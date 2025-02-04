@@ -2,24 +2,20 @@ import { Test } from '@nestjs/testing';
 import { UserSession } from '@novu/testing';
 import { SubscriberRepository } from '@novu/dal';
 
-import { CreateSubscriber } from './create-subscriber.usecase';
-import { CreateSubscriberCommand } from './create-subscriber.command';
+import { CreateOrUpdateSubscriberCommand } from './create-or-update-subscriber.command';
 
 import {
-  CacheService,
   CacheInMemoryProviderService,
-  InMemoryProviderEnum,
-  InMemoryProviderService,
+  CacheService,
   InvalidateCacheService,
 } from '../../services';
 import { UpdateSubscriber } from '../update-subscriber';
+import { CreateOrUpdateSubscriberUseCase } from './create-or-update-subscriber.usecase';
 
 const cacheInMemoryProviderService = {
   provide: CacheInMemoryProviderService,
   useFactory: async (): Promise<CacheInMemoryProviderService> => {
-    const cacheInMemoryProvider = new CacheInMemoryProviderService();
-
-    return cacheInMemoryProvider;
+    return new CacheInMemoryProviderService();
   },
 };
 
@@ -37,7 +33,7 @@ const cacheService = {
 };
 
 describe('Create Subscriber', function () {
-  let useCase: CreateSubscriber;
+  let useCase: CreateOrUpdateSubscriberUseCase;
   let session: UserSession;
 
   beforeEach(async () => {
@@ -49,13 +45,15 @@ describe('Create Subscriber', function () {
     session = new UserSession();
     await session.initialize();
 
-    useCase = moduleRef.get<CreateSubscriber>(CreateSubscriber);
+    useCase = moduleRef.get<CreateOrUpdateSubscriberUseCase>(
+      CreateOrUpdateSubscriberUseCase,
+    );
   });
 
   it('should create a subscriber', async function () {
     const locale = 'en';
     const result = await useCase.execute(
-      CreateSubscriberCommand.create({
+      CreateOrUpdateSubscriberCommand.create({
         organizationId: session.organization._id,
         environmentId: session.environment._id,
         subscriberId: '1234',
@@ -74,7 +72,7 @@ describe('Create Subscriber', function () {
     const noLocale = 'no';
 
     await useCase.execute(
-      CreateSubscriberCommand.create({
+      CreateOrUpdateSubscriberCommand.create({
         organizationId: session.organization._id,
         environmentId: session.environment._id,
         subscriberId,
@@ -85,7 +83,7 @@ describe('Create Subscriber', function () {
     );
 
     const result = await useCase.execute(
-      CreateSubscriberCommand.create({
+      CreateOrUpdateSubscriberCommand.create({
         organizationId: session.organization._id,
         environmentId: session.environment._id,
         subscriberId,

@@ -321,8 +321,8 @@ importers:
         specifier: ^0.0.24
         version: 0.0.24
       pnpm:
-        specifier: 9.15.0
-        version: 9.15.0
+        specifier: 10.2.0
+        version: 10.2.0
       prettier:
         specifier: ~3.3.3
         version: 3.3.3
@@ -587,19 +587,6 @@ importers:
       zod-to-json-schema:
         specifier: ^3.23.3
         version: 3.23.3(zod@3.23.8)
-    optionalDependencies:
-      '@novu/ee-auth':
-        specifier: workspace:*
-        version: link:../../enterprise/packages/auth
-      '@novu/ee-billing':
-        specifier: workspace:*
-        version: link:../../enterprise/packages/billing
-      '@novu/ee-shared-services':
-        specifier: workspace:*
-        version: link:../../enterprise/packages/shared-services
-      '@novu/ee-translation':
-        specifier: workspace:*
-        version: link:../../enterprise/packages/translation
     devDependencies:
       '@faker-js/faker':
         specifier: ^6.0.0
@@ -676,6 +663,19 @@ importers:
       typescript:
         specifier: 5.6.2
         version: 5.6.2
+    optionalDependencies:
+      '@novu/ee-auth':
+        specifier: workspace:*
+        version: link:../../enterprise/packages/auth
+      '@novu/ee-billing':
+        specifier: workspace:*
+        version: link:../../enterprise/packages/billing
+      '@novu/ee-shared-services':
+        specifier: workspace:*
+        version: link:../../enterprise/packages/shared-services
+      '@novu/ee-translation':
+        specifier: workspace:*
+        version: link:../../enterprise/packages/translation
 
   apps/dashboard:
     dependencies:
@@ -2064,16 +2064,6 @@ importers:
       uuid:
         specifier: ^8.3.2
         version: 8.3.2
-    optionalDependencies:
-      '@novu/ee-billing':
-        specifier: workspace:*
-        version: link:../../enterprise/packages/billing
-      '@novu/ee-shared-services':
-        specifier: workspace:*
-        version: link:../../enterprise/packages/shared-services
-      '@novu/ee-translation':
-        specifier: workspace:*
-        version: link:../../enterprise/packages/translation
     devDependencies:
       '@faker-js/faker':
         specifier: ^6.0.0
@@ -2138,6 +2128,16 @@ importers:
       typescript:
         specifier: 5.6.2
         version: 5.6.2
+    optionalDependencies:
+      '@novu/ee-billing':
+        specifier: workspace:*
+        version: link:../../enterprise/packages/billing
+      '@novu/ee-shared-services':
+        specifier: workspace:*
+        version: link:../../enterprise/packages/shared-services
+      '@novu/ee-translation':
+        specifier: workspace:*
+        version: link:../../enterprise/packages/translation
 
   apps/ws:
     dependencies:
@@ -2852,13 +2852,6 @@ importers:
       zod-to-json-schema:
         specifier: ^3.23.3
         version: 3.23.3(zod@3.23.8)
-    optionalDependencies:
-      '@novu/ee-shared-services':
-        specifier: workspace:*
-        version: link:../../enterprise/packages/shared-services
-      '@taskforcesh/bullmq-pro':
-        specifier: 5.1.14
-        version: 5.1.14
     devDependencies:
       '@istanbuljs/nyc-config-typescript':
         specifier: ^1.0.1
@@ -2920,6 +2913,13 @@ importers:
       vitest:
         specifier: ^2.0.5
         version: 2.1.2(@edge-runtime/vm@4.0.2)(@types/node@22.7.4)(jsdom@25.0.0)(less@4.2.0)(lightningcss@1.26.0)(sass@1.77.8)(sugarss@4.0.1(postcss@8.4.47))(terser@5.31.6)
+    optionalDependencies:
+      '@novu/ee-shared-services':
+        specifier: workspace:*
+        version: link:../../enterprise/packages/shared-services
+      '@taskforcesh/bullmq-pro':
+        specifier: 5.1.14
+        version: 5.1.14
 
   libs/automation:
     dependencies:
@@ -35093,9 +35093,9 @@ packages:
       { integrity: sha512-2Rb3vm+EXble/sMXNSu6eoBx8e79gKqhNq9F5ZWW6ERNCTE/Q0wQNne5541tE5vKjfM8hpNCYL+LGc1YTfI0dg== }
     engines: { node: '>=6' }
 
-  pnpm@9.15.0:
+  pnpm@10.2.0:
     resolution:
-      { integrity: sha512-duI3l2CkMo7EQVgVvNZije5yevN3mqpMkU45RBVsQpmSGon5djge4QfUHxLPpLZmgcqccY8GaPoIMe1MbYulbA== }
+      { integrity: sha512-DSc2TgE5xqre7WWtoVMTXgypbI2kISO9UAR/lhM53Hp1j8LpRLQo9SvlcNG9M3JFXBxl+i56oL+/kxGQ+VUgAQ== }
     engines: { node: '>=18.12' }
     hasBin: true
 
@@ -83444,7 +83444,7 @@ snapshots:
     transitivePeerDependencies:
       - typescript
 
-  pnpm@9.15.0: {}
+  pnpm@10.2.0: {}
 
   polished@4.2.2:
     dependencies:
