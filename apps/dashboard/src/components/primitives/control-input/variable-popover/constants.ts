@@ -308,4 +308,17 @@ export const FILTERS: Filters[] = [
     example: '"fun%20%26%20games" | url_decode → fun & games',
     sampleValue: 'fun%20%26%20games',
   },
+  {
+    label: 'Digest',
+    value: 'digest',
+    hasParam: true,
+    description: 'Format a list of names with optional key path and separator',
+    example: 'events | digest: 2, "name", ", " → John, Jane and 3 others',
+    params: [
+      { placeholder: 'Max names to show', type: 'number' },
+      { placeholder: 'Object key path (optional)', type: 'string' },
+      { placeholder: 'Custom separator (optional)', type: 'string' },
+    ],
+    sampleValue: '[{ name: "John" }, { name: "Jane" }]',
+  },
 ];
