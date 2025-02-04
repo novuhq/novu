@@ -90,7 +90,7 @@ export function SubscriberOverviewForm({ subscriberId }: { subscriberId: string 
     const dirtyPayload = Object.keys(dirtyFields).reduce<Partial<typeof formData>>((acc, key) => {
       const typedKey = key as keyof typeof formData;
       if (typedKey === 'data') {
-        return { ...acc, data: JSON.parse(formData.data) };
+        return { ...acc, data: JSON.parse(JSON.stringify(formData.data)) };
       }
       return { ...acc, [typedKey]: formData[typedKey] };
     }, {});

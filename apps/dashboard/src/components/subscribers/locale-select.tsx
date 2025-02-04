@@ -31,7 +31,7 @@ export function LocaleSelect({
       <SelectTrigger className="group p-1.5 shadow-sm">
         <SelectValue
           placeholder={
-            <div className="flex w-full items-center gap-1">
+            <div className="flex w-full items-center gap-2">
               <div>
                 <RiEarthLine className="size-4" />
               </div>
@@ -40,7 +40,7 @@ export function LocaleSelect({
           }
           asChild
         >
-          <div className="flex w-full items-center gap-1">
+          <div className="flex w-full items-center gap-2">
             {value && (
               <>
                 <div>
@@ -52,14 +52,16 @@ export function LocaleSelect({
           </div>
         </SelectValue>
       </SelectTrigger>
-      <SelectContent>
+      <SelectContent className="p-1">
         {locales.map((item) => (
-          <SelectItem key={item.langIso} value={item.langIso}>
-            <div className="flex w-full items-center gap-1">
+          <SelectItem key={item.langIso} value={item.langIso} className="px-2">
+            <div className="flex w-full items-center gap-2">
               <div>
                 <CountryFlags name={item.alpha2} className="size-4" />
               </div>
-              <TruncatedText className="text-sm">{item.langIso}</TruncatedText>
+              <TruncatedText className="text-sm">
+                {item.langIso} - {item.langName}
+              </TruncatedText>
             </div>
           </SelectItem>
         ))}
