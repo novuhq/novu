@@ -1,8 +1,7 @@
-import { ComponentProps, useMemo } from 'react';
+import { ComponentProps } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Node as FlowNode, Handle, NodeProps, Position } from '@xyflow/react';
 import { RiFilter3Fill, RiPlayCircleLine } from 'react-icons/ri';
-import { parseJsonLogic } from 'react-querybuilder/parseJsonLogic';
 import { RQBJsonLogic } from 'react-querybuilder';
 import { WorkflowOriginEnum } from '@novu/shared';
 
@@ -17,6 +16,7 @@ import { cn } from '@/utils/ui';
 import { STEP_TYPE_TO_ICON } from '../icons/utils';
 import { AddStepMenu } from './add-step-menu';
 import { Node, NodeBody, NodeError, NodeHeader, NodeIcon, NodeName } from './base-node';
+import { useConditionsCount } from '@/hooks/use-conditions-count';
 
 export type NodeData = {
   addStepIndex?: number;
@@ -85,13 +85,7 @@ const StepNode = (props: StepNodeProps) => {
     stepSlug: string;
   }>();
 
-  const conditionsCount = useMemo(() => {
-    if (!data.controlValues?.skip) return 0;
-
-    const query = parseJsonLogic(data.controlValues.skip as RQBJsonLogic);
-
-    return query.rules.length;
-  }, [data.controlValues]);
+  const conditionsCount = useConditionsCount(data.controlValues?.skip as RQBJsonLogic);
 
   const isSelected =
     getWorkflowIdFromSlug({ slug: stepSlug ?? '', divider: STEP_DIVIDER }) ===

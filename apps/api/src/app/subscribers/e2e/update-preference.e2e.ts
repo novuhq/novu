@@ -77,7 +77,7 @@ describe('Update Subscribers preferences - /subscribers/:subscriberId/preference
     };
 
     const { error } = await expectSdkExceptionGeneric(() =>
-      novuClient.subscribers.preferences.update({
+      novuClient.subscribers.preferences.updateLegacy({
         workflowId: '63cc6e0b561e0a609f223e27',
         subscriberId: session.subscriberId,
         updateSubscriberPreferenceRequestDto: updateDataEmailFalse as any,
@@ -142,7 +142,7 @@ describe('Update Subscribers preferences - /subscribers/:subscriberId/preference
       channels: {},
     };
 
-    await novuClient.subscribers.preferences.update({
+    await novuClient.subscribers.preferences.updateLegacy({
       workflowId: template._id,
       subscriberId: session.subscriberId,
       updateSubscriberPreferenceRequestDto: emptyPreferenceData as any,
@@ -176,7 +176,7 @@ describe('Update Subscribers preferences - /subscribers/:subscriberId/preference
       enabled: false,
     };
 
-    await novuClient.subscribers.preferences.update({
+    await novuClient.subscribers.preferences.updateLegacy({
       workflowId: template._id,
       subscriberId: session.subscriberId,
       updateSubscriberPreferenceRequestDto: disablePreferenceData,
@@ -199,7 +199,7 @@ describe('Update Subscribers preferences - /subscribers/:subscriberId/preference
       },
     };
 
-    await novuClient.subscribers.preferences.update({
+    await novuClient.subscribers.preferences.updateLegacy({
       workflowId: template._id,
       subscriberId: session.subscriberId,
       updateSubscriberPreferenceRequestDto: updateEmailPreferenceData,
@@ -232,7 +232,7 @@ describe('Update Subscribers preferences - /subscribers/:subscriberId/preference
       enabled: false,
     };
 
-    await novuClient.subscribers.preferences.update({
+    await novuClient.subscribers.preferences.updateLegacy({
       workflowId: template._id,
       subscriberId: session.subscriberId,
       updateSubscriberPreferenceRequestDto: disablePreferenceData,
@@ -252,7 +252,7 @@ describe('Update Subscribers preferences - /subscribers/:subscriberId/preference
       enabled: true,
     };
 
-    await novuClient.subscribers.preferences.update({
+    await novuClient.subscribers.preferences.updateLegacy({
       workflowId: template._id,
       subscriberId: session.subscriberId,
       updateSubscriberPreferenceRequestDto: enablePreferenceData,
@@ -287,7 +287,7 @@ describe('Update Subscribers preferences - /subscribers/:subscriberId/preference
       },
     };
 
-    await novuClient.subscribers.preferences.update({
+    await novuClient.subscribers.preferences.updateLegacy({
       workflowId: template._id,
       subscriberId: session.subscriberId,
       updateSubscriberPreferenceRequestDto: disableEmailPreferenceData,
@@ -310,7 +310,7 @@ describe('Update Subscribers preferences - /subscribers/:subscriberId/preference
       },
     };
 
-    await novuClient.subscribers.preferences.update({
+    await novuClient.subscribers.preferences.updateLegacy({
       workflowId: template._id,
       subscriberId: session.subscriberId,
       updateSubscriberPreferenceRequestDto: enableEmailPreferenceData,
@@ -345,7 +345,7 @@ describe('Update Subscribers preferences - /subscribers/:subscriberId/preference
       },
     };
 
-    await novuClient.subscribers.preferences.update({
+    await novuClient.subscribers.preferences.updateLegacy({
       workflowId: template._id,
       subscriberId: session.subscriberId,
       updateSubscriberPreferenceRequestDto: updateSmsPreferenceData,
@@ -401,7 +401,7 @@ describe('Update Subscribers preferences - /subscribers/:subscriberId/preference
       },
     };
 
-    await novuClient.subscribers.preferences.update({
+    await novuClient.subscribers.preferences.updateLegacy({
       workflowId: template._id,
       subscriberId: session.subscriberId,
       updateSubscriberPreferenceRequestDto: updateSmsPreferenceData,
@@ -463,7 +463,7 @@ describe('Update Subscribers preferences - /subscribers/:subscriberId/preference
       },
     };
 
-    await novuClient.subscribers.preferences.update({
+    await novuClient.subscribers.preferences.updateLegacy({
       workflowId: template._id,
       subscriberId: session.subscriberId,
       updateSubscriberPreferenceRequestDto: updateSmsPreferenceData,

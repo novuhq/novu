@@ -1,10 +1,4 @@
-import {
-  AnalyticsService,
-  GetSubscriberGlobalPreference,
-  GetSubscriberGlobalPreferenceCommand,
-  GetSubscriberPreference,
-  GetSubscriberPreferenceCommand,
-} from '@novu/application-generic';
+import { AnalyticsService } from '@novu/application-generic';
 import {
   ChannelTypeEnum,
   ISubscriberPreferenceResponse,
@@ -17,6 +11,14 @@ import {
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { GetInboxPreferences } from './get-inbox-preferences.usecase';
+import {
+  GetSubscriberPreference,
+  GetSubscriberPreferenceCommand,
+} from '../../../subscribers/usecases/get-subscriber-preference';
+import {
+  GetSubscriberGlobalPreference,
+  GetSubscriberGlobalPreferenceCommand,
+} from '../../../subscribers/usecases/get-subscriber-global-preference';
 
 const mockedWorkflow = {
   _id: '123',

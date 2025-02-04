@@ -11,21 +11,27 @@ import { NovuCore } from "../core.js";
 import { subscribersPreferencesUpdate } from "../funcs/subscribersPreferencesUpdate.js";
 import { combineSignals } from "../lib/primitives.js";
 import { RequestOptions } from "../lib/sdks.js";
+import * as components from "../models/components/index.js";
 import * as operations from "../models/operations/index.js";
 import { unwrapAsync } from "../types/fp.js";
 import { useNovuContext } from "./_context.js";
 import { MutationHookOptions } from "./_types.js";
 
 export type SubscribersPreferencesUpdateMutationVariables = {
-  request: operations.SubscribersV1ControllerUpdateSubscriberPreferenceRequest;
+  patchSubscriberPreferencesDto: components.PatchSubscriberPreferencesDto;
+  subscriberId: string;
+  idempotencyKey?: string | undefined;
   options?: RequestOptions;
 };
 
 export type SubscribersPreferencesUpdateMutationData =
-  operations.SubscribersV1ControllerUpdateSubscriberPreferenceResponse;
+  operations.SubscribersControllerUpdateSubscriberPreferencesResponse;
 
 /**
- * Update subscriber preference
+ * Update subscriber global or workflow specific preferences
+ *
+ * @remarks
+ * Update subscriber global or workflow specific preferences
  */
 export function useSubscribersPreferencesUpdateMutation(
   options?: MutationHookOptions<
@@ -61,7 +67,9 @@ export function buildSubscribersPreferencesUpdateMutation(
   return {
     mutationKey: mutationKeySubscribersPreferencesUpdate(),
     mutationFn: function subscribersPreferencesUpdateMutationFn({
-      request,
+      patchSubscriberPreferencesDto,
+      subscriberId,
+      idempotencyKey,
       options,
     }): Promise<SubscribersPreferencesUpdateMutationData> {
       const mergedOptions = {
@@ -78,7 +86,9 @@ export function buildSubscribersPreferencesUpdateMutation(
       };
       return unwrapAsync(subscribersPreferencesUpdate(
         client$,
-        request,
+        patchSubscriberPreferencesDto,
+        subscriberId,
+        idempotencyKey,
         mergedOptions,
       ));
     },

@@ -3,16 +3,15 @@ import { EnvironmentRepository } from '@novu/dal';
 import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
 import {
   AnalyticsService,
-  LogDecorator,
-  CreateSubscriber,
-  CreateSubscriberCommand,
-  SelectIntegrationCommand,
-  SelectIntegration,
-  AuthService,
+  CreateOrUpdateSubscriberUseCase,
   createHash,
+  CreateOrUpdateSubscriberCommand,
   decryptApiKey,
+  LogDecorator,
+  SelectIntegration,
+  SelectIntegrationCommand,
 } from '@novu/application-generic';
-
+import { AuthService } from '../../../auth/services/auth.service';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { InitializeSessionCommand } from './initialize-session.command';
 
@@ -22,7 +21,7 @@ import { SessionInitializeResponseDto } from '../../dtos/session-initialize-resp
 export class InitializeSession {
   constructor(
     private environmentRepository: EnvironmentRepository,
-    private createSubscriber: CreateSubscriber,
+    private createSubscriber: CreateOrUpdateSubscriberUseCase,
     private authService: AuthService,
     private selectIntegration: SelectIntegration,
     private analyticsService: AnalyticsService
@@ -54,7 +53,7 @@ export class InitializeSession {
       validateNotificationCenterEncryption(environment, command);
     }
 
-    const commandos = CreateSubscriberCommand.create({
+    const commandos = CreateOrUpdateSubscriberCommand.create({
       environmentId: environment._id,
       organizationId: environment._organizationId,
       subscriberId: command.subscriberId,

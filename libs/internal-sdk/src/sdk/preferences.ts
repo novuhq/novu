@@ -3,9 +3,11 @@
  */
 
 import { subscribersPreferencesList } from "../funcs/subscribersPreferencesList.js";
+import { subscribersPreferencesRetrieve } from "../funcs/subscribersPreferencesRetrieve.js";
 import { subscribersPreferencesRetrieveByLevel } from "../funcs/subscribersPreferencesRetrieveByLevel.js";
 import { subscribersPreferencesUpdate } from "../funcs/subscribersPreferencesUpdate.js";
 import { subscribersPreferencesUpdateGlobal } from "../funcs/subscribersPreferencesUpdateGlobal.js";
+import { subscribersPreferencesUpdateLegacy } from "../funcs/subscribersPreferencesUpdateLegacy.js";
 import { ClientSDK, RequestOptions } from "../lib/sdks.js";
 import * as components from "../models/components/index.js";
 import * as operations from "../models/operations/index.js";
@@ -73,16 +75,58 @@ export class Preferences extends ClientSDK {
   /**
    * Update subscriber preference
    */
-  async update(
+  async updateLegacy(
     request:
       operations.SubscribersV1ControllerUpdateSubscriberPreferenceRequest,
     options?: RequestOptions,
   ): Promise<
     operations.SubscribersV1ControllerUpdateSubscriberPreferenceResponse
   > {
-    return unwrapAsync(subscribersPreferencesUpdate(
+    return unwrapAsync(subscribersPreferencesUpdateLegacy(
       this,
       request,
+      options,
+    ));
+  }
+
+  /**
+   * Get subscriber preferences
+   *
+   * @remarks
+   * Get subscriber global and workflow specific preferences
+   */
+  async retrieve(
+    subscriberId: string,
+    idempotencyKey?: string | undefined,
+    options?: RequestOptions,
+  ): Promise<operations.SubscribersControllerGetSubscriberPreferencesResponse> {
+    return unwrapAsync(subscribersPreferencesRetrieve(
+      this,
+      subscriberId,
+      idempotencyKey,
+      options,
+    ));
+  }
+
+  /**
+   * Update subscriber global or workflow specific preferences
+   *
+   * @remarks
+   * Update subscriber global or workflow specific preferences
+   */
+  async update(
+    patchSubscriberPreferencesDto: components.PatchSubscriberPreferencesDto,
+    subscriberId: string,
+    idempotencyKey?: string | undefined,
+    options?: RequestOptions,
+  ): Promise<
+    operations.SubscribersControllerUpdateSubscriberPreferencesResponse
+  > {
+    return unwrapAsync(subscribersPreferencesUpdate(
+      this,
+      patchSubscriberPreferencesDto,
+      subscriberId,
+      idempotencyKey,
       options,
     ));
   }

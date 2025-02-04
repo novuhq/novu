@@ -68,7 +68,7 @@ const FormLabel = React.forwardRef<
               e.stopPropagation();
             }}
           >
-            <BsFillInfoCircleFill className="text-foreground-300 -mt-0.5 inline size-3" />
+            <BsFillInfoCircleFill className="text-foreground-300 ml-1 inline size-3" />
           </TooltipTrigger>
           <TooltipContent className="max-w-56">{tooltip}</TooltipContent>
         </Tooltip>

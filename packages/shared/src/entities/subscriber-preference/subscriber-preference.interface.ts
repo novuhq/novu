@@ -1,8 +1,13 @@
 import { ChannelTypeEnum, PreferenceOverrideSourceEnum, PreferencesTypeEnum } from '../../types';
-import { IPreferenceChannelsDto } from '../../dto';
 import { INotificationTrigger } from '../notification-trigger';
 
-export interface IPreferenceChannels extends IPreferenceChannelsDto {}
+export interface IPreferenceChannels {
+  email?: boolean;
+  sms?: boolean;
+  in_app?: boolean;
+  chat?: boolean;
+  push?: boolean;
+}
 
 export interface IPreferenceOverride {
   channel: ChannelTypeEnum;
@@ -15,23 +20,7 @@ export interface ISubscriberPreferenceResponse {
   type: PreferencesTypeEnum;
 }
 
-export interface ISubscriberWorkflowPreferenceResponse extends IPreferenceResponse {
-  workflow: ITemplateConfiguration;
-  level: PreferenceLevelEnum.TEMPLATE;
-}
-
-export interface IWorkflow extends Omit<ITemplateConfiguration, '_id'> {
-  id: string;
-}
-export interface ISubscriberPreferences {
-  level: PreferenceLevelEnum;
-  workflow?: IWorkflow;
-  enabled: boolean;
-  channels: IPreferenceChannels;
-  overrides?: IPreferenceOverride[];
-}
-
-export interface IPreferenceResponse {
+interface IPreferenceResponse {
   enabled: boolean;
   channels: IPreferenceChannels;
   overrides: IPreferenceOverride[];

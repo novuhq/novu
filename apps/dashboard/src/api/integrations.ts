@@ -10,6 +10,7 @@ export type CreateIntegrationData = {
   active: boolean;
   primary?: boolean;
   _environmentId: string;
+  removeNovuBranding?: boolean;
 };
 
 export enum CheckIntegrationResponseEnum {
@@ -26,6 +27,7 @@ export type UpdateIntegrationData = {
   primary: boolean;
   credentials: Record<string, string>;
   check: boolean;
+  removeNovuBranding?: boolean;
 };
 
 export async function getIntegrations({ environment }: { environment: IEnvironment }) {
