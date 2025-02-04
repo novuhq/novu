@@ -37,15 +37,15 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
     return () => clearInterval(interval);
   });
 
-  const handleNotificationClick: JSX.EventHandlerUnion<HTMLAnchorElement, MouseEvent> = async (e) => {
+  const handleNotificationClick: JSX.EventHandlerUnion<HTMLAnchorElement, MouseEvent> = (e) => {
     e.stopPropagation();
     e.preventDefault();
 
     if (!props.notification.isRead) {
-      await props.notification.read();
+      props.notification.read();
     }
 
-    await props.onNotificationClick?.(props.notification);
+    props.onNotificationClick?.(props.notification);
 
     navigate(props.notification.redirect?.url, props.notification.redirect?.target);
   };
