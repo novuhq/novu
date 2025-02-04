@@ -27,7 +27,7 @@ export type VariablesListProps = {
   className?: string;
 };
 
-export const VariablesList = React.forwardRef<HTMLUListElement, VariablesListProps>(
+export const VariableList = React.forwardRef<HTMLUListElement, VariablesListProps>(
   ({ options, onSelect, selectedValue, title, hoveredOptionIndex, className }, ref) => {
     return (
       <div className={cn('bg-background flex flex-col', className)}>

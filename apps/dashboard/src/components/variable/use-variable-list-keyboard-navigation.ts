@@ -2,7 +2,7 @@ import { useRef } from 'react';
 
 import { useState } from 'react';
 
-export const useListKeyboardNavigation = ({ maxIndex }: { maxIndex: number }) => {
+export const useVariableListKeyboardNavigation = ({ maxIndex }: { maxIndex: number }) => {
   const variablesListRef = useRef<HTMLUListElement>(null);
   const [hoveredOptionIndex, setHoveredOptionIndex] = useState(0);
 

@@ -1,12 +1,12 @@
 import React, { useMemo, useImperativeHandle } from 'react';
 import { VariableListProps } from '@maily-to/core/extensions';
 
-import { VariablesList } from '@/components/variable/variables-list';
-import { useListKeyboardNavigation } from '@/components/variable/use-list-keyboard-navigation';
+import { VariableList } from '@/components/variable/variable-list';
+import { useVariableListKeyboardNavigation } from '@/components/variable/use-variable-list-keyboard-navigation';
 
 export const MailyVariablesList = React.forwardRef(({ items, command }: VariableListProps, ref) => {
   const options = useMemo(() => items.map((item) => ({ label: item.name, value: item.name })), [items]);
-  const { variablesListRef, hoveredOptionIndex, next, prev, reset } = useListKeyboardNavigation({
+  const { variablesListRef, hoveredOptionIndex, next, prev, reset } = useVariableListKeyboardNavigation({
     maxIndex: options.length - 1,
   });
 
@@ -47,7 +47,7 @@ export const MailyVariablesList = React.forwardRef(({ items, command }: Variable
   }));
 
   return (
-    <VariablesList
+    <VariableList
       ref={variablesListRef}
       className="rounded-md border shadow-md outline-none"
       hoveredOptionIndex={hoveredOptionIndex}

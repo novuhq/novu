@@ -3,8 +3,8 @@ import React, { useMemo, useState, useRef } from 'react';
 import { Popover, PopoverAnchor, PopoverContent } from '@/components/primitives/popover';
 import { InputPure, InputRoot, InputWrapper } from '@/components/primitives/input';
 import { AUTOCOMPLETE_PASSWORD_MANAGERS_OFF } from '@/utils/constants';
-import { VariablesList } from '@/components/variable/variables-list';
-import { useListKeyboardNavigation } from '../variable/use-list-keyboard-navigation';
+import { VariableList } from '@/components/variable/variable-list';
+import { useVariableListKeyboardNavigation } from '../variable/use-variable-list-keyboard-navigation';
 
 type VariableSelectProps = {
   disabled?: boolean;
@@ -38,7 +38,7 @@ export const VariableSelect = ({
   const [isOpen, setIsOpen] = useState(false);
   const [options, setOptions] = useState(optionsProp);
 
-  const { variablesListRef, hoveredOptionIndex, next, prev, reset, focusFirst } = useListKeyboardNavigation({
+  const { variablesListRef, hoveredOptionIndex, next, prev, reset, focusFirst } = useVariableListKeyboardNavigation({
     maxIndex: options.length - 1,
   });
 
@@ -141,7 +141,7 @@ export const VariableSelect = ({
           }}
           onFocusOutside={onClose}
         >
-          <VariablesList
+          <VariableList
             ref={variablesListRef}
             hoveredOptionIndex={hoveredOptionIndex}
             options={filteredOptions}
