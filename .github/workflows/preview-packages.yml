@@ -22,8 +22,11 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20.14.0
+          node-version: 22
           cache: 'pnpm'
+
+      - name: Install pnpm
+        run: corepack enable
 
       - name: Install dependencies
         run: pnpm install

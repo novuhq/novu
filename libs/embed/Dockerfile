@@ -1,6 +1,6 @@
 FROM node:20-alpine3.19
 
-RUN npm install -g pnpm@9.11.0 --loglevel notice --force
+RUN npm install -g pnpm@10.2.0 --loglevel notice --force
 RUN apk --update --no-cache add curl g++ make py3-pip
 
 USER 1000
