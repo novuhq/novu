@@ -2413,10 +2413,11 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
 
     describe('Post Mortem', function () {
       // Repeat the test 3 times
-      for (let i = 0; i < 3; i += 1) {
-        it(`should not create multiple subscribers when multiple triggers are made with the same not created subscribers (run ${i + 1})`, async function () {
-          template = await createSimpleWorkflow(session);
 
+      it(`should not create multiple subscribers when multiple triggers are made
+         with the same not created subscribers `, async () => {
+        template = await createSimpleWorkflow(session);
+        for (let i = 0; i < 3; i += 1) {
           const subscriberId = `not-created-twice-subscriber${i}`;
           await Promise.all([
             simpleTrigger(novuClient, template, subscriberId),
@@ -2430,8 +2431,8 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
           });
 
           expect(subscribers.length).to.equal(1);
-        });
-      }
+        }
+      });
     });
     describe('filters logic', () => {
       beforeEach(async () => {
