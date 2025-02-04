@@ -18,10 +18,7 @@ export default function SubscriberTabs({ subscriberId }: { subscriberId: string 
       <header className="border-bg-soft flex h-12 w-full flex-row items-center gap-2 gap-3 border-b p-3">
         <div className="flex flex-1 items-center gap-1 text-sm font-medium">
           <RiGroup2Line className="size-5 p-0.5" />
-          <TruncatedText className="flex-1">
-            Subscriber Profile - {subscriberId} Lorem ipsum dolor sit, amet consectetur adipisicing elit. Delectus atque
-            iusto, magni dignissimos ex enim? Nihil facere at ut ducimus.
-          </TruncatedText>
+          <TruncatedText className="flex-1">Subscriber Profile - {subscriberId}</TruncatedText>
         </div>
         <CompactButton
           icon={RiCloseLine}
