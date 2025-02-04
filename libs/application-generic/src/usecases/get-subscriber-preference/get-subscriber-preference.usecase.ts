@@ -136,7 +136,7 @@ export class GetSubscriberPreference {
       );
 
     const nonCriticalWorkflowPreferences = workflowPreferences.filter(
-      (preference) => !preference.template.critical,
+      (preference) => preference && !preference.template.critical,
     );
 
     return nonCriticalWorkflowPreferences;
@@ -151,6 +151,11 @@ export class GetSubscriberPreference {
   ): ISubscriberPreferenceResponse[] {
     return workflowList.map((workflow) => {
       const preferences = workflowPreferenceSets[workflow._id];
+
+      if (!preferences) {
+        return;
+      }
+
       const merged = this.mergePreferences(
         preferences,
         subscriberGlobalPreference,

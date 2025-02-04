@@ -1,8 +1,10 @@
 import {
+  GetSubscriberPreferencesDto,
   ListSubscribersResponseDto,
+  PatchSubscriberPreferencesDto,
+  PatchSubscriberRequestDto,
   RemoveSubscriberResponseDto,
   SubscriberResponseDto,
-  PatchSubscriberRequestDto,
 } from '@novu/api/models/components';
 import type { DirectionEnum, IEnvironment } from '@novu/shared';
 import { delV2, getV2, patchV2 } from './api.client';
@@ -88,6 +90,37 @@ export const patchSubscriber = async ({
   const { data } = await patchV2<{ data: SubscriberResponseDto }>(`/subscribers/${subscriberId}`, {
     environment,
     body: subscriber,
+  });
+
+  return data;
+};
+
+export const getSubscriberPreferences = async ({
+  environment,
+  subscriberId,
+}: {
+  environment: IEnvironment;
+  subscriberId: string;
+}) => {
+  const { data } = await getV2<{ data: GetSubscriberPreferencesDto }>(`/subscribers/${subscriberId}/preferences`, {
+    environment,
+  });
+
+  return data;
+};
+
+export const patchSubscriberPreferences = async ({
+  environment,
+  subscriberId,
+  preferences,
+}: {
+  environment: IEnvironment;
+  subscriberId: string;
+  preferences: Partial<PatchSubscriberPreferencesDto>;
+}) => {
+  const { data } = await patchV2<{ data: GetSubscriberPreferencesDto }>(`/subscribers/${subscriberId}/preferences`, {
+    environment,
+    body: preferences,
   });
 
   return data;
