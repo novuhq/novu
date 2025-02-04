@@ -90,7 +90,8 @@ export function SubscriberOverviewForm({ subscriberId }: { subscriberId: string 
     const dirtyPayload = Object.keys(dirtyFields).reduce<Partial<typeof formData>>((acc, key) => {
       const typedKey = key as keyof typeof formData;
       if (typedKey === 'data') {
-        return { ...acc, data: JSON.parse(JSON.stringify(formData.data)) };
+        const data = JSON.parse(JSON.stringify(formData.data));
+        return { ...acc, data: data === '' ? {} : data };
       }
       return { ...acc, [typedKey]: formData[typedKey] };
     }, {});
@@ -192,11 +193,12 @@ export function SubscriberOverviewForm({ subscriberId }: { subscriberId: string 
                 <Input
                   value={subscriberId}
                   readOnly
-                  trailingNode={<CopyButton valueToCopy={subscriberId} className="focus:border-l" />}
+                  trailingNode={
+                    <CopyButton valueToCopy={subscriberId} className="group-has-[input:focus]:border-l-stroke-strong" />
+                  }
                 />
               </FormItem>
             </div>
-
             <div className="flex flex-1 items-center gap-2.5">
               <FormField
                 control={form.control}
@@ -244,7 +246,7 @@ export function SubscriberOverviewForm({ subscriberId }: { subscriberId: string 
                 control={form.control}
                 name="locale"
                 render={({ field }) => (
-                  <FormItem className="w-1/4">
+                  <FormItem className="w-1/5">
                     <FormLabel>Locale</FormLabel>
                     <FormControl>
                       <LocaleSelect {...field} value={field.value} onValueChange={field.onChange} />
@@ -256,7 +258,7 @@ export function SubscriberOverviewForm({ subscriberId }: { subscriberId: string 
                 control={form.control}
                 name="timezone"
                 render={({ field }) => (
-                  <FormItem className="w-full">
+                  <FormItem className="min-w-0 flex-1">
                     <FormLabel>Timezone</FormLabel>
                     <FormControl>
                       <TimezoneSelect {...field} value={field.value} onValueChange={field.onChange} />
@@ -285,6 +287,10 @@ export function SubscriberOverviewForm({ subscriberId }: { subscriberId: string 
                         multiline
                         {...field}
                         value={field.value || ''}
+                        onChange={(val) => {
+                          field.onChange(val);
+                          form.trigger(field.name);
+                        }}
                       />
                     </InputRoot>
                   </FormControl>
@@ -294,7 +300,6 @@ export function SubscriberOverviewForm({ subscriberId }: { subscriberId: string 
             />
           </div>
           <Separator />
-
           {subscriberDetails?.updatedAt && (
             <span className="text-2xs px-5 py-1 text-neutral-400">
               Updated at{' '}
@@ -315,7 +320,6 @@ export function SubscriberOverviewForm({ subscriberId }: { subscriberId: string 
             <Separator />
             <div className="flex justify-between gap-3 p-3">
               <Button
-                type="submit"
                 variant="primary"
                 mode="ghost"
                 leadingIcon={RiDeleteBin2Line}
