@@ -100,7 +100,19 @@ export class SubscriberJobBound {
     });
 
     const subscriberProcessed = await this.createOrUpdateSubscriberUsecase.execute(
-      this.buildCommand(environmentId, organizationId, subscriber)
+      CreateOrUpdateSubscriberCommand.create({
+        environmentId,
+        organizationId,
+        subscriberId: subscriber?.subscriberId,
+        email: subscriber?.email,
+        firstName: subscriber?.firstName,
+        lastName: subscriber?.lastName,
+        phone: subscriber?.phone,
+        avatar: subscriber?.avatar,
+        locale: subscriber?.locale,
+        data: subscriber?.data,
+        channels: subscriber?.channels,
+      })
     );
 
     // If no subscriber makes no sense to try to create notification
@@ -156,25 +168,6 @@ export class SubscriberJobBound {
         organizationId: command.organizationId,
       })
     );
-  }
-  private buildCommand(
-    environmentId: string,
-    organizationId: string,
-    subscriberPayload: ISubscribersDefine
-  ): CreateOrUpdateSubscriberCommand {
-    return CreateOrUpdateSubscriberCommand.create({
-      environmentId,
-      organizationId,
-      subscriberId: subscriberPayload?.subscriberId,
-      email: subscriberPayload?.email,
-      firstName: subscriberPayload?.firstName,
-      lastName: subscriberPayload?.lastName,
-      phone: subscriberPayload?.phone,
-      avatar: subscriberPayload?.avatar,
-      locale: subscriberPayload?.locale,
-      data: subscriberPayload?.data,
-      channels: subscriberPayload?.channels,
-    });
   }
 
   private mapBridgeWorkflow(command: SubscriberJobBoundCommand): NotificationTemplateEntity | null {

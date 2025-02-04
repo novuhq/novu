@@ -43,7 +43,6 @@ import { DetailEnum } from '@novu/application-generic';
 import { Novu } from '@novu/api';
 import { SubscriberPayloadDto } from '@novu/api/src/models/components/subscriberpayloaddto';
 import { CreateIntegrationRequestDto, TriggerEventResponseDto } from '@novu/api/models/components';
-import { it } from 'mocha';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 import { createTenant } from '../../tenant/e2e/create-tenant.e2e';
 
