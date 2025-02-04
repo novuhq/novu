@@ -146,7 +146,7 @@ with Novu(
     api_key=${renderedSecretKey},
 ) as novu:
     res = novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
-        name="${identifier}",
+        workflowId="${identifier}",
         to={
             "subscriber_id": "${(to as { subscriberId: string }).subscriberId}",
         },
