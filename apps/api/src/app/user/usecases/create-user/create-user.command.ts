@@ -1,5 +1,5 @@
 import { AuthProviderEnum } from '@novu/shared';
-import { BaseCommand } from '../../commands';
+import { BaseCommand } from '@novu/application-generic';
 
 export class CreateUserCommand extends BaseCommand {
   email: string;
