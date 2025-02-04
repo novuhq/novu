@@ -1141,10 +1141,10 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
           { subscriberId: subscriber.subscriberId, email: 'gg@ff.com' },
           { subscriberId, email: 'gg@ff.com' },
         ],
-        payload: {
-          email: 'new-test-email@gmail.com',
-          firstName: 'Testing of User Name',
-          urlVar: '/test/url/path',
+        overrides: {
+          email: {
+            toRecipient: 'new-test-email@gmail.com',
+          },
         },
       });
 
