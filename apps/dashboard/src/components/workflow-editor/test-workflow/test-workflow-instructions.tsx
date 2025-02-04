@@ -63,6 +63,25 @@ function TimelineLine() {
   return <div className="absolute left-3 top-6 h-[calc(100%+2rem)] w-[1px] -translate-x-1/2 bg-neutral-100" />;
 }
 
+function TriggerStepContent() {
+  return (
+    <>
+      <div className="text-foreground-400 mb-3 text-xs">
+        A trigger is the starting point of every workflow — an action or event that kicks it off. To initiate this, you
+        call the Novu API using workflow_id.
+      </div>
+      <div className="text-foreground-400 mb-3 text-xs">
+        With the trigger, you can pass a custom payload object to the workflow, and use it in the workflow steps.
+      </div>
+      <InlineToast
+        variant="tip"
+        title="Tip"
+        description="To create subscribers on the fly without the need for a migration, just pass an object with the subscriberId and the subscriber details like email, firstName, and lastName."
+      />
+    </>
+  );
+}
+
 function StepContent({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="flex-1">
@@ -196,18 +215,7 @@ export function TestWorkflowInstructions({ isOpen, onClose, workflow, to, payloa
                   codeLanguage={SNIPPET_TO_CODE_LANGUAGE.typescript}
                   codeTitle="index.ts"
                 >
-                  <div className="text-foreground-400 mb-3 text-xs">
-                    A trigger is the starting point of every workflow — an action or event that kicks it off. To
-                    initiate this, you call the Novu API using workflow_id.
-                  </div>
-                  <div className="text-foreground-400 mb-3 text-xs">
-                    When the trigger happens, it sends the data the workflow needs to notify subscribers.
-                  </div>
-                  <InlineToast
-                    variant="tip"
-                    title="Tip"
-                    description="A trigger is the starting point of every workflow — an action or event that kicks it off. To initiate this, you call the Novu API using workflow_id."
-                  />
+                  <TriggerStepContent />
                 </InstructionStep>
               </TabsContent>
 
@@ -218,18 +226,7 @@ export function TestWorkflowInstructions({ isOpen, onClose, workflow, to, payloa
                   code={getSnippetForLanguage('shell')}
                   codeLanguage={SNIPPET_TO_CODE_LANGUAGE.shell}
                 >
-                  <div className="text-foreground-400 mb-3 text-xs">
-                    A trigger is the starting point of every workflow — an action or event that kicks it off. To
-                    initiate this, you call the Novu API using workflow_id.
-                  </div>
-                  <div className="text-foreground-400 mb-3 text-xs">
-                    When the trigger happens, it sends the data the workflow needs to notify subscribers.
-                  </div>
-                  <InlineToast
-                    variant="tip"
-                    title="Tip"
-                    description="A trigger is the starting point of every workflow — an action or event that kicks it off. To initiate this, you call the Novu API using workflow_id."
-                  />
+                  <TriggerStepContent />
                 </InstructionStep>
               </TabsContent>
 
@@ -255,20 +252,7 @@ NOVU_SECRET_KEY='${apiKey}'`}
                   codeTitle="index.php"
                   codeLanguage={SNIPPET_TO_CODE_LANGUAGE.php}
                 >
-                  <div className="text-foreground-400 mb-3 text-xs">
-                    A trigger is the starting point of every workflow — an action or event that kicks it off. To
-                    initiate this, you call the Novu API using workflow_id.
-                  </div>
-                  <div className="text-foreground-400 mb-3 text-xs">
-                    When the trigger happens, it sends the data the workflow needs to notify subscribers.
-                  </div>
-                  <div className="text-foreground-400 text-xs">
-                    Note: The subscriberId uniquely identifies each user in your app. This will create subscribers
-                    dynamically when sending notifications.{' '}
-                    <a href="https://docs.novu.co/platform/subscribers" target="_blank" className="underline">
-                      Learn more
-                    </a>
-                  </div>
+                  <TriggerStepContent />
                 </InstructionStep>
               </TabsContent>
 
@@ -289,20 +273,7 @@ NOVU_SECRET_KEY='${apiKey}'`}
                   code={getSnippetForLanguage('python')}
                   codeLanguage={SNIPPET_TO_CODE_LANGUAGE.python}
                 >
-                  <div className="text-foreground-400 mb-3 text-xs">
-                    A trigger is the starting point of every workflow — an action or event that kicks it off. To
-                    initiate this, you call the Novu API using workflow_id.
-                  </div>
-                  <div className="text-foreground-400 mb-3 text-xs">
-                    When the trigger happens, it sends the data the workflow needs to notify subscribers.
-                  </div>
-                  <div className="text-foreground-400 text-xs">
-                    Note: The subscriberId uniquely identifies each user in your app. This will create subscribers
-                    dynamically when sending notifications.{' '}
-                    <a href="https://docs.novu.co/platform/subscribers" target="_blank" className="underline">
-                      Learn more
-                    </a>
-                  </div>
+                  <TriggerStepContent />
                 </InstructionStep>
               </TabsContent>
 
@@ -328,20 +299,7 @@ NOVU_SECRET_KEY='${apiKey}'`}
                   code={getSnippetForLanguage('go')}
                   codeLanguage={SNIPPET_TO_CODE_LANGUAGE.go}
                 >
-                  <div className="text-foreground-400 mb-3 text-xs">
-                    A trigger is the starting point of every workflow — an action or event that kicks it off. To
-                    initiate this, you call the Novu API using workflow_id.
-                  </div>
-                  <div className="text-foreground-400 mb-3 text-xs">
-                    When the trigger happens, it sends the data the workflow needs to notify subscribers.
-                  </div>
-                  <div className="text-foreground-400 text-xs">
-                    Note: The subscriberId uniquely identifies each user in your app. This will create subscribers
-                    dynamically when sending notifications.{' '}
-                    <a href="https://docs.novu.co/platform/subscribers" target="_blank" className="underline">
-                      Learn more
-                    </a>
-                  </div>
+                  <TriggerStepContent />
                 </InstructionStep>
               </TabsContent>
             </div>
