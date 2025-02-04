@@ -2,9 +2,9 @@ import sinon from 'sinon';
 import { expect } from 'chai';
 import { NotFoundException } from '@nestjs/common';
 import { EnvironmentRepository, IntegrationRepository } from '@novu/dal';
-import { AnalyticsService, CreateSubscriber, SelectIntegration, AuthService } from '@novu/application-generic';
+import { AnalyticsService, CreateSubscriber, SelectIntegration } from '@novu/application-generic';
 import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
-
+import { AuthService } from '../../../auth/services/auth.service';
 import { Session } from './session.usecase';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { SessionCommand } from './session.command';

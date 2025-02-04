@@ -11,7 +11,6 @@ import {
 import { UserSessionData } from '@novu/shared';
 import { ApiExcludeController, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UserSession } from '../shared/framework/user.decorator';
-import { UserAuthGuard } from '../auth/framework/user.auth.guard';
 import { UpdateBrandingDetailsCommand } from './usecases/update-branding-details/update-branding-details.command';
 import { UpdateBrandingDetails } from './usecases/update-branding-details/update-branding-details.usecase';
 import { GetMyOrganization } from './usecases/get-my-organization/get-my-organization.usecase';
@@ -24,10 +23,11 @@ import { UpdateBrandingDetailsDto } from './dtos/update-branding-details.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
 import { OrganizationBrandingResponseDto, OrganizationResponseDto } from './dtos/organization-response.dto';
+import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
 
 @Controller('/organizations')
 @UseInterceptors(ClassSerializerInterceptor)
-@UseGuards(UserAuthGuard)
+@UserAuthentication()
 @ApiTags('Organizations')
 @ApiCommonResponses()
 @ApiExcludeController()
