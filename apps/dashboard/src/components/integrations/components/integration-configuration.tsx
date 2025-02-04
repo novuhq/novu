@@ -1,9 +1,9 @@
+import { ChannelTypeEnum, IProviderConfig } from '@novu/shared';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/primitives/accordion';
 import { Form } from '@/components/primitives/form/form';
 import { Label } from '@/components/primitives/label';
 import { Separator } from '@/components/primitives/separator';
-import { useAuth } from '@/context/auth/hooks';
-import { useEnvironment, useFetchEnvironments } from '@/context/environment/hooks';
+import { useEnvironment } from '@/context/environment/hooks';
 import { IIntegration } from '@novu/shared';
 import { useEffect } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
@@ -14,7 +14,8 @@ import { EnvironmentDropdown } from '../../side-navigation/environment-dropdown'
 import { CredentialsSection } from './integration-credentials';
 import { GeneralSettings } from './integration-general-settings';
 import { isDemoIntegration } from './utils/helpers';
-import { IProviderConfig } from '@novu/shared';
+import { useNavigate } from 'react-router-dom';
+import { ROUTES } from '@/utils/routes';
 
 type IntegrationFormData = {
   name: string;
@@ -53,9 +54,8 @@ export function IntegrationConfiguration({
   isChannelSupportPrimary,
   hasOtherProviders,
 }: IntegrationConfigurationProps) {
-  const { currentOrganization } = useAuth();
-  const { environments } = useFetchEnvironments({ organizationId: currentOrganization?._id });
-  const { currentEnvironment } = useEnvironment();
+  const navigate = useNavigate();
+  const { currentEnvironment, environments } = useEnvironment();
 
   const form = useForm<IntegrationFormData>({
     defaultValues: integration
@@ -163,16 +163,31 @@ export function IntegrationConfiguration({
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
-            <InlineToast
-              variant={'tip'}
-              className="mt-3"
-              title="Configure Integration"
-              description="To learn more about how to configure your integration, please refer to the documentation."
-              ctaLabel="View Guide"
-              onCtaClick={() => {
-                window.open(provider?.docReference ?? '', '_blank');
-              }}
-            />
+
+            {/* TODO: This is a temporary solution to show the guide only for in-app channel, 
+              we need to replace it with dedicated view per integration channel */}
+            {integration && integration.channel === ChannelTypeEnum.IN_APP && !integration.connected ? (
+              <InlineToast
+                variant={'tip'}
+                className="mt-3"
+                title="Integrate in less than 4 minutes"
+                ctaLabel="Get started"
+                onCtaClick={() => navigate(ROUTES.INBOX_EMBED + `?environmentId=${integration._environmentId}`)}
+              />
+            ) : (
+              provider?.docReference && (
+                <InlineToast
+                  variant={'tip'}
+                  className="mt-3"
+                  title="Configure Integration"
+                  description="To learn more about how to configure your integration, please refer to the documentation."
+                  ctaLabel="View Guide"
+                  onCtaClick={() => {
+                    window.open(provider?.docReference ?? '', '_blank');
+                  }}
+                />
+              )
+            )}
           </div>
         )}
       </form>

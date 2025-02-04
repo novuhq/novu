@@ -1,17 +1,7 @@
-import {
-  forwardRef,
-  Inject,
-  Injectable,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
-import {
-  EnvironmentRepository,
-  MemberRepository,
-  UserRepository,
-} from '@novu/dal';
+import { forwardRef, Inject, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { EnvironmentRepository, MemberRepository, UserRepository } from '@novu/dal';
+import { AuthService } from '../../services/auth.service';
 import { SwitchEnvironmentCommand } from './switch-environment.command';
-import { AuthService } from '../../services/auth/auth.service';
 
 @Injectable()
 export class SwitchEnvironment {
@@ -19,7 +9,7 @@ export class SwitchEnvironment {
     private environmentRepository: EnvironmentRepository,
     private userRepository: UserRepository,
     private memberRepository: MemberRepository,
-    @Inject(forwardRef(() => AuthService)) private authService: AuthService,
+    private authService: AuthService
   ) {}
 
   async execute(command: SwitchEnvironmentCommand) {
@@ -31,21 +21,13 @@ export class SwitchEnvironment {
       throw new UnauthorizedException('Not authorized for organization');
     }
 
-    const member = await this.memberRepository.findMemberByUserId(
-      command.organizationId,
-      command.userId,
-    );
+    const member = await this.memberRepository.findMemberByUserId(command.organizationId, command.userId);
     if (!member) throw new NotFoundException('Member is not found');
 
     const user = await this.userRepository.findById(command.userId);
     if (!user) throw new NotFoundException('User is not found');
 
-    const token = await this.authService.getSignedToken(
-      user,
-      command.organizationId,
-      member,
-      command.newEnvironmentId,
-    );
+    const token = await this.authService.getSignedToken(user, command.organizationId, member, command.newEnvironmentId);
 
     return token;
   }

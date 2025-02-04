@@ -1,5 +1,6 @@
 import { Input } from '@/components/primitives/input';
 import { SecretInput } from '@/components/primitives/secret-input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
 import { Switch } from '@/components/primitives/switch';
 import { CredentialsKeyEnum, IProviderConfig } from '@novu/shared';
 import { Control } from 'react-hook-form';
@@ -50,6 +51,21 @@ export function CredentialsSection({ provider, control }: CredentialsSectionProp
                     <Switch id={credential.key} checked={Boolean(field.value)} onCheckedChange={field.onChange} />
                   </FormControl>
                 </div>
+              ) : credential.type === 'dropdown' && credential.dropdown ? (
+                <FormControl>
+                  <Select value={field.value || ''} onValueChange={field.onChange}>
+                    <SelectTrigger>
+                      <SelectValue placeholder={`Select ${credential.displayName.toLowerCase()}`} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {credential.dropdown.map((option) => (
+                        <SelectItem key={option.value || ''} value={option.value || ''}>
+                          {option.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
               ) : credential.type === 'secret' || SECURE_CREDENTIALS.includes(credential.key as CredentialsKeyEnum) ? (
                 <FormControl>
                   <SecretInput
