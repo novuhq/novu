@@ -14,13 +14,13 @@ const CHANNEL_LABELS_LOOKUP: Record<`${ChannelTypeEnum}`, string> = {
   [ChannelTypeEnum.PUSH]: 'Push',
 };
 
-interface SubscriberChannelToggleProps {
+type PreferencesItemProps = {
   channel: ChannelTypeEnum;
   enabled: boolean;
-  onToggle: (checked: boolean) => void;
-}
+  onChange: (checked: boolean) => void;
+};
 
-export function SubscriberChannelToggle({ channel, enabled, onToggle }: SubscriberChannelToggleProps) {
+export function PreferencesItem({ channel, enabled, onChange }: PreferencesItemProps) {
   const Icon = STEP_TYPE_TO_ICON[channel];
 
   return (
@@ -38,7 +38,7 @@ export function SubscriberChannelToggle({ channel, enabled, onToggle }: Subscrib
           </Step>
           <span className="text-foreground-950 text-xs font-medium">{capitalize(CHANNEL_LABELS_LOOKUP[channel])}</span>
         </div>
-        <Switch checked={enabled} onCheckedChange={onToggle} />
+        <Switch checked={enabled} onCheckedChange={onChange} />
       </div>
     </motion.div>
   );

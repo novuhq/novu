@@ -1,9 +1,9 @@
 import { showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { SidebarContent } from '@/components/side-navigation/sidebar';
-import { SubscriberPreferencesSkeleton } from '@/components/subscribers/preferences/subscriber-preferences-skeleton';
-import { SubscriberChannelToggle } from '@/components/subscribers/preferences/subscriber-preferences-toggles';
-import { SubscriberWorkflowPreferences } from '@/components/subscribers/preferences/subscriber-workflow-preferences';
+import { PreferencesItem } from '@/components/subscribers/preferences/preferences-item';
+import { PreferencesSkeleton } from '@/components/subscribers/preferences/preferences-skeleton';
+import { WorkflowPreferences } from '@/components/subscribers/preferences/workflow-preferences';
 import useFetchSubscriberPreferences from '@/hooks/use-fetch-subscriber-preferences';
 import { usePatchSubscriberPreferences } from '@/hooks/use-patch-subscriber-preferences';
 import { GetSubscriberPreferencesDto, PatchPreferenceChannelsDto } from '@novu/api/models/components';
@@ -12,7 +12,7 @@ import { motion } from 'motion/react';
 import { useEffect, useMemo, useState } from 'react';
 import { RiQuestionLine } from 'react-icons/ri';
 
-export default function SubscriberPreferences({ subscriberId }: { subscriberId: string }) {
+export function Preferences({ subscriberId }: { subscriberId: string }) {
   const [currentPreferences, setCurrentPreferences] = useState<GetSubscriberPreferencesDto | null>(null);
 
   const { patchSubscriberPreferences } = usePatchSubscriberPreferences({
@@ -46,7 +46,7 @@ export default function SubscriberPreferences({ subscriberId }: { subscriberId: 
   }, [currentPreferences]);
 
   if (isFetching) {
-    return <SubscriberPreferencesSkeleton />;
+    return <PreferencesSkeleton />;
   }
 
   const handleChannelToggle = async (channels: PatchPreferenceChannelsDto, workflowId?: string) => {
@@ -85,11 +85,11 @@ export default function SubscriberPreferences({ subscriberId }: { subscriberId: 
               ease: [0.21, 1.11, 0.81, 0.99],
             }}
           >
-            <SubscriberChannelToggle
+            <PreferencesItem
               key={channel}
               channel={channel}
               enabled={enabled}
-              onToggle={(checked: boolean) => handleChannelToggle({ [channel]: checked })}
+              onChange={(checked: boolean) => handleChannelToggle({ [channel]: checked })}
             />
           </motion.div>
         ))}
@@ -122,11 +122,7 @@ export default function SubscriberPreferences({ subscriberId }: { subscriberId: 
               ease: [0.21, 1.11, 0.81, 0.99],
             }}
           >
-            <SubscriberWorkflowPreferences
-              key={wf.workflow.slug}
-              workflowPreferences={wf}
-              onToggle={handleChannelToggle}
-            />
+            <WorkflowPreferences key={wf.workflow.slug} workflowPreferences={wf} onToggle={handleChannelToggle} />
           </motion.div>
         ))}
       </SidebarContent>

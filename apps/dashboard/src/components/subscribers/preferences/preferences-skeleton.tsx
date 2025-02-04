@@ -1,6 +1,6 @@
 import { Skeleton } from '@/components/primitives/skeleton';
 
-export function SubscriberPreferencesSkeleton() {
+export function PreferencesSkeleton() {
   return (
     <div className="flex h-full flex-col items-stretch">
       <div className="flex items-center gap-2 bg-neutral-50 px-4 py-2">

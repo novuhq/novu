@@ -1,7 +1,7 @@
 import { STEP_TYPE_TO_ICON } from '@/components/icons/utils';
 import { Card, CardContent, CardHeader } from '@/components/primitives/card';
 import { Step } from '@/components/primitives/step';
-import { SubscriberChannelToggle } from '@/components/subscribers/preferences/subscriber-preferences-toggles';
+import { PreferencesItem } from '@/components/subscribers/preferences/preferences-item';
 import { PatchPreferenceChannelsDto, WorkflowPreferenceDto } from '@novu/api/models/components';
 import { ChannelTypeEnum } from '@novu/shared';
 import { motion } from 'motion/react';
@@ -9,7 +9,7 @@ import { useState } from 'react';
 import { RiContractUpDownLine, RiExpandUpDownLine } from 'react-icons/ri';
 import { STEP_TYPE_TO_COLOR } from '../../../utils/color';
 
-export function SubscriberWorkflowPreferences({
+export function WorkflowPreferences({
   workflowPreferences,
   onToggle,
 }: {
@@ -40,11 +40,11 @@ export function SubscriberWorkflowPreferences({
       <motion.div animate={{ height: isExpanded ? 'auto' : 0 }} className="overflow-hidden">
         <CardContent className="rounded-lg bg-neutral-50 p-2">
           {Object.entries(channels).map(([channel, enabled]) => (
-            <SubscriberChannelToggle
+            <PreferencesItem
               key={channel}
               channel={channel as ChannelTypeEnum}
               enabled={enabled}
-              onToggle={(checked: boolean) => onToggle({ [channel]: checked }, workflow.slug)}
+              onChange={(checked: boolean) => onToggle({ [channel]: checked }, workflow.slug)}
             />
           ))}
         </CardContent>
