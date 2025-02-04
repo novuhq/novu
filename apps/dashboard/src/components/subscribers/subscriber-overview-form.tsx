@@ -93,7 +93,7 @@ export function SubscriberOverviewForm({ subscriberId }: { subscriberId: string 
         const data = JSON.parse(JSON.stringify(formData.data));
         return { ...acc, data: data === '' ? {} : data };
       }
-      return { ...acc, [typedKey]: formData[typedKey] };
+      return { ...acc, [typedKey]: formData[typedKey]?.trim() };
     }, {});
 
     if (!Object.keys(dirtyPayload).length) {
@@ -147,6 +147,7 @@ export function SubscriberOverviewForm({ subscriberId }: { subscriberId: string 
                           hasError={!!fieldState.error}
                         />
                       </FormControl>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -166,6 +167,7 @@ export function SubscriberOverviewForm({ subscriberId }: { subscriberId: string 
                           hasError={!!fieldState.error}
                         />
                       </FormControl>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -217,6 +219,7 @@ export function SubscriberOverviewForm({ subscriberId }: { subscriberId: string 
                         hasError={!!fieldState.error}
                       />
                     </FormControl>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -227,14 +230,9 @@ export function SubscriberOverviewForm({ subscriberId }: { subscriberId: string 
                   <FormItem className="w-full">
                     <FormLabel>Phone number</FormLabel>
                     <FormControl>
-                      <PhoneInput
-                        {...field}
-                        placeholder={field.name}
-                        id={field.name}
-                        value={field.value || ''}
-                        onChange={field.onChange}
-                      />
+                      <PhoneInput {...field} placeholder={field.name} id={field.name} value={field.value || ''} />
                     </FormControl>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -251,6 +249,7 @@ export function SubscriberOverviewForm({ subscriberId }: { subscriberId: string 
                     <FormControl>
                       <LocaleSelect {...field} value={field.value} onValueChange={field.onChange} />
                     </FormControl>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -263,6 +262,7 @@ export function SubscriberOverviewForm({ subscriberId }: { subscriberId: string 
                     <FormControl>
                       <TimezoneSelect {...field} value={field.value} onValueChange={field.onChange} />
                     </FormControl>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
