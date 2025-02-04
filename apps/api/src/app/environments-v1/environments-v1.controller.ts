@@ -11,7 +11,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiExcludeController, ApiExcludeEndpoint, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
-import { Roles, RolesGuard } from '@novu/application-generic';
+import { Roles } from '@novu/application-generic';
 import { ApiAuthSchemeEnum, MemberRoleEnum, ProductFeatureKeyEnum, UserSessionData } from '@novu/shared';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ProductFeature } from '../shared/decorators/product-feature.decorator';
@@ -35,7 +35,7 @@ import { GetMyEnvironments } from './usecases/get-my-environments/get-my-environ
 import { RegenerateApiKeys } from './usecases/regenerate-api-keys/regenerate-api-keys.usecase';
 import { UpdateEnvironmentCommand } from './usecases/update-environment/update-environment.command';
 import { UpdateEnvironment } from './usecases/update-environment/update-environment.usecase';
-
+import { RolesGuard } from '../auth/framework/roles.guard';
 /**
  * @deprecated use EnvironmentsControllerV2
  */

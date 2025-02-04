@@ -10,7 +10,6 @@ import { ExpressAdapter } from '@nestjs/platform-express';
 import { CONTEXT_PATH, corsOptionsDelegate, validateEnv } from './config';
 import { AppModule } from './app.module';
 import { setupSwagger } from './app/shared/framework/swagger/swagger.controller';
-import { SubscriberRouteGuard } from './app/auth/framework/subscriber-route.guard';
 import { ResponseInterceptor } from './app/shared/framework/response.interceptor';
 import { AllExceptionsFilter } from './exception-filter';
 
@@ -90,8 +89,6 @@ export async function bootstrap(
 
   app.useGlobalInterceptors(new ResponseInterceptor());
   app.useGlobalInterceptors(getErrorInterceptor());
-
-  app.useGlobalGuards(new SubscriberRouteGuard(app.get(Reflector), app.get(PinoLogger)));
 
   app.use(extendedBodySizeRoutes, bodyParser.json({ limit: '20mb' }));
   app.use(extendedBodySizeRoutes, bodyParser.urlencoded({ limit: '20mb', extended: true }));
