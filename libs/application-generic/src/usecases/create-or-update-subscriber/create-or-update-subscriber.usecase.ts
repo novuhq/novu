@@ -42,7 +42,7 @@ export class CreateOrUpdateSubscriberUseCase {
           subscriberId: command.subscriberId,
           _environmentId: command.environmentId,
         }),
-        ttl: 1,
+        ttl: 10000,
       },
       async () => await this.createOrUpdateSubscriber(command),
     );
