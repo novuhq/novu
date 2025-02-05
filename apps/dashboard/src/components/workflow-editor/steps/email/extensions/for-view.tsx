@@ -7,7 +7,7 @@ function TooltipContent({ forNodeEachKey, currentProperty }: { forNodeEachKey: s
   return (
     <p className="mly-top-1/2 mly-left-1/2 -mly-translate-x-1/2 -mly-translate-y-1/2 mly-text-gray-400 mly-shadow-sm absolute z-[1] flex items-center gap-2 rounded-md bg-white px-3 py-1.5">
       <Lightbulb className="size-3.5 stroke-[2] text-gray-400" />
-      Access 'for' loop items using{' '}
+      Access 'repeat' loop items using{' '}
       <code className="mly-px-1 mly-py-0.5 mly-bg-gray-50 mly-rounded mly-font-mono mly-text-gray-400">
         {`{{ ${forNodeEachKey}`}
         <span className="inline-block pr-1">
@@ -71,7 +71,7 @@ export function ForView(props: NodeViewProps) {
   }, []);
 
   return (
-    <NodeViewWrapper draggable="true" data-drag-handle="" data-type="for" className="mly-relative">
+    <NodeViewWrapper draggable="true" data-drag-handle="" data-type="repeat" className="mly-relative">
       <NodeViewContent className="is-editable" />
       {isOnEmptyForNodeLine && forNodeEachKey && (
         <TooltipContent forNodeEachKey={forNodeEachKey} currentProperty={currentProperty} />

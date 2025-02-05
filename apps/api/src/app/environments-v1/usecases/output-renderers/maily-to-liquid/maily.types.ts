@@ -1,6 +1,6 @@
 export enum MailyContentTypeEnum {
   VARIABLE = 'variable',
-  FOR = 'for',
+  REPEAT = 'repeat',
   BUTTON = 'button',
   IMAGE = 'image',
   LINK = 'link',

@@ -86,7 +86,7 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
         return dedupAndSortVariables(filteredVariables, queryWithoutSuffix);
       }
 
-      const iterableName = editor?.getAttributes('for')?.each;
+      const iterableName = editor?.getAttributes('repeat')?.each;
 
       const newNamespaces = [...namespaces, ...(iterableName ? [{ name: iterableName, required: false }] : [])];
 
@@ -123,7 +123,7 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
     <>
       <div className={cn('mx-auto flex h-full flex-col items-start', className)} {...rest}>
         <Editor
-          key="for-block-enabled"
+          key="repeat-block-enabled"
           config={DEFAULT_EDITOR_CONFIG}
           blocks={DEFAULT_EDITOR_BLOCKS}
           extensions={extensions}

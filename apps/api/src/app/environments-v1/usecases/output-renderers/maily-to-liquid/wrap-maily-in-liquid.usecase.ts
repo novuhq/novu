@@ -10,12 +10,12 @@ import {
 } from './maily.types';
 
 /**
- * Enriches Maily JSON content with Liquid syntax for variables.
+ * Enriches Maily JSON content with Liquid syntax repeat variables.
  *
  * @example
  * Input:
  * {
- *   type: "for",
+ *   type: "repeat",
  *   attrs: { each: "payload.comments" },
  *   content: [{
  *     type: "variable",
@@ -157,7 +157,7 @@ export class WrapMailyInLiquidUseCase {
     node: MailyJSONContent
   ): node is MailyJSONContent & { attrs: { [MailyAttrsEnum.EACH_KEY]: string } } {
     return !!(
-      node.type === MailyContentTypeEnum.FOR &&
+      node.type === MailyContentTypeEnum.REPEAT &&
       node.attrs &&
       node.attrs[MailyAttrsEnum.EACH_KEY] !== undefined &&
       typeof node.attrs[MailyAttrsEnum.EACH_KEY] === 'string'
