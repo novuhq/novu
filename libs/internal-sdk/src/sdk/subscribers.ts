@@ -4,6 +4,7 @@
 
 import { subscribersCreate } from "../funcs/subscribersCreate.js";
 import { subscribersCreateBulk } from "../funcs/subscribersCreateBulk.js";
+import { subscribersCreateLegacy } from "../funcs/subscribersCreateLegacy.js";
 import { subscribersDelete } from "../funcs/subscribersDelete.js";
 import { subscribersDeleteLegacy } from "../funcs/subscribersDeleteLegacy.js";
 import { subscribersList } from "../funcs/subscribersList.js";
@@ -11,7 +12,7 @@ import { subscribersPatch } from "../funcs/subscribersPatch.js";
 import { subscribersRetrieve } from "../funcs/subscribersRetrieve.js";
 import { subscribersRetrieveLegacy } from "../funcs/subscribersRetrieveLegacy.js";
 import { subscribersSearch } from "../funcs/subscribersSearch.js";
-import { subscribersUpdate } from "../funcs/subscribersUpdate.js";
+import { subscribersUpdateLegacy } from "../funcs/subscribersUpdateLegacy.js";
 import { ClientSDK, RequestOptions } from "../lib/sdks.js";
 import * as components from "../models/components/index.js";
 import * as operations from "../models/operations/index.js";
@@ -87,12 +88,12 @@ export class Subscribers extends ClientSDK {
    * @remarks
    * Creates a subscriber entity, in the Novu platform. The subscriber will be later used to receive notifications, and access notification feeds. Communication credentials such as email, phone number, and 3 rd party credentials i.e slack tokens could be later associated to this entity.
    */
-  async create(
+  async createLegacy(
     createSubscriberRequestDto: components.CreateSubscriberRequestDto,
     idempotencyKey?: string | undefined,
     options?: RequestOptions,
   ): Promise<operations.SubscribersV1ControllerCreateSubscriberResponse> {
-    return unwrapAsync(subscribersCreate(
+    return unwrapAsync(subscribersCreateLegacy(
       this,
       createSubscriberRequestDto,
       idempotencyKey,
@@ -127,13 +128,13 @@ export class Subscribers extends ClientSDK {
    * @remarks
    * Used to update the subscriber entity with new information
    */
-  async update(
+  async updateLegacy(
     updateSubscriberRequestDto: components.UpdateSubscriberRequestDto,
     subscriberId: string,
     idempotencyKey?: string | undefined,
     options?: RequestOptions,
   ): Promise<operations.SubscribersV1ControllerUpdateSubscriberResponse> {
-    return unwrapAsync(subscribersUpdate(
+    return unwrapAsync(subscribersUpdateLegacy(
       this,
       updateSubscriberRequestDto,
       subscriberId,
@@ -194,6 +195,25 @@ export class Subscribers extends ClientSDK {
     return unwrapAsync(subscribersSearch(
       this,
       request,
+      options,
+    ));
+  }
+
+  /**
+   * Create subscriber
+   *
+   * @remarks
+   * Create subscriber with the given data
+   */
+  async create(
+    createSubscriberRequestDto: components.CreateSubscriberRequestDto,
+    idempotencyKey?: string | undefined,
+    options?: RequestOptions,
+  ): Promise<operations.SubscribersControllerCreateSubscriberResponse> {
+    return unwrapAsync(subscribersCreate(
+      this,
+      createSubscriberRequestDto,
+      idempotencyKey,
       options,
     ));
   }

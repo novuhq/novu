@@ -25,19 +25,18 @@ import * as operations from "../models/operations/index.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Create subscriber
- *
- * @remarks
- * Create subscriber with the given data
+ * Update subscriber global preferences
  */
-export async function subscribersCreate(
+export async function subscribersPreferencesLegacyUpdateGlobal(
   client: NovuCore,
-  createSubscriberRequestDto: components.CreateSubscriberRequestDto,
+  updateSubscriberGlobalPreferencesRequestDto:
+    components.UpdateSubscriberGlobalPreferencesRequestDto,
+  subscriberId: string,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): Promise<
   Result<
-    operations.SubscribersControllerCreateSubscriberResponse,
+    operations.SubscribersV1ControllerUpdateSubscriberGlobalPreferencesResponse,
     | errors.ErrorDto
     | errors.ErrorDto
     | errors.ValidationErrorDto
@@ -51,15 +50,20 @@ export async function subscribersCreate(
     | ConnectionError
   >
 > {
-  const input: operations.SubscribersControllerCreateSubscriberRequest = {
-    createSubscriberRequestDto: createSubscriberRequestDto,
-    idempotencyKey: idempotencyKey,
-  };
+  const input:
+    operations.SubscribersV1ControllerUpdateSubscriberGlobalPreferencesRequest =
+      {
+        updateSubscriberGlobalPreferencesRequestDto:
+          updateSubscriberGlobalPreferencesRequestDto,
+        subscriberId: subscriberId,
+        idempotencyKey: idempotencyKey,
+      };
 
   const parsed = safeParse(
     input,
     (value) =>
-      operations.SubscribersControllerCreateSubscriberRequest$outboundSchema
+      operations
+        .SubscribersV1ControllerUpdateSubscriberGlobalPreferencesRequest$outboundSchema
         .parse(value),
     "Input validation failed",
   );
@@ -67,11 +71,22 @@ export async function subscribersCreate(
     return parsed;
   }
   const payload = parsed.value;
-  const body = encodeJSON("body", payload.CreateSubscriberRequestDto, {
-    explode: true,
-  });
+  const body = encodeJSON(
+    "body",
+    payload.UpdateSubscriberGlobalPreferencesRequestDto,
+    { explode: true },
+  );
 
-  const path = pathToFunc("/v2/subscribers")();
+  const pathParams = {
+    subscriberId: encodeSimple("subscriberId", payload.subscriberId, {
+      explode: false,
+      charEncoding: "percent",
+    }),
+  };
+
+  const path = pathToFunc("/v1/subscribers/{subscriberId}/preferences")(
+    pathParams,
+  );
 
   const headers = new Headers(compactMap({
     "Content-Type": "application/json",
@@ -87,7 +102,7 @@ export async function subscribersCreate(
   const requestSecurity = resolveGlobalSecurity(securityInput);
 
   const context = {
-    operationID: "SubscribersController_createSubscriber",
+    operationID: "SubscribersV1Controller_updateSubscriberGlobalPreferences",
     oAuth2Scopes: [],
 
     resolvedSecurity: requestSecurity,
@@ -111,7 +126,7 @@ export async function subscribersCreate(
 
   const requestRes = client._createRequest(context, {
     security: requestSecurity,
-    method: "POST",
+    method: "PATCH",
     baseURL: options?.serverURL,
     path: path,
     headers: headers,
@@ -155,7 +170,7 @@ export async function subscribersCreate(
   };
 
   const [result] = await M.match<
-    operations.SubscribersControllerCreateSubscriberResponse,
+    operations.SubscribersV1ControllerUpdateSubscriberGlobalPreferencesResponse,
     | errors.ErrorDto
     | errors.ErrorDto
     | errors.ValidationErrorDto
@@ -170,7 +185,8 @@ export async function subscribersCreate(
   >(
     M.json(
       200,
-      operations.SubscribersControllerCreateSubscriberResponse$inboundSchema,
+      operations
+        .SubscribersV1ControllerUpdateSubscriberGlobalPreferencesResponse$inboundSchema,
       { hdrs: true, key: "Result" },
     ),
     M.jsonErr(414, errors.ErrorDto$inboundSchema),

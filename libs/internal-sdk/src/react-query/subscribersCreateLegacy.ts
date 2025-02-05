@@ -8,7 +8,7 @@ import {
   UseMutationResult,
 } from "@tanstack/react-query";
 import { NovuCore } from "../core.js";
-import { subscribersCreate } from "../funcs/subscribersCreate.js";
+import { subscribersCreateLegacy } from "../funcs/subscribersCreateLegacy.js";
 import { combineSignals } from "../lib/primitives.js";
 import { RequestOptions } from "../lib/sdks.js";
 import * as components from "../models/components/index.js";
@@ -17,59 +17,59 @@ import { unwrapAsync } from "../types/fp.js";
 import { useNovuContext } from "./_context.js";
 import { MutationHookOptions } from "./_types.js";
 
-export type SubscribersCreateMutationVariables = {
+export type SubscribersCreateLegacyMutationVariables = {
   createSubscriberRequestDto: components.CreateSubscriberRequestDto;
   idempotencyKey?: string | undefined;
   options?: RequestOptions;
 };
 
-export type SubscribersCreateMutationData =
-  operations.SubscribersControllerCreateSubscriberResponse;
+export type SubscribersCreateLegacyMutationData =
+  operations.SubscribersV1ControllerCreateSubscriberResponse;
 
 /**
  * Create subscriber
  *
  * @remarks
- * Create subscriber with the given data
+ * Creates a subscriber entity, in the Novu platform. The subscriber will be later used to receive notifications, and access notification feeds. Communication credentials such as email, phone number, and 3 rd party credentials i.e slack tokens could be later associated to this entity.
  */
-export function useSubscribersCreateMutation(
+export function useSubscribersCreateLegacyMutation(
   options?: MutationHookOptions<
-    SubscribersCreateMutationData,
+    SubscribersCreateLegacyMutationData,
     Error,
-    SubscribersCreateMutationVariables
+    SubscribersCreateLegacyMutationVariables
   >,
 ): UseMutationResult<
-  SubscribersCreateMutationData,
+  SubscribersCreateLegacyMutationData,
   Error,
-  SubscribersCreateMutationVariables
+  SubscribersCreateLegacyMutationVariables
 > {
   const client = useNovuContext();
   return useMutation({
-    ...buildSubscribersCreateMutation(client, options),
+    ...buildSubscribersCreateLegacyMutation(client, options),
     ...options,
   });
 }
 
-export function mutationKeySubscribersCreate(): MutationKey {
-  return ["@novu/api", "Subscribers", "create"];
+export function mutationKeySubscribersCreateLegacy(): MutationKey {
+  return ["@novu/api", "Subscribers", "createLegacy"];
 }
 
-export function buildSubscribersCreateMutation(
+export function buildSubscribersCreateLegacyMutation(
   client$: NovuCore,
   hookOptions?: RequestOptions,
 ): {
   mutationKey: MutationKey;
   mutationFn: (
-    variables: SubscribersCreateMutationVariables,
-  ) => Promise<SubscribersCreateMutationData>;
+    variables: SubscribersCreateLegacyMutationVariables,
+  ) => Promise<SubscribersCreateLegacyMutationData>;
 } {
   return {
-    mutationKey: mutationKeySubscribersCreate(),
-    mutationFn: function subscribersCreateMutationFn({
+    mutationKey: mutationKeySubscribersCreateLegacy(),
+    mutationFn: function subscribersCreateLegacyMutationFn({
       createSubscriberRequestDto,
       idempotencyKey,
       options,
-    }): Promise<SubscribersCreateMutationData> {
+    }): Promise<SubscribersCreateLegacyMutationData> {
       const mergedOptions = {
         ...hookOptions,
         ...options,
@@ -82,7 +82,7 @@ export function buildSubscribersCreateMutation(
           ),
         },
       };
-      return unwrapAsync(subscribersCreate(
+      return unwrapAsync(subscribersCreateLegacy(
         client$,
         createSubscriberRequestDto,
         idempotencyKey,

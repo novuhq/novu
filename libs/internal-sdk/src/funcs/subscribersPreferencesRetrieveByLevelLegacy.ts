@@ -3,14 +3,13 @@
  */
 
 import { NovuCore } from "../core.js";
-import { encodeJSON, encodeSimple } from "../lib/encodings.js";
+import { encodeFormQuery, encodeSimple } from "../lib/encodings.js";
 import * as M from "../lib/matchers.js";
 import { compactMap } from "../lib/primitives.js";
 import { safeParse } from "../lib/schemas.js";
 import { RequestOptions } from "../lib/sdks.js";
 import { extractSecurity, resolveGlobalSecurity } from "../lib/security.js";
 import { pathToFunc } from "../lib/url.js";
-import * as components from "../models/components/index.js";
 import {
   ConnectionError,
   InvalidRequestError,
@@ -25,19 +24,18 @@ import * as operations from "../models/operations/index.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Create subscriber
+ * Get subscriber preferences by level
  *
- * @remarks
- * Create subscriber with the given data
+ * @deprecated method: This will be removed in a future release, please migrate away from it as soon as possible.
  */
-export async function subscribersCreate(
+export async function subscribersPreferencesRetrieveByLevelLegacy(
   client: NovuCore,
-  createSubscriberRequestDto: components.CreateSubscriberRequestDto,
-  idempotencyKey?: string | undefined,
+  request:
+    operations.SubscribersV1ControllerGetSubscriberPreferenceByLevelRequest,
   options?: RequestOptions,
 ): Promise<
   Result<
-    operations.SubscribersControllerCreateSubscriberResponse,
+    operations.SubscribersV1ControllerGetSubscriberPreferenceByLevelResponse,
     | errors.ErrorDto
     | errors.ErrorDto
     | errors.ValidationErrorDto
@@ -51,15 +49,11 @@ export async function subscribersCreate(
     | ConnectionError
   >
 > {
-  const input: operations.SubscribersControllerCreateSubscriberRequest = {
-    createSubscriberRequestDto: createSubscriberRequestDto,
-    idempotencyKey: idempotencyKey,
-  };
-
   const parsed = safeParse(
-    input,
+    request,
     (value) =>
-      operations.SubscribersControllerCreateSubscriberRequest$outboundSchema
+      operations
+        .SubscribersV1ControllerGetSubscriberPreferenceByLevelRequest$outboundSchema
         .parse(value),
     "Input validation failed",
   );
@@ -67,14 +61,28 @@ export async function subscribersCreate(
     return parsed;
   }
   const payload = parsed.value;
-  const body = encodeJSON("body", payload.CreateSubscriberRequestDto, {
-    explode: true,
+  const body = null;
+
+  const pathParams = {
+    parameter: encodeSimple("parameter", payload.preferenceLevel, {
+      explode: false,
+      charEncoding: "percent",
+    }),
+    subscriberId: encodeSimple("subscriberId", payload.subscriberId, {
+      explode: false,
+      charEncoding: "percent",
+    }),
+  };
+
+  const path = pathToFunc(
+    "/v1/subscribers/{subscriberId}/preferences/{parameter}",
+  )(pathParams);
+
+  const query = encodeFormQuery({
+    "includeInactiveChannels": payload.includeInactiveChannels,
   });
 
-  const path = pathToFunc("/v2/subscribers")();
-
   const headers = new Headers(compactMap({
-    "Content-Type": "application/json",
     Accept: "application/json",
     "idempotency-key": encodeSimple(
       "idempotency-key",
@@ -87,7 +95,7 @@ export async function subscribersCreate(
   const requestSecurity = resolveGlobalSecurity(securityInput);
 
   const context = {
-    operationID: "SubscribersController_createSubscriber",
+    operationID: "SubscribersV1Controller_getSubscriberPreferenceByLevel",
     oAuth2Scopes: [],
 
     resolvedSecurity: requestSecurity,
@@ -111,10 +119,11 @@ export async function subscribersCreate(
 
   const requestRes = client._createRequest(context, {
     security: requestSecurity,
-    method: "POST",
+    method: "GET",
     baseURL: options?.serverURL,
     path: path,
     headers: headers,
+    query: query,
     body: body,
     timeoutMs: options?.timeoutMs || client._options.timeoutMs || -1,
   }, options);
@@ -155,7 +164,7 @@ export async function subscribersCreate(
   };
 
   const [result] = await M.match<
-    operations.SubscribersControllerCreateSubscriberResponse,
+    operations.SubscribersV1ControllerGetSubscriberPreferenceByLevelResponse,
     | errors.ErrorDto
     | errors.ErrorDto
     | errors.ValidationErrorDto
@@ -170,7 +179,8 @@ export async function subscribersCreate(
   >(
     M.json(
       200,
-      operations.SubscribersControllerCreateSubscriberResponse$inboundSchema,
+      operations
+        .SubscribersV1ControllerGetSubscriberPreferenceByLevelResponse$inboundSchema,
       { hdrs: true, key: "Result" },
     ),
     M.jsonErr(414, errors.ErrorDto$inboundSchema),
