@@ -128,7 +128,7 @@ describe('Update Subscribers preferences - /subscribers/:subscriberId/preference
   });
 
   it('should not do any action or error when sending an empty channels property', async function () {
-    const initialPreferences = (await novuClient.subscribers.preferences.list(session.subscriberId)).result[0];
+    const initialPreferences = (await novuClient.subscribers.preferences.listLegacy(session.subscriberId)).result[0];
     expect(initialPreferences.preference.enabled).to.eql(true);
     expect(initialPreferences.preference.channels).to.eql({
       email: true,
@@ -148,7 +148,7 @@ describe('Update Subscribers preferences - /subscribers/:subscriberId/preference
       updateSubscriberPreferenceRequestDto: emptyPreferenceData as any,
     });
 
-    const preferences = (await novuClient.subscribers.preferences.list(session.subscriberId)).result[0];
+    const preferences = (await novuClient.subscribers.preferences.listLegacy(session.subscriberId)).result[0];
 
     expect(preferences.preference.enabled).to.eql(true);
     expect(preferences.preference.channels).to.eql({
@@ -162,7 +162,7 @@ describe('Update Subscribers preferences - /subscribers/:subscriberId/preference
 
   // `enabled` flag is not used anymore. The presence of a preference object means that the subscriber has enabled notifications.
   it.skip('should update user preference and disable the flag for the future general notification template preference', async function () {
-    const initialPreferences = (await novuClient.subscribers.preferences.list(session.subscriberId)).result[0];
+    const initialPreferences = (await novuClient.subscribers.preferences.listLegacy(session.subscriberId)).result[0];
     expect(initialPreferences.preference.enabled).to.eql(true);
     expect(initialPreferences.preference.channels).to.eql({
       email: true,
@@ -182,7 +182,7 @@ describe('Update Subscribers preferences - /subscribers/:subscriberId/preference
       updateSubscriberPreferenceRequestDto: disablePreferenceData,
     });
 
-    const midwayPreferences = (await novuClient.subscribers.preferences.list(session.subscriberId)).result[0];
+    const midwayPreferences = (await novuClient.subscribers.preferences.listLegacy(session.subscriberId)).result[0];
     expect(midwayPreferences.preference.enabled).to.eql(false);
     expect(midwayPreferences.preference.channels).to.eql({
       email: true,
@@ -205,7 +205,7 @@ describe('Update Subscribers preferences - /subscribers/:subscriberId/preference
       updateSubscriberPreferenceRequestDto: updateEmailPreferenceData,
     });
 
-    const finalPreferences = (await novuClient.subscribers.preferences.list(session.subscriberId)).result[0];
+    const finalPreferences = (await novuClient.subscribers.preferences.listLegacy(session.subscriberId)).result[0];
     expect(finalPreferences.preference.enabled).to.eql(false);
     expect(finalPreferences.preference.channels).to.eql({
       email: false,
@@ -218,7 +218,7 @@ describe('Update Subscribers preferences - /subscribers/:subscriberId/preference
 
   // `enabled` flag is not used anymore. The presence of a preference object means that the subscriber has enabled notifications.
   it.skip('should update user preference and enable the flag for the future general notification template preference', async function () {
-    const initialPreferences = (await novuClient.subscribers.preferences.list(session.subscriberId)).result[0];
+    const initialPreferences = (await novuClient.subscribers.preferences.listLegacy(session.subscriberId)).result[0];
     expect(initialPreferences.preference.enabled).to.eql(true);
     expect(initialPreferences.preference.channels).to.eql({
       email: true,
@@ -238,7 +238,7 @@ describe('Update Subscribers preferences - /subscribers/:subscriberId/preference
       updateSubscriberPreferenceRequestDto: disablePreferenceData,
     });
 
-    const midwayPreferences = (await novuClient.subscribers.preferences.list(session.subscriberId)).result[0];
+    const midwayPreferences = (await novuClient.subscribers.preferences.listLegacy(session.subscriberId)).result[0];
     expect(midwayPreferences.preference.enabled).to.eql(false);
     expect(midwayPreferences.preference.channels).to.eql({
       email: true,
@@ -258,7 +258,7 @@ describe('Update Subscribers preferences - /subscribers/:subscriberId/preference
       updateSubscriberPreferenceRequestDto: enablePreferenceData,
     });
 
-    const finalPreferences = (await novuClient.subscribers.preferences.list(session.subscriberId)).result[0];
+    const finalPreferences = (await novuClient.subscribers.preferences.listLegacy(session.subscriberId)).result[0];
     expect(finalPreferences.preference.enabled).to.eql(true);
     expect(finalPreferences.preference.channels).to.eql({
       email: true,
@@ -270,7 +270,7 @@ describe('Update Subscribers preferences - /subscribers/:subscriberId/preference
   });
 
   it('should be able to update the subscriber preference for an active channel of the template', async function () {
-    const initialPreferences = (await novuClient.subscribers.preferences.list(session.subscriberId)).result[0];
+    const initialPreferences = (await novuClient.subscribers.preferences.listLegacy(session.subscriberId)).result[0];
     expect(initialPreferences.preference.enabled).to.eql(true);
     expect(initialPreferences.preference.channels).to.eql({
       email: true,
@@ -293,7 +293,7 @@ describe('Update Subscribers preferences - /subscribers/:subscriberId/preference
       updateSubscriberPreferenceRequestDto: disableEmailPreferenceData,
     });
 
-    const updatedPreferences = (await novuClient.subscribers.preferences.list(session.subscriberId)).result[0];
+    const updatedPreferences = (await novuClient.subscribers.preferences.listLegacy(session.subscriberId)).result[0];
     expect(updatedPreferences.preference.enabled).to.eql(true);
     expect(updatedPreferences.preference.channels).to.eql({
       email: false,
@@ -316,7 +316,7 @@ describe('Update Subscribers preferences - /subscribers/:subscriberId/preference
       updateSubscriberPreferenceRequestDto: enableEmailPreferenceData,
     });
 
-    const finalPreferences = (await novuClient.subscribers.preferences.list(session.subscriberId)).result[0];
+    const finalPreferences = (await novuClient.subscribers.preferences.listLegacy(session.subscriberId)).result[0];
     expect(finalPreferences.preference.enabled).to.eql(true);
     expect(finalPreferences.preference.channels).to.eql({
       email: true,
@@ -328,7 +328,7 @@ describe('Update Subscribers preferences - /subscribers/:subscriberId/preference
   });
 
   it('should ignore the channel update if channel not being used in the notification template', async function () {
-    const initialPreferences = (await novuClient.subscribers.preferences.list(session.subscriberId)).result[0];
+    const initialPreferences = (await novuClient.subscribers.preferences.listLegacy(session.subscriberId)).result[0];
     expect(initialPreferences.preference.enabled).to.eql(true);
     expect(initialPreferences.preference.channels).to.eql({
       email: true,
@@ -351,7 +351,7 @@ describe('Update Subscribers preferences - /subscribers/:subscriberId/preference
       updateSubscriberPreferenceRequestDto: updateSmsPreferenceData,
     });
 
-    const finalPreferences = (await novuClient.subscribers.preferences.list(session.subscriberId)).result[0];
+    const finalPreferences = (await novuClient.subscribers.preferences.listLegacy(session.subscriberId)).result[0];
     expect(finalPreferences.preference.enabled).to.eql(true);
     expect(finalPreferences.preference.channels).to.eql({
       email: true,
@@ -384,7 +384,7 @@ describe('Update Subscribers preferences - /subscribers/:subscriberId/preference
     const updatedNotificationTemplate = (await getNotificationTemplate(session, template._id)).data.data;
     expect(updatedNotificationTemplate.steps.length).to.eql(3);
 
-    const initialPreferences = (await novuClient.subscribers.preferences.list(session.subscriberId)).result[0];
+    const initialPreferences = (await novuClient.subscribers.preferences.listLegacy(session.subscriberId)).result[0];
     expect(initialPreferences.preference.enabled).to.eql(true);
     expect(initialPreferences.preference.channels).to.eql({
       email: true,
@@ -407,7 +407,7 @@ describe('Update Subscribers preferences - /subscribers/:subscriberId/preference
       updateSubscriberPreferenceRequestDto: updateSmsPreferenceData,
     });
 
-    const finalPreferences = (await novuClient.subscribers.preferences.list(session.subscriberId)).result[0];
+    const finalPreferences = (await novuClient.subscribers.preferences.listLegacy(session.subscriberId)).result[0];
     expect(finalPreferences.preference.enabled).to.eql(true);
     expect(finalPreferences.preference.channels).to.eql({
       email: true,
@@ -446,7 +446,7 @@ describe('Update Subscribers preferences - /subscribers/:subscriberId/preference
     const updatedNotificationTemplate = (await getNotificationTemplate(session, template._id)).data.data;
     expect(updatedNotificationTemplate.steps.length).to.eql(3);
 
-    const initialPreferences = (await novuClient.subscribers.preferences.list(session.subscriberId)).result[0];
+    const initialPreferences = (await novuClient.subscribers.preferences.listLegacy(session.subscriberId)).result[0];
     expect(initialPreferences.preference.enabled).to.eql(true);
     expect(initialPreferences.preference.channels).to.eql({
       email: true,
@@ -469,7 +469,7 @@ describe('Update Subscribers preferences - /subscribers/:subscriberId/preference
       updateSubscriberPreferenceRequestDto: updateSmsPreferenceData,
     });
 
-    const finalPreferences = (await novuClient.subscribers.preferences.list(session.subscriberId)).result[0];
+    const finalPreferences = (await novuClient.subscribers.preferences.listLegacy(session.subscriberId)).result[0];
     expect(finalPreferences.preference.enabled).to.eql(true);
     expect(finalPreferences.preference.channels).to.eql({
       email: false,
