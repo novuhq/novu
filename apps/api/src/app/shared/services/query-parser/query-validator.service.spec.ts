@@ -8,9 +8,15 @@ describe('QueryValidatorService', () => {
   let queryValidatorService: QueryValidatorService;
 
   beforeEach(() => {
-    const allowedFields = ['payload.foo', 'payload.bar', 'subscriber.firstName', 'subscriber.email', 'allowed.field'];
-    const allowedPrefixes = ['payload.', 'subscriber.data.'];
-    queryValidatorService = new QueryValidatorService(allowedFields, allowedPrefixes);
+    const allowedVariables = [
+      'payload.foo',
+      'payload.bar',
+      'subscriber.firstName',
+      'subscriber.email',
+      'allowed.field',
+    ];
+    const allowedNamespaces = ['payload.', 'subscriber.data.'];
+    queryValidatorService = new QueryValidatorService(allowedVariables, allowedNamespaces);
   });
 
   describe('validateQueryRules', () => {

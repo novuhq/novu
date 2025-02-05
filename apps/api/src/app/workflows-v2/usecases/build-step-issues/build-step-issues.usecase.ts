@@ -283,10 +283,10 @@ export class BuildStepIssuesUsecase {
   private validateSkipField(variableSchema: JSONSchemaDto, skipLogic: RulesLogic<AdditionalOperation>): StepIssuesDto {
     const issues: StepIssuesDto = {};
     const { primitives } = parseStepVariables(variableSchema);
-    const allowedFields = primitives.map((variable) => variable.label);
-    const allowedPrefixes = [PAYLOAD_FIELD_PREFIX, SUBSCRIBER_DATA_FIELD_PREFIX];
+    const allowedVariables = primitives.map((variable) => variable.label);
+    const allowedNamespaces = [PAYLOAD_FIELD_PREFIX, SUBSCRIBER_DATA_FIELD_PREFIX];
 
-    const queryValidatorService = new QueryValidatorService(allowedFields, allowedPrefixes);
+    const queryValidatorService = new QueryValidatorService(allowedVariables, allowedNamespaces);
     const skipRulesIssues = queryValidatorService.validateQueryRules(skipLogic);
 
     if (skipRulesIssues.length > 0) {

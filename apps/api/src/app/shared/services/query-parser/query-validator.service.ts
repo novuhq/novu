@@ -16,8 +16,8 @@ export enum QueryIssueTypeEnum {
 
 export class QueryValidatorService {
   constructor(
-    private allowedFields: string[],
-    private allowedPrefixes: string[]
+    private allowedVariables: string[],
+    private allowedNamespaces: string[]
   ) {}
 
   private isInvalidFieldReference(field: unknown) {
@@ -25,17 +25,13 @@ export class QueryValidatorService {
   }
 
   private isInvalidFieldValue(field: unknown) {
-    if (this.isInvalidFieldReference(field)) {
-      return true;
-    }
-
     const fieldValue = (field as { var: string })?.var ?? '';
 
-    const isWithinAllowedPrefixes = this.allowedPrefixes.some(
+    const isWithinAllowedPrefixes = this.allowedNamespaces.some(
       (prefix) => fieldValue.startsWith(prefix) && fieldValue.length > prefix.length
     );
 
-    return !fieldValue || (!this.allowedFields.includes(fieldValue) && !isWithinAllowedPrefixes);
+    return !fieldValue || (!this.allowedVariables.includes(fieldValue) && !isWithinAllowedPrefixes);
   }
 
   private getLogicalOperatorIssue(operator: string, path: number[]): QueryIssue {

@@ -21,6 +21,8 @@ const ruleClassName = `${ruleActionsClassName}`;
 const controlClassnames = {
   ruleGroup: ruleGroupClassName,
   rule: ruleClassName,
+  queryBuilder:
+    'queryBuilder-branches [&_.rule]:before:border-stroke-soft [&_.rule]:after:border-stroke-soft [&_.ruleGroup_.ruleGroup]:before:border-stroke-soft [&_.ruleGroup_.ruleGroup]:after:border-stroke-soft',
 };
 
 const translations: Partial<Translations> = {
