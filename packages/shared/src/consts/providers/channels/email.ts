@@ -81,11 +81,11 @@ export const emailProviders: IProviderConfig[] = [
   },
   {
     id: EmailProviderIdEnum.Sendinblue,
-    displayName: 'Sendinblue',
+    displayName: 'Brevo (formerly Sendinblue)',
     channel: ChannelTypeEnum.EMAIL,
     credentials: sendinblueConfig,
     docReference: `https://docs.novu.co/integrations/providers/email/sendinblue${UTM_CAMPAIGN_QUERY_PARAM}`,
-    logoFileName: { light: 'sendinblue.png', dark: 'sendinblue.png' },
+    logoFileName: { light: 'brevo.svg', dark: 'brevo.svg' },
   },
   {
     id: EmailProviderIdEnum.SES,
