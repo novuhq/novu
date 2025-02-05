@@ -373,8 +373,8 @@ importers:
         specifier: ^6.2.3
         version: 6.9.5(encoding@0.1.13)
       '@maily-to/render':
-        specifier: ^0.0.17
-        version: 0.0.17(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: ^0.0.19
+        version: 0.0.19(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@nestjs/axios':
         specifier: 3.0.3
         version: 3.0.3(@nestjs/common@10.4.1(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1))(axios@1.6.8)(rxjs@7.8.1)
@@ -10130,6 +10130,12 @@ packages:
 
   '@maily-to/render@0.0.17':
     resolution: {integrity: sha512-vFDlY9U9XtyDRzeVGVON9tgbzBRrq5wBOMG1aFGc/30soaamK7oYxRqSUbwNmrfT2ScBgL7YFtDLoeRZbpdmeA==}
+    engines: {node: '>=18.0.0'}
+    peerDependencies:
+      react: ^18.3.1
+
+  '@maily-to/render@0.0.19':
+    resolution: {integrity: sha512-cyR/cRmUj+zcZOKc2yZlBTGFUAJazjoc3YFkBOnx8eMq3N4bHAxC+zT1MsfEqXXiHcw2uW289xxEVkrjKC0xJw==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
       react: ^18.3.1
@@ -47470,6 +47476,14 @@ snapshots:
       - yjs
 
   '@maily-to/render@0.0.17(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+    dependencies:
+      '@react-email/components': 0.0.25(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@react-email/render': 1.0.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      react: 18.3.1
+    transitivePeerDependencies:
+      - react-dom
+
+  '@maily-to/render@0.0.19(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
       '@react-email/components': 0.0.25(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@react-email/render': 1.0.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
