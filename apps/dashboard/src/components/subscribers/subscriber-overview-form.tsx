@@ -38,7 +38,7 @@ const toastOptions: ExternalToast = {
 
 export function SubscriberOverviewForm({ subscriberId }: { subscriberId: string }) {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const { data: subscriber, isFetching } = useFetchSubscriber({ subscriberId });
+  const { data: subscriber, isPending } = useFetchSubscriber({ subscriberId });
 
   const { patchSubscriber } = usePatchSubscriber({
     onSuccess: (data) => {
@@ -72,7 +72,7 @@ export function SubscriberOverviewForm({ subscriberId }: { subscriberId: string 
    * Needed to forcefully reset the form when switching subscriber
    * Without this, the form will keep the previous subscriber's data for undefined fields of current one
    */
-  const subscriberDetails = isFetching ? undefined : subscriber;
+  const subscriberDetails = isPending ? undefined : subscriber;
 
   const form = useForm<z.infer<typeof SubscriberFormSchema>>({
     values: { ...subscriberDetails, data: JSON.stringify(subscriberDetails?.data, null, 2) },
@@ -80,7 +80,7 @@ export function SubscriberOverviewForm({ subscriberId }: { subscriberId: string 
     shouldFocusError: false,
   });
 
-  if (isFetching || !subscriberDetails) {
+  if (isPending || !subscriberDetails) {
     return <SubscriberOverviewSkeleton />;
   }
 
@@ -330,7 +330,7 @@ export function SubscriberOverviewForm({ subscriberId }: { subscriberId: string 
               <Button
                 variant="secondary"
                 type="submit"
-                disabled={!form.formState.isDirty || Object.keys(form.formState.dirtyFields).length === 0 || isFetching}
+                disabled={!form.formState.isDirty || Object.keys(form.formState.dirtyFields).length === 0 || isPending}
               >
                 Save changes
               </Button>
