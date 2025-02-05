@@ -10,13 +10,13 @@ export class CreateSubscriber {
   constructor(private subscriberRepository: SubscriberRepository) {}
 
   async execute(command: CreateSubscriberCommand): Promise<SubscriberResponseDto> {
-    const exisitingSubscriber = await this.subscriberRepository.findOne({
+    const existingSubscriber = await this.subscriberRepository.findOne({
       subscriberId: command.createSubscriberRequestDto.subscriberId,
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
     });
 
-    if (exisitingSubscriber) {
+    if (existingSubscriber) {
       throw new ApiException(`Subscriber: ${command.createSubscriberRequestDto.subscriberId} already exists`);
     }
 
