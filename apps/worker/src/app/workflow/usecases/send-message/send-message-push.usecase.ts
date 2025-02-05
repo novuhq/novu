@@ -134,10 +134,22 @@ export class SendMessagePush extends SendMessageBase {
     for (const channel of pushChannels) {
       const { deviceTokens } = channel.credentials || {};
 
-      const [isChannelMissingDeviceTokens, integration] = await Promise.all([
-        this.isChannelMissingDeviceTokens(channel, command),
-        this.getSubscriberIntegration(channel, command),
-      ]);
+      let isChannelMissingDeviceTokens;
+      let integration;
+      try {
+        [isChannelMissingDeviceTokens, integration] = await Promise.all([
+          this.isChannelMissingDeviceTokens(channel, command),
+          this.getSubscriberIntegration(channel, command),
+        ]);
+      } catch (error) {
+        integrationsWithErrors += 1;
+        Logger.error(
+          { jobId: command.jobId },
+          [`Error processing channel for jobId ${command.jobId}`, error.message || error.toString()].join(' '),
+          LOG_CONTEXT
+        );
+        continue;
+      }
 
       // We avoid to send a message if subscriber has not an integration or if the subscriber has no device tokens for said integration
       if (!deviceTokens || !integration || isChannelMissingDeviceTokens) {
@@ -331,7 +343,11 @@ export class SendMessagePush extends SendMessageBase {
 
       const raw = JSON.stringify(e) !== JSON.stringify({}) ? JSON.stringify(e) : JSON.stringify(e.message);
 
-      await this.sendProviderError(command.job, message._id, raw);
+      try {
+        await this.sendProviderError(command.job, message._id, raw);
+      } catch (e) {
+        // Do nothing, as this throws error createExecutionDetailsError
+      }
 
       return { success: false, error: e };
     }
