@@ -112,10 +112,10 @@ jobs:
             './node_modules/@taskforcesh/bullmq-pro'  # Add more patterns as needed
           )
           for pattern in "${patterns[@]}"; do
-            if docker run --rm novu-$SERVICE_COMMON_NAME sh -c "ls $pattern 2>/dev/null"; then
+            if docker run --rm entrypoint sh novu-$SERVICE_COMMON_NAME -c "ls $pattern 2>/dev/null"; then
               echo "::error::'$pattern' files were detected in ${{ matrix.name }}."
               exit 1
-            fi
+          fi
           done
           echo "No matching EE files found in the Docker image ${{ matrix.name }}"
 
