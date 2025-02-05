@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { prepareRuleGroup } from 'react-querybuilder';
 import { parseJsonLogic } from 'react-querybuilder/parseJsonLogic';
-import type { StepUpdateDto } from '@novu/shared';
+import { StepContentIssueEnum, type StepUpdateDto } from '@novu/shared';
 
 import { ConditionsEditor } from '@/components/conditions-editor/conditions-editor';
 import { Form, FormField } from '@/components/primitives/form/form';
@@ -17,47 +17,62 @@ import { UnsavedChangesAlertDialog } from '@/components/unsaved-changes-alert-di
 import { useBeforeUnload } from '@/hooks/use-before-unload';
 import { EditStepConditionsLayout } from './edit-step-conditions-layout';
 
-const rulesSchema: z.ZodType<RuleType | RuleGroupType> = z.union([
-  z
-    .object({
-      field: z.string().min(1),
-      operator: z.string(),
-      value: z.string().nullable(),
-    })
-    .passthrough()
-    .superRefine(({ operator, value }, ctx) => {
-      if (operator === 'between' || operator === 'notBetween') {
-        const values = value?.split(',').filter((val) => val.trim() !== '');
-        if (!values || values.length !== 2) {
-          ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Both values are required', path: ['value'] });
+const PAYLOAD_FIELD_PREFIX = 'payload.';
+const SUBSCRIBER_DATA_FIELD_PREFIX = 'subscriber.data.';
+
+const getRuleSchema = (fields: Array<{ value: string }>): z.ZodType<RuleType | RuleGroupType> => {
+  const allowedFields = fields.map((field) => field.value);
+
+  return z.union([
+    z
+      .object({
+        field: z.string().min(1),
+        operator: z.string(),
+        value: z.string().nullable(),
+      })
+      .passthrough()
+      .superRefine(({ field, operator, value }, ctx) => {
+        if (operator === 'between' || operator === 'notBetween') {
+          const values = value?.split(',').filter((val) => val.trim() !== '');
+          if (!values || values.length !== 2) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Both values are required', path: ['value'] });
+          }
+        } else if (operator !== 'null' && operator !== 'notNull') {
+          const trimmedValue = value?.trim();
+          if (!trimmedValue || trimmedValue.length === 0) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Value is required', path: ['value'] });
+          }
         }
-      } else if (operator !== 'null' && operator !== 'notNull') {
-        const trimmedValue = value?.trim();
-        if (!trimmedValue || trimmedValue.length === 0) {
-          ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Value is required', path: ['value'] });
+        const isPayloadField = field.startsWith(PAYLOAD_FIELD_PREFIX) && field.length > PAYLOAD_FIELD_PREFIX.length;
+        const isSubscriberDataField =
+          field.startsWith(SUBSCRIBER_DATA_FIELD_PREFIX) && field.length > SUBSCRIBER_DATA_FIELD_PREFIX.length;
+        if (!allowedFields.includes(field) && !isPayloadField && !isSubscriberDataField) {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Value is not valid', path: ['field'] });
         }
-      }
-    }),
-  z
-    .object({
-      combinator: z.string(),
-      rules: z.array(z.lazy(() => rulesSchema)),
-    })
-    .passthrough(),
-]);
+      }),
+    z
+      .object({
+        combinator: z.string(),
+        rules: z.array(z.lazy(() => getRuleSchema(fields))),
+      })
+      .passthrough(),
+  ]);
+};
 
 type FormQuery = {
   query: RuleGroupType;
 };
 
-const conditionsSchema: z.ZodType<FormQuery> = z.object({
-  query: z
-    .object({
-      combinator: z.string(),
-      rules: z.array(rulesSchema),
-    })
-    .passthrough(),
-});
+const getConditionsSchema = (fields: Array<{ value: string }>): z.ZodType<FormQuery> => {
+  return z.object({
+    query: z
+      .object({
+        combinator: z.string(),
+        rules: z.array(getRuleSchema(fields)),
+      })
+      .passthrough(),
+  });
+};
 
 export const EditStepConditionsForm = () => {
   const { workflow, step, update } = useWorkflow();
@@ -70,16 +85,6 @@ export const EditStepConditionsForm = () => {
         : prepareRuleGroup({ combinator: 'and', rules: [] }),
     [step]
   );
-  const form = useForm<FormQuery>({
-    mode: 'onSubmit',
-    resolver: zodResolver(conditionsSchema),
-    defaultValues: {
-      query,
-    },
-  });
-  const { formState } = form;
-  const blocker = useBlocker(formState.isDirty);
-  useBeforeUnload(formState.isDirty);
 
   const { fields, variables } = useMemo(() => {
     if (!step) return { fields: [], variables: [] };
@@ -95,7 +100,18 @@ export const EditStepConditionsForm = () => {
     };
   }, [step]);
 
-  const onSubmit = (values: z.infer<typeof conditionsSchema>) => {
+  const form = useForm<FormQuery>({
+    mode: 'onSubmit',
+    resolver: zodResolver(getConditionsSchema(fields)),
+    defaultValues: {
+      query,
+    },
+  });
+  const { formState } = form;
+  const blocker = useBlocker(formState.isDirty);
+  useBeforeUnload(formState.isDirty);
+
+  const onSubmit = (values: z.infer<ReturnType<typeof getConditionsSchema>>) => {
     if (!step || !workflow) return;
 
     const skip = formatQuery(values.query, 'jsonlogic');
@@ -116,10 +132,16 @@ export const EditStepConditionsForm = () => {
     const stepConditionIssues = step.issues?.controls?.skip;
     if (stepConditionIssues && stepConditionIssues.length > 0) {
       stepConditionIssues.forEach((issue) => {
-        const queryPath = 'query.rules.' + issue.variableName?.split('.').join('.rules.') + '.value';
-        form.setError(queryPath as keyof typeof form.formState.errors, {
-          message: issue.message,
-        });
+        const queryPath = 'query.rules.' + issue.variableName?.split('.').join('.rules.');
+        if (issue.issueType === StepContentIssueEnum.MISSING_VALUE) {
+          form.setError(`${queryPath}.value` as keyof typeof form.formState.errors, {
+            message: issue.message,
+          });
+        } else {
+          form.setError(`${queryPath}.field` as keyof typeof form.formState.errors, {
+            message: issue.message,
+          });
+        }
       });
     }
   }, [form, step]);

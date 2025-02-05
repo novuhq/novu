@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ExternalApiAccessible, UserSession } from '@novu/application-generic';
-import { UserSessionData } from '@novu/shared';
+import { ApiRateLimitCategoryEnum, UserSessionData } from '@novu/shared';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
 import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
 import { ListSubscribersCommand } from './usecases/list-subscribers/list-subscribers.command';
@@ -35,7 +35,9 @@ import { GetSubscriberPreferencesDto } from './dtos/get-subscriber-preferences.d
 import { PatchSubscriberPreferencesDto } from './dtos/patch-subscriber-preferences.dto';
 import { UpdateSubscriberPreferencesCommand } from './usecases/update-subscriber-preferences/update-subscriber-preferences.command';
 import { UpdateSubscriberPreferences } from './usecases/update-subscriber-preferences/update-subscriber-preferences.usecase';
+import { ThrottlerCategory } from '../rate-limiting/guards/throttler.decorator';
 
+@ThrottlerCategory(ApiRateLimitCategoryEnum.CONFIGURATION)
 @Controller({ path: '/subscribers', version: '2' })
 @UseInterceptors(ClassSerializerInterceptor)
 @ApiTags('Subscribers')
