@@ -12,7 +12,7 @@ import {
 
 import { RunJobCommand } from './run-job.command';
 import { SendMessage, SendMessageCommand } from '../send-message';
-import { PlatformException, EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER } from '../../../shared/utils';
+import { PlatformException, EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER, shouldHaltOnStepFailure } from '../../../shared/utils';
 import { SetJobAsFailed } from '../update-job-status/set-job-as-failed.usecase';
 import { AddJob } from '../add-job';
 import { SetJobAsFailedCommand } from '../update-job-status/set-job-as.command';
@@ -111,7 +111,7 @@ export class RunJob {
       }
     } catch (error: any) {
       Logger.error({ error }, `Running job ${job._id} has thrown an error`, LOG_CONTEXT);
-      if (job.step.shouldStopOnFail || this.shouldBackoff(error)) {
+      if (shouldHaltOnStepFailure(job.type, job.step.shouldStopOnFail) || this.shouldBackoff(error)) {
         shouldQueueNextJob = false;
       }
       throw error;
@@ -178,7 +178,7 @@ export class RunJob {
           error
         );
 
-        if (nextJob.step.shouldStopOnFail || this.shouldBackoff(error)) {
+        if (shouldHaltOnStepFailure(nextJob.type, nextJob.step.shouldStopOnFail) || this.shouldBackoff(error)) {
           shouldContinue = false;
           throw error;
         }
