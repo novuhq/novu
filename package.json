@@ -1,7 +1,7 @@
 {
   "name": "root",
   "private": true,
-  "packageManager": "pnpm@10.2.0",
+  "packageManager": "pnpm@9.11.0",
   "scripts": {
     "bootstrap": "npm run setup:dev",
     "build-ee": "nx run-many --target=build-ee --all",
@@ -43,7 +43,7 @@
     "preview:pkg:publish": "node scripts/publish-preview-packages.mjs",
     "release": "node scripts/release.mjs",
     "release:version:apps": "nx release version --projects=tag:type:app",
-    "setup:project": "npx --yes pnpm@10.2.0 i && node scripts/setup-env-files.js && pnpm build",
+    "setup:project": "npx --yes pnpm@9.11.0 i && node scripts/setup-env-files.js && pnpm build",
     "start:api:dev": "cross-env nx run @novu/api-service:start:dev",
     "start:api:test": "cross-env nx run-many --target=start:test --projects=@novu/api-service",
     "start:api": "cross-env nx run @novu/api-service:start",
@@ -174,7 +174,7 @@
     "nx-cloud": "19.1.0",
     "ora": "~5.4.1",
     "pkg-pr-new": "^0.0.24",
-    "pnpm": "10.2.0",
+    "pnpm": "9.15.0",
     "prettier": "~3.3.3",
     "process": "^0.11.10",
     "rimraf": "^3.0.2",
@@ -219,7 +219,7 @@
   },
   "engines": {
     "node": ">=20 <21",
-    "pnpm": "^10.2.0"
+    "pnpm": "^9.11.0"
   },
   "dependencies": {
     "tslib": "^2.4.0"
