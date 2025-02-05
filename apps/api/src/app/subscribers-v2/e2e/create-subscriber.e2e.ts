@@ -15,7 +15,7 @@ describe('Create Subscriber - /subscribers (POST) #novu-v2', () => {
     novuClient = initNovuClassSdk(session);
   });
 
-  it('should create  the subscriber', async () => {
+  it('should create the subscriber', async () => {
     const subscriberId = `test-subscriber-${`${randomBytes(4).toString('hex')}`}`;
     const payload = {
       subscriberId,
