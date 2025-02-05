@@ -27,7 +27,7 @@ describe('Update Subscribers global preferences - /subscribers/:subscriberId/pre
     };
 
     try {
-      const firstResponse = await novuClient.subscribers.preferences.updateGlobal(
+      const firstResponse = await novuClient.subscribers.preferences.legacy.updateGlobal(
         badPayload as any,
         session.subscriberId
       );
@@ -43,7 +43,7 @@ describe('Update Subscribers global preferences - /subscribers/:subscriberId/pre
       preferences: [{ type: ChannelTypeEnum.Email, enabled: true }],
     };
 
-    const response = await novuClient.subscribers.preferences.updateGlobal(payload, session.subscriberId);
+    const response = await novuClient.subscribers.preferences.legacy.updateGlobal(payload, session.subscriberId);
 
     expect(response.result.preference.enabled).to.eql(true);
     expect(response.result.preference.channels).to.not.eql({
@@ -68,7 +68,7 @@ describe('Update Subscribers global preferences - /subscribers/:subscriberId/pre
       ],
     };
 
-    const response = await novuClient.subscribers.preferences.updateGlobal(payload, session.subscriberId);
+    const response = await novuClient.subscribers.preferences.legacy.updateGlobal(payload, session.subscriberId);
 
     expect(response.result.preference.enabled).to.eql(true);
     expect(response.result.preference.channels).to.deep.eq({
@@ -111,7 +111,7 @@ describe('Update Subscribers global preferences - /subscribers/:subscriberId/pre
 
     await session.switchToDevEnvironment();
     // update the subscriber global preferences in dev environment
-    const response = await novuClient.subscribers.preferences.updateGlobal(
+    const response = await novuClient.subscribers.preferences.legacy.updateGlobal(
       {
         enabled: true,
         preferences: [{ type: ChannelTypeEnumInShared.IN_APP, enabled: false }],
@@ -129,7 +129,7 @@ describe('Update Subscribers global preferences - /subscribers/:subscriberId/pre
     } as PreferenceChannels);
 
     // get the subscriber preferences in dev environment
-    const getDevPreferencesResponse = await novuClient.subscribers.preferences.list(session.subscriberId);
+    const getDevPreferencesResponse = await novuClient.subscribers.preferences.listLegacy(session.subscriberId);
     const devPreferences = getDevPreferencesResponse.result;
     expect(devPreferences.every((item) => !!item.preference.channels.inApp)).to.be.false;
 
@@ -138,7 +138,9 @@ describe('Update Subscribers global preferences - /subscribers/:subscriberId/pre
     // get the subscriber preferences in prod environment
     session.apiKey = session.environment.apiKeys[0].key;
     const novuClientForProduction = initNovuClassSdk(session);
-    const getProdPreferencesResponse = await novuClientForProduction.subscribers.preferences.list(session.subscriberId);
+    const getProdPreferencesResponse = await novuClientForProduction.subscribers.preferences.listLegacy(
+      session.subscriberId
+    );
     const prodPreferences = getProdPreferencesResponse.result;
     expect(prodPreferences.every((item) => !!item.preference.channels.inApp)).to.be.true;
   });
