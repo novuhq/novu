@@ -14,50 +14,40 @@ import {
   StepTypeEnum,
 } from '@novu/shared';
 
-import { GetSubscriberPreferenceCommand } from './get-subscriber-preference.command';
-import { Instrument, InstrumentUsecase } from '../../instrumentation';
-import { MergePreferences } from '../merge-preferences/merge-preferences.usecase';
 import {
+  Instrument,
+  InstrumentUsecase,
+  MergePreferences,
   GetPreferences,
   GetPreferencesResponseDto,
   PreferenceSet,
-} from '../get-preferences';
-import {
   filteredPreference,
   overridePreferences,
-} from '../get-subscriber-template-preference';
-import { MergePreferencesCommand } from '../merge-preferences/merge-preferences.command';
-import { mapTemplateConfiguration } from '../get-subscriber-template-preference/get-subscriber-template-preference.usecase';
+  MergePreferencesCommand,
+  mapTemplateConfiguration,
+} from '@novu/application-generic';
+import { GetSubscriberPreferenceCommand } from './get-subscriber-preference.command';
 
 @Injectable()
 export class GetSubscriberPreference {
   constructor(
     private subscriberRepository: SubscriberRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
-    private preferencesRepository: PreferencesRepository,
+    private preferencesRepository: PreferencesRepository
   ) {}
 
   @InstrumentUsecase()
-  async execute(
-    command: GetSubscriberPreferenceCommand,
-  ): Promise<ISubscriberPreferenceResponse[]> {
-    const subscriber = await this.subscriberRepository.findBySubscriberId(
-      command.environmentId,
-      command.subscriberId,
-    );
+  async execute(command: GetSubscriberPreferenceCommand): Promise<ISubscriberPreferenceResponse[]> {
+    const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
     if (!subscriber) {
-      throw new NotFoundException(
-        `Subscriber with id: ${command.subscriberId} not found`,
-      );
+      throw new NotFoundException(`Subscriber with id: ${command.subscriberId} not found`);
     }
 
-    const workflowList = await this.notificationTemplateRepository.filterActive(
-      {
-        organizationId: command.organizationId,
-        environmentId: command.environmentId,
-        tags: command.tags,
-      },
-    );
+    const workflowList = await this.notificationTemplateRepository.filterActive({
+      organizationId: command.organizationId,
+      environmentId: command.environmentId,
+      tags: command.tags,
+    });
 
     const workflowIds = workflowList.map((wf) => wf._id);
 
@@ -92,9 +82,7 @@ export class GetSubscriberPreference {
       ...subscriberWorkflowPreferences,
     ];
 
-    const workflowPreferenceSets = allWorkflowPreferences.reduce<
-      Record<string, PreferenceSet>
-    >((acc, preference) => {
+    const workflowPreferenceSets = allWorkflowPreferences.reduce<Record<string, PreferenceSet>>((acc, preference) => {
       const workflowId = preference._templateId;
 
       // Skip if the preference is not for a workflow
@@ -111,12 +99,10 @@ export class GetSubscriberPreference {
       }
       switch (preference.type) {
         case PreferencesTypeEnum.WORKFLOW_RESOURCE:
-          acc[workflowId].workflowResourcePreference =
-            preference as PreferenceSet['workflowResourcePreference'];
+          acc[workflowId].workflowResourcePreference = preference as PreferenceSet['workflowResourcePreference'];
           break;
         case PreferencesTypeEnum.USER_WORKFLOW:
-          acc[workflowId].workflowUserPreference =
-            preference as PreferenceSet['workflowUserPreference'];
+          acc[workflowId].workflowUserPreference = preference as PreferenceSet['workflowUserPreference'];
           break;
         case PreferencesTypeEnum.SUBSCRIBER_WORKFLOW:
           acc[workflowId].subscriberWorkflowPreference = preference;
@@ -127,17 +113,14 @@ export class GetSubscriberPreference {
       return acc;
     }, {});
 
-    const workflowPreferences: ISubscriberPreferenceResponse[] =
-      this.calculateWorkflowPreferences(
-        workflowList,
-        workflowPreferenceSets,
-        subscriberGlobalPreference,
-        command.includeInactiveChannels,
-      );
-
-    const nonCriticalWorkflowPreferences = workflowPreferences.filter(
-      (preference) => !preference.template.critical,
+    const workflowPreferences: ISubscriberPreferenceResponse[] = this.calculateWorkflowPreferences(
+      workflowList,
+      workflowPreferenceSets,
+      subscriberGlobalPreference,
+      command.includeInactiveChannels
     );
+
+    const nonCriticalWorkflowPreferences = workflowPreferences.filter((preference) => !preference.template.critical);
 
     return nonCriticalWorkflowPreferences;
   }
@@ -146,20 +129,14 @@ export class GetSubscriberPreference {
   private calculateWorkflowPreferences(
     workflowList: NotificationTemplateEntity[],
     workflowPreferenceSets: Record<string, PreferenceSet>,
-    subscriberGlobalPreference: PreferencesEntity,
-    includeInactiveChannels: boolean,
+    subscriberGlobalPreference: PreferencesEntity | null,
+    includeInactiveChannels: boolean
   ): ISubscriberPreferenceResponse[] {
     return workflowList.map((workflow) => {
       const preferences = workflowPreferenceSets[workflow._id];
-      const merged = this.mergePreferences(
-        preferences,
-        subscriberGlobalPreference,
-      );
+      const merged = this.mergePreferences(preferences, subscriberGlobalPreference);
 
-      const includedChannels = this.getChannels(
-        workflow,
-        includeInactiveChannels,
-      );
+      const includedChannels = this.getChannels(workflow, includeInactiveChannels);
 
       const initialChannels = filteredPreference(
         {
@@ -169,13 +146,10 @@ export class GetSubscriberPreference {
           chat: true,
           push: true,
         },
-        includedChannels,
+        includedChannels
       );
 
-      const { channels, overrides } = this.calculateChannelsAndOverrides(
-        merged,
-        initialChannels,
-      );
+      const { channels, overrides } = this.calculateChannelsAndOverrides(merged, initialChannels);
 
       return {
         preference: {
@@ -193,29 +167,19 @@ export class GetSubscriberPreference {
   }
 
   @Instrument()
-  private calculateChannelsAndOverrides(
-    merged: GetPreferencesResponseDto,
-    initialChannels: IPreferenceChannels,
-  ) {
+  private calculateChannelsAndOverrides(merged: GetPreferencesResponseDto, initialChannels: IPreferenceChannels) {
     return overridePreferences(
       {
-        template: GetPreferences.mapWorkflowPreferencesToChannelPreferences(
-          merged.source.WORKFLOW_RESOURCE,
-        ),
-        subscriber: GetPreferences.mapWorkflowPreferencesToChannelPreferences(
-          merged.preferences,
-        ),
+        template: GetPreferences.mapWorkflowPreferencesToChannelPreferences(merged.source.WORKFLOW_RESOURCE),
+        subscriber: GetPreferences.mapWorkflowPreferencesToChannelPreferences(merged.preferences),
         workflowOverride: {},
       },
-      initialChannels,
+      initialChannels
     );
   }
 
   @Instrument()
-  private mergePreferences(
-    preferences: PreferenceSet,
-    subscriberGlobalPreference: PreferencesEntity,
-  ) {
+  private mergePreferences(preferences: PreferenceSet, subscriberGlobalPreference: PreferencesEntity | null) {
     const mergeCommand = MergePreferencesCommand.create({
       workflowResourcePreference: preferences.workflowResourcePreference,
       workflowUserPreference: preferences.workflowUserPreference,
@@ -226,10 +190,7 @@ export class GetSubscriberPreference {
     return MergePreferences.execute(mergeCommand);
   }
 
-  private getChannels(
-    workflow: NotificationTemplateEntity,
-    includeInactiveChannels: boolean,
-  ): ChannelTypeEnum[] {
+  private getChannels(workflow: NotificationTemplateEntity, includeInactiveChannels: boolean): ChannelTypeEnum[] {
     if (includeInactiveChannels) {
       return Object.values(ChannelTypeEnum);
     }
@@ -237,7 +198,7 @@ export class GetSubscriberPreference {
     const activeSteps = workflow.steps.filter((step) => step.active === true);
 
     const channels = activeSteps
-      .map((item) => item.template.type as StepTypeEnum)
+      .map((item) => item.template?.type as StepTypeEnum)
       .reduce<StepTypeEnum[]>((list, channel) => {
         if (list.includes(channel)) {
           return list;

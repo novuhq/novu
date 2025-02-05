@@ -1,5 +1,5 @@
 import { Button } from '@/components/primitives/button';
-import { FilterWithParam } from '@/components/primitives/control-input/variable-popover/types';
+import { FilterWithParam } from '../types';
 import { InputPure } from '@/components/primitives/input';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { GripVertical } from 'lucide-react';

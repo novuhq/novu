@@ -20,11 +20,19 @@ jobs:
         with:
           fetch-depth: 0
 
-      - run: corepack enable
+      # https://vercel.com/guides/corepack-errors-github-actions
+      - name: Use Latest Corepack
+        run: |
+          npm install -g corepack@latest
+          corepack enable
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20.8.1
           cache: 'pnpm'
+
+      - name: Install pnpm
+        run: corepack enable
 
       - name: Install dependencies
         run: pnpm install
