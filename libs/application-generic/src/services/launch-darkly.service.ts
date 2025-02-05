@@ -77,14 +77,18 @@ export class LaunchDarklyService implements IFeatureFlagsService {
     return result;
   }
 
-  public async getWithEnvironmentContext<T>(
+  public async getWithEnvironmentContext<T, V_Context>(
     key: FeatureFlagsKeysEnum,
     defaultValue: T,
     environmentId: EnvironmentId,
+    context?: V_Context,
   ): Promise<T> {
-    const context = this.mapToEnvironmentContext(environmentId);
+    const getContext = this.mapToEnvironmentContext(
+      environmentId,
+      context as LDSingleKindContext,
+    );
 
-    return await this.get(key, context, defaultValue);
+    return await this.get(key, getContext, defaultValue);
   }
 
   public async getWithOrganizationContext<T>(
@@ -130,8 +134,10 @@ export class LaunchDarklyService implements IFeatureFlagsService {
   // TODO: Unused for now.
   private mapToEnvironmentContext(
     environmentId: EnvironmentId,
+    context?: LDSingleKindContext,
   ): LDSingleKindContext {
     const launchDarklyContext = {
+      ...context,
       kind: 'environment',
       key: environmentId,
     };

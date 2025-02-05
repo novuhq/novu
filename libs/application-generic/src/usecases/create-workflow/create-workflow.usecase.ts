@@ -196,7 +196,7 @@ export class CreateWorkflow {
 
   private validatePayload(command: CreateWorkflowCommand) {
     if (command.steps) {
-      this.resourceValidatorService.validateStepsCount(
+      this.resourceValidatorService.validateStepsLimit(
         command.environmentId,
         command.steps,
       );

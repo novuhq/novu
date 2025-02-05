@@ -415,7 +415,7 @@ export class UpdateWorkflow {
 
   private validatePayload(command: UpdateWorkflowCommand) {
     if (command.steps) {
-      this.resourceValidatorService.validateStepsCount(
+      this.resourceValidatorService.validateStepsLimit(
         command.environmentId,
         command.steps,
       );

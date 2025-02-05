@@ -74,13 +74,22 @@ export class FeatureFlagsService {
   public async getWithContext<T>(
     contextualFeatureFlag: IContextualFeatureFlag<T>,
   ): Promise<T> {
-    const { defaultValue, key, environmentId, organizationId, userId } =
-      contextualFeatureFlag;
+    const {
+      defaultValue,
+      key,
+      environmentId,
+      organizationId,
+      userId,
+      environmentCreatedAt,
+      count,
+    } = contextualFeatureFlag;
 
     const context = {
       environmentId,
       organizationId,
       userId,
+      environmentCreatedAt,
+      count,
     };
 
     return await this.get(key, defaultValue, context);
@@ -150,12 +159,16 @@ export class FeatureFlagsService {
           defaultValue,
           context.organizationId,
         )) satisfies T;
-      case 'environmentId':
+      case 'environmentId': {
+        const { environmentId, environmentCreatedAt, count } = context;
+
         return (await this.service.getWithEnvironmentContext(
           key,
           defaultValue,
-          context.environmentId,
+          environmentId,
+          { environmentCreatedAt, count },
         )) satisfies T;
+      }
       case 'userId':
         return (await this.service.getWithUserContext(
           key,
