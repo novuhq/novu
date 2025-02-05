@@ -1,10 +1,9 @@
-import React, { useImperativeHandle } from 'react';
+import React, { useCallback, useImperativeHandle, useRef, useState } from 'react';
 import { CheckIcon } from '@radix-ui/react-icons';
 
 import { Code2 } from '@/components/icons/code-2';
 import { cn } from '@/utils/ui';
 import TruncatedText from '@/components/truncated-text';
-import { useVariableListKeyboardNavigation } from './use-variable-list-keyboard-navigation';
 
 const KeyboardItem = ({ children, className }: { children: React.ReactNode; className?: string }) => {
   return (
@@ -36,19 +35,73 @@ export type VariableListRef = {
 
 export const VariableList = React.forwardRef<VariableListRef, VariablesListProps>(
   ({ options, onSelect, selectedValue, title, className }, ref) => {
-    const { variablesListRef, hoveredOptionIndex, next, prev, reset, focusFirst } = useVariableListKeyboardNavigation({
-      maxIndex: options.length - 1,
-    });
+    const variablesListRef = useRef<HTMLUListElement>(null);
+    const [hoveredOptionIndex, setHoveredOptionIndex] = useState(0);
+    const maxIndex = options.length - 1;
+
+    const scrollToOption = useCallback((index: number) => {
+      if (!variablesListRef.current) return;
+
+      const listElement = variablesListRef.current;
+      const optionElement = listElement.children[index] as HTMLLIElement;
+
+      if (optionElement) {
+        const containerHeight = listElement.clientHeight;
+        const optionTop = optionElement.offsetTop;
+        const optionHeight = optionElement.clientHeight;
+
+        if (optionTop < listElement.scrollTop) {
+          // Scroll up if option is above visible area
+          listElement.scrollTop = optionTop;
+        } else if (optionTop + optionHeight > listElement.scrollTop + containerHeight) {
+          // Scroll down if option is below visible area
+          listElement.scrollTop = optionTop + optionHeight - containerHeight;
+        }
+      }
+    }, []);
+
+    const next = useCallback(() => {
+      if (hoveredOptionIndex === -1) {
+        setHoveredOptionIndex(0);
+        scrollToOption(0);
+      } else {
+        setHoveredOptionIndex((oldIndex) => {
+          const newIndex = oldIndex === maxIndex ? 0 : oldIndex + 1;
+          scrollToOption(newIndex);
+          return newIndex;
+        });
+      }
+    }, [hoveredOptionIndex, maxIndex, scrollToOption]);
+
+    const prev = useCallback(() => {
+      if (hoveredOptionIndex === -1) {
+        setHoveredOptionIndex(maxIndex);
+        scrollToOption(maxIndex);
+      } else {
+        setHoveredOptionIndex((oldIndex) => {
+          const newIndex = oldIndex === 0 ? maxIndex : oldIndex - 1;
+          scrollToOption(newIndex);
+          return newIndex;
+        });
+      }
+    }, [hoveredOptionIndex, maxIndex, scrollToOption]);
+
+    const select = useCallback(() => {
+      if (hoveredOptionIndex !== -1) {
+        onSelect(options[hoveredOptionIndex].value ?? '');
+        setHoveredOptionIndex(-1);
+      }
+    }, [hoveredOptionIndex, onSelect, options]);
+
+    const focusFirst = useCallback(() => {
+      setHoveredOptionIndex(0);
+      scrollToOption(0);
+    }, [scrollToOption]);
 
     useImperativeHandle(ref, () => ({
       next,
       prev,
-      select: () => {
-        if (hoveredOptionIndex !== -1) {
-          onSelect(options[hoveredOptionIndex].value ?? '');
-          reset();
-        }
-      },
+      select,
       focusFirst,
     }));
 
