@@ -2423,7 +2423,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
             simpleTrigger(novuClient, template, subscriberId),
             simpleTrigger(novuClient, template, subscriberId),
           ]);
-          await session.awaitRunningJobs(template._id);
+          await session.waitForJobCompletion(template._id);
 
           const subscribers = await subscriberRepository.find({
             _environmentId: session.environment._id,
