@@ -6,16 +6,13 @@ import { merge } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 
 import {
-  AnalyticsService,
   buildNotificationTemplateIdentifierKey,
   CachedEntity,
   ExecuteBridgeRequest,
   ExecuteBridgeRequestCommand,
   ExecuteBridgeRequestDto,
-  GetFeatureFlag,
   Instrument,
   InstrumentUsecase,
-  InvalidateCacheService,
   IWorkflowDataDto,
   StorageHelperService,
   WorkflowQueueService,
@@ -23,13 +20,10 @@ import {
 import {
   EnvironmentEntity,
   EnvironmentRepository,
-  MemberRepository,
-  NotificationRepository,
   NotificationTemplateEntity,
   NotificationTemplateRepository,
   TenantEntity,
   TenantRepository,
-  UserRepository,
   WorkflowOverrideEntity,
   WorkflowOverrideRepository,
 } from '@novu/dal';
@@ -50,18 +44,12 @@ const LOG_CONTEXT = 'ParseEventRequest';
 export class ParseEventRequest {
   constructor(
     private notificationTemplateRepository: NotificationTemplateRepository,
-    private notificationRepository: NotificationRepository,
     private environmentRepository: EnvironmentRepository,
-    private userRepository: UserRepository,
-    private memberRepository: MemberRepository,
     private verifyPayload: VerifyPayload,
     private storageHelperService: StorageHelperService,
     private workflowQueueService: WorkflowQueueService,
     private tenantRepository: TenantRepository,
     private workflowOverrideRepository: WorkflowOverrideRepository,
-    private analyticsService: AnalyticsService,
-    private getFeatureFlag: GetFeatureFlag,
-    private invalidateCacheService: InvalidateCacheService,
     private executeBridgeRequest: ExecuteBridgeRequest,
     protected moduleRef: ModuleRef
   ) {}

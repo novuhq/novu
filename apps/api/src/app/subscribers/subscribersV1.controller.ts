@@ -15,8 +15,8 @@ import {
   Res,
 } from '@nestjs/common';
 import {
-  CreateSubscriber,
-  CreateSubscriberCommand,
+  CreateOrUpdateSubscriberCommand,
+  CreateOrUpdateSubscriberUseCase,
   OAuthHandlerEnum,
   UpdateSubscriber,
   UpdateSubscriberChannel,
@@ -119,7 +119,7 @@ import { BulkCreateSubscriberResponseDto } from './dtos/bulk-create-subscriber-r
 @Controller('/subscribers')
 export class SubscribersV1Controller {
   constructor(
-    private createSubscriberUsecase: CreateSubscriber,
+    private createSubscriberUsecase: CreateOrUpdateSubscriberUseCase,
     private bulkCreateSubscribersUsecase: BulkCreateSubscribers,
     private updateSubscriberUsecase: UpdateSubscriber,
     private updateSubscriberChannelUsecase: UpdateSubscriberChannel,
@@ -209,7 +209,7 @@ export class SubscribersV1Controller {
     @Body() body: CreateSubscriberRequestDto
   ): Promise<SubscriberResponseDto> {
     return await this.createSubscriberUsecase.execute(
-      CreateSubscriberCommand.create({
+      CreateOrUpdateSubscriberCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         subscriberId: body.subscriberId,
@@ -259,6 +259,7 @@ export class SubscribersV1Controller {
     summary: 'Update subscriber',
     description: 'Used to update the subscriber entity with new information',
   })
+  @SdkMethodName('updateLegacy')
   async updateSubscriber(
     @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string,
@@ -418,6 +419,7 @@ export class SubscribersV1Controller {
   @ApiResponse(UpdateSubscriberPreferenceResponseDto, 200, true)
   @ApiOperation({
     summary: 'Get subscriber preferences',
+    deprecated: true,
   })
   @ApiQuery({
     name: 'includeInactiveChannels',
@@ -427,7 +429,7 @@ export class SubscribersV1Controller {
       'A flag which specifies if the inactive workflow channels should be included in the retrieved preferences. Default is true',
   })
   @SdkGroupName('Subscribers.Preferences')
-  @SdkMethodName('list')
+  @SdkMethodName('listLegacy')
   async listSubscriberPreferences(
     @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string,
@@ -450,6 +452,7 @@ export class SubscribersV1Controller {
   @ApiResponse(GetSubscriberPreferencesResponseDto, 200, true)
   @ApiOperation({
     summary: 'Get subscriber preferences by level',
+    deprecated: true,
   })
   @ApiParam({ name: 'subscriberId', type: String, required: true })
   @SdkApiParam(
@@ -470,7 +473,7 @@ export class SubscribersV1Controller {
       'A flag which specifies if the inactive workflow channels should be included in the retrieved preferences. Default is true',
   })
   @SdkGroupName('Subscribers.Preferences')
-  @SdkMethodName('retrieveByLevel')
+  @SdkMethodName('retrieveByLevelLegacy')
   async getSubscriberPreferenceByLevel(
     @UserSession() user: UserSessionData,
     @Param() { parameter, subscriberId }: GetSubscriberPreferencesByLevelParams,
@@ -553,7 +556,7 @@ export class SubscribersV1Controller {
   @ApiOperation({
     summary: 'Update subscriber global preferences',
   })
-  @SdkGroupName('Subscribers.Preferences')
+  @SdkGroupName('Subscribers.Preferences.legacy')
   @SdkMethodName('updateGlobal')
   async updateSubscriberGlobalPreferences(
     @UserSession() user: UserSessionData,
