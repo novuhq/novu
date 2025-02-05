@@ -36,7 +36,7 @@ describe('Create Subscriber - /subscribers (POST) #novu-v2', () => {
     expect(subscriber.timezone).to.equal(payload.timezone);
   });
 
-  it('should return 400 if subscriberId already exists', async () => {
+  it('should return 409 if subscriberId already exists', async () => {
     const subscriberId = `test-subscriber-${`${randomBytes(4).toString('hex')}`}`;
     const payload = {
       subscriberId,
@@ -52,6 +52,6 @@ describe('Create Subscriber - /subscribers (POST) #novu-v2', () => {
       novuClient.subscribers.create(payload, payload.subscriberId)
     );
 
-    expect(error?.statusCode).to.equal(400);
+    expect(error?.statusCode).to.equal(409);
   });
 });

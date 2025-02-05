@@ -1,6 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
-import { ApiException } from '../../../shared/exceptions/api.exception';
+import { Injectable, ConflictException } from '@nestjs/common';
+import { SubscriberRepository } from '@novu/dal';
 import { SubscriberResponseDto } from '../../../subscribers/dtos';
 import { mapSubscriberEntityToDto } from '../list-subscribers/map-subscriber-entity-to.dto';
 import { CreateSubscriberCommand } from './create-subscriber.command';
@@ -17,16 +16,11 @@ export class CreateSubscriber {
     });
 
     if (existingSubscriber) {
-      throw new ApiException(`Subscriber: ${command.createSubscriberRequestDto.subscriberId} already exists`);
+      throw new ConflictException(`Subscriber: ${command.createSubscriberRequestDto.subscriberId} already exists`);
     }
 
-    const nonUndefinedEntries = Object.entries(command.createSubscriberRequestDto).filter(
-      ([_key, value]) => value !== undefined
-    );
-    const payload: Partial<SubscriberEntity> = Object.fromEntries(nonUndefinedEntries);
-
     const createdSubscriber = await this.subscriberRepository.create({
-      ...payload,
+      ...command.createSubscriberRequestDto,
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
     });
