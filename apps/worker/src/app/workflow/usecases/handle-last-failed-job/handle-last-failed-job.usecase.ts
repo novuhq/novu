@@ -48,7 +48,7 @@ export class HandleLastFailedJob {
       })
     );
 
-    if (!shouldHaltOnStepFailure(job.type, job.step.shouldStopOnFail)) {
+    if (!shouldHaltOnStepFailure(job)) {
       await this.queueNextJob.execute(
         QueueNextJobCommand.create({
           parentId: job?._id,

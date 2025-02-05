@@ -1,17 +1,15 @@
-import { StepTypeEnum } from '@novu/shared';
+import { isActionStepType } from '@novu/application-generic';
+import { JobEntity } from '@novu/dal';
 
-export const shouldHaltOnStepFailure = (
-  stepType: StepTypeEnum | undefined,
-  shouldStopOnFail: boolean | undefined
-): boolean | undefined => {
-  if (!stepType) {
-    return shouldStopOnFail;
+export const shouldHaltOnStepFailure = (job: JobEntity): boolean => {
+  if (!job.type) {
+    return typeof job.step.shouldStopOnFail === 'boolean' ? job.step.shouldStopOnFail : false;
   }
 
   /*
    * Action steps always stop on failure across all versions (v1 & v2)
    */
-  if (stepType === StepTypeEnum.DELAY) {
+  if (isActionStepType(job.type)) {
     return true;
   }
 
@@ -19,7 +17,7 @@ export const shouldHaltOnStepFailure = (
    * Legacy v1 behavior:
    * Return true if shouldStopOnFail was explicitly enabled by user
    */
-  if (shouldStopOnFail === true) {
+  if (job.step.shouldStopOnFail === true) {
     return true;
   }
 

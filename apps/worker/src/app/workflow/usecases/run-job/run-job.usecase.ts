@@ -111,7 +111,7 @@ export class RunJob {
       }
     } catch (error: any) {
       Logger.error({ error }, `Running job ${job._id} has thrown an error`, LOG_CONTEXT);
-      if (shouldHaltOnStepFailure(job.type, job.step.shouldStopOnFail) || this.shouldBackoff(error)) {
+      if (shouldHaltOnStepFailure(job) || this.shouldBackoff(error)) {
         shouldQueueNextJob = false;
       }
       throw error;
@@ -178,7 +178,7 @@ export class RunJob {
           error
         );
 
-        if (shouldHaltOnStepFailure(nextJob.type, nextJob.step.shouldStopOnFail) || this.shouldBackoff(error)) {
+        if (shouldHaltOnStepFailure(nextJob) || this.shouldBackoff(error)) {
           shouldContinue = false;
           throw error;
         }
