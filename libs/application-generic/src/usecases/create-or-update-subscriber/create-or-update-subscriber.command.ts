@@ -11,7 +11,7 @@ import { ISubscriberChannel, SubscriberCustomData } from '@novu/shared';
 
 import { EnvironmentCommand } from '../../commands/project.command';
 
-export class CreateSubscriberCommand extends EnvironmentCommand {
+export class CreateOrUpdateSubscriberCommand extends EnvironmentCommand {
   @IsString()
   @IsNotEmpty()
   @Transform(({ value }) => value?.toString().trim())
@@ -44,6 +44,10 @@ export class CreateSubscriberCommand extends EnvironmentCommand {
   @IsOptional()
   data?: SubscriberCustomData;
 
+  /**
+   * Represents existing entity that will be used for updating subscriber instead of creating one
+   * @optional
+   */
   @IsOptional()
   subscriber?: SubscriberEntity;
 

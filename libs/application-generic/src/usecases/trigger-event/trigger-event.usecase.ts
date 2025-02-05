@@ -19,15 +19,7 @@ import {
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import { PinoLogger } from '../../logging';
 import { AnalyticsService } from '../../services/analytics.service';
-import {
-  buildNotificationTemplateIdentifierKey,
-  CachedEntity,
-} from '../../services/cache';
 import { ApiException } from '../../utils/exceptions';
-import {
-  ProcessSubscriber,
-  ProcessSubscriberCommand,
-} from '../process-subscriber';
 import { ProcessTenant, ProcessTenantCommand } from '../process-tenant';
 import { TriggerBroadcastCommand } from '../trigger-broadcast/trigger-broadcast.command';
 import { TriggerBroadcast } from '../trigger-broadcast/trigger-broadcast.usecase';
@@ -36,13 +28,17 @@ import {
   TriggerMulticastCommand,
 } from '../trigger-multicast';
 import { TriggerEventCommand } from './trigger-event.command';
+import {
+  CreateOrUpdateSubscriberCommand,
+  CreateOrUpdateSubscriberUseCase,
+} from '../create-or-update-subscriber';
 
 const LOG_CONTEXT = 'TriggerEventUseCase';
 
 @Injectable()
 export class TriggerEvent {
   constructor(
-    private processSubscriber: ProcessSubscriber,
+    private createOrUpdateSubscriberUsecase: CreateOrUpdateSubscriberUseCase,
     private environmentRepository: EnvironmentRepository,
     private jobRepository: JobRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
@@ -133,13 +129,8 @@ export class TriggerEvent {
       // We might have a single actor for every trigger, so we only need to check for it once
       let actorProcessed: SubscriberEntity | undefined;
       if (mappedCommand.actor) {
-        actorProcessed = await this.processSubscriber.execute(
-          ProcessSubscriberCommand.create({
-            environmentId,
-            organizationId,
-            userId,
-            subscriber: mappedCommand.actor,
-          }),
+        actorProcessed = await this.createOrUpdateSubscriberUsecase.execute(
+          this.buildCommand(environmentId, organizationId, mappedCommand.actor),
         );
       }
 
@@ -202,16 +193,25 @@ export class TriggerEvent {
     }
   }
 
-  @CachedEntity({
-    builder: (command: { triggerIdentifier: string; environmentId: string }) =>
-      buildNotificationTemplateIdentifierKey({
-        _environmentId: command.environmentId,
-        templateIdentifier: command.triggerIdentifier,
-      }),
-    options: {
-      ttl: 120, // seconds
-    },
-  })
+  private buildCommand(
+    environmentId: string,
+    organizationId: string,
+    subscriberPayload: ISubscribersDefine,
+  ): CreateOrUpdateSubscriberCommand {
+    return CreateOrUpdateSubscriberCommand.create({
+      environmentId,
+      organizationId,
+      subscriberId: subscriberPayload?.subscriberId,
+      email: subscriberPayload?.email,
+      firstName: subscriberPayload?.firstName,
+      lastName: subscriberPayload?.lastName,
+      phone: subscriberPayload?.phone,
+      avatar: subscriberPayload?.avatar,
+      locale: subscriberPayload?.locale,
+      data: subscriberPayload?.data,
+      channels: subscriberPayload?.channels,
+    });
+  }
   private async getAndUpdateWorkflowById(command: {
     triggerIdentifier: string;
     environmentId: string;

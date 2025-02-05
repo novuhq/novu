@@ -21,4 +21,5 @@ export type FilterWithParam = {
 export type VariablePopoverProps = {
   variable?: string;
   onUpdate: (newValue: string) => void;
+  onEscapeKeyDown?: (event: KeyboardEvent) => void;
 };

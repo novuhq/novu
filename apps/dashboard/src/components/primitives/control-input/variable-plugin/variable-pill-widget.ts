@@ -1,5 +1,5 @@
+import { CSSProperties } from 'react';
 import { WidgetType } from '@uiw/react-codemirror';
-import { FILTERS_CLASS, VARIABLE_PILL_CLASS } from './';
 
 export class VariablePillWidget extends WidgetType {
   private clickHandler: (e: MouseEvent) => void;
@@ -25,11 +25,75 @@ export class VariablePillWidget extends WidgetType {
     };
   }
 
+  createBeforeStyles(): CSSProperties {
+    return {
+      width: 'calc(1em - 2px)',
+      minWidth: 'calc(1em - 2px)',
+      height: 'calc(1em - 2px)',
+      backgroundImage: `url("/images/code.svg")`,
+      backgroundRepeat: 'no-repeat',
+      backgroundPosition: 'center',
+      backgroundSize: 'contain',
+    };
+  }
+
+  createAfterStyles(): CSSProperties {
+    return {
+      width: '0.275em',
+      height: '0.275em',
+      backgroundColor: 'hsl(var(--feature-base))',
+      borderRadius: '100%',
+      marginLeft: '3px',
+    };
+  }
+
+  createPillStyles(): CSSProperties {
+    return {
+      backgroundColor: 'hsl(var(--bg-weak))',
+      color: 'hsl(var(--text-sub))',
+      border: '1px solid hsl(var(--stroke-soft))',
+      borderRadius: '0.5rem',
+      gap: '4px',
+      padding: '2px 6px',
+      margin: 0,
+      fontFamily: 'inherit',
+      display: 'inline-flex',
+      alignItems: 'center',
+      height: '100%',
+      lineHeight: 'inherit',
+      fontSize: 'inherit',
+      cursor: 'pointer',
+      position: 'relative',
+      verticalAlign: 'middle',
+      fontWeight: '500',
+      boxSizing: 'border-box',
+    };
+  }
+
+  createContentStyles(): CSSProperties {
+    return {
+      lineHeight: '1.2',
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      '-webkit-font-smoothing': 'antialiased',
+      '-moz-osx-font-smoothing': 'grayscale',
+    };
+  }
+
   toDOM() {
     const span = document.createElement('span');
-    const pillClass = `${VARIABLE_PILL_CLASS} ${this.hasFilters ? FILTERS_CLASS : ''}`;
+    const content = document.createElement('span');
+    content.textContent = this.variableName;
+    const before = document.createElement('span');
 
-    span.className = pillClass;
+    const pillStyles = this.createPillStyles();
+    Object.assign(span.style, pillStyles);
+
+    const beforeStyles = this.createBeforeStyles();
+    Object.assign(before.style, beforeStyles);
+
+    const contentStyles = this.createContentStyles();
+    Object.assign(content.style, contentStyles);
 
     // Stores the complete variable expression including any filters
     span.setAttribute('data-variable', this.fullVariableName);
@@ -40,7 +104,14 @@ export class VariablePillWidget extends WidgetType {
     // Contains the clean variable name shown to the user
     span.setAttribute('data-display', this.variableName);
 
-    span.textContent = this.variableName;
+    span.appendChild(before);
+    span.appendChild(content);
+    if (this.hasFilters) {
+      const after = document.createElement('span');
+      const afterStyles = this.createAfterStyles();
+      Object.assign(after.style, afterStyles);
+      span.appendChild(after);
+    }
 
     span.addEventListener('mousedown', this.clickHandler);
 

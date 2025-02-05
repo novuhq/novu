@@ -1,13 +1,13 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
-import { JobEntity, JobRepository, IDelayOrDigestJobResult, NotificationRepository } from '@novu/dal';
+import { IDelayOrDigestJobResult, JobEntity, JobRepository, NotificationRepository } from '@novu/dal';
 import {
+  DigestCreationResultEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
   IDigestBaseMetadata,
   IDigestRegularMetadata,
-  JobStatusEnum,
-  DigestCreationResultEnum,
   IDigestTimedMetadata,
+  JobStatusEnum,
 } from '@novu/shared';
 import {
   ApiException,

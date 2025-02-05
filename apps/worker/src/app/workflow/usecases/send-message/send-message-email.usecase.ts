@@ -5,7 +5,6 @@ import { addBreadcrumb } from '@sentry/node';
 
 import {
   MessageRepository,
-  NotificationStepEntity,
   SubscriberRepository,
   EnvironmentRepository,
   IntegrationEntity,
@@ -19,7 +18,6 @@ import {
   ExecutionDetailsStatusEnum,
   IAttachmentOptions,
   IEmailOptions,
-  LogCodeEnum,
   FeatureFlagsKeysEnum,
 } from '@novu/shared';
 import {
@@ -110,7 +108,7 @@ export class SendMessageEmail extends SendMessageBase {
     if (!step.template) throw new PlatformException('Email channel template not found');
 
     const { subscriber } = command.compileContext;
-    const email = command.payload.email || subscriber.email;
+    const email = command.overrides?.email?.toRecipient || subscriber.email;
 
     addBreadcrumb({
       message: 'Sending Email',
@@ -149,8 +147,8 @@ export class SendMessageEmail extends SendMessageBase {
     }
 
     const overrides: Record<string, any> = {
-      ...(command.overrides.email || {}),
-      ...(command.overrides[integration?.providerId] || {}),
+      ...(command.overrides?.email || {}),
+      ...(command.overrides?.[integration?.providerId] || {}),
     };
     const bridgeOutputs = command.bridgeData?.outputs;
 
