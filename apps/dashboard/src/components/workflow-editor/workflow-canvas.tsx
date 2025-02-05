@@ -1,4 +1,4 @@
-import { EnvironmentEnum, FeatureFlagsKeysEnum } from '@novu/shared';
+import { EnvironmentEnum, FeatureFlagsKeysEnum, WorkflowOriginEnum } from '@novu/shared';
 import {
   Background,
   BackgroundVariant,
@@ -66,8 +66,12 @@ const panOnDrag = [1, 2];
 // y distance = node height + space between nodes
 const Y_DISTANCE = NODE_HEIGHT + 50;
 
-const mapStepToNodeContent = (step: Step): string | undefined => {
+const mapStepToNodeContent = (step: Step, workflowOrigin: WorkflowOriginEnum): string | undefined => {
   const controlValues = step.controls.values;
+  const delayMessage =
+    workflowOrigin === WorkflowOriginEnum.EXTERNAL
+      ? 'Delay duration defined in code'
+      : `Delay for ${controlValues.amount} ${controlValues.unit}`;
 
   switch (step.type) {
     case StepTypeEnum.TRIGGER:
@@ -83,7 +87,7 @@ const mapStepToNodeContent = (step: Step): string | undefined => {
     case StepTypeEnum.CHAT:
       return 'Sends Chat message to your subscribers';
     case StepTypeEnum.DELAY:
-      return `Delay for ${controlValues.amount} ${controlValues.unit}`;
+      return delayMessage;
     case StepTypeEnum.DIGEST:
       return 'Batches events into one coherent message before delivery to the subscriber.';
     case StepTypeEnum.CUSTOM:
@@ -98,13 +102,15 @@ const mapStepToNode = ({
   previousPosition,
   step,
   readOnly,
+  workflowOrigin = WorkflowOriginEnum.NOVU_CLOUD,
 }: {
   addStepIndex: number;
   previousPosition: { x: number; y: number };
   step: Step;
   readOnly?: boolean;
+  workflowOrigin?: WorkflowOriginEnum;
 }): Node<NodeData, keyof typeof nodeTypes> => {
-  const content = mapStepToNodeContent(step);
+  const content = mapStepToNodeContent(step, workflowOrigin);
 
   const error = getFirstBodyErrorMessage(step.issues) || getFirstControlsErrorMessage(step.issues);
 
@@ -152,6 +158,7 @@ const WorkflowCanvasChild = ({ steps, readOnly }: { steps: Step[]; readOnly?: bo
         previousPosition,
         addStepIndex: index,
         readOnly,
+        workflowOrigin: currentWorkflow?.origin,
       });
       previousPosition = node.position;
       return node;
