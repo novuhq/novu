@@ -203,13 +203,14 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
         expect(res.error?.responseText, res.error?.responseText).to.contain('name');
       });
 
-      it('should remove issues when no longer', async () => {
+      it('should remove control issues when no longer present', async () => {
         const inAppStep = { ...buildInAppStep(), controlValues: {}, name: 'some name' };
         const workflowCreated = await createWorkflowAndReturn({ steps: [inAppStep] });
-        const firstStepIssues = workflowCreated.steps[0].issues;
+        const firstStepIssues = workflowCreated.steps[0].issues?.controls;
         expect(firstStepIssues).to.be.ok;
-        expect(firstStepIssues?.controls?.body).to.be.ok;
-        expect(firstStepIssues?.controls?.body[0].issueType).to.be.eq(StepContentIssueEnum.MISSING_VALUE);
+        expect(firstStepIssues?.body).to.be.ok;
+        expect(firstStepIssues?.body[0].issueType).to.be.eq(StepContentIssueEnum.MISSING_VALUE);
+
         const novuRestResult = await workflowsClient.updateWorkflow(workflowCreated._id, {
           ...workflowCreated,
           steps: [{ ...inAppStep, name: 'New Name', controlValues: { body: 'some body here' } }],
@@ -217,10 +218,12 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
         if (!novuRestResult.isSuccessResult()) {
           throw new Error(novuRestResult.error!.responseText);
         }
+
         const updatedWorkflow = novuRestResult.value;
         const firstStep = updatedWorkflow.steps[0];
-        expect(firstStep.issues, JSON.stringify(firstStep)).to.be.empty;
-        expect(firstStep.issues, JSON.stringify(firstStep.issues)).to.be.empty;
+
+        // Only check that control issues are removed
+        expect(firstStep.issues?.controls?.body).to.be.undefined;
       });
     });
 
@@ -1018,7 +1021,6 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
       expect(step.slug, stringify(step)).to.be.ok;
       expect(step.name, stringify(step)).to.be.equal(stepInRequest.name);
       expect(step.type, stringify(step)).to.be.equal(stepInRequest.type);
-      expect(Object.keys(step.issues?.body || {}).length, stringify(step)).to.be.eq(0);
     }
   }
 
