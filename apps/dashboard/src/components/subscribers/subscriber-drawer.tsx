@@ -8,9 +8,10 @@ const transitionSetting = { duration: 0.4 };
 
 type SubscriberDrawerProps = PropsWithChildren<{
   open: boolean;
+  onOpenChange?: (open: boolean) => void;
 }>;
 
-export function SubscriberDrawer({ children, open }: SubscriberDrawerProps) {
+export function SubscriberDrawer({ children, open, onOpenChange }: SubscriberDrawerProps) {
   const navigate = useNavigate();
 
   const handleCloseSheet = () => {
@@ -18,7 +19,7 @@ export function SubscriberDrawer({ children, open }: SubscriberDrawerProps) {
   };
 
   return (
-    <Sheet modal={false} open={open}>
+    <Sheet modal={false} open={open} onOpenChange={onOpenChange}>
       <motion.div
         initial={{
           opacity: 0,
