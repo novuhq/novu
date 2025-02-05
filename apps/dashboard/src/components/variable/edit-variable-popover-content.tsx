@@ -16,8 +16,8 @@ import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { RiAddFill, RiQuestionLine } from 'react-icons/ri';
-import { Separator } from '../../separator';
-import { Tooltip, TooltipContent, TooltipTrigger } from '../../tooltip';
+import { Separator } from '@/components/primitives/separator';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { FilterItem } from './components/filter-item';
 import { FilterPreview } from './components/filter-preview';
 import { ReorderFiltersGroup } from './components/reorder-filters-group';
@@ -27,7 +27,7 @@ import { useVariableParser } from './hooks/use-variable-parser';
 import type { Filters, FilterWithParam, VariablePopoverProps } from './types';
 import { formatLiquidVariable, getDefaultSampleValue } from './utils';
 
-export function VariablePopover({ variable, onUpdate }: VariablePopoverProps) {
+export function EditVariablePopoverContent({ variable, onUpdate, onEscapeKeyDown }: VariablePopoverProps) {
   const { parsedName, parsedDefaultValue, parsedFilters, originalVariable, parseRawInput } = useVariableParser(
     variable || ''
   );
@@ -105,7 +105,7 @@ export function VariablePopover({ variable, onUpdate }: VariablePopoverProps) {
   }, [name, defaultVal, filters, onUpdate, track]);
 
   return (
-    <PopoverContent className="w-72 p-0" onOpenAutoFocus={handlePopoverOpen}>
+    <PopoverContent className="w-72 p-0" onOpenAutoFocus={handlePopoverOpen} onEscapeKeyDown={onEscapeKeyDown}>
       <div className="bg-bg-weak">
         <div className="flex flex-row items-center justify-between space-y-0 p-1.5">
           <div className="flex items-center gap-1">

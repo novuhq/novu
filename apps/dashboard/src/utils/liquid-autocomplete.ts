@@ -1,4 +1,4 @@
-import { FILTERS } from '@/components/primitives/control-input/variable-popover/constants';
+import { FILTERS } from '@/components/variable/constants';
 import { LiquidVariable } from '@/utils/parseStepVariablesToLiquidVariables';
 import { Completion, CompletionContext, CompletionResult } from '@codemirror/autocomplete';
 import { EditorView } from '@uiw/react-codemirror';
