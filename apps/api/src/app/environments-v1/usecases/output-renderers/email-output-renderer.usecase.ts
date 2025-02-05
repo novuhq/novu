@@ -160,7 +160,7 @@ export class EmailOutputRendererUsecase {
     node: MailyJSONContent
   ): node is MailyJSONContent & { attrs: { [MailyAttrsEnum.EACH_KEY]: string } } {
     return !!(
-      node.type === MailyContentTypeEnum.REPEAT &&
+      (node.type === MailyContentTypeEnum.REPEAT || node.type === MailyContentTypeEnum.FOR) &&
       node.attrs &&
       node.attrs[MailyAttrsEnum.EACH_KEY] !== undefined &&
       typeof node.attrs[MailyAttrsEnum.EACH_KEY] === 'string'

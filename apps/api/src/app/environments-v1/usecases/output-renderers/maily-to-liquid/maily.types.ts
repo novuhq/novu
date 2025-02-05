@@ -1,6 +1,8 @@
 export enum MailyContentTypeEnum {
   VARIABLE = 'variable',
   REPEAT = 'repeat',
+  // IS DEPRECATED, but kept for backwards compatibility
+  FOR = 'for',
   BUTTON = 'button',
   IMAGE = 'image',
   LINK = 'link',
