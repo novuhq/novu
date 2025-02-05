@@ -345,8 +345,12 @@ export class SendMessagePush extends SendMessageBase {
 
       try {
         await this.sendProviderError(command.job, message._id, raw);
-      } catch (e) {
-        // Do nothing, as this throws error createExecutionDetailsError
+      } catch (err) {
+        Logger.error(
+          { jobId: command.jobId },
+          [`Error sending provider error for jobId ${command.jobId}`, err.message || err.toString()].join(' '),
+          LOG_CONTEXT
+        );
       }
 
       return { success: false, error: e };
