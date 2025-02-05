@@ -17,7 +17,7 @@ export function useFetchSubscriber({ subscriberId, options = {} }: Props) {
   const { currentEnvironment } = useEnvironment();
 
   const subscriberQuery = useQuery<SubscriberResponseDto>({
-    queryKey: [QueryKeys.fetchSubscriber, currentOrganization?._id, currentEnvironment?._id],
+    queryKey: [QueryKeys.fetchSubscriber, currentOrganization?._id, currentEnvironment?._id, subscriberId],
     queryFn: () => getSubscriber({ environment: currentEnvironment!, subscriberId }),
     enabled: !!currentOrganization,
     ...options,
