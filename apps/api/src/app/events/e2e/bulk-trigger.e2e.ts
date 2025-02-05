@@ -49,7 +49,7 @@ describe('Trigger bulk events - /v1/events/trigger/bulk (POST) #novu-v2', functi
       events: [
         {
           transactionId: '1111',
-          name: template.triggers[0].identifier,
+          workflowId: template.triggers[0].identifier,
           to: [subscriber.subscriberId],
           payload: {
             firstName: 'Testing of User Name',
@@ -58,7 +58,7 @@ describe('Trigger bulk events - /v1/events/trigger/bulk (POST) #novu-v2', functi
         },
         {
           transactionId: '2222',
-          name: template.triggers[0].identifier,
+          workflowId: template.triggers[0].identifier,
           to: [subscriber.subscriberId],
           payload: {
             firstName: 'Testing of User Name',
@@ -67,7 +67,7 @@ describe('Trigger bulk events - /v1/events/trigger/bulk (POST) #novu-v2', functi
         },
         {
           transactionId: '3333',
-          name: template.triggers[0].identifier,
+          workflowId: template.triggers[0].identifier,
           to: [subscriber.subscriberId],
           payload: {
             firstName: 'Testing of User Name',
@@ -103,7 +103,7 @@ describe('Trigger bulk events - /v1/events/trigger/bulk (POST) #novu-v2', functi
     await novuClient.triggerBulk({
       events: [
         {
-          name: template.triggers[0].identifier,
+          workflowId: template.triggers[0].identifier,
           to: [
             {
               subscriberId: subscriber.subscriberId,
@@ -115,7 +115,7 @@ describe('Trigger bulk events - /v1/events/trigger/bulk (POST) #novu-v2', functi
           },
         },
         {
-          name: secondTemplate.triggers[0].identifier,
+          workflowId: secondTemplate.triggers[0].identifier,
           to: [
             {
               subscriberId: secondSubscriber.subscriberId,
@@ -202,7 +202,7 @@ describe('Trigger bulk events - /v1/events/trigger/bulk (POST) #novu-v2', functi
   it('should throw an error when sending more than 100 events', async function () {
     const event: TriggerEventRequestDto = {
       transactionId: '2222',
-      name: template.triggers[0].identifier,
+      workflowId: template.triggers[0].identifier,
       to: [subscriber.subscriberId],
       payload: {
         firstName: 'Testing of User Name',
@@ -225,7 +225,7 @@ describe('Trigger bulk events - /v1/events/trigger/bulk (POST) #novu-v2', functi
       events: [
         {
           transactionId: '1111',
-          name: 'non-existing-trigger',
+          workflowId: 'non-existing-trigger',
           to: [subscriber.subscriberId],
           payload: {
             firstName: 'Testing of User Name',
@@ -234,7 +234,7 @@ describe('Trigger bulk events - /v1/events/trigger/bulk (POST) #novu-v2', functi
         },
         {
           transactionId: '2222',
-          name: template.triggers[0].identifier,
+          workflowId: template.triggers[0].identifier,
           to: [subscriber.subscriberId],
           payload: {
             firstName: 'Testing of User Name',
@@ -247,7 +247,7 @@ describe('Trigger bulk events - /v1/events/trigger/bulk (POST) #novu-v2', functi
             firstName: 'Testing of User Name',
             name: '',
           },
-          name: '',
+          workflowId: '',
           to: [],
         },
       ],

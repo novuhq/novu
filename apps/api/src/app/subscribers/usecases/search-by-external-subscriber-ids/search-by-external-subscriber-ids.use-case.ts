@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { IExternalSubscribersEntity, SubscriberEntity, SubscriberRepository } from '@novu/dal';
 import { SubscriberDto } from '@novu/shared';
 
@@ -25,7 +25,7 @@ export class SearchByExternalSubscriberIds {
   }
 
   private mapFromEntity(entity: SubscriberEntity): SubscriberDto {
-    const { _id, createdAt, updatedAt, ...rest } = entity;
+    const { _id, ...rest } = entity;
 
     return {
       ...rest,

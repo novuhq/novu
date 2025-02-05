@@ -1,8 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import {
   AnalyticsService,
-  GetSubscriberGlobalPreference,
-  GetSubscriberGlobalPreferenceCommand,
   GetSubscriberTemplatePreference,
   GetSubscriberTemplatePreferenceCommand,
   UpsertPreferences,
@@ -27,6 +25,10 @@ import { ApiException } from '../../../shared/exceptions/api.exception';
 import { AnalyticsEventsEnum } from '../../utils';
 import { InboxPreference } from '../../utils/types';
 import { UpdatePreferencesCommand } from './update-preferences.command';
+import {
+  GetSubscriberGlobalPreference,
+  GetSubscriberGlobalPreferenceCommand,
+} from '../../../subscribers/usecases/get-subscriber-global-preference';
 
 @Injectable()
 export class UpdatePreferences {

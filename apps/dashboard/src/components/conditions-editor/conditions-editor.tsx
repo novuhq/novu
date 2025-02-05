@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { type Field, QueryBuilder, RuleGroupType } from 'react-querybuilder';
+import { type Field, QueryBuilder, RuleGroupType, Translations } from 'react-querybuilder';
 import 'react-querybuilder/dist/query-builder.css';
 
 import { LiquidVariable } from '@/utils/parseStepVariablesToLiquidVariables';
@@ -23,7 +23,7 @@ const controlClassnames = {
   rule: ruleClassName,
 };
 
-const translations = {
+const translations: Partial<Translations> = {
   addRule: {
     label: 'Add condition',
     title: 'Add condition',
@@ -69,6 +69,7 @@ function InternalConditionsEditor({
       onQueryChange={onQueryChange}
       controlClassnames={controlClassnames}
       translations={translations}
+      accessibleDescriptionGenerator={() => ''}
     />
   );
 }

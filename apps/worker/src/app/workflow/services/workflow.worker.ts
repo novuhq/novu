@@ -5,7 +5,6 @@ import {
   storage,
   Store,
   TriggerEvent,
-  TriggerEventCommand,
   WorkflowWorkerService,
   WorkerOptions,
   WorkerProcessor,

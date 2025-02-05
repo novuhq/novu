@@ -211,6 +211,7 @@ jobs:
         with:
           targets: lint,build,test
           projects: ${{matrix.projectName}}
+          args: '--skip-nx-cache'
 
   validate_openapi:
     name: Validate OpenAPI

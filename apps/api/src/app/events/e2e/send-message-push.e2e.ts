@@ -159,7 +159,7 @@ describe('Trigger event - Send Push Notification - /v1/events/trigger (POST) #no
   });
   async function triggerEvent(template2) {
     await novuClient.trigger({
-      name: template2.triggers[0].identifier,
+      workflowId: template2.triggers[0].identifier,
       to: [{ subscriberId: session.subscriberId }],
       payload: {},
     });

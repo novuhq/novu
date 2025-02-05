@@ -1,6 +1,5 @@
 /* eslint-disable no-param-reassign */
 import { Injectable } from '@nestjs/common';
-import { z } from 'zod';
 import { JSONContent as MailyJSONContent } from '@maily-to/render';
 import { WrapMailyInLiquidCommand } from './wrap-maily-in-liquid.command';
 import {
@@ -31,7 +30,7 @@ import {
  * Output:
  * {
  *   type: "paragraph",
- *   attrs: { each: "{{ payload.comments }}" },
+ *   attrs: { each: "{{ payload.comments[0] }}" },
  *   content: [{
  *     type: "variable",
  *     text: "{{ payload.comments[0].name }}"
@@ -91,8 +90,8 @@ export class WrapMailyInLiquidUseCase {
 
       let processedValue = attrValue;
 
-      // add array index for attributes that belong to the for loop
-      if (parentForLoopKey && processedValue.startsWith(`${parentForLoopKey}`) && type !== MailyContentTypeEnum.FOR) {
+      // add special indicator for attributes that belong to the for loop and to the for loop itself
+      if (parentForLoopKey && processedValue.startsWith(`${parentForLoopKey}`)) {
         processedValue = processedValue.replace(`${parentForLoopKey}`, `${parentForLoopKey}[${MAILY_ITERABLE_MARK}]`);
       }
 

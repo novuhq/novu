@@ -209,7 +209,8 @@ export class EmailOutputRendererUsecase {
   }
 
   private async getIterableArray(iterablePath: string, variables: FullPayloadForRender): Promise<unknown[]> {
-    const iterableArrayString = await parseLiquid(iterablePath, variables);
+    const normalizedPath = iterablePath.replace(`[${MAILY_ITERABLE_MARK}]`, '');
+    const iterableArrayString = await parseLiquid(normalizedPath, variables);
 
     try {
       const parsedArray = JSON.parse(iterableArrayString.replace(/'/g, '"'));
@@ -246,12 +247,15 @@ export class EmailOutputRendererUsecase {
     });
   }
 
-  private stringToBoolean(value: unknown): boolean {
-    if (typeof value === 'string') {
-      return value.toLowerCase() === 'true';
-    }
+  private stringToBoolean(value: string): boolean {
+    const normalized = value.toLowerCase().trim();
+    if (normalized === 'false' || normalized === 'null' || normalized === 'undefined') return false;
 
-    return false;
+    try {
+      return Boolean(JSON.parse(normalized));
+    } catch {
+      return Boolean(normalized);
+    }
   }
 
   private isVariableNode(

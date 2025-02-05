@@ -35,8 +35,7 @@ export class PlainCardsUsecase {
     private userRepository: UserRepository
   ) {}
   async fetchCustomerDetails(command: PlainCardsCommand) {
-    const key = process.env.NOVU_REGION === 'eu-west-2' ? 'customer-details-eu' : 'customer-details-us';
-
+    const key = `customer-details-${process.env.NOVU_REGION}`;
     if (!command?.customer?.externalId) {
       return {
         data: {},
@@ -51,7 +50,7 @@ export class PlainCardsUsecase {
               },
               {
                 componentText: {
-                  text: 'This user is not yet registered on Novu',
+                  text: 'This user is not yet registered in this region',
                 },
               },
             ],
@@ -61,6 +60,29 @@ export class PlainCardsUsecase {
     }
 
     const organizations = await this.organizationRepository.findUserActiveOrganizations(command?.customer?.externalId);
+    if (!organizations) {
+      return {
+        data: {},
+        cards: [
+          {
+            key,
+            components: [
+              {
+                componentSpacer: {
+                  spacerSize: 'S',
+                },
+              },
+              {
+                componentText: {
+                  text: 'This user is not yet registered in this region',
+                },
+              },
+            ],
+          },
+        ],
+      };
+    }
+
     const sessions = await this.userRepository.findUserSessions(command?.customer?.externalId);
 
     return {

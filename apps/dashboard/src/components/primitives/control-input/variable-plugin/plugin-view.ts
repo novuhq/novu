@@ -1,6 +1,6 @@
 import { Decoration, DecorationSet, EditorView, Range } from '@uiw/react-codemirror';
 import { MutableRefObject } from 'react';
-import { VARIABLE_REGEX } from './';
+import { VARIABLE_REGEX_STRING } from './';
 import { isTypingVariable, parseVariable } from './utils';
 import { VariablePillWidget } from './variable-pill-widget';
 
@@ -39,8 +39,9 @@ export class VariablePluginView {
     const pos = view.state.selection.main.head;
     let match: RegExpExecArray | null = null;
 
+    const regex = new RegExp(VARIABLE_REGEX_STRING, 'g');
     // Iterate through all variable matches in the content and add the pills
-    while ((match = VARIABLE_REGEX.exec(content)) !== null) {
+    while ((match = regex.exec(content)) !== null) {
       const { fullLiquidExpression, name, start, end, filters } = parseVariable(match);
 
       // Skip creating pills for variables that are currently being edited

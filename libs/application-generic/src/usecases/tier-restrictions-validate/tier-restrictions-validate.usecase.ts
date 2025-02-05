@@ -1,10 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { parseExpression as parseCronExpression } from 'cron-parser';
 
+import { GetFeatureFlag, GetFeatureFlagCommand } from '../get-feature-flag';
+
 import {
   ApiServiceLevelEnum,
   DigestUnitEnum,
   StepTypeEnum,
+  FeatureFlagsKeysEnum,
 } from '@novu/shared';
 import { CommunityOrganizationRepository } from '@novu/dal';
 
@@ -30,6 +33,7 @@ export const MAX_DELAY_BUSINESS_TIER =
 export class TierRestrictionsValidateUsecase {
   constructor(
     private organizationRepository: CommunityOrganizationRepository,
+    private getFeatureFlag: GetFeatureFlag,
   ) {}
 
   @InstrumentUsecase()
@@ -37,6 +41,19 @@ export class TierRestrictionsValidateUsecase {
     command: TierRestrictionsValidateCommand,
   ): Promise<TierRestrictionsValidateResponse> {
     if (![StepTypeEnum.DIGEST, StepTypeEnum.DELAY].includes(command.stepType)) {
+      return [];
+    }
+
+    const isTierDurationRestrictionExcluded = await this.getFeatureFlag.execute(
+      GetFeatureFlagCommand.create({
+        userId: 'system',
+        environmentId: 'system',
+        organizationId: command.organizationId,
+        key: FeatureFlagsKeysEnum.IS_TIER_DURATION_RESTRICTION_EXCLUDED_ENABLED,
+      }),
+    );
+
+    if (isTierDurationRestrictionExcluded) {
       return [];
     }
 

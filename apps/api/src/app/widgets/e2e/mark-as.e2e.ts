@@ -32,9 +32,9 @@ describe('Mark as Seen - /widgets/messages/markAs (POST) #novu-v1', async () => 
       })
       .expect(201);
 
-    await novuClient.trigger({ name: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
 
-    await novuClient.trigger({ name: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
     await session.awaitRunningJobs(template._id);
     const { token } = body.data;
     const messages = await messageRepository.findBySubscriberChannel(

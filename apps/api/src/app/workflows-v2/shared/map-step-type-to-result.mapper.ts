@@ -16,12 +16,18 @@ export function computeResultSchema(stepType: StepTypeEnum, payloadSchema?: JSON
   return mapStepTypeToResult[stepType];
 }
 
-function buildDigestResult(payloadSchema?: JSONSchema) {
+function buildDigestResult(payloadSchema?: JSONSchema): JSONSchema {
   return {
     type: 'object',
     properties: {
       events: {
         type: 'array',
+        properties: {
+          // the length property is JS native property on arrays
+          length: {
+            type: 'number',
+          },
+        },
         items: {
           type: 'object',
           properties: {

@@ -1,8 +1,8 @@
-import { useSearchParams } from 'react-router-dom';
-import { useCallback, useMemo } from 'react';
-import { ChannelTypeEnum } from '@novu/shared';
 import { ActivityFilters } from '@/api/activity';
 import { ActivityFiltersData, ActivityUrlState } from '@/types/activity';
+import { ChannelTypeEnum } from '@novu/shared';
+import { useCallback, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
 const DEFAULT_DATE_RANGE = '30d';
 

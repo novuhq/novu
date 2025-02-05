@@ -228,7 +228,7 @@ export function QuestionnaireForm() {
 }
 
 function useSubmitQuestionnaire() {
-  const { currentUser, currentOrganization } = useAuth();
+  const { currentOrganization } = useAuth();
   const segment = useSegment();
   const track = useTelemetry();
   const navigate = useNavigate();
@@ -245,29 +245,19 @@ function useSubmitQuestionnaire() {
         },
       });
 
+      const anonymousId = await segment.getAnonymousId();
+
       await identifyUser({
-        jobTitle: data.jobTitle,
         pageUri: data.pageUri,
         pageName: data.pageName,
         hubspotContext: data.hubspotContext,
-        companySize: data.companySize,
-        organizationType: data.organizationType,
-      });
-
-      track(TelemetryEvent.CREATE_ORGANIZATION_FORM_SUBMITTED, {
-        location: 'web',
         jobTitle: data.jobTitle,
         companySize: data.companySize,
         organizationType: data.organizationType,
+        anonymousId,
       });
 
-      if (currentUser && currentOrganization) {
-        segment.identify(currentUser, {
-          organizationType: data.organizationType,
-          jobTitle: data.jobTitle,
-          companySize: data.companySize,
-        });
-
+      if (currentOrganization) {
         segment.group(
           {
             id: currentOrganization?._id,
@@ -280,6 +270,13 @@ function useSubmitQuestionnaire() {
           }
         );
       }
+
+      track(TelemetryEvent.CREATE_ORGANIZATION_FORM_SUBMITTED, {
+        location: 'web',
+        jobTitle: data.jobTitle,
+        companySize: data.companySize,
+        organizationType: data.organizationType,
+      });
     },
     onSuccess: () => {
       navigate(ROUTES.USECASE_SELECT);

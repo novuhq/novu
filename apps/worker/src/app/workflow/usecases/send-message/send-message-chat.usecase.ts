@@ -351,8 +351,7 @@ export class SendMessageChat extends SendMessageBase {
         'warning',
         'chat_missing_integration_error',
         'Subscriber does not have an active chat integration',
-        command,
-        LogCodeEnum.MISSING_CHAT_INTEGRATION
+        command
       );
 
       await this.executionLogRoute.execute(
@@ -422,7 +421,6 @@ export class SendMessageChat extends SendMessageBase {
         'unexpected_chat_error',
         e.message || e.name || 'Un-expect CHAT provider error',
         command,
-        LogCodeEnum.CHAT_ERROR,
         e
       );
 

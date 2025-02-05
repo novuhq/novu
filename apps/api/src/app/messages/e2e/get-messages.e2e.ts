@@ -23,7 +23,7 @@ describe('Get Message - /messages (GET) #novu-v2', function () {
   it('should fetch existing messages', async function () {
     const subscriber2 = await subscriberService.createSubscriber();
     await novuClient.trigger({
-      name: template.triggers[0].identifier,
+      workflowId: template.triggers[0].identifier,
       to: [
         { subscriberId: subscriber.subscriberId, email: 'gg@ff.com' },
         { subscriberId: subscriber2.subscriberId, email: 'john@doe.com' },
@@ -78,7 +78,7 @@ describe('Get Message - /messages (GET) #novu-v2', function () {
     transactionId: string
   ) {
     return await novuClient.trigger({
-      name: templateIdentifier,
+      workflowId: templateIdentifier,
       to: [{ subscriberId, email: 'gg@ff.com' }],
       payload: {},
       transactionId,

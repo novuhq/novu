@@ -1,16 +1,14 @@
-import {
-  AnalyticsService,
-  GetSubscriberGlobalPreference,
-  GetSubscriberTemplatePreference,
-  GetSubscriberGlobalPreferenceCommand,
-  UpsertPreferences,
-} from '@novu/application-generic';
+import { AnalyticsService, GetSubscriberTemplatePreference, UpsertPreferences } from '@novu/application-generic';
 import { NotificationTemplateRepository, SubscriberRepository } from '@novu/dal';
 import { PreferenceLevelEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { AnalyticsEventsEnum } from '../../utils';
 import { UpdatePreferences } from './update-preferences.usecase';
+import {
+  GetSubscriberGlobalPreference,
+  GetSubscriberGlobalPreferenceCommand,
+} from '../../../subscribers/usecases/get-subscriber-global-preference';
 
 const mockedSubscriber: any = {
   _id: '6447aff3d89122e250412c29',

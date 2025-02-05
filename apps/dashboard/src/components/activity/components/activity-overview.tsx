@@ -37,7 +37,12 @@ export function ActivityOverview({ activity }: ActivityOverviewProps) {
 
         <OverviewItem label="Transaction ID" value={activity.transactionId} isCopyable />
 
-        <OverviewItem label="Subscriber ID" value={activity.subscriber?.subscriberId ?? ''} isCopyable />
+        <OverviewItem
+          label="Subscriber ID"
+          isDeleted={!activity.subscriber}
+          value={(activity.subscriber?.subscriberId || activity._subscriberId) ?? ''}
+          isCopyable
+        />
 
         <OverviewItem label="Triggered at" value={format(new Date(activity.createdAt), 'MMM d yyyy, HH:mm:ss')}>
           <TimeDisplayHoverCard

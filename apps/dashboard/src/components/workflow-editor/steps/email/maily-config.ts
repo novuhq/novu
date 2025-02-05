@@ -4,7 +4,7 @@ import {
   button,
   columns,
   divider,
-  forLoop,
+  repeat,
   hardBreak,
   heading1,
   heading2,
@@ -37,8 +37,5 @@ export const DEFAULT_EDITOR_BLOCKS = [
   button,
   hardBreak,
   blockquote,
+  repeat,
 ];
-
-export function getEditorBlocks(isForBlockEnabled: boolean) {
-  return [...DEFAULT_EDITOR_BLOCKS, ...(isForBlockEnabled ? [forLoop] : [])];
-}

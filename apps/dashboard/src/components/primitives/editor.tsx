@@ -17,6 +17,7 @@ const variants = cva('h-full w-full flex-1 [&_.cm-focused]:outline-none', {
     size: {
       md: 'text-base',
       sm: 'text-xs',
+      '2xs': 'text-xs',
     },
   },
   defaultVariants: {
@@ -123,6 +124,9 @@ const baseTheme = (options: { multiline?: boolean }) =>
       borderRight: 'none',
       color: 'hsl(var(--foreground-400))',
     },
+    '.cm-placeholder': {
+      fontWeight: 'normal',
+    },
   });
 
 export type EditorProps = {
@@ -133,7 +137,7 @@ export type EditorProps = {
   height?: string;
   onChange?: (value: string) => void;
   fontFamily?: 'inherit';
-  size?: 'sm' | 'md';
+  size?: 'sm' | 'md' | '2xs';
 } & ReactCodeMirrorProps;
 
 export const Editor = React.forwardRef<ReactCodeMirrorRef, EditorProps>(
@@ -211,9 +215,6 @@ export const Editor = React.forwardRef<ReactCodeMirrorRef, EditorProps>(
         value={value}
         onChange={onChangeCallback}
         theme={theme}
-        onBlur={() => {
-          console.log('onBlur');
-        }}
         {...restCodeMirrorProps}
       />
     );

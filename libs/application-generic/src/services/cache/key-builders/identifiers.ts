@@ -25,6 +25,7 @@ export enum CacheKeyPrefixEnum {
   NOTIFICATION_TEMPLATE = 'notification_template',
   SERVICE_CONFIG = 'service_config',
   SUBSCRIBER = 'subscriber',
+  SUBSCRIBER_DEDUP = 'subscriber_deduplication',
   SUBSCRIBER_TOPICS = 'subscriber_topics',
   SUBSCRIPTION = 'subscription',
   USAGE = 'usage',

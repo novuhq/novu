@@ -42,7 +42,7 @@ export function ActivityFeed() {
         />
         <div className="relative flex h-[calc(100vh-88px)]">
           <ResizablePanelGroup direction="horizontal">
-            <ResizablePanel defaultSize={70} minSize={40}>
+            <ResizablePanel defaultSize={70} minSize={50}>
               <ActivityTable
                 selectedActivityId={activityItemId}
                 onActivitySelect={handleActivitySelect}
@@ -56,7 +56,7 @@ export function ActivityFeed() {
               {activityItemId && (
                 <>
                   <ResizableHandle />
-                  <ResizablePanel defaultSize={30} minSize={30} maxSize={50}>
+                  <ResizablePanel defaultSize={35} minSize={35} maxSize={50}>
                     <motion.div
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}

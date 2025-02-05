@@ -13,7 +13,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common/decorators';
 import { ApiTags } from '@nestjs/swagger';
-import { DeleteWorkflowCommand, DeleteWorkflowUseCase, UserAuthGuard, UserSession } from '@novu/application-generic';
+import { DeleteWorkflowCommand, DeleteWorkflowUseCase, UserSession } from '@novu/application-generic';
 import {
   CreateWorkflowDto,
   DirectionEnum,
@@ -54,6 +54,7 @@ import { SyncToEnvironmentCommand } from './usecases/sync-to-environment/sync-to
 import { SyncToEnvironmentUseCase } from './usecases/sync-to-environment/sync-to-environment.usecase';
 import { UpsertWorkflowCommand } from './usecases/upsert-workflow/upsert-workflow.command';
 import { UpsertWorkflowUseCase } from './usecases/upsert-workflow/upsert-workflow.usecase';
+import { SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 
 @ApiCommonResponses()
 @Controller({ path: `/workflows`, version: '2' })
@@ -75,7 +76,6 @@ export class WorkflowController {
   ) {}
 
   @Post('')
-  @UseGuards(UserAuthGuard)
   async create(
     @UserSession(ParseSlugEnvironmentIdPipe) user: UserSessionData,
     @Body() createWorkflowDto: CreateWorkflowDto
@@ -89,7 +89,6 @@ export class WorkflowController {
   }
 
   @Put(':workflowId/sync')
-  @UseGuards(UserAuthGuard)
   async sync(
     @UserSession() user: UserSessionData,
     @Param('workflowId', ParseSlugIdPipe) workflowIdOrInternalId: string,
@@ -105,7 +104,6 @@ export class WorkflowController {
   }
 
   @Put(':workflowId')
-  @UseGuards(UserAuthGuard)
   async update(
     @UserSession(ParseSlugEnvironmentIdPipe) user: UserSessionData,
     @Param('workflowId', ParseSlugIdPipe) workflowIdOrInternalId: string,
@@ -121,7 +119,6 @@ export class WorkflowController {
   }
 
   @Get(':workflowId')
-  @UseGuards(UserAuthGuard)
   async getWorkflow(
     @UserSession(ParseSlugEnvironmentIdPipe) user: UserSessionData,
     @Param('workflowId', ParseSlugIdPipe) workflowIdOrInternalId: string,
@@ -155,7 +152,6 @@ export class WorkflowController {
   }
 
   @Get('')
-  @UseGuards(UserAuthGuard)
   async searchWorkflows(
     @UserSession(ParseSlugEnvironmentIdPipe) user: UserSessionData,
     @Query() query: GetListQueryParams
@@ -173,7 +169,6 @@ export class WorkflowController {
   }
 
   @Post('/:workflowId/step/:stepId/preview')
-  @UseGuards(UserAuthGuard)
   async generatePreview(
     @UserSession(ParseSlugEnvironmentIdPipe) user: UserSessionData,
     @Param('workflowId', ParseSlugIdPipe) workflowIdOrInternalId: string,
@@ -191,7 +186,7 @@ export class WorkflowController {
   }
 
   @Get('/:workflowId/steps/:stepId')
-  @UseGuards(UserAuthGuard)
+  @SdkMethodName('getStepData')
   async getWorkflowStepData(
     @UserSession(ParseSlugEnvironmentIdPipe) user: UserSessionData,
     @Param('workflowId', ParseSlugIdPipe) workflowIdOrInternalId: string,
@@ -203,7 +198,6 @@ export class WorkflowController {
   }
 
   @Patch('/:workflowId/steps/:stepId')
-  @UseGuards(UserAuthGuard)
   async patchWorkflowStepData(
     @UserSession(ParseSlugEnvironmentIdPipe) user: UserSessionData,
     @Param('workflowId', ParseSlugIdPipe) workflowIdOrInternalId: string,
@@ -221,7 +215,6 @@ export class WorkflowController {
   }
 
   @Patch('/:workflowId')
-  @UseGuards(UserAuthGuard)
   async patchWorkflow(
     @UserSession(ParseSlugEnvironmentIdPipe) user: UserSessionData,
     @Param('workflowId', ParseSlugIdPipe) workflowIdOrInternalId: string,
@@ -233,7 +226,7 @@ export class WorkflowController {
   }
 
   @Get('/:workflowId/test-data')
-  @UseGuards(UserAuthGuard)
+  @SdkMethodName('getWorkflowTestData')
   async getWorkflowTestData(
     @UserSession() user: UserSessionData,
     @Param('workflowId', ParseSlugIdPipe) workflowIdOrInternalId: string

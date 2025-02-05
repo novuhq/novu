@@ -108,7 +108,7 @@ const initializeCustomOperators = (): void => {
   });
 
   jsonLogic.add_operation(
-    'beginsWith',
+    'startsWith',
     createStringOperator((input, value) => input.startsWith(value))
   );
 

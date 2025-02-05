@@ -19,10 +19,12 @@ import {
   ActorTypeEnum,
   ChannelTypeEnum,
   ChatProviderIdEnum,
+  CreateWorkflowDto,
   DelayTypeEnum,
   DigestUnitEnum,
   EmailBlockTypeEnum,
   EmailProviderIdEnum,
+  ExecutionDetailsStatusEnum,
   FieldLogicalOperatorEnum,
   FieldOperatorEnum,
   FilterPartTypeEnum,
@@ -33,10 +35,8 @@ import {
   StepTypeEnum,
   SystemAvatarIconEnum,
   TemplateVariableTypeEnum,
-  CreateWorkflowDto,
   WorkflowCreationSourceEnum,
   WorkflowResponseDto,
-  ExecutionDetailsStatusEnum,
 } from '@novu/shared';
 import { EmailEventStatusEnum } from '@novu/stateless';
 import { DetailEnum } from '@novu/application-generic';
@@ -127,7 +127,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       });
 
       await novuClient.trigger({
-        name: template.triggers[0].identifier,
+        workflowId: template.triggers[0].identifier,
         to: [subscriber.subscriberId],
         payload: {
           customVar: 'Testing of User Name',
@@ -191,7 +191,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       });
 
       await novuClient.trigger({
-        name: template.triggers[0].identifier,
+        workflowId: template.triggers[0].identifier,
         to: [subscriber.subscriberId],
         payload: {
           customVar: 'Testing of User Name',
@@ -263,7 +263,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       });
 
       await novuClient.trigger({
-        name: template.triggers[0].identifier,
+        workflowId: template.triggers[0].identifier,
         to: [subscriber.subscriberId],
         payload: {
           customVar: 'Testing of User Name',
@@ -383,7 +383,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       });
 
       await novuClient.trigger({
-        name: template.triggers[0].identifier,
+        workflowId: template.triggers[0].identifier,
         to: [subscriber.subscriberId],
         payload: {
           customVar: 'Testing of User Name',
@@ -457,7 +457,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       });
 
       await novuClient.trigger({
-        name: template.triggers[0].identifier,
+        workflowId: template.triggers[0].identifier,
         to: [subscriber.subscriberId],
         payload: {
           customVar: 'Testing of User Name',
@@ -520,14 +520,14 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       });
 
       await novuClient.trigger({
-        name: template.triggers[0].identifier,
+        workflowId: template.triggers[0].identifier,
         to: [subscriber.subscriberId],
         payload: {
           exclude: false,
         },
       });
       await novuClient.trigger({
-        name: template.triggers[0].identifier,
+        workflowId: template.triggers[0].identifier,
         to: [subscriber.subscriberId],
         payload: {
           exclude: false,
@@ -591,14 +591,14 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       });
 
       await novuClient.trigger({
-        name: template.triggers[0].identifier,
+        workflowId: template.triggers[0].identifier,
         to: [subscriber.subscriberId],
         payload: {
           exclude: false,
         },
       });
       await novuClient.trigger({
-        name: template.triggers[0].identifier,
+        workflowId: template.triggers[0].identifier,
         to: [subscriber.subscriberId],
         payload: {},
       });
@@ -670,7 +670,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       });
 
       await novuClient.trigger({
-        name: template.triggers[0].identifier,
+        workflowId: template.triggers[0].identifier,
         to: [subscriber.subscriberId],
         payload: {
           customVar: 'Testing of User Name',
@@ -823,7 +823,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
 
     it('should trigger an event successfully', async function () {
       const response = await novuClient.trigger({
-        name: template.triggers[0].identifier,
+        workflowId: template.triggers[0].identifier,
         to: [subscriber.subscriberId],
         payload: {
           firstName: 'Testing of User Name',
@@ -840,7 +840,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
 
     it('should store jobs & message provider id successfully', async function () {
       await novuClient.trigger({
-        name: template.triggers[0].identifier,
+        workflowId: template.triggers[0].identifier,
         to: [subscriber.subscriberId],
       });
 
@@ -882,7 +882,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
         data: { custom1: 'custom value1', custom2: 'custom value2' },
       };
       await novuClient.trigger({
-        name: template.triggers[0].identifier,
+        workflowId: template.triggers[0].identifier,
         to: [payload],
         payload: {
           urlVar: '/test/url/path',
@@ -912,7 +912,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       };
 
       await novuClient.trigger({
-        name: template.triggers[0].identifier,
+        workflowId: template.triggers[0].identifier,
         to: [
           {
             ...payload,
@@ -933,7 +933,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       expect(createdSubscriber?.locale).to.equal(payload.locale);
 
       await novuClient.trigger({
-        name: template.triggers[0].identifier,
+        workflowId: template.triggers[0].identifier,
         to: [
           {
             ...payload,
@@ -976,7 +976,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
         };
 
         await novuClient.trigger({
-          name: template.triggers[0].identifier,
+          workflowId: template.triggers[0].identifier,
           to: [payload],
           payload: {
             urlVar: '/test/url/path',
@@ -1025,7 +1025,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
         };
 
         await novuClient.trigger({
-          name: template.triggers[0].identifier,
+          workflowId: template.triggers[0].identifier,
           to: [
             {
               ...payload,
@@ -1043,7 +1043,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
         expect(createdSubscriber?.channels?.length).to.equal(1);
 
         await novuClient.trigger({
-          name: template.triggers[0].identifier,
+          workflowId: template.triggers[0].identifier,
           to: [
             {
               ...payload,
@@ -1086,7 +1086,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       };
 
       await novuClient.trigger({
-        name: template.triggers[0].identifier,
+        workflowId: template.triggers[0].identifier,
         to: [
           {
             ...payload,
@@ -1107,7 +1107,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       expect(createdSubscriber?.locale).to.equal(payload.locale);
 
       await novuClient.trigger({
-        name: template.triggers[0].identifier,
+        workflowId: template.triggers[0].identifier,
         to: [
           {
             ...payload,
@@ -1135,16 +1135,16 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       const transactionId = SubscriberRepository.createObjectId();
 
       await novuClient.trigger({
-        name: template.triggers[0].identifier,
+        workflowId: template.triggers[0].identifier,
         transactionId,
         to: [
           { subscriberId: subscriber.subscriberId, email: 'gg@ff.com' },
           { subscriberId, email: 'gg@ff.com' },
         ],
-        payload: {
-          email: 'new-test-email@gmail.com',
-          firstName: 'Testing of User Name',
-          urlVar: '/test/url/path',
+        overrides: {
+          email: {
+            toRecipient: 'new-test-email@gmail.com',
+          },
         },
       });
 
@@ -1183,7 +1183,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
 
     it('should generate message and notification based on event', async function () {
       await novuClient.trigger({
-        name: template.triggers[0].identifier,
+        workflowId: template.triggers[0].identifier,
         to: [
           {
             subscriberId: subscriber.subscriberId,
@@ -1250,7 +1250,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       const templateName = template.triggers[0].identifier;
 
       const response = await novuClient.trigger({
-        name: templateName,
+        workflowId: templateName,
         to: [
           {
             subscriberId: subscriber.subscriberId,
@@ -1313,7 +1313,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       });
 
       await novuClient.trigger({
-        name: template.triggers[0].identifier,
+        workflowId: template.triggers[0].identifier,
         to: [subscriber.subscriberId],
         payload: {
           customVar: 'Testing of User Name',
@@ -1344,7 +1344,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       });
 
       await novuClient.trigger({
-        name: template.triggers[0].identifier,
+        workflowId: template.triggers[0].identifier,
         to: [{ subscriberId: subscriber.subscriberId }, { subscriberId, phone: '+972541111111' }],
         payload: {
           organizationName: 'Testing of Organization Name',
@@ -1382,7 +1382,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
         ],
       });
       await novuClient.trigger({
-        name: template.triggers[0].identifier,
+        workflowId: template.triggers[0].identifier,
         to: [subscriber.subscriberId],
         payload: {
           phone: '+972541111111',
@@ -1901,7 +1901,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       });
 
       const response = await novuClient.trigger({
-        name: template.triggers[0].identifier,
+        workflowId: template.triggers[0].identifier,
         to: [subscriber.subscriberId],
         payload: {
           myUser: {
@@ -1934,7 +1934,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       });
 
       await novuClient.trigger({
-        name: template.triggers[0].identifier,
+        workflowId: template.triggers[0].identifier,
         to: [subscriber.subscriberId],
         payload: {
           myUser: {
@@ -2060,7 +2060,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       });
 
       await novuClient.trigger({
-        name: template.triggers[0].identifier,
+        workflowId: template.triggers[0].identifier,
         to: [subscriber.subscriberId],
         payload: {
           firstName: 'Testing of User Name',
@@ -2125,7 +2125,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
        */
 
       await novuClient.trigger({
-        name: template.triggers[0].identifier,
+        workflowId: template.triggers[0].identifier,
         to: [subscriber.subscriberId],
         payload: {},
       });
@@ -2149,7 +2149,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
        */
 
       await novuClient.trigger({
-        name: template.triggers[0].identifier,
+        workflowId: template.triggers[0].identifier,
         to: [subscriber.subscriberId],
         payload: {},
       });
@@ -2205,7 +2205,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       // const axiosPostStub = sinon.stub(axios, 'post').throws(new Error('Users remote error')));
 
       await novuClient.trigger({
-        name: template.triggers[0].identifier,
+        workflowId: template.triggers[0].identifier,
         to: [subscriber.subscriberId],
         payload: {},
       });
@@ -2272,7 +2272,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
        */
 
       await novuClient.trigger({
-        name: template.triggers[0].identifier,
+        workflowId: template.triggers[0].identifier,
         to: [subscriber.subscriberId],
         payload: {},
       });
@@ -2304,7 +2304,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
        */
 
       await novuClient.trigger({
-        name: template.triggers[0].identifier,
+        workflowId: template.triggers[0].identifier,
         to: [subscriber.subscriberId],
         payload: {},
       });
@@ -2394,7 +2394,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       });
 
       await novuClient.trigger({
-        name: templateWithVariants.triggers[0].identifier,
+        workflowId: templateWithVariants.triggers[0].identifier,
         to: [subscriber.subscriberId],
         payload: {},
         tenant: { identifier: tenant.identifier },
@@ -2409,6 +2409,30 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
 
       expect(messages.length).to.equal(1);
       expect(messages[0].subject).to.equal('Better Variant subject');
+    });
+
+    describe('Post Mortem', function () {
+      // Repeat the test 3 times
+
+      it(`should not create multiple subscribers when multiple triggers are made
+         with the same not created subscribers `, async () => {
+        template = await createSimpleWorkflow(session);
+        for (let i = 0; i < 3; i += 1) {
+          const subscriberId = `not-created-twice-subscriber${i}`;
+          await Promise.all([
+            simpleTrigger(novuClient, template, subscriberId),
+            simpleTrigger(novuClient, template, subscriberId),
+          ]);
+          await session.awaitRunningJobs(template._id);
+
+          const subscribers = await subscriberRepository.find({
+            _environmentId: session.environment._id,
+            subscriberId,
+          });
+
+          expect(subscribers.length).to.equal(1);
+        }
+      });
     });
     describe('filters logic', () => {
       beforeEach(async () => {
@@ -2478,7 +2502,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
         });
 
         await novuClient.trigger({
-          name: template.triggers[0].identifier,
+          workflowId: template.triggers[0].identifier,
           to: [subscriber.subscriberId],
           payload: {
             firstName: 'Testing of User Name',
@@ -2534,7 +2558,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
         });
 
         await novuClient.trigger({
-          name: template.triggers[0].identifier,
+          workflowId: template.triggers[0].identifier,
           to: [subscriber.subscriberId],
           payload: {
             firstName: 'Testing of User Name',
@@ -2593,7 +2617,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
         });
 
         await novuClient.trigger({
-          name: templateWithVariants.triggers[0].identifier,
+          workflowId: templateWithVariants.triggers[0].identifier,
           to: [subscriber.subscriberId],
           payload: { count: 5 },
           tenant: { identifier: tenant.identifier },
@@ -2609,7 +2633,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
         expect(messages.length).to.equal(0);
 
         await novuClient.trigger({
-          name: templateWithVariants.triggers[0].identifier,
+          workflowId: templateWithVariants.triggers[0].identifier,
           to: [subscriber.subscriberId],
           payload: { count: 1 },
           tenant: { identifier: tenant.identifier },
@@ -2698,7 +2722,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
           });
 
           await novuClient.trigger({
-            name: template.triggers[0].identifier,
+            workflowId: template.triggers[0].identifier,
             to: [subscriber.subscriberId],
             payload: {},
           });
@@ -2736,7 +2760,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
           });
 
           await novuClient.trigger({
-            name: template.triggers[0].identifier,
+            workflowId: template.triggers[0].identifier,
             to: [subscriber.subscriberId],
             payload: {},
           });
@@ -2776,7 +2800,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
           });
 
           await novuClient.trigger({
-            name: template.triggers[0].identifier,
+            workflowId: template.triggers[0].identifier,
             to: [subscriber.subscriberId],
             payload: {},
             actor: actor.subscriberId,
@@ -2839,7 +2863,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
           });
 
           await novuClient.trigger({
-            name: template.triggers[0].identifier,
+            workflowId: template.triggers[0].identifier,
             to: [subscriber.subscriberId],
             payload: {
               customVar: 'Testing of User Name',
@@ -2923,7 +2947,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
           });
 
           await novuClient.trigger({
-            name: template.triggers[0].identifier,
+            workflowId: template.triggers[0].identifier,
             to: [subscriber.subscriberId],
             payload: {
               customVar: 'Testing of User Name',
@@ -2993,7 +3017,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
           }
 
           const triggerResponse = await novuClient.trigger({
-            name: workflow.triggers[0].identifier,
+            workflowId: workflow.triggers[0].identifier,
             to: [subscriberOverride],
             tenant: tenant.identifier,
             payload: {
@@ -3020,7 +3044,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
           );
 
           const triggerResponse2 = await novuClient.trigger({
-            name: workflow.triggers[0].identifier,
+            workflowId: workflow.triggers[0].identifier,
             to: [subscriberOverride],
             tenant: tenant.identifier,
             payload: {
@@ -3062,7 +3086,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
           }
 
           const triggerResponse = await novuClient.trigger({
-            name: workflow.triggers[0].identifier,
+            workflowId: workflow.triggers[0].identifier,
             to: [subscriberOverride],
             tenant: tenant.identifier,
             payload: {
@@ -3089,7 +3113,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
           );
 
           const triggerResponse2 = await novuClient.trigger({
-            name: workflow.triggers[0].identifier,
+            workflowId: workflow.triggers[0].identifier,
             to: [subscriberOverride],
             tenant: tenant.identifier,
             payload: {
@@ -3131,7 +3155,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
             throw new Error('Tenant not found');
           }
           const triggerResponse = await novuClient.trigger({
-            name: workflow.triggers[0].identifier,
+            workflowId: workflow.triggers[0].identifier,
             to: [subscriberOverride],
             tenant: tenant.identifier,
             payload: {
@@ -3182,7 +3206,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
           }
 
           const triggerResponse = await novuClient.trigger({
-            name: workflow.triggers[0].identifier,
+            workflowId: workflow.triggers[0].identifier,
             to: [subscriberOverride],
             tenant: tenant.identifier,
             payload: {
@@ -3216,7 +3240,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
     actor?: string
   ): Promise<TriggerEventResponseDto> {
     const request = {
-      name: templateInner.triggers[0].identifier,
+      workflowId: templateInner.triggers[0].identifier,
       to: [{ subscriberId: newSubscriberIdInAppNotification, lastName: 'Smith', email: 'test@email.novu' }],
       payload: {
         organizationName: 'Umbrella Corp',
@@ -3238,10 +3262,10 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       });
     });
 
-    it('should skip step based on skip', async function () {
+    it('should execute step based on conditions', async function () {
       const workflowBody: CreateWorkflowDto = {
-        name: 'Test Skip Workflow',
-        workflowId: 'test-skip-workflow',
+        name: 'Test Step Conditions Workflow',
+        workflowId: 'test-step-conditions-workflow',
         __source: WorkflowCreationSourceEnum.DASHBOARD,
         steps: [
           {
@@ -3250,7 +3274,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
             controlValues: {
               body: 'Hello {{subscriber.lastName}}, Welcome!',
               skip: {
-                '==': [{ var: 'payload.shouldSkip' }, true],
+                '==': [{ var: 'payload.shouldExecute' }, true],
               },
             },
           },
@@ -3262,10 +3286,10 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       const workflow: WorkflowResponseDto = response.body.data;
 
       await novuClient.trigger({
-        name: workflow.workflowId,
+        workflowId: workflow.workflowId,
         to: [subscriber.subscriberId],
         payload: {
-          shouldSkip: true,
+          shouldExecute: false,
         },
       });
       await session.awaitRunningJobs(workflow._id);
@@ -3276,10 +3300,10 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       expect(skippedMessages.length).to.equal(0);
 
       await novuClient.trigger({
-        name: workflow.workflowId,
+        workflowId: workflow.workflowId,
         to: [subscriber.subscriberId],
         payload: {
-          shouldSkip: false,
+          shouldExecute: true,
         },
       });
       await session.awaitRunningJobs(workflow._id);
@@ -3324,7 +3348,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       });
 
       const triggerResponse = await novuClient.trigger({
-        name: workflow.workflowId,
+        workflowId: workflow.workflowId,
         to: [subscriber.subscriberId],
         payload: {
           firstName: subscriber.firstName,
@@ -3354,10 +3378,10 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
     });
   });
 
-  it('should handle complex skip logic with subscriber data', async function () {
+  it('should handle complex conditions logic with subscriber data', async function () {
     const workflowBody: CreateWorkflowDto = {
-      name: 'Test Complex Skip Logic',
-      workflowId: 'test-complex-skip-workflow',
+      name: 'Test Complex Conditions Logic',
+      workflowId: 'test-complex-conditions-workflow',
       __source: WorkflowCreationSourceEnum.DASHBOARD,
       steps: [
         {
@@ -3390,7 +3414,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
     expect(response.status).to.equal(201);
     const workflow: WorkflowResponseDto = response.body.data;
 
-    // Should skip - matches all conditions
+    // Should execute step - matches all conditions
     subscriber = await subscriberService.createSubscriber({
       firstName: 'John',
       lastName: 'Doe',
@@ -3398,20 +3422,20 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
     });
 
     await novuClient.trigger({
-      name: workflow.workflowId,
+      workflowId: workflow.workflowId,
       to: [subscriber.subscriberId],
       payload: {
         userScore: 150,
       },
     });
     await session.awaitRunningJobs(workflow._id);
-    const skippedMessages = await messageRepository.find({
+    const messages = await messageRepository.find({
       _environmentId: session.environment._id,
       _subscriberId: subscriber._id,
     });
-    expect(skippedMessages.length).to.equal(0);
+    expect(messages.length).to.equal(1);
 
-    // Should not skip - doesn't match lastName condition
+    // Should not execute step - doesn't match lastName condition
     subscriber = await subscriberService.createSubscriber({
       firstName: 'John',
       lastName: 'Smith',
@@ -3419,20 +3443,20 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
     });
 
     await novuClient.trigger({
-      name: workflow.workflowId,
+      workflowId: workflow.workflowId,
       to: [subscriber.subscriberId],
       payload: {
         userScore: 150,
       },
     });
     await session.awaitRunningJobs(workflow._id);
-    const notSkippedMessages1 = await messageRepository.find({
+    const skippedMessages1 = await messageRepository.find({
       _environmentId: session.environment._id,
       _subscriberId: subscriber._id,
     });
-    expect(notSkippedMessages1.length).to.equal(1);
+    expect(skippedMessages1.length).to.equal(0);
 
-    // Should not skip - doesn't match score condition
+    // Should not execute step - doesn't match score condition
     subscriber = await subscriberService.createSubscriber({
       firstName: 'John',
       lastName: 'Doe',
@@ -3440,18 +3464,18 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
     });
 
     await novuClient.trigger({
-      name: workflow.workflowId,
+      workflowId: workflow.workflowId,
       to: [subscriber.subscriberId],
       payload: {
         userScore: 50,
       },
     });
     await session.awaitRunningJobs(workflow._id);
-    const notSkippedMessages2 = await messageRepository.find({
+    const skippedMessages2 = await messageRepository.find({
       _environmentId: session.environment._id,
       _subscriberId: subscriber._id,
     });
-    expect(notSkippedMessages2.length).to.equal(1);
+    expect(skippedMessages2.length).to.equal(0);
   });
 
   it('should exit execution if skip condition execution throws an error', async function () {
@@ -3482,7 +3506,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
     });
 
     await novuClient.trigger({
-      name: workflow.workflowId,
+      workflowId: workflow.workflowId,
       to: [subscriber.subscriberId],
       payload: {
         userScore: 150,
@@ -3509,5 +3533,26 @@ async function createTemplate(session, channelType) {
         content: 'Hello {{subscriber.lastName}}, Welcome to {{organizationName}}' as string,
       },
     ],
+  });
+}
+async function createSimpleWorkflow(session) {
+  return await session.createTemplate({
+    steps: [
+      {
+        type: StepTypeEnum.EMAIL,
+        content: 'Hello world {{firstName}}' as string,
+      },
+    ],
+  });
+}
+
+function simpleTrigger(novuClient: Novu, template, notCreatedTwiceSubscriber: string) {
+  return novuClient.trigger({
+    workflowId: template.triggers[0].identifier,
+    to: [notCreatedTwiceSubscriber],
+    payload: {
+      firstName: 'Testing of User Name',
+      phone: '+972541111111',
+    },
   });
 }

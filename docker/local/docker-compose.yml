@@ -36,9 +36,3 @@ services:
       test: "bash -c 'redis-cli ping'"
       retries: 5
       interval: 10s
-  pyroscope:
-    image: grafana/pyroscope:latest
-    ports:
-      - '4040:4040'
-    profiles:
-      - optional
