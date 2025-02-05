@@ -32,6 +32,10 @@ import {
   QueryIssueTypeEnum,
   QueryValidatorService,
 } from '../../../shared/services/query-parser/query-validator.service';
+import { parseStepVariables } from '../../util/parse-step-variables';
+
+const PAYLOAD_FIELD_PREFIX = 'payload.';
+const SUBSCRIBER_DATA_FIELD_PREFIX = 'subscriber.data.';
 
 @Injectable()
 export class BuildStepIssuesUsecase {
@@ -84,7 +88,7 @@ export class BuildStepIssuesUsecase {
     const liquidIssues = this.processControlValuesByLiquid(variableSchema, newControlValues || {});
     const customIssues = await this.processControlValuesByCustomeRules(user, stepTypeDto, sanitizedControlValues || {});
     const skipLogicIssues = sanitizedControlValues?.skip
-      ? this.validateSkipField(sanitizedControlValues.skip as RulesLogic<AdditionalOperation>)
+      ? this.validateSkipField(variableSchema, sanitizedControlValues.skip as RulesLogic<AdditionalOperation>)
       : {};
 
     return merge(schemaIssues, liquidIssues, customIssues, skipLogicIssues);
@@ -276,10 +280,13 @@ export class BuildStepIssuesUsecase {
   }
 
   @Instrument()
-  private validateSkipField(skipLogic: RulesLogic<AdditionalOperation>): StepIssuesDto {
+  private validateSkipField(variableSchema: JSONSchemaDto, skipLogic: RulesLogic<AdditionalOperation>): StepIssuesDto {
     const issues: StepIssuesDto = {};
+    const { primitives } = parseStepVariables(variableSchema);
+    const allowedVariables = primitives.map((variable) => variable.label);
+    const allowedNamespaces = [PAYLOAD_FIELD_PREFIX, SUBSCRIBER_DATA_FIELD_PREFIX];
 
-    const queryValidatorService = new QueryValidatorService();
+    const queryValidatorService = new QueryValidatorService(allowedVariables, allowedNamespaces);
     const skipRulesIssues = queryValidatorService.validateQueryRules(skipLogic);
 
     if (skipRulesIssues.length > 0) {

@@ -3,9 +3,9 @@ import { EnvironmentRepository } from '@novu/dal';
 import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
 import {
   AnalyticsService,
-  CreateOrUpdateSubscriberUseCase,
   createHash,
   CreateOrUpdateSubscriberCommand,
+  CreateOrUpdateSubscriberUseCase,
   decryptApiKey,
   LogDecorator,
   SelectIntegration,
@@ -21,7 +21,7 @@ import { SessionInitializeResponseDto } from '../../dtos/session-initialize-resp
 export class InitializeSession {
   constructor(
     private environmentRepository: EnvironmentRepository,
-    private createSubscriber: CreateOrUpdateSubscriberUseCase,
+    private createOrUpdateSubscriberUsecase: CreateOrUpdateSubscriberUseCase,
     private authService: AuthService,
     private selectIntegration: SelectIntegration,
     private analyticsService: AnalyticsService
@@ -62,7 +62,7 @@ export class InitializeSession {
       email: command.email,
       phone: command.phone,
     });
-    const subscriber = await this.createSubscriber.execute(commandos);
+    const subscriber = await this.createOrUpdateSubscriberUsecase.execute(commandos);
 
     this.analyticsService.mixpanelTrack('Initialize Widget Session - [Notification Center]', '', {
       _organization: environment._organizationId,
