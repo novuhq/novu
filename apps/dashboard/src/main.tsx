@@ -40,6 +40,7 @@ import { OnboardingParentRoute } from './routes/onboarding';
 import { ROUTES } from './utils/routes';
 import { initializeSentry } from './utils/sentry';
 import { overrideZodErrorMap } from './utils/validation';
+import { EditSubscriberPage } from './pages/edit-subscriber-page';
 
 initializeSentry();
 overrideZodErrorMap();
@@ -124,6 +125,12 @@ const router = createBrowserRouter([
               {
                 path: ROUTES.SUBSCRIBERS,
                 element: <SubscribersPage />,
+                children: [
+                  {
+                    path: ROUTES.EDIT_SUBSCRIBER,
+                    element: <EditSubscriberPage />,
+                  },
+                ],
               },
               {
                 path: ROUTES.API_KEYS,

@@ -25,17 +25,13 @@ import { ExternalToast } from 'sonner';
 import { Avatar, AvatarFallback, AvatarImage } from '../primitives/avatar';
 import { CompactButton } from '../primitives/button-compact';
 import { CopyButton } from '../primitives/copy-button';
+import { getSubscriberTitle } from './utils';
 
 const toastOptions: ExternalToast = {
   position: 'bottom-right',
   classNames: {
     toast: 'mb-4 right-0',
   },
-};
-
-const getSubscriberTitle = (subscriber: SubscriberResponseDto) => {
-  const fullName = `${subscriber.firstName || ''} ${subscriber.lastName || ''}`.trim();
-  return fullName || subscriber.email || subscriber.phone || subscriber.subscriberId;
 };
 
 type SubscriberRowProps = {
@@ -48,10 +44,19 @@ type SubscriberLinkTableCellProps = ComponentProps<typeof TableCell> & {
 
 const SubscriberLinkTableCell = (props: SubscriberLinkTableCellProps) => {
   const { subscriber, children, className, ...rest } = props;
+  const { currentEnvironment } = useEnvironment();
+
+  const editSubscriberLink = buildRoute(ROUTES.EDIT_SUBSCRIBER, {
+    environmentSlug: currentEnvironment?.slug ?? '',
+    subscriberId: subscriber.subscriberId,
+  });
 
   return (
     <TableCell className={cn('group-hover:bg-neutral-alpha-50 text-text-sub relative', className)} {...rest}>
       {children}
+      <Link to={editSubscriberLink} className={cn('absolute inset-0')}>
+        <span className="sr-only">Edit subscriber</span>
+      </Link>
     </TableCell>
   );
 };

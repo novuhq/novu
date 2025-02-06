@@ -373,8 +373,8 @@ importers:
         specifier: ^6.2.3
         version: 6.9.5(encoding@0.1.13)
       '@maily-to/render':
-        specifier: ^0.0.17
-        version: 0.0.17(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: ^0.0.19
+        version: 0.0.19(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@nestjs/axios':
         specifier: 3.0.3
         version: 3.0.3(@nestjs/common@10.4.1(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1))(axios@1.6.8)(rxjs@7.8.1)
@@ -902,6 +902,9 @@ importers:
       react-icons:
         specifier: ^5.3.0
         version: 5.3.0(react@18.3.1)
+      react-phone-number-input:
+        specifier: ^3.4.11
+        version: 3.4.11(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react-querybuilder:
         specifier: ^8.0.0
         version: 8.1.0(@types/react@18.3.3)(react@18.3.1)(redux@5.0.1)
@@ -911,6 +914,9 @@ importers:
       react-router-dom:
         specifier: 6.26.2
         version: 6.26.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      react-timezone-select:
+        specifier: ^3.2.8
+        version: 3.2.8(react-dom@18.3.1(react@18.3.1))(react-select@5.10.0(@types/react@18.3.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)
       react-use-intercom:
         specifier: ^2.0.0
         version: 2.1.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -10137,6 +10143,12 @@ packages:
     peerDependencies:
       react: ^18.3.1
 
+  '@maily-to/render@0.0.19':
+    resolution: {integrity: sha512-cyR/cRmUj+zcZOKc2yZlBTGFUAJazjoc3YFkBOnx8eMq3N4bHAxC+zT1MsfEqXXiHcw2uW289xxEVkrjKC0xJw==}
+    engines: {node: '>=18.0.0'}
+    peerDependencies:
+      react: ^18.3.1
+
   '@mantine/code-highlight@7.12.1':
     resolution: {integrity: sha512-ZYe8aubMXSDql5Zh+HTM/JeFulaJEkpy4eFzwnKzQa6SqofoeG78CAf6cJrdSKSHmxLPMUqYhRwX+p59oQW6RQ==}
     peerDependencies:
@@ -17996,6 +18008,11 @@ packages:
   '@types/react-table@7.7.14':
     resolution: {integrity: sha512-TYrv7onCiakaG1uAu/UpQ9FojNEt/4/ht87EgJQaEGFoWV606ZLWUZAcUHzMxgc3v1mywP1cDyz3qB4ho3hWOw==}
 
+  '@types/react-transition-group@4.4.12':
+    resolution: {integrity: sha512-8TV6R3h2j7a91c+1DXdJi3Syo69zzIZbz7Lg5tORM5LEJG7X/E6a1V3drRyBRZq7/utz7A+c4OgYLiLcYGHG6w==}
+    peerDependencies:
+      '@types/react': '*'
+
   '@types/react@17.0.62':
     resolution: {integrity: sha512-eANCyz9DG8p/Vdhr0ZKST8JV12PhH2ACCDYlFw6DIO+D+ca+uP4jtEDEpVqXZrh/uZdXQGwk7whJa3ah5DtyLw==}
 
@@ -20719,6 +20736,9 @@ packages:
   classnames@2.3.2:
     resolution: {integrity: sha512-CSbhY4cFEJRe6/GQzIk5qXZ4Jeg5pcsP7b5peFSDpffpe1cqjASH/n9UTjBwOp6XpMSTwQ8Za2K5V02ueA7Tmw==}
 
+  classnames@2.5.1:
+    resolution: {integrity: sha512-saHYOzhIQs6wy2sVxTM6bUDsQO4F50V9RQ22qBpEdCW+I+/Wmke2HOl6lS6dTpdxVhb88/I6+Hs+438c3lfUow==}
+
   clean-css@5.3.2:
     resolution: {integrity: sha512-JVJbM+f3d3Q704rF4bqQ5UUyTtuJ0JRKNbTKVEeujCCBoMdkEi+V+e8oktO9qGQNSvHrFTM6JZRXrUvGR1czww==}
     engines: {node: '>= 10.0'}
@@ -21313,6 +21333,9 @@ packages:
     peerDependenciesMeta:
       typescript:
         optional: true
+
+  country-flag-icons@1.5.14:
+    resolution: {integrity: sha512-GAFsVzHDu3bdAhbQ1LwBRqk/Ad8+ZzS5zU49P+lRla0KGy/V1V8ywNa1SxBOAmI/lyEOT9dfH3Q++q1lqJlvBA==}
 
   cpx@1.5.0:
     resolution: {integrity: sha512-jHTjZhsbg9xWgsP2vuNW2jnnzBX+p4T+vNI9Lbjzs1n4KhOfa22bQppiFYLsWQKd8TzmL5aSP/Me3yfsCwXbDA==}
@@ -25154,6 +25177,17 @@ packages:
   inline-style-parser@0.2.3:
     resolution: {integrity: sha512-qlD8YNDqyTKTyuITrDOffsl6Tdhv+UC4hcdAVuQsK4IMQ99nSgd1MIA/Q+jQYoh9r3hVUXhYh7urSRmXPkW04g==}
 
+  input-format@0.3.12:
+    resolution: {integrity: sha512-ml5iG8JA5aw6nsmxKOe++wAL6D8xb7MUadSPkyzHckxQnhscTqt81X+Tgv/ax3D36dkVwkcwAzKyKKPb6F7rBQ==}
+    peerDependencies:
+      react: '>=18.1.0'
+      react-dom: '>=18.1.0'
+    peerDependenciesMeta:
+      react:
+        optional: true
+      react-dom:
+        optional: true
+
   inquirer@8.2.6:
     resolution: {integrity: sha512-M1WuAmb7pn9zdFRtQYk26ZBoY043Sse0wVDdk4Bppr+JOXyQYybdtvK+l9wUibhtjdjvtoiNy8tk+EgsYIUqKg==}
     engines: {node: '>=12.0.0'}
@@ -26614,6 +26648,9 @@ packages:
     resolution: {integrity: sha512-LUR08JKSviZiqrYTDfywvtnsnxr+tOvBU0BF8H+9frt7HMvc6Qn6F8Ubm72g5hDTHbq8qupKfDvDAln2TVPvFg==}
     engines: {node: ^12.13.0 || ^14.15.0 || >=16.0.0}
 
+  libphonenumber-js@1.11.19:
+    resolution: {integrity: sha512-bW/Yp/9dod6fmyR+XqSUL1N5JE7QRxQ3KrBIbYS1FTv32e5i3SEtQVX+71CYNv8maWNSOgnlCoNp9X78f/cKiA==}
+
   libphonenumber-js@1.11.7:
     resolution: {integrity: sha512-x2xON4/Qg2bRIS11KIN9yCNYUjhtiEjNyptjX0mX+pyKHecxuJVLIpfX1lq9ZD6CrC/rB+y4GBi18c6CEcUR+A==}
 
@@ -27523,6 +27560,9 @@ packages:
   memfs@3.5.0:
     resolution: {integrity: sha512-yK6o8xVJlQerz57kvPROwTMgx5WtGwC2ZxDtOUsnGl49rHjYkfQoPNZPCKH73VdLE1BwBu/+Fx/NL8NYMUw2aA==}
     engines: {node: '>= 4.0.0'}
+
+  memoize-one@6.0.0:
+    resolution: {integrity: sha512-rkpe71W0N0c0Xz6QD0eJETuWAJGnJ9afsl1srmwPrI+yBCkge5EycXXbYRyvL29zZVUWQCY7InPRCv3GDXuZNw==}
 
   memoizerific@1.11.3:
     resolution: {integrity: sha512-/EuHYwAPdLtXwAwSZkh/Gutery6pD2KYd44oQLhAvQp/50mpyduZh8Q7PYHXTCJ+wuXxt7oij2LXyIJOOYFPog==}
@@ -31376,6 +31416,12 @@ packages:
       react: '>=16.8.6'
       react-dom: '>=16.8.6'
 
+  react-phone-number-input@3.4.11:
+    resolution: {integrity: sha512-ypN9hXwUModpngho9brCHLLD40xzb1DKAZFacbF0J+fFaMVLEJo+zul9sZfSRlKehSjpttT4b1pLMcOWXI228g==}
+    peerDependencies:
+      react: '>=16.8'
+      react-dom: '>=16.8'
+
   react-popper@2.3.0:
     resolution: {integrity: sha512-e1hj8lL3uM+sgSR4Lxzn5h1GxBlpa4CQz0XLF8kx4MDrDRWY0Ena4c97PUeSX9i5W3UAfDP0z0FXCTQkoXUl3Q==}
     peerDependencies:
@@ -31511,6 +31557,12 @@ packages:
       typescript:
         optional: true
 
+  react-select@5.10.0:
+    resolution: {integrity: sha512-k96gw+i6N3ExgDwPIg0lUPmexl1ygPe6u5BdQFNBhkpbwroIgCNXdubtIzHfThYXYYTubwOBafoMnn7ruEP1xA==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+
   react-simple-animate@3.5.2:
     resolution: {integrity: sha512-xLE65euP920QMTOmv5haPlml+hmOPDkbIr5WeF7ADIXWBYt5kW/vwpNfWg8EKMab8aeDxIZ6QjffVh8v2dUyhg==}
     peerDependencies:
@@ -31553,6 +31605,13 @@ packages:
     engines: {node: '>=10'}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0
+
+  react-timezone-select@3.2.8:
+    resolution: {integrity: sha512-efEIVmYAHtm+oS+YlE/9DbieMka1Lop0v1LsW1TdLq0yCBnnAzROKDUY09CICY8TCijZlo0fk+wHZZkV5NpVNw==}
+    peerDependencies:
+      react: ^16 || ^17.0.1 || ^18 || ^19.0.0-0
+      react-dom: ^16 || ^17.0.1 || ^18 || ^19.0.0-0
+      react-select: ^5.8.0
 
   react-transition-group@4.4.2:
     resolution: {integrity: sha512-/RNYfRAMlZwDSr6z4zNKV6xu53/e2BuaBbGhbyYIXTrmgu/bGHzmqOs7mJSJBHy9Ud+ApHx3QjrkKSp1pxvlFg==}
@@ -32892,6 +32951,9 @@ packages:
   space-separated-tokens@2.0.2:
     resolution: {integrity: sha512-PEGlAwrG8yXGXRjW32fGbg66JAlOAwbObuqVoJpv/mRgoWDQfgH1wDPvtzWyUSNAXBGSk8h755YDbbcEy3SH2Q==}
 
+  spacetime@7.7.0:
+    resolution: {integrity: sha512-m97vi+g9OdEZWmvpWFpoDjx9ApsUX8pcTw2VcTc39SCysg/pmPfTD7zhs+XSg5tfA1yr7SlRpzzprgAVFLUdeA==}
+
   spamc@0.0.5:
     resolution: {integrity: sha512-jYXItuZuiWZyG9fIdvgTUbp2MNRuyhuSwvvhhpPJd4JK/9oSZxkD7zAj53GJtowSlXwCJzLg6sCKAoE9wXsKgg==}
 
@@ -33777,6 +33839,9 @@ packages:
   time-span@4.0.0:
     resolution: {integrity: sha512-MyqZCTGLDZ77u4k+jqg4UlrzPTPZ49NDlaekU6uuFaJLzPIN1woaRXCbGeqOfxwc3Y37ZROGAJ614Rdv7Olt+g==}
     engines: {node: '>=10'}
+
+  timezone-soft@1.5.2:
+    resolution: {integrity: sha512-BUr+CfBfeWXJwFAuEzPO9uF+v6sy3pL5SKLkDg4vdEhsyXgbBnpFoBCW8oEKSNTqNq9YHbVOjNb31xE7WyGmrA==}
 
   tiny-glob@0.2.9:
     resolution: {integrity: sha512-g/55ssRPUjShh+xkfx9UPDXqhckHEsHr4Vd9zX55oSdGZc/MD0m3sferOkwWtp98bv+kcVfEHtRJgBVJzelrzg==}
@@ -34845,6 +34910,15 @@ packages:
       '@types/react':
         optional: true
 
+  use-isomorphic-layout-effect@1.2.0:
+    resolution: {integrity: sha512-q6ayo8DWoPZT0VdG4u3D3uxcgONP3Mevx2i2b0434cwWBoL+aelL1DzkXI6w3PhTZzUeR2kaVlZn70iCiseP6w==}
+    peerDependencies:
+      '@types/react': '*'
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+
   use-latest@1.2.1:
     resolution: {integrity: sha512-xA+AVm/Wlg3e2P/JiItTziwS7FK92LWrDB0p+hgXloIMuVCeJJ8v6f0eeHyPZaJrM+usM1FkFfbNCrJGs8A/zw==}
     peerDependencies:
@@ -35041,6 +35115,7 @@ packages:
   verdaccio@5.32.1:
     resolution: {integrity: sha512-GU8a+van7cQzzv6/pXWW8jMlQ7OoWNYPqRpvCW7F2QmxzpKp9hWb3yX9iLY3CJNrODuQYnUDjJ/hmBa8rUq+Aw==}
     engines: {node: '>=14'}
+    deprecated: this version is deprecated, please migrate to 6.x versions
     hasBin: true
 
   verror@1.10.0:
@@ -47480,6 +47555,14 @@ snapshots:
     transitivePeerDependencies:
       - react-dom
 
+  '@maily-to/render@0.0.19(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+    dependencies:
+      '@react-email/components': 0.0.25(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@react-email/render': 1.0.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      react: 18.3.1
+    transitivePeerDependencies:
+      - react-dom
+
   '@mantine/code-highlight@7.12.1(@mantine/core@7.12.1(@mantine/hooks@7.12.1(react@18.3.1))(@types/react@18.3.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@mantine/hooks@7.12.1(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
       '@mantine/core': 7.12.1(@mantine/hooks@7.12.1(react@18.3.1))(@types/react@18.3.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -59422,6 +59505,10 @@ snapshots:
     dependencies:
       '@types/react': 18.3.3
 
+  '@types/react-transition-group@4.4.12(@types/react@18.3.3)':
+    dependencies:
+      '@types/react': 18.3.3
+
   '@types/react@17.0.62':
     dependencies:
       '@types/prop-types': 15.7.5
@@ -63787,6 +63874,8 @@ snapshots:
 
   classnames@2.3.2: {}
 
+  classnames@2.5.1: {}
+
   clean-css@5.3.2:
     dependencies:
       source-map: 0.6.1
@@ -64439,6 +64528,8 @@ snapshots:
       parse-json: 5.2.0
     optionalDependencies:
       typescript: 5.6.2
+
+  country-flag-icons@1.5.14: {}
 
   cpx@1.5.0:
     dependencies:
@@ -69799,6 +69890,13 @@ snapshots:
 
   inline-style-parser@0.2.3: {}
 
+  input-format@0.3.12(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
+    dependencies:
+      prop-types: 15.8.1
+    optionalDependencies:
+      react: 18.3.1
+      react-dom: 18.3.1(react@18.3.1)
+
   inquirer@8.2.6:
     dependencies:
       ansi-escapes: 4.3.2
@@ -72382,6 +72480,8 @@ snapshots:
       - bluebird
       - supports-color
 
+  libphonenumber-js@1.11.19: {}
+
   libphonenumber-js@1.11.7: {}
 
   lie@3.1.1:
@@ -73504,6 +73604,8 @@ snapshots:
   memfs@3.5.0:
     dependencies:
       fs-monkey: 1.0.3
+
+  memoize-one@6.0.0: {}
 
   memoizerific@1.11.3:
     dependencies:
@@ -78723,6 +78825,16 @@ snapshots:
       react-dom: 18.3.1(react@18.3.1)
       zxcvbn: 4.4.2
 
+  react-phone-number-input@3.4.11(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
+    dependencies:
+      classnames: 2.5.1
+      country-flag-icons: 1.5.14
+      input-format: 0.3.12(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      libphonenumber-js: 1.11.19
+      prop-types: 15.8.1
+      react: 18.3.1
+      react-dom: 18.3.1(react@18.3.1)
+
   react-popper@2.3.0(@popperjs/core@2.11.7)(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
     dependencies:
       '@popperjs/core': 2.11.7
@@ -79047,6 +79159,22 @@ snapshots:
       - webpack-hot-middleware
       - webpack-plugin-serve
 
+  react-select@5.10.0(@types/react@18.3.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
+    dependencies:
+      '@babel/runtime': 7.25.6
+      '@emotion/cache': 11.11.0
+      '@emotion/react': 11.10.6(@types/react@18.3.3)(react@18.3.1)
+      '@floating-ui/dom': 1.6.7
+      '@types/react-transition-group': 4.4.12(@types/react@18.3.3)
+      memoize-one: 6.0.0
+      prop-types: 15.8.1
+      react: 18.3.1
+      react-dom: 18.3.1(react@18.3.1)
+      react-transition-group: 4.4.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      use-isomorphic-layout-effect: 1.2.0(@types/react@18.3.3)(react@18.3.1)
+    transitivePeerDependencies:
+      - '@types/react'
+
   react-simple-animate@3.5.2(react-dom@18.3.1(react@18.3.1)):
     dependencies:
       react-dom: 18.3.1(react@18.3.1)
@@ -79108,6 +79236,14 @@ snapshots:
       use-latest: 1.2.1(@types/react@18.3.3)(react@18.3.1)
     transitivePeerDependencies:
       - '@types/react'
+
+  react-timezone-select@3.2.8(react-dom@18.3.1(react@18.3.1))(react-select@5.10.0(@types/react@18.3.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1):
+    dependencies:
+      react: 18.3.1
+      react-dom: 18.3.1(react@18.3.1)
+      react-select: 5.10.0(@types/react@18.3.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      spacetime: 7.7.0
+      timezone-soft: 1.5.2
 
   react-transition-group@4.4.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
     dependencies:
@@ -80748,6 +80884,8 @@ snapshots:
 
   space-separated-tokens@2.0.2: {}
 
+  spacetime@7.7.0: {}
+
   spamc@0.0.5: {}
 
   spark-md5@3.0.2: {}
@@ -82081,6 +82219,8 @@ snapshots:
   time-span@4.0.0:
     dependencies:
       convert-hrtime: 3.0.0
+
+  timezone-soft@1.5.2: {}
 
   tiny-glob@0.2.9:
     dependencies:
@@ -83526,6 +83666,12 @@ snapshots:
       react: 18.3.1
 
   use-isomorphic-layout-effect@1.1.2(@types/react@18.3.3)(react@18.3.1):
+    dependencies:
+      react: 18.3.1
+    optionalDependencies:
+      '@types/react': 18.3.3
+
+  use-isomorphic-layout-effect@1.2.0(@types/react@18.3.3)(react@18.3.1):
     dependencies:
       react: 18.3.1
     optionalDependencies:

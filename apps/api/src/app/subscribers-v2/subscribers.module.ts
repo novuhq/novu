@@ -26,6 +26,7 @@ import { UpdateSubscriberPreferences } from './usecases/update-subscriber-prefer
 import { UpdatePreferences } from '../inbox/usecases/update-preferences/update-preferences.usecase';
 import { GetSubscriberGlobalPreference } from '../subscribers/usecases/get-subscriber-global-preference';
 import { GetSubscriberPreference } from '../subscribers/usecases/get-subscriber-preference';
+import { CreateSubscriber } from './usecases/create-subscriber/create-subscriber.usecase';
 
 const USE_CASES = [
   ListSubscribersUseCase,
@@ -40,6 +41,7 @@ const USE_CASES = [
   UpdatePreferences,
   GetSubscriberTemplatePreference,
   UpsertPreferences,
+  CreateSubscriber,
 ];
 
 const DAL_MODELS = [

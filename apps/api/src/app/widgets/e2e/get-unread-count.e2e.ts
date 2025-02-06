@@ -48,7 +48,7 @@ describe('Unread Count - GET /widget/notifications/unread #novu-v1', function ()
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
 
     const messages = await messageRepository.findBySubscriberChannel(
       session.environment._id,
@@ -77,7 +77,7 @@ describe('Unread Count - GET /widget/notifications/unread #novu-v1', function ()
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
 
     const messages = await messageRepository.findBySubscriberChannel(
       session.environment._id,
@@ -106,7 +106,7 @@ describe('Unread Count - GET /widget/notifications/unread #novu-v1', function ()
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
 
     const messages = await messageRepository.findBySubscriberChannel(
       session.environment._id,

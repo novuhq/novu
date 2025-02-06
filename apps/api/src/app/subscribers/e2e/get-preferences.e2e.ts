@@ -21,7 +21,7 @@ describe('Get Subscribers workflow preferences - /subscribers/:subscriberId/pref
   });
 
   it('should get subscriber workflow preferences with inactive channels by default', async function () {
-    const response = await novuClient.subscribers.preferences.list(session.subscriberId);
+    const response = await novuClient.subscribers.preferences.listLegacy(session.subscriberId);
     const data = response.result[0];
 
     expect(data.preference.channels).to.deep.equal({
@@ -34,7 +34,7 @@ describe('Get Subscribers workflow preferences - /subscribers/:subscriberId/pref
   });
 
   it('should get subscriber workflow preferences with inactive channels when includeInactiveChannels is true', async function () {
-    const response = await novuClient.subscribers.preferences.list(session.subscriberId, true);
+    const response = await novuClient.subscribers.preferences.listLegacy(session.subscriberId, true);
     const data = response.result[0];
 
     expect(data.preference.channels).to.deep.equal({
@@ -47,7 +47,7 @@ describe('Get Subscribers workflow preferences - /subscribers/:subscriberId/pref
   });
 
   it('should get subscriber workflow preferences with active channels when includeInactiveChannels is false', async function () {
-    const response = await novuClient.subscribers.preferences.list(session.subscriberId, false);
+    const response = await novuClient.subscribers.preferences.listLegacy(session.subscriberId, false);
     const data = response.result[0];
 
     expect(data.preference.channels).to.deep.equal({
@@ -58,7 +58,7 @@ describe('Get Subscribers workflow preferences - /subscribers/:subscriberId/pref
 
   it('should handle un existing subscriberId', async function () {
     const { error } = await expectSdkExceptionGeneric(() =>
-      novuClient.subscribers.preferences.list('unexisting-subscriber-id')
+      novuClient.subscribers.preferences.listLegacy('unexisting-subscriber-id')
     );
     expect(error).to.be.ok;
     expect(error?.message).to.contain('not found');
@@ -83,7 +83,7 @@ describe('Get Subscribers preferences by level - /subscribers/:subscriberId/pref
 
   levels.forEach((level) => {
     it(`should get subscriber ${level} preferences with inactive channels by default`, async function () {
-      const response = await novuClient.subscribers.preferences.retrieveByLevel({
+      const response = await novuClient.subscribers.preferences.retrieveByLevelLegacy({
         preferenceLevel: level,
         subscriberId: session.subscriberId,
       });
@@ -99,7 +99,7 @@ describe('Get Subscribers preferences by level - /subscribers/:subscriberId/pref
     });
 
     it(`should get subscriber ${level} preferences with inactive channels when includeInactiveChannels is true`, async function () {
-      const response = await novuClient.subscribers.preferences.retrieveByLevel({
+      const response = await novuClient.subscribers.preferences.retrieveByLevelLegacy({
         preferenceLevel: level,
         subscriberId: session.subscriberId,
         includeInactiveChannels: {
@@ -118,7 +118,7 @@ describe('Get Subscribers preferences by level - /subscribers/:subscriberId/pref
     });
 
     it(`should get subscriber ${level} preferences with active channels when includeInactiveChannels is false`, async function () {
-      const response = await novuClient.subscribers.preferences.retrieveByLevel({
+      const response = await novuClient.subscribers.preferences.retrieveByLevelLegacy({
         preferenceLevel: level,
         subscriberId: session.subscriberId,
         includeInactiveChannels: {

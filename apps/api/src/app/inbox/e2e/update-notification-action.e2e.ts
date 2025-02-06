@@ -54,7 +54,7 @@ describe('Update Notification Action - /inbox/notifications/:id/{complete/revert
     }
 
     await Promise.all(promises);
-    await session.awaitRunningJobs(templateToTrigger._id);
+    await session.waitForJobCompletion(templateToTrigger._id);
   };
 
   const removeUndefinedDeep = (obj) => {

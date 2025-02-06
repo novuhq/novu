@@ -217,7 +217,7 @@ describe('Standard Worker', () => {
 
     await standardQueueService.add({ name: jobCreated._id, data: jobData, groupId: '0' });
 
-    await jobsService.awaitRunningJobs({
+    await jobsService.waitForJobCompletion({
       templateId: _templateId,
       organizationId: organization._id,
       delay: false,
@@ -280,7 +280,7 @@ describe('Standard Worker', () => {
 
     await standardQueueService.add({ name: jobCreated._id, data: jobData, groupId: '0' });
 
-    await jobsService.awaitRunningJobs({
+    await jobsService.waitForJobCompletion({
       templateId: _templateId,
       organizationId: organization._id,
       delay: false,

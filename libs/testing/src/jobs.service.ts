@@ -41,15 +41,7 @@ export class JobsService {
     }
   }
 
-  public async awaitParsingEvents() {
-    let totalCount = 0;
-
-    do {
-      totalCount = (await this.getQueueMetric()).totalCount;
-    } while (totalCount > 0);
-  }
-
-  public async awaitRunningJobs({
+  public async waitForJobCompletion({
     templateId,
     organizationId,
     delay,
@@ -61,11 +53,9 @@ export class JobsService {
     unfinishedJobs?: number;
   }) {
     let runningJobs = 0;
-    let totalCount = 0;
+    const safeUnfinishedJobs = Math.max(unfinishedJobs, 0);
 
-    const workflowMatch = templateId
-      ? { _templateId: Array.isArray(templateId) ? { $in: templateId } : templateId }
-      : {};
+    const workflowMatch = templateId ? { _templateId: { $in: [templateId].flat() } } : {};
     const typeMatch = delay
       ? {
           type: {
@@ -74,38 +64,29 @@ export class JobsService {
         }
       : {};
 
+    let totalCount = 0;
+
     do {
+      // Wait until Bull queues are empty
       totalCount = (await this.getQueueMetric()).totalCount;
-      runningJobs = await this.jobRepository.count({
-        _organizationId: organizationId,
-        ...typeMatch,
-        ...workflowMatch,
-        status: {
-          $in: [JobStatusEnum.PENDING, JobStatusEnum.QUEUED, JobStatusEnum.RUNNING],
-        },
-      });
-    } while (totalCount > 0 || runningJobs > unfinishedJobs);
+      // Wait until there are no pending, queued or running jobs in Mongo
+      runningJobs = Math.max(
+        await this.jobRepository.count({
+          _organizationId: organizationId,
+          ...typeMatch,
+          ...workflowMatch,
+          status: {
+            $in: [JobStatusEnum.PENDING, JobStatusEnum.QUEUED, JobStatusEnum.RUNNING],
+          },
+        }),
+        0
+      );
+    } while (totalCount > 0 || runningJobs > safeUnfinishedJobs);
+  }
 
-    return {
-      getDelayedTimestamp: async () => {
-        const delayedJobs = await this.standardQueue.getDelayed();
-
-        if (delayedJobs.length === 1) {
-          return delayedJobs[0].delay;
-        } else if (delayedJobs.length > 1) {
-          throw new Error('There are more than one delayed jobs');
-        } else if (delayedJobs.length === 0) {
-          throw new Error('There are no delayed jobs');
-        }
-      },
-      runDelayedImmediately: async () => {
-        const delayedJobs = await this.standardQueue.getDelayed();
-
-        await delayedJobs.forEach(async (job) => {
-          job.changeDelay(1);
-        });
-      },
-    };
+  public async runAllDelayedJobsImmediately() {
+    const delayedJobs = await this.standardQueue.getDelayed();
+    await delayedJobs.forEach(async (job) => job.promote());
   }
 
   private async getQueueMetric() {

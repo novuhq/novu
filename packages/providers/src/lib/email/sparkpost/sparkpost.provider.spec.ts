@@ -20,7 +20,7 @@ const mockNovuMessage = {
   ],
 };
 
-test('should trigger sendinblue library correctly', async () => {
+test('should trigger sparkpost library correctly', async () => {
   const { mockPost: spy } = axiosSpy({
     data: {
       results: {
@@ -58,7 +58,7 @@ test('should trigger sendinblue library correctly', async () => {
   );
 });
 
-test('should trigger sendinblue library correctly with _passthrough', async () => {
+test('should trigger sparkpost library correctly with _passthrough', async () => {
   const { mockPost: spy } = axiosSpy({
     data: {
       results: {

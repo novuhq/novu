@@ -34,6 +34,7 @@ export const ROUTES = {
   WORKFLOWS_CREATE: '/env/:environmentSlug/workflows/create',
   TEMPLATE_STORE_CREATE_WORKFLOW: '/env/:environmentSlug/workflows/templates/:templateId',
   SUBSCRIBERS: '/env/:environmentSlug/subscribers',
+  EDIT_SUBSCRIBER: '/env/:environmentSlug/subscribers/:subscriberId',
 } as const;
 
 export const buildRoute = (route: string, params: Record<string, string>) => {
