@@ -113,7 +113,7 @@ export class GetSubscriberPreference {
       return acc;
     }, {});
 
-    const workflowPreferences: ISubscriberPreferenceResponse[] = this.calculateWorkflowPreferences(
+    const workflowPreferences: (ISubscriberPreferenceResponse | undefined)[] = this.calculateWorkflowPreferences(
       workflowList,
       workflowPreferenceSets,
       subscriberGlobalPreference,
@@ -121,7 +121,8 @@ export class GetSubscriberPreference {
     );
 
     const nonCriticalWorkflowPreferences = workflowPreferences.filter(
-      (preference) => preference && !preference.template.critical
+      (preference): preference is ISubscriberPreferenceResponse =>
+        preference !== undefined && !preference.template.critical
     );
 
     return nonCriticalWorkflowPreferences;
