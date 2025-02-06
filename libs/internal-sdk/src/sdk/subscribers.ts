@@ -4,15 +4,11 @@
 
 import { subscribersCreate } from "../funcs/subscribersCreate.js";
 import { subscribersCreateBulk } from "../funcs/subscribersCreateBulk.js";
-import { subscribersCreateLegacy } from "../funcs/subscribersCreateLegacy.js";
 import { subscribersDelete } from "../funcs/subscribersDelete.js";
-import { subscribersDeleteLegacy } from "../funcs/subscribersDeleteLegacy.js";
 import { subscribersList } from "../funcs/subscribersList.js";
 import { subscribersPatch } from "../funcs/subscribersPatch.js";
 import { subscribersRetrieve } from "../funcs/subscribersRetrieve.js";
-import { subscribersRetrieveLegacy } from "../funcs/subscribersRetrieveLegacy.js";
 import { subscribersSearch } from "../funcs/subscribersSearch.js";
-import { subscribersUpdateLegacy } from "../funcs/subscribersUpdateLegacy.js";
 import { ClientSDK, RequestOptions } from "../lib/sdks.js";
 import * as components from "../models/components/index.js";
 import * as operations from "../models/operations/index.js";
@@ -36,11 +32,6 @@ export class Subscribers extends ClientSDK {
     return (this._properties ??= new Properties(this._options));
   }
 
-  private _preferences?: Preferences;
-  get preferences(): Preferences {
-    return (this._preferences ??= new Preferences(this._options));
-  }
-
   private _notifications?: NovuNotifications;
   get notifications(): NovuNotifications {
     return (this._notifications ??= new NovuNotifications(this._options));
@@ -54,6 +45,11 @@ export class Subscribers extends ClientSDK {
   private _authentication?: Authentication;
   get authentication(): Authentication {
     return (this._authentication ??= new Authentication(this._options));
+  }
+
+  private _preferences?: Preferences;
+  get preferences(): Preferences {
+    return (this._preferences ??= new Preferences(this._options));
   }
 
   /**
@@ -77,88 +73,6 @@ export class Subscribers extends ClientSDK {
       this,
       page,
       limit,
-      idempotencyKey,
-      options,
-    ));
-  }
-
-  /**
-   * Create subscriber
-   *
-   * @remarks
-   * Creates a subscriber entity, in the Novu platform. The subscriber will be later used to receive notifications, and access notification feeds. Communication credentials such as email, phone number, and 3 rd party credentials i.e slack tokens could be later associated to this entity.
-   */
-  async createLegacy(
-    createSubscriberRequestDto: components.CreateSubscriberRequestDto,
-    idempotencyKey?: string | undefined,
-    options?: RequestOptions,
-  ): Promise<operations.SubscribersV1ControllerCreateSubscriberResponse> {
-    return unwrapAsync(subscribersCreateLegacy(
-      this,
-      createSubscriberRequestDto,
-      idempotencyKey,
-      options,
-    ));
-  }
-
-  /**
-   * Get subscriber
-   *
-   * @remarks
-   * Get subscriber by your internal id used to identify the subscriber
-   */
-  async retrieveLegacy(
-    subscriberId: string,
-    includeTopics?: boolean | undefined,
-    idempotencyKey?: string | undefined,
-    options?: RequestOptions,
-  ): Promise<operations.SubscribersV1ControllerGetSubscriberResponse> {
-    return unwrapAsync(subscribersRetrieveLegacy(
-      this,
-      subscriberId,
-      includeTopics,
-      idempotencyKey,
-      options,
-    ));
-  }
-
-  /**
-   * Update subscriber
-   *
-   * @remarks
-   * Used to update the subscriber entity with new information
-   */
-  async updateLegacy(
-    updateSubscriberRequestDto: components.UpdateSubscriberRequestDto,
-    subscriberId: string,
-    idempotencyKey?: string | undefined,
-    options?: RequestOptions,
-  ): Promise<operations.SubscribersV1ControllerUpdateSubscriberResponse> {
-    return unwrapAsync(subscribersUpdateLegacy(
-      this,
-      updateSubscriberRequestDto,
-      subscriberId,
-      idempotencyKey,
-      options,
-    ));
-  }
-
-  /**
-   * Delete subscriber
-   *
-   * @remarks
-   * Deletes a subscriber entity from the Novu platform
-   *
-   * @deprecated method: This will be removed in a future release, please migrate away from it as soon as possible.
-   */
-  async deleteLegacy(
-    subscriberId: string,
-    idempotencyKey?: string | undefined,
-    options?: RequestOptions,
-  ): Promise<operations.SubscribersV1ControllerRemoveSubscriberResponse> {
-    return unwrapAsync(subscribersDeleteLegacy(
-      this,
-      subscriberId,
       idempotencyKey,
       options,
     ));

@@ -26,14 +26,16 @@ import {
 } from "./_types.js";
 
 export type SubscribersPreferencesListQueryData =
-  operations.SubscribersV1ControllerListSubscriberPreferencesResponse;
+  operations.SubscribersControllerGetSubscriberPreferencesResponse;
 
 /**
  * Get subscriber preferences
+ *
+ * @remarks
+ * Get subscriber global and workflow specific preferences
  */
 export function useSubscribersPreferencesList(
   subscriberId: string,
-  includeInactiveChannels?: boolean | undefined,
   idempotencyKey?: string | undefined,
   options?: QueryHookOptions<SubscribersPreferencesListQueryData>,
 ): UseQueryResult<SubscribersPreferencesListQueryData, Error> {
@@ -42,7 +44,6 @@ export function useSubscribersPreferencesList(
     ...buildSubscribersPreferencesListQuery(
       client,
       subscriberId,
-      includeInactiveChannels,
       idempotencyKey,
       options,
     ),
@@ -52,10 +53,12 @@ export function useSubscribersPreferencesList(
 
 /**
  * Get subscriber preferences
+ *
+ * @remarks
+ * Get subscriber global and workflow specific preferences
  */
 export function useSubscribersPreferencesListSuspense(
   subscriberId: string,
-  includeInactiveChannels?: boolean | undefined,
   idempotencyKey?: string | undefined,
   options?: SuspenseQueryHookOptions<SubscribersPreferencesListQueryData>,
 ): UseSuspenseQueryResult<SubscribersPreferencesListQueryData, Error> {
@@ -64,7 +67,6 @@ export function useSubscribersPreferencesListSuspense(
     ...buildSubscribersPreferencesListQuery(
       client,
       subscriberId,
-      includeInactiveChannels,
       idempotencyKey,
       options,
     ),
@@ -76,14 +78,12 @@ export function prefetchSubscribersPreferencesList(
   queryClient: QueryClient,
   client$: NovuCore,
   subscriberId: string,
-  includeInactiveChannels?: boolean | undefined,
   idempotencyKey?: string | undefined,
 ): Promise<void> {
   return queryClient.prefetchQuery({
     ...buildSubscribersPreferencesListQuery(
       client$,
       subscriberId,
-      includeInactiveChannels,
       idempotencyKey,
     ),
   });
@@ -93,10 +93,7 @@ export function setSubscribersPreferencesListData(
   client: QueryClient,
   queryKeyBase: [
     subscriberId: string,
-    parameters: {
-      includeInactiveChannels?: boolean | undefined;
-      idempotencyKey?: string | undefined;
-    },
+    parameters: { idempotencyKey?: string | undefined },
   ],
   data: SubscribersPreferencesListQueryData,
 ): SubscribersPreferencesListQueryData | undefined {
@@ -108,13 +105,7 @@ export function setSubscribersPreferencesListData(
 export function invalidateSubscribersPreferencesList(
   client: QueryClient,
   queryKeyBase: TupleToPrefixes<
-    [
-      subscriberId: string,
-      parameters: {
-        includeInactiveChannels?: boolean | undefined;
-        idempotencyKey?: string | undefined;
-      },
-    ]
+    [subscriberId: string, parameters: { idempotencyKey?: string | undefined }]
   >,
   filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
 ): Promise<void> {
@@ -137,7 +128,6 @@ export function invalidateAllSubscribersPreferencesList(
 export function buildSubscribersPreferencesListQuery(
   client$: NovuCore,
   subscriberId: string,
-  includeInactiveChannels?: boolean | undefined,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): {
@@ -148,7 +138,6 @@ export function buildSubscribersPreferencesListQuery(
 } {
   return {
     queryKey: queryKeySubscribersPreferencesList(subscriberId, {
-      includeInactiveChannels,
       idempotencyKey,
     }),
     queryFn: async function subscribersPreferencesListQueryFn(
@@ -163,7 +152,6 @@ export function buildSubscribersPreferencesListQuery(
       return unwrapAsync(subscribersPreferencesList(
         client$,
         subscriberId,
-        includeInactiveChannels,
         idempotencyKey,
         mergedOptions,
       ));
@@ -173,10 +161,7 @@ export function buildSubscribersPreferencesListQuery(
 
 export function queryKeySubscribersPreferencesList(
   subscriberId: string,
-  parameters: {
-    includeInactiveChannels?: boolean | undefined;
-    idempotencyKey?: string | undefined;
-  },
+  parameters: { idempotencyKey?: string | undefined },
 ): QueryKey {
   return ["@novu/api", "Preferences", "list", subscriberId, parameters];
 }
