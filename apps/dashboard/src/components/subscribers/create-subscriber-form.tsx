@@ -63,8 +63,6 @@ export function CreateSubscriberForm() {
   const blocker = useBlocker(isDirty);
   useBeforeUnload(isDirty);
 
-  console.log({ dir: form.formState.dirtyFields, isDirty, dirt: form.formState.isDirty });
-
   const { createSubscriber } = useCreateSubscriber({
     onSuccess: () => {
       showSuccessToast('Created subscriber successfully', undefined, toastOptions);
