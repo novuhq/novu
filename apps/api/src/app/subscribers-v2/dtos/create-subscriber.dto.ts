@@ -1,5 +1,15 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEmail, IsLocale, IsObject, IsOptional, IsString, IsTimeZone, ValidateIf } from 'class-validator';
+import {
+  IsDefined,
+  IsEmail,
+  IsLocale,
+  IsNotEmpty,
+  IsObject,
+  IsOptional,
+  IsString,
+  IsTimeZone,
+  ValidateIf,
+} from 'class-validator';
 
 export class CreateSubscriberRequestDto {
   @ApiProperty({
@@ -7,6 +17,10 @@ export class CreateSubscriberRequestDto {
     description: 'Unique identifier of the subscriber',
   })
   @IsString()
+  @IsDefined()
+  @IsNotEmpty({
+    message: 'SubscriberId is required',
+  })
   subscriberId: string;
 
   @ApiPropertyOptional({

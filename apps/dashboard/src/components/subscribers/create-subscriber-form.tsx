@@ -12,10 +12,9 @@ import { Separator } from '../primitives/separator';
 import { LocaleSelect } from './locale-select';
 import { CreateSubscriberFormSchema } from './schema';
 import { TimezoneSelect } from './timezone-select';
-import { RiCloseLine, RiGroup2Line, RiInformationFill, RiMailLine } from 'react-icons/ri';
+import { RiCloseCircleLine, RiCloseLine, RiGroup2Line, RiInformationFill, RiMailLine } from 'react-icons/ri';
 import TruncatedText from '../truncated-text';
 import { CompactButton } from '../primitives/button-compact';
-import { ExternalLink } from '../shared/external-link';
 import { InlineToast } from '../primitives/inline-toast';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { useCreateSubscriber } from '@/hooks/use-create-subscriber';
@@ -172,11 +171,25 @@ export function CreateSubscriberForm() {
                         {...field}
                         placeholder={field.name}
                         id={field.name}
-                        value={field.value || undefined}
+                        value={field.value}
                         onChange={field.onChange}
                         hasError={!!fieldState.error}
                         size="xs"
-                        required
+                        inlineTrailingNode={
+                          <div className="flex items-center">
+                            <CompactButton
+                              icon={RiCloseCircleLine}
+                              variant="ghost"
+                              onClick={() => {
+                                form.setValue('subscriberId', '', {
+                                  shouldDirty: true,
+                                  shouldValidate: true,
+                                });
+                              }}
+                              type="button"
+                            />
+                          </div>
+                        }
                       />
                     </FormControl>
                     <FormMessage>Must be unique and used to identify a subscriber</FormMessage>
@@ -265,7 +278,7 @@ export function CreateSubscriberForm() {
                 <FormItem className="w-full">
                   <FormLabel
                     tooltip={`Store additional user details as key-value pairs in the custom data field.
-                     \n Example: {\n "address": "123 Main St",\n "nationality": "Canadian"\n}`}
+                     \nExample: {\n "address": "123 Main St",\n "nationality": "Canadian"\n}`}
                   >
                     Custom data (JSON)
                   </FormLabel>
@@ -302,13 +315,13 @@ export function CreateSubscriberForm() {
                     <strong>Tip:</strong> You can also Add subscriber via API, or create them on the fly when sending
                     notifications.
                   </span>
-                  <ExternalLink
-                    className="text-xs text-neutral-600"
-                    variant="text"
-                    href="https://docs.novu.co/concepts/subscribers#just-in-time"
+                  <Link
+                    to="https://docs.novu.co/concepts/subscribers#just-in-time"
+                    className="text-xs font-medium text-neutral-600 underline"
+                    target="_blank"
                   >
                     Learn more
-                  </ExternalLink>
+                  </Link>
                 </div>
               }
               variant="success"
@@ -322,9 +335,13 @@ export function CreateSubscriberForm() {
                 <RiInformationFill className="size-4" />
                 <span>
                   Looking for no-PII handling?{' '}
-                  <ExternalLink className="text-2xs text-neutral-600" variant="text">
+                  <Link
+                    className="text-2xs text-neutral-600 underline"
+                    to="https://docs.novu.co/additional-resources/security#what-should-i-do-if-i-have-regulatory-or-security-issues-with-pii"
+                    target="_blank"
+                  >
                     Learn more
-                  </ExternalLink>
+                  </Link>
                 </span>
               </div>
 

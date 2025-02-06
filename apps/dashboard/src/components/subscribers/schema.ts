@@ -29,6 +29,12 @@ export const SubscriberFormSchema = z.object({
 });
 
 export const CreateSubscriberFormSchema = SubscriberFormSchema.extend({
-  subscriberId: z.string(),
+  subscriberId: z.string().transform((str, ctc) => {
+    if (!str.trim()) {
+      ctc.addIssue({ code: 'custom', message: 'SubscriberId is required' });
+      return z.NEVER;
+    }
+    return str;
+  }),
   email: z.string().email().optional(),
 });
