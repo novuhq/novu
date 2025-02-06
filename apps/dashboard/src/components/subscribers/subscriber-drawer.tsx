@@ -1,8 +1,9 @@
 import { motion } from 'motion/react';
 import { Sheet, SheetContentBase, SheetDescription, SheetPortal, SheetTitle } from '../primitives/sheet';
 import { VisuallyHidden } from '../primitives/visually-hidden';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { PropsWithChildren } from 'react';
+import { buildRoute, ROUTES } from '@/utils/routes';
 
 const transitionSetting = { duration: 0.4 };
 
@@ -13,9 +14,14 @@ type SubscriberDrawerProps = PropsWithChildren<{
 
 export function SubscriberDrawer({ children, open, onOpenChange }: SubscriberDrawerProps) {
   const navigate = useNavigate();
+  const { environmentSlug } = useParams<{ environmentSlug: string }>();
 
   const handleCloseSheet = () => {
-    navigate(-1);
+    navigate(
+      buildRoute(ROUTES.SUBSCRIBERS, {
+        environmentSlug: environmentSlug ?? '',
+      })
+    );
   };
 
   return (

@@ -247,7 +247,7 @@ export function SubscriberOverviewForm({ subscriberId }: { subscriberId: string 
                   <FormItem className="w-1/5">
                     <FormLabel>Locale</FormLabel>
                     <FormControl>
-                      <LocaleSelect {...field} value={field.value} onValueChange={field.onChange} />
+                      <LocaleSelect value={field.value} onValueChange={field.onChange} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -260,7 +260,7 @@ export function SubscriberOverviewForm({ subscriberId }: { subscriberId: string 
                   <FormItem className="min-w-0 flex-1">
                     <FormLabel>Timezone</FormLabel>
                     <FormControl>
-                      <TimezoneSelect {...field} value={field.value} onValueChange={field.onChange} />
+                      <TimezoneSelect value={field.value} onValueChange={field.onChange} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

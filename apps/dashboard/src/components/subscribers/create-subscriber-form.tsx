@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { loadLanguage } from '@uiw/codemirror-extensions-langs';
 import { useForm } from 'react-hook-form';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { z } from 'zod';
 import { Button } from '../primitives/button';
 import { Editor } from '../primitives/editor';
@@ -17,18 +17,24 @@ import TruncatedText from '../truncated-text';
 import { CompactButton } from '../primitives/button-compact';
 import { ExternalLink } from '../shared/external-link';
 import { InlineToast } from '../primitives/inline-toast';
+import { buildRoute, ROUTES } from '@/utils/routes';
 
 const extensions = [loadLanguage('json')?.extension ?? []];
 const basicSetup = { lineNumbers: true, defaultKeymap: true };
 
 export function CreateSubscriberForm() {
   const navigate = useNavigate();
+  const { environmentSlug } = useParams();
   /**
    * Needed to forcefully reset the form when switching subscriber
    * Without this, the form will keep the previous subscriber's data for undefined fields of current one
    */
 
   const form = useForm<z.infer<typeof CreateSubscriberFormSchema>>({
+    defaultValues: {
+      data: '',
+      subscriberId: crypto.randomUUID(),
+    },
     resolver: zodResolver(CreateSubscriberFormSchema),
     shouldFocusError: false,
   });
@@ -66,7 +72,11 @@ export function CreateSubscriberForm() {
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            navigate('../', { relative: 'path' });
+            navigate(
+              buildRoute(ROUTES.SUBSCRIBERS, {
+                environmentSlug: environmentSlug ?? '',
+              })
+            );
           }}
         >
           <span className="sr-only">Close</span>
@@ -126,11 +136,8 @@ export function CreateSubscriberForm() {
                 render={({ field, fieldState }) => (
                   <FormItem className="w-full">
                     <div className="flex">
-                      <FormLabel
-                        tooltip="Provide a unique ID for the user as the subscriberId (e.g., your app's internal user ID)."
-                        className="gap-1"
-                      >
-                        SubscriberId
+                      <FormLabel className="gap-1">
+                        SubscriberId <span className="text-primary">*</span>
                       </FormLabel>
                       <span className="ml-auto">
                         <Link
@@ -151,9 +158,10 @@ export function CreateSubscriberForm() {
                         onChange={field.onChange}
                         hasError={!!fieldState.error}
                         size="xs"
+                        required
                       />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage>Must be unique and used to identify a subscriber</FormMessage>
                   </FormItem>
                 )}
               />
@@ -211,7 +219,7 @@ export function CreateSubscriberForm() {
                   <FormItem className="w-1/5">
                     <FormLabel>Locale</FormLabel>
                     <FormControl>
-                      <LocaleSelect {...field} value={field.value} onValueChange={field.onChange} />
+                      <LocaleSelect value={field.value} onValueChange={field.onChange} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -224,7 +232,7 @@ export function CreateSubscriberForm() {
                   <FormItem className="min-w-0 flex-1">
                     <FormLabel>Timezone</FormLabel>
                     <FormControl>
-                      <TimezoneSelect {...field} value={field.value} onValueChange={field.onChange} />
+                      <TimezoneSelect value={field.value} onValueChange={field.onChange} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -272,7 +280,11 @@ export function CreateSubscriberForm() {
                     <strong>Tip:</strong> You can also Add subscriber via API, or create them on the fly when sending
                     notifications.
                   </span>
-                  <ExternalLink className="text-xs text-neutral-600" variant="text">
+                  <ExternalLink
+                    className="text-xs text-neutral-600"
+                    variant="text"
+                    href="https://docs.novu.co/concepts/subscribers#just-in-time"
+                  >
                     Learn more
                   </ExternalLink>
                 </div>
