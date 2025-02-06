@@ -11,7 +11,6 @@ export const Footer = () => {
       <a
         href={`https://go.novu.co/powered?ref=`}
         target="_blank"
-        rel="noopener noreferrer"
         class="nt-flex nt-shrink-0 nt-justify-center nt-items-center nt-gap-1 nt-mt-auto nt-pt-9 nt-pb-3 nt-text-foreground-alpha-200 hover:nt-text-foreground-alpha-300 nt-no-underline nt-transition-colors"
       >
         <Novu />
