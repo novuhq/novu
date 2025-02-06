@@ -1,4 +1,4 @@
-import { createSubscriber, patchSubscriber } from '@/api/subscribers';
+import { createSubscriber } from '@/api/subscribers';
 import { useEnvironment } from '@/context/environment/hooks';
 import { QueryKeys } from '@/utils/query-keys';
 import { OmitEnvironmentFromParameters } from '@/utils/types';

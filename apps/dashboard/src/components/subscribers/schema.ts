@@ -30,4 +30,5 @@ export const SubscriberFormSchema = z.object({
 
 export const CreateSubscriberFormSchema = SubscriberFormSchema.extend({
   subscriberId: z.string(),
+  email: z.string().email().optional(),
 });

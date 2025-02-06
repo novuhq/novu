@@ -18,17 +18,22 @@ import { CompactButton } from '../primitives/button-compact';
 import { ExternalLink } from '../shared/external-link';
 import { InlineToast } from '../primitives/inline-toast';
 import { buildRoute, ROUTES } from '@/utils/routes';
+import { useCreateSubscriber } from '@/hooks/use-create-subscriber';
+import { showErrorToast, showSuccessToast } from '../primitives/sonner-helpers';
+import { ExternalToast } from 'sonner';
 
 const extensions = [loadLanguage('json')?.extension ?? []];
 const basicSetup = { lineNumbers: true, defaultKeymap: true };
+const toastOptions: ExternalToast = {
+  position: 'bottom-right',
+  classNames: {
+    toast: 'mb-4 right-0',
+  },
+};
 
 export function CreateSubscriberForm() {
   const navigate = useNavigate();
   const { environmentSlug } = useParams();
-  /**
-   * Needed to forcefully reset the form when switching subscriber
-   * Without this, the form will keep the previous subscriber's data for undefined fields of current one
-   */
 
   const form = useForm<z.infer<typeof CreateSubscriberFormSchema>>({
     defaultValues: {
@@ -37,6 +42,20 @@ export function CreateSubscriberForm() {
     },
     resolver: zodResolver(CreateSubscriberFormSchema),
     shouldFocusError: false,
+  });
+
+  const { createSubscriber } = useCreateSubscriber({
+    onSuccess: () => {
+      showSuccessToast('Created subscriber successfully', undefined, toastOptions);
+      navigate(
+        buildRoute(ROUTES.SUBSCRIBERS, {
+          environmentSlug: environmentSlug ?? '',
+        })
+      );
+    },
+    onError: () => {
+      showErrorToast('Failed to create subscriber', undefined, toastOptions);
+    },
   });
 
   const onSubmit = async (formData: z.infer<typeof CreateSubscriberFormSchema>) => {
@@ -51,11 +70,9 @@ export function CreateSubscriberForm() {
       return { ...acc, [typedKey]: formData[typedKey]?.trim() };
     }, {});
 
-    if (!Object.keys(dirtyPayload).length) {
-      return;
-    }
-
-    // await patchSubscriber({ subscriberId, subscriber: dirtyPayload });
+    await createSubscriber({
+      subscriber: { ...dirtyPayload, subscriberId: formData.subscriberId },
+    });
   };
 
   return (
@@ -166,6 +183,8 @@ export function CreateSubscriberForm() {
                 )}
               />
             </div>
+            <Separator />
+
             <div className="flex flex-1 gap-2.5">
               <FormField
                 control={form.control}
@@ -209,7 +228,6 @@ export function CreateSubscriberForm() {
                 )}
               />
             </div>
-            <Separator />
 
             <div className="flex flex-1 gap-2.5">
               <FormField
@@ -244,7 +262,10 @@ export function CreateSubscriberForm() {
               name="data"
               render={({ field, fieldState }) => (
                 <FormItem className="w-full">
-                  <FormLabel tooltip="Store additional user info as key-value pairs, like address, height, or nationality, in the data field.">
+                  <FormLabel
+                    tooltip={`Store additional user details as key-value pairs in the custom data field.
+                     \n Example: {\n "address": "123 Main St",\n "nationality": "Canadian"\n}`}
+                  >
                     Custom data (JSON)
                   </FormLabel>
                   <FormControl>
@@ -306,11 +327,7 @@ export function CreateSubscriberForm() {
                 </span>
               </div>
 
-              <Button
-                variant="secondary"
-                type="submit"
-                disabled={!form.formState.isDirty || Object.keys(form.formState.dirtyFields).length === 0}
-              >
+              <Button variant="secondary" type="submit">
                 Create subscriber
               </Button>
             </div>
