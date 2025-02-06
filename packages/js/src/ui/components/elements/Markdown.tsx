@@ -1,5 +1,5 @@
-import { createMemo, For, JSX } from 'solid-js';
-import { useStyle } from '../../helpers';
+import { createMemo, For, JSX, splitProps } from 'solid-js';
+import { cn, useStyle } from '../../helpers';
 import { parseMarkdownIntoTokens } from '../../internal';
 import { AppearanceKey } from '../../types';
 
@@ -11,20 +11,22 @@ const Bold = (props: { children?: JSX.Element; appearanceKey?: AppearanceKey }) 
 const Text = (props: { children?: JSX.Element }) => props.children;
 
 type MarkdownProps = JSX.HTMLAttributes<HTMLParagraphElement> & {
+  appearanceKey: AppearanceKey;
   strongAppearanceKey: AppearanceKey;
   children: string;
 };
 const Markdown = (props: MarkdownProps) => {
-  const { children, strongAppearanceKey, ...rest } = props;
+  const [local, rest] = splitProps(props, ['class', 'children', 'appearanceKey', 'strongAppearanceKey']);
+  const style = useStyle();
 
-  const tokens = createMemo(() => parseMarkdownIntoTokens(children));
+  const tokens = createMemo(() => parseMarkdownIntoTokens(local.children));
 
   return (
-    <p {...rest}>
+    <p class={style(local.appearanceKey, cn(local.class))} {...rest}>
       <For each={tokens()}>
         {(token) => {
           if (token.type === 'bold') {
-            return <Bold appearanceKey={strongAppearanceKey}>{token.content}</Bold>;
+            return <Bold appearanceKey={local.strongAppearanceKey}>{token.content}</Bold>;
           } else {
             return <Text>{token.content}</Text>;
           }
