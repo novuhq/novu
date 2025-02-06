@@ -286,7 +286,7 @@ export function SubscriberOverviewForm({ subscriberId }: { subscriberId: string 
                         height="100%"
                         multiline
                         {...field}
-                        value={field.value || ''}
+                        value={field.value}
                         onChange={(val) => {
                           field.onChange(val);
                           form.trigger(field.name);

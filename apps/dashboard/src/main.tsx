@@ -41,6 +41,7 @@ import { ROUTES } from './utils/routes';
 import { initializeSentry } from './utils/sentry';
 import { overrideZodErrorMap } from './utils/validation';
 import { EditSubscriberPage } from './pages/edit-subscriber-page';
+import { CreateSubscriberPage } from './pages/create-subscriber';
 
 initializeSentry();
 overrideZodErrorMap();
@@ -129,6 +130,10 @@ const router = createBrowserRouter([
                   {
                     path: ROUTES.EDIT_SUBSCRIBER,
                     element: <EditSubscriberPage />,
+                  },
+                  {
+                    path: ROUTES.CREATE_SUBSCRIBER,
+                    element: <CreateSubscriberPage />,
                   },
                 ],
               },
