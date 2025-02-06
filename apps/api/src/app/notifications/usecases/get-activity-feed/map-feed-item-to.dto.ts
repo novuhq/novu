@@ -54,6 +54,7 @@ function buildTemplate(template: TemplateFeedItem): ActivityNotificationTemplate
     _id: template._id,
     name: template.name,
     triggers: template.triggers,
+    origin: template.origin,
   };
 }
 

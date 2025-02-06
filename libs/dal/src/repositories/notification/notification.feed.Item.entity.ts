@@ -10,7 +10,7 @@ export type NotificationFeedItemEntity = Omit<NotificationEntity, 'template'> & 
   subscriber?: SubscriberFeedItem;
   jobs: JobFeedItem[];
 };
-export type TemplateFeedItem = Pick<NotificationTemplateEntity, '_id' | 'name' | 'triggers'>;
+export type TemplateFeedItem = Pick<NotificationTemplateEntity, '_id' | 'name' | 'triggers' | 'origin'>;
 
 export type SubscriberFeedItem = Pick<
   SubscriberEntity,
