@@ -32,40 +32,41 @@ const toastOptions: ExternalToast = {
   },
 };
 
-/**
- * Define all the initial values for the form,
- * else the form isDirty on mount
- * if only subscriberId is auto-generated
- */
-const initialValues = {
-  data: '',
-  subscriberId: crypto.randomUUID(),
-  avatar: '',
-  firstName: '',
-  lastName: '',
-  locale: '',
-  phone: '',
-  timezone: '',
-  email: '',
-};
-
 export function CreateSubscriberForm() {
   const navigate = useNavigate();
   const { environmentSlug } = useParams();
 
   const form = useForm<z.infer<typeof CreateSubscriberFormSchema>>({
-    defaultValues: initialValues,
+    /**
+     * Define all the initial values for the form,
+     * else the form isDirty on mount
+     * if only subscriberId is auto-generated
+     */
+    defaultValues: {
+      data: '',
+      subscriberId: crypto.randomUUID(),
+      avatar: '',
+      firstName: '',
+      lastName: '',
+      locale: '',
+      phone: '',
+      timezone: '',
+      email: '',
+    },
     resolver: zodResolver(CreateSubscriberFormSchema),
     shouldFocusError: false,
   });
 
-  const isDirty = form.formState.isDirty || Object.keys(form.formState.dirtyFields).length > 0;
+  const isDirty = Object.keys(form.formState.dirtyFields).length > 0;
   const blocker = useBlocker(isDirty);
   useBeforeUnload(isDirty);
 
   const { createSubscriber } = useCreateSubscriber({
     onSuccess: () => {
       showSuccessToast('Created subscriber successfully', undefined, toastOptions);
+      console.log({
+        g: form.formState.dirtyFields,
+      });
       navigate(
         buildRoute(ROUTES.SUBSCRIBERS, {
           environmentSlug: environmentSlug ?? '',
@@ -90,6 +91,7 @@ export function CreateSubscriberForm() {
       return { ...acc, [typedKey]: formData[typedKey]?.trim() };
     }, {});
 
+    form.reset({ ...formData, data: JSON.stringify(formData.data) });
     await createSubscriber({
       subscriber: { ...dirtyPayload, subscriberId: formData.subscriberId },
     });
@@ -232,7 +234,7 @@ export function CreateSubscriberForm() {
                         type="email"
                         placeholder="hello@novu.co"
                         id={field.name}
-                        value={field.value || undefined}
+                        value={field.value}
                         onChange={field.onChange}
                         hasError={!!fieldState.error}
                         leadingIcon={RiMailLine}

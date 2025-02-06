@@ -36,5 +36,10 @@ export const CreateSubscriberFormSchema = SubscriberFormSchema.extend({
     }
     return str;
   }),
-  email: z.string().email().optional(),
+  email: z
+    .string()
+    .trim()
+    .refine((val) => val === '' || z.string().email().safeParse(val).success, {
+      message: 'Invalid email',
+    }),
 });
