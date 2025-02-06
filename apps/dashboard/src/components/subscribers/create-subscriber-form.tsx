@@ -74,7 +74,7 @@ export function CreateSubscriberForm() {
       );
     },
     onError: (error) => {
-      const errMsg = error instanceof Error ? error.message : 'Failed to create subcriber';
+      const errMsg = error instanceof Error ? error.message : 'Failed to create subscriber';
       showErrorToast(errMsg, undefined, toastOptions);
     },
   });
