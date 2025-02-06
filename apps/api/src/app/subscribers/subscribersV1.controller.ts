@@ -197,6 +197,7 @@ export class SubscribersV1Controller {
   @ExternalApiAccessible()
   @UserAuthentication()
   @ApiResponse(SubscriberResponseDto, 201)
+  @SdkMethodName('createLegacy')
   @ApiOperation({
     summary: 'Create subscriber',
     description:

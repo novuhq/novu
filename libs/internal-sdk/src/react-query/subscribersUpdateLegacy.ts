@@ -8,7 +8,7 @@ import {
   UseMutationResult,
 } from "@tanstack/react-query";
 import { NovuCore } from "../core.js";
-import { subscribersCreate } from "../funcs/subscribersCreate.js";
+import { subscribersUpdateLegacy } from "../funcs/subscribersUpdateLegacy.js";
 import { combineSignals } from "../lib/primitives.js";
 import { RequestOptions } from "../lib/sdks.js";
 import * as components from "../models/components/index.js";
@@ -17,59 +17,61 @@ import { unwrapAsync } from "../types/fp.js";
 import { useNovuContext } from "./_context.js";
 import { MutationHookOptions } from "./_types.js";
 
-export type SubscribersCreateMutationVariables = {
-  createSubscriberRequestDto: components.CreateSubscriberRequestDto;
+export type SubscribersUpdateLegacyMutationVariables = {
+  updateSubscriberRequestDto: components.UpdateSubscriberRequestDto;
+  subscriberId: string;
   idempotencyKey?: string | undefined;
   options?: RequestOptions;
 };
 
-export type SubscribersCreateMutationData =
-  operations.SubscribersControllerCreateSubscriberResponse;
+export type SubscribersUpdateLegacyMutationData =
+  operations.SubscribersV1ControllerUpdateSubscriberResponse;
 
 /**
- * Create subscriber
+ * Update subscriber
  *
  * @remarks
- * Create subscriber with the given data
+ * Used to update the subscriber entity with new information
  */
-export function useSubscribersCreateMutation(
+export function useSubscribersUpdateLegacyMutation(
   options?: MutationHookOptions<
-    SubscribersCreateMutationData,
+    SubscribersUpdateLegacyMutationData,
     Error,
-    SubscribersCreateMutationVariables
+    SubscribersUpdateLegacyMutationVariables
   >,
 ): UseMutationResult<
-  SubscribersCreateMutationData,
+  SubscribersUpdateLegacyMutationData,
   Error,
-  SubscribersCreateMutationVariables
+  SubscribersUpdateLegacyMutationVariables
 > {
   const client = useNovuContext();
   return useMutation({
-    ...buildSubscribersCreateMutation(client, options),
+    ...buildSubscribersUpdateLegacyMutation(client, options),
     ...options,
   });
 }
 
-export function mutationKeySubscribersCreate(): MutationKey {
-  return ["@novu/api", "Subscribers", "create"];
+export function mutationKeySubscribersUpdateLegacy(): MutationKey {
+  return ["@novu/api", "Subscribers", "updateLegacy"];
 }
 
-export function buildSubscribersCreateMutation(
+export function buildSubscribersUpdateLegacyMutation(
   client$: NovuCore,
   hookOptions?: RequestOptions,
 ): {
   mutationKey: MutationKey;
   mutationFn: (
-    variables: SubscribersCreateMutationVariables,
-  ) => Promise<SubscribersCreateMutationData>;
+    variables: SubscribersUpdateLegacyMutationVariables,
+  ) => Promise<SubscribersUpdateLegacyMutationData>;
 } {
   return {
-    mutationKey: mutationKeySubscribersCreate(),
-    mutationFn: function subscribersCreateMutationFn({
-      createSubscriberRequestDto,
+    mutationKey: mutationKeySubscribersUpdateLegacy(),
+    mutationFn: function subscribersUpdateLegacyMutationFn({
+      updateSubscriberRequestDto,
+      subscriberId,
       idempotencyKey,
       options,
-    }): Promise<SubscribersCreateMutationData> {
+    }): Promise<SubscribersUpdateLegacyMutationData> {
       const mergedOptions = {
         ...hookOptions,
         ...options,
@@ -82,9 +84,10 @@ export function buildSubscribersCreateMutation(
           ),
         },
       };
-      return unwrapAsync(subscribersCreate(
+      return unwrapAsync(subscribersUpdateLegacy(
         client$,
-        createSubscriberRequestDto,
+        updateSubscriberRequestDto,
+        subscriberId,
         idempotencyKey,
         mergedOptions,
       ));

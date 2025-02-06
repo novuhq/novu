@@ -25,19 +25,20 @@ import * as operations from "../models/operations/index.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Create subscriber
+ * Update subscriber
  *
  * @remarks
- * Create subscriber with the given data
+ * Used to update the subscriber entity with new information
  */
-export async function subscribersCreate(
+export async function subscribersUpdateLegacy(
   client: NovuCore,
-  createSubscriberRequestDto: components.CreateSubscriberRequestDto,
+  updateSubscriberRequestDto: components.UpdateSubscriberRequestDto,
+  subscriberId: string,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): Promise<
   Result<
-    operations.SubscribersControllerCreateSubscriberResponse,
+    operations.SubscribersV1ControllerUpdateSubscriberResponse,
     | errors.ErrorDto
     | errors.ErrorDto
     | errors.ValidationErrorDto
@@ -51,15 +52,16 @@ export async function subscribersCreate(
     | ConnectionError
   >
 > {
-  const input: operations.SubscribersControllerCreateSubscriberRequest = {
-    createSubscriberRequestDto: createSubscriberRequestDto,
+  const input: operations.SubscribersV1ControllerUpdateSubscriberRequest = {
+    updateSubscriberRequestDto: updateSubscriberRequestDto,
+    subscriberId: subscriberId,
     idempotencyKey: idempotencyKey,
   };
 
   const parsed = safeParse(
     input,
     (value) =>
-      operations.SubscribersControllerCreateSubscriberRequest$outboundSchema
+      operations.SubscribersV1ControllerUpdateSubscriberRequest$outboundSchema
         .parse(value),
     "Input validation failed",
   );
@@ -67,11 +69,18 @@ export async function subscribersCreate(
     return parsed;
   }
   const payload = parsed.value;
-  const body = encodeJSON("body", payload.CreateSubscriberRequestDto, {
+  const body = encodeJSON("body", payload.UpdateSubscriberRequestDto, {
     explode: true,
   });
 
-  const path = pathToFunc("/v2/subscribers")();
+  const pathParams = {
+    subscriberId: encodeSimple("subscriberId", payload.subscriberId, {
+      explode: false,
+      charEncoding: "percent",
+    }),
+  };
+
+  const path = pathToFunc("/v1/subscribers/{subscriberId}")(pathParams);
 
   const headers = new Headers(compactMap({
     "Content-Type": "application/json",
@@ -87,7 +96,7 @@ export async function subscribersCreate(
   const requestSecurity = resolveGlobalSecurity(securityInput);
 
   const context = {
-    operationID: "SubscribersController_createSubscriber",
+    operationID: "SubscribersV1Controller_updateSubscriber",
     oAuth2Scopes: [],
 
     resolvedSecurity: requestSecurity,
@@ -111,7 +120,7 @@ export async function subscribersCreate(
 
   const requestRes = client._createRequest(context, {
     security: requestSecurity,
-    method: "POST",
+    method: "PUT",
     baseURL: options?.serverURL,
     path: path,
     headers: headers,
@@ -155,7 +164,7 @@ export async function subscribersCreate(
   };
 
   const [result] = await M.match<
-    operations.SubscribersControllerCreateSubscriberResponse,
+    operations.SubscribersV1ControllerUpdateSubscriberResponse,
     | errors.ErrorDto
     | errors.ErrorDto
     | errors.ValidationErrorDto
@@ -170,7 +179,7 @@ export async function subscribersCreate(
   >(
     M.json(
       200,
-      operations.SubscribersControllerCreateSubscriberResponse$inboundSchema,
+      operations.SubscribersV1ControllerUpdateSubscriberResponse$inboundSchema,
       { hdrs: true, key: "Result" },
     ),
     M.jsonErr(414, errors.ErrorDto$inboundSchema),

@@ -93,7 +93,6 @@ export type SubscriberResponseDto = {
    * Additional custom data for the subscriber
    */
   data?: { [k: string]: any } | null | undefined;
-
   /**
    * Timezone of the subscriber
    */
@@ -125,6 +124,7 @@ export const SubscriberResponseDto$inboundSchema: z.ZodType<
   updatedAt: z.string(),
   __v: z.number().optional(),
   data: z.nullable(z.record(z.any())).optional(),
+  timezone: z.string().optional(),
 }).transform((v) => {
   return remap$(v, {
     "_id": "id",
@@ -155,6 +155,7 @@ export type SubscriberResponseDto$Outbound = {
   updatedAt: string;
   __v?: number | undefined;
   data?: { [k: string]: any } | null | undefined;
+  timezone?: string | undefined;
 };
 
 /** @internal */
@@ -182,6 +183,7 @@ export const SubscriberResponseDto$outboundSchema: z.ZodType<
   updatedAt: z.string(),
   v: z.number().optional(),
   data: z.nullable(z.record(z.any())).optional(),
+  timezone: z.string().optional(),
 }).transform((v) => {
   return remap$(v, {
     id: "_id",

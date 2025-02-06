@@ -23,7 +23,7 @@ describe('Update Subscriber - /subscribers/:subscriberId (PUT) #novu-v2', functi
       email: 'john@doe.com',
     });
 
-    const response = await novuClient.subscribers.update(
+    const response = await novuClient.subscribers.updateLegacy(
       {
         lastName: 'Test Changed',
         email: 'changed@mail.com',
@@ -55,7 +55,7 @@ describe('Update Subscriber - /subscribers/:subscriberId (PUT) #novu-v2', functi
       email: 'john@doe.com',
     });
 
-    const response = await novuClient.subscribers.update(
+    const response = await novuClient.subscribers.updateLegacy(
       {
         lastName: 'Test Changed',
         phone: '+972523333333',
