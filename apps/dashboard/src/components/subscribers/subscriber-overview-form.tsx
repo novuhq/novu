@@ -14,44 +14,73 @@ import { SubscriberFormSchema } from './schema';
 import { TimezoneSelect } from './timezone-select';
 import { Avatar, AvatarFallback, AvatarImage } from '../primitives/avatar';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { usePatchSubscriber } from '@/hooks/use-patch-subscriber';
-import { showSuccessToast } from '../primitives/sonner-helpers';
-import { SubscriberResponseDto } from '@novu/api/models/components';
+import { showErrorToast, showSuccessToast } from '../primitives/sonner-helpers';
 import { CopyButton } from '../primitives/copy-button';
 import { SubscriberOverviewSkeleton } from './subscriber-overview-skeleton';
+import { LocaleSelect } from './locale-select';
+import { useState } from 'react';
+import { useDeleteSubscriber } from '@/hooks/use-delete-subscriber';
+import { getSubscriberTitle } from './utils';
+import { ConfirmationModal } from '../confirmation-modal';
+import { ExternalToast } from 'sonner';
+import { useFetchSubscriber } from '@/hooks/use-fetch-subscriber';
 
 const extensions = [loadLanguage('json')?.extension ?? []];
 const basicSetup = { lineNumbers: true, defaultKeymap: true };
+const toastOptions: ExternalToast = {
+  position: 'bottom-right',
+  classNames: {
+    toast: 'mb-4 right-0',
+  },
+};
 
-export default function SubscriberOverviewForm({
-  subscriberId,
-  subscriber,
-  isFetching,
-}: {
-  subscriberId: string;
-  subscriber?: SubscriberResponseDto;
-  isFetching: boolean;
-}) {
+export function SubscriberOverviewForm({ subscriberId }: { subscriberId: string }) {
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const { data: subscriber, isPending } = useFetchSubscriber({ subscriberId });
+
   const { patchSubscriber } = usePatchSubscriber({
-    onSuccess: () => {
-      showSuccessToast('Subscriber updated successfully');
+    onSuccess: (data) => {
+      showSuccessToast(
+        `Updated subscriber: ${subscriberDetails && getSubscriberTitle(subscriberDetails)}`,
+        undefined,
+        toastOptions
+      );
+      form.reset({ ...data, data: JSON.stringify(data.data, null, 2) });
+    },
+    onError: () => {
+      showErrorToast('Failed to update subscriber', undefined, toastOptions);
     },
   });
 
+  const { deleteSubscriber, isPending: isDeleteSubscriberPending } = useDeleteSubscriber({
+    onSuccess: () => {
+      showSuccessToast(
+        `Deleted subscriber: ${subscriberDetails && getSubscriberTitle(subscriberDetails)}`,
+        undefined,
+        toastOptions
+      );
+    },
+    onError: () => {
+      showErrorToast('Failed to delete subscriber', undefined, toastOptions);
+    },
+  });
+
+  const navigate = useNavigate();
   /**
    * Needed to forcefully reset the form when switching subscriber
    * Without this, the form will keep the previous subscriber's data for undefined fields of current one
    */
-  const subscriberDetails = isFetching ? undefined : subscriber;
+  const subscriberDetails = isPending ? undefined : subscriber;
 
   const form = useForm<z.infer<typeof SubscriberFormSchema>>({
-    values: { ...subscriberDetails, data: JSON.stringify(subscriberDetails?.data, null, 2) },
+    values: { ...subscriberDetails, data: JSON.stringify(subscriberDetails?.data, null, 2) ?? '' },
     resolver: zodResolver(SubscriberFormSchema),
     shouldFocusError: false,
   });
 
-  if (isFetching) {
+  if (isPending || !subscriberDetails) {
     return <SubscriberOverviewSkeleton />;
   }
 
@@ -61,9 +90,10 @@ export default function SubscriberOverviewForm({
     const dirtyPayload = Object.keys(dirtyFields).reduce<Partial<typeof formData>>((acc, key) => {
       const typedKey = key as keyof typeof formData;
       if (typedKey === 'data') {
-        return { ...acc, data: JSON.parse(formData.data) };
+        const data = JSON.parse(JSON.stringify(formData.data));
+        return { ...acc, data: data === '' ? {} : data };
       }
-      return { ...acc, [typedKey]: formData[typedKey] };
+      return { ...acc, [typedKey]: formData[typedKey]?.trim() };
     }, {});
 
     if (!Object.keys(dirtyPayload).length) {
@@ -74,7 +104,7 @@ export default function SubscriberOverviewForm({
   };
 
   return (
-    <div className="flex h-full flex-col items-stretch">
+    <div className="flex h-full flex-col">
       <Form {...form}>
         <form autoComplete="off" noValidate onSubmit={form.handleSubmit(onSubmit)} className="flex h-full flex-col">
           <div className="flex flex-col items-stretch gap-6 p-5">
@@ -87,7 +117,7 @@ export default function SubscriberOverviewForm({
                     e.stopPropagation();
                   }}
                 >
-                  <Avatar className="size-[3.75rem]">
+                  <Avatar className="size-[3.75rem] cursor-default">
                     <AvatarImage src={subscriber?.avatar || undefined} />
                     <AvatarFallback className="bg-neutral-alpha-100">
                       <Avatar className="size-full">
@@ -117,6 +147,7 @@ export default function SubscriberOverviewForm({
                           hasError={!!fieldState.error}
                         />
                       </FormControl>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -136,6 +167,7 @@ export default function SubscriberOverviewForm({
                           hasError={!!fieldState.error}
                         />
                       </FormControl>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -160,10 +192,15 @@ export default function SubscriberOverviewForm({
                     </Link>
                   </span>
                 </div>
-                <Input value={subscriberId} readOnly trailingNode={<CopyButton valueToCopy={subscriberId} />} />
+                <Input
+                  value={subscriberId}
+                  readOnly
+                  trailingNode={
+                    <CopyButton valueToCopy={subscriberId} className="group-has-[input:focus]:border-l-stroke-strong" />
+                  }
+                />
               </FormItem>
             </div>
-
             <div className="flex flex-1 items-center gap-2.5">
               <FormField
                 control={form.control}
@@ -182,6 +219,7 @@ export default function SubscriberOverviewForm({
                         hasError={!!fieldState.error}
                       />
                     </FormControl>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -192,14 +230,9 @@ export default function SubscriberOverviewForm({
                   <FormItem className="w-full">
                     <FormLabel>Phone number</FormLabel>
                     <FormControl>
-                      <PhoneInput
-                        {...field}
-                        placeholder={field.name}
-                        id={field.name}
-                        value={field.value || ''}
-                        onChange={field.onChange}
-                      />
+                      <PhoneInput {...field} placeholder={field.name} id={field.name} value={field.value || ''} />
                     </FormControl>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -211,11 +244,12 @@ export default function SubscriberOverviewForm({
                 control={form.control}
                 name="locale"
                 render={({ field }) => (
-                  <FormItem className="w-1/4">
+                  <FormItem className="w-1/5">
                     <FormLabel>Locale</FormLabel>
                     <FormControl>
-                      <TimezoneSelect {...field} value={field.value} onValueChange={field.onChange} />
+                      <LocaleSelect {...field} value={field.value} onValueChange={field.onChange} />
                     </FormControl>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -223,11 +257,12 @@ export default function SubscriberOverviewForm({
                 control={form.control}
                 name="timezone"
                 render={({ field }) => (
-                  <FormItem className="w-full">
+                  <FormItem className="min-w-0 flex-1">
                     <FormLabel>Timezone</FormLabel>
                     <FormControl>
                       <TimezoneSelect {...field} value={field.value} onValueChange={field.onChange} />
                     </FormControl>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -237,7 +272,9 @@ export default function SubscriberOverviewForm({
               name="data"
               render={({ field, fieldState }) => (
                 <FormItem className="w-full">
-                  <FormLabel>Custom data (JSON)</FormLabel>
+                  <FormLabel tooltip="Store additional user info as key-value pairs, like address, height, or nationality, in the data field.">
+                    Custom data (JSON)
+                  </FormLabel>
                   <FormControl>
                     <InputRoot hasError={!!fieldState.error} className="h-32 p-1 py-2">
                       <Editor
@@ -249,7 +286,11 @@ export default function SubscriberOverviewForm({
                         height="100%"
                         multiline
                         {...field}
-                        value={field.value || ''}
+                        value={field.value}
+                        onChange={(val) => {
+                          field.onChange(val);
+                          form.trigger(field.name);
+                        }}
                       />
                     </InputRoot>
                   </FormControl>
@@ -259,7 +300,6 @@ export default function SubscriberOverviewForm({
             />
           </div>
           <Separator />
-
           {subscriberDetails?.updatedAt && (
             <span className="text-2xs px-5 py-1 text-neutral-400">
               Updated at{' '}
@@ -279,13 +319,18 @@ export default function SubscriberOverviewForm({
           <div className="mt-auto">
             <Separator />
             <div className="flex justify-between gap-3 p-3">
-              <Button type="submit" variant="primary" mode="ghost" leadingIcon={RiDeleteBin2Line}>
+              <Button
+                variant="primary"
+                mode="ghost"
+                leadingIcon={RiDeleteBin2Line}
+                onClick={() => setIsDeleteModalOpen(true)}
+              >
                 Delete subscriber
               </Button>
               <Button
                 variant="secondary"
                 type="submit"
-                disabled={!form.formState.isDirty || Object.keys(form.formState.dirtyFields).length === 0 || isFetching}
+                disabled={!form.formState.isDirty || Object.keys(form.formState.dirtyFields).length === 0 || isPending}
               >
                 Save changes
               </Button>
@@ -293,6 +338,24 @@ export default function SubscriberOverviewForm({
           </div>
         </form>
       </Form>
+      <ConfirmationModal
+        open={isDeleteModalOpen}
+        onOpenChange={setIsDeleteModalOpen}
+        onConfirm={async () => {
+          await deleteSubscriber({ subscriberId: subscriberDetails.subscriberId });
+          setIsDeleteModalOpen(false);
+          navigate('../', { relative: 'path' });
+        }}
+        title={`Delete subscriber`}
+        description={
+          <span>
+            Are you sure you want to delete subscriber{' '}
+            <span className="font-bold">{getSubscriberTitle(subscriberDetails!)}</span>? This action cannot be undone.
+          </span>
+        }
+        confirmButtonText="Delete subscriber"
+        isLoading={isDeleteSubscriberPending}
+      />
     </div>
   );
 }

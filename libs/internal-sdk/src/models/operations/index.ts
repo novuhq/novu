@@ -20,6 +20,7 @@ export * from "./notificationscontrollergetactivitygraphstats.js";
 export * from "./notificationscontrollergetactivitystats.js";
 export * from "./notificationscontrollergetnotification.js";
 export * from "./notificationscontrollerlistnotifications.js";
+export * from "./subscriberscontrollercreatesubscriber.js";
 export * from "./subscriberscontrollergetsubscriber.js";
 export * from "./subscriberscontrollergetsubscriberpreferences.js";
 export * from "./subscriberscontrollerpatchsubscriber.js";

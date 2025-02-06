@@ -113,14 +113,17 @@ export class GetSubscriberPreference {
       return acc;
     }, {});
 
-    const workflowPreferences: ISubscriberPreferenceResponse[] = this.calculateWorkflowPreferences(
+    const workflowPreferences: (ISubscriberPreferenceResponse | undefined)[] = this.calculateWorkflowPreferences(
       workflowList,
       workflowPreferenceSets,
       subscriberGlobalPreference,
       command.includeInactiveChannels
     );
 
-    const nonCriticalWorkflowPreferences = workflowPreferences.filter((preference) => !preference.template.critical);
+    const nonCriticalWorkflowPreferences = workflowPreferences.filter(
+      (preference): preference is ISubscriberPreferenceResponse =>
+        preference !== undefined && !preference.template.critical
+    );
 
     return nonCriticalWorkflowPreferences;
   }
@@ -131,9 +134,14 @@ export class GetSubscriberPreference {
     workflowPreferenceSets: Record<string, PreferenceSet>,
     subscriberGlobalPreference: PreferencesEntity | null,
     includeInactiveChannels: boolean
-  ): ISubscriberPreferenceResponse[] {
+  ): (ISubscriberPreferenceResponse | undefined)[] {
     return workflowList.map((workflow) => {
       const preferences = workflowPreferenceSets[workflow._id];
+
+      if (!preferences) {
+        return;
+      }
+
       const merged = this.mergePreferences(preferences, subscriberGlobalPreference);
 
       const includedChannels = this.getChannels(workflow, includeInactiveChannels);

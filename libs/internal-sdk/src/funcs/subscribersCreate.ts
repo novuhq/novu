@@ -28,7 +28,7 @@ import { Result } from "../types/fp.js";
  * Create subscriber
  *
  * @remarks
- * Creates a subscriber entity, in the Novu platform. The subscriber will be later used to receive notifications, and access notification feeds. Communication credentials such as email, phone number, and 3 rd party credentials i.e slack tokens could be later associated to this entity.
+ * Create subscriber with the given data
  */
 export async function subscribersCreate(
   client: NovuCore,
@@ -37,7 +37,7 @@ export async function subscribersCreate(
   options?: RequestOptions,
 ): Promise<
   Result<
-    operations.SubscribersV1ControllerCreateSubscriberResponse,
+    operations.SubscribersControllerCreateSubscriberResponse,
     | errors.ErrorDto
     | errors.ErrorDto
     | errors.ValidationErrorDto
@@ -51,7 +51,7 @@ export async function subscribersCreate(
     | ConnectionError
   >
 > {
-  const input: operations.SubscribersV1ControllerCreateSubscriberRequest = {
+  const input: operations.SubscribersControllerCreateSubscriberRequest = {
     createSubscriberRequestDto: createSubscriberRequestDto,
     idempotencyKey: idempotencyKey,
   };
@@ -59,7 +59,7 @@ export async function subscribersCreate(
   const parsed = safeParse(
     input,
     (value) =>
-      operations.SubscribersV1ControllerCreateSubscriberRequest$outboundSchema
+      operations.SubscribersControllerCreateSubscriberRequest$outboundSchema
         .parse(value),
     "Input validation failed",
   );
@@ -71,7 +71,7 @@ export async function subscribersCreate(
     explode: true,
   });
 
-  const path = pathToFunc("/v1/subscribers")();
+  const path = pathToFunc("/v2/subscribers")();
 
   const headers = new Headers(compactMap({
     "Content-Type": "application/json",
@@ -87,7 +87,7 @@ export async function subscribersCreate(
   const requestSecurity = resolveGlobalSecurity(securityInput);
 
   const context = {
-    operationID: "SubscribersV1Controller_createSubscriber",
+    operationID: "SubscribersController_createSubscriber",
     oAuth2Scopes: [],
 
     resolvedSecurity: requestSecurity,
@@ -155,7 +155,7 @@ export async function subscribersCreate(
   };
 
   const [result] = await M.match<
-    operations.SubscribersV1ControllerCreateSubscriberResponse,
+    operations.SubscribersControllerCreateSubscriberResponse,
     | errors.ErrorDto
     | errors.ErrorDto
     | errors.ValidationErrorDto
@@ -169,8 +169,8 @@ export async function subscribersCreate(
     | ConnectionError
   >(
     M.json(
-      201,
-      operations.SubscribersV1ControllerCreateSubscriberResponse$inboundSchema,
+      200,
+      operations.SubscribersControllerCreateSubscriberResponse$inboundSchema,
       { hdrs: true, key: "Result" },
     ),
     M.jsonErr(414, errors.ErrorDto$inboundSchema),

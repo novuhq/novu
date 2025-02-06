@@ -15,5 +15,5 @@ targets:
         source: internal-sdk-OAS
         codeSamples:
             registry:
-                location: registry.speakeasyapi.dev/novu/novu/json-development-internal-code-samples
+                location: registry.speakeasyapi.dev/novu/novu/json-development-internal-typescript-code-samples
             blocking: false

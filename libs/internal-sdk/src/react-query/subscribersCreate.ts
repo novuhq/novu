@@ -24,13 +24,13 @@ export type SubscribersCreateMutationVariables = {
 };
 
 export type SubscribersCreateMutationData =
-  operations.SubscribersV1ControllerCreateSubscriberResponse;
+  operations.SubscribersControllerCreateSubscriberResponse;
 
 /**
  * Create subscriber
  *
  * @remarks
- * Creates a subscriber entity, in the Novu platform. The subscriber will be later used to receive notifications, and access notification feeds. Communication credentials such as email, phone number, and 3 rd party credentials i.e slack tokens could be later associated to this entity.
+ * Create subscriber with the given data
  */
 export function useSubscribersCreateMutation(
   options?: MutationHookOptions<

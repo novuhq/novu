@@ -12,12 +12,12 @@ type Props = {
   options?: Omit<UseQueryOptions<SubscriberResponse, Error>, 'queryKey' | 'queryFn'>;
 };
 
-export default function useFetchSubscriber({ subscriberId, options = {} }: Props) {
+export function useFetchSubscriber({ subscriberId, options = {} }: Props) {
   const { currentOrganization } = useAuth();
   const { currentEnvironment } = useEnvironment();
 
   const subscriberQuery = useQuery<SubscriberResponseDto>({
-    queryKey: [QueryKeys.fetchSubscriber, currentOrganization?._id, currentEnvironment?._id],
+    queryKey: [QueryKeys.fetchSubscriber, currentOrganization?._id, currentEnvironment?._id, subscriberId],
     queryFn: () => getSubscriber({ environment: currentEnvironment!, subscriberId }),
     enabled: !!currentOrganization,
     ...options,

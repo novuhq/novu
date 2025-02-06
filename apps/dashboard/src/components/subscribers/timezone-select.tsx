@@ -32,7 +32,7 @@ export function TimezoneSelect({
       required={required}
       defaultValue={defaultOption}
     >
-      <SelectTrigger className="group p-1.5 shadow-sm last:[&>svg]:hidden">
+      <SelectTrigger className="focus:ring-stroke-strong group overflow-hidden p-1.5 shadow-sm focus:ring-1">
         <SelectValue
           placeholder={
             <div className="flex w-full items-center gap-1">
@@ -43,12 +43,17 @@ export function TimezoneSelect({
             </div>
           }
           asChild
+          className="w-full overflow-hidden"
         >
-          <div className="flex w-full items-center gap-1">
+          <div className="flex max-w-full flex-1 items-center gap-1 overflow-hidden">
             <div>
               <RiTimeLine className="size-4" />
             </div>
-            {value && <TruncatedText className="text-foreground text-sm">{parseTimezone(value).label}</TruncatedText>}
+            {value && (
+              <TruncatedText className="text-foreground w-full min-w-0 flex-1 text-sm">
+                {parseTimezone(value).label}
+              </TruncatedText>
+            )}
           </div>
         </SelectValue>
       </SelectTrigger>
