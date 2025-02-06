@@ -27,7 +27,7 @@ export function ActivityFilters({
   hide = [],
   className,
 }: ActivityFilters) {
-  const { data: workflowTemplates } = useFetchWorkflows({ limit: 100, refetchOnMount: false });
+  const { data: workflowTemplates } = useFetchWorkflows({ limit: 100 });
 
   return (
     <div className={cn('flex items-center gap-2 p-2 py-[11px]', className)}>

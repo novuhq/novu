@@ -23,13 +23,11 @@ export function useFetchActivities(
     enabled = true,
     refetchInterval = false,
     refetchOnWindowFocus = false,
-    refetchOnMount = true,
     staleTime = 0,
   }: {
     enabled?: boolean;
     refetchInterval?: number | false;
     refetchOnWindowFocus?: boolean;
-    refetchOnMount?: boolean;
     staleTime?: number;
   } = {}
 ) {
@@ -40,7 +38,6 @@ export function useFetchActivities(
     queryFn: ({ signal }) => getActivityList({ environment: currentEnvironment!, page, limit, filters, signal }),
     staleTime,
     refetchOnWindowFocus,
-    refetchOnMount,
     refetchInterval,
     enabled: enabled && !!currentEnvironment,
   });

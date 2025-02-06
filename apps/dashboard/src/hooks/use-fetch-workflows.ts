@@ -10,7 +10,6 @@ interface UseWorkflowsParams {
   query?: string;
   orderBy?: string;
   orderDirection?: DirectionEnum;
-  refetchOnMount?: boolean;
 }
 
 export function useFetchWorkflows({
@@ -19,7 +18,6 @@ export function useFetchWorkflows({
   query = '',
   orderBy = '',
   orderDirection = DirectionEnum.DESC,
-  refetchOnMount = true,
 }: UseWorkflowsParams = {}) {
   const { currentEnvironment } = useEnvironment();
 
@@ -29,7 +27,6 @@ export function useFetchWorkflows({
     placeholderData: keepPreviousData,
     enabled: !!currentEnvironment?._id,
     refetchOnWindowFocus: true,
-    refetchOnMount,
   });
 
   const currentPage = Math.floor(offset / limit) + 1;
