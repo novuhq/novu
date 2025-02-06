@@ -15,7 +15,7 @@ import { Tooltip } from '@/components/primitives/tooltip';
 import { cn } from '@/utils/ui';
 import { Skeleton } from '@/components/primitives/skeleton';
 
-const statusToToltipStyles: Record<string, string> = {
+const statusToTooltipStyles: Record<string, string> = {
   completed: 'before:bg-success-lighter before:border before:border-success-lighter text-success-base',
   pending: 'before:bg-warning-lighter before:border before:border-warning-lighter text-warning-base',
   failed: 'before:bg-error-lighter before:border before:border-error-lighter text-error-base',
@@ -141,7 +141,7 @@ export const SubscriberActivityList = ({
                 <TooltipContent className="bg-background relative">
                   <div
                     className={cn(
-                      statusToToltipStyles[variant ?? 'disabled'],
+                      statusToTooltipStyles[variant ?? 'disabled'],
                       'before:absolute before:inset-0 before:rounded-md before:content-[""]'
                     )}
                   >

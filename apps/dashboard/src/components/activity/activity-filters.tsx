@@ -8,14 +8,14 @@ import { CHANNEL_OPTIONS, DATE_RANGE_OPTIONS } from './constants';
 import { ActivityFiltersData } from '@/types/activity';
 import { cn } from '@/utils/ui';
 
-type HideableFilter = 'dateRange' | 'workflows' | 'channels' | 'transactionId' | 'subscriberId';
+type Fields = 'dateRange' | 'workflows' | 'channels' | 'transactionId' | 'subscriberId';
 
 export type ActivityFilters = {
   filters: ActivityFiltersData;
   showReset?: boolean;
   onFiltersChange: (filters: ActivityFiltersData) => void;
   onReset?: () => void;
-  hide?: HideableFilter[];
+  hide?: Fields[];
   className?: string;
 };
 
