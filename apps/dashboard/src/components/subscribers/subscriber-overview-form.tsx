@@ -151,6 +151,7 @@ export function SubscriberOverviewForm({ subscriberId }: { subscriberId: string 
                           value={field.value}
                           onChange={field.onChange}
                           hasError={!!fieldState.error}
+                          size="xs"
                         />
                       </FormControl>
                       <FormMessage />
@@ -171,6 +172,7 @@ export function SubscriberOverviewForm({ subscriberId }: { subscriberId: string 
                           value={field.value}
                           onChange={field.onChange}
                           hasError={!!fieldState.error}
+                          size="xs"
                         />
                       </FormControl>
                       <FormMessage />
@@ -204,6 +206,7 @@ export function SubscriberOverviewForm({ subscriberId }: { subscriberId: string 
                   trailingNode={
                     <CopyButton valueToCopy={subscriberId} className="group-has-[input:focus]:border-l-stroke-strong" />
                   }
+                  size="xs"
                 />
               </FormItem>
             </div>
@@ -223,6 +226,7 @@ export function SubscriberOverviewForm({ subscriberId }: { subscriberId: string 
                         value={field.value || undefined}
                         onChange={field.onChange}
                         hasError={!!fieldState.error}
+                        size="xs"
                       />
                     </FormControl>
                     <FormMessage />
