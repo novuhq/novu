@@ -64,9 +64,6 @@ export function CreateSubscriberForm() {
   const { createSubscriber } = useCreateSubscriber({
     onSuccess: () => {
       showSuccessToast('Created subscriber successfully', undefined, toastOptions);
-      console.log({
-        g: form.formState.dirtyFields,
-      });
       navigate(
         buildRoute(ROUTES.SUBSCRIBERS, {
           environmentSlug: environmentSlug ?? '',
