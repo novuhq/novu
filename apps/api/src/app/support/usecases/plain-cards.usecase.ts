@@ -77,10 +77,10 @@ export class PlainCardsUsecase {
   private organizationsComponent = (organizations) => {
     const activeOrganizations = organizations?.map((organization) => {
       const orgCreatedAt = new Date(organization?.createdAt);
-      const isTrialExpired = differenceInDays(new Date(), orgCreatedAt) < 14;
+      const isTrialRemaining = differenceInDays(new Date(), orgCreatedAt) < 14;
 
       const orgTier =
-        organization?.apiServiceLevel === 'business' && isTrialExpired
+        organization?.apiServiceLevel === 'business' && isTrialRemaining
           ? 'business-trial'
           : (organization?.apiServiceLevel ?? 'NA');
 
