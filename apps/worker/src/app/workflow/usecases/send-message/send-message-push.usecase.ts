@@ -145,7 +145,7 @@ export class SendMessagePush extends SendMessageBase {
         integrationsWithErrors += 1;
         Logger.error(
           { jobId: command.jobId },
-          [`Error processing channel for jobId ${command.jobId}`, error.message || error.toString()].join(' '),
+          `Error processing channel for jobId ${command.jobId} ${error.message || error.toString()}`,
           LOG_CONTEXT
         );
         continue;
@@ -182,10 +182,7 @@ export class SendMessagePush extends SendMessageBase {
 
           Logger.error(
             { jobId: command.jobId },
-            [
-              `Error sending push notification for jobId ${command.jobId}`,
-              result.error.message || result.error.toString(),
-            ].join(' '),
+            `Error sending push notification for jobId ${command.jobId} ${result.error.message || result.error.toString()}`,
             LOG_CONTEXT
           );
         }
@@ -348,7 +345,7 @@ export class SendMessagePush extends SendMessageBase {
       } catch (err) {
         Logger.error(
           { jobId: command.jobId },
-          [`Error sending provider error for jobId ${command.jobId}`, err.message || err.toString()].join(' '),
+          `Error sending provider error for jobId ${command.jobId} ${err.message || err.toString()}`,
           LOG_CONTEXT
         );
       }
