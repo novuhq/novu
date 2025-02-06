@@ -38,9 +38,6 @@ export function SubscriberTabs({ subscriberId }: { subscriberId: string }) {
         <TabsTrigger value="overview" className={tabTriggerClasses}>
           <span>Overview</span>
         </TabsTrigger>
-        <TabsTrigger value="credentials" className={tabTriggerClasses}>
-          <span>Credentials</span>
-        </TabsTrigger>
         <TabsTrigger value="preferences" className={tabTriggerClasses}>
           <span>Preferences</span>
         </TabsTrigger>
@@ -50,9 +47,6 @@ export function SubscriberTabs({ subscriberId }: { subscriberId: string }) {
       </TabsList>
       <TabsContent value="overview" className="h-full w-full overflow-y-auto">
         <SubscriberOverviewForm subscriberId={subscriberId} />
-      </TabsContent>
-      <TabsContent value="credentials" className="h-full w-full overflow-y-auto">
-        <h2>Credentials</h2>
       </TabsContent>
       <TabsContent value="preferences" className="h-full w-full overflow-y-auto">
         <Preferences subscriberId={subscriberId} />
