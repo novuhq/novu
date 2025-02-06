@@ -20,12 +20,15 @@ const safeParsePayload = (payload: string) => {
 export const createNodeJsSnippet = ({ identifier, to, payload, secretKey }: CodeSnippet) => {
   const renderedSecretKey = secretKey ? `'${secretKey}'` : `process.env['${SECRET_KEY_ENV_KEY}']`;
 
-  return `import { Novu } from '@novu/node'; 
+  return `import { Novu } from '@novu/api'; 
 
-const novu = new Novu(${renderedSecretKey});
+const novu = new Novu({ 
+  apiKey: ${renderedSecretKey}
+});
 
-novu.trigger('${identifier}', ${JSON.stringify(
+novu.trigger(${JSON.stringify(
     {
+      workflowId: identifier,
       to,
       payload: safeParsePayload(payload),
     },
@@ -102,59 +105,53 @@ ${indent}'${key}' => ${JSON.stringify(value)},`;
 };
 
 export const createPhpSnippet = ({ identifier, to, payload, secretKey }: CodeSnippet) => {
-  const renderedSecretKey = secretKey ? `'${secretKey}'` : `getenv('${SECRET_KEY_ENV_KEY}')`;
+  const renderedSecretKey = secretKey
+    ? `'${secretKey}'`
+    : `$_ENV['${SECRET_KEY_ENV_KEY}'] ?? getenv('${SECRET_KEY_ENV_KEY}')`;
 
-  return `use Novu\\SDK\\Novu;
+  return `use novu;
+use novu\\Models\\Components;
 
-$novu = new Novu(${renderedSecretKey});
+// Load environment variables from .env file
+require 'vendor/autoload.php';
+$dotenv = Dotenv\\Dotenv::createImmutable(__DIR__);
+$dotenv->load();
 
-$response = $novu->triggerEvent([
-    'name' => '${identifier}',
-    'payload' => [${transformJsonToPhpArray(safeParsePayload(payload), 8)}],
-    'to' => [${transformJsonToPhpArray(to, 8)}],
-])->toArray();`;
-};
+// Get API key from environment variable
+$apiKey = ${renderedSecretKey};
 
-const transformJsonToPythonDict = (data: Record<string, unknown>, tabSpaces = 4): string => {
-  const entries = Object.entries(data);
-  const indent = ' '.repeat(tabSpaces);
+$sdk = novu\\Novu::builder()
+    ->setSecurity($apiKey)
+    ->build();
 
-  const obj = entries
-    .map(([key, value]) => {
-      return `
-${indent}"${key}": ${JSON.stringify(value)},`;
-    })
-    .join('');
+$request = new Components\\TriggerEventRequestDto(
+    workflowId: '${identifier}',
+    to: new Components\\SubscriberPayloadDto(
+        subscriberId: '${(to as { subscriberId: string }).subscriberId}',
+    ),
+    payload: [${transformJsonToPhpArray(safeParsePayload(payload), 8)}]
+);
 
-  return `${obj}${entries.length > 0 ? `\n${new Array(tabSpaces - 2).fill(' ').join('')}` : ''}`;
+$response = $sdk->events->trigger($request);`;
 };
 
 export const createPythonSnippet = ({ identifier, to, payload, secretKey }: CodeSnippet) => {
   const renderedSecretKey = secretKey ? `'${secretKey}'` : `os.environ['${SECRET_KEY_ENV_KEY}']`;
 
-  return `from novu.api import EventApi
+  return `import novu_py
+from novu_py import Novu
+import os
 
-url = "${API_HOSTNAME}"
-
-novu = EventApi(url, ${renderedSecretKey}).trigger(
-    name="${identifier}",
-    recipients={${to.subscriberId as string}},
-    payload={${transformJsonToPythonDict(safeParsePayload(payload), 6)}},
-)`;
-};
-
-const transformJsonToGoMap = (data: Record<string, unknown>, tabSpaces = 4): string => {
-  const entries = Object.entries(data);
-  const indent = ' '.repeat(tabSpaces);
-
-  const obj = entries
-    .map(([key, value]) => {
-      return `
-${indent}"${key}": ${JSON.stringify(value)},`;
-    })
-    .join('');
-
-  return `${obj}${entries.length > 0 ? `\n${new Array(tabSpaces - 4).fill(' ').join('')}` : ''}`;
+with Novu(
+    api_key=${renderedSecretKey},
+) as novu:
+    res = novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflowId="${identifier}",
+        to={
+            "subscriber_id": "${(to as { subscriberId: string }).subscriberId}",
+        },
+        payload=${JSON.stringify(safeParsePayload(payload), null, 8)}
+    ))`;
 };
 
 export const createGoSnippet = ({ identifier, to, payload, secretKey }: CodeSnippet) => {
@@ -164,31 +161,31 @@ export const createGoSnippet = ({ identifier, to, payload, secretKey }: CodeSnip
 
 import (
 	"context"
-	"fmt"
-	novu "github.com/novuhq/go-novu/lib"
+	novugo "github.com/novuhq/novu-go"
+	"github.com/novuhq/novu-go/models/components"
 	"log"
+	"os"
 )
 
 func main() {
 	ctx := context.Background()
-	to := map[string]interface{}{${transformJsonToGoMap(to, 8)}}
-	payload := map[string]interface{}{${transformJsonToGoMap(safeParsePayload(payload), 8)}}
-	data := novu.ITriggerPayloadOptions{To: to, Payload: payload}
-	novuClient := novu.NewAPIClient(${renderedSecretKey}, &novu.Config{})
 
-	resp, err := novuClient.EventApi.Trigger(ctx, "${identifier}", data)
+	s := novugo.New(
+		novugo.WithSecurity(${renderedSecretKey}),
+	)
+
+	res, err := s.Trigger(ctx, components.TriggerEventRequestDto{
+		WorkflowId: "${identifier}",
+		Payload: ${JSON.stringify(safeParsePayload(payload))},
+		To: components.CreateToSubscriberPayloadDto(
+			components.SubscriberPayloadDto{
+				SubscriberID: "${(to as { subscriberId: string }).subscriberId}",
+			},
+		),
+	})
 	if err != nil {
-		log.Fatal("novu error", err.Error())
-		return
+		log.Fatal("novu error:", err)
 	}
-
-	fmt.Println(resp)
-
-	// get integrations
-	integrations, err := novuClient.IntegrationsApi.GetAll(ctx)
-	if err != nil {
-		log.Fatal("Get all integrations error: ", err.Error())
-	}
-	fmt.Println(integrations)
+	log.Printf("Response: %+v\\n", res)
 }`;
 };

@@ -2,16 +2,27 @@ import { Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import { ActivityPanel } from '@/components/activity/activity-panel';
+import { WorkflowResponseDto } from '@novu/shared';
+import { useFormContext, useWatch } from 'react-hook-form';
+import { RiCheckboxCircleFill } from 'react-icons/ri';
 import { useFetchActivities } from '../../../hooks/use-fetch-activities';
 import { WorkflowTriggerInboxIllustration } from '../../icons/workflow-trigger-inbox';
+import { Button } from '../../primitives/button';
+import { TestWorkflowFormType } from '../schema';
+import { TestWorkflowInstructions } from './test-workflow-instructions';
 
 type TestWorkflowLogsSidebarProps = {
   transactionId?: string;
+  workflow?: WorkflowResponseDto;
 };
 
-export const TestWorkflowLogsSidebar = ({ transactionId }: TestWorkflowLogsSidebarProps) => {
+export const TestWorkflowLogsSidebar = ({ transactionId, workflow }: TestWorkflowLogsSidebarProps) => {
+  const { control } = useFormContext<TestWorkflowFormType>();
   const [parentActivityId, setParentActivityId] = useState<string | undefined>(undefined);
   const [shouldRefetch, setShouldRefetch] = useState(true);
+  const [showInstructions, setShowInstructions] = useState(false);
+  const to = useWatch({ name: 'to', control });
+  const payload = useWatch({ name: 'payload', control });
   const { activities } = useFetchActivities(
     {
       filters: transactionId ? { transactionId } : undefined,
@@ -49,12 +60,38 @@ export const TestWorkflowLogsSidebar = ({ transactionId }: TestWorkflowLogsSideb
           </div>
         </div>
       ) : activityId ? (
-        <ActivityPanel
-          activityId={activityId}
-          onActivitySelect={setParentActivityId}
-          headerClassName="h-[49px]"
-          overviewHeaderClassName="border-t-0"
-        />
+        <>
+          <ActivityPanel
+            activityId={activityId}
+            onActivitySelect={setParentActivityId}
+            headerClassName="h-[49px]"
+            overviewHeaderClassName="border-t-0"
+          />
+          {!workflow?.lastTriggeredAt && (
+            <div className="p-3">
+              <div className="border-stroke-soft bg-bg-weak rounded-8 flex items-center justify-between gap-3 border p-3 py-2">
+                <div className="flex items-center gap-3">
+                  <div className="bg-success-100 flex size-6 items-center justify-center rounded-full">
+                    <RiCheckboxCircleFill className="text-success size-5" />
+                  </div>
+                  <div>
+                    <div className="text-success text-label-xs">You have triggered the workflow!</div>
+                    <div className="text-text-sub text-label-xs">Now integrate the workflow in your application.</div>
+                  </div>
+                </div>
+                <Button
+                  variant="secondary"
+                  mode="outline"
+                  size="2xs"
+                  className="whitespace-nowrap"
+                  onClick={() => setShowInstructions(true)}
+                >
+                  Integrate workflow
+                </Button>
+              </div>
+            </div>
+          )}
+        </>
       ) : (
         <div className="flex h-full flex-col items-center justify-center gap-6 p-6 text-center">
           <div>
@@ -67,6 +104,14 @@ export const TestWorkflowLogsSidebar = ({ transactionId }: TestWorkflowLogsSideb
           </div>
         </div>
       )}
+
+      <TestWorkflowInstructions
+        isOpen={showInstructions}
+        onClose={() => setShowInstructions(false)}
+        workflow={workflow}
+        to={to}
+        payload={payload}
+      />
     </aside>
   );
 };

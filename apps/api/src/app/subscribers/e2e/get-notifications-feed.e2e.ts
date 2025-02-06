@@ -24,7 +24,7 @@ describe('Get Notifications feed - /:subscriberId/notifications/feed (GET) #novu
   it('should throw exception on invalid subscriber id', async function () {
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
 
     const notificationsFeedResponse = (await novuClient.subscribers.notifications.feed({ limit: 5, subscriberId }))
       .result;
@@ -46,7 +46,7 @@ describe('Get Notifications feed - /:subscriberId/notifications/feed (GET) #novu
   it('should throw exception when invalid payload query param is passed', async function () {
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
 
     const { error: err } = await expectSdkExceptionGeneric(() =>
       novuClient.subscribers.notifications.feed({
@@ -64,10 +64,8 @@ describe('Get Notifications feed - /:subscriberId/notifications/feed (GET) #novu
     const payload = { ...partialPayload, bar: 'bar' };
 
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
-    await session.awaitRunningJobs(template._id);
-
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId, payload });
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
 
     const payloadQueryValue = Buffer.from(JSON.stringify(partialPayload)).toString('base64');
     const { data } = (
@@ -83,10 +81,8 @@ describe('Get Notifications feed - /:subscriberId/notifications/feed (GET) #novu
     const payload = { ...partialPayload, baz: 'baz' };
 
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
-    await session.awaitRunningJobs(template._id);
-
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId, payload });
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
 
     const payloadQueryValue = Buffer.from(JSON.stringify(partialPayload)).toString('base64');
     const { data } = (

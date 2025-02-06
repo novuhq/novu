@@ -18,7 +18,7 @@ export const SubscriberFormSchema = z.object({
     .string()
     .transform((str, ctx) => {
       try {
-        if (!str) return {};
+        if (!str) return '';
         return JSON.parse(str);
       } catch (e) {
         ctx.addIssue({ code: 'custom', message: 'Custom data must be a valid JSON' });

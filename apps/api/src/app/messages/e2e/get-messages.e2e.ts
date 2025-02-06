@@ -35,7 +35,7 @@ describe('Get Message - /messages (GET) #novu-v2', function () {
       },
     });
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
 
     let response = await novuClient.messages.retrieve({});
     expect(response.result.data.length).to.be.equal(4);
@@ -57,7 +57,7 @@ describe('Get Message - /messages (GET) #novu-v2', function () {
     await triggerEventWithTransactionId(template.triggers[0].identifier, subscriber3.subscriberId, transactionId2);
     await triggerEventWithTransactionId(template.triggers[0].identifier, subscriber3.subscriberId, transactionId1);
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
 
     let response = await novuClient.messages.retrieve({ subscriberId: subscriber3.subscriberId });
     // here we are expecting 6 messages because workflow has 2 steps in-app and email

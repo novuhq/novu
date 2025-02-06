@@ -75,7 +75,7 @@ export function SubscriberOverviewForm({ subscriberId }: { subscriberId: string 
   const subscriberDetails = isPending ? undefined : subscriber;
 
   const form = useForm<z.infer<typeof SubscriberFormSchema>>({
-    values: { ...subscriberDetails, data: JSON.stringify(subscriberDetails?.data, null, 2) },
+    values: { ...subscriberDetails, data: JSON.stringify(subscriberDetails?.data, null, 2) ?? '' },
     resolver: zodResolver(SubscriberFormSchema),
     shouldFocusError: false,
   });

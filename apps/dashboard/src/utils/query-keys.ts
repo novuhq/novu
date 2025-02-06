@@ -11,4 +11,6 @@ export const QueryKeys = Object.freeze({
   fetchActivity: 'fetchActivity',
   fetchSubscribers: 'fetchSubscribers',
   fetchSubscriber: 'fetchSubscriber',
+  fetchSubscriberPreferences: 'fetchSubscriberPreferences',
+  patchSubscriberPreferences: 'patchSubscriberPreferences',
 });

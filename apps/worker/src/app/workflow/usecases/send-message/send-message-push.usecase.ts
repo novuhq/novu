@@ -134,10 +134,22 @@ export class SendMessagePush extends SendMessageBase {
     for (const channel of pushChannels) {
       const { deviceTokens } = channel.credentials || {};
 
-      const [isChannelMissingDeviceTokens, integration] = await Promise.all([
-        this.isChannelMissingDeviceTokens(channel, command),
-        this.getSubscriberIntegration(channel, command),
-      ]);
+      let isChannelMissingDeviceTokens;
+      let integration;
+      try {
+        [isChannelMissingDeviceTokens, integration] = await Promise.all([
+          this.isChannelMissingDeviceTokens(channel, command),
+          this.getSubscriberIntegration(channel, command),
+        ]);
+      } catch (error) {
+        integrationsWithErrors += 1;
+        Logger.error(
+          { jobId: command.jobId },
+          `Error processing channel for jobId ${command.jobId} ${error.message || error.toString()}`,
+          LOG_CONTEXT
+        );
+        continue;
+      }
 
       // We avoid to send a message if subscriber has not an integration or if the subscriber has no device tokens for said integration
       if (!deviceTokens || !integration || isChannelMissingDeviceTokens) {
@@ -170,10 +182,7 @@ export class SendMessagePush extends SendMessageBase {
 
           Logger.error(
             { jobId: command.jobId },
-            [
-              `Error sending push notification for jobId ${command.jobId}`,
-              result.error.message || result.error.toString(),
-            ].join(' '),
+            `Error sending push notification for jobId ${command.jobId} ${result.error.message || result.error.toString()}`,
             LOG_CONTEXT
           );
         }
@@ -263,24 +272,19 @@ export class SendMessagePush extends SendMessageBase {
       raw?: string;
     }
   ): Promise<void> {
-    // We avoid to throw the errors to be able to execute all actions in the loop
-    try {
-      await this.executionLogRoute.execute(
-        ExecutionLogRouteCommand.create({
-          ...ExecutionLogRouteCommand.getDetailsFromJob(job),
-          detail,
-          source: ExecutionDetailsSourceEnum.INTERNAL,
-          status: ExecutionDetailsStatusEnum.FAILED,
-          isTest: false,
-          isRetry: false,
-          ...(contextData?.providerId && { providerId: contextData.providerId }),
-          ...(contextData?.messageId && { messageId: contextData.messageId }),
-          ...(contextData?.raw && { raw: contextData.raw }),
-        })
-      );
-    } catch (error) {
-      Logger.error(error, 'Error creating execution details error');
-    }
+    await this.executionLogRoute.execute(
+      ExecutionLogRouteCommand.create({
+        ...ExecutionLogRouteCommand.getDetailsFromJob(job),
+        detail,
+        source: ExecutionDetailsSourceEnum.INTERNAL,
+        status: ExecutionDetailsStatusEnum.FAILED,
+        isTest: false,
+        isRetry: false,
+        ...(contextData?.providerId && { providerId: contextData.providerId }),
+        ...(contextData?.messageId && { messageId: contextData.messageId }),
+        ...(contextData?.raw && { raw: contextData.raw }),
+      })
+    );
   }
 
   private async sendMessage(
@@ -336,7 +340,15 @@ export class SendMessagePush extends SendMessageBase {
 
       const raw = JSON.stringify(e) !== JSON.stringify({}) ? JSON.stringify(e) : JSON.stringify(e.message);
 
-      await this.sendProviderError(command.job, message._id, raw);
+      try {
+        await this.sendProviderError(command.job, message._id, raw);
+      } catch (err) {
+        Logger.error(
+          { jobId: command.jobId },
+          `Error sending provider error for jobId ${command.jobId} ${err.message || err.toString()}`,
+          LOG_CONTEXT
+        );
+      }
 
       return { success: false, error: e };
     }

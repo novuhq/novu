@@ -71,7 +71,7 @@ describe('Get Notifications Count - /inbox/notifications/count (GET) #novu-v2', 
     }
 
     await Promise.all(promises);
-    await session.awaitRunningJobs(templateToTrigger._id);
+    await session.waitForJobCompletion(templateToTrigger._id);
   };
 
   it('should throw exception when filtering for unread and archived notifications', async function () {

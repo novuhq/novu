@@ -87,7 +87,7 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST) #novu-v2'
       }
     );
 
-    await session.awaitRunningJobs(newTemplate._id);
+    await session.waitForJobCompletion(newTemplate._id);
 
     const message = await messageRepository.find({
       _environmentId: session.environment._id,
@@ -110,7 +110,7 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST) #novu-v2'
 
     await triggerEvent(session, template, payload);
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
 
     const createdSubscriber = await subscriberRepository.findBySubscriberId(
       session.environment._id,
@@ -133,7 +133,7 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST) #novu-v2'
 
     await triggerEvent(session, template, payload);
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
 
     const widgetSubscriber = await subscriberRepository.findBySubscriberId(
       session.environment._id,
@@ -159,7 +159,7 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST) #novu-v2'
 
     await triggerEvent(session, template, payload);
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
 
     message = await messageRepository.find({
       _environmentId: session.environment._id,
@@ -180,7 +180,7 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST) #novu-v2'
 
     await triggerEvent(session, template, payload);
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
 
     const widgetSubscriber = await subscriberRepository.findBySubscriberId(
       session.environment._id,
@@ -216,7 +216,7 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST) #novu-v2'
 
     await triggerEvent(session, template, payload);
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
 
     message = await messageRepository.find({
       _environmentId: session.environment._id,
