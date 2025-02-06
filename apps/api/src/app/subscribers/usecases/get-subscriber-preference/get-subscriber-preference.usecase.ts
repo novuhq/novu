@@ -133,9 +133,14 @@ export class GetSubscriberPreference {
     workflowPreferenceSets: Record<string, PreferenceSet>,
     subscriberGlobalPreference: PreferencesEntity | null,
     includeInactiveChannels: boolean
-  ): ISubscriberPreferenceResponse[] {
+  ): (ISubscriberPreferenceResponse | undefined)[] {
     return workflowList.map((workflow) => {
       const preferences = workflowPreferenceSets[workflow._id];
+
+      if (!preferences) {
+        return;
+      }
+
       const merged = this.mergePreferences(preferences, subscriberGlobalPreference);
 
       const includedChannels = this.getChannels(workflow, includeInactiveChannels);
