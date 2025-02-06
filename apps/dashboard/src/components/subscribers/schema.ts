@@ -27,3 +27,7 @@ export const SubscriberFormSchema = z.object({
     })
     .optional(),
 });
+
+export const CreateSubscriberFormSchema = SubscriberFormSchema.extend({
+  subscriberId: z.string(),
+});
