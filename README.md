@@ -68,20 +68,11 @@ With Novu, you can create custom workflows and define conditions for each channe
 
 ## 🚀 Getting Started
 
-There are two ways to get started:
-
-1. type the following command in your terminal.
-
-```bash
-npx novu@latest dev
-```
-
-2. [Create a free cloud account](https://dashboard-v2.novu.co?utm_campaign=github-readme)
+[Create a free account](https://dashboard-v2.novu.co?utm_campaign=github-readme) and follow the instructions on the dashboard.
 
 ## 📚 Table of contents
 
 - [Getting Started](https://github.com/novuhq/novu#-getting-started)
-- [GitOps & React Email Integration](https://github.com/novuhq/novu#-gitops)
 - [Embeddable Inbox and Preferences](https://github.com/novuhq/novu#embeddable-notification-center)
 - [Providers](https://github.com/novuhq/novu#providers)
   - [Email](https://github.com/novuhq/novu#-email)
@@ -93,40 +84,6 @@ npx novu@latest dev
 - [Need Help?](https://github.com/novuhq/novu#-need-help)
 - [Links](https://github.com/novuhq/novu#-links)
 - [License](https://github.com/novuhq/novu#%EF%B8%8F-license)
-
-## Notification workflows as code
-
-For API documentation and reference, please visit our [API Reference](https://docs.novu.co/api-reference/overview?utm_campaign=github-readme).
-
-```ts
-import { workflow, CronExpression } from '@novu/framework';
-import { z } from 'zod';
-import { render } from '@react-email/render';
-
-const commentWorkflow = workflow('comment-workflow', async (event) => {
-  const digest = await event.step.digest('digest-comments', (controls) => ({
-    cron: controls.schedule
-  }), { controlSchema: z.object({ schedule: z.nativeEnum(CronExpression) }) });
-
-  await event.step.email('digest-email', async (controls) => ({
-    subject: controls.subject,
-    body: render(<WeeklyDigestEmail { ...controls } events = { digest.events } />)
-  }), {
-    skip: () => !digest.events.length,
-    controlSchema: z.object({
-      subject: z.string().default('Hi {{subscriber.firstName}} - Acme Comments'),
-      openAiModel: z.enum(['gpt-3.5-turbo', 'gpt-4o']).default('gpt-4o'),
-      aiPrompt: z.string().default('Produce a concise comment digest'),
-    })
-  });
-}, { payloadSchema: z.object({ name: z.string(), comment: z.string() }) });
-
-await commentWorkflow.trigger({
-  payload: { name: 'John', comment: 'Are you free to give me a call?' },
-  to: 'jane@acme.com'
-});
-
-```
 
 ## Embeddable Inbox component
 

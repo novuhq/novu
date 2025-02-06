@@ -1,6 +1,6 @@
+import { ReactNode } from 'react';
 import { ExternalToast, toast } from 'sonner';
 import { Toast, ToastIcon, ToastProps } from './sonner';
-import { ReactNode } from 'react';
 
 export const showToast = ({
   options,
@@ -33,7 +33,7 @@ export const showSuccessToast = (message: string, position: 'bottom-center' | 't
 export const showErrorToast = (
   message: string,
   title?: string,
-  position: 'bottom-center' | 'top-center' = 'bottom-center'
+  position: 'bottom-center' | 'top-center' | 'bottom-right' = 'bottom-right'
 ) => {
   showToast({
     title,

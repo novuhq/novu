@@ -5,13 +5,12 @@ import { cn } from '@/utils/ui';
 import { cva } from 'class-variance-authority';
 
 import { Editor } from '@/components/primitives/editor';
-import { Popover, PopoverTrigger } from '@/components/primitives/popover';
 import { createAutocompleteSource } from '@/utils/liquid-autocomplete';
 import { LiquidVariable } from '@/utils/parseStepVariablesToLiquidVariables';
 import { useVariables } from './hooks/use-variables';
 import { createVariableExtension } from './variable-plugin';
 import { variablePillTheme } from './variable-plugin/variable-theme';
-import { VariablePopover } from './variable-popover';
+import { EditVariablePopover } from '@/components/variable/edit-variable-popover';
 
 const variants = cva('relative w-full', {
   variants: {
@@ -117,21 +116,18 @@ export function ControlInput({
         value={value}
         onChange={onChange}
       />
-      <Popover open={!!selectedVariable} onOpenChange={handleOpenChange}>
-        <PopoverTrigger asChild>
-          <div />
-        </PopoverTrigger>
-        {selectedVariable && (
-          <VariablePopover
-            variable={selectedVariable.value}
-            onUpdate={(newValue) => {
-              handleVariableUpdate(newValue);
-              // Focus back to the editor after updating the variable
-              viewRef.current?.focus();
-            }}
-          />
-        )}
-      </Popover>
+      <EditVariablePopover
+        open={!!selectedVariable}
+        onOpenChange={handleOpenChange}
+        variable={selectedVariable?.value}
+        onUpdate={(newValue) => {
+          handleVariableUpdate(newValue);
+          // Focus back to the editor after updating the variable
+          viewRef.current?.focus();
+        }}
+      >
+        <div />
+      </EditVariablePopover>
     </div>
   );
 }

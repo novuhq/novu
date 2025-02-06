@@ -76,12 +76,10 @@ describe('Trigger event - Send Push Notification - /v1/events/trigger (POST) #no
         _environmentId: session.environment._id,
       });
 
-      expect(executionDetails.length).to.equal(8);
+      expect(executionDetails.length).to.equal(7);
       const noActiveChannel = executionDetails.find((ex) => ex.detail === DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL);
       expect(noActiveChannel).to.be.ok;
       expect(noActiveChannel?.providerId).to.equal('fcm');
-      const genericError = executionDetails.find((ex) => ex.detail === DetailEnum.NOTIFICATION_ERROR);
-      expect(genericError).to.be.ok;
     });
 
     it('should not create any message if subscriber has configured two providers without device tokens', async () => {

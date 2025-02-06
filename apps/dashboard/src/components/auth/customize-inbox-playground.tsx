@@ -172,7 +172,7 @@ function NotificationConfigSection() {
             <FormItem className="w-full">
               <FormControl>
                 <InputRoot hasError={!!fieldState.error}>
-                  <InputWrapper className="flex h-9 items-center justify-center px-1">
+                  <InputWrapper className="flex items-center justify-center px-1 py-2">
                     <Editor
                       indentWithTab={false}
                       fontFamily="inherit"
@@ -181,7 +181,6 @@ function NotificationConfigSection() {
                       extensions={extensions}
                       value={field.value}
                       onChange={field.onChange}
-                      className="flex h-full items-center"
                     />
                   </InputWrapper>
                 </InputRoot>
@@ -197,7 +196,7 @@ function NotificationConfigSection() {
           <FormItem className="w-full">
             <FormControl>
               <InputRoot>
-                <InputWrapper className="flex h-36 items-center justify-center px-1">
+                <InputWrapper className="flex h-36 items-center justify-center px-1 py-2">
                   <Editor
                     fontFamily="inherit"
                     indentWithTab={false}

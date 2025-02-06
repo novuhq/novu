@@ -13,7 +13,6 @@ import { AddMemberCommand } from '../membership/add-member/add-member.command';
 import { AddMember } from '../membership/add-member/add-member.usecase';
 import { CreateOrganizationCommand } from './create-organization.command';
 
-import { CreateNovuIntegrations } from '../../../integrations/usecases/create-novu-integrations/create-novu-integrations.usecase';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 
 @Injectable({
@@ -26,7 +25,6 @@ export class CreateOrganization {
     private readonly getOrganizationUsecase: GetOrganization,
     private readonly userRepository: UserRepository,
     private readonly createEnvironmentUsecase: CreateEnvironment,
-    private readonly createNovuIntegrations: CreateNovuIntegrations,
     private analyticsService: AnalyticsService,
     private moduleRef: ModuleRef
   ) {}

@@ -133,6 +133,26 @@ export function WorkflowChecklist({ steps, workflow }: WorkflowChecklistProps) {
   );
 }
 
+function isStepContentComplete(step: Step): boolean {
+  const values = step.controls?.values;
+  if (!values) return false;
+
+  switch (step.type) {
+    case StepTypeEnum.EMAIL:
+      return !!(values.subject && values.body);
+    case StepTypeEnum.IN_APP:
+      return !!values.body;
+    case StepTypeEnum.SMS:
+      return !!values.body;
+    case StepTypeEnum.PUSH:
+      return !!(values.title && values.body);
+    case StepTypeEnum.CHAT:
+      return !!values.body;
+    default:
+      return false;
+  }
+}
+
 function useChecklistItems(steps: Step[]) {
   const navigate = useNavigate();
   const { currentEnvironment } = useEnvironment();
@@ -148,8 +168,12 @@ function useChecklistItems(steps: Step[]) {
   return useMemo(
     () => [
       {
-        title: 'Add a step',
-        isCompleted: (steps: Step[]) => steps.length > 0,
+        title: 'Add a channel step',
+        isCompleted: (steps: Step[]) =>
+          steps?.filter(
+            (step) =>
+              step.type !== StepTypeEnum.TRIGGER && ![StepTypeEnum.DIGEST, StepTypeEnum.DELAY].includes(step.type)
+          ).length > 0,
         onClick: () => {
           telemetry(TelemetryEvent.WORKFLOW_CHECKLIST_STEP_CLICKED, { stepTitle: 'Add a step' });
           if (steps.length === 0) {
@@ -163,7 +187,7 @@ function useChecklistItems(steps: Step[]) {
       {
         title: 'Add notification content',
         isCompleted: (steps: Step[]) =>
-          steps.some((step: Step) => step.type !== StepTypeEnum.TRIGGER && step.controls?.values),
+          steps.some((step: Step) => step.type !== StepTypeEnum.TRIGGER && isStepContentComplete(step)),
         onClick: () => {
           telemetry(TelemetryEvent.WORKFLOW_CHECKLIST_STEP_CLICKED, { stepTitle: 'Add notification content' });
           const stepToConfig = steps.find((step) => step.type !== StepTypeEnum.TRIGGER);
@@ -195,9 +219,9 @@ function useChecklistItems(steps: Step[]) {
         : []),
       {
         key: 'trigger',
-        title: 'Trigger workflow',
+        title: 'Trigger workflow from your application',
         description: 'Trigger the workflow to test it in production',
-        isCompleted: () => !!workflow?.lastTriggeredAt,
+        isCompleted: () => workflow?.lastTriggeredAt !== undefined,
         onClick: () => {
           telemetry(TelemetryEvent.WORKFLOW_CHECKLIST_STEP_CLICKED, { stepTitle: 'Trigger workflow' });
           navigate(

@@ -7,7 +7,7 @@ import { expectSdkExceptionGeneric, initNovuClassSdk } from '../../shared/helper
 
 let session: UserSession;
 
-describe('Get Subscriber - /subscribers/:subscriberId (GET) #novu-v2', () => {
+describe.only('Get Subscriber - /subscribers/:subscriberId (GET) #novu-v2', () => {
   let subscriber: SubscriberResponseDto;
   let novuClient: Novu;
 

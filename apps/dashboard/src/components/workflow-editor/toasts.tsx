@@ -11,9 +11,9 @@ export const showSavingToast = (setToastId: (toastId: string | number) => void) 
         </>
       ),
       options: {
-        position: 'bottom-left',
+        position: 'bottom-right',
         classNames: {
-          toast: 'ml-10',
+          toast: 'right-0',
         },
       },
     })
@@ -29,9 +29,9 @@ export const showSuccessToast = (toastId: string | number) => {
       </>
     ),
     options: {
-      position: 'bottom-left',
+      position: 'bottom-right',
       classNames: {
-        toast: 'ml-10',
+        toast: 'right-0',
       },
       id: toastId,
     },
@@ -47,9 +47,9 @@ export const showErrorToast = (toastId: string | number) => {
       </>
     ),
     options: {
-      position: 'bottom-left',
+      position: 'bottom-right',
       classNames: {
-        toast: 'ml-10',
+        toast: 'right-0',
       },
       id: toastId,
     },

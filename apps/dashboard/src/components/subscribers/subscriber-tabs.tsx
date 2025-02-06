@@ -1,4 +1,4 @@
-import SubscriberPreferences from '@/components/subscribers/preferences/subscriber-preferences';
+import { Preferences } from '@/components/subscribers/preferences/preferences';
 import useFetchSubscriber from '@/hooks/use-fetch-subscriber';
 import { RiCloseLine, RiGroup2Line } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
@@ -63,7 +63,7 @@ export default function SubscriberTabs({ subscriberId }: { subscriberId: string 
         <h2>Credentials</h2>
       </TabsContent>
       <TabsContent value="preferences" className="h-full w-full overflow-y-auto">
-        <SubscriberPreferences subscriberId={subscriberId} />
+        <Preferences subscriberId={subscriberId} />
       </TabsContent>
       <TabsContent value="activity-feed" className="h-full w-full overflow-y-auto">
         <h2>Activity Feed</h2>

@@ -46,7 +46,18 @@ export const StepDrawer = ({ children, title }: { children: React.ReactNode; tit
           transition={transitionSetting}
         />
         <SheetPortal>
-          <SheetContentBase asChild onInteractOutside={handleCloseSheet} onEscapeKeyDown={handleCloseSheet}>
+          <SheetContentBase
+            asChild
+            onInteractOutside={(e) => {
+              // IMPORTANT: do not close the sheet if the interact outside is from the maily variable list
+              if (e.target instanceof HTMLDivElement && e.target.className.includes('tippy-box')) {
+                return;
+              }
+
+              handleCloseSheet();
+            }}
+            onEscapeKeyDown={handleCloseSheet}
+          >
             <motion.div
               initial={{
                 x: '100%',

@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 
 import { QUERY_PREFIX } from './key-builders';
 import {
@@ -222,8 +222,9 @@ export class CacheService implements ICacheService {
 
   private getTtlInSeconds(options?: CachingConfig): number {
     const seconds = options?.ttl || this.cacheTtl;
+    const number = addJitter(seconds, this.TTL_VARIANT_PERCENTAGE);
 
-    return addJitter(seconds, this.TTL_VARIANT_PERCENTAGE);
+    return number;
   }
 
   public async sadd(
