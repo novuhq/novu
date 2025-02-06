@@ -26,7 +26,6 @@ export const SubscriberActivity = ({ subscriberId }: { subscriberId: string }) =
     },
     {
       refetchOnWindowFocus: false,
-      refetchOnMount: false,
     }
   );
 
