@@ -14,7 +14,7 @@ import { SubscriberFormSchema } from './schema';
 import { TimezoneSelect } from './timezone-select';
 import { Avatar, AvatarFallback, AvatarImage } from '../primitives/avatar';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useBlocker, useNavigate } from 'react-router-dom';
 import { usePatchSubscriber } from '@/hooks/use-patch-subscriber';
 import { showErrorToast, showSuccessToast } from '../primitives/sonner-helpers';
 import { CopyButton } from '../primitives/copy-button';
@@ -26,6 +26,8 @@ import { getSubscriberTitle } from './utils';
 import { ConfirmationModal } from '../confirmation-modal';
 import { ExternalToast } from 'sonner';
 import { useFetchSubscriber } from '@/hooks/use-fetch-subscriber';
+import { useBeforeUnload } from '@/hooks/use-before-unload';
+import { UnsavedChangesAlertDialog } from '../unsaved-changes-alert-dialog';
 
 const extensions = [loadLanguage('json')?.extension ?? []];
 const basicSetup = { lineNumbers: true, defaultKeymap: true };
@@ -79,6 +81,10 @@ export function SubscriberOverviewForm({ subscriberId }: { subscriberId: string 
     resolver: zodResolver(SubscriberFormSchema),
     shouldFocusError: false,
   });
+
+  const isDirty = form.formState.isDirty || Object.keys(form.formState.dirtyFields).length > 0;
+  const blocker = useBlocker(isDirty);
+  useBeforeUnload(isDirty);
 
   if (isPending || !subscriberDetails) {
     return <SubscriberOverviewSkeleton />;
@@ -356,6 +362,7 @@ export function SubscriberOverviewForm({ subscriberId }: { subscriberId: string 
         confirmButtonText="Delete subscriber"
         isLoading={isDeleteSubscriberPending}
       />
+      <UnsavedChangesAlertDialog blocker={blocker} />
     </div>
   );
 }

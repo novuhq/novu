@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { loadLanguage } from '@uiw/codemirror-extensions-langs';
 import { useForm } from 'react-hook-form';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useBlocker, useNavigate, useParams } from 'react-router-dom';
 import { z } from 'zod';
 import { Button } from '../primitives/button';
 import { Editor } from '../primitives/editor';
@@ -20,6 +20,8 @@ import { buildRoute, ROUTES } from '@/utils/routes';
 import { useCreateSubscriber } from '@/hooks/use-create-subscriber';
 import { showErrorToast, showSuccessToast } from '../primitives/sonner-helpers';
 import { ExternalToast } from 'sonner';
+import { UnsavedChangesAlertDialog } from '../unsaved-changes-alert-dialog';
+import { useBeforeUnload } from '@/hooks/use-before-unload';
 
 const extensions = [loadLanguage('json')?.extension ?? []];
 const basicSetup = { lineNumbers: true, defaultKeymap: true };
@@ -30,18 +32,38 @@ const toastOptions: ExternalToast = {
   },
 };
 
+/**
+ * Define all the initial values for the form,
+ * else the form isDirty on mount
+ * if only subscriberId is auto-generated
+ */
+const initialValues = {
+  data: '',
+  subscriberId: crypto.randomUUID(),
+  avatar: '',
+  firstName: '',
+  lastName: '',
+  locale: '',
+  phone: '',
+  timezone: '',
+  email: '',
+};
+
 export function CreateSubscriberForm() {
   const navigate = useNavigate();
   const { environmentSlug } = useParams();
 
   const form = useForm<z.infer<typeof CreateSubscriberFormSchema>>({
-    defaultValues: {
-      data: '',
-      subscriberId: crypto.randomUUID(),
-    },
+    defaultValues: initialValues,
     resolver: zodResolver(CreateSubscriberFormSchema),
     shouldFocusError: false,
   });
+
+  const isDirty = form.formState.isDirty || Object.keys(form.formState.dirtyFields).length > 0;
+  const blocker = useBlocker(isDirty);
+  useBeforeUnload(isDirty);
+
+  console.log({ dir: form.formState.dirtyFields, isDirty, dirt: form.formState.isDirty });
 
   const { createSubscriber } = useCreateSubscriber({
     onSuccess: () => {
@@ -352,6 +374,7 @@ export function CreateSubscriberForm() {
           </div>
         </form>
       </Form>
+      <UnsavedChangesAlertDialog blocker={blocker} />
     </div>
   );
 }
