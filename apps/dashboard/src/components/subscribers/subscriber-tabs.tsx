@@ -10,7 +10,7 @@ import { SubscriberOverviewForm } from './subscriber-overview-form';
 const tabTriggerClasses =
   'hover:data-[state=inactive]:text-foreground-950 h-11 data-[state=active]:border-b data-[state=active]:border-primary-base data-[state=active]:border-b-2 py-3 rounded-none [&>span]:h-5 px-0';
 
-export default function SubscriberTabs({ subscriberId }: { subscriberId: string }) {
+export function SubscriberTabs({ subscriberId }: { subscriberId: string }) {
   const navigate = useNavigate();
 
   return (

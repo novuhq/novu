@@ -1,5 +1,5 @@
 import { SubscriberDrawer } from '@/components/subscribers/subscriber-drawer';
-import SubscriberTabs from '@/components/subscribers/subscriber-tabs';
+import { SubscriberTabs } from '@/components/subscribers/subscriber-tabs';
 import { useParams } from 'react-router-dom';
 
 export function EditSubscriberPage() {
