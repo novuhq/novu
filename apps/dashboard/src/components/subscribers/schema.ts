@@ -27,3 +27,19 @@ export const SubscriberFormSchema = z.object({
     })
     .optional(),
 });
+
+export const CreateSubscriberFormSchema = SubscriberFormSchema.extend({
+  subscriberId: z.string().transform((str, ctc) => {
+    if (!str.trim()) {
+      ctc.addIssue({ code: 'custom', message: 'SubscriberId is required' });
+      return z.NEVER;
+    }
+    return str;
+  }),
+  email: z
+    .string()
+    .trim()
+    .refine((val) => val === '' || z.string().email().safeParse(val).success, {
+      message: 'Invalid email',
+    }),
+});

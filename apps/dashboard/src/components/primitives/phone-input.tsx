@@ -60,7 +60,7 @@ const CountrySelect = ({ disabled, value: selectedCountry, options: countryList,
           type="button"
           variant="secondary"
           mode="outline"
-          className="flex h-9 items-center gap-1 rounded-e-none rounded-s-lg border-r-0 px-3 focus:z-10"
+          className="flex h-8 items-center gap-1 rounded-e-none rounded-s-lg border-r-0 px-3 focus:z-10"
           disabled={disabled}
         >
           <FlagComponent country={selectedCountry} countryName={selectedCountry} />
@@ -96,8 +96,8 @@ const CountrySelect = ({ disabled, value: selectedCountry, options: countryList,
 
 const InputComponent = React.forwardRef<HTMLInputElement, React.ComponentProps<typeof InputPure>>(
   ({ className, ...props }, ref) => (
-    <InputRoot size="2xs" className="rounded-s-none">
-      <InputWrapper className="flex h-full items-center p-2 py-1">
+    <InputRoot size="xs" className="rounded-s-none">
+      <InputWrapper>
         <InputPure className={cn('rounded-e-lg rounded-s-none', className)} ref={ref} {...props} />
       </InputWrapper>
     </InputRoot>

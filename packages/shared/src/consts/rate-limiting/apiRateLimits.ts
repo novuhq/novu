@@ -1,10 +1,10 @@
 import {
   ApiRateLimitAlgorithmEnum,
+  ApiRateLimitCategoryEnum,
   ApiRateLimitCostEnum,
   ApiServiceLevelEnum,
   IApiRateLimitAlgorithm,
   IApiRateLimitCost,
-  ApiRateLimitCategoryEnum,
   IApiRateLimitServiceMaximum,
 } from '../../types';
 
@@ -18,7 +18,17 @@ export const DEFAULT_API_RATE_LIMIT_SERVICE_MAXIMUM_CONFIG: IApiRateLimitService
     [ApiRateLimitCategoryEnum.CONFIGURATION]: 20,
     [ApiRateLimitCategoryEnum.GLOBAL]: 30,
   },
+  [ApiServiceLevelEnum.PRO]: {
+    [ApiRateLimitCategoryEnum.TRIGGER]: 240,
+    [ApiRateLimitCategoryEnum.CONFIGURATION]: 80,
+    [ApiRateLimitCategoryEnum.GLOBAL]: 120,
+  },
   [ApiServiceLevelEnum.BUSINESS]: {
+    [ApiRateLimitCategoryEnum.TRIGGER]: 600,
+    [ApiRateLimitCategoryEnum.CONFIGURATION]: 200,
+    [ApiRateLimitCategoryEnum.GLOBAL]: 300,
+  },
+  [ApiServiceLevelEnum.TEAM]: {
     [ApiRateLimitCategoryEnum.TRIGGER]: 600,
     [ApiRateLimitCategoryEnum.CONFIGURATION]: 200,
     [ApiRateLimitCategoryEnum.GLOBAL]: 300,

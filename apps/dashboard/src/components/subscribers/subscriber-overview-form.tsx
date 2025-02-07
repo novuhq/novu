@@ -14,7 +14,7 @@ import { SubscriberFormSchema } from './schema';
 import { TimezoneSelect } from './timezone-select';
 import { Avatar, AvatarFallback, AvatarImage } from '../primitives/avatar';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useBlocker, useNavigate } from 'react-router-dom';
 import { usePatchSubscriber } from '@/hooks/use-patch-subscriber';
 import { showErrorToast, showSuccessToast } from '../primitives/sonner-helpers';
 import { CopyButton } from '../primitives/copy-button';
@@ -26,6 +26,8 @@ import { getSubscriberTitle } from './utils';
 import { ConfirmationModal } from '../confirmation-modal';
 import { ExternalToast } from 'sonner';
 import { useFetchSubscriber } from '@/hooks/use-fetch-subscriber';
+import { useBeforeUnload } from '@/hooks/use-before-unload';
+import { UnsavedChangesAlertDialog } from '../unsaved-changes-alert-dialog';
 
 const extensions = [loadLanguage('json')?.extension ?? []];
 const basicSetup = { lineNumbers: true, defaultKeymap: true };
@@ -39,20 +41,6 @@ const toastOptions: ExternalToast = {
 export function SubscriberOverviewForm({ subscriberId }: { subscriberId: string }) {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const { data: subscriber, isPending } = useFetchSubscriber({ subscriberId });
-
-  const { patchSubscriber } = usePatchSubscriber({
-    onSuccess: (data) => {
-      showSuccessToast(
-        `Updated subscriber: ${subscriberDetails && getSubscriberTitle(subscriberDetails)}`,
-        undefined,
-        toastOptions
-      );
-      form.reset({ ...data, data: JSON.stringify(data.data, null, 2) });
-    },
-    onError: () => {
-      showErrorToast('Failed to update subscriber', undefined, toastOptions);
-    },
-  });
 
   const { deleteSubscriber, isPending: isDeleteSubscriberPending } = useDeleteSubscriber({
     onSuccess: () => {
@@ -78,6 +66,31 @@ export function SubscriberOverviewForm({ subscriberId }: { subscriberId: string 
     values: { ...subscriberDetails, data: JSON.stringify(subscriberDetails?.data, null, 2) ?? '' },
     resolver: zodResolver(SubscriberFormSchema),
     shouldFocusError: false,
+  });
+
+  const { patchSubscriber } = usePatchSubscriber({
+    onSuccess: (data) => {
+      showSuccessToast(
+        `Updated subscriber: ${subscriberDetails && getSubscriberTitle(subscriberDetails)}`,
+        undefined,
+        toastOptions
+      );
+      form.reset({ ...data, data: JSON.stringify(data.data, null, 2) });
+    },
+    onError: () => {
+      showErrorToast('Failed to update subscriber', undefined, toastOptions);
+    },
+  });
+
+  const isDirty = Object.keys(form.formState.dirtyFields).length > 0;
+  const blocker = useBlocker(isDirty);
+  useBeforeUnload(isDirty);
+
+  console.log({
+    isDirty,
+    isPending,
+    dirt: form.formState.dirtyFields,
+    d: form.formState.isDirty,
   });
 
   if (isPending || !subscriberDetails) {
@@ -145,6 +158,7 @@ export function SubscriberOverviewForm({ subscriberId }: { subscriberId: string 
                           value={field.value}
                           onChange={field.onChange}
                           hasError={!!fieldState.error}
+                          size="xs"
                         />
                       </FormControl>
                       <FormMessage />
@@ -165,6 +179,7 @@ export function SubscriberOverviewForm({ subscriberId }: { subscriberId: string 
                           value={field.value}
                           onChange={field.onChange}
                           hasError={!!fieldState.error}
+                          size="xs"
                         />
                       </FormControl>
                       <FormMessage />
@@ -198,6 +213,7 @@ export function SubscriberOverviewForm({ subscriberId }: { subscriberId: string 
                   trailingNode={
                     <CopyButton valueToCopy={subscriberId} className="group-has-[input:focus]:border-l-stroke-strong" />
                   }
+                  size="xs"
                 />
               </FormItem>
             </div>
@@ -217,6 +233,7 @@ export function SubscriberOverviewForm({ subscriberId }: { subscriberId: string 
                         value={field.value || undefined}
                         onChange={field.onChange}
                         hasError={!!fieldState.error}
+                        size="xs"
                       />
                     </FormControl>
                     <FormMessage />
@@ -247,7 +264,7 @@ export function SubscriberOverviewForm({ subscriberId }: { subscriberId: string 
                   <FormItem className="w-1/5">
                     <FormLabel>Locale</FormLabel>
                     <FormControl>
-                      <LocaleSelect {...field} value={field.value} onValueChange={field.onChange} />
+                      <LocaleSelect value={field.value} onValueChange={field.onChange} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -260,7 +277,7 @@ export function SubscriberOverviewForm({ subscriberId }: { subscriberId: string 
                   <FormItem className="min-w-0 flex-1">
                     <FormLabel>Timezone</FormLabel>
                     <FormControl>
-                      <TimezoneSelect {...field} value={field.value} onValueChange={field.onChange} />
+                      <TimezoneSelect value={field.value} onValueChange={field.onChange} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -356,6 +373,7 @@ export function SubscriberOverviewForm({ subscriberId }: { subscriberId: string 
         confirmButtonText="Delete subscriber"
         isLoading={isDeleteSubscriberPending}
       />
+      <UnsavedChangesAlertDialog blocker={blocker} />
     </div>
   );
 }
