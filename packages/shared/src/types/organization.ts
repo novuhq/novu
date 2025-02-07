@@ -1,11 +1,34 @@
 export type OrganizationId = string;
 
 export enum ApiServiceLevelEnum {
+  /** @deprecated Use FREE_2025 instead */
   FREE = 'free',
+  FREE_2025 = 'free_2025',
+  PRO = 'pro',
+  /** @deprecated Use TEAM instead */
   BUSINESS = 'business',
+  TEAM = 'team',
   ENTERPRISE = 'enterprise',
-  // TODO: NV-3067 - Remove unlimited tier once all organizations have a service level
-  UNLIMITED = 'unlimited',
+  /**
+   * @deprecated Use ENTERPRISE instead
+   * TODO: NV-3067 - Remove unlimited tier once all organizations have a service level
+   *
+   */
+  UNLIMITED = 'unlimited', // Redirect to enterprise
+}
+
+export function migrateServiceLevel(level: ApiServiceLevelEnum): ApiServiceLevelEnum {
+  switch (level) {
+    case ApiServiceLevelEnum.UNLIMITED:
+      return ApiServiceLevelEnum.ENTERPRISE;
+    case ApiServiceLevelEnum.FREE:
+      return ApiServiceLevelEnum.FREE_2025;
+    case ApiServiceLevelEnum.BUSINESS:
+      return ApiServiceLevelEnum.TEAM;
+
+    default:
+      return level;
+  }
 }
 
 export enum ProductUseCasesEnum {
