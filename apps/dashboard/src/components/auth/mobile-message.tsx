@@ -9,11 +9,18 @@ export function MobileMessage() {
       <div className="space-y-3">
         <h1 className="text-xl font-semibold">Desktop Setup Required</h1>
         <div className="space-y-2">
-          <p className="text-sm font-medium text-gray-950">Workspace setup is not available on mobile devices</p>
-          <p className="text-sm text-gray-500">
-            We've sent setup instructions to your email. Please continue on a desktop browser to complete the process.
+          <p className="text-sm font-medium text-gray-950">👋 Hey, You’re Almost There!</p>
+          <p className="text-sm font-medium text-gray-950">
+            We see you signed up from your mobile—nice move! But to complete the Novu setup, you’ll need to switch over
+            to your laptop and fire up your favorite IDE.
           </p>
-          <p className="text-primary text-sm font-medium">Can't find the email? Check your spam folder.</p>
+          <p className="text-sm text-gray-500">
+            Integrating Novu into your stack means writing some actual code, setting up workflows, configuring Inbox ,
+            and composing your first email.
+          </p>
+          <p className="text-primary text-sm font-medium">
+            Check your inbox! We’ve sent you the setup instructions to get started.
+          </p>
         </div>
       </div>
     </div>
