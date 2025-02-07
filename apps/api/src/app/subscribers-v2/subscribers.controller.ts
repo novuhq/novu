@@ -182,7 +182,7 @@ export class SubscribersController {
   })
   @ApiResponse(GetSubscriberPreferencesDto)
   @SdkGroupName('Subscribers.Preferences')
-  @SdkMethodName('retrieve')
+  @SdkMethodName('list')
   async getSubscriberPreferences(
     @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string
