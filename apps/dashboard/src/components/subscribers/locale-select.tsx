@@ -38,7 +38,7 @@ export function LocaleSelect({
           <div className="flex max-w-full flex-1 items-center gap-1 overflow-hidden">
             <span className="inline-flex gap-1">
               {CurrentFlag && <CurrentFlag title={currentCountryCode} className="size-4" />}
-              {value ?? <span className="text-neutral-400">locale</span>}
+              {value || <span className="text-neutral-400">locale</span>}
             </span>
 
             <RiArrowDownSLine
