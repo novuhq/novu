@@ -264,7 +264,7 @@ export default function Home() {
                     </li>
                     <li className={styles.bulletItem}>
                       <div className={styles.bullet}></div>- Trigger a reminder
-                      notification if user hasn&apos;t completed an action
+                      notification if user has not completed an action
                     </li>
                     <li className={styles.bulletItem}>
                       <div className={styles.bullet}></div>- Schedule
