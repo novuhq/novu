@@ -1,5 +1,6 @@
 import { HoverCard, HoverCardContent, HoverCardPortal, HoverCardTrigger } from '@/components/primitives/hover-card';
 import { formatDistanceToNow } from 'date-fns';
+import { cn } from '@/utils/ui';
 
 interface TimeDisplayHoverCardProps {
   date: Date | string | undefined;
@@ -37,7 +38,7 @@ export function TimeDisplayHoverCard({ date, children, className }: TimeDisplayH
   return (
     <HoverCard openDelay={100} closeDelay={100}>
       <HoverCardTrigger asChild className="hover:cursor-default">
-        <span className={className}>{children}</span>
+        <span className={cn('relative z-10', className)}>{children}</span>
       </HoverCardTrigger>
       <HoverCardPortal>
         <HoverCardContent className="w-fit" align="end" sideOffset={4}>

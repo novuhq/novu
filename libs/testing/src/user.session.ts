@@ -425,18 +425,22 @@ export class UserSession {
     return feed;
   }
 
-  public async awaitRunningJobs(
+  public async waitForJobCompletion(
     templateId?: string | string[],
     delay?: boolean,
     unfinishedJobs = 0,
     organizationId = this.organization._id
   ) {
-    return await this.jobsService.awaitRunningJobs({
+    return this.jobsService.waitForJobCompletion({
       templateId,
       organizationId,
       delay,
       unfinishedJobs,
     });
+  }
+
+  public async runAllDelayedJobsImmediately() {
+    return this.jobsService.runAllDelayedJobsImmediately();
   }
 
   public async queueGet(jobTopicName: JobTopicNameEnum, getter: 'getDelayed') {

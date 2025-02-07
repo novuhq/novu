@@ -60,10 +60,10 @@ export class Workflows extends ClientSDK {
   }
 
   /**
-   * Update subscriber
+   * Update subscriber global or workflow specific preferences
    *
    * @remarks
-   * Used to update the subscriber entity with new information
+   * Update subscriber global or workflow specific preferences
    */
   async update(
     workflowId: string,

@@ -3,7 +3,7 @@
  */
 
 import { NovuCore } from "../core.js";
-import { encodeFormQuery, encodeSimple } from "../lib/encodings.js";
+import { encodeSimple } from "../lib/encodings.js";
 import * as M from "../lib/matchers.js";
 import { compactMap } from "../lib/primitives.js";
 import { safeParse } from "../lib/schemas.js";
@@ -25,16 +25,18 @@ import { Result } from "../types/fp.js";
 
 /**
  * Get subscriber preferences
+ *
+ * @remarks
+ * Get subscriber global and workflow specific preferences
  */
 export async function subscribersPreferencesList(
   client: NovuCore,
   subscriberId: string,
-  includeInactiveChannels?: boolean | undefined,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): Promise<
   Result<
-    operations.SubscribersV1ControllerListSubscriberPreferencesResponse,
+    operations.SubscribersControllerGetSubscriberPreferencesResponse,
     | errors.ErrorDto
     | errors.ErrorDto
     | errors.ValidationErrorDto
@@ -48,10 +50,9 @@ export async function subscribersPreferencesList(
     | ConnectionError
   >
 > {
-  const input:
-    operations.SubscribersV1ControllerListSubscriberPreferencesRequest = {
+  const input: operations.SubscribersControllerGetSubscriberPreferencesRequest =
+    {
       subscriberId: subscriberId,
-      includeInactiveChannels: includeInactiveChannels,
       idempotencyKey: idempotencyKey,
     };
 
@@ -59,7 +60,7 @@ export async function subscribersPreferencesList(
     input,
     (value) =>
       operations
-        .SubscribersV1ControllerListSubscriberPreferencesRequest$outboundSchema
+        .SubscribersControllerGetSubscriberPreferencesRequest$outboundSchema
         .parse(value),
     "Input validation failed",
   );
@@ -76,13 +77,9 @@ export async function subscribersPreferencesList(
     }),
   };
 
-  const path = pathToFunc("/v1/subscribers/{subscriberId}/preferences")(
+  const path = pathToFunc("/v2/subscribers/{subscriberId}/preferences")(
     pathParams,
   );
-
-  const query = encodeFormQuery({
-    "includeInactiveChannels": payload.includeInactiveChannels,
-  });
 
   const headers = new Headers(compactMap({
     Accept: "application/json",
@@ -97,7 +94,7 @@ export async function subscribersPreferencesList(
   const requestSecurity = resolveGlobalSecurity(securityInput);
 
   const context = {
-    operationID: "SubscribersV1Controller_listSubscriberPreferences",
+    operationID: "SubscribersController_getSubscriberPreferences",
     oAuth2Scopes: [],
 
     resolvedSecurity: requestSecurity,
@@ -125,7 +122,6 @@ export async function subscribersPreferencesList(
     baseURL: options?.serverURL,
     path: path,
     headers: headers,
-    query: query,
     body: body,
     timeoutMs: options?.timeoutMs || client._options.timeoutMs || -1,
   }, options);
@@ -166,7 +162,7 @@ export async function subscribersPreferencesList(
   };
 
   const [result] = await M.match<
-    operations.SubscribersV1ControllerListSubscriberPreferencesResponse,
+    operations.SubscribersControllerGetSubscriberPreferencesResponse,
     | errors.ErrorDto
     | errors.ErrorDto
     | errors.ValidationErrorDto
@@ -182,7 +178,7 @@ export async function subscribersPreferencesList(
     M.json(
       200,
       operations
-        .SubscribersV1ControllerListSubscriberPreferencesResponse$inboundSchema,
+        .SubscribersControllerGetSubscriberPreferencesResponse$inboundSchema,
       { hdrs: true, key: "Result" },
     ),
     M.jsonErr(414, errors.ErrorDto$inboundSchema),

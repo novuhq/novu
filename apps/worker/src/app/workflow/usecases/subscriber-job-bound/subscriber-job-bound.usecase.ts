@@ -1,11 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 
-import {
-  NotificationTemplateEntity,
-  NotificationTemplateRepository,
-  IntegrationRepository,
-  EnvironmentRepository,
-} from '@novu/dal';
+import { IntegrationRepository, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
 import {
   buildWorkflowPreferences,
   ChannelTypeEnum,
@@ -22,11 +17,11 @@ import {
   CachedEntity,
   CreateNotificationJobs,
   CreateNotificationJobsCommand,
+  CreateOrUpdateSubscriberCommand,
+  CreateOrUpdateSubscriberUseCase,
   Instrument,
   InstrumentUsecase,
   PinoLogger,
-  ProcessSubscriber,
-  ProcessSubscriberCommand,
 } from '@novu/application-generic';
 import { StoreSubscriberJobs, StoreSubscriberJobsCommand } from '../store-subscriber-jobs';
 import { SubscriberJobBoundCommand } from './subscriber-job-bound.command';
@@ -38,9 +33,9 @@ export class SubscriberJobBound {
   constructor(
     private storeSubscriberJobs: StoreSubscriberJobs,
     private createNotificationJobs: CreateNotificationJobs,
-    private processSubscriber: ProcessSubscriber,
+    private createOrUpdateSubscriberUsecase: CreateOrUpdateSubscriberUseCase,
+
     private integrationRepository: IntegrationRepository,
-    private environmentRepository: EnvironmentRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private logger: PinoLogger,
     private analyticsService: AnalyticsService
@@ -104,12 +99,19 @@ export class SubscriberJobBound {
       statelessWorkflow: !!command.bridge?.url,
     });
 
-    const subscriberProcessed = await this.processSubscriber.execute(
-      ProcessSubscriberCommand.create({
+    const subscriberProcessed = await this.createOrUpdateSubscriberUsecase.execute(
+      CreateOrUpdateSubscriberCommand.create({
         environmentId,
         organizationId,
-        userId,
-        subscriber,
+        subscriberId: subscriber?.subscriberId,
+        email: subscriber?.email,
+        firstName: subscriber?.firstName,
+        lastName: subscriber?.lastName,
+        phone: subscriber?.phone,
+        avatar: subscriber?.avatar,
+        locale: subscriber?.locale,
+        data: subscriber?.data,
+        channels: subscriber?.channels,
       })
     );
 

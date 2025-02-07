@@ -215,9 +215,6 @@ export const Editor = React.forwardRef<ReactCodeMirrorRef, EditorProps>(
         value={value}
         onChange={onChangeCallback}
         theme={theme}
-        onBlur={() => {
-          console.log('onBlur');
-        }}
         {...restCodeMirrorProps}
       />
     );

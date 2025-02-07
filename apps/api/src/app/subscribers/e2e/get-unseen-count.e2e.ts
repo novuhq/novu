@@ -25,7 +25,7 @@ describe('Get Unseen Count - /:subscriberId/notifications/unseen (GET) #novu-v2'
   it('should throw exception on invalid subscriber id', async function () {
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
 
     const seenCount = await getUnSeenCount({ seen: false, subscriberId });
     expect(seenCount).to.equal(1);

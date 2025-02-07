@@ -10,4 +10,7 @@ export const QueryKeys = Object.freeze({
   fetchIntegrations: 'fetchIntegrations',
   fetchActivity: 'fetchActivity',
   fetchSubscribers: 'fetchSubscribers',
+  fetchSubscriber: 'fetchSubscriber',
+  fetchSubscriberPreferences: 'fetchSubscriberPreferences',
+  patchSubscriberPreferences: 'patchSubscriberPreferences',
 });

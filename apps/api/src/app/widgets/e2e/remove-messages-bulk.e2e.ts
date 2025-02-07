@@ -49,7 +49,7 @@ describe('Remove messages by bulk - /widgets/messages/bulk/delete (POST) #novu-v
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
 
     const messagesBefore = await messageRepository.find({
       _environmentId: session.environment._id,
@@ -86,7 +86,7 @@ describe('Remove messages by bulk - /widgets/messages/bulk/delete (POST) #novu-v
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
 
     try {
       const res = await axios.post(
