@@ -270,7 +270,7 @@ export function CreateSubscriberForm() {
                   <FormItem className="w-1/5">
                     <FormLabel>Locale</FormLabel>
                     <FormControl>
-                      <LocaleSelect value={field.value} onValueChange={field.onChange} />
+                      <LocaleSelect value={field.value} onChange={field.onChange} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -283,7 +283,7 @@ export function CreateSubscriberForm() {
                   <FormItem className="min-w-0 flex-1">
                     <FormLabel>Timezone</FormLabel>
                     <FormControl>
-                      <TimezoneSelect value={field.value} onValueChange={field.onChange} />
+                      <TimezoneSelect value={field.value} onChange={field.onChange} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

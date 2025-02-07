@@ -86,13 +86,6 @@ export function SubscriberOverviewForm({ subscriberId }: { subscriberId: string 
   const blocker = useBlocker(isDirty);
   useBeforeUnload(isDirty);
 
-  console.log({
-    isDirty,
-    isPending,
-    dirt: form.formState.dirtyFields,
-    d: form.formState.isDirty,
-  });
-
   if (isPending || !subscriberDetails) {
     return <SubscriberOverviewSkeleton />;
   }
@@ -264,7 +257,7 @@ export function SubscriberOverviewForm({ subscriberId }: { subscriberId: string 
                   <FormItem className="w-1/5">
                     <FormLabel>Locale</FormLabel>
                     <FormControl>
-                      <LocaleSelect value={field.value} onValueChange={field.onChange} />
+                      <LocaleSelect value={field.value} onChange={field.onChange} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -277,7 +270,7 @@ export function SubscriberOverviewForm({ subscriberId }: { subscriberId: string 
                   <FormItem className="min-w-0 flex-1">
                     <FormLabel>Timezone</FormLabel>
                     <FormControl>
-                      <TimezoneSelect value={field.value} onValueChange={field.onChange} />
+                      <TimezoneSelect value={field.value} onChange={field.onChange} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
