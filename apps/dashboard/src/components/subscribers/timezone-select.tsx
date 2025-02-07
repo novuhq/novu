@@ -6,6 +6,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Popover, PopoverContent, PopoverTrigger } from '../primitives/popover';
 import { ScrollArea } from '../primitives/scroll-area';
 import TruncatedText from '../truncated-text';
+import { useState } from 'react';
 
 export function TimezoneSelect({
   value,
@@ -18,10 +19,11 @@ export function TimezoneSelect({
   readOnly?: boolean;
   onChange: (val: string) => void;
 }) {
+  const [open, setOpen] = useState(false);
   const { options, parseTimezone } = useTimezoneSelect({ labelStyle: 'abbrev', displayValue: 'UTC' });
 
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
           type="button"
@@ -58,6 +60,7 @@ export function TimezoneSelect({
                     onSelect={() => {
                       const parsedValue = parseTimezone(item.value);
                       onChange(parsedValue.value);
+                      setOpen(false);
                     }}
                     key={item.value}
                   >

@@ -8,6 +8,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Popover, PopoverContent, PopoverTrigger } from '../primitives/popover';
 import { ScrollArea } from '../primitives/scroll-area';
 import TruncatedText from '../truncated-text';
+import { useState } from 'react';
 
 export function LocaleSelect({
   value,
@@ -20,11 +21,12 @@ export function LocaleSelect({
   readOnly?: boolean;
   onChange: (val: string) => void;
 }) {
+  const [open, setOpen] = useState(false);
   const currentCountryCode = value?.split('_')?.[1] as Country;
   const CurrentFlag = currentCountryCode ? flags[currentCountryCode] : RiEarthLine;
 
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
           type="button"
@@ -58,7 +60,10 @@ export function LocaleSelect({
                     languageName={item.langName}
                     value={item.langIso}
                     key={item.langIso}
-                    onChange={onChange}
+                    onChange={(val) => {
+                      onChange(val);
+                      setOpen(false);
+                    }}
                   />
                 ))}
               </CommandGroup>
