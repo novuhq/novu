@@ -1,6 +1,6 @@
 import { locales } from '@/utils/locales';
 import { cn } from '@/utils/ui';
-import { RiArrowDownSLine, RiEarthLine } from 'react-icons/ri';
+import { RiArrowDownSLine, RiCheckLine, RiEarthLine } from 'react-icons/ri';
 import { type Country } from 'react-phone-number-input';
 import flags from 'react-phone-number-input/flags';
 import { Button } from '../primitives/button';
@@ -58,12 +58,13 @@ export function LocaleSelect({
                   <FlagItem
                     countryCode={item.alpha2}
                     languageName={item.langName}
-                    value={item.langIso}
+                    optionValue={item.langIso}
                     key={item.langIso}
                     onChange={(val) => {
                       onChange(val);
                       setOpen(false);
                     }}
+                    currentValue={value}
                   />
                 ))}
               </CommandGroup>
@@ -78,23 +79,32 @@ export function LocaleSelect({
 const FlagItem = ({
   countryCode,
   languageName,
-  value,
+  optionValue,
   onChange,
+  currentValue,
 }: {
   countryCode: string;
   languageName: string;
-  value: string;
+  optionValue: string;
   onChange: (val: string) => void;
+  currentValue?: string;
 }) => {
   const CurrentFlag = countryCode ? flags[countryCode as Country] : RiEarthLine;
+  const isSelected = optionValue === currentValue;
 
   return (
-    <CommandItem className="gap-3" onSelect={() => onChange(value)}>
+    <CommandItem
+      className={cn('cursor-pointer gap-3', {
+        'bg-accent': isSelected,
+      })}
+      onSelect={() => onChange(optionValue)}
+    >
       <div className="flex w-full items-center gap-2">
         <div>{CurrentFlag && <CurrentFlag className="size-4" title={countryCode} />}</div>
         <TruncatedText className="text-sm">
-          {value} - {languageName}
+          {optionValue} - {languageName}
         </TruncatedText>
+        <RiCheckLine className={cn(`ml-auto size-4 ${isSelected ? 'opacity-100' : 'opacity-0'}`)} />
       </div>
     </CommandItem>
   );

@@ -1,5 +1,5 @@
 import { cn } from '@/utils/ui';
-import { RiArrowDownSLine, RiTimeLine } from 'react-icons/ri';
+import { RiArrowDownSLine, RiCheckLine, RiTimeLine } from 'react-icons/ri';
 import { useTimezoneSelect } from 'react-timezone-select';
 import { Button } from '../primitives/button';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '../primitives/command';
@@ -60,7 +60,9 @@ export function TimezoneSelect({
               <CommandGroup className="rounded-md py-2">
                 {options.map((item) => (
                   <CommandItem
-                    className="gap-3"
+                    className={cn('cursor-pointer', {
+                      'bg-accent': value === item.value,
+                    })}
                     onSelect={() => {
                       const parsedValue = parseTimezone(item.value);
                       onChange(parsedValue.value);
@@ -69,6 +71,7 @@ export function TimezoneSelect({
                     key={item.value}
                   >
                     {item.label}
+                    <RiCheckLine className={`ml-auto size-4 ${value === item.value ? 'opacity-100' : 'opacity-0'}`} />
                   </CommandItem>
                 ))}
               </CommandGroup>
