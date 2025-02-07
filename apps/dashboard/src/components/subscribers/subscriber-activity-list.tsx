@@ -72,7 +72,7 @@ export const SubscriberActivityList = ({
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.2 }}
-        className="flex flex-col overflow-y-auto border-t border-t-neutral-200"
+        className="flex flex-1 flex-col overflow-y-auto border-t border-t-neutral-200"
       >
         {Array.from({ length: 10 }).map((_, index) => (
           <motion.div
@@ -106,7 +106,7 @@ export const SubscriberActivityList = ({
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.2 }}
-      className="flex flex-col overflow-y-auto border-t border-t-neutral-200"
+      className="flex flex-1 flex-col overflow-y-auto border-t border-t-neutral-200"
     >
       {activities.map((activity, index) => {
         const status = getActivityStatus(activity.jobs);
@@ -116,7 +116,7 @@ export const SubscriberActivityList = ({
           <motion.div
             key={activity._id}
             {...staggerSettings(index)}
-            className="border-b-stroke-soft flex w-full cursor-pointer border-b"
+            className="border-b-stroke-soft flex w-full cursor-pointer border-b last:border-b-0"
           >
             <div className="flex max-w-96 items-center gap-2 px-3 py-2">
               {activity.template.origin === WorkflowOriginEnum.EXTERNAL ? (
