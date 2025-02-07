@@ -13,7 +13,9 @@ import {
   IProcessSubscriberDataDto,
 } from '@novu/application-generic';
 
+import { CommunityOrganizationRepository, CommunityUserRepository } from '@novu/dal';
 import { SubscriberJobBound } from '../usecases/subscriber-job-bound/subscriber-job-bound.usecase';
+import { SubscriberJobBoundCommand } from '../usecases/subscriber-job-bound/subscriber-job-bound.command';
 
 const nr = require('newrelic');
 
@@ -23,7 +25,9 @@ const LOG_CONTEXT = 'SubscriberProcessWorker';
 export class SubscriberProcessWorker extends SubscriberProcessWorkerService {
   constructor(
     private subscriberJobBoundUsecase: SubscriberJobBound,
-    public workflowInMemoryProviderService: WorkflowInMemoryProviderService
+    public workflowInMemoryProviderService: WorkflowInMemoryProviderService,
+    private organizationRepository: CommunityOrganizationRepository,
+    private userRepository: CommunityUserRepository
   ) {
     super(new BullMqService(workflowInMemoryProviderService));
 
@@ -32,6 +36,8 @@ export class SubscriberProcessWorker extends SubscriberProcessWorkerService {
 
   public getWorkerProcessor() {
     return async ({ data }: { data: IProcessSubscriberDataDto }) => {
+      await this.checkOrganizationAndUserExist(data);
+
       return await new Promise((resolve, reject) => {
         const _this = this;
 
@@ -63,5 +69,20 @@ export class SubscriberProcessWorker extends SubscriberProcessWorkerService {
 
   private getWorkerOpts(): WorkerOptions {
     return getSubscriberProcessWorkerOptions();
+  }
+
+  private async checkOrganizationAndUserExist(data: IProcessSubscriberDataDto) {
+    const { organizationId, userId } = data;
+
+    const organization = await this.organizationRepository.findOne({ _id: organizationId });
+    const user = await this.userRepository.findOne({ _id: userId });
+
+    if (!organization) {
+      throw new Error('Organization not found');
+    }
+
+    if (!user) {
+      throw new Error('User not found');
+    }
   }
 }

@@ -14,6 +14,7 @@ import {
   WorkflowInMemoryProviderService,
 } from '@novu/application-generic';
 
+import { CommunityOrganizationRepository, CommunityUserRepository } from '@novu/dal';
 import {
   RunJob,
   RunJobCommand,
@@ -40,7 +41,9 @@ export class StandardWorker extends StandardWorkerService {
     @Inject(forwardRef(() => WebhookFilterBackoffStrategy))
     private webhookFilterBackoffStrategy: WebhookFilterBackoffStrategy,
     @Inject(forwardRef(() => WorkflowInMemoryProviderService))
-    public workflowInMemoryProviderService: WorkflowInMemoryProviderService
+    public workflowInMemoryProviderService: WorkflowInMemoryProviderService,
+    private organizationRepository: CommunityOrganizationRepository,
+    private userRepository: CommunityUserRepository
   ) {
     super(new BullMqService(workflowInMemoryProviderService));
 
@@ -94,6 +97,7 @@ export class StandardWorker extends StandardWorkerService {
   private getWorkerProcessor() {
     return async ({ data }: { data: IStandardDataDto }) => {
       const minimalJobData = this.extractMinimalJobData(data);
+      await this.checkOrganizationAndUserExist(data);
 
       Logger.verbose(`Job ${minimalJobData.jobId} is being processed in the new instance standard worker`, LOG_CONTEXT);
 
@@ -193,4 +197,19 @@ export class StandardWorker extends StandardWorkerService {
       });
     };
   };
+
+  private async checkOrganizationAndUserExist(data: IStandardDataDto) {
+    const { _organizationId, _userId } = data;
+
+    const organization = await this.organizationRepository.findOne({ _id: _organizationId });
+    const user = await this.userRepository.findOne({ _id: _userId });
+
+    if (!organization) {
+      throw new Error('Organization not found');
+    }
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+  }
 }
