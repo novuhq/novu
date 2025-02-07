@@ -1,6 +1,6 @@
 {
   "name": "@novu/web",
-  "version": "2.1.1",
+  "version": "2.1.5",
   "private": true,
   "scripts": {
     "start": "pnpm panda --watch & cross-env NODE_OPTIONS=--max_old_space_size=8192 DISABLE_ESLINT_PLUGIN=true PORT=4200 react-app-rewired start",
