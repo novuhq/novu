@@ -8,14 +8,28 @@ export const Footer = () => {
 
   return (
     <Show when={!hideBranding()}>
-      <a
-        href={`https://go.novu.co/powered?ref=`}
-        target="_blank"
-        class="nt-flex nt-shrink-0 nt-justify-center nt-items-center nt-gap-1 nt-mt-auto nt-pt-9 nt-pb-3 nt-text-foreground-alpha-200 hover:nt-text-foreground-alpha-300 nt-no-underline nt-transition-colors"
-      >
-        <Novu />
-        <span class="nt-text-xs">Powered by Novu</span>
-      </a>
+      <div class="nt-flex nt-shrink-0 nt-justify-center nt-items-center nt-gap-1 nt-mt-auto nt-pt-9 nt-pb-3 nt-text-foreground-alpha-200">
+        <a
+          href={`https://go.novu.co/powered?ref=${getCurrentDomain()}`}
+          target="_blank"
+          class="nt-block nt-w-full nt-flex nt-items-center nt-gap-1 nt-justify-center"
+        >
+          <Novu />
+          <span class="nt-text-xs">Powered by Novu</span>
+        </a>
+      </div>
     </Show>
   );
 };
+
+function getCurrentDomain() {
+  try {
+    if (typeof window !== 'undefined') {
+      return window.location.hostname;
+    }
+
+    return '';
+  } catch {
+    return '';
+  }
+}
