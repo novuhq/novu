@@ -13,9 +13,8 @@ import {
   IProcessSubscriberDataDto,
 } from '@novu/application-generic';
 
-import { CommunityOrganizationRepository, CommunityUserRepository } from '@novu/dal';
+import { CommunityOrganizationRepository } from '@novu/dal';
 import { SubscriberJobBound } from '../usecases/subscriber-job-bound/subscriber-job-bound.usecase';
-import { SubscriberJobBoundCommand } from '../usecases/subscriber-job-bound/subscriber-job-bound.command';
 
 const nr = require('newrelic');
 
