@@ -285,7 +285,7 @@ export class ExecuteBridgeRequest {
       return `http://localhost:${process.env.PORT}`;
     }
 
-    const apiUrl = process.env.API_ROOT_URL;
+    const apiUrl = process.env.API_INTERNAL_ORIGIN || process.env.API_ROOT_URL;
 
     if (!apiUrl) {
       throw new Error('API_ROOT_URL environment variable is not set');
