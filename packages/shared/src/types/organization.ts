@@ -19,8 +19,6 @@ export function migrateServiceLevel(level: ApiServiceLevelEnum): ApiServiceLevel
   switch (level) {
     case ApiServiceLevelEnum.UNLIMITED:
       return ApiServiceLevelEnum.ENTERPRISE;
-    case ApiServiceLevelEnum.FREE:
-      return ApiServiceLevelEnum.FREE_2025;
     case ApiServiceLevelEnum.BUSINESS:
       return ApiServiceLevelEnum.TEAM;
 
