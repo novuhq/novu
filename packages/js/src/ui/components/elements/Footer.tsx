@@ -1,6 +1,7 @@
 /* eslint-disable local-rules/no-class-without-style */
 import { Show } from 'solid-js';
 import { useInboxContext } from 'src/ui/context';
+import { isBrowser } from 'src/utils/is-browser';
 import { Novu } from '../../icons';
 
 export const Footer = () => {
@@ -23,13 +24,9 @@ export const Footer = () => {
 };
 
 function getCurrentDomain() {
-  try {
-    if (typeof window !== 'undefined') {
-      return window.location.hostname;
-    }
-
-    return '';
-  } catch {
-    return '';
+  if (isBrowser()) {
+    return window.location.hostname;
   }
+
+  return '';
 }
