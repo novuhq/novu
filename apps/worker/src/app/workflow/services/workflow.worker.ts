@@ -24,8 +24,7 @@ export class WorkflowWorker extends WorkflowWorkerService {
   constructor(
     private triggerEventUsecase: TriggerEvent,
     public workflowInMemoryProviderService: WorkflowInMemoryProviderService,
-    private organizationRepository: CommunityOrganizationRepository,
-    private userRepository: CommunityUserRepository
+    private organizationRepository: CommunityOrganizationRepository
   ) {
     super(new BullMqService(workflowInMemoryProviderService));
 
@@ -38,7 +37,7 @@ export class WorkflowWorker extends WorkflowWorkerService {
 
   private getWorkerProcessor(): WorkerProcessor {
     return async ({ data }: { data: IWorkflowDataDto }) => {
-      await this.checkOrganizationAndUserExist(data);
+      await this.checkOrganizationExist(data);
 
       return await new Promise((resolve, reject) => {
         const _this = this;
@@ -69,18 +68,13 @@ export class WorkflowWorker extends WorkflowWorkerService {
     };
   }
 
-  private async checkOrganizationAndUserExist(data: IWorkflowDataDto) {
-    const { organizationId, userId } = data;
+  private async checkOrganizationExist(data: IWorkflowDataDto) {
+    const { organizationId } = data;
 
     const organization = await this.organizationRepository.findOne({ _id: organizationId });
-    const user = await this.userRepository.findOne({ _id: userId });
 
     if (!organization) {
       throw new Error('Organization not found');
-    }
-
-    if (!user) {
-      throw new Error('User not found');
     }
   }
 }

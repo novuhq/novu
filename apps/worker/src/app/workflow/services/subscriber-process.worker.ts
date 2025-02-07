@@ -26,8 +26,7 @@ export class SubscriberProcessWorker extends SubscriberProcessWorkerService {
   constructor(
     private subscriberJobBoundUsecase: SubscriberJobBound,
     public workflowInMemoryProviderService: WorkflowInMemoryProviderService,
-    private organizationRepository: CommunityOrganizationRepository,
-    private userRepository: CommunityUserRepository
+    private organizationRepository: CommunityOrganizationRepository
   ) {
     super(new BullMqService(workflowInMemoryProviderService));
 
@@ -36,7 +35,7 @@ export class SubscriberProcessWorker extends SubscriberProcessWorkerService {
 
   public getWorkerProcessor() {
     return async ({ data }: { data: IProcessSubscriberDataDto }) => {
-      await this.checkOrganizationAndUserExist(data);
+      await this.checkOrganizationExist(data);
 
       return await new Promise((resolve, reject) => {
         const _this = this;
@@ -71,18 +70,13 @@ export class SubscriberProcessWorker extends SubscriberProcessWorkerService {
     return getSubscriberProcessWorkerOptions();
   }
 
-  private async checkOrganizationAndUserExist(data: IProcessSubscriberDataDto) {
-    const { organizationId, userId } = data;
+  private async checkOrganizationExist(data: IProcessSubscriberDataDto) {
+    const { organizationId } = data;
 
     const organization = await this.organizationRepository.findOne({ _id: organizationId });
-    const user = await this.userRepository.findOne({ _id: userId });
 
     if (!organization) {
       throw new Error('Organization not found');
-    }
-
-    if (!user) {
-      throw new Error('User not found');
     }
   }
 }
