@@ -18,9 +18,11 @@ type PreferencesItemProps = {
   channel: ChannelTypeEnum;
   enabled: boolean;
   onChange: (checked: boolean) => void;
+  readOnly?: boolean;
 };
 
-export function PreferencesItem({ channel, enabled, onChange }: PreferencesItemProps) {
+export function PreferencesItem(props: PreferencesItemProps) {
+  const { channel, enabled, onChange, readOnly = false } = props;
   const Icon = STEP_TYPE_TO_ICON[channel];
 
   return (
@@ -38,7 +40,7 @@ export function PreferencesItem({ channel, enabled, onChange }: PreferencesItemP
           </Step>
           <span className="text-foreground-950 text-xs font-medium">{capitalize(CHANNEL_LABELS_LOOKUP[channel])}</span>
         </div>
-        <Switch checked={enabled} onCheckedChange={onChange} />
+        <Switch checked={enabled} onCheckedChange={readOnly ? undefined : onChange} />
       </div>
     </motion.div>
   );

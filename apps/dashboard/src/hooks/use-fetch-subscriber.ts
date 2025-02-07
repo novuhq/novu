@@ -1,8 +1,8 @@
-import { SubscriberResponseDto } from '@novu/api/models/components';
 import { getSubscriber } from '@/api/subscribers';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment } from '@/context/environment/hooks';
 import { QueryKeys } from '@/utils/query-keys';
+import { SubscriberResponseDto } from '@novu/api/models/components';
 import { useQuery, UseQueryOptions } from '@tanstack/react-query';
 
 export type SubscriberResponse = Awaited<ReturnType<typeof getSubscriber>>;

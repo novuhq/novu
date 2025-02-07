@@ -1,6 +1,3 @@
-import React, { useCallback, useMemo } from 'react';
-import { flushSync } from 'react-dom';
-import { cva } from 'class-variance-authority';
 import { autocompleteFooter, autocompleteHeader, functionIcon } from '@/components/primitives/constants';
 import { useDataRef } from '@/hooks/use-data-ref';
 import { tags as t } from '@lezer/highlight';
@@ -11,6 +8,9 @@ import {
   ReactCodeMirrorProps,
   type ReactCodeMirrorRef,
 } from '@uiw/react-codemirror';
+import { cva } from 'class-variance-authority';
+import React, { useCallback, useMemo } from 'react';
+import { flushSync } from 'react-dom';
 
 const variants = cva('h-full w-full flex-1 [&_.cm-focused]:outline-none', {
   variants: {
