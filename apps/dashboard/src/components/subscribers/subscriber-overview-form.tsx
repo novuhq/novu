@@ -42,20 +42,6 @@ export function SubscriberOverviewForm({ subscriberId }: { subscriberId: string 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const { data: subscriber, isPending } = useFetchSubscriber({ subscriberId });
 
-  const { patchSubscriber } = usePatchSubscriber({
-    onSuccess: (data) => {
-      showSuccessToast(
-        `Updated subscriber: ${subscriberDetails && getSubscriberTitle(subscriberDetails)}`,
-        undefined,
-        toastOptions
-      );
-      form.reset({ ...data, data: JSON.stringify(data.data, null, 2) });
-    },
-    onError: () => {
-      showErrorToast('Failed to update subscriber', undefined, toastOptions);
-    },
-  });
-
   const { deleteSubscriber, isPending: isDeleteSubscriberPending } = useDeleteSubscriber({
     onSuccess: () => {
       showSuccessToast(
@@ -82,9 +68,30 @@ export function SubscriberOverviewForm({ subscriberId }: { subscriberId: string 
     shouldFocusError: false,
   });
 
-  const isDirty = form.formState.isDirty || Object.keys(form.formState.dirtyFields).length > 0;
+  const { patchSubscriber } = usePatchSubscriber({
+    onSuccess: (data) => {
+      showSuccessToast(
+        `Updated subscriber: ${subscriberDetails && getSubscriberTitle(subscriberDetails)}`,
+        undefined,
+        toastOptions
+      );
+      form.reset({ ...data, data: JSON.stringify(data.data, null, 2) });
+    },
+    onError: () => {
+      showErrorToast('Failed to update subscriber', undefined, toastOptions);
+    },
+  });
+
+  const isDirty = Object.keys(form.formState.dirtyFields).length > 0;
   const blocker = useBlocker(isDirty);
   useBeforeUnload(isDirty);
+
+  console.log({
+    isDirty,
+    isPending,
+    dirt: form.formState.dirtyFields,
+    d: form.formState.isDirty,
+  });
 
   if (isPending || !subscriberDetails) {
     return <SubscriberOverviewSkeleton />;
