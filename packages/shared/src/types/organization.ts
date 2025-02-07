@@ -1,9 +1,7 @@
 export type OrganizationId = string;
 
 export enum ApiServiceLevelEnum {
-  /** @deprecated Use FREE_2025 instead */
   FREE = 'free',
-  FREE_2025 = 'free_2025',
   PRO = 'pro',
   /** @deprecated Use TEAM instead */
   BUSINESS = 'business',
