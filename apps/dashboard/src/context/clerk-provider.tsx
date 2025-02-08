@@ -1,35 +1,9 @@
 import { buttonVariants } from '@/components/primitives/button';
-import { cn } from '@/utils/ui';
 import { CLERK_PUBLISHABLE_KEY } from '@/config';
 import { ClerkProvider as _ClerkProvider } from '@clerk/clerk-react';
 import { PropsWithChildren } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../utils/routes';
-
-const CLERK_LOCALIZATION = {
-  userProfile: {
-    navbar: {
-      title: 'Settings',
-      description: '',
-      account: 'User profile',
-      security: 'Access security',
-    },
-  },
-  organizationProfile: {
-    membersPage: {
-      requestsTab: { autoSuggestions: { headerTitle: '' } },
-      invitationsTab: { autoInvitations: { headerTitle: '' } },
-    },
-  },
-  userButton: {
-    action__signOut: 'Log out',
-    action__signOutAll: 'Log out from all accounts',
-    action__manageAccount: 'Settings',
-  },
-  formFieldLabel__organizationSlug: 'URL friendly identifier',
-};
-
-const ALLOWED_REDIRECT_ORIGINS = ['http://localhost:*', window.location.origin];
 
 type ClerkProviderProps = PropsWithChildren;
 export const ClerkProvider = (props: ClerkProviderProps) => {
@@ -61,15 +35,49 @@ export const ClerkProvider = (props: ClerkProviderProps) => {
             },
           },
         },
+        organizationList: {
+          elements: {
+            cardBox: {
+              borderRadius: '0',
+            },
+            card: {
+              borderRadius: '0',
+            },
+          },
+        },
         elements: {
-          formButtonPrimary: cn(buttonVariants({ variant: 'primary' })),
+          formButtonPrimary: buttonVariants({ variant: 'primary', mode: 'gradient' }).root({}),
         },
         variables: {
           fontSize: '14px !important',
         },
       }}
-      localization={CLERK_LOCALIZATION}
-      allowedRedirectOrigins={ALLOWED_REDIRECT_ORIGINS}
+      localization={{
+        userProfile: {
+          navbar: {
+            title: 'Settings',
+            description: '',
+            account: 'User profile',
+            security: 'Access security',
+          },
+        },
+        organizationProfile: {
+          membersPage: {
+            requestsTab: { autoSuggestions: { headerTitle: '' } },
+            invitationsTab: { autoInvitations: { headerTitle: '' } },
+          },
+        },
+        userButton: {
+          action__signOut: 'Log out',
+          action__signOutAll: 'Log out from all accounts',
+          action__manageAccount: 'Settings',
+        },
+        formFieldLabel__organizationSlug: 'URL friendly identifier',
+        unstable__errors: {
+          form_identifier_exists: 'Already taken, please choose another',
+        },
+      }}
+      allowedRedirectOrigins={['http://localhost:*', window.location.origin]}
     >
       {children}
     </_ClerkProvider>

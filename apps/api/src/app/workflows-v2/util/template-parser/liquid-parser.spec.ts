@@ -81,6 +81,15 @@ describe('parseLiquidVariables', () => {
     expect(validVariables[0].name).to.equal('user.name');
   });
 
+  it('should extract array variables from for loop syntax', () => {
+    const template = '{{ payload.comments[0].author }} {{ payload.comments[1].author }}';
+    const { validVariables, invalidVariables } = extractLiquidTemplateVariables(template);
+    const validVariablesNames = validVariables.map((variable) => variable.name);
+
+    expect(validVariablesNames).to.have.members(['payload.comments.0.author', 'payload.comments.1.author']);
+    expect(invalidVariables).to.have.lengthOf(0);
+  });
+
   describe('Error handling', () => {
     it('should handle invalid liquid syntax gracefully', () => {
       const { validVariables, invalidVariables } = extractLiquidTemplateVariables(

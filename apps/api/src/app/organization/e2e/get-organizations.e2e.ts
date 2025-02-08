@@ -3,7 +3,7 @@ import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { MemberRoleEnum } from '@novu/shared';
 
-describe('Get organizations - /organizations (GET) @skip-in-ee', async () => {
+describe('Get organizations - /organizations (GET) #novu-v1-os', async () => {
   let session: UserSession;
   let otherSession: UserSession;
   let thirdSession: UserSession;

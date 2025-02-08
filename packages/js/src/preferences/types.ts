@@ -11,7 +11,9 @@ export type ListPreferencesArgs = {
 
 export type UpdatePreferencesArgs = {
   workflowId?: string;
-  channelPreferences: ChannelPreference;
+  channels: ChannelPreference;
+  // @deprecated use channels instead
+  channelPreferences?: ChannelPreference;
   preference?: {
     level: PreferenceLevel;
     enabled: boolean;

@@ -19,7 +19,7 @@ export const createMailData = (options: IEmailOptions, overrides: Record<string,
   };
 };
 
-describe('Trigger event - Send message email - /v1/events/trigger (POST)', function () {
+describe('Trigger event - Send message email - /v1/events/trigger (POST) #novu-v2', function () {
   it('should merge mail data', function () {
     const defaultMailData = {
       to: ['to-reply@novu.co'],

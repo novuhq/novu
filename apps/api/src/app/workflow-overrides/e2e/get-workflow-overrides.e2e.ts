@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import { UserSession, WorkflowOverrideService } from '@novu/testing';
 import { NotificationGroupRepository, NotificationTemplateRepository, WorkflowOverrideRepository } from '@novu/dal';
 
-describe('Get workflows overrides - /workflow-overrides (GET)', async () => {
+describe('Get workflows overrides - /workflow-overrides (GET) #novu-v1', async () => {
   let session: UserSession;
   const notificationTemplateRepository = new NotificationTemplateRepository();
   const notificationGroupRepository = new NotificationGroupRepository();

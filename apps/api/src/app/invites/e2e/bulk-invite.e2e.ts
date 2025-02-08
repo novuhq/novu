@@ -3,7 +3,7 @@ import { UserSession } from '@novu/testing';
 import { IBulkInviteResponse, MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
 import { expect } from 'chai';
 
-describe('Bulk invite members - /invites/bulk (POST) @skip-in-ee', async () => {
+describe('Bulk invite members - /invites/bulk (POST) #novu-v1-os', async () => {
   let session: UserSession;
   const memberRepository = new CommunityMemberRepository();
 

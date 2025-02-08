@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useLDClient } from 'launchdarkly-react-client-sdk';
 import { useAuth } from './auth/hooks';
 import { useSegment } from './segment/hooks';
-import { setUser as sentrySetUser } from '@sentry/react';
+import { setUser as sentrySetUser, setTags as setSentryTags } from '@sentry/react';
 
 export function IdentityProvider({ children }: { children: React.ReactNode }) {
   const ldClient = useLDClient();
@@ -24,10 +24,16 @@ export function IdentityProvider({ children }: { children: React.ReactNode }) {
         email: currentUser.email ?? '',
         username: `${currentUser.firstName} ${currentUser.lastName}`,
         id: currentUser._id,
-        organizationId: currentOrganization._id,
-        organizationName: currentOrganization.name,
-        organizationTier: currentOrganization.apiServiceLevel,
-        organizationCreatedAt: currentOrganization.createdAt,
+      });
+
+      setSentryTags({
+        // user tags
+        'user.createdAt': currentUser.createdAt,
+        // organization tags
+        'organization.id': currentOrganization._id,
+        'organization.name': currentOrganization.name,
+        'organization.tier': currentOrganization.apiServiceLevel,
+        'organization.createdAt': currentOrganization.createdAt,
       });
 
       if (ldClient) {

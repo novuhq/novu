@@ -48,7 +48,6 @@ export const RootNavMenu: React.FC = () => {
   const { updateOnboardingStatus, showOnboarding, isLoading: isLoadingOnboardingStatus } = useUserOnboardingStatus();
   const { readonly: isEnvReadonly, environment } = useEnvironment();
   const isV2Enabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_ENABLED);
-  const isNewDashboardEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_NEW_DASHBOARD_ENABLED);
   const [isLocalStudioModalOpen, toggleLocalStudioModalOpen] = useToggle();
   const { navigateToLocalStudio } = useNavigateToLocalStudio({ fallbackFn: toggleLocalStudioModalOpen });
 
@@ -160,21 +159,17 @@ export const RootNavMenu: React.FC = () => {
           ></NavMenuLinkButton>
         </When>
       </NavMenuSection>
-      {isNewDashboardEnabled ? (
-        <>
-          <SidebarFooter>
-            {!IS_SELF_HOSTED && IS_EE_AUTH_ENABLED && <NewDashboardOptInWidget />}
-            <FreeTrialSidebarWidget />
-            <OutlineButton fullWidth onClick={navigateToLocalStudio} Icon={IconLaptop}>
-              Open Local Studio
-            </OutlineButton>
-          </SidebarFooter>
-          {/** TODO: refactor when modal manager is available */}
-          {isLocalStudioModalOpen && <OpenLocalStudioModal isOpen toggleOpen={toggleLocalStudioModalOpen} />}
-        </>
-      ) : (
-        <RootNavMenuFooter />
-      )}
+      <>
+        <SidebarFooter>
+          {!IS_SELF_HOSTED && IS_EE_AUTH_ENABLED && <NewDashboardOptInWidget />}
+          <FreeTrialSidebarWidget />
+          <OutlineButton fullWidth onClick={navigateToLocalStudio} Icon={IconLaptop}>
+            Open Local Studio
+          </OutlineButton>
+        </SidebarFooter>
+        {/** TODO: refactor when modal manager is available */}
+        {isLocalStudioModalOpen && <OpenLocalStudioModal isOpen toggleOpen={toggleLocalStudioModalOpen} />}
+      </>
     </NavMenu>
   );
 };

@@ -1,4 +1,4 @@
-import { getHeader, getQuery, type H3Event, readBody, send, setHeaders, type EventHandlerRequest } from 'h3';
+import { getHeader, getQuery, type H3Event, readBody, send, setHeaders } from 'h3';
 
 import { NovuRequestHandler, type ServeHandlerOptions } from '../handler';
 import { type SupportedFrameworkName } from '../types';
@@ -49,7 +49,7 @@ export const serve = (options: ServeHandlerOptions) => {
   const handler = new NovuRequestHandler({
     frameworkName,
     ...options,
-    handler: (event: H3Event<EventHandlerRequest>) => {
+    handler: (event: H3Event) => {
       return {
         body: () => readBody(event),
         headers: (key) => getHeader(event, key),
@@ -59,6 +59,7 @@ export const serve = (options: ServeHandlerOptions) => {
             String(event.path),
             `${process.env.NODE_ENV === 'development' ? 'http' : 'https'}://${String(getHeader(event, 'host'))}`
           ),
+        // eslint-disable-next-line @typescript-eslint/no-base-to-string
         queryString: (key) => String(getQuery(event)[key]),
         transformResponse: (actionRes) => {
           const { res } = event.node;

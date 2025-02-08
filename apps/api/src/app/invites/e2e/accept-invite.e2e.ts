@@ -3,7 +3,7 @@ import { UserSession } from '@novu/testing';
 import { MemberStatusEnum } from '@novu/shared';
 import { expect } from 'chai';
 
-describe('Accept invite - /invites/:inviteToken/accept (POST) @skip-in-ee', async () => {
+describe('Accept invite - /invites/:inviteToken/accept (POST) #novu-v1-os', async () => {
   let session: UserSession;
   let invitedUserSession: UserSession;
   const memberRepository = new CommunityMemberRepository();

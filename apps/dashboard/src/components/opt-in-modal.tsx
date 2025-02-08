@@ -1,18 +1,18 @@
 import { CircleCheck } from '@/components/icons/circle-check';
-import { PartyPopover } from '@/components/icons/party-popover';
 import { OptInArrow } from '@/components/icons/opt-in-arrow';
+import { PartyPopover } from '@/components/icons/party-popover';
 import { Button } from '@/components/primitives/button';
 import {
   Dialog,
   DialogClose,
-  DialogDescription,
   DialogContent,
+  DialogDescription,
   DialogOverlay,
   DialogPortal,
   DialogTitle,
 } from '@/components/primitives/dialog';
-import { RiCustomerService2Line } from 'react-icons/ri';
 import { useNewDashboardOptIn } from '@/hooks/use-new-dashboard-opt-in';
+import { RiCustomerService2Line } from 'react-icons/ri';
 
 export const OptInModal = () => {
   const { isFirstVisit, updateNewDashboardFirstVisit } = useNewDashboardOptIn();

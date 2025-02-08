@@ -14,7 +14,7 @@ import { ChangeRepository } from '@novu/dal';
 import { CreateWorkflowRequestDto, UpdateWorkflowRequestDto } from '../dto';
 import { WorkflowResponse } from '../dto/workflow-response.dto';
 
-describe('Update workflow by id - /workflows/:workflowId (PUT)', async () => {
+describe('Update workflow by id - /workflows/:workflowId (PUT) #novu-v1', async () => {
   let session: UserSession;
   const changeRepository: ChangeRepository = new ChangeRepository();
 

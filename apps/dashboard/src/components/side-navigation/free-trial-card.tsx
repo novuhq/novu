@@ -1,13 +1,11 @@
-import { LogoCircle } from '../icons';
+import { ROUTES } from '@/utils/routes';
+import { GetSubscriptionDto } from '@novu/shared';
 import { RiArrowRightDoubleLine, RiInformationFill } from 'react-icons/ri';
-import { Progress } from '../primitives/progress';
-import { Button } from '../primitives/button';
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipArrow } from '../primitives/tooltip';
-import { LEGACY_ROUTES, ROUTES } from '@/utils/routes';
 import { Link } from 'react-router-dom';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
-import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
+import { LogoCircle } from '../icons';
+import { Button } from '../primitives/button';
+import { Progress } from '../primitives/progress';
+import { Tooltip, TooltipArrow, TooltipContent, TooltipTrigger } from '../primitives/tooltip';
 
 const transition = 'transition-all duration-300 ease-out';
 
@@ -53,7 +51,7 @@ const CardContent = ({
       </Tooltip>
     </div>
     <span className="text-foreground-600 text-xs">
-      Experience Novu without any limits for free for the next {pluralizedDays}.
+      Enjoy unlimited access to Novu for free for the next {pluralizedDays}.
     </span>
     <div className={`max-h-3 overflow-hidden opacity-100 ${transition} group-hover:max-h-0 group-hover:opacity-0`}>
       <Progress value={daysTotal - daysLeft} max={daysTotal} />
@@ -61,37 +59,28 @@ const CardContent = ({
     <div
       className={`-mt-2 max-h-0 overflow-hidden opacity-0 ${transition} group-hover:max-h-8 group-hover:opacity-100`}
     >
-      <Button className={`w-full translate-y-full ${transition} group-hover:translate-y-0`} variant="light" size="sm">
+      <Button
+        className={`w-full translate-y-full ${transition} group-hover:translate-y-0`}
+        variant="primary"
+        mode="lighter"
+        size="xs"
+      >
         Upgrade now
       </Button>
     </div>
   </>
 );
 
-export const FreeTrialCard = () => {
-  const { subscription, daysLeft, isLoading } = useFetchSubscription();
+export const FreeTrialCard = ({ subscription, daysLeft }: { subscription?: GetSubscriptionDto; daysLeft: number }) => {
   const daysTotal = subscription && subscription.trial.daysTotal > 0 ? subscription.trial.daysTotal : 100;
-  const isV2BillingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_DASHBOARD_BILLING_ENABLED);
-
-  if (isLoading || !subscription || !subscription.trial.isActive || subscription?.hasPaymentMethod) {
-    return null;
-  }
-
   const pluralizedDays = pluralizeDaysLeft(daysLeft);
+
   const cardClassName =
     'bg-background group relative left-2 mb-2 flex w-[calc(100%-1rem)] cursor-pointer flex-col gap-2 rounded-lg p-3 shadow';
 
-  if (isV2BillingEnabled) {
-    return (
-      <Link to={ROUTES.SETTINGS_BILLING} className={cardClassName}>
-        <CardContent pluralizedDays={pluralizedDays} daysTotal={daysTotal} daysLeft={daysLeft} />
-      </Link>
-    );
-  }
-
   return (
-    <a href={LEGACY_ROUTES.BILLING} className={cardClassName}>
+    <Link to={ROUTES.SETTINGS_BILLING} className={cardClassName}>
       <CardContent pluralizedDays={pluralizedDays} daysTotal={daysTotal} daysLeft={daysLeft} />
-    </a>
+    </Link>
   );
 };

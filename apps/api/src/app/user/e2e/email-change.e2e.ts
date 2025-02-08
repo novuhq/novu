@@ -1,7 +1,7 @@
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
-describe('Change Profile Email - /users/profile/email (PUT) @skip-in-ee', async () => {
+describe('Change Profile Email - /users/profile/email (PUT) #novu-v1-os', async () => {
   let session: UserSession;
   let existingSession: UserSession;
 

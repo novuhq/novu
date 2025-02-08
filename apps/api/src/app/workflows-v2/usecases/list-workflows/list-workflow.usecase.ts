@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 
+import { InstrumentUsecase } from '@novu/application-generic';
 import { NotificationTemplateRepository } from '@novu/dal';
 import { ListWorkflowResponse } from '@novu/shared';
-import { InstrumentUsecase } from '@novu/application-generic';
-import { ListWorkflowsCommand } from './list-workflows.command';
 import { toWorkflowsMinifiedDtos } from '../../mappers/notification-template-mapper';
+import { ListWorkflowsCommand } from './list-workflows.command';
 
 @Injectable()
 export class ListWorkflowsUseCase {
@@ -17,7 +17,10 @@ export class ListWorkflowsUseCase {
       command.user.environmentId,
       command.offset,
       command.limit,
-      command.searchQuery
+      command.searchQuery,
+      false,
+      command.orderBy,
+      command.orderDirection
     );
     if (res.data === null || res.data === undefined) {
       return { workflows: [], totalCount: 0 };

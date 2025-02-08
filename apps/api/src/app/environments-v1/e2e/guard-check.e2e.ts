@@ -3,7 +3,7 @@ import { expect } from 'chai';
 import { NotificationTemplateRepository } from '@novu/dal';
 import { CreateWorkflowRequestDto } from '../../workflows-v1/dto';
 
-describe('Environment - Check Root Environment Guard', async () => {
+describe('Environment - Check Root Environment Guard #novu-v2', async () => {
   let session: UserSession;
   const notificationTemplateRepository: NotificationTemplateRepository = new NotificationTemplateRepository();
 

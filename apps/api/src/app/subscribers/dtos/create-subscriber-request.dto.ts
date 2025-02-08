@@ -1,6 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-  ArrayMaxSize,
   ArrayNotEmpty,
   IsArray,
   IsDefined,
@@ -106,7 +105,7 @@ export class CreateSubscriberRequestDto {
   @IsOptional()
   locale?: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     type: 'object',
     description: 'An optional payload object that can contain any properties.',
     required: false,
@@ -137,10 +136,10 @@ export class CreateSubscriberRequestDto {
 export class BulkSubscriberCreateDto {
   @ApiProperty({
     description: 'An array of subscribers to be created in bulk.',
+    type: [CreateSubscriberRequestDto], // Specify the type of the array elements
   })
   @IsArray()
   @ArrayNotEmpty()
-  @ArrayMaxSize(500)
   @ValidateNested({ each: true })
   @Type(() => CreateSubscriberRequestDto)
   subscribers: CreateSubscriberRequestDto[];

@@ -9,11 +9,12 @@ import {
   IsNotEmpty,
   Length,
   IsObject,
+  IsDefined,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
 import { EnvironmentWithUserObjectCommand, MAX_NAME_LENGTH } from '@novu/application-generic';
-import { StepTypeEnum, WorkflowCreationSourceEnum, ChannelTypeEnum } from '@novu/shared';
+import { StepTypeEnum, WorkflowCreationSourceEnum, ChannelTypeEnum, WorkflowOriginEnum } from '@novu/shared';
 
 export class ChannelPreferenceData {
   @IsBoolean()
@@ -71,6 +72,10 @@ export class UpsertWorkflowDataCommand {
   @IsString()
   @IsOptional()
   workflowId?: string;
+
+  @IsEnum(WorkflowOriginEnum)
+  @IsDefined()
+  origin: WorkflowOriginEnum;
 
   @IsArray()
   @ValidateNested({ each: true })

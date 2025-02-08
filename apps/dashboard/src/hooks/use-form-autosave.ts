@@ -35,9 +35,11 @@ export function useFormAutosave<U extends Record<string, unknown>, T extends Fie
         return;
       }
       // manually trigger the validation of the form
-      const isValid = await form.trigger();
-      if (!isValid && shouldClientValidate) {
-        return;
+      if (shouldClientValidate) {
+        const isValid = await form.trigger();
+        if (!isValid) {
+          return;
+        }
       }
 
       const values = { ...previousData, ...data };

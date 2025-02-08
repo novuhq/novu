@@ -4,7 +4,7 @@ import { ChannelCTATypeEnum, INotificationTemplate, INotificationTemplateStep, S
 import { PreferencesRepository } from '@novu/dal';
 import { CreateWorkflowRequestDto } from '../dto';
 
-describe('Get workflow by id - /workflows/:workflowId (GET)', async () => {
+describe('Get workflow by id - /workflows/:workflowId (GET) #novu-v1', async () => {
   let session: UserSession;
 
   before(async () => {

@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import { UserSession, WorkflowOverrideService } from '@novu/testing';
 import { TenantRepository, WorkflowOverrideRepository } from '@novu/dal';
 
-describe('Delete workflow override - /workflow-overrides/:overrideId (Delete)', async () => {
+describe('Delete workflow override - /workflow-overrides/:overrideId (Delete) #novu-v1', async () => {
   let session: UserSession;
   const tenantRepository = new TenantRepository();
   const workflowOverrideRepository = new WorkflowOverrideRepository();

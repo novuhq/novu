@@ -1,13 +1,13 @@
 import { forwardRef, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import {
   ChangeRepository,
+  EnvironmentRepository,
+  MessageTemplateRepository,
+  NotificationGroupRepository,
+  NotificationStepData,
+  NotificationStepEntity,
   NotificationTemplateEntity,
   NotificationTemplateRepository,
-  MessageTemplateRepository,
-  NotificationStepEntity,
-  NotificationGroupRepository,
-  StepVariantEntity,
-  EnvironmentRepository,
 } from '@novu/dal';
 import {
   buildWorkflowPreferencesFromPreferenceChannels,
@@ -20,14 +20,13 @@ import {
   buildGroupedBlueprintsKey,
   buildNotificationTemplateIdentifierKey,
   buildNotificationTemplateKey,
-  InvalidateCacheService,
-  DeletePreferencesUseCase,
   DeletePreferencesCommand,
+  DeletePreferencesUseCase,
+  InvalidateCacheService,
   UpsertPreferences,
   UpsertUserWorkflowPreferencesCommand,
   UpsertWorkflowPreferencesCommand,
 } from '@novu/application-generic';
-
 import { ApplyChange, ApplyChangeCommand } from '../apply-change';
 import { PromoteTypeChangeCommand } from '../promote-type-change.command';
 
@@ -85,7 +84,7 @@ export class PromoteNotificationTemplateChange {
         // eslint-disable-next-line no-param-reassign
         step.variants = step.variants
           ?.map(mapNewVariantItem)
-          .filter((variant): variant is StepVariantEntity => variant !== undefined);
+          .filter((variant): variant is NotificationStepData => variant !== undefined);
       }
 
       if (!oldMessage) {
@@ -102,7 +101,7 @@ export class PromoteNotificationTemplateChange {
       return step;
     };
 
-    const mapNewVariantItem = (step: StepVariantEntity) => {
+    const mapNewVariantItem = (step: NotificationStepData) => {
       const oldMessage = messages.find((message) => {
         return message._parentId === step._templateId;
       });

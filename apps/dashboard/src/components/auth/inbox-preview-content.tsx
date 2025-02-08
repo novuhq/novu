@@ -5,6 +5,7 @@ import { useFetchEnvironments } from '../../context/environment/hooks';
 import { useUser } from '@clerk/clerk-react';
 import { useAuth } from '../../context/auth/hooks';
 import { API_HOSTNAME, WEBSOCKET_HOSTNAME } from '../../config';
+import { useNavigate } from 'react-router-dom';
 
 interface InboxPreviewContentProps {
   selectedStyle: string;
@@ -19,6 +20,7 @@ export function InboxPreviewContent({
   primaryColor,
   foregroundColor,
 }: InboxPreviewContentProps) {
+  const navigate = useNavigate();
   const auth = useAuth();
   const { user } = useUser();
   const { environments } = useFetchEnvironments({ organizationId: auth?.currentOrganization?._id });
@@ -66,7 +68,14 @@ export function InboxPreviewContent({
       {selectedStyle === 'popover' && (
         <div className="relative flex h-full w-full flex-col items-center">
           <div className="mt-10 flex w-full max-w-[440px] items-center justify-end">
-            <Inbox {...configuration} placement="bottom-end" open />
+            <Inbox
+              {...configuration}
+              routerPush={(path: string) => {
+                return navigate(path);
+              }}
+              placement="bottom-end"
+              open
+            />
           </div>
           <div className="absolute bottom-[-10px] left-2 flex flex-col items-start">
             <SendNotificationArrow className="mt-2 h-[73px] w-[86px]" />

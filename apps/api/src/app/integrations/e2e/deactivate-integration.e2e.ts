@@ -2,7 +2,7 @@ import { IntegrationRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
-describe('Deactivate Integration', function () {
+describe('Deactivate Integration #novu-v2', function () {
   let session: UserSession;
   const integrationRepository = new IntegrationRepository();
 

@@ -53,7 +53,7 @@ export const MultiSelect = <T extends string | number>({
         <button
           role="combobox"
           aria-expanded={openCombobox}
-          className={cn(selectTriggerVariants({ size: 'sm', className }))}
+          className={cn(selectTriggerVariants({ size: '2xs', className }))}
           disabled={isDisabled}
         >
           <TruncatedText className="text-xs">

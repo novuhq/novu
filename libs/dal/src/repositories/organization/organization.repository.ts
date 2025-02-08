@@ -1,4 +1,3 @@
-import { ApiServiceLevelEnum } from '@novu/shared';
 import { Inject } from '@nestjs/common';
 import { IPartnerConfiguration, OrganizationEntity } from './organization.entity';
 import { IOrganizationRepository } from './organization-repository.interface';

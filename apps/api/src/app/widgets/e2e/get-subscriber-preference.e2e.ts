@@ -5,7 +5,7 @@ import { expect } from 'chai';
 import { ChannelTypeEnum } from '@novu/stateless';
 import { updateSubscriberPreference } from './update-subscriber-preference.e2e';
 
-describe('GET /widget/preferences', function () {
+describe('GET /widget/preferences #novu-v1', function () {
   let template: NotificationTemplateEntity;
   let session: UserSession;
 

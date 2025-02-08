@@ -5,7 +5,7 @@ import { expect } from 'chai';
 import { Novu } from '@novu/api';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-describe('Remove subscribers to topic - /topics/:topicKey/subscribers/removal (POST)', async () => {
+describe('Remove subscribers to topic - /topics/:topicKey/subscribers/removal (POST) #novu-v2', async () => {
   const topicKey = 'topic-key-remove-subscribers';
   const topicName = 'topic-name';
   let session: UserSession;

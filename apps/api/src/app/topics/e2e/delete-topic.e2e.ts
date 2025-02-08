@@ -5,9 +5,7 @@ import { Novu } from '@novu/api';
 import { expectSdkExceptionGeneric, initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 import { addSubscribers, createTopic, getTopic } from './helpers/topic-e2e-helper';
 
-const BASE_PATH = '/v1/topics';
-
-describe('Delete a topic - /topics/:topicKey (DELETE)', async () => {
+describe('Delete a topic - /topics/:topicKey (DELETE) #novu-v2', async () => {
   let session: UserSession;
   let novuClient: Novu;
 
@@ -59,12 +57,13 @@ describe('Delete a topic - /topics/:topicKey (DELETE)', async () => {
 
     await addSubscribers(session, topicKey, [subscriber.subscriberId]);
 
-    const { body } = await session.testAgent.delete(`${BASE_PATH}/${topicKey}`);
-
-    expect(body.statusCode).to.equal(409);
-    expect(body.message).to.eql(
+    const { error } = await expectSdkExceptionGeneric(() =>
+      novuClient.topics.delete(topicKey, undefined, { retries: { strategy: 'none' } })
+    );
+    expect(error?.statusCode).to.equal(409);
+    expect(error?.message).to.eql(
       `Topic with key ${topicKey} in the environment ${session.environment._id} can't be deleted as it still has subscribers assigned`
     );
-    expect(body.error).to.eql('Conflict');
+    expect(error?.ctx?.error, JSON.stringify(error)).to.eql('Conflict');
   });
 });

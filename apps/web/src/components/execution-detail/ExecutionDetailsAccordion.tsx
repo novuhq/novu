@@ -49,13 +49,13 @@ export const ExecutionDetailsAccordion = ({ identifier, steps, subscriberVariabl
       classNames={classes}
     >
       {steps.map((step) => (
-        <Accordion.Item key={`execution-details-step-${step.id}`} value={step.id}>
+        <Accordion.Item key={`execution-details-step-${step._id}`} value={step._id}>
           <Accordion.Control>
             <ExecutionDetailsStepHeader step={step} />
           </Accordion.Control>
           <Accordion.Panel>
             <ExecutionDetailsStepContent
-              key={`execution-details-step-content-${step.id}`}
+              key={`execution-details-step-content-${step._id}`}
               identifier={identifier}
               step={step}
               subscriberVariables={subscriberVariables}

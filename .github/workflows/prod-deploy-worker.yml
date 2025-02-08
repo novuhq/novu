@@ -70,6 +70,7 @@ jobs:
             --platform=linux/amd64
             --output=type=image,name=$REGISTRY/$REPOSITORY,push-by-digest=true,name-canonical=true
         run: |
+          cp scripts/dotenvcreate.mjs apps/worker/src/dotenvcreate.mjs
           cd apps/worker && pnpm --silent --workspace-root pnpm-context -- apps/worker/Dockerfile | BULL_MQ_PRO_NPM_TOKEN=${BULL_MQ_PRO_NPM_TOKEN} docker buildx build --secret id=BULL_MQ_PRO_NPM_TOKEN --build-arg PACKAGE_PATH=apps/worker - -t novu-worker --load $DOCKER_BUILD_ARGUMENTS
           docker tag novu-worker $REGISTRY/$REPOSITORY:latest
           docker tag novu-worker $REGISTRY/$REPOSITORY:prod

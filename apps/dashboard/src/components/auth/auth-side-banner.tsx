@@ -28,7 +28,7 @@ export function AuthSideBanner() {
       </div>
       <div className="flex flex-col items-start justify-start gap-8 self-stretch">
         <AuthFeatureRow
-          icon={<Plug className="h-6 w-6" />}
+          icon={<Plug className="h-6 w-6 text-[#DD2450]" />}
           title="Powerful notifications, easy integrations"
           description="Unlimited workflows, unlimited providers, unlimited subscribers with 99.9% uptime SLA"
         />

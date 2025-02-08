@@ -7,6 +7,7 @@ import {
   PreferencesTypeEnum,
   StepTypeEnum,
   TemplateVariableTypeEnum,
+  IWorkflowStepMetadata,
 } from '@novu/shared';
 import {
   MessageTemplateRepository,
@@ -136,7 +137,7 @@ export class NotificationTemplateService {
               filters: variant.filters,
               _templateId: savedVariant._id,
               active: variant.active,
-              metadata: variant.metadata as any,
+              metadata: variant.metadata as IWorkflowStepMetadata,
               replyCallback: variant.replyCallback,
               uuid: variant.uuid,
             });
@@ -150,7 +151,7 @@ export class NotificationTemplateService {
           filters: message.filters,
           _templateId: savedMessageTemplate._id,
           active: message.active,
-          metadata: message.metadata as any,
+          metadata: message.metadata as IWorkflowStepMetadata,
           replyCallback: message.replyCallback,
           uuid: message.uuid ?? uuid(),
           name: message.name,

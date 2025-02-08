@@ -292,6 +292,8 @@ messageSchema.index({
  */
 messageSchema.index({ createdAt: 1 });
 
+messageSchema.index({ _environmentId: 1, _jobId: 1, deleted: 1 });
+
 export const Message =
   (mongoose.models.Message as mongoose.Model<MessageDBModel>) ||
   mongoose.model<MessageDBModel>('Message', messageSchema);

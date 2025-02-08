@@ -1,5 +1,7 @@
 import { applyDecorators } from '@nestjs/common';
-import { ApiExtension } from '@nestjs/swagger';
+import { ApiExtension, ApiParam, ApiProperty } from '@nestjs/swagger';
+import { ApiParamOptions } from '@nestjs/swagger/dist/decorators/api-param.decorator';
+import { ApiPropertyOptions } from '@nestjs/swagger/dist/decorators/api-property.decorator';
 
 /**
  * Sets the method name for the SDK.
@@ -19,6 +21,17 @@ export function SdkMethodName(methodName: string) {
 
 export function SdkGroupName(methodName: string) {
   return applyDecorators(ApiExtension('x-speakeasy-group', methodName));
+}
+/**
+ * A decorator function that marks a path or operation to be ignored in OpenAPI documentation.
+ *
+ * This function applies the `x-ignore` extension to the OpenAPI specification,
+ * indicating that the decorated path or operation should not be included in the generated documentation.
+ *
+ * @returns {Function} A decorator function that applies the `x-ignore` extension.
+ */
+export function DocumentationIgnore() {
+  return applyDecorators(ApiExtension('x-ignore', true));
 }
 
 /**
@@ -53,6 +66,34 @@ export function SdkMethodMaxParamsOverride(maxParamsBeforeCollapseToObject?: num
   return applyDecorators(ApiExtension('x-speakeasy-max-method-params', maxParamsBeforeCollapseToObject));
 }
 
+class SDKOverrideOptions {
+  nameOverride?: string;
+}
+
+export function SdkApiParam(options: ApiParamOptions, sdkOverrideOptions?: SDKOverrideOptions) {
+  let finalOptions: ApiParamOptions;
+  if (sdkOverrideOptions) {
+    finalOptions = sdkOverrideOptions.nameOverride
+      ? ({ ...options, 'x-speakeasy-name-override': sdkOverrideOptions.nameOverride } as unknown as ApiParamOptions)
+      : options;
+  } else {
+    finalOptions = options;
+  }
+
+  return applyDecorators(ApiParam(finalOptions));
+}
+export function SdkApiProperty(options: ApiPropertyOptions, sdkOverrideOptions?: SDKOverrideOptions) {
+  let finalOptions: ApiPropertyOptions;
+  if (sdkOverrideOptions) {
+    finalOptions = sdkOverrideOptions.nameOverride
+      ? ({ ...options, 'x-speakeasy-name-override': sdkOverrideOptions.nameOverride } as unknown as ApiPropertyOptions)
+      : options;
+  } else {
+    finalOptions = options;
+  }
+
+  return applyDecorators(ApiProperty(finalOptions));
+}
 /**
  * Sets the pagination for the SDK.
  * @param {string} override - The override for the limit parameter.

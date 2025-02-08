@@ -1,8 +1,10 @@
+import { WorkflowInternalResponseDto } from '@novu/application-generic';
+import { NotificationStepEntity, NotificationTemplateEntity } from '@novu/dal';
 import {
   PreferencesResponseDto,
   RuntimeIssueDto,
   ShortIsPrefixEnum,
-  StepDataDto,
+  StepResponseDto,
   StepTypeEnum,
   WorkflowCreateAndUpdateKeys,
   WorkflowListResponseDto,
@@ -11,13 +13,11 @@ import {
   WorkflowStatusEnum,
   WorkflowTypeEnum,
 } from '@novu/shared';
-import { NotificationStepEntity, NotificationTemplateEntity } from '@novu/dal';
-import { WorkflowInternalResponseDto } from '@novu/application-generic';
 import { buildSlug } from '../../shared/helpers/build-slug';
 
 export function toResponseWorkflowDto(
   workflow: WorkflowInternalResponseDto,
-  steps: StepDataDto[]
+  steps: StepResponseDto[]
 ): WorkflowResponseDto {
   const preferencesDto: PreferencesResponseDto = {
     user: workflow.userPreferences,
@@ -40,6 +40,7 @@ export function toResponseWorkflowDto(
     createdAt: workflow.createdAt || 'Missing Create At',
     status: workflow.status || WorkflowStatusEnum.ACTIVE,
     issues: workflow.issues as unknown as Record<WorkflowCreateAndUpdateKeys, RuntimeIssueDto>,
+    lastTriggeredAt: workflow.lastTriggeredAt,
   };
 }
 
@@ -57,6 +58,7 @@ function toMinifiedWorkflowDto(template: NotificationTemplateEntity): WorkflowLi
     stepTypeOverviews: template.steps.map(buildStepTypeOverview).filter((stepTypeEnum) => !!stepTypeEnum),
     createdAt: template.createdAt || 'Missing Create At',
     status: template.status || WorkflowStatusEnum.ACTIVE,
+    lastTriggeredAt: template.lastTriggeredAt,
   };
 }
 
@@ -70,6 +72,10 @@ function buildStepTypeOverview(step: NotificationStepEntity): StepTypeEnum | und
 
 function computeOrigin(template: NotificationTemplateEntity): WorkflowOriginEnum {
   // Required to differentiate between old V1 and new workflows in an attempt to eliminate the need for type field
+  if (typeof template.type === 'undefined' && typeof template.origin === 'undefined') {
+    return WorkflowOriginEnum.NOVU_CLOUD_V1;
+  }
+
   return template?.type === WorkflowTypeEnum.REGULAR
     ? WorkflowOriginEnum.NOVU_CLOUD_V1
     : template.origin || WorkflowOriginEnum.EXTERNAL;

@@ -1,5 +1,5 @@
-import mongoose, { Schema } from 'mongoose';
 import { ApiRateLimitCategoryEnum } from '@novu/shared';
+import mongoose, { Schema } from 'mongoose';
 
 import { schemaOptions } from '../schema-default.options';
 import { EnvironmentDBModel } from './environment.entity';
@@ -57,6 +57,7 @@ const environmentSchema = new Schema<EnvironmentDBModel>(
       type: Schema.Types.ObjectId,
       ref: 'Environment',
     },
+    color: Schema.Types.String,
   },
   schemaOptions
 );

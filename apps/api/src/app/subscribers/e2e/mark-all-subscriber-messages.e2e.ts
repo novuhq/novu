@@ -5,7 +5,7 @@ import { MessageRepository, NotificationTemplateEntity, SubscriberRepository } f
 import { Novu } from '@novu/api';
 import { expectSdkExceptionGeneric, initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-describe('Mark All Subscriber Messages - /subscribers/:subscriberId/messages/mark-all (POST)', function () {
+describe('Mark All Subscriber Messages - /subscribers/:subscriberId/messages/mark-all (POST) #novu-v2', function () {
   let session: UserSession;
   let template: NotificationTemplateEntity;
   const messageRepository = new MessageRepository();
@@ -15,11 +15,11 @@ describe('Mark All Subscriber Messages - /subscribers/:subscriberId/messages/mar
     session = new UserSession();
     await session.initialize();
     template = await session.createTemplate();
+    novuClient = initNovuClassSdk(session);
     await messageRepository.deleteMany({
       _environmentId: session.environment._id,
       _subscriberId: session.subscriberId,
     });
-    novuClient = initNovuClassSdk(session);
   });
 
   it("should throw not found when subscriberId doesn't exist", async function () {
@@ -39,13 +39,13 @@ describe('Mark All Subscriber Messages - /subscribers/:subscriberId/messages/mar
 
   it('should mark all the subscriber messages as read', async function () {
     const { subscriberId } = session;
-    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
-    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
-    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
-    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
-    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
 
     const notificationsFeedResponse = await getSubscriberNotifications(subscriberId);
     expect(notificationsFeedResponse.totalCount).to.equal(5);
@@ -71,13 +71,13 @@ describe('Mark All Subscriber Messages - /subscribers/:subscriberId/messages/mar
 
   it('should not mark all the messages as read if they are already read', async function () {
     const { subscriberId } = session;
-    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
-    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
-    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
-    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
-    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
 
     const notificationsFeedResponse = await getSubscriberNotifications(subscriberId);
     expect(notificationsFeedResponse.totalCount).to.equal(5);
@@ -114,13 +114,13 @@ describe('Mark All Subscriber Messages - /subscribers/:subscriberId/messages/mar
 
   it('should mark all the subscriber messages as unread', async function () {
     const { subscriberId } = session;
-    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
-    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
-    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
-    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
-    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
 
     const notificationsFeedResponse = await getSubscriberNotifications(subscriberId);
     expect(notificationsFeedResponse.totalCount).to.equal(5);
@@ -157,13 +157,13 @@ describe('Mark All Subscriber Messages - /subscribers/:subscriberId/messages/mar
 
   it('should mark all the subscriber messages as seen', async function () {
     const { subscriberId } = session;
-    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
-    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
-    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
-    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
-    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
 
     const notificationsFeedResponse = await getSubscriberNotifications(subscriberId);
     expect(notificationsFeedResponse.totalCount).to.equal(5);
@@ -189,13 +189,13 @@ describe('Mark All Subscriber Messages - /subscribers/:subscriberId/messages/mar
 
   it('should mark all the subscriber messages as unseen', async function () {
     const { subscriberId } = session;
-    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
-    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
-    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
-    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
-    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
 
     const notificationsFeedResponse = await getSubscriberNotifications(subscriberId);
     expect(notificationsFeedResponse.totalCount).to.equal(5);

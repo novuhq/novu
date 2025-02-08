@@ -1,6 +1,6 @@
 export type HttpClientOptions = {
   apiVersion?: string;
-  backendUrl?: string;
+  apiUrl?: string;
   userAgent?: string;
 };
 
@@ -9,18 +9,18 @@ const DEFAULT_BACKEND_URL = 'https://api.novu.co';
 const DEFAULT_USER_AGENT = `${PACKAGE_NAME}@${PACKAGE_VERSION}`;
 
 export class HttpClient {
-  private backendUrl: string;
+  private apiUrl: string;
   private apiVersion: string;
   private headers: Record<string, string>;
 
   constructor(options: HttpClientOptions = {}) {
     const {
       apiVersion = DEFAULT_API_VERSION,
-      backendUrl = DEFAULT_BACKEND_URL,
+      apiUrl = DEFAULT_BACKEND_URL,
       userAgent = DEFAULT_USER_AGENT,
     } = options || {};
     this.apiVersion = apiVersion;
-    this.backendUrl = `${backendUrl}/${this.apiVersion}`;
+    this.apiUrl = `${apiUrl}/${this.apiVersion}`;
     this.headers = {
       'Novu-API-Version': NOVU_API_VERSION,
       'Content-Type': 'application/json',
@@ -91,7 +91,7 @@ export class HttpClient {
     options?: RequestInit;
     unwrapEnvelope?: boolean;
   }) {
-    const fullUrl = combineUrl(this.backendUrl, path, searchParams ? `?${searchParams.toString()}` : '');
+    const fullUrl = combineUrl(this.apiUrl, path, searchParams ? `?${searchParams.toString()}` : '');
     const reqInit = {
       method: options?.method || 'GET',
       headers: { ...this.headers, ...(options?.headers || {}) },

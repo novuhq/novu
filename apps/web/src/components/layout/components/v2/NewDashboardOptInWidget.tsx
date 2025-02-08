@@ -12,9 +12,8 @@ import { useSegment } from '../../../providers/SegmentProvider';
 export function NewDashboardOptInWidget() {
   const { dismiss, optIn, status } = useNewDashboardOptIn();
   const segment = useSegment();
-  const isNewDashboardEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_NEW_DASHBOARD_ENABLED);
 
-  const showWidget = !status && isNewDashboardEnabled && !IS_SELF_HOSTED;
+  const showWidget = !status && !IS_SELF_HOSTED;
 
   useEffect(() => {
     if (showWidget) {

@@ -10,7 +10,7 @@ import {
 } from '@novu/shared';
 import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
 
-describe('Get Webhook Support Status - /webhook/provider/:providerOrIntegrationId/status (GET)', function () {
+describe('Get Webhook Support Status - /webhook/provider/:providerOrIntegrationId/status (GET) #novu-v1', function () {
   let session: UserSession;
   const integrationRepository = new IntegrationRepository();
 

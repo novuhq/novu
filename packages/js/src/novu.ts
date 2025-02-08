@@ -4,7 +4,6 @@ import { Notifications } from './notifications';
 import { Session } from './session';
 import { Preferences } from './preferences';
 import { Socket } from './ws';
-import { PRODUCTION_BACKEND_URL } from './utils/config';
 import type { NovuOptions } from './types';
 import { InboxService } from './api';
 
@@ -25,7 +24,7 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
 
   constructor(options: NovuOptions) {
     this.#inboxService = new InboxService({
-      backendUrl: options.backendUrl ?? PRODUCTION_BACKEND_URL,
+      apiUrl: options.apiUrl || options.backendUrl,
       userAgent: options.__userAgent,
     });
     this.#emitter = new NovuEventEmitter();

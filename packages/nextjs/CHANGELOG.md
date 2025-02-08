@@ -1,3 +1,17 @@
+## 2.6.5 (2024-12-24)
+
+### 🧱 Updated Dependencies
+
+- Updated @novu/react to 2.6.3
+
+### ❤️ Thank You
+
+- GalTidhar @tatarco
+- George Desipris @desiprisg
+- George Djabarov @djabarovgeorge
+- Pawan Jain
+
+
 ## 2.6.3 (2024-11-26)
 
 ### 🚀 Features

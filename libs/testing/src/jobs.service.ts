@@ -4,20 +4,16 @@ import { JobTopicNameEnum, StepTypeEnum } from '@novu/shared';
 
 import { TestingQueueService } from './testing-queue.service';
 
-const LOG_CONTEXT = 'TestingJobsService';
-
 export class JobsService {
   private jobRepository = new JobRepository();
 
   public standardQueue: Queue;
   public workflowQueue: Queue;
   public subscriberProcessQueue: Queue;
-  public executionLogQueue: Queue;
   constructor(private isClusterMode?: boolean) {
     this.workflowQueue = new TestingQueueService(JobTopicNameEnum.WORKFLOW).queue;
     this.standardQueue = new TestingQueueService(JobTopicNameEnum.STANDARD).queue;
     this.subscriberProcessQueue = new TestingQueueService(JobTopicNameEnum.PROCESS_SUBSCRIBER).queue;
-    this.executionLogQueue = new TestingQueueService(JobTopicNameEnum.EXECUTION_LOG).queue;
   }
 
   public async queueGet(jobTopicName: JobTopicNameEnum, getter: 'getDelayed') {
@@ -45,15 +41,7 @@ export class JobsService {
     }
   }
 
-  public async awaitParsingEvents() {
-    let totalCount = 0;
-
-    do {
-      totalCount = (await this.getQueueMetric()).totalCount;
-    } while (totalCount > 0);
-  }
-
-  public async awaitRunningJobs({
+  public async waitForJobCompletion({
     templateId,
     organizationId,
     delay,
@@ -65,11 +53,9 @@ export class JobsService {
     unfinishedJobs?: number;
   }) {
     let runningJobs = 0;
-    let totalCount = 0;
+    const safeUnfinishedJobs = Math.max(unfinishedJobs, 0);
 
-    const workflowMatch = templateId
-      ? { _templateId: Array.isArray(templateId) ? { $in: templateId } : templateId }
-      : {};
+    const workflowMatch = templateId ? { _templateId: { $in: [templateId].flat() } } : {};
     const typeMatch = delay
       ? {
           type: {
@@ -78,42 +64,29 @@ export class JobsService {
         }
       : {};
 
+    let totalCount = 0;
+
     do {
+      // Wait until Bull queues are empty
       totalCount = (await this.getQueueMetric()).totalCount;
-      runningJobs = await this.jobRepository.count({
-        _organizationId: organizationId,
-        ...typeMatch,
-        ...workflowMatch,
-        status: {
-          $in: [JobStatusEnum.PENDING, JobStatusEnum.QUEUED, JobStatusEnum.RUNNING],
-        },
-      });
-    } while (totalCount > 0 || runningJobs > unfinishedJobs);
+      // Wait until there are no pending, queued or running jobs in Mongo
+      runningJobs = Math.max(
+        await this.jobRepository.count({
+          _organizationId: organizationId,
+          ...typeMatch,
+          ...workflowMatch,
+          status: {
+            $in: [JobStatusEnum.PENDING, JobStatusEnum.QUEUED, JobStatusEnum.RUNNING],
+          },
+        }),
+        0
+      );
+    } while (totalCount > 0 || runningJobs > safeUnfinishedJobs);
+  }
 
-    return {
-      getDelayedTimestamp: async () => {
-        const delayedJobs = await this.standardQueue.getDelayed();
-
-        if (delayedJobs.length === 1) {
-          return delayedJobs[0].delay;
-        } else if (delayedJobs.length > 1) {
-          throw new Error('There are more than one delayed jobs');
-        } else if (delayedJobs.length === 0) {
-          throw new Error('There are no delayed jobs');
-        }
-      },
-      runDelayedImmediately: async () => {
-        const delayedJobs = await this.standardQueue.getDelayed();
-
-        if (delayedJobs.length === 1) {
-          await delayedJobs[0].changeDelay(1);
-        } else if (delayedJobs.length > 1) {
-          throw new Error('There are more than one delayed jobs');
-        } else if (delayedJobs.length === 0) {
-          throw new Error('There are no delayed jobs');
-        }
-      },
-    };
+  public async runAllDelayedJobsImmediately() {
+    const delayedJobs = await this.standardQueue.getDelayed();
+    await delayedJobs.forEach(async (job) => job.promote());
   }
 
   private async getQueueMetric() {
@@ -124,8 +97,6 @@ export class JobsService {
       activeStandardJobsCount,
       subscriberProcessQueueWaitingCount,
       subscriberProcessQueueActiveCount,
-      executionLogQueueWaitingCount,
-      executionLogQueueActiveCount,
     ] = await Promise.all([
       this.workflowQueue.getActiveCount(),
       this.workflowQueue.getWaitingCount(),
@@ -135,9 +106,6 @@ export class JobsService {
 
       this.subscriberProcessQueue.getWaitingCount(),
       this.subscriberProcessQueue.getActiveCount(),
-
-      this.executionLogQueue.getWaitingCount(),
-      this.executionLogQueue.getActiveCount(),
     ]);
 
     const totalCount =
@@ -146,9 +114,7 @@ export class JobsService {
       waitingStandardJobsCount +
       activeStandardJobsCount +
       subscriberProcessQueueWaitingCount +
-      subscriberProcessQueueActiveCount +
-      executionLogQueueWaitingCount +
-      executionLogQueueActiveCount;
+      subscriberProcessQueueActiveCount;
 
     return {
       totalCount,
@@ -158,8 +124,6 @@ export class JobsService {
       activeStandardJobsCount,
       subscriberProcessQueueWaitingCount,
       subscriberProcessQueueActiveCount,
-      executionLogQueueWaitingCount,
-      executionLogQueueActiveCount,
     };
   }
 }

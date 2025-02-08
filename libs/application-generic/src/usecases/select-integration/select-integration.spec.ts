@@ -12,18 +12,15 @@ import {
 
 import { SelectIntegration } from './select-integration.usecase';
 import { SelectIntegrationCommand } from './select-integration.command';
-import { GetDecryptedIntegrations } from '../get-decrypted-integrations';
 import { ConditionsFilter } from '../conditions-filter';
 import { CompileTemplate } from '../compile-template';
 import {
-  ExecutionLogQueueService,
   FeatureFlagsService,
   WorkflowInMemoryProviderService,
 } from '../../services';
 import { ExecutionLogRoute } from '../execution-log-route';
 import { CreateExecutionDetails } from '../create-execution-details';
 import { GetFeatureFlag } from '../get-feature-flag';
-import { NormalizeVariables } from '../normalize-variables';
 
 const testIntegration: IntegrationEntity = {
   _environmentId: 'env-test-123',
@@ -108,8 +105,6 @@ describe('select integration', function () {
     new EnvironmentRepository(),
     new ExecutionLogRoute(
       new CreateExecutionDetails(new ExecutionDetailsRepository()),
-      new ExecutionLogQueueService(new WorkflowInMemoryProviderService()),
-      new GetFeatureFlag(new FeatureFlagsService()),
     ),
     new CompileTemplate(),
   );

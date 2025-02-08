@@ -1,7 +1,7 @@
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
-describe('Preview email - /v1/content-templates/preview/email (POST)', function () {
+describe('Preview email - /v1/content-templates/preview/email (POST) #novu-v1', function () {
   let session: UserSession;
   beforeEach(async () => {
     session = new UserSession();

@@ -1,21 +1,18 @@
+import { useEnvironment } from '@/context/environment/hooks';
+import { useTelemetry } from '@/hooks/use-telemetry';
+import { buildRoute, ROUTES } from '@/utils/routes';
+import { TelemetryEvent } from '@/utils/telemetry';
 import { useUser } from '@clerk/clerk-react';
 import { motion } from 'motion/react';
-import { RiQuestionLine, RiSparkling2Fill, RiCloseLine } from 'react-icons/ri';
-import { Badge } from '../primitives/badge';
-import { buildRoute, ROUTES } from '@/utils/routes';
-import { useEnvironment } from '@/context/environment/hooks';
+import { RiCloseFill, RiQuestionLine, RiSparkling2Fill } from 'react-icons/ri';
 import { useOnboardingSteps } from '../../hooks/use-onboarding-steps';
-import { NavigationLink } from './navigation-link';
-import { useTelemetry } from '@/hooks/use-telemetry';
-import { TelemetryEvent } from '@/utils/telemetry';
-import { Button } from '../primitives/button';
+import { Badge, BadgeIcon } from '../primitives/badge';
+import { CompactButton } from '../primitives/button-compact';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { NavigationLink } from './navigation-link';
 
 export function GettingStartedMenuItem() {
   const { totalSteps, completedSteps, steps } = useOnboardingSteps();
-  const isGettingStartedEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_NEW_DASHBOARD_GETTING_STARTED_ENABLED);
 
   const { currentEnvironment } = useEnvironment();
   const { user } = useUser();
@@ -41,7 +38,7 @@ export function GettingStartedMenuItem() {
     });
   };
 
-  if (!isGettingStartedEnabled || user?.unsafeMetadata?.hideGettingStarted) {
+  if (user?.unsafeMetadata?.hideGettingStarted) {
     return null;
   }
 
@@ -51,11 +48,7 @@ export function GettingStartedMenuItem() {
         <RiQuestionLine className="size-4" />
         <span>Getting started</span>
 
-        <Badge
-          variant="soft"
-          kind="pill"
-          className="bg-primary/10 text-primary inline-flex items-center gap-0.5 px-1 py-0.5 leading-4"
-        >
+        <Badge color="red" size="md" variant="lighter">
           <motion.div
             variants={{
               initial: { scale: 1, rotate: 0, opacity: 1 },
@@ -71,7 +64,7 @@ export function GettingStartedMenuItem() {
               },
             }}
           >
-            <RiSparkling2Fill className="h-4 w-4" />
+            <BadgeIcon as={RiSparkling2Fill} />
           </motion.div>
           <span className="text-xs">
             {completedSteps}/{totalSteps}
@@ -88,15 +81,16 @@ export function GettingStartedMenuItem() {
           >
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button
-                  size="icon"
+                <CompactButton
+                  size="md"
+                  icon={RiCloseFill}
                   variant="ghost"
                   onClick={handleClose}
                   className="h-4 w-4 hover:bg-neutral-300"
                   aria-label="Close getting started menu"
                 >
-                  <RiCloseLine className="size-4" />
-                </Button>
+                  <span className="sr-only">Close</span>
+                </CompactButton>
               </TooltipTrigger>
               <TooltipContent>This will hide the Getting Started page</TooltipContent>
             </Tooltip>

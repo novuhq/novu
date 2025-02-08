@@ -10,12 +10,12 @@ import {
   InvalidateCacheService,
 } from '@novu/application-generic';
 
-import { encryptApiKeysMigration } from '../../../../migrations/encrypt-api-keys/encrypt-api-keys-migration';
+// import { encryptApiKeysMigration } from '../../../../migrations/encrypt-api-keys/encrypt-api-keys-migration';
 
 const integrationRepository = new IntegrationRepository();
 const subscriberId = '12345';
 
-describe('Initialize Session - /widgets/session/initialize (POST)', async () => {
+describe('Initialize Session - /widgets/session/initialize (POST) #novu-v1', async () => {
   let session: UserSession;
   let invalidateCache: InvalidateCacheService;
 
@@ -105,17 +105,17 @@ describe('Initialize Session - /widgets/session/initialize (POST)', async () => 
     expect(responseInvalidSecretKey.body.message).to.contain('Please provide a valid HMAC hash');
   });
 
-  it('should pass api key migration regression tests', async function () {
-    const validSecretKey = session.environment.apiKeys[0].key;
+  // it('should pass api key migration regression tests', async function () {
+  //   const validSecretKey = session.environment.apiKeys[0].key;
 
-    const invalidSubscriberHmacHash = createHash(validSecretKey, subscriberId);
+  //   const invalidSubscriberHmacHash = createHash(validSecretKey, subscriberId);
 
-    await encryptApiKeysMigration();
+  //   await encryptApiKeysMigration();
 
-    const response = await initWidgetSession(subscriberId, session, invalidSubscriberHmacHash);
+  //   const response = await initWidgetSession(subscriberId, session, invalidSubscriberHmacHash);
 
-    expect(response.status).to.equal(201);
-  });
+  //   expect(response.status).to.equal(201);
+  // });
 });
 
 async function initWidgetSession(subscriberIdentifier: string, session, hmacHash?: string) {

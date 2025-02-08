@@ -138,7 +138,7 @@ export async function createNotifications({
   }
 
   if (organizationId) {
-    await session.awaitRunningJobs(templateId, undefined, 0, organizationId);
+    await session.waitForJobCompletion(templateId, undefined, 0, organizationId);
   }
 
   while ((await jobsService.standardQueue.getWaitingCount()) || (await jobsService.standardQueue.getActiveCount())) {

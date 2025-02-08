@@ -49,7 +49,7 @@ function getHeaders(overrideEnv?: string): HeadersInit {
   };
 }
 
-describe('Workflow Controller E2E API Testing', () => {
+describe('Workflow Controller E2E API Testing #novu-v2', () => {
   let workflowsClient: ReturnType<typeof createWorkflowClient>;
 
   beforeEach(async () => {
@@ -275,6 +275,39 @@ describe('Workflow Controller E2E API Testing', () => {
         await assertValuesInSteps(workflowCreated);
       }
     });
+
+    it('should generate a payload schema if only control values are provided during workflow creation', async () => {
+      const steps = [
+        {
+          ...buildEmailStep(),
+          controlValues: {
+            body: 'Welcome {{payload.name}}',
+            subject: 'Hello {{payload.name}}',
+          },
+        },
+      ];
+
+      const nameSuffix = `Test Workflow${new Date().toISOString()}`;
+
+      const createWorkflowDto: CreateWorkflowDto = buildCreateWorkflowDto(`${nameSuffix}`, { steps });
+      const res = await workflowsClient.createWorkflow(createWorkflowDto);
+      expect(res.isSuccessResult()).to.be.true;
+
+      const workflow = res.value as WorkflowResponseDto;
+      expect(workflow).to.be.ok;
+
+      expect(workflow.steps[0].variables).to.be.ok;
+
+      const stepData = await getStepData(workflow._id, workflow.steps[0]._id);
+      expect(stepData.variables).to.be.ok;
+
+      const { properties } = stepData.variables as JSONSchemaDto;
+      expect(properties).to.be.ok;
+
+      const payloadProperties = properties?.payload as JSONSchemaDto;
+      expect(payloadProperties).to.be.ok;
+      expect(payloadProperties.properties?.name).to.be.ok;
+    });
   });
 
   describe('Update Workflow Permutations', () => {
@@ -284,6 +317,7 @@ describe('Workflow Controller E2E API Testing', () => {
       const inAppControlValue = `test-${generateUUID()}`;
       const emailControlValue = `test-${generateUUID()}`;
       const updateRequest: UpdateWorkflowDto = {
+        origin: WorkflowOriginEnum.NOVU_CLOUD,
         name: workflowCreated.name,
         preferences: {
           user: null,
@@ -536,7 +570,7 @@ describe('Workflow Controller E2E API Testing', () => {
       const prodWorkflowCreated = resPromoteCreate.body.data;
 
       // Update the workflow in the development environment
-      const updateDto = {
+      const updateDto: UpdateWorkflowDto = {
         ...convertResponseToUpdateDto(devWorkflow),
         name: 'Updated Name',
         description: 'Updated Description',
@@ -959,6 +993,7 @@ describe('Workflow Controller E2E API Testing', () => {
 
     return res.value;
   }
+
   function stringify(workflowResponseDto: any) {
     return JSON.stringify(workflowResponseDto, null, 2);
   }
@@ -1423,7 +1458,7 @@ function generateUUID(): string {
 }
 
 function convertResponseToUpdateDto(workflowCreated: WorkflowResponseDto): UpsertWorkflowBody {
-  const workflowWithoutResponseFields = removeFields(workflowCreated, 'updatedAt', '_id', 'origin', 'status');
+  const workflowWithoutResponseFields = removeFields(workflowCreated, 'updatedAt', '_id', 'status');
   const steps: UpsertStepBody[] = workflowWithoutResponseFields.steps.map((step) => removeFields(step, 'stepId'));
 
   return { ...workflowWithoutResponseFields, steps };
@@ -1438,7 +1473,7 @@ function createStep(): StepCreateDto {
 
 function buildUpdateRequest(workflowCreated: WorkflowResponseDto): UpdateWorkflowDto {
   const steps = [createStep()];
-  const updateRequest = removeFields(workflowCreated, 'updatedAt', '_id', 'origin', 'status') as UpdateWorkflowDto;
+  const updateRequest = removeFields(workflowCreated, 'updatedAt', '_id', 'status') as UpdateWorkflowDto;
 
   return {
     ...updateRequest,

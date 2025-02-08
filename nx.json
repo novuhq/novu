@@ -53,6 +53,7 @@
           "@novu/react-native",
           "@novu/nextjs",
           "@novu/node",
+          "@novu/api",
           "@novu/providers",
           "@novu/shared",
           "@novu/stateless"

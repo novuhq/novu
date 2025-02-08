@@ -1,5 +1,5 @@
-import { HTMLAttributes, useMemo } from 'react';
 import { parseMarkdownIntoTokens } from '@novu/js/internal';
+import { HTMLAttributes, useMemo } from 'react';
 
 import { InboxArrowDown } from '@/components/icons/inbox-arrow-down';
 import { InboxBell } from '@/components/icons/inbox-bell';
@@ -115,7 +115,9 @@ export const InAppPreviewBody = (props: InAppPreviewBodyProps) => {
     );
   }
 
-  return <Markdown className={cn('text-foreground-400 text-xs font-normal', className)} {...rest} />;
+  return (
+    <Markdown className={cn('text-foreground-400 whitespace-pre-wrap text-xs font-normal', className)} {...rest} />
+  );
 };
 
 type InAppPreviewActionsProps = HTMLAttributes<HTMLDivElement>;
@@ -138,10 +140,10 @@ export const InAppPreviewPrimaryAction = (props: InAppPreviewPrimaryActionProps)
 
   return (
     <Button
-      className={cn('px-3 text-xs font-medium shadow-none', className)}
+      className={cn('h-6 px-3 text-xs font-medium shadow-none', className)}
       type="button"
       variant="primary"
-      size="xs"
+      size="2xs"
       {...rest}
     >
       {children}
@@ -162,7 +164,14 @@ export const InAppPreviewSecondaryAction = (props: InAppPreviewSecondaryActionPr
   }
 
   return (
-    <Button variant="outline" className={cn('px-3 text-xs font-medium', className)} type="button" size="xs" {...rest}>
+    <Button
+      variant="secondary"
+      mode="outline"
+      className={cn('h-6 px-3 text-xs font-medium', className)}
+      type="button"
+      size="2xs"
+      {...rest}
+    >
       {children}
     </Button>
   );

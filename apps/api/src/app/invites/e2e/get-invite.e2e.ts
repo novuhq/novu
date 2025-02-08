@@ -3,7 +3,7 @@ import { UserSession } from '@novu/testing';
 import { MemberStatusEnum } from '@novu/shared';
 import { expect } from 'chai';
 
-describe('Get invite object - /invites/:inviteToken (GET) @skip-in-ee', async () => {
+describe('Get invite object - /invites/:inviteToken (GET) #novu-v1-os', async () => {
   let session: UserSession;
   const organizationRepository = new CommunityOrganizationRepository();
   const memberRepository = new CommunityMemberRepository();

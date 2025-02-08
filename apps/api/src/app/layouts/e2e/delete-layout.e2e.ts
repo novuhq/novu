@@ -12,7 +12,7 @@ import { SharedModule } from '../../shared/shared.module';
 
 const BASE_PATH = '/v1/layouts';
 
-describe('Delete a layout - /layouts/:layoutId (DELETE)', async () => {
+describe('Delete a layout - /layouts/:layoutId (DELETE) #novu-v1', async () => {
   let useCase: CreateMessageTemplate;
   let session: UserSession;
 

@@ -1,13 +1,13 @@
 import { IsBoolean, IsOptional, ValidateNested } from 'class-validator';
-import { ApiExtraModels, ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiExtraModels, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { ChannelPreference } from '../../shared/dtos/channel-preference';
 
 @ApiExtraModels(ChannelPreference)
 export class UpdateSubscriberPreferenceRequestDto {
-  @ApiProperty({
+  @ApiPropertyOptional({
     type: ChannelPreference,
-    description: 'The subscriber preferences for every ChannelTypeEnum for the workflow assigned.',
+    description: 'Optional preferences for each channel type in the assigned workflow.',
   })
   @ValidateNested()
   @Type(() => ChannelPreference)
@@ -15,7 +15,7 @@ export class UpdateSubscriberPreferenceRequestDto {
   channel?: ChannelPreference;
 
   @ApiPropertyOptional({
-    description: 'Sets if the workflow is fully enabled for all channels or not for the subscriber.',
+    description: 'Indicates whether the workflow is fully enabled for all channels for the subscriber.',
     type: Boolean,
   })
   @IsBoolean()

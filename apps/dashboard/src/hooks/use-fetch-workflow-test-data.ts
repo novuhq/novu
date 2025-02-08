@@ -18,8 +18,6 @@ export const useFetchWorkflowTestData = ({ workflowSlug }: { workflowSlug: strin
     gcTime: 0,
   });
 
-  console.log(data);
-
   return {
     testData: data,
     isPending,

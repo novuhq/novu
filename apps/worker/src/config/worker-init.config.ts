@@ -2,14 +2,13 @@ import { Provider } from '@nestjs/common';
 
 import { JobTopicNameEnum } from '@novu/shared';
 
-import { ExecutionLogWorker, StandardWorker, WorkflowWorker } from '../app/workflow/services';
+import { StandardWorker, WorkflowWorker } from '../app/workflow/services';
 import { SubscriberProcessWorker } from '../app/workflow/services/subscriber-process.worker';
 import { InboundParseWorker } from '../app/workflow/workers/inbound-parse.worker.service';
 
 type WorkerClass =
   | typeof StandardWorker
   | typeof WorkflowWorker
-  | typeof ExecutionLogWorker
   | typeof SubscriberProcessWorker
   | typeof InboundParseWorker;
 
@@ -20,39 +19,15 @@ type WorkerDepTree = Partial<Record<JobTopicNameEnum, WorkerModuleTree>>;
 export const WORKER_MAPPING: WorkerDepTree = {
   [JobTopicNameEnum.STANDARD]: {
     workerClass: StandardWorker,
-    queueDependencies: [
-      JobTopicNameEnum.EXECUTION_LOG,
-      JobTopicNameEnum.WEB_SOCKETS,
-      JobTopicNameEnum.STANDARD,
-      JobTopicNameEnum.PROCESS_SUBSCRIBER,
-    ],
+    queueDependencies: [JobTopicNameEnum.WEB_SOCKETS, JobTopicNameEnum.STANDARD, JobTopicNameEnum.PROCESS_SUBSCRIBER],
   },
   [JobTopicNameEnum.WORKFLOW]: {
     workerClass: WorkflowWorker,
-    queueDependencies: [
-      JobTopicNameEnum.EXECUTION_LOG,
-      JobTopicNameEnum.PROCESS_SUBSCRIBER,
-      JobTopicNameEnum.STANDARD,
-      JobTopicNameEnum.WEB_SOCKETS,
-    ],
-  },
-  [JobTopicNameEnum.EXECUTION_LOG]: {
-    workerClass: ExecutionLogWorker,
-    queueDependencies: [
-      JobTopicNameEnum.EXECUTION_LOG,
-      JobTopicNameEnum.STANDARD,
-      JobTopicNameEnum.WEB_SOCKETS,
-      JobTopicNameEnum.PROCESS_SUBSCRIBER,
-    ],
+    queueDependencies: [JobTopicNameEnum.PROCESS_SUBSCRIBER, JobTopicNameEnum.STANDARD, JobTopicNameEnum.WEB_SOCKETS],
   },
   [JobTopicNameEnum.PROCESS_SUBSCRIBER]: {
     workerClass: SubscriberProcessWorker,
-    queueDependencies: [
-      JobTopicNameEnum.EXECUTION_LOG,
-      JobTopicNameEnum.STANDARD,
-      JobTopicNameEnum.WEB_SOCKETS,
-      JobTopicNameEnum.PROCESS_SUBSCRIBER,
-    ],
+    queueDependencies: [JobTopicNameEnum.STANDARD, JobTopicNameEnum.WEB_SOCKETS, JobTopicNameEnum.PROCESS_SUBSCRIBER],
   },
   [JobTopicNameEnum.INBOUND_PARSE_MAIL]: {
     workerClass: InboundParseWorker,
@@ -88,7 +63,7 @@ export const UNIQUE_WORKER_DEPENDENCIES = [...new Set(WORKER_DEPENDENCIES)];
 export const ACTIVE_WORKERS: Provider[] | any[] = [];
 
 if (!workersToProcess.length) {
-  ACTIVE_WORKERS.push(StandardWorker, WorkflowWorker, ExecutionLogWorker, SubscriberProcessWorker, InboundParseWorker);
+  ACTIVE_WORKERS.push(StandardWorker, WorkflowWorker, SubscriberProcessWorker, InboundParseWorker);
 } else {
   workersToProcess.forEach((queue) => {
     const workerClass = WORKER_MAPPING[queue]?.workerClass;

@@ -4,7 +4,7 @@ import axios, { AxiosResponse } from 'axios';
 import { UserSession } from '@novu/testing';
 import { TenantRepository } from '@novu/dal';
 
-describe('Delete Tenant - /tenants/:identifier (DELETE)', function () {
+describe('Delete Tenant - /tenants/:identifier (DELETE) #novu-v1', function () {
   let session: UserSession;
   const tenantRepository = new TenantRepository();
 

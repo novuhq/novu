@@ -1,49 +1,49 @@
 import { useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { autocompletion } from '@codemirror/autocomplete';
 
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/primitives/form/form';
-import { InputFieldPure } from '@/components/primitives/input';
 import { Code2 } from '@/components/icons/code-2';
-import { Editor } from '@/components/primitives/editor';
+import { FormField, FormItem, FormLabel, FormMessage } from '@/components/primitives/form/form';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { parseStepVariablesToLiquidVariables } from '@/utils/parseStepVariablesToLiquidVariables';
-import { completions } from '@/utils/liquid-autocomplete';
+import { ControlInput } from '../../../primitives/control-input';
+import { InputRoot, InputWrapper } from '../../../primitives/input';
 
 export const DigestKey = () => {
   const { control } = useFormContext();
   const { step } = useWorkflow();
   const variables = useMemo(() => (step ? parseStepVariablesToLiquidVariables(step.variables) : []), [step]);
-  const extensions = useMemo(() => [autocompletion({ override: [completions(variables)] })], [variables]);
 
   return (
     <FormField
       control={control}
       name="controlValues.digestKey"
       render={({ field }) => (
-        <FormItem className="flex w-full flex-col overflow-hidden">
+        <FormItem className="flex w-full flex-col">
           <>
-            <FormLabel tooltip="Digest is aggregated by the subscriberId by default. You can add one more aggregation key to group events further.">
+            <FormLabel
+              optional
+              tooltip="Digest is aggregated by the subscriberId by default. You can add one more aggregation key to group events further."
+            >
               Aggregated by
             </FormLabel>
-            <InputFieldPure className="h-7 items-center gap-0 rounded-lg border">
-              <FormLabel className="flex h-full items-center gap-1 border-r border-neutral-100 pr-1">
-                <Code2 className="-ml-1.5 size-5" />
-                <span className="text-foreground-600 text-xs font-normal">subscriberId</span>
-              </FormLabel>
-              <FormControl>
-                <Editor
-                  fontFamily="inherit"
-                  ref={field.ref}
+            <InputRoot>
+              <InputWrapper className="flex h-[28px] items-center gap-1 border-r border-neutral-100 pr-1">
+                <FormLabel className="flex h-full items-center gap-1 border-r border-neutral-100 pr-1">
+                  <Code2 className="text-feature -ml-1.5 size-4" />
+                  <span className="text-foreground-600 text-xs font-normal">subscriberId</span>
+                </FormLabel>
+                <ControlInput
+                  multiline={false}
+                  indentWithTab={false}
                   placeholder="Add additional digest..."
-                  className="overflow-x-auto [&_.cm-line]:mt-px"
                   id={field.name}
-                  extensions={extensions}
                   value={field.value}
                   onChange={field.onChange}
+                  variables={variables}
+                  size="sm"
                 />
-              </FormControl>
-            </InputFieldPure>
+              </InputWrapper>
+            </InputRoot>
             <FormMessage />
           </>
         </FormItem>

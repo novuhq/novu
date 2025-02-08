@@ -58,6 +58,7 @@ import {
   WorkflowInternalResponseDto,
   GetWorkflowByIdsUseCase,
 } from '../workflow';
+import { Instrument, InstrumentUsecase } from '../../instrumentation';
 
 /**
  * @deprecated - use `UpsertWorkflow` instead
@@ -80,6 +81,7 @@ export class CreateWorkflow {
     private getWorkflowByIdsUseCase: GetWorkflowByIdsUseCase,
   ) {}
 
+  @InstrumentUsecase()
   async execute(
     usecaseCommand: CreateWorkflowCommand,
   ): Promise<WorkflowInternalResponseDto> {
@@ -114,8 +116,9 @@ export class CreateWorkflow {
 
     try {
       if (
-        process.env.NOVU_ENTERPRISE === 'true' ||
-        process.env.CI_EE_TEST === 'true'
+        (process.env.NOVU_ENTERPRISE === 'true' ||
+          process.env.CI_EE_TEST === 'true') &&
+        storedWorkflow.origin === WorkflowOriginEnum.NOVU_CLOUD_V1
       ) {
         if (!require('@novu/ee-shared-services')?.TranslationsService) {
           throw new PlatformException('Translation module is not loaded');
@@ -199,6 +202,7 @@ export class CreateWorkflow {
     }
   }
 
+  @Instrument()
   private async createNotificationTrigger(
     command: CreateWorkflowCommand,
     triggerIdentifier: string,
@@ -316,6 +320,7 @@ export class CreateWorkflow {
     }
   }
 
+  @Instrument()
   private async storeWorkflow(
     command: CreateWorkflowCommand,
     templateSteps: INotificationTemplateStep[],
@@ -412,6 +417,7 @@ export class CreateWorkflow {
     );
   }
 
+  @Instrument()
   private async storeTemplateSteps(
     command: CreateWorkflowCommand,
     parentChangeId: string,

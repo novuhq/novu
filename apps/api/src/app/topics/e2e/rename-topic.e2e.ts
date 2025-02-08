@@ -7,7 +7,7 @@ import { expectSdkExceptionGeneric, initNovuClassSdk } from '../../shared/helper
 
 const BASE_PATH = '/v1/topics';
 
-describe('Rename a topic - /topics/:topicKey (PATCH)', async () => {
+describe('Rename a topic - /topics/:topicKey (PATCH) #novu-v2', async () => {
   const renamedTopicName = 'topic-renamed';
   const topicKey: TopicKey = 'topic-key';
   const topicName = 'topic-name';

@@ -14,7 +14,7 @@ import {
 import { GroupedBlueprintResponse } from '../dto/grouped-blueprint.response.dto';
 import { CreateWorkflowRequestDto } from '../../workflows-v1/dto';
 
-describe('Get blueprints by id - /blueprints/:templateId (GET)', async () => {
+describe('Get blueprints by id - /blueprints/:templateId (GET) #novu-v1', async () => {
   let session: UserSession;
   const notificationTemplateRepository: NotificationTemplateRepository = new NotificationTemplateRepository();
   const environmentRepository: EnvironmentRepository = new EnvironmentRepository();

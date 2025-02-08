@@ -7,7 +7,7 @@ import { LayoutDto } from '../dtos';
 
 const BASE_PATH = '/v1/layouts';
 
-describe('Layout update - /layouts (PATCH)', async () => {
+describe('Layout update - /layouts (PATCH) #novu-v1', async () => {
   let session: UserSession;
   let createdLayout: LayoutDto;
 

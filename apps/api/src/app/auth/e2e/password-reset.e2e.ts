@@ -6,7 +6,7 @@ import { stub, SinonStubbedMember } from 'sinon';
 import { subDays, subMinutes } from 'date-fns';
 import { PasswordResetFlowEnum } from '@novu/shared';
 
-describe('Password reset - /auth/reset (POST) @skip-in-ee', async () => {
+describe('Password reset - /auth/reset (POST) #novu-v1-os', async () => {
   let session: UserSession;
   const userRepository = new CommunityUserRepository();
 

@@ -1,7 +1,7 @@
-import { Button } from '@/components/primitives/button';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { RiCloseLine, RiEdit2Line } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
+import { CompactButton } from '../../../primitives/button-compact';
 import { CustomStepControls } from '../controls/custom-step-controls';
 
 export const CommonCustomControlValues = () => {
@@ -20,18 +20,17 @@ export const CommonCustomControlValues = () => {
           <RiEdit2Line className="size-4" />
           <span>Configure Template</span>
         </div>
-        <Button
+        <CompactButton
+          icon={RiCloseLine}
           variant="ghost"
-          size="xs"
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
             navigate('../', { relative: 'path' });
           }}
         >
-          <RiCloseLine className="h-4 w-4" />
           <span className="sr-only">Close</span>
-        </Button>
+        </CompactButton>
       </header>
       <CustomStepControls dataSchema={dataSchema} origin={workflow.origin} />
     </>

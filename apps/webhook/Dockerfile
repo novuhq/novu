@@ -13,7 +13,11 @@ RUN --mount=type=cache,id=pnpm-store-webhook,target=/root/.pnpm-store \
 
 # Set the working directory to the webhook app and copy example environment file
 WORKDIR /usr/src/app/apps/webhook
+RUN cp src/dotenvcreate.mjs dist/dotenvcreate.mjs
 RUN cp src/.example.env dist/.env
+RUN cp src/.env.test dist/.env.test
+RUN cp src/.env.development dist/.env.development
+RUN cp src/.env.production dist/.env.production
 
 # Set the working directory to the root of the app
 WORKDIR /usr/src/app
@@ -47,4 +51,4 @@ RUN --mount=type=cache,id=pnpm-store-webhook,target=/root/.pnpm-store \
 
 # Set the working directory to the webhook app and start the application using pm2-runtime
 WORKDIR /usr/src/app/apps/webhook
-CMD [ "pm2-runtime", "start", "dist/main.js" ]
+ENTRYPOINT [ "sh", "-c", "node dist/dotenvcreate.mjs -s=novu/webhook -r=$NOVU_REGION -e=$NOVU_ENTERPRISE -v=$NODE_ENV && pm2-runtime start dist/main.js" ]

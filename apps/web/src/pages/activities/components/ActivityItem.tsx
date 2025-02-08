@@ -70,7 +70,10 @@ export const ActivityItem = ({ item, onClick }) => {
   }, [item]);
 
   return (
-    <UnstyledButton onClick={isOld ? undefined : (event) => onClick(event, item.id)} className={classes.unstyledButton}>
+    <UnstyledButton
+      onClick={isOld ? undefined : (event) => onClick(event, item._id)}
+      className={classes.unstyledButton}
+    >
       <ListItem dark={theme.colorScheme === 'dark'}>
         <Grid gutter={10}>
           <Grid.Col span={3}>

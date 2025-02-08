@@ -1,29 +1,24 @@
-import { useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { Editor } from '@/components/primitives/editor';
+import { ControlInput } from '@/components/primitives/control-input';
 import { FormControl, FormField, FormItem, FormMessagePure } from '@/components/primitives/form/form';
-import { Input, InputFieldProps, InputFieldPure, InputProps } from '@/components/primitives/input';
+import { InputProps, InputRoot } from '@/components/primitives/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
-import { completions } from '@/utils/liquid-autocomplete';
-import { LiquidVariable } from '@/utils/parseStepVariablesToLiquidVariables';
-import { autocompletion } from '@codemirror/autocomplete';
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
+import { LiquidVariable } from '@/utils/parseStepVariablesToLiquidVariables';
 
-type URLInputProps = Omit<InputProps, 'value' | 'onChange' | 'size'> & {
+type URLInputProps = Omit<InputProps, 'value' | 'onChange'> & {
   options: string[];
-  asEditor?: boolean;
   withHint?: boolean;
   fields: {
     urlKey: string;
     targetKey: string;
   };
   variables: LiquidVariable[];
-} & Pick<InputFieldProps, 'size'>;
+};
 
 export const URLInput = ({
   options,
-  asEditor = false,
   placeholder,
   fields: { urlKey, targetKey },
   withHint = true,
@@ -34,32 +29,25 @@ export const URLInput = ({
   const url = getFieldState(`${urlKey}`);
   const target = getFieldState(`${targetKey}`);
   const error = url.error || target.error;
-  const extensions = useMemo(() => [autocompletion({ override: [completions(variables)] })], [variables]);
 
   return (
     <div className="flex flex-col gap-1">
       <div className="flex items-center justify-between space-x-2">
-        <div className="relative w-full">
-          <InputFieldPure className="pr-0">
+        <div className="flex w-full">
+          <InputRoot className="focus:ring- overflow-visible text-xs" hasError={!!error}>
             <FormField
               control={control}
               name={urlKey}
               render={({ field }) => (
                 <FormItem className="min-w-px max-w-full basis-full">
-                  <FormControl>
-                    {asEditor ? (
-                      <Editor
-                        asInput
-                        fontFamily="inherit"
-                        placeholder={placeholder}
-                        extensions={extensions}
-                        value={field.value}
-                        onChange={field.onChange}
-                      />
-                    ) : (
-                      <Input type="text" className="min-w-[20ch]" placeholder={placeholder} {...field} />
-                    )}
-                  </FormControl>
+                  <ControlInput
+                    multiline={false}
+                    indentWithTab={false}
+                    placeholder={placeholder}
+                    value={field.value}
+                    onChange={field.onChange}
+                    variables={variables}
+                  />
                 </FormItem>
               )}
             />
@@ -76,12 +64,12 @@ export const URLInput = ({
                         saveForm();
                       }}
                     >
-                      <SelectTrigger className="h-full max-w-24 rounded-l-none border-0 border-l">
+                      <SelectTrigger className="border-1 h-[36px] max-w-24 rounded-l-none border-l-0 text-xs focus:ring-0">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
                         {options.map((option) => (
-                          <SelectItem key={option} value={option}>
+                          <SelectItem key={option} value={option} className="text-xs">
                             {option}
                           </SelectItem>
                         ))}
@@ -91,7 +79,7 @@ export const URLInput = ({
                 </FormItem>
               )}
             />
-          </InputFieldPure>
+          </InputRoot>
         </div>
       </div>
       <FormMessagePure error={error ? String(error.message) : undefined}>

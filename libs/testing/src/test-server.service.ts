@@ -19,6 +19,7 @@ export class TestServer {
         await this.app.close();
       }
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('Error when closing TestServer', error.message);
     }
   }
@@ -47,6 +48,7 @@ export class WsTestServer {
         await this.app.close();
       }
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('Error when closing WsServer', error.message);
     }
   }

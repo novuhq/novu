@@ -6,6 +6,8 @@ import { API_HOSTNAME, WEBSOCKET_HOSTNAME } from '../../config';
 import { motion } from 'motion/react';
 import { Framework, frameworks } from './framework-guides.instructions';
 import { FrameworkInstructions } from './framework-guides';
+import { TelemetryEvent } from '../../utils/telemetry';
+import { useTelemetry } from '../../hooks/use-telemetry';
 
 const containerVariants = {
   hidden: {},
@@ -119,6 +121,7 @@ export function InboxFrameworkGuide({
   primaryColor,
   foregroundColor,
 }: InboxFrameworkGuideProps) {
+  const track = useTelemetry();
   const [selectedFramework, setSelectedFramework] = useState(frameworks.find((f) => f.selected) || frameworks[0]);
 
   useEffect(() => {
@@ -145,6 +148,10 @@ export function InboxFrameworkGuide({
   }, [currentEnvironment?.identifier, subscriberId, selectedFramework.name, primaryColor, foregroundColor]);
 
   function handleFrameworkSelect(framework: Framework) {
+    track(TelemetryEvent.INBOX_FRAMEWORK_SELECTED, {
+      framework: framework.name,
+    });
+
     setSelectedFramework(framework);
   }
 

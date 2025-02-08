@@ -74,9 +74,9 @@
     --neutral-foreground: 0 0% 100%;
 
     /* Neutral scale in alpha that looks the same on white background */
-    --neutral-alpha-24: var(--neutral-alpha-24);
-    --neutral-alpha-16: var(--neutral-alpha-16);
-    --neutral-alpha-10: var(--neutral-alpha-10);
+    --neutral-alpha-24: 220 11% 64% / 24%;
+    --neutral-alpha-16: 220 11% 64% / 16%;
+    --neutral-alpha-10: 220 11% 64% / 10%;
 
     --neutral-alpha-50: 0 0% 69% / 0.05;
     --neutral-alpha-100: 210 30% 61% / 0.1;

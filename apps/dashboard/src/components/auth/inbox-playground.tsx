@@ -1,26 +1,25 @@
-import { Button } from '../primitives/button';
+import { useEnvironment } from '@/context/environment/hooks';
+import { useTriggerWorkflow } from '@/hooks/use-trigger-workflow';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { IEnvironment, StepTypeEnum, WorkflowCreationSourceEnum } from '@novu/shared';
+import { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { RiNotification2Fill } from 'react-icons/ri';
+import { useNavigate } from 'react-router-dom';
+import { z } from 'zod';
 import { createWorkflow } from '../../api/workflows';
+import { ONBOARDING_DEMO_WORKFLOW_ID } from '../../config';
+import { useAuth } from '../../context/auth/hooks';
+import { useFetchWorkflows } from '../../hooks/use-fetch-workflows';
+import { useTelemetry } from '../../hooks/use-telemetry';
+import { ROUTES } from '../../utils/routes';
+import { TelemetryEvent } from '../../utils/telemetry';
+import { Button } from '../primitives/button';
+import { InlineToast } from '../primitives/inline-toast';
+import { showErrorToast, showSuccessToast } from '../primitives/sonner-helpers';
+import { UsecasePlaygroundHeader } from '../usecase-playground-header';
 import { CustomizeInbox } from './customize-inbox-playground';
 import { InboxPreviewContent } from './inbox-preview-content';
-import { InlineToast } from '../primitives/inline-toast';
-import { Loader2 } from 'lucide-react';
-import { ONBOARDING_DEMO_WORKFLOW_ID } from '../../config';
-import { RiNotification2Fill } from 'react-icons/ri';
-import { ROUTES } from '../../utils/routes';
-import { showErrorToast, showSuccessToast } from '../primitives/sonner-helpers';
-import { IEnvironment, StepTypeEnum, WorkflowCreationSourceEnum } from '@novu/shared';
-import { TelemetryEvent } from '../../utils/telemetry';
-import { useAuth } from '../../context/auth/hooks';
-import { UsecasePlaygroundHeader } from '../usecase-playground-header';
-import { useEffect, useState } from 'react';
-import { useEnvironment } from '@/context/environment/hooks';
-import { useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
-import { useTelemetry } from '../../hooks/use-telemetry';
-import { useTriggerWorkflow } from '@/hooks/use-trigger-workflow';
-import { useFetchWorkflows } from '../../hooks/use-fetch-workflows';
-import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
 
 export interface ActionConfig {
   label: string;
@@ -77,7 +76,7 @@ const defaultFormValues: InboxPlaygroundFormData = {
     label: 'Add to your app',
     redirect: {
       target: '_self',
-      url: '/',
+      url: '/onboarding/inbox/embed',
     },
   },
   secondaryAction: null,
@@ -98,10 +97,6 @@ export function InboxPlayground() {
   const [hasNotificationBeenSent, setHasNotificationBeenSent] = useState(false);
   const navigate = useNavigate();
   const telemetry = useTelemetry();
-
-  useEffect(() => {
-    telemetry(TelemetryEvent.INBOX_USECASE_PAGE_VIEWED);
-  }, [telemetry]);
 
   useEffect(() => {
     if (!data) return;
@@ -216,20 +211,22 @@ export function InboxPlayground() {
           <div className="bg-muted mt-auto border-t">
             <div className="flex justify-end gap-3 p-2">
               {!hasNotificationBeenSent ? (
-                <Button size="sm" onClick={handleSendNotification} disabled={isPending} className="px-2">
+                <Button
+                  variant="secondary"
+                  size="xs"
+                  trailingIcon={RiNotification2Fill}
+                  isLoading={isPending}
+                  onClick={handleSendNotification}
+                  disabled={isPending}
+                >
                   Send notification
-                  {isPending ? (
-                    <Loader2 className="h-3 w-3 animate-spin" />
-                  ) : (
-                    <RiNotification2Fill className="h-3 w-3" />
-                  )}
                 </Button>
               ) : (
                 <>
-                  <Button size="sm" variant="ghost" className="px-2" onClick={handleSkipToDashboard}>
+                  <Button size="xs" variant="secondary" mode="ghost" className="px-2" onClick={handleSkipToDashboard}>
                     Skip to Dashboard
                   </Button>
-                  <Button size="sm" className="px-2" onClick={handleImplementClick}>
+                  <Button size="xs" variant="secondary" onClick={handleImplementClick}>
                     Implement &lt;Inbox /&gt;
                   </Button>
                 </>
@@ -270,14 +267,14 @@ async function createDemoWorkflow({ environment }: { environment: IEnvironment }
               label: '{{payload.primaryActionLabel}}',
               redirect: {
                 target: '_self',
-                url: '',
+                url: '/onboarding/inbox/embed',
               },
             },
             secondaryAction: {
               label: '{{payload.secondaryActionLabel}}',
               redirect: {
                 target: '_self',
-                url: '',
+                url: '/onboarding/inbox/embed',
               },
             },
           },

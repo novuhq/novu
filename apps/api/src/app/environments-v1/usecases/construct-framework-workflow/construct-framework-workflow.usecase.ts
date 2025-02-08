@@ -2,7 +2,7 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { workflow } from '@novu/framework/express';
 import { ActionStep, ChannelStep, JsonSchema, Step, StepOptions, StepOutput, Workflow } from '@novu/framework/internal';
 import { NotificationStepEntity, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
-import { JSONSchemaDefinition, JSONSchemaDto, StepTypeEnum } from '@novu/shared';
+import { JSONSchemaDefinition, StepTypeEnum, WorkflowOriginEnum } from '@novu/shared';
 import { Instrument, InstrumentUsecase, PinoLogger } from '@novu/application-generic';
 import { AdditionalOperation, RulesLogic } from 'json-logic-js';
 import _ from 'lodash';
@@ -12,7 +12,7 @@ import {
   FullPayloadForRender,
   InAppOutputRendererUsecase,
   PushOutputRendererUsecase,
-  RenderEmailOutputUsecase,
+  EmailOutputRendererUsecase,
   SmsOutputRendererUsecase,
 } from '../output-renderers';
 import { DelayOutputRendererUsecase } from '../output-renderers/delay-output-renderer.usecase';
@@ -28,7 +28,7 @@ export class ConstructFrameworkWorkflow {
     private logger: PinoLogger,
     private workflowsRepository: NotificationTemplateRepository,
     private inAppOutputRendererUseCase: InAppOutputRendererUsecase,
-    private emailOutputRendererUseCase: RenderEmailOutputUsecase,
+    private emailOutputRendererUseCase: EmailOutputRendererUsecase,
     private smsOutputRendererUseCase: SmsOutputRendererUsecase,
     private chatOutputRendererUseCase: ChatOutputRendererUsecase,
     private pushOutputRendererUseCase: PushOutputRendererUsecase,
@@ -49,12 +49,12 @@ export class ConstructFrameworkWorkflow {
   }
 
   @Instrument()
-  private constructFrameworkWorkflow(newWorkflow: NotificationTemplateEntity): Workflow {
+  private constructFrameworkWorkflow(dbWorkflow: NotificationTemplateEntity): Workflow {
     return workflow(
-      newWorkflow.triggers[0].identifier,
+      dbWorkflow.triggers[0].identifier,
       async ({ step, payload, subscriber }) => {
         const fullPayloadForRender: FullPayloadForRender = { payload, subscriber, steps: {} };
-        for await (const staticStep of newWorkflow.steps) {
+        for await (const staticStep of dbWorkflow.steps) {
           fullPayloadForRender.steps[staticStep.stepId || staticStep._templateId] = await this.constructStep(
             step,
             staticStep,
@@ -121,7 +121,7 @@ export class ConstructFrameworkWorkflow {
           this.constructChannelStepOptions(staticStep, fullPayloadForRender)
         );
       case StepTypeEnum.SMS:
-        return step.inApp(
+        return step.sms(
           stepId,
           async (controlValues) => {
             return this.smsOutputRendererUseCase.execute({ controlValues, fullPayloadForRender });
@@ -129,7 +129,7 @@ export class ConstructFrameworkWorkflow {
           this.constructChannelStepOptions(staticStep, fullPayloadForRender)
         );
       case StepTypeEnum.CHAT:
-        return step.inApp(
+        return step.chat(
           stepId,
           async (controlValues) => {
             return this.chatOutputRendererUseCase.execute({ controlValues, fullPayloadForRender });
@@ -137,7 +137,7 @@ export class ConstructFrameworkWorkflow {
           this.constructChannelStepOptions(staticStep, fullPayloadForRender)
         );
       case StepTypeEnum.PUSH:
-        return step.inApp(
+        return step.push(
           stepId,
           async (controlValues) => {
             return this.pushOutputRendererUseCase.execute({ controlValues, fullPayloadForRender });
@@ -173,7 +173,8 @@ export class ConstructFrameworkWorkflow {
     return {
       ...this.constructCommonStepOptions(staticStep, fullPayloadForRender),
       // TODO: resolve this from the Step options
-      disableOutputSanitization: false,
+      disableOutputSanitization:
+        (staticStep.controlVariables?.disableOutputSanitization as boolean | undefined) ?? false,
       // TODO: add providers
       providers: {},
     };
@@ -229,7 +230,10 @@ export class ConstructFrameworkWorkflow {
     return foundWorkflow;
   }
 
-  private processSkipOption(controlValues: { [x: string]: unknown }, variables: FullPayloadForRender) {
+  private async processSkipOption(
+    controlValues: { [x: string]: unknown },
+    variables: FullPayloadForRender
+  ): Promise<boolean> {
     const skipRules = controlValues.skip as RulesLogic<AdditionalOperation>;
 
     if (_.isEmpty(skipRules)) {
@@ -242,7 +246,8 @@ export class ConstructFrameworkWorkflow {
       this.logger.error({ err: error }, 'Failed to evaluate skip rule', LOG_CONTEXT);
     }
 
-    return result;
+    // The Step Conditions in the Dashboard control the step execution, that's why we need to invert the result.
+    return !result;
   }
 }
 

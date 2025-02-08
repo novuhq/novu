@@ -1,7 +1,7 @@
-import { Button } from '../../../button';
 import { cn } from '../../../../../utils/ui';
 import { SizeType } from '../types';
 import { STYLES } from '../styles';
+import { Button } from '../../../button';
 
 interface ClearButtonProps {
   onClick: () => void;
@@ -13,7 +13,13 @@ interface ClearButtonProps {
 
 export function ClearButton({ onClick, size, label = 'Clear filter', className }: ClearButtonProps) {
   return (
-    <Button variant="ghost" onClick={onClick} className={cn(STYLES.clearButton, STYLES.size[size].input, className)}>
+    <Button
+      variant="secondary"
+      mode="ghost"
+      size="2xs"
+      onClick={onClick}
+      className={cn(STYLES.clearButton, STYLES.size[size].input, className)}
+    >
       {label}
     </Button>
   );

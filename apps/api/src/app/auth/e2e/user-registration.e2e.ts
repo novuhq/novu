@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken';
 import { expect } from 'chai';
 import { MemberRoleEnum, UserSessionData } from '@novu/shared';
 
-describe('User registration - /auth/register (POST) @skip-in-ee', async () => {
+describe('User registration - /auth/register (POST) #novu-v1-os', async () => {
   let session: UserSession;
   const environmentRepository = new EnvironmentRepository();
   const organizationRepository = new CommunityOrganizationRepository();

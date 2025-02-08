@@ -20,6 +20,15 @@ type StringValidation =
       isValid: false;
     };
 
+type BooleanValidation =
+  | {
+      isValid: true;
+      input: boolean;
+    }
+  | {
+      isValid: false;
+    };
+
 function validateStringInput(dataInput: unknown, ruleValue: unknown): StringValidation {
   if (typeof dataInput !== 'string' || typeof ruleValue !== 'string') {
     return { isValid: false };
@@ -43,6 +52,45 @@ function validateRangeInput(dataInput: unknown, ruleValue: unknown): RangeValida
   return { isValid: valid, min, max };
 }
 
+function validateBooleanInput(dataInput: unknown): BooleanValidation {
+  if (typeof dataInput !== 'boolean' && dataInput !== 'true' && dataInput !== 'false') {
+    return { isValid: false };
+  }
+
+  return { isValid: true, input: typeof dataInput === 'boolean' ? dataInput : dataInput === 'true' };
+}
+
+function validateComparison(
+  a: unknown,
+  b: unknown
+): { isValid: true; a: number | string | boolean; b: number | string | boolean } | { isValid: false } {
+  // handle boolean values and string representations of booleans
+  const booleanA = validateBooleanInput(a);
+  const booleanB = validateBooleanInput(b);
+  if (booleanA.isValid && booleanB.isValid) {
+    return { isValid: true, a: booleanA.input, b: booleanB.input };
+  }
+
+  // try to convert to numbers if possible
+  const numA = Number(a);
+  const numB = Number(b);
+  if (!Number.isNaN(numA) && !Number.isNaN(numB)) {
+    return { isValid: true, a: numA, b: numB };
+  }
+
+  // handle dates
+  if (typeof a === 'string' && typeof b === 'string') {
+    const dateA = new Date(a);
+    const dateB = new Date(b);
+
+    if (!Number.isNaN(dateA.getTime()) && !Number.isNaN(dateB.getTime())) {
+      return { isValid: true, a: dateA.getTime(), b: dateB.getTime() };
+    }
+  }
+
+  return { isValid: false };
+}
+
 function createStringOperator(evaluator: (input: string, value: string) => boolean) {
   return (dataInput: unknown, ruleValue: unknown): boolean => {
     const validation = validateStringInput(dataInput, ruleValue);
@@ -60,7 +108,7 @@ const initializeCustomOperators = (): void => {
   });
 
   jsonLogic.add_operation(
-    'beginsWith',
+    'startsWith',
     createStringOperator((input, value) => input.startsWith(value))
   );
 
@@ -117,6 +165,69 @@ const initializeCustomOperators = (): void => {
 
     return dataInput < validation.min || dataInput > validation.max;
   });
+
+  jsonLogic.rm_operation('<');
+  jsonLogic.add_operation('<', (a: unknown, b: unknown) => {
+    const validation = validateComparison(a, b);
+    if (!validation.isValid) return false;
+
+    return validation.a < validation.b;
+  });
+
+  jsonLogic.rm_operation('>');
+  jsonLogic.add_operation('>', (a: unknown, b: unknown) => {
+    const validation = validateComparison(a, b);
+    if (!validation.isValid) return false;
+
+    return validation.a > validation.b;
+  });
+
+  jsonLogic.rm_operation('<=');
+  jsonLogic.add_operation('<=', (first: unknown, second: unknown, third?: unknown) => {
+    // handle three argument case (typically used in between operations)
+    if (third !== undefined) {
+      const validation1 = validateComparison(first, second);
+      const validation2 = validateComparison(second, third);
+      if (!validation1.isValid || !validation2.isValid) return false;
+
+      return validation1.a <= validation1.b && validation1.b <= validation2.b;
+    }
+
+    const validation = validateComparison(first, second);
+    if (!validation.isValid) return false;
+
+    return validation.a <= validation.b;
+  });
+
+  jsonLogic.rm_operation('>=');
+  jsonLogic.add_operation('>=', (a: unknown, b: unknown) => {
+    const validation = validateComparison(a, b);
+    if (!validation.isValid) return false;
+
+    return validation.a >= validation.b;
+  });
+
+  jsonLogic.rm_operation('==');
+  jsonLogic.add_operation('==', (a: unknown, b: unknown) => {
+    const validation = validateComparison(a, b);
+    if (!validation.isValid) {
+      // fall back to strict equality for other types
+      return a === b;
+    }
+
+    return validation.a === validation.b;
+  });
+
+  jsonLogic.rm_operation('!=');
+  jsonLogic.add_operation('!=', (a: unknown, b: unknown) => {
+    const validation = validateComparison(a, b);
+    if (!validation.isValid) {
+      // fall back to strict inequality for other types
+      return a !== b;
+    }
+
+    return validation.a !== validation.b;
+  });
 };
 
 initializeCustomOperators();
@@ -143,4 +254,40 @@ export function isValidRule(rule: RulesLogic<AdditionalOperation>): boolean {
   } catch {
     return false;
   }
+}
+
+export function extractFieldsFromRules(rules: RulesLogic<AdditionalOperation>): string[] {
+  const variables = new Set<string>();
+
+  const collectVariables = (node: RulesLogic<AdditionalOperation>) => {
+    if (!node || typeof node !== 'object') {
+      return;
+    }
+
+    const entries = Object.entries(node);
+
+    for (const [key, value] of entries) {
+      if (key === 'var' && typeof value === 'string') {
+        variables.add(value);
+        continue;
+      }
+
+      if (Array.isArray(value)) {
+        value.forEach((item) => {
+          if (typeof item === 'object') {
+            collectVariables(item);
+          }
+        });
+        continue;
+      }
+
+      if (typeof value === 'object') {
+        collectVariables(value as RulesLogic<AdditionalOperation>);
+      }
+    }
+  };
+
+  collectVariables(rules);
+
+  return Array.from(variables);
 }

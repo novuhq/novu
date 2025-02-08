@@ -1,4 +1,3 @@
-import { Types } from 'mongoose';
 import {
   BuilderFieldType,
   BuilderGroupValues,
@@ -22,10 +21,11 @@ import {
   WorkflowStatusEnum,
   WorkflowTypeEnum,
 } from '@novu/shared';
+import { Types } from 'mongoose';
+import type { ChangePropsValueType } from '../../types';
+import type { EnvironmentId } from '../environment';
 import { NotificationGroupEntity } from '../notification-group';
 import type { OrganizationId } from '../organization';
-import type { EnvironmentId } from '../environment';
-import type { ChangePropsValueType } from '../../types';
 
 export class NotificationTemplateEntity implements INotificationTemplate {
   _id: string;
@@ -89,6 +89,8 @@ export class NotificationTemplateEntity implements INotificationTemplate {
   issues: Record<string, RuntimeIssue[]>;
 
   status?: WorkflowStatusEnum;
+
+  lastTriggeredAt?: string;
 }
 export class RuntimeIssue {
   issueType: WorkflowIssueTypeEnum;
@@ -115,7 +117,7 @@ export class NotificationTriggerEntity implements INotificationTrigger {
   reservedVariables?: ITriggerReservedVariable[];
 }
 
-export class StepVariantEntity implements IStepVariant {
+export class NotificationStepData implements IStepVariant {
   _id?: string;
 
   uuid?: string;
@@ -157,8 +159,8 @@ export class StepVariantEntity implements IStepVariant {
    */
   controls?: ControlSchemas;
 }
-export class NotificationStepEntity extends StepVariantEntity implements INotificationTemplateStep {
-  variants?: StepVariantEntity[];
+export class NotificationStepEntity extends NotificationStepData implements INotificationTemplateStep {
+  variants?: NotificationStepData[];
 }
 
 export class StepFilter implements IMessageFilter {

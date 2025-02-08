@@ -2,6 +2,9 @@ import { ChannelTypeEnum, GeneratePreviewResponseDto } from '@novu/shared';
 import { useState } from 'react';
 import { RiMacLine, RiSmartphoneFill } from 'react-icons/ri';
 
+import { Separator } from '@/components/primitives/separator';
+import { Skeleton } from '@/components/primitives/skeleton';
+import { Tabs, TabsList, TabsTrigger } from '@/components/primitives/tabs';
 import {
   EmailPreviewBody,
   EmailPreviewBodyMobile,
@@ -11,15 +14,12 @@ import {
   EmailPreviewSubjectMobile,
 } from '@/components/workflow-editor/steps/email/email-preview';
 import { EmailTabsSection } from '@/components/workflow-editor/steps/email/email-tabs-section';
-import { Tabs, TabsList, TabsTrigger } from '@/components/primitives/tabs';
 import { TabsContent } from '@radix-ui/react-tabs';
-import { Separator } from '@/components/primitives/separator';
-import { Skeleton } from '@/components/primitives/skeleton';
 import { ConfigurePreviewAccordion } from '../shared/configure-preview-accordion';
 
 type EmailEditorPreviewProps = {
   editorValue: string;
-  setEditorValue: (value: string) => void;
+  setEditorValue: (value: string) => Error | null;
   previewStep: () => void;
   previewData?: GeneratePreviewResponseDto;
   isPreviewPending: boolean;
@@ -55,7 +55,7 @@ export const EmailEditorPreview = ({
             <EmailTabsSection className="py-2">
               <Skeleton className="h-6 w-full" />
             </EmailTabsSection>
-            <Separator className="bg-neutral-100" />
+            <Separator className="before:bg-neutral-100" />
             <EmailTabsSection>
               <Skeleton className="h-96 w-full" />
             </EmailTabsSection>
@@ -74,7 +74,7 @@ export const EmailEditorPreview = ({
                 </TabsContent>
                 <TabsContent value="desktop">
                   <EmailPreviewSubject subject={previewData.result.preview.subject} />
-                  <Separator className="bg-neutral-100" />
+                  <Separator className="before:bg-neutral-100" />
                   <EmailPreviewBody body={previewData.result.preview.body} className="bg-background rounded-lg" />
                 </TabsContent>
               </>

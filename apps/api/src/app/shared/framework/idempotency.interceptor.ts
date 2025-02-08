@@ -15,8 +15,8 @@ import {
   CacheService,
   GetFeatureFlag,
   GetFeatureFlagCommand,
-  Instrument,
   HttpResponseHeaderKeysEnum,
+  Instrument,
 } from '@novu/application-generic';
 import { Observable, of, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
@@ -53,7 +53,7 @@ export class IdempotencyInterceptor implements NestInterceptor {
     const user = this.getReqUser(context);
     const { organizationId, environmentId, _id } = user;
 
-    const isEnabled = await this.getFeatureFlag.execute(
+    return await this.getFeatureFlag.execute(
       GetFeatureFlagCommand.create({
         key: FeatureFlagsKeysEnum.IS_API_IDEMPOTENCY_ENABLED,
         environmentId,
@@ -61,8 +61,6 @@ export class IdempotencyInterceptor implements NestInterceptor {
         userId: _id,
       })
     );
-
-    return isEnabled;
   }
 
   @Instrument()
@@ -163,16 +161,6 @@ export class IdempotencyInterceptor implements NestInterceptor {
     return null;
   }
 
-  private buildError(error: any): HttpException {
-    const statusCode = error.status || error.response?.statusCode || 500;
-    if (statusCode === 500 && !error.response) {
-      // some unhandled exception occurred
-      return new InternalServerErrorException();
-    }
-
-    return new HttpException(error.response || error.message, statusCode, error.response?.options);
-  }
-
   private setHeaders(response: any, headers: Record<string, string>) {
     // eslint-disable-next-line array-callback-return
     Object.keys(headers).map((key) => {
@@ -226,7 +214,7 @@ export class IdempotencyInterceptor implements NestInterceptor {
     if (parsed.status === ReqStatusEnum.ERROR) {
       Logger.verbose(`returning cached error response. key: "${idempotencyKey}"`, LOG_CONTEXT);
 
-      throw this.buildError(parsed.data);
+      throw parsed.data;
     }
 
     return of(parsed.data);
@@ -257,16 +245,12 @@ export class IdempotencyInterceptor implements NestInterceptor {
         return response;
       }),
       catchError((err) => {
-        const httpException = this.buildError(err);
-        // Cache the error response and return it
-        const error = err instanceof HttpException ? err : httpException;
         this.setCache(
           cacheKey,
           {
             status: ReqStatusEnum.ERROR,
-            statusCode: httpException.getStatus(),
             bodyHash,
-            data: error,
+            data: err,
           },
           IDEMPOTENCY_CACHE_TTL
         ).catch(() => {});

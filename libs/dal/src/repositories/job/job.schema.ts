@@ -79,6 +79,9 @@ const jobSchema = new Schema<JobDBModel>(
       digestKey: {
         type: Schema.Types.String,
       },
+      digestValue: {
+        type: Schema.Types.String,
+      },
       type: {
         type: Schema.Types.String,
       },

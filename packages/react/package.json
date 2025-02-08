@@ -1,6 +1,6 @@
 {
   "name": "@novu/react",
-  "version": "2.6.2",
+  "version": "2.6.5",
   "repository": "https://github.com/novuhq/novu",
   "description": "Novu's React SDK for building custom inbox notification experiences",
   "author": "",

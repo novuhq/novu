@@ -42,7 +42,7 @@ export const Preferences = () => {
     (preference?: Preference) =>
     ({ channel, enabled }: { channel: ChannelType; enabled: boolean }) => {
       preference?.update({
-        channelPreferences: {
+        channels: {
           [channel]: enabled,
         },
       });

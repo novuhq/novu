@@ -1,9 +1,9 @@
 import { ApiExtraModels, ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional } from 'class-validator';
 
-import { INotificationTemplate, CustomDataType, TriggerTypeEnum, WorkflowIntegrationStatus } from '@novu/shared';
+import { CustomDataType, INotificationTemplate, TriggerTypeEnum, WorkflowIntegrationStatus } from '@novu/shared';
 
-import { NotificationStep } from '../../shared/dtos/notification-step';
+import { NotificationStepDto } from '../../shared/dtos/notification-step-dto';
 import { PreferenceChannels } from '../../shared/dtos/preference-channels';
 
 /**
@@ -80,9 +80,9 @@ export class WorkflowResponse implements INotificationTemplate {
   tags: string[];
 
   @ApiProperty({
-    type: [NotificationStep],
+    type: [NotificationStepDto],
   })
-  steps: NotificationStep[];
+  steps: NotificationStepDto[];
 
   @ApiProperty()
   _organizationId: string;

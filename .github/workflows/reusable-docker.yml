@@ -116,6 +116,7 @@ jobs:
             --platform=linux/amd64 --provenance=false
             --output=type=image,name=$REGISTRY/$REPOSITORY,push-by-digest=true,name-canonical=true
         run: |
+          cp scripts/dotenvcreate.mjs $PROJECT_PATH/src/dotenvcreate.mjs
           cd $PROJECT_PATH && npm run docker:build
           docker tag $LOCAL_TAG $REGISTRY/$REPOSITORY:$IMAGE_TAG
           docker tag $LOCAL_TAG $REGISTRY/$REPOSITORY:$ENV_TAG
@@ -137,6 +138,7 @@ jobs:
             --platform=linux/amd64
             --output=type=image,name=$REGISTRY/$REPOSITORY,push-by-digest=true,name-canonical=true
         run: |
+          cp scripts/dotenvcreate.mjs $PROJECT_PATH/src/dotenvcreate.mjs
           cd $PROJECT_PATH && npm run docker:build
           docker tag $LOCAL_TAG $REGISTRY/$REPOSITORY:$IMAGE_TAG
           docker tag $LOCAL_TAG $REGISTRY/$REPOSITORY:$ENV_TAG

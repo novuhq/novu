@@ -72,6 +72,7 @@ export function HeaderNav() {
             alt: 'Novu Logo',
           },
           customerDetails: {
+            fullName: `${currentUser.firstName} ${currentUser.lastName}`,
             email: currentUser?.email,
             emailHash: currentUser?.servicesHashes?.plain,
             externalId: currentUser?._id,

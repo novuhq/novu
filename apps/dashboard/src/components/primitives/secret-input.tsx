@@ -1,40 +1,40 @@
 import { useState } from 'react';
-import { Eye, EyeOff } from 'lucide-react';
-import { Input, InputField } from './input';
-import { Button } from './button';
-import { AUTOCOMPLETE_PASSWORD_MANAGERS_OFF } from '../../utils/constants';
+import { RiEyeLine, RiEyeOffLine } from 'react-icons/ri';
+import { CopyButton } from './copy-button';
+import { Input, InputProps } from './input';
 
-interface SecretInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
+interface SecretInputProps extends Omit<InputProps, 'onChange'> {
   value: string;
   onChange: (value: string) => void;
+  copyButton?: boolean;
 }
 
-export function SecretInput({ className, value, onChange, ...props }: SecretInputProps) {
+export function SecretInput({ className, value, onChange, copyButton = false, ...props }: SecretInputProps) {
   const [revealed, setRevealed] = useState(false);
 
   return (
-    <InputField className="flex overflow-hidden pr-0">
-      <Input
-        type={revealed ? 'text' : 'password'}
-        {...AUTOCOMPLETE_PASSWORD_MANAGERS_OFF}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        {...props}
-      />
-      <Button
-        type="button"
-        variant="ghost"
-        size="sm"
-        className="h-9 w-9 px-0 hover:bg-transparent"
-        onClick={() => setRevealed(!revealed)}
-      >
-        {revealed ? (
-          <EyeOff className="text-muted-foreground/70 h-4 w-4" />
-        ) : (
-          <Eye className="text-muted-foreground/70 h-4 w-4" />
-        )}
-        <span className="sr-only">{revealed ? 'Hide' : 'Show'} password</span>
-      </Button>
-    </InputField>
+    <Input
+      type={revealed ? 'text' : 'password'}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      {...props}
+      inlineTrailingNode={
+        <button type="button" onClick={() => setRevealed(!revealed)}>
+          {revealed ? (
+            <RiEyeOffLine className="text-text-soft group-has-[disabled]:text-text-disabled size-5" />
+          ) : (
+            <RiEyeLine className="text-text-soft group-has-[disabled]:text-text-disabled size-5" />
+          )}
+        </button>
+      }
+      trailingNode={
+        copyButton ? (
+          <CopyButton
+            valueToCopy={value ?? ''}
+            className="rounded-none border-l border-neutral-200 shadow-none ring-0"
+          />
+        ) : null
+      }
+    />
   );
 }

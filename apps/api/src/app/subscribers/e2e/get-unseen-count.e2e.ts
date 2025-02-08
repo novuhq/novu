@@ -1,16 +1,19 @@
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import axios from 'axios';
 import { NotificationTemplateEntity, SubscriberRepository } from '@novu/dal';
+import { Novu } from '@novu/api';
+import { SubscribersV1ControllerGetUnseenCountRequest } from '@novu/api/models/operations';
+import { expectSdkExceptionGeneric, initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-describe('Get Unseen Count - /:subscriberId/notifications/unseen (GET)', function () {
+describe('Get Unseen Count - /:subscriberId/notifications/unseen (GET) #novu-v2', function () {
   let session: UserSession;
   let template: NotificationTemplateEntity;
   let subscriberId: string;
-
+  let novuClient: Novu;
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
+    novuClient = initNovuClassSdk(session);
 
     template = await session.createTemplate({
       noFeedId: true,
@@ -20,34 +23,24 @@ describe('Get Unseen Count - /:subscriberId/notifications/unseen (GET)', functio
   });
 
   it('should throw exception on invalid subscriber id', async function () {
-    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
 
-    const seenCount = (await getUnSeenCount(subscriberId, session.apiKey, { seen: false })).data.count;
+    const seenCount = await getUnSeenCount({ seen: false, subscriberId });
     expect(seenCount).to.equal(1);
 
-    try {
-      await getUnSeenCount(`${subscriberId}111`, session.apiKey, { seen: false });
-    } catch (err) {
-      expect(err.response.status).to.equals(400);
-      expect(err.response.data.message).to.contain(`Subscriber ${`${subscriberId}111`} is not exist in environment`);
-    }
+    const { error } = await expectSdkExceptionGeneric(() =>
+      getUnSeenCount({ seen: false, subscriberId: `${subscriberId}111` })
+    );
+    expect(error?.statusCode, JSON.stringify(error)).to.equals(400);
+    expect(error?.message, JSON.stringify(error)).to.contain(
+      `Subscriber ${`${subscriberId}111`} is not exist in environment`
+    );
   });
+  async function getUnSeenCount(query: SubscribersV1ControllerGetUnseenCountRequest) {
+    const response = await novuClient.subscribers.notifications.unseenCount(query);
+
+    return response.result.count;
+  }
 });
-
-async function getUnSeenCount(subscriberId: string, apiKey: string, query = {}) {
-  const response = await axios.get(
-    `http://127.0.0.1:${process.env.PORT}/v1/subscribers/${subscriberId}/notifications/unseen`,
-    {
-      params: {
-        ...query,
-      },
-      headers: {
-        authorization: `ApiKey ${apiKey}`,
-      },
-    }
-  );
-
-  return response.data;
-}

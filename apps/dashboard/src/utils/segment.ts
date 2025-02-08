@@ -1,7 +1,8 @@
-import { AnalyticsBrowser } from '@segment/analytics-next';
-import type { IUserEntity } from '@novu/shared';
-import * as mixpanel from 'mixpanel-browser';
 import { MIXPANEL_KEY, SEGMENT_KEY } from '@/config';
+import type { IUserEntity } from '@novu/shared';
+import { AnalyticsBrowser } from '@segment/analytics-next';
+import * as Sentry from '@sentry/react';
+import * as mixpanel from 'mixpanel-browser';
 
 export class SegmentService {
   private _segment: AnalyticsBrowser | null = null;
@@ -17,12 +18,21 @@ export class SegmentService {
         //@ts-expect-error missing from types
         record_sessions_percent: 100,
       });
+
+      try {
+        //@ts-expect-error missing from types
+        mixpanel.start_session_recording();
+      } catch (e) {
+        Sentry.captureException(e);
+        console.error(e);
+      }
     }
 
     if (this._segmentEnabled) {
       this._segment = AnalyticsBrowser.load({
         writeKey: SEGMENT_KEY as string,
       });
+
       if (!this._mixpanelEnabled) {
         return;
       }
@@ -51,7 +61,7 @@ export class SegmentService {
     }
   }
 
-  identify(user: IUserEntity) {
+  identify(user: IUserEntity, extraProperties?: Record<string, unknown>) {
     if (!this.isSegmentEnabled()) {
       return;
     }
@@ -62,6 +72,19 @@ export class SegmentService {
       firstName: user.firstName,
       lastName: user.lastName,
       avatar: user.profilePicture,
+      ...(extraProperties || {}),
+    });
+  }
+
+  group(organization: { id: string; name: string; createdAt: string }, extraProperties?: Record<string, unknown>) {
+    if (!this.isSegmentEnabled()) {
+      return;
+    }
+
+    this._segment?.group(organization.id, {
+      name: organization.name,
+      createdAt: organization.createdAt,
+      ...(extraProperties || {}),
     });
   }
 
@@ -85,7 +108,6 @@ export class SegmentService {
     this._segment?.setAnonymousId(anonymousId);
   }
 
-  // @ts-expect-error event is unused at the moment until we do the /v1/telemetry/measure API call
   async track(event: string, data?: Record<string, unknown>) {
     if (!this.isSegmentEnabled()) {
       return;
@@ -102,11 +124,7 @@ export class SegmentService {
       };
     }
 
-    // TODO: Add api call
-    // await api.post("/v1/telemetry/measure", {
-    //   event: `${event} - [WEB]`,
-    //   data,
-    // });
+    this._segment?.track(event, data);
   }
 
   pageView(url: string) {
@@ -123,6 +141,16 @@ export class SegmentService {
     }
 
     this._segment?.reset();
+  }
+
+  async getAnonymousId() {
+    if (!this.isSegmentEnabled()) {
+      return;
+    }
+
+    const user = await this._segment?.user();
+
+    return user?.anonymousId();
   }
 
   isSegmentEnabled(): boolean {

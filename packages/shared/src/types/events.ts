@@ -7,8 +7,6 @@ export enum TriggerEventStatusEnum {
   NO_WORKFLOW_ACTIVE_STEPS = 'no_workflow_active_steps_defined',
   NO_WORKFLOW_STEPS = 'no_workflow_steps_defined',
   PROCESSED = 'processed',
-  // TODO: Seems not used. Remove.
-  SUBSCRIBER_MISSING = 'subscriber_id_missing',
   TENANT_MISSING = 'no_tenant_found',
 }
 

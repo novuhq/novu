@@ -16,6 +16,7 @@ runs:
       with:
         targets: build
         projects: '@novu/api-service'
+        args: '--skip-nx-cache'
 
     - name: Start API
       shell: bash

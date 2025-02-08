@@ -1,8 +1,8 @@
-import { useSearchParams } from 'react-router-dom';
-import { useCallback, useMemo } from 'react';
-import { ChannelTypeEnum } from '@novu/shared';
 import { ActivityFilters } from '@/api/activity';
 import { ActivityFiltersData, ActivityUrlState } from '@/types/activity';
+import { ChannelTypeEnum } from '@novu/shared';
+import { useCallback, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
 const DEFAULT_DATE_RANGE = '30d';
 
@@ -89,6 +89,10 @@ export function useActivityUrlState(): ActivityUrlState & {
       }
       if (data.dateRange && data.dateRange !== DEFAULT_DATE_RANGE) {
         newParams.set('dateRange', data.dateRange);
+      }
+
+      if (searchParams.get('page')) {
+        newParams.set('page', searchParams.get('page') || '0');
       }
 
       setSearchParams(newParams, { replace: true });

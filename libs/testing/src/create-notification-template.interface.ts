@@ -11,7 +11,7 @@ import {
 import { NotificationTemplateEntity, StepFilter } from '@novu/dal';
 
 interface IVariant {
-  cta?: any;
+  cta?: {};
   uuid?: string;
   active?: boolean;
   subject?: string;

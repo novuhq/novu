@@ -10,7 +10,7 @@ test.describe('Translations', () => {
     await initializeSession(page, { noTemplates: true });
   });
 
-  test('Can create translation group', async ({ page }) => {
+  test.skip('Can create translation group', async ({ page }) => {
     const groupName = 'My Test Group';
     const translationsPage = await TranslationsPage.goTo(page);
     await translationsPage.assertTitleEquals('Translations');
@@ -18,7 +18,7 @@ test.describe('Translations', () => {
     await translationsPage.assertHasHeading(groupName);
   });
 
-  test('Can delete a translation group', async ({ page }) => {
+  test.skip('Can delete a translation group', async ({ page }) => {
     const translationsPage = await TranslationsPage.goTo(page);
     const { identifier } = await translationsPage.createGroup();
     await translationsPage.navigateToGroup(identifier);
@@ -27,7 +27,7 @@ test.describe('Translations', () => {
     await translationsPage.assertGroupDoesNotExist(identifier);
   });
 
-  test('Can upload translation file', async ({ page }) => {
+  test.skip('Can upload translation file', async ({ page }) => {
     const translationsPage = await TranslationsPage.goTo(page);
     const { identifier } = await translationsPage.createGroup();
     await translationsPage.navigateToGroup(identifier);

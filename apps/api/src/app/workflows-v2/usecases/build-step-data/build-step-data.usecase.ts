@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { ControlValuesLevelEnum, ShortIsPrefixEnum, StepDataDto, WorkflowOriginEnum } from '@novu/shared';
+import { ControlValuesLevelEnum, ShortIsPrefixEnum, StepResponseDto, WorkflowOriginEnum } from '@novu/shared';
 import { ControlValuesRepository, NotificationStepEntity, NotificationTemplateEntity } from '@novu/dal';
 import {
   GetWorkflowByIdsUseCase,
@@ -9,7 +9,7 @@ import {
 } from '@novu/application-generic';
 import { BuildStepDataCommand } from './build-step-data.command';
 import { InvalidStepException } from '../../exceptions/invalid-step.exception';
-import { BuildAvailableVariableSchemaUsecase } from '../build-variable-schema';
+import { BuildVariableSchemaUsecase } from '../build-variable-schema';
 import { buildSlug } from '../../../shared/helpers/build-slug';
 
 @Injectable()
@@ -17,11 +17,11 @@ export class BuildStepDataUsecase {
   constructor(
     private getWorkflowByIdsUseCase: GetWorkflowByIdsUseCase,
     private controlValuesRepository: ControlValuesRepository,
-    private buildAvailableVariableSchemaUsecase: BuildAvailableVariableSchemaUsecase
+    private buildAvailableVariableSchemaUsecase: BuildVariableSchemaUsecase
   ) {}
 
   @InstrumentUsecase()
-  async execute(command: BuildStepDataCommand): Promise<StepDataDto> {
+  async execute(command: BuildStepDataCommand): Promise<StepResponseDto> {
     const workflow: WorkflowInternalResponseDto = await this.fetchWorkflow(command);
 
     const { currentStep } = await this.loadStepsFromDb(command, workflow);

@@ -1,6 +1,6 @@
 {
   "name": "@novu/application-generic",
-  "version": "2.0.6",
+  "version": "2.0.10",
   "description": "Generic backend code used inside of Novu's different services",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -38,12 +38,12 @@
     "reflect-metadata": "0.2.2"
   },
   "dependencies": {
-    "@aws-sdk/client-cloudwatch": "^3.567.0",
     "@aws-sdk/client-s3": "^3.567.0",
     "@aws-sdk/s3-request-presigner": "^3.567.0",
     "@azure/storage-blob": "^12.11.0",
     "@google-cloud/storage": "^6.2.3",
     "@hokify/agenda": "^6.3.0",
+    "@maily-to/render": "^0.0.17",
     "@novu/dal": "workspace:*",
     "@novu/framework": "workspace:*",
     "@novu/providers": "workspace:*",
@@ -66,14 +66,14 @@
     "@opentelemetry/sdk-trace-base": "~1.19.0",
     "@opentelemetry/sdk-trace-node": "~1.19.0",
     "@opentelemetry/semantic-conventions": "~1.19.0",
-    "@pyroscope/nodejs": "^0.2.9",
     "@segment/analytics-node": "^1.1.4",
     "@sentry/node": "^8.33.1",
-    "@team-plain/typescript-sdk": "5.4.3",
+    "@team-plain/typescript-sdk": "5.8.0",
     "axios": "^1.6.8",
     "bullmq": "^3.10.2",
     "class-transformer": "0.5.1",
     "class-validator": "0.14.1",
+    "cron-parser": "^4.9.0",
     "date-fns": "^2.29.2",
     "got": "^11.8.6",
     "handlebars": "^4.7.7",
@@ -83,7 +83,6 @@
     "launchdarkly-node-server-sdk": "^7.0.1",
     "lodash": "^4.17.15",
     "mixpanel": "^0.17.0",
-    "cron-parser": "^4.9.0",
     "nanoid": "^3.1.20",
     "nestjs-otel": "6.1.1",
     "nestjs-pino": "4.1.0",
@@ -95,7 +94,9 @@
     "rrule": "^2.7.2",
     "rxjs": "7.8.1",
     "sanitize-html": "^2.4.0",
-    "shortid": "^2.2.16"
+    "shortid": "^2.2.16",
+    "zod": "^3.23.8",
+    "zod-to-json-schema": "^3.23.3"
   },
   "optionalDependencies": {
     "@novu/ee-shared-services": "workspace:*",

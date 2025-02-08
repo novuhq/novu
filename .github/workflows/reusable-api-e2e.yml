@@ -52,8 +52,7 @@ jobs:
   # This workflow contains a single job called "build"
   e2e_api:
     name: Test E2E
-    if: ${{ (contains(inputs.job-name, '-ee') && inputs.test-e2e-ee-affected) || (!contains(inputs.job-name, '-ee') && inputs.test-e2e-affected) }}
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-2vcpu-ubuntu-2204
     timeout-minutes: 80
     permissions:
       contents: read
@@ -80,30 +79,31 @@ jobs:
         with:
           submodules: ${{ inputs.ee && needs.check_submodule_token.outputs.has_token == 'true' }}
 
-      - uses: ./.github/actions/setup-redis-cluster
-        name: Setup redis cluster
-
       - uses: ./.github/actions/start-localstack
         name: Start localstack
 
-      - uses: ./.github/actions/run-worker
-        name: Run worker
-        with:
-          launch_darkly_sdk_key: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
-          ee: ${{ needs.check_submodule_token.outputs.has_token == 'true' && inputs.ee }}
+      - name: Build API & Worker
+        run: CI='' pnpm run build:api_and_worker --skip-nx-cache
 
-        # Runs a single command using the runners shell
-      - name: Build API
-        run: CI='' pnpm build:api --skip-nx-cache
+      - name: Start Worker
+        shell: bash
+        env:
+          LAUNCH_DARKLY_SDK_KEY: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
+          NOVU_ENTERPRISE: ${{ inputs.ee }}
+        run: cd apps/worker && pnpm start:test &
 
-      - name: Run E2E tests
+      - name: Wait on worker
+        shell: bash
+        run: wait-on --timeout=180000 http://127.0.0.1:1342/v1/health-check
+
+      - name: Run Novu V1 E2E tests
         if: ${{ !inputs.ee }}
         env:
           LAUNCH_DARKLY_SDK_KEY: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
         run: |
-          cd apps/api && pnpm test:e2e
+          pnpm --filter @novu/api-service test:e2e:novu-v1
 
-      - name: Run E2E EE tests
+      - name: Run Novu V2 E2E tests
         if: ${{ needs.check_submodule_token.outputs.has_token == 'true' && inputs.ee }}
         env:
           LAUNCH_DARKLY_SDK_KEY: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
@@ -111,18 +111,15 @@ jobs:
           CLERK_ENABLED: true
           CLERK_ISSUER_URL: ${{ vars.CLERK_ISSUER_URL }}
           CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
-          CLERK_PRIVATE_KEY_BASE64: ${{ secrets.CLERK_PRIVATE_KEY_BASE64 }}
-          CLERK_PEM_PUBLIC_KEY_BASE64: ${{ secrets.CLERK_PEM_PUBLIC_KEY_BASE64 }}
           CLERK_WEBHOOK_SECRET: ${{ secrets.CLERK_WEBHOOK_SECRET }}
           CLERK_LONG_LIVED_TOKEN: ${{ secrets.CLERK_LONG_LIVED_TOKEN }}
         run: |
-          export CLERK_PEM_PUBLIC_KEY=$(echo $CLERK_PEM_PUBLIC_KEY_BASE64 | base64 -d)
-          export CLERK_PRIVATE_KEY=$(echo $CLERK_PRIVATE_KEY_BASE64 | base64 -d)
-          cd apps/api && pnpm test:e2e:ee
+          pnpm --filter @novu/api-service test:e2e:novu-v2
 
       - name: Kill port for worker 1342 for unit tests
         run: sudo kill -9 $(sudo lsof -t -i:1342)
 
+      # TODO: Run unit tests before e2e
       - name: Run unit tests
         if: inputs.test-unit
         run: |

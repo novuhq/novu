@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ChannelTypeEnum } from '@novu/shared';
-import { StepFilter } from '../../shared/dtos/step-filter';
+import { StepFilterDto } from '../../shared/dtos/step-filter-dto';
 import { CredentialsDto } from './credentials.dto';
 
 export class IntegrationResponseDto {
@@ -92,7 +92,7 @@ export class IntegrationResponseDto {
   @ApiPropertyOptional({
     description:
       'An array of conditions associated with the integration that may influence its behavior or processing logic.',
-    type: [StepFilter],
+    type: [StepFilterDto],
   })
-  conditions?: StepFilter[];
+  conditions?: StepFilterDto[];
 }

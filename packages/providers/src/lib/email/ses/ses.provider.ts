@@ -183,8 +183,8 @@ export class SESEmailProvider extends BaseProvider implements IEmailProvider {
         attachments: {},
         bcc: [],
         cc: [],
-        replyTo: 'support@novu.co',
-        senderName: 'Novu Support',
+        replyTo: this.config.from,
+        senderName: this.config.senderName,
       });
 
       return {

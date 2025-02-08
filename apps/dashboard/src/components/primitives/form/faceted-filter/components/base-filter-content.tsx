@@ -1,8 +1,9 @@
-import { SizeType } from '../types';
-import { FilterInput } from './filter-input';
-import { ClearButton } from './clear-button';
 import { RiArrowDownLine, RiArrowUpLine } from 'react-icons/ri';
 import { EnterLineIcon } from '../../../../icons/enter-line';
+import { Separator } from '../../../separator';
+import { SizeType } from '../types';
+import { ClearButton } from './clear-button';
+import { FilterInput } from './filter-input';
 
 interface BaseFilterContentProps {
   inputRef: React.RefObject<HTMLInputElement>;
@@ -35,10 +36,12 @@ export function BaseFilterContent({
 }: BaseFilterContentProps) {
   return (
     <div className="flex h-full flex-col">
-      <div className="flex justify-between rounded-t-md bg-neutral-50 px-1.5 py-1">
-        {title && <span className="text-foreground-400 text-[11px] uppercase">{title}</span>}
-        {!hideClear && <ClearButton onClick={onClear} size={size} label="Reset" />}
-      </div>
+      <Separator variant="solid-text" className="px-1.5 py-1">
+        <div className="flex w-full justify-between rounded-t-md bg-neutral-50">
+          {title && <div className="uppercase leading-[16px]">{title}</div>}
+          {!hideClear && <ClearButton onClick={onClear} size={size} className="h-[16px]" label="Reset" />}
+        </div>
+      </Separator>
 
       {!hideSearch && onSearchChange && (
         <FilterInput

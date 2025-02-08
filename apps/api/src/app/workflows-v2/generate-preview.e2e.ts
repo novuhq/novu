@@ -8,6 +8,7 @@ import {
   createWorkflowClient,
   CreateWorkflowDto,
   CronExpressionEnum,
+  EmailRenderOutput,
   GeneratePreviewRequestDto,
   GeneratePreviewResponseDto,
   HttpError,
@@ -16,16 +17,15 @@ import {
   StepTypeEnum,
   WorkflowCreationSourceEnum,
 } from '@novu/shared';
+import { EmailControlType, InAppControlType } from '@novu/application-generic';
 import { buildCreateWorkflowDto } from './workflow.controller.e2e';
-import { forSnippet, fullCodeSnippet } from './maily-test-data';
-import { InAppControlType } from './shared/schemas/in-app-control.schema';
-import { EmailControlType } from './shared/schemas/email-control.schema';
+import { fullCodeSnippet, previewPayloadExample } from './maily-test-data';
 
 const SUBJECT_TEST_PAYLOAD = '{{payload.subject.test.payload}}';
 const PLACEHOLDER_SUBJECT_INAPP = '{{payload.subject}}';
 const PLACEHOLDER_SUBJECT_INAPP_PAYLOAD_VALUE = 'this is the replacement text for the placeholder';
 
-describe('Generate Preview', () => {
+describe('Generate Preview #novu-v2', () => {
   let session: UserSession;
   let workflowsClient: ReturnType<typeof createWorkflowClient>;
 
@@ -116,7 +116,7 @@ describe('Generate Preview', () => {
         PLACEHOLDER_SUBJECT_INAPP_PAYLOAD_VALUE
       );
       if (previewResponseDto.result?.type !== 'in_app') {
-        throw new Error('should have a inapp redview ');
+        throw new Error('should have a in-app preview ');
       }
       expect(previewResponseDto.result.preview.subject).to.deep.equal(controlValues.subject);
     });
@@ -171,142 +171,27 @@ describe('Generate Preview', () => {
         expect(previewResponseDto.result!.preview).to.deep.equal(getTestControlValues()[StepTypeEnum.CHAT]);
       });
 
-      it.skip('email: should match the body in the preview response', async () => {
+      it('email: should match the body in the preview response', async () => {
         const previewResponseDto = await createWorkflowAndPreview(StepTypeEnum.EMAIL, 'Email');
+        const preview = previewResponseDto.result.preview as EmailRenderOutput;
 
-        expect(previewResponseDto.result!.preview).to.exist;
+        expect(previewResponseDto.result.type).to.equal(StepTypeEnum.EMAIL);
+
+        expect(preview).to.exist;
+        expect(preview.body).to.exist;
+        expect(preview.subject).to.exist;
+        expect(preview.body).to.contain(previewPayloadExample().payload.body);
+        expect(preview.subject).to.contain(`Hello, World! ${SUBJECT_TEST_PAYLOAD}`);
         expect(previewResponseDto.previewPayloadExample).to.exist;
-        expect(previewResponseDto.previewPayloadExample.subscriber, 'Expecting to find subscriber in the payload').to
-          .exist;
-
-        assertEmail(previewResponseDto);
+        expect(previewResponseDto.previewPayloadExample).to.deep.equal(previewPayloadExample());
       });
 
       async function createWorkflowAndPreview(type: StepTypeEnum, description: string) {
-        const { stepDatabaseId, workflowId, stepId } = await createWorkflowAndReturnId(workflowsClient, type);
+        const { stepDatabaseId, workflowId } = await createWorkflowAndReturnId(workflowsClient, type);
         const requestDto = buildDtoNoPayload(type);
 
         return await generatePreview(workflowsClient, workflowId, stepDatabaseId, requestDto, description);
       }
-    });
-
-    describe('email specific features', () => {
-      describe('show', () => {
-        it('show -> should hide element based on payload', async () => {
-          const { stepDatabaseId, workflowId, stepId } = await createWorkflowAndReturnId(
-            workflowsClient,
-            StepTypeEnum.EMAIL
-          );
-          const previewResponseDto = await generatePreview(
-            workflowsClient,
-            workflowId,
-            stepDatabaseId,
-            {
-              controlValues: getTestControlValues(stepId)[StepTypeEnum.EMAIL],
-              previewPayload: { payload: { params: { isPayedUser: 'false' } } },
-            },
-            'email'
-          );
-          expect(previewResponseDto.result!.preview).to.exist;
-          if (previewResponseDto.result!.type !== ChannelTypeEnum.EMAIL) {
-            throw new Error('Expected email');
-          }
-          const preview = previewResponseDto.result!.preview.body;
-          expect(preview).to.not.contain('should be the fallback value');
-        });
-        it('show -> should show element based on payload - string', async () => {
-          const { stepDatabaseId, workflowId, stepId } = await createWorkflowAndReturnId(
-            workflowsClient,
-            StepTypeEnum.EMAIL
-          );
-          const previewResponseDto = await generatePreview(
-            workflowsClient,
-            workflowId,
-            stepDatabaseId,
-            {
-              controlValues: getTestControlValues(stepId)[StepTypeEnum.EMAIL],
-              previewPayload: { payload: { params: { isPayedUser: 'true' } } },
-            },
-            'email'
-          );
-          expect(previewResponseDto.result!.preview).to.exist;
-          if (previewResponseDto.result!.type !== ChannelTypeEnum.EMAIL) {
-            throw new Error('Expected email');
-          }
-          const preview = previewResponseDto.result!.preview.body;
-          expect(preview).to.contain('should be the fallback value');
-        });
-        it('show -> should show element based on payload - boolean', async () => {
-          const { stepDatabaseId, workflowId, stepId } = await createWorkflowAndReturnId(
-            workflowsClient,
-            StepTypeEnum.EMAIL
-          );
-          const previewResponseDto = await generatePreview(
-            workflowsClient,
-            workflowId,
-            stepDatabaseId,
-            {
-              controlValues: getTestControlValues(stepId)[StepTypeEnum.EMAIL],
-              previewPayload: { payload: { params: { isPayedUser: true } } },
-            },
-            'email'
-          );
-          if (previewResponseDto.result!.type !== ChannelTypeEnum.EMAIL) {
-            throw new Error('Expected email');
-          }
-          const preview = previewResponseDto.result!.preview.body;
-          expect(preview).to.contain('should be the fallback value');
-        });
-        it('show -> should show element if payload is missing', async () => {
-          const { stepDatabaseId, workflowId, stepId } = await createWorkflowAndReturnId(
-            workflowsClient,
-            StepTypeEnum.EMAIL
-          );
-          const previewResponseDto = await generatePreview(
-            workflowsClient,
-            workflowId,
-            stepDatabaseId,
-            {
-              controlValues: getTestControlValues(stepId)[StepTypeEnum.EMAIL],
-              previewPayload: { payload: { params: { isPayedUser: 'true' } } },
-            },
-            'email'
-          );
-          expect(previewResponseDto.result!.preview).to.exist;
-          if (previewResponseDto.result!.type !== ChannelTypeEnum.EMAIL) {
-            throw new Error('Expected email');
-          }
-          const preview = previewResponseDto.result!.preview.body;
-          expect(preview).to.contain('should be the fallback value');
-        });
-      });
-      describe('for', () => {
-        it('should populate for if payload exist with actual values', async () => {
-          const { stepDatabaseId, workflowId } = await createWorkflowAndReturnId(workflowsClient, StepTypeEnum.EMAIL);
-          const name1 = 'ball is round';
-          const name2 = 'square is square';
-          const previewResponseDto = await generatePreview(
-            workflowsClient,
-            workflowId,
-            stepDatabaseId,
-            {
-              controlValues: buildSimpleForEmail() as unknown as Record<string, unknown>,
-              previewPayload: { payload: { food: { items: [{ name: name1 }, { name: name2 }] } } },
-            },
-            'email'
-          );
-          expect(previewResponseDto.result!.preview).to.exist;
-          if (previewResponseDto.result!.type !== ChannelTypeEnum.EMAIL) {
-            throw new Error('Expected email');
-          }
-          const preview = previewResponseDto.result!.preview.body;
-          expect(preview).to.not.contain('should be the fallback value');
-          expect(preview).not.to.contain('{{item.name}}1');
-          expect(preview).not.to.contain('{{item.name}}2');
-          expect(preview).to.contain(name1);
-          expect(preview).to.contain(name2);
-        });
-      });
     });
 
     describe('payload sanitation', () => {
@@ -514,18 +399,13 @@ function buildDtoNoPayload(stepTypeEnum: StepTypeEnum, stepId?: string): Generat
   };
 }
 
-function buildEmailControlValuesPayload(stepId?: string): EmailControlType {
+function buildEmailControlValuesPayload(): EmailControlType {
   return {
     subject: `Hello, World! ${SUBJECT_TEST_PAYLOAD}`,
-    body: JSON.stringify(fullCodeSnippet(stepId)),
+    body: JSON.stringify(fullCodeSnippet()),
   };
 }
-function buildSimpleForEmail(): EmailControlType {
-  return {
-    subject: `Hello, World! ${SUBJECT_TEST_PAYLOAD}`,
-    body: JSON.stringify(forSnippet),
-  };
-}
+
 function buildInAppControlValues() {
   return {
     subject: `{{subscriber.firstName}} Hello, World! ${PLACEHOLDER_SUBJECT_INAPP}`,
@@ -605,7 +485,7 @@ function buildDigestControlValuesPayload() {
 
 export const getTestControlValues = (stepId?: string) => ({
   [StepTypeEnum.SMS]: buildSmsControlValuesPayload(stepId),
-  [StepTypeEnum.EMAIL]: buildEmailControlValuesPayload(stepId) as unknown as Record<string, unknown>,
+  [StepTypeEnum.EMAIL]: buildEmailControlValuesPayload(),
   [StepTypeEnum.PUSH]: buildPushControlValuesPayload(),
   [StepTypeEnum.CHAT]: buildChatControlValuesPayload(),
   [StepTypeEnum.IN_APP]: buildInAppControlValues(),
@@ -624,23 +504,6 @@ async function assertHttpError(
   }
 
   return new Error(`${description}: Failed to generate preview, bug in response error mapping `);
-}
-
-function assertEmail(dto: GeneratePreviewResponseDto) {
-  if (dto.result!.type === ChannelTypeEnum.EMAIL) {
-    const preview = dto.result!.preview.body;
-    expect(preview).to.exist;
-    expect(preview).to.contain('{{item.header}}-1');
-    expect(preview).to.contain('{{item.header}}-2');
-    expect(preview).to.contain('{{item.name}}-1');
-    expect(preview).to.contain('{{item.name}}-2');
-    expect(preview).to.contain('{{item.id}}-1');
-    expect(preview).to.contain('{{item.id}}-2');
-    expect(preview).to.contain('{{item.origin.country}}-1');
-    expect(preview).to.contain('{{item.origin.country}}-2');
-    expect(preview).to.contain('{{payload.body}}');
-    expect(preview).to.contain('should be the fallback value');
-  }
 }
 
 export async function createWorkflowAndReturnId(

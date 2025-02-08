@@ -65,6 +65,14 @@ const features: Feature[] = [
     },
   },
   {
+    label: 'Environments',
+    values: {
+      [SupportedPlansEnum.FREE]: { value: '2' },
+      [SupportedPlansEnum.BUSINESS]: { value: '10' },
+      [SupportedPlansEnum.ENTERPRISE]: { value: 'Unlimited' },
+    },
+  },
+  {
     label: 'Framework',
     isTitle: true,
     values: {

@@ -21,8 +21,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-legacy/*
-!legacy/.gitkeep
 tsconfig.app.tsbuildinfo
 tsconfig.node.tsbuildinfo
 /test-results/

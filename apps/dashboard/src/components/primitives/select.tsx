@@ -14,12 +14,12 @@ const SelectValue = SelectPrimitive.Value;
 const SelectIcon = SelectPrimitive.Icon;
 
 export const selectTriggerVariants = cva(
-  'border-input ring-offset-background text-foreground-600 placeholder:text-foreground-400 focus:ring-ring shadow-xs flex w-full items-center justify-between whitespace-nowrap rounded-lg border bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1',
+  'border-input ring-offset-background text-foreground-600 placeholder:text-foreground-400 focus:ring-ring shadow-xs flex w-full items-center justify-between whitespace-nowrap rounded-lg border bg-transparent text-sm focus:outline-none focus:ring-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1',
   {
     variants: {
       size: {
-        default: 'h-9',
-        sm: 'h-7',
+        default: 'h-9 px-3 py-2',
+        '2xs': 'h-7 px-2 py-2',
       },
     },
     defaultVariants: {
@@ -28,16 +28,15 @@ export const selectTriggerVariants = cva(
   }
 );
 
-type SelectTriggerProps = React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger> &
-  VariantProps<typeof selectTriggerVariants>;
+type SelectTriggerProps = React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger> & {
+  rightIcon?: React.ReactNode;
+} & VariantProps<typeof selectTriggerVariants>;
 
 const SelectTrigger = React.forwardRef<React.ElementRef<typeof SelectPrimitive.Trigger>, SelectTriggerProps>(
-  ({ className, children, size, ...props }, ref) => (
-    <SelectPrimitive.Trigger ref={ref} className={selectTriggerVariants({ size, className })} {...props}>
+  ({ className, children, size, rightIcon: icon, ...props }, ref) => (
+    <SelectPrimitive.Trigger ref={ref} className={cn(selectTriggerVariants({ size }), className)} {...props}>
       {children}
-      <SelectPrimitive.Icon asChild>
-        <CaretSortIcon className="h-4 w-4 opacity-50" />
-      </SelectPrimitive.Icon>
+      <SelectPrimitive.Icon asChild>{icon ?? <CaretSortIcon className="h-4 w-4 opacity-50" />}</SelectPrimitive.Icon>
     </SelectPrimitive.Trigger>
   )
 );
@@ -128,7 +127,7 @@ const SelectItem = React.forwardRef<
         <CheckIcon className="h-4 w-4" />
       </SelectPrimitive.ItemIndicator>
     </span>
-    <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
+    <SelectPrimitive.ItemText className="text-sm">{children}</SelectPrimitive.ItemText>
   </SelectPrimitive.Item>
 ));
 SelectItem.displayName = SelectPrimitive.Item.displayName;

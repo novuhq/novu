@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { UserSession } from '@novu/testing';
 
-describe('Update Notification Group - /notification-groups/:id (PATCH)', async () => {
+describe('Update Notification Group - /notification-groups/:id (PATCH) #novu-v1', async () => {
   let session: UserSession;
 
   beforeEach(async () => {

@@ -158,7 +158,7 @@ export class IntegrationsController {
           channel: body.channel,
           credentials: body.credentials,
           active: body.active ?? false,
-          check: body.check ?? true,
+          check: body.check ?? false,
           conditions: body.conditions,
         })
       );
@@ -198,7 +198,7 @@ export class IntegrationsController {
           credentials: body.credentials,
           removeNovuBranding: body.removeNovuBranding,
           active: body.active,
-          check: body.check ?? true,
+          check: body.check ?? false,
           conditions: body.conditions,
         })
       );

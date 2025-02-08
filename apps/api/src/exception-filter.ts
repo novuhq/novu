@@ -14,12 +14,17 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
-
     const errorDto = this.buildErrorResponse(exception, request);
-    this.logError(errorDto, exception);
+
+    // TODO: In same cases the statusCode is a string. We should investigate why this is happening.
+    const statusCode = Number(errorDto.statusCode);
+    if (statusCode >= 500) {
+      this.logError(errorDto, exception);
+    }
+
     // This is for backwards compatibility for clients waiting for the context elements to appear flat
     const finalResponse = { ...errorDto.ctx, ...errorDto };
-    response.status(errorDto.statusCode).json(finalResponse);
+    response.status(statusCode).json(finalResponse);
   }
 
   private logError(errorDto: ErrorDto, exception: unknown) {
@@ -74,7 +79,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const response = exception.getResponse();
     const { innerMsg, tempContext } = this.buildMsgAndContextForHttpError(response, status);
 
-    return this.buildErrorDto(request, status, innerMsg, tempContext);
+    return this.buildErrorDto(request, status || 500, innerMsg, tempContext);
   }
 
   private buildMsgAndContextForHttpError(response: string | object | { message: string }, status: number) {

@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { UserSession } from '@novu/testing';
 
-describe('Get Feeds - /feeds (GET)', async () => {
+describe('Get Feeds - /feeds (GET) #novu-v1', async () => {
   let session: UserSession;
 
   beforeEach(async () => {

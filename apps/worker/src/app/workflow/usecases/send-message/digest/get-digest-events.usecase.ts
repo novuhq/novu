@@ -56,7 +56,7 @@ export abstract class GetDigestEvents {
       );
 
       const message = `Trigger job for jobId ${currentJob._id} is not found`;
-      Logger.error(message, LOG_CONTEXT);
+      Logger.log(message, LOG_CONTEXT);
       throw new PlatformException(message);
     }
 

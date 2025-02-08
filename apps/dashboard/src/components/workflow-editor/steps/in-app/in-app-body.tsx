@@ -1,51 +1,40 @@
-import { EditorView } from '@uiw/react-codemirror';
 import { useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { Editor } from '@/components/primitives/editor';
+import { ControlInput } from '@/components/primitives/control-input';
 import { FormControl, FormField, FormItem, FormMessage } from '@/components/primitives/form/form';
-import { InputField } from '@/components/primitives/input';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
-import { completions } from '@/utils/liquid-autocomplete';
 import { parseStepVariablesToLiquidVariables } from '@/utils/parseStepVariablesToLiquidVariables';
 import { capitalize } from '@/utils/string';
-import { autocompletion } from '@codemirror/autocomplete';
+import { InputRoot } from '../../../primitives/input';
 
 const bodyKey = 'body';
-
-const basicSetup = {
-  defaultKeymap: true,
-};
 
 export const InAppBody = () => {
   const { control } = useFormContext();
   const { step } = useWorkflow();
   const variables = useMemo(() => (step ? parseStepVariablesToLiquidVariables(step.variables) : []), [step]);
-  const extensions = useMemo(
-    () => [autocompletion({ override: [completions(variables)] }), EditorView.lineWrapping],
-    [variables]
-  );
 
   return (
     <FormField
       control={control}
       name={bodyKey}
-      render={({ field }) => (
+      render={({ field, fieldState }) => (
         <FormItem className="w-full">
           <FormControl>
-            <InputField className="h-36 px-1">
-              <Editor
-                fontFamily="inherit"
+            <InputRoot hasError={!!fieldState.error}>
+              <ControlInput
+                className="h-[7.75rem]"
+                indentWithTab={false}
                 placeholder={capitalize(field.name)}
                 id={field.name}
-                extensions={extensions}
-                basicSetup={basicSetup}
-                ref={field.ref}
                 value={field.value}
                 onChange={field.onChange}
-                height="100%"
+                variables={variables}
+                autoFocus
+                multiline
               />
-            </InputField>
+            </InputRoot>
           </FormControl>
           <FormMessage>{`Type {{ for variables, or wrap text in ** for bold.`}</FormMessage>
         </FormItem>

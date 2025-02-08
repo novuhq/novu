@@ -4,7 +4,7 @@ import { StepTypeEnum } from '@novu/shared';
 import { FeedRepository, MessageTemplateRepository, NotificationTemplateRepository } from '@novu/dal';
 import { CreateWorkflowRequestDto } from '../../workflows-v1/dto';
 
-describe('Delete A Feed - /feeds (POST)', async () => {
+describe('Delete A Feed - /feeds (POST) #novu-v1', async () => {
   let session: UserSession;
   let feedRepository = new FeedRepository();
   let notificationTemplateRepository = new NotificationTemplateRepository();

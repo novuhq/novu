@@ -16,16 +16,20 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiExcludeController, ApiOperation, ApiQuery } from '@nestjs/swagger';
-import { AnalyticsService, GetSubscriberPreference, GetSubscriberPreferenceCommand } from '@novu/application-generic';
+import { AnalyticsService } from '@novu/application-generic';
 import { MessageEntity, SubscriberEntity } from '@novu/dal';
 import {
-  MessagesStatusEnum,
   ButtonTypeEnum,
-  MessageActionStatusEnum,
-  TriggerTypeEnum,
   IPreferenceChannels,
+  MessageActionStatusEnum,
+  MessagesStatusEnum,
   PreferenceLevelEnum,
+  TriggerTypeEnum,
 } from '@novu/shared';
+import {
+  GetSubscriberPreference,
+  GetSubscriberPreferenceCommand,
+} from '../subscribers/usecases/get-subscriber-preference';
 
 import { SubscriberSession } from '../shared/framework/user.decorator';
 import { LogUsageRequestDto } from './dtos/log-usage-request.dto';
@@ -70,6 +74,7 @@ import { MarkMessageAsByMark } from './usecases/mark-message-as-by-mark/mark-mes
 import { MarkMessageAsByMarkCommand } from './usecases/mark-message-as-by-mark/mark-message-as-by-mark.command';
 import { UpdatePreferences } from '../inbox/usecases/update-preferences/update-preferences.usecase';
 import { UpdatePreferencesCommand } from '../inbox/usecases/update-preferences/update-preferences.command';
+import { MessageResponseDto } from './dtos/message-response.dto';
 
 @ApiCommonResponses()
 @Controller('/widgets')
@@ -253,7 +258,7 @@ export class WidgetsController {
   async markMessagesAs(
     @SubscriberSession() subscriberSession: SubscriberEntity,
     @Body() body: MessageMarkAsRequestDto
-  ): Promise<MessageEntity[]> {
+  ): Promise<MessageResponseDto[]> {
     const messageIds = this.toArray(body.messageId);
     if (!messageIds || messageIds.length === 0) throw new BadRequestException('messageId is required');
 

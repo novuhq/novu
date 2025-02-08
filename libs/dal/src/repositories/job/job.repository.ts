@@ -189,9 +189,10 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
       job.digest?.type === DigestTypeEnum.BACKOFF ||
       (job.digest as IDigestRegularMetadata)?.backoff ||
       (digestMeta?.backoff && digestMeta?.backoff);
+    const digestQuery = this.buildDigestQuery(digestKey, digestValue);
 
     if (isBackoff) {
-      const trigger = await this.getTrigger(job, digestMeta, digestKey, digestValue);
+      const trigger = await this.getTriggerJob(job, digestMeta, digestQuery);
       if (!trigger) {
         return {
           digestResult: DigestCreationResultEnum.SKIPPED,
@@ -219,7 +220,7 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
         _templateId: job._templateId,
         _environmentId: this.convertStringToObjectId(job._environmentId),
         _subscriberId: this.convertStringToObjectId(job._subscriberId),
-        ...(digestKey && { [`payload.${digestKey}`]: digestValue }),
+        ...digestQuery,
       },
       '_id _notificationId'
     );
@@ -252,18 +253,22 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
     };
   }
 
+  private buildDigestQuery(digestKey: string | undefined, digestValue: string | number | undefined) {
+    const digestQueryV1 = digestKey ? { [`payload.${digestKey}`]: digestValue } : null;
+    // Digest key parsing is handled by the framework, leaving only the digest value available here
+    const digestQueryV2 = !digestKey && digestValue ? { [`digest.digestValue`]: digestValue } : null;
+    const digestQuery = digestQueryV1 || digestQueryV2;
+
+    return digestQuery || {};
+  }
+
   private getBackoffDate(metadata: IDigestRegularMetadata | undefined) {
     return sub(new Date(), {
       [metadata?.backoffUnit as string]: metadata?.backoffAmount,
     });
   }
 
-  private getTrigger(
-    job: JobEntity,
-    metadata?: IDigestRegularMetadata,
-    digestKey?: string,
-    digestValue?: string | number
-  ) {
+  private getTriggerJob(job: JobEntity, metadata?: IDigestRegularMetadata, digestQuery?: Record<string, unknown>) {
     const query = {
       updatedAt: {
         $gte: this.getBackoffDate(metadata),
@@ -276,7 +281,7 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
       type: StepTypeEnum.TRIGGER,
       _environmentId: job._environmentId,
       _subscriberId: job._subscriberId,
-      ...(digestKey && { [`payload.${digestKey}`]: digestValue }),
+      ...digestQuery,
     };
 
     return this.findOne(query);

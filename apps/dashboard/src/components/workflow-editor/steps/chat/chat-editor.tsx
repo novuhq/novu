@@ -1,4 +1,3 @@
-import { RiChat1Fill } from 'react-icons/ri';
 import { type UiSchema } from '@novu/shared';
 
 import { getComponentByType } from '@/components/workflow-editor/steps/component-utils';
@@ -13,11 +12,8 @@ export const ChatEditor = (props: ChatEditorProps) => {
   return (
     <div className="flex h-full flex-col">
       <TabsSection>
-        <div className="flex items-center gap-2.5 text-sm font-medium">
-          <RiChat1Fill className="size-3" />
-          Chat template editor
-        </div>
-        <div className="flex flex-col gap-1 rounded-lg border border-neutral-100 p-1">
+        <div className="flex items-center gap-2.5 text-sm font-medium">Chat template editor</div>
+        <div className="rounded-12 flex flex-col gap-2 border border-neutral-100 p-2">
           {getComponentByType({ component: body.component })}
         </div>
       </TabsSection>

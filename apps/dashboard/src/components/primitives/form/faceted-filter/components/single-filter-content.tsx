@@ -1,9 +1,9 @@
-import { RadioGroup, RadioGroupItem } from '../../../radio-group';
-import { Label } from '../../../label';
-import { FilterOption, SizeType } from '../types';
 import { cn } from '../../../../../utils/ui';
-import { BaseFilterContent } from './base-filter-content';
+import { Label } from '../../../label';
+import { RadioGroup, RadioGroupItem } from '../../../radio-group';
 import { useKeyboardNavigation } from '../hooks/use-keyboard-navigation';
+import { FilterOption, SizeType } from '../types';
+import { BaseFilterContent } from './base-filter-content';
 
 interface SingleFilterContentProps {
   inputRef: React.RefObject<HTMLInputElement>;
@@ -71,7 +71,9 @@ export function SingleFilterContent({
               onClick={() => onSelect(option.value)}
             >
               <RadioGroupItem value={option.value} id={option.value} />
-              <Label htmlFor={option.value}>{option.label}</Label>
+              <Label className="text-xs font-medium" htmlFor={option.value}>
+                {option.label}
+              </Label>
             </div>
           );
         })}

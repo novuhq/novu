@@ -19,7 +19,7 @@ import {
   SmsProviderIdEnum,
 } from '@novu/shared';
 
-describe('Create Organization - /organizations (POST) @skip-in-ee', async () => {
+describe('Create Organization - /organizations (POST) #novu-v1-os', async () => {
   let session: UserSession;
   const organizationRepository = new CommunityOrganizationRepository();
   const userRepository = new CommunityUserRepository();

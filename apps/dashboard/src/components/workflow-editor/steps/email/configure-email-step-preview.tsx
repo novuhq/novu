@@ -2,12 +2,12 @@ import * as Sentry from '@sentry/react';
 import { HTMLAttributes, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 
-import { usePreviewStep } from '@/hooks/use-preview-step';
-import { EmailPreviewHeader } from '@/components/workflow-editor/steps/email/email-preview';
 import { Separator } from '@/components/primitives/separator';
 import { Skeleton } from '@/components/primitives/skeleton';
-import { cn } from '@/utils/ui';
+import { EmailPreviewHeader } from '@/components/workflow-editor/steps/email/email-preview';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
+import { usePreviewStep } from '@/hooks/use-preview-step';
+import { cn } from '@/utils/ui';
 
 type MiniEmailPreviewProps = HTMLAttributes<HTMLDivElement>;
 const MiniEmailPreview = (props: MiniEmailPreviewProps) => {
@@ -22,7 +22,7 @@ const MiniEmailPreview = (props: MiniEmailPreviewProps) => {
     >
       <div className="flex flex-col gap-1 py-1">
         <EmailPreviewHeader className="px-2 text-sm" />
-        <Separator className="bg-neutral-alpha-100" />
+        <Separator className="before:bg-neutral-alpha-100" />
         <div className="relative z-10 space-y-1 px-2">{children}</div>
       </div>
     </div>

@@ -12,7 +12,7 @@ import {
   PushProviderIdEnum,
 } from '@novu/shared';
 
-describe('Update Integration - /integrations/:integrationId (PUT)', function () {
+describe('Update Integration - /integrations/:integrationId (PUT) #novu-v2', function () {
   let session: UserSession;
   const integrationRepository = new IntegrationRepository();
   const envRepository = new EnvironmentRepository();
@@ -1036,7 +1036,6 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
       body: { data },
     } = await session.testAgent.put(`/v1/integrations/${inAppIntegration._id}`).send(payload);
 
-    console.log('data', data);
     expect(data.removeNovuBranding).to.be.undefined;
 
     const updatedIntegration = await integrationRepository.findOne({

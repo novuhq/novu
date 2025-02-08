@@ -66,6 +66,7 @@ jobs:
             --platform=linux/amd64
             --output=type=image,name=$REGISTRY/$REPOSITORY,push-by-digest=true,name-canonical=true
         run: |
+          cp scripts/dotenvcreate.mjs apps/ws/src/dotenvcreate.mjs
           BULL_MQ_PRO_NPM_TOKEN=${BULL_MQ_PRO_NPM_TOKEN} docker buildx build --secret id=BULL_MQ_PRO_NPM_TOKEN -t $REGISTRY/$REPOSITORY:$IMAGE_TAG --load -f apps/ws/Dockerfile . $DOCKER_BUILD_ARGUMENTS
           docker run --network=host --name api -dit --env NODE_ENV=test $REGISTRY/$REPOSITORY:$IMAGE_TAG
           docker run --network=host appropriate/curl --retry 10 --retry-delay 5 --retry-connrefused http://127.0.0.1:1340/v1/health-check | grep 'ok'

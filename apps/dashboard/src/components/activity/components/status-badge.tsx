@@ -1,15 +1,14 @@
-import { useState, useRef, useEffect } from 'react';
-import { Badge, BadgeVariant } from '@/components/primitives/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives/popover';
 import { IActivityJob, JobStatusEnum } from '@novu/shared';
-import { StatusPreviewCard } from './status-preview-card';
+import { useEffect, useRef, useState } from 'react';
+import { StatusBadge as StatusBadgeComponent, StatusBadgeIcon } from '../../primitives/status-badge';
 import { JOB_STATUS_CONFIG } from '../constants';
-
+import { StatusPreviewCard } from './status-preview-card';
 export interface StatusBadgeProps {
   jobs: IActivityJob[];
 }
 
-export function StatusBadge({ jobs }: StatusBadgeProps) {
+export function ActivityStatusBadge({ jobs }: StatusBadgeProps) {
   const [isOpen, setIsOpen] = useState(false);
   const errorCount = jobs.filter((job) => job.status === JobStatusEnum.FAILED).length;
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
@@ -49,10 +48,9 @@ export function StatusBadge({ jobs }: StatusBadgeProps) {
   return (
     <Popover open={isOpen}>
       <PopoverTrigger onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
-        <Badge variant={variant as BadgeVariant} className="cursor-pointer gap-1 px-1 py-0 leading-6">
-          <Icon className="h-3.5 w-3.5" />
-          {displayLabel}
-        </Badge>
+        <StatusBadgeComponent variant="light" status={variant}>
+          <StatusBadgeIcon as={Icon} /> {displayLabel}
+        </StatusBadgeComponent>
       </PopoverTrigger>
       <PopoverContent
         className="w-64"

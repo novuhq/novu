@@ -1,6 +1,6 @@
 {
   "name": "@novu/nextjs",
-  "version": "2.6.3",
+  "version": "2.6.5",
   "repository": "https://github.com/novuhq/novu",
   "description": "Novu's Next.js SDK for building custom inbox notification experiences",
   "author": "",

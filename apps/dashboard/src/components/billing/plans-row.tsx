@@ -44,7 +44,11 @@ export function PlansRow({ selectedBillingInterval, currentPlan, trial }: PlansR
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-xl font-semibold">Free</h3>
-              {effectiveCurrentPlan === 'free' && <Badge variant="soft">Current Plan</Badge>}
+              {effectiveCurrentPlan === 'free' && (
+                <Badge variant="light" color="gray" size="sm">
+                  Current Plan
+                </Badge>
+              )}
             </div>
             <PlanDisplay price="$0" subtitle="free forever" events="30,000 events per month" />
             <ul className="space-y-2">
@@ -73,7 +77,11 @@ export function PlansRow({ selectedBillingInterval, currentPlan, trial }: PlansR
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-xl font-semibold">Business</h3>
-              {effectiveCurrentPlan === 'business' && <Badge variant="soft">Current Plan</Badge>}
+              {effectiveCurrentPlan === 'business' && (
+                <Badge variant="light" color="gray" size="sm">
+                  Current Plan
+                </Badge>
+              )}
             </div>
             <PlanDisplay
               price={businessPlanPrice}
@@ -97,7 +105,7 @@ export function PlansRow({ selectedBillingInterval, currentPlan, trial }: PlansR
           </div>
           <div className="mt-6">
             {effectiveCurrentPlan !== 'enterprise' && (
-              <PlanActionButton selectedBillingInterval={selectedBillingInterval} className="w-full" />
+              <PlanActionButton selectedBillingInterval={selectedBillingInterval} mode="filled" className="w-full" />
             )}
           </div>
         </div>
@@ -111,7 +119,11 @@ export function PlansRow({ selectedBillingInterval, currentPlan, trial }: PlansR
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-xl font-semibold">Enterprise</h3>
-              {effectiveCurrentPlan === 'enterprise' && <Badge variant="soft">Current Plan</Badge>}
+              {effectiveCurrentPlan === 'enterprise' && (
+                <Badge variant="light" color="gray" size="sm">
+                  Current Plan
+                </Badge>
+              )}
             </div>
             <div className="space-y-1">
               <div className="flex items-baseline gap-1">
@@ -134,9 +146,9 @@ export function PlansRow({ selectedBillingInterval, currentPlan, trial }: PlansR
               </li>
             </ul>
           </div>
-          <div className="mt-6">
+          <div className="mt-auto">
             {effectiveCurrentPlan === 'enterprise' ? (
-              <PlanActionButton selectedBillingInterval={selectedBillingInterval} className="w-full" />
+              <PlanActionButton selectedBillingInterval={selectedBillingInterval} mode="outline" className="w-full" />
             ) : (
               <ContactSalesButton variant="outline" className="w-full" />
             )}

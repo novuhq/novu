@@ -22,7 +22,7 @@ import {
 import { UserSession } from '@novu/testing';
 import { CreateWorkflowRequestDto, UpdateWorkflowRequestDto } from '../../workflows-v1/dto';
 
-describe('Promote changes', () => {
+describe('Promote changes #novu-v1', () => {
   let session: UserSession;
   let prodEnv: EnvironmentEntity;
   const changeRepository: ChangeRepository = new ChangeRepository();

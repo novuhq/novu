@@ -10,7 +10,7 @@ import {
 } from '@novu/shared';
 import { HttpStatus } from '@nestjs/common';
 
-describe('Delete Integration - /integration/:integrationId (DELETE)', function () {
+describe('Delete Integration - /integration/:integrationId (DELETE) #novu-v2', function () {
   let session: UserSession;
   const integrationRepository = new IntegrationRepository();
 

@@ -1,9 +1,8 @@
+import merge from 'lodash/merge';
 import { PreferencesTypeEnum } from '@novu/shared';
-import { PreferencesEntity } from '@novu/dal';
-import { deepMerge } from '../../utils';
+
 import { GetPreferencesResponseDto } from '../get-preferences';
 import { MergePreferencesCommand } from './merge-preferences.command';
-import { DeepRequired } from '../../http/utils.types';
 
 /**
  * Merge preferences for a subscriber.
@@ -44,9 +43,7 @@ export class MergePreferences {
       ...(isWorkflowPreferenceReadonly ? [] : subscriberPreferences),
     ];
 
-    const mergedPreferences = deepMerge(
-      preferencesList as DeepRequired<PreferencesEntity>[],
-    );
+    const mergedPreferences = merge({}, ...preferencesList);
 
     // Build the source object
     const source = {

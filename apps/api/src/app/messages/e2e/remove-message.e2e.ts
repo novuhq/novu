@@ -8,7 +8,7 @@ import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 const axiosInstance = axios.create();
 
-describe('Delete Message - /messages/:messageId (DELETE)', function () {
+describe('Delete Message - /messages/:messageId (DELETE) #novu-v2', function () {
   let session: UserSession;
   const messageRepository = new MessageRepository();
   let template: NotificationTemplateEntity;
@@ -34,7 +34,7 @@ describe('Delete Message - /messages/:messageId (DELETE)', function () {
 
   it('should delete a existing message', async function () {
     await novuClient.trigger({
-      name: template.triggers[0].identifier,
+      workflowId: template.triggers[0].identifier,
       to: [{ subscriberId: subscriber.subscriberId, email: 'gg@ff.com' }],
       payload: {
         email: 'new-test-email@gmail.com',
@@ -43,7 +43,7 @@ describe('Delete Message - /messages/:messageId (DELETE)', function () {
       },
     });
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
 
     const messages = await messageRepository.findBySubscriberChannel(
       session.environment._id,

@@ -5,7 +5,7 @@ import { expect } from 'chai';
 import { CommunityUserRepository } from '@novu/dal';
 import { UserSessionData } from '@novu/shared';
 
-describe('User login - /auth/login (POST) @skip-in-ee', async () => {
+describe('User login - /auth/login (POST) #novu-v1-os', async () => {
   let session: UserSession;
   const userRepository = new CommunityUserRepository();
   const userCredentials = {

@@ -22,7 +22,7 @@ export const updatePreference = async ({
   useCache,
   args,
 }: UpdatePreferenceParams): Result<Preference> => {
-  const { workflowId, channelPreferences } = args;
+  const { workflowId, channels } = args;
   try {
     emitter.emit('preference.update.pending', {
       args,
@@ -32,7 +32,7 @@ export const updatePreference = async ({
               ...args.preference,
               channels: {
                 ...args.preference.channels,
-                ...channelPreferences,
+                ...channels,
               },
             },
             {
@@ -47,10 +47,10 @@ export const updatePreference = async ({
 
     let response;
     if (workflowId) {
-      response = await apiService.updateWorkflowPreferences({ workflowId, channelPreferences });
+      response = await apiService.updateWorkflowPreferences({ workflowId, channels });
     } else {
       optimisticUpdateWorkflowPreferences({ emitter, apiService, cache, useCache, args });
-      response = await apiService.updateGlobalPreferences(channelPreferences);
+      response = await apiService.updateGlobalPreferences(channels);
     }
 
     const preference = new Preference(response, {
@@ -84,7 +84,7 @@ const optimisticUpdateWorkflowPreferences = ({
         ...el,
         channels: Object.entries(el.channels).reduce((acc, [key, value]) => {
           const channelType = key as ChannelType;
-          acc[channelType] = args.channelPreferences[channelType] ?? value;
+          acc[channelType] = args.channels[channelType] ?? value;
 
           return acc;
         }, {} as ChannelPreference),
@@ -102,7 +102,7 @@ const optimisticUpdateWorkflowPreferences = ({
         emitter.emit('preference.update.pending', {
           args: {
             workflowId: el.workflow?.id,
-            channelPreferences: updatedPreference.channels,
+            channels: updatedPreference.channels,
           },
           data: updatedPreference,
         });

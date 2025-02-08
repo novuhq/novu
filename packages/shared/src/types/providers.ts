@@ -140,3 +140,11 @@ export type ProvidersIdEnum =
   | PushProviderIdEnum
   | InAppProviderIdEnum
   | ChatProviderIdEnum;
+
+export const ProvidersIdEnumConst = {
+  EmailProviderIdEnum,
+  SmsProviderIdEnum,
+  PushProviderIdEnum,
+  InAppProviderIdEnum,
+  ChatProviderIdEnum,
+};

@@ -5,7 +5,7 @@ import { LayoutId, TemplateVariableTypeEnum } from '../types';
 
 const BASE_PATH = '/v1/layouts';
 
-describe('Layout creation - /layouts (POST)', async () => {
+describe('Layout creation - /layouts (POST) #novu-v1', async () => {
   let session: UserSession;
   let initialDefaultLayoutId: LayoutId;
 

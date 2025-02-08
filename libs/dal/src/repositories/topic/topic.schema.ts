@@ -31,10 +31,8 @@ const topicSchema = new Schema<TopicDBModel>(
 
 topicSchema.index({
   _environmentId: 1,
-});
-
-topicSchema.index({
   _organizationId: 1,
+  key: 1,
 });
 
 export const Topic =

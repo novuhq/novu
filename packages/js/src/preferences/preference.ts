@@ -1,9 +1,10 @@
 import { InboxService } from '../api';
 
 import { NovuEventEmitter } from '../event-emitter';
-import { ChannelPreference, PreferenceLevel, Result, Workflow } from '../types';
+import { ChannelPreference, PreferenceLevel, Result, Workflow, Prettify } from '../types';
 import { updatePreference } from './helpers';
 import { PreferencesCache } from '../cache/preferences-cache';
+import { UpdatePreferencesArgs } from './types';
 
 type PreferenceLike = Pick<Preference, 'level' | 'enabled' | 'channels' | 'workflow'>;
 
@@ -42,7 +43,11 @@ export class Preference {
     this.workflow = preference.workflow;
   }
 
-  update({ channelPreferences }: { channelPreferences: ChannelPreference }): Result<Preference> {
+  update({
+    channels,
+    // @deprecated use channels instead
+    channelPreferences,
+  }: Prettify<Pick<UpdatePreferencesArgs, 'channels' | 'channelPreferences'>>): Result<Preference> {
     return updatePreference({
       emitter: this.#emitter,
       apiService: this.#apiService,
@@ -50,7 +55,7 @@ export class Preference {
       useCache: this.#useCache,
       args: {
         workflowId: this.workflow?.id,
-        channelPreferences,
+        channels: channels || channelPreferences,
         preference: {
           level: this.level,
           enabled: this.enabled,

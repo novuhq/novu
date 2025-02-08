@@ -1,24 +1,59 @@
-import * as React from 'react';
-import * as SeparatorPrimitive from '@radix-ui/react-separator';
+import { tv, type VariantProps } from '@/utils/tv';
 
-import { cn } from '@/utils/ui';
+const SEPARATOR_ROOT_NAME = 'SeparatorRoot';
 
-const Separator = React.forwardRef<
-  React.ElementRef<typeof SeparatorPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof SeparatorPrimitive.Root>
->(({ className, orientation = 'horizontal', decorative = true, ...props }, ref) => (
-  <SeparatorPrimitive.Root
-    ref={ref}
-    decorative={decorative}
-    orientation={orientation}
-    className={cn(
-      'bg-neutral-alpha-200 shrink-0',
-      orientation === 'horizontal' ? 'h-[1px] w-full' : 'h-full w-[1px]',
-      className
-    )}
-    {...props}
-  />
-));
-Separator.displayName = SeparatorPrimitive.Root.displayName;
+export const separatorVariants = tv({
+  base: 'relative flex w-full items-center',
+  variants: {
+    variant: {
+      line: 'h-0 before:absolute before:left-0 before:top-1/2 before:h-px before:w-full before:-translate-y-1/2 before:bg-stroke-soft',
+      'line-spacing': [
+        // base
+        'h-1',
+        // before
+        'before:absolute before:left-0 before:top-1/2 before:h-px before:w-full before:-translate-y-1/2 before:bg-stroke-soft',
+      ],
+      'line-text': [
+        // base
+        'gap-2.5',
+        'text-subheading-2xs text-text-soft',
+        // before
+        'before:h-px before:w-full before:flex-1 before:bg-stroke-soft',
+        // after
+        'after:h-px after:w-full after:flex-1 after:bg-stroke-soft',
+      ],
+      content: [
+        // base
+        'gap-2.5',
+        // before
+        'before:h-px before:w-full before:flex-1 before:bg-stroke-soft',
+        // after
+        'after:h-px after:w-full after:flex-1 after:bg-stroke-soft',
+      ],
+      text: [
+        // base
+        'px-2 py-1',
+        'text-subheading-2xs text-text-soft',
+      ],
+      'solid-text': [
+        // base
+        'bg-bg-weak px-3 py-1.5 uppercase',
+        'text-subheading-2xs text-text-soft',
+      ],
+    },
+  },
+  defaultVariants: {
+    variant: 'line',
+  },
+});
+
+function Separator({
+  className,
+  variant,
+  ...rest
+}: React.HTMLAttributes<HTMLDivElement> & VariantProps<typeof separatorVariants>) {
+  return <div role="separator" className={separatorVariants({ variant, class: className })} {...rest} />;
+}
+Separator.displayName = SEPARATOR_ROOT_NAME;
 
 export { Separator };

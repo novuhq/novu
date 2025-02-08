@@ -83,46 +83,42 @@ export function ActivityPanel({
       transition={{ duration: 0.5, ease: 'easeOut' }}
       className="h-full"
     >
-      <div>
-        <div
-          className={cn(
-            'flex items-center gap-2 border-b border-t border-neutral-200 border-b-neutral-100 px-3 pb-2 pt-[7px]',
-            headerClassName,
-            overviewHeaderClassName
-          )}
-        >
-          <RiRouteFill className="h-3 w-3" />
-          <span className="text-foreground-950 text-sm font-medium">
-            {activity.template?.name || 'Deleted workflow'}
-          </span>
-        </div>
-        <ActivityOverview activity={activity} />
-
-        <div className={cn('flex items-center gap-2 border-b border-t border-neutral-100 p-2 px-3', headerClassName)}>
-          <RiPlayCircleLine className="h-3 w-3" />
-          <span className="text-foreground-950 text-sm font-medium">Logs</span>
-        </div>
-
-        {isMerged && (
-          <div className="px-3 py-3">
-            <InlineToast
-              ctaClassName="text-foreground-950"
-              variant={'tip'}
-              ctaLabel="View Execution"
-              onCtaClick={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-
-                if (activity._digestedNotificationId) {
-                  onActivitySelect(activity._digestedNotificationId);
-                }
-              }}
-              description="Remaining execution has been merged to an active Digest of an existing workflow execution."
-            />
-          </div>
+      <div
+        className={cn(
+          'flex items-center gap-2 border-b border-t border-neutral-200 border-b-neutral-100 px-3 pb-2 pt-[7px]',
+          headerClassName,
+          overviewHeaderClassName
         )}
-        <LogsSection jobs={activity.jobs} />
+      >
+        <RiRouteFill className="h-3 w-3" />
+        <span className="text-foreground-950 text-sm font-medium">{activity.template?.name || 'Deleted workflow'}</span>
       </div>
+      <ActivityOverview activity={activity} />
+
+      <div className={cn('flex items-center gap-2 border-b border-t border-neutral-100 p-2 px-3', headerClassName)}>
+        <RiPlayCircleLine className="h-3 w-3" />
+        <span className="text-foreground-950 text-sm font-medium">Logs</span>
+      </div>
+
+      {isMerged && (
+        <div className="px-3 py-3">
+          <InlineToast
+            ctaClassName="text-foreground-950"
+            variant={'tip'}
+            ctaLabel="View Execution"
+            onCtaClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+
+              if (activity._digestedNotificationId) {
+                onActivitySelect(activity._digestedNotificationId);
+              }
+            }}
+            description="Remaining execution has been merged to an active Digest of an existing workflow execution."
+          />
+        </div>
+      )}
+      <LogsSection jobs={activity.jobs} />
     </motion.div>
   );
 }

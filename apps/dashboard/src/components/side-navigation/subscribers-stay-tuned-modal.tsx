@@ -1,7 +1,7 @@
 import { Button } from '@/components/primitives/button';
 import { Dialog, DialogClose, DialogContent, DialogFooter, DialogTrigger } from '@/components/primitives/dialog';
 import { ReactNode } from 'react';
-import { RiBookMarkedLine } from 'react-icons/ri';
+import { ExternalLink } from '../shared/external-link';
 
 export const SubscribersStayTunedModal = ({ children }: { children: ReactNode }) => {
   return (
@@ -19,16 +19,14 @@ export const SubscribersStayTunedModal = ({ children }: { children: ReactNode })
             In the meantime, you can keep using Novu’s powerful APIs to access your subscribers.
           </p>
         </div>
-        <DialogFooter className="[&~button]:hidden" variant="between">
-          <a
+        <DialogFooter className="items-center [&~button]:hidden" variant="between">
+          <ExternalLink
+            variant="documentation"
             href="https://docs.novu.co/api-reference/subscribers/get-subscribers"
-            rel="noreferrer noopener"
-            target="_blank"
             className="flex items-center gap-1 text-sm"
           >
-            <RiBookMarkedLine className="h-5 w-5" />
             View docs
-          </a>
+          </ExternalLink>
           <DialogClose asChild aria-label="Close">
             <Button type="button" variant="primary">
               Alright!

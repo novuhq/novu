@@ -1,14 +1,14 @@
 import { useCallback } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
 import { Button } from '@/components/primitives/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { DashboardLayout } from '../components/dashboard-layout';
+import { IntegrationsList } from '../components/integrations/components/integrations-list';
 import { TableIntegration } from '../components/integrations/types';
 import { Badge } from '../components/primitives/badge';
-import { IntegrationsList } from '../components/integrations/components/integrations-list';
 
 export function IntegrationsListPage() {
   const navigate = useNavigate();
@@ -26,9 +26,6 @@ export function IntegrationsListPage() {
       headerStartItems={
         <h1 className="text-foreground-950 flex items-center gap-1">
           <span>Integration Store</span>
-          <Badge kind="pill" size="2xs">
-            BETA
-          </Badge>
         </h1>
       }
     >
@@ -42,7 +39,7 @@ export function IntegrationsListPage() {
               <TooltipTrigger>
                 <TabsTrigger value="data-warehouse" variant="regular" disabled>
                   Data{' '}
-                  <Badge kind="pill" size="2xs">
+                  <Badge color="gray" size="sm" variant="lighter">
                     SOON
                   </Badge>
                 </TabsTrigger>
@@ -54,7 +51,13 @@ export function IntegrationsListPage() {
               </TooltipContent>
             </Tooltip>
           </TabsList>
-          <Button size="sm" variant="primary" onClick={onAddIntegrationClickCallback} className="my-1.5 mr-2.5">
+          <Button
+            size="xs"
+            variant="primary"
+            mode="gradient"
+            onClick={onAddIntegrationClickCallback}
+            className="my-1.5 mr-2.5"
+          >
             Connect Provider
           </Button>
         </div>

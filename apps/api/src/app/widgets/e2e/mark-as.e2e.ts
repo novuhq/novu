@@ -1,20 +1,23 @@
-import { MessageRepository, NotificationTemplateEntity, SubscriberRepository, MessageEntity } from '@novu/dal';
+import { MessageEntity, MessageRepository, NotificationTemplateEntity, SubscriberRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import axios from 'axios';
 import { ChannelTypeEnum } from '@novu/shared';
 import { expect } from 'chai';
+import { Novu } from '@novu/api';
+import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-describe('Mark as Seen - /widgets/messages/markAs (POST)', async () => {
+describe('Mark as Seen - /widgets/messages/markAs (POST) #novu-v1', async () => {
   const messageRepository = new MessageRepository();
   let session: UserSession;
   let template: NotificationTemplateEntity;
   let subscriberId;
-
+  let novuClient: Novu;
   before(async () => {
     session = new UserSession();
     await session.initialize();
     subscriberId = SubscriberRepository.createObjectId();
     template = await session.createTemplate();
+    novuClient = initNovuClassSdk(session);
   });
 
   it('should change the seen status', async function () {
@@ -29,10 +32,8 @@ describe('Mark as Seen - /widgets/messages/markAs (POST)', async () => {
       })
       .expect(201);
 
-    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
-
-    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
-    await session.awaitRunningJobs(template._id);
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await session.waitForJobCompletion(template._id);
     const { token } = body.data;
     const messages = await messageRepository.findBySubscriberChannel(
       session.environment._id,

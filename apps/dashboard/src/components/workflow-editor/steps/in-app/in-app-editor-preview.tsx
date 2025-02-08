@@ -1,12 +1,12 @@
-import { GeneratePreviewResponseDto } from '@novu/shared';
 import { Notification5Fill } from '@/components/icons';
 import { InAppTabsSection } from '@/components/workflow-editor/steps/in-app/in-app-tabs-section';
-import { InboxPreview } from './inbox-preview';
+import { GeneratePreviewResponseDto } from '@novu/shared';
 import { ConfigurePreviewAccordion } from '../shared/configure-preview-accordion';
+import { InboxPreview } from './inbox-preview';
 
 type InAppEditorPreviewProps = {
   editorValue: string;
-  setEditorValue: (value: string) => void;
+  setEditorValue: (value: string) => Error | null;
   previewStep: () => void;
   previewData?: GeneratePreviewResponseDto;
   isPreviewPending: boolean;

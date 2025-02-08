@@ -1,12 +1,12 @@
-import { X } from 'lucide-react';
-import { Button } from '../primitives/button';
-import { Card, CardContent } from '../primitives/card';
 import { ToggleGroup, ToggleGroupItem } from '@/components/primitives/toggle-group';
-import { toast } from 'sonner';
-import { useCallback, useRef, useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
+import { AnimatePresence, motion } from 'motion/react';
+import { useCallback, useRef, useState } from 'react';
+import { RiCloseFill } from 'react-icons/ri';
+import { toast } from 'sonner';
+import { CompactButton } from '../primitives/button-compact';
+import { Card, CardContent } from '../primitives/card';
 
 interface PromotionalBannerContent {
   emoji?: string;
@@ -168,14 +168,15 @@ function BannerHeader({
         <p className="text-foreground-600 text-xs">{description}</p>
       </motion.div>
       {onDismiss && (
-        <Button
+        <CompactButton
           variant="ghost"
-          size="icon"
+          size="md"
+          icon={RiCloseFill}
           className="absolute right-2.5 top-3 mt-[-3px] h-6 w-6 p-0 hover:bg-neutral-100"
           onClick={onDismiss}
         >
-          <X className="text-foreground-600 h-4 w-4" />
-        </Button>
+          <span className="sr-only">Close</span>
+        </CompactButton>
       )}
     </div>
   );

@@ -5,7 +5,7 @@ import { Novu } from '@novu/api';
 import { ChannelTypeEnum } from '@novu/api/models/components';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-describe('Get Message - /messages (GET)', function () {
+describe('Get Message - /messages (GET) #novu-v2', function () {
   let session: UserSession;
   let template: NotificationTemplateEntity;
   let subscriber: SubscriberEntity;
@@ -23,7 +23,7 @@ describe('Get Message - /messages (GET)', function () {
   it('should fetch existing messages', async function () {
     const subscriber2 = await subscriberService.createSubscriber();
     await novuClient.trigger({
-      name: template.triggers[0].identifier,
+      workflowId: template.triggers[0].identifier,
       to: [
         { subscriberId: subscriber.subscriberId, email: 'gg@ff.com' },
         { subscriberId: subscriber2.subscriberId, email: 'john@doe.com' },
@@ -35,7 +35,7 @@ describe('Get Message - /messages (GET)', function () {
       },
     });
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
 
     let response = await novuClient.messages.retrieve({});
     expect(response.result.data.length).to.be.equal(4);
@@ -57,7 +57,7 @@ describe('Get Message - /messages (GET)', function () {
     await triggerEventWithTransactionId(template.triggers[0].identifier, subscriber3.subscriberId, transactionId2);
     await triggerEventWithTransactionId(template.triggers[0].identifier, subscriber3.subscriberId, transactionId1);
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
 
     let response = await novuClient.messages.retrieve({ subscriberId: subscriber3.subscriberId });
     // here we are expecting 6 messages because workflow has 2 steps in-app and email
@@ -78,7 +78,7 @@ describe('Get Message - /messages (GET)', function () {
     transactionId: string
   ) {
     return await novuClient.trigger({
-      name: templateIdentifier,
+      workflowId: templateIdentifier,
       to: [{ subscriberId, email: 'gg@ff.com' }],
       payload: {},
       transactionId,

@@ -31,7 +31,7 @@ export function WorkflowTriggerInboxIllustration() {
           y2="98.6257"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#F1EFEF" />
+          <stop stopColor="#F1EFEF" />
           <stop offset="0.48" stopColor="#F9F8F8" />
           <stop offset="0.992158" stopColor="#F9F8F8" stopOpacity="0.75" />
         </linearGradient>
@@ -43,7 +43,7 @@ export function WorkflowTriggerInboxIllustration() {
           y2="105.626"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#F1EFEF" />
+          <stop stopColor="#F1EFEF" />
           <stop offset="0.48" stopColor="#F9F8F8" />
           <stop offset="0.992158" stopColor="#F9F8F8" stopOpacity="0.75" />
         </linearGradient>

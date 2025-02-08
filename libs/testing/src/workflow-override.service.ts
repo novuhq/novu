@@ -47,7 +47,7 @@ export class WorkflowOverrideService {
       payload.preferenceSettings = override.preferenceSettings;
     }
 
-    const workflowOverride = await this.workflowOverrideRepository.create(payload as any);
+    const workflowOverride = await this.workflowOverrideRepository.create(payload as WorkflowOverrideEntity);
 
     return { tenant, workflowOverride };
   }

@@ -169,12 +169,12 @@ export class StandardWorker extends StandardWorkerService {
       }
 
       if (shouldHandleLastFailedJob) {
-        const handleLastFailedJobCommand = HandleLastFailedJobCommand.create({
-          ...minimalData,
-          error,
-        });
-
-        await this.handleLastFailedJob.execute(handleLastFailedJobCommand);
+        await this.handleLastFailedJob.execute(
+          HandleLastFailedJobCommand.create({
+            ...minimalData,
+            error,
+          })
+        );
       }
     } catch (anotherError) {
       Logger.error(anotherError, `Failed to set job ${jobId} as failed`, LOG_CONTEXT);
@@ -183,16 +183,14 @@ export class StandardWorker extends StandardWorkerService {
 
   private getBackoffStrategies = () => {
     return async (attemptsMade: number, type: string, eventError: Error, eventJob: Job): Promise<number> => {
-      const command = {
+      return await this.webhookFilterBackoffStrategy.execute({
         attemptsMade,
         environmentId: eventJob?.data?._environmentId,
         eventError,
         eventJob,
         organizationId: eventJob?.data?._organizationId,
         userId: eventJob?.data?._userId,
-      };
-
-      return await this.webhookFilterBackoffStrategy.execute(command);
+      });
     };
   };
 }

@@ -77,5 +77,3 @@ export interface IEncryptedApiKey {
   _userId: string;
   hash: string;
 }
-
-encryptApiKeysMigration();

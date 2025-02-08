@@ -5,7 +5,7 @@ import { SubscriberEntity } from '@novu/dal';
 import { workflow } from '@novu/framework';
 import { BridgeServer } from '../../../../e2e/bridge.server';
 
-describe('Bridge Health Check', async () => {
+describe('Bridge Health Check #novu-v2', async () => {
   let session: UserSession;
   let frameworkClient: BridgeServer;
   let subscriber: SubscriberEntity;

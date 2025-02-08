@@ -117,7 +117,6 @@ jobs:
             echo "test-packages=$(pnpm run get-affected test origin/${{steps.get-base-branch-name.outputs.branch}} packages | tail -n +5)" >> $GITHUB_OUTPUT
             echo "test-libs=$(pnpm run get-affected test origin/${{steps.get-base-branch-name.outputs.branch}} libs | tail -n +5)" >> $GITHUB_OUTPUT
           fi
-
   test_unit_providers:
     name: Unit test @novu/providers
     runs-on: ubuntu-latest
@@ -212,6 +211,7 @@ jobs:
         with:
           targets: lint,build,test
           projects: ${{matrix.projectName}}
+          args: '--skip-nx-cache'
 
   validate_openapi:
     name: Validate OpenAPI
@@ -237,16 +237,12 @@ jobs:
   test_e2e_api:
     name: E2E test API
     needs: [get-affected]
-    strategy:
-      # The order is important for ee to be first, otherwise outputs not work correctly
-      matrix:
-        name: ['novu/api-ee', 'novu/api']
     uses: ./.github/workflows/reusable-api-e2e.yml
     with:
-      ee: ${{ contains (matrix.name,'-ee') }}
+      ee: true
       test-e2e-affected: ${{ contains(fromJson(needs.get-affected.outputs.test-e2e), '@novu/api-service') || contains(fromJson(needs.get-affected.outputs.test-e2e), '@novu/worker') }}
       test-e2e-ee-affected: ${{ contains(fromJson(needs.get-affected.outputs.test-e2e-ee), '@novu/api-service') || contains(fromJson(needs.get-affected.outputs.test-e2e-ee), '@novu/worker') }}
-      job-name: ${{ matrix.name }}
+      job-name: 'novu/api-ee'
       test-unit: false
     secrets: inherit
 

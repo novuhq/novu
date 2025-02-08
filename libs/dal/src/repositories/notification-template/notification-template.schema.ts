@@ -204,6 +204,10 @@ const notificationTemplateSchema = new Schema<NotificationTemplateDBModel>(
     status: {
       type: Schema.Types.String,
     },
+    lastTriggeredAt: {
+      type: Schema.Types.Date,
+      default: null,
+    },
     _environmentId: {
       type: Schema.Types.ObjectId,
       ref: 'Environment',
@@ -269,11 +273,6 @@ notificationTemplateSchema.index({
   _environmentId: 1,
   'triggers.identifier': 1,
   name: 1,
-});
-
-notificationTemplateSchema.index({
-  _environmentId: 1,
-  'triggers.identifier': 1,
 });
 
 notificationTemplateSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, overrideMethods: 'all' });

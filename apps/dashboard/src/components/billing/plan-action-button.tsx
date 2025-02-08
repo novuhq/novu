@@ -1,23 +1,23 @@
 import { Button } from '@/components/primitives/button';
 import { ApiServiceLevelEnum } from '@novu/shared';
-import { cn } from '../../utils/ui';
-import { useFetchSubscription } from '../../hooks/use-fetch-subscription';
-import { useCheckoutSession } from '../../hooks/use-checkout-session';
 import { useBillingPortal } from '../../hooks/use-billing-portal';
+import { useCheckoutSession } from '../../hooks/use-checkout-session';
+import { useFetchSubscription } from '../../hooks/use-fetch-subscription';
+import { cn } from '../../utils/ui';
 
 interface PlanActionButtonProps {
   selectedBillingInterval: 'month' | 'year';
-  variant?: 'default' | 'outline';
+  mode?: 'outline' | 'filled';
   showIcon?: boolean;
   className?: string;
-  size?: 'default' | 'sm' | 'lg';
+  size?: 'sm' | 'md' | 'xs' | '2xs';
 }
 
 export function PlanActionButton({
   selectedBillingInterval,
-  variant = 'default',
+  mode = 'filled',
   className,
-  size = 'default',
+  size = 'md',
 }: PlanActionButtonProps) {
   const { subscription: data, isLoading: isLoadingSubscription } = useFetchSubscription();
   const { navigateToCheckout, isLoading: isCheckingOut } = useCheckoutSession();
@@ -37,7 +37,7 @@ export function PlanActionButton({
 
   return (
     <Button
-      variant={variant}
+      mode={mode}
       size={size}
       className={cn('gap-2', className)}
       onClick={handleAction}

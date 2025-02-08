@@ -4,57 +4,71 @@ import { IsOptional } from 'class-validator';
 
 export class ActivitiesRequestDto {
   @ApiPropertyOptional({
-    enum: ChannelTypeEnum,
+    enum: [...Object.values(ChannelTypeEnum)],
+    enumName: 'ChannelTypeEnum',
     isArray: true,
+    description: 'Array of channel types',
   })
+  @IsOptional()
   channels?: ChannelTypeEnum[] | ChannelTypeEnum;
 
   @ApiPropertyOptional({
     type: String,
     isArray: true,
+    description: 'Array of template IDs or a single template ID',
   })
+  @IsOptional()
   templates?: string[] | string;
 
   @ApiPropertyOptional({
     type: String,
     isArray: true,
+    description: 'Array of email addresses or a single email address',
   })
+  @IsOptional()
   emails?: string | string[];
 
   @ApiPropertyOptional({
     type: String,
     deprecated: true,
+    description: 'Search term (deprecated)',
   })
+  @IsOptional()
   search?: string;
 
   @ApiPropertyOptional({
     type: String,
     isArray: true,
+    description: 'Array of subscriber IDs or a single subscriber ID',
   })
+  @IsOptional()
   subscriberIds?: string | string[];
 
   @ApiPropertyOptional({
     type: Number,
-    required: false,
+    default: 0,
+    description: 'Page number for pagination',
   })
-  page?: number = 0;
+  @IsOptional()
+  page?: number;
 
   @ApiPropertyOptional({
     type: String,
-    required: false,
+    description: 'Transaction ID for filtering',
   })
+  @IsOptional()
   transactionId?: string;
 
   @ApiPropertyOptional({
     type: String,
-    required: false,
+    description: 'Date filter for records after this timestamp',
   })
   @IsOptional()
   after?: string;
 
   @ApiPropertyOptional({
     type: String,
-    required: false,
+    description: 'Date filter for records before this timestamp',
   })
   @IsOptional()
   before?: string;

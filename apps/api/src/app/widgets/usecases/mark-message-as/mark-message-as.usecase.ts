@@ -62,18 +62,7 @@ export class MarkMessageAs {
         $in: command.messageIds,
       },
     });
-    const isEnabled = await this.getFeatureFlag.execute(
-      GetFeatureFlagCommand.create({
-        key: FeatureFlagsKeysEnum.IS_TEAM_MEMBER_INVITE_NUDGE_ENABLED,
-        organizationId: command.organizationId,
-        userId: 'system',
-        environmentId: 'system',
-      })
-    );
     if (command.mark.seen != null) {
-      if (isEnabled && (process.env.NODE_ENV === 'dev' || process.env.NODE_ENV === 'production')) {
-        await this.sendAnalyticsEventForInviteTeamNudge(messages);
-      }
       await this.updateServices(command, subscriber, messages, MarkEnum.SEEN);
     }
 

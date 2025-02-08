@@ -1,12 +1,11 @@
-import { Cross2Icon } from '@radix-ui/react-icons';
-import { RiEdit2Line, RiPencilRuler2Line } from 'react-icons/ri';
-import { useNavigate } from 'react-router-dom';
 import React, { useEffect } from 'react';
+import { RiCloseLine, RiEdit2Line, RiPencilRuler2Line } from 'react-icons/ri';
+import { useNavigate } from 'react-router-dom';
 
 import { Notification5Fill } from '@/components/icons';
-import { Button } from '@/components/primitives/button';
 import { Separator } from '@/components/primitives/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
+import { CompactButton } from '../../primitives/button-compact';
 
 interface TemplateTabsProps {
   editorContent: React.ReactNode;
@@ -51,9 +50,9 @@ export const TemplateTabs = ({
           </TabsTrigger>
         </TabsList>
 
-        <Button
+        <CompactButton
+          icon={RiCloseLine}
           variant="ghost"
-          size="xs"
           className="size-6"
           onClick={(e) => {
             e.preventDefault();
@@ -61,9 +60,8 @@ export const TemplateTabs = ({
             navigate('../', { relative: 'path' });
           }}
         >
-          <Cross2Icon className="h-4 w-4" />
           <span className="sr-only">Close</span>
-        </Button>
+        </CompactButton>
       </header>
       <Separator />
       <TabsContent value="editor" className="h-full w-full overflow-y-auto">

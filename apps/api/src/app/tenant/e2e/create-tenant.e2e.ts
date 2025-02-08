@@ -10,13 +10,12 @@ function assertValidationMessages(e: AxiosError<any, any>, field: string, msg1: 
   if (!(e instanceof AxiosError)) {
     throw new Error(e);
   }
-  console.log(JSON.stringify(e.response?.data));
   const messages = e.response?.data.errors[field].messages;
 
   expect(messages).to.be.an('array').that.includes(msg1);
 }
 
-describe('Create Tenant - /tenants (POST)', function () {
+describe('Create Tenant - /tenants (POST) #novu-v1', function () {
   let session: UserSession;
   const tenantRepository = new TenantRepository();
 

@@ -1,5 +1,5 @@
-import { Template, Liquid, RenderError, LiquidError } from 'liquidjs';
-import { isValidTemplate, extractLiquidExpressions } from './parser-utils';
+import { Liquid, LiquidError, RenderError, Template } from 'liquidjs';
+import { extractLiquidExpressions, isValidTemplate } from './parser-utils';
 
 const LIQUID_CONFIG = {
   strictVariables: true,
@@ -123,10 +123,14 @@ function processLiquidRawOutput(rawOutputs: string[]): TemplateVariables {
 }
 
 function parseByLiquid(rawOutput: string): TemplateVariables {
+  const parserEngine = new Liquid(LIQUID_CONFIG);
+
+  // Register digest filter for validation of digest transformers
+  parserEngine.registerFilter('digest', () => '');
+
   const validVariables: Variable[] = [];
   const invalidVariables: Variable[] = [];
-  const engine = new Liquid(LIQUID_CONFIG);
-  const parsed = engine.parse(rawOutput) as unknown as Template[];
+  const parsed = parserEngine.parse(rawOutput) as unknown as Template[];
 
   parsed.forEach((template: Template) => {
     if (isOutputToken(template)) {
@@ -162,13 +166,16 @@ function extractProps(template: any): { valid: boolean; props: string[]; error?:
    * Invalid: {{user.first name}} - postfix length would be 2 due to space
    */
   if (initial.postfix.length > 1) {
-    return { valid: false, props: [], error: 'Novu does not support variables with spaces' };
+    return {
+      valid: false,
+      props: [],
+      error: `contains whitespaces. Variables must follow the dot notation (e.g. payload.something)`,
+    };
   }
 
   const validProps: string[] = [];
 
   for (const prop of initial.postfix[0].props) {
-    if (prop.constructor.name !== 'IdentifierToken') break;
     validProps.push(prop.content);
   }
 
@@ -181,7 +188,11 @@ function extractProps(template: any): { valid: boolean; props: string[]; error?:
    * Invalid: {{firstName}} - No namespace
    */
   if (validProps.length === 1) {
-    return { valid: false, props: [], error: 'Novu variables must include a namespace (e.g. user.firstName)' };
+    return {
+      valid: false,
+      props: [],
+      error: `missing namespace. Variables must follow the dot notation (e.g. payload.${validProps[0] === 'payload' ? 'something' : validProps[0]})`,
+    };
   }
 
   return { valid: true, props: validProps };

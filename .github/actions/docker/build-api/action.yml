@@ -74,6 +74,7 @@ runs:
           --output=type=image,name=$REGISTRY/$REPOSITORY,push-by-digest=true,name-canonical=true
       run: |
         set -x
+        cp scripts/dotenvcreate.mjs apps/api/src/dotenvcreate.mjs
         cd apps/api && pnpm run docker:build
 
     - name: Tag and test

@@ -1,7 +1,5 @@
-import { IsNumber, IsOptional, IsString } from 'class-validator';
-
+import { IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 import { TopicKey } from '../../types';
-
 import { EnvironmentCommand } from '../../../shared/commands/project.command';
 
 export class FilterTopicsCommand extends EnvironmentCommand {
@@ -9,11 +7,14 @@ export class FilterTopicsCommand extends EnvironmentCommand {
   @IsOptional()
   key?: TopicKey;
 
-  @IsNumber()
   @IsOptional()
-  page?: number;
+  @IsInt()
+  @Min(0)
+  page?: number = 0;
 
-  @IsNumber()
   @IsOptional()
-  pageSize?: number;
+  @IsInt()
+  @Min(0)
+  @Max(10)
+  pageSize?: number = 10;
 }

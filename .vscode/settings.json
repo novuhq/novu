@@ -8,7 +8,7 @@
   "files.insertFinalNewline": true,
   "files.trimFinalNewlines": true,
   "css.validate": false,
-  "editor.wordWrap": "wordWrapColumn",
+  "editor.wordWrap": "off",
   "editor.wordWrapColumn": 120,
   "editor.codeActionsOnSave": {
     "source.fixAll": "explicit"

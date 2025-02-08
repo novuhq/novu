@@ -1,21 +1,21 @@
-import { useState } from 'react';
-import { Tabs } from '@radix-ui/react-tabs';
-import { FieldValues, useFormContext } from 'react-hook-form';
 import { TimeUnitEnum } from '@novu/shared';
+import { Tabs } from '@radix-ui/react-tabs';
+import { useState } from 'react';
+import { FieldValues, useFormContext } from 'react-hook-form';
 
 import { FormField, FormLabel, FormMessagePure } from '@/components/primitives/form/form';
 import { Separator } from '@/components/primitives/separator';
 import { TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
+import { AMOUNT_KEY, CRON_KEY, UNIT_KEY } from '@/components/workflow-editor/steps/digest/keys';
 import { RegularDigest } from '@/components/workflow-editor/steps/digest/regular-digest';
 import { ScheduledDigest } from '@/components/workflow-editor/steps/digest/scheduled-digest';
-import { AMOUNT_KEY, CRON_KEY, UNIT_KEY } from '@/components/workflow-editor/steps/digest/keys';
-import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
 import { EVERY_MINUTE_CRON } from '@/components/workflow-editor/steps/digest/utils';
+import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
 
 const REGULAR_DIGEST_TYPE = 'regular';
 const SCHEDULED_DIGEST_TYPE = 'scheduled';
-const TWO_SECONDS = 2000;
+const POPOVER_DURATION_MS = 600;
 
 type PreservedFormValuesByType = { [key: string]: FieldValues | undefined };
 
@@ -79,7 +79,7 @@ export const DigestWindow = () => {
         <div className="bg-neutral-alpha-50 flex flex-col rounded-lg border border-solid border-neutral-100">
           <div className="rounded-t-lg p-2">
             <TabsList className="w-full">
-              <Tooltip delayDuration={TWO_SECONDS}>
+              <Tooltip delayDuration={POPOVER_DURATION_MS}>
                 <TooltipTrigger className="ml-1" asChild>
                   <span className="flex-1">
                     <TabsTrigger value={REGULAR_DIGEST_TYPE} className="w-full text-xs">
@@ -94,7 +94,7 @@ export const DigestWindow = () => {
                   </span>
                 </TooltipContent>
               </Tooltip>
-              <Tooltip delayDuration={TWO_SECONDS}>
+              <Tooltip delayDuration={POPOVER_DURATION_MS}>
                 <TooltipTrigger className="ml-1" asChild>
                   <span className="flex-1">
                     <TabsTrigger value={SCHEDULED_DIGEST_TYPE} className="w-full text-xs">
@@ -111,7 +111,7 @@ export const DigestWindow = () => {
               </Tooltip>
             </TabsList>
           </div>
-          <Separator className="bg-neutral-100" />
+          <Separator className="before:bg-neutral-100" />
           <div className="bg-background rounded-b-lg p-2">
             <TabsContent value={REGULAR_DIGEST_TYPE}>
               <RegularDigest />

@@ -24,7 +24,11 @@ export class SubscriberDto {
   subscriberId: string;
   channels?: IChannelSettings[];
   deleted: boolean;
+  createdAt: string;
+  updatedAt: string;
+  lastOnlineAt?: string;
 }
+
 export interface ISubscriberFeedResponseDto {
   _id?: string;
   firstName?: string;

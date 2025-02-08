@@ -3,7 +3,7 @@ import { expect } from 'chai';
 import { UserSession, WorkflowOverrideService } from '@novu/testing';
 import { IUpdateWorkflowOverrideRequestDto } from '@novu/shared';
 
-describe('Update Workflow Override By ID - /workflow-overrides/:overrideId (PUT)', function () {
+describe('Update Workflow Override By ID - /workflow-overrides/:overrideId (PUT) #novu-v1', function () {
   let session: UserSession;
 
   beforeEach(async () => {

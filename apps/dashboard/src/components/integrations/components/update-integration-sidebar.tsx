@@ -1,20 +1,20 @@
-import { useState } from 'react';
-import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
-import { useUpdateIntegration } from '@/hooks/use-update-integration';
-import { useSetPrimaryIntegration } from '@/hooks/use-set-primary-integration';
-import { IntegrationConfiguration } from './integration-configuration';
 import { Button } from '@/components/primitives/button';
+import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
+import { useSetPrimaryIntegration } from '@/hooks/use-set-primary-integration';
+import { useUpdateIntegration } from '@/hooks/use-update-integration';
+import { ChannelTypeEnum, providers as novuProviders } from '@novu/shared';
+import { useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { showSuccessToast } from '../../../components/primitives/sonner-helpers';
+import { useDeleteIntegration } from '../../../hooks/use-delete-integration';
+import { ROUTES } from '../../../utils/routes';
+import { IntegrationFormData } from '../types';
+import { useIntegrationPrimaryModal } from './hooks/use-integration-primary-modal';
+import { IntegrationConfiguration } from './integration-configuration';
+import { IntegrationSheet } from './integration-sheet';
 import { DeleteIntegrationModal } from './modals/delete-integration-modal';
 import { SelectPrimaryIntegrationModal } from './modals/select-primary-integration-modal';
-import { IntegrationSheet } from './integration-sheet';
-import { ChannelTypeEnum, providers as novuProviders } from '@novu/shared';
-import { IntegrationFormData } from '../types';
-import { useDeleteIntegration } from '../../../hooks/use-delete-integration';
 import { handleIntegrationError } from './utils/handle-integration-error';
-import { useIntegrationPrimaryModal } from './hooks/use-integration-primary-modal';
-import { useNavigate, useParams } from 'react-router-dom';
-import { ROUTES } from '../../../utils/routes';
-import { showSuccessToast } from '../../../components/primitives/sonner-helpers';
 
 type UpdateIntegrationSidebarProps = {
   isOpened: boolean;
@@ -81,6 +81,7 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
           primary: data.primary,
           credentials: data.credentials,
           check: data.check,
+          removeNovuBranding: data.removeNovuBranding,
         },
       });
 
@@ -136,12 +137,7 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
 
         <div className="bg-background flex justify-between gap-2 border-t p-3">
           {integration.channel !== ChannelTypeEnum.IN_APP && (
-            <Button
-              variant="ghostDestructive"
-              size="sm"
-              isLoading={isDeleting}
-              onClick={() => setIsDeleteDialogOpen(true)}
-            >
+            <Button variant="error" mode="ghost" isLoading={isDeleting} onClick={() => setIsDeleteDialogOpen(true)}>
               Delete Integration
             </Button>
           )}
@@ -150,7 +146,6 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
             form="integration-configuration-form"
             className="ml-auto"
             isLoading={isUpdating || isSettingPrimary}
-            size="sm"
           >
             Save Changes
           </Button>

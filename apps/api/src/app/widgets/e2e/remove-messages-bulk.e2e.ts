@@ -4,8 +4,10 @@ import { expect } from 'chai';
 import { UserSession } from '@novu/testing';
 import { MessageRepository, NotificationTemplateEntity, SubscriberRepository } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/shared';
+import { Novu } from '@novu/api';
+import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-describe('Remove messages by bulk - /widgets/messages/bulk/delete (POST)', function () {
+describe('Remove messages by bulk - /widgets/messages/bulk/delete (POST) #novu-v1', function () {
   const messageRepository = new MessageRepository();
   let session: UserSession;
   let template: NotificationTemplateEntity;
@@ -14,11 +16,12 @@ describe('Remove messages by bulk - /widgets/messages/bulk/delete (POST)', funct
   let subscriberProfile: {
     _id: string;
   } | null = null;
-
+  let novuClient: Novu;
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
     subscriberId = SubscriberRepository.createObjectId();
+    novuClient = initNovuClassSdk(session);
 
     template = await session.createTemplate({
       noFeedId: true,
@@ -42,11 +45,11 @@ describe('Remove messages by bulk - /widgets/messages/bulk/delete (POST)', funct
   });
 
   it('should remove messages by bulk', async function () {
-    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
-    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
-    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
 
     const messagesBefore = await messageRepository.find({
       _environmentId: session.environment._id,
@@ -79,11 +82,11 @@ describe('Remove messages by bulk - /widgets/messages/bulk/delete (POST)', funct
   });
 
   it('should throw an exception when message ids were not provided', async function () {
-    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
-    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
-    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
 
     try {
       const res = await axios.post(

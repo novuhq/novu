@@ -1,10 +1,12 @@
 import _ from 'lodash';
-
+import { AdditionalOperation, RulesLogic } from 'json-logic-js';
 import { PinoLogger } from '@novu/application-generic';
 
 import { Variable, extractLiquidTemplateVariables, TemplateVariables } from './template-parser/liquid-parser';
-import { transformMailyContentToLiquid } from '../usecases/generate-preview/transform-maily-content-to-liquid';
-import { isStringTipTapNode } from './tip-tap.util';
+import { WrapMailyInLiquidUseCase } from '../../environments-v1/usecases/output-renderers/maily-to-liquid/wrap-maily-in-liquid.usecase';
+import { MAILY_ITERABLE_MARK } from '../../environments-v1/usecases/output-renderers/maily-to-liquid/maily.types';
+import { isStringifiedMailyJSONContent } from '../../environments-v1/usecases/output-renderers/maily-to-liquid/wrap-maily-in-liquid.command';
+import { extractFieldsFromRules, isValidRule } from '../../shared/services/query-parser/query-parser.service';
 
 export function buildVariables(
   variableSchema: Record<string, unknown> | undefined,
@@ -13,9 +15,11 @@ export function buildVariables(
 ): TemplateVariables {
   let variableControlValue = controlValue;
 
-  if (isStringTipTapNode(variableControlValue)) {
+  if (isStringifiedMailyJSONContent(variableControlValue)) {
     try {
-      variableControlValue = transformMailyContentToLiquid(JSON.parse(variableControlValue));
+      variableControlValue = new WrapMailyInLiquidUseCase().execute({
+        emailEditor: variableControlValue,
+      });
     } catch (error) {
       logger?.error(
         {
@@ -26,9 +30,23 @@ export function buildVariables(
         'BuildVariables'
       );
     }
+  } else if (isValidRule(variableControlValue as RulesLogic<AdditionalOperation>)) {
+    const fields = extractFieldsFromRules(variableControlValue as RulesLogic<AdditionalOperation>)
+      .filter((field) => field.startsWith('payload.') || field.startsWith('subscriber.data.'))
+      .map((field) => `{{${field}}}`);
+
+    variableControlValue = {
+      rules: variableControlValue,
+      fields,
+    };
   }
 
   const { validVariables, invalidVariables } = extractLiquidTemplateVariables(JSON.stringify(variableControlValue));
+
+  // don't compare against schema if it's not provided
+  if (!variableSchema) {
+    return { validVariables, invalidVariables };
+  }
 
   const { validVariables: validSchemaVariables, invalidVariables: invalidSchemaVariables } = identifyUnknownVariables(
     variableSchema || {},
@@ -41,53 +59,64 @@ export function buildVariables(
   };
 }
 
-/**
- * Validates variables against a schema to identify which ones are valid/invalid.
- * Returns an object containing arrays of valid and invalid variables.
- */
+function isPropertyAllowed(schema: Record<string, unknown>, propertyPath: string) {
+  let currentSchema = { ...schema };
+  if (!currentSchema || typeof currentSchema !== 'object') {
+    return false;
+  }
+
+  const pathParts = propertyPath.split('.');
+
+  for (const part of pathParts) {
+    const { properties, additionalProperties } = currentSchema;
+
+    if (properties?.[part]) {
+      currentSchema = properties[part];
+      continue;
+    }
+
+    if (part === MAILY_ITERABLE_MARK && currentSchema.type === 'array') {
+      currentSchema = currentSchema.items as Record<string, unknown>;
+      continue;
+    }
+
+    if (additionalProperties === true) {
+      return true;
+    }
+
+    return false;
+  }
+
+  return true;
+}
+
+function createInvalidVariable(variable: Variable): Variable {
+  return {
+    name: variable.output,
+    context: variable.context,
+    message: 'Variable is not supported',
+    output: variable.output,
+  };
+}
+
 function identifyUnknownVariables(
   variableSchema: Record<string, unknown>,
   validVariables: Variable[]
 ): TemplateVariables {
-  const validVariablesCopy: Variable[] = _.cloneDeep(validVariables);
+  const variables = _.cloneDeep(validVariables);
 
-  const result = validVariablesCopy.reduce<TemplateVariables>(
-    (acc, variable: Variable) => {
-      const parts = variable.name.split('.');
-      let isValid = true;
-      let currentPath = 'properties';
-
-      for (const part of parts) {
-        currentPath += `.${part}`;
-        const valueSearch = _.get(variableSchema, currentPath);
-
-        currentPath += '.properties';
-        const propertiesSearch = _.get(variableSchema, currentPath);
-
-        if (valueSearch === undefined && propertiesSearch === undefined) {
-          isValid = false;
-          break;
-        }
-      }
+  return variables.reduce<TemplateVariables>(
+    (acc, variable) => {
+      const isValid = isPropertyAllowed(variableSchema, variable.name);
 
       if (isValid) {
         acc.validVariables.push(variable);
       } else {
-        acc.invalidVariables.push({
-          name: variable.output,
-          context: variable.context,
-          message: 'Variable is not supported',
-          output: variable.output,
-        });
+        acc.invalidVariables.push(createInvalidVariable(variable));
       }
 
       return acc;
     },
-    {
-      validVariables: [] as Variable[],
-      invalidVariables: [] as Variable[],
-    } as TemplateVariables
+    { validVariables: [], invalidVariables: [] }
   );
-
-  return result;
 }

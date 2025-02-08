@@ -2,26 +2,26 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import axios from 'axios';
 
 import {
-  CreateSubscriber,
-  CreateSubscriberCommand,
+  CreateOrUpdateSubscriberUseCase,
+  CreateOrUpdateSubscriberCommand,
   decryptCredentials,
-  OAuthHandlerEnum,
   IChannelCredentialsCommand,
+  OAuthHandlerEnum,
   UpdateSubscriberChannel,
   UpdateSubscriberChannelCommand,
 } from '@novu/application-generic';
 import { ICredentialsDto } from '@novu/shared';
 import {
   ChannelTypeEnum,
+  EnvironmentEntity,
   EnvironmentRepository,
   IntegrationEntity,
   IntegrationRepository,
-  EnvironmentEntity,
 } from '@novu/dal';
-
 import { ChatOauthCallbackCommand } from './chat-oauth-callback.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { validateEncryption } from '../chat-oauth/chat-oauth.usecase';
+import { ChatOauthCallbackResult, ResponseTypeEnum } from './chat-oauth-callback.result';
 
 @Injectable()
 export class ChatOauthCallback {
@@ -32,10 +32,10 @@ export class ChatOauthCallback {
     private updateSubscriberChannelUsecase: UpdateSubscriberChannel,
     private integrationRepository: IntegrationRepository,
     private environmentRepository: EnvironmentRepository,
-    private createSubscriberUsecase: CreateSubscriber
+    private createSubscriberUsecase: CreateOrUpdateSubscriberUseCase
   ) {}
 
-  async execute(command: ChatOauthCallbackCommand) {
+  async execute(command: ChatOauthCallbackCommand): Promise<ChatOauthCallbackResult> {
     const integrationCredentials = await this.getIntegrationCredentials(command);
 
     const { _organizationId, apiKeys } = await this.getEnvironment(command.environmentId);
@@ -51,9 +51,11 @@ export class ChatOauthCallback {
 
     await this.createSubscriber(_organizationId, command, webhookUrl);
 
-    const redirect = integrationCredentials.redirectUrl != null && integrationCredentials.redirectUrl !== '';
+    if (integrationCredentials && integrationCredentials.redirectUrl) {
+      return { typeOfResponse: ResponseTypeEnum.URL, resultString: integrationCredentials.redirectUrl };
+    }
 
-    return { redirect, action: redirect ? integrationCredentials.redirectUrl! : this.SCRIPT_CLOSE_TAB };
+    return { typeOfResponse: ResponseTypeEnum.HTML, resultString: this.SCRIPT_CLOSE_TAB };
   }
 
   private async createSubscriber(
@@ -62,7 +64,7 @@ export class ChatOauthCallback {
     webhookUrl: string
   ): Promise<void> {
     await this.createSubscriberUsecase.execute(
-      CreateSubscriberCommand.create({
+      CreateOrUpdateSubscriberCommand.create({
         organizationId,
         environmentId: command.environmentId,
         subscriberId: command?.subscriberId,

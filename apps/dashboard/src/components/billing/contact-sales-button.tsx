@@ -1,13 +1,13 @@
 import { Button } from '@/components/primitives/button';
 import { ApiServiceLevelEnum } from '@novu/shared';
 import { useState } from 'react';
-import { ContactSalesModal } from './contact-sales-modal';
 import { useTelemetry } from '../../hooks/use-telemetry';
 import { TelemetryEvent } from '../../utils/telemetry';
+import { ContactSalesModal } from './contact-sales-modal';
 
 interface ContactSalesButtonProps {
   className?: string;
-  variant?: 'default' | 'outline';
+  variant?: 'filled' | 'outline';
 }
 
 export function ContactSalesButton({ className, variant = 'outline' }: ContactSalesButtonProps) {
@@ -31,7 +31,7 @@ export function ContactSalesButton({ className, variant = 'outline' }: ContactSa
 
   return (
     <>
-      <Button variant={variant} className={className} onClick={handleContactSales}>
+      <Button mode={variant} size="sm" className={className} onClick={handleContactSales}>
         Contact sales
       </Button>
       <ContactSalesModal

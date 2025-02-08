@@ -1,8 +1,8 @@
-import type { JSONSchemaDto } from './json-schema-dto';
-import { Slug } from '../../types/utils';
 import { StepTypeEnum, WorkflowCreationSourceEnum, WorkflowOriginEnum, WorkflowPreferences } from '../../types';
+import { Slug } from '../../types/utils';
+import type { JSONSchemaDto } from './json-schema-dto';
+import { StepCreateDto, StepResponseDto, StepUpdateDto } from './step.dto';
 import { WorkflowStatusEnum } from './workflow-status-enum';
-import { StepCreateDto, StepDataDto, StepUpdateDto } from './step.dto';
 
 export class ControlsSchema {
   schema: JSONSchemaDto;
@@ -22,7 +22,7 @@ export type ListWorkflowResponse = {
 
 export type WorkflowListResponseDto = Pick<
   WorkflowResponseDto,
-  'name' | 'tags' | 'updatedAt' | 'createdAt' | '_id' | 'workflowId' | 'slug' | 'status' | 'origin'
+  'name' | 'tags' | 'updatedAt' | 'createdAt' | '_id' | 'workflowId' | 'slug' | 'status' | 'origin' | 'lastTriggeredAt'
 > & {
   stepTypeOverviews: StepTypeEnum[];
 };
@@ -50,11 +50,12 @@ export type WorkflowResponseDto = WorkflowCommonsFields & {
   slug: Slug;
   updatedAt: string;
   createdAt: string;
-  steps: StepDataDto[];
+  steps: StepResponseDto[];
   origin: WorkflowOriginEnum;
   preferences: PreferencesResponseDto;
   status: WorkflowStatusEnum;
   issues?: Record<WorkflowCreateAndUpdateKeys, RuntimeIssueDto>;
+  lastTriggeredAt?: string;
 };
 export type WorkflowCreateAndUpdateKeys = keyof CreateWorkflowDto | keyof UpdateWorkflowDto;
 export class RuntimeIssueDto {
@@ -89,6 +90,8 @@ export type UpdateWorkflowDto = WorkflowCommonsFields & {
   steps: (StepCreateDto | StepUpdateDto)[];
 
   preferences: PreferencesRequestDto;
+
+  origin: WorkflowOriginEnum;
 };
 
 export type UpsertWorkflowBody = Omit<UpdateWorkflowDto, 'steps'> & {

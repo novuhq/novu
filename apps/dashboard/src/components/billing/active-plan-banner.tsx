@@ -1,11 +1,11 @@
 import { Badge } from '@/components/primitives/badge';
 import { Card } from '@/components/primitives/card';
 import { Progress } from '@/components/primitives/progress';
-import { cn } from '../../utils/ui';
-import { CalendarDays } from 'lucide-react';
-import { PlanActionButton } from './plan-action-button';
 import { Skeleton } from '@/components/primitives/skeleton';
+import { CalendarDays } from 'lucide-react';
 import { useFetchSubscription } from '../../hooks/use-fetch-subscription';
+import { cn } from '../../utils/ui';
+import { PlanActionButton } from './plan-action-button';
 
 interface ActivePlanBannerProps {
   selectedBillingInterval: 'month' | 'year';
@@ -51,7 +51,7 @@ export function ActivePlanBanner({ selectedBillingInterval }: ActivePlanBannerPr
                   <h3 className="text-lg font-semibold capitalize">{subscription.apiServiceLevel?.toLowerCase()}</h3>
                 )}
                 {subscription?.trial.isActive && (
-                  <Badge variant="outline" className="font-medium">
+                  <Badge variant="light" color="gray" size="sm">
                     Trial
                   </Badge>
                 )}
@@ -63,7 +63,7 @@ export function ActivePlanBanner({ selectedBillingInterval }: ActivePlanBannerPr
 
             <PlanActionButton
               selectedBillingInterval={selectedBillingInterval}
-              variant="outline"
+              mode="outline"
               size="sm"
               className="shrink-0"
             />

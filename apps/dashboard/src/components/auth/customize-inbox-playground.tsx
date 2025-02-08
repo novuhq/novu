@@ -1,16 +1,16 @@
-import { Info } from 'lucide-react';
-import { RiInputField, RiLayoutLine } from 'react-icons/ri';
-import { FormProvider, useFormContext, UseFormReturn } from 'react-hook-form';
 import { EditorView } from '@uiw/react-codemirror';
+import { Info } from 'lucide-react';
+import { FormProvider, useFormContext, UseFormReturn } from 'react-hook-form';
+import { RiInputField, RiLayoutLine } from 'react-icons/ri';
 
+import { InAppActionDropdown } from '@/components/in-app-action-dropdown';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/primitives/accordion';
 import { ColorPicker } from '@/components/primitives/color-picker';
-import type { InboxPlaygroundFormData } from './inbox-playground';
-import { FormControl, FormField, FormItem } from '@/components/primitives/form/form';
-import { InputField } from '@/components/primitives/input';
 import { Editor } from '@/components/primitives/editor';
+import { FormControl, FormField, FormItem } from '@/components/primitives/form/form';
 import { capitalize } from '@/utils/string';
-import { InAppActionDropdown } from '@/components/in-app-action-dropdown';
+import { InputRoot, InputWrapper } from '../primitives/input';
+import type { InboxPlaygroundFormData } from './inbox-playground';
 
 interface PreviewStyle {
   id: string;
@@ -168,21 +168,24 @@ function NotificationConfigSection() {
         <FormField
           control={control}
           name="subject"
-          render={({ field }) => (
-            <InputField size="fit">
-              <FormItem className="w-full">
-                <FormControl>
-                  <Editor
-                    fontFamily="inherit"
-                    placeholder={capitalize(field.name)}
-                    id={field.name}
-                    extensions={extensions}
-                    value={field.value}
-                    onChange={field.onChange}
-                  />
-                </FormControl>
-              </FormItem>
-            </InputField>
+          render={({ field, fieldState }) => (
+            <FormItem className="w-full">
+              <FormControl>
+                <InputRoot hasError={!!fieldState.error}>
+                  <InputWrapper className="flex items-center justify-center px-1 py-2">
+                    <Editor
+                      indentWithTab={false}
+                      fontFamily="inherit"
+                      placeholder={capitalize(field.name)}
+                      id={field.name}
+                      extensions={extensions}
+                      value={field.value}
+                      onChange={field.onChange}
+                    />
+                  </InputWrapper>
+                </InputRoot>
+              </FormControl>
+            </FormItem>
           )}
         />
       </div>
@@ -192,19 +195,22 @@ function NotificationConfigSection() {
         render={({ field }) => (
           <FormItem className="w-full">
             <FormControl>
-              <InputField className="h-36 px-1">
-                <Editor
-                  fontFamily="inherit"
-                  placeholder={capitalize(field.name)}
-                  id={field.name}
-                  extensions={extensions}
-                  basicSetup={basicSetup}
-                  ref={field.ref}
-                  value={field.value}
-                  onChange={field.onChange}
-                  height="100%"
-                />
-              </InputField>
+              <InputRoot>
+                <InputWrapper className="flex h-36 items-center justify-center px-1 py-2">
+                  <Editor
+                    fontFamily="inherit"
+                    indentWithTab={false}
+                    placeholder={capitalize(field.name)}
+                    id={field.name}
+                    extensions={extensions}
+                    basicSetup={basicSetup}
+                    ref={field.ref}
+                    value={field.value}
+                    onChange={field.onChange}
+                    height="100%"
+                  />
+                </InputWrapper>
+              </InputRoot>
             </FormControl>
           </FormItem>
         )}

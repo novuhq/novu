@@ -1,21 +1,23 @@
 import { Button } from '@/components/primitives/button';
 import { CardDescription, CardTitle } from '@/components/primitives/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
-import React from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { StepIndicator } from './shared';
-import { JobTitleEnum, jobTitleToLabelMapper, OrganizationTypeEnum, CompanySizeEnum } from '@novu/shared';
-import { useForm, Controller } from 'react-hook-form';
-import { updateClerkOrgMetadata } from '../../api/organization';
-import { hubspotCookie } from '../../utils/cookies';
-import { identifyUser } from '../../api/telemetry';
-import { useTelemetry } from '../../hooks/use-telemetry';
-import { TelemetryEvent } from '../../utils/telemetry';
-import { useNavigate } from 'react-router-dom';
-import { ROUTES } from '../../utils/routes';
-import { useMutation } from '@tanstack/react-query';
 import { useOrganization, useUser } from '@clerk/clerk-react';
+import { CompanySizeEnum, JobTitleEnum, jobTitleToLabelMapper, OrganizationTypeEnum } from '@novu/shared';
+import { useMutation } from '@tanstack/react-query';
+import { AnimatePresence, motion } from 'motion/react';
+import React from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
+import { updateClerkOrgMetadata } from '../../api/organization';
+import { identifyUser } from '../../api/telemetry';
+import { useAuth } from '../../context/auth/hooks';
 import { useEnvironment, useFetchEnvironments } from '../../context/environment/hooks';
+import { useSegment } from '../../context/segment';
+import { useTelemetry } from '../../hooks/use-telemetry';
+import { hubspotCookie } from '../../utils/cookies';
+import { ROUTES } from '../../utils/routes';
+import { TelemetryEvent } from '../../utils/telemetry';
+import { StepIndicator } from './shared';
 
 interface QuestionnaireFormData {
   jobTitle: JobTitleEnum;
@@ -107,8 +109,8 @@ export function QuestionnaireForm() {
                         <SelectValue placeholder="What's your nature of work" />
                       </SelectTrigger>
                       <SelectContent>
-                        {Object.entries(jobTitleToLabelMapper).map(([value, label]) => (
-                          <SelectItem key={value} value={value}>
+                        {Object.entries(jobTitleToLabelMapper).map(([value, label], index) => (
+                          <SelectItem key={index} value={value}>
                             {label}
                           </SelectItem>
                         ))}
@@ -134,10 +136,11 @@ export function QuestionnaireForm() {
                         control={control}
                         render={({ field }) => (
                           <>
-                            {Object.values(OrganizationTypeEnum).map((type) => (
+                            {Object.values(OrganizationTypeEnum).map((type, index) => (
                               <Button
-                                key={type}
-                                variant="outline"
+                                variant="secondary"
+                                key={index}
+                                mode="outline"
                                 size="xs"
                                 type="button"
                                 className={`h-[28px] rounded-full px-3 py-1 text-sm ${
@@ -170,10 +173,11 @@ export function QuestionnaireForm() {
                         control={control}
                         render={({ field }) => (
                           <>
-                            {Object.values(CompanySizeEnum).map((size) => (
+                            {Object.values(CompanySizeEnum).map((size, index) => (
                               <Button
-                                key={size}
-                                variant="outline"
+                                variant="secondary"
+                                key={index}
+                                mode="outline"
                                 size="xs"
                                 type="button"
                                 className={`h-[28px] rounded-full px-3 py-1 text-sm ${
@@ -203,28 +207,11 @@ export function QuestionnaireForm() {
                   className="flex flex-col gap-3"
                 >
                   <Button
-                    className={`relative bg-black ${submitQuestionnaireMutation.isPending ? 'cursor-not-allowed' : ''}`}
                     type="submit"
+                    isLoading={submitQuestionnaireMutation.isPending}
                     disabled={submitQuestionnaireMutation.isPending}
                   >
-                    <motion.div
-                      initial={false}
-                      animate={{
-                        opacity: submitQuestionnaireMutation.isPending ? 1 : 0,
-                        scale: submitQuestionnaireMutation.isPending ? [1, 1.1, 1] : 1,
-                      }}
-                      transition={{ duration: 1, repeat: Infinity }}
-                      className="absolute inset-0 flex items-center justify-center"
-                    >
-                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                    </motion.div>
-                    <motion.span
-                      animate={{
-                        opacity: submitQuestionnaireMutation.isPending ? 0 : 1,
-                      }}
-                    >
-                      Continue
-                    </motion.span>
+                    Continue
                   </Button>
                 </motion.div>
               )}
@@ -241,6 +228,8 @@ export function QuestionnaireForm() {
 }
 
 function useSubmitQuestionnaire() {
+  const { currentOrganization } = useAuth();
+  const segment = useSegment();
   const track = useTelemetry();
   const navigate = useNavigate();
   const { currentEnvironment } = useEnvironment();
@@ -256,14 +245,31 @@ function useSubmitQuestionnaire() {
         },
       });
 
+      const anonymousId = await segment.getAnonymousId();
+
       await identifyUser({
-        jobTitle: data.jobTitle,
         pageUri: data.pageUri,
         pageName: data.pageName,
         hubspotContext: data.hubspotContext,
+        jobTitle: data.jobTitle,
         companySize: data.companySize,
         organizationType: data.organizationType,
+        anonymousId,
       });
+
+      if (currentOrganization) {
+        segment.group(
+          {
+            id: currentOrganization?._id,
+            name: currentOrganization?.name,
+            createdAt: currentOrganization?.createdAt,
+          },
+          {
+            organizationType: data.organizationType,
+            companySize: data.companySize,
+          }
+        );
+      }
 
       track(TelemetryEvent.CREATE_ORGANIZATION_FORM_SUBMITTED, {
         location: 'web',

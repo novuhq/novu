@@ -5,7 +5,7 @@ import { createLayout } from './helpers';
 
 const BASE_PATH = '/v1/layouts';
 
-describe('Filter layouts - /layouts (GET)', async () => {
+describe('Filter layouts - /layouts (GET) #novu-v1', async () => {
   let session: UserSession;
 
   before(async () => {

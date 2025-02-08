@@ -4,7 +4,7 @@ import axios, { AxiosResponse } from 'axios';
 import { UserSession } from '@novu/testing';
 import { TenantRepository } from '@novu/dal';
 
-describe('Update Tenant - /tenants/:tenantId (PUT)', function () {
+describe('Update Tenant - /tenants/:tenantId (PUT) #novu-v1', function () {
   let session: UserSession;
   const tenantRepository = new TenantRepository();
 

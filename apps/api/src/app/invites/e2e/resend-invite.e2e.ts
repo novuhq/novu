@@ -3,7 +3,7 @@ import { UserSession } from '@novu/testing';
 import { MemberStatusEnum } from '@novu/shared';
 import { expect } from 'chai';
 
-describe('Resend invite - /invites/resend (POST) @skip-in-ee', async () => {
+describe('Resend invite - /invites/resend (POST) #novu-v1-os', async () => {
   let session: UserSession;
   let invitee: MemberEntity;
   const memberRepository = new CommunityMemberRepository();

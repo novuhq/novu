@@ -22,7 +22,7 @@ export const EmailEditor = (props: EmailEditorProps) => {
       <EmailTabsSection className="-mx-[2px] -my-[3px] px-7 py-2">
         {getComponentByType({ component: subject.component })}
       </EmailTabsSection>
-      <Separator className="bg-neutral-100" />
+      <Separator className="before:bg-neutral-100" />
       {/* extra padding on the left to account for the drag handle */}
       <EmailTabsSection className="basis-full overflow-hidden pl-10">
         {getComponentByType({ component: body.component })}

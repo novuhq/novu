@@ -5,9 +5,9 @@ import { OrganizationLevelCommand } from '../../commands';
 
 export class TierRestrictionsValidateCommand extends OrganizationLevelCommand {
   @IsOptional()
-  @Transform(({ value }) => (value ? String(value) : value))
-  @IsString()
-  amount?: string;
+  @Transform(({ value }) => (value ? Number(value) : value))
+  @IsNumber()
+  amount?: number;
 
   @IsString()
   @IsOptional()

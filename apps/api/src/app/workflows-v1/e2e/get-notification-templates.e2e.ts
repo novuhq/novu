@@ -11,7 +11,7 @@ import {
   TriggerTypeEnum,
 } from '@novu/shared';
 
-describe('Get workflows - /workflows (GET)', async () => {
+describe('Get workflows - /workflows (GET) #novu-v1', async () => {
   let session: UserSession;
   const templates: NotificationTemplateEntity[] = [];
   let notificationTemplateService: NotificationTemplateService;

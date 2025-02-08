@@ -10,7 +10,7 @@ export interface IEnvironment {
   widget: IWidgetSettings;
   dns?: IDnsSettings;
   apiRateLimits?: IApiRateLimitMaximum;
-
+  color: string;
   branding?: {
     color: string;
     logo: string;
@@ -26,6 +26,9 @@ export interface IEnvironment {
   bridge?: {
     url?: string;
   };
+
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface IWidgetSettings {

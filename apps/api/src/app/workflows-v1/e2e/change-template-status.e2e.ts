@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import { NotificationTemplateRepository } from '@novu/dal';
 import { UserSession, NotificationTemplateService } from '@novu/testing';
 
-describe('Change workflow status by id - /workflows/:workflowId/status (PUT)', async () => {
+describe('Change workflow status by id - /workflows/:workflowId/status (PUT) #novu-v1', async () => {
   let session: UserSession;
   const notificationTemplateRepository = new NotificationTemplateRepository();
 

@@ -1,5 +1,5 @@
-import { json, port, str, num, ValidatorSpec, makeValidator, bool, CleanedEnv, cleanEnv, url } from 'envalid';
 import { DEFAULT_NOTIFICATION_RETENTION_DAYS, FeatureFlagsKeysEnum, StringifyEnv } from '@novu/shared';
+import { bool, CleanedEnv, cleanEnv, json, makeValidator, num, port, str, url, ValidatorSpec } from 'envalid';
 
 export function validateEnv() {
   return cleanEnv(process.env, envValidators);
@@ -31,7 +31,6 @@ export const envValidators = {
   MAX_NOVU_INTEGRATION_MAIL_REQUESTS: num({ default: 300 }),
   NOVU_EMAIL_INTEGRATION_API_KEY: str({ default: '' }),
   STORAGE_SERVICE: str({ default: undefined }),
-  METRICS_SERVICE: str({ default: '' }),
   REDIS_HOST: str(),
   REDIS_PORT: port(),
   REDIS_PASSWORD: str({ default: undefined }),

@@ -15,7 +15,7 @@ describe('Workflow Test Data', function () {
     await session.initialize();
   });
 
-  describe('GET /v2/workflows/:workflowId/test-data', () => {
+  describe('GET /v2/workflows/:workflowId/test-data #novu-v2', () => {
     describe('single step workflows', () => {
       it('should generate correct schema for email notification', async () => {
         const emailStep: ITestStepConfig = {

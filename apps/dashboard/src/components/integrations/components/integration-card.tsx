@@ -1,13 +1,13 @@
 import { Badge } from '@/components/primitives/badge';
 import { Button } from '@/components/primitives/button';
-import { RiCheckboxCircleFill, RiGitBranchFill, RiSettings4Line, RiStarSmileLine } from 'react-icons/ri';
-import { TableIntegration } from '../types';
-import { ChannelTypeEnum, type IEnvironment, type IIntegration, type IProviderConfig } from '@novu/shared';
-import { useNavigate } from 'react-router-dom';
-import { ROUTES } from '@/utils/routes';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
-import { ProviderIcon } from './provider-icon';
+import { ChannelTypeEnum, type IEnvironment, type IIntegration, type IProviderConfig } from '@novu/shared';
+import { RiCheckboxCircleFill, RiCloseCircleFill, RiSettings4Line, RiStarSmileLine } from 'react-icons/ri';
 import { cn } from '../../../utils/ui';
+import { EnvironmentBranchIcon } from '../../primitives/environment-branch-icon';
+import { StatusBadge, StatusBadgeIcon } from '../../primitives/status-badge';
+import { TableIntegration } from '../types';
+import { ProviderIcon } from './provider-icon';
 import { isDemoIntegration } from './utils/helpers';
 
 type IntegrationCardProps = {
@@ -18,24 +18,16 @@ type IntegrationCardProps = {
 };
 
 export function IntegrationCard({ integration, provider, environment, onClick }: IntegrationCardProps) {
-  const navigate = useNavigate();
-
-  const handleConfigureClick = (e: React.MouseEvent) => {
-    if (integration.channel === ChannelTypeEnum.IN_APP && !integration.connected) {
-      e.stopPropagation();
-
-      navigate(ROUTES.INBOX_EMBED + `?environmentId=${environment._id}`);
-    } else {
-      onClick({
-        integrationId: integration._id ?? '',
-        name: integration.name,
-        identifier: integration.identifier,
-        provider: provider.displayName,
-        channel: integration.channel,
-        environment: environment.name,
-        active: integration.active,
-      });
-    }
+  const handleConfigureClick = () => {
+    onClick({
+      integrationId: integration._id ?? '',
+      name: integration.name,
+      identifier: integration.identifier,
+      provider: provider.displayName,
+      channel: integration.channel,
+      environment: environment.name,
+      active: integration.active,
+    });
   };
 
   const isDemo = isDemoIntegration(provider.id);
@@ -74,7 +66,7 @@ export function IntegrationCard({ integration, provider, environment, onClick }:
           <Tooltip>
             <TooltipTrigger className="flex h-[16px] items-center gap-1">
               <span className="flex h-[16px] items-center gap-1">
-                <Badge variant="warning" className="text-2xs h-[16px] rounded-sm text-[#F6B51E]">
+                <Badge variant="lighter" color="yellow" size="sm">
                   DEMO
                 </Badge>
               </span>
@@ -91,22 +83,26 @@ export function IntegrationCard({ integration, provider, environment, onClick }:
 
       <div className="mt-auto flex items-center gap-2">
         {integration.channel === ChannelTypeEnum.IN_APP && !integration.connected ? (
-          <Button size="xs" className="h-[26px]" variant="outline" onClick={handleConfigureClick}>
-            <RiSettings4Line className="h-4 w-4" />
+          <Button
+            size="xs"
+            leadingIcon={RiSettings4Line}
+            className="h-[26px]"
+            variant="secondary"
+            mode="outline"
+            onClick={handleConfigureClick}
+          >
             Connect
           </Button>
         ) : (
-          <Badge variant={integration.active ? 'success' : 'neutral'} className="capitalize">
-            <RiCheckboxCircleFill className="text-success h-4 w-4" />
+          <StatusBadge variant="light" status={integration.active ? 'completed' : 'disabled'}>
+            <StatusBadgeIcon as={integration.active ? RiCheckboxCircleFill : RiCloseCircleFill} />
             {integration.active ? 'Active' : 'Inactive'}
-          </Badge>
+          </StatusBadge>
         )}
-        <Badge variant="outline" className="shadow-none">
-          <RiGitBranchFill
-            className={cn('h-4 w-4', environment.name.toLowerCase() === 'production' ? 'text-feature' : 'text-warning')}
-          />
+        <StatusBadge variant="stroke" status="pending" className="gap-1 shadow-none">
+          <EnvironmentBranchIcon size="xs" environment={environment} mode="ghost" />
           {environment.name}
-        </Badge>
+        </StatusBadge>
       </div>
     </div>
   );

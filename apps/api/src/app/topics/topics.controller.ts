@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post, Query } from '@nestjs/common';
-import { ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { ApiRateLimitCategoryEnum, ExternalSubscriberId, TopicKey, UserSessionData } from '@novu/shared';
 
 import {
@@ -36,7 +36,6 @@ import { ExternalApiAccessible } from '../auth/framework/external-api.decorator'
 import { UserSession } from '../shared/framework/user.decorator';
 import {
   ApiCommonResponses,
-  ApiConflictResponse,
   ApiNoContentResponse,
   ApiOkResponse,
   ApiResponse,
@@ -166,29 +165,11 @@ export class TopicsController {
 
   @Get('')
   @ExternalApiAccessible()
-  @ApiQuery({
-    name: 'key',
-    type: String,
-    description: 'Topic key',
-    required: false,
-  })
-  @ApiQuery({
-    name: 'page',
-    type: Number,
-    description: 'Number of page for the pagination',
-    required: false,
-  })
-  @ApiQuery({
-    name: 'pageSize',
-    type: Number,
-    description: 'Size of page for the pagination',
-    required: false,
-  })
   @ApiOkResponse({
     type: FilterTopicsResponseDto,
   })
   @ApiOperation({
-    summary: 'Filter topics',
+    summary: 'Get topic list filtered ',
     description:
       'Returns a list of topics that can be paginated using the `page` query ' +
       'parameter and filtered by the topic key with the `key` query parameter',
@@ -212,10 +193,6 @@ export class TopicsController {
   @ExternalApiAccessible()
   @ApiNoContentResponse({
     description: 'The topic has been deleted correctly',
-  })
-  @ApiConflictResponse({
-    description:
-      'The topic you are trying to delete has subscribers assigned to it. Delete the subscribers before deleting the topic.',
   })
   @ApiParam({ name: 'topicKey', description: 'The topic key', type: String, required: true })
   @HttpCode(HttpStatus.NO_CONTENT)

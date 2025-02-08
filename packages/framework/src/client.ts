@@ -1,4 +1,5 @@
 import { Liquid } from 'liquidjs';
+import { digest } from './filters/digest';
 
 import { ChannelStepEnum, PostActionEnum } from './constants';
 import {
@@ -76,9 +77,11 @@ export class Client {
     this.apiUrl = builtOpts.apiUrl;
     this.secretKey = builtOpts.secretKey;
     this.strictAuthentication = builtOpts.strictAuthentication;
+
     this.templateEngine.registerFilter('json', (value, spaces) =>
       stringifyDataStructureWithSingleQuotes(value, spaces)
     );
+    this.templateEngine.registerFilter('digest', digest);
   }
 
   private buildOptions(providedOptions?: ClientOptions) {
@@ -312,7 +315,8 @@ export class Client {
 
       // Only evaluate a skip condition when the step is the current step and not in preview mode.
       if (!isPreview && stepId === event.stepId) {
-        const controls = await this.createStepControls(step, event);
+        const templateControls = await this.createStepControls(step, event);
+        const controls = await this.compileControls(templateControls, event);
         const shouldSkip = await this.shouldSkip(options?.skip as typeof step.options.skip, controls);
 
         if (shouldSkip) {

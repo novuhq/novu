@@ -1,28 +1,19 @@
-import { useState } from 'react';
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { Controller, useForm } from 'react-hook-form';
-import { useMutation } from '@tanstack/react-query';
 import { Group, Input as MantineInput } from '@mantine/core';
-import { captureException } from '@sentry/react';
-import {
-  FeatureFlagsKeysEnum,
-  IResponseError,
-  UpdateExternalOrganizationDto,
-  JobTitleEnum,
-  jobTitleToLabelMapper,
-} from '@novu/shared';
 import { Button, inputStyles, Select } from '@novu/design-system';
+import { FeatureFlagsKeysEnum, JobTitleEnum, jobTitleToLabelMapper, UpdateExternalOrganizationDto } from '@novu/shared';
+import { useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 import styled from '@emotion/styled/macro';
 import { api } from '../../../api/api.client';
-import { useAuth } from '../../../hooks/useAuth';
-import { useFeatureFlag, useVercelIntegration } from '../../../hooks';
-import { ROUTES } from '../../../constants/routes';
-import { useSegment } from '../../../components/providers/SegmentProvider';
-import { BRIDGE_SYNC_SAMPLE_ENDPOINT } from '../../../config/index';
-import { DynamicCheckBox } from '../../../pages/auth/components/dynamic-checkbox/DynamicCheckBox';
-import { useWebContainerSupported } from '../../../hooks/useWebContainerSupport';
 import { identifyUser } from '../../../api/telemetry';
+import { useSegment } from '../../../components/providers/SegmentProvider';
+import { ROUTES } from '../../../constants/routes';
+import { useFeatureFlag, useVercelIntegration } from '../../../hooks';
+import { useAuth } from '../../../hooks/useAuth';
+import { useWebContainerSupported } from '../../../hooks/useWebContainerSupport';
+import { DynamicCheckBox } from '../../../pages/auth/components/dynamic-checkbox/DynamicCheckBox';
 import { hubspotCookie } from '../../../utils';
 
 function updateClerkOrgMetadata(data: UpdateExternalOrganizationDto) {
@@ -85,17 +76,6 @@ export function QuestionnaireForm() {
     setLoading(true);
     await updateOrganization({ ...data });
     setLoading(false);
-
-    try {
-      await api.post(`/v1/bridge/sync?source=sample-workspace`, {
-        bridgeUrl: BRIDGE_SYNC_SAMPLE_ENDPOINT,
-      });
-    } catch (e) {
-      // eslint-disable-next-line no-console
-      console.error(e);
-
-      captureException(e);
-    }
 
     const vercelRedirectData = localStorage.getItem('vercel_redirect_data');
 

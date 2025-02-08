@@ -7,7 +7,7 @@ import { LayoutDto } from '../dtos';
 
 const BASE_PATH = '/v1/layouts';
 
-describe('Set layout as default - /layouts/:layoutId/default (POST)', async () => {
+describe('Set layout as default - /layouts/:layoutId/default (POST) #novu-v1', async () => {
   const layoutName = 'layout-name-set-default';
   const layoutIdentifier = 'layout-identifier-set-default';
   const isDefault = false;

@@ -10,7 +10,7 @@ import { WorkflowOriginEnum, WorkflowTypeEnum } from '@novu/shared';
 import { workflow } from '@novu/framework';
 import { BridgeServer } from '../../../../e2e/bridge.server';
 
-describe('Bridge Sync - /bridge/sync (POST)', async () => {
+describe('Bridge Sync - /bridge/sync (POST) #novu-v2', async () => {
   let session: UserSession;
   const environmentRepository = new EnvironmentRepository();
   const workflowsRepository = new NotificationTemplateRepository();

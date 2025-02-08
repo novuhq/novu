@@ -1,58 +1,42 @@
 import { Injectable, Logger, UnprocessableEntityException } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
 import { addBreadcrumb } from '@sentry/node';
 import { randomBytes } from 'crypto';
 import { merge } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
-import { ModuleRef } from '@nestjs/core';
 
 import {
-  AnalyticsService,
-  buildHasNotificationKey,
   buildNotificationTemplateIdentifierKey,
   CachedEntity,
   ExecuteBridgeRequest,
   ExecuteBridgeRequestCommand,
   ExecuteBridgeRequestDto,
-  GetFeatureFlag,
-  GetFeatureFlagCommand,
   Instrument,
   InstrumentUsecase,
-  InvalidateCacheService,
   IWorkflowDataDto,
   StorageHelperService,
   WorkflowQueueService,
 } from '@novu/application-generic';
 import {
-  FeatureFlagsKeysEnum,
-  INVITE_TEAM_MEMBER_NUDGE_PAYLOAD_KEY,
-  ReservedVariablesMap,
-  TriggerContextTypeEnum,
-  TriggerEventStatusEnum,
-  WorkflowOriginEnum,
-} from '@novu/shared';
-import {
   EnvironmentEntity,
   EnvironmentRepository,
-  MemberRepository,
-  NotificationRepository,
   NotificationTemplateEntity,
   NotificationTemplateRepository,
   TenantEntity,
   TenantRepository,
-  UserRepository,
   WorkflowOverrideEntity,
   WorkflowOverrideRepository,
 } from '@novu/dal';
 import { DiscoverWorkflowOutput, GetActionEnum } from '@novu/framework/internal';
+import { ReservedVariablesMap, TriggerContextTypeEnum, TriggerEventStatusEnum, WorkflowOriginEnum } from '@novu/shared';
 
-import { Novu } from '@novu/api';
+import { ApiException } from '../../../shared/exceptions/api.exception';
+import { VerifyPayload, VerifyPayloadCommand } from '../verify-payload';
 import {
   ParseEventRequestBroadcastCommand,
   ParseEventRequestCommand,
   ParseEventRequestMulticastCommand,
 } from './parse-event-request.command';
-import { ApiException } from '../../../shared/exceptions/api.exception';
-import { VerifyPayload, VerifyPayloadCommand } from '../verify-payload';
 
 const LOG_CONTEXT = 'ParseEventRequest';
 
@@ -60,18 +44,12 @@ const LOG_CONTEXT = 'ParseEventRequest';
 export class ParseEventRequest {
   constructor(
     private notificationTemplateRepository: NotificationTemplateRepository,
-    private notificationRepository: NotificationRepository,
     private environmentRepository: EnvironmentRepository,
-    private userRepository: UserRepository,
-    private memberRepository: MemberRepository,
     private verifyPayload: VerifyPayload,
     private storageHelperService: StorageHelperService,
     private workflowQueueService: WorkflowQueueService,
     private tenantRepository: TenantRepository,
     private workflowOverrideRepository: WorkflowOverrideRepository,
-    private analyticsService: AnalyticsService,
-    private getFeatureFlag: GetFeatureFlag,
-    private invalidateCacheService: InvalidateCacheService,
     private executeBridgeRequest: ExecuteBridgeRequest,
     protected moduleRef: ModuleRef
   ) {}
@@ -183,9 +161,9 @@ export class ParseEventRequest {
     // eslint-disable-next-line no-param-reassign
     command.payload = merge({}, defaultPayload, command.payload);
 
-    await this.sendInAppNudgeForTeamMemberInvite(command);
+    const result = await this.dispatchEvent(command, transactionId);
 
-    return await this.dispatchEvent(command, transactionId);
+    return result;
   }
 
   private async queryDiscoverWorkflow(command: ParseEventRequestCommand): Promise<DiscoverWorkflowOutput | null> {
@@ -308,113 +286,4 @@ export class ParseEventRequest {
 
     return reservedVariables?.map((reservedVariable) => reservedVariable.type) || [];
   }
-
-  @Instrument()
-  @CachedEntity({
-    builder: (command: ParseEventRequestCommand) =>
-      buildHasNotificationKey({
-        _organizationId: command.organizationId,
-      }),
-  })
-  private async getNotificationCount(command: ParseEventRequestCommand): Promise<number> {
-    return await this.notificationRepository.count(
-      {
-        _organizationId: command.organizationId,
-      },
-      1
-    );
-  }
-
-  @Instrument()
-  private async sendInAppNudgeForTeamMemberInvite(command: ParseEventRequestCommand): Promise<void> {
-    try {
-      const isEnabled = await this.getFeatureFlag.execute(
-        GetFeatureFlagCommand.create({
-          key: FeatureFlagsKeysEnum.IS_TEAM_MEMBER_INVITE_NUDGE_ENABLED,
-          organizationId: command.organizationId,
-          userId: 'system',
-          environmentId: 'system',
-        })
-      );
-
-      if (!isEnabled) return;
-
-      // check if this is first trigger
-      const notificationCount = await this.getNotificationCount(command);
-
-      if (notificationCount > 0) return;
-
-      /*
-       * After the first trigger, we invalidate the cache to ensure the next event trigger
-       * will update the cache with a count of 1.
-       */
-      this.invalidateCacheService.invalidateByKey({
-        key: buildHasNotificationKey({
-          _organizationId: command.organizationId,
-        }),
-      });
-
-      // check if user is using personal email
-      const user = await this.userRepository.findById(command.userId);
-
-      if (!user) throw new ApiException('User not found');
-
-      if (this.isBlockedEmail(user.email)) return;
-
-      // check if organization has more than 1 member
-      const membersCount = await this.memberRepository.count(
-        {
-          _organizationId: command.organizationId,
-        },
-        2
-      );
-
-      if (membersCount > 1) return;
-
-      Logger.log('No notification found', LOG_CONTEXT);
-
-      if (process.env.NOVU_API_KEY) {
-        if (!command.payload[INVITE_TEAM_MEMBER_NUDGE_PAYLOAD_KEY]) {
-          const novu = new Novu({ apiKey: process.env.NOVU_API_KEY });
-
-          await novu.trigger({
-            name: process.env.NOVU_INVITE_TEAM_MEMBER_NUDGE_TRIGGER_IDENTIFIER,
-            to: [
-              {
-                subscriberId: command.userId,
-                email: user?.email as string,
-              },
-            ],
-            payload: {
-              [INVITE_TEAM_MEMBER_NUDGE_PAYLOAD_KEY]: true,
-              webhookUrl: `${process.env.API_ROOT_URL}/v1/invites/webhook`,
-              organizationId: command.organizationId,
-            },
-          });
-
-          this.analyticsService.track('Invite Nudge Sent', command.userId, {
-            _organization: command.organizationId,
-          });
-        }
-      }
-    } catch (error) {
-      Logger.error(error, 'Invite nudge failed', LOG_CONTEXT);
-    }
-  }
-
-  private isBlockedEmail(email: string): boolean {
-    return BLOCKED_DOMAINS.some((domain) => email.includes(domain));
-  }
 }
-
-const BLOCKED_DOMAINS = [
-  '@gmail',
-  '@outlook',
-  '@yahoo',
-  '@icloud',
-  '@mail',
-  '@hotmail',
-  '@protonmail',
-  '@gmx',
-  '@novu',
-];

@@ -9,7 +9,7 @@ import {
 } from '@novu/dal';
 import { ChannelCTATypeEnum } from '@novu/shared';
 
-describe('Delete workflow by id - /workflows/:workflowId (DELETE)', async () => {
+describe('Delete workflow by id - /workflows/:workflowId (DELETE) #novu-v1', async () => {
   let session: UserSession;
   const notificationTemplateRepository = new NotificationTemplateRepository();
   const notificationGroupRepository: NotificationGroupRepository = new NotificationGroupRepository();

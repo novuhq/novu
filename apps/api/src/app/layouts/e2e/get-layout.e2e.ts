@@ -8,7 +8,7 @@ import { ChannelTypeEnum, TemplateVariableTypeEnum } from '../types';
 
 const BASE_PATH = '/v1/layouts';
 
-describe('Get a layout - /layouts/:layoutId (GET)', async () => {
+describe('Get a layout - /layouts/:layoutId (GET) #novu-v1', async () => {
   const layoutName = 'layout-name-retrieval';
   const layoutIdentifier = 'layout-identifier-retrieval';
   const isDefault = false;

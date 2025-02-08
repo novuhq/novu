@@ -2,21 +2,23 @@ import { expect } from 'chai';
 import { UserSession } from '@novu/testing';
 import { MessageRepository, NotificationTemplateEntity, SubscriberEntity, SubscriberRepository } from '@novu/dal';
 import {
-  StepTypeEnum,
-  ChannelCTATypeEnum,
-  TemplateVariableTypeEnum,
   ActorTypeEnum,
-  SystemAvatarIconEnum,
   ButtonTypeEnum,
+  ChannelCTATypeEnum,
+  StepTypeEnum,
+  SystemAvatarIconEnum,
+  TemplateVariableTypeEnum,
 } from '@novu/shared';
+import { Novu } from '@novu/api';
+import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-describe('Update All Notifications - /inbox/notifications/{read,archive,read-archive} (POST)', async () => {
+describe('Update All Notifications - /inbox/notifications/{read,archive,read-archive} (POST) #novu-v2', async () => {
   let session: UserSession;
   let template: NotificationTemplateEntity;
   let subscriber: SubscriberEntity | null;
   const messageRepository = new MessageRepository();
   const subscriberRepository = new SubscriberRepository();
-
+  let novuClient: Novu;
   const updateAllNotifications = async ({
     action,
     tags,
@@ -33,11 +35,16 @@ describe('Update All Notifications - /inbox/notifications/{read,archive,read-arc
   const triggerEvent = async (templateToTrigger: NotificationTemplateEntity, times = 1) => {
     const promises: Array<Promise<unknown>> = [];
     for (let i = 0; i < times; i += 1) {
-      promises.push(session.triggerEvent(templateToTrigger.triggers[0].identifier, session.subscriberId));
+      promises.push(
+        novuClient.trigger({
+          workflowId: templateToTrigger.triggers[0].identifier,
+          to: { subscriberId: session.subscriberId },
+        })
+      );
     }
 
     await Promise.all(promises);
-    await session.awaitRunningJobs(templateToTrigger._id);
+    await session.waitForJobCompletion(templateToTrigger._id);
   };
 
   const removeUndefinedDeep = (obj) => {
@@ -56,7 +63,7 @@ describe('Update All Notifications - /inbox/notifications/{read,archive,read-arc
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
-
+    novuClient = initNovuClassSdk(session);
     subscriber = await subscriberRepository.findBySubscriberId(session.environment._id, session.subscriberId);
     template = await session.createTemplate({
       noFeedId: true,

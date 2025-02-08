@@ -10,7 +10,7 @@ import {
 import { UserSession } from '@novu/testing';
 import { CreateWorkflowRequestDto, UpdateWorkflowRequestDto } from '../../workflows-v1/dto';
 
-describe('Get changes', () => {
+describe('Get changes #novu-v1', () => {
   let session: UserSession;
   const changeRepository: ChangeRepository = new ChangeRepository();
 

@@ -4,7 +4,7 @@ import { StepTypeEnum } from '@novu/shared';
 import { FeedRepository } from '@novu/dal';
 import { CreateWorkflowRequestDto, UpdateWorkflowRequestDto } from '../../workflows-v1/dto';
 
-describe('Create A Feed - /feeds (POST)', async () => {
+describe('Create A Feed - /feeds (POST) #novu-v1', async () => {
   let session: UserSession;
   const feedRepository: FeedRepository = new FeedRepository();
 

@@ -1,4 +1,4 @@
-import { StepTypeEnum } from '@novu/shared';
+import { StepTypeEnum, TimeUnitEnum } from '@novu/shared';
 
 export const AUTOCOMPLETE_PASSWORD_MANAGERS_OFF = {
   autoComplete: 'off',
@@ -27,3 +27,12 @@ export const STEP_TYPE_LABELS: Record<StepTypeEnum, string> = {
   [StepTypeEnum.TRIGGER]: 'Trigger',
   [StepTypeEnum.CUSTOM]: 'Custom',
 };
+
+export const DEFAULT_CONTROL_DELAY_AMOUNT = 30;
+export const DEFAULT_CONTROL_DELAY_UNIT = TimeUnitEnum.SECONDS;
+export const DEFAULT_CONTROL_DELAY_TYPE = 'regular';
+
+export const DEFAULT_CONTROL_DIGEST_AMOUNT = 30;
+export const DEFAULT_CONTROL_DIGEST_UNIT = TimeUnitEnum.SECONDS;
+export const DEFAULT_CONTROL_DIGEST_CRON = '';
+export const DEFAULT_CONTROL_DIGEST_DIGEST_KEY = '';

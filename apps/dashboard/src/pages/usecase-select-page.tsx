@@ -1,23 +1,24 @@
-import { UsecaseSelectOnboarding } from '../components/auth/usecase-selector';
-import { AuthCard } from '../components/auth/auth-card';
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { Button } from '../components/primitives/button';
-import { ROUTES } from '../utils/routes';
-import { useNavigate } from 'react-router-dom';
-import { OnboardingArrowLeft } from '../components/icons/onboarding-arrow-left';
-import { updateClerkOrgMetadata } from '../api/organization';
-import { ChannelTypeEnum } from '@novu/shared';
-import { PageMeta } from '../components/page-meta';
+import { channelOptions } from '@/components/auth/usecases-list.utils';
+import { AnimatedPage } from '@/components/onboarding/animated-page';
+import { useEnvironment } from '@/context/environment/hooks';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
-import { channelOptions } from '@/components/auth/usecases-list.utils';
-import { useMutation } from '@tanstack/react-query';
-import * as Sentry from '@sentry/react';
 import { useOrganization } from '@clerk/clerk-react';
-import { AnimatedPage } from '@/components/onboarding/animated-page';
+import { ChannelTypeEnum } from '@novu/shared';
+import * as Sentry from '@sentry/react';
+import { useMutation } from '@tanstack/react-query';
+import { AnimatePresence, motion } from 'motion/react';
+import { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { useEnvironment } from '@/context/environment/hooks';
+import { useNavigate } from 'react-router-dom';
+import { updateClerkOrgMetadata } from '../api/organization';
+import { AuthCard } from '../components/auth/auth-card';
+import { UsecaseSelectOnboarding } from '../components/auth/usecase-selector';
+import { OnboardingArrowLeft } from '../components/icons/onboarding-arrow-left';
+import { PageMeta } from '../components/page-meta';
+import { Button } from '../components/primitives/button';
+import { LinkButton } from '../components/primitives/button-link';
+import { ROUTES } from '../utils/routes';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -87,7 +88,7 @@ export function UsecaseSelectPage() {
   function handleSkip() {
     track(TelemetryEvent.USE_CASE_SKIPPED);
 
-    navigate(ROUTES.WELCOME);
+    navigate(ROUTES.INBOX_USECASE);
   }
 
   function handleSelectUseCase(useCase: ChannelTypeEnum) {
@@ -132,6 +133,8 @@ export function UsecaseSelectPage() {
 
                   <motion.div className="flex w-full flex-col items-center gap-3" variants={itemVariants}>
                     <Button
+                      variant="secondary"
+                      mode="filled"
                       disabled={selectedUseCases.length === 0}
                       isLoading={isPending}
                       className="w-full"
@@ -139,9 +142,9 @@ export function UsecaseSelectPage() {
                     >
                       Continue
                     </Button>
-                    <Button type="button" variant="link" className="pt-0 text-xs text-[#717784]" onClick={handleSkip}>
-                      Skip to Homepage
-                    </Button>
+                    <LinkButton size="sm" type="button" variant="gray" className="pt-0" onClick={handleSkip}>
+                      Skip this step
+                    </LinkButton>
                   </motion.div>
                 </div>
               </form>

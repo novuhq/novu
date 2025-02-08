@@ -1,13 +1,12 @@
 import { FilterQuery } from 'mongoose';
-import { EnvironmentId, ISubscribersDefine, OrganizationId } from '@novu/shared';
+import { DirectionEnum, EnvironmentId, ISubscribersDefine, OrganizationId, SubscriberDto } from '@novu/shared';
 import { SubscriberDBModel, SubscriberEntity } from './subscriber.entity';
 import { Subscriber } from './subscriber.schema';
 import { IExternalSubscribersEntity } from './types';
 import { BaseRepository } from '../base-repository';
 import { DalException } from '../../shared';
 import type { EnforceEnvOrOrgIds } from '../../types';
-
-type SubscriberQuery = FilterQuery<SubscriberDBModel> & EnforceEnvOrOrgIds;
+import { BulkCreateSubscriberEntity } from './bulk.create.subscriber.entity';
 
 export class SubscriberRepository extends BaseRepository<SubscriberDBModel, SubscriberEntity, EnforceEnvOrOrgIds> {
   constructor() {
@@ -33,7 +32,7 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
     subscribers: ISubscribersDefine[],
     environmentId: EnvironmentId,
     organizationId: OrganizationId
-  ) {
+  ): Promise<BulkCreateSubscriberEntity> {
     const bulkWriteOps = subscribers.map((subscriber) => {
       const { subscriberId, ...rest } = subscriber;
 
@@ -109,7 +108,12 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
     });
   }
 
-  async searchSubscribers(environmentId: string, subscriberIds: string[] = [], emails: string[] = [], search?: string) {
+  async searchSubscribers(
+    environmentId: string,
+    subscriberIds: string[] = [],
+    emails: string[] = [],
+    search?: string
+  ): Promise<string[]> {
     const filters: any = [];
 
     if (emails?.length) {
@@ -142,17 +146,99 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
       );
     }
 
-    return await this.find(
-      {
-        _environmentId: environmentId,
-        $or: filters,
-      },
-      '_id'
-    );
+    return (
+      await this.find(
+        {
+          _environmentId: environmentId,
+          $or: filters,
+        },
+        '_id'
+      )
+    ).map((entity) => entity._id);
   }
 
   async estimatedDocumentCount(): Promise<number> {
     return this._model.estimatedDocumentCount();
+  }
+
+  async listSubscribers(query: {
+    environmentId: string;
+    organizationId: string;
+    limit: number;
+    sortBy: 'updatedAt' | '_id';
+    sortDirection: DirectionEnum;
+    after?: string;
+    before?: string;
+    email?: string;
+    phone?: string;
+    subscriberId?: string;
+    name?: string;
+  }): Promise<{ subscribers: SubscriberEntity[]; next: string | null; previous: string | null }> {
+    if (query.before && query.after) {
+      throw new DalException('Cannot specify both "before" and "after" cursors at the same time.');
+    }
+
+    const id = query.before || query.after;
+    let subscriber: SubscriberEntity | null = null;
+    if (id) {
+      subscriber = await this.findOne({
+        _environmentId: query.environmentId,
+        _organizationId: query.organizationId,
+        _id: id,
+      });
+      if (!subscriber) {
+        return {
+          subscribers: [],
+          next: null,
+          previous: null,
+        };
+      }
+    }
+
+    const after =
+      query.after && subscriber ? { sortBy: subscriber[query.sortBy], paginateField: subscriber._id } : undefined;
+    const before =
+      query.before && subscriber ? { sortBy: subscriber[query.sortBy], paginateField: subscriber._id } : undefined;
+
+    const pagination = await this.findWithCursorBasedPagination({
+      after,
+      before,
+      paginateField: '_id',
+      limit: query.limit,
+      sortDirection: query.sortDirection,
+      sortBy: query.sortBy,
+      query: {
+        _environmentId: query.environmentId,
+        _organizationId: query.organizationId,
+        $and: [
+          {
+            ...(query.email && { email: query.email }),
+            ...(query.phone && { phone: query.phone }),
+            ...(query.subscriberId && { subscriberId: query.subscriberId }),
+            ...(query.name && {
+              $expr: {
+                $eq: [
+                  {
+                    $trim: {
+                      input: {
+                        $concat: [{ $ifNull: ['$firstName', ''] }, ' ', { $ifNull: ['$lastName', ''] }],
+                      },
+                    },
+                  },
+                  query.name,
+                ],
+              },
+            }),
+          },
+        ],
+      },
+    });
+
+    return {
+      subscribers: pagination.data,
+      next: pagination.next,
+      previous: pagination.previous,
+    };
   }
 }
 

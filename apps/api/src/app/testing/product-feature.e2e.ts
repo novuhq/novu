@@ -3,7 +3,7 @@ import { ApiServiceLevelEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
-describe('Product feature Test @skip-in-ee', async () => {
+describe('Product feature Test #novu-v1-os', async () => {
   let session: UserSession;
   const path = '/v1/testing/product-feature';
   let organizationRepository: CommunityOrganizationRepository;

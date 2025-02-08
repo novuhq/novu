@@ -6,3 +6,5 @@ export * from './update-subscriber-channel-request.dto';
 export * from './update-subscriber-request.dto';
 export * from './get-subscriber-preferences-response.dto';
 export * from './update-subscriber-global-preferences-request.dto';
+export { ChannelSettingsDto } from './channelSettingsDto';
+export { SubscriberFeedResponseDto } from './subscriber-feed-response.dto';

@@ -1,159 +1,251 @@
+import { FILTERS } from '@/components/variable/constants';
 import { LiquidVariable } from '@/utils/parseStepVariablesToLiquidVariables';
-import { CompletionContext, CompletionResult } from '@codemirror/autocomplete';
+import { Completion, CompletionContext, CompletionResult } from '@codemirror/autocomplete';
+import { EditorView } from '@uiw/react-codemirror';
 
-const filters = [
-  // Math filters
-  { label: 'plus', type: 'function' },
-  { label: 'minus', type: 'function' },
-  { label: 'modulo', type: 'function' },
-  { label: 'times', type: 'function' },
-  { label: 'floor', type: 'function' },
-  { label: 'ceil', type: 'function' },
-  { label: 'round', type: 'function' },
-  { label: 'divided_by', type: 'function' },
-  { label: 'abs', type: 'function' },
-  { label: 'at_least', type: 'function' },
-  { label: 'at_most', type: 'function' },
+interface CompletionOption {
+  label: string;
+  type: string;
+  boost?: number;
+}
 
-  // String filters
-  { label: 'append', type: 'function' },
-  { label: 'prepend', type: 'function' },
-  { label: 'capitalize', type: 'function' },
-  { label: 'upcase', type: 'function' },
-  { label: 'downcase', type: 'function' },
-  { label: 'strip', type: 'function' },
-  { label: 'lstrip', type: 'function' },
-  { label: 'rstrip', type: 'function' },
-  { label: 'strip_newlines', type: 'function' },
-  { label: 'split', type: 'function' },
-  { label: 'replace', type: 'function' },
-  { label: 'replace_first', type: 'function' },
-  { label: 'replace_last', type: 'function' },
-  { label: 'remove', type: 'function' },
-  { label: 'remove_first', type: 'function' },
-  { label: 'truncate', type: 'function' },
-  { label: 'truncatewords', type: 'function' },
-  { label: 'normalize_whitespace', type: 'function' },
-  { label: 'number_of_words', type: 'function' },
-  { label: 'array_to_sentence_string', type: 'function' },
+const ROOT_PREFIXES = {
+  subscriber: 'subscriber.',
+  payload: 'payload.',
+  steps: 'steps.',
+} as const;
 
-  // HTML/URI filters
-  { label: 'escape', type: 'function' },
-  { label: 'escape_once', type: 'function' },
-  { label: 'url_encode', type: 'function' },
-  { label: 'url_decode', type: 'function' },
-  { label: 'strip_html', type: 'function' },
-  { label: 'newline_to_br', type: 'function' },
-  { label: 'xml_escape', type: 'function' },
-  { label: 'cgi_escape', type: 'function' },
-  { label: 'uri_escape', type: 'function' },
-  { label: 'slugify', type: 'function' },
+const VALID_DYNAMIC_PATHS = ['subscriber.data.', 'payload.', /^steps\.[^.]+\.events\[\d+\]\.payload\./] as const;
 
-  // Array filters
-  { label: 'slice', type: 'function' },
-  { label: 'map', type: 'function' },
-  { label: 'sort', type: 'function' },
-  { label: 'sort_natural', type: 'function' },
-  { label: 'uniq', type: 'function' },
-  { label: 'where', type: 'function' },
-  { label: 'where_exp', type: 'function' },
-  { label: 'group_by', type: 'function' },
-  { label: 'group_by_exp', type: 'function' },
-  { label: 'find', type: 'function' },
-  { label: 'find_exp', type: 'function' },
-  { label: 'first', type: 'function' },
-  { label: 'last', type: 'function' },
-  { label: 'join', type: 'function' },
-  { label: 'reverse', type: 'function' },
-  { label: 'concat', type: 'function' },
-  { label: 'compact', type: 'function' },
-  { label: 'size', type: 'function' },
-  { label: 'push', type: 'function' },
-  { label: 'pop', type: 'function' },
-  { label: 'shift', type: 'function' },
-  { label: 'unshift', type: 'function' },
-
-  // Date filters
-  { label: 'date', type: 'function' },
-  { label: 'date_to_xmlschema', type: 'function' },
-  { label: 'date_to_rfc822', type: 'function' },
-  { label: 'date_to_string', type: 'function' },
-  { label: 'date_to_long_string', type: 'function' },
-
-  // Misc filters
-  { label: 'default', type: 'function' },
-  { label: 'json', type: 'function' },
-  { label: 'jsonify', type: 'function' },
-  { label: 'inspect', type: 'function' },
-  { label: 'raw', type: 'function' },
-  { label: 'to_integer', type: 'function' },
-];
-
+/**
+ * Liquid variable autocomplete for the following patterns:
+ *
+ * 1. Payload Variables:
+ *    Valid:
+ *    - payload.
+ *    - payload.user
+ *    - payload.anyNewField (allows any new field)
+ *    - payload.deeply.nested.field
+ *    Invalid:
+ *    - pay (shows suggestions but won't validate)
+ *    - payload (shows suggestions but won't validate)
+ *
+ * 2. Subscriber Variables:
+ *    Valid:
+ *    - subscriber.data.
+ *    - subscriber.data.anyNewField (allows any new field)
+ *    - subscriber.data.custom.nested.field
+ *    - subscriber (shows suggestions but won't validate)
+ *    - subscriber.email
+ *    - subscriber.firstName
+ *    Invalid:
+ *    - subscriber.someOtherField (must use valid subscriber field)
+ *
+ * 3. Step Variables:
+ *    Valid:
+ *    - steps.
+ *    - steps.digest-step (must be existing step ID)
+ *    - steps.digest-step.events
+ *    - steps.digest-step.events[0]
+ *    - steps.digest-step.events[0].id
+ *    - steps.digest-step.events[0].payload
+ *    - steps.digest-step.events[0].payload.anyNewField (allows any new field after payload)
+ *    - steps.digest-step.events[0].payload.deeply.nested.field
+ *    Invalid:
+ *    - steps.invalid-step (must use existing step ID)
+ *    - steps.digest-step.payload (must use events[n].payload pattern)
+ *    - steps.digest-step.events.payload (must use events[n] pattern)
+ *    - steps.digest-step.invalidProp (only events[] is allowed)
+ *
+ * Autocomplete Behavior:
+ * 1. Shows suggestions when typing partial prefixes:
+ *    - 'su' -> shows subscriber.data.* variables
+ *    - 'pay' -> shows payload.* variables
+ *    - 'ste' -> shows steps.* variables
+ *
+ * 2. Shows suggestions with closing braces:
+ *    - '{{su}}' -> shows subscriber.data.* variables
+ *    - '{{payload.}}' -> shows payload.* variables
+ *
+ * 3. Allows new variables after valid prefixes:
+ *    - subscriber.data.* (any new field)
+ *    - payload.* (any new field)
+ *    - steps.{valid-step}.events[n].payload.* (any new field)
+ */
 export const completions =
   (variables: LiquidVariable[]) =>
   (context: CompletionContext): CompletionResult | null => {
     const { state, pos } = context;
-
     const beforeCursor = state.sliceDoc(0, pos);
 
-    // Determine whether we're inside a {{ ... }} block
+    // Only proceed if we're inside or just after {{
     const lastOpenBrace = beforeCursor.lastIndexOf('{{');
-    const lastCloseBrace = beforeCursor.lastIndexOf('}}');
+    if (lastOpenBrace === -1) return null;
 
-    if (lastOpenBrace === -1 || lastOpenBrace < lastCloseBrace) {
-      // Not inside a {{ ... }} block
-      return null;
-    }
-
-    // Get the content inside the braces up to the cursor position
+    // Get the content between {{ and cursor
     const insideBraces = state.sliceDoc(lastOpenBrace + 2, pos);
 
-    // Detect the position of the last `|` relative to the cursor
-    const pipeIndex = insideBraces.lastIndexOf('|');
+    // Get clean search text without braces and trim
+    const searchText = insideBraces.replace(/}+$/, '').trim();
 
-    if (pipeIndex !== -1 && pos > lastOpenBrace + 2 + pipeIndex) {
-      // Cursor is after the pipe (`|`)
-      const afterPipe = insideBraces.slice(pipeIndex + 1).trimStart();
-
-      // Filter the list of filters based on the user's input
-      const matchingFilters = filters.filter((f) => f.label.toLowerCase().startsWith(afterPipe.toLowerCase()));
-
-      // Suggest filters if content after the pipe is incomplete
-      if (/^[\w.]*$/.test(afterPipe)) {
-        return {
-          from: pos - afterPipe.length, // Start from where the filter name starts
-          to: pos, // Extend to the current cursor position
-          options: matchingFilters.map((f) => ({
-            label: f.label,
-            type: 'function',
-          })),
-        };
-      }
-    }
-
-    // If no pipe (|) is present, suggest variables
-    const word = context.matchBefore(/[\w.]+/); // Match variable names only
-    if (!word && insideBraces.trim() === '') {
+    // Handle pipe filters
+    const afterPipe = getContentAfterPipe(searchText);
+    if (afterPipe !== null) {
       return {
-        from: pos,
-        options: variables.map((v) => ({
-          label: v.label,
-          type: 'variable',
-        })),
+        from: pos - afterPipe.length,
+        to: pos,
+        options: getFilterCompletions(afterPipe),
       };
     }
 
-    // Suggest variables if typing a valid variable name
-    if (word) {
+    const matchingVariables = getMatchingVariables(searchText, variables);
+
+    // If we have matches or we're in a valid context, show them
+    if (matchingVariables.length > 0 || isInsideLiquidBlock(beforeCursor)) {
       return {
-        from: word.from,
-        to: word.to ?? pos,
-        options: variables.map((v) => ({
-          label: v.label,
-          type: 'variable',
-        })),
+        from: lastOpenBrace + 2,
+        to: pos,
+        options:
+          matchingVariables.length > 0
+            ? matchingVariables.map((v) => createCompletionOption(v.label, 'variable'))
+            : variables.map((v) => createCompletionOption(v.label, 'variable')),
       };
     }
 
-    return null; // No suggestions in other cases
+    return null;
   };
+
+function isInsideLiquidBlock(beforeCursor: string): boolean {
+  const lastOpenBrace = beforeCursor.lastIndexOf('{{');
+
+  return lastOpenBrace !== -1;
+}
+
+function getContentAfterPipe(content: string): string | null {
+  const pipeIndex = content.lastIndexOf('|');
+  if (pipeIndex === -1) return null;
+
+  return content.slice(pipeIndex + 1).trimStart();
+}
+
+function createCompletionOption(label: string, type: string, boost?: number): CompletionOption {
+  return { label, type, ...(boost && { boost }) };
+}
+
+function getFilterCompletions(afterPipe: string): CompletionOption[] {
+  return FILTERS.filter((f) => f.label.toLowerCase().startsWith(afterPipe.toLowerCase())).map((f) =>
+    createCompletionOption(f.value, 'function')
+  );
+}
+
+function isValidDynamicPath(searchText: string): boolean {
+  return VALID_DYNAMIC_PATHS.some((path) =>
+    typeof path === 'string' ? searchText.startsWith(path) : path.test(searchText)
+  );
+}
+
+function validateSubscriberField(searchText: string, matches: LiquidVariable[]): LiquidVariable[] {
+  const parts = searchText.split('.');
+  if (parts.length === 2 && parts[0] === 'subscriber') {
+    if (!matches.some((v) => v.label === searchText)) {
+      return [];
+    }
+  }
+
+  return matches;
+}
+
+function validateStepId(searchText: string, variables: LiquidVariable[]): boolean {
+  if (!searchText.startsWith('steps.')) return true;
+
+  const stepMatch = searchText.match(/^steps\.([^.]+)/);
+  if (!stepMatch) return true;
+
+  const stepId = stepMatch[1];
+  return variables.some((v) => v.label.startsWith(`steps.${stepId}.`));
+}
+
+function getMatchingVariables(searchText: string, variables: LiquidVariable[]): LiquidVariable[] {
+  if (!searchText) return variables;
+
+  const searchLower = searchText.toLowerCase();
+
+  // Handle root prefixes and their partials
+  for (const [root, prefix] of Object.entries(ROOT_PREFIXES)) {
+    if (searchLower.startsWith(root) || root.startsWith(searchLower)) {
+      let matches = variables.filter((v) => v.label.startsWith(prefix));
+
+      // Special handling for subscriber fields
+      if (prefix === 'subscriber.') {
+        matches = validateSubscriberField(searchText, matches);
+      }
+
+      // Allow new paths for dynamic paths
+      if (isValidDynamicPath(searchText)) {
+        if (!matches.some((v) => v.label === searchText)) {
+          matches.push({ label: searchText, type: 'variable' } as LiquidVariable);
+        }
+      }
+
+      return matches;
+    }
+  }
+
+  // Handle dot endings
+  if (searchText.endsWith('.')) {
+    const prefix = searchText.slice(0, -1);
+    return variables.filter((v) => v.label.startsWith(prefix));
+  }
+
+  // Validate step ID exists
+  if (!validateStepId(searchText, variables)) {
+    return [];
+  }
+
+  // Default case: show any variables containing the search text
+  return variables.filter((v) => v.label.toLowerCase().includes(searchLower));
+}
+
+export function createAutocompleteSource(variables: LiquidVariable[]) {
+  return (context: CompletionContext) => {
+    // Match text that starts with {{ and capture everything after it until the cursor position
+    const word = context.matchBefore(/\{\{([^}]*)/);
+    if (!word) return null;
+
+    const options = completions(variables)(context);
+    if (!options) return null;
+
+    const { from, to } = options;
+
+    return {
+      from,
+      to,
+      options: options.options.map((option) => ({
+        ...option,
+        apply: (view: EditorView, completion: Completion, from: number, to: number) => {
+          const selectedValue = completion.label;
+          const content = view.state.doc.toString();
+          const beforeCursor = content.slice(0, from);
+          const afterCursor = content.slice(to);
+
+          // Ensure proper {{ }} wrapping
+          const needsOpening = !beforeCursor.endsWith('{{');
+          const needsClosing = !afterCursor.startsWith('}}');
+
+          const wrappedValue = `${needsOpening ? '{{' : ''}${selectedValue}${needsClosing ? '}}' : ''}`;
+
+          // Calculate the final cursor position
+          // Add 2 if we need to account for closing brackets
+          const finalCursorPos = from + wrappedValue.length + (needsClosing ? 0 : 2);
+
+          view.dispatch({
+            changes: { from, to, insert: wrappedValue },
+            selection: { anchor: finalCursorPos },
+          });
+
+          return true;
+        },
+      })),
+    };
+  };
+}

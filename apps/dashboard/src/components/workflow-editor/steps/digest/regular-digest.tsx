@@ -1,11 +1,11 @@
-import { useMemo } from 'react';
 import { TimeUnitEnum } from '@novu/shared';
+import { useMemo } from 'react';
 
 import { AmountInput } from '@/components/amount-input';
-import { TIME_UNIT_OPTIONS } from '@/components/workflow-editor/steps/time-units';
 import { AMOUNT_KEY, UNIT_KEY } from '@/components/workflow-editor/steps/digest/keys';
-import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
+import { TIME_UNIT_OPTIONS } from '@/components/workflow-editor/steps/time-units';
+import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 
 export const RegularDigest = () => {
   const { step } = useWorkflow();
@@ -32,7 +32,7 @@ export const RegularDigest = () => {
         fields={{ inputKey: `${AMOUNT_KEY}`, selectKey: `${UNIT_KEY}` }}
         options={TIME_UNIT_OPTIONS}
         defaultOption={TimeUnitEnum.SECONDS}
-        className="w-min [&_input]:!w-[3ch] [&_input]:!min-w-[3ch]"
+        className="w-min [&_input]:!w-[5ch] [&_input]:!min-w-[5ch]"
         onValueChange={() => saveForm()}
         showError={false}
         min={minAmountValue}

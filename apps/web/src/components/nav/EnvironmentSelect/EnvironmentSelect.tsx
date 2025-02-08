@@ -1,9 +1,9 @@
-import { Select, IconConstruction, IconRocketLaunch } from '@novu/design-system';
+import { IconConstruction, IconRocketLaunch, Select } from '@novu/design-system';
 
 import { css } from '@novu/novui/css';
-import { navSelectStyles } from '../NavSelect.styles';
-import { useEnvironment } from '../../providers/EnvironmentProvider';
 import { BaseEnvironmentEnum } from '../../../constants/BaseEnvironmentEnum';
+import { useEnvironment } from '../../providers/EnvironmentProvider';
+import { navSelectStyles } from '../NavSelect.styles';
 
 export function EnvironmentSelect() {
   const { environment, environments, isLoaded, switchEnvironment } = useEnvironment();

@@ -154,17 +154,17 @@ export class InboxService {
     return this.#httpClient.get(`${INBOX_ROUTE}/preferences${query}`);
   }
 
-  updateGlobalPreferences(channelPreferences: ChannelPreference): Promise<PreferencesResponse> {
-    return this.#httpClient.patch(`${INBOX_ROUTE}/preferences`, channelPreferences);
+  updateGlobalPreferences(channels: ChannelPreference): Promise<PreferencesResponse> {
+    return this.#httpClient.patch(`${INBOX_ROUTE}/preferences`, channels);
   }
 
   updateWorkflowPreferences({
     workflowId,
-    channelPreferences,
+    channels,
   }: {
     workflowId: string;
-    channelPreferences: ChannelPreference;
+    channels: ChannelPreference;
   }): Promise<PreferencesResponse> {
-    return this.#httpClient.patch(`${INBOX_ROUTE}/preferences/${workflowId}`, channelPreferences);
+    return this.#httpClient.patch(`${INBOX_ROUTE}/preferences/${workflowId}`, channels);
   }
 }

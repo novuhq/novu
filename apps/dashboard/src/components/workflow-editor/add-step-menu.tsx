@@ -1,8 +1,6 @@
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { STEP_TYPE_TO_COLOR } from '@/utils/color';
 import { StepTypeEnum } from '@/utils/enums';
 import { cn } from '@/utils/ui';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { PopoverPortal } from '@radix-ui/react-popover';
 import React, { ReactNode, useState } from 'react';
 import { RiAddLine } from 'react-icons/ri';
@@ -32,7 +30,7 @@ const MenuItemsGroup = ({ children }: { children: ReactNode }) => {
 const MenuItem = ({
   children,
   stepType,
-  disabled = true,
+  disabled,
   onClick,
 }: {
   children: ReactNode;
@@ -61,7 +59,7 @@ const MenuItem = ({
       />
       <span className="text-xs">{children}</span>
       {disabled && (
-        <Badge kind="pill" variant="soft" className="ml-auto opacity-40">
+        <Badge color="gray" size="md" variant="lighter">
           coming soon
         </Badge>
       )}
@@ -77,8 +75,6 @@ export const AddStepMenu = ({
   onMenuItemClick: (stepType: StepTypeEnum) => void;
 }) => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
-  const areNewStepsEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_ND_DELAY_DIGEST_EMAIL_ENABLED);
-  const arePushChatSMSEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_ND_SMS_CHAT_PUSH_ENABLED);
 
   const handleMenuItemClick = (stepType: StepTypeEnum) => {
     onMenuItemClick(stepType);
@@ -93,7 +89,7 @@ export const AddStepMenu = ({
       }}
     >
       <PopoverTrigger asChild>
-        <span>
+        <span data-test-id="add-step-button">
           <Node
             variant="sm"
             className={cn('opacity-0 transition duration-300 ease-out hover:opacity-100', {
@@ -110,11 +106,7 @@ export const AddStepMenu = ({
             <MenuGroup>
               <MenuTitle>Channels</MenuTitle>
               <MenuItemsGroup>
-                <MenuItem
-                  stepType={StepTypeEnum.EMAIL}
-                  disabled={!areNewStepsEnabled}
-                  onClick={() => handleMenuItemClick(StepTypeEnum.EMAIL)}
-                >
+                <MenuItem stepType={StepTypeEnum.EMAIL} onClick={() => handleMenuItemClick(StepTypeEnum.EMAIL)}>
                   Email
                 </MenuItem>
                 <MenuItem
@@ -124,25 +116,13 @@ export const AddStepMenu = ({
                 >
                   In-App
                 </MenuItem>
-                <MenuItem
-                  stepType={StepTypeEnum.PUSH}
-                  disabled={!arePushChatSMSEnabled}
-                  onClick={() => handleMenuItemClick(StepTypeEnum.PUSH)}
-                >
+                <MenuItem stepType={StepTypeEnum.PUSH} onClick={() => handleMenuItemClick(StepTypeEnum.PUSH)}>
                   Push
                 </MenuItem>
-                <MenuItem
-                  stepType={StepTypeEnum.CHAT}
-                  disabled={!arePushChatSMSEnabled}
-                  onClick={() => handleMenuItemClick(StepTypeEnum.CHAT)}
-                >
+                <MenuItem stepType={StepTypeEnum.CHAT} onClick={() => handleMenuItemClick(StepTypeEnum.CHAT)}>
                   Chat
                 </MenuItem>
-                <MenuItem
-                  stepType={StepTypeEnum.SMS}
-                  disabled={!arePushChatSMSEnabled}
-                  onClick={() => handleMenuItemClick(StepTypeEnum.SMS)}
-                >
+                <MenuItem stepType={StepTypeEnum.SMS} onClick={() => handleMenuItemClick(StepTypeEnum.SMS)}>
                   SMS
                 </MenuItem>
               </MenuItemsGroup>
@@ -150,18 +130,10 @@ export const AddStepMenu = ({
             <MenuGroup>
               <MenuTitle>Actions</MenuTitle>
               <MenuItemsGroup>
-                <MenuItem
-                  stepType={StepTypeEnum.DELAY}
-                  disabled={!areNewStepsEnabled}
-                  onClick={() => handleMenuItemClick(StepTypeEnum.DELAY)}
-                >
+                <MenuItem stepType={StepTypeEnum.DELAY} onClick={() => handleMenuItemClick(StepTypeEnum.DELAY)}>
                   Delay
                 </MenuItem>
-                <MenuItem
-                  stepType={StepTypeEnum.DIGEST}
-                  disabled={!areNewStepsEnabled}
-                  onClick={() => handleMenuItemClick(StepTypeEnum.DIGEST)}
-                >
+                <MenuItem stepType={StepTypeEnum.DIGEST} onClick={() => handleMenuItemClick(StepTypeEnum.DIGEST)}>
                   Digest
                 </MenuItem>
               </MenuItemsGroup>

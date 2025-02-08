@@ -24,7 +24,16 @@ export enum FieldLogicalOperatorEnum {
 export type BuilderGroupValues = FieldLogicalOperatorEnum.AND | FieldLogicalOperatorEnum.OR;
 
 export type BuilderFieldType = 'BOOLEAN' | 'TEXT' | 'DATE' | 'NUMBER' | 'STATEMENT' | 'LIST' | 'MULTI_LIST' | 'GROUP';
-
+export enum BuilderFieldTypeEnum {
+  BOOLEAN = 'BOOLEAN',
+  TEXT = 'TEXT',
+  DATE = 'DATE',
+  NUMBER = 'NUMBER',
+  STATEMENT = 'STATEMENT',
+  LIST = 'LIST',
+  MULTI_LIST = 'MULTI_LIST',
+  GROUP = 'GROUP',
+}
 export type BuilderFieldOperator =
   | FieldOperatorEnum.LARGER
   | FieldOperatorEnum.SMALLER

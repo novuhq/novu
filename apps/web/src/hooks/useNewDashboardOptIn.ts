@@ -44,7 +44,6 @@ export function useNewDashboardOptIn() {
     isLoaded,
     optIn,
     dismiss,
-    redirectToNewDashboard,
     status: user?.unsafeMetadata?.newDashboardOptInStatus as NewDashboardOptInStatusEnum | null | undefined,
   };
 }

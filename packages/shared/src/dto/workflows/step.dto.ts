@@ -2,7 +2,7 @@ import type { JSONSchemaDto } from './json-schema-dto';
 import { Slug, StepTypeEnum, WorkflowOriginEnum } from '../../types';
 import { StepContentIssueEnum, StepIssueEnum } from './step-content-issue.enum';
 
-export type StepDataDto = {
+export type StepResponseDto = {
   controls: ControlsMetadata;
   variables: JSONSchemaDto;
   stepId: string;
@@ -73,6 +73,7 @@ export enum UiComponentEnum {
   IN_APP_AVATAR = 'IN_APP_AVATAR',
   IN_APP_SUBJECT = 'IN_APP_PRIMARY_SUBJECT',
   IN_APP_BUTTON_DROPDOWN = 'IN_APP_BUTTON_DROPDOWN',
+  IN_APP_DISABLE_SANITIZATION_SWITCH = 'IN_APP_DISABLE_SANITIZATION_SWITCH',
   URL_TEXT_BOX = 'URL_TEXT_BOX',
   DIGEST_AMOUNT = 'DIGEST_AMOUNT',
   DIGEST_UNIT = 'DIGEST_UNIT',

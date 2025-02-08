@@ -1,14 +1,10 @@
-import { EditorView } from '@uiw/react-codemirror';
-import { useMemo } from 'react';
-import { useFormContext } from 'react-hook-form';
-
-import { Editor } from '@/components/primitives/editor';
+import { ControlInput } from '@/components/primitives/control-input';
 import { FormControl, FormField, FormItem, FormMessage } from '@/components/primitives/form/form';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
-import { completions } from '@/utils/liquid-autocomplete';
 import { parseStepVariablesToLiquidVariables } from '@/utils/parseStepVariablesToLiquidVariables';
 import { capitalize } from '@/utils/string';
-import { autocompletion } from '@codemirror/autocomplete';
+import { useMemo } from 'react';
+import { useFormContext } from 'react-hook-form';
 
 const subjectKey = 'subject';
 
@@ -25,13 +21,13 @@ export const EmailSubject = () => {
         <>
           <FormItem className="w-full">
             <FormControl>
-              <Editor
-                size="lg"
+              <ControlInput
+                size="md"
+                indentWithTab={false}
                 autoFocus={!field.value}
-                fontFamily="inherit"
                 placeholder={capitalize(field.name)}
                 id={field.name}
-                extensions={[autocompletion({ override: [completions(variables)] }), EditorView.lineWrapping]}
+                variables={variables}
                 value={field.value}
                 onChange={(val) => field.onChange(val)}
               />

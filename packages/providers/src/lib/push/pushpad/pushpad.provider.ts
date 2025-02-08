@@ -46,7 +46,7 @@ export class PushpadPushProvider extends BaseProvider implements IPushProvider {
     });
 
     return {
-      id: String(notificationId),
+      id: String(notificationId as string),
       date: new Date().toISOString(),
     };
   }

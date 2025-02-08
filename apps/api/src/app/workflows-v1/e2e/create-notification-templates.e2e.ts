@@ -31,7 +31,7 @@ import { isSameDay } from 'date-fns';
 import axios from 'axios';
 import { CreateWorkflowRequestDto } from '../dto';
 
-describe('Create Workflow - /workflows (POST)', async () => {
+describe('Create Workflow - /workflows (POST) #novu-v1', async () => {
   let session: UserSession;
   const changeRepository: ChangeRepository = new ChangeRepository();
   const notificationTemplateRepository: NotificationTemplateRepository = new NotificationTemplateRepository();

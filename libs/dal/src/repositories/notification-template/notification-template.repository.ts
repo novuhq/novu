@@ -1,12 +1,13 @@
 import { FilterQuery } from 'mongoose';
 import { SoftDeleteModel } from 'mongoose-delete';
 
-import { BaseRepository } from '../base-repository';
-import { NotificationTemplate } from './notification-template.schema';
-import { NotificationTemplateDBModel, NotificationTemplateEntity } from './notification-template.entity';
+import { DirectionEnum } from '@novu/shared';
 import { DalException } from '../../shared';
 import type { EnforceEnvOrOrgIds } from '../../types/enforce';
+import { BaseRepository } from '../base-repository';
 import { EnvironmentRepository } from '../environment';
+import { NotificationTemplateDBModel, NotificationTemplateEntity } from './notification-template.entity';
+import { NotificationTemplate } from './notification-template.schema';
 
 type NotificationTemplateQuery = FilterQuery<NotificationTemplateDBModel> & EnforceEnvOrOrgIds;
 // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -51,6 +52,21 @@ export class NotificationTemplateRepository extends BaseRepository<
 
   async findById(id: string, environmentId: string) {
     return this.findByIdQuery({ id, environmentId });
+  }
+
+  async findByTriggerIdentifierAndUpdate(environmentId: string, triggerIdentifier: string, lastTriggeredAt: Date) {
+    const requestQuery: NotificationTemplateQuery = {
+      _environmentId: environmentId,
+      'triggers.identifier': triggerIdentifier,
+    };
+
+    const item = await this.MongooseModel.findOneAndUpdate(requestQuery, {
+      $set: {
+        lastTriggeredAt,
+      },
+    }).populate('steps.template');
+
+    return this.mapEntity(item);
   }
 
   async findByIdQuery(query: FindByIdQuery) {
@@ -194,7 +210,9 @@ export class NotificationTemplateRepository extends BaseRepository<
     skip: number = 0,
     limit: number = 10,
     query?: string,
-    excludeNewDashboardWorkflows: boolean = false
+    excludeNewDashboardWorkflows: boolean = false,
+    orderBy: string = 'createdAt',
+    orderDirection: DirectionEnum = DirectionEnum.DESC
   ): Promise<{ totalCount: number; data: NotificationTemplateEntity[] }> {
     const searchQuery: FilterQuery<NotificationTemplateDBModel> = {};
 
@@ -219,7 +237,7 @@ export class NotificationTemplateRepository extends BaseRepository<
       _organizationId: organizationId,
       ...searchQuery,
     })
-      .sort({ createdAt: -1 })
+      .sort({ [orderBy]: orderDirection === DirectionEnum.ASC ? 1 : -1 })
       .skip(skip)
       .limit(limit)
       .populate({ path: 'notificationGroup' })

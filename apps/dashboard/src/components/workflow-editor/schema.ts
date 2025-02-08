@@ -1,6 +1,5 @@
 import * as z from 'zod';
 import { type JSONSchemaDefinition, ChannelTypeEnum } from '@novu/shared';
-import type { ZodValue } from '@/utils/schema';
 
 export const MAX_TAG_ELEMENTS = 16;
 export const MAX_TAG_LENGTH = 32;
@@ -14,22 +13,20 @@ export const workflowSchema = z.object({
   tags: z
     .array(z.string().min(0).max(MAX_TAG_LENGTH))
     .max(MAX_TAG_ELEMENTS)
-    .optional()
     .refine((tags) => tags?.every((tag) => tag.length <= MAX_TAG_LENGTH), {
       message: `Tags must be less than ${MAX_TAG_LENGTH} characters`,
     })
+    .optional()
     .refine((tags) => new Set(tags).size === tags?.length, {
       message: 'Duplicate tags are not allowed',
     }),
   description: z.string().max(MAX_DESCRIPTION_LENGTH).optional(),
 });
 
-export const buildStepSchema = (controlsSchema?: ZodValue) =>
-  z.object({
-    name: z.string().min(1).max(MAX_NAME_LENGTH),
-    stepId: z.string(),
-    ...(controlsSchema ? { controlValues: controlsSchema } : {}),
-  });
+export const stepSchema = z.object({
+  name: z.string().min(1).max(MAX_NAME_LENGTH),
+  stepId: z.string(),
+});
 
 export const buildDynamicFormSchema = ({
   to,

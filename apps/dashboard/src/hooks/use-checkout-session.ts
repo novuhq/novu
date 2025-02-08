@@ -1,9 +1,9 @@
-import { useMutation } from '@tanstack/react-query';
 import { ApiServiceLevelEnum } from '@novu/shared';
-import { post } from '../api/api.client';
+import { useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { useTelemetry } from './use-telemetry';
+import { post } from '../api/api.client';
 import { TelemetryEvent } from '../utils/telemetry';
+import { useTelemetry } from './use-telemetry';
 
 interface CheckoutResponse {
   data: {

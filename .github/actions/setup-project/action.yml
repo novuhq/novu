@@ -41,7 +41,7 @@ runs:
       if: ${{ inputs.slim == 'false' }}
       uses: supercharge/mongodb-github-action@1.11.0
       with:
-        mongodb-version: 5.0.29
+        mongodb-version: 8.0
 
     - name: 🛟 Install dependencies
       shell: bash

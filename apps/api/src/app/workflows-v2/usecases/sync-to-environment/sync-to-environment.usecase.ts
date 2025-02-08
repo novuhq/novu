@@ -1,12 +1,11 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import {
-  CreateWorkflowDto,
   PreferencesTypeEnum,
   StepCreateDto,
-  StepDataDto,
+  StepResponseDto,
   StepUpdateDto,
-  UpdateWorkflowDto,
   WorkflowCreationSourceEnum,
+  WorkflowOriginEnum,
   WorkflowPreferences,
   WorkflowResponseDto,
 } from '@novu/shared';
@@ -14,7 +13,7 @@ import { PreferencesEntity, PreferencesRepository } from '@novu/dal';
 import { Instrument, InstrumentUsecase } from '@novu/application-generic';
 import { SyncToEnvironmentCommand } from './sync-to-environment.command';
 import { GetWorkflowCommand, GetWorkflowUseCase } from '../get-workflow';
-import { UpsertWorkflowCommand, UpsertWorkflowUseCase } from '../upsert-workflow';
+import { UpsertWorkflowCommand, UpsertWorkflowDataCommand, UpsertWorkflowUseCase } from '../upsert-workflow';
 
 /**
  * This usecase is used to sync a workflow from one environment to another.
@@ -59,7 +58,7 @@ export class SyncToEnvironmentUseCase {
     originWorkflow: WorkflowResponseDto,
     preferencesToClone: PreferencesEntity[],
     targetWorkflow?: WorkflowResponseDto
-  ) {
+  ): Promise<UpsertWorkflowDataCommand> {
     if (targetWorkflow) {
       return await this.mapWorkflowToUpdateWorkflowDto(originWorkflow, targetWorkflow, preferencesToClone);
     }
@@ -98,9 +97,10 @@ export class SyncToEnvironmentUseCase {
   private async mapWorkflowToCreateWorkflowDto(
     originWorkflow: WorkflowResponseDto,
     preferences: PreferencesEntity[]
-  ): Promise<CreateWorkflowDto> {
+  ): Promise<UpsertWorkflowDataCommand> {
     return {
       workflowId: originWorkflow.workflowId,
+      origin: WorkflowOriginEnum.NOVU_CLOUD,
       name: originWorkflow.name,
       active: originWorkflow.active,
       tags: originWorkflow.tags,
@@ -116,8 +116,9 @@ export class SyncToEnvironmentUseCase {
     originWorkflow: WorkflowResponseDto,
     existingTargetEnvWorkflow: WorkflowResponseDto | undefined,
     preferencesToClone: PreferencesEntity[]
-  ): Promise<UpdateWorkflowDto> {
+  ): Promise<UpsertWorkflowDataCommand> {
     return {
+      origin: WorkflowOriginEnum.NOVU_CLOUD,
       workflowId: originWorkflow.workflowId,
       name: originWorkflow.name,
       active: originWorkflow.active,
@@ -130,8 +131,8 @@ export class SyncToEnvironmentUseCase {
 
   @Instrument()
   private async mapStepsToCreateOrUpdateDto(
-    originSteps: StepDataDto[],
-    targetEnvSteps?: StepDataDto[]
+    originSteps: StepResponseDto[],
+    targetEnvSteps?: StepResponseDto[]
   ): Promise<(StepUpdateDto | StepCreateDto)[]> {
     return originSteps.map((sourceStep) => {
       // if we find matching step in target environment, we are updating
@@ -143,7 +144,10 @@ export class SyncToEnvironmentUseCase {
     });
   }
 
-  private buildStepCreateOrUpdateDto(step: StepDataDto, existingInternalId?: string): StepUpdateDto | StepCreateDto {
+  private buildStepCreateOrUpdateDto(
+    step: StepResponseDto,
+    existingInternalId?: string
+  ): StepUpdateDto | StepCreateDto {
     return {
       ...(existingInternalId && { _id: existingInternalId }),
       name: step.name ?? '',

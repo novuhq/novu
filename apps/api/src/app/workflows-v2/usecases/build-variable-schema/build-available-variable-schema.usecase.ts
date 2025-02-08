@@ -3,21 +3,31 @@ import { NotificationStepEntity, NotificationTemplateEntity } from '@novu/dal';
 import { JSONSchemaDto } from '@novu/shared';
 import { Instrument } from '@novu/application-generic';
 import { computeResultSchema } from '../../shared';
-import { BuildAvailableVariableSchemaCommand } from './build-available-variable-schema.command';
+import { BuildVariableSchemaCommand } from './build-available-variable-schema.command';
 import { parsePayloadSchema } from '../../shared/parse-payload-schema';
-import { BuildPayloadSchemaCommand } from '../build-payload-schema/build-payload-schema.command';
-import { BuildPayloadSchema } from '../build-payload-schema/build-payload-schema.usecase';
+import { ExtractVariablesCommand } from '../extract-variables/extract-variables.command';
+import { ExtractVariables } from '../extract-variables/extract-variables.usecase';
 import { emptyJsonSchema } from '../../util/jsonToSchema';
+import { buildVariablesSchema } from '../../util/create-schema';
 
 @Injectable()
-export class BuildAvailableVariableSchemaUsecase {
-  constructor(private readonly buildPayloadSchema: BuildPayloadSchema) {}
+export class BuildVariableSchemaUsecase {
+  constructor(private readonly extractVariables: ExtractVariables) {}
 
-  async execute(command: BuildAvailableVariableSchemaCommand): Promise<JSONSchemaDto> {
-    const { workflow } = command;
+  async execute(command: BuildVariableSchemaCommand): Promise<JSONSchemaDto> {
+    const { workflow, stepInternalId } = command;
     const previousSteps = workflow?.steps.slice(
       0,
-      workflow?.steps.findIndex((stepItem) => stepItem._id === command.stepInternalId)
+      workflow?.steps.findIndex((stepItem) => stepItem._id === stepInternalId)
+    );
+    const { payload, subscriber } = await this.extractVariables.execute(
+      ExtractVariablesCommand.create({
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        userId: command.userId,
+        workflowId: workflow?._id,
+        ...(command.optimisticControlValues ? { controlValues: command.optimisticControlValues } : {}),
+      })
     );
 
     return {
@@ -40,18 +50,15 @@ export class BuildAvailableVariableSchemaUsecase {
               format: 'date-time',
               description: 'The last time the subscriber was online (optional)',
             },
-            data: {
-              type: 'object',
-              properties: {},
-              description: 'Additional data about the subscriber',
-              additionalProperties: true,
-            },
+            data: buildVariablesSchema(
+              subscriber && typeof subscriber === 'object' && 'data' in subscriber ? subscriber.data : {}
+            ),
           },
           required: ['firstName', 'lastName', 'email', 'subscriberId'],
           additionalProperties: false,
         },
         steps: buildPreviousStepsSchema(previousSteps, workflow?.payloadSchema),
-        payload: await this.resolvePayloadSchema(workflow, command),
+        payload: await this.resolvePayloadSchema(workflow, payload),
       },
       additionalProperties: false,
     } as const satisfies JSONSchemaDto;
@@ -60,9 +67,9 @@ export class BuildAvailableVariableSchemaUsecase {
   @Instrument()
   private async resolvePayloadSchema(
     workflow: NotificationTemplateEntity | undefined,
-    command: BuildAvailableVariableSchemaCommand
+    payload: unknown
   ): Promise<JSONSchemaDto> {
-    if (!workflow) {
+    if (workflow && workflow.steps.length === 0) {
       return {
         type: 'object',
         properties: {},
@@ -70,19 +77,11 @@ export class BuildAvailableVariableSchemaUsecase {
       };
     }
 
-    if (workflow.payloadSchema) {
+    if (workflow?.payloadSchema) {
       return parsePayloadSchema(workflow.payloadSchema, { safe: true }) || emptyJsonSchema();
     }
 
-    return this.buildPayloadSchema.execute(
-      BuildPayloadSchemaCommand.create({
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-        userId: command.userId,
-        workflowId: workflow._id,
-        ...(command.optimisticControlValues ? { controlValues: command.optimisticControlValues } : {}),
-      })
-    );
+    return buildVariablesSchema(payload);
   }
 }
 

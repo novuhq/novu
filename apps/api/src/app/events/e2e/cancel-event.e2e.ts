@@ -14,7 +14,7 @@ import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 const axiosInstance = axios.create();
 
-describe('Cancel event - /v1/events/trigger/:transactionId (DELETE)', function () {
+describe('Cancel event - /v1/events/trigger/:transactionId (DELETE) #novu-v2', function () {
   let session: UserSession;
   let template: NotificationTemplateEntity;
   let subscriber: SubscriberEntity;
@@ -32,7 +32,7 @@ describe('Cancel event - /v1/events/trigger/:transactionId (DELETE)', function (
     return (
       await novuClient.trigger({
         transactionId,
-        name: template.triggers[0].identifier,
+        workflowId: template.triggers[0].identifier,
         to,
         payload,
         overrides,
@@ -81,7 +81,7 @@ describe('Cancel event - /v1/events/trigger/:transactionId (DELETE)', function (
       id
     );
 
-    await session.awaitRunningJobs(template?._id, false, 1);
+    await session.waitForJobCompletion(template?._id, false, 1);
     await axiosInstance.delete(`${session.serverUrl}/v1/events/trigger/${id}`, {
       headers: {
         authorization: `ApiKey ${session.apiKey}`,
@@ -151,7 +151,7 @@ describe('Cancel event - /v1/events/trigger/:transactionId (DELETE)', function (
       [subscriber.subscriberId, secondSubscriber.subscriberId]
     );
 
-    await session.awaitRunningJobs(template?._id, true, 2);
+    await session.waitForJobCompletion(template?._id, true, 2);
     await axiosInstance.delete(`${session.serverUrl}/v1/events/trigger/${id}`, {
       headers: {
         authorization: `ApiKey ${session.apiKey}`,
@@ -214,7 +214,7 @@ describe('Cancel event - /v1/events/trigger/:transactionId (DELETE)', function (
     });
 
     // Wait for trigger2 to be merged to trigger1
-    await session.awaitRunningJobs(template?._id, false, 1);
+    await session.waitForJobCompletion(template?._id, false, 1);
 
     const trigger3 = await triggerEvent({
       customVar: 'trigger_3_data',
@@ -222,7 +222,7 @@ describe('Cancel event - /v1/events/trigger/:transactionId (DELETE)', function (
 
     cancelEvent(trigger2.transactionId);
 
-    await session.awaitRunningJobs(template?._id, false, 0);
+    await session.waitForJobCompletion(template?._id, false, 0);
 
     const delayedJobs = await jobRepository.find({
       _environmentId: session.environment._id,
@@ -299,14 +299,14 @@ describe('Cancel event - /v1/events/trigger/:transactionId (DELETE)', function (
     });
 
     // Wait for trigger2 to be merged to trigger1
-    await session.awaitRunningJobs(template?._id, false, 1);
+    await session.waitForJobCompletion(template?._id, false, 1);
     cancelEvent(trigger1.transactionId);
 
     const trigger3 = await triggerEvent({
       customVar: 'trigger_3_data',
     });
 
-    await session.awaitRunningJobs(template?._id, false, 0);
+    await session.waitForJobCompletion(template?._id, false, 0);
 
     const delayedJobs = await jobRepository.find(
       {
@@ -394,7 +394,7 @@ describe('Cancel event - /v1/events/trigger/:transactionId (DELETE)', function (
 
     // Wait for trigger2 to be merged to trigger1
     const mainDigest = trigger1.transactionId;
-    await session.awaitRunningJobs(template?._id, false, 1);
+    await session.waitForJobCompletion(template?._id, false, 1);
     cancelEvent(mainDigest);
 
     const trigger3 = await triggerEvent({
@@ -403,14 +403,14 @@ describe('Cancel event - /v1/events/trigger/:transactionId (DELETE)', function (
 
     // Wait for trigger3 to be merged to trigger2
     const followerDigest = trigger2.transactionId;
-    await session.awaitRunningJobs(template?._id, false, 1);
+    await session.waitForJobCompletion(template?._id, false, 1);
     cancelEvent(followerDigest);
 
     const trigger4 = await triggerEvent({
       customVar: 'trigger_4_data',
     });
 
-    await session.awaitRunningJobs(template?._id, false, 0);
+    await session.waitForJobCompletion(template?._id, false, 0);
 
     const delayedJobs = await jobRepository.find(
       {
@@ -502,7 +502,7 @@ describe('Cancel event - /v1/events/trigger/:transactionId (DELETE)', function (
 
     // Wait for trigger2 to be merged to trigger1
     const mainDigest = trigger1.transactionId;
-    await session.awaitRunningJobs(template?._id, false, 1);
+    await session.waitForJobCompletion(template?._id, false, 1);
     cancelEvent(mainDigest);
 
     const trigger3 = await triggerEvent({
@@ -511,7 +511,7 @@ describe('Cancel event - /v1/events/trigger/:transactionId (DELETE)', function (
 
     // Wait for trigger3 to be merged to trigger2
     const followerDigest = trigger2.transactionId;
-    await session.awaitRunningJobs(template?._id, false, 1);
+    await session.waitForJobCompletion(template?._id, false, 1);
     cancelEvent(followerDigest);
 
     const trigger4 = await triggerEvent({
@@ -519,10 +519,10 @@ describe('Cancel event - /v1/events/trigger/:transactionId (DELETE)', function (
     });
 
     // Wait for trigger4 to be merged to trigger3
-    await session.awaitRunningJobs(template?._id, false, 1);
+    await session.waitForJobCompletion(template?._id, false, 1);
     cancelEvent(trigger4.transactionId);
 
-    await session.awaitRunningJobs(template?._id, false, 0);
+    await session.waitForJobCompletion(template?._id, false, 0);
 
     const delayedJobs = await jobRepository.find(
       {

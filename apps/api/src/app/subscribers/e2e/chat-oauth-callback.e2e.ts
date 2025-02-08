@@ -6,18 +6,20 @@ import { UserSession } from '@novu/testing';
 import { ChannelTypeEnum, ChatProviderIdEnum } from '@novu/shared';
 import { IntegrationRepository, SubscriberRepository } from '@novu/dal';
 import { createHash } from '@novu/application-generic';
+import { Novu } from '@novu/api';
+import { expectSdkExceptionGeneric, initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-const axiosInstance = axios.create();
-
-describe('ChatOauthCallback - /:subscriberId/credentials/:providerId/:environmentId/callback (GET)', function () {
+describe('ChatOauthCallback - /:subscriberId/credentials/:providerId/:environmentId/callback (GET) #novu-v2', function () {
   let session: UserSession;
-  const ACTION = '<script>window.close();</script>';
+  const HTML_SCRIPT = '<script>window.close();</script>';
 
   const integrationRepository = new IntegrationRepository();
+  let novuClient: Novu;
 
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
+    novuClient = initNovuClassSdk(session);
   });
 
   it('should return action script', async () => {
@@ -31,9 +33,18 @@ describe('ChatOauthCallback - /:subscriberId/credentials/:providerId/:environmen
 
     const userSubscriberId = '123';
 
-    const res = await chatOauthCallback(session.serverUrl, userSubscriberId, session.environment._id);
+    const res = await novuClient.subscribers.authentication.chatAccessOauthCallBack(
+      {
+        code: 'code_123',
+        subscriberId: userSubscriberId,
+        providerId: ChatProviderIdEnum.Slack,
+        environmentId: session.environment._id,
+        hmacHash: '',
+      },
+      { retries: { strategy: 'none' } }
+    );
 
-    expect(res.data).to.be.equal(ACTION);
+    expect(res.result).to.be.equal(HTML_SCRIPT);
   });
 
   it('should throw an exception when looking for integration with invalid environmentId', async () => {
@@ -46,14 +57,19 @@ describe('ChatOauthCallback - /:subscriberId/credentials/:providerId/:environmen
 
     const invalidEnvironment = SubscriberRepository.createObjectId();
 
-    const errorMessage =
+    const { error } = await expectSdkExceptionGeneric(() =>
+      novuClient.subscribers.authentication.chatAccessOauthCallBack({
+        code: 'code_123',
+        subscriberId: session.subscriberId,
+        providerId: ChatProviderIdEnum.Slack,
+        environmentId: invalidEnvironment,
+        hmacHash: '',
+      })
+    );
+    await expect(error?.message).to.equal(
       `Integration in environment ${invalidEnvironment} was not found, channel: ${ChannelTypeEnum.CHAT}, ` +
-      `providerId: ${ChatProviderIdEnum.Slack}`;
-    await expectThrow({
-      subscriberId: session.subscriberId,
-      error: errorMessage,
-      environmentId: invalidEnvironment,
-    });
+        `providerId: ${ChatProviderIdEnum.Slack}`
+    );
   });
 
   it('should throw an exception with missing hmacHash (enabled hmac)', async () => {
@@ -84,10 +100,18 @@ describe('ChatOauthCallback - /:subscriberId/credentials/:providerId/:environmen
       })
     );
 
-    await expectThrow({
-      subscriberId: '123',
-      error: 'Hmac is enabled on the integration, please provide a HMAC hash on the request params',
-    });
+    const { error } = await expectSdkExceptionGeneric(() =>
+      novuClient.subscribers.authentication.chatAccessOauthCallBack({
+        code: 'code_123',
+        subscriberId: '123',
+        providerId: ChatProviderIdEnum.Slack,
+        environmentId: session.environment._id,
+        hmacHash: '',
+      })
+    );
+    await expect(error?.message).to.equal(
+      `Hmac is enabled on the integration, please provide a HMAC hash on the request params`
+    );
   });
 
   it('should return action script (hmac enabled)', async () => {
@@ -120,15 +144,15 @@ describe('ChatOauthCallback - /:subscriberId/credentials/:providerId/:environmen
 
     const hmacHash = createHash(session.apiKey, userSubscriberId);
 
-    const res = await chatOauthCallback(
-      session.serverUrl,
-      userSubscriberId,
-      session.environment._id,
-      ChatProviderIdEnum.Slack,
-      hmacHash
-    );
+    const res = await novuClient.subscribers.authentication.chatAccessOauthCallBack({
+      code: 'code_123',
+      subscriberId: userSubscriberId,
+      providerId: ChatProviderIdEnum.Slack,
+      environmentId: session.environment._id,
+      hmacHash,
+    });
 
-    expect(res.data).to.be.equal(ACTION);
+    expect(res.result).to.be.equal(HTML_SCRIPT);
   });
 
   it('should throw exception on invalid hashHmac (hmac enabled)', async () => {
@@ -163,11 +187,16 @@ describe('ChatOauthCallback - /:subscriberId/credentials/:providerId/:environmen
 
     const invalidHmac = `${hmacHash}007`;
 
-    await expectThrow({
-      subscriberId: userSubscriberId,
-      error: 'Hmac is enabled on the integration, please provide a valid HMAC hash',
-      hashHmac: invalidHmac,
-    });
+    const { error } = await expectSdkExceptionGeneric(() =>
+      novuClient.subscribers.authentication.chatAccessOauthCallBack({
+        code: 'code_123',
+        subscriberId: userSubscriberId,
+        providerId: ChatProviderIdEnum.Slack,
+        environmentId: session.environment._id,
+        hmacHash: invalidHmac,
+      })
+    );
+    await expect(error?.message).to.equal(`Hmac is enabled on the integration, please provide a valid HMAC hash`);
   });
 
   it('should throw exception on missing webhook', async () => {
@@ -180,45 +209,15 @@ describe('ChatOauthCallback - /:subscriberId/credentials/:providerId/:environmen
 
     const userSubscriberId = '123';
 
-    await expectThrow({
-      subscriberId: userSubscriberId,
-      error: 'Provider slack did not return a webhook url',
-    });
+    const { error } = await expectSdkExceptionGeneric(() =>
+      novuClient.subscribers.authentication.chatAccessOauthCallBack({
+        code: 'code_123',
+        subscriberId: userSubscriberId,
+        providerId: ChatProviderIdEnum.Slack,
+        environmentId: session.environment._id,
+        hmacHash: '',
+      })
+    );
+    await expect(error?.message).to.equal(`Provider slack did not return a webhook url`);
   });
-
-  async function expectThrow({
-    subscriberId,
-    error,
-    environmentId = session.environment._id,
-    hashHmac = '',
-  }: {
-    subscriberId: string | undefined | null;
-    error: string;
-    environmentId?: string;
-    hashHmac?: string;
-  }) {
-    const expectedError = `Exception should have been thrown expect error: ${error}`;
-    try {
-      await chatOauthCallback(session.serverUrl, subscriberId, environmentId, ChatProviderIdEnum.Slack, hashHmac);
-      throw new Error(expectedError);
-    } catch (e) {
-      const message = Array.isArray(e.response.data.message) ? e.response.data.message[0] : e.response.data.message;
-      expect(message || e.message).to.equal(error);
-    }
-  }
 });
-
-async function chatOauthCallback(
-  serverUrl: string,
-  subscriberId?: string | null,
-  environmentId?: string | null | undefined,
-  providerId: ChatProviderIdEnum | null = ChatProviderIdEnum.Slack,
-  hmacHash = ''
-) {
-  const environmentIdQuery = `&environmentId=${environmentId}`;
-  const hmacHashQuery = hmacHash ? `&hmacHash=${hmacHash}` : '';
-
-  return await axiosInstance.get(
-    `${serverUrl}/v1/subscribers/${subscriberId}/credentials/${providerId}/oauth/callback?code=code_123${environmentIdQuery}${hmacHashQuery}`
-  );
-}

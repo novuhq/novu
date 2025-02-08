@@ -2,7 +2,7 @@ import { EmailBlockTypeEnum, PreferenceLevelEnum, StepTypeEnum } from '@novu/sha
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
-describe('Update global preferences - /inbox/preferences (PATCH)', function () {
+describe('Update global preferences - /inbox/preferences (PATCH) #novu-v2', function () {
   let session: UserSession;
 
   beforeEach(async () => {

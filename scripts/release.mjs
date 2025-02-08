@@ -13,10 +13,10 @@ import inquirer from 'inquirer';
 import yargs from 'yargs/yargs';
 import { execa } from 'execa';
 
-const projects = ['tag:type:package'];
+const groups = ['packages'];
 
 (async () => {
-  const { dryRun, verbose, from, ...rest } = yargs(hideBin(process.argv))
+  const { dryRun, verbose, from, firstRelease, ...rest } = yargs(hideBin(process.argv))
     .version(false)
     .option('dryRun', {
       alias: 'd',
@@ -34,6 +34,11 @@ const projects = ['tag:type:package'];
         'The git reference to use as the start of the changelog. If not set it will attempt to resolve the latest tag and use that.',
       type: 'string',
     })
+    .option('first-release', {
+      description: 'Whether or not this is the first release, defaults to false',
+      type: 'boolean',
+      default: false,
+    })
     .help()
     .parse();
 
@@ -45,15 +50,15 @@ const projects = ['tag:type:package'];
   }
 
   const { workspaceVersion, projectsVersionData } = await releaseVersion({
-    projects,
+    groups,
     specifier,
     dryRun,
     verbose,
-    firstRelease: false,
+    firstRelease,
   });
 
   await releaseChangelog({
-    projects,
+    groups,
     specifier,
     versionData: projectsVersionData,
     version: workspaceVersion,
@@ -61,6 +66,7 @@ const projects = ['tag:type:package'];
     verbose,
     from,
     interactive: 'projects',
+    firstRelease,
   });
 
   await execa({
@@ -77,10 +83,11 @@ const projects = ['tag:type:package'];
   ]);
 
   await releasePublish({
-    projects,
+    groups,
     specifier: 'patch',
     dryRun,
     verbose,
     otp: answers.otp,
+    firstRelease,
   });
 })();

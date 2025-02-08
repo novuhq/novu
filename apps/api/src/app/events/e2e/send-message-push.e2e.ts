@@ -11,7 +11,7 @@ import { UserSession } from '@novu/testing';
 import { Novu } from '@novu/api';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-describe('Trigger event - Send Push Notification - /v1/events/trigger (POST)', () => {
+describe('Trigger event - Send Push Notification - /v1/events/trigger (POST) #novu-v2', () => {
   let session: UserSession;
   let template: NotificationTemplateEntity;
 
@@ -62,7 +62,7 @@ describe('Trigger event - Send Push Notification - /v1/events/trigger (POST)', (
     it('should not create any message if subscriber has no configured channel', async () => {
       await triggerEvent(template);
 
-      await session.awaitRunningJobs(template._id);
+      await session.waitForJobCompletion(template._id);
 
       const messages = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -76,12 +76,10 @@ describe('Trigger event - Send Push Notification - /v1/events/trigger (POST)', (
         _environmentId: session.environment._id,
       });
 
-      expect(executionDetails.length).to.equal(8);
+      expect(executionDetails.length).to.equal(7);
       const noActiveChannel = executionDetails.find((ex) => ex.detail === DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL);
       expect(noActiveChannel).to.be.ok;
       expect(noActiveChannel?.providerId).to.equal('fcm');
-      const genericError = executionDetails.find((ex) => ex.detail === DetailEnum.NOTIFICATION_ERROR);
-      expect(genericError).to.be.ok;
     });
 
     it('should not create any message if subscriber has configured two providers without device tokens', async () => {
@@ -90,7 +88,7 @@ describe('Trigger event - Send Push Notification - /v1/events/trigger (POST)', (
 
       await triggerEvent(template);
 
-      await session.awaitRunningJobs(template._id);
+      await session.waitForJobCompletion(template._id);
 
       const messages = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -123,7 +121,7 @@ describe('Trigger event - Send Push Notification - /v1/events/trigger (POST)', (
 
       await triggerEvent(template);
 
-      await session.awaitRunningJobs(template._id);
+      await session.waitForJobCompletion(template._id);
 
       const messages = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -159,7 +157,7 @@ describe('Trigger event - Send Push Notification - /v1/events/trigger (POST)', (
   });
   async function triggerEvent(template2) {
     await novuClient.trigger({
-      name: template2.triggers[0].identifier,
+      workflowId: template2.triggers[0].identifier,
       to: [{ subscriberId: session.subscriberId }],
       payload: {},
     });

@@ -4,7 +4,7 @@ import { expect } from 'chai';
 import { Novu } from '@novu/api';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-describe('Add subscribers to topic - /topics/:topicKey/subscribers (POST)', async () => {
+describe('Add subscribers to topic - /topics/:topicKey/subscribers (POST) #novu-v2', async () => {
   const topicKey = 'topic-key-add-subscribers';
   const topicName = 'topic-name';
   const URL = '/v1/topics';
@@ -39,8 +39,8 @@ describe('Add subscribers to topic - /topics/:topicKey/subscribers (POST)', asyn
     topicUrl = `${URL}/${topicKey}`;
     addSubscribersUrl = `${topicUrl}/subscribers`;
   });
-
   it('should throw validation error for missing request payload information', async () => {
+    // Not changing to use SDK since the SDK would block wrong usage
     const { body } = await session.testAgent.post(addSubscribersUrl).send({});
 
     expect(body.statusCode).to.eql(400);

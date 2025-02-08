@@ -1,19 +1,19 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 
-import { MessageEntity, MessageRepository, SubscriberRepository, SubscriberEntity } from '@novu/dal';
-import { MessagesStatusEnum, WebSocketEventEnum } from '@novu/shared';
+import { MessageEntity, MessageRepository, SubscriberEntity, SubscriberRepository } from '@novu/dal';
+import { MessagesStatusEnum } from '@novu/shared';
 import {
-  WebSocketsQueueService,
   AnalyticsService,
-  InvalidateCacheService,
-  CachedEntity,
   buildFeedKey,
   buildMessageCountKey,
   buildSubscriberKey,
+  CachedEntity,
+  InvalidateCacheService,
+  WebSocketsQueueService,
 } from '@novu/application-generic';
-
 import { MarkMessageAsByMarkCommand } from './mark-message-as-by-mark.command';
 import { mapMarkMessageToWebSocketEvent } from '../../../shared/helpers';
+import { MessageResponseDto } from '../../dtos/message-response.dto';
 
 @Injectable()
 export class MarkMessageAsByMark {
@@ -25,7 +25,7 @@ export class MarkMessageAsByMark {
     private subscriberRepository: SubscriberRepository
   ) {}
 
-  async execute(command: MarkMessageAsByMarkCommand): Promise<MessageEntity[]> {
+  async execute(command: MarkMessageAsByMarkCommand): Promise<MessageResponseDto[]> {
     const subscriber = await this.fetchSubscriber({
       _environmentId: command.environmentId,
       subscriberId: command.subscriberId,
@@ -54,7 +54,7 @@ export class MarkMessageAsByMark {
       markAs: command.markAs,
     });
 
-    const messages = await this.messageRepository.find({
+    const messages: MessageEntity[] = await this.messageRepository.find({
       _environmentId: command.environmentId,
       _id: {
         $in: command.messageIds,
@@ -63,7 +63,7 @@ export class MarkMessageAsByMark {
 
     await this.updateServices(command, subscriber, messages, command.markAs);
 
-    return messages;
+    return messages.map(mapMessageEntityToResponseDto);
   }
 
   private async updateServices(command: MarkMessageAsByMarkCommand, subscriber, messages, markAs: MessagesStatusEnum) {
@@ -116,4 +116,40 @@ export class MarkMessageAsByMark {
   }): Promise<SubscriberEntity | null> {
     return await this.subscriberRepository.findBySubscriberId(_environmentId, subscriberId);
   }
+}
+export function mapMessageEntityToResponseDto(entity: MessageEntity): MessageResponseDto {
+  const responseDto = new MessageResponseDto();
+
+  responseDto._id = entity._id;
+  responseDto._templateId = entity._templateId;
+  responseDto._environmentId = entity._environmentId;
+  responseDto._messageTemplateId = entity._messageTemplateId;
+  responseDto._organizationId = entity._organizationId;
+  responseDto._notificationId = entity._notificationId;
+  responseDto._subscriberId = entity._subscriberId;
+  responseDto.templateIdentifier = entity.templateIdentifier;
+  responseDto.createdAt = entity.createdAt;
+  responseDto.lastSeenDate = entity.lastSeenDate;
+  responseDto.lastReadDate = entity.lastReadDate;
+  responseDto.content = entity.content; // Assuming content can be directly assigned
+  responseDto.transactionId = entity.transactionId;
+  responseDto.subject = entity.subject;
+  responseDto.channel = entity.channel;
+  responseDto.read = entity.read;
+  responseDto.seen = entity.seen;
+  responseDto.email = entity.email;
+  responseDto.phone = entity.phone;
+  responseDto.directWebhookUrl = entity.directWebhookUrl;
+  responseDto.providerId = entity.providerId;
+  responseDto.deviceTokens = entity.deviceTokens;
+  responseDto.title = entity.title;
+  responseDto.cta = entity.cta; // Assuming cta can be directly assigned
+  responseDto._feedId = entity._feedId ?? null; // Handle optional _feedId
+  responseDto.status = entity.status;
+  responseDto.errorId = entity.errorId;
+  responseDto.errorText = entity.errorText;
+  responseDto.payload = entity.payload;
+  responseDto.overrides = entity.overrides;
+
+  return responseDto;
 }

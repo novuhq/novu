@@ -8,8 +8,7 @@ import { CreateTopicResponseDto } from '@novu/api/models/components';
 import { TopicsControllerAssignResponse } from '@novu/api/models/operations';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-const BASE_PATH = '/v1/topics';
-describe('Filter topics - /topics (GET)', async () => {
+describe('Filter topics - /topics (GET) #novu-v2', async () => {
   let firstSubscriber: SubscriberEntity;
   let secondSubscriber: SubscriberEntity;
   let session: UserSession;
@@ -43,44 +42,47 @@ describe('Filter topics - /topics (GET)', async () => {
   });
 
   it('should return a validation error if the params provided are not in the right type', async () => {
-    const url = `${BASE_PATH}?page=first&pageSize=big`;
-    const response = await session.testAgent.get(url);
-
-    expect(response.statusCode).to.eql(400);
-    expect(response.body.error).to.eql('Bad Request');
-    expect(response.body.message).to.eql([
-      'page must not be less than 0',
+    const response = await session.testAgent.get(`/v1/topics?page=first&pageSize=big`);
+    expect(response.statusCode).to.eql(422);
+    expect(response.body.errors.page.messages, JSON.stringify(response.body)).to.include.members([
       'page must be an integer number',
-      'pageSize must not be less than 0',
+    ]);
+    expect(response.body.errors.pageSize.messages, JSON.stringify(response.body)).to.include.members([
       'pageSize must be an integer number',
     ]);
   });
 
   it('should return a validation error if the expected params provided are not integers', async () => {
-    const url = `${BASE_PATH}?page=1.5&pageSize=1.5`;
+    const url = `/v1/topics?page=1.5&pageSize=1.5`;
     const response = await session.testAgent.get(url);
 
-    expect(response.statusCode).to.eql(400);
-    expect(response.body.error).to.eql('Bad Request');
-    expect(response.body.message).to.eql(['page must be an integer number', 'pageSize must be an integer number']);
+    expect(response.statusCode).to.eql(422);
+    expect(response.body.message, JSON.stringify(response.body)).to.eql('Validation failed');
+    expect(response.body.errors.page.messages).to.include.members(['page must be an integer number']);
+    expect(response.body.errors.pageSize.messages).to.include.members(['pageSize must be an integer number']);
   });
 
   it('should return a validation error if the expected params provided are negative integers', async () => {
-    const url = `${BASE_PATH}?page=-1&pageSize=-1`;
+    const url = `/v1/topics?page=-1&pageSize=-1`;
     const response = await session.testAgent.get(url);
 
-    expect(response.statusCode).to.eql(400);
-    expect(response.body.error).to.eql('Bad Request');
-    expect(response.body.message).to.eql(['page must not be less than 0', 'pageSize must not be less than 0']);
+    expect(response.statusCode).to.eql(422);
+    expect(response.body.errors.page.messages, JSON.stringify(response.body)).to.include.members([
+      'page must not be less than 0',
+    ]);
+    expect(response.body.errors.pageSize.messages, JSON.stringify(response.body)).to.include.members([
+      'pageSize must not be less than 0',
+    ]);
   });
 
   it('should return a Bad Request error if the page size requested is bigger than the default one (10)', async () => {
-    const url = `${BASE_PATH}?page=1&pageSize=101`;
+    const url = `/v1/topics?page=1&pageSize=101`;
     const response = await session.testAgent.get(url);
 
-    expect(response.statusCode).to.eql(400);
-    expect(response.body.error).to.eql('Bad Request');
-    expect(response.body.message).to.eql('Page size can not be larger then 10');
+    expect(response.statusCode).to.eql(422);
+    expect(response.body.errors.pageSize.messages, JSON.stringify(response.body)).to.include.members([
+      'pageSize must not be greater than 10',
+    ]);
   });
 
   it('should retrieve all the topics that exist in the database for the user if not query params provided', async () => {
@@ -122,7 +124,7 @@ describe('Filter topics - /topics (GET)', async () => {
   });
 
   it('should ignore other query params and return all the topics that belong the user', async () => {
-    const url = `${BASE_PATH}?unsupportedParam=whatever`;
+    const url = `/v1/topics?unsupportedParam=whatever`;
     const response = await session.testAgent.get(url);
 
     expect(response.statusCode).to.eql(200);

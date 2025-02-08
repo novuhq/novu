@@ -1,4 +1,3 @@
-import { createNovuBaseClient, HttpError, NovuRestResult } from './novu-base-client';
 import {
   CreateWorkflowDto,
   GeneratePreviewRequestDto,
@@ -7,12 +6,13 @@ import {
   ListWorkflowResponse,
   PatchStepDataDto,
   PatchWorkflowDto,
-  StepDataDto,
+  StepResponseDto,
   SyncWorkflowDto,
   UpdateWorkflowDto,
   WorkflowResponseDto,
   WorkflowTestDataResponseDto,
 } from '../dto';
+import { createNovuBaseClient, HttpError, NovuRestResult } from './novu-base-client';
 
 export const createWorkflowClient = (baseUrl: string, headers: HeadersInit = {}) => {
   const baseClient = createNovuBaseClient(baseUrl, headers);
@@ -44,16 +44,16 @@ export const createWorkflowClient = (baseUrl: string, headers: HeadersInit = {})
   const getWorkflowStepData = async (
     workflowId: string,
     stepId: string
-  ): Promise<NovuRestResult<StepDataDto, HttpError>> => {
-    return await baseClient.safeGet<StepDataDto>(`/v2/workflows/${workflowId}/steps/${stepId}`);
+  ): Promise<NovuRestResult<StepResponseDto, HttpError>> => {
+    return await baseClient.safeGet<StepResponseDto>(`/v2/workflows/${workflowId}/steps/${stepId}`);
   };
 
   const patchWorkflowStepData = async (
     workflowId: string,
     stepId: string,
     patchStepDataDto: PatchStepDataDto
-  ): Promise<NovuRestResult<StepDataDto, HttpError>> => {
-    return await baseClient.safePatch<StepDataDto>(`/v2/workflows/${workflowId}/steps/${stepId}`, patchStepDataDto);
+  ): Promise<NovuRestResult<StepResponseDto, HttpError>> => {
+    return await baseClient.safePatch<StepResponseDto>(`/v2/workflows/${workflowId}/steps/${stepId}`, patchStepDataDto);
   };
 
   const patchWorkflow = async (
@@ -76,8 +76,8 @@ export const createWorkflowClient = (baseUrl: string, headers: HeadersInit = {})
     if (queryParams.orderDirection) {
       query.append('orderDirection', queryParams.orderDirection);
     }
-    if (queryParams.orderByField) {
-      query.append('orderByField', queryParams.orderByField);
+    if (queryParams.orderBy) {
+      query.append('orderBy', queryParams.orderBy);
     }
     if (queryParams.query) {
       query.append('query', queryParams.query);

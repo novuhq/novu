@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { JobEntity, JobRepository, JobStatusEnum, NotificationRepository } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
 import { setUser } from '@sentry/node';
@@ -11,9 +11,11 @@ import {
 } from '@novu/application-generic';
 
 import { RunJobCommand } from './run-job.command';
-import { QueueNextJob, QueueNextJobCommand } from '../queue-next-job';
 import { SendMessage, SendMessageCommand } from '../send-message';
 import { PlatformException, EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER } from '../../../shared/utils';
+import { SetJobAsFailed } from '../update-job-status/set-job-as-failed.usecase';
+import { AddJob } from '../add-job';
+import { SetJobAsFailedCommand } from '../update-job-status/set-job-as.command';
 
 const nr = require('newrelic');
 
@@ -24,7 +26,8 @@ export class RunJob {
   constructor(
     private jobRepository: JobRepository,
     private sendMessage: SendMessage,
-    private queueNextJob: QueueNextJob,
+    @Inject(forwardRef(() => AddJob)) private addJobUsecase: AddJob,
+    @Inject(forwardRef(() => SetJobAsFailed)) private setJobAsFailed: SetJobAsFailed,
     private storageHelperService: StorageHelperService,
     private notificationRepository: NotificationRepository,
     private logger?: PinoLogger
@@ -107,29 +110,83 @@ export class RunJob {
         await this.jobRepository.updateStatus(job._environmentId, job._id, JobStatusEnum.COMPLETED);
       }
     } catch (error: any) {
-      Logger.error({ error }, `Running job ${job._id} has thrown an error`, LOG_CONTEXT);
       if (job.step.shouldStopOnFail || this.shouldBackoff(error)) {
         shouldQueueNextJob = false;
       }
       throw error;
     } finally {
       if (shouldQueueNextJob) {
-        const newJob = await this.queueNextJob.execute(
-          QueueNextJobCommand.create({
-            parentId: job._id,
-            environmentId: job._environmentId,
-            organizationId: job._organizationId,
-            userId: job._userId,
-          })
-        );
-
-        // Only remove the attachments if that is the last job
-        if (!newJob) {
-          await this.storageHelperService.deleteAttachments(job.payload?.attachments);
-        }
+        await this.tryQueueNextJobs(job);
       } else {
         // Remove the attachments if the job should not be queued
         await this.storageHelperService.deleteAttachments(job.payload?.attachments);
+      }
+    }
+  }
+
+  /**
+   * Attempts to queue subsequent jobs in the workflow chain.
+   * If queueNextJob.execute returns undefined, we stop the workflow.
+   * Otherwise, we continue trying to queue the next job in the chain.
+   */
+  private async tryQueueNextJobs(job: JobEntity): Promise<void> {
+    let currentFailedJob: JobEntity | null = job;
+    let nextJob: JobEntity | null = null;
+    if (!currentFailedJob) {
+      return;
+    }
+
+    let shouldContinue = true;
+
+    while (shouldContinue) {
+      try {
+        if (!currentFailedJob) {
+          return;
+        }
+
+        nextJob = await this.jobRepository.findOne({
+          _environmentId: currentFailedJob._environmentId,
+          _parentId: currentFailedJob._id,
+        });
+
+        if (!nextJob) {
+          return;
+        }
+
+        await this.addJobUsecase.execute({
+          userId: nextJob._userId,
+          environmentId: nextJob._environmentId,
+          organizationId: nextJob._organizationId,
+          jobId: nextJob._id,
+          job: nextJob,
+        });
+
+        shouldContinue = false;
+      } catch (error: any) {
+        if (!nextJob) {
+          return;
+        }
+
+        await this.setJobAsFailed.execute(
+          SetJobAsFailedCommand.create({
+            environmentId: nextJob._environmentId,
+            jobId: nextJob._id,
+            organizationId: nextJob._organizationId,
+            userId: nextJob._userId,
+          }),
+          error
+        );
+
+        if (nextJob.step.shouldStopOnFail || this.shouldBackoff(error)) {
+          shouldContinue = false;
+          throw error;
+        }
+
+        currentFailedJob = nextJob;
+      } finally {
+        if (nextJob) {
+          await this.storageHelperService.deleteAttachments(nextJob.payload?.attachments);
+        }
       }
     }
   }

@@ -1,18 +1,10 @@
-import { Control } from 'react-hook-form';
-import { Input, InputField } from '@/components/primitives/input';
-import { Switch } from '@/components/primitives/switch';
+import { Input } from '@/components/primitives/input';
 import { SecretInput } from '@/components/primitives/secret-input';
-import { Info } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
+import { Switch } from '@/components/primitives/switch';
 import { CredentialsKeyEnum, IProviderConfig } from '@novu/shared';
-import {
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '../../../components/primitives/form/form';
-import { AUTOCOMPLETE_PASSWORD_MANAGERS_OFF } from '../../../utils/constants';
+import { Control } from 'react-hook-form';
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '../../../components/primitives/form/form';
 
 type IntegrationFormData = {
   name: string;
@@ -22,6 +14,7 @@ type IntegrationFormData = {
   check: boolean;
   primary: boolean;
   environmentId: string;
+  removeNovuBranding?: boolean;
 };
 
 type CredentialsSectionProps = {
@@ -47,11 +40,10 @@ export function CredentialsSection({ provider, control }: CredentialsSectionProp
           control={control}
           name={`credentials.${credential.key}`}
           rules={{ required: credential.required ? `${credential.displayName} is required` : false }}
-          render={({ field }) => (
+          render={({ field, fieldState }) => (
             <FormItem className="mb-2">
-              <FormLabel htmlFor={credential.key}>
+              <FormLabel htmlFor={credential.key} optional={!credential.required}>
                 {credential.displayName}
-                {credential.required && <span className="text-destructive ml-1">*</span>}
               </FormLabel>
               {credential.type === 'switch' ? (
                 <div className="flex items-center justify-between gap-2">
@@ -59,6 +51,21 @@ export function CredentialsSection({ provider, control }: CredentialsSectionProp
                     <Switch id={credential.key} checked={Boolean(field.value)} onCheckedChange={field.onChange} />
                   </FormControl>
                 </div>
+              ) : credential.type === 'dropdown' && credential.dropdown ? (
+                <FormControl>
+                  <Select value={field.value || ''} onValueChange={field.onChange}>
+                    <SelectTrigger>
+                      <SelectValue placeholder={`Select ${credential.displayName.toLowerCase()}`} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {credential.dropdown.map((option) => (
+                        <SelectItem key={option.value || ''} value={option.value || ''}>
+                          {option.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
               ) : credential.type === 'secret' || SECURE_CREDENTIALS.includes(credential.key as CredentialsKeyEnum) ? (
                 <FormControl>
                   <SecretInput
@@ -70,24 +77,18 @@ export function CredentialsSection({ provider, control }: CredentialsSectionProp
                 </FormControl>
               ) : (
                 <FormControl>
-                  <InputField>
-                    <Input
-                      id={credential.key}
-                      type="text"
-                      {...AUTOCOMPLETE_PASSWORD_MANAGERS_OFF}
-                      placeholder={`Enter ${credential.displayName.toLowerCase()}`}
-                      {...field}
-                    />
-                  </InputField>
+                  <Input
+                    size={'md'}
+                    id={credential.key}
+                    type="text"
+                    placeholder={`Enter ${credential.displayName.toLowerCase()}`}
+                    {...field}
+                    hasError={!!fieldState.error}
+                  />
                 </FormControl>
               )}
-              {credential.description && (
-                <FormDescription className="text-foreground-400 flex gap-1 text-xs">
-                  <Info className="relative top-[2px] h-3 w-3" />
-                  <span>{credential.description}</span>
-                </FormDescription>
-              )}
-              <FormMessage />
+
+              <FormMessage>{credential.description}</FormMessage>
             </FormItem>
           )}
         />

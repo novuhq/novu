@@ -1,6 +1,6 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 
-import { StepDataDto, UserSessionData, WorkflowResponseDto } from '@novu/shared';
+import { StepResponseDto, UserSessionData, WorkflowResponseDto } from '@novu/shared';
 import {
   GetWorkflowByIdsCommand,
   GetWorkflowByIdsUseCase,
@@ -40,7 +40,7 @@ export class GetWorkflowUseCase {
   private async getFullWorkflowSteps(
     workflow: WorkflowInternalResponseDto,
     user: UserSessionData
-  ): Promise<StepDataDto[]> {
+  ): Promise<StepResponseDto[]> {
     const stepPromises = workflow.steps.map((step: NotificationStepEntity & { _id: string }) =>
       this.buildStepForWorkflow(workflow, step, user)
     );
@@ -52,7 +52,7 @@ export class GetWorkflowUseCase {
     workflow: WorkflowInternalResponseDto,
     step: NotificationStepEntity & { _id: string },
     user: UserSessionData
-  ): Promise<StepDataDto> {
+  ): Promise<StepResponseDto> {
     try {
       return await this.buildStepDataUsecase.execute(
         BuildStepDataCommand.create({

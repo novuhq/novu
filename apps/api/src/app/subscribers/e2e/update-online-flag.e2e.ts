@@ -2,10 +2,9 @@ import { SubscribersService, UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { sub } from 'date-fns';
 import { SubscriberEntity } from '@novu/dal';
+import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-import { updateSubscriberOnlineFlag } from './helpers';
-
-describe('Update Subscriber online flag - /subscribers/:subscriberId/online-status (PATCH)', function () {
+describe('Update Subscriber online flag - /subscribers/:subscriberId/online-status (PATCH) #novu-v2', function () {
   let session: UserSession;
   let onlineSubscriber: SubscriberEntity;
   let offlineSubscriber: SubscriberEntity;
@@ -30,10 +29,13 @@ describe('Update Subscriber online flag - /subscribers/:subscriberId/online-stat
       isOnline: false,
     };
 
-    const { data } = await updateSubscriberOnlineFlag(body, session, onlineSubscriber.subscriberId);
+    const { result: data } = await initNovuClassSdk(session).subscribers.properties.updateOnlineFlag(
+      body,
+      onlineSubscriber.subscriberId
+    );
 
-    expect(data.data.isOnline).to.equal(false);
-    expect(data.data.lastOnlineAt).to.be.a('string');
+    expect(data.isOnline).to.equal(false);
+    expect(data.lastOnlineAt).to.be.a('string');
   });
 
   it('should set the online status to true', async function () {
@@ -41,8 +43,11 @@ describe('Update Subscriber online flag - /subscribers/:subscriberId/online-stat
       isOnline: true,
     };
 
-    const { data } = await updateSubscriberOnlineFlag(body, session, offlineSubscriber.subscriberId);
+    const { result: data } = await initNovuClassSdk(session).subscribers.properties.updateOnlineFlag(
+      body,
+      offlineSubscriber.subscriberId
+    );
 
-    expect(data.data.isOnline).to.equal(true);
+    expect(data.isOnline).to.equal(true);
   });
 });

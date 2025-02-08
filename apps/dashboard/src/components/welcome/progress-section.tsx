@@ -2,14 +2,12 @@ import { Card, CardContent } from '../primitives/card';
 import { RiArrowRightDoubleFill, RiCheckLine, RiLoader3Line } from 'react-icons/ri';
 import { useOnboardingSteps, StepIdEnum } from '../../hooks/use-onboarding-steps';
 import { Link, useParams } from 'react-router-dom';
-import { buildRoute, LEGACY_ROUTES, ROUTES } from '../../utils/routes';
+import { buildRoute, ROUTES } from '../../utils/routes';
 import { motion } from 'motion/react';
 import { mainCard, leftSection, textItem, stepsList, stepItem, logo } from './progress-section.animations';
 import { PointingArrow, NovuLogo } from './icons';
 import { useTelemetry } from '../../hooks/use-telemetry';
 import { TelemetryEvent } from '../../utils/telemetry';
-import { useFeatureFlag } from '../../hooks/use-feature-flag';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 interface StepItemProps {
   step: {
@@ -45,7 +43,6 @@ export function ProgressSection() {
 }
 
 function StepItem({ step, environmentSlug }: StepItemProps) {
-  const isNewIntegrationStoreEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_ND_INTEGRATION_STORE_ENABLED, false);
   const telemetry = useTelemetry();
 
   const handleStepClick = () => {
@@ -69,8 +66,8 @@ function StepItem({ step, environmentSlug }: StepItemProps) {
       </div>
 
       <Link
-        to={getStepRoute(step.id, environmentSlug, isNewIntegrationStoreEnabled).path}
-        reloadDocument={getStepRoute(step.id, environmentSlug, isNewIntegrationStoreEnabled).isLegacy}
+        to={getStepRoute(step.id, environmentSlug).path}
+        reloadDocument={getStepRoute(step.id, environmentSlug).isLegacy}
         className="w-full"
         onClick={handleStepClick}
       >
@@ -121,7 +118,7 @@ function WelcomeHeader() {
   );
 }
 
-function getStepRoute(stepId: StepIdEnum, environmentSlug: string = '', isNewIntegrationStoreEnabled: boolean) {
+function getStepRoute(stepId: StepIdEnum, environmentSlug: string = '') {
   switch (stepId) {
     case StepIdEnum.CREATE_A_WORKFLOW:
       return {
@@ -133,10 +130,8 @@ function getStepRoute(stepId: StepIdEnum, environmentSlug: string = '', isNewInt
     case StepIdEnum.CONNECT_CHAT_PROVIDER:
     case StepIdEnum.CONNECT_SMS_PROVIDER:
       return {
-        path: isNewIntegrationStoreEnabled
-          ? buildRoute(ROUTES.INTEGRATIONS, { environmentSlug })
-          : LEGACY_ROUTES.INTEGRATIONS,
-        isLegacy: !isNewIntegrationStoreEnabled,
+        path: buildRoute(ROUTES.INTEGRATIONS, { environmentSlug }),
+        isLegacy: false,
       };
     case StepIdEnum.CONNECT_IN_APP_PROVIDER:
       return {

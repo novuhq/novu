@@ -1,11 +1,11 @@
 import { AmountInput } from '@/components/amount-input';
 
 import { FormLabel } from '@/components/primitives/form/form';
-import { useMemo } from 'react';
-import { TimeUnitEnum } from '@novu/shared';
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
-import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { TIME_UNIT_OPTIONS } from '@/components/workflow-editor/steps/time-units';
+import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
+import { TimeUnitEnum } from '@novu/shared';
+import { useMemo } from 'react';
 
 const amountKey = 'amount';
 const unitKey = 'unit';
@@ -29,7 +29,7 @@ export const DelayAmount = () => {
 
   return (
     <div className="flex h-full flex-col gap-2">
-      <FormLabel tooltip="Delays workflow for the set time, then proceeds to the next step.">
+      <FormLabel required tooltip="Delays workflow for the set time, then proceeds to the next step.">
         Delay execution by
       </FormLabel>
       <AmountInput

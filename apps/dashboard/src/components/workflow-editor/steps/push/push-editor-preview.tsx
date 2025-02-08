@@ -1,13 +1,12 @@
-import { RiCellphoneFill } from 'react-icons/ri';
+import { InlineToast } from '@/components/primitives/inline-toast';
 import { PushPreview } from '@/components/workflow-editor/steps/push/push-preview';
 import { TabsSection } from '@/components/workflow-editor/steps/tabs-section';
-import { InlineToast } from '@/components/primitives/inline-toast';
-import { ConfigurePreviewAccordion } from '../shared/configure-preview-accordion';
 import { GeneratePreviewResponseDto } from '@novu/shared';
+import { ConfigurePreviewAccordion } from '../shared/configure-preview-accordion';
 
 type PushEditorPreviewProps = {
   editorValue: string;
-  setEditorValue: (value: string) => void;
+  setEditorValue: (value: string) => Error | null;
   previewStep: () => void;
   previewData?: GeneratePreviewResponseDto;
   isPreviewPending: boolean;
@@ -24,7 +23,6 @@ export const PushEditorPreview = ({
     <TabsSection>
       <div className="relative flex flex-col gap-3">
         <div className="flex items-center gap-2.5 pb-2 text-sm font-medium">
-          <RiCellphoneFill className="size-3" />
           <span>Push template editor</span>
         </div>
         <div className="flex flex-col items-center justify-center gap-4">

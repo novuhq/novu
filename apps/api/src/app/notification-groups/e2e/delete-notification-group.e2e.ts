@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { UserSession } from '@novu/testing';
 
-describe('Delete Notification Group - /notification-groups/:id (DELETE)', async () => {
+describe('Delete Notification Group - /notification-groups/:id (DELETE) #novu-v1', async () => {
   let session: UserSession;
 
   beforeEach(async () => {

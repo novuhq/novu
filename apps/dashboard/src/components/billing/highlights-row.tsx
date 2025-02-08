@@ -36,7 +36,12 @@ function PlanHighlights({ planHighlights }: { planHighlights: Highlight[] }) {
         {planHighlights.map((item, index) => (
           <li key={index} className="flex items-center gap-2">
             <div className="bg-primary h-1.5 w-1.5 rounded-full" />
-            {item.text} {item.badgeLabel && <Badge variant="outline">{item.badgeLabel}</Badge>}
+            {item.text}{' '}
+            {item.badgeLabel && (
+              <Badge variant="stroke" color="gray">
+                {item.badgeLabel}
+              </Badge>
+            )}
           </li>
         ))}
       </ul>

@@ -3,7 +3,7 @@ import { UserSession, WorkflowOverrideService } from '@novu/testing';
 import { IWorkflowOverride } from '@novu/shared';
 import { TenantRepository } from '@novu/dal';
 
-describe('Get workflow override - /workflow-overrides/workflows/:workflowId/tenants/:tenantIdentifier (GET)', async () => {
+describe('Get workflow override - /workflow-overrides/workflows/:workflowId/tenants/:tenantIdentifier (GET) #novu-v1', async () => {
   let session: UserSession;
   const tenantRepository = new TenantRepository();
 

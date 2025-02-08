@@ -17,7 +17,6 @@ import {
 import { ReadinessService, WorkflowInMemoryProviderService } from '../services';
 import {
   ActiveJobsMetricQueueService,
-  ExecutionLogQueueService,
   InboundParseQueueService,
   StandardQueueService,
   SubscriberProcessQueueService,
@@ -95,10 +94,6 @@ export class QueuesModule implements OnApplicationShutdown {
             SubscriberProcessQueueService,
             SubscriberProcessQueueHealthIndicator,
           );
-          break;
-        case JobTopicNameEnum.EXECUTION_LOG:
-          tokenList.push(ExecutionLogQueueService);
-          DYNAMIC_PROVIDERS.push(ExecutionLogQueueService);
           break;
         case JobTopicNameEnum.ACTIVE_JOBS_METRIC:
           healthIndicators.push(ActiveJobsMetricQueueServiceHealthIndicator);

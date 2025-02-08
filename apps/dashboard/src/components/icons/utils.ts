@@ -1,9 +1,9 @@
 import {
   RiCellphoneFill,
   RiChatThreadFill,
+  RiCodeBlock,
   RiFlashlightFill,
   RiHourglassFill,
-  RiRocket2Fill,
   RiShadowLine,
 } from 'react-icons/ri';
 import { Mail3Fill } from './mail-3-fill';
@@ -14,7 +14,7 @@ import { StepTypeEnum } from '@/utils/enums';
 
 export const STEP_TYPE_TO_ICON: Record<StepTypeEnum, IconType> = {
   [StepTypeEnum.CHAT]: RiChatThreadFill,
-  [StepTypeEnum.CUSTOM]: RiRocket2Fill,
+  [StepTypeEnum.CUSTOM]: RiCodeBlock,
   [StepTypeEnum.DELAY]: RiHourglassFill,
   [StepTypeEnum.DIGEST]: RiShadowLine,
   [StepTypeEnum.EMAIL]: Mail3Fill,

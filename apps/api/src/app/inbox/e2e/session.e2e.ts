@@ -7,7 +7,7 @@ import { CacheInMemoryProviderService, CacheService, createHash } from '@novu/ap
 const integrationRepository = new IntegrationRepository();
 const mockSubscriberId = '12345';
 
-describe('Session - /inbox/session (POST)', async () => {
+describe('Session - /inbox/session (POST) #novu-v2', async () => {
   let session: UserSession;
   let cacheService: CacheService;
 

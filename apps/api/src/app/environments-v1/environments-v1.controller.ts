@@ -2,6 +2,7 @@ import {
   Body,
   ClassSerializerInterceptor,
   Controller,
+  Delete,
   Get,
   Param,
   Post,
@@ -9,29 +10,32 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiAuthSchemeEnum, MemberRoleEnum, UserSessionData } from '@novu/shared';
-import { ApiExcludeController, ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Roles, RolesGuard } from '@novu/application-generic';
-import { UserSession } from '../shared/framework/user.decorator';
-import { CreateEnvironment } from './usecases/create-environment/create-environment.usecase';
-import { CreateEnvironmentCommand } from './usecases/create-environment/create-environment.command';
-import { CreateEnvironmentRequestDto } from './dtos/create-environment-request.dto';
-import { GetApiKeysCommand } from './usecases/get-api-keys/get-api-keys.command';
-import { GetApiKeys } from './usecases/get-api-keys/get-api-keys.usecase';
-import { GetEnvironment, GetEnvironmentCommand } from './usecases/get-environment';
-import { GetMyEnvironments } from './usecases/get-my-environments/get-my-environments.usecase';
-import { GetMyEnvironmentsCommand } from './usecases/get-my-environments/get-my-environments.command';
-import { ApiKey } from '../shared/dtos/api-key';
-import { EnvironmentResponseDto } from './dtos/environment-response.dto';
+import { ApiExcludeController, ApiExcludeEndpoint, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import { Roles } from '@novu/application-generic';
+import { ApiAuthSchemeEnum, MemberRoleEnum, ProductFeatureKeyEnum, UserSessionData } from '@novu/shared';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
-import { RegenerateApiKeys } from './usecases/regenerate-api-keys/regenerate-api-keys.usecase';
-import { UpdateEnvironmentCommand } from './usecases/update-environment/update-environment.command';
-import { UpdateEnvironment } from './usecases/update-environment/update-environment.usecase';
-import { UpdateEnvironmentRequestDto } from './dtos/update-environment-request.dto';
+import { ProductFeature } from '../shared/decorators/product-feature.decorator';
+import { ApiKey } from '../shared/dtos/api-key';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
 import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
 import { SdkGroupName } from '../shared/framework/swagger/sdk.decorators';
-
+import { UserSession } from '../shared/framework/user.decorator';
+import { CreateEnvironmentRequestDto } from './dtos/create-environment-request.dto';
+import { EnvironmentResponseDto } from './dtos/environment-response.dto';
+import { UpdateEnvironmentRequestDto } from './dtos/update-environment-request.dto';
+import { CreateEnvironmentCommand } from './usecases/create-environment/create-environment.command';
+import { CreateEnvironment } from './usecases/create-environment/create-environment.usecase';
+import { DeleteEnvironmentCommand } from './usecases/delete-environment/delete-environment.command';
+import { DeleteEnvironment } from './usecases/delete-environment/delete-environment.usecase';
+import { GetApiKeysCommand } from './usecases/get-api-keys/get-api-keys.command';
+import { GetApiKeys } from './usecases/get-api-keys/get-api-keys.usecase';
+import { GetEnvironment, GetEnvironmentCommand } from './usecases/get-environment';
+import { GetMyEnvironmentsCommand } from './usecases/get-my-environments/get-my-environments.command';
+import { GetMyEnvironments } from './usecases/get-my-environments/get-my-environments.usecase';
+import { RegenerateApiKeys } from './usecases/regenerate-api-keys/regenerate-api-keys.usecase';
+import { UpdateEnvironmentCommand } from './usecases/update-environment/update-environment.command';
+import { UpdateEnvironment } from './usecases/update-environment/update-environment.usecase';
+import { RolesGuard } from '../auth/framework/roles.guard';
 /**
  * @deprecated use EnvironmentsControllerV2
  */
@@ -48,7 +52,8 @@ export class EnvironmentsControllerV1 {
     private getApiKeysUsecase: GetApiKeys,
     private regenerateApiKeysUsecase: RegenerateApiKeys,
     private getEnvironmentUsecase: GetEnvironment,
-    private getMyEnvironmentsUsecase: GetMyEnvironments
+    private getMyEnvironmentsUsecase: GetMyEnvironments,
+    private deleteEnvironmentUsecase: DeleteEnvironment
   ) {}
 
   @Get('/me')
@@ -73,6 +78,9 @@ export class EnvironmentsControllerV1 {
   })
   @ApiExcludeEndpoint()
   @ApiResponse(EnvironmentResponseDto, 201)
+  @ProductFeature(ProductFeatureKeyEnum.MANAGE_ENVIRONMENTS)
+  @UseGuards(RolesGuard)
+  @Roles(MemberRoleEnum.ADMIN)
   async createEnvironment(
     @UserSession() user: UserSessionData,
     @Body() body: CreateEnvironmentRequestDto
@@ -82,6 +90,8 @@ export class EnvironmentsControllerV1 {
         name: body.name,
         userId: user._id,
         organizationId: user.organizationId,
+        color: body.color,
+        system: false,
       })
     );
   }
@@ -121,6 +131,7 @@ export class EnvironmentsControllerV1 {
         name: payload.name,
         identifier: payload.identifier,
         _parentId: payload.parentId,
+        color: payload.color,
         dns: payload.dns,
         bridge: payload.bridge,
       })
@@ -156,5 +167,23 @@ export class EnvironmentsControllerV1 {
     });
 
     return await this.regenerateApiKeysUsecase.execute(command);
+  }
+
+  @Delete('/:environmentId')
+  @ApiOperation({
+    summary: 'Delete environment',
+  })
+  @ApiParam({ name: 'environmentId', type: String, required: true })
+  @ProductFeature(ProductFeatureKeyEnum.MANAGE_ENVIRONMENTS)
+  @UseGuards(RolesGuard)
+  @Roles(MemberRoleEnum.ADMIN)
+  async deleteEnvironment(@UserSession() user: UserSessionData, @Param('environmentId') environmentId: string) {
+    return await this.deleteEnvironmentUsecase.execute(
+      DeleteEnvironmentCommand.create({
+        userId: user._id,
+        organizationId: user.organizationId,
+        environmentId,
+      })
+    );
   }
 }
