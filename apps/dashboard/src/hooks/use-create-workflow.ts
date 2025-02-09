@@ -7,9 +7,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { workflowSchema } from '../components/workflow-editor/schema';
-import { showSuccessToast } from '../components/workflow-editor/toasts';
-import { showErrorToast } from '../components/workflow-editor/toasts';
-import { showSavingToast } from '../components/workflow-editor/toasts';
+import { showSuccessToast, showErrorToast, showSavingToast } from '../components/workflow-editor/toasts';
 import { useState } from 'react';
 
 interface UseCreateWorkflowOptions {
@@ -41,9 +39,6 @@ export function useCreateWorkflow({ onSuccess }: UseCreateWorkflowOptions = {}) 
       onSuccess?.();
     },
 
-    onMutate: () => {
-      showSavingToast(setToastId);
-    },
     onError: (error) => {
       showErrorToast(toastId, error);
     },

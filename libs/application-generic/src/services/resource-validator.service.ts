@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import {
   EnvironmentRepository,
   NotificationTemplateRepository,
@@ -6,7 +6,6 @@ import {
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 import { GetFeatureFlag, NotificationStep } from '../usecases';
-import { ApiException } from '../utils/exceptions';
 
 @Injectable()
 export class ResourceValidatorService {
@@ -32,7 +31,7 @@ export class ResourceValidatorService {
     }
 
     if (steps.length > this.MAX_STEPS_PER_WORKFLOW) {
-      throw new ApiException({
+      throw new BadRequestException({
         message: `Workflow steps limit exceeded. Maximum allowed steps is ${this.MAX_STEPS_PER_WORKFLOW}, but got ${steps.length} steps.`,
         providedStepsCount: steps.length,
         maxSteps: this.MAX_STEPS_PER_WORKFLOW,
@@ -61,7 +60,7 @@ export class ResourceValidatorService {
     });
 
     if (isWorkflowLimitHitLimit) {
-      throw new ApiException({
+      throw new BadRequestException({
         message:
           'Workflow limit exceeded. Please contact us to support more workflows.',
         currentCount: workflowsCount,
@@ -75,7 +74,7 @@ export class ResourceValidatorService {
     });
 
     if (!environment) {
-      throw new ApiException({
+      throw new BadRequestException({
         message: 'Environment not found',
       });
     }
