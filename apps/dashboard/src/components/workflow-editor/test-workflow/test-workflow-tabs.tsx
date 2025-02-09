@@ -122,7 +122,7 @@ export const TestWorkflowTabs = ({ testData }: { testData?: WorkflowTestDataResp
             </ResizablePanel>
             <ResizableHandle />
             <ResizablePanel defaultSize={30} minSize={30} maxSize={50}>
-              <TestWorkflowLogsSidebar transactionId={transactionId} />
+              <TestWorkflowLogsSidebar transactionId={transactionId} workflow={workflow} />
             </ResizablePanel>
           </ResizablePanelGroup>
         </form>

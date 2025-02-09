@@ -53,7 +53,7 @@ describe('Mark Notification As - /inbox/notifications/:id/{read,unread,archive,u
     }
 
     await Promise.all(promises);
-    await session.awaitRunningJobs(templateToTrigger._id);
+    await session.waitForJobCompletion(templateToTrigger._id);
   };
 
   const removeUndefinedDeep = (obj) => {

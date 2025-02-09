@@ -79,7 +79,7 @@ describe('Topic Trigger Event #novu-v2', () => {
 
       await novuClient.trigger(buildTriggerRequestPayload(template, to, attachments));
 
-      await session.awaitRunningJobs(template._id);
+      await session.waitForJobCompletion(template._id);
 
       expect(subscribers.length).to.be.greaterThan(0);
 
@@ -136,7 +136,7 @@ describe('Topic Trigger Event #novu-v2', () => {
         actor: { subscriberId: actor.subscriberId },
       });
 
-      await session.awaitRunningJobs(template._id);
+      await session.waitForJobCompletion(template._id);
 
       const actorNotifications = await notificationRepository.findBySubscriberId(session.environment._id, actor._id);
       expect(actorNotifications.length).to.equal(0);
@@ -187,7 +187,7 @@ describe('Topic Trigger Event #novu-v2', () => {
         actor: { subscriberId: actor.subscriberId },
       });
 
-      await session.awaitRunningJobs(template._id);
+      await session.waitForJobCompletion(template._id);
 
       for (const subscriber of subscribers) {
         const notifications = await notificationRepository.findBySubscriberId(session.environment._id, subscriber._id);
@@ -247,7 +247,7 @@ describe('Topic Trigger Event #novu-v2', () => {
 
       await novuClient.trigger(buildTriggerRequestPayload(template, to));
 
-      await session.awaitRunningJobs(template._id);
+      await session.waitForJobCompletion(template._id);
 
       expect(subscribers.length).to.be.greaterThan(0);
 
@@ -360,7 +360,7 @@ describe('Topic Trigger Event #novu-v2', () => {
 
       await novuClient.trigger(buildTriggerRequestPayload(template, to, attachments));
 
-      await session.awaitRunningJobs(template._id);
+      await session.waitForJobCompletion(template._id);
       expect(subscribers.length).to.be.greaterThan(0);
 
       for (const subscriber of subscribers) {
@@ -421,7 +421,7 @@ describe('Topic Trigger Event #novu-v2', () => {
 
       await novuClient.trigger(buildTriggerRequestPayload(template, to));
 
-      await session.awaitRunningJobs(template._id);
+      await session.waitForJobCompletion(template._id);
 
       expect(subscribers.length).to.be.greaterThan(0);
 
@@ -446,7 +446,7 @@ describe('Topic Trigger Event #novu-v2', () => {
             content: '',
             metadata: {
               unit: DigestUnitEnum.SECONDS,
-              amount: 5,
+              amount: 1,
               digestKey: 'id',
               type: DigestTypeEnum.REGULAR,
             },
@@ -478,7 +478,7 @@ describe('Topic Trigger Event #novu-v2', () => {
         id: 'key-2',
       });
 
-      await session.awaitRunningJobs(template?._id, false, 0);
+      await session.waitForJobCompletion(template?._id, false, 0);
 
       for (const subscriber of firstTopicSubscribers) {
         const messages = await messageRepository.findBySubscriberChannel(

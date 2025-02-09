@@ -48,7 +48,7 @@ describe('Remove all messages - /widgets/messages (DELETE) #novu-v1', function (
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
 
     const messagesBefore = await messageRepository.find({
       _environmentId: session.environment._id,
@@ -83,8 +83,8 @@ describe('Remove all messages - /widgets/messages (DELETE) #novu-v1', function (
     await novuClient.trigger({ workflowId: templateWithFeed.triggers[0].identifier, to: subscriberId });
     await novuClient.trigger({ workflowId: templateWithFeed.triggers[0].identifier, to: subscriberId });
 
-    await session.awaitRunningJobs(templateWithFeed._id);
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(templateWithFeed._id);
+    await session.waitForJobCompletion(template._id);
 
     const messagesBefore = await messageRepository.find({
       _environmentId: session.environment._id,

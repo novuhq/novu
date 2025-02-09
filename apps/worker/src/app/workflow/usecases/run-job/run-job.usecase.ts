@@ -110,7 +110,6 @@ export class RunJob {
         await this.jobRepository.updateStatus(job._environmentId, job._id, JobStatusEnum.COMPLETED);
       }
     } catch (error: any) {
-      Logger.error({ error }, `Running job ${job._id} has thrown an error`, LOG_CONTEXT);
       if (shouldHaltOnStepFailure(job) || this.shouldBackoff(error)) {
         shouldQueueNextJob = false;
       }

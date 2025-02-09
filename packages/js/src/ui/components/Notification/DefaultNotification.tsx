@@ -211,14 +211,19 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
         <Show when={props.notification.subject}>
           {(subject) => (
             <Markdown
-              class={style('notificationSubject', 'nt-text-start')}
+              appearanceKey="notificationSubject__strong"
+              class="nt-text-start"
               strongAppearanceKey="notificationSubject__strong"
             >
               {subject()}
             </Markdown>
           )}
         </Show>
-        <Markdown class={style('notificationBody', 'nt-text-start')} strongAppearanceKey="notificationBody__strong">
+        <Markdown
+          appearanceKey="notificationBody__strong"
+          strongAppearanceKey="notificationBody__strong"
+          class="nt-text-start nt-whitespace-pre-wrap"
+        >
           {props.notification.body}
         </Markdown>
         <div class={style('notificationCustomActions', 'nt-flex nt-flex-wrap nt-gap-4 nt-mt-4')}>

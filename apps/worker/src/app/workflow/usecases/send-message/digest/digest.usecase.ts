@@ -122,7 +122,7 @@ export class Digest extends SendMessageType {
 
     if (!currentJob) {
       const message = `Digest job ${command.jobId} is not found`;
-      Logger.error(message, LOG_CONTEXT);
+      Logger.log(message, LOG_CONTEXT);
       throw new PlatformException(message);
     }
 

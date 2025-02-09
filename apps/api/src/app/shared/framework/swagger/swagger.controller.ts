@@ -12,7 +12,8 @@ export const API_KEY_SECURITY_DEFINITIONS: SecuritySchemeObject = {
   name: 'Authorization',
   in: 'header',
   description: 'API key authentication. Allowed headers-- "Authorization: ApiKey <api_key>".',
-};
+  'x-speakeasy-example': 'YOUR_SECRET_KEY_HERE',
+} as unknown as SecuritySchemeObject;
 export const BEARER_SECURITY_DEFINITIONS: SecuritySchemeObject = {
   type: 'http',
   scheme: 'bearer',

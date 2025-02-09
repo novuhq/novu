@@ -134,7 +134,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
         },
       });
 
-      await session.awaitRunningJobs(template?._id, true, 0);
+      await session.waitForJobCompletion(template?._id, true, 0);
 
       const messagesAfter = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -198,7 +198,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
         },
       });
 
-      await session.awaitRunningJobs(template?._id, true, 0);
+      await session.waitForJobCompletion(template?._id, true, 0);
 
       const messagesAfter = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -270,7 +270,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
         },
       });
 
-      await session.awaitRunningJobs(template?._id, true, 0);
+      await session.waitForJobCompletion(template?._id, true, 0);
 
       const messagesAfter = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -391,7 +391,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
         },
       });
 
-      await session.awaitRunningJobs(template?._id, true, 0);
+      await session.waitForJobCompletion(template?._id, true, 0);
 
       const messagesAfter = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -465,7 +465,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
         },
       });
 
-      await session.awaitRunningJobs(template?._id, true, 0);
+      await session.waitForJobCompletion(template?._id, true, 0);
 
       const messagesAfter = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -534,7 +534,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
         },
       });
 
-      await session.awaitRunningJobs(template?._id, true, 0);
+      await session.waitForJobCompletion(template?._id, true, 0);
 
       const messagesAfter = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -603,7 +603,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
         payload: {},
       });
 
-      await session.awaitRunningJobs(template?._id, true, 0);
+      await session.waitForJobCompletion(template?._id, true, 0);
 
       const messagesAfter = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -678,7 +678,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
         },
       });
 
-      await session.awaitRunningJobs(template?._id, true, 0);
+      await session.waitForJobCompletion(template?._id, true, 0);
 
       const messagesAfter = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -721,7 +721,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
 
       await sendTrigger(template, subscriber.subscriberId, {}, {}, 'test');
 
-      await session.awaitRunningJobs(template._id);
+      await session.waitForJobCompletion(template._id);
 
       const createdSubscriber = await subscriberRepository.findBySubscriberId(
         session.environment._id,
@@ -765,7 +765,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
 
       await sendTrigger(template, subscriber.subscriberId, {}, {}, 'test3');
 
-      await session.awaitRunningJobs(template._id);
+      await session.waitForJobCompletion(template._id);
 
       const createdSubscriber = await subscriberRepository.findBySubscriberId(
         session.environment._id,
@@ -782,7 +782,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
 
       await sendTrigger(template, subscriber.subscriberId, {}, {}, 'test2');
 
-      await session.awaitRunningJobs(template._id);
+      await session.waitForJobCompletion(template._id);
 
       const secondMessage = await messageRepository.findOne({
         _environmentId: session.environment._id,
@@ -844,7 +844,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
         to: [subscriber.subscriberId],
       });
 
-      await session.awaitRunningJobs(template._id);
+      await session.waitForJobCompletion(template._id);
 
       const message = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -889,7 +889,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
         },
       });
 
-      await session.awaitRunningJobs();
+      await session.waitForJobCompletion();
       const envId = session.environment._id;
       const createdSubscriber = await subscriberRepository.findBySubscriberId(envId, subscriberId);
 
@@ -923,7 +923,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
         },
       });
 
-      await session.awaitRunningJobs();
+      await session.waitForJobCompletion();
       const createdSubscriber = await subscriberRepository.findBySubscriberId(session.environment._id, subscriberId);
 
       expect(createdSubscriber?.subscriberId).to.equal(subscriberId);
@@ -945,7 +945,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
         },
       });
 
-      await session.awaitRunningJobs();
+      await session.waitForJobCompletion();
 
       const updatedSubscriber = await subscriberRepository.findBySubscriberId(session.environment._id, subscriberId);
 
@@ -983,7 +983,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
           },
         });
 
-        await session.awaitRunningJobs();
+        await session.waitForJobCompletion();
 
         const createdSubscriber = await subscriberRepository.findBySubscriberId(session.environment._id, subscriberId);
 
@@ -1036,7 +1036,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
           },
         });
 
-        await session.awaitRunningJobs();
+        await session.waitForJobCompletion();
         const createdSubscriber = await subscriberRepository.findBySubscriberId(session.environment._id, subscriberId);
 
         expect(createdSubscriber?.subscriberId).to.equal(subscriberId);
@@ -1062,7 +1062,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
           },
         });
 
-        await session.awaitRunningJobs();
+        await session.waitForJobCompletion();
 
         const updatedSubscriber = await subscriberRepository.findBySubscriberId(session.environment._id, subscriberId);
 
@@ -1097,7 +1097,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
         },
       });
 
-      await session.awaitRunningJobs();
+      await session.waitForJobCompletion();
       const createdSubscriber = await subscriberRepository.findBySubscriberId(session.environment._id, subscriberId);
 
       expect(createdSubscriber?.subscriberId).to.equal(subscriberId);
@@ -1119,7 +1119,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
         },
       });
 
-      await session.awaitRunningJobs();
+      await session.waitForJobCompletion();
 
       const updatedSubscriber = await subscriberRepository.findBySubscriberId(session.environment._id, subscriberId);
 
@@ -1205,7 +1205,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
         },
       });
 
-      await session.awaitRunningJobs(template._id);
+      await session.waitForJobCompletion(template._id);
 
       const notifications = await notificationRepository.findBySubscriberId(session.environment._id, subscriber._id);
 
@@ -1267,7 +1267,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       expect(body.status).to.equal('processed');
       expect(body.transactionId).to.be.a.string;
 
-      await session.awaitRunningJobs(template._id);
+      await session.waitForJobCompletion(template._id);
 
       const jobs = await jobRepository.find({
         _templateId: template._id,
@@ -1320,7 +1320,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
         },
       });
 
-      await session.awaitRunningJobs(template._id);
+      await session.waitForJobCompletion(template._id);
 
       const message = await messageRepository._model.findOne({
         _environmentId: session.environment._id,
@@ -1351,7 +1351,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
         },
       });
 
-      await session.awaitRunningJobs(template._id);
+      await session.waitForJobCompletion(template._id);
 
       const message = await messageRepository._model.findOne({
         _environmentId: session.environment._id,
@@ -1390,7 +1390,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
         },
       });
 
-      await session.awaitRunningJobs(template._id);
+      await session.waitForJobCompletion(template._id);
 
       const message = await messageRepository._model.findOne({
         _environmentId: session.environment._id,
@@ -1410,7 +1410,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
 
       await sendTrigger(template, newSubscriberIdInAppNotification);
 
-      await session.awaitRunningJobs(template._id);
+      await session.waitForJobCompletion(template._id);
 
       const createdSubscriber = await subscriberRepository.findBySubscriberId(
         session.environment._id,
@@ -1434,7 +1434,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
 
       await sendTrigger(template, newSubscriberIdInAppNotification);
 
-      await session.awaitRunningJobs(template._id);
+      await session.waitForJobCompletion(template._id);
 
       const createdSubscriber = await subscriberRepository.findBySubscriberId(
         session.environment._id,
@@ -1478,7 +1478,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
         },
       });
 
-      await session.awaitRunningJobs(template._id);
+      await session.waitForJobCompletion(template._id);
 
       const createdSubscriber = await subscriberRepository.findBySubscriberId(
         session.environment._id,
@@ -1520,7 +1520,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
 
       await sendTrigger(template, newSubscriberId, {}, {}, '', actorSubscriber.subscriberId);
 
-      await session.awaitRunningJobs(template._id);
+      await session.waitForJobCompletion(template._id);
 
       const createdSubscriber = await subscriberRepository.findBySubscriberId(session.environment._id, newSubscriberId);
 
@@ -1574,7 +1574,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
         },
       });
 
-      await session.awaitRunningJobs(template._id);
+      await session.waitForJobCompletion(template._id);
 
       const createdSubscriber = await subscriberRepository.findBySubscriberId(
         session.environment._id,
@@ -1653,7 +1653,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
         },
       });
 
-      await session.awaitRunningJobs(template._id);
+      await session.waitForJobCompletion(template._id);
 
       const createdSubscriber = await subscriberRepository.findBySubscriberId(
         session.environment._id,
@@ -1690,7 +1690,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
         },
       });
 
-      await session.awaitRunningJobs(template._id);
+      await session.waitForJobCompletion(template._id);
 
       const createdSubscriber = await subscriberRepository.findBySubscriberId(
         session.environment._id,
@@ -1725,7 +1725,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
         },
       });
 
-      await session.awaitRunningJobs(template._id);
+      await session.waitForJobCompletion(template._id);
 
       messages = await messageRepository.find(
         {
@@ -1856,7 +1856,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
         })
         .expect(201);
 
-      await session.awaitRunningJobs(template._id);
+      await session.waitForJobCompletion(template._id);
 
       const createdSubscriber = await subscriberRepository.findBySubscriberId(
         session.environment._id,
@@ -1975,7 +1975,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
           organizationName: 'Umbrella Corp',
         },
       });
-      await session.awaitRunningJobs(template._id);
+      await session.waitForJobCompletion(template._id);
       const messages = await messageRepository.find({
         _environmentId: session.environment._id,
         channel: channelType,
@@ -2069,7 +2069,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
         },
       });
 
-      await session.awaitRunningJobs(template._id);
+      await session.waitForJobCompletion(template._id);
 
       const messages = await messageRepository.count({
         _environmentId: session.environment._id,
@@ -2130,7 +2130,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
         payload: {},
       });
 
-      await session.awaitRunningJobs(template._id);
+      await session.waitForJobCompletion(template._id);
 
       let messages = await messageRepository.count({
         _environmentId: session.environment._id,
@@ -2154,7 +2154,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
         payload: {},
       });
 
-      await session.awaitRunningJobs(template._id);
+      await session.waitForJobCompletion(template._id);
 
       messages = await messageRepository.count({
         _environmentId: session.environment._id,
@@ -2210,7 +2210,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
         payload: {},
       });
 
-      await session.awaitRunningJobs(template._id);
+      await session.waitForJobCompletion(template._id);
 
       const messages = await messageRepository.count({
         _environmentId: session.environment._id,
@@ -2277,7 +2277,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
         payload: {},
       });
 
-      await session.awaitRunningJobs(template._id);
+      await session.waitForJobCompletion(template._id);
 
       let messages = await messageRepository.count({
         _environmentId: session.environment._id,
@@ -2309,7 +2309,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
         payload: {},
       });
 
-      await session.awaitRunningJobs(template._id);
+      await session.waitForJobCompletion(template._id);
 
       messages = await messageRepository.count({
         _environmentId: session.environment._id,
@@ -2400,7 +2400,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
         tenant: { identifier: tenant.identifier },
       });
 
-      await session.awaitRunningJobs(templateWithVariants._id);
+      await session.waitForJobCompletion(templateWithVariants._id);
 
       const messages = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -2423,7 +2423,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
             simpleTrigger(novuClient, template, subscriberId),
             simpleTrigger(novuClient, template, subscriberId),
           ]);
-          await session.awaitRunningJobs(template._id);
+          await session.waitForJobCompletion(template._id);
 
           const subscribers = await subscriberRepository.find({
             _environmentId: session.environment._id,
@@ -2512,7 +2512,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
           },
         });
 
-        await session.awaitRunningJobs(template._id);
+        await session.waitForJobCompletion(template._id);
 
         const messages = await messageRepository.count({
           _environmentId: session.environment._id,
@@ -2568,7 +2568,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
           actor: actorSubscriber.subscriberId,
         });
 
-        await session.awaitRunningJobs(template._id);
+        await session.waitForJobCompletion(template._id);
 
         const messages = await messageRepository.count({
           _environmentId: session.environment._id,
@@ -2623,7 +2623,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
           tenant: { identifier: tenant.identifier },
         });
 
-        await session.awaitRunningJobs(templateWithVariants._id);
+        await session.waitForJobCompletion(templateWithVariants._id);
 
         let messages = await messageRepository.find({
           _environmentId: session.environment._id,
@@ -2638,7 +2638,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
           payload: { count: 1 },
           tenant: { identifier: tenant.identifier },
         });
-        await session.awaitRunningJobs(templateWithVariants._id);
+        await session.waitForJobCompletion(templateWithVariants._id);
 
         messages = await messageRepository.find({
           _environmentId: session.environment._id,
@@ -2655,7 +2655,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
 
         await sendTrigger(template, newSubscriberId);
 
-        await session.awaitRunningJobs(template._id);
+        await session.waitForJobCompletion(template._id);
 
         const createdSubscriber = await subscriberRepository.findBySubscriberId(
           session.environment._id,
@@ -2688,7 +2688,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
         const { result } = await novuClient.integrations.create(payload);
         await sendTrigger(template, newSubscriberId, {}, { email: { integrationIdentifier: result.identifier } });
 
-        await session.awaitRunningJobs(template._id);
+        await session.waitForJobCompletion(template._id);
 
         messages = await messageRepository.find(
           {
@@ -2727,7 +2727,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
             payload: {},
           });
 
-          await session.awaitRunningJobs(template?._id, true, 1);
+          await session.waitForJobCompletion(template?._id, true, 1);
 
           const messages = await messageRepository.find({
             _environmentId: session.environment._id,
@@ -2765,7 +2765,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
             payload: {},
           });
 
-          await session.awaitRunningJobs(template?._id, true, 1);
+          await session.waitForJobCompletion(template?._id, true, 1);
 
           const messages = await messageRepository.find({
             _environmentId: session.environment._id,
@@ -2806,7 +2806,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
             actor: actor.subscriberId,
           });
 
-          await session.awaitRunningJobs(template?._id, true, 1);
+          await session.waitForJobCompletion(template?._id, true, 1);
 
           const messages = await messageRepository.find({
             _environmentId: session.environment._id,
@@ -2870,7 +2870,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
             },
           });
 
-          await session.awaitRunningJobs(template?._id, true, 1);
+          await session.waitForJobCompletion(template?._id, true, 1);
 
           const delayedJob = await jobRepository.findOne({
             _environmentId: session.environment._id,
@@ -2892,7 +2892,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
 
           expect(messages.length).to.equal(1);
 
-          await session.awaitRunningJobs(template?._id, true, 0);
+          await session.waitForJobCompletion(template?._id, true, 0);
 
           const messagesAfter = await messageRepository.find({
             _environmentId: session.environment._id,
@@ -2954,7 +2954,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
             },
           });
 
-          await session.awaitRunningJobs(template?._id, true, 1);
+          await session.waitForJobCompletion(template?._id, true, 1);
 
           const delayedJob = await jobRepository.findOne({
             _environmentId: session.environment._id,
@@ -2980,7 +2980,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
             webhookStatus: EmailEventStatusEnum.OPENED,
           });
 
-          await session.awaitRunningJobs(template?._id, true, 0);
+          await session.waitForJobCompletion(template?._id, true, 0);
 
           const messagesAfter = await messageRepository.find({
             _environmentId: session.environment._id,
@@ -3028,7 +3028,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
 
           expect(triggerResponse.result.status).to.equal('trigger_not_active');
 
-          await session.awaitRunningJobs();
+          await session.waitForJobCompletion();
 
           const messages = await messageRepository.find({
             _environmentId: session.environment._id,
@@ -3055,7 +3055,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
 
           expect(triggerResponse2.result.status).to.equal('trigger_not_active');
 
-          await session.awaitRunningJobs();
+          await session.waitForJobCompletion();
 
           const messages2 = await messageRepository.find({
             _environmentId: session.environment._id,
@@ -3097,7 +3097,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
 
           expect(triggerResponse.result.status).to.equal('processed');
 
-          await session.awaitRunningJobs();
+          await session.waitForJobCompletion();
 
           const messages = await messageRepository.find({
             _environmentId: session.environment._id,
@@ -3124,7 +3124,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
 
           expect(triggerResponse2.result.status).to.equal('processed');
 
-          await session.awaitRunningJobs();
+          await session.waitForJobCompletion();
 
           const messages2 = await messageRepository.find({
             _environmentId: session.environment._id,
@@ -3166,7 +3166,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
 
           expect(triggerResponse.result.status).to.equal('processed');
 
-          await session.awaitRunningJobs();
+          await session.waitForJobCompletion();
 
           const messages = await messageRepository.find({
             _environmentId: session.environment._id,
@@ -3218,7 +3218,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
           expect(triggerResponse.result.status).to.equal(201);
           expect(triggerResponse.result.status).to.equal('processed');
 
-          await session.awaitRunningJobs();
+          await session.waitForJobCompletion();
 
           const messages = await messageRepository.find({
             _environmentId: session.environment._id,
@@ -3292,7 +3292,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
           shouldExecute: false,
         },
       });
-      await session.awaitRunningJobs(workflow._id);
+      await session.waitForJobCompletion(workflow._id);
       const skippedMessages = await messageRepository.find({
         _environmentId: session.environment._id,
         _subscriberId: subscriber._id,
@@ -3306,7 +3306,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
           shouldExecute: true,
         },
       });
-      await session.awaitRunningJobs(workflow._id);
+      await session.waitForJobCompletion(workflow._id);
       const notSkippedMessages = await messageRepository.find({
         _environmentId: session.environment._id,
         _subscriberId: subscriber._id,
@@ -3358,7 +3358,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       expect(triggerResponse.result.status).to.equal('processed');
       expect(triggerResponse.result.acknowledged).to.equal(true);
 
-      await session.awaitRunningJobs(workflow._id);
+      await session.waitForJobCompletion(workflow._id);
 
       const messages = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -3428,7 +3428,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
         userScore: 150,
       },
     });
-    await session.awaitRunningJobs(workflow._id);
+    await session.waitForJobCompletion(workflow._id);
     const messages = await messageRepository.find({
       _environmentId: session.environment._id,
       _subscriberId: subscriber._id,
@@ -3449,7 +3449,8 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
         userScore: 150,
       },
     });
-    await session.awaitRunningJobs(workflow._id);
+
+    await session.waitForJobCompletion(workflow._id);
     const skippedMessages1 = await messageRepository.find({
       _environmentId: session.environment._id,
       _subscriberId: subscriber._id,
@@ -3470,7 +3471,8 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
         userScore: 50,
       },
     });
-    await session.awaitRunningJobs(workflow._id);
+
+    await session.waitForJobCompletion(workflow._id);
     const skippedMessages2 = await messageRepository.find({
       _environmentId: session.environment._id,
       _subscriberId: subscriber._id,
@@ -3512,7 +3514,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
         userScore: 150,
       },
     });
-    await session.awaitRunningJobs(workflow._id);
+    await session.waitForJobCompletion(workflow._id);
     const executionDetails = await executionDetailsRepository.findOne({
       _environmentId: session.environment._id,
       _subscriberId: subscriber._id,
