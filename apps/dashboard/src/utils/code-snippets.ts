@@ -23,7 +23,7 @@ export const createNodeJsSnippet = ({ identifier, to, payload, secretKey }: Code
   return `import { Novu } from '@novu/api'; 
 
 const novu = new Novu({ 
-  apiKey: ${renderedSecretKey}
+  secretKey: ${renderedSecretKey}
 });
 
 novu.trigger(${JSON.stringify(
