@@ -42,10 +42,6 @@ export class SupportController {
   @UserAuthentication()
   @Post('mobile-setup')
   async mobileSetup(@UserSession() user: UserSessionData) {
-    if (!process.env.NOVU_INTERNAL_SECRET_KEY) {
-      throw new Error('NOVU_INTERNAL_SECRET_KEY is not set');
-    }
-
     const novu = new Novu({
       security: {
         secretKey: process.env.NOVU_INTERNAL_SECRET_KEY,
