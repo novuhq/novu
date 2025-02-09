@@ -53,7 +53,6 @@
     "start:docker:embed": "cd libs/embed && npm run start:docker",
     "start:docker:web": "cross-env nx run-many --target=start:docker --projects=@novu/web",
     "start:docker:widget": "cross-env nx run-many --target=start:docker --projects=@novu/widget",
-    "start:e2e:api": "cd apps/api && pnpm run test:e2e",
     "start:integration:api": "cd apps/api && pnpm run test",
     "start:node": "cross-env nx run @novu/node:start",
     "start:notification-center": "cross-env nx run @novu/notification-center:start",
