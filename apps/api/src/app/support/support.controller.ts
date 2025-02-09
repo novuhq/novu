@@ -41,10 +41,14 @@ export class SupportController {
 
   @UserAuthentication()
   @Post('mobile-setup')
-  async mobileSetup(@Body() body: CreateSupportThreadDto, @UserSession() user: UserSessionData) {
+  async mobileSetup(@UserSession() user: UserSessionData) {
+    if (!process.env.NOVU_INTERNAL_SECRET_KEY) {
+      throw new Error('NOVU_INTERNAL_SECRET_KEY is not set');
+    }
+
     const novu = new Novu({
       security: {
-        secretKey: process.env.NOVU_SECRET_KEY,
+        secretKey: process.env.NOVU_INTERNAL_SECRET_KEY,
       },
     });
 
@@ -52,6 +56,8 @@ export class SupportController {
       workflowId: 'mobile-setup-email',
       to: {
         subscriberId: user._id as string,
+        firstName: user.firstName as string,
+        lastName: user.lastName as string,
         email: user.email as string,
       },
       payload: {},
