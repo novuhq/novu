@@ -42,6 +42,9 @@ jobs:
           # Check if output contains the error message
           if echo "$output" | grep -q "Found .only"; then
             echo "❌ Found '.only' in test files!"
+            echo "-------------------------------------------"
+            echo "$output"
+            echo "-------------------------------------------"
             echo "⚠️  Please remove all instances of '.only' from your test files"
             exit 1
           else
