@@ -34,7 +34,13 @@ export class SubscriberProcessWorker extends SubscriberProcessWorkerService {
 
   public getWorkerProcessor() {
     return async ({ data }: { data: IProcessSubscriberDataDto }) => {
-      await this.checkOrganizationExist(data);
+      const organizationExists = await this.organizationExist(data);
+
+      if (!organizationExists) {
+        Logger.error(`Organization not found for organizationId ${data.organizationId}. Skipping job.`, LOG_CONTEXT);
+
+        return;
+      }
 
       return await new Promise((resolve, reject) => {
         const _this = this;
@@ -69,13 +75,11 @@ export class SubscriberProcessWorker extends SubscriberProcessWorkerService {
     return getSubscriberProcessWorkerOptions();
   }
 
-  private async checkOrganizationExist(data: IProcessSubscriberDataDto) {
+  private async organizationExist(data: IProcessSubscriberDataDto): Promise<boolean> {
     const { organizationId } = data;
 
     const organization = await this.organizationRepository.findOne({ _id: organizationId });
 
-    if (!organization) {
-      throw new Error('Organization not found');
-    }
+    return !!organization;
   }
 }

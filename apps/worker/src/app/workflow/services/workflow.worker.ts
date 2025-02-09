@@ -37,7 +37,13 @@ export class WorkflowWorker extends WorkflowWorkerService {
 
   private getWorkerProcessor(): WorkerProcessor {
     return async ({ data }: { data: IWorkflowDataDto }) => {
-      await this.checkOrganizationExist(data);
+      const organizationExists = await this.organizationExist(data);
+
+      if (!organizationExists) {
+        Logger.error(`Organization not found for organizationId ${data.organizationId}. Skipping job.`, LOG_CONTEXT);
+
+        return;
+      }
 
       return await new Promise((resolve, reject) => {
         const _this = this;
@@ -68,13 +74,11 @@ export class WorkflowWorker extends WorkflowWorkerService {
     };
   }
 
-  private async checkOrganizationExist(data: IWorkflowDataDto) {
+  private async organizationExist(data: IWorkflowDataDto): Promise<boolean> {
     const { organizationId } = data;
 
     const organization = await this.organizationRepository.findOne({ _id: organizationId });
 
-    if (!organization) {
-      throw new Error('Organization not found');
-    }
+    return !!organization;
   }
 }

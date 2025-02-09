@@ -96,7 +96,16 @@ export class StandardWorker extends StandardWorkerService {
   private getWorkerProcessor() {
     return async ({ data }: { data: IStandardDataDto }) => {
       const minimalJobData = this.extractMinimalJobData(data);
-      await this.checkOrganizationExist(data);
+      const organizationExists = await this.organizationExist(data);
+
+      if (!organizationExists) {
+        Logger.error(
+          `Organization not found for organizationId ${minimalJobData.organizationId}. Skipping job.`,
+          LOG_CONTEXT
+        );
+
+        return;
+      }
 
       Logger.verbose(`Job ${minimalJobData.jobId} is being processed in the new instance standard worker`, LOG_CONTEXT);
 
@@ -197,13 +206,11 @@ export class StandardWorker extends StandardWorkerService {
     };
   };
 
-  private async checkOrganizationExist(data: IStandardDataDto) {
+  private async organizationExist(data: IStandardDataDto): Promise<boolean> {
     const { _organizationId } = data;
 
     const organization = await this.organizationRepository.findOne({ _id: _organizationId });
 
-    if (!organization) {
-      throw new Error('Organization not found');
-    }
+    return !!organization;
   }
 }
