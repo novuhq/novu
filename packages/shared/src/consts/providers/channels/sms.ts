@@ -31,6 +31,7 @@ import {
   whatsAppBusinessConfig,
   eazySmsConfig,
   mobishastraConfig,
+  msg91SmsConfig,
 } from '../credentials';
 import { ChannelTypeEnum, SmsProviderIdEnum } from '../../../types';
 import { UTM_CAMPAIGN_QUERY_PARAM } from '../../../ui';
@@ -287,5 +288,13 @@ export const smsProviders: IProviderConfig[] = [
     credentials: mobishastraConfig,
     docReference: 'https://telkosh.com/mobishastra/',
     logoFileName: { light: 'mobishastra.png', dark: 'mobishastra.png' },
+  },
+  {
+    id: SmsProviderIdEnum.Msg91,
+    displayName: 'Msg91',
+    channel: ChannelTypeEnum.SMS,
+    credentials: msg91SmsConfig,
+    docReference: 'https://docs.msg91.com/sms/send-sms',
+    logoFileName: { light: 'msg91-sms.png', dark: 'msg91-sms.png' },
   },
 ];

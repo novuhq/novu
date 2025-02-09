@@ -1173,3 +1173,20 @@ export const mobishastraConfig: IConfigCredentials[] = [
   },
   ...smsConfigBase,
 ];
+
+export const msg91SmsConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'AuthKey',
+    type: 'string',
+    description: 'AuthKey provided by Msg91',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.ApiURL,
+    displayName: 'API URL',
+    type: 'string',
+    description: 'Override default Msg91 API URL',
+    required: false,
+  },
+];
