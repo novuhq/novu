@@ -31,19 +31,19 @@ jobs:
           echo "  - *.e2e-ee.ts"
           echo "-------------------------------------------"
           
-          # Check all possible test file patterns
-          find . -type f \( \
+          # Store the output in a variable
+          output=$(find . -type f \( \
             -name "*.spec.ts" -o \
             -name "*.test.ts" -o \
             -name "*.e2e.ts" -o \
             -name "*.e2e-ee.ts" \
-          \) -not -path "*/node_modules/*" -not -path "*/dist/*" -exec stop-only --file {} \;
+          \) -not -path "*/node_modules/*" -not -path "*/dist/*" -exec stop-only --file {} \; 2>&1)
           
-          if [ $? -eq 0 ]; then
-            echo "✅ No '.only' found in test files"
-          else
+          # Check if output contains the error message
+          if echo "$output" | grep -q "Found .only"; then
             echo "❌ Found '.only' in test files!"
-            echo "-------------------------------------------"
             echo "⚠️  Please remove all instances of '.only' from your test files"
             exit 1
+          else
+            echo "✅ No '.only' found in test files"
           fi
