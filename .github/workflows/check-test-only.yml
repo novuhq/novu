@@ -22,6 +22,15 @@ jobs:
         
       - name: Check for .only in test files
         run: |
+          echo "🔍 Checking for .only in test files..."
+          echo "This check will fail if any test files contain .only"
+          echo "Files being checked:"
+          echo "  - *.spec.ts"
+          echo "  - *.test.ts"
+          echo "  - *.e2e.ts"
+          echo "  - *.e2e-ee.ts"
+          echo "-------------------------------------------"
+          
           # Check all possible test file patterns
           find . -type f \( \
             -name "*.spec.ts" -o \
@@ -29,15 +38,12 @@ jobs:
             -name "*.e2e.ts" -o \
             -name "*.e2e-ee.ts" \
           \) -not -path "*/node_modules/*" -not -path "*/dist/*" -exec stop-only --file {} \;
-        
-      - name: Comment on PR if .only is found
-        if: failure() && github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: '⚠️ This PR contains `.only` in test files. Please remove them before merging.'
-            }) 
+          
+          if [ $? -eq 0 ]; then
+            echo "✅ No '.only' found in test files"
+          else
+            echo "❌ Found '.only' in test files!"
+            echo "-------------------------------------------"
+            echo "⚠️  Please remove all instances of '.only' from your test files"
+            exit 1
+          fi
