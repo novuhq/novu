@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { showErrorToast } from '../primitives/sonner-helpers';
 
 const MOBILE_WIDTH_THRESHOLD = 768;
-const FIVE_MINUTES_MS = 5 * 60 * 1000;
+const ONE_HOUR_MS = 60 * 60 * 1000;
 const MOBILE_SETUP_STORAGE_KEY = 'mobileSetupEmailSentAt';
 
 export function MobileMessage() {
@@ -15,7 +15,7 @@ export function MobileMessage() {
         const lastSentAt = localStorage.getItem(MOBILE_SETUP_STORAGE_KEY);
 
         const now = Date.now();
-        const shouldSendEmail = !lastSentAt || now - parseInt(lastSentAt) > FIVE_MINUTES_MS;
+        const shouldSendEmail = !lastSentAt || now - parseInt(lastSentAt) > ONE_HOUR_MS;
 
         if (isMobile && shouldSendEmail) {
           localStorage.setItem(MOBILE_SETUP_STORAGE_KEY, now.toString());
