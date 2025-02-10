@@ -7,8 +7,8 @@
     "afterinstall": "pnpm build",
     "prebuild": "rimraf dist",
     "build": "npm run build:cjs && npm run build:esm",
-    "build:esm": "cross-env node_modules/.bin/tsc -p tsconfig.esm.json",
-    "build:cjs": "cross-env node_modules/.bin/tsc -p tsconfig.json",
+    "build:esm": "tsc -p tsconfig.esm.json",
+    "build:cjs": "tsc -p tsconfig.json",
     "build:watch": "cross-env node_modules/.bin/tsc -p tsconfig.json -w --preserveWatchOutput",
     "postbuild": "npm run check:circulars",
     "start:dev": "pnpm build:watch",
@@ -25,7 +25,12 @@
   "module": "dist/esm/index.js",
   "types": "dist/cjs/index.d.ts",
   "files": [
-    "dist/"
+    "dist/",
+    "!**/*.spec.*",
+    "!**/*.json",
+    "CHANGELOG.md",
+    "LICENSE",
+    "README.md"
   ],
   "exports": {
     ".": {
