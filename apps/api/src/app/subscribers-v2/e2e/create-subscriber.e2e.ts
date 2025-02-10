@@ -48,10 +48,11 @@ describe('Create Subscriber - /subscribers (POST) #novu-v2', () => {
 
     await novuClient.subscribers.create(payload, payload.subscriberId);
 
-    const { error } = await expectSdkExceptionGeneric(() =>
+    const { error, successfulBody } = await expectSdkExceptionGeneric(() =>
       novuClient.subscribers.create(payload, payload.subscriberId)
     );
-
+    expect(successfulBody, JSON.stringify(successfulBody)).to.be.undefined;
+    expect(error, JSON.stringify(successfulBody)).to.be.ok;
     expect(error?.statusCode).to.equal(409);
   });
 });

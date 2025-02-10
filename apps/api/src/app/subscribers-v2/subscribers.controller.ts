@@ -152,7 +152,7 @@ export class SubscribersController {
   }
 
   @Delete('/:subscriberId')
-  @ApiResponse(RemoveSubscriberResponseDto, 201)
+  @ApiResponse(RemoveSubscriberResponseDto, 200)
   @UserAuthentication()
   @ExternalApiAccessible()
   @ApiOperation({
