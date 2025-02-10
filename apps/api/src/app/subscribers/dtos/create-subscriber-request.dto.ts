@@ -5,10 +5,12 @@ import {
   IsDefined,
   IsEmail,
   IsLocale,
+  IsNotEmpty,
   IsObject,
   IsOptional,
   IsString,
   IsTimeZone,
+  Matches,
   ValidateNested,
 } from 'class-validator';
 import { ChatProviderIdEnum, IChannelCredentials, PushProviderIdEnum, SubscriberCustomData } from '@novu/shared';
@@ -62,6 +64,12 @@ export class CreateSubscriberRequestDto {
   })
   @IsString()
   @IsDefined()
+  @Matches(/^[a-zA-Z0-9_-]+$/, {
+    message: 'SubscriberId can only contain letters, numbers, hyphens, and underscores.',
+  })
+  @IsNotEmpty({
+    message: 'SubscriberId is required',
+  })
   subscriberId: string;
 
   @ApiPropertyOptional({

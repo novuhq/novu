@@ -22,6 +22,7 @@ import {
 } from '../update-subscriber';
 import { CreateOrUpdateSubscriberCommand } from './create-or-update-subscriber.command';
 import { EventsDistributedLockService } from '../../services';
+import { ApiException } from '../../utils';
 
 @Injectable()
 export class CreateOrUpdateSubscriberUseCase {
@@ -154,6 +155,11 @@ export class CreateOrUpdateSubscriberUseCase {
 
   private async createSubscriber(command: CreateOrUpdateSubscriberCommand) {
     try {
+      if (command.subscriberId.match(/^[a-zA-Z0-9_-]+$/) === null) {
+        throw new ApiException(
+          'SubscriberId can only contain letters, numbers, hyphens, and underscores.',
+        );
+      }
       await this.invalidateCache.invalidateByKey({
         key: buildSubscriberKey({
           subscriberId: command.subscriberId,

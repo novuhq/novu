@@ -8,6 +8,7 @@ import {
   IsOptional,
   IsString,
   IsTimeZone,
+  Matches,
   ValidateIf,
 } from 'class-validator';
 
@@ -20,6 +21,9 @@ export class CreateSubscriberRequestDto {
   @IsDefined()
   @IsNotEmpty({
     message: 'SubscriberId is required',
+  })
+  @Matches(/^[a-zA-Z0-9_-]+$/, {
+    message: 'SubscriberId can only contain letters, numbers, hyphens, and underscores.',
   })
   subscriberId: string;
 
