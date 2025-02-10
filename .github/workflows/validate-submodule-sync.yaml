@@ -26,4 +26,4 @@ jobs:
           # Run the script with arguments
           .github/workflows/scripts/validate-submodule-sync.sh
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SUBMODULES_TOKEN: ${{ secrets.SUBMODULES_TOKEN }}

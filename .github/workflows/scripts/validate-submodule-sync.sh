@@ -1,13 +1,13 @@
 #!/bin/bash
 
 # Configuration
-GITHUB_TOKEN="$GITHUB_TOKEN"
+SUBMODULES_TOKEN="$SUBMODULES_TOKEN"
 PRIVATE_REPO_BRANCH="next"
 SOURCE_SUBMODULE=".source"
 
 # Validate inputs
-if [ -z "$GITHUB_TOKEN" ]; then
-  echo "Error: GITHUB_TOKEN variable is required."
+if [ -z "$SUBMODULES_TOKEN" ]; then
+  echo "Error: SUBMODULES_TOKEN variable is required."
   exit 1
 fi
 
@@ -20,7 +20,7 @@ echo "📡 Fetching latest commit hash from private repository..."
 echo "   Branch: $PRIVATE_REPO_BRANCH"
 echo ""
 
-PRIVATE_REPO_URL_WITH_TOKEN="https://$GITHUB_TOKEN@github.com/novuhq/packages-enterprise.git"
+PRIVATE_REPO_URL_WITH_TOKEN="https://$SUBMODULES_TOKEN@github.com/novuhq/packages-enterprise.git"
 PRIVATE_NEXT_HASH=$(git ls-remote "$PRIVATE_REPO_URL_WITH_TOKEN" "refs/heads/$PRIVATE_REPO_BRANCH" | awk '{print $1}')
 if [ -z "$PRIVATE_NEXT_HASH" ]; then
   echo "❌ Error: Failed to fetch commit hash from private repository."
