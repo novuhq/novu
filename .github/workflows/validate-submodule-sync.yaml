@@ -1,0 +1,27 @@
+name: Validate Submodule Sync on Next Branch
+
+on:
+  pull_request:
+    branches:
+      - next
+    types:
+      - opened
+      - synchronize
+
+jobs:
+  validate-submodule-sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout main repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Run validation script
+        run: |
+          # Ensure the script is executable
+          chmod +x validate-submodule-sync.sh
+
+          # Run the script with arguments
+          ./validate-submodule-sync.sh ${{ secrets.GITHUB_TOKEN }}
