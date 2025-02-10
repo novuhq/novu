@@ -7,7 +7,7 @@ import { Button } from '../primitives/button';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '../primitives/command';
 import { Popover, PopoverContent, PopoverTrigger } from '../primitives/popover';
 import TruncatedText from '../truncated-text';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 export function LocaleSelect({
   value,
@@ -23,6 +23,9 @@ export function LocaleSelect({
   const [open, setOpen] = useState(false);
   const currentCountryCode = value?.split('_')?.[1] as Country;
   const CurrentFlag = currentCountryCode ? flags[currentCountryCode] : RiEarthLine;
+
+  const listRef = useRef<HTMLDivElement>(null);
+  const scrollId = useRef<ReturnType<typeof setTimeout>>();
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -48,8 +51,26 @@ export function LocaleSelect({
       </PopoverTrigger>
       <PopoverContent className="w-[300px] rounded-lg border-t-0 p-0">
         <Command>
-          <CommandInput placeholder="Search locale..." />
-          <CommandList>
+          <CommandInput
+            placeholder="Search locale..."
+            /**
+             * Scroll to top bug workaround: https://github.com/pacocoursey/cmdk/issues/233#issuecomment-2015998940
+             */
+            onValueChange={() => {
+              // clear pending scroll
+              clearTimeout(scrollId.current);
+
+              // the setTimeout is used to create a new task
+              // this is to make sure that we don't scroll until the user is done typing
+              // you can tweak the timeout duration ofc
+              scrollId.current = setTimeout(() => {
+                // inside your list select the first group and scroll to the top
+                const div = listRef.current;
+                div?.scrollTo({ top: 0, behavior: 'smooth' });
+              }, 0);
+            }}
+          />
+          <CommandList ref={listRef}>
             <CommandEmpty>No locale found.</CommandEmpty>
             <CommandGroup className="rounded-md py-2">
               {locales.map((item) => (
