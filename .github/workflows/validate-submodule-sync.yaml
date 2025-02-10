@@ -9,14 +9,33 @@ on:
       - synchronize
 
 jobs:
+  check_submodule_token:
+    name: Check if the secret exists or not.
+    runs-on: ubuntu-latest
+    outputs:
+      has_token: ${{ steps.secret-check.outputs.has_token }}
+    steps:
+      - name: Check if secret exists
+        id: secret-check
+        run: |
+          if [[ -n "${{ secrets.SUBMODULES_TOKEN }}" ]]; then
+            echo "::set-output name=has_token::true"
+          else
+            echo "::set-output name=has_token::false"
+          fi
+
   validate-submodule-sync:
     runs-on: ubuntu-latest
+    needs: [check_submodule_token]
+    if: needs.check_submodule_token.outputs.has_token == 'true'
 
     steps:
       - name: Checkout main repository
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          submodules: true
+          token: ${{ secrets.SUBMODULES_TOKEN }}
 
       - name: Run validation script
         run: |
