@@ -40,7 +40,7 @@ export class MandrillProvider extends BaseProvider implements IEmailProvider {
       apiKey: string;
       from: string;
       senderName: string;
-    },
+    }
   ) {
     super();
     this.transporter = mailchimp(this.config.apiKey);
@@ -48,25 +48,22 @@ export class MandrillProvider extends BaseProvider implements IEmailProvider {
 
   async sendMessage(
     emailOptions: IEmailOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
-    const mandrillSendOption = this.transform<IMandrillSendOptions>(
-      bridgeProviderData,
-      {
-        message: {
-          from_email: emailOptions.from || this.config.from,
-          from_name: emailOptions.senderName || this.config.senderName,
-          subject: emailOptions.subject,
-          html: emailOptions.html,
-          to: this.mapTo(emailOptions),
-          attachments: emailOptions.attachments?.map((attachment) => ({
-            content: attachment.file.toString('base64'),
-            type: attachment.mime,
-            name: attachment?.name,
-          })),
-        },
+    const mandrillSendOption = this.transform<IMandrillSendOptions>(bridgeProviderData, {
+      message: {
+        from_email: emailOptions.from || this.config.from,
+        from_name: emailOptions.senderName || this.config.senderName,
+        subject: emailOptions.subject,
+        html: emailOptions.html,
+        to: this.mapTo(emailOptions),
+        attachments: emailOptions.attachments?.map((attachment) => ({
+          content: attachment.file.toString('base64'),
+          type: attachment.mime,
+          name: attachment?.name,
+        })),
       },
-    ).body;
+    }).body;
 
     const response = await this.transporter.messages.send(mandrillSendOption);
 
@@ -123,10 +120,7 @@ export class MandrillProvider extends BaseProvider implements IEmailProvider {
     return [body._id];
   }
 
-  parseEventBody(
-    body: any | any[],
-    identifier: string,
-  ): IEmailEventBody | undefined {
+  parseEventBody(body: any | any[], identifier: string): IEmailEventBody | undefined {
     if (Array.isArray(body)) {
       // eslint-disable-next-line no-param-reassign
       body = body.find((item) => item._id === identifier);

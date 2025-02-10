@@ -22,9 +22,7 @@ const mockMailtrapResponse: SendResponse = {
 
 test('should trigger mailtrap library correctly', async () => {
   const provider = new MailtrapEmailProvider(mockConfig);
-  const spy = vi
-    .spyOn(MailtrapClient.prototype, 'send')
-    .mockImplementation(async () => mockMailtrapResponse);
+  const spy = vi.spyOn(MailtrapClient.prototype, 'send').mockImplementation(async () => mockMailtrapResponse);
 
   await provider.sendMessage(mockNovuMessage);
 
@@ -39,9 +37,7 @@ test('should trigger mailtrap library correctly', async () => {
 
 test('should check integration successfully', async () => {
   const provider = new MailtrapEmailProvider(mockConfig);
-  const spy = vi
-    .spyOn(MailtrapClient.prototype, 'send')
-    .mockImplementation(async () => mockMailtrapResponse);
+  const spy = vi.spyOn(MailtrapClient.prototype, 'send').mockImplementation(async () => mockMailtrapResponse);
 
   const messageResponse = await provider.checkIntegration(mockNovuMessage);
 

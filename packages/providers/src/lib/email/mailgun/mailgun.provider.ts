@@ -14,16 +14,13 @@ import { MailgunMessageData } from 'mailgun.js/interfaces/Messages';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
-export class MailgunEmailProvider
-  extends BaseProvider
-  implements IEmailProvider
-{
+export class MailgunEmailProvider extends BaseProvider implements IEmailProvider {
   id = EmailProviderIdEnum.Mailgun;
 
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
 
   protected casing = CasingEnum.CAMEL_CASE;
-  protected keyCaseObject: Record<string, string> = {
+  protected override keyCaseObject: Record<string, string> = {
     ampHtml: 'amp-html',
     tVersion: 't:version',
     tText: 't:text',
@@ -51,7 +48,7 @@ export class MailgunEmailProvider
       domain: string;
       from: string;
       senderName: string;
-    },
+    }
   ) {
     super();
     const mailgun = new Mailgun(formData);
@@ -65,7 +62,7 @@ export class MailgunEmailProvider
 
   async sendMessage(
     emailOptions: IEmailOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const senderName = emailOptions.senderName || this.config.senderName;
     const fromAddress = emailOptions.from || this.config.from;
@@ -88,14 +85,11 @@ export class MailgunEmailProvider
       data['h:Reply-To'] = emailOptions.replyTo;
     }
 
-    const mailgunMessageData: Partial<MailgunMessageData> = this.transform(
-      bridgeProviderData,
-      data,
-    ).body;
+    const mailgunMessageData: Partial<MailgunMessageData> = this.transform(bridgeProviderData, data).body;
 
     const response = await this.mailgunClient.messages.create(
       this.config.domain,
-      mailgunMessageData as MailgunMessageData,
+      mailgunMessageData as MailgunMessageData
     );
 
     return {
@@ -103,9 +97,7 @@ export class MailgunEmailProvider
       date: new Date().toISOString(),
     };
   }
-  async checkIntegration(
-    options: IEmailOptions,
-  ): Promise<ICheckIntegrationResponse> {
+  async checkIntegration(options: IEmailOptions): Promise<ICheckIntegrationResponse> {
     return {
       success: true,
       message: 'Integrated successfully!',

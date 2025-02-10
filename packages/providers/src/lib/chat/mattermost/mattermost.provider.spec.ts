@@ -85,7 +85,7 @@ test('should trigger mattermost library correctly, default channel with _passthr
           text: '_passthrough content message',
         },
       },
-    },
+    }
   );
   expect(fakePostDefaultChannel).toHaveBeenCalled();
   expect(fakePostDefaultChannel).toHaveBeenCalledWith(testWebhookUrl, {

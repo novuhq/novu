@@ -1,9 +1,4 @@
-import {
-  ChannelTypeEnum,
-  ISendMessageSuccessResponse,
-  ISmsOptions,
-  ISmsProvider,
-} from '@novu/stateless';
+import { ChannelTypeEnum, ISendMessageSuccessResponse, ISmsOptions, ISmsProvider } from '@novu/stateless';
 
 import { Vonage } from '@vonage/server-sdk';
 import { Auth } from '@vonage/auth';
@@ -22,27 +17,27 @@ export class NexmoSmsProvider extends BaseProvider implements ISmsProvider {
       apiKey: string;
       apiSecret: string;
       from: string;
-    },
+    }
   ) {
     super();
     this.vonageClient = new Vonage(
       new Auth({
         apiKey: config.apiKey,
         apiSecret: config.apiSecret,
-      }),
+      })
     );
   }
 
   async sendMessage(
     options: ISmsOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const response = await this.vonageClient.sms.send(
       this.transform<any>(bridgeProviderData, {
         to: options.to,
         from: this.config.from,
         text: options.content,
-      }).body,
+      }).body
     );
 
     return {
