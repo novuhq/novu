@@ -16,6 +16,9 @@ import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { UnsavedChangesAlertDialog } from '@/components/unsaved-changes-alert-dialog';
 import { useBeforeUnload } from '@/hooks/use-before-unload';
 import { EditStepConditionsLayout } from './edit-step-conditions-layout';
+import { useTelemetry } from '@/hooks/use-telemetry';
+import { TelemetryEvent } from '@/utils/telemetry';
+import { countConditions, getUniqueOperators, getUniqueFieldNamespaces } from '@/utils/conditions';
 
 const PAYLOAD_FIELD_PREFIX = 'payload.';
 const SUBSCRIBER_DATA_FIELD_PREFIX = 'subscriber.data.';
@@ -75,15 +78,17 @@ const getConditionsSchema = (fields: Array<{ value: string }>): z.ZodType<FormQu
 };
 
 export const EditStepConditionsForm = () => {
+  const track = useTelemetry();
   const { workflow, step, update } = useWorkflow();
+  const hasConditions = !!step?.controls.values.skip;
   const query = useMemo(
     () =>
       // prepareRuleGroup and parseJsonLogic calls are needed to generate the unique ids on the query and rules,
       // otherwise the lib will do it and it will result in the form being dirty
-      step?.controls.values.skip
+      hasConditions
         ? prepareRuleGroup(parseJsonLogic(step.controls.values.skip as RQBJsonLogic))
         : prepareRuleGroup({ combinator: 'and', rules: [] }),
-    [step]
+    [hasConditions, step]
   );
 
   const { fields, variables } = useMemo(() => {
@@ -122,7 +127,30 @@ export const EditStepConditionsForm = () => {
       updateStepData.controlValues!.skip = null;
     }
 
-    update(updateStepInWorkflow(workflow, step.stepId, updateStepData));
+    update(updateStepInWorkflow(workflow, step.stepId, updateStepData), {
+      onSuccess: () => {
+        const uniqueFieldTypes: string[] = getUniqueFieldNamespaces(skip);
+        const uniqueOperators: string[] = getUniqueOperators(skip);
+
+        if (!hasConditions) {
+          track(TelemetryEvent.STEP_CONDITIONS_ADDED, {
+            stepType: step.type,
+            fieldTypes: uniqueFieldTypes,
+            operators: uniqueOperators,
+          });
+        } else {
+          const oldConditionsCount = countConditions(step.controls.values.skip as RQBJsonLogic);
+          const newConditionsCount = countConditions(skip);
+
+          track(TelemetryEvent.STEP_CONDITIONS_UPDATED, {
+            stepType: step.type,
+            fieldTypes: uniqueFieldTypes,
+            operators: uniqueOperators,
+            type: newConditionsCount < oldConditionsCount ? 'deletion' : 'update',
+          });
+        }
+      },
+    });
     form.reset(values);
   };
 
