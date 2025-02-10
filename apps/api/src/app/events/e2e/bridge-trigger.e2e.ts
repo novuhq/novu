@@ -18,7 +18,6 @@ import {
   MessagesStatusEnum,
   StepTypeEnum,
   WorkflowCreationSourceEnum,
-  WorkflowOriginEnum,
   WorkflowResponseDto,
 } from '@novu/shared';
 import { workflow } from '@novu/framework';
@@ -565,7 +564,7 @@ contexts.forEach((context: Context) => {
       }
 
       await triggerEvent(session, workflowId, subscriber.subscriberId, {}, bridge);
-
+      await session.runAllDelayedJobsImmediately();
       await session.waitForJobCompletion();
 
       const messagesAfter = await messageRepository.find({
@@ -598,7 +597,7 @@ contexts.forEach((context: Context) => {
       await bridgeServer.start({ workflows: [exceedMaxTierDurationWorkflow] });
 
       if (context.isStateful) {
-        await discoverAndSyncBridge(session, workflowsRepository, workflowId, bridgeServer);
+        await discoverAndSyncBridge(session, workflowsRepository, exceedMaxTierDurationWorkflowId, bridgeServer);
       }
 
       const result = await triggerEvent(session, exceedMaxTierDurationWorkflowId, subscriber.subscriberId, {}, bridge);

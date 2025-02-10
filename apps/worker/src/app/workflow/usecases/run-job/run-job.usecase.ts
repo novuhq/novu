@@ -118,6 +118,12 @@ export class RunJob {
       if (shouldQueueNextJob) {
         await this.tryQueueNextJobs(job);
       } else {
+        await this.jobRepository.cancelPendingJobs({
+          transactionId: job.transactionId,
+          _environmentId: job._environmentId,
+          _subscriberId: job._subscriberId,
+          _templateId: job._templateId,
+        });
         // Remove the attachments if the job should not be queued
         await this.storageHelperService.deleteAttachments(job.payload?.attachments);
       }
@@ -186,6 +192,14 @@ export class RunJob {
       } finally {
         if (nextJob) {
           await this.storageHelperService.deleteAttachments(nextJob.payload?.attachments);
+        }
+        if (nextJob && !shouldContinue) {
+          await this.jobRepository.cancelPendingJobs({
+            transactionId: nextJob.transactionId,
+            _environmentId: nextJob._environmentId,
+            _subscriberId: nextJob._subscriberId,
+            _templateId: nextJob._templateId,
+          });
         }
       }
     }
