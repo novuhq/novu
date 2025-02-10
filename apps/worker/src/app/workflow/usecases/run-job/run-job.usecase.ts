@@ -42,7 +42,9 @@ export class RunJob {
     });
 
     let job = await this.jobRepository.findOne({ _id: command.jobId, _environmentId: command.environmentId });
-    if (!job) throw new PlatformException(`Job with id ${command.jobId} not found`);
+    if (!job) {
+      throw new PlatformException(`Job with id ${command.jobId} not found`);
+    }
 
     this.assignLogger(job);
 
@@ -110,6 +112,15 @@ export class RunJob {
         await this.jobRepository.updateStatus(job._environmentId, job._id, JobStatusEnum.COMPLETED);
       }
     } catch (error: any) {
+      if (shouldHaltOnStepFailure(job) && !this.shouldBackoff(error)) {
+        await this.jobRepository.cancelPendingJobs({
+          transactionId: job.transactionId,
+          _environmentId: job._environmentId,
+          _subscriberId: job._subscriberId,
+          _templateId: job._templateId,
+        });
+      }
+
       if (shouldHaltOnStepFailure(job) || this.shouldBackoff(error)) {
         shouldQueueNextJob = false;
       }
@@ -118,12 +129,6 @@ export class RunJob {
       if (shouldQueueNextJob) {
         await this.tryQueueNextJobs(job);
       } else {
-        await this.jobRepository.cancelPendingJobs({
-          transactionId: job.transactionId,
-          _environmentId: job._environmentId,
-          _subscriberId: job._subscriberId,
-          _templateId: job._templateId,
-        });
         // Remove the attachments if the job should not be queued
         await this.storageHelperService.deleteAttachments(job.payload?.attachments);
       }
@@ -142,9 +147,9 @@ export class RunJob {
       return;
     }
 
-    let shouldContinue = true;
+    let shouldContinueQueueNextJob = true;
 
-    while (shouldContinue) {
+    while (shouldContinueQueueNextJob) {
       try {
         if (!currentFailedJob) {
           return;
@@ -167,7 +172,7 @@ export class RunJob {
           job: nextJob,
         });
 
-        shouldContinue = false;
+        shouldContinueQueueNextJob = false;
       } catch (error: any) {
         if (!nextJob) {
           return;
@@ -183,8 +188,17 @@ export class RunJob {
           error
         );
 
+        if (shouldHaltOnStepFailure(nextJob) && !this.shouldBackoff(error)) {
+          await this.jobRepository.cancelPendingJobs({
+            transactionId: nextJob.transactionId,
+            _environmentId: nextJob._environmentId,
+            _subscriberId: nextJob._subscriberId,
+            _templateId: nextJob._templateId,
+          });
+        }
+
         if (shouldHaltOnStepFailure(nextJob) || this.shouldBackoff(error)) {
-          shouldContinue = false;
+          shouldContinueQueueNextJob = false;
           throw error;
         }
 
@@ -192,14 +206,6 @@ export class RunJob {
       } finally {
         if (nextJob) {
           await this.storageHelperService.deleteAttachments(nextJob.payload?.attachments);
-        }
-        if (nextJob && !shouldContinue) {
-          await this.jobRepository.cancelPendingJobs({
-            transactionId: nextJob.transactionId,
-            _environmentId: nextJob._environmentId,
-            _subscriberId: nextJob._subscriberId,
-            _templateId: nextJob._templateId,
-          });
         }
       }
     }
