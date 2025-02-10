@@ -172,7 +172,7 @@ export async function subscribersDelete(
     | ConnectionError
   >(
     M.json(
-      200,
+      201,
       operations.SubscribersControllerRemoveSubscriberResponse$inboundSchema,
       { hdrs: true, key: "Result" },
     ),
