@@ -1,9 +1,11 @@
-name: Validate Submodule Sync on Next Branch
+name: Validate Submodule Sync
 
 on:
   pull_request:
     branches:
       - next
+      - main
+      - prod
     types:
       - opened
       - synchronize
@@ -43,6 +45,6 @@ jobs:
           chmod +x .github/workflows/scripts/validate-submodule-sync.sh
 
           # Run the script with arguments
-          .github/workflows/scripts/validate-submodule-sync.sh
+          .github/workflows/scripts/validate-submodule-sync.sh ${{ github.base_ref }}
         env:
           SUBMODULES_TOKEN: ${{ secrets.SUBMODULES_TOKEN }}
