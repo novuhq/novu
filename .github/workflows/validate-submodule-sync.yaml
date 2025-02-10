@@ -21,7 +21,7 @@ jobs:
       - name: Run validation script
         run: |
           # Ensure the script is executable
-          chmod +x validate-submodule-sync.sh
+          chmod +x .github/workflows/scripts/validate-submodule-sync.sh
 
           # Run the script with arguments
-          ./validate-submodule-sync.sh ${{ secrets.GITHUB_TOKEN }}
+          .github/workflows/scripts/validate-submodule-sync.sh ${{ secrets.GITHUB_TOKEN }}
