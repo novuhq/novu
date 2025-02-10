@@ -6,7 +6,6 @@ import flags from 'react-phone-number-input/flags';
 import { Button } from '../primitives/button';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '../primitives/command';
 import { Popover, PopoverContent, PopoverTrigger } from '../primitives/popover';
-import { ScrollArea } from '../primitives/scroll-area';
 import TruncatedText from '../truncated-text';
 import { useState } from 'react';
 
@@ -52,23 +51,21 @@ export function LocaleSelect({
           <CommandInput placeholder="Search locale..." />
           <CommandList>
             <CommandEmpty>No locale found.</CommandEmpty>
-            <ScrollArea className="h-72">
-              <CommandGroup className="rounded-md py-2">
-                {locales.map((item) => (
-                  <FlagItem
-                    countryCode={item.alpha2}
-                    languageName={item.langName}
-                    optionValue={item.langIso}
-                    key={item.langIso}
-                    onChange={(val) => {
-                      onChange(val);
-                      setOpen(false);
-                    }}
-                    currentValue={value}
-                  />
-                ))}
-              </CommandGroup>
-            </ScrollArea>
+            <CommandGroup className="rounded-md py-2">
+              {locales.map((item) => (
+                <FlagItem
+                  countryCode={item.alpha2}
+                  languageName={item.langName}
+                  optionValue={item.langIso}
+                  key={item.langIso}
+                  onChange={(val) => {
+                    onChange(val);
+                    setOpen(false);
+                  }}
+                  currentValue={value}
+                />
+              ))}
+            </CommandGroup>
           </CommandList>
         </Command>
       </PopoverContent>

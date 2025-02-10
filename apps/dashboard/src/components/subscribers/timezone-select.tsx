@@ -4,7 +4,6 @@ import { useTimezoneSelect } from 'react-timezone-select';
 import { Button } from '../primitives/button';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '../primitives/command';
 import { Popover, PopoverContent, PopoverTrigger } from '../primitives/popover';
-import { ScrollArea } from '../primitives/scroll-area';
 import TruncatedText from '../truncated-text';
 import { useState } from 'react';
 
@@ -56,26 +55,25 @@ export function TimezoneSelect({
           <CommandInput placeholder="Search timezone..." />
           <CommandList>
             <CommandEmpty>No timezone found.</CommandEmpty>
-            <ScrollArea className="h-72">
-              <CommandGroup className="rounded-md py-2">
-                {options.map((item) => (
-                  <CommandItem
-                    className={cn('cursor-pointer', {
-                      'bg-accent': value === item.value,
-                    })}
-                    onSelect={() => {
-                      const parsedValue = parseTimezone(item.value);
-                      onChange(parsedValue.value);
-                      setOpen(false);
-                    }}
-                    key={item.value}
-                  >
-                    {item.label}
-                    <RiCheckLine className={`ml-auto size-4 ${value === item.value ? 'opacity-100' : 'opacity-0'}`} />
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            </ScrollArea>
+
+            <CommandGroup className="rounded-md py-2">
+              {options.map((item) => (
+                <CommandItem
+                  className={cn('cursor-pointer', {
+                    'bg-accent': value === item.value,
+                  })}
+                  onSelect={() => {
+                    const parsedValue = parseTimezone(item.value);
+                    onChange(parsedValue.value);
+                    setOpen(false);
+                  }}
+                  key={item.value}
+                >
+                  {item.label}
+                  <RiCheckLine className={`ml-auto size-4 ${value === item.value ? 'opacity-100' : 'opacity-0'}`} />
+                </CommandItem>
+              ))}
+            </CommandGroup>
           </CommandList>
         </Command>
       </PopoverContent>
