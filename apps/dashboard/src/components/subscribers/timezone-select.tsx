@@ -36,7 +36,7 @@ export function TimezoneSelect({
               <RiTimeLine className="size-4" />
             </div>
             {value ? (
-              <TruncatedText className="text-foreground w-full min-w-0 flex-1 text-xs font-normal">
+              <TruncatedText className="text-foreground w-full min-w-0 flex-1 text-xs font-normal text-neutral-950">
                 {parseTimezone(value).label}
               </TruncatedText>
             ) : (

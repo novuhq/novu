@@ -35,7 +35,7 @@ export function LocaleSelect({
           disabled={disabled}
         >
           <div className="flex max-w-full flex-1 items-center gap-1 overflow-hidden">
-            <span className="inline-flex gap-1">
+            <span className="inline-flex gap-1 text-xs font-normal text-neutral-950">
               {CurrentFlag && <CurrentFlag title={currentCountryCode} className="size-4" />}
               {value || <span className="text-neutral-400">locale</span>}
             </span>
