@@ -5,7 +5,6 @@ import { ActivitiesResponseDto } from '../../dtos/activities-response.dto';
 import { GetActivityFeedCommand } from './get-activity-feed.command';
 import { mapFeedItemToDto } from './map-feed-item-to.dto';
 
-const LIMIT = 10;
 @Injectable()
 export class GetActivityFeed {
   constructor(
@@ -23,7 +22,7 @@ export class GetActivityFeed {
       return {
         page: 0,
         hasMore: false,
-        pageSize: LIMIT,
+        pageSize: command.limit,
         data: [],
       };
     }
@@ -32,8 +31,8 @@ export class GetActivityFeed {
 
     return {
       page: command.page,
-      hasMore: notifications?.length === LIMIT,
-      pageSize: LIMIT,
+      hasMore: notifications?.length === command.limit,
+      pageSize: command.limit,
       data: notifications.map((notification) => mapFeedItemToDto(notification)),
     };
   }
@@ -63,8 +62,8 @@ export class GetActivityFeed {
         after: command.after,
         before: command.before,
       },
-      command.page * LIMIT,
-      LIMIT
+      command.page * command.limit,
+      command.limit
     );
   }
 }
