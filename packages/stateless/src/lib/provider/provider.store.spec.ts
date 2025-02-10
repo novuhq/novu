@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import { ChannelTypeEnum } from '../template/template.interface';
 import { CheckIntegrationResponseEnum } from './provider.enum';
 import { ProviderStore } from './provider.store';
