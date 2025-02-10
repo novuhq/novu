@@ -1,14 +1,15 @@
 import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
+import { Novu } from '@novu/api';
 import { UserSession } from '@novu/application-generic';
 import { UserSessionData } from '@novu/shared';
-import { CreateSupportThreadDto } from './dto/create-thread.dto';
-import { CreateSupportThreadCommand } from './usecases/create-thread.command';
-import { PlainCardRequestDto } from './dto/plain-card.dto';
-import { PlainCardsCommand } from './usecases/plain-cards.command';
-import { CreateSupportThreadUsecase, PlainCardsUsecase } from './usecases';
-import { PlainCardsGuard } from './guards/plain-cards.guard';
 import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
+import { CreateSupportThreadDto } from './dto/create-thread.dto';
+import { PlainCardRequestDto } from './dto/plain-card.dto';
+import { PlainCardsGuard } from './guards/plain-cards.guard';
+import { CreateSupportThreadUsecase, PlainCardsUsecase } from './usecases';
+import { CreateSupportThreadCommand } from './usecases/create-thread.command';
+import { PlainCardsCommand } from './usecases/plain-cards.command';
 
 @Controller('/support')
 @ApiExcludeController()
@@ -36,5 +37,26 @@ export class SupportController {
         userId: user._id as string,
       })
     );
+  }
+
+  @UserAuthentication()
+  @Post('mobile-setup')
+  async mobileSetup(@UserSession() user: UserSessionData) {
+    const novu = new Novu({
+      security: {
+        secretKey: process.env.NOVU_INTERNAL_SECRET_KEY,
+      },
+    });
+
+    await novu.trigger({
+      workflowId: 'mobile-setup-email',
+      to: {
+        subscriberId: user._id as string,
+        firstName: user.firstName as string,
+        lastName: user.lastName as string,
+        email: user.email as string,
+      },
+      payload: {},
+    });
   }
 }
