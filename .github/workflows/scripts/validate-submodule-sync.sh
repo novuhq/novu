@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Configuration
-GITHUB_TOKEN="$1"  # Default: next
-PRIVATE_REPO_BRANCH="${2:-next}"  # Default: next
+GITHUB_TOKEN="$GITHUB_TOKEN"
+PRIVATE_REPO_BRANCH="next"
 SOURCE_SUBMODULE=".source"
 
 # Validate inputs

@@ -24,4 +24,6 @@ jobs:
           chmod +x .github/workflows/scripts/validate-submodule-sync.sh
 
           # Run the script with arguments
-          .github/workflows/scripts/validate-submodule-sync.sh ${{ secrets.GITHUB_TOKEN }}
+          .github/workflows/scripts/validate-submodule-sync.sh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
