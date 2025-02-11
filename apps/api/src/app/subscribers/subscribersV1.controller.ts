@@ -23,7 +23,7 @@ import {
   UpdateSubscriberChannelCommand,
   UpdateSubscriberCommand,
 } from '@novu/application-generic';
-import { ApiExcludeEndpoint, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiExcludeEndpoint, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import {
   ApiRateLimitCategoryEnum,
   ApiRateLimitCostEnum,
@@ -106,7 +106,7 @@ import { MarkMessageAsByMarkCommand } from '../widgets/usecases/mark-message-as-
 import { MarkMessageAsByMark } from '../widgets/usecases/mark-message-as-by-mark/mark-message-as-by-mark.usecase';
 import { FeedResponseDto } from '../widgets/dtos/feeds-response.dto';
 import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
-import { SdkApiParam, SdkGroupName, SdkMethodName, SdkUsePagination } from '../shared/framework/swagger/sdk.decorators';
+import { SdkGroupName, SdkMethodName, SdkUsePagination } from '../shared/framework/swagger/sdk.decorators';
 import { UpdatePreferences } from '../inbox/usecases/update-preferences/update-preferences.usecase';
 import { UpdatePreferencesCommand } from '../inbox/usecases/update-preferences/update-preferences.command';
 import { UnseenCountQueryDto } from './query-objects/unseen-count.query';
@@ -166,8 +166,8 @@ export class SubscribersV1Controller {
   @Get('/:subscriberId')
   @ExternalApiAccessible()
   @UserAuthentication()
+  @ApiExcludeEndpoint()
   @ApiResponse(SubscriberResponseDto)
-  @SdkMethodName('retrieveLegacy')
   @ApiOperation({
     summary: 'Get subscriber',
     description: 'Get subscriber by your internal id used to identify the subscriber',
@@ -195,16 +195,8 @@ export class SubscribersV1Controller {
 
   @Post('/')
   @ExternalApiAccessible()
+  @ApiExcludeEndpoint()
   @UserAuthentication()
-  @ApiResponse(SubscriberResponseDto, 201)
-  @SdkMethodName('createLegacy')
-  @ApiOperation({
-    summary: 'Create subscriber',
-    description:
-      'Creates a subscriber entity, in the Novu platform. ' +
-      'The subscriber will be later used to receive notifications, and access notification feeds. ' +
-      'Communication credentials such as email, phone number, and 3 rd party credentials i.e slack tokens could be later associated to this entity.',
-  })
   async createSubscriber(
     @UserSession() user: UserSessionData,
     @Body() body: CreateSubscriberRequestDto
@@ -260,7 +252,7 @@ export class SubscribersV1Controller {
     summary: 'Update subscriber',
     description: 'Used to update the subscriber entity with new information',
   })
-  @SdkMethodName('updateLegacy')
+  @ApiExcludeEndpoint()
   async updateSubscriber(
     @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string,
@@ -400,7 +392,7 @@ export class SubscribersV1Controller {
     description: 'Deletes a subscriber entity from the Novu platform',
     deprecated: true,
   })
-  @SdkMethodName('deleteLegacy')
+  @ApiExcludeEndpoint()
   async removeSubscriber(
     @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string
@@ -430,7 +422,7 @@ export class SubscribersV1Controller {
       'A flag which specifies if the inactive workflow channels should be included in the retrieved preferences. Default is true',
   })
   @SdkGroupName('Subscribers.Preferences')
-  @SdkMethodName('listLegacy')
+  @ApiExcludeEndpoint()
   async listSubscriberPreferences(
     @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string,
@@ -450,31 +442,7 @@ export class SubscribersV1Controller {
   @Get('/:subscriberId/preferences/:parameter')
   @ExternalApiAccessible()
   @UserAuthentication()
-  @ApiResponse(GetSubscriberPreferencesResponseDto, 200, true)
-  @ApiOperation({
-    summary: 'Get subscriber preferences by level',
-    deprecated: true,
-  })
-  @ApiParam({ name: 'subscriberId', type: String, required: true })
-  @SdkApiParam(
-    {
-      name: 'parameter',
-      type: String,
-      enum: PreferenceLevelEnum,
-      required: true,
-      description: 'the preferences level to be retrieved (template / global) ',
-    },
-    { nameOverride: 'preferenceLevel' }
-  )
-  @ApiQuery({
-    name: 'includeInactiveChannels',
-    type: Boolean,
-    required: false,
-    description:
-      'A flag which specifies if the inactive workflow channels should be included in the retrieved preferences. Default is true',
-  })
-  @SdkGroupName('Subscribers.Preferences')
-  @SdkMethodName('retrieveByLevelLegacy')
+  @ApiExcludeEndpoint()
   async getSubscriberPreferenceByLevel(
     @UserSession() user: UserSessionData,
     @Param() { parameter, subscriberId }: GetSubscriberPreferencesByLevelParams,
@@ -495,21 +463,7 @@ export class SubscribersV1Controller {
   @Patch('/:subscriberId/preferences/:parameter')
   @ExternalApiAccessible()
   @UserAuthentication()
-  @ApiResponse(UpdateSubscriberPreferenceResponseDto)
-  @ApiParam({ name: 'subscriberId', type: String, required: true })
-  @SdkApiParam(
-    {
-      name: 'parameter',
-      type: String,
-      required: true,
-    },
-    { nameOverride: 'workflowId' }
-  )
-  @ApiOperation({
-    summary: 'Update subscriber preference',
-  })
-  @SdkGroupName('Subscribers.Preferences')
-  @SdkMethodName('updateLegacy')
+  @ApiExcludeEndpoint()
   async updateSubscriberPreference(
     @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string,
@@ -553,12 +507,7 @@ export class SubscribersV1Controller {
   @Patch('/:subscriberId/preferences')
   @ExternalApiAccessible()
   @UserAuthentication()
-  @ApiResponse(UpdateSubscriberPreferenceGlobalResponseDto)
-  @ApiOperation({
-    summary: 'Update subscriber global preferences',
-  })
-  @SdkGroupName('Subscribers.Preferences.legacy')
-  @SdkMethodName('updateGlobal')
+  @ApiExcludeEndpoint()
   async updateSubscriberGlobalPreferences(
     @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string,

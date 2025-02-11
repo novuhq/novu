@@ -10,8 +10,12 @@
 <br/>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/@novu/node">
-    <img src="https://img.shields.io/npm/v/@novu/node" alt="NPM">
+  <a href="https://www.producthunt.com/products/novu">
+    <img src="https://img.shields.io/badge/Product%20Hunt-Golden%20Kitty%20Award%202023-yellow" alt="Product Hunt">
+  </a>
+  <a href="https://news.ycombinator.com/item?id=38419513"><img src="https://img.shields.io/badge/Hacker%20News-%231-%23FF6600" alt="Hacker News"></a>
+  <a href="https://www.npmjs.com/package/@novu/react">
+    <img src="https://img.shields.io/npm/v/@novu/react" alt="NPM">
   </a>
   <a href="https://www.npmjs.com/package/@novu/node">
     <img src="https://img.shields.io/npm/dm/@novu/node" alt="npm downloads">
@@ -19,7 +23,7 @@
 </p>
 
 <h1 align="center">
-  The open source notifications framework that makes it easy for developers to empower product teams.
+  The open source notification platform
 </h1>
 
 <div align="center">
@@ -28,17 +32,13 @@
 
 <p align="center">
   <br />
-  <a href="https://docs.novu.co?utm_campaign=github-readme" rel="dofollow"><strong>Explore the docs »</strong></a>
-  <br />
-  or
-  <br />
-  <a href="https://go.novu.co/github" rel="dofollow"><strong>create a free account »</strong></a>
+  <a href="https://go.novu.co/github" rel="dofollow"><strong>Learn More »</strong></a>
   <br />
 
 <br/>
   <a href="https://github.com/novuhq/novu/issues/new?assignees=&labels=type%3A+bug&template=bug_report.yml&title=%F0%9F%90%9B+Bug+Report%3A+">Report a bug</a>
   ·
-  <a href="https://github.com/novuhq/novu/issues/new?assignees=&labels=feature&template=feature_request.yml&title=%F0%9F%9A%80+Feature%3A+">Request a feature</a>
+  <a href="https://go.novu.co/github">Website</a>
   ·
 <a href="https://bit.ly/novu-github-discord">Join our Discord</a>
   ·
@@ -56,19 +56,17 @@ With Novu, you can create custom workflows and define conditions for each channe
 
 ## ✨ Features
 
-- 🌈 Single API for all messaging providers (Inbox/In-App, Email, SMS, Push, Chat)
-- 💅 Fully managed GitOps flow, deployed from your CI
-- 🔥 Define workflow and step controls with Zod or JSON Schema
-- 💌 Easily re-use existing content in various frameworks, including React Email, Vue-email, Maizzle, MJML, and more
-- 🚀 Equipped with a CMS for advanced layouts and design management
-- 🛡 Debug and analyze multi-channel messages in a single dashboard
-- 📦 Embeddable Inbox component with real-time updates
-- 📤 Embeddable user preferences component gives your subscribers control over their notifications
-- 👨‍💻 Community-driven
+- Embeddable Inbox component with real-time support
+- Single API for all messaging providers (Inbox/In-App, Email, SMS, Push, Chat)
+- Digest Engine to combine multiple notification in to a single E-mail
+- No-Code Block Editor for Email
+- Notification Workflow Engine
+- Embeddable user preferences component gives your subscribers control over their notifications
+- Community-driven
 
 ## 🚀 Getting Started
 
-[Create a free account](https://dashboard-v2.novu.co?utm_campaign=github-readme) and follow the instructions on the dashboard.
+[Create a free account](https://go.novu.co/dashboard?utm_campaign=github-readme) and follow the instructions on the dashboard.
 
 ## 📚 Table of contents
 

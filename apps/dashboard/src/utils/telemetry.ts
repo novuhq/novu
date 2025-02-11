@@ -55,4 +55,6 @@ export enum TelemetryEvent {
   SUBSCRIBERS_PAGE_VISIT = 'Subscribers page visit',
   SIGN_UP_PAGE_VIEWED = 'Signup page viewed',
   SIGN_IN_PAGE_VIEWED = 'Signin page viewed',
+  STEP_CONDITIONS_ADDED = 'Step conditions added',
+  STEP_CONDITIONS_UPDATED = 'Step conditions updated',
 }

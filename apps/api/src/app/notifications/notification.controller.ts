@@ -66,7 +66,8 @@ export class NotificationsController {
 
     return this.getActivityFeedUsecase.execute(
       GetActivityFeedCommand.create({
-        page: query.page ? Number(query.page) : 0,
+        page: query.page,
+        limit: query.limit,
         organizationId: user.organizationId,
         environmentId: user.environmentId,
         userId: user._id,

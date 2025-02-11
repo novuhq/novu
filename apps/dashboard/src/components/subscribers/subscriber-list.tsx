@@ -14,21 +14,40 @@ import {
 import { cn } from '@/utils/ui';
 import { DirectionEnum } from '@novu/shared';
 import { HTMLAttributes, useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { Button } from '../primitives/button';
+import { RiUserSharedLine } from 'react-icons/ri';
+import { buildRoute, ROUTES } from '@/utils/routes';
 
 type SubscriberListFiltersProps = HTMLAttributes<HTMLDivElement> &
   Pick<SubscribersUrlState, 'filterValues' | 'handleFiltersChange' | 'resetFilters'>;
 
 const SubscriberListWrapper = (props: SubscriberListFiltersProps) => {
   const { className, children, filterValues, handleFiltersChange, resetFilters, ...rest } = props;
+  const navigate = useNavigate();
+  const { environmentSlug } = useParams();
 
   return (
     <div className={cn('flex h-full flex-col p-2', className)} {...rest}>
-      <SubscribersFilters
-        onFiltersChange={handleFiltersChange}
-        filterValues={filterValues}
-        onReset={resetFilters}
-        className="py-2"
-      />
+      <div className="flex items-center justify-between">
+        <SubscribersFilters
+          onFiltersChange={handleFiltersChange}
+          filterValues={filterValues}
+          onReset={resetFilters}
+          className="py-2"
+        />
+
+        <Button
+          mode="gradient"
+          className="rounded-l-lg border-none px-1.5 py-2 text-white"
+          variant="primary"
+          size="xs"
+          leadingIcon={RiUserSharedLine}
+          onClick={() => navigate(buildRoute(ROUTES.CREATE_SUBSCRIBER, { environmentSlug: environmentSlug || '' }))}
+        >
+          Add subscriber
+        </Button>
+      </div>
       {children}
     </div>
   );
