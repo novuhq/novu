@@ -49,27 +49,12 @@ afterEach(async () => {
   const standardQueue = new TestingQueueService(JobTopicNameEnum.STANDARD).queue;
   const subscriberProcessQueue = new TestingQueueService(JobTopicNameEnum.PROCESS_SUBSCRIBER).queue;
 
-  const countBeforeDrain = await Promise.all([
-    workflowQueue.count(),
-    standardQueue.count(),
-    subscriberProcessQueue.count(),
-  ]);
-
   await Promise.all([
     jobRepository._model.deleteMany({}),
     workflowQueue.drain(),
     standardQueue.drain(),
     subscriberProcessQueue.drain(),
   ]);
-
-  const countAfterDrain = await Promise.all([
-    workflowQueue.count(),
-    standardQueue.count(),
-    subscriberProcessQueue.count(),
-  ]);
-
-  // eslint-disable-next-line no-console
-  console.log('stats before drain ', countBeforeDrain, ' stats after drain ', countAfterDrain);
 
   sinon.restore();
 });
