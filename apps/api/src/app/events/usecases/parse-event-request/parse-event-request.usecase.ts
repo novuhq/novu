@@ -28,7 +28,16 @@ import {
   WorkflowOverrideRepository,
 } from '@novu/dal';
 import { DiscoverWorkflowOutput, GetActionEnum } from '@novu/framework/internal';
-import { ReservedVariablesMap, TriggerContextTypeEnum, TriggerEventStatusEnum, WorkflowOriginEnum } from '@novu/shared';
+import {
+  ReservedVariablesMap,
+  slugify,
+  TriggerContextTypeEnum,
+  TriggerEventStatusEnum,
+  TriggerRecipients,
+  TriggerRecipientsPayload,
+  TriggerRecipientSubscriber,
+  WorkflowOriginEnum,
+} from '@novu/shared';
 
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { VerifyPayload, VerifyPayloadCommand } from '../verify-payload';
@@ -188,8 +197,26 @@ export class ParseEventRequest {
     transactionId,
     discoveredWorkflow?: DiscoverWorkflowOutput | null
   ) {
-    const jobData: IWorkflowDataDto = {
+    const commandArgs = {
       ...command,
+    };
+
+    if ('to' in commandArgs) {
+      const sanitizedSubcribers = this.sanitizeRecipients(commandArgs.to);
+      const validSubcribers = this.removeInvalidSubscribers(sanitizedSubcribers);
+
+      if (!validSubcribers) {
+        return {
+          acknowledged: true,
+          status: TriggerEventStatusEnum.NO_VALID_RECIPIENTS,
+          transactionId,
+        };
+      }
+      commandArgs.to = validSubcribers;
+    }
+
+    const jobData: IWorkflowDataDto = {
+      ...commandArgs,
       actor: command.actor,
       transactionId,
       bridgeWorkflow: discoveredWorkflow ?? undefined,
@@ -285,5 +312,56 @@ export class ParseEventRequest {
     const { reservedVariables } = template.triggers[0];
 
     return reservedVariables?.map((reservedVariable) => reservedVariable.type) || [];
+  }
+
+  private sanitize(subcriberId: string) {
+    if (subcriberId.trim().match(/^[a-zA-Z0-9_-]+$/)) {
+      return slugify(subcriberId, {
+        lowercase: false,
+      });
+    }
+  }
+
+  private sanitizeRecipients(payload: TriggerRecipientsPayload): TriggerRecipientsPayload | null {
+    if (typeof payload === 'string') {
+      return this.sanitize(payload) ?? null;
+    }
+
+    if (Array.isArray(payload)) {
+      return payload.map((sub) => this.sanitizeRecipients(sub as TriggerRecipientSubscriber)) as TriggerRecipients;
+    }
+
+    if ('subscriberId' in payload) {
+      const subscriberId = this.sanitize(payload.subscriberId);
+
+      if (!subscriberId) {
+        return null;
+      }
+
+      return {
+        ...payload,
+        subscriberId,
+      };
+    }
+
+    return payload;
+  }
+
+  private removeInvalidSubscribers(subscribers: TriggerRecipientsPayload | null): TriggerRecipientsPayload | null {
+    if (subscribers === null) {
+      return null;
+    }
+
+    if (typeof subscribers === 'string') {
+      return subscribers;
+    }
+
+    if (Array.isArray(subscribers)) {
+      return subscribers.filter((subscriber) => !!subscriber);
+    }
+
+    const isValid = subscribers.subscriberId !== null;
+
+    return isValid ? subscribers : null;
   }
 }
