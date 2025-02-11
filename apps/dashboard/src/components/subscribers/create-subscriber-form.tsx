@@ -21,6 +21,8 @@ import { UnsavedChangesAlertDialog } from '../unsaved-changes-alert-dialog';
 import { LocaleSelect } from './locale-select';
 import { CreateSubscriberFormSchema } from './schema';
 import { TimezoneSelect } from './timezone-select';
+import { useTelemetry } from '@/hooks/use-telemetry';
+import { TelemetryEvent } from '@/utils/telemetry';
 
 const extensions = [loadLanguage('json')?.extension ?? []];
 const basicSetup = { lineNumbers: true, defaultKeymap: true };
@@ -36,6 +38,7 @@ type CreateSubscriberFormProps = {
 };
 
 export const CreateSubscriberForm = (props: CreateSubscriberFormProps) => {
+  const track = useTelemetry();
   const { onSuccess } = props;
 
   const form = useForm<z.infer<typeof CreateSubscriberFormSchema>>({
@@ -62,6 +65,7 @@ export const CreateSubscriberForm = (props: CreateSubscriberFormProps) => {
     onSuccess: () => {
       showSuccessToast('Created subscriber successfully', undefined, toastOptions);
       onSuccess?.();
+      track(TelemetryEvent.SUBSCRIBER_CREATED);
     },
     onError: (error) => {
       const errMsg = error instanceof Error ? error.message : 'Failed to create subscriber';
