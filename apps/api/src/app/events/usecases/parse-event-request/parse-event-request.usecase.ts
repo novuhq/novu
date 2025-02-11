@@ -202,17 +202,17 @@ export class ParseEventRequest {
     };
 
     if ('to' in commandArgs) {
-      const sanitizedSubcribers = this.sanitizeRecipients(commandArgs.to);
-      const validSubcribers = this.removeInvalidSubscribers(sanitizedSubcribers);
+      const sanitizedSubscribers = this.sanitizeRecipients(commandArgs.to);
+      const validSubscribers = this.removeInvalidSubscribers(sanitizedSubscribers);
 
-      if (!validSubcribers) {
+      if (!validSubscribers) {
         return {
           acknowledged: true,
           status: TriggerEventStatusEnum.NO_VALID_RECIPIENTS,
           transactionId,
         };
       }
-      commandArgs.to = validSubcribers;
+      commandArgs.to = validSubscribers;
     }
 
     const jobData: IWorkflowDataDto = {
@@ -314,9 +314,9 @@ export class ParseEventRequest {
     return reservedVariables?.map((reservedVariable) => reservedVariable.type) || [];
   }
 
-  private sanitize(subcriberId: string) {
-    if (subcriberId.trim().match(/^[a-zA-Z0-9_-]+$/)) {
-      return slugify(subcriberId, {
+  private sanitize(subscriberId: string) {
+    if (subscriberId.trim().match(/^[a-zA-Z0-9_-]+$/)) {
+      return slugify(subscriberId, {
         lowercase: false,
       });
     }
