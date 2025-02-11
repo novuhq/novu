@@ -1,17 +1,29 @@
-import { testServer } from '@novu/testing';
+import { testServer, TestingQueueService } from '@novu/testing';
 import sinon from 'sinon';
 import chai from 'chai';
-import { default as mongoose } from 'mongoose';
+import mongoose from 'mongoose';
+import { JobRepository } from '@novu/dal';
+import { JobTopicNameEnum } from '@novu/shared';
 import { bootstrap } from '../src/bootstrap';
+
+const jobRepository = new JobRepository();
+
+let connection: typeof mongoose;
+
+async function getConnection() {
+  if (!connection) {
+    connection = await mongoose.connect(process.env.MONGO_URL);
+  }
+
+  return connection;
+}
 
 async function dropDatabase() {
   try {
-    await mongoose.connect(process.env.MONGO_URL);
-    await mongoose.connection.db.dropDatabase();
+    const conn = await getConnection();
+    await conn.connection.db.dropDatabase();
   } catch (error) {
     console.error('Error dropping the database:', error);
-  } finally {
-    await mongoose.disconnect();
   }
 }
 
@@ -27,9 +39,37 @@ before(async () => {
 after(async () => {
   await testServer.teardown();
   await dropDatabase();
+  if (connection) {
+    await connection.disconnect();
+  }
 });
 
-// TODO: Remove this
-afterEach(() => {
+afterEach(async () => {
+  const workflowQueue = new TestingQueueService(JobTopicNameEnum.WORKFLOW).queue;
+  const standardQueue = new TestingQueueService(JobTopicNameEnum.STANDARD).queue;
+  const subscriberProcessQueue = new TestingQueueService(JobTopicNameEnum.PROCESS_SUBSCRIBER).queue;
+
+  const countBeforeDrain = await Promise.all([
+    workflowQueue.count(),
+    standardQueue.count(),
+    subscriberProcessQueue.count(),
+  ]);
+
+  await Promise.all([
+    jobRepository._model.deleteMany({}),
+    workflowQueue.drain(),
+    standardQueue.drain(),
+    subscriberProcessQueue.drain(),
+  ]);
+
+  const countAfterDrain = await Promise.all([
+    workflowQueue.count(),
+    standardQueue.count(),
+    subscriberProcessQueue.count(),
+  ]);
+
+  // eslint-disable-next-line no-console
+  console.log('stats before drain ', countBeforeDrain, ' stats after drain ', countAfterDrain);
+
   sinon.restore();
 });
