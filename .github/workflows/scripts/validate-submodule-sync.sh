@@ -87,7 +87,7 @@ if [ "$MAIN_BRANCH_HASH" != "$PRIVATE_BRANCH_HASH" ]; then
   echo ""
   echo "   To fix this:"
   echo "   1. Ensure the private repository's '$TARGET_BRANCH' branch is up to date"
-  echo "   2. Commit and push the updated submodule changes"
+  echo "   2. Ensure the monorepo repository point to the '$TARGET_BRANCH' branch at the private repository"
   echo ""
   exit 1
 else
