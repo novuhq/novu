@@ -14,6 +14,12 @@ export interface IFeatureFlagContext {
   [attribute: string]: unknown;
 }
 
+export type FeatureFlagFullContext = {
+  contextKey: 'environment' | 'organization' | 'user';
+  contextId: string;
+  context?: Record<string, unknown>;
+};
+
 export interface IGlobalFeatureFlag<T> {
   key: FeatureFlagsKeysEnum;
   defaultValue: T;
@@ -21,6 +27,9 @@ export interface IGlobalFeatureFlag<T> {
 
 export type IContextualFeatureFlag<T> = IGlobalFeatureFlag<T> &
   IFeatureFlagContext;
+
+export type FullContextualFeatureFlag<T> = IGlobalFeatureFlag<T> &
+  FeatureFlagFullContext;
 
 export interface IFeatureFlagsService {
   getWithAnonymousContext: <T>(
@@ -45,6 +54,12 @@ export interface IFeatureFlagsService {
     key: FeatureFlagsKeysEnum,
     defaultValue: T,
     userId: UserId,
+  ) => Promise<T>;
+
+  getWithFullContext: <T>(
+    key: FeatureFlagsKeysEnum,
+    defaultValue: T,
+    context: FeatureFlagFullContext,
   ) => Promise<T>;
 
   gracefullyShutdown: () => Promise<void>;

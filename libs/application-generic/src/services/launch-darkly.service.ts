@@ -7,6 +7,7 @@ import { Injectable, Logger } from '@nestjs/common';
 
 import {
   EnvironmentId,
+  FeatureFlagFullContext,
   FeatureFlagsKeysEnum,
   IFeatureFlagsService,
   OrganizationId,
@@ -109,6 +110,24 @@ export class LaunchDarklyService implements IFeatureFlagsService {
     const context = this.mapToUserContext(userId);
 
     return await this.get(key, context, defaultValue);
+  }
+
+  public async getWithFullContext<T>(
+    key: FeatureFlagsKeysEnum,
+    defaultValue: T,
+    context: FeatureFlagFullContext,
+  ): Promise<T> {
+    const { contextKey, contextId, context: contextData } = context;
+
+    return await this.client.variation(
+      key,
+      {
+        ...contextData,
+        kind: contextKey,
+        key: contextId,
+      },
+      defaultValue,
+    );
   }
 
   public async gracefullyShutdown(): Promise<void> {

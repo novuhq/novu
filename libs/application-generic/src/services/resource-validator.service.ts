@@ -10,7 +10,7 @@ import { GetFeatureFlag, NotificationStep } from '../usecases';
 @Injectable()
 export class ResourceValidatorService {
   private readonly MAX_STEPS_PER_WORKFLOW = 10;
-  private readonly MAX_WORKFLOWS_LIMIT = 1000;
+  private readonly MAX_WORKFLOWS_LIMIT = 100;
 
   constructor(
     private notificationTemplateRepository: NotificationTemplateRepository,
@@ -50,20 +50,22 @@ export class ResourceValidatorService {
       return;
     }
 
-    const isWorkflowLimitHitLimit = await this.getFeatureFlag.execute({
-      key: FeatureFlagsKeysEnum.IS_MAX_WORKFLOW_LIMIT_ENABLED,
-      environmentId,
-      organizationId: 'system',
-      userId: 'system',
-      environmentCreatedAt: environment.createdAt,
-      count: workflowsCount,
+    const maxWorkflowLimit = await this.getFeatureFlag.getNumber({
+      key: FeatureFlagsKeysEnum.MAX_WORKFLOW_LIMIT_NUMBER,
+      contextKey: 'environment',
+      contextId: environmentId,
+      defaultValue: this.MAX_WORKFLOWS_LIMIT,
+      context: {
+        createdAt: environment.createdAt,
+      },
     });
 
-    if (isWorkflowLimitHitLimit) {
+    if (workflowsCount >= maxWorkflowLimit) {
       throw new BadRequestException({
         message:
           'Workflow limit exceeded. Please contact us to support more workflows.',
         currentCount: workflowsCount,
+        limit: maxWorkflowLimit,
       });
     }
   }
