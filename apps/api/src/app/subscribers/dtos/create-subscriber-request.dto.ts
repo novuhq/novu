@@ -8,6 +8,7 @@ import {
   IsObject,
   IsOptional,
   IsString,
+  IsTimeZone,
   ValidateNested,
 } from 'class-validator';
 import { ChatProviderIdEnum, IChannelCredentials, PushProviderIdEnum, SubscriberCustomData } from '@novu/shared';
@@ -131,6 +132,14 @@ export class CreateSubscriberRequestDto {
   @ValidateNested({ each: true })
   @Type(() => SubscriberChannelDto)
   channels?: SubscriberChannelDto[];
+
+  @ApiPropertyOptional({
+    type: 'string',
+    description: 'The timezone of the subscriber.',
+  })
+  @IsOptional()
+  @IsTimeZone()
+  timezone?: string;
 }
 
 export class BulkSubscriberCreateDto {

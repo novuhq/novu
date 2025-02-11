@@ -114,5 +114,6 @@ export * from "./updateintegrationrequestdto.js";
 export * from "./updatesubscriberchannelrequestdto.js";
 export * from "./updatesubscriberonlineflagrequestdto.js";
 export * from "./workflowinfodto.js";
+export * from "./workfloworiginenum.js";
 export * from "./workflowpreferencedto.js";
 export * from "./workflowresponse.js";

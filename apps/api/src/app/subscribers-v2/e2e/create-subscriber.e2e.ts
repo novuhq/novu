@@ -46,12 +46,11 @@ describe('Create Subscriber - /subscribers (POST) #novu-v2', () => {
       timezone: 'America/New_York',
     };
 
-    await novuClient.subscribers.create(payload, payload.subscriberId);
+    await novuClient.subscribers.create(payload);
 
-    const { error } = await expectSdkExceptionGeneric(() =>
-      novuClient.subscribers.create(payload, payload.subscriberId)
-    );
-
+    const { error, successfulBody } = await expectSdkExceptionGeneric(() => novuClient.subscribers.create(payload));
+    expect(successfulBody).to.be.undefined;
+    expect(error).to.be.ok;
     expect(error?.statusCode).to.equal(409);
   });
 });
