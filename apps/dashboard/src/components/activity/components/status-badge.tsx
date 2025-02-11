@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import { StatusBadge as StatusBadgeComponent, StatusBadgeIcon } from '../../primitives/status-badge';
 import { JOB_STATUS_CONFIG } from '../constants';
 import { StatusPreviewCard } from './status-preview-card';
+import { getActivityStatus } from '../helpers';
+
 export interface StatusBadgeProps {
   jobs: IActivityJob[];
 }
@@ -64,10 +66,3 @@ export function ActivityStatusBadge({ jobs }: StatusBadgeProps) {
     </Popover>
   );
 }
-const getActivityStatus = (jobs: IActivityJob[]) => {
-  if (!jobs.length) return JobStatusEnum.PENDING;
-
-  const lastJob = jobs[jobs.length - 1];
-
-  return lastJob.status;
-};

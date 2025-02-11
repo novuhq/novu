@@ -10,10 +10,22 @@ import { ExternalLink } from '../shared/external-link';
 interface ActivityEmptyStateProps {
   className?: string;
   emptySearchResults?: boolean;
+  emptySearchTitle?: string;
+  emptySearchDescription?: string;
+  emptyFiltersTitle?: string;
+  emptyFiltersDescription?: string;
   onClearFilters?: () => void;
 }
 
-export function ActivityEmptyState({ className, emptySearchResults, onClearFilters }: ActivityEmptyStateProps) {
+export function ActivityEmptyState({
+  className,
+  emptySearchResults,
+  onClearFilters,
+  emptySearchTitle = 'No activity match that filter',
+  emptySearchDescription = 'Try adjusting your filters to see more results.',
+  emptyFiltersTitle = 'No activity in the past 30 days',
+  emptyFiltersDescription = 'Your activity feed is empty. Once you trigger your first workflow, you can monitor notifications and view delivery details.',
+}: ActivityEmptyStateProps) {
   const navigate = useNavigate();
   const { currentEnvironment } = useEnvironment();
 
@@ -67,12 +79,10 @@ export function ActivityEmptyState({ className, emptySearchResults, onClearFilte
             className="flex flex-col items-center gap-1 text-center"
           >
             <h2 className="text-foreground-900 text-lg font-medium">
-              {emptySearchResults ? 'No activity match that filter' : 'No activity in the past 30 days'}
+              {emptySearchResults ? emptySearchTitle : emptyFiltersTitle}
             </h2>
             <p className="text-foreground-600 max-w-md text-sm font-normal">
-              {emptySearchResults
-                ? 'Change your search criteria.'
-                : 'Your activity feed is empty. Once you trigger your first workflow, you can monitor notifications and view delivery details.'}
+              {emptySearchResults ? emptySearchDescription : emptyFiltersDescription}
             </p>
           </motion.div>
 
