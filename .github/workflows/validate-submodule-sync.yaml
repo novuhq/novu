@@ -1,5 +1,12 @@
 name: Validate Submodule Sync
 
+# This workflow validates submodule synchronization when PRs are merged to main branches.
+# Logic:
+# 1. Triggers only when PRs are closed (merged) to next/main/prod branches
+# 2. First checks if SUBMODULES_TOKEN secret exists
+# 3. If token exists and PR was merged, proceeds to validate submodule sync
+# 4. Uses a validation script to ensure submodules are properly synchronized
+
 on:
   pull_request:
     branches:
@@ -7,13 +14,13 @@ on:
       - main
       - prod
     types:
-      - opened
-      - synchronize
+      - closed
 
 jobs:
   check_submodule_token:
     name: Check if the secret exists or not.
     runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true  # Only run if the PR was merged
     outputs:
       has_token: ${{ steps.secret-check.outputs.has_token }}
     steps:
