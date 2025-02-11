@@ -52,6 +52,10 @@ export type SubscriberPayloadDto = {
    * An optional array of subscriber channels.
    */
   channels?: Array<SubscriberChannelDto> | undefined;
+  /**
+   * The timezone of the subscriber.
+   */
+  timezone?: string | undefined;
 };
 
 /** @internal */
@@ -109,6 +113,7 @@ export const SubscriberPayloadDto$inboundSchema: z.ZodType<
     z.union([z.string(), z.array(z.string()), z.boolean(), z.number()]),
   ).optional(),
   channels: z.array(SubscriberChannelDto$inboundSchema).optional(),
+  timezone: z.string().optional(),
 });
 
 /** @internal */
@@ -122,6 +127,7 @@ export type SubscriberPayloadDto$Outbound = {
   locale?: string | undefined;
   data?: { [k: string]: string | Array<string> | boolean | number } | undefined;
   channels?: Array<SubscriberChannelDto$Outbound> | undefined;
+  timezone?: string | undefined;
 };
 
 /** @internal */
@@ -141,6 +147,7 @@ export const SubscriberPayloadDto$outboundSchema: z.ZodType<
     z.union([z.string(), z.array(z.string()), z.boolean(), z.number()]),
   ).optional(),
   channels: z.array(SubscriberChannelDto$outboundSchema).optional(),
+  timezone: z.string().optional(),
 });
 
 /**

@@ -112,7 +112,7 @@ export class SubscribersController {
     summary: 'Create subscriber',
     description: 'Create subscriber with the given data',
   })
-  @ApiResponse(SubscriberResponseDto)
+  @ApiResponse(SubscriberResponseDto, 201)
   @SdkMethodName('create')
   async createSubscriber(
     @UserSession() user: UserSessionData,
@@ -152,7 +152,7 @@ export class SubscribersController {
   }
 
   @Delete('/:subscriberId')
-  @ApiResponse(RemoveSubscriberResponseDto)
+  @ApiResponse(RemoveSubscriberResponseDto, 200)
   @UserAuthentication()
   @ExternalApiAccessible()
   @ApiOperation({

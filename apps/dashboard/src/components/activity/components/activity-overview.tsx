@@ -1,12 +1,13 @@
+import { SubscriberDrawerButton } from '@/components/subscribers/subscriber-drawer';
+import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
+import { useEnvironment } from '@/context/environment/hooks';
+import { buildRoute, ROUTES } from '@/utils/routes';
+import { cn } from '@/utils/ui';
+import { IActivity } from '@novu/shared';
 import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
-import { cn } from '@/utils/ui';
-import { buildRoute, ROUTES } from '@/utils/routes';
-import { useEnvironment } from '@/context/environment/hooks';
-import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
-import { OverviewItem } from './overview-item';
-import { IActivity } from '@novu/shared';
 import { JOB_STATUS_CONFIG } from '../constants';
+import { OverviewItem } from './overview-item';
 
 export interface ActivityOverviewProps {
   activity: IActivity;
@@ -37,12 +38,19 @@ export function ActivityOverview({ activity }: ActivityOverviewProps) {
 
         <OverviewItem label="Transaction ID" value={activity.transactionId} isCopyable />
 
-        <OverviewItem
-          label="Subscriber ID"
-          isDeleted={!activity.subscriber}
-          value={(activity.subscriber?.subscriberId || activity._subscriberId) ?? ''}
-          isCopyable
-        />
+        <SubscriberDrawerButton
+          disabled={!activity.subscriber}
+          className="text-start"
+          subscriberId={activity.subscriber?.subscriberId || activity._subscriberId}
+          readOnly={true}
+        >
+          <OverviewItem
+            label="Subscriber ID"
+            isDeleted={!activity.subscriber}
+            value={(activity.subscriber?.subscriberId || activity._subscriberId) ?? ''}
+            isCopyable
+          />
+        </SubscriberDrawerButton>
 
         <OverviewItem label="Triggered at" value={format(new Date(activity.createdAt), 'MMM d yyyy, HH:mm:ss')}>
           <TimeDisplayHoverCard

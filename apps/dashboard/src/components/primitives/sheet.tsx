@@ -14,8 +14,6 @@ const SheetClose = SheetPrimitive.Close;
 
 const SheetPortal = SheetPrimitive.Portal;
 
-const SheetContentBase = SheetPrimitive.Content;
-
 const SheetOverlay = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Overlay>,
   React.ComponentPropsWithoutRef<typeof SheetPrimitive.Overlay>
@@ -39,9 +37,9 @@ const sheetVariants = cva(
         top: 'inset-x-0 top-0 border-b data-[state=closed]:slide-out-to-top data-[state=open]:slide-in-from-top',
         bottom:
           'inset-x-0 bottom-0 border-t data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom',
-        left: 'inset-y-0 left-0 h-full w-3/4 border-r data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left sm:max-w-sm',
+        left: 'inset-y-0 left-0 h-full w-3/4 border-r data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left sm:max-w-xl',
         right:
-          'inset-y-0 right-0 h-full w-3/4 border-l data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right sm:max-w-sm',
+          'inset-y-0 right-0 h-full w-3/4 border-l data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right sm:max-w-xl',
       },
     },
     defaultVariants: {
@@ -59,7 +57,7 @@ const SheetContent = React.forwardRef<React.ElementRef<typeof SheetPrimitive.Con
     <SheetPortal>
       <SheetOverlay />
       <SheetPrimitive.Content ref={ref} className={cn(sheetVariants({ side }), className)} {...props}>
-        <SheetPrimitive.Close className="absolute right-4 top-4" asChild>
+        <SheetPrimitive.Close className="absolute right-3.5 top-3.5" asChild>
           <CompactButton size="md" variant="ghost" icon={RiCloseLine}>
             <span className="sr-only">Close</span>
           </CompactButton>
@@ -106,7 +104,6 @@ export {
   Sheet,
   SheetClose,
   SheetContent,
-  SheetContentBase,
   SheetDescription,
   SheetFooter,
   SheetHeader,
