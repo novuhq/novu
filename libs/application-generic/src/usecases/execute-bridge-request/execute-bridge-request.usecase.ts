@@ -487,7 +487,6 @@ export class ExecuteBridgeRequest {
             BRIDGE_EXECUTION_ERROR.UNKNOWN_BRIDGE_REQUEST_ERROR.message(url),
           code: BRIDGE_EXECUTION_ERROR.UNKNOWN_BRIDGE_REQUEST_ERROR.code,
           statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-          cause: error,
         };
       }
     } else {
@@ -501,12 +500,12 @@ export class ExecuteBridgeRequest {
           BRIDGE_EXECUTION_ERROR.UNKNOWN_BRIDGE_NON_REQUEST_ERROR.message(url),
         code: BRIDGE_EXECUTION_ERROR.UNKNOWN_BRIDGE_NON_REQUEST_ERROR.code,
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-        cause: error,
       };
     }
 
     const fullBridgeError: BridgeError = {
       ...bridgeErrorData,
+      cause: error,
       url,
     };
 
