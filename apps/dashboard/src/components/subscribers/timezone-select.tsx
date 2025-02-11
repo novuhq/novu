@@ -1,7 +1,31 @@
-import { useTimezoneSelect } from 'react-timezone-select';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../primitives/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
+import TruncatedText from '@/components/truncated-text';
+import { memo, useState } from 'react';
 import { RiTimeLine } from 'react-icons/ri';
-import TruncatedText from '../truncated-text';
+import { useTimezoneSelect } from 'react-timezone-select';
+
+// Define a type for timezone options.
+type TimezoneOption = {
+  label: string;
+  value: string;
+};
+
+interface TimezoneOptionsProps {
+  options: TimezoneOption[];
+}
+
+// Extracted and memoized component for rendering timezone options.
+const TimezoneOptions = memo(function TimezoneOptions({ options }: TimezoneOptionsProps) {
+  return (
+    <>
+      {options.map((item) => (
+        <SelectItem key={item.value} value={item.value}>
+          {item.label}
+        </SelectItem>
+      ))}
+    </>
+  );
+});
 
 export function TimezoneSelect({
   value,
@@ -19,20 +43,27 @@ export function TimezoneSelect({
   required?: boolean;
   onValueChange: (val: string) => void;
 }) {
+  // State to track whether the select is open.
+  const [isOpen, setIsOpen] = useState(false);
+  // Get timezone options and the parse function.
   const { options, parseTimezone } = useTimezoneSelect({ labelStyle: 'abbrev', displayValue: 'UTC' });
+
+  const handleValueChange = (val: string) => {
+    const parsedValue = parseTimezone(val);
+    onValueChange(parsedValue.value);
+  };
 
   return (
     <Select
       value={value}
-      onValueChange={(val) => {
-        const parsedValue = parseTimezone(val);
-        onValueChange(parsedValue.value);
-      }}
-      disabled={disabled || readOnly}
+      onValueChange={handleValueChange}
+      disabled={disabled}
       required={required}
       defaultValue={defaultOption}
+      open={readOnly ? false : isOpen}
+      onOpenChange={(open) => setIsOpen(open)}
     >
-      <SelectTrigger className="focus:ring-stroke-strong group overflow-hidden p-1.5 shadow-sm focus:ring-1">
+      <SelectTrigger className="focus:ring-stroke-strong group overflow-hidden p-1.5 focus:ring-1">
         <SelectValue
           placeholder={
             <div className="flex w-full items-center gap-1">
@@ -57,13 +88,11 @@ export function TimezoneSelect({
           </div>
         </SelectValue>
       </SelectTrigger>
-      <SelectContent>
-        {options.map((item) => (
-          <SelectItem key={item.value} value={item.value}>
-            {item.label}
-          </SelectItem>
-        ))}
-      </SelectContent>
+      {isOpen && (
+        <SelectContent>
+          <TimezoneOptions options={options} />
+        </SelectContent>
+      )}
     </Select>
   );
 }

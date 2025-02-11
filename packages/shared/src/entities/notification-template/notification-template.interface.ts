@@ -7,7 +7,7 @@ import type {
   WorkflowTypeEnum,
 } from '../../types';
 import { JSONSchemaDto } from '../../dto/workflows';
-import type { ContentIssue, StepIssue } from '../../dto/workflows/step.dto';
+import type { StepContentIssue, StepIntegrationIssue, StepIssue } from '../../dto/workflows/step.dto';
 import { ControlSchemas, IMessageTemplate } from '../message-template';
 import { INotificationGroup } from '../notification-group';
 import { INotificationBridgeTrigger, INotificationTrigger } from '../notification-trigger';
@@ -51,8 +51,8 @@ export interface IBlueprint extends INotificationTemplate {
 }
 
 export class StepIssues {
-  body?: Record<string, StepIssue>;
-  controls?: Record<string, ContentIssue[]>;
+  controls?: Record<string, StepContentIssue[]>;
+  integration?: Record<string, StepIntegrationIssue[]>;
 }
 
 export interface IStepVariant {

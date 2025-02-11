@@ -1,13 +1,13 @@
+import { cn } from '@/utils/ui';
 import * as React from 'react';
+import { RiArrowDownSLine, RiCheckLine, RiEarthLine } from 'react-icons/ri';
 import * as RPNInput from 'react-phone-number-input';
 import flags from 'react-phone-number-input/flags';
-import { cn } from '@/utils/ui';
-import { InputPure, InputRoot, InputWrapper } from './input';
-import { Popover, PopoverContent, PopoverTrigger } from './popover';
 import { Button } from './button';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from './command';
+import { InputPure, InputRoot, InputWrapper } from './input';
+import { Popover, PopoverContent, PopoverTrigger } from './popover';
 import { ScrollArea } from './scroll-area';
-import { RiArrowDownSLine, RiCheckLine, RiEarthLine } from 'react-icons/ri';
 
 type PhoneInputProps = Omit<React.ComponentProps<'input'>, 'onChange' | 'value' | 'ref'> &
   Omit<RPNInput.Props<typeof RPNInput.default>, 'onChange'> & {
@@ -54,7 +54,7 @@ type CountrySelectProps = {
 
 const CountrySelect = ({ disabled, value: selectedCountry, options: countryList, onChange }: CountrySelectProps) => {
   return (
-    <Popover>
+    <Popover modal={false}>
       <PopoverTrigger asChild>
         <Button
           type="button"
@@ -67,7 +67,7 @@ const CountrySelect = ({ disabled, value: selectedCountry, options: countryList,
           <RiArrowDownSLine className={cn('-mr-2 size-4 opacity-50', disabled ? 'hidden' : 'opacity-100')} />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[300px] rounded-lg border-t-0 p-0">
+      <PopoverContent portal={false} className="w-[300px] rounded-lg border-t-0 p-0">
         <Command>
           <CommandInput placeholder="Search country..." />
           <CommandList>

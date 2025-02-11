@@ -1,33 +1,33 @@
+import { PhoneInput } from '@/components/primitives/phone-input';
+import { LocaleSelect } from '@/components/subscribers/locale-select';
+import { useBeforeUnload } from '@/hooks/use-before-unload';
+import { useDeleteSubscriber } from '@/hooks/use-delete-subscriber';
+import { usePatchSubscriber } from '@/hooks/use-patch-subscriber';
 import { formatDateSimple } from '@/utils/format-date';
+import { cn } from '@/utils/ui';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { SubscriberResponseDto } from '@novu/api/models/components';
 import { loadLanguage } from '@uiw/codemirror-extensions-langs';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { RiDeleteBin2Line } from 'react-icons/ri';
+import { Link, useBlocker, useNavigate } from 'react-router-dom';
+import { ExternalToast } from 'sonner';
 import { z } from 'zod';
+import { ConfirmationModal } from '../confirmation-modal';
+import { Avatar, AvatarFallback, AvatarImage } from '../primitives/avatar';
 import { Button } from '../primitives/button';
+import { CopyButton } from '../primitives/copy-button';
 import { Editor } from '../primitives/editor';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../primitives/form/form';
 import { Input, InputRoot } from '../primitives/input';
-import { PhoneInput } from '../primitives/phone-input';
 import { Separator } from '../primitives/separator';
+import { showErrorToast, showSuccessToast } from '../primitives/sonner-helpers';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip';
+import { UnsavedChangesAlertDialog } from '../unsaved-changes-alert-dialog';
 import { SubscriberFormSchema } from './schema';
 import { TimezoneSelect } from './timezone-select';
-import { Avatar, AvatarFallback, AvatarImage } from '../primitives/avatar';
-import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip';
-import { Link, useBlocker, useNavigate } from 'react-router-dom';
-import { usePatchSubscriber } from '@/hooks/use-patch-subscriber';
-import { showErrorToast, showSuccessToast } from '../primitives/sonner-helpers';
-import { CopyButton } from '../primitives/copy-button';
-import { SubscriberOverviewSkeleton } from './subscriber-overview-skeleton';
-import { LocaleSelect } from './locale-select';
-import { useState } from 'react';
-import { useDeleteSubscriber } from '@/hooks/use-delete-subscriber';
 import { getSubscriberTitle } from './utils';
-import { ConfirmationModal } from '../confirmation-modal';
-import { ExternalToast } from 'sonner';
-import { useFetchSubscriber } from '@/hooks/use-fetch-subscriber';
-import { useBeforeUnload } from '@/hooks/use-before-unload';
-import { UnsavedChangesAlertDialog } from '../unsaved-changes-alert-dialog';
 
 const extensions = [loadLanguage('json')?.extension ?? []];
 const basicSetup = { lineNumbers: true, defaultKeymap: true };
@@ -38,17 +38,18 @@ const toastOptions: ExternalToast = {
   },
 };
 
-export function SubscriberOverviewForm({ subscriberId }: { subscriberId: string }) {
+type SubscriberOverviewFormProps = {
+  subscriber: SubscriberResponseDto;
+  readOnly?: boolean;
+};
+
+export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
+  const { subscriber, readOnly = false } = props;
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const { data: subscriber, isPending } = useFetchSubscriber({ subscriberId });
 
   const { deleteSubscriber, isPending: isDeleteSubscriberPending } = useDeleteSubscriber({
     onSuccess: () => {
-      showSuccessToast(
-        `Deleted subscriber: ${subscriberDetails && getSubscriberTitle(subscriberDetails)}`,
-        undefined,
-        toastOptions
-      );
+      showSuccessToast(`Deleted subscriber: ${getSubscriberTitle(subscriber)}`, undefined, toastOptions);
     },
     onError: () => {
       showErrorToast('Failed to delete subscriber', undefined, toastOptions);
@@ -56,25 +57,25 @@ export function SubscriberOverviewForm({ subscriberId }: { subscriberId: string 
   });
 
   const navigate = useNavigate();
-  /**
-   * Needed to forcefully reset the form when switching subscriber
-   * Without this, the form will keep the previous subscriber's data for undefined fields of current one
-   */
-  const subscriberDetails = isPending ? undefined : subscriber;
 
   const form = useForm<z.infer<typeof SubscriberFormSchema>>({
-    values: { ...subscriberDetails, data: JSON.stringify(subscriberDetails?.data, null, 2) ?? '' },
+    defaultValues: {
+      avatar: subscriber.avatar,
+      email: subscriber.email,
+      phone: subscriber.phone,
+      firstName: subscriber.firstName,
+      lastName: subscriber.lastName,
+      locale: subscriber.locale,
+      timezone: subscriber.timezone,
+      data: JSON.stringify(subscriber.data, null, 2),
+    },
     resolver: zodResolver(SubscriberFormSchema),
     shouldFocusError: false,
   });
 
   const { patchSubscriber } = usePatchSubscriber({
     onSuccess: (data) => {
-      showSuccessToast(
-        `Updated subscriber: ${subscriberDetails && getSubscriberTitle(subscriberDetails)}`,
-        undefined,
-        toastOptions
-      );
+      showSuccessToast(`Updated subscriber: ${getSubscriberTitle(subscriber)}`, undefined, toastOptions);
       form.reset({ ...data, data: JSON.stringify(data.data, null, 2) });
     },
     onError: () => {
@@ -82,20 +83,8 @@ export function SubscriberOverviewForm({ subscriberId }: { subscriberId: string 
     },
   });
 
-  const isDirty = Object.keys(form.formState.dirtyFields).length > 0;
-  const blocker = useBlocker(isDirty);
-  useBeforeUnload(isDirty);
-
-  console.log({
-    isDirty,
-    isPending,
-    dirt: form.formState.dirtyFields,
-    d: form.formState.isDirty,
-  });
-
-  if (isPending || !subscriberDetails) {
-    return <SubscriberOverviewSkeleton />;
-  }
+  const blocker = useBlocker(form.formState.isDirty);
+  useBeforeUnload(form.formState.isDirty);
 
   const onSubmit = async (formData: z.infer<typeof SubscriberFormSchema>) => {
     const dirtyFields = form.formState.dirtyFields;
@@ -113,11 +102,11 @@ export function SubscriberOverviewForm({ subscriberId }: { subscriberId: string 
       return;
     }
 
-    await patchSubscriber({ subscriberId, subscriber: dirtyPayload });
+    await patchSubscriber({ subscriberId: subscriber.subscriberId, subscriber: dirtyPayload });
   };
 
   return (
-    <div className="flex h-full flex-col">
+    <div className={cn('flex h-full flex-col')}>
       <Form {...form}>
         <form autoComplete="off" noValidate onSubmit={form.handleSubmit(onSubmit)} className="flex h-full flex-col">
           <div className="flex flex-col items-stretch gap-6 p-5">
@@ -143,16 +132,17 @@ export function SubscriberOverviewForm({ subscriberId }: { subscriberId: string 
                   Subscriber profile Image can only be updated via API
                 </TooltipContent>
               </Tooltip>
-              <div className="flex flex-1 items-center gap-2.5">
+              <div className="grid grid-cols-2 gap-2.5">
                 <FormField
                   control={form.control}
                   name="firstName"
                   render={({ field, fieldState }) => (
-                    <FormItem className="w-full">
+                    <FormItem>
                       <FormLabel>First Name</FormLabel>
                       <FormControl>
                         <Input
                           {...field}
+                          readOnly={readOnly}
                           placeholder={field.name}
                           id={field.name}
                           value={field.value}
@@ -169,11 +159,12 @@ export function SubscriberOverviewForm({ subscriberId }: { subscriberId: string 
                   control={form.control}
                   name="lastName"
                   render={({ field, fieldState }) => (
-                    <FormItem className="w-full">
+                    <FormItem>
                       <FormLabel>Last Name</FormLabel>
                       <FormControl>
                         <Input
                           {...field}
+                          readOnly={readOnly}
                           placeholder={field.name}
                           id={field.name}
                           value={field.value}
@@ -208,25 +199,29 @@ export function SubscriberOverviewForm({ subscriberId }: { subscriberId: string 
                   </span>
                 </div>
                 <Input
-                  value={subscriberId}
+                  value={subscriber.subscriberId}
                   readOnly
                   trailingNode={
-                    <CopyButton valueToCopy={subscriberId} className="group-has-[input:focus]:border-l-stroke-strong" />
+                    <CopyButton
+                      valueToCopy={subscriber.subscriberId}
+                      className="group-has-[input:focus]:border-l-stroke-strong"
+                    />
                   }
                   size="xs"
                 />
               </FormItem>
             </div>
-            <div className="flex flex-1 items-center gap-2.5">
+            <div className="grid grid-cols-2 gap-2.5">
               <FormField
                 control={form.control}
                 name="email"
                 render={({ field, fieldState }) => (
-                  <FormItem className="w-full">
+                  <FormItem>
                     <FormLabel>Email address</FormLabel>
                     <FormControl>
                       <Input
                         {...field}
+                        readOnly={readOnly}
                         type="email"
                         placeholder={field.name}
                         id={field.name}
@@ -244,10 +239,16 @@ export function SubscriberOverviewForm({ subscriberId }: { subscriberId: string 
                 control={form.control}
                 name="phone"
                 render={({ field }) => (
-                  <FormItem className="w-full">
+                  <FormItem>
                     <FormLabel>Phone number</FormLabel>
                     <FormControl>
-                      <PhoneInput {...field} placeholder={field.name} id={field.name} value={field.value || ''} />
+                      <PhoneInput
+                        {...field}
+                        readOnly={readOnly}
+                        placeholder={field.name}
+                        id={field.name}
+                        value={field.value || ''}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -256,15 +257,15 @@ export function SubscriberOverviewForm({ subscriberId }: { subscriberId: string 
             </div>
             <Separator />
 
-            <div className="flex flex-1 items-center gap-2.5">
+            <div className="grid grid-cols-2 gap-2.5">
               <FormField
                 control={form.control}
                 name="locale"
                 render={({ field }) => (
-                  <FormItem className="w-1/5">
+                  <FormItem>
                     <FormLabel>Locale</FormLabel>
                     <FormControl>
-                      <LocaleSelect value={field.value} onValueChange={field.onChange} />
+                      <LocaleSelect value={field.value} onValueChange={field.onChange} readOnly={readOnly} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -274,10 +275,10 @@ export function SubscriberOverviewForm({ subscriberId }: { subscriberId: string 
                 control={form.control}
                 name="timezone"
                 render={({ field }) => (
-                  <FormItem className="min-w-0 flex-1">
+                  <FormItem>
                     <FormLabel>Timezone</FormLabel>
                     <FormControl>
-                      <TimezoneSelect value={field.value} onValueChange={field.onChange} />
+                      <TimezoneSelect value={field.value} onValueChange={field.onChange} readOnly={readOnly} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -295,6 +296,7 @@ export function SubscriberOverviewForm({ subscriberId }: { subscriberId: string 
                   <FormControl>
                     <InputRoot hasError={!!fieldState.error} className="h-32 p-1 py-2">
                       <Editor
+                        readOnly={readOnly}
                         lang="json"
                         className="overflow-auto"
                         extensions={extensions}
@@ -317,10 +319,10 @@ export function SubscriberOverviewForm({ subscriberId }: { subscriberId: string 
             />
           </div>
           <Separator />
-          {subscriberDetails?.updatedAt && (
+          {subscriber.updatedAt && (
             <span className="text-2xs px-5 py-1 text-neutral-400">
               Updated at{' '}
-              {formatDateSimple(subscriberDetails?.updatedAt, {
+              {formatDateSimple(subscriber.updatedAt, {
                 month: 'short',
                 day: '2-digit',
                 year: 'numeric',
@@ -333,33 +335,31 @@ export function SubscriberOverviewForm({ subscriberId }: { subscriberId: string 
             </span>
           )}
 
-          <div className="mt-auto">
-            <Separator />
-            <div className="flex justify-between gap-3 p-3">
-              <Button
-                variant="primary"
-                mode="ghost"
-                leadingIcon={RiDeleteBin2Line}
-                onClick={() => setIsDeleteModalOpen(true)}
-              >
-                Delete subscriber
-              </Button>
-              <Button
-                variant="secondary"
-                type="submit"
-                disabled={!form.formState.isDirty || Object.keys(form.formState.dirtyFields).length === 0 || isPending}
-              >
-                Save changes
-              </Button>
+          {!readOnly && (
+            <div className="mt-auto">
+              <Separator />
+              <div className="flex justify-between gap-3 p-3.5">
+                <Button
+                  variant="primary"
+                  mode="ghost"
+                  leadingIcon={RiDeleteBin2Line}
+                  onClick={() => setIsDeleteModalOpen(true)}
+                >
+                  Delete subscriber
+                </Button>
+                <Button variant="secondary" type="submit" disabled={!form.formState.isDirty}>
+                  Save changes
+                </Button>
+              </div>
             </div>
-          </div>
+          )}
         </form>
       </Form>
       <ConfirmationModal
         open={isDeleteModalOpen}
         onOpenChange={setIsDeleteModalOpen}
         onConfirm={async () => {
-          await deleteSubscriber({ subscriberId: subscriberDetails.subscriberId });
+          await deleteSubscriber({ subscriberId: subscriber.subscriberId });
           setIsDeleteModalOpen(false);
           navigate('../', { relative: 'path' });
         }}
@@ -367,7 +367,7 @@ export function SubscriberOverviewForm({ subscriberId }: { subscriberId: string 
         description={
           <span>
             Are you sure you want to delete subscriber{' '}
-            <span className="font-bold">{getSubscriberTitle(subscriberDetails!)}</span>? This action cannot be undone.
+            <span className="font-bold">{getSubscriberTitle(subscriber)}</span>? This action cannot be undone.
           </span>
         }
         confirmButtonText="Delete subscriber"

@@ -13,6 +13,7 @@ import {
 import '@xyflow/react/dist/style.css';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 
+import { getFirstErrorMessage } from '@/components/workflow-editor/step-utils';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
@@ -36,7 +37,6 @@ import {
   SmsNode,
   TriggerNode,
 } from './nodes';
-import { getFirstBodyErrorMessage, getFirstControlsErrorMessage } from './step-utils';
 import { WorkflowChecklist } from './workflow-checklist';
 
 const nodeTypes = {
@@ -112,7 +112,9 @@ const mapStepToNode = ({
 }): Node<NodeData, keyof typeof nodeTypes> => {
   const content = mapStepToNodeContent(step, workflowOrigin);
 
-  const error = getFirstBodyErrorMessage(step.issues) || getFirstControlsErrorMessage(step.issues);
+  const error = step.issues
+    ? getFirstErrorMessage(step.issues, 'controls') || getFirstErrorMessage(step.issues, 'integration')
+    : undefined;
 
   return {
     id: crypto.randomUUID(),
@@ -122,7 +124,7 @@ const mapStepToNode = ({
       content,
       addStepIndex,
       stepSlug: step.slug,
-      error,
+      error: error?.message,
       controlValues: step.controls.values,
       readOnly,
     },
