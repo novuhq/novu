@@ -80,8 +80,10 @@ function getDateRangeInDays(range: string): number {
   }
 }
 
-export function getNotification(notificationId: string, environment: IEnvironment) {
-  return get<{ data: IActivity }>(`/notifications/${notificationId}`, {
+export async function getNotification(notificationId: string, environment: IEnvironment): Promise<IActivity> {
+  const { data } = await get<{ data: IActivity }>(`/notifications/${notificationId}`, {
     environment,
   });
+
+  return data;
 }
