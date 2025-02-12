@@ -28,6 +28,8 @@ import { UnsavedChangesAlertDialog } from '../unsaved-changes-alert-dialog';
 import { SubscriberFormSchema } from './schema';
 import { TimezoneSelect } from './timezone-select';
 import { getSubscriberTitle } from './utils';
+import { useTelemetry } from '@/hooks/use-telemetry';
+import { TelemetryEvent } from '@/utils/telemetry';
 
 const extensions = [loadLanguage('json')?.extension ?? []];
 const basicSetup = { lineNumbers: true, defaultKeymap: true };
@@ -46,10 +48,12 @@ type SubscriberOverviewFormProps = {
 export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
   const { subscriber, readOnly = false } = props;
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const track = useTelemetry();
 
   const { deleteSubscriber, isPending: isDeleteSubscriberPending } = useDeleteSubscriber({
     onSuccess: () => {
       showSuccessToast(`Deleted subscriber: ${getSubscriberTitle(subscriber)}`, undefined, toastOptions);
+      track(TelemetryEvent.SUBSCRIBER_DELETED);
     },
     onError: () => {
       showErrorToast('Failed to delete subscriber', undefined, toastOptions);
@@ -75,8 +79,9 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
 
   const { patchSubscriber } = usePatchSubscriber({
     onSuccess: (data) => {
-      showSuccessToast(`Updated subscriber: ${getSubscriberTitle(subscriber)}`, undefined, toastOptions);
+      showSuccessToast(`Updated subscriber: ${getSubscriberTitle(data)}`, undefined, toastOptions);
       form.reset({ ...data, data: JSON.stringify(data.data, null, 2) });
+      track(TelemetryEvent.SUBSCRIBER_EDITED);
     },
     onError: () => {
       showErrorToast('Failed to update subscriber', undefined, toastOptions);
