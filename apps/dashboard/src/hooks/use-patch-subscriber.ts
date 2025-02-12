@@ -17,9 +17,7 @@ export const usePatchSubscriber = (
     mutationFn: (args: PatchSubscriberParameters) => patchSubscriber({ environment: currentEnvironment!, ...args }),
     ...options,
     onSuccess: async (data, variables, ctx) => {
-      await queryClient.invalidateQueries({
-        queryKey: [QueryKeys.fetchSubscriber, variables.subscriberId],
-      });
+      await queryClient.setQueryData([QueryKeys.fetchSubscriber, variables.subscriberId], data);
 
       await queryClient.invalidateQueries({
         queryKey: [QueryKeys.fetchSubscribers],
