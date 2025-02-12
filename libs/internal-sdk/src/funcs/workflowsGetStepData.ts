@@ -92,6 +92,7 @@ export async function workflowsGetStepData(
   const requestSecurity = resolveGlobalSecurity(securityInput);
 
   const context = {
+    baseURL: options?.serverURL ?? "",
     operationID: "WorkflowController_getWorkflowStepData",
     oAuth2Scopes: [],
 

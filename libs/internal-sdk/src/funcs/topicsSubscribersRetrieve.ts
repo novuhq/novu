@@ -100,6 +100,7 @@ export async function topicsSubscribersRetrieve(
   const requestSecurity = resolveGlobalSecurity(securityInput);
 
   const context = {
+    baseURL: options?.serverURL ?? "",
     operationID: "TopicsController_getTopicSubscriber",
     oAuth2Scopes: [],
 

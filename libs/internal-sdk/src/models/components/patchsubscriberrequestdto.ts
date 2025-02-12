@@ -14,10 +14,6 @@ export type PatchSubscriberRequestDtoData = {};
 
 export type PatchSubscriberRequestDto = {
   /**
-   * Unique identifier of the subscriber
-   */
-  subscriberId?: string | null | undefined;
-  /**
    * First name of the subscriber
    */
   firstName?: string | null | undefined;
@@ -107,7 +103,6 @@ export const PatchSubscriberRequestDto$inboundSchema: z.ZodType<
   z.ZodTypeDef,
   unknown
 > = z.object({
-  subscriberId: z.nullable(z.string()).optional(),
   firstName: z.nullable(z.string()).optional(),
   lastName: z.nullable(z.string()).optional(),
   email: z.nullable(z.string()).optional(),
@@ -121,7 +116,6 @@ export const PatchSubscriberRequestDto$inboundSchema: z.ZodType<
 
 /** @internal */
 export type PatchSubscriberRequestDto$Outbound = {
-  subscriberId?: string | null | undefined;
   firstName?: string | null | undefined;
   lastName?: string | null | undefined;
   email?: string | null | undefined;
@@ -138,7 +132,6 @@ export const PatchSubscriberRequestDto$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   PatchSubscriberRequestDto
 > = z.object({
-  subscriberId: z.nullable(z.string()).optional(),
   firstName: z.nullable(z.string()).optional(),
   lastName: z.nullable(z.string()).optional(),
   email: z.nullable(z.string()).optional(),
