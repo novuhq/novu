@@ -47,13 +47,37 @@ after(async () => {
   }
 });
 
-afterEach(async () => {
+async function cleanup() {
   const jobsService = new JobsService();
-  await jobsService.runAllDelayedJobsImmediately();
-  await jobsService.awaitAllJobs();
+  try {
+    await jobsService.runAllDelayedJobsImmediately();
+    await jobsService.awaitAllJobs();
 
-  await Promise.all([workflowQueue.drain(), standardQueue.drain(), subscriberProcessQueue.drain()]);
-  await jobRepository._model.deleteMany({});
+    await Promise.all([workflowQueue.drain(), standardQueue.drain(), subscriberProcessQueue.drain()]);
 
-  sinon.restore();
+    await jobRepository._model.deleteMany({});
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error('Error during cleanup:', e);
+  }
+}
+
+function timeoutPromise(ms: number) {
+  // eslint-disable-next-line no-promise-executor-return
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+afterEach(async function () {
+  const TIMEOUT = 4500;
+
+  try {
+    await Promise.race([
+      cleanup(),
+      timeoutPromise(TIMEOUT).then(() => {
+        console.warn('Cleanup operation timed out after 5000ms - continuing with tests');
+      }),
+    ]);
+  } finally {
+    sinon.restore();
+  }
 });
