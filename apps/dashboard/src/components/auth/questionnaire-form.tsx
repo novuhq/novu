@@ -258,20 +258,6 @@ function useSubmitQuestionnaire() {
         anonymousId,
       });
 
-      if (currentOrganization) {
-        segment.group(
-          {
-            id: currentOrganization?._id,
-            name: currentOrganization?.name,
-            createdAt: currentOrganization?.createdAt,
-          },
-          {
-            organizationType: data.organizationType,
-            companySize: data.companySize,
-          }
-        );
-      }
-
       track(TelemetryEvent.CREATE_ORGANIZATION_FORM_SUBMITTED, {
         location: 'web',
         jobTitle: data.jobTitle,

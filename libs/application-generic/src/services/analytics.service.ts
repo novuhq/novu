@@ -71,6 +71,22 @@ export class AnalyticsService {
     });
   }
 
+  updateGroup(
+    userId: string,
+    groupId: string,
+    traits: Record<string, string | string[]>,
+  ) {
+    if (!this.segmentEnabled) {
+      return;
+    }
+
+    this.segment.group({
+      userId,
+      groupId,
+      traits,
+    });
+  }
+
   alias(distinctId: string, userId: string) {
     if (!this.segmentEnabled) {
       return;
