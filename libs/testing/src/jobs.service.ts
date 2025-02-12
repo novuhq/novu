@@ -86,7 +86,7 @@ export class JobsService {
 
   public async runAllDelayedJobsImmediately() {
     const delayedJobs = await this.standardQueue.getDelayed();
-    await delayedJobs.forEach(async (job) => job.promote());
+    await Promise.all(delayedJobs.map((job) => job.promote()));
   }
 
   private async getQueueMetric() {
