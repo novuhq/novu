@@ -64,14 +64,14 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
 
   const form = useForm<z.infer<typeof SubscriberFormSchema>>({
     defaultValues: {
-      avatar: subscriber.avatar,
-      email: subscriber.email,
-      phone: subscriber.phone,
-      firstName: subscriber.firstName,
-      lastName: subscriber.lastName,
-      locale: subscriber.locale,
-      timezone: subscriber.timezone,
-      data: JSON.stringify(subscriber.data, null, 2),
+      avatar: subscriber?.avatar ?? '',
+      email: subscriber.email ?? '',
+      phone: subscriber.phone ?? '',
+      firstName: subscriber.firstName ?? '',
+      lastName: subscriber.lastName ?? '',
+      locale: subscriber.locale ?? null,
+      timezone: subscriber.timezone ?? null,
+      data: JSON.stringify(subscriber.data, null, 2) ?? '',
     },
     resolver: zodResolver(SubscriberFormSchema),
     shouldFocusError: false,
@@ -80,7 +80,7 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
   const { patchSubscriber } = usePatchSubscriber({
     onSuccess: (data) => {
       showSuccessToast(`Updated subscriber: ${getSubscriberTitle(data)}`, undefined, toastOptions);
-      form.reset({ ...data, data: JSON.stringify(data.data, null, 2) });
+      form.reset({ ...data, data: JSON.stringify(data.data, null, 2) ?? '' });
       track(TelemetryEvent.SUBSCRIBER_EDITED);
     },
     onError: () => {
@@ -95,7 +95,16 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
    */
   useEffect(() => {
     if (subscriber) {
-      form.reset(subscriber);
+      form.reset({
+        avatar: subscriber?.avatar ?? '',
+        email: subscriber.email ?? '',
+        phone: subscriber.phone ?? '',
+        firstName: subscriber.firstName ?? '',
+        lastName: subscriber.lastName ?? '',
+        locale: subscriber.locale ?? null,
+        timezone: subscriber.timezone ?? null,
+        data: JSON.stringify(subscriber.data, null, 2) ?? '',
+      });
     }
   }, [subscriber, form]);
 
@@ -289,7 +298,6 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
                         value={field.value ?? undefined}
                         onChange={(val) => {
                           const finalValue = field.value === val ? null : val;
-
                           field.onChange(finalValue);
                         }}
                         readOnly={readOnly}
