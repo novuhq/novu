@@ -145,7 +145,6 @@ describe('webhook event - checkout.session.completed #novu-v2', () => {
   const stripeStub = {
     customers: {
       update: sinon.stub(),
-      retrieve: sinon.stub(),
     },
     subscriptions: {
       create: sinon.stub(),

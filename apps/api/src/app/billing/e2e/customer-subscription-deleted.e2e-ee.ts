@@ -120,7 +120,6 @@ describe('webhook event - customer.subscription.deleted #novu-v2', () => {
   const stripeStub = {
     customers: {
       update: sinon.stub(),
-      retrieve: sinon.stub(),
     },
     subscriptions: {
       create: sinon.stub(),
