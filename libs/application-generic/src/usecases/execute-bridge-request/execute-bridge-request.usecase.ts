@@ -41,30 +41,36 @@ import { BRIDGE_EXECUTION_ERROR } from '../../utils';
 import { HttpRequestHeaderKeysEnum } from '../../http';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 
+const isTestEnv = process.env.NODE_ENV === 'test';
+
 export const DEFAULT_TIMEOUT = 5_000; // 5 seconds
 export const DEFAULT_RETRIES_LIMIT = 3;
-export const RETRYABLE_HTTP_CODES: number[] = [
-  408, // Request Timeout
-  429, // Too Many Requests
-  500, // Internal Server Error
-  503, // Service Unavailable
-  504, // Gateway Timeout
-  // https://developers.cloudflare.com/support/troubleshooting/cloudflare-errors/troubleshooting-cloudflare-5xx-errors/
-  521, // CloudFlare web server is down
-  522, // CloudFlare connection timed out
-  524, // CloudFlare a timeout occurred
-];
-const RETRYABLE_ERROR_CODES: string[] = [
-  'EAI_AGAIN', //    DNS resolution failed, retry
-  'ECONNREFUSED', // Connection refused by the server
-  'ECONNRESET', //   Connection was forcibly closed by a peer
-  'EADDRINUSE', //   Address already in use
-  'EPIPE', //        Broken pipe
-  'ETIMEDOUT', //    Operation timed out
-  'ENOTFOUND', //    DNS lookup failed
-  'EHOSTUNREACH', // No route to host
-  'ENETUNREACH', //  Network is unreachable
-];
+export const RETRYABLE_HTTP_CODES: number[] = isTestEnv
+  ? []
+  : [
+      408, // Request Timeout
+      429, // Too Many Requests
+      500, // Internal Server Error
+      503, // Service Unavailable
+      504, // Gateway Timeout
+      // https://developers.cloudflare.com/support/troubleshooting/cloudflare-errors/troubleshooting-cloudflare-5xx-errors/
+      521, // CloudFlare web server is down
+      522, // CloudFlare connection timed out
+      524, // CloudFlare a timeout occurred
+    ];
+export const RETRYABLE_ERROR_CODES: string[] = isTestEnv
+  ? []
+  : [
+      'EAI_AGAIN', //    DNS resolution failed, retry
+      'ECONNREFUSED', // Connection refused by the server
+      'ECONNRESET', //   Connection was forcibly closed by a peer
+      'EADDRINUSE', //   Address already in use
+      'EPIPE', //        Broken pipe
+      'ETIMEDOUT', //    Operation timed out
+      'ENOTFOUND', //    DNS lookup failed
+      'EHOSTUNREACH', // No route to host
+      'ENETUNREACH', //  Network is unreachable
+    ];
 
 const LOG_CONTEXT = 'ExecuteBridgeRequest';
 
