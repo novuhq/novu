@@ -1,4 +1,4 @@
-import { testServer, TestingQueueService } from '@novu/testing';
+import { testServer, TestingQueueService, JobsService } from '@novu/testing';
 import sinon from 'sinon';
 import chai from 'chai';
 import mongoose from 'mongoose';
@@ -45,6 +45,13 @@ after(async () => {
 });
 
 afterEach(async () => {
+  const countBefore = await Promise.all([
+    jobRepository.count({} as any),
+    new TestingQueueService(JobTopicNameEnum.WORKFLOW).queue.getWaitingCount(),
+    new TestingQueueService(JobTopicNameEnum.STANDARD).queue.getWaitingCount(),
+    new TestingQueueService(JobTopicNameEnum.PROCESS_SUBSCRIBER).queue.getWaitingCount(),
+  ]);
+
   const workflowQueue = new TestingQueueService(JobTopicNameEnum.WORKFLOW).queue;
   const standardQueue = new TestingQueueService(JobTopicNameEnum.STANDARD).queue;
   const subscriberProcessQueue = new TestingQueueService(JobTopicNameEnum.PROCESS_SUBSCRIBER).queue;
@@ -56,5 +63,17 @@ afterEach(async () => {
     subscriberProcessQueue.drain(),
   ]);
 
+  const jobsService = new JobsService();
+  await jobsService.runAllDelayedJobsImmediately();
+
+  const countAfter = await Promise.all([
+    jobRepository.count({} as any),
+    new TestingQueueService(JobTopicNameEnum.WORKFLOW).queue.getWaitingCount(),
+    new TestingQueueService(JobTopicNameEnum.STANDARD).queue.getWaitingCount(),
+    new TestingQueueService(JobTopicNameEnum.PROCESS_SUBSCRIBER).queue.getWaitingCount(),
+  ]);
+
+  // eslint-disable-next-line no-console
+  console.log('afterEach run metadata: before ', countBefore, ', after ', countAfter);
   sinon.restore();
 });

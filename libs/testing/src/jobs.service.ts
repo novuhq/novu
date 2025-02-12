@@ -48,7 +48,7 @@ export class JobsService {
     unfinishedJobs = 0,
   }: {
     templateId?: string | string[];
-    organizationId: string;
+    organizationId?: string;
     delay?: boolean;
     unfinishedJobs?: number;
   }) {
@@ -72,7 +72,7 @@ export class JobsService {
       // Wait until there are no pending, queued or running jobs in Mongo
       runningJobs = Math.max(
         await this.jobRepository.count({
-          _organizationId: organizationId,
+          ...((organizationId ? { _organizationId: organizationId } : {}) as { _organizationId: string }),
           ...typeMatch,
           ...workflowMatch,
           status: {
@@ -87,6 +87,7 @@ export class JobsService {
   public async runAllDelayedJobsImmediately() {
     const delayedJobs = await this.standardQueue.getDelayed();
     await Promise.all(delayedJobs.map((job) => job.promote()));
+    await this.waitForJobCompletion({});
   }
 
   private async getQueueMetric() {
