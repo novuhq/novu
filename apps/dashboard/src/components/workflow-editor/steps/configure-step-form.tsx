@@ -25,14 +25,12 @@ import { SidebarContent, SidebarFooter, SidebarHeader } from '@/components/side-
 import TruncatedText from '@/components/truncated-text';
 import { stepSchema } from '@/components/workflow-editor/schema';
 import { getStepDefaultValues } from '@/components/workflow-editor/step-default-values';
-import {
-  flattenIssues,
-  getFirstBodyErrorMessage,
-  getFirstControlsErrorMessage,
-  updateStepInWorkflow,
-} from '@/components/workflow-editor/step-utils';
+import { flattenIssues, getFirstErrorMessage, updateStepInWorkflow } from '@/components/workflow-editor/step-utils';
 import { ConfigureChatStepPreview } from '@/components/workflow-editor/steps/chat/configure-chat-step-preview';
-import { ConfigureStepTemplateIssueCta } from '@/components/workflow-editor/steps/configure-step-template-issue-cta';
+import {
+  ConfigureStepTemplateIssueCta,
+  ConfigureStepTemplateIssuesContainer,
+} from '@/components/workflow-editor/steps/configure-step-template-issue-cta';
 import { DelayControlValues } from '@/components/workflow-editor/steps/delay/delay-control-values';
 import { DigestControlValues } from '@/components/workflow-editor/steps/digest/digest-control-values';
 import { ConfigureEmailStepPreview } from '@/components/workflow-editor/steps/email/configure-email-step-preview';
@@ -159,9 +157,12 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
     },
   });
 
-  const firstError = useMemo(
-    () =>
-      step.issues ? getFirstBodyErrorMessage(step.issues) || getFirstControlsErrorMessage(step.issues) : undefined,
+  const firstControlsError = useMemo(
+    () => (step.issues ? getFirstErrorMessage(step.issues, 'controls') : undefined),
+    [step]
+  );
+  const firstIntegrationError = useMemo(
+    () => (step.issues ? getFirstErrorMessage(step.issues, 'integration') : undefined),
     [step]
   );
 
@@ -173,7 +174,7 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
     Object.values(currentErrors).forEach((controlValues) => {
       Object.keys(controlValues).forEach((key) => {
         if (!stepIssues[`${key}`]) {
-          // @ts-expect-error
+          // @ts-expect-error - dynamic key
           form.clearErrors(`controlValues.${key}`);
         }
       });
@@ -181,7 +182,7 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
 
     // Set new errors from stepIssues
     Object.entries(stepIssues).forEach(([key, value]) => {
-      // @ts-expect-error
+      // @ts-expect-error - dynamic key
       form.setError(`controlValues.${key}`, { message: value });
     });
   }, [form, step]);
@@ -298,9 +299,16 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
               </SidebarContent>
               <Separator />
 
-              {firstError ? (
+              {firstControlsError || firstIntegrationError ? (
                 <>
-                  <ConfigureStepTemplateIssueCta step={step} issue={firstError} />
+                  <ConfigureStepTemplateIssuesContainer>
+                    {firstControlsError && (
+                      <ConfigureStepTemplateIssueCta step={step} issue={firstControlsError} type="error" />
+                    )}
+                    {firstIntegrationError && (
+                      <ConfigureStepTemplateIssueCta step={step} issue={firstIntegrationError} type="info" />
+                    )}
+                  </ConfigureStepTemplateIssuesContainer>
                   <Separator />
                 </>
               ) : (

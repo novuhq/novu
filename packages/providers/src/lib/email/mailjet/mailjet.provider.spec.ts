@@ -21,8 +21,7 @@ const response = {
             Email: 'testTo@test2.com',
             MessageUUID: 'a6da-4b1b-ad92-066cfb314d66',
             MessageID: '5764607616719',
-            MessageHref:
-              'https://api.mailjet.com/v3/REST/message/5764607616719',
+            MessageHref: 'https://api.mailjet.com/v3/REST/message/5764607616719',
           },
         ],
         Cc: [],

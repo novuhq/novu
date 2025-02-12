@@ -7,19 +7,17 @@ test('should trigger infobip library correctly - SMS', async () => {
     apiKey: '<infobip-auth-token>',
   });
 
-  const spy = vi
-    .spyOn((provider as any).infobipClient.channels.sms, 'send')
-    .mockImplementation(async () => {
-      return {
-        data: {
-          messages: [
-            {
-              messageId: '<a-valid-message-id>',
-            },
-          ],
-        },
-      };
-    });
+  const spy = vi.spyOn((provider as any).infobipClient.channels.sms, 'send').mockImplementation(async () => {
+    return {
+      data: {
+        messages: [
+          {
+            messageId: '<a-valid-message-id>',
+          },
+        ],
+      },
+    };
+  });
 
   await provider.sendMessage({
     to: '44123456',
@@ -47,19 +45,17 @@ test('should trigger infobip library correctly - SMS', async () => {
     apiKey: '<infobip-auth-token>',
   });
 
-  const spy = vi
-    .spyOn((provider as any).infobipClient.channels.sms, 'send')
-    .mockImplementation(async () => {
-      return {
-        data: {
-          messages: [
-            {
-              messageId: '<a-valid-message-id>',
-            },
-          ],
-        },
-      };
-    });
+  const spy = vi.spyOn((provider as any).infobipClient.channels.sms, 'send').mockImplementation(async () => {
+    return {
+      data: {
+        messages: [
+          {
+            messageId: '<a-valid-message-id>',
+          },
+        ],
+      },
+    };
+  });
 
   await provider.sendMessage(
     {
@@ -72,7 +68,7 @@ test('should trigger infobip library correctly - SMS', async () => {
           text: 'Hello World _passthrough',
         },
       },
-    },
+    }
   );
 
   expect(spy).toHaveBeenCalled();

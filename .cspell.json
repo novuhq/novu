@@ -726,7 +726,8 @@
     "querybuilder",
     "liquified",
     "autoload",
-    "novugo"
+    "novugo",
+    "titleize"
   ],
   "flagWords": [],
   "patterns": [

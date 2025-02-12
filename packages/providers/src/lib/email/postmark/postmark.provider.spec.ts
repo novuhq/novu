@@ -10,9 +10,7 @@ const mockNovuMessage = {
   to: ['test2@test.com'],
   subject: 'test subject',
   html: '<div> Mail Content </div>',
-  attachments: [
-    { mime: 'text/plain', file: Buffer.from('test'), name: 'test.txt' },
-  ],
+  attachments: [{ mime: 'text/plain', file: Buffer.from('test'), name: 'test.txt' }],
 };
 
 const mockMessage = {
@@ -40,11 +38,9 @@ const mockWebHook = {
 
 test('should trigger postmark correctly', async () => {
   const provider = new PostmarkEmailProvider(mockConfig);
-  const spy = vi
-    .spyOn((provider as any).client, 'sendEmail')
-    .mockImplementation(async () => {
-      return {};
-    });
+  const spy = vi.spyOn((provider as any).client, 'sendEmail').mockImplementation(async () => {
+    return {};
+  });
 
   await provider.sendMessage(mockNovuMessage);
 
@@ -68,11 +64,9 @@ test('should trigger postmark correctly', async () => {
 
 test('should trigger postmark correctly with _passthrough', async () => {
   const provider = new PostmarkEmailProvider(mockConfig);
-  const spy = vi
-    .spyOn((provider as any).client, 'sendEmail')
-    .mockImplementation(async () => {
-      return {};
-    });
+  const spy = vi.spyOn((provider as any).client, 'sendEmail').mockImplementation(async () => {
+    return {};
+  });
 
   await provider.sendMessage(mockNovuMessage, {
     _passthrough: {
@@ -101,9 +95,7 @@ test('should trigger postmark correctly with _passthrough', async () => {
 
 test('should get message ID', () => {
   const provider = new PostmarkEmailProvider(mockConfig);
-  expect(provider.getMessageId(mockMessage)).toEqual([
-    '883953f4-6105-42a2-a16a-77a8eac79483',
-  ]);
+  expect(provider.getMessageId(mockMessage)).toEqual(['883953f4-6105-42a2-a16a-77a8eac79483']);
 });
 
 test('should parse postmark webhook', () => {
@@ -116,9 +108,7 @@ test('should parse postmark webhook', () => {
    * Checking difference between current timestamp and timestamp received from result,
    * to be less than 5 seconds
    */
-  expect(
-    Math.abs(currentDateTimestamp - new Date(date).getTime()),
-  ).toBeLessThanOrEqual(5000);
+  expect(Math.abs(currentDateTimestamp - new Date(date).getTime())).toBeLessThanOrEqual(5000);
 
   expect(result).toStrictEqual({
     status: 'delivered',
@@ -131,11 +121,9 @@ test('should parse postmark webhook', () => {
 
 test('should check provider integration correctly', async () => {
   const provider = new PostmarkEmailProvider(mockConfig);
-  const spy = vi
-    .spyOn((provider as any).client, 'sendEmail')
-    .mockImplementation(async () => {
-      return {};
-    });
+  const spy = vi.spyOn((provider as any).client, 'sendEmail').mockImplementation(async () => {
+    return {};
+  });
 
   const response = await provider.checkIntegration(mockNovuMessage);
   expect(spy).toHaveBeenCalled();

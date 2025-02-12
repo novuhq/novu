@@ -1,10 +1,5 @@
 import axios from 'axios';
-import {
-  ChannelTypeEnum,
-  ISendMessageSuccessResponse,
-  IChatOptions,
-  IChatProvider,
-} from '@novu/stateless';
+import { ChannelTypeEnum, ISendMessageSuccessResponse, IChatOptions, IChatProvider } from '@novu/stateless';
 import { ChatProviderIdEnum } from '@novu/shared';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
@@ -22,17 +17,14 @@ export class MattermostProvider extends BaseProvider implements IChatProvider {
 
   async sendMessage(
     data: IChatOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const payload: IMattermostPayload = { text: data.content };
 
     if (data.channel) {
       payload.channel = data.channel;
     }
-    const response = await this.axiosInstance.post(
-      data.webhookUrl,
-      this.transform(bridgeProviderData, payload).body,
-    );
+    const response = await this.axiosInstance.post(data.webhookUrl, this.transform(bridgeProviderData, payload).body);
 
     return {
       id: response.headers['x-request-id'],

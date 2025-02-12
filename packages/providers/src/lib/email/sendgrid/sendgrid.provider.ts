@@ -16,10 +16,7 @@ import { WithPassthrough } from '../../../utils/types';
 
 type AttachmentJSON = MailDataRequired['attachments'][0];
 
-export class SendgridEmailProvider
-  extends BaseProvider
-  implements IEmailProvider
-{
+export class SendgridEmailProvider extends BaseProvider implements IEmailProvider {
   id = EmailProviderIdEnum.SendGrid;
   protected casing: CasingEnum = CasingEnum.CAMEL_CASE;
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
@@ -31,7 +28,7 @@ export class SendgridEmailProvider
       from: string;
       senderName: string;
       ipPoolName?: string;
-    },
+    }
   ) {
     super();
     this.sendgridMail = new MailService();
@@ -40,14 +37,11 @@ export class SendgridEmailProvider
 
   async sendMessage(
     options: IEmailOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const mailData = this.createMailData(options);
     const response = await this.sendgridMail.send(
-      this.transform<MailDataRequired>(
-        bridgeProviderData,
-        mailData as unknown as Record<string, unknown>,
-      ).body,
+      this.transform<MailDataRequired>(bridgeProviderData, mailData as unknown as Record<string, unknown>).body
     );
 
     return {
@@ -56,9 +50,7 @@ export class SendgridEmailProvider
     };
   }
 
-  async checkIntegration(
-    options: IEmailOptions,
-  ): Promise<ICheckIntegrationResponse> {
+  async checkIntegration(options: IEmailOptions): Promise<ICheckIntegrationResponse> {
     try {
       const mailData = this.createMailData(options);
 
@@ -92,25 +84,23 @@ export class SendgridEmailProvider
     // eslint-disable-next-line no-param-reassign
     delete options.customData?.templateId;
 
-    const attachments = options.attachments?.map(
-      (attachment: IAttachmentOptions) => {
-        const attachmentJson: AttachmentJSON = {
-          content: attachment.file.toString('base64'),
-          filename: attachment.name,
-          type: attachment.mime,
-        };
+    const attachments = options.attachments?.map((attachment: IAttachmentOptions) => {
+      const attachmentJson: AttachmentJSON = {
+        content: attachment.file.toString('base64'),
+        filename: attachment.name,
+        type: attachment.mime,
+      };
 
-        if (attachment?.cid) {
-          attachmentJson.contentId = attachment?.cid;
-        }
+      if (attachment?.cid) {
+        attachmentJson.contentId = attachment?.cid;
+      }
 
-        if (attachment?.disposition) {
-          attachmentJson.disposition = attachment?.disposition;
-        }
+      if (attachment?.disposition) {
+        attachmentJson.disposition = attachment?.disposition;
+      }
 
-        return attachmentJson;
-      },
-    );
+      return attachmentJson;
+    });
 
     const mailData: Partial<MailDataRequired> = {
       from: {
@@ -167,10 +157,7 @@ export class SendgridEmailProvider
     return [body.id];
   }
 
-  parseEventBody(
-    body: any | any[],
-    identifier: string,
-  ): IEmailEventBody | undefined {
+  parseEventBody(body: any | any[], identifier: string): IEmailEventBody | undefined {
     if (Array.isArray(body)) {
       // eslint-disable-next-line no-param-reassign
       body = body.find((item) => item.id === identifier);

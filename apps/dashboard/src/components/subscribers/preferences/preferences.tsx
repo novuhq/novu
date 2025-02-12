@@ -2,52 +2,35 @@ import { showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { SidebarContent } from '@/components/side-navigation/sidebar';
 import { PreferencesItem } from '@/components/subscribers/preferences/preferences-item';
-import { PreferencesSkeleton } from '@/components/subscribers/preferences/preferences-skeleton';
 import { WorkflowPreferences } from '@/components/subscribers/preferences/workflow-preferences';
-import useFetchSubscriberPreferences from '@/hooks/use-fetch-subscriber-preferences';
 import { usePatchSubscriberPreferences } from '@/hooks/use-patch-subscriber-preferences';
 import { GetSubscriberPreferencesDto, PatchPreferenceChannelsDto } from '@novu/api/models/components';
 import { ChannelTypeEnum } from '@novu/shared';
 import { motion } from 'motion/react';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { RiQuestionLine } from 'react-icons/ri';
 
-export function Preferences({ subscriberId }: { subscriberId: string }) {
-  const [currentPreferences, setCurrentPreferences] = useState<GetSubscriberPreferencesDto | null>(null);
+type PreferencesProps = {
+  subscriberPreferences: GetSubscriberPreferencesDto;
+  subscriberId: string;
+  readOnly?: boolean;
+};
 
+export const Preferences = (props: PreferencesProps) => {
+  const { subscriberPreferences, subscriberId, readOnly = false } = props;
   const { patchSubscriberPreferences } = usePatchSubscriberPreferences({
-    onSuccess: (data) => {
-      setCurrentPreferences(data);
+    onSuccess: () => {
       showSuccessToast('Subscriber preferences updated successfully');
     },
   });
 
-  const { data: preferences, isFetching } = useFetchSubscriberPreferences({
-    subscriberId,
-    /**
-     * Only fetch if there are no current preferences (at first render),
-     * otherwise we'll use the PATCH response
-     */
-    options: { enabled: currentPreferences === null },
-  });
-
-  useEffect(() => {
-    if (preferences) {
-      setCurrentPreferences(preferences);
-    }
-  }, [preferences]);
-
   const { workflows, globalChannelsKeys } = useMemo(() => {
-    const global = currentPreferences?.global ?? { channels: {} };
-    const workflows = currentPreferences?.workflows ?? [];
+    const global = subscriberPreferences?.global ?? { channels: {} };
+    const workflows = subscriberPreferences?.workflows ?? [];
     const globalChannelsKeys = Object.entries(global?.channels ?? {}) as [ChannelTypeEnum, boolean][];
 
     return { global, workflows, globalChannelsKeys };
-  }, [currentPreferences]);
-
-  if (isFetching) {
-    return <PreferencesSkeleton />;
-  }
+  }, [subscriberPreferences]);
 
   const handleChannelToggle = async (channels: PatchPreferenceChannelsDto, workflowId?: string) => {
     await patchSubscriberPreferences({
@@ -88,6 +71,7 @@ export function Preferences({ subscriberId }: { subscriberId: string }) {
             <PreferencesItem
               key={channel}
               channel={channel}
+              readOnly={readOnly}
               enabled={enabled}
               onChange={(checked: boolean) => handleChannelToggle({ [channel]: checked })}
             />
@@ -122,10 +106,15 @@ export function Preferences({ subscriberId }: { subscriberId: string }) {
               ease: [0.21, 1.11, 0.81, 0.99],
             }}
           >
-            <WorkflowPreferences key={wf.workflow.slug} workflowPreferences={wf} onToggle={handleChannelToggle} />
+            <WorkflowPreferences
+              key={wf.workflow.slug}
+              workflowPreferences={wf}
+              onToggle={handleChannelToggle}
+              readOnly={readOnly}
+            />
           </motion.div>
         ))}
       </SidebarContent>
     </div>
   );
-}
+};
