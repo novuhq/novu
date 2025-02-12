@@ -11,18 +11,6 @@ const workflowQueue = new TestingQueueService(JobTopicNameEnum.WORKFLOW).queue;
 const standardQueue = new TestingQueueService(JobTopicNameEnum.STANDARD).queue;
 const subscriberProcessQueue = new TestingQueueService(JobTopicNameEnum.PROCESS_SUBSCRIBER).queue;
 
-const printJobsState = async (prefix: string) => {
-  const count = await Promise.all([
-    jobRepository.count({} as any),
-    new TestingQueueService(JobTopicNameEnum.WORKFLOW).queue.getWaitingCount(),
-    new TestingQueueService(JobTopicNameEnum.PROCESS_SUBSCRIBER).queue.getWaitingCount(),
-    new TestingQueueService(JobTopicNameEnum.STANDARD).queue.getWaitingCount(),
-  ]);
-
-  // eslint-disable-next-line no-console
-  console.log(`${prefix} Jobs state `, count);
-};
-
 let connection: typeof mongoose;
 
 async function getConnection() {
@@ -60,21 +48,12 @@ after(async () => {
 });
 
 afterEach(async () => {
-  await printJobsState('before cleanup');
-
   const jobsService = new JobsService();
   await jobsService.runAllDelayedJobsImmediately();
   await jobsService.awaitAllJobs();
 
-  await printJobsState('after job service cleanup');
-
   await Promise.all([workflowQueue.drain(), standardQueue.drain(), subscriberProcessQueue.drain()]);
-
-  await printJobsState('after queues drain');
-
   await jobRepository._model.deleteMany({});
-
-  await printJobsState('after job repository cleanup');
 
   sinon.restore();
 });
