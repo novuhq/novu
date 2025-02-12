@@ -10,7 +10,7 @@ import {
   JobEntity,
 } from '@novu/dal';
 import { StepTypeEnum, DigestTypeEnum, DigestUnitEnum, IDigestRegularMetadata } from '@novu/shared';
-import { UserSession, SubscribersService } from '@novu/testing';
+import { UserSession, SubscribersService, JobsService } from '@novu/testing';
 
 const axiosInstance = axios.create();
 
@@ -26,6 +26,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST) #n
   let subscriberService: SubscribersService;
   const jobRepository = new JobRepository();
   const messageRepository = new MessageRepository();
+  const jobsService = new JobsService();
 
   const triggerEvent = async (payload, transactionId?: string): Promise<void> => {
     await axiosInstance.post(
@@ -255,7 +256,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST) #n
     const mergedJobs = jobs.filter((elem) => elem.status !== JobStatusEnum.DELAYED);
     expect(mergedJobs && mergedJobs.length).to.eql(1);
 
-    await session.waitForJobCompletion(template?._id, false, 1);
+    await jobsService.awaitAllJobs();
 
     const finalJobs = await jobRepository.find({
       _environmentId: session.environment._id,

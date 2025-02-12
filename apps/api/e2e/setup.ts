@@ -45,30 +45,13 @@ after(async () => {
 });
 
 afterEach(async () => {
-  const countBefore = await Promise.all([
-    jobRepository.count({} as any),
-    new TestingQueueService(JobTopicNameEnum.WORKFLOW).queue.getWaitingCount(),
-    new TestingQueueService(JobTopicNameEnum.STANDARD).queue.getWaitingCount(),
-    new TestingQueueService(JobTopicNameEnum.PROCESS_SUBSCRIBER).queue.getWaitingCount(),
-  ]);
-
   const workflowQueue = new TestingQueueService(JobTopicNameEnum.WORKFLOW).queue;
   const standardQueue = new TestingQueueService(JobTopicNameEnum.STANDARD).queue;
   const subscriberProcessQueue = new TestingQueueService(JobTopicNameEnum.PROCESS_SUBSCRIBER).queue;
-
   await Promise.all([workflowQueue.drain(), standardQueue.drain(), subscriberProcessQueue.drain()]);
   const jobsService = new JobsService();
   await jobsService.awaitAllJobs();
   await jobRepository._model.deleteMany({});
 
-  const countAfter = await Promise.all([
-    jobRepository.count({} as any),
-    new TestingQueueService(JobTopicNameEnum.WORKFLOW).queue.getWaitingCount(),
-    new TestingQueueService(JobTopicNameEnum.STANDARD).queue.getWaitingCount(),
-    new TestingQueueService(JobTopicNameEnum.PROCESS_SUBSCRIBER).queue.getWaitingCount(),
-  ]);
-
-  // eslint-disable-next-line no-console
-  console.log('afterEach run metadata: before ', countBefore, ', after ', countAfter);
   sinon.restore();
 });

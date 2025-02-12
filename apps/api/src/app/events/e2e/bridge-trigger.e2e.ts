@@ -2,7 +2,7 @@ import axios from 'axios';
 import { expect } from 'chai';
 import sinon from 'sinon';
 
-import { SubscribersService, UserSession } from '@novu/testing';
+import { JobsService, SubscribersService, UserSession } from '@novu/testing';
 import {
   ExecutionDetailsRepository,
   JobRepository,
@@ -43,6 +43,7 @@ contexts.forEach((context: Context) => {
     let subscriber: SubscriberEntity;
     let subscriberService: SubscribersService;
     const executionDetailsRepository = new ExecutionDetailsRepository();
+    const jobsService = new JobsService();
     let bridge;
 
     beforeEach(async () => {
@@ -657,7 +658,7 @@ contexts.forEach((context: Context) => {
       await triggerEvent(session, workflowId, subscriber.subscriberId, {}, bridge);
       await session.waitForJobCompletion();
       await triggerEvent(session, workflowId, subscriber.subscriberId, { name: 'payload_name' }, bridge);
-      await session.waitForJobCompletion();
+      await jobsService.awaitAllJobs();
 
       const sentMessage = await messageRepository.find({
         _environmentId: session.environment._id,
