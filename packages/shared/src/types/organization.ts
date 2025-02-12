@@ -15,7 +15,10 @@ export enum ApiServiceLevelEnum {
   UNLIMITED = 'unlimited', // Redirect to enterprise
 }
 
-export function migrateServiceLevel(level: ApiServiceLevelEnum): ApiServiceLevelEnum {
+export function migrateServiceLevel(level?: ApiServiceLevelEnum): ApiServiceLevelEnum {
+  if (!level) {
+    return ApiServiceLevelEnum.FREE;
+  }
   switch (level) {
     case ApiServiceLevelEnum.UNLIMITED:
       return ApiServiceLevelEnum.ENTERPRISE;
@@ -26,7 +29,10 @@ export function migrateServiceLevel(level: ApiServiceLevelEnum): ApiServiceLevel
       return level;
   }
 }
-
+export enum StripeBillingIntervalEnum {
+  MONTH = 'month',
+  YEAR = 'year',
+}
 export enum ProductUseCasesEnum {
   IN_APP = 'in_app',
   MULTI_CHANNEL = 'multi_channel',

@@ -21,6 +21,13 @@ export class CommunityOrganizationRepository
     return this.mapEntity(data.toObject());
   }
 
+  protected mapEntity<TData>(data: TData): TData extends null ? null : OrganizationEntity {
+    const mapEntity = super.mapEntity(data);
+
+    return mapEntity;
+    // return { ...mapEntity, apiServiceLevel: migrateServiceLevel(mapEntity?.apiServiceLevel) };
+  }
+
   async findUserActiveOrganizations(userId: string): Promise<OrganizationEntity[]> {
     const organizationIds = await this.getUsersMembersOrganizationIds(userId);
 

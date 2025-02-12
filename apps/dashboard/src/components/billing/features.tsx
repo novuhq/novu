@@ -1,13 +1,27 @@
-import { ApiServiceLevelEnum } from '@novu/shared';
+import {
+  ApiServiceLevelEnum,
+  FeatureFlags,
+  FeatureNameEnum,
+  getFeatureForTierAsBoolean,
+  getFeatureForTierAsText,
+} from '@novu/shared';
 import { Check } from 'lucide-react';
 import { cn } from '../../utils/ui';
+import { useFlagsMap } from '@novu/web/src/hooks';
 
 enum SupportedPlansEnum {
-  FREE = ApiServiceLevelEnum.FREE,
-  BUSINESS = ApiServiceLevelEnum.BUSINESS,
-  ENTERPRISE = ApiServiceLevelEnum.ENTERPRISE,
+  FREE = 'FREE',
+  PRO = 'PRO',
+  TEAM = 'TEAM',
+  ENTERPRISE = 'ENTERPRISE',
 }
 
+const SupportedPlansEnumToServiceLevelRecord: Record<SupportedPlansEnum, ApiServiceLevelEnum> = {
+  FREE: ApiServiceLevelEnum.FREE,
+  PRO: ApiServiceLevelEnum.PRO,
+  TEAM: ApiServiceLevelEnum.TEAM,
+  ENTERPRISE: ApiServiceLevelEnum.ENTERPRISE,
+};
 type FeatureValue = {
   value: React.ReactNode;
 };
@@ -15,258 +29,188 @@ type FeatureValue = {
 type Feature = {
   label: string;
   isTitle?: boolean;
-  values: {
-    [SupportedPlansEnum.FREE]: FeatureValue;
-    [SupportedPlansEnum.BUSINESS]: FeatureValue;
-    [SupportedPlansEnum.ENTERPRISE]: FeatureValue;
-  };
+  values: Record<SupportedPlansEnum, FeatureValue>;
 };
 
-const features: Feature[] = [
-  {
-    label: 'Platform',
-    isTitle: true,
-    values: {
-      [SupportedPlansEnum.FREE]: { value: '' },
-      [SupportedPlansEnum.BUSINESS]: { value: '' },
-      [SupportedPlansEnum.ENTERPRISE]: { value: '' },
+interface BuildValuesParams {
+  featureName?: FeatureNameEnum;
+  isBoolean?: boolean;
+  prefix?: string | React.ReactNode;
+  suffix?: string | React.ReactNode;
+}
+
+const features: (activeFlags: FeatureFlags) => Feature[] = (activeFlags: FeatureFlags) => {
+  return [
+    {
+      label: 'Platform',
+      isTitle: true,
+      values: buildEmptyRow(),
     },
-  },
-  {
-    label: 'Monthly events',
-    values: {
-      [SupportedPlansEnum.FREE]: { value: 'Up to 30,000' },
-      [SupportedPlansEnum.BUSINESS]: { value: 'Up to 250,000' },
-      [SupportedPlansEnum.ENTERPRISE]: { value: '5,000,000' },
+    {
+      label: 'Monthly events',
+      values: buildTableRowRecord({ featureName: FeatureNameEnum.PLATFORM_MONTHLY_EVENTS_INCLUDED, prefix: 'Up to ' }),
     },
-  },
-  {
-    label: 'Additional Events',
-    values: {
-      [SupportedPlansEnum.FREE]: { value: '-' },
-      [SupportedPlansEnum.BUSINESS]: { value: '$0.0012 per event' },
-      [SupportedPlansEnum.ENTERPRISE]: { value: 'Custom' },
+    {
+      label: 'Additional Events',
+      values: buildTableRowRecord({ featureName: FeatureNameEnum.PLATFORM_COST_PER_ADDITIONAL_1K_EVENTS }),
     },
-  },
-  {
-    label: 'Email, InApp, SMS, Chat, Push Channels',
-    values: {
-      [SupportedPlansEnum.FREE]: { value: <Check className="h-4 w-4" /> },
-      [SupportedPlansEnum.BUSINESS]: { value: <Check className="h-4 w-4" /> },
-      [SupportedPlansEnum.ENTERPRISE]: { value: <Check className="h-4 w-4" /> },
+    {
+      label: 'Email, InApp, SMS, Chat, Push Channels',
+      values: buildTableRowRecord({
+        featureName: FeatureNameEnum.PLATFORM_CHANNELS_SUPPORTED_BOOLEAN,
+        isBoolean: true,
+      }),
     },
-  },
-  {
-    label: 'Notification subscribers',
-    values: {
-      [SupportedPlansEnum.FREE]: { value: 'Unlimited' },
-      [SupportedPlansEnum.BUSINESS]: { value: 'Unlimited' },
-      [SupportedPlansEnum.ENTERPRISE]: { value: 'Unlimited' },
+    {
+      label: 'Notification subscribers',
+      values: buildTableRowRecord({ featureName: FeatureNameEnum.PLATFORM_SUBSCRIBERS }),
     },
-  },
-  {
-    label: 'Environments',
-    values: {
-      [SupportedPlansEnum.FREE]: { value: '2' },
-      [SupportedPlansEnum.BUSINESS]: { value: '10' },
-      [SupportedPlansEnum.ENTERPRISE]: { value: 'Unlimited' },
+    {
+      label: 'Custom Environments',
+      values: buildTableRowRecord({ featureName: FeatureNameEnum.CUSTOM_ENVIRONMENTS_BOOLEAN, isBoolean: true }),
     },
-  },
-  {
-    label: 'Framework',
-    isTitle: true,
-    values: {
-      [SupportedPlansEnum.FREE]: { value: '' },
-      [SupportedPlansEnum.BUSINESS]: { value: '' },
-      [SupportedPlansEnum.ENTERPRISE]: { value: '' },
+    {
+      label: 'Framework',
+      isTitle: true,
+      values: buildEmptyRow(),
     },
-  },
-  {
-    label: 'Total workflows',
-    values: {
-      [SupportedPlansEnum.FREE]: { value: 'Unlimited' },
-      [SupportedPlansEnum.BUSINESS]: { value: 'Unlimited' },
-      [SupportedPlansEnum.ENTERPRISE]: { value: 'Unlimited' },
+    {
+      label: 'Total workflows',
+      values: buildTableRowRecord({ featureName: FeatureNameEnum.PLATFORM_MAX_WORKFLOWS }),
     },
-  },
-  {
-    label: 'Provider integrations',
-    values: {
-      [SupportedPlansEnum.FREE]: { value: 'Unlimited' },
-      [SupportedPlansEnum.BUSINESS]: { value: 'Unlimited' },
-      [SupportedPlansEnum.ENTERPRISE]: { value: 'Unlimited' },
+    {
+      label: 'Provider integrations',
+      values: buildTableRowRecord({ featureName: FeatureNameEnum.PLATFORM_PROVIDER_INTEGRATIONS }),
     },
-  },
-  {
-    label: 'Activity Feed retention',
-    values: {
-      [SupportedPlansEnum.FREE]: { value: '30 days' },
-      [SupportedPlansEnum.BUSINESS]: { value: '90 days' },
-      [SupportedPlansEnum.ENTERPRISE]: { value: 'Unlimited' },
+    {
+      label: 'Activity Feed retention',
+      values: buildTableRowRecord({ featureName: FeatureNameEnum.PLATFORM_ACTIVITY_FEED_RETENTION }),
     },
-  },
-  {
-    label: 'Digests',
-    values: {
-      [SupportedPlansEnum.FREE]: { value: <Check className="h-4 w-4" /> },
-      [SupportedPlansEnum.BUSINESS]: { value: <Check className="h-4 w-4" /> },
-      [SupportedPlansEnum.ENTERPRISE]: { value: <Check className="h-4 w-4" /> },
+    {
+      label: 'Digests',
+      values: buildTableRowRecord({ featureName: FeatureNameEnum.PLATFORM_MAX_DIGEST_WINDOW_TIME }),
     },
-  },
-  {
-    label: 'Step controls',
-    values: {
-      [SupportedPlansEnum.FREE]: { value: <Check className="h-4 w-4" /> },
-      [SupportedPlansEnum.BUSINESS]: { value: <Check className="h-4 w-4" /> },
-      [SupportedPlansEnum.ENTERPRISE]: { value: <Check className="h-4 w-4" /> },
+    {
+      label: 'Step controls',
+      values: buildTableRowRecord({ featureName: FeatureNameEnum.PLATFORM_STEP_CONTROLS_BOOLEAN, isBoolean: true }),
     },
-  },
-  {
-    label: 'Inbox',
-    isTitle: true,
-    values: {
-      [SupportedPlansEnum.FREE]: { value: '' },
-      [SupportedPlansEnum.BUSINESS]: { value: '' },
-      [SupportedPlansEnum.ENTERPRISE]: { value: '' },
+    {
+      label: 'Inbox',
+      isTitle: true,
+      values: buildEmptyRow(),
     },
-  },
-  {
-    label: 'Inbox component',
-    values: {
-      [SupportedPlansEnum.FREE]: { value: <Check className="h-4 w-4" /> },
-      [SupportedPlansEnum.BUSINESS]: { value: <Check className="h-4 w-4" /> },
-      [SupportedPlansEnum.ENTERPRISE]: { value: <Check className="h-4 w-4" /> },
+    {
+      label: 'Inbox component',
+      values: buildTableRowRecord({ featureName: FeatureNameEnum.INBOX_BELL_COMPONENT_BOOLEAN, isBoolean: true }),
     },
-  },
-  {
-    label: 'User preferences component',
-    values: {
-      [SupportedPlansEnum.FREE]: { value: <Check className="h-4 w-4" /> },
-      [SupportedPlansEnum.BUSINESS]: { value: <Check className="h-4 w-4" /> },
-      [SupportedPlansEnum.ENTERPRISE]: { value: <Check className="h-4 w-4" /> },
+    {
+      label: 'User preferences component',
+      values: buildTableRowRecord({
+        featureName: FeatureNameEnum.INBOX_USER_PREFERENCES_COMPONENT_BOOLEAN,
+        isBoolean: true,
+      }),
     },
-  },
-  {
-    label: 'Remove Novu branding',
-    values: {
-      [SupportedPlansEnum.FREE]: { value: '-' },
-      [SupportedPlansEnum.BUSINESS]: { value: <Check className="h-4 w-4" /> },
-      [SupportedPlansEnum.ENTERPRISE]: { value: <Check className="h-4 w-4" /> },
+    {
+      label: 'Remove Novu branding',
+      values: buildTableRowRecord({
+        featureName: FeatureNameEnum.PLATFORM_REMOVE_NOVU_BRANDING_BOOLEAN,
+        isBoolean: true,
+      }),
     },
-  },
-  {
-    label: 'Account administration and security',
-    isTitle: true,
-    values: {
-      [SupportedPlansEnum.FREE]: { value: '' },
-      [SupportedPlansEnum.BUSINESS]: { value: '' },
-      [SupportedPlansEnum.ENTERPRISE]: { value: '' },
+    {
+      label: 'Account administration and security',
+      isTitle: true,
+      values: buildEmptyRow(),
     },
-  },
-  {
-    label: 'Team members',
-    values: {
-      [SupportedPlansEnum.FREE]: { value: '3' },
-      [SupportedPlansEnum.BUSINESS]: { value: 'Unlimited' },
-      [SupportedPlansEnum.ENTERPRISE]: { value: 'Unlimited' },
+    {
+      label: 'Team members',
+      values: buildTableRowRecord({ featureName: FeatureNameEnum.ACCOUNT_MAX_TEAM_MEMBERS }),
     },
-  },
-  {
-    label: 'RBAC',
-    values: {
-      [SupportedPlansEnum.FREE]: { value: '-' },
-      [SupportedPlansEnum.BUSINESS]: { value: <Check className="h-4 w-4" /> },
-      [SupportedPlansEnum.ENTERPRISE]: { value: <Check className="h-4 w-4" /> },
+    {
+      label: 'RBAC',
+      values: buildTableRowRecord({
+        featureName: FeatureNameEnum.ACCOUNT_ROLE_BASED_ACCESS_CONTROL_BOOLEAN,
+        isBoolean: true,
+      }),
     },
-  },
-  {
-    label: 'GDPR compliance',
-    values: {
-      [SupportedPlansEnum.FREE]: { value: <Check className="h-4 w-4" /> },
-      [SupportedPlansEnum.BUSINESS]: { value: <Check className="h-4 w-4" /> },
-      [SupportedPlansEnum.ENTERPRISE]: { value: <Check className="h-4 w-4" /> },
+    {
+      label: 'GDPR compliance',
+      values: buildTableRowRecord({ featureName: FeatureNameEnum.COMPLIANCE_GDPR_BOOLEAN, isBoolean: true }),
     },
-  },
-  {
-    label: 'SAML SSO and Enterprise SSO providers',
-    values: {
-      [SupportedPlansEnum.FREE]: { value: '-' },
-      [SupportedPlansEnum.BUSINESS]: { value: '-' },
-      [SupportedPlansEnum.ENTERPRISE]: { value: <Check className="h-4 w-4" /> },
+    {
+      label: 'SAML SSO and Enterprise SSO providers',
+      values: buildTableRowRecord({
+        featureName: FeatureNameEnum.ACCOUNT_CUSTOM_SAML_SSO_OIDC_BOOLEAN,
+        isBoolean: true,
+      }),
     },
-  },
-  {
-    label: 'Support and account management',
-    isTitle: true,
-    values: {
-      [SupportedPlansEnum.FREE]: { value: '' },
-      [SupportedPlansEnum.BUSINESS]: { value: '' },
-      [SupportedPlansEnum.ENTERPRISE]: { value: '' },
+    {
+      label: 'Support and account management',
+      isTitle: true,
+      values: buildEmptyRow(),
     },
-  },
-  {
-    label: 'Support SLA',
-    values: {
-      [SupportedPlansEnum.FREE]: { value: '-' },
-      [SupportedPlansEnum.BUSINESS]: { value: '48 hours' },
-      [SupportedPlansEnum.ENTERPRISE]: { value: '24 hours' },
+    {
+      label: 'Support SLA',
+      values: buildTableRowRecord({ featureName: FeatureNameEnum.PLATFORM_SUPPORT_SLA }),
     },
-  },
-  {
-    label: 'Support channels',
-    values: {
-      [SupportedPlansEnum.FREE]: { value: 'Community & Discord' },
-      [SupportedPlansEnum.BUSINESS]: { value: 'Slack & Email' },
-      [SupportedPlansEnum.ENTERPRISE]: { value: 'Dedicated' },
+    {
+      label: 'Support channels',
+      values: buildTableRowRecord({ featureName: FeatureNameEnum.PLATFORM_SUPPORT_CHANNELS }),
     },
-  },
-  {
-    label: 'Legal & Vendor management',
-    isTitle: true,
-    values: {
-      [SupportedPlansEnum.FREE]: { value: '' },
-      [SupportedPlansEnum.BUSINESS]: { value: '' },
-      [SupportedPlansEnum.ENTERPRISE]: { value: '' },
+    {
+      label: 'Legal & Vendor management',
+      isTitle: true,
+      values: buildEmptyRow(),
     },
-  },
-  {
-    label: 'Payment method',
-    values: {
-      [SupportedPlansEnum.FREE]: { value: '-' },
-      [SupportedPlansEnum.BUSINESS]: { value: 'Credit card only' },
-      [SupportedPlansEnum.ENTERPRISE]: { value: 'Credit card & PO and Invoicing' },
+    {
+      label: 'Payment method',
+      values: buildTableRowRecord({ featureName: FeatureNameEnum.PAYMENT_METHOD }),
     },
-  },
-  {
-    label: 'Terms of service',
-    values: {
-      [SupportedPlansEnum.FREE]: { value: 'Standard' },
-      [SupportedPlansEnum.BUSINESS]: { value: 'Standard' },
-      [SupportedPlansEnum.ENTERPRISE]: { value: 'Custom' },
+    {
+      label: 'Terms of service',
+      values: buildTableRowRecord({ featureName: FeatureNameEnum.PLATFORM_TERMS_OF_SERVICE }),
     },
-  },
-  {
-    label: 'DPA',
-    values: {
-      [SupportedPlansEnum.FREE]: { value: 'Standard' },
-      [SupportedPlansEnum.BUSINESS]: { value: 'Standard' },
-      [SupportedPlansEnum.ENTERPRISE]: { value: 'Custom' },
+    {
+      label: 'DPA',
+      values: buildTableRowRecord({ featureName: FeatureNameEnum.COMPLIANCE_DATA_PROCESSING_AGREEMENTS }),
     },
-  },
-  {
-    label: 'Security review',
-    values: {
-      [SupportedPlansEnum.FREE]: { value: 'SOC 2 and ISO 27001 upon request' },
-      [SupportedPlansEnum.BUSINESS]: { value: 'Custom' },
-      [SupportedPlansEnum.ENTERPRISE]: { value: 'Custom' },
+    {
+      label: 'Security review',
+      values: buildTableRowRecord({ featureName: FeatureNameEnum.COMPLIANCE_CUSTOM_SECURITY_REVIEWS }),
     },
-  },
-];
+  ];
+  function buildEmptyRow() {
+    return buildTableRowRecord({});
+  }
+  function buildTableRowRecord(params: BuildValuesParams): Record<SupportedPlansEnum, FeatureValue> {
+    return Object.values(SupportedPlansEnum).reduce(
+      (acc, plan) => {
+        const apiServiceLevel = SupportedPlansEnumToServiceLevelRecord[plan];
+        if (params.isBoolean) {
+          const bool = params.featureName ? getFeatureForTierAsBoolean(params.featureName, apiServiceLevel) : '';
+          acc[plan] = {
+            value: bool ? <Check className="h-4 w-4" /> : '-',
+          };
+          return acc;
+        }
+        const text = params.featureName
+          ? getFeatureForTierAsText(params.featureName, apiServiceLevel, activeFlags)
+          : '';
+        const value = `${params.prefix || ''}${text}${params.suffix || ''}`;
+        acc[plan] = {
+          value,
+        };
+        return acc;
+      },
+      {} as Record<SupportedPlansEnum, FeatureValue>
+    );
+  }
+};
 
 function FeatureRow({ feature, index }: { feature: Feature; index: number }) {
   return (
     <div
-      className={cn('divide-border grid grid-cols-4 divide-x bg-neutral-50', {
+      className={cn('divide-border grid grid-cols-5 divide-x bg-neutral-50', {
         'bg-muted/50': index % 2 === 1,
         'border-border border-y': feature.isTitle,
       })}
@@ -292,9 +236,11 @@ function FeatureRow({ feature, index }: { feature: Feature; index: number }) {
 }
 
 export function Features() {
+  const activeFlags = useFlagsMap();
+
   return (
     <div className="flex flex-col">
-      {features.map((feature, index) => (
+      {features(activeFlags).map((feature, index) => (
         <FeatureRow key={index} feature={feature} index={index} />
       ))}
     </div>

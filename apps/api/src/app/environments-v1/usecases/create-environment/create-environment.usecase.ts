@@ -6,11 +6,14 @@ import { encryptApiKey } from '@novu/application-generic';
 import { EnvironmentRepository, NotificationGroupRepository } from '@novu/dal';
 
 import { EnvironmentEnum, PROTECTED_ENVIRONMENTS } from '@novu/shared';
+import { undefined } from 'zod';
 import { CreateNovuIntegrationsCommand } from '../../../integrations/usecases/create-novu-integrations/create-novu-integrations.command';
 import { CreateNovuIntegrations } from '../../../integrations/usecases/create-novu-integrations/create-novu-integrations.usecase';
 import { CreateDefaultLayout, CreateDefaultLayoutCommand } from '../../../layouts/usecases';
 import { GenerateUniqueApiKey } from '../generate-unique-api-key/generate-unique-api-key.usecase';
 import { CreateEnvironmentCommand } from './create-environment.command';
+import { ValidateTiersUseCase } from './validate-tiers-use.case';
+import { TierValidationTypeEnum } from './tier-validation-type.enum';
 
 @Injectable()
 export class CreateEnvironment {
@@ -19,17 +22,20 @@ export class CreateEnvironment {
     private notificationGroupRepository: NotificationGroupRepository,
     private generateUniqueApiKey: GenerateUniqueApiKey,
     private createDefaultLayoutUsecase: CreateDefaultLayout,
-    private createNovuIntegrationsUsecase: CreateNovuIntegrations
+    private createNovuIntegrationsUsecase: CreateNovuIntegrations,
+    private tierValidator: ValidateTiersUseCase
   ) {}
 
   async execute(command: CreateEnvironmentCommand) {
     const environmentCount = await this.environmentRepository.count({
       _organizationId: command.organizationId,
     });
+    this.tierValidator.execute({
+      organizationId: command.organizationId,
+      validationType: TierValidationTypeEnum.ENVIRONMENT_COUNT,
+      valueToValidate: environmentCount,
+    });
 
-    if (environmentCount >= 10) {
-      throw new BadRequestException('Organization cannot have more than 10 environments');
-    }
     const normalizedName = command.name.trim();
 
     if (!command.system) {

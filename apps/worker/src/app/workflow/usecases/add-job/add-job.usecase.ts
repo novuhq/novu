@@ -23,19 +23,19 @@ import {
   DetailEnum,
   ExecutionLogRoute,
   ExecutionLogRouteCommand,
+  getDigestType,
   IFilterVariables,
   InstrumentUsecase,
-  JobsOptions,
-  LogDecorator,
-  StandardQueueService,
-  NormalizeVariablesCommand,
-  NormalizeVariables,
-  getDigestType,
-  isTimedDigestOutput,
   isLookBackDigestOutput,
   isRegularDigestOutput,
-  TierRestrictionsValidateUsecase,
+  isTimedDigestOutput,
+  JobsOptions,
+  LogDecorator,
+  NormalizeVariables,
+  NormalizeVariablesCommand,
+  StandardQueueService,
   TierRestrictionsValidateCommand,
+  ValidateContentTierLimits,
 } from '@novu/application-generic';
 
 import { AddDelayJob } from './add-delay-job.usecase';
@@ -66,7 +66,7 @@ export class AddJob {
     @Inject(forwardRef(() => ConditionsFilter))
     private conditionsFilter: ConditionsFilter,
     private normalizeVariablesUsecase: NormalizeVariables,
-    private tierRestrictionsValidateUsecase: TierRestrictionsValidateUsecase,
+    private tierRestrictionsValidateUsecase: ValidateContentTierLimits,
     private executeBridgeJob: ExecuteBridgeJob
   ) {}
 

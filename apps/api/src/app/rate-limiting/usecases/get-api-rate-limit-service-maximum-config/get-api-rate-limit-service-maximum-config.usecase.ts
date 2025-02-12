@@ -1,9 +1,10 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import {
   ApiRateLimitCategoryEnum,
+  ApiRateLimitCategoryToFeatureName,
   ApiRateLimitServiceMaximumEnvVarFormat,
   ApiServiceLevelEnum,
-  DEFAULT_API_RATE_LIMIT_SERVICE_MAXIMUM_CONFIG,
+  getFeatureForTierAsNumber,
   IApiRateLimitServiceMaximum,
 } from '@novu/shared';
 import { createHash } from 'crypto';
@@ -16,7 +17,7 @@ import {
 
 @Injectable()
 export class GetApiRateLimitServiceMaximumConfig implements OnModuleInit {
-  public default: IApiRateLimitServiceMaximum = DEFAULT_API_RATE_LIMIT_SERVICE_MAXIMUM_CONFIG;
+  public default: IApiRateLimitServiceMaximum;
 
   constructor(
     private invalidateCache: InvalidateCacheService,
@@ -43,7 +44,7 @@ export class GetApiRateLimitServiceMaximumConfig implements OnModuleInit {
       Logger.log(`Updating API Rate Limit Maximum config cache`, GetApiRateLimitServiceMaximumConfig.name);
       await this.cacheService.set(cacheKey, newHash);
 
-      this.invalidateCache.invalidateByKey({
+      await this.invalidateCache.invalidateByKey({
         key: buildMaximumApiRateLimitKey({
           _environmentId: '*',
           apiRateLimitCategory: '*',
@@ -60,23 +61,27 @@ export class GetApiRateLimitServiceMaximumConfig implements OnModuleInit {
   }
 
   private createDefault(): IApiRateLimitServiceMaximum {
-    const mergedConfig: IApiRateLimitServiceMaximum = { ...DEFAULT_API_RATE_LIMIT_SERVICE_MAXIMUM_CONFIG };
-
     // Read process environment only once for performance
     const processEnv = process.env;
 
-    Object.values(ApiServiceLevelEnum).forEach((apiServiceLevel) => {
-      Object.values(ApiRateLimitCategoryEnum).forEach((apiRateLimitCategory) => {
-        const envVarName = this.getEnvVarName(apiServiceLevel, apiRateLimitCategory);
-        const envVarValue = processEnv[envVarName];
+    return Object.values(ApiServiceLevelEnum).reduce((acc, apiServiceLevel) => {
+      acc[apiServiceLevel] = Object.values(ApiRateLimitCategoryEnum).reduce(
+        (categoryAcc, apiRateLimitCategory) => {
+          const featureName = ApiRateLimitCategoryToFeatureName[apiRateLimitCategory];
+          const featureForTierAsNumber = getFeatureForTierAsNumber(featureName, apiServiceLevel);
+          const envVarName = this.getEnvVarName(apiServiceLevel, apiRateLimitCategory);
+          const envVarValue = processEnv[envVarName];
 
-        if (envVarValue) {
-          mergedConfig[apiServiceLevel][apiRateLimitCategory] = Number(envVarValue);
-        }
-      });
-    });
+          // eslint-disable-next-line no-param-reassign
+          categoryAcc[apiRateLimitCategory] = envVarValue ? Number(envVarValue) : featureForTierAsNumber;
 
-    return mergedConfig;
+          return categoryAcc;
+        },
+        {} as Record<ApiRateLimitCategoryEnum, number>
+      );
+
+      return acc;
+    }, {} as IApiRateLimitServiceMaximum);
   }
 
   private getEnvVarName(

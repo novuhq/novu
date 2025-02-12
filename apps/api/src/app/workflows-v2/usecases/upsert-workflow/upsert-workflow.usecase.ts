@@ -2,16 +2,16 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 
 import {
   AnalyticsService,
-  CreateWorkflowCommand,
   CreateWorkflow as CreateWorkflowGeneric,
+  CreateWorkflowCommand,
   GetWorkflowByIdsCommand,
   GetWorkflowByIdsUseCase,
   Instrument,
   InstrumentUsecase,
   NotificationStep,
   shortId,
-  UpdateWorkflowCommand,
   UpdateWorkflow as UpdateWorkflowGeneric,
+  UpdateWorkflowCommand,
   UpsertControlValuesCommand,
   UpsertControlValuesUseCase,
   WorkflowInternalResponseDto,
@@ -21,6 +21,7 @@ import {
   NotificationGroupRepository,
   NotificationStepEntity,
   NotificationTemplateEntity,
+  NotificationTemplateRepository,
 } from '@novu/dal';
 import {
   ControlSchemas,
@@ -42,6 +43,8 @@ import { computeWorkflowStatus } from '../../shared/compute-workflow-status';
 import { BuildStepIssuesUsecase } from '../build-step-issues/build-step-issues.usecase';
 import { GetWorkflowCommand, GetWorkflowUseCase } from '../get-workflow';
 import { UpsertWorkflowCommand, UpsertWorkflowDataCommand } from './upsert-workflow.command';
+import { ValidateTiersUseCase } from '../../../environments-v1/usecases/create-environment/validate-tiers-use.case';
+import { TierValidationTypeEnum } from '../../../environments-v1/usecases/create-environment/tier-validation-type.enum';
 
 @Injectable()
 export class UpsertWorkflowUseCase {
@@ -54,23 +57,34 @@ export class UpsertWorkflowUseCase {
     private buildStepIssuesUsecase: BuildStepIssuesUsecase,
     private controlValuesRepository: ControlValuesRepository,
     private upsertControlValuesUseCase: UpsertControlValuesUseCase,
-    private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService,
+    private notificationTemplateRepository: NotificationTemplateRepository,
+    private validateTiersUseCase: ValidateTiersUseCase
   ) {}
 
   @InstrumentUsecase()
   async execute(command: UpsertWorkflowCommand): Promise<WorkflowResponseDto> {
+    await this.validateMaxWorkflowsForTeir(command);
     const workflowForUpdate = await this.queryWorkflow(command);
     const persistedWorkflow = await this.createOrUpdateWorkflow(workflowForUpdate, command);
     // TODO: this upsertControlValues logic should be moved to the create/update workflow usecase
     await this.upsertControlValues(persistedWorkflow, command);
-    const workflow = await this.getWorkflowUseCase.execute(
+
+    return await this.getWorkflowUseCase.execute(
       GetWorkflowCommand.create({
         workflowIdOrInternalId: persistedWorkflow._id,
         user: command.user,
       })
     );
+  }
 
-    return workflow;
+  private async validateMaxWorkflowsForTeir(command: UpsertWorkflowCommand) {
+    const existingWorkflowCount = await this.countWorkflows(command);
+    await this.validateTiersUseCase.execute({
+      organizationId: command.user.organizationId,
+      validationType: TierValidationTypeEnum.ENVIRONMENT_COUNT,
+      valueToValidate: existingWorkflowCount,
+    });
   }
 
   @Instrument()
@@ -95,13 +109,7 @@ export class UpsertWorkflowUseCase {
     command: UpsertWorkflowCommand
   ): Promise<WorkflowInternalResponseDto> {
     if (existingWorkflow && isWorkflowUpdateDto(command.workflowDto, command.workflowIdOrInternalId)) {
-      this.analyticsService.mixpanelTrack('Workflow Update - [API]', command.user._id, {
-        _organization: command.user.organizationId,
-        name: command.workflowDto.name,
-        tags: command.workflowDto.tags || [],
-        origin: command.workflowDto.origin,
-        source: command.workflowDto.__source,
-      });
+      this.updateMixPanel(command, 'Workflow Update - [API]');
 
       return await this.updateWorkflowGenericUsecase.execute(
         UpdateWorkflowCommand.create(
@@ -110,17 +118,21 @@ export class UpsertWorkflowUseCase {
       );
     }
 
-    this.analyticsService.mixpanelTrack('Workflow Created - [API]', command.user?._id, {
-      _organization: command.user?.organizationId,
-      name: command.workflowDto?.name,
-      tags: command.workflowDto?.tags || [],
-      origin: command.workflowDto?.origin,
-      source: command.workflowDto?.__source,
-    });
+    this.updateMixPanel(command, 'Workflow Created - [API]');
 
     return await this.createWorkflowGenericUsecase.execute(
       CreateWorkflowCommand.create(await this.buildCreateWorkflowCommand(command))
     );
+  }
+
+  private updateMixPanel(command: UpsertWorkflowCommand, eventName: string) {
+    this.analyticsService.mixpanelTrack(eventName, command.user?._id, {
+      _organization: command.user.organizationId,
+      name: command.workflowDto.name,
+      tags: command.workflowDto.tags || [],
+      origin: command.workflowDto.origin,
+      source: command.workflowDto.__source,
+    });
   }
 
   @Instrument()
@@ -364,6 +376,13 @@ export class UpsertWorkflowUseCase {
 
       return stepRequest.name === step.name;
     })?.controlValues;
+  }
+
+  private async countWorkflows(command: UpsertWorkflowCommand): Promise<number> {
+    return this.notificationTemplateRepository.count({
+      _environmentId: command.user.environmentId,
+      _organizationId: command.user.organizationId,
+    });
   }
 }
 

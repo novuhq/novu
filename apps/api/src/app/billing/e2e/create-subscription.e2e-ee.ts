@@ -1,13 +1,9 @@
 /* eslint-disable global-require */
 import sinon from 'sinon';
 import { expect } from 'chai';
-import { ApiServiceLevelEnum } from '@novu/shared';
+import { ApiServiceLevelEnum, StripeBillingIntervalEnum } from '@novu/shared';
 // eslint-disable-next-line no-restricted-imports
-import {
-  StripeBillingIntervalEnum,
-  StripeUsageTypeEnum,
-  StripeSubscriptionStatusEnum,
-} from '@novu/ee-billing/src/stripe/types';
+import { StripeSubscriptionStatusEnum, StripeUsageTypeEnum } from '@novu/ee-billing/src/stripe/types';
 
 describe('CreateSubscription #novu-v2', () => {
   const eeBilling = require('@novu/ee-billing');
@@ -15,7 +11,7 @@ describe('CreateSubscription #novu-v2', () => {
     throw new Error('ee-billing does not exist');
   }
 
-  const { CreateSubscription, GetPrices, UpdateServiceLevel, CreateSubscriptionCommand } = eeBilling;
+  const { CreateSubscription, GetStripePlanPriceUseCase, UpdateServiceLevel, CreateSubscriptionCommand } = eeBilling;
 
   const stripeStub = {
     subscriptions: {
@@ -53,7 +49,7 @@ describe('CreateSubscription #novu-v2', () => {
   };
 
   beforeEach(() => {
-    getPricesStub = sinon.stub(GetPrices.prototype, 'execute').resolves({
+    getPricesStub = sinon.stub(GetStripePlanPriceUseCase.prototype, 'execute').resolves({
       metered: [
         {
           id: 'price_id_notifications',

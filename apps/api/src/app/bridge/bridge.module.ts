@@ -4,6 +4,7 @@ import {
   CreateMessageTemplate,
   CreateWorkflow,
   DeleteMessageTemplate,
+  DeletePreferencesUseCase,
   DeleteWorkflowUseCase,
   GetPreferences,
   GetWorkflowByIdsUseCase,
@@ -12,8 +13,7 @@ import {
   UpdateWorkflow,
   UpsertControlValuesUseCase,
   UpsertPreferences,
-  DeletePreferencesUseCase,
-  TierRestrictionsValidateUsecase,
+  ValidateContentTierLimits,
 } from '@novu/application-generic';
 import { CommunityOrganizationRepository, PreferencesRepository } from '@novu/dal';
 import { SharedModule } from '../shared/shared.module';
@@ -40,7 +40,7 @@ const PROVIDERS = [
   DeletePreferencesUseCase,
   UpsertControlValuesUseCase,
   BuildVariableSchemaUsecase,
-  TierRestrictionsValidateUsecase,
+  ValidateContentTierLimits,
   CommunityOrganizationRepository,
   ExtractVariables,
   BuildStepIssuesUsecase,

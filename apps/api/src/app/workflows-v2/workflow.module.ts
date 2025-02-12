@@ -5,10 +5,10 @@ import {
   DeleteWorkflowUseCase,
   GetPreferences,
   GetWorkflowByIdsUseCase,
-  TierRestrictionsValidateUsecase,
   UpdateWorkflow,
   UpsertControlValuesUseCase,
   UpsertPreferences,
+  ValidateContentTierLimits,
 } from '@novu/application-generic';
 
 import { CommunityOrganizationRepository } from '@novu/dal';
@@ -19,8 +19,8 @@ import { IntegrationModule } from '../integrations/integrations.module';
 import { MessageTemplateModule } from '../message-template/message-template.module';
 import { SharedModule } from '../shared/shared.module';
 import {
-  BuildVariableSchemaUsecase,
   BuildStepDataUsecase,
+  BuildVariableSchemaUsecase,
   BuildWorkflowTestDataUseCase,
   GeneratePreviewUsecase,
   GetWorkflowUseCase,
@@ -33,6 +33,7 @@ import { PatchStepUsecase } from './usecases/patch-step-data/patch-step.usecase'
 import { ExtractVariables } from './usecases/extract-variables/extract-variables.usecase';
 import { BuildStepIssuesUsecase } from './usecases/build-step-issues/build-step-issues.usecase';
 import { WorkflowController } from './workflow.controller';
+import { ValidateTiersUseCase } from '../environments-v1/usecases/create-environment/validate-tiers-use.case';
 
 const DAL_REPOSITORIES = [CommunityOrganizationRepository];
 
@@ -59,8 +60,9 @@ const DAL_REPOSITORIES = [CommunityOrganizationRepository];
     BuildVariableSchemaUsecase,
     PatchStepUsecase,
     PatchWorkflowUsecase,
-    TierRestrictionsValidateUsecase,
+    ValidateContentTierLimits,
     ExtractVariables,
+    ValidateTiersUseCase,
     BuildStepIssuesUsecase,
   ],
 })
