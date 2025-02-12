@@ -11,7 +11,7 @@ import { Button } from '../../primitives/button';
 import { TestWorkflowFormType } from '../schema';
 import { TestWorkflowInstructions } from './test-workflow-instructions';
 import { ActivitySkeleton } from '@/components/activity/activity-skeleton';
-import { ActivityLoadFailure } from '@/components/activity/activity-load-failure';
+import { ActivityError } from '@/components/activity/activity-error';
 import { ActivityHeader } from '@/components/activity/activity-header';
 import { ActivityOverview } from '@/components/activity/components/activity-overview';
 import { ActivityLogs } from '@/components/activity/activity-logs';
@@ -71,7 +71,7 @@ export const TestWorkflowLogsSidebar = ({ transactionId, workflow }: TestWorkflo
             {isPending ? (
               <ActivitySkeleton />
             ) : error || !activity ? (
-              <ActivityLoadFailure />
+              <ActivityError />
             ) : (
               <>
                 <ActivityHeader title={activity.template?.name} className="h-[49px] border-t-0" />
@@ -91,13 +91,7 @@ export const TestWorkflowLogsSidebar = ({ transactionId, workflow }: TestWorkflo
                       <div className="text-text-sub text-label-xs">Now integrate the workflow in your application.</div>
                     </div>
                   </div>
-                  <Button
-                    variant="secondary"
-                    mode="outline"
-                    size="2xs"
-                    className="whitespace-nowrap"
-                    onClick={() => setShowInstructions(true)}
-                  >
+                  <Button variant="secondary" mode="outline" size="2xs" onClick={() => setShowInstructions(true)}>
                     Integrate workflow
                   </Button>
                 </div>

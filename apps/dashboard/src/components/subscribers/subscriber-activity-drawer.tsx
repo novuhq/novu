@@ -7,7 +7,7 @@ import { Sheet } from '@/components/primitives/sheet';
 import { cn } from '@/utils/ui';
 import { ActivityPanel } from '@/components/activity/activity-panel';
 import { ActivitySkeleton } from '@/components/activity/activity-skeleton';
-import { ActivityLoadFailure } from '@/components/activity/activity-load-failure';
+import { ActivityError } from '@/components/activity/activity-error';
 import { ActivityHeader } from '@/components/activity/activity-header';
 import { ActivityOverview } from '@/components/activity/components/activity-overview';
 import { ActivityLogs } from '@/components/activity/activity-logs';
@@ -40,7 +40,8 @@ export const ActivityDetailsDrawer = forwardRef<HTMLDivElement, ActivityPanelDra
       <SheetContent
         ref={ref}
         className={
-          'w-3/4 sm:max-w-[600px] [&_[data-close-button="true"]]:right-3 [&_[data-close-button="true"]]:top-[calc(0.75rem+2px)]'
+          // to make the drawers stacking effect, we need to make sure the width is a bit smaller than the normal sidebar width
+          'w-3/4 sm:max-w-[540px] [&_[data-close-button="true"]]:right-3 [&_[data-close-button="true"]]:top-[calc(0.75rem+2px)]'
         }
       >
         <VisuallyHidden>
@@ -51,7 +52,7 @@ export const ActivityDetailsDrawer = forwardRef<HTMLDivElement, ActivityPanelDra
           {isPending ? (
             <ActivitySkeleton headerClassName="h-12" />
           ) : error || !activity ? (
-            <ActivityLoadFailure />
+            <ActivityError />
           ) : (
             <>
               <ActivityHeader title={activity.template?.name} className="h-12 py-3" />

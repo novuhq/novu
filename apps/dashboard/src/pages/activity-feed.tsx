@@ -14,7 +14,7 @@ import { ActivityHeader } from '@/components/activity/activity-header';
 import { ActivityOverview } from '@/components/activity/components/activity-overview';
 import { ActivityLogs } from '@/components/activity/activity-logs';
 import { ActivitySkeleton } from '@/components/activity/activity-skeleton';
-import { ActivityLoadFailure } from '@/components/activity/activity-load-failure';
+import { ActivityError } from '@/components/activity/activity-error';
 
 export function ActivityFeed() {
   const { activityItemId, filters, filterValues, handleActivitySelect, handleFiltersChange } = useActivityUrlState();
@@ -92,7 +92,7 @@ export function ActivityFeed() {
                         {isPending ? (
                           <ActivitySkeleton />
                         ) : error || !activity ? (
-                          <ActivityLoadFailure />
+                          <ActivityError />
                         ) : (
                           <>
                             <ActivityHeader title={activity.template?.name} />
