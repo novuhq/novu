@@ -2,7 +2,7 @@ import axios from 'axios';
 import { expect } from 'chai';
 import sinon from 'sinon';
 
-import { JobsService, SubscribersService, UserSession } from '@novu/testing';
+import { JobsService, SubscribersService, TestingQueueService, UserSession } from '@novu/testing';
 import {
   ExecutionDetailsRepository,
   JobRepository,
@@ -15,6 +15,7 @@ import {
   CreateWorkflowDto,
   ExecutionDetailsStatusEnum,
   JobStatusEnum,
+  JobTopicNameEnum,
   MessagesStatusEnum,
   StepTypeEnum,
   WorkflowCreationSourceEnum,
@@ -45,6 +46,18 @@ contexts.forEach((context: Context) => {
     const executionDetailsRepository = new ExecutionDetailsRepository();
     const jobsService = new JobsService();
     let bridge;
+
+    const printJobsState = async (prefix: string) => {
+      const count = await Promise.all([
+        jobRepository.count({} as any),
+        new TestingQueueService(JobTopicNameEnum.WORKFLOW).queue.getWaitingCount(),
+        new TestingQueueService(JobTopicNameEnum.PROCESS_SUBSCRIBER).queue.getWaitingCount(),
+        new TestingQueueService(JobTopicNameEnum.STANDARD).queue.getWaitingCount(),
+      ]);
+
+      // eslint-disable-next-line no-console
+      console.log(`${prefix} Jobs state `, count);
+    };
 
     beforeEach(async () => {
       bridgeServer = new BridgeServer();
@@ -615,6 +628,7 @@ contexts.forEach((context: Context) => {
     });
 
     it(`should trigger the bridge workflow with control default and payload data [${context.name}]`, async () => {
+      await printJobsState('test init');
       const workflowId = `default-payload-params-workflow-${`${context.name}`}`;
       const newWorkflow = workflow(
         workflowId,
@@ -655,9 +669,27 @@ contexts.forEach((context: Context) => {
         await discoverAndSyncBridge(session, workflowsRepository, workflowId, bridgeServer);
       }
 
+      await printJobsState('before trigger 1');
+
       await triggerEvent(session, workflowId, subscriber.subscriberId, {}, bridge);
+
       await session.waitForJobCompletion();
+
+      await printJobsState('after trigger 1');
+
       await triggerEvent(session, workflowId, subscriber.subscriberId, { name: 'payload_name' }, bridge);
+
+      await printJobsState('after trigger 2');
+
+      await jobsService.awaitAllJobs();
+
+      await printJobsState('before sleep');
+
+      // eslint-disable-next-line no-promise-executor-return
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      await printJobsState('after sleep');
+
       await jobsService.awaitAllJobs();
 
       const sentMessage = await messageRepository.find({
