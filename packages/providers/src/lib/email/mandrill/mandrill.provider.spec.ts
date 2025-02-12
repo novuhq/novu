@@ -7,15 +7,14 @@ const mockConfig = {
   senderName: 'Test Sender',
 };
 
-test('should trigger mandrill correctly', async () => {
+test('should send a standard email through Mandrill', async () => {
   const provider = new MandrillProvider(mockConfig);
-  const spy = vi
-    // eslint-disable-next-line @typescript-eslint/dot-notation
-    .spyOn(provider['transporter'].messages, 'send')
-    .mockImplementation(async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return [{}] as any;
-    });
+  // eslint-disable-next-line @typescript-eslint/dot-notation
+  const spy = vi.spyOn(provider['transporter'].messages, 'send').mockImplementation(async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return [{}] as any;
+  });
+
   const mockNovuMessage = {
     to: ['test2@test.com'],
     subject: 'test subject',
@@ -38,18 +37,54 @@ test('should trigger mandrill correctly', async () => {
       from_name: mockConfig.senderName,
       subject: mockNovuMessage.subject,
       html: mockNovuMessage.html,
-      to: [
-        {
-          email: mockNovuMessage.to[0],
-          type: 'to',
-        },
-      ],
+      to: [{ email: mockNovuMessage.to[0], type: 'to' }],
       attachments: [
         {
           content: Buffer.from('test').toString('base64'),
           type: 'text/plain',
           name: 'test.txt',
         },
+      ],
+    },
+  });
+});
+
+test('should send an email using a Mandrill template', async () => {
+  const provider = new MandrillProvider(mockConfig);
+  // eslint-disable-next-line @typescript-eslint/dot-notation
+  const spy = vi.spyOn(provider['transporter'].messages, 'sendTemplate').mockImplementation(async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return [{}] as any;
+  });
+
+  const mockNovuMessage = {
+    to: ['test2@test.com'],
+    subject: 'test subject',
+    html: undefined,
+    customData: {
+      templateId: 'welcome-template',
+      variables: {
+        FIRST_NAME: 'John',
+        LAST_NAME: 'Doe',
+      },
+    },
+  };
+
+  await provider.sendMessage(mockNovuMessage);
+
+  expect(spy).toHaveBeenCalled();
+  expect(spy).toHaveBeenCalledWith({
+    template_name: mockNovuMessage.customData.templateId,
+    template_content: [],
+    message: {
+      from_email: mockConfig.from,
+      from_name: mockConfig.senderName,
+      subject: mockNovuMessage.subject,
+      html: mockNovuMessage.html,
+      to: [{ email: mockNovuMessage.to[0], type: 'to' }],
+      global_merge_vars: [
+        { name: 'FIRST_NAME', content: 'John' },
+        { name: 'LAST_NAME', content: 'Doe' },
       ],
     },
   });
