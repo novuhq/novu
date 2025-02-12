@@ -20,7 +20,7 @@ export class ResourceValidatorService {
 
   async validateStepsLimit(environmentId: string, steps: NotificationStep[]) {
     const isWorkflowLimitEnabled = await this.getFeatureFlag.execute({
-      key: FeatureFlagsKeysEnum.IS_MAX_WORKFLOW_LIMIT_ENABLED,
+      key: FeatureFlagsKeysEnum.IS_MAX_STEPS_PER_WORKFLOW_ENABLED,
       environmentId,
       organizationId: 'system',
       userId: 'system',
