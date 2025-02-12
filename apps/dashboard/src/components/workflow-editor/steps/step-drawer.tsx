@@ -1,9 +1,11 @@
 import { useNavigate } from 'react-router-dom';
 
+import { FormProtection } from '@/components/form-protection';
 import { PageMeta } from '@/components/page-meta';
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/primitives/sheet';
 import { VisuallyHidden } from '@/components/primitives/visually-hidden';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
+import { useFormProtection } from '@/hooks/use-form-protection';
 import { useOnElementUnmount } from '@/hooks/use-on-element-unmount';
 import { cn } from '@/utils/ui';
 import { StepTypeEnum } from '@novu/shared';
@@ -26,6 +28,9 @@ export const StepDrawer = ({ children, title }: { children: React.ReactNode; tit
       navigate(-1);
     },
   });
+
+  const { isFormDirty, setShowAlert, showAlert } = useFormProtection(sheetRef);
+
   if (!workflow || !step) {
     return null;
   }
@@ -33,8 +38,16 @@ export const StepDrawer = ({ children, title }: { children: React.ReactNode; tit
   return (
     <>
       <PageMeta title={title} />
-      <Sheet modal={false} open={isOpen} onOpenChange={setIsOpen}>
-        {/* Custom overlay since SheetOverlay does not work with modal={false} */}
+      <Sheet
+        modal={false}
+        open={isOpen}
+        onOpenChange={(open) => {
+          if (isFormDirty) {
+            return setShowAlert(true);
+          }
+          setIsOpen(open);
+        }}
+      >
         <div
           className={cn('animate-in fade-in fixed inset-0 z-50 bg-black/20 transition-opacity duration-300', {
             'pointer-events-none opacity-0': !isOpen,
@@ -48,6 +61,8 @@ export const StepDrawer = ({ children, title }: { children: React.ReactNode; tit
           {children}
         </SheetContent>
       </Sheet>
+
+      <FormProtection onClose={() => setIsOpen(false)} showAlert={showAlert} setShowAlert={setShowAlert} />
     </>
   );
 };

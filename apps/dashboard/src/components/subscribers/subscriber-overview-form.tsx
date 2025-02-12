@@ -1,9 +1,10 @@
 import { PhoneInput } from '@/components/primitives/phone-input';
 import { LocaleSelect } from '@/components/subscribers/locale-select';
-import { useBeforeUnload } from '@/hooks/use-before-unload';
 import { useDeleteSubscriber } from '@/hooks/use-delete-subscriber';
 import { usePatchSubscriber } from '@/hooks/use-patch-subscriber';
+import { useTelemetry } from '@/hooks/use-telemetry';
 import { formatDateSimple } from '@/utils/format-date';
+import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { SubscriberResponseDto } from '@novu/api/models/components';
@@ -11,7 +12,7 @@ import { loadLanguage } from '@uiw/codemirror-extensions-langs';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { RiDeleteBin2Line, RiMailLine } from 'react-icons/ri';
-import { Link, useBlocker, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ExternalToast } from 'sonner';
 import { z } from 'zod';
 import { ConfirmationModal } from '../confirmation-modal';
@@ -19,17 +20,14 @@ import { Avatar, AvatarFallback, AvatarImage } from '../primitives/avatar';
 import { Button } from '../primitives/button';
 import { CopyButton } from '../primitives/copy-button';
 import { Editor } from '../primitives/editor';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../primitives/form/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormRoot } from '../primitives/form/form';
 import { Input, InputRoot } from '../primitives/input';
 import { Separator } from '../primitives/separator';
 import { showErrorToast, showSuccessToast } from '../primitives/sonner-helpers';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip';
-import { UnsavedChangesAlertDialog } from '../unsaved-changes-alert-dialog';
 import { SubscriberFormSchema } from './schema';
 import { TimezoneSelect } from './timezone-select';
 import { getSubscriberTitle } from './utils';
-import { useTelemetry } from '@/hooks/use-telemetry';
-import { TelemetryEvent } from '@/utils/telemetry';
 
 const extensions = [loadLanguage('json')?.extension ?? []];
 const basicSetup = { lineNumbers: true, defaultKeymap: true };
@@ -108,10 +106,6 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
     }
   }, [subscriber, form]);
 
-  const isDirty = Object.keys(form.formState.dirtyFields).length > 0;
-  const blocker = useBlocker(isDirty);
-  useBeforeUnload(isDirty);
-
   const onSubmit = async (formData: z.infer<typeof SubscriberFormSchema>) => {
     const dirtyFields = form.formState.dirtyFields;
 
@@ -134,7 +128,7 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
   return (
     <div className={cn('flex h-full flex-col')}>
       <Form {...form}>
-        <form autoComplete="off" noValidate onSubmit={form.handleSubmit(onSubmit)} className="flex h-full flex-col">
+        <FormRoot autoComplete="off" noValidate onSubmit={form.handleSubmit(onSubmit)} className="flex h-full flex-col">
           <div className="flex flex-col items-stretch gap-6 p-5">
             <div className="flex items-center gap-3">
               <Tooltip>
@@ -394,13 +388,13 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
                 >
                   Delete subscriber
                 </Button>
-                <Button variant="secondary" type="submit" disabled={!isDirty}>
+                <Button variant="secondary" type="submit" disabled={!form.formState.isDirty}>
                   Save changes
                 </Button>
               </div>
             </div>
           )}
-        </form>
+        </FormRoot>
       </Form>
       <ConfirmationModal
         open={isDeleteModalOpen}
@@ -420,7 +414,6 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
         confirmButtonText="Delete subscriber"
         isLoading={isDeleteSubscriberPending}
       />
-      <UnsavedChangesAlertDialog blocker={blocker} />
     </div>
   );
 }
