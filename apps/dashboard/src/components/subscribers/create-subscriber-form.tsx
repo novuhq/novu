@@ -52,6 +52,7 @@ export const CreateSubscriberForm = (props: CreateSubscriberFormProps) => {
     },
     resolver: zodResolver(CreateSubscriberFormSchema),
     shouldFocusError: false,
+    mode: 'onBlur',
   });
 
   const isDirty = Object.keys(form.formState.dirtyFields).length > 0;
