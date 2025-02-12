@@ -65,7 +65,7 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
   const form = useForm<z.infer<typeof SubscriberFormSchema>>({
     defaultValues: {
       avatar: subscriber?.avatar ?? '',
-      email: subscriber.email ?? null,
+      email: subscriber.email || null,
       phone: subscriber.phone ?? '',
       firstName: subscriber.firstName ?? '',
       lastName: subscriber.lastName ?? '',
@@ -97,7 +97,7 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
     if (subscriber) {
       form.reset({
         avatar: subscriber?.avatar ?? '',
-        email: subscriber.email ?? null,
+        email: subscriber.email || null,
         phone: subscriber.phone ?? '',
         firstName: subscriber.firstName ?? '',
         lastName: subscriber.lastName ?? '',
@@ -111,6 +111,12 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
   const isDirty = Object.keys(form.formState.dirtyFields).length > 0;
   const blocker = useBlocker(isDirty);
   useBeforeUnload(isDirty);
+
+  console.log({
+    isDirty: form.formState.isDirty,
+    dirtyFields: form.formState.dirtyFields,
+    values: form.getValues(),
+  });
 
   const onSubmit = async (formData: z.infer<typeof SubscriberFormSchema>) => {
     const dirtyFields = form.formState.dirtyFields;
@@ -254,7 +260,11 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
                         placeholder="hello@novu.co"
                         id={field.name}
                         value={field.value || undefined}
-                        onChange={field.onChange}
+                        onChange={(event) => {
+                          const { value } = event.target;
+                          const finalValue = value === '' ? null : value;
+                          field.onChange(finalValue);
+                        }}
                         hasError={!!fieldState.error}
                         size="xs"
                         leadingIcon={RiMailLine}
