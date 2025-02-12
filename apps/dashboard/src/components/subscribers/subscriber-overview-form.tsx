@@ -112,12 +112,6 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
   const blocker = useBlocker(isDirty);
   useBeforeUnload(isDirty);
 
-  console.log({
-    isDirty: form.formState.isDirty,
-    dirtyFields: form.formState.dirtyFields,
-    values: form.getValues(),
-  });
-
   const onSubmit = async (formData: z.infer<typeof SubscriberFormSchema>) => {
     const dirtyFields = form.formState.dirtyFields;
 
