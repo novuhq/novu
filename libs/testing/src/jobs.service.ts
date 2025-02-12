@@ -97,7 +97,6 @@ export class JobsService {
     while (hasMoreDelayedJobs && iterationCount < MAX_ITERATIONS) {
       const jobsResult = await Promise.all([
         this.standardQueue.getDelayed(),
-        this.standardQueue.getDelayed(),
         this.workflowQueue.getDelayed(),
         this.subscriberProcessQueue.getDelayed(),
       ]);
