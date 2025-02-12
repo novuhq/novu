@@ -325,7 +325,7 @@ export class BuildStepIssuesUsecase {
       _environmentId: args.environmentId,
       _organizationId: args.organizationId,
       active: true,
-      primary: primaryNeeded ? true : undefined,
+      ...(primaryNeeded && { primary: true }),
       channel: args.stepTypeDto,
     });
 
