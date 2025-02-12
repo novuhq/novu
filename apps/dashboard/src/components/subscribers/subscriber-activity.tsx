@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { AnimatePresence } from 'motion/react';
 
 import { ActivityFilters } from '@/components/activity/activity-filters';
@@ -6,9 +7,9 @@ import { defaultActivityFilters } from '@/components/activity/constants';
 import { ActivityFiltersData } from '@/types/activity';
 import { useFetchActivities } from '@/hooks/use-fetch-activities';
 import { SubscriberActivityList } from '@/components/subscribers/subscriber-activity-list';
-import { Link } from 'react-router-dom';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { useEnvironment } from '@/context/environment/hooks';
+import { ActivityDetailsDrawer } from '@/components/subscribers/subscriber-activity-drawer';
 
 const getInitialFilters = (subscriberId: string): ActivityFiltersData => ({
   dateRange: '30d',
@@ -21,7 +22,7 @@ const getInitialFilters = (subscriberId: string): ActivityFiltersData => ({
 export const SubscriberActivity = ({ subscriberId }: { subscriberId: string }) => {
   const { currentEnvironment } = useEnvironment();
   const [filters, setFilters] = useState<ActivityFiltersData>(getInitialFilters(subscriberId));
-
+  const [activityItemId, setActivityItemId] = useState<string>('');
   const { activities, isLoading } = useFetchActivities(
     {
       filters,
@@ -65,6 +66,10 @@ export const SubscriberActivity = ({ subscriberId }: { subscriberId: string }) =
     return params;
   }, [subscriberId, filters]);
 
+  const handleActivitySelect = (activityId: string) => {
+    setActivityItemId(activityId);
+  };
+
   return (
     <AnimatePresence mode="wait">
       <div className="flex h-full flex-col">
@@ -81,8 +86,9 @@ export const SubscriberActivity = ({ subscriberId }: { subscriberId: string }) =
           activities={activities}
           hasChangesInFilters={hasChangesInFilters}
           onClearFilters={handleClearFilters}
+          onActivitySelect={handleActivitySelect}
         />
-        <span className="text-paragraph-2xs text-text-soft border-border-soft mt-auto border-t px-3 pb-3 pt-2">
+        <span className="text-paragraph-2xs text-text-soft border-border-soft mt-auto border-t px-3 pb-3 pt-2 text-center">
           To view more detailed activity, View{' '}
           <Link
             className="underline"
@@ -93,6 +99,7 @@ export const SubscriberActivity = ({ subscriberId }: { subscriberId: string }) =
           page.
         </span>
       </div>
+      <ActivityDetailsDrawer activityId={activityItemId} onActivitySelect={handleActivitySelect} />
     </AnimatePresence>
   );
 };

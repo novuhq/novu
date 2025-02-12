@@ -40,10 +40,13 @@ const CommandInput = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof CommandPrimitive.Input> & {
     size?: 'sm' | 'md' | 'xs';
     inputWrapperClassName?: string;
+    inputRootClassName?: string;
+    inlineLeadingNode?: React.ReactNode;
   }
->(({ className, size = 'md', inputWrapperClassName, ...props }, ref) => (
-  <InputRoot>
+>(({ className, size = 'md', inputRootClassName, inputWrapperClassName, inlineLeadingNode, ...props }, ref) => (
+  <InputRoot className={inputRootClassName}>
     <InputWrapper className={cn('h-9', size === 'sm' && 'h-8', size === 'xs' && 'h-7', inputWrapperClassName)}>
+      {inlineLeadingNode}
       <CommandPrimitive.Input
         ref={ref}
         className={cn('text-paragraph-xs placeholder:text-text-soft h-9 w-full bg-transparent outline-none', className)}
