@@ -10,6 +10,11 @@ import { WorkflowTriggerInboxIllustration } from '../../icons/workflow-trigger-i
 import { Button } from '../../primitives/button';
 import { TestWorkflowFormType } from '../schema';
 import { TestWorkflowInstructions } from './test-workflow-instructions';
+import { ActivitySkeleton } from '@/components/activity/activity-skeleton';
+import { ActivityError } from '@/components/activity/activity-error';
+import { ActivityHeader } from '@/components/activity/activity-header';
+import { ActivityOverview } from '@/components/activity/components/activity-overview';
+import { ActivityLogs } from '@/components/activity/activity-logs';
 
 type TestWorkflowLogsSidebarProps = {
   transactionId?: string;
@@ -23,7 +28,7 @@ export const TestWorkflowLogsSidebar = ({ transactionId, workflow }: TestWorkflo
   const [showInstructions, setShowInstructions] = useState(false);
   const to = useWatch({ name: 'to', control });
   const payload = useWatch({ name: 'payload', control });
-  const { activities } = useFetchActivities(
+  const { activities, isPending, error } = useFetchActivities(
     {
       filters: transactionId ? { transactionId } : undefined,
     },
@@ -32,7 +37,8 @@ export const TestWorkflowLogsSidebar = ({ transactionId, workflow }: TestWorkflo
       refetchInterval: shouldRefetch ? 1000 : false,
     }
   );
-  const activityId: string | undefined = parentActivityId ?? activities?.[0]?._id;
+  const activity = activities?.[0];
+  const activityId: string | undefined = parentActivityId ?? activity?._id;
 
   useEffect(() => {
     if (activityId) {
@@ -61,36 +67,37 @@ export const TestWorkflowLogsSidebar = ({ transactionId, workflow }: TestWorkflo
         </div>
       ) : activityId ? (
         <>
-          <ActivityPanel
-            activityId={activityId}
-            onActivitySelect={setParentActivityId}
-            headerClassName="h-[49px]"
-            overviewHeaderClassName="border-t-0"
-          />
-          {!workflow?.lastTriggeredAt && (
-            <div className="p-3">
-              <div className="border-stroke-soft bg-bg-weak rounded-8 flex items-center justify-between gap-3 border p-3 py-2">
-                <div className="flex items-center gap-3">
-                  <div className="bg-success-100 flex size-6 items-center justify-center rounded-full">
-                    <RiCheckboxCircleFill className="text-success size-5" />
+          <ActivityPanel>
+            {isPending ? (
+              <ActivitySkeleton />
+            ) : error || !activity ? (
+              <ActivityError />
+            ) : (
+              <>
+                <ActivityHeader title={activity.template?.name} className="h-[49px] border-t-0" />
+                <ActivityOverview activity={activity} />
+                <ActivityLogs activity={activity} onActivitySelect={setParentActivityId} />
+              </>
+            )}
+            {!workflow?.lastTriggeredAt && (
+              <div className="border-t border-neutral-100 p-3">
+                <div className="border-stroke-soft bg-bg-weak rounded-8 flex items-center justify-between gap-3 border p-3 py-2">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-success-100 flex size-6 items-center justify-center rounded-full">
+                      <RiCheckboxCircleFill className="text-success size-5" />
+                    </div>
+                    <div>
+                      <div className="text-success text-label-xs">You have triggered the workflow!</div>
+                      <div className="text-text-sub text-label-xs">Now integrate the workflow in your application.</div>
+                    </div>
                   </div>
-                  <div>
-                    <div className="text-success text-label-xs">You have triggered the workflow!</div>
-                    <div className="text-text-sub text-label-xs">Now integrate the workflow in your application.</div>
-                  </div>
+                  <Button variant="secondary" mode="outline" size="2xs" onClick={() => setShowInstructions(true)}>
+                    Integrate workflow
+                  </Button>
                 </div>
-                <Button
-                  variant="secondary"
-                  mode="outline"
-                  size="2xs"
-                  className="whitespace-nowrap"
-                  onClick={() => setShowInstructions(true)}
-                >
-                  Integrate workflow
-                </Button>
               </div>
-            </div>
-          )}
+            )}
+          </ActivityPanel>
         </>
       ) : (
         <div className="flex h-full flex-col items-center justify-center gap-6 p-6 text-center">

@@ -4,6 +4,8 @@ import { SidebarContent } from '@/components/side-navigation/sidebar';
 import { PreferencesItem } from '@/components/subscribers/preferences/preferences-item';
 import { WorkflowPreferences } from '@/components/subscribers/preferences/workflow-preferences';
 import { usePatchSubscriberPreferences } from '@/hooks/use-patch-subscriber-preferences';
+import { useTelemetry } from '@/hooks/use-telemetry';
+import { TelemetryEvent } from '@/utils/telemetry';
 import { GetSubscriberPreferencesDto, PatchPreferenceChannelsDto } from '@novu/api/models/components';
 import { ChannelTypeEnum } from '@novu/shared';
 import { motion } from 'motion/react';
@@ -18,9 +20,12 @@ type PreferencesProps = {
 
 export const Preferences = (props: PreferencesProps) => {
   const { subscriberPreferences, subscriberId, readOnly = false } = props;
+  const track = useTelemetry();
+
   const { patchSubscriberPreferences } = usePatchSubscriberPreferences({
     onSuccess: () => {
       showSuccessToast('Subscriber preferences updated successfully');
+      track(TelemetryEvent.SUBSCRIBER_PREFERENCES_UPDATED);
     },
   });
 

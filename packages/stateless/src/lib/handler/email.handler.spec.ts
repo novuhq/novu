@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { CheckIntegrationResponseEnum } from '../provider/provider.enum';
 import { IEmailProvider } from '../provider/provider.interface';
 import {

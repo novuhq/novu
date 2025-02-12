@@ -63,8 +63,7 @@ describe('Expo', () => {
         return [
           {
             status: 'error',
-            message:
-              '"invalidDeviceToken" is not a registered push notification recipient',
+            message: '"invalidDeviceToken" is not a registered push notification recipient',
           },
         ];
       });
@@ -86,9 +85,7 @@ describe('Expo', () => {
       });
       throw new Error('Should not reach here');
     } catch (error) {
-      expect(error.message).toEqual(
-        '"invalidDeviceToken" is not a registered push notification recipient',
-      );
+      expect(error.message).toEqual('"invalidDeviceToken" is not a registered push notification recipient');
     }
 
     // @ts-expect-error
@@ -197,7 +194,7 @@ describe('Expo', () => {
             badge: '_passthrough',
           },
         },
-      },
+      }
     );
 
     // @ts-expect-error

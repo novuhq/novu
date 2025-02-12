@@ -25,7 +25,7 @@ export class TelnyxSmsProvider extends BaseProvider implements ISmsProvider {
       apiKey?: string;
       from?: string;
       messageProfileId?: string;
-    },
+    }
   ) {
     super();
     this.telnyxClient = Telnyx(config.apiKey);
@@ -33,7 +33,7 @@ export class TelnyxSmsProvider extends BaseProvider implements ISmsProvider {
 
   async sendMessage(
     options: ISmsOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const telynxResponse = await this.telnyxClient.messages.create(
       this.transform<any>(bridgeProviderData, {
@@ -41,7 +41,7 @@ export class TelnyxSmsProvider extends BaseProvider implements ISmsProvider {
         text: options.content,
         from: options.from || this.config.from,
         messaging_profile_id: this.config.messageProfileId,
-      }).body,
+      }).body
     );
 
     return {
@@ -58,10 +58,7 @@ export class TelnyxSmsProvider extends BaseProvider implements ISmsProvider {
     return [body.data.id];
   }
 
-  parseEventBody(
-    body: any | any[],
-    identifier: string,
-  ): ISMSEventBody | undefined {
+  parseEventBody(body: any | any[], identifier: string): ISMSEventBody | undefined {
     if (Array.isArray(body)) {
       // eslint-disable-next-line no-param-reassign
       body = body.find((item) => item.data.id === identifier);

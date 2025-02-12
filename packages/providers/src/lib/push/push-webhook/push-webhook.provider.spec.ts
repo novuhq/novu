@@ -44,10 +44,9 @@ test('should trigger push-webhook library correctly', async () => {
     {
       headers: {
         'content-type': 'application/json',
-        'X-Novu-Signature':
-          'ebb2ff6420df59a863a6ddfa64ca8721cbbce038d5432c441cde83dee43b70d9',
+        'X-Novu-Signature': 'ebb2ff6420df59a863a6ddfa64ca8721cbbce038d5432c441cde83dee43b70d9',
       },
-    },
+    }
   );
 });
 
@@ -83,7 +82,7 @@ test('should trigger push-webhook library correctly with _passthrough', async ()
           content: 'test _passthrough',
         },
       },
-    },
+    }
   );
 
   expect(fakePost).toHaveBeenCalled();
@@ -102,9 +101,8 @@ test('should trigger push-webhook library correctly with _passthrough', async ()
     {
       headers: {
         'content-type': 'application/json',
-        'X-Novu-Signature':
-          '5147e1613526bad56a1c0e318ebbdd7d312c7760dcb8230f3f4c80c07d9ebdd0',
+        'X-Novu-Signature': '5147e1613526bad56a1c0e318ebbdd7d312c7760dcb8230f3f4c80c07d9ebdd0',
       },
-    },
+    }
   );
 });

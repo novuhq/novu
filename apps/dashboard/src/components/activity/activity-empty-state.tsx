@@ -113,13 +113,7 @@ export function ActivityEmptyState({
               }}
               className="flex items-center gap-6"
             >
-              <ExternalLink
-                size="md"
-                underline={false}
-                variant="documentation"
-                href="https://docs.novu.co"
-                target="_blank"
-              >
+              <ExternalLink underline={false} variant="documentation" href="https://docs.novu.co" target="_blank">
                 View Docs
               </ExternalLink>
               <Button

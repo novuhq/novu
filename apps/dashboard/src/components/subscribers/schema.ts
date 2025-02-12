@@ -12,8 +12,8 @@ export const SubscriberFormSchema = z.object({
     .or(z.literal(''))
     .optional(),
   avatar: z.string().optional(),
-  locale: z.string().optional(),
-  timezone: z.string().optional(),
+  locale: z.string().optional().nullable(),
+  timezone: z.string().optional().nullable(),
   data: z
     .string()
     .transform((str, ctx) => {
@@ -42,4 +42,6 @@ export const CreateSubscriberFormSchema = SubscriberFormSchema.extend({
     .refine((val) => val === '' || z.string().email().safeParse(val).success, {
       message: 'Invalid email',
     }),
+  locale: z.string().optional(),
+  timezone: z.string().optional(),
 });

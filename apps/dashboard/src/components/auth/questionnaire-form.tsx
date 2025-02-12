@@ -28,7 +28,7 @@ interface QuestionnaireFormData {
 interface SubmitQuestionnaireData {
   jobTitle: JobTitleEnum;
   organizationType: OrganizationTypeEnum;
-  companySize?: CompanySizeEnum;
+  companySize?: CompanySizeEnum | string;
   pageUri: string;
   pageName: string;
   hubspotContext: string;
@@ -61,6 +61,7 @@ export function QuestionnaireForm() {
 
     submitQuestionnaireMutation.mutate({
       ...data,
+      companySize: data.companySize || '1',
       pageUri: window.location.href,
       pageName: 'Create Organization Form',
       hubspotContext: hubspotContext || '',

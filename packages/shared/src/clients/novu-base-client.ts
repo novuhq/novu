@@ -9,7 +9,7 @@ export class HttpError extends Error {
     this.name = this.constructor.name;
   }
 
-  toString(): string {
+  override toString(): string {
     return `${this.name} (status: ${this.status}): ${this.responseText}`;
   }
 }

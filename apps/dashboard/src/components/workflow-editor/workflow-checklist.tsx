@@ -221,7 +221,7 @@ function useChecklistItems(steps: Step[]) {
         key: 'trigger',
         title: 'Trigger workflow from your application',
         description: 'Trigger the workflow to test it in production',
-        isCompleted: () => workflow?.lastTriggeredAt !== undefined,
+        isCompleted: () => !!workflow?.lastTriggeredAt,
         onClick: () => {
           telemetry(TelemetryEvent.WORKFLOW_CHECKLIST_STEP_CLICKED, { stepTitle: 'Trigger workflow' });
           navigate(

@@ -1,98 +1,103 @@
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
-import TruncatedText from '@/components/truncated-text';
-import { memo, useState } from 'react';
-import { RiTimeLine } from 'react-icons/ri';
+import { cn } from '@/utils/ui';
+import { RiArrowDownSLine, RiCheckLine, RiSearchLine, RiTimeLine } from 'react-icons/ri';
 import { useTimezoneSelect } from 'react-timezone-select';
-
-// Define a type for timezone options.
-type TimezoneOption = {
-  label: string;
-  value: string;
-};
-
-interface TimezoneOptionsProps {
-  options: TimezoneOption[];
-}
-
-// Extracted and memoized component for rendering timezone options.
-const TimezoneOptions = memo(function TimezoneOptions({ options }: TimezoneOptionsProps) {
-  return (
-    <>
-      {options.map((item) => (
-        <SelectItem key={item.value} value={item.value}>
-          {item.label}
-        </SelectItem>
-      ))}
-    </>
-  );
-});
+import { Button } from '../primitives/button';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '../primitives/command';
+import { Popover, PopoverContent, PopoverTrigger } from '../primitives/popover';
+import TruncatedText from '../truncated-text';
+import { useRef, useState } from 'react';
 
 export function TimezoneSelect({
   value,
-  defaultOption,
   disabled,
-  onValueChange,
+  onChange,
   readOnly,
-  required,
 }: {
   value?: string;
-  defaultOption?: string;
-  size?: 'sm' | 'md';
   disabled?: boolean;
   readOnly?: boolean;
-  required?: boolean;
-  onValueChange: (val: string) => void;
+  onChange: (val: string) => void;
 }) {
-  // State to track whether the select is open.
-  const [isOpen, setIsOpen] = useState(false);
-  // Get timezone options and the parse function.
+  const [open, setOpen] = useState(false);
   const { options, parseTimezone } = useTimezoneSelect({ labelStyle: 'abbrev', displayValue: 'UTC' });
-
-  const handleValueChange = (val: string) => {
-    const parsedValue = parseTimezone(val);
-    onValueChange(parsedValue.value);
-  };
+  const listRef = useRef<HTMLDivElement>(null);
+  const scrollId = useRef<ReturnType<typeof setTimeout>>();
 
   return (
-    <Select
-      value={value}
-      onValueChange={handleValueChange}
-      disabled={disabled}
-      required={required}
-      defaultValue={defaultOption}
-      open={readOnly ? false : isOpen}
-      onOpenChange={(open) => setIsOpen(open)}
-    >
-      <SelectTrigger className="focus:ring-stroke-strong group overflow-hidden p-1.5 focus:ring-1">
-        <SelectValue
-          placeholder={
-            <div className="flex w-full items-center gap-1">
-              <div>
-                <RiTimeLine className="size-4" />
-              </div>
-              <TruncatedText className="text-sm">Select a timezone</TruncatedText>
-            </div>
-          }
-          asChild
-          className="w-full overflow-hidden"
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="secondary"
+          mode="outline"
+          className="flex h-8 w-full items-center gap-1 rounded-lg px-3 focus:z-10"
+          disabled={disabled}
         >
           <div className="flex max-w-full flex-1 items-center gap-1 overflow-hidden">
             <div>
-              <RiTimeLine className="size-4" />
+              <RiTimeLine className="size-4 text-neutral-400" />
             </div>
-            {value && (
-              <TruncatedText className="text-foreground w-full min-w-0 flex-1 text-sm">
+            {value ? (
+              <TruncatedText className="text-foreground w-full min-w-0 flex-1 text-xs font-normal text-neutral-950">
                 {parseTimezone(value).label}
               </TruncatedText>
+            ) : (
+              <TruncatedText className="w-full min-w-0 flex-1 text-xs font-normal text-neutral-400">
+                Search timezone...
+              </TruncatedText>
             )}
+            <RiArrowDownSLine
+              className={cn('ml-auto size-4 opacity-50', disabled || readOnly ? 'hidden' : 'opacity-100')}
+            />
           </div>
-        </SelectValue>
-      </SelectTrigger>
-      {isOpen && (
-        <SelectContent>
-          <TimezoneOptions options={options} />
-        </SelectContent>
-      )}
-    </Select>
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[300px] rounded-lg p-0">
+        <Command>
+          <CommandInput
+            placeholder="Search timezone..."
+            inputRootClassName="rounded-b-none before:ring-0 before:border-b has-[input:focus]:shadow-none focus-within:shadow-none px-1.5"
+            inlineLeadingNode={<RiSearchLine className="size-4 text-neutral-400" />}
+            /**
+             * Scroll to top bug workaround: https://github.com/pacocoursey/cmdk/issues/233#issuecomment-2015998940
+             */
+            onValueChange={() => {
+              // clear pending scroll
+              clearTimeout(scrollId.current);
+
+              // the setTimeout is used to create a new task
+              // this is to make sure that we don't scroll until the user is done typing
+              // you can tweak the timeout duration ofc
+              scrollId.current = setTimeout(() => {
+                // inside your list select the first group and scroll to the top
+                const div = listRef.current;
+                div?.scrollTo({ top: 0, behavior: 'smooth' });
+              }, 0);
+            }}
+          />
+          <CommandList ref={listRef}>
+            <CommandEmpty>No timezone found.</CommandEmpty>
+
+            <CommandGroup className="rounded-md p-2">
+              {options.map((item) => (
+                <CommandItem
+                  className={cn('cursor-pointer', {
+                    'bg-accent': value === item.value,
+                  })}
+                  onSelect={() => {
+                    const parsedValue = parseTimezone(item.value);
+                    onChange(parsedValue.value);
+                    setOpen(false);
+                  }}
+                  key={item.value}
+                >
+                  {item.label}
+                  <RiCheckLine className={`ml-auto size-4 ${value === item.value ? 'opacity-100' : 'opacity-0'}`} />
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 }

@@ -11,10 +11,7 @@ import { Resend } from 'resend';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
-export class ResendEmailProvider
-  extends BaseProvider
-  implements IEmailProvider
-{
+export class ResendEmailProvider extends BaseProvider implements IEmailProvider {
   protected casing: CasingEnum = CasingEnum.SNAKE_CASE;
   id = EmailProviderIdEnum.Resend;
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
@@ -25,7 +22,7 @@ export class ResendEmailProvider
       apiKey: string;
       from: string;
       senderName?: string;
-    },
+    }
   ) {
     super();
     this.resendClient = new Resend(this.config.apiKey);
@@ -33,7 +30,7 @@ export class ResendEmailProvider
 
   async sendMessage(
     options: IEmailOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const senderName = options.senderName || this.config?.senderName;
     const fromAddress = options.from || this.config.from;
@@ -53,7 +50,7 @@ export class ResendEmailProvider
         })),
         bcc: options.bcc,
         headers: options.headers,
-      }).body,
+      }).body
     );
 
     if (response.error) {
@@ -66,9 +63,7 @@ export class ResendEmailProvider
     };
   }
 
-  async checkIntegration(
-    options: IEmailOptions,
-  ): Promise<ICheckIntegrationResponse> {
+  async checkIntegration(options: IEmailOptions): Promise<ICheckIntegrationResponse> {
     try {
       await this.resendClient.emails.send({
         from: options.from || this.config.from,
