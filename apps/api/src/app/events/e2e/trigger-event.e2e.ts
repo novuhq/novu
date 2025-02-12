@@ -45,6 +45,7 @@ import { SubscriberPayloadDto } from '@novu/api/src/models/components/subscriber
 import { CreateIntegrationRequestDto, TriggerEventResponseDto } from '@novu/api/models/components';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 import { createTenant } from '../../tenant/e2e/create-tenant.e2e';
+import { printJobsState } from './bridge-trigger.e2e';
 
 const promiseTimeout = (ms: number): Promise<void> =>
   new Promise((resolve) => {
@@ -126,6 +127,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
         ],
       });
 
+      await printJobsState('before triggerEvent');
       await novuClient.trigger({
         workflowId: template.triggers[0].identifier,
         to: [subscriber.subscriberId],
@@ -134,7 +136,11 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
         },
       });
 
+      await printJobsState('after triggerEvent');
+
       await session.waitForJobCompletion(template?._id, true, 0);
+
+      await printJobsState('after waitForJobCompletion');
 
       const messagesAfter = await messageRepository.find({
         _environmentId: session.environment._id,
