@@ -331,7 +331,7 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
                         className="overflow-auto"
                         extensions={extensions}
                         basicSetup={basicSetup}
-                        placeholder="Custom data (JSON)"
+                        placeholder="{}"
                         height="100%"
                         multiline
                         {...field}

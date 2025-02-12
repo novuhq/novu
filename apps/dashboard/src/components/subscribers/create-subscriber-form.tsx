@@ -297,7 +297,7 @@ export const CreateSubscriberForm = (props: CreateSubscriberFormProps) => {
                         className="overflow-auto"
                         extensions={extensions}
                         basicSetup={basicSetup}
-                        placeholder="Custom data (JSON)"
+                        placeholder="{}"
                         height="100%"
                         multiline
                         {...field}
