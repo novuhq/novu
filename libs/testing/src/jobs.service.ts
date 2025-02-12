@@ -101,6 +101,7 @@ export class JobsService {
     let hasMoreDelayedJobs = true;
     let iterationCount = 0;
     const MAX_ITERATIONS = 100;
+    await this.waitForJobCompletion({});
 
     while (hasMoreDelayedJobs && iterationCount < MAX_ITERATIONS) {
       const jobsResult = await Promise.all([

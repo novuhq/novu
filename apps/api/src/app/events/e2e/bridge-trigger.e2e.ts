@@ -686,7 +686,7 @@ contexts.forEach((context: Context) => {
       await printJobsState('before sleep');
 
       // eslint-disable-next-line no-promise-executor-return
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       await printJobsState('after sleep');
 
