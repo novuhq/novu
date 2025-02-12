@@ -100,7 +100,7 @@ export class JobsService {
   public async awaitAllJobs() {
     let hasMoreDelayedJobs = true;
     let iterationCount = 0;
-    const MAX_ITERATIONS = 200;
+    const MAX_ITERATIONS = 20;
     await this.waitForJobCompletion({});
 
     while (hasMoreDelayedJobs && iterationCount < MAX_ITERATIONS) {
