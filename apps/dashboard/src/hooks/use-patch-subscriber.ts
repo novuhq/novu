@@ -18,6 +18,10 @@ export const usePatchSubscriber = (
     ...options,
     onSuccess: async (data, variables, ctx) => {
       await queryClient.invalidateQueries({
+        queryKey: [QueryKeys.fetchSubscriber, variables.subscriberId],
+      });
+
+      await queryClient.invalidateQueries({
         queryKey: [QueryKeys.fetchSubscribers],
       });
 

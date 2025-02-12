@@ -1,6 +1,6 @@
 import { locales } from '@/utils/locales';
 import { cn } from '@/utils/ui';
-import { RiArrowDownSLine, RiCheckLine, RiEarthLine } from 'react-icons/ri';
+import { RiArrowDownSLine, RiCheckLine, RiEarthLine, RiSearchLine } from 'react-icons/ri';
 import { type Country } from 'react-phone-number-input';
 import flags from 'react-phone-number-input/flags';
 import { Button } from '../primitives/button';
@@ -31,7 +31,6 @@ export function LocaleSelect({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
-          type="button"
           variant="secondary"
           mode="outline"
           className="flex h-8 w-full items-center justify-between gap-1 rounded-lg border-r-0 px-3 focus:z-10"
@@ -39,7 +38,7 @@ export function LocaleSelect({
         >
           <div className="flex max-w-full flex-1 items-center gap-1 overflow-hidden">
             <span className="inline-flex gap-1 text-xs font-normal text-neutral-950">
-              {CurrentFlag && <CurrentFlag title={currentCountryCode} className="size-4" />}
+              {CurrentFlag && <CurrentFlag title={currentCountryCode} className="size-4 text-neutral-400" />}
               {value || <span className="text-neutral-400">locale</span>}
             </span>
 
@@ -49,10 +48,12 @@ export function LocaleSelect({
           </div>
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[300px] rounded-lg border-t-0 p-0">
+      <PopoverContent className="w-[300px] rounded-lg p-0">
         <Command>
           <CommandInput
             placeholder="Search locale..."
+            inputRootClassName="rounded-b-none before:ring-0 before:border-b has-[input:focus]:shadow-none focus-within:shadow-none px-1.5"
+            inlineLeadingNode={<RiSearchLine className="size-4 text-neutral-400" />}
             /**
              * Scroll to top bug workaround: https://github.com/pacocoursey/cmdk/issues/233#issuecomment-2015998940
              */
@@ -72,7 +73,7 @@ export function LocaleSelect({
           />
           <CommandList ref={listRef}>
             <CommandEmpty>No locale found.</CommandEmpty>
-            <CommandGroup className="rounded-md py-2">
+            <CommandGroup className="rounded-md p-2">
               {locales.map((item) => (
                 <FlagItem
                   countryCode={item.alpha2}
@@ -118,7 +119,7 @@ const FlagItem = ({
       onSelect={() => onChange(optionValue)}
     >
       <div className="flex w-full items-center gap-2">
-        <div>{CurrentFlag && <CurrentFlag className="size-4" title={countryCode} />}</div>
+        {CurrentFlag && <CurrentFlag className="size-4" title={countryCode} />}
         <TruncatedText className="text-sm">
           {optionValue} - {languageName}
         </TruncatedText>

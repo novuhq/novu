@@ -1,5 +1,5 @@
 import { cn } from '@/utils/ui';
-import { RiArrowDownSLine, RiCheckLine, RiTimeLine } from 'react-icons/ri';
+import { RiArrowDownSLine, RiCheckLine, RiSearchLine, RiTimeLine } from 'react-icons/ri';
 import { useTimezoneSelect } from 'react-timezone-select';
 import { Button } from '../primitives/button';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '../primitives/command';
@@ -27,7 +27,6 @@ export function TimezoneSelect({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
-          type="button"
           variant="secondary"
           mode="outline"
           className="flex h-8 w-full items-center gap-1 rounded-lg px-3 focus:z-10"
@@ -35,7 +34,7 @@ export function TimezoneSelect({
         >
           <div className="flex max-w-full flex-1 items-center gap-1 overflow-hidden">
             <div>
-              <RiTimeLine className="size-4" />
+              <RiTimeLine className="size-4 text-neutral-400" />
             </div>
             {value ? (
               <TruncatedText className="text-foreground w-full min-w-0 flex-1 text-xs font-normal text-neutral-950">
@@ -52,10 +51,12 @@ export function TimezoneSelect({
           </div>
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[300px] rounded-lg border-t-0 p-0">
+      <PopoverContent className="w-[300px] rounded-lg p-0">
         <Command>
           <CommandInput
             placeholder="Search timezone..."
+            inputRootClassName="rounded-b-none before:ring-0 before:border-b has-[input:focus]:shadow-none focus-within:shadow-none px-1.5"
+            inlineLeadingNode={<RiSearchLine className="size-4 text-neutral-400" />}
             /**
              * Scroll to top bug workaround: https://github.com/pacocoursey/cmdk/issues/233#issuecomment-2015998940
              */
@@ -76,7 +77,7 @@ export function TimezoneSelect({
           <CommandList ref={listRef}>
             <CommandEmpty>No timezone found.</CommandEmpty>
 
-            <CommandGroup className="rounded-md py-2">
+            <CommandGroup className="rounded-md p-2">
               {options.map((item) => (
                 <CommandItem
                   className={cn('cursor-pointer', {
