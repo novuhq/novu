@@ -90,6 +90,7 @@ const CountrySelect = ({ disabled, value: selectedCountry, options: countryList,
                 div?.scrollTo({ top: 0, behavior: 'smooth' });
               }, 0);
             }}
+            autoComplete="off"
           />
           <CommandList ref={listRef}>
             <CommandEmpty>No country found.</CommandEmpty>
@@ -117,7 +118,7 @@ const InputComponent = React.forwardRef<HTMLInputElement, React.ComponentProps<t
   ({ className, ...props }, ref) => (
     <InputRoot size="xs" className="rounded-s-none">
       <InputWrapper>
-        <InputPure className={cn('rounded-e-lg rounded-s-none', className)} ref={ref} {...props} />
+        <InputPure className={cn('rounded-e-lg rounded-s-none', className)} ref={ref} {...props} autoComplete="off" />
       </InputWrapper>
     </InputRoot>
   )
