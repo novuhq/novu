@@ -40,7 +40,7 @@ import {
   RiPlayCircleLine,
   RiPulseFill,
 } from 'react-icons/ri';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { type ExternalToast } from 'sonner';
 import { ConfirmationModal } from './confirmation-modal';
 import { DeleteWorkflowDialog } from './delete-workflow-dialog';
@@ -61,30 +61,15 @@ const toastOptions: ExternalToast = {
   },
 };
 
-type WorkflowLinkTableCellProps = ComponentProps<typeof TableCell> & {
-  workflow: WorkflowListResponseDto;
-};
+type WorkflowLinkTableCellProps = ComponentProps<typeof TableCell>;
 
 const WorkflowLinkTableCell = (props: WorkflowLinkTableCellProps) => {
-  const { workflow, children, className, ...rest } = props;
-  const { currentEnvironment } = useEnvironment();
-  const isV1Workflow = workflow.origin === WorkflowOriginEnum.NOVU_CLOUD_V1;
-
-  const workflowLink = isV1Workflow
-    ? buildRoute(`${LEGACY_DASHBOARD_URL}/workflows/edit/:workflowId`, {
-        workflowId: workflow._id,
-      })
-    : buildRoute(ROUTES.EDIT_WORKFLOW, {
-        environmentSlug: currentEnvironment?.slug ?? '',
-        workflowSlug: workflow.slug,
-      });
+  const { children, className, ...rest } = props;
 
   return (
     <TableCell className={cn('group-hover:bg-neutral-alpha-50 relative', className)} {...rest}>
       {children}
-      <Link to={workflowLink} className={cn('absolute inset-0')} reloadDocument={isV1Workflow}>
-        <span className="sr-only">Edit workflow</span>
-      </Link>
+      <span className="sr-only">Edit workflow</span>
     </TableCell>
   );
 };
@@ -93,9 +78,17 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isPauseModalOpen, setIsPauseModalOpen] = useState(false);
   const { currentEnvironment } = useEnvironment();
+  const navigate = useNavigate();
   const { safeSync, isSyncable, tooltipContent, PromoteConfirmModal } = useSyncWorkflow(workflow);
-
   const isV1Workflow = workflow.origin === WorkflowOriginEnum.NOVU_CLOUD_V1;
+  const workflowLink = isV1Workflow
+    ? buildRoute(`${LEGACY_DASHBOARD_URL}/workflows/edit/:workflowId`, {
+        workflowId: workflow._id,
+      })
+    : buildRoute(ROUTES.EDIT_WORKFLOW, {
+        environmentSlug: currentEnvironment?.slug ?? '',
+        workflowSlug: workflow.slug,
+      });
   const triggerWorkflowLink = isV1Workflow
     ? buildRoute(`${LEGACY_DASHBOARD_URL}/workflows/edit/:workflowId/test-workflow`, { workflowId: workflow._id })
     : buildRoute(ROUTES.TEST_WORKFLOW, {
@@ -179,51 +172,66 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
 
   const handlePauseWorkflow = () => {
     if (workflow.status === WorkflowStatusEnum.ACTIVE) {
-      setIsPauseModalOpen(true);
+      setTimeout(() => setIsPauseModalOpen(true), 0);
       return;
     }
     onPauseWorkflow();
   };
 
+  const handleRowClick = () => {
+    if (isV1Workflow) {
+      document.location.href = workflowLink;
+    } else {
+      navigate(workflowLink);
+    }
+  };
+
+  const stopPropagation = (e: React.MouseEvent) => {
+    // don't propagate the click event to the row
+    e.stopPropagation();
+  };
+
   return (
-    <TableRow key={workflow._id} className="group relative isolate">
-      <PromoteConfirmModal />
-      <WorkflowLinkTableCell workflow={workflow} className="font-medium">
-        <div className="flex items-center gap-1">
-          {workflow.origin === WorkflowOriginEnum.EXTERNAL && (
-            <Badge color="yellow" size="sm" variant="lighter">
-              <FaCode className="size-3" />
-            </Badge>
-          )}
-          <TruncatedText className="max-w-[32ch]">{workflow.name}</TruncatedText>
-        </div>
-        <div className="flex items-center gap-1 transition-opacity duration-200">
-          <TruncatedText className="text-foreground-400 font-code block text-xs">{workflow.workflowId}</TruncatedText>
+    <>
+      <TableRow key={workflow._id} className="group relative isolate cursor-pointer" onClick={handleRowClick}>
+        <PromoteConfirmModal />
+        <WorkflowLinkTableCell className="font-medium">
+          <div className="flex items-center gap-1">
+            {workflow.origin === WorkflowOriginEnum.EXTERNAL && (
+              <Badge color="yellow" size="sm" variant="lighter">
+                <FaCode className="size-3" />
+              </Badge>
+            )}
+            <TruncatedText className="max-w-[32ch]">{workflow.name}</TruncatedText>
+          </div>
+          <div className="flex items-center gap-1 transition-opacity duration-200">
+            <TruncatedText className="text-foreground-400 font-code block text-xs">{workflow.workflowId}</TruncatedText>
 
-          <CopyButton
-            className="z-10 flex size-2 p-0 px-1 opacity-0 group-hover:opacity-100"
-            valueToCopy={workflow.workflowId}
-            size="2xs"
-            mode="ghost"
-          ></CopyButton>
-        </div>
-      </WorkflowLinkTableCell>
-      <WorkflowLinkTableCell workflow={workflow} className="min-w-[200px]">
-        <WorkflowStatus status={workflow.status} />
-      </WorkflowLinkTableCell>
-      <WorkflowLinkTableCell workflow={workflow}>
-        <WorkflowSteps steps={workflow.stepTypeOverviews} />
-      </WorkflowLinkTableCell>
-      <WorkflowLinkTableCell workflow={workflow}>
-        <WorkflowTags tags={workflow.tags || []} />
-      </WorkflowLinkTableCell>
+            <CopyButton
+              className="z-10 flex size-2 p-0 px-1 opacity-0 group-hover:opacity-100"
+              valueToCopy={workflow.workflowId}
+              size="2xs"
+              mode="ghost"
+              onClick={stopPropagation}
+            ></CopyButton>
+          </div>
+        </WorkflowLinkTableCell>
+        <WorkflowLinkTableCell className="min-w-[200px]">
+          <WorkflowStatus status={workflow.status} />
+        </WorkflowLinkTableCell>
+        <WorkflowLinkTableCell>
+          <WorkflowSteps steps={workflow.stepTypeOverviews} />
+        </WorkflowLinkTableCell>
+        <WorkflowLinkTableCell>
+          <WorkflowTags tags={workflow.tags || []} />
+        </WorkflowLinkTableCell>
 
-      <WorkflowLinkTableCell workflow={workflow} className="text-foreground-600 text-sm font-medium">
-        <TimeDisplayHoverCard date={new Date(workflow.updatedAt)}>
-          {formatDateSimple(workflow.updatedAt)}
-        </TimeDisplayHoverCard>
-      </WorkflowLinkTableCell>
-      {/* <WorkflowLinkTableCell workflow={workflow} className="text-foreground-600 text-sm font-medium">
+        <WorkflowLinkTableCell className="text-foreground-600 text-sm font-medium">
+          <TimeDisplayHoverCard date={new Date(workflow.updatedAt)}>
+            {formatDateSimple(workflow.updatedAt)}
+          </TimeDisplayHoverCard>
+        </WorkflowLinkTableCell>
+        {/* <WorkflowLinkTableCell  className="text-foreground-600 text-sm font-medium">
         {workflow.lastTriggeredAt ? (
           <TimeDisplayHoverCard date={workflow.lastTriggeredAt}>
             {formatDateSimple(workflow.lastTriggeredAt)}
@@ -231,92 +239,90 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
         ) : null}
       </WorkflowLinkTableCell> */}
 
-      <WorkflowLinkTableCell workflow={workflow} className="w-1">
-        <DeleteWorkflowDialog
-          workflow={workflow}
-          open={isDeleteModalOpen}
-          onOpenChange={setIsDeleteModalOpen}
-          onConfirm={onDeleteWorkflow}
-          isLoading={isDeleteWorkflowPending}
-        />
-        <ConfirmationModal
-          open={isPauseModalOpen}
-          onOpenChange={setIsPauseModalOpen}
-          onConfirm={async () => {
-            await onPauseWorkflow();
-            setIsPauseModalOpen(false);
-          }}
-          title={PAUSE_MODAL_TITLE}
-          description={<PauseModalDescription workflowName={workflow.name} />}
-          confirmButtonText="Proceed"
-          isLoading={isPauseWorkflowPending}
-        />
-        {/**
-         * Needs modal={false} to prevent the click freeze after the modal is closed
-         */}
-        <DropdownMenu modal={false}>
-          <DropdownMenuTrigger asChild>
-            <CompactButton icon={RiMore2Fill} variant="ghost" className="z-10 h-8 w-8 p-0"></CompactButton>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56">
-            <DropdownMenuGroup>
-              <Link to={triggerWorkflowLink} reloadDocument={isV1Workflow}>
-                <DropdownMenuItem className="cursor-pointer">
-                  <RiPlayCircleLine />
-                  Trigger workflow
+        <WorkflowLinkTableCell className="w-1">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <CompactButton icon={RiMore2Fill} variant="ghost" className="z-10 h-8 w-8 p-0"></CompactButton>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56" onClick={stopPropagation}>
+              <DropdownMenuGroup>
+                <Link to={triggerWorkflowLink} reloadDocument={isV1Workflow}>
+                  <DropdownMenuItem className="cursor-pointer">
+                    <RiPlayCircleLine />
+                    Trigger workflow
+                  </DropdownMenuItem>
+                </Link>
+                <SyncWorkflowMenuItem
+                  currentEnvironment={currentEnvironment}
+                  isSyncable={isSyncable}
+                  tooltipContent={tooltipContent}
+                  onSync={safeSync}
+                />
+                <Link
+                  to={
+                    buildRoute(ROUTES.ACTIVITY_FEED, {
+                      environmentSlug: currentEnvironment?.slug ?? '',
+                    }) +
+                    '?' +
+                    new URLSearchParams({ workflows: workflow._id }).toString()
+                  }
+                >
+                  <DropdownMenuItem className="cursor-pointer">
+                    <RiPulseFill />
+                    View activity
+                  </DropdownMenuItem>
+                </Link>
+              </DropdownMenuGroup>
+              <DropdownMenuSeparator />
+              <DropdownMenuGroup className="*:cursor-pointer">
+                <DropdownMenuItem onClick={handlePauseWorkflow} disabled={workflow.status === WorkflowStatusEnum.ERROR}>
+                  {workflow.status === WorkflowStatusEnum.ACTIVE ? (
+                    <>
+                      <RiPauseCircleLine />
+                      Pause workflow
+                    </>
+                  ) : (
+                    <>
+                      <RiFlashlightLine />
+                      Enable workflow
+                    </>
+                  )}
                 </DropdownMenuItem>
-              </Link>
-              <SyncWorkflowMenuItem
-                currentEnvironment={currentEnvironment}
-                isSyncable={isSyncable}
-                tooltipContent={tooltipContent}
-                onSync={safeSync}
-              />
-              <Link
-                to={
-                  buildRoute(ROUTES.ACTIVITY_FEED, {
-                    environmentSlug: currentEnvironment?.slug ?? '',
-                  }) +
-                  '?' +
-                  new URLSearchParams({ workflows: workflow._id }).toString()
-                }
-              >
-                <DropdownMenuItem className="cursor-pointer">
-                  <RiPulseFill />
-                  View activity
+                <DropdownMenuItem
+                  className="text-destructive"
+                  disabled={workflow.origin === WorkflowOriginEnum.EXTERNAL}
+                  onClick={() => {
+                    setTimeout(() => setIsDeleteModalOpen(true), 0);
+                  }}
+                >
+                  <RiDeleteBin2Line />
+                  Delete workflow
                 </DropdownMenuItem>
-              </Link>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup className="*:cursor-pointer">
-              <DropdownMenuItem onClick={handlePauseWorkflow} disabled={workflow.status === WorkflowStatusEnum.ERROR}>
-                {workflow.status === WorkflowStatusEnum.ACTIVE ? (
-                  <>
-                    <RiPauseCircleLine />
-                    Pause workflow
-                  </>
-                ) : (
-                  <>
-                    <RiFlashlightLine />
-                    Enable workflow
-                  </>
-                )}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="text-destructive"
-                disabled={workflow.origin === WorkflowOriginEnum.EXTERNAL}
-                onClick={() => {
-                  setIsDeleteModalOpen(true);
-                }}
-              >
-                <RiDeleteBin2Line />
-                Delete workflow
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </WorkflowLinkTableCell>
-    </TableRow>
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </WorkflowLinkTableCell>
+      </TableRow>
+      <DeleteWorkflowDialog
+        workflow={workflow}
+        open={isDeleteModalOpen}
+        onOpenChange={setIsDeleteModalOpen}
+        onConfirm={onDeleteWorkflow}
+        isLoading={isDeleteWorkflowPending}
+      />
+      <ConfirmationModal
+        open={isPauseModalOpen}
+        onOpenChange={setIsPauseModalOpen}
+        onConfirm={async () => {
+          await onPauseWorkflow();
+          setIsPauseModalOpen(false);
+        }}
+        title={PAUSE_MODAL_TITLE}
+        description={<PauseModalDescription workflowName={workflow.name} />}
+        confirmButtonText="Proceed"
+        isLoading={isPauseWorkflowPending}
+      />
+    </>
   );
 };
 
