@@ -202,13 +202,12 @@ export class ParseEventRequest {
     };
 
     if ('to' in commandArgs) {
-      const sanitizedSubscribers = this.sanitizeRecipients(commandArgs.to);
-      const validSubscribers = this.removeInvalidSubscribers(sanitizedSubscribers);
+      const validSubscribers = this.sanitizeRecipients(commandArgs.to);
 
       if (!validSubscribers) {
         return {
           acknowledged: true,
-          status: TriggerEventStatusEnum.NO_VALID_RECIPIENTS,
+          status: TriggerEventStatusEnum.INVALID_RECIPIENTS,
           transactionId,
         };
       }
@@ -323,45 +322,24 @@ export class ParseEventRequest {
   }
 
   private sanitizeRecipients(payload: TriggerRecipientsPayload): TriggerRecipientsPayload | null {
+    if (!payload) return null;
+
     if (typeof payload === 'string') {
-      return this.sanitize(payload) ?? null;
+      return this.sanitize(payload) || null;
     }
 
     if (Array.isArray(payload)) {
-      return payload.map((sub) => this.sanitizeRecipients(sub as TriggerRecipientSubscriber)) as TriggerRecipients;
+      return payload
+        .map((sub) => this.sanitizeRecipients(sub as TriggerRecipientSubscriber))
+        .filter(Boolean) as TriggerRecipients;
     }
 
     if ('subscriberId' in payload) {
       const subscriberId = this.sanitize(payload.subscriberId);
 
-      if (!subscriberId) {
-        return null;
-      }
-
-      return {
-        ...payload,
-        subscriberId,
-      };
+      return subscriberId ? { ...payload, subscriberId } : null;
     }
 
     return payload;
-  }
-
-  private removeInvalidSubscribers(subscribers: TriggerRecipientsPayload | null): TriggerRecipientsPayload | null {
-    if (subscribers === null) {
-      return null;
-    }
-
-    if (typeof subscribers === 'string') {
-      return subscribers;
-    }
-
-    if (Array.isArray(subscribers)) {
-      return subscribers.filter((subscriber) => !!subscriber);
-    }
-
-    const isValid = subscribers.subscriberId !== null;
-
-    return isValid ? subscribers : null;
   }
 }
