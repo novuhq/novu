@@ -65,7 +65,7 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
   const form = useForm<z.infer<typeof SubscriberFormSchema>>({
     defaultValues: {
       avatar: subscriber?.avatar ?? '',
-      email: subscriber.email ?? '',
+      email: subscriber.email ?? null,
       phone: subscriber.phone ?? '',
       firstName: subscriber.firstName ?? '',
       lastName: subscriber.lastName ?? '',
@@ -91,13 +91,13 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
   /**
    * Fixes the issue where you update the form,
    * then close the drawer and re-open it,
-   * the form is shows the stale data.
+   * the form shows the stale data.
    */
   useEffect(() => {
     if (subscriber) {
       form.reset({
         avatar: subscriber?.avatar ?? '',
-        email: subscriber.email ?? '',
+        email: subscriber.email ?? null,
         phone: subscriber.phone ?? '',
         firstName: subscriber.firstName ?? '',
         lastName: subscriber.lastName ?? '',
@@ -363,7 +363,7 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
           </div>
           <Separator />
           {subscriber.updatedAt && (
-            <span className="text-2xs px-5 py-2 text-right text-neutral-400">
+            <span className="text-2xs px-5 py-2 text-right text-neutral-400" key={subscriber.updatedAt}>
               Updated at{' '}
               {formatDateSimple(subscriber.updatedAt, {
                 month: 'short',
@@ -406,7 +406,7 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
           setIsDeleteModalOpen(false);
           navigate('../', { relative: 'path' });
         }}
-        title={`Delete subscriber`}
+        title="Delete subscriber"
         description={
           <span>
             Are you sure you want to delete subscriber{' '}
