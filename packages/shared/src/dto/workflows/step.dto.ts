@@ -1,6 +1,6 @@
 import type { JSONSchemaDto } from './json-schema-dto';
 import { Slug, StepTypeEnum, WorkflowOriginEnum } from '../../types';
-import { StepContentIssueEnum, StepIssueEnum } from './step-content-issue.enum';
+import { StepContentIssueEnum, StepIntegrationIssueEnum, StepIssueEnum } from './step-content-issue.enum';
 
 export type StepResponseDto = {
   controls: ControlsMetadata;
@@ -42,14 +42,17 @@ interface Issue<T> {
 }
 
 export class StepIssuesDto {
-  body?: Record<StepCreateAndUpdateKeys, StepIssue>;
-  controls?: Record<string, ContentIssue[]>;
+  controls?: Record<string, StepContentIssue[]>;
+  integration?: Record<string, StepIntegrationIssue[]>;
 }
 
 export type StepCreateAndUpdateKeys = keyof StepCreateDto | keyof StepUpdateDto;
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
-export interface ContentIssue extends Issue<StepContentIssueEnum> {}
+export interface StepContentIssue extends Issue<StepContentIssueEnum> {}
+
+// eslint-disable-next-line @typescript-eslint/naming-convention
+export interface StepIntegrationIssue extends Issue<StepIntegrationIssueEnum> {}
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface StepIssue extends Issue<StepIssueEnum> {}

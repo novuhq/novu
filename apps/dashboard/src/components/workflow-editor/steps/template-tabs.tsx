@@ -1,11 +1,9 @@
 import React, { useEffect } from 'react';
-import { RiCloseLine, RiEdit2Line, RiPencilRuler2Line } from 'react-icons/ri';
-import { useNavigate } from 'react-router-dom';
+import { RiEdit2Line, RiPencilRuler2Line } from 'react-icons/ri';
 
 import { Notification5Fill } from '@/components/icons';
 import { Separator } from '@/components/primitives/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
-import { CompactButton } from '../../primitives/button-compact';
 
 interface TemplateTabsProps {
   editorContent: React.ReactNode;
@@ -22,8 +20,6 @@ export const TemplateTabs = ({
   onTabChange,
   previewStep,
 }: TemplateTabsProps) => {
-  const navigate = useNavigate();
-
   useEffect(() => {
     // We reload the preview when the tab changes to get the latest values
     if (tabsValue === 'preview') {
@@ -34,8 +30,8 @@ export const TemplateTabs = ({
 
   return (
     <Tabs defaultValue="editor" value={tabsValue} onValueChange={onTabChange} className="flex h-full flex-1 flex-col">
-      <header className="flex flex-row items-center gap-3 px-3 py-1.5">
-        <div className="mr-auto flex items-center gap-2.5 text-sm font-medium">
+      <header className="flex h-12 w-full flex-row items-center justify-between gap-3 border-b py-4 pl-3 pr-12">
+        <div className="flex items-center gap-2.5 text-sm font-medium">
           <RiEdit2Line className="size-4" />
           <span>Configure Template</span>
         </div>
@@ -49,21 +45,7 @@ export const TemplateTabs = ({
             <span>Preview</span>
           </TabsTrigger>
         </TabsList>
-
-        <CompactButton
-          icon={RiCloseLine}
-          variant="ghost"
-          className="size-6"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            navigate('../', { relative: 'path' });
-          }}
-        >
-          <span className="sr-only">Close</span>
-        </CompactButton>
       </header>
-      <Separator />
       <TabsContent value="editor" className="h-full w-full overflow-y-auto">
         {editorContent}
       </TabsContent>

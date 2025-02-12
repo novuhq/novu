@@ -43,7 +43,7 @@ test('should trigger msTeams webhook correctly with _passthrough', async () => {
           title: '_passthrough test title',
         },
       },
-    },
+    }
   );
 
   expect(fakePost).toHaveBeenCalled();

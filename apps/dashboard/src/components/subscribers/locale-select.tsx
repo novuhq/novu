@@ -1,8 +1,9 @@
+import { CountryFlags } from '@/components/icons/country-flags';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
+import TruncatedText from '@/components/truncated-text';
 import { locales } from '@/utils/locales';
+import { useState } from 'react';
 import { RiEarthLine } from 'react-icons/ri';
-import { CountryFlags } from '../icons/country-flags';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../primitives/select';
-import TruncatedText from '../truncated-text';
 
 export function LocaleSelect({
   value,
@@ -20,15 +21,19 @@ export function LocaleSelect({
   required?: boolean;
   onValueChange: (val: string) => void;
 }) {
+  const [open, setOpen] = useState(false);
+
   return (
     <Select
       value={value}
       onValueChange={onValueChange}
-      disabled={disabled || readOnly}
+      disabled={disabled}
       required={required}
       defaultValue={defaultOption}
+      open={readOnly ? false : open}
+      onOpenChange={setOpen}
     >
-      <SelectTrigger className="focus:ring-stroke-strong group p-1.5 shadow-sm focus:ring-1">
+      <SelectTrigger className="focus:ring-stroke-strong group p-1.5 focus:ring-1">
         <SelectValue
           placeholder={
             <div className="flex w-full items-center gap-2">
@@ -52,20 +57,22 @@ export function LocaleSelect({
           </div>
         </SelectValue>
       </SelectTrigger>
-      <SelectContent className="p-1">
-        {locales.map((item) => (
-          <SelectItem key={item.langIso} value={item.langIso} className="px-2">
-            <div className="flex w-full items-center gap-2">
-              <div>
-                <CountryFlags name={item.alpha2} className="size-4" />
+      {open && (
+        <SelectContent className="p-1">
+          {locales.map((item) => (
+            <SelectItem key={item.langIso} value={item.langIso} className="px-2">
+              <div className="flex w-full items-center gap-2">
+                <div>
+                  <CountryFlags name={item.alpha2} className="size-4" />
+                </div>
+                <TruncatedText className="text-sm">
+                  {item.langIso} - {item.langName}
+                </TruncatedText>
               </div>
-              <TruncatedText className="text-sm">
-                {item.langIso} - {item.langName}
-              </TruncatedText>
-            </div>
-          </SelectItem>
-        ))}
-      </SelectContent>
+            </SelectItem>
+          ))}
+        </SelectContent>
+      )}
     </Select>
   );
 }

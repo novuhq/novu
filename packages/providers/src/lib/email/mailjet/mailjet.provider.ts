@@ -15,15 +15,12 @@ import { WithPassthrough } from '../../../utils/types';
 
 const MAILJET_API_VERSION = 'v3.1';
 
-export class MailjetEmailProvider
-  extends BaseProvider
-  implements IEmailProvider
-{
+export class MailjetEmailProvider extends BaseProvider implements IEmailProvider {
   protected casing: CasingEnum = CasingEnum.PASCAL_CASE;
   id = EmailProviderIdEnum.Mailjet;
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
 
-  protected keyCaseObject: Record<string, string> = {
+  protected override keyCaseObject: Record<string, string> = {
     contentId: 'ContentID',
     htmlPart: 'HTMLPart',
     templateId: 'TemplateID',
@@ -38,7 +35,7 @@ export class MailjetEmailProvider
       apiSecret: string;
       from: string;
       senderName: string;
-    },
+    }
   ) {
     super();
     this.mailjetClient = new Client({
@@ -49,7 +46,7 @@ export class MailjetEmailProvider
 
   async sendMessage(
     emailOptions: IEmailOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const response = await this.mailjetClient
       .post('send', {
@@ -67,9 +64,7 @@ export class MailjetEmailProvider
     };
   }
 
-  async checkIntegration(
-    options: IEmailOptions,
-  ): Promise<ICheckIntegrationResponse> {
+  async checkIntegration(options: IEmailOptions): Promise<ICheckIntegrationResponse> {
     const send = this.mailjetClient.post('send', {
       version: MAILJET_API_VERSION,
     });
@@ -93,28 +88,27 @@ export class MailjetEmailProvider
 
   private createMailData(
     options: IEmailOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): SendEmailV3_1.Body {
-    const message: SendEmailV3_1.Message =
-      this.transform<SendEmailV3_1.Message>(bridgeProviderData, {
-        From: {
-          Email: options.from || this.config.from,
-          Name: options.senderName || this.config.senderName,
-        },
-        To: options.to.map((email) => ({
-          Email: email,
-        })) as SendEmailV3_1.EmailAddressTo[],
-        Cc: options.cc?.map((ccItem) => ({ Email: ccItem })),
-        Bcc: options.bcc?.map((ccItem) => ({ Email: ccItem })),
-        Subject: options.subject,
-        TextPart: options.text,
-        HTMLPart: options.html,
-        Attachments: options.attachments?.map((attachment) => ({
-          ContentType: attachment.mime,
-          Filename: attachment.name,
-          Base64Content: attachment.file.toString('base64'),
-        })),
-      }).body;
+    const message: SendEmailV3_1.Message = this.transform<SendEmailV3_1.Message>(bridgeProviderData, {
+      From: {
+        Email: options.from || this.config.from,
+        Name: options.senderName || this.config.senderName,
+      },
+      To: options.to.map((email) => ({
+        Email: email,
+      })) as SendEmailV3_1.EmailAddressTo[],
+      Cc: options.cc?.map((ccItem) => ({ Email: ccItem })),
+      Bcc: options.bcc?.map((ccItem) => ({ Email: ccItem })),
+      Subject: options.subject,
+      TextPart: options.text,
+      HTMLPart: options.html,
+      Attachments: options.attachments?.map((attachment) => ({
+        ContentType: attachment.mime,
+        Filename: attachment.name,
+        Base64Content: attachment.file.toString('base64'),
+      })),
+    }).body;
 
     if (options.replyTo) {
       message.ReplyTo.Email = options.replyTo;
@@ -133,10 +127,7 @@ export class MailjetEmailProvider
     return [body.MessageID];
   }
 
-  parseEventBody(
-    body: any | any[],
-    identifier: string,
-  ): IEmailEventBody | undefined {
+  parseEventBody(body: any | any[], identifier: string): IEmailEventBody | undefined {
     if (Array.isArray(body)) {
       // eslint-disable-next-line no-param-reassign
       body = body.find((item) => item.MessageID === identifier);

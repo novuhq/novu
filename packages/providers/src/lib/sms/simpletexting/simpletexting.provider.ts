@@ -1,19 +1,11 @@
 import { SmsProviderIdEnum } from '@novu/shared';
-import {
-  ChannelTypeEnum,
-  ISendMessageSuccessResponse,
-  ISmsOptions,
-  ISmsProvider,
-} from '@novu/stateless';
+import { ChannelTypeEnum, ISendMessageSuccessResponse, ISmsOptions, ISmsProvider } from '@novu/stateless';
 
 import axios from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
-export class SimpletextingSmsProvider
-  extends BaseProvider
-  implements ISmsProvider
-{
+export class SimpletextingSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.Simpletexting;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   protected casing = CasingEnum.CAMEL_CASE;
@@ -22,14 +14,14 @@ export class SimpletextingSmsProvider
     private config: {
       apiKey: string;
       accountPhone: string;
-    },
+    }
   ) {
     super();
   }
 
   async sendMessage(
     options: ISmsOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const data = this.transform(bridgeProviderData, {
       contactPhone: options.to,
@@ -37,15 +29,13 @@ export class SimpletextingSmsProvider
       mode: 'SINGLE_SMS_STRICTLY',
       text: options.content,
     });
-    const response = await axios
-      .create()
-      .post('https://api-app2.simpletexting.com/v2/api/messages', data.body, {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${this.config.apiKey}`,
-          ...data.headers,
-        },
-      });
+    const response = await axios.create().post('https://api-app2.simpletexting.com/v2/api/messages', data.body, {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${this.config.apiKey}`,
+        ...data.headers,
+      },
+    });
 
     return {
       id: response.data.id,

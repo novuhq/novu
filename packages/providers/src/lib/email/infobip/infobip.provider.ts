@@ -11,10 +11,7 @@ import { EmailProviderIdEnum } from '@novu/shared';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
-export class InfobipEmailProvider
-  extends BaseProvider
-  implements IEmailProvider
-{
+export class InfobipEmailProvider extends BaseProvider implements IEmailProvider {
   protected casing: CasingEnum = CasingEnum.CAMEL_CASE;
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
   id = EmailProviderIdEnum.Infobip;
@@ -26,7 +23,7 @@ export class InfobipEmailProvider
       baseUrl: string;
       apiKey: string;
       from?: string;
-    },
+    }
   ) {
     super();
     this.infobipClient = new Infobip({
@@ -36,9 +33,7 @@ export class InfobipEmailProvider
     });
   }
 
-  async checkIntegration(
-    options: IEmailOptions,
-  ): Promise<ICheckIntegrationResponse> {
+  async checkIntegration(options: IEmailOptions): Promise<ICheckIntegrationResponse> {
     try {
       await this.infobipClient.channels.email.send({
         to: options.to,
@@ -64,7 +59,7 @@ export class InfobipEmailProvider
 
   async sendMessage(
     options: IEmailOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const infobipResponse = await this.infobipClient.channels.email.send(
       this.transform(bridgeProviderData, {
@@ -73,7 +68,7 @@ export class InfobipEmailProvider
         subject: options.subject,
         text: options.text,
         html: options.html,
-      }).body,
+      }).body
     );
     const { messageId } = infobipResponse.data.messages.pop();
 

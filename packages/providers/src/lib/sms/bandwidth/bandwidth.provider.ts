@@ -1,9 +1,4 @@
-import {
-  ChannelTypeEnum,
-  ISendMessageSuccessResponse,
-  ISmsOptions,
-  ISmsProvider,
-} from '@novu/stateless';
+import { ChannelTypeEnum, ISendMessageSuccessResponse, ISmsOptions, ISmsProvider } from '@novu/stateless';
 
 import { Client, ApiController, MessageRequest } from '@bandwidth/messaging';
 import { SmsProviderIdEnum } from '@novu/shared';
@@ -21,7 +16,7 @@ export class BandwidthSmsProvider extends BaseProvider implements ISmsProvider {
       username: string;
       password: string;
       accountId: string;
-    },
+    }
   ) {
     super();
     const client = new Client({
@@ -33,7 +28,7 @@ export class BandwidthSmsProvider extends BaseProvider implements ISmsProvider {
 
   async sendMessage(
     options: ISmsOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const body = this.transform<MessageRequest>(bridgeProviderData, {
       applicationId: this.config.accountId,
@@ -42,10 +37,7 @@ export class BandwidthSmsProvider extends BaseProvider implements ISmsProvider {
       text: options.content,
     });
 
-    const createMessageResponse = await this.controller.createMessage(
-      this.config.accountId,
-      body.body,
-    );
+    const createMessageResponse = await this.controller.createMessage(this.config.accountId, body.body);
 
     return {
       id: createMessageResponse.result.id,

@@ -1,9 +1,4 @@
-import {
-  ChannelTypeEnum,
-  ISendMessageSuccessResponse,
-  ISmsOptions,
-  ISmsProvider,
-} from '@novu/stateless';
+import { ChannelTypeEnum, ISendMessageSuccessResponse, ISmsOptions, ISmsProvider } from '@novu/stateless';
 
 import { Message, MessageParameters } from 'messagebird/types/messages';
 import { initClient } from 'messagebird';
@@ -11,10 +6,7 @@ import { SmsProviderIdEnum } from '@novu/shared';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
-export class MessageBirdSmsProvider
-  extends BaseProvider
-  implements ISmsProvider
-{
+export class MessageBirdSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.MessageBird;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   protected casing = CasingEnum.CAMEL_CASE;
@@ -22,7 +14,7 @@ export class MessageBirdSmsProvider
   constructor(
     private config: {
       access_key?: string;
-    },
+    }
   ) {
     super();
     this.messageBirdClient = initClient(config.access_key);
@@ -30,7 +22,7 @@ export class MessageBirdSmsProvider
 
   async sendMessage(
     options: ISmsOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const params = this.transform<MessageParameters>(bridgeProviderData, {
       originator: options.from,

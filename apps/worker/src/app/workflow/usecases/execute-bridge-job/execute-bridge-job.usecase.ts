@@ -225,6 +225,7 @@ export class ExecuteBridgeJob {
             message: response.message,
             code: response.code,
             data: response.data,
+            cause: response.cause,
           }),
         };
 

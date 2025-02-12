@@ -17,7 +17,7 @@ import {
   BuilderFieldType,
   BuilderGroupValues,
   ChannelCTATypeEnum,
-  ContentIssue as ContentIssueDto,
+  StepContentIssue as StepContentIssueDto,
   CustomDataType,
   FilterParts,
   IMessageAction,
@@ -166,7 +166,7 @@ export class ChannelCTACommand {
   action?: IMessageAction[];
 }
 
-export class ContentIssue implements ContentIssueDto {
+export class ContentIssue implements StepContentIssueDto {
   @IsOptional()
   @IsString()
   variableName?: string;
@@ -180,7 +180,7 @@ export class ContentIssue implements ContentIssueDto {
 
 export class StepIssue implements StepIssueDto {
   @IsEnum(StepIssueEnum)
-  issueType: StepIssueEnum;
+  issueType: StepIssueEnum; // Union of both
 
   @IsOptional()
   @IsString()
