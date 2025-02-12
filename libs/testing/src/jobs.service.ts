@@ -4,6 +4,14 @@ import { JobTopicNameEnum, StepTypeEnum } from '@novu/shared';
 
 import { TestingQueueService } from './testing-queue.service';
 
+const promote = (job) => {
+  try {
+    job.promote();
+  } catch (error) {
+    // Silently handle promotion failures since job may have already executed
+  }
+};
+
 export class JobsService {
   private jobRepository = new JobRepository();
 
@@ -107,7 +115,7 @@ export class JobsService {
         continue;
       }
 
-      await Promise.all(jobs.map((job) => job.promote()));
+      await Promise.all(jobs.map(promote));
       await this.waitForJobCompletion({});
 
       iterationCount += 1;
