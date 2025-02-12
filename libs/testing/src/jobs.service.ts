@@ -87,7 +87,38 @@ export class JobsService {
   public async runAllDelayedJobsImmediately() {
     const delayedJobs = await this.standardQueue.getDelayed();
     await Promise.all(delayedJobs.map((job) => job.promote()));
-    await this.waitForJobCompletion({});
+  }
+
+  public async awaitAllJobs() {
+    let hasMoreDelayedJobs = true;
+    let iterationCount = 0;
+    const MAX_ITERATIONS = 100;
+
+    while (hasMoreDelayedJobs && iterationCount < MAX_ITERATIONS) {
+      const jobsResult = await Promise.all([
+        this.standardQueue.getDelayed(),
+        this.standardQueue.getDelayed(),
+        this.workflowQueue.getDelayed(),
+        this.subscriberProcessQueue.getDelayed(),
+      ]);
+      const jobs = jobsResult.flat();
+
+      if (jobs.length === 0) {
+        hasMoreDelayedJobs = false;
+        continue;
+      }
+
+      await Promise.all(jobs.map((job) => job.promote()));
+      await this.waitForJobCompletion({});
+
+      iterationCount += 1;
+    }
+
+    if (iterationCount >= MAX_ITERATIONS) {
+      throw new Error(
+        'Max iterations reached while processing delayed jobs. This might indicate an infinite loop in job creation.'
+      );
+    }
   }
 
   private async getQueueMetric() {

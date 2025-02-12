@@ -56,15 +56,10 @@ afterEach(async () => {
   const standardQueue = new TestingQueueService(JobTopicNameEnum.STANDARD).queue;
   const subscriberProcessQueue = new TestingQueueService(JobTopicNameEnum.PROCESS_SUBSCRIBER).queue;
 
-  await Promise.all([
-    jobRepository._model.deleteMany({}),
-    workflowQueue.drain(),
-    standardQueue.drain(),
-    subscriberProcessQueue.drain(),
-  ]);
-
+  await Promise.all([workflowQueue.drain(), standardQueue.drain(), subscriberProcessQueue.drain()]);
   const jobsService = new JobsService();
-  await jobsService.runAllDelayedJobsImmediately();
+  await jobsService.awaitAllJobs();
+  await jobRepository._model.deleteMany({});
 
   const countAfter = await Promise.all([
     jobRepository.count({} as any),
