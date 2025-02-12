@@ -1,6 +1,6 @@
 import { cn } from '@/utils/ui';
 import * as React from 'react';
-import { RiArrowDownSLine, RiCheckLine, RiEarthLine, RiSearchLine } from 'react-icons/ri';
+import { RiArrowDownSLine, RiCheckLine, RiPhoneLine, RiSearchLine } from 'react-icons/ri';
 import * as RPNInput from 'react-phone-number-input';
 import flags from 'react-phone-number-input/flags';
 import { Button } from './button';
@@ -149,7 +149,7 @@ const FlagComponent = ({ country, countryName }: RPNInput.FlagProps) => {
       className="bg-foreground/20 flex h-4 w-6 overflow-hidden rounded-sm drop-shadow-md [&_svg]:size-full"
       key={country}
     >
-      {Flag ? <Flag title={countryName} /> : <RiEarthLine className="size-4 text-neutral-400" />}
+      {Flag ? <Flag title={countryName} /> : <RiPhoneLine className="size-4 text-neutral-400" />}
     </span>
   );
 };

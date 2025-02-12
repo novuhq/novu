@@ -10,7 +10,7 @@ import { SubscriberResponseDto } from '@novu/api/models/components';
 import { loadLanguage } from '@uiw/codemirror-extensions-langs';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { RiDeleteBin2Line } from 'react-icons/ri';
+import { RiDeleteBin2Line, RiMailLine } from 'react-icons/ri';
 import { Link, useBlocker, useNavigate } from 'react-router-dom';
 import { ExternalToast } from 'sonner';
 import { z } from 'zod';
@@ -243,6 +243,7 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
                         onChange={field.onChange}
                         hasError={!!fieldState.error}
                         size="xs"
+                        leadingIcon={RiMailLine}
                       />
                     </FormControl>
                     <FormMessage />
