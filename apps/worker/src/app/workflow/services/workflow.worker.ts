@@ -40,7 +40,7 @@ export class WorkflowWorker extends WorkflowWorkerService {
       const organizationExists = await this.organizationExist(data);
 
       if (!organizationExists) {
-        Logger.error(`Organization not found for organizationId ${data.organizationId}. Skipping job.`, LOG_CONTEXT);
+        Logger.log(`Organization not found for organizationId ${data.organizationId}. Skipping job.`, LOG_CONTEXT);
 
         return;
       }
