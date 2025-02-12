@@ -7,6 +7,9 @@ import { JobTopicNameEnum } from '@novu/shared';
 import { bootstrap } from '../src/bootstrap';
 
 const jobRepository = new JobRepository();
+const workflowQueue = new TestingQueueService(JobTopicNameEnum.WORKFLOW).queue;
+const standardQueue = new TestingQueueService(JobTopicNameEnum.STANDARD).queue;
+const subscriberProcessQueue = new TestingQueueService(JobTopicNameEnum.PROCESS_SUBSCRIBER).queue;
 
 const printJobsState = async (prefix: string) => {
   const count = await Promise.all([
@@ -58,9 +61,6 @@ after(async () => {
 
 afterEach(async () => {
   await printJobsState('before cleanup');
-  const workflowQueue = new TestingQueueService(JobTopicNameEnum.WORKFLOW).queue;
-  const standardQueue = new TestingQueueService(JobTopicNameEnum.STANDARD).queue;
-  const subscriberProcessQueue = new TestingQueueService(JobTopicNameEnum.PROCESS_SUBSCRIBER).queue;
 
   const jobsService = new JobsService();
   await jobsService.runAllDelayedJobsImmediately();
