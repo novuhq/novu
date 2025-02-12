@@ -14,7 +14,7 @@ import {
   SubscriberRepository,
   TenantRepository,
 } from '@novu/dal';
-import { SubscribersService, UserSession, WorkflowOverrideService } from '@novu/testing';
+import { SubscribersService, TestingQueueService, UserSession, WorkflowOverrideService } from '@novu/testing';
 import {
   ActorTypeEnum,
   ChannelTypeEnum,
@@ -30,6 +30,7 @@ import {
   FilterPartTypeEnum,
   IEmailBlock,
   InAppProviderIdEnum,
+  JobTopicNameEnum,
   PreviousStepTypeEnum,
   SmsProviderIdEnum,
   StepTypeEnum,
@@ -45,7 +46,6 @@ import { SubscriberPayloadDto } from '@novu/api/src/models/components/subscriber
 import { CreateIntegrationRequestDto, TriggerEventResponseDto } from '@novu/api/models/components';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 import { createTenant } from '../../tenant/e2e/create-tenant.e2e';
-import { printJobsState } from './bridge-trigger.e2e';
 
 const promiseTimeout = (ms: number): Promise<void> =>
   new Promise((resolve) => {
@@ -68,6 +68,18 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
   const environmentRepository = new EnvironmentRepository();
   const tenantRepository = new TenantRepository();
   let novuClient: Novu;
+
+  const printJobsState = async (prefix: string) => {
+    const count = await Promise.all([
+      jobRepository.count({} as any),
+      new TestingQueueService(JobTopicNameEnum.WORKFLOW).queue.getWaitingCount(),
+      new TestingQueueService(JobTopicNameEnum.PROCESS_SUBSCRIBER).queue.getWaitingCount(),
+      new TestingQueueService(JobTopicNameEnum.STANDARD).queue.getWaitingCount(),
+    ]);
+
+    // eslint-disable-next-line no-console
+    console.log(`${prefix} Jobs state `, count);
+  };
 
   beforeEach(async () => {
     session = new UserSession();

@@ -34,20 +34,6 @@ const contexts: Context[] = [
   { name: 'stateless', isStateful: false },
 ];
 
-export const printJobsState = async (prefix: string) => {
-  const jobRepository = new JobRepository();
-
-  const count = await Promise.all([
-    jobRepository.count({} as any),
-    new TestingQueueService(JobTopicNameEnum.WORKFLOW).queue.getWaitingCount(),
-    new TestingQueueService(JobTopicNameEnum.PROCESS_SUBSCRIBER).queue.getWaitingCount(),
-    new TestingQueueService(JobTopicNameEnum.STANDARD).queue.getWaitingCount(),
-  ]);
-
-  // eslint-disable-next-line no-console
-  console.log(`${prefix} Jobs state `, count);
-};
-
 contexts.forEach((context: Context) => {
   describe('Self-Hosted Bridge Trigger #novu-v2', async () => {
     let session: UserSession;
@@ -60,6 +46,18 @@ contexts.forEach((context: Context) => {
     const executionDetailsRepository = new ExecutionDetailsRepository();
     const jobsService = new JobsService();
     let bridge;
+
+    const printJobsState = async (prefix: string) => {
+      const count = await Promise.all([
+        jobRepository.count({} as any),
+        new TestingQueueService(JobTopicNameEnum.WORKFLOW).queue.getWaitingCount(),
+        new TestingQueueService(JobTopicNameEnum.PROCESS_SUBSCRIBER).queue.getWaitingCount(),
+        new TestingQueueService(JobTopicNameEnum.STANDARD).queue.getWaitingCount(),
+      ]);
+
+      // eslint-disable-next-line no-console
+      console.log(`${prefix} Jobs state `, count);
+    };
 
     beforeEach(async () => {
       bridgeServer = new BridgeServer();
