@@ -1,10 +1,11 @@
 import { SubscriberDrawer } from '@/components/subscribers/subscriber-drawer';
 import { useOnElementUnmount } from '@/hooks/use-on-element-unmount';
+import { buildRoute, ROUTES } from '@/utils/routes';
 import { useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 export function EditSubscriberPage() {
-  const { subscriberId } = useParams<{ subscriberId: string }>();
+  const { subscriberId, environmentSlug } = useParams<{ subscriberId: string; environmentSlug: string }>();
   const navigate = useNavigate();
   const [open, setOpen] = useState(true);
   const sheetRef = useRef<HTMLDivElement>(null);
@@ -12,7 +13,11 @@ export function EditSubscriberPage() {
   useOnElementUnmount({
     element: sheetRef.current,
     callback: () => {
-      navigate(-1);
+      navigate(
+        buildRoute(ROUTES.SUBSCRIBERS, {
+          environmentSlug: environmentSlug ?? '',
+        })
+      );
     },
   });
 
