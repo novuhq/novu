@@ -89,22 +89,13 @@ export class FeatureFlagsService {
   public async getWithContext<T>(
     contextualFeatureFlag: IContextualFeatureFlag<T>,
   ): Promise<T> {
-    const {
-      defaultValue,
-      key,
-      environmentId,
-      organizationId,
-      userId,
-      environmentCreatedAt,
-      count,
-    } = contextualFeatureFlag;
+    const { defaultValue, key, environmentId, organizationId, userId } =
+      contextualFeatureFlag;
 
     const context = {
       environmentId,
       organizationId,
       userId,
-      environmentCreatedAt,
-      count,
     };
 
     return await this.get(key, defaultValue, context);

@@ -22,7 +22,7 @@ export class FeatureFlagCommand extends BaseCommand {
 export class GetFeatureFlagNumberCommand extends FeatureFlagCommand {
   @IsOptional()
   context?: {
-    createdAt?: string;
+    organizationCreatedAt?: string;
   };
 
   @IsOptional()

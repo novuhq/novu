@@ -1,8 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import {
-  EnvironmentRepository,
-  NotificationTemplateRepository,
-} from '@novu/dal';
+import { OrganizationRepository } from '@novu/dal';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 import { GetFeatureFlag, NotificationStep } from '../usecases';
@@ -14,7 +11,7 @@ export class ResourceValidatorService {
 
   constructor(
     private notificationTemplateRepository: NotificationTemplateRepository,
-    private environmentRepository: EnvironmentRepository,
+    private organizationRepository: OrganizationRepository,
     private getFeatureFlag: GetFeatureFlag,
   ) {}
 
@@ -40,7 +37,7 @@ export class ResourceValidatorService {
   }
 
   async validateWorkflowLimit(environmentId: string) {
-    const environment = await this.getEnvironment(environmentId);
+    const organization = await this.getOrganization(environmentId);
 
     const workflowsCount = await this.notificationTemplateRepository.count({
       _environmentId: environmentId,
@@ -56,7 +53,7 @@ export class ResourceValidatorService {
       contextId: environmentId,
       defaultValue: this.MAX_WORKFLOWS_LIMIT,
       context: {
-        createdAt: environment.createdAt,
+        organizationCreatedAt: organization.createdAt,
       },
     });
 
@@ -70,17 +67,17 @@ export class ResourceValidatorService {
     }
   }
 
-  private async getEnvironment(environmentId: string) {
-    const environment = await this.environmentRepository.findOne({
-      _id: environmentId,
+  private async getOrganization(environmentId: string) {
+    const organization = await this.organizationRepository.findOne({
+      _environmentId: environmentId,
     });
 
-    if (!environment) {
+    if (!organization) {
       throw new BadRequestException({
-        message: 'Environment not found',
+        message: 'Organization not found',
       });
     }
 
-    return environment;
+    return organization;
   }
 }
