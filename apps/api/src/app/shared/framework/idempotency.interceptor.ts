@@ -13,7 +13,7 @@ import {
 } from '@nestjs/common';
 import {
   CacheService,
-  GetFeatureFlag,
+  GetFeatureFlagService,
   GetFeatureFlagCommand,
   HttpResponseHeaderKeysEnum,
   Instrument,
@@ -42,7 +42,7 @@ const ALLOWED_METHODS = ['post', 'patch'];
 export class IdempotencyInterceptor implements NestInterceptor {
   constructor(
     private readonly cacheService: CacheService,
-    private getFeatureFlag: GetFeatureFlag
+    private getFeatureFlag: GetFeatureFlagService
   ) {}
 
   protected async isEnabled(context: ExecutionContext): Promise<boolean> {
@@ -54,7 +54,7 @@ export class IdempotencyInterceptor implements NestInterceptor {
     const user = this.getReqUser(context);
     const { organizationId, environmentId, _id } = user;
 
-    return await this.getFeatureFlag.execute(
+    return await this.getFeatureFlag.getBoolean(
       GetFeatureFlagCommand.create({
         key: FeatureFlagsKeysEnum.IS_API_IDEMPOTENCY_ENABLED,
         environment: { _id: environmentId } as EnvironmentEntity,

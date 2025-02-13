@@ -19,7 +19,7 @@ import { ApiRateLimitCategoryEnum, FeatureFlagsKeysEnum, UserSessionData } from 
 import {
   CreateTenant,
   CreateTenantCommand,
-  GetFeatureFlag,
+  GetFeatureFlagService,
   GetFeatureFlagCommand,
   GetTenant,
   GetTenantCommand,
@@ -72,7 +72,7 @@ export class TenantController {
     private getTenantUsecase: GetTenant,
     private deleteTenantUsecase: DeleteTenant,
     private getTenantsUsecase: GetTenants,
-    private getFeatureFlag: GetFeatureFlag
+    private getFeatureFlagService: GetFeatureFlagService
   ) {}
 
   @Get('')
@@ -213,7 +213,7 @@ export class TenantController {
   }
 
   private async verifyTenantsApiAvailability(user: UserSessionData) {
-    const isV2Enabled = await this.getFeatureFlag.execute(
+    const isV2Enabled = await this.getFeatureFlagService.getBoolean(
       GetFeatureFlagCommand.create({
         user: { _id: user._id } as UserEntity,
         environment: { _id: user.environmentId } as EnvironmentEntity,

@@ -41,7 +41,7 @@ import {
   ExecutionLogRoute,
   featureFlagsService,
   GetDecryptedSecretKey,
-  getFeatureFlag,
+  getFeatureFlagService,
   InvalidateCacheService,
   launchDarklyService,
   LoggerModule,
@@ -128,7 +128,7 @@ const PROVIDERS = [
   ExecutionLogRoute,
   CreateExecutionDetails,
   ExecuteBridgeRequest,
-  getFeatureFlag,
+  getFeatureFlagService,
   GetDecryptedSecretKey,
   launchDarklyService,
 ];

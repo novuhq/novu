@@ -7,12 +7,12 @@ import {
 } from '@novu/dal';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 
+import { NotificationStep } from '../usecases';
 import {
-  GetFeatureFlag,
   GetFeatureFlagCommand,
-  NotificationStep,
-} from '../usecases';
-import { GetFeatureFlagNumberCommand } from '../usecases/get-feature-flag/get-feature-flag.command';
+  GetFeatureFlagService,
+} from '../usecases/feature-flag';
+import { GetFeatureFlagNumberCommand } from '../usecases/feature-flag/get-feature-flag/get-feature-flag.command';
 
 @Injectable()
 export class ResourceValidatorService {
@@ -23,20 +23,20 @@ export class ResourceValidatorService {
     private notificationTemplateRepository: NotificationTemplateRepository,
     private organizationRepository: OrganizationRepository,
     private environmentRepository: EnvironmentRepository,
-    private getFeatureFlag: GetFeatureFlag,
+    private getFeatureFlag: GetFeatureFlagService,
   ) {}
 
   async validateStepsLimit(environmentId: string, steps: NotificationStep[]) {
     const environment = await this.getEnvironment(environmentId);
 
-    const isWorkflowLimitEnabled = await this.getFeatureFlag.execute(
+    const isMaxStepsPerWorkflowEnabled = await this.getFeatureFlag.getBoolean(
       GetFeatureFlagCommand.create({
         key: FeatureFlagsKeysEnum.IS_MAX_STEPS_PER_WORKFLOW_ENABLED,
         environment: { _id: environment._id } as EnvironmentEntity,
       }),
     );
 
-    if (!isWorkflowLimitEnabled) {
+    if (!isMaxStepsPerWorkflowEnabled) {
       return;
     }
 

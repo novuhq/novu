@@ -2,7 +2,7 @@ import { IsDefined, IsOptional } from 'class-validator';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 import { EnvironmentEntity, OrganizationEntity, UserEntity } from '@novu/dal';
-import { BaseCommand } from '../../commands';
+import { BaseCommand } from '../../../commands';
 
 export class GetFeatureFlagCommand extends BaseCommand {
   @IsDefined()

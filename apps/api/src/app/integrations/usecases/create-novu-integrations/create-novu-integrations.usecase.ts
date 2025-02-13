@@ -3,7 +3,7 @@ import { EnvironmentEntity, IntegrationRepository, OrganizationEntity, UserEntit
 import {
   areNovuEmailCredentialsSet,
   areNovuSmsCredentialsSet,
-  GetFeatureFlag,
+  GetFeatureFlagService,
   GetFeatureFlagCommand,
 } from '@novu/application-generic';
 
@@ -26,7 +26,7 @@ export class CreateNovuIntegrations {
     private createIntegration: CreateIntegration,
     private integrationRepository: IntegrationRepository,
     private setIntegrationAsPrimary: SetIntegrationAsPrimary,
-    private getFeatureFlag: GetFeatureFlag
+    private getFeatureFlag: GetFeatureFlagService
   ) {}
 
   private async createEmailIntegration(command: CreateNovuIntegrationsCommand) {
@@ -110,7 +110,7 @@ export class CreateNovuIntegrations {
     });
 
     if (inAppIntegrationCount === 0) {
-      const isV2Enabled = await this.getFeatureFlag.execute(
+      const isV2Enabled = await this.getFeatureFlag.getBoolean(
         GetFeatureFlagCommand.create({
           user: { _id: command.userId } as UserEntity,
           environment: { _id: command.environmentId } as EnvironmentEntity,

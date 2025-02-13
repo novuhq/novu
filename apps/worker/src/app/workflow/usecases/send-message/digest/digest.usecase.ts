@@ -18,7 +18,7 @@ import {
 } from '@novu/shared';
 import {
   DetailEnum,
-  GetFeatureFlag,
+  GetFeatureFlagService,
   GetFeatureFlagCommand,
   ExecutionLogRoute,
   ExecutionLogRouteCommand,
@@ -43,7 +43,7 @@ export class Digest extends SendMessageType {
     protected jobRepository: JobRepository,
     private getDigestEventsRegular: GetDigestEventsRegular,
     private getDigestEventsBackoff: GetDigestEventsBackoff,
-    private getFeatureFlag: GetFeatureFlag
+    private getFeatureFlagService: GetFeatureFlagService
   ) {
     super(messageRepository, executionLogRoute);
   }
@@ -51,7 +51,7 @@ export class Digest extends SendMessageType {
   public async execute(command: SendMessageCommand) {
     const currentJob = await this.getCurrentJob(command);
 
-    const useMergedDigestId = await this.getFeatureFlag.execute(
+    const useMergedDigestId = await this.getFeatureFlagService.getBoolean(
       GetFeatureFlagCommand.create({
         key: FeatureFlagsKeysEnum.IS_USE_MERGED_DIGEST_ID_ENABLED,
         environment: { _id: command.environmentId } as EnvironmentEntity,

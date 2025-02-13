@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { parseExpression as parseCronExpression } from 'cron-parser';
+import { addYears, differenceInMilliseconds, isAfter } from 'date-fns';
 
 import {
   ApiServiceLevelEnum,
@@ -9,9 +10,6 @@ import {
 } from '@novu/shared';
 import { CommunityOrganizationRepository, OrganizationEntity } from '@novu/dal';
 
-import { addYears, differenceInMilliseconds, isAfter } from 'date-fns';
-import { GetFeatureFlag, GetFeatureFlagCommand } from '../get-feature-flag';
-
 import { TierRestrictionsValidateCommand } from './tier-restrictions-validate.command';
 import {
   ErrorEnum,
@@ -19,6 +17,7 @@ import {
   TierValidationError,
 } from './tier-restrictions-validate.response';
 import { InstrumentUsecase } from '../../instrumentation';
+import { GetFeatureFlagCommand, GetFeatureFlagService } from '../feature-flag';
 
 export const MILLISECONDS_IN_DAY = 24 * 60 * 60 * 1000;
 export const FREE_TIER_MAX_DELAY_DAYS = 30;
@@ -32,7 +31,7 @@ export const MAX_DELAY_BUSINESS_TIER =
 export class TierRestrictionsValidateUsecase {
   constructor(
     private organizationRepository: CommunityOrganizationRepository,
-    private getFeatureFlag: GetFeatureFlag,
+    private getFeatureFlagService: GetFeatureFlagService,
   ) {}
 
   @InstrumentUsecase()
@@ -43,12 +42,13 @@ export class TierRestrictionsValidateUsecase {
       return [];
     }
 
-    const isTierDurationRestrictionExcluded = await this.getFeatureFlag.execute(
-      GetFeatureFlagCommand.create({
-        organization: { _id: command.organizationId } as OrganizationEntity,
-        key: FeatureFlagsKeysEnum.IS_TIER_DURATION_RESTRICTION_EXCLUDED_ENABLED,
-      }),
-    );
+    const isTierDurationRestrictionExcluded =
+      await this.getFeatureFlagService.getBoolean(
+        GetFeatureFlagCommand.create({
+          organization: { _id: command.organizationId } as OrganizationEntity,
+          key: FeatureFlagsKeysEnum.IS_TIER_DURATION_RESTRICTION_EXCLUDED_ENABLED,
+        }),
+      );
 
     if (isTierDurationRestrictionExcluded) {
       return [];
