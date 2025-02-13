@@ -19,8 +19,14 @@ describe('GetPrices #novu-v2', () => {
     },
   };
   let listPricesStub: sinon.SinonStub;
+  let getFeatureFlagStub: { execute: sinon.SinonStub };
+  const IS_2025_Q1_TIERING_ENABLED = true;
 
   beforeEach(() => {
+    getFeatureFlagStub = {
+      execute: sinon.stub().resolves(IS_2025_Q1_TIERING_ENABLED),
+    };
+
     listPricesStub = stripeStub.prices.list;
     listPricesStub.onFirstCall().resolves({
       data: [{ id: 'licensed_price_id_1' }],
@@ -32,9 +38,14 @@ describe('GetPrices #novu-v2', () => {
 
   afterEach(() => {
     listPricesStub.reset();
+    getFeatureFlagStub.execute.reset();
   });
 
-  const createUseCase = () => new GetPrices(stripeStub as any);
+  const createUseCase = () => new GetPrices(stripeStub, getFeatureFlagStub);
+
+  const freeMeteredPriceLookupKey = IS_2025_Q1_TIERING_ENABLED
+    ? ['free_usage_notifications_10k']
+    : ['free_usage_notifications'];
 
   const expectedPrices = [
     {
@@ -42,7 +53,7 @@ describe('GetPrices #novu-v2', () => {
       billingInterval: StripeBillingIntervalEnum.MONTH,
       prices: {
         licensed: ['free_flat_monthly'],
-        metered: ['free_usage_notifications'],
+        metered: freeMeteredPriceLookupKey,
       },
     },
     {
