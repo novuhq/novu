@@ -13,7 +13,13 @@ import {
   Matches,
   ValidateNested,
 } from 'class-validator';
-import { ChatProviderIdEnum, IChannelCredentials, PushProviderIdEnum, SubscriberCustomData } from '@novu/shared';
+import {
+  ChatProviderIdEnum,
+  IChannelCredentials,
+  PushProviderIdEnum,
+  SUBSCRIBER_ID_REGEX,
+  SubscriberCustomData,
+} from '@novu/shared';
 import { Type } from 'class-transformer';
 
 export class ChannelCredentialsDto implements IChannelCredentials {
@@ -64,7 +70,7 @@ export class CreateSubscriberRequestDto {
   })
   @IsString()
   @IsDefined()
-  @Matches(/^[a-zA-Z0-9_-]+$/, {
+  @Matches(SUBSCRIBER_ID_REGEX, {
     message: 'SubscriberId can only contain letters, numbers, hyphens, and underscores.',
   })
   @IsNotEmpty({

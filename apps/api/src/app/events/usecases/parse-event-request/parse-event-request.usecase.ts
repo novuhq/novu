@@ -36,6 +36,7 @@ import {
   TriggerRecipientsPayload,
   TriggerRecipientSubscriber,
   WorkflowOriginEnum,
+  SUBSCRIBER_ID_REGEX,
 } from '@novu/shared';
 
 import { ApiException } from '../../../shared/exceptions/api.exception';
@@ -313,7 +314,7 @@ export class ParseEventRequest {
   }
 
   private sanitize(subscriberId: string) {
-    if (subscriberId.trim().match(/^[a-zA-Z0-9_-]+$/)) {
+    if (subscriberId.trim().match(SUBSCRIBER_ID_REGEX)) {
       return subscriberId;
     }
   }

@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { SUBSCRIBER_ID_REGEX } from '@novu/shared';
 import { Transform } from 'class-transformer';
 import {
   IsDefined,
@@ -24,7 +25,7 @@ export class CreateSubscriberRequestDto {
     message: 'SubscriberId is required',
   })
   @Transform(({ value }) => value.trim())
-  @Matches(/^[a-zA-Z0-9_-]+$/, {
+  @Matches(SUBSCRIBER_ID_REGEX, {
     message: 'SubscriberId can only contain letters, numbers, hyphens, and underscores.',
   })
   subscriberId: string;
