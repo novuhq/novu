@@ -1,14 +1,11 @@
 import {
   init,
   LDClient,
+  LDMultiKindContext,
   LDSingleKindContext,
 } from 'launchdarkly-node-server-sdk';
 import { Injectable, Logger } from '@nestjs/common';
 
-import {
-  prepareBooleanStringFeatureFlag,
-  prepareNumberStringFeatureFlag,
-} from '@novu/shared';
 import {
   EnvironmentId,
   FeatureFlagContext,
@@ -82,6 +79,10 @@ export class LaunchDarklyService implements IFeatureFlagsService {
     return result;
   }
 
+  /**
+   * @deprecated This method is deprecated.
+   * Please use the more flexible `getFlag()` method instead, with the context data.
+   */
   public async getWithEnvironmentContext<T>(
     key: FeatureFlagsKeysEnum,
     defaultValue: T,
@@ -92,6 +93,10 @@ export class LaunchDarklyService implements IFeatureFlagsService {
     return await this.get(key, context, defaultValue);
   }
 
+  /**
+   * @deprecated This method is deprecated.
+   * Please use the more flexible `getFlag()` method instead, with the context data.
+   */
   public async getWithOrganizationContext<T>(
     key: FeatureFlagsKeysEnum,
     defaultValue: T,
@@ -102,6 +107,10 @@ export class LaunchDarklyService implements IFeatureFlagsService {
     return await this.get(key, context, defaultValue);
   }
 
+  /**
+   * @deprecated This method is deprecated.
+   * Please use the more flexible `getFlag()` method instead, with the context data.
+   */
   public async getWithUserContext<T>(
     key: FeatureFlagsKeysEnum,
     defaultValue: T,
@@ -112,46 +121,40 @@ export class LaunchDarklyService implements IFeatureFlagsService {
     return await this.get(key, context, defaultValue);
   }
 
-  public async getWithFullContext<T>({
+  public async getFlag<T>({
     key,
     defaultValue,
-    contextKey,
-    contextId,
-    fallbackToDefault,
-    attributes,
+    environment,
+    organization,
+    user,
+    anonymous,
   }: FeatureFlagContext<T>): Promise<T> {
-    const value = process.env[key];
+    const mappedContext: LDMultiKindContext = {
+      kind: 'multi',
+    };
 
-    let parsedDefaultValue: T = defaultValue;
-    if (typeof defaultValue === 'boolean') {
-      parsedDefaultValue = prepareBooleanStringFeatureFlag(
-        value,
-        defaultValue,
-      ) as T;
+    if (environment) {
+      mappedContext.environment = {
+        ...environment,
+        key: environment._id,
+      };
     }
 
-    if (typeof defaultValue === 'number') {
-      parsedDefaultValue = prepareNumberStringFeatureFlag(
-        value,
-        defaultValue,
-      ) as T;
+    if (organization) {
+      mappedContext.organization = {
+        ...organization,
+        key: organization._id,
+      };
     }
 
-    const result = await this.client.variation(
-      key,
-      {
-        ...attributes,
-        kind: contextKey,
-        key: contextId,
-      },
-      parsedDefaultValue,
-    );
-
-    if (result === fallbackToDefault) {
-      return defaultValue;
+    if (user) {
+      mappedContext.user = {
+        ...user,
+        key: user._id,
+      };
     }
 
-    return result;
+    return await this.client.variation(key, mappedContext, defaultValue);
   }
 
   public async gracefullyShutdown(): Promise<void> {
@@ -174,7 +177,6 @@ export class LaunchDarklyService implements IFeatureFlagsService {
     }
   }
 
-  // TODO: Unused for now.
   private mapToEnvironmentContext(
     environmentId: EnvironmentId,
   ): LDSingleKindContext {
@@ -186,7 +188,6 @@ export class LaunchDarklyService implements IFeatureFlagsService {
     return launchDarklyContext;
   }
 
-  // TODO: Unused for now
   private mapToOrganizationContext(
     organizationId: OrganizationId,
   ): LDSingleKindContext {

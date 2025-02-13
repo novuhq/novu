@@ -9,6 +9,7 @@ import {
   IFeatureFlagsService,
   IContextualFeatureFlag,
   IGlobalFeatureFlag,
+  GetFlagData,
 } from './types';
 
 const LOG_CONTEXT = 'FeatureFlagsService';
@@ -71,6 +72,10 @@ export class FeatureFlagsService {
     }
   }
 
+  /**
+   * @deprecated This method is deprecated.
+   * Please use the more flexible `getFlag()` method instead, with the context data.
+   */
   public async getWithContext<T>(
     contextualFeatureFlag: IContextualFeatureFlag<T>,
   ): Promise<T> {
@@ -86,10 +91,19 @@ export class FeatureFlagsService {
     return await this.get(key, defaultValue, context);
   }
 
+  public async getFlag<Result>(
+    getFlagData: GetFlagData<Result>,
+  ): Promise<Result> {
+    return await this.service.getFlag<Result>(getFlagData);
+  }
+
   /**
    * When we want to retrieve a global feature flag that shouldn't be dependant on any context
    * we will use this functionality. Helpful for setting feature flags that discriminate
    * the Novu Cloud service offerings with the self hosted users.
+   *
+   * @deprecated This method is deprecated.
+   * Please use the more flexible `getFlag()` method instead, with the context data.
    */
   public async getGlobal<T>(
     globalFeatureFlag: IGlobalFeatureFlag<T>,

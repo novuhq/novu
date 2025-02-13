@@ -1,17 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { parseExpression as parseCronExpression } from 'cron-parser';
 
-import { GetFeatureFlag, GetFeatureFlagCommand } from '../get-feature-flag';
-
 import {
   ApiServiceLevelEnum,
   DigestUnitEnum,
   StepTypeEnum,
   FeatureFlagsKeysEnum,
 } from '@novu/shared';
-import { CommunityOrganizationRepository } from '@novu/dal';
+import { CommunityOrganizationRepository, OrganizationEntity } from '@novu/dal';
 
-import { differenceInMilliseconds, addYears, isAfter } from 'date-fns';
+import { addYears, differenceInMilliseconds, isAfter } from 'date-fns';
+import { GetFeatureFlag, GetFeatureFlagCommand } from '../get-feature-flag';
 
 import { TierRestrictionsValidateCommand } from './tier-restrictions-validate.command';
 import {
@@ -46,9 +45,7 @@ export class TierRestrictionsValidateUsecase {
 
     const isTierDurationRestrictionExcluded = await this.getFeatureFlag.execute(
       GetFeatureFlagCommand.create({
-        userId: 'system',
-        environmentId: 'system',
-        organizationId: command.organizationId,
+        organization: { _id: command.organizationId } as OrganizationEntity,
         key: FeatureFlagsKeysEnum.IS_TIER_DURATION_RESTRICTION_EXCLUDED_ENABLED,
       }),
     );

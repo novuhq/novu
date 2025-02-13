@@ -1,3 +1,4 @@
+import { UserEntity, OrganizationEntity, EnvironmentEntity } from '@novu/dal';
 import { GetFeatureFlag } from './index';
 import { GetFeatureFlagCommand } from './get-feature-flag.command';
 import { FeatureFlagsService } from '../../services';
@@ -16,9 +17,9 @@ describe('Get Feature Flag', () => {
 
         getFeatureFlagCommand = GetFeatureFlagCommand.create({
           key: mockKey,
-          environmentId: 'environmentId',
-          organizationId: 'organizationId',
-          userId: 'userId',
+          environment: { _id: 'environmentId' } as EnvironmentEntity,
+          organization: { _id: 'organizationId' } as OrganizationEntity,
+          user: { _id: 'userId' } as UserEntity,
         });
       });
 
@@ -51,9 +52,9 @@ describe('Get Feature Flag', () => {
 
         getFeatureFlagCommand = GetFeatureFlagCommand.create({
           key: mockKey,
-          environmentId: 'environmentId',
-          organizationId: 'organizationId',
-          userId: 'userId',
+          environment: { _id: 'environmentId' } as EnvironmentEntity,
+          organization: { _id: 'organizationId' } as OrganizationEntity,
+          user: { _id: 'userId' } as UserEntity,
         });
       });
 

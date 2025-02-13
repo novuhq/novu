@@ -1,3 +1,4 @@
+import { EnvironmentEntity, OrganizationEntity, UserEntity } from '@novu/dal';
 import {
   EnvironmentId,
   FeatureFlagsKeysEnum,
@@ -21,10 +22,24 @@ export interface IGlobalFeatureFlag<T> {
 export type IContextualFeatureFlag<T> = IGlobalFeatureFlag<T> &
   IFeatureFlagContext;
 
+export type GetFlagData<T> = {
+  key: FeatureFlagsKeysEnum;
+  defaultValue: T;
+  user?: UserEntity;
+  organization?: OrganizationEntity;
+  environment?: EnvironmentEntity;
+};
+
 export interface IFeatureFlagsService {
   getWithAnonymousContext: <T>(
     key: FeatureFlagsKeysEnum,
     defaultValue: T,
+  ) => Promise<T>;
+
+  getWithEnvironmentContext: <T>(
+    key: FeatureFlagsKeysEnum,
+    defaultValue: T,
+    organizationId: OrganizationId,
   ) => Promise<T>;
 
   getWithOrganizationContext: <T>(
@@ -39,19 +54,7 @@ export interface IFeatureFlagsService {
     userId: UserId,
   ) => Promise<T>;
 
-  getWithFullContext: <T>({
-    key,
-    defaultValue,
-    contextKey,
-    contextId,
-    attributes,
-  }: {
-    key: FeatureFlagsKeysEnum;
-    defaultValue: T;
-    contextKey: 'environment' | 'organization' | 'user';
-    contextId: string;
-    attributes?: Record<string, unknown>;
-  }) => Promise<T>;
+  getFlag<T>(getFlagData: GetFlagData<T>): Promise<T>;
 
   gracefullyShutdown: () => Promise<void>;
 
@@ -65,15 +68,11 @@ export type FeatureFlagContext<T> = {
 
   defaultValue: T;
 
-  contextKey: 'environment' | 'organization' | 'user';
+  environment?: EnvironmentEntity;
 
-  contextId: string;
+  organization?: OrganizationEntity;
 
-  /*
-   * If the Launch Darkly flag value matches the fallbackToDefault number, return defaultValue instead.
-   * This allows configuring different fallback behaviors per feature flag by setting distinct fallbackToDefault values.
-   */
-  fallbackToDefault?: number;
+  user?: UserEntity;
 
-  attributes?: Record<string, unknown>;
+  anonymous?: boolean;
 };

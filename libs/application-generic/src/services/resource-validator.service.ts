@@ -1,12 +1,18 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import {
+  EnvironmentEntity,
+  EnvironmentRepository,
   NotificationTemplateRepository,
   OrganizationRepository,
 } from '@novu/dal';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 
-import { GetFeatureFlag, NotificationStep } from '../usecases';
-import { LaunchDarklyService } from './launch-darkly.service';
+import {
+  GetFeatureFlag,
+  GetFeatureFlagCommand,
+  NotificationStep,
+} from '../usecases';
+import { GetFeatureFlagNumberCommand } from '../usecases/get-feature-flag/get-feature-flag.command';
 
 @Injectable()
 export class ResourceValidatorService {
@@ -16,17 +22,19 @@ export class ResourceValidatorService {
   constructor(
     private notificationTemplateRepository: NotificationTemplateRepository,
     private organizationRepository: OrganizationRepository,
-    private launchDarklyService: LaunchDarklyService,
+    private environmentRepository: EnvironmentRepository,
+    private getFeatureFlag: GetFeatureFlag,
   ) {}
 
   async validateStepsLimit(environmentId: string, steps: NotificationStep[]) {
-    const isWorkflowLimitEnabled =
-      await this.launchDarklyService.getWithFullContext({
+    const environment = await this.getEnvironment(environmentId);
+
+    const isWorkflowLimitEnabled = await this.getFeatureFlag.execute(
+      GetFeatureFlagCommand.create({
         key: FeatureFlagsKeysEnum.IS_MAX_STEPS_PER_WORKFLOW_ENABLED,
-        contextKey: 'environment',
-        contextId: environmentId,
-        defaultValue: false,
-      });
+        environment: { _id: environment._id } as EnvironmentEntity,
+      }),
+    );
 
     if (!isWorkflowLimitEnabled) {
       return;
@@ -42,8 +50,6 @@ export class ResourceValidatorService {
   }
 
   async validateWorkflowLimit(environmentId: string) {
-    const organization = await this.getOrganization(environmentId);
-
     const workflowsCount = await this.notificationTemplateRepository.count({
       _environmentId: environmentId,
     });
@@ -52,16 +58,18 @@ export class ResourceValidatorService {
       return;
     }
 
-    const maxWorkflowLimit = await this.launchDarklyService.getWithFullContext({
-      key: FeatureFlagsKeysEnum.MAX_WORKFLOW_LIMIT_NUMBER,
-      contextKey: 'environment',
-      contextId: environmentId,
-      defaultValue: this.MAX_WORKFLOWS_LIMIT,
-      fallbackToDefault: -1,
-      attributes: {
-        organizationCreatedAt: organization.createdAt,
-      },
-    });
+    const organization = await this.getOrganization(environmentId);
+    const environment = await this.getEnvironment(environmentId);
+
+    const maxWorkflowLimit = await this.getFeatureFlag.getNumber(
+      GetFeatureFlagNumberCommand.create({
+        key: FeatureFlagsKeysEnum.MAX_WORKFLOW_LIMIT_NUMBER,
+        defaultValue: this.MAX_WORKFLOWS_LIMIT,
+        fallbackToDefault: -1,
+        environment,
+        organization,
+      }),
+    );
 
     if (workflowsCount >= maxWorkflowLimit) {
       throw new BadRequestException({
@@ -71,6 +79,20 @@ export class ResourceValidatorService {
         limit: maxWorkflowLimit,
       });
     }
+  }
+
+  private async getEnvironment(environmentId: string) {
+    const environment = await this.environmentRepository.findOne({
+      _id: environmentId,
+    });
+
+    if (!environment) {
+      throw new BadRequestException({
+        message: 'Environment not found',
+      });
+    }
+
+    return environment;
   }
 
   private async getOrganization(environmentId: string) {
