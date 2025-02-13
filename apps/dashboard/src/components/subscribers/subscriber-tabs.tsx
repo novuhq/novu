@@ -1,6 +1,9 @@
+import { Separator } from '@/components/primitives/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
 import { Preferences } from '@/components/subscribers/preferences/preferences';
 import { PreferencesSkeleton } from '@/components/subscribers/preferences/preferences-skeleton';
 import { SubscriberActivity } from '@/components/subscribers/subscriber-activity';
+import { SubscriberOverviewForm } from '@/components/subscribers/subscriber-overview-form';
 import { SubscriberOverviewSkeleton } from '@/components/subscribers/subscriber-overview-skeleton';
 import TruncatedText from '@/components/truncated-text';
 import { useFetchSubscriber } from '@/hooks/use-fetch-subscriber';
@@ -8,9 +11,6 @@ import useFetchSubscriberPreferences from '@/hooks/use-fetch-subscriber-preferen
 import { useFormProtection } from '@/hooks/use-form-protection';
 import { useState } from 'react';
 import { RiGroup2Line } from 'react-icons/ri';
-import { Separator } from '../primitives/separator';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../primitives/tabs';
-import { SubscriberOverviewForm } from './subscriber-overview-form';
 
 type SubscriberOverviewProps = {
   subscriberId: string;
@@ -100,6 +100,7 @@ export function SubscriberTabs(props: SubscriberTabsProps) {
         <SubscriberActivity subscriberId={subscriberId} />
       </TabsContent>
       <Separator />
+
       <ProtectionAlert />
     </Tabs>
   );

@@ -17,8 +17,17 @@ import { z } from 'zod';
 import { ConfirmationModal } from '@/components/confirmation-modal';
 import { PageMeta } from '@/components/page-meta';
 import { Button } from '@/components/primitives/button';
+import { CompactButton } from '@/components/primitives/button-compact';
 import { CopyButton } from '@/components/primitives/copy-button';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/primitives/form/form';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  FormRoot,
+} from '@/components/primitives/form/form';
 import { Input } from '@/components/primitives/input';
 import { Separator } from '@/components/primitives/separator';
 import { SidebarContent, SidebarFooter, SidebarHeader } from '@/components/side-navigation/sidebar';
@@ -44,7 +53,6 @@ import { UpdateWorkflowFn } from '@/components/workflow-editor/workflow-provider
 import { useFormAutosave } from '@/hooks/use-form-autosave';
 import { INLINE_CONFIGURABLE_STEP_TYPES, STEP_TYPE_LABELS, TEMPLATE_CONFIGURABLE_STEP_TYPES } from '@/utils/constants';
 import { buildRoute, ROUTES } from '@/utils/routes';
-import { CompactButton } from '../../primitives/button-compact';
 
 const STEP_TYPE_TO_INLINE_CONTROL_VALUES: Record<StepTypeEnum, () => React.JSX.Element | null> = {
   [StepTypeEnum.DELAY]: DelayControlValues,
@@ -233,7 +241,7 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
             </Link>
           </SidebarHeader>
           <Form {...form}>
-            <form onBlur={onBlur}>
+            <FormRoot onBlur={onBlur}>
               <SaveFormContext.Provider value={value}>
                 <SidebarContent>
                   <FormField
@@ -279,7 +287,7 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
 
                 {isInlineConfigurableStep && !hasCustomControls && <InlineControlValues />}
               </SaveFormContext.Provider>
-            </form>
+            </FormRoot>
           </Form>
 
           {(isTemplateConfigurableStep || isInlineConfigurableStepWithCustomControls) && (
