@@ -47,6 +47,25 @@ describe('GetPrices #novu-v2', () => {
     ? ['free_usage_notifications_10k']
     : ['free_usage_notifications'];
 
+  const proPrices = [
+    {
+      apiServiceLevel: ApiServiceLevelEnum.PRO,
+      billingInterval: StripeBillingIntervalEnum.MONTH,
+      prices: {
+        licensed: ['pro_flat_monthly'],
+        metered: ['pro_usage_notifications'],
+      },
+    },
+    {
+      apiServiceLevel: ApiServiceLevelEnum.PRO,
+      billingInterval: StripeBillingIntervalEnum.YEAR,
+      prices: {
+        licensed: ['pro_flat_annually'],
+        metered: ['pro_usage_notifications'],
+      },
+    },
+  ];
+
   const expectedPrices = [
     {
       apiServiceLevel: ApiServiceLevelEnum.FREE,
@@ -56,6 +75,7 @@ describe('GetPrices #novu-v2', () => {
         metered: freeMeteredPriceLookupKey,
       },
     },
+    ...(IS_2025_Q1_TIERING_ENABLED ? proPrices : []),
     {
       apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
       billingInterval: StripeBillingIntervalEnum.MONTH,
