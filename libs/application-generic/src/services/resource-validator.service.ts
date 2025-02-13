@@ -1,5 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { OrganizationRepository } from '@novu/dal';
+import {
+  NotificationTemplateRepository,
+  OrganizationRepository,
+} from '@novu/dal';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 import { GetFeatureFlag, NotificationStep } from '../usecases';
