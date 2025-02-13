@@ -10,6 +10,9 @@ import {
   IntegrationEntity,
   MessageEntity,
   LayoutRepository,
+  EnvironmentEntity,
+  OrganizationEntity,
+  UserEntity,
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
@@ -239,9 +242,9 @@ export class SendMessageEmail extends SendMessageBase {
         const shouldDisableInlineCss = await this.getFeatureFlag.execute(
           GetFeatureFlagCommand.create({
             key: FeatureFlagsKeysEnum.IS_EMAIL_INLINE_CSS_DISABLED,
-            environmentId: 'system',
-            organizationId: command.organizationId,
-            userId: 'system',
+            environment: { _id: command.environmentId } as EnvironmentEntity,
+            organization: { _id: command.organizationId } as OrganizationEntity,
+            user: { _id: command.userId } as UserEntity,
           })
         );
 

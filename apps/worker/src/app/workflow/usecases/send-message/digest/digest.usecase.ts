@@ -1,5 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { MessageRepository, JobRepository, JobStatusEnum, JobEntity } from '@novu/dal';
+import {
+  MessageRepository,
+  JobRepository,
+  JobStatusEnum,
+  JobEntity,
+  EnvironmentEntity,
+  OrganizationEntity,
+  UserEntity,
+} from '@novu/dal';
 import {
   StepTypeEnum,
   ExecutionDetailsSourceEnum,
@@ -46,9 +54,9 @@ export class Digest extends SendMessageType {
     const useMergedDigestId = await this.getFeatureFlag.execute(
       GetFeatureFlagCommand.create({
         key: FeatureFlagsKeysEnum.IS_USE_MERGED_DIGEST_ID_ENABLED,
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-        userId: command.userId,
+        environment: { _id: command.environmentId } as EnvironmentEntity,
+        organization: { _id: command.organizationId } as OrganizationEntity,
+        user: { _id: command.userId } as UserEntity,
       })
     );
 
