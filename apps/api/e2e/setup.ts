@@ -49,17 +49,12 @@ after(async () => {
 
 async function cleanup() {
   const jobsService = new JobsService();
-  try {
-    await jobsService.runAllDelayedJobsImmediately();
-    await jobsService.awaitAllJobs();
+  await jobsService.runAllDelayedJobsImmediately();
+  await jobsService.awaitAllJobs();
 
-    await Promise.all([workflowQueue.drain(), standardQueue.drain(), subscriberProcessQueue.drain()]);
+  await Promise.all([workflowQueue.drain(), standardQueue.drain(), subscriberProcessQueue.drain()]);
 
-    await jobRepository._model.deleteMany({});
-  } catch (e) {
-    // eslint-disable-next-line no-console
-    console.error('Error during cleanup:', e);
-  }
+  await jobRepository._model.deleteMany({});
 }
 
 function timeoutPromise(ms: number) {
@@ -69,6 +64,7 @@ function timeoutPromise(ms: number) {
 
 afterEach(async function () {
   const TIMEOUT = 4500;
+  sinon.restore();
 
   try {
     await Promise.race([
@@ -77,7 +73,7 @@ afterEach(async function () {
         console.warn('Cleanup operation timed out after 5000ms - continuing with tests');
       }),
     ]);
-  } finally {
-    sinon.restore();
+  } catch (error) {
+    console.error('Error during cleanup:', error);
   }
 });
