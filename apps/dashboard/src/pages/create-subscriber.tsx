@@ -1,7 +1,7 @@
 import { Sheet, SheetContent } from '@/components/primitives/sheet';
 import { CreateSubscriberForm } from '@/components/subscribers/create-subscriber-form';
 import { useCombinedRefs } from '@/hooks/use-combined-refs';
-import { useFormDialogProtection } from '@/hooks/use-form-dialog-protection';
+import { useFormProtection } from '@/hooks/use-form-protection';
 import { useOnElementUnmount } from '@/hooks/use-on-element-unmount';
 import { cn } from '@/utils/ui';
 import { useState } from 'react';
@@ -12,11 +12,11 @@ export function CreateSubscriberPage() {
   const [open, setOpen] = useState(true);
 
   const {
-    protectedOnOpenChange,
+    protectedOnValueChange,
     ProtectionAlert,
     ref: protectionRef,
-  } = useFormDialogProtection({
-    onOpenChange: setOpen,
+  } = useFormProtection({
+    onValueChange: setOpen,
   });
 
   const { ref: unmountRef } = useOnElementUnmount({
@@ -29,7 +29,7 @@ export function CreateSubscriberPage() {
 
   return (
     <>
-      <Sheet open={open} onOpenChange={protectedOnOpenChange}>
+      <Sheet open={open} onOpenChange={protectedOnValueChange}>
         {/* Custom overlay since SheetOverlay does not work with modal={false} */}
         <div
           className={cn('fade-in animate-in fixed inset-0 z-50 bg-black/20 transition-opacity duration-300', {

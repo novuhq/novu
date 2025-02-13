@@ -2,7 +2,7 @@ import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/
 import { VisuallyHidden } from '@/components/primitives/visually-hidden';
 import { SubscriberTabs } from '@/components/subscribers/subscriber-tabs';
 import { useCombinedRefs } from '@/hooks/use-combined-refs';
-import { useFormDialogProtection } from '@/hooks/use-form-dialog-protection';
+import { useFormProtection } from '@/hooks/use-form-protection';
 import { cn } from '@/utils/ui';
 import { forwardRef, useState } from 'react';
 
@@ -16,13 +16,19 @@ type SubscriberDrawerProps = {
 export const SubscriberDrawer = forwardRef<HTMLDivElement, SubscriberDrawerProps>((props, forwardedRef) => {
   const { open, onOpenChange, subscriberId, readOnly = false } = props;
 
-  const { protectedOnOpenChange, ProtectionAlert, ref: protectionRef } = useFormDialogProtection({ onOpenChange });
+  const {
+    protectedOnValueChange,
+    ProtectionAlert,
+    ref: protectionRef,
+  } = useFormProtection({
+    onValueChange: onOpenChange,
+  });
 
   const combinedRef = useCombinedRefs(forwardedRef, protectionRef);
 
   return (
     <>
-      <Sheet modal={false} open={open} onOpenChange={protectedOnOpenChange}>
+      <Sheet modal={false} open={open} onOpenChange={protectedOnValueChange}>
         {/* Custom overlay since SheetOverlay does not work with modal={false} */}
         <div
           className={cn('fade-in animate-in fixed inset-0 z-50 bg-black/20 transition-opacity duration-300', {

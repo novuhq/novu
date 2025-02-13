@@ -5,7 +5,7 @@ import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/
 import { VisuallyHidden } from '@/components/primitives/visually-hidden';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useCombinedRefs } from '@/hooks/use-combined-refs';
-import { useFormDialogProtection } from '@/hooks/use-form-dialog-protection';
+import { useFormProtection } from '@/hooks/use-form-protection';
 import { useOnElementUnmount } from '@/hooks/use-on-element-unmount';
 import { cn } from '@/utils/ui';
 import { StepTypeEnum } from '@novu/shared';
@@ -28,10 +28,12 @@ export const StepDrawer = ({ children, title }: { children: React.ReactNode; tit
   });
 
   const {
-    protectedOnOpenChange,
+    protectedOnValueChange,
     ProtectionAlert,
     ref: protectionRef,
-  } = useFormDialogProtection({ onOpenChange: setIsOpen });
+  } = useFormProtection({
+    onValueChange: setIsOpen,
+  });
 
   const combinedRef = useCombinedRefs(unmountRef, protectionRef);
 
@@ -42,7 +44,7 @@ export const StepDrawer = ({ children, title }: { children: React.ReactNode; tit
   return (
     <>
       <PageMeta title={title} />
-      <Sheet modal={false} open={isOpen} onOpenChange={protectedOnOpenChange}>
+      <Sheet modal={false} open={isOpen} onOpenChange={protectedOnValueChange}>
         <div
           className={cn('animate-in fade-in fixed inset-0 z-50 bg-black/20 transition-opacity duration-300', {
             'pointer-events-none opacity-0': !isOpen,
