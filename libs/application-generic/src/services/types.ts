@@ -11,7 +11,6 @@ export interface IFeatureFlagContext {
   environmentId: EnvironmentId;
   organizationId: OrganizationId;
   userId: UserId;
-  [attribute: string]: unknown;
 }
 
 export interface IGlobalFeatureFlag<T> {

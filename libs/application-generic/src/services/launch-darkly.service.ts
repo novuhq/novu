@@ -87,9 +87,9 @@ export class LaunchDarklyService implements IFeatureFlagsService {
     defaultValue: T,
     environmentId: EnvironmentId,
   ): Promise<T> {
-    const getContext = this.mapToEnvironmentContext(environmentId);
+    const context = this.mapToEnvironmentContext(environmentId);
 
-    return await this.get(key, getContext, defaultValue);
+    return await this.get(key, context, defaultValue);
   }
 
   public async getWithOrganizationContext<T>(
