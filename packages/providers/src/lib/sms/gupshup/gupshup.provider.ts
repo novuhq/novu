@@ -1,10 +1,5 @@
 import { SmsProviderIdEnum } from '@novu/shared';
-import {
-  ChannelTypeEnum,
-  ISendMessageSuccessResponse,
-  ISmsOptions,
-  ISmsProvider,
-} from '@novu/stateless';
+import { ChannelTypeEnum, ISendMessageSuccessResponse, ISmsOptions, ISmsProvider } from '@novu/stateless';
 import axios from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
@@ -19,14 +14,14 @@ export class GupshupSmsProvider extends BaseProvider implements ISmsProvider {
     private config: {
       userId?: string;
       password?: string;
-    },
+    }
   ) {
     super();
   }
 
   async sendMessage(
     options: ISmsOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const params = this.transform(bridgeProviderData, {
       send_to: options.to,
@@ -46,9 +41,7 @@ export class GupshupSmsProvider extends BaseProvider implements ISmsProvider {
       }),
     }).body;
 
-    const response = await axios
-      .create()
-      .post(GupshupSmsProvider.BASE_URL, params);
+    const response = await axios.create().post(GupshupSmsProvider.BASE_URL, params);
 
     const body = response.data;
     const result = body.split(' | ');

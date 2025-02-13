@@ -1,13 +1,12 @@
 import { cn } from '@/utils/ui';
 import * as React from 'react';
-import { RiArrowDownSLine, RiCheckLine, RiEarthLine } from 'react-icons/ri';
+import { RiArrowDownSLine, RiCheckLine, RiPhoneLine, RiSearchLine } from 'react-icons/ri';
 import * as RPNInput from 'react-phone-number-input';
 import flags from 'react-phone-number-input/flags';
 import { Button } from './button';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from './command';
 import { InputPure, InputRoot, InputWrapper } from './input';
 import { Popover, PopoverContent, PopoverTrigger } from './popover';
-import { ScrollArea } from './scroll-area';
 
 type PhoneInputProps = Omit<React.ComponentProps<'input'>, 'onChange' | 'value' | 'ref'> &
   Omit<RPNInput.Props<typeof RPNInput.default>, 'onChange'> & {
@@ -53,11 +52,13 @@ type CountrySelectProps = {
 };
 
 const CountrySelect = ({ disabled, value: selectedCountry, options: countryList, onChange }: CountrySelectProps) => {
+  const listRef = React.useRef<HTMLDivElement>(null);
+  const scrollId = React.useRef<ReturnType<typeof setTimeout>>();
+
   return (
     <Popover modal={false}>
       <PopoverTrigger asChild>
         <Button
-          type="button"
           variant="secondary"
           mode="outline"
           className="flex h-8 items-center gap-1 rounded-e-none rounded-s-lg border-r-0 px-3 focus:z-10"
@@ -67,26 +68,45 @@ const CountrySelect = ({ disabled, value: selectedCountry, options: countryList,
           <RiArrowDownSLine className={cn('-mr-2 size-4 opacity-50', disabled ? 'hidden' : 'opacity-100')} />
         </Button>
       </PopoverTrigger>
-      <PopoverContent portal={false} className="w-[300px] rounded-lg border-t-0 p-0">
+      <PopoverContent portal={false} className="w-[300px] rounded-lg p-0">
         <Command>
-          <CommandInput placeholder="Search country..." />
-          <CommandList>
+          <CommandInput
+            placeholder="Search country..."
+            inputRootClassName="rounded-b-none before:ring-0 before:border-b has-[input:focus]:shadow-none focus-within:shadow-none"
+            inlineLeadingNode={<RiSearchLine className="size-4 text-neutral-400" />}
+            /**
+             * Scroll to top bug workaround: https://github.com/pacocoursey/cmdk/issues/233#issuecomment-2015998940
+             */
+            onValueChange={() => {
+              // clear pending scroll
+              clearTimeout(scrollId.current);
+
+              // the setTimeout is used to create a new task
+              // this is to make sure that we don't scroll until the user is done typing
+              // you can tweak the timeout duration ofc
+              scrollId.current = setTimeout(() => {
+                // inside your list select the first group and scroll to the top
+                const div = listRef.current;
+                div?.scrollTo({ top: 0, behavior: 'smooth' });
+              }, 0);
+            }}
+            autoComplete="off"
+          />
+          <CommandList ref={listRef}>
             <CommandEmpty>No country found.</CommandEmpty>
-            <ScrollArea className="h-72">
-              <CommandGroup className="rounded-md py-2">
-                {countryList.map(({ value, label }) =>
-                  value ? (
-                    <CountrySelectOption
-                      key={value}
-                      country={value}
-                      countryName={label}
-                      selectedCountry={selectedCountry}
-                      onChange={onChange}
-                    />
-                  ) : null
-                )}
-              </CommandGroup>
-            </ScrollArea>
+            <CommandGroup className="rounded-md py-2">
+              {countryList.map(({ value, label }) =>
+                value ? (
+                  <CountrySelectOption
+                    key={value}
+                    country={value}
+                    countryName={label}
+                    selectedCountry={selectedCountry}
+                    onChange={onChange}
+                  />
+                ) : null
+              )}
+            </CommandGroup>
           </CommandList>
         </Command>
       </PopoverContent>
@@ -98,7 +118,7 @@ const InputComponent = React.forwardRef<HTMLInputElement, React.ComponentProps<t
   ({ className, ...props }, ref) => (
     <InputRoot size="xs" className="rounded-s-none">
       <InputWrapper>
-        <InputPure className={cn('rounded-e-lg rounded-s-none', className)} ref={ref} {...props} />
+        <InputPure className={cn('rounded-e-lg rounded-s-none', className)} ref={ref} {...props} autoComplete="off" />
       </InputWrapper>
     </InputRoot>
   )
@@ -129,7 +149,7 @@ const FlagComponent = ({ country, countryName }: RPNInput.FlagProps) => {
       className="bg-foreground/20 flex h-4 w-6 overflow-hidden rounded-sm drop-shadow-md [&_svg]:size-full"
       key={country}
     >
-      {Flag ? <Flag title={countryName} /> : <RiEarthLine className="size-4" />}
+      {Flag ? <Flag title={countryName} /> : <RiPhoneLine className="size-4 text-neutral-400" />}
     </span>
   );
 };

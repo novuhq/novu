@@ -71,7 +71,7 @@ test('should trigger AzureSmsProvider library correctly with _passthrough', asyn
           from: '+2234567890',
         },
       },
-    },
+    }
   );
 
   expect(mockSend).toHaveBeenCalled();

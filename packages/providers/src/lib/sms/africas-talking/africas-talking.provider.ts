@@ -1,18 +1,10 @@
 import { SmsProviderIdEnum } from '@novu/shared';
-import {
-  ChannelTypeEnum,
-  ISendMessageSuccessResponse,
-  ISmsOptions,
-  ISmsProvider,
-} from '@novu/stateless';
+import { ChannelTypeEnum, ISendMessageSuccessResponse, ISmsOptions, ISmsProvider } from '@novu/stateless';
 import AfricasTalking from 'africastalking';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
-export class AfricasTalkingSmsProvider
-  extends BaseProvider
-  implements ISmsProvider
-{
+export class AfricasTalkingSmsProvider extends BaseProvider implements ISmsProvider {
   protected casing = CasingEnum.CAMEL_CASE;
   id: SmsProviderIdEnum.AfricasTalking;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
@@ -23,7 +15,7 @@ export class AfricasTalkingSmsProvider
       apiKey: string;
       username: string;
       from?: string;
-    },
+    }
   ) {
     super();
     this.africasTalkingClient = new AfricasTalking({
@@ -34,14 +26,14 @@ export class AfricasTalkingSmsProvider
 
   async sendMessage(
     options: ISmsOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const response = await this.africasTalkingClient.send(
       this.transform(bridgeProviderData, {
         from: options.from || this.config.from,
         to: options.to,
         message: options.content,
-      }).body,
+      }).body
     );
 
     return {

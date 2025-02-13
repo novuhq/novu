@@ -19,9 +19,7 @@ const mockEmailOptions: IEmailOptions = {
   to: ['test@to.com'],
   cc: ['test@cc.com'],
   bcc: ['test@bcc.com'],
-  attachments: [
-    { mime: 'text/plain', file: Buffer.from('dGVzdA=='), name: 'test.txt' },
-  ],
+  attachments: [{ mime: 'text/plain', file: Buffer.from('dGVzdA=='), name: 'test.txt' }],
 };
 
 const mockNovuMessage: IEmailBody = {

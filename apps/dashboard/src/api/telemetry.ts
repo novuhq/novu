@@ -17,7 +17,7 @@ interface IdentifyUserProps {
   pageName: string;
   jobTitle: JobTitleEnum;
   organizationType: OrganizationTypeEnum;
-  companySize?: CompanySizeEnum;
+  companySize?: CompanySizeEnum | string;
   anonymousId?: string | null;
 }
 

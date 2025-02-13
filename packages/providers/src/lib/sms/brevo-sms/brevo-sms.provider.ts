@@ -1,9 +1,4 @@
-import {
-  ChannelTypeEnum,
-  ISendMessageSuccessResponse,
-  ISmsOptions,
-  ISmsProvider,
-} from '@novu/stateless';
+import { ChannelTypeEnum, ISendMessageSuccessResponse, ISmsOptions, ISmsProvider } from '@novu/stateless';
 import { ProxyAgent } from 'proxy-agent';
 import 'cross-fetch';
 import { SmsProviderIdEnum } from '@novu/shared';
@@ -27,14 +22,14 @@ export class BrevoSmsProvider extends BaseProvider implements ISmsProvider {
     private config: {
       apiKey: string;
       from: string;
-    },
+    }
   ) {
     super();
   }
 
   async sendMessage(
     options: ISmsOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const sms = this.transform(bridgeProviderData, {
       sender: options.from || this.config.from,

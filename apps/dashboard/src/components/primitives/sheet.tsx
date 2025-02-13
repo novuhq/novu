@@ -58,7 +58,7 @@ const SheetContent = React.forwardRef<React.ElementRef<typeof SheetPrimitive.Con
       <SheetOverlay />
       <SheetPrimitive.Content ref={ref} className={cn(sheetVariants({ side }), className)} {...props}>
         <SheetPrimitive.Close className="absolute right-3.5 top-3.5" asChild>
-          <CompactButton size="md" variant="ghost" icon={RiCloseLine}>
+          <CompactButton size="md" variant="ghost" icon={RiCloseLine} data-close-button>
             <span className="sr-only">Close</span>
           </CompactButton>
         </SheetPrimitive.Close>

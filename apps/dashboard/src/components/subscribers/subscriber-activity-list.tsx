@@ -38,11 +38,13 @@ export const SubscriberActivityList = ({
   activities,
   hasChangesInFilters,
   onClearFilters,
+  onActivitySelect,
 }: {
   isLoading: boolean;
   activities: IActivity[];
   hasChangesInFilters: boolean;
   onClearFilters: () => void;
+  onActivitySelect: (activityId: string) => void;
 }) => {
   if (!isLoading && activities.length === 0) {
     return (
@@ -117,21 +119,26 @@ export const SubscriberActivityList = ({
             key={activity._id}
             {...staggerSettings(index)}
             className="border-b-stroke-soft flex w-full cursor-pointer border-b last:border-b-0"
+            onClick={() => {
+              onActivitySelect(activity._id);
+            }}
           >
-            <div className="flex max-w-96 items-center gap-2 px-3 py-2">
-              {activity.template.origin === WorkflowOriginEnum.EXTERNAL ? (
+            <div className={cn('flex max-w-96 items-center gap-2 px-3 py-2', { 'opacity-50': !activity.template })}>
+              {activity.template?.origin === WorkflowOriginEnum.EXTERNAL ? (
                 <FaCode className="size-3.5 min-w-3.5" />
               ) : (
-                <RouteFill className="text-feature size-3.5 min-w-3.5" />
+                <RouteFill className={cn('text-feature size-3.5 min-w-3.5')} />
               )}
               <div className="flex w-full flex-col gap-0.5">
-                <TruncatedText className="text-label-xs">{activity.template.name}</TruncatedText>
+                <TruncatedText className={cn('text-label-xs', { 'text-foreground-400': !activity.template })}>
+                  {activity.template?.name ?? 'Deleted workflow'}
+                </TruncatedText>
                 <TruncatedText className="text-paragraph-2xs text-text-soft">
-                  {activity.template.triggers.map((trigger) => trigger.identifier).join(', ')}
+                  {activity.template?.triggers.map((trigger) => trigger.identifier).join(', ')}
                 </TruncatedText>
               </div>
             </div>
-            <div className="ml-auto flex items-center px-3 py-2">
+            <div className={cn('ml-auto flex items-center px-3 py-2', { 'opacity-50': !activity.template })}>
               <Tooltip>
                 <TooltipTrigger>
                   <StatusBadge variant="light" status={variant}>
@@ -150,7 +157,7 @@ export const SubscriberActivityList = ({
                 </TooltipContent>
               </Tooltip>
             </div>
-            <div className="flex w-40 items-center px-3 py-2">
+            <div className={cn('flex w-40 items-center px-3 py-2', { 'opacity-50': !activity.template })}>
               <TimeDisplayHoverCard
                 date={new Date(activity.createdAt)}
                 className="text-label-xs text-text-soft flex w-full justify-end"

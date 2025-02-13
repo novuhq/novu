@@ -47,6 +47,12 @@ export class AnalyticsController {
       jobTitle: body.jobTitle,
     });
 
+    this.analyticsService.updateGroup(user._id, user.organizationId, {
+      organizationType: body.organizationType,
+      companySize: body.companySize,
+      jobTitle: body.jobTitle,
+    });
+
     await this.hubspotIdentifyFormUsecase.execute(
       HubspotIdentifyFormCommand.create({
         email: user.email as string,

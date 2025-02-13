@@ -24,7 +24,7 @@ export interface IActivity {
   tags: string[];
   createdAt: string;
   updatedAt: string;
-  template: Pick<INotificationTemplate, '_id' | 'name' | 'triggers' | 'origin'>;
-  subscriber: Pick<ISubscriber, '_id' | 'subscriberId' | 'firstName' | 'lastName'>;
+  template?: Pick<INotificationTemplate, '_id' | 'name' | 'triggers' | 'origin'>;
+  subscriber?: Pick<ISubscriber, '_id' | 'subscriberId' | 'firstName' | 'lastName'>;
   jobs: IActivityJob[];
 }

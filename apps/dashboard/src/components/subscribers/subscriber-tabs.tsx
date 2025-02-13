@@ -17,7 +17,10 @@ type SubscriberOverviewProps = {
 
 const SubscriberOverview = (props: SubscriberOverviewProps) => {
   const { subscriberId, readOnly = false } = props;
-  const { data, isPending } = useFetchSubscriber({ subscriberId });
+  const { data, isPending } = useFetchSubscriber({
+    subscriberId,
+  });
+
   if (isPending) {
     return <SubscriberOverviewSkeleton />;
   }

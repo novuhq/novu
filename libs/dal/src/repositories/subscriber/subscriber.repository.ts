@@ -212,21 +212,37 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
         _organizationId: query.organizationId,
         $and: [
           {
-            ...(query.email && { email: query.email }),
-            ...(query.phone && { phone: query.phone }),
-            ...(query.subscriberId && { subscriberId: query.subscriberId }),
+            ...(query.email && {
+              email: {
+                $regex: regExpEscape(query.email),
+                $options: 'i',
+              },
+            }),
+            ...(query.phone && {
+              phone: {
+                $regex: regExpEscape(query.phone),
+                $options: 'i',
+              },
+            }),
+            ...(query.subscriberId && {
+              subscriberId: {
+                $regex: regExpEscape(query.subscriberId),
+                $options: 'i',
+              },
+            }),
             ...(query.name && {
               $expr: {
-                $eq: [
-                  {
+                $regexMatch: {
+                  input: {
                     $trim: {
                       input: {
                         $concat: [{ $ifNull: ['$firstName', ''] }, ' ', { $ifNull: ['$lastName', ''] }],
                       },
                     },
                   },
-                  query.name,
-                ],
+                  regex: regExpEscape(query.name),
+                  options: 'i',
+                },
               },
             }),
           },

@@ -21,6 +21,8 @@ import { UnsavedChangesAlertDialog } from '../unsaved-changes-alert-dialog';
 import { LocaleSelect } from './locale-select';
 import { CreateSubscriberFormSchema } from './schema';
 import { TimezoneSelect } from './timezone-select';
+import { useTelemetry } from '@/hooks/use-telemetry';
+import { TelemetryEvent } from '@/utils/telemetry';
 
 const extensions = [loadLanguage('json')?.extension ?? []];
 const basicSetup = { lineNumbers: true, defaultKeymap: true };
@@ -36,6 +38,7 @@ type CreateSubscriberFormProps = {
 };
 
 export const CreateSubscriberForm = (props: CreateSubscriberFormProps) => {
+  const track = useTelemetry();
   const { onSuccess } = props;
 
   const form = useForm<z.infer<typeof CreateSubscriberFormSchema>>({
@@ -52,6 +55,7 @@ export const CreateSubscriberForm = (props: CreateSubscriberFormProps) => {
     },
     resolver: zodResolver(CreateSubscriberFormSchema),
     shouldFocusError: false,
+    mode: 'onBlur',
   });
 
   const isDirty = Object.keys(form.formState.dirtyFields).length > 0;
@@ -62,6 +66,7 @@ export const CreateSubscriberForm = (props: CreateSubscriberFormProps) => {
     onSuccess: () => {
       showSuccessToast('Created subscriber successfully', undefined, toastOptions);
       onSuccess?.();
+      track(TelemetryEvent.SUBSCRIBER_CREATED);
     },
     onError: (error) => {
       const errMsg = error instanceof Error ? error.message : 'Failed to create subscriber';
@@ -239,15 +244,21 @@ export const CreateSubscriberForm = (props: CreateSubscriberFormProps) => {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-2.5">
+            <div className="flex flex-nowrap gap-2.5">
               <FormField
                 control={form.control}
                 name="locale"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="w-1/4">
                     <FormLabel>Locale</FormLabel>
                     <FormControl>
-                      <LocaleSelect value={field.value} onValueChange={field.onChange} />
+                      <LocaleSelect
+                        value={field.value}
+                        onChange={(val) => {
+                          const finalValue = field.value === val ? '' : val;
+                          field.onChange(finalValue);
+                        }}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -257,10 +268,16 @@ export const CreateSubscriberForm = (props: CreateSubscriberFormProps) => {
                 control={form.control}
                 name="timezone"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="flex-1">
                     <FormLabel>Timezone</FormLabel>
                     <FormControl>
-                      <TimezoneSelect value={field.value} onValueChange={field.onChange} />
+                      <TimezoneSelect
+                        value={field.value}
+                        onChange={(val) => {
+                          const finalValue = field.value === val ? '' : val;
+                          field.onChange(finalValue);
+                        }}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -285,7 +302,7 @@ export const CreateSubscriberForm = (props: CreateSubscriberFormProps) => {
                         className="overflow-auto"
                         extensions={extensions}
                         basicSetup={basicSetup}
-                        placeholder="Custom data (JSON)"
+                        placeholder="{}"
                         height="100%"
                         multiline
                         {...field}
