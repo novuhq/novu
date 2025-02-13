@@ -68,7 +68,7 @@ export interface IFeatureFlagsService {
   isEnabled: boolean;
 }
 
-export type FeatureFlagFullContext<T> = {
+export type FeatureFlagContext<T> = {
   key: FeatureFlagsKeysEnum;
 
   defaultValue: T;

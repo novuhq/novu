@@ -11,7 +11,7 @@ import {
 } from '@novu/shared';
 import {
   EnvironmentId,
-  FeatureFlagFullContext,
+  FeatureFlagContext,
   FeatureFlagsKeysEnum,
   IFeatureFlagsService,
   OrganizationId,
@@ -123,7 +123,7 @@ export class LaunchDarklyService implements IFeatureFlagsService {
     contextId,
     fallbackToDefault,
     attributes,
-  }: FeatureFlagFullContext<T>): Promise<T> {
+  }: FeatureFlagContext<T>): Promise<T> {
     const value = process.env[key];
 
     let parsedDefaultValue: T = defaultValue;
