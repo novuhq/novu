@@ -328,4 +328,31 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
 
     return updatedJobs;
   }
+
+  public async cancelPendingJobs({
+    _environmentId,
+    transactionId,
+    _subscriberId,
+    _templateId,
+  }: {
+    _environmentId: string;
+    transactionId: string;
+    _subscriberId: string;
+    _templateId: string;
+  }): Promise<IUpdateResult> {
+    return this.MongooseModel.updateMany(
+      {
+        _environmentId,
+        _subscriberId,
+        _templateId,
+        status: JobStatusEnum.PENDING,
+        transactionId,
+      },
+      {
+        $set: {
+          status: JobStatusEnum.CANCELED,
+        },
+      }
+    );
+  }
 }

@@ -45,7 +45,7 @@ export const WorkflowsPage = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams({
     orderDirection: DirectionEnum.DESC,
-    orderBy: 'updatedAt',
+    orderBy: 'createdAt',
     query: '',
   });
   const form = useForm<WorkflowFilters>({

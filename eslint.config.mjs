@@ -115,6 +115,7 @@ export default tsEslint.config(
     },
 
     rules: {
+      '@typescript-eslint/await-thenable': 'warn',
       'unused-imports/no-unused-imports': 'off',
       '@typescript-eslint/space-before-blocks': 'off',
       '@typescript-eslint/lines-between-class-members': 'off',
