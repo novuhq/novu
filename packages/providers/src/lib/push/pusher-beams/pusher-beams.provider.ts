@@ -1,18 +1,10 @@
 import { PushProviderIdEnum } from '@novu/shared';
-import {
-  ChannelTypeEnum,
-  IPushOptions,
-  IPushProvider,
-  ISendMessageSuccessResponse,
-} from '@novu/stateless';
+import { ChannelTypeEnum, IPushOptions, IPushProvider, ISendMessageSuccessResponse } from '@novu/stateless';
 import axios, { AxiosInstance } from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
-export class PusherBeamsPushProvider
-  extends BaseProvider
-  implements IPushProvider
-{
+export class PusherBeamsPushProvider extends BaseProvider implements IPushProvider {
   protected casing: CasingEnum = CasingEnum.SNAKE_CASE;
   id = PushProviderIdEnum.PusherBeams;
   channelType = ChannelTypeEnum.PUSH as ChannelTypeEnum.PUSH;
@@ -23,7 +15,7 @@ export class PusherBeamsPushProvider
     private config: {
       instanceId: string;
       secretKey: string;
-    },
+    }
   ) {
     super();
     this.axiosInstance = axios.create({
@@ -37,7 +29,7 @@ export class PusherBeamsPushProvider
 
   async sendMessage(
     options: IPushOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const { sound, badge, ...overrides } = options.overrides ?? {};
     const payload = this.transform(bridgeProviderData, {

@@ -10,7 +10,7 @@ type CopyButtonProps = ButtonProps & {
 };
 
 export const CopyButton = (props: CopyButtonProps) => {
-  const { className, valueToCopy, children, size, ...rest } = props;
+  const { className, valueToCopy, children, onClick, size, ...rest } = props;
 
   const [copied, setCopied] = useState<boolean>(false);
 
@@ -32,7 +32,10 @@ export const CopyButton = (props: CopyButtonProps) => {
         <Button
           mode="outline"
           variant="secondary"
-          onClick={handleCopy}
+          onClick={(e) => {
+            handleCopy();
+            onClick?.(e);
+          }}
           className={cn(
             'rounded-none bg-transparent outline-none ring-1 ring-inset ring-transparent transition duration-200 ease-out',
             'hover:bg-bg-weak-50 hover:text-text-strong-950',

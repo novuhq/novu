@@ -1,10 +1,5 @@
 import { SmsProviderIdEnum } from '@novu/shared';
-import {
-  ChannelTypeEnum,
-  ISendMessageSuccessResponse,
-  ISmsOptions,
-  ISmsProvider,
-} from '@novu/stateless';
+import { ChannelTypeEnum, ISendMessageSuccessResponse, ISmsOptions, ISmsProvider } from '@novu/stateless';
 import axios, { AxiosInstance } from 'axios';
 import qs from 'qs';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
@@ -20,7 +15,7 @@ export class BurstSmsProvider extends BaseProvider implements ISmsProvider {
     private config: {
       apiKey?: string;
       secretKey?: string;
-    },
+    }
   ) {
     super();
     this.axiosInstance = axios.create({
@@ -33,20 +28,17 @@ export class BurstSmsProvider extends BaseProvider implements ISmsProvider {
 
   async sendMessage(
     options: ISmsOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const data = qs.stringify(
       this.transform(bridgeProviderData, {
         message: options.content,
         to: options.to,
         from: options.from,
-      }).body,
+      }).body
     );
 
-    const response = await this.axiosInstance.post(
-      'https://api.transmitsms.com/send-sms.json',
-      data,
-    );
+    const response = await this.axiosInstance.post('https://api.transmitsms.com/send-sms.json', data);
 
     return {
       id: response.data.message_id,

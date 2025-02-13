@@ -46,8 +46,11 @@ export function OverviewItem({
             valueToCopy={value}
             mode="ghost"
             size="2xs"
+            onClick={(e) => {
+              e.stopPropagation();
+            }}
             className="text-foreground-600 mr-0 size-3 gap-0 p-0 opacity-0 transition-opacity group-hover:opacity-100"
-          ></CopyButton>
+          />
         )}
         {wrappedChildren}
       </div>

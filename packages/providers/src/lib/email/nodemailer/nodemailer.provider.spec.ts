@@ -195,7 +195,7 @@ describe.skip('NodemailerProvider', () => {
         fail('Should not reach here');
       } catch (error) {
         expect(error.message).toBe(
-          'TLS options is not a valid JSON. Check again the value set for NODEMAILER_TLS_OPTIONS',
+          'TLS options is not a valid JSON. Check again the value set for NODEMAILER_TLS_OPTIONS'
         );
       }
     });

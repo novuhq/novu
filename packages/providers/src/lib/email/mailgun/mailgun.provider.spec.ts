@@ -14,9 +14,7 @@ const mockNovuMessage = {
   to: ['test@test2.com'],
   subject: 'test subject',
   html: '<div> Mail Content </div>',
-  attachments: [
-    { mime: 'text/plain', file: Buffer.from('dGVzdA=='), name: 'test.txt' },
-  ],
+  attachments: [{ mime: 'text/plain', file: Buffer.from('dGVzdA=='), name: 'test.txt' }],
 };
 
 test('should trigger mailgun correctly', async () => {

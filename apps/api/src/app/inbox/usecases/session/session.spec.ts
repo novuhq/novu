@@ -175,6 +175,7 @@ describe('Session', () => {
       applicationIdentifier: 'app-id',
       subscriberId: 'subscriber-id',
       subscriberHash: 'hash',
+      origin: 'origin',
     };
 
     const environment = { _id: 'env-id', _organizationId: 'org-id', name: 'env-name', apiKeys: [{ key: 'api-key' }] };
@@ -198,6 +199,7 @@ describe('Session', () => {
         _organization: environment._organizationId,
         environmentName: environment.name,
         _subscriber: subscriber._id,
+        origin: command.origin,
       })
     ).to.be.true;
   });

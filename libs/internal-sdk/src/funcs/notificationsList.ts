@@ -66,6 +66,7 @@ export async function notificationsList(
     "before": payload.before,
     "channels": payload.channels,
     "emails": payload.emails,
+    "limit": payload.limit,
     "page": payload.page,
     "search": payload.search,
     "subscriberIds": payload.subscriberIds,

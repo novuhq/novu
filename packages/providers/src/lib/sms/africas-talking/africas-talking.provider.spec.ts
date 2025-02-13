@@ -8,14 +8,12 @@ test(`should trigger Africa's Talking library correctly`, async () => {
     from: '1234',
   });
 
-  const spy = vi
-    .spyOn((provider as any).africasTalkingClient, 'send')
-    .mockImplementation(async () => {
-      return {
-        date: new Date().toISOString(),
-        id: Math.ceil(Math.random() * 100),
-      };
-    });
+  const spy = vi.spyOn((provider as any).africasTalkingClient, 'send').mockImplementation(async () => {
+    return {
+      date: new Date().toISOString(),
+      id: Math.ceil(Math.random() * 100),
+    };
+  });
 
   await provider.sendMessage({
     to: '+2347063317344',
@@ -37,14 +35,12 @@ test(`should trigger Africa's Talking library correctly with _passthrough`, asyn
     from: '1234',
   });
 
-  const spy = vi
-    .spyOn((provider as any).africasTalkingClient, 'send')
-    .mockImplementation(async () => {
-      return {
-        date: new Date().toISOString(),
-        id: Math.ceil(Math.random() * 100),
-      };
-    });
+  const spy = vi.spyOn((provider as any).africasTalkingClient, 'send').mockImplementation(async () => {
+    return {
+      date: new Date().toISOString(),
+      id: Math.ceil(Math.random() * 100),
+    };
+  });
 
   await provider.sendMessage(
     {
@@ -57,7 +53,7 @@ test(`should trigger Africa's Talking library correctly with _passthrough`, asyn
           to: '+3347063317344',
         },
       },
-    },
+    }
   );
 
   expect(spy).toHaveBeenCalled();

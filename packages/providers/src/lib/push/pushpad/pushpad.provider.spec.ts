@@ -70,7 +70,7 @@ test('should trigger pushpad library correctly with _passthrough', async () => {
           title: 'Test passthrough',
         },
       },
-    },
+    }
   );
 
   expect(result.id).toBe('12345');

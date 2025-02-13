@@ -169,7 +169,7 @@ export async function subscribersCreate(
     | ConnectionError
   >(
     M.json(
-      200,
+      201,
       operations.SubscribersControllerCreateSubscriberResponse$inboundSchema,
       { hdrs: true, key: "Result" },
     ),

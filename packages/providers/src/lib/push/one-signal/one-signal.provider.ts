@@ -1,19 +1,11 @@
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 
-import {
-  ChannelTypeEnum,
-  ISendMessageSuccessResponse,
-  IPushOptions,
-  IPushProvider,
-} from '@novu/stateless';
+import { ChannelTypeEnum, ISendMessageSuccessResponse, IPushOptions, IPushProvider } from '@novu/stateless';
 import { PushProviderIdEnum } from '@novu/shared';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
-export class OneSignalPushProvider
-  extends BaseProvider
-  implements IPushProvider
-{
+export class OneSignalPushProvider extends BaseProvider implements IPushProvider {
   id = PushProviderIdEnum.OneSignal;
   channelType = ChannelTypeEnum.PUSH as ChannelTypeEnum.PUSH;
   private axiosInstance: AxiosInstance;
@@ -27,22 +19,19 @@ export class OneSignalPushProvider
       appId: string;
       apiKey: string;
       apiVersion?: 'externalId' | 'playerModel' | null;
-    },
+    }
   ) {
     super();
     this.apiVersion = config.apiVersion;
 
     this.axiosInstance = axios.create({
-      baseURL:
-        config.apiVersion === 'externalId'
-          ? this.BASE_URL_USER_MODEL
-          : this.BASE_URL_PLAYER_MODEL,
+      baseURL: config.apiVersion === 'externalId' ? this.BASE_URL_USER_MODEL : this.BASE_URL_PLAYER_MODEL,
     });
   }
 
   async sendMessage(
     options: IPushOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const { sound, badge, ...overrides } = options.overrides ?? {};
 
@@ -86,9 +75,7 @@ export class OneSignalPushProvider
       data: JSON.stringify(notification),
     };
 
-    const res = await this.axiosInstance.request<{ id: string }>(
-      notificationOptions,
-    );
+    const res = await this.axiosInstance.request<{ id: string }>(notificationOptions);
 
     return {
       id: res?.data.id,
@@ -96,7 +83,7 @@ export class OneSignalPushProvider
     };
   }
 
-  protected keyCaseObject: Record<string, string> = {
+  protected override keyCaseObject: Record<string, string> = {
     is_ios: 'isIos',
     is_android: 'isAndroid',
     is_huawei: 'isHuawei',

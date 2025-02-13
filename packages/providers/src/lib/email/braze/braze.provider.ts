@@ -7,12 +7,7 @@ import {
   ICheckIntegrationResponse,
   CheckIntegrationResponseEnum,
 } from '@novu/stateless';
-import {
-  Braze,
-  MessagesSendObject,
-  UsersExportIdsObject,
-  UsersExportIdsResponse,
-} from 'braze-api';
+import { Braze, MessagesSendObject, UsersExportIdsObject, UsersExportIdsResponse } from 'braze-api';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
@@ -27,7 +22,7 @@ export class BrazeEmailProvider extends BaseProvider implements IEmailProvider {
       apiKey: string;
       apiURL: string;
       appID: string;
-    },
+    }
   ) {
     super();
     this.braze = new Braze(this.config.apiURL, this.config.apiKey);
@@ -35,12 +30,10 @@ export class BrazeEmailProvider extends BaseProvider implements IEmailProvider {
 
   async sendMessage(
     options: IEmailOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const maildata = await this.createMailData(options);
-    const response = await this.braze.messages.send(
-      this.transform(bridgeProviderData, maildata).body,
-    );
+    const response = await this.braze.messages.send(this.transform(bridgeProviderData, maildata).body);
 
     return {
       id: response.dispatch_id,
@@ -55,17 +48,14 @@ export class BrazeEmailProvider extends BaseProvider implements IEmailProvider {
         email_address: email,
       };
 
-      const response: UsersExportIdsResponse =
-        await this.braze.users.export.ids(exportObject);
+      const response: UsersExportIdsResponse = await this.braze.users.export.ids(exportObject);
       externalIds.push(...response.users.map((user) => user.external_id));
     }
 
     return externalIds;
   }
 
-  private async createMailData(
-    options: IEmailOptions,
-  ): Promise<MessagesSendObject> {
+  private async createMailData(options: IEmailOptions): Promise<MessagesSendObject> {
     const messageBody: MessagesSendObject = {
       broadcast: false,
       external_user_ids: await this.mapToExternalID(options.to),
@@ -87,24 +77,18 @@ export class BrazeEmailProvider extends BaseProvider implements IEmailProvider {
     };
 
     if (options.attachments && options.attachments.length > 0) {
-      messageBody.messages.email.attachments = options.attachments.map(
-        (attachment) => {
-          return {
-            file_name: attachment.name || 'attachment',
-            url: `data:${attachment.mime};base64,${attachment.file.toString(
-              'base64',
-            )}`,
-          };
-        },
-      );
+      messageBody.messages.email.attachments = options.attachments.map((attachment) => {
+        return {
+          file_name: attachment.name || 'attachment',
+          url: `data:${attachment.mime};base64,${attachment.file.toString('base64')}`,
+        };
+      });
     }
 
     return messageBody;
   }
 
-  async checkIntegration(
-    options: IEmailOptions,
-  ): Promise<ICheckIntegrationResponse> {
+  async checkIntegration(options: IEmailOptions): Promise<ICheckIntegrationResponse> {
     try {
       const testEmailMessage = await this.createMailData(options);
 
