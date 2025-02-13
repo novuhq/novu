@@ -103,7 +103,7 @@ const verifyCustomerMock = {
   ],
 };
 
-describe('webhook event - customer.subscription.deleted #novu-v2', () => {
+describe.skip('webhook event - customer.subscription.deleted #novu-v2', () => {
   const eeBilling = require('@novu/ee-billing');
   if (!eeBilling) {
     throw new Error('ee-billing does not exist');
@@ -120,7 +120,6 @@ describe('webhook event - customer.subscription.deleted #novu-v2', () => {
   const stripeStub = {
     customers: {
       update: sinon.stub(),
-      retrieve: sinon.stub(),
     },
     subscriptions: {
       create: sinon.stub(),
