@@ -57,17 +57,29 @@ describe('Create checkout session #novu-v2', async () => {
     },
   };
   let checkoutCreateStub: sinon.SinonStub;
+  let getFeatureFlagStub: { execute: sinon.SinonStub };
+  const IS_2025_Q1_TIERING_ENABLED = true;
 
   beforeEach(() => {
     checkoutCreateStub = sinon.stub(stripeStub.checkout.sessions, 'create').resolves({ url: 'url' });
+    getFeatureFlagStub = {
+      execute: sinon.stub().resolves(IS_2025_Q1_TIERING_ENABLED),
+    };
   });
 
   afterEach(() => {
     checkoutCreateStub.reset();
+    getFeatureFlagStub.execute.reset();
   });
 
   it('Create checkout session with 1 subscription containing 1 licensed item and 1 metered item for monthly billing interval', async () => {
-    const usecase = new CreateCheckoutSession(stripeStub, getOrCreateCustomer, userRepository, getPrices);
+    const usecase = new CreateCheckoutSession(
+      stripeStub,
+      getOrCreateCustomer,
+      userRepository,
+      getPrices,
+      getFeatureFlagStub
+    );
 
     const result = await usecase.execute({
       organizationId: 'organization_id',
@@ -89,7 +101,13 @@ describe('Create checkout session #novu-v2', async () => {
   });
 
   it('Create checkout session with 1 subscription containing 1 licensed item for annual billing interval', async () => {
-    const usecase = new CreateCheckoutSession(stripeStub, getOrCreateCustomer, userRepository, getPrices);
+    const usecase = new CreateCheckoutSession(
+      stripeStub,
+      getOrCreateCustomer,
+      userRepository,
+      getPrices,
+      getFeatureFlagStub
+    );
 
     const result = await usecase.execute({
       organizationId: 'organization_id',
