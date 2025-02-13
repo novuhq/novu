@@ -28,13 +28,6 @@ export interface IFeatureFlagsService {
     defaultValue: T,
   ) => Promise<T>;
 
-  getWithEnvironmentContext: <T, V_Context>(
-    key: FeatureFlagsKeysEnum,
-    defaultValue: T,
-    environmentId: EnvironmentId,
-    context?: V_Context,
-  ) => Promise<T>;
-
   getWithOrganizationContext: <T>(
     key: FeatureFlagsKeysEnum,
     defaultValue: T,

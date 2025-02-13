@@ -150,16 +150,12 @@ export class FeatureFlagsService {
           defaultValue,
           context.organizationId,
         )) satisfies T;
-      case 'environmentId': {
-        const { environmentId, environmentCreatedAt, count } = context;
-
+      case 'environmentId':
         return (await this.service.getWithEnvironmentContext(
           key,
           defaultValue,
-          environmentId,
-          { environmentCreatedAt, count },
+          context.environmentId,
         )) satisfies T;
-      }
       case 'userId':
         return (await this.service.getWithUserContext(
           key,
