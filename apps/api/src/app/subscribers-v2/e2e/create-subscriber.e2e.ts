@@ -23,6 +23,7 @@ describe('Create Subscriber - /subscribers (POST) #novu-v2', () => {
       lastName: 'Last Name',
       locale: 'en_US',
       timezone: 'America/New_York',
+      data: { test1: 'test value1', test2: 'test value2' },
     };
 
     const res = await novuClient.subscribers.create(payload, payload.subscriberId);
@@ -34,6 +35,7 @@ describe('Create Subscriber - /subscribers (POST) #novu-v2', () => {
     expect(subscriber.lastName).to.equal(payload.lastName);
     expect(subscriber.locale).to.equal(payload.locale);
     expect(subscriber.timezone).to.equal(payload.timezone);
+    expect(subscriber.data).to.deep.equal(payload.data);
   });
 
   it('should return 409 if subscriberId already exists', async () => {
