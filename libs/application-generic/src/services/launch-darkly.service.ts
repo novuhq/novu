@@ -112,22 +112,29 @@ export class LaunchDarklyService implements IFeatureFlagsService {
     return await this.get(key, context, defaultValue);
   }
 
-  public async getWithFullContext<T>(
-    key: FeatureFlagsKeysEnum,
-    defaultValue: T,
-    context: FeatureFlagFullContext,
-  ): Promise<T> {
-    const { contextKey, contextId, context: contextData } = context;
-
-    return await this.client.variation(
+  public async getWithFullContext<T>({
+    key,
+    defaultValue,
+    contextKey,
+    contextId,
+    fallbackToDefault,
+    attributes,
+  }: FeatureFlagFullContext<T>): Promise<T> {
+    const result = await this.client.variation(
       key,
       {
-        ...contextData,
+        ...attributes,
         kind: contextKey,
         key: contextId,
       },
       defaultValue,
     );
+
+    if (result === fallbackToDefault) {
+      return defaultValue;
+    }
+
+    return result;
   }
 
   public async gracefullyShutdown(): Promise<void> {

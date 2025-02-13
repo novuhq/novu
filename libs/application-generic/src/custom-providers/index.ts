@@ -5,6 +5,7 @@ import {
   CacheService,
   DistributedLockService,
   FeatureFlagsService,
+  LaunchDarklyService,
 } from '../services';
 import { GetFeatureFlag } from '../usecases';
 
@@ -12,6 +13,16 @@ export const featureFlagsService = {
   provide: FeatureFlagsService,
   useFactory: async (): Promise<FeatureFlagsService> => {
     const instance = new FeatureFlagsService();
+    await instance.initialize();
+
+    return instance;
+  },
+};
+
+export const launchDarklyService = {
+  provide: LaunchDarklyService,
+  useFactory: async (): Promise<LaunchDarklyService> => {
+    const instance = new LaunchDarklyService();
     await instance.initialize();
 
     return instance;

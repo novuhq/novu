@@ -43,6 +43,7 @@ import {
   GetDecryptedSecretKey,
   getFeatureFlag,
   InvalidateCacheService,
+  launchDarklyService,
   LoggerModule,
   QueuesModule,
   storageService,
@@ -129,6 +130,7 @@ const PROVIDERS = [
   ExecuteBridgeRequest,
   getFeatureFlag,
   GetDecryptedSecretKey,
+  launchDarklyService,
 ];
 
 const IMPORTS = [

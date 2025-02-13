@@ -9,7 +9,6 @@ import {
   IFeatureFlagsService,
   IContextualFeatureFlag,
   IGlobalFeatureFlag,
-  FullContextualFeatureFlag,
 } from './types';
 
 const LOG_CONTEXT = 'FeatureFlagsService';
@@ -70,20 +69,6 @@ export class FeatureFlagsService {
         );
       }
     }
-  }
-
-  public async getWithFullContext<T>(
-    contextualFeatureFlag: FullContextualFeatureFlag<T>,
-  ): Promise<T> {
-    return await this.service.getWithFullContext(
-      contextualFeatureFlag.key,
-      contextualFeatureFlag.defaultValue,
-      {
-        contextKey: contextualFeatureFlag.contextKey,
-        contextId: contextualFeatureFlag.contextId,
-        context: contextualFeatureFlag.context,
-      },
-    );
   }
 
   public async getWithContext<T>(

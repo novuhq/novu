@@ -14,12 +14,6 @@ export interface IFeatureFlagContext {
   [attribute: string]: unknown;
 }
 
-export type FeatureFlagFullContext = {
-  contextKey: 'environment' | 'organization' | 'user';
-  contextId: string;
-  context?: Record<string, unknown>;
-};
-
 export interface IGlobalFeatureFlag<T> {
   key: FeatureFlagsKeysEnum;
   defaultValue: T;
@@ -27,9 +21,6 @@ export interface IGlobalFeatureFlag<T> {
 
 export type IContextualFeatureFlag<T> = IGlobalFeatureFlag<T> &
   IFeatureFlagContext;
-
-export type FullContextualFeatureFlag<T> = IGlobalFeatureFlag<T> &
-  FeatureFlagFullContext;
 
 export interface IFeatureFlagsService {
   getWithAnonymousContext: <T>(
@@ -56,11 +47,19 @@ export interface IFeatureFlagsService {
     userId: UserId,
   ) => Promise<T>;
 
-  getWithFullContext: <T>(
-    key: FeatureFlagsKeysEnum,
-    defaultValue: T,
-    context: FeatureFlagFullContext,
-  ) => Promise<T>;
+  getWithFullContext: <T>({
+    key,
+    defaultValue,
+    contextKey,
+    contextId,
+    attributes,
+  }: {
+    key: FeatureFlagsKeysEnum;
+    defaultValue: T;
+    contextKey: 'environment' | 'organization' | 'user';
+    contextId: string;
+    attributes?: Record<string, unknown>;
+  }) => Promise<T>;
 
   gracefullyShutdown: () => Promise<void>;
 
@@ -68,3 +67,21 @@ export interface IFeatureFlagsService {
 
   isEnabled: boolean;
 }
+
+export type FeatureFlagFullContext<T> = {
+  key: FeatureFlagsKeysEnum;
+
+  defaultValue: T;
+
+  contextKey: 'environment' | 'organization' | 'user';
+
+  contextId: string;
+
+  /*
+   * If the Launch Darkly flag value matches the fallbackToDefault number, return defaultValue instead.
+   * This allows configuring different fallback behaviors per feature flag by setting distinct fallbackToDefault values.
+   */
+  fallbackToDefault?: number;
+
+  attributes?: Record<string, unknown>;
+};

@@ -6,6 +6,7 @@ import {
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 import { GetFeatureFlag, NotificationStep } from '../usecases';
+import { LaunchDarklyService } from './launch-darkly.service';
 
 @Injectable()
 export class ResourceValidatorService {
@@ -15,16 +16,17 @@ export class ResourceValidatorService {
   constructor(
     private notificationTemplateRepository: NotificationTemplateRepository,
     private organizationRepository: OrganizationRepository,
-    private getFeatureFlag: GetFeatureFlag,
+    private launchDarklyService: LaunchDarklyService,
   ) {}
 
   async validateStepsLimit(environmentId: string, steps: NotificationStep[]) {
-    const isWorkflowLimitEnabled = await this.getFeatureFlag.execute({
-      key: FeatureFlagsKeysEnum.IS_MAX_STEPS_PER_WORKFLOW_ENABLED,
-      environmentId,
-      organizationId: 'system',
-      userId: 'system',
-    });
+    const isWorkflowLimitEnabled =
+      await this.launchDarklyService.getWithFullContext({
+        key: FeatureFlagsKeysEnum.IS_MAX_STEPS_PER_WORKFLOW_ENABLED,
+        contextKey: 'environment',
+        contextId: environmentId,
+        defaultValue: false,
+      });
 
     if (!isWorkflowLimitEnabled) {
       return;
@@ -50,12 +52,13 @@ export class ResourceValidatorService {
       return;
     }
 
-    const maxWorkflowLimit = await this.getFeatureFlag.getNumber({
+    const maxWorkflowLimit = await this.launchDarklyService.getWithFullContext({
       key: FeatureFlagsKeysEnum.MAX_WORKFLOW_LIMIT_NUMBER,
       contextKey: 'environment',
       contextId: environmentId,
       defaultValue: this.MAX_WORKFLOWS_LIMIT,
-      context: {
+      fallbackToDefault: -1,
+      attributes: {
         organizationCreatedAt: organization.createdAt,
       },
     });
