@@ -7,11 +7,6 @@ import { safeParse } from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 
-/**
- * Additional custom data for the subscriber
- */
-export type CreateSubscriberRequestDtoData = {};
-
 export type CreateSubscriberRequestDto = {
   /**
    * Unique identifier of the subscriber
@@ -48,58 +43,8 @@ export type CreateSubscriberRequestDto = {
   /**
    * Additional custom data for the subscriber
    */
-  data?: CreateSubscriberRequestDtoData | null | undefined;
+  data?: { [k: string]: any } | null | undefined;
 };
-
-/** @internal */
-export const CreateSubscriberRequestDtoData$inboundSchema: z.ZodType<
-  CreateSubscriberRequestDtoData,
-  z.ZodTypeDef,
-  unknown
-> = z.object({});
-
-/** @internal */
-export type CreateSubscriberRequestDtoData$Outbound = {};
-
-/** @internal */
-export const CreateSubscriberRequestDtoData$outboundSchema: z.ZodType<
-  CreateSubscriberRequestDtoData$Outbound,
-  z.ZodTypeDef,
-  CreateSubscriberRequestDtoData
-> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace CreateSubscriberRequestDtoData$ {
-  /** @deprecated use `CreateSubscriberRequestDtoData$inboundSchema` instead. */
-  export const inboundSchema = CreateSubscriberRequestDtoData$inboundSchema;
-  /** @deprecated use `CreateSubscriberRequestDtoData$outboundSchema` instead. */
-  export const outboundSchema = CreateSubscriberRequestDtoData$outboundSchema;
-  /** @deprecated use `CreateSubscriberRequestDtoData$Outbound` instead. */
-  export type Outbound = CreateSubscriberRequestDtoData$Outbound;
-}
-
-export function createSubscriberRequestDtoDataToJSON(
-  createSubscriberRequestDtoData: CreateSubscriberRequestDtoData,
-): string {
-  return JSON.stringify(
-    CreateSubscriberRequestDtoData$outboundSchema.parse(
-      createSubscriberRequestDtoData,
-    ),
-  );
-}
-
-export function createSubscriberRequestDtoDataFromJSON(
-  jsonString: string,
-): SafeParseResult<CreateSubscriberRequestDtoData, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => CreateSubscriberRequestDtoData$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'CreateSubscriberRequestDtoData' from JSON`,
-  );
-}
 
 /** @internal */
 export const CreateSubscriberRequestDto$inboundSchema: z.ZodType<
@@ -115,8 +60,7 @@ export const CreateSubscriberRequestDto$inboundSchema: z.ZodType<
   avatar: z.nullable(z.string()).optional(),
   timezone: z.nullable(z.string()).optional(),
   locale: z.nullable(z.string()).optional(),
-  data: z.nullable(z.lazy(() => CreateSubscriberRequestDtoData$inboundSchema))
-    .optional(),
+  data: z.nullable(z.record(z.any())).optional(),
 });
 
 /** @internal */
@@ -129,7 +73,7 @@ export type CreateSubscriberRequestDto$Outbound = {
   avatar?: string | null | undefined;
   timezone?: string | null | undefined;
   locale?: string | null | undefined;
-  data?: CreateSubscriberRequestDtoData$Outbound | null | undefined;
+  data?: { [k: string]: any } | null | undefined;
 };
 
 /** @internal */
@@ -146,8 +90,7 @@ export const CreateSubscriberRequestDto$outboundSchema: z.ZodType<
   avatar: z.nullable(z.string()).optional(),
   timezone: z.nullable(z.string()).optional(),
   locale: z.nullable(z.string()).optional(),
-  data: z.nullable(z.lazy(() => CreateSubscriberRequestDtoData$outboundSchema))
-    .optional(),
+  data: z.nullable(z.record(z.any())).optional(),
 });
 
 /**

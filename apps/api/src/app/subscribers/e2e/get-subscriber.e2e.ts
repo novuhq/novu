@@ -21,8 +21,6 @@ describe('Get Subscriber - /subscribers/:id (GET) #novu-v2', function () {
       email: 'john@doe.com',
     });
 
-    console.log(createResponse.result);
-
     const response = await novuClient.subscribers.retrieve(subscriberId);
 
     const subscriber = response.result;

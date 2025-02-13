@@ -104,6 +104,7 @@ export class CreateSubscriberRequestDto {
     type: Object,
     description: 'Additional custom data for the subscriber',
     nullable: true,
+    additionalProperties: true,
   })
   @IsOptional()
   @ValidateIf((obj) => obj.data !== null)

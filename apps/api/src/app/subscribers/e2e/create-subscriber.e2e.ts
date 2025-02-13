@@ -31,7 +31,6 @@ describe('Create Subscriber - /subscribers (POST) #novu-v2', function () {
     expect(body).to.be.ok;
     const createdSubscriber = await subscriberRepository.findBySubscriberId(session.environment._id, '123');
 
-    console.log({ createdSubscriber });
     expect(createdSubscriber?.firstName).to.equal('John');
     expect(createdSubscriber?.email).to.equal('john@doe.com');
     expect(createdSubscriber?.phone).to.equal('+972523333333');
