@@ -4,6 +4,14 @@ import { JobTopicNameEnum, StepTypeEnum } from '@novu/shared';
 
 import { TestingQueueService } from './testing-queue.service';
 
+const promote = async (job) => {
+  try {
+    await job.promote();
+  } catch (error) {
+    // Silently handle promotion failures since job may have already executed
+  }
+};
+
 export class JobsService {
   private jobRepository = new JobRepository();
 
@@ -48,7 +56,7 @@ export class JobsService {
     unfinishedJobs = 0,
   }: {
     templateId?: string | string[];
-    organizationId: string;
+    organizationId?: string;
     delay?: boolean;
     unfinishedJobs?: number;
   }) {
@@ -72,7 +80,7 @@ export class JobsService {
       // Wait until there are no pending, queued or running jobs in Mongo
       runningJobs = Math.max(
         await this.jobRepository.count({
-          _organizationId: organizationId,
+          ...((organizationId ? { _organizationId: organizationId } : {}) as { _organizationId: string }),
           ...typeMatch,
           ...workflowMatch,
           status: {
@@ -86,7 +94,39 @@ export class JobsService {
 
   public async runAllDelayedJobsImmediately() {
     const delayedJobs = await this.standardQueue.getDelayed();
-    await delayedJobs.forEach(async (job) => job.promote());
+    await Promise.all(delayedJobs.map((job) => job.promote()));
+  }
+
+  public async awaitAllJobs() {
+    let hasMoreDelayedJobs = true;
+    let iterationCount = 0;
+    const MAX_ITERATIONS = 20;
+    await this.waitForJobCompletion({});
+
+    while (hasMoreDelayedJobs && iterationCount < MAX_ITERATIONS) {
+      const jobsResult = await Promise.all([
+        this.standardQueue.getDelayed(),
+        this.workflowQueue.getDelayed(),
+        this.subscriberProcessQueue.getDelayed(),
+      ]);
+      const jobs = jobsResult.flat();
+
+      if (jobs.length === 0) {
+        hasMoreDelayedJobs = false;
+        continue;
+      }
+
+      await Promise.all(jobs.map(promote));
+      await this.waitForJobCompletion({});
+      iterationCount += 1;
+    }
+
+    if (iterationCount >= MAX_ITERATIONS) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        'Max iterations reached while processing delayed jobs. This might indicate an infinite loop in job creation.'
+      );
+    }
   }
 
   private async getQueueMetric() {

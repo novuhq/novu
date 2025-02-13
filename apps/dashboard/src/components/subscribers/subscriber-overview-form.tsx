@@ -8,9 +8,9 @@ import { cn } from '@/utils/ui';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { SubscriberResponseDto } from '@novu/api/models/components';
 import { loadLanguage } from '@uiw/codemirror-extensions-langs';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { RiDeleteBin2Line } from 'react-icons/ri';
+import { RiDeleteBin2Line, RiMailLine } from 'react-icons/ri';
 import { Link, useBlocker, useNavigate } from 'react-router-dom';
 import { ExternalToast } from 'sonner';
 import { z } from 'zod';
@@ -64,14 +64,14 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
 
   const form = useForm<z.infer<typeof SubscriberFormSchema>>({
     defaultValues: {
-      avatar: subscriber.avatar,
-      email: subscriber.email,
-      phone: subscriber.phone,
-      firstName: subscriber.firstName,
-      lastName: subscriber.lastName,
-      locale: subscriber.locale,
-      timezone: subscriber.timezone,
-      data: JSON.stringify(subscriber.data, null, 2),
+      avatar: subscriber?.avatar ?? '',
+      email: subscriber.email || null,
+      phone: subscriber.phone ?? '',
+      firstName: subscriber.firstName ?? '',
+      lastName: subscriber.lastName ?? '',
+      locale: subscriber.locale ?? null,
+      timezone: subscriber.timezone ?? null,
+      data: JSON.stringify(subscriber.data, null, 2) ?? '',
     },
     resolver: zodResolver(SubscriberFormSchema),
     shouldFocusError: false,
@@ -80,7 +80,7 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
   const { patchSubscriber } = usePatchSubscriber({
     onSuccess: (data) => {
       showSuccessToast(`Updated subscriber: ${getSubscriberTitle(data)}`, undefined, toastOptions);
-      form.reset({ ...data, data: JSON.stringify(data.data, null, 2) });
+      form.reset({ ...data, data: JSON.stringify(data.data, null, 2) ?? '' });
       track(TelemetryEvent.SUBSCRIBER_EDITED);
     },
     onError: () => {
@@ -88,8 +88,29 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
     },
   });
 
-  const blocker = useBlocker(form.formState.isDirty);
-  useBeforeUnload(form.formState.isDirty);
+  /**
+   * Fixes the issue where you update the form,
+   * then close the drawer and re-open it,
+   * the form shows the stale data.
+   */
+  useEffect(() => {
+    if (subscriber) {
+      form.reset({
+        avatar: subscriber?.avatar ?? '',
+        email: subscriber.email || null,
+        phone: subscriber.phone ?? '',
+        firstName: subscriber.firstName ?? '',
+        lastName: subscriber.lastName ?? '',
+        locale: subscriber.locale ?? null,
+        timezone: subscriber.timezone ?? null,
+        data: JSON.stringify(subscriber.data, null, 2) ?? '',
+      });
+    }
+  }, [subscriber, form]);
+
+  const isDirty = Object.keys(form.formState.dirtyFields).length > 0;
+  const blocker = useBlocker(isDirty);
+  useBeforeUnload(isDirty);
 
   const onSubmit = async (formData: z.infer<typeof SubscriberFormSchema>) => {
     const dirtyFields = form.formState.dirtyFields;
@@ -100,7 +121,7 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
         const data = JSON.parse(JSON.stringify(formData.data));
         return { ...acc, data: data === '' ? {} : data };
       }
-      return { ...acc, [typedKey]: formData[typedKey]?.trim() };
+      return { ...acc, [typedKey]: formData[typedKey] === null ? null : formData[typedKey]?.trim() };
     }, {});
 
     if (!Object.keys(dirtyPayload).length) {
@@ -137,7 +158,7 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
                   Subscriber profile Image can only be updated via API
                 </TooltipContent>
               </Tooltip>
-              <div className="grid grid-cols-2 gap-2.5">
+              <div className="grid flex-1 grid-cols-2 gap-2.5">
                 <FormField
                   control={form.control}
                   name="firstName"
@@ -148,7 +169,7 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
                         <Input
                           {...field}
                           readOnly={readOnly}
-                          placeholder={field.name}
+                          placeholder="John"
                           id={field.name}
                           value={field.value}
                           onChange={field.onChange}
@@ -170,7 +191,7 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
                         <Input
                           {...field}
                           readOnly={readOnly}
-                          placeholder={field.name}
+                          placeholder="Doe"
                           id={field.name}
                           value={field.value}
                           onChange={field.onChange}
@@ -205,14 +226,16 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
                 </div>
                 <Input
                   value={subscriber.subscriberId}
-                  readOnly
+                  size="xs"
+                  className="disabled:text-neutral-900"
                   trailingNode={
                     <CopyButton
                       valueToCopy={subscriber.subscriberId}
                       className="group-has-[input:focus]:border-l-stroke-strong"
                     />
                   }
-                  size="xs"
+                  readOnly
+                  disabled
                 />
               </FormItem>
             </div>
@@ -228,12 +251,17 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
                         {...field}
                         readOnly={readOnly}
                         type="email"
-                        placeholder={field.name}
+                        placeholder="hello@novu.co"
                         id={field.name}
                         value={field.value || undefined}
-                        onChange={field.onChange}
+                        onChange={(event) => {
+                          const { value } = event.target;
+                          const finalValue = value === '' ? null : value;
+                          field.onChange(finalValue);
+                        }}
                         hasError={!!fieldState.error}
                         size="xs"
+                        leadingIcon={RiMailLine}
                       />
                     </FormControl>
                     <FormMessage />
@@ -250,7 +278,7 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
                       <PhoneInput
                         {...field}
                         readOnly={readOnly}
-                        placeholder={field.name}
+                        placeholder="+1234567890"
                         id={field.name}
                         value={field.value || ''}
                       />
@@ -262,15 +290,22 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
             </div>
             <Separator />
 
-            <div className="grid grid-cols-2 gap-2.5">
+            <div className="flex w-full flex-nowrap gap-2.5">
               <FormField
                 control={form.control}
                 name="locale"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="w-1/4">
                     <FormLabel>Locale</FormLabel>
                     <FormControl>
-                      <LocaleSelect value={field.value} onValueChange={field.onChange} readOnly={readOnly} />
+                      <LocaleSelect
+                        value={field.value ?? undefined}
+                        onChange={(val) => {
+                          const finalValue = field.value === val ? null : val;
+                          field.onChange(finalValue);
+                        }}
+                        readOnly={readOnly}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -280,10 +315,17 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
                 control={form.control}
                 name="timezone"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="flex-1">
                     <FormLabel>Timezone</FormLabel>
                     <FormControl>
-                      <TimezoneSelect value={field.value} onValueChange={field.onChange} readOnly={readOnly} />
+                      <TimezoneSelect
+                        value={field.value ?? undefined}
+                        onChange={(val) => {
+                          const finalValue = field.value === val ? null : val;
+                          field.onChange(finalValue);
+                        }}
+                        readOnly={readOnly}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -306,7 +348,7 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
                         className="overflow-auto"
                         extensions={extensions}
                         basicSetup={basicSetup}
-                        placeholder="Custom data (JSON)"
+                        placeholder="{}"
                         height="100%"
                         multiline
                         {...field}
@@ -325,7 +367,7 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
           </div>
           <Separator />
           {subscriber.updatedAt && (
-            <span className="text-2xs px-5 py-1 text-neutral-400">
+            <span className="text-2xs px-5 py-2 text-right text-neutral-400" key={subscriber.updatedAt}>
               Updated at{' '}
               {formatDateSimple(subscriber.updatedAt, {
                 month: 'short',
@@ -352,7 +394,7 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
                 >
                   Delete subscriber
                 </Button>
-                <Button variant="secondary" type="submit" disabled={!form.formState.isDirty}>
+                <Button variant="secondary" type="submit" disabled={!isDirty}>
                   Save changes
                 </Button>
               </div>
@@ -368,7 +410,7 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
           setIsDeleteModalOpen(false);
           navigate('../', { relative: 'path' });
         }}
-        title={`Delete subscriber`}
+        title="Delete subscriber"
         description={
           <span>
             Are you sure you want to delete subscriber{' '}

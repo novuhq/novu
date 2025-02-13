@@ -95,7 +95,7 @@ export class SendMessage {
     const stepType = command.step?.template?.type;
 
     let bridgeResponse: ExecuteOutput | null = null;
-    if (![StepTypeEnum.DIGEST, StepTypeEnum.DELAY, StepTypeEnum.TRIGGER].includes(stepType as StepTypeEnum)) {
+    if (isChannelStep(stepType)) {
       bridgeResponse = await this.executeBridgeJob.execute({
         ...command,
         variables,
@@ -501,4 +501,8 @@ export class SendMessage {
 
     return tenant;
   }
+}
+
+function isChannelStep(stepType: StepTypeEnum | undefined) {
+  return ![StepTypeEnum.DIGEST, StepTypeEnum.DELAY, StepTypeEnum.TRIGGER].includes(stepType as StepTypeEnum);
 }
