@@ -6,6 +6,10 @@ import {
 import { Injectable, Logger } from '@nestjs/common';
 
 import {
+  prepareBooleanStringFeatureFlag,
+  prepareNumberStringFeatureFlag,
+} from '@novu/shared';
+import {
   EnvironmentId,
   FeatureFlagFullContext,
   FeatureFlagsKeysEnum,
@@ -120,6 +124,23 @@ export class LaunchDarklyService implements IFeatureFlagsService {
     fallbackToDefault,
     attributes,
   }: FeatureFlagFullContext<T>): Promise<T> {
+    const value = process.env[key];
+
+    let parsedDefaultValue: T = defaultValue;
+    if (typeof defaultValue === 'boolean') {
+      parsedDefaultValue = prepareBooleanStringFeatureFlag(
+        value,
+        defaultValue,
+      ) as T;
+    }
+
+    if (typeof defaultValue === 'number') {
+      parsedDefaultValue = prepareNumberStringFeatureFlag(
+        value,
+        defaultValue,
+      ) as T;
+    }
+
     const result = await this.client.variation(
       key,
       {
@@ -127,7 +148,7 @@ export class LaunchDarklyService implements IFeatureFlagsService {
         kind: contextKey,
         key: contextId,
       },
-      defaultValue,
+      parsedDefaultValue,
     );
 
     if (result === fallbackToDefault) {
