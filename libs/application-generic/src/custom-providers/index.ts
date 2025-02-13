@@ -19,16 +19,6 @@ export const featureFlagsService = {
   },
 };
 
-export const launchDarklyService = {
-  provide: LaunchDarklyService,
-  useFactory: async (): Promise<LaunchDarklyService> => {
-    const instance = new LaunchDarklyService();
-    await instance.initialize();
-
-    return instance;
-  },
-};
-
 export const getFeatureFlagService = {
   provide: GetFeatureFlagService,
   useFactory: async (
