@@ -30,7 +30,6 @@ import {
 import { DiscoverWorkflowOutput, GetActionEnum } from '@novu/framework/internal';
 import {
   ReservedVariablesMap,
-  slugify,
   TriggerContextTypeEnum,
   TriggerEventStatusEnum,
   TriggerRecipients,
@@ -315,9 +314,7 @@ export class ParseEventRequest {
 
   private sanitize(subscriberId: string) {
     if (subscriberId.trim().match(/^[a-zA-Z0-9_-]+$/)) {
-      return slugify(subscriberId, {
-        lowercase: false,
-      });
+      return subscriberId;
     }
   }
 
