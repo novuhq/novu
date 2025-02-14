@@ -1,5 +1,5 @@
 import { expect, describe, it } from 'vitest';
-import { IFlagKey, testFlagEnumValidity, FeatureFlagsKeysEnum, SystemCriticalFlagsEnum } from './feature-flags';
+import { FlagKey, testFlagEnumValidity, FeatureFlagsKeysEnum, SystemCriticalFlagsEnum } from './feature-flags';
 
 describe('Flags', () => {
   /**
@@ -20,19 +20,19 @@ describe('Flags', () => {
  */
 
 /**
- * IFlagKey tests
+ * FlagKey tests
  */
 // Valid
-export const validFlag: IFlagKey = 'IS_SOMETHING_ENABLED';
+export const validFlag: FlagKey = 'IS_SOMETHING_ENABLED';
 
 // @ts-expect-error - Missing `IS_` prefix
-export const invalidPrefixFlag: IFlagKey = 'SOMETHING_ENABLED';
+export const invalidPrefixFlag: FlagKey = 'SOMETHING_ENABLED';
 
 // @ts-expect-error - Missing `_ENABLED` suffix
-export const invalidSuffixFlag: IFlagKey = 'IS_SOMETHING';
+export const invalidSuffixFlag: FlagKey = 'IS_SOMETHING';
 
 // @ts-expect-error - Incorrect subject casing
-export const invalidSubjectFlag: IFlagKey = 'IS_something_ENABLED';
+export const invalidSubjectFlag: FlagKey = 'IS_something_ENABLED';
 
 /**
  * testFlagEnumValidity Tests
@@ -55,7 +55,7 @@ enum NonMatchingKeyValueEnum {
 
 // Ensure that the keys and values of FeatureFlagsKeysEnum match
 type ValidateNonMatchingKeyValueEnum = {
-  [K in keyof typeof NonMatchingKeyValueEnum]: K extends IFlagKey ? K : `Value doesn't match key`;
+  [K in keyof typeof NonMatchingKeyValueEnum]: K extends FlagKey ? K : `Value doesn't match key`;
 };
 // @ts-expect-error - non matching key-value pair in enum
 const validateNonMatchingKeyValueEnum: ValidateNonMatchingKeyValueEnum = NonMatchingKeyValueEnum;
@@ -65,14 +65,14 @@ const validateNonMatchingKeyValueEnum: ValidateNonMatchingKeyValueEnum = NonMatc
  */
 // Ensure that the keys and values of FeatureFlagsKeysEnum match
 type ValidateFeatureFlagsKeysEnum = {
-  [K in keyof typeof FeatureFlagsKeysEnum]: K extends IFlagKey ? K : `Value doesn't match key`;
+  [K in keyof typeof FeatureFlagsKeysEnum]: K extends FlagKey ? K : `Value doesn't match key`;
 };
 const validateFeatureFlagsKeysEnum: ValidateFeatureFlagsKeysEnum = FeatureFlagsKeysEnum;
 testFlagEnumValidity(FeatureFlagsKeysEnum);
 
 // Ensure that the keys and values of SystemCriticalFlagsEnum match
 type ValidateSystemCriticalFlagsEnum = {
-  [K in keyof typeof SystemCriticalFlagsEnum]: K extends IFlagKey ? K : `Value doesn't match key`;
+  [K in keyof typeof SystemCriticalFlagsEnum]: K extends FlagKey ? K : `Value doesn't match key`;
 };
 const validateSystemCriticalFlagsEnum: ValidateSystemCriticalFlagsEnum = SystemCriticalFlagsEnum;
 testFlagEnumValidity(SystemCriticalFlagsEnum);
