@@ -10,7 +10,6 @@ import { Controller, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { updateClerkOrgMetadata } from '../../api/organization';
 import { identifyUser } from '../../api/telemetry';
-import { useAuth } from '../../context/auth/hooks';
 import { useEnvironment, useFetchEnvironments } from '../../context/environment/hooks';
 import { useSegment } from '../../context/segment';
 import { useTelemetry } from '../../hooks/use-telemetry';
@@ -229,7 +228,6 @@ export function QuestionnaireForm() {
 }
 
 function useSubmitQuestionnaire() {
-  const { currentOrganization } = useAuth();
   const segment = useSegment();
   const track = useTelemetry();
   const navigate = useNavigate();
@@ -257,20 +255,6 @@ function useSubmitQuestionnaire() {
         organizationType: data.organizationType,
         anonymousId,
       });
-
-      if (currentOrganization) {
-        segment.group(
-          {
-            id: currentOrganization?._id,
-            name: currentOrganization?.name,
-            createdAt: currentOrganization?.createdAt,
-          },
-          {
-            organizationType: data.organizationType,
-            companySize: data.companySize,
-          }
-        );
-      }
 
       track(TelemetryEvent.CREATE_ORGANIZATION_FORM_SUBMITTED, {
         location: 'web',

@@ -14,7 +14,7 @@ import {
   SubscriberRepository,
   TenantRepository,
 } from '@novu/dal';
-import { SubscribersService, UserSession, WorkflowOverrideService } from '@novu/testing';
+import { SubscribersService, TestingQueueService, UserSession, WorkflowOverrideService } from '@novu/testing';
 import {
   ActorTypeEnum,
   ChannelTypeEnum,
@@ -30,6 +30,7 @@ import {
   FilterPartTypeEnum,
   IEmailBlock,
   InAppProviderIdEnum,
+  JobTopicNameEnum,
   PreviousStepTypeEnum,
   SmsProviderIdEnum,
   StepTypeEnum,
@@ -67,6 +68,18 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
   const environmentRepository = new EnvironmentRepository();
   const tenantRepository = new TenantRepository();
   let novuClient: Novu;
+
+  const printJobsState = async (prefix: string) => {
+    const count = await Promise.all([
+      jobRepository.count({} as any),
+      new TestingQueueService(JobTopicNameEnum.WORKFLOW).queue.getWaitingCount(),
+      new TestingQueueService(JobTopicNameEnum.PROCESS_SUBSCRIBER).queue.getWaitingCount(),
+      new TestingQueueService(JobTopicNameEnum.STANDARD).queue.getWaitingCount(),
+    ]);
+
+    // eslint-disable-next-line no-console
+    console.log(`${prefix} Jobs state `, count);
+  };
 
   beforeEach(async () => {
     session = new UserSession();
@@ -126,6 +139,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
         ],
       });
 
+      await printJobsState('before triggerEvent');
       await novuClient.trigger({
         workflowId: template.triggers[0].identifier,
         to: [subscriber.subscriberId],
@@ -134,7 +148,11 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
         },
       });
 
+      await printJobsState('after triggerEvent');
+
       await session.waitForJobCompletion(template?._id, true, 0);
+
+      await printJobsState('after waitForJobCompletion');
 
       const messagesAfter = await messageRepository.find({
         _environmentId: session.environment._id,
