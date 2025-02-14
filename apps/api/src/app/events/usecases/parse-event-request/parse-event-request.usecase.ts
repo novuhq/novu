@@ -203,7 +203,7 @@ export class ParseEventRequest {
     };
 
     if ('to' in commandArgs) {
-      const validSubscribers = this.removeInvalidrecipients(commandArgs.to);
+      const validSubscribers = this.removeInvalidRecipients(commandArgs.to);
 
       if (!validSubscribers) {
         return {
@@ -320,7 +320,7 @@ export class ParseEventRequest {
     }
   }
 
-  private removeInvalidrecipients(payload: TriggerRecipientsPayload): TriggerRecipientsPayload | null {
+  private removeInvalidRecipients(payload: TriggerRecipientsPayload): TriggerRecipientsPayload | null {
     if (!payload) return null;
 
     if (!Array.isArray(payload)) {
