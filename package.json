@@ -70,6 +70,7 @@
     "start:ws": "cross-env nx run @novu/ws:start",
     "start": "npm run jarvis",
     "symlink:submodules": "pnpm --filter \"@novu/ee-*\" exec node \"$(pwd)/scripts/symlink-ee.mjs\"",
+    "submodule:update": "git submodule update --remote --reference origin/next .source && git add .source && git commit -m 'chore(root): Update submodules' && git push",
     "test:providers": "cross-env pnpm --filter './packages/providers/**' test",
     "test": "cross-env CI=true lerna run test:watch --parallel"
   },
