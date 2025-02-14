@@ -202,7 +202,7 @@ export class ParseEventRequest {
     };
 
     if ('to' in commandArgs) {
-      const validSubscribers = this.sanitizeRecipients(commandArgs.to);
+      const validSubscribers = this.removeInvalidrecipients(commandArgs.to);
 
       if (!validSubscribers) {
         return {
@@ -313,27 +313,25 @@ export class ParseEventRequest {
     return reservedVariables?.map((reservedVariable) => reservedVariable.type) || [];
   }
 
-  private sanitize(subscriberId: string) {
+  private isValidId(subscriberId: string) {
     if (subscriberId.trim().match(SUBSCRIBER_ID_REGEX)) {
       return subscriberId;
     }
   }
 
-  private sanitizeRecipients(payload: TriggerRecipientsPayload): TriggerRecipientsPayload | null {
+  private removeInvalidrecipients(payload: TriggerRecipientsPayload): TriggerRecipientsPayload | null {
     if (!payload) return null;
 
     if (typeof payload === 'string') {
-      return this.sanitize(payload) || null;
+      return this.isValidId(payload) || null;
     }
 
     if (Array.isArray(payload)) {
-      return payload
-        .map((sub) => this.sanitizeRecipients(sub as TriggerRecipientSubscriber))
-        .filter(Boolean) as TriggerRecipients;
+      return payload.map((sub) => this.removeInvalidrecipients(sub)).filter(Boolean) as TriggerRecipients;
     }
 
     if ('subscriberId' in payload) {
-      const subscriberId = this.sanitize(payload.subscriberId);
+      const subscriberId = this.isValidId(payload.subscriberId);
 
       return subscriberId ? { ...payload, subscriberId } : null;
     }
