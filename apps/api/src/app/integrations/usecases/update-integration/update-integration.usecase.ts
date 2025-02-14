@@ -9,9 +9,8 @@ import {
   AnalyticsService,
   buildIntegrationKey,
   encryptCredentials,
-  GetFeatureFlagService,
-  GetFeatureFlagCommand,
   InvalidateCacheService,
+  FeatureFlagsService,
 } from '@novu/application-generic';
 import { ApiServiceLevelEnum, CHANNELS_WITH_PRIMARY, FeatureFlagsKeysEnum } from '@novu/shared';
 
@@ -27,7 +26,7 @@ export class UpdateIntegration {
     private invalidateCache: InvalidateCacheService,
     private integrationRepository: IntegrationRepository,
     private analyticsService: AnalyticsService,
-    private getFeatureFlag: GetFeatureFlagService,
+    private featureFlagService: FeatureFlagsService,
     private communityOrganizationRepository: CommunityOrganizationRepository
   ) {}
 
@@ -153,12 +152,11 @@ export class UpdateIntegration {
       active: command.active,
     });
 
-    const isInvalidationDisabled = await this.getFeatureFlag.getBoolean(
-      GetFeatureFlagCommand.create({
-        organization: { _id: command.organizationId } as OrganizationEntity,
-        key: FeatureFlagsKeysEnum.IS_INTEGRATION_INVALIDATION_DISABLED,
-      })
-    );
+    const isInvalidationDisabled = await this.featureFlagService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_INTEGRATION_INVALIDATION_DISABLED,
+      defaultValue: false,
+      organization: { _id: command.organizationId } as OrganizationEntity,
+    });
 
     if (!isInvalidationDisabled) {
       await this.invalidateCache.invalidateQuery({

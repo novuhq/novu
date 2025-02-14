@@ -4,7 +4,6 @@ import {
   CalculateLimitNovuIntegration,
   ConditionsFilter,
   NormalizeVariables,
-  getFeatureFlagService,
 } from '@novu/application-generic';
 
 import { GetWebhookSupportStatus } from './get-webhook-support-status/get-webhook-support-status.usecase';
@@ -36,5 +35,4 @@ export const USE_CASES = [
   SetIntegrationAsPrimary,
   CreateNovuIntegrations,
   NormalizeVariables,
-  getFeatureFlagService,
 ];

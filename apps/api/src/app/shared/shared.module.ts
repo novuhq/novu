@@ -41,7 +41,6 @@ import {
   ExecutionLogRoute,
   featureFlagsService,
   GetDecryptedSecretKey,
-  getFeatureFlagService,
   InvalidateCacheService,
   LoggerModule,
   QueuesModule,
@@ -127,7 +126,6 @@ const PROVIDERS = [
   ExecutionLogRoute,
   CreateExecutionDetails,
   ExecuteBridgeRequest,
-  getFeatureFlagService,
   GetDecryptedSecretKey,
 ];
 

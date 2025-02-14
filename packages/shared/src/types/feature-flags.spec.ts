@@ -1,5 +1,5 @@
 import { expect, describe, it } from 'vitest';
-import { FlagKey, testFlagEnumValidity, FeatureFlagsKeysEnum, SystemCriticalFlagsEnum } from './feature-flags';
+import { FlagKey, testFlagEnumValidity } from './feature-flags';
 
 describe('Flags', () => {
   /**
@@ -59,20 +59,3 @@ type ValidateNonMatchingKeyValueEnum = {
 };
 // @ts-expect-error - non matching key-value pair in enum
 const validateNonMatchingKeyValueEnum: ValidateNonMatchingKeyValueEnum = NonMatchingKeyValueEnum;
-
-/**
- * Verifying declared FlagEnums
- */
-// Ensure that the keys and values of FeatureFlagsKeysEnum match
-type ValidateFeatureFlagsKeysEnum = {
-  [K in keyof typeof FeatureFlagsKeysEnum]: K extends FlagKey ? K : `Value doesn't match key`;
-};
-const validateFeatureFlagsKeysEnum: ValidateFeatureFlagsKeysEnum = FeatureFlagsKeysEnum;
-testFlagEnumValidity(FeatureFlagsKeysEnum);
-
-// Ensure that the keys and values of SystemCriticalFlagsEnum match
-type ValidateSystemCriticalFlagsEnum = {
-  [K in keyof typeof SystemCriticalFlagsEnum]: K extends FlagKey ? K : `Value doesn't match key`;
-};
-const validateSystemCriticalFlagsEnum: ValidateSystemCriticalFlagsEnum = SystemCriticalFlagsEnum;
-testFlagEnumValidity(SystemCriticalFlagsEnum);

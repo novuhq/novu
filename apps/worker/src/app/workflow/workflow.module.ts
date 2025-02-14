@@ -25,7 +25,6 @@ import {
   TriggerMulticast,
   TierRestrictionsValidateUsecase,
   WorkflowInMemoryProviderService,
-  getFeatureFlagService,
 } from '@novu/application-generic';
 import { CommunityOrganizationRepository, JobRepository, PreferencesRepository } from '@novu/dal';
 
@@ -126,7 +125,6 @@ const USE_CASES = [
   UpdateJobStatus,
   WebhookFilterBackoffStrategy,
   GetTopicSubscribersUseCase,
-  getFeatureFlagService,
   SubscriberJobBound,
   TriggerBroadcast,
   TriggerMulticast,
