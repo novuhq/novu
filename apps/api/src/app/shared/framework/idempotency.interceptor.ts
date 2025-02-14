@@ -11,13 +11,7 @@ import {
   ServiceUnavailableException,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import {
-  CacheService,
-  GetFeatureFlagService,
-  GetFeatureFlagCommand,
-  HttpResponseHeaderKeysEnum,
-  Instrument,
-} from '@novu/application-generic';
+import { CacheService, HttpResponseHeaderKeysEnum, Instrument, FeatureFlagsService } from '@novu/application-generic';
 import { Observable, of, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { createHash } from 'crypto';
@@ -42,7 +36,7 @@ const ALLOWED_METHODS = ['post', 'patch'];
 export class IdempotencyInterceptor implements NestInterceptor {
   constructor(
     private readonly cacheService: CacheService,
-    private getFeatureFlag: GetFeatureFlagService
+    private featureFlagService: FeatureFlagsService
   ) {}
 
   protected async isEnabled(context: ExecutionContext): Promise<boolean> {
@@ -54,14 +48,13 @@ export class IdempotencyInterceptor implements NestInterceptor {
     const user = this.getReqUser(context);
     const { organizationId, environmentId, _id } = user;
 
-    return await this.getFeatureFlag.getBoolean(
-      GetFeatureFlagCommand.create({
-        key: FeatureFlagsKeysEnum.IS_API_IDEMPOTENCY_ENABLED,
-        environment: { _id: environmentId } as EnvironmentEntity,
-        organization: { _id: organizationId } as OrganizationEntity,
-        user: { _id } as UserEntity,
-      })
-    );
+    return await this.featureFlagService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_API_IDEMPOTENCY_ENABLED,
+      defaultValue: false,
+      environment: { _id: environmentId } as EnvironmentEntity,
+      organization: { _id: organizationId } as OrganizationEntity,
+      user: { _id } as UserEntity,
+    });
   }
 
   @Instrument()

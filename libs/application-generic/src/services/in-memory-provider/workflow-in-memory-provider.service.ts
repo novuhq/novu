@@ -2,27 +2,19 @@ import { Logger } from '@nestjs/common';
 
 import { InMemoryProviderService } from './in-memory-provider.service';
 import { InMemoryProviderEnum, InMemoryProviderClient } from './types';
-import { GetIsInMemoryClusterModeEnabled } from '../../usecases/feature-flag';
+import { isClusterModeEnabled } from './utils';
 
 const LOG_CONTEXT = 'WorkflowInMemoryProviderService';
 
 export class WorkflowInMemoryProviderService {
   public inMemoryProviderService: InMemoryProviderService;
   public isCluster: boolean;
-  private getIsInMemoryClusterModeEnabled: GetIsInMemoryClusterModeEnabled;
 
   constructor() {
-    this.getIsInMemoryClusterModeEnabled =
-      new GetIsInMemoryClusterModeEnabled();
-
     const provider = this.selectProvider();
     this.isCluster = this.isClusterMode();
 
-    this.inMemoryProviderService = new InMemoryProviderService(
-      provider,
-      this.isCluster,
-      false,
-    );
+    this.inMemoryProviderService = new InMemoryProviderService(provider, this.isCluster, false);
   }
 
   /**
@@ -46,18 +38,14 @@ export class WorkflowInMemoryProviderService {
   }
 
   private isClusterMode(): boolean {
-    const isClusterModeEnabled = this.getIsInMemoryClusterModeEnabled.execute();
+    const isEnabled = isClusterModeEnabled();
 
     Logger.log(
-      this.descriptiveLogMessage(
-        `Cluster mode ${
-          isClusterModeEnabled ? 'is' : 'is not'
-        } enabled for ${LOG_CONTEXT}`,
-      ),
-      LOG_CONTEXT,
+      this.descriptiveLogMessage(`Cluster mode ${isEnabled ? 'is' : 'is not'} enabled for ${LOG_CONTEXT}`),
+      LOG_CONTEXT
     );
 
-    return isClusterModeEnabled;
+    return isEnabled;
   }
 
   public async initialize(): Promise<void> {
@@ -73,8 +61,7 @@ export class WorkflowInMemoryProviderService {
   }
 
   public providerInUseIsInClusterMode(): boolean {
-    const providerConfigured =
-      this.inMemoryProviderService.getProvider.configured;
+    const providerConfigured = this.inMemoryProviderService.getProvider.configured;
 
     return this.isCluster || providerConfigured !== InMemoryProviderEnum.REDIS;
   }

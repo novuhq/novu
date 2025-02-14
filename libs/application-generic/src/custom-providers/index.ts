@@ -5,9 +5,7 @@ import {
   CacheService,
   DistributedLockService,
   FeatureFlagsService,
-  LaunchDarklyService,
 } from '../services';
-import { GetFeatureFlagService } from '../usecases/feature-flag';
 
 export const featureFlagsService = {
   provide: FeatureFlagsService,
@@ -17,18 +15,6 @@ export const featureFlagsService = {
 
     return instance;
   },
-};
-
-export const getFeatureFlagService = {
-  provide: GetFeatureFlagService,
-  useFactory: async (
-    featureFlagsServiceItem: FeatureFlagsService,
-  ): Promise<GetFeatureFlagService> => {
-    const useCase = new GetFeatureFlagService(featureFlagsServiceItem);
-
-    return useCase;
-  },
-  inject: [FeatureFlagsService],
 };
 
 export const cacheInMemoryProviderService = {
@@ -41,8 +27,7 @@ export const cacheInMemoryProviderService = {
 export const cacheService = {
   provide: CacheService,
   useFactory: async (): Promise<CacheService> => {
-    const factoryCacheInMemoryProviderService =
-      cacheInMemoryProviderService.useFactory();
+    const factoryCacheInMemoryProviderService = cacheInMemoryProviderService.useFactory();
 
     const service = new CacheService(factoryCacheInMemoryProviderService);
 
@@ -75,12 +60,9 @@ export const analyticsService = {
 export const distributedLockService = {
   provide: DistributedLockService,
   useFactory: async (): Promise<DistributedLockService> => {
-    const factoryCacheInMemoryProviderService =
-      cacheInMemoryProviderService.useFactory();
+    const factoryCacheInMemoryProviderService = cacheInMemoryProviderService.useFactory();
 
-    const service = new DistributedLockService(
-      factoryCacheInMemoryProviderService,
-    );
+    const service = new DistributedLockService(factoryCacheInMemoryProviderService);
 
     await service.initialize();
 

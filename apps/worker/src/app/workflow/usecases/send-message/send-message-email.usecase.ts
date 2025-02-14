@@ -34,8 +34,7 @@ import {
   SelectVariant,
   ExecutionLogRoute,
   ExecutionLogRouteCommand,
-  GetFeatureFlagService,
-  GetFeatureFlagCommand,
+  FeatureFlagsService,
 } from '@novu/application-generic';
 import { EmailOutput } from '@novu/framework/internal';
 
@@ -60,7 +59,7 @@ export class SendMessageEmail extends SendMessageBase {
     protected getNovuProviderCredentials: GetNovuProviderCredentials,
     protected selectVariant: SelectVariant,
     protected moduleRef: ModuleRef,
-    private getFeatureFlagService: GetFeatureFlagService
+    private featureFlagService: FeatureFlagsService
   ) {
     super(
       messageRepository,
@@ -239,14 +238,13 @@ export class SendMessageEmail extends SendMessageBase {
         }
 
         // TODO: remove as part of https://linear.app/novu/issue/NV-4117/email-html-content-issue-in-mobile-devices
-        const shouldDisableInlineCss = await this.getFeatureFlagService.getBoolean(
-          GetFeatureFlagCommand.create({
-            key: FeatureFlagsKeysEnum.IS_EMAIL_INLINE_CSS_DISABLED,
-            environment: { _id: command.environmentId } as EnvironmentEntity,
-            organization: { _id: command.organizationId } as OrganizationEntity,
-            user: { _id: command.userId } as UserEntity,
-          })
-        );
+        const shouldDisableInlineCss = await this.featureFlagService.getFlag({
+          key: FeatureFlagsKeysEnum.IS_EMAIL_INLINE_CSS_DISABLED,
+          defaultValue: false,
+          environment: { _id: command.environmentId } as EnvironmentEntity,
+          organization: { _id: command.organizationId } as OrganizationEntity,
+          user: { _id: command.userId } as UserEntity,
+        });
 
         if (!shouldDisableInlineCss) {
           // this is causing rendering issues in Gmail (especially when media queries are used), so we are disabling it
