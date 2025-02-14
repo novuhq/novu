@@ -22,7 +22,11 @@ export class FeatureFlagsService {
       await this.service.initialize();
       Logger.verbose(`Feature Flags service (${Service.name}) has been successfully initialized.`, LOG_CONTEXT);
     } catch (error) {
-      Logger.error(`Feature Flags service (${Service.name}) failed to initialize.`, error, LOG_CONTEXT);
+      Logger.error(
+        `Feature Flags service (${Service.name}) failed to initialize.`,
+        (error as Error).stack || (error as Error).message,
+        LOG_CONTEXT
+      );
     }
   }
 

@@ -4,10 +4,14 @@ import type { IFeatureFlagContext, IFeatureFlagsService } from './types';
 
 @Injectable()
 export class ProcessEnvFeatureFlagsService implements IFeatureFlagsService {
-  initialize: () => Promise<void>;
-  gracefullyShutdown: () => Promise<void>;
-
   public isEnabled: boolean = true;
+
+  async initialize() {
+    this.isEnabled = true;
+  }
+  async gracefullyShutdown() {
+    this.isEnabled = false;
+  }
 
   async getBooleanFlag<T extends FeatureFlagsKeysEnum>({
     key,
