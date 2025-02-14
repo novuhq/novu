@@ -37,6 +37,7 @@ import {
   TriggerRecipientSubscriber,
   WorkflowOriginEnum,
   SUBSCRIBER_ID_REGEX,
+  TriggerRecipient,
 } from '@novu/shared';
 
 import { ApiException } from '../../../shared/exceptions/api.exception';
@@ -322,20 +323,34 @@ export class ParseEventRequest {
   private removeInvalidrecipients(payload: TriggerRecipientsPayload): TriggerRecipientsPayload | null {
     if (!payload) return null;
 
-    if (typeof payload === 'string') {
-      return this.isValidId(payload) || null;
+    if (!Array.isArray(payload)) {
+      return this.filterValidRecipient(payload) as TriggerRecipientsPayload;
     }
 
-    if (Array.isArray(payload)) {
-      return payload.map((sub) => this.removeInvalidrecipients(sub)).filter(Boolean) as TriggerRecipients;
+    const filteredRecipients: TriggerRecipients = payload
+      .map((subscriber) => this.filterValidRecipient(subscriber))
+      .filter((subscriber): subscriber is TriggerRecipient => subscriber !== null);
+
+    return filteredRecipients.length > 0 ? filteredRecipients : null;
+  }
+
+  private filterValidRecipient(subscriber: TriggerRecipient): TriggerRecipient | null {
+    if (typeof subscriber === 'string') {
+      return this.isValidId(subscriber) ? subscriber : null;
     }
 
-    if ('subscriberId' in payload) {
-      const subscriberId = this.isValidId(payload.subscriberId);
+    if (typeof subscriber === 'object' && subscriber !== null) {
+      if ('topicKey' in subscriber) {
+        return subscriber;
+      }
 
-      return subscriberId ? { ...payload, subscriberId } : null;
+      if ('subscriberId' in subscriber) {
+        const subscriberId = this.isValidId(subscriber.subscriberId);
+
+        return subscriberId ? { ...subscriber, subscriberId } : null;
+      }
     }
 
-    return payload;
+    return null;
   }
 }
