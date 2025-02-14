@@ -7,6 +7,7 @@ import { RetryConfig } from "../lib/retries.js";
 import { SecurityState } from "../lib/security.js";
 
 export type HookContext = {
+  baseURL: string | URL;
   operationID: string;
   oAuth2Scopes?: string[];
   securitySource?: any | (() => Promise<any>);
