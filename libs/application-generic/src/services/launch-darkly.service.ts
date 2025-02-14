@@ -1,12 +1,14 @@
 import {
   init,
   LDClient,
+  LDMultiKindContext,
   LDSingleKindContext,
 } from 'launchdarkly-node-server-sdk';
 import { Injectable, Logger } from '@nestjs/common';
 
 import {
   EnvironmentId,
+  FeatureFlagContext,
   FeatureFlagsKeysEnum,
   IFeatureFlagsService,
   OrganizationId,
@@ -77,6 +79,10 @@ export class LaunchDarklyService implements IFeatureFlagsService {
     return result;
   }
 
+  /**
+   * @deprecated This method is deprecated.
+   * Please use the more flexible `getFlag()` method instead, with the context data.
+   */
   public async getWithEnvironmentContext<T>(
     key: FeatureFlagsKeysEnum,
     defaultValue: T,
@@ -87,6 +93,10 @@ export class LaunchDarklyService implements IFeatureFlagsService {
     return await this.get(key, context, defaultValue);
   }
 
+  /**
+   * @deprecated This method is deprecated.
+   * Please use the more flexible `getFlag()` method instead, with the context data.
+   */
   public async getWithOrganizationContext<T>(
     key: FeatureFlagsKeysEnum,
     defaultValue: T,
@@ -97,6 +107,10 @@ export class LaunchDarklyService implements IFeatureFlagsService {
     return await this.get(key, context, defaultValue);
   }
 
+  /**
+   * @deprecated This method is deprecated.
+   * Please use the more flexible `getFlag()` method instead, with the context data.
+   */
   public async getWithUserContext<T>(
     key: FeatureFlagsKeysEnum,
     defaultValue: T,
@@ -105,6 +119,42 @@ export class LaunchDarklyService implements IFeatureFlagsService {
     const context = this.mapToUserContext(userId);
 
     return await this.get(key, context, defaultValue);
+  }
+
+  public async getFlag<T>({
+    key,
+    defaultValue,
+    environment,
+    organization,
+    user,
+    anonymous,
+  }: FeatureFlagContext<T>): Promise<T> {
+    const mappedContext: LDMultiKindContext = {
+      kind: 'multi',
+    };
+
+    if (environment) {
+      mappedContext.environment = {
+        ...environment,
+        key: environment._id,
+      };
+    }
+
+    if (organization) {
+      mappedContext.organization = {
+        ...organization,
+        key: organization._id,
+      };
+    }
+
+    if (user) {
+      mappedContext.user = {
+        ...user,
+        key: user._id,
+      };
+    }
+
+    return await this.client.variation(key, mappedContext, defaultValue);
   }
 
   public async gracefullyShutdown(): Promise<void> {
@@ -127,7 +177,6 @@ export class LaunchDarklyService implements IFeatureFlagsService {
     }
   }
 
-  // TODO: Unused for now.
   private mapToEnvironmentContext(
     environmentId: EnvironmentId,
   ): LDSingleKindContext {
@@ -139,7 +188,6 @@ export class LaunchDarklyService implements IFeatureFlagsService {
     return launchDarklyContext;
   }
 
-  // TODO: Unused for now
   private mapToOrganizationContext(
     organizationId: OrganizationId,
   ): LDSingleKindContext {

@@ -2,6 +2,7 @@ import {
   CreateWorkflow,
   DeleteWorkflowUseCase,
   GetWorkflowByIdsUseCase,
+  ResourceValidatorService,
   UpdateWorkflow,
 } from '@novu/application-generic';
 
@@ -18,6 +19,7 @@ export const USE_CASES = [
   GetWorkflowByIdsUseCase,
   CreateWorkflow,
   UpdateWorkflow,
+  ResourceValidatorService,
   DeleteWorkflowUseCase,
   GetNotificationTemplates,
   GetNotificationTemplate,

@@ -59,6 +59,7 @@ import {
   GetWorkflowByIdsUseCase,
 } from '../workflow';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
+import { ResourceValidatorService } from '../../services/resource-validator.service';
 
 /**
  * @deprecated - use `UpsertWorkflow` instead
@@ -79,6 +80,7 @@ export class CreateWorkflow {
     @Inject(forwardRef(() => UpsertPreferences))
     private upsertPreferences: UpsertPreferences,
     private getWorkflowByIdsUseCase: GetWorkflowByIdsUseCase,
+    private resourceValidatorService: ResourceValidatorService,
   ) {}
 
   @InstrumentUsecase()
@@ -88,6 +90,10 @@ export class CreateWorkflow {
     const blueprintCommand = await this.processBlueprint(usecaseCommand);
     const command = blueprintCommand ?? usecaseCommand;
     this.validatePayload(command);
+    await this.resourceValidatorService.validateWorkflowLimit(
+      command.environmentId,
+    );
+
     let storedWorkflow: WorkflowInternalResponseDto;
     await this.notificationTemplateRepository.withTransaction(async () => {
       const triggerIdentifier = this.generateTriggerIdentifier(command);
@@ -189,6 +195,13 @@ export class CreateWorkflow {
   }
 
   private validatePayload(command: CreateWorkflowCommand) {
+    if (command.steps) {
+      this.resourceValidatorService.validateStepsLimit(
+        command.environmentId,
+        command.steps,
+      );
+    }
+
     const variants = command.steps
       ? command.steps?.flatMap((step) => step.variants || [])
       : [];

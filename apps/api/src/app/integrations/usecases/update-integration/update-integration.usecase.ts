@@ -1,10 +1,15 @@
 import { BadRequestException, ConflictException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { CommunityOrganizationRepository, IntegrationEntity, IntegrationRepository } from '@novu/dal';
+import {
+  CommunityOrganizationRepository,
+  IntegrationEntity,
+  IntegrationRepository,
+  OrganizationEntity,
+} from '@novu/dal';
 import {
   AnalyticsService,
   buildIntegrationKey,
   encryptCredentials,
-  GetFeatureFlag,
+  GetFeatureFlagService,
   GetFeatureFlagCommand,
   InvalidateCacheService,
 } from '@novu/application-generic';
@@ -22,7 +27,7 @@ export class UpdateIntegration {
     private invalidateCache: InvalidateCacheService,
     private integrationRepository: IntegrationRepository,
     private analyticsService: AnalyticsService,
-    private getFeatureFlag: GetFeatureFlag,
+    private getFeatureFlag: GetFeatureFlagService,
     private communityOrganizationRepository: CommunityOrganizationRepository
   ) {}
 
@@ -148,11 +153,9 @@ export class UpdateIntegration {
       active: command.active,
     });
 
-    const isInvalidationDisabled = await this.getFeatureFlag.execute(
+    const isInvalidationDisabled = await this.getFeatureFlag.getBoolean(
       GetFeatureFlagCommand.create({
-        userId: 'system',
-        environmentId: 'system',
-        organizationId: command.organizationId,
+        organization: { _id: command.organizationId } as OrganizationEntity,
         key: FeatureFlagsKeysEnum.IS_INTEGRATION_INVALIDATION_DISABLED,
       })
     );

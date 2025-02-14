@@ -7,6 +7,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { workflowSchema } from '../components/workflow-editor/schema';
+import { showSuccessToast, showErrorToast } from '../components/workflow-editor/toasts';
+import { useState } from 'react';
 
 interface UseCreateWorkflowOptions {
   onSuccess?: () => void;
@@ -16,6 +18,7 @@ export function useCreateWorkflow({ onSuccess }: UseCreateWorkflowOptions = {}) 
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { currentEnvironment } = useEnvironment();
+  const [toastId] = useState<string | number>('');
 
   const mutation = useMutation({
     mutationFn: async (workflow: CreateWorkflowDto) => createWorkflow({ environment: currentEnvironment!, workflow }),
@@ -25,6 +28,7 @@ export function useCreateWorkflow({ onSuccess }: UseCreateWorkflowOptions = {}) 
         queryKey: [QueryKeys.fetchTags, currentEnvironment?._id],
       });
 
+      showSuccessToast(toastId);
       navigate(
         buildRoute(ROUTES.EDIT_WORKFLOW, {
           environmentSlug: currentEnvironment?.slug ?? '',
@@ -33,6 +37,10 @@ export function useCreateWorkflow({ onSuccess }: UseCreateWorkflowOptions = {}) 
       );
 
       onSuccess?.();
+    },
+
+    onError: (error) => {
+      showErrorToast(toastId, error);
     },
   });
 

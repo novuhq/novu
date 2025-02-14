@@ -14,7 +14,7 @@ export * from './create-notification-jobs';
 export * from './select-integration';
 export * from './create-or-update-subscriber';
 export * from './select-variant';
-export * from './get-feature-flag';
+export * from './feature-flag';
 export * from './get-novu-provider-credentials';
 export * from './update-tenant';
 export * from './create-tenant';
