@@ -19,12 +19,12 @@ describe('GetPrices #novu-v2', () => {
     },
   };
   let listPricesStub: sinon.SinonStub;
-  let getFeatureFlagStub: { execute: sinon.SinonStub };
+  let featureFlagsServiceStub: { getFlag: sinon.SinonStub };
   const IS_2025_Q1_TIERING_ENABLED = true;
 
   beforeEach(() => {
-    getFeatureFlagStub = {
-      execute: sinon.stub().resolves(IS_2025_Q1_TIERING_ENABLED),
+    featureFlagsServiceStub = {
+      getFlag: sinon.stub().resolves(IS_2025_Q1_TIERING_ENABLED),
     };
 
     listPricesStub = stripeStub.prices.list;
@@ -38,10 +38,10 @@ describe('GetPrices #novu-v2', () => {
 
   afterEach(() => {
     listPricesStub.reset();
-    getFeatureFlagStub.execute.reset();
+    featureFlagsServiceStub.getFlag.reset();
   });
 
-  const createUseCase = () => new GetPrices(stripeStub, getFeatureFlagStub);
+  const createUseCase = () => new GetPrices(stripeStub, featureFlagsServiceStub);
 
   const freeMeteredPriceLookupKey = IS_2025_Q1_TIERING_ENABLED
     ? ['free_usage_notifications_10k']

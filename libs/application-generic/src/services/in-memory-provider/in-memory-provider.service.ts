@@ -231,7 +231,7 @@ export class InMemoryProviderService {
         await this.inMemoryProviderClient.quit();
         Logger.verbose(this.descriptiveLogMessage(`In-memory provider service shutdown`), LOG_CONTEXT);
       } catch (error) {
-        Logger.warn(error, this.descriptiveLogMessage(`In-memory provider service shutdown has failed`), LOG_CONTEXT);
+        Logger.error(error, this.descriptiveLogMessage(`In-memory provider service shutdown has failed`), LOG_CONTEXT);
       }
     }
   }

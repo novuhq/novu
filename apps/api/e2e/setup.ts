@@ -4,6 +4,7 @@ import chai from 'chai';
 import mongoose from 'mongoose';
 import { JobRepository } from '@novu/dal';
 import { JobTopicNameEnum } from '@novu/shared';
+import { setTimeout } from 'timers/promises';
 import { bootstrap } from '../src/bootstrap';
 
 const jobRepository = new JobRepository();
@@ -47,47 +48,27 @@ after(async () => {
   }
 });
 
+async function cleanup() {
+  const jobsService = new JobsService();
+  await jobsService.runAllDelayedJobsImmediately();
+  await jobsService.awaitAllJobs();
+
+  await Promise.all([workflowQueue.clean(), standardQueue.drain(), subscriberProcessQueue.drain()]);
+
+  await jobRepository._model.deleteMany({});
+}
+
 afterEach(async function () {
   sinon.restore();
+
+  try {
+    await Promise.race([
+      cleanup(),
+      setTimeout(4500).then(() => {
+        console.warn('Cleanup operation timed out after 5000ms - continuing with tests');
+      }),
+    ]);
+  } catch (error) {
+    console.error('Error during cleanup:', error);
+  }
 });
-
-/*
- * async function cleanup() {
- *   const jobsService = new JobsService();
- *   await jobsService.runAllDelayedJobsImmediately();
- *   await jobsService.awaitAllJobs();
- */
-
-//   await Promise.all([workflowQueue.drain(), standardQueue.drain(), subscriberProcessQueue.drain()]);
-
-/*
- *   await jobRepository._model.deleteMany({});
- * }
- */
-
-/*
- * function timeoutPromise(ms: number) {
- *   // eslint-disable-next-line no-promise-executor-return
- *   return new Promise((resolve) => setTimeout(resolve, ms));
- * }
- */
-
-/*
- * afterEach(async function () {
- *   const TIMEOUT = 4500;
- *   sinon.restore();
- */
-
-/*
- *   try {
- *     await Promise.race([
- *       cleanup(),
- *       timeoutPromise(TIMEOUT).then(() => {
- *         console.warn('Cleanup operation timed out after 5000ms - continuing with tests');
- *       }),
- *     ]);
- *   } catch (error) {
- *     console.error('Error during cleanup:', error);
- *   }
- * });
- */
