@@ -18,9 +18,9 @@ export enum FeatureFlagsProvidersEnum {
   LAUNCH_DARKLY = 'LaunchDarkly',
 }
 
-const featureFlagsProviders = {
-  [FeatureFlagsProvidersEnum.LAUNCH_DARKLY]: LaunchDarklyService,
-};
+const FEATURE_FLAGS_PROVIDERS = {
+  [FeatureFlagsProvidersEnum.LAUNCH_DARKLY]: process.env.LAUNCH_DARKLY_SDK_KEY ? LaunchDarklyService : null,
+} as const;
 
 @Injectable()
 export class FeatureFlagsService {
@@ -30,27 +30,19 @@ export class FeatureFlagsService {
     Logger.verbose('Feature Flags service initialized', LOG_CONTEXT);
 
     // TODO: In the future we can replace the object key here for an environment variable
-    const Service =
-      featureFlagsProviders[FeatureFlagsProvidersEnum.LAUNCH_DARKLY];
+    const Service = FEATURE_FLAGS_PROVIDERS[FeatureFlagsProvidersEnum.LAUNCH_DARKLY];
 
     if (Service) {
       this.service = new Service();
 
       try {
         await this.service.initialize();
-        Logger.log(
-          'Feature Flags service has been successfully initialized',
-          LOG_CONTEXT,
-        );
+        Logger.log('Feature Flags service has been successfully initialized', LOG_CONTEXT);
       } catch (error) {
-        Logger.error(
-          'Feature Flags service has failed when initialized',
-          error,
-          LOG_CONTEXT,
-        );
+        Logger.error('Feature Flags service has failed when initialized', error, LOG_CONTEXT);
       }
     } else {
-      Logger.error('No Feature Flags service available to initialize');
+      Logger.verbose('No Feature Flags service available');
     }
   }
 
@@ -58,16 +50,9 @@ export class FeatureFlagsService {
     if (this.isServiceEnabled()) {
       try {
         await this.service.gracefullyShutdown();
-        Logger.log(
-          'Feature Flags service has been gracefully shut down',
-          LOG_CONTEXT,
-        );
+        Logger.log('Feature Flags service has been gracefully shut down', LOG_CONTEXT);
       } catch (error) {
-        Logger.error(
-          error,
-          'Feature Flags service has failed when shut down',
-          LOG_CONTEXT,
-        );
+        Logger.error(error, 'Feature Flags service has failed when shut down', LOG_CONTEXT);
       }
     }
   }
@@ -76,11 +61,8 @@ export class FeatureFlagsService {
    * @deprecated This method is deprecated.
    * Please use the more flexible `getFlag()` method instead, with the context data.
    */
-  public async getWithContext<T>(
-    contextualFeatureFlag: IContextualFeatureFlag<T>,
-  ): Promise<T> {
-    const { defaultValue, key, environmentId, organizationId, userId } =
-      contextualFeatureFlag;
+  public async getWithContext<T>(contextualFeatureFlag: IContextualFeatureFlag<T>): Promise<T> {
+    const { defaultValue, key, environmentId, organizationId, userId } = contextualFeatureFlag;
 
     const context = {
       environmentId,
@@ -91,9 +73,11 @@ export class FeatureFlagsService {
     return await this.get(key, defaultValue, context);
   }
 
-  public async getFlag<Result>(
-    getFlagData: GetFlagData<Result>,
-  ): Promise<Result> {
+  public async getFlag<Result>(getFlagData: GetFlagData<Result>): Promise<Result> {
+    if (!this.isServiceEnabled()) {
+      return getFlagData.defaultValue;
+    }
+
     return await this.service.getFlag<Result>(getFlagData);
   }
 
@@ -105,19 +89,14 @@ export class FeatureFlagsService {
    * @deprecated This method is deprecated.
    * Please use the more flexible `getFlag()` method instead, with the context data.
    */
-  public async getGlobal<T>(
-    globalFeatureFlag: IGlobalFeatureFlag<T>,
-  ): Promise<T> {
+  public async getGlobal<T>(globalFeatureFlag: IGlobalFeatureFlag<T>): Promise<T> {
     const { defaultValue, key } = globalFeatureFlag;
 
     if (!this.isServiceEnabled()) {
       return defaultValue;
     }
 
-    return (await this.service.getWithAnonymousContext(
-      key,
-      defaultValue,
-    )) satisfies T;
+    return (await this.service.getWithAnonymousContext(key, defaultValue)) satisfies T;
   }
 
   /**
@@ -128,17 +107,9 @@ export class FeatureFlagsService {
    *  - Default value with the value provided by the hardcoded fallback
    */
   @Instrument({
-    buildTransactionIdSuffix: (
-      key: FeatureFlagsKeysEnum,
-      defaultValue: unknown,
-      context: IFeatureFlagContext,
-    ) => key,
+    buildTransactionIdSuffix: (key: FeatureFlagsKeysEnum, defaultValue: unknown, context: IFeatureFlagContext) => key,
   })
-  public async get<T>(
-    key: FeatureFlagsKeysEnum,
-    defaultValue: T,
-    context: IFeatureFlagContext,
-  ): Promise<T> {
+  public async get<T>(key: FeatureFlagsKeysEnum, defaultValue: T, context: IFeatureFlagContext): Promise<T> {
     if (!this.isServiceEnabled()) {
       return defaultValue;
     }
@@ -159,23 +130,11 @@ export class FeatureFlagsService {
 
     switch (contextTarget) {
       case 'organizationId':
-        return (await this.service.getWithOrganizationContext(
-          key,
-          defaultValue,
-          context.organizationId,
-        )) satisfies T;
+        return (await this.service.getWithOrganizationContext(key, defaultValue, context.organizationId)) satisfies T;
       case 'environmentId':
-        return (await this.service.getWithEnvironmentContext(
-          key,
-          defaultValue,
-          context.environmentId,
-        )) satisfies T;
+        return (await this.service.getWithEnvironmentContext(key, defaultValue, context.environmentId)) satisfies T;
       case 'userId':
-        return (await this.service.getWithUserContext(
-          key,
-          defaultValue,
-          context.userId,
-        )) satisfies T;
+        return (await this.service.getWithUserContext(key, defaultValue, context.userId)) satisfies T;
       default:
         throw new Error('Invalid context target');
     }
