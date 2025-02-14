@@ -316,7 +316,7 @@ export class ParseEventRequest {
 
   private isValidId(subscriberId: string) {
     if (subscriberId.trim().match(SUBSCRIBER_ID_REGEX)) {
-      return subscriberId;
+      return subscriberId.trim();
     }
   }
 
