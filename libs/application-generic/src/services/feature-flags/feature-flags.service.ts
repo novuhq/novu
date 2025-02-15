@@ -12,15 +12,13 @@ export class FeatureFlagsService {
   public service: IFeatureFlagsService;
 
   public async initialize(): Promise<void> {
-    Logger.verbose('Feature Flags service initialized', LOG_CONTEXT);
-
     const Service = process.env.LAUNCH_DARKLY_SDK_KEY ? LaunchDarklyFeatureFlagsService : ProcessEnvFeatureFlagsService;
 
     this.service = new Service();
 
     try {
       await this.service.initialize();
-      Logger.verbose(`Feature Flags service (${Service.name}) has been successfully initialized.`, LOG_CONTEXT);
+      Logger.log(`Feature Flags service (${Service.name}) has been successfully initialized.`, LOG_CONTEXT);
     } catch (error) {
       Logger.error(
         `Feature Flags service (${Service.name}) failed to initialize.`,
