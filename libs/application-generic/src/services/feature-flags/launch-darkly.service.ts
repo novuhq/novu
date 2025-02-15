@@ -14,7 +14,7 @@ export class LaunchDarklyFeatureFlagsService implements IFeatureFlagsService {
       throw new Error('Missing Launch Darkly SDK key');
     }
     this.client = init(launchDarklySdkKey);
-    await this.client.waitForInitialization();
+    await this.client.waitForInitialization({ timeout: 10000 });
     this.isEnabled = true;
   }
 
