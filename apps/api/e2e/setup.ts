@@ -53,7 +53,7 @@ async function cleanup() {
   await jobsService.runAllDelayedJobsImmediately();
   await jobsService.awaitAllJobs();
 
-  await Promise.all([workflowQueue.clean(), standardQueue.drain(), subscriberProcessQueue.drain()]);
+  await Promise.all([workflowQueue.drain(), standardQueue.drain(), subscriberProcessQueue.drain()]);
 
   await jobRepository._model.deleteMany({});
 }
