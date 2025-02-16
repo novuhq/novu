@@ -2,8 +2,7 @@ import { Logger } from '@nestjs/common';
 
 import { InMemoryProviderService } from './in-memory-provider.service';
 import { InMemoryProviderEnum, InMemoryProviderClient } from './types';
-
-import { GetIsInMemoryClusterModeEnabled } from '../../usecases';
+import { GetIsInMemoryClusterModeEnabled } from '../../usecases/feature-flag';
 
 const LOG_CONTEXT = 'WorkflowInMemoryProviderService';
 

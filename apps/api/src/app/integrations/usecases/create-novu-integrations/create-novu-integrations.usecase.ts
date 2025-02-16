@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { IntegrationRepository } from '@novu/dal';
+import { EnvironmentEntity, IntegrationRepository, OrganizationEntity, UserEntity } from '@novu/dal';
 import {
   areNovuEmailCredentialsSet,
   areNovuSmsCredentialsSet,
-  GetFeatureFlag,
+  GetFeatureFlagService,
   GetFeatureFlagCommand,
 } from '@novu/application-generic';
 
@@ -26,7 +26,7 @@ export class CreateNovuIntegrations {
     private createIntegration: CreateIntegration,
     private integrationRepository: IntegrationRepository,
     private setIntegrationAsPrimary: SetIntegrationAsPrimary,
-    private getFeatureFlag: GetFeatureFlag
+    private getFeatureFlag: GetFeatureFlagService
   ) {}
 
   private async createEmailIntegration(command: CreateNovuIntegrationsCommand) {
@@ -110,11 +110,11 @@ export class CreateNovuIntegrations {
     });
 
     if (inAppIntegrationCount === 0) {
-      const isV2Enabled = await this.getFeatureFlag.execute(
+      const isV2Enabled = await this.getFeatureFlag.getBoolean(
         GetFeatureFlagCommand.create({
-          userId: command.userId,
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
+          user: { _id: command.userId } as UserEntity,
+          environment: { _id: command.environmentId } as EnvironmentEntity,
+          organization: { _id: command.organizationId } as OrganizationEntity,
           key: FeatureFlagsKeysEnum.IS_V2_ENABLED,
         })
       );

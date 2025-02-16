@@ -63,6 +63,7 @@ import {
   UpdateMessageTemplateCommand,
 } from '../../message-template';
 import { Instrument, InstrumentUsecase } from '../../../instrumentation';
+import { ResourceValidatorService } from '../../../services/resource-validator.service';
 
 /**
  * @deprecated - use `UpsertWorkflow` instead
@@ -92,6 +93,7 @@ export class UpdateWorkflow {
     @Inject(forwardRef(() => GetWorkflowByIdsUseCase))
     private getWorkflowByIdsUseCase: GetWorkflowByIdsUseCase,
     private controlValuesRepository: ControlValuesRepository,
+    private resourceValidatorService: ResourceValidatorService,
   ) {}
 
   @InstrumentUsecase()
@@ -412,6 +414,13 @@ export class UpdateWorkflow {
   }
 
   private validatePayload(command: UpdateWorkflowCommand) {
+    if (command.steps) {
+      this.resourceValidatorService.validateStepsLimit(
+        command.environmentId,
+        command.steps,
+      );
+    }
+
     const variants = command.steps
       ? command.steps?.flatMap((step) => step.variants || [])
       : [];

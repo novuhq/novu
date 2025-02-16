@@ -6,8 +6,7 @@ import {
   InMemoryProviderClient,
   ScanStream,
 } from './types';
-
-import { GetIsInMemoryClusterModeEnabled } from '../../usecases';
+import { GetIsInMemoryClusterModeEnabled } from '../../usecases/feature-flag';
 
 const LOG_CONTEXT = 'WebSocketsInMemoryProviderService';
 

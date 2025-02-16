@@ -10,7 +10,7 @@ import {
 import { CallHandler, ExecutionContext, Injectable, Logger, NestInterceptor } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import {
-  GetFeatureFlag,
+  GetFeatureFlagService,
   GetFeatureFlagCommand,
   Instrument,
   HttpRequestHeaderKeysEnum,
@@ -23,8 +23,9 @@ import {
   FeatureFlagsKeysEnum,
   UserSessionData,
 } from '@novu/shared';
-import { EvaluateApiRateLimit, EvaluateApiRateLimitCommand } from '../usecases/evaluate-api-rate-limit';
+import { UserEntity, OrganizationEntity, EnvironmentEntity } from '@novu/dal';
 import { ThrottlerCategory, ThrottlerCost } from './throttler.decorator';
+import { EvaluateApiRateLimit, EvaluateApiRateLimitCommand } from '../usecases/evaluate-api-rate-limit';
 
 export const THROTTLED_EXCEPTION_MESSAGE = 'API rate limit exceeded';
 export const ALLOWED_AUTH_SCHEMES = [ApiAuthSchemeEnum.API_KEY];
@@ -44,7 +45,7 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
     @InjectThrottlerStorage() protected readonly storageService: ThrottlerStorage,
     reflector: Reflector,
     private evaluateApiRateLimit: EvaluateApiRateLimit,
-    private getFeatureFlag: GetFeatureFlag
+    private getFeatureFlag: GetFeatureFlagService
   ) {
     super(options, storageService, reflector);
   }
@@ -72,11 +73,11 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
     const user = this.getReqUser(context);
     const { organizationId, environmentId, _id } = user;
 
-    const isEnabled = await this.getFeatureFlag.execute(
+    const isEnabled = await this.getFeatureFlag.getBoolean(
       GetFeatureFlagCommand.create({
-        environmentId,
-        organizationId,
-        userId: _id,
+        environment: { _id: environmentId } as EnvironmentEntity,
+        organization: { _id: organizationId } as OrganizationEntity,
+        user: { _id } as UserEntity,
         key: FeatureFlagsKeysEnum.IS_API_RATE_LIMITING_ENABLED,
       })
     );
@@ -127,11 +128,11 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
      * The purpose of the dry run is to allow us to observe how
      * the rate limiting would behave without actually enforcing it.
      */
-    const isDryRun = await this.getFeatureFlag.execute(
+    const isDryRun = await this.getFeatureFlag.getBoolean(
       GetFeatureFlagCommand.create({
-        environmentId,
-        organizationId,
-        userId: _id,
+        environment: { _id: environmentId } as EnvironmentEntity,
+        organization: { _id: organizationId } as OrganizationEntity,
+        user: { _id } as UserEntity,
         key: FeatureFlagsKeysEnum.IS_API_RATE_LIMITING_DRY_RUN_ENABLED,
       })
     );

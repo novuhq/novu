@@ -5,8 +5,9 @@ import {
   CacheService,
   DistributedLockService,
   FeatureFlagsService,
+  LaunchDarklyService,
 } from '../services';
-import { GetFeatureFlag } from '../usecases';
+import { GetFeatureFlagService } from '../usecases/feature-flag';
 
 export const featureFlagsService = {
   provide: FeatureFlagsService,
@@ -18,12 +19,12 @@ export const featureFlagsService = {
   },
 };
 
-export const getFeatureFlag = {
-  provide: GetFeatureFlag,
+export const getFeatureFlagService = {
+  provide: GetFeatureFlagService,
   useFactory: async (
     featureFlagsServiceItem: FeatureFlagsService,
-  ): Promise<GetFeatureFlag> => {
-    const useCase = new GetFeatureFlag(featureFlagsServiceItem);
+  ): Promise<GetFeatureFlagService> => {
+    const useCase = new GetFeatureFlagService(featureFlagsServiceItem);
 
     return useCase;
   },

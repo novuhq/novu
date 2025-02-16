@@ -10,6 +10,9 @@ import {
   IntegrationEntity,
   MessageEntity,
   LayoutRepository,
+  EnvironmentEntity,
+  OrganizationEntity,
+  UserEntity,
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
@@ -31,7 +34,7 @@ import {
   SelectVariant,
   ExecutionLogRoute,
   ExecutionLogRouteCommand,
-  GetFeatureFlag,
+  GetFeatureFlagService,
   GetFeatureFlagCommand,
 } from '@novu/application-generic';
 import { EmailOutput } from '@novu/framework/internal';
@@ -57,7 +60,7 @@ export class SendMessageEmail extends SendMessageBase {
     protected getNovuProviderCredentials: GetNovuProviderCredentials,
     protected selectVariant: SelectVariant,
     protected moduleRef: ModuleRef,
-    private getFeatureFlag: GetFeatureFlag
+    private getFeatureFlagService: GetFeatureFlagService
   ) {
     super(
       messageRepository,
@@ -236,12 +239,12 @@ export class SendMessageEmail extends SendMessageBase {
         }
 
         // TODO: remove as part of https://linear.app/novu/issue/NV-4117/email-html-content-issue-in-mobile-devices
-        const shouldDisableInlineCss = await this.getFeatureFlag.execute(
+        const shouldDisableInlineCss = await this.getFeatureFlagService.getBoolean(
           GetFeatureFlagCommand.create({
             key: FeatureFlagsKeysEnum.IS_EMAIL_INLINE_CSS_DISABLED,
-            environmentId: 'system',
-            organizationId: command.organizationId,
-            userId: 'system',
+            environment: { _id: command.environmentId } as EnvironmentEntity,
+            organization: { _id: command.organizationId } as OrganizationEntity,
+            user: { _id: command.userId } as UserEntity,
           })
         );
 

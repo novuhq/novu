@@ -19,7 +19,7 @@ import { ApiRateLimitCategoryEnum, FeatureFlagsKeysEnum, UserSessionData } from 
 import {
   CreateTenant,
   CreateTenantCommand,
-  GetFeatureFlag,
+  GetFeatureFlagService,
   GetFeatureFlagCommand,
   GetTenant,
   GetTenantCommand,
@@ -27,6 +27,7 @@ import {
   UpdateTenantCommand,
 } from '@novu/application-generic';
 import { ApiExcludeController } from '@nestjs/swagger/dist/decorators/api-exclude-controller.decorator';
+import { EnvironmentEntity, OrganizationEntity, UserEntity } from '@novu/dal';
 import { UserSession } from '../shared/framework/user.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import {
@@ -71,7 +72,7 @@ export class TenantController {
     private getTenantUsecase: GetTenant,
     private deleteTenantUsecase: DeleteTenant,
     private getTenantsUsecase: GetTenants,
-    private getFeatureFlag: GetFeatureFlag
+    private getFeatureFlagService: GetFeatureFlagService
   ) {}
 
   @Get('')
@@ -212,11 +213,11 @@ export class TenantController {
   }
 
   private async verifyTenantsApiAvailability(user: UserSessionData) {
-    const isV2Enabled = await this.getFeatureFlag.execute(
+    const isV2Enabled = await this.getFeatureFlagService.getBoolean(
       GetFeatureFlagCommand.create({
-        userId: user._id,
-        environmentId: user.environmentId,
-        organizationId: user.organizationId,
+        user: { _id: user._id } as UserEntity,
+        environment: { _id: user.environmentId } as EnvironmentEntity,
+        organization: { _id: user.organizationId } as OrganizationEntity,
         key: FeatureFlagsKeysEnum.IS_V2_ENABLED,
       })
     );
