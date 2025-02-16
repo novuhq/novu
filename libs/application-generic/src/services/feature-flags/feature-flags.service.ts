@@ -1,9 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { FeatureFlagsKeysEnum, FlagType } from '@novu/shared';
 import { LaunchDarklyFeatureFlagsService } from './launch-darkly.service';
 import { ProcessEnvFeatureFlagsService } from './process-env.service';
 
-import { IFeatureFlagsService, IFeatureFlagContext } from './types';
+import { IFeatureFlagsService, FeatureFlagContext } from './types';
 
 const LOG_CONTEXT = 'FeatureFlagsService';
 
@@ -37,17 +36,7 @@ export class FeatureFlagsService {
     }
   }
 
-  public async getFlag<T extends FeatureFlagsKeysEnum>(context: IFeatureFlagContext<T>) {
-    const { key } = context;
-
-    if (key.endsWith('_ENABLED') || key.endsWith('_DISABLED')) {
-      return this.service.getBooleanFlag<T>(context) as Promise<FlagType<T>>;
-    }
-
-    if (key.endsWith('_NUMBER')) {
-      return this.service.getNumberFlag<T>(context) as Promise<FlagType<T>>;
-    }
-
-    throw new Error('Invalid feature flag key format');
+  public async getFlag<T_Result>(context: FeatureFlagContext<T_Result>) {
+    return this.service.getFlag(context);
   }
 }
