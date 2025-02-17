@@ -51,9 +51,9 @@ export class IdempotencyInterceptor implements NestInterceptor {
     return await this.featureFlagService.getFlag({
       key: FeatureFlagsKeysEnum.IS_API_IDEMPOTENCY_ENABLED,
       defaultValue: false,
-      environment: { _id: environmentId } as EnvironmentEntity,
-      organization: { _id: organizationId } as OrganizationEntity,
-      user: { _id } as UserEntity,
+      environment: { _id: environmentId },
+      organization: { _id: organizationId },
+      user: { _id },
     });
   }
 

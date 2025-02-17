@@ -61,21 +61,21 @@ export class LaunchDarklyFeatureFlagsService implements IFeatureFlagsService {
       kind: 'multi',
     };
 
-    if (environment) {
+    if (environment?._id) {
       mappedContext.environment = {
         ...environment,
         key: environment._id,
       };
     }
 
-    if (organization) {
+    if (organization?._id) {
       mappedContext.organization = {
         ...organization,
         key: organization._id,
       };
     }
 
-    if (user) {
+    if (user?._id) {
       mappedContext.user = {
         ...user,
         key: user._id,

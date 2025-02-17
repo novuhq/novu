@@ -91,7 +91,7 @@ export class UpdateWorkflow {
 
   @InstrumentUsecase()
   async execute(command: UpdateWorkflowCommand): Promise<WorkflowInternalResponseDto> {
-    this.validatePayload(command);
+    await this.validatePayload(command);
 
     const existingTemplate = await this.getWorkflowByIdsUseCase.execute(
       GetWorkflowByIdsCommand.create({
@@ -352,9 +352,9 @@ export class UpdateWorkflow {
     return notificationTemplateWithStepTemplate;
   }
 
-  private validatePayload(command: UpdateWorkflowCommand) {
+  private async validatePayload(command: UpdateWorkflowCommand) {
     if (command.steps) {
-      this.resourceValidatorService.validateStepsLimit(command.environmentId, command.steps);
+      await this.resourceValidatorService.validateStepsLimit(command.environmentId, command.steps);
     }
 
     const variants = command.steps ? command.steps?.flatMap((step) => step.variants || []) : [];
