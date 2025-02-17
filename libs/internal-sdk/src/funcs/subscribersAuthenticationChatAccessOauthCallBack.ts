@@ -102,6 +102,7 @@ export async function subscribersAuthenticationChatAccessOauthCallBack(
   const requestSecurity = resolveGlobalSecurity(securityInput);
 
   const context = {
+    baseURL: options?.serverURL ?? "",
     operationID: "SubscribersV1Controller_chatOauthCallback",
     oAuth2Scopes: [],
 

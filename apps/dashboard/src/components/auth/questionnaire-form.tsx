@@ -1,6 +1,16 @@
+import { updateClerkOrgMetadata } from '@/api/organization';
+import { identifyUser } from '@/api/telemetry';
+import { StepIndicator } from '@/components/auth/shared';
 import { Button } from '@/components/primitives/button';
 import { CardDescription, CardTitle } from '@/components/primitives/card';
+import { FormRoot } from '@/components/primitives/form/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
+import { useEnvironment, useFetchEnvironments } from '@/context/environment/hooks';
+import { useSegment } from '@/context/segment/hooks';
+import { useTelemetry } from '@/hooks/use-telemetry';
+import { hubspotCookie } from '@/utils/cookies';
+import { ROUTES } from '@/utils/routes';
+import { TelemetryEvent } from '@/utils/telemetry';
 import { useOrganization, useUser } from '@clerk/clerk-react';
 import { CompanySizeEnum, JobTitleEnum, jobTitleToLabelMapper, OrganizationTypeEnum } from '@novu/shared';
 import { useMutation } from '@tanstack/react-query';
@@ -8,15 +18,6 @@ import { AnimatePresence, motion } from 'motion/react';
 import React from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
-import { updateClerkOrgMetadata } from '../../api/organization';
-import { identifyUser } from '../../api/telemetry';
-import { useEnvironment, useFetchEnvironments } from '../../context/environment/hooks';
-import { useSegment } from '../../context/segment';
-import { useTelemetry } from '../../hooks/use-telemetry';
-import { hubspotCookie } from '../../utils/cookies';
-import { ROUTES } from '../../utils/routes';
-import { TelemetryEvent } from '../../utils/telemetry';
-import { StepIndicator } from './shared';
 
 interface QuestionnaireFormData {
   jobTitle: JobTitleEnum;
@@ -94,7 +95,7 @@ export function QuestionnaireForm() {
             </CardDescription>
           </div>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="flex w-[350px] flex-col gap-8">
+          <FormRoot onSubmit={handleSubmit(onSubmit)} className="flex w-[350px] flex-col gap-8">
             <div className="flex flex-col gap-7">
               <div className="flex flex-col gap-[4px]">
                 <label className="text-foreground-600 text-xs font-medium">Job title</label>
@@ -216,7 +217,7 @@ export function QuestionnaireForm() {
                 </motion.div>
               )}
             </AnimatePresence>
-          </form>
+          </FormRoot>
         </div>
       </div>
 

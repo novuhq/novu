@@ -92,6 +92,7 @@ export async function subscribersNotificationsFeed(
   const requestSecurity = resolveGlobalSecurity(securityInput);
 
   const context = {
+    baseURL: options?.serverURL ?? "",
     operationID: "SubscribersV1Controller_getNotificationsFeed",
     oAuth2Scopes: [],
 

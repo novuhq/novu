@@ -99,6 +99,7 @@ export async function topicsSubscribersRemove(
   const requestSecurity = resolveGlobalSecurity(securityInput);
 
   const context = {
+    baseURL: options?.serverURL ?? "",
     operationID: "TopicsController_removeSubscribers",
     oAuth2Scopes: [],
 

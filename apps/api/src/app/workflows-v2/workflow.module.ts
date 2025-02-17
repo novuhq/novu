@@ -5,6 +5,7 @@ import {
   DeleteWorkflowUseCase,
   GetPreferences,
   GetWorkflowByIdsUseCase,
+  ResourceValidatorService,
   TierRestrictionsValidateUsecase,
   UpdateWorkflow,
   UpsertControlValuesUseCase,
@@ -62,6 +63,7 @@ const DAL_REPOSITORIES = [CommunityOrganizationRepository];
     TierRestrictionsValidateUsecase,
     ExtractVariables,
     BuildStepIssuesUsecase,
+    ResourceValidatorService,
   ],
 })
 export class WorkflowModule implements NestModule {

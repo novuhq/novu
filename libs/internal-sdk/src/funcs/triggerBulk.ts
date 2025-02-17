@@ -88,6 +88,7 @@ export async function triggerBulk(
   const requestSecurity = resolveGlobalSecurity(securityInput);
 
   const context = {
+    baseURL: options?.serverURL ?? "",
     operationID: "EventsController_triggerBulk",
     oAuth2Scopes: [],
 

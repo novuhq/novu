@@ -82,6 +82,9 @@ export const SideNavigation = () => {
                 >
                   <RiGroup2Line className="size-4" />
                   <span>Subscribers</span>
+                  <Badge color="orange" size="sm" variant="lighter">
+                    New
+                  </Badge>
                 </NavigationLink>
               ) : (
                 <SubscribersStayTunedModal>
@@ -110,9 +113,6 @@ export const SideNavigation = () => {
               <NavigationLink to={buildRoute(ROUTES.ENVIRONMENTS, { environmentSlug: currentEnvironment?.slug ?? '' })}>
                 <RiDatabase2Line className="size-4" />
                 <span>Environments</span>
-                <Badge color="orange" size="sm" variant="lighter">
-                  New
-                </Badge>
               </NavigationLink>
               <NavigationLink to={buildRoute(ROUTES.INTEGRATIONS, { environmentSlug: currentEnvironment?.slug ?? '' })}>
                 <RiStore3Line className="size-4" />

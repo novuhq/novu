@@ -1,18 +1,16 @@
 import { RiCloseLine, RiGuideFill } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
-import { FeatureFlagsKeysEnum, WorkflowOriginEnum } from '@novu/shared';
+import { WorkflowOriginEnum } from '@novu/shared';
 
 import { CompactButton } from '@/components/primitives/button-compact';
 import { EditStepConditionsForm } from '@/components/workflow-editor/steps/conditions/edit-step-conditions-form';
 import { EditStepConditionsFormSkeleton } from '@/components/workflow-editor/steps/conditions/edit-step-conditions-skeleton';
 import { StepDrawer } from '@/components/workflow-editor/steps/step-drawer';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 
 export const EditStepConditions = () => {
   const navigate = useNavigate();
   const { isPending, workflow, step } = useWorkflow();
-  const isStepConditionsEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_STEP_CONDITIONS_ENABLED);
 
   if (!workflow || !step) {
     return null;
@@ -21,7 +19,7 @@ export const EditStepConditions = () => {
   const { uiSchema } = step.controls ?? {};
   const { skip } = uiSchema?.properties ?? {};
 
-  if (!isStepConditionsEnabled || !skip || workflow.origin !== WorkflowOriginEnum.NOVU_CLOUD) {
+  if (!skip || workflow.origin !== WorkflowOriginEnum.NOVU_CLOUD) {
     navigate('..', { relative: 'path' });
     return null;
   }

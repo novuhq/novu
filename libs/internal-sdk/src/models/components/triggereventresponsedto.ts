@@ -18,6 +18,7 @@ export const Status = {
   NoWorkflowStepsDefined: "no_workflow_steps_defined",
   Processed: "processed",
   NoTenantFound: "no_tenant_found",
+  InvalidRecipients: "invalid_recipients",
 } as const;
 /**
  * Status of the trigger

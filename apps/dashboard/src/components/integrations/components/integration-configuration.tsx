@@ -1,21 +1,20 @@
-import { ChannelTypeEnum, IProviderConfig } from '@novu/shared';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/primitives/accordion';
-import { Form } from '@/components/primitives/form/form';
+import { Form, FormRoot } from '@/components/primitives/form/form';
 import { Label } from '@/components/primitives/label';
 import { Separator } from '@/components/primitives/separator';
 import { useEnvironment } from '@/context/environment/hooks';
-import { IIntegration } from '@novu/shared';
+import { ROUTES } from '@/utils/routes';
+import { ChannelTypeEnum, IIntegration, IProviderConfig } from '@novu/shared';
 import { useEffect } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { RiInputField } from 'react-icons/ri';
+import { useNavigate } from 'react-router-dom';
 import { InlineToast } from '../../../components/primitives/inline-toast';
 import { cn } from '../../../utils/ui';
 import { EnvironmentDropdown } from '../../side-navigation/environment-dropdown';
 import { CredentialsSection } from './integration-credentials';
 import { GeneralSettings } from './integration-general-settings';
 import { isDemoIntegration } from './utils/helpers';
-import { useNavigate } from 'react-router-dom';
-import { ROUTES } from '@/utils/routes';
 
 type IntegrationFormData = {
   name: string;
@@ -94,7 +93,7 @@ export function IntegrationConfiguration({
 
   return (
     <Form {...form}>
-      <form id="integration-configuration-form" onSubmit={handleSubmit(onSubmit)} className="flex flex-col">
+      <FormRoot id="integration-configuration-form" onSubmit={handleSubmit(onSubmit)} className="flex flex-col">
         <div className="flex items-center justify-between gap-2 p-3">
           <Label className="text-sm" htmlFor="environmentId">
             Environment
@@ -190,7 +189,7 @@ export function IntegrationConfiguration({
             )}
           </div>
         )}
-      </form>
+      </FormRoot>
     </Form>
   );
 }
