@@ -1,5 +1,5 @@
-import { bool, CleanedEnv, cleanEnv, json, num, port, str, url, ValidatorSpec } from 'envalid';
 import { DEFAULT_NOTIFICATION_RETENTION_DAYS, FeatureFlagsKeysEnum, StringifyEnv } from '@novu/shared';
+import { bool, CleanedEnv, cleanEnv, json, num, port, str, url, ValidatorSpec } from 'envalid';
 
 export function validateEnv() {
   return cleanEnv(process.env, envValidators);
@@ -42,6 +42,8 @@ export const envValidators = {
   API_ROOT_URL: url(),
   NOVU_INVITE_TEAM_MEMBER_NUDGE_TRIGGER_IDENTIFIER: str({ default: undefined }),
   SUBSCRIBER_WIDGET_JWT_EXPIRATION_TIME: str({ default: '15 days' }),
+  NOVU_REGION: str({ default: 'local' }),
+  NOVU_SECRET_KEY: str({ default: '' }),
 
   // Novu Cloud third party services
   ...(processEnv.IS_SELF_HOSTED !== 'true' &&
@@ -56,6 +58,7 @@ export const envValidators = {
       PLAIN_CARDS_HMAC_SECRET_KEY: str({ default: undefined }),
       STRIPE_API_KEY: str({ default: undefined }),
       STRIPE_CONNECT_SECRET: str({ default: undefined }),
+      NOVU_INTERNAL_SECRET_KEY: str({ default: '' }),
     }),
 
   // Feature Flags

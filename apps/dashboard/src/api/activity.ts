@@ -16,14 +16,22 @@ interface ActivityResponse {
   pageSize: number;
 }
 
-export function getActivityList(
-  environment: IEnvironment,
-  page = 0,
-  filters?: ActivityFilters,
-  signal?: AbortSignal
-): Promise<ActivityResponse> {
+export function getActivityList({
+  environment,
+  page,
+  limit,
+  filters,
+  signal,
+}: {
+  environment: IEnvironment;
+  page: number;
+  limit: number;
+  filters?: ActivityFilters;
+  signal?: AbortSignal;
+}): Promise<ActivityResponse> {
   const searchParams = new URLSearchParams();
   searchParams.append('page', page.toString());
+  searchParams.append('limit', limit.toString());
 
   if (filters?.channels?.length) {
     filters.channels.forEach((channel) => {
@@ -72,8 +80,10 @@ function getDateRangeInDays(range: string): number {
   }
 }
 
-export function getNotification(notificationId: string, environment: IEnvironment) {
-  return get<{ data: IActivity }>(`/notifications/${notificationId}`, {
+export async function getNotification(notificationId: string, environment: IEnvironment): Promise<IActivity> {
+  const { data } = await get<{ data: IActivity }>(`/notifications/${notificationId}`, {
     environment,
   });
+
+  return data;
 }

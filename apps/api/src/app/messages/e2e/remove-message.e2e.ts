@@ -34,7 +34,7 @@ describe('Delete Message - /messages/:messageId (DELETE) #novu-v2', function () 
 
   it('should delete a existing message', async function () {
     await novuClient.trigger({
-      name: template.triggers[0].identifier,
+      workflowId: template.triggers[0].identifier,
       to: [{ subscriberId: subscriber.subscriberId, email: 'gg@ff.com' }],
       payload: {
         email: 'new-test-email@gmail.com',
@@ -43,7 +43,7 @@ describe('Delete Message - /messages/:messageId (DELETE) #novu-v2', function () 
       },
     });
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
 
     const messages = await messageRepository.findBySubscriberChannel(
       session.environment._id,

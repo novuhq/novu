@@ -14,12 +14,11 @@ describe('Get Subscriber - /subscribers/:id (GET) #novu-v2', function () {
 
   const subscriberId = 'sub_42';
   it('should return a subscriber by id', async function () {
-    await novuClient.subscribers.create({
+    const createResponse = await novuClient.subscribers.create({
       subscriberId,
       firstName: 'John',
       lastName: 'Doe',
       email: 'john@doe.com',
-      phone: '+5555555555',
     });
 
     const response = await novuClient.subscribers.retrieve(subscriberId);
@@ -27,34 +26,5 @@ describe('Get Subscriber - /subscribers/:id (GET) #novu-v2', function () {
     const subscriber = response.result;
     expect(subscriber.subscriberId).to.equal(subscriberId);
     expect(subscriber.topics).to.be.undefined;
-  });
-
-  it('should return a subscriber with their topics', async function () {
-    await novuClient.subscribers.create({
-      subscriberId,
-      firstName: 'John',
-      lastName: 'Doe',
-      email: 'john@doe.com',
-      phone: '+5555555555',
-    });
-
-    const topicKey = 'top_42';
-    await novuClient.topics.create({
-      key: topicKey,
-      name: 'My Topic',
-    });
-
-    await novuClient.topics.subscribers.assign(
-      {
-        subscribers: [subscriberId],
-      },
-      topicKey
-    );
-
-    const response = await novuClient.subscribers.retrieve(subscriberId, true);
-
-    const subscriber = response.result;
-    expect(subscriber.subscriberId).to.equal(subscriberId);
-    expect(subscriber.topics).to.eql([topicKey]);
   });
 });

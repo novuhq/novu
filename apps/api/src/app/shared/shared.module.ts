@@ -24,6 +24,9 @@ import {
   TopicSubscribersRepository,
   UserRepository,
   WorkflowOverrideRepository,
+  CommunityUserRepository,
+  CommunityMemberRepository,
+  CommunityOrganizationRepository,
 } from '@novu/dal';
 import {
   analyticsService,
@@ -38,8 +41,6 @@ import {
   ExecutionLogRoute,
   featureFlagsService,
   GetDecryptedSecretKey,
-  getFeatureFlag,
-  injectCommunityAuthProviders,
   InvalidateCacheService,
   LoggerModule,
   QueuesModule,
@@ -56,7 +57,22 @@ function getDynamicAuthProviders() {
 
     return eeAuthPackage.injectEEAuthProviders();
   } else {
-    return injectCommunityAuthProviders();
+    const userRepositoryProvider = {
+      provide: 'USER_REPOSITORY',
+      useClass: CommunityUserRepository,
+    };
+
+    const memberRepositoryProvider = {
+      provide: 'MEMBER_REPOSITORY',
+      useClass: CommunityMemberRepository,
+    };
+
+    const organizationRepositoryProvider = {
+      provide: 'ORGANIZATION_REPOSITORY',
+      useClass: CommunityOrganizationRepository,
+    };
+
+    return [userRepositoryProvider, memberRepositoryProvider, organizationRepositoryProvider];
   }
 }
 
@@ -89,7 +105,7 @@ const dalService = {
   provide: DalService,
   useFactory: async () => {
     const service = new DalService();
-    await service.connect(process.env.MONGO_URL);
+    await service.connect(process.env.MONGO_URL || '.');
 
     return service;
   },
@@ -110,7 +126,6 @@ const PROVIDERS = [
   ExecutionLogRoute,
   CreateExecutionDetails,
   ExecuteBridgeRequest,
-  getFeatureFlag,
   GetDecryptedSecretKey,
 ];
 

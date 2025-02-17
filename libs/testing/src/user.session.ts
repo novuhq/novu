@@ -41,6 +41,7 @@ import { ClerkJwtPayload } from './ee/types';
 type UserSessionOptions = {
   noOrganization?: boolean;
   noEnvironment?: boolean;
+  noWidgetSession?: boolean;
   showOnBoardingTour?: boolean;
   ee?: {
     userId: 'clerk_user_1' | 'clerk_user_2';
@@ -138,7 +139,7 @@ export class UserSession {
       }
     }
 
-    if (!options.noOrganization && !options.noEnvironment) {
+    if (!options.noOrganization && !options.noEnvironment && !options.noWidgetSession) {
       const { token, profile } = await this.initializeWidgetSession();
       this.subscriberToken = token;
       this.subscriberProfile = profile;
@@ -180,7 +181,7 @@ export class UserSession {
       }
     }
 
-    if (!options.noOrganization && !options.noEnvironment) {
+    if (!options.noOrganization && !options.noEnvironment && !options.noWidgetSession) {
       const { token, profile } = await this.initializeWidgetSession();
       this.subscriberToken = token;
       this.subscriberProfile = profile;
@@ -425,18 +426,22 @@ export class UserSession {
     return feed;
   }
 
-  public async awaitRunningJobs(
+  public async waitForJobCompletion(
     templateId?: string | string[],
     delay?: boolean,
     unfinishedJobs = 0,
     organizationId = this.organization._id
   ) {
-    return await this.jobsService.awaitRunningJobs({
+    return this.jobsService.waitForJobCompletion({
       templateId,
       organizationId,
       delay,
       unfinishedJobs,
     });
+  }
+
+  public async runAllDelayedJobsImmediately() {
+    return this.jobsService.runAllDelayedJobsImmediately();
   }
 
   public async queueGet(jobTopicName: JobTopicNameEnum, getter: 'getDelayed') {

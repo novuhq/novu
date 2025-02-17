@@ -1,5 +1,5 @@
+import { zodResolver } from '@hookform/resolvers/zod';
 import {
-  FeatureFlagsKeysEnum,
   IEnvironment,
   StepResponseDto,
   StepTypeEnum,
@@ -10,39 +10,36 @@ import {
 import { AnimatePresence, motion } from 'motion/react';
 import { HTMLAttributes, ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import {
-  RiArrowLeftSLine,
-  RiArrowRightSLine,
-  RiCloseFill,
-  RiDeleteBin2Line,
-  RiGuideFill,
-  RiPencilRuler2Fill,
-} from 'react-icons/ri';
+import { RiArrowLeftSLine, RiArrowRightSLine, RiCloseFill, RiDeleteBin2Line, RiPencilRuler2Fill } from 'react-icons/ri';
 import { Link, useNavigate } from 'react-router-dom';
-import { parseJsonLogic } from 'react-querybuilder/parseJsonLogic';
-import { RQBJsonLogic } from 'react-querybuilder';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 
 import { ConfirmationModal } from '@/components/confirmation-modal';
-import { stepSchema } from '@/components/workflow-editor/schema';
 import { PageMeta } from '@/components/page-meta';
 import { Button } from '@/components/primitives/button';
+import { CompactButton } from '@/components/primitives/button-compact';
 import { CopyButton } from '@/components/primitives/copy-button';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/primitives/form/form';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  FormRoot,
+} from '@/components/primitives/form/form';
 import { Input } from '@/components/primitives/input';
 import { Separator } from '@/components/primitives/separator';
 import { SidebarContent, SidebarFooter, SidebarHeader } from '@/components/side-navigation/sidebar';
 import TruncatedText from '@/components/truncated-text';
+import { stepSchema } from '@/components/workflow-editor/schema';
 import { getStepDefaultValues } from '@/components/workflow-editor/step-default-values';
-import {
-  flattenIssues,
-  getFirstBodyErrorMessage,
-  getFirstControlsErrorMessage,
-  updateStepInWorkflow,
-} from '@/components/workflow-editor/step-utils';
+import { flattenIssues, getFirstErrorMessage, updateStepInWorkflow } from '@/components/workflow-editor/step-utils';
 import { ConfigureChatStepPreview } from '@/components/workflow-editor/steps/chat/configure-chat-step-preview';
-import { ConfigureStepTemplateIssueCta } from '@/components/workflow-editor/steps/configure-step-template-issue-cta';
+import {
+  ConfigureStepTemplateIssueCta,
+  ConfigureStepTemplateIssuesContainer,
+} from '@/components/workflow-editor/steps/configure-step-template-issue-cta';
 import { DelayControlValues } from '@/components/workflow-editor/steps/delay/delay-control-values';
 import { DigestControlValues } from '@/components/workflow-editor/steps/digest/digest-control-values';
 import { ConfigureEmailStepPreview } from '@/components/workflow-editor/steps/email/configure-email-step-preview';
@@ -50,13 +47,12 @@ import { ConfigureInAppStepPreview } from '@/components/workflow-editor/steps/in
 import { ConfigurePushStepPreview } from '@/components/workflow-editor/steps/push/configure-push-step-preview';
 import { SaveFormContext } from '@/components/workflow-editor/steps/save-form-context';
 import { SdkBanner } from '@/components/workflow-editor/steps/sdk-banner';
+import { SkipConditionsButton } from '@/components/workflow-editor/steps/skip-conditions-button';
 import { ConfigureSmsStepPreview } from '@/components/workflow-editor/steps/sms/configure-sms-step-preview';
 import { UpdateWorkflowFn } from '@/components/workflow-editor/workflow-provider';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFormAutosave } from '@/hooks/use-form-autosave';
 import { INLINE_CONFIGURABLE_STEP_TYPES, STEP_TYPE_LABELS, TEMPLATE_CONFIGURABLE_STEP_TYPES } from '@/utils/constants';
 import { buildRoute, ROUTES } from '@/utils/routes';
-import { CompactButton } from '../../primitives/button-compact';
 
 const STEP_TYPE_TO_INLINE_CONTROL_VALUES: Record<StepTypeEnum, () => React.JSX.Element | null> = {
   [StepTypeEnum.DELAY]: DelayControlValues,
@@ -93,7 +89,6 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
   const { step, workflow, update, environment } = props;
   const navigate = useNavigate();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const isStepConditionsEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_STEP_CONDITIONS_ENABLED);
   const supportedStepTypes = [
     StepTypeEnum.IN_APP,
     StepTypeEnum.SMS,
@@ -170,9 +165,12 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
     },
   });
 
-  const firstError = useMemo(
-    () =>
-      step.issues ? getFirstBodyErrorMessage(step.issues) || getFirstControlsErrorMessage(step.issues) : undefined,
+  const firstControlsError = useMemo(
+    () => (step.issues ? getFirstErrorMessage(step.issues, 'controls') : undefined),
+    [step]
+  );
+  const firstIntegrationError = useMemo(
+    () => (step.issues ? getFirstErrorMessage(step.issues, 'integration') : undefined),
     [step]
   );
 
@@ -184,7 +182,7 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
     Object.values(currentErrors).forEach((controlValues) => {
       Object.keys(controlValues).forEach((key) => {
         if (!stepIssues[`${key}`]) {
-          // @ts-expect-error
+          // @ts-expect-error - dynamic key
           form.clearErrors(`controlValues.${key}`);
         }
       });
@@ -192,7 +190,7 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
 
     // Set new errors from stepIssues
     Object.entries(stepIssues).forEach(([key, value]) => {
-      // @ts-expect-error
+      // @ts-expect-error - dynamic key
       form.setError(`controlValues.${key}`, { message: value });
     });
   }, [form, step]);
@@ -205,14 +203,6 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
   const InlineControlValues = STEP_TYPE_TO_INLINE_CONTROL_VALUES[step.type];
 
   const value = useMemo(() => ({ saveForm }), [saveForm]);
-
-  const conditionsCount = useMemo(() => {
-    if (!step.controls.values.skip) return 0;
-
-    const query = parseJsonLogic(step.controls.values.skip as RQBJsonLogic);
-
-    return query.rules.length;
-  }, [step]);
 
   return (
     <>
@@ -251,7 +241,7 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
             </Link>
           </SidebarHeader>
           <Form {...form}>
-            <form onBlur={onBlur}>
+            <FormRoot onBlur={onBlur}>
               <SaveFormContext.Provider value={value}>
                 <SidebarContent>
                   <FormField
@@ -297,7 +287,7 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
 
                 {isInlineConfigurableStep && !hasCustomControls && <InlineControlValues />}
               </SaveFormContext.Provider>
-            </form>
+            </FormRoot>
           </Form>
 
           {(isTemplateConfigurableStep || isInlineConfigurableStepWithCustomControls) && (
@@ -317,9 +307,16 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
               </SidebarContent>
               <Separator />
 
-              {firstError ? (
+              {firstControlsError || firstIntegrationError ? (
                 <>
-                  <ConfigureStepTemplateIssueCta step={step} issue={firstError} />
+                  <ConfigureStepTemplateIssuesContainer>
+                    {firstControlsError && (
+                      <ConfigureStepTemplateIssueCta step={step} issue={firstControlsError} type="error" />
+                    )}
+                    {firstIntegrationError && (
+                      <ConfigureStepTemplateIssueCta step={step} issue={firstIntegrationError} type="info" />
+                    )}
+                  </ConfigureStepTemplateIssuesContainer>
                   <Separator />
                 </>
               ) : (
@@ -335,27 +332,7 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
             </>
           )}
 
-          {isStepConditionsEnabled && (
-            <>
-              <SidebarContent>
-                <Link to={'./conditions'} relative="path" state={{ stepType: step.type }}>
-                  <Button
-                    variant="secondary"
-                    mode="outline"
-                    className="flex w-full justify-start gap-1.5 text-xs font-medium"
-                  >
-                    <RiGuideFill className="h-4 w-4 text-neutral-600" />
-                    Skip Conditions
-                    <span className="ml-auto flex items-center gap-0.5">
-                      <span>{conditionsCount}</span>
-                      <RiArrowRightSLine className="ml-auto h-4 w-4 text-neutral-600" />
-                    </span>
-                  </Button>
-                </Link>
-              </SidebarContent>
-              <Separator />
-            </>
-          )}
+          <SkipConditionsButton origin={workflow.origin} step={step} inSidebar />
 
           {!isSupportedStep && (
             <SidebarContent>

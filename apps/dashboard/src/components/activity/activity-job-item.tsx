@@ -136,12 +136,13 @@ function getStatusMessage(job: IActivityJob): string | React.ReactNode {
       }
 
       if (job.status === JobStatusEnum.DELAYED) {
-        return (
-          'Waiting for ' +
-          (job.digest as IDelayRegularMetadata)?.amount +
-          ' ' +
-          (job.digest as IDelayRegularMetadata)?.unit
-        );
+        // TODO: Ensure that the API populates the delay unit and amount for all occasions
+        const { unit, amount } = (job.digest || {}) as IDelayRegularMetadata;
+        let msg = 'Waiting';
+        if (unit && amount) {
+          msg = `Waiting for ${amount} ${unit}`;
+        }
+        return msg;
       }
 
       return '';

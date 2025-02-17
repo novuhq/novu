@@ -123,7 +123,7 @@ export const InAppPreviewBody = (props: InAppPreviewBodyProps) => {
 
   return (
     <Markdown
-      className={cn('text-foreground-400 text-xs font-normal', className)}
+      className={cn('text-foreground-400 whitespace-pre-wrap text-xs font-normal', className)}
       {...rest}
       data-testid="in-app-preview-body"
     />

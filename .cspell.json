@@ -6,9 +6,11 @@
     "ABNF",
     "ORGANISATION",
     "EQAs",
+    "analagous",
     "addrs",
     "subscriberpayloaddto",
     "adresses",
+    "APIJSON",
     "sdkerror",
     "idempotancy",
     "errordto",
@@ -497,9 +499,6 @@
     "Pushwoosh",
     "pychecker",
     "pydns",
-    "pyroscope",
-    "Pyroscope",
-    "PYROSCOPE",
     "pyspf",
     "QCLASS",
     "qtype",
@@ -725,7 +724,10 @@
     "facated",
     "dotenvcreate",
     "querybuilder",
-    "liquified"
+    "liquified",
+    "autoload",
+    "novugo",
+    "titleize"
   ],
   "flagWords": [],
   "patterns": [
@@ -803,6 +805,7 @@
     "apps/api/src/app/workflows-v2/maily-test-data.ts",
     "apps/api/src/app/workflows-v2/usecases/validate-content/validate-placeholders/validate-placeholder.usecase.ts",
     "apps/dashboard/eslint.config.js",
+    "libs/internal-sdk/**/*",
     "apps/web/env.sh",
     "apps/web/playwright.config.ts",
     "apps/web/src/pages/playground/web-container-configuration/sandbox-vite/*.ts",
@@ -829,6 +832,7 @@
     "unreadRead",
     "websockets",
     "apps/dashboard/src/hooks/use-plain-chat.ts",
-    "apps/dashboard/src/components/primitives/control-input/variable-popover/constants.ts"
+    "apps/dashboard/src/components/variable/constants.ts",
+    "apps/dashboard/src/utils/locales.ts"
   ]
 }

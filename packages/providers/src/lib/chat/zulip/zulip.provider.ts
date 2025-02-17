@@ -1,10 +1,5 @@
 import { ChatProviderIdEnum } from '@novu/shared';
-import {
-  ChannelTypeEnum,
-  ISendMessageSuccessResponse,
-  IChatOptions,
-  IChatProvider,
-} from '@novu/stateless';
+import { ChannelTypeEnum, ISendMessageSuccessResponse, IChatOptions, IChatProvider } from '@novu/stateless';
 import axios from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
@@ -22,13 +17,13 @@ export class ZulipProvider extends BaseProvider implements IChatProvider {
 
   async sendMessage(
     data: IChatOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     await this.axiosInstance.post(
       data.webhookUrl,
       this.transform(bridgeProviderData, {
         text: data.content,
-      }).body,
+      }).body
     );
 
     return {

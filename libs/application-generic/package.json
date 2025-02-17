@@ -1,6 +1,6 @@
 {
   "name": "@novu/application-generic",
-  "version": "2.0.6",
+  "version": "2.0.10",
   "description": "Generic backend code used inside of Novu's different services",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -66,10 +66,9 @@
     "@opentelemetry/sdk-trace-base": "~1.19.0",
     "@opentelemetry/sdk-trace-node": "~1.19.0",
     "@opentelemetry/semantic-conventions": "~1.19.0",
-    "@pyroscope/nodejs": "^0.2.9",
     "@segment/analytics-node": "^1.1.4",
     "@sentry/node": "^8.33.1",
-    "@team-plain/typescript-sdk": "5.4.3",
+    "@team-plain/typescript-sdk": "5.8.0",
     "axios": "^1.6.8",
     "bullmq": "^3.10.2",
     "class-transformer": "0.5.1",
@@ -81,7 +80,7 @@
     "i18next": "^23.7.6",
     "ioredis": "^5.2.4",
     "jsonwebtoken": "9.0.0",
-    "launchdarkly-node-server-sdk": "^7.0.1",
+    "@launchdarkly/node-server-sdk": "^9.7.3",
     "lodash": "^4.17.15",
     "mixpanel": "^0.17.0",
     "nanoid": "^3.1.20",
@@ -134,9 +133,6 @@
     "LICENSE",
     "README.md"
   ],
-  "prettier": {
-    "singleQuote": true
-  },
   "nyc": {
     "extends": "@istanbuljs/nyc-config-typescript",
     "exclude": [

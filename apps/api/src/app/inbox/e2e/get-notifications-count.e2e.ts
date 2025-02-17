@@ -64,14 +64,14 @@ describe('Get Notifications Count - /inbox/notifications/count (GET) #novu-v2', 
     for (let i = 0; i < times; i += 1) {
       promises.push(
         novuClient.trigger({
-          name: templateToTrigger.triggers[0].identifier,
+          workflowId: templateToTrigger.triggers[0].identifier,
           to: { subscriberId: session.subscriberId },
         })
       );
     }
 
     await Promise.all(promises);
-    await session.awaitRunningJobs(templateToTrigger._id);
+    await session.waitForJobCompletion(templateToTrigger._id);
   };
 
   it('should throw exception when filtering for unread and archived notifications', async function () {

@@ -1,20 +1,12 @@
 import { ChatProviderIdEnum } from '@novu/shared';
-import {
-  ChannelTypeEnum,
-  IChatOptions,
-  IChatProvider,
-  ISendMessageSuccessResponse,
-} from '@novu/stateless';
+import { ChannelTypeEnum, IChatOptions, IChatProvider, ISendMessageSuccessResponse } from '@novu/stateless';
 import Axios, { AxiosInstance } from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 import { WhatsAppMessageTypeEnum } from './consts/whatsapp-business.enum';
 import { ISendMessageRes } from './types/whatsapp-business.types';
 
-export class WhatsappBusinessChatProvider
-  extends BaseProvider
-  implements IChatProvider
-{
+export class WhatsappBusinessChatProvider extends BaseProvider implements IChatProvider {
   id = ChatProviderIdEnum.WhatsAppBusiness;
   protected casing: CasingEnum = CasingEnum.SNAKE_CASE;
   channelType = ChannelTypeEnum.CHAT as ChannelTypeEnum.CHAT;
@@ -26,7 +18,7 @@ export class WhatsappBusinessChatProvider
     private config: {
       accessToken: string;
       phoneNumberIdentification: string;
-    },
+    }
   ) {
     super();
     this.axiosClient = Axios.create({
@@ -39,16 +31,13 @@ export class WhatsappBusinessChatProvider
 
   async sendMessage(
     options: IChatOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
-    const payload = this.transform(
-      bridgeProviderData,
-      this.defineMessagePayload(options),
-    ).body;
+    const payload = this.transform(bridgeProviderData, this.defineMessagePayload(options)).body;
 
     const { data } = await this.axiosClient.post<ISendMessageRes>(
       `${this.baseUrl + this.config.phoneNumberIdentification}/messages`,
-      payload,
+      payload
     );
 
     return {
@@ -80,8 +69,7 @@ export class WhatsappBusinessChatProvider
   }
 
   private defineMessageType(options: IChatOptions): WhatsAppMessageTypeEnum {
-    return options.customData &&
-      Object.keys(options.customData).some((key) => key === 'template')
+    return options.customData && Object.keys(options.customData).some((key) => key === 'template')
       ? WhatsAppMessageTypeEnum.TEMPLATE
       : WhatsAppMessageTypeEnum.TEXT;
   }

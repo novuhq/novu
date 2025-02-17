@@ -74,7 +74,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST) #no
       customVar: 'Testing of User Name',
     });
 
-    await session.awaitRunningJobs(template?._id, true, 1);
+    await session.waitForJobCompletion(template?._id, true, 1);
 
     const delayedJob = await jobRepository.findOne({
       _environmentId: session.environment._id,
@@ -95,7 +95,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST) #no
     expect(messages.length).to.equal(1);
     expect(messages[0].content).to.include('Not Delayed');
 
-    await session.awaitRunningJobs(template?._id, true, 0);
+    await session.waitForJobCompletion(template?._id, true, 0);
 
     const messagesAfter = await messageRepository.find({
       _environmentId: session.environment._id,
@@ -133,7 +133,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST) #no
       id,
       { delay: { amount: 2, unit: DigestUnitEnum.SECONDS } }
     );
-    await session.awaitRunningJobs(template?._id, true, 0);
+    await session.waitForJobCompletion(template?._id, true, 0);
     const messages = await messageRepository.find({
       _environmentId: session.environment._id,
       _subscriberId: subscriber._id,
@@ -165,7 +165,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST) #no
       customVar: 'Testing of User Name',
       sendAt: addSeconds(new Date(), 30),
     });
-    await session.awaitRunningJobs(template?._id, true, 1);
+    await session.waitForJobCompletion(template?._id, true, 1);
 
     const delayedJobs = await jobRepository.find({
       _environmentId: session.environment._id,
@@ -221,7 +221,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST) #no
       eventNumber: '2',
     });
 
-    await session.awaitRunningJobs(template?._id, true, 0);
+    await session.waitForJobCompletion(template?._id, true, 0);
 
     const messages = await messageRepository.find({
       _environmentId: session.environment._id,
@@ -270,7 +270,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST) #no
       eventNumber: '2',
       sendAt: dateValue,
     });
-    await session.awaitRunningJobs(template?._id, true, 0);
+    await session.waitForJobCompletion(template?._id, true, 0);
 
     const messages = await messageRepository.find({
       _environmentId: session.environment._id,

@@ -1,5 +1,5 @@
-import { RiSendPlane2Fill } from 'react-icons/ri';
 import { ChannelTypeEnum, ChatRenderOutput, GeneratePreviewResponseDto } from '@novu/shared';
+import { RiSendPlane2Fill } from 'react-icons/ri';
 
 import { LogoCircle } from '@/components/icons';
 import { Skeleton } from '@/components/primitives/skeleton';
@@ -37,7 +37,7 @@ export const ChatPreview = ({
               <Skeleton className="h-4 w-1/2" />
             ) : (
               <span
-                className={cn('text-foreground-950 min-h-4 text-xs font-normal', {
+                className={cn('text-foreground-950 min-h-4 whitespace-pre-wrap text-xs font-normal', {
                   'line-clamp-3': variant === 'mini',
                 })}
                 title={variant === 'mini' ? body : undefined}

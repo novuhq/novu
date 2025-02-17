@@ -1,11 +1,12 @@
+import { ReactNode, useState } from 'react';
+import { RiErrorWarningFill } from 'react-icons/ri';
+import { cva, VariantProps } from 'class-variance-authority';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
+
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { STEP_TYPE_TO_COLOR } from '@/utils/color';
 import { StepTypeEnum } from '@/utils/enums';
 import { cn } from '@/utils/ui';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
-import { cva, VariantProps } from 'class-variance-authority';
-import { ReactNode, useState } from 'react';
-import { RiErrorWarningFill } from 'react-icons/ri';
 import { HoverCard, HoverCardContent, HoverCardPortal, HoverCardTrigger } from '../primitives/hover-card';
 import { Popover, PopoverArrow, PopoverContent, PopoverPortal, PopoverTrigger } from '../primitives/popover';
 import { StepPreview } from '../step-preview-hover-card';
@@ -143,12 +144,23 @@ const nodeVariants = cva(
   }
 );
 
-export interface BaseNodeProps extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof nodeVariants> {}
+export interface BaseNodeProps extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof nodeVariants> {
+  pill?: ReactNode;
+  onPillClick?: (e: React.MouseEvent<HTMLDivElement>) => void;
+}
 
 export const Node = (props: BaseNodeProps) => {
-  const { children, variant, className, ...rest } = props;
+  const { children, variant, className, pill, onPillClick, ...rest } = props;
   return (
     <div className={nodeVariants({ variant, className })} {...rest}>
+      {pill && (
+        <div
+          className="border-neutral-alpha-200 text-foreground-600 absolute left-0 top-0 flex -translate-y-full items-center gap-1 rounded-t-lg border border-b-0 bg-neutral-50 px-1.5 py-0.5 text-xs font-medium"
+          onClick={onPillClick}
+        >
+          {pill}
+        </div>
+      )}
       <span>{children}</span>
     </div>
   );

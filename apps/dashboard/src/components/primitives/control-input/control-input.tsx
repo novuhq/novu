@@ -2,15 +2,28 @@ import { useCallback, useMemo, useRef } from 'react';
 import { autocompletion } from '@codemirror/autocomplete';
 import { EditorView } from '@uiw/react-codemirror';
 import { cn } from '@/utils/ui';
+import { cva } from 'class-variance-authority';
 
 import { Editor } from '@/components/primitives/editor';
-import { Popover, PopoverTrigger } from '@/components/primitives/popover';
 import { createAutocompleteSource } from '@/utils/liquid-autocomplete';
 import { LiquidVariable } from '@/utils/parseStepVariablesToLiquidVariables';
 import { useVariables } from './hooks/use-variables';
 import { createVariableExtension } from './variable-plugin';
 import { variablePillTheme } from './variable-plugin/variable-theme';
-import { VariablePopover } from './variable-popover';
+import { EditVariablePopover } from '@/components/variable/edit-variable-popover';
+
+const variants = cva('relative w-full', {
+  variants: {
+    size: {
+      md: 'p-2.5',
+      sm: 'p-2.5',
+      '2xs': 'px-2 py-1.5',
+    },
+  },
+  defaultVariants: {
+    size: 'sm',
+  },
+});
 
 type CompletionRange = {
   from: number;
@@ -24,7 +37,7 @@ type ControlInputProps = {
   variables: LiquidVariable[];
   placeholder?: string;
   autoFocus?: boolean;
-  size?: 'md' | 'sm';
+  size?: 'md' | 'sm' | '2xs';
   id?: string;
   multiline?: boolean;
   indentWithTab?: boolean;
@@ -88,7 +101,7 @@ export function ControlInput({
   );
 
   return (
-    <div className={cn('relative h-full w-full p-2.5', className)}>
+    <div className={variants({ size, className })}>
       <Editor
         fontFamily="inherit"
         multiline={multiline}
@@ -103,21 +116,18 @@ export function ControlInput({
         value={value}
         onChange={onChange}
       />
-      <Popover open={!!selectedVariable} onOpenChange={handleOpenChange}>
-        <PopoverTrigger asChild>
-          <div />
-        </PopoverTrigger>
-        {selectedVariable && (
-          <VariablePopover
-            variable={selectedVariable.value}
-            onUpdate={(newValue) => {
-              handleVariableUpdate(newValue);
-              // Focus back to the editor after updating the variable
-              viewRef.current?.focus();
-            }}
-          />
-        )}
-      </Popover>
+      <EditVariablePopover
+        open={!!selectedVariable}
+        onOpenChange={handleOpenChange}
+        variable={selectedVariable?.value}
+        onUpdate={(newValue) => {
+          handleVariableUpdate(newValue);
+          // Focus back to the editor after updating the variable
+          viewRef.current?.focus();
+        }}
+      >
+        <div />
+      </EditVariablePopover>
     </div>
   );
 }

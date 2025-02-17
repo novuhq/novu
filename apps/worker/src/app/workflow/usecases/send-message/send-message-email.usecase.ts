@@ -5,12 +5,14 @@ import { addBreadcrumb } from '@sentry/node';
 
 import {
   MessageRepository,
-  NotificationStepEntity,
   SubscriberRepository,
   EnvironmentRepository,
   IntegrationEntity,
   MessageEntity,
   LayoutRepository,
+  EnvironmentEntity,
+  OrganizationEntity,
+  UserEntity,
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
@@ -19,7 +21,6 @@ import {
   ExecutionDetailsStatusEnum,
   IAttachmentOptions,
   IEmailOptions,
-  LogCodeEnum,
   FeatureFlagsKeysEnum,
 } from '@novu/shared';
 import {
@@ -33,8 +34,7 @@ import {
   SelectVariant,
   ExecutionLogRoute,
   ExecutionLogRouteCommand,
-  GetFeatureFlag,
-  GetFeatureFlagCommand,
+  FeatureFlagsService,
 } from '@novu/application-generic';
 import { EmailOutput } from '@novu/framework/internal';
 
@@ -59,7 +59,7 @@ export class SendMessageEmail extends SendMessageBase {
     protected getNovuProviderCredentials: GetNovuProviderCredentials,
     protected selectVariant: SelectVariant,
     protected moduleRef: ModuleRef,
-    private getFeatureFlag: GetFeatureFlag
+    private featureFlagService: FeatureFlagsService
   ) {
     super(
       messageRepository,
@@ -110,7 +110,7 @@ export class SendMessageEmail extends SendMessageBase {
     if (!step.template) throw new PlatformException('Email channel template not found');
 
     const { subscriber } = command.compileContext;
-    const email = command.payload.email || subscriber.email;
+    const email = command.overrides?.email?.toRecipient || subscriber.email;
 
     addBreadcrumb({
       message: 'Sending Email',
@@ -149,8 +149,8 @@ export class SendMessageEmail extends SendMessageBase {
     }
 
     const overrides: Record<string, any> = {
-      ...(command.overrides.email || {}),
-      ...(command.overrides[integration?.providerId] || {}),
+      ...(command.overrides?.email || {}),
+      ...(command.overrides?.[integration?.providerId] || {}),
     };
     const bridgeOutputs = command.bridgeData?.outputs;
 
@@ -238,14 +238,13 @@ export class SendMessageEmail extends SendMessageBase {
         }
 
         // TODO: remove as part of https://linear.app/novu/issue/NV-4117/email-html-content-issue-in-mobile-devices
-        const shouldDisableInlineCss = await this.getFeatureFlag.execute(
-          GetFeatureFlagCommand.create({
-            key: FeatureFlagsKeysEnum.IS_EMAIL_INLINE_CSS_DISABLED,
-            environmentId: 'system',
-            organizationId: command.organizationId,
-            userId: 'system',
-          })
-        );
+        const shouldDisableInlineCss = await this.featureFlagService.getFlag({
+          key: FeatureFlagsKeysEnum.IS_EMAIL_INLINE_CSS_DISABLED,
+          defaultValue: false,
+          environment: { _id: command.environmentId } as EnvironmentEntity,
+          organization: { _id: command.organizationId } as OrganizationEntity,
+          user: { _id: command.userId } as UserEntity,
+        });
 
         if (!shouldDisableInlineCss) {
           // this is causing rendering issues in Gmail (especially when media queries are used), so we are disabling it
@@ -381,14 +380,7 @@ export class SendMessageEmail extends SendMessageBase {
     if (!email) {
       const mailErrorMessage = `${errorMessage} email address`;
 
-      await this.sendErrorStatus(
-        message,
-        status,
-        errorId,
-        mailErrorMessage,
-        command,
-        LogCodeEnum.SUBSCRIBER_MISSING_EMAIL
-      );
+      await this.sendErrorStatus(message, status, errorId, mailErrorMessage, command);
 
       await this.executionLogRoute.execute(
         ExecutionLogRouteCommand.create({
@@ -408,14 +400,7 @@ export class SendMessageEmail extends SendMessageBase {
     if (!integration) {
       const integrationError = `${errorMessage} active email integration not found`;
 
-      await this.sendErrorStatus(
-        message,
-        status,
-        errorId,
-        integrationError,
-        command,
-        LogCodeEnum.MISSING_EMAIL_INTEGRATION
-      );
+      await this.sendErrorStatus(message, status, errorId, integrationError, command);
 
       await this.executionLogRoute.execute(
         ExecutionLogRouteCommand.create({
@@ -480,7 +465,7 @@ export class SendMessageEmail extends SendMessageBase {
         'mail_unexpected_error',
         error.message || error.name || 'Error while sending email with provider',
         command,
-        LogCodeEnum.MAIL_PROVIDER_DELIVERY_ERROR
+        error
       );
 
       /*

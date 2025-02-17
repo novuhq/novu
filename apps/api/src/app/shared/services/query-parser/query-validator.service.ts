@@ -11,11 +11,27 @@ type QueryIssue = {
 export enum QueryIssueTypeEnum {
   INVALID_STRUCTURE = 'INVALID_STRUCTURE',
   MISSING_VALUE = 'MISSING_VALUE',
+  INVALID_FIELD_VALUE = 'INVALID_FIELD_VALUE',
 }
 
 export class QueryValidatorService {
+  constructor(
+    private allowedVariables: string[],
+    private allowedNamespaces: string[]
+  ) {}
+
   private isInvalidFieldReference(field: unknown) {
     return !field || typeof field !== 'object' || !('var' in field);
+  }
+
+  private isInvalidFieldValue(field: unknown) {
+    const fieldValue = (field as { var: string })?.var ?? '';
+
+    const isWithinAllowedPrefixes = this.allowedNamespaces.some(
+      (prefix) => fieldValue.startsWith(prefix) && fieldValue.length > prefix.length
+    );
+
+    return !fieldValue || (!this.allowedVariables.includes(fieldValue) && !isWithinAllowedPrefixes);
   }
 
   private getLogicalOperatorIssue(operator: string, path: number[]): QueryIssue {
@@ -48,6 +64,22 @@ export class QueryValidatorService {
       path,
       type: QueryIssueTypeEnum.MISSING_VALUE,
     };
+  }
+
+  private getFieldValueNotValidIssue(path: number[]): QueryIssue {
+    return {
+      message: 'Value is not valid',
+      path,
+      type: QueryIssueTypeEnum.INVALID_FIELD_VALUE,
+    };
+  }
+
+  private validateFieldReference(field: unknown, issues: QueryIssue[], path: number[]) {
+    if (this.isInvalidFieldReference(field)) {
+      issues.push(this.getFieldReferenceIssue(path));
+    } else if (this.isInvalidFieldValue(field)) {
+      issues.push(this.getFieldValueNotValidIssue(path));
+    }
   }
 
   private validateNode({
@@ -134,9 +166,7 @@ export class QueryValidatorService {
   }) {
     const [lowerBound, field, upperBound] = value;
 
-    if (this.isInvalidFieldReference(field)) {
-      issues.push(this.getFieldReferenceIssue(path));
-    }
+    this.validateFieldReference(field, issues, path);
 
     const lowerBoundIsUndefined = lowerBound === undefined || lowerBound === null;
     const upperBoundIsUndefined = upperBound === undefined || upperBound === null;
@@ -165,9 +195,7 @@ export class QueryValidatorService {
     const [field, comparisonValue] = value;
 
     // Validate field reference
-    if (this.isInvalidFieldReference(field)) {
-      issues.push(this.getFieldReferenceIssue(path));
-    }
+    this.validateFieldReference(field, issues, path);
 
     // Validate comparison value exists
     const valueIsUndefinedOrEmptyCase =

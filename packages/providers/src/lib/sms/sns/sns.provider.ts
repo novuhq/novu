@@ -1,14 +1,5 @@
-import {
-  ChannelTypeEnum,
-  ISendMessageSuccessResponse,
-  ISmsOptions,
-  ISmsProvider,
-} from '@novu/stateless';
-import {
-  PublishCommand,
-  PublishCommandInput,
-  SNSClient,
-} from '@aws-sdk/client-sns';
+import { ChannelTypeEnum, ISendMessageSuccessResponse, ISmsOptions, ISmsProvider } from '@novu/stateless';
+import { PublishCommand, PublishCommandInput, SNSClient } from '@aws-sdk/client-sns';
 
 import { SmsProviderIdEnum } from '@novu/shared';
 import { SNSConfig } from './sns.config';
@@ -34,7 +25,7 @@ export class SNSSmsProvider extends BaseProvider implements ISmsProvider {
 
   async sendMessage(
     options: ISmsOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const { to, content } = options;
 
@@ -42,7 +33,7 @@ export class SNSSmsProvider extends BaseProvider implements ISmsProvider {
       this.transform<PublishCommandInput>(bridgeProviderData, {
         PhoneNumber: to,
         Message: content,
-      }).body,
+      }).body
     );
 
     const snsResponse = await this.client.send(publish);

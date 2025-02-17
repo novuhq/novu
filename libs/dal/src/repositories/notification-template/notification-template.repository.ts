@@ -54,6 +54,21 @@ export class NotificationTemplateRepository extends BaseRepository<
     return this.findByIdQuery({ id, environmentId });
   }
 
+  async findByTriggerIdentifierAndUpdate(environmentId: string, triggerIdentifier: string, lastTriggeredAt: Date) {
+    const requestQuery: NotificationTemplateQuery = {
+      _environmentId: environmentId,
+      'triggers.identifier': triggerIdentifier,
+    };
+
+    const item = await this.MongooseModel.findOneAndUpdate(requestQuery, {
+      $set: {
+        lastTriggeredAt,
+      },
+    }).populate('steps.template');
+
+    return this.mapEntity(item);
+  }
+
   async findByIdQuery(query: FindByIdQuery) {
     const item = await this.MongooseModel.findOne({
       _id: query.id,

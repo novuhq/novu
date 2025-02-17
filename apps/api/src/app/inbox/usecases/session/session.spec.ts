@@ -2,9 +2,9 @@ import sinon from 'sinon';
 import { expect } from 'chai';
 import { NotFoundException } from '@nestjs/common';
 import { EnvironmentRepository, IntegrationRepository } from '@novu/dal';
-import { AnalyticsService, CreateSubscriber, SelectIntegration, AuthService } from '@novu/application-generic';
+import { AnalyticsService, CreateOrUpdateSubscriberUseCase, SelectIntegration } from '@novu/application-generic';
 import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
-
+import { AuthService } from '../../../auth/services/auth.service';
 import { Session } from './session.usecase';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { SessionCommand } from './session.command';
@@ -34,7 +34,7 @@ const mockIntegration = {
 describe('Session', () => {
   let session: Session;
   let environmentRepository: sinon.SinonStubbedInstance<EnvironmentRepository>;
-  let createSubscriber: sinon.SinonStubbedInstance<CreateSubscriber>;
+  let createSubscriber: sinon.SinonStubbedInstance<CreateOrUpdateSubscriberUseCase>;
   let authService: sinon.SinonStubbedInstance<AuthService>;
   let selectIntegration: sinon.SinonStubbedInstance<SelectIntegration>;
   let analyticsService: sinon.SinonStubbedInstance<AnalyticsService>;
@@ -42,7 +42,7 @@ describe('Session', () => {
   let integrationRepository: sinon.SinonStubbedInstance<IntegrationRepository>;
   beforeEach(() => {
     environmentRepository = sinon.createStubInstance(EnvironmentRepository);
-    createSubscriber = sinon.createStubInstance(CreateSubscriber);
+    createSubscriber = sinon.createStubInstance(CreateOrUpdateSubscriberUseCase);
     authService = sinon.createStubInstance(AuthService);
     selectIntegration = sinon.createStubInstance(SelectIntegration);
     analyticsService = sinon.createStubInstance(AnalyticsService);
@@ -175,6 +175,7 @@ describe('Session', () => {
       applicationIdentifier: 'app-id',
       subscriberId: 'subscriber-id',
       subscriberHash: 'hash',
+      origin: 'origin',
     };
 
     const environment = { _id: 'env-id', _organizationId: 'org-id', name: 'env-name', apiKeys: [{ key: 'api-key' }] };
@@ -198,6 +199,7 @@ describe('Session', () => {
         _organization: environment._organizationId,
         environmentName: environment.name,
         _subscriber: subscriber._id,
+        origin: command.origin,
       })
     ).to.be.true;
   });

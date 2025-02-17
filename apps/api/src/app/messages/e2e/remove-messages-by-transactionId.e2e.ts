@@ -43,7 +43,7 @@ describe('Delete Messages By TransactionId - /messages/?transactionId= (DELETE) 
         urlVar: '/test/url/path',
       },
     });
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
 
     const { transactionId } = res.result;
 
@@ -80,7 +80,7 @@ describe('Delete Messages By TransactionId - /messages/?transactionId= (DELETE) 
       },
     });
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
     const { transactionId } = response.result;
 
     const messages = await messageRepository.find({

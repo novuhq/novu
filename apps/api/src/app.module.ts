@@ -1,7 +1,7 @@
 /* eslint-disable global-require */
 import { DynamicModule, Logger, Module, Provider } from '@nestjs/common';
 import { APP_INTERCEPTOR } from '@nestjs/core';
-import { ProfilingModule, TracingModule } from '@novu/application-generic';
+import { TracingModule } from '@novu/application-generic';
 import { Client, NovuModule } from '@novu/framework/nest';
 
 import { Type } from '@nestjs/common/interfaces/type.interface';
@@ -27,7 +27,7 @@ import { InvitesModule } from './app/invites/invites.module';
 import { ContentTemplatesModule } from './app/content-templates/content-templates.module';
 import { IntegrationModule } from './app/integrations/integrations.module';
 import { ChangeModule } from './app/change/change.module';
-import { SubscribersModule } from './app/subscribers/subscribers.module';
+import { SubscribersV1Module } from './app/subscribers/subscribersV1.module';
 import { FeedsModule } from './app/feeds/feeds.module';
 import { LayoutsModule } from './app/layouts/layouts.module';
 import { MessagesModule } from './app/messages/messages.module';
@@ -49,6 +49,7 @@ import { WorkflowModule } from './app/workflows-v2/workflow.module';
 import { WorkflowModuleV1 } from './app/workflows-v1/workflow-v1.module';
 import { EnvironmentsModuleV1 } from './app/environments-v1/environments-v1.module';
 import { EnvironmentsModule } from './app/environments-v2/environments.module';
+import { SubscribersModule } from './app/subscribers-v2/subscribers.module';
 
 const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> => {
   const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];
@@ -96,6 +97,7 @@ const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | Forward
   UserModule,
   IntegrationModule,
   ChangeModule,
+  SubscribersV1Module,
   SubscribersModule,
   FeedsModule,
   LayoutsModule,
@@ -108,7 +110,6 @@ const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | Forward
   WorkflowOverridesModule,
   RateLimitingModule,
   WidgetsModule,
-  ProfilingModule.register(packageJson.name),
   TracingModule.register(packageJson.name, packageJson.version),
   BridgeModule,
   PreferencesModule,

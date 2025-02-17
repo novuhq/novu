@@ -62,11 +62,11 @@ describe('Unseen Count - GET /widget/notifications/unseen #novu-v1', function ()
   });
 
   it('should return unseen count with no query', async function () {
-    await novuClient.trigger({ name: template.triggers[0].identifier, to: subscriberId });
-    await novuClient.trigger({ name: template.triggers[0].identifier, to: subscriberId });
-    await novuClient.trigger({ name: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
 
     const messages = await messageRepository.findBySubscriberChannel(
       session.environment._id,
@@ -91,11 +91,11 @@ describe('Unseen Count - GET /widget/notifications/unseen #novu-v1', function ()
   });
 
   it('should return unseen count with query seen false', async function () {
-    await novuClient.trigger({ name: template.triggers[0].identifier, to: subscriberId });
-    await novuClient.trigger({ name: template.triggers[0].identifier, to: subscriberId });
-    await novuClient.trigger({ name: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
 
     const messages = await messageRepository.findBySubscriberChannel(
       session.environment._id,
@@ -120,11 +120,11 @@ describe('Unseen Count - GET /widget/notifications/unseen #novu-v1', function ()
   });
 
   it('should return unseen count with query seen true', async function () {
-    await novuClient.trigger({ name: template.triggers[0].identifier, to: subscriberId });
-    await novuClient.trigger({ name: template.triggers[0].identifier, to: subscriberId });
-    await novuClient.trigger({ name: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
 
     const messages = await messageRepository.findBySubscriberChannel(
       session.environment._id,
@@ -149,11 +149,11 @@ describe('Unseen Count - GET /widget/notifications/unseen #novu-v1', function ()
   });
 
   it('should return unseen count after mark as request', async function () {
-    await novuClient.trigger({ name: template.triggers[0].identifier, to: subscriberId });
-    await novuClient.trigger({ name: template.triggers[0].identifier, to: subscriberId });
-    await novuClient.trigger({ name: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
 
     const messages = await messageRepository.findBySubscriberChannel(
       session.environment._id,

@@ -2,13 +2,27 @@ import { DashboardLayout } from '@/components/dashboard-layout';
 import { OptInModal } from '@/components/opt-in-modal';
 import { PageMeta } from '@/components/page-meta';
 import { Button } from '@/components/primitives/button';
+import { ButtonGroupItem, ButtonGroupRoot } from '@/components/primitives/button-group';
+import { LinkButton } from '@/components/primitives/button-link';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/primitives/dropdown-menu';
+import { Form, FormField, FormItem, FormRoot } from '@/components/primitives/form/form';
 import { Input } from '@/components/primitives/input';
 import { ScrollArea, ScrollBar } from '@/components/primitives/scroll-area';
+import { getTemplates, WorkflowTemplate } from '@/components/template-store/templates';
+import { WorkflowCard } from '@/components/template-store/workflow-card';
+import { WorkflowTemplateModal } from '@/components/template-store/workflow-template-modal';
+import { SortableColumn, WorkflowList } from '@/components/workflow-list';
 import { useDebounce } from '@/hooks/use-debounce';
 import { useFetchWorkflows } from '@/hooks/use-fetch-workflows';
 import { useTelemetry } from '@/hooks/use-telemetry';
+import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
-import { StepTypeEnum } from '@novu/shared';
+import { DirectionEnum, StepTypeEnum } from '@novu/shared';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import {
@@ -20,20 +34,6 @@ import {
   RiSearchLine,
 } from 'react-icons/ri';
 import { Outlet, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { ButtonGroupItem, ButtonGroupRoot } from '../components/primitives/button-group';
-import { LinkButton } from '../components/primitives/button-link';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '../components/primitives/dropdown-menu';
-import { Form, FormField, FormItem } from '../components/primitives/form/form';
-import { getTemplates, WorkflowTemplate } from '../components/template-store/templates';
-import { WorkflowCard } from '../components/template-store/workflow-card';
-import { WorkflowTemplateModal } from '../components/template-store/workflow-template-modal';
-import { SortableColumn, WorkflowList } from '../components/workflow-list';
-import { buildRoute, ROUTES } from '../utils/routes';
 
 interface WorkflowFilters {
   query: string;
@@ -44,8 +44,8 @@ export const WorkflowsPage = () => {
   const track = useTelemetry();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams({
-    orderDirection: 'desc',
-    orderBy: 'updatedAt',
+    orderDirection: DirectionEnum.DESC,
+    orderBy: 'createdAt',
     query: '',
   });
   const form = useForm<WorkflowFilters>({
@@ -93,7 +93,7 @@ export const WorkflowsPage = () => {
     limit,
     offset,
     orderBy: searchParams.get('orderBy') as SortableColumn,
-    orderDirection: searchParams.get('orderDirection') as 'asc' | 'desc',
+    orderDirection: searchParams.get('orderDirection') as DirectionEnum,
     query: searchParams.get('query') || '',
   });
 
@@ -124,7 +124,7 @@ export const WorkflowsPage = () => {
         <div className="h-full w-full">
           <div className="flex justify-between px-2.5 py-2.5">
             <Form {...form}>
-              <form>
+              <FormRoot>
                 <FormField
                   control={form.control}
                   name="query"
@@ -140,7 +140,7 @@ export const WorkflowsPage = () => {
                     </FormItem>
                   )}
                 />
-              </form>
+              </FormRoot>
             </Form>
             <ButtonGroupRoot size="xs">
               <ButtonGroupItem asChild className="gap-1">
@@ -177,10 +177,8 @@ export const WorkflowsPage = () => {
                           navigate(buildRoute(ROUTES.WORKFLOWS_CREATE, { environmentSlug: environmentSlug || '' }));
                         }}
                       >
-                        <div className="flex items-center gap-2">
-                          <RiFileAddLine />
-                          Blank Workflow
-                        </div>
+                        <RiFileAddLine />
+                        Blank Workflow
                       </div>
                     </DropdownMenuItem>
                     <DropdownMenuItem
@@ -253,7 +251,7 @@ export const WorkflowsPage = () => {
               hasActiveFilters={!!hasActiveFilters}
               onClearFilters={clearFilters}
               orderBy={searchParams.get('orderBy') as SortableColumn}
-              orderDirection={searchParams.get('orderDirection') as 'asc' | 'desc'}
+              orderDirection={searchParams.get('orderDirection') as DirectionEnum}
               data={workflowsData}
               isLoading={isPending}
               isError={isError}

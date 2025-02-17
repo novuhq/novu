@@ -9,6 +9,7 @@ import {
   WorkflowQueueService,
 } from '@novu/application-generic';
 
+import { CommunityOrganizationRepository } from '@novu/dal';
 import { WorkflowWorker } from './workflow.worker';
 
 import { WorkflowModule } from '../workflow.module';
@@ -29,7 +30,9 @@ describe('Workflow Worker', () => {
     const workflowInMemoryProviderService = moduleRef.get<WorkflowInMemoryProviderService>(
       WorkflowInMemoryProviderService
     );
-    workflowWorker = new WorkflowWorker(triggerEventUseCase, workflowInMemoryProviderService);
+    const organizationRepository = moduleRef.get<CommunityOrganizationRepository>(CommunityOrganizationRepository);
+
+    workflowWorker = new WorkflowWorker(triggerEventUseCase, workflowInMemoryProviderService, organizationRepository);
 
     workflowQueueService = new WorkflowQueueService(workflowInMemoryProviderService);
     await workflowQueueService.queue.obliterate();

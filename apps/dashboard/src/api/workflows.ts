@@ -13,11 +13,18 @@ import { delV2, getV2, patchV2, post, postV2, putV2 } from './api.client';
 export const getWorkflow = async ({
   environment,
   workflowSlug,
+  targetEnvironmentId,
 }: {
   environment: IEnvironment;
   workflowSlug?: string;
+  targetEnvironmentId?: string;
 }): Promise<WorkflowResponseDto> => {
-  const { data } = await getV2<{ data: WorkflowResponseDto }>(`/workflows/${workflowSlug}`, { environment });
+  const { data } = await getV2<{ data: WorkflowResponseDto }>(
+    `/workflows/${workflowSlug}?${targetEnvironmentId ? `environmentId=${targetEnvironmentId}` : ''}`,
+    {
+      environment,
+    }
+  );
 
   return data;
 };

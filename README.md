@@ -1,5 +1,5 @@
 <div align="center">
-  <a href="https://novu.co?utm_source=github" target="_blank">
+  <a href="https://go.novu.co/github" target="_blank">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/2233092/213641039-220ac15f-f367-4d13-9eaf-56e79433b8c1.png">
     <img alt="Novu Logo" src="https://user-images.githubusercontent.com/2233092/213641043-3bbb3f21-3c53-4e67-afe5-755aeb222159.png" width="280"/>
@@ -10,8 +10,12 @@
 <br/>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/@novu/node">
-    <img src="https://img.shields.io/npm/v/@novu/node" alt="NPM">
+  <a href="https://www.producthunt.com/products/novu">
+    <img src="https://img.shields.io/badge/Product%20Hunt-Golden%20Kitty%20Award%202023-yellow" alt="Product Hunt">
+  </a>
+  <a href="https://news.ycombinator.com/item?id=38419513"><img src="https://img.shields.io/badge/Hacker%20News-%231-%23FF6600" alt="Hacker News"></a>
+  <a href="https://www.npmjs.com/package/@novu/react">
+    <img src="https://img.shields.io/npm/v/@novu/react" alt="NPM">
   </a>
   <a href="https://www.npmjs.com/package/@novu/node">
     <img src="https://img.shields.io/npm/dm/@novu/node" alt="npm downloads">
@@ -19,7 +23,7 @@
 </p>
 
 <h1 align="center">
-  The open source notifications framework that makes it easy for developers to empower product teams.
+  The open source notification platform
 </h1>
 
 <div align="center">
@@ -28,17 +32,13 @@
 
 <p align="center">
   <br />
-  <a href="https://docs.novu.co?utm_campaign=github-readme" rel="dofollow"><strong>Explore the docs »</strong></a>
-  <br />
-  or
-  <br />
-  <a href="https://dashboard-v2.novu.co?utm_campaign=github-readme" rel="dofollow"><strong>create a free account »</strong></a>
+  <a href="https://go.novu.co/github" rel="dofollow"><strong>Learn More »</strong></a>
   <br />
 
 <br/>
   <a href="https://github.com/novuhq/novu/issues/new?assignees=&labels=type%3A+bug&template=bug_report.yml&title=%F0%9F%90%9B+Bug+Report%3A+">Report a bug</a>
   ·
-  <a href="https://github.com/novuhq/novu/issues/new?assignees=&labels=feature&template=feature_request.yml&title=%F0%9F%9A%80+Feature%3A+">Request a feature</a>
+  <a href="https://go.novu.co/github">Website</a>
   ·
 <a href="https://bit.ly/novu-github-discord">Join our Discord</a>
   ·
@@ -56,32 +56,21 @@ With Novu, you can create custom workflows and define conditions for each channe
 
 ## ✨ Features
 
-- 🌈 Single API for all messaging providers (Inbox/In-App, Email, SMS, Push, Chat)
-- 💅 Fully managed GitOps flow, deployed from your CI
-- 🔥 Define workflow and step controls with Zod or JSON Schema
-- 💌 Easily re-use existing content in various frameworks, including React Email, Vue-email, Maizzle, MJML, and more
-- 🚀 Equipped with a CMS for advanced layouts and design management
-- 🛡 Debug and analyze multi-channel messages in a single dashboard
-- 📦 Embeddable Inbox component with real-time updates
-- 📤 Embeddable user preferences component gives your subscribers control over their notifications
-- 👨‍💻 Community-driven
+- Embeddable Inbox component with real-time support
+- Single API for all messaging providers (Inbox/In-App, Email, SMS, Push, Chat)
+- Digest Engine to combine multiple notification in to a single E-mail
+- No-Code Block Editor for Email
+- Notification Workflow Engine
+- Embeddable user preferences component gives your subscribers control over their notifications
+- Community-driven
 
 ## 🚀 Getting Started
 
-There are two ways to get started:
-
-1. type the following command in your terminal.
-
-```bash
-npx novu@latest dev
-```
-
-2. [Create a free cloud account](https://dashboard-v2.novu.co?utm_campaign=github-readme)
+[Create a free account](https://go.novu.co/dashboard?utm_campaign=github-readme) and follow the instructions on the dashboard.
 
 ## 📚 Table of contents
 
 - [Getting Started](https://github.com/novuhq/novu#-getting-started)
-- [GitOps & React Email Integration](https://github.com/novuhq/novu#-gitops)
 - [Embeddable Inbox and Preferences](https://github.com/novuhq/novu#embeddable-notification-center)
 - [Providers](https://github.com/novuhq/novu#providers)
   - [Email](https://github.com/novuhq/novu#-email)
@@ -93,40 +82,6 @@ npx novu@latest dev
 - [Need Help?](https://github.com/novuhq/novu#-need-help)
 - [Links](https://github.com/novuhq/novu#-links)
 - [License](https://github.com/novuhq/novu#%EF%B8%8F-license)
-
-## Notification workflows as code
-
-For API documentation and reference, please visit our [API Reference](https://docs.novu.co/api-reference/overview?utm_campaign=github-readme).
-
-```ts
-import { workflow, CronExpression } from '@novu/framework';
-import { z } from 'zod';
-import { render } from '@react-email/render';
-
-const commentWorkflow = workflow('comment-workflow', async (event) => {
-  const digest = await event.step.digest('digest-comments', (controls) => ({
-    cron: controls.schedule
-  }), { controlSchema: z.object({ schedule: z.nativeEnum(CronExpression) }) });
-
-  await event.step.email('digest-email', async (controls) => ({
-    subject: controls.subject,
-    body: render(<WeeklyDigestEmail { ...controls } events = { digest.events } />)
-  }), {
-    skip: () => !digest.events.length,
-    controlSchema: z.object({
-      subject: z.string().default('Hi {{subscriber.firstName}} - Acme Comments'),
-      openAiModel: z.enum(['gpt-3.5-turbo', 'gpt-4o']).default('gpt-4o'),
-      aiPrompt: z.string().default('Produce a concise comment digest'),
-    })
-  });
-}, { payloadSchema: z.object({ name: z.string(), comment: z.string() }) });
-
-await commentWorkflow.trigger({
-  payload: { name: 'John', comment: 'Are you free to give me a call?' },
-  to: 'jane@acme.com'
-});
-
-```
 
 ## Embeddable Inbox component
 

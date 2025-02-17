@@ -1,8 +1,6 @@
 import { captureException } from '@sentry/node';
 import { MessageEntity, MessageRepository } from '@novu/dal';
-import { LogCodeEnum } from '@novu/shared';
 import { ExecutionLogRoute } from '@novu/application-generic';
-
 import { SendMessageCommand } from './send-message.command';
 
 export abstract class SendMessageType {
@@ -11,7 +9,7 @@ export abstract class SendMessageType {
     protected executionLogRoute: ExecutionLogRoute
   ) {}
 
-  public abstract execute(command: SendMessageCommand);
+  public abstract execute(command: SendMessageCommand): void;
 
   protected async sendErrorStatus(
     message: MessageEntity,
@@ -19,15 +17,9 @@ export abstract class SendMessageType {
     errorId: string,
     errorMessageFallback: string,
     command: SendMessageCommand,
-    logCodeEnum: LogCodeEnum,
     error?: any
-  ) {
-    const errorString =
-      stringifyObject(error?.response?.body) ||
-      stringifyObject(error?.response?.data) ||
-      stringifyObject(error?.response) ||
-      stringifyObject(error) ||
-      errorMessageFallback;
+  ): Promise<void> {
+    const errorString = this.stringifyError(error) || errorMessageFallback;
 
     if (error) {
       captureException(errorString);
@@ -42,22 +34,17 @@ export abstract class SendMessageType {
       errorString
     );
   }
-}
 
-function stringifyObject(error: any): string {
-  if (!error) return '';
+  private stringifyError(error: any): string {
+    if (!error) return '';
 
-  if (typeof error === 'string') {
-    return error;
+    if (typeof error === 'string' || error instanceof String) {
+      return error.toString();
+    }
+    if (Object.keys(error)?.length > 0) {
+      return JSON.stringify(error);
+    }
+
+    return '';
   }
-
-  if (error instanceof String) {
-    return error.toString();
-  }
-
-  if (Object.keys(error)?.length > 0) {
-    return JSON.stringify(error);
-  }
-
-  return '';
 }

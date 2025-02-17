@@ -1,10 +1,5 @@
 import { SmsProviderIdEnum } from '@novu/shared';
-import {
-  ChannelTypeEnum,
-  ISendMessageSuccessResponse,
-  ISmsOptions,
-  ISmsProvider,
-} from '@novu/stateless';
+import { ChannelTypeEnum, ISendMessageSuccessResponse, ISmsOptions, ISmsProvider } from '@novu/stateless';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
@@ -18,7 +13,7 @@ export class FiretextSmsProvider extends BaseProvider implements ISmsProvider {
     private config: {
       apiKey?: string;
       from?: string;
-    },
+    }
   ) {
     super();
   }
@@ -44,17 +39,14 @@ export class FiretextSmsProvider extends BaseProvider implements ISmsProvider {
 
   async sendMessage(
     options: ISmsOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
-    const baseMessage = this.transform<Record<string, string>>(
-      bridgeProviderData,
-      {
-        apiKey: this.config.apiKey,
-        to: options.to,
-        from: options.from || this.config.from,
-        message: options.content,
-      },
-    );
+    const baseMessage = this.transform<Record<string, string>>(bridgeProviderData, {
+      apiKey: this.config.apiKey,
+      to: options.to,
+      from: options.from || this.config.from,
+      message: options.content,
+    });
 
     const urlSearchParams = new URLSearchParams(baseMessage.body);
     const url = new URL(this.BASE_URL);

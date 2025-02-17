@@ -1,3 +1,85 @@
+## 2.6.5 (2025-02-07)
+
+### 🚀 Features
+
+- **api-service:** add enum values ([#7670](https://github.com/novuhq/novu/pull/7670))
+- Update README.md ([bb63172dd](https://github.com/novuhq/novu/commit/bb63172dd))
+- **readme:** Update README.md ([955cbeab0](https://github.com/novuhq/novu/commit/955cbeab0))
+- quick start updates readme ([88b3b6628](https://github.com/novuhq/novu/commit/88b3b6628))
+- **api-service:** get subscriber preferences v2 endpoint ([#7613](https://github.com/novuhq/novu/pull/7613))
+- **readme:** update readme ([e5ea61812](https://github.com/novuhq/novu/commit/e5ea61812))
+- **api-service:** add internal sdk ([#7599](https://github.com/novuhq/novu/pull/7599))
+- **api-service,dashboard:** Delete subscriber functionality ([#7607](https://github.com/novuhq/novu/pull/7607))
+- **dashboard:** Workflow onboarding checklist. ([#7593](https://github.com/novuhq/novu/pull/7593))
+- **api-service:** Add patch subscriber functionality with tests ([#7596](https://github.com/novuhq/novu/pull/7596))
+- **api-service:** get subscriber ([#7591](https://github.com/novuhq/novu/pull/7591))
+- **api-service,dashboard:** New subscribers page and api ([#7525](https://github.com/novuhq/novu/pull/7525))
+- **dashboard:** Workflows search and sort functionality -  NV-4462 & NV-4461 ([#7550](https://github.com/novuhq/novu/pull/7550))
+- **dashboard:** Multi environments management ([#7522](https://github.com/novuhq/novu/pull/7522))
+- **dashboard:** step conditions editor ui ([#7502](https://github.com/novuhq/novu/pull/7502))
+- **dashboard:** Template store modal ([#7436](https://github.com/novuhq/novu/pull/7436))
+- **dashboard:** restore email editor 'for' block ([#7483](https://github.com/novuhq/novu/pull/7483))
+- **dashboard:** Add a disableOutputSanitization option for in app steps ([#7456](https://github.com/novuhq/novu/pull/7456))
+- **api-service:** SDK test updates ([#7315](https://github.com/novuhq/novu/pull/7315))
+- **dashboard:** edit step conditions drawer ([#7417](https://github.com/novuhq/novu/pull/7417))
+- **api-service:** refactor issue error messages ([#7359](https://github.com/novuhq/novu/pull/7359))
+- **dashboard:** new integrations page view ([#7310](https://github.com/novuhq/novu/pull/7310))
+- **dashboard:** Nv 4885 push step editor ([#7306](https://github.com/novuhq/novu/pull/7306))
+- **api:** Nv 5045 update the api to have same behavior as preference ([#7302](https://github.com/novuhq/novu/pull/7302))
+- **api:** add query parser ([#7267](https://github.com/novuhq/novu/pull/7267))
+- **api:** Nv 5033 additional removal cycle found unneeded elements ([#7283](https://github.com/novuhq/novu/pull/7283))
+- **dashboard:** Activity Feed Page - Stacked PR ([#7249](https://github.com/novuhq/novu/pull/7249))
+- **dashboard:** digest fixed duration ([#7234](https://github.com/novuhq/novu/pull/7234))
+- **api:** Nv 4966 e2e testing happy path - messages ([#7248](https://github.com/novuhq/novu/pull/7248))
+- **api:** add external id api to onesignal Based on #6976 ([#7270](https://github.com/novuhq/novu/pull/7270), [#6976](https://github.com/novuhq/novu/issues/6976))
+- **api:** add push control schema ([#7252](https://github.com/novuhq/novu/pull/7252))
+- **api:** add chat control schema ([#7251](https://github.com/novuhq/novu/pull/7251))
+- **api:** add sms control schema ([#7250](https://github.com/novuhq/novu/pull/7250))
+- **api:** add full step data to workflow dto; refactor ([#7235](https://github.com/novuhq/novu/pull/7235))
+- **dashboard:** Billing settings page in dashboard v2 ([#7203](https://github.com/novuhq/novu/pull/7203))
+- **dashboard:** Implement email step editor & mini preview ([#7129](https://github.com/novuhq/novu/pull/7129))
+- **api:** Nv 4939 e2e testing happy path events ([#7208](https://github.com/novuhq/novu/pull/7208))
+- **dashboard:** Getting started page ([#7132](https://github.com/novuhq/novu/pull/7132))
+- **api:** converted bulk trigger to use SDK ([#7166](https://github.com/novuhq/novu/pull/7166))
+- **api:** wip fix framework workflow issues ([#7147](https://github.com/novuhq/novu/pull/7147))
+- **api:** fix framework workflow payload preview ([#7137](https://github.com/novuhq/novu/pull/7137))
+- **application-generic:** add SUBSCRIBER_WIDGET_JWT_EXPIRATION_TIME env variable ([#7105](https://github.com/novuhq/novu/pull/7105))
+- **dashboard:** Sign up Questionnaire ([#7114](https://github.com/novuhq/novu/pull/7114))
+
+### 🩹 Fixes
+
+- **dashboard:** change sendinblue to brevo ([#7668](https://github.com/novuhq/novu/pull/7668))
+- **js:** Await read action in Inbox ([#7653](https://github.com/novuhq/novu/pull/7653))
+- **api:** duplicated subscribers created due to race condition ([#7646](https://github.com/novuhq/novu/pull/7646))
+- **dashboard:** Fixes for Integrations store ([64dd9a86d](https://github.com/novuhq/novu/commit/64dd9a86d))
+- **api-service:** Exclude customers from duration restrictions ([#7615](https://github.com/novuhq/novu/pull/7615))
+- **worker:** digest by key ([#7569](https://github.com/novuhq/novu/pull/7569))
+- **api-service:** add missing environment variable ([#7553](https://github.com/novuhq/novu/pull/7553))
+- **api:** Fix failing API e2e tests ([78c385ec7](https://github.com/novuhq/novu/commit/78c385ec7))
+- **api-service:** E2E improvements ([#7461](https://github.com/novuhq/novu/pull/7461))
+- **novu:** automatically create indexes on startup ([#7431](https://github.com/novuhq/novu/pull/7431))
+- **api-service:** digest schema - remove the schema defaults as it doesn't work with the framework ajv validation ([#7334](https://github.com/novuhq/novu/pull/7334))
+- **api:** @novu/api -> @novu/api-service ([#7348](https://github.com/novuhq/novu/pull/7348))
+- **api:** Crate of fixes part 2 ([#7292](https://github.com/novuhq/novu/pull/7292))
+- **api:** centralize upsert validation  + improve nested error handling ([#7173](https://github.com/novuhq/novu/pull/7173))
+- **dashboard:** nested payload gen ([#7240](https://github.com/novuhq/novu/pull/7240))
+- **dashboard:** Always trust the URL for the environment selection ([#7223](https://github.com/novuhq/novu/pull/7223))
+
+### ❤️ Thank You
+
+- Adam Chmara @ChmaraX
+- Aminul Islam @AminulBD
+- Biswajeet Das @BiswaViraj
+- Dima Grossman @scopsy
+- GalTidhar @tatarco
+- George Desipris @desiprisg
+- George Djabarov @djabarovgeorge
+- Lucky @L-U-C-K-Y
+- Pawan Jain
+- Paweł Tymczuk @LetItRock
+- Sokratis Vidros @SokratisVidros
+
+
 ## 2.1.5 (2024-12-24)
 
 ### 🚀 Features

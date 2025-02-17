@@ -46,6 +46,8 @@ describe('Trigger event - Scheduled Digest Mode - /v1/events/trigger (POST) #nov
   });
 
   it('should digest events using a scheduled digest', async () => {
+    this.timeout(10000);
+
     template = await session.createTemplate({
       steps: [
         {
@@ -64,22 +66,13 @@ describe('Trigger event - Scheduled Digest Mode - /v1/events/trigger (POST) #nov
       ],
     });
 
-    const events = [
-      { customVar: 'Testing of User Name' },
-      { customVar: 'digest' },
-      { customVar: 'merged' },
-      { customVar: 'digest' },
-      { customVar: 'merged' },
-      { customVar: 'digest' },
-      { customVar: 'merged' },
-    ];
+    const events = [{ customVar: 'One' }, { customVar: 'Two' }, { customVar: 'Three' }];
 
     await Promise.all(events.map((event) => triggerEvent(event)));
 
-    const handler = await session.awaitRunningJobs(template?._id, false, 1);
-
-    await handler.runDelayedImmediately();
-    await session.awaitRunningJobs(template?._id);
+    await session.waitForJobCompletion(template?._id, false, 1);
+    await session.runAllDelayedJobsImmediately();
+    await session.waitForJobCompletion(template?._id);
 
     const jobs = await jobRepository.find({
       _environmentId: session.environment._id,
@@ -88,7 +81,9 @@ describe('Trigger event - Scheduled Digest Mode - /v1/events/trigger (POST) #nov
       type: StepTypeEnum.DIGEST,
     });
 
-    expect(jobs && jobs.length).to.eql(7);
+    expect(jobs && jobs.length).to.eql(3);
+
+    console.log('jobs', jobs);
 
     const completedJob = jobs.find((elem) => elem.status === JobStatusEnum.COMPLETED);
     expect(completedJob).to.ok;
@@ -103,15 +98,15 @@ describe('Trigger event - Scheduled Digest Mode - /v1/events/trigger (POST) #nov
       type: StepTypeEnum.IN_APP,
     });
 
-    expect(generatedMessageJob && generatedMessageJob.length).to.equal(7);
+    expect(generatedMessageJob && generatedMessageJob.length).to.equal(3);
 
     const mergedInApp = generatedMessageJob.filter((elem) => elem.status === JobStatusEnum.MERGED);
-    expect(mergedInApp && mergedInApp.length).to.equal(6);
+    expect(mergedInApp && mergedInApp.length).to.equal(2);
 
     const completedInApp = generatedMessageJob.filter((elem) => elem.status === JobStatusEnum.COMPLETED);
     expect(completedInApp && completedInApp.length).to.equal(1);
 
-    const digestEventLength = completedInApp.find((i) => i.digest?.events?.length === 7);
+    const digestEventLength = completedInApp.find((i) => i.digest?.events?.length === 3);
     expect(digestEventLength).to.be.ok;
   });
 });

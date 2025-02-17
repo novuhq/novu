@@ -1,6 +1,3 @@
-import React, { useCallback, useMemo } from 'react';
-import { flushSync } from 'react-dom';
-import { cva } from 'class-variance-authority';
 import { autocompleteFooter, autocompleteHeader, functionIcon } from '@/components/primitives/constants';
 import { useDataRef } from '@/hooks/use-data-ref';
 import { tags as t } from '@lezer/highlight';
@@ -11,12 +8,16 @@ import {
   ReactCodeMirrorProps,
   type ReactCodeMirrorRef,
 } from '@uiw/react-codemirror';
+import { cva } from 'class-variance-authority';
+import React, { useCallback, useMemo } from 'react';
+import { flushSync } from 'react-dom';
 
 const variants = cva('h-full w-full flex-1 [&_.cm-focused]:outline-none', {
   variants: {
     size: {
       md: 'text-base',
       sm: 'text-xs',
+      '2xs': 'text-xs',
     },
   },
   defaultVariants: {
@@ -123,6 +124,9 @@ const baseTheme = (options: { multiline?: boolean }) =>
       borderRight: 'none',
       color: 'hsl(var(--foreground-400))',
     },
+    '.cm-placeholder': {
+      fontWeight: 'normal',
+    },
   });
 
 export type EditorProps = {
@@ -133,7 +137,7 @@ export type EditorProps = {
   height?: string;
   onChange?: (value: string) => void;
   fontFamily?: 'inherit';
-  size?: 'sm' | 'md';
+  size?: 'sm' | 'md' | '2xs';
 } & ReactCodeMirrorProps;
 
 export const Editor = React.forwardRef<ReactCodeMirrorRef, EditorProps>(
@@ -211,9 +215,6 @@ export const Editor = React.forwardRef<ReactCodeMirrorRef, EditorProps>(
         value={value}
         onChange={onChangeCallback}
         theme={theme}
-        onBlur={() => {
-          console.log('onBlur');
-        }}
         {...restCodeMirrorProps}
       />
     );

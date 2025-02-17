@@ -12,7 +12,7 @@ import {
 
 import { RunJobCommand } from './run-job.command';
 import { SendMessage, SendMessageCommand } from '../send-message';
-import { PlatformException, EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER } from '../../../shared/utils';
+import { PlatformException, EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER, shouldHaltOnStepFailure } from '../../../shared/utils';
 import { SetJobAsFailed } from '../update-job-status/set-job-as-failed.usecase';
 import { AddJob } from '../add-job';
 import { SetJobAsFailedCommand } from '../update-job-status/set-job-as.command';
@@ -42,7 +42,9 @@ export class RunJob {
     });
 
     let job = await this.jobRepository.findOne({ _id: command.jobId, _environmentId: command.environmentId });
-    if (!job) throw new PlatformException(`Job with id ${command.jobId} not found`);
+    if (!job) {
+      throw new PlatformException(`Job with id ${command.jobId} not found`);
+    }
 
     this.assignLogger(job);
 
@@ -110,8 +112,16 @@ export class RunJob {
         await this.jobRepository.updateStatus(job._environmentId, job._id, JobStatusEnum.COMPLETED);
       }
     } catch (error: any) {
-      Logger.error({ error }, `Running job ${job._id} has thrown an error`, LOG_CONTEXT);
-      if (job.step.shouldStopOnFail || this.shouldBackoff(error)) {
+      if (shouldHaltOnStepFailure(job) && !this.shouldBackoff(error)) {
+        await this.jobRepository.cancelPendingJobs({
+          transactionId: job.transactionId,
+          _environmentId: job._environmentId,
+          _subscriberId: job._subscriberId,
+          _templateId: job._templateId,
+        });
+      }
+
+      if (shouldHaltOnStepFailure(job) || this.shouldBackoff(error)) {
         shouldQueueNextJob = false;
       }
       throw error;
@@ -137,9 +147,9 @@ export class RunJob {
       return;
     }
 
-    let shouldContinue = true;
+    let shouldContinueQueueNextJob = true;
 
-    while (shouldContinue) {
+    while (shouldContinueQueueNextJob) {
       try {
         if (!currentFailedJob) {
           return;
@@ -162,7 +172,7 @@ export class RunJob {
           job: nextJob,
         });
 
-        shouldContinue = false;
+        shouldContinueQueueNextJob = false;
       } catch (error: any) {
         if (!nextJob) {
           return;
@@ -178,8 +188,17 @@ export class RunJob {
           error
         );
 
-        if (nextJob.step.shouldStopOnFail || this.shouldBackoff(error)) {
-          shouldContinue = false;
+        if (shouldHaltOnStepFailure(nextJob) && !this.shouldBackoff(error)) {
+          await this.jobRepository.cancelPendingJobs({
+            transactionId: nextJob.transactionId,
+            _environmentId: nextJob._environmentId,
+            _subscriberId: nextJob._subscriberId,
+            _templateId: nextJob._templateId,
+          });
+        }
+
+        if (shouldHaltOnStepFailure(nextJob) || this.shouldBackoff(error)) {
+          shouldContinueQueueNextJob = false;
           throw error;
         }
 

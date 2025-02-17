@@ -1,13 +1,14 @@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/primitives/accordion';
-import { Form } from '@/components/primitives/form/form';
+import { Form, FormRoot } from '@/components/primitives/form/form';
 import { Label } from '@/components/primitives/label';
 import { Separator } from '@/components/primitives/separator';
-import { useAuth } from '@/context/auth/hooks';
-import { useEnvironment, useFetchEnvironments } from '@/context/environment/hooks';
-import { IIntegration, IProviderConfig } from '@novu/shared';
+import { useEnvironment } from '@/context/environment/hooks';
+import { ROUTES } from '@/utils/routes';
+import { ChannelTypeEnum, IIntegration, IProviderConfig } from '@novu/shared';
 import { useEffect } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { RiInputField } from 'react-icons/ri';
+import { useNavigate } from 'react-router-dom';
 import { InlineToast } from '../../../components/primitives/inline-toast';
 import { cn } from '../../../utils/ui';
 import { EnvironmentDropdown } from '../../side-navigation/environment-dropdown';
@@ -23,6 +24,7 @@ type IntegrationFormData = {
   check: boolean;
   primary: boolean;
   environmentId: string;
+  removeNovuBranding?: boolean;
 };
 
 type IntegrationConfigurationProps = {
@@ -51,9 +53,8 @@ export function IntegrationConfiguration({
   isChannelSupportPrimary,
   hasOtherProviders,
 }: IntegrationConfigurationProps) {
-  const { currentOrganization } = useAuth();
-  const { environments } = useFetchEnvironments({ organizationId: currentOrganization?._id });
-  const { currentEnvironment } = useEnvironment();
+  const navigate = useNavigate();
+  const { currentEnvironment, environments } = useEnvironment();
 
   const form = useForm<IntegrationFormData>({
     defaultValues: integration
@@ -64,6 +65,7 @@ export function IntegrationConfiguration({
           primary: integration.primary ?? false,
           credentials: integration.credentials as Record<string, string>,
           environmentId: integration._environmentId,
+          removeNovuBranding: integration.removeNovuBranding,
         }
       : {
           name: provider?.displayName ?? '',
@@ -72,6 +74,7 @@ export function IntegrationConfiguration({
           primary: true,
           credentials: {},
           environmentId: currentEnvironment?._id ?? '',
+          removeNovuBranding: false,
         },
   });
 
@@ -90,7 +93,7 @@ export function IntegrationConfiguration({
 
   return (
     <Form {...form}>
-      <form id="integration-configuration-form" onSubmit={handleSubmit(onSubmit)} className="flex flex-col">
+      <FormRoot id="integration-configuration-form" onSubmit={handleSubmit(onSubmit)} className="flex flex-col">
         <div className="flex items-center justify-between gap-2 p-3">
           <Label className="text-sm" htmlFor="environmentId">
             Environment
@@ -125,6 +128,8 @@ export function IntegrationConfiguration({
                 mode={mode}
                 hidePrimarySelector={!isChannelSupportPrimary}
                 disabledPrimary={!hasOtherProviders && integration?.primary}
+                // TODO: This is an ugly hack. The GeneralSettigns section should be redefined for in-app step.
+                isForInAppStep={provider?.channel === 'in_app'}
               />
             </AccordionContent>
           </AccordionItem>
@@ -157,19 +162,34 @@ export function IntegrationConfiguration({
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
-            <InlineToast
-              variant={'tip'}
-              className="mt-3"
-              title="Configure Integration"
-              description="To learn more about how to configure your integration, please refer to the documentation."
-              ctaLabel="View Guide"
-              onCtaClick={() => {
-                window.open(provider?.docReference ?? '', '_blank');
-              }}
-            />
+
+            {/* TODO: This is a temporary solution to show the guide only for in-app channel, 
+              we need to replace it with dedicated view per integration channel */}
+            {integration && integration.channel === ChannelTypeEnum.IN_APP && !integration.connected ? (
+              <InlineToast
+                variant={'tip'}
+                className="mt-3"
+                title="Integrate in less than 4 minutes"
+                ctaLabel="Get started"
+                onCtaClick={() => navigate(ROUTES.INBOX_EMBED + `?environmentId=${integration._environmentId}`)}
+              />
+            ) : (
+              provider?.docReference && (
+                <InlineToast
+                  variant={'tip'}
+                  className="mt-3"
+                  title="Configure Integration"
+                  description="To learn more about how to configure your integration, please refer to the documentation."
+                  ctaLabel="View Guide"
+                  onCtaClick={() => {
+                    window.open(provider?.docReference ?? '', '_blank');
+                  }}
+                />
+              )
+            )}
           </div>
         )}
-      </form>
+      </FormRoot>
     </Form>
   );
 }

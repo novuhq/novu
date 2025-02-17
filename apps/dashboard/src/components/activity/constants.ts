@@ -1,7 +1,8 @@
-import { JobStatusEnum } from '@novu/shared';
+import { ChannelTypeEnum, JobStatusEnum } from '@novu/shared';
 import { IconType } from 'react-icons/lib';
 import { RiCheckboxCircleFill, RiErrorWarningFill, RiForbidFill, RiLoader3Line, RiLoader4Fill } from 'react-icons/ri';
 import { StatusBadgeProps } from '../primitives/status-badge';
+import { ActivityFiltersData } from '@/types/activity';
 
 export const STATUS_STYLES = {
   completed: 'border-[#99e3bb] bg-[#e9faf0] text-[#99e3bb]',
@@ -76,3 +77,25 @@ export const JOB_STATUS_CONFIG: Record<
     label: 'QUEUED',
   },
 };
+
+export const DATE_RANGE_OPTIONS = [
+  { value: '24h', label: 'Last 24 hours' },
+  { value: '7d', label: 'Last 7 days' },
+  { value: '30d', label: 'Last 30 days' },
+];
+
+export const CHANNEL_OPTIONS = [
+  { value: ChannelTypeEnum.SMS, label: 'SMS' },
+  { value: ChannelTypeEnum.EMAIL, label: 'Email' },
+  { value: ChannelTypeEnum.IN_APP, label: 'In-App' },
+  { value: ChannelTypeEnum.PUSH, label: 'Push' },
+  { value: ChannelTypeEnum.CHAT, label: 'Chat' },
+];
+
+export const defaultActivityFilters: ActivityFiltersData = {
+  dateRange: '30d',
+  channels: [],
+  workflows: [],
+  transactionId: '',
+  subscriberId: '',
+} as const;

@@ -1,29 +1,28 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { EnvironmentRepository, IntegrationRepository } from '@novu/dal';
-import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
 import {
   AnalyticsService,
+  CreateOrUpdateSubscriberCommand,
+  CreateOrUpdateSubscriberUseCase,
   LogDecorator,
-  CreateSubscriber,
-  CreateSubscriberCommand,
-  SelectIntegrationCommand,
   SelectIntegration,
-  AuthService,
+  SelectIntegrationCommand,
 } from '@novu/application-generic';
-
+import { EnvironmentRepository, IntegrationRepository } from '@novu/dal';
+import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
+import { AuthService } from '../../../auth/services/auth.service';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { SessionCommand } from './session.command';
 import { SubscriberSessionResponseDto } from '../../dtos/subscriber-session-response.dto';
 import { AnalyticsEventsEnum } from '../../utils';
 import { validateHmacEncryption } from '../../utils/encryption';
-import { NotificationsCount } from '../notifications-count/notifications-count.usecase';
 import { NotificationsCountCommand } from '../notifications-count/notifications-count.command';
+import { NotificationsCount } from '../notifications-count/notifications-count.usecase';
+import { SessionCommand } from './session.command';
 
 @Injectable()
 export class Session {
   constructor(
     private environmentRepository: EnvironmentRepository,
-    private createSubscriber: CreateSubscriber,
+    private createSubscriber: CreateOrUpdateSubscriberUseCase,
     private authService: AuthService,
     private selectIntegration: SelectIntegration,
     private analyticsService: AnalyticsService,
@@ -62,7 +61,7 @@ export class Session {
     }
 
     const subscriber = await this.createSubscriber.execute(
-      CreateSubscriberCommand.create({
+      CreateOrUpdateSubscriberCommand.create({
         environmentId: environment._id,
         organizationId: environment._organizationId,
         subscriberId: command.subscriberId,
@@ -73,6 +72,7 @@ export class Session {
       _organization: environment._organizationId,
       environmentName: environment.name,
       _subscriber: subscriber._id,
+      origin: command.origin,
     });
 
     const { data } = await this.notificationsCount.execute(

@@ -34,11 +34,11 @@ export class ResendInvite {
     const token = createGuid();
 
     if (process.env.NODE_ENV === 'dev' || process.env.NODE_ENV === 'production') {
-      const novu = new Novu({ apiKey: process.env.NOVU_API_KEY ?? '' });
+      const novu = new Novu({ security: { secretKey: process.env.NOVU_API_KEY } });
 
       // cspell:disable-next
       await novu.trigger({
-        name: process.env.NOVU_TEMPLATEID_INVITE_TO_ORGANISATION || 'invite-to-organization-wBnO8NpDn',
+        workflowId: process.env.NOVU_TEMPLATEID_INVITE_TO_ORGANISATION || 'invite-to-organization-wBnO8NpDn',
         to: [
           {
             subscriberId: foundInvitee.invite.email,

@@ -1,7 +1,7 @@
 import { useValueEditor, ValueEditorProps } from 'react-querybuilder';
 import { useFormContext } from 'react-hook-form';
 
-import { InputRoot, InputWrapper } from '@/components/primitives/input';
+import { InputRoot } from '@/components/primitives/input';
 import { LiquidVariable } from '@/utils/parseStepVariablesToLiquidVariables';
 import { ControlInput } from '../primitives/control-input/control-input';
 
@@ -20,17 +20,16 @@ export const ValueEditor = (props: ValueEditorProps) => {
   if ((operator === 'between' || operator === 'notBetween') && (type === 'select' || type === 'text')) {
     const editors = ['from', 'to'].map((key, i) => {
       return (
-        <InputRoot key={key} size="2xs" className="w-28" hasError={!!error && !valueAsArray[i]}>
-          <InputWrapper className="h-7">
-            <ControlInput
-              multiline={false}
-              indentWithTab={false}
-              placeholder="value"
-              value={valueAsArray[i] ?? ''}
-              onChange={(newValue) => multiValueHandler(newValue, i)}
-              variables={variables}
-            />
-          </InputWrapper>
+        <InputRoot key={key} className="bg-bg-white w-28" hasError={!!error && !valueAsArray[i]}>
+          <ControlInput
+            multiline={false}
+            indentWithTab={false}
+            placeholder="value"
+            value={valueAsArray[i] ?? ''}
+            onChange={(newValue) => multiValueHandler(newValue, i)}
+            variables={variables}
+            size="2xs"
+          />
         </InputRoot>
       );
     });
@@ -49,17 +48,16 @@ export const ValueEditor = (props: ValueEditorProps) => {
 
   return (
     <div className="flex flex-col gap-1">
-      <InputRoot size="2xs" className="w-40" hasError={!!error}>
-        <InputWrapper className="h-7">
-          <ControlInput
-            multiline={false}
-            indentWithTab={false}
-            placeholder="value"
-            value={value ?? ''}
-            onChange={handleOnChange}
-            variables={variables}
-          />
-        </InputWrapper>
+      <InputRoot className="bg-bg-white w-40" hasError={!!error}>
+        <ControlInput
+          multiline={false}
+          indentWithTab={false}
+          placeholder="value"
+          value={value ?? ''}
+          onChange={handleOnChange}
+          variables={variables}
+          size="2xs"
+        />
       </InputRoot>
       {error && <span className="text-destructive text-xs">{error?.message}</span>}
     </div>

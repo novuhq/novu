@@ -1,13 +1,14 @@
 /* eslint-disable no-param-reassign */
 import { render as mailyRender, JSONContent as MailyJSONContent } from '@maily-to/render';
 import { Injectable } from '@nestjs/common';
-import { Liquid } from 'liquidjs';
 import { EmailRenderOutput } from '@novu/shared';
 import { InstrumentUsecase } from '@novu/application-generic';
+
 import { FullPayloadForRender, RenderCommand } from './render-command';
 import { WrapMailyInLiquidUseCase } from './maily-to-liquid/wrap-maily-in-liquid.usecase';
-import { MAILY_ITERABLE_MARK, MailyAttrsEnum, MailyContentTypeEnum } from './maily-to-liquid/maily.types';
+import { MAILY_ITERABLE_MARK, MailyAttrsEnum } from './maily-to-liquid/maily.types';
 import { parseLiquid } from '../../../shared/helpers/liquid';
+import { hasShow, isRepeatNode, isVariableNode } from './maily-to-liquid/maily-utils';
 
 export class EmailOutputRendererCommand extends RenderCommand {}
 
@@ -88,15 +89,15 @@ export class EmailOutputRendererUsecase {
     while (queue.length > 0) {
       const current = queue.shift()!;
 
-      if (this.hasShow(current.node)) {
+      if (hasShow(current.node)) {
         await this.handleShowNode(current.node, variables, current.parent);
       }
 
-      if (this.isForNode(current.node)) {
+      if (isRepeatNode(current.node)) {
         await this.handleEachNode(current.node, variables, current.parent);
       }
 
-      if (this.isVariableNode(current.node)) {
+      if (isVariableNode(current.node)) {
         this.processVariableNodeTypes(current.node);
       }
 
@@ -156,23 +157,6 @@ export class EmailOutputRendererUsecase {
     node.text = node.attrs?.id || '';
   }
 
-  private isForNode(
-    node: MailyJSONContent
-  ): node is MailyJSONContent & { attrs: { [MailyAttrsEnum.EACH_KEY]: string } } {
-    return !!(
-      node.type === MailyContentTypeEnum.FOR &&
-      node.attrs &&
-      node.attrs[MailyAttrsEnum.EACH_KEY] !== undefined &&
-      typeof node.attrs[MailyAttrsEnum.EACH_KEY] === 'string'
-    );
-  }
-
-  private hasShow(
-    node: MailyJSONContent
-  ): node is MailyJSONContent & { attrs: { [MailyAttrsEnum.SHOW_IF_KEY]: string } } {
-    return node.attrs?.[MailyAttrsEnum.SHOW_IF_KEY] !== undefined && node.attrs?.[MailyAttrsEnum.SHOW_IF_KEY] !== null;
-  }
-
   /**
    * For 'each' node, multiply the content by the number of items in the iterable array
    * and add indexes to the placeholders.
@@ -209,7 +193,8 @@ export class EmailOutputRendererUsecase {
   }
 
   private async getIterableArray(iterablePath: string, variables: FullPayloadForRender): Promise<unknown[]> {
-    const iterableArrayString = await parseLiquid(iterablePath, variables);
+    const normalizedPath = iterablePath.replace(`[${MAILY_ITERABLE_MARK}]`, '');
+    const iterableArrayString = await parseLiquid(normalizedPath, variables);
 
     try {
       const parsedArray = JSON.parse(iterableArrayString.replace(/'/g, '"'));
@@ -228,7 +213,7 @@ export class EmailOutputRendererUsecase {
     return nodes.map((node) => {
       const processedNode = { ...node };
 
-      if (this.isVariableNode(processedNode)) {
+      if (isVariableNode(processedNode)) {
         this.processVariableNodeTypes(processedNode);
 
         if (processedNode.text) {
@@ -246,22 +231,14 @@ export class EmailOutputRendererUsecase {
     });
   }
 
-  private stringToBoolean(value: unknown): boolean {
-    if (typeof value === 'string') {
-      return value.toLowerCase() === 'true';
+  private stringToBoolean(value: string): boolean {
+    const normalized = value.toLowerCase().trim();
+    if (normalized === 'false' || normalized === 'null' || normalized === 'undefined') return false;
+
+    try {
+      return Boolean(JSON.parse(normalized));
+    } catch {
+      return Boolean(normalized);
     }
-
-    return false;
-  }
-
-  private isVariableNode(
-    node: MailyJSONContent
-  ): node is MailyJSONContent & { attrs: { [MailyAttrsEnum.ID]: string } } {
-    return !!(
-      node.type === MailyContentTypeEnum.VARIABLE &&
-      node.attrs &&
-      node.attrs[MailyAttrsEnum.ID] !== undefined &&
-      typeof node.attrs[MailyAttrsEnum.ID] === 'string'
-    );
   }
 }

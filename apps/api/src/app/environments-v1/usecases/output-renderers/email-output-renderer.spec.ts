@@ -334,7 +334,17 @@ describe('EmailOutputRendererUsecase', () => {
   });
 
   describe('conditional block transformation (showIfKey)', () => {
-    it('should render content when showIfKey condition is true', async () => {
+    describe('truthy conditions', () => {
+      const truthyValues = [
+        { value: true, desc: 'boolean true' },
+        { value: 1, desc: 'number 1' },
+        { value: 'true', desc: 'string "true"' },
+        { value: 'TRUE', desc: 'string "TRUE"' },
+        { value: 'yes', desc: 'string "yes"' },
+        { value: {}, desc: 'empty object' },
+        { value: [], desc: 'empty array' },
+      ];
+
       const mockTipTapNode: MailyJSONContent = {
         type: 'doc',
         content: [
@@ -371,27 +381,40 @@ describe('EmailOutputRendererUsecase', () => {
         ],
       };
 
-      const renderCommand = {
-        controlValues: {
-          subject: 'Conditional Test',
-          body: JSON.stringify(mockTipTapNode),
-        },
-        fullPayloadForRender: {
-          ...mockFullPayload,
-          payload: {
-            isPremium: true,
-          },
-        },
-      };
+      truthyValues.forEach(({ value, desc }) => {
+        it(`should render content when showIfKey is ${desc}`, async () => {
+          const renderCommand = {
+            controlValues: {
+              subject: 'Conditional Test',
+              body: JSON.stringify(mockTipTapNode),
+            },
+            fullPayloadForRender: {
+              ...mockFullPayload,
+              payload: {
+                isPremium: value,
+              },
+            },
+          };
 
-      const result = await emailOutputRendererUsecase.execute(renderCommand);
+          const result = await emailOutputRendererUsecase.execute(renderCommand);
 
-      expect(result.body).to.include('Before condition');
-      expect(result.body).to.include('Premium content');
-      expect(result.body).to.include('After condition');
+          expect(result.body).to.include('Before condition');
+          expect(result.body).to.include('Premium content');
+          expect(result.body).to.include('After condition');
+        });
+      });
     });
 
-    it('should not render content when showIfKey condition is false', async () => {
+    describe('falsy conditions', () => {
+      const falsyValues = [
+        { value: false, desc: 'boolean false' },
+        { value: 0, desc: 'number 0' },
+        { value: '', desc: 'empty string' },
+        { value: null, desc: 'null' },
+        { value: undefined, desc: 'undefined' },
+        { value: 'UNDEFINED', desc: 'string "UNDEFINED"' },
+      ];
+
       const mockTipTapNode: MailyJSONContent = {
         type: 'doc',
         content: [
@@ -423,34 +446,33 @@ describe('EmailOutputRendererUsecase', () => {
                 type: 'text',
                 text: 'After condition',
               },
-              {
-                type: 'text',
-                text: 'After condition 2',
-              },
             ],
           },
         ],
       };
 
-      const renderCommand = {
-        controlValues: {
-          subject: 'Conditional Test',
-          body: JSON.stringify(mockTipTapNode),
-        },
-        fullPayloadForRender: {
-          ...mockFullPayload,
-          payload: {
-            isPremium: false,
-          },
-        },
-      };
+      falsyValues.forEach(({ value, desc }) => {
+        it(`should not render content when showIfKey is ${desc}`, async () => {
+          const renderCommand = {
+            controlValues: {
+              subject: 'Conditional Test',
+              body: JSON.stringify(mockTipTapNode),
+            },
+            fullPayloadForRender: {
+              ...mockFullPayload,
+              payload: {
+                isPremium: value,
+              },
+            },
+          };
 
-      const result = await emailOutputRendererUsecase.execute(renderCommand);
+          const result = await emailOutputRendererUsecase.execute(renderCommand);
 
-      expect(result.body).to.include('Before condition');
-      expect(result.body).to.not.include('Premium content');
-      expect(result.body).to.include('After condition');
-      expect(result.body).to.include('After condition 2');
+          expect(result.body).to.include('Before condition');
+          expect(result.body).to.not.include('Premium content');
+          expect(result.body).to.include('After condition');
+        });
+      });
     });
 
     it('should handle nested conditional blocks correctly', async () => {
@@ -537,13 +559,13 @@ describe('EmailOutputRendererUsecase', () => {
     });
   });
 
-  describe('for block transformation and expansion', () => {
-    it('should handle for loop block transformation with array of objects', async () => {
+  describe('repeat block transformation and expansion', () => {
+    it('should handle repeat loop block transformation with array of objects', async () => {
       const mockTipTapNode: MailyJSONContent = {
         type: 'doc',
         content: [
           {
-            type: 'for',
+            type: 'repeat',
             attrs: {
               each: 'payload.comments',
               isUpdatingKey: false,
@@ -588,7 +610,7 @@ describe('EmailOutputRendererUsecase', () => {
 
       const renderCommand = {
         controlValues: {
-          subject: 'For Loop Test',
+          subject: 'Repeat Loop Test',
           body: JSON.stringify(mockTipTapNode),
         },
         fullPayloadForRender: {
@@ -604,12 +626,12 @@ describe('EmailOutputRendererUsecase', () => {
       expect(result.body).to.include('This is an author: <!-- -->Jane<!-- -->Post Title');
     });
 
-    it('should handle for loop block transformation with array of primitives', async () => {
+    it('should handle repeat loop block transformation with array of primitives', async () => {
       const mockTipTapNode: MailyJSONContent = {
         type: 'doc',
         content: [
           {
-            type: 'for',
+            type: 'repeat',
             attrs: {
               each: 'payload.names',
               isUpdatingKey: false,
@@ -640,7 +662,7 @@ describe('EmailOutputRendererUsecase', () => {
 
       const renderCommand = {
         controlValues: {
-          subject: 'For Loop Test',
+          subject: 'Repeat Loop Test',
           body: JSON.stringify(mockTipTapNode),
         },
         fullPayloadForRender: {

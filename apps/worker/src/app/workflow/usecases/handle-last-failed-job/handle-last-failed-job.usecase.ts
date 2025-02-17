@@ -7,7 +7,7 @@ import { DetailEnum, ExecutionLogRoute, ExecutionLogRouteCommand, InstrumentUsec
 
 import { HandleLastFailedJobCommand } from './handle-last-failed-job.command';
 import { QueueNextJob, QueueNextJobCommand } from '../queue-next-job';
-import { PlatformException } from '../../../shared/utils';
+import { PlatformException, shouldHaltOnStepFailure } from '../../../shared/utils';
 
 const LOG_CONTEXT = 'HandleLastFailedJob';
 
@@ -48,7 +48,7 @@ export class HandleLastFailedJob {
       })
     );
 
-    if (!job?.step?.shouldStopOnFail) {
+    if (!shouldHaltOnStepFailure(job)) {
       await this.queueNextJob.execute(
         QueueNextJobCommand.create({
           parentId: job?._id,

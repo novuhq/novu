@@ -6,6 +6,7 @@ import { faker } from '@faker-js/faker';
 import { setTimeout } from 'timers/promises';
 
 import {
+  CommunityOrganizationRepository,
   EnvironmentEntity,
   JobEntity,
   JobRepository,
@@ -117,6 +118,7 @@ describe('Standard Worker', () => {
     const workflowInMemoryProviderService = moduleRef.get<WorkflowInMemoryProviderService>(
       WorkflowInMemoryProviderService
     );
+    const organizationRepository = moduleRef.get<CommunityOrganizationRepository>(CommunityOrganizationRepository);
 
     standardWorker = new StandardWorker(
       handleLastFailedJob,
@@ -124,7 +126,8 @@ describe('Standard Worker', () => {
       setJobAsCompleted,
       setJobAsFailed,
       webhookFilterBackoffStrategy,
-      workflowInMemoryProviderService
+      workflowInMemoryProviderService,
+      organizationRepository
     );
   });
 
@@ -217,7 +220,7 @@ describe('Standard Worker', () => {
 
     await standardQueueService.add({ name: jobCreated._id, data: jobData, groupId: '0' });
 
-    await jobsService.awaitRunningJobs({
+    await jobsService.waitForJobCompletion({
       templateId: _templateId,
       organizationId: organization._id,
       delay: false,
@@ -280,7 +283,7 @@ describe('Standard Worker', () => {
 
     await standardQueueService.add({ name: jobCreated._id, data: jobData, groupId: '0' });
 
-    await jobsService.awaitRunningJobs({
+    await jobsService.waitForJobCompletion({
       templateId: _templateId,
       organizationId: organization._id,
       delay: false,

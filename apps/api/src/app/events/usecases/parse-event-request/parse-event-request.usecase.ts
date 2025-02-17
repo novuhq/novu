@@ -1,58 +1,52 @@
 import { Injectable, Logger, UnprocessableEntityException } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
 import { addBreadcrumb } from '@sentry/node';
 import { randomBytes } from 'crypto';
 import { merge } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
-import { ModuleRef } from '@nestjs/core';
 
 import {
-  AnalyticsService,
-  buildHasNotificationKey,
   buildNotificationTemplateIdentifierKey,
   CachedEntity,
   ExecuteBridgeRequest,
   ExecuteBridgeRequestCommand,
   ExecuteBridgeRequestDto,
-  GetFeatureFlag,
-  GetFeatureFlagCommand,
   Instrument,
   InstrumentUsecase,
-  InvalidateCacheService,
   IWorkflowDataDto,
   StorageHelperService,
   WorkflowQueueService,
 } from '@novu/application-generic';
 import {
-  FeatureFlagsKeysEnum,
-  INVITE_TEAM_MEMBER_NUDGE_PAYLOAD_KEY,
-  ReservedVariablesMap,
-  TriggerContextTypeEnum,
-  TriggerEventStatusEnum,
-  WorkflowOriginEnum,
-} from '@novu/shared';
-import {
   EnvironmentEntity,
   EnvironmentRepository,
-  MemberRepository,
-  NotificationRepository,
   NotificationTemplateEntity,
   NotificationTemplateRepository,
   TenantEntity,
   TenantRepository,
-  UserRepository,
   WorkflowOverrideEntity,
   WorkflowOverrideRepository,
 } from '@novu/dal';
 import { DiscoverWorkflowOutput, GetActionEnum } from '@novu/framework/internal';
+import {
+  ReservedVariablesMap,
+  TriggerContextTypeEnum,
+  TriggerEventStatusEnum,
+  TriggerRecipients,
+  TriggerRecipientsPayload,
+  TriggerRecipientSubscriber,
+  WorkflowOriginEnum,
+  SUBSCRIBER_ID_REGEX,
+  TriggerRecipient,
+} from '@novu/shared';
 
-import { Novu } from '@novu/api';
+import { ApiException } from '../../../shared/exceptions/api.exception';
+import { VerifyPayload, VerifyPayloadCommand } from '../verify-payload';
 import {
   ParseEventRequestBroadcastCommand,
   ParseEventRequestCommand,
   ParseEventRequestMulticastCommand,
 } from './parse-event-request.command';
-import { ApiException } from '../../../shared/exceptions/api.exception';
-import { VerifyPayload, VerifyPayloadCommand } from '../verify-payload';
 
 const LOG_CONTEXT = 'ParseEventRequest';
 
@@ -60,18 +54,12 @@ const LOG_CONTEXT = 'ParseEventRequest';
 export class ParseEventRequest {
   constructor(
     private notificationTemplateRepository: NotificationTemplateRepository,
-    private notificationRepository: NotificationRepository,
     private environmentRepository: EnvironmentRepository,
-    private userRepository: UserRepository,
-    private memberRepository: MemberRepository,
     private verifyPayload: VerifyPayload,
     private storageHelperService: StorageHelperService,
     private workflowQueueService: WorkflowQueueService,
     private tenantRepository: TenantRepository,
     private workflowOverrideRepository: WorkflowOverrideRepository,
-    private analyticsService: AnalyticsService,
-    private getFeatureFlag: GetFeatureFlag,
-    private invalidateCacheService: InvalidateCacheService,
     private executeBridgeRequest: ExecuteBridgeRequest,
     protected moduleRef: ModuleRef
   ) {}
@@ -183,7 +171,9 @@ export class ParseEventRequest {
     // eslint-disable-next-line no-param-reassign
     command.payload = merge({}, defaultPayload, command.payload);
 
-    return await this.dispatchEvent(command, transactionId);
+    const result = await this.dispatchEvent(command, transactionId);
+
+    return result;
   }
 
   private async queryDiscoverWorkflow(command: ParseEventRequestCommand): Promise<DiscoverWorkflowOutput | null> {
@@ -208,8 +198,25 @@ export class ParseEventRequest {
     transactionId,
     discoveredWorkflow?: DiscoverWorkflowOutput | null
   ) {
-    const jobData: IWorkflowDataDto = {
+    const commandArgs = {
       ...command,
+    };
+
+    if ('to' in commandArgs) {
+      const validSubscribers = this.removeInvalidRecipients(commandArgs.to);
+
+      if (!validSubscribers) {
+        return {
+          acknowledged: true,
+          status: TriggerEventStatusEnum.INVALID_RECIPIENTS,
+          transactionId,
+        };
+      }
+      commandArgs.to = validSubscribers;
+    }
+
+    const jobData: IWorkflowDataDto = {
+      ...commandArgs,
       actor: command.actor,
       transactionId,
       bridgeWorkflow: discoveredWorkflow ?? undefined,
@@ -305,5 +312,45 @@ export class ParseEventRequest {
     const { reservedVariables } = template.triggers[0];
 
     return reservedVariables?.map((reservedVariable) => reservedVariable.type) || [];
+  }
+
+  private isValidId(subscriberId: string) {
+    if (subscriberId.trim().match(SUBSCRIBER_ID_REGEX)) {
+      return subscriberId.trim();
+    }
+  }
+
+  private removeInvalidRecipients(payload: TriggerRecipientsPayload): TriggerRecipientsPayload | null {
+    if (!payload) return null;
+
+    if (!Array.isArray(payload)) {
+      return this.filterValidRecipient(payload) as TriggerRecipientsPayload;
+    }
+
+    const filteredRecipients: TriggerRecipients = payload
+      .map((subscriber) => this.filterValidRecipient(subscriber))
+      .filter((subscriber): subscriber is TriggerRecipient => subscriber !== null);
+
+    return filteredRecipients.length > 0 ? filteredRecipients : null;
+  }
+
+  private filterValidRecipient(subscriber: TriggerRecipient): TriggerRecipient | null {
+    if (typeof subscriber === 'string') {
+      return this.isValidId(subscriber) ? subscriber : null;
+    }
+
+    if (typeof subscriber === 'object' && subscriber !== null) {
+      if ('topicKey' in subscriber) {
+        return subscriber;
+      }
+
+      if ('subscriberId' in subscriber) {
+        const subscriberId = this.isValidId(subscriber.subscriberId);
+
+        return subscriberId ? { ...subscriber, subscriberId } : null;
+      }
+    }
+
+    return null;
   }
 }

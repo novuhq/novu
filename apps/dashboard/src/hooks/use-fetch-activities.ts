@@ -18,19 +18,24 @@ interface ActivityResponse {
 }
 
 export function useFetchActivities(
-  { filters, page }: UseActivitiesOptions = {},
+  { filters, page = 0, limit = 10 }: UseActivitiesOptions = {},
   {
     enabled = true,
     refetchInterval = false,
     refetchOnWindowFocus = false,
     staleTime = 0,
-  }: { enabled?: boolean; refetchInterval?: number | false; refetchOnWindowFocus?: boolean; staleTime?: number } = {}
+  }: {
+    enabled?: boolean;
+    refetchInterval?: number | false;
+    refetchOnWindowFocus?: boolean;
+    staleTime?: number;
+  } = {}
 ) {
   const { currentEnvironment } = useEnvironment();
 
   const { data, ...rest } = useQuery<ActivityResponse>({
-    queryKey: ['activitiesList', currentEnvironment?._id, page, filters],
-    queryFn: ({ signal }) => getActivityList(currentEnvironment!, page, filters, signal),
+    queryKey: ['activitiesList', currentEnvironment?._id, page, limit, filters, limit],
+    queryFn: ({ signal }) => getActivityList({ environment: currentEnvironment!, page, limit, filters, signal }),
     staleTime,
     refetchOnWindowFocus,
     refetchInterval,

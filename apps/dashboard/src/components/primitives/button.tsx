@@ -37,7 +37,7 @@ export const buttonVariants = tv({
     mode: {
       filled: {},
       outline: {
-        root: 'ring-1 ring-inset',
+        root: 'border',
       },
       lighter: {
         root: 'ring-1 ring-inset',

@@ -22,14 +22,14 @@ describe('Get Notifications feed - /:subscriberId/notifications/feed (GET) #novu
   });
 
   it('should throw exception on invalid subscriber id', async function () {
-    await novuClient.trigger({ name: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
 
     const notificationsFeedResponse = (await novuClient.subscribers.notifications.feed({ limit: 5, subscriberId }))
       .result;
     expect(notificationsFeedResponse.pageSize).to.equal(5);
-    const { error, successfulBody } = await expectSdkExceptionGeneric(() =>
+    const { error } = await expectSdkExceptionGeneric(() =>
       novuClient.subscribers.notifications.feed({
         subscriberId: `${subscriberId}111`,
         seen: false,
@@ -44,9 +44,9 @@ describe('Get Notifications feed - /:subscriberId/notifications/feed (GET) #novu
   });
 
   it('should throw exception when invalid payload query param is passed', async function () {
-    await novuClient.trigger({ name: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
 
     const { error: err } = await expectSdkExceptionGeneric(() =>
       novuClient.subscribers.notifications.feed({
@@ -63,11 +63,9 @@ describe('Get Notifications feed - /:subscriberId/notifications/feed (GET) #novu
     const partialPayload = { foo: 123 };
     const payload = { ...partialPayload, bar: 'bar' };
 
-    await novuClient.trigger({ name: template.triggers[0].identifier, to: subscriberId });
-    await session.awaitRunningJobs(template._id);
-
-    await novuClient.trigger({ name: template.triggers[0].identifier, to: subscriberId, payload });
-    await session.awaitRunningJobs(template._id);
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId, payload });
+    await session.waitForJobCompletion(template._id);
 
     const payloadQueryValue = Buffer.from(JSON.stringify(partialPayload)).toString('base64');
     const { data } = (
@@ -82,11 +80,9 @@ describe('Get Notifications feed - /:subscriberId/notifications/feed (GET) #novu
     const partialPayload = { foo: { bar: 123 } };
     const payload = { ...partialPayload, baz: 'baz' };
 
-    await novuClient.trigger({ name: template.triggers[0].identifier, to: subscriberId });
-    await session.awaitRunningJobs(template._id);
-
-    await novuClient.trigger({ name: template.triggers[0].identifier, to: subscriberId, payload });
-    await session.awaitRunningJobs(template._id);
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId, payload });
+    await session.waitForJobCompletion(template._id);
 
     const payloadQueryValue = Buffer.from(JSON.stringify(partialPayload)).toString('base64');
     const { data } = (

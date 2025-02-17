@@ -34,18 +34,18 @@ describe('Get activity feed - /notifications (GET) #novu-v2', async () => {
 
   it('should get the current activity feed of user', async function () {
     await novuClient.trigger({
-      name: template.triggers[0].identifier,
+      workflowId: template.triggers[0].identifier,
       to: subscriberId,
       payload: { firstName: 'Test' },
     });
 
     await novuClient.trigger({
-      name: template.triggers[0].identifier,
+      workflowId: template.triggers[0].identifier,
       to: subscriberId,
       payload: { firstName: 'Test' },
     });
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
     const body = await novuClient.notifications.list({ page: 0 });
     const activities = body.result;
 
@@ -64,13 +64,13 @@ describe('Get activity feed - /notifications (GET) #novu-v2', async () => {
 
   it('should filter by channel', async function () {
     await novuClient.trigger({
-      name: template.triggers[0].identifier,
+      workflowId: template.triggers[0].identifier,
       to: subscriberId,
       payload: { firstName: 'Test' },
     });
 
     await novuClient.trigger({
-      name: smsOnlyTemplate.triggers[0].identifier,
+      workflowId: smsOnlyTemplate.triggers[0].identifier,
       to: subscriberId,
       payload: {
         firstName: 'Test',
@@ -78,15 +78,15 @@ describe('Get activity feed - /notifications (GET) #novu-v2', async () => {
     });
 
     await novuClient.trigger({
-      name: smsOnlyTemplate.triggers[0].identifier,
+      workflowId: smsOnlyTemplate.triggers[0].identifier,
       to: subscriberId,
       payload: {
         firstName: 'Test',
       },
     });
 
-    await session.awaitRunningJobs([template._id, smsOnlyTemplate._id]);
-    novuClient.notifications.list({ page: 0, transactionId: ChannelTypeEnum.Sms });
+    await session.waitForJobCompletion([template._id, smsOnlyTemplate._id]);
+    await novuClient.notifications.list({ page: 0, transactionId: ChannelTypeEnum.Sms });
 
     const body = await novuClient.notifications.list({ page: 0, channels: [ChannelTypeEnum.Sms] });
     const activities = body.result;
@@ -104,7 +104,7 @@ describe('Get activity feed - /notifications (GET) #novu-v2', async () => {
 
   it('should filter by templateId', async function () {
     await novuClient.trigger({
-      name: smsOnlyTemplate.triggers[0].identifier,
+      workflowId: smsOnlyTemplate.triggers[0].identifier,
       to: subscriberId,
       payload: {
         firstName: 'Test',
@@ -112,17 +112,17 @@ describe('Get activity feed - /notifications (GET) #novu-v2', async () => {
     });
 
     await novuClient.trigger({
-      name: template.triggers[0].identifier,
+      workflowId: template.triggers[0].identifier,
       to: subscriberId,
       payload: { firstName: 'Test' },
     });
 
     await novuClient.trigger({
-      name: template.triggers[0].identifier,
+      workflowId: template.triggers[0].identifier,
       to: subscriberId,
       payload: { firstName: 'Test' },
     });
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
     const body = await novuClient.notifications.list({ page: 0, templates: [template._id] });
     const activities = body.result;
 
@@ -146,7 +146,7 @@ describe('Get activity feed - /notifications (GET) #novu-v2', async () => {
 
   it('should filter by email', async function () {
     await novuClient.trigger({
-      name: template.triggers[0].identifier,
+      workflowId: template.triggers[0].identifier,
       to: {
         subscriberId: SubscriberRepository.createObjectId(),
         email: 'test@email.coms',
@@ -156,7 +156,7 @@ describe('Get activity feed - /notifications (GET) #novu-v2', async () => {
       },
     });
     await novuClient.trigger({
-      name: template.triggers[0].identifier,
+      workflowId: template.triggers[0].identifier,
       to: {
         subscriberId: SubscriberRepository.createObjectId(),
       },
@@ -166,7 +166,7 @@ describe('Get activity feed - /notifications (GET) #novu-v2', async () => {
     });
 
     await novuClient.trigger({
-      name: template.triggers[0].identifier,
+      workflowId: template.triggers[0].identifier,
       to: SubscriberRepository.createObjectId(),
       payload: {
         firstName: 'Test',
@@ -174,7 +174,7 @@ describe('Get activity feed - /notifications (GET) #novu-v2', async () => {
     });
 
     await novuClient.trigger({
-      name: template.triggers[0].identifier,
+      workflowId: template.triggers[0].identifier,
       to: SubscriberRepository.createObjectId(),
       payload: {
         firstName: 'Test',
@@ -182,14 +182,14 @@ describe('Get activity feed - /notifications (GET) #novu-v2', async () => {
     });
 
     await novuClient.trigger({
-      name: template.triggers[0].identifier,
+      workflowId: template.triggers[0].identifier,
       to: subscriberId,
       payload: {
         firstName: 'Test',
       },
     });
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
     const activities = (await novuClient.notifications.list({ page: 0, emails: ['test@email.coms'] })).result.data;
 
     expect(activities.length).to.equal(1);
@@ -200,7 +200,7 @@ describe('Get activity feed - /notifications (GET) #novu-v2', async () => {
     const subscriberIdToCreate = `${SubscriberRepository.createObjectId()}some-test`;
 
     await novuClient.trigger({
-      name: template.triggers[0].identifier,
+      workflowId: template.triggers[0].identifier,
       to: {
         subscriberId: subscriberIdToCreate,
         email: 'test@email.coms',
@@ -210,7 +210,7 @@ describe('Get activity feed - /notifications (GET) #novu-v2', async () => {
       },
     });
     await novuClient.trigger({
-      name: template.triggers[0].identifier,
+      workflowId: template.triggers[0].identifier,
       to: SubscriberRepository.createObjectId(),
       payload: {
         firstName: 'Test',
@@ -218,21 +218,21 @@ describe('Get activity feed - /notifications (GET) #novu-v2', async () => {
     });
 
     await novuClient.trigger({
-      name: template.triggers[0].identifier,
+      workflowId: template.triggers[0].identifier,
       to: SubscriberRepository.createObjectId(),
       payload: {
         firstName: 'Test',
       },
     });
     await novuClient.trigger({
-      name: template.triggers[0].identifier,
+      workflowId: template.triggers[0].identifier,
       to: subscriberId,
       payload: {
         firstName: 'Test',
       },
     });
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
     const { result } = await novuClient.notifications.list({ page: 0, subscriberIds: [subscriberIdToCreate] });
     const activities = result.data;
 
@@ -247,12 +247,12 @@ describe('Get activity feed - /notifications (GET) #novu-v2', async () => {
     const subscriberIdToDelete = `${SubscriberRepository.createObjectId()}`;
 
     await novuClient.trigger({
-      name: templateToDelete.triggers[0].identifier,
+      workflowId: templateToDelete.triggers[0].identifier,
       to: subscriberIdToDelete,
       payload: { firstName: 'Test' },
     });
 
-    await session.awaitRunningJobs(templateToDelete._id);
+    await session.waitForJobCompletion(templateToDelete._id);
 
     await notificationTemplateRepository.delete({ _id: templateToDelete._id, _environmentId: session.environment._id });
     const subscriberToDelete = await subscriberRepository.findOne({

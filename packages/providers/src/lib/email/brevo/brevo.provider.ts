@@ -26,7 +26,7 @@ export class BrevoEmailProvider extends BaseProvider implements IEmailProvider {
       apiKey: string;
       from: string;
       senderName: string;
-    },
+    }
   ) {
     super();
     this.axiosInstance = axios.create({
@@ -36,7 +36,7 @@ export class BrevoEmailProvider extends BaseProvider implements IEmailProvider {
 
   async sendMessage(
     options: IEmailOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const email: any = {};
     email.sender = {
@@ -86,9 +86,7 @@ export class BrevoEmailProvider extends BaseProvider implements IEmailProvider {
       data: JSON.stringify(transformedData.body),
     };
 
-    const response = await this.axiosInstance.request<{ messageId: string }>(
-      emailOptions,
-    );
+    const response = await this.axiosInstance.request<{ messageId: string }>(emailOptions);
 
     return {
       id: response?.data.messageId,
@@ -104,10 +102,7 @@ export class BrevoEmailProvider extends BaseProvider implements IEmailProvider {
     return [body['message-id']];
   }
 
-  parseEventBody(
-    body: any | any[],
-    identifier: string,
-  ): IEmailEventBody | undefined {
+  parseEventBody(body: any | any[], identifier: string): IEmailEventBody | undefined {
     if (Array.isArray(body)) {
       // eslint-disable-next-line no-param-reassign
       body = body.find((item) => item['message-id'] === identifier);
@@ -156,9 +151,7 @@ export class BrevoEmailProvider extends BaseProvider implements IEmailProvider {
     }
   }
 
-  async checkIntegration(
-    options: IEmailOptions,
-  ): Promise<ICheckIntegrationResponse> {
+  async checkIntegration(options: IEmailOptions): Promise<ICheckIntegrationResponse> {
     return {
       success: true,
       message: 'Integrated successfully!',
