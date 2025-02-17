@@ -31,11 +31,6 @@ const highlights: PlanHighlights = {
     { text: '3 teammates' },
     { text: '24 hours Activity Feed retention' },
   ],
-  [ApiServiceLevelEnum.PRO]: [
-    { text: 'Up to 30,000 events per month' },
-    { text: '3 teammates' },
-    { text: '7 dats Activity Feed retention' },
-  ],
   [ApiServiceLevelEnum.BUSINESS]: [
     { text: 'Up to 250,000 events per month' },
     { text: 'Unlimited teammates' },
@@ -99,7 +94,7 @@ export const Descriptions = () => {
       </Cell>
       {Object.entries(descriptions).map(([planName, description]) => (
         <Cell key={planName}>
-          <Text style={{ textAlign: 'center' }}>{description}</Text>
+          <Text>{description}</Text>
         </Cell>
       ))}
     </div>
