@@ -6,6 +6,7 @@ import {
   UpdateWorkflow,
 } from '@novu/application-generic';
 
+import { CommunityOrganizationRepository } from '@novu/dal';
 import { GetActiveIntegrationsStatus } from './get-active-integrations-status/get-active-integrations-status.usecase';
 import { ChangeTemplateActiveStatus } from './change-template-active-status/change-template-active-status.usecase';
 import { GetNotificationTemplates } from './get-notification-templates/get-notification-templates.usecase';
@@ -25,4 +26,5 @@ export const USE_CASES = [
   GetNotificationTemplate,
   DeleteNotificationTemplate,
   GetWorkflowVariables,
+  CommunityOrganizationRepository,
 ];
