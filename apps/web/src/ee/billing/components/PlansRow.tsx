@@ -100,7 +100,7 @@ const PlansRowNew = ({
         <Title variant="subsection" color="typography.text.primary">
           Free
         </Title>
-        <PriceDisplay price="$0" subtitle="free forever" events="30,000 events per month" />
+        <PriceDisplay price="$0" subtitle="free forever" events="10,000 events per month" />
       </Cell>
       <Cell>
         <Title
