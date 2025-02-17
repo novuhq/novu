@@ -28,7 +28,7 @@ import { ListSubscribersResponseDto } from './dtos/list-subscribers-response.dto
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 import { DirectionEnum } from '../shared/dtos/base-responses';
 import { PatchSubscriberRequestDto } from './dtos/patch-subscriber.dto';
-import { CreateSubscriberRequestDto, SubscriberResponseDto } from '../subscribers/dtos';
+import { SubscriberResponseDto } from '../subscribers/dtos';
 import { RemoveSubscriberCommand } from './usecases/remove-subscriber/remove-subscriber.command';
 import { RemoveSubscriber } from './usecases/remove-subscriber/remove-subscriber.usecase';
 import { RemoveSubscriberResponseDto } from './dtos/remove-subscriber.dto';
@@ -39,6 +39,7 @@ import { UpdateSubscriberPreferences } from './usecases/update-subscriber-prefer
 import { ThrottlerCategory } from '../rate-limiting/guards/throttler.decorator';
 import { CreateSubscriber } from './usecases/create-subscriber/create-subscriber.usecase';
 import { CreateSubscriberCommand } from './usecases/create-subscriber/create-subscriber.command';
+import { CreateSubscriberRequestDto } from './dtos/create-subscriber.dto';
 
 @ThrottlerCategory(ApiRateLimitCategoryEnum.CONFIGURATION)
 @Controller({ path: '/subscribers', version: '2' })

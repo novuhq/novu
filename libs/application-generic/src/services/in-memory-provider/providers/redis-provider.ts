@@ -60,15 +60,9 @@ export const getRedisProviderConfig = (): IRedisProviderConfig => {
   const port = redisConfig.port ? Number(redisConfig.port) : DEFAULT_PORT;
   const host = redisConfig.host || DEFAULT_HOST;
   const { password } = redisConfig;
-  const connectTimeout = redisConfig.connectTimeout
-    ? Number(redisConfig.connectTimeout)
-    : DEFAULT_CONNECT_TIMEOUT;
-  const family = redisConfig.family
-    ? Number(redisConfig.family)
-    : DEFAULT_FAMILY;
-  const keepAlive = redisConfig.keepAlive
-    ? Number(redisConfig.keepAlive)
-    : DEFAULT_KEEP_ALIVE;
+  const connectTimeout = redisConfig.connectTimeout ? Number(redisConfig.connectTimeout) : DEFAULT_CONNECT_TIMEOUT;
+  const family = redisConfig.family ? Number(redisConfig.family) : DEFAULT_FAMILY;
+  const keepAlive = redisConfig.keepAlive ? Number(redisConfig.keepAlive) : DEFAULT_KEEP_ALIVE;
   const keyPrefix = redisConfig.keyPrefix ?? DEFAULT_KEY_PREFIX;
   const ttl = redisConfig.ttl ? Number(redisConfig.ttl) : DEFAULT_TTL_SECONDS;
   const { tls } = redisConfig;
@@ -101,10 +95,8 @@ export const getRedisInstance = (): Redis | undefined => {
 
   if (port && host) {
     const redisInstance = new Redis(port, host, options);
-    const isNewRelicEnabled =
-      typeof newrelic !== 'undefined' && newrelic.instrumentDatastore;
-    const isNewRelicEnvSet =
-      process.env.NEW_RELIC_LICENSE_KEY && process.env.NEW_RELIC_APP_NAME;
+    const isNewRelicEnabled = typeof newrelic !== 'undefined' && newrelic.instrumentDatastore;
+    const isNewRelicEnvSet = process.env.NEW_RELIC_LICENSE_KEY && process.env.NEW_RELIC_APP_NAME;
 
     if (isNewRelicEnabled && isNewRelicEnvSet) {
       newrelic.instrumentDatastore('Redis', () => redisInstance);
@@ -122,5 +114,4 @@ export const validateRedisProviderConfig = (): boolean => {
   return !!config.host && !!config.port;
 };
 
-export const isClientReady = (status: string): boolean =>
-  status === CLIENT_READY;
+export const isClientReady = (status: string): boolean => status === CLIENT_READY;

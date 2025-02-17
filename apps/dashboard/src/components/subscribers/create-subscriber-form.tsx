@@ -1,23 +1,21 @@
-import { useBeforeUnload } from '@/hooks/use-before-unload';
 import { useCreateSubscriber } from '@/hooks/use-create-subscriber';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { loadLanguage } from '@uiw/codemirror-extensions-langs';
 import { useForm } from 'react-hook-form';
 import { RiCloseCircleLine, RiGroup2Line, RiInformationFill, RiMailLine } from 'react-icons/ri';
-import { Link, useBlocker } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { ExternalToast } from 'sonner';
 import { z } from 'zod';
 import { Button } from '../primitives/button';
 import { CompactButton } from '../primitives/button-compact';
 import { Editor } from '../primitives/editor';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../primitives/form/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormRoot } from '../primitives/form/form';
 import { InlineToast } from '../primitives/inline-toast';
 import { Input, InputRoot } from '../primitives/input';
 import { PhoneInput } from '../primitives/phone-input';
 import { Separator } from '../primitives/separator';
 import { showErrorToast, showSuccessToast } from '../primitives/sonner-helpers';
 import TruncatedText from '../truncated-text';
-import { UnsavedChangesAlertDialog } from '../unsaved-changes-alert-dialog';
 import { LocaleSelect } from './locale-select';
 import { CreateSubscriberFormSchema } from './schema';
 import { TimezoneSelect } from './timezone-select';
@@ -58,10 +56,6 @@ export const CreateSubscriberForm = (props: CreateSubscriberFormProps) => {
     mode: 'onBlur',
   });
 
-  const isDirty = Object.keys(form.formState.dirtyFields).length > 0;
-  const blocker = useBlocker(isDirty);
-  useBeforeUnload(isDirty);
-
   const { createSubscriber } = useCreateSubscriber({
     onSuccess: () => {
       showSuccessToast('Created subscriber successfully', undefined, toastOptions);
@@ -101,7 +95,7 @@ export const CreateSubscriberForm = (props: CreateSubscriberFormProps) => {
         </div>
       </header>
       <Form {...form}>
-        <form autoComplete="off" noValidate onSubmit={form.handleSubmit(onSubmit)} className="flex h-full flex-col">
+        <FormRoot autoComplete="off" noValidate onSubmit={form.handleSubmit(onSubmit)} className="flex h-full flex-col">
           <div className="flex flex-col items-stretch gap-6 p-5">
             <div className="grid grid-cols-2 gap-2.5">
               <FormField
@@ -363,9 +357,8 @@ export const CreateSubscriberForm = (props: CreateSubscriberFormProps) => {
               </Button>
             </div>
           </div>
-        </form>
+        </FormRoot>
       </Form>
-      <UnsavedChangesAlertDialog blocker={blocker} />
     </div>
   );
 };

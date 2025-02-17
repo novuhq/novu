@@ -7,6 +7,8 @@ export type NumericFlagKey = `${Uppercase<string>}_NUMBER`;
 
 export type FlagKey = BooleanFlagKey | NumericFlagKey;
 
+export type FlagType<T> = T extends BooleanFlagKey ? boolean : T extends NumericFlagKey ? number : never;
+
 /**
  * Helper function to test that enum keys and values match correct format.
  *
@@ -22,10 +24,6 @@ export type FlagKey = BooleanFlagKey | NumericFlagKey;
 export function testFlagEnumValidity<TEnum extends IFlags, IFlags = Record<FlagKey, FlagKey>>(
   _: TEnum & Record<Exclude<keyof TEnum, keyof IFlags>, ['Key must follow `FlagKey` format']>
 ) {}
-
-export enum SystemCriticalFlagsEnum {
-  IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'IS_IN_MEMORY_CLUSTER_MODE_ENABLED',
-}
 
 export enum FeatureFlagsKeysEnum {
   // Boolean flags

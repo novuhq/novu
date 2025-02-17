@@ -1,40 +1,31 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import {
-  EnvironmentEntity,
-  EnvironmentRepository,
-  NotificationTemplateRepository,
-  OrganizationRepository,
-} from '@novu/dal';
+import { EnvironmentRepository, NotificationTemplateRepository, OrganizationRepository } from '@novu/dal';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 import { NotificationStep } from '../usecases';
-import {
-  GetFeatureFlagCommand,
-  GetFeatureFlagService,
-} from '../usecases/feature-flag';
-import { GetFeatureFlagNumberCommand } from '../usecases/feature-flag/get-feature-flag/get-feature-flag.command';
+import { FeatureFlagsService } from './feature-flags';
 
 @Injectable()
 export class ResourceValidatorService {
   private readonly MAX_STEPS_PER_WORKFLOW = 10;
   private readonly MAX_WORKFLOWS_LIMIT = 100;
+  private readonly DISABLED_FLAG_VALUE = -1;
 
   constructor(
     private notificationTemplateRepository: NotificationTemplateRepository,
     private organizationRepository: OrganizationRepository,
     private environmentRepository: EnvironmentRepository,
-    private getFeatureFlag: GetFeatureFlagService,
+    private featureFlagService: FeatureFlagsService
   ) {}
 
-  async validateStepsLimit(environmentId: string, steps: NotificationStep[]) {
+  async validateStepsLimit(environmentId: string, steps: NotificationStep[]): Promise<void> {
     const environment = await this.getEnvironment(environmentId);
 
-    const isMaxStepsPerWorkflowEnabled = await this.getFeatureFlag.getBoolean(
-      GetFeatureFlagCommand.create({
-        key: FeatureFlagsKeysEnum.IS_MAX_STEPS_PER_WORKFLOW_ENABLED,
-        environment: { _id: environment._id } as EnvironmentEntity,
-      }),
-    );
+    const isMaxStepsPerWorkflowEnabled = await this.featureFlagService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_MAX_STEPS_PER_WORKFLOW_ENABLED,
+      environment: { _id: environment._id },
+      defaultValue: false,
+    });
 
     if (!isMaxStepsPerWorkflowEnabled) {
       return;
@@ -49,7 +40,7 @@ export class ResourceValidatorService {
     }
   }
 
-  async validateWorkflowLimit(environmentId: string) {
+  async validateWorkflowLimit(environmentId: string): Promise<void> {
     const workflowsCount = await this.notificationTemplateRepository.count({
       _environmentId: environmentId,
     });
@@ -61,20 +52,20 @@ export class ResourceValidatorService {
     const organization = await this.getOrganization(environmentId);
     const environment = await this.getEnvironment(environmentId);
 
-    const maxWorkflowLimit = await this.getFeatureFlag.getNumber(
-      GetFeatureFlagNumberCommand.create({
-        key: FeatureFlagsKeysEnum.MAX_WORKFLOW_LIMIT_NUMBER,
-        defaultValue: this.MAX_WORKFLOWS_LIMIT,
-        fallbackToDefault: -1,
-        environment,
-        organization,
-      }),
-    );
+    const maxWorkflowLimit = await this.featureFlagService.getFlag({
+      key: FeatureFlagsKeysEnum.MAX_WORKFLOW_LIMIT_NUMBER,
+      defaultValue: this.MAX_WORKFLOWS_LIMIT,
+      environment,
+      organization,
+    });
+
+    if (maxWorkflowLimit === this.DISABLED_FLAG_VALUE) {
+      return;
+    }
 
     if (workflowsCount >= maxWorkflowLimit) {
       throw new BadRequestException({
-        message:
-          'Workflow limit exceeded. Please contact us to support more workflows.',
+        message: 'Workflow limit exceeded. Please contact us to support more workflows.',
         currentCount: workflowsCount,
         limit: maxWorkflowLimit,
       });

@@ -93,6 +93,7 @@ export async function workflowsWorkflowControllerGeneratePreview(
   const requestSecurity = resolveGlobalSecurity(securityInput);
 
   const context = {
+    baseURL: options?.serverURL ?? "",
     operationID: "WorkflowController_generatePreview",
     oAuth2Scopes: [],
 

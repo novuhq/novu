@@ -28,7 +28,17 @@ import {
   WorkflowOverrideRepository,
 } from '@novu/dal';
 import { DiscoverWorkflowOutput, GetActionEnum } from '@novu/framework/internal';
-import { ReservedVariablesMap, TriggerContextTypeEnum, TriggerEventStatusEnum, WorkflowOriginEnum } from '@novu/shared';
+import {
+  ReservedVariablesMap,
+  TriggerContextTypeEnum,
+  TriggerEventStatusEnum,
+  TriggerRecipients,
+  TriggerRecipientsPayload,
+  TriggerRecipientSubscriber,
+  WorkflowOriginEnum,
+  SUBSCRIBER_ID_REGEX,
+  TriggerRecipient,
+} from '@novu/shared';
 
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { VerifyPayload, VerifyPayloadCommand } from '../verify-payload';
@@ -188,8 +198,25 @@ export class ParseEventRequest {
     transactionId,
     discoveredWorkflow?: DiscoverWorkflowOutput | null
   ) {
-    const jobData: IWorkflowDataDto = {
+    const commandArgs = {
       ...command,
+    };
+
+    if ('to' in commandArgs) {
+      const validSubscribers = this.removeInvalidRecipients(commandArgs.to);
+
+      if (!validSubscribers) {
+        return {
+          acknowledged: true,
+          status: TriggerEventStatusEnum.INVALID_RECIPIENTS,
+          transactionId,
+        };
+      }
+      commandArgs.to = validSubscribers;
+    }
+
+    const jobData: IWorkflowDataDto = {
+      ...commandArgs,
       actor: command.actor,
       transactionId,
       bridgeWorkflow: discoveredWorkflow ?? undefined,
@@ -285,5 +312,45 @@ export class ParseEventRequest {
     const { reservedVariables } = template.triggers[0];
 
     return reservedVariables?.map((reservedVariable) => reservedVariable.type) || [];
+  }
+
+  private isValidId(subscriberId: string) {
+    if (subscriberId.trim().match(SUBSCRIBER_ID_REGEX)) {
+      return subscriberId.trim();
+    }
+  }
+
+  private removeInvalidRecipients(payload: TriggerRecipientsPayload): TriggerRecipientsPayload | null {
+    if (!payload) return null;
+
+    if (!Array.isArray(payload)) {
+      return this.filterValidRecipient(payload) as TriggerRecipientsPayload;
+    }
+
+    const filteredRecipients: TriggerRecipients = payload
+      .map((subscriber) => this.filterValidRecipient(subscriber))
+      .filter((subscriber): subscriber is TriggerRecipient => subscriber !== null);
+
+    return filteredRecipients.length > 0 ? filteredRecipients : null;
+  }
+
+  private filterValidRecipient(subscriber: TriggerRecipient): TriggerRecipient | null {
+    if (typeof subscriber === 'string') {
+      return this.isValidId(subscriber) ? subscriber : null;
+    }
+
+    if (typeof subscriber === 'object' && subscriber !== null) {
+      if ('topicKey' in subscriber) {
+        return subscriber;
+      }
+
+      if ('subscriberId' in subscriber) {
+        const subscriberId = this.isValidId(subscriber.subscriberId);
+
+        return subscriberId ? { ...subscriber, subscriberId } : null;
+      }
+    }
+
+    return null;
   }
 }

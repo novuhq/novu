@@ -76,6 +76,7 @@ export async function workflowsWorkflowControllerSearchWorkflows(
   const requestSecurity = resolveGlobalSecurity(securityInput);
 
   const context = {
+    baseURL: options?.serverURL ?? "",
     operationID: "WorkflowController_searchWorkflows",
     oAuth2Scopes: [],
 

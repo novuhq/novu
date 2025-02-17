@@ -2,12 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { parseExpression as parseCronExpression } from 'cron-parser';
 import { addYears, differenceInMilliseconds, isAfter } from 'date-fns';
 
-import {
-  ApiServiceLevelEnum,
-  DigestUnitEnum,
-  StepTypeEnum,
-  FeatureFlagsKeysEnum,
-} from '@novu/shared';
+import { ApiServiceLevelEnum, DigestUnitEnum, StepTypeEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { CommunityOrganizationRepository, OrganizationEntity } from '@novu/dal';
 
 import { TierRestrictionsValidateCommand } from './tier-restrictions-validate.command';
@@ -17,46 +12,39 @@ import {
   TierValidationError,
 } from './tier-restrictions-validate.response';
 import { InstrumentUsecase } from '../../instrumentation';
-import { GetFeatureFlagCommand, GetFeatureFlagService } from '../feature-flag';
+import { FeatureFlagsService } from '../../services/feature-flags/feature-flags.service';
 
 export const MILLISECONDS_IN_DAY = 24 * 60 * 60 * 1000;
 export const FREE_TIER_MAX_DELAY_DAYS = 30;
 export const BUSINESS_TIER_MAX_DELAY_DAYS = 90;
-export const MAX_DELAY_FREE_TIER =
-  FREE_TIER_MAX_DELAY_DAYS * MILLISECONDS_IN_DAY; // 30 days in milliseconds
-export const MAX_DELAY_BUSINESS_TIER =
-  BUSINESS_TIER_MAX_DELAY_DAYS * MILLISECONDS_IN_DAY; // 90 days in milliseconds
+export const MAX_DELAY_FREE_TIER = FREE_TIER_MAX_DELAY_DAYS * MILLISECONDS_IN_DAY; // 30 days in milliseconds
+export const MAX_DELAY_BUSINESS_TIER = BUSINESS_TIER_MAX_DELAY_DAYS * MILLISECONDS_IN_DAY; // 90 days in milliseconds
 
 @Injectable()
 export class TierRestrictionsValidateUsecase {
   constructor(
     private organizationRepository: CommunityOrganizationRepository,
-    private getFeatureFlagService: GetFeatureFlagService,
+    private featureFlagsService: FeatureFlagsService
   ) {}
 
   @InstrumentUsecase()
-  async execute(
-    command: TierRestrictionsValidateCommand,
-  ): Promise<TierRestrictionsValidateResponse> {
+  async execute(command: TierRestrictionsValidateCommand): Promise<TierRestrictionsValidateResponse> {
     if (![StepTypeEnum.DIGEST, StepTypeEnum.DELAY].includes(command.stepType)) {
       return [];
     }
 
-    const isTierDurationRestrictionExcluded =
-      await this.getFeatureFlagService.getBoolean(
-        GetFeatureFlagCommand.create({
-          organization: { _id: command.organizationId } as OrganizationEntity,
-          key: FeatureFlagsKeysEnum.IS_TIER_DURATION_RESTRICTION_EXCLUDED_ENABLED,
-        }),
-      );
+    const isTierDurationRestrictionExcluded = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_TIER_DURATION_RESTRICTION_EXCLUDED_ENABLED,
+      defaultValue: false,
+      environment: { _id: command.environmentId },
+      organization: { _id: command.organizationId },
+    });
 
     if (isTierDurationRestrictionExcluded) {
       return [];
     }
 
-    const apiServiceLevel = (
-      await this.organizationRepository.findById(command.organizationId)
-    )?.apiServiceLevel;
+    const apiServiceLevel = (await this.organizationRepository.findById(command.organizationId))?.apiServiceLevel;
     const maxDelayMs = getMaxDelay(apiServiceLevel);
 
     if (isCronExpression(command.cron)) {
@@ -78,18 +66,8 @@ export class TierRestrictionsValidateUsecase {
     if (isRegularDeferAction(command)) {
       const deferDurationMs = calculateDeferDuration(command);
 
-      const amountIssue = buildIssue(
-        deferDurationMs,
-        maxDelayMs,
-        ErrorEnum.TIER_LIMIT_EXCEEDED,
-        'amount',
-      );
-      const unitIssue = buildIssue(
-        deferDurationMs,
-        maxDelayMs,
-        ErrorEnum.TIER_LIMIT_EXCEEDED,
-        'unit',
-      );
+      const amountIssue = buildIssue(deferDurationMs, maxDelayMs, ErrorEnum.TIER_LIMIT_EXCEEDED, 'amount');
+      const unitIssue = buildIssue(deferDurationMs, maxDelayMs, ErrorEnum.TIER_LIMIT_EXCEEDED, 'unit');
 
       return [amountIssue, unitIssue].filter(Boolean);
     }
@@ -97,10 +75,7 @@ export class TierRestrictionsValidateUsecase {
     return [];
   }
 
-  private isCronDeltaDeferDurationExceededTier(
-    cron: string,
-    maxDelayMs: number,
-  ): boolean {
+  private isCronDeltaDeferDurationExceededTier(cron: string, maxDelayMs: number): boolean {
     const cronExpression = parseCronExpression(cron);
     const firstDate = cronExpression.next().toDate();
     const twoYearsFromFirst = addYears(firstDate, 2);
@@ -115,10 +90,7 @@ export class TierRestrictionsValidateUsecase {
         return false;
       }
 
-      const deferDurationMs = differenceInMilliseconds(
-        currentDate,
-        previousDate,
-      );
+      const deferDurationMs = differenceInMilliseconds(currentDate, previousDate);
 
       if (deferDurationMs > maxDelayMs) {
         return true;
@@ -131,9 +103,7 @@ export class TierRestrictionsValidateUsecase {
   }
 }
 
-function calculateDeferDuration(
-  command: TierRestrictionsValidateCommand,
-): number | null {
+function calculateDeferDuration(command: TierRestrictionsValidateCommand): number | null {
   if (command.deferDurationMs) {
     return command.deferDurationMs;
   }
@@ -184,19 +154,11 @@ const isRegularDeferAction = (command: TierRestrictionsValidateCommand) => {
     return true;
   }
 
-  return (
-    !!command.amount &&
-    isNumber(command.amount) &&
-    !!command.unit &&
-    isValidDigestUnit(command.unit)
-  );
+  return !!command.amount && isNumber(command.amount) && !!command.unit && isValidDigestUnit(command.unit);
 };
 
 function getMaxDelay(tier: ApiServiceLevelEnum): number {
-  if (
-    tier === ApiServiceLevelEnum.BUSINESS ||
-    tier === ApiServiceLevelEnum.ENTERPRISE
-  ) {
+  if (tier === ApiServiceLevelEnum.BUSINESS || tier === ApiServiceLevelEnum.ENTERPRISE) {
     return MAX_DELAY_BUSINESS_TIER;
   }
 
@@ -207,7 +169,7 @@ function buildIssue(
   deferDurationMs: number,
   maxDelayMs: number,
   error: ErrorEnum,
-  controlKey: string,
+  controlKey: string
 ): TierValidationError | null {
   if (deferDurationMs > maxDelayMs) {
     return {

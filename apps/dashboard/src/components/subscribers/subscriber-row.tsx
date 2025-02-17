@@ -20,7 +20,7 @@ import { cn } from '@/utils/ui';
 import { SubscriberResponseDto } from '@novu/api/models/components';
 import { ComponentProps, useState } from 'react';
 import { RiDeleteBin2Line, RiFileCopyLine, RiMore2Fill, RiPulseFill } from 'react-icons/ri';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ExternalToast } from 'sonner';
 import { Avatar, AvatarFallback, AvatarImage } from '../primitives/avatar';
 import { CompactButton } from '../primitives/button-compact';
@@ -38,33 +38,28 @@ type SubscriberRowProps = {
   subscriber: SubscriberResponseDto;
 };
 
-type SubscriberLinkTableCellProps = ComponentProps<typeof TableCell> & {
-  subscriber: SubscriberResponseDto;
-};
+type SubscriberLinkTableCellProps = ComponentProps<typeof TableCell>;
 
-const SubscriberLinkTableCell = (props: SubscriberLinkTableCellProps) => {
-  const { subscriber, children, className, ...rest } = props;
-  const { currentEnvironment } = useEnvironment();
-
-  const editSubscriberLink = buildRoute(ROUTES.EDIT_SUBSCRIBER, {
-    environmentSlug: currentEnvironment?.slug ?? '',
-    subscriberId: subscriber.subscriberId,
-  });
+const SubscriberTableCell = (props: SubscriberLinkTableCellProps) => {
+  const { children, className, ...rest } = props;
 
   return (
     <TableCell className={cn('group-hover:bg-neutral-alpha-50 text-text-sub relative', className)} {...rest}>
       {children}
-      <Link to={editSubscriberLink} className={cn('absolute inset-0')}>
-        <span className="sr-only">Edit subscriber</span>
-      </Link>
+      <span className="sr-only">Edit subscriber</span>
     </TableCell>
   );
 };
 
 export const SubscriberRow = ({ subscriber }: SubscriberRowProps) => {
   const { currentEnvironment } = useEnvironment();
+  const navigate = useNavigate();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const subscriberTitle = getSubscriberTitle(subscriber);
+  const editSubscriberLink = buildRoute(ROUTES.EDIT_SUBSCRIBER, {
+    environmentSlug: currentEnvironment?.slug ?? '',
+    subscriberId: subscriber.subscriberId,
+  });
 
   const { deleteSubscriber, isPending: isDeleteSubscriberPending } = useDeleteSubscriber({
     onSuccess: () => {
@@ -95,10 +90,21 @@ export const SubscriberRow = ({ subscriber }: SubscriberRowProps) => {
     },
   });
 
+  const stopPropagation = (e: React.MouseEvent) => {
+    // don't propagate the click event to the row
+    e.stopPropagation();
+  };
+
   return (
     <>
-      <TableRow key={subscriber.subscriberId} className="group relative isolate">
-        <SubscriberLinkTableCell subscriber={subscriber}>
+      <TableRow
+        key={subscriber.subscriberId}
+        className="group relative isolate cursor-pointer"
+        onClick={() => {
+          navigate(editSubscriberLink);
+        }}
+      >
+        <SubscriberTableCell>
           <div className="flex items-center gap-3">
             <Avatar>
               <AvatarImage src={subscriber.avatar || undefined} />
@@ -115,29 +121,32 @@ export const SubscriberRow = ({ subscriber }: SubscriberRowProps) => {
                   valueToCopy={subscriber.subscriberId}
                   size="2xs"
                   mode="ghost"
+                  onClick={stopPropagation}
                 />
               </div>
             </div>
           </div>
-        </SubscriberLinkTableCell>
-        <SubscriberLinkTableCell subscriber={subscriber}>{subscriber.email || '-'}</SubscriberLinkTableCell>
-        <SubscriberLinkTableCell subscriber={subscriber}>{subscriber.phone || '-'}</SubscriberLinkTableCell>
-        <SubscriberLinkTableCell subscriber={subscriber}>
+        </SubscriberTableCell>
+        <SubscriberTableCell>
+          <TruncatedText className="relative z-10 max-w-[28ch]">{subscriber.email || '-'}</TruncatedText>
+        </SubscriberTableCell>
+        <SubscriberTableCell>{subscriber.phone || '-'}</SubscriberTableCell>
+        <SubscriberTableCell>
           <TimeDisplayHoverCard date={new Date(subscriber.createdAt)}>
             {formatDateSimple(subscriber.createdAt)}
           </TimeDisplayHoverCard>
-        </SubscriberLinkTableCell>
-        <SubscriberLinkTableCell subscriber={subscriber}>
+        </SubscriberTableCell>
+        <SubscriberTableCell>
           <TimeDisplayHoverCard date={new Date(subscriber.updatedAt)}>
             {formatDateSimple(subscriber.updatedAt)}
           </TimeDisplayHoverCard>
-        </SubscriberLinkTableCell>
-        <SubscriberLinkTableCell subscriber={subscriber} className="w-1">
-          <DropdownMenu modal={false}>
+        </SubscriberTableCell>
+        <SubscriberTableCell className="w-1">
+          <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <CompactButton icon={RiMore2Fill} variant="ghost" className="z-10 h-8 w-8 p-0" />
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56">
+            <DropdownMenuContent className="w-56" onClick={stopPropagation}>
               <DropdownMenuGroup>
                 <DropdownMenuItem
                   className="cursor-pointer"
@@ -165,7 +174,7 @@ export const SubscriberRow = ({ subscriber }: SubscriberRowProps) => {
                 <DropdownMenuItem
                   className="text-destructive cursor-pointer"
                   onClick={() => {
-                    setIsDeleteModalOpen(true);
+                    setTimeout(() => setIsDeleteModalOpen(true), 0);
                   }}
                 >
                   <RiDeleteBin2Line />
@@ -174,7 +183,7 @@ export const SubscriberRow = ({ subscriber }: SubscriberRowProps) => {
               </DropdownMenuGroup>
             </DropdownMenuContent>
           </DropdownMenu>
-        </SubscriberLinkTableCell>
+        </SubscriberTableCell>
       </TableRow>
       <ConfirmationModal
         open={isDeleteModalOpen}
@@ -186,8 +195,9 @@ export const SubscriberRow = ({ subscriber }: SubscriberRowProps) => {
         title={`Delete subscriber`}
         description={
           <span>
-            Are you sure you want to delete subscriber <span className="font-bold">{subscriberTitle}</span>? This action
-            cannot be undone.
+            Are you sure you want to delete subscriber{' '}
+            <TruncatedText className="max-w-[20ch] font-bold">{subscriberTitle}</TruncatedText>? This action cannot be
+            undone.
           </span>
         }
         confirmButtonText="Delete subscriber"
