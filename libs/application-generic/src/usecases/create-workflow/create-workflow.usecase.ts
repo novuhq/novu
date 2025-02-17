@@ -66,7 +66,7 @@ export class CreateWorkflow {
   async execute(usecaseCommand: CreateWorkflowCommand): Promise<WorkflowInternalResponseDto> {
     const blueprintCommand = await this.processBlueprint(usecaseCommand);
     const command = blueprintCommand ?? usecaseCommand;
-    this.validatePayload(command);
+    await this.validatePayload(command);
     await this.resourceValidatorService.validateWorkflowLimit(command.environmentId);
 
     let storedWorkflow: WorkflowInternalResponseDto;
@@ -141,9 +141,9 @@ export class CreateWorkflow {
     return triggerIdentifier;
   }
 
-  private validatePayload(command: CreateWorkflowCommand) {
+  private async validatePayload(command: CreateWorkflowCommand) {
     if (command.steps) {
-      this.resourceValidatorService.validateStepsLimit(command.environmentId, command.steps);
+      await this.resourceValidatorService.validateStepsLimit(command.environmentId, command.steps);
     }
 
     const variants = command.steps ? command.steps?.flatMap((step) => step.variants || []) : [];

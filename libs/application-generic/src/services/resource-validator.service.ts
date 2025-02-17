@@ -40,7 +40,7 @@ export class ResourceValidatorService {
     }
   }
 
-  async validateWorkflowLimit(environmentId: string) {
+  async validateWorkflowLimit(environmentId: string): Promise<void> {
     const workflowsCount = await this.notificationTemplateRepository.count({
       _environmentId: environmentId,
     });
