@@ -1,5 +1,5 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
-import { EnvironmentRepository, IOrganizationRepository, NotificationTemplateRepository } from '@novu/dal';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { CommunityOrganizationRepository, EnvironmentRepository, NotificationTemplateRepository } from '@novu/dal';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 import { NotificationStep } from '../usecases';
@@ -13,8 +13,7 @@ export class ResourceValidatorService {
 
   constructor(
     private notificationTemplateRepository: NotificationTemplateRepository,
-    @Inject('ORGANIZATION_REPOSITORY')
-    private organizationRepository: IOrganizationRepository,
+    private organizationRepository: CommunityOrganizationRepository,
     private environmentRepository: EnvironmentRepository,
     private featureFlagService: FeatureFlagsService
   ) {}
