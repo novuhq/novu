@@ -1,17 +1,12 @@
 import { CacheKeyPrefixEnum } from '../key-builders';
 
-export function validateCredentials(
-  keyPrefix: CacheKeyPrefixEnum,
-  credentials: string,
-) {
+export function validateCredentials(keyPrefix: CacheKeyPrefixEnum, credentials: string) {
   const entitiesEnvironmentLevel = [
     CacheKeyPrefixEnum.USER,
     CacheKeyPrefixEnum.INTEGRATION,
     CacheKeyPrefixEnum.ENVIRONMENT_BY_API_KEY,
   ];
-  const splitCredentials = credentials
-    ?.split(':')
-    .filter((possibleKey) => possibleKey?.length > 0);
+  const splitCredentials = credentials?.split(':').filter((possibleKey) => possibleKey?.length > 0);
 
   return entitiesEnvironmentLevel.some((cacheKey) => cacheKey === keyPrefix)
     ? splitCredentials.length === 1
@@ -26,23 +21,13 @@ export function validateCredentials(
  */
 export function getIdentifier(
   key: string,
-  keyConfig: Record<string, unknown>,
+  keyConfig: Record<string, unknown>
 ): { key: string | undefined; value: string } {
-  const entitiesSubscriberPreferred = [
-    CacheKeyPrefixEnum.MESSAGE_COUNT,
-    CacheKeyPrefixEnum.FEED,
-  ];
-  const subscriberPreferredKeys = [
-    'subscriberId',
-    '_subscriberId',
-    '_id',
-    'id',
-  ];
+  const entitiesSubscriberPreferred = [CacheKeyPrefixEnum.MESSAGE_COUNT, CacheKeyPrefixEnum.FEED];
+  const subscriberPreferredKeys = ['subscriberId', '_subscriberId', '_id', 'id'];
   const idPreferredKeys = ['_id', 'id', '_subscriberId', 'subscriberId'];
 
-  const subscriberPrefKey = subscriberPreferredKeys.find(
-    (prefKey) => keyConfig[prefKey],
-  );
+  const subscriberPrefKey = subscriberPreferredKeys.find((prefKey) => keyConfig[prefKey]);
   const subscriberPreferred = {
     key: subscriberPrefKey,
     value: keyConfig[subscriberPrefKey as string] as string,
@@ -54,14 +39,10 @@ export function getIdentifier(
     value: keyConfig[idPrefKey as string] as string,
   };
 
-  return entitiesSubscriberPreferred.some((entity) => key.startsWith(entity))
-    ? subscriberPreferred
-    : idPreferred;
+  return entitiesSubscriberPreferred.some((entity) => key.startsWith(entity)) ? subscriberPreferred : idPreferred;
 }
 
-export function getEnvironment(
-  keyConfig: Record<string, unknown>,
-): { key: string; value: string } | undefined {
+export function getEnvironment(keyConfig: Record<string, unknown>): { key: string; value: string } | undefined {
   // eslint-disable-next-line no-nested-ternary
   return keyConfig._environmentId
     ? { key: '_environmentId', value: keyConfig._environmentId as string }
@@ -70,36 +51,24 @@ export function getEnvironment(
       : undefined;
 }
 
-export function buildCredentialsKeyPart(
-  key: string,
-  keyConfig: Record<string, unknown>,
-): string {
+export function buildCredentialsKeyPart(key: string, keyConfig: Record<string, unknown>): string {
   let credentialsResult = '';
   const identifier = getIdentifier(key, keyConfig);
 
   if (identifier?.key) {
-    credentialsResult += `:${getCredentialWithContext(
-      identifier.key,
-      identifier.value,
-    )}`;
+    credentialsResult += `:${getCredentialWithContext(identifier.key, identifier.value)}`;
   }
 
   const environment = getEnvironment(keyConfig);
 
   if (environment?.key) {
-    credentialsResult += `:${getCredentialWithContext(
-      environment.key,
-      environment.value,
-    )}`;
+    credentialsResult += `:${getCredentialWithContext(environment.key, environment.value)}`;
   }
 
   return credentialsResult;
 }
 
-export function getCredentialWithContext(
-  credentialKey: string,
-  credentialValue: string,
-): string {
+export function getCredentialWithContext(credentialKey: string, credentialValue: string): string {
   const context = credentialKey.replace('_', '')[0];
 
   return `${context}=${credentialValue}`;
@@ -113,7 +82,7 @@ export enum CacheInterceptorTypeEnum {
 export function buildKey(
   prefix: CacheKeyPrefixEnum,
   keyConfig: Record<string, unknown>,
-  interceptorType: CacheInterceptorTypeEnum,
+  interceptorType: CacheInterceptorTypeEnum
 ): string {
   let cacheKey = prefix as string;
 
@@ -132,14 +101,13 @@ export function getQueryParams(keysConfig: Record<string, unknown>): string {
   const filteredContextKeys = Object.fromEntries(
     Object.entries(keysConfig).filter(([key, value]) => {
       return !keysToExclude.some((element) => element === key);
-    }),
+    })
   );
 
   for (const [key, value] of Object.entries(filteredContextKeys)) {
     if (value == null) continue;
 
-    const elementValue =
-      typeof value === 'object' ? JSON.stringify(value) : value;
+    const elementValue = typeof value === 'object' ? JSON.stringify(value) : value;
 
     const elementKey = `${key}=${elementValue as string}`;
 
@@ -152,9 +120,7 @@ export function getQueryParams(keysConfig: Record<string, unknown>): string {
 }
 
 export function getCredentialsKeys() {
-  return ['id', 'subscriberId', 'environmentId', 'organizationId']
-    .map((cred) => [cred, `_${cred}`])
-    .flat();
+  return ['id', 'subscriberId', 'environmentId', 'organizationId'].map((cred) => [cred, `_${cred}`]).flat();
 }
 
 /**
@@ -164,10 +130,7 @@ export function getCredentialsKeys() {
  */
 export function buildCachedQuery(args: unknown[]): Record<string, unknown> {
   const fromStringArray = { id: args[0], environmentId: args[1] };
-  const fromObjectArray = args.reduce<Record<string, unknown>>(
-    (obj, item) => Object.assign(obj, item),
-    {},
-  );
+  const fromObjectArray = args.reduce<Record<string, unknown>>((obj, item) => Object.assign(obj, item), {});
 
   return typeof args[0] === 'string' ? fromStringArray : fromObjectArray;
 }
@@ -182,7 +145,7 @@ export function buildCachedQuery(args: unknown[]): Record<string, unknown> {
 export function getInvalidateQuery(
   methodName: string,
   res: Record<string, unknown>,
-  args: Record<string, unknown>[],
+  args: Record<string, unknown>[]
 ): Record<string, unknown> {
   return methodName.startsWith('Create') ? res : args[0];
 }
@@ -190,11 +153,9 @@ export function getInvalidateQuery(
 export function buildQueryKeyPart(
   prefix: CacheKeyPrefixEnum,
   interceptorType: CacheInterceptorTypeEnum,
-  keyConfig: Record<string, unknown>,
+  keyConfig: Record<string, unknown>
 ) {
   const WILD_CARD = '*';
 
-  return interceptorType === CacheInterceptorTypeEnum.INVALIDATE
-    ? WILD_CARD
-    : getQueryParams(keyConfig);
+  return interceptorType === CacheInterceptorTypeEnum.INVALIDATE ? WILD_CARD : getQueryParams(keyConfig);
 }

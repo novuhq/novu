@@ -2,7 +2,13 @@ import { IntegrationRepository } from '@novu/dal';
 import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import { CacheInMemoryProviderService, CacheService, createHash } from '@novu/application-generic';
+import {
+  buildIntegrationKey,
+  CacheInMemoryProviderService,
+  CacheService,
+  createHash,
+  InvalidateCacheService,
+} from '@novu/application-generic';
 
 const integrationRepository = new IntegrationRepository();
 const mockSubscriberId = '12345';
@@ -10,11 +16,13 @@ const mockSubscriberId = '12345';
 describe('Session - /inbox/session (POST) #novu-v2', async () => {
   let session: UserSession;
   let cacheService: CacheService;
+  let invalidateCache: InvalidateCacheService;
 
   before(async () => {
     const cacheInMemoryProviderService = new CacheInMemoryProviderService();
     cacheService = new CacheService(cacheInMemoryProviderService);
     await cacheService.initialize();
+    invalidateCache = new InvalidateCacheService(cacheService);
   });
 
   beforeEach(async () => {
@@ -26,7 +34,7 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
         _environmentId: session.environment._id,
         _organizationId: session.environment._organizationId,
       },
-      cacheService
+      invalidateCache
     );
   });
 
@@ -53,7 +61,7 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
         _organizationId: session.environment._organizationId,
         hmac: false,
       },
-      cacheService
+      invalidateCache
     );
     const { body, status } = await initializeSession({
       applicationIdentifier: session.environment.identifier,
@@ -97,7 +105,7 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
         _organizationId: session.environment._organizationId,
         active: false,
       },
-      cacheService
+      invalidateCache
     );
 
     const { body, status } = await initializeSession({
@@ -131,9 +139,13 @@ async function setIntegrationConfig(
     hmac = true,
     active = true,
   }: { _environmentId: string; _organizationId: string; active?: boolean; hmac?: boolean },
-  cacheService: CacheService
+  invalidateCache: InvalidateCacheService
 ) {
-  await cacheService.delByPattern('*');
+  await invalidateCache.invalidateQuery({
+    key: buildIntegrationKey().invalidate({
+      _organizationId,
+    }),
+  });
 
   await integrationRepository.update(
     {
