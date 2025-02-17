@@ -13,6 +13,16 @@ export class ProcessEnvFeatureFlagsService implements IFeatureFlagsService {
   }
 
   async getFlag<T_Result>(context: FeatureFlagContext<T_Result>): Promise<T_Result> {
+    const processEnvValue = process.env[context.key];
+
+    if (typeof context.defaultValue === 'number') {
+      return Number(processEnvValue) as T_Result;
+    }
+
+    if (typeof context.defaultValue === 'boolean') {
+      return (processEnvValue === 'true') as T_Result;
+    }
+
     return context.defaultValue;
   }
 }
