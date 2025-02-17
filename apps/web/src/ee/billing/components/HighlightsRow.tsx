@@ -48,7 +48,7 @@ const descriptions = {
   [ApiServiceLevelEnum.PRO]:
     'Perfect for startups and indie hackers looking to add <Inbox /> and connect to Email and digest engine.',
   [ApiServiceLevelEnum.BUSINESS]:
-    'Ideal for teams looking to add <Inbox/> in minutes, and manage system notification experiance from one system.',
+    'Ideal for teams looking to add <Inbox/> in minutes, and manage system notification experience from one system.',
   [ApiServiceLevelEnum.ENTERPRISE]:
     'For organizations with privacy, and compliance demands. Looking to add the best OS notification technology, while maintaining flexibility.',
 };
