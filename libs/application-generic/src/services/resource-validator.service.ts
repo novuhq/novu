@@ -1,10 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import {
-  EnvironmentEntity,
-  EnvironmentRepository,
-  NotificationTemplateRepository,
-  OrganizationRepository,
-} from '@novu/dal';
+import { EnvironmentRepository, NotificationTemplateRepository, OrganizationRepository } from '@novu/dal';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 import { NotificationStep } from '../usecases';
@@ -23,12 +18,12 @@ export class ResourceValidatorService {
     private featureFlagService: FeatureFlagsService
   ) {}
 
-  async validateStepsLimit(environmentId: string, steps: NotificationStep[]) {
+  async validateStepsLimit(environmentId: string, steps: NotificationStep[]): Promise<void> {
     const environment = await this.getEnvironment(environmentId);
 
     const isMaxStepsPerWorkflowEnabled = await this.featureFlagService.getFlag({
       key: FeatureFlagsKeysEnum.IS_MAX_STEPS_PER_WORKFLOW_ENABLED,
-      environment: { _id: environment._id } as EnvironmentEntity,
+      environment: { _id: environment._id },
       defaultValue: false,
     });
 
@@ -45,7 +40,7 @@ export class ResourceValidatorService {
     }
   }
 
-  async validateWorkflowLimit(environmentId: string) {
+  async validateWorkflowLimit(environmentId: string): Promise<void> {
     const workflowsCount = await this.notificationTemplateRepository.count({
       _environmentId: environmentId,
     });

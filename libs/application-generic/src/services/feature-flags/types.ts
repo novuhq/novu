@@ -1,10 +1,12 @@
 import { EnvironmentEntity, OrganizationEntity, UserEntity } from '@novu/dal';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 
+type PartialWithId<T> = Partial<T> & { _id: string };
+
 export type FeatureFlagContextBase = {
-  environment?: Partial<EnvironmentEntity>;
-  organization?: Partial<OrganizationEntity>;
-  user?: Partial<UserEntity>;
+  environment?: PartialWithId<EnvironmentEntity>;
+  organization?: PartialWithId<OrganizationEntity>;
+  user?: PartialWithId<UserEntity>;
 };
 
 export type FeatureFlagContext<T_Result> = FeatureFlagContextBase & {

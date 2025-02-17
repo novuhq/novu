@@ -121,6 +121,7 @@ export default tsEslint.config(
       '@typescript-eslint/lines-between-class-members': 'off',
       '@typescript-eslint/no-throw-literal': 'off',
       '@typescript-eslint/only-throw-error': 'error',
+      '@typescript-eslint/no-floating-promises': 'warn',
       'react/jsx-wrap-multilines': 'off',
       'react/jsx-filename-extension': 'off',
       'multiline-comment-style': ['warn', 'starred-block'],
