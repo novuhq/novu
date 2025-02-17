@@ -1,4 +1,7 @@
 import { ConfirmationModal } from '@/components/confirmation-modal';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/primitives/avatar';
+import { CompactButton } from '@/components/primitives/button-compact';
+import { CopyButton } from '@/components/primitives/copy-button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,6 +13,7 @@ import { Skeleton } from '@/components/primitives/skeleton';
 import { ToastIcon } from '@/components/primitives/sonner';
 import { showToast } from '@/components/primitives/sonner-helpers';
 import { TableCell, TableRow } from '@/components/primitives/table';
+import { getSubscriberTitle } from '@/components/subscribers/utils';
 import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
 import TruncatedText from '@/components/truncated-text';
 import { useEnvironment } from '@/context/environment/hooks';
@@ -22,10 +26,6 @@ import { ComponentProps, useState } from 'react';
 import { RiDeleteBin2Line, RiFileCopyLine, RiMore2Fill, RiPulseFill } from 'react-icons/ri';
 import { Link, useNavigate } from 'react-router-dom';
 import { ExternalToast } from 'sonner';
-import { Avatar, AvatarFallback, AvatarImage } from '../primitives/avatar';
-import { CompactButton } from '../primitives/button-compact';
-import { CopyButton } from '../primitives/copy-button';
-import { getSubscriberTitle } from './utils';
 
 const toastOptions: ExternalToast = {
   position: 'bottom-right',
@@ -108,7 +108,7 @@ export const SubscriberRow = ({ subscriber }: SubscriberRowProps) => {
           <div className="flex items-center gap-3">
             <Avatar>
               <AvatarImage src={subscriber.avatar || undefined} />
-              <AvatarFallback className="bg-neutral-alpha-100">{subscriberTitle[0]}</AvatarFallback>
+              <AvatarFallback>{subscriberTitle[0]}</AvatarFallback>
             </Avatar>
             <div className="flex flex-col">
               <TruncatedText className="text-text-strong max-w-[32ch] font-medium">{subscriberTitle}</TruncatedText>

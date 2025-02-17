@@ -1,19 +1,19 @@
+import { IActivity, JobStatusEnum, WorkflowOriginEnum } from '@novu/shared';
 import { motion } from 'motion/react';
 import { FaCode } from 'react-icons/fa6';
-import { IActivity, JobStatusEnum, WorkflowOriginEnum } from '@novu/shared';
 
-import { JOB_STATUS_CONFIG } from '@/components/activity/constants';
 import { ActivityEmptyState } from '@/components/activity/activity-empty-state';
-import { RouteFill } from '@/components/icons/route-fill';
-import TruncatedText from '@/components/truncated-text';
-import { StatusBadge, StatusBadgeIcon } from '@/components/primitives/status-badge';
+import { JOB_STATUS_CONFIG } from '@/components/activity/constants';
 import { getActivityStatus } from '@/components/activity/helpers';
-import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
-import { formatDateSimple } from '@/utils/format-date';
-import { TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
-import { Tooltip } from '@/components/primitives/tooltip';
-import { cn } from '@/utils/ui';
+import { RouteFill } from '@/components/icons/route-fill';
 import { Skeleton } from '@/components/primitives/skeleton';
+import { StatusBadge, StatusBadgeIcon } from '@/components/primitives/status-badge';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
+import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
+import TruncatedText from '@/components/truncated-text';
+import { itemVariants, listVariants } from '@/motion/variants';
+import { formatDateSimple } from '@/utils/format-date';
+import { cn } from '@/utils/ui';
 
 const statusToTooltipStyles: Record<string, string> = {
   completed: 'before:bg-success-lighter before:border before:border-success-lighter text-success-base',
@@ -21,17 +21,6 @@ const statusToTooltipStyles: Record<string, string> = {
   failed: 'before:bg-error-lighter before:border before:border-error-lighter text-error-base',
   disabled: 'before:bg-faded-lighter before:border before:border-faded-light text-faded-base',
 };
-
-const staggerSettings = (index: number) => ({
-  initial: { opacity: 0, y: 20 },
-  animate: { opacity: 1, y: 0 },
-  exit: { opacity: 0, y: -20 },
-  transition: {
-    duration: 0.4,
-    delay: index * 0.01,
-    ease: [0.25, 0.1, 0.25, 1],
-  },
-});
 
 export const SubscriberActivityList = ({
   isLoading,
@@ -60,7 +49,7 @@ export const SubscriberActivityList = ({
           emptySearchResults={hasChangesInFilters}
           onClearFilters={onClearFilters}
           emptyFiltersTitle="No activity in the past 30 days"
-          emptyFiltersDescription="This subscriber hasn’t received any notifications yet. Once a workflow is triggered for them, you'll see their notification history and delivery details here."
+          emptyFiltersDescription="This subscriber hasn't received any notifications yet. Once a workflow is triggered for them, you'll see their notification history and delivery details here."
         />
       </motion.div>
     );
@@ -70,16 +59,15 @@ export const SubscriberActivityList = ({
     return (
       <motion.div
         key="table-state"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.2 }}
+        initial="hidden"
+        animate="visible"
+        variants={listVariants}
         className="flex flex-1 flex-col overflow-y-auto border-t border-t-neutral-200"
       >
         {Array.from({ length: 10 }).map((_, index) => (
           <motion.div
             key={index}
-            {...staggerSettings(index)}
+            variants={itemVariants}
             className="border-b-stroke-soft flex w-full cursor-pointer border-b"
           >
             <div className="flex max-w-96 items-center gap-2 px-3 py-2">
@@ -104,20 +92,25 @@ export const SubscriberActivityList = ({
   return (
     <motion.div
       key="table-state"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.2 }}
+      initial="hidden"
+      animate="visible"
+      variants={{
+        visible: {
+          transition: {
+            staggerChildren: 0.03,
+          },
+        },
+      }}
       className="flex flex-1 flex-col overflow-y-auto border-t border-t-neutral-200"
     >
-      {activities.map((activity, index) => {
+      {activities.map((activity) => {
         const status = getActivityStatus(activity.jobs);
         const { variant, icon: Icon, label } = JOB_STATUS_CONFIG[status] || JOB_STATUS_CONFIG[JobStatusEnum.PENDING];
 
         return (
           <motion.div
             key={activity._id}
-            {...staggerSettings(index)}
+            variants={itemVariants}
             className="border-b-stroke-soft flex w-full cursor-pointer border-b last:border-b-0"
             onClick={() => {
               onActivitySelect(activity._id);

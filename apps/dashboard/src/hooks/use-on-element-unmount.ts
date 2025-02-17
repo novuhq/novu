@@ -1,7 +1,7 @@
 import { useCallback, useRef } from 'react';
 
-export const useOnElementUnmount = (props: { callback: () => void }) => {
-  const { callback } = props;
+export const useOnElementUnmount = (props: { callback: () => void; condition: boolean }) => {
+  const { callback, condition } = props;
   const hasCalledCallback = useRef(false);
 
   const ref = useCallback(
@@ -17,7 +17,7 @@ export const useOnElementUnmount = (props: { callback: () => void }) => {
         if (hasCalledCallback.current) return;
 
         // Check if element is still in DOM
-        if (!element.isConnected) {
+        if (!element.isConnected && condition) {
           hasCalledCallback.current = true;
           observer.disconnect();
           callback();
