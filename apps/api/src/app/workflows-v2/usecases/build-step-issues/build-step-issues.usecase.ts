@@ -320,6 +320,18 @@ export class BuildStepIssuesUsecase {
   }): Promise<StepIssuesDto> {
     const issues: StepIssuesDto = {};
 
+    const integrationNeeded = [
+      StepTypeEnum.EMAIL,
+      StepTypeEnum.SMS,
+      StepTypeEnum.IN_APP,
+      StepTypeEnum.PUSH,
+      StepTypeEnum.CHAT,
+    ].includes(args.stepTypeDto);
+
+    if (!integrationNeeded) {
+      return issues;
+    }
+
     const primaryNeeded = args.stepTypeDto === StepTypeEnum.EMAIL || args.stepTypeDto === StepTypeEnum.SMS;
     const validIntegrationForStep = await this.integrationsRepository.findOne({
       _environmentId: args.environmentId,
