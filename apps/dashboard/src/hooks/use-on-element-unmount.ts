@@ -1,30 +1,37 @@
-import { useEffect } from 'react';
+import { useCallback, useRef } from 'react';
 
-export const useOnElementUnmount = (props: {
-  element?: HTMLElement | null;
-  callback: () => void;
-  condition?: boolean;
-}) => {
-  const { element, callback } = props;
+export const useOnElementUnmount = (props: { callback: () => void }) => {
+  const { callback } = props;
+  const hasCalledCallback = useRef(false);
 
-  useEffect(() => {
-    if (!element || !element.parentNode) return;
-
-    const observer = new MutationObserver((mutations) => {
-      for (const mutation of mutations) {
-        // Check if the element is among the removed nodes.
-        mutation.removedNodes.forEach((removedNode) => {
-          if (removedNode === element) {
-            callback();
-          }
-        });
+  const ref = useCallback(
+    (element: HTMLElement | null) => {
+      if (!element) {
+        return;
       }
-    });
 
-    // Observe the parent node for changes in its children.
-    observer.observe(element.parentNode, { childList: true });
+      // Reset flag when element is mounted
+      hasCalledCallback.current = false;
 
-    // Cleanup on unmount.
-    return () => observer.disconnect();
-  }, [callback, element]);
+      const observer = new MutationObserver(() => {
+        if (hasCalledCallback.current) return;
+
+        // Check if element is still in DOM
+        if (!element.isConnected) {
+          hasCalledCallback.current = true;
+          observer.disconnect();
+          callback();
+        }
+      });
+
+      observer.observe(element.parentNode!, { childList: true });
+
+      return () => {
+        observer.disconnect();
+      };
+    },
+    [callback]
+  );
+
+  return { ref };
 };

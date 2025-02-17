@@ -7,6 +7,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormRoot,
 } from '@/components/primitives/form/form';
 import { Separator } from '@/components/primitives/separator';
 import {
@@ -32,7 +33,7 @@ import { showErrorToast, showSuccessToast } from '../primitives/sonner-helpers';
 // TODO: Merge with CreateEnvironmentButton
 const editEnvironmentSchema = z.object({
   name: z.string().min(1, 'Name is required'),
-  color: z.string().regex(/^\#[0-9a-fA-F]{6}$/, 'Enter a valid hex color, like #123456.'),
+  color: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Enter a valid hex color, like #123456.'),
 });
 
 type EditEnvironmentFormData = z.infer<typeof editEnvironmentSchema>;
@@ -96,7 +97,7 @@ export const EditEnvironmentSheet = ({ environment, isOpen, onOpenChange }: Edit
         <Separator />
         <SheetMain>
           <Form {...form}>
-            <form
+            <FormRoot
               id="edit-environment"
               autoComplete="off"
               noValidate
@@ -135,7 +136,7 @@ export const EditEnvironmentSheet = ({ environment, isOpen, onOpenChange }: Edit
                   </FormItem>
                 )}
               />
-            </form>
+            </FormRoot>
           </Form>
         </SheetMain>
         <Separator />

@@ -1,12 +1,12 @@
-import { Popover, PopoverContent, PopoverTrigger, PopoverPortal } from '@/components/primitives/popover';
+import { Popover, PopoverContent, PopoverPortal, PopoverTrigger } from '@/components/primitives/popover';
 import { API_HOSTNAME, APP_ID, WEBSOCKET_HOSTNAME } from '@/config';
+import { useEnvironment } from '@/context/environment/hooks';
+import { useTestPage } from '@/hooks/use-test-page';
 import { useUser } from '@clerk/clerk-react';
 import { Bell, Inbox, InboxContent, useNovu } from '@novu/react';
-import { InboxBellFilled } from './icons/inbox-bell-filled';
+import { useEffect, useState } from 'react';
 import { HeaderButton } from './header-navigation/header-button';
-import { useState, useEffect } from 'react';
-import { useEnvironment } from '../context/environment/hooks';
-import { useTestPage } from '@/hooks/use-test-page';
+import { InboxBellFilled } from './icons/inbox-bell-filled';
 
 const InboxInner = () => {
   const [open, setOpen] = useState(false);

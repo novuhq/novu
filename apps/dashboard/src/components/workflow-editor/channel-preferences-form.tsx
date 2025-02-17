@@ -7,6 +7,16 @@ import { RiArrowLeftSLine, RiCloseFill, RiInformationFill } from 'react-icons/ri
 import { Link } from 'react-router-dom';
 import { z } from 'zod';
 
+import { STEP_TYPE_TO_ICON } from '@/components/icons/utils';
+import { PageMeta } from '@/components/page-meta';
+import { CompactButton } from '@/components/primitives/button-compact';
+import { Card, CardContent } from '@/components/primitives/card';
+import { Checkbox } from '@/components/primitives/checkbox';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormRoot } from '@/components/primitives/form/form';
+import { Separator } from '@/components/primitives/separator';
+import { Step } from '@/components/primitives/step';
+import { Switch } from '@/components/primitives/switch';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { SidebarContent, SidebarHeader } from '@/components/side-navigation/sidebar';
 import { UserPreferencesFormSchema } from '@/components/workflow-editor/schema';
 import { UpdateWorkflowFn } from '@/components/workflow-editor/workflow-provider';
@@ -16,16 +26,6 @@ import { StepTypeEnum, WorkflowOriginEnum } from '@/utils/enums';
 import { capitalize } from '@/utils/string';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
-import { STEP_TYPE_TO_ICON } from '../icons/utils';
-import { PageMeta } from '../page-meta';
-import { CompactButton } from '../primitives/button-compact';
-import { Card, CardContent } from '../primitives/card';
-import { Checkbox } from '../primitives/checkbox';
-import { Form, FormControl, FormField, FormItem, FormLabel } from '../primitives/form/form';
-import { Separator } from '../primitives/separator';
-import { Step } from '../primitives/step';
-import { Switch } from '../primitives/switch';
-import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip';
 
 type ConfigureWorkflowFormProps = {
   workflow: WorkflowResponseDto;
@@ -198,7 +198,7 @@ export const ChannelPreferencesForm = (props: ConfigureWorkflowFormProps) => {
           <SidebarContent size="md">
             {/* This doesn't needs to be a form, but using it as a form allows to re-use the formItem designs without duplicating the same styles */}
             <Form {...overrideForm}>
-              <form>
+              <FormRoot>
                 <FormField
                   control={overrideForm.control}
                   name="override"
@@ -224,13 +224,13 @@ export const ChannelPreferencesForm = (props: ConfigureWorkflowFormProps) => {
                     </FormItem>
                   )}
                 />
-              </form>
+              </FormRoot>
             </Form>
           </SidebarContent>
         )}
         <Separator />
         <Form {...form}>
-          <form>
+          <FormRoot>
             <SidebarContent size="md">
               <FormField
                 control={form.control}
@@ -345,7 +345,7 @@ export const ChannelPreferencesForm = (props: ConfigureWorkflowFormProps) => {
               })}
             </SidebarContent>
             <Separator />
-          </form>
+          </FormRoot>
         </Form>
         {!isDashboardWorkflow && override && (
           <SidebarContent size="md">

@@ -1,5 +1,12 @@
+import { Button } from '@/components/primitives/button';
+import { Form, FormRoot } from '@/components/primitives/form/form';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/primitives/resizable';
 import { ToastClose, ToastIcon } from '@/components/primitives/sonner';
+import { showToast } from '@/components/primitives/sonner-helpers';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
+import { buildDynamicFormSchema, TestWorkflowFormType } from '@/components/workflow-editor/schema';
+import { TestWorkflowForm } from '@/components/workflow-editor/test-workflow/test-workflow-form';
+import { TestWorkflowLogsSidebar } from '@/components/workflow-editor/test-workflow/test-workflow-logs-sidebar';
 import { useFetchWorkflow } from '@/hooks/use-fetch-workflow';
 import { useTriggerWorkflow } from '@/hooks/use-trigger-workflow';
 import { buildRoute, ROUTES } from '@/utils/routes';
@@ -10,13 +17,6 @@ import { useForm } from 'react-hook-form';
 import { RiPlayCircleLine } from 'react-icons/ri';
 import { Link, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Button } from '../../primitives/button';
-import { Form } from '../../primitives/form/form';
-import { showToast } from '../../primitives/sonner-helpers';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../primitives/tabs';
-import { buildDynamicFormSchema, TestWorkflowFormType } from '../schema';
-import { TestWorkflowForm } from './test-workflow-form';
-import { TestWorkflowLogsSidebar } from './test-workflow-logs-sidebar';
 
 export const TestWorkflowTabs = ({ testData }: { testData?: WorkflowTestDataResponseDto }) => {
   const { environmentSlug = '', workflowSlug = '' } = useParams<{ environmentSlug: string; workflowSlug: string }>();
@@ -73,7 +73,7 @@ export const TestWorkflowTabs = ({ testData }: { testData?: WorkflowTestDataResp
   return (
     <div className="h-full w-full">
       <Form {...form}>
-        <form onSubmit={handleSubmit(onSubmit)} className="flex h-full flex-1">
+        <FormRoot onSubmit={handleSubmit(onSubmit)} className="flex h-full flex-1">
           <ResizablePanelGroup direction="horizontal">
             <ResizablePanel defaultSize={70} minSize={40} className="h-full">
               <Tabs defaultValue="workflow" className="-mt-[1px] flex h-full flex-1 flex-col" value="trigger">
@@ -125,7 +125,7 @@ export const TestWorkflowTabs = ({ testData }: { testData?: WorkflowTestDataResp
               <TestWorkflowLogsSidebar transactionId={transactionId} workflow={workflow} />
             </ResizablePanel>
           </ResizablePanelGroup>
-        </form>
+        </FormRoot>
       </Form>
     </div>
   );

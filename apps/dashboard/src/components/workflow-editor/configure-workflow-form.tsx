@@ -5,7 +5,14 @@ import { useNavigate } from 'react-router-dom';
 import type { ExternalToast } from 'sonner';
 import { z } from 'zod';
 
+import { ConfirmationModal } from '@/components/confirmation-modal';
+import { DeleteWorkflowDialog } from '@/components/delete-workflow-dialog';
+import { RouteFill } from '@/components/icons/route-fill';
+import { PageMeta } from '@/components/page-meta';
 import { PAUSE_MODAL_TITLE, PauseModalDescription } from '@/components/pause-workflow-dialog';
+import { Button } from '@/components/primitives/button';
+import { CompactButton } from '@/components/primitives/button-compact';
+import { CopyButton } from '@/components/primitives/copy-button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,8 +25,24 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/components/primitives/dropdown-menu';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  FormRoot,
+} from '@/components/primitives/form/form';
+import { Input } from '@/components/primitives/input';
+import { Separator } from '@/components/primitives/separator';
 import { ToastIcon } from '@/components/primitives/sonner';
 import { showToast } from '@/components/primitives/sonner-helpers';
+import { Switch } from '@/components/primitives/switch';
+import { TagInput } from '@/components/primitives/tag-input';
+import { Textarea } from '@/components/primitives/textarea';
+import { Tooltip, TooltipContent, TooltipPortal, TooltipTrigger } from '@/components/primitives/tooltip';
+import { usePromotionalBanner } from '@/components/promotional/coming-soon-banner';
 import { SidebarContent, SidebarHeader } from '@/components/side-navigation/sidebar';
 import { MAX_DESCRIPTION_LENGTH, workflowSchema } from '@/components/workflow-editor/schema';
 import { UpdateWorkflowFn } from '@/components/workflow-editor/workflow-provider';
@@ -30,6 +53,7 @@ import { useFormAutosave } from '@/hooks/use-form-autosave';
 import { useSyncWorkflow } from '@/hooks/use-sync-workflow';
 import { useTags } from '@/hooks/use-tags';
 import { ROUTES } from '@/utils/routes';
+import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { WorkflowOriginEnum, WorkflowResponseDto } from '@novu/shared';
@@ -42,22 +66,6 @@ import {
   RiSettingsLine,
 } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
-import { TelemetryEvent } from '../../utils/telemetry';
-import { ConfirmationModal } from '../confirmation-modal';
-import { DeleteWorkflowDialog } from '../delete-workflow-dialog';
-import { RouteFill } from '../icons';
-import { PageMeta } from '../page-meta';
-import { Button } from '../primitives/button';
-import { CompactButton } from '../primitives/button-compact';
-import { CopyButton } from '../primitives/copy-button';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../primitives/form/form';
-import { Input } from '../primitives/input';
-import { Separator } from '../primitives/separator';
-import { Switch } from '../primitives/switch';
-import { TagInput } from '../primitives/tag-input';
-import { Textarea } from '../primitives/textarea';
-import { Tooltip, TooltipContent, TooltipPortal, TooltipTrigger } from '../primitives/tooltip';
-import { usePromotionalBanner } from '../promotional/coming-soon-banner';
 
 type ConfigureWorkflowFormProps = {
   workflow: WorkflowResponseDto;
@@ -264,7 +272,7 @@ export const ConfigureWorkflowForm = (props: ConfigureWorkflowFormProps) => {
           <PromoteConfirmModal />
         </SidebarHeader>
         <Form {...form}>
-          <form onBlur={onBlur}>
+          <FormRoot onBlur={onBlur}>
             <SidebarContent size="md">
               <FormField
                 control={form.control}
@@ -382,7 +390,7 @@ export const ConfigureWorkflowForm = (props: ConfigureWorkflowFormProps) => {
                 )}
               />
             </SidebarContent>
-          </form>
+          </FormRoot>
         </Form>
         <Separator />
         <SidebarContent size="lg">
