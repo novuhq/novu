@@ -1,5 +1,5 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { EnvironmentRepository, NotificationTemplateRepository, OrganizationRepository } from '@novu/dal';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { EnvironmentRepository, IOrganizationRepository, NotificationTemplateRepository } from '@novu/dal';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 import { NotificationStep } from '../usecases';
@@ -13,7 +13,8 @@ export class ResourceValidatorService {
 
   constructor(
     private notificationTemplateRepository: NotificationTemplateRepository,
-    private organizationRepository: OrganizationRepository,
+    @Inject('ORGANIZATION_REPOSITORY')
+    private organizationRepository: IOrganizationRepository,
     private environmentRepository: EnvironmentRepository,
     private featureFlagService: FeatureFlagsService
   ) {}
@@ -49,8 +50,8 @@ export class ResourceValidatorService {
       return;
     }
 
-    const organization = await this.getOrganization(environmentId);
     const environment = await this.getEnvironment(environmentId);
+    const organization = await this.getOrganization(environment._organizationId);
 
     const maxWorkflowLimit = await this.featureFlagService.getFlag({
       key: FeatureFlagsKeysEnum.MAX_WORKFLOW_LIMIT_NUMBER,
@@ -86,10 +87,8 @@ export class ResourceValidatorService {
     return environment;
   }
 
-  private async getOrganization(environmentId: string) {
-    const organization = await this.organizationRepository.findOne({
-      _environmentId: environmentId,
-    });
+  private async getOrganization(organizationId: string) {
+    const organization = await this.organizationRepository.findById(organizationId);
 
     if (!organization) {
       throw new BadRequestException({
