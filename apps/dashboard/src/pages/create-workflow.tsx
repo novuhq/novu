@@ -11,9 +11,10 @@ import {
 } from '@/components/primitives/sheet';
 import { ExternalLink } from '@/components/shared/external-link';
 import { CreateWorkflowForm } from '@/components/workflow-editor/create-workflow-form';
+import { useCombinedRefs } from '@/hooks/use-combined-refs';
 import { useCreateWorkflow } from '@/hooks/use-create-workflow';
 import { useOnElementUnmount } from '@/hooks/use-on-element-unmount';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { RiArrowRightSLine } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
 
@@ -22,18 +23,18 @@ export function CreateWorkflowPage() {
 
   const { submit, isLoading: isCreating } = useCreateWorkflow();
   const [open, setOpen] = useState(true);
-  const sheetRef = useRef<HTMLDivElement>(null);
 
-  useOnElementUnmount({
-    element: sheetRef.current,
+  const { ref: unmountRef } = useOnElementUnmount({
     callback: () => {
       navigate(-1);
     },
   });
 
+  const combinedRef = useCombinedRefs(unmountRef);
+
   return (
     <Sheet open={open} onOpenChange={setOpen}>
-      <SheetContent ref={sheetRef} onOpenAutoFocus={(e) => e.preventDefault()}>
+      <SheetContent ref={combinedRef} onOpenAutoFocus={(e) => e.preventDefault()}>
         <SheetHeader>
           <SheetTitle>Create workflow</SheetTitle>
           <div>

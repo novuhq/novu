@@ -7,6 +7,8 @@ export type NumericFlagKey = `${Uppercase<string>}_NUMBER`;
 
 export type FlagKey = BooleanFlagKey | NumericFlagKey;
 
+export type FlagType<T> = T extends BooleanFlagKey ? boolean : T extends NumericFlagKey ? number : never;
+
 /**
  * Helper function to test that enum keys and values match correct format.
  *

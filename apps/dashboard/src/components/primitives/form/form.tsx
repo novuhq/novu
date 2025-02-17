@@ -1,7 +1,7 @@
 import * as LabelPrimitive from '@radix-ui/react-label';
 import { Slot } from '@radix-ui/react-slot';
 import * as React from 'react';
-import { Controller, ControllerProps, FieldPath, FieldValues, FormProvider } from 'react-hook-form';
+import { Controller, ControllerProps, FieldPath, FieldValues, FormProvider, useFormContext } from 'react-hook-form';
 
 import { Input } from '@/components/primitives/input';
 import { Label, LabelAsterisk, LabelSub } from '@/components/primitives/label';
@@ -13,6 +13,19 @@ import { Hint, HintIcon } from '../hint';
 import { FormFieldContext, FormItemContext, useFormField } from './form-context';
 
 const Form = FormProvider;
+
+const FormRoot = React.forwardRef<HTMLFormElement, React.ComponentPropsWithoutRef<'form'>>(
+  ({ children, ...props }, ref) => {
+    const form = useFormContext();
+
+    return (
+      <form ref={ref} data-dirty={form.formState.isDirty || undefined} {...props}>
+        {children}
+      </form>
+    );
+  }
+);
+FormRoot.displayName = 'FormRoot';
 
 const FormField = <
   TFieldValues extends FieldValues = FieldValues,
@@ -128,4 +141,14 @@ const FormTextInput = React.forwardRef<HTMLInputElement, React.ComponentPropsWit
 });
 FormTextInput.displayName = 'FormTextInput';
 
-export { Form, FormControl, FormField, FormTextInput as FormInput, FormItem, FormLabel, FormMessage, FormMessagePure };
+export {
+  Form,
+  FormControl,
+  FormField,
+  FormTextInput as FormInput,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  FormMessagePure,
+  FormRoot,
+};

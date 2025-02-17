@@ -14,12 +14,11 @@ describe('Get Subscriber - /subscribers/:id (GET) #novu-v2', function () {
 
   const subscriberId = 'sub_42';
   it('should return a subscriber by id', async function () {
-    await novuClient.subscribers.create({
+    const createResponse = await novuClient.subscribers.create({
       subscriberId,
       firstName: 'John',
       lastName: 'Doe',
       email: 'john@doe.com',
-      phone: '+5555555555',
     });
 
     const response = await novuClient.subscribers.retrieve(subscriberId);

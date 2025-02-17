@@ -6,16 +6,17 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormRoot,
 } from '@/components/primitives/form/form';
 import { Separator } from '@/components/primitives/separator';
 import { TagInput } from '@/components/primitives/tag-input';
 import { Textarea } from '@/components/primitives/textarea';
+import { MAX_DESCRIPTION_LENGTH, MAX_TAG_ELEMENTS, workflowSchema } from '@/components/workflow-editor/schema';
 import { useTags } from '@/hooks/use-tags';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { type CreateWorkflowDto, slugify } from '@novu/shared';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { MAX_DESCRIPTION_LENGTH, MAX_TAG_ELEMENTS, workflowSchema } from './schema';
 
 interface CreateWorkflowFormProps {
   onSubmit: (values: z.infer<typeof workflowSchema>) => void;
@@ -38,7 +39,7 @@ export function CreateWorkflowForm({ onSubmit, template }: CreateWorkflowFormPro
 
   return (
     <Form {...form}>
-      <form
+      <FormRoot
         id="create-workflow"
         autoComplete="off"
         noValidate
@@ -128,7 +129,7 @@ export function CreateWorkflowForm({ onSubmit, template }: CreateWorkflowFormPro
             </FormItem>
           )}
         />
-      </form>
+      </FormRoot>
     </Form>
   );
 }
