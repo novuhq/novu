@@ -26,7 +26,7 @@ export const EditStepConditions = () => {
 
   return (
     <StepDrawer title={`Edit ${step?.name} Conditions`}>
-      <header className="flex flex-row items-center gap-3 border-b border-neutral-200 px-3 py-1.5">
+      <header className="flex h-12 w-full flex-row items-center justify-between gap-3 border-b py-4 pl-3 pr-3">
         <div className="mr-auto flex items-center gap-2.5 py-2 text-sm font-medium">
           <RiGuideFill className="size-4" />
           <span>Step Conditions</span>

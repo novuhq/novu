@@ -1,41 +1,27 @@
+import { motion } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
 
-import { PageMeta } from '@/components/page-meta';
-import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/primitives/sheet';
+import { Sheet, SheetContentBase, SheetDescription, SheetPortal, SheetTitle } from '@/components/primitives/sheet';
 import { VisuallyHidden } from '@/components/primitives/visually-hidden';
+import { PageMeta } from '@/components/page-meta';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
-import { useCombinedRefs } from '@/hooks/use-combined-refs';
-import { useFormProtection } from '@/hooks/use-form-protection';
-import { useOnElementUnmount } from '@/hooks/use-on-element-unmount';
-import { cn } from '@/utils/ui';
 import { StepTypeEnum } from '@novu/shared';
-import { useState } from 'react';
+import { cn } from '@/utils/ui';
 
+const transitionSetting = { ease: [0.29, 0.83, 0.57, 0.99], duration: 0.4 };
 const stepTypeToClassname: Record<string, string | undefined> = {
   [StepTypeEnum.IN_APP]: 'sm:max-w-[600px]',
   [StepTypeEnum.EMAIL]: 'sm:max-w-[800px]',
 };
-
 export const StepDrawer = ({ children, title }: { children: React.ReactNode; title?: string }) => {
   const navigate = useNavigate();
   const { workflow, step } = useWorkflow();
-  const [isOpen, setIsOpen] = useState(true);
-
-  const { ref: unmountRef } = useOnElementUnmount({
-    callback: () => {
-      navigate(-1);
-    },
-  });
-
-  const {
-    protectedOnValueChange,
-    ProtectionAlert,
-    ref: protectionRef,
-  } = useFormProtection({
-    onValueChange: setIsOpen,
-  });
-
-  const combinedRef = useCombinedRefs(unmountRef, protectionRef);
+  const handleCloseSheet = () => {
+    if (step) {
+      // Do not use relative path here, calling twice will result in moving further back
+      navigate(`../steps/${step.slug}`);
+    }
+  };
 
   if (!workflow || !step) {
     return null;
@@ -44,22 +30,58 @@ export const StepDrawer = ({ children, title }: { children: React.ReactNode; tit
   return (
     <>
       <PageMeta title={title} />
-      <Sheet modal={false} open={isOpen} onOpenChange={protectedOnValueChange}>
-        <div
-          className={cn('animate-in fade-in fixed inset-0 z-50 bg-black/20 transition-opacity duration-300', {
-            'pointer-events-none opacity-0': !isOpen,
-          })}
+      <Sheet modal={false} open>
+        <motion.div
+          initial={{
+            opacity: 0,
+          }}
+          animate={{
+            opacity: 1,
+          }}
+          exit={{
+            opacity: 0,
+          }}
+          className="fixed inset-0 z-50 h-screen w-screen bg-black/20"
+          transition={transitionSetting}
+          onClick={handleCloseSheet}
         />
-        <SheetContent ref={combinedRef} className={cn(stepTypeToClassname[step.type])}>
-          <VisuallyHidden>
-            <SheetTitle />
-            <SheetDescription />
-          </VisuallyHidden>
-          {children}
-        </SheetContent>
+        <SheetPortal>
+          <SheetContentBase
+            asChild
+            onInteractOutside={(e) => {
+              // IMPORTANT DO NOT REMOVE
+              // we don’t want to close the sheet if interacting outside,
+              // happens on the dropdowns, elements that are rendered outside the component tree
+              // for example maily variable list, the conditions operators
+              e.preventDefault();
+            }}
+            onEscapeKeyDown={handleCloseSheet}
+          >
+            <motion.div
+              initial={{
+                x: '100%',
+              }}
+              animate={{
+                x: 0,
+              }}
+              exit={{
+                x: '100%',
+              }}
+              transition={transitionSetting}
+              className={cn(
+                'bg-background fixed inset-y-0 right-0 z-50 flex h-full w-3/4 flex-col border-l shadow-lg outline-none sm:max-w-[600px]',
+                stepTypeToClassname[step.type]
+              )}
+            >
+              <VisuallyHidden>
+                <SheetTitle />
+                <SheetDescription />
+              </VisuallyHidden>
+              {children}
+            </motion.div>
+          </SheetContentBase>
+        </SheetPortal>
       </Sheet>
-
-      <ProtectionAlert />
     </>
   );
 };

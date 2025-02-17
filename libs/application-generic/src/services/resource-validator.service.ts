@@ -14,6 +14,7 @@ import { FeatureFlagsService } from './feature-flags';
 export class ResourceValidatorService {
   private readonly MAX_STEPS_PER_WORKFLOW = 10;
   private readonly MAX_WORKFLOWS_LIMIT = 100;
+  private readonly DISABLED_FLAG_VALUE = -1;
 
   constructor(
     private notificationTemplateRepository: NotificationTemplateRepository,
@@ -62,6 +63,10 @@ export class ResourceValidatorService {
       environment,
       organization,
     });
+
+    if (maxWorkflowLimit === this.DISABLED_FLAG_VALUE) {
+      return;
+    }
 
     if (workflowsCount >= maxWorkflowLimit) {
       throw new BadRequestException({
