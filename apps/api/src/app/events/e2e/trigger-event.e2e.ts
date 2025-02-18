@@ -1420,13 +1420,40 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       expect(message!.errorText).to.contains('Currently 3rd-party packages test are not support on test env');
     });
 
-    it('should trigger In-App notification with subscriber data', async function () {
+    it('should trigger in-app notification', async function () {
       const newSubscriberIdInAppNotification = SubscriberRepository.createObjectId();
       const channelType = ChannelTypeEnum.IN_APP;
 
       template = await createTemplate(session, channelType);
 
-      await sendTrigger(template, newSubscriberIdInAppNotification);
+      await novuClient.trigger({
+        workflowId: template.triggers[0].identifier,
+        to: [{ subscriberId: 'no_type_123' }],
+        payload: {
+          randomVar: 'no_type_123',
+        },
+      });
+
+      await novuClient.trigger({
+        workflowId: template.triggers[0].identifier,
+        to: [
+          {
+            type: 'Subscriber',
+            subscriberId: 'with_type_123',
+          },
+        ],
+        payload: {
+          randomVar: 'with_type_123',
+        },
+      });
+
+      await novuClient.trigger({
+        workflowId: template.triggers[0].identifier,
+        to: [{ subscriberId: 'second_no_type_123' }],
+        payload: {
+          randomVar: 'second_no_type_123',
+        },
+      });
 
       await session.waitForJobCompletion(template._id);
 
