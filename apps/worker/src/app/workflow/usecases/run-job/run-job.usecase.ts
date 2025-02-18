@@ -110,6 +110,16 @@ export class RunJob {
 
       if (sendMessageResult.status === 'success') {
         await this.jobRepository.updateStatus(job._environmentId, job._id, JobStatusEnum.COMPLETED);
+      } else if (sendMessageResult.status === 'failed') {
+        shouldQueueNextJob = false;
+        if (shouldHaltOnStepFailure(job)) {
+          await this.jobRepository.cancelPendingJobs({
+            transactionId: job.transactionId,
+            _environmentId: job._environmentId,
+            _subscriberId: job._subscriberId,
+            _templateId: job._templateId,
+          });
+        }
       }
     } catch (error: any) {
       if (shouldHaltOnStepFailure(job) && !this.shouldBackoff(error)) {
@@ -198,8 +208,7 @@ export class RunJob {
         }
 
         if (shouldHaltOnStepFailure(nextJob) || this.shouldBackoff(error)) {
-          shouldContinueQueueNextJob = false;
-          throw error;
+          return;
         }
 
         currentFailedJob = nextJob;
@@ -213,13 +222,14 @@ export class RunJob {
 
   private assignLogger(job) {
     try {
-      this.logger?.assign({
-        transactionId: job.transactionId,
-        environmentId: job._environmentId,
-        organizationId: job._organizationId,
-        jobId: job._id,
-        jobType: job.type,
-      });
+      if (this.logger) {
+        this.logger.assign({
+          transactionId: job.transactionId,
+          jobId: job._id,
+          environmentId: job._environmentId,
+          organizationId: job._organizationId,
+        });
+      }
     } catch (e) {
       Logger.error(e, 'RunJob', LOG_CONTEXT);
     }
@@ -285,6 +295,6 @@ export class RunJob {
   }
 
   public shouldBackoff(error: Error): boolean {
-    return error.message.includes(EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER);
+    return error?.message?.includes(EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER);
   }
 }
