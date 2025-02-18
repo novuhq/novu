@@ -70,9 +70,6 @@ export class CreateSubscriberRequestDto {
   })
   @IsString()
   @IsDefined()
-  @Matches(SUBSCRIBER_ID_REGEX, {
-    message: 'SubscriberId can only contain letters, numbers, hyphens, and underscores.',
-  })
   @IsNotEmpty({
     message: 'SubscriberId is required',
   })
