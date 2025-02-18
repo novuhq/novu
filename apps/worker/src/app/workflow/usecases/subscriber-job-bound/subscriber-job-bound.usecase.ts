@@ -1,15 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
 
-import { IntegrationRepository, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
-import {
-  buildWorkflowPreferences,
-  ChannelTypeEnum,
-  InAppProviderIdEnum,
-  ISubscribersDefine,
-  ProvidersIdEnum,
-  STEP_TYPE_TO_CHANNEL_TYPE,
-  WorkflowTypeEnum,
-} from '@novu/shared';
 import {
   AnalyticsService,
   ApiException,
@@ -23,6 +13,16 @@ import {
   InstrumentUsecase,
   PinoLogger,
 } from '@novu/application-generic';
+import { IntegrationRepository, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
+import {
+  buildWorkflowPreferences,
+  ChannelTypeEnum,
+  InAppProviderIdEnum,
+  ISubscribersDefine,
+  ProvidersIdEnum,
+  STEP_TYPE_TO_CHANNEL_TYPE,
+  WorkflowTypeEnum,
+} from '@novu/shared';
 import { StoreSubscriberJobs, StoreSubscriberJobsCommand } from '../store-subscriber-jobs';
 import { SubscriberJobBoundCommand } from './subscriber-job-bound.command';
 
@@ -88,6 +88,7 @@ export class SubscriberJobBound {
     this.analyticsService.mixpanelTrack('Notification event trigger - [Triggers]', segmentUserId, {
       name: template.name,
       type: template?.type || WorkflowTypeEnum.REGULAR,
+      origin: template?.origin,
       transactionId: command.transactionId,
       _template: template._id,
       _organization: command.organizationId,
