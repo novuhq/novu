@@ -9,6 +9,7 @@ import {
   GetPreferences,
   GetWorkflowByIdsUseCase,
   ResourceValidatorService,
+  TierRestrictionsValidateUsecase,
   UpdateChange,
   UpdateMessageTemplate,
   UpdateWorkflow,
@@ -44,6 +45,7 @@ const PROVIDERS = [
   ExtractVariables,
   BuildStepIssuesUsecase,
   ResourceValidatorService,
+  TierRestrictionsValidateUsecase,
 ];
 
 @Module({
