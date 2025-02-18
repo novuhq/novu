@@ -6,6 +6,7 @@ import { CalendarDays } from 'lucide-react';
 import { useFetchSubscription } from '../../hooks/use-fetch-subscription';
 import { cn } from '../../utils/ui';
 import { PlanActionButton } from './plan-action-button';
+import { ApiServiceLevelEnum } from '@novu/shared';
 
 interface ActivePlanBannerProps {
   selectedBillingInterval: 'month' | 'year';
@@ -63,6 +64,7 @@ export function ActivePlanBanner({ selectedBillingInterval }: ActivePlanBannerPr
 
             <PlanActionButton
               selectedBillingInterval={selectedBillingInterval}
+              checkOutServiceLevel={subscription?.apiServiceLevel || ApiServiceLevelEnum.FREE}
               mode="outline"
               size="sm"
               className="shrink-0"

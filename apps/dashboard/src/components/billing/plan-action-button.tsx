@@ -7,6 +7,7 @@ import { cn } from '../../utils/ui';
 
 interface PlanActionButtonProps {
   selectedBillingInterval: 'month' | 'year';
+  checkOutServiceLevel: ApiServiceLevelEnum;
   mode?: 'outline' | 'filled';
   showIcon?: boolean;
   className?: string;
@@ -15,6 +16,7 @@ interface PlanActionButtonProps {
 
 export function PlanActionButton({
   selectedBillingInterval,
+  checkOutServiceLevel,
   mode = 'filled',
   className,
   size = 'md',
@@ -31,7 +33,7 @@ export function PlanActionButton({
     if (isPaidSubscriptionActive()) {
       navigateToPortal();
     } else {
-      navigateToCheckout(selectedBillingInterval);
+      navigateToCheckout({ billingInterval: selectedBillingInterval, requestedServiceLevel: checkOutServiceLevel });
     }
   };
 

@@ -27,9 +27,6 @@ export class CreateEnvironment {
       _organizationId: command.organizationId,
     });
 
-    if (environmentCount >= 10) {
-      throw new BadRequestException('Organization cannot have more than 10 environments');
-    }
     const normalizedName = command.name.trim();
 
     if (!command.system) {

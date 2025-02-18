@@ -1,8 +1,29 @@
 import { ApiServiceLevelEnum, ProductFeatureKeyEnum } from '../types';
+import { FeatureNameEnum, getFeatureForTierAsBoolean } from './feature-tiers-constants';
 
-export const productFeatureEnabledForServiceLevel: Record<ProductFeatureKeyEnum, ApiServiceLevelEnum[]> = Object.freeze(
-  {
-    [ProductFeatureKeyEnum.TRANSLATIONS]: [ApiServiceLevelEnum.BUSINESS, ApiServiceLevelEnum.ENTERPRISE],
-    [ProductFeatureKeyEnum.MANAGE_ENVIRONMENTS]: [ApiServiceLevelEnum.BUSINESS, ApiServiceLevelEnum.ENTERPRISE],
+const featureAccessAtoFeatureNameMapping: Record<ProductFeatureKeyEnum, FeatureNameEnum> = {
+  [ProductFeatureKeyEnum.TRANSLATIONS]: FeatureNameEnum.AUTO_TRANSLATIONS,
+  [ProductFeatureKeyEnum.MANAGE_ENVIRONMENTS]: FeatureNameEnum.CUSTOM_ENVIRONMENTS_BOOLEAN,
+} as const;
+function createProductFeatureMap(): Record<ProductFeatureKeyEnum, ApiServiceLevelEnum[]> {
+  const productFeatures: Record<ProductFeatureKeyEnum, ApiServiceLevelEnum[]> = {
+    [ProductFeatureKeyEnum.TRANSLATIONS]: [],
+    [ProductFeatureKeyEnum.MANAGE_ENVIRONMENTS]: [],
+  };
+
+  for (const apiServiceLevel of Object.values(ApiServiceLevelEnum)) {
+    for (const [productFeatureKey, featureName] of Object.entries(featureAccessAtoFeatureNameMapping)) {
+      const typedProductKey = productFeatureKey as unknown as ProductFeatureKeyEnum;
+      if (Object.values(ProductFeatureKeyEnum).includes(typedProductKey)) {
+        const isFeatureEnabled = getFeatureForTierAsBoolean(featureName, apiServiceLevel, {});
+        if (isFeatureEnabled) {
+          productFeatures[typedProductKey]!.push(apiServiceLevel);
+        }
+      }
+    }
   }
-);
+
+  return Object.freeze(productFeatures);
+}
+export const productFeatureEnabledForServiceLevel: Record<ProductFeatureKeyEnum, ApiServiceLevelEnum[]> =
+  createProductFeatureMap();

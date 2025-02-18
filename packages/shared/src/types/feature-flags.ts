@@ -55,3 +55,6 @@ export enum FeatureFlagsKeysEnum {
   // Numeric flags
   MAX_WORKFLOW_LIMIT_NUMBER = 'MAX_WORKFLOW_LIMIT_NUMBER',
 }
+export type FeatureFlags = {
+  [key in FeatureFlagsKeysEnum]: boolean | undefined;
+};

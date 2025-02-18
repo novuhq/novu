@@ -1,160 +1,231 @@
+import React from 'react';
 import { Badge } from '@/components/primitives/badge';
 import { Card } from '@/components/primitives/card';
 import { Check } from 'lucide-react';
 import { ContactSalesButton } from './contact-sales-button';
 import { PlanActionButton } from './plan-action-button';
+import {
+  ApiServiceLevelEnum,
+  FeatureFlags,
+  FeatureFlagsKeysEnum,
+  FeatureNameEnum,
+  getFeatureForTierAsNumber,
+  getFeatureForTierAsText,
+  StripeBillingIntervalEnum,
+} from '@novu/shared';
 
 interface PlansRowProps {
-  selectedBillingInterval: 'month' | 'year';
-  currentPlan?: 'free' | 'business' | 'enterprise';
+  selectedBillingInterval: StripeBillingIntervalEnum;
+  currentPlan?: ApiServiceLevelEnum;
   trial?: {
     isActive: boolean;
   };
+  featureFlags: FeatureFlags;
 }
-
-interface PlanDisplayProps {
+interface PlanConfig {
+  name: string;
   price: string;
   subtitle: string;
   events: string;
+  features: string[];
+  actionType?: 'button' | 'contact';
 }
 
-function PlanDisplay({ price, subtitle, events }: PlanDisplayProps) {
-  return (
-    <div className="space-y-1">
-      <div className="flex items-baseline gap-1">
-        <span className="text-3xl font-bold tracking-tight">{price}</span>
-        <span className="text-muted-foreground text-sm font-medium">{subtitle}</span>
-      </div>
-      <span className="text-muted-foreground text-sm">{events}</span>
+const PlanFeature: React.FC<{ text: string }> = ({ text }) => (
+  <li className="flex items-center gap-2 text-sm">
+    <Check className="text-primary h-4 w-4" />
+    <span>{text}</span>
+  </li>
+);
+
+const PlanDisplay: React.FC<{
+  price: string;
+  subtitle: string;
+  events: string;
+  isEnterprise?: boolean;
+}> = ({ price, subtitle, events, isEnterprise = false }) => (
+  <div className="space-y-1">
+    <div className="flex items-baseline gap-1">
+      <span className={`${isEnterprise ? 'text-2xl font-semibold' : 'text-3xl font-bold tracking-tight'}`}>
+        {price}
+      </span>
+      {!isEnterprise && <span className="text-muted-foreground text-sm font-medium">{subtitle}</span>}
     </div>
-  );
+    {isEnterprise ? (
+      <span className="text-muted-foreground text-sm">For large-scale operations</span>
+    ) : (
+      <span className="text-muted-foreground text-sm">{events}</span>
+    )}
+  </div>
+);
+
+function calcCostFeatureName(interval: StripeBillingIntervalEnum) {
+  return interval === StripeBillingIntervalEnum.YEAR
+    ? FeatureNameEnum.PLATFORM_ANNUAL_COST
+    : FeatureNameEnum.PLATFORM_MONTHLY_COST;
 }
 
-export function PlansRow({ selectedBillingInterval, currentPlan, trial }: PlansRowProps) {
-  const businessPlanPrice = selectedBillingInterval === 'year' ? '$2,700' : '$250';
-  const effectiveCurrentPlan = trial?.isActive ? 'free' : currentPlan;
+function getEventsIncludedParsedText(apiServiceLevelEnum: ApiServiceLevelEnum) {
+  const eventsIncluded = getFeatureForTierAsNumber(
+    FeatureNameEnum.PLATFORM_MONTHLY_EVENTS_INCLUDED,
+    apiServiceLevelEnum
+  );
+  const events: string = new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(eventsIncluded);
+  return events;
+}
 
+function buildSubtitle(interval: StripeBillingIntervalEnum, price: string) {
+  if (price === '0$') return 'Free forever';
+  return `billed ${interval === 'year' ? 'annually' : 'monthly'}`;
+}
+
+function buildPlanConfig(
+  apiServiceLevelEnum: ApiServiceLevelEnum,
+  actionType: ActionType,
+  firstFeature: string,
+  lastFeature: string
+): (interval: StripeBillingIntervalEnum, featureFlags: FeatureFlags) => PlanConfig {
+  return (interval: StripeBillingIntervalEnum, featureFlags) => {
+    const maxTeamMembers = getFeatureForTierAsText(
+      FeatureNameEnum.ACCOUNT_MAX_TEAM_MEMBERS,
+      apiServiceLevelEnum,
+      featureFlags
+    );
+    const price = getFeatureForTierAsText(calcCostFeatureName(interval), apiServiceLevelEnum, featureFlags);
+    return {
+      name: getFeatureForTierAsText(FeatureNameEnum.PLATFORM_PLAN_LABEL, apiServiceLevelEnum, featureFlags),
+      price,
+      subtitle: buildSubtitle(interval, price),
+      events: `${getEventsIncludedParsedText(apiServiceLevelEnum)} events per month`,
+      features: [firstFeature, `${maxTeamMembers} team members`, lastFeature],
+      actionType: actionType,
+    };
+  };
+}
+enum ActionType {
+  BUTTON = 'button',
+  CONTACT = 'contact',
+}
+const PLAN_CONFIGURATIONS: Record<
+  string,
+  (interval: StripeBillingIntervalEnum, featureFlags: FeatureFlags) => PlanConfig
+> = {
+  [ApiServiceLevelEnum.FREE]: buildPlanConfig(
+    ApiServiceLevelEnum.FREE,
+    ActionType.BUTTON,
+    'All core features',
+    'Community support'
+  ),
+  [ApiServiceLevelEnum.PRO]: buildPlanConfig(
+    ApiServiceLevelEnum.PRO,
+    ActionType.BUTTON,
+    'Everything in Free',
+    'Remove Novu Branding'
+  ),
+  [ApiServiceLevelEnum.TEAM]: buildPlanConfig(
+    ApiServiceLevelEnum.TEAM,
+    ActionType.BUTTON,
+    'Everything in Pro',
+    'Priority support'
+  ),
+  [ApiServiceLevelEnum.ENTERPRISE]: buildPlanConfig(
+    ApiServiceLevelEnum.ENTERPRISE,
+    ActionType.CONTACT,
+    'Everything in Business',
+    'Custom contracts & SLA'
+  ),
+};
+
+function augmentPlansConfigurationsBasedOnFeatureFlag(
+  configurations: Record<string, (interval: StripeBillingIntervalEnum, featureFlags: FeatureFlags) => PlanConfig>,
+  featureFlags: FeatureFlags
+) {
+  if (!featureFlags[FeatureFlagsKeysEnum.IS_2025_Q1_TIERING_ENABLED]) {
+    delete configurations[ApiServiceLevelEnum.PRO];
+    configurations[ApiServiceLevelEnum.BUSINESS] = (
+      interval: StripeBillingIntervalEnum,
+      featureFlags: FeatureFlags
+    ) => {
+      const planConfigPostFF = configurations[ApiServiceLevelEnum.TEAM](interval, featureFlags);
+
+      return {
+        ...planConfigPostFF,
+        name: ApiServiceLevelEnum.BUSINESS,
+      };
+    };
+    delete configurations[ApiServiceLevelEnum.PRO];
+  }
+  return configurations;
+}
+
+export function PlansRow({ selectedBillingInterval, currentPlan, trial, featureFlags }: PlansRowProps) {
+  const effectiveCurrentPlan = trial?.isActive ? ApiServiceLevelEnum.FREE : currentPlan;
+  const augmentedPlans = augmentPlansConfigurationsBasedOnFeatureFlag(PLAN_CONFIGURATIONS, featureFlags);
   return (
-    <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-      {/* Free Plan */}
-      <Card
-        className={`hover:border-primary/50 relative overflow-hidden border transition-colors ${currentPlan === 'free' && !trial?.isActive ? 'border-primary border-2 shadow-md' : ''}`}
-      >
-        <div className="flex h-full flex-col p-6">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xl font-semibold">Free</h3>
-              {effectiveCurrentPlan === 'free' && (
-                <Badge variant="light" color="gray" size="sm">
-                  Current Plan
-                </Badge>
-              )}
-            </div>
-            <PlanDisplay price="$0" subtitle="free forever" events="30,000 events per month" />
-            <ul className="space-y-2">
-              <li className="flex items-center gap-2 text-sm">
-                <Check className="text-primary h-4 w-4" />
-                <span>All core features</span>
-              </li>
-              <li className="flex items-center gap-2 text-sm">
-                <Check className="text-primary h-4 w-4" />
-                <span>Up to 3 team members</span>
-              </li>
-              <li className="flex items-center gap-2 text-sm">
-                <Check className="text-primary h-4 w-4" />
-                <span>Community support</span>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </Card>
+    <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
+      {Object.entries(augmentedPlans).map(([planKey, planConfigFunc]) => {
+        const planConfig = planConfigFunc(selectedBillingInterval, featureFlags);
+        const isCurrentPlan = effectiveCurrentPlan === planKey && !trial?.isActive;
 
-      {/* Business Plan */}
-      <Card
-        className={`relative overflow-hidden border transition-colors ${currentPlan === 'business' && !trial?.isActive ? 'border-primary border-2 shadow-md' : 'hover:border-primary/50'}`}
-      >
-        <div className="flex h-full flex-col p-6">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xl font-semibold">Business</h3>
-              {effectiveCurrentPlan === 'business' && (
-                <Badge variant="light" color="gray" size="sm">
-                  Current Plan
-                </Badge>
-              )}
-            </div>
-            <PlanDisplay
-              price={businessPlanPrice}
-              subtitle={`billed ${selectedBillingInterval === 'year' ? 'annually' : 'monthly'}`}
-              events="250,000 events per month"
-            />
-            <ul className="space-y-2">
-              <li className="flex items-center gap-2 text-sm">
-                <Check className="text-primary h-4 w-4" />
-                <span>Everything in Free</span>
-              </li>
-              <li className="flex items-center gap-2 text-sm">
-                <Check className="text-primary h-4 w-4" />
-                <span>Unlimited team members</span>
-              </li>
-              <li className="flex items-center gap-2 text-sm">
-                <Check className="text-primary h-4 w-4" />
-                <span>Priority support</span>
-              </li>
-            </ul>
-          </div>
-          <div className="mt-6">
-            {effectiveCurrentPlan !== 'enterprise' && (
-              <PlanActionButton selectedBillingInterval={selectedBillingInterval} mode="filled" className="w-full" />
-            )}
-          </div>
-        </div>
-      </Card>
+        return (
+          <Card
+            key={planKey}
+            className={`relative overflow-hidden border transition-colors ${
+              isCurrentPlan ? 'border-primary border-2 shadow-md' : 'hover:border-primary/50'
+            }`}
+          >
+            <div className="flex h-full flex-col p-6">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xl font-semibold">{planConfig.name}</h3>
+                  {effectiveCurrentPlan === planKey && (
+                    <Badge variant="light" color="gray" size="sm">
+                      Current Plan
+                    </Badge>
+                  )}
+                </div>
 
-      {/* Enterprise Plan */}
-      <Card
-        className={`relative overflow-hidden border transition-colors ${currentPlan === 'enterprise' && !trial?.isActive ? 'border-primary border-2 shadow-md' : 'hover:border-primary/50'}`}
-      >
-        <div className="flex h-full flex-col p-6">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xl font-semibold">Enterprise</h3>
-              {effectiveCurrentPlan === 'enterprise' && (
-                <Badge variant="light" color="gray" size="sm">
-                  Current Plan
-                </Badge>
-              )}
-            </div>
-            <div className="space-y-1">
-              <div className="flex items-baseline gap-1">
-                <span className="text-2xl font-semibold">Custom pricing</span>
+                <PlanDisplay
+                  price={planConfig.price}
+                  subtitle={planKey === 'enterprise' ? '' : planConfig.subtitle}
+                  isEnterprise={planKey === 'enterprise'}
+                  events={planConfig.events}
+                />
+                <ul className="space-y-2">
+                  {planConfig.features.map((feature, index) => (
+                    <PlanFeature key={index} text={feature} />
+                  ))}
+                </ul>
               </div>
-              <span className="text-muted-foreground text-sm">For large-scale operations</span>
+
+              <div className="mt-6 mt-auto">
+                {planKey === 'enterprise' ? (
+                  effectiveCurrentPlan === 'enterprise' ? (
+                    <PlanActionButton
+                      selectedBillingInterval={selectedBillingInterval}
+                      checkOutServiceLevel={effectiveCurrentPlan}
+                      mode="outline"
+                      className="w-full"
+                    />
+                  ) : (
+                    <ContactSalesButton variant="outline" className="w-full" />
+                  )
+                ) : effectiveCurrentPlan !== 'enterprise' ? (
+                  <PlanActionButton
+                    selectedBillingInterval={selectedBillingInterval}
+                    checkOutServiceLevel={effectiveCurrentPlan || ApiServiceLevelEnum.FREE}
+                    mode="filled"
+                    className="w-full"
+                  />
+                ) : null}
+              </div>
             </div>
-            <ul className="space-y-2">
-              <li className="flex items-center gap-2 text-sm">
-                <Check className="text-primary h-4 w-4" />
-                <span>Everything in Business</span>
-              </li>
-              <li className="flex items-center gap-2 text-sm">
-                <Check className="text-primary h-4 w-4" />
-                <span>Unlimited team members</span>
-              </li>
-              <li className="flex items-center gap-2 text-sm">
-                <Check className="text-primary h-4 w-4" />
-                <span>Custom contracts & SLA</span>
-              </li>
-            </ul>
-          </div>
-          <div className="mt-auto">
-            {effectiveCurrentPlan === 'enterprise' ? (
-              <PlanActionButton selectedBillingInterval={selectedBillingInterval} mode="outline" className="w-full" />
-            ) : (
-              <ContactSalesButton variant="outline" className="w-full" />
-            )}
-          </div>
-        </div>
-      </Card>
+          </Card>
+        );
+      })}
     </div>
   );
 }

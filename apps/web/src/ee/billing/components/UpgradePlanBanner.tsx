@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useMantineTheme, Stack } from '@mantine/core';
-import { colors, Text, Button, When } from '@novu/design-system';
+import { Stack, useMantineTheme } from '@mantine/core';
+import { Button, colors, Text, When } from '@novu/design-system';
 import { ApiServiceLevelEnum } from '@novu/shared';
 import { useSubscription } from '../hooks/useSubscription';
 import { ContactSalesModal } from './ContactSalesModal';

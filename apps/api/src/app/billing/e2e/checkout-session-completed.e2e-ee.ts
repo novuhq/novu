@@ -1,9 +1,7 @@
 /* eslint-disable global-require */
 import sinon from 'sinon';
 import { expect } from 'chai';
-import { ApiServiceLevelEnum } from '@novu/shared';
-// eslint-disable-next-line no-restricted-imports
-import { StripeBillingIntervalEnum } from '@novu/ee-billing/src/stripe/types';
+import { ApiServiceLevelEnum, StripeBillingIntervalEnum } from '@novu/shared';
 
 const mockCheckoutSessionCompletedEvent = {
   type: 'checkout.session.completed',
@@ -171,7 +169,7 @@ describe('webhook event - checkout.session.completed #novu-v2', () => {
 
   beforeEach(() => {
     verifyCustomerStub = sinon.stub(VerifyCustomer.prototype, 'execute').resolves(verifyCustomerMock);
-    getPricesStub = sinon.stub(GetPrices.prototype, 'execute').resolves(getPricesMock);
+    getPricesStub = sinon.stub(GetStripePlanPriceUseCase.prototype, 'execute').resolves(getPricesMock);
   });
 
   afterEach(() => {
