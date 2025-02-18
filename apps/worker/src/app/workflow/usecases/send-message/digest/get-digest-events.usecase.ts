@@ -10,8 +10,8 @@ import {
   DetailEnum,
   Instrument,
   getNestedValue,
-  ExecutionLogRoute,
-  ExecutionLogRouteCommand,
+  CreateExecutionDetails,
+  CreateExecutionDetailsCommand,
 } from '@novu/application-generic';
 
 import { PlatformException } from '../../../../shared/utils';
@@ -22,7 +22,7 @@ const LOG_CONTEXT = 'GetDigestEvents';
 export abstract class GetDigestEvents {
   constructor(
     protected jobRepository: JobRepository,
-    private executionLogRoute: ExecutionLogRoute
+    private createExecutionDetails: CreateExecutionDetails
   ) {}
 
   @Instrument()
@@ -44,9 +44,9 @@ export abstract class GetDigestEvents {
     )) as Pick<JobEntity, '_id'>;
 
     if (!currentTrigger) {
-      await this.executionLogRoute.execute(
-        ExecutionLogRouteCommand.create({
-          ...ExecutionLogRouteCommand.getDetailsFromJob(currentJob),
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(currentJob),
           detail: DetailEnum.DIGEST_TRIGGERED_EVENTS,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,

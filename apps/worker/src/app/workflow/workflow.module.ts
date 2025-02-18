@@ -8,7 +8,6 @@ import {
   CompileTemplate,
   ConditionsFilter,
   CreateExecutionDetails,
-  ExecutionLogRoute,
   GetDecryptedIntegrations,
   GetLayoutUseCase,
   GetNovuLayout,
@@ -130,7 +129,6 @@ const USE_CASES = [
   TriggerMulticast,
   CompileInAppTemplate,
   InboundEmailParse,
-  ExecutionLogRoute,
   ExecuteBridgeJob,
   GetPreferences,
 ];

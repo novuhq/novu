@@ -18,8 +18,8 @@ import {
   ConditionsFilter,
   ConditionsFilterCommand,
   DetailEnum,
-  ExecutionLogRoute,
-  ExecutionLogRouteCommand,
+  CreateExecutionDetails,
+  CreateExecutionDetailsCommand,
   GetPreferences,
   GetSubscriberTemplatePreference,
   GetSubscriberTemplatePreferenceCommand,
@@ -62,7 +62,7 @@ export class SendMessage {
     private sendMessageChat: SendMessageChat,
     private sendMessagePush: SendMessagePush,
     private digest: Digest,
-    private executionLogRoute: ExecutionLogRoute,
+    private createExecutionDetails: CreateExecutionDetails,
     private getSubscriberTemplatePreferenceUsecase: GetSubscriberTemplatePreference,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private jobRepository: JobRepository,
@@ -111,9 +111,9 @@ export class SendMessage {
     if (!stepCondition?.passed || !channelPreference || isBridgeSkipped) {
       await this.jobRepository.updateStatus(command.environmentId, command.jobId, JobStatusEnum.CANCELED);
 
-      await this.executionLogRoute.execute(
-        ExecutionLogRouteCommand.create({
-          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           detail: DetailEnum.FILTER_STEPS,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.SUCCESS,
@@ -138,9 +138,9 @@ export class SendMessage {
     }
 
     if (stepType !== StepTypeEnum.DELAY) {
-      await this.executionLogRoute.execute(
-        ExecutionLogRouteCommand.create({
-          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           detail: stepType === StepTypeEnum.DIGEST ? DetailEnum.START_DIGESTING : DetailEnum.START_SENDING,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.PENDING,
@@ -354,9 +354,9 @@ export class SendMessage {
     };
 
     if (!result) {
-      await this.executionLogRoute.execute(
-        ExecutionLogRouteCommand.create({
-          ...ExecutionLogRouteCommand.getDetailsFromJob(job),
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
           detail: preferenceDetailFromPreferenceType[subscriberPreferenceType],
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.SUCCESS,
@@ -449,9 +449,9 @@ export class SendMessage {
   }
 
   protected async sendSelectedTenantExecution(job: JobEntity, tenant: TenantEntity) {
-    await this.executionLogRoute.execute(
-      ExecutionLogRouteCommand.create({
-        ...ExecutionLogRouteCommand.getDetailsFromJob(job),
+    await this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
         detail: DetailEnum.TENANT_CONTEXT_SELECTED,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.PENDING,
@@ -480,9 +480,9 @@ export class SendMessage {
         identifier: tenantIdentifier,
       });
       if (!tenant) {
-        await this.executionLogRoute.execute(
-          ExecutionLogRouteCommand.create({
-            ...ExecutionLogRouteCommand.getDetailsFromJob(job),
+        await this.createExecutionDetails.execute(
+          CreateExecutionDetailsCommand.create({
+            ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
             detail: DetailEnum.TENANT_NOT_FOUND,
             source: ExecutionDetailsSourceEnum.INTERNAL,
             status: ExecutionDetailsStatusEnum.FAILED,
