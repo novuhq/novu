@@ -63,7 +63,7 @@ export class UpsertWorkflowUseCase {
 
   @InstrumentUsecase()
   async execute(command: UpsertWorkflowCommand): Promise<WorkflowResponseDto> {
-    await this.validateMaxWorkflowsForTeir(command);
+    await this.validateMaxWorkflowsForTier(command);
     const workflowForUpdate = await this.queryWorkflow(command);
     const persistedWorkflow = await this.createOrUpdateWorkflow(workflowForUpdate, command);
     // TODO: this upsertControlValues logic should be moved to the create/update workflow usecase
@@ -77,7 +77,7 @@ export class UpsertWorkflowUseCase {
     );
   }
 
-  private async validateMaxWorkflowsForTeir(command: UpsertWorkflowCommand) {
+  private async validateMaxWorkflowsForTier(command: UpsertWorkflowCommand) {
     const existingWorkflowCount = await this.countWorkflows(command);
     await this.validateTiersUseCase.execute({
       organizationId: command.user.organizationId,
