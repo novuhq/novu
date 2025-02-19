@@ -90,7 +90,7 @@ export const AddStepMenu = ({
       }}
     >
       <PopoverTrigger asChild>
-        <span data-test-id="add-step-menu-button">
+        <span data-testid="add-step-menu-button">
           <Node
             variant="sm"
             className={cn('opacity-0 transition duration-300 ease-out hover:opacity-100', {

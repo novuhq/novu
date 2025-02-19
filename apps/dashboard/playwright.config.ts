@@ -52,22 +52,16 @@ export default defineConfig({
   /* Configure projects for major browsers */
   projects: [
     {
-      name: 'setup',
-      testMatch: /global\.setup\.ts/,
-    },
-    {
       name: 'chromium',
       testMatch: /.*\.e2e\.ts/,
       use: {
         ...devices['Desktop Chrome'],
-        storageState: 'playwright/.clerk/user.json',
         viewport: { width: 1512, height: 982 },
         video: {
           mode: 'on-first-retry',
           size: { width: 1512, height: 982 },
         },
       },
-      dependencies: ['setup'],
     },
   ],
 });

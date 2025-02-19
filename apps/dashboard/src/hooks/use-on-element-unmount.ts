@@ -25,10 +25,6 @@ export const useOnElementUnmount = (props: { callback: () => void; condition: bo
       });
 
       observer.observe(element.parentNode!, { childList: true });
-
-      return () => {
-        observer.disconnect();
-      };
     },
     [callback]
   );

@@ -1,17 +1,13 @@
-import { expect, test } from '@playwright/test';
+import { expect } from '@playwright/test';
 import { StepTypeEnum } from '@novu/shared';
 
+import { test } from './utils/fixtures';
 import { InAppStepEditor } from './page-object-models/in-app-step-editor';
 import { WorkflowsPage } from './page-object-models/workflows-page';
 import { CreateWorkflowSidebar } from './page-object-models/create-workflow-sidebar';
 import { WorkflowEditorPage } from './page-object-models/workflow-editor-page';
 import { StepConfigSidebar } from './page-object-models/step-config-sidebar';
 import { TriggerWorkflowPage } from './page-object-models/trigger-workflow-page';
-import { initializeSession } from './utils/session';
-
-test.beforeEach(async ({ page }) => {
-  await initializeSession({ page });
-});
 
 test('manage workflows', async ({ page }) => {
   const workflowName = 'test-workflow';
@@ -120,10 +116,10 @@ test('manage workflows', async ({ page }) => {
   // check the last step
   lastStep = await workflowEditorPage.getLastStep(StepTypeEnum.IN_APP);
   await expect(lastStep).toBeVisible();
-  await workflowEditorPage.clickLastStep(StepTypeEnum.IN_APP);
 
   // check the step config sidebar
-  await expect(page).toHaveTitle(`Configure ${inAppStepName} | Novu Cloud Dashboard`);
+  await expect(page).toHaveTitle(`Edit ${inAppStepName} | Novu Cloud Dashboard`);
+  await inAppStepEditor.close();
 
   // delete the step
   await stepConfigSidebar.delete();

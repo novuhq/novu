@@ -1,12 +1,12 @@
 import { UserEntity, UserRepository } from '@novu/dal';
 
-import { getEEUserRepository } from './ee.repository.factory';
+import { getEERepository } from './ee.repository.factory';
 
 export class EEUserService {
   private userRepository: UserRepository;
 
-  constructor({ mockClerkClient = true }: { mockClerkClient?: boolean } = {}) {
-    this.userRepository = getEEUserRepository({ mockClerkClient });
+  constructor() {
+    this.userRepository = getEERepository('UserRepository');
   }
 
   async createUser(userId: string): Promise<UserEntity> {

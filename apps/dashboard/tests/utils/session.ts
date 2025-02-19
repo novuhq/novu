@@ -1,53 +1,90 @@
-import { type Page } from '@playwright/test';
-import { DalService } from '@novu/dal';
-import { UserSession } from '@novu/testing';
+import { ClerkClient, createClerkClient } from '@clerk/backend';
+import { clerk, clerkSetup } from '@clerk/testing/playwright';
+import { Page } from '@playwright/test';
+import { faker } from '@faker-js/faker';
+import { DalService, EnvironmentEntity, OrganizationEntity, UserEntity } from '@novu/dal';
 
-export async function initializeSession({ page }: { page: Page }): Promise<UserSession> {
-  if (!process.env.MONGO_URL) {
-    throw new Error('Please provide MONGO_URL environment variable.');
+import { UserService } from './user-service';
+import { OrganizationService } from './organization-service';
+import { EnvironmentService } from './environment-service';
+
+export class Session {
+  private dal: DalService;
+  private clerkClient: ClerkClient;
+  private userService: UserService;
+  private organizationService: OrganizationService;
+  private environmentService: EnvironmentService;
+  public user: UserEntity;
+  public organization: OrganizationEntity;
+  public developmentEnvironment: EnvironmentEntity;
+  public productionEnvironment: EnvironmentEntity;
+
+  constructor(private page: Page) {
+    this.dal = new DalService();
+    this.clerkClient = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY });
+    this.userService = new UserService(this.clerkClient);
+    this.organizationService = new OrganizationService(this.clerkClient);
+    this.environmentService = new EnvironmentService();
   }
-  if (!process.env.API_URL) {
-    throw new Error('Please provide API_URL environment variable.');
-  }
-  if (!process.env.CLERK_EXTERNAL_USER_ID || !process.env.CLERK_EXTERNAL_ORG_ID) {
-    throw new Error('Please provide CLERK_EXTERNAL_USER_ID and CLERK_EXTERNAL_ORG_ID environment variables.');
-  }
 
-  const dal = new DalService();
-  await dal.connect(process.env.MONGO_URL ?? '');
+  async initialize() {
+    await this.dal.connect(process.env.MONGO_URL ?? '');
 
-  const session = new UserSession(process.env.API_URL);
-  await session.initialize({
-    ee: {
-      userId: process.env.CLERK_EXTERNAL_USER_ID as any,
-      orgId: process.env.CLERK_EXTERNAL_ORG_ID as any,
-      mockClerkClient: false,
-    },
-  });
+    const emailPrefix = faker.internet.email().split('@')[0];
+    const email = `${emailPrefix}@novu.co`;
+    const password = faker.internet.password();
 
-  const sessionData = {
-    token: session.token.split(' ')[1],
-    user: session.user,
-    organization: session.organization,
-    environment: session.environment,
-  };
-
-  /*
-   * Why is this necessary?
-   *
-   * Most Playwright tests, create a sessions using some utility functions. The session
-   * is injected in the test, but also needs to be injected in the browser storage, so that
-   * the app can work as expected. Currently, the apps shares token and environment information
-   * between React hooks and the api.client.ts via the localStorage. This needs to be revised
-   * in favor of an in-memory approach.
-   */
-  await page.addInitScript((currentSession) => {
-    window.addEventListener('DOMContentLoaded', () => {
-      localStorage.setItem('nv_auth_token', currentSession.token);
+    const clerkUser = await this.userService.createClerkUser({
+      email,
+      password,
+      firstName: faker.person.firstName(),
+      lastName: faker.person.lastName(),
     });
-  }, sessionData);
+    this.user = await this.userService.createNovuUser({ externalId: clerkUser.id });
 
-  await page.goto('/');
+    const clerkOrganization = await this.organizationService.createClerkOrganization({
+      name: faker.company.name(),
+      createdBy: clerkUser.id,
+    });
+    this.organization = await this.organizationService.createNovuOrganization({
+      externalId: clerkOrganization.id,
+    });
 
-  return session;
+    const { development, production } = await this.environmentService.createDevAndProdEnvironments({
+      organizationId: this.organization._id,
+      userId: this.user._id,
+    });
+    this.developmentEnvironment = development;
+    this.productionEnvironment = production;
+
+    await clerkSetup();
+
+    await this.page.goto('/');
+
+    await clerk.signIn({
+      page: this.page,
+      signInParams: {
+        strategy: 'password',
+        identifier: email,
+        password,
+      },
+    });
+
+    await this.page.goto('/');
+  }
+
+  async teardown() {
+    await this.userService.deleteClerkUser(this.user.externalId);
+    await this.organizationService.deleteClerkOrganization(this.organization.externalId);
+    await this.dal.disconnect();
+  }
+
+  async getJwt() {
+    const sessions = await this.clerkClient.sessions.getSessionList({
+      userId: this.user.externalId,
+    });
+    const token = await this.clerkClient.sessions.getToken(sessions.data[0].id, 'e2e_tests');
+
+    return token.jwt;
+  }
 }

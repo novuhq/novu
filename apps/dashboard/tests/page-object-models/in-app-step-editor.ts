@@ -76,7 +76,7 @@ export class InAppStepEditor {
   }
 
   async close(): Promise<void> {
-    const closeSidebar = await this.page.getByRole('button').filter({ hasText: 'Close' });
+    const closeSidebar = await this.page.getByTestId('tabs-close-button');
     await closeSidebar.click();
   }
 

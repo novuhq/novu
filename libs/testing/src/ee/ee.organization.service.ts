@@ -7,9 +7,9 @@ export class EEOrganizationService {
   private communityOrganizationRepository = new CommunityOrganizationRepository();
   private memberRepository: MemberRepository;
 
-  constructor({ mockClerkClient = true }: { mockClerkClient?: boolean } = {}) {
-    this.organizationRepository = getEEOrganizationRepository({ mockClerkClient });
-    this.memberRepository = getEEMemberRepository({ mockClerkClient });
+  constructor() {
+    this.organizationRepository = getEEOrganizationRepository();
+    this.memberRepository = getEEMemberRepository();
   }
 
   async createOrganization(orgId: string) {
