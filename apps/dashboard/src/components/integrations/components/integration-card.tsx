@@ -22,8 +22,10 @@ type IntegrationCardProps = {
 export function IntegrationCard({ integration, provider, environment, onClick }: IntegrationCardProps) {
   const navigate = useNavigate();
 
-  const handleConfigureClick = () => {
+  const handleConfigureClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (integration.channel === ChannelTypeEnum.IN_APP && !integration.connected) {
+      e.preventDefault();
+
       navigate(ROUTES.INBOX_EMBED + `?environmentId=${environment._id}`);
     } else {
       onClick({
