@@ -35,8 +35,8 @@ export class FeatureFlagsService {
       Logger.error(error, 'Feature Flags service has failed when shut down', LOG_CONTEXT);
     }
   }
-
-  public async getFlag<T_Result>(context: FeatureFlagContext<T_Result>) {
+  // the T_Result is inferred from the usage within the context.defaultValue in FeatureFlagContext
+  public async getFlag<T_Result>(context: FeatureFlagContext<T_Result>): Promise<T_Result> {
     return this.service.getFlag(context);
   }
 }

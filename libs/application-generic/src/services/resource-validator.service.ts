@@ -1,14 +1,20 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { CommunityOrganizationRepository, EnvironmentRepository, NotificationTemplateRepository } from '@novu/dal';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
+import {
+  CommunityOrganizationRepository,
+  EnvironmentEntity,
+  EnvironmentRepository,
+  NotificationTemplateRepository,
+  OrganizationEntity,
+} from '@novu/dal';
+import { ApiServiceLevelEnum, FeatureFlagsKeysEnum, FeatureNameEnum, getFeatureForTierAsNumber } from '@novu/shared';
 
 import { NotificationStep } from '../usecases';
 import { FeatureFlagsService } from './feature-flags';
 
+export const MAX_WORKFLOWS_LIMIT = 100;
 @Injectable()
 export class ResourceValidatorService {
   private readonly MAX_STEPS_PER_WORKFLOW = 10;
-  private readonly MAX_WORKFLOWS_LIMIT = 100;
   private readonly DISABLED_FLAG_VALUE = -1;
 
   constructor(
@@ -45,19 +51,14 @@ export class ResourceValidatorService {
       _environmentId: environmentId,
     });
 
-    if (workflowsCount < this.MAX_WORKFLOWS_LIMIT) {
+    if (workflowsCount < MAX_WORKFLOWS_LIMIT) {
       return;
     }
 
     const environment = await this.getEnvironment(environmentId);
     const organization = await this.getOrganization(environment._organizationId);
 
-    const maxWorkflowLimit = await this.featureFlagService.getFlag({
-      key: FeatureFlagsKeysEnum.MAX_WORKFLOW_LIMIT_NUMBER,
-      defaultValue: this.MAX_WORKFLOWS_LIMIT,
-      environment,
-      organization,
-    });
+    const maxWorkflowLimit = await this.getWorkflowLimit(environment, organization);
 
     if (maxWorkflowLimit === this.DISABLED_FLAG_VALUE) {
       return;
@@ -70,6 +71,26 @@ export class ResourceValidatorService {
         limit: maxWorkflowLimit,
       });
     }
+  }
+
+  private async getWorkflowLimit(environment: EnvironmentEntity, organization: OrganizationEntity) {
+    const valueFromFlag = await this.featureFlagService.getFlag({
+      key: FeatureFlagsKeysEnum.MAX_WORKFLOW_LIMIT_NUMBER,
+      defaultValue: this.DISABLED_FLAG_VALUE,
+      environment,
+      organization,
+    });
+    const maxWorkflowsFromTier = getFeatureForTierAsNumber(
+      FeatureNameEnum.PLATFORM_MAX_WORKFLOWS,
+      organization.apiServiceLevel || ApiServiceLevelEnum.FREE,
+      {},
+      false
+    );
+    if (valueFromFlag === this.DISABLED_FLAG_VALUE) {
+      return Math.min(MAX_WORKFLOWS_LIMIT, maxWorkflowsFromTier);
+    }
+
+    return valueFromFlag;
   }
 
   private async getEnvironment(environmentId: string) {
