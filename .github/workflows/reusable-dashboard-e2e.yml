@@ -76,7 +76,7 @@ jobs:
           echo VITE_API_HOSTNAME=http://127.0.0.1:1336 >> .env
           echo VITE_WEBSOCKET_HOSTNAME=http://127.0.0.1:1340 >> .env
           echo VITE_LEGACY_DASHBOARD_URL=http://127.0.0.1:4200 >> .env
-          echo VITE_CLERK_PUBLISHABLE_KEY=${{ secrets.CLERK_PUBLISHABLE_KEY }} >> .env
+          echo VITE_CLERK_PUBLISHABLE_KEY=${{ secrets.CLERK_E2E_PUBLISHABLE_KEY }} >> .env
 
       - name: Create .env file for the Playwright
         working-directory: apps/dashboard
@@ -88,15 +88,9 @@ jobs:
           echo MONGO_URL=mongodb://127.0.0.1:27017/novu-test >> .env.playwright
           echo API_URL=http://127.0.0.1:1336 >> .env.playwright
           echo CLERK_ENABLED=true >> .env.playwright
-          echo CLERK_USER_USERNAME=${{ secrets.CLERK_USER_USERNAME }} >> .env.playwright
-          echo CLERK_USER_PASSWORD=${{ secrets.CLERK_USER_PASSWORD }} >> .env.playwright
-          echo CLERK_PUBLISHABLE_KEY=${{ secrets.CLERK_PUBLISHABLE_KEY }} >> .env.playwright
-          echo CLERK_SECRET_KEY=${{ secrets.CLERK_SECRET_KEY }} >> .env.playwright
-          echo CLERK_LONG_LIVED_TOKEN=${{ secrets.CLERK_LONG_LIVED_TOKEN }} >> .env.playwright
-          echo CLERK_PRIVATE_KEY=\"$(echo ${{ secrets.DASHBOARD_E2E_CLERK_PRIVATE_KEY }} | base64 -d)\" >> .env.playwright
-          echo CLERK_PEM_PUBLIC_KEY=\"$(echo ${{ secrets.DASHBOARD_E2E_CLERK_PEM_PUBLIC_KEY }} | base64 -d)\" >> .env.playwright
-          echo CLERK_EXTERNAL_ORG_ID=org_2p9RYIgFs6Z2sSdQDpnuA1mJ4dx >> .env.playwright
-          echo CLERK_EXTERNAL_USER_ID=user_2p7nkg2pyfTjLopPsLMh5ukMRkF >> .env.playwright
+          echo CLERK_PUBLISHABLE_KEY=${{ secrets.CLERK_E2E_PUBLISHABLE_KEY }} >> .env.playwright
+          echo CLERK_SECRET_KEY=${{ secrets.CLERK_E2E_SECRET_KEY }} >> .env.playwright
+          echo NODE_ENV=test >> .env.playwright
 
       - uses: mansagroup/nrwl-nx-action@v3
         with:
@@ -112,15 +106,9 @@ jobs:
           LAUNCH_DARKLY_SDK_KEY: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
           CI_EE_TEST: true
           CLERK_ENABLED: true
-          CLERK_ISSUER_URL: ${{ vars.CLERK_ISSUER_URL }}
-          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
-          CLERK_PRIVATE_KEY_BASE64: ${{ secrets.CLERK_PRIVATE_KEY_BASE64 }}
-          CLERK_PEM_PUBLIC_KEY_BASE64: ${{ secrets.CLERK_PEM_PUBLIC_KEY_BASE64 }}
-          CLERK_WEBHOOK_SECRET: ${{ secrets.CLERK_WEBHOOK_SECRET }}
-          CLERK_LONG_LIVED_TOKEN: ${{ secrets.CLERK_LONG_LIVED_TOKEN }}
+          CLERK_ISSUER_URL: https://neat-mole-83.clerk.accounts.dev
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_E2E_SECRET_KEY }}
         run: |
-          export CLERK_PEM_PUBLIC_KEY=$(echo $CLERK_PEM_PUBLIC_KEY_BASE64 | base64 -d)
-          export CLERK_PRIVATE_KEY=$(echo $CLERK_PRIVATE_KEY_BASE64 | base64 -d)
           cd apps/api && pnpm start:test &
 
       - name: Start Worker
