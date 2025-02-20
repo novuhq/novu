@@ -1,5 +1,4 @@
 import { GetMxRecord } from '../../inbound-parse/usecases/get-mx-record/get-mx-record.usecase';
-import { ValidateTiersUseCase } from '../../workflows-v2/usecases/service-level-tier-validator';
 import { CreateEnvironment } from './create-environment/create-environment.usecase';
 import { DeleteEnvironment } from './delete-environment';
 import { GenerateUniqueApiKey } from './generate-unique-api-key/generate-unique-api-key.usecase';
@@ -11,7 +10,6 @@ import { UpdateEnvironment } from './update-environment/update-environment.useca
 
 export const USE_CASES = [
   GetMxRecord,
-  ValidateTiersUseCase,
   CreateEnvironment,
   UpdateEnvironment,
   GenerateUniqueApiKey,

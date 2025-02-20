@@ -4,7 +4,7 @@ import { expect } from 'chai';
 import { ApiServiceLevelEnum, StripeBillingIntervalEnum } from '@novu/shared';
 // eslint-disable-next-line no-restricted-imports
 import { StripeSubscriptionStatusEnum, StripeUsageTypeEnum } from '@novu/ee-billing/src/stripe/types';
-import { GetPrices } from '../../../../../../enterprise/packages/billing/dist';
+import { GetPrices } from '@novu/ee-billing';
 
 describe('CreateSubscription #novu-v2', () => {
   const eeBilling = require('@novu/ee-billing');

@@ -34,7 +34,6 @@ import { PatchStepUsecase } from './usecases/patch-step-data';
 import { ExtractVariables } from './usecases/extract-variables/extract-variables.usecase';
 import { BuildStepIssuesUsecase } from './usecases/build-step-issues/build-step-issues.usecase';
 import { WorkflowController } from './workflow.controller';
-import { ValidateTiersUseCase } from './usecases/service-level-tier-validator';
 
 const DAL_REPOSITORIES = [CommunityOrganizationRepository];
 
@@ -62,7 +61,6 @@ const DAL_REPOSITORIES = [CommunityOrganizationRepository];
     PatchStepUsecase,
     PatchWorkflowUsecase,
     ExtractVariables,
-    ValidateTiersUseCase,
     BuildStepIssuesUsecase,
     ResourceValidatorService,
     TierRestrictionsValidateUsecase,

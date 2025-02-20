@@ -43,7 +43,6 @@ import { computeWorkflowStatus } from '../../shared/compute-workflow-status';
 import { BuildStepIssuesUsecase } from '../build-step-issues/build-step-issues.usecase';
 import { GetWorkflowCommand, GetWorkflowUseCase } from '../get-workflow';
 import { UpsertWorkflowCommand, UpsertWorkflowDataCommand } from './upsert-workflow.command';
-import { TierValidationTypeEnum, ValidateTiersUseCase } from '../service-level-tier-validator';
 
 @Injectable()
 export class UpsertWorkflowUseCase {
@@ -57,13 +56,11 @@ export class UpsertWorkflowUseCase {
     private controlValuesRepository: ControlValuesRepository,
     private upsertControlValuesUseCase: UpsertControlValuesUseCase,
     private analyticsService: AnalyticsService,
-    private notificationTemplateRepository: NotificationTemplateRepository,
-    private validateTiersUseCase: ValidateTiersUseCase
+    private notificationTemplateRepository: NotificationTemplateRepository
   ) {}
 
   @InstrumentUsecase()
   async execute(command: UpsertWorkflowCommand): Promise<WorkflowResponseDto> {
-    await this.validateMaxWorkflowsForTier(command);
     const workflowForUpdate = await this.queryWorkflow(command);
     const persistedWorkflow = await this.createOrUpdateWorkflow(workflowForUpdate, command);
     // TODO: this upsertControlValues logic should be moved to the create/update workflow usecase
@@ -75,15 +72,6 @@ export class UpsertWorkflowUseCase {
         user: command.user,
       })
     );
-  }
-
-  private async validateMaxWorkflowsForTier(command: UpsertWorkflowCommand) {
-    const existingWorkflowCount = await this.countWorkflows(command);
-    await this.validateTiersUseCase.execute({
-      organizationId: command.user.organizationId,
-      validationType: TierValidationTypeEnum.WORKFLOW_COUNT,
-      valueToValidate: existingWorkflowCount,
-    });
   }
 
   @Instrument()

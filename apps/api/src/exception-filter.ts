@@ -6,7 +6,6 @@ import { captureException } from '@sentry/node';
 import { ZodError } from 'zod';
 import { InternalServerErrorException } from '@nestjs/common/exceptions/internal-server-error.exception';
 import { ErrorDto, ValidationErrorDto } from './error-dto';
-import { TierExceededException } from './app/workflows-v2/usecases/service-level-tier-validator';
 
 const ERROR_MSG_500 = `Internal server error, contact support and provide them with the errorId`;
 export class AllExceptionsFilter implements ExceptionFilter {
@@ -54,9 +53,6 @@ export class AllExceptionsFilter implements ExceptionFilter {
   private buildErrorResponse(exception: unknown, request: Request): ErrorDto {
     if (exception instanceof ZodError) {
       return this.handleZod(exception, request);
-    }
-    if (exception instanceof TierExceededException) {
-      return this.handleTierException(exception, request);
     }
     if (exception instanceof CommandValidationException) {
       return this.handleCommandValidation(exception, request);
@@ -129,14 +125,6 @@ export class AllExceptionsFilter implements ExceptionFilter {
     };
 
     return this.buildErrorDto(request, HttpStatus.BAD_REQUEST, 'Zod Validation Failed', ctx);
-  }
-
-  private handleTierException(exception: TierExceededException, request: Request) {
-    const ctx = {
-      tierExceeded: exception.tierValidationEnum,
-    };
-
-    return this.buildErrorDto(request, HttpStatus.PAYMENT_REQUIRED, 'Tier Exceeded', ctx);
   }
 }
 

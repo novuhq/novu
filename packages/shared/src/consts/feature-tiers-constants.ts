@@ -412,7 +412,6 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
     [ApiServiceLevelEnum.ENTERPRISE]: 1,
     [ApiServiceLevelEnum.UNLIMITED]: 1,
   },
-  // ... (previous code remains the same)
 
   [FeatureNameEnum.COMPLIANCE_SOC2_ISO27001_REPORT_BOOLEAN]: {
     [ApiServiceLevelEnum.FREE]: 0,
