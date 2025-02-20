@@ -91,7 +91,7 @@ const TagInput = forwardRef<HTMLInputElement, TagInputProps>((props, ref) => {
 
                   removeTag(tag);
                 }}
-                data-testid={`tags-badge-remove-${tag}`}
+                dismissTestId={`tags-badge-remove-${tag}`}
               >
                 <span style={{ wordBreak: 'break-all' }} data-testid="tags-badge-value">
                   {tag}

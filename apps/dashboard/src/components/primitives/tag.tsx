@@ -162,15 +162,16 @@ type TagProps = {
   onDismiss?: React.MouseEventHandler<HTMLButtonElement>;
   asChild?: boolean;
   className?: string;
+  dismissTestId?: string;
 } & Pick<VariantProps<typeof tagVariants>, 'variant' | 'disabled'>;
 
 const Tag = React.forwardRef<HTMLDivElement, TagProps>(
-  ({ children, icon, onDismiss, asChild, variant, disabled, className, ...rest }, ref) => {
+  ({ children, icon, onDismiss, asChild, variant, disabled, className, dismissTestId, ...rest }, ref) => {
     return (
       <TagRoot ref={ref} asChild={asChild} variant={variant} disabled={disabled} className={className} {...rest}>
         {icon && <TagIcon as={icon.type} {...icon.props} />}
         {children}
-        {onDismiss && <TagDismissButton onClick={onDismiss} disabled={disabled} />}
+        {onDismiss && <TagDismissButton onClick={onDismiss} disabled={disabled} data-testid={dismissTestId} />}
       </TagRoot>
     );
   }
