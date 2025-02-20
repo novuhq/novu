@@ -13,7 +13,7 @@ export type FlagType<T> = T extends BooleanFlagKey ? boolean : T extends Numeric
  * Helper function to test that enum keys and values match correct format.
  *
  * It is not possible as of Typescript 5.2 to declare a type for an enum key or value in-line.
- * Therefore we must test the enum via a helper function that abstracts the enum to an object.
+ * Therefore, we must test the enum via a helper function that abstracts the enum to an object.
  *
  * If the test fails, you should review your `enum` to verify that both the
  * keys and values match the format specified by the `FlagKey` template literal type.

@@ -1,7 +1,6 @@
 import { init, LDClient, LDMultiKindContext } from '@launchdarkly/node-server-sdk';
 import { Injectable } from '@nestjs/common';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
-import type { IFeatureFlagContext, IFeatureFlagsService } from './types';
+import type { FeatureFlagContext, FeatureFlagContextBase, IFeatureFlagsService } from './types';
 
 @Injectable()
 export class LaunchDarklyFeatureFlagsService implements IFeatureFlagsService {
@@ -25,38 +24,17 @@ export class LaunchDarklyFeatureFlagsService implements IFeatureFlagsService {
     }
   }
 
-  async getBooleanFlag<T extends FeatureFlagsKeysEnum>({
+  async getFlag<T_Result>({
     key,
     defaultValue,
     environment,
     organization,
     user,
-  }: IFeatureFlagContext<T>): Promise<boolean> {
-    return (await this.client.variation(
-      key,
-      this.buildLDContext({ user, organization, environment }),
-      defaultValue
-    )) as boolean;
-  }
-  async getNumberFlag<T extends FeatureFlagsKeysEnum>({
-    key,
-    defaultValue,
-    environment,
-    organization,
-    user,
-  }: IFeatureFlagContext<T>): Promise<number> {
-    return (await this.client.variation(
-      key,
-      this.buildLDContext({ user, organization, environment }),
-      defaultValue
-    )) as number;
+  }: FeatureFlagContext<T_Result>): Promise<T_Result> {
+    return await this.client.variation(key, this.buildLDContext({ user, organization, environment }), defaultValue);
   }
 
-  private buildLDContext<T extends FeatureFlagsKeysEnum>({
-    user,
-    organization,
-    environment,
-  }: Pick<IFeatureFlagContext<T>, 'user' | 'organization' | 'environment'>): LDMultiKindContext {
+  private buildLDContext({ user, organization, environment }: FeatureFlagContextBase): LDMultiKindContext {
     const mappedContext: LDMultiKindContext = {
       kind: 'multi',
     };

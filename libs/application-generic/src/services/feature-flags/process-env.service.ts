@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
-import type { IFeatureFlagContext, IFeatureFlagsService } from './types';
+import type { FeatureFlagContext, IFeatureFlagsService } from './types';
 
 @Injectable()
 export class ProcessEnvFeatureFlagsService implements IFeatureFlagsService {
@@ -13,14 +12,17 @@ export class ProcessEnvFeatureFlagsService implements IFeatureFlagsService {
     this.isEnabled = false;
   }
 
-  async getBooleanFlag<T extends FeatureFlagsKeysEnum>({
-    key,
-    defaultValue,
-  }: IFeatureFlagContext<T>): Promise<boolean> {
-    return process.env[key] === 'true' || (defaultValue as boolean);
-  }
+  async getFlag<T_Result>(context: FeatureFlagContext<T_Result>): Promise<T_Result> {
+    const processEnvValue = process.env[context.key];
 
-  async getNumberFlag<T extends FeatureFlagsKeysEnum>({ key, defaultValue }: IFeatureFlagContext<T>): Promise<number> {
-    return Number(process.env[key]) || (defaultValue as number);
+    if (typeof context.defaultValue === 'number') {
+      return Number(processEnvValue) as T_Result;
+    }
+
+    if (typeof context.defaultValue === 'boolean') {
+      return (processEnvValue === 'true') as T_Result;
+    }
+
+    return (processEnvValue || context.defaultValue) as T_Result;
   }
 }
