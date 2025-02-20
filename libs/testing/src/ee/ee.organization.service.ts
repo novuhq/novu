@@ -1,16 +1,11 @@
 import { ApiServiceLevelEnum, MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
 import { CommunityOrganizationRepository, MemberRepository, OrganizationRepository } from '@novu/dal';
-import { getEEMemberRepository, getEEOrganizationRepository, getEERepository } from './ee.repository.factory';
+import { getEERepository } from './ee.repository.factory';
 
 export class EEOrganizationService {
-  private organizationRepository: OrganizationRepository;
+  private organizationRepository = getEERepository<OrganizationRepository>('OrganizationRepository');
   private communityOrganizationRepository = new CommunityOrganizationRepository();
-  private memberRepository: MemberRepository;
-
-  constructor() {
-    this.organizationRepository = getEEOrganizationRepository();
-    this.memberRepository = getEEMemberRepository();
-  }
+  private memberRepository = getEERepository<MemberRepository>('MemberRepository');
 
   async createOrganization(orgId: string) {
     //  if internal organization exists delete so we can re-create with same Clerk org id

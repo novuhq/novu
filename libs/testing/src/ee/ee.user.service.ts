@@ -3,11 +3,7 @@ import { UserEntity, UserRepository } from '@novu/dal';
 import { getEERepository } from './ee.repository.factory';
 
 export class EEUserService {
-  private userRepository: UserRepository;
-
-  constructor() {
-    this.userRepository = getEERepository('UserRepository');
-  }
+  private userRepository = getEERepository<UserRepository>('UserRepository');
 
   async createUser(userId: string): Promise<UserEntity> {
     // link external user to newly created internal user

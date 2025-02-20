@@ -45,14 +45,14 @@ function getEEUserRepository() {
   return new EEUserRepository(new CommunityUserRepository(), clerkClientMock);
 }
 
-export function getEEOrganizationRepository() {
+function getEEOrganizationRepository() {
   // nx-ignore-next-line
   const { EEOrganizationRepository } = require('@novu/ee-auth');
 
   return new EEOrganizationRepository(new CommunityOrganizationRepository(), clerkClientMock);
 }
 
-export function getEEMemberRepository() {
+function getEEMemberRepository() {
   // nx-ignore-next-line
   const { EEMemberRepository } = require('@novu/ee-auth');
 

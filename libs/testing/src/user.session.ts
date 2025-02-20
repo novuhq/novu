@@ -154,6 +154,7 @@ export class UserSession {
 
     // already existing user in Clerk
     const user = await userService.getUser(userId);
+
     if (!user._id) {
       // not linked in clerk
       this.user = await userService.createUser(userId);
