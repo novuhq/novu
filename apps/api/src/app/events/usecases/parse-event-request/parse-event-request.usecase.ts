@@ -202,6 +202,19 @@ export class ParseEventRequest {
       ...command,
     };
 
+    if ('to' in commandArgs) {
+      const validSubscribers = this.removeInvalidRecipients(commandArgs.to);
+
+      if (!validSubscribers) {
+        return {
+          acknowledged: true,
+          status: TriggerEventStatusEnum.INVALID_RECIPIENTS,
+          transactionId,
+        };
+      }
+      commandArgs.to = validSubscribers;
+    }
+
     const jobData: IWorkflowDataDto = {
       ...commandArgs,
       actor: command.actor,
@@ -299,7 +312,7 @@ export class ParseEventRequest {
   }
 
   private isValidId(subscriberId: string) {
-    if (subscriberId.trim().match(SUBSCRIBER_ID_REGEX)) {
+    if (subscriberId?.trim().match(SUBSCRIBER_ID_REGEX)) {
       return subscriberId.trim();
     }
   }
