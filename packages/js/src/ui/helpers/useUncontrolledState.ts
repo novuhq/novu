@@ -1,4 +1,4 @@
-import { Accessor, createEffect, createSignal, Setter } from 'solid-js';
+import { Accessor, createSignal, Setter } from 'solid-js';
 
 type UseUncontrolledState = {
   value?: boolean;

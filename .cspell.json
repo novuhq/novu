@@ -728,7 +728,8 @@
     "liquified",
     "autoload",
     "novugo",
-    "titleize"
+    "titleize",
+    "oklch"
   ],
   "flagWords": [],
   "patterns": [

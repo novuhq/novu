@@ -1,10 +1,10 @@
 import { JSX } from 'solid-js';
 
-export const ArrowLeft = (props?: JSX.HTMLAttributes<SVGSVGElement>) => {
+export const ArrowDown = (props?: JSX.HTMLAttributes<SVGSVGElement>) => {
   return (
     <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
       <path
-        d="M9.20425 9.99907L12.9168 13.7116L11.8563 14.7721L7.08325 9.99907L11.8563 5.22607L12.9168 6.28657L9.20425 9.99907Z"
+        d="M10.0001 10.879L13.7126 7.1665L14.7731 8.227L10.0001 13L5.22705 8.227L6.28755 7.1665L10.0001 10.879Z"
         fill="currentColor"
       />
     </svg>

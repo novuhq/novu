@@ -132,7 +132,7 @@
     "socket.io-client": "4.7.2",
     "solid-floating-ui": "^0.3.1",
     "solid-js": "^1.8.11",
-    "solid-motionone": "^1.0.1",
+    "solid-motionone": "^1.0.3",
     "tailwind-merge": "^2.4.0"
   },
   "nx": {
