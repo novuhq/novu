@@ -63,8 +63,8 @@ export function ActivePlanBanner({ selectedBillingInterval }: ActivePlanBannerPr
             </div>
 
             <PlanActionButton
-              selectedBillingInterval={selectedBillingInterval}
-              checkOutServiceLevel={subscription?.apiServiceLevel || ApiServiceLevelEnum.FREE}
+              billingInterval={selectedBillingInterval}
+              requestedServiceLevel={subscription?.apiServiceLevel || ApiServiceLevelEnum.FREE}
               mode="outline"
               size="sm"
               className="shrink-0"

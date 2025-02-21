@@ -205,8 +205,8 @@ export function PlansRow({ selectedBillingInterval, currentPlan, trial, featureF
                 {planKey === 'enterprise' ? (
                   effectiveCurrentPlan === 'enterprise' ? (
                     <PlanActionButton
-                      selectedBillingInterval={selectedBillingInterval}
-                      checkOutServiceLevel={effectiveCurrentPlan}
+                      billingInterval={selectedBillingInterval}
+                      requestedServiceLevel={effectiveCurrentPlan}
                       mode="outline"
                       className="w-full"
                     />
@@ -215,8 +215,8 @@ export function PlansRow({ selectedBillingInterval, currentPlan, trial, featureF
                   )
                 ) : effectiveCurrentPlan !== 'enterprise' ? (
                   <PlanActionButton
-                    selectedBillingInterval={selectedBillingInterval}
-                    checkOutServiceLevel={effectiveCurrentPlan || ApiServiceLevelEnum.FREE}
+                    billingInterval={selectedBillingInterval}
+                    requestedServiceLevel={effectiveCurrentPlan || ApiServiceLevelEnum.FREE}
                     mode="filled"
                     className="w-full"
                   />
