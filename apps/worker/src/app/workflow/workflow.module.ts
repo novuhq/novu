@@ -20,6 +20,7 @@ import {
   ProcessTenant,
   SelectIntegration,
   SelectVariant,
+  TierRestrictionsValidateUsecase,
   TriggerBroadcast,
   TriggerEvent,
   TriggerMulticast,
@@ -85,6 +86,7 @@ const REPOSITORIES = [JobRepository, CommunityOrganizationRepository, Preference
 
 const USE_CASES = [
   AddDelayJob,
+  TierRestrictionsValidateUsecase,
   MergeOrCreateDigest,
   AddJob,
   CalculateLimitNovuIntegration,
