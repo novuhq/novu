@@ -23,6 +23,7 @@ export async function processFilters(value: string, filters: FilterWithParam[]):
       if (!filter.params?.length) {
         return filter.value;
       }
+
       return `${filter.value}: ${filter.params.map((param) => `"${param}"`).join(', ')}`;
     })
     .join(' | ');

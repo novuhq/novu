@@ -8,6 +8,7 @@ import { SegmentContext } from './segment-provider';
  */
 export const useSegment = () => {
   const result = React.useContext(SegmentContext);
+
   if (!result) {
     throw new Error('Context used outside of its Provider!');
   }

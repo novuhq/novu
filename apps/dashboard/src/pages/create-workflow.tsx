@@ -11,29 +11,34 @@ import {
 } from '@/components/primitives/sheet';
 import { ExternalLink } from '@/components/shared/external-link';
 import { CreateWorkflowForm } from '@/components/workflow-editor/create-workflow-form';
+import { useEnvironment } from '@/context/environment/hooks';
 import { useCreateWorkflow } from '@/hooks/use-create-workflow';
 import { useOnElementUnmount } from '@/hooks/use-on-element-unmount';
-import { useRef, useState } from 'react';
+import { buildRoute, ROUTES } from '@/utils/routes';
+import { useState } from 'react';
 import { RiArrowRightSLine } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
 
 export function CreateWorkflowPage() {
   const navigate = useNavigate();
-
   const { submit, isLoading: isCreating } = useCreateWorkflow();
   const [open, setOpen] = useState(true);
-  const sheetRef = useRef<HTMLDivElement>(null);
+  const { currentEnvironment } = useEnvironment();
 
-  useOnElementUnmount({
-    element: sheetRef.current,
+  const { ref: unmountRef } = useOnElementUnmount({
     callback: () => {
-      navigate(-1);
+      navigate(
+        buildRoute(ROUTES.WORKFLOWS, {
+          environmentSlug: currentEnvironment?.slug ?? '',
+        })
+      );
     },
+    condition: !open,
   });
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
-      <SheetContent ref={sheetRef} onOpenAutoFocus={(e) => e.preventDefault()}>
+      <SheetContent ref={unmountRef}>
         <SheetHeader>
           <SheetTitle>Create workflow</SheetTitle>
           <div>

@@ -9,18 +9,20 @@ export class CreateSubscriber {
   constructor(private subscriberRepository: SubscriberRepository) {}
 
   async execute(command: CreateSubscriberCommand): Promise<SubscriberResponseDto> {
+    const { subscriberId } = command.createSubscriberRequestDto;
     const existingSubscriber = await this.subscriberRepository.findOne({
-      subscriberId: command.createSubscriberRequestDto.subscriberId,
+      subscriberId,
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
     });
 
     if (existingSubscriber) {
-      throw new ConflictException(`Subscriber: ${command.createSubscriberRequestDto.subscriberId} already exists`);
+      throw new ConflictException(`Subscriber: ${subscriberId} already exists`);
     }
 
     const createdSubscriber = await this.subscriberRepository.create({
       ...command.createSubscriberRequestDto,
+      subscriberId,
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
     });

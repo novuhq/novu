@@ -83,6 +83,7 @@ export async function workflowsWorkflowControllerSync(
   const requestSecurity = resolveGlobalSecurity(securityInput);
 
   const context = {
+    baseURL: options?.serverURL ?? "",
     operationID: "WorkflowController_sync",
     oAuth2Scopes: [],
 

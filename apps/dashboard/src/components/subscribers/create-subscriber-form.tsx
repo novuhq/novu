@@ -1,28 +1,28 @@
-import { useBeforeUnload } from '@/hooks/use-before-unload';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/primitives/avatar';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { useCreateSubscriber } from '@/hooks/use-create-subscriber';
+import { useTelemetry } from '@/hooks/use-telemetry';
+import { TelemetryEvent } from '@/utils/telemetry';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { loadLanguage } from '@uiw/codemirror-extensions-langs';
 import { useForm } from 'react-hook-form';
 import { RiCloseCircleLine, RiGroup2Line, RiInformationFill, RiMailLine } from 'react-icons/ri';
-import { Link, useBlocker } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { ExternalToast } from 'sonner';
 import { z } from 'zod';
 import { Button } from '../primitives/button';
 import { CompactButton } from '../primitives/button-compact';
 import { Editor } from '../primitives/editor';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../primitives/form/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormRoot } from '../primitives/form/form';
 import { InlineToast } from '../primitives/inline-toast';
 import { Input, InputRoot } from '../primitives/input';
 import { PhoneInput } from '../primitives/phone-input';
 import { Separator } from '../primitives/separator';
 import { showErrorToast, showSuccessToast } from '../primitives/sonner-helpers';
 import TruncatedText from '../truncated-text';
-import { UnsavedChangesAlertDialog } from '../unsaved-changes-alert-dialog';
 import { LocaleSelect } from './locale-select';
 import { CreateSubscriberFormSchema } from './schema';
 import { TimezoneSelect } from './timezone-select';
-import { useTelemetry } from '@/hooks/use-telemetry';
-import { TelemetryEvent } from '@/utils/telemetry';
 
 const extensions = [loadLanguage('json')?.extension ?? []];
 const basicSetup = { lineNumbers: true, defaultKeymap: true };
@@ -58,10 +58,6 @@ export const CreateSubscriberForm = (props: CreateSubscriberFormProps) => {
     mode: 'onBlur',
   });
 
-  const isDirty = Object.keys(form.formState.dirtyFields).length > 0;
-  const blocker = useBlocker(isDirty);
-  useBeforeUnload(isDirty);
-
   const { createSubscriber } = useCreateSubscriber({
     onSuccess: () => {
       showSuccessToast('Created subscriber successfully', undefined, toastOptions);
@@ -79,10 +75,12 @@ export const CreateSubscriberForm = (props: CreateSubscriberFormProps) => {
 
     const dirtyPayload = Object.keys(dirtyFields).reduce<Partial<typeof formData>>((acc, key) => {
       const typedKey = key as keyof typeof formData;
+
       if (typedKey === 'data') {
         const data = JSON.parse(JSON.stringify(formData.data));
         return { ...acc, data: data === '' ? {} : data };
       }
+
       return { ...acc, [typedKey]: formData[typedKey]?.trim() };
     }, {});
 
@@ -91,6 +89,9 @@ export const CreateSubscriberForm = (props: CreateSubscriberFormProps) => {
       subscriber: { ...dirtyPayload, subscriberId: formData.subscriberId },
     });
   };
+
+  const firstNameChar = form.getValues('firstName')?.charAt(0) || '';
+  const lastNameChar = form.getValues('lastName')?.charAt(0) || '';
 
   return (
     <div className="flex h-full flex-col">
@@ -101,51 +102,76 @@ export const CreateSubscriberForm = (props: CreateSubscriberFormProps) => {
         </div>
       </header>
       <Form {...form}>
-        <form autoComplete="off" noValidate onSubmit={form.handleSubmit(onSubmit)} className="flex h-full flex-col">
+        <FormRoot autoComplete="off" noValidate onSubmit={form.handleSubmit(onSubmit)} className="flex h-full flex-col">
           <div className="flex flex-col items-stretch gap-6 p-5">
-            <div className="grid grid-cols-2 gap-2.5">
-              <FormField
-                control={form.control}
-                name="firstName"
-                render={({ field, fieldState }) => (
-                  <FormItem>
-                    <FormLabel>First Name</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        placeholder={field.name}
-                        id={field.name}
-                        value={field.value}
-                        onChange={field.onChange}
-                        hasError={!!fieldState.error}
-                        size="xs"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="lastName"
-                render={({ field, fieldState }) => (
-                  <FormItem>
-                    <FormLabel>Last Name</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        placeholder={field.name}
-                        id={field.name}
-                        value={field.value}
-                        onChange={field.onChange}
-                        hasError={!!fieldState.error}
-                        size="xs"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <div className="flex items-center gap-3">
+              <Tooltip>
+                <TooltipTrigger
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
+                >
+                  <Avatar className="size-[3.75rem] cursor-default">
+                    <AvatarImage src={firstNameChar || lastNameChar ? '' : '/images/avatar.svg'} />
+                    <AvatarFallback>
+                      {firstNameChar || lastNameChar ? (
+                        firstNameChar + lastNameChar
+                      ) : (
+                        <AvatarImage src="/images/avatar.svg" />
+                      )}
+                    </AvatarFallback>
+                  </Avatar>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-56">
+                  Subscriber profile Image can only be updated via API
+                </TooltipContent>
+              </Tooltip>
+              <div className="grid w-full grid-cols-2 gap-2.5">
+                <FormField
+                  control={form.control}
+                  name="firstName"
+                  render={({ field, fieldState }) => (
+                    <FormItem>
+                      <FormLabel>First Name</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          placeholder={'John'}
+                          id={field.name}
+                          value={field.value}
+                          onChange={field.onChange}
+                          hasError={!!fieldState.error}
+                          size="xs"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="lastName"
+                  render={({ field, fieldState }) => (
+                    <FormItem>
+                      <FormLabel>Last Name</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          placeholder={'Doe'}
+                          id={field.name}
+                          value={field.value}
+                          onChange={field.onChange}
+                          hasError={!!fieldState.error}
+                          size="xs"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
             <div>
               <FormField
@@ -244,12 +270,12 @@ export const CreateSubscriberForm = (props: CreateSubscriberFormProps) => {
               />
             </div>
 
-            <div className="flex flex-nowrap gap-2.5">
+            <div className="grid grid-cols-[1fr_3fr] gap-2.5">
               <FormField
                 control={form.control}
                 name="locale"
                 render={({ field }) => (
-                  <FormItem className="w-1/4">
+                  <FormItem>
                     <FormLabel>Locale</FormLabel>
                     <FormControl>
                       <LocaleSelect
@@ -268,7 +294,7 @@ export const CreateSubscriberForm = (props: CreateSubscriberFormProps) => {
                 control={form.control}
                 name="timezone"
                 render={({ field }) => (
-                  <FormItem className="flex-1">
+                  <FormItem className="overflow-hidden">
                     <FormLabel>Timezone</FormLabel>
                     <FormControl>
                       <TimezoneSelect
@@ -363,9 +389,8 @@ export const CreateSubscriberForm = (props: CreateSubscriberFormProps) => {
               </Button>
             </div>
           </div>
-        </form>
+        </FormRoot>
       </Form>
-      <UnsavedChangesAlertDialog blocker={blocker} />
     </div>
   );
 };

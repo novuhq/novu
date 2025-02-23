@@ -14,13 +14,8 @@ import { SelectIntegration } from './select-integration.usecase';
 import { SelectIntegrationCommand } from './select-integration.command';
 import { ConditionsFilter } from '../conditions-filter';
 import { CompileTemplate } from '../compile-template';
-import {
-  FeatureFlagsService,
-  WorkflowInMemoryProviderService,
-} from '../../services';
 import { ExecutionLogRoute } from '../execution-log-route';
 import { CreateExecutionDetails } from '../create-execution-details';
-import { GetFeatureFlag } from '../get-feature-flag';
 
 const testIntegration: IntegrationEntity = {
   _environmentId: 'env-test-123',
@@ -92,10 +87,8 @@ jest.mock('../get-decrypted-integrations', () => ({
 
 describe('select integration', function () {
   let useCase: SelectIntegration;
-  const integrationRepository: IntegrationRepository =
-    new IntegrationRepository();
-  const executionDetailsRepository: ExecutionDetailsRepository =
-    new ExecutionDetailsRepository();
+  const integrationRepository: IntegrationRepository = new IntegrationRepository();
+  const executionDetailsRepository: ExecutionDetailsRepository = new ExecutionDetailsRepository();
 
   const conditionsFilter = new ConditionsFilter(
     new SubscriberRepository(),
@@ -103,18 +96,12 @@ describe('select integration', function () {
     executionDetailsRepository,
     new JobRepository(),
     new EnvironmentRepository(),
-    new ExecutionLogRoute(
-      new CreateExecutionDetails(new ExecutionDetailsRepository()),
-    ),
-    new CompileTemplate(),
+    new ExecutionLogRoute(new CreateExecutionDetails(new ExecutionDetailsRepository())),
+    new CompileTemplate()
   );
   beforeEach(async function () {
     // @ts-ignore
-    useCase = new SelectIntegration(
-      integrationRepository,
-      conditionsFilter,
-      new TenantRepository(),
-    );
+    useCase = new SelectIntegration(integrationRepository, conditionsFilter, new TenantRepository());
     jest.clearAllMocks();
   });
 
@@ -126,7 +113,7 @@ describe('select integration', function () {
         organizationId: 'organizationId',
         userId: 'userId',
         filterData: {},
-      }),
+      })
     );
 
     expect(integration).not.toBeNull();
@@ -143,7 +130,7 @@ describe('select integration', function () {
         organizationId: 'organizationId',
         userId: 'userId',
         filterData: {},
-      }),
+      })
     );
 
     expect(integration).not.toBeNull();
@@ -175,7 +162,7 @@ describe('select integration', function () {
           organizationId,
           userId,
           filterData: {},
-        }),
+        })
       );
 
       expect(findOneMock).toHaveBeenCalledWith(
@@ -189,8 +176,8 @@ describe('select integration', function () {
           }),
         },
         undefined,
-        { query: { sort: { createdAt: -1 } } },
+        { query: { sort: { createdAt: -1 } } }
       );
-    },
+    }
   );
 });

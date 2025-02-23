@@ -4,16 +4,6 @@ import { IsEmail, IsLocale, IsObject, IsOptional, IsString, IsTimeZone, Validate
 export class PatchSubscriberRequestDto {
   @ApiPropertyOptional({
     type: String,
-    description: 'Unique identifier of the subscriber',
-    nullable: true,
-  })
-  @IsOptional()
-  @ValidateIf((obj) => obj.subscriberId !== null)
-  @IsString()
-  subscriberId: string | null;
-
-  @ApiPropertyOptional({
-    type: String,
     description: 'First name of the subscriber',
     nullable: true,
   })

@@ -122,6 +122,7 @@ export const CustomStepControls = (props: CustomStepControlsProps) => {
               setIsRestoreDefaultModalOpen(true);
               return;
             }
+
             setIsOverridden(checked);
           }}
         />

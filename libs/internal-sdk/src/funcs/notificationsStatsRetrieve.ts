@@ -78,6 +78,7 @@ export async function notificationsStatsRetrieve(
   const requestSecurity = resolveGlobalSecurity(securityInput);
 
   const context = {
+    baseURL: options?.serverURL ?? "",
     operationID: "NotificationsController_getActivityStats",
     oAuth2Scopes: [],
 

@@ -6,115 +6,45 @@ import * as z from "zod";
 import { safeParse } from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
-import {
-  SubscriberChannelDto,
-  SubscriberChannelDto$inboundSchema,
-  SubscriberChannelDto$Outbound,
-  SubscriberChannelDto$outboundSchema,
-} from "./subscriberchanneldto.js";
-
-export type CreateSubscriberRequestDtoData =
-  | string
-  | Array<string>
-  | boolean
-  | number;
 
 export type CreateSubscriberRequestDto = {
   /**
-   * The internal identifier you used to create this subscriber, usually correlates to the id the user in your systems
+   * Unique identifier of the subscriber
    */
   subscriberId: string;
   /**
-   * The email address of the subscriber.
+   * First name of the subscriber
    */
-  email?: string | undefined;
+  firstName?: string | null | undefined;
   /**
-   * The first name of the subscriber.
+   * Last name of the subscriber
    */
-  firstName?: string | undefined;
+  lastName?: string | null | undefined;
   /**
-   * The last name of the subscriber.
+   * Email address of the subscriber
    */
-  lastName?: string | undefined;
+  email?: string | null | undefined;
   /**
-   * The phone number of the subscriber.
+   * Phone number of the subscriber
    */
-  phone?: string | undefined;
+  phone?: string | null | undefined;
   /**
-   * An HTTP URL to the profile image of your subscriber.
+   * Avatar URL or identifier
    */
-  avatar?: string | undefined;
+  avatar?: string | null | undefined;
   /**
-   * The locale of the subscriber.
+   * Timezone of the subscriber
    */
-  locale?: string | undefined;
+  timezone?: string | null | undefined;
   /**
-   * An optional payload object that can contain any properties.
+   * Locale of the subscriber
    */
-  data?: { [k: string]: string | Array<string> | boolean | number } | undefined;
+  locale?: string | null | undefined;
   /**
-   * An optional array of subscriber channels.
+   * Additional custom data for the subscriber
    */
-  channels?: Array<SubscriberChannelDto> | undefined;
-  /**
-   * The timezone of the subscriber.
-   */
-  timezone?: string | undefined;
+  data?: { [k: string]: any } | null | undefined;
 };
-
-/** @internal */
-export const CreateSubscriberRequestDtoData$inboundSchema: z.ZodType<
-  CreateSubscriberRequestDtoData,
-  z.ZodTypeDef,
-  unknown
-> = z.union([z.string(), z.array(z.string()), z.boolean(), z.number()]);
-
-/** @internal */
-export type CreateSubscriberRequestDtoData$Outbound =
-  | string
-  | Array<string>
-  | boolean
-  | number;
-
-/** @internal */
-export const CreateSubscriberRequestDtoData$outboundSchema: z.ZodType<
-  CreateSubscriberRequestDtoData$Outbound,
-  z.ZodTypeDef,
-  CreateSubscriberRequestDtoData
-> = z.union([z.string(), z.array(z.string()), z.boolean(), z.number()]);
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace CreateSubscriberRequestDtoData$ {
-  /** @deprecated use `CreateSubscriberRequestDtoData$inboundSchema` instead. */
-  export const inboundSchema = CreateSubscriberRequestDtoData$inboundSchema;
-  /** @deprecated use `CreateSubscriberRequestDtoData$outboundSchema` instead. */
-  export const outboundSchema = CreateSubscriberRequestDtoData$outboundSchema;
-  /** @deprecated use `CreateSubscriberRequestDtoData$Outbound` instead. */
-  export type Outbound = CreateSubscriberRequestDtoData$Outbound;
-}
-
-export function createSubscriberRequestDtoDataToJSON(
-  createSubscriberRequestDtoData: CreateSubscriberRequestDtoData,
-): string {
-  return JSON.stringify(
-    CreateSubscriberRequestDtoData$outboundSchema.parse(
-      createSubscriberRequestDtoData,
-    ),
-  );
-}
-
-export function createSubscriberRequestDtoDataFromJSON(
-  jsonString: string,
-): SafeParseResult<CreateSubscriberRequestDtoData, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => CreateSubscriberRequestDtoData$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'CreateSubscriberRequestDtoData' from JSON`,
-  );
-}
 
 /** @internal */
 export const CreateSubscriberRequestDto$inboundSchema: z.ZodType<
@@ -123,31 +53,27 @@ export const CreateSubscriberRequestDto$inboundSchema: z.ZodType<
   unknown
 > = z.object({
   subscriberId: z.string(),
-  email: z.string().optional(),
-  firstName: z.string().optional(),
-  lastName: z.string().optional(),
-  phone: z.string().optional(),
-  avatar: z.string().optional(),
-  locale: z.string().optional(),
-  data: z.record(
-    z.union([z.string(), z.array(z.string()), z.boolean(), z.number()]),
-  ).optional(),
-  channels: z.array(SubscriberChannelDto$inboundSchema).optional(),
-  timezone: z.string().optional(),
+  firstName: z.nullable(z.string()).optional(),
+  lastName: z.nullable(z.string()).optional(),
+  email: z.nullable(z.string()).optional(),
+  phone: z.nullable(z.string()).optional(),
+  avatar: z.nullable(z.string()).optional(),
+  timezone: z.nullable(z.string()).optional(),
+  locale: z.nullable(z.string()).optional(),
+  data: z.nullable(z.record(z.any())).optional(),
 });
 
 /** @internal */
 export type CreateSubscriberRequestDto$Outbound = {
   subscriberId: string;
-  email?: string | undefined;
-  firstName?: string | undefined;
-  lastName?: string | undefined;
-  phone?: string | undefined;
-  avatar?: string | undefined;
-  locale?: string | undefined;
-  data?: { [k: string]: string | Array<string> | boolean | number } | undefined;
-  channels?: Array<SubscriberChannelDto$Outbound> | undefined;
-  timezone?: string | undefined;
+  firstName?: string | null | undefined;
+  lastName?: string | null | undefined;
+  email?: string | null | undefined;
+  phone?: string | null | undefined;
+  avatar?: string | null | undefined;
+  timezone?: string | null | undefined;
+  locale?: string | null | undefined;
+  data?: { [k: string]: any } | null | undefined;
 };
 
 /** @internal */
@@ -157,17 +83,14 @@ export const CreateSubscriberRequestDto$outboundSchema: z.ZodType<
   CreateSubscriberRequestDto
 > = z.object({
   subscriberId: z.string(),
-  email: z.string().optional(),
-  firstName: z.string().optional(),
-  lastName: z.string().optional(),
-  phone: z.string().optional(),
-  avatar: z.string().optional(),
-  locale: z.string().optional(),
-  data: z.record(
-    z.union([z.string(), z.array(z.string()), z.boolean(), z.number()]),
-  ).optional(),
-  channels: z.array(SubscriberChannelDto$outboundSchema).optional(),
-  timezone: z.string().optional(),
+  firstName: z.nullable(z.string()).optional(),
+  lastName: z.nullable(z.string()).optional(),
+  email: z.nullable(z.string()).optional(),
+  phone: z.nullable(z.string()).optional(),
+  avatar: z.nullable(z.string()).optional(),
+  timezone: z.nullable(z.string()).optional(),
+  locale: z.nullable(z.string()).optional(),
+  data: z.nullable(z.record(z.any())).optional(),
 });
 
 /**

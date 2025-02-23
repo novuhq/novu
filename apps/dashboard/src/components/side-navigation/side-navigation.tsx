@@ -60,6 +60,7 @@ export const SideNavigation = () => {
       console.error('Error opening plain chat:', error);
     }
   };
+
   return (
     <aside className="bg-neutral-alpha-50 relative flex h-full w-[275px] flex-shrink-0 flex-col">
       <SidebarContent className="h-full">
@@ -82,6 +83,9 @@ export const SideNavigation = () => {
                 >
                   <RiGroup2Line className="size-4" />
                   <span>Subscribers</span>
+                  <Badge color="orange" size="sm" variant="lighter">
+                    New
+                  </Badge>
                 </NavigationLink>
               ) : (
                 <SubscribersStayTunedModal>
@@ -110,9 +114,6 @@ export const SideNavigation = () => {
               <NavigationLink to={buildRoute(ROUTES.ENVIRONMENTS, { environmentSlug: currentEnvironment?.slug ?? '' })}>
                 <RiDatabase2Line className="size-4" />
                 <span>Environments</span>
-                <Badge color="orange" size="sm" variant="lighter">
-                  New
-                </Badge>
               </NavigationLink>
               <NavigationLink to={buildRoute(ROUTES.INTEGRATIONS, { environmentSlug: currentEnvironment?.slug ?? '' })}>
                 <RiStore3Line className="size-4" />

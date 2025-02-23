@@ -9,6 +9,7 @@ export const MailyVariablesList = React.forwardRef(({ items, command }: Variable
 
   const onSelect = (value: string) => {
     const item = items.find((item) => item.name === value);
+
     if (!item) {
       return;
     }

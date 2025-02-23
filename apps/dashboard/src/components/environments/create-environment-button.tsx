@@ -7,6 +7,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormRoot,
 } from '@/components/primitives/form/form';
 import { Separator } from '@/components/primitives/separator';
 import {
@@ -58,7 +59,7 @@ function getRandomColor(existingEnvironments: IEnvironment[] = []) {
 
 const createEnvironmentSchema = z.object({
   name: z.string().min(1, 'Name is required'),
-  color: z.string().regex(/^\#[0-9a-fA-F]{6}$/, 'Enter a valid hex color, like #123456.'),
+  color: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Enter a valid hex color, like #123456.'),
 });
 
 type CreateEnvironmentFormData = z.infer<typeof createEnvironmentSchema>;
@@ -126,7 +127,7 @@ export const CreateEnvironmentButton = (props: CreateEnvironmentButtonProps) => 
         <Separator />
         <SheetMain>
           <Form {...form}>
-            <form
+            <FormRoot
               id="create-environment"
               autoComplete="off"
               noValidate
@@ -165,7 +166,7 @@ export const CreateEnvironmentButton = (props: CreateEnvironmentButtonProps) => 
                   </FormItem>
                 )}
               />
-            </form>
+            </FormRoot>
           </Form>
         </SheetMain>
         <Separator />

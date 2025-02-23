@@ -92,6 +92,7 @@ export async function workflowsWorkflowControllerPatchWorkflowStepData(
   const requestSecurity = resolveGlobalSecurity(securityInput);
 
   const context = {
+    baseURL: options?.serverURL ?? "",
     operationID: "WorkflowController_patchWorkflowStepData",
     oAuth2Scopes: [],
 

@@ -78,6 +78,7 @@ export const TriggerNode = ({
 };
 
 type StepNodeProps = ComponentProps<typeof Node> & { data: NodeData };
+
 const StepNode = (props: StepNodeProps) => {
   const navigate = useNavigate();
   const { className, data, ...rest } = props;
@@ -334,11 +335,13 @@ export const CustomNode = (props: NodeProps<NodeType>) => {
 export const AddNode = (_props: NodeProps<NodeType>) => {
   const { workflow, update } = useWorkflow();
   const navigate = useNavigate();
+
   if (!workflow) {
     return null;
   }
 
   const isReadOnly = workflow.origin === WorkflowOriginEnum.EXTERNAL;
+
   if (isReadOnly) {
     return null;
   }

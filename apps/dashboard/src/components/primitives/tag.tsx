@@ -121,6 +121,7 @@ function TagIcon<T extends React.ElementType>({
 
   return <Component className={icon({ class: className })} {...rest} />;
 }
+
 TagIcon.displayName = TAG_ICON_NAME;
 
 type TagDismissButtonProps = TagSharedProps &
@@ -154,6 +155,7 @@ function TagDismissIcon<T extends React.ElementType>({
 
   return <Component className={dismissIcon({ class: className })} {...rest} />;
 }
+
 TagDismissIcon.displayName = TAG_DISMISS_ICON_NAME;
 
 type TagProps = {

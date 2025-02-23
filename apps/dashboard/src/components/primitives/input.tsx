@@ -221,6 +221,7 @@ function InputWrapper({
     </Component>
   );
 }
+
 InputWrapper.displayName = INPUT_WRAPPER_NAME;
 
 const InputEl = React.forwardRef<
@@ -308,6 +309,7 @@ function InputIcon<T extends React.ElementType = 'div'>({
 
   return <Component className={icon({ class: className })} {...rest} />;
 }
+
 InputIcon.displayName = INPUT_ICON_NAME;
 
 function InputAffix({
@@ -328,6 +330,7 @@ function InputAffix({
     </div>
   );
 }
+
 InputAffix.displayName = INPUT_AFFIX_NAME;
 
 function InputInlineAffix({
@@ -348,6 +351,7 @@ function InputInlineAffix({
     </span>
   );
 }
+
 InputInlineAffix.displayName = INPUT_INLINE_AFFIX_NAME;
 
 export {

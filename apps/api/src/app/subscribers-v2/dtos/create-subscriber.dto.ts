@@ -1,4 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { SUBSCRIBER_ID_REGEX } from '@novu/shared';
+import { Transform } from 'class-transformer';
 import {
   IsDefined,
   IsEmail,
@@ -8,6 +10,7 @@ import {
   IsOptional,
   IsString,
   IsTimeZone,
+  Matches,
   ValidateIf,
 } from 'class-validator';
 
@@ -21,6 +24,7 @@ export class CreateSubscriberRequestDto {
   @IsNotEmpty({
     message: 'SubscriberId is required',
   })
+  @Transform(({ value }) => value.trim())
   subscriberId: string;
 
   @ApiPropertyOptional({
@@ -97,6 +101,7 @@ export class CreateSubscriberRequestDto {
     type: Object,
     description: 'Additional custom data for the subscriber',
     nullable: true,
+    additionalProperties: true,
   })
   @IsOptional()
   @ValidateIf((obj) => obj.data !== null)

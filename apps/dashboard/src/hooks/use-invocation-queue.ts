@@ -31,6 +31,7 @@ export function useInvocationQueue<T extends CallbackFunction = CallbackFunction
 
       await safelyRunInvocation(nextInvocation); // Execute the next autosave function
     }
+
     if (queueRef.current.length === 0) {
       setHasPendingItems(false);
     }

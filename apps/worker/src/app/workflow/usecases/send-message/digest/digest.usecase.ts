@@ -1,5 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { MessageRepository, JobRepository, JobStatusEnum, JobEntity } from '@novu/dal';
+import {
+  MessageRepository,
+  JobRepository,
+  JobStatusEnum,
+  JobEntity,
+  EnvironmentEntity,
+  OrganizationEntity,
+  UserEntity,
+} from '@novu/dal';
 import {
   StepTypeEnum,
   ExecutionDetailsSourceEnum,
@@ -10,10 +18,9 @@ import {
 } from '@novu/shared';
 import {
   DetailEnum,
-  GetFeatureFlag,
-  GetFeatureFlagCommand,
   ExecutionLogRoute,
   ExecutionLogRouteCommand,
+  FeatureFlagsService,
 } from '@novu/application-generic';
 
 import { GetDigestEventsRegular } from './get-digest-events-regular.usecase';
@@ -35,7 +42,7 @@ export class Digest extends SendMessageType {
     protected jobRepository: JobRepository,
     private getDigestEventsRegular: GetDigestEventsRegular,
     private getDigestEventsBackoff: GetDigestEventsBackoff,
-    private getFeatureFlag: GetFeatureFlag
+    private featureFlagService: FeatureFlagsService
   ) {
     super(messageRepository, executionLogRoute);
   }
@@ -43,16 +50,17 @@ export class Digest extends SendMessageType {
   public async execute(command: SendMessageCommand) {
     const currentJob = await this.getCurrentJob(command);
 
-    const useMergedDigestId = await this.getFeatureFlag.execute(
-      GetFeatureFlagCommand.create({
-        key: FeatureFlagsKeysEnum.IS_USE_MERGED_DIGEST_ID_ENABLED,
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-        userId: command.userId,
-      })
-    );
+    const useMergedDigestIdEnabled = await this.featureFlagService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_USE_MERGED_DIGEST_ID_ENABLED,
+      defaultValue: false,
+      environment: { _id: command.environmentId } as EnvironmentEntity,
+      organization: { _id: command.organizationId } as OrganizationEntity,
+      user: { _id: command.userId } as UserEntity,
+    });
 
-    const getEvents = useMergedDigestId ? this.getEvents.bind(this) : this.backwardCompatibleGetEvents.bind(this);
+    const getEvents = useMergedDigestIdEnabled
+      ? this.getEvents.bind(this)
+      : this.backwardCompatibleGetEvents.bind(this);
 
     const events = await getEvents(command, currentJob);
     const nextJobs = await this.getJobsToUpdate(command);

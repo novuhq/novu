@@ -1,20 +1,12 @@
-import {
-  buildEnvironmentScopedKeyById,
-  buildOrganizationScopedKey,
-} from './builder.scoped';
-import {
-  CacheKeyPrefixEnum,
-  CacheKeyTypeEnum,
-  IdentifierPrefixEnum,
-  QUERY_PREFIX,
-} from './identifiers';
+import { buildEnvironmentScopedKeyById, buildOrganizationScopedKey } from './builder.scoped';
+import { CacheKeyPrefixEnum, CacheKeyTypeEnum, IdentifierPrefixEnum, QUERY_PREFIX } from './identifiers';
 
 export const buildFeedKey = () => {
   const cache = (
     command: Record<string, unknown> & {
       environmentId: string;
       subscriberId: string;
-    },
+    }
   ): string =>
     buildQueryKey({
       type: CacheKeyTypeEnum.QUERY,
@@ -25,13 +17,7 @@ export const buildFeedKey = () => {
       query: command,
     });
 
-  const invalidate = ({
-    subscriberId,
-    _environmentId,
-  }: {
-    subscriberId: string;
-    _environmentId: string;
-  }): string =>
+  const invalidate = ({ subscriberId, _environmentId }: { subscriberId: string; _environmentId: string }): string =>
     buildEnvironmentScopedKeyById({
       type: CacheKeyTypeEnum.QUERY,
       keyEntity: CacheKeyPrefixEnum.FEED,
@@ -51,7 +37,7 @@ export const buildMessageCountKey = () => {
     command: Record<string, unknown> & {
       environmentId: string;
       subscriberId: string;
-    },
+    }
   ): string =>
     buildQueryKey({
       type: CacheKeyTypeEnum.QUERY,
@@ -62,13 +48,7 @@ export const buildMessageCountKey = () => {
       query: command,
     });
 
-  const invalidate = ({
-    subscriberId,
-    _environmentId,
-  }: {
-    subscriberId: string;
-    _environmentId: string;
-  }): string =>
+  const invalidate = ({ subscriberId, _environmentId }: { subscriberId: string; _environmentId: string }): string =>
     buildEnvironmentScopedKeyById({
       type: CacheKeyTypeEnum.QUERY,
       keyEntity: CacheKeyPrefixEnum.MESSAGE_COUNT,
@@ -84,9 +64,7 @@ export const buildMessageCountKey = () => {
 };
 
 export const buildIntegrationKey = () => {
-  const cache = (
-    command: Record<string, unknown> & { _organizationId: string },
-  ): string =>
+  const cache = (command: Record<string, unknown> & { _organizationId: string }): string =>
     buildQueryByOrganizationKey({
       type: CacheKeyTypeEnum.QUERY,
       keyEntity: CacheKeyPrefixEnum.INTEGRATION,
@@ -94,11 +72,7 @@ export const buildIntegrationKey = () => {
       query: command,
     });
 
-  const invalidate = ({
-    _organizationId,
-  }: {
-    _organizationId: string;
-  }): string =>
+  const invalidate = ({ _organizationId }: { _organizationId: string }): string =>
     buildOrganizationScopedKey({
       type: CacheKeyTypeEnum.QUERY,
       keyEntity: CacheKeyPrefixEnum.INTEGRATION,
@@ -153,7 +127,5 @@ export const buildQueryByOrganizationKey = ({
 
 export interface IBuildNotificationTemplateByIdentifier {
   _environmentId: string;
-  identifiers:
-    | ({ id: string } & { triggerIdentifier?: string })
-    | ({ id?: string } & { triggerIdentifier: string });
+  identifiers: ({ id: string } & { triggerIdentifier?: string }) | ({ id?: string } & { triggerIdentifier: string });
 }

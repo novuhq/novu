@@ -30,11 +30,13 @@ const TagInput = forwardRef<HTMLInputElement, TagInputProps>((props, ref) => {
 
   const addTag = (tag: string) => {
     const newTag = tag.trim();
+
     if (newTag === '') {
       return;
     }
 
     const newTags = [...tags, tag];
+
     if (new Set(newTags).size !== newTags.length) {
       return;
     }
@@ -47,9 +49,11 @@ const TagInput = forwardRef<HTMLInputElement, TagInputProps>((props, ref) => {
   const removeTag = (tag: string) => {
     const newTags = [...tags];
     const index = newTags.indexOf(tag);
+
     if (index !== -1) {
       newTags.splice(index, 1);
     }
+
     onChange(newTags);
     setInputValue('');
   };
@@ -67,6 +71,7 @@ const TagInput = forwardRef<HTMLInputElement, TagInputProps>((props, ref) => {
               placeholder="Type a tag and press Enter"
               onValueChange={(value) => {
                 setInputValue(value);
+
                 if (value) {
                   setIsOpen(true);
                 }

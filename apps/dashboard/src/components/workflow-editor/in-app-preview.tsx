@@ -10,6 +10,7 @@ import { cn } from '@/utils/ui';
 import { Skeleton } from '../primitives/skeleton';
 
 type InAppPreviewBellProps = HTMLAttributes<HTMLDivElement>;
+
 export const InAppPreviewBell = (props: InAppPreviewBellProps) => {
   const { className, ...rest } = props;
   return (
@@ -23,6 +24,7 @@ export const InAppPreviewBell = (props: InAppPreviewBellProps) => {
 };
 
 type InAppPreviewProps = HTMLAttributes<HTMLDivElement>;
+
 export const InAppPreview = (props: InAppPreviewProps) => {
   const { className, ...rest } = props;
 
@@ -38,6 +40,7 @@ export const InAppPreview = (props: InAppPreviewProps) => {
 };
 
 type InAppPreviewHeaderProps = HTMLAttributes<HTMLDivElement>;
+
 export const InAppPreviewHeader = (props: InAppPreviewHeaderProps) => {
   const { className, ...rest } = props;
 
@@ -63,6 +66,7 @@ type InAppPreviewAvatarProps = HTMLAttributes<HTMLImageElement> & {
   src?: string;
   isPending?: boolean;
 };
+
 export const InAppPreviewAvatar = (props: InAppPreviewAvatarProps) => {
   const { className, isPending, src, ...rest } = props;
 
@@ -78,6 +82,7 @@ export const InAppPreviewAvatar = (props: InAppPreviewAvatarProps) => {
 };
 
 type InAppPreviewNotificationProps = HTMLAttributes<HTMLDivElement>;
+
 export const InAppPreviewNotification = (props: InAppPreviewNotificationProps) => {
   const { className, ...rest } = props;
 
@@ -85,6 +90,7 @@ export const InAppPreviewNotification = (props: InAppPreviewNotificationProps) =
 };
 
 type InAppPreviewNotificationContentProps = HTMLAttributes<HTMLDivElement>;
+
 export const InAppPreviewNotificationContent = (props: InAppPreviewNotificationContentProps) => {
   const { className, ...rest } = props;
 
@@ -92,6 +98,7 @@ export const InAppPreviewNotificationContent = (props: InAppPreviewNotificationC
 };
 
 type InAppPreviewSubjectProps = MarkdownProps & { isPending?: boolean };
+
 export const InAppPreviewSubject = (props: InAppPreviewSubjectProps) => {
   const { className, isPending, ...rest } = props;
 
@@ -103,6 +110,7 @@ export const InAppPreviewSubject = (props: InAppPreviewSubjectProps) => {
 };
 
 type InAppPreviewBodyProps = MarkdownProps & { isPending?: boolean };
+
 export const InAppPreviewBody = (props: InAppPreviewBodyProps) => {
   const { className, isPending, ...rest } = props;
 
@@ -121,12 +129,14 @@ export const InAppPreviewBody = (props: InAppPreviewBodyProps) => {
 };
 
 type InAppPreviewActionsProps = HTMLAttributes<HTMLDivElement>;
+
 export const InAppPreviewActions = (props: InAppPreviewActionsProps) => {
   const { className, ...rest } = props;
   return <div className={cn('mt-3 flex flex-wrap gap-1 overflow-hidden', className)} {...rest} />;
 };
 
 type InAppPreviewPrimaryActionProps = ButtonProps & { isPending?: boolean };
+
 export const InAppPreviewPrimaryAction = (props: InAppPreviewPrimaryActionProps) => {
   const { className, isPending, children, ...rest } = props;
 
@@ -152,6 +162,7 @@ export const InAppPreviewPrimaryAction = (props: InAppPreviewPrimaryActionProps)
 };
 
 type InAppPreviewSecondaryActionProps = ButtonProps & { isPending?: boolean };
+
 export const InAppPreviewSecondaryAction = (props: InAppPreviewSecondaryActionProps) => {
   const { className, isPending, children, ...rest } = props;
 
@@ -178,6 +189,7 @@ export const InAppPreviewSecondaryAction = (props: InAppPreviewSecondaryActionPr
 };
 
 type MarkdownProps = Omit<HTMLAttributes<HTMLParagraphElement>, 'children'> & { children?: string };
+
 const Markdown = (props: MarkdownProps) => {
   const { children, ...rest } = props;
 

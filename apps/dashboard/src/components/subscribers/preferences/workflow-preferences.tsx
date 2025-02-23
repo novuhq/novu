@@ -14,6 +14,7 @@ type WorkflowPreferencesProps = {
   onToggle: (channels: PatchPreferenceChannelsDto, workflowId: string) => void;
   readOnly?: boolean;
 };
+
 export function WorkflowPreferences(props: WorkflowPreferencesProps) {
   const { workflowPreferences, onToggle, readOnly = false } = props;
   const [isExpanded, setIsExpanded] = useState(false);
@@ -36,11 +37,24 @@ export function WorkflowPreferences(props: WorkflowPreferencesProps) {
         </div>
       </CardHeader>
 
-      <motion.div animate={{ height: isExpanded ? 'auto' : 0 }} className="overflow-hidden">
+      <motion.div
+        initial={{
+          height: 0,
+          opacity: 0,
+        }}
+        animate={{
+          height: isExpanded ? 'auto' : 0,
+          opacity: isExpanded ? 1 : 0,
+        }}
+        transition={{
+          height: { duration: 0.2 },
+          opacity: { duration: 0.2 },
+        }}
+        className="overflow-hidden"
+      >
         <CardContent className="rounded-lg bg-neutral-50 p-2">
           {Object.entries(channels).map(([channel, enabled]) => (
             <PreferencesItem
-              key={channel}
               channel={channel as ChannelTypeEnum}
               enabled={enabled}
               onChange={(checked: boolean) => onToggle({ [channel]: checked }, workflow.slug)}

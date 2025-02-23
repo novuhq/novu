@@ -1,13 +1,6 @@
 /* eslint-disable global-require */
 // eslint-ignore max-len
-import {
-  BadRequestException,
-  forwardRef,
-  Inject,
-  Injectable,
-  Logger,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 
 import {
@@ -63,6 +56,7 @@ import {
   UpdateMessageTemplateCommand,
 } from '../../message-template';
 import { Instrument, InstrumentUsecase } from '../../../instrumentation';
+import { ResourceValidatorService } from '../../../services/resource-validator.service';
 
 /**
  * @deprecated - use `UpsertWorkflow` instead
@@ -92,13 +86,12 @@ export class UpdateWorkflow {
     @Inject(forwardRef(() => GetWorkflowByIdsUseCase))
     private getWorkflowByIdsUseCase: GetWorkflowByIdsUseCase,
     private controlValuesRepository: ControlValuesRepository,
+    private resourceValidatorService: ResourceValidatorService
   ) {}
 
   @InstrumentUsecase()
-  async execute(
-    command: UpdateWorkflowCommand,
-  ): Promise<WorkflowInternalResponseDto> {
-    this.validatePayload(command);
+  async execute(command: UpdateWorkflowCommand): Promise<WorkflowInternalResponseDto> {
+    await this.validatePayload(command);
 
     const existingTemplate = await this.getWorkflowByIdsUseCase.execute(
       GetWorkflowByIdsCommand.create({
@@ -106,12 +99,9 @@ export class UpdateWorkflow {
         environmentId: command.environmentId,
         organizationId: command.organizationId,
         userId: command.userId,
-      }),
+      })
     );
-    if (!existingTemplate)
-      throw new NotFoundException(
-        `Notification template with id ${command.id} not found`,
-      );
+    if (!existingTemplate) throw new NotFoundException(`Notification template with id ${command.id} not found`);
 
     let updatePayload: Partial<WorkflowInternalResponseDto> = {};
     if (command.name) {
@@ -127,16 +117,13 @@ export class UpdateWorkflow {
     }
 
     if (command.workflowId) {
-      const isExistingIdentifier =
-        await this.notificationTemplateRepository.findByTriggerIdentifier(
-          command.environmentId,
-          command.workflowId,
-        );
+      const isExistingIdentifier = await this.notificationTemplateRepository.findByTriggerIdentifier(
+        command.environmentId,
+        command.workflowId
+      );
 
       if (isExistingIdentifier && isExistingIdentifier._id !== command.id) {
-        throw new BadRequestException(
-          `Workflow with identifier ${command.workflowId} already exists`,
-        );
+        throw new BadRequestException(`Workflow with identifier ${command.workflowId} already exists`);
       } else {
         updatePayload['triggers.0.identifier'] = command.workflowId;
       }
@@ -150,7 +137,7 @@ export class UpdateWorkflow {
 
       if (!notificationGroup)
         throw new NotFoundException(
-          `Notification group with id ${command.notificationGroupId} not found, under environment ${command.environmentId}`,
+          `Notification group with id ${command.notificationGroupId} not found, under environment ${command.environmentId}`
         );
 
       updatePayload._notificationGroupId = command.notificationGroupId;
@@ -159,7 +146,7 @@ export class UpdateWorkflow {
     const parentChangeId: string = await this.changeRepository.getChangeId(
       command.environmentId,
       ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE,
-      existingTemplate._id,
+      existingTemplate._id
     );
 
     let notificationTemplateWithStepTemplate: WorkflowInternalResponseDto;
@@ -167,17 +154,9 @@ export class UpdateWorkflow {
       if (command.steps) {
         updatePayload = this.updateTriggers(updatePayload, command.steps);
 
-        updatePayload.steps = await this.updateMessageTemplates(
-          command.steps,
-          command,
-          parentChangeId,
-        );
+        updatePayload.steps = await this.updateMessageTemplates(command.steps, command, parentChangeId);
 
-        await this.deleteRemovedSteps(
-          existingTemplate.steps,
-          command,
-          parentChangeId,
-        );
+        await this.deleteRemovedSteps(existingTemplate.steps, command, parentChangeId);
       }
 
       if (command.tags) {
@@ -211,13 +190,10 @@ export class UpdateWorkflow {
           preferences: command.defaultPreferences,
           environmentId: command.environmentId,
           organizationId: command.organizationId,
-        }),
+        })
       );
 
-      if (
-        command.userPreferences !== undefined ||
-        command.critical !== undefined
-      ) {
+      if (command.userPreferences !== undefined || command.critical !== undefined) {
         /*
          * userPreferences is optional, so we need to check if it's defined before calling the upsert.
          * we also need to check if the legacy `critical` property is defined, because if provided,
@@ -226,18 +202,13 @@ export class UpdateWorkflow {
 
         updatePayload.critical = command.critical;
 
-        this.analyticsService.track(
-          'Workflow critical status changed',
-          command.userId,
-          {
-            _organization: command.organizationId,
-            name: updatePayload.name ?? existingTemplate.name,
-            description:
-              updatePayload.description ?? existingTemplate.description,
-            new_status: command.userPreferences?.all?.readOnly,
-            tags: updatePayload.tags ?? existingTemplate.tags,
-          },
-        );
+        this.analyticsService.track('Workflow critical status changed', command.userId, {
+          _organization: command.organizationId,
+          name: updatePayload.name ?? existingTemplate.name,
+          description: updatePayload.description ?? existingTemplate.description,
+          new_status: command.userPreferences?.all?.readOnly,
+          tags: updatePayload.tags ?? existingTemplate.tags,
+        });
 
         /*
          * This builder pattern is only needed for the `critical` property,
@@ -247,8 +218,7 @@ export class UpdateWorkflow {
          * TODO: remove this once we deprecate the `critical` property
          * and use only the `userPreferences` object
          */
-        const defaultUserPreferences =
-          command.userPreferences ?? existingTemplate.userPreferences;
+        const defaultUserPreferences = command.userPreferences ?? existingTemplate.userPreferences;
         const defaultCritical =
           command.userPreferences?.all?.readOnly ??
           command.critical ??
@@ -263,7 +233,7 @@ export class UpdateWorkflow {
               organizationId: command.organizationId,
               userId: command.userId,
               type: PreferencesTypeEnum.USER_WORKFLOW,
-            }),
+            })
           );
         } else {
           const userPreferences = buildWorkflowPreferences(
@@ -272,7 +242,7 @@ export class UpdateWorkflow {
                 readOnly: defaultCritical,
               },
             },
-            defaultUserPreferences,
+            defaultUserPreferences
           );
           await this.upsertPreferences.upsertUserWorkflowPreferences(
             UpsertUserWorkflowPreferencesCommand.create({
@@ -281,25 +251,18 @@ export class UpdateWorkflow {
               environmentId: command.environmentId,
               organizationId: command.organizationId,
               userId: command.userId,
-            }),
+            })
           );
 
           /** @deprecated - use `userPreferences` instead */
-          const preferenceSettings =
-            GetPreferences.mapWorkflowPreferencesToChannelPreferences(
-              userPreferences,
-            );
+          const preferenceSettings = GetPreferences.mapWorkflowPreferencesToChannelPreferences(userPreferences);
           updatePayload.preferenceSettings = preferenceSettings;
 
-          this.analyticsService.track(
-            'Update Preference Defaults - [Platform]',
-            command.userId,
-            {
-              _organization: command.organizationId,
-              critical: userPreferences?.all?.readOnly ?? false,
-              ...preferenceSettings,
-            },
-          );
+          this.analyticsService.track('Update Preference Defaults - [Platform]', command.userId, {
+            _organization: command.organizationId,
+            critical: userPreferences?.all?.readOnly ?? false,
+            ...preferenceSettings,
+          });
         }
       }
 
@@ -314,7 +277,7 @@ export class UpdateWorkflow {
         },
         {
           $set: updatePayload,
-        },
+        }
       );
 
       // Invalidate cache after update
@@ -332,20 +295,17 @@ export class UpdateWorkflow {
         }),
       });
 
-      notificationTemplateWithStepTemplate =
-        await this.getWorkflowByIdsUseCase.execute(
-          GetWorkflowByIdsCommand.create({
-            userId: command.userId,
-            environmentId: command.environmentId,
-            organizationId: command.organizationId,
-            workflowIdOrInternalId: command.id,
-          }),
-        );
+      notificationTemplateWithStepTemplate = await this.getWorkflowByIdsUseCase.execute(
+        GetWorkflowByIdsCommand.create({
+          userId: command.userId,
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          workflowIdOrInternalId: command.id,
+        })
+      );
 
       if (!isBridgeWorkflow(command.type)) {
-        const notificationTemplate = this.cleanNotificationTemplate(
-          notificationTemplateWithStepTemplate,
-        );
+        const notificationTemplate = this.cleanNotificationTemplate(notificationTemplateWithStepTemplate);
 
         await this.createChange.execute(
           CreateChangeCommand.create({
@@ -355,72 +315,53 @@ export class UpdateWorkflow {
             type: ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE,
             item: notificationTemplate,
             changeId: parentChangeId,
-          }),
+          })
         );
       }
     });
 
-    this.analyticsService.track(
-      'Update Notification Template - [Platform]',
-      command.userId,
-      {
-        _organization: command.organizationId,
-        steps: command.steps?.length,
-        channels: command.steps?.map((i) => i.template?.type),
-        critical: command.userPreferences?.all?.readOnly,
-      },
-    );
+    this.analyticsService.track('Update Notification Template - [Platform]', command.userId, {
+      _organization: command.organizationId,
+      steps: command.steps?.length,
+      channels: command.steps?.map((i) => i.template?.type),
+      critical: command.userPreferences?.all?.readOnly,
+    });
 
     try {
       if (
-        (process.env.NOVU_ENTERPRISE === 'true' ||
-          process.env.CI_EE_TEST === 'true') &&
-        notificationTemplateWithStepTemplate.origin ===
-          WorkflowOriginEnum.NOVU_CLOUD_V1
+        (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') &&
+        notificationTemplateWithStepTemplate.origin === WorkflowOriginEnum.NOVU_CLOUD_V1
       ) {
         if (!require('@novu/ee-shared-services')?.TranslationsService) {
           throw new PlatformException('Translation module is not loaded');
         }
-        const service = this.moduleRef.get(
-          require('@novu/ee-shared-services')?.TranslationsService,
-          { strict: false },
-        );
-        const locales = await service.createTranslationAnalytics(
-          notificationTemplateWithStepTemplate,
-        );
+        const service = this.moduleRef.get(require('@novu/ee-shared-services')?.TranslationsService, { strict: false });
+        const locales = await service.createTranslationAnalytics(notificationTemplateWithStepTemplate);
 
-        this.analyticsService.track(
-          'Locale used in workflow - [Translations]',
-          command.userId,
-          {
-            _organization: command.organizationId,
-            _environment: command.environmentId,
-            workflowId: command.id,
-            locales,
-          },
-        );
+        this.analyticsService.track('Locale used in workflow - [Translations]', command.userId, {
+          _organization: command.organizationId,
+          _environment: command.environmentId,
+          workflowId: command.id,
+          locales,
+        });
       }
     } catch (e) {
-      Logger.error(
-        e,
-        `Unexpected error while importing enterprise modules`,
-        'TranslationsService',
-      );
+      Logger.error(e, `Unexpected error while importing enterprise modules`, 'TranslationsService');
     }
 
     return notificationTemplateWithStepTemplate;
   }
 
-  private validatePayload(command: UpdateWorkflowCommand) {
-    const variants = command.steps
-      ? command.steps?.flatMap((step) => step.variants || [])
-      : [];
+  private async validatePayload(command: UpdateWorkflowCommand) {
+    if (command.steps) {
+      await this.resourceValidatorService.validateStepsLimit(command.environmentId, command.steps);
+    }
+
+    const variants = command.steps ? command.steps?.flatMap((step) => step.variants || []) : [];
 
     for (const variant of variants) {
       if (isVariantEmpty(variant)) {
-        throw new ApiException(
-          `Variant filters are required, variant name ${variant.name} id ${variant._id}`,
-        );
+        throw new ApiException(`Variant filters are required, variant name ${variant.name} id ${variant._id}`);
       }
     }
   }
@@ -429,7 +370,7 @@ export class UpdateWorkflow {
   private async updateMessageTemplates(
     steps: NotificationStep[],
     command: UpdateWorkflowCommand,
-    parentChangeId: string,
+    parentChangeId: string
   ) {
     let parentStepId: string | null = null;
     const templateMessages: NotificationStepEntity[] = [];
@@ -438,20 +379,12 @@ export class UpdateWorkflow {
       let messageTemplateId = message._id;
 
       if (!message.template) {
-        throw new ApiException(
-          `Something un-expected happened, template couldn't be found`,
-        );
+        throw new ApiException(`Something un-expected happened, template couldn't be found`);
       }
 
-      const updatedVariants = await this.updateVariants(
-        message.variants,
-        command,
-        parentChangeId!,
-      );
+      const updatedVariants = await this.updateVariants(message.variants, command, parentChangeId!);
 
-      const messageTemplatePayload:
-        | CreateMessageTemplateCommand
-        | UpdateMessageTemplateCommand = {
+      const messageTemplatePayload: CreateMessageTemplateCommand | UpdateMessageTemplateCommand = {
         type: message.template.type,
         name: message.template.name,
         content: message.template.content,
@@ -478,12 +411,11 @@ export class UpdateWorkflow {
       let messageTemplateExist = message._templateId;
 
       if (!messageTemplateExist && isBridgeWorkflow(command.type)) {
-        const stepMessageTemplate =
-          await this.messageTemplateRepository.findOne({
-            _environmentId: command.environmentId,
-            stepId: message.stepId,
-            _parentId: command.id,
-          });
+        const stepMessageTemplate = await this.messageTemplateRepository.findOne({
+          _environmentId: command.environmentId,
+          stepId: message.stepId,
+          _parentId: command.id,
+        });
         messageTemplateExist = stepMessageTemplate?._id;
       }
 
@@ -492,11 +424,9 @@ export class UpdateWorkflow {
             UpdateMessageTemplateCommand.create({
               templateId: message._templateId!,
               ...messageTemplatePayload,
-            }),
+            })
           )
-        : await this.createMessageTemplate.execute(
-            CreateMessageTemplateCommand.create(messageTemplatePayload),
-          );
+        : await this.createMessageTemplate.execute(CreateMessageTemplateCommand.create(messageTemplatePayload));
 
       if (!messageTemplateExist) {
         this.analyticsService.track('Workflow step added', command.userId, {
@@ -513,7 +443,7 @@ export class UpdateWorkflow {
         messageTemplateId,
         parentStepId,
         message,
-        updatedVariants,
+        updatedVariants
       );
 
       templateMessages.push(partialNotificationStep as NotificationStepEntity);
@@ -527,15 +457,14 @@ export class UpdateWorkflow {
   @Instrument()
   private updateTriggers(
     updatePayload: Partial<WorkflowInternalResponseDto>,
-    steps: NotificationStep[],
+    steps: NotificationStep[]
   ): Partial<WorkflowInternalResponseDto> {
     const updatePayloadResult: Partial<WorkflowInternalResponseDto> = {
       ...updatePayload,
     };
 
     const contentService = new ContentService();
-    const { variables, reservedVariables } =
-      contentService.extractMessageVariables(steps);
+    const { variables, reservedVariables } = contentService.extractMessageVariables(steps);
 
     updatePayloadResult['triggers.0.variables'] = variables.map((i) => {
       return {
@@ -544,29 +473,25 @@ export class UpdateWorkflow {
       };
     });
 
-    updatePayloadResult['triggers.0.reservedVariables'] = reservedVariables.map(
-      (i) => {
-        return {
-          type: i.type,
-          variables: i.variables.map((variable) => {
-            return {
-              name: variable.name,
-              type: variable.type,
-            };
-          }),
-        };
-      },
-    );
+    updatePayloadResult['triggers.0.reservedVariables'] = reservedVariables.map((i) => {
+      return {
+        type: i.type,
+        variables: i.variables.map((variable) => {
+          return {
+            name: variable.name,
+            type: variable.type,
+          };
+        }),
+      };
+    });
 
-    const subscribersVariables =
-      contentService.extractSubscriberMessageVariables(steps);
+    const subscribersVariables = contentService.extractSubscriberMessageVariables(steps);
 
-    updatePayloadResult['triggers.0.subscriberVariables'] =
-      subscribersVariables.map((i) => {
-        return {
-          name: i,
-        };
-      });
+    updatePayloadResult['triggers.0.subscriberVariables'] = subscribersVariables.map((i) => {
+      return {
+        name: i,
+      };
+    });
 
     return updatePayloadResult;
   }
@@ -575,7 +500,7 @@ export class UpdateWorkflow {
     stepId: string | undefined,
     parentStepId: string | null,
     message: NotificationStep,
-    updatedVariants: NotificationStepData[],
+    updatedVariants: NotificationStepData[]
   ) {
     const partialNotificationStep: Partial<NotificationStepEntity> = {
       _id: stepId,
@@ -626,28 +551,21 @@ export class UpdateWorkflow {
     return partialNotificationStep;
   }
 
-  private cleanNotificationTemplate(
-    notificationTemplateWithStepTemplate: NotificationTemplateEntity,
-  ) {
+  private cleanNotificationTemplate(notificationTemplateWithStepTemplate: NotificationTemplateEntity) {
     const notificationTemplate = {
       ...notificationTemplateWithStepTemplate,
     };
 
-    notificationTemplate.steps = notificationTemplateWithStepTemplate.steps.map(
-      (step) => {
-        const { template, ...rest } = step;
+    notificationTemplate.steps = notificationTemplateWithStepTemplate.steps.map((step) => {
+      const { template, ...rest } = step;
 
-        return rest;
-      },
-    );
+      return rest;
+    });
 
     return notificationTemplate;
   }
 
-  private getRemovedSteps(
-    existingSteps: NotificationStepEntity[],
-    newSteps: NotificationStep[],
-  ) {
+  private getRemovedSteps(existingSteps: NotificationStepEntity[], newSteps: NotificationStep[]) {
     const existingStepsIds = (existingSteps || []).flatMap((step) => [
       step._templateId,
       ...(step.variants || []).flatMap((variant) => variant._templateId),
@@ -658,9 +576,7 @@ export class UpdateWorkflow {
       ...(step.variants || []).flatMap((variant) => variant._templateId),
     ]);
 
-    const removedStepsIds = existingStepsIds.filter(
-      (id) => !newStepsIds.includes(id),
-    );
+    const removedStepsIds = existingStepsIds.filter((id) => !newStepsIds.includes(id));
 
     return removedStepsIds;
   }
@@ -668,7 +584,7 @@ export class UpdateWorkflow {
   private async updateVariants(
     variants: NotificationStepVariantCommand[] | undefined,
     command: UpdateWorkflowCommand,
-    parentChangeId: string,
+    parentChangeId: string
   ): Promise<NotificationStepData[]> {
     if (!variants?.length) return [];
 
@@ -676,14 +592,9 @@ export class UpdateWorkflow {
     let parentVariantId: string | null = null;
 
     for (const variant of variants) {
-      if (!variant.template)
-        throw new ApiException(
-          `Unexpected error: variants message template is missing`,
-        );
+      if (!variant.template) throw new ApiException(`Unexpected error: variants message template is missing`);
 
-      const messageTemplatePayload:
-        | CreateMessageTemplateCommand
-        | UpdateMessageTemplateCommand = {
+      const messageTemplatePayload: CreateMessageTemplateCommand | UpdateMessageTemplateCommand = {
         organizationId: command.organizationId,
         environmentId: command.environmentId,
         userId: command.userId,
@@ -710,16 +621,11 @@ export class UpdateWorkflow {
             UpdateMessageTemplateCommand.create({
               templateId: variant._templateId!,
               ...messageTemplatePayload,
-            }),
+            })
           )
-        : await this.createMessageTemplate.execute(
-            CreateMessageTemplateCommand.create(messageTemplatePayload),
-          );
+        : await this.createMessageTemplate.execute(CreateMessageTemplateCommand.create(messageTemplatePayload));
 
-      if (!updatedVariant._id)
-        throw new ApiException(
-          `Unexpected error: variants message template was not created`,
-        );
+      if (!updatedVariant._id) throw new ApiException(`Unexpected error: variants message template was not created`);
 
       variantsList.push({
         _id: updatedVariant._id,
@@ -744,17 +650,11 @@ export class UpdateWorkflow {
 
   @Instrument()
   private async deleteRemovedSteps(
-    existingSteps:
-      | NotificationStepEntity[]
-      | NotificationStepData[]
-      | undefined,
+    existingSteps: NotificationStepEntity[] | NotificationStepData[] | undefined,
     command: UpdateWorkflowCommand,
-    parentChangeId: string,
+    parentChangeId: string
   ) {
-    const removedStepsIds = this.getRemovedSteps(
-      existingSteps || [],
-      command.steps || [],
-    );
+    const removedStepsIds = this.getRemovedSteps(existingSteps || [], command.steps || []);
 
     for (const id of removedStepsIds) {
       await this.deleteMessageTemplate.execute(
@@ -765,7 +665,7 @@ export class UpdateWorkflow {
           messageTemplateId: id,
           parentChangeId,
           workflowType: command.type,
-        }),
+        })
       );
 
       await this.controlValuesRepository.delete({

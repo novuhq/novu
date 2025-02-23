@@ -2,9 +2,11 @@ import { css } from '@novu/novui/css';
 import { Title, Text } from '@novu/novui';
 import styled from '@emotion/styled';
 import { MantineTheme } from '@mantine/core';
+import { ApiServiceLevelEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { Badge } from './Badge';
 import { PlanActionButton } from './PlanActionButton';
 import { ContactUsButton } from './ContactUsButton';
+import { useFeatureFlag } from '../../../hooks/useFeatureFlag';
 
 const Cell = styled.div`
   display: flex;
@@ -26,7 +28,7 @@ const PriceDisplay = ({ price, subtitle, events }) => (
   </div>
 );
 
-export const PlansRow = ({
+const PlansRowLegacy = ({
   theme,
   selectedBillingInterval,
 }: {
@@ -61,7 +63,10 @@ export const PlansRow = ({
           subtitle={`billed ${selectedBillingInterval === 'year' ? 'annually' : 'monthly'}`}
           events="250,000 events per month"
         />
-        <PlanActionButton selectedBillingInterval={selectedBillingInterval} />
+        <PlanActionButton
+          selectedBillingInterval={selectedBillingInterval}
+          checkoutServiceLevel={ApiServiceLevelEnum.BUSINESS}
+        />
       </Cell>
       <Cell style={{ justifyContent: 'space-between' }}>
         <Title variant="subsection" color="typography.text.primary">
@@ -71,6 +76,92 @@ export const PlansRow = ({
         <ContactUsButton />
       </Cell>
     </div>
+  );
+};
+
+const PlansRowNew = ({
+  theme,
+  selectedBillingInterval,
+}: {
+  theme: MantineTheme;
+  selectedBillingInterval: 'month' | 'year';
+}) => {
+  const businessPlanPrice = selectedBillingInterval === 'year' ? '$2,700' : '$250';
+  const proPlanPrice = selectedBillingInterval === 'year' ? '$330' : '$30';
+
+  return (
+    <div className={styles.container(theme)}>
+      <Cell>
+        <Title variant="subsection" color="typography.text.secondary">
+          Plans
+        </Title>
+      </Cell>
+      <Cell>
+        <Title variant="subsection" color="typography.text.primary">
+          Free
+        </Title>
+        <PriceDisplay price="$0" subtitle="free forever" events="10,000 events per month" />
+      </Cell>
+      <Cell>
+        <Title
+          variant="subsection"
+          color="typography.text.primary"
+          style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+        >
+          Pro <Badge label="Popular" />
+        </Title>
+        <PriceDisplay
+          price={proPlanPrice}
+          subtitle={`billed ${selectedBillingInterval === 'year' ? 'annually' : 'monthly'}`}
+          events="30,000 events per month"
+        />
+        <PlanActionButton
+          selectedBillingInterval={selectedBillingInterval}
+          checkoutServiceLevel={ApiServiceLevelEnum.PRO}
+        />
+      </Cell>
+      <Cell>
+        <Title
+          variant="subsection"
+          color="typography.text.primary"
+          style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+        >
+          Team
+        </Title>
+        <PriceDisplay
+          price={businessPlanPrice}
+          subtitle={`billed ${selectedBillingInterval === 'year' ? 'annually' : 'monthly'}`}
+          events="250,000 events per month"
+        />
+        <PlanActionButton
+          selectedBillingInterval={selectedBillingInterval}
+          checkoutServiceLevel={ApiServiceLevelEnum.BUSINESS}
+        />
+      </Cell>
+      <Cell style={{ justifyContent: 'space-between' }}>
+        <Title variant="subsection" color="typography.text.primary">
+          Enterprise
+        </Title>
+        <Text color="typography.text.secondary">Custom pricing, billing, and extended services.</Text>
+        <ContactUsButton />
+      </Cell>
+    </div>
+  );
+};
+
+export const PlansRow = ({
+  theme,
+  selectedBillingInterval,
+}: {
+  theme: MantineTheme;
+  selectedBillingInterval: 'month' | 'year';
+}) => {
+  const is2025Q1TieringEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_2025_Q1_TIERING_ENABLED);
+
+  return is2025Q1TieringEnabled ? (
+    <PlansRowNew theme={theme} selectedBillingInterval={selectedBillingInterval} />
+  ) : (
+    <PlansRowLegacy theme={theme} selectedBillingInterval={selectedBillingInterval} />
   );
 };
 

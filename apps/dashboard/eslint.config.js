@@ -31,6 +31,14 @@ export default tseslint.config(
           format: ['PascalCase', 'camelCase', 'UPPER_CASE'],
         },
       ],
+      'lines-between-class-members': ['error', 'always', { exceptAfterSingleLine: false }],
+      'padding-line-between-statements': [
+        'warn',
+        { blankLine: 'always', prev: '*', next: 'block' },
+        { blankLine: 'always', prev: 'block', next: '*' },
+        { blankLine: 'always', prev: '*', next: 'block-like' },
+        { blankLine: 'always', prev: 'block-like', next: '*' },
+      ],
     },
   }
 );
