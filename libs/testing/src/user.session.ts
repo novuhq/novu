@@ -15,14 +15,18 @@ import {
 import {
   ChangeEntity,
   ChangeRepository,
+  CommunityOrganizationRepository,
+  CommunityUserRepository,
   EnvironmentEntity,
   FeedRepository,
   LayoutRepository,
   NotificationGroupEntity,
   NotificationGroupRepository,
   OrganizationEntity,
+  OrganizationRepository,
   SubscriberRepository,
   UserEntity,
+  UserRepository,
 } from '@novu/dal';
 
 import { NotificationTemplateService } from './notification-template.service';
@@ -33,9 +37,9 @@ import { CreateTemplatePayload } from './create-notification-template.interface'
 import { IntegrationService } from './integration.service';
 import { UserService } from './user.service';
 import { JobsService } from './jobs.service';
-import { EEUserService } from './ee/ee.user.service';
-import { EEOrganizationService } from './ee/ee.organization.service';
 import { TEST_USER_PASSWORD } from './constants';
+import { getEERepository } from './ee/ee.repository.factory';
+import { CLERK_ORGANIZATION_1, CLERK_USER_1 } from './ee/clerk-mock-data';
 import { ClerkJwtPayload } from './ee/types';
 
 type UserSessionOptions = {
@@ -44,8 +48,8 @@ type UserSessionOptions = {
   noWidgetSession?: boolean;
   showOnBoardingTour?: boolean;
   ee?: {
-    userId: 'clerk_user_1' | 'clerk_user_2';
-    orgId: 'clerk_org_1';
+    userId?: string;
+    orgId?: string;
   };
 };
 
@@ -93,9 +97,8 @@ export class UserSession {
     this.jobsService = new JobsService();
   }
 
-  async initialize(options?: UserSessionOptions) {
+  async initialize(options: UserSessionOptions = {}) {
     if (isClerkEnabled()) {
-      // The ids of pre-seeded Clerk resources (MongoDB: clerk_users, clerk_organizations, clerk_organization_memberships)
       await this.initializeEE(options);
     } else {
       await this.initializeCommunity(options);
@@ -145,28 +148,15 @@ export class UserSession {
     }
   }
 
-  private async initializeEE(options: UserSessionOptions = { ee: { userId: 'clerk_user_1', orgId: 'clerk_org_1' } }) {
-    const userService = new EEUserService();
+  private async initializeEE(options: UserSessionOptions) {
+    const externalUserId = options.ee?.userId || CLERK_USER_1.id;
+    const externalOrgId = options.ee?.orgId || CLERK_ORGANIZATION_1.id;
 
-    // user is already in org
-    const userId = options.ee?.userId || 'clerk_user_1';
-    const orgId = options.ee?.orgId || 'clerk_org_1';
-
-    // already existing user in Clerk
-    const user = await userService.getUser(userId);
-
-    if (!user._id) {
-      // not linked in clerk
-      this.user = await userService.createUser(userId);
-    } else {
-      this.user = user;
-    }
+    this.user = await this.linkEEUser(externalUserId);
 
     if (!options.noOrganization) {
-      await this.addOrganizationEE(orgId);
+      this.organization = await this.linkEEOrganization(externalOrgId);
     }
-
-    await this.fetchJwtEE();
 
     if (!options.noOrganization && !options?.noEnvironment) {
       await this.createEnvironmentsAndFeeds();
@@ -185,6 +175,38 @@ export class UserSession {
       this.subscriberToken = token;
       this.subscriberProfile = profile;
     }
+  }
+
+  private async linkEEUser(externalUserId: string) {
+    const userRepository = getEERepository<UserRepository>('UserRepository');
+    const communityUserRepository = new CommunityUserRepository();
+    const user = await communityUserRepository.findOne({ externalId: externalUserId });
+
+    if (user) {
+      return user;
+    }
+
+    return userRepository.create(
+      {},
+      {
+        linkOnly: true,
+        externalId: externalUserId,
+      }
+    );
+  }
+
+  private async linkEEOrganization(externalOrgId: string) {
+    const organizationRepository = getEERepository<OrganizationRepository>('OrganizationRepository');
+    const communityOrganizationRepository = new CommunityOrganizationRepository();
+    const organization = await communityOrganizationRepository.findOne({ externalId: externalOrgId });
+
+    if (organization) {
+      return organization;
+    }
+
+    return organizationRepository.create({
+      externalId: externalOrgId,
+    });
   }
 
   private async initializeWidgetSession() {
@@ -223,10 +245,10 @@ export class UserSession {
   }
 
   async addOrganization() {
-    if (isClerkEnabled()) {
-      return await this.addOrganizationEE('clerk_org_1');
-    } else {
+    if (!isClerkEnabled()) {
       return await this.addOrganizationCommunity();
+    } else {
+      throw new Error('Not implemented');
     }
   }
 
@@ -367,20 +389,6 @@ export class UserSession {
     return this.organization;
   }
 
-  private async addOrganizationEE(orgId: string) {
-    const organizationService = new EEOrganizationService();
-
-    try {
-      // is not linked
-      this.organization = await organizationService.createOrganization(orgId);
-    } catch (e) {
-      // is already linked
-      this.organization = (await organizationService.getOrganization(orgId)) as OrganizationEntity;
-    }
-
-    return this.organization;
-  }
-
   async switchToProdEnvironment() {
     const prodEnvironment = await this.environmentService.getProductionEnvironment(this.organization._id);
     if (prodEnvironment) {
@@ -467,9 +475,9 @@ export class UserSession {
   }
 
   public async updateOrganizationServiceLevel(serviceLevel: ApiServiceLevelEnum) {
-    const organizationService = isClerkEnabled() ? new EEOrganizationService() : new OrganizationService();
+    const communityOrganizationRepository = new CommunityOrganizationRepository();
 
-    await organizationService.updateServiceLevel(this.organization._id, serviceLevel);
+    await communityOrganizationRepository.update({ _id: this.organization._id }, { apiServiceLevel: serviceLevel });
   }
 
   public async updateEnvironmentApiRateLimits(apiRateLimits: Partial<IApiRateLimitMaximum>) {
