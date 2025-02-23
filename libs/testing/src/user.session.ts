@@ -16,17 +16,14 @@ import {
   ChangeEntity,
   ChangeRepository,
   CommunityOrganizationRepository,
-  CommunityUserRepository,
   EnvironmentEntity,
   FeedRepository,
   LayoutRepository,
   NotificationGroupEntity,
   NotificationGroupRepository,
   OrganizationEntity,
-  OrganizationRepository,
   SubscriberRepository,
   UserEntity,
-  UserRepository,
 } from '@novu/dal';
 
 import { NotificationTemplateService } from './notification-template.service';
@@ -37,10 +34,11 @@ import { CreateTemplatePayload } from './create-notification-template.interface'
 import { IntegrationService } from './integration.service';
 import { UserService } from './user.service';
 import { JobsService } from './jobs.service';
+import { EEUserService } from './ee/ee.user.service';
+import { EEOrganizationService } from './ee/ee.organization.service';
 import { TEST_USER_PASSWORD } from './constants';
-import { getEERepository } from './ee/ee.repository.factory';
-import { CLERK_ORGANIZATION_1, CLERK_USER_1 } from './ee/clerk-mock-data';
 import { ClerkJwtPayload } from './ee/types';
+import { CLERK_ORGANIZATION_1, CLERK_USER_1 } from './ee/clerk-mock-data';
 
 type UserSessionOptions = {
   noOrganization?: boolean;
@@ -48,8 +46,8 @@ type UserSessionOptions = {
   noWidgetSession?: boolean;
   showOnBoardingTour?: boolean;
   ee?: {
-    userId?: string;
-    orgId?: string;
+    userId: string;
+    orgId: string;
   };
 };
 
@@ -149,14 +147,25 @@ export class UserSession {
   }
 
   private async initializeEE(options: UserSessionOptions) {
+    const userService = new EEUserService();
+
     const externalUserId = options.ee?.userId || CLERK_USER_1.id;
     const externalOrgId = options.ee?.orgId || CLERK_ORGANIZATION_1.id;
 
-    this.user = await this.linkEEUser(externalUserId);
+    const user = await userService.getUser(externalUserId);
+
+    if (!user._id) {
+      // not linked in clerk
+      this.user = await userService.createUser(externalUserId);
+    } else {
+      this.user = user;
+    }
 
     if (!options.noOrganization) {
-      this.organization = await this.linkEEOrganization(externalOrgId);
+      await this.addOrganizationEE(externalOrgId);
     }
+
+    await this.fetchJwtEE();
 
     if (!options.noOrganization && !options?.noEnvironment) {
       await this.createEnvironmentsAndFeeds();
@@ -175,38 +184,6 @@ export class UserSession {
       this.subscriberToken = token;
       this.subscriberProfile = profile;
     }
-  }
-
-  private async linkEEUser(externalUserId: string) {
-    const userRepository = getEERepository<UserRepository>('UserRepository');
-    const communityUserRepository = new CommunityUserRepository();
-    const user = await communityUserRepository.findOne({ externalId: externalUserId });
-
-    if (user) {
-      return user;
-    }
-
-    return userRepository.create(
-      {},
-      {
-        linkOnly: true,
-        externalId: externalUserId,
-      }
-    );
-  }
-
-  private async linkEEOrganization(externalOrgId: string) {
-    const organizationRepository = getEERepository<OrganizationRepository>('OrganizationRepository');
-    const communityOrganizationRepository = new CommunityOrganizationRepository();
-    const organization = await communityOrganizationRepository.findOne({ externalId: externalOrgId });
-
-    if (organization) {
-      return organization;
-    }
-
-    return organizationRepository.create({
-      externalId: externalOrgId,
-    });
   }
 
   private async initializeWidgetSession() {
@@ -385,6 +362,20 @@ export class UserSession {
 
     this.organization = await organizationService.createOrganization();
     await organizationService.addMember(this.organization._id, this.user._id);
+
+    return this.organization;
+  }
+
+  private async addOrganizationEE(orgId: string) {
+    const organizationService = new EEOrganizationService();
+
+    try {
+      // is not linked
+      this.organization = await organizationService.createOrganization(orgId);
+    } catch (e) {
+      // is already linked
+      this.organization = (await organizationService.getOrganization(orgId)) as OrganizationEntity;
+    }
 
     return this.organization;
   }
