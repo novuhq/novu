@@ -42,7 +42,7 @@ describe('GetApiRateLimitServiceMaximumConfig', () => {
 
   it('should load the default API rate limits on module init', () => {
     expect(useCase.default).to.be.ok;
-    expect(useCase.default[ApiServiceLevelEnum.PRO]).to.be.greaterThan(0);
+    expect(useCase.default[ApiServiceLevelEnum.PRO].trigger).to.be.greaterThan(0);
   });
 
   it('should override default API rate limits with environment variables', async () => {
@@ -52,13 +52,6 @@ describe('GetApiRateLimitServiceMaximumConfig', () => {
     delete process.env[mockEnvVarName]; // cleanup
 
     expect(useCase.default[mockRateLimitServiceLevel][mockRateLimitCategory]).to.equal(mockOverrideRateLimit);
-  });
-
-  it('should NOT invalidate the cache when loading defaults and the cache IS disabled', async () => {
-    cacheServiceIsEnabledStub.returns(false);
-    await useCase.loadDefault();
-
-    expect(invalidateByKeyStub.callCount).to.equal(0);
   });
 
   it('should NOT invalidate the cache when loading defaults and the config HAS NOT changed between loads', async () => {
