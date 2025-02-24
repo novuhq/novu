@@ -1,14 +1,15 @@
 import { Badge } from '@/components/primitives/badge';
 import { Card } from '@/components/primitives/card';
+import { useFlagsMap } from '@/hooks/use-feature-flag.tsx';
 import {
   ApiServiceLevelEnum,
   FeatureFlags,
   FeatureFlagsKeysEnum,
   FeatureNameEnum,
   getFeatureForTierAsNumber,
-  getFeatureForTierAsText,
-} from '@novu/shared';
-import { useFlagsMap } from '@/hooks/use-feature-flag.tsx';
+  getFeatureForTierAsText
+} from "@novu/shared";
+import { useFlagsMap } from "@/hooks/use-feature-flag.tsx";
 
 const serviceLevelHighlightFunctions: Record<
   string,
@@ -16,7 +17,7 @@ const serviceLevelHighlightFunctions: Record<
 > = {
   [ApiServiceLevelEnum.FREE]: [getEventsLine, getTeammatesLine, feedRetentionLine],
   [ApiServiceLevelEnum.PRO]: [getEventsLine, getTeammatesLine, feedRetentionLine],
-  [ApiServiceLevelEnum.TEAM]: [getEventsLine, getTeammatesLine, feedRetentionLine],
+  [ApiServiceLevelEnum.BUSINESS]: [getEventsLine, getTeammatesLine, feedRetentionLine],
   [ApiServiceLevelEnum.ENTERPRISE]: [getEventsLine, getTeammatesLine, getSamlText],
 };
 

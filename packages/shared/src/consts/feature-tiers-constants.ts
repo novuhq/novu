@@ -65,7 +65,6 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
   [FeatureNameEnum.PLATFORM_SUPPORT_SLA]: {
     [ApiServiceLevelEnum.FREE]: '-',
     [ApiServiceLevelEnum.PRO]: '-',
-    [ApiServiceLevelEnum.TEAM]: '48 Hours',
     [ApiServiceLevelEnum.BUSINESS]: '48 Hours',
     [ApiServiceLevelEnum.ENTERPRISE]: '24 Hours',
     [ApiServiceLevelEnum.UNLIMITED]: '24 Hours',
@@ -73,7 +72,6 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
   [FeatureNameEnum.PLATFORM_PLAN_LABEL]: {
     [ApiServiceLevelEnum.FREE]: 'Free',
     [ApiServiceLevelEnum.PRO]: 'Pro',
-    [ApiServiceLevelEnum.TEAM]: 'Team',
     [ApiServiceLevelEnum.BUSINESS]: 'Team',
     [ApiServiceLevelEnum.ENTERPRISE]: 'Enterprise',
     [ApiServiceLevelEnum.UNLIMITED]: '-',
@@ -81,7 +79,6 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
   [FeatureNameEnum.PLATFORM_TERMS_OF_SERVICE]: {
     [ApiServiceLevelEnum.FREE]: 'Standard',
     [ApiServiceLevelEnum.PRO]: 'Standard',
-    [ApiServiceLevelEnum.TEAM]: 'Standard',
     [ApiServiceLevelEnum.BUSINESS]: 'Standard',
     [ApiServiceLevelEnum.ENTERPRISE]: 'Custom',
     [ApiServiceLevelEnum.UNLIMITED]: 'Custom',
@@ -89,7 +86,6 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
   [FeatureNameEnum.PAYMENT_METHOD]: {
     [ApiServiceLevelEnum.FREE]: '-',
     [ApiServiceLevelEnum.PRO]: 'Credit card only',
-    [ApiServiceLevelEnum.TEAM]: 'Credit card & PO and Invoicing',
     [ApiServiceLevelEnum.BUSINESS]: 'Credit card & PO and Invoicing',
     [ApiServiceLevelEnum.ENTERPRISE]: 'Credit card & PO and Invoicing',
     [ApiServiceLevelEnum.UNLIMITED]: 'Credit card & PO and Invoicing',
@@ -97,7 +93,6 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
   [FeatureNameEnum.PLATFORM_SUPPORT_CHANNELS]: {
     [ApiServiceLevelEnum.FREE]: 'Community & Discord',
     [ApiServiceLevelEnum.PRO]: 'Community & Discord',
-    [ApiServiceLevelEnum.TEAM]: 'Slack & Email',
     [ApiServiceLevelEnum.BUSINESS]: 'Slack & Email',
     [ApiServiceLevelEnum.ENTERPRISE]: 'Slack & Email',
     [ApiServiceLevelEnum.UNLIMITED]: 'Slack & Email',
@@ -111,11 +106,6 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
       value: 30,
       currency: '$',
       label: '30$',
-    },
-    [ApiServiceLevelEnum.TEAM]: {
-      value: 250,
-      currency: '$',
-      label: '250$',
     },
     [ApiServiceLevelEnum.BUSINESS]: {
       value: 250,
@@ -141,11 +131,6 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
       currency: '$',
       label: '330$',
     },
-    [ApiServiceLevelEnum.TEAM]: {
-      value: 2700,
-      currency: '$',
-      label: '2,700$',
-    },
     [ApiServiceLevelEnum.BUSINESS]: {
       value: 2700,
       currency: '$',
@@ -164,7 +149,6 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
   [FeatureNameEnum.PLATFORM_MONTHLY_EVENTS_INCLUDED]: {
     [ApiServiceLevelEnum.FREE]: { value: 10000, label: '10,000' },
     [ApiServiceLevelEnum.PRO]: { value: 30000, label: '30,000' },
-    [ApiServiceLevelEnum.TEAM]: { value: 250000, label: '25,0000' },
     [ApiServiceLevelEnum.BUSINESS]: { value: 250000, label: '250,000' },
     [ApiServiceLevelEnum.ENTERPRISE]: { value: 5000000, label: '5,000,000' },
     [ApiServiceLevelEnum.UNLIMITED]: { value: 5000000, label: '5,000,000' },
@@ -172,7 +156,6 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
   [FeatureNameEnum.PLATFORM_MAX_API_REQUESTS_TRIGGER_EVENTS]: {
     [ApiServiceLevelEnum.FREE]: 60,
     [ApiServiceLevelEnum.PRO]: 240,
-    [ApiServiceLevelEnum.TEAM]: 600,
     [ApiServiceLevelEnum.BUSINESS]: 600,
     [ApiServiceLevelEnum.ENTERPRISE]: 6000,
     [ApiServiceLevelEnum.UNLIMITED]: 6000,
@@ -180,7 +163,6 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
   [FeatureNameEnum.PLATFORM_MAX_API_REQUESTS_CONFIGURATION]: {
     [ApiServiceLevelEnum.FREE]: 20,
     [ApiServiceLevelEnum.PRO]: 80,
-    [ApiServiceLevelEnum.TEAM]: 200,
     [ApiServiceLevelEnum.BUSINESS]: 200,
     [ApiServiceLevelEnum.ENTERPRISE]: 2000,
     [ApiServiceLevelEnum.UNLIMITED]: 2000,
@@ -188,7 +170,6 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
   [FeatureNameEnum.PLATFORM_MAX_API_REQUESTS_GLOBAL]: {
     [ApiServiceLevelEnum.FREE]: 30,
     [ApiServiceLevelEnum.PRO]: 120,
-    [ApiServiceLevelEnum.TEAM]: 300,
     [ApiServiceLevelEnum.BUSINESS]: 300,
     [ApiServiceLevelEnum.ENTERPRISE]: 3000,
     [ApiServiceLevelEnum.UNLIMITED]: 3000,
@@ -196,7 +177,6 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
   [FeatureNameEnum.PLATFORM_COST_PER_ADDITIONAL_1K_EVENTS]: {
     [ApiServiceLevelEnum.FREE]: { label: '-', value: null },
     [ApiServiceLevelEnum.PRO]: { label: '$1.2 per 1,000 events', value: 1.2 },
-    [ApiServiceLevelEnum.TEAM]: { label: '$1.2 per 1,000 events', value: 1.2 },
     [ApiServiceLevelEnum.BUSINESS]: { label: '$1.2 per 1,000 events', value: 1.2 },
     [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Custom', value: null },
     [ApiServiceLevelEnum.UNLIMITED]: { label: 'Custom', value: null },
@@ -204,7 +184,6 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
   [FeatureNameEnum.PLATFORM_CHANNELS_SUPPORTED_BOOLEAN]: {
     [ApiServiceLevelEnum.FREE]: { label: 'Yes', value: true },
     [ApiServiceLevelEnum.PRO]: { label: 'Yes', value: true },
-    [ApiServiceLevelEnum.TEAM]: { label: 'Yes', value: true },
     [ApiServiceLevelEnum.BUSINESS]: { label: 'Yes', value: true },
     [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Yes', value: true },
     [ApiServiceLevelEnum.UNLIMITED]: { label: 'Yes', value: true },
@@ -212,7 +191,6 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
   [FeatureNameEnum.PLATFORM_STEP_CONTROLS_BOOLEAN]: {
     [ApiServiceLevelEnum.FREE]: { label: 'Yes', value: true },
     [ApiServiceLevelEnum.PRO]: { label: 'Yes', value: true },
-    [ApiServiceLevelEnum.TEAM]: { label: 'Yes', value: true },
     [ApiServiceLevelEnum.BUSINESS]: { label: 'Yes', value: true },
     [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Yes', value: true },
     [ApiServiceLevelEnum.UNLIMITED]: { label: 'Yes', value: true },
@@ -220,7 +198,6 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
   [FeatureNameEnum.PLATFORM_SUBSCRIBERS]: {
     [ApiServiceLevelEnum.FREE]: { label: 'Unlimited', value: -1 },
     [ApiServiceLevelEnum.PRO]: { label: 'Unlimited', value: -1 },
-    [ApiServiceLevelEnum.TEAM]: { label: 'Unlimited', value: -1 },
     [ApiServiceLevelEnum.BUSINESS]: { label: 'Unlimited', value: -1 },
     [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Unlimited', value: -1 },
     [ApiServiceLevelEnum.UNLIMITED]: { label: 'Unlimited', value: -1 },
@@ -228,7 +205,6 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
   [FeatureNameEnum.PLATFORM_MAX_WORKFLOWS]: {
     [ApiServiceLevelEnum.FREE]: { value: 20 },
     [ApiServiceLevelEnum.PRO]: { value: 20 },
-    [ApiServiceLevelEnum.TEAM]: { value: -1 },
     [ApiServiceLevelEnum.BUSINESS]: { value: -1, label: 'unlimited' },
     [ApiServiceLevelEnum.ENTERPRISE]: { value: -1, label: 'unlimited' },
     [ApiServiceLevelEnum.UNLIMITED]: { value: -1, label: 'unlimited' },
@@ -236,7 +212,6 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
   [FeatureNameEnum.PLATFORM_GUI_BASED_WORKFLOW_MANAGEMENT_BOOLEAN]: {
     [ApiServiceLevelEnum.FREE]: 1,
     [ApiServiceLevelEnum.PRO]: 1,
-    [ApiServiceLevelEnum.TEAM]: 1,
     [ApiServiceLevelEnum.BUSINESS]: 1,
     [ApiServiceLevelEnum.ENTERPRISE]: 1,
     [ApiServiceLevelEnum.UNLIMITED]: 1,
@@ -244,7 +219,6 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
   [FeatureNameEnum.PLATFORM_CODE_BASED_WORKFLOW_MANAGEMENT_BOOLEAN]: {
     [ApiServiceLevelEnum.FREE]: 1,
     [ApiServiceLevelEnum.PRO]: 1,
-    [ApiServiceLevelEnum.TEAM]: 1,
     [ApiServiceLevelEnum.BUSINESS]: 1,
     [ApiServiceLevelEnum.ENTERPRISE]: 1,
     [ApiServiceLevelEnum.UNLIMITED]: 1,
@@ -252,7 +226,6 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
   [FeatureNameEnum.PLATFORM_SUBSCRIBER_MANAGEMENT_BOOLEAN]: {
     [ApiServiceLevelEnum.FREE]: 1,
     [ApiServiceLevelEnum.PRO]: 1,
-    [ApiServiceLevelEnum.TEAM]: 1,
     [ApiServiceLevelEnum.BUSINESS]: 1,
     [ApiServiceLevelEnum.ENTERPRISE]: 1,
     [ApiServiceLevelEnum.UNLIMITED]: 1,
@@ -260,7 +233,6 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
   [FeatureNameEnum.CUSTOM_ENVIRONMENTS_BOOLEAN]: {
     [ApiServiceLevelEnum.FREE]: false,
     [ApiServiceLevelEnum.PRO]: false,
-    [ApiServiceLevelEnum.TEAM]: true,
     [ApiServiceLevelEnum.BUSINESS]: true,
     [ApiServiceLevelEnum.ENTERPRISE]: true,
     [ApiServiceLevelEnum.UNLIMITED]: true,
@@ -268,7 +240,6 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
   [FeatureNameEnum.AUTO_TRANSLATIONS]: {
     [ApiServiceLevelEnum.FREE]: false,
     [ApiServiceLevelEnum.PRO]: false,
-    [ApiServiceLevelEnum.TEAM]: true,
     [ApiServiceLevelEnum.BUSINESS]: true,
     [ApiServiceLevelEnum.ENTERPRISE]: true,
     [ApiServiceLevelEnum.UNLIMITED]: true,
@@ -276,7 +247,6 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
   [FeatureNameEnum.PLATFORM_MULTI_ORG_MULTI_TENANCY]: {
     [ApiServiceLevelEnum.FREE]: { label: 'No', value: 0 },
     [ApiServiceLevelEnum.PRO]: { label: 'No', value: 0 },
-    [ApiServiceLevelEnum.TEAM]: { label: 'Q2 2025', value: true },
     [ApiServiceLevelEnum.BUSINESS]: { label: 'Q2 2025', value: true },
     [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Q2 2025', value: true },
     [ApiServiceLevelEnum.UNLIMITED]: { label: 'Q2 2025', value: true },
@@ -284,7 +254,6 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
   [FeatureNameEnum.PLATFORM_PROVIDER_INTEGRATIONS]: {
     [ApiServiceLevelEnum.FREE]: -1,
     [ApiServiceLevelEnum.PRO]: -1,
-    [ApiServiceLevelEnum.TEAM]: -1,
     [ApiServiceLevelEnum.BUSINESS]: -1,
     [ApiServiceLevelEnum.ENTERPRISE]: -1,
     [ApiServiceLevelEnum.UNLIMITED]: -1,
@@ -292,7 +261,6 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
   [FeatureNameEnum.PLATFORM_ACTIVITY_FEED_RETENTION]: {
     [ApiServiceLevelEnum.FREE]: { label: '24 hours', value: 24, timeSuffix: 'h' },
     [ApiServiceLevelEnum.PRO]: { label: '7 days', value: 7, timeSuffix: 'd' },
-    [ApiServiceLevelEnum.TEAM]: { label: '90 days', value: 90, timeSuffix: 'd' },
     [ApiServiceLevelEnum.BUSINESS]: { label: '90 days', value: 90, timeSuffix: 'd' },
     [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Unlimited', value: -1 },
     [ApiServiceLevelEnum.UNLIMITED]: { label: 'Unlimited', value: -1 },
@@ -300,7 +268,6 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
   [FeatureNameEnum.PLATFORM_MAX_DIGEST_WINDOW_TIME]: {
     [ApiServiceLevelEnum.FREE]: { label: '24 Hours', value: 24, timeSuffix: 'h' },
     [ApiServiceLevelEnum.PRO]: { label: '7 days', value: 7, timeSuffix: 'd' },
-    [ApiServiceLevelEnum.TEAM]: { label: '30 days', value: 30, timeSuffix: 'd' },
     [ApiServiceLevelEnum.BUSINESS]: { label: '30 days', value: 30, timeSuffix: 'd' },
     [ApiServiceLevelEnum.ENTERPRISE]: { label: 'unlimited', value: -1 },
     [ApiServiceLevelEnum.UNLIMITED]: { label: 'unlimited', value: -1 },
@@ -308,7 +275,6 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
   [FeatureNameEnum.PLATFORM_BLOCK_BASED_EMAIL_EDITOR_BOOLEAN]: {
     [ApiServiceLevelEnum.FREE]: 1,
     [ApiServiceLevelEnum.PRO]: 1,
-    [ApiServiceLevelEnum.TEAM]: 1,
     [ApiServiceLevelEnum.BUSINESS]: 1,
     [ApiServiceLevelEnum.ENTERPRISE]: 1,
     [ApiServiceLevelEnum.UNLIMITED]: 1,
@@ -316,7 +282,6 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
   [FeatureNameEnum.PLATFORM_REMOVE_NOVU_BRANDING_BOOLEAN]: {
     [ApiServiceLevelEnum.FREE]: 0,
     [ApiServiceLevelEnum.PRO]: 1,
-    [ApiServiceLevelEnum.TEAM]: 1,
     [ApiServiceLevelEnum.BUSINESS]: 1,
     [ApiServiceLevelEnum.ENTERPRISE]: 1,
     [ApiServiceLevelEnum.UNLIMITED]: 1,
@@ -325,7 +290,6 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
   [FeatureNameEnum.INBOX_COMPONENT_BOOLEAN]: {
     [ApiServiceLevelEnum.FREE]: 1,
     [ApiServiceLevelEnum.PRO]: 1,
-    [ApiServiceLevelEnum.TEAM]: 1,
     [ApiServiceLevelEnum.BUSINESS]: 1,
     [ApiServiceLevelEnum.ENTERPRISE]: 1,
     [ApiServiceLevelEnum.UNLIMITED]: 1,
@@ -333,7 +297,6 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
   [FeatureNameEnum.INBOX_USER_PREFERENCES_COMPONENT_BOOLEAN]: {
     [ApiServiceLevelEnum.FREE]: 1,
     [ApiServiceLevelEnum.PRO]: 1,
-    [ApiServiceLevelEnum.TEAM]: 1,
     [ApiServiceLevelEnum.BUSINESS]: 1,
     [ApiServiceLevelEnum.ENTERPRISE]: 1,
     [ApiServiceLevelEnum.UNLIMITED]: 1,
@@ -341,7 +304,6 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
   [FeatureNameEnum.INBOX_BELL_COMPONENT_BOOLEAN]: {
     [ApiServiceLevelEnum.FREE]: 1,
     [ApiServiceLevelEnum.PRO]: 1,
-    [ApiServiceLevelEnum.TEAM]: 1,
     [ApiServiceLevelEnum.BUSINESS]: 1,
     [ApiServiceLevelEnum.ENTERPRISE]: 1,
     [ApiServiceLevelEnum.UNLIMITED]: 1,
@@ -349,7 +311,6 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
   [FeatureNameEnum.INBOX_NOTIFICATIONS_COMPONENT_BOOLEAN]: {
     [ApiServiceLevelEnum.FREE]: 1,
     [ApiServiceLevelEnum.PRO]: 1,
-    [ApiServiceLevelEnum.TEAM]: 1,
     [ApiServiceLevelEnum.BUSINESS]: 1,
     [ApiServiceLevelEnum.ENTERPRISE]: 1,
     [ApiServiceLevelEnum.UNLIMITED]: 1,
@@ -357,7 +318,6 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
   [FeatureNameEnum.INBOX_CONTENT_COMPONENT_BOOLEAN]: {
     [ApiServiceLevelEnum.FREE]: 1,
     [ApiServiceLevelEnum.PRO]: 1,
-    [ApiServiceLevelEnum.TEAM]: 1,
     [ApiServiceLevelEnum.BUSINESS]: 1,
     [ApiServiceLevelEnum.ENTERPRISE]: 1,
     [ApiServiceLevelEnum.UNLIMITED]: 1,
@@ -366,7 +326,6 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
   [FeatureNameEnum.ACCOUNT_MAX_TEAM_MEMBERS]: {
     [ApiServiceLevelEnum.FREE]: 3,
     [ApiServiceLevelEnum.PRO]: 3,
-    [ApiServiceLevelEnum.TEAM]: -1,
     [ApiServiceLevelEnum.BUSINESS]: -1,
     [ApiServiceLevelEnum.ENTERPRISE]: -1,
     [ApiServiceLevelEnum.UNLIMITED]: -1,
@@ -374,7 +333,6 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
   [FeatureNameEnum.ACCOUNT_ROLE_BASED_ACCESS_CONTROL_BOOLEAN]: {
     [ApiServiceLevelEnum.FREE]: 0,
     [ApiServiceLevelEnum.PRO]: 0,
-    [ApiServiceLevelEnum.TEAM]: 1,
     [ApiServiceLevelEnum.BUSINESS]: 1,
     [ApiServiceLevelEnum.ENTERPRISE]: 1,
     [ApiServiceLevelEnum.UNLIMITED]: 1,
@@ -382,7 +340,6 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
   [FeatureNameEnum.ACCOUNT_STANDARD_BUILT_IN_AUTHENTICATION_BOOLEAN]: {
     [ApiServiceLevelEnum.FREE]: 1,
     [ApiServiceLevelEnum.PRO]: 1,
-    [ApiServiceLevelEnum.TEAM]: 1,
     [ApiServiceLevelEnum.BUSINESS]: 1,
     [ApiServiceLevelEnum.ENTERPRISE]: 1,
     [ApiServiceLevelEnum.UNLIMITED]: 1,
@@ -390,7 +347,6 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
   [FeatureNameEnum.ACCOUNT_CUSTOM_SAML_SSO_OIDC_BOOLEAN]: {
     [ApiServiceLevelEnum.FREE]: 0,
     [ApiServiceLevelEnum.PRO]: 0,
-    [ApiServiceLevelEnum.TEAM]: 0,
     [ApiServiceLevelEnum.BUSINESS]: 0,
     [ApiServiceLevelEnum.ENTERPRISE]: 1,
     [ApiServiceLevelEnum.UNLIMITED]: 1,
@@ -398,7 +354,6 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
   [FeatureNameEnum.ACCOUNT_MULTI_FACTOR_AUTHENTICATION_BOOLEAN]: {
     [ApiServiceLevelEnum.FREE]: 1,
     [ApiServiceLevelEnum.PRO]: 1,
-    [ApiServiceLevelEnum.TEAM]: 1,
     [ApiServiceLevelEnum.BUSINESS]: 1,
     [ApiServiceLevelEnum.ENTERPRISE]: 1,
     [ApiServiceLevelEnum.UNLIMITED]: 1,
@@ -407,7 +362,6 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
   [FeatureNameEnum.COMPLIANCE_GDPR_BOOLEAN]: {
     [ApiServiceLevelEnum.FREE]: 1,
     [ApiServiceLevelEnum.PRO]: 1,
-    [ApiServiceLevelEnum.TEAM]: 1,
     [ApiServiceLevelEnum.BUSINESS]: 1,
     [ApiServiceLevelEnum.ENTERPRISE]: 1,
     [ApiServiceLevelEnum.UNLIMITED]: 1,
@@ -416,7 +370,6 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
   [FeatureNameEnum.COMPLIANCE_SOC2_ISO27001_REPORT_BOOLEAN]: {
     [ApiServiceLevelEnum.FREE]: 0,
     [ApiServiceLevelEnum.PRO]: 0,
-    [ApiServiceLevelEnum.TEAM]: 1,
     [ApiServiceLevelEnum.BUSINESS]: 1,
     [ApiServiceLevelEnum.ENTERPRISE]: 1,
     [ApiServiceLevelEnum.UNLIMITED]: 1,
@@ -424,7 +377,6 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
   [FeatureNameEnum.COMPLIANCE_HIPAA_BAA_BOOLEAN]: {
     [ApiServiceLevelEnum.FREE]: 0,
     [ApiServiceLevelEnum.PRO]: 0,
-    [ApiServiceLevelEnum.TEAM]: 0,
     [ApiServiceLevelEnum.BUSINESS]: 0,
     [ApiServiceLevelEnum.ENTERPRISE]: 1,
     [ApiServiceLevelEnum.UNLIMITED]: 1,
@@ -433,14 +385,12 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
     [ApiServiceLevelEnum.FREE]: 'SOC 2 and ISO 27001 upon request',
     [ApiServiceLevelEnum.PRO]: 'SOC 2 and ISO 27001 upon request',
     [ApiServiceLevelEnum.BUSINESS]: 'SOC 2 and ISO 27001 upon request',
-    [ApiServiceLevelEnum.TEAM]: 'SOC 2 and ISO 27001 upon request',
     [ApiServiceLevelEnum.ENTERPRISE]: 'Custom',
     [ApiServiceLevelEnum.UNLIMITED]: 'Custom',
   },
   [FeatureNameEnum.COMPLIANCE_DATA_PROCESSING_AGREEMENTS]: {
     [ApiServiceLevelEnum.FREE]: 'Standard',
     [ApiServiceLevelEnum.PRO]: 'Standard',
-    [ApiServiceLevelEnum.TEAM]: 'Standard',
     [ApiServiceLevelEnum.BUSINESS]: 'Standard',
     [ApiServiceLevelEnum.ENTERPRISE]: 'Custom',
     [ApiServiceLevelEnum.UNLIMITED]: 'Custom',

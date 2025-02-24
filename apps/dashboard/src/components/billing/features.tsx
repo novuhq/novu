@@ -23,6 +23,7 @@ const supportedPlansEnumToServiceLevelRecord: Record<SupportedPlansEnum, ApiServ
   BUSINESS: ApiServiceLevelEnum.BUSINESS,
   ENTERPRISE: ApiServiceLevelEnum.ENTERPRISE,
 };
+
 type FeatureValue = {
   value: React.ReactNode;
 };

@@ -93,7 +93,7 @@ export function FreeTrialBanner() {
         onClose={() => {
           setIsContactSalesModalOpen(false);
         }}
-        intendedApiServiceLevel={ApiServiceLevelEnum.TEAM}
+        intendedApiServiceLevel={ApiServiceLevelEnum.BUSINESS}
       />
     </>
   );

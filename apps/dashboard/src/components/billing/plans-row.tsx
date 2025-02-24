@@ -1,9 +1,5 @@
-import React from 'react';
 import { Badge } from '@/components/primitives/badge';
 import { Card } from '@/components/primitives/card';
-import { Check } from 'lucide-react';
-import { ContactSalesButton } from './contact-sales-button';
-import { PlanActionButton } from './plan-action-button';
 import {
   ApiServiceLevelEnum,
   FeatureFlags,
@@ -13,6 +9,10 @@ import {
   getFeatureForTierAsText,
   StripeBillingIntervalEnum,
 } from '@novu/shared';
+import { Check } from 'lucide-react';
+import React from 'react';
+import { ContactSalesButton } from './contact-sales-button';
+import { PlanActionButton } from './plan-action-button';
 
 interface PlansRowProps {
   selectedBillingInterval: StripeBillingIntervalEnum;

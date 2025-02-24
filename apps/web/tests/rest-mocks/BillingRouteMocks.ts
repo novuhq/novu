@@ -6,7 +6,7 @@ const SUBSCRIPTION_ROUTE = '**/v1/billing/subscription';
 
 const subscriptionMock: GetSubscriptionDto = {
   status: 'active',
-  apiServiceLevel: ApiServiceLevelEnum.TEAM,
+  apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
   isActive: true,
   currentPeriodStart: new Date().toISOString(),
   currentPeriodEnd: new Date().toISOString(),

@@ -169,7 +169,7 @@ describe('webhook event - checkout.session.completed #novu-v2', () => {
 
   beforeEach(() => {
     verifyCustomerStub = sinon.stub(VerifyCustomer.prototype, 'execute').resolves(verifyCustomerMock);
-    getPricesStub = sinon.stub(GetStripePlanPriceUseCase.prototype, 'execute').resolves(getPricesMock);
+    getPricesStub = sinon.stub(GetPrices.prototype, 'execute').resolves(getPricesMock);
   });
 
   afterEach(() => {
