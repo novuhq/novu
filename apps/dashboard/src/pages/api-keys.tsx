@@ -142,7 +142,7 @@ function SettingField({
   };
 
   const maskSecret = (secret: string) => {
-    return `${'•'.repeat(28)} ${secret.slice(-4)}`;
+    return `${'•'.repeat(28)}${secret.slice(-4)}`;
   };
 
   return (
@@ -160,22 +160,17 @@ function SettingField({
         ) : (
           <>
             <Input
-              className="cursor-default !text-neutral-500"
+              className="cursor-default font-mono !text-neutral-500"
               value={secret ? (showSecret ? value : maskSecret(value ?? '')) : value}
               readOnly={readOnly}
-              trailingNode={
-                <CopyButton
-                  valueToCopy={value ?? ''}
-                  className="rounded-none border-l border-neutral-200 shadow-none ring-0"
-                />
-              }
+              trailingNode={<CopyButton valueToCopy={value ?? ''} />}
               inlineTrailingNode={
                 secret && (
                   <button type="button" onClick={toggleSecretVisibility}>
                     {showSecret ? (
-                      <RiEyeOffLine className="text-text-soft group-has-[disabled]:text-text-disabled size-5" />
+                      <RiEyeOffLine className="text-text-sub group-has-[disabled]:text-text-disabled" />
                     ) : (
-                      <RiEyeLine className="text-text-soft group-has-[disabled]:text-text-disabled size-5" />
+                      <RiEyeLine className="text-text-sub group-has-[disabled]:text-text-disabled" />
                     )}
                   </button>
                 )
