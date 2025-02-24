@@ -70,7 +70,6 @@ export function FreeTierState() {
                           className="z-10 flex size-2 p-0 px-1 opacity-0 group-hover:opacity-100"
                           valueToCopy={environment.identifier}
                           size="2xs"
-                          mode="ghost"
                         />
                       </div>
                     </TableCell>

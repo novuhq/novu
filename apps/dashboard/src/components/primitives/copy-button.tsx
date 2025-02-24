@@ -7,10 +7,11 @@ import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip';
 type CopyButtonProps = {
   className?: string;
   valueToCopy: string;
+  size?: '2xs' | 'xs';
 };
 
 export const CopyButton = (props: CopyButtonProps) => {
-  const { className, valueToCopy, children, onClick, size, ...rest } = props;
+  const { className, valueToCopy, size, ...rest } = props;
 
   const [copied, setCopied] = useState<boolean>(false);
 
@@ -32,10 +33,11 @@ export const CopyButton = (props: CopyButtonProps) => {
         <button
           onClick={(e) => {
             handleCopy();
-            onClick?.(e);
+            e.stopPropagation();
+            e.preventDefault();
           }}
           className={cn(
-            'inline-flex select-none items-center justify-center whitespace-nowrap p-3 outline-none',
+            'inline-flex select-none items-center justify-center whitespace-nowrap p-2.5 outline-none',
             // colors
             'text-text-sub',
             // transitions
@@ -47,7 +49,6 @@ export const CopyButton = (props: CopyButtonProps) => {
           )}
           {...rest}
         >
-          {children}
           <AnimatePresence mode="wait" initial={false}>
             {copied ? (
               <motion.div
