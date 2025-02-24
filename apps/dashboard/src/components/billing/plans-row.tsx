@@ -1,18 +1,10 @@
 import { Badge } from '@/components/primitives/badge';
 import { Card } from '@/components/primitives/card';
-import {
-  ApiServiceLevelEnum,
-  FeatureFlags,
-  FeatureFlagsKeysEnum,
-  FeatureNameEnum,
-  getFeatureForTierAsNumber,
-  getFeatureForTierAsText,
-  StripeBillingIntervalEnum,
-} from '@novu/shared';
+import { ApiServiceLevelEnum, StripeBillingIntervalEnum } from '@novu/shared';
 import { Check } from 'lucide-react';
-import React from 'react';
 import { ContactSalesButton } from './contact-sales-button';
 import { PlanActionButton } from './plan-action-button';
+import { ActionType } from '@/components/billing/utils/action.button.constants.ts';
 
 interface PlansRowProps {
   selectedBillingInterval: StripeBillingIntervalEnum;
@@ -20,26 +12,36 @@ interface PlansRowProps {
   trial?: {
     isActive: boolean;
   };
-  featureFlags: FeatureFlags;
+  plans: Record<ApiServiceLevelEnum, PlanConfig>;
 }
 
-interface PlanConfig {
+export interface PlanConfig {
   name: string;
   price: string;
   subtitle: string;
   events: string;
   features: string[];
-  actionType?: 'button' | 'contact';
+  actionType?: ActionType;
 }
 
-const PlanFeature = ({ text }) => (
+const PlanFeature = ({ text }: { text: string }) => (
   <li className="flex items-center gap-2 text-sm">
     <Check className="text-primary h-4 w-4" />
     <span>{text}</span>
   </li>
 );
 
-const PlanDisplay = ({ price, subtitle, events, isEnterprise = false }) => (
+const PlanDisplay = ({
+  price,
+  subtitle,
+  events,
+  isEnterprise = false,
+}: {
+  price: string;
+  subtitle: string;
+  events: string;
+  isEnterprise: boolean;
+}) => (
   <div className="space-y-1">
     <div className="flex items-baseline gap-1">
       <span className={`${isEnterprise ? 'text-2xl font-semibold' : 'text-3xl font-bold tracking-tight'}`}>
@@ -55,111 +57,11 @@ const PlanDisplay = ({ price, subtitle, events, isEnterprise = false }) => (
   </div>
 );
 
-function calcCostFeatureName(interval: StripeBillingIntervalEnum) {
-  return interval === StripeBillingIntervalEnum.YEAR
-    ? FeatureNameEnum.PLATFORM_ANNUAL_COST
-    : FeatureNameEnum.PLATFORM_MONTHLY_COST;
-}
-
-function getEventsIncludedParsedText(apiServiceLevelEnum: ApiServiceLevelEnum, featureFlags: FeatureFlags) {
-  const eventsIncluded = getFeatureForTierAsNumber(
-    FeatureNameEnum.PLATFORM_MONTHLY_EVENTS_INCLUDED,
-    apiServiceLevelEnum,
-    featureFlags,
-    false
-  );
-  const events: string = new Intl.NumberFormat('en-US', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(eventsIncluded);
-  return events;
-}
-
-function buildSubtitle(interval: StripeBillingIntervalEnum, price: string) {
-  if (price === '0$') return 'Free forever';
-  return `billed ${interval === 'year' ? 'annually' : 'monthly'}`;
-}
-
-function buildPlanConfig(
-  apiServiceLevelEnum: ApiServiceLevelEnum,
-  actionType: ActionType | undefined,
-  firstFeature: string,
-  lastFeature: string
-): (interval: StripeBillingIntervalEnum, featureFlags: FeatureFlags) => PlanConfig {
-  return (interval: StripeBillingIntervalEnum, featureFlags) => {
-    const maxTeamMembers = getFeatureForTierAsText(
-      FeatureNameEnum.ACCOUNT_MAX_TEAM_MEMBERS,
-      apiServiceLevelEnum,
-      featureFlags
-    );
-    const price = getFeatureForTierAsText(calcCostFeatureName(interval), apiServiceLevelEnum, featureFlags);
-    return {
-      name: getFeatureForTierAsText(FeatureNameEnum.PLATFORM_PLAN_LABEL, apiServiceLevelEnum, featureFlags),
-      price,
-      subtitle: buildSubtitle(interval, price),
-      events: `${getEventsIncludedParsedText(apiServiceLevelEnum, featureFlags)} events per month`,
-      features: [firstFeature, `${maxTeamMembers} team members`, lastFeature],
-      actionType: actionType,
-    };
-  };
-}
-
-enum ActionType {
-  BUTTON = 'button',
-  CONTACT = 'contact',
-}
-
-const PLANS: Record<string, (interval: StripeBillingIntervalEnum, featureFlags: FeatureFlags) => PlanConfig> = {
-  [ApiServiceLevelEnum.FREE]: buildPlanConfig(
-    ApiServiceLevelEnum.FREE,
-    undefined,
-    'All core features',
-    'Community support'
-  ),
-  [ApiServiceLevelEnum.PRO]: buildPlanConfig(
-    ApiServiceLevelEnum.PRO,
-    ActionType.BUTTON,
-    'Everything in Free',
-    'Remove Novu Branding'
-  ),
-  [ApiServiceLevelEnum.BUSINESS]: buildPlanConfig(
-    ApiServiceLevelEnum.BUSINESS,
-    ActionType.BUTTON,
-    'Everything in Pro',
-    'Priority support'
-  ),
-  [ApiServiceLevelEnum.ENTERPRISE]: buildPlanConfig(
-    ApiServiceLevelEnum.ENTERPRISE,
-    ActionType.CONTACT,
-    'Everything in Business',
-    'Custom contracts & SLA'
-  ),
-};
-
-function augmentPlansConfigurationsBasedOnFeatureFlag(
-  configurations: Record<string, (interval: StripeBillingIntervalEnum, featureFlags: FeatureFlags) => PlanConfig>,
-  featureFlags: FeatureFlags
-) {
-  if (!featureFlags[FeatureFlagsKeysEnum.IS_2025_Q1_TIERING_ENABLED]) {
-    delete configurations[ApiServiceLevelEnum.PRO];
-    const planConfigPreFF = configurations[ApiServiceLevelEnum.BUSINESS];
-
-    configurations[ApiServiceLevelEnum.BUSINESS] = (interval, featureFlags) => {
-      const planConfig = planConfigPreFF(interval, featureFlags);
-      planConfig.name = 'Business';
-      planConfig.features[0] = 'Everything in Free';
-      return planConfig;
-    };
-  }
-
-  return configurations;
-}
-
 function buildCtaButton(
   planToDraw: ApiServiceLevelEnum,
   effectiveCurrentPlan: ApiServiceLevelEnum | undefined,
   selectedBillingInterval: StripeBillingIntervalEnum,
-  actionType: ActionType
+  actionType: ActionType | undefined
 ) {
   if (planToDraw === effectiveCurrentPlan) {
     return (
@@ -190,14 +92,12 @@ function buildCtaButton(
   return null;
 }
 
-export function PlansRow({ selectedBillingInterval, currentPlan, trial, featureFlags }: PlansRowProps) {
+export function PlansRow({ selectedBillingInterval, currentPlan, trial, plans }: PlansRowProps) {
   const effectiveCurrentPlan = trial?.isActive ? ApiServiceLevelEnum.FREE : currentPlan;
-  const augmentedPlans = augmentPlansConfigurationsBasedOnFeatureFlag(PLANS, featureFlags);
-  const numberOfPlans = Object.keys(augmentedPlans).length;
+  const numberOfPlans = Object.keys(plans).length;
   return (
     <div className={`grid grid-cols-${numberOfPlans} gap-6 md:grid-cols-${numberOfPlans}`}>
-      {Object.entries(augmentedPlans).map(([planKey, planConfigFunc]) => {
-        const planConfig = planConfigFunc(selectedBillingInterval, featureFlags);
+      {Object.entries(plans).map(([planKey, planConfig]) => {
         const isCurrentPlan = effectiveCurrentPlan === planKey && !trial?.isActive;
         return (
           <Card
@@ -231,7 +131,12 @@ export function PlansRow({ selectedBillingInterval, currentPlan, trial, featureF
               </div>
 
               <div className="mt-auto pt-6">
-                {buildCtaButton(planKey, effectiveCurrentPlan, selectedBillingInterval, planConfig.actionType)}
+                {buildCtaButton(
+                  planKey as ApiServiceLevelEnum,
+                  effectiveCurrentPlan,
+                  selectedBillingInterval,
+                  planConfig.actionType
+                )}
               </div>
             </div>
           </Card>
