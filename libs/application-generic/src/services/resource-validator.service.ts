@@ -51,10 +51,6 @@ export class ResourceValidatorService {
       _environmentId: environmentId,
     });
 
-    if (workflowsCount < MAX_WORKFLOWS_LIMIT) {
-      return;
-    }
-
     const environment = await this.getEnvironment(environmentId);
     const organization = await this.getOrganization(environment._organizationId);
 
