@@ -7,9 +7,8 @@ import {
   FeatureFlagsKeysEnum,
   FeatureNameEnum,
   getFeatureForTierAsNumber,
-  getFeatureForTierAsText
-} from "@novu/shared";
-import { useFlagsMap } from "@/hooks/use-feature-flag.tsx";
+  getFeatureForTierAsText,
+} from '@novu/shared';
 
 const serviceLevelHighlightFunctions: Record<
   string,
