@@ -1,9 +1,5 @@
-import React from 'react';
 import { Badge } from '@/components/primitives/badge';
 import { Card } from '@/components/primitives/card';
-import { Check } from 'lucide-react';
-import { ContactSalesButton } from './contact-sales-button';
-import { PlanActionButton } from './plan-action-button';
 import {
   ApiServiceLevelEnum,
   FeatureFlags,
@@ -13,6 +9,10 @@ import {
   getFeatureForTierAsText,
   StripeBillingIntervalEnum,
 } from '@novu/shared';
+import { Check } from 'lucide-react';
+import React from 'react';
+import { ContactSalesButton } from './contact-sales-button';
+import { PlanActionButton } from './plan-action-button';
 
 interface PlansRowProps {
   selectedBillingInterval: StripeBillingIntervalEnum;
@@ -105,6 +105,7 @@ function buildPlanConfig(
     };
   };
 }
+
 enum ActionType {
   BUTTON = 'button',
   CONTACT = 'contact',
@@ -125,8 +126,8 @@ const PLAN_CONFIGURATIONS: Record<
     'Everything in Free',
     'Remove Novu Branding'
   ),
-  [ApiServiceLevelEnum.TEAM]: buildPlanConfig(
-    ApiServiceLevelEnum.TEAM,
+  [ApiServiceLevelEnum.BUSINESS]: buildPlanConfig(
+    ApiServiceLevelEnum.BUSINESS,
     ActionType.BUTTON,
     'Everything in Pro',
     'Priority support'
@@ -145,19 +146,22 @@ function augmentPlansConfigurationsBasedOnFeatureFlag(
 ) {
   if (!featureFlags[FeatureFlagsKeysEnum.IS_2025_Q1_TIERING_ENABLED]) {
     delete configurations[ApiServiceLevelEnum.PRO];
+
     configurations[ApiServiceLevelEnum.BUSINESS] = (
       interval: StripeBillingIntervalEnum,
       featureFlags: FeatureFlags
     ) => {
-      const planConfigPostFF = configurations[ApiServiceLevelEnum.TEAM](interval, featureFlags);
+      const planConfigPostFF = configurations[ApiServiceLevelEnum.BUSINESS](interval, featureFlags);
 
       return {
         ...planConfigPostFF,
         name: ApiServiceLevelEnum.BUSINESS,
       };
     };
+
     delete configurations[ApiServiceLevelEnum.PRO];
   }
+
   return configurations;
 }
 

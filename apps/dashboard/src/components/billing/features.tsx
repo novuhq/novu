@@ -3,11 +3,11 @@ import {
   FeatureFlags,
   FeatureNameEnum,
   getFeatureForTierAsBoolean,
-  getFeatureForTierAsText
-} from "@novu/shared";
-import { Check } from "lucide-react";
-import { cn } from "../../utils/ui";
-import { useFlagsMap } from "@/hooks/use-feature-flag.tsx";
+  getFeatureForTierAsText,
+} from '@novu/shared';
+import { Check } from 'lucide-react';
+import { cn } from '../../utils/ui';
+import { useFlagsMap } from '@/hooks/use-feature-flag.tsx';
 
 3;
 enum SupportedPlansEnum {
@@ -20,7 +20,7 @@ enum SupportedPlansEnum {
 const supportedPlansEnumToServiceLevelRecord: Record<SupportedPlansEnum, ApiServiceLevelEnum> = {
   FREE: ApiServiceLevelEnum.FREE,
   PRO: ApiServiceLevelEnum.PRO,
-  TEAM: ApiServiceLevelEnum.TEAM,
+  TEAM: ApiServiceLevelEnum.BUSINESS,
   ENTERPRISE: ApiServiceLevelEnum.ENTERPRISE,
 };
 type FeatureValue = {

@@ -1,14 +1,14 @@
-import { Badge } from "@/components/primitives/badge";
-import { Card } from "@/components/primitives/card";
+import { Badge } from '@/components/primitives/badge';
+import { Card } from '@/components/primitives/card';
+import { useFlagsMap } from '@/hooks/use-feature-flag.tsx';
 import {
   ApiServiceLevelEnum,
   FeatureFlags,
   FeatureFlagsKeysEnum,
   FeatureNameEnum,
   getFeatureForTierAsNumber,
-  getFeatureForTierAsText
-} from "@novu/shared";
-import { useFlagsMap } from "@/hooks/use-feature-flag.tsx";
+  getFeatureForTierAsText,
+} from '@novu/shared';
 
 const serviceLevelHighlightFunctions: Record<
   string,
@@ -16,7 +16,7 @@ const serviceLevelHighlightFunctions: Record<
 > = {
   [ApiServiceLevelEnum.FREE]: [getEventsLine, getTeammatesLine, feedRetentionLine],
   [ApiServiceLevelEnum.PRO]: [getEventsLine, getTeammatesLine, feedRetentionLine],
-  [ApiServiceLevelEnum.TEAM]: [getEventsLine, getTeammatesLine, feedRetentionLine],
+  [ApiServiceLevelEnum.BUSINESS]: [getEventsLine, getTeammatesLine, feedRetentionLine],
   [ApiServiceLevelEnum.ENTERPRISE]: [getEventsLine, getTeammatesLine, getSamlText],
 };
 
@@ -24,6 +24,7 @@ function augmentBasedOfFeatureFlags(highlightsArray: Partial<PlanHighlights>, fe
   if (!featureFlags[FeatureFlagsKeysEnum.IS_2025_Q1_TIERING_ENABLED]) {
     delete highlightsArray[ApiServiceLevelEnum.PRO];
   }
+
   return highlightsArray;
 }
 
@@ -43,6 +44,7 @@ function buildHighlightsArray(activeFlags: FeatureFlags): Partial<PlanHighlights
       highlightsArray[serviceLevel].push(highlightDisplayElement);
     }
   }
+
   return augmentBasedOfFeatureFlags(highlightsArray, activeFlags);
 }
 
@@ -77,6 +79,7 @@ export function HighlightsRow() {
     </div>
   );
 }
+
 function getEventsLine(serviceLevel: ApiServiceLevelEnum) {
   const eventsAmount = getFeatureForTierAsNumber(FeatureNameEnum.PLATFORM_MONTHLY_EVENTS_INCLUDED, serviceLevel);
   const formatted: string = new Intl.NumberFormat('en-US', {
@@ -103,6 +106,7 @@ function feedRetentionLine(serviceLevel: ApiServiceLevelEnum, activeFlags: Featu
 function getSamlText() {
   return 'SAML SSO';
 }
+
 interface Highlight {
   text: string;
   badgeLabel?: string;
