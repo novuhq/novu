@@ -1,6 +1,6 @@
 import { Badge } from '@/components/primitives/badge';
 import { Card } from '@/components/primitives/card';
-import { useFlagsMap } from '@/hooks/use-feature-flag.tsx';
+import { useFeatureFlagMap } from '@/hooks/use-feature-flag.tsx';
 import {
   ApiServiceLevelEnum,
   FeatureFlags,
@@ -69,11 +69,11 @@ function PlanHighlights({ planHighlights }: { planHighlights: Highlight[] }) {
 }
 
 export function HighlightsRow() {
-  const activeFlags = useFlagsMap();
+  const activeFlags = useFeatureFlagMap();
   const highlightsArray = buildHighlightsArray(activeFlags);
   const numberOfPlans = Object.keys(highlightsArray).length;
   return (
-    <div className={`grid grid-cols-1 gap-6 md:grid-cols-${numberOfPlans}`}>
+    <div className={`grid grid-cols-${numberOfPlans} gap-6 md:grid-cols-${numberOfPlans}`}>
       {Object.entries(highlightsArray).map(([planName, planHighlights]) => (
         <PlanHighlights key={planName} planHighlights={planHighlights} />
       ))}

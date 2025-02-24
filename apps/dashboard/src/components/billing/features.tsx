@@ -8,7 +8,7 @@ import {
 } from '@novu/shared';
 import { Check } from 'lucide-react';
 import { cn } from '../../utils/ui';
-import { useFlagsMap } from '@/hooks/use-feature-flag.tsx';
+import { useFeatureFlagMap } from '@/hooks/use-feature-flag.tsx';
 
 enum SupportedPlansEnum {
   FREE = 'FREE',
@@ -228,7 +228,7 @@ function FeatureRow({ feature, index }: { feature: Feature; index: number }) {
 }
 
 export function Features() {
-  const activeFlags = useFlagsMap();
+  const activeFlags = useFeatureFlagMap();
 
   const featureArray = features(activeFlags);
   return (

@@ -10,10 +10,10 @@ import { TelemetryEvent } from '../../utils/telemetry';
 import { useFetchSubscription } from '../../hooks/use-fetch-subscription';
 import { showErrorToast, showSuccessToast } from '../primitives/sonner-helpers';
 import { ApiServiceLevelEnum, StripeBillingIntervalEnum } from '@novu/shared';
-import { useFlagsMap } from '@/hooks/use-feature-flag.tsx';
+import { useFeatureFlagMap } from '@/hooks/use-feature-flag.tsx';
 
 export function Plan() {
-  const featureFlags = useFlagsMap();
+  const featureFlags = useFeatureFlagMap();
   const track = useTelemetry();
   const { subscription: data } = useFetchSubscription();
   const [selectedBillingInterval, setSelectedBillingInterval] = useState<'month' | 'year'>(

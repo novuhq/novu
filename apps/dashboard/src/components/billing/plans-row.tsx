@@ -31,19 +31,14 @@ interface PlanConfig {
   actionType?: 'button' | 'contact';
 }
 
-const PlanFeature: React.FC<{ text: string }> = ({ text }) => (
+const PlanFeature = ({ text }) => (
   <li className="flex items-center gap-2 text-sm">
     <Check className="text-primary h-4 w-4" />
     <span>{text}</span>
   </li>
 );
 
-const PlanDisplay: React.FC<{
-  price: string;
-  subtitle: string;
-  events: string;
-  isEnterprise?: boolean;
-}> = ({ price, subtitle, events, isEnterprise = false }) => (
+const PlanDisplay = ({ price, subtitle, events, isEnterprise = false }) => (
   <div className="space-y-1">
     <div className="flex items-baseline gap-1">
       <span className={`${isEnterprise ? 'text-2xl font-semibold' : 'text-3xl font-bold tracking-tight'}`}>
@@ -52,7 +47,7 @@ const PlanDisplay: React.FC<{
       {!isEnterprise && <span className="text-muted-foreground text-sm font-medium">{subtitle}</span>}
     </div>
     {isEnterprise ? (
-      <span className="text-muted-foreground text-sm">For large-scale operations</span>
+      <span className="text-muted-foreground text-sm">For scale</span>
     ) : (
       <span className="text-muted-foreground text-sm">{events}</span>
     )}
@@ -110,10 +105,8 @@ enum ActionType {
   BUTTON = 'button',
   CONTACT = 'contact',
 }
-const PLAN_CONFIGURATIONS: Record<
-  string,
-  (interval: StripeBillingIntervalEnum, featureFlags: FeatureFlags) => PlanConfig
-> = {
+
+const PLANS: Record<string, (interval: StripeBillingIntervalEnum, featureFlags: FeatureFlags) => PlanConfig> = {
   [ApiServiceLevelEnum.FREE]: buildPlanConfig(
     ApiServiceLevelEnum.FREE,
     ActionType.BUTTON,
@@ -161,10 +154,10 @@ function augmentPlansConfigurationsBasedOnFeatureFlag(
 
 export function PlansRow({ selectedBillingInterval, currentPlan, trial, featureFlags }: PlansRowProps) {
   const effectiveCurrentPlan = trial?.isActive ? ApiServiceLevelEnum.FREE : currentPlan;
-  const augmentedPlans = augmentPlansConfigurationsBasedOnFeatureFlag(PLAN_CONFIGURATIONS, featureFlags);
+  const augmentedPlans = augmentPlansConfigurationsBasedOnFeatureFlag(PLANS, featureFlags);
   const numberOfPlans = Object.keys(augmentedPlans).length;
   return (
-    <div className={`grid grid-cols-1 gap-6 md:grid-cols-${numberOfPlans}`}>
+    <div className={`grid grid-cols-${numberOfPlans} gap-6 md:grid-cols-${numberOfPlans}`}>
       {Object.entries(augmentedPlans).map(([planKey, planConfigFunc]) => {
         const planConfig = planConfigFunc(selectedBillingInterval, featureFlags);
         const isCurrentPlan = effectiveCurrentPlan === planKey && !trial?.isActive;
