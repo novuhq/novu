@@ -9,7 +9,6 @@ import { Check } from 'lucide-react';
 import { cn } from '../../utils/ui';
 import { useFlagsMap } from '@/hooks/use-feature-flag.tsx';
 
-3;
 enum SupportedPlansEnum {
   FREE = 'FREE',
   PRO = 'PRO',
@@ -23,6 +22,7 @@ const supportedPlansEnumToServiceLevelRecord: Record<SupportedPlansEnum, ApiServ
   TEAM: ApiServiceLevelEnum.BUSINESS,
   ENTERPRISE: ApiServiceLevelEnum.ENTERPRISE,
 };
+
 type FeatureValue = {
   value: React.ReactNode;
 };
