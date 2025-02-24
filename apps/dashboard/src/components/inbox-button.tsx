@@ -1,5 +1,5 @@
 import { Popover, PopoverContent, PopoverPortal, PopoverTrigger } from '@/components/primitives/popover';
-import { API_HOSTNAME, WEBSOCKET_HOSTNAME } from '@/config';
+import { API_HOSTNAME, APP_ID, WEBSOCKET_HOSTNAME } from '@/config';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useTestPage } from '@/hooks/use-test-page';
 import { useUser } from '@clerk/clerk-react';

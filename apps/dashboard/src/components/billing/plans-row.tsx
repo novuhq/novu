@@ -9,9 +9,6 @@ import { PlanActionButton } from './plan-action-button';
 interface PlansRowProps {
   selectedBillingInterval: StripeBillingIntervalEnum;
   currentPlan?: ApiServiceLevelEnum;
-  trial?: {
-    isActive: boolean;
-  };
   plans: Record<ApiServiceLevelEnum, PlanConfig>;
 }
 
@@ -57,48 +54,13 @@ const PlanDisplay = ({
   </div>
 );
 
-function buildCtaButton(
-  planToDraw: ApiServiceLevelEnum,
-  effectiveCurrentPlan: ApiServiceLevelEnum | undefined,
-  selectedBillingInterval: StripeBillingIntervalEnum,
-  actionType: ActionType | undefined
-) {
-  if (planToDraw === effectiveCurrentPlan) {
-    return (
-      <PlanActionButton
-        billingInterval={selectedBillingInterval}
-        requestedServiceLevel={planToDraw}
-        mode="outline"
-        className="w-full"
-      />
-    );
-  }
-
-  if (actionType === ActionType.BUTTON) {
-    return (
-      <PlanActionButton
-        billingInterval={selectedBillingInterval}
-        requestedServiceLevel={planToDraw}
-        mode="filled"
-        className="w-full"
-      />
-    );
-  }
-
-  if (actionType === ActionType.CONTACT) {
-    return <ContactSalesButton variant="outline" className="w-full" />;
-  }
-
-  return null;
-}
-
-export function PlansRow({ selectedBillingInterval, currentPlan, trial, plans }: PlansRowProps) {
-  const effectiveCurrentPlan = trial?.isActive ? ApiServiceLevelEnum.FREE : currentPlan;
+export function PlansRow({ selectedBillingInterval, currentPlan, plans }: PlansRowProps) {
   const numberOfPlans = Object.keys(plans).length;
+
   return (
     <div className={`grid grid-cols-${numberOfPlans} gap-6 md:grid-cols-${numberOfPlans}`}>
       {Object.entries(plans).map(([planKey, planConfig]) => {
-        const isCurrentPlan = effectiveCurrentPlan === planKey && !trial?.isActive;
+        const isCurrentPlan = currentPlan === planKey;
         return (
           <Card
             key={planKey}
@@ -131,12 +93,16 @@ export function PlansRow({ selectedBillingInterval, currentPlan, trial, plans }:
               </div>
 
               <div className="mt-auto pt-6">
-                {buildCtaButton(
-                  planKey as ApiServiceLevelEnum,
-                  effectiveCurrentPlan,
-                  selectedBillingInterval,
-                  planConfig.actionType
-                )}
+                {planConfig.actionType === ActionType.BUTTON ? (
+                  <PlanActionButton
+                    billingInterval={selectedBillingInterval}
+                    requestedServiceLevel={planKey as ApiServiceLevelEnum}
+                    mode="filled"
+                    className="w-full"
+                  />
+                ) : planConfig.actionType === ActionType.CONTACT ? (
+                  <ContactSalesButton variant="outline" className="w-full" />
+                ) : null}
               </div>
             </div>
           </Card>
