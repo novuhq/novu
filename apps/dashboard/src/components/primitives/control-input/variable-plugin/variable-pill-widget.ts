@@ -13,6 +13,7 @@ export class VariablePillWidget extends WidgetType {
     private onSelect?: (value: string, from: number, to: number) => void
   ) {
     super();
+
     this.clickHandler = (e: MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
@@ -106,6 +107,7 @@ export class VariablePillWidget extends WidgetType {
 
     span.appendChild(before);
     span.appendChild(content);
+
     if (this.hasFilters) {
       const after = document.createElement('span');
       const afterStyles = this.createAfterStyles();

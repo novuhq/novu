@@ -21,6 +21,7 @@ import { flatten } from 'flat';
 
 export const getFirstErrorMessage = (issues: StepIssuesDto, type: 'controls' | 'integration') => {
   const issuesArray = Object.entries({ ...issues?.[type] });
+
   if (issuesArray.length > 0) {
     const firstIssue = issuesArray[0];
     const contentIssues = firstIssue?.[1];
@@ -33,6 +34,7 @@ export const flattenIssues = (controlIssues?: Record<string, StepContentIssue[]>
 
   return Object.entries(controlIssuesFlat).reduce((acc, [key, value]) => {
     const errorMessage = value.length > 0 ? value[0].message : undefined;
+
     if (!errorMessage) {
       return acc;
     }
@@ -52,6 +54,7 @@ export const updateStepInWorkflow = (
       if (step.stepId === stepId) {
         return { ...step, ...updateStep };
       }
+
       return step;
     }),
   };

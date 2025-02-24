@@ -123,6 +123,7 @@ function replaceAlternatives(str: string, min: number, alt?: string[]) {
       str = str.replace(alt[i], `${i + min}`);
     }
   }
+
   return str;
 }
 
@@ -310,6 +311,7 @@ export function getPeriodFromCronParts(cronParts: number[][]): PeriodValues {
   } else if (cronParts[0].length > 0) {
     return PeriodValues.HOUR;
   }
+
   return PeriodValues.MINUTE;
 }
 
@@ -347,6 +349,7 @@ export function getCronBasedOnPeriod(
   { minute, hour, dayOfWeek, dayOfMonth, month }: UiCronFields
 ) {
   let cron = EVERY_MINUTE_CRON;
+
   if (period === PeriodValues.HOUR) {
     const cronFields = toCronFields({
       second: [...EVERY_SECOND],

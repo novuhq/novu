@@ -60,6 +60,7 @@ export const SideNavigation = () => {
       console.error('Error opening plain chat:', error);
     }
   };
+
   return (
     <aside className="bg-neutral-alpha-50 relative flex h-full w-[275px] flex-shrink-0 flex-col">
       <SidebarContent className="h-full">

@@ -57,9 +57,11 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
         if (!query.endsWith('}}')) {
           return;
         }
+
         if (filteredVariables.every((variable) => variable.name !== queryWithoutSuffix)) {
           return;
         }
+
         const from = editor?.state.selection.from - queryWithoutSuffix.length - 4; /* for prefix */
         const to = editor?.state.selection.from;
 
@@ -78,6 +80,7 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
 
       if (from === 'repeat-variable') {
         filteredVariables.push(...arrays, ...namespaces);
+
         if (namespaces.some((namespace) => queryWithoutSuffix.includes(namespace.name))) {
           filteredVariables.push({ name: queryWithoutSuffix, required: false });
         }
@@ -91,6 +94,7 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
       const newNamespaces = [...namespaces, ...(iterableName ? [{ name: iterableName, required: false }] : [])];
 
       filteredVariables.push(...primitives, ...newNamespaces);
+
       if (newNamespaces.some((namespace) => queryWithoutSuffix.includes(namespace.name))) {
         filteredVariables.push({ name: queryWithoutSuffix, required: false });
       }
@@ -98,6 +102,7 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
       if (from === 'content-variable') {
         addInlineVariable();
       }
+
       return dedupAndSortVariables(filteredVariables, queryWithoutSuffix);
     },
     [arrays, namespaces, primitives]

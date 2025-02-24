@@ -13,9 +13,11 @@ const stepTypeToClassname: Record<string, string | undefined> = {
   [StepTypeEnum.IN_APP]: 'sm:max-w-[600px]',
   [StepTypeEnum.EMAIL]: 'sm:max-w-[800px]',
 };
+
 export const StepDrawer = ({ children, title }: { children: React.ReactNode; title?: string }) => {
   const navigate = useNavigate();
   const { workflow, step } = useWorkflow();
+
   const handleCloseSheet = () => {
     if (step) {
       // Do not use relative path here, calling twice will result in moving further back

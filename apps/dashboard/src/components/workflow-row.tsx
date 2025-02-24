@@ -175,6 +175,7 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
       setTimeout(() => setIsPauseModalOpen(true), 0);
       return;
     }
+
     onPauseWorkflow();
   };
 

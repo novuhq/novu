@@ -127,6 +127,7 @@ function LinkButtonIcon<T extends React.ElementType>({
 
   return <Component className={icon({ class: className })} {...rest} />;
 }
+
 LinkButtonIcon.displayName = LINK_BUTTON_ICON_NAME;
 
 const LinkButton = React.forwardRef<

@@ -10,6 +10,7 @@ import { usePreviewStep } from '@/hooks/use-preview-step';
 import { cn } from '@/utils/ui';
 
 type MiniEmailPreviewProps = HTMLAttributes<HTMLDivElement>;
+
 const MiniEmailPreview = (props: MiniEmailPreviewProps) => {
   const { className, children, ...rest } = props;
   return (
@@ -30,6 +31,7 @@ const MiniEmailPreview = (props: MiniEmailPreviewProps) => {
 };
 
 type ConfigureEmailStepPreviewProps = HTMLAttributes<HTMLDivElement>;
+
 export function ConfigureEmailStepPreview(props: ConfigureEmailStepPreviewProps) {
   const {
     previewStep,

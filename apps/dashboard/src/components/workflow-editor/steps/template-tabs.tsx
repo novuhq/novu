@@ -14,6 +14,7 @@ interface TemplateTabsProps {
   onTabChange: (tab: string) => void;
   previewStep?: () => void;
 }
+
 export const TemplateTabs = ({
   editorContent,
   previewContent,

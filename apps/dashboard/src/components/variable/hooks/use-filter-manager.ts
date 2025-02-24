@@ -63,6 +63,7 @@ export function useFilterManager({ initialFilters, onUpdate }: UseFilterManagerP
             const numericValue = String(param).replace(/[^\d.-]/g, '');
             return isNaN(Number(numericValue)) ? '' : numericValue;
           }
+
           return param;
         });
 

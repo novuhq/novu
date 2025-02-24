@@ -20,6 +20,7 @@ export function updateAttributes(type: string, attrs: Record<string, any>): Comm
 
         if (lastPos !== null) {
           const node = state.doc.nodeAt(lastPos);
+
           if (node) {
             tr.setNodeMarkup(lastPos, null, {
               ...node.attrs,

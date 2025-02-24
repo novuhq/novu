@@ -48,6 +48,7 @@ export function ConditionsEditorProvider({
 
           if (isRuleGroup(rule)) {
             const parent = findParent(rule);
+
             if (parent) {
               return parent;
             }

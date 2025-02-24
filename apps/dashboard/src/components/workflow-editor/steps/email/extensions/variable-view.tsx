@@ -15,6 +15,7 @@ export function VariableView({ node, updateAttributes, editor }: NodeViewProps) 
   const parseVariableCallback = useCallback((variable: string) => {
     const regex = new RegExp(VARIABLE_REGEX_STRING, 'g');
     const match = regex.exec(variable);
+
     if (!match) {
       return { name: '', fullLiquidExpression: '', start: 0, end: 0, filters: [] };
     }

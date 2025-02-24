@@ -53,7 +53,7 @@ export const AvatarPicker = forwardRef<HTMLInputElement, AvatarPickerProps>(({ n
         <PopoverTrigger asChild className="relative size-full overflow-hidden">
           <Button
             mode="outline"
-            variant={!!error ? 'error' : 'secondary'}
+            variant={error ? 'error' : 'secondary'}
             className="text-foreground-600 relative size-full overflow-hidden"
           >
             {value && !error ? (
