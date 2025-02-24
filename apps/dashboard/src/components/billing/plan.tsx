@@ -34,7 +34,12 @@ export function Plan() {
     {
       plans: resolvePlanCardConfig(planCardConfig, selectedBillingInterval as StripeBillingIntervalEnum, featureFlags),
       highlights: buildHighlightsArray(featureFlags),
-      features: buildFeatureArray(featureFlags),
+      features: buildFeatureArray(featureFlags, [
+        ApiServiceLevelEnum.FREE,
+        ApiServiceLevelEnum.PRO,
+        ApiServiceLevelEnum.BUSINESS,
+        ApiServiceLevelEnum.ENTERPRISE,
+      ]),
     },
     featureFlags
   );
@@ -131,7 +136,10 @@ const serviceLevelHighlightFunctions: Record<string, PlanHighlightResolver[]> = 
   [ApiServiceLevelEnum.ENTERPRISE]: [getEventsLine, getTeammatesLine, getSamlText],
 };
 
-const buildFeatureArray: (activeFlags: FeatureFlags) => Feature[] = (featureFlags: FeatureFlags) => {
+const buildFeatureArray: (activeFlags: FeatureFlags, columns: ApiServiceLevelEnum[]) => Feature[] = (
+  featureFlags: FeatureFlags,
+  columns: ApiServiceLevelEnum[]
+) => {
   return [
     {
       label: 'Platform',
@@ -279,7 +287,7 @@ const buildFeatureArray: (activeFlags: FeatureFlags) => Feature[] = (featureFlag
   function buildTableRowRecord(params: BuildValuesParams): Partial<Record<ApiServiceLevelEnum, PlanFeatureValue>> {
     const result: Partial<Record<ApiServiceLevelEnum, PlanFeatureValue>> = {};
 
-    for (const serviceLevelEnum of Object.values(ApiServiceLevelEnum)) {
+    for (const serviceLevelEnum of columns) {
       result[serviceLevelEnum] = {
         value: getValue(params, serviceLevelEnum, featureFlags),
       };
