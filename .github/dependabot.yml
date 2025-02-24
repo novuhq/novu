@@ -1,0 +1,20 @@
+# Please see the documentation for all configuration options:
+# https://docs.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
+
+version: 2
+
+# Enable beta ecosystems to get updates for Docker Compose
+enable-beta-ecosystems: true
+updates:
+
+  # Maintain dependencies for Docker Compose
+  - package-ecosystem: "docker-compose"
+    directory: "/docker/community/" # Location of package manifests
+    schedule:
+      interval: "weekly"
+
+  # Maintain dependencies for Docker Compose
+  - package-ecosystem: "docker-compose"
+    directory: "/docker/local/" # Location of package manifests
+    schedule:
+      interval: "weekly"
