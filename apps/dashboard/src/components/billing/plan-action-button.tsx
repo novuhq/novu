@@ -26,7 +26,12 @@ export function PlanActionButton({
   const { navigateToPortal, isLoading: isLoadingPortal } = useBillingPortal(billingInterval);
 
   const isPaidSubscriptionActive = () => {
-    return data?.isActive && !data?.trial?.isActive && data?.apiServiceLevel !== ApiServiceLevelEnum.FREE;
+    return (
+      data?.isActive &&
+      !data?.trial?.isActive &&
+      data?.apiServiceLevel !== ApiServiceLevelEnum.FREE &&
+      requestedServiceLevel === data?.apiServiceLevel
+    );
   };
 
   const handleAction = () => {
@@ -37,9 +42,13 @@ export function PlanActionButton({
     }
   };
 
+  if (requestedServiceLevel === ApiServiceLevelEnum.FREE) {
+    return null;
+  }
+
   return (
     <Button
-      mode={mode}
+      mode={isPaidSubscriptionActive() ? 'outline' : mode}
       size={size}
       className={cn('gap-2', className)}
       onClick={handleAction}
