@@ -5,6 +5,7 @@ export enum ApiServiceLevelEnum {
   PRO = 'pro',
   BUSINESS = 'business',
   ENTERPRISE = 'enterprise',
+  UNLIMITED = 'unlimited',
 }
 
 export enum StripeBillingIntervalEnum {
