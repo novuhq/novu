@@ -1,14 +1,6 @@
-import { useEffect, useState } from 'react';
-import { ActivePlanBanner } from './active-plan-banner';
-import { PlanSwitcher } from './plan-switcher';
-import { PlanConfig, PlansRow } from './plans-row';
-import { HighlightsRow, PlanHighlights } from './highlights-row';
-import { BuildValuesParams, Feature, Features, PlanFeatureValue } from './features';
-import { cn } from '../../utils/ui';
-import { useTelemetry } from '../../hooks/use-telemetry';
-import { TelemetryEvent } from '../../utils/telemetry';
-import { useFetchSubscription } from '../../hooks/use-fetch-subscription';
-import { showErrorToast, showSuccessToast } from '../primitives/sonner-helpers';
+import { ActionType } from '@/components/billing/utils/action.button.constants.ts';
+import { useFeatureFlagMap } from '@/hooks/use-feature-flag.tsx';
+import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import {
   ApiServiceLevelEnum,
   FeatureFlags,
@@ -19,9 +11,17 @@ import {
   getFeatureForTierAsText,
   StripeBillingIntervalEnum,
 } from '@novu/shared';
-import { useFeatureFlagMap } from '@/hooks/use-feature-flag.tsx';
 import { Check } from 'lucide-react';
-import { ActionType } from '@/components/billing/utils/action.button.constants.ts';
+import { useEffect, useState } from 'react';
+import { useTelemetry } from '../../hooks/use-telemetry';
+import { TelemetryEvent } from '../../utils/telemetry';
+import { cn } from '../../utils/ui';
+import { showErrorToast, showSuccessToast } from '../primitives/sonner-helpers';
+import { ActivePlanBanner } from './active-plan-banner';
+import { BuildValuesParams, Feature, Features, PlanFeatureValue } from './features';
+import { HighlightsRow, PlanHighlights } from './highlights-row';
+import { PlanSwitcher } from './plan-switcher';
+import { PlanConfig, PlansRow } from './plans-row';
 
 export function Plan() {
   const featureFlags = useFeatureFlagMap();

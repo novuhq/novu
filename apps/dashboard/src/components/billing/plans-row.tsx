@@ -1,10 +1,10 @@
+import { ActionType } from '@/components/billing/utils/action.button.constants.ts';
 import { Badge } from '@/components/primitives/badge';
 import { Card } from '@/components/primitives/card';
 import { ApiServiceLevelEnum, StripeBillingIntervalEnum } from '@novu/shared';
 import { Check } from 'lucide-react';
 import { ContactSalesButton } from './contact-sales-button';
 import { PlanActionButton } from './plan-action-button';
-import { ActionType } from '@/components/billing/utils/action.button.constants.ts';
 
 interface PlansRowProps {
   selectedBillingInterval: StripeBillingIntervalEnum;
@@ -110,7 +110,7 @@ export function PlansRow({ selectedBillingInterval, currentPlan, trial, plans }:
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-xl font-semibold">{planConfig.name}</h3>
-                  {effectiveCurrentPlan === planKey && (
+                  {currentPlan === planKey && (
                     <Badge variant="light" color="gray" size="sm">
                       Current Plan
                     </Badge>
