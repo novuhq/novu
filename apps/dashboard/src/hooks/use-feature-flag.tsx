@@ -5,12 +5,12 @@ import { LAUNCH_DARKLY_CLIENT_SIDE_ID } from '../config';
 function isLaunchDarklyEnabled() {
   return !!LAUNCH_DARKLY_CLIENT_SIDE_ID;
 }
+
 export const useFlagsMap = (defaultValue = false): FeatureFlags => {
   const flags = useFlags();
 
-  return flags.reduce((acc: FeatureFlags, flag: FeatureFlagsKeysEnum) => {
+  return Object.keys(flags).reduce((acc: FeatureFlags, flag: string) => {
     acc[flag] = flags[flag] ?? defaultValue;
-
     return acc;
   }, {} as FeatureFlags);
 };
