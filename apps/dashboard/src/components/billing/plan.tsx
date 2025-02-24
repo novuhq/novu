@@ -1,16 +1,16 @@
-import { useEffect, useState } from "react";
-import { ActivePlanBanner } from "./active-plan-banner";
-import { PlanSwitcher } from "./plan-switcher";
-import { PlansRow } from "./plans-row";
-import { HighlightsRow } from "./highlights-row";
-import { Features } from "./features";
-import { cn } from "../../utils/ui";
-import { useTelemetry } from "../../hooks/use-telemetry";
-import { TelemetryEvent } from "../../utils/telemetry";
-import { useFetchSubscription } from "../../hooks/use-fetch-subscription";
-import { showErrorToast, showSuccessToast } from "../primitives/sonner-helpers";
-import { ApiServiceLevelEnum, StripeBillingIntervalEnum } from "@novu/shared";
-import { useFlagsMap } from "@/hooks/use-feature-flag.tsx";
+import { useEffect, useState } from 'react';
+import { ActivePlanBanner } from './active-plan-banner';
+import { PlanSwitcher } from './plan-switcher';
+import { PlansRow } from './plans-row';
+import { HighlightsRow } from './highlights-row';
+import { Features } from './features';
+import { cn } from '../../utils/ui';
+import { useTelemetry } from '../../hooks/use-telemetry';
+import { TelemetryEvent } from '../../utils/telemetry';
+import { useFetchSubscription } from '../../hooks/use-fetch-subscription';
+import { showErrorToast, showSuccessToast } from '../primitives/sonner-helpers';
+import { ApiServiceLevelEnum, StripeBillingIntervalEnum } from '@novu/shared';
+import { useFlagsMap } from '@/hooks/use-feature-flag.tsx';
 
 export function Plan() {
   const featureFlags = useFlagsMap();

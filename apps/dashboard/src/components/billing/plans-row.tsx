@@ -105,6 +105,7 @@ function buildPlanConfig(
     };
   };
 }
+
 enum ActionType {
   BUTTON = 'button',
   CONTACT = 'contact',
@@ -125,8 +126,8 @@ const PLAN_CONFIGURATIONS: Record<
     'Everything in Free',
     'Remove Novu Branding'
   ),
-  [ApiServiceLevelEnum.TEAM]: buildPlanConfig(
-    ApiServiceLevelEnum.TEAM,
+  [ApiServiceLevelEnum.BUSINESS]: buildPlanConfig(
+    ApiServiceLevelEnum.BUSINESS,
     ActionType.BUTTON,
     'Everything in Pro',
     'Priority support'
@@ -145,27 +146,25 @@ function augmentPlansConfigurationsBasedOnFeatureFlag(
 ) {
   if (!featureFlags[FeatureFlagsKeysEnum.IS_2025_Q1_TIERING_ENABLED]) {
     delete configurations[ApiServiceLevelEnum.PRO];
-    configurations[ApiServiceLevelEnum.BUSINESS] = (
-      interval: StripeBillingIntervalEnum,
-      featureFlags: FeatureFlags
-    ) => {
-      const planConfigPostFF = configurations[ApiServiceLevelEnum.TEAM](interval, featureFlags);
+    const planConfigPreFF = configurations[ApiServiceLevelEnum.BUSINESS];
 
-      return {
-        ...planConfigPostFF,
-        name: ApiServiceLevelEnum.BUSINESS,
-      };
+    configurations[ApiServiceLevelEnum.BUSINESS] = (interval, featureFlags) => {
+      const planConfig = planConfigPreFF(interval, featureFlags);
+      planConfig.name = 'Business';
+      planConfig.features[0] = 'Everything in Free';
+      return planConfig;
     };
-    delete configurations[ApiServiceLevelEnum.PRO];
   }
+
   return configurations;
 }
 
 export function PlansRow({ selectedBillingInterval, currentPlan, trial, featureFlags }: PlansRowProps) {
   const effectiveCurrentPlan = trial?.isActive ? ApiServiceLevelEnum.FREE : currentPlan;
   const augmentedPlans = augmentPlansConfigurationsBasedOnFeatureFlag(PLAN_CONFIGURATIONS, featureFlags);
+  const numberOfPlans = Object.keys(augmentedPlans).length;
   return (
-    <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
+    <div className={`grid grid-cols-1 gap-6 md:grid-cols-${numberOfPlans}`}>
       {Object.entries(augmentedPlans).map(([planKey, planConfigFunc]) => {
         const planConfig = planConfigFunc(selectedBillingInterval, featureFlags);
         const isCurrentPlan = effectiveCurrentPlan === planKey && !trial?.isActive;

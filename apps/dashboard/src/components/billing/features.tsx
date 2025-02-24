@@ -1,26 +1,26 @@
 import {
   ApiServiceLevelEnum,
   FeatureFlags,
+  FeatureFlagsKeysEnum,
   FeatureNameEnum,
   getFeatureForTierAsBoolean,
-  getFeatureForTierAsText
-} from "@novu/shared";
-import { Check } from "lucide-react";
-import { cn } from "../../utils/ui";
-import { useFlagsMap } from "@/hooks/use-feature-flag.tsx";
+  getFeatureForTierAsText,
+} from '@novu/shared';
+import { Check } from 'lucide-react';
+import { cn } from '../../utils/ui';
+import { useFlagsMap } from '@/hooks/use-feature-flag.tsx';
 
-3;
 enum SupportedPlansEnum {
   FREE = 'FREE',
   PRO = 'PRO',
-  TEAM = 'TEAM',
+  BUSINESS = 'BUSINESS',
   ENTERPRISE = 'ENTERPRISE',
 }
 
 const supportedPlansEnumToServiceLevelRecord: Record<SupportedPlansEnum, ApiServiceLevelEnum> = {
   FREE: ApiServiceLevelEnum.FREE,
   PRO: ApiServiceLevelEnum.PRO,
-  TEAM: ApiServiceLevelEnum.TEAM,
+  BUSINESS: ApiServiceLevelEnum.BUSINESS,
   ENTERPRISE: ApiServiceLevelEnum.ENTERPRISE,
 };
 type FeatureValue = {
@@ -180,9 +180,11 @@ const features: (activeFlags: FeatureFlags) => Feature[] = (featureFlags: Featur
       values: buildTableRowRecord({ featureName: FeatureNameEnum.COMPLIANCE_CUSTOM_SECURITY_REVIEWS }),
     },
   ];
+
   function buildEmptyRow() {
     return buildTableRowRecord({});
   }
+
   function buildTableRowRecord(params: BuildValuesParams): Partial<Record<SupportedPlansEnum, FeatureValue>> {
     const result: Partial<Record<SupportedPlansEnum, FeatureValue>> = {};
 
@@ -227,14 +229,27 @@ function FeatureRow({ feature, index }: { feature: Feature; index: number }) {
 export function Features() {
   const activeFlags = useFlagsMap();
 
+  const featureArray = features(activeFlags);
   return (
     <div className="flex flex-col">
-      {features(activeFlags).map((feature, index) => (
+      {augmentFeatures(featureArray, activeFlags).map((feature, index) => (
         <FeatureRow key={index} feature={feature} index={index} />
       ))}
     </div>
   );
 }
+
+function augmentFeatures(featureArray: Feature[], activeFlags) {
+  if (!activeFlags[FeatureFlagsKeysEnum.IS_2025_Q1_TIERING_ENABLED]) {
+    featureArray = featureArray.map((feature) => {
+      delete feature.values.PRO;
+      return feature;
+    });
+  }
+
+  return featureArray;
+}
+
 function getBooleanValue(params: BuildValuesParams, apiServiceLevel: ApiServiceLevelEnum, featureFlags: FeatureFlags) {
   const bool = params.featureName ? getFeatureForTierAsBoolean(params.featureName, apiServiceLevel, featureFlags) : '';
   return bool ? <Check className="h-4 w-4" /> : '-';

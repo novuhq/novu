@@ -165,7 +165,7 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
     [ApiServiceLevelEnum.FREE]: { value: 10000, label: '10,000' },
     [ApiServiceLevelEnum.PRO]: { value: 30000, label: '30,000' },
     [ApiServiceLevelEnum.TEAM]: { value: 250000, label: '25,0000' },
-    [ApiServiceLevelEnum.BUSINESS]: { value: 250000, label: '25,0000' },
+    [ApiServiceLevelEnum.BUSINESS]: { value: 250000, label: '250,000' },
     [ApiServiceLevelEnum.ENTERPRISE]: { value: 5000000, label: '5,000,000' },
     [ApiServiceLevelEnum.UNLIMITED]: { value: 5000000, label: '5,000,000' },
   },
