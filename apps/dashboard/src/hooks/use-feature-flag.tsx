@@ -10,7 +10,8 @@ export const useFeatureFlagMap = (defaultValue = false): FeatureFlags => {
   const flags = useFlags();
 
   return Object.keys(flags).reduce((acc: FeatureFlags, flag: string) => {
-    acc[flag] = flags[flag] ?? defaultValue;
+    acc[flag as keyof FeatureFlags] = flags[flag] ?? defaultValue;
+
     return acc;
   }, {} as FeatureFlags);
 };
