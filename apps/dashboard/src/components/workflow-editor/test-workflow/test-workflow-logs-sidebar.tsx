@@ -1,10 +1,9 @@
-import { Loader2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
-
-import { ActivityPanel } from '@/components/activity/activity-panel';
-import { WorkflowResponseDto } from '@novu/shared';
+import React, { useEffect, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { RiCheckboxCircleFill } from 'react-icons/ri';
+import { WorkflowResponseDto } from '@novu/shared';
+
+import { ActivityPanel } from '@/components/activity/activity-panel';
 import { useFetchActivities } from '../../../hooks/use-fetch-activities';
 import { WorkflowTriggerInboxIllustration } from '../../icons/workflow-trigger-inbox';
 import { Button } from '../../primitives/button';
@@ -15,6 +14,7 @@ import { ActivityError } from '@/components/activity/activity-error';
 import { ActivityHeader } from '@/components/activity/activity-header';
 import { ActivityOverview } from '@/components/activity/components/activity-overview';
 import { ActivityLogs } from '@/components/activity/activity-logs';
+import { usePullActivity } from '@/hooks/use-pull-activity';
 
 type TestWorkflowLogsSidebarProps = {
   transactionId?: string;
@@ -28,7 +28,12 @@ export const TestWorkflowLogsSidebar = ({ transactionId, workflow }: TestWorkflo
   const [showInstructions, setShowInstructions] = useState(false);
   const to = useWatch({ name: 'to', control });
   const payload = useWatch({ name: 'payload', control });
-  const { activities, isPending, error } = useFetchActivities(
+
+  const {
+    activities,
+    isPending: areActivitiesPending,
+    error: activitiesError,
+  } = useFetchActivities(
     {
       filters: transactionId ? { transactionId } : undefined,
     },
@@ -37,8 +42,12 @@ export const TestWorkflowLogsSidebar = ({ transactionId, workflow }: TestWorkflo
       refetchInterval: shouldRefetch ? 1000 : false,
     }
   );
-  const activity = activities?.[0];
-  const activityId: string | undefined = parentActivityId ?? activity?._id;
+
+  const activityId: string | undefined = parentActivityId ?? activities?.[0]?._id;
+  const { activity: latestActivity, isPending: isActivityPending, error: activityError } = usePullActivity(activityId);
+  const activity = latestActivity ?? activities?.[0];
+  const isPending = areActivitiesPending || isActivityPending;
+  const error = activitiesError || activityError;
 
   useEffect(() => {
     if (activityId) {
@@ -58,14 +67,7 @@ export const TestWorkflowLogsSidebar = ({ transactionId, workflow }: TestWorkflo
 
   return (
     <aside className="flex h-full max-h-full flex-1 flex-col overflow-auto">
-      {transactionId && !activityId ? (
-        <div className="flex h-full items-center justify-center">
-          <div className="flex flex-col items-center gap-4">
-            <Loader2 className="size-8 animate-spin text-neutral-500" />
-            <div className="text-foreground-600 text-sm">Waiting for activity...</div>
-          </div>
-        </div>
-      ) : activityId ? (
+      {transactionId ? (
         <>
           <ActivityPanel>
             {isPending ? (
@@ -73,11 +75,11 @@ export const TestWorkflowLogsSidebar = ({ transactionId, workflow }: TestWorkflo
             ) : error || !activity ? (
               <ActivityError />
             ) : (
-              <>
+              <React.Fragment key={activityId}>
                 <ActivityHeader title={activity.template?.name} className="h-[49px] border-t-0" />
                 <ActivityOverview activity={activity} />
                 <ActivityLogs activity={activity} onActivitySelect={setParentActivityId} />
-              </>
+              </React.Fragment>
             )}
             {!workflow?.lastTriggeredAt && (
               <div className="border-t border-neutral-100 p-3">
