@@ -102,7 +102,7 @@ export const InboxButton = () => {
    * This displays a test inbox, where the user can see their test notifications appear
    * in real-time.
    */
-  const appId = isTestPage ? currentEnvironment?.identifier : 'aqs6CnVJ1kbL';
+  const appId = isTestPage ? currentEnvironment?.identifier : APP_ID;
 
   const localizationTestSuffix = isTestPage ? ' (Test)' : '';
 
