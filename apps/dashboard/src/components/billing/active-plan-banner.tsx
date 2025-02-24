@@ -6,7 +6,8 @@ import { CalendarDays } from 'lucide-react';
 import { useFetchSubscription } from '../../hooks/use-fetch-subscription';
 import { cn } from '../../utils/ui';
 import { PlanActionButton } from './plan-action-button';
-import { ApiServiceLevelEnum } from '@novu/shared';
+import { ApiServiceLevelEnum, FeatureFlagsKeysEnum } from '@novu/shared';
+import { useFeatureFlag } from '@/hooks/use-feature-flag.tsx';
 
 interface ActivePlanBannerProps {
   selectedBillingInterval: 'month' | 'year';
@@ -14,6 +15,7 @@ interface ActivePlanBannerProps {
 
 export function ActivePlanBanner({ selectedBillingInterval }: ActivePlanBannerProps) {
   const { subscription, daysLeft } = useFetchSubscription();
+  const is2025Q1TieringEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_2025_Q1_TIERING_ENABLED);
 
   const getProgressColor = (current: number, max: number) => {
     const percentage = (current / max) * 100;
@@ -39,6 +41,12 @@ export function ActivePlanBanner({ selectedBillingInterval }: ActivePlanBannerPr
     });
   };
 
+  const renameBusinessToTeam = (plan: string) => {
+    if (plan === ApiServiceLevelEnum.BUSINESS && is2025Q1TieringEnabled) return 'Team';
+
+    return plan.toLowerCase();
+  };
+
   return (
     <div className="mt-6 flex space-y-3">
       <Card className="mx-auto w-full max-w-[500px] overflow-hidden border shadow-none">
@@ -49,7 +57,9 @@ export function ActivePlanBanner({ selectedBillingInterval }: ActivePlanBannerPr
                 {!subscription ? (
                   <Skeleton className="h-7 w-24" />
                 ) : (
-                  <h3 className="text-lg font-semibold capitalize">{subscription.apiServiceLevel?.toLowerCase()}</h3>
+                  <h3 className="text-lg font-semibold capitalize">
+                    {renameBusinessToTeam(subscription.apiServiceLevel)}
+                  </h3>
                 )}
                 {subscription?.trial.isActive && (
                   <Badge variant="light" color="gray" size="sm">

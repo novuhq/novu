@@ -200,7 +200,7 @@ export function PlansRow({ selectedBillingInterval, currentPlan, trial, featureF
                 </ul>
               </div>
 
-              <div className="mt-6 mt-auto">
+              <div className="mt-auto pt-6">
                 {planKey === 'enterprise' ? (
                   effectiveCurrentPlan === 'enterprise' ? (
                     <PlanActionButton
