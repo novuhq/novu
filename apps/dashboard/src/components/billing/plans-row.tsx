@@ -22,6 +22,7 @@ interface PlansRowProps {
   };
   featureFlags: FeatureFlags;
 }
+
 interface PlanConfig {
   name: string;
   price: string;
@@ -60,10 +61,12 @@ function calcCostFeatureName(interval: StripeBillingIntervalEnum) {
     : FeatureNameEnum.PLATFORM_MONTHLY_COST;
 }
 
-function getEventsIncludedParsedText(apiServiceLevelEnum: ApiServiceLevelEnum) {
+function getEventsIncludedParsedText(apiServiceLevelEnum: ApiServiceLevelEnum, featureFlags: FeatureFlags) {
   const eventsIncluded = getFeatureForTierAsNumber(
     FeatureNameEnum.PLATFORM_MONTHLY_EVENTS_INCLUDED,
-    apiServiceLevelEnum
+    apiServiceLevelEnum,
+    featureFlags,
+    false
   );
   const events: string = new Intl.NumberFormat('en-US', {
     minimumFractionDigits: 0,
@@ -79,7 +82,7 @@ function buildSubtitle(interval: StripeBillingIntervalEnum, price: string) {
 
 function buildPlanConfig(
   apiServiceLevelEnum: ApiServiceLevelEnum,
-  actionType: ActionType,
+  actionType: ActionType | undefined,
   firstFeature: string,
   lastFeature: string
 ): (interval: StripeBillingIntervalEnum, featureFlags: FeatureFlags) => PlanConfig {
@@ -94,7 +97,7 @@ function buildPlanConfig(
       name: getFeatureForTierAsText(FeatureNameEnum.PLATFORM_PLAN_LABEL, apiServiceLevelEnum, featureFlags),
       price,
       subtitle: buildSubtitle(interval, price),
-      events: `${getEventsIncludedParsedText(apiServiceLevelEnum)} events per month`,
+      events: `${getEventsIncludedParsedText(apiServiceLevelEnum, featureFlags)} events per month`,
       features: [firstFeature, `${maxTeamMembers} team members`, lastFeature],
       actionType: actionType,
     };
@@ -109,7 +112,7 @@ enum ActionType {
 const PLANS: Record<string, (interval: StripeBillingIntervalEnum, featureFlags: FeatureFlags) => PlanConfig> = {
   [ApiServiceLevelEnum.FREE]: buildPlanConfig(
     ApiServiceLevelEnum.FREE,
-    ActionType.BUTTON,
+    undefined,
     'All core features',
     'Community support'
   ),
@@ -152,6 +155,41 @@ function augmentPlansConfigurationsBasedOnFeatureFlag(
   return configurations;
 }
 
+function buildCtaButton(
+  planToDraw: ApiServiceLevelEnum,
+  effectiveCurrentPlan: ApiServiceLevelEnum | undefined,
+  selectedBillingInterval: StripeBillingIntervalEnum,
+  actionType: ActionType
+) {
+  if (planToDraw === effectiveCurrentPlan) {
+    return (
+      <PlanActionButton
+        billingInterval={selectedBillingInterval}
+        requestedServiceLevel={planToDraw}
+        mode="outline"
+        className="w-full"
+      />
+    );
+  }
+
+  if (actionType === ActionType.BUTTON) {
+    return (
+      <PlanActionButton
+        billingInterval={selectedBillingInterval}
+        requestedServiceLevel={planToDraw}
+        mode="filled"
+        className="w-full"
+      />
+    );
+  }
+
+  if (actionType === ActionType.CONTACT) {
+    return <ContactSalesButton variant="outline" className="w-full" />;
+  }
+
+  return null;
+}
+
 export function PlansRow({ selectedBillingInterval, currentPlan, trial, featureFlags }: PlansRowProps) {
   const effectiveCurrentPlan = trial?.isActive ? ApiServiceLevelEnum.FREE : currentPlan;
   const augmentedPlans = augmentPlansConfigurationsBasedOnFeatureFlag(PLANS, featureFlags);
@@ -161,7 +199,6 @@ export function PlansRow({ selectedBillingInterval, currentPlan, trial, featureF
       {Object.entries(augmentedPlans).map(([planKey, planConfigFunc]) => {
         const planConfig = planConfigFunc(selectedBillingInterval, featureFlags);
         const isCurrentPlan = effectiveCurrentPlan === planKey && !trial?.isActive;
-
         return (
           <Card
             key={planKey}
@@ -194,25 +231,7 @@ export function PlansRow({ selectedBillingInterval, currentPlan, trial, featureF
               </div>
 
               <div className="mt-auto pt-6">
-                {planKey === 'enterprise' ? (
-                  effectiveCurrentPlan === 'enterprise' ? (
-                    <PlanActionButton
-                      billingInterval={selectedBillingInterval}
-                      requestedServiceLevel={effectiveCurrentPlan}
-                      mode="outline"
-                      className="w-full"
-                    />
-                  ) : (
-                    <ContactSalesButton variant="outline" className="w-full" />
-                  )
-                ) : effectiveCurrentPlan !== 'enterprise' ? (
-                  <PlanActionButton
-                    billingInterval={selectedBillingInterval}
-                    requestedServiceLevel={effectiveCurrentPlan || ApiServiceLevelEnum.FREE}
-                    mode="filled"
-                    className="w-full"
-                  />
-                ) : null}
+                {buildCtaButton(planKey, effectiveCurrentPlan, selectedBillingInterval, planConfig.actionType)}
               </div>
             </div>
           </Card>

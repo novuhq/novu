@@ -81,8 +81,13 @@ export function HighlightsRow() {
   );
 }
 
-function getEventsLine(serviceLevel: ApiServiceLevelEnum) {
-  const eventsAmount = getFeatureForTierAsNumber(FeatureNameEnum.PLATFORM_MONTHLY_EVENTS_INCLUDED, serviceLevel);
+function getEventsLine(serviceLevel: ApiServiceLevelEnum, featureFlags: FeatureFlags) {
+  const eventsAmount = getFeatureForTierAsNumber(
+    FeatureNameEnum.PLATFORM_MONTHLY_EVENTS_INCLUDED,
+    serviceLevel,
+    featureFlags,
+    false
+  );
   const formatted: string = new Intl.NumberFormat('en-US', {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,

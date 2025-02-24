@@ -41,7 +41,7 @@ interface BuildValuesParams {
   suffix?: string | React.ReactNode;
 }
 
-const features: (activeFlags: FeatureFlags) => Feature[] = (featureFlags: FeatureFlags) => {
+const buildFeatureArray: (activeFlags: FeatureFlags) => Feature[] = (featureFlags: FeatureFlags) => {
   return [
     {
       label: 'Platform',
@@ -230,7 +230,7 @@ function FeatureRow({ feature, index }: { feature: Feature; index: number }) {
 export function Features() {
   const activeFlags = useFeatureFlagMap();
 
-  const featureArray = features(activeFlags);
+  const featureArray = buildFeatureArray(activeFlags);
   return (
     <div className="flex flex-col">
       {augmentFeatures(featureArray, activeFlags).map((feature, index) => (
