@@ -18,11 +18,6 @@ export class EnvironmentService {
     name?: string,
     parentId?: string
   ): Promise<EnvironmentEntity> {
-    const existingEnvironment = await this.environmentRepository.findOne({ _organizationId: organizationId, name });
-    if (existingEnvironment) {
-      return existingEnvironment;
-    }
-
     const key = uuid();
     const hashedApiKey = createHash('sha256').update(key).digest('hex');
 
