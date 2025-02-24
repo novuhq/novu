@@ -12,7 +12,7 @@ describe('CreateSubscription #novu-v2', () => {
     throw new Error('ee-billing does not exist');
   }
 
-  const { CreateSubscription, GetPrice, UpdateServiceLevel, CreateSubscriptionCommand } = eeBilling;
+  const { CreateSubscription, GetPrices, UpdateServiceLevel, CreateSubscriptionCommand } = eeBilling;
 
   const stripeStub = {
     subscriptions: {
