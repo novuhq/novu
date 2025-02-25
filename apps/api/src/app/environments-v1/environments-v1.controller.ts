@@ -10,7 +10,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiExcludeController, ApiExcludeEndpoint, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import { ApiExcludeEndpoint, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { Roles } from '@novu/application-generic';
 import { ApiAuthSchemeEnum, MemberRoleEnum, ProductFeatureKeyEnum, UserSessionData } from '@novu/shared';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
@@ -45,7 +45,6 @@ import { RolesGuard } from '../auth/framework/roles.guard';
 @UseInterceptors(ClassSerializerInterceptor)
 @UserAuthentication()
 @ApiTags('Environments')
-@ApiExcludeController()
 export class EnvironmentsControllerV1 {
   constructor(
     private createEnvironmentUsecase: CreateEnvironment,
