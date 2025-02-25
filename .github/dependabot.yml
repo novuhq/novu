@@ -3,8 +3,6 @@
 
 version: 2
 
-# Enable beta ecosystems to get updates for Docker Compose
-enable-beta-ecosystems: true
 updates:
 
   # Maintain dependencies for Docker Compose
