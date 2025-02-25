@@ -4,26 +4,26 @@ import isEmpty from 'lodash/isEmpty';
 import Ajv, { ErrorObject } from 'ajv';
 import addFormats from 'ajv-formats';
 import { AdditionalOperation, RulesLogic } from 'json-logic-js';
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { ControlValuesRepository, IntegrationRepository } from '@novu/dal';
 import {
-  StepContentIssue,
-  JSONSchemaDto,
-  StepContentIssueEnum,
-  StepIssuesDto,
-  UserSessionData,
-  StepTypeEnum,
-  WorkflowOriginEnum,
   ControlValuesLevelEnum,
+  JSONSchemaDto,
+  StepContentIssue,
+  StepContentIssueEnum,
   StepIntegrationIssueEnum,
+  StepIssuesDto,
+  StepTypeEnum,
+  UserSessionData,
+  WorkflowOriginEnum,
 } from '@novu/shared';
 import {
-  InstrumentUsecase,
-  TierRestrictionsValidateUsecase,
-  TierRestrictionsValidateCommand,
   dashboardSanitizeControlValues,
-  PinoLogger,
   Instrument,
+  InstrumentUsecase,
+  PinoLogger,
+  TierRestrictionsValidateCommand,
+  TierRestrictionsValidateUsecase,
 } from '@novu/application-generic';
 
 import { buildVariables } from '../../util/build-variables';
@@ -43,6 +43,7 @@ export class BuildStepIssuesUsecase {
   constructor(
     private buildAvailableVariableSchemaUsecase: BuildVariableSchemaUsecase,
     private controlValuesRepository: ControlValuesRepository,
+    @Inject(forwardRef(() => TierRestrictionsValidateUsecase))
     private tierRestrictionsValidateUsecase: TierRestrictionsValidateUsecase,
     private logger: PinoLogger,
     private integrationsRepository: IntegrationRepository

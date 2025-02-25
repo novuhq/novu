@@ -59,6 +59,7 @@ export const TemplateTabs = ({
             e.stopPropagation();
             navigate('../', { relative: 'path' });
           }}
+          data-testid="tabs-close-button"
         >
           <span className="sr-only">Close</span>
         </CompactButton>

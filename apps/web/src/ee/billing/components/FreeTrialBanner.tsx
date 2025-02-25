@@ -1,12 +1,12 @@
-import { Close, colors, Text, Warning, Button } from '@novu/design-system';
-import { useMantineTheme, Group } from '@mantine/core';
+import { Button, Close, colors, Text, Warning } from '@novu/design-system';
+import { Group, useMantineTheme } from '@mantine/core';
 import styled from '@emotion/styled';
 import { useLocalStorage } from '@mantine/hooks';
 import { useNavigate } from 'react-router-dom';
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { ApiServiceLevelEnum } from '@novu/shared';
 import { useSubscription } from '../hooks/useSubscription';
-import { COLOR_WARNING, WARNING_LIMIT_DAYS, pluralizeDaysLeft } from '../utils/freeTrial.constants';
+import { COLOR_WARNING, pluralizeDaysLeft, WARNING_LIMIT_DAYS } from '../utils/freeTrial.constants';
 import { ContactSalesModal } from './ContactSalesModal';
 import { capitalize } from '../utils/capitalize';
 import { ROUTES } from '../../../constants/routes';
