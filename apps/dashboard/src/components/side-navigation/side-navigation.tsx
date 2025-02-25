@@ -1,12 +1,9 @@
 import { Badge } from '@/components/primitives/badge';
 import { SidebarContent } from '@/components/side-navigation/sidebar';
-import { SubscribersStayTunedModal } from '@/components/side-navigation/subscribers-stay-tuned-modal';
 import { useEnvironment } from '@/context/environment/hooks';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 import * as Sentry from '@sentry/react';
 import { ReactNode } from 'react';
 import {
@@ -40,7 +37,6 @@ const NavigationGroup = ({ children, label }: { children: ReactNode; label?: str
 export const SideNavigation = () => {
   const { subscription, daysLeft, isLoading: isLoadingSubscription } = useFetchSubscription();
   const isFreeTrialActive = subscription?.trial.isActive;
-  const isSubscribersPageEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_SUBSCRIBERS_PAGE_ENABLED);
 
   const { currentEnvironment, environments, switchEnvironment } = useEnvironment();
   const track = useTelemetry();
@@ -77,26 +73,13 @@ export const SideNavigation = () => {
                 <RiRouteFill className="size-4" />
                 <span>Workflows</span>
               </NavigationLink>
-              {isSubscribersPageEnabled ? (
-                <NavigationLink
-                  to={buildRoute(ROUTES.SUBSCRIBERS, { environmentSlug: currentEnvironment?.slug ?? '' })}
-                >
-                  <RiGroup2Line className="size-4" />
-                  <span>Subscribers</span>
-                  <Badge color="orange" size="sm" variant="lighter">
-                    New
-                  </Badge>
-                </NavigationLink>
-              ) : (
-                <SubscribersStayTunedModal>
-                  <span onClick={() => track(TelemetryEvent.SUBSCRIBERS_LINK_CLICKED)}>
-                    <NavigationLink>
-                      <RiGroup2Line className="size-4" />
-                      <span>Subscribers</span>
-                    </NavigationLink>
-                  </span>
-                </SubscribersStayTunedModal>
-              )}
+              <NavigationLink to={buildRoute(ROUTES.SUBSCRIBERS, { environmentSlug: currentEnvironment?.slug ?? '' })}>
+                <RiGroup2Line className="size-4" />
+                <span>Subscribers</span>
+                <Badge color="orange" size="sm" variant="lighter">
+                  New
+                </Badge>
+              </NavigationLink>
             </NavigationGroup>
             <NavigationGroup label="Monitor">
               <NavigationLink

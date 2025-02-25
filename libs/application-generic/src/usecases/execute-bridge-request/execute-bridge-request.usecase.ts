@@ -1,11 +1,4 @@
-import {
-  BadRequestException,
-  HttpException,
-  HttpStatus,
-  Injectable,
-  Logger,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import got, {
   CacheError,
   HTTPError,
@@ -28,15 +21,8 @@ import {
 } from '@novu/framework/internal';
 import { EnvironmentRepository } from '@novu/dal';
 import { WorkflowOriginEnum } from '@novu/shared';
-import {
-  BridgeError,
-  ExecuteBridgeRequestCommand,
-  ExecuteBridgeRequestDto,
-} from './execute-bridge-request.command';
-import {
-  GetDecryptedSecretKey,
-  GetDecryptedSecretKeyCommand,
-} from '../get-decrypted-secret-key';
+import { BridgeError, ExecuteBridgeRequestCommand, ExecuteBridgeRequestDto } from './execute-bridge-request.command';
+import { GetDecryptedSecretKey, GetDecryptedSecretKeyCommand } from '../get-decrypted-secret-key';
 import { BRIDGE_EXECUTION_ERROR } from '../../utils';
 import { HttpRequestHeaderKeysEnum } from '../../http';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
@@ -99,7 +85,7 @@ class BridgeRequestError extends HttpException {
       bridgeError.statusCode,
       {
         cause: bridgeError.cause,
-      },
+      }
     );
   }
 }
@@ -108,21 +94,19 @@ class BridgeRequestError extends HttpException {
 export class ExecuteBridgeRequest {
   constructor(
     private environmentRepository: EnvironmentRepository,
-    private getDecryptedSecretKey: GetDecryptedSecretKey,
+    private getDecryptedSecretKey: GetDecryptedSecretKey
   ) {}
 
   @InstrumentUsecase()
   async execute<T extends PostActionEnum | GetActionEnum>(
-    command: ExecuteBridgeRequestCommand,
+    command: ExecuteBridgeRequestCommand
   ): Promise<ExecuteBridgeRequestDto<T>> {
     const environment = await this.environmentRepository.findOne({
       _id: command.environmentId,
     });
 
     if (!environment) {
-      throw new NotFoundException(
-        `Environment ${command.environmentId} not found`,
-      );
+      throw new NotFoundException(`Environment ${command.environmentId} not found`);
     }
 
     const bridgeUrl = this.getBridgeUrl(
@@ -130,12 +114,12 @@ export class ExecuteBridgeRequest {
       command.environmentId,
       command.workflowOrigin,
       command.statelessBridgeUrl,
-      command.action,
+      command.action
     );
 
     Logger.log(
       `Resolved bridge URL: ${bridgeUrl} for environment ${command.environmentId} and origin ${command.workflowOrigin}`,
-      LOG_CONTEXT,
+      LOG_CONTEXT
     );
 
     const retriesLimit = command.retriesLimit || DEFAULT_RETRIES_LIMIT;
@@ -156,23 +140,17 @@ export class ExecuteBridgeRequest {
         errorCodes: RETRYABLE_ERROR_CODES,
         calculateDelay: ({ attemptCount, error }) => {
           if (attemptCount > retriesLimit) {
-            Logger.log(
-              `Exceeded retry limit of ${retriesLimit}. Stopping retries.`,
-              LOG_CONTEXT,
-            );
+            Logger.log(`Exceeded retry limit of ${retriesLimit}. Stopping retries.`, LOG_CONTEXT);
 
             return 0;
           }
 
           // Check if the error status code is in our retryable codes
-          if (
-            error?.response?.statusCode &&
-            RETRYABLE_HTTP_CODES.includes(error.response.statusCode)
-          ) {
+          if (error?.response?.statusCode && RETRYABLE_HTTP_CODES.includes(error.response.statusCode)) {
             const delay = 2 ** attemptCount * 1000;
             Logger.log(
               `Retryable status code ${error.response.statusCode} detected. Retrying in ${delay}ms`,
-              LOG_CONTEXT,
+              LOG_CONTEXT
             );
 
             return delay;
@@ -181,18 +159,12 @@ export class ExecuteBridgeRequest {
           // Check if the error code is in our retryable error codes
           if (error?.code && RETRYABLE_ERROR_CODES.includes(error.code)) {
             const delay = 2 ** attemptCount * 1000;
-            Logger.log(
-              `Retryable error code ${error.code} detected. Retrying in ${delay}ms`,
-              LOG_CONTEXT,
-            );
+            Logger.log(`Retryable error code ${error.code} detected. Retrying in ${delay}ms`, LOG_CONTEXT);
 
             return delay;
           }
 
-          Logger.log(
-            'Error is not retryable. Stopping retry attempts.',
-            LOG_CONTEXT,
-          );
+          Logger.log('Error is not retryable. Stopping retry attempts.', LOG_CONTEXT);
 
           return 0; // Don't retry for other errors
         },
@@ -206,9 +178,7 @@ export class ExecuteBridgeRequest {
       },
     };
 
-    const request = [PostActionEnum.EXECUTE, PostActionEnum.PREVIEW].includes(
-      command.action as PostActionEnum,
-    )
+    const request = [PostActionEnum.EXECUTE, PostActionEnum.PREVIEW].includes(command.action as PostActionEnum)
       ? got.post
       : got.get;
 
@@ -241,25 +211,21 @@ export class ExecuteBridgeRequest {
     const secretKey = await this.getDecryptedSecretKey.execute(
       GetDecryptedSecretKeyCommand.create({
         environmentId: command.environmentId,
-      }),
+      })
     );
 
     const timestamp = Date.now();
     const novuSignatureHeader = `t=${timestamp},v1=${this.createHmacBySecretKey(
       secretKey,
       timestamp,
-      command.event || {},
+      command.event || {}
     )}`;
 
     return novuSignatureHeader;
   }
 
   @Instrument()
-  private createHmacBySecretKey(
-    secretKey: string,
-    timestamp: number,
-    payload: unknown,
-  ) {
+  private createHmacBySecretKey(secretKey: string, timestamp: number, payload: unknown) {
     const publicKey = `${timestamp}.${JSON.stringify(payload)}`;
 
     return createHmac('sha256', secretKey).update(publicKey).digest('hex');
@@ -283,7 +249,7 @@ export class ExecuteBridgeRequest {
     environmentId: string,
     workflowOrigin: WorkflowOriginEnum,
     statelessBridgeUrl?: string,
-    action?: PostActionEnum | GetActionEnum,
+    action?: PostActionEnum | GetActionEnum
   ): string {
     if (statelessBridgeUrl) {
       return statelessBridgeUrl;
@@ -299,10 +265,7 @@ export class ExecuteBridgeRequest {
         if (!environmentBridgeUrl) {
           throw new BadRequestException({
             code: BRIDGE_EXECUTION_ERROR.INVALID_BRIDGE_URL.code,
-            message:
-              BRIDGE_EXECUTION_ERROR.INVALID_BRIDGE_URL.message(
-                environmentBridgeUrl,
-              ),
+            message: BRIDGE_EXECUTION_ERROR.INVALID_BRIDGE_URL.message(environmentBridgeUrl),
           });
         }
 
@@ -331,12 +294,9 @@ export class ExecuteBridgeRequest {
   private async handleResponseError(
     error: unknown,
     url: string,
-    processError: ExecuteBridgeRequestCommand['processError'],
+    processError: ExecuteBridgeRequestCommand['processError']
   ) {
-    let bridgeErrorData: Pick<
-      BridgeError,
-      'data' | 'code' | 'statusCode' | 'message' | 'cause'
-    >;
+    let bridgeErrorData: Pick<BridgeError, 'data' | 'code' | 'statusCode' | 'message' | 'cause'>;
     if (error instanceof RequestError) {
       let body: Record<string, unknown>;
       try {
@@ -369,20 +329,14 @@ export class ExecuteBridgeRequest {
           statusCode: HttpStatus.BAD_REQUEST,
         };
       } else if (error instanceof ReadError) {
-        Logger.error(
-          `Response body could not be read for \`${url}\``,
-          LOG_CONTEXT,
-        );
+        Logger.error(`Response body could not be read for \`${url}\``, LOG_CONTEXT);
         bridgeErrorData = {
           code: BRIDGE_EXECUTION_ERROR.RESPONSE_READ_ERROR.code,
           message: BRIDGE_EXECUTION_ERROR.RESPONSE_READ_ERROR.message(url),
           statusCode: HttpStatus.BAD_REQUEST,
         };
       } else if (error instanceof UploadError) {
-        Logger.error(
-          `Error uploading request body for \`${url}\``,
-          LOG_CONTEXT,
-        );
+        Logger.error(`Error uploading request body for \`${url}\``, LOG_CONTEXT);
         bridgeErrorData = {
           code: BRIDGE_EXECUTION_ERROR.REQUEST_UPLOAD_ERROR.code,
           message: BRIDGE_EXECUTION_ERROR.REQUEST_UPLOAD_ERROR.message(url),
@@ -398,19 +352,14 @@ export class ExecuteBridgeRequest {
       } else if (error instanceof MaxRedirectsError) {
         Logger.error(`Maximum redirects exceeded for \`${url}\``, LOG_CONTEXT);
         bridgeErrorData = {
-          message:
-            BRIDGE_EXECUTION_ERROR.MAXIMUM_REDIRECTS_EXCEEDED.message(url),
+          message: BRIDGE_EXECUTION_ERROR.MAXIMUM_REDIRECTS_EXCEEDED.message(url),
           code: BRIDGE_EXECUTION_ERROR.MAXIMUM_REDIRECTS_EXCEEDED.code,
           statusCode: HttpStatus.BAD_REQUEST,
         };
       } else if (error instanceof ParseError) {
-        Logger.error(
-          `Bridge URL response code is 2xx, but parsing body fails. \`${url}\``,
-          LOG_CONTEXT,
-        );
+        Logger.error(`Bridge URL response code is 2xx, but parsing body fails. \`${url}\``, LOG_CONTEXT);
         bridgeErrorData = {
-          message:
-            BRIDGE_EXECUTION_ERROR.MAXIMUM_REDIRECTS_EXCEEDED.message(url),
+          message: BRIDGE_EXECUTION_ERROR.MAXIMUM_REDIRECTS_EXCEEDED.message(url),
           code: BRIDGE_EXECUTION_ERROR.MAXIMUM_REDIRECTS_EXCEEDED.code,
           statusCode: HttpStatus.BAD_REQUEST,
         };
@@ -419,7 +368,7 @@ export class ExecuteBridgeRequest {
         const tunnelBody = body as TunnelResponseError;
         Logger.error(
           `Could not establish tunnel connection for \`${url}\`. Error: \`${tunnelBody.message}\``,
-          LOG_CONTEXT,
+          LOG_CONTEXT
         );
         bridgeErrorData = {
           message: BRIDGE_EXECUTION_ERROR.TUNNEL_NOT_FOUND.message(url),
@@ -429,7 +378,7 @@ export class ExecuteBridgeRequest {
       } else if (error.code === 'DEPTH_ZERO_SELF_SIGNED_CERT') {
         Logger.error(
           `Bridge URL is uing a self-signed certificate that is not allowed for production environments. \`${url}\``,
-          LOG_CONTEXT,
+          LOG_CONTEXT
         );
         bridgeErrorData = {
           message: BRIDGE_EXECUTION_ERROR.SELF_SIGNED_CERTIFICATE.message(url),
@@ -441,20 +390,13 @@ export class ExecuteBridgeRequest {
          * Tunnel was live, but the Bridge endpoint was down.
          * 502 is thrown by the tunnel service when the Bridge endpoint is not reachable.
          */
-        Logger.error(
-          `Local Bridge endpoint not found for \`${url}\``,
-          LOG_CONTEXT,
-        );
+        Logger.error(`Local Bridge endpoint not found for \`${url}\``, LOG_CONTEXT);
         bridgeErrorData = {
-          message:
-            BRIDGE_EXECUTION_ERROR.BRIDGE_ENDPOINT_NOT_FOUND.message(url),
+          message: BRIDGE_EXECUTION_ERROR.BRIDGE_ENDPOINT_NOT_FOUND.message(url),
           code: BRIDGE_EXECUTION_ERROR.BRIDGE_ENDPOINT_NOT_FOUND.code,
           statusCode: HttpStatus.NOT_FOUND,
         };
-      } else if (
-        error.response?.statusCode === 404 ||
-        RETRYABLE_ERROR_CODES.includes(error.code)
-      ) {
+      } else if (error.response?.statusCode === 404 || RETRYABLE_ERROR_CODES.includes(error.code)) {
         Logger.error(`Bridge endpoint unavailable for \`${url}\``, LOG_CONTEXT);
 
         let codeToThrow: string;
@@ -464,46 +406,33 @@ export class ExecuteBridgeRequest {
           codeToThrow = BRIDGE_EXECUTION_ERROR.BRIDGE_ENDPOINT_UNAVAILABLE.code;
         }
         bridgeErrorData = {
-          message:
-            BRIDGE_EXECUTION_ERROR.BRIDGE_ENDPOINT_UNAVAILABLE.message(url),
+          message: BRIDGE_EXECUTION_ERROR.BRIDGE_ENDPOINT_UNAVAILABLE.message(url),
           code: codeToThrow,
           statusCode: HttpStatus.BAD_REQUEST,
         };
       } else if (error.response?.statusCode === 405) {
-        Logger.error(
-          `Bridge endpoint method not configured for \`${url}\``,
-          LOG_CONTEXT,
-        );
+        Logger.error(`Bridge endpoint method not configured for \`${url}\``, LOG_CONTEXT);
         bridgeErrorData = {
-          message:
-            BRIDGE_EXECUTION_ERROR.BRIDGE_METHOD_NOT_CONFIGURED.message(url),
+          message: BRIDGE_EXECUTION_ERROR.BRIDGE_METHOD_NOT_CONFIGURED.message(url),
           code: BRIDGE_EXECUTION_ERROR.BRIDGE_METHOD_NOT_CONFIGURED.code,
           statusCode: HttpStatus.BAD_REQUEST,
         };
       } else {
         Logger.error(
-          `Unknown bridge request error calling \`${url}\`: \`${JSON.stringify(
-            body,
-          )}\``,
+          `Unknown bridge request error calling \`${url}\`: \`${JSON.stringify(body)}\``,
           error,
-          LOG_CONTEXT,
+          LOG_CONTEXT
         );
         bridgeErrorData = {
-          message:
-            BRIDGE_EXECUTION_ERROR.UNKNOWN_BRIDGE_REQUEST_ERROR.message(url),
+          message: BRIDGE_EXECUTION_ERROR.UNKNOWN_BRIDGE_REQUEST_ERROR.message(url),
           code: BRIDGE_EXECUTION_ERROR.UNKNOWN_BRIDGE_REQUEST_ERROR.code,
           statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
         };
       }
     } else {
-      Logger.error(
-        `Unknown bridge non-request error calling \`${url}\``,
-        error,
-        LOG_CONTEXT,
-      );
+      Logger.error(`Unknown bridge non-request error calling \`${url}\``, error, LOG_CONTEXT);
       bridgeErrorData = {
-        message:
-          BRIDGE_EXECUTION_ERROR.UNKNOWN_BRIDGE_NON_REQUEST_ERROR.message(url),
+        message: BRIDGE_EXECUTION_ERROR.UNKNOWN_BRIDGE_NON_REQUEST_ERROR.message(url),
         code: BRIDGE_EXECUTION_ERROR.UNKNOWN_BRIDGE_NON_REQUEST_ERROR.code,
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
       };
