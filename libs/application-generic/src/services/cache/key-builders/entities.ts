@@ -65,36 +65,6 @@ export const buildUserKey = ({ _id }: { _id: string }): string =>
     identifierPrefix: IdentifierPrefixEnum.ID,
   });
 
-export const buildNotificationTemplateKey = ({
-  _id,
-  _environmentId,
-}: {
-  _id: string;
-  _environmentId: string;
-}): string =>
-  buildEnvironmentScopedKeyById({
-    type: CacheKeyTypeEnum.ENTITY,
-    keyEntity: CacheKeyPrefixEnum.NOTIFICATION_TEMPLATE,
-    environmentId: _environmentId,
-    identifierPrefix: IdentifierPrefixEnum.ID,
-    identifier: _id,
-  });
-
-export const buildNotificationTemplateIdentifierKey = ({
-  templateIdentifier,
-  _environmentId,
-}: {
-  templateIdentifier: string;
-  _environmentId: string;
-}): string =>
-  buildEnvironmentScopedKeyById({
-    type: CacheKeyTypeEnum.ENTITY,
-    keyEntity: CacheKeyPrefixEnum.NOTIFICATION_TEMPLATE,
-    environmentId: _environmentId,
-    identifierPrefix: IdentifierPrefixEnum.TEMPLATE_IDENTIFIER,
-    identifier: templateIdentifier,
-  });
-
 export const buildEnvironmentByApiKey = ({ apiKey }: { apiKey: string }): string =>
   buildUnscopedKey({
     type: CacheKeyTypeEnum.ENTITY,

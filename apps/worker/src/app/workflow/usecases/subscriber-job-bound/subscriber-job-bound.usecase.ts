@@ -3,7 +3,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import {
   AnalyticsService,
   ApiException,
-  buildNotificationTemplateKey,
   CachedEntity,
   CreateNotificationJobs,
   CreateNotificationJobsCommand,
@@ -228,13 +227,6 @@ export class SubscriberJobBound {
     return true;
   }
 
-  @CachedEntity({
-    builder: (command: { _id: string; environmentId: string }) =>
-      buildNotificationTemplateKey({
-        _environmentId: command.environmentId,
-        _id: command._id,
-      }),
-  })
   private async getNotificationTemplate({ _id, environmentId }: { _id: string; environmentId: string }) {
     return await this.notificationTemplateRepository.findById(_id, environmentId);
   }
