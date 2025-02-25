@@ -260,15 +260,28 @@ notificationTemplateSchema.virtual('notificationGroup', {
 });
 
 notificationTemplateSchema.index({
-  _organizationId: 1,
+  _environmentId: 1,
   'triggers.identifier': 1,
 });
 
 notificationTemplateSchema.index({
   _environmentId: 1,
+  _id: 1,
+});
+
+// TODO: Deprecate this index. Use the envId, triggerId instead
+notificationTemplateSchema.index({
+  _organizationId: 1,
+  'triggers.identifier': 1,
+});
+
+// TODO: Deprecate this index. Use the envId, triggerId instead
+notificationTemplateSchema.index({
+  _environmentId: 1,
   name: 1,
 });
 
+// TODO: Deprecate this index. Use the envId, triggerId instead
 notificationTemplateSchema.index({
   _environmentId: 1,
   'triggers.identifier': 1,
