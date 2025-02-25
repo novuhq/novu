@@ -42,7 +42,7 @@ export default defineConfig({
     baseURL: baseURL,
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-    trace: 'on-all-retries',
+    trace: 'retain-on-failure',
     permissions: ['clipboard-read'],
   },
   timeout: process.env.CI ? 30_000 : 60_000,
@@ -58,7 +58,7 @@ export default defineConfig({
         ...devices['Desktop Chrome'],
         viewport: { width: 1512, height: 982 },
         video: {
-          mode: 'on',
+          mode: 'retain-on-failure',
           size: { width: 1512, height: 982 },
         },
       },
