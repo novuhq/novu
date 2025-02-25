@@ -507,9 +507,9 @@ function getOriginalFeatureOrAugments(
     throw new Error(`Invalid tier [${tier}] for feature ${featureName}`);
   }
   const originalFeature = novuServiceTiers[featureName][tier];
-  if (!originalFeature) {
+  if (originalFeature === undefined) {
     throw new Error(
-      `Invalid feature [${featureName}] for tier [${tier}]: Original: ${JSON.stringify(novuServiceTiers[featureName])}`
+      `Invalid feature [${featureName}] for tier [${tier}]: Original: ${JSON.stringify(novuServiceTiers[featureName], null, 2)}`
     );
   }
   for (const inActiveFunctionFF of Object.keys(inActiveFeatureFlagRecordGetters)) {
