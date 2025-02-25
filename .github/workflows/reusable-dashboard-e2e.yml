@@ -68,6 +68,30 @@ jobs:
         with:
           submodules: true
 
+      - name: Create .env file for the Dashboard app
+        working-directory: apps/dashboard
+        run: |
+          touch .env
+          echo VITE_LAUNCH_DARKLY_CLIENT_SIDE_ID=${{ secrets.LAUNCH_DARKLY_CLIENT_SIDE_ID }} >> .env
+          echo VITE_API_HOSTNAME=http://127.0.0.1:1336 >> .env
+          echo VITE_WEBSOCKET_HOSTNAME=http://127.0.0.1:1340 >> .env
+          echo VITE_LEGACY_DASHBOARD_URL=http://127.0.0.1:4200 >> .env
+          echo VITE_CLERK_PUBLISHABLE_KEY=${{ secrets.CLERK_E2E_PUBLISHABLE_KEY }} >> .env
+
+      - name: Create .env file for the Playwright
+        working-directory: apps/dashboard
+        run: |
+          touch .env.playwright
+          echo NOVU_ENTERPRISE=true >> .env.playwright
+          echo NEW_RELIC_ENABLED=false >> .env.playwright
+          echo NEW_RELIC_APP_NAME=Novu >> .env.playwright
+          echo MONGO_URL=mongodb://127.0.0.1:27017/novu-test >> .env.playwright
+          echo API_URL=http://127.0.0.1:1336 >> .env.playwright
+          echo CLERK_ENABLED=true >> .env.playwright
+          echo CLERK_PUBLISHABLE_KEY=${{ secrets.CLERK_E2E_PUBLISHABLE_KEY }} >> .env.playwright
+          echo CLERK_SECRET_KEY=${{ secrets.CLERK_E2E_SECRET_KEY }} >> .env.playwright
+          echo NODE_ENV=test >> .env.playwright
+
       - uses: mansagroup/nrwl-nx-action@v3
         with:
           targets: build
@@ -77,30 +101,35 @@ jobs:
       - uses: ./.github/actions/start-localstack
       - uses: ./.github/actions/setup-redis-cluster
 
-      - uses: ./.github/actions/run-backend
-        with:
-          cypress_github_oauth_client_id: ${{ secrets.CYPRESS_GITHUB_OAUTH_CLIENT_ID }}
-          cypress_github_oauth_client_secret: ${{ secrets.CYPRESS_GITHUB_OAUTH_CLIENT_SECRET }}
-          launch_darkly_sdk_key: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
-          ci_ee_test: ${{ steps.determine_run_type.outputs.enterprise_run }}
+      - name: Start API in TEST
+        env:
+          LAUNCH_DARKLY_SDK_KEY: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
+          CI_EE_TEST: true
+          CLERK_ENABLED: true
+          CLERK_ISSUER_URL: https://neat-mole-83.clerk.accounts.dev
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_E2E_SECRET_KEY }}
+        run: |
+          cd apps/api && pnpm start:test &
+
+      - name: Start Worker
+        shell: bash
+        env:
+          NODE_ENV: 'test'
+          PORT: '1342'
+          LAUNCH_DARKLY_SDK_KEY: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
+          CI_EE_TEST: true
+        run: cd apps/worker && pnpm start:prod &
+
+      - name: Wait on API and Worker
+        shell: bash
+        run: wait-on --timeout=180000 http://127.0.0.1:1336/v1/health-check http://127.0.0.1:1342/v1/health-check
 
       - name: Start WS
         run: |
           cd apps/ws && pnpm start:test &
 
-      - name: Start Novu Dashboard
-        working-directory: apps/dashboard
-        env:
-          REACT_APP_API_URL: http://127.0.0.1:1336
-          REACT_APP_WS_URL: http://127.0.0.1:1340
-          REACT_APP_WEBHOOK_URL: http://127.0.0.1:1341
-          # Disable LaunchDarkly client-side SDK in the test environment to reduce E2E flakiness
-          REACT_APP_LAUNCH_DARKLY_CLIENT_SIDE_ID: ''
-          NOVU_ENTERPRISE: ${{ steps.determine_run_type.outputs.enterprise_run }}
-        run: pnpm start:static:build &
-
       - name: Wait on Services
-        run: wait-on --timeout=180000 http://127.0.0.1:1340/v1/health-check http://127.0.0.1:4201/
+        run: wait-on --timeout=180000 http://127.0.0.1:1340/v1/health-check
 
       - name: Install Playwright
         working-directory: apps/dashboard

@@ -1,6 +1,6 @@
 {
   "name": "@novu/widget",
-  "version": "2.1.3",
+  "version": "2.1.5",
   "private": true,
   "scripts": {
     "start": "DISABLE_ESLINT_PLUGIN=true react-app-rewired start",

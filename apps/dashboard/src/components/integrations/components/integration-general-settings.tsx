@@ -1,14 +1,14 @@
+import { LinkButton } from '@/components/primitives/button-link';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/primitives/form/form';
 import { Input } from '@/components/primitives/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives/popover';
 import { Separator } from '@/components/primitives/separator';
 import { Switch } from '@/components/primitives/switch';
-import { Button } from '@/components/primitives/button';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
-import { Control } from 'react-hook-form';
-import { ApiServiceLevelEnum } from '@novu/shared';
-import { HoverCard, HoverCardPortal, HoverCardContent, HoverCardTrigger } from '@/components/primitives/hover-card';
 import { ROUTES } from '@/utils/routes';
-import { Link } from 'react-router-dom';
+import { ApiServiceLevelEnum } from '@novu/shared';
+import { Control } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
 
 type IntegrationFormData = {
   name: string;
@@ -29,6 +29,42 @@ type GeneralSettingsProps = {
   isForInAppStep?: boolean;
 };
 
+function NovuBrandingSwitch({ value, onChange }: { value: boolean | undefined; onChange: (value: boolean) => void }) {
+  const { subscription, isLoading } = useFetchSubscription();
+  const navigate = useNavigate();
+
+  const isFreePlan = subscription?.apiServiceLevel === ApiServiceLevelEnum.FREE;
+  const disabled = isFreePlan || isLoading;
+  const checked = disabled ? false : value;
+
+  return (
+    <div className="flex items-center">
+      <Popover modal>
+        <PopoverTrigger asChild>
+          <Switch onCheckedChange={onChange} checked={checked} />
+        </PopoverTrigger>
+        {isFreePlan && (
+          <PopoverContent className="w-72" align="end" sideOffset={4}>
+            <div className="flex flex-col gap-2 p-1">
+              <div className="flex flex-col gap-1">
+                <h4 className="text-xs font-semibold">Premium Feature</h4>
+                <p className="text-muted-foreground text-xs">
+                  Remove Novu branding from your inbox by upgrading to our paid plans.
+                </p>
+              </div>
+              <div className="flex justify-end">
+                <LinkButton size="sm" variant="primary" onClick={() => navigate(ROUTES.SETTINGS_BILLING)}>
+                  Upgrade Plan
+                </LinkButton>
+              </div>
+            </div>
+          </PopoverContent>
+        )}
+      </Popover>
+    </div>
+  );
+}
+
 export function GeneralSettings({
   control,
   mode,
@@ -36,8 +72,6 @@ export function GeneralSettings({
   disabledPrimary,
   isForInAppStep,
 }: GeneralSettingsProps) {
-  const { subscription, isLoading: isLoadingSubscription } = useFetchSubscription();
-
   return (
     <div className="border-neutral-alpha-200 bg-background text-foreground-600 mx-0 mt-0 flex flex-col gap-2 rounded-lg border p-3">
       <FormField
@@ -63,12 +97,6 @@ export function GeneralSettings({
           control={control}
           name="removeNovuBranding"
           render={({ field }) => {
-            const isFreePlan = subscription?.apiServiceLevel === ApiServiceLevelEnum.FREE;
-            const disabled = isFreePlan || isLoadingSubscription;
-            const value = disabled ? false : field.value;
-
-            const switchControl = <Switch disabled={disabled} onCheckedChange={field.onChange} checked={value} />;
-
             return (
               <FormItem className="flex items-center justify-between gap-2">
                 <FormLabel
@@ -79,25 +107,7 @@ export function GeneralSettings({
                   Remove "Powered by Novu" branding
                 </FormLabel>
                 <FormControl>
-                  {isFreePlan ? (
-                    <HoverCard openDelay={100} closeDelay={100}>
-                      <HoverCardTrigger asChild>{switchControl}</HoverCardTrigger>
-                      <HoverCardPortal>
-                        <HoverCardContent className="w-fit" align="end" sideOffset={4}>
-                          <div className="flex max-w-52 flex-col gap-2 text-wrap text-xs">
-                            <span>Upgrade your billing plan to remove Novu branding</span>
-                            <Link to={ROUTES.SETTINGS_BILLING}>
-                              <Button variant="primary" mode="lighter" size="xs">
-                                Upgrade now
-                              </Button>
-                            </Link>
-                          </div>
-                        </HoverCardContent>
-                      </HoverCardPortal>
-                    </HoverCard>
-                  ) : (
-                    switchControl
-                  )}
+                  <NovuBrandingSwitch value={field.value} onChange={field.onChange} />
                 </FormControl>
               </FormItem>
             );

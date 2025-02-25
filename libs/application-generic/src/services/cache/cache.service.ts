@@ -1,11 +1,7 @@
 import { Logger } from '@nestjs/common';
 
 import { QUERY_PREFIX } from './key-builders';
-import {
-  CacheInMemoryProviderService,
-  InMemoryProviderClient,
-  Pipeline,
-} from '../in-memory-provider';
+import { CacheInMemoryProviderService, InMemoryProviderClient, Pipeline } from '../in-memory-provider';
 import { addJitter } from '../../resilience';
 
 const LOG_CONTEXT = 'CacheService';
@@ -24,11 +20,7 @@ export interface ICacheService {
   getStatus();
   cacheEnabled();
   sadd(key: string, ...members: (string | number | Buffer)[]): Promise<number>;
-  eval<TData = unknown>(
-    script: string,
-    keys: string[],
-    args: (string | number | Buffer)[],
-  ): Promise<TData>;
+  eval<TData = unknown>(script: string, keys: string[], args: (string | number | Buffer)[]): Promise<TData>;
 }
 
 export type CachingConfig = {
@@ -39,9 +31,7 @@ export class CacheService implements ICacheService {
   private cacheTtl: number;
   private readonly TTL_VARIANT_PERCENTAGE = 0.1;
 
-  constructor(
-    private cacheInMemoryProviderService: CacheInMemoryProviderService,
-  ) {}
+  constructor(private cacheInMemoryProviderService: CacheInMemoryProviderService) {}
 
   public async initialize(): Promise<void> {
     Logger.log('Initiated cache service', LOG_CONTEXT);
@@ -72,68 +62,34 @@ export class CacheService implements ICacheService {
     return isEnabled;
   }
 
-  public async set(
-    key: string,
-    value: string,
-    options?: CachingConfig,
-  ): Promise<string | null> {
-    const result = await this.client?.set(
-      key,
-      value,
-      'EX',
-      this.getTtlInSeconds(options),
-    );
+  public async set(key: string, value: string, options?: CachingConfig): Promise<string | null> {
+    const result = await this.client?.set(key, value, 'EX', this.getTtlInSeconds(options));
 
     if (result === null) {
-      Logger.error(
-        `Set operation for key ${key} was not performed`,
-        LOG_CONTEXT,
-      );
+      Logger.error(`Set operation for key ${key} was not performed`, LOG_CONTEXT);
     }
 
     return result;
   }
 
-  public async setIfNotExist(
-    key: string,
-    value: string,
-    options?: CachingConfig,
-  ): Promise<string | null> {
-    const result = await this.client?.set(
-      key,
-      value,
-      'EX',
-      this.getTtlInSeconds(options),
-      'NX',
-    );
+  public async setIfNotExist(key: string, value: string, options?: CachingConfig): Promise<string | null> {
+    const result = await this.client?.set(key, value, 'EX', this.getTtlInSeconds(options), 'NX');
 
     return result;
   }
 
-  public async setQuery(
-    key: string,
-    value: string,
-    options?: CachingConfig,
-  ): Promise<void | unknown[]> {
+  public async setQuery(key: string, value: string, options?: CachingConfig): Promise<void | unknown[]> {
     if (this.client) {
       const { credentials, query } = splitKey(key);
 
       const pipeline = this.client.pipeline();
 
       pipeline.sadd(credentials, query);
-      pipeline.expire(
-        credentials,
-        this.cacheInMemoryProviderService.getTtl() +
-          this.getTtlInSeconds(options),
-      );
+      pipeline.expire(credentials, this.cacheInMemoryProviderService.getTtl() + this.getTtlInSeconds(options));
 
       pipeline.set(key, value, 'EX', this.getTtlInSeconds(options));
 
-      return await this.capturedExec(
-        pipeline,
-        CacheServiceActionsEnum.SET_QUERY,
-        key,
-      );
+      return await this.capturedExec(pipeline, CacheServiceActionsEnum.SET_QUERY, key);
     }
   }
 
@@ -169,27 +125,15 @@ export class CacheService implements ICacheService {
       // invalidate queries set
       pipeline.del(key);
 
-      return await this.capturedExec(
-        pipeline,
-        CacheServiceActionsEnum.DEL_QUERY,
-        key,
-      );
+      return await this.capturedExec(pipeline, CacheServiceActionsEnum.DEL_QUERY, key);
     }
   }
 
-  private async capturedExec(
-    pipeline: Pipeline,
-    action: CacheServiceActionsEnum,
-    key: string,
-  ): Promise<unknown[]> {
+  private async capturedExec(pipeline: Pipeline, action: CacheServiceActionsEnum, key: string): Promise<unknown[]> {
     try {
       return await pipeline.exec();
     } catch (error) {
-      Logger.error(
-        error,
-        `Failed to execute pipeline action ${action} for key ${key}`,
-        LOG_CONTEXT,
-      );
+      Logger.error(error, `Failed to execute pipeline action ${action} for key ${key}`, LOG_CONTEXT);
       throw error;
     }
   }
@@ -227,24 +171,16 @@ export class CacheService implements ICacheService {
     return number;
   }
 
-  public async sadd(
-    key: string,
-    ...members: (string | number | Buffer)[]
-  ): Promise<number> {
+  public async sadd(key: string, ...members: (string | number | Buffer)[]): Promise<number> {
     return this.client?.sadd(key, ...members);
   }
 
   public async eval<TData = unknown>(
     script: string,
     keys: string[],
-    args: (string | number | Buffer)[],
+    args: (string | number | Buffer)[]
   ): Promise<TData> {
-    return this.client?.eval(
-      script,
-      keys.length,
-      ...keys,
-      ...args,
-    ) as Promise<TData>;
+    return this.client?.eval(script, keys.length, ...keys, ...args) as Promise<TData>;
   }
 }
 

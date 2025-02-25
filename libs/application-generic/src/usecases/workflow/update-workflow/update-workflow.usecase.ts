@@ -22,13 +22,7 @@ import {
   WorkflowOriginEnum,
 } from '@novu/shared';
 
-import {
-  AnalyticsService,
-  buildNotificationTemplateIdentifierKey,
-  buildNotificationTemplateKey,
-  ContentService,
-  InvalidateCacheService,
-} from '../../../services';
+import { AnalyticsService, ContentService, InvalidateCacheService } from '../../../services';
 import { UpdateWorkflowCommand } from './update-workflow.command';
 import { isVariantEmpty } from '../../../utils/variants';
 import { ApiException, PlatformException } from '../../../utils/exceptions';
@@ -279,21 +273,6 @@ export class UpdateWorkflow {
           $set: updatePayload,
         }
       );
-
-      // Invalidate cache after update
-      await this.invalidateCache.invalidateByKey({
-        key: buildNotificationTemplateKey({
-          _id: existingTemplate._id,
-          _environmentId: command.environmentId,
-        }),
-      });
-
-      await this.invalidateCache.invalidateByKey({
-        key: buildNotificationTemplateIdentifierKey({
-          templateIdentifier: existingTemplate.triggers[0].identifier,
-          _environmentId: command.environmentId,
-        }),
-      });
 
       notificationTemplateWithStepTemplate = await this.getWorkflowByIdsUseCase.execute(
         GetWorkflowByIdsCommand.create({

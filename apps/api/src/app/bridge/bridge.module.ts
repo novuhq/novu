@@ -4,23 +4,23 @@ import {
   CreateMessageTemplate,
   CreateWorkflow,
   DeleteMessageTemplate,
+  DeletePreferencesUseCase,
   DeleteWorkflowUseCase,
   GetPreferences,
   GetWorkflowByIdsUseCase,
+  ResourceValidatorService,
+  TierRestrictionsValidateUsecase,
   UpdateChange,
   UpdateMessageTemplate,
   UpdateWorkflow,
   UpsertControlValuesUseCase,
   UpsertPreferences,
-  DeletePreferencesUseCase,
-  TierRestrictionsValidateUsecase,
-  ResourceValidatorService,
 } from '@novu/application-generic';
 import { CommunityOrganizationRepository, PreferencesRepository } from '@novu/dal';
 import { SharedModule } from '../shared/shared.module';
 import { BridgeController } from './bridge.controller';
 import { USECASES } from './usecases';
-import { BuildVariableSchemaUsecase } from '../workflows-v2/usecases/build-variable-schema';
+import { BuildVariableSchemaUsecase } from '../workflows-v2/usecases';
 import { ExtractVariables } from '../workflows-v2/usecases/extract-variables/extract-variables.usecase';
 import { BuildStepIssuesUsecase } from '../workflows-v2/usecases/build-step-issues/build-step-issues.usecase';
 
@@ -41,11 +41,11 @@ const PROVIDERS = [
   DeletePreferencesUseCase,
   UpsertControlValuesUseCase,
   BuildVariableSchemaUsecase,
-  TierRestrictionsValidateUsecase,
   CommunityOrganizationRepository,
   ExtractVariables,
   BuildStepIssuesUsecase,
   ResourceValidatorService,
+  TierRestrictionsValidateUsecase,
 ];
 
 @Module({

@@ -2,8 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { parseExpression as parseCronExpression } from 'cron-parser';
 import { addYears, differenceInMilliseconds, isAfter } from 'date-fns';
 
-import { ApiServiceLevelEnum, DigestUnitEnum, StepTypeEnum, FeatureFlagsKeysEnum } from '@novu/shared';
-import { CommunityOrganizationRepository, OrganizationEntity } from '@novu/dal';
+import { ApiServiceLevelEnum, DigestUnitEnum, FeatureFlagsKeysEnum, StepTypeEnum } from '@novu/shared';
+import { CommunityOrganizationRepository } from '@novu/dal';
 
 import { TierRestrictionsValidateCommand } from './tier-restrictions-validate.command';
 import {
@@ -12,7 +12,7 @@ import {
   TierValidationError,
 } from './tier-restrictions-validate.response';
 import { InstrumentUsecase } from '../../instrumentation';
-import { FeatureFlagsService } from '../../services/feature-flags/feature-flags.service';
+import { FeatureFlagsService } from '../../services';
 
 export const MILLISECONDS_IN_DAY = 24 * 60 * 60 * 1000;
 export const FREE_TIER_MAX_DELAY_DAYS = 30;
