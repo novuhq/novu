@@ -100,17 +100,17 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
   [FeatureNameEnum.PLATFORM_MONTHLY_COST]: {
     [ApiServiceLevelEnum.FREE]: {
       value: 0,
-      label: '0$',
+      label: '$0',
     },
     [ApiServiceLevelEnum.PRO]: {
       value: 30,
       currency: '$',
-      label: '30$',
+      label: '$30',
     },
     [ApiServiceLevelEnum.BUSINESS]: {
       value: 250,
       currency: '$',
-      label: '250$',
+      label: '$250',
     },
     [ApiServiceLevelEnum.ENTERPRISE]: {
       value: 'Custom Pricing',
