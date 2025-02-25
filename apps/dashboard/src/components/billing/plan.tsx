@@ -169,11 +169,6 @@ const buildFeatureArray: (activeFlags: FeatureFlags, columns: ApiServiceLevelEnu
       values: buildTableRowRecord({ featureName: FeatureNameEnum.CUSTOM_ENVIRONMENTS_BOOLEAN, isBoolean: true }),
     },
     {
-      label: 'Framework',
-      isTitle: true,
-      values: buildEmptyRow(),
-    },
-    {
       label: 'Total workflows',
       values: buildTableRowRecord({ featureName: FeatureNameEnum.PLATFORM_MAX_WORKFLOWS }),
     },
