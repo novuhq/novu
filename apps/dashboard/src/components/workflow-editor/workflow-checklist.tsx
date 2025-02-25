@@ -178,7 +178,7 @@ function useChecklistItems(steps: Step[]) {
           telemetry(TelemetryEvent.WORKFLOW_CHECKLIST_STEP_CLICKED, { stepTitle: 'Add a step' });
 
           if (steps.length === 0) {
-            const addStepButton = document.querySelector('[data-test-id="add-step-button"]');
+            const addStepButton = document.querySelector('[data-testid="add-step-menu-button"]');
 
             if (addStepButton instanceof HTMLElement) {
               addStepButton.click();
