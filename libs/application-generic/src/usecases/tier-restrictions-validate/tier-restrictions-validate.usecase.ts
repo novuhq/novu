@@ -3,6 +3,7 @@ import { parseExpression as parseCronExpression } from 'cron-parser';
 import { addYears, differenceInMilliseconds, isAfter } from 'date-fns';
 
 import {
+  ApiServiceLevelEnum,
   DigestUnitEnum,
   FeatureFlagsKeysEnum,
   FeatureNameEnum,
@@ -80,7 +81,7 @@ export class TierRestrictionsValidateUsecase {
 
     return getFeatureForTierAsNumber(
       FeatureNameEnum.PLATFORM_MAX_DIGEST_WINDOW_TIME,
-      apiServiceLevel,
+      apiServiceLevel || ApiServiceLevelEnum.FREE,
       featureFlags,
       true
     );

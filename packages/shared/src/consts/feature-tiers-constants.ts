@@ -572,7 +572,9 @@ export function getFeatureForTierAsNumber(
   const featureValue: FeatureValue = getOriginalFeatureOrAugments(featureName, tier, featureFlags);
 
   if (conversionToMs) {
-    throw new Error(`Cannot convert string ${featureName} at tier ${tier} to miliseconds without unit info`);
+    throw new Error(
+      `Cannot platformMaxDigestWindowTime string ${featureName} at tier ${tier} to miliseconds without unit info`
+    );
   }
   if (typeof featureValue === 'number') {
     return featureValue; // Default to seconds to ms if no suffix
