@@ -62,7 +62,7 @@ export class GetApiRateLimitMaximum implements OnModuleInit {
     return [apiRateLimitRecord[apiRateLimitCategory], apiServiceLevel];
   }
 
-  private async getOrganizationApiServiceLevel(_organizationId: string) {
+  private async getOrganizationApiServiceLevel(_organizationId: string): Promise<ApiServiceLevelEnum> {
     const organization = await this.organizationRepository.findById(_organizationId);
 
     if (!organization) {
