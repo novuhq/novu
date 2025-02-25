@@ -31,8 +31,8 @@ describe('Env Controller', async () => {
           novuClient.environments.create(generateRandomEnvRequest().environmentRequestDto)
         );
         expect(error).to.be.ok;
-        expect(error.message).to.equal('Unauthorized');
-        expect(error?.statusCode).to.equal(401);
+        expect(error?.message).to.equal('Payment Required');
+        expect(error?.statusCode).to.equal(402);
       });
     });
   });
