@@ -51,7 +51,7 @@ export class GetApiRateLimitMaximum implements OnModuleInit {
     _environmentId: string;
     _organizationId: string;
   }): Promise<GetApiRateLimitMaximumDto> {
-    const environment = await this.getEnviroment(_environmentId);
+    const environment = await this.getEnvironment(_environmentId);
 
     if (environment.apiRateLimits) {
       return [environment.apiRateLimits[apiRateLimitCategory], CUSTOM_API_SERVICE_LEVEL];
@@ -78,7 +78,7 @@ export class GetApiRateLimitMaximum implements OnModuleInit {
     return ApiServiceLevelEnum.UNLIMITED;
   }
 
-  private async getEnviroment(_environmentId: string) {
+  private async getEnvironment(_environmentId: string) {
     const environment = await this.environmentRepository.findOne({ _id: _environmentId });
 
     if (!environment) {
