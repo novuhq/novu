@@ -2,12 +2,12 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IApiKeyDto } from './i-api-key.dto';
 
 export class EnvironmentResponseDto {
-  @ApiPropertyOptional({
+  @ApiProperty({
     type: String,
     description: 'Unique identifier of the environment',
     example: '60d5ecb8b3b3a30015f3e1a1',
   })
-  _id?: string;
+  _id: string;
 
   @ApiProperty({
     type: String,
@@ -37,12 +37,12 @@ export class EnvironmentResponseDto {
   })
   apiKeys?: IApiKeyDto[];
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     type: String,
     description: 'Parent environment ID',
     example: '60d5ecb8b3b3a30015f3e1a3',
   })
-  _parentId: string;
+  _parentId?: string;
 
   @ApiPropertyOptional({
     type: String,

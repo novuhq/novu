@@ -18,7 +18,7 @@ export type EnvironmentResponseDto = {
   /**
    * Unique identifier of the environment
    */
-  id?: string | undefined;
+  id: string;
   /**
    * Name of the environment
    */
@@ -38,7 +38,7 @@ export type EnvironmentResponseDto = {
   /**
    * Parent environment ID
    */
-  parentId: string;
+  parentId?: string | undefined;
   /**
    * URL-friendly slug for the environment
    */
@@ -51,12 +51,12 @@ export const EnvironmentResponseDto$inboundSchema: z.ZodType<
   z.ZodTypeDef,
   unknown
 > = z.object({
-  _id: z.string().optional(),
+  _id: z.string(),
   name: z.string(),
   _organizationId: z.string(),
   identifier: z.string(),
   apiKeys: z.array(IApiKeyDto$inboundSchema).optional(),
-  _parentId: z.string(),
+  _parentId: z.string().optional(),
   slug: z.string().optional(),
 }).transform((v) => {
   return remap$(v, {
@@ -68,12 +68,12 @@ export const EnvironmentResponseDto$inboundSchema: z.ZodType<
 
 /** @internal */
 export type EnvironmentResponseDto$Outbound = {
-  _id?: string | undefined;
+  _id: string;
   name: string;
   _organizationId: string;
   identifier: string;
   apiKeys?: Array<IApiKeyDto$Outbound> | undefined;
-  _parentId: string;
+  _parentId?: string | undefined;
   slug?: string | undefined;
 };
 
@@ -83,12 +83,12 @@ export const EnvironmentResponseDto$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   EnvironmentResponseDto
 > = z.object({
-  id: z.string().optional(),
+  id: z.string(),
   name: z.string(),
   organizationId: z.string(),
   identifier: z.string(),
   apiKeys: z.array(IApiKeyDto$outboundSchema).optional(),
-  parentId: z.string(),
+  parentId: z.string().optional(),
   slug: z.string().optional(),
 }).transform((v) => {
   return remap$(v, {
