@@ -577,11 +577,11 @@ export function getFeatureForTierAsNumber(
   conversionToMs?: boolean
 ): number {
   const featureValue: FeatureValue = getOriginalFeatureOrAugments(featureName, tier, featureFlags);
-
+  if (isDetailedPriceListItem(featureValue)) {
+    return handleDetailedPriceListItem(featureValue, conversionToMs);
+  }
   if (conversionToMs) {
-    throw new Error(
-      `Cannot platformMaxDigestWindowTime string ${featureName} at tier ${tier} to miliseconds without unit info`
-    );
+    throw new Error(`Cannot convert [${featureName}] at tier [${tier}] to milliseconds without unit info`);
   }
   if (typeof featureValue === 'number') {
     return featureValue; // Default to seconds to ms if no suffix
@@ -592,10 +592,6 @@ export function getFeatureForTierAsNumber(
 
   // Boolean to number
   if (typeof featureValue === 'boolean') return featureValue ? 1 : 0;
-
-  if (isDetailedPriceListItem(featureValue)) {
-    return handleDetailedPriceListItem(featureValue, conversionToMs);
-  }
 
   throw new Error(`Cannot convert feature ${featureName} at tier ${tier} to number`);
 }
