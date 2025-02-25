@@ -118,7 +118,7 @@ jobs:
           PORT: '1342'
           LAUNCH_DARKLY_SDK_KEY: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
           CI_EE_TEST: true
-        run: cd apps/worker && pnpm start:prod &
+        run: cd apps/worker && pnpm start:test &
 
       - name: Wait on API and Worker
         shell: bash
