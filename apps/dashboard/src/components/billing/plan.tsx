@@ -93,7 +93,6 @@ export function Plan() {
       <PlansRow
         selectedBillingInterval={selectedBillingInterval as StripeBillingIntervalEnum}
         currentPlan={data?.apiServiceLevel as ApiServiceLevelEnum}
-        trial={data?.trial}
         plans={plans}
       />
       <HighlightsRow highlightsArray={highlights} />
