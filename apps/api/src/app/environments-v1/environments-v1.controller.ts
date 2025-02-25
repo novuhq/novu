@@ -36,6 +36,7 @@ import { RegenerateApiKeys } from './usecases/regenerate-api-keys/regenerate-api
 import { UpdateEnvironmentCommand } from './usecases/update-environment/update-environment.command';
 import { UpdateEnvironment } from './usecases/update-environment/update-environment.usecase';
 import { RolesGuard } from '../auth/framework/roles.guard';
+import { ErrorDto } from '../../error-dto';
 
 /**
  * @deprecated use EnvironmentsControllerV2
@@ -78,6 +79,7 @@ export class EnvironmentsControllerV1 {
     summary: 'Create environment',
   })
   @ApiResponse(EnvironmentResponseDto, 201)
+  @ApiResponse(ErrorDto, 402, false, false)
   @ProductFeature(ProductFeatureKeyEnum.MANAGE_ENVIRONMENTS)
   @UseGuards(RolesGuard)
   @Roles(MemberRoleEnum.ADMIN)

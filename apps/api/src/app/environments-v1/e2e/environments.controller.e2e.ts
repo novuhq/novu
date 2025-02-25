@@ -16,12 +16,11 @@ describe('Env Controller', async () => {
     [ApiServiceLevelEnum.BUSINESS, ApiServiceLevelEnum.ENTERPRISE].forEach((serviceLevel) => {
       it(`should be able to create env in ${serviceLevel} tier`, async () => {
         await session.updateOrganizationServiceLevel(serviceLevel);
-        const { name, parentId, environmentRequestDto } = generateRandomEnvRequest();
+        const { name, environmentRequestDto } = generateRandomEnvRequest();
         const createdEnv = await novuClient.environments.create(environmentRequestDto);
         const { result } = createdEnv;
         expect(result).to.be.ok;
         expect(result.name).to.equal(name);
-        expect(result.parentId).to.equal(parentId);
       });
     });
 

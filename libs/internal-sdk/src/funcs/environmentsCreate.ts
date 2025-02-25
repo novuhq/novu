@@ -159,6 +159,7 @@ async function $do(
     errorCodes: [
       "400",
       "401",
+      "402",
       "403",
       "404",
       "405",
@@ -205,7 +206,7 @@ async function $do(
         .EnvironmentsControllerV1CreateEnvironmentResponse$inboundSchema,
       { hdrs: true, key: "Result" },
     ),
-    M.jsonErr(414, errors.ErrorDto$inboundSchema),
+    M.jsonErr([402, 414], errors.ErrorDto$inboundSchema),
     M.jsonErr(
       [400, 401, 403, 404, 405, 409, 413, 415],
       errors.ErrorDto$inboundSchema,
