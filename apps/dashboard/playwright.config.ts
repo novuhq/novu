@@ -26,8 +26,8 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   /* Retry on CI only */
   retries: process.env.CI ? 5 : 3,
-  /* Use 4 workers in CI, 50% of CPU count in local */
-  workers: process.env.CI ? 4 : '25%',
+  /* Use 1 workers in CI, 50% of CPU count in local */
+  workers: process.env.CI ? 1 : '25%',
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: process.env.CI ? 'blob' : 'html',
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
