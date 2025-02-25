@@ -23,10 +23,6 @@ export class CreateEnvironment {
   ) {}
 
   async execute(command: CreateEnvironmentCommand) {
-    const environmentCount = await this.environmentRepository.count({
-      _organizationId: command.organizationId,
-    });
-
     const normalizedName = command.name.trim();
 
     if (!command.system) {

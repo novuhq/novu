@@ -18,7 +18,7 @@ import { ProductFeature } from '../shared/decorators/product-feature.decorator';
 import { ApiKey } from '../shared/dtos/api-key';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
 import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
-import { SdkGroupName } from '../shared/framework/swagger/sdk.decorators';
+import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 import { UserSession } from '../shared/framework/user.decorator';
 import { CreateEnvironmentRequestDto } from './dtos/create-environment-request.dto';
 import { EnvironmentResponseDto } from './dtos/environment-response.dto';
@@ -81,6 +81,8 @@ export class EnvironmentsControllerV1 {
   @ProductFeature(ProductFeatureKeyEnum.MANAGE_ENVIRONMENTS)
   @UseGuards(RolesGuard)
   @Roles(MemberRoleEnum.ADMIN)
+  @SdkGroupName('Environments')
+  @SdkMethodName('create')
   async createEnvironment(
     @UserSession() user: UserSessionData,
     @Body() body: CreateEnvironmentRequestDto

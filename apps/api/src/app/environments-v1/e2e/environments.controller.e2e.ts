@@ -1,20 +1,57 @@
-import { NOVU_ENCRYPTION_SUB_MASK } from '@novu/shared';
+import { ApiServiceLevelEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
+import { Novu } from '@novu/api';
+import { expectSdkExceptionGeneric, initNovuClassSdkInternalAuth } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-describe('Get Environment API Keys - /environments/api-keys (GET) #novu-v2', async () => {
+describe('Env Controller', async () => {
   let session: UserSession;
   let novuClient: Novu;
   before(async () => {
     session = new UserSession();
     await session.initialize({});
-    novuClient = initNovuClassSdk(session);
+    novuClient = initNovuClassSdkInternalAuth(session);
   });
+  describe('Create Env', () => {
+    [ApiServiceLevelEnum.BUSINESS, ApiServiceLevelEnum.ENTERPRISE].forEach((serviceLevel) => {
+      it(`should be able to create env in ${serviceLevel} tier`, async () => {
+        await session.updateOrganizationServiceLevel(serviceLevel);
+        const { name, parentId, environmentRequestDto } = generateRandomEnvRequest();
+        const createdEnv = await novuClient.environments.create(environmentRequestDto);
+        const { result } = createdEnv;
+        expect(result).to.be.ok;
+        expect(result.name).to.equal(name);
+        expect(result.parentId).to.equal(parentId);
+      });
+    });
 
-  it('should get environment api keys correctly', async () => {
-    const { body } = await session.testAgent.get('/v1/environments/api-keys').send();
-    novuClient.environments.expect(body.data[0].key).to.not.contains(NOVU_ENCRYPTION_SUB_MASK);
-    expect(body.data[0]._userId).to.equal(session.user._id);
+    [ApiServiceLevelEnum.PRO, ApiServiceLevelEnum.FREE].forEach((serviceLevel) => {
+      it(`should not be able to create env in ${serviceLevel} tier`, async () => {
+        await session.updateOrganizationServiceLevel(serviceLevel);
+        const { error, successfulBody } = await expectSdkExceptionGeneric(() =>
+          novuClient.environments.create(generateRandomEnvRequest().environmentRequestDto)
+        );
+        expect(error).to.be.ok;
+        expect(error.message).to.equal('Unauthorized');
+        expect(error?.statusCode).to.equal(401);
+      });
+    });
   });
+  function generateRandomEnvRequest() {
+    const name = generateRandomName('env');
+    const parentId = session.environment._id;
+    const environmentRequestDto = {
+      name,
+      parentId,
+      color: '#b15353',
+    };
+
+    return { name, parentId, environmentRequestDto };
+  }
 });
+function generateRandomName(prefix: string = 'env'): string {
+  const timestamp = Date.now();
+  const randomPart = Math.random().toString(36).substring(2, 7);
+
+  return `${prefix}-${randomPart}-${timestamp}`;
+}
