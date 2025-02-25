@@ -2,9 +2,13 @@ import { expect } from 'chai';
 import { UserSession } from '@novu/testing';
 import { randomBytes } from 'crypto';
 import {
+  ApiServiceLevelEnum,
   createWorkflowClient,
   CreateWorkflowDto,
   DEFAULT_WORKFLOW_PREFERENCES,
+  FeatureFlagsKeysEnum,
+  FeatureNameEnum,
+  getFeatureForTierAsNumber,
   isStepUpdateBody,
   JSONSchemaDefinition,
   JSONSchemaDto,
@@ -310,6 +314,26 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
       const payloadProperties = properties?.payload as JSONSchemaDto;
       expect(payloadProperties).to.be.ok;
       expect(payloadProperties.properties?.name).to.be.ok;
+    });
+
+    it('should not allow to create more than 20 workflows for a free organization', async () => {
+      // @ts-ignore
+      process.env.IS_2025_Q1_TIERING_ENABLED = 'true';
+      await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.FREE);
+      const featureFlags = { [FeatureFlagsKeysEnum.IS_2025_Q1_TIERING_ENABLED]: true };
+      getFeatureForTierAsNumber(FeatureNameEnum.PLATFORM_MAX_WORKFLOWS, ApiServiceLevelEnum.FREE, featureFlags, false);
+      for (let i = 0; i < 20; i += 1) {
+        const createWorkflowDto: CreateWorkflowDto = buildCreateWorkflowDto(new Date().toISOString() + i);
+        const res = await workflowsClient.createWorkflow(createWorkflowDto);
+      }
+
+      const createWorkflowDto: CreateWorkflowDto = buildCreateWorkflowDto(new Date().toISOString() + 30);
+      const res = await workflowsClient.createWorkflow(createWorkflowDto);
+      if (res.isSuccessResult()) {
+        throw new Error('should fail');
+      }
+      const { error } = res;
+      expect(error?.status).eq(400);
     });
   });
 

@@ -87,8 +87,20 @@ const TagInput = forwardRef<HTMLInputElement, TagInputProps>((props, ref) => {
           </PopoverAnchor>
           <div className="flex flex-wrap gap-2">
             {tags.map((tag, index) => (
-              <Tag key={index} variant="stroke" onDismiss={() => removeTag(tag)}>
-                <span style={{ wordBreak: 'break-all' }}>{tag}</span>
+              <Tag
+                key={index}
+                variant="stroke"
+                onDismiss={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+
+                  removeTag(tag);
+                }}
+                dismissTestId={`tags-badge-remove-${tag}`}
+              >
+                <span style={{ wordBreak: 'break-all' }} data-testid="tags-badge-value">
+                  {tag}
+                </span>
               </Tag>
             ))}
           </div>

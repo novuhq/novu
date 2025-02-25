@@ -1,8 +1,8 @@
+import { ActivityFiltersData } from '@/types/activity';
 import { ChannelTypeEnum, JobStatusEnum } from '@novu/shared';
 import { IconType } from 'react-icons/lib';
 import { RiCheckboxCircleFill, RiErrorWarningFill, RiForbidFill, RiLoader3Line, RiLoader4Fill } from 'react-icons/ri';
 import { StatusBadgeProps } from '../primitives/status-badge';
-import { ActivityFiltersData } from '@/types/activity';
 
 export const STATUS_STYLES = {
   completed: 'border-[#99e3bb] bg-[#e9faf0] text-[#99e3bb]',
@@ -62,6 +62,7 @@ export const JOB_STATUS_CONFIG: Record<
     icon: RiLoader3Line,
     color: 'warning',
     label: 'RUNNING',
+    animationClass: 'animate-spin',
   },
   [JobStatusEnum.DELAYED]: {
     variant: 'pending' as const,

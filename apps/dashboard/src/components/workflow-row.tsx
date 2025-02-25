@@ -243,7 +243,12 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
         <WorkflowLinkTableCell className="w-1">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <CompactButton icon={RiMore2Fill} variant="ghost" className="z-10 h-8 w-8 p-0"></CompactButton>
+              <CompactButton
+                icon={RiMore2Fill}
+                variant="ghost"
+                className="z-10 h-8 w-8 p-0"
+                data-testid="workflow-actions-menu"
+              ></CompactButton>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56" onClick={stopPropagation}>
               <DropdownMenuGroup>
@@ -276,7 +281,11 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
               <DropdownMenuGroup className="*:cursor-pointer">
-                <DropdownMenuItem onClick={handlePauseWorkflow} disabled={workflow.status === WorkflowStatusEnum.ERROR}>
+                <DropdownMenuItem
+                  onClick={handlePauseWorkflow}
+                  disabled={workflow.status === WorkflowStatusEnum.ERROR}
+                  data-testid={workflow.status === WorkflowStatusEnum.ACTIVE ? 'pause-workflow' : 'enable-workflow'}
+                >
                   {workflow.status === WorkflowStatusEnum.ACTIVE ? (
                     <>
                       <RiPauseCircleLine />
@@ -295,6 +304,7 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
                   onClick={() => {
                     setTimeout(() => setIsDeleteModalOpen(true), 0);
                   }}
+                  data-testid="delete-workflow"
                 >
                   <RiDeleteBin2Line />
                   Delete workflow
