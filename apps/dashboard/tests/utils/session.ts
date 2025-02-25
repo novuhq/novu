@@ -7,6 +7,7 @@ import { DalService, EnvironmentEntity, OrganizationEntity, UserEntity } from '@
 import { UserService } from './user-service';
 import { OrganizationService } from './organization-service';
 import { EnvironmentService } from './environment-service';
+import { IntegrationService } from './integration-service';
 
 export class Session {
   private dal: DalService;
@@ -18,6 +19,7 @@ export class Session {
   public organization: OrganizationEntity;
   public developmentEnvironment: EnvironmentEntity;
   public productionEnvironment: EnvironmentEntity;
+  private integrationService: IntegrationService;
 
   constructor(private page: Page) {
     this.dal = new DalService();
@@ -25,6 +27,7 @@ export class Session {
     this.userService = new UserService(this.clerkClient);
     this.organizationService = new OrganizationService(this.clerkClient);
     this.environmentService = new EnvironmentService();
+    this.integrationService = new IntegrationService();
   }
 
   async initialize() {
@@ -56,6 +59,15 @@ export class Session {
     });
     this.developmentEnvironment = development;
     this.productionEnvironment = production;
+
+    await this.integrationService.createInAppIntegration({
+      organizationId: this.organization._id,
+      environmentId: this.developmentEnvironment._id,
+    });
+    await this.integrationService.createInAppIntegration({
+      organizationId: this.organization._id,
+      environmentId: this.productionEnvironment._id,
+    });
 
     await clerkSetup();
 

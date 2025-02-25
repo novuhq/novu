@@ -5,44 +5,64 @@ export class WorkflowEditorPage {
   constructor(private page: Page) {}
 
   async updateWorkflowName(workflowName: string): Promise<void> {
-    const workflowNameInput = await this.page.locator('input[name="name"]');
+    const workflowNameInput = this.page.locator('input[name="name"]');
     await workflowNameInput.fill(workflowName);
     await workflowNameInput.blur();
     // await workflow name to be updated
     await this.page.waitForResponse('**/v2/workflows/**');
   }
 
-  async addStepAsLast(stepType: StepTypeEnum): Promise<void> {
-    const addStepMenuBtn = await this.page.getByTestId('add-step-menu-button').last();
+  async addStepAsFirst(stepType: StepTypeEnum): Promise<void> {
+    const addStepMenuBtn = this.page.getByTestId('add-step-menu-button').first();
     await addStepMenuBtn.click();
 
-    const inAppMenuItem = await this.page.getByTestId(`add-step-menu-item-${stepType}`);
+    const inAppMenuItem = this.page.getByTestId(`add-step-menu-item-${stepType}`);
     await inAppMenuItem.click({ force: true });
 
     // await for the workflow steps to be updated
-    await this.page.waitForResponse('**/v2/workflows/**');
+    await this.page.waitForResponse(
+      (resp) => resp.url().includes('/v2/workflows/') && resp.request().method() === 'PUT' && resp.status() === 200
+    );
+  }
+
+  async addStepAsLast(stepType: StepTypeEnum): Promise<void> {
+    const addStepMenuBtn = this.page.getByTestId('add-step-menu-button').last();
+    await addStepMenuBtn.click();
+
+    const inAppMenuItem = this.page.getByTestId(`add-step-menu-item-${stepType}`);
+    await inAppMenuItem.click({ force: true });
+
+    // await for the workflow steps to be updated
+    await this.page.waitForResponse(
+      (resp) => resp.url().includes('/v2/workflows/') && resp.request().method() === 'PUT' && resp.status() === 200
+    );
   }
 
   async clickLastStep(stepType: StepTypeEnum): Promise<void> {
-    const step = await this.page.getByTestId(`${stepType}-node`).last();
+    const step = this.page.getByTestId(`${stepType}-node`).last();
+    await step.click();
+  }
+
+  async clickFirstStep(stepType: StepTypeEnum): Promise<void> {
+    const step = this.page.getByTestId(`${stepType}-node`).first();
     await step.click();
   }
 
   async clickWorkflowsBreadcrumb(): Promise<void> {
-    const workflowsLink = await this.page.getByRole('link').filter({ hasText: 'Workflows' });
+    const workflowsLink = this.page.getByRole('link').filter({ hasText: 'Workflows' });
     await workflowsLink.click();
   }
 
   async triggerTabClick(): Promise<void> {
-    const triggerTab = await this.page.getByRole('tab').filter({ hasText: 'Trigger' });
+    const triggerTab = this.page.getByRole('tab').filter({ hasText: 'Trigger' });
     await triggerTab.click();
   }
 
   async getWorkflowFormValues() {
-    const workflowNameInput = await this.page.locator('input[name="name"]');
-    const workflowIdInput = await this.page.locator('input[name="workflowId"]');
-    const tagBadges = await this.page.getByTestId('tags-badge-value');
-    const descriptionTextArea = await this.page.locator('textarea[name="description"]');
+    const workflowNameInput = this.page.locator('input[name="name"]');
+    const workflowIdInput = this.page.locator('input[name="workflowId"]');
+    const tagBadges = this.page.getByTestId('tags-badge-value');
+    const descriptionTextArea = this.page.locator('textarea[name="description"]');
 
     return {
       nameValue: await workflowNameInput.inputValue(),
@@ -57,6 +77,6 @@ export class WorkflowEditorPage {
   }
 
   async getLastStep(stepType: StepTypeEnum) {
-    return await this.page.getByTestId(`${stepType}-node`).last();
+    return this.page.getByTestId(`${stepType}-node`).last();
   }
 }

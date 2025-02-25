@@ -65,7 +65,10 @@ export function ActivityOverview({ activity }: ActivityOverviewProps) {
         </OverviewItem>
 
         <OverviewItem label="Status">
-          <span className={cn('font-mono text-xs uppercase', 'text-' + JOB_STATUS_CONFIG[status]?.color)}>
+          <span
+            className={cn('font-mono text-xs uppercase', 'text-' + JOB_STATUS_CONFIG[status]?.color)}
+            data-testid="activity-status"
+          >
             {status || 'QUEUED'}
           </span>
         </OverviewItem>

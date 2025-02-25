@@ -6,7 +6,7 @@ import { fadeIn } from '@/utils/animation';
 
 export function ActivitySkeleton({ headerClassName }: { headerClassName?: string }) {
   return (
-    <motion.div {...fadeIn}>
+    <motion.div {...fadeIn} data-testid="activity-panel-skeleton">
       <div
         className={cn(
           'flex items-center gap-2 border-b border-t border-neutral-200 border-b-neutral-100 p-2',

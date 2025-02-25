@@ -38,8 +38,8 @@ test('manage workflows', async ({ page }) => {
     tags: 17,
   });
   // check the workflow id
-  const workflowIdInput = await page.locator('input[name="workflowId"]');
-  await expect(await workflowIdInput.inputValue()).toEqual(workflowId);
+  const workflowIdInput = page.locator('input[name="workflowId"]');
+  expect(await workflowIdInput.inputValue()).toEqual(workflowId);
 
   // submit the form to see the tags validation errors
   await createWorkflowSidebar.createBtnClick();
@@ -57,10 +57,10 @@ test('manage workflows', async ({ page }) => {
 
   // check the sidebar form values
   const formValues = await workflowEditorPage.getWorkflowFormValues();
-  await expect(formValues.nameValue).toEqual(workflowName);
-  await expect(formValues.idValue).toMatch(/test-workflow.*/);
-  await expect(formValues.descriptionValue).toEqual(workflowDescription);
-  await expect(await formValues.tagBadges.count()).toEqual(16);
+  expect(formValues.nameValue).toEqual(workflowName);
+  expect(formValues.idValue).toMatch(/test-workflow.*/);
+  expect(formValues.descriptionValue).toEqual(workflowDescription);
+  expect(await formValues.tagBadges.count()).toEqual(16);
 
   // update the workflow name
   const workflowNameUpdated = `${workflowName}-updated`;
@@ -68,7 +68,7 @@ test('manage workflows', async ({ page }) => {
 
   // add a step
   await workflowEditorPage.addStepAsLast(StepTypeEnum.IN_APP);
-  let lastStep = await workflowEditorPage.getLastStep(StepTypeEnum.IN_APP);
+  const lastStep = await workflowEditorPage.getLastStep(StepTypeEnum.IN_APP);
   await expect(lastStep).toBeVisible();
   await workflowEditorPage.clickLastStep(StepTypeEnum.IN_APP);
 
@@ -83,9 +83,8 @@ test('manage workflows', async ({ page }) => {
 
   const inAppStepEditor = new InAppStepEditor(page);
   // Wait for navigation and check title
-  await page.waitForResponse('**/v2/workflows/**');
   const title = await page.title();
-  await expect(title).toBe(`Edit ${inAppStepNameUpdated} | Novu Cloud Dashboard`);
+  expect(title).toBe(`Edit ${inAppStepNameUpdated} | Novu Cloud Dashboard`);
 
   // check the validation errors
   await expect(await inAppStepEditor.getBodyValidationError()).toBeVisible();
@@ -102,8 +101,8 @@ test('manage workflows', async ({ page }) => {
   await inAppStepEditor.previewTabClick();
   // TODO: add assertions for the primary and secondary actions
   const previewElements = await inAppStepEditor.getPreviewElements();
-  await expect(await previewElements.subject).toContainText(subject);
-  await expect(await previewElements.body).toContainText(body);
+  await expect(previewElements.subject).toContainText(subject);
+  await expect(previewElements.body).toContainText(body);
   await inAppStepEditor.close();
 
   // add a second step
@@ -111,11 +110,7 @@ test('manage workflows', async ({ page }) => {
 
   // check the step count
   let stepCount = await workflowEditorPage.getStepCount(StepTypeEnum.IN_APP);
-  await expect(stepCount).toEqual(2);
-
-  // check the last step
-  lastStep = await workflowEditorPage.getLastStep(StepTypeEnum.IN_APP);
-  await expect(lastStep).toBeVisible();
+  expect(stepCount).toEqual(2);
 
   // check the step config sidebar
   await expect(page).toHaveTitle(`Edit ${inAppStepName} | Novu Cloud Dashboard`);
@@ -126,7 +121,20 @@ test('manage workflows', async ({ page }) => {
 
   // check the step count
   stepCount = await workflowEditorPage.getStepCount(StepTypeEnum.IN_APP);
-  await expect(stepCount).toEqual(1);
+  expect(stepCount).toEqual(1);
+
+  await workflowEditorPage.addStepAsFirst(StepTypeEnum.DIGEST);
+  await workflowEditorPage.clickFirstStep(StepTypeEnum.DIGEST);
+
+  // check the step config sidebar
+  await expect(page).toHaveTitle(`Configure Digest Step | Novu Cloud Dashboard`);
+  const digestStepConfigSidebar = new StepConfigSidebar(page);
+  await digestStepConfigSidebar.setRegularDigestAmountInputValue('5');
+  await digestStepConfigSidebar.close();
+  // await for the workflow to be updated
+  await page.waitForResponse(
+    (resp) => resp.url().includes('/v2/workflows/') && resp.request().method() === 'PUT' && resp.status() === 200
+  );
 
   // go to the trigger tab
   await workflowEditorPage.triggerTabClick();
@@ -137,9 +145,36 @@ test('manage workflows', async ({ page }) => {
 
   // trigger the workflow
   await triggerWorkflowPage.triggerWorkflowBtnClick();
-  const activityPanel = await triggerWorkflowPage.getActivityPanel();
+
+  // check the activity panel skeleton
+  let activityPanelSkeleton = triggerWorkflowPage.getActivityPanelSkeleton();
+  await expect(activityPanelSkeleton).toBeVisible();
+
+  // check the activity panel
+  let activityPanel = triggerWorkflowPage.getActivityPanel();
   await expect(activityPanel).toBeVisible();
   await expect(activityPanel.locator('span').filter({ hasText: workflowNameUpdated })).toBeVisible();
+  await expect(activityPanel.getByTestId('activity-status')).toHaveText('pending');
+
+  // trigger the workflow second time to see digested activity
+  await triggerWorkflowPage.triggerWorkflowBtnClick();
+
+  activityPanelSkeleton = triggerWorkflowPage.getActivityPanelSkeleton();
+  await expect(activityPanelSkeleton).toBeVisible();
+
+  activityPanel = triggerWorkflowPage.getActivityPanel();
+  await expect(activityPanel).toBeVisible();
+  await expect(activityPanel.locator('span').filter({ hasText: workflowNameUpdated })).toBeVisible();
+  await expect(activityPanel.getByTestId('activity-status')).toHaveText('merged');
+
+  // click the view execution to see the parent execution
+  await activityPanel.locator('button').filter({ hasText: 'View Execution' }).click();
+
+  // check the activity panel pending status
+  await expect(activityPanel.getByTestId('activity-status')).toHaveText('pending');
+
+  // wait for the parent execution to be completed
+  await expect(activityPanel.getByTestId('activity-status')).toHaveText('completed');
 
   // Navigate back to workflows page
   await workflowEditorPage.clickWorkflowsBreadcrumb();

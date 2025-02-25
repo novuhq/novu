@@ -4,11 +4,15 @@ export class TriggerWorkflowPage {
   constructor(private page: Page) {}
 
   async triggerWorkflowBtnClick(): Promise<void> {
-    const triggerWorkflowBtn = await this.page.getByRole('button', { name: 'Test workflow' });
+    const triggerWorkflowBtn = this.page.getByRole('button', { name: 'Test workflow' });
     await triggerWorkflowBtn.click();
   }
 
-  async getActivityPanel(): Promise<Locator> {
-    return await this.page.getByTestId('activity-panel');
+  getActivityPanelSkeleton(): Locator {
+    return this.page.getByTestId('activity-panel-skeleton');
+  }
+
+  getActivityPanel(): Locator {
+    return this.page.getByTestId('activity-panel');
   }
 }
