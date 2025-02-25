@@ -23,7 +23,7 @@ import { HighlightsRow, PlanHighlights } from './highlights-row';
 import { PlanSwitcher } from './plan-switcher';
 import { PlanConfig, PlansRow } from './plans-row';
 
-function getTierLabel(tierForLabel: ApiServiceLevelEnum.BUSINESS, featureFlags: FeatureFlags) {
+function getTierLabel(tierForLabel: ApiServiceLevelEnum, featureFlags: FeatureFlags) {
   return getFeatureForTierAsText(FeatureNameEnum.PLATFORM_PLAN_LABEL, tierForLabel, featureFlags);
 }
 

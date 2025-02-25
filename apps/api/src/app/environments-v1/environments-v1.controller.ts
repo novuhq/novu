@@ -62,6 +62,7 @@ export class EnvironmentsControllerV1 {
   })
   @ApiResponse(EnvironmentResponseDto)
   @ExternalApiAccessible()
+  @ApiExcludeEndpoint()
   async getCurrentEnvironment(@UserSession() user: UserSessionData): Promise<EnvironmentResponseDto> {
     return await this.getEnvironmentUsecase.execute(
       GetEnvironmentCommand.create({
@@ -76,7 +77,6 @@ export class EnvironmentsControllerV1 {
   @ApiOperation({
     summary: 'Create environment',
   })
-  @ApiExcludeEndpoint()
   @ApiResponse(EnvironmentResponseDto, 201)
   @ProductFeature(ProductFeatureKeyEnum.MANAGE_ENVIRONMENTS)
   @UseGuards(RolesGuard)
@@ -102,6 +102,7 @@ export class EnvironmentsControllerV1 {
   })
   @ApiResponse(EnvironmentResponseDto, 200, true)
   @ExternalApiAccessible()
+  @ApiExcludeEndpoint()
   async listMyEnvironments(@UserSession() user: UserSessionData): Promise<EnvironmentResponseDto[]> {
     return await this.getMyEnvironmentsUsecase.execute(
       GetMyEnvironmentsCommand.create({
@@ -145,6 +146,7 @@ export class EnvironmentsControllerV1 {
   @ApiResponse(ApiKey, 200, true)
   @ExternalApiAccessible()
   @SdkGroupName('Environments.ApiKeys')
+  @ApiExcludeEndpoint()
   async listOrganizationApiKeys(@UserSession() user: UserSessionData): Promise<ApiKey[]> {
     const command = GetApiKeysCommand.create({
       userId: user._id,
@@ -159,6 +161,7 @@ export class EnvironmentsControllerV1 {
   @ApiResponse(ApiKey, 201, true)
   @UseGuards(RolesGuard)
   @Roles(MemberRoleEnum.ADMIN)
+  @ApiExcludeEndpoint()
   async regenerateOrganizationApiKeys(@UserSession() user: UserSessionData): Promise<ApiKey[]> {
     const command = GetApiKeysCommand.create({
       userId: user._id,
@@ -177,6 +180,7 @@ export class EnvironmentsControllerV1 {
   @ProductFeature(ProductFeatureKeyEnum.MANAGE_ENVIRONMENTS)
   @UseGuards(RolesGuard)
   @Roles(MemberRoleEnum.ADMIN)
+  @ApiExcludeEndpoint()
   async deleteEnvironment(@UserSession() user: UserSessionData, @Param('environmentId') environmentId: string) {
     return await this.deleteEnvironmentUsecase.execute(
       DeleteEnvironmentCommand.create({

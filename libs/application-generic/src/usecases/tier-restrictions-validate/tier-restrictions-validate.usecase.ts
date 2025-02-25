@@ -44,7 +44,7 @@ export class TierRestrictionsValidateUsecase {
     }
 
     const apiServiceLevel = (await this.organizationRepository.findById(command.organizationId))?.apiServiceLevel;
-    const maxDelayMs = this.getMaxDelayInMs(apiServiceLevel);
+    const maxDelayMs = await this.getMaxDelayInMs(apiServiceLevel);
 
     if (isCronExpression(command.cron)) {
       if (this.isCronDeltaDeferDurationExceededTier(command.cron, maxDelayMs)) {
@@ -74,11 +74,14 @@ export class TierRestrictionsValidateUsecase {
     return [];
   }
 
-  private getMaxDelayInMs(apiServiceLevel) {
+  private async getMaxDelayInMs(apiServiceLevel) {
+    const isPackagesQ1Enabled = await this.is4PackageTierActivated();
+    const featureFlags = { [FeatureFlagsKeysEnum.IS_2025_Q1_TIERING_ENABLED]: isPackagesQ1Enabled };
+
     return getFeatureForTierAsNumber(
       FeatureNameEnum.PLATFORM_MAX_DIGEST_WINDOW_TIME,
       apiServiceLevel,
-      { [FeatureFlagsKeysEnum.IS_2025_Q1_TIERING_ENABLED]: this.is4PackageTierActivated() },
+      featureFlags,
       true
     );
   }
@@ -91,7 +94,7 @@ export class TierRestrictionsValidateUsecase {
       organization: { _id: command.organizationId },
     });
   }
-  private async is4PackageTierActivated(): boolean {
+  private async is4PackageTierActivated(): Promise<boolean> {
     return await this.featureFlagsService.getFlag({
       key: FeatureFlagsKeysEnum.IS_2025_Q1_TIERING_ENABLED,
       defaultValue: false,
