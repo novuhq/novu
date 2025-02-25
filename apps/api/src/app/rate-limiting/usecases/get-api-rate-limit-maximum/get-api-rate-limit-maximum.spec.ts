@@ -7,7 +7,6 @@ import { Test } from '@nestjs/testing';
 import { CacheService, MockCacheService } from '@novu/application-generic';
 import { GetApiRateLimitMaximum, GetApiRateLimitMaximumCommand } from './index';
 import { SharedModule } from '../../../shared/shared.module';
-import { GetApiRateLimitServiceMaximumConfig } from '../get-api-rate-limit-service-maximum-config';
 import { RateLimitingModule } from '../../rate-limiting.module';
 import { CUSTOM_API_SERVICE_LEVEL } from './get-api-rate-limit-maximum.dto';
 
@@ -29,11 +28,9 @@ describe('GetApiRateLimitMaximum', async () => {
   let session: UserSession;
   let organizationRepository: CommunityOrganizationRepository;
   let environmentRepository: EnvironmentRepository;
-  let getDefaultApiRateLimits: GetApiRateLimitServiceMaximumConfig;
 
   let findOneEnvironmentStub: sinon.SinonStub;
   let findOneOrganizationStub: sinon.SinonStub;
-  let defaultApiRateLimits: sinon.SinonStub;
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -50,11 +47,9 @@ describe('GetApiRateLimitMaximum', async () => {
     useCase = moduleRef.get<GetApiRateLimitMaximum>(GetApiRateLimitMaximum);
     organizationRepository = moduleRef.get<CommunityOrganizationRepository>(CommunityOrganizationRepository);
     environmentRepository = moduleRef.get<EnvironmentRepository>(EnvironmentRepository);
-    getDefaultApiRateLimits = moduleRef.get<GetApiRateLimitServiceMaximumConfig>(GetApiRateLimitServiceMaximumConfig);
 
     findOneEnvironmentStub = sinon.stub(environmentRepository, 'findOne');
     findOneOrganizationStub = sinon.stub(organizationRepository, 'findById');
-    defaultApiRateLimits = sinon.stub(getDefaultApiRateLimits, 'default').value(mockDefaultApiRateLimits);
   });
 
   afterEach(() => {
