@@ -1,6 +1,12 @@
 import { CommunityOrganizationRepository, EnvironmentRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
-import { ApiRateLimitCategoryEnum, ApiServiceLevelEnum } from '@novu/shared';
+import {
+  ApiRateLimitCategoryEnum,
+  ApiRateLimitCategoryToFeatureName,
+  ApiServiceLevelEnum,
+  FeatureFlagsKeysEnum,
+  getFeatureForTierAsNumber,
+} from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { Test } from '@nestjs/testing';
@@ -40,6 +46,7 @@ describe('GetApiRateLimitMaximum', async () => {
       .overrideProvider(CacheService)
       .useValue(MockCacheService.createClient())
       .compile();
+    await moduleRef.init(); // Trigger OnModuleInit
 
     session = new UserSession();
     await session.initialize();
@@ -130,8 +137,12 @@ describe('GetApiRateLimitMaximum', async () => {
       });
 
       it('should return default api rate limit for the organizations apiServiceLevel when apiServiceLevel IS set on organization', async () => {
-        const defaultApiRateLimit = mockDefaultApiRateLimits[mockApiServiceLevel][mockApiRateLimitCategory];
-
+        const defaultApiRateLimit = getFeatureForTierAsNumber(
+          ApiRateLimitCategoryToFeatureName[mockApiRateLimitCategory],
+          mockApiServiceLevel,
+          { [FeatureFlagsKeysEnum.IS_2025_Q1_TIERING_ENABLED]: true },
+          false
+        );
         const [rateLimit] = await useCase.execute(
           GetApiRateLimitMaximumCommand.create({
             organizationId: session.organization._id,
@@ -164,7 +175,12 @@ describe('GetApiRateLimitMaximum', async () => {
       });
 
       it('should return default api rate limit for the UNLIMITED service level when apiServiceLevel IS NOT set on organization', async () => {
-        const defaultApiRateLimit = mockDefaultApiRateLimits[ApiServiceLevelEnum.UNLIMITED][mockApiRateLimitCategory];
+        const defaultApiRateLimit = getFeatureForTierAsNumber(
+          ApiRateLimitCategoryToFeatureName[mockApiRateLimitCategory],
+          ApiServiceLevelEnum.UNLIMITED,
+          { [FeatureFlagsKeysEnum.IS_2025_Q1_TIERING_ENABLED]: true },
+          false
+        );
 
         const [rateLimit] = await useCase.execute(
           GetApiRateLimitMaximumCommand.create({
