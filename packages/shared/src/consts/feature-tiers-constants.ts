@@ -503,8 +503,15 @@ function getOriginalFeatureOrAugments(
   tier: ApiServiceLevelEnum,
   featureFlags: Partial<FeatureFlags> = {}
 ): FeatureValue {
+  if (!tier) {
+    throw new Error(`Invalid tier [${tier}] for feature ${featureName}`);
+  }
   const originalFeature = novuServiceTiers[featureName][tier];
-
+  if (!originalFeature) {
+    throw new Error(
+      `Invalid feature [${featureName}] for tier [${tier}]: Original: ${JSON.stringify(novuServiceTiers[featureName])}`
+    );
+  }
   for (const inActiveFunctionFF of Object.keys(inActiveFeatureFlagRecordGetters)) {
     const featureFlagGetter = inActiveFeatureFlagRecordGetters[inActiveFunctionFF];
 
