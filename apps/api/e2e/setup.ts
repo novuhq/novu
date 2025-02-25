@@ -1,4 +1,4 @@
-import { testServer, TestingQueueService, JobsService } from '@novu/testing';
+import { JobsService, TestingQueueService, testServer } from '@novu/testing';
 import sinon from 'sinon';
 import chai from 'chai';
 import mongoose from 'mongoose';
@@ -67,12 +67,7 @@ afterEach(async function () {
   sinon.restore();
 
   try {
-    await Promise.race([
-      cleanup(),
-      timeoutPromise(TIMEOUT).then(() => {
-        console.warn('Cleanup operation timed out after 5000ms - continuing with tests');
-      }),
-    ]);
+    await Promise.race([cleanup(), timeoutPromise(TIMEOUT).then(() => {})]);
   } catch (error) {
     console.error('Error during cleanup:', error);
   }
