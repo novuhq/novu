@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IApiKeyDto } from './i-api-key.dto';
+import { ApiKeyDto } from './api-key.dto';
 
 export class EnvironmentResponseDto {
   @ApiProperty({
@@ -31,11 +31,11 @@ export class EnvironmentResponseDto {
   identifier: string;
 
   @ApiPropertyOptional({
-    type: IApiKeyDto,
+    type: ApiKeyDto,
     isArray: true,
     description: 'List of API keys associated with the environment',
   })
-  apiKeys?: IApiKeyDto[];
+  apiKeys?: ApiKeyDto[];
 
   @ApiPropertyOptional({
     type: String,

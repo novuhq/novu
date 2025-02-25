@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
-export class IApiKeyDto {
+export class ApiKeyDto {
   @ApiProperty({
     type: String,
     description: 'API key',
