@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, Logger, OnModuleInit } from '@nestjs/common';
 import { CommunityOrganizationRepository, EnvironmentRepository } from '@novu/dal';
 import { buildMaximumApiRateLimitKey, CachedEntity, Instrument, InstrumentUsecase } from '@novu/application-generic';
 import {
@@ -15,12 +15,16 @@ import { CUSTOM_API_SERVICE_LEVEL, GetApiRateLimitMaximumDto } from './get-api-r
 const LOG_CONTEXT = 'GetApiRateLimit';
 
 @Injectable()
-export class GetApiRateLimitMaximum {
+export class GetApiRateLimitMaximum implements OnModuleInit {
+  private apiRateLimitRecord: IApiRateLimitServiceMaximum;
   constructor(
     private environmentRepository: EnvironmentRepository,
-    private organizationRepository: CommunityOrganizationRepository,
-    private apiRateLimitRecord = this.buildApiRateLimitRecord()
+    private organizationRepository: CommunityOrganizationRepository
   ) {}
+
+  onModuleInit() {
+    this.apiRateLimitRecord = this.buildApiRateLimitRecord();
+  }
 
   @InstrumentUsecase()
   async execute(command: GetApiRateLimitMaximumCommand): Promise<GetApiRateLimitMaximumDto> {
