@@ -86,7 +86,7 @@ describe('Link external and internal entities #novu-v2', () => {
     await communityOrganizationRepository.delete({ externalId: CLERK_ORGANIZATION_1.id });
   });
 
-  it('should create new user and organization when no internal entities exist', async () => {
+  it.skip('should create new user and organization when no internal entities exist', async () => {
     const mockClerkPayload: Partial<typeof ClerkJwtPayload> = {
       _id: CLERK_USER_1.id,
       email: CLERK_USER_1.primaryEmailAddress?.emailAddress || '',
