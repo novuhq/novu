@@ -94,9 +94,7 @@ test('sync workflow', async ({ page }) => {
   const inAppStepEditor = new InAppStepEditor(page);
 
   // Wait for navigation and check title
-  await page.waitForResponse('**/v2/workflows/**');
-  const title = await page.title();
-  expect(title).toBe(`Edit ${inAppStepId} | Novu Cloud Dashboard`);
+  await expect(page).toHaveTitle(`Edit ${inAppStepId} | Novu Cloud Dashboard`);
 
   // Verify custom controls form
   const controlElements = await inAppStepEditor.getCustomControlElements({

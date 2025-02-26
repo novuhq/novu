@@ -7,9 +7,7 @@ export class WorkflowEditorPage {
   async updateWorkflowName(workflowName: string): Promise<void> {
     const workflowNameInput = this.page.locator('input[name="name"]');
     await workflowNameInput.fill(workflowName);
-    await workflowNameInput.blur();
-    // await workflow name to be updated
-    await this.page.waitForResponse('**/v2/workflows/**');
+    await workflowNameInput.press('Tab');
   }
 
   async addStepAsFirst(stepType: StepTypeEnum): Promise<void> {
@@ -19,7 +17,7 @@ export class WorkflowEditorPage {
 
     const inAppMenuItem = this.page.getByTestId(`add-step-menu-item-${stepType}`);
     await expect(inAppMenuItem).toBeVisible();
-    await inAppMenuItem.click();
+    await inAppMenuItem.click({ force: true });
 
     // await for the workflow steps to be updated
     await this.page.waitForResponse(
@@ -34,7 +32,7 @@ export class WorkflowEditorPage {
 
     const inAppMenuItem = this.page.getByTestId(`add-step-menu-item-${stepType}`);
     await expect(inAppMenuItem).toBeVisible();
-    await inAppMenuItem.click();
+    await inAppMenuItem.click({ force: true });
 
     // await for the workflow steps to be updated
     await this.page.waitForResponse(
@@ -76,11 +74,11 @@ export class WorkflowEditorPage {
     };
   }
 
-  async getStepCount(stepType: StepTypeEnum) {
-    return await this.page.getByTestId(`${stepType}-node`).count();
+  getSteps(stepType: StepTypeEnum) {
+    return this.page.getByTestId(`${stepType}-node`);
   }
 
-  async getLastStep(stepType: StepTypeEnum) {
+  getLastStep(stepType: StepTypeEnum) {
     return this.page.getByTestId(`${stepType}-node`).last();
   }
 }

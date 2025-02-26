@@ -50,7 +50,7 @@ test('manage workflows', async ({ page }) => {
   await createWorkflowSidebar.removeTag('17');
 
   // submit the form as it should be valid
-  await createWorkflowSidebar.createBtnClick({ awaitResponse: true });
+  await createWorkflowSidebar.createBtnClick();
 
   const workflowEditorPage = new WorkflowEditorPage(page);
   await expect(page).toHaveTitle(`${workflowName} | Novu Cloud Dashboard`);
@@ -65,10 +65,11 @@ test('manage workflows', async ({ page }) => {
   // update the workflow name
   const workflowNameUpdated = `${workflowName}-updated`;
   await workflowEditorPage.updateWorkflowName(workflowNameUpdated);
+  await expect(page).toHaveTitle(`${workflowNameUpdated} | Novu Cloud Dashboard`);
 
   // add a step
   await workflowEditorPage.addStepAsLast(StepTypeEnum.IN_APP);
-  const lastStep = await workflowEditorPage.getLastStep(StepTypeEnum.IN_APP);
+  const lastStep = workflowEditorPage.getLastStep(StepTypeEnum.IN_APP);
   await expect(lastStep).toBeVisible();
 
   const inAppStepEditor = new InAppStepEditor(page);
@@ -107,8 +108,7 @@ test('manage workflows', async ({ page }) => {
   await workflowEditorPage.addStepAsLast(StepTypeEnum.IN_APP);
 
   // check the step count
-  let stepCount = await workflowEditorPage.getStepCount(StepTypeEnum.IN_APP);
-  expect(stepCount).toEqual(2);
+  await expect(workflowEditorPage.getSteps(StepTypeEnum.IN_APP)).toHaveCount(2);
 
   // check the step config sidebar
   await expect(page).toHaveTitle(`Edit ${inAppStepName} | Novu Cloud Dashboard`);
@@ -118,8 +118,7 @@ test('manage workflows', async ({ page }) => {
   await stepConfigSidebar.delete();
 
   // check the step count
-  stepCount = await workflowEditorPage.getStepCount(StepTypeEnum.IN_APP);
-  expect(stepCount).toEqual(1);
+  await expect(workflowEditorPage.getSteps(StepTypeEnum.IN_APP)).toHaveCount(1);
 
   await workflowEditorPage.addStepAsFirst(StepTypeEnum.DIGEST);
 

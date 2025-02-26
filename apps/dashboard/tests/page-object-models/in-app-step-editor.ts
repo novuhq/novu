@@ -29,14 +29,12 @@ export class InAppStepEditor {
     });
     await subjectField.click();
     await subjectField.fill(subject);
-    await this.page.waitForTimeout(50);
 
     const bodyField = this.page.locator('div[contenteditable="true"]', {
       hasText: 'Body',
     });
     await bodyField.click();
     await bodyField.fill(body);
-    await this.page.waitForTimeout(50);
 
     const actionDropdownTrigger = this.page.getByTestId('in-app-action-dropdown-trigger');
     await actionDropdownTrigger.click();

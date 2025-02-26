@@ -32,10 +32,7 @@ export class StepConfigSidebar {
     await stepNameInput.fill(`${newStepName}`);
     const newStepNameInput = this.page.locator(`input[value="${newStepName}"]`);
     await expect(newStepNameInput).toBeVisible();
-    await newStepNameInput.blur();
-
-    // await for the step name to be updated
-    await this.page.waitForResponse('**/v2/workflows/**');
+    await newStepNameInput.press('Tab');
   }
 
   async configureTemplateClick(): Promise<void> {
@@ -49,9 +46,8 @@ export class StepConfigSidebar {
 
     const deleteStepModal = this.page.getByRole('dialog');
     const deleteConfirm = deleteStepModal.getByRole('button').filter({ hasText: 'Delete' });
-    await deleteConfirm.click({ force: true });
-
-    await this.page.waitForResponse('**/v2/workflows/**');
+    await expect(deleteConfirm).toBeVisible();
+    await deleteConfirm.click();
   }
 
   async setRegularDigestAmountInputValue(value: string): Promise<void> {
