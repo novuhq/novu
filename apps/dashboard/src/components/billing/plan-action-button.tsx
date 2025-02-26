@@ -64,7 +64,7 @@ export function PlanActionButton({
       {}
     );
 
-    if (indexRequested > indexActive) {
+    if (indexRequested >= indexActive) {
       return <> {'Upgrade plan'}</>;
     }
 
