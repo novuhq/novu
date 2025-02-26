@@ -1,3 +1,4 @@
+import { execSync } from 'child_process';
 import { compress } from 'esbuild-plugin-compress';
 import { solidPlugin } from 'esbuild-plugin-solid';
 import fs from 'fs';
@@ -23,6 +24,17 @@ const buildCSS = async () => {
 };
 
 const isProd = process.env.NODE_ENV === 'production';
+const isPreview = process.env.IS_PREVIEW === 'true';
+
+let previewLastCommitHash: string | undefined = undefined; // Default value
+if (isPreview) {
+  try {
+    previewLastCommitHash = execSync('git rev-parse HEAD').toString().trim();
+  } catch (error) {
+    console.error('Error getting commit hash:', error);
+    // Optionally re-throw or handle as needed.
+  }
+}
 
 const baseConfig: Options = {
   splitting: true,
@@ -46,6 +58,7 @@ const baseModuleConfig: Options = {
     PACKAGE_NAME: `"${name}"`,
     PACKAGE_VERSION: `"${version}"`,
     __DEV__: `${isProd ? false : true}`,
+    __PREVIEW_LAST_COMMIT_HASH__: `"${previewLastCommitHash || ''}"`,
   },
 };
 
