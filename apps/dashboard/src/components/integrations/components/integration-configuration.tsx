@@ -106,6 +106,7 @@ export function IntegrationConfiguration({
               data={environments}
               onChange={(value) => {
                 const env = environments?.find((env) => env.name === value);
+
                 if (env) {
                   setValue('environmentId', env._id);
                 }

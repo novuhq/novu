@@ -43,12 +43,14 @@ export const VariableSelect = ({
     if (!filterValue) {
       return options;
     }
+
     return options.filter((option) => option.value?.toLocaleLowerCase().includes(filterValue.toLocaleLowerCase()));
   }, [options, filterValue]);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const onInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value.trim();
+
     if (newValue !== inputValue) {
       setInputValue(newValue);
       setFilterValue(newValue);
@@ -57,6 +59,7 @@ export const VariableSelect = ({
 
   const onInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     setIsOpen(true);
+
     if (e.key === 'ArrowDown') {
       variablesListRef.current?.next();
       e.preventDefault();

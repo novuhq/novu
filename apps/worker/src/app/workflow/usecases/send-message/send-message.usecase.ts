@@ -17,6 +17,7 @@ import {
   DetailEnum,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
+  GetPreferences,
   GetSubscriberTemplatePreference,
   GetSubscriberTemplatePreferenceCommand,
   IConditionsFilterResponse,
@@ -25,7 +26,6 @@ import {
   NormalizeVariables,
   NormalizeVariablesCommand,
   PlatformException,
-  GetPreferences,
   CachedEntity,
   buildSubscriberKey,
   buildNotificationTemplateKey,
@@ -404,13 +404,6 @@ export class SendMessage {
     };
   }
 
-  @CachedEntity({
-    builder: (command: { _id: string; environmentId: string }) =>
-      buildNotificationTemplateKey({
-        _environmentId: command.environmentId,
-        _id: command._id,
-      }),
-  })
   private async getWorkflow({ _id, environmentId }: { _id: string; environmentId: string }) {
     return await this.notificationTemplateRepository.findById(_id, environmentId);
   }

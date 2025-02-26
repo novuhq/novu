@@ -46,6 +46,7 @@ export const EditBridgeUrlButton = () => {
 
   const onSubmit = async ({ bridgeUrl }: z.infer<typeof formSchema>) => {
     const { isValid } = await validateBridgeUrl({ bridgeUrl });
+
     if (isValid) {
       await updateBridgeUrl({ url: bridgeUrl, environmentId: currentEnvironment?._id ?? '' });
       setBridgeUrl(bridgeUrl);
@@ -59,6 +60,7 @@ export const EditBridgeUrlButton = () => {
       open={isPopoverOpen}
       onOpenChange={(newIsOpen) => {
         setIsPopoverOpen(newIsOpen);
+
         if (!newIsOpen && isDirty) {
           reset({ bridgeUrl: envBridgeUrl });
         }

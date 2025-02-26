@@ -6,8 +6,6 @@ import { merge } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 
 import {
-  buildNotificationTemplateIdentifierKey,
-  CachedEntity,
   ExecuteBridgeRequest,
   ExecuteBridgeRequestCommand,
   ExecuteBridgeRequestDto,
@@ -236,13 +234,6 @@ export class ParseEventRequest {
   }
 
   @Instrument()
-  @CachedEntity({
-    builder: (command: { triggerIdentifier: string; environmentId: string }) =>
-      buildNotificationTemplateIdentifierKey({
-        _environmentId: command.environmentId,
-        templateIdentifier: command.triggerIdentifier,
-      }),
-  })
   private async getNotificationTemplateByTriggerIdentifier(command: {
     triggerIdentifier: string;
     environmentId: string;
