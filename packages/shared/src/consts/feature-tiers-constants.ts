@@ -26,6 +26,7 @@ export enum FeatureNameEnum {
   PLATFORM_PROVIDER_INTEGRATIONS = 'platformProviderIntegrations',
   PLATFORM_ACTIVITY_FEED_RETENTION = 'platformActivityFeedRetention',
   PLATFORM_MAX_DIGEST_WINDOW_TIME = 'platformMaxDigestWindowTime',
+  PLATFORM_MAX_DELAY_DURATION = 'platformMaxDelayDuration',
   PLATFORM_STEP_CONTROLS_BOOLEAN = 'platformStepControlsBoolean',
   PLATFORM_BLOCK_BASED_EMAIL_EDITOR_BOOLEAN = 'platformBlockBasedEmailEditorBoolean',
   PLATFORM_REMOVE_NOVU_BRANDING_BOOLEAN = 'platformRemoveNovuBrandingBoolean',
@@ -268,9 +269,16 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
   [FeatureNameEnum.PLATFORM_MAX_DIGEST_WINDOW_TIME]: {
     [ApiServiceLevelEnum.FREE]: { label: '24 Hours', value: 24, timeSuffix: 'h' },
     [ApiServiceLevelEnum.PRO]: { label: '7 days', value: 7, timeSuffix: 'd' },
-    [ApiServiceLevelEnum.BUSINESS]: { label: '30 days', value: 30, timeSuffix: 'd' },
-    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'unlimited', value: -1 },
-    [ApiServiceLevelEnum.UNLIMITED]: { label: 'unlimited', value: -1 },
+    [ApiServiceLevelEnum.BUSINESS]: { label: '90 days', value: 90, timeSuffix: 'd' },
+    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Custom', value: -1 },
+    [ApiServiceLevelEnum.UNLIMITED]: { label: 'Unlimited', value: -1 },
+  },
+  [FeatureNameEnum.PLATFORM_MAX_DELAY_DURATION]: {
+    [ApiServiceLevelEnum.FREE]: { label: '24 Hours', value: 24, timeSuffix: 'h' },
+    [ApiServiceLevelEnum.PRO]: { label: '7 days', value: 7, timeSuffix: 'd' },
+    [ApiServiceLevelEnum.BUSINESS]: { label: '90 days', value: 90, timeSuffix: 'd' },
+    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Unlimited', value: -1 },
+    [ApiServiceLevelEnum.UNLIMITED]: { label: 'Unlimited', value: -1 },
   },
   [FeatureNameEnum.PLATFORM_BLOCK_BASED_EMAIL_EDITOR_BOOLEAN]: {
     [ApiServiceLevelEnum.FREE]: 1,
@@ -620,6 +628,8 @@ const inActiveFeatureFlagRecordGetters: Record<string, FeatureAugmentFunction> =
         case FeatureNameEnum.PLATFORM_ACTIVITY_FEED_RETENTION:
           return { label: '30 days', value: 7, timeSuffix: 'd' };
         case FeatureNameEnum.PLATFORM_MAX_DIGEST_WINDOW_TIME:
+          return { label: '7 days', value: 7, timeSuffix: 'd' };
+        case FeatureNameEnum.PLATFORM_MAX_DELAY_DURATION:
           return { label: '7 days', value: 7, timeSuffix: 'd' };
 
         default:

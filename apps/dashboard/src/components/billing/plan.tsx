@@ -191,8 +191,12 @@ const buildFeatureArray: (activeFlags: FeatureFlags, columns: ApiServiceLevelEnu
       values: buildTableRowRecord({ featureName: FeatureNameEnum.PLATFORM_ACTIVITY_FEED_RETENTION }),
     },
     {
-      label: 'Digests',
+      label: 'Max Digest Window',
       values: buildTableRowRecord({ featureName: FeatureNameEnum.PLATFORM_MAX_DIGEST_WINDOW_TIME }),
+    },
+    {
+      label: 'Max Delay Duration',
+      values: buildTableRowRecord({ featureName: FeatureNameEnum.PLATFORM_MAX_DELAY_DURATION }),
     },
     {
       label: 'Step controls',
