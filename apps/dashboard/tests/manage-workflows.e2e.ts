@@ -122,7 +122,6 @@ test('manage workflows', async ({ page }) => {
   expect(stepCount).toEqual(1);
 
   await workflowEditorPage.addStepAsFirst(StepTypeEnum.DIGEST);
-  await workflowEditorPage.clickFirstStep(StepTypeEnum.DIGEST);
 
   // check the step config sidebar
   await expect(page).toHaveTitle(`Configure Digest Step | Novu Cloud Dashboard`);
