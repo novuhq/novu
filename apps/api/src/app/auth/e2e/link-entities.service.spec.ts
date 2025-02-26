@@ -19,8 +19,13 @@ import { CreateNovuIntegrationsCommand } from '../../integrations/usecases/creat
 import { CreateEnvironmentCommand } from '../../environments-v1/usecases/create-environment/create-environment.command';
 
 describe('Link external and internal entities #novu-v2', () => {
-  const eeAuth = require('@novu/ee-auth');
-  if (!eeAuth) return;
+  let eeAuth: any;
+
+  try {
+    eeAuth = require('@novu/ee-auth');
+  } catch (error) {
+    return;
+  }
 
   const { LinkEntitiesService, ClerkJwtPayload, SyncExternalUser, EEUserRepository, EEOrganizationRepository } = eeAuth;
 

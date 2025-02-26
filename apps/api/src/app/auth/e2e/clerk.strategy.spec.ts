@@ -8,9 +8,11 @@ import { HttpRequestHeaderKeysEnum } from '@novu/application-generic';
 import { UnauthorizedException } from '@nestjs/common';
 
 describe('ClerkStrategy', () => {
-  const eeAuth = require('@novu/ee-authz');
+  let eeAuth: any;
 
-  if (!eeAuth) {
+  try {
+    eeAuth = require('@novu/ee-auth');
+  } catch (error) {
     return;
   }
 
