@@ -3,15 +3,9 @@ import { type Page } from '@playwright/test';
 export class CreateWorkflowSidebar {
   constructor(private page: Page) {}
 
-  async createBtnClick({ awaitResponse = false } = {}): Promise<void> {
+  async createBtnClick(): Promise<void> {
     const createWorkflowBtn = this.page.getByRole('button', { name: 'Create workflow' });
     await createWorkflowBtn.click();
-
-    if (awaitResponse) {
-      await this.page.waitForResponse(
-        (resp) => resp.url().includes('/v2/workflows') && resp.request().method() === 'POST' && resp.status() === 201
-      );
-    }
   }
 
   async getNameValidationError() {

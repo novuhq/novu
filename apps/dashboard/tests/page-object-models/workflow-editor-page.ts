@@ -1,4 +1,4 @@
-import { type Page } from '@playwright/test';
+import { type Page, expect } from '@playwright/test';
 import { StepTypeEnum } from '@novu/shared';
 
 export class WorkflowEditorPage {
@@ -14,9 +14,11 @@ export class WorkflowEditorPage {
 
   async addStepAsFirst(stepType: StepTypeEnum): Promise<void> {
     const addStepMenuBtn = this.page.getByTestId('add-step-menu-button').first();
+    await expect(addStepMenuBtn).toBeVisible();
     await addStepMenuBtn.click();
 
     const inAppMenuItem = this.page.getByTestId(`add-step-menu-item-${stepType}`);
+    await expect(inAppMenuItem).toBeVisible();
     await inAppMenuItem.click();
 
     // await for the workflow steps to be updated
@@ -27,9 +29,11 @@ export class WorkflowEditorPage {
 
   async addStepAsLast(stepType: StepTypeEnum): Promise<void> {
     const addStepMenuBtn = this.page.getByTestId('add-step-menu-button').last();
+    await expect(addStepMenuBtn).toBeVisible();
     await addStepMenuBtn.click();
 
     const inAppMenuItem = this.page.getByTestId(`add-step-menu-item-${stepType}`);
+    await expect(inAppMenuItem).toBeVisible();
     await inAppMenuItem.click();
 
     // await for the workflow steps to be updated
