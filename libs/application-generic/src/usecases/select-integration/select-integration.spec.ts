@@ -14,7 +14,6 @@ import { SelectIntegration } from './select-integration.usecase';
 import { SelectIntegrationCommand } from './select-integration.command';
 import { ConditionsFilter } from '../conditions-filter';
 import { CompileTemplate } from '../compile-template';
-import { ExecutionLogRoute } from '../execution-log-route';
 import { CreateExecutionDetails } from '../create-execution-details';
 
 const testIntegration: IntegrationEntity = {
@@ -96,7 +95,7 @@ describe('select integration', function () {
     executionDetailsRepository,
     new JobRepository(),
     new EnvironmentRepository(),
-    new ExecutionLogRoute(new CreateExecutionDetails(new ExecutionDetailsRepository())),
+    new CreateExecutionDetails(new ExecutionDetailsRepository()),
     new CompileTemplate()
   );
   beforeEach(async function () {

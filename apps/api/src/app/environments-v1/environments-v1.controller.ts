@@ -10,7 +10,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiExcludeController, ApiExcludeEndpoint, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import { ApiExcludeEndpoint, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { Roles } from '@novu/application-generic';
 import { ApiAuthSchemeEnum, MemberRoleEnum, ProductFeatureKeyEnum, UserSessionData } from '@novu/shared';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
@@ -18,7 +18,7 @@ import { ProductFeature } from '../shared/decorators/product-feature.decorator';
 import { ApiKey } from '../shared/dtos/api-key';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
 import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
-import { SdkGroupName } from '../shared/framework/swagger/sdk.decorators';
+import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 import { UserSession } from '../shared/framework/user.decorator';
 import { CreateEnvironmentRequestDto } from './dtos/create-environment-request.dto';
 import { EnvironmentResponseDto } from './dtos/environment-response.dto';
@@ -36,6 +36,7 @@ import { RegenerateApiKeys } from './usecases/regenerate-api-keys/regenerate-api
 import { UpdateEnvironmentCommand } from './usecases/update-environment/update-environment.command';
 import { UpdateEnvironment } from './usecases/update-environment/update-environment.usecase';
 import { RolesGuard } from '../auth/framework/roles.guard';
+import { ErrorDto } from '../../error-dto';
 
 /**
  * @deprecated use EnvironmentsControllerV2
@@ -45,7 +46,6 @@ import { RolesGuard } from '../auth/framework/roles.guard';
 @UseInterceptors(ClassSerializerInterceptor)
 @UserAuthentication()
 @ApiTags('Environments')
-@ApiExcludeController()
 export class EnvironmentsControllerV1 {
   constructor(
     private createEnvironmentUsecase: CreateEnvironment,
@@ -63,6 +63,7 @@ export class EnvironmentsControllerV1 {
   })
   @ApiResponse(EnvironmentResponseDto)
   @ExternalApiAccessible()
+  @ApiExcludeEndpoint()
   async getCurrentEnvironment(@UserSession() user: UserSessionData): Promise<EnvironmentResponseDto> {
     return await this.getEnvironmentUsecase.execute(
       GetEnvironmentCommand.create({
@@ -77,11 +78,13 @@ export class EnvironmentsControllerV1 {
   @ApiOperation({
     summary: 'Create environment',
   })
-  @ApiExcludeEndpoint()
   @ApiResponse(EnvironmentResponseDto, 201)
+  @ApiResponse(ErrorDto, 402, false, false)
   @ProductFeature(ProductFeatureKeyEnum.MANAGE_ENVIRONMENTS)
   @UseGuards(RolesGuard)
   @Roles(MemberRoleEnum.ADMIN)
+  @SdkGroupName('Environments')
+  @SdkMethodName('create')
   async createEnvironment(
     @UserSession() user: UserSessionData,
     @Body() body: CreateEnvironmentRequestDto
@@ -103,6 +106,7 @@ export class EnvironmentsControllerV1 {
   })
   @ApiResponse(EnvironmentResponseDto, 200, true)
   @ExternalApiAccessible()
+  @ApiExcludeEndpoint()
   async listMyEnvironments(@UserSession() user: UserSessionData): Promise<EnvironmentResponseDto[]> {
     return await this.getMyEnvironmentsUsecase.execute(
       GetMyEnvironmentsCommand.create({
@@ -146,6 +150,7 @@ export class EnvironmentsControllerV1 {
   @ApiResponse(ApiKey, 200, true)
   @ExternalApiAccessible()
   @SdkGroupName('Environments.ApiKeys')
+  @ApiExcludeEndpoint()
   async listOrganizationApiKeys(@UserSession() user: UserSessionData): Promise<ApiKey[]> {
     const command = GetApiKeysCommand.create({
       userId: user._id,
@@ -160,6 +165,7 @@ export class EnvironmentsControllerV1 {
   @ApiResponse(ApiKey, 201, true)
   @UseGuards(RolesGuard)
   @Roles(MemberRoleEnum.ADMIN)
+  @ApiExcludeEndpoint()
   async regenerateOrganizationApiKeys(@UserSession() user: UserSessionData): Promise<ApiKey[]> {
     const command = GetApiKeysCommand.create({
       userId: user._id,
@@ -178,6 +184,7 @@ export class EnvironmentsControllerV1 {
   @ProductFeature(ProductFeatureKeyEnum.MANAGE_ENVIRONMENTS)
   @UseGuards(RolesGuard)
   @Roles(MemberRoleEnum.ADMIN)
+  @ApiExcludeEndpoint()
   async deleteEnvironment(@UserSession() user: UserSessionData, @Param('environmentId') environmentId: string) {
     return await this.deleteEnvironmentUsecase.execute(
       DeleteEnvironmentCommand.create({

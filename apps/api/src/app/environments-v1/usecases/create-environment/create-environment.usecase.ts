@@ -3,7 +3,7 @@ import { createHash } from 'crypto';
 import { nanoid } from 'nanoid';
 
 import { encryptApiKey } from '@novu/application-generic';
-import { EnvironmentRepository, NotificationGroupRepository } from '@novu/dal';
+import { EnvironmentEntity, EnvironmentRepository, NotificationGroupRepository } from '@novu/dal';
 
 import { EnvironmentEnum, PROTECTED_ENVIRONMENTS } from '@novu/shared';
 import { CreateNovuIntegrationsCommand } from '../../../integrations/usecases/create-novu-integrations/create-novu-integrations.command';
@@ -11,6 +11,7 @@ import { CreateNovuIntegrations } from '../../../integrations/usecases/create-no
 import { CreateDefaultLayout, CreateDefaultLayoutCommand } from '../../../layouts/usecases';
 import { GenerateUniqueApiKey } from '../generate-unique-api-key/generate-unique-api-key.usecase';
 import { CreateEnvironmentCommand } from './create-environment.command';
+import { EnvironmentResponseDto } from '../../dtos/environment-response.dto';
 
 @Injectable()
 export class CreateEnvironment {
@@ -22,11 +23,7 @@ export class CreateEnvironment {
     private createNovuIntegrationsUsecase: CreateNovuIntegrations
   ) {}
 
-  async execute(command: CreateEnvironmentCommand) {
-    const environmentCount = await this.environmentRepository.count({
-      _organizationId: command.organizationId,
-    });
-
+  async execute(command: CreateEnvironmentCommand): Promise<EnvironmentResponseDto> {
     const normalizedName = command.name.trim();
 
     if (!command.system) {
@@ -108,9 +105,28 @@ export class CreateEnvironment {
       })
     );
 
-    return environment;
+    return this.convertEnvironmentEntityToDto(environment);
   }
 
+  private convertEnvironmentEntityToDto(environment: EnvironmentEntity) {
+    const dto = new EnvironmentResponseDto();
+
+    dto._id = environment._id;
+    dto.name = environment.name;
+    dto._organizationId = environment._organizationId;
+    dto.identifier = environment.identifier;
+    dto._parentId = environment._parentId;
+
+    if (environment.apiKeys && environment.apiKeys.length > 0) {
+      dto.apiKeys = environment.apiKeys.map((apiKey) => ({
+        key: apiKey.key,
+        hash: apiKey.hash,
+        _userId: apiKey._userId,
+      }));
+    }
+
+    return dto;
+  }
   private getEnvironmentColor(name: string, commandColor?: string): string | undefined {
     if (name === EnvironmentEnum.DEVELOPMENT) return '#ff8547';
     if (name === EnvironmentEnum.PRODUCTION) return '#7e52f4';

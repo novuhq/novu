@@ -100,17 +100,17 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
   [FeatureNameEnum.PLATFORM_MONTHLY_COST]: {
     [ApiServiceLevelEnum.FREE]: {
       value: 0,
-      label: '0$',
+      label: '$0',
     },
     [ApiServiceLevelEnum.PRO]: {
       value: 30,
       currency: '$',
-      label: '30$',
+      label: '$30',
     },
     [ApiServiceLevelEnum.BUSINESS]: {
       value: 250,
       currency: '$',
-      label: '250$',
+      label: '$250',
     },
     [ApiServiceLevelEnum.ENTERPRISE]: {
       value: 'Custom Pricing',
@@ -503,8 +503,15 @@ function getOriginalFeatureOrAugments(
   tier: ApiServiceLevelEnum,
   featureFlags: Partial<FeatureFlags> = {}
 ): FeatureValue {
+  if (!tier) {
+    throw new Error(`Invalid tier [${tier}] for feature ${featureName}`);
+  }
   const originalFeature = novuServiceTiers[featureName][tier];
-
+  if (originalFeature === undefined) {
+    throw new Error(
+      `Invalid feature [${featureName}] for tier [${tier}]: Original: ${JSON.stringify(novuServiceTiers[featureName], null, 2)}`
+    );
+  }
   for (const inActiveFunctionFF of Object.keys(inActiveFeatureFlagRecordGetters)) {
     const featureFlagGetter = inActiveFeatureFlagRecordGetters[inActiveFunctionFF];
 
@@ -570,9 +577,11 @@ export function getFeatureForTierAsNumber(
   conversionToMs?: boolean
 ): number {
   const featureValue: FeatureValue = getOriginalFeatureOrAugments(featureName, tier, featureFlags);
-
+  if (isDetailedPriceListItem(featureValue)) {
+    return handleDetailedPriceListItem(featureValue, conversionToMs);
+  }
   if (conversionToMs) {
-    throw new Error(`Cannot convert string ${featureName} at tier ${tier} to miliseconds without unit info`);
+    throw new Error(`Cannot convert [${featureName}] at tier [${tier}] to milliseconds without unit info`);
   }
   if (typeof featureValue === 'number') {
     return featureValue; // Default to seconds to ms if no suffix
@@ -583,10 +592,6 @@ export function getFeatureForTierAsNumber(
 
   // Boolean to number
   if (typeof featureValue === 'boolean') return featureValue ? 1 : 0;
-
-  if (isDetailedPriceListItem(featureValue)) {
-    return handleDetailedPriceListItem(featureValue, conversionToMs);
-  }
 
   throw new Error(`Cannot convert feature ${featureName} at tier ${tier} to number`);
 }

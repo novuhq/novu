@@ -212,9 +212,7 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
               className="z-10 flex size-2 p-0 px-1 opacity-0 group-hover:opacity-100"
               valueToCopy={workflow.workflowId}
               size="2xs"
-              mode="ghost"
-              onClick={stopPropagation}
-            ></CopyButton>
+            />
           </div>
         </WorkflowLinkTableCell>
         <WorkflowLinkTableCell className="min-w-[200px]">

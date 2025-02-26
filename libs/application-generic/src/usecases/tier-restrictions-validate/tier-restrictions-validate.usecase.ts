@@ -2,7 +2,14 @@ import { Injectable } from '@nestjs/common';
 import { parseExpression as parseCronExpression } from 'cron-parser';
 import { addYears, differenceInMilliseconds, isAfter } from 'date-fns';
 
-import { ApiServiceLevelEnum, DigestUnitEnum, FeatureFlagsKeysEnum, StepTypeEnum } from '@novu/shared';
+import {
+  ApiServiceLevelEnum,
+  DigestUnitEnum,
+  FeatureFlagsKeysEnum,
+  FeatureNameEnum,
+  getFeatureForTierAsNumber,
+  StepTypeEnum,
+} from '@novu/shared';
 import { CommunityOrganizationRepository } from '@novu/dal';
 
 import { TierRestrictionsValidateCommand } from './tier-restrictions-validate.command';
@@ -17,8 +24,6 @@ import { FeatureFlagsService } from '../../services';
 export const MILLISECONDS_IN_DAY = 24 * 60 * 60 * 1000;
 export const FREE_TIER_MAX_DELAY_DAYS = 30;
 export const BUSINESS_TIER_MAX_DELAY_DAYS = 90;
-export const MAX_DELAY_FREE_TIER = FREE_TIER_MAX_DELAY_DAYS * MILLISECONDS_IN_DAY; // 30 days in milliseconds
-export const MAX_DELAY_BUSINESS_TIER = BUSINESS_TIER_MAX_DELAY_DAYS * MILLISECONDS_IN_DAY; // 90 days in milliseconds
 
 @Injectable()
 export class TierRestrictionsValidateUsecase {
@@ -33,19 +38,14 @@ export class TierRestrictionsValidateUsecase {
       return [];
     }
 
-    const isTierDurationRestrictionExcluded = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_TIER_DURATION_RESTRICTION_EXCLUDED_ENABLED,
-      defaultValue: false,
-      environment: { _id: command.environmentId },
-      organization: { _id: command.organizationId },
-    });
+    const isTierDurationRestrictionExcluded = await this.isOrganizationExcludedFromRestriction(command);
 
     if (isTierDurationRestrictionExcluded) {
       return [];
     }
 
     const apiServiceLevel = (await this.organizationRepository.findById(command.organizationId))?.apiServiceLevel;
-    const maxDelayMs = getMaxDelay(apiServiceLevel);
+    const maxDelayMs = await this.getMaxDelayInMs(apiServiceLevel);
 
     if (isCronExpression(command.cron)) {
       if (this.isCronDeltaDeferDurationExceededTier(command.cron, maxDelayMs)) {
@@ -73,6 +73,33 @@ export class TierRestrictionsValidateUsecase {
     }
 
     return [];
+  }
+
+  private async getMaxDelayInMs(apiServiceLevel) {
+    const isPackagesQ1Enabled = await this.is4PackageTierActivated();
+    const featureFlags = { [FeatureFlagsKeysEnum.IS_2025_Q1_TIERING_ENABLED]: isPackagesQ1Enabled };
+
+    return getFeatureForTierAsNumber(
+      FeatureNameEnum.PLATFORM_MAX_DIGEST_WINDOW_TIME,
+      apiServiceLevel || ApiServiceLevelEnum.FREE,
+      featureFlags,
+      true
+    );
+  }
+
+  private async isOrganizationExcludedFromRestriction(command: TierRestrictionsValidateCommand) {
+    return await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_TIER_DURATION_RESTRICTION_EXCLUDED_ENABLED,
+      defaultValue: false,
+      environment: { _id: command.environmentId },
+      organization: { _id: command.organizationId },
+    });
+  }
+  private async is4PackageTierActivated(): Promise<boolean> {
+    return await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_2025_Q1_TIERING_ENABLED,
+      defaultValue: false,
+    });
   }
 
   private isCronDeltaDeferDurationExceededTier(cron: string, maxDelayMs: number): boolean {
@@ -156,14 +183,6 @@ const isRegularDeferAction = (command: TierRestrictionsValidateCommand) => {
 
   return !!command.amount && isNumber(command.amount) && !!command.unit && isValidDigestUnit(command.unit);
 };
-
-function getMaxDelay(tier: ApiServiceLevelEnum): number {
-  if (tier === ApiServiceLevelEnum.BUSINESS || tier === ApiServiceLevelEnum.ENTERPRISE) {
-    return MAX_DELAY_BUSINESS_TIER;
-  }
-
-  return MAX_DELAY_FREE_TIER;
-}
 
 function buildIssue(
   deferDurationMs: number,

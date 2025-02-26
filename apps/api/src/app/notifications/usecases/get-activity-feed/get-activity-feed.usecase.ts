@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { NotificationFeedItemEntity, NotificationRepository, SubscriberRepository } from '@novu/dal';
 import { Instrument } from '@novu/application-generic';
-import { ActivitiesResponseDto } from '../../dtos/activities-response.dto';
+import { ActivitiesResponseDto, ActivityNotificationResponseDto } from '../../dtos/activities-response.dto';
 import { GetActivityFeedCommand } from './get-activity-feed.command';
 import { mapFeedItemToDto } from './map-feed-item-to.dto';
 
@@ -29,11 +29,20 @@ export class GetActivityFeed {
 
     const notifications: NotificationFeedItemEntity[] = await this.getFeedNotifications(command, subscriberIds);
 
+    const data = notifications.reduce<ActivityNotificationResponseDto[]>((memo, notification) => {
+      // TODO: Identify why mongo returns an array of undefined or null values. Is it a data issue?
+      if (notification) {
+        memo.push(mapFeedItemToDto(notification));
+      }
+
+      return memo;
+    }, []);
+
     return {
       page: command.page,
       hasMore: notifications?.length === command.limit,
       pageSize: command.limit,
-      data: notifications.map((notification) => mapFeedItemToDto(notification)),
+      data,
     };
   }
 

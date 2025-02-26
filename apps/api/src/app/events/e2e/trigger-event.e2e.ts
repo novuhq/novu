@@ -1420,28 +1420,45 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       expect(message!.errorText).to.contains('Currently 3rd-party packages test are not support on test env');
     });
 
-    it('should trigger In-App notification with subscriber data', async function () {
-      const newSubscriberIdInAppNotification = SubscriberRepository.createObjectId();
+    it('should trigger in-app notification', async function () {
       const channelType = ChannelTypeEnum.IN_APP;
 
       template = await createTemplate(session, channelType);
 
-      await sendTrigger(template, newSubscriberIdInAppNotification);
+      await novuClient.trigger({
+        workflowId: template.triggers[0].identifier,
+        to: [
+          { subscriberId: 'no_type_123', lastName: 'smith_no_type', email: 'test@email.novu' },
+          {
+            type: 'Subscriber',
+            subscriberId: 'with_type_123',
+            lastName: 'smith_with_type',
+            email: 'test@email.novu',
+          },
+        ],
+        payload: {
+          organizationName: 'Umbrella Corp',
+          compiledVariable: 'test-env',
+        },
+      });
 
       await session.waitForJobCompletion(template._id);
 
-      const createdSubscriber = await subscriberRepository.findBySubscriberId(
-        session.environment._id,
-        newSubscriberIdInAppNotification
-      );
-
-      const message = await messageRepository.findOne({
+      let createdSubscriber = await subscriberRepository.findBySubscriberId(session.environment._id, 'no_type_123');
+      let message = await messageRepository.findOne({
         _environmentId: session.environment._id,
         _subscriberId: createdSubscriber?._id,
         channel: channelType,
       });
+      expect(message!.content).to.equal('Hello smith_no_type, Welcome to Umbrella Corp');
 
-      expect(message!.content).to.equal('Hello Smith, Welcome to Umbrella Corp');
+      createdSubscriber = await subscriberRepository.findBySubscriberId(session.environment._id, 'with_type_123');
+      message = await messageRepository.findOne({
+        _environmentId: session.environment._id,
+        _subscriberId: createdSubscriber?._id,
+        channel: channelType,
+      });
+      expect(message!.content).to.equal('Hello smith_with_type, Welcome to Umbrella Corp');
     });
 
     it('should trigger SMS notification with subscriber data', async function () {

@@ -13,8 +13,8 @@ import {
   ApiException,
   DetailEnum,
   EventsDistributedLockService,
-  ExecutionLogRoute,
-  ExecutionLogRouteCommand,
+  CreateExecutionDetails,
+  CreateExecutionDetailsCommand,
   getNestedValue,
   Instrument,
   InstrumentUsecase,
@@ -36,8 +36,8 @@ export class MergeOrCreateDigest {
     @Inject(forwardRef(() => EventsDistributedLockService))
     private eventsDistributedLockService: EventsDistributedLockService,
     private jobRepository: JobRepository,
-    @Inject(forwardRef(() => ExecutionLogRoute))
-    private executionLogRoute: ExecutionLogRoute,
+    @Inject(forwardRef(() => CreateExecutionDetails))
+    private createExecutionDetails: CreateExecutionDetails,
     private notificationRepository: NotificationRepository
   ) {}
 
@@ -186,9 +186,9 @@ export class MergeOrCreateDigest {
   }
 
   private async digestMergedExecutionDetails(job: JobEntity): Promise<void> {
-    await this.executionLogRoute.execute(
-      ExecutionLogRouteCommand.create({
-        ...ExecutionLogRouteCommand.getDetailsFromJob(job),
+    await this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
         detail: DetailEnum.DIGEST_MERGED,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.SUCCESS,
@@ -198,9 +198,9 @@ export class MergeOrCreateDigest {
     );
   }
   private async digestSkippedExecutionDetails(job: JobEntity, filtered: boolean): Promise<void> {
-    await this.executionLogRoute.execute(
-      ExecutionLogRouteCommand.create({
-        ...ExecutionLogRouteCommand.getDetailsFromJob(job),
+    await this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
         detail: filtered ? DetailEnum.FILTER_STEPS : DetailEnum.DIGEST_SKIPPED,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.SUCCESS,
