@@ -37,7 +37,7 @@ export const buttonVariants = tv({
     mode: {
       filled: {},
       outline: {
-        root: 'ring-1 ring-inset',
+        root: 'border',
       },
       lighter: {
         root: 'ring-1 ring-inset',
@@ -386,6 +386,7 @@ function ButtonIcon<T extends React.ElementType>({
 
   return <Component className={icon({ class: className })} {...rest} />;
 }
+
 ButtonIcon.displayName = BUTTON_ICON_NAME;
 
 export { Button, ButtonIcon, ButtonRoot };

@@ -4,6 +4,7 @@
 !/REACT_QUERY.md
 !/**/*.ts
 !/**/*.js
+!/**/*.mjs
 !/**/*.json
 !/**/*.map
 

@@ -55,6 +55,7 @@ export function EditVariablePopoverContent({ variable, onUpdate, onEscapeKeyDown
     if (filters.length > 0) {
       const firstFilter = filters[0];
       const sampleValue = getDefaultSampleValue(firstFilter.value);
+
       if (sampleValue) {
         setPreviewValue(sampleValue);
       }
@@ -205,6 +206,7 @@ export function EditVariablePopoverContent({ variable, onUpdate, onEscapeKeyDown
                                   setSearchQuery('');
                                   setIsCommandOpen(false);
                                   const sampleValue = getDefaultSampleValue(filter.value);
+
                                   if (sampleValue) {
                                     setPreviewValue(sampleValue);
                                   }

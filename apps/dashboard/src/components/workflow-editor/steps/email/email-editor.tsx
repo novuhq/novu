@@ -5,6 +5,7 @@ import { EmailTabsSection } from '@/components/workflow-editor/steps/email/email
 import { UiSchemaGroupEnum, type UiSchema } from '@novu/shared';
 
 type EmailEditorProps = { uiSchema: UiSchema };
+
 export const EmailEditor = (props: EmailEditorProps) => {
   const { uiSchema } = props;
 

@@ -21,16 +21,17 @@ import * as errors from "../models/errors/index.js";
 import { SDKError } from "../models/errors/sdkerror.js";
 import { SDKValidationError } from "../models/errors/sdkvalidationerror.js";
 import * as operations from "../models/operations/index.js";
+import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
  * Get notifications
  */
-export async function notificationsList(
+export function notificationsList(
   client: NovuCore,
   request: operations.NotificationsControllerListNotificationsRequest,
   options?: RequestOptions,
-): Promise<
+): APIPromise<
   Result<
     operations.NotificationsControllerListNotificationsResponse,
     | errors.ErrorDto
@@ -46,6 +47,36 @@ export async function notificationsList(
     | ConnectionError
   >
 > {
+  return new APIPromise($do(
+    client,
+    request,
+    options,
+  ));
+}
+
+async function $do(
+  client: NovuCore,
+  request: operations.NotificationsControllerListNotificationsRequest,
+  options?: RequestOptions,
+): Promise<
+  [
+    Result<
+      operations.NotificationsControllerListNotificationsResponse,
+      | errors.ErrorDto
+      | errors.ErrorDto
+      | errors.ValidationErrorDto
+      | errors.ErrorDto
+      | SDKError
+      | SDKValidationError
+      | UnexpectedClientError
+      | InvalidRequestError
+      | RequestAbortedError
+      | RequestTimeoutError
+      | ConnectionError
+    >,
+    APICall,
+  ]
+> {
   const parsed = safeParse(
     request,
     (value) =>
@@ -54,7 +85,7 @@ export async function notificationsList(
     "Input validation failed",
   );
   if (!parsed.ok) {
-    return parsed;
+    return [parsed, { status: "invalid" }];
   }
   const payload = parsed.value;
   const body = null;
@@ -87,7 +118,7 @@ export async function notificationsList(
   const requestSecurity = resolveGlobalSecurity(securityInput);
 
   const context = {
-    baseURL: options?.serverURL ?? "",
+    baseURL: options?.serverURL ?? client._baseURL ?? "",
     operationID: "NotificationsController_listNotifications",
     oAuth2Scopes: [],
 
@@ -121,7 +152,7 @@ export async function notificationsList(
     timeoutMs: options?.timeoutMs || client._options.timeoutMs || -1,
   }, options);
   if (!requestRes.ok) {
-    return requestRes;
+    return [requestRes, { status: "invalid" }];
   }
   const req = requestRes.value;
 
@@ -148,7 +179,7 @@ export async function notificationsList(
     retryCodes: context.retryCodes,
   });
   if (!doResult.ok) {
-    return doResult;
+    return [doResult, { status: "request-error", request: req }];
   }
   const response = doResult.value;
 
@@ -189,8 +220,8 @@ export async function notificationsList(
     M.fail("5XX"),
   )(response, { extraFields: responseFields });
   if (!result.ok) {
-    return result;
+    return [result, { status: "complete", request: req, response }];
   }
 
-  return result;
+  return [result, { status: "complete", request: req, response }];
 }

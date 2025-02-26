@@ -104,10 +104,12 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
 
     const dirtyPayload = Object.keys(dirtyFields).reduce<Partial<typeof formData>>((acc, key) => {
       const typedKey = key as keyof typeof formData;
+
       if (typedKey === 'data') {
         const data = JSON.parse(JSON.stringify(formData.data));
         return { ...acc, data: data === '' ? {} : data };
       }
+
       return { ...acc, [typedKey]: formData[typedKey] === null ? null : formData[typedKey]?.trim() };
     }, {});
 
@@ -117,6 +119,9 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
 
     await patchSubscriber({ subscriberId: subscriber.subscriberId, subscriber: dirtyPayload });
   };
+
+  const firstNameChar = form.getValues('firstName')?.charAt(0) || '';
+  const lastNameChar = form.getValues('lastName')?.charAt(0) || '';
 
   return (
     <div className={cn('flex h-full flex-col')}>
@@ -133,11 +138,11 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
                   }}
                 >
                   <Avatar className="size-[3.75rem] cursor-default">
-                    <AvatarImage src={subscriber?.avatar || undefined} />
-                    <AvatarFallback className="bg-neutral-alpha-100">
-                      <Avatar className="size-full">
-                        <AvatarImage src="/images/avatar.svg" />
-                      </Avatar>
+                    <AvatarImage
+                      src={subscriber?.avatar ?? (firstNameChar || lastNameChar ? '' : '/images/avatar.svg')}
+                    />
+                    <AvatarFallback>
+                      {firstNameChar || lastNameChar ? firstNameChar + lastNameChar : null}
                     </AvatarFallback>
                   </Avatar>
                 </TooltipTrigger>
@@ -277,12 +282,12 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
             </div>
             <Separator />
 
-            <div className="flex w-full flex-nowrap gap-2.5">
+            <div className="grid grid-cols-[1fr_3fr] gap-2.5">
               <FormField
                 control={form.control}
                 name="locale"
                 render={({ field }) => (
-                  <FormItem className="w-1/4">
+                  <FormItem className="w-full">
                     <FormLabel>Locale</FormLabel>
                     <FormControl>
                       <LocaleSelect
@@ -302,7 +307,7 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
                 control={form.control}
                 name="timezone"
                 render={({ field }) => (
-                  <FormItem className="flex-1">
+                  <FormItem className="w-full grow-0 overflow-hidden">
                     <FormLabel>Timezone</FormLabel>
                     <FormControl>
                       <TimezoneSelect

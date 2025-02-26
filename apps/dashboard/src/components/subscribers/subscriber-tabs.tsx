@@ -34,6 +34,7 @@ type SubscriberPreferencesProps = {
   subscriberId: string;
   readOnly?: boolean;
 };
+
 const SubscriberPreferences = (props: SubscriberPreferencesProps) => {
   const { subscriberId, readOnly = false } = props;
   const { data, isPending } = useFetchSubscriberPreferences({
@@ -54,6 +55,7 @@ type SubscriberTabsProps = {
   subscriberId: string;
   readOnly?: boolean;
 };
+
 export function SubscriberTabs(props: SubscriberTabsProps) {
   const { subscriberId, readOnly = false } = props;
   const [tab, setTab] = useState('overview');

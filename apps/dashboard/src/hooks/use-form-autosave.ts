@@ -26,17 +26,21 @@ export function useFormAutosave<U extends Record<string, unknown>, T extends Fie
       if (isReadOnly) {
         return;
       }
+
       // use the form reference instead of destructuring the props to avoid stale closures
       const form = formRef.current;
       const dirtyFields = form.formState.dirtyFields;
       // somehow the form isDirty flag is lost on first blur that why we fallback to dirtyFields
       const isDirty = form.formState.isDirty || Object.keys(dirtyFields).length > 0;
+
       if (!isDirty && !options?.forceSubmit) {
         return;
       }
+
       // manually trigger the validation of the form
       if (shouldClientValidate) {
         const isValid = await form.trigger();
+
         if (!isValid) {
           return;
         }

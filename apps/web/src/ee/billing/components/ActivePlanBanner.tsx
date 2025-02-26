@@ -6,6 +6,8 @@ import { useSubscriptionContext, type UseSubscriptionType } from './Subscription
 import { capitalizeFirstLetter } from '../../../utils/string';
 import { Badge } from './Badge';
 import { PlanActionButton } from './PlanActionButton';
+import { ApiServiceLevelEnum, FeatureFlagsKeysEnum } from '@novu/shared';
+import { useFeatureFlag } from '../../../hooks/useFeatureFlag';
 
 type BillingInterval = 'month' | 'year';
 
@@ -29,10 +31,17 @@ export const ActivePlanBanner = ({ selectedBillingInterval }: { selectedBillingI
 function PlanHeader({ apiServiceLevel, trial }: UseSubscriptionType) {
   const { daysLeft, isActive } = trial;
   const color = getColorByDaysLeft(daysLeft);
+  const is2025Q1TieringEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_2025_Q1_TIERING_ENABLED);
+
+  const renameBusinessToTeam = (plan: string) => {
+    if (plan === ApiServiceLevelEnum.BUSINESS && is2025Q1TieringEnabled) return 'team';
+
+    return plan.toLowerCase();
+  };
 
   return (
     <div className={styles.header}>
-      <Title variant="section">{capitalizeFirstLetter(apiServiceLevel)}</Title>
+      <Title variant="section">{capitalizeFirstLetter(renameBusinessToTeam(apiServiceLevel))}</Title>
       {isActive && (
         <>
           <Badge label="Trial" />

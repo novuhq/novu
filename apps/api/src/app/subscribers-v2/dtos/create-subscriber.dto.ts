@@ -25,9 +25,6 @@ export class CreateSubscriberRequestDto {
     message: 'SubscriberId is required',
   })
   @Transform(({ value }) => value.trim())
-  @Matches(SUBSCRIBER_ID_REGEX, {
-    message: 'SubscriberId can only contain letters, numbers, hyphens, and underscores.',
-  })
   subscriberId: string;
 
   @ApiPropertyOptional({

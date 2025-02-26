@@ -21,7 +21,7 @@ export function ActivityEmptyState({
   className,
   emptySearchResults,
   onClearFilters,
-  emptySearchTitle = 'No activity match that filter',
+  emptySearchTitle = 'No activity matches that filter',
   emptySearchDescription = 'Try adjusting your filters to see more results.',
   emptyFiltersTitle = 'No activity in the past 30 days',
   emptyFiltersDescription = 'Your activity feed is empty. Once you trigger your first workflow, you can monitor notifications and view delivery details.',

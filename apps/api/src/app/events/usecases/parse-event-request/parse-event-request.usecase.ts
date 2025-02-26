@@ -6,8 +6,6 @@ import { merge } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 
 import {
-  buildNotificationTemplateIdentifierKey,
-  CachedEntity,
   ExecuteBridgeRequest,
   ExecuteBridgeRequestCommand,
   ExecuteBridgeRequestDto,
@@ -202,19 +200,6 @@ export class ParseEventRequest {
       ...command,
     };
 
-    if ('to' in commandArgs) {
-      const validSubscribers = this.removeInvalidRecipients(commandArgs.to);
-
-      if (!validSubscribers) {
-        return {
-          acknowledged: true,
-          status: TriggerEventStatusEnum.INVALID_RECIPIENTS,
-          transactionId,
-        };
-      }
-      commandArgs.to = validSubscribers;
-    }
-
     const jobData: IWorkflowDataDto = {
       ...commandArgs,
       actor: command.actor,
@@ -249,13 +234,6 @@ export class ParseEventRequest {
   }
 
   @Instrument()
-  @CachedEntity({
-    builder: (command: { triggerIdentifier: string; environmentId: string }) =>
-      buildNotificationTemplateIdentifierKey({
-        _environmentId: command.environmentId,
-        templateIdentifier: command.triggerIdentifier,
-      }),
-  })
   private async getNotificationTemplateByTriggerIdentifier(command: {
     triggerIdentifier: string;
     environmentId: string;

@@ -1,25 +1,23 @@
 import { locales } from '@/utils/locales';
 import { cn } from '@/utils/ui';
+import { useRef, useState } from 'react';
 import { RiArrowDownSLine, RiCheckLine, RiEarthLine, RiSearchLine } from 'react-icons/ri';
 import { type Country } from 'react-phone-number-input';
 import flags from 'react-phone-number-input/flags';
-import { Button } from '../primitives/button';
+import { Button, ButtonProps } from '../primitives/button';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '../primitives/command';
 import { Popover, PopoverContent, PopoverTrigger } from '../primitives/popover';
 import TruncatedText from '../truncated-text';
-import { useRef, useState } from 'react';
 
-export function LocaleSelect({
-  value,
-  onChange,
-  disabled,
-  readOnly,
-}: {
+type LocaleSelectProps = ButtonProps & {
   value?: string;
   disabled?: boolean;
   readOnly?: boolean;
   onChange: (val: string) => void;
-}) {
+};
+
+export function LocaleSelect(props: LocaleSelectProps) {
+  const { value, disabled, readOnly, onChange, className, ...rest } = props;
   const [open, setOpen] = useState(false);
   const currentCountryCode = value?.split('_')?.[1] as Country;
   const CurrentFlag = currentCountryCode ? flags[currentCountryCode] : RiEarthLine;
@@ -33,8 +31,9 @@ export function LocaleSelect({
         <Button
           variant="secondary"
           mode="outline"
-          className="flex h-8 w-full items-center justify-between gap-1 rounded-lg border-r-0 px-3 focus:z-10"
+          className={cn('flex h-8 w-full items-center justify-between gap-1 rounded-lg px-3 focus:z-10', className)}
           disabled={disabled}
+          {...rest}
         >
           <div className="flex max-w-full flex-1 items-center gap-1 overflow-hidden">
             <span className="inline-flex gap-1 text-xs font-normal text-neutral-950">

@@ -294,6 +294,7 @@ export const ConfigureWorkflowForm = (props: ConfigureWorkflowFormProps) => {
                             setIsPauseModalOpen(true);
                             return;
                           }
+
                           onPauseWorkflow(checked);
                         }}
                         disabled={isReadOnly}

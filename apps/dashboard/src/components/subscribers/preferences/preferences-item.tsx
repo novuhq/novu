@@ -4,7 +4,6 @@ import { Switch } from '@/components/primitives/switch';
 import { STEP_TYPE_TO_COLOR } from '@/utils/color';
 import { capitalize } from '@/utils/string';
 import { ChannelTypeEnum } from '@novu/shared';
-import { motion } from 'motion/react';
 
 const CHANNEL_LABELS_LOOKUP: Record<`${ChannelTypeEnum}`, string> = {
   [ChannelTypeEnum.IN_APP]: 'In-App',
@@ -26,13 +25,7 @@ export function PreferencesItem(props: PreferencesItemProps) {
   const Icon = STEP_TYPE_TO_ICON[channel];
 
   return (
-    <motion.div
-      variants={{
-        hidden: { opacity: 0, y: 20 },
-        visible: { opacity: 1, y: 0 },
-      }}
-      transition={{ duration: 0.3 }}
-    >
+    <div>
       <div className="mt-2 flex w-full items-center justify-between space-y-1">
         <div className="flex items-center gap-2">
           <Step variant={STEP_TYPE_TO_COLOR[channel]} className="size-5">
@@ -42,6 +35,6 @@ export function PreferencesItem(props: PreferencesItemProps) {
         </div>
         <Switch checked={enabled} onCheckedChange={readOnly ? undefined : onChange} />
       </div>
-    </motion.div>
+    </div>
   );
 }

@@ -34,6 +34,7 @@ export const CreateSubscriberFormSchema = SubscriberFormSchema.extend({
       ctc.addIssue({ code: 'custom', message: 'SubscriberId is required' });
       return z.NEVER;
     }
+
     return str;
   }),
   email: z

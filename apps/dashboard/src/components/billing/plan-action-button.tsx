@@ -6,7 +6,8 @@ import { useFetchSubscription } from '../../hooks/use-fetch-subscription';
 import { cn } from '../../utils/ui';
 
 interface PlanActionButtonProps {
-  selectedBillingInterval: 'month' | 'year';
+  billingInterval: 'month' | 'year';
+  requestedServiceLevel: ApiServiceLevelEnum;
   mode?: 'outline' | 'filled';
   showIcon?: boolean;
   className?: string;
@@ -14,30 +15,40 @@ interface PlanActionButtonProps {
 }
 
 export function PlanActionButton({
-  selectedBillingInterval,
+  billingInterval,
+  requestedServiceLevel,
   mode = 'filled',
   className,
   size = 'md',
 }: PlanActionButtonProps) {
   const { subscription: data, isLoading: isLoadingSubscription } = useFetchSubscription();
   const { navigateToCheckout, isLoading: isCheckingOut } = useCheckoutSession();
-  const { navigateToPortal, isLoading: isLoadingPortal } = useBillingPortal(selectedBillingInterval);
+  const { navigateToPortal, isLoading: isLoadingPortal } = useBillingPortal(billingInterval);
 
   const isPaidSubscriptionActive = () => {
-    return data?.isActive && !data?.trial?.isActive && data?.apiServiceLevel !== ApiServiceLevelEnum.FREE;
+    return (
+      data?.isActive &&
+      !data?.trial?.isActive &&
+      data?.apiServiceLevel !== ApiServiceLevelEnum.FREE &&
+      requestedServiceLevel === data?.apiServiceLevel
+    );
   };
 
   const handleAction = () => {
     if (isPaidSubscriptionActive()) {
       navigateToPortal();
     } else {
-      navigateToCheckout(selectedBillingInterval);
+      navigateToCheckout({ billingInterval, requestedServiceLevel });
     }
   };
 
+  if (requestedServiceLevel === ApiServiceLevelEnum.FREE) {
+    return null;
+  }
+
   return (
     <Button
-      mode={mode}
+      mode={isPaidSubscriptionActive() ? 'outline' : mode}
       size={size}
       className={cn('gap-2', className)}
       onClick={handleAction}

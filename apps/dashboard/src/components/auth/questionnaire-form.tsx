@@ -3,7 +3,7 @@ import { identifyUser } from '@/api/telemetry';
 import { StepIndicator } from '@/components/auth/shared';
 import { Button } from '@/components/primitives/button';
 import { CardDescription, CardTitle } from '@/components/primitives/card';
-import { FormRoot } from '@/components/primitives/form/form';
+import { Form, FormRoot } from '@/components/primitives/form/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
 import { useEnvironment, useFetchEnvironments } from '@/context/environment/hooks';
 import { useSegment } from '@/context/segment/hooks';
@@ -38,7 +38,8 @@ export function QuestionnaireForm() {
   const { organization } = useOrganization();
   useFetchEnvironments({ organizationId: organization?.id });
 
-  const { control, watch, handleSubmit } = useForm<QuestionnaireFormData>();
+  const form = useForm<QuestionnaireFormData>();
+  const { control, watch, handleSubmit } = form;
   const submitQuestionnaireMutation = useSubmitQuestionnaire();
   const { user } = useUser();
   const selectedJobTitle = watch('jobTitle');
@@ -95,129 +96,131 @@ export function QuestionnaireForm() {
             </CardDescription>
           </div>
 
-          <FormRoot onSubmit={handleSubmit(onSubmit)} className="flex w-[350px] flex-col gap-8">
-            <div className="flex flex-col gap-7">
-              <div className="flex flex-col gap-[4px]">
-                <label className="text-foreground-600 text-xs font-medium">Job title</label>
-                <Controller
-                  name="jobTitle"
-                  control={control}
-                  render={({ field }) => (
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <SelectTrigger
-                        className={`shadow-regular-shadow-x-small h-[32px] w-full border border-[#E1E4EA] ${field.value ? 'text-[#0E121B]' : 'text-[#99A0AE]'}`}
-                      >
-                        <SelectValue placeholder="What's your nature of work" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {Object.entries(jobTitleToLabelMapper).map(([value, label], index) => (
-                          <SelectItem key={index} value={value}>
-                            {label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+          <Form {...form}>
+            <FormRoot onSubmit={handleSubmit(onSubmit)} className="flex w-[350px] flex-col gap-8">
+              <div className="flex flex-col gap-7">
+                <div className="flex flex-col gap-[4px]">
+                  <label className="text-foreground-600 text-xs font-medium">Job title</label>
+                  <Controller
+                    name="jobTitle"
+                    control={control}
+                    render={({ field }) => (
+                      <Select value={field.value} onValueChange={field.onChange}>
+                        <SelectTrigger
+                          className={`shadow-regular-shadow-x-small h-[32px] w-full border border-[#E1E4EA] ${field.value ? 'text-[#0E121B]' : 'text-[#99A0AE]'}`}
+                        >
+                          <SelectValue placeholder="What's your nature of work" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Object.entries(jobTitleToLabelMapper).map(([value, label], index) => (
+                            <SelectItem key={index} value={value}>
+                              {label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                </div>
+
+                <AnimatePresence mode="sync">
+                  {selectedJobTitle && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 4 }}
+                      transition={{ duration: 0.2, ease: 'easeOut' }}
+                      className="flex flex-col gap-[4px]"
+                    >
+                      <label className="text-xs font-medium text-[#525866]">Organization type</label>
+                      <div className="flex flex-wrap gap-[8px]">
+                        <Controller
+                          name="organizationType"
+                          control={control}
+                          render={({ field }) => (
+                            <>
+                              {Object.values(OrganizationTypeEnum).map((type, index) => (
+                                <Button
+                                  variant="secondary"
+                                  key={index}
+                                  mode="outline"
+                                  size="xs"
+                                  type="button"
+                                  className={`h-[28px] rounded-full px-3 py-1 text-sm ${
+                                    field.value === type ? 'border-[#E1E4EA] bg-[#F2F5F8]' : 'border-[#E1E4EA]'
+                                  }`}
+                                  onClick={() => field.onChange(type)}
+                                >
+                                  {type}
+                                </Button>
+                              ))}
+                            </>
+                          )}
+                        />
+                      </div>
+                    </motion.div>
                   )}
-                />
+
+                  {shouldShowCompanySize && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 4 }}
+                      transition={{ duration: 0.2, ease: 'easeOut' }}
+                      className="flex flex-col gap-[4px]"
+                    >
+                      <label className="text-xs font-medium text-[#525866]">Company size</label>
+                      <div className="flex flex-wrap gap-[8px]">
+                        <Controller
+                          name="companySize"
+                          control={control}
+                          render={({ field }) => (
+                            <>
+                              {Object.values(CompanySizeEnum).map((size, index) => (
+                                <Button
+                                  variant="secondary"
+                                  key={index}
+                                  mode="outline"
+                                  size="xs"
+                                  type="button"
+                                  className={`h-[28px] rounded-full px-3 py-1 text-sm ${
+                                    field.value === size ? 'border-[#E1E4EA] bg-[#F2F5F8]' : 'border-[#E1E4EA]'
+                                  }`}
+                                  onClick={() => field.onChange(size)}
+                                >
+                                  {size}
+                                </Button>
+                              ))}
+                            </>
+                          )}
+                        />
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
-              <AnimatePresence mode="sync">
-                {selectedJobTitle && (
+              <AnimatePresence>
+                {isFormValid && (
                   <motion.div
                     initial={{ opacity: 0, y: 4 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 4 }}
                     transition={{ duration: 0.2, ease: 'easeOut' }}
-                    className="flex flex-col gap-[4px]"
+                    className="flex flex-col gap-3"
                   >
-                    <label className="text-xs font-medium text-[#525866]">Organization type</label>
-                    <div className="flex flex-wrap gap-[8px]">
-                      <Controller
-                        name="organizationType"
-                        control={control}
-                        render={({ field }) => (
-                          <>
-                            {Object.values(OrganizationTypeEnum).map((type, index) => (
-                              <Button
-                                variant="secondary"
-                                key={index}
-                                mode="outline"
-                                size="xs"
-                                type="button"
-                                className={`h-[28px] rounded-full px-3 py-1 text-sm ${
-                                  field.value === type ? 'border-[#E1E4EA] bg-[#F2F5F8]' : 'border-[#E1E4EA]'
-                                }`}
-                                onClick={() => field.onChange(type)}
-                              >
-                                {type}
-                              </Button>
-                            ))}
-                          </>
-                        )}
-                      />
-                    </div>
-                  </motion.div>
-                )}
-
-                {shouldShowCompanySize && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 4 }}
-                    transition={{ duration: 0.2, ease: 'easeOut' }}
-                    className="flex flex-col gap-[4px]"
-                  >
-                    <label className="text-xs font-medium text-[#525866]">Company size</label>
-                    <div className="flex flex-wrap gap-[8px]">
-                      <Controller
-                        name="companySize"
-                        control={control}
-                        render={({ field }) => (
-                          <>
-                            {Object.values(CompanySizeEnum).map((size, index) => (
-                              <Button
-                                variant="secondary"
-                                key={index}
-                                mode="outline"
-                                size="xs"
-                                type="button"
-                                className={`h-[28px] rounded-full px-3 py-1 text-sm ${
-                                  field.value === size ? 'border-[#E1E4EA] bg-[#F2F5F8]' : 'border-[#E1E4EA]'
-                                }`}
-                                onClick={() => field.onChange(size)}
-                              >
-                                {size}
-                              </Button>
-                            ))}
-                          </>
-                        )}
-                      />
-                    </div>
+                    <Button
+                      type="submit"
+                      isLoading={submitQuestionnaireMutation.isPending}
+                      disabled={submitQuestionnaireMutation.isPending}
+                    >
+                      Continue
+                    </Button>
                   </motion.div>
                 )}
               </AnimatePresence>
-            </div>
-
-            <AnimatePresence>
-              {isFormValid && (
-                <motion.div
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 4 }}
-                  transition={{ duration: 0.2, ease: 'easeOut' }}
-                  className="flex flex-col gap-3"
-                >
-                  <Button
-                    type="submit"
-                    isLoading={submitQuestionnaireMutation.isPending}
-                    disabled={submitQuestionnaireMutation.isPending}
-                  >
-                    Continue
-                  </Button>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </FormRoot>
+            </FormRoot>
+          </Form>
         </div>
       </div>
 

@@ -8,6 +8,16 @@ import { useEffect, useState } from 'react';
 import { HeaderButton } from './header-navigation/header-button';
 import { InboxBellFilled } from './icons/inbox-bell-filled';
 
+declare global {
+  interface Window {
+    Clerk: {
+      session: {
+        getToken: (options: { template: string }) => Promise<string>;
+      };
+    };
+  }
+}
+
 const InboxInner = () => {
   const [open, setOpen] = useState(false);
   const [jingle, setJingle] = useState(false);

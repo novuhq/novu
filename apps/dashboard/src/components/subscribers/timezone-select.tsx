@@ -1,23 +1,21 @@
 import { cn } from '@/utils/ui';
+import { useRef, useState } from 'react';
 import { RiArrowDownSLine, RiCheckLine, RiSearchLine, RiTimeLine } from 'react-icons/ri';
 import { useTimezoneSelect } from 'react-timezone-select';
-import { Button } from '../primitives/button';
+import { Button, ButtonProps } from '../primitives/button';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '../primitives/command';
 import { Popover, PopoverContent, PopoverTrigger } from '../primitives/popover';
 import TruncatedText from '../truncated-text';
-import { useRef, useState } from 'react';
 
-export function TimezoneSelect({
-  value,
-  disabled,
-  onChange,
-  readOnly,
-}: {
+type TimezoneSelectProps = ButtonProps & {
   value?: string;
   disabled?: boolean;
   readOnly?: boolean;
   onChange: (val: string) => void;
-}) {
+};
+
+export function TimezoneSelect(props: TimezoneSelectProps) {
+  const { value, disabled, readOnly, onChange, className, ...rest } = props;
   const [open, setOpen] = useState(false);
   const { options, parseTimezone } = useTimezoneSelect({ labelStyle: 'abbrev', displayValue: 'UTC' });
   const listRef = useRef<HTMLDivElement>(null);
@@ -29,8 +27,9 @@ export function TimezoneSelect({
         <Button
           variant="secondary"
           mode="outline"
-          className="flex h-8 w-full items-center gap-1 rounded-lg px-3 focus:z-10"
+          className={cn('flex h-8 w-full items-center gap-1 truncate rounded-lg px-3 focus:z-10', className)}
           disabled={disabled}
+          {...rest}
         >
           <div className="flex max-w-full flex-1 items-center gap-1 overflow-hidden">
             <div>

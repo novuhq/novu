@@ -78,6 +78,7 @@ export const TriggerNode = ({
 };
 
 type StepNodeProps = ComponentProps<typeof Node> & { data: NodeData };
+
 const StepNode = (props: StepNodeProps) => {
   const navigate = useNavigate();
   const { className, data, ...rest } = props;
@@ -119,7 +120,7 @@ const StepNode = (props: StepNodeProps) => {
   return <Node aria-selected={isSelected} className={cn('group', className)} {...rest} />;
 };
 
-const NodeWrapper = ({ children, data }: { children: React.ReactNode; data: NodeData }) => {
+const NodeWrapper = ({ children, data, type }: { children: React.ReactNode; data: NodeData; type: StepTypeEnum }) => {
   if (data.readOnly) {
     return children;
   }
@@ -132,6 +133,7 @@ const NodeWrapper = ({ children, data }: { children: React.ReactNode; data: Node
         e.stopPropagation();
       }}
       className="contents"
+      data-testid={`${type}-node`}
     >
       {children}
     </Link>
@@ -142,7 +144,7 @@ export const EmailNode = ({ data }: NodeProps<NodeType>) => {
   const Icon = STEP_TYPE_TO_ICON[StepTypeEnum.EMAIL];
 
   return (
-    <NodeWrapper data={data}>
+    <NodeWrapper data={data} type={StepTypeEnum.EMAIL}>
       <StepNode data={data}>
         <NodeHeader type={StepTypeEnum.EMAIL}>
           <NodeIcon variant={STEP_TYPE_TO_COLOR[StepTypeEnum.EMAIL]}>
@@ -168,7 +170,7 @@ export const SmsNode = (props: NodeProps<NodeType>) => {
   const Icon = STEP_TYPE_TO_ICON[StepTypeEnum.SMS];
 
   return (
-    <NodeWrapper data={data}>
+    <NodeWrapper data={data} type={StepTypeEnum.SMS}>
       <StepNode data={data}>
         <NodeHeader type={StepTypeEnum.SMS}>
           <NodeIcon variant={STEP_TYPE_TO_COLOR[StepTypeEnum.SMS]}>
@@ -192,7 +194,7 @@ export const InAppNode = (props: NodeProps<NodeType>) => {
   const Icon = STEP_TYPE_TO_ICON[StepTypeEnum.IN_APP];
 
   return (
-    <NodeWrapper data={data}>
+    <NodeWrapper data={data} type={StepTypeEnum.IN_APP}>
       <StepNode data={data}>
         <NodeHeader type={StepTypeEnum.IN_APP}>
           <NodeIcon variant={STEP_TYPE_TO_COLOR[StepTypeEnum.IN_APP]}>
@@ -216,7 +218,7 @@ export const PushNode = (props: NodeProps<NodeType>) => {
   const Icon = STEP_TYPE_TO_ICON[StepTypeEnum.PUSH];
 
   return (
-    <NodeWrapper data={data}>
+    <NodeWrapper data={data} type={StepTypeEnum.PUSH}>
       <StepNode data={data}>
         <NodeHeader type={StepTypeEnum.PUSH}>
           <NodeIcon variant={STEP_TYPE_TO_COLOR[StepTypeEnum.PUSH]}>
@@ -240,7 +242,7 @@ export const ChatNode = (props: NodeProps<NodeType>) => {
   const Icon = STEP_TYPE_TO_ICON[StepTypeEnum.CHAT];
 
   return (
-    <NodeWrapper data={data}>
+    <NodeWrapper data={data} type={StepTypeEnum.CHAT}>
       <StepNode data={data}>
         <NodeHeader type={StepTypeEnum.CHAT}>
           <NodeIcon variant={STEP_TYPE_TO_COLOR[StepTypeEnum.CHAT]}>
@@ -264,7 +266,7 @@ export const DelayNode = (props: NodeProps<NodeType>) => {
   const Icon = STEP_TYPE_TO_ICON[StepTypeEnum.DELAY];
 
   return (
-    <NodeWrapper data={data}>
+    <NodeWrapper data={data} type={StepTypeEnum.DELAY}>
       <StepNode data={data}>
         <NodeHeader type={StepTypeEnum.DELAY}>
           <NodeIcon variant={STEP_TYPE_TO_COLOR[StepTypeEnum.DELAY]}>
@@ -288,7 +290,7 @@ export const DigestNode = (props: NodeProps<NodeType>) => {
   const Icon = STEP_TYPE_TO_ICON[StepTypeEnum.DIGEST];
 
   return (
-    <NodeWrapper data={data}>
+    <NodeWrapper data={data} type={StepTypeEnum.DIGEST}>
       <StepNode data={data}>
         <NodeHeader type={StepTypeEnum.DIGEST}>
           <NodeIcon variant={STEP_TYPE_TO_COLOR[StepTypeEnum.DIGEST]}>
@@ -312,7 +314,7 @@ export const CustomNode = (props: NodeProps<NodeType>) => {
   const Icon = STEP_TYPE_TO_ICON[StepTypeEnum.CUSTOM];
 
   return (
-    <NodeWrapper data={data}>
+    <NodeWrapper data={data} type={StepTypeEnum.CUSTOM}>
       <StepNode data={data}>
         <NodeHeader type={StepTypeEnum.CUSTOM}>
           <NodeIcon variant={STEP_TYPE_TO_COLOR[StepTypeEnum.CUSTOM]}>
@@ -334,11 +336,13 @@ export const CustomNode = (props: NodeProps<NodeType>) => {
 export const AddNode = (_props: NodeProps<NodeType>) => {
   const { workflow, update } = useWorkflow();
   const navigate = useNavigate();
+
   if (!workflow) {
     return null;
   }
 
   const isReadOnly = workflow.origin === WorkflowOriginEnum.EXTERNAL;
+
   if (isReadOnly) {
     return null;
   }

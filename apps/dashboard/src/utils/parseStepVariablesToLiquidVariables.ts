@@ -46,9 +46,11 @@ export function parseStepVariables(schema: JSONSchemaDefinition): ParsedVariable
               type: 'variable',
               label: fullPath,
             });
+
             if (value.properties) {
               extractProperties({ type: 'object', properties: value.properties }, fullPath);
             }
+
             if (value.items) {
               const items = Array.isArray(value.items) ? value.items[0] : value.items;
               extractProperties(items, `${fullPath}[0]`);

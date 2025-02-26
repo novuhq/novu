@@ -175,6 +175,7 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
       setTimeout(() => setIsPauseModalOpen(true), 0);
       return;
     }
+
     onPauseWorkflow();
   };
 
@@ -211,9 +212,7 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
               className="z-10 flex size-2 p-0 px-1 opacity-0 group-hover:opacity-100"
               valueToCopy={workflow.workflowId}
               size="2xs"
-              mode="ghost"
-              onClick={stopPropagation}
-            ></CopyButton>
+            />
           </div>
         </WorkflowLinkTableCell>
         <WorkflowLinkTableCell className="min-w-[200px]">
@@ -242,7 +241,12 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
         <WorkflowLinkTableCell className="w-1">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <CompactButton icon={RiMore2Fill} variant="ghost" className="z-10 h-8 w-8 p-0"></CompactButton>
+              <CompactButton
+                icon={RiMore2Fill}
+                variant="ghost"
+                className="z-10 h-8 w-8 p-0"
+                data-testid="workflow-actions-menu"
+              ></CompactButton>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56" onClick={stopPropagation}>
               <DropdownMenuGroup>
@@ -275,7 +279,11 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
               <DropdownMenuGroup className="*:cursor-pointer">
-                <DropdownMenuItem onClick={handlePauseWorkflow} disabled={workflow.status === WorkflowStatusEnum.ERROR}>
+                <DropdownMenuItem
+                  onClick={handlePauseWorkflow}
+                  disabled={workflow.status === WorkflowStatusEnum.ERROR}
+                  data-testid={workflow.status === WorkflowStatusEnum.ACTIVE ? 'pause-workflow' : 'enable-workflow'}
+                >
                   {workflow.status === WorkflowStatusEnum.ACTIVE ? (
                     <>
                       <RiPauseCircleLine />
@@ -294,6 +302,7 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
                   onClick={() => {
                     setTimeout(() => setIsDeleteModalOpen(true), 0);
                   }}
+                  data-testid="delete-workflow"
                 >
                   <RiDeleteBin2Line />
                   Delete workflow

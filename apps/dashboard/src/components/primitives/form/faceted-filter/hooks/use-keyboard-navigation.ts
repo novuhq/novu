@@ -25,9 +25,11 @@ export function useKeyboardNavigation({ options, onSelect, initialSelectedValue 
           break;
         case 'Enter':
           e.preventDefault();
+
           if (focusedIndex >= 0 && focusedIndex < options.length) {
             onSelect(options[focusedIndex].value);
           }
+
           break;
       }
     }
@@ -40,6 +42,7 @@ export function useKeyboardNavigation({ options, onSelect, initialSelectedValue 
   useEffect(() => {
     if (initialSelectedValue) {
       const index = options.findIndex((option) => option.value === initialSelectedValue);
+
       if (index !== -1) {
         setFocusedIndex(index);
       }

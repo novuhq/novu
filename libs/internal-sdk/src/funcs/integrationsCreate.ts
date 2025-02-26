@@ -22,6 +22,7 @@ import * as errors from "../models/errors/index.js";
 import { SDKError } from "../models/errors/sdkerror.js";
 import { SDKValidationError } from "../models/errors/sdkvalidationerror.js";
 import * as operations from "../models/operations/index.js";
+import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
@@ -30,12 +31,12 @@ import { Result } from "../types/fp.js";
  * @remarks
  * Create an integration for the current environment the user is based on the API key provided
  */
-export async function integrationsCreate(
+export function integrationsCreate(
   client: NovuCore,
   createIntegrationRequestDto: components.CreateIntegrationRequestDto,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
-): Promise<
+): APIPromise<
   Result<
     operations.IntegrationsControllerCreateIntegrationResponse,
     | errors.ErrorDto
@@ -51,6 +52,38 @@ export async function integrationsCreate(
     | ConnectionError
   >
 > {
+  return new APIPromise($do(
+    client,
+    createIntegrationRequestDto,
+    idempotencyKey,
+    options,
+  ));
+}
+
+async function $do(
+  client: NovuCore,
+  createIntegrationRequestDto: components.CreateIntegrationRequestDto,
+  idempotencyKey?: string | undefined,
+  options?: RequestOptions,
+): Promise<
+  [
+    Result<
+      operations.IntegrationsControllerCreateIntegrationResponse,
+      | errors.ErrorDto
+      | errors.ErrorDto
+      | errors.ValidationErrorDto
+      | errors.ErrorDto
+      | SDKError
+      | SDKValidationError
+      | UnexpectedClientError
+      | InvalidRequestError
+      | RequestAbortedError
+      | RequestTimeoutError
+      | ConnectionError
+    >,
+    APICall,
+  ]
+> {
   const input: operations.IntegrationsControllerCreateIntegrationRequest = {
     createIntegrationRequestDto: createIntegrationRequestDto,
     idempotencyKey: idempotencyKey,
@@ -64,7 +97,7 @@ export async function integrationsCreate(
     "Input validation failed",
   );
   if (!parsed.ok) {
-    return parsed;
+    return [parsed, { status: "invalid" }];
   }
   const payload = parsed.value;
   const body = encodeJSON("body", payload.CreateIntegrationRequestDto, {
@@ -87,7 +120,7 @@ export async function integrationsCreate(
   const requestSecurity = resolveGlobalSecurity(securityInput);
 
   const context = {
-    baseURL: options?.serverURL ?? "",
+    baseURL: options?.serverURL ?? client._baseURL ?? "",
     operationID: "IntegrationsController_createIntegration",
     oAuth2Scopes: [],
 
@@ -120,7 +153,7 @@ export async function integrationsCreate(
     timeoutMs: options?.timeoutMs || client._options.timeoutMs || -1,
   }, options);
   if (!requestRes.ok) {
-    return requestRes;
+    return [requestRes, { status: "invalid" }];
   }
   const req = requestRes.value;
 
@@ -147,7 +180,7 @@ export async function integrationsCreate(
     retryCodes: context.retryCodes,
   });
   if (!doResult.ok) {
-    return doResult;
+    return [doResult, { status: "request-error", request: req }];
   }
   const response = doResult.value;
 
@@ -188,8 +221,8 @@ export async function integrationsCreate(
     M.fail("5XX"),
   )(response, { extraFields: responseFields });
   if (!result.ok) {
-    return result;
+    return [result, { status: "complete", request: req, response }];
   }
 
-  return result;
+  return [result, { status: "complete", request: req, response }];
 }

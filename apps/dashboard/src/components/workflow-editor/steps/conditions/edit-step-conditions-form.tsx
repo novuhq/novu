@@ -33,18 +33,22 @@ const getRuleSchema = (fields: Array<{ value: string }>): z.ZodType<RuleType | R
       .superRefine(({ field, operator, value }, ctx) => {
         if (operator === 'between' || operator === 'notBetween') {
           const values = value?.split(',').filter((val) => val.trim() !== '');
+
           if (!values || values.length !== 2) {
             ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Both values are required', path: ['value'] });
           }
         } else if (operator !== 'null' && operator !== 'notNull') {
           const trimmedValue = value?.trim();
+
           if (!trimmedValue || trimmedValue.length === 0) {
             ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Value is required', path: ['value'] });
           }
         }
+
         const isPayloadField = field.startsWith(PAYLOAD_FIELD_PREFIX) && field.length > PAYLOAD_FIELD_PREFIX.length;
         const isSubscriberDataField =
           field.startsWith(SUBSCRIBER_DATA_FIELD_PREFIX) && field.length > SUBSCRIBER_DATA_FIELD_PREFIX.length;
+
         if (!allowedFields.includes(field) && !isPayloadField && !isSubscriberDataField) {
           ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Value is not valid', path: ['field'] });
         }
@@ -117,6 +121,7 @@ export const EditStepConditionsForm = () => {
     const updateStepData: Partial<StepUpdateDto> = {
       controlValues: { ...step.controls.values, skip },
     };
+
     if (!skip) {
       updateStepData.controlValues!.skip = null;
     }
@@ -152,9 +157,11 @@ export const EditStepConditionsForm = () => {
     if (!step) return;
 
     const stepConditionIssues = step.issues?.controls?.skip;
+
     if (stepConditionIssues && stepConditionIssues.length > 0) {
       stepConditionIssues.forEach((issue) => {
         const queryPath = 'query.rules.' + issue.variableName?.split('.').join('.rules.');
+
         if (issue.issueType === StepContentIssueEnum.MISSING_VALUE) {
           form.setError(`${queryPath}.value` as keyof typeof form.formState.errors, {
             message: issue.message,

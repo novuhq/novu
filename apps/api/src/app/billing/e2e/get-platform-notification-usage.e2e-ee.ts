@@ -1,7 +1,6 @@
 /* eslint-disable global-require */
-import sinon from 'sinon';
 import { expect } from 'chai';
-import { EnvironmentRepository, NotificationRepository, CommunityOrganizationRepository } from '@novu/dal';
+import { CommunityOrganizationRepository, EnvironmentRepository, NotificationRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import { ApiServiceLevelEnum, isClerkEnabled } from '@novu/shared';
 

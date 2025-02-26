@@ -26,4 +26,6 @@ tsconfig.node.tsbuildinfo
 /test-results/
 /playwright-report/
 /blob-report/
-/playwright/.cache/
+/playwright/
+.env.test
+.env.playwright

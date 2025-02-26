@@ -16,6 +16,7 @@ import {
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 
 type ConfigureInAppStepPreviewProps = HTMLAttributes<HTMLDivElement>;
+
 export const ConfigureInAppStepPreview = (props: ConfigureInAppStepPreviewProps) => {
   const {
     previewStep,
@@ -44,6 +45,7 @@ export const ConfigureInAppStepPreview = (props: ConfigureInAppStepPreviewProps)
   }, [workflowSlug, stepSlug, previewStep, step, isPending]);
 
   const previewResult = previewData?.result;
+
   if (isPreviewPending || previewData === undefined) {
     return (
       <InAppPreview {...props}>

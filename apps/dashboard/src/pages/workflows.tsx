@@ -60,6 +60,7 @@ export const WorkflowsPage = () => {
     } else {
       searchParams.delete('query');
     }
+
     setSearchParams(searchParams);
   };
 
