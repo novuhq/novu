@@ -32,21 +32,25 @@ export class WorkflowEditorPage {
 
   async clickLastStep(stepType: StepTypeEnum): Promise<void> {
     const step = this.page.getByTestId(`${stepType}-node`).last();
+    await expect(step).toBeVisible();
     await step.click();
   }
 
   async clickFirstStep(stepType: StepTypeEnum): Promise<void> {
     const step = this.page.getByTestId(`${stepType}-node`).first();
+    await expect(step).toBeVisible();
     await step.click();
   }
 
   async clickWorkflowsBreadcrumb(): Promise<void> {
     const workflowsLink = this.page.getByRole('link').filter({ hasText: 'Workflows' });
+    await expect(workflowsLink).toBeVisible();
     await workflowsLink.click();
   }
 
   async triggerTabClick(): Promise<void> {
     const triggerTab = this.page.getByRole('tab').filter({ hasText: 'Trigger' });
+    await expect(triggerTab).toBeVisible();
     await triggerTab.click();
   }
 

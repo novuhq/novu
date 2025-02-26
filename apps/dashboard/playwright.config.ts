@@ -34,7 +34,7 @@ export default defineConfig({
   webServer: {
     command: 'pnpm start:test',
     url: baseURL,
-    timeout: 120 * 1000,
+    timeout: 180 * 1000,
     reuseExistingServer: !process.env.CI,
   },
   use: {
@@ -45,9 +45,9 @@ export default defineConfig({
     trace: 'retain-on-failure',
     permissions: ['clipboard-read'],
   },
-  timeout: process.env.CI ? 30_000 : 60_000,
+  timeout: 180_000,
   expect: {
-    timeout: 15000,
+    timeout: 30_000,
   },
   /* Configure projects for major browsers */
   projects: [

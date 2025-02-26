@@ -53,6 +53,7 @@ export class StepConfigSidebar {
   async setRegularDigestAmountInputValue(value: string): Promise<void> {
     const regularDigestAmountInput = this.page.getByTestId('regular-digest-amount-input');
     await regularDigestAmountInput.fill(value);
+    await regularDigestAmountInput.press('Tab');
   }
 
   async close(): Promise<void> {
