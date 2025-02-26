@@ -1,4 +1,4 @@
-import { type Page } from '@playwright/test';
+import { type Page, expect } from '@playwright/test';
 
 export class StepConfigSidebar {
   constructor(private page: Page) {}
@@ -30,7 +30,9 @@ export class StepConfigSidebar {
   async updateStepName({ oldStepName, newStepName }: { newStepName: string; oldStepName: string }): Promise<void> {
     const stepNameInput = this.page.locator(`input[value="${oldStepName}"]`);
     await stepNameInput.fill(`${newStepName}`);
-    await this.page.locator(`input[value="${newStepName}"]`).blur();
+    const newStepNameInput = this.page.locator(`input[value="${newStepName}"]`);
+    await expect(newStepNameInput).toBeVisible();
+    await newStepNameInput.blur();
 
     // await for the step name to be updated
     await this.page.waitForResponse('**/v2/workflows/**');

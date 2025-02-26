@@ -17,7 +17,7 @@ export class WorkflowEditorPage {
     await addStepMenuBtn.click();
 
     const inAppMenuItem = this.page.getByTestId(`add-step-menu-item-${stepType}`);
-    await inAppMenuItem.click({ force: true });
+    await inAppMenuItem.click();
 
     // await for the workflow steps to be updated
     await this.page.waitForResponse(
@@ -30,7 +30,7 @@ export class WorkflowEditorPage {
     await addStepMenuBtn.click();
 
     const inAppMenuItem = this.page.getByTestId(`add-step-menu-item-${stepType}`);
-    await inAppMenuItem.click({ force: true });
+    await inAppMenuItem.click();
 
     // await for the workflow steps to be updated
     await this.page.waitForResponse(
