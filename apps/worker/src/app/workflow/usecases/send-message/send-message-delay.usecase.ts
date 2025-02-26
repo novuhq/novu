@@ -1,7 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { MessageRepository } from '@novu/dal';
 import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
-import { InstrumentUsecase, DetailEnum, ExecutionLogRoute, ExecutionLogRouteCommand } from '@novu/application-generic';
+import {
+  InstrumentUsecase,
+  DetailEnum,
+  CreateExecutionDetails,
+  CreateExecutionDetailsCommand,
+} from '@novu/application-generic';
 
 import { SendMessageType } from './send-message-type.usecase';
 import { SendMessageCommand } from './send-message.command';
@@ -10,16 +15,16 @@ import { SendMessageCommand } from './send-message.command';
 export class SendMessageDelay extends SendMessageType {
   constructor(
     protected messageRepository: MessageRepository,
-    protected executionLogRoute: ExecutionLogRoute
+    protected createExecutionDetails: CreateExecutionDetails
   ) {
-    super(messageRepository, executionLogRoute);
+    super(messageRepository, createExecutionDetails);
   }
 
   @InstrumentUsecase()
   public async execute(command: SendMessageCommand) {
-    await this.executionLogRoute.execute(
-      ExecutionLogRouteCommand.create({
-        ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
+    await this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
         detail: DetailEnum.DELAY_FINISHED,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.SUCCESS,

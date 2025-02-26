@@ -38,6 +38,7 @@ export function useFormProtection<T>(props: UseFormProtectionProps<T>) {
         if (pendingChange) {
           onValueChange(pendingChange.value);
         }
+
         setShowAlert(false);
         setPendingChange(null);
       }}

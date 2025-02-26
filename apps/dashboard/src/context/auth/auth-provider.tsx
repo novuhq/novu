@@ -47,6 +47,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (!clerkUser || orgId) return;
 
     const hasOrganizations = clerkUser.organizationMemberships.length > 0;
+
     if (!hasOrganizations && window.location.pathname !== ROUTES.SIGNUP_ORGANIZATION_LIST) {
       return redirectTo({ url: ROUTES.SIGNUP_ORGANIZATION_LIST });
     }

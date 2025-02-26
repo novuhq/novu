@@ -119,6 +119,7 @@ export const ChannelPreferencesForm = (props: ConfigureWorkflowFormProps) => {
     // If all channels are same value(all true or all false), update the "all" channel value to true/false
     // Also, update the "all" channel value to true if a single channel is enabled and it's not already enabled
     const areAllChannelsSameValue = checkHasEveryChannelSameValue(updatedUserPreferences.channels, value);
+
     if (areAllChannelsSameValue || (value && !updatedUserPreferences.all.enabled)) {
       updatedUserPreferences.all.enabled = value;
     }
@@ -212,9 +213,11 @@ export const ChannelPreferencesForm = (props: ConfigureWorkflowFormProps) => {
                           checked={field.value}
                           onCheckedChange={(checked) => {
                             field.onChange(checked);
+
                             if (!checked) {
                               updateUserPreference(null);
                             }
+
                             track(TelemetryEvent.WORKFLOW_PREFERENCES_OVERRIDE_USED, {
                               new_status: checked,
                             });

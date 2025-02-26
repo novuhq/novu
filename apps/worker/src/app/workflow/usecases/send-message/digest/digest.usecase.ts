@@ -18,8 +18,8 @@ import {
 } from '@novu/shared';
 import {
   DetailEnum,
-  ExecutionLogRoute,
-  ExecutionLogRouteCommand,
+  CreateExecutionDetails,
+  CreateExecutionDetailsCommand,
   FeatureFlagsService,
 } from '@novu/application-generic';
 
@@ -38,13 +38,13 @@ const LOG_CONTEXT = 'Digest';
 export class Digest extends SendMessageType {
   constructor(
     protected messageRepository: MessageRepository,
-    protected executionLogRoute: ExecutionLogRoute,
+    protected createExecutionDetails: CreateExecutionDetails,
     protected jobRepository: JobRepository,
     private getDigestEventsRegular: GetDigestEventsRegular,
     private getDigestEventsBackoff: GetDigestEventsBackoff,
     private featureFlagService: FeatureFlagsService
   ) {
-    super(messageRepository, executionLogRoute);
+    super(messageRepository, createExecutionDetails);
   }
 
   public async execute(command: SendMessageCommand) {
@@ -65,9 +65,9 @@ export class Digest extends SendMessageType {
     const events = await getEvents(command, currentJob);
     const nextJobs = await this.getJobsToUpdate(command);
 
-    await this.executionLogRoute.execute(
-      ExecutionLogRouteCommand.create({
-        ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
+    await this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
         detail: DetailEnum.DIGEST_TRIGGERED_EVENTS,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.SUCCESS,

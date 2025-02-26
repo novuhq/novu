@@ -8,7 +8,6 @@ import {
   CompileTemplate,
   ConditionsFilter,
   CreateExecutionDetails,
-  ExecutionLogRoute,
   GetDecryptedIntegrations,
   GetLayoutUseCase,
   GetNovuLayout,
@@ -20,10 +19,10 @@ import {
   ProcessTenant,
   SelectIntegration,
   SelectVariant,
+  TierRestrictionsValidateUsecase,
   TriggerBroadcast,
   TriggerEvent,
   TriggerMulticast,
-  TierRestrictionsValidateUsecase,
   WorkflowInMemoryProviderService,
 } from '@novu/application-generic';
 import { CommunityOrganizationRepository, JobRepository, PreferencesRepository } from '@novu/dal';
@@ -86,9 +85,9 @@ const REPOSITORIES = [JobRepository, CommunityOrganizationRepository, Preference
 
 const USE_CASES = [
   AddDelayJob,
+  TierRestrictionsValidateUsecase,
   MergeOrCreateDigest,
   AddJob,
-  TierRestrictionsValidateUsecase,
   CalculateLimitNovuIntegration,
   CompileEmailTemplate,
   CompileTemplate,
@@ -130,7 +129,6 @@ const USE_CASES = [
   TriggerMulticast,
   CompileInAppTemplate,
   InboundEmailParse,
-  ExecutionLogRoute,
   ExecuteBridgeJob,
   GetPreferences,
 ];

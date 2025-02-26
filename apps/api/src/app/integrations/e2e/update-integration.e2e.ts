@@ -1,4 +1,4 @@
-import { EnvironmentRepository, IntegrationRepository, CommunityOrganizationRepository } from '@novu/dal';
+import { CommunityOrganizationRepository, EnvironmentRepository, IntegrationRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import {

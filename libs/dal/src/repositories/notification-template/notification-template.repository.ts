@@ -10,11 +10,6 @@ import { NotificationTemplateDBModel, NotificationTemplateEntity } from './notif
 import { NotificationTemplate } from './notification-template.schema';
 
 type NotificationTemplateQuery = FilterQuery<NotificationTemplateDBModel> & EnforceEnvOrOrgIds;
-// eslint-disable-next-line @typescript-eslint/naming-convention
-export interface FindByIdQuery {
-  id: string;
-  environmentId: string;
-}
 
 export class NotificationTemplateRepository extends BaseRepository<
   NotificationTemplateDBModel,
@@ -39,6 +34,7 @@ export class NotificationTemplateRepository extends BaseRepository<
 
     return this.mapEntity(item);
   }
+
   async findAllByTriggerIdentifier(environmentId: string, identifier: string): Promise<NotificationTemplateEntity[]> {
     const requestQuery: NotificationTemplateQuery = {
       _environmentId: environmentId,
@@ -51,7 +47,14 @@ export class NotificationTemplateRepository extends BaseRepository<
   }
 
   async findById(id: string, environmentId: string) {
-    return this.findByIdQuery({ id, environmentId });
+    const item = await this.MongooseModel.findOne({
+      _id: id,
+      _environmentId: environmentId,
+    })
+      .populate('steps.template')
+      .populate('steps.variants.template');
+
+    return this.mapEntity(item);
   }
 
   async findByTriggerIdentifierAndUpdate(environmentId: string, triggerIdentifier: string, lastTriggeredAt: Date) {
@@ -65,17 +68,6 @@ export class NotificationTemplateRepository extends BaseRepository<
         lastTriggeredAt,
       },
     }).populate('steps.template');
-
-    return this.mapEntity(item);
-  }
-
-  async findByIdQuery(query: FindByIdQuery) {
-    const item = await this.MongooseModel.findOne({
-      _id: query.id,
-      _environmentId: query.environmentId,
-    })
-      .populate('steps.template')
-      .populate('steps.variants.template');
 
     return this.mapEntity(item);
   }

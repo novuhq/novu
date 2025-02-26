@@ -54,6 +54,7 @@ function Separator({
 }: React.HTMLAttributes<HTMLDivElement> & VariantProps<typeof separatorVariants>) {
   return <div role="separator" className={separatorVariants({ variant, class: className })} {...rest} />;
 }
+
 Separator.displayName = SEPARATOR_ROOT_NAME;
 
 export { Separator };

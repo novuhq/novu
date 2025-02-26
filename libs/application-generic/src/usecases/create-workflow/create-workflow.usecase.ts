@@ -19,12 +19,7 @@ import {
 import { PinoLogger } from 'nestjs-pino';
 import { CreateWorkflowCommand, NotificationStep, NotificationStepVariantCommand } from './create-workflow.command';
 import { CreateChange, CreateChangeCommand } from '../create-change';
-import {
-  AnalyticsService,
-  buildNotificationTemplateIdentifierKey,
-  buildNotificationTemplateKey,
-  InvalidateCacheService,
-} from '../../services';
+import { AnalyticsService, InvalidateCacheService } from '../../services';
 import { ContentService } from '../../services/content.service';
 import { isVariantEmpty } from '../../utils/variants';
 import { CreateMessageTemplate, CreateMessageTemplateCommand } from '../message-template';
@@ -307,19 +302,6 @@ export class CreateWorkflow {
         })
       );
     }
-
-    await this.invalidateCache.invalidateByKey({
-      key: buildNotificationTemplateIdentifierKey({
-        templateIdentifier: savedWorkflow.triggers[0].identifier,
-        _environmentId: command.environmentId,
-      }),
-    });
-    await this.invalidateCache.invalidateByKey({
-      key: buildNotificationTemplateKey({
-        _id: savedWorkflow._id,
-        _environmentId: command.environmentId,
-      }),
-    });
 
     const item = await this.notificationTemplateRepository.findById(savedWorkflow._id, command.environmentId);
     if (!item) throw new NotFoundException(`Workflow ${savedWorkflow._id} is not found`);

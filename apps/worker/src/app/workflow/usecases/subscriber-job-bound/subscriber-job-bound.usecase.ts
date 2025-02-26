@@ -1,5 +1,17 @@
 import { Injectable, Logger } from '@nestjs/common';
 
+import {
+  AnalyticsService,
+  ApiException,
+  CachedEntity,
+  CreateNotificationJobs,
+  CreateNotificationJobsCommand,
+  CreateOrUpdateSubscriberCommand,
+  CreateOrUpdateSubscriberUseCase,
+  Instrument,
+  InstrumentUsecase,
+  PinoLogger,
+} from '@novu/application-generic';
 import { IntegrationRepository, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
 import {
   buildWorkflowPreferences,
@@ -10,19 +22,6 @@ import {
   STEP_TYPE_TO_CHANNEL_TYPE,
   WorkflowTypeEnum,
 } from '@novu/shared';
-import {
-  AnalyticsService,
-  ApiException,
-  buildNotificationTemplateKey,
-  CachedEntity,
-  CreateNotificationJobs,
-  CreateNotificationJobsCommand,
-  CreateOrUpdateSubscriberCommand,
-  CreateOrUpdateSubscriberUseCase,
-  Instrument,
-  InstrumentUsecase,
-  PinoLogger,
-} from '@novu/application-generic';
 import { StoreSubscriberJobs, StoreSubscriberJobsCommand } from '../store-subscriber-jobs';
 import { SubscriberJobBoundCommand } from './subscriber-job-bound.command';
 
@@ -88,6 +87,7 @@ export class SubscriberJobBound {
     this.analyticsService.mixpanelTrack('Notification event trigger - [Triggers]', segmentUserId, {
       name: template.name,
       type: template?.type || WorkflowTypeEnum.REGULAR,
+      origin: template?.origin,
       transactionId: command.transactionId,
       _template: template._id,
       _organization: command.organizationId,
@@ -227,13 +227,6 @@ export class SubscriberJobBound {
     return true;
   }
 
-  @CachedEntity({
-    builder: (command: { _id: string; environmentId: string }) =>
-      buildNotificationTemplateKey({
-        _environmentId: command.environmentId,
-        _id: command._id,
-      }),
-  })
   private async getNotificationTemplate({ _id, environmentId }: { _id: string; environmentId: string }) {
     return await this.notificationTemplateRepository.findById(_id, environmentId);
   }

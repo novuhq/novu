@@ -1,20 +1,30 @@
-import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, Logger, OnModuleInit } from '@nestjs/common';
 import { CommunityOrganizationRepository, EnvironmentRepository } from '@novu/dal';
-import { buildMaximumApiRateLimitKey, CachedEntity, InstrumentUsecase } from '@novu/application-generic';
-import { ApiRateLimitCategoryEnum, ApiServiceLevelEnum, IApiRateLimitMaximum } from '@novu/shared';
+import { buildMaximumApiRateLimitKey, CachedEntity, Instrument, InstrumentUsecase } from '@novu/application-generic';
+import {
+  ApiRateLimitCategoryEnum,
+  ApiRateLimitCategoryToFeatureName,
+  ApiRateLimitServiceMaximumEnvVarFormat,
+  ApiServiceLevelEnum,
+  getFeatureForTierAsNumber,
+  IApiRateLimitServiceMaximum,
+} from '@novu/shared';
 import { GetApiRateLimitMaximumCommand } from './get-api-rate-limit-maximum.command';
-import { GetApiRateLimitServiceMaximumConfig } from '../get-api-rate-limit-service-maximum-config';
-import { ApiServiceLevel, CUSTOM_API_SERVICE_LEVEL, GetApiRateLimitMaximumDto } from './get-api-rate-limit-maximum.dto';
+import { CUSTOM_API_SERVICE_LEVEL, GetApiRateLimitMaximumDto } from './get-api-rate-limit-maximum.dto';
 
 const LOG_CONTEXT = 'GetApiRateLimit';
 
 @Injectable()
-export class GetApiRateLimitMaximum {
+export class GetApiRateLimitMaximum implements OnModuleInit {
+  private apiRateLimitRecord: IApiRateLimitServiceMaximum;
   constructor(
     private environmentRepository: EnvironmentRepository,
-    private organizationRepository: CommunityOrganizationRepository,
-    private getDefaultApiRateLimits: GetApiRateLimitServiceMaximumConfig
+    private organizationRepository: CommunityOrganizationRepository
   ) {}
+
+  onModuleInit() {
+    this.apiRateLimitRecord = this.buildApiRateLimitRecord();
+  }
 
   @InstrumentUsecase()
   async execute(command: GetApiRateLimitMaximumCommand): Promise<GetApiRateLimitMaximumDto> {
@@ -41,6 +51,34 @@ export class GetApiRateLimitMaximum {
     _environmentId: string;
     _organizationId: string;
   }): Promise<GetApiRateLimitMaximumDto> {
+    const environment = await this.getEnvironment(_environmentId);
+
+    if (environment.apiRateLimits) {
+      return [environment.apiRateLimits[apiRateLimitCategory], CUSTOM_API_SERVICE_LEVEL];
+    }
+    const apiServiceLevel = await this.getOrganizationApiServiceLevel(_organizationId);
+    const apiRateLimitRecord = this.apiRateLimitRecord[apiServiceLevel];
+
+    return [apiRateLimitRecord[apiRateLimitCategory], apiServiceLevel];
+  }
+
+  private async getOrganizationApiServiceLevel(_organizationId: string): Promise<ApiServiceLevelEnum> {
+    const organization = await this.organizationRepository.findById(_organizationId);
+
+    if (!organization) {
+      const message = `Organization id: ${_organizationId} not found`;
+      Logger.error(message, LOG_CONTEXT);
+      throw new InternalServerErrorException(message);
+    }
+
+    if (organization.apiServiceLevel) {
+      return organization.apiServiceLevel;
+    }
+
+    return ApiServiceLevelEnum.UNLIMITED;
+  }
+
+  private async getEnvironment(_environmentId: string) {
     const environment = await this.environmentRepository.findOne({ _id: _environmentId });
 
     if (!environment) {
@@ -49,31 +87,39 @@ export class GetApiRateLimitMaximum {
       throw new InternalServerErrorException(message);
     }
 
-    let apiRateLimits: IApiRateLimitMaximum;
-    let apiServiceLevel: ApiServiceLevel;
-    if (environment.apiRateLimits) {
-      apiServiceLevel = CUSTOM_API_SERVICE_LEVEL;
-      apiRateLimits = environment.apiRateLimits;
-    } else {
-      const organization = await this.organizationRepository.findById(_organizationId);
+    return environment;
+  }
+  @Instrument()
+  private buildApiRateLimitRecord(): IApiRateLimitServiceMaximum {
+    // Read process environment only once for performance
+    const processEnv = process.env;
 
-      if (!organization) {
-        const message = `Organization id: ${_organizationId} not found`;
-        Logger.error(message, LOG_CONTEXT);
-        throw new InternalServerErrorException(message);
-      }
+    return Object.values(ApiServiceLevelEnum).reduce((acc, apiServiceLevel) => {
+      acc[apiServiceLevel] = Object.values(ApiRateLimitCategoryEnum).reduce(
+        (categoryAcc, apiRateLimitCategory) => {
+          const featureName = ApiRateLimitCategoryToFeatureName[apiRateLimitCategory];
+          const featureForTierAsNumber = getFeatureForTierAsNumber(featureName, apiServiceLevel);
+          const envVarName = this.getEnvVarName(apiServiceLevel, apiRateLimitCategory);
+          const envVarValue = processEnv[envVarName];
 
-      if (organization.apiServiceLevel) {
-        apiServiceLevel = organization.apiServiceLevel;
-      } else {
-        // TODO: NV-3067 - Remove this once all organizations have a service level
-        apiServiceLevel = ApiServiceLevelEnum.UNLIMITED;
-      }
-      apiRateLimits = this.getDefaultApiRateLimits.default[apiServiceLevel];
-    }
+          // eslint-disable-next-line no-param-reassign
+          categoryAcc[apiRateLimitCategory] = envVarValue ? Number(envVarValue) : featureForTierAsNumber;
 
-    const apiRateLimit = apiRateLimits[apiRateLimitCategory];
+          return categoryAcc;
+        },
+        {} as Record<ApiRateLimitCategoryEnum, number>
+      );
 
-    return [apiRateLimit, apiServiceLevel];
+      return acc;
+    }, {} as IApiRateLimitServiceMaximum);
+  }
+
+  private getEnvVarName(
+    apiServiceLevel: ApiServiceLevelEnum,
+    apiRateLimitCategory: ApiRateLimitCategoryEnum
+  ): ApiRateLimitServiceMaximumEnvVarFormat {
+    return `API_RATE_LIMIT_MAXIMUM_${apiServiceLevel.toUpperCase() as Uppercase<ApiServiceLevelEnum>}_${
+      apiRateLimitCategory.toUpperCase() as Uppercase<ApiRateLimitCategoryEnum>
+    }`;
   }
 }

@@ -14,6 +14,7 @@ interface TemplateTabsProps {
   onTabChange: (tab: string) => void;
   previewStep?: () => void;
 }
+
 export const TemplateTabs = ({
   editorContent,
   previewContent,
@@ -58,6 +59,7 @@ export const TemplateTabs = ({
             e.stopPropagation();
             navigate('../', { relative: 'path' });
           }}
+          data-testid="tabs-close-button"
         >
           <span className="sr-only">Close</span>
         </CompactButton>

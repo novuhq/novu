@@ -58,6 +58,7 @@ export function IntegrationsList({ onItemClick }: IntegrationsListProps) {
     return integrations?.reduce(
       (acc, integration) => {
         const channel = integration.channel;
+
         if (!acc[channel]) {
           acc[channel] = [];
         }

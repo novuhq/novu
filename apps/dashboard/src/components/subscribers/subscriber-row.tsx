@@ -120,8 +120,6 @@ export const SubscriberRow = ({ subscriber }: SubscriberRowProps) => {
                   className="z-10 flex size-2 p-0 px-1 opacity-0 group-hover:opacity-100"
                   valueToCopy={subscriber.subscriberId}
                   size="2xs"
-                  mode="ghost"
-                  onClick={stopPropagation}
                 />
               </div>
             </div>

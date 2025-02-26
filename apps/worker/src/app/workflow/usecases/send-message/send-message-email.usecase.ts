@@ -32,8 +32,8 @@ import {
   MailFactory,
   GetNovuProviderCredentials,
   SelectVariant,
-  ExecutionLogRoute,
-  ExecutionLogRouteCommand,
+  CreateExecutionDetails,
+  CreateExecutionDetailsCommand,
   FeatureFlagsService,
 } from '@novu/application-generic';
 import { EmailOutput } from '@novu/framework/internal';
@@ -53,7 +53,7 @@ export class SendMessageEmail extends SendMessageBase {
     protected subscriberRepository: SubscriberRepository,
     protected messageRepository: MessageRepository,
     protected layoutRepository: LayoutRepository,
-    protected executionLogRoute: ExecutionLogRoute,
+    protected createExecutionDetails: CreateExecutionDetails,
     private compileEmailTemplateUsecase: CompileEmailTemplate,
     protected selectIntegration: SelectIntegration,
     protected getNovuProviderCredentials: GetNovuProviderCredentials,
@@ -63,7 +63,7 @@ export class SendMessageEmail extends SendMessageBase {
   ) {
     super(
       messageRepository,
-      executionLogRoute,
+      createExecutionDetails,
       subscriberRepository,
       selectIntegration,
       getNovuProviderCredentials,
@@ -89,9 +89,9 @@ export class SendMessageEmail extends SendMessageBase {
         },
       });
     } catch (e) {
-      await this.executionLogRoute.execute(
-        ExecutionLogRouteCommand.create({
-          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           detail: DetailEnum.LIMIT_PASSED_NOVU_INTEGRATION,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
@@ -117,9 +117,9 @@ export class SendMessageEmail extends SendMessageBase {
     });
 
     if (!integration) {
-      await this.executionLogRoute.execute(
-        ExecutionLogRouteCommand.create({
-          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
@@ -265,9 +265,9 @@ export class SendMessageEmail extends SendMessageBase {
       return;
     }
 
-    await this.executionLogRoute.execute(
-      ExecutionLogRouteCommand.create({
-        ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
+    await this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
         detail: DetailEnum.MESSAGE_CREATED,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.PENDING,
@@ -325,9 +325,9 @@ export class SendMessageEmail extends SendMessageBase {
 
   private async getReplyTo(command: SendMessageCommand, messageId: string): Promise<string | null> {
     if (!command.step.replyCallback?.url) {
-      await this.executionLogRoute.execute(
-        ExecutionLogRouteCommand.create({
-          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId,
           detail: DetailEnum.REPLY_CALLBACK_MISSING_REPLAY_CALLBACK_URL,
           source: ExecutionDetailsSourceEnum.INTERNAL,
@@ -356,9 +356,9 @@ export class SendMessageEmail extends SendMessageBase {
             ? DetailEnum.REPLY_CALLBACK_MISSING_MX_RECORD_CONFIGURATION
             : DetailEnum.REPLY_CALLBACK_MISSING_MX_ROUTE_DOMAIN_CONFIGURATION;
 
-      await this.executionLogRoute.execute(
-        ExecutionLogRouteCommand.create({
-          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId,
           detail: detailEnum,
           source: ExecutionDetailsSourceEnum.INTERNAL,
@@ -382,9 +382,9 @@ export class SendMessageEmail extends SendMessageBase {
 
       await this.sendErrorStatus(message, status, errorId, mailErrorMessage, command);
 
-      await this.executionLogRoute.execute(
-        ExecutionLogRouteCommand.create({
-          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
           detail: DetailEnum.SUBSCRIBER_NO_CHANNEL_DETAILS,
           source: ExecutionDetailsSourceEnum.INTERNAL,
@@ -402,9 +402,9 @@ export class SendMessageEmail extends SendMessageBase {
 
       await this.sendErrorStatus(message, status, errorId, integrationError, command);
 
-      await this.executionLogRoute.execute(
-        ExecutionLogRouteCommand.create({
-          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
           detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
           source: ExecutionDetailsSourceEnum.INTERNAL,
@@ -431,9 +431,9 @@ export class SendMessageEmail extends SendMessageBase {
 
       Logger.verbose({ command }, 'Email message has been sent', LOG_CONTEXT);
 
-      await this.executionLogRoute.execute(
-        ExecutionLogRouteCommand.create({
-          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
           detail: DetailEnum.MESSAGE_SENT,
           source: ExecutionDetailsSourceEnum.INTERNAL,
@@ -477,9 +477,9 @@ export class SendMessageEmail extends SendMessageBase {
         error = error.response;
       }
 
-      await this.executionLogRoute.execute(
-        ExecutionLogRouteCommand.create({
-          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
           detail: DetailEnum.PROVIDER_ERROR,
           source: ExecutionDetailsSourceEnum.INTERNAL,
@@ -504,9 +504,9 @@ export class SendMessageEmail extends SendMessageBase {
         '_id'
       );
       if (!layoutOverride) {
-        await this.executionLogRoute.execute(
-          ExecutionLogRouteCommand.create({
-            ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
+        await this.createExecutionDetails.execute(
+          CreateExecutionDetailsCommand.create({
+            ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
             detail: DetailEnum.LAYOUT_NOT_FOUND,
             source: ExecutionDetailsSourceEnum.INTERNAL,
             status: ExecutionDetailsStatusEnum.FAILED,

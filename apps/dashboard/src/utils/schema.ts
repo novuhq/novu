@@ -87,9 +87,11 @@ const handleNumberType = ({ jsonSchema }: { jsonSchema: JSONSchemaDto }) => {
   if (typeof minimum === 'number') {
     numberValue = numberValue.min(minimum);
   }
+
   if (typeof maximum === 'number') {
     numberValue = numberValue.max(maximum);
   }
+
   if (defaultValue !== undefined) {
     numberValue = numberValue.default(defaultValue as number);
   }
@@ -101,14 +103,17 @@ const getZodValueByType = (jsonSchema: JSONSchemaDefinition, key: string): ZodVa
   if (typeof jsonSchema !== 'object') {
     return z.any();
   }
+
   const requiredFields = jsonSchema.required ?? [];
   const { type, default: defaultValue, required } = jsonSchema;
 
   if (type === 'object') {
     let zodValue = buildDynamicZodSchema(jsonSchema, key) as z.ZodTypeAny;
+
     if (defaultValue) {
       zodValue = zodValue.default(defaultValue as object);
     }
+
     zodValue = zodValue.transform((val) => {
       const hasAnyRequiredEmpty = required?.some((field) => val[field] === '' || val[field] === undefined);
       // remove object if any required field is empty or undefined
@@ -142,6 +147,7 @@ export const buildDynamicZodSchema = (obj: JSONSchemaDefinition, key = ''): ZodV
 
     const keys: Record<string, z.ZodTypeAny> = Object.keys(properties).reduce((acc, key) => {
       const jsonSchemaProp = properties[key];
+
       if (typeof jsonSchemaProp !== 'object') {
         return acc;
       }
@@ -149,6 +155,7 @@ export const buildDynamicZodSchema = (obj: JSONSchemaDefinition, key = ''): ZodV
       let zodValue = getZodValueByType(jsonSchemaProp, key);
 
       const isRequired = requiredFields.includes(key);
+
       if (!isRequired) {
         zodValue = zodValue.optional() as ZodValue;
       }
@@ -171,11 +178,13 @@ export const buildDefaultValues = (uiSchema: UiSchema): Record<string, unknown> 
 
   const keys: Record<string, unknown> = Object.keys(properties).reduce((acc, key) => {
     const property = properties[key];
+
     if (typeof property !== 'object') {
       return acc;
     }
 
     const { placeholder: defaultValue } = property;
+
     if (typeof defaultValue === 'undefined') {
       return acc;
     }
@@ -216,6 +225,7 @@ const getProperties = (defaults: Record<string, unknown>, properties?: Record<st
 
     if (prop.type === 'array' && prop.items) {
       const arrayDefaults: unknown[] = [];
+
       if (Array.isArray(prop.items)) {
         arrayDefaults.push(...prop.items.map(() => ({})));
       } else if (typeof prop.items === 'object' && (prop.items as JSONSchemaDto).type === 'object') {
@@ -223,6 +233,7 @@ const getProperties = (defaults: Record<string, unknown>, properties?: Record<st
         getProperties(itemDefaults, (prop.items as JSONSchemaDto).properties);
         arrayDefaults.push(itemDefaults);
       }
+
       defaults[key] = arrayDefaults;
       continue;
     }

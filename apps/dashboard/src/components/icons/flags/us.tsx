@@ -1,7 +1,7 @@
 export function USFlag(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
-      <g id="United States" clip-path="url(#clip0_377_4883)">
+      <g id="United States" clipPath="url(#clip0_377_4883)">
         <path
           id="Vector"
           d="M8 15.999C12.4183 15.999 16 12.4173 16 7.99902C16 3.58075 12.4183 -0.000976562 8 -0.000976562C3.58172 -0.000976562 0 3.58075 0 7.99902C0 12.4173 3.58172 15.999 8 15.999Z"

@@ -28,6 +28,7 @@ export function HubspotForm({ formId, properties = {}, readonlyProperties = [], 
     const script = document.createElement('script');
     script.src = '//js.hsforms.net/forms/embed/v2.js';
     script.async = true;
+
     script.onload = () => {
       if (window.hbspt && formContainerRef.current) {
         window.hbspt.forms.create({
@@ -43,6 +44,7 @@ export function HubspotForm({ formId, properties = {}, readonlyProperties = [], 
               if (readonlyProperties.includes(key)) {
                 acc[key] = { value, hidden: true };
               }
+
               return acc;
             },
             {} as Record<string, { value: string; hidden: boolean }>
@@ -50,6 +52,7 @@ export function HubspotForm({ formId, properties = {}, readonlyProperties = [], 
         });
       }
     };
+
     document.body.appendChild(script);
 
     return () => {

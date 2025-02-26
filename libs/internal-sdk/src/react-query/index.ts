@@ -6,6 +6,7 @@ export { NovuProvider, useNovuContext } from "./_context.js";
 export * from "./_types.js";
 
 export * from "./cancel.js";
+export * from "./environmentsCreate.js";
 export * from "./integrationsCreate.js";
 export * from "./integrationsDelete.js";
 export * from "./integrationsList.js";

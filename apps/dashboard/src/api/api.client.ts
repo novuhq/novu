@@ -26,6 +26,7 @@ const request = async <T>(
   }
 ): Promise<T> => {
   const { body, environment, headers, method = 'GET', version = 'v1', signal } = options || {};
+
   try {
     const jwt = await getToken();
     const config: RequestInit = {
@@ -60,9 +61,11 @@ const request = async <T>(
     if (error instanceof NovuApiError) {
       throw error;
     }
+
     if (typeof error === 'object' && error && 'message' in error) {
       throw new Error(`Fetch error: ${error.message}`);
     }
+
     throw new Error(`Fetch error: ${JSON.stringify(error)}`);
   }
 };

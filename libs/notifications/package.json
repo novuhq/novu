@@ -1,6 +1,6 @@
 {
   "name": "@novu/notifications",
-  "version": "1.0.7",
+  "version": "1.0.10",
   "description": "Novu notification templates and workflows",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",

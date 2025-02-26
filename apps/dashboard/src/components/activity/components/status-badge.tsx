@@ -19,6 +19,7 @@ export function ActivityStatusBadge({ jobs }: StatusBadgeProps) {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
+
     timeoutRef.current = setTimeout(() => {
       setIsOpen(true);
     }, 200);
@@ -28,6 +29,7 @@ export function ActivityStatusBadge({ jobs }: StatusBadgeProps) {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
+
     timeoutRef.current = setTimeout(() => {
       setIsOpen(false);
     }, 150);

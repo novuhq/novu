@@ -37,6 +37,7 @@ export const InboxPreview = ({
   previewData?: GeneratePreviewResponseDto;
 }) => {
   const previewResult = previewData?.result;
+
   if (isPreviewPending || previewData === undefined) {
     return (
       <InboxPreviewContainer>

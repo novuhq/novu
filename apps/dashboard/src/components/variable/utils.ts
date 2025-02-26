@@ -9,6 +9,7 @@ export function formatParamValue(param: string, type?: 'string' | 'number') {
   if (type === 'number') {
     return param;
   }
+
   return `'${escapeString(param)}'`;
 }
 
