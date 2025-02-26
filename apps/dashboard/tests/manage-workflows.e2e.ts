@@ -70,21 +70,10 @@ test('manage workflows', async ({ page }) => {
   await workflowEditorPage.addStepAsLast(StepTypeEnum.IN_APP);
   const lastStep = await workflowEditorPage.getLastStep(StepTypeEnum.IN_APP);
   await expect(lastStep).toBeVisible();
-  await workflowEditorPage.clickLastStep(StepTypeEnum.IN_APP);
-
-  // check the step config sidebar
-  const stepConfigSidebar = new StepConfigSidebar(page);
-  await expect(page).toHaveTitle(`Configure ${inAppStepName} | Novu Cloud Dashboard`);
-
-  // update the step name
-  const inAppStepNameUpdated = `${inAppStepName}-updated`;
-  await stepConfigSidebar.updateStepName({ oldStepName: inAppStepName, newStepName: inAppStepNameUpdated });
-  await stepConfigSidebar.configureTemplateClick();
 
   const inAppStepEditor = new InAppStepEditor(page);
   // Wait for navigation and check title
-  const title = await page.title();
-  expect(title).toBe(`Edit ${inAppStepNameUpdated} | Novu Cloud Dashboard`);
+  await expect(page).toHaveTitle(`Edit ${inAppStepName} | Novu Cloud Dashboard`);
 
   // check the validation errors
   await expect(await inAppStepEditor.getBodyValidationError()).toBeVisible();
@@ -104,6 +93,15 @@ test('manage workflows', async ({ page }) => {
   await expect(previewElements.subject).toContainText(subject);
   await expect(previewElements.body).toContainText(body);
   await inAppStepEditor.close();
+
+  // check the step config sidebar
+  const stepConfigSidebar = new StepConfigSidebar(page);
+  await expect(page).toHaveTitle(`Configure ${inAppStepName} | Novu Cloud Dashboard`);
+
+  // update the step name
+  const inAppStepNameUpdated = `${inAppStepName}-updated`;
+  await stepConfigSidebar.updateStepName({ oldStepName: inAppStepName, newStepName: inAppStepNameUpdated });
+  await expect(page).toHaveTitle(`Configure ${inAppStepNameUpdated} | Novu Cloud Dashboard`);
 
   // add a second step
   await workflowEditorPage.addStepAsLast(StepTypeEnum.IN_APP);
