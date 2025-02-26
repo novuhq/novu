@@ -1,8 +1,9 @@
 import { Tabs, TabsList, TabsTrigger } from '@/components/primitives/tabs';
+import { StripeBillingIntervalEnum } from '@novu/shared';
 
 interface PlanSwitcherProps {
   selectedBillingInterval: 'month' | 'year';
-  setSelectedBillingInterval: (value: 'month' | 'year') => void;
+  setSelectedBillingInterval: (value: StripeBillingIntervalEnum) => void;
 }
 
 export function PlanSwitcher({ selectedBillingInterval, setSelectedBillingInterval }: PlanSwitcherProps) {
@@ -12,7 +13,7 @@ export function PlanSwitcher({ selectedBillingInterval, setSelectedBillingInterv
       <div className="flex flex-1 justify-end">
         <Tabs
           value={selectedBillingInterval}
-          onValueChange={(value) => setSelectedBillingInterval(value as 'month' | 'year')}
+          onValueChange={(value) => setSelectedBillingInterval(value as StripeBillingIntervalEnum)}
         >
           <TabsList>
             <TabsTrigger value="month">Monthly</TabsTrigger>

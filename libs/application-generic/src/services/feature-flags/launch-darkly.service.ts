@@ -31,7 +31,10 @@ export class LaunchDarklyFeatureFlagsService implements IFeatureFlagsService {
     organization,
     user,
   }: FeatureFlagContext<T_Result>): Promise<T_Result> {
-    return await this.client.variation(key, this.buildLDContext({ user, organization, environment }), defaultValue);
+    const context = this.buildLDContext({ user, organization, environment });
+    const newVar = await this.client.variation(key, context, defaultValue);
+
+    return newVar;
   }
 
   private buildLDContext({ user, organization, environment }: FeatureFlagContextBase): LDMultiKindContext {

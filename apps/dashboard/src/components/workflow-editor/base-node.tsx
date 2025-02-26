@@ -80,7 +80,7 @@ export const NodeBody = ({
 
   return (
     <HoverCard openDelay={300}>
-      <HoverCardTrigger>
+      <HoverCardTrigger asChild>
         <div className="bg-neutral-alpha-50 hover-trigger pointer-events-auto relative flex items-center rounded-lg px-1 py-2">
           <span className="text-foreground-400 overflow-hidden text-ellipsis text-nowrap text-sm font-medium">
             {children}

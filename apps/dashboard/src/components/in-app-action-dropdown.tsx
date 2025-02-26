@@ -80,7 +80,12 @@ export const InAppActionDropdown = ({ onMenuItemClick }: { onMenuItemClick?: () 
             <DropdownMenuTrigger className="absolute size-full" tabIndex={-1} />
           </div>
           <DropdownMenuTrigger asChild>
-            <CompactButton icon={RiExpandUpDownLine} size="lg" variant="ghost">
+            <CompactButton
+              icon={RiExpandUpDownLine}
+              size="lg"
+              variant="ghost"
+              data-testid="in-app-action-dropdown-trigger"
+            >
               <span className="sr-only">Actions</span>
             </CompactButton>
           </DropdownMenuTrigger>

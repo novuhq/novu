@@ -55,6 +55,7 @@ export const DaysOfWeek = ({
 }) => {
   const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const dataId = parseInt(e.target.getAttribute('data-id') ?? '0');
+
     if (e.target.checked) {
       onDaysChange([...daysOfWeek, dataId]);
     } else {

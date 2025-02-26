@@ -20,6 +20,7 @@ export const handleValidationIssues = <T extends FieldValues>(props: HandleValid
 
   (Object.keys(issues) as Array<keyof typeof issues>).map((issueKey) => {
     const key = issueKey as FieldPath<T>;
+
     if (fields[key]) {
       setError(key, { message: issues[issueKey][0]?.message || 'Unknown error' });
     } else {

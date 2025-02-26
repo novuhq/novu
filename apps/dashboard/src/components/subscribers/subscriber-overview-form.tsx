@@ -104,10 +104,12 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
 
     const dirtyPayload = Object.keys(dirtyFields).reduce<Partial<typeof formData>>((acc, key) => {
       const typedKey = key as keyof typeof formData;
+
       if (typedKey === 'data') {
         const data = JSON.parse(JSON.stringify(formData.data));
         return { ...acc, data: data === '' ? {} : data };
       }
+
       return { ...acc, [typedKey]: formData[typedKey] === null ? null : formData[typedKey]?.trim() };
     }, {});
 

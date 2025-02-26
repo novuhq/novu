@@ -76,6 +76,7 @@ function ResizeHandle() {
     </div>
   );
 }
+
 ResizeHandle.displayName = TEXTAREA_RESIZE_HANDLE_NAME;
 
 type TextareaProps = React.TextareaHTMLAttributes<HTMLTextAreaElement> &
@@ -172,6 +173,7 @@ function CharCounter({
     </span>
   );
 }
+
 CharCounter.displayName = TEXTAREA_COUNTER_NAME;
 
 export { TextareaRoot as Textarea, CharCounter as TextareaCounter };

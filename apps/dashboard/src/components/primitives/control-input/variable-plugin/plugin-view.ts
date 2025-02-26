@@ -6,7 +6,9 @@ import { VariablePillWidget } from './variable-pill-widget';
 
 export class VariablePluginView {
   decorations: DecorationSet;
+
   lastCursor: number = 0;
+
   isTypingVariable: boolean = false;
 
   constructor(
@@ -40,6 +42,7 @@ export class VariablePluginView {
     let match: RegExpExecArray | null = null;
 
     const regex = new RegExp(VARIABLE_REGEX_STRING, 'g');
+
     // Iterate through all variable matches in the content and add the pills
     while ((match = regex.exec(content)) !== null) {
       const { fullLiquidExpression, name, start, end, filters } = parseVariable(match);

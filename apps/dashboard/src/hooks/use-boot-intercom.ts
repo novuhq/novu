@@ -11,6 +11,7 @@ export function useBootIntercom() {
 
   useEffect(() => {
     const shouldBootIntercom = !!INTERCOM_APP_ID && currentUser && currentOrganization;
+
     if (shouldBootIntercom) {
       boot({
         userId: currentUser._id,

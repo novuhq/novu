@@ -19,52 +19,67 @@ export const getComponentByType = ({ component }: { component?: UiComponentEnum 
     case UiComponentEnum.IN_APP_AVATAR: {
       return <InAppAvatar />;
     }
+
     case UiComponentEnum.IN_APP_SUBJECT: {
       return <InAppSubject />;
     }
+
     case UiComponentEnum.IN_APP_BODY: {
       return <InAppBody />;
     }
+
     case UiComponentEnum.IN_APP_BUTTON_DROPDOWN: {
       return <InAppAction />;
     }
+
     case UiComponentEnum.IN_APP_DISABLE_SANITIZATION_SWITCH: {
       return <InAppBypassSanitizationSwitch />;
     }
+
     case UiComponentEnum.URL_TEXT_BOX: {
       return <InAppRedirect />;
     }
+
     case UiComponentEnum.DELAY_AMOUNT:
     case UiComponentEnum.DELAY_UNIT:
     case UiComponentEnum.DELAY_TYPE: {
       return <DelayAmount />;
     }
+
     case UiComponentEnum.BLOCK_EDITOR: {
       return <EmailBodyEditor />;
     }
+
     case UiComponentEnum.TEXT_INLINE_LABEL: {
       return <EmailSubject />;
     }
+
     case UiComponentEnum.DIGEST_KEY: {
       return <DigestKey />;
     }
+
     case UiComponentEnum.DIGEST_AMOUNT:
     case UiComponentEnum.DIGEST_UNIT:
     case UiComponentEnum.DIGEST_CRON: {
       return <DigestWindow />;
     }
+
     case UiComponentEnum.PUSH_BODY: {
       return <BaseBody />;
     }
+
     case UiComponentEnum.PUSH_SUBJECT: {
       return <BaseSubject />;
     }
+
     case UiComponentEnum.SMS_BODY: {
       return <BaseBody />;
     }
+
     case UiComponentEnum.CHAT_BODY: {
       return <BaseBody />;
     }
+
     default: {
       return null;
     }

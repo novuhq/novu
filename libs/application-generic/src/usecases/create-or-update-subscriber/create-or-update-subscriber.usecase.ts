@@ -1,9 +1,5 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
-import {
-  ErrorCodesEnum,
-  SubscriberEntity,
-  SubscriberRepository,
-} from '@novu/dal';
+import { ErrorCodesEnum, SubscriberEntity, SubscriberRepository } from '@novu/dal';
 import { AnalyticsService } from '../../services/analytics.service';
 import {
   buildDedupSubscriberKey,
@@ -11,15 +7,8 @@ import {
   CachedEntity,
   InvalidateCacheService,
 } from '../../services/cache';
-import {
-  OAuthHandlerEnum,
-  UpdateSubscriberChannel,
-  UpdateSubscriberChannelCommand,
-} from '../subscribers';
-import {
-  UpdateSubscriber,
-  UpdateSubscriberCommand,
-} from '../update-subscriber';
+import { OAuthHandlerEnum, UpdateSubscriberChannel, UpdateSubscriberChannelCommand } from '../subscribers';
+import { UpdateSubscriber, UpdateSubscriberCommand } from '../update-subscriber';
 import { CreateOrUpdateSubscriberCommand } from './create-or-update-subscriber.command';
 import { EventsDistributedLockService } from '../../services';
 
@@ -32,7 +21,7 @@ export class CreateOrUpdateSubscriberUseCase {
     private updateSubscriberChannel: UpdateSubscriberChannel,
     private analyticsService: AnalyticsService,
     @Inject(forwardRef(() => EventsDistributedLockService))
-    private eventsDistributedLockService: EventsDistributedLockService,
+    private eventsDistributedLockService: EventsDistributedLockService
   ) {}
 
   async execute(command: CreateOrUpdateSubscriberCommand) {
@@ -44,13 +33,11 @@ export class CreateOrUpdateSubscriberUseCase {
         }),
         ttl: 10000,
       },
-      async () => await this.createOrUpdateSubscriber(command),
+      async () => await this.createOrUpdateSubscriber(command)
     );
   }
 
-  private async createOrUpdateSubscriber(
-    command: CreateOrUpdateSubscriberCommand,
-  ) {
+  private async createOrUpdateSubscriber(command: CreateOrUpdateSubscriberCommand) {
     const existingSubscriber = await this.getExistingSubscriber(command);
 
     if (existingSubscriber) {
@@ -62,18 +49,11 @@ export class CreateOrUpdateSubscriberUseCase {
     return await this.updateSubscriberCredentials(command, createdSubscriber);
   }
 
-  private async updateSubscriber(
-    command: CreateOrUpdateSubscriberCommand,
-    existingSubscriber: SubscriberEntity,
-  ) {
-    return await this.updateSubscriberUseCase.execute(
-      this.buildUpdateSubscriberCommand(command, existingSubscriber),
-    );
+  private async updateSubscriber(command: CreateOrUpdateSubscriberCommand, existingSubscriber: SubscriberEntity) {
+    return await this.updateSubscriberUseCase.execute(this.buildUpdateSubscriberCommand(command, existingSubscriber));
   }
 
-  private async getExistingSubscriber(
-    command: CreateOrUpdateSubscriberCommand,
-  ) {
+  private async getExistingSubscriber(command: CreateOrUpdateSubscriberCommand) {
     const existingSubscriber: SubscriberEntity =
       command.subscriber ??
       (await this.fetchSubscriber({
@@ -84,10 +64,7 @@ export class CreateOrUpdateSubscriberUseCase {
     return existingSubscriber;
   }
 
-  private async updateSubscriberCredentials(
-    command: CreateOrUpdateSubscriberCommand,
-    subscriber: SubscriberEntity,
-  ) {
+  private async updateSubscriberCredentials(command: CreateOrUpdateSubscriberCommand, subscriber: SubscriberEntity) {
     let updatedSubscriber: SubscriberEntity | undefined;
     if (command.channels?.length) {
       await this.updateCredentials(command);
@@ -101,9 +78,7 @@ export class CreateOrUpdateSubscriberUseCase {
     return updatedSubscriber || subscriber;
   }
 
-  private publishSubscriberUpdatedEvent(
-    command: CreateOrUpdateSubscriberCommand,
-  ) {
+  private publishSubscriberUpdatedEvent(command: CreateOrUpdateSubscriberCommand) {
     this.analyticsService.mixpanelTrack('Subscriber Created', '', {
       _organization: command.organizationId,
       hasEmail: !!command.email,
@@ -115,10 +90,7 @@ export class CreateOrUpdateSubscriberUseCase {
     });
   }
 
-  private buildUpdateSubscriberCommand(
-    command: CreateOrUpdateSubscriberCommand,
-    subscriber: SubscriberEntity,
-  ) {
+  private buildUpdateSubscriberCommand(command: CreateOrUpdateSubscriberCommand, subscriber: SubscriberEntity) {
     return UpdateSubscriberCommand.create({
       environmentId: command.environmentId,
       organizationId: command.organizationId,
@@ -147,7 +119,7 @@ export class CreateOrUpdateSubscriberUseCase {
           integrationIdentifier: channel.integrationIdentifier,
           oauthHandler: OAuthHandlerEnum.EXTERNAL,
           isIdempotentOperation: false,
-        }),
+        })
       );
     }
   }
@@ -204,10 +176,6 @@ export class CreateOrUpdateSubscriberUseCase {
     subscriberId: string;
     _environmentId: string;
   }): Promise<SubscriberEntity | null> {
-    return await this.subscriberRepository.findBySubscriberId(
-      _environmentId,
-      subscriberId,
-      true,
-    );
+    return await this.subscriberRepository.findBySubscriberId(_environmentId, subscriberId, true);
   }
 }
