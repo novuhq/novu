@@ -6,6 +6,8 @@ const twMerge = extendTailwindMerge({
   prefix: 'nt-',
 });
 
+export const publicFacingTwMerge = extendTailwindMerge({});
+
 export type ClassName = ClassNameValue;
 
 export function cn(...inputs: ClassValue[]) {
@@ -221,7 +223,19 @@ export const parseElements = (elements: Elements) => {
     }
   }
 
-  return elementsStyleData;
+  /*
+   ** Sort the elements by the number of __ in the className
+   ** This is to ensure that the most specific elements are applied last
+   ** i.e. dropdownItem__icon should be applied last so that it can override the icon class from dropdownItem
+   */
+  const sortedElementsStyleData = elementsStyleData.sort((a, b) => {
+    const countA = (a.key.match(/__/g) || []).length;
+    const countB = (b.key.match(/__/g) || []).length;
+
+    return countA - countB;
+  });
+
+  return sortedElementsStyleData;
 };
 
 /**
