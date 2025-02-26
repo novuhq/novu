@@ -544,6 +544,11 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
     it('should promote by creating a new workflow in production environment with the same properties', async () => {
       // Create a workflow in the development environment
       let devWorkflow = await createWorkflowAndValidate('-promote-workflow');
+      // Update the workflow name to make sure the workflow identifier is the same after promotion
+      devWorkflow = await updateWorkflowRest(devWorkflow._id, {
+        ...devWorkflow,
+        name: `${devWorkflow.name}-updated`,
+      });
       await workflowsClient.patchWorkflowStepData(devWorkflow._id, devWorkflow.steps[0]._id, {
         controlValues: { vinyl: 'vinyl', color: 'red', band: 'beatles' },
       });
