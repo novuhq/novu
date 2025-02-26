@@ -1,4 +1,4 @@
-import { type Page } from '@playwright/test';
+import { type Page, expect } from '@playwright/test';
 
 export class WorkflowsPage {
   constructor(private page: Page) {}
@@ -34,26 +34,18 @@ export class WorkflowsPage {
 
   async pauseWorkflow(): Promise<void> {
     const pauseAction = this.page.getByTestId('pause-workflow');
-    const pauseModal = this.page.getByRole('dialog');
-    const proceedBtn = pauseModal.getByRole('button').filter({ hasText: 'Proceed' });
-
     await pauseAction.click();
-    await proceedBtn.click();
 
-    await this.page.waitForResponse(
-      (resp) => resp.url().includes('/v2/workflows') && resp.request().method() === 'PATCH' && resp.status() === 200
-    );
-    await this.page.waitForTimeout(200);
+    const pauseModal = this.page.getByRole('dialog');
+    await expect(pauseModal).toBeVisible();
+
+    const proceedBtn = pauseModal.getByRole('button').filter({ hasText: 'Proceed' });
+    await proceedBtn.click();
   }
 
   async enableWorkflow(): Promise<void> {
     const enableWorkflow = this.page.getByTestId('enable-workflow');
     await enableWorkflow.click();
-
-    await this.page.waitForResponse(
-      (resp) => resp.url().includes('/v2/workflows') && resp.request().method() === 'PATCH' && resp.status() === 200
-    );
-    await this.page.waitForTimeout(200);
   }
 
   async deleteWorkflow(): Promise<void> {

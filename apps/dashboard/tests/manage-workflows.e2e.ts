@@ -69,8 +69,7 @@ test('manage workflows', async ({ page }) => {
 
   // add a step
   await workflowEditorPage.addStepAsLast(StepTypeEnum.IN_APP);
-  const lastStep = workflowEditorPage.getLastStep(StepTypeEnum.IN_APP);
-  await expect(lastStep).toBeVisible();
+  await expect(workflowEditorPage.getLastStep(StepTypeEnum.IN_APP)).toBeVisible();
 
   const inAppStepEditor = new InAppStepEditor(page);
   // Wait for navigation and check title

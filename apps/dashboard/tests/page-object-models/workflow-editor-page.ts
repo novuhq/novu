@@ -18,11 +18,6 @@ export class WorkflowEditorPage {
     const inAppMenuItem = this.page.getByTestId(`add-step-menu-item-${stepType}`);
     await expect(inAppMenuItem).toBeVisible();
     await inAppMenuItem.click({ force: true });
-
-    // await for the workflow steps to be updated
-    await this.page.waitForResponse(
-      (resp) => resp.url().includes('/v2/workflows/') && resp.request().method() === 'PUT' && resp.status() === 200
-    );
   }
 
   async addStepAsLast(stepType: StepTypeEnum): Promise<void> {
@@ -33,11 +28,6 @@ export class WorkflowEditorPage {
     const inAppMenuItem = this.page.getByTestId(`add-step-menu-item-${stepType}`);
     await expect(inAppMenuItem).toBeVisible();
     await inAppMenuItem.click({ force: true });
-
-    // await for the workflow steps to be updated
-    await this.page.waitForResponse(
-      (resp) => resp.url().includes('/v2/workflows/') && resp.request().method() === 'PUT' && resp.status() === 200
-    );
   }
 
   async clickLastStep(stepType: StepTypeEnum): Promise<void> {

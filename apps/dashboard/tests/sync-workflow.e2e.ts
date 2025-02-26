@@ -68,8 +68,7 @@ test('sync workflow', async ({ page }) => {
   await expect(page).toHaveTitle(`${workflowId} | Novu Cloud Dashboard`);
 
   // check the step count
-  const stepCount = await workflowEditorPage.getStepCount(StepTypeEnum.IN_APP);
-  expect(stepCount).toEqual(1);
+  await expect(workflowEditorPage.getSteps(StepTypeEnum.IN_APP)).toHaveCount(1);
 
   // check the last step
   await workflowEditorPage.clickLastStep(StepTypeEnum.IN_APP);
