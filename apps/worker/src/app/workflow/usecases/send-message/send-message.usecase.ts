@@ -28,7 +28,6 @@ import {
   PlatformException,
   CachedEntity,
   buildSubscriberKey,
-  buildNotificationTemplateKey,
   Instrument,
 } from '@novu/application-generic';
 import {
