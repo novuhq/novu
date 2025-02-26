@@ -1,5 +1,5 @@
 import { Button } from '@/components/primitives/button';
-import { ApiServiceLevelEnum, getFeatureForTierAsNumber } from '@novu/shared';
+import { ApiServiceLevelEnum, FeatureNameEnum, getFeatureForTierAsNumber } from '@novu/shared';
 import { useBillingPortal } from '../../hooks/use-billing-portal';
 import { useCheckoutSession } from '../../hooks/use-checkout-session';
 import { useFetchSubscription } from '../../hooks/use-fetch-subscription';
@@ -53,8 +53,8 @@ export function PlanActionButton({
       return <> {'Manage Account'}</>;
     }
 
-    const indexRequested = getFeatureForTierAsNumber(requestedServiceLevel);
-    const indexActive = getFeatureForTierAsNumber(activeServiceLevel);
+    const indexRequested = getFeatureForTierAsNumber(FeatureNameEnum.TIERS_ORDER_INDEX, requestedServiceLevel, {});
+    const indexActive = getFeatureForTierAsNumber(FeatureNameEnum.TIERS_ORDER_INDEX, activeServiceLevel, {});
 
     if (indexRequested > indexActive) {
       return <> {'Upgrade plan'}</>;
