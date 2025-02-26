@@ -51,6 +51,8 @@ export enum FeatureNameEnum {
   COMPLIANCE_HIPAA_BAA_BOOLEAN = 'complianceHipaaBaaBoolean',
   COMPLIANCE_CUSTOM_SECURITY_REVIEWS = 'complianceCustomSecurityReviewsBoolean',
   COMPLIANCE_DATA_PROCESSING_AGREEMENTS = 'complianceDataProcessingAgreements',
+
+  TIERS_ORDER_INDEX = 'tiersOrderIndex',
 }
 
 export type FeatureValue = string | number | null | boolean | DetailedPriceListItem;
@@ -69,6 +71,13 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
     [ApiServiceLevelEnum.BUSINESS]: '48 Hours',
     [ApiServiceLevelEnum.ENTERPRISE]: '24 Hours',
     [ApiServiceLevelEnum.UNLIMITED]: '24 Hours',
+  },
+  [FeatureNameEnum.TIERS_ORDER_INDEX]: {
+    [ApiServiceLevelEnum.FREE]: 0,
+    [ApiServiceLevelEnum.PRO]: 1,
+    [ApiServiceLevelEnum.BUSINESS]: 2,
+    [ApiServiceLevelEnum.ENTERPRISE]: 3,
+    [ApiServiceLevelEnum.UNLIMITED]: 4,
   },
   [FeatureNameEnum.PLATFORM_PLAN_LABEL]: {
     [ApiServiceLevelEnum.FREE]: 'Free',
@@ -125,17 +134,17 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
   [FeatureNameEnum.PLATFORM_ANNUAL_COST]: {
     [ApiServiceLevelEnum.FREE]: {
       value: 0,
-      label: '0$',
+      label: '$0',
     },
     [ApiServiceLevelEnum.PRO]: {
       value: 330,
       currency: '$',
-      label: '330$',
+      label: '$330',
     },
     [ApiServiceLevelEnum.BUSINESS]: {
       value: 2700,
       currency: '$',
-      label: '2,700$',
+      label: '$2,700',
     },
     [ApiServiceLevelEnum.ENTERPRISE]: {
       value: 'Custom Pricing',

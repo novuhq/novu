@@ -97,6 +97,7 @@ export function PlansRow({ selectedBillingInterval, currentPlan, plans }: PlansR
                   <PlanActionButton
                     billingInterval={selectedBillingInterval}
                     requestedServiceLevel={planKey as ApiServiceLevelEnum}
+                    activeServiceLevel={currentPlan}
                     mode="filled"
                     className="w-full"
                   />
