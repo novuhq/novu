@@ -277,7 +277,7 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
     [ApiServiceLevelEnum.FREE]: { label: '24 Hours', value: 24, timeSuffix: 'h' },
     [ApiServiceLevelEnum.PRO]: { label: '7 days', value: 7, timeSuffix: 'd' },
     [ApiServiceLevelEnum.BUSINESS]: { label: '90 days', value: 90, timeSuffix: 'd' },
-    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Unlimited', value: -1 },
+    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Custom', value: -1 },
     [ApiServiceLevelEnum.UNLIMITED]: { label: 'Unlimited', value: -1 },
   },
   [FeatureNameEnum.PLATFORM_BLOCK_BASED_EMAIL_EDITOR_BOOLEAN]: {
