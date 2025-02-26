@@ -156,48 +156,35 @@ export class SendMessage {
       bridgeData: bridgeResponse,
     });
 
-    let result: SendMessageResult;
-
     switch (stepType) {
       case StepTypeEnum.SMS: {
-        result = await this.sendMessageSms.execute(sendMessageCommand);
-        break;
+        return await this.sendMessageSms.execute(sendMessageCommand);
       }
       case StepTypeEnum.IN_APP: {
-        result = await this.sendMessageInApp.execute(sendMessageCommand);
-        break;
+        return await this.sendMessageInApp.execute(sendMessageCommand);
       }
       case StepTypeEnum.EMAIL: {
-        result = await this.sendMessageEmail.execute(sendMessageCommand);
-        break;
+        return await this.sendMessageEmail.execute(sendMessageCommand);
       }
       case StepTypeEnum.CHAT: {
-        result = await this.sendMessageChat.execute(sendMessageCommand);
-        break;
+        return await this.sendMessageChat.execute(sendMessageCommand);
       }
       case StepTypeEnum.PUSH: {
-        result = await this.sendMessagePush.execute(sendMessageCommand);
-        break;
+        return await this.sendMessagePush.execute(sendMessageCommand);
       }
       case StepTypeEnum.DIGEST: {
-        result = await this.digest.execute(command);
-        break;
+        return await this.digest.execute(command);
       }
       case StepTypeEnum.DELAY: {
-        result = await this.sendMessageDelay.execute(command);
-        break;
+        return await this.sendMessageDelay.execute(command);
       }
       case StepTypeEnum.CUSTOM: {
-        result = await this.executeStepCustom.execute(sendMessageCommand);
-        break;
+        return await this.executeStepCustom.execute(sendMessageCommand);
       }
       default: {
-        result = { status: 'success' };
-        break;
+        throw new Error(`Unsupported step type: ${stepType}`);
       }
     }
-
-    return result;
   }
 
   private async evaluateFilters(

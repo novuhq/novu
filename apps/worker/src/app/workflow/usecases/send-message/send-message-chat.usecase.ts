@@ -104,7 +104,7 @@ export class SendMessageChat extends SendMessageBase {
 
       return {
         status: 'failed',
-        detail: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
+        reason: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
       };
     }
 
@@ -135,7 +135,7 @@ export class SendMessageChat extends SendMessageBase {
 
       return {
         status: 'failed',
-        detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL,
+        reason: DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL,
       };
     }
 
@@ -167,7 +167,7 @@ export class SendMessageChat extends SendMessageBase {
 
       return {
         status: 'failed',
-        detail: DetailEnum.CHAT_ALL_CHANNELS_FAILED,
+        reason: DetailEnum.CHAT_ALL_CHANNELS_FAILED,
       };
     }
 
@@ -349,7 +349,7 @@ export class SendMessageChat extends SendMessageBase {
 
       return {
         status: 'failed',
-        detail: DetailEnum.CHAT_MISSING_PHONE_NUMBER,
+        reason: DetailEnum.CHAT_MISSING_PHONE_NUMBER,
       };
     } else if (!chatWebhookUrl) {
       await this.messageRepository.updateMessageStatus(
@@ -378,7 +378,7 @@ export class SendMessageChat extends SendMessageBase {
 
       return {
         status: 'failed',
-        detail: DetailEnum.CHAT_WEBHOOK_URL_MISSING,
+        reason: DetailEnum.CHAT_WEBHOOK_URL_MISSING,
       };
     }
     if (!integration) {
@@ -407,13 +407,13 @@ export class SendMessageChat extends SendMessageBase {
 
       return {
         status: 'failed',
-        detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
+        reason: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
       };
     }
 
     return {
       status: 'failed',
-      detail: DetailEnum.PROVIDER_ERROR,
+      reason: DetailEnum.PROVIDER_ERROR,
     };
   }
 
@@ -489,7 +489,7 @@ export class SendMessageChat extends SendMessageBase {
 
       return {
         status: 'failed',
-        detail: DetailEnum.PROVIDER_ERROR,
+        reason: DetailEnum.PROVIDER_ERROR,
       };
     }
   }

@@ -107,7 +107,7 @@ export class SendMessagePush extends SendMessageBase {
 
       return {
         status: 'failed',
-        detail: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
+        reason: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
       };
     }
 
@@ -121,7 +121,7 @@ export class SendMessagePush extends SendMessageBase {
 
       return {
         status: 'failed',
-        detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL,
+        reason: DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL,
       };
     }
 
@@ -143,7 +143,7 @@ export class SendMessagePush extends SendMessageBase {
         integrationsWithErrors += 1;
         Logger.error(
           { jobId: command.jobId },
-          `Error processing channel for jobId ${command.jobId} ${error.message || error.toString()}`,
+          `Unexpected error while processing channel for jobId ${command.jobId} ${error.message || error.toString()}`,
           LOG_CONTEXT
         );
         continue;
@@ -201,7 +201,7 @@ export class SendMessagePush extends SendMessageBase {
 
       return {
         status: 'failed',
-        detail: DetailEnum.NOTIFICATION_ERROR,
+        reason: DetailEnum.NOTIFICATION_ERROR,
       };
     }
 
@@ -240,7 +240,7 @@ export class SendMessagePush extends SendMessageBase {
     if (!integration) {
       await this.createExecutionDetailsError(DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION, command.job);
 
-      throw new Error(DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION);
+      return undefined;
     }
 
     return integration;

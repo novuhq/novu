@@ -99,7 +99,7 @@ export abstract class SendMessageBase extends SendMessageType {
 
     return {
       status: 'failed',
-      detail: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
+      reason: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
     };
   }
 

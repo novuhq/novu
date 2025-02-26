@@ -92,7 +92,7 @@ export class SendMessageInApp extends SendMessageBase {
 
       return {
         status: 'failed',
-        detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
+        reason: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
       };
     }
 
@@ -144,7 +144,7 @@ export class SendMessageInApp extends SendMessageBase {
 
       return {
         status: 'failed',
-        detail: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
+        reason: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
       };
     }
 

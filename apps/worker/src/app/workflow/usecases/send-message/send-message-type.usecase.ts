@@ -1,12 +1,11 @@
 import { captureException } from '@sentry/node';
 import { MessageEntity, MessageRepository } from '@novu/dal';
 import { CreateExecutionDetails } from '@novu/application-generic';
-import { ExecutionDetailsStatusEnum } from '@novu/shared';
 import { SendMessageCommand } from './send-message.command';
 
 export type SendMessageResult = {
   status: 'success' | 'failed' | 'canceled';
-  detail?: string;
+  reason?: string;
 };
 
 export abstract class SendMessageType {

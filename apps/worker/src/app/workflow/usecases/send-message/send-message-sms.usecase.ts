@@ -111,7 +111,7 @@ export class SendMessageSms extends SendMessageBase {
 
       return {
         status: 'failed',
-        detail: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
+        reason: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
       };
     }
 
@@ -138,7 +138,7 @@ export class SendMessageSms extends SendMessageBase {
 
       return {
         status: 'failed',
-        detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
+        reason: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
       };
     }
 
@@ -221,7 +221,7 @@ export class SendMessageSms extends SendMessageBase {
 
       return {
         status: 'failed',
-        detail: DetailEnum.SUBSCRIBER_NO_CHANNEL_DETAILS,
+        reason: DetailEnum.SUBSCRIBER_NO_CHANNEL_DETAILS,
       };
     }
     if (!integration) {
@@ -247,7 +247,7 @@ export class SendMessageSms extends SendMessageBase {
 
       return {
         status: 'failed',
-        detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
+        reason: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
       };
     }
     if (!integration?.credentials?.from) {
@@ -273,13 +273,13 @@ export class SendMessageSms extends SendMessageBase {
 
       return {
         status: 'failed',
-        detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL,
+        reason: DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL,
       };
     }
 
     return {
       status: 'failed',
-      detail: DetailEnum.PROVIDER_ERROR,
+      reason: DetailEnum.PROVIDER_ERROR,
     };
   }
 
@@ -326,7 +326,7 @@ export class SendMessageSms extends SendMessageBase {
       if (!result?.id) {
         return {
           status: 'failed',
-          detail: DetailEnum.PROVIDER_ERROR,
+          reason: DetailEnum.PROVIDER_ERROR,
         };
       }
 
@@ -367,7 +367,7 @@ export class SendMessageSms extends SendMessageBase {
 
       return {
         status: 'failed',
-        detail: DetailEnum.PROVIDER_ERROR,
+        reason: DetailEnum.PROVIDER_ERROR,
       };
     }
   }
