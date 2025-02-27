@@ -152,13 +152,13 @@ export class StandardWorker extends StandardWorkerService {
 
       /*
        * The job might have been cancelled in the pipeline (e.g., by a digest or delay step)
-       * In such cases, we should preserve the CANCELED status rather than overwriting it with COMPLETED
+       * In such cases, we only update jobs that are in RUNNING status to COMPLETED, preserving other final statuses
        */
       await this.jobRepository.updateOne(
         {
           _environmentId: minimalData.environmentId,
           _id: minimalData.jobId,
-          status: { $ne: JobStatusEnum.CANCELED },
+          status: JobStatusEnum.RUNNING,
         },
         {
           $set: {
