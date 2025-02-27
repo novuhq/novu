@@ -237,6 +237,9 @@ export class ActivityNotificationJobResponseDto {
   })
   step: ActivityNotificationStepResponseDto;
 
+  @ApiPropertyOptional({ description: 'Optional overrides for the job', type: Object })
+  overrides?: Record<string, unknown>;
+
   @ApiPropertyOptional({ description: 'Optional payload for the job', type: Object })
   payload?: Record<string, unknown>;
 
