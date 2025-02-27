@@ -46,7 +46,7 @@ export class SyncToEnvironmentUseCase {
 
     return await this.upsertWorkflowUseCase.execute(
       UpsertWorkflowCommand.create({
-        isSync: true,
+        preserveWorkflowId: true,
         user: { ...command.user, environmentId: command.targetEnvironmentId },
         workflowIdOrInternalId: targetWorkflow?._id,
         workflowDto,

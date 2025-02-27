@@ -114,7 +114,7 @@ export class UpsertWorkflowDataCommand {
 export class UpsertWorkflowCommand extends EnvironmentWithUserObjectCommand {
   @IsOptional()
   @IsBoolean()
-  isSync?: boolean;
+  preserveWorkflowId?: boolean;
 
   @IsOptional()
   @IsString()
