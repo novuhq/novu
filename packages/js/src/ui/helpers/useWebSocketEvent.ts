@@ -1,5 +1,5 @@
 import { onCleanup, onMount } from 'solid-js';
-import type { SocketEventNames, EventHandler, Events } from '../../event-emitter';
+import type { EventHandler, Events, SocketEventNames } from '../../event-emitter';
 import { useNovu } from '../context';
 import { requestLock } from './browser';
 import { useBrowserTabsChannel } from './useBrowserTabsChannel';

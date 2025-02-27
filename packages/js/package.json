@@ -71,7 +71,7 @@
     "build": "pnpm run clean && NODE_ENV=production tsup",
     "postbuild": "./scripts/copy-package-json.sh && node scripts/size-limit.mjs && pnpm run check-exports",
     "build:umd": "webpack --config webpack.config.cjs",
-    "build:watch": "concurrently \"pnpm run tsup:watch\" \"pnpm run start:server\"",
+    "build:watch": "concurrently \"NODE_ENV=development pnpm run tsup:watch\" \"pnpm run start:server\"",
     "tsup:watch": "tsup --watch",
     "check-exports": "attw --pack .",
     "lint": "eslint src",
@@ -132,7 +132,7 @@
     "socket.io-client": "4.7.2",
     "solid-floating-ui": "^0.3.1",
     "solid-js": "^1.8.11",
-    "solid-motionone": "^1.0.1",
+    "solid-motionone": "^1.0.3",
     "tailwind-merge": "^2.4.0"
   },
   "nx": {

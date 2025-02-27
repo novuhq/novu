@@ -1,8 +1,8 @@
 import { JSX, splitProps } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
 import { usePopover } from '.';
-import type { AppearanceKey } from '../../../types';
 import { useStyle } from '../../../helpers';
+import type { AppearanceKey } from '../../../types';
 
 type PopoverTriggerProps = JSX.IntrinsicElements['button'] & {
   appearanceKey?: AppearanceKey;

@@ -9,7 +9,7 @@ export default function Home() {
   return (
     <>
       <Title title="Notifications Component" />
-      <div className="h-96 w-96 overflow-y-auto">
+      <div className="h-[600-px] w-96 overflow-y-auto">
         <Inbox {...novuConfig}>
           <Notifications
             renderNotification={(notification) => {

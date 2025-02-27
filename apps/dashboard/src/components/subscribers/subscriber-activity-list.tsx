@@ -11,7 +11,7 @@ import { StatusBadge, StatusBadgeIcon } from '@/components/primitives/status-bad
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
 import TruncatedText from '@/components/truncated-text';
-import { itemVariants, listVariants } from '@/motion/variants';
+import { itemVariants, listVariants } from '@/utils/animation';
 import { formatDateSimple } from '@/utils/format-date';
 import { cn } from '@/utils/ui';
 

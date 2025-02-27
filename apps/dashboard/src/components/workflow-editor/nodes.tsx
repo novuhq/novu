@@ -8,7 +8,7 @@ import { WorkflowOriginEnum } from '@novu/shared';
 import { createStep } from '@/components/workflow-editor/step-utils';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { STEP_TYPE_TO_COLOR } from '@/utils/color';
-import { TEMPLATE_CONFIGURABLE_STEP_TYPES } from '@/utils/constants';
+import { INLINE_CONFIGURABLE_STEP_TYPES, TEMPLATE_CONFIGURABLE_STEP_TYPES } from '@/utils/constants';
 import { StepTypeEnum } from '@/utils/enums';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { getWorkflowIdFromSlug, STEP_DIVIDER } from '@/utils/step';
@@ -363,7 +363,12 @@ export const AddNode = (_props: NodeProps<NodeType>) => {
                 if (TEMPLATE_CONFIGURABLE_STEP_TYPES.includes(stepType)) {
                   navigate(
                     buildRoute(ROUTES.EDIT_STEP_TEMPLATE, {
-                      workflowSlug: workflow.slug,
+                      stepSlug: data.steps[data.steps.length - 1].slug,
+                    })
+                  );
+                } else if (INLINE_CONFIGURABLE_STEP_TYPES.includes(stepType)) {
+                  navigate(
+                    buildRoute(ROUTES.EDIT_STEP, {
                       stepSlug: data.steps[data.steps.length - 1].slug,
                     })
                   );

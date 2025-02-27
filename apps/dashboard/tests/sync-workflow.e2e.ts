@@ -68,8 +68,7 @@ test('sync workflow', async ({ page }) => {
   await expect(page).toHaveTitle(`${workflowId} | Novu Cloud Dashboard`);
 
   // check the step count
-  const stepCount = await workflowEditorPage.getStepCount(StepTypeEnum.IN_APP);
-  await expect(stepCount).toEqual(1);
+  await expect(workflowEditorPage.getSteps(StepTypeEnum.IN_APP)).toHaveCount(1);
 
   // check the last step
   await workflowEditorPage.clickLastStep(StepTypeEnum.IN_APP);
@@ -80,23 +79,21 @@ test('sync workflow', async ({ page }) => {
   // Verify step name input
   const stepNameValue = await stepConfigSidebar.getStepNameInputValue();
   const isStepNameDisabled = await stepConfigSidebar.isStepNameInputDisabled();
-  await expect(stepNameValue).toEqual(inAppStepId);
-  await expect(isStepNameDisabled).toBeTruthy();
+  expect(stepNameValue).toEqual(inAppStepId);
+  expect(isStepNameDisabled).toBeTruthy();
 
   // Verify step identifier input
   const stepIdValue = await stepConfigSidebar.getStepIdentifierInputValue();
   const stepIdReadonly = await stepConfigSidebar.getStepIdentifierReadonlyAttribute();
-  await expect(stepIdValue).toEqual(inAppStepId);
-  await expect(stepIdReadonly).toEqual('');
+  expect(stepIdValue).toEqual(inAppStepId);
+  expect(stepIdReadonly).toEqual('');
 
   await stepConfigSidebar.configureTemplateClick();
 
   const inAppStepEditor = new InAppStepEditor(page);
 
   // Wait for navigation and check title
-  await page.waitForResponse('**/v2/workflows/**');
-  const title = await page.title();
-  await expect(title).toBe(`Edit ${inAppStepId} | Novu Cloud Dashboard`);
+  await expect(page).toHaveTitle(`Edit ${inAppStepId} | Novu Cloud Dashboard`);
 
   // Verify custom controls form
   const controlElements = await inAppStepEditor.getCustomControlElements({
@@ -132,7 +129,7 @@ test('sync workflow', async ({ page }) => {
 
   // trigger the workflow
   await triggerWorkflowPage.triggerWorkflowBtnClick();
-  const activityPanel = await triggerWorkflowPage.getActivityPanel();
+  const activityPanel = triggerWorkflowPage.getActivityPanel();
   await expect(activityPanel).toBeVisible();
   await expect(activityPanel.locator('span').filter({ hasText: workflowId })).toBeVisible();
 

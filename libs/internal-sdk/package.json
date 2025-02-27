@@ -1,10 +1,9 @@
 {
   "name": "@novu/api",
-  "version": "2.6.6",
+  "version": "0.1.19",
   "author": "Novu",
   "main": "./index.js",
   "sideEffects": false,
-  "private": true,
   "scripts": {
     "lint": "eslint --cache --max-warnings=0 src",
     "build": "tsc",
@@ -17,15 +16,9 @@
     "zod": ">= 3"
   },
   "peerDependenciesMeta": {
-    "@tanstack/react-query": {
-      "optional": true
-    },
-    "react": {
-      "optional": true
-    },
-    "react-dom": {
-      "optional": true
-    }
+    "@tanstack/react-query": {"optional":true},
+    "react": {"optional":true},
+    "react-dom": {"optional":true}
   },
   "devDependencies": {
     "@eslint/js": "^9.19.0",
@@ -37,5 +30,7 @@
     "typescript-eslint": "^8.22.0",
     "zod": "^3.23.4"
   },
-  "dependencies": {}
+  "dependencies": {
+    
+  }
 }

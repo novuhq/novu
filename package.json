@@ -39,7 +39,7 @@
     "pnpm-context": "node scripts/pnpm-context.mjs",
     "prebuild": "nx run-many --target=prebuild --all",
     "preinstall": "npx only-allow pnpm",
-    "preview:pkg:build": "nx affected -t build --base=origin/next --head=HEAD --exclude='*,!tag:type:package'",
+    "preview:pkg:build": "IS_PREVIEW=true nx affected -t build --base=origin/next --head=HEAD --exclude='*,!tag:type:package'",
     "preview:pkg:publish": "node scripts/publish-preview-packages.mjs",
     "release": "node scripts/release.mjs",
     "release:version:apps": "nx release version --projects=tag:type:app",

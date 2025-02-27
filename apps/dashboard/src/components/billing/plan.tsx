@@ -23,6 +23,39 @@ import { HighlightsRow, PlanHighlights } from './highlights-row';
 import { PlanSwitcher } from './plan-switcher';
 import { PlanConfig, PlansRow } from './plans-row';
 
+function getTierLabel(tierForLabel: ApiServiceLevelEnum, featureFlags: FeatureFlags) {
+  return getFeatureForTierAsText(FeatureNameEnum.PLATFORM_PLAN_LABEL, tierForLabel, featureFlags);
+}
+
+function getPlanCardConfig(featureFlags: FeatureFlags) {
+  return {
+    [ApiServiceLevelEnum.FREE]: buildPlanConfig(
+      ApiServiceLevelEnum.FREE,
+      undefined,
+      'All core features',
+      'Community support'
+    ),
+    [ApiServiceLevelEnum.PRO]: buildPlanConfig(
+      ApiServiceLevelEnum.PRO,
+      ActionType.BUTTON,
+      'Everything in ' + getTierLabel(ApiServiceLevelEnum.FREE, featureFlags),
+      'Remove Novu Branding'
+    ),
+    [ApiServiceLevelEnum.BUSINESS]: buildPlanConfig(
+      ApiServiceLevelEnum.BUSINESS,
+      ActionType.BUTTON,
+      `Everything in ${getTierLabel(ApiServiceLevelEnum.PRO, featureFlags)}`,
+      'Priority support'
+    ),
+    [ApiServiceLevelEnum.ENTERPRISE]: buildPlanConfig(
+      ApiServiceLevelEnum.ENTERPRISE,
+      ActionType.CONTACT,
+      `Everything in ${getTierLabel(ApiServiceLevelEnum.BUSINESS, featureFlags)}`,
+      'Custom contracts & SLA'
+    ),
+  };
+}
+
 export function Plan() {
   const featureFlags = useFeatureFlagMap();
   const track = useTelemetry();
@@ -32,7 +65,11 @@ export function Plan() {
   );
   const { plans, highlights, features } = augmentConfigurationsBasedOnFeatureFlags(
     {
-      plans: resolvePlanCardConfig(planCardConfig, selectedBillingInterval as StripeBillingIntervalEnum, featureFlags),
+      plans: resolvePlanCardConfig(
+        getPlanCardConfig(featureFlags),
+        selectedBillingInterval as StripeBillingIntervalEnum,
+        featureFlags
+      ),
       highlights: buildHighlightsArray(featureFlags),
       features: buildFeatureArray(featureFlags, [
         ApiServiceLevelEnum.FREE,
@@ -101,33 +138,6 @@ export function Plan() {
   );
 }
 
-const planCardConfig: Record<string, (interval: StripeBillingIntervalEnum, featureFlags: FeatureFlags) => PlanConfig> =
-  {
-    [ApiServiceLevelEnum.FREE]: buildPlanConfig(
-      ApiServiceLevelEnum.FREE,
-      undefined,
-      'All core features',
-      'Community support'
-    ),
-    [ApiServiceLevelEnum.PRO]: buildPlanConfig(
-      ApiServiceLevelEnum.PRO,
-      ActionType.BUTTON,
-      'Everything in Free',
-      'Remove Novu Branding'
-    ),
-    [ApiServiceLevelEnum.BUSINESS]: buildPlanConfig(
-      ApiServiceLevelEnum.BUSINESS,
-      ActionType.BUTTON,
-      'Everything in Pro',
-      'Priority support'
-    ),
-    [ApiServiceLevelEnum.ENTERPRISE]: buildPlanConfig(
-      ApiServiceLevelEnum.ENTERPRISE,
-      ActionType.CONTACT,
-      'Everything in Business',
-      'Custom contracts & SLA'
-    ),
-  };
 const serviceLevelHighlightFunctions: Record<string, PlanHighlightResolver[]> = {
   [ApiServiceLevelEnum.FREE]: [getEventsLine, getTeammatesLine, feedRetentionLine],
   [ApiServiceLevelEnum.PRO]: [getEventsLine, getTeammatesLine, feedRetentionLine],
@@ -181,8 +191,12 @@ const buildFeatureArray: (activeFlags: FeatureFlags, columns: ApiServiceLevelEnu
       values: buildTableRowRecord({ featureName: FeatureNameEnum.PLATFORM_ACTIVITY_FEED_RETENTION }),
     },
     {
-      label: 'Digests',
+      label: 'Max Digest Window',
       values: buildTableRowRecord({ featureName: FeatureNameEnum.PLATFORM_MAX_DIGEST_WINDOW_TIME }),
+    },
+    {
+      label: 'Max Delay Duration',
+      values: buildTableRowRecord({ featureName: FeatureNameEnum.PLATFORM_MAX_DELAY_DURATION }),
     },
     {
       label: 'Step controls',

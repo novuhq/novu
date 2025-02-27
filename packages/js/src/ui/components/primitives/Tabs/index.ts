@@ -1,5 +1,5 @@
-import { TabsList } from './TabsList';
 import { TabsContent } from './TabsContent';
+import { TabsList } from './TabsList';
 import { TabsRoot } from './TabsRoot';
 import { TabsTrigger } from './TabsTrigger';
 

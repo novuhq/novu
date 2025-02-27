@@ -77,7 +77,7 @@ jobs:
           docker tag novu-api $REGISTRY/$REPOSITORY:$IMAGE_TAG
 
           docker run --network=host --name api -dit --env NODE_ENV=test $REGISTRY/$REPOSITORY:$IMAGE_TAG
-          docker run --network=host appropriate/curl --retry 10 --retry-delay 5 --retry-connrefused http://127.0.0.1:1337/v1/health-check | grep 'ok'
+          docker run --network=host appropriate/curl --retry 10 --retry-delay 5 --retry-connrefused http://127.0.0.1:1336/v1/health-check | grep 'ok'
 
           docker push $REGISTRY/$REPOSITORY:prod
           docker push $REGISTRY/$REPOSITORY:latest

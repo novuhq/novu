@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import _ from 'lodash';
 import { TopicEntity, TopicRepository, TopicSubscribersRepository } from '@novu/dal';
 import {
@@ -10,6 +10,7 @@ import {
   TriggerRecipientSubscriber,
 } from '@novu/shared';
 
+import { PinoLogger } from 'nestjs-pino';
 import { InstrumentUsecase } from '../../instrumentation';
 import { ApiException } from '../../utils/exceptions';
 import { SubscriberProcessQueueService } from '../../services/queues/subscriber-process-queue.service';
@@ -30,7 +31,8 @@ export class TriggerMulticast {
   constructor(
     private subscriberProcessQueueService: SubscriberProcessQueueService,
     private topicSubscribersRepository: TopicSubscribersRepository,
-    private topicRepository: TopicRepository
+    private topicRepository: TopicRepository,
+    private logger: PinoLogger
   ) {}
 
   @InstrumentUsecase()
@@ -53,7 +55,7 @@ export class TriggerMulticast {
     const topicIds = topics.map((topic) => topic._id);
     const singleSubscriberIds = Array.from(singleSubscribers.keys());
     let subscribersList: ISubscribersDefine[] = [];
-    const getTopicDistinctSubscribersGenerator = await this.topicSubscribersRepository.getTopicDistinctSubscribers({
+    const getTopicDistinctSubscribersGenerator = this.topicSubscribersRepository.getTopicDistinctSubscribers({
       query: {
         _organizationId: organizationId,
         _environmentId: environmentId,
@@ -108,7 +110,7 @@ export class TriggerMulticast {
     const notFoundTopics = [...topicKeys].filter((topicKey) => !storageTopicsKeys.includes(topicKey));
 
     if (notFoundTopics.length > 0) {
-      throw new NotFoundException(`Topic with key ${notFoundTopics.join()} not found in current environment`);
+      this.logger.warn(`Topic with key ${notFoundTopics.join()} not found in current environment`);
     }
   }
 

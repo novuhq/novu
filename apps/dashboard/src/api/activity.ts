@@ -10,7 +10,7 @@ export type ActivityFilters = {
   dateRange?: string;
 };
 
-interface ActivityResponse {
+export interface ActivityResponse {
   data: IActivity[];
   hasMore: boolean;
   pageSize: number;

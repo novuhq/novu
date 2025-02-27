@@ -3,6 +3,8 @@ import { Button } from '@/components/primitives/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { ChannelTypeEnum, type IEnvironment, type IIntegration, type IProviderConfig } from '@novu/shared';
 import { RiCheckboxCircleFill, RiCloseCircleFill, RiSettings4Line, RiStarSmileLine } from 'react-icons/ri';
+import { useNavigate } from 'react-router-dom';
+import { ROUTES } from '../../../utils/routes';
 import { cn } from '../../../utils/ui';
 import { EnvironmentBranchIcon } from '../../primitives/environment-branch-icon';
 import { StatusBadge, StatusBadgeIcon } from '../../primitives/status-badge';
@@ -18,16 +20,24 @@ type IntegrationCardProps = {
 };
 
 export function IntegrationCard({ integration, provider, environment, onClick }: IntegrationCardProps) {
-  const handleConfigureClick = () => {
-    onClick({
-      integrationId: integration._id ?? '',
-      name: integration.name,
-      identifier: integration.identifier,
-      provider: provider.displayName,
-      channel: integration.channel,
-      environment: environment.name,
-      active: integration.active,
-    });
+  const navigate = useNavigate();
+
+  const handleConfigureClick = (e: React.MouseEvent<HTMLElement>) => {
+    if (integration.channel === ChannelTypeEnum.IN_APP && !integration.connected) {
+      e.preventDefault();
+
+      navigate(ROUTES.INBOX_EMBED + `?environmentId=${environment._id}`);
+    } else {
+      onClick({
+        integrationId: integration._id ?? '',
+        name: integration.name,
+        identifier: integration.identifier,
+        provider: provider.displayName,
+        channel: integration.channel,
+        environment: environment.name,
+        active: integration.active,
+      });
+    }
   };
 
   const isDemo = isDemoIntegration(provider.id);

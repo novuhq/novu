@@ -2,7 +2,7 @@ import { JSX } from 'solid-js';
 import { useArchiveAll, useArchiveAllRead, useReadAll } from '../../../api';
 import { StringLocalizationKey, useInboxContext, useLocalization } from '../../../context';
 import { cn, useStyle } from '../../../helpers';
-import { Archive, ArchiveRead, ReadAll } from '../../../icons';
+import { MarkAsArchived, MarkAsArchivedRead, MarkAsRead } from '../../../icons';
 import { Dropdown, dropdownItemVariants } from '../../primitives';
 
 export const MoreActionsOptions = () => {
@@ -16,17 +16,17 @@ export const MoreActionsOptions = () => {
       <ActionsItem
         localizationKey="notifications.actions.readAll"
         onClick={() => readAll({ tags: filter().tags })}
-        icon={ReadAll}
+        icon={MarkAsRead}
       />
       <ActionsItem
         localizationKey="notifications.actions.archiveAll"
         onClick={() => archiveAll({ tags: filter().tags })}
-        icon={Archive}
+        icon={MarkAsArchived}
       />
       <ActionsItem
         localizationKey="notifications.actions.archiveRead"
         onClick={() => archiveAllRead({ tags: filter().tags })}
-        icon={ArchiveRead}
+        icon={MarkAsArchivedRead}
       />
     </>
   );
@@ -45,7 +45,7 @@ export const ActionsItem = (props: {
       class={style('moreActions__dropdownItem', cn(dropdownItemVariants(), 'nt-flex nt-gap-2'))}
       onClick={props.onClick}
     >
-      <span class={style('moreActions__dropdownItemLeft__icon', 'nt-text-foreground-alpha-600')}>{props.icon()}</span>
+      <span class={style('moreActions__dropdownItemLeft__icon', 'nt-size-3')}>{props.icon()}</span>
       <span data-localization={props.localizationKey} class={style('moreActions__dropdownItemLabel')}>
         {t(props.localizationKey)}
       </span>
