@@ -1,5 +1,6 @@
 import { ApiServiceLevelEnum, FeatureFlags, FeatureFlagsKeysEnum } from '../types';
 
+// This is a large value on purpose that should surpass any realistic system limits
 const UNLIMITED_VALUE = 9999;
 
 export enum FeatureNameEnum {
