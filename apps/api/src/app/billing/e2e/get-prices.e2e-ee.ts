@@ -119,6 +119,7 @@ describe('GetPrices #novu-v2', () => {
               GetPricesCommand.create({
                 apiServiceLevel,
                 billingInterval,
+                organizationId: 'system',
               })
             );
 
@@ -147,6 +148,7 @@ describe('GetPrices #novu-v2', () => {
         GetPricesCommand.create({
           apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
           billingInterval: StripeBillingIntervalEnum.MONTH,
+          organizationId: 'system',
         })
       );
     } catch (e) {
