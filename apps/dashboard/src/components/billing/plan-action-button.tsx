@@ -1,5 +1,5 @@
 import { Button } from '@/components/primitives/button';
-import { ApiServiceLevelEnum } from '@novu/shared';
+import { ApiServiceLevelEnum, FeatureNameEnum, getFeatureForTierAsNumber } from '@novu/shared';
 import { useBillingPortal } from '../../hooks/use-billing-portal';
 import { useCheckoutSession } from '../../hooks/use-checkout-session';
 import { useFetchSubscription } from '../../hooks/use-fetch-subscription';
@@ -8,6 +8,7 @@ import { cn } from '../../utils/ui';
 interface PlanActionButtonProps {
   billingInterval: 'month' | 'year';
   requestedServiceLevel: ApiServiceLevelEnum;
+  activeServiceLevel?: ApiServiceLevelEnum;
   mode?: 'outline' | 'filled';
   showIcon?: boolean;
   className?: string;
@@ -17,6 +18,7 @@ interface PlanActionButtonProps {
 export function PlanActionButton({
   billingInterval,
   requestedServiceLevel,
+  activeServiceLevel,
   mode = 'filled',
   className,
   size = 'md',
@@ -46,6 +48,29 @@ export function PlanActionButton({
     return null;
   }
 
+  function buildLabel() {
+    if (isPaidSubscriptionActive()) {
+      return <> {'Manage Account'}</>;
+    }
+
+    const indexRequested = getFeatureForTierAsNumber(
+      FeatureNameEnum.TIERS_ORDER_INDEX,
+      requestedServiceLevel || ApiServiceLevelEnum.FREE,
+      {}
+    );
+    const indexActive = getFeatureForTierAsNumber(
+      FeatureNameEnum.TIERS_ORDER_INDEX,
+      activeServiceLevel || ApiServiceLevelEnum.FREE,
+      {}
+    );
+
+    if (indexRequested >= indexActive) {
+      return <> {'Upgrade plan'}</>;
+    }
+
+    return <> {'Downgrade plan'}</>;
+  }
+
   return (
     <Button
       mode={isPaidSubscriptionActive() ? 'outline' : mode}
@@ -55,7 +80,7 @@ export function PlanActionButton({
       disabled={isLoadingPortal}
       isLoading={isCheckingOut || isLoadingSubscription}
     >
-      {isPaidSubscriptionActive() ? 'Manage Account' : 'Upgrade plan'}
+      {buildLabel()}
     </Button>
   );
 }
