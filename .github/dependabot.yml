@@ -10,9 +10,3 @@ updates:
     directory: "/docker/community/" # Location of package manifests
     schedule:
       interval: "weekly"
-
-  # Maintain dependencies for Docker Compose
-  - package-ecosystem: "docker-compose"
-    directory: "/docker/local/" # Location of package manifests
-    schedule:
-      interval: "weekly"
