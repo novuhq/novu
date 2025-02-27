@@ -11,6 +11,7 @@ import { OAuthHandlerEnum, UpdateSubscriberChannel, UpdateSubscriberChannelComma
 import { UpdateSubscriber, UpdateSubscriberCommand } from '../update-subscriber';
 import { CreateOrUpdateSubscriberCommand } from './create-or-update-subscriber.command';
 import { EventsDistributedLockService } from '../../services';
+import { RetryOnError } from '../../decorators/retry-on-error-decorator';
 
 @Injectable()
 export class CreateOrUpdateSubscriberUseCase {
@@ -23,7 +24,10 @@ export class CreateOrUpdateSubscriberUseCase {
     @Inject(forwardRef(() => EventsDistributedLockService))
     private eventsDistributedLockService: EventsDistributedLockService
   ) {}
-
+  @RetryOnError('MongoServerError', {
+    maxRetries: 3,
+    delay: 500,
+  })
   async execute(command: CreateOrUpdateSubscriberCommand) {
     return await this.eventsDistributedLockService.applyLock<SubscriberEntity>(
       {
@@ -37,7 +41,7 @@ export class CreateOrUpdateSubscriberUseCase {
     );
   }
 
-  private async createOrUpdateSubscriber(command: CreateOrUpdateSubscriberCommand) {
+  private async createOrUpdateSubscriber(command: CreateOrUpdateSubscriberCommand): Promise<SubscriberEntity> {
     const existingSubscriber = await this.getExistingSubscriber(command);
 
     if (existingSubscriber) {
@@ -64,7 +68,10 @@ export class CreateOrUpdateSubscriberUseCase {
     return existingSubscriber;
   }
 
-  private async updateSubscriberCredentials(command: CreateOrUpdateSubscriberCommand, subscriber: SubscriberEntity) {
+  private async updateSubscriberCredentials(
+    command: CreateOrUpdateSubscriberCommand,
+    subscriber: SubscriberEntity
+  ): Promise<SubscriberEntity> {
     let updatedSubscriber: SubscriberEntity | undefined;
     if (command.channels?.length) {
       await this.updateCredentials(command);
@@ -124,7 +131,7 @@ export class CreateOrUpdateSubscriberUseCase {
     }
   }
 
-  private async createSubscriber(command: CreateOrUpdateSubscriberCommand) {
+  private async createSubscriber(command: CreateOrUpdateSubscriberCommand): Promise<SubscriberEntity> {
     try {
       await this.invalidateCache.invalidateByKey({
         key: buildSubscriberKey({

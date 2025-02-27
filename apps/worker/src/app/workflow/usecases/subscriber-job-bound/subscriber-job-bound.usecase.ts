@@ -3,7 +3,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import {
   AnalyticsService,
   ApiException,
-  CachedEntity,
   CreateNotificationJobs,
   CreateNotificationJobsCommand,
   CreateOrUpdateSubscriberCommand,
