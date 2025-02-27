@@ -9,6 +9,7 @@ import {
   ExecuteBridgeRequest,
   ExecuteBridgeRequestCommand,
   ExecuteBridgeRequestDto,
+  FeatureFlagsService,
   Instrument,
   InstrumentUsecase,
   IWorkflowDataDto,
@@ -21,13 +22,16 @@ import {
   EnvironmentRepository,
   NotificationTemplateEntity,
   NotificationTemplateRepository,
+  OrganizationEntity,
   TenantEntity,
   TenantRepository,
+  UserEntity,
   WorkflowOverrideEntity,
   WorkflowOverrideRepository,
 } from '@novu/dal';
 import { DiscoverWorkflowOutput, GetActionEnum } from '@novu/framework/internal';
 import {
+  FeatureFlagsKeysEnum,
   ReservedVariablesMap,
   SUBSCRIBER_ID_REGEX,
   TriggerContextTypeEnum,
@@ -60,6 +64,7 @@ export class ParseEventRequest {
     private workflowOverrideRepository: WorkflowOverrideRepository,
     private executeBridgeRequest: ExecuteBridgeRequest,
     private logger: PinoLogger,
+    private featureFlagService: FeatureFlagsService,
     protected moduleRef: ModuleRef
   ) {}
 
@@ -202,17 +207,35 @@ export class ParseEventRequest {
       ...command,
     };
 
-    if ('to' in commandArgs) {
-      const validSubscribers = this.removeInvalidRecipients(commandArgs.to);
+    const isDryRun = await this.featureFlagService.getFlag({
+      environment: { _id: command.environmentId } as EnvironmentEntity,
+      organization: { _id: command.organizationId } as OrganizationEntity,
+      user: { _id: command.userId } as UserEntity,
+      key: FeatureFlagsKeysEnum.IS_SUBSCRIBER_ID_VALIDATION_DRY_RUN_ENABLED,
+      defaultValue: false,
+    });
 
-      if (!validSubscribers) {
+    if ('to' in commandArgs) {
+      const { validSubscribers, inValidSubscribers } = this.separateRecipients(commandArgs.to);
+
+      if (inValidSubscribers.length > 0 && isDryRun) {
+        Logger.warn(
+          `[Dry run] Invalid recipients: ${inValidSubscribers.map((recipient) => JSON.stringify(recipient)).join(', ')}`,
+          'ParseEventRequest'
+        );
+      }
+
+      if (!validSubscribers && !isDryRun) {
         return {
           acknowledged: true,
           status: TriggerEventStatusEnum.INVALID_RECIPIENTS,
           transactionId,
         };
       }
-      commandArgs.to = validSubscribers;
+
+      if (!isDryRun && validSubscribers) {
+        commandArgs.to = validSubscribers;
+      }
     }
 
     const jobData: IWorkflowDataDto = {
@@ -311,43 +334,108 @@ export class ParseEventRequest {
     return reservedVariables?.map((reservedVariable) => reservedVariable.type) || [];
   }
 
-  private isValidId(subscriberId: string) {
-    if (subscriberId?.trim().match(SUBSCRIBER_ID_REGEX)) {
-      return subscriberId.trim();
-    }
+  private isValidSubscriberId(subscriberId: string) {
+    return Boolean(subscriberId?.trim().match(SUBSCRIBER_ID_REGEX));
   }
 
-  private removeInvalidRecipients(payload: TriggerRecipientsPayload): TriggerRecipientsPayload | null {
-    if (!payload) return null;
+  /**
+   * Separates valid and invalid recipients from the given payload.
+   *
+   * @param payload - The payload containing recipients to be validated.
+   * @returns An object containing valid subscribers and invalid subscribers.
+   * - `validSubscribers`: An array of valid recipients or null if none are valid.
+   * - `inValidSubscribers`: An array of invalid recipients.
+   */
+  private separateRecipients(payload: TriggerRecipientsPayload): {
+    validSubscribers: TriggerRecipientsPayload | null;
+    inValidSubscribers: TriggerRecipientsPayload[];
+  } {
+    if (!payload)
+      return {
+        validSubscribers: null,
+        inValidSubscribers: [],
+      };
 
     if (!Array.isArray(payload)) {
-      return this.filterValidRecipient(payload) as TriggerRecipientsPayload;
+      const { invalid, valid } = this.filterValidRecipient(payload);
+
+      return {
+        validSubscribers: valid as TriggerRecipientsPayload,
+        inValidSubscribers: invalid ? ([invalid] as TriggerRecipientsPayload[]) : [],
+      };
     }
 
-    const filteredRecipients: TriggerRecipients = payload
-      .map((subscriber) => this.filterValidRecipient(subscriber))
-      .filter((subscriber): subscriber is TriggerRecipient => subscriber !== null);
+    const invalidRecipients: TriggerRecipientsPayload[] = [];
+    const recipients: TriggerRecipients = payload
+      .map((subscriber) => {
+        const { invalid, valid } = this.filterValidRecipient(subscriber);
 
-    return filteredRecipients.length > 0 ? filteredRecipients : null;
+        if (invalid) {
+          invalidRecipients.push(invalid as TriggerRecipientsPayload);
+        }
+
+        return valid;
+      })
+      .filter((recipient) => recipient !== null);
+
+    return { validSubscribers: recipients.length > 0 ? recipients : null, inValidSubscribers: invalidRecipients };
   }
 
-  private filterValidRecipient(subscriber: TriggerRecipient): TriggerRecipient | null {
+  /**
+   * Filters a given subscriber and determines if it is valid or invalid.
+   *
+   * @param subscriber - The subscriber to be validated. It can be a string or an object.
+   *
+   * @returns An object containing:
+   * - `valid`: The valid subscriber if the input is valid, otherwise `null`.
+   * - `invalid`: The invalid subscriber if the input is invalid, otherwise `null`.
+   *
+   * The function performs the following checks:
+   * - If the subscriber is a string, it trims the string and checks if it is a valid subscriber ID.
+   * - If the subscriber is an object, it checks if it contains a `topicKey` or a `subscriberId`.
+   * - If it contains a `topicKey`, then we do nothing and return it as it is.
+   * - If it contains a `subscriberId`, it trims the `subscriberId` and checks if it is valid.
+   *
+   * If the subscriber does not meet any of the above conditions, it is considered invalid.
+   */
+  private filterValidRecipient(subscriber: TriggerRecipient): {
+    valid: TriggerRecipient | null;
+    invalid: TriggerRecipient | null;
+  } {
     if (typeof subscriber === 'string') {
-      return this.isValidId(subscriber) ? subscriber : null;
+      const trimmedSubscriber = subscriber.trim();
+
+      return this.isValidSubscriberId(subscriber)
+        ? {
+            valid: trimmedSubscriber,
+            invalid: null,
+          }
+        : {
+            valid: null,
+            invalid: subscriber,
+          };
     }
 
     if (typeof subscriber === 'object' && subscriber !== null) {
       if ('topicKey' in subscriber) {
-        return subscriber;
+        return { valid: subscriber, invalid: null };
       }
 
       if ('subscriberId' in subscriber) {
-        const subscriberId = this.isValidId(subscriber.subscriberId);
+        const isValidSubscriberId = this.isValidSubscriberId(subscriber.subscriberId);
 
-        return subscriberId ? { ...subscriber, subscriberId } : null;
+        return isValidSubscriberId
+          ? { valid: { ...subscriber, subscriberId: subscriber.subscriberId.trim() }, invalid: null }
+          : {
+              valid: null,
+              invalid: subscriber,
+            };
       }
     }
 
-    return null;
+    return {
+      valid: null,
+      invalid: subscriber,
+    };
   }
 }
