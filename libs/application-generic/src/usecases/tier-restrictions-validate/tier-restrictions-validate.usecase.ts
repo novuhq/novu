@@ -45,7 +45,7 @@ export class TierRestrictionsValidateUsecase {
     }
 
     const apiServiceLevel = (await this.organizationRepository.findById(command.organizationId))?.apiServiceLevel;
-    const maxDelayMs = await this.getMaxDelayInMs(apiServiceLevel);
+    const maxDelayMs = await this.getMaxDelayInMs(apiServiceLevel, command);
 
     if (isCronExpression(command.cron)) {
       if (this.isCronDeltaDeferDurationExceededTier(command.cron, maxDelayMs)) {
@@ -75,8 +75,8 @@ export class TierRestrictionsValidateUsecase {
     return [];
   }
 
-  private async getMaxDelayInMs(apiServiceLevel) {
-    const isPackagesQ1Enabled = await this.is4PackageTierActivated();
+  private async getMaxDelayInMs(apiServiceLevel: ApiServiceLevelEnum, command: TierRestrictionsValidateCommand) {
+    const isPackagesQ1Enabled = await this.is4PackageTierActivated(command);
     const featureFlags = { [FeatureFlagsKeysEnum.IS_2025_Q1_TIERING_ENABLED]: isPackagesQ1Enabled };
 
     return getFeatureForTierAsNumber(
@@ -95,10 +95,13 @@ export class TierRestrictionsValidateUsecase {
       organization: { _id: command.organizationId },
     });
   }
-  private async is4PackageTierActivated(): Promise<boolean> {
+
+  private async is4PackageTierActivated(command: TierRestrictionsValidateCommand): Promise<boolean> {
     return await this.featureFlagsService.getFlag({
       key: FeatureFlagsKeysEnum.IS_2025_Q1_TIERING_ENABLED,
       defaultValue: false,
+      environment: { _id: command.environmentId },
+      organization: { _id: command.organizationId },
     });
   }
 

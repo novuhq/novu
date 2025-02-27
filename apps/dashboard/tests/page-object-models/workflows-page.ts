@@ -1,4 +1,4 @@
-import { type Page } from '@playwright/test';
+import { type Page, expect } from '@playwright/test';
 
 export class WorkflowsPage {
   constructor(private page: Page) {}
@@ -12,7 +12,7 @@ export class WorkflowsPage {
   }
 
   async getWorkflowElement(workflowName: string) {
-    return await this.page.locator('td').filter({ hasText: workflowName });
+    return this.page.locator('td').filter({ hasText: workflowName });
   }
 
   async clickWorkflowName(workflowName: string): Promise<void> {
@@ -21,51 +21,43 @@ export class WorkflowsPage {
   }
 
   async getWorkflowStatusBadge(workflowName: string, status: 'Active' | 'Inactive') {
-    const workflowRow = await this.page.getByRole('row').filter({ hasText: workflowName });
+    const workflowRow = this.page.getByRole('row').filter({ hasText: workflowName });
 
-    return await workflowRow.locator('td', { hasText: status });
+    return workflowRow.locator('td', { hasText: status });
   }
 
   async clickWorkflowActionsMenu(workflowName: string): Promise<void> {
-    const workflowRow = await this.page.getByRole('row').filter({ hasText: workflowName });
-    const workflowActions = await workflowRow.getByTestId('workflow-actions-menu');
+    const workflowRow = this.page.getByRole('row').filter({ hasText: workflowName });
+    const workflowActions = workflowRow.getByTestId('workflow-actions-menu');
     await workflowActions.click();
   }
 
   async pauseWorkflow(): Promise<void> {
-    const pauseAction = await this.page.getByTestId('pause-workflow');
-    const pauseModal = await this.page.getByRole('dialog');
-    const proceedBtn = await pauseModal.getByRole('button').filter({ hasText: 'Proceed' });
-
+    const pauseAction = this.page.getByTestId('pause-workflow');
     await pauseAction.click();
-    await proceedBtn.click();
 
-    await this.page.waitForResponse(
-      (resp) => resp.url().includes('/v2/workflows') && resp.request().method() === 'PATCH' && resp.status() === 200
-    );
-    await this.page.waitForTimeout(200);
+    const pauseModal = this.page.getByRole('dialog');
+    await expect(pauseModal).toBeVisible();
+
+    const proceedBtn = pauseModal.getByRole('button').filter({ hasText: 'Proceed' });
+    await proceedBtn.click();
   }
 
   async enableWorkflow(): Promise<void> {
-    const enableWorkflow = await this.page.getByTestId('enable-workflow');
+    const enableWorkflow = this.page.getByTestId('enable-workflow');
     await enableWorkflow.click();
-
-    await this.page.waitForResponse(
-      (resp) => resp.url().includes('/v2/workflows') && resp.request().method() === 'PATCH' && resp.status() === 200
-    );
-    await this.page.waitForTimeout(200);
   }
 
   async deleteWorkflow(): Promise<void> {
-    const deleteWorkflow = await this.page.getByTestId('delete-workflow');
+    const deleteWorkflow = this.page.getByTestId('delete-workflow');
     await deleteWorkflow.click();
-    const deleteWorkflowModal = await this.page.getByRole('dialog');
-    const deleteBtn = await deleteWorkflowModal.getByRole('button').filter({ hasText: 'Delete' });
+    const deleteWorkflowModal = this.page.getByRole('dialog');
+    const deleteBtn = deleteWorkflowModal.getByRole('button').filter({ hasText: 'Delete' });
 
     await deleteBtn.click();
   }
 
   async getDeleteWorkflowButton() {
-    return await this.page.getByTestId('delete-workflow');
+    return this.page.getByTestId('delete-workflow');
   }
 }

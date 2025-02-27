@@ -1,14 +1,19 @@
-import { type Locator, type Page } from '@playwright/test';
+import { type Locator, type Page, expect } from '@playwright/test';
 
 export class TriggerWorkflowPage {
   constructor(private page: Page) {}
 
   async triggerWorkflowBtnClick(): Promise<void> {
-    const triggerWorkflowBtn = await this.page.getByRole('button', { name: 'Test workflow' });
+    const triggerWorkflowBtn = this.page.getByRole('button', { name: 'Test workflow' });
+    await expect(triggerWorkflowBtn).toBeVisible();
     await triggerWorkflowBtn.click();
   }
 
-  async getActivityPanel(): Promise<Locator> {
-    return await this.page.getByTestId('activity-panel');
+  getActivityPanelSkeleton(): Locator {
+    return this.page.getByTestId('activity-panel-skeleton');
+  }
+
+  getActivityPanel(): Locator {
+    return this.page.getByTestId('activity-panel');
   }
 }

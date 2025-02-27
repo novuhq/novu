@@ -1435,7 +1435,7 @@ function removeFields<T>(obj: T, ...keysToRemove: (keyof T)[]): T {
 interface ApiResponse {
   req: {
     method: string; // e.g., "GET"
-    url: string; // e.g., "http://127.0.0.1:1337/v1/v2/workflows/66e929c6667852862a1e5145"
+    url: string; // e.g., "http://127.0.0.1:1336/v1/v2/workflows/66e929c6667852862a1e5145"
     headers: {
       authorization: string; // e.g., "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpX5cJ9..."
       'novu-environment-id': string; // e.g., "66e929c6667852862a1e50e4"
