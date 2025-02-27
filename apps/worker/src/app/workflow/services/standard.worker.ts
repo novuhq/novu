@@ -1,6 +1,6 @@
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 
-import { ObservabilityBackgroundTransactionEnum } from '@novu/shared';
+import { ObservabilityBackgroundTransactionEnum, JobStatusEnum } from '@novu/shared';
 import {
   BullMqService,
   getStandardWorkerOptions,
@@ -14,12 +14,10 @@ import {
   WorkflowInMemoryProviderService,
 } from '@novu/application-generic';
 
-import { CommunityOrganizationRepository, CommunityUserRepository } from '@novu/dal';
+import { CommunityOrganizationRepository, JobRepository } from '@novu/dal';
 import {
   RunJob,
   RunJobCommand,
-  SetJobAsCommand,
-  SetJobAsCompleted,
   SetJobAsFailed,
   SetJobAsFailedCommand,
   WebhookFilterBackoffStrategy,
@@ -36,13 +34,13 @@ export class StandardWorker extends StandardWorkerService {
   constructor(
     private handleLastFailedJob: HandleLastFailedJob,
     private runJob: RunJob,
-    @Inject(forwardRef(() => SetJobAsCompleted)) private setJobAsCompleted: SetJobAsCompleted,
     @Inject(forwardRef(() => SetJobAsFailed)) private setJobAsFailed: SetJobAsFailed,
     @Inject(forwardRef(() => WebhookFilterBackoffStrategy))
     private webhookFilterBackoffStrategy: WebhookFilterBackoffStrategy,
     @Inject(forwardRef(() => WorkflowInMemoryProviderService))
     public workflowInMemoryProviderService: WorkflowInMemoryProviderService,
-    private organizationRepository: CommunityOrganizationRepository
+    private organizationRepository: CommunityOrganizationRepository,
+    private jobRepository: JobRepository
   ) {
     super(new BullMqService(workflowInMemoryProviderService));
 
@@ -152,12 +150,21 @@ export class StandardWorker extends StandardWorkerService {
       const minimalData = this.extractMinimalJobData(job.data);
       jobId = minimalData.jobId;
 
-      await this.setJobAsCompleted.execute(
-        SetJobAsCommand.create({
-          environmentId: minimalData.environmentId,
-          jobId: minimalData.jobId,
-          userId: minimalData.userId,
-        })
+      /*
+       * The job might have been cancelled in the pipeline (e.g., by a digest or delay step)
+       * In such cases, we should preserve the CANCELED status rather than overwriting it with COMPLETED
+       */
+      await this.jobRepository.updateOne(
+        {
+          _environmentId: minimalData.environmentId,
+          _id: minimalData.jobId,
+          status: { $ne: JobStatusEnum.CANCELED },
+        },
+        {
+          $set: {
+            status: JobStatusEnum.COMPLETED,
+          },
+        }
       );
     } catch (error) {
       Logger.error(error, `Failed to set job ${jobId} as completed`, LOG_CONTEXT);
