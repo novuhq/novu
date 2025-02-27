@@ -1,6 +1,8 @@
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment, useFetchEnvironments } from '@/context/environment/hooks';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { ROUTES } from '@/utils/routes';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { RiBookMarkedLine, RiSparkling2Line } from 'react-icons/ri';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTelemetry } from '../../hooks/use-telemetry';
@@ -22,6 +24,7 @@ export function FreeTierState() {
     organizationId: currentOrganization?._id,
   });
   const { currentEnvironment } = useEnvironment();
+  const is2025Q1TieringEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_2025_Q1_TIERING_ENABLED);
 
   return (
     <div className="flex h-full w-full flex-col items-center justify-center gap-6 px-4">
@@ -87,14 +90,14 @@ export function FreeTierState() {
             size="xs"
             className="mb-3.5"
             onClick={() => {
-              track(TelemetryEvent.UPGRADE_TO_BUSINESS_TIER_CLICK, {
+              track(TelemetryEvent.UPGRADE_TO_TEAM_TIER_CLICK, {
                 source: 'environments-page',
               });
               navigate(ROUTES.SETTINGS_BILLING);
             }}
             leadingIcon={RiSparkling2Line}
           >
-            Upgrade to Business Tier
+            {is2025Q1TieringEnabled ? 'Upgrade to Team Tier' : 'Upgrade to Business Tier'}
           </Button>
           <Link to={'https://docs.novu.co/concepts/environments'} target="_blank">
             <LinkButton size="sm" leadingIcon={RiBookMarkedLine}>

@@ -53,7 +53,11 @@ function NovuBrandingSwitch({ value, onChange }: { value: boolean | undefined; o
                 </p>
               </div>
               <div className="flex justify-end">
-                <LinkButton size="sm" variant="primary" onClick={() => navigate(ROUTES.SETTINGS_BILLING)}>
+                <LinkButton
+                  size="sm"
+                  variant="primary"
+                  onClick={() => navigate(ROUTES.SETTINGS_BILLING + '?utm_source=remove_branding_prompt')}
+                >
                   Upgrade Plan
                 </LinkButton>
               </div>
