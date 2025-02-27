@@ -112,7 +112,6 @@ describe('Standard Worker', () => {
 
     const handleLastFailedJob = moduleRef.get<HandleLastFailedJob>(HandleLastFailedJob);
     const runJob = moduleRef.get<RunJob>(RunJob);
-    const setJobAsCompleted = moduleRef.get<SetJobAsCompleted>(SetJobAsCompleted);
     const setJobAsFailed = moduleRef.get<SetJobAsFailed>(SetJobAsFailed);
     const webhookFilterBackoffStrategy = moduleRef.get<WebhookFilterBackoffStrategy>(WebhookFilterBackoffStrategy);
     const workflowInMemoryProviderService = moduleRef.get<WorkflowInMemoryProviderService>(
@@ -123,11 +122,11 @@ describe('Standard Worker', () => {
     standardWorker = new StandardWorker(
       handleLastFailedJob,
       runJob,
-      setJobAsCompleted,
       setJobAsFailed,
       webhookFilterBackoffStrategy,
       workflowInMemoryProviderService,
-      organizationRepository
+      organizationRepository,
+      jobRepository
     );
   });
 
