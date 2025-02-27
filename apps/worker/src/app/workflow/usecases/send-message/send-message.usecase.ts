@@ -157,6 +157,9 @@ export class SendMessage {
     });
 
     switch (stepType) {
+      case StepTypeEnum.TRIGGER: {
+        return { status: 'success' };
+      }
       case StepTypeEnum.SMS: {
         return await this.sendMessageSms.execute(sendMessageCommand);
       }

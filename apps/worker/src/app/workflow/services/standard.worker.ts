@@ -51,6 +51,10 @@ export class StandardWorker extends StandardWorkerService {
     this.worker.on('failed', async (job: Job<IStandardDataDto, void, string>, error: Error): Promise<void> => {
       await this.jobHasFailed(job, error);
     });
+
+    this.worker.on('completed', async (job: Job<IStandardDataDto, void, string>): Promise<void> => {
+      await this.jobHasCompleted(job);
+    });
   }
 
   private getWorkerOptions(): WorkerOptions {
@@ -147,14 +151,12 @@ export class StandardWorker extends StandardWorkerService {
     try {
       const minimalData = this.extractMinimalJobData(job.data);
       jobId = minimalData.jobId;
-      const { environmentId } = minimalData;
-      const { userId } = minimalData;
 
       await this.setJobAsCompleted.execute(
         SetJobAsCommand.create({
-          environmentId,
-          jobId,
-          userId,
+          environmentId: minimalData.environmentId,
+          jobId: minimalData.jobId,
+          userId: minimalData.userId,
         })
       );
     } catch (error) {
