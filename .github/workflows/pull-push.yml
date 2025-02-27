@@ -1,0 +1,74 @@
+name: Novu Image Transfer to GCP Artifact Registry
+
+on:
+  workflow_dispatch:
+    inputs:
+      component:
+        description: 'Novu component to transfer (e.g., web)'
+        required: true
+        default: 'web'
+
+jobs:
+  transfer:
+    name: Pull Novu Image from GHCR and Push to GCP Artifact Registry
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Authenticate to GCP using Workload Identity Federation
+      - name: GCP authentication for GitHub Actions
+        id: gcp-auth
+        uses: google-github-actions/auth@v2
+        with:
+          token_format: 'access_token'
+          workload_identity_provider: ${{ secrets.GCP_AUTH_WORKLOAD_IDP }}
+          service_account: ${{ secrets.GCP_AUTH_SA }}
+
+      # Set up Docker Buildx for advanced Docker commands
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Authenticate to GitHub Container Registry (GHCR) for pulling the Novu image.
+      # - name: Docker login to GitHub Container Registry
+      #   uses: docker/login-action@v3
+      #   with:
+      #     registry: ghcr.io
+      #     username: ${{ github.actor }}
+      #     password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Pull the latest image of the specified Novu component from GHCR.
+      - name: Pull Novu Component Image from GHCR
+        run: |
+          # The image is expected to be available under the novu organization on GHCR.
+          IMAGE_NAME="ghcr.io/novuhq/novu/${{ github.event.inputs.component }}:latest"
+          echo "Pulling image: $IMAGE_NAME"
+          docker pull "$IMAGE_NAME"
+          echo "IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_ENV
+
+      # Tag the pulled image for your GCP Artifact Registry.
+      - name: Tag Image for GCP Artifact Registry
+        run: |
+          # Construct the target image tag using secrets for project and repository.
+          TARGET_IMAGE="europe-west1-docker.pkg.dev/jack-lucius-tech/lucius/novu-${{ github.event.inputs.component }}:latest"
+          echo "Tagging image as: $TARGET_IMAGE"
+          docker tag "$IMAGE_NAME" "$TARGET_IMAGE"
+          echo "TARGET_IMAGE=$TARGET_IMAGE" >> $GITHUB_ENV
+
+      # Authenticate to GCP Artifact Registry using the access token from GCP authentication.
+      - name: Docker login to GCP Artifact Registry
+        uses: docker/login-action@v3
+        with:
+          registry: europe-west1-docker.pkg.dev
+          username: oauth2accesstoken
+          password: ${{ steps.gcp-auth.outputs.access_token }}
+
+      # Push the tagged image to your GCP Artifact Registry.
+      - name: Push Image to GCP Artifact Registry
+        run: |
+          echo "Pushing image: $TARGET_IMAGE"
+          docker push "$TARGET_IMAGE"
+          echo "Image pushed successfully."
