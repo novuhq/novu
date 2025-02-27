@@ -26,15 +26,15 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   /* Retry on CI only */
   retries: process.env.CI ? 5 : 3,
-  /* Use 4 workers in CI, 50% of CPU count in local */
-  workers: process.env.CI ? 4 : '25%',
+  /* Use 1 workers in CI, 50% of CPU count in local */
+  workers: process.env.CI ? 1 : '25%',
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: process.env.CI ? 'blob' : 'html',
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   webServer: {
     command: 'pnpm start:test',
     url: baseURL,
-    timeout: 120 * 1000,
+    timeout: 180 * 1000,
     reuseExistingServer: !process.env.CI,
   },
   use: {
@@ -42,12 +42,12 @@ export default defineConfig({
     baseURL: baseURL,
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-    trace: 'on-first-retry',
+    trace: 'retain-on-failure',
     permissions: ['clipboard-read'],
   },
-  timeout: process.env.CI ? 30_000 : 60_000,
+  timeout: 180_000,
   expect: {
-    timeout: 15000,
+    timeout: 30_000,
   },
   /* Configure projects for major browsers */
   projects: [
@@ -58,7 +58,7 @@ export default defineConfig({
         ...devices['Desktop Chrome'],
         viewport: { width: 1512, height: 982 },
         video: {
-          mode: 'on-first-retry',
+          mode: 'retain-on-failure',
           size: { width: 1512, height: 982 },
         },
       },

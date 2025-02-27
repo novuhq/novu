@@ -26,6 +26,7 @@ export enum FeatureNameEnum {
   PLATFORM_PROVIDER_INTEGRATIONS = 'platformProviderIntegrations',
   PLATFORM_ACTIVITY_FEED_RETENTION = 'platformActivityFeedRetention',
   PLATFORM_MAX_DIGEST_WINDOW_TIME = 'platformMaxDigestWindowTime',
+  PLATFORM_MAX_DELAY_DURATION = 'platformMaxDelayDuration',
   PLATFORM_STEP_CONTROLS_BOOLEAN = 'platformStepControlsBoolean',
   PLATFORM_BLOCK_BASED_EMAIL_EDITOR_BOOLEAN = 'platformBlockBasedEmailEditorBoolean',
   PLATFORM_REMOVE_NOVU_BRANDING_BOOLEAN = 'platformRemoveNovuBrandingBoolean',
@@ -50,6 +51,8 @@ export enum FeatureNameEnum {
   COMPLIANCE_HIPAA_BAA_BOOLEAN = 'complianceHipaaBaaBoolean',
   COMPLIANCE_CUSTOM_SECURITY_REVIEWS = 'complianceCustomSecurityReviewsBoolean',
   COMPLIANCE_DATA_PROCESSING_AGREEMENTS = 'complianceDataProcessingAgreements',
+
+  TIERS_ORDER_INDEX = 'tiersOrderIndex',
 }
 
 export type FeatureValue = string | number | null | boolean | DetailedPriceListItem;
@@ -68,6 +71,13 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
     [ApiServiceLevelEnum.BUSINESS]: '48 Hours',
     [ApiServiceLevelEnum.ENTERPRISE]: '24 Hours',
     [ApiServiceLevelEnum.UNLIMITED]: '24 Hours',
+  },
+  [FeatureNameEnum.TIERS_ORDER_INDEX]: {
+    [ApiServiceLevelEnum.FREE]: 0,
+    [ApiServiceLevelEnum.PRO]: 1,
+    [ApiServiceLevelEnum.BUSINESS]: 2,
+    [ApiServiceLevelEnum.ENTERPRISE]: 3,
+    [ApiServiceLevelEnum.UNLIMITED]: 4,
   },
   [FeatureNameEnum.PLATFORM_PLAN_LABEL]: {
     [ApiServiceLevelEnum.FREE]: 'Free',
@@ -124,17 +134,17 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
   [FeatureNameEnum.PLATFORM_ANNUAL_COST]: {
     [ApiServiceLevelEnum.FREE]: {
       value: 0,
-      label: '0$',
+      label: '$0',
     },
     [ApiServiceLevelEnum.PRO]: {
       value: 330,
       currency: '$',
-      label: '330$',
+      label: '$330',
     },
     [ApiServiceLevelEnum.BUSINESS]: {
       value: 2700,
       currency: '$',
-      label: '2,700$',
+      label: '$2,700',
     },
     [ApiServiceLevelEnum.ENTERPRISE]: {
       value: 'Custom Pricing',
@@ -268,9 +278,16 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
   [FeatureNameEnum.PLATFORM_MAX_DIGEST_WINDOW_TIME]: {
     [ApiServiceLevelEnum.FREE]: { label: '24 Hours', value: 24, timeSuffix: 'h' },
     [ApiServiceLevelEnum.PRO]: { label: '7 days', value: 7, timeSuffix: 'd' },
-    [ApiServiceLevelEnum.BUSINESS]: { label: '30 days', value: 30, timeSuffix: 'd' },
-    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'unlimited', value: -1 },
-    [ApiServiceLevelEnum.UNLIMITED]: { label: 'unlimited', value: -1 },
+    [ApiServiceLevelEnum.BUSINESS]: { label: '90 days', value: 90, timeSuffix: 'd' },
+    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Custom', value: -1 },
+    [ApiServiceLevelEnum.UNLIMITED]: { label: 'Unlimited', value: -1 },
+  },
+  [FeatureNameEnum.PLATFORM_MAX_DELAY_DURATION]: {
+    [ApiServiceLevelEnum.FREE]: { label: '24 Hours', value: 24, timeSuffix: 'h' },
+    [ApiServiceLevelEnum.PRO]: { label: '7 days', value: 7, timeSuffix: 'd' },
+    [ApiServiceLevelEnum.BUSINESS]: { label: '90 days', value: 90, timeSuffix: 'd' },
+    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Custom', value: -1 },
+    [ApiServiceLevelEnum.UNLIMITED]: { label: 'Unlimited', value: -1 },
   },
   [FeatureNameEnum.PLATFORM_BLOCK_BASED_EMAIL_EDITOR_BOOLEAN]: {
     [ApiServiceLevelEnum.FREE]: 1,
@@ -620,6 +637,8 @@ const inActiveFeatureFlagRecordGetters: Record<string, FeatureAugmentFunction> =
         case FeatureNameEnum.PLATFORM_ACTIVITY_FEED_RETENTION:
           return { label: '30 days', value: 7, timeSuffix: 'd' };
         case FeatureNameEnum.PLATFORM_MAX_DIGEST_WINDOW_TIME:
+          return { label: '7 days', value: 7, timeSuffix: 'd' };
+        case FeatureNameEnum.PLATFORM_MAX_DELAY_DURATION:
           return { label: '7 days', value: 7, timeSuffix: 'd' };
 
         default:

@@ -235,7 +235,14 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
               })}
               className="ml-auto flex items-center"
             >
-              <CompactButton size="lg" variant="ghost" icon={RiCloseFill} className="size-4" type="button">
+              <CompactButton
+                size="lg"
+                variant="ghost"
+                icon={RiCloseFill}
+                className="size-4"
+                type="button"
+                data-testid="configure-step-form-close"
+              >
                 <span className="sr-only">Close</span>
               </CompactButton>
             </Link>
