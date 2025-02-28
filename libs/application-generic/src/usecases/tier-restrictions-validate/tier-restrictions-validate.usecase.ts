@@ -49,7 +49,7 @@ export class TierRestrictionsValidateUsecase {
       return [];
     }
 
-    const maxDelayMs = await this.getMaxDelayInMs(organization.apiServiceLevel, command);
+    const maxDelayMs = await this.getMaxDelayInMs(command, organization);
 
     if (isCronExpression(command.cron)) {
       if (this.isCronDeltaDeferDurationExceededTier(command.cron, maxDelayMs)) {
@@ -79,13 +79,13 @@ export class TierRestrictionsValidateUsecase {
     return [];
   }
 
-  private async getMaxDelayInMs(apiServiceLevel: ApiServiceLevelEnum, command: TierRestrictionsValidateCommand) {
-    const isPackagesQ1Enabled = await this.is4PackageTierActivated(command);
+  private async getMaxDelayInMs(command: TierRestrictionsValidateCommand, organization: OrganizationEntity) {
+    const isPackagesQ1Enabled = await this.is4PackageTierActivated(command, organization);
     const featureFlags = { [FeatureFlagsKeysEnum.IS_2025_Q1_TIERING_ENABLED]: isPackagesQ1Enabled };
 
     return getFeatureForTierAsNumber(
       FeatureNameEnum.PLATFORM_MAX_DIGEST_WINDOW_TIME,
-      apiServiceLevel || ApiServiceLevelEnum.FREE,
+      organization.apiServiceLevel || ApiServiceLevelEnum.FREE,
       featureFlags,
       true
     );
