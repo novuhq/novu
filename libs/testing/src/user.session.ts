@@ -442,6 +442,10 @@ export class UserSession {
     return this.jobsService.runAllDelayedJobsImmediately();
   }
 
+  public async awaitAllQueueJobs() {
+    return this.jobsService.awaitAllQueueJobs();
+  }
+
   public async queueGet(jobTopicName: JobTopicNameEnum, getter: 'getDelayed') {
     return await this.jobsService.queueGet(jobTopicName, getter);
   }

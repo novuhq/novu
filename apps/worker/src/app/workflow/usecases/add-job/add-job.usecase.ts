@@ -170,7 +170,7 @@ export class AddJob {
     const valid = await this.validateDeferDuration(delay, job, command, digestResult?.cronExpression);
 
     if (!valid) {
-      return;
+      throw new Error('Defer duration limit exceeded');
     }
 
     await this.queueJob(job, delay);

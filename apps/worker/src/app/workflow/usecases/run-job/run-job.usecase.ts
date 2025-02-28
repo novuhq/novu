@@ -151,9 +151,9 @@ export class RunJob {
    * Otherwise, we continue trying to queue the next job in the chain.
    */
   private async tryQueueNextJobs(job: JobEntity): Promise<void> {
-    let currentFailedJob: JobEntity | null = job;
+    let currentJob: JobEntity | null = job;
     let nextJob: JobEntity | null = null;
-    if (!currentFailedJob) {
+    if (!currentJob) {
       return;
     }
 
@@ -161,13 +161,13 @@ export class RunJob {
 
     while (shouldContinueQueueNextJob) {
       try {
-        if (!currentFailedJob) {
+        if (!currentJob) {
           return;
         }
 
         nextJob = await this.jobRepository.findOne({
-          _environmentId: currentFailedJob._environmentId,
-          _parentId: currentFailedJob._id,
+          _environmentId: currentJob._environmentId,
+          _parentId: currentJob._id,
         });
 
         if (!nextJob) {
@@ -211,7 +211,7 @@ export class RunJob {
           return;
         }
 
-        currentFailedJob = nextJob;
+        currentJob = nextJob;
       } finally {
         if (nextJob) {
           await this.storageHelperService.deleteAttachments(nextJob.payload?.attachments);

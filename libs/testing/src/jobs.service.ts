@@ -49,6 +49,23 @@ export class JobsService {
     }
   }
 
+  public async promoteJobs() {
+    const jobsResult = await Promise.all([
+      this.standardQueue.getDelayed(),
+      this.workflowQueue.getDelayed(),
+      this.subscriberProcessQueue.getDelayed(),
+    ]);
+    const jobs = jobsResult.flat();
+
+    if (jobs.length === 0) {
+      return false;
+    }
+
+    await Promise.all(jobs.map(promote));
+
+    return true;
+  }
+
   public async waitForJobCompletion({
     templateId,
     organizationId,
@@ -60,7 +77,7 @@ export class JobsService {
     delay?: boolean;
     unfinishedJobs?: number;
   }) {
-    let runningJobs = 0;
+    let runningJobsInStorage = 0;
     const safeUnfinishedJobs = Math.max(unfinishedJobs, 0);
 
     const workflowMatch = templateId ? { _templateId: { $in: [templateId].flat() } } : {};
@@ -77,8 +94,9 @@ export class JobsService {
     do {
       // Wait until Bull queues are empty
       totalCount = (await this.getQueueMetric()).totalCount;
+
       // Wait until there are no pending, queued or running jobs in Mongo
-      runningJobs = Math.max(
+      runningJobsInStorage = Math.max(
         await this.jobRepository.count({
           ...((organizationId ? { _organizationId: organizationId } : {}) as { _organizationId: string }),
           ...typeMatch,
@@ -89,7 +107,7 @@ export class JobsService {
         }),
         0
       );
-    } while (totalCount > 0 || runningJobs > safeUnfinishedJobs);
+    } while (totalCount > 0 || runningJobsInStorage > safeUnfinishedJobs);
   }
 
   public async runAllDelayedJobsImmediately() {
@@ -97,26 +115,20 @@ export class JobsService {
     await Promise.all(delayedJobs.map((job) => job.promote()));
   }
 
-  public async awaitAllJobs() {
+  public async awaitAllQueueJobs() {
     let hasMoreDelayedJobs = true;
     let iterationCount = 0;
     const MAX_ITERATIONS = 20;
+
+    await this.promoteJobs();
     await this.waitForJobCompletion({});
 
     while (hasMoreDelayedJobs && iterationCount < MAX_ITERATIONS) {
-      const jobsResult = await Promise.all([
-        this.standardQueue.getDelayed(),
-        this.workflowQueue.getDelayed(),
-        this.subscriberProcessQueue.getDelayed(),
-      ]);
-      const jobs = jobsResult.flat();
-
-      if (jobs.length === 0) {
-        hasMoreDelayedJobs = false;
+      hasMoreDelayedJobs = await this.promoteJobs();
+      if (!hasMoreDelayedJobs) {
         continue;
       }
 
-      await Promise.all(jobs.map(promote));
       await this.waitForJobCompletion({});
       iterationCount += 1;
     }
