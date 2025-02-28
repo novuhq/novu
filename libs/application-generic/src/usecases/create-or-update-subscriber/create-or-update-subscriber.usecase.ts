@@ -116,6 +116,7 @@ export class CreateOrUpdateSubscriberUseCase {
       data: command.data,
       subscriber,
       channels: command.channels,
+      timezone: command.timezone,
     });
   }
 
@@ -156,6 +157,7 @@ export class CreateOrUpdateSubscriberUseCase {
       avatar: command.avatar,
       locale: command.locale,
       data: command.data,
+      timezone: command.timezone,
     });
     this.pinoLogger.info(
       { ...command, _id: createdSubscriber._id },

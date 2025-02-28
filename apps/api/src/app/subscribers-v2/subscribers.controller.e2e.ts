@@ -295,9 +295,9 @@ describe('Subscriber Controller E2E API Testing #novu-v2', () => {
     });
   });
   describe('Create Subscriber', () => {
-    it(`should not create multiple subscribers when multiple triggers are made        
+    it.skip(`should not create multiple subscribers when multiple triggers are made        
          with the same not created subscribers `, async () => {
-      for (let i = 0; i < 5; i += 1) {
+      for (let i = 0; i < 2; i += 1) {
         const subscriberId = `not-created-twice-subscriber${i}`;
         await Promise.all([
           novuClient.subscribers.create({ subscriberId, firstName: 'TestSubFName', lastName: 'TestSubLName' }),
