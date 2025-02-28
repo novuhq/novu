@@ -1,5 +1,8 @@
 import { ApiServiceLevelEnum, FeatureFlags, FeatureFlagsKeysEnum } from '../types';
 
+// This is a large value on purpose that should surpass any realistic system limits
+const UNLIMITED_VALUE = 9999;
+
 export enum FeatureNameEnum {
   // Platform Features
   AUTO_TRANSLATIONS = 'autoTranslations',
@@ -206,18 +209,18 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
     [ApiServiceLevelEnum.UNLIMITED]: { label: 'Yes', value: true },
   },
   [FeatureNameEnum.PLATFORM_SUBSCRIBERS]: {
-    [ApiServiceLevelEnum.FREE]: { label: 'Unlimited', value: -1 },
-    [ApiServiceLevelEnum.PRO]: { label: 'Unlimited', value: -1 },
-    [ApiServiceLevelEnum.BUSINESS]: { label: 'Unlimited', value: -1 },
-    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Unlimited', value: -1 },
-    [ApiServiceLevelEnum.UNLIMITED]: { label: 'Unlimited', value: -1 },
+    [ApiServiceLevelEnum.FREE]: { label: 'Unlimited', value: UNLIMITED_VALUE },
+    [ApiServiceLevelEnum.PRO]: { label: 'Unlimited', value: UNLIMITED_VALUE },
+    [ApiServiceLevelEnum.BUSINESS]: { label: 'Unlimited', value: UNLIMITED_VALUE },
+    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Unlimited', value: UNLIMITED_VALUE },
+    [ApiServiceLevelEnum.UNLIMITED]: { label: 'Unlimited', value: UNLIMITED_VALUE },
   },
   [FeatureNameEnum.PLATFORM_MAX_WORKFLOWS]: {
     [ApiServiceLevelEnum.FREE]: { value: 20 },
     [ApiServiceLevelEnum.PRO]: { value: 20 },
-    [ApiServiceLevelEnum.BUSINESS]: { value: -1, label: 'unlimited' },
-    [ApiServiceLevelEnum.ENTERPRISE]: { value: -1, label: 'unlimited' },
-    [ApiServiceLevelEnum.UNLIMITED]: { value: -1, label: 'unlimited' },
+    [ApiServiceLevelEnum.BUSINESS]: { value: UNLIMITED_VALUE, label: 'unlimited' },
+    [ApiServiceLevelEnum.ENTERPRISE]: { value: UNLIMITED_VALUE, label: 'unlimited' },
+    [ApiServiceLevelEnum.UNLIMITED]: { value: UNLIMITED_VALUE, label: 'unlimited' },
   },
   [FeatureNameEnum.PLATFORM_GUI_BASED_WORKFLOW_MANAGEMENT_BOOLEAN]: {
     [ApiServiceLevelEnum.FREE]: 1,
@@ -262,32 +265,32 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
     [ApiServiceLevelEnum.UNLIMITED]: { label: 'Q2 2025', value: true },
   },
   [FeatureNameEnum.PLATFORM_PROVIDER_INTEGRATIONS]: {
-    [ApiServiceLevelEnum.FREE]: -1,
-    [ApiServiceLevelEnum.PRO]: -1,
-    [ApiServiceLevelEnum.BUSINESS]: -1,
-    [ApiServiceLevelEnum.ENTERPRISE]: -1,
-    [ApiServiceLevelEnum.UNLIMITED]: -1,
+    [ApiServiceLevelEnum.FREE]: UNLIMITED_VALUE,
+    [ApiServiceLevelEnum.PRO]: UNLIMITED_VALUE,
+    [ApiServiceLevelEnum.BUSINESS]: UNLIMITED_VALUE,
+    [ApiServiceLevelEnum.ENTERPRISE]: UNLIMITED_VALUE,
+    [ApiServiceLevelEnum.UNLIMITED]: UNLIMITED_VALUE,
   },
   [FeatureNameEnum.PLATFORM_ACTIVITY_FEED_RETENTION]: {
     [ApiServiceLevelEnum.FREE]: { label: '24 hours', value: 24, timeSuffix: 'h' },
     [ApiServiceLevelEnum.PRO]: { label: '7 days', value: 7, timeSuffix: 'd' },
     [ApiServiceLevelEnum.BUSINESS]: { label: '90 days', value: 90, timeSuffix: 'd' },
-    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Unlimited', value: -1 },
-    [ApiServiceLevelEnum.UNLIMITED]: { label: 'Unlimited', value: -1 },
+    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Unlimited', value: UNLIMITED_VALUE },
+    [ApiServiceLevelEnum.UNLIMITED]: { label: 'Unlimited', value: UNLIMITED_VALUE },
   },
   [FeatureNameEnum.PLATFORM_MAX_DIGEST_WINDOW_TIME]: {
     [ApiServiceLevelEnum.FREE]: { label: '24 Hours', value: 24, timeSuffix: 'h' },
     [ApiServiceLevelEnum.PRO]: { label: '7 days', value: 7, timeSuffix: 'd' },
     [ApiServiceLevelEnum.BUSINESS]: { label: '90 days', value: 90, timeSuffix: 'd' },
-    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Custom', value: -1 },
-    [ApiServiceLevelEnum.UNLIMITED]: { label: 'Unlimited', value: -1 },
+    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Custom', value: UNLIMITED_VALUE },
+    [ApiServiceLevelEnum.UNLIMITED]: { label: 'Unlimited', value: UNLIMITED_VALUE },
   },
   [FeatureNameEnum.PLATFORM_MAX_DELAY_DURATION]: {
     [ApiServiceLevelEnum.FREE]: { label: '24 Hours', value: 24, timeSuffix: 'h' },
     [ApiServiceLevelEnum.PRO]: { label: '7 days', value: 7, timeSuffix: 'd' },
     [ApiServiceLevelEnum.BUSINESS]: { label: '90 days', value: 90, timeSuffix: 'd' },
-    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Custom', value: -1 },
-    [ApiServiceLevelEnum.UNLIMITED]: { label: 'Unlimited', value: -1 },
+    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Custom', value: UNLIMITED_VALUE },
+    [ApiServiceLevelEnum.UNLIMITED]: { label: 'Unlimited', value: UNLIMITED_VALUE },
   },
   [FeatureNameEnum.PLATFORM_BLOCK_BASED_EMAIL_EDITOR_BOOLEAN]: {
     [ApiServiceLevelEnum.FREE]: 1,
@@ -343,9 +346,9 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
   [FeatureNameEnum.ACCOUNT_MAX_TEAM_MEMBERS]: {
     [ApiServiceLevelEnum.FREE]: 3,
     [ApiServiceLevelEnum.PRO]: 3,
-    [ApiServiceLevelEnum.BUSINESS]: -1,
-    [ApiServiceLevelEnum.ENTERPRISE]: -1,
-    [ApiServiceLevelEnum.UNLIMITED]: -1,
+    [ApiServiceLevelEnum.BUSINESS]: UNLIMITED_VALUE,
+    [ApiServiceLevelEnum.ENTERPRISE]: UNLIMITED_VALUE,
+    [ApiServiceLevelEnum.UNLIMITED]: UNLIMITED_VALUE,
   },
   [FeatureNameEnum.ACCOUNT_ROLE_BASED_ACCESS_CONTROL_BOOLEAN]: {
     [ApiServiceLevelEnum.FREE]: 0,
@@ -508,7 +511,7 @@ function getTextFromItem(feature: DetailedPriceListItem) {
     return feature.label;
   }
 
-  if (feature.value !== null && feature.value !== undefined && feature.value === -1) {
+  if (feature.value !== null && feature.value !== undefined && feature.value === UNLIMITED_VALUE) {
     return 'Unlimited';
   }
 
@@ -559,7 +562,7 @@ export function getFeatureForTierAsText(
 
   if (feature === null) return '';
   if (feature === undefined) return '';
-  if (feature === -1) return 'Unlimited';
+  if (feature === UNLIMITED_VALUE) return 'Unlimited';
   if (typeof feature === 'string') {
     return feature;
   }
@@ -633,7 +636,7 @@ const inActiveFeatureFlagRecordGetters: Record<string, FeatureAugmentFunction> =
         case FeatureNameEnum.PLATFORM_MONTHLY_EVENTS_INCLUDED:
           return { value: 30000, label: '30,000' };
         case FeatureNameEnum.PLATFORM_MAX_WORKFLOWS:
-          return { value: -1, label: 'Unlimited' };
+          return { value: UNLIMITED_VALUE, label: 'Unlimited' };
         case FeatureNameEnum.PLATFORM_ACTIVITY_FEED_RETENTION:
           return { label: '30 days', value: 7, timeSuffix: 'd' };
         case FeatureNameEnum.PLATFORM_MAX_DIGEST_WINDOW_TIME:

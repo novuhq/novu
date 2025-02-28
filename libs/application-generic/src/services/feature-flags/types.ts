@@ -3,11 +3,22 @@ import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 type PartialWithId<T> = Partial<T> & { _id: string };
 
-export type FeatureFlagContextBase = {
-  environment?: PartialWithId<EnvironmentEntity>;
-  organization?: PartialWithId<OrganizationEntity>;
-  user?: PartialWithId<UserEntity>;
-};
+export type FeatureFlagContextBase =
+  | {
+      environment: PartialWithId<EnvironmentEntity>;
+      organization?: PartialWithId<OrganizationEntity>;
+      user?: PartialWithId<UserEntity>;
+    }
+  | {
+      environment?: PartialWithId<EnvironmentEntity>;
+      organization: PartialWithId<OrganizationEntity>;
+      user?: PartialWithId<UserEntity>;
+    }
+  | {
+      environment?: PartialWithId<EnvironmentEntity>;
+      organization?: PartialWithId<OrganizationEntity>;
+      user: PartialWithId<UserEntity>;
+    };
 
 export type FeatureFlagContext<T_Result> = FeatureFlagContextBase & {
   key: FeatureFlagsKeysEnum;
