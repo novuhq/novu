@@ -424,42 +424,37 @@ export class UserSession {
     return feed;
   }
 
-  public async waitForJobCompletion(
-    templateId?: string | string[],
-    delay?: boolean,
-    unfinishedJobs = 0,
-    organizationId = this.organization._id
-  ) {
+  public async waitForJobCompletion(templateId?: string | string[], organizationId = this.organization._id) {
     return this.jobsService.waitForJobCompletion({
       templateId,
       organizationId,
-      delay,
-      unfinishedJobs,
     });
   }
 
-  public async runAllDelayedJobsImmediately() {
-    return this.jobsService.runAllDelayedJobsImmediately();
+  public async waitForDbJobCompletion({
+    templateId,
+    organizationId,
+  }: {
+    templateId?: string | string[];
+    organizationId?: string | string[];
+  }) {
+    return this.jobsService.waitForDbJobCompletion({ templateId, organizationId });
   }
 
-  public async awaitAllJobs() {
-    return this.jobsService.awaitAllJobs();
+  public async waitForWorkflowQueueCompletion() {
+    return this.jobsService.waitForWorkflowQueueCompletion();
   }
 
-  public async waitForStorageImmediateJobCompletion() {
-    return this.jobsService.waitForStorageImmediateJobCompletion();
+  public async waitForSubscriberQueueCompletion() {
+    return this.jobsService.waitForSubscriberQueueCompletion();
   }
 
-  public async waitForQueueImmediateJobCompletion() {
-    return this.jobsService.waitForQueueImmediateJobCompletion();
+  public async waitForStandardQueueCompletion() {
+    return this.jobsService.waitForStandardQueueCompletion();
   }
 
-  public async queueGet(jobTopicName: JobTopicNameEnum, getter: 'getDelayed') {
-    return await this.jobsService.queueGet(jobTopicName, getter);
-  }
-
-  public async getQueueMetric() {
-    return await this.jobsService.getQueueMetric();
+  public async runStandardQueueDelayedJobsImmediately() {
+    return this.jobsService.runStandardQueueDelayedJobsImmediately();
   }
 
   public async applyChanges(where: Partial<ChangeEntity> = {}) {

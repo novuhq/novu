@@ -8,7 +8,7 @@ import { WorkflowsPage } from './page-object-models/workflows-page';
 import { WorkflowEditorPage } from './page-object-models/workflow-editor-page';
 import { StepConfigSidebar } from './page-object-models/step-config-sidebar';
 import { TriggerWorkflowPage } from './page-object-models/trigger-workflow-page';
-import { BridgeServer } from './utils/bridge-server';
+import { TestBridgeServer } from './utils/bridge-server';
 import { syncBridge } from './utils/api';
 
 const workflowId = 'code-created-workflow';

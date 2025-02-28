@@ -101,7 +101,7 @@ export class StandardWorker extends StandardWorkerService {
       const organizationExists = await this.organizationExist(data);
 
       if (!organizationExists) {
-        Logger.log(
+        Logger.verbose(
           `Organization not found for organizationId ${minimalJobData.organizationId}. Skipping job.`,
           LOG_CONTEXT
         );
