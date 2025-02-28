@@ -256,7 +256,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST) #n
     const mergedJobs = jobs.filter((elem) => elem.status !== JobStatusEnum.DELAYED);
     expect(mergedJobs && mergedJobs.length).to.eql(1);
 
-    await jobsService.awaitAllJobs();
+    await jobsService.awaitAllQueueJobs();
 
     const finalJobs = await jobRepository.find({
       _environmentId: session.environment._id,
