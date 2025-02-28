@@ -1,17 +1,17 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
 import { PinoLogger } from 'nestjs-pino';
-import { AnalyticsService } from '../../services/analytics.service';
 import {
+  AnalyticsService,
   buildDedupSubscriberKey,
   buildSubscriberKey,
   CachedEntity,
+  EventsDistributedLockService,
   InvalidateCacheService,
-} from '../../services/cache';
+} from '../../services';
 import { OAuthHandlerEnum, UpdateSubscriberChannel, UpdateSubscriberChannelCommand } from '../subscribers';
 import { UpdateSubscriber, UpdateSubscriberCommand } from '../update-subscriber';
 import { CreateOrUpdateSubscriberCommand } from './create-or-update-subscriber.command';
-import { EventsDistributedLockService } from '../../services';
 import { RetryOnError } from '../../decorators/retry-on-error-decorator';
 
 @Injectable()
@@ -163,7 +163,7 @@ export class CreateOrUpdateSubscriberUseCase {
 
     return createdSubscriber;
   }
-
+  // TODO: Remove one we have an index on subscriberID
   @CachedEntity({
     builder: (command: { subscriberId: string; _environmentId: string }) =>
       buildSubscriberKey({

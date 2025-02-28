@@ -20,6 +20,7 @@ export function mapSubscriberRequestToCommand(
     avatar: dto.avatar ?? undefined,
     locale: dto.locale ?? undefined,
     data: dto.data ? mapCustomData(dto.data) : undefined,
+    timezone: dto.timezone,
   };
 }
 
@@ -51,7 +52,6 @@ export function mapSubscriberEntityToResponseDto(entity: SubscriberEntity): Subs
     email: entity.email ?? null,
     phone: entity.phone,
     avatar: entity.avatar,
-    locale: entity.locale,
     subscriberId: entity.subscriberId,
     channels: entity.channels?.map(mapChannelSettings),
     topics: entity.topics,
@@ -64,6 +64,7 @@ export function mapSubscriberEntityToResponseDto(entity: SubscriberEntity): Subs
     updatedAt: entity.updatedAt,
     __v: entity.__v,
     data: entity.data,
+    locale: entity.locale,
     timezone: entity.timezone,
   };
 }

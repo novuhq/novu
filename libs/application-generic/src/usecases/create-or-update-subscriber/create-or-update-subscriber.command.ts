@@ -38,6 +38,9 @@ export class CreateOrUpdateSubscriberCommand extends EnvironmentCommand {
   @IsOptional()
   data?: SubscriberCustomData;
 
+  @IsOptional()
+  timezone?: string | null;
+
   /**
    * Represents existing entity that will be used for updating subscriber instead of creating one
    * @optional
