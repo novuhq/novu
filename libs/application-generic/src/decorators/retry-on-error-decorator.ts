@@ -4,7 +4,7 @@ export class RetryOptions {
   exponentialBackoff?: boolean;
 }
 
-export function RetryOnError(errorType: string, options: RetryOptions = {}) {
+export function RetryOnError(errorName: string, options: RetryOptions = {}) {
   return (target: unknown, propertyKey: string, descriptor: PropertyDescriptor) => {
     const originalMethod = descriptor.value;
 
@@ -16,12 +16,14 @@ export function RetryOnError(errorType: string, options: RetryOptions = {}) {
         try {
           return await originalMethod.apply(this, args);
         } catch (error) {
-          if (!(error instanceof Error && 'name' in error && error.name === errorType)) {
+          if (!(error instanceof Error && 'name' in error && error.name === errorName)) {
             throw error; // Rethrow non-matching errors
           }
           console.warn(
-            `RetryOnError Decorator: Retrying ${retries + 1}/${maxRetries} due to error:`,
-            errorType,
+            `RetryOnError Decorator:\n
+             ClassName: [${this.constructor.name}]\n
+             Function Name: [${propertyKey}] Retrying ${retries + 1}/${maxRetries} due to error:`,
+            errorName,
             'args:',
             JSON.stringify(args)
           );
