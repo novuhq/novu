@@ -237,7 +237,16 @@ export class ActivityNotificationJobResponseDto {
   })
   step: ActivityNotificationStepResponseDto;
 
-  @ApiPropertyOptional({ description: 'Optional overrides for the job', type: Object })
+  @ApiPropertyOptional({
+    description: 'Optional context object for additional error details.',
+    type: 'object',
+    required: false,
+    additionalProperties: true,
+    example: {
+      workflowId: 'some_wf_id',
+      stepId: 'some_wf_id',
+    },
+  })
   overrides?: Record<string, unknown>;
 
   @ApiPropertyOptional({ description: 'Optional payload for the job', type: Object })
