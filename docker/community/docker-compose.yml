@@ -46,7 +46,7 @@ services:
       start_period: 60s
 
   api:
-    image: 'ghcr.io/novuhq/novu/api:2.1.0'
+    image: 'ghcr.io/novuhq/novu/api:2.1.1'
     depends_on:
       mongodb:
         condition: service_healthy
