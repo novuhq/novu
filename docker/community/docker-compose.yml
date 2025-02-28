@@ -158,7 +158,7 @@ services:
       - ${WS_PORT}:${WS_PORT}
 
   web:
-    image: 'ghcr.io/novuhq/novu/web:2.1.0'
+    image: 'ghcr.io/novuhq/novu/web:2.1.1'
     depends_on:
       - api
       - worker
