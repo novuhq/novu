@@ -21,6 +21,7 @@ export function mapSubscriberRequestToCommand(
     locale: dto.locale ?? undefined,
     data: dto.data ? mapCustomData(dto.data) : undefined,
     timezone: dto.timezone,
+    isUpsert: false,
   };
 }
 

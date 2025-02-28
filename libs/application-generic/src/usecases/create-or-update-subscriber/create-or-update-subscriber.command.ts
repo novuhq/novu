@@ -1,11 +1,13 @@
-import { IsEmail, IsLocale, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsEmail, IsLocale, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { SubscriberEntity } from '@novu/dal';
 import { ISubscriberChannel, SubscriberCustomData } from '@novu/shared';
 
-import { EnvironmentCommand } from '../../commands/project.command';
+import { EnvironmentCommand } from '../../commands';
 
 export class CreateOrUpdateSubscriberCommand extends EnvironmentCommand {
+  @IsBoolean()
+  isUpsert?: boolean = true;
   @IsString()
   @IsNotEmpty()
   @Transform(({ value }) => value?.toString().trim())

@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { ConflictException, forwardRef, Inject, Injectable } from '@nestjs/common';
 import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
 import { PinoLogger } from 'nestjs-pino';
 import {
@@ -53,10 +53,12 @@ export class CreateOrUpdateSubscriberUseCase {
   }
 
   private async createOrUpdateSubscriber(command: CreateOrUpdateSubscriberCommand): Promise<SubscriberEntity> {
-    const persistedSubscriber = await this.getExistingSubscriber(command);
-
-    if (persistedSubscriber) {
-      await this.updateSubscriber(command, persistedSubscriber);
+    const existingSubscriber = await this.getExistingSubscriber(command);
+    if (existingSubscriber) {
+      if (!command.isUpsert) {
+        throw new ConflictException(`Subscriber: ${command.subscriberId} already exists`);
+      }
+      await this.updateSubscriber(command, existingSubscriber);
     } else {
       await this.createSubscriber(command);
     }
