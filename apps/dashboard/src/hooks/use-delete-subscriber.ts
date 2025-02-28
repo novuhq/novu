@@ -16,8 +16,8 @@ export const useDeleteSubscriber = (
   const { mutateAsync, ...rest } = useMutation({
     mutationFn: (args: DeleteSubscriberParameters) => deleteSubscriber({ environment: currentEnvironment!, ...args }),
     ...options,
-    onSuccess: async (data, variables, ctx) => {
-      await queryClient.invalidateQueries({
+    onSuccess: (data, variables, ctx) => {
+      queryClient.invalidateQueries({
         queryKey: [QueryKeys.fetchSubscribers],
       });
 

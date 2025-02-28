@@ -23,6 +23,7 @@ import TruncatedText from '../truncated-text';
 import { LocaleSelect } from './locale-select';
 import { CreateSubscriberFormSchema } from './schema';
 import { TimezoneSelect } from './timezone-select';
+import { useNavigateToSubscribersFirstPage } from './hooks/use-navigate-to-subscribers-first-page';
 
 const extensions = [loadLanguage('json')?.extension ?? []];
 const basicSetup = { lineNumbers: true, defaultKeymap: true };
@@ -38,9 +39,9 @@ type CreateSubscriberFormProps = {
 };
 
 export const CreateSubscriberForm = (props: CreateSubscriberFormProps) => {
-  const track = useTelemetry();
   const { onSuccess } = props;
-
+  const track = useTelemetry();
+  const navigateToSubscribersFirstPage = useNavigateToSubscribersFirstPage();
   const form = useForm<z.infer<typeof CreateSubscriberFormSchema>>({
     defaultValues: {
       data: '',
@@ -88,6 +89,7 @@ export const CreateSubscriberForm = (props: CreateSubscriberFormProps) => {
     await createSubscriber({
       subscriber: { ...dirtyPayload, subscriberId: formData.subscriberId },
     });
+    navigateToSubscribersFirstPage();
   };
 
   const firstNameChar = form.getValues('firstName')?.charAt(0) || '';

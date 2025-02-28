@@ -28,6 +28,10 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip';
 import { SubscriberFormSchema } from './schema';
 import { TimezoneSelect } from './timezone-select';
 import { getSubscriberTitle } from './utils';
+import { useSubscribersUrlState } from '@/components/subscribers/hooks/use-subscribers-url-state';
+import { useFetchSubscribers } from '@/hooks/use-fetch-subscribers';
+import { useNavigateToSubscribersFirstPage } from '@/components/subscribers/hooks/use-navigate-to-subscribers-first-page';
+import { useNavigateToSubscribersCurrentPage } from '@/components/subscribers/hooks/use-navigate-to-subscribers-current-page';
 
 const extensions = [loadLanguage('json')?.extension ?? []];
 const basicSetup = { lineNumbers: true, defaultKeymap: true };
@@ -58,6 +62,13 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
   const { subscriber, readOnly = false } = props;
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const track = useTelemetry();
+
+  const navigateToSubscribersFirstPage = useNavigateToSubscribersFirstPage();
+  const navigateToSubscribersCurrentPage = useNavigateToSubscribersCurrentPage();
+  const { filterValues } = useSubscribersUrlState();
+  const { data } = useFetchSubscribers(filterValues, {
+    meta: { errorMessage: 'Issue fetching subscribers' },
+  });
 
   const { deleteSubscriber, isPending: isDeleteSubscriberPending } = useDeleteSubscriber({
     onSuccess: () => {
@@ -398,9 +409,15 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
         open={isDeleteModalOpen}
         onOpenChange={setIsDeleteModalOpen}
         onConfirm={async () => {
+          const isLastSubscriber = data?.data.length === 1;
           await deleteSubscriber({ subscriberId: subscriber.subscriberId });
           setIsDeleteModalOpen(false);
-          navigate('../', { relative: 'path' });
+
+          if (isLastSubscriber) {
+            navigateToSubscribersFirstPage();
+          } else {
+            navigateToSubscribersCurrentPage();
+          }
         }}
         title="Delete subscriber"
         description={

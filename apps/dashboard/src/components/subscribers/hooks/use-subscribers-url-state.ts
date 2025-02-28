@@ -1,7 +1,7 @@
 import { DirectionEnum } from '@novu/shared';
 import { useCallback, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useDebounce } from '../hooks/use-debounce';
+import { useDebounce } from '../../../hooks/use-debounce';
 
 export type SubscribersSortableColumn = '_id' | 'updatedAt';
 export interface SubscribersFilter {
@@ -39,13 +39,13 @@ export interface SubscribersUrlState {
 }
 
 type UseSubscribersUrlStateProps = {
-  after?: string;
-  before?: string;
-  debounceMs: number;
+  after?: string | null;
+  before?: string | null;
+  debounceMs?: number;
 };
 
-export function useSubscribersUrlState(props: UseSubscribersUrlStateProps): SubscribersUrlState {
-  const { after, before, debounceMs } = props;
+export function useSubscribersUrlState(props: UseSubscribersUrlStateProps = {}): SubscribersUrlState {
+  const { after, before, debounceMs = 300 } = props;
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const filterValues = useMemo(
