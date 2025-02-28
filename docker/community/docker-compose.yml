@@ -129,7 +129,7 @@ services:
       MULTICAST_QUEUE_CHUNK_SIZE: ${MULTICAST_QUEUE_CHUNK_SIZE}
 
   ws:
-    image: 'ghcr.io/novuhq/novu/ws:2.1.0'
+    image: 'ghcr.io/novuhq/novu/ws:2.1.1'
     depends_on:
       mongodb:
         condition: service_healthy
