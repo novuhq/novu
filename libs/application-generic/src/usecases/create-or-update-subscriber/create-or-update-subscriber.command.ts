@@ -47,4 +47,9 @@ export class CreateOrUpdateSubscriberCommand extends EnvironmentCommand {
 
   @IsOptional()
   channels?: ISubscriberChannel[];
+  /**
+   * Represents the name of the active worker that is processing the subscriber for debugging and logging
+   */
+  @IsOptional()
+  activeWorkerName?: string;
 }

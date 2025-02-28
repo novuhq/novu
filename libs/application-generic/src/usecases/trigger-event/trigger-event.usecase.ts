@@ -29,6 +29,10 @@ import { CreateOrUpdateSubscriberCommand, CreateOrUpdateSubscriberUseCase } from
 
 const LOG_CONTEXT = 'TriggerEventUseCase';
 
+function getActiveWorker() {
+  return process.env.ACTIVE_WORKER;
+}
+
 @Injectable()
 export class TriggerEvent {
   constructor(
@@ -45,6 +49,7 @@ export class TriggerEvent {
 
   @InstrumentUsecase()
   async execute(command: TriggerEventCommand) {
+    this.logger.info(command, 'TriggerEventUseCase - START');
     try {
       const mappedCommand = {
         ...command,
@@ -119,6 +124,7 @@ export class TriggerEvent {
       // We might have a single actor for every trigger, so we only need to check for it once
       let actorProcessed: SubscriberEntity | undefined;
       if (mappedCommand.actor) {
+        this.logger.info(mappedCommand, 'Processing actor');
         actorProcessed = await this.createOrUpdateSubscriberUsecase.execute(
           this.buildCommand(environmentId, organizationId, mappedCommand.actor)
         );
@@ -194,6 +200,7 @@ export class TriggerEvent {
       locale: subscriberPayload?.locale,
       data: subscriberPayload?.data,
       channels: subscriberPayload?.channels,
+      activeWorkerName: getActiveWorker(),
     });
   }
   private async getAndUpdateWorkflowById(command: {
