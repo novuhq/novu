@@ -17,7 +17,7 @@ services:
       start_period: 10s
 
   mongodb:
-    image: mongo:8.0.3
+    image: mongo:8.0.5
     container_name: mongodb
     restart: unless-stopped
     logging:
