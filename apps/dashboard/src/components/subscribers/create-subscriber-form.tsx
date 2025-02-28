@@ -384,7 +384,7 @@ export const CreateSubscriberForm = (props: CreateSubscriberFormProps) => {
                 </span>
               </div>
 
-              <Button variant="secondary" type="submit" disabled={isPending}>
+              <Button variant="secondary" type="submit" disabled={isPending} isLoading={isPending}>
                 Create subscriber
               </Button>
             </div>
