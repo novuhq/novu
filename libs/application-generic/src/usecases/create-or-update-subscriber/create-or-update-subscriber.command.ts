@@ -7,7 +7,7 @@ import { EnvironmentCommand } from '../../commands';
 
 export class CreateOrUpdateSubscriberCommand extends EnvironmentCommand {
   @IsBoolean()
-  isUpsert?: boolean = true;
+  isUpsert?: boolean;
   @IsString()
   @IsNotEmpty()
   @Transform(({ value }) => value?.toString().trim())
