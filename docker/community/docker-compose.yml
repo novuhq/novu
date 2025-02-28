@@ -92,7 +92,7 @@ services:
       - ${API_PORT}:${API_PORT}
 
   worker:
-    image: 'ghcr.io/novuhq/novu/worker:2.1.0'
+    image: 'ghcr.io/novuhq/novu/worker:2.1.1'
     depends_on:
       mongodb:
         condition: service_healthy
