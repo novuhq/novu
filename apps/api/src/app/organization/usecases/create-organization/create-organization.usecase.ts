@@ -88,7 +88,7 @@ export class CreateOrganization {
     );
 
     if (organizationAfterChanges !== null) {
-      await this.startFreeTrial(user._id, organizationAfterChanges._id);
+      await this.startFreeTrial(user.email, organizationAfterChanges._id);
     }
 
     return organizationAfterChanges as OrganizationEntity;
@@ -109,7 +109,7 @@ export class CreateOrganization {
     this.analyticsService.setValue(user._id, 'jobTitle', jobTitle);
   }
 
-  private async startFreeTrial(userId: string, organizationId: string) {
+  private async startFreeTrial(billingEmail: string, organizationId: string) {
     try {
       if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
         if (!require('@novu/ee-billing')?.StartReverseFreeTrial) {
@@ -121,8 +121,8 @@ export class CreateOrganization {
         });
 
         await usecase.execute({
-          userId,
           organizationId,
+          billingEmail,
         });
       }
     } catch (e) {
