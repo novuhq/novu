@@ -28,18 +28,12 @@ import {
   UserService,
   JobsService,
 } from '@novu/testing';
-import { BullMqService, StandardQueueService, WorkflowInMemoryProviderService } from '@novu/application-generic';
+import { StandardQueueService, WorkflowInMemoryProviderService } from '@novu/application-generic';
 
 import { StandardWorker } from './standard.worker';
 
 import { WorkflowModule } from '../workflow.module';
-import {
-  HandleLastFailedJob,
-  RunJob,
-  SetJobAsCompleted,
-  SetJobAsFailed,
-  WebhookFilterBackoffStrategy,
-} from '../usecases';
+import { HandleLastFailedJob, RunJob, SetJobAsFailed, WebhookFilterBackoffStrategy } from '../usecases';
 import { SharedModule } from '../../shared/shared.module';
 
 let standardQueueService: StandardQueueService;
@@ -65,10 +59,9 @@ describe('Standard Worker', () => {
 
     jobRepository = new JobRepository();
     notificationRepository = new NotificationRepository();
-
     jobsService = new JobsService();
-
     const userService = new UserService();
+
     const card = {
       firstName: faker.name.firstName(),
       lastName: faker.name.lastName(),

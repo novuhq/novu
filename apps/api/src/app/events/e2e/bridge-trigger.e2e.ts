@@ -47,18 +47,6 @@ contexts.forEach((context: Context) => {
     const jobsService = new JobsService();
     let bridge;
 
-    const printJobsState = async (prefix: string) => {
-      const count = await Promise.all([
-        jobRepository.count({} as any),
-        new TestingQueueService(JobTopicNameEnum.WORKFLOW).queue.getWaitingCount(),
-        new TestingQueueService(JobTopicNameEnum.PROCESS_SUBSCRIBER).queue.getWaitingCount(),
-        new TestingQueueService(JobTopicNameEnum.STANDARD).queue.getWaitingCount(),
-      ]);
-
-      // eslint-disable-next-line no-console
-      console.log(`${prefix} Jobs state `, count);
-    };
-
     beforeEach(async () => {
       bridgeServer = new BridgeServer();
       bridge = context.isStateful ? undefined : { url: `${bridgeServer.serverPath}/novu` };
@@ -155,7 +143,7 @@ contexts.forEach((context: Context) => {
       }
 
       await triggerEvent(session, workflowId, subscriber.subscriberId, { name: 'test_name' }, bridge);
-      await session.awaitAllQueueJobs();
+      await session.awaitAllJobs();
 
       const messages = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -571,7 +559,7 @@ contexts.forEach((context: Context) => {
       }
 
       await triggerEvent(session, workflowId, subscriber.subscriberId, {}, bridge);
-      await session.awaitAllQueueJobs();
+      await session.awaitAllJobs();
 
       const messagesAfter = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -607,7 +595,7 @@ contexts.forEach((context: Context) => {
       }
 
       const result = await triggerEvent(session, exceedMaxTierDurationWorkflowId, subscriber.subscriberId, {}, bridge);
-      await session.awaitAllQueueJobs();
+      await session.awaitAllJobs();
 
       const executionDetails = await executionDetailsRepository.find({
         _environmentId: session.environment._id,
@@ -620,7 +608,6 @@ contexts.forEach((context: Context) => {
     });
 
     it(`should trigger the bridge workflow with control default and payload data [${context.name}]`, async () => {
-      await printJobsState('test init');
       const workflowId = `default-payload-params-workflow-${`${context.name}`}`;
       const newWorkflow = workflow(
         workflowId,
@@ -661,28 +648,13 @@ contexts.forEach((context: Context) => {
         await discoverAndSyncBridge(session, workflowsRepository, workflowId, bridgeServer);
       }
 
-      await printJobsState('before trigger 1');
-
       await triggerEvent(session, workflowId, subscriber.subscriberId, {}, bridge);
 
       await session.waitForJobCompletion();
 
-      await printJobsState('after trigger 1');
-
       await triggerEvent(session, workflowId, subscriber.subscriberId, { name: 'payload_name' }, bridge);
 
-      await printJobsState('after trigger 2');
-
-      await jobsService.awaitAllQueueJobs();
-
-      await printJobsState('before sleep');
-
-      // eslint-disable-next-line no-promise-executor-return
-      await new Promise((resolve) => setTimeout(resolve, 100));
-
-      await printJobsState('after sleep');
-
-      await jobsService.awaitAllQueueJobs();
+      await session.awaitAllJobs();
 
       const sentMessage = await messageRepository.find({
         _environmentId: session.environment._id,
