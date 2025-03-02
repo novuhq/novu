@@ -1,17 +1,17 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { ConflictException, forwardRef, Inject, Injectable } from '@nestjs/common';
 import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
 import { PinoLogger } from 'nestjs-pino';
-import { AnalyticsService } from '../../services/analytics.service';
 import {
+  AnalyticsService,
   buildDedupSubscriberKey,
   buildSubscriberKey,
   CachedEntity,
+  EventsDistributedLockService,
   InvalidateCacheService,
-} from '../../services/cache';
+} from '../../services';
 import { OAuthHandlerEnum, UpdateSubscriberChannel, UpdateSubscriberChannelCommand } from '../subscribers';
 import { UpdateSubscriber, UpdateSubscriberCommand } from '../update-subscriber';
 import { CreateOrUpdateSubscriberCommand } from './create-or-update-subscriber.command';
-import { EventsDistributedLockService } from '../../services';
 import { RetryOnError } from '../../decorators/retry-on-error-decorator';
 
 @Injectable()
@@ -53,10 +53,12 @@ export class CreateOrUpdateSubscriberUseCase {
   }
 
   private async createOrUpdateSubscriber(command: CreateOrUpdateSubscriberCommand): Promise<SubscriberEntity> {
-    const persistedSubscriber = await this.getExistingSubscriber(command);
-
-    if (persistedSubscriber) {
-      await this.updateSubscriber(command, persistedSubscriber);
+    const existingSubscriber = await this.getExistingSubscriber(command);
+    if (existingSubscriber) {
+      if (!command.isUpsert) {
+        throw new ConflictException(`Subscriber: ${command.subscriberId} already exists`);
+      }
+      await this.updateSubscriber(command, existingSubscriber);
     } else {
       await this.createSubscriber(command);
     }
@@ -114,6 +116,7 @@ export class CreateOrUpdateSubscriberUseCase {
       data: command.data,
       subscriber,
       channels: command.channels,
+      timezone: command.timezone,
     });
   }
 
@@ -154,6 +157,7 @@ export class CreateOrUpdateSubscriberUseCase {
       avatar: command.avatar,
       locale: command.locale,
       data: command.data,
+      timezone: command.timezone,
     });
     this.pinoLogger.info(
       { ...command, _id: createdSubscriber._id },
@@ -163,7 +167,7 @@ export class CreateOrUpdateSubscriberUseCase {
 
     return createdSubscriber;
   }
-
+  // TODO: Remove one we have an index on subscriberID
   @CachedEntity({
     builder: (command: { subscriberId: string; _environmentId: string }) =>
       buildSubscriberKey({

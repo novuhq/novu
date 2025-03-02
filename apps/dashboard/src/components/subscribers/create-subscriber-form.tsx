@@ -58,7 +58,7 @@ export const CreateSubscriberForm = (props: CreateSubscriberFormProps) => {
     mode: 'onBlur',
   });
 
-  const { createSubscriber } = useCreateSubscriber({
+  const { createSubscriber, isPending } = useCreateSubscriber({
     onSuccess: () => {
       showSuccessToast('Created subscriber successfully', undefined, toastOptions);
       onSuccess?.();
@@ -384,7 +384,7 @@ export const CreateSubscriberForm = (props: CreateSubscriberFormProps) => {
                 </span>
               </div>
 
-              <Button variant="secondary" type="submit">
+              <Button variant="secondary" type="submit" disabled={isPending} isLoading={isPending}>
                 Create subscriber
               </Button>
             </div>
