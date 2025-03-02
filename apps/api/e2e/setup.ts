@@ -49,7 +49,7 @@ after(async () => {
 
 async function cleanup() {
   const jobsService = new JobsService();
-  await jobsService.awaitAllQueueJobs();
+  await jobsService.awaitAllJobs();
 
   await Promise.all([workflowQueue.drain(), standardQueue.drain(), subscriberProcessQueue.drain()]);
 
