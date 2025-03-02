@@ -55,11 +55,24 @@ async function cleanup() {
     standardQueue.obliterate({ force: true }),
     subscriberProcessQueue.obliterate({ force: true }),
   ]);
-
-  // eslint-disable-next-line no-console
-  console.log('after cleanup metric', await jobsService.getQueueMetric());
-
   await jobRepository._model.deleteMany({});
+
+  const jobCount = await jobRepository.count({} as any);
+  const metric = await jobsService.getQueueMetric();
+
+  if (metric.totalCount !== 0) {
+    // eslint-disable-next-line no-console
+    console.log('after cleanup metric.totalCount !== 0 metric', metric);
+    // eslint-disable-next-line no-console
+    console.log('after cleanup metric.totalCount !== 0 jobCount', jobCount);
+  }
+
+  if (jobCount !== 0) {
+    // eslint-disable-next-line no-console
+    console.log('after cleanup jobCount !== 0 metric', metric);
+    // eslint-disable-next-line no-console
+    console.log('after cleanup jobCount !== 0 jobCount', jobCount);
+  }
 }
 
 async function createCleanupTimeout(ms: number): Promise<void> {
