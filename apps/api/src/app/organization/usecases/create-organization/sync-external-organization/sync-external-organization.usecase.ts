@@ -93,13 +93,13 @@ export class SyncExternalOrganization {
     );
 
     if (organizationAfterChanges !== null) {
-      await this.startFreeTrial(user._id, organizationAfterChanges._id);
+      await this.startFreeTrial(user.email, organizationAfterChanges._id);
     }
 
     return organizationAfterChanges as OrganizationEntity;
   }
 
-  private async startFreeTrial(userId: string, organizationId: string) {
+  private async startFreeTrial(billingEmail: string, organizationId: string) {
     try {
       if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
         if (!require('@novu/ee-billing')?.StartReverseFreeTrial) {
@@ -109,8 +109,8 @@ export class SyncExternalOrganization {
           strict: false,
         });
         await usecase.execute({
-          userId,
           organizationId,
+          billingEmail,
         });
       }
     } catch (e) {
