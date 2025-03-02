@@ -65,14 +65,6 @@ export const buildUserKey = ({ _id }: { _id: string }): string =>
     identifierPrefix: IdentifierPrefixEnum.ID,
   });
 
-export const buildEnvironmentByApiKey = ({ apiKey }: { apiKey: string }): string =>
-  buildUnscopedKey({
-    type: CacheKeyTypeEnum.ENTITY,
-    keyEntity: CacheKeyPrefixEnum.ENVIRONMENT_BY_API_KEY,
-    identifier: apiKey,
-    identifierPrefix: IdentifierPrefixEnum.API_KEY,
-  });
-
 export const buildGroupedBlueprintsKey = (environmentId: string): string =>
   buildEnvironmentScopedKeyById({
     type: CacheKeyTypeEnum.ENTITY,
@@ -123,13 +115,6 @@ export const buildEvaluateApiRateLimitKey = ({
     identifier: apiRateLimitCategory,
   });
 
-export const buildHasNotificationKey = ({ _organizationId }: { _organizationId: string }): string =>
-  buildOrganizationScopedKey({
-    type: CacheKeyTypeEnum.ENTITY,
-    keyEntity: CacheKeyPrefixEnum.HAS_NOTIFICATION,
-    organizationId: _organizationId,
-  });
-
 export const buildUsageKey = ({
   _organizationId,
   resourceType,
@@ -155,9 +140,6 @@ export const buildSubscriptionKey = ({ organizationId }: { organizationId: strin
     keyEntity: CacheKeyPrefixEnum.SUBSCRIPTION,
     organizationId,
   });
-
-export const buildServiceConfigApiRateLimitMaximumKey = (): string =>
-  buildServiceConfigKey(ServiceConfigIdentifierEnum.API_RATE_LIMIT_SERVICE_MAXIMUM);
 
 export const buildSubscriberTopicsKey = ({
   subscriberId,
