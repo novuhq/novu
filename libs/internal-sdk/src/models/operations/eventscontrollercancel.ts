@@ -6,7 +6,6 @@ import * as z from "zod";
 import { remap as remap$ } from "../../lib/primitives.js";
 import { safeParse } from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
-import * as components from "../components/index.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 
 export type EventsControllerCancelRequest = {
@@ -19,7 +18,7 @@ export type EventsControllerCancelRequest = {
 
 export type EventsControllerCancelResponse = {
   headers: { [k: string]: Array<string> };
-  result: components.DataBooleanDto;
+  result: boolean;
 };
 
 /** @internal */
@@ -96,7 +95,7 @@ export const EventsControllerCancelResponse$inboundSchema: z.ZodType<
   unknown
 > = z.object({
   Headers: z.record(z.array(z.string())),
-  Result: components.DataBooleanDto$inboundSchema,
+  Result: z.boolean(),
 }).transform((v) => {
   return remap$(v, {
     "Headers": "headers",
@@ -107,7 +106,7 @@ export const EventsControllerCancelResponse$inboundSchema: z.ZodType<
 /** @internal */
 export type EventsControllerCancelResponse$Outbound = {
   Headers: { [k: string]: Array<string> };
-  Result: components.DataBooleanDto$Outbound;
+  Result: boolean;
 };
 
 /** @internal */
@@ -117,7 +116,7 @@ export const EventsControllerCancelResponse$outboundSchema: z.ZodType<
   EventsControllerCancelResponse
 > = z.object({
   headers: z.record(z.array(z.string())),
-  result: components.DataBooleanDto$outboundSchema,
+  result: z.boolean(),
 }).transform((v) => {
   return remap$(v, {
     headers: "Headers",

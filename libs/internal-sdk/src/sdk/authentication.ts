@@ -15,22 +15,6 @@ export { ChatAccessOauthCallBackAcceptEnum } from "../funcs/subscribersAuthentic
 
 export class Authentication extends ClientSDK {
   /**
-   * Handle providers oauth redirect
-   */
-  async chatAccessOauthCallBack(
-    request: operations.SubscribersV1ControllerChatOauthCallbackRequest,
-    options?: RequestOptions & {
-      acceptHeaderOverride?: ChatAccessOauthCallBackAcceptEnum;
-    },
-  ): Promise<operations.SubscribersV1ControllerChatOauthCallbackResponse> {
-    return unwrapAsync(subscribersAuthenticationChatAccessOauthCallBack(
-      this,
-      request,
-      options,
-    ));
-  }
-
-  /**
    * Handle chat oauth
    */
   async chatAccessOauth(
@@ -40,6 +24,22 @@ export class Authentication extends ClientSDK {
     operations.SubscribersV1ControllerChatAccessOauthResponse | undefined
   > {
     return unwrapAsync(subscribersAuthenticationChatAccessOauth(
+      this,
+      request,
+      options,
+    ));
+  }
+
+  /**
+   * Handle providers oauth redirect
+   */
+  async chatAccessOauthCallBack(
+    request: operations.SubscribersV1ControllerChatOauthCallbackRequest,
+    options?: RequestOptions & {
+      acceptHeaderOverride?: ChatAccessOauthCallBackAcceptEnum;
+    },
+  ): Promise<operations.SubscribersV1ControllerChatOauthCallbackResponse> {
+    return unwrapAsync(subscribersAuthenticationChatAccessOauthCallBack(
       this,
       request,
       options,

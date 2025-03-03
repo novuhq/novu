@@ -22,24 +22,14 @@ import { Preferences } from "./preferences.js";
 import { Properties } from "./properties.js";
 
 export class Subscribers extends ClientSDK {
+  private _preferences?: Preferences;
+  get preferences(): Preferences {
+    return (this._preferences ??= new Preferences(this._options));
+  }
+
   private _credentials?: Credentials;
   get credentials(): Credentials {
     return (this._credentials ??= new Credentials(this._options));
-  }
-
-  private _properties?: Properties;
-  get properties(): Properties {
-    return (this._properties ??= new Properties(this._options));
-  }
-
-  private _notifications?: NovuNotifications;
-  get notifications(): NovuNotifications {
-    return (this._notifications ??= new NovuNotifications(this._options));
-  }
-
-  private _messages?: NovuMessages;
-  get messages(): NovuMessages {
-    return (this._messages ??= new NovuMessages(this._options));
   }
 
   private _authentication?: Authentication;
@@ -47,56 +37,19 @@ export class Subscribers extends ClientSDK {
     return (this._authentication ??= new Authentication(this._options));
   }
 
-  private _preferences?: Preferences;
-  get preferences(): Preferences {
-    return (this._preferences ??= new Preferences(this._options));
+  private _messages?: NovuMessages;
+  get messages(): NovuMessages {
+    return (this._messages ??= new NovuMessages(this._options));
   }
 
-  /**
-   * Get subscribers
-   *
-   * @remarks
-   * Returns a list of subscribers, could paginated using the `page` and `limit` query parameter
-   */
-  async list(
-    page?: number | undefined,
-    limit?: number | undefined,
-    idempotencyKey?: string | undefined,
-    options?: RequestOptions,
-  ): Promise<
-    PageIterator<
-      operations.SubscribersV1ControllerListSubscribersResponse,
-      { page: number }
-    >
-  > {
-    return unwrapResultIterator(subscribersList(
-      this,
-      page,
-      limit,
-      idempotencyKey,
-      options,
-    ));
+  private _notifications?: NovuNotifications;
+  get notifications(): NovuNotifications {
+    return (this._notifications ??= new NovuNotifications(this._options));
   }
 
-  /**
-   * Bulk create subscribers
-   *
-   * @remarks
-   *
-   *       Using this endpoint you can create multiple subscribers at once, to avoid multiple calls to the API.
-   *       The bulk API is limited to 500 subscribers per request.
-   */
-  async createBulk(
-    bulkSubscriberCreateDto: components.BulkSubscriberCreateDto,
-    idempotencyKey?: string | undefined,
-    options?: RequestOptions,
-  ): Promise<operations.SubscribersV1ControllerBulkCreateSubscribersResponse> {
-    return unwrapAsync(subscribersCreateBulk(
-      this,
-      bulkSubscriberCreateDto,
-      idempotencyKey,
-      options,
-    ));
+  private _properties?: Properties;
+  get properties(): Properties {
+    return (this._properties ??= new Properties(this._options));
   }
 
   /**
@@ -186,6 +139,53 @@ export class Subscribers extends ClientSDK {
     return unwrapAsync(subscribersDelete(
       this,
       subscriberId,
+      idempotencyKey,
+      options,
+    ));
+  }
+
+  /**
+   * Get subscribers
+   *
+   * @remarks
+   * Returns a list of subscribers, could paginated using the `page` and `limit` query parameter
+   */
+  async list(
+    page?: number | undefined,
+    limit?: number | undefined,
+    idempotencyKey?: string | undefined,
+    options?: RequestOptions,
+  ): Promise<
+    PageIterator<
+      operations.SubscribersV1ControllerListSubscribersResponse,
+      { page: number }
+    >
+  > {
+    return unwrapResultIterator(subscribersList(
+      this,
+      page,
+      limit,
+      idempotencyKey,
+      options,
+    ));
+  }
+
+  /**
+   * Bulk create subscribers
+   *
+   * @remarks
+   *
+   *       Using this endpoint you can create multiple subscribers at once, to avoid multiple calls to the API.
+   *       The bulk API is limited to 500 subscribers per request.
+   */
+  async createBulk(
+    bulkSubscriberCreateDto: components.BulkSubscriberCreateDto,
+    idempotencyKey?: string | undefined,
+    options?: RequestOptions,
+  ): Promise<operations.SubscribersV1ControllerBulkCreateSubscribersResponse> {
+    return unwrapAsync(subscribersCreateBulk(
+      this,
+      bulkSubscriberCreateDto,
       idempotencyKey,
       options,
     ));

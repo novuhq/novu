@@ -33,7 +33,6 @@ export * from "./createsubscriberrequestdto.js";
 export * from "./createtopicrequestdto.js";
 export * from "./createtopicresponsedto.js";
 export * from "./credentialsdto.js";
-export * from "./databooleandto.js";
 export * from "./delayregularmetadata.js";
 export * from "./delayscheduledmetadata.js";
 export * from "./deletemessageresponsedto.js";

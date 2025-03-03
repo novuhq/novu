@@ -57,23 +57,6 @@ export class Integrations extends ClientSDK {
   }
 
   /**
-   * Get active integrations
-   *
-   * @remarks
-   * Return all the active integrations the user has created for that organization. Review v.0.17.0 changelog for a breaking change
-   */
-  async listActive(
-    idempotencyKey?: string | undefined,
-    options?: RequestOptions,
-  ): Promise<operations.IntegrationsControllerGetActiveIntegrationsResponse> {
-    return unwrapAsync(integrationsListActive(
-      this,
-      idempotencyKey,
-      options,
-    ));
-  }
-
-  /**
    * Update integration
    */
   async update(
@@ -118,6 +101,23 @@ export class Integrations extends ClientSDK {
     return unwrapAsync(integrationsSetAsPrimary(
       this,
       integrationId,
+      idempotencyKey,
+      options,
+    ));
+  }
+
+  /**
+   * Get active integrations
+   *
+   * @remarks
+   * Return all the active integrations the user has created for that organization. Review v.0.17.0 changelog for a breaking change
+   */
+  async listActive(
+    idempotencyKey?: string | undefined,
+    options?: RequestOptions,
+  ): Promise<operations.IntegrationsControllerGetActiveIntegrationsResponse> {
+    return unwrapAsync(integrationsListActive(
+      this,
       idempotencyKey,
       options,
     ));
