@@ -1,4 +1,9 @@
-import { ConflictException, forwardRef, Inject, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  forwardRef,
+  Inject,
+  Injectable,
+} from '@nestjs/common';
 import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
 import { PinoLogger } from 'nestjs-pino';
 import {
@@ -9,8 +14,15 @@ import {
   EventsDistributedLockService,
   InvalidateCacheService,
 } from '../../services';
-import { OAuthHandlerEnum, UpdateSubscriberChannel, UpdateSubscriberChannelCommand } from '../subscribers';
-import { UpdateSubscriber, UpdateSubscriberCommand } from '../update-subscriber';
+import {
+  OAuthHandlerEnum,
+  UpdateSubscriberChannel,
+  UpdateSubscriberChannelCommand,
+} from '../subscribers';
+import {
+  UpdateSubscriber,
+  UpdateSubscriberCommand,
+} from '../update-subscriber';
 import { CreateOrUpdateSubscriberCommand } from './create-or-update-subscriber.command';
 import { RetryOnError } from '../../decorators/retry-on-error-decorator';
 
@@ -24,39 +36,53 @@ export class CreateOrUpdateSubscriberUseCase {
     private analyticsService: AnalyticsService,
     @Inject(forwardRef(() => EventsDistributedLockService))
     private eventsDistributedLockService: EventsDistributedLockService,
-    private pinoLogger: PinoLogger
+    private pinoLogger: PinoLogger,
   ) {}
   @RetryOnError('MongoServerError', {
     maxRetries: 3,
     delay: 500,
   })
   async execute(command: CreateOrUpdateSubscriberCommand) {
-    this.pinoLogger.info(command, 'CreateOrUpdateSubscriberUseCase - START - Attempting to get Lock');
-
-    const subscriberEntity = await this.eventsDistributedLockService.applyLock<SubscriberEntity>(
-      {
-        resource: buildDedupSubscriberKey({
-          subscriberId: command.subscriberId,
-          _environmentId: command.environmentId,
-        }),
-        ttl: 10000,
-      },
-      async () => {
-        this.pinoLogger.info(command, 'CreateOrUpdateSubscriberUseCase - Obtained Lock');
-
-        return await this.createOrUpdateSubscriber(command);
-      }
+    this.pinoLogger.info(
+      command,
+      'CreateOrUpdateSubscriberUseCase - START - Attempting to get Lock',
     );
-    this.pinoLogger.info(command, 'CreateOrUpdateSubscriberUseCase - Lock Released');
+
+    const subscriberEntity =
+      await this.eventsDistributedLockService.applyLock<SubscriberEntity>(
+        {
+          resource: buildDedupSubscriberKey({
+            subscriberId: command.subscriberId,
+            _environmentId: command.environmentId,
+          }),
+          ttl: 10000,
+        },
+        async () => {
+          this.pinoLogger.info(
+            command,
+            'CreateOrUpdateSubscriberUseCase - Obtained Lock',
+          );
+
+          return await this.createOrUpdateSubscriber(command);
+        },
+      );
+    this.pinoLogger.info(
+      command,
+      'CreateOrUpdateSubscriberUseCase - Lock Released',
+    );
 
     return subscriberEntity;
   }
 
-  private async createOrUpdateSubscriber(command: CreateOrUpdateSubscriberCommand): Promise<SubscriberEntity> {
+  private async createOrUpdateSubscriber(
+    command: CreateOrUpdateSubscriberCommand,
+  ): Promise<SubscriberEntity> {
     const existingSubscriber = await this.getExistingSubscriber(command);
     if (existingSubscriber) {
       if (!command.isUpsert) {
-        throw new ConflictException(`Subscriber: ${command.subscriberId} already exists`);
+        throw new ConflictException(
+          `Subscriber: ${command.subscriberId} already exists`,
+        );
       }
       await this.updateSubscriber(command, existingSubscriber);
     } else {
@@ -73,13 +99,23 @@ export class CreateOrUpdateSubscriberUseCase {
     });
   }
 
-  private async updateSubscriber(command: CreateOrUpdateSubscriberCommand, existingSubscriber: SubscriberEntity) {
-    this.pinoLogger.info(command, 'CreateOrUpdateSubscriberUseCase: Subscriber exist - Updating Subscriber');
+  private async updateSubscriber(
+    command: CreateOrUpdateSubscriberCommand,
+    existingSubscriber: SubscriberEntity,
+  ) {
+    this.pinoLogger.info(
+      command,
+      'CreateOrUpdateSubscriberUseCase: Subscriber exist - Updating Subscriber',
+    );
 
-    return await this.updateSubscriberUseCase.execute(this.buildUpdateSubscriberCommand(command, existingSubscriber));
+    return await this.updateSubscriberUseCase.execute(
+      this.buildUpdateSubscriberCommand(command, existingSubscriber),
+    );
   }
 
-  private async getExistingSubscriber(command: CreateOrUpdateSubscriberCommand) {
+  private async getExistingSubscriber(
+    command: CreateOrUpdateSubscriberCommand,
+  ) {
     const existingSubscriber: SubscriberEntity =
       command.subscriber ??
       (await this.fetchSubscriber({
@@ -90,7 +126,9 @@ export class CreateOrUpdateSubscriberUseCase {
     return existingSubscriber;
   }
 
-  private publishSubscriberCreatedEvent(command: CreateOrUpdateSubscriberCommand) {
+  private publishSubscriberCreatedEvent(
+    command: CreateOrUpdateSubscriberCommand,
+  ) {
     this.analyticsService.mixpanelTrack('Subscriber Created', '', {
       _organization: command.organizationId,
       hasEmail: !!command.email,
@@ -102,7 +140,10 @@ export class CreateOrUpdateSubscriberUseCase {
     });
   }
 
-  private buildUpdateSubscriberCommand(command: CreateOrUpdateSubscriberCommand, subscriber: SubscriberEntity) {
+  private buildUpdateSubscriberCommand(
+    command: CreateOrUpdateSubscriberCommand,
+    subscriber: SubscriberEntity,
+  ) {
     return UpdateSubscriberCommand.create({
       environmentId: command.environmentId,
       organizationId: command.organizationId,
@@ -132,13 +173,18 @@ export class CreateOrUpdateSubscriberUseCase {
           integrationIdentifier: channel.integrationIdentifier,
           oauthHandler: OAuthHandlerEnum.EXTERNAL,
           isIdempotentOperation: false,
-        })
+        }),
       );
     }
   }
 
-  private async createSubscriber(command: CreateOrUpdateSubscriberCommand): Promise<SubscriberEntity> {
-    this.pinoLogger.info(command, 'CreateOrUpdateSubscriberUseCase: Creating Subscriber');
+  private async createSubscriber(
+    command: CreateOrUpdateSubscriberCommand,
+  ): Promise<SubscriberEntity> {
+    this.pinoLogger.info(
+      command,
+      'CreateOrUpdateSubscriberUseCase: Creating Subscriber',
+    );
     await this.invalidateCache.invalidateByKey({
       key: buildSubscriberKey({
         subscriberId: command.subscriberId,
@@ -161,7 +207,7 @@ export class CreateOrUpdateSubscriberUseCase {
     });
     this.pinoLogger.info(
       { ...command, _id: createdSubscriber._id },
-      'CreateOrUpdateSubscriberUseCase: Subscriber Created '
+      'CreateOrUpdateSubscriberUseCase: Subscriber Created ',
     );
     this.publishSubscriberCreatedEvent(command);
 
@@ -182,6 +228,10 @@ export class CreateOrUpdateSubscriberUseCase {
     subscriberId: string;
     _environmentId: string;
   }): Promise<SubscriberEntity | null> {
-    return await this.subscriberRepository.findBySubscriberId(_environmentId, subscriberId, true);
+    return await this.subscriberRepository.findBySubscriberId(
+      _environmentId,
+      subscriberId,
+      false,
+    );
   }
 }
