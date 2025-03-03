@@ -39,6 +39,7 @@ typescript:
       shared: models/components
       webhooks: models/webhooks
   inputModelSuffix: input
+  jsonpath: rfc9535
   maxMethodParams: 3
   methodArguments: require-security-and-request
   moduleFormat: commonjs

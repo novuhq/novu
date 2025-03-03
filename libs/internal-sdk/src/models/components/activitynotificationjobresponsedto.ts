@@ -54,6 +54,11 @@ export type ActivityNotificationJobResponseDtoType = ClosedEnum<
 >;
 
 /**
+ * Optional overrides for the job
+ */
+export type ActivityNotificationJobResponseDtoOverrides = {};
+
+/**
  * Optional payload for the job
  */
 export type Payload = {};
@@ -79,6 +84,10 @@ export type ActivityNotificationJobResponseDto = {
    * Step details of the job
    */
   step: ActivityNotificationStepResponseDto;
+  /**
+   * Optional overrides for the job
+   */
+  overrides?: ActivityNotificationJobResponseDtoOverrides | undefined;
   /**
    * Optional payload for the job
    */
@@ -119,6 +128,67 @@ export namespace ActivityNotificationJobResponseDtoType$ {
   /** @deprecated use `ActivityNotificationJobResponseDtoType$outboundSchema` instead. */
   export const outboundSchema =
     ActivityNotificationJobResponseDtoType$outboundSchema;
+}
+
+/** @internal */
+export const ActivityNotificationJobResponseDtoOverrides$inboundSchema:
+  z.ZodType<
+    ActivityNotificationJobResponseDtoOverrides,
+    z.ZodTypeDef,
+    unknown
+  > = z.object({});
+
+/** @internal */
+export type ActivityNotificationJobResponseDtoOverrides$Outbound = {};
+
+/** @internal */
+export const ActivityNotificationJobResponseDtoOverrides$outboundSchema:
+  z.ZodType<
+    ActivityNotificationJobResponseDtoOverrides$Outbound,
+    z.ZodTypeDef,
+    ActivityNotificationJobResponseDtoOverrides
+  > = z.object({});
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace ActivityNotificationJobResponseDtoOverrides$ {
+  /** @deprecated use `ActivityNotificationJobResponseDtoOverrides$inboundSchema` instead. */
+  export const inboundSchema =
+    ActivityNotificationJobResponseDtoOverrides$inboundSchema;
+  /** @deprecated use `ActivityNotificationJobResponseDtoOverrides$outboundSchema` instead. */
+  export const outboundSchema =
+    ActivityNotificationJobResponseDtoOverrides$outboundSchema;
+  /** @deprecated use `ActivityNotificationJobResponseDtoOverrides$Outbound` instead. */
+  export type Outbound = ActivityNotificationJobResponseDtoOverrides$Outbound;
+}
+
+export function activityNotificationJobResponseDtoOverridesToJSON(
+  activityNotificationJobResponseDtoOverrides:
+    ActivityNotificationJobResponseDtoOverrides,
+): string {
+  return JSON.stringify(
+    ActivityNotificationJobResponseDtoOverrides$outboundSchema.parse(
+      activityNotificationJobResponseDtoOverrides,
+    ),
+  );
+}
+
+export function activityNotificationJobResponseDtoOverridesFromJSON(
+  jsonString: string,
+): SafeParseResult<
+  ActivityNotificationJobResponseDtoOverrides,
+  SDKValidationError
+> {
+  return safeParse(
+    jsonString,
+    (x) =>
+      ActivityNotificationJobResponseDtoOverrides$inboundSchema.parse(
+        JSON.parse(x),
+      ),
+    `Failed to parse 'ActivityNotificationJobResponseDtoOverrides' from JSON`,
+  );
 }
 
 /** @internal */
@@ -175,6 +245,9 @@ export const ActivityNotificationJobResponseDto$inboundSchema: z.ZodType<
     ActivityNotificationExecutionDetailResponseDto$inboundSchema,
   ),
   step: ActivityNotificationStepResponseDto$inboundSchema,
+  overrides: z.lazy(() =>
+    ActivityNotificationJobResponseDtoOverrides$inboundSchema
+  ).optional(),
   payload: z.lazy(() => Payload$inboundSchema).optional(),
   providerId: ProvidersIdEnum$inboundSchema,
   status: z.string(),
@@ -194,6 +267,7 @@ export type ActivityNotificationJobResponseDto$Outbound = {
     ActivityNotificationExecutionDetailResponseDto$Outbound
   >;
   step: ActivityNotificationStepResponseDto$Outbound;
+  overrides?: ActivityNotificationJobResponseDtoOverrides$Outbound | undefined;
   payload?: Payload$Outbound | undefined;
   providerId: string;
   status: string;
@@ -213,6 +287,9 @@ export const ActivityNotificationJobResponseDto$outboundSchema: z.ZodType<
     ActivityNotificationExecutionDetailResponseDto$outboundSchema,
   ),
   step: ActivityNotificationStepResponseDto$outboundSchema,
+  overrides: z.lazy(() =>
+    ActivityNotificationJobResponseDtoOverrides$outboundSchema
+  ).optional(),
   payload: z.lazy(() => Payload$outboundSchema).optional(),
   providerId: ProvidersIdEnum$outboundSchema,
   status: z.string(),
