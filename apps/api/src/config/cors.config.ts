@@ -31,6 +31,10 @@ export const corsOptionsDelegate: Parameters<INestApplication['enableCors']>[0] 
     if (process.env.NODE_ENV === 'dev') {
       corsOptions.origin.push(origin(req));
     }
+    // Enable CORS for the docs
+    if (process.env.DOCS_BASE_URL) {
+      corsOptions.origin.push(process.env.DOCS_BASE_URL);
+    }
   }
 
   callback(null as unknown as Error, corsOptions);
