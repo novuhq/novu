@@ -4,14 +4,14 @@ import { IChannelCredentials, IChannelSettings, SubscriberEntity } from '@novu/d
 import { CreateSubscriberRequestDto } from '../dtos/create-subscriber.dto';
 import { ChannelSettingsDto, SubscriberResponseDto } from '../../subscribers/dtos';
 import { ChannelCredentials } from '../../shared/dtos/subscriber-channel';
+import { CreateSubscriberCommand } from '../usecases/create-subscriber/create-subscriber.command';
 
-export function mapSubscriberRequestToCommand(
-  dto: CreateSubscriberRequestDto,
-  user: UserSessionData
-): CreateOrUpdateSubscriberCommand {
+export function mapSubscriberRequestToCommand(command: CreateSubscriberCommand): CreateOrUpdateSubscriberCommand {
+  const dto = command.createSubscriberRequestDto;
+
   return {
-    organizationId: user.organizationId,
-    environmentId: user.environmentId,
+    organizationId: command.organizationId,
+    environmentId: command.environmentId,
     subscriberId: dto.subscriberId,
     email: dto.email ?? undefined,
     firstName: dto.firstName ?? undefined,
@@ -21,7 +21,6 @@ export function mapSubscriberRequestToCommand(
     locale: dto.locale ?? undefined,
     data: dto.data ? mapCustomData(dto.data) : undefined,
     timezone: dto.timezone,
-    isUpsert: false,
   };
 }
 

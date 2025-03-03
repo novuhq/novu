@@ -201,7 +201,6 @@ export class TriggerEvent {
       data: subscriberPayload?.data,
       channels: subscriberPayload?.channels,
       activeWorkerName: getActiveWorker(),
-      isUpsert: true,
     });
   }
   private async getAndUpdateWorkflowById(command: {
