@@ -33,6 +33,7 @@ describe('GetEventResourceUsage #novu-v2', async () => {
       isActive: true,
       daysTotal: 0,
     },
+    cancelAt: null,
   };
 
   beforeEach(async () => {
