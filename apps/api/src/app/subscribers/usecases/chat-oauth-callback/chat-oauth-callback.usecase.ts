@@ -2,8 +2,8 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import axios from 'axios';
 
 import {
-  CreateOrUpdateSubscriberUseCase,
   CreateOrUpdateSubscriberCommand,
+  CreateOrUpdateSubscriberUseCase,
   decryptCredentials,
   IChannelCredentialsCommand,
   OAuthHandlerEnum,
@@ -68,6 +68,7 @@ export class ChatOauthCallback {
         organizationId,
         environmentId: command.environmentId,
         subscriberId: command?.subscriberId,
+        isUpsert: true,
       })
     );
 

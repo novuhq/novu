@@ -2449,7 +2449,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
     describe('Post Mortem', function () {
       // Repeat the test 3 times
 
-      it(`should not create multiple subscribers when multiple triggers are made
+      it(`should not create multiple subscribers when multiple triggers are made        
          with the same not created subscribers `, async () => {
         template = await createSimpleWorkflow(session);
         for (let i = 0; i < 3; i += 1) {
@@ -3583,10 +3583,12 @@ async function createSimpleWorkflow(session) {
   });
 }
 
-function simpleTrigger(novuClient: Novu, template, notCreatedTwiceSubscriber: string) {
+function simpleTrigger(novuClient: Novu, template, subscriberID: string) {
+  console.log(`Triggering workflow${subscriberID}`);
+
   return novuClient.trigger({
     workflowId: template.triggers[0].identifier,
-    to: [notCreatedTwiceSubscriber],
+    to: [subscriberID],
     payload: {
       firstName: 'Testing of User Name',
       phone: '+972541111111',
