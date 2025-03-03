@@ -6,6 +6,7 @@
 export const appearanceKeys = [
   // Primitives
   'button',
+  'icon',
 
   'popoverContent',
   'popoverTrigger',
@@ -15,8 +16,11 @@ export const appearanceKeys = [
   'dropdownItem',
   'dropdownItemLabel',
   'dropdownItemLabelContainer',
-  'dropdownItemLeftIcon',
-  'dropdownItemRightIcon',
+  'dropdownItemLeft__icon',
+  'dropdownItemRight__icon',
+  'dropdownItem__icon',
+
+  'collapsible',
 
   'tooltipContent',
   'tooltipTrigger',
@@ -50,11 +54,19 @@ export const appearanceKeys = [
   'notificationListContainer',
   'notificationList',
   'notificationListEmptyNoticeContainer',
-  'notificationListEmptyNotice',
+  'notificationListEmptyNoticeOverlay',
   'notificationListEmptyNoticeIcon',
+  'notificationListEmptyNotice',
+  'notificationList__skeleton',
+  'notificationList__skeletonContent',
+  'notificationList__skeletonItem',
+  'notificationList__skeletonAvatar',
+  'notificationList__skeletonText',
   'notificationListNewNotificationsNotice__button',
 
   'notification',
+  'notificationContent',
+  'notificationTextContainer',
   'notificationDot',
   'notificationSubject',
   'notificationSubject__strong',
@@ -63,6 +75,7 @@ export const appearanceKeys = [
   'notificationBodyContainer',
   'notificationImage',
   'notificationDate',
+  'notificationDateActionsContainer',
   'notificationDefaultActions',
   'notificationCustomActions',
   'notificationPrimaryAction__button',
@@ -71,6 +84,10 @@ export const appearanceKeys = [
   'notificationUnread__button',
   'notificationArchive__button',
   'notificationUnarchive__button',
+  'notificationRead__icon',
+  'notificationUnread__icon',
+  'notificationArchive__icon',
+  'notificationUnarchive__icon',
 
   // Notifications tabs
   'notificationsTabs__tabsRoot',
@@ -89,7 +106,8 @@ export const appearanceKeys = [
   'inboxStatus__dropdownItemLabelContainer',
   'inboxStatus__dropdownItemLeft__icon',
   'inboxStatus__dropdownItemRight__icon',
-
+  'inboxStatus__dropdownItem__icon',
+  'inboxStatus__dropdownItemCheck__icon',
   // More actions
   'moreActionsContainer',
   'moreActions__dropdownTrigger',
@@ -101,7 +119,7 @@ export const appearanceKeys = [
 
   // More tabs
   'moreTabs__button',
-  'moreTabs__dots',
+  'moreTabs__icon',
   'moreTabs__dropdownTrigger',
   'moreTabs__dropdownContent',
   'moreTabs__dropdownItem',
@@ -117,14 +135,16 @@ export const appearanceKeys = [
   'workflowLabelDisabled__icon',
   'workflowContainerRight__icon',
   'workflowArrow__icon',
+  'workflowDescription',
 
   // channel
   'channelContainer',
+  'channelIconContainer',
+  'channel__icon',
   'channelsContainerCollapsible',
   'channelsContainer',
   'channelLabel',
   'channelLabelContainer',
-  'channelDescription',
   'channelName',
   'channelSwitchContainer',
   'channelSwitch',
@@ -133,7 +153,9 @@ export const appearanceKeys = [
   // Preferences Header
   'preferencesHeader',
   'preferencesHeader__back__button',
+  'preferencesHeader__back__button__icon',
   'preferencesHeader__title',
+  'preferencesHeader__icon',
 
   // Preferences Loading
   'preferencesLoadingContainer',

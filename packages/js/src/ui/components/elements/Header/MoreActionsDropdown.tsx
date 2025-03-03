@@ -16,8 +16,8 @@ export const MoreActionsDropdown = () => {
         <Dropdown.Trigger
           class={style('moreActions__dropdownTrigger')}
           asChild={(triggerProps) => (
-            <Button variant="icon" size="icon" {...triggerProps}>
-              <Dots class={style('moreActions__dots')} />
+            <Button variant="ghost" size="iconSm" {...triggerProps}>
+              <Dots class={style('moreActions__dots', 'nt-size-5')} />
             </Button>
           )}
         />

@@ -24,6 +24,12 @@ export class CreateEnvironment {
   ) {}
 
   async execute(command: CreateEnvironmentCommand): Promise<EnvironmentResponseDto> {
+    const environmentCount = await this.environmentRepository.count({
+      _organizationId: command.organizationId,
+    });
+    if (environmentCount >= 10) {
+      throw new BadRequestException('Organization cannot have more than 10 environments');
+    }
     const normalizedName = command.name.trim();
 
     if (!command.system) {

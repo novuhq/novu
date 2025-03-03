@@ -1,5 +1,5 @@
-import { createMemo, createSignal, Match, Show, Switch } from 'solid-js';
 import { type OffsetOptions, type Placement } from '@floating-ui/dom';
+import { createMemo, createSignal, Match, Show, Switch } from 'solid-js';
 import { useInboxContext } from '../context';
 import { useStyle } from '../helpers';
 import type {
@@ -8,7 +8,8 @@ import type {
   NotificationClickHandler,
   NotificationRenderer,
 } from '../types';
-import { Bell, Footer, Header, Preferences, PreferencesHeader } from './elements';
+import { Bell, Footer, Header, Preferences } from './elements';
+import { PreferencesHeader } from './elements/Preferences/PreferencesHeader';
 import { InboxTabs } from './InboxTabs';
 import { NotificationList } from './Notification';
 import { Button, Popover } from './primitives';

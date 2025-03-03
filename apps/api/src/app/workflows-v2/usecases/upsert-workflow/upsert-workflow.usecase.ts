@@ -148,7 +148,7 @@ export class UpsertWorkflowUseCase {
       tags: workflowDto.tags || [],
       userPreferences: command.workflowDto.preferences?.user ?? null,
       defaultPreferences: command.workflowDto.preferences?.workflow ?? DEFAULT_WORKFLOW_PREFERENCES,
-      triggerIdentifier: slugify(workflowDto.name),
+      triggerIdentifier: command.preserveWorkflowId ? workflowDto.workflowId : slugify(workflowDto.name),
       status: computeWorkflowStatus(isWorkflowActive, steps),
     };
   }

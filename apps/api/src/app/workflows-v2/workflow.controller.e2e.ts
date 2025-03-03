@@ -544,6 +544,11 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
     it('should promote by creating a new workflow in production environment with the same properties', async () => {
       // Create a workflow in the development environment
       let devWorkflow = await createWorkflowAndValidate('-promote-workflow');
+      // Update the workflow name to make sure the workflow identifier is the same after promotion
+      devWorkflow = await updateWorkflowRest(devWorkflow._id, {
+        ...devWorkflow,
+        name: `${devWorkflow.name}-updated`,
+      });
       await workflowsClient.patchWorkflowStepData(devWorkflow._id, devWorkflow.steps[0]._id, {
         controlValues: { vinyl: 'vinyl', color: 'red', band: 'beatles' },
       });
@@ -1435,7 +1440,7 @@ function removeFields<T>(obj: T, ...keysToRemove: (keyof T)[]): T {
 interface ApiResponse {
   req: {
     method: string; // e.g., "GET"
-    url: string; // e.g., "http://127.0.0.1:1337/v1/v2/workflows/66e929c6667852862a1e5145"
+    url: string; // e.g., "http://127.0.0.1:1336/v1/v2/workflows/66e929c6667852862a1e5145"
     headers: {
       authorization: string; // e.g., "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpX5cJ9..."
       'novu-environment-id': string; // e.g., "66e929c6667852862a1e50e4"

@@ -12,6 +12,7 @@ import {
   Instrument,
   InstrumentUsecase,
   IWorkflowDataDto,
+  PinoLogger,
   StorageHelperService,
   WorkflowQueueService,
 } from '@novu/application-generic';
@@ -28,14 +29,13 @@ import {
 import { DiscoverWorkflowOutput, GetActionEnum } from '@novu/framework/internal';
 import {
   ReservedVariablesMap,
+  SUBSCRIBER_ID_REGEX,
   TriggerContextTypeEnum,
   TriggerEventStatusEnum,
+  TriggerRecipient,
   TriggerRecipients,
   TriggerRecipientsPayload,
-  TriggerRecipientSubscriber,
   WorkflowOriginEnum,
-  SUBSCRIBER_ID_REGEX,
-  TriggerRecipient,
 } from '@novu/shared';
 
 import { ApiException } from '../../../shared/exceptions/api.exception';
@@ -59,11 +59,13 @@ export class ParseEventRequest {
     private tenantRepository: TenantRepository,
     private workflowOverrideRepository: WorkflowOverrideRepository,
     private executeBridgeRequest: ExecuteBridgeRequest,
+    private logger: PinoLogger,
     protected moduleRef: ModuleRef
   ) {}
 
   @InstrumentUsecase()
   public async execute(command: ParseEventRequestCommand) {
+    this.logger.info(command, 'TriggerEventUseCase - START');
     const transactionId = command.transactionId || uuidv4();
 
     const { environment, statelessWorkflowAllowed } = await this.isStatelessWorkflowAllowed(
@@ -78,7 +80,7 @@ export class ParseEventRequest {
         throw new UnprocessableEntityException('workflow_not_found');
       }
 
-      return await this.dispatchEvent(command, transactionId, discoveredWorkflow);
+      return await this.dispatchEventToWorkflowQueue(command, transactionId, discoveredWorkflow);
     }
 
     const template = await this.getNotificationTemplateByTriggerIdentifier({
@@ -124,6 +126,7 @@ export class ParseEventRequest {
     if (inactiveWorkflowOverride || inactiveWorkflow) {
       const message = workflowOverride ? 'Workflow is not active by workflow override' : 'Workflow is not active';
       Logger.log(message, LOG_CONTEXT);
+      this.logger.info(command, `${LOG_CONTEXT}:${message}`);
 
       return {
         acknowledged: true,
@@ -169,7 +172,7 @@ export class ParseEventRequest {
     // eslint-disable-next-line no-param-reassign
     command.payload = merge({}, defaultPayload, command.payload);
 
-    const result = await this.dispatchEvent(command, transactionId);
+    const result = await this.dispatchEventToWorkflowQueue(command, transactionId);
 
     return result;
   }
@@ -191,7 +194,7 @@ export class ParseEventRequest {
     return discover?.workflows?.find((findWorkflow) => findWorkflow.workflowId === command.identifier) || null;
   }
 
-  private async dispatchEvent(
+  private async dispatchEventToWorkflowQueue(
     command: ParseEventRequestMulticastCommand | ParseEventRequestBroadcastCommand,
     transactionId,
     discoveredWorkflow?: DiscoverWorkflowOutput | null
@@ -208,6 +211,10 @@ export class ParseEventRequest {
     };
 
     await this.workflowQueueService.add({ name: transactionId, data: jobData, groupId: command.organizationId });
+    this.logger.info(
+      { ...command, transactionId, discoveredWorkflowId: discoveredWorkflow?.workflowId },
+      'TriggerEventUseCase - Event dispatched to [Workflow] Queue'
+    );
 
     return {
       acknowledged: true,

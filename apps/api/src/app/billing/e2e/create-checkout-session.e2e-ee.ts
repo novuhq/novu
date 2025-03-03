@@ -40,13 +40,6 @@ describe('Create checkout session #novu-v2', async () => {
         metered: [{ id: 'metered_price_id_1' }],
       }),
   };
-  const userRepository = {
-    findById: () =>
-      Promise.resolve({
-        _id: 'user_id',
-        email: 'test@test.com',
-      }),
-  };
 
   const stripeStub = {
     checkout: {
@@ -72,13 +65,7 @@ describe('Create checkout session #novu-v2', async () => {
   });
 
   it('Create checkout session with 1 subscription containing 1 licensed item and 1 metered item for monthly billing interval', async () => {
-    const usecase = new CreateCheckoutSession(
-      stripeStub,
-      getOrCreateCustomer,
-      userRepository,
-      getPrices,
-      featureFlagsServiceStub
-    );
+    const usecase = new CreateCheckoutSession(stripeStub, getOrCreateCustomer, getPrices, featureFlagsServiceStub);
 
     const result = await usecase.execute({
       organizationId: 'organization_id',
@@ -100,13 +87,7 @@ describe('Create checkout session #novu-v2', async () => {
   });
 
   it('Create checkout session with 1 subscription containing 1 licensed item for annual billing interval', async () => {
-    const usecase = new CreateCheckoutSession(
-      stripeStub,
-      getOrCreateCustomer,
-      userRepository,
-      getPrices,
-      featureFlagsServiceStub
-    );
+    const usecase = new CreateCheckoutSession(stripeStub, getOrCreateCustomer, getPrices, featureFlagsServiceStub);
 
     const result = await usecase.execute({
       organizationId: 'organization_id',
