@@ -2,7 +2,7 @@ import { For, Show } from 'solid-js';
 import { JSX } from 'solid-js/jsx-runtime';
 import { StringLocalizationKey, useLocalization } from '../../../context';
 import { cn, useStyle } from '../../../helpers';
-import { Archive, Check, Inbox, Unread } from '../../../icons';
+import { Check, MarkAsArchived, MarkAsUnread, UnreadRead } from '../../../icons';
 import { NotificationStatus } from '../../../types';
 import { Dropdown, dropdownItemVariants } from '../../primitives/Dropdown';
 import { notificationStatusOptionsLocalizationKeys } from './constants';
@@ -10,15 +10,15 @@ import { notificationStatusOptionsLocalizationKeys } from './constants';
 const cases = [
   {
     status: NotificationStatus.UNREAD_READ,
-    icon: Inbox,
+    icon: UnreadRead,
   },
   {
     status: NotificationStatus.UNREAD,
-    icon: Unread,
+    icon: MarkAsUnread,
   },
   {
     status: NotificationStatus.ARCHIVED,
-    icon: Archive,
+    icon: MarkAsArchived,
   },
 ] satisfies { status: NotificationStatus; icon: () => JSX.Element }[];
 
@@ -57,15 +57,13 @@ export const StatusItem = (props: {
       onClick={props.onClick}
     >
       <span class={style('inboxStatus__dropdownItemLabelContainer', 'nt-flex nt-gap-2 nt-items-center')}>
-        <span class={style('inboxStatus__dropdownItemLeft__icon')}>{props.icon()}</span>
+        <span class={style('inboxStatus__dropdownItemLeft__icon', 'nt-size-3')}>{props.icon()}</span>
         <span data-localization={props.localizationKey} class={style('inboxStatus__dropdownItemLabel')}>
           {t(props.localizationKey)}
         </span>
       </span>
       <Show when={props.isSelected}>
-        <span class={style('inboxStatus__dropdownItemRight__icon')}>
-          <Check />
-        </span>
+        <Check class={style('inboxStatus__dropdownItemCheck__icon', 'nt-size-3')} />
       </Show>
     </Dropdown.Item>
   );

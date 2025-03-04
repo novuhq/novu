@@ -33,6 +33,7 @@ type InputWithSelectProps = {
   min?: number;
   showError?: boolean;
   shouldUnregister?: boolean;
+  dataTestId?: string;
 };
 
 const AmountInputContainer = ({
@@ -56,6 +57,7 @@ const AmountInputField = ({
   disabled,
   onChange,
   onBlur,
+  dataTestId,
 }: {
   value?: string | number;
   placeholder?: string;
@@ -63,6 +65,7 @@ const AmountInputField = ({
   min?: number;
   onChange: (arg: string | number) => void;
   onBlur?: FocusEventHandler<HTMLInputElement>;
+  dataTestId?: string;
 }) => {
   return (
     <InputPure
@@ -87,6 +90,7 @@ const AmountInputField = ({
       }}
       min={min}
       onBlur={onBlur}
+      data-testid={dataTestId}
       {...AUTOCOMPLETE_PASSWORD_MANAGERS_OFF}
     />
   );
@@ -145,6 +149,7 @@ const AmountInput = ({
   min,
   showError = true,
   shouldUnregister = false,
+  dataTestId,
 }: InputWithSelectProps) => {
   const { getFieldState, setValue, control } = useFormContext();
 
@@ -171,6 +176,7 @@ const AmountInput = ({
                     onValueChange?.();
                   }}
                   min={min}
+                  dataTestId={dataTestId}
                 />
               </FormControl>
             </FormItem>

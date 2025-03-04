@@ -1,7 +1,7 @@
 import { Card } from '@/components/primitives/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
 import { ROUTES } from '@/utils/routes';
-import { OrganizationProfile, UserProfile } from '@clerk/clerk-react';
+import { OrganizationProfile, useOrganization, UserProfile } from '@clerk/clerk-react';
 import { Appearance } from '@clerk/types';
 import { motion } from 'motion/react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -53,6 +53,7 @@ const clerkComponentAppearance: Appearance = {
 export function SettingsPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { organization } = useOrganization();
 
   const currentTab =
     location.pathname === ROUTES.SETTINGS ? 'account' : location.pathname.split('/settings/')[1] || 'account';
@@ -125,7 +126,12 @@ export function SettingsPage() {
           <TabsContent value="team" className="rounded-lg">
             <motion.div {...FADE_ANIMATION}>
               <Card className="border-none shadow-none">
-                <OrganizationProfile appearance={clerkComponentAppearance}>
+                <OrganizationProfile
+                  appearance={clerkComponentAppearance}
+                  // @ts-expect-error usage of __unstable Clerk feature
+                  __unstable_manageBillingUrl={ROUTES.SETTINGS_BILLING + '?utm_source=invite_limit_exceeded_prompt'}
+                  __unstable_manageBillingMembersLimit={organization?.maxAllowedMemberships}
+                >
                   <OrganizationProfile.Page label="members" />
                   <OrganizationProfile.Page label="general" />
                 </OrganizationProfile>

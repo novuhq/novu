@@ -4,6 +4,7 @@ import { setTimeout } from 'timers/promises';
 
 import {
   BullMqService,
+  PinoLogger,
   TriggerEvent,
   WorkflowInMemoryProviderService,
   WorkflowQueueService,
@@ -32,7 +33,12 @@ describe('Workflow Worker', () => {
     );
     const organizationRepository = moduleRef.get<CommunityOrganizationRepository>(CommunityOrganizationRepository);
 
-    workflowWorker = new WorkflowWorker(triggerEventUseCase, workflowInMemoryProviderService, organizationRepository);
+    workflowWorker = new WorkflowWorker(
+      triggerEventUseCase,
+      workflowInMemoryProviderService,
+      organizationRepository,
+      new PinoLogger({})
+    );
 
     workflowQueueService = new WorkflowQueueService(workflowInMemoryProviderService);
     await workflowQueueService.queue.obliterate();

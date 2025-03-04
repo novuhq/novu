@@ -1,5 +1,5 @@
 import { createSignal, onMount } from 'solid-js';
-import type { Tab } from '../../types';
+import type { Tab } from '../types';
 
 type TabsArray = Array<Tab>;
 

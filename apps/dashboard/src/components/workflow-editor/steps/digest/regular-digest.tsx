@@ -37,6 +37,7 @@ export const RegularDigest = () => {
         onValueChange={() => saveForm()}
         showError={false}
         min={minAmountValue}
+        dataTestId="regular-digest-amount-input"
       />
     </div>
   );

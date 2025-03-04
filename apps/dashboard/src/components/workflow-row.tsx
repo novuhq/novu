@@ -195,7 +195,6 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
   return (
     <>
       <TableRow key={workflow._id} className="group relative isolate cursor-pointer" onClick={handleRowClick}>
-        <PromoteConfirmModal />
         <WorkflowLinkTableCell className="font-medium">
           <div className="flex items-center gap-1">
             {workflow.origin === WorkflowOriginEnum.EXTERNAL && (
@@ -331,6 +330,7 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
         confirmButtonText="Proceed"
         isLoading={isPauseWorkflowPending}
       />
+      <PromoteConfirmModal />
     </>
   );
 };

@@ -89,15 +89,18 @@ export const Renderer = (props: RendererProps) => {
 
                     onMount(() => {
                       /*
-                       * return here if not `<Notifications /> or `<Preferences />` since we only want to override some styles for those to work properly
-                       * due to the extra divs being introduces by the renderer/mounter
+                       ** return here if not `<Notifications /> or `<Preferences />` since we only want to override some styles for those to work properly
+                       ** due to the extra divs being introduced by the renderer/mounter
                        */
-                      if (!['Notifications', 'Preferences'].includes(novuComponent().name)) return;
+                      if (!['Notifications', 'Preferences', 'InboxContent'].includes(novuComponent().name)) return;
 
                       if (node instanceof HTMLElement) {
-                        node.classList.add('nt-h-full');
+                        // eslint-disable-next-line no-param-reassign
+                        node.style.height = '100%';
                       }
-                      portalDivElement.classList.add('nt-h-full');
+                      if (portalDivElement) {
+                        portalDivElement.style.height = '100%';
+                      }
                     });
 
                     return (

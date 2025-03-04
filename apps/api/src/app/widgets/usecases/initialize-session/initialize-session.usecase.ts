@@ -61,6 +61,7 @@ export class InitializeSession {
       lastName: command.lastName,
       email: command.email,
       phone: command.phone,
+      isUpsert: true,
     });
     const subscriber = await this.createOrUpdateSubscriberUsecase.execute(commandos);
 

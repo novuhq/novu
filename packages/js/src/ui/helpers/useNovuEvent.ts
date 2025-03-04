@@ -1,5 +1,5 @@
 import { onCleanup, onMount } from 'solid-js';
-import type { EventHandler, Events, EventNames } from '../../event-emitter';
+import type { EventHandler, EventNames, Events } from '../../event-emitter';
 import { useNovu } from '../context';
 
 export const useNovuEvent = <E extends EventNames>({

@@ -1,6 +1,6 @@
 import { JSX, ParentProps, Show, splitProps } from 'solid-js';
-import type { AppearanceKey } from '../../../types';
 import { useStyle } from '../../../helpers';
+import type { AppearanceKey } from '../../../types';
 import { useTabsContext } from './TabsRoot';
 
 type TabsContentProps = JSX.IntrinsicElements['div'] &

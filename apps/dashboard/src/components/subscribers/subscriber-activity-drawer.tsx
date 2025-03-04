@@ -1,4 +1,4 @@
-import { forwardRef } from 'react';
+import React, { forwardRef } from 'react';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 
 import { SheetContent, SheetDescription, SheetTitle } from '@/components/primitives/sheet';
@@ -54,11 +54,11 @@ export const ActivityDetailsDrawer = forwardRef<HTMLDivElement, ActivityPanelDra
           ) : error || !activity ? (
             <ActivityError />
           ) : (
-            <>
+            <React.Fragment key={activityId}>
               <ActivityHeader title={activity.template?.name} className="h-12 py-3" />
               <ActivityOverview activity={activity} />
               <ActivityLogs activity={activity} onActivitySelect={onActivitySelect} />
-            </>
+            </React.Fragment>
           )}
         </ActivityPanel>
       </SheetContent>

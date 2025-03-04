@@ -55,6 +55,7 @@ async function cleanup() {
     standardQueue.obliterate({ force: true }),
     subscriberProcessQueue.obliterate({ force: true }),
   ]);
+
   await jobRepository._model.deleteMany({});
 
   const jobCount = await jobRepository.count({} as any);

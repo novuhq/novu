@@ -10,7 +10,7 @@ import {
   getFeatureForTierAsNumber,
   StepTypeEnum,
 } from '@novu/shared';
-import { CommunityOrganizationRepository } from '@novu/dal';
+import { CommunityOrganizationRepository, OrganizationEntity } from '@novu/dal';
 
 import { TierRestrictionsValidateCommand } from './tier-restrictions-validate.command';
 import {
@@ -38,14 +38,18 @@ export class TierRestrictionsValidateUsecase {
       return [];
     }
 
-    const isTierDurationRestrictionExcluded = await this.isOrganizationExcludedFromRestriction(command);
+    const organization = await this.organizationRepository.findById(command.organizationId);
+    if (!organization) {
+      throw new Error(`Organization not found: ${command.organizationId}`);
+    }
+
+    const isTierDurationRestrictionExcluded = await this.isOrganizationExcludedFromRestriction(command, organization);
 
     if (isTierDurationRestrictionExcluded) {
       return [];
     }
 
-    const apiServiceLevel = (await this.organizationRepository.findById(command.organizationId))?.apiServiceLevel;
-    const maxDelayMs = await this.getMaxDelayInMs(apiServiceLevel, command);
+    const maxDelayMs = await this.getMaxDelayInMs(command, organization);
 
     if (isCronExpression(command.cron)) {
       if (this.isCronDeltaDeferDurationExceededTier(command.cron, maxDelayMs)) {
@@ -75,33 +79,36 @@ export class TierRestrictionsValidateUsecase {
     return [];
   }
 
-  private async getMaxDelayInMs(apiServiceLevel: ApiServiceLevelEnum, command: TierRestrictionsValidateCommand) {
-    const isPackagesQ1Enabled = await this.is4PackageTierActivated(command);
+  private async getMaxDelayInMs(command: TierRestrictionsValidateCommand, organization: OrganizationEntity) {
+    const isPackagesQ1Enabled = await this.is4PackageTierActivated(command, organization);
     const featureFlags = { [FeatureFlagsKeysEnum.IS_2025_Q1_TIERING_ENABLED]: isPackagesQ1Enabled };
 
     return getFeatureForTierAsNumber(
       FeatureNameEnum.PLATFORM_MAX_DIGEST_WINDOW_TIME,
-      apiServiceLevel || ApiServiceLevelEnum.FREE,
+      organization.apiServiceLevel || ApiServiceLevelEnum.FREE,
       featureFlags,
       true
     );
   }
 
-  private async isOrganizationExcludedFromRestriction(command: TierRestrictionsValidateCommand) {
+  private async isOrganizationExcludedFromRestriction(
+    command: TierRestrictionsValidateCommand,
+    organization: OrganizationEntity
+  ) {
     return await this.featureFlagsService.getFlag({
       key: FeatureFlagsKeysEnum.IS_TIER_DURATION_RESTRICTION_EXCLUDED_ENABLED,
       defaultValue: false,
       environment: { _id: command.environmentId },
-      organization: { _id: command.organizationId },
+      organization,
     });
   }
 
-  private async is4PackageTierActivated(command: TierRestrictionsValidateCommand): Promise<boolean> {
+  private async is4PackageTierActivated(command: TierRestrictionsValidateCommand, organization: OrganizationEntity) {
     return await this.featureFlagsService.getFlag({
       key: FeatureFlagsKeysEnum.IS_2025_Q1_TIERING_ENABLED,
       defaultValue: false,
       environment: { _id: command.environmentId },
-      organization: { _id: command.organizationId },
+      organization,
     });
   }
 

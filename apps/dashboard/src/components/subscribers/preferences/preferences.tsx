@@ -5,7 +5,7 @@ import { PreferencesItem } from '@/components/subscribers/preferences/preference
 import { WorkflowPreferences } from '@/components/subscribers/preferences/workflow-preferences';
 import { usePatchSubscriberPreferences } from '@/hooks/use-patch-subscriber-preferences';
 import { useTelemetry } from '@/hooks/use-telemetry';
-import { itemVariants, sectionVariants } from '@/motion/variants';
+import { itemVariants, sectionVariants } from '@/utils/animation';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { GetSubscriberPreferencesDto, PatchPreferenceChannelsDto } from '@novu/api/models/components';
 import { ChannelTypeEnum } from '@novu/shared';

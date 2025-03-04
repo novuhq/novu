@@ -1,13 +1,14 @@
 import { createEffect, createMemo, createSignal, For, Show } from 'solid-js';
-import { Presence } from 'solid-motionone';
+import { JSX } from 'solid-js/jsx-runtime';
 import { Preference } from '../../../../preferences/preference';
 import { ChannelPreference, ChannelType, PreferenceLevel } from '../../../../types';
 import { usePreferences } from '../../../api';
 import { setDynamicLocalization } from '../../../config';
 import { StringLocalizationKey, useInboxContext, useLocalization } from '../../../context';
-import { useStyle } from '../../../helpers';
+import { cn, useStyle } from '../../../helpers';
 import { ArrowDropDown } from '../../../icons';
-import { Motion } from '../../primitives';
+import { AppearanceKey } from '../../../types';
+import { Collapsible } from '../../primitives/Collapsible';
 import { ChannelRow, getLabel } from './ChannelRow';
 import { LoadingScreen } from './LoadingScreen';
 
@@ -40,8 +41,8 @@ export const Preferences = () => {
 
   const optimisticUpdate =
     (preference?: Preference) =>
-    ({ channel, enabled }: { channel: ChannelType; enabled: boolean }) => {
-      preference?.update({
+    async ({ channel, enabled }: { channel: ChannelType; enabled: boolean }) => {
+      await preference?.update({
         channels: {
           [channel]: enabled,
         },
@@ -50,10 +51,7 @@ export const Preferences = () => {
 
   return (
     <div
-      class={style(
-        'preferencesContainer',
-        'nt-p-2 nt-flex nt-flex-col nt-gap-1 nt-bg-background nt-overflow-y-auto nt-h-full'
-      )}
+      class={style('preferencesContainer', 'nt-px-3 nt-py-4 nt-flex nt-flex-col nt-gap-1 nt-overflow-y-auto nt-h-full')}
     >
       <Show when={loading()}>
         <LoadingScreen />
@@ -87,7 +85,12 @@ export const Preferences = () => {
   );
 };
 
-const ChannelsLabel = (props: { channels: ChannelPreference }) => {
+type WorkflowDescriptionProps = JSX.IntrinsicElements['div'] & {
+  channels: ChannelPreference;
+  appearanceKey: AppearanceKey;
+};
+
+const WorkflowDescription = (props: WorkflowDescriptionProps) => {
   const style = useStyle();
 
   const channelNames = () => {
@@ -118,7 +121,7 @@ const ChannelsLabel = (props: { channels: ChannelPreference }) => {
   };
 
   return (
-    <div class={style('channelDescription', 'nt-text-sm nt-text-foreground-alpha-600 nt-text-start')}>
+    <div class={style(props.appearanceKey, cn('nt-text-sm nt-text-foreground-alpha-600 nt-text-start', props.class))}>
       {channelNames()}
     </div>
   );
@@ -130,8 +133,9 @@ const PreferencesRow = (props: {
   workflowId?: string;
   onChange: ({ channel, enabled, workflowId }: { workflowId?: string; channel: ChannelType; enabled: boolean }) => void;
 }) => {
-  const [isOpen, setIsOpen] = createSignal(false);
   const style = useStyle();
+  const [isOpenDescription, setIsOpenDescription] = createSignal(true);
+  const [isOpenChannels, setIsOpenChannels] = createSignal(false);
   const { t } = useLocalization();
 
   const channels = createMemo(() => Object.keys(props.channels || {}));
@@ -139,63 +143,64 @@ const PreferencesRow = (props: {
   return (
     <Show when={channels().length > 0}>
       <div
-        class={style(
-          'workflowContainer',
-          `nt-p-4 nt-flex nt-flex-col nt-gap-1 nt-items-start nt-self-stretch hover:nt-bg-neutral-alpha-50 nt-rounded-lg data-[disabled=true]:nt-bg-neutral-alpha-50`
-        )}
-        data-open={isOpen()}
+        class={style('workflowContainer', `nt-p-1 nt-bg-neutral-alpha-25 nt-rounded-lg`)}
+        data-open={isOpenChannels()}
       >
         <div
           class={style(
             'workflowLabelContainer',
-            'nt-flex nt-justify-between nt-flex-nowrap nt-self-stretch nt-cursor-pointer nt-items-center nt-overflow-hidden'
+            'nt-flex nt-justify-between nt-p-1 nt-flex-nowrap nt-self-stretch nt-cursor-pointer nt-items-center nt-overflow-hidden'
           )}
-          onClick={() => setIsOpen((prev) => !prev)}
-          data-open={isOpen()}
+          onClick={() => {
+            setIsOpenChannels((prev) => !prev);
+            setIsOpenDescription((prev) => !prev);
+          }}
         >
           <div class={style('workflowLabelHeader', 'nt-overflow-hidden')}>
             <div
-              class={style('workflowLabel', 'nt-text-base nt-font-semibold nt-truncate')}
+              class={style('workflowLabel', 'nt-text-sm nt-font-semibold nt-truncate')}
               data-localization={props.localizationKey}
-              data-open={isOpen()}
+              data-open={isOpenChannels()}
             >
               {t(props.localizationKey)}
             </div>
-            <ChannelsLabel channels={props.channels} />
+            <Collapsible open={isOpenDescription()}>
+              <WorkflowDescription
+                channels={props.channels}
+                appearanceKey="workflowDescription"
+                class="nt-overflow-hidden"
+              />
+            </Collapsible>
           </div>
           <span
             class={style(
               'workflowContainerRight__icon',
               `nt-text-foreground-alpha-600 nt-transition-all nt-duration-200 data-[open=true]:nt-transform data-[open=true]:nt-rotate-180`
             )}
-            data-open={isOpen()}
+            data-open={isOpenChannels()}
           >
-            <ArrowDropDown class={style('workflowArrow__icon', 'nt-text-foreground-alpha-600')} />
+            <ArrowDropDown class={style('workflowArrow__icon', 'nt-text-foreground-alpha-600 nt-size-4')} />
           </span>
         </div>
-        <Presence exitBeforeEnter>
-          <Show when={isOpen()}>
-            <Motion.div
-              animate={{ gridTemplateRows: ['0fr', '1fr'] }}
-              exit={{ gridTemplateRows: ['1fr', '0fr'] }}
-              transition={{ duration: 0.2, easing: 'ease-out' }}
-              class={style('channelsContainerCollapsible', 'nt-grid nt-self-stretch')}
-            >
-              <div class={style('channelsContainer', 'nt-overflow-hidden nt-flex-col nt-gap-1')}>
-                <For each={channels()}>
-                  {(channel) => (
-                    <ChannelRow
-                      channel={channel as ChannelType}
-                      enabled={!!props.channels[channel as keyof ChannelPreference]}
-                      workflowId={props.workflowId}
-                      onChange={props.onChange}
-                    />
-                  )}
-                </For>
-              </div>
-            </Motion.div>
-          </Show>
-        </Presence>
+        <Collapsible open={isOpenChannels()}>
+          <div
+            class={style(
+              'channelsContainer',
+              'nt-flex nt-bg-background nt-border nt-border-neutral-alpha-50 nt-rounded-lg nt-p-2 nt-flex-col nt-gap-1 nt-overflow-hidden'
+            )}
+          >
+            <For each={channels()}>
+              {(channel) => (
+                <ChannelRow
+                  channel={channel as ChannelType}
+                  enabled={!!props.channels[channel as keyof ChannelPreference]}
+                  workflowId={props.workflowId}
+                  onChange={props.onChange}
+                />
+              )}
+            </For>
+          </div>
+        </Collapsible>
       </div>
     </Show>
   );

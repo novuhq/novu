@@ -8,7 +8,7 @@ export const defaultLocalization = {
   'inbox.filters.labels.unread': 'Unread',
   'inbox.filters.labels.default': 'Inbox',
   'inbox.filters.labels.archived': 'Archived',
-  'notifications.emptyNotice': 'No notifications',
+  'notifications.emptyNotice': 'Quiet for now. Check back later.',
   'notifications.actions.readAll': 'Mark all as read',
   'notifications.actions.archiveAll': 'Archive all',
   'notifications.actions.archiveRead': 'Archive read',
@@ -20,7 +20,7 @@ export const defaultLocalization = {
   'notification.actions.unread.tooltip': 'Mark as unread',
   'notification.actions.archive.tooltip': 'Archive',
   'notification.actions.unarchive.tooltip': 'Unarchive',
-  'preferences.title': 'Notification Preferences',
+  'preferences.title': 'Preferences',
   'preferences.global': 'Global Preferences',
   'preferences.workflow.disabled.notice':
     'Contact admin to enable subscription management for this critical notification.',
