@@ -46,7 +46,7 @@ services:
       start_period: 60s
 
   api:
-    image: 'ghcr.io/novuhq/novu/api:2.1.0'
+    image: 'ghcr.io/novuhq/novu/api:2.1.1'
     depends_on:
       mongodb:
         condition: service_healthy
@@ -92,7 +92,7 @@ services:
       - ${API_PORT}:${API_PORT}
 
   worker:
-    image: 'ghcr.io/novuhq/novu/worker:2.1.0'
+    image: 'ghcr.io/novuhq/novu/worker:2.1.1'
     depends_on:
       mongodb:
         condition: service_healthy
@@ -129,7 +129,7 @@ services:
       MULTICAST_QUEUE_CHUNK_SIZE: ${MULTICAST_QUEUE_CHUNK_SIZE}
 
   ws:
-    image: 'ghcr.io/novuhq/novu/ws:2.1.0'
+    image: 'ghcr.io/novuhq/novu/ws:2.1.1'
     depends_on:
       mongodb:
         condition: service_healthy
@@ -158,7 +158,7 @@ services:
       - ${WS_PORT}:${WS_PORT}
 
   web:
-    image: 'ghcr.io/novuhq/novu/web:2.1.0'
+    image: 'ghcr.io/novuhq/novu/web:2.1.1'
     depends_on:
       - api
       - worker

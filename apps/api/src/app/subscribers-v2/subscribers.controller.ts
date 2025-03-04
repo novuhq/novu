@@ -11,7 +11,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { ExternalApiAccessible, UserSession } from '@novu/application-generic';
+import { CreateOrUpdateSubscriberUseCase, ExternalApiAccessible, UserSession } from '@novu/application-generic';
 import { ApiRateLimitCategoryEnum, UserSessionData } from '@novu/shared';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
 import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
@@ -28,7 +28,7 @@ import { ListSubscribersResponseDto } from './dtos/list-subscribers-response.dto
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 import { DirectionEnum } from '../shared/dtos/base-responses';
 import { PatchSubscriberRequestDto } from './dtos/patch-subscriber.dto';
-import { CreateSubscriberRequestDto, SubscriberResponseDto } from '../subscribers/dtos';
+import { SubscriberResponseDto } from '../subscribers/dtos';
 import { RemoveSubscriberCommand } from './usecases/remove-subscriber/remove-subscriber.command';
 import { RemoveSubscriber } from './usecases/remove-subscriber/remove-subscriber.usecase';
 import { RemoveSubscriberResponseDto } from './dtos/remove-subscriber.dto';
@@ -37,8 +37,8 @@ import { PatchSubscriberPreferencesDto } from './dtos/patch-subscriber-preferenc
 import { UpdateSubscriberPreferencesCommand } from './usecases/update-subscriber-preferences/update-subscriber-preferences.command';
 import { UpdateSubscriberPreferences } from './usecases/update-subscriber-preferences/update-subscriber-preferences.usecase';
 import { ThrottlerCategory } from '../rate-limiting/guards/throttler.decorator';
-import { CreateSubscriber } from './usecases/create-subscriber/create-subscriber.usecase';
-import { CreateSubscriberCommand } from './usecases/create-subscriber/create-subscriber.command';
+import { CreateSubscriberRequestDto } from './dtos/create-subscriber.dto';
+import { mapSubscriberEntityToResponseDto, mapSubscriberRequestToCommand } from './utils/create-subscriber.mapper';
 
 @ThrottlerCategory(ApiRateLimitCategoryEnum.CONFIGURATION)
 @Controller({ path: '/subscribers', version: '2' })
@@ -54,7 +54,7 @@ export class SubscribersController {
     private removeSubscriberUsecase: RemoveSubscriber,
     private getSubscriberPreferencesUsecase: GetSubscriberPreferences,
     private updateSubscriberPreferencesUsecase: UpdateSubscriberPreferences,
-    private createSubscriberUsecase: CreateSubscriber
+    private createOrUpdateSubscriberUseCase: CreateOrUpdateSubscriberUseCase
   ) {}
 
   @Get('')
@@ -112,19 +112,16 @@ export class SubscribersController {
     summary: 'Create subscriber',
     description: 'Create subscriber with the given data',
   })
-  @ApiResponse(SubscriberResponseDto)
+  @ApiResponse(SubscriberResponseDto, 201)
   @SdkMethodName('create')
   async createSubscriber(
     @UserSession() user: UserSessionData,
     @Body() body: CreateSubscriberRequestDto
   ): Promise<SubscriberResponseDto> {
-    return await this.createSubscriberUsecase.execute(
-      CreateSubscriberCommand.create({
-        environmentId: user.environmentId,
-        organizationId: user.organizationId,
-        createSubscriberRequestDto: body,
-      })
-    );
+    const command = mapSubscriberRequestToCommand(body, user);
+    const subscriberEntity = await this.createOrUpdateSubscriberUseCase.execute(command);
+
+    return mapSubscriberEntityToResponseDto(subscriberEntity);
   }
 
   @Patch('/:subscriberId')
@@ -152,7 +149,7 @@ export class SubscribersController {
   }
 
   @Delete('/:subscriberId')
-  @ApiResponse(RemoveSubscriberResponseDto)
+  @ApiResponse(RemoveSubscriberResponseDto, 200)
   @UserAuthentication()
   @ExternalApiAccessible()
   @ApiOperation({

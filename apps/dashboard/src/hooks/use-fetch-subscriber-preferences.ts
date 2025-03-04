@@ -16,7 +16,7 @@ export default function useFetchSubscriberPreferences({ subscriberId, options = 
   const { currentEnvironment } = useEnvironment();
 
   const subscriberQuery = useQuery<GetSubscriberPreferencesResponse>({
-    queryKey: [QueryKeys.fetchSubscriberPreferences, currentOrganization?._id, currentEnvironment?._id],
+    queryKey: [QueryKeys.fetchSubscriberPreferences, currentOrganization?._id, currentEnvironment?._id, subscriberId],
     queryFn: () => getSubscriberPreferences({ environment: currentEnvironment!, subscriberId }),
     enabled: !!currentOrganization,
     ...options,

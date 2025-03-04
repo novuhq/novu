@@ -1,5 +1,5 @@
-import { bool, CleanedEnv, cleanEnv, json, num, port, str, url, ValidatorSpec } from 'envalid';
 import { DEFAULT_NOTIFICATION_RETENTION_DAYS, FeatureFlagsKeysEnum, StringifyEnv } from '@novu/shared';
+import { bool, CleanedEnv, cleanEnv, json, num, port, str, url, ValidatorSpec } from 'envalid';
 
 export function validateEnv() {
   return cleanEnv(process.env, envValidators);
@@ -58,6 +58,7 @@ export const envValidators = {
       PLAIN_CARDS_HMAC_SECRET_KEY: str({ default: undefined }),
       STRIPE_API_KEY: str({ default: undefined }),
       STRIPE_CONNECT_SECRET: str({ default: undefined }),
+      NOVU_INTERNAL_SECRET_KEY: str({ default: '' }),
     }),
 
   // Feature Flags

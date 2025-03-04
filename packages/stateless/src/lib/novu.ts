@@ -59,12 +59,12 @@ export class NovuStateless extends EventEmitter {
 
   async registerProvider(
     provider: IEmailProvider | ISmsProvider | IChatProvider | IPushProvider,
-  );
+  ): Promise<void>;
 
   async registerProvider(
     providerId: string,
     provider: IEmailProvider | ISmsProvider | IChatProvider | IPushProvider,
-  );
+  ): Promise<void>;
 
   async registerProvider(
     providerOrProviderId:
@@ -74,15 +74,21 @@ export class NovuStateless extends EventEmitter {
       | IChatProvider
       | IPushProvider,
     provider?: IEmailProvider | ISmsProvider | IChatProvider | IPushProvider,
-  ) {
-    await this.providerStore.addProvider(
+  ): Promise<void> {
+    const providerId =
       typeof providerOrProviderId === 'string'
         ? providerOrProviderId
-        : provider?.id,
+        : provider?.id || '';
+    const finalProvider =
       typeof providerOrProviderId === 'string'
         ? provider
-        : providerOrProviderId,
-    );
+        : providerOrProviderId;
+
+    if (!finalProvider) {
+      throw new Error('Provider is required');
+    }
+
+    await this.providerStore.addProvider(providerId, finalProvider);
   }
 
   async getProviderByInternalId(providerId: string) {

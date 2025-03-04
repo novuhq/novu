@@ -1,5 +1,16 @@
 import { Injectable, Logger } from '@nestjs/common';
 
+import {
+  AnalyticsService,
+  ApiException,
+  CreateNotificationJobs,
+  CreateNotificationJobsCommand,
+  CreateOrUpdateSubscriberCommand,
+  CreateOrUpdateSubscriberUseCase,
+  Instrument,
+  InstrumentUsecase,
+  PinoLogger,
+} from '@novu/application-generic';
 import { IntegrationRepository, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
 import {
   buildWorkflowPreferences,
@@ -10,19 +21,6 @@ import {
   STEP_TYPE_TO_CHANNEL_TYPE,
   WorkflowTypeEnum,
 } from '@novu/shared';
-import {
-  AnalyticsService,
-  ApiException,
-  buildNotificationTemplateKey,
-  CachedEntity,
-  CreateNotificationJobs,
-  CreateNotificationJobsCommand,
-  CreateOrUpdateSubscriberCommand,
-  CreateOrUpdateSubscriberUseCase,
-  Instrument,
-  InstrumentUsecase,
-  PinoLogger,
-} from '@novu/application-generic';
 import { StoreSubscriberJobs, StoreSubscriberJobsCommand } from '../store-subscriber-jobs';
 import { SubscriberJobBoundCommand } from './subscriber-job-bound.command';
 
@@ -43,6 +41,7 @@ export class SubscriberJobBound {
 
   @InstrumentUsecase()
   async execute(command: SubscriberJobBoundCommand) {
+    this.logger.info(command, 'SubscriberJobBoundUseCase - START');
     this.logger.assign({
       transactionId: command.transactionId,
       environmentId: command.environmentId,
@@ -81,13 +80,16 @@ export class SubscriberJobBound {
     /**
      * Due to Mixpanel HotSharding, we don't want to pass userId for production volume
      */
-    const segmentUserId = ['test-workflow', 'digest-playground', 'dashboard'].includes(command.payload.__source)
+    const segmentUserId = ['test-workflow', 'digest-playground', 'dashboard', 'inbox-onboarding'].includes(
+      command.payload.__source
+    )
       ? userId
       : '';
 
     this.analyticsService.mixpanelTrack('Notification event trigger - [Triggers]', segmentUserId, {
       name: template.name,
       type: template?.type || WorkflowTypeEnum.REGULAR,
+      origin: template?.origin,
       transactionId: command.transactionId,
       _template: template._id,
       _organization: command.organizationId,
@@ -98,7 +100,7 @@ export class SubscriberJobBound {
       environmentName,
       statelessWorkflow: !!command.bridge?.url,
     });
-
+    this.logger.info(command, 'SubscriberJobBoundUseCase - CreateOrUpdateSubscriberUseCase - Ref');
     const subscriberProcessed = await this.createOrUpdateSubscriberUsecase.execute(
       CreateOrUpdateSubscriberCommand.create({
         environmentId,
@@ -112,6 +114,8 @@ export class SubscriberJobBound {
         locale: subscriber?.locale,
         data: subscriber?.data,
         channels: subscriber?.channels,
+        activeWorkerName: process.env.ACTIVE_WORKER,
+        isUpsert: true,
       })
     );
 
@@ -227,13 +231,6 @@ export class SubscriberJobBound {
     return true;
   }
 
-  @CachedEntity({
-    builder: (command: { _id: string; environmentId: string }) =>
-      buildNotificationTemplateKey({
-        _environmentId: command.environmentId,
-        _id: command._id,
-      }),
-  })
   private async getNotificationTemplate({ _id, environmentId }: { _id: string; environmentId: string }) {
     return await this.notificationTemplateRepository.findById(_id, environmentId);
   }

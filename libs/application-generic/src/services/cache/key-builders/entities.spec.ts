@@ -1,16 +1,5 @@
-import {
-  buildEnvironmentByApiKey,
-  buildNotificationTemplateIdentifierKey,
-  buildNotificationTemplateKey,
-  buildSubscriberKey,
-  buildUserKey,
-} from './entities';
-import {
-  CacheKeyTypeEnum,
-  CacheKeyPrefixEnum,
-  IdentifierPrefixEnum,
-  OrgScopePrefixEnum,
-} from './identifiers';
+import { buildSubscriberKey, buildUserKey } from './entities';
+import { CacheKeyTypeEnum, CacheKeyPrefixEnum, IdentifierPrefixEnum, OrgScopePrefixEnum } from './identifiers';
 import { buildUnscopedKey } from './builder.base';
 
 describe('Key builder for entities', () => {
@@ -36,16 +25,6 @@ describe('Key builder for entities', () => {
     });
   });
 
-  describe('buildEnvironmentByApiKey', () => {
-    it('should build an environment by api key with the given _id', () => {
-      const _id = '123';
-      // eslint-disable-next-line max-len
-      const expectedKey = `{${CacheKeyTypeEnum.ENTITY}:${CacheKeyPrefixEnum.ENVIRONMENT_BY_API_KEY}:${IdentifierPrefixEnum.API_KEY}=${_id}}`;
-      const actualKey = buildEnvironmentByApiKey({ apiKey: _id });
-      expect(actualKey).toEqual(expectedKey);
-    });
-  });
-
   describe('buildKeyById', () => {
     it('should build a key with the given parameters', () => {
       const type = CacheKeyTypeEnum.ENTITY;
@@ -60,38 +39,6 @@ describe('Key builder for entities', () => {
         identifier,
       });
       expect(actualKey).toEqual(expectedKey);
-    });
-  });
-
-  describe('buildNotificationTemplateKey', () => {
-    it('should build the correct key with ID', () => {
-      const type = CacheKeyTypeEnum.ENTITY;
-      const keyEntity = CacheKeyPrefixEnum.NOTIFICATION_TEMPLATE;
-      const identifierPrefix = IdentifierPrefixEnum.ID;
-      const identifier = '123';
-      const environmentId = '456';
-      const expectedKey = `{${type}:${keyEntity}:${OrgScopePrefixEnum.ENVIRONMENT_ID}=${environmentId}:${identifierPrefix}=${identifier}}`;
-      const result = buildNotificationTemplateKey({
-        _id: identifier,
-        _environmentId: environmentId,
-      });
-      expect(result).toEqual(expectedKey);
-    });
-  });
-
-  describe('buildNotificationTemplateIdentifierKey', () => {
-    it('should build the correct key with ID', () => {
-      const type = CacheKeyTypeEnum.ENTITY;
-      const keyEntity = CacheKeyPrefixEnum.NOTIFICATION_TEMPLATE;
-      const identifierPrefix = IdentifierPrefixEnum.TEMPLATE_IDENTIFIER;
-      const identifier = '123';
-      const environmentId = '456';
-      const expectedKey = `{${type}:${keyEntity}:${OrgScopePrefixEnum.ENVIRONMENT_ID}=${environmentId}:${identifierPrefix}=${identifier}}`;
-      const result = buildNotificationTemplateIdentifierKey({
-        templateIdentifier: identifier,
-        _environmentId: environmentId,
-      });
-      expect(result).toEqual(expectedKey);
     });
   });
 });

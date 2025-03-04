@@ -1,69 +1,73 @@
-import { motion } from 'motion/react';
-import { Sheet, SheetContentBase, SheetDescription, SheetPortal, SheetTitle } from '../primitives/sheet';
-import { VisuallyHidden } from '../primitives/visually-hidden';
-import { useNavigate, useParams } from 'react-router-dom';
-import { PropsWithChildren } from 'react';
-import { buildRoute, ROUTES } from '@/utils/routes';
+import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/primitives/sheet';
+import { VisuallyHidden } from '@/components/primitives/visually-hidden';
+import { SubscriberTabs } from '@/components/subscribers/subscriber-tabs';
+import { useCombinedRefs } from '@/hooks/use-combined-refs';
+import { useFormProtection } from '@/hooks/use-form-protection';
+import { cn } from '@/utils/ui';
+import { forwardRef, useState } from 'react';
 
-const transitionSetting = { duration: 0.4 };
-
-type SubscriberDrawerProps = PropsWithChildren<{
+type SubscriberDrawerProps = {
   open: boolean;
-  onOpenChange?: (open: boolean) => void;
-}>;
+  onOpenChange: (open: boolean) => void;
+  subscriberId: string;
+  readOnly?: boolean;
+};
 
-export function SubscriberDrawer({ children, open, onOpenChange }: SubscriberDrawerProps) {
-  const navigate = useNavigate();
-  const { environmentSlug } = useParams<{ environmentSlug: string }>();
+export const SubscriberDrawer = forwardRef<HTMLDivElement, SubscriberDrawerProps>((props, forwardedRef) => {
+  const { open, onOpenChange, subscriberId, readOnly = false } = props;
 
-  const handleCloseSheet = () => {
-    navigate(
-      buildRoute(ROUTES.SUBSCRIBERS, {
-        environmentSlug: environmentSlug ?? '',
-      })
-    );
-  };
+  const {
+    protectedOnValueChange,
+    ProtectionAlert,
+    ref: protectionRef,
+  } = useFormProtection({
+    onValueChange: onOpenChange,
+  });
+
+  const combinedRef = useCombinedRefs(forwardedRef, protectionRef);
 
   return (
-    <Sheet modal={false} open={open} onOpenChange={onOpenChange}>
-      <motion.div
-        initial={{
-          opacity: 0,
-        }}
-        animate={{
-          opacity: 1,
-        }}
-        exit={{
-          opacity: 0,
-        }}
-        className="fixed inset-0 z-50 h-screen w-screen bg-black/20"
-        transition={transitionSetting}
-      />
-      <SheetPortal>
-        <SheetContentBase asChild onInteractOutside={handleCloseSheet} onEscapeKeyDown={handleCloseSheet}>
-          <motion.div
-            initial={{
-              x: '100%',
-            }}
-            animate={{
-              x: 0,
-            }}
-            exit={{
-              x: '100%',
-            }}
-            transition={transitionSetting}
-            className={
-              'bg-background fixed inset-y-0 right-0 z-50 flex h-full w-3/4 flex-col border-l shadow-lg outline-none sm:max-w-[600px]'
-            }
-          >
-            <VisuallyHidden>
-              <SheetTitle />
-              <SheetDescription />
-            </VisuallyHidden>
-            {children}
-          </motion.div>
-        </SheetContentBase>
-      </SheetPortal>
-    </Sheet>
+    <>
+      <Sheet modal={false} open={open} onOpenChange={protectedOnValueChange}>
+        {/* Custom overlay since SheetOverlay does not work with modal={false} */}
+        <div
+          className={cn('fade-in animate-in fixed inset-0 z-50 bg-black/20 transition-opacity duration-300', {
+            'pointer-events-none opacity-0': !open,
+          })}
+        />
+        <SheetContent ref={combinedRef}>
+          <VisuallyHidden>
+            <SheetTitle />
+            <SheetDescription />
+          </VisuallyHidden>
+          <SubscriberTabs subscriberId={subscriberId} readOnly={readOnly} />
+        </SheetContent>
+      </Sheet>
+
+      <ProtectionAlert />
+    </>
   );
-}
+});
+
+type SubscriberDrawerButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
+  subscriberId: string;
+  readOnly?: boolean;
+};
+
+export const SubscriberDrawerButton = (props: SubscriberDrawerButtonProps) => {
+  const { subscriberId, onClick, readOnly = false, ...rest } = props;
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <button
+        {...rest}
+        onClick={(e) => {
+          setOpen(true);
+          onClick?.(e);
+        }}
+      />
+      <SubscriberDrawer open={open} onOpenChange={setOpen} subscriberId={subscriberId} readOnly={readOnly} />
+    </>
+  );
+};

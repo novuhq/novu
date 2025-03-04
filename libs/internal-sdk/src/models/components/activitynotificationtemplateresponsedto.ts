@@ -13,6 +13,11 @@ import {
   NotificationTriggerDto$Outbound,
   NotificationTriggerDto$outboundSchema,
 } from "./notificationtriggerdto.js";
+import {
+  WorkflowOriginEnum,
+  WorkflowOriginEnum$inboundSchema,
+  WorkflowOriginEnum$outboundSchema,
+} from "./workfloworiginenum.js";
 
 export type ActivityNotificationTemplateResponseDto = {
   /**
@@ -23,6 +28,10 @@ export type ActivityNotificationTemplateResponseDto = {
    * Name of the template
    */
   name: string;
+  /**
+   * Origin of the workflow
+   */
+  origin?: WorkflowOriginEnum | undefined;
   /**
    * Triggers of the template
    */
@@ -37,6 +46,7 @@ export const ActivityNotificationTemplateResponseDto$inboundSchema: z.ZodType<
 > = z.object({
   _id: z.string().optional(),
   name: z.string(),
+  origin: WorkflowOriginEnum$inboundSchema.optional(),
   triggers: z.array(NotificationTriggerDto$inboundSchema),
 }).transform((v) => {
   return remap$(v, {
@@ -48,6 +58,7 @@ export const ActivityNotificationTemplateResponseDto$inboundSchema: z.ZodType<
 export type ActivityNotificationTemplateResponseDto$Outbound = {
   _id?: string | undefined;
   name: string;
+  origin?: string | undefined;
   triggers: Array<NotificationTriggerDto$Outbound>;
 };
 
@@ -59,6 +70,7 @@ export const ActivityNotificationTemplateResponseDto$outboundSchema: z.ZodType<
 > = z.object({
   id: z.string().optional(),
   name: z.string(),
+  origin: WorkflowOriginEnum$outboundSchema.optional(),
   triggers: z.array(NotificationTriggerDto$outboundSchema),
 }).transform((v) => {
   return remap$(v, {

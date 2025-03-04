@@ -1,8 +1,5 @@
 import { expect, test, vi } from 'vitest';
-import {
-  CheckIntegrationResponseEnum,
-  ICheckIntegrationResponse,
-} from '@novu/stateless';
+import { CheckIntegrationResponseEnum, ICheckIntegrationResponse } from '@novu/stateless';
 import nodemailer from 'nodemailer';
 import { Outlook365Provider } from './outlook365.provider';
 
@@ -79,15 +76,13 @@ test('should trigger outlook365 library correctly with _passthrough', async () =
 test('should check provider integration correctly', async () => {
   const provider = new Outlook365Provider(mockConfig);
 
-  const spy = vi
-    .spyOn(provider, 'checkIntegration')
-    .mockImplementation(async () => {
-      return {
-        success: true,
-        message: 'test',
-        code: CheckIntegrationResponseEnum.SUCCESS,
-      } as ICheckIntegrationResponse;
-    });
+  const spy = vi.spyOn(provider, 'checkIntegration').mockImplementation(async () => {
+    return {
+      success: true,
+      message: 'test',
+      code: CheckIntegrationResponseEnum.SUCCESS,
+    } as ICheckIntegrationResponse;
+  });
 
   const response = await provider.checkIntegration(mockNovuMessage);
 

@@ -1,27 +1,28 @@
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/primitives/avatar';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
+import { useCreateSubscriber } from '@/hooks/use-create-subscriber';
+import { useTelemetry } from '@/hooks/use-telemetry';
+import { TelemetryEvent } from '@/utils/telemetry';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { loadLanguage } from '@uiw/codemirror-extensions-langs';
 import { useForm } from 'react-hook-form';
-import { Link, useBlocker, useNavigate, useParams } from 'react-router-dom';
+import { RiCloseCircleLine, RiGroup2Line, RiInformationFill, RiMailLine } from 'react-icons/ri';
+import { Link } from 'react-router-dom';
+import { ExternalToast } from 'sonner';
 import { z } from 'zod';
 import { Button } from '../primitives/button';
+import { CompactButton } from '../primitives/button-compact';
 import { Editor } from '../primitives/editor';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../primitives/form/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormRoot } from '../primitives/form/form';
+import { InlineToast } from '../primitives/inline-toast';
 import { Input, InputRoot } from '../primitives/input';
 import { PhoneInput } from '../primitives/phone-input';
 import { Separator } from '../primitives/separator';
+import { showErrorToast, showSuccessToast } from '../primitives/sonner-helpers';
+import TruncatedText from '../truncated-text';
 import { LocaleSelect } from './locale-select';
 import { CreateSubscriberFormSchema } from './schema';
 import { TimezoneSelect } from './timezone-select';
-import { RiCloseCircleLine, RiCloseLine, RiGroup2Line, RiInformationFill, RiMailLine } from 'react-icons/ri';
-import TruncatedText from '../truncated-text';
-import { CompactButton } from '../primitives/button-compact';
-import { InlineToast } from '../primitives/inline-toast';
-import { buildRoute, ROUTES } from '@/utils/routes';
-import { useCreateSubscriber } from '@/hooks/use-create-subscriber';
-import { showErrorToast, showSuccessToast } from '../primitives/sonner-helpers';
-import { ExternalToast } from 'sonner';
-import { UnsavedChangesAlertDialog } from '../unsaved-changes-alert-dialog';
-import { useBeforeUnload } from '@/hooks/use-before-unload';
 
 const extensions = [loadLanguage('json')?.extension ?? []];
 const basicSetup = { lineNumbers: true, defaultKeymap: true };
@@ -32,16 +33,15 @@ const toastOptions: ExternalToast = {
   },
 };
 
-export function CreateSubscriberForm() {
-  const navigate = useNavigate();
-  const { environmentSlug } = useParams();
+type CreateSubscriberFormProps = {
+  onSuccess?: () => void;
+};
+
+export const CreateSubscriberForm = (props: CreateSubscriberFormProps) => {
+  const track = useTelemetry();
+  const { onSuccess } = props;
 
   const form = useForm<z.infer<typeof CreateSubscriberFormSchema>>({
-    /**
-     * Define all the initial values for the form,
-     * else the form isDirty on mount
-     * if only subscriberId is auto-generated
-     */
     defaultValues: {
       data: '',
       subscriberId: crypto.randomUUID(),
@@ -55,20 +55,14 @@ export function CreateSubscriberForm() {
     },
     resolver: zodResolver(CreateSubscriberFormSchema),
     shouldFocusError: false,
+    mode: 'onBlur',
   });
 
-  const isDirty = Object.keys(form.formState.dirtyFields).length > 0;
-  const blocker = useBlocker(isDirty);
-  useBeforeUnload(isDirty);
-
-  const { createSubscriber } = useCreateSubscriber({
+  const { createSubscriber, isPending } = useCreateSubscriber({
     onSuccess: () => {
       showSuccessToast('Created subscriber successfully', undefined, toastOptions);
-      navigate(
-        buildRoute(ROUTES.SUBSCRIBERS, {
-          environmentSlug: environmentSlug ?? '',
-        })
-      );
+      onSuccess?.();
+      track(TelemetryEvent.SUBSCRIBER_CREATED);
     },
     onError: (error) => {
       const errMsg = error instanceof Error ? error.message : 'Failed to create subscriber';
@@ -81,10 +75,12 @@ export function CreateSubscriberForm() {
 
     const dirtyPayload = Object.keys(dirtyFields).reduce<Partial<typeof formData>>((acc, key) => {
       const typedKey = key as keyof typeof formData;
+
       if (typedKey === 'data') {
         const data = JSON.parse(JSON.stringify(formData.data));
         return { ...acc, data: data === '' ? {} : data };
       }
+
       return { ...acc, [typedKey]: formData[typedKey]?.trim() };
     }, {});
 
@@ -94,76 +90,88 @@ export function CreateSubscriberForm() {
     });
   };
 
+  const firstNameChar = form.getValues('firstName')?.charAt(0) || '';
+  const lastNameChar = form.getValues('lastName')?.charAt(0) || '';
+
   return (
     <div className="flex h-full flex-col">
-      <header className="border-bg-soft flex h-12 w-full flex-row items-center gap-3 border-b p-3">
+      <header className="border-bg-soft flex h-12 w-full flex-row items-center gap-3 border-b p-3.5">
         <div className="flex flex-1 items-center gap-1 overflow-hidden text-sm font-medium">
           <RiGroup2Line className="size-5 p-0.5" />
           <TruncatedText className="flex-1">Add subscriber</TruncatedText>
         </div>
-        <CompactButton
-          icon={RiCloseLine}
-          variant="ghost"
-          className="ml-auto size-6"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            navigate(
-              buildRoute(ROUTES.SUBSCRIBERS, {
-                environmentSlug: environmentSlug ?? '',
-              })
-            );
-          }}
-        >
-          <span className="sr-only">Close</span>
-        </CompactButton>
       </header>
       <Form {...form}>
-        <form autoComplete="off" noValidate onSubmit={form.handleSubmit(onSubmit)} className="flex h-full flex-col">
+        <FormRoot autoComplete="off" noValidate onSubmit={form.handleSubmit(onSubmit)} className="flex h-full flex-col">
           <div className="flex flex-col items-stretch gap-6 p-5">
-            <div className="flex flex-1 gap-2.5">
-              <FormField
-                control={form.control}
-                name="firstName"
-                render={({ field, fieldState }) => (
-                  <FormItem className="w-full">
-                    <FormLabel>First Name</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        placeholder={field.name}
-                        id={field.name}
-                        value={field.value}
-                        onChange={field.onChange}
-                        hasError={!!fieldState.error}
-                        size="xs"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="lastName"
-                render={({ field, fieldState }) => (
-                  <FormItem className="w-full">
-                    <FormLabel>Last Name</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        placeholder={field.name}
-                        id={field.name}
-                        value={field.value}
-                        onChange={field.onChange}
-                        hasError={!!fieldState.error}
-                        size="xs"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <div className="flex items-center gap-3">
+              <Tooltip>
+                <TooltipTrigger
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
+                >
+                  <Avatar className="size-[3.75rem] cursor-default">
+                    <AvatarImage src={firstNameChar || lastNameChar ? '' : '/images/avatar.svg'} />
+                    <AvatarFallback>
+                      {firstNameChar || lastNameChar ? (
+                        firstNameChar + lastNameChar
+                      ) : (
+                        <AvatarImage src="/images/avatar.svg" />
+                      )}
+                    </AvatarFallback>
+                  </Avatar>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-56">
+                  Subscriber profile Image can only be updated via API
+                </TooltipContent>
+              </Tooltip>
+              <div className="grid w-full grid-cols-2 gap-2.5">
+                <FormField
+                  control={form.control}
+                  name="firstName"
+                  render={({ field, fieldState }) => (
+                    <FormItem>
+                      <FormLabel>First Name</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          placeholder={'John'}
+                          id={field.name}
+                          value={field.value}
+                          onChange={field.onChange}
+                          hasError={!!fieldState.error}
+                          size="xs"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="lastName"
+                  render={({ field, fieldState }) => (
+                    <FormItem>
+                      <FormLabel>Last Name</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          placeholder={'Doe'}
+                          id={field.name}
+                          value={field.value}
+                          onChange={field.onChange}
+                          hasError={!!fieldState.error}
+                          size="xs"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
             <div>
               <FormField
@@ -218,12 +226,12 @@ export function CreateSubscriberForm() {
             </div>
             <Separator />
 
-            <div className="flex flex-1 gap-2.5">
+            <div className="grid grid-cols-2 gap-2.5">
               <FormField
                 control={form.control}
                 name="email"
                 render={({ field, fieldState }) => (
-                  <FormItem className="w-full">
+                  <FormItem>
                     <FormLabel>Email address</FormLabel>
                     <FormControl>
                       <Input
@@ -246,7 +254,7 @@ export function CreateSubscriberForm() {
                 control={form.control}
                 name="phone"
                 render={({ field }) => (
-                  <FormItem className="w-full">
+                  <FormItem>
                     <FormLabel>Phone number</FormLabel>
                     <FormControl>
                       <PhoneInput
@@ -262,15 +270,21 @@ export function CreateSubscriberForm() {
               />
             </div>
 
-            <div className="flex flex-1 gap-2.5">
+            <div className="grid grid-cols-[1fr_3fr] gap-2.5">
               <FormField
                 control={form.control}
                 name="locale"
                 render={({ field }) => (
-                  <FormItem className="w-1/5">
+                  <FormItem>
                     <FormLabel>Locale</FormLabel>
                     <FormControl>
-                      <LocaleSelect value={field.value} onValueChange={field.onChange} />
+                      <LocaleSelect
+                        value={field.value}
+                        onChange={(val) => {
+                          const finalValue = field.value === val ? '' : val;
+                          field.onChange(finalValue);
+                        }}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -280,10 +294,16 @@ export function CreateSubscriberForm() {
                 control={form.control}
                 name="timezone"
                 render={({ field }) => (
-                  <FormItem className="min-w-0 flex-1">
+                  <FormItem className="overflow-hidden">
                     <FormLabel>Timezone</FormLabel>
                     <FormControl>
-                      <TimezoneSelect value={field.value} onValueChange={field.onChange} />
+                      <TimezoneSelect
+                        value={field.value}
+                        onChange={(val) => {
+                          const finalValue = field.value === val ? '' : val;
+                          field.onChange(finalValue);
+                        }}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -308,7 +328,7 @@ export function CreateSubscriberForm() {
                         className="overflow-auto"
                         extensions={extensions}
                         basicSetup={basicSetup}
-                        placeholder="Custom data (JSON)"
+                        placeholder="{}"
                         height="100%"
                         multiline
                         {...field}
@@ -364,14 +384,13 @@ export function CreateSubscriberForm() {
                 </span>
               </div>
 
-              <Button variant="secondary" type="submit">
+              <Button variant="secondary" type="submit" disabled={isPending} isLoading={isPending}>
                 Create subscriber
               </Button>
             </div>
           </div>
-        </form>
+        </FormRoot>
       </Form>
-      <UnsavedChangesAlertDialog blocker={blocker} />
     </div>
   );
-}
+};

@@ -60,11 +60,11 @@ export const linkButtonVariants = tv({
     },
     size: {
       md: {
-        root: 'h-5 gap-1 text-label-sm',
+        root: 'h-5 gap-1 text-paragraph-sm',
         icon: 'size-5',
       },
       sm: {
-        root: 'h-4 gap-1 text-label-xs',
+        root: 'h-4 gap-1 text-paragraph-xs',
         icon: 'size-4',
       },
     },
@@ -127,6 +127,7 @@ function LinkButtonIcon<T extends React.ElementType>({
 
   return <Component className={icon({ class: className })} {...rest} />;
 }
+
 LinkButtonIcon.displayName = LINK_BUTTON_ICON_NAME;
 
 const LinkButton = React.forwardRef<

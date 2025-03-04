@@ -58,6 +58,7 @@ type SubscriberListTableProps = HTMLAttributes<HTMLTableElement> & {
   orderBy?: SubscribersSortableColumn;
   orderDirection?: DirectionEnum;
 };
+
 const SubscriberListTable = (props: SubscriberListTableProps) => {
   const { children, orderBy, orderDirection, toggleSort, ...rest } = props;
   return (
@@ -114,6 +115,7 @@ export const SubscriberList = (props: SubscriberListProps) => {
     if (data?.next) {
       setNextPageAfter(data.next);
     }
+
     if (data?.previous) {
       setPreviousPageBefore(data.previous);
     }

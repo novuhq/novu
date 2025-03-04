@@ -7,7 +7,8 @@ import { decryptApiKey, encryptApiKey } from '@novu/application-generic';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { GenerateUniqueApiKey } from '../generate-unique-api-key/generate-unique-api-key.usecase';
 import { GetApiKeysCommand } from '../get-api-keys/get-api-keys.command';
-import { IApiKeyDto } from '../../dtos/environment-response.dto';
+
+import { ApiKeyDto } from '../../dtos/api-key.dto';
 
 @Injectable()
 export class RegenerateApiKeys {
@@ -16,7 +17,7 @@ export class RegenerateApiKeys {
     private generateUniqueApiKey: GenerateUniqueApiKey
   ) {}
 
-  async execute(command: GetApiKeysCommand): Promise<IApiKeyDto[]> {
+  async execute(command: GetApiKeysCommand): Promise<ApiKeyDto[]> {
     const environment = await this.environmentRepository.findOne({ _id: command.environmentId });
 
     if (!environment) {

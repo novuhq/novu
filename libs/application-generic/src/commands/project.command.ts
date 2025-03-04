@@ -1,13 +1,4 @@
-import {
-  IsDefined,
-  IsEnum,
-  IsNotEmpty,
-  IsNumber,
-  IsOptional,
-  IsString,
-  Max,
-  Min,
-} from 'class-validator';
+import { IsDefined, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, Max, Min } from 'class-validator';
 
 import { DirectionEnum, KeysOfT, UserSessionData } from '@novu/shared';
 
@@ -99,10 +90,7 @@ export abstract class EnvironmentCommand extends BaseCommand {
   @IsNotEmpty()
   readonly organizationId: string;
 }
-export abstract class CursorBasedPaginatedCommand<
-  T,
-  K extends KeysOfT<T>,
-> extends EnvironmentWithUserObjectCommand {
+export abstract class CursorBasedPaginatedCommand<T, K extends KeysOfT<T>> extends EnvironmentWithUserObjectCommand {
   @IsDefined()
   @IsNumber()
   @Min(1)

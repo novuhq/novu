@@ -10,7 +10,7 @@ import { usePopover } from './PopoverRoot';
 export const popoverContentVariants = () =>
   cn(
     'nt-w-[400px] nt-h-[600px] nt-rounded-xl nt-bg-background',
-    'nt-shadow-popover nt-z-10 nt-cursor-default nt-flex nt-flex-col nt-overflow-hidden'
+    'nt-shadow-popover nt-z-10 nt-cursor-default nt-flex nt-flex-col nt-overflow-hidden nt-border nt-border-border'
   );
 
 const PopoverContentBody = (props: PopoverContentProps) => {

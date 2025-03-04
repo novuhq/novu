@@ -1,11 +1,11 @@
-import { NovuEventEmitter } from './event-emitter';
-import type { EventHandler, EventNames, Events } from './event-emitter';
-import { Notifications } from './notifications';
-import { Session } from './session';
-import { Preferences } from './preferences';
-import { Socket } from './ws';
-import type { NovuOptions } from './types';
 import { InboxService } from './api';
+import type { EventHandler, EventNames, Events } from './event-emitter';
+import { NovuEventEmitter } from './event-emitter';
+import { Notifications } from './notifications';
+import { Preferences } from './preferences';
+import { Session } from './session';
+import type { NovuOptions } from './types';
+import { Socket } from './ws';
 
 export class Novu implements Pick<NovuEventEmitter, 'on'> {
   #emitter: NovuEventEmitter;

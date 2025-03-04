@@ -1,16 +1,26 @@
 {
-  "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "strictNullChecks": false,
-    "allowSyntheticDefaultImports": true,
-    "outDir": "build/main",
-    "module": "commonjs",
+    "composite": true,
+    "declaration": true,
+    "declarationMap": true,
     "esModuleInterop": true,
-    "rootDir": "src",
+    "isolatedModules": true,
+    "lib": ["es2022", "dom"],
+    "module": "nodenext",
+    "moduleDetection": "force",
+    "moduleResolution": "nodenext",
+    "noImplicitOverride": true,
+    "noUncheckedIndexedAccess": true,
+    "outDir": "./dist/cjs",
+    "resolveJsonModule": true,
+    "rootDir": "./src",
+    "skipLibCheck": true,
+    "sourceMap": true,
     "strict": true,
-    "types": ["node", "jest"],
-    "typeRoots": ["./node_modules/@types", "../../node_modules/@types"]
+    "strictPropertyInitialization": false,
+    "target": "ES2022",
+    "verbatimModuleSyntax": false
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["node_modules/**"]
+  "include": ["src/**/*"],
+  "exclude": ["node_modules/**", "**/node_modules/**"]
 }

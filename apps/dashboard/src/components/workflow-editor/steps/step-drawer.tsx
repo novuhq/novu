@@ -17,6 +17,7 @@ const stepTypeToClassname: Record<string, string | undefined> = {
 export const StepDrawer = ({ children, title }: { children: React.ReactNode; title?: string }) => {
   const navigate = useNavigate();
   const { workflow, step } = useWorkflow();
+
   const handleCloseSheet = () => {
     if (step) {
       // Do not use relative path here, calling twice will result in moving further back
@@ -44,17 +45,17 @@ export const StepDrawer = ({ children, title }: { children: React.ReactNode; tit
           }}
           className="fixed inset-0 z-50 h-screen w-screen bg-black/20"
           transition={transitionSetting}
+          onClick={handleCloseSheet}
         />
         <SheetPortal>
           <SheetContentBase
             asChild
             onInteractOutside={(e) => {
-              // IMPORTANT: do not close the sheet if the interact outside is from the maily variable list
-              if (e.target instanceof HTMLDivElement && e.target.className.includes('tippy-box')) {
-                return;
-              }
-
-              handleCloseSheet();
+              // IMPORTANT DO NOT REMOVE
+              // we don’t want to close the sheet if interacting outside,
+              // happens on the dropdowns, elements that are rendered outside the component tree
+              // for example maily variable list, the conditions operators
+              e.preventDefault();
             }}
             onEscapeKeyDown={handleCloseSheet}
           >

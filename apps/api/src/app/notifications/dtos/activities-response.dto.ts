@@ -13,6 +13,7 @@ import {
   ProvidersIdEnumConst,
   StepTypeEnum,
   TriggerTypeEnum,
+  WorkflowOriginEnum,
 } from '@novu/shared';
 import { IsArray, IsEnum, IsNumber, IsOptional, IsString } from 'class-validator';
 import { StepFilterDto } from '../../shared/dtos/step-filter-dto';
@@ -312,6 +313,16 @@ export class ActivityNotificationTemplateResponseDto {
 
   @ApiProperty({ description: 'Name of the template', type: String })
   name: string;
+
+  @ApiProperty({
+    enum: [...Object.values(WorkflowOriginEnum)],
+    enumName: 'WorkflowOriginEnum',
+    description: 'Origin of the workflow',
+    type: String,
+  })
+  @IsString()
+  @IsEnum(WorkflowOriginEnum)
+  origin?: WorkflowOriginEnum;
 
   @ApiProperty({
     description: 'Triggers of the template',

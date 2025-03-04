@@ -31,9 +31,6 @@ jobs:
         run: |
           echo "BULL_MQ_PRO_NPM_TOKEN=${{ secrets.BULL_MQ_PRO_NPM_TOKEN }}" >> $GITHUB_ENV
 
-      - name: build ws
-        run: pnpm build:ws
-
       - name: Set Up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:

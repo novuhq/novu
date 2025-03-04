@@ -4,7 +4,15 @@ import { useForm } from 'react-hook-form';
 import { RiLinkM, RiPencilFill } from 'react-icons/ri';
 import * as z from 'zod';
 
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/primitives/form/form';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  FormRoot,
+} from '@/components/primitives/form/form';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchBridgeHealthCheck } from '@/hooks/use-fetch-bridge-health-check';
 import { useUpdateBridgeUrl } from '@/hooks/use-update-bridge-url';
@@ -38,6 +46,7 @@ export const EditBridgeUrlButton = () => {
 
   const onSubmit = async ({ bridgeUrl }: z.infer<typeof formSchema>) => {
     const { isValid } = await validateBridgeUrl({ bridgeUrl });
+
     if (isValid) {
       await updateBridgeUrl({ url: bridgeUrl, environmentId: currentEnvironment?._id ?? '' });
       setBridgeUrl(bridgeUrl);
@@ -51,6 +60,7 @@ export const EditBridgeUrlButton = () => {
       open={isPopoverOpen}
       onOpenChange={(newIsOpen) => {
         setIsPopoverOpen(newIsOpen);
+
         if (!newIsOpen && isDirty) {
           reset({ bridgeUrl: envBridgeUrl });
         }
@@ -77,7 +87,7 @@ export const EditBridgeUrlButton = () => {
       <PopoverPortal>
         <PopoverContent className="w-[362px] p-0" side="bottom" align="end">
           <Form {...form}>
-            <form onSubmit={handleSubmit(onSubmit)}>
+            <FormRoot onSubmit={handleSubmit(onSubmit)}>
               <div className="flex flex-col gap-1 p-5">
                 <FormField
                   control={control}
@@ -113,7 +123,7 @@ export const EditBridgeUrlButton = () => {
                   Update endpoint
                 </Button>
               </div>
-            </form>
+            </FormRoot>
           </Form>
         </PopoverContent>
       </PopoverPortal>

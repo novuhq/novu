@@ -38,10 +38,8 @@ import {
   DalServiceHealthIndicator,
   distributedLockService,
   ExecuteBridgeRequest,
-  ExecutionLogRoute,
   featureFlagsService,
   GetDecryptedSecretKey,
-  getFeatureFlag,
   InvalidateCacheService,
   LoggerModule,
   QueuesModule,
@@ -124,10 +122,8 @@ const PROVIDERS = [
   InvalidateCacheService,
   storageService,
   ...DAL_MODELS,
-  ExecutionLogRoute,
   CreateExecutionDetails,
   ExecuteBridgeRequest,
-  getFeatureFlag,
   GetDecryptedSecretKey,
 ];
 

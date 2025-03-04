@@ -2,8 +2,9 @@ import { css } from '@novu/novui/css';
 import { Text } from '@novu/novui';
 import styled from '@emotion/styled';
 import { List } from '@mantine/core';
-import { ApiServiceLevelEnum } from '@novu/shared';
+import { ApiServiceLevelEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { Badge } from './Badge';
+import { useFeatureFlag } from '../../../hooks/useFeatureFlag';
 
 const Cell = styled.div`
   display: flex;
@@ -26,9 +27,9 @@ type PlanHighlights = {
 
 const highlights: PlanHighlights = {
   [ApiServiceLevelEnum.FREE]: [
-    { text: 'Up to 30,000 events per month' },
+    { text: 'Up to 10,000 events per month' },
     { text: '3 teammates' },
-    { text: '30 days Activity Feed retention' },
+    { text: '24 hours Activity Feed retention' },
   ],
   [ApiServiceLevelEnum.BUSINESS]: [
     { text: 'Up to 250,000 events per month' },
@@ -40,6 +41,16 @@ const highlights: PlanHighlights = {
     { text: 'Unlimited teammates' },
     { text: 'SAML SSO' },
   ],
+};
+
+const descriptions = {
+  [ApiServiceLevelEnum.FREE]: 'For testing and small-scale.',
+  [ApiServiceLevelEnum.PRO]:
+    'Perfect for startups and indie hackers looking to add <Inbox /> and connect to Email and digest engine.',
+  [ApiServiceLevelEnum.BUSINESS]:
+    'Ideal for teams looking to add <Inbox/> in minutes, and manage system notification experience from one system.',
+  [ApiServiceLevelEnum.ENTERPRISE]:
+    'For organizations with privacy, and compliance demands. Looking to add the best OS notification technology, while maintaining flexibility.',
 };
 
 const PlanHighlights = ({ planHighlights }: { planHighlights: Highlight[] }) => (
@@ -57,6 +68,12 @@ const PlanHighlights = ({ planHighlights }: { planHighlights: Highlight[] }) => 
 );
 
 export const HighlightsRow = () => {
+  const is2025Q1TieringEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_2025_Q1_TIERING_ENABLED);
+
+  return is2025Q1TieringEnabled ? <Descriptions /> : <Highlights />;
+};
+
+export const Highlights = () => {
   return (
     <div className={styles.container}>
       <Cell>
@@ -64,6 +81,21 @@ export const HighlightsRow = () => {
       </Cell>
       {Object.entries(highlights).map(([planName, planHighlights]) => (
         <PlanHighlights key={planName} planHighlights={planHighlights} />
+      ))}
+    </div>
+  );
+};
+
+export const Descriptions = () => {
+  return (
+    <div className={styles.container}>
+      <Cell>
+        <Text color="typography.text.secondary">Description</Text>
+      </Cell>
+      {Object.entries(descriptions).map(([planName, description]) => (
+        <Cell key={planName}>
+          <Text>{description}</Text>
+        </Cell>
       ))}
     </div>
   );

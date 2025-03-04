@@ -8,9 +8,7 @@ import {
   CompileTemplate,
   ConditionsFilter,
   CreateExecutionDetails,
-  ExecutionLogRoute,
   GetDecryptedIntegrations,
-  getFeatureFlag,
   GetLayoutUseCase,
   GetNovuLayout,
   GetNovuProviderCredentials,
@@ -21,10 +19,10 @@ import {
   ProcessTenant,
   SelectIntegration,
   SelectVariant,
+  TierRestrictionsValidateUsecase,
   TriggerBroadcast,
   TriggerEvent,
   TriggerMulticast,
-  TierRestrictionsValidateUsecase,
   WorkflowInMemoryProviderService,
 } from '@novu/application-generic';
 import { CommunityOrganizationRepository, JobRepository, PreferencesRepository } from '@novu/dal';
@@ -87,9 +85,9 @@ const REPOSITORIES = [JobRepository, CommunityOrganizationRepository, Preference
 
 const USE_CASES = [
   AddDelayJob,
+  TierRestrictionsValidateUsecase,
   MergeOrCreateDigest,
   AddJob,
-  TierRestrictionsValidateUsecase,
   CalculateLimitNovuIntegration,
   CompileEmailTemplate,
   CompileTemplate,
@@ -126,13 +124,11 @@ const USE_CASES = [
   UpdateJobStatus,
   WebhookFilterBackoffStrategy,
   GetTopicSubscribersUseCase,
-  getFeatureFlag,
   SubscriberJobBound,
   TriggerBroadcast,
   TriggerMulticast,
   CompileInAppTemplate,
   InboundEmailParse,
-  ExecutionLogRoute,
   ExecuteBridgeJob,
   GetPreferences,
 ];

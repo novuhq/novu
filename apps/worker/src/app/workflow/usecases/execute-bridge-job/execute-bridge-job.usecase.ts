@@ -128,7 +128,7 @@ export class ExecuteBridgeJob {
       },
     });
 
-    const createExecutionDetailsCommand: CreateExecutionDetailsCommand = {
+    const executionDetailsCommand: CreateExecutionDetailsCommand = {
       ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
       detail: DetailEnum.SUCCESSFUL_BRIDGE_RESPONSE_RECEIVED,
       source: ExecutionDetailsSourceEnum.INTERNAL,
@@ -138,7 +138,7 @@ export class ExecuteBridgeJob {
       raw: JSON.stringify(bridgeResponse.metadata),
     };
 
-    await this.createExecutionDetails.execute(createExecutionDetailsCommand);
+    await this.createExecutionDetails.execute(executionDetailsCommand);
 
     return bridgeResponse;
   }
@@ -211,8 +211,10 @@ export class ExecuteBridgeJob {
       event,
       action: PostActionEnum.EXECUTE,
       searchParams,
+      workflowOrigin,
+      environmentId,
       processError: async (response) => {
-        const createExecutionDetailsCommand: CreateExecutionDetailsCommand = {
+        await this.createExecutionDetails.execute({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
           detail: DetailEnum.FAILED_BRIDGE_EXECUTION,
           source: ExecutionDetailsSourceEnum.INTERNAL,
@@ -225,13 +227,10 @@ export class ExecuteBridgeJob {
             message: response.message,
             code: response.code,
             data: response.data,
+            cause: response.cause,
           }),
-        };
-
-        await this.createExecutionDetails.execute(createExecutionDetailsCommand);
+        });
       },
-      workflowOrigin,
-      environmentId,
     }) as Promise<ExecuteOutput>;
   }
 

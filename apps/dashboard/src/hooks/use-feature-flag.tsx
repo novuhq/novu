@@ -1,10 +1,20 @@
+import { FeatureFlags, FeatureFlagsKeysEnum, prepareBooleanStringFeatureFlag } from '@novu/shared';
 import { useFlags } from 'launchdarkly-react-client-sdk';
-import { FeatureFlagsKeysEnum, prepareBooleanStringFeatureFlag } from '@novu/shared';
 import { LAUNCH_DARKLY_CLIENT_SIDE_ID } from '../config';
 
 function isLaunchDarklyEnabled() {
   return !!LAUNCH_DARKLY_CLIENT_SIDE_ID;
 }
+
+export const useFeatureFlagMap = (defaultValue = false): FeatureFlags => {
+  const flags = useFlags();
+
+  return Object.keys(flags).reduce((acc: FeatureFlags, flag: string) => {
+    acc[flag as keyof FeatureFlags] = flags[flag] ?? defaultValue;
+
+    return acc;
+  }, {} as FeatureFlags);
+};
 
 export const useFeatureFlag = (key: FeatureFlagsKeysEnum, defaultValue = false): boolean => {
   const flags = useFlags();

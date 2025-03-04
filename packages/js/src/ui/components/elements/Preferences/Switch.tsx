@@ -22,7 +22,7 @@ export const Switch = (props: SwitchProps) => {
       <div
         class={style(
           'channelSwitchThumb',
-          `nt-peer nt-h-6 nt-w-11 nt-rounded-full nt-border nt-border-neutral-alpha-200 peer-checked:nt-border-neutral-alpha-400 nt-bg-neutral-alpha-300 after:nt-absolute after:nt-left-[2px] after:nt-top-0.5 after:nt-h-5 after:nt-w-5 after:nt-rounded-full after:nt-border after:nt-border-neutral-alpha-400 after:nt-bg-background after:nt-transition-all after:nt-content-[''] peer-checked:nt-bg-primary peer-checked:after:nt-translate-x-full peer-checked:after:nt-border-background nt-transition-all nt-duration-200 after:nt-duration-200`
+          `nt-peer nt-h-4 nt-w-7 nt-rounded-full peer-checked:nt-shadow-none peer-checked:nt-border-neutral-alpha-400 nt-bg-neutral-alpha-300 after:nt-absolute after:nt-top-0.5 after:nt-size-3 after:nt-left-0.5 after:nt-rounded-full after:nt-bg-background after:nt-transition-all after:nt-content-[''] peer-checked:nt-bg-primary peer-checked:after:nt-translate-x-full peer-checked:after:nt-border-background nt-transition-all nt-duration-200 after:nt-duration-200 shadow-sm`
         )}
         data-checked={props.checked}
       />

@@ -17,22 +17,29 @@ import { z } from 'zod';
 import { ConfirmationModal } from '@/components/confirmation-modal';
 import { PageMeta } from '@/components/page-meta';
 import { Button } from '@/components/primitives/button';
+import { CompactButton } from '@/components/primitives/button-compact';
 import { CopyButton } from '@/components/primitives/copy-button';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/primitives/form/form';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  FormRoot,
+} from '@/components/primitives/form/form';
 import { Input } from '@/components/primitives/input';
 import { Separator } from '@/components/primitives/separator';
 import { SidebarContent, SidebarFooter, SidebarHeader } from '@/components/side-navigation/sidebar';
 import TruncatedText from '@/components/truncated-text';
 import { stepSchema } from '@/components/workflow-editor/schema';
 import { getStepDefaultValues } from '@/components/workflow-editor/step-default-values';
-import {
-  flattenIssues,
-  getFirstBodyErrorMessage,
-  getFirstControlsErrorMessage,
-  updateStepInWorkflow,
-} from '@/components/workflow-editor/step-utils';
+import { flattenIssues, getFirstErrorMessage, updateStepInWorkflow } from '@/components/workflow-editor/step-utils';
 import { ConfigureChatStepPreview } from '@/components/workflow-editor/steps/chat/configure-chat-step-preview';
-import { ConfigureStepTemplateIssueCta } from '@/components/workflow-editor/steps/configure-step-template-issue-cta';
+import {
+  ConfigureStepTemplateIssueCta,
+  ConfigureStepTemplateIssuesContainer,
+} from '@/components/workflow-editor/steps/configure-step-template-issue-cta';
 import { DelayControlValues } from '@/components/workflow-editor/steps/delay/delay-control-values';
 import { DigestControlValues } from '@/components/workflow-editor/steps/digest/digest-control-values';
 import { ConfigureEmailStepPreview } from '@/components/workflow-editor/steps/email/configure-email-step-preview';
@@ -46,7 +53,6 @@ import { UpdateWorkflowFn } from '@/components/workflow-editor/workflow-provider
 import { useFormAutosave } from '@/hooks/use-form-autosave';
 import { INLINE_CONFIGURABLE_STEP_TYPES, STEP_TYPE_LABELS, TEMPLATE_CONFIGURABLE_STEP_TYPES } from '@/utils/constants';
 import { buildRoute, ROUTES } from '@/utils/routes';
-import { CompactButton } from '../../primitives/button-compact';
 
 const STEP_TYPE_TO_INLINE_CONTROL_VALUES: Record<StepTypeEnum, () => React.JSX.Element | null> = {
   [StepTypeEnum.DELAY]: DelayControlValues,
@@ -159,9 +165,12 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
     },
   });
 
-  const firstError = useMemo(
-    () =>
-      step.issues ? getFirstBodyErrorMessage(step.issues) || getFirstControlsErrorMessage(step.issues) : undefined,
+  const firstControlsError = useMemo(
+    () => (step.issues ? getFirstErrorMessage(step.issues, 'controls') : undefined),
+    [step]
+  );
+  const firstIntegrationError = useMemo(
+    () => (step.issues ? getFirstErrorMessage(step.issues, 'integration') : undefined),
     [step]
   );
 
@@ -173,7 +182,7 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
     Object.values(currentErrors).forEach((controlValues) => {
       Object.keys(controlValues).forEach((key) => {
         if (!stepIssues[`${key}`]) {
-          // @ts-expect-error
+          // @ts-expect-error - dynamic key
           form.clearErrors(`controlValues.${key}`);
         }
       });
@@ -181,7 +190,7 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
 
     // Set new errors from stepIssues
     Object.entries(stepIssues).forEach(([key, value]) => {
-      // @ts-expect-error
+      // @ts-expect-error - dynamic key
       form.setError(`controlValues.${key}`, { message: value });
     });
   }, [form, step]);
@@ -226,13 +235,20 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
               })}
               className="ml-auto flex items-center"
             >
-              <CompactButton size="lg" variant="ghost" icon={RiCloseFill} className="size-4" type="button">
+              <CompactButton
+                size="lg"
+                variant="ghost"
+                icon={RiCloseFill}
+                className="size-4"
+                type="button"
+                data-testid="configure-step-form-close"
+              >
                 <span className="sr-only">Close</span>
               </CompactButton>
             </Link>
           </SidebarHeader>
           <Form {...form}>
-            <form onBlur={onBlur}>
+            <FormRoot onBlur={onBlur}>
               <SaveFormContext.Provider value={value}>
                 <SidebarContent>
                   <FormField
@@ -278,7 +294,7 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
 
                 {isInlineConfigurableStep && !hasCustomControls && <InlineControlValues />}
               </SaveFormContext.Provider>
-            </form>
+            </FormRoot>
           </Form>
 
           {(isTemplateConfigurableStep || isInlineConfigurableStepWithCustomControls) && (
@@ -298,9 +314,16 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
               </SidebarContent>
               <Separator />
 
-              {firstError ? (
+              {firstControlsError || firstIntegrationError ? (
                 <>
-                  <ConfigureStepTemplateIssueCta step={step} issue={firstError} />
+                  <ConfigureStepTemplateIssuesContainer>
+                    {firstControlsError && (
+                      <ConfigureStepTemplateIssueCta step={step} issue={firstControlsError} type="error" />
+                    )}
+                    {firstIntegrationError && (
+                      <ConfigureStepTemplateIssueCta step={step} issue={firstIntegrationError} type="info" />
+                    )}
+                  </ConfigureStepTemplateIssuesContainer>
                   <Separator />
                 </>
               ) : (

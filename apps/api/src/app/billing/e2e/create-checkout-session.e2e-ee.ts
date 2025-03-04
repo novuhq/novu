@@ -1,9 +1,8 @@
 /* eslint-disable global-require */
 import sinon from 'sinon';
 import { expect } from 'chai';
-// eslint-disable-next-line no-restricted-imports
-import { StripeBillingIntervalEnum } from '@novu/ee-billing/src/stripe/types';
-import { ApiServiceLevelEnum } from '@novu/shared';
+
+import { ApiServiceLevelEnum, StripeBillingIntervalEnum } from '@novu/shared';
 
 const checkoutSessionCreateParamsMock = {
   mode: 'subscription',
@@ -41,13 +40,6 @@ describe('Create checkout session #novu-v2', async () => {
         metered: [{ id: 'metered_price_id_1' }],
       }),
   };
-  const userRepository = {
-    findById: () =>
-      Promise.resolve({
-        _id: 'user_id',
-        email: 'test@test.com',
-      }),
-  };
 
   const stripeStub = {
     checkout: {
@@ -57,17 +49,23 @@ describe('Create checkout session #novu-v2', async () => {
     },
   };
   let checkoutCreateStub: sinon.SinonStub;
+  let featureFlagsServiceStub: { getFlag: sinon.SinonStub };
+  const IS_2025_Q1_TIERING_ENABLED = true;
 
   beforeEach(() => {
     checkoutCreateStub = sinon.stub(stripeStub.checkout.sessions, 'create').resolves({ url: 'url' });
+    featureFlagsServiceStub = {
+      getFlag: sinon.stub().resolves(IS_2025_Q1_TIERING_ENABLED),
+    };
   });
 
   afterEach(() => {
     checkoutCreateStub.reset();
+    featureFlagsServiceStub.getFlag.reset();
   });
 
   it('Create checkout session with 1 subscription containing 1 licensed item and 1 metered item for monthly billing interval', async () => {
-    const usecase = new CreateCheckoutSession(stripeStub, getOrCreateCustomer, userRepository, getPrices);
+    const usecase = new CreateCheckoutSession(stripeStub, getOrCreateCustomer, getPrices, featureFlagsServiceStub);
 
     const result = await usecase.execute({
       organizationId: 'organization_id',
@@ -89,7 +87,7 @@ describe('Create checkout session #novu-v2', async () => {
   });
 
   it('Create checkout session with 1 subscription containing 1 licensed item for annual billing interval', async () => {
-    const usecase = new CreateCheckoutSession(stripeStub, getOrCreateCustomer, userRepository, getPrices);
+    const usecase = new CreateCheckoutSession(stripeStub, getOrCreateCustomer, getPrices, featureFlagsServiceStub);
 
     const result = await usecase.execute({
       organizationId: 'organization_id',

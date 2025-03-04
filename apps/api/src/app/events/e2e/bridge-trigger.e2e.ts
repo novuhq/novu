@@ -2,7 +2,7 @@ import axios from 'axios';
 import { expect } from 'chai';
 import sinon from 'sinon';
 
-import { SubscribersService, UserSession } from '@novu/testing';
+import { JobsService, SubscribersService, TestingQueueService, UserSession } from '@novu/testing';
 import {
   ExecutionDetailsRepository,
   JobRepository,
@@ -15,10 +15,10 @@ import {
   CreateWorkflowDto,
   ExecutionDetailsStatusEnum,
   JobStatusEnum,
+  JobTopicNameEnum,
   MessagesStatusEnum,
   StepTypeEnum,
   WorkflowCreationSourceEnum,
-  WorkflowOriginEnum,
   WorkflowResponseDto,
 } from '@novu/shared';
 import { workflow } from '@novu/framework';
@@ -44,6 +44,7 @@ contexts.forEach((context: Context) => {
     let subscriber: SubscriberEntity;
     let subscriberService: SubscribersService;
     const executionDetailsRepository = new ExecutionDetailsRepository();
+    const jobsService = new JobsService();
     let bridge;
 
     beforeEach(async () => {
@@ -128,9 +129,7 @@ contexts.forEach((context: Context) => {
         }
       );
 
-      console.time('CHECKPOINT:> Starting mock bridge server');
       await bridgeServer.start({ workflows: [newWorkflow] });
-      console.timeEnd('CHECKPOINT:> Starting mock bridge server');
 
       if (context.isStateful) {
         await discoverAndSyncBridge(session, workflowsRepository, workflowId, bridgeServer);
@@ -143,13 +142,8 @@ contexts.forEach((context: Context) => {
         }
       }
 
-      console.time('CHECKPOINT:> Starting triggering event');
       await triggerEvent(session, workflowId, subscriber.subscriberId, { name: 'test_name' }, bridge);
-      console.timeEnd('CHECKPOINT:> Starting triggering event');
-
-      console.time('CHECKPOINT:> Starting waiting for job completion');
-      await session.waitForJobCompletion();
-      console.timeEnd('CHECKPOINT:> Starting waiting for job completion');
+      await session.awaitAllJobs();
 
       const messages = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -565,8 +559,7 @@ contexts.forEach((context: Context) => {
       }
 
       await triggerEvent(session, workflowId, subscriber.subscriberId, {}, bridge);
-
-      await session.waitForJobCompletion();
+      await session.awaitAllJobs();
 
       const messagesAfter = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -598,11 +591,11 @@ contexts.forEach((context: Context) => {
       await bridgeServer.start({ workflows: [exceedMaxTierDurationWorkflow] });
 
       if (context.isStateful) {
-        await discoverAndSyncBridge(session, workflowsRepository, workflowId, bridgeServer);
+        await discoverAndSyncBridge(session, workflowsRepository, exceedMaxTierDurationWorkflowId, bridgeServer);
       }
 
       const result = await triggerEvent(session, exceedMaxTierDurationWorkflowId, subscriber.subscriberId, {}, bridge);
-      await session.waitForJobCompletion();
+      await session.awaitAllJobs();
 
       const executionDetails = await executionDetailsRepository.find({
         _environmentId: session.environment._id,
@@ -656,9 +649,12 @@ contexts.forEach((context: Context) => {
       }
 
       await triggerEvent(session, workflowId, subscriber.subscriberId, {}, bridge);
+
       await session.waitForJobCompletion();
+
       await triggerEvent(session, workflowId, subscriber.subscriberId, { name: 'payload_name' }, bridge);
-      await session.waitForJobCompletion();
+
+      await session.awaitAllJobs();
 
       const sentMessage = await messageRepository.find({
         _environmentId: session.environment._id,

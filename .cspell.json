@@ -8,6 +8,7 @@
     "EQAs",
     "analagous",
     "addrs",
+    "Tiering",
     "subscriberpayloaddto",
     "adresses",
     "APIJSON",
@@ -726,7 +727,9 @@
     "querybuilder",
     "liquified",
     "autoload",
-    "novugo"
+    "novugo",
+    "titleize",
+    "oklch"
   ],
   "flagWords": [],
   "patterns": [

@@ -1,7 +1,6 @@
 import { StepTypeEnum } from '@novu/shared';
 import React from 'react';
-import { RiCloseFill, RiEdit2Line, RiPencilRuler2Line } from 'react-icons/ri';
-import { useNavigate } from 'react-router-dom';
+import { RiEdit2Line, RiPencilRuler2Line } from 'react-icons/ri';
 
 import { Notification5Fill } from '@/components/icons';
 import { Button } from '@/components/primitives/button';
@@ -9,7 +8,6 @@ import { Separator } from '@/components/primitives/separator';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { Tabs, TabsList, TabsTrigger } from '@/components/primitives/tabs';
 import { WorkflowOriginEnum } from '@/utils/enums';
-import { CompactButton } from '../../primitives/button-compact';
 
 const SingleLineSkeleton = () => {
   return (
@@ -61,14 +59,12 @@ export const StepSkeleton = ({
   stepType?: StepTypeEnum;
   workflowOrigin?: WorkflowOriginEnum;
 }) => {
-  const navigate = useNavigate();
-
   const SkeletonContent = STEP_TYPE_TO_SKELETON_CONTENT[stepType ?? ''];
 
   return (
     <div className="flex h-full flex-1 flex-col">
-      <header className="flex flex-row items-center gap-3 px-3 py-1.5">
-        <div className="mr-auto flex items-center gap-2.5 text-sm font-medium">
+      <header className="flex flex-row items-center justify-between gap-3 py-1.5 pl-3 pr-12">
+        <div className="flex items-center gap-2.5 text-sm font-medium">
           <RiEdit2Line className="size-4" />
           <span>Configure Template</span>
         </div>
@@ -84,18 +80,6 @@ export const StepSkeleton = ({
             </TabsTrigger>
           </TabsList>
         </Tabs>
-
-        <CompactButton
-          icon={RiCloseFill}
-          className="size-6"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            navigate('../', { relative: 'path' });
-          }}
-        >
-          <span className="sr-only">Close</span>
-        </CompactButton>
       </header>
       <Separator />
       <div className="flex h-full w-full flex-col gap-3 px-3 py-3.5">

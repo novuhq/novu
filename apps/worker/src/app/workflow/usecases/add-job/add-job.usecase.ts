@@ -21,21 +21,21 @@ import {
   ConditionsFilter,
   ConditionsFilterCommand,
   DetailEnum,
-  ExecutionLogRoute,
-  ExecutionLogRouteCommand,
+  CreateExecutionDetails,
+  CreateExecutionDetailsCommand,
+  getDigestType,
   IFilterVariables,
   InstrumentUsecase,
-  JobsOptions,
-  LogDecorator,
-  StandardQueueService,
-  NormalizeVariablesCommand,
-  NormalizeVariables,
-  getDigestType,
-  isTimedDigestOutput,
   isLookBackDigestOutput,
   isRegularDigestOutput,
-  TierRestrictionsValidateUsecase,
+  isTimedDigestOutput,
+  JobsOptions,
+  LogDecorator,
+  NormalizeVariables,
+  NormalizeVariablesCommand,
+  StandardQueueService,
   TierRestrictionsValidateCommand,
+  TierRestrictionsValidateUsecase,
 } from '@novu/application-generic';
 
 import { AddDelayJob } from './add-delay-job.usecase';
@@ -57,8 +57,8 @@ export class AddJob {
     private jobRepository: JobRepository,
     @Inject(forwardRef(() => StandardQueueService))
     private standardQueueService: StandardQueueService,
-    @Inject(forwardRef(() => ExecutionLogRoute))
-    private executionLogRoute: ExecutionLogRoute,
+    @Inject(forwardRef(() => CreateExecutionDetails))
+    private createExecutionDetails: CreateExecutionDetails,
     private mergeOrCreateDigestUsecase: MergeOrCreateDigest,
     private addDelayJob: AddDelayJob,
     @Inject(forwardRef(() => ComputeJobWaitDurationService))
@@ -91,9 +91,9 @@ export class AddJob {
       await this.executeNoneDeferredJob(command);
     }
 
-    await this.executionLogRoute.execute(
-      ExecutionLogRouteCommand.create({
-        ...ExecutionLogRouteCommand.getDetailsFromJob(job),
+    await this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
         detail: DetailEnum.STEP_QUEUED,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.PENDING,
@@ -167,12 +167,21 @@ export class AddJob {
 
     const delay = this.getExecutionDelayAmount(filtered, digestAmount, delayAmount);
 
-    await this.validateDeferDuration(delay, job, command, digestResult?.cronExpression);
+    const valid = await this.validateDeferDuration(delay, job, command, digestResult?.cronExpression);
+
+    if (!valid) {
+      throw new Error('Defer duration limit exceeded');
+    }
 
     await this.queueJob(job, delay);
   }
 
-  private async validateDeferDuration(delay: number, job: JobEntity, command: AddJobCommand, cronExpression?: string) {
+  private async validateDeferDuration(
+    delay: number,
+    job: JobEntity,
+    command: AddJobCommand,
+    cronExpression?: string
+  ): Promise<boolean> {
     const errors = await this.tierRestrictionsValidateUsecase.execute(
       TierRestrictionsValidateCommand.create({
         deferDurationMs: delay,
@@ -186,9 +195,9 @@ export class AddJob {
       const uniqueErrors = _.uniq(errors.map((error) => error.message));
       Logger.warn({ errors, jobId: job._id }, uniqueErrors, LOG_CONTEXT);
 
-      await this.executionLogRoute.execute(
-        ExecutionLogRouteCommand.create({
-          ...ExecutionLogRouteCommand.getDetailsFromJob(job),
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
           detail: DetailEnum.DEFER_DURATION_LIMIT_EXCEEDED,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
@@ -197,7 +206,11 @@ export class AddJob {
           raw: JSON.stringify({ errors: uniqueErrors }),
         })
       );
+
+      return false;
     }
+
+    return true;
   }
 
   private async executeNoneDeferredJob(command: AddJobCommand): Promise<void> {
@@ -485,9 +498,9 @@ export class AddJob {
 
       Logger.verbose(logMessage, LOG_CONTEXT);
 
-      await this.executionLogRoute.execute(
-        ExecutionLogRouteCommand.create({
-          ...ExecutionLogRouteCommand.getDetailsFromJob(job),
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
           detail: job.type === StepTypeEnum.DELAY ? DetailEnum.STEP_DELAYED : DetailEnum.STEP_DIGESTED,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.PENDING,

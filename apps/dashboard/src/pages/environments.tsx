@@ -1,5 +1,5 @@
 import { PageMeta } from '@/components/page-meta';
-import { ApiServiceLevelEnum } from '@novu/shared';
+import { ApiServiceLevelEnum, FeatureNameEnum, getFeatureForTierAsBoolean } from '@novu/shared';
 import { useEffect } from 'react';
 import { CreateEnvironmentButton } from '../components/environments/create-environment-button';
 import { DashboardLayout } from '../components/dashboard-layout';
@@ -19,9 +19,14 @@ export function EnvironmentsPage() {
   const track = useTelemetry();
   const { subscription } = useFetchSubscription();
 
-  const isPaidTier = subscription?.apiServiceLevel !== ApiServiceLevelEnum.FREE;
+  const isTierEligibleForCustomEnvironments = getFeatureForTierAsBoolean(
+    FeatureNameEnum.CUSTOM_ENVIRONMENTS_BOOLEAN,
+    subscription?.apiServiceLevel || ApiServiceLevelEnum.FREE,
+    {}
+  );
   const isTrialActive = subscription?.trial?.isActive;
-  const canAccessEnvironments = areEnvironmentsInitialLoading || !subscription || (isPaidTier && !isTrialActive);
+  const canAccessEnvironments =
+    areEnvironmentsInitialLoading || !subscription || (isTierEligibleForCustomEnvironments && !isTrialActive);
 
   useEffect(() => {
     track(TelemetryEvent.ENVIRONMENTS_PAGE_VIEWED);
