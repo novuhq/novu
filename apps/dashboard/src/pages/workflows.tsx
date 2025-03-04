@@ -17,6 +17,7 @@ import { getTemplates, WorkflowTemplate } from '@/components/template-store/temp
 import { WorkflowCard } from '@/components/template-store/workflow-card';
 import { WorkflowTemplateModal } from '@/components/template-store/workflow-template-modal';
 import { SortableColumn, WorkflowList } from '@/components/workflow-list';
+import { useEnvironment } from '@/context/environment/hooks';
 import { useDebounce } from '@/hooks/use-debounce';
 import { useFetchWorkflows } from '@/hooks/use-fetch-workflows';
 import { useTelemetry } from '@/hooks/use-telemetry';
@@ -98,9 +99,14 @@ export const WorkflowsPage = () => {
     query: searchParams.get('query') || '',
   });
 
+  const { currentEnvironment } = useEnvironment();
+
   const hasActiveFilters = searchParams.get('query') && searchParams.get('query') !== null;
 
-  const shouldShowStartWith = workflowsData && workflowsData.totalCount < 5 && !hasActiveFilters;
+  const isProdEnv = currentEnvironment?.name === 'Production';
+
+  const shouldShowStartWithTemplatesSection =
+    workflowsData && workflowsData.totalCount < 5 && !hasActiveFilters && !isProdEnv;
 
   useEffect(() => {
     track(TelemetryEvent.WORKFLOWS_PAGE_VISIT);
@@ -200,7 +206,7 @@ export const WorkflowsPage = () => {
               </ButtonGroupItem>
             </ButtonGroupRoot>
           </div>
-          {shouldShowStartWith && (
+          {shouldShowStartWithTemplatesSection && (
             <div className="px-2.5 py-2">
               <div className="mb-2 flex items-center justify-between">
                 <div className="text-label-xs text-text-soft">Start with</div>
@@ -247,7 +253,9 @@ export const WorkflowsPage = () => {
           )}
 
           <div className="px-2.5 py-2">
-            {shouldShowStartWith && <div className="text-label-xs text-text-soft mb-2">Your Workflows</div>}
+            {shouldShowStartWithTemplatesSection && (
+              <div className="text-label-xs text-text-soft mb-2">Your Workflows</div>
+            )}
             <WorkflowList
               hasActiveFilters={!!hasActiveFilters}
               onClearFilters={clearFilters}
