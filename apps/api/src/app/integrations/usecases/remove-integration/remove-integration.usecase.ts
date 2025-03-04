@@ -26,7 +26,7 @@ export class RemoveIntegration {
       }
 
       if (this.isBuiltInIntegration(existingIntegration)) {
-        throw new BadRequestException('Novu demo integration or in-app integration cannot be deleted');
+        throw new BadRequestException('Novu demo integration or In-App integration cannot be deleted');
       }
 
       await this.invalidateCache.invalidateQuery({
