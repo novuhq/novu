@@ -32,7 +32,6 @@ describe('CORS Configuration', () => {
         process.env.FRONT_BASE_URL = 'https://test.com';
         process.env.LEGACY_STAGING_DASHBOARD_URL = 'https://test-legacy-staging-dashboard.com';
         process.env.WIDGET_BASE_URL = 'https://widget.com';
-        process.env.DOCS_BASE_URL = 'https://docs.com';
       });
 
       afterEach(() => {
@@ -59,7 +58,6 @@ describe('CORS Configuration', () => {
         expect(callbackSpy.firstCall.lastArg.origin[0]).to.equal(process.env.FRONT_BASE_URL);
         expect(callbackSpy.firstCall.lastArg.origin[1]).to.equal(process.env.LEGACY_STAGING_DASHBOARD_URL);
         expect(callbackSpy.firstCall.lastArg.origin[2]).to.equal(process.env.WIDGET_BASE_URL);
-        expect(callbackSpy.firstCall.lastArg.origin[3]).to.equal(process.env.DOCS_BASE_URL);
 
         if (environment === 'dev') {
           expect(callbackSpy.firstCall.lastArg.origin[3]).to.equal('https://test.novu.com');
