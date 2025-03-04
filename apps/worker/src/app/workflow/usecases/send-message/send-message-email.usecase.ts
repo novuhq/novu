@@ -41,6 +41,7 @@ import { EmailOutput } from '@novu/framework/internal';
 import { SendMessageCommand } from './send-message.command';
 import { SendMessageBase } from './send-message.base';
 import { PlatformException } from '../../../shared/utils';
+import { SendMessageResult } from './send-message-type.usecase';
 
 const LOG_CONTEXT = 'SendMessageEmail';
 
@@ -73,7 +74,7 @@ export class SendMessageEmail extends SendMessageBase {
   }
 
   @InstrumentUsecase()
-  public async execute(command: SendMessageCommand) {
+  public async execute(command: SendMessageCommand): Promise<SendMessageResult> {
     let integration: IntegrationEntity | undefined;
 
     const overrideSelectedIntegration = command.overrides?.email?.integrationIdentifier;
@@ -101,7 +102,10 @@ export class SendMessageEmail extends SendMessageBase {
         })
       );
 
-      return;
+      return {
+        status: 'failed',
+        reason: DetailEnum.LIMIT_PASSED_NOVU_INTEGRATION,
+      };
     }
 
     const { step } = command;
@@ -135,7 +139,10 @@ export class SendMessageEmail extends SendMessageBase {
         })
       );
 
-      return;
+      return {
+        status: 'failed',
+        reason: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
+      };
     }
 
     const [template, overrideLayoutId] = await Promise.all([
@@ -262,7 +269,10 @@ export class SendMessageEmail extends SendMessageBase {
       );
       await this.sendErrorHandlebars(command.job, error.message);
 
-      return;
+      return {
+        status: 'failed',
+        reason: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
+      };
     }
 
     await this.createExecutionDetails.execute(
@@ -315,12 +325,15 @@ export class SendMessageEmail extends SendMessageBase {
       mailData.payloadDetails = payload;
     }
 
-    if (email && integration) {
-      await this.sendMessage(integration, mailData, message, command);
-
-      return;
+    if (!email || !integration) {
+      return await this.sendErrors(email, integration, message, command);
     }
-    await this.sendErrors(email, integration, message, command);
+
+    await this.sendMessage(integration, mailData, message, command);
+
+    return {
+      status: 'success',
+    };
   }
 
   private async getReplyTo(command: SendMessageCommand, messageId: string): Promise<string | null> {
@@ -372,7 +385,12 @@ export class SendMessageEmail extends SendMessageBase {
     }
   }
 
-  private async sendErrors(email, integration, message: MessageEntity, command: SendMessageCommand) {
+  private async sendErrors(
+    email,
+    integration,
+    message: MessageEntity,
+    command: SendMessageCommand
+  ): Promise<SendMessageResult> {
     const errorMessage = 'Subscriber does not have an';
     const status = 'warning';
     const errorId = 'mail_unexpected_error';
@@ -394,7 +412,10 @@ export class SendMessageEmail extends SendMessageBase {
         })
       );
 
-      return;
+      return {
+        status: 'failed',
+        reason: DetailEnum.SUBSCRIBER_NO_CHANNEL_DETAILS,
+      };
     }
 
     if (!integration) {
@@ -413,7 +434,17 @@ export class SendMessageEmail extends SendMessageBase {
           isRetry: false,
         })
       );
+
+      return {
+        status: 'failed',
+        reason: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
+      };
     }
+
+    return {
+      status: 'failed',
+      reason: DetailEnum.PROVIDER_ERROR,
+    };
   }
 
   private async sendMessage(
@@ -421,7 +452,7 @@ export class SendMessageEmail extends SendMessageBase {
     mailData: IEmailOptions,
     message: MessageEntity,
     command: SendMessageCommand
-  ) {
+  ): Promise<SendMessageResult> {
     const mailFactory = new MailFactory();
     const mailHandler = mailFactory.getHandler(this.buildFactoryIntegration(integration), mailData.from);
     const bridgeProviderData = command.bridgeData?.providers?.[integration.providerId] || {};
@@ -447,7 +478,10 @@ export class SendMessageEmail extends SendMessageBase {
       Logger.verbose({ command }, 'Execution details of sending an email message have been stored', LOG_CONTEXT);
 
       if (!result?.id) {
-        return;
+        return {
+          status: 'failed',
+          reason: DetailEnum.PROVIDER_ERROR,
+        };
       }
 
       await this.messageRepository.update(
@@ -458,6 +492,10 @@ export class SendMessageEmail extends SendMessageBase {
           },
         }
       );
+
+      return {
+        status: 'success',
+      };
     } catch (error) {
       await this.sendErrorStatus(
         message,
@@ -489,6 +527,11 @@ export class SendMessageEmail extends SendMessageBase {
           raw: JSON.stringify(error) === '{}' ? JSON.stringify({ message: error.message }) : JSON.stringify(error),
         })
       );
+
+      return {
+        status: 'failed',
+        reason: DetailEnum.PROVIDER_ERROR,
+      };
     }
   }
 

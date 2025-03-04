@@ -12,8 +12,6 @@ import {
 } from '@novu/shared';
 import {
   AnalyticsService,
-  buildSubscriberKey,
-  CachedEntity,
   ConditionsFilter,
   ConditionsFilterCommand,
   DetailEnum,
@@ -24,10 +22,13 @@ import {
   GetSubscriberTemplatePreferenceCommand,
   IConditionsFilterResponse,
   IFilterVariables,
-  Instrument,
   InstrumentUsecase,
   NormalizeVariables,
   NormalizeVariablesCommand,
+  PlatformException,
+  CachedEntity,
+  buildSubscriberKey,
+  Instrument,
 } from '@novu/application-generic';
 import {
   JobEntity,
@@ -48,9 +49,9 @@ import { SendMessageInApp } from './send-message-in-app.usecase';
 import { SendMessageChat } from './send-message-chat.usecase';
 import { SendMessagePush } from './send-message-push.usecase';
 import { Digest } from './digest';
-import { PlatformException } from '../../../shared/utils';
 import { ExecuteStepCustom } from './execute-step-custom.usecase';
 import { ExecuteBridgeJob } from '../execute-bridge-job';
+import { SendMessageResult } from './send-message-type.usecase';
 
 @Injectable()
 export class SendMessage {
@@ -76,7 +77,7 @@ export class SendMessage {
   ) {}
 
   @InstrumentUsecase()
-  public async execute(command: SendMessageCommand): Promise<{ status: 'success' | 'canceled' }> {
+  public async execute(command: SendMessageCommand): Promise<SendMessageResult> {
     const payload = await this.buildCompileContext(command);
 
     const variables = await this.normalizeVariablesUsecase.execute(
@@ -156,44 +157,37 @@ export class SendMessage {
     });
 
     switch (stepType) {
+      case StepTypeEnum.TRIGGER: {
+        return { status: 'success' };
+      }
       case StepTypeEnum.SMS: {
-        await this.sendMessageSms.execute(sendMessageCommand);
-        break;
+        return await this.sendMessageSms.execute(sendMessageCommand);
       }
       case StepTypeEnum.IN_APP: {
-        await this.sendMessageInApp.execute(sendMessageCommand);
-        break;
+        return await this.sendMessageInApp.execute(sendMessageCommand);
       }
       case StepTypeEnum.EMAIL: {
-        await this.sendMessageEmail.execute(sendMessageCommand);
-        break;
+        return await this.sendMessageEmail.execute(sendMessageCommand);
       }
       case StepTypeEnum.CHAT: {
-        await this.sendMessageChat.execute(sendMessageCommand);
-        break;
+        return await this.sendMessageChat.execute(sendMessageCommand);
       }
       case StepTypeEnum.PUSH: {
-        await this.sendMessagePush.execute(sendMessageCommand);
-        break;
+        return await this.sendMessagePush.execute(sendMessageCommand);
       }
       case StepTypeEnum.DIGEST: {
-        await this.digest.execute(command);
-        break;
+        return await this.digest.execute(command);
       }
       case StepTypeEnum.DELAY: {
-        await this.sendMessageDelay.execute(command);
-        break;
+        return await this.sendMessageDelay.execute(command);
       }
       case StepTypeEnum.CUSTOM: {
-        await this.executeStepCustom.execute(sendMessageCommand);
-        break;
+        return await this.executeStepCustom.execute(sendMessageCommand);
       }
       default: {
-        break;
+        throw new Error(`Unsupported step type: ${stepType}`);
       }
     }
-
-    return { status: 'success' };
   }
 
   private async evaluateFilters(

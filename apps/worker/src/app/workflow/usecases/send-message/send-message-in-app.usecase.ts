@@ -31,6 +31,7 @@ import { InAppOutput } from '@novu/framework/internal';
 import { SendMessageCommand } from './send-message.command';
 import { SendMessageBase } from './send-message.base';
 import { PlatformException } from '../../../shared/utils';
+import { SendMessageResult } from './send-message-type.usecase';
 
 @Injectable()
 export class SendMessageInApp extends SendMessageBase {
@@ -60,7 +61,7 @@ export class SendMessageInApp extends SendMessageBase {
   }
 
   @InstrumentUsecase()
-  public async execute(command: SendMessageCommand) {
+  public async execute(command: SendMessageCommand): Promise<SendMessageResult> {
     if (!command.step.template) throw new PlatformException('Template not found');
 
     addBreadcrumb({
@@ -89,7 +90,10 @@ export class SendMessageInApp extends SendMessageBase {
         })
       );
 
-      return;
+      return {
+        status: 'failed',
+        reason: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
+      };
     }
 
     const { step } = command;
@@ -138,7 +142,10 @@ export class SendMessageInApp extends SendMessageBase {
     } catch (e) {
       await this.sendErrorHandlebars(command.job, e.message);
 
-      return;
+      return {
+        status: 'failed',
+        reason: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
+      };
     }
 
     const messagePayload = { ...command.payload };
@@ -291,5 +298,9 @@ export class SendMessageInApp extends SendMessageBase {
         isRetry: false,
       })
     );
+
+    return {
+      status: 'success',
+    };
   }
 }

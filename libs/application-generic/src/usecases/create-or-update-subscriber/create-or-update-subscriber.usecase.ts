@@ -182,6 +182,6 @@ export class CreateOrUpdateSubscriberUseCase {
     subscriberId: string;
     _environmentId: string;
   }): Promise<SubscriberEntity | null> {
-    return await this.subscriberRepository.findBySubscriberId(_environmentId, subscriberId, true);
+    return await this.subscriberRepository.findBySubscriberId(_environmentId, subscriberId, false);
   }
 }
