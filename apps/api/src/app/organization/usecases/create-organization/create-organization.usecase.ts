@@ -1,10 +1,8 @@
-/* eslint-disable global-require */
-import { BadRequestException, Injectable, Logger, Scope } from '@nestjs/common';
+import { Injectable, Scope } from '@nestjs/common';
 import { AnalyticsService } from '@novu/application-generic';
 import { OrganizationEntity, OrganizationRepository, UserRepository } from '@novu/dal';
 import { ApiServiceLevelEnum, EnvironmentEnum, JobTitleEnum, MemberRoleEnum } from '@novu/shared';
 
-import { ModuleRef } from '@nestjs/core';
 import { CreateEnvironmentCommand } from '../../../environments-v1/usecases/create-environment/create-environment.command';
 import { CreateEnvironment } from '../../../environments-v1/usecases/create-environment/create-environment.usecase';
 import { GetOrganizationCommand } from '../get-organization/get-organization.command';
@@ -25,8 +23,7 @@ export class CreateOrganization {
     private readonly getOrganizationUsecase: GetOrganization,
     private readonly userRepository: UserRepository,
     private readonly createEnvironmentUsecase: CreateEnvironment,
-    private analyticsService: AnalyticsService,
-    private moduleRef: ModuleRef
+    private analyticsService: AnalyticsService
   ) {}
 
   async execute(command: CreateOrganizationCommand): Promise<OrganizationEntity> {
@@ -87,10 +84,6 @@ export class CreateOrganization {
       })
     );
 
-    if (organizationAfterChanges !== null) {
-      await this.startFreeTrial(user.email, organizationAfterChanges._id);
-    }
-
     return organizationAfterChanges as OrganizationEntity;
   }
 
@@ -107,26 +100,5 @@ export class CreateOrganization {
     );
 
     this.analyticsService.setValue(user._id, 'jobTitle', jobTitle);
-  }
-
-  private async startFreeTrial(billingEmail: string, organizationId: string) {
-    try {
-      if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
-        if (!require('@novu/ee-billing')?.StartReverseFreeTrial) {
-          throw new BadRequestException('Billing module is not loaded');
-        }
-
-        const usecase = this.moduleRef.get(require('@novu/ee-billing')?.StartReverseFreeTrial, {
-          strict: false,
-        });
-
-        await usecase.execute({
-          organizationId,
-          billingEmail,
-        });
-      }
-    } catch (e) {
-      Logger.error(e, `Unexpected error while importing enterprise modules`, 'StartReverseFreeTrial');
-    }
   }
 }

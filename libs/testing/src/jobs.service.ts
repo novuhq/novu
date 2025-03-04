@@ -12,6 +12,29 @@ const promote = async (job) => {
   }
 };
 
+const finalizedStatuses = [
+  JobStatusEnum.COMPLETED,
+  JobStatusEnum.SKIPPED,
+  JobStatusEnum.FAILED,
+  JobStatusEnum.CANCELED,
+  JobStatusEnum.MERGED,
+];
+const immediateJobStatuses = [JobStatusEnum.QUEUED, JobStatusEnum.RUNNING];
+
+type QueueJobCountsResult = {
+  active: number;
+  waiting: number;
+  delayed: number;
+  completed: number;
+  failed?: number;
+  'active-waiting': number;
+  [key: string]: number | undefined;
+};
+
+function sumActiveAndWaitingJobs(queueState: QueueJobCountsResult) {
+  return queueState.active + queueState.waiting;
+}
+
 export class JobsService {
   private jobRepository = new JobRepository();
 
@@ -49,6 +72,23 @@ export class JobsService {
     }
   }
 
+  public async promoteDelayedJobs() {
+    const jobsResult = await Promise.all([
+      this.standardQueue.getDelayed(),
+      this.workflowQueue.getDelayed(),
+      this.subscriberProcessQueue.getDelayed(),
+    ]);
+    const jobs = jobsResult.flat();
+
+    if (jobs.length === 0) {
+      return false;
+    }
+
+    await Promise.all(jobs.map(promote));
+
+    return true;
+  }
+
   public async waitForJobCompletion({
     templateId,
     organizationId,
@@ -60,7 +100,7 @@ export class JobsService {
     delay?: boolean;
     unfinishedJobs?: number;
   }) {
-    let runningJobs = 0;
+    let runningJobsInStorage = 0;
     const safeUnfinishedJobs = Math.max(unfinishedJobs, 0);
 
     const workflowMatch = templateId ? { _templateId: { $in: [templateId].flat() } } : {};
@@ -76,9 +116,10 @@ export class JobsService {
 
     do {
       // Wait until Bull queues are empty
-      totalCount = (await this.getQueueMetric()).totalCount;
+      totalCount = (await this.getQueueCount()).totalCount;
+
       // Wait until there are no pending, queued or running jobs in Mongo
-      runningJobs = Math.max(
+      runningJobsInStorage = Math.max(
         await this.jobRepository.count({
           ...((organizationId ? { _organizationId: organizationId } : {}) as { _organizationId: string }),
           ...typeMatch,
@@ -89,7 +130,7 @@ export class JobsService {
         }),
         0
       );
-    } while (totalCount > 0 || runningJobs > safeUnfinishedJobs);
+    } while (totalCount > 0 || runningJobsInStorage > safeUnfinishedJobs);
   }
 
   public async runAllDelayedJobsImmediately() {
@@ -101,23 +142,23 @@ export class JobsService {
     let hasMoreDelayedJobs = true;
     let iterationCount = 0;
     const MAX_ITERATIONS = 20;
-    await this.waitForJobCompletion({});
+
+    await this.promoteDelayedJobs();
+
+    // todo check of waitForStorageImmediateJobCompletion is needed as it should be equivalent to waitForQueueImmediateJobCompletion
+    await this.waitForQueueImmediateJobCompletion();
+    await this.waitForStorageImmediateJobCompletion();
 
     while (hasMoreDelayedJobs && iterationCount < MAX_ITERATIONS) {
-      const jobsResult = await Promise.all([
-        this.standardQueue.getDelayed(),
-        this.workflowQueue.getDelayed(),
-        this.subscriberProcessQueue.getDelayed(),
-      ]);
-      const jobs = jobsResult.flat();
+      hasMoreDelayedJobs = await this.promoteDelayedJobs();
 
-      if (jobs.length === 0) {
-        hasMoreDelayedJobs = false;
+      if (!hasMoreDelayedJobs) {
         continue;
       }
 
-      await Promise.all(jobs.map(promote));
-      await this.waitForJobCompletion({});
+      // todo check of waitForStorageImmediateJobCompletion is needed as it should be equivalent to waitForQueueImmediateJobCompletion
+      await this.waitForQueueImmediateJobCompletion();
+      await this.waitForStorageImmediateJobCompletion();
       iterationCount += 1;
     }
 
@@ -129,7 +170,7 @@ export class JobsService {
     }
   }
 
-  private async getQueueMetric() {
+  private async getQueueCount() {
     const [
       parsedEvents,
       waitingCount,
@@ -165,5 +206,57 @@ export class JobsService {
       subscriberProcessQueueWaitingCount,
       subscriberProcessQueueActiveCount,
     };
+  }
+
+  public async getQueueMetric() {
+    const [workflowQueueState, standardQueueState, subscriberProcessQueueState] = await Promise.all([
+      this.workflowQueue.getJobCounts(),
+      this.standardQueue.getJobCounts(),
+      this.subscriberProcessQueue.getJobCounts(),
+    ]);
+
+    const workflowImmediateCount = sumActiveAndWaitingJobs(workflowQueueState as QueueJobCountsResult);
+    const standardImmediateCount = sumActiveAndWaitingJobs(standardQueueState as QueueJobCountsResult);
+    const subscriberProcessImmediateCount = sumActiveAndWaitingJobs(
+      subscriberProcessQueueState as QueueJobCountsResult
+    );
+    const totalImmediateCount = workflowImmediateCount + standardImmediateCount + subscriberProcessImmediateCount;
+
+    const workflowQueueCount = Object.values(workflowQueueState).reduce((a, b) => a + b, 0);
+    const standardQueueCount = Object.values(standardQueueState).reduce((a, b) => a + b, 0);
+    const subscriberProcessQueueCount = Object.values(subscriberProcessQueueState).reduce((a, b) => a + b, 0);
+
+    const totalCount = workflowQueueCount + standardQueueCount + subscriberProcessQueueCount;
+
+    return {
+      totalCount,
+      totalImmediateCount,
+      workflowQueueCount,
+      standardQueueCount,
+      subscriberProcessQueueCount,
+      workflowQueueState,
+      standardQueueState,
+      subscriberProcessQueueState,
+    };
+  }
+
+  /**
+   * Wait until there are no queued or running jobs in Mongo
+   * Will not wait for delayed or pending jobs
+   */
+  public async waitForStorageImmediateJobCompletion() {
+    let totalCount = 0;
+
+    do {
+      totalCount = await this.jobRepository.count({ status: { $in: immediateJobStatuses } } as any);
+    } while (totalCount > 0);
+  }
+
+  public async waitForQueueImmediateJobCompletion() {
+    let totalCount = 0;
+
+    do {
+      totalCount = (await this.getQueueMetric()).totalImmediateCount;
+    } while (totalCount > 0);
   }
 }

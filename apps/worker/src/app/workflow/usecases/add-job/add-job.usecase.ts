@@ -167,12 +167,21 @@ export class AddJob {
 
     const delay = this.getExecutionDelayAmount(filtered, digestAmount, delayAmount);
 
-    await this.validateDeferDuration(delay, job, command, digestResult?.cronExpression);
+    const valid = await this.validateDeferDuration(delay, job, command, digestResult?.cronExpression);
+
+    if (!valid) {
+      throw new Error('Defer duration limit exceeded');
+    }
 
     await this.queueJob(job, delay);
   }
 
-  private async validateDeferDuration(delay: number, job: JobEntity, command: AddJobCommand, cronExpression?: string) {
+  private async validateDeferDuration(
+    delay: number,
+    job: JobEntity,
+    command: AddJobCommand,
+    cronExpression?: string
+  ): Promise<boolean> {
     const errors = await this.tierRestrictionsValidateUsecase.execute(
       TierRestrictionsValidateCommand.create({
         deferDurationMs: delay,
@@ -197,7 +206,11 @@ export class AddJob {
           raw: JSON.stringify({ errors: uniqueErrors }),
         })
       );
+
+      return false;
     }
+
+    return true;
   }
 
   private async executeNoneDeferredJob(command: AddJobCommand): Promise<void> {

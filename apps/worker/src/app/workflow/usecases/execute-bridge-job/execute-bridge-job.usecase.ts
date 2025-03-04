@@ -211,8 +211,10 @@ export class ExecuteBridgeJob {
       event,
       action: PostActionEnum.EXECUTE,
       searchParams,
+      workflowOrigin,
+      environmentId,
       processError: async (response) => {
-        const executionDetailsCommand: CreateExecutionDetailsCommand = {
+        await this.createExecutionDetails.execute({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
           detail: DetailEnum.FAILED_BRIDGE_EXECUTION,
           source: ExecutionDetailsSourceEnum.INTERNAL,
@@ -227,12 +229,8 @@ export class ExecuteBridgeJob {
             data: response.data,
             cause: response.cause,
           }),
-        };
-
-        await this.createExecutionDetails.execute(executionDetailsCommand);
+        });
       },
-      workflowOrigin,
-      environmentId,
     }) as Promise<ExecuteOutput>;
   }
 
