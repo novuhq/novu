@@ -418,8 +418,12 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
     let startIndex = 0;
     let endIndex = limit;
     if (reverseResults) {
-      rawResults.reverse(); // Reverse the order to maintain consistency
+      rawResults.reverse();
 
+      /**
+       * If we have an extra item, we need to adjust the start and end index
+       * as it is reversed, the first item is actually the extra item
+       */
       if (hasExtraItem) {
         startIndex = 1;
         endIndex = limit + 1;
