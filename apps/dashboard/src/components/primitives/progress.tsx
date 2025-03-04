@@ -1,5 +1,5 @@
-import * as React from 'react';
 import * as ProgressPrimitive from '@radix-ui/react-progress';
+import * as React from 'react';
 
 import { cn } from '@/utils/ui';
 import { cva, VariantProps } from 'class-variance-authority';
@@ -9,6 +9,8 @@ const indicatorVariants = cva(`h-full w-full flex-1 transition-all`, {
     variant: {
       default: 'bg-neutral-800',
       novu: 'bg-information',
+      warning: 'bg-warning',
+      error: 'bg-error-base',
     },
   },
   defaultVariants: {
@@ -39,6 +41,7 @@ const Progress = React.forwardRef<React.ElementRef<typeof ProgressPrimitive.Root
     );
   }
 );
+
 Progress.displayName = ProgressPrimitive.Root.displayName;
 
 export { Progress };
