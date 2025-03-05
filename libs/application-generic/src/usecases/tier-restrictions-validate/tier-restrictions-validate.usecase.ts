@@ -20,7 +20,7 @@ import {
 } from './tier-restrictions-validate.response';
 import { InstrumentUsecase } from '../../instrumentation';
 import { FeatureFlagsService } from '../../services';
-import { SYSTEM_LIMITS, VALIDATION_THRESHOLDS } from '../../services/resource-validator.service';
+import { SYSTEM_LIMITS, MIN_VALIDATION_LIMITS } from '../../services/resource-validator.service';
 
 @Injectable()
 export class TierRestrictionsValidateUsecase {
@@ -63,7 +63,7 @@ export class TierRestrictionsValidateUsecase {
     if (isRegularDeferAction(command)) {
       const deferDurationMs = calculateDeferDuration(command);
 
-      if (deferDurationMs < VALIDATION_THRESHOLDS.DEFFER_DURATION) {
+      if (deferDurationMs < MIN_VALIDATION_LIMITS.DEFFER_DURATION) {
         return [];
       }
 

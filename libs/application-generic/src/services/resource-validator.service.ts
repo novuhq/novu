@@ -21,7 +21,7 @@ export const SYSTEM_LIMITS = {
 } as const;
 
 /* The threshold below which validation is skipped */
-export const VALIDATION_THRESHOLDS = {
+export const MIN_VALIDATION_LIMITS = {
   WORKFLOWS: 20,
   STEPS_PER_WORKFLOW: 20,
   DEFFER_DURATION: DAY_IN_MS,
@@ -37,7 +37,7 @@ export class ResourceValidatorService {
   ) {}
 
   async validateStepsLimit(environmentId: string, organizationId: string, steps: NotificationStep[]): Promise<void> {
-    if (steps.length < VALIDATION_THRESHOLDS.STEPS_PER_WORKFLOW) {
+    if (steps.length < MIN_VALIDATION_LIMITS.STEPS_PER_WORKFLOW) {
       return;
     }
 
@@ -64,7 +64,7 @@ export class ResourceValidatorService {
       _environmentId: environmentId,
     });
 
-    if (workflowsCount < VALIDATION_THRESHOLDS.WORKFLOWS) {
+    if (workflowsCount < MIN_VALIDATION_LIMITS.WORKFLOWS) {
       return;
     }
 
