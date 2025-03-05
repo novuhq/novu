@@ -1,17 +1,10 @@
 import { createHash } from './crypto';
-import {
-  BLUEPRINT_IDENTIFIER,
-  CacheKeyPrefixEnum,
-  CacheKeyTypeEnum,
-  IdentifierPrefixEnum,
-  ServiceConfigIdentifierEnum,
-} from './identifiers';
+import { BLUEPRINT_IDENTIFIER, CacheKeyPrefixEnum, CacheKeyTypeEnum, IdentifierPrefixEnum } from './identifiers';
 import {
   buildEnvironmentScopedKey,
   buildEnvironmentScopedKeyById,
   buildOrganizationScopedKey,
   buildOrganizationScopedKeyById,
-  buildServiceConfigKey,
 } from './builder.scoped';
 import { buildUnscopedKey } from './builder.base';
 
@@ -118,21 +111,18 @@ export const buildEvaluateApiRateLimitKey = ({
 export const buildUsageKey = ({
   _organizationId,
   resourceType,
-  periodStart,
-  periodEnd,
 }: {
   _organizationId: string;
   resourceType: string;
-  periodStart: number;
-  periodEnd: number;
-}): string =>
-  buildOrganizationScopedKeyById({
+}): string => {
+  return buildOrganizationScopedKeyById({
     type: CacheKeyTypeEnum.ENTITY,
     keyEntity: CacheKeyPrefixEnum.USAGE,
     identifierPrefix: IdentifierPrefixEnum.RESOURCE_TYPE,
-    identifier: `${resourceType}_${periodStart}_${periodEnd}`,
+    identifier: `${resourceType}`,
     organizationId: _organizationId,
   });
+};
 
 export const buildSubscriptionKey = ({ organizationId }: { organizationId: string }): string =>
   buildOrganizationScopedKey({

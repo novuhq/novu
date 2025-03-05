@@ -44,7 +44,7 @@ describe('Resource Limiting #novu-v2', () => {
     describe('Event resource blocking', () => {
       describe('Event Quota FF is enabled', () => {
         beforeEach(() => {
-          process.env.IS_EVENT_QUOTA_LIMITING_ENABLED = 'true';
+          process.env.IS_EVENT_QUOTA_THROTTLER_ENABLED = 'true';
         });
 
         it('should block the request', async () => {
@@ -61,7 +61,7 @@ describe('Resource Limiting #novu-v2', () => {
 
       describe('Event Quota FF is disabled', () => {
         beforeEach(() => {
-          process.env.IS_EVENT_QUOTA_LIMITING_ENABLED = 'false';
+          process.env.IS_EVENT_QUOTA_THROTTLER_ENABLED = 'false';
         });
 
         describe('Base Quota FF is enabled', () => {
@@ -88,7 +88,6 @@ describe('Resource Limiting #novu-v2', () => {
               start: 1609459200000,
               reset: 1612137600000,
               apiServiceLevel: ApiServiceLevelEnum.FREE,
-              locked: true,
             });
             const response = await request(pathEvent);
 
@@ -103,7 +102,6 @@ describe('Resource Limiting #novu-v2', () => {
               start: 1609459200000,
               reset: 1612137600000,
               apiServiceLevel: ApiServiceLevelEnum.FREE,
-              locked: true,
             });
             const response = await request(pathEvent);
 
@@ -118,7 +116,6 @@ describe('Resource Limiting #novu-v2', () => {
               start: 1609459200000,
               reset: 1612137600000,
               apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
-              locked: true,
             });
             const response = await request(pathEvent);
 
@@ -148,7 +145,6 @@ describe('Resource Limiting #novu-v2', () => {
               start: 1609459200000,
               reset: 1612137600000,
               apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
-              locked: true,
             });
             const response = await request(pathEvent);
 
@@ -195,14 +191,14 @@ describe('Resource Limiting #novu-v2', () => {
 
     describe('Default resources (no decorator)', () => {
       it('should handle the request when the FF is enabled', async () => {
-        process.env.IS_EVENT_QUOTA_LIMITING_ENABLED = 'true';
+        process.env.IS_EVENT_QUOTA_THROTTLER_ENABLED = 'true';
         const response = await request(pathDefault);
 
         expect(response.status).to.equal(200);
       });
 
       it('should handle the request when the FF is disabled', async () => {
-        process.env.IS_EVENT_QUOTA_LIMITING_ENABLED = 'false';
+        process.env.IS_EVENT_QUOTA_THROTTLER_ENABLED = 'false';
         const response = await request(pathDefault);
 
         expect(response.status).to.equal(200);

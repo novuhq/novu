@@ -108,6 +108,7 @@ describe('CreateUsageRecords #novu-v2', () => {
     expect(getPlatformNotificationUsageStub.lastCall.args).to.deep.equal([
       {
         startDate: expectedStartDate,
+        skipCache: true,
         endDate: expectedEndDate,
       },
     ]);

@@ -7,11 +7,9 @@ export { INovuWorker, ReadinessService } from './readiness';
 export { AnalyticsService } from './analytics.service';
 export { SupportService } from './support.service';
 export { VerifyPayloadService } from './verify-payload.service';
-export { EventsDistributedLockService } from './events-distributed-lock.service';
 export * from './calculate-delay';
 export * from './storage';
 export * from './metrics';
-export * from './distributed-lock';
 export {
   BullMqConnectionOptions,
   BullMqService,

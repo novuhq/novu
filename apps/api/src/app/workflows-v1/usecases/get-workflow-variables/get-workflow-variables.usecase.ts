@@ -2,7 +2,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { SystemVariablesWithTypes } from '@novu/shared';
-import { buildVariablesKey, CachedEntity } from '@novu/application-generic';
+import { buildVariablesKey, CachedResponse } from '@novu/application-generic';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { GetWorkflowVariablesCommand } from './get-workflow-variables.command';
 
@@ -22,7 +22,7 @@ export class GetWorkflowVariables {
     });
   }
 
-  @CachedEntity({
+  @CachedResponse({
     builder: (command: { _environmentId: string; _organizationId: string }) =>
       buildVariablesKey({
         _environmentId: command._environmentId,
