@@ -1,10 +1,5 @@
 import { Injectable, Logger, UnprocessableEntityException } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import { addBreadcrumb } from '@sentry/node';
-import { randomBytes } from 'crypto';
-import { merge } from 'lodash';
-import { v4 as uuidv4 } from 'uuid';
-
 import {
   ExecuteBridgeRequest,
   ExecuteBridgeRequestCommand,
@@ -36,13 +31,15 @@ import {
   SUBSCRIBER_ID_REGEX,
   TriggerContextTypeEnum,
   TriggerEventStatusEnum,
-  TriggerRecipient,
-  TriggerRecipients,
   TriggerRecipientsPayload,
   WorkflowOriginEnum,
 } from '@novu/shared';
-
+import { addBreadcrumb } from '@sentry/node';
+import { randomBytes } from 'crypto';
+import { merge } from 'lodash';
+import { v4 as uuidv4 } from 'uuid';
 import { ApiException } from '../../../shared/exceptions/api.exception';
+import { RecipientSchema, RecipientsSchema } from '../../utils/trigger-recipient-validation';
 import { VerifyPayload, VerifyPayloadCommand } from '../verify-payload';
 import {
   ParseEventRequestBroadcastCommand,
@@ -200,7 +197,7 @@ export class ParseEventRequest {
 
   private async dispatchEventToWorkflowQueue(
     command: ParseEventRequestMulticastCommand | ParseEventRequestBroadcastCommand,
-    transactionId,
+    transactionId: string,
     discoveredWorkflow?: DiscoverWorkflowOutput | null
   ) {
     const commandArgs = {
@@ -212,15 +209,15 @@ export class ParseEventRequest {
       organization: { _id: command.organizationId } as OrganizationEntity,
       user: { _id: command.userId } as UserEntity,
       key: FeatureFlagsKeysEnum.IS_SUBSCRIBER_ID_VALIDATION_DRY_RUN_ENABLED,
-      defaultValue: false,
+      defaultValue: true,
     });
 
     if ('to' in commandArgs) {
-      const { validSubscribers, inValidSubscribers } = this.separateRecipients(commandArgs.to);
+      const { validSubscribers, invalidSubscribers } = this.parseRecipients(commandArgs.to);
 
-      if (inValidSubscribers.length > 0 && isDryRun) {
+      if (invalidSubscribers.length > 0 && isDryRun) {
         Logger.warn(
-          `[Dry run] Invalid recipients: ${inValidSubscribers.map((recipient) => JSON.stringify(recipient)).join(', ')}`,
+          `[Dry run] Invalid recipients: ${invalidSubscribers.map((recipient) => JSON.stringify(recipient)).join(', ')}`,
           'ParseEventRequest'
         );
       }
@@ -234,7 +231,7 @@ export class ParseEventRequest {
       }
 
       if (!isDryRun && validSubscribers) {
-        commandArgs.to = validSubscribers;
+        commandArgs.to = validSubscribers as TriggerRecipientsPayload;
       }
     }
 
@@ -334,108 +331,57 @@ export class ParseEventRequest {
     return reservedVariables?.map((reservedVariable) => reservedVariable.type) || [];
   }
 
-  private isValidSubscriberId(subscriberId: string) {
-    return Boolean(subscriberId?.trim().match(SUBSCRIBER_ID_REGEX));
+  /**
+   * Validates a single Parent item.
+   * @param item - The item to validate
+   * @param invalidValues - Array to collect invalid values
+   * @returns The valid item or null if invalid
+   */
+  private validateItem(item: unknown, invalidValues: unknown[]) {
+    const result = RecipientSchema.safeParse(item);
+    if (result.success) {
+      return result.data;
+    } else {
+      invalidValues.push(item);
+
+      return null;
+    }
   }
 
   /**
-   * Separates valid and invalid recipients from the given payload.
+   * Parses and validates the recipients from the given input.
    *
-   * @param payload - The payload containing recipients to be validated.
-   * @returns An object containing valid subscribers and invalid subscribers.
-   * - `validSubscribers`: An array of valid recipients or null if none are valid.
-   * - `inValidSubscribers`: An array of invalid recipients.
+   * The input can be a single recipient or an array of recipients. Each recipient can be:
+   * - A string that matches the `SUBSCRIBER_ID_REGEX`
+   * - An object with a `subscriberId` property that matches the `SUBSCRIBER_ID_REGEX`
+   * - An object with a `topicKey` property that matches the `SUBSCRIBER_ID_REGEX`
+   *
+   * If the input is valid, it returns the parsed data. If the input is an array, it returns an object
+   * containing arrays of valid and invalid values. If the input is a single item, it returns an object
+   * containing the valid item and an array of invalid values.
+   *
+   * @param input - The input to parse and validate. Can be a single recipient or an array of recipients.
+   * @returns The object containing valid and invalid values.
    */
-  private separateRecipients(payload: TriggerRecipientsPayload): {
-    validSubscribers: TriggerRecipientsPayload | null;
-    inValidSubscribers: TriggerRecipientsPayload[];
-  } {
-    if (!payload)
-      return {
-        validSubscribers: null,
-        inValidSubscribers: [],
-      };
+  private parseRecipients(input: unknown) {
+    const invalidValues: unknown[] = [];
 
-    if (!Array.isArray(payload)) {
-      const { invalid, valid } = this.filterValidRecipient(payload);
-
-      return {
-        validSubscribers: valid as TriggerRecipientsPayload,
-        inValidSubscribers: invalid ? ([invalid] as TriggerRecipientsPayload[]) : [],
-      };
+    // Try to validate the whole input first
+    const parsed = RecipientsSchema.safeParse(input);
+    if (parsed.success) {
+      return { validSubscribers: parsed.data, invalidSubscribers: [] };
     }
 
-    const invalidRecipients: TriggerRecipientsPayload[] = [];
-    const recipients: TriggerRecipients = payload
-      .map((subscriber) => {
-        const { invalid, valid } = this.filterValidRecipient(subscriber);
+    // If input is an array, validate each item
+    if (Array.isArray(input)) {
+      const validValues = input.map((item) => this.validateItem(item, invalidValues)).filter(Boolean);
 
-        if (invalid) {
-          invalidRecipients.push(invalid as TriggerRecipientsPayload);
-        }
-
-        return valid;
-      })
-      .filter((recipient) => recipient !== null);
-
-    return { validSubscribers: recipients.length > 0 ? recipients : null, inValidSubscribers: invalidRecipients };
-  }
-
-  /**
-   * Filters a given subscriber and determines if it is valid or invalid.
-   *
-   * @param subscriber - The subscriber to be validated. It can be a string or an object.
-   *
-   * @returns An object containing:
-   * - `valid`: The valid subscriber if the input is valid, otherwise `null`.
-   * - `invalid`: The invalid subscriber if the input is invalid, otherwise `null`.
-   *
-   * The function performs the following checks:
-   * - If the subscriber is a string, it trims the string and checks if it is a valid subscriber ID.
-   * - If the subscriber is an object, it checks if it contains a `topicKey` or a `subscriberId`.
-   * - If it contains a `topicKey`, then we do nothing and return it as it is.
-   * - If it contains a `subscriberId`, it trims the `subscriberId` and checks if it is valid.
-   *
-   * If the subscriber does not meet any of the above conditions, it is considered invalid.
-   */
-  private filterValidRecipient(subscriber: TriggerRecipient): {
-    valid: TriggerRecipient | null;
-    invalid: TriggerRecipient | null;
-  } {
-    if (typeof subscriber === 'string') {
-      const trimmedSubscriber = subscriber.trim();
-
-      return this.isValidSubscriberId(subscriber)
-        ? {
-            valid: trimmedSubscriber,
-            invalid: null,
-          }
-        : {
-            valid: null,
-            invalid: subscriber,
-          };
+      return { validSubscribers: validValues, invalidSubscribers: invalidValues };
     }
 
-    if (typeof subscriber === 'object' && subscriber !== null) {
-      if ('topicKey' in subscriber) {
-        return { valid: subscriber, invalid: null };
-      }
+    // If input is a single item
+    const validItem = this.validateItem(input, invalidValues);
 
-      if ('subscriberId' in subscriber) {
-        const isValidSubscriberId = this.isValidSubscriberId(subscriber.subscriberId);
-
-        return isValidSubscriberId
-          ? { valid: { ...subscriber, subscriberId: subscriber.subscriberId.trim() }, invalid: null }
-          : {
-              valid: null,
-              invalid: subscriber,
-            };
-      }
-    }
-
-    return {
-      valid: null,
-      invalid: subscriber,
-    };
+    return { validSubscribers: validItem, invalidSubscribers: invalidValues };
   }
 }
