@@ -1,4 +1,4 @@
-import { ConflictException, forwardRef, Inject, Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
 import { PinoLogger } from 'nestjs-pino';
 import {
@@ -9,10 +9,10 @@ import {
   EventsDistributedLockService,
   InvalidateCacheService,
 } from '../../services';
-import { OAuthHandlerEnum, UpdateSubscriberChannel, UpdateSubscriberChannelCommand } from '../subscribers';
 import { UpdateSubscriber, UpdateSubscriberCommand } from '../update-subscriber';
-import { CreateOrUpdateSubscriberCommand } from './create-or-update-subscriber.command';
+import { OAuthHandlerEnum, UpdateSubscriberChannel, UpdateSubscriberChannelCommand } from '../subscribers';
 import { RetryOnError } from '../../decorators/retry-on-error-decorator';
+import { CreateOrUpdateSubscriberCommand } from './create-or-update-subscriber.command';
 
 @Injectable()
 export class CreateOrUpdateSubscriberUseCase {
@@ -53,12 +53,10 @@ export class CreateOrUpdateSubscriberUseCase {
   }
 
   private async createOrUpdateSubscriber(command: CreateOrUpdateSubscriberCommand): Promise<SubscriberEntity> {
-    const existingSubscriber = await this.getExistingSubscriber(command);
-    if (existingSubscriber) {
-      if (!command.isUpsert) {
-        throw new ConflictException(`Subscriber: ${command.subscriberId} already exists`);
-      }
-      await this.updateSubscriber(command, existingSubscriber);
+    const persistedSubscriber = await this.getExistingSubscriber(command);
+
+    if (persistedSubscriber) {
+      await this.updateSubscriber(command, persistedSubscriber);
     } else {
       await this.createSubscriber(command);
     }

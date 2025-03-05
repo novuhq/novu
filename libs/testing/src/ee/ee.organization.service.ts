@@ -1,11 +1,10 @@
-import { ApiServiceLevelEnum, MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
-import { CommunityOrganizationRepository, MemberRepository, OrganizationRepository } from '@novu/dal';
+import { ApiServiceLevelEnum } from '@novu/shared';
+import { CommunityOrganizationRepository, OrganizationRepository } from '@novu/dal';
 import { getEERepository } from './ee.repository.factory';
 
 export class EEOrganizationService {
   private organizationRepository = getEERepository<OrganizationRepository>('OrganizationRepository');
   private communityOrganizationRepository = new CommunityOrganizationRepository();
-  private memberRepository = getEERepository<MemberRepository>('MemberRepository');
 
   async createOrganization(orgId: string) {
     //  if internal organization exists delete so we can re-create with same Clerk org id
@@ -24,14 +23,6 @@ export class EEOrganizationService {
      * (!) this is without org creation side-effects
      */
     return this.organizationRepository.create(syncExternalOrg);
-  }
-
-  async addMember(organizationId: string, userId: string) {
-    await this.memberRepository.addMember(organizationId, {
-      _userId: userId,
-      roles: [MemberRoleEnum.ADMIN],
-      memberStatus: MemberStatusEnum.ACTIVE,
-    });
   }
 
   async getOrganization(organizationId: string) {
