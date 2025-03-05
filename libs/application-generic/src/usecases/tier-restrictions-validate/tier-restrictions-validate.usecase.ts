@@ -20,10 +20,7 @@ import {
 } from './tier-restrictions-validate.response';
 import { InstrumentUsecase } from '../../instrumentation';
 import { FeatureFlagsService } from '../../services';
-
-export const MILLISECONDS_IN_DAY = 24 * 60 * 60 * 1000;
-export const FREE_TIER_MAX_DELAY_DAYS = 30;
-export const BUSINESS_TIER_MAX_DELAY_DAYS = 90;
+import { SYSTEM_LIMITS, VALIDATION_THRESHOLDS } from '../../services/resource-validator.service';
 
 @Injectable()
 export class TierRestrictionsValidateUsecase {
@@ -38,20 +35,16 @@ export class TierRestrictionsValidateUsecase {
       return [];
     }
 
+    const stepType = command.stepType as StepTypeEnum.DELAY | StepTypeEnum.DIGEST;
     const organization = await this.organizationRepository.findById(command.organizationId);
+
     if (!organization) {
       throw new Error(`Organization not found: ${command.organizationId}`);
     }
 
-    const isTierDurationRestrictionExcluded = await this.isOrganizationExcludedFromRestriction(command, organization);
-
-    if (isTierDurationRestrictionExcluded) {
-      return [];
-    }
-
-    const maxDelayMs = await this.getMaxDelayInMs(command, organization);
-
     if (isCronExpression(command.cron)) {
+      const maxDelayMs = await this.getMaxDelayInMs(command, organization, stepType);
+
       if (this.isCronDeltaDeferDurationExceededTier(command.cron, maxDelayMs)) {
         return [
           {
@@ -70,6 +63,12 @@ export class TierRestrictionsValidateUsecase {
     if (isRegularDeferAction(command)) {
       const deferDurationMs = calculateDeferDuration(command);
 
+      if (deferDurationMs < VALIDATION_THRESHOLDS.DEFFER_DURATION) {
+        return [];
+      }
+
+      const maxDelayMs = await this.getMaxDelayInMs(command, organization, stepType);
+
       const amountIssue = buildIssue(deferDurationMs, maxDelayMs, ErrorEnum.TIER_LIMIT_EXCEEDED, 'amount');
       const unitIssue = buildIssue(deferDurationMs, maxDelayMs, ErrorEnum.TIER_LIMIT_EXCEEDED, 'unit');
 
@@ -79,24 +78,33 @@ export class TierRestrictionsValidateUsecase {
     return [];
   }
 
-  private async getMaxDelayInMs(command: TierRestrictionsValidateCommand, organization: OrganizationEntity) {
-    return getFeatureForTierAsNumber(
-      FeatureNameEnum.PLATFORM_MAX_DIGEST_WINDOW_TIME,
-      organization.apiServiceLevel || ApiServiceLevelEnum.FREE,
-      true
-    );
-  }
-
-  private async isOrganizationExcludedFromRestriction(
+  private async getMaxDelayInMs(
     command: TierRestrictionsValidateCommand,
-    organization: OrganizationEntity
+    organization: OrganizationEntity,
+    stepType: StepTypeEnum.DELAY | StepTypeEnum.DIGEST
   ) {
-    return await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_TIER_DURATION_RESTRICTION_EXCLUDED_ENABLED,
-      defaultValue: false,
+    const config = getFlagNameByType(stepType);
+
+    const systemLimit = await this.featureFlagsService.getFlag({
+      key: config.system,
+      defaultValue: SYSTEM_LIMITS.DEFFER_DURATION,
       environment: { _id: command.environmentId },
       organization,
     });
+
+    // If the system limit is not the default, we need to use it as the absolute limit for special cases instead of the tier limit
+    const isSpecialLimit = systemLimit !== SYSTEM_LIMITS.DEFFER_DURATION;
+    if (isSpecialLimit) {
+      return systemLimit;
+    }
+
+    const tierLimit = getFeatureForTierAsNumber(
+      config.tier,
+      organization.apiServiceLevel || ApiServiceLevelEnum.FREE,
+      true
+    );
+
+    return Math.min(systemLimit, tierLimit);
   }
 
   private isCronDeltaDeferDurationExceededTier(cron: string, maxDelayMs: number): boolean {
@@ -126,7 +134,6 @@ export class TierRestrictionsValidateUsecase {
     return false;
   }
 }
-
 function calculateDeferDuration(command: TierRestrictionsValidateCommand): number | null {
   if (command.deferDurationMs) {
     return command.deferDurationMs;
@@ -172,7 +179,6 @@ function calculateMilliseconds(amount: number, unit: DigestUnitEnum): number {
 const isCronExpression = (cron: string) => {
   return !!cron;
 };
-
 const isRegularDeferAction = (command: TierRestrictionsValidateCommand) => {
   if (command.deferDurationMs) {
     return true;
@@ -199,6 +205,23 @@ function buildIssue(
 
   return null;
 }
+
+const getFlagNameByType = (stepType: StepTypeEnum.DELAY | StepTypeEnum.DIGEST) => {
+  switch (stepType) {
+    case StepTypeEnum.DIGEST:
+      return {
+        tier: FeatureNameEnum.PLATFORM_MAX_DIGEST_WINDOW_TIME,
+        system: FeatureFlagsKeysEnum.MAX_DEFER_DURATION_MS_NUMBER,
+      };
+    case StepTypeEnum.DELAY:
+      return {
+        tier: FeatureNameEnum.PLATFORM_MAX_DELAY_DURATION,
+        system: FeatureFlagsKeysEnum.MAX_DEFER_DURATION_MS_NUMBER,
+      };
+    default:
+      throw new Error(`Invalid step type: ${stepType}`);
+  }
+};
 
 function msToDays(ms: number): number {
   return Math.floor(ms / (1000 * 60 * 60 * 24));
