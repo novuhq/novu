@@ -70,12 +70,9 @@ export class ResourceValidatorService {
   }
 
   private async getMaxWorkflowsTierLimit(environment, organization) {
-    const q1TieringFlagValue = await this.getQ1TieringFlag(environment, organization);
-
     return getFeatureForTierAsNumber(
       FeatureNameEnum.PLATFORM_MAX_WORKFLOWS,
       organization.apiServiceLevel || ApiServiceLevelEnum.FREE,
-      { [FeatureFlagsKeysEnum.IS_2025_Q1_TIERING_ENABLED]: q1TieringFlagValue },
       false
     );
   }
@@ -84,15 +81,6 @@ export class ResourceValidatorService {
     return await this.featureFlagService.getFlag({
       key: FeatureFlagsKeysEnum.MAX_WORKFLOW_LIMIT_NUMBER,
       defaultValue: MAX_WORKFLOWS_LIMIT,
-      environment,
-      organization,
-    });
-  }
-
-  private async getQ1TieringFlag(environment: EnvironmentEntity, organization: OrganizationEntity): Promise<boolean> {
-    return await this.featureFlagService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_2025_Q1_TIERING_ENABLED,
-      defaultValue: true,
       environment,
       organization,
     });

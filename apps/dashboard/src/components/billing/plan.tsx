@@ -4,7 +4,6 @@ import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import {
   ApiServiceLevelEnum,
   FeatureFlags,
-  FeatureFlagsKeysEnum,
   FeatureNameEnum,
   getFeatureForTierAsBoolean,
   getFeatureForTierAsNumber,
@@ -23,11 +22,11 @@ import { HighlightsRow, PlanHighlights } from './highlights-row';
 import { PlanSwitcher } from './plan-switcher';
 import { PlanConfig, PlansRow } from './plans-row';
 
-function getTierLabel(tierForLabel: ApiServiceLevelEnum, featureFlags: FeatureFlags) {
-  return getFeatureForTierAsText(FeatureNameEnum.PLATFORM_PLAN_LABEL, tierForLabel, featureFlags);
+function getTierLabel(tierForLabel: ApiServiceLevelEnum) {
+  return getFeatureForTierAsText(FeatureNameEnum.PLATFORM_PLAN_LABEL, tierForLabel);
 }
 
-function getPlanCardConfig(featureFlags: FeatureFlags) {
+function getPlanCardConfig() {
   return {
     [ApiServiceLevelEnum.FREE]: buildPlanConfig(
       ApiServiceLevelEnum.FREE,
@@ -38,19 +37,19 @@ function getPlanCardConfig(featureFlags: FeatureFlags) {
     [ApiServiceLevelEnum.PRO]: buildPlanConfig(
       ApiServiceLevelEnum.PRO,
       ActionType.BUTTON,
-      'Everything in ' + getTierLabel(ApiServiceLevelEnum.FREE, featureFlags),
+      'Everything in ' + getTierLabel(ApiServiceLevelEnum.FREE),
       'Remove Novu Branding'
     ),
     [ApiServiceLevelEnum.BUSINESS]: buildPlanConfig(
       ApiServiceLevelEnum.BUSINESS,
       ActionType.BUTTON,
-      `Everything in ${getTierLabel(ApiServiceLevelEnum.PRO, featureFlags)}`,
+      `Everything in ${getTierLabel(ApiServiceLevelEnum.PRO)}`,
       'Priority support'
     ),
     [ApiServiceLevelEnum.ENTERPRISE]: buildPlanConfig(
       ApiServiceLevelEnum.ENTERPRISE,
       ActionType.CONTACT,
-      `Everything in ${getTierLabel(ApiServiceLevelEnum.BUSINESS, featureFlags)}`,
+      `Everything in ${getTierLabel(ApiServiceLevelEnum.BUSINESS)}`,
       'Custom contracts & SLA'
     ),
   };
@@ -63,23 +62,20 @@ export function Plan() {
   const [selectedBillingInterval, setSelectedBillingInterval] = useState<'month' | 'year'>(
     data?.billingInterval || 'month'
   );
-  const { plans, highlights, features } = augmentConfigurationsBasedOnFeatureFlags(
-    {
-      plans: resolvePlanCardConfig(
-        getPlanCardConfig(featureFlags),
-        selectedBillingInterval as StripeBillingIntervalEnum,
-        featureFlags
-      ),
-      highlights: buildHighlightsArray(featureFlags),
-      features: buildFeatureArray(featureFlags, [
-        ApiServiceLevelEnum.FREE,
-        ApiServiceLevelEnum.PRO,
-        ApiServiceLevelEnum.BUSINESS,
-        ApiServiceLevelEnum.ENTERPRISE,
-      ]),
-    },
-    featureFlags
-  );
+  const { plans, highlights, features } = {
+    plans: resolvePlanCardConfig(
+      getPlanCardConfig(),
+      selectedBillingInterval as StripeBillingIntervalEnum,
+      featureFlags
+    ),
+    highlights: buildHighlightsArray(featureFlags),
+    features: buildFeatureArray([
+      ApiServiceLevelEnum.FREE,
+      ApiServiceLevelEnum.PRO,
+      ApiServiceLevelEnum.BUSINESS,
+      ApiServiceLevelEnum.ENTERPRISE,
+    ]),
+  };
 
   useEffect(() => {
     const checkoutResult = new URLSearchParams(window.location.search).get('result');
@@ -145,10 +141,7 @@ const serviceLevelHighlightFunctions: Record<string, PlanHighlightResolver[]> = 
   [ApiServiceLevelEnum.ENTERPRISE]: [getEventsLine, getTeammatesLine, getSamlText],
 };
 
-const buildFeatureArray: (activeFlags: FeatureFlags, columns: ApiServiceLevelEnum[]) => Feature[] = (
-  featureFlags: FeatureFlags,
-  columns: ApiServiceLevelEnum[]
-) => {
+const buildFeatureArray: (columns: ApiServiceLevelEnum[]) => Feature[] = (columns: ApiServiceLevelEnum[]) => {
   return [
     {
       label: 'Platform',
@@ -297,7 +290,7 @@ const buildFeatureArray: (activeFlags: FeatureFlags, columns: ApiServiceLevelEnu
 
     for (const serviceLevelEnum of columns) {
       result[serviceLevelEnum] = {
-        value: getValue(params, serviceLevelEnum, featureFlags),
+        value: getValue(params, serviceLevelEnum),
       };
     }
 
@@ -310,19 +303,15 @@ function buildPlanConfig(
   actionType: ActionType | undefined,
   firstFeature: string,
   lastFeature: string
-): (interval: StripeBillingIntervalEnum, featureFlags: FeatureFlags) => PlanConfig {
-  return (interval: StripeBillingIntervalEnum, featureFlags) => {
-    const maxTeamMembers = getFeatureForTierAsText(
-      FeatureNameEnum.ACCOUNT_MAX_TEAM_MEMBERS,
-      apiServiceLevelEnum,
-      featureFlags
-    );
-    const price = getFeatureForTierAsText(calcCostFeatureName(interval), apiServiceLevelEnum, featureFlags);
+): (interval: StripeBillingIntervalEnum) => PlanConfig {
+  return (interval: StripeBillingIntervalEnum) => {
+    const maxTeamMembers = getFeatureForTierAsText(FeatureNameEnum.ACCOUNT_MAX_TEAM_MEMBERS, apiServiceLevelEnum);
+    const price = getFeatureForTierAsText(calcCostFeatureName(interval), apiServiceLevelEnum);
     return {
-      name: getFeatureForTierAsText(FeatureNameEnum.PLATFORM_PLAN_LABEL, apiServiceLevelEnum, featureFlags),
+      name: getFeatureForTierAsText(FeatureNameEnum.PLATFORM_PLAN_LABEL, apiServiceLevelEnum),
       price,
       subtitle: buildSubtitle(interval, price),
-      events: `${getEventsIncludedParsedText(apiServiceLevelEnum, featureFlags)} events per month`,
+      events: `${getEventsIncludedParsedText(apiServiceLevelEnum)} events per month`,
       features: [firstFeature, `${maxTeamMembers} team members`, lastFeature],
       actionType: actionType,
     };
@@ -331,21 +320,21 @@ function buildPlanConfig(
 
 type PlanHighlightResolver = (ApiServiceLevelEnum: ApiServiceLevelEnum, activeFlags: FeatureFlags) => string;
 
-function getBooleanValue(params: BuildValuesParams, apiServiceLevel: ApiServiceLevelEnum, featureFlags: FeatureFlags) {
-  const bool = params.featureName ? getFeatureForTierAsBoolean(params.featureName, apiServiceLevel, featureFlags) : '';
+function getBooleanValue(params: BuildValuesParams, apiServiceLevel: ApiServiceLevelEnum) {
+  const bool = params.featureName ? getFeatureForTierAsBoolean(params.featureName, apiServiceLevel) : '';
   return bool ? <Check className="h-4 w-4" /> : '-';
 }
 
-function getTextValue(params: BuildValuesParams, apiServiceLevel: ApiServiceLevelEnum, featureFlags: FeatureFlags) {
-  const text = params.featureName ? getFeatureForTierAsText(params.featureName, apiServiceLevel, featureFlags) : '';
+function getTextValue(params: BuildValuesParams, apiServiceLevel: ApiServiceLevelEnum) {
+  const text = params.featureName ? getFeatureForTierAsText(params.featureName, apiServiceLevel) : '';
   return `${params.prefix || ''}${text}${params.suffix || ''}`;
 }
 
-function getValue(params: BuildValuesParams, apiServiceLevel: ApiServiceLevelEnum, featureFlags: FeatureFlags) {
+function getValue(params: BuildValuesParams, apiServiceLevel: ApiServiceLevelEnum) {
   if (params.isBoolean) {
-    return getBooleanValue(params, apiServiceLevel, featureFlags);
+    return getBooleanValue(params, apiServiceLevel);
   } else {
-    return getTextValue(params, apiServiceLevel, featureFlags);
+    return getTextValue(params, apiServiceLevel);
   }
 }
 
@@ -355,11 +344,10 @@ function calcCostFeatureName(interval: StripeBillingIntervalEnum) {
     : FeatureNameEnum.PLATFORM_MONTHLY_COST;
 }
 
-function getEventsIncludedParsedText(apiServiceLevelEnum: ApiServiceLevelEnum, featureFlags: FeatureFlags) {
+function getEventsIncludedParsedText(apiServiceLevelEnum: ApiServiceLevelEnum) {
   const eventsIncluded = getFeatureForTierAsNumber(
     FeatureNameEnum.PLATFORM_MONTHLY_EVENTS_INCLUDED,
     apiServiceLevelEnum,
-    featureFlags,
     false
   );
   const events: string = new Intl.NumberFormat('en-US', {
@@ -369,13 +357,8 @@ function getEventsIncludedParsedText(apiServiceLevelEnum: ApiServiceLevelEnum, f
   return events;
 }
 
-function getEventsLine(serviceLevel: ApiServiceLevelEnum, featureFlags: FeatureFlags) {
-  const eventsAmount = getFeatureForTierAsNumber(
-    FeatureNameEnum.PLATFORM_MONTHLY_EVENTS_INCLUDED,
-    serviceLevel,
-    featureFlags,
-    false
-  );
+function getEventsLine(serviceLevel: ApiServiceLevelEnum) {
+  const eventsAmount = getFeatureForTierAsNumber(FeatureNameEnum.PLATFORM_MONTHLY_EVENTS_INCLUDED, serviceLevel, false);
   const formatted: string = new Intl.NumberFormat('en-US', {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
@@ -383,17 +366,13 @@ function getEventsLine(serviceLevel: ApiServiceLevelEnum, featureFlags: FeatureF
   return `Up to ${formatted} events per month`;
 }
 
-function getTeammatesLine(serviceLevel: ApiServiceLevelEnum, activeFlags: FeatureFlags) {
-  const maxTeamMembers = getFeatureForTierAsText(FeatureNameEnum.ACCOUNT_MAX_TEAM_MEMBERS, serviceLevel, activeFlags);
+function getTeammatesLine(serviceLevel: ApiServiceLevelEnum) {
+  const maxTeamMembers = getFeatureForTierAsText(FeatureNameEnum.ACCOUNT_MAX_TEAM_MEMBERS, serviceLevel);
   return `${maxTeamMembers} teammates`;
 }
 
-function feedRetentionLine(serviceLevel: ApiServiceLevelEnum, activeFlags: FeatureFlags) {
-  const retention = getFeatureForTierAsText(
-    FeatureNameEnum.PLATFORM_ACTIVITY_FEED_RETENTION,
-    serviceLevel,
-    activeFlags
-  );
+function feedRetentionLine(serviceLevel: ApiServiceLevelEnum) {
+  const retention = getFeatureForTierAsText(FeatureNameEnum.PLATFORM_ACTIVITY_FEED_RETENTION, serviceLevel);
   return `${retention} Activity Feed retention`;
 }
 
@@ -434,28 +413,4 @@ function resolvePlanCardConfig(
   return Object.fromEntries(
     Object.entries(originalRecord).map(([key, configFn]) => [key, configFn(interval, featureFlags)])
   );
-}
-
-function augmentConfigurationsBasedOnFeatureFlags(
-  configurations: {
-    plans: Record<string, PlanConfig>;
-    highlights: Partial<PlanHighlights>;
-    features: Feature[];
-  },
-  featureFlags: FeatureFlags
-) {
-  if (!featureFlags[FeatureFlagsKeysEnum.IS_2025_Q1_TIERING_ENABLED]) {
-    delete configurations.plans[ApiServiceLevelEnum.PRO];
-    configurations.plans[ApiServiceLevelEnum.BUSINESS].name = 'Business';
-    configurations.plans[ApiServiceLevelEnum.BUSINESS].features[0] = 'Everything in Free';
-
-    delete configurations.highlights[ApiServiceLevelEnum.PRO];
-
-    configurations.features = configurations.features.map((feature) => {
-      delete feature.values[ApiServiceLevelEnum.PRO];
-      return feature;
-    });
-  }
-
-  return configurations;
 }

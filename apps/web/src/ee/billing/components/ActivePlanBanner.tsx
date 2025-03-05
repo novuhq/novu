@@ -1,13 +1,12 @@
 import { Text, Title } from '@novu/novui';
 import { MantineTheme } from '@mantine/core';
 import { css } from '@novu/novui/css';
+import { ApiServiceLevelEnum } from '@novu/shared';
 import { UsageProgress } from './UsageProgress';
 import { useSubscriptionContext, type UseSubscriptionType } from './SubscriptionProvider';
 import { capitalizeFirstLetter } from '../../../utils/string';
 import { Badge } from './Badge';
 import { PlanActionButton } from './PlanActionButton';
-import { ApiServiceLevelEnum, FeatureFlagsKeysEnum } from '@novu/shared';
-import { useFeatureFlag } from '../../../hooks/useFeatureFlag';
 
 type BillingInterval = 'month' | 'year';
 
@@ -31,10 +30,9 @@ export const ActivePlanBanner = ({ selectedBillingInterval }: { selectedBillingI
 function PlanHeader({ apiServiceLevel, trial }: UseSubscriptionType) {
   const { daysLeft, isActive } = trial;
   const color = getColorByDaysLeft(daysLeft);
-  const is2025Q1TieringEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_2025_Q1_TIERING_ENABLED);
 
   const renameBusinessToTeam = (plan: string) => {
-    if (plan === ApiServiceLevelEnum.BUSINESS && is2025Q1TieringEnabled) return 'team';
+    if (plan === ApiServiceLevelEnum.BUSINESS) return 'team';
 
     return plan.toLowerCase();
   };

@@ -80,13 +80,9 @@ export class TierRestrictionsValidateUsecase {
   }
 
   private async getMaxDelayInMs(command: TierRestrictionsValidateCommand, organization: OrganizationEntity) {
-    const isPackagesQ1Enabled = await this.is4PackageTierActivated(command, organization);
-    const featureFlags = { [FeatureFlagsKeysEnum.IS_2025_Q1_TIERING_ENABLED]: isPackagesQ1Enabled };
-
     return getFeatureForTierAsNumber(
       FeatureNameEnum.PLATFORM_MAX_DIGEST_WINDOW_TIME,
       organization.apiServiceLevel || ApiServiceLevelEnum.FREE,
-      featureFlags,
       true
     );
   }
@@ -97,15 +93,6 @@ export class TierRestrictionsValidateUsecase {
   ) {
     return await this.featureFlagsService.getFlag({
       key: FeatureFlagsKeysEnum.IS_TIER_DURATION_RESTRICTION_EXCLUDED_ENABLED,
-      defaultValue: false,
-      environment: { _id: command.environmentId },
-      organization,
-    });
-  }
-
-  private async is4PackageTierActivated(command: TierRestrictionsValidateCommand, organization: OrganizationEntity) {
-    return await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_2025_Q1_TIERING_ENABLED,
       defaultValue: false,
       environment: { _id: command.environmentId },
       organization,

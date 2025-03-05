@@ -15,7 +15,7 @@ function createProductFeatureMap(): Record<ProductFeatureKeyEnum, ApiServiceLeve
     for (const [productFeatureKey, featureName] of Object.entries(featureAccessAtoFeatureNameMapping)) {
       const typedProductKey = productFeatureKey as unknown as ProductFeatureKeyEnum;
       if (Object.values(ProductFeatureKeyEnum).includes(typedProductKey)) {
-        const isFeatureEnabled = getFeatureForTierAsBoolean(featureName, apiServiceLevel, {});
+        const isFeatureEnabled = getFeatureForTierAsBoolean(featureName, apiServiceLevel);
         if (isFeatureEnabled) {
           productFeatures[typedProductKey]!.push(apiServiceLevel);
         }

@@ -140,7 +140,6 @@ describe('GetApiRateLimitMaximum', async () => {
         const defaultApiRateLimit = getFeatureForTierAsNumber(
           ApiRateLimitCategoryToFeatureName[mockApiRateLimitCategory],
           mockApiServiceLevel,
-          { [FeatureFlagsKeysEnum.IS_2025_Q1_TIERING_ENABLED]: true },
           false
         );
         const [rateLimit] = await useCase.execute(
@@ -178,7 +177,6 @@ describe('GetApiRateLimitMaximum', async () => {
         const defaultApiRateLimit = getFeatureForTierAsNumber(
           ApiRateLimitCategoryToFeatureName[mockApiRateLimitCategory],
           ApiServiceLevelEnum.UNLIMITED,
-          { [FeatureFlagsKeysEnum.IS_2025_Q1_TIERING_ENABLED]: true },
           false
         );
 
