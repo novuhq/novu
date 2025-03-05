@@ -224,7 +224,7 @@ describe('Delete Integration - /integration/:integrationId (DELETE) #novu-v2', f
 
     const res = await session.testAgent.delete(`/v1/integrations/${demoEmailIntegration._id}`).send();
     expect(res.body.statusCode).to.equal(400);
-    expect(res.body.message[0]).to.equal('Novu demo integration or In-App integration cannot be deleted');
+    expect(res.body.message).to.equal('Novu demo integration or In-App integration cannot be deleted');
   });
 
   it('should remove a newly created integration', async function () {
