@@ -1,14 +1,6 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
-import { PinoLogger } from 'nestjs-pino';
-import {
-  AnalyticsService,
-  buildDedupSubscriberKey,
-  buildSubscriberKey,
-  CachedEntity,
-  EventsDistributedLockService,
-  InvalidateCacheService,
-} from '../../services';
+import { AnalyticsService, buildSubscriberKey, InvalidateCacheService } from '../../services';
 import { UpdateSubscriber, UpdateSubscriberCommand } from '../update-subscriber';
 import { OAuthHandlerEnum, UpdateSubscriberChannel, UpdateSubscriberChannelCommand } from '../subscribers';
 import { RetryOnError } from '../../decorators/retry-on-error-decorator';
@@ -21,38 +13,14 @@ export class CreateOrUpdateSubscriberUseCase {
     private subscriberRepository: SubscriberRepository,
     private updateSubscriberUseCase: UpdateSubscriber,
     private updateSubscriberChannel: UpdateSubscriberChannel,
-    private analyticsService: AnalyticsService,
-    @Inject(forwardRef(() => EventsDistributedLockService))
-    private eventsDistributedLockService: EventsDistributedLockService,
-    private pinoLogger: PinoLogger
+    private analyticsService: AnalyticsService
   ) {}
+
   @RetryOnError('MongoServerError', {
     maxRetries: 3,
     delay: 500,
   })
   async execute(command: CreateOrUpdateSubscriberCommand) {
-    this.pinoLogger.info(command, 'CreateOrUpdateSubscriberUseCase - START - Attempting to get Lock');
-
-    const subscriberEntity = await this.eventsDistributedLockService.applyLock<SubscriberEntity>(
-      {
-        resource: buildDedupSubscriberKey({
-          subscriberId: command.subscriberId,
-          _environmentId: command.environmentId,
-        }),
-        ttl: 10000,
-      },
-      async () => {
-        this.pinoLogger.info(command, 'CreateOrUpdateSubscriberUseCase - Obtained Lock');
-
-        return await this.createOrUpdateSubscriber(command);
-      }
-    );
-    this.pinoLogger.info(command, 'CreateOrUpdateSubscriberUseCase - Lock Released');
-
-    return subscriberEntity;
-  }
-
-  private async createOrUpdateSubscriber(command: CreateOrUpdateSubscriberCommand): Promise<SubscriberEntity> {
     const persistedSubscriber = await this.getExistingSubscriber(command);
 
     if (persistedSubscriber) {
@@ -72,8 +40,6 @@ export class CreateOrUpdateSubscriberUseCase {
   }
 
   private async updateSubscriber(command: CreateOrUpdateSubscriberCommand, existingSubscriber: SubscriberEntity) {
-    this.pinoLogger.info(command, 'CreateOrUpdateSubscriberUseCase: Subscriber exist - Updating Subscriber');
-
     return await this.updateSubscriberUseCase.execute(this.buildUpdateSubscriberCommand(command, existingSubscriber));
   }
 
@@ -136,7 +102,6 @@ export class CreateOrUpdateSubscriberUseCase {
   }
 
   private async createSubscriber(command: CreateOrUpdateSubscriberCommand): Promise<SubscriberEntity> {
-    this.pinoLogger.info(command, 'CreateOrUpdateSubscriberUseCase: Creating Subscriber');
     await this.invalidateCache.invalidateByKey({
       key: buildSubscriberKey({
         subscriberId: command.subscriberId,
@@ -157,22 +122,11 @@ export class CreateOrUpdateSubscriberUseCase {
       data: command.data,
       timezone: command.timezone,
     });
-    this.pinoLogger.info(
-      { ...command, _id: createdSubscriber._id },
-      'CreateOrUpdateSubscriberUseCase: Subscriber Created '
-    );
     this.publishSubscriberCreatedEvent(command);
 
     return createdSubscriber;
   }
-  // TODO: Remove one we have an index on subscriberID
-  @CachedEntity({
-    builder: (command: { subscriberId: string; _environmentId: string }) =>
-      buildSubscriberKey({
-        _environmentId: command._environmentId,
-        subscriberId: command.subscriberId,
-      }),
-  })
+
   private async fetchSubscriber({
     subscriberId,
     _environmentId,
