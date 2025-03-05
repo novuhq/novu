@@ -27,7 +27,7 @@ jobs:
       # Checkout with EE-submodule if token provided
       - uses: actions/checkout@v4
         name: Checkout with submodules
-        if: ${{ secrets.SUBMODULES_TOKEN && inputs.ee }}
+        if: ${{ inputs.ee }}
         with:
           submodules: true
           token: ${{ secrets.SUBMODULES_TOKEN }}
@@ -35,7 +35,7 @@ jobs:
       # Else checkout without submodules if the token is not provided
       - uses: actions/checkout@v4
         name: Checkout
-        if: ${{ !secrets.SUBMODULES_TOKEN || !inputs.ee }}
+        if: ${{ !inputs.ee }}
 
       - uses: ./.github/actions/setup-project
         name: Setup project
