@@ -137,7 +137,7 @@ export class JobsService {
    *
    * @remarks
    * This is useful in testing when you want the trigger to be asserted in specific parts of the execution.
-   * For example, you can wait for the standard queue to be completed and then assert agains the stage of the job in Mongo
+   * For example, you can wait for the standard queue to be completed and then assert against the stage of the job in Mongo
    */
   public async waitForStandardQueueCompletion(maxWaitTime = 10000) {
     return this.waitQueueUntil(
