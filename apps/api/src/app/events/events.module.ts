@@ -7,6 +7,7 @@ import {
   StorageHelperService,
 } from '@novu/application-generic';
 
+import { CommunityOrganizationRepository } from '@novu/dal';
 import { EventsController } from './events.controller';
 import { USE_CASES } from './usecases';
 
@@ -22,7 +23,12 @@ import { TenantModule } from '../tenant/tenant.module';
 import { BridgeModule } from '../bridge';
 import { SubscribersV1Module } from '../subscribers/subscribersV1.module';
 
-const PROVIDERS = [GetNovuProviderCredentials, StorageHelperService, EventsDistributedLockService];
+const PROVIDERS = [
+  GetNovuProviderCredentials,
+  StorageHelperService,
+  CommunityOrganizationRepository,
+  EventsDistributedLockService,
+];
 
 @Module({
   imports: [

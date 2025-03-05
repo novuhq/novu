@@ -13,6 +13,7 @@ import {
   WorkflowQueueService,
 } from '@novu/application-generic';
 import {
+  CommunityOrganizationRepository,
   EnvironmentEntity,
   EnvironmentRepository,
   NotificationTemplateEntity,
@@ -28,7 +29,6 @@ import { DiscoverWorkflowOutput, GetActionEnum } from '@novu/framework/internal'
 import {
   FeatureFlagsKeysEnum,
   ReservedVariablesMap,
-  SUBSCRIBER_ID_REGEX,
   TriggerContextTypeEnum,
   TriggerEventStatusEnum,
   TriggerRecipientsPayload,
@@ -54,6 +54,7 @@ export class ParseEventRequest {
   constructor(
     private notificationTemplateRepository: NotificationTemplateRepository,
     private environmentRepository: EnvironmentRepository,
+    private communityOrganizationRepository: CommunityOrganizationRepository,
     private verifyPayload: VerifyPayload,
     private storageHelperService: StorageHelperService,
     private workflowQueueService: WorkflowQueueService,
@@ -69,19 +70,34 @@ export class ParseEventRequest {
   public async execute(command: ParseEventRequestCommand) {
     const transactionId = command.transactionId || uuidv4();
 
-    const { environment, statelessWorkflowAllowed } = await this.isStatelessWorkflowAllowed(
-      command.environmentId,
-      command.bridgeUrl
-    );
+    const environment = await this.environmentRepository.findOne({ _id: command.environmentId });
 
-    if (environment && statelessWorkflowAllowed) {
+    if (!environment) {
+      throw new UnprocessableEntityException('Environment not found');
+    }
+
+    const organization = await this.communityOrganizationRepository.findOne({ _id: command.organizationId });
+
+    if (!organization) {
+      throw new UnprocessableEntityException('Organization not found');
+    }
+
+    const statelessWorkflowAllowed = this.isStatelessWorkflowAllowed(command.bridgeUrl);
+
+    if (statelessWorkflowAllowed) {
       const discoveredWorkflow = await this.queryDiscoverWorkflow(command);
 
       if (!discoveredWorkflow) {
         throw new UnprocessableEntityException('workflow_not_found');
       }
 
-      return await this.dispatchEventToWorkflowQueue(command, transactionId, discoveredWorkflow);
+      return await this.dispatchEventToWorkflowQueue({
+        command,
+        transactionId,
+        discoveredWorkflow,
+        environment,
+        organization,
+      });
     }
 
     const template = await this.getNotificationTemplateByTriggerIdentifier({
@@ -173,7 +189,7 @@ export class ParseEventRequest {
     // eslint-disable-next-line no-param-reassign
     command.payload = merge({}, defaultPayload, command.payload);
 
-    const result = await this.dispatchEventToWorkflowQueue(command, transactionId);
+    const result = await this.dispatchEventToWorkflowQueue({ command, transactionId, environment, organization });
 
     return result;
   }
@@ -195,18 +211,26 @@ export class ParseEventRequest {
     return discover?.workflows?.find((findWorkflow) => findWorkflow.workflowId === command.identifier) || null;
   }
 
-  private async dispatchEventToWorkflowQueue(
-    command: ParseEventRequestMulticastCommand | ParseEventRequestBroadcastCommand,
-    transactionId: string,
-    discoveredWorkflow?: DiscoverWorkflowOutput | null
-  ) {
+  private async dispatchEventToWorkflowQueue({
+    command,
+    transactionId,
+    discoveredWorkflow,
+    environment,
+    organization,
+  }: {
+    command: ParseEventRequestMulticastCommand | ParseEventRequestBroadcastCommand;
+    transactionId: string;
+    discoveredWorkflow?: DiscoverWorkflowOutput | null;
+    environment?: EnvironmentEntity;
+    organization?: OrganizationEntity;
+  }) {
     const commandArgs = {
       ...command,
     };
 
     const isDryRun = await this.featureFlagService.getFlag({
-      environment: { _id: command.environmentId } as EnvironmentEntity,
-      organization: { _id: command.organizationId } as OrganizationEntity,
+      environment,
+      organization,
       user: { _id: command.userId } as UserEntity,
       key: FeatureFlagsKeysEnum.IS_SUBSCRIBER_ID_VALIDATION_DRY_RUN_ENABLED,
       defaultValue: true,
@@ -255,21 +279,12 @@ export class ParseEventRequest {
     };
   }
 
-  private async isStatelessWorkflowAllowed(
-    environmentId: string,
-    bridgeUrl: string | undefined
-  ): Promise<{ environment: EnvironmentEntity | null; statelessWorkflowAllowed: boolean }> {
+  private isStatelessWorkflowAllowed(bridgeUrl: string | undefined) {
     if (!bridgeUrl) {
-      return { environment: null, statelessWorkflowAllowed: false };
+      return false;
     }
 
-    const environment = await this.environmentRepository.findOne({ _id: environmentId });
-
-    if (!environment) {
-      throw new UnprocessableEntityException('Environment not found');
-    }
-
-    return { environment, statelessWorkflowAllowed: true };
+    return true;
   }
 
   @Instrument()
