@@ -17,14 +17,14 @@ export const DAY_IN_MS = 24 * 60 * 60 * 1000;
 export const SYSTEM_LIMITS = {
   WORKFLOWS: 100,
   STEPS_PER_WORKFLOW: 20,
-  DEFFER_DURATION: 180 * DAY_IN_MS,
+  DEFER_DURATION_MS: 180 * DAY_IN_MS,
 } as const;
 
 /* The threshold below which validation is skipped */
 export const MIN_VALIDATION_LIMITS = {
   WORKFLOWS: 20,
   STEPS_PER_WORKFLOW: 20,
-  DEFFER_DURATION: DAY_IN_MS,
+  DEFER_DURATION_MS: DAY_IN_MS,
 } as const;
 
 @Injectable()
@@ -72,7 +72,7 @@ export class ResourceValidatorService {
     const organization = await this.getOrganization(environment._organizationId);
     const maxWorkflowLimit = await this.getWorkflowLimit(environment, organization);
 
-    if (workflowsCount >= maxWorkflowLimit) {
+    if (workflowsCount > maxWorkflowLimit) {
       throw new BadRequestException({
         message: 'Workflow limit exceeded. Please contact us to support more workflows.',
         currentCount: workflowsCount,

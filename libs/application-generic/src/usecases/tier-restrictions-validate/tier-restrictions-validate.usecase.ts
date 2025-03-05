@@ -31,11 +31,12 @@ export class TierRestrictionsValidateUsecase {
 
   @InstrumentUsecase()
   async execute(command: TierRestrictionsValidateCommand): Promise<TierRestrictionsValidateResponse> {
-    if (![StepTypeEnum.DIGEST, StepTypeEnum.DELAY].includes(command.stepType)) {
+    const { stepType } = command;
+
+    if (!isDigestOrDelay(stepType)) {
       return [];
     }
 
-    const stepType = command.stepType as StepTypeEnum.DELAY | StepTypeEnum.DIGEST;
     const organization = await this.organizationRepository.findById(command.organizationId);
 
     if (!organization) {
@@ -63,7 +64,7 @@ export class TierRestrictionsValidateUsecase {
     if (isRegularDeferAction(command)) {
       const deferDurationMs = calculateDeferDuration(command);
 
-      if (deferDurationMs < MIN_VALIDATION_LIMITS.DEFFER_DURATION) {
+      if (deferDurationMs < MIN_VALIDATION_LIMITS.DEFER_DURATION_MS) {
         return [];
       }
 
@@ -87,13 +88,13 @@ export class TierRestrictionsValidateUsecase {
 
     const systemLimit = await this.featureFlagsService.getFlag({
       key: config.system,
-      defaultValue: SYSTEM_LIMITS.DEFFER_DURATION,
+      defaultValue: SYSTEM_LIMITS.DEFER_DURATION_MS,
       environment: { _id: command.environmentId },
       organization,
     });
 
     // If the system limit is not the default, we need to use it as the absolute limit for special cases instead of the tier limit
-    const isSpecialLimit = systemLimit !== SYSTEM_LIMITS.DEFFER_DURATION;
+    const isSpecialLimit = systemLimit !== SYSTEM_LIMITS.DEFER_DURATION_MS;
     if (isSpecialLimit) {
       return systemLimit;
     }
@@ -225,4 +226,8 @@ const getFlagNameByType = (stepType: StepTypeEnum.DELAY | StepTypeEnum.DIGEST) =
 
 function msToDays(ms: number): number {
   return Math.floor(ms / (1000 * 60 * 60 * 24));
+}
+
+function isDigestOrDelay(stepType: StepTypeEnum): stepType is StepTypeEnum.DIGEST | StepTypeEnum.DELAY {
+  return [StepTypeEnum.DIGEST, StepTypeEnum.DELAY].includes(stepType);
 }
