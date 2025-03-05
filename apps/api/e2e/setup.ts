@@ -1,23 +1,22 @@
 import { testServer } from '@novu/testing';
 import sinon from 'sinon';
 import chai from 'chai';
-import mongoose from 'mongoose';
 import { bootstrap } from '../src/bootstrap';
 
-let connection: typeof mongoose;
+let connection: Connection;
+const dalService = new DalService();
 
 async function getConnection() {
   if (!connection) {
-    connection = await mongoose.connect(process.env.MONGO_URL);
+    connection = await dalService.connect(process.env.MONGO_URL);
   }
 
-  return connection;
 }
 
 async function dropDatabase() {
   try {
     const conn = await getConnection();
-    await conn.connection.db.dropDatabase();
+    await conn.db.dropDatabase();
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error('Error dropping the database:', error);
@@ -35,6 +34,10 @@ before(async () => {
 
 after(async () => {
   await testServer.teardown();
+  await dropDatabase();
+  if (connection) {
+    await connection.close();
+  }
 });
 
 afterEach(async function () {
