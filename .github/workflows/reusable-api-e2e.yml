@@ -23,7 +23,6 @@ jobs:
       deployments: write
       id-token: write
       packages: write
-    needs: [check_submodule_token]
     steps:
       # Checkout with EE-submodule if token provided
       - uses: actions/checkout@v4
@@ -41,7 +40,7 @@ jobs:
       - uses: ./.github/actions/setup-project
         name: Setup project
         with:
-          submodules: ${{ inputs.ee && needs.check_submodule_token.outputs.has_token == 'true' }}
+          submodules: ${{ inputs.ee }}
 
       - uses: ./.github/actions/start-localstack
         name: Start localstack
@@ -52,7 +51,6 @@ jobs:
       - name: Start Worker
         shell: bash
         env:
-          LAUNCH_DARKLY_SDK_KEY: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
           NOVU_ENTERPRISE: ${{ inputs.ee }}
         run: cd apps/worker && pnpm start:test &
 
@@ -62,14 +60,10 @@ jobs:
 
       - name: Run Novu V1 E2E tests
         if: ${{ !inputs.ee }}
-        env:
-          LAUNCH_DARKLY_SDK_KEY: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
         run: |
           pnpm --filter @novu/api-service test:e2e:novu-v1
 
       - name: Run Novu V2 E2E tests
-        if: ${{ needs.check_submodule_token.outputs.has_token == 'true' && inputs.ee }}
-        env:
-          LAUNCH_DARKLY_SDK_KEY: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
+        if: ${{ inputs.ee }}
         run: |
           pnpm --filter @novu/api-service test:e2e:novu-v2
