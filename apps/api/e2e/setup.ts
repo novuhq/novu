@@ -12,6 +12,7 @@ const standardQueue = new TestingQueueService(JobTopicNameEnum.STANDARD).queue;
 const subscriberProcessQueue = new TestingQueueService(JobTopicNameEnum.PROCESS_SUBSCRIBER).queue;
 
 let connection: typeof mongoose;
+const jobsService = new JobsService();
 
 async function getConnection() {
   if (!connection) {
@@ -26,6 +27,7 @@ async function dropDatabase() {
     const conn = await getConnection();
     await conn.connection.db.dropDatabase();
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('Error dropping the database:', error);
   }
 }
@@ -48,17 +50,38 @@ after(async () => {
 });
 
 async function cleanup() {
-  const jobsService = new JobsService();
-  await jobsService.awaitAllJobs();
-
-  await Promise.all([workflowQueue.drain(), standardQueue.drain(), subscriberProcessQueue.drain()]);
+  await Promise.all([
+    workflowQueue.obliterate({ force: true }),
+    standardQueue.obliterate({ force: true }),
+    subscriberProcessQueue.obliterate({ force: true }),
+  ]);
 
   await jobRepository._model.deleteMany({});
+
+  const jobCount = await jobRepository.count({} as any);
+  const metric = await jobsService.getQueueMetric();
+
+  if (metric.totalCount !== 0) {
+    // eslint-disable-next-line no-console
+    console.log('after cleanup metric.totalCount !== 0 metric', metric);
+    // eslint-disable-next-line no-console
+    console.log('after cleanup metric.totalCount !== 0 jobCount', jobCount);
+  }
+
+  if (jobCount !== 0) {
+    // eslint-disable-next-line no-console
+    console.log('after cleanup jobCount !== 0 metric', metric);
+    // eslint-disable-next-line no-console
+    console.log('after cleanup jobCount !== 0 jobCount', jobCount);
+  }
 }
 
-function timeoutPromise(ms: number) {
-  // eslint-disable-next-line no-promise-executor-return
-  return new Promise((resolve) => setTimeout(resolve, ms));
+async function createCleanupTimeout(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve();
+    }, ms);
+  });
 }
 
 afterEach(async function () {
@@ -66,8 +89,9 @@ afterEach(async function () {
   sinon.restore();
 
   try {
-    await Promise.race([cleanup(), timeoutPromise(TIMEOUT).then(() => {})]);
+    await Promise.race([cleanup(), createCleanupTimeout(TIMEOUT).then(() => {})]);
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('Error during cleanup:', error);
   }
 });
