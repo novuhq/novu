@@ -3,14 +3,13 @@ import { Portal } from 'solid-js/web';
 import { useFocusManager } from '../../../context';
 import { cn, useStyle } from '../../../helpers';
 import type { AppearanceKey } from '../../../types';
-import { Root } from '../../elements';
-import { Motion } from '../Motion';
+import { Root } from '../../elements/Root';
 import { usePopover } from './PopoverRoot';
 
 export const popoverContentVariants = () =>
   cn(
     'nt-w-[400px] nt-h-[600px] nt-rounded-xl nt-bg-background',
-    'nt-shadow-popover nt-z-10 nt-cursor-default nt-flex nt-flex-col nt-overflow-hidden nt-border nt-border-border'
+    'nt-shadow-popover nt-animate-in nt-slide-in-from-top-2 nt-fade-in nt-z-10 nt-cursor-default nt-flex nt-flex-col nt-overflow-hidden nt-border nt-border-border'
   );
 
 const PopoverContentBody = (props: PopoverContentProps) => {
@@ -29,13 +28,11 @@ const PopoverContentBody = (props: PopoverContentProps) => {
   });
 
   return (
-    <Motion.div
+    <div
       ref={setFloating}
       class={local.class ? local.class : style(local.appearanceKey || 'popoverContent', popoverContentVariants())}
       style={floatingStyles()}
       data-open={open()}
-      animate={{ opacity: [0, 1], y: [-6, 0] }}
-      transition={{ duration: 0.1, easing: 'ease-out' }}
       {...rest}
     />
   );

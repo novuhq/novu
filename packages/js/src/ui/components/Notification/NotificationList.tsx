@@ -69,7 +69,7 @@ export const NotificationList = (props: NotificationListProps) => {
           </For>
           <Show when={!end()}>
             <div ref={setEl}>
-              <For each={Array.from({ length: 3 })}>{() => <NotificationListSkeleton loading={true} />}</For>
+              <NotificationListSkeleton loading={true} />
             </div>
           </Show>
         </Show>
