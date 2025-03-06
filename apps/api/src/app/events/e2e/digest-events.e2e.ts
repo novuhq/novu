@@ -54,7 +54,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST) #n
   });
 
   it('should digest events within time interval', async function () {
-    const digestAmount = 1;
+    const digestAmount = 2;
     const digestUnit = DigestUnitEnum.SECONDS;
     template = await session.createTemplate({
       steps: [
@@ -82,11 +82,14 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST) #n
       customVar: 'Testing of User Name',
     });
 
+    await session.waitForQueueImmediateJobCompletion();
+
     await triggerEvent({
       customVar: 'digest',
     });
 
-    await session.waitForJobCompletion(template?._id, false, 2);
+    await session.waitForQueueImmediateJobCompletion();
+    await session.awaitAllJobs();
 
     const initialJobs = await jobRepository.find({
       _environmentId: session.environment._id,
@@ -96,16 +99,14 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST) #n
 
     expect(initialJobs && initialJobs.length).to.eql(2);
 
-    const delayedJobs = initialJobs.filter((elem) => elem.status === JobStatusEnum.DELAYED);
+    const delayedJobs = initialJobs.filter((elem) => elem.status === JobStatusEnum.COMPLETED);
     expect(delayedJobs && delayedJobs.length).to.eql(1);
-    const mergedJobs = initialJobs.filter((elem) => elem.status !== JobStatusEnum.DELAYED);
+    const mergedJobs = initialJobs.filter((elem) => elem.status === JobStatusEnum.MERGED);
     expect(mergedJobs && mergedJobs.length).to.eql(1);
 
     const delayedJob = delayedJobs[0];
 
     expect(delayedJob).to.be.ok;
-
-    await session.waitForJobCompletion(template?._id, false, 0);
 
     const jobs = await jobRepository.find({
       _environmentId: session.environment._id,

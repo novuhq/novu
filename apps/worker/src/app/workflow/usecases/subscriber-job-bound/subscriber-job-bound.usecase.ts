@@ -115,7 +115,6 @@ export class SubscriberJobBound {
         data: subscriber?.data,
         channels: subscriber?.channels,
         activeWorkerName: process.env.ACTIVE_WORKER,
-        isUpsert: true,
       })
     );
 

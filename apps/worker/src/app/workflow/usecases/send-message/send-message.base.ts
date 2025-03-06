@@ -25,7 +25,7 @@ import {
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
 } from '@novu/application-generic';
-import { SendMessageType } from './send-message-type.usecase';
+import { SendMessageType, SendMessageResult } from './send-message-type.usecase';
 import { PlatformException } from '../../../shared/utils';
 import { SendMessageCommand } from './send-message.command';
 
@@ -84,7 +84,7 @@ export abstract class SendMessageBase extends SendMessageType {
     return { ...payload, ...rest };
   }
 
-  protected async sendErrorHandlebars(job: JobEntity, error: string) {
+  protected async sendErrorHandlebars(job: JobEntity, error: string): Promise<SendMessageResult> {
     await this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
         ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
@@ -96,6 +96,11 @@ export abstract class SendMessageBase extends SendMessageType {
         raw: JSON.stringify({ error }),
       })
     );
+
+    return {
+      status: 'failed',
+      reason: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
+    };
   }
 
   protected async sendSelectedIntegrationExecution(job: JobEntity, integration: IntegrationEntity) {

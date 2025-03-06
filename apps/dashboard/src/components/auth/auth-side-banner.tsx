@@ -20,7 +20,7 @@ export function AuthSideBanner() {
             <div className="inline-flex justify-start gap-1">
               <CircleCheck className="h-3 w-3" color="#99a0ad" />
               <div className="text-xs font-medium leading-none text-neutral-400">
-                No credit card required, 30k events for free every month.
+                No credit card required, 10k events for free every month.
               </div>
             </div>
           </div>

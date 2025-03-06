@@ -65,7 +65,6 @@ export class Session {
         environmentId: environment._id,
         organizationId: environment._organizationId,
         subscriberId: command.subscriberId,
-        isUpsert: true,
       })
     );
 

@@ -207,6 +207,11 @@ subscriberSchema.index({
   _id: 1,
 });
 
+subscriberSchema.index(
+  { _environmentId: 1, subscriberId: 1 },
+  { name: 'unique_subscriber_per_environment', unique: true, partialFilterExpression: { deleted: false } }
+);
+
 subscriberSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, overrideMethods: 'all' });
 
 export const Subscriber =

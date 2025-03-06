@@ -8,7 +8,7 @@ import {
   CreateExecutionDetailsCommand,
 } from '@novu/application-generic';
 
-import { SendMessageType } from './send-message-type.usecase';
+import { SendMessageResult, SendMessageType } from './send-message-type.usecase';
 import { SendMessageCommand } from './send-message.command';
 
 @Injectable()
@@ -21,7 +21,7 @@ export class SendMessageDelay extends SendMessageType {
   }
 
   @InstrumentUsecase()
-  public async execute(command: SendMessageCommand) {
+  public async execute(command: SendMessageCommand): Promise<SendMessageResult> {
     await this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
         ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
@@ -32,5 +32,9 @@ export class SendMessageDelay extends SendMessageType {
         isRetry: false,
       })
     );
+
+    return {
+      status: 'success',
+    };
   }
 }

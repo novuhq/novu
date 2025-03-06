@@ -1,4 +1,4 @@
-import { Inbox, InboxContent, InboxProps } from '@novu/react';
+import { Inbox, InboxContent, InboxProps } from '@novu/react-v2';
 import { SVGProps } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useFetchEnvironments } from '../../context/environment/hooks';

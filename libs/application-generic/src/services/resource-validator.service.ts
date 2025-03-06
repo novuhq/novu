@@ -12,7 +12,7 @@ import { NotificationStep } from '../usecases';
 import { FeatureFlagsService } from './feature-flags';
 
 export const MAX_WORKFLOWS_LIMIT = 100;
-export const MAX_STEPS_PER_WORKFLOW = 10;
+export const MAX_STEPS_PER_WORKFLOW = 20;
 
 @Injectable()
 export class ResourceValidatorService {
