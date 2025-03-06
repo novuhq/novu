@@ -44,7 +44,7 @@ export class ResourceValidatorService {
     const organization = await this.getOrganization(organizationId);
 
     const maxStepsPerWorkflowNumber = await this.featureFlagService.getFlag({
-      key: FeatureFlagsKeysEnum.MAX_STEPS_PER_WORKFLOW_NUMBER,
+      key: FeatureFlagsKeysEnum.MAX_STEPS_PER_WORKFLOW_LIMIT_NUMBER,
       environment: { _id: environmentId },
       organization,
       defaultValue: SYSTEM_LIMITS.STEPS_PER_WORKFLOW,
