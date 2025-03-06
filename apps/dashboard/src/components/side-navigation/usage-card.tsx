@@ -52,7 +52,7 @@ const CardContent = ({ currentEvents, maxEvents, resetDate }: CardContentProps) 
   const isComplete = percentage >= 100;
 
   return (
-    <div className="flex flex-col gap-1 p-2 group-hover:gap-0">
+    <div className="relative flex flex-col p-2">
       <div className="flex items-center">
         {!isComplete ? (
           <>
@@ -78,27 +78,23 @@ const CardContent = ({ currentEvents, maxEvents, resetDate }: CardContentProps) 
 
       {!isComplete ? (
         <>
-          <div
-            className={`max-h-3 overflow-hidden opacity-100 ${transition} group-hover:max-h-0 group-hover:opacity-0`}
-          >
+          <div className={`${transition} opacity-100 group-hover:opacity-0`}>
             <Progress
               value={percentage}
               max={100}
               variant={progressVariant}
-              className={`h-1 rounded-lg ${transition}`}
+              className={`h-1 rounded-lg ${transition} mt-1`}
             />
+            <span className={`text-text-soft text-label-xs flex items-center gap-1 leading-[16px] ${transition} mt-1`}>
+              <RiCalendarEventLine className={`size-3.5 ${transition}`} />
+              Usage reset on {resetDate ? format(new Date(resetDate), 'MMM d yyyy') : ''}
+            </span>
           </div>
-          <span
-            className={`text-text-soft text-label-xs flex items-center gap-1 leading-[16px] ${transition} max-h-6 overflow-hidden opacity-100 group-hover:max-h-0 group-hover:opacity-0`}
-          >
-            <RiCalendarEventLine className={`size-3.5 ${transition}`} />
-            Usage reset on {resetDate ? format(new Date(resetDate), 'MMM d yyyy') : ''}
-          </span>
           <div
-            className={`max-h-0 overflow-hidden opacity-0 ${transition} group-hover:max-h-8 group-hover:opacity-100`}
+            className={`absolute bottom-0 left-0 right-0 top-[24px] flex items-center justify-center opacity-0 group-hover:opacity-100 ${transition} pointer-events-none group-hover:pointer-events-auto`}
           >
             <Button
-              className={`w-full translate-y-full ${transition} h-[24px] group-hover:translate-y-0`}
+              className={`h-[24px] w-[calc(100%-16px)] ${transition}`}
               variant="secondary"
               mode="lighter"
               size="2xs"
@@ -126,7 +122,7 @@ export const UsageCard = ({ subscription }: UsageCardProps) => {
   const currentEvents = subscription?.events?.current ?? 0;
   const maxEvents = subscription?.events?.included ?? 10000;
 
-  const cardClassName = 'bg-bg-white group flex cursor-pointer flex-col rounded-lg shadow';
+  const cardClassName = 'bg-bg-white group relative flex h-[58px] cursor-pointer flex-col rounded-lg shadow';
 
   return (
     <Link to={ROUTES.SETTINGS_BILLING} className={cardClassName}>
