@@ -38,7 +38,7 @@ const NavigationGroup = ({ children, label }: { children: ReactNode; label?: str
 
 export const SideNavigation = () => {
   const { subscription, daysLeft, isLoading: isLoadingSubscription } = useFetchSubscription();
-  const isFreeTrialActive = subscription?.trial.isActive;
+  const isTrialActive = subscription?.trial.isActive;
   const isFreeTier = subscription?.apiServiceLevel === ApiServiceLevelEnum.FREE;
 
   const { currentEnvironment, environments, switchEnvironment } = useEnvironment();
@@ -115,12 +115,12 @@ export const SideNavigation = () => {
           </div>
 
           <div className="relative mt-auto gap-8 pt-4">
-            {!isFreeTrialActive && !isLoadingSubscription && <ChangelogStack />}
-            {isFreeTrialActive && !isLoadingSubscription && (
+            {!isTrialActive && !isLoadingSubscription && <ChangelogStack />}
+            {isTrialActive && !isLoadingSubscription && (
               <FreeTrialCard subscription={subscription} daysLeft={daysLeft} />
             )}
 
-            {!isFreeTrialActive && isFreeTier && !isLoadingSubscription && <UsageCard subscription={subscription} />}
+            {!isTrialActive && isFreeTier && !isLoadingSubscription && <UsageCard subscription={subscription} />}
             <NavigationGroup>
               <button onClick={showPlainLiveChat} className="w-full">
                 <NavigationLink>
