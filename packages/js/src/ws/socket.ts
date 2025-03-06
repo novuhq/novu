@@ -177,9 +177,10 @@ export class Socket extends BaseModule {
     );
   }
 
-  initialize(): void {
+  connect(): void {
     if (this.#token) {
       this.#initializeSocket().catch((error) => {
+        // eslint-disable-next-line no-console
         console.error(error);
       });
 
@@ -188,10 +189,33 @@ export class Socket extends BaseModule {
 
     this.callWithSession(async () => {
       this.#initializeSocket().catch((error) => {
+        // eslint-disable-next-line no-console
         console.error(error);
       });
 
       return {};
+    }).catch((error) => {
+      // eslint-disable-next-line no-console
+      console.error(error);
+    });
+  }
+
+  disconnect(): void {
+    if (this.#socketIo) {
+      this.#socketIo?.disconnect();
+      this.#socketIo = undefined;
+
+      return;
+    }
+
+    this.callWithSession(async () => {
+      this.#socketIo?.disconnect();
+      this.#socketIo = undefined;
+
+      return {};
+    }).catch((error) => {
+      // eslint-disable-next-line no-console
+      console.error(error);
     });
   }
 }
