@@ -1,4 +1,6 @@
+import { useTelemetry } from '@/hooks/use-telemetry';
 import { ROUTES } from '@/utils/routes';
+import { TelemetryEvent } from '@/utils/telemetry';
 import { GetSubscriptionDto } from '@novu/shared';
 import { format } from 'date-fns';
 import { RiCalendarEventLine, RiErrorWarningLine } from 'react-icons/ri';
@@ -16,14 +18,25 @@ export type UsageCardProps = {
 };
 
 export function UsageCard({ subscription }: UsageCardProps) {
+  const track = useTelemetry();
   const currentEvents = subscription?.events?.current ?? 0;
   const maxEvents = subscription?.events?.included ?? 10000;
   const resetDate = subscription?.currentPeriodEnd ?? null;
+
+  const handleUsageCardClick = () => {
+    track(TelemetryEvent.USAGE_CARD_CLICKED, {
+      currentEvents,
+      maxEvents,
+      usagePercentage: getUsagePercentage(currentEvents, maxEvents),
+      isLimitReached: getUsageStatus(currentEvents, maxEvents).isComplete,
+    });
+  };
 
   return (
     <Link
       to={ROUTES.SETTINGS_BILLING}
       className="bg-bg-white group relative mb-2 flex h-[58px] cursor-pointer flex-col rounded-lg"
+      onClick={handleUsageCardClick}
     >
       <CardContent
         currentEvents={currentEvents > maxEvents ? maxEvents : currentEvents}
