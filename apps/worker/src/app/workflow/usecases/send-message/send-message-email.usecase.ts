@@ -329,11 +329,7 @@ export class SendMessageEmail extends SendMessageBase {
       return await this.sendErrors(email, integration, message, command);
     }
 
-    await this.sendMessage(integration, mailData, message, command);
-
-    return {
-      status: 'success',
-    };
+    return await this.sendMessage(integration, mailData, message, command);
   }
 
   private async getReplyTo(command: SendMessageCommand, messageId: string): Promise<string | null> {
