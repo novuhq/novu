@@ -442,8 +442,24 @@ export class UserSession {
     return this.jobsService.runAllDelayedJobsImmediately();
   }
 
+  public async awaitAllJobs() {
+    return this.jobsService.awaitAllJobs();
+  }
+
+  public async waitForStorageImmediateJobCompletion() {
+    return this.jobsService.waitForStorageImmediateJobCompletion();
+  }
+
+  public async waitForQueueImmediateJobCompletion() {
+    return this.jobsService.waitForQueueImmediateJobCompletion();
+  }
+
   public async queueGet(jobTopicName: JobTopicNameEnum, getter: 'getDelayed') {
     return await this.jobsService.queueGet(jobTopicName, getter);
+  }
+
+  public async getQueueMetric() {
+    return await this.jobsService.getQueueMetric();
   }
 
   public async applyChanges(where: Partial<ChangeEntity> = {}) {

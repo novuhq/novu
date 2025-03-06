@@ -8,6 +8,7 @@ import {
   ProjectionType,
   QueryOptions,
   QueryWithHelpers,
+  SortOrder,
   Types,
   UpdateQuery,
 } from 'mongoose';
@@ -367,8 +368,9 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
 
     const isDesc = sortDirection === DirectionEnum.DESC;
     const sortValue = isDesc ? -1 : 1;
-
     const paginationQuery: any = { ...query };
+
+    let reverseResults = false;
 
     if (before) {
       paginationQuery.$or = [
@@ -382,6 +384,9 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
           ],
         },
       ];
+
+      // Reverse sort order for backwards pagination
+      reverseResults = true;
     } else if (after) {
       paginationQuery.$or = [
         {
@@ -397,7 +402,10 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
     }
 
     let builder = this.MongooseModel.find(paginationQuery)
-      .sort({ [sortBy]: sortValue, [paginateField]: sortValue })
+      .sort({
+        [sortBy]: reverseResults ? -sortValue : sortValue,
+        [paginateField]: reverseResults ? -sortValue : sortValue,
+      } as Record<string, SortOrder>)
       .limit(limit + 1);
 
     if (enhanceQuery) {
@@ -405,9 +413,24 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
     }
 
     const rawResults = await builder.exec();
-
     const hasExtraItem = rawResults.length > limit;
-    const pageResults = rawResults.slice(0, limit);
+
+    let startIndex = 0;
+    let endIndex = limit;
+    if (reverseResults) {
+      rawResults.reverse();
+
+      /**
+       * If we have an extra item, we need to adjust the start and end index
+       * as it is reversed, the first item is actually the extra item
+       */
+      if (hasExtraItem) {
+        startIndex = 1;
+        endIndex = limit + 1;
+      }
+    }
+
+    const pageResults = rawResults.slice(startIndex, endIndex);
 
     if (pageResults.length === 0) {
       return {

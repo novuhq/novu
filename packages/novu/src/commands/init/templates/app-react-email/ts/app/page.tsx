@@ -185,7 +185,7 @@ export default function Home() {
                         Inbox Playground
                       </a>
                       . You can customize the Inbox component to match your
-                      application's design.
+                      application&apos;s design.
                     </p>
                   </div>
                   <a
@@ -264,7 +264,7 @@ export default function Home() {
                     </li>
                     <li className={styles.bulletItem}>
                       <div className={styles.bullet}></div>- Trigger a reminder
-                      notification if user hasn't completed an action
+                      notification if user has not completed an action
                     </li>
                     <li className={styles.bulletItem}>
                       <div className={styles.bullet}></div>- Schedule
