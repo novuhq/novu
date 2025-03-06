@@ -72,7 +72,7 @@ export class ResourceValidatorService {
     const organization = await this.getOrganization(environment._organizationId);
     const maxWorkflowLimit = await this.getWorkflowLimit(environment, organization);
 
-    if (workflowsCount > maxWorkflowLimit) {
+    if (workflowsCount >= maxWorkflowLimit) {
       throw new BadRequestException({
         message: 'Workflow limit exceeded. Please contact us to support more workflows.',
         currentCount: workflowsCount,

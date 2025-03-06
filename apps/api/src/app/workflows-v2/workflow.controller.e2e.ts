@@ -327,9 +327,8 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
 
       const createWorkflowDto: CreateWorkflowDto = buildCreateWorkflowDto(new Date().toISOString() + 30);
       const res = await workflowsClient.createWorkflow(createWorkflowDto);
-      if (res.isSuccessResult()) {
-        throw new Error('should fail');
-      }
+
+      expect(res.isSuccessResult()).to.be.false;
       const { error } = res;
       expect(error?.status).eq(400);
     });
