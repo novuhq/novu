@@ -82,7 +82,7 @@ export class ResourceValidatorService {
   }
 
   private async getWorkflowLimit(environment: EnvironmentEntity, organization: OrganizationEntity) {
-    const systemLimitMaxWorkflow = await this.getSystemLimitWorkflows(environment, organization);
+    const systemLimitMaxWorkflow = await this.getMaxWorkflowSystemLimit(environment, organization);
 
     // If the system limit is not the default, we need to use it as the absolute limit for special cases instead of the tier limit
     const isSpecialLimit = systemLimitMaxWorkflow !== SYSTEM_LIMITS.WORKFLOWS;
@@ -103,7 +103,7 @@ export class ResourceValidatorService {
     );
   }
 
-  private async getSystemLimitWorkflows(environment, organization) {
+  private async getMaxWorkflowSystemLimit(environment, organization) {
     return await this.featureFlagService.getFlag({
       key: FeatureFlagsKeysEnum.MAX_WORKFLOW_LIMIT_NUMBER,
       defaultValue: SYSTEM_LIMITS.WORKFLOWS,

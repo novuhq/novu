@@ -84,10 +84,8 @@ export class TierRestrictionsValidateUsecase {
     organization: OrganizationEntity,
     stepType: StepTypeEnum.DELAY | StepTypeEnum.DIGEST
   ) {
-    const config = getFlagNameByType(stepType);
-
     const systemLimit = await this.featureFlagsService.getFlag({
-      key: config.system,
+      key: FeatureFlagsKeysEnum.MAX_DEFER_DURATION_IN_MS_NUMBER,
       defaultValue: SYSTEM_LIMITS.DEFER_DURATION_MS,
       environment: { _id: command.environmentId },
       organization,
@@ -100,7 +98,9 @@ export class TierRestrictionsValidateUsecase {
     }
 
     const tierLimit = getFeatureForTierAsNumber(
-      config.tier,
+      stepType === StepTypeEnum.DELAY
+        ? FeatureNameEnum.PLATFORM_MAX_DELAY_DURATION
+        : FeatureNameEnum.PLATFORM_MAX_DIGEST_WINDOW_TIME,
       organization.apiServiceLevel || ApiServiceLevelEnum.FREE,
       true
     );
@@ -206,23 +206,6 @@ function buildIssue(
 
   return null;
 }
-
-const getFlagNameByType = (stepType: StepTypeEnum.DELAY | StepTypeEnum.DIGEST) => {
-  switch (stepType) {
-    case StepTypeEnum.DIGEST:
-      return {
-        tier: FeatureNameEnum.PLATFORM_MAX_DIGEST_WINDOW_TIME,
-        system: FeatureFlagsKeysEnum.MAX_DEFER_DURATION_MS_NUMBER,
-      };
-    case StepTypeEnum.DELAY:
-      return {
-        tier: FeatureNameEnum.PLATFORM_MAX_DELAY_DURATION,
-        system: FeatureFlagsKeysEnum.MAX_DEFER_DURATION_MS_NUMBER,
-      };
-    default:
-      throw new Error(`Invalid step type: ${stepType}`);
-  }
-};
 
 function msToDays(ms: number): number {
   return Math.floor(ms / (1000 * 60 * 60 * 24));
