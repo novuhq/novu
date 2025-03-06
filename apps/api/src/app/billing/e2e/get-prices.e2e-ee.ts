@@ -36,7 +36,15 @@ describe('GetPrices #novu-v2', () => {
 
   const freeMeteredPriceLookupKey = ['free_usage_notifications_10k'];
 
-  const proPrices = [
+  const expectedPrices = [
+    {
+      apiServiceLevel: ApiServiceLevelEnum.FREE,
+      billingInterval: StripeBillingIntervalEnum.MONTH,
+      prices: {
+        licensed: ['free_flat_monthly'],
+        metered: freeMeteredPriceLookupKey,
+      },
+    },
     {
       apiServiceLevel: ApiServiceLevelEnum.PRO,
       billingInterval: StripeBillingIntervalEnum.MONTH,
@@ -53,18 +61,6 @@ describe('GetPrices #novu-v2', () => {
         metered: ['pro_usage_notifications'],
       },
     },
-  ];
-
-  const expectedPrices = [
-    {
-      apiServiceLevel: ApiServiceLevelEnum.FREE,
-      billingInterval: StripeBillingIntervalEnum.MONTH,
-      prices: {
-        licensed: ['free_flat_monthly'],
-        metered: freeMeteredPriceLookupKey,
-      },
-    },
-    ...proPrices,
     {
       apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
       billingInterval: StripeBillingIntervalEnum.MONTH,
