@@ -1,7 +1,9 @@
+/* eslint-disable global-require */
 import { Logger } from '@nestjs/common';
 import sinon from 'sinon';
 import { expect } from 'chai';
 import { ApiServiceLevelEnum, StripeBillingIntervalEnum } from '@novu/shared';
+// eslint-disable-next-line no-restricted-imports
 import { StripeUsageTypeEnum } from '@novu/ee-billing/src/stripe/types';
 
 const mockMonthlyBusinessSubscription = {
