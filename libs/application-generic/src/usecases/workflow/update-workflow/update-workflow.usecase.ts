@@ -333,7 +333,11 @@ export class UpdateWorkflow {
 
   private async validatePayload(command: UpdateWorkflowCommand) {
     if (command.steps) {
-      await this.resourceValidatorService.validateStepsLimit(command.environmentId, command.steps);
+      await this.resourceValidatorService.validateStepsLimit(
+        command.environmentId,
+        command.organizationId,
+        command.steps
+      );
     }
 
     const variants = command.steps ? command.steps?.flatMap((step) => step.variants || []) : [];

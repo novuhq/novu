@@ -1,8 +1,6 @@
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment, useFetchEnvironments } from '@/context/environment/hooks';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { ROUTES } from '@/utils/routes';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { RiBookMarkedLine, RiSparkling2Line } from 'react-icons/ri';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTelemetry } from '../../hooks/use-telemetry';
@@ -24,7 +22,6 @@ export function FreeTierState() {
     organizationId: currentOrganization?._id,
   });
   const { currentEnvironment } = useEnvironment();
-  const is2025Q1TieringEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_2025_Q1_TIERING_ENABLED);
 
   return (
     <div className="flex h-full w-full flex-col items-center justify-center gap-6 px-4">
@@ -97,7 +94,7 @@ export function FreeTierState() {
             }}
             leadingIcon={RiSparkling2Line}
           >
-            {is2025Q1TieringEnabled ? 'Upgrade to Team Tier' : 'Upgrade to Business Tier'}
+            Upgrade to Team Tier
           </Button>
           <Link to={'https://docs.novu.co/concepts/environments'} target="_blank">
             <LinkButton size="sm" leadingIcon={RiBookMarkedLine}>

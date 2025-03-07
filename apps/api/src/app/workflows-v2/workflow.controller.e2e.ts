@@ -318,10 +318,8 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
 
     it('should not allow to create more than 20 workflows for a free organization', async () => {
       // @ts-ignore
-      process.env.IS_2025_Q1_TIERING_ENABLED = 'true';
       await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.FREE);
-      const featureFlags = { [FeatureFlagsKeysEnum.IS_2025_Q1_TIERING_ENABLED]: true };
-      getFeatureForTierAsNumber(FeatureNameEnum.PLATFORM_MAX_WORKFLOWS, ApiServiceLevelEnum.FREE, featureFlags, false);
+      getFeatureForTierAsNumber(FeatureNameEnum.PLATFORM_MAX_WORKFLOWS, ApiServiceLevelEnum.FREE, false);
       for (let i = 0; i < 20; i += 1) {
         const createWorkflowDto: CreateWorkflowDto = buildCreateWorkflowDto(new Date().toISOString() + i);
         const res = await workflowsClient.createWorkflow(createWorkflowDto);
@@ -329,9 +327,8 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
 
       const createWorkflowDto: CreateWorkflowDto = buildCreateWorkflowDto(new Date().toISOString() + 30);
       const res = await workflowsClient.createWorkflow(createWorkflowDto);
-      if (res.isSuccessResult()) {
-        throw new Error('should fail');
-      }
+
+      expect(res.isSuccessResult()).to.be.false;
       const { error } = res;
       expect(error?.status).eq(400);
     });
