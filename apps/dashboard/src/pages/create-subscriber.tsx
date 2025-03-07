@@ -49,7 +49,7 @@ export function CreateSubscriberPage() {
         </SheetContent>
       </Sheet>
 
-      <ProtectionAlert />
+      {ProtectionAlert}
     </>
   );
 }

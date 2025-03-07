@@ -56,6 +56,7 @@ export class LaunchDarklyFeatureFlagsService implements IFeatureFlagsService {
         createdAt: organization.createdAt,
         updatedAt: organization.updatedAt,
         externalId: organization.externalId,
+        apiServiceLevel: organization.apiServiceLevel,
       };
     }
 

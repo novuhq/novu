@@ -488,7 +488,7 @@ describe('Topic Trigger Event #novu-v2', () => {
         id: 'key-2',
       });
 
-      await session.waitForJobCompletion(template?._id, false, 0);
+      await session.waitForJobCompletion(template._id);
 
       for (const subscriber of firstTopicSubscribers) {
         const messages = await messageRepository.findBySubscriberChannel(

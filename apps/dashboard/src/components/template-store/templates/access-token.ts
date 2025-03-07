@@ -4,7 +4,7 @@ import { WorkflowTemplate } from './types';
 export const accessTokenTemplate: WorkflowTemplate = {
   id: 'access-token',
   name: 'Access Token',
-  description: 'Alert users about new access token creation',
+  description: 'Alert users about new access token',
   category: 'authentication',
   isPopular: true,
   workflowDefinition: {
