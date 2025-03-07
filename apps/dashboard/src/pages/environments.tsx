@@ -21,8 +21,7 @@ export function EnvironmentsPage() {
 
   const isTierEligibleForCustomEnvironments = getFeatureForTierAsBoolean(
     FeatureNameEnum.CUSTOM_ENVIRONMENTS_BOOLEAN,
-    subscription?.apiServiceLevel || ApiServiceLevelEnum.FREE,
-    {}
+    subscription?.apiServiceLevel || ApiServiceLevelEnum.FREE
   );
   const isTrialActive = subscription?.trial?.isActive;
   const canAccessEnvironments =

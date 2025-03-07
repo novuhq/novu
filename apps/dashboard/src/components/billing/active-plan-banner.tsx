@@ -2,8 +2,7 @@ import { Badge } from '@/components/primitives/badge';
 import { Card } from '@/components/primitives/card';
 import { Progress } from '@/components/primitives/progress';
 import { Skeleton } from '@/components/primitives/skeleton';
-import { useFeatureFlag } from '@/hooks/use-feature-flag.tsx';
-import { ApiServiceLevelEnum, FeatureFlagsKeysEnum } from '@novu/shared';
+import { ApiServiceLevelEnum } from '@novu/shared';
 import { CalendarDays } from 'lucide-react';
 import { useFetchSubscription } from '../../hooks/use-fetch-subscription';
 import { cn } from '../../utils/ui';
@@ -15,7 +14,6 @@ interface ActivePlanBannerProps {
 
 export function ActivePlanBanner({ selectedBillingInterval }: ActivePlanBannerProps) {
   const { subscription, daysLeft } = useFetchSubscription();
-  const is2025Q1TieringEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_2025_Q1_TIERING_ENABLED);
 
   const getSubscriptionStatus = () => {
     if (subscription?.trial.isActive) {
@@ -72,7 +70,7 @@ export function ActivePlanBanner({ selectedBillingInterval }: ActivePlanBannerPr
   };
 
   const renameBusinessToTeam = (plan: string) => {
-    if (plan === ApiServiceLevelEnum.BUSINESS && is2025Q1TieringEnabled) return 'Team';
+    if (plan === ApiServiceLevelEnum.BUSINESS) return 'Team';
 
     return plan.toLowerCase();
   };
