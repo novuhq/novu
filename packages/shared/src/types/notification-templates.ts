@@ -45,7 +45,7 @@ type ActiveIntegrationStatusWithPrimary = {
  */
 export enum WorkflowTypeEnum {
   REGULAR = 'REGULAR',
-  ECHO = 'ECHO', // @deprecated
+  /** @deprecated Use BRIDGE instead */
   BRIDGE = 'BRIDGE',
 }
 /**
