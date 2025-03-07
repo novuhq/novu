@@ -1,4 +1,4 @@
-import { useNavigateToSubscribersCurrentPage } from '@/components/subscribers/hooks/use-navigate-to-subscribers-current-page';
+import { useSubscribersNavigate } from '@/components/subscribers/hooks/use-subscribers-navigate';
 import { SubscriberDrawer } from '@/components/subscribers/subscriber-drawer';
 import { useOnElementUnmount } from '@/hooks/use-on-element-unmount';
 import { useState } from 'react';
@@ -7,7 +7,7 @@ import { useParams } from 'react-router-dom';
 export function EditSubscriberPage() {
   const { subscriberId } = useParams<{ subscriberId: string }>();
   const [open, setOpen] = useState(true);
-  const navigateToSubscribersCurrentPage = useNavigateToSubscribersCurrentPage();
+  const { navigateToSubscribersCurrentPage } = useSubscribersNavigate();
 
   const { ref: unmountRef } = useOnElementUnmount({
     callback: () => {

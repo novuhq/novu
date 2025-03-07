@@ -16,14 +16,14 @@ import { DirectionEnum } from '@novu/shared';
 import { HTMLAttributes, useEffect, useState } from 'react';
 import { Button } from '../primitives/button';
 import { RiUserSharedLine } from 'react-icons/ri';
-import { useNavigateCreateSubscriberPage } from './hooks/use-navigate-create-subscriber-page';
+import { useSubscribersNavigate } from '@/components/subscribers/hooks/use-subscribers-navigate';
 
 type SubscriberListFiltersProps = HTMLAttributes<HTMLDivElement> &
   Pick<SubscribersUrlState, 'filterValues' | 'handleFiltersChange' | 'resetFilters'>;
 
 const SubscriberListWrapper = (props: SubscriberListFiltersProps) => {
   const { className, children, filterValues, handleFiltersChange, resetFilters, ...rest } = props;
-  const navigateCreateSubscriberPage = useNavigateCreateSubscriberPage();
+  const { navigateToCreateSubscriberPage } = useSubscribersNavigate();
 
   return (
     <div className={cn('flex h-full flex-col p-2', className)} {...rest}>
@@ -41,7 +41,7 @@ const SubscriberListWrapper = (props: SubscriberListFiltersProps) => {
           variant="primary"
           size="xs"
           leadingIcon={RiUserSharedLine}
-          onClick={() => navigateCreateSubscriberPage()}
+          onClick={navigateToCreateSubscriberPage}
         >
           Add subscriber
         </Button>

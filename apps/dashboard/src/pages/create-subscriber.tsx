@@ -1,6 +1,6 @@
 import { Sheet, SheetContent } from '@/components/primitives/sheet';
 import { CreateSubscriberForm } from '@/components/subscribers/create-subscriber-form';
-import { useNavigateToSubscribersCurrentPage } from '@/components/subscribers/hooks/use-navigate-to-subscribers-current-page';
+import { useSubscribersNavigate } from '@/components/subscribers/hooks/use-subscribers-navigate';
 import { useCombinedRefs } from '@/hooks/use-combined-refs';
 import { useFormProtection } from '@/hooks/use-form-protection';
 import { useOnElementUnmount } from '@/hooks/use-on-element-unmount';
@@ -9,7 +9,7 @@ import { useState } from 'react';
 
 export function CreateSubscriberPage() {
   const [open, setOpen] = useState(true);
-  const navigateToSubscribersCurrentPage = useNavigateToSubscribersCurrentPage();
+  const { navigateToSubscribersCurrentPage } = useSubscribersNavigate();
 
   const {
     protectedOnValueChange,
@@ -38,7 +38,7 @@ export function CreateSubscriberPage() {
           })}
         />
         <SheetContent ref={combinedRef}>
-          <CreateSubscriberForm onSuccess={() => navigateToSubscribersCurrentPage()} />
+          <CreateSubscriberForm onSuccess={navigateToSubscribersCurrentPage} />
         </SheetContent>
       </Sheet>
 

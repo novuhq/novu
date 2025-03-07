@@ -26,8 +26,7 @@ import { ComponentProps, useState } from 'react';
 import { RiDeleteBin2Line, RiFileCopyLine, RiMore2Fill, RiPulseFill } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
 import { ExternalToast } from 'sonner';
-import { useNavigateToSubscribersFirstPage } from './hooks/use-navigate-to-subscribers-first-page';
-import { useNavigateEditSubscriberPage } from './hooks/use-navigate-edit-subscriber-page';
+import { useSubscribersNavigate } from '@/components/subscribers/hooks/use-subscribers-navigate';
 
 const toastOptions: ExternalToast = {
   position: 'bottom-right',
@@ -58,8 +57,7 @@ export const SubscriberRow = ({ subscriber, subscribersCount }: SubscriberRowPro
   const { currentEnvironment } = useEnvironment();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const subscriberTitle = getSubscriberTitle(subscriber);
-  const navigateToSubscribersFirstPage = useNavigateToSubscribersFirstPage();
-  const navigateEditSubscriberPage = useNavigateEditSubscriberPage();
+  const { navigateToSubscribersFirstPage, navigateToEditSubscriberPage } = useSubscribersNavigate();
 
   const { deleteSubscriber, isPending: isDeleteSubscriberPending } = useDeleteSubscriber({
     onSuccess: () => {
@@ -101,7 +99,7 @@ export const SubscriberRow = ({ subscriber, subscribersCount }: SubscriberRowPro
         key={subscriber.subscriberId}
         className="group relative isolate cursor-pointer"
         onClick={() => {
-          navigateEditSubscriberPage(subscriber.subscriberId);
+          navigateToEditSubscriberPage(subscriber.subscriberId);
         }}
       >
         <SubscriberTableCell>
