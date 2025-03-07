@@ -1,6 +1,8 @@
 import { testServer } from '@novu/testing';
 import sinon from 'sinon';
 import chai from 'chai';
+import { Connection } from 'mongoose';
+import { DalService } from '@novu/dal';
 import { bootstrap } from '../src/bootstrap';
 
 let connection: Connection;
@@ -10,7 +12,6 @@ async function getConnection() {
   if (!connection) {
     connection = await dalService.connect(process.env.MONGO_URL);
   }
-
 }
 
 async function dropDatabase() {
