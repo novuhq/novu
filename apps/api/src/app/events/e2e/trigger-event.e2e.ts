@@ -3566,8 +3566,6 @@ async function createSimpleWorkflow(session) {
 }
 
 function simpleTrigger(novuClient: Novu, template, subscriberID: string) {
-  console.log(`Triggering workflow${subscriberID}`);
-
   return novuClient.trigger({
     workflowId: template.triggers[0].identifier,
     to: [subscriberID],

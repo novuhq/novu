@@ -214,7 +214,6 @@ export class SubscribersV1Controller {
         locale: body.locale,
         data: body.data,
         channels: body.channels,
-        isUpsert: true,
       })
     );
   }

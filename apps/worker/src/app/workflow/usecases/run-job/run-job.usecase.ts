@@ -111,6 +111,19 @@ export class RunJob {
       if (sendMessageResult.status === 'success') {
         await this.jobRepository.updateStatus(job._environmentId, job._id, JobStatusEnum.COMPLETED);
       } else if (sendMessageResult.status === 'failed') {
+        await this.jobRepository.update(
+          {
+            _environmentId: job._environmentId,
+            _id: job._id,
+          },
+          {
+            $set: {
+              status: JobStatusEnum.FAILED,
+              error: sendMessageResult.reason,
+            },
+          }
+        );
+
         if (shouldHaltOnStepFailure(job)) {
           shouldQueueNextJob = false;
           await this.jobRepository.cancelPendingJobs({

@@ -11,7 +11,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { CreateOrUpdateSubscriberUseCase, ExternalApiAccessible, UserSession } from '@novu/application-generic';
+import { ExternalApiAccessible, UserSession } from '@novu/application-generic';
 import { ApiRateLimitCategoryEnum, UserSessionData } from '@novu/shared';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
 import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
@@ -37,8 +37,9 @@ import { PatchSubscriberPreferencesDto } from './dtos/patch-subscriber-preferenc
 import { UpdateSubscriberPreferencesCommand } from './usecases/update-subscriber-preferences/update-subscriber-preferences.command';
 import { UpdateSubscriberPreferences } from './usecases/update-subscriber-preferences/update-subscriber-preferences.usecase';
 import { ThrottlerCategory } from '../rate-limiting/guards/throttler.decorator';
+import { CreateSubscriber } from './usecases/create-subscriber/create-subscriber.usecase';
+import { CreateSubscriberCommand } from './usecases/create-subscriber/create-subscriber.command';
 import { CreateSubscriberRequestDto } from './dtos/create-subscriber.dto';
-import { mapSubscriberEntityToResponseDto, mapSubscriberRequestToCommand } from './utils/create-subscriber.mapper';
 
 @ThrottlerCategory(ApiRateLimitCategoryEnum.CONFIGURATION)
 @Controller({ path: '/subscribers', version: '2' })
@@ -54,7 +55,7 @@ export class SubscribersController {
     private removeSubscriberUsecase: RemoveSubscriber,
     private getSubscriberPreferencesUsecase: GetSubscriberPreferences,
     private updateSubscriberPreferencesUsecase: UpdateSubscriberPreferences,
-    private createOrUpdateSubscriberUseCase: CreateOrUpdateSubscriberUseCase
+    private createSubscriberUsecase: CreateSubscriber
   ) {}
 
   @Get('')
@@ -118,10 +119,13 @@ export class SubscribersController {
     @UserSession() user: UserSessionData,
     @Body() body: CreateSubscriberRequestDto
   ): Promise<SubscriberResponseDto> {
-    const command = mapSubscriberRequestToCommand(body, user);
-    const subscriberEntity = await this.createOrUpdateSubscriberUseCase.execute(command);
-
-    return mapSubscriberEntityToResponseDto(subscriberEntity);
+    return await this.createSubscriberUsecase.execute(
+      CreateSubscriberCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        createSubscriberRequestDto: body,
+      })
+    );
   }
 
   @Patch('/:subscriberId')
