@@ -45,7 +45,7 @@ export const useSubscribersNavigate = () => {
       newParams.delete('after');
       newParams.delete('before');
 
-      // reset the query to trigger a subscriberstable loading state
+      // reset the query to trigger a subscribers table loading state
       queryClient.resetQueries({
         queryKey: [QueryKeys.fetchSubscribers],
       });
