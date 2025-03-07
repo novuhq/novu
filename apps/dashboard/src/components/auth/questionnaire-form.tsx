@@ -12,7 +12,13 @@ import { hubspotCookie } from '@/utils/cookies';
 import { ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { useOrganization, useUser } from '@clerk/clerk-react';
-import { CompanySizeEnum, JobTitleEnum, jobTitleToLabelMapper, OrganizationTypeEnum } from '@novu/shared';
+import {
+  CompanySizeEnum,
+  JobTitleEnum,
+  jobTitleToLabelMapper,
+  NewDashboardOptInStatusEnum,
+  OrganizationTypeEnum,
+} from '@novu/shared';
 import { useMutation } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
 import React from 'react';
@@ -71,7 +77,7 @@ export function QuestionnaireForm() {
     if (!user?.unsafeMetadata?.newDashboardOptInStatus) {
       await user?.update({
         unsafeMetadata: {
-          newDashboardOptInStatus: 'opted_in',
+          newDashboardOptInStatus: NewDashboardOptInStatusEnum.OPTED_IN,
         },
       });
       await user?.reload();
