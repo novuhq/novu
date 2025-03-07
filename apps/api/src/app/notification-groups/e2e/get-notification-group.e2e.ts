@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { UserSession } from '@novu/testing';
 
-describe('Get Notification Group - /notification-groups/:id (GET) #novu-v1', async () => {
+describe('Get Notification Group - /notification-groups/:id (GET) #novu-v0', async () => {
   let session: UserSession;
 
   const testTemplate = {
