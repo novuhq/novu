@@ -11,8 +11,21 @@ import { ApiServiceLevelEnum, FeatureFlagsKeysEnum, FeatureNameEnum, getFeatureF
 import { NotificationStep } from '../usecases';
 import { FeatureFlagsService } from './feature-flags';
 
-export const MAX_WORKFLOWS_LIMIT = 100;
-export const MAX_STEPS_PER_WORKFLOW = 20;
+export const DAY_IN_MS = 24 * 60 * 60 * 1000;
+
+/* The absolute maximum values allowed by the system */
+export const SYSTEM_LIMITS = {
+  WORKFLOWS: 100,
+  STEPS_PER_WORKFLOW: 20,
+  DEFER_DURATION_MS: 180 * DAY_IN_MS,
+} as const;
+
+/* The threshold below which validation is skipped */
+export const MIN_VALIDATION_LIMITS = {
+  WORKFLOWS: 20,
+  STEPS_PER_WORKFLOW: 20,
+  DEFER_DURATION_MS: DAY_IN_MS,
+} as const;
 
 @Injectable()
 export class ResourceValidatorService {
@@ -23,22 +36,25 @@ export class ResourceValidatorService {
     private featureFlagService: FeatureFlagsService
   ) {}
 
-  async validateStepsLimit(environmentId: string, steps: NotificationStep[]): Promise<void> {
-    const isMaxStepsPerWorkflowEnabled = await this.featureFlagService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_MAX_STEPS_PER_WORKFLOW_ENABLED,
-      environment: { _id: environmentId },
-      defaultValue: false,
-    });
-
-    if (!isMaxStepsPerWorkflowEnabled) {
+  async validateStepsLimit(environmentId: string, organizationId: string, steps: NotificationStep[]): Promise<void> {
+    if (steps.length < MIN_VALIDATION_LIMITS.STEPS_PER_WORKFLOW) {
       return;
     }
 
-    if (steps.length > MAX_STEPS_PER_WORKFLOW) {
+    const organization = await this.getOrganization(organizationId);
+
+    const maxStepsPerWorkflowNumber = await this.featureFlagService.getFlag({
+      key: FeatureFlagsKeysEnum.MAX_STEPS_PER_WORKFLOW_LIMIT_NUMBER,
+      environment: { _id: environmentId },
+      organization,
+      defaultValue: SYSTEM_LIMITS.STEPS_PER_WORKFLOW,
+    });
+
+    if (steps.length > maxStepsPerWorkflowNumber) {
       throw new BadRequestException({
-        message: `Workflow steps limit exceeded. Maximum allowed steps is ${MAX_STEPS_PER_WORKFLOW}, but got ${steps.length} steps.`,
+        message: `Workflow steps limit exceeded. Maximum allowed steps is ${maxStepsPerWorkflowNumber}, but got ${steps.length} steps.`,
         providedStepsCount: steps.length,
-        maxSteps: MAX_STEPS_PER_WORKFLOW,
+        maxSteps: maxStepsPerWorkflowNumber,
       });
     }
   }
@@ -48,9 +64,12 @@ export class ResourceValidatorService {
       _environmentId: environmentId,
     });
 
+    if (workflowsCount < MIN_VALIDATION_LIMITS.WORKFLOWS) {
+      return;
+    }
+
     const environment = await this.getEnvironment(environmentId);
     const organization = await this.getOrganization(environment._organizationId);
-
     const maxWorkflowLimit = await this.getWorkflowLimit(environment, organization);
 
     if (workflowsCount >= maxWorkflowLimit) {
@@ -63,19 +82,23 @@ export class ResourceValidatorService {
   }
 
   private async getWorkflowLimit(environment: EnvironmentEntity, organization: OrganizationEntity) {
-    const maxWorkflowSystemLimit = await this.getMaxWorkflowSystemLimit(environment, organization);
+    const systemLimitMaxWorkflow = await this.getMaxWorkflowSystemLimit(environment, organization);
+
+    // If the system limit is not the default, we need to use it as the absolute limit for special cases instead of the tier limit
+    const isSpecialLimit = systemLimitMaxWorkflow !== SYSTEM_LIMITS.WORKFLOWS;
+    if (isSpecialLimit) {
+      return systemLimitMaxWorkflow;
+    }
+
     const maxWorkflowsTierLimit = await this.getMaxWorkflowsTierLimit(environment, organization);
 
-    return Math.min(maxWorkflowSystemLimit, maxWorkflowsTierLimit);
+    return Math.min(systemLimitMaxWorkflow, maxWorkflowsTierLimit);
   }
 
   private async getMaxWorkflowsTierLimit(environment, organization) {
-    const q1TieringFlagValue = await this.getQ1TieringFlag(environment, organization);
-
     return getFeatureForTierAsNumber(
       FeatureNameEnum.PLATFORM_MAX_WORKFLOWS,
       organization.apiServiceLevel || ApiServiceLevelEnum.FREE,
-      { [FeatureFlagsKeysEnum.IS_2025_Q1_TIERING_ENABLED]: q1TieringFlagValue },
       false
     );
   }
@@ -83,16 +106,7 @@ export class ResourceValidatorService {
   private async getMaxWorkflowSystemLimit(environment, organization) {
     return await this.featureFlagService.getFlag({
       key: FeatureFlagsKeysEnum.MAX_WORKFLOW_LIMIT_NUMBER,
-      defaultValue: MAX_WORKFLOWS_LIMIT,
-      environment,
-      organization,
-    });
-  }
-
-  private async getQ1TieringFlag(environment: EnvironmentEntity, organization: OrganizationEntity): Promise<boolean> {
-    return await this.featureFlagService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_2025_Q1_TIERING_ENABLED,
-      defaultValue: true,
+      defaultValue: SYSTEM_LIMITS.WORKFLOWS,
       environment,
       organization,
     });

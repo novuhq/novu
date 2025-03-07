@@ -103,7 +103,7 @@ export function SubscriberTabs(props: SubscriberTabsProps) {
       </TabsContent>
       <Separator />
 
-      <ProtectionAlert />
+      {ProtectionAlert}
     </Tabs>
   );
 }

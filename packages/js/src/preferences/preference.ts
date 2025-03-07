@@ -45,7 +45,7 @@ export class Preference {
 
   update({
     channels,
-    // @deprecated use channels instead
+    /** @deprecated Use channels instead */
     channelPreferences,
   }: Prettify<Pick<UpdatePreferencesArgs, 'channels' | 'channelPreferences'>>): Result<Preference> {
     return updatePreference({

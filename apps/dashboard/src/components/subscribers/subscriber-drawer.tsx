@@ -44,7 +44,7 @@ export const SubscriberDrawer = forwardRef<HTMLDivElement, SubscriberDrawerProps
         </SheetContent>
       </Sheet>
 
-      <ProtectionAlert />
+      {ProtectionAlert}
     </>
   );
 });

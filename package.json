@@ -19,7 +19,7 @@
     "build:worker": "nx build @novu/worker",
     "build:ws": "nx build @novu/ws",
     "build": "nx run-many --target=build --all --exclude=nextjs",
-    "clean": "lerna clean --yes && rimraf node_modules",
+    "clean": "rimraf **/build **/dist **/node_modules",
     "commit": "cz",
     "dev-environment-setup": "sh ./scripts/dev-environment-setup.sh",
     "docker:build": "pnpm -r --if-present --parallel docker:build",

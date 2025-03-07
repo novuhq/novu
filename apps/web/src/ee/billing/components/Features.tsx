@@ -1,9 +1,8 @@
 import { css } from '@novu/novui/css';
 import { Text } from '@novu/novui';
 import styled from '@emotion/styled';
-import { ApiServiceLevelEnum, FeatureFlagsKeysEnum } from '@novu/shared';
+import { ApiServiceLevelEnum } from '@novu/shared';
 import { IconCheck as _IconCheck } from '@novu/novui/icons';
-import { useFeatureFlag } from '../../../hooks/useFeatureFlag';
 
 const TitleCell = styled.div`
   display: flex;
@@ -62,240 +61,7 @@ type Feature<T extends LegacySupportedPlansEnum | SupportedPlansEnum> = {
   };
 };
 
-const featuresLegacy: Feature<LegacySupportedPlansEnum>[] = [
-  {
-    label: 'Platform',
-    isTitle: true,
-    values: {
-      [LegacySupportedPlansEnum.FREE]: { value: '' },
-      [LegacySupportedPlansEnum.BUSINESS]: { value: '' },
-      [LegacySupportedPlansEnum.ENTERPRISE]: { value: '' },
-    },
-  },
-  {
-    label: 'Monthly events',
-    values: {
-      [LegacySupportedPlansEnum.FREE]: { value: 'Up to 30,000' },
-      [LegacySupportedPlansEnum.BUSINESS]: { value: 'Up to 250,000' },
-      [LegacySupportedPlansEnum.ENTERPRISE]: { value: '5,000,000' },
-    },
-  },
-  {
-    label: 'Additional Events',
-    values: {
-      [LegacySupportedPlansEnum.FREE]: { value: '-' },
-      [LegacySupportedPlansEnum.BUSINESS]: { value: '$0.0012 per event' },
-      [LegacySupportedPlansEnum.ENTERPRISE]: { value: 'Custom' },
-    },
-  },
-  {
-    label: 'Email, InApp, SMS, Chat, Push Channels',
-    values: {
-      [LegacySupportedPlansEnum.FREE]: { value: <IconCheck /> },
-      [LegacySupportedPlansEnum.BUSINESS]: { value: <IconCheck /> },
-      [LegacySupportedPlansEnum.ENTERPRISE]: { value: <IconCheck /> },
-    },
-  },
-  {
-    label: 'Notification subscribers',
-    values: {
-      [LegacySupportedPlansEnum.FREE]: { value: 'Unlimited' },
-      [LegacySupportedPlansEnum.BUSINESS]: { value: 'Unlimited' },
-      [LegacySupportedPlansEnum.ENTERPRISE]: { value: 'Unlimited' },
-    },
-  },
-  {
-    label: 'Framework',
-    isTitle: true,
-    values: {
-      [LegacySupportedPlansEnum.FREE]: { value: '' },
-      [LegacySupportedPlansEnum.BUSINESS]: { value: '' },
-      [LegacySupportedPlansEnum.ENTERPRISE]: { value: '' },
-    },
-  },
-  {
-    label: 'Total workflows',
-    values: {
-      [LegacySupportedPlansEnum.FREE]: { value: 'Unlimited' },
-      [LegacySupportedPlansEnum.BUSINESS]: { value: 'Unlimited' },
-      [LegacySupportedPlansEnum.ENTERPRISE]: { value: 'Unlimited' },
-    },
-  },
-  {
-    label: 'Provider integrations',
-    values: {
-      [LegacySupportedPlansEnum.FREE]: { value: 'Unlimited' },
-      [LegacySupportedPlansEnum.BUSINESS]: { value: 'Unlimited' },
-      [LegacySupportedPlansEnum.ENTERPRISE]: { value: 'Unlimited' },
-    },
-  },
-  {
-    label: 'Activity Feed retention',
-    values: {
-      [LegacySupportedPlansEnum.FREE]: { value: '30 days' },
-      [LegacySupportedPlansEnum.BUSINESS]: { value: '90 days' },
-      [LegacySupportedPlansEnum.ENTERPRISE]: { value: 'Unlimited' },
-    },
-  },
-  {
-    label: 'Digests',
-    values: {
-      [LegacySupportedPlansEnum.FREE]: { value: <IconCheck /> },
-      [LegacySupportedPlansEnum.BUSINESS]: { value: <IconCheck /> },
-      [LegacySupportedPlansEnum.ENTERPRISE]: { value: <IconCheck /> },
-    },
-  },
-  {
-    label: 'Step controls',
-    values: {
-      [LegacySupportedPlansEnum.FREE]: { value: <IconCheck /> },
-      [LegacySupportedPlansEnum.BUSINESS]: { value: <IconCheck /> },
-      [LegacySupportedPlansEnum.ENTERPRISE]: { value: <IconCheck /> },
-    },
-  },
-  {
-    label: 'Inbox',
-    isTitle: true,
-    values: {
-      [LegacySupportedPlansEnum.FREE]: { value: '' },
-      [LegacySupportedPlansEnum.BUSINESS]: { value: '' },
-      [LegacySupportedPlansEnum.ENTERPRISE]: { value: '' },
-    },
-  },
-  {
-    label: 'Inbox component',
-    values: {
-      [LegacySupportedPlansEnum.FREE]: { value: <IconCheck /> },
-      [LegacySupportedPlansEnum.BUSINESS]: { value: <IconCheck /> },
-      [LegacySupportedPlansEnum.ENTERPRISE]: { value: <IconCheck /> },
-    },
-  },
-  {
-    label: 'User preferences component',
-    values: {
-      [LegacySupportedPlansEnum.FREE]: { value: <IconCheck /> },
-      [LegacySupportedPlansEnum.BUSINESS]: { value: <IconCheck /> },
-      [LegacySupportedPlansEnum.ENTERPRISE]: { value: <IconCheck /> },
-    },
-  },
-  {
-    label: 'Remove Novu branding',
-    values: {
-      [LegacySupportedPlansEnum.FREE]: { value: '-' },
-      [LegacySupportedPlansEnum.BUSINESS]: { value: <IconCheck /> },
-      [LegacySupportedPlansEnum.ENTERPRISE]: { value: <IconCheck /> },
-    },
-  },
-  {
-    label: 'Account administration and security',
-    isTitle: true,
-    values: {
-      [LegacySupportedPlansEnum.FREE]: { value: '' },
-      [LegacySupportedPlansEnum.BUSINESS]: { value: '' },
-      [LegacySupportedPlansEnum.ENTERPRISE]: { value: '' },
-    },
-  },
-  {
-    label: 'Team members',
-    values: {
-      [LegacySupportedPlansEnum.FREE]: { value: '3' },
-      [LegacySupportedPlansEnum.BUSINESS]: { value: 'Unlimited' },
-      [LegacySupportedPlansEnum.ENTERPRISE]: { value: 'Unlimited' },
-    },
-  },
-  {
-    label: 'RBAC',
-    values: {
-      [LegacySupportedPlansEnum.FREE]: { value: '-' },
-      [LegacySupportedPlansEnum.BUSINESS]: { value: <IconCheck /> },
-      [LegacySupportedPlansEnum.ENTERPRISE]: { value: <IconCheck /> },
-    },
-  },
-  {
-    label: 'GDPR compliance',
-    values: {
-      [LegacySupportedPlansEnum.FREE]: { value: <IconCheck /> },
-      [LegacySupportedPlansEnum.BUSINESS]: { value: <IconCheck /> },
-      [LegacySupportedPlansEnum.ENTERPRISE]: { value: <IconCheck /> },
-    },
-  },
-  {
-    label: 'SAML SSO and Enterprise SSO providers',
-    values: {
-      [LegacySupportedPlansEnum.FREE]: { value: '-' },
-      [LegacySupportedPlansEnum.BUSINESS]: { value: '-' },
-      [LegacySupportedPlansEnum.ENTERPRISE]: { value: <IconCheck /> },
-    },
-  },
-  {
-    label: 'Support and account management',
-    isTitle: true,
-    values: {
-      [LegacySupportedPlansEnum.FREE]: { value: '' },
-      [LegacySupportedPlansEnum.BUSINESS]: { value: '' },
-      [LegacySupportedPlansEnum.ENTERPRISE]: { value: '' },
-    },
-  },
-  {
-    label: 'Support SLA',
-    values: {
-      [LegacySupportedPlansEnum.FREE]: { value: '-' },
-      [LegacySupportedPlansEnum.BUSINESS]: { value: '48 hours' },
-      [LegacySupportedPlansEnum.ENTERPRISE]: { value: '24 hours' },
-    },
-  },
-  {
-    label: 'Support channels',
-    values: {
-      [LegacySupportedPlansEnum.FREE]: { value: 'Community & Discord' },
-      [LegacySupportedPlansEnum.BUSINESS]: { value: 'Slack & Email' },
-      [LegacySupportedPlansEnum.ENTERPRISE]: { value: 'Dedicated' },
-    },
-  },
-  {
-    label: 'Legal & Vendor management',
-    isTitle: true,
-    values: {
-      [LegacySupportedPlansEnum.FREE]: { value: '' },
-      [LegacySupportedPlansEnum.BUSINESS]: { value: '' },
-      [LegacySupportedPlansEnum.ENTERPRISE]: { value: '' },
-    },
-  },
-  {
-    label: 'Payment method',
-    values: {
-      [LegacySupportedPlansEnum.FREE]: { value: '-' },
-      [LegacySupportedPlansEnum.BUSINESS]: { value: 'Credit card only' },
-      [LegacySupportedPlansEnum.ENTERPRISE]: { value: 'Credit card & PO and Invoicing' },
-    },
-  },
-  {
-    label: 'Terms of service',
-    values: {
-      [LegacySupportedPlansEnum.FREE]: { value: 'Standard' },
-      [LegacySupportedPlansEnum.BUSINESS]: { value: 'Standard' },
-      [LegacySupportedPlansEnum.ENTERPRISE]: { value: 'Custom' },
-    },
-  },
-  {
-    label: 'DPA',
-    values: {
-      [LegacySupportedPlansEnum.FREE]: { value: 'Standard' },
-      [LegacySupportedPlansEnum.BUSINESS]: { value: 'Standard' },
-      [LegacySupportedPlansEnum.ENTERPRISE]: { value: 'Custom' },
-    },
-  },
-  {
-    label: 'Security review',
-    values: {
-      [LegacySupportedPlansEnum.FREE]: { value: 'SOC 2 and ISO 27001 upon request' },
-      [LegacySupportedPlansEnum.BUSINESS]: { value: 'Custom' },
-      [LegacySupportedPlansEnum.ENTERPRISE]: { value: 'Custom' },
-    },
-  },
-];
-
-const featuresNew: Feature<SupportedPlansEnum>[] = [
+const featuresDefinition: Feature<SupportedPlansEnum>[] = [
   {
     label: 'Platform',
     isTitle: true,
@@ -609,15 +375,9 @@ const featuresNew: Feature<SupportedPlansEnum>[] = [
 ];
 
 export const Features = () => {
-  const is2025Q1TieringEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_2025_Q1_TIERING_ENABLED);
-
-  const features = is2025Q1TieringEnabled
-    ? featuresNew
-    : (featuresLegacy as Feature<LegacySupportedPlansEnum | SupportedPlansEnum>[]);
-
   return (
     <div className={styles.featureList}>
-      {features.map((feature, index) => (
+      {featuresDefinition.map((feature, index) => (
         <FeatureRow key={index} feature={feature} index={index} />
       ))}
     </div>
