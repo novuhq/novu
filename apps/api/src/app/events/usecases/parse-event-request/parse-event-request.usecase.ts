@@ -237,16 +237,16 @@ export class ParseEventRequest {
     });
 
     if ('to' in commandArgs) {
-      const { validSubscribers, invalidSubscribers } = this.parseRecipients(commandArgs.to);
+      const { validRecipients, invalidRecipients } = this.parseRecipients(commandArgs.to);
 
-      if (invalidSubscribers.length > 0 && isDryRun) {
+      if (invalidRecipients.length > 0 && isDryRun) {
         Logger.warn(
-          `[Dry run] Invalid recipients: ${invalidSubscribers.map((recipient) => JSON.stringify(recipient)).join(', ')}`,
+          `[Dry run] Invalid recipients: ${invalidRecipients.map((recipient) => JSON.stringify(recipient)).join(', ')}`,
           'ParseEventRequest'
         );
       }
 
-      if (!validSubscribers && !isDryRun) {
+      if (!validRecipients && !isDryRun) {
         return {
           acknowledged: true,
           status: TriggerEventStatusEnum.INVALID_RECIPIENTS,
@@ -254,8 +254,8 @@ export class ParseEventRequest {
         };
       }
 
-      if (!isDryRun && validSubscribers) {
-        commandArgs.to = validSubscribers as TriggerRecipientsPayload;
+      if (!isDryRun && validRecipients) {
+        commandArgs.to = validRecipients as TriggerRecipientsPayload;
       }
     }
 
@@ -384,19 +384,19 @@ export class ParseEventRequest {
     // Try to validate the whole input first
     const parsed = RecipientsSchema.safeParse(input);
     if (parsed.success) {
-      return { validSubscribers: parsed.data, invalidSubscribers: [] };
+      return { validRecipients: parsed.data, invalidRecipients: [] };
     }
 
     // If input is an array, validate each item
     if (Array.isArray(input)) {
       const validValues = input.map((item) => this.validateItem(item, invalidValues)).filter(Boolean);
 
-      return { validSubscribers: validValues, invalidSubscribers: invalidValues };
+      return { validRecipients: validValues, invalidRecipients: invalidValues };
     }
 
     // If input is a single item
     const validItem = this.validateItem(input, invalidValues);
 
-    return { validSubscribers: validItem, invalidSubscribers: invalidValues };
+    return { validRecipients: validItem, invalidRecipients: invalidValues };
   }
 }

@@ -2,8 +2,7 @@ import { SUBSCRIBER_ID_REGEX } from '@novu/shared';
 import { z } from 'zod';
 
 export const subscriberIdSchema = z.string().trim().regex(SUBSCRIBER_ID_REGEX);
-export const singleSubscriberSchema = subscriberIdSchema;
 export const subscriberObjectSchema = z.object({ subscriberId: subscriberIdSchema }).passthrough();
 export const topicSchema = z.object({ topicKey: subscriberIdSchema }).passthrough();
-export const RecipientSchema = z.union([singleSubscriberSchema, subscriberObjectSchema, topicSchema]);
+export const RecipientSchema = z.union([subscriberIdSchema, subscriberObjectSchema, topicSchema]);
 export const RecipientsSchema = z.union([RecipientSchema, z.array(RecipientSchema)]);

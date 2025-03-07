@@ -47,7 +47,6 @@ export const buildDynamicFormSchema = ({
 
     const isRequired = requiredFields.includes(key);
     let zodValue: z.ZodString | z.ZodNumber | z.ZodOptional<z.ZodString | z.ZodNumber>;
-    console.log({ value, key });
 
     if (value.type === 'string') {
       zodValue = z.string().min(1);
