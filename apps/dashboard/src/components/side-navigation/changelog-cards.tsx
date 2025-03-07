@@ -16,12 +16,6 @@ type Changelog = {
   published: boolean;
 };
 
-declare global {
-  interface UserUnsafeMetadata {
-    dismissed_changelogs?: string[];
-  }
-}
-
 const CONSTANTS = {
   CHANGELOG_API_URL: 'https://productlane.com/api/v1/changelogs/f13f1996-c9b0-4fea-8ee7-2c3faf6a832d',
   NUMBER_OF_CARDS: 3,
