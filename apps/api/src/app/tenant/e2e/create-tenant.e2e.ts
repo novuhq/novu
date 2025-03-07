@@ -15,7 +15,7 @@ function assertValidationMessages(e: AxiosError<any, any>, field: string, msg1: 
   expect(messages).to.be.an('array').that.includes(msg1);
 }
 
-describe('Create Tenant - /tenants (POST) #novu-v1', function () {
+describe('Create Tenant - /tenants (POST) #novu-v0', function () {
   let session: UserSession;
   const tenantRepository = new TenantRepository();
 

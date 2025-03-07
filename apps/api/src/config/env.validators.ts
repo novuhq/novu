@@ -19,8 +19,6 @@ export const envValidators = {
   REDIS_TLS: json({ default: undefined }),
   JWT_SECRET: str(),
   SENDGRID_API_KEY: str({ default: '' }),
-  /** @deprecated - use `MONGO_AUTO_CREATE_INDEXES` instead */
-  AUTO_CREATE_INDEXES: bool({ default: false }),
   MONGO_AUTO_CREATE_INDEXES: bool({ default: false }),
   MONGO_MAX_IDLE_TIME_IN_MS: num({ default: 1000 * 30 }),
   MONGO_MAX_POOL_SIZE: num({ default: 50 }),

@@ -2409,6 +2409,42 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       expect(messages[0].subject).to.equal('Better Variant subject');
     });
 
+    describe('Post Mortem', function () {
+      // Repeat the test 3 times
+
+      it(`should not create multiple subscribers when multiple triggers are made        
+         with the same not created subscribers `, async () => {
+        // Access subscriberRepository and print database indexes
+        console.log('process.env', process.env);
+        console.log('Accessing subscriberRepository indexes...');
+        const subscriberModel = subscriberRepository._model;
+        subscriberModel.collection
+          .getIndexes()
+          .then((indexes) => {
+            console.log('Subscriber Collection Indexes:');
+            console.log(JSON.stringify(indexes, null, 2));
+          })
+          .catch((error) => {
+            console.error('Error fetching indexes:', error);
+          });
+        template = await createSimpleWorkflow(session);
+        for (let i = 0; i < 3; i += 1) {
+          const subscriberId = `not-created-twice-subscriber${i}`;
+          await Promise.all([
+            simpleTrigger(novuClient, template, subscriberId),
+            simpleTrigger(novuClient, template, subscriberId),
+          ]);
+          await session.waitForJobCompletion(template._id);
+
+          const subscribers = await subscriberRepository.find({
+            _environmentId: session.environment._id,
+            subscriberId,
+          });
+
+          expect(subscribers.length).to.equal(1);
+        }
+      });
+    });
     describe('filters logic', () => {
       beforeEach(async () => {
         subscriberService = new SubscribersService(session.organization._id, session.environment._id);

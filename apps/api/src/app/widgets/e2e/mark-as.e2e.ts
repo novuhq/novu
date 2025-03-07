@@ -6,7 +6,7 @@ import { expect } from 'chai';
 import { Novu } from '@novu/api';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-describe('Mark as Seen - /widgets/messages/markAs (POST) #novu-v1', async () => {
+describe('Mark as Seen - /widgets/messages/markAs (POST) #novu-v0', async () => {
   const messageRepository = new MessageRepository();
   let session: UserSession;
   let template: NotificationTemplateEntity;

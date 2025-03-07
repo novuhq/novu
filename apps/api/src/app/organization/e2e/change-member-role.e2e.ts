@@ -4,7 +4,7 @@ import { MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
 import { expect } from 'chai';
 import { describe } from 'mocha';
 
-describe('Change member role - /organizations/members/:memberId/role (PUT) #novu-v1-os', async () => {
+describe('Change member role - /organizations/members/:memberId/role (PUT) #novu-v0-os', async () => {
   const memberRepository = new CommunityMemberRepository();
   let session: UserSession;
   let user2: UserSession;

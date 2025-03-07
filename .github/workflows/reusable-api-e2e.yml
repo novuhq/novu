@@ -61,7 +61,7 @@ jobs:
       - name: Run Novu V1 E2E tests
         if: ${{ !inputs.ee }}
         run: |
-          pnpm --filter @novu/api-service test:e2e:novu-v1
+          pnpm --filter @novu/api-service test:e2e:novu-v0
 
       - name: Run Novu V2 E2E tests
         if: ${{ inputs.ee }}
