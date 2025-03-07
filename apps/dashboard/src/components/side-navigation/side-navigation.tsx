@@ -4,6 +4,7 @@ import { useEnvironment } from '@/context/environment/hooks';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
+import { ApiServiceLevelEnum } from '@novu/shared';
 import * as Sentry from '@sentry/react';
 import { ReactNode } from 'react';
 import {
@@ -24,6 +25,7 @@ import { FreeTrialCard } from './free-trial-card';
 import { GettingStartedMenuItem } from './getting-started-menu-item';
 import { NavigationLink } from './navigation-link';
 import { OrganizationDropdown } from './organization-dropdown';
+import { UsageCard } from './usage-card';
 
 const NavigationGroup = ({ children, label }: { children: ReactNode; label?: string }) => {
   return (
@@ -36,7 +38,8 @@ const NavigationGroup = ({ children, label }: { children: ReactNode; label?: str
 
 export const SideNavigation = () => {
   const { subscription, daysLeft, isLoading: isLoadingSubscription } = useFetchSubscription();
-  const isFreeTrialActive = subscription?.trial.isActive;
+  const isTrialActive = subscription?.trial.isActive;
+  const isFreeTier = subscription?.apiServiceLevel === ApiServiceLevelEnum.FREE;
 
   const { currentEnvironment, environments, switchEnvironment } = useEnvironment();
   const track = useTelemetry();
@@ -112,10 +115,12 @@ export const SideNavigation = () => {
           </div>
 
           <div className="relative mt-auto gap-8 pt-4">
-            {!isFreeTrialActive && !isLoadingSubscription && <ChangelogStack />}{' '}
-            {isFreeTrialActive && !isLoadingSubscription && (
+            {!isTrialActive && !isLoadingSubscription && <ChangelogStack />}
+            {isTrialActive && !isLoadingSubscription && (
               <FreeTrialCard subscription={subscription} daysLeft={daysLeft} />
             )}
+
+            {!isTrialActive && isFreeTier && !isLoadingSubscription && <UsageCard subscription={subscription} />}
             <NavigationGroup>
               <button onClick={showPlainLiveChat} className="w-full">
                 <NavigationLink>

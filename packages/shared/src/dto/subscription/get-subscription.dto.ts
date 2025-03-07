@@ -61,4 +61,10 @@ export type GetSubscriptionDto = {
      */
     daysTotal: number;
   };
+  /**
+   * The date the subscription will be canceled at in UTC ISO 8601 format, or null if the subscription is not canceled.
+   * @example 2021-01-01T00:00:00.000Z
+   * @see https://en.wikipedia.org/wiki/ISO_8601
+   */
+  cancelAt: string | null;
 };

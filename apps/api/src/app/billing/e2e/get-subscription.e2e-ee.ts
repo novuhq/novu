@@ -131,6 +131,7 @@ describe('GetSubscription #novu-v2', async () => {
         isActive: false,
         daysTotal: 0,
       },
+      cancelAt: null,
     });
   });
 

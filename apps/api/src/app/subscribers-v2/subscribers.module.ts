@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import {
+  IntegrationRepository,
   MessageTemplateRepository,
   NotificationTemplateRepository,
   PreferencesRepository,
@@ -10,10 +11,16 @@ import {
 } from '@novu/dal';
 import {
   analyticsService,
+  CacheInMemoryProviderService,
   cacheService,
+  CreateOrUpdateSubscriberUseCase,
+  DistributedLockService,
+  EventsDistributedLockService,
   GetPreferences,
   GetSubscriberTemplatePreference,
   InvalidateCacheService,
+  UpdateSubscriber,
+  UpdateSubscriberChannel,
   UpsertPreferences,
 } from '@novu/application-generic';
 import { ListSubscribersUseCase } from './usecases/list-subscribers/list-subscribers.usecase';
@@ -30,6 +37,20 @@ import { CreateSubscriber } from './usecases/create-subscriber/create-subscriber
 
 const USE_CASES = [
   ListSubscribersUseCase,
+  CreateOrUpdateSubscriberUseCase,
+  UpdateSubscriber,
+  UpdateSubscriberChannel,
+  EventsDistributedLockService,
+  IntegrationRepository,
+  DistributedLockService,
+  CacheInMemoryProviderService,
+  CreateOrUpdateSubscriberUseCase,
+  UpdateSubscriber,
+  UpdateSubscriberChannel,
+  EventsDistributedLockService,
+  IntegrationRepository,
+  DistributedLockService,
+  CacheInMemoryProviderService,
   GetSubscriber,
   PatchSubscriber,
   RemoveSubscriber,

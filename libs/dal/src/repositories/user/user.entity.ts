@@ -42,6 +42,8 @@ export class UserEntity implements IUserEntity {
 
   createdAt: string;
 
+  updatedAt: string;
+
   showOnBoarding?: boolean;
   showOnBoardingTour?: number;
 

@@ -1,55 +1,54 @@
-import React, { useMemo, useImperativeHandle, useRef } from 'react';
-import { VariableListProps } from '@maily-to/core/extensions';
+import { Variable } from '@maily-to/core/extensions';
+import React, { useImperativeHandle, useMemo, useRef } from 'react';
 
 import { VariableList, VariableListRef } from '@/components/variable/variable-list';
 
-export const MailyVariablesList = React.forwardRef(({ items, command }: VariableListProps, ref) => {
-  const options = useMemo(() => items.map((item) => ({ label: item.name, value: item.name })), [items]);
-  const variablesListRef = useRef<VariableListRef>(null);
+type VariableSuggestionsPopoverProps = {
+  items: Variable[];
+  onSelectItem: (item: Variable) => void;
+};
 
-  const onSelect = (value: string) => {
-    const item = items.find((item) => item.name === value);
+type VariableSuggestionsPopoverRef = {
+  moveUp: () => void;
+  moveDown: () => void;
+  select: () => void;
+};
 
-    if (!item) {
-      return;
-    }
+export const MailyVariablesList = React.forwardRef(
+  ({ items, onSelectItem }: VariableSuggestionsPopoverProps, ref: React.Ref<VariableSuggestionsPopoverRef>) => {
+    const options = useMemo(() => items.map((item) => ({ label: item.name, value: item.name })), [items]);
+    const variablesListRef = useRef<VariableListRef>(null);
 
-    command({
-      id: item.name,
-      required: item.required ?? true,
-    });
-  };
+    const onSelect = (value: string) => {
+      const item = items.find((item) => item.name === value);
 
-  useImperativeHandle(ref, () => ({
-    onKeyDown: ({ event }: { event: KeyboardEvent }) => {
-      if (event.key === 'ArrowUp') {
-        event.preventDefault();
+      if (!item) {
+        return;
+      }
+
+      onSelectItem(item);
+    };
+
+    useImperativeHandle(ref, () => ({
+      moveUp: () => {
         variablesListRef.current?.prev();
-        return true;
-      }
-
-      if (event.key === 'ArrowDown') {
-        event.preventDefault();
+      },
+      moveDown: () => {
         variablesListRef.current?.next();
-        return true;
-      }
-
-      if (event.key === 'Enter') {
+      },
+      select: () => {
         variablesListRef.current?.select();
-        return true;
-      }
+      },
+    }));
 
-      return false;
-    },
-  }));
-
-  return (
-    <VariableList
-      ref={variablesListRef}
-      className="rounded-md border shadow-md outline-none"
-      options={options}
-      onSelect={onSelect}
-      title="Variables"
-    />
-  );
-});
+    return (
+      <VariableList
+        ref={variablesListRef}
+        className="rounded-md border shadow-md outline-none"
+        options={options}
+        onSelect={onSelect}
+        title="Variables"
+      />
+    );
+  }
+);

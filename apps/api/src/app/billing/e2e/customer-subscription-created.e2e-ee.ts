@@ -43,9 +43,6 @@ const verifyCustomerMock = {
       data: [{ id: 'subscription_id' }],
     },
   },
-  adminUser: {
-    _id: 'admin_user_id',
-  },
   organization: { _id: 'organization_id', apiServiceLevel: ApiServiceLevelEnum.FREE },
   subscriptions: [
     {

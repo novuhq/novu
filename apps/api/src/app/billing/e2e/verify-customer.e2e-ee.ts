@@ -1,11 +1,10 @@
 /* eslint-disable global-require */
 import { Logger } from '@nestjs/common';
 import sinon from 'sinon';
-import { OrganizationRepository } from '@novu/dal';
+import { CommunityOrganizationRepository } from '@novu/dal';
 import { expect } from 'chai';
 import { ApiServiceLevelEnum } from '@novu/shared';
 import { VerifyCustomerCommand } from '@novu/ee-billing';
-import { getEERepository } from '@novu/testing';
 
 describe('VerifyCustomer #novu-v2', () => {
   const eeBilling = require('@novu/ee-billing');
@@ -14,10 +13,6 @@ describe('VerifyCustomer #novu-v2', () => {
   }
 
   const { VerifyCustomer } = eeBilling;
-
-  const getOrganizationAdminUserStub = {
-    execute: () => {},
-  };
 
   const stripeStub = {
     customers: {
@@ -31,7 +26,7 @@ describe('VerifyCustomer #novu-v2', () => {
 
   let getSubscriptionStub: sinon.SinonStub;
 
-  const repo = getEERepository<OrganizationRepository>('OrganizationRepository');
+  const repo = new CommunityOrganizationRepository();
   let getOrgStub: sinon.SinonStub;
 
   beforeEach(() => {
@@ -71,10 +66,6 @@ describe('VerifyCustomer #novu-v2', () => {
       },
     });
 
-    sinon.stub(getOrganizationAdminUserStub, 'execute').resolves({
-      _id: 'admin_user_id',
-    });
-
     getOrgStub = sinon
       .stub(repo, 'findById')
       .resolves({ _id: 'organization_id', apiServiceLevel: ApiServiceLevelEnum.FREE } as any);
@@ -87,7 +78,7 @@ describe('VerifyCustomer #novu-v2', () => {
   });
 
   const createUseCase = () => {
-    const useCase = new VerifyCustomer(stripeStub as any, repo, getOrganizationAdminUserStub);
+    const useCase = new VerifyCustomer(stripeStub as any, repo);
 
     return useCase;
   };

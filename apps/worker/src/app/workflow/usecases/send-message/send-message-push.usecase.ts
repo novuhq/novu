@@ -2,17 +2,9 @@ import { Injectable, Logger } from '@nestjs/common';
 import { addBreadcrumb } from '@sentry/node';
 import { ModuleRef } from '@nestjs/core';
 
-import {
-  MessageRepository,
-  NotificationStepEntity,
-  SubscriberRepository,
-  MessageEntity,
-  IntegrationEntity,
-  JobEntity,
-} from '@novu/dal';
+import { MessageRepository, SubscriberRepository, MessageEntity, IntegrationEntity, JobEntity } from '@novu/dal';
 import {
   ChannelTypeEnum,
-  LogCodeEnum,
   PushProviderIdEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
@@ -39,6 +31,7 @@ import { SendMessageCommand } from './send-message.command';
 import { SendMessageBase } from './send-message.base';
 
 import { PlatformException } from '../../../shared/utils';
+import { SendMessageResult } from './send-message-type.usecase';
 
 const LOG_CONTEXT = 'SendMessagePush';
 
@@ -68,7 +61,7 @@ export class SendMessagePush extends SendMessageBase {
   }
 
   @InstrumentUsecase()
-  public async execute(command: SendMessageCommand) {
+  public async execute(command: SendMessageCommand): Promise<SendMessageResult> {
     addBreadcrumb({
       message: 'Sending Push',
     });
@@ -112,7 +105,10 @@ export class SendMessagePush extends SendMessageBase {
     } catch (e) {
       await this.sendErrorHandlebars(command.job, e.message);
 
-      return;
+      return {
+        status: 'failed',
+        reason: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
+      };
     }
 
     const pushChannels =
@@ -121,10 +117,12 @@ export class SendMessagePush extends SendMessageBase {
       ) || [];
 
     if (!pushChannels.length) {
-      await this.sendNoActiveChannelError(command.job);
-      await this.sendNotificationError(command.job);
+      await this.createExecutionDetailsError(DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL, command.job);
 
-      return;
+      return {
+        status: 'failed',
+        reason: DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL,
+      };
     }
 
     const messagePayload = { ...command.payload };
@@ -145,7 +143,7 @@ export class SendMessagePush extends SendMessageBase {
         integrationsWithErrors += 1;
         Logger.error(
           { jobId: command.jobId },
-          `Error processing channel for jobId ${command.jobId} ${error.message || error.toString()}`,
+          `Unexpected error while processing channel for jobId ${command.jobId} ${error.message || error.toString()}`,
           LOG_CONTEXT
         );
         continue;
@@ -190,8 +188,26 @@ export class SendMessagePush extends SendMessageBase {
     }
 
     if (integrationsWithErrors > 0) {
-      await this.sendNotificationError(command.job);
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          detail: DetailEnum.NOTIFICATION_ERROR,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+        })
+      );
+
+      return {
+        status: 'failed',
+        reason: DetailEnum.NOTIFICATION_ERROR,
+      };
     }
+
+    return {
+      status: 'success',
+    };
   }
 
   private async isChannelMissingDeviceTokens(channel: IChannelSettings, command: SendMessageCommand): Promise<boolean> {
@@ -222,25 +238,12 @@ export class SendMessagePush extends SendMessageBase {
     });
 
     if (!integration) {
-      await this.sendNoActiveIntegrationError(command.job);
+      await this.createExecutionDetailsError(DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION, command.job);
 
       return undefined;
     }
 
     return integration;
-  }
-
-  private async sendNotificationError(job: JobEntity): Promise<void> {
-    await this.createExecutionDetails.execute(
-      CreateExecutionDetailsCommand.create({
-        ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
-        detail: DetailEnum.NOTIFICATION_ERROR,
-        source: ExecutionDetailsSourceEnum.INTERNAL,
-        status: ExecutionDetailsStatusEnum.FAILED,
-        isTest: false,
-        isRetry: false,
-      })
-    );
   }
 
   private async sendPushMissingDeviceTokensError(job: JobEntity, channel: IChannelSettings): Promise<void> {
@@ -249,18 +252,6 @@ export class SendMessagePush extends SendMessageBase {
       raw,
       providerId: channel.providerId,
     });
-  }
-
-  private async sendNoActiveIntegrationError(job: JobEntity): Promise<void> {
-    await this.createExecutionDetailsError(DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION, job);
-  }
-
-  private async sendNoActiveChannelError(job: JobEntity): Promise<void> {
-    await this.createExecutionDetailsError(DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL, job);
-  }
-
-  private async sendProviderError(job: JobEntity, messageId: string, raw: string): Promise<void> {
-    await this.createExecutionDetailsError(DetailEnum.PROVIDER_ERROR, job, { messageId, raw });
   }
 
   private async createExecutionDetailsError(
@@ -341,7 +332,10 @@ export class SendMessagePush extends SendMessageBase {
       const raw = JSON.stringify(e) !== JSON.stringify({}) ? JSON.stringify(e) : JSON.stringify(e.message);
 
       try {
-        await this.sendProviderError(command.job, message._id, raw);
+        await this.createExecutionDetailsError(DetailEnum.PROVIDER_ERROR, command.job, {
+          messageId: message._id,
+          raw,
+        });
       } catch (err) {
         Logger.error(
           { jobId: command.jobId },

@@ -1,16 +1,16 @@
-import { HTMLAttributes, useCallback, useMemo, useState } from 'react';
 import { Editor } from '@maily-to/core';
 import { VariableExtension, getVariableSuggestions } from '@maily-to/core/extensions';
 import type { AnyExtension, Editor as TiptapEditor } from '@tiptap/core';
 import { ReactNodeViewRenderer } from '@tiptap/react';
+import { HTMLAttributes, useCallback, useMemo, useState } from 'react';
 
+import { MailyVariablesList } from '@/components/workflow-editor/steps/email/extensions/maily-variables-list';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { parseStepVariables } from '@/utils/parseStepVariablesToLiquidVariables';
 import { cn } from '@/utils/ui';
 import { ForExtension } from './extensions/for';
-import { DEFAULT_EDITOR_BLOCKS, DEFAULT_EDITOR_CONFIG } from './maily-config';
 import { VariableView } from './extensions/variable-view';
-import { MailyVariablesList } from './extensions/maily-variables-list';
+import { DEFAULT_EDITOR_BLOCKS, DEFAULT_EDITOR_CONFIG } from './maily-config';
 
 type MailyProps = HTMLAttributes<HTMLDivElement> & {
   value: string;
@@ -119,7 +119,9 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
           });
         },
       }).configure({
-        suggestion: getVariableSuggestions(calculateVariables, VARIABLE_TRIGGER_CHARACTER, MailyVariablesList),
+        suggestion: getVariableSuggestions(VARIABLE_TRIGGER_CHARACTER),
+        variables: calculateVariables,
+        variableSuggestionsPopover: MailyVariablesList,
       }),
     ];
   }, [calculateVariables]);
@@ -132,8 +134,6 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
           config={DEFAULT_EDITOR_CONFIG}
           blocks={DEFAULT_EDITOR_BLOCKS}
           extensions={extensions}
-          variableTriggerCharacter={VARIABLE_TRIGGER_CHARACTER}
-          variables={calculateVariables}
           contentJson={value ? JSON.parse(value) : undefined}
           onCreate={setEditor}
           onUpdate={(editor) => {

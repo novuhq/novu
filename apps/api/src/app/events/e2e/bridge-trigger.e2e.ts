@@ -2,7 +2,7 @@ import axios from 'axios';
 import { expect } from 'chai';
 import sinon from 'sinon';
 
-import { JobsService, SubscribersService, TestingQueueService, UserSession } from '@novu/testing';
+import { SubscribersService, UserSession } from '@novu/testing';
 import {
   ExecutionDetailsRepository,
   JobRepository,
@@ -15,7 +15,6 @@ import {
   CreateWorkflowDto,
   ExecutionDetailsStatusEnum,
   JobStatusEnum,
-  JobTopicNameEnum,
   MessagesStatusEnum,
   StepTypeEnum,
   WorkflowCreationSourceEnum,
@@ -24,7 +23,7 @@ import {
 import { workflow } from '@novu/framework';
 
 import { DetailEnum } from '@novu/application-generic';
-import { BridgeServer } from '../../../../e2e/bridge.server';
+import { TestBridgeServer } from '../../../../e2e/test-bridge-server';
 
 const eventTriggerPath = '/v1/events/trigger';
 
@@ -37,30 +36,17 @@ const contexts: Context[] = [
 contexts.forEach((context: Context) => {
   describe('Self-Hosted Bridge Trigger #novu-v2', async () => {
     let session: UserSession;
-    let bridgeServer: BridgeServer;
+    let bridgeServer: TestBridgeServer;
     const messageRepository = new MessageRepository();
     const workflowsRepository = new NotificationTemplateRepository();
     const jobRepository = new JobRepository();
     let subscriber: SubscriberEntity;
     let subscriberService: SubscribersService;
     const executionDetailsRepository = new ExecutionDetailsRepository();
-    const jobsService = new JobsService();
     let bridge;
 
-    const printJobsState = async (prefix: string) => {
-      const count = await Promise.all([
-        jobRepository.count({} as any),
-        new TestingQueueService(JobTopicNameEnum.WORKFLOW).queue.getWaitingCount(),
-        new TestingQueueService(JobTopicNameEnum.PROCESS_SUBSCRIBER).queue.getWaitingCount(),
-        new TestingQueueService(JobTopicNameEnum.STANDARD).queue.getWaitingCount(),
-      ]);
-
-      // eslint-disable-next-line no-console
-      console.log(`${prefix} Jobs state `, count);
-    };
-
     beforeEach(async () => {
-      bridgeServer = new BridgeServer();
+      bridgeServer = new TestBridgeServer();
       bridge = context.isStateful ? undefined : { url: `${bridgeServer.serverPath}/novu` };
       session = new UserSession();
       await session.initialize();
@@ -141,9 +127,7 @@ contexts.forEach((context: Context) => {
         }
       );
 
-      console.time('CHECKPOINT:> Starting mock bridge server');
       await bridgeServer.start({ workflows: [newWorkflow] });
-      console.timeEnd('CHECKPOINT:> Starting mock bridge server');
 
       if (context.isStateful) {
         await discoverAndSyncBridge(session, workflowsRepository, workflowId, bridgeServer);
@@ -156,13 +140,9 @@ contexts.forEach((context: Context) => {
         }
       }
 
-      console.time('CHECKPOINT:> Starting triggering event');
+      await bridgeServer.start({ workflows: [newWorkflow] });
       await triggerEvent(session, workflowId, subscriber.subscriberId, { name: 'test_name' }, bridge);
-      console.timeEnd('CHECKPOINT:> Starting triggering event');
-
-      console.time('CHECKPOINT:> Starting waiting for job completion');
       await session.waitForJobCompletion();
-      console.timeEnd('CHECKPOINT:> Starting waiting for job completion');
 
       const messages = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -338,7 +318,7 @@ contexts.forEach((context: Context) => {
 
       await triggerEvent(session, workflowId, subscriber.subscriberId, {}, bridge);
 
-      await session.waitForJobCompletion(undefined);
+      await session.waitForJobCompletion();
 
       const messagesAfter = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -577,17 +557,8 @@ contexts.forEach((context: Context) => {
         await discoverAndSyncBridge(session, workflowsRepository, workflowId, bridgeServer);
       }
 
-      await printJobsState('before triggerEvent');
       await triggerEvent(session, workflowId, subscriber.subscriberId, {}, bridge);
-      await printJobsState('after triggerEvent');
 
-      await session.runAllDelayedJobsImmediately();
-      await printJobsState('after runAllDelayedJobsImmediately');
-
-      await session.waitForJobCompletion();
-      await printJobsState('after waitForJobCompletion');
-
-      await session.runAllDelayedJobsImmediately();
       await session.waitForJobCompletion();
 
       const messagesAfter = await messageRepository.find({
@@ -637,7 +608,6 @@ contexts.forEach((context: Context) => {
     });
 
     it(`should trigger the bridge workflow with control default and payload data [${context.name}]`, async () => {
-      await printJobsState('test init');
       const workflowId = `default-payload-params-workflow-${`${context.name}`}`;
       const newWorkflow = workflow(
         workflowId,
@@ -678,28 +648,11 @@ contexts.forEach((context: Context) => {
         await discoverAndSyncBridge(session, workflowsRepository, workflowId, bridgeServer);
       }
 
-      await printJobsState('before trigger 1');
-
       await triggerEvent(session, workflowId, subscriber.subscriberId, {}, bridge);
-
-      await session.waitForJobCompletion();
-
-      await printJobsState('after trigger 1');
 
       await triggerEvent(session, workflowId, subscriber.subscriberId, { name: 'payload_name' }, bridge);
 
-      await printJobsState('after trigger 2');
-
-      await jobsService.awaitAllJobs();
-
-      await printJobsState('before sleep');
-
-      // eslint-disable-next-line no-promise-executor-return
-      await new Promise((resolve) => setTimeout(resolve, 100));
-
-      await printJobsState('after sleep');
-
-      await jobsService.awaitAllJobs();
+      await session.waitForJobCompletion();
 
       const sentMessage = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -1529,7 +1482,7 @@ contexts.forEach((context: Context) => {
                 properties: {
                   subject: {
                     type: 'string',
-                    default: `A Successful Test on Novu from defualt_name`,
+                    default: `A Successful Test on Novu from default_name`,
                   },
                 },
               } as const,
@@ -1575,7 +1528,7 @@ contexts.forEach((context: Context) => {
         channel: StepTypeEnum.EMAIL,
       });
       expect(emailMessages.length).to.eq(1);
-      expect(emailMessages[0].subject).to.include('A Successful Test on Novu from defualt_name');
+      expect(emailMessages[0].subject).to.include('A Successful Test on Novu from default_name');
     });
 
     it(`should execute both inApp and email steps when userName is not John Doe [${context.name}]`, async () => {
@@ -1722,7 +1675,7 @@ async function syncWorkflow(
   session: UserSession,
   workflowsRepository: NotificationTemplateRepository,
   workflowIdentifier: string,
-  bridgeServer: BridgeServer
+  bridgeServer: TestBridgeServer
 ) {
   await session.testAgent.post(`/v1/bridge/sync`).send({
     bridgeUrl: `${bridgeServer.serverPath}/novu`,
@@ -1746,7 +1699,7 @@ async function triggerEvent(
     name: 'test_name',
   };
 
-  return await axios.post(
+  const response = await axios.post(
     `${session.serverUrl}${eventTriggerPath}`,
     {
       name: workflowId,
@@ -1764,13 +1717,15 @@ async function triggerEvent(
       },
     }
   );
+
+  return response;
 }
 
 async function discoverAndSyncBridge(
   session: UserSession,
   workflowsRepository?: NotificationTemplateRepository,
   workflowIdentifier?: string,
-  bridgeServer?: BridgeServer
+  bridgeServer?: TestBridgeServer
 ) {
   const discoverResponse = await session.testAgent.post(`/v1/bridge/sync`).send({
     bridgeUrl: `${bridgeServer?.serverPath}/novu`,

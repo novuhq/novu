@@ -17,6 +17,7 @@ import { getTemplates, WorkflowTemplate } from '@/components/template-store/temp
 import { WorkflowCard } from '@/components/template-store/workflow-card';
 import { WorkflowTemplateModal } from '@/components/template-store/workflow-template-modal';
 import { SortableColumn, WorkflowList } from '@/components/workflow-list';
+import { useEnvironment } from '@/context/environment/hooks';
 import { useDebounce } from '@/hooks/use-debounce';
 import { useFetchWorkflows } from '@/hooks/use-fetch-workflows';
 import { useTelemetry } from '@/hooks/use-telemetry';
@@ -98,9 +99,14 @@ export const WorkflowsPage = () => {
     query: searchParams.get('query') || '',
   });
 
+  const { currentEnvironment } = useEnvironment();
+
   const hasActiveFilters = searchParams.get('query') && searchParams.get('query') !== null;
 
-  const shouldShowStartWith = workflowsData && workflowsData.totalCount < 5 && !hasActiveFilters;
+  const isProdEnv = currentEnvironment?.name === 'Production';
+
+  const shouldShowStartWithTemplatesSection =
+    workflowsData && workflowsData.totalCount < 5 && !hasActiveFilters && !isProdEnv;
 
   useEffect(() => {
     track(TelemetryEvent.WORKFLOWS_PAGE_VISIT);
@@ -122,8 +128,8 @@ export const WorkflowsPage = () => {
       <PageMeta title="Workflows" />
       <DashboardLayout headerStartItems={<h1 className="text-foreground-950 flex items-center gap-1">Workflows</h1>}>
         <OptInModal />
-        <div className="h-full w-full">
-          <div className="flex justify-between px-2.5 py-2.5">
+        <div className="flex h-full w-full flex-col gap-2.5 p-2.5">
+          <div className="flex justify-between">
             <Form {...form}>
               <FormRoot>
                 <FormField
@@ -200,9 +206,9 @@ export const WorkflowsPage = () => {
               </ButtonGroupItem>
             </ButtonGroupRoot>
           </div>
-          {shouldShowStartWith && (
-            <div className="px-2.5 py-2">
-              <div className="mb-2 flex items-center justify-between">
+          {shouldShowStartWithTemplatesSection && (
+            <div className="mb-2">
+              <div className="my-2 flex items-center justify-between">
                 <div className="text-label-xs text-text-soft">Start with</div>
                 <LinkButton
                   size="sm"
@@ -229,7 +235,7 @@ export const WorkflowsPage = () => {
                       navigate(buildRoute(ROUTES.WORKFLOWS_CREATE, { environmentSlug: environmentSlug || '' }));
                     }}
                   >
-                    <WorkflowCard name="Blank workflow" description="Create a blank workflow" steps={[]} />
+                    <WorkflowCard name="Start from scratch" description="Create a workflow from scratch" steps={[]} />
                   </div>
                   {popularTemplates.map((template) => (
                     <WorkflowCard
@@ -245,20 +251,17 @@ export const WorkflowsPage = () => {
               </ScrollArea>
             </div>
           )}
-
-          <div className="px-2.5 py-2">
-            {shouldShowStartWith && <div className="text-label-xs text-text-soft mb-2">Your Workflows</div>}
-            <WorkflowList
-              hasActiveFilters={!!hasActiveFilters}
-              onClearFilters={clearFilters}
-              orderBy={searchParams.get('orderBy') as SortableColumn}
-              orderDirection={searchParams.get('orderDirection') as DirectionEnum}
-              data={workflowsData}
-              isLoading={isPending}
-              isError={isError}
-              limit={limit}
-            />
-          </div>
+          {shouldShowStartWithTemplatesSection && <div className="text-label-xs text-text-soft">Your Workflows</div>}
+          <WorkflowList
+            hasActiveFilters={!!hasActiveFilters}
+            onClearFilters={clearFilters}
+            orderBy={searchParams.get('orderBy') as SortableColumn}
+            orderDirection={searchParams.get('orderDirection') as DirectionEnum}
+            data={workflowsData}
+            isLoading={isPending}
+            isError={isError}
+            limit={limit}
+          />
         </div>
         <Outlet />
       </DashboardLayout>

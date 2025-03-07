@@ -19,7 +19,7 @@ import {
 import { PinoLogger } from 'nestjs-pino';
 import { CreateWorkflowCommand, NotificationStep, NotificationStepVariantCommand } from './create-workflow.command';
 import { CreateChange, CreateChangeCommand } from '../create-change';
-import { AnalyticsService, InvalidateCacheService } from '../../services';
+import { AnalyticsService } from '../../services';
 import { ContentService } from '../../services/content.service';
 import { isVariantEmpty } from '../../utils/variants';
 import { CreateMessageTemplate, CreateMessageTemplateCommand } from '../message-template';
@@ -48,8 +48,6 @@ export class CreateWorkflow {
     @Inject(forwardRef(() => AnalyticsService))
     private analyticsService: AnalyticsService,
     private logger: PinoLogger,
-    @Inject(forwardRef(() => InvalidateCacheService))
-    private invalidateCache: InvalidateCacheService,
     protected moduleRef: ModuleRef,
     @Inject(forwardRef(() => UpsertPreferences))
     private upsertPreferences: UpsertPreferences,
@@ -138,7 +136,11 @@ export class CreateWorkflow {
 
   private async validatePayload(command: CreateWorkflowCommand) {
     if (command.steps) {
-      await this.resourceValidatorService.validateStepsLimit(command.environmentId, command.steps);
+      await this.resourceValidatorService.validateStepsLimit(
+        command.environmentId,
+        command.organizationId,
+        command.steps
+      );
     }
 
     const variants = command.steps ? command.steps?.flatMap((step) => step.variants || []) : [];

@@ -2,7 +2,7 @@
   "name": "@novu/js",
   "version": "2.6.6",
   "repository": "https://github.com/novuhq/novu",
-  "description": "Novu's JavaScript SDK for building custom inbox notification experiences",
+  "description": "Novu JavaScript SDK for <Inbox />",
   "author": "",
   "license": "ISC",
   "main": "dist/cjs/index.js",
@@ -125,7 +125,7 @@
     "webpack-cli": "^5.1.4"
   },
   "dependencies": {
-    "@floating-ui/dom": "^1.6.7",
+    "@floating-ui/dom": "^1.6.13",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "mitt": "^3.0.1",

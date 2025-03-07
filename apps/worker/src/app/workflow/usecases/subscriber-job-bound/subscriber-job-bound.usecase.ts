@@ -80,7 +80,9 @@ export class SubscriberJobBound {
     /**
      * Due to Mixpanel HotSharding, we don't want to pass userId for production volume
      */
-    const segmentUserId = ['test-workflow', 'digest-playground', 'dashboard'].includes(command.payload.__source)
+    const segmentUserId = ['test-workflow', 'digest-playground', 'dashboard', 'inbox-onboarding'].includes(
+      command.payload.__source
+    )
       ? userId
       : '';
 

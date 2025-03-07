@@ -8,8 +8,8 @@ import {
   NotificationRepository,
 } from '@novu/dal';
 import { UserSession } from '@novu/testing';
-import { sendTrigger } from '../../src/app/events/e2e/trigger-event.e2e';
 import { DelayTypeEnum, DigestUnitEnum, StepTypeEnum } from '@novu/shared';
+import { sendTrigger } from '../../src/app/events/e2e/trigger-event.e2e';
 import { notificationExpireAt } from './expire-at.migration';
 
 describe('Create expireAt - TTL support - with pending jobs', function () {
@@ -74,7 +74,7 @@ describe('Create expireAt - TTL support - with pending jobs', function () {
   });
 
   it('should add expireAt to pending events that were digested', async function () {
-    await session.waitForJobCompletion(digestTemplate?._id, false, 5);
+    await session.waitForJobCompletion();
 
     await notificationExpireAt(query);
 

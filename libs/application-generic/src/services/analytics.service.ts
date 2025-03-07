@@ -36,7 +36,7 @@ export class AnalyticsService {
     }
   }
 
-  upsertGroup(organizationId: string, organization: IOrganizationEntity, user: IUser) {
+  upsertGroup(organizationId: string, organization: IOrganizationEntity, user?: IUser) {
     if (!this.segmentEnabled) {
       return;
     }
@@ -46,7 +46,7 @@ export class AnalyticsService {
       id: organizationId,
       name: organization.name,
       createdAt: this.convertToIsoDate(organization.createdAt),
-      domain: organization.domain || user.email?.split('@')[1],
+      domain: organization.domain || user?.email?.split('@')[1] || '',
     };
 
     if (organization.productUseCases) {
@@ -61,7 +61,7 @@ export class AnalyticsService {
     }
 
     this.segment.group({
-      userId: user._id as any,
+      userId: user?._id as any,
       groupId: organizationId,
       traits,
     });

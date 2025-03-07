@@ -29,7 +29,7 @@ import { GetDigestEventsBackoff } from './get-digest-events-backoff.usecase';
 import { PlatformException } from '../../../../shared/utils';
 
 import { SendMessageCommand } from '../send-message.command';
-import { SendMessageType } from '../send-message-type.usecase';
+import { SendMessageResult, SendMessageType } from '../send-message-type.usecase';
 import { DigestEventsCommand } from './digest-events.command';
 
 const LOG_CONTEXT = 'Digest';
@@ -47,7 +47,7 @@ export class Digest extends SendMessageType {
     super(messageRepository, createExecutionDetails);
   }
 
-  public async execute(command: SendMessageCommand) {
+  public async execute(command: SendMessageCommand): Promise<SendMessageResult> {
     const currentJob = await this.getCurrentJob(command);
 
     const useMergedDigestIdEnabled = await this.featureFlagService.getFlag({
@@ -92,6 +92,10 @@ export class Digest extends SendMessageType {
         },
       }
     );
+
+    return {
+      status: 'success',
+    };
   }
 
   private async getEvents(command: SendMessageCommand, currentJob: JobEntity) {

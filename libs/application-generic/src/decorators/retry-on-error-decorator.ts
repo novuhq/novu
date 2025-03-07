@@ -20,9 +20,10 @@ export function RetryOnError(errorName: string, options: RetryOptions = {}) {
             throw error; // Rethrow non-matching errors
           }
           console.warn(
-            `RetryOnError Decorator:\n
-             ClassName: [${this.constructor.name}]\n
-             Function Name: [${propertyKey}] Retrying ${retries + 1}/${maxRetries} due to error:`,
+            `RetryOnError Decorator:
+             ClassName: [${this.constructor.name}]
+             Function Name: [${propertyKey}] 
+             Retrying ${retries + 1}/${maxRetries} due to error:`,
             errorName,
             'args:',
             JSON.stringify(args)

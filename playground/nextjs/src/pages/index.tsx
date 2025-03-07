@@ -1,6 +1,7 @@
+/* eslint-disable import/extensions */
 import { dark } from '@novu/react/themes';
 import { useState } from 'react';
-import { Bell, Inbox } from '@novu/nextjs';
+import { Inbox } from '@novu/nextjs';
 import Title from '@/components/Title';
 import { novuConfig } from '@/utils/config';
 

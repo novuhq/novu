@@ -44,22 +44,28 @@ export class LaunchDarklyFeatureFlagsService implements IFeatureFlagsService {
 
     if (environment?._id) {
       mappedContext.environment = {
-        ...environment,
         key: environment._id,
+        createdAt: environment.createdAt,
+        updatedAt: environment.updatedAt,
       };
     }
 
     if (organization?._id) {
       mappedContext.organization = {
-        ...organization,
         key: organization._id,
+        createdAt: organization.createdAt,
+        updatedAt: organization.updatedAt,
+        externalId: organization.externalId,
+        apiServiceLevel: organization.apiServiceLevel,
       };
     }
 
     if (user?._id) {
       mappedContext.user = {
-        ...user,
         key: user._id,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+        externalId: user.externalId,
       };
     }
 
