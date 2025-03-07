@@ -177,13 +177,9 @@ subscriberSchema.index({
  * We can not add `deleted` field to the index the client wont be able to delete twice subscriber with the same subscriberId.
  */
 subscriberSchema.index(
-  {
-    subscriberId: 1,
-    _environmentId: 1,
-  },
-  { unique: true }
+  { subscriberId: 1, _environmentId: 1 },
+  { name: 'unique_subscriber_per_environment', unique: true, partialFilterExpression: { deleted: false } }
 );
-
 subscriberSchema.index({
   _organizationId: 1,
 });

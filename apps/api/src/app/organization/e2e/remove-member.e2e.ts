@@ -5,7 +5,7 @@ import { MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
 import { expect } from 'chai';
 import { describe } from 'mocha';
 
-describe('Remove organization member - /organizations/members/:memberId (DELETE) #novu-v1-os', async () => {
+describe('Remove organization member - /organizations/members/:memberId (DELETE) #novu-v0-os', async () => {
   let session: UserSession;
   const memberRepository = new CommunityMemberRepository();
   const environmentRepository = new EnvironmentRepository();
