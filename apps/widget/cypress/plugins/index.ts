@@ -56,7 +56,7 @@ module.exports = (on, config) => {
         await new Promise((resolve) => {
           setTimeout(resolve, 500);
         });
-        await session.waitForJobCompletion(templateId, undefined, 0, organizationId);
+        await session.waitForJobCompletion(templateId, organizationId);
       }
 
       return 'ok';

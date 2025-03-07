@@ -13,7 +13,12 @@ export const PreferencesHeader = (props: PreferencesHeaderProps) => {
   const { t } = useLocalization();
 
   return (
-    <div class={style('preferencesHeader', 'nt-flex nt-items-center nt-pt-4 nt-pb-3 nt-px-4 nt-gap-2')}>
+    <div
+      class={style(
+        'preferencesHeader',
+        'nt-flex nt-bg-neutral-alpha-25 nt-shrink-0 nt-border-b nt-border-border nt-items-center nt-pt-4 nt-pb-3 nt-px-4 nt-gap-2'
+      )}
+    >
       <Show when={props.navigateToNotifications}>
         {(navigateToNotifications) => (
           <Button

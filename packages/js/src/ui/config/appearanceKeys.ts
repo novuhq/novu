@@ -29,6 +29,9 @@ export const appearanceKeys = [
 
   'skeletonText',
   'skeletonAvatar',
+  'skeletonSwitch',
+  'skeletonSwitchThumb',
+
   'tabsRoot',
   'tabsList',
   'tabsContent',
@@ -74,6 +77,7 @@ export const appearanceKeys = [
   'notificationBody__strong',
   'notificationBodyContainer',
   'notificationImage',
+  'notificationImageLoadingFallback',
   'notificationDate',
   'notificationDateActionsContainer',
   'notificationDefaultActions',
@@ -158,7 +162,15 @@ export const appearanceKeys = [
   'preferencesHeader__icon',
 
   // Preferences Loading
-  'preferencesLoadingContainer',
+  'preferencesListEmptyNoticeContainer',
+  'preferencesListEmptyNotice',
+  'preferencesList__skeleton',
+  'preferencesList__skeletonContent',
+  'preferencesList__skeletonItem',
+  'preferencesList__skeletonIcon',
+  'preferencesList__skeletonSwitch',
+  'preferencesList__skeletonSwitchThumb',
+  'preferencesList__skeletonText',
 
   // Text formatting
   'strong',

@@ -7,77 +7,40 @@ env:
 on:
   workflow_call:
     inputs:
-      test-e2e-affected:
-        description: 'detect if we should run e2e tests'
-        required: false
-        default: true
-        type: boolean
-      test-e2e-ee-affected:
-        description: 'detect if we should run e2e-ee tests'
-        required: false
-        default: true
-        type: boolean
-      test-unit:
-        description: 'detect if we should run unit tests'
-        required: false
-        default: true
-        type: boolean
       ee:
         description: 'use the ee version of api'
         required: false
         default: false
         type: boolean
-      job-name:
-        description: 'job name [options: novu/api-ee, novu/api]'
-        required: true
-        type: string
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  check_submodule_token:
-    name: Check if the secret exists or not.
-    runs-on: ubuntu-latest
-    outputs:
-      has_token: ${{ steps.secret-check.outputs.has_token }}
-    steps:
-      - name: Check if secret exists
-        id: secret-check
-        run: |
-          if [[ -n "${{ secrets.SUBMODULES_TOKEN }}" ]]; then
-            echo "::set-output name=has_token::true"
-          else
-            echo "::set-output name=has_token::false"
-          fi
-
-  # This workflow contains a single job called "build"
   e2e_api:
     name: Test E2E
     runs-on: ubuntu-latest
-    timeout-minutes: 80
+    timeout-minutes: 30
     permissions:
       contents: read
-      packages: write
       deployments: write
       id-token: write
-    needs: [check_submodule_token]
+      packages: write
     steps:
-      # checkout with submodules if token is provided
+      # Checkout with EE-submodule if token provided
       - uses: actions/checkout@v4
         name: Checkout with submodules
-        if: ${{ needs.check_submodule_token.outputs.has_token == 'true' && inputs.ee }}
+        if: ${{ inputs.ee }}
         with:
           submodules: true
           token: ${{ secrets.SUBMODULES_TOKEN }}
 
-      # else checkout without submodules if the token is not provided
+      # Else checkout without submodules if the token is not provided
       - uses: actions/checkout@v4
         name: Checkout
-        if: ${{ needs.check_submodule_token.outputs.has_token != 'true' || !contains (inputs.job-name,'-ee') }}
+        if: ${{ !inputs.ee }}
 
       - uses: ./.github/actions/setup-project
         name: Setup project
         with:
-          submodules: ${{ inputs.ee && needs.check_submodule_token.outputs.has_token == 'true' }}
+          submodules: ${{ inputs.ee }}
 
       - uses: ./.github/actions/start-localstack
         name: Start localstack
@@ -88,7 +51,6 @@ jobs:
       - name: Start Worker
         shell: bash
         env:
-          LAUNCH_DARKLY_SDK_KEY: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
           NOVU_ENTERPRISE: ${{ inputs.ee }}
         run: cd apps/worker && pnpm start:test &
 
@@ -98,29 +60,10 @@ jobs:
 
       - name: Run Novu V1 E2E tests
         if: ${{ !inputs.ee }}
-        env:
-          LAUNCH_DARKLY_SDK_KEY: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
         run: |
           pnpm --filter @novu/api-service test:e2e:novu-v1
 
       - name: Run Novu V2 E2E tests
-        if: ${{ needs.check_submodule_token.outputs.has_token == 'true' && inputs.ee }}
-        env:
-          LAUNCH_DARKLY_SDK_KEY: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
+        if: ${{ inputs.ee }}
         run: |
           pnpm --filter @novu/api-service test:e2e:novu-v2
-
-      - name: Kill port for worker 1342 for unit tests
-        run: sudo kill -9 $(sudo lsof -t -i:1342)
-
-      # TODO: Run unit tests before e2e
-      - name: Run unit tests
-        if: inputs.test-unit
-        run: |
-          cd apps/api && pnpm test
-
-      - name: Send Slack notifications
-        uses: ./.github/actions/slack-notify-on-failure
-        if: failure()
-        with:
-          slackWebhookURL: ${{ secrets.SLACK_WEBHOOK_URL_ENG_FEED_GITHUB }}

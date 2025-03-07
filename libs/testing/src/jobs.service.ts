@@ -1,262 +1,238 @@
 import { Queue } from 'bullmq';
+import { setTimeout } from 'node:timers/promises';
 import { JobRepository, JobStatusEnum } from '@novu/dal';
-import { JobTopicNameEnum, StepTypeEnum } from '@novu/shared';
-
+import { JobTopicNameEnum } from '@novu/shared';
 import { TestingQueueService } from './testing-queue.service';
 
-const promote = async (job) => {
-  try {
-    await job.promote();
-  } catch (error) {
-    // Silently handle promotion failures since job may have already executed
-  }
-};
-
-const finalizedStatuses = [
-  JobStatusEnum.COMPLETED,
-  JobStatusEnum.SKIPPED,
-  JobStatusEnum.FAILED,
-  JobStatusEnum.CANCELED,
-  JobStatusEnum.MERGED,
-];
-const immediateJobStatuses = [JobStatusEnum.QUEUED, JobStatusEnum.RUNNING];
-
-type QueueJobCountsResult = {
-  active: number;
-  waiting: number;
-  delayed: number;
-  completed: number;
-  failed?: number;
-  'active-waiting': number;
-  [key: string]: number | undefined;
-};
-
-function sumActiveAndWaitingJobs(queueState: QueueJobCountsResult) {
-  return queueState.active + queueState.waiting;
-}
-
+/**
+ * This service is contains utilities to manage the jobs in the Redis queue and Mongo during testing.
+ */
 export class JobsService {
-  private jobRepository = new JobRepository();
+  public standardQueue: Queue = new TestingQueueService(JobTopicNameEnum.WORKFLOW).queue;
+  public workflowQueue: Queue = new TestingQueueService(JobTopicNameEnum.STANDARD).queue;
+  public subscriberProcessQueue: Queue = new TestingQueueService(JobTopicNameEnum.PROCESS_SUBSCRIBER).queue;
 
-  public standardQueue: Queue;
-  public workflowQueue: Queue;
-  public subscriberProcessQueue: Queue;
-  constructor(private isClusterMode?: boolean) {
-    this.workflowQueue = new TestingQueueService(JobTopicNameEnum.WORKFLOW).queue;
-    this.standardQueue = new TestingQueueService(JobTopicNameEnum.STANDARD).queue;
-    this.subscriberProcessQueue = new TestingQueueService(JobTopicNameEnum.PROCESS_SUBSCRIBER).queue;
-  }
+  constructor(private jobRepository: JobRepository = new JobRepository()) {}
 
-  public async queueGet(jobTopicName: JobTopicNameEnum, getter: 'getDelayed') {
-    let queue: Queue;
-
-    switch (jobTopicName) {
-      case JobTopicNameEnum.WORKFLOW:
-        queue = this.workflowQueue;
-        break;
-      case JobTopicNameEnum.STANDARD:
-        queue = this.standardQueue;
-        break;
-      case JobTopicNameEnum.PROCESS_SUBSCRIBER:
-        queue = this.subscriberProcessQueue;
-        break;
-      default:
-        throw new Error(`Invalid job topic name: ${jobTopicName}`);
-    }
-
-    switch (getter) {
-      case 'getDelayed':
-        return queue.getDelayed();
-      default:
-        throw new Error(`Invalid getter: ${getter}`);
-    }
-  }
-
-  public async promoteDelayedJobs() {
-    const jobsResult = await Promise.all([
-      this.standardQueue.getDelayed(),
-      this.workflowQueue.getDelayed(),
-      this.subscriberProcessQueue.getDelayed(),
-    ]);
-    const jobs = jobsResult.flat();
-
-    if (jobs.length === 0) {
-      return false;
-    }
-
-    await Promise.all(jobs.map(promote));
-
-    return true;
-  }
-
+  /**
+   * Wait for all jobs to be completed from the Redis queue and Mongo
+   *
+   * @param templateId - The template ID to wait for (optional)
+   * @param organizationId - The organization ID to wait for (optional)
+   */
   public async waitForJobCompletion({
     templateId,
     organizationId,
-    delay,
-    unfinishedJobs = 0,
   }: {
     templateId?: string | string[];
-    organizationId?: string;
-    delay?: boolean;
-    unfinishedJobs?: number;
+    organizationId?: string | string[];
   }) {
-    let runningJobsInStorage = 0;
-    const safeUnfinishedJobs = Math.max(unfinishedJobs, 0);
-
     const workflowMatch = templateId ? { _templateId: { $in: [templateId].flat() } } : {};
-    const typeMatch = delay
-      ? {
-          type: {
-            $nin: [delay ? StepTypeEnum.DELAY : StepTypeEnum.DIGEST],
-          },
-        }
-      : {};
+    const organizationMatch = organizationId ? { _organizationId: { $in: [organizationId].flat() } } : {};
 
-    let totalCount = 0;
+    let redisJobsCount = 0;
+    let mongoJobsCount = 0;
 
     do {
-      // Wait until Bull queues are empty
-      totalCount = (await this.getQueueCount()).totalCount;
+      await setTimeout(100);
 
-      // Wait until there are no pending, queued or running jobs in Mongo
-      runningJobsInStorage = Math.max(
+      const metrics = await this.getQueueMetrics();
+
+      redisJobsCount = metrics.totalCount;
+
+      mongoJobsCount = Math.max(
+        // @ts-expect-error
         await this.jobRepository.count({
-          ...((organizationId ? { _organizationId: organizationId } : {}) as { _organizationId: string }),
-          ...typeMatch,
           ...workflowMatch,
+          ...organizationMatch,
           status: {
             $in: [JobStatusEnum.PENDING, JobStatusEnum.QUEUED, JobStatusEnum.RUNNING],
           },
         }),
         0
       );
-    } while (totalCount > 0 || runningJobsInStorage > safeUnfinishedJobs);
+
+      // console.log('AwaitRunningJobs:>', metrics);
+    } while (redisJobsCount > 0 || mongoJobsCount > 0);
   }
 
-  public async runAllDelayedJobsImmediately() {
+  /**
+   * Wait for all jobs to be completed from the Redis queue and Mongo
+   *
+   * @param templateId - The template ID to wait for (optional)
+   * @param organizationId - The organization ID to wait for (optional)
+   */
+  public async waitForDbJobCompletion({
+    templateId,
+    organizationId,
+  }: {
+    templateId?: string | string[];
+    organizationId?: string | string[];
+  }) {
+    const workflowMatch = templateId ? { _templateId: { $in: [templateId].flat() } } : {};
+    const organizationMatch = organizationId ? { _organizationId: { $in: [organizationId].flat() } } : {};
+
+    let mongoJobsCount = 0;
+
+    do {
+      await setTimeout(100);
+
+      mongoJobsCount = Math.max(
+        // @ts-expect-error
+        await this.jobRepository.count({
+          ...workflowMatch,
+          ...organizationMatch,
+          status: {
+            $in: [JobStatusEnum.PENDING, JobStatusEnum.QUEUED, JobStatusEnum.RUNNING],
+          },
+        }),
+        0
+      );
+    } while (mongoJobsCount > 0);
+  }
+
+  /**
+   * Wait for all jobs to be completed from the workflow Redis queue
+   *
+   * |----------------|------------------|----------------|
+   * | workflow queue > subscriber queue > standard queue |
+   * |----------------|------------------|----------------|
+   *
+   * @remarks
+   * This is useful in testing when you want the trigger to be asserted in specific parts of the execution.
+   * For example, you can wait for the workflow queue to be completed and then assert that the trigger was sent to the subscriber queue.
+   */
+  public async waitForWorkflowQueueCompletion(maxWaitTime = 10000) {
+    return this.waitQueueUntil(
+      ({ activeWorkflowJobsCount, waitingWorkflowJobsCount }) => activeWorkflowJobsCount + waitingWorkflowJobsCount > 0,
+      maxWaitTime
+    );
+  }
+
+  /**
+   * Wait for all jobs to be completed from the subscriber Redis queue.
+   *
+   * |----------------|------------------|----------------|
+   * | workflow queue > subscriber queue > standard queue |
+   * |----------------|------------------|----------------|
+   *
+   * @remarks
+   * This is useful in testing when you want the trigger to be asserted in specific parts of the execution.
+   * For example, you can wait for the subscriber queue to be completed and then assert that the trigger was sent to the standard queue.
+   */
+  public async waitForSubscriberQueueCompletion(maxWaitTime = 10000) {
+    return this.waitQueueUntil(
+      ({ activeSubscriberJobsCount, waitingSubscriberJobsCount }) =>
+        activeSubscriberJobsCount + waitingSubscriberJobsCount > 0,
+      maxWaitTime
+    );
+  }
+
+  /**
+   * Wait for all jobs to be completed from the standard Redis queue
+   *
+   * |----------------|------------------|----------------|
+   * | workflow queue > subscriber queue > standard queue |
+   * |----------------|------------------|----------------|
+   *
+   * @remarks
+   * This is useful in testing when you want the trigger to be asserted in specific parts of the execution.
+   * For example, you can wait for the standard queue to be completed and then assert against the stage of the job in Mongo
+   */
+  public async waitForStandardQueueCompletion(maxWaitTime = 10000) {
+    return this.waitQueueUntil(
+      ({ activeStandardJobsCount, waitingStandardJobsCount }) => activeStandardJobsCount + waitingStandardJobsCount > 0,
+      maxWaitTime
+    );
+  }
+
+  public async waitQueueUntil(
+    cb: (metrics: Awaited<ReturnType<typeof this.getQueueMetrics>>) => boolean,
+    maxWaitTime = 10000
+  ) {
+    const startTime = Date.now();
+    const safeMaxWaitTime = Math.min(200, maxWaitTime);
+
+    let queueMetrics: Awaited<ReturnType<typeof this.getQueueMetrics>>;
+
+    do {
+      await setTimeout(100);
+      queueMetrics = await this.getQueueMetrics();
+    } while (cb(queueMetrics) && Date.now() - startTime < safeMaxWaitTime);
+  }
+
+  public async runStandardQueueDelayedJobsImmediately() {
     const delayedJobs = await this.standardQueue.getDelayed();
     await Promise.all(delayedJobs.map((job) => job.promote()));
   }
 
-  public async awaitAllJobs() {
-    let hasMoreDelayedJobs = true;
-    let iterationCount = 0;
-    const MAX_ITERATIONS = 20;
-
-    await this.promoteDelayedJobs();
-
-    // todo check of waitForStorageImmediateJobCompletion is needed as it should be equivalent to waitForQueueImmediateJobCompletion
-    await this.waitForQueueImmediateJobCompletion();
-    await this.waitForStorageImmediateJobCompletion();
-
-    while (hasMoreDelayedJobs && iterationCount < MAX_ITERATIONS) {
-      hasMoreDelayedJobs = await this.promoteDelayedJobs();
-
-      if (!hasMoreDelayedJobs) {
-        continue;
-      }
-
-      // todo check of waitForStorageImmediateJobCompletion is needed as it should be equivalent to waitForQueueImmediateJobCompletion
-      await this.waitForQueueImmediateJobCompletion();
-      await this.waitForStorageImmediateJobCompletion();
-      iterationCount += 1;
-    }
-
-    if (iterationCount >= MAX_ITERATIONS) {
-      // eslint-disable-next-line no-console
-      console.warn(
-        'Max iterations reached while processing delayed jobs. This might indicate an infinite loop in job creation.'
-      );
-    }
-  }
-
-  private async getQueueCount() {
+  private async getQueueMetrics() {
     const [
-      parsedEvents,
-      waitingCount,
-      waitingStandardJobsCount,
+      activeWorkflowJobsCount,
+      waitingWorkflowJobsCount,
+      failedWorkflowJobsCount,
+      completedWorkflowJobsCount,
+      delayedWorkflowJobsCount,
+
+      activeSubscriberJobsCount,
+      waitingSubscriberJobsCount,
+      failedSubscriberJobsCount,
+      completedSubscriberJobsCount,
+      delayedSubscriberJobsCount,
+
       activeStandardJobsCount,
-      subscriberProcessQueueWaitingCount,
-      subscriberProcessQueueActiveCount,
+      waitingStandardJobsCount,
+      failedStandardJobsCount,
+      completedStandardJobsCount,
+      delayedStandardJobsCount,
     ] = await Promise.all([
       this.workflowQueue.getActiveCount(),
       this.workflowQueue.getWaitingCount(),
+      this.workflowQueue.getFailedCount(),
+      this.workflowQueue.getCompletedCount(),
+      this.workflowQueue.getDelayedCount(),
 
-      this.standardQueue.getWaitingCount(),
-      this.standardQueue.getActiveCount(),
-
-      this.subscriberProcessQueue.getWaitingCount(),
       this.subscriberProcessQueue.getActiveCount(),
+      this.subscriberProcessQueue.getWaitingCount(),
+      this.subscriberProcessQueue.getFailedCount(),
+      this.subscriberProcessQueue.getCompletedCount(),
+      this.subscriberProcessQueue.getDelayedCount(),
+
+      this.standardQueue.getActiveCount(),
+      this.standardQueue.getWaitingCount(),
+      this.standardQueue.getFailedCount(),
+      this.standardQueue.getCompletedCount(),
+      this.standardQueue.getDelayedCount(),
     ]);
 
     const totalCount =
-      parsedEvents +
-      waitingCount +
-      waitingStandardJobsCount +
+      activeWorkflowJobsCount +
+      waitingWorkflowJobsCount +
+      activeSubscriberJobsCount +
+      waitingSubscriberJobsCount +
       activeStandardJobsCount +
-      subscriberProcessQueueWaitingCount +
-      subscriberProcessQueueActiveCount;
+      waitingStandardJobsCount;
 
     return {
       totalCount,
-      parsedEvents,
-      waitingCount,
-      waitingStandardJobsCount,
+
+      activeWorkflowJobsCount,
+      waitingWorkflowJobsCount,
+      failedWorkflowJobsCount,
+      completedWorkflowJobsCount,
+      delayedWorkflowJobsCount,
+
+      activeSubscriberJobsCount,
+      waitingSubscriberJobsCount,
+      failedSubscriberJobsCount,
+      completedSubscriberJobsCount,
+      delayedSubscriberJobsCount,
+
       activeStandardJobsCount,
-      subscriberProcessQueueWaitingCount,
-      subscriberProcessQueueActiveCount,
+      waitingStandardJobsCount,
+      failedStandardJobsCount,
+      completedStandardJobsCount,
+      delayedStandardJobsCount,
     };
-  }
-
-  public async getQueueMetric() {
-    const [workflowQueueState, standardQueueState, subscriberProcessQueueState] = await Promise.all([
-      this.workflowQueue.getJobCounts(),
-      this.standardQueue.getJobCounts(),
-      this.subscriberProcessQueue.getJobCounts(),
-    ]);
-
-    const workflowImmediateCount = sumActiveAndWaitingJobs(workflowQueueState as QueueJobCountsResult);
-    const standardImmediateCount = sumActiveAndWaitingJobs(standardQueueState as QueueJobCountsResult);
-    const subscriberProcessImmediateCount = sumActiveAndWaitingJobs(
-      subscriberProcessQueueState as QueueJobCountsResult
-    );
-    const totalImmediateCount = workflowImmediateCount + standardImmediateCount + subscriberProcessImmediateCount;
-
-    const workflowQueueCount = Object.values(workflowQueueState).reduce((a, b) => a + b, 0);
-    const standardQueueCount = Object.values(standardQueueState).reduce((a, b) => a + b, 0);
-    const subscriberProcessQueueCount = Object.values(subscriberProcessQueueState).reduce((a, b) => a + b, 0);
-
-    const totalCount = workflowQueueCount + standardQueueCount + subscriberProcessQueueCount;
-
-    return {
-      totalCount,
-      totalImmediateCount,
-      workflowQueueCount,
-      standardQueueCount,
-      subscriberProcessQueueCount,
-      workflowQueueState,
-      standardQueueState,
-      subscriberProcessQueueState,
-    };
-  }
-
-  /**
-   * Wait until there are no queued or running jobs in Mongo
-   * Will not wait for delayed or pending jobs
-   */
-  public async waitForStorageImmediateJobCompletion() {
-    let totalCount = 0;
-
-    do {
-      totalCount = await this.jobRepository.count({ status: { $in: immediateJobStatuses } } as any);
-    } while (totalCount > 0);
-  }
-
-  public async waitForQueueImmediateJobCompletion() {
-    let totalCount = 0;
-
-    do {
-      totalCount = (await this.getQueueMetric()).totalImmediateCount;
-    } while (totalCount > 0);
   }
 }

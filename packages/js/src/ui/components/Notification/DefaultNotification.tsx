@@ -84,10 +84,14 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
     >
       <Show
         when={props.notification.avatar}
-        fallback={<div class={style('notificationImage', 'nt-size-8 nt-rounded-lg nt-shrink-0')} />}
+        fallback={
+          <div
+            class={style('notificationImageLoadingFallback', 'nt-size-8 nt-rounded-lg nt-shrink-0 nt-aspect-square')}
+          />
+        }
       >
         <img
-          class={style('notificationImage', 'nt-size-8 nt-rounded-lg nt-object-cover')}
+          class={style('notificationImage', 'nt-size-8 nt-rounded-lg nt-object-cover nt-aspect-square')}
           src={props.notification.avatar}
         />
       </Show>

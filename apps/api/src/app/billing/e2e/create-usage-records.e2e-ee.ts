@@ -93,7 +93,7 @@ describe('CreateUsageRecords #novu-v2', () => {
   };
 
   it('should fetch the platform usage records with usage dates between the start and end date of the previous day', async () => {
-    const mockDate = new Date('2021-01-15T12:00:00Z');
+    const mockDate = new Date('2021-01-15T00:00:00Z');
     const useCase = createUseCase();
 
     await useCase.execute(

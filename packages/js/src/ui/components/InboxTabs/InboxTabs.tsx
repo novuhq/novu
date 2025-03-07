@@ -77,7 +77,7 @@ export const InboxTabs = (props: InboxTabsProps) => {
         <Tabs.List appearanceKey="notificationsTabs__tabsList" class="nt-bg-neutral-alpha-25 nt-px-4">
           <For each={visibleTabs()}>{(tab) => <InboxTabComponent {...tab} />}</For>
           <Show when={dropdownTabs().length > 0}>
-            <Dropdown.Root fallbackPlacements={['bottom', 'top']} placement={'bottom-start'}>
+            <Dropdown.Root>
               <Dropdown.Trigger
                 appearanceKey="moreTabs__dropdownTrigger"
                 asChild={(triggerProps) => (

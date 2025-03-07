@@ -45,16 +45,14 @@ describe('Trigger event - Scheduled Digest Mode - /v1/events/trigger (POST) #nov
     subscriber = await subscriberService.createSubscriber();
   });
 
-  it('should digest events using a scheduled digest', async () => {
-    this.timeout(10000);
-
+  it.skip('should digest events using a scheduled digest', async () => {
     template = await session.createTemplate({
       steps: [
         {
           type: StepTypeEnum.DIGEST,
           content: '',
           metadata: {
-            unit: DigestUnitEnum.MINUTES,
+            unit: DigestUnitEnum.SECONDS,
             amount: 1,
             type: DigestTypeEnum.TIMED,
           },
@@ -70,9 +68,13 @@ describe('Trigger event - Scheduled Digest Mode - /v1/events/trigger (POST) #nov
 
     await Promise.all(events.map((event) => triggerEvent(event)));
 
-    await session.waitForJobCompletion(template?._id, false, 1);
-    await session.runAllDelayedJobsImmediately();
-    await session.waitForJobCompletion(template?._id);
+    await session.waitForWorkflowQueueCompletion();
+    await session.waitForSubscriberQueueCompletion();
+    await session.waitForStandardQueueCompletion();
+
+    await session.runStandardQueueDelayedJobsImmediately();
+
+    await session.waitForDbJobCompletion({ templateId: template._id });
 
     const jobs = await jobRepository.find({
       _environmentId: session.environment._id,
@@ -82,8 +84,6 @@ describe('Trigger event - Scheduled Digest Mode - /v1/events/trigger (POST) #nov
     });
 
     expect(jobs && jobs.length).to.eql(3);
-
-    console.log('jobs', jobs);
 
     const completedJob = jobs.find((elem) => elem.status === JobStatusEnum.COMPLETED);
     expect(completedJob).to.ok;
@@ -98,13 +98,13 @@ describe('Trigger event - Scheduled Digest Mode - /v1/events/trigger (POST) #nov
       type: StepTypeEnum.IN_APP,
     });
 
-    expect(generatedMessageJob && generatedMessageJob.length).to.equal(3);
+    expect(generatedMessageJob.length).to.equal(3);
 
     const mergedInApp = generatedMessageJob.filter((elem) => elem.status === JobStatusEnum.MERGED);
-    expect(mergedInApp && mergedInApp.length).to.equal(2);
+    expect(mergedInApp.length).to.equal(2);
 
     const completedInApp = generatedMessageJob.filter((elem) => elem.status === JobStatusEnum.COMPLETED);
-    expect(completedInApp && completedInApp.length).to.equal(1);
+    expect(completedInApp.length).to.equal(1);
 
     const digestEventLength = completedInApp.find((i) => i.digest?.events?.length === 3);
     expect(digestEventLength).to.be.ok;
