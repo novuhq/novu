@@ -146,7 +146,6 @@ async function getMetafilesFromPnpmSelector(selector, cwd, options = {}) {
         'tsconfig.json',
         'tsconfig.build.json',
         '.npmrc',
-        'lerna.json',
         '.npmrc-cloud',
       ],
       { cwd, dot: true, gitignore: true }
