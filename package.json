@@ -49,7 +49,6 @@
     "start:api": "cross-env nx run @novu/api-service:start",
     "start:dal": "cross-env nx run @novu/dal:start",
     "start:dashboard": "cross-env nx run @novu/dashboard:start",
-    "start:dev": "cross-env lerna run start:dev --stream --parallel --concurrency=20 --scope=@novu/{api,worker,web,widget,ws,notification-center}",
     "start:docker:embed": "cd libs/embed && npm run start:docker",
     "start:docker:web": "cross-env nx run-many --target=start:docker --projects=@novu/web",
     "start:docker:widget": "cross-env nx run-many --target=start:docker --projects=@novu/widget",
@@ -71,8 +70,7 @@
     "start": "npm run jarvis",
     "symlink:submodules": "pnpm --filter \"@novu/ee-*\" exec node \"$(pwd)/scripts/symlink-ee.mjs\"",
     "submodule:update": "git submodule update --remote --reference origin/next .source && git add .source && git commit -m 'chore(root): Update submodules' && git push",
-    "test:providers": "cross-env pnpm --filter './packages/providers/**' test",
-    "test": "cross-env CI=true lerna run test:watch --parallel"
+    "test:providers": "cross-env pnpm --filter './packages/providers/**' test"
   },
   "resolutions": {
     "minimist": "1.2.6"
@@ -164,7 +162,6 @@
     "inquirer": "8.2.6",
     "jest": "29.7.0",
     "jira-prepare-commit-msg": "1.7.2",
-    "lerna": "5.6.2",
     "lint-staged": "^10.5.4",
     "listr": "^0.14.3",
     "markdownlint-cli": "^0.33.0",
