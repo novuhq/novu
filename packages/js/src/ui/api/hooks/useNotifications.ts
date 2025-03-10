@@ -13,11 +13,16 @@ export const useNotificationsInfiniteScroll = (props: UseNotificationsInfiniteSc
   const novu = useNovu();
   let filter = { ...props.options() };
 
-  const [data, { initialLoading, setEl, end, mutate, reset }] = createInfiniteScroll(async (offset) => {
-    const { data } = await novu.notifications.list({ ...(props.options() || {}), offset });
+  const [data, { initialLoading, setEl, end, mutate, reset }] = createInfiniteScroll(
+    async (after) => {
+      const { data } = await novu.notifications.list({ ...(props.options() || {}), after });
 
-    return { data: data?.notifications ?? [], hasMore: data?.hasMore ?? false };
-  });
+      return { data: data?.notifications ?? [], hasMore: data?.hasMore ?? false };
+    },
+    {
+      paginationField: 'id',
+    }
+  );
 
   onMount(() => {
     const listener = ({ data }: { data: ListNotificationsResponse }) => {
@@ -33,20 +38,20 @@ export const useNotificationsInfiniteScroll = (props: UseNotificationsInfiniteSc
     onCleanup(() => cleanup());
   });
 
-  createEffect(() => {
+  createEffect(async () => {
     const newFilter = { ...props.options() };
     if (isSameFilter(filter, newFilter)) {
       return;
     }
 
     novu.notifications.clearCache();
-    reset();
+    await reset();
     filter = newFilter;
   });
 
-  const refetch = ({ filter }: { filter?: NotificationFilter }) => {
+  const refetch = async ({ filter }: { filter?: NotificationFilter }) => {
     novu.notifications.clearCache({ filter });
-    reset();
+    await reset();
   };
 
   return { data, initialLoading, setEl, end, refetch };
