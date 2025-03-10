@@ -122,7 +122,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
               </Show>
             }
           >
-            <ExternalElementRenderer render={(el) => props.renderSubject!(el, props.notification)} />
+            {(renderSubject) => <ExternalElementRenderer render={(el) => renderSubject()(el, props.notification)} />}
           </Show>
           <Show
             when={props.renderBody}
@@ -136,7 +136,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
               </Markdown>
             }
           >
-            <ExternalElementRenderer render={(el) => props.renderBody!(el, props.notification)} />
+            {(renderBody) => <ExternalElementRenderer render={(el) => renderBody()(el, props.notification)} />}
           </Show>
         </div>
         <div
