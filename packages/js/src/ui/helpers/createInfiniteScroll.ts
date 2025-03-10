@@ -1,12 +1,16 @@
-import { Accessor, batch, createEffect, createResource, createSignal, onCleanup, Setter } from 'solid-js';
-import { isServer } from 'solid-js/web';
+import { Accessor, batch, createEffect, createResource, createSignal, onCleanup, onMount, Setter } from 'solid-js';
 
-export function createInfiniteScroll<T>(fetcher: (page: number) => Promise<{ data: T[]; hasMore: boolean }>): [
+export function createInfiniteScroll<T>(
+  fetcher: (after: string | undefined) => Promise<{ data: T[]; hasMore: boolean }>,
+  options: {
+    paginationField: string;
+  }
+): [
   data: Accessor<T[]>,
   options: {
     initialLoading: Accessor<boolean>;
     setEl: (el: Element) => void;
-    offset: Accessor<number>;
+    after: Accessor<string | undefined>;
     end: Accessor<boolean>;
     reset: () => Promise<void>;
     mutate: Setter<
@@ -20,19 +24,26 @@ export function createInfiniteScroll<T>(fetcher: (page: number) => Promise<{ dat
 ] {
   const [data, setData] = createSignal<T[]>([]);
   const [initialLoading, setInitialLoading] = createSignal(true);
-  const [offset, setOffset] = createSignal(0);
+  const [after, setAfter] = createSignal<string | undefined>(undefined);
   const [end, setEnd] = createSignal(false);
-  const [contents, { mutate, refetch }] = createResource(offset, fetcher);
+  const [contents, { mutate, refetch }] = createResource(
+    () => ({ trigger: true, after: after() }),
+    (params) => fetcher(params.after)
+  );
 
   let observedElement: Element | null = null;
+  let io: IntersectionObserver | null = null;
 
-  let setEl: (el: Element) => void = () => {};
-  if (!isServer) {
-    const io = new IntersectionObserver(
+  onMount(() => {
+    io = new IntersectionObserver(
       (entries) => {
         const entry = entries[0];
         if (entry && entry.isIntersecting && !end() && !contents.loading) {
-          setOffset((prev) => prev + 1);
+          const data = contents.latest?.data;
+          if (data) {
+            // @ts-ignore
+            setAfter(data[data.length - 1][options.paginationField]);
+          }
         }
       },
       {
@@ -40,14 +51,15 @@ export function createInfiniteScroll<T>(fetcher: (page: number) => Promise<{ dat
       }
     );
 
-    onCleanup(() => io.disconnect());
+    if (observedElement && io) {
+      io.observe(observedElement);
+    }
 
-    setEl = (el: Element) => {
-      observedElement = el;
-      io.observe(el);
-      onCleanup(() => io.unobserve(el));
-    };
-  }
+    onCleanup(() => {
+      io?.disconnect();
+      io = null;
+    });
+  });
 
   createEffect(() => {
     if (contents.loading) return;
@@ -76,14 +88,18 @@ export function createInfiniteScroll<T>(fetcher: (page: number) => Promise<{ dat
         (entries) => {
           const entry = entries[0];
 
-          if (entry.isIntersecting && entry.intersectionRatio > 0.1) {
-            setOffset((prev) => prev + 1);
+          if (entry.isIntersecting) {
+            const data = contents.latest?.data;
+            if (data) {
+              // @ts-ignore
+              setAfter(data[data.length - 1][options.paginationField]);
+            }
           }
 
           observer.disconnect();
         },
         {
-          threshold: [0.1, 0.2, 0.3, 0.4, 0.5],
+          threshold: [0.1],
         }
       );
 
@@ -95,13 +111,29 @@ export function createInfiniteScroll<T>(fetcher: (page: number) => Promise<{ dat
     }
   };
 
+  const setEl = (el: Element) => {
+    if (io && observedElement) {
+      io.unobserve(observedElement);
+    }
+
+    observedElement = el;
+
+    if (io && el) {
+      io.observe(el);
+    }
+
+    onCleanup(() => {
+      if (io && el) io.unobserve(el);
+    });
+  };
+
   const reset = async () => {
     setData([]);
     setInitialLoading(true);
     setEnd(false);
 
-    if (offset() !== 0) {
-      setOffset(0);
+    if (after() !== undefined) {
+      setAfter(undefined);
     } else {
       await refetch();
     }
@@ -112,7 +144,7 @@ export function createInfiniteScroll<T>(fetcher: (page: number) => Promise<{ dat
     {
       initialLoading,
       setEl,
-      offset,
+      after,
       end,
       mutate,
       reset,
