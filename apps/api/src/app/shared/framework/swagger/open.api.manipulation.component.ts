@@ -164,10 +164,6 @@ export function sortOpenAPIDocument(openApiDoc: OpenAPIObject): OpenAPIObject {
       return a.localeCompare(b);
     });
 
-    // Debug: Print sorted path keys
-    console.log('Sorted Path Keys:');
-    console.log(sortedPathKeys);
-
     // Debugging function to extract operation details
     const extractOperationDetails = (method: string, url: string, operation?: OperationObject) => {
       if (!operation) return null;
@@ -220,10 +216,6 @@ export function sortOpenAPIDocument(openApiDoc: OpenAPIObject): OpenAPIObject {
         ),
       };
     });
-
-    // Debug: Print sorted operations
-    console.log('\nSorted Operations:');
-    console.table(debugOperations);
 
     sortedDoc.paths = sortedPaths;
   }
