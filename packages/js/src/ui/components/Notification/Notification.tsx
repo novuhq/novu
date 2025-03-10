@@ -1,12 +1,20 @@
 import { Show } from 'solid-js';
 import type { Notification as NotificationType } from '../../../notifications';
-import type { NotificationActionClickHandler, NotificationClickHandler, NotificationRenderer } from '../../types';
+import type {
+  BodyRenderer,
+  NotificationActionClickHandler,
+  NotificationClickHandler,
+  NotificationRenderer,
+  SubjectRenderer,
+} from '../../types';
 import { ExternalElementRenderer } from '../ExternalElementRenderer';
 import { DefaultNotification } from './DefaultNotification';
 
 type NotificationProps = {
   notification: NotificationType;
   renderNotification?: NotificationRenderer;
+  renderSubject?: SubjectRenderer;
+  renderBody?: BodyRenderer;
   onNotificationClick?: NotificationClickHandler;
   onPrimaryActionClick?: NotificationActionClickHandler;
   onSecondaryActionClick?: NotificationActionClickHandler;
@@ -19,6 +27,8 @@ export const Notification = (props: NotificationProps) => {
       fallback={
         <DefaultNotification
           notification={props.notification}
+          renderSubject={props.renderSubject}
+          renderBody={props.renderBody}
           onNotificationClick={props.onNotificationClick}
           onPrimaryActionClick={props.onPrimaryActionClick}
           onSecondaryActionClick={props.onSecondaryActionClick}

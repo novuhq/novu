@@ -1,13 +1,16 @@
 import React from 'react';
 import type { NotificationClickHandler, NotificationActionClickHandler, InboxPage } from '@novu/js/ui';
 import { Mounter } from './Mounter';
-import { NotificationsRenderer } from '../utils/types';
+import { NotificationsRenderer, SubjectRenderer, BodyRenderer } from '../utils/types';
 import { useRenderer } from '../context/RendererContext';
 import { useNovuUI } from '../context/NovuUIContext';
 import { withRenderer } from './Renderer';
+import { useDataRef } from '../hooks/internal/useDataRef';
 
 export type InboxContentProps = {
   renderNotification?: NotificationsRenderer;
+  renderSubject?: SubjectRenderer;
+  renderBody?: BodyRenderer;
   onNotificationClick?: NotificationClickHandler;
   onPrimaryActionClick?: NotificationActionClickHandler;
   onSecondaryActionClick?: NotificationActionClickHandler;
@@ -20,6 +23,8 @@ const _InboxContent = React.memo((props: InboxContentProps) => {
     onNotificationClick,
     onPrimaryActionClick,
     renderNotification,
+    renderSubject,
+    renderBody,
     onSecondaryActionClick,
     initialPage,
     hideNav,
@@ -36,6 +41,10 @@ const _InboxContent = React.memo((props: InboxContentProps) => {
           renderNotification: renderNotification
             ? (el, notification) => mountElement(el, renderNotification(notification))
             : undefined,
+          renderSubject: renderSubject
+            ? (el, notification) => mountElement(el, renderSubject(notification))
+            : undefined,
+          renderBody: renderBody ? (el, notification) => mountElement(el, renderBody(notification)) : undefined,
           onNotificationClick,
           onPrimaryActionClick,
           onSecondaryActionClick,
@@ -44,7 +53,7 @@ const _InboxContent = React.memo((props: InboxContentProps) => {
         },
       });
     },
-    [renderNotification, onNotificationClick, onPrimaryActionClick, onSecondaryActionClick]
+    [renderNotification, renderSubject, renderBody, onNotificationClick, onPrimaryActionClick, onSecondaryActionClick]
   );
 
   return <Mounter mount={mount} />;
