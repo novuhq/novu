@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { SUBSCRIBER_ID_REGEX, SUBSCRIBER_EMAIL_REGEX } from '@novu/shared';
+import { SUBSCRIBER_ID_REGEX } from '@novu/shared';
 import { Transform } from 'class-transformer';
 import {
   IsDefined,
