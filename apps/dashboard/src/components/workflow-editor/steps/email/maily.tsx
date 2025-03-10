@@ -8,12 +8,13 @@ import { HTMLCodeBlockView } from '@/components/workflow-editor/steps/email/exte
 import { MailyVariablesList } from '@/components/workflow-editor/steps/email/extensions/maily-variables-list';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { useTelemetry } from '@/hooks/use-telemetry';
 import { parseStepVariables } from '@/utils/parseStepVariablesToLiquidVariables';
 import { cn } from '@/utils/ui';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { ForExtension } from './extensions/for';
 import { VariableView } from './extensions/variable-view';
-import { DEFAULT_EDITOR_CONFIG, getDefaultEditorBlocks } from './maily-config';
+import { createDefaultEditorBlocks, DEFAULT_EDITOR_CONFIG } from './maily-config';
 
 type MailyProps = HTMLAttributes<HTMLDivElement> & {
   value: string;
@@ -43,6 +44,7 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
   );
   const [_, setEditor] = useState<TiptapEditor>();
   const isCustomEmailBlocksEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CUSTOM_EMAIL_BLOCKS_ENABLED);
+  const track = useTelemetry();
 
   const calculateVariables = useCallback(
     ({
@@ -170,7 +172,7 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
         <Editor
           key="repeat-block-enabled"
           config={DEFAULT_EDITOR_CONFIG}
-          blocks={getDefaultEditorBlocks(isCustomEmailBlocksEnabled)}
+          blocks={createDefaultEditorBlocks({ track, isCustomEmailBlocksEnabled })}
           extensions={extensions}
           contentJson={value ? JSON.parse(value) : undefined}
           onCreate={setEditor}
