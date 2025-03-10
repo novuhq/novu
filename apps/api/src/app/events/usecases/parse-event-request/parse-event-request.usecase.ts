@@ -70,13 +70,14 @@ export class ParseEventRequest {
   public async execute(command: ParseEventRequestCommand) {
     const transactionId = command.transactionId || uuidv4();
 
-    const environment = await this.environmentRepository.findOne({ _id: command.environmentId });
+    const [environment, organization] = await Promise.all([
+      this.environmentRepository.findOne({ _id: command.environmentId }),
+      this.communityOrganizationRepository.findOne({ _id: command.organizationId }),
+    ]);
 
     if (!environment) {
       throw new UnprocessableEntityException('Environment not found');
     }
-
-    const organization = await this.communityOrganizationRepository.findOne({ _id: command.organizationId });
 
     if (!organization) {
       throw new UnprocessableEntityException('Organization not found');

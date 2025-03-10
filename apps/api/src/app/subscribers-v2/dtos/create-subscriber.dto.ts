@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { SUBSCRIBER_ID_REGEX } from '@novu/shared';
+import { SUBSCRIBER_ID_REGEX, SUBSCRIBER_EMAIL_REGEX } from '@novu/shared';
 import { Transform } from 'class-transformer';
 import {
   IsDefined,
@@ -20,6 +20,10 @@ export class CreateSubscriberRequestDto {
     description: 'Unique identifier of the subscriber',
   })
   @IsString()
+  @Matches(SUBSCRIBER_ID_REGEX, {
+    message:
+      'SubscriberId must be a valid email address or a string of alphanumeric characters, hyphens, and underscores',
+  })
   @IsDefined()
   @IsNotEmpty({
     message: 'SubscriberId is required',
