@@ -59,6 +59,7 @@ export function useSubscribersUrlState(props: UseSubscribersUrlStateProps = {}):
       before: searchParams.get('before') || '',
       orderBy: (searchParams.get('orderBy') as SubscribersSortableColumn) || defaultSubscribersFilter.orderBy,
       orderDirection: (searchParams.get('orderDirection') as DirectionEnum) || DirectionEnum.DESC,
+      includeCursor: searchParams.get('includeCursor') || '',
     }),
     [searchParams]
   );
@@ -133,6 +134,7 @@ export function useSubscribersUrlState(props: UseSubscribersUrlStateProps = {}):
 
     const newParams = new URLSearchParams(searchParams);
     newParams.delete('before');
+    newParams.delete('includeCursor');
 
     newParams.set('after', after);
 
@@ -144,6 +146,7 @@ export function useSubscribersUrlState(props: UseSubscribersUrlStateProps = {}):
 
     const newParams = new URLSearchParams(searchParams);
     newParams.delete('after');
+    newParams.delete('includeCursor');
 
     newParams.set('before', before);
 
@@ -154,6 +157,7 @@ export function useSubscribersUrlState(props: UseSubscribersUrlStateProps = {}):
     const newParams = new URLSearchParams(searchParams);
     newParams.delete('after');
     newParams.delete('before');
+    newParams.delete('includeCursor');
     navigate(`${location.pathname}?${newParams}`, { replace: true });
   };
 

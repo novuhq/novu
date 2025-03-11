@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
 import { DirectionEnum } from '@novu/shared';
+import { Transform } from 'class-transformer';
 
 export class CursorPaginationQueryDto<T, K extends keyof T> {
   @ApiProperty({
@@ -24,4 +25,7 @@ export class CursorPaginationQueryDto<T, K extends keyof T> {
   limit?: number;
   orderDirection?: DirectionEnum;
   orderBy?: K;
+
+  @Transform(({ value }) => value === 'true')
+  includeCursor?: boolean;
 }

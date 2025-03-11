@@ -24,7 +24,7 @@ import { cn } from '@/utils/ui';
 import { SubscriberResponseDto } from '@novu/api/models/components';
 import { ComponentProps, useState } from 'react';
 import { RiDeleteBin2Line, RiFileCopyLine, RiMore2Fill, RiPulseFill } from 'react-icons/ri';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ExternalToast } from 'sonner';
 import { useSubscribersNavigate } from '@/components/subscribers/hooks/use-subscribers-navigate';
 
@@ -38,6 +38,7 @@ const toastOptions: ExternalToast = {
 type SubscriberRowProps = {
   subscriber: SubscriberResponseDto;
   subscribersCount: number;
+  firstSubscriberInternalId: string;
 };
 
 type SubscriberLinkTableCellProps = ComponentProps<typeof TableCell>;
@@ -53,11 +54,14 @@ const SubscriberTableCell = (props: SubscriberLinkTableCellProps) => {
   );
 };
 
-export const SubscriberRow = ({ subscriber, subscribersCount }: SubscriberRowProps) => {
+export const SubscriberRow = ({ subscriber, subscribersCount, firstSubscriberInternalId }: SubscriberRowProps) => {
   const { currentEnvironment } = useEnvironment();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const subscriberTitle = getSubscriberTitle(subscriber);
   const { navigateToSubscribersFirstPage, navigateToEditSubscriberPage } = useSubscribersNavigate();
+
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const { deleteSubscriber, isPending: isDeleteSubscriberPending } = useDeleteSubscriber({
     onSuccess: () => {
@@ -190,6 +194,16 @@ export const SubscriberRow = ({ subscriber, subscribersCount }: SubscriberRowPro
 
           if (subscribersCount === 1) {
             navigateToSubscribersFirstPage();
+            return;
+          }
+
+          if (firstSubscriberInternalId) {
+            const newParams = new URLSearchParams(searchParams);
+            newParams.delete('before');
+            newParams.set('after', firstSubscriberInternalId);
+            newParams.set('includeCursor', 'true');
+
+            navigate(`${location.pathname}?${newParams}`, { replace: true });
           }
         }}
         title={`Delete subscriber`}

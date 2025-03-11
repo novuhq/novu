@@ -178,7 +178,12 @@ export const SubscriberList = (props: SubscriberListProps) => {
         toggleSort={toggleSort}
       >
         {data.data.map((subscriber) => (
-          <SubscriberRow key={subscriber.id} subscriber={subscriber} subscribersCount={data.data.length} />
+          <SubscriberRow
+            key={subscriber.id}
+            subscriber={subscriber}
+            subscribersCount={data.data.length}
+            firstSubscriberInternalId={data.data[0]._id!}
+          />
         ))}
       </SubscriberListTable>
 

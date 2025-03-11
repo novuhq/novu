@@ -21,6 +21,7 @@ export const getSubscribers = async ({
   phone,
   subscriberId,
   name,
+  includeCursor,
 }: {
   environment: IEnvironment;
   after?: string;
@@ -32,6 +33,7 @@ export const getSubscribers = async ({
   name?: string;
   orderDirection?: DirectionEnum;
   orderBy?: string;
+  includeCursor?: boolean;
 }): Promise<ListSubscribersResponseDto> => {
   const params = new URLSearchParams({
     limit: limit.toString(),
@@ -44,6 +46,7 @@ export const getSubscribers = async ({
     ...(name && { name }),
     ...(orderBy && { orderBy }),
     ...(orderDirection && { orderDirection }),
+    ...(includeCursor && { includeCursor: includeCursor.toString() }),
   });
   const response = await getV2<ListSubscribersResponseDto>(`/subscribers?${params}`, {
     environment,
