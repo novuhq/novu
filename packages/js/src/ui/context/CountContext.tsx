@@ -70,7 +70,7 @@ export const CountProvider = (props: ParentProps) => {
   const updateNewNotificationCountsOrCache = (notification: Notification, tags: string[]) => {
     const notificationsCache = novu.notifications.cache;
     const limitValue = limit();
-    const tabFilter = { ...filter(), tags, offset: 0, limit: limitValue };
+    const tabFilter = { ...filter(), tags, after: undefined, limit: limitValue };
     const hasEmptyCache = !notificationsCache.has(tabFilter);
     if (!isOpened() && hasEmptyCache) {
       return;
