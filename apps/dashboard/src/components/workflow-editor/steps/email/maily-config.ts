@@ -25,28 +25,7 @@ export const DEFAULT_EDITOR_CONFIG = {
 };
 
 export const getDefaultEditorBlocks = (isCustomEmailBlocksEnabled: boolean): BlockGroupItem[] => {
-  const blocks: BlockGroupItem[] = [
-    {
-      title: 'All blocks',
-      commands: [
-        blockquote,
-        bulletList,
-        button,
-        columns,
-        divider,
-        hardBreak,
-        heading1,
-        heading2,
-        heading3,
-        image,
-        orderedList,
-        repeat,
-        section,
-        spacer,
-        text,
-      ],
-    },
-  ];
+  const blocks: BlockGroupItem[] = [];
 
   if (isCustomEmailBlocksEnabled) {
     blocks.push({
@@ -54,6 +33,27 @@ export const getDefaultEditorBlocks = (isCustomEmailBlocksEnabled: boolean): Blo
       commands: [htmlCodeBlock],
     });
   }
+
+  blocks.push({
+    title: 'All blocks',
+    commands: [
+      blockquote,
+      bulletList,
+      button,
+      columns,
+      divider,
+      hardBreak,
+      heading1,
+      heading2,
+      heading3,
+      image,
+      orderedList,
+      repeat,
+      section,
+      spacer,
+      text,
+    ],
+  });
 
   return blocks;
 };
