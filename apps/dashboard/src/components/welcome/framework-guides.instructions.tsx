@@ -1,5 +1,6 @@
 import { RiAngularjsFill, RiJavascriptFill, RiNextjsFill, RiReactjsFill, RiRemixRunFill } from 'react-icons/ri';
 import { Language } from '../primitives/code-block';
+import { API_HOSTNAME, WEBSOCKET_HOSTNAME } from '@/config';
 
 export interface Framework {
   name: string;
@@ -19,6 +20,9 @@ export interface InstallationStep {
     description: string | React.ReactNode;
   };
 }
+
+const isDefaultApi = API_HOSTNAME === 'https://api.novu.co';
+const isDefaultWs = WEBSOCKET_HOSTNAME === 'https://ws.novu.co';
 
 export const customizationTip = {
   title: 'Tip:',
@@ -47,23 +51,23 @@ export const frameworks: Framework[] = [
     icon: <RiNextjsFill className="h-8 w-8 text-black" />,
     selected: true,
     installSteps: [
-      commonInstallStep('@novu/react'),
+      commonInstallStep('@novu/nextjs'),
       {
         title: 'Add the inbox code to your Next.js app',
-        description: 'Novu uses the router hook to make your notifications navigatable in Next.js.',
-        code: `'use client';
-
-import { Inbox } from '@novu/react';
-import { useRouter } from 'next/navigation';
+        description: 'Inbox utilizes the Next.js router to enable navigation within your notifications.',
+        code: `import { Inbox } from '@novu/nextjs';
 
 function Novu() {
-  const router = useRouter();
-
   return (
     <Inbox
       applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
-      subscriberId="YOUR_SUBSCRIBER_ID"
-      routerPush={(path: string) => router.push(path)}
+      subscriberId="YOUR_SUBSCRIBER_ID"${!isDefaultApi ? `\n      ${`backendUrl="${API_HOSTNAME}"`}` : ''}${!isDefaultWs ? `\n      ${`socketUrl="${WEBSOCKET_HOSTNAME}"`}` : ''}
+      appearance={{
+        variables: {
+          colorPrimary: "YOUR_PRIMARY_COLOR",
+          colorForeground: "YOUR_FOREGROUND_COLOR"
+        }
+      }}
     />
   );
 }`,
@@ -80,7 +84,8 @@ function Novu() {
       commonInstallStep('@novu/react'),
       {
         title: 'Add the inbox code to your React app',
-        description: 'Novu uses the onNavigate prop to handle notification clicks in React.',
+        description:
+          'Inbox utilizes the routerPush prop and your preferred router to enable navigation within your notifications.',
         code: `import { Inbox } from '@novu/react';
 import { useNavigate } from 'react-router-dom';
 
@@ -90,8 +95,14 @@ function Novu() {
   return (
     <Inbox
       applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
-      subscriberId="YOUR_SUBSCRIBER_ID"
+      subscriberId="YOUR_SUBSCRIBER_ID"${!isDefaultApi ? `\n      ${`backendUrl="${API_HOSTNAME}"`}` : ''}${!isDefaultWs ? `\n      ${`socketUrl="${WEBSOCKET_HOSTNAME}"`}` : ''}
       routerPush={(path: string) => navigate(path)}
+      appearance={{
+        variables: {
+          colorPrimary: "YOUR_PRIMARY_COLOR",
+          colorForeground: "YOUR_FOREGROUND_COLOR"
+        }
+      }}
     />
   );
 }`,
@@ -108,7 +119,7 @@ function Novu() {
       commonInstallStep('@novu/react'),
       {
         title: 'Add the inbox code to your Remix app',
-        description: 'Implement the notification center in your Remix application.',
+        description: 'Inbox utilizes the routerPush prop to enable navigation within your notifications.',
         code: `import { Inbox } from '@novu/react';
 import { useNavigate } from '@remix-run/react';
 
@@ -118,8 +129,14 @@ function Novu() {
   return (
     <Inbox
       applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
-      subscriberId="YOUR_SUBSCRIBER_ID"
+      subscriberId="YOUR_SUBSCRIBER_ID"${!isDefaultApi ? `\n      ${`backendUrl="${API_HOSTNAME}"`}` : ''}${!isDefaultWs ? `\n      ${`socketUrl="${WEBSOCKET_HOSTNAME}"`}` : ''}
       routerPush={(path: string) => navigate(path)}
+      appearance={{
+        variables: {
+          colorPrimary: "YOUR_PRIMARY_COLOR",
+          colorForeground: "YOUR_FOREGROUND_COLOR"
+        }
+      }}
     />
   );
 }`,
@@ -143,8 +160,8 @@ import { YourCustomInbox } from './Inbox';
 function Layout() {
   return (
      <NovuProvider
-      subscriberId="YOUR_SUBSCRIBER_ID"
       applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+      subscriberId="YOUR_SUBSCRIBER_ID"${!isDefaultApi ? `\n      ${`backendUrl="${API_HOSTNAME}"`}` : ''}${!isDefaultWs ? `\n      ${`socketUrl="${WEBSOCKET_HOSTNAME}"`}` : ''}
     >
       <YourCustomInbox />
     </NovuProvider>
