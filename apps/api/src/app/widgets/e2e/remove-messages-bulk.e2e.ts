@@ -7,7 +7,7 @@ import { ChannelTypeEnum } from '@novu/shared';
 import { Novu } from '@novu/api';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-describe('Remove messages by bulk - /widgets/messages/bulk/delete (POST) #novu-v1', function () {
+describe('Remove messages by bulk - /widgets/messages/bulk/delete (POST) #novu-v0', function () {
   const messageRepository = new MessageRepository();
   let session: UserSession;
   let template: NotificationTemplateEntity;

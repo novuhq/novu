@@ -16,7 +16,7 @@ export type FeedIdentifier = string | Array<string>;
 /**
  * Mark all subscriber messages as read, unread, seen or unseen
  */
-export const MarkAllMessageAsRequestDtoMarkAs = {
+export const MarkAs = {
   Read: "read",
   Seen: "seen",
   Unread: "unread",
@@ -25,9 +25,7 @@ export const MarkAllMessageAsRequestDtoMarkAs = {
 /**
  * Mark all subscriber messages as read, unread, seen or unseen
  */
-export type MarkAllMessageAsRequestDtoMarkAs = ClosedEnum<
-  typeof MarkAllMessageAsRequestDtoMarkAs
->;
+export type MarkAs = ClosedEnum<typeof MarkAs>;
 
 export type MarkAllMessageAsRequestDto = {
   /**
@@ -37,7 +35,7 @@ export type MarkAllMessageAsRequestDto = {
   /**
    * Mark all subscriber messages as read, unread, seen or unseen
    */
-  markAs: MarkAllMessageAsRequestDtoMarkAs;
+  markAs: MarkAs;
 };
 
 /** @internal */
@@ -85,24 +83,22 @@ export function feedIdentifierFromJSON(
 }
 
 /** @internal */
-export const MarkAllMessageAsRequestDtoMarkAs$inboundSchema: z.ZodNativeEnum<
-  typeof MarkAllMessageAsRequestDtoMarkAs
-> = z.nativeEnum(MarkAllMessageAsRequestDtoMarkAs);
+export const MarkAs$inboundSchema: z.ZodNativeEnum<typeof MarkAs> = z
+  .nativeEnum(MarkAs);
 
 /** @internal */
-export const MarkAllMessageAsRequestDtoMarkAs$outboundSchema: z.ZodNativeEnum<
-  typeof MarkAllMessageAsRequestDtoMarkAs
-> = MarkAllMessageAsRequestDtoMarkAs$inboundSchema;
+export const MarkAs$outboundSchema: z.ZodNativeEnum<typeof MarkAs> =
+  MarkAs$inboundSchema;
 
 /**
  * @internal
  * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
  */
-export namespace MarkAllMessageAsRequestDtoMarkAs$ {
-  /** @deprecated use `MarkAllMessageAsRequestDtoMarkAs$inboundSchema` instead. */
-  export const inboundSchema = MarkAllMessageAsRequestDtoMarkAs$inboundSchema;
-  /** @deprecated use `MarkAllMessageAsRequestDtoMarkAs$outboundSchema` instead. */
-  export const outboundSchema = MarkAllMessageAsRequestDtoMarkAs$outboundSchema;
+export namespace MarkAs$ {
+  /** @deprecated use `MarkAs$inboundSchema` instead. */
+  export const inboundSchema = MarkAs$inboundSchema;
+  /** @deprecated use `MarkAs$outboundSchema` instead. */
+  export const outboundSchema = MarkAs$outboundSchema;
 }
 
 /** @internal */
@@ -112,7 +108,7 @@ export const MarkAllMessageAsRequestDto$inboundSchema: z.ZodType<
   unknown
 > = z.object({
   feedIdentifier: z.union([z.string(), z.array(z.string())]).optional(),
-  markAs: MarkAllMessageAsRequestDtoMarkAs$inboundSchema,
+  markAs: MarkAs$inboundSchema,
 });
 
 /** @internal */
@@ -128,7 +124,7 @@ export const MarkAllMessageAsRequestDto$outboundSchema: z.ZodType<
   MarkAllMessageAsRequestDto
 > = z.object({
   feedIdentifier: z.union([z.string(), z.array(z.string())]).optional(),
-  markAs: MarkAllMessageAsRequestDtoMarkAs$outboundSchema,
+  markAs: MarkAs$outboundSchema,
 });
 
 /**

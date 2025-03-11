@@ -8,7 +8,7 @@ import { safeParse } from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 
-export type IApiKeyDto = {
+export type ApiKeyDto = {
   /**
    * API key
    */
@@ -24,8 +24,8 @@ export type IApiKeyDto = {
 };
 
 /** @internal */
-export const IApiKeyDto$inboundSchema: z.ZodType<
-  IApiKeyDto,
+export const ApiKeyDto$inboundSchema: z.ZodType<
+  ApiKeyDto,
   z.ZodTypeDef,
   unknown
 > = z.object({
@@ -39,17 +39,17 @@ export const IApiKeyDto$inboundSchema: z.ZodType<
 });
 
 /** @internal */
-export type IApiKeyDto$Outbound = {
+export type ApiKeyDto$Outbound = {
   key: string;
   _userId: string;
   hash?: string | undefined;
 };
 
 /** @internal */
-export const IApiKeyDto$outboundSchema: z.ZodType<
-  IApiKeyDto$Outbound,
+export const ApiKeyDto$outboundSchema: z.ZodType<
+  ApiKeyDto$Outbound,
   z.ZodTypeDef,
-  IApiKeyDto
+  ApiKeyDto
 > = z.object({
   key: z.string(),
   userId: z.string(),
@@ -64,25 +64,25 @@ export const IApiKeyDto$outboundSchema: z.ZodType<
  * @internal
  * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
  */
-export namespace IApiKeyDto$ {
-  /** @deprecated use `IApiKeyDto$inboundSchema` instead. */
-  export const inboundSchema = IApiKeyDto$inboundSchema;
-  /** @deprecated use `IApiKeyDto$outboundSchema` instead. */
-  export const outboundSchema = IApiKeyDto$outboundSchema;
-  /** @deprecated use `IApiKeyDto$Outbound` instead. */
-  export type Outbound = IApiKeyDto$Outbound;
+export namespace ApiKeyDto$ {
+  /** @deprecated use `ApiKeyDto$inboundSchema` instead. */
+  export const inboundSchema = ApiKeyDto$inboundSchema;
+  /** @deprecated use `ApiKeyDto$outboundSchema` instead. */
+  export const outboundSchema = ApiKeyDto$outboundSchema;
+  /** @deprecated use `ApiKeyDto$Outbound` instead. */
+  export type Outbound = ApiKeyDto$Outbound;
 }
 
-export function iApiKeyDtoToJSON(iApiKeyDto: IApiKeyDto): string {
-  return JSON.stringify(IApiKeyDto$outboundSchema.parse(iApiKeyDto));
+export function apiKeyDtoToJSON(apiKeyDto: ApiKeyDto): string {
+  return JSON.stringify(ApiKeyDto$outboundSchema.parse(apiKeyDto));
 }
 
-export function iApiKeyDtoFromJSON(
+export function apiKeyDtoFromJSON(
   jsonString: string,
-): SafeParseResult<IApiKeyDto, SDKValidationError> {
+): SafeParseResult<ApiKeyDto, SDKValidationError> {
   return safeParse(
     jsonString,
-    (x) => IApiKeyDto$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'IApiKeyDto' from JSON`,
+    (x) => ApiKeyDto$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'ApiKeyDto' from JSON`,
   );
 }

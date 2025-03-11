@@ -16,14 +16,16 @@ const LINKS: LinkType[] = [
   { href: '/novu-theme', label: 'Novu Theme' },
   { href: '/custom-popover', label: 'Custom Popover' },
   { href: '/hooks', label: 'Hooks' },
+  { href: '/custom-subject-body', label: 'Custom Subject Body' },
 ];
 
 const NavLink = ({ href, label }: LinkType) => {
   const router = useRouter();
 
-  const pathname = router.pathname;
+  const { pathname } = router;
 
   const isActive = pathname === href;
+
   return (
     <li className={`rounded p-2 hover:bg-slate-200 ${isActive ? 'text-cyan-800 underline' : ''}`}>
       <Link href={href}>{label}</Link>

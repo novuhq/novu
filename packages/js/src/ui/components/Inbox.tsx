@@ -7,6 +7,8 @@ import type {
   NotificationActionClickHandler,
   NotificationClickHandler,
   NotificationRenderer,
+  SubjectRenderer,
+  BodyRenderer,
 } from '../types';
 import { Bell, Footer, Header, Preferences } from './elements';
 import { PreferencesHeader } from './elements/Preferences/PreferencesHeader';
@@ -17,6 +19,8 @@ import { Button, Popover } from './primitives';
 export type InboxProps = {
   open?: boolean;
   renderNotification?: NotificationRenderer;
+  renderSubject?: SubjectRenderer;
+  renderBody?: BodyRenderer;
   renderBell?: BellRenderer;
   onNotificationClick?: NotificationClickHandler;
   onPrimaryActionClick?: NotificationActionClickHandler;
@@ -32,6 +36,8 @@ export enum InboxPage {
 
 export type InboxContentProps = {
   renderNotification?: NotificationRenderer;
+  renderSubject?: SubjectRenderer;
+  renderBody?: BodyRenderer;
   onNotificationClick?: NotificationClickHandler;
   onPrimaryActionClick?: NotificationActionClickHandler;
   onSecondaryActionClick?: NotificationActionClickHandler;
@@ -65,6 +71,8 @@ export const InboxContent = (props: InboxContentProps) => {
             fallback={
               <NotificationList
                 renderNotification={props.renderNotification}
+                renderSubject={props.renderSubject}
+                renderBody={props.renderBody}
                 onNotificationClick={props.onNotificationClick}
                 onPrimaryActionClick={props.onPrimaryActionClick}
                 onSecondaryActionClick={props.onSecondaryActionClick}
@@ -74,6 +82,8 @@ export const InboxContent = (props: InboxContentProps) => {
           >
             <InboxTabs
               renderNotification={props.renderNotification}
+              renderSubject={props.renderSubject}
+              renderBody={props.renderBody}
               onNotificationClick={props.onNotificationClick}
               onPrimaryActionClick={props.onPrimaryActionClick}
               onSecondaryActionClick={props.onSecondaryActionClick}
@@ -108,6 +118,8 @@ export const Inbox = (props: InboxProps) => {
       <Popover.Content appearanceKey="inbox__popoverContent" portal>
         <InboxContent
           renderNotification={props.renderNotification}
+          renderSubject={props.renderSubject}
+          renderBody={props.renderBody}
           onNotificationClick={props.onNotificationClick}
           onPrimaryActionClick={props.onPrimaryActionClick}
           onSecondaryActionClick={props.onSecondaryActionClick}

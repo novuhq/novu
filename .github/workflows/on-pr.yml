@@ -240,10 +240,6 @@ jobs:
     uses: ./.github/workflows/reusable-api-e2e.yml
     with:
       ee: true
-      test-e2e-affected: ${{ contains(fromJson(needs.get-affected.outputs.test-e2e), '@novu/api-service') || contains(fromJson(needs.get-affected.outputs.test-e2e), '@novu/worker') }}
-      test-e2e-ee-affected: ${{ contains(fromJson(needs.get-affected.outputs.test-e2e-ee), '@novu/api-service') || contains(fromJson(needs.get-affected.outputs.test-e2e-ee), '@novu/worker') }}
-      job-name: 'novu/api-ee'
-      test-unit: false
     secrets: inherit
 
   # TODO: Uncomment this when we have update on the web app
@@ -265,11 +261,11 @@ jobs:
     with:
       ee: true
 
-  test_e2e_widget:
-    name: E2E test Widget
-    needs: [get-affected]
-    uses: ./.github/workflows/reusable-widget-e2e.yml
-    with:
-      ee: true
-    if: ${{ contains(fromJson(needs.get-affected.outputs.test-cypress), '@novu/widget') || contains(fromJson(needs.get-affected.outputs.test-unit), '@novu/notification-center') || contains(fromJson(needs.get-affected.outputs.test-unit), '@novu/ws') }}
-    secrets: inherit
+  # test_e2e_widget:
+  #   name: E2E test Widget
+  #   needs: [get-affected]
+  #   uses: ./.github/workflows/reusable-widget-e2e.yml
+  #   with:
+  #     ee: true
+  #   if: ${{ contains(fromJson(needs.get-affected.outputs.test-cypress), '@novu/widget') || contains(fromJson(needs.get-affected.outputs.test-unit), '@novu/notification-center') || contains(fromJson(needs.get-affected.outputs.test-unit), '@novu/ws') }}
+  #   secrets: inherit

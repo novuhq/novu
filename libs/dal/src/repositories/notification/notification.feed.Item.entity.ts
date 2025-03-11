@@ -19,7 +19,7 @@ export type SubscriberFeedItem = Pick<
 
 export type JobFeedItem = Pick<
   JobEntity,
-  '_id' | 'status' | 'payload' | 'step' | 'type' | 'providerId' | 'createdAt' | 'updatedAt' | 'digest'
+  '_id' | 'status' | 'overrides' | 'payload' | 'step' | 'type' | 'providerId' | 'createdAt' | 'updatedAt' | 'digest'
 > & {
   executionDetails: ExecutionDetailFeedItem[]; // Assuming ExecutionDetailFeedItem is defined
   type: StepTypeEnum;

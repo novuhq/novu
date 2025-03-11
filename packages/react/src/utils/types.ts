@@ -11,11 +11,15 @@ import type {
 } from '@novu/js/ui';
 
 export type NotificationsRenderer = (notification: Notification) => React.ReactNode;
+export type SubjectRenderer = (notification: Notification) => React.ReactNode;
+export type BodyRenderer = (notification: Notification) => React.ReactNode;
 export type BellRenderer = (unreadCount: number) => React.ReactNode;
 
 export type DefaultInboxProps = {
   open?: boolean;
   renderNotification?: NotificationsRenderer;
+  renderSubject?: SubjectRenderer;
+  renderBody?: BodyRenderer;
   renderBell?: BellRenderer;
   onNotificationClick?: NotificationClickHandler;
   onPrimaryActionClick?: NotificationActionClickHandler;

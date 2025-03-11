@@ -88,7 +88,7 @@ export const NotionTheme = () => {
 
   return (
     <div className="flex min-h-[600px] w-full max-w-[1200px] rounded-lg bg-white">
-      <div className="flex w-[240px] flex-shrink-0 flex-col border-gray-200 bg-[#f7f7f5] p-4 shadow-lg">
+      <div className="flex w-[240px] shrink-0 flex-col border-gray-200 bg-[#f7f7f5] p-4 shadow-lg">
         <div className="mb-4 flex items-center">
           <div className="mr-4 flex items-center">
             <NotionIcon className="mr-2 h-4 w-4" />
@@ -104,7 +104,7 @@ export const NotionTheme = () => {
           <SidebarItem icon={FiHome} label="Home" isActive />
           <SidebarItem icon={FiInbox} label="Inbox">
             {counts && counts[0].count > 0 && (
-              <span className="!ml-auto flex h-4 min-w-4 items-center justify-center rounded bg-[#eb5757] px-1 text-[10px] font-semibold text-white">
+              <span className="ml-auto! flex h-4 min-w-4 items-center justify-center rounded bg-[#eb5757] px-1 text-[10px] font-semibold text-white">
                 {counts[0].count}
               </span>
             )}

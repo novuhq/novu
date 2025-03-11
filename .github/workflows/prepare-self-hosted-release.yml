@@ -31,7 +31,7 @@ jobs:
         shell: bash
         run: |
           service=${{ matrix.name }}
-          LATEST_VERSION=$(jq -r '.version' lerna.json)
+          LATEST_VERSION=$(jq -r '.version'  apps/api/package.json)
           SERVICE_NAME=$(basename "${service//-/-}")
           SERVICE_COMMON_NAME=$(echo "$SERVICE_NAME" | sed 's/-ee$//')
           echo "LATEST_VERSION=$LATEST_VERSION" >> $GITHUB_ENV

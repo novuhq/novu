@@ -8,11 +8,11 @@ import { safeParse } from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 import {
-  IApiKeyDto,
-  IApiKeyDto$inboundSchema,
-  IApiKeyDto$Outbound,
-  IApiKeyDto$outboundSchema,
-} from "./iapikeydto.js";
+  ApiKeyDto,
+  ApiKeyDto$inboundSchema,
+  ApiKeyDto$Outbound,
+  ApiKeyDto$outboundSchema,
+} from "./apikeydto.js";
 
 export type EnvironmentResponseDto = {
   /**
@@ -34,7 +34,7 @@ export type EnvironmentResponseDto = {
   /**
    * List of API keys associated with the environment
    */
-  apiKeys?: Array<IApiKeyDto> | undefined;
+  apiKeys?: Array<ApiKeyDto> | undefined;
   /**
    * Parent environment ID
    */
@@ -55,7 +55,7 @@ export const EnvironmentResponseDto$inboundSchema: z.ZodType<
   name: z.string(),
   _organizationId: z.string(),
   identifier: z.string(),
-  apiKeys: z.array(IApiKeyDto$inboundSchema).optional(),
+  apiKeys: z.array(ApiKeyDto$inboundSchema).optional(),
   _parentId: z.string().optional(),
   slug: z.string().optional(),
 }).transform((v) => {
@@ -72,7 +72,7 @@ export type EnvironmentResponseDto$Outbound = {
   name: string;
   _organizationId: string;
   identifier: string;
-  apiKeys?: Array<IApiKeyDto$Outbound> | undefined;
+  apiKeys?: Array<ApiKeyDto$Outbound> | undefined;
   _parentId?: string | undefined;
   slug?: string | undefined;
 };
@@ -87,7 +87,7 @@ export const EnvironmentResponseDto$outboundSchema: z.ZodType<
   name: z.string(),
   organizationId: z.string(),
   identifier: z.string(),
-  apiKeys: z.array(IApiKeyDto$outboundSchema).optional(),
+  apiKeys: z.array(ApiKeyDto$outboundSchema).optional(),
   parentId: z.string().optional(),
   slug: z.string().optional(),
 }).transform((v) => {

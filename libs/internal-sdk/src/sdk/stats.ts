@@ -10,20 +10,6 @@ import { unwrapAsync } from "../types/fp.js";
 
 export class Stats extends ClientSDK {
   /**
-   * Get notification statistics
-   */
-  async retrieve(
-    idempotencyKey?: string | undefined,
-    options?: RequestOptions,
-  ): Promise<operations.NotificationsControllerGetActivityStatsResponse> {
-    return unwrapAsync(notificationsStatsRetrieve(
-      this,
-      idempotencyKey,
-      options,
-    ));
-  }
-
-  /**
    * Get notification graph statistics
    */
   async graph(
@@ -34,6 +20,20 @@ export class Stats extends ClientSDK {
     return unwrapAsync(notificationsStatsGraph(
       this,
       days,
+      idempotencyKey,
+      options,
+    ));
+  }
+
+  /**
+   * Get notification statistics
+   */
+  async retrieve(
+    idempotencyKey?: string | undefined,
+    options?: RequestOptions,
+  ): Promise<operations.NotificationsControllerGetActivityStatsResponse> {
+    return unwrapAsync(notificationsStatsRetrieve(
+      this,
       idempotencyKey,
       options,
     ));

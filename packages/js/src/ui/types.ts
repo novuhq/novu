@@ -8,6 +8,8 @@ export type NotificationClickHandler = (notification: Notification) => void;
 export type NotificationActionClickHandler = (notification: Notification) => void;
 
 export type NotificationRenderer = (el: HTMLDivElement, notification: Notification) => () => void;
+export type SubjectRenderer = (el: HTMLDivElement, notification: Notification) => () => void;
+export type BodyRenderer = (el: HTMLDivElement, notification: Notification) => () => void;
 export type BellRenderer = (el: HTMLDivElement, unreadCount: number) => () => void;
 export type RouterPush = (path: string) => void;
 

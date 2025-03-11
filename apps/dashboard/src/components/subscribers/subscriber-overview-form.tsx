@@ -12,7 +12,7 @@ import { loadLanguage } from '@uiw/codemirror-extensions-langs';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { RiDeleteBin2Line, RiMailLine } from 'react-icons/ri';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { ExternalToast } from 'sonner';
 import { z } from 'zod';
 import { ConfirmationModal } from '../confirmation-modal';
@@ -28,6 +28,9 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip';
 import { SubscriberFormSchema } from './schema';
 import { TimezoneSelect } from './timezone-select';
 import { getSubscriberTitle } from './utils';
+import { useSubscribersUrlState } from '@/components/subscribers/hooks/use-subscribers-url-state';
+import { useFetchSubscribers } from '@/hooks/use-fetch-subscribers';
+import { useSubscribersNavigate } from '@/components/subscribers/hooks/use-subscribers-navigate';
 
 const extensions = [loadLanguage('json')?.extension ?? []];
 const basicSetup = { lineNumbers: true, defaultKeymap: true };
@@ -59,17 +62,28 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const track = useTelemetry();
 
+  const { navigateToSubscribersFirstPage, navigateToSubscribersCurrentPage } = useSubscribersNavigate();
+  const { filterValues } = useSubscribersUrlState();
+  const { data } = useFetchSubscribers(filterValues, {
+    meta: { errorMessage: 'Issue fetching subscribers' },
+  });
+
   const { deleteSubscriber, isPending: isDeleteSubscriberPending } = useDeleteSubscriber({
     onSuccess: () => {
       showSuccessToast(`Deleted subscriber: ${getSubscriberTitle(subscriber)}`, undefined, toastOptions);
       track(TelemetryEvent.SUBSCRIBER_DELETED);
+      const isLastSubscriber = data?.data.length === 1;
+
+      if (isLastSubscriber) {
+        navigateToSubscribersFirstPage();
+      } else {
+        navigateToSubscribersCurrentPage();
+      }
     },
     onError: () => {
       showErrorToast('Failed to delete subscriber', undefined, toastOptions);
     },
   });
-
-  const navigate = useNavigate();
 
   const form = useForm<z.infer<typeof SubscriberFormSchema>>({
     defaultValues: createDefaultSubscriberValues(subscriber),
@@ -400,7 +414,6 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
         onConfirm={async () => {
           await deleteSubscriber({ subscriberId: subscriber.subscriberId });
           setIsDeleteModalOpen(false);
-          navigate('../', { relative: 'path' });
         }}
         title="Delete subscriber"
         description={

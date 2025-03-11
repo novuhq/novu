@@ -1,11 +1,15 @@
 /* eslint-disable max-len */
-import { DocumentBuilder, OpenAPIObject, SwaggerModule } from '@nestjs/swagger';
-import { INestApplication } from '@nestjs/common';
-import { SecuritySchemeObject } from '@nestjs/swagger/dist/interfaces/open-api-spec.interface';
-import { injectDocumentComponents } from './injection';
-import { overloadDocumentForSdkGeneration, removeEndpointsWithoutApiKey } from './open.api.manipulation.component';
-import metadata from '../../../../metadata';
-import { API_KEY_SWAGGER_SECURITY_NAME, BEARER_SWAGGER_SECURITY_NAME } from '@novu/application-generic';
+import { DocumentBuilder, OpenAPIObject, SwaggerModule } from "@nestjs/swagger";
+import { INestApplication } from "@nestjs/common";
+import { SecuritySchemeObject } from "@nestjs/swagger/dist/interfaces/open-api-spec.interface";
+import { injectDocumentComponents } from "./injection";
+import {
+  overloadDocumentForSdkGeneration,
+  removeEndpointsWithoutApiKey,
+  sortOpenAPIDocument
+} from "./open.api.manipulation.component";
+import metadata from "../../../../metadata";
+import { API_KEY_SWAGGER_SECURITY_NAME, BEARER_SWAGGER_SECURITY_NAME } from "@novu/application-generic";
 
 export const API_KEY_SECURITY_DEFINITIONS: SecuritySchemeObject = {
   type: 'apiKey',
@@ -208,6 +212,7 @@ function publishSdkSpecificDocumentAndReturnDocument(
   overloadNamingGuidelines(document);
   overloadGlobalSdkRetrySettings(document);
   let sdkDocument: OpenAPIObject = overloadDocumentForSdkGeneration(document, internalSdkGeneration);
+  sdkDocument = sortOpenAPIDocument(sdkDocument);
   SwaggerModule.setup('openapi.sdk', app, sdkDocument, {
     jsonDocumentUrl: 'openapi.sdk.json',
     yamlDocumentUrl: 'openapi.sdk.yaml',

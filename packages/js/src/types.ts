@@ -176,14 +176,12 @@ export type NovuOptions = {
   applicationIdentifier: string;
   subscriberId: string;
   subscriberHash?: string;
-  // @deprecated use apiUrl instead
+  /** @deprecated Use apiUrl instead  */
   backendUrl?: string;
   apiUrl?: string;
   socketUrl?: string;
   useCache?: boolean;
-  /**
-   * @internal Should be used internally
-   */
+  /** @internal Should be used internally for testing purposes */
   __userAgent?: string;
 };
 
