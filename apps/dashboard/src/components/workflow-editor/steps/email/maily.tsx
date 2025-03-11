@@ -10,7 +10,6 @@ import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { parseStepVariables } from '@/utils/parseStepVariablesToLiquidVariables';
 import { cn } from '@/utils/ui';
-import '@maily-to/core/style.css';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { ForExtension } from './extensions/for';
 import { VariableView } from './extensions/variable-view';
