@@ -18,7 +18,9 @@ import {
   Subscriber,
   TODO,
   WebSocketEvent,
+  Result,
 } from '../types';
+import { NovuError } from '../utils/errors';
 
 const PRODUCTION_SOCKET_URL = 'https://ws.novu.co';
 const NOTIFICATION_RECEIVED: NotificationReceivedEvent = 'notifications.notification_received';
@@ -171,27 +173,46 @@ export class Socket extends BaseModule {
     this.#socketIo?.on(WebSocketEvent.UNREAD, this.#unreadCountChanged);
   }
 
+  async #handleConnectSocket(): Result<void> {
+    try {
+      await this.#initializeSocket();
+
+      return {};
+    } catch (error) {
+      return { error: new NovuError('Failed to initialize the socket', error) };
+    }
+  }
+
+  async #handleDisconnectSocket(): Result<void> {
+    try {
+      this.#socketIo?.disconnect();
+      this.#socketIo = undefined;
+
+      return {};
+    } catch (error) {
+      return { error: new NovuError('Failed to disconnect from the socket', error) };
+    }
+  }
+
   isSocketEvent(eventName: string): eventName is SocketEventNames {
     return (
       eventName === NOTIFICATION_RECEIVED || eventName === UNSEEN_COUNT_CHANGED || eventName === UNREAD_COUNT_CHANGED
     );
   }
 
-  initialize(): void {
+  async connect(): Result<void> {
     if (this.#token) {
-      this.#initializeSocket().catch((error) => {
-        console.error(error);
-      });
-
-      return;
+      return this.#handleConnectSocket();
     }
 
-    this.callWithSession(async () => {
-      this.#initializeSocket().catch((error) => {
-        console.error(error);
-      });
+    return this.callWithSession(this.#handleConnectSocket.bind(this));
+  }
 
-      return {};
-    });
+  async disconnect(): Result<void> {
+    if (this.#socketIo) {
+      return this.#handleDisconnectSocket();
+    }
+
+    return this.callWithSession(this.#handleDisconnectSocket.bind(this));
   }
 }

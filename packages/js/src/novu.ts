@@ -10,11 +10,12 @@ import { Socket } from './ws';
 export class Novu implements Pick<NovuEventEmitter, 'on'> {
   #emitter: NovuEventEmitter;
   #session: Session;
-  #socket: Socket;
   #inboxService: InboxService;
 
   public readonly notifications: Notifications;
   public readonly preferences: Preferences;
+  public readonly socket: Socket;
+
   public on: <Key extends EventNames>(eventName: Key, listener: EventHandler<Events[Key]>) => () => void;
   /**
    * @deprecated
@@ -48,15 +49,15 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
       inboxServiceInstance: this.#inboxService,
       eventEmitterInstance: this.#emitter,
     });
-    this.#socket = new Socket({
+    this.socket = new Socket({
       socketUrl: options.socketUrl,
       eventEmitterInstance: this.#emitter,
       inboxServiceInstance: this.#inboxService,
     });
 
     this.on = (eventName, listener) => {
-      if (this.#socket.isSocketEvent(eventName)) {
-        this.#socket.initialize();
+      if (this.socket.isSocketEvent(eventName)) {
+        this.socket.connect();
       }
       const cleanup = this.#emitter.on(eventName, listener);
 

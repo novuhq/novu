@@ -24,8 +24,9 @@ import { cn } from '@/utils/ui';
 import { SubscriberResponseDto } from '@novu/api/models/components';
 import { ComponentProps, useState } from 'react';
 import { RiDeleteBin2Line, RiFileCopyLine, RiMore2Fill, RiPulseFill } from 'react-icons/ri';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { ExternalToast } from 'sonner';
+import { useSubscribersNavigate } from '@/components/subscribers/hooks/use-subscribers-navigate';
 
 const toastOptions: ExternalToast = {
   position: 'bottom-right',
@@ -36,6 +37,7 @@ const toastOptions: ExternalToast = {
 
 type SubscriberRowProps = {
   subscriber: SubscriberResponseDto;
+  subscribersCount: number;
 };
 
 type SubscriberLinkTableCellProps = ComponentProps<typeof TableCell>;
@@ -51,15 +53,11 @@ const SubscriberTableCell = (props: SubscriberLinkTableCellProps) => {
   );
 };
 
-export const SubscriberRow = ({ subscriber }: SubscriberRowProps) => {
+export const SubscriberRow = ({ subscriber, subscribersCount }: SubscriberRowProps) => {
   const { currentEnvironment } = useEnvironment();
-  const navigate = useNavigate();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const subscriberTitle = getSubscriberTitle(subscriber);
-  const editSubscriberLink = buildRoute(ROUTES.EDIT_SUBSCRIBER, {
-    environmentSlug: currentEnvironment?.slug ?? '',
-    subscriberId: subscriber.subscriberId,
-  });
+  const { navigateToSubscribersFirstPage, navigateToEditSubscriberPage } = useSubscribersNavigate();
 
   const { deleteSubscriber, isPending: isDeleteSubscriberPending } = useDeleteSubscriber({
     onSuccess: () => {
@@ -101,7 +99,7 @@ export const SubscriberRow = ({ subscriber }: SubscriberRowProps) => {
         key={subscriber.subscriberId}
         className="group relative isolate cursor-pointer"
         onClick={() => {
-          navigate(editSubscriberLink);
+          navigateToEditSubscriberPage(subscriber.subscriberId);
         }}
       >
         <SubscriberTableCell>
@@ -189,6 +187,10 @@ export const SubscriberRow = ({ subscriber }: SubscriberRowProps) => {
         onConfirm={async () => {
           await deleteSubscriber({ subscriberId: subscriber.subscriberId });
           setIsDeleteModalOpen(false);
+
+          if (subscribersCount === 1) {
+            navigateToSubscribersFirstPage();
+          }
         }}
         title={`Delete subscriber`}
         description={

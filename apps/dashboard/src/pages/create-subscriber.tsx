@@ -1,18 +1,15 @@
 import { Sheet, SheetContent } from '@/components/primitives/sheet';
 import { CreateSubscriberForm } from '@/components/subscribers/create-subscriber-form';
-import { useEnvironment } from '@/context/environment/hooks';
+import { useSubscribersNavigate } from '@/components/subscribers/hooks/use-subscribers-navigate';
 import { useCombinedRefs } from '@/hooks/use-combined-refs';
 import { useFormProtection } from '@/hooks/use-form-protection';
 import { useOnElementUnmount } from '@/hooks/use-on-element-unmount';
-import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 export function CreateSubscriberPage() {
-  const navigate = useNavigate();
-  const { currentEnvironment } = useEnvironment();
   const [open, setOpen] = useState(true);
+  const { navigateToSubscribersCurrentPage } = useSubscribersNavigate();
 
   const {
     protectedOnValueChange,
@@ -24,7 +21,7 @@ export function CreateSubscriberPage() {
 
   const { ref: unmountRef } = useOnElementUnmount({
     callback: () => {
-      navigate(buildRoute(ROUTES.SUBSCRIBERS, { environmentSlug: currentEnvironment?.slug ?? '' }));
+      navigateToSubscribersCurrentPage();
     },
     condition: !open,
   });
@@ -41,11 +38,7 @@ export function CreateSubscriberPage() {
           })}
         />
         <SheetContent ref={combinedRef}>
-          <CreateSubscriberForm
-            onSuccess={() =>
-              navigate(buildRoute(ROUTES.SUBSCRIBERS, { environmentSlug: currentEnvironment?.slug ?? '' }))
-            }
-          />
+          <CreateSubscriberForm onSuccess={navigateToSubscribersCurrentPage} />
         </SheetContent>
       </Sheet>
 

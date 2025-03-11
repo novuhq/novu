@@ -2,7 +2,7 @@ import { EnvironmentRepository, NotificationTemplateRepository } from '@novu/dal
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
-describe('Get Environment Tags - /v2/environments/:environmentId/tags (GET) #novu-v1', async () => {
+describe('Get Environment Tags - /v2/environments/:environmentId/tags (GET) #novu-v0', async () => {
   let session: UserSession;
   const environmentRepository = new EnvironmentRepository();
   const notificationTemplateRepository = new NotificationTemplateRepository();

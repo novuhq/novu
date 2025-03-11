@@ -13,7 +13,7 @@ import { ChannelTypeEnum, MessagesStatusEnum } from '@novu/shared';
 import { Novu } from '@novu/api';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-describe('Mark as Seen - /widgets/messages/mark-as (POST) #novu-v1', async () => {
+describe('Mark as Seen - /widgets/messages/mark-as (POST) #novu-v0', async () => {
   const messageRepository = new MessageRepository();
   const subscriberRepository = new SubscriberRepository();
   let session: UserSession;

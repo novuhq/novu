@@ -3,13 +3,21 @@ import type { NotificationFilter } from '../../../types';
 import { useNotificationsInfiniteScroll } from '../../api';
 import { DEFAULT_LIMIT, useInboxContext, useNewMessagesCount } from '../../context';
 import { useStyle } from '../../helpers';
-import type { NotificationActionClickHandler, NotificationClickHandler, NotificationRenderer } from '../../types';
+import type {
+  BodyRenderer,
+  NotificationActionClickHandler,
+  NotificationClickHandler,
+  NotificationRenderer,
+  SubjectRenderer,
+} from '../../types';
 import { NewMessagesCta } from './NewMessagesCta';
 import { Notification } from './Notification';
 import { NotificationListSkeleton } from './NotificationListSkeleton';
 
 type NotificationListProps = {
   renderNotification?: NotificationRenderer;
+  renderSubject?: SubjectRenderer;
+  renderBody?: BodyRenderer;
   onNotificationClick?: NotificationClickHandler;
   onPrimaryActionClick?: NotificationActionClickHandler;
   onSecondaryActionClick?: NotificationActionClickHandler;
@@ -60,6 +68,8 @@ export const NotificationList = (props: NotificationListProps) => {
                 <Notification
                   notification={notification()}
                   renderNotification={props.renderNotification}
+                  renderSubject={props.renderSubject}
+                  renderBody={props.renderBody}
                   onNotificationClick={props.onNotificationClick}
                   onPrimaryActionClick={props.onPrimaryActionClick}
                   onSecondaryActionClick={props.onSecondaryActionClick}

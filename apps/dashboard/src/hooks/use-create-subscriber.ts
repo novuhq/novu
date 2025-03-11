@@ -17,7 +17,7 @@ export const useCreateSubscriber = (
     mutationFn: (args: CreateSubscriberParameters) => createSubscriber({ environment: currentEnvironment!, ...args }),
     ...options,
     onSuccess: async (data, variables, ctx) => {
-      await queryClient.invalidateQueries({
+      queryClient.invalidateQueries({
         queryKey: [QueryKeys.fetchSubscribers],
       });
 

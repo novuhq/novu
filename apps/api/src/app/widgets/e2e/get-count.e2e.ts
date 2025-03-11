@@ -13,7 +13,7 @@ import {
 import { Novu } from '@novu/api';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-describe('Count - GET /widget/notifications/count #novu-v1', function () {
+describe('Count - GET /widget/notifications/count #novu-v0', function () {
   const messageRepository = new MessageRepository();
   let session: UserSession;
   let template: NotificationTemplateEntity;

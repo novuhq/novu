@@ -1,15 +1,15 @@
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { Popover, PopoverContent, PopoverPortal, PopoverTrigger } from '@/components/primitives/popover';
 import { API_HOSTNAME, APP_ID, WEBSOCKET_HOSTNAME } from '@/config';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useTestPage } from '@/hooks/use-test-page';
 import { useUser } from '@clerk/clerk-react';
-import { Bell as BellV2, Inbox as InboxV2, InboxContent as InboxContentV2, useNovu as useNovuV2 } from '@novu/react-v2';
-import { Bell as BellV3, Inbox as InboxV3, InboxContent as InboxContentV3, useNovu as useNovuV3 } from '@novu/react';
+import { Bell as BellV3, InboxContent as InboxContentV3, Inbox as InboxV3, useNovu as useNovuV3 } from '@novu/react';
+import { Bell as BellV2, InboxContent as InboxContentV2, Inbox as InboxV2, useNovu as useNovuV2 } from '@novu/react-v2';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { useEffect, useState } from 'react';
 import { HeaderButton } from './header-navigation/header-button';
 import { InboxBellFilled } from './icons/inbox-bell-filled';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 
 declare global {
   interface Window {
@@ -83,11 +83,7 @@ const InboxInner = () => {
         />
       </PopoverTrigger>
       <PopoverPortal>
-        <PopoverContent
-          side="bottom"
-          align="end"
-          className="h-[500px] w-[350px] overflow-y-auto p-0 [&>div:first-child]:[&>div:first-child]:h-full [&>div:first-child]:h-full"
-        >
+        <PopoverContent side="bottom" align="end" className="h-[550px] w-[350px] overflow-hidden p-0">
           <InboxContent />
         </PopoverContent>
       </PopoverPortal>

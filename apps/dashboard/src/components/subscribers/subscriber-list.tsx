@@ -10,22 +10,20 @@ import {
   SubscribersSortableColumn,
   SubscribersUrlState,
   useSubscribersUrlState,
-} from '@/hooks/use-subscribers-url-state';
+} from '@/components/subscribers/hooks/use-subscribers-url-state';
 import { cn } from '@/utils/ui';
 import { DirectionEnum } from '@novu/shared';
 import { HTMLAttributes, useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '../primitives/button';
 import { RiUserSharedLine } from 'react-icons/ri';
-import { buildRoute, ROUTES } from '@/utils/routes';
+import { useSubscribersNavigate } from '@/components/subscribers/hooks/use-subscribers-navigate';
 
 type SubscriberListFiltersProps = HTMLAttributes<HTMLDivElement> &
   Pick<SubscribersUrlState, 'filterValues' | 'handleFiltersChange' | 'resetFilters'>;
 
 const SubscriberListWrapper = (props: SubscriberListFiltersProps) => {
   const { className, children, filterValues, handleFiltersChange, resetFilters, ...rest } = props;
-  const navigate = useNavigate();
-  const { environmentSlug } = useParams();
+  const { navigateToCreateSubscriberPage } = useSubscribersNavigate();
 
   return (
     <div className={cn('flex h-full flex-col p-2', className)} {...rest}>
@@ -43,7 +41,7 @@ const SubscriberListWrapper = (props: SubscriberListFiltersProps) => {
           variant="primary"
           size="xs"
           leadingIcon={RiUserSharedLine}
-          onClick={() => navigate(buildRoute(ROUTES.CREATE_SUBSCRIBER, { environmentSlug: environmentSlug || '' }))}
+          onClick={navigateToCreateSubscriberPage}
         >
           Add subscriber
         </Button>
@@ -98,7 +96,6 @@ export const SubscriberList = (props: SubscriberListProps) => {
   const [previousPageBefore, setPreviousPageBefore] = useState<string | undefined>(undefined);
   const { filterValues, handleFiltersChange, toggleSort, resetFilters, handleNext, handlePrevious, handleFirst } =
     useSubscribersUrlState({
-      debounceMs: 300,
       after: nextPageAfter,
       before: previousPageBefore,
     });
@@ -181,7 +178,7 @@ export const SubscriberList = (props: SubscriberListProps) => {
         toggleSort={toggleSort}
       >
         {data.data.map((subscriber) => (
-          <SubscriberRow key={subscriber.id} subscriber={subscriber} />
+          <SubscriberRow key={subscriber.id} subscriber={subscriber} subscribersCount={data.data.length} />
         ))}
       </SubscriberListTable>
 

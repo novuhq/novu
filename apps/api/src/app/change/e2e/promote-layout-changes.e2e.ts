@@ -12,7 +12,7 @@ import {
 } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 
-describe('Promote Layout Changes #novu-v1', () => {
+describe('Promote Layout Changes #novu-v0', () => {
   let session: UserSession;
   const changeRepository: ChangeRepository = new ChangeRepository();
   const layoutRepository = new LayoutRepository();

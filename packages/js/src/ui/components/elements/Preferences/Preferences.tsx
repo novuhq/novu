@@ -140,6 +140,10 @@ const PreferencesRow = (props: {
 
   const channels = createMemo(() => Object.keys(props.channels || {}));
 
+  if (!channels().length) {
+    return null;
+  }
+
   return (
     <div class={style('workflowContainer', `nt-p-1 nt-bg-neutral-alpha-25 nt-rounded-lg`)} data-open={isOpenChannels()}>
       <div
@@ -148,9 +152,6 @@ const PreferencesRow = (props: {
           'nt-flex nt-justify-between nt-p-1 nt-flex-nowrap nt-self-stretch nt-cursor-pointer nt-items-center nt-overflow-hidden'
         )}
         onClick={() => {
-          if (!channels().length) {
-            return;
-          }
           setIsOpenChannels((prev) => !prev);
           setIsOpenDescription((prev) => !prev);
         }}
@@ -163,27 +164,23 @@ const PreferencesRow = (props: {
           >
             {t(props.localizationKey)}
           </div>
-          <Show when={channels().length > 0}>
-            <Collapsible open={isOpenDescription()}>
-              <WorkflowDescription
-                channels={props.channels}
-                appearanceKey="workflowDescription"
-                class="nt-overflow-hidden"
-              />
-            </Collapsible>
-          </Show>
+          <Collapsible open={isOpenDescription()}>
+            <WorkflowDescription
+              channels={props.channels}
+              appearanceKey="workflowDescription"
+              class="nt-overflow-hidden"
+            />
+          </Collapsible>
         </div>
-        <Show when={channels().length}>
-          <span
-            class={style(
-              'workflowContainerRight__icon',
-              `nt-text-foreground-alpha-600 nt-transition-all nt-duration-200 data-[open=true]:nt-transform data-[open=true]:nt-rotate-180`
-            )}
-            data-open={isOpenChannels()}
-          >
-            <ArrowDropDown class={style('workflowArrow__icon', 'nt-text-foreground-alpha-600 nt-size-4')} />
-          </span>
-        </Show>
+        <span
+          class={style(
+            'workflowContainerRight__icon',
+            `nt-text-foreground-alpha-600 nt-transition-all nt-duration-200 data-[open=true]:nt-transform data-[open=true]:nt-rotate-180`
+          )}
+          data-open={isOpenChannels()}
+        >
+          <ArrowDropDown class={style('workflowArrow__icon', 'nt-text-foreground-alpha-600 nt-size-4')} />
+        </span>
       </div>
       <Collapsible open={isOpenChannels()}>
         <div

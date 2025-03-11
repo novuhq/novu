@@ -15,7 +15,7 @@ import {
 const integrationRepository = new IntegrationRepository();
 const subscriberId = '12345';
 
-describe('Initialize Session - /widgets/session/initialize (POST) #novu-v1', async () => {
+describe('Initialize Session - /widgets/session/initialize (POST) #novu-v0', async () => {
   let session: UserSession;
   let invalidateCache: InvalidateCacheService;
 

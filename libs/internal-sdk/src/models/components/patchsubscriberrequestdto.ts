@@ -10,7 +10,7 @@ import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 /**
  * Additional custom data for the subscriber
  */
-export type PatchSubscriberRequestDtoData = {};
+export type Data = {};
 
 export type PatchSubscriberRequestDto = {
   /**
@@ -44,56 +44,44 @@ export type PatchSubscriberRequestDto = {
   /**
    * Additional custom data for the subscriber
    */
-  data?: PatchSubscriberRequestDtoData | null | undefined;
+  data?: Data | null | undefined;
 };
 
 /** @internal */
-export const PatchSubscriberRequestDtoData$inboundSchema: z.ZodType<
-  PatchSubscriberRequestDtoData,
-  z.ZodTypeDef,
-  unknown
-> = z.object({});
+export const Data$inboundSchema: z.ZodType<Data, z.ZodTypeDef, unknown> = z
+  .object({});
 
 /** @internal */
-export type PatchSubscriberRequestDtoData$Outbound = {};
+export type Data$Outbound = {};
 
 /** @internal */
-export const PatchSubscriberRequestDtoData$outboundSchema: z.ZodType<
-  PatchSubscriberRequestDtoData$Outbound,
-  z.ZodTypeDef,
-  PatchSubscriberRequestDtoData
-> = z.object({});
+export const Data$outboundSchema: z.ZodType<Data$Outbound, z.ZodTypeDef, Data> =
+  z.object({});
 
 /**
  * @internal
  * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
  */
-export namespace PatchSubscriberRequestDtoData$ {
-  /** @deprecated use `PatchSubscriberRequestDtoData$inboundSchema` instead. */
-  export const inboundSchema = PatchSubscriberRequestDtoData$inboundSchema;
-  /** @deprecated use `PatchSubscriberRequestDtoData$outboundSchema` instead. */
-  export const outboundSchema = PatchSubscriberRequestDtoData$outboundSchema;
-  /** @deprecated use `PatchSubscriberRequestDtoData$Outbound` instead. */
-  export type Outbound = PatchSubscriberRequestDtoData$Outbound;
+export namespace Data$ {
+  /** @deprecated use `Data$inboundSchema` instead. */
+  export const inboundSchema = Data$inboundSchema;
+  /** @deprecated use `Data$outboundSchema` instead. */
+  export const outboundSchema = Data$outboundSchema;
+  /** @deprecated use `Data$Outbound` instead. */
+  export type Outbound = Data$Outbound;
 }
 
-export function patchSubscriberRequestDtoDataToJSON(
-  patchSubscriberRequestDtoData: PatchSubscriberRequestDtoData,
-): string {
-  return JSON.stringify(
-    PatchSubscriberRequestDtoData$outboundSchema.parse(
-      patchSubscriberRequestDtoData,
-    ),
-  );
+export function dataToJSON(data: Data): string {
+  return JSON.stringify(Data$outboundSchema.parse(data));
 }
 
-export function patchSubscriberRequestDtoDataFromJSON(
+export function dataFromJSON(
   jsonString: string,
-): SafeParseResult<PatchSubscriberRequestDtoData, SDKValidationError> {
+): SafeParseResult<Data, SDKValidationError> {
   return safeParse(
     jsonString,
-    (x) => PatchSubscriberRequestDtoData$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'PatchSubscriberRequestDtoData' from JSON`,
+    (x) => Data$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'Data' from JSON`,
   );
 }
 
@@ -110,8 +98,7 @@ export const PatchSubscriberRequestDto$inboundSchema: z.ZodType<
   avatar: z.nullable(z.string()).optional(),
   timezone: z.nullable(z.string()).optional(),
   locale: z.nullable(z.string()).optional(),
-  data: z.nullable(z.lazy(() => PatchSubscriberRequestDtoData$inboundSchema))
-    .optional(),
+  data: z.nullable(z.lazy(() => Data$inboundSchema)).optional(),
 });
 
 /** @internal */
@@ -123,7 +110,7 @@ export type PatchSubscriberRequestDto$Outbound = {
   avatar?: string | null | undefined;
   timezone?: string | null | undefined;
   locale?: string | null | undefined;
-  data?: PatchSubscriberRequestDtoData$Outbound | null | undefined;
+  data?: Data$Outbound | null | undefined;
 };
 
 /** @internal */
@@ -139,8 +126,7 @@ export const PatchSubscriberRequestDto$outboundSchema: z.ZodType<
   avatar: z.nullable(z.string()).optional(),
   timezone: z.nullable(z.string()).optional(),
   locale: z.nullable(z.string()).optional(),
-  data: z.nullable(z.lazy(() => PatchSubscriberRequestDtoData$outboundSchema))
-    .optional(),
+  data: z.nullable(z.lazy(() => Data$outboundSchema)).optional(),
 });
 
 /**

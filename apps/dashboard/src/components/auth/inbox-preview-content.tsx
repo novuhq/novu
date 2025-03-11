@@ -1,4 +1,4 @@
-import { Inbox, InboxContent, InboxProps } from '@novu/react-v2';
+import { Inbox, InboxContent, InboxProps } from '@novu/react';
 import { SVGProps } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useFetchEnvironments } from '../../context/environment/hooks';
@@ -6,6 +6,8 @@ import { useUser } from '@clerk/clerk-react';
 import { useAuth } from '../../context/auth/hooks';
 import { API_HOSTNAME, WEBSOCKET_HOSTNAME } from '../../config';
 import { useNavigate } from 'react-router-dom';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 interface InboxPreviewContentProps {
   selectedStyle: string;
@@ -20,6 +22,7 @@ export function InboxPreviewContent({
   primaryColor,
   foregroundColor,
 }: InboxPreviewContentProps) {
+  const isInboxV3Enabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_INBOX_V3_ENABLED);
   const navigate = useNavigate();
   const auth = useAuth();
   const { user } = useUser();
@@ -51,7 +54,9 @@ export function InboxPreviewContent({
           fontSize: '12px',
           lineHeight: '24px',
           height: '24px',
-          borderRadius: '6px',
+          ...(isInboxV3Enabled && {
+            borderRadius: '6px',
+          }),
         },
         notificationBody: {
           colorForeground: `color-mix(in srgb, ${foregroundColor} 70%, white)`,
