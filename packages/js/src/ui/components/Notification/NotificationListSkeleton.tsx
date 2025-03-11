@@ -67,7 +67,7 @@ export const NotificationListSkeleton = (props: NotificationListSkeletonProps) =
           initial={{ opacity: 0, y: -4, filter: 'blur(4px)' }}
           animate={{ opacity: props.loading ? 0 : 1, y: 0, filter: 'blur(0px)' }}
           transition={{ duration: 0.7, easing: [0.39, 0.24, 0.3, 1], delay: 0.6 }}
-          class={(style('notificationListEmptyNotice'), 'nt-text-center')}
+          class={style('notificationListEmptyNotice', 'nt-text-center')}
           data-localization="notifications.emptyNotice"
         >
           {t('notifications.emptyNotice')}
