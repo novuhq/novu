@@ -23,12 +23,6 @@ export const htmlCodeBlock: BlockItem = {
     </div>
   ),
   command: ({ editor, range }) => {
-    editor
-      .chain()
-      .focus()
-      .deleteRange(range)
-      // @ts-expect-error: This is a valid command
-      .setHtmlCodeBlock({ language: 'html' })
-      .run();
+    editor.chain().focus().deleteRange(range).setHtmlCodeBlock({ language: 'html' }).run();
   },
 };
