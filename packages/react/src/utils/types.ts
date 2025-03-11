@@ -41,10 +41,28 @@ export type BaseProps = {
   routerPush?: RouterPush;
 };
 
+export type NotificationRendererProps = {
+  renderNotification: NotificationsRenderer;
+  renderSubject?: never;
+  renderBody?: never;
+};
+
+export type SubjectBodyRendererProps = {
+  renderNotification?: never;
+  renderSubject?: SubjectRenderer;
+  renderBody?: BodyRenderer;
+};
+
+export type NoRendererProps = {
+  renderNotification?: undefined;
+  renderSubject?: undefined;
+  renderBody?: undefined;
+};
+
 export type DefaultProps = BaseProps &
   DefaultInboxProps & {
     children?: never;
-  };
+  } & (NotificationRendererProps | SubjectBodyRendererProps | NoRendererProps);
 
 export type WithChildrenProps = BaseProps & {
   children: React.ReactNode;

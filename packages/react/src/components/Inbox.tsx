@@ -28,13 +28,29 @@ const _DefaultInbox = (props: DefaultInboxProps) => {
 
   const mount = React.useCallback(
     (element: HTMLElement) => {
+      if (renderNotification) {
+        return novuUI.mountComponent({
+          name: 'Inbox',
+          props: {
+            open,
+            renderNotification: renderNotification
+              ? (el, notification) => mountElement(el, renderNotification(notification))
+              : undefined,
+            renderBell: renderBell ? (el, unreadCount) => mountElement(el, renderBell(unreadCount)) : undefined,
+            onNotificationClick,
+            onPrimaryActionClick,
+            onSecondaryActionClick,
+            placementOffset,
+            placement,
+          },
+          element,
+        });
+      }
+
       return novuUI.mountComponent({
         name: 'Inbox',
         props: {
           open,
-          renderNotification: renderNotification
-            ? (el, notification) => mountElement(el, renderNotification(notification))
-            : undefined,
           renderSubject: renderSubject
             ? (el, notification) => mountElement(el, renderSubject(notification))
             : undefined,

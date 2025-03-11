@@ -1,22 +1,18 @@
 import React from 'react';
 import type { NotificationClickHandler, NotificationActionClickHandler, InboxPage } from '@novu/js/ui';
 import { Mounter } from './Mounter';
-import { NotificationsRenderer, SubjectRenderer, BodyRenderer } from '../utils/types';
+import { NoRendererProps, SubjectBodyRendererProps, NotificationRendererProps } from '../utils/types';
 import { useRenderer } from '../context/RendererContext';
 import { useNovuUI } from '../context/NovuUIContext';
 import { withRenderer } from './Renderer';
-import { useDataRef } from '../hooks/internal/useDataRef';
 
 export type InboxContentProps = {
-  renderNotification?: NotificationsRenderer;
-  renderSubject?: SubjectRenderer;
-  renderBody?: BodyRenderer;
   onNotificationClick?: NotificationClickHandler;
   onPrimaryActionClick?: NotificationActionClickHandler;
   onSecondaryActionClick?: NotificationActionClickHandler;
   initialPage?: InboxPage;
   hideNav?: boolean;
-};
+} & (NotificationRendererProps | SubjectBodyRendererProps | NoRendererProps);
 
 const _InboxContent = React.memo((props: InboxContentProps) => {
   const {
@@ -34,13 +30,27 @@ const _InboxContent = React.memo((props: InboxContentProps) => {
 
   const mount = React.useCallback(
     (element: HTMLElement) => {
+      if (renderNotification) {
+        return novuUI.mountComponent({
+          name: 'InboxContent',
+          element,
+          props: {
+            renderNotification: renderNotification
+              ? (el, notification) => mountElement(el, renderNotification(notification))
+              : undefined,
+            onNotificationClick,
+            onPrimaryActionClick,
+            onSecondaryActionClick,
+            initialPage,
+            hideNav,
+          },
+        });
+      }
+
       return novuUI.mountComponent({
         name: 'InboxContent',
         element,
         props: {
-          renderNotification: renderNotification
-            ? (el, notification) => mountElement(el, renderNotification(notification))
-            : undefined,
           renderSubject: renderSubject
             ? (el, notification) => mountElement(el, renderSubject(notification))
             : undefined,
