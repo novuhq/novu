@@ -10,15 +10,15 @@ import { MarkAsRead } from '../../icons/MarkAsRead';
 import { MarkAsUnread } from '../../icons/MarkAsUnread';
 import {
   NotificationStatus,
+  type BodyRenderer,
   type NotificationActionClickHandler,
   type NotificationClickHandler,
   type SubjectRenderer,
-  type BodyRenderer,
 } from '../../types';
 import Markdown from '../elements/Markdown';
+import { ExternalElementRenderer } from '../ExternalElementRenderer';
 import { Button } from '../primitives';
 import { Tooltip } from '../primitives/Tooltip';
-import { ExternalElementRenderer } from '../ExternalElementRenderer';
 
 type DefaultNotificationProps = {
   notification: Notification;
@@ -142,7 +142,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
         <div
           class={style(
             'notificationDefaultActions',
-            'nt-absolute nt-transition nt-duration-100 nt-ease-out nt-gap-0.5 nt-flex nt-shrink-0 nt-opacity-0 group-hover:nt-opacity-100 group-focus-within:nt-opacity-100 nt-justify-center nt-items-center nt-bg-background/90 nt-right-8 nt-top-3 nt-border nt-border-neutral-alpha-100 nt-rounded-lg nt-backdrop-blur-lg nt-p-0.5'
+            'nt-absolute nt-transition nt-duration-100 nt-ease-out nt-gap-0.5 nt-flex nt-shrink-0 nt-opacity-0 group-hover:nt-opacity-100 group-focus-within:nt-opacity-100 nt-justify-center nt-items-center nt-bg-background/90 nt-right-3 nt-top-3 nt-border nt-border-neutral-alpha-100 nt-rounded-lg nt-backdrop-blur-lg nt-p-0.5'
           )}
         >
           <Show when={status() !== NotificationStatus.ARCHIVED}>

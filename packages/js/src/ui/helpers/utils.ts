@@ -136,8 +136,9 @@ export function generateFontSizeRules(props: { id: string; baseFontSize: string 
 
   Object.entries(sizeRatios).forEach(([key, ratio]) => {
     const size = `calc(${baseFontSize} * ${ratio})`;
+    const lineHeight = `calc(${baseFontSize} * ${ratio} * 1.33)`;
 
-    const cssVariableRule = `.${id} { --nv-font-size-${key}: ${size}; }`;
+    const cssVariableRule = `.${id} { --nv-font-size-${key}: ${size}; --nv-line-height-${key}: ${lineHeight}; }`;
     rules.push(cssVariableRule);
   });
 
