@@ -8,13 +8,22 @@ import { MarkAsUnarchived } from '../../icons';
 import { MarkAsArchived } from '../../icons/MarkAsArchived';
 import { MarkAsRead } from '../../icons/MarkAsRead';
 import { MarkAsUnread } from '../../icons/MarkAsUnread';
-import { NotificationStatus, type NotificationActionClickHandler, type NotificationClickHandler } from '../../types';
+import {
+  NotificationStatus,
+  type NotificationActionClickHandler,
+  type NotificationClickHandler,
+  type SubjectRenderer,
+  type BodyRenderer,
+} from '../../types';
 import Markdown from '../elements/Markdown';
 import { Button } from '../primitives';
 import { Tooltip } from '../primitives/Tooltip';
+import { ExternalElementRenderer } from '../ExternalElementRenderer';
 
 type DefaultNotificationProps = {
   notification: Notification;
+  renderSubject?: SubjectRenderer;
+  renderBody?: BodyRenderer;
   onNotificationClick?: NotificationClickHandler;
   onPrimaryActionClick?: NotificationActionClickHandler;
   onSecondaryActionClick?: NotificationActionClickHandler;
@@ -97,24 +106,38 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
       </Show>
       <div class={style('notificationContent', 'nt-flex nt-flex-col nt-gap-2 nt-w-full')}>
         <div class={style('notificationTextContainer')}>
-          <Show when={props.notification.subject}>
-            {(subject) => (
-              <Markdown
-                appearanceKey="notificationSubject"
-                class="nt-text-start nt-font-medium"
-                strongAppearanceKey="notificationSubject__strong"
-              >
-                {subject()}
-              </Markdown>
-            )}
-          </Show>
-          <Markdown
-            appearanceKey="notificationBody"
-            strongAppearanceKey="notificationBody__strong"
-            class="nt-text-start nt-whitespace-pre-wrap"
+          <Show
+            when={props.renderSubject}
+            fallback={
+              <Show when={props.notification.subject}>
+                {(subject) => (
+                  <Markdown
+                    appearanceKey="notificationSubject"
+                    class="nt-text-start nt-font-medium"
+                    strongAppearanceKey="notificationSubject__strong"
+                  >
+                    {subject()}
+                  </Markdown>
+                )}
+              </Show>
+            }
           >
-            {props.notification.body}
-          </Markdown>
+            {(renderSubject) => <ExternalElementRenderer render={(el) => renderSubject()(el, props.notification)} />}
+          </Show>
+          <Show
+            when={props.renderBody}
+            fallback={
+              <Markdown
+                appearanceKey="notificationBody"
+                strongAppearanceKey="notificationBody__strong"
+                class="nt-text-start nt-whitespace-pre-wrap"
+              >
+                {props.notification.body}
+              </Markdown>
+            }
+          >
+            {(renderBody) => <ExternalElementRenderer render={(el) => renderBody()(el, props.notification)} />}
+          </Show>
         </div>
         <div
           class={style(

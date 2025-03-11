@@ -10,6 +10,8 @@ import {
   NotificationClickHandler,
   NotificationRenderer,
   NotificationStatus,
+  SubjectRenderer,
+  BodyRenderer,
   Tab,
 } from '../../types';
 import { NotificationList } from '../Notification';
@@ -21,6 +23,8 @@ const tabsDropdownTriggerVariants = () =>
   `after:nt-w-full after:nt-h-[2px] after:nt-border-b-2 nt-mb-[0.625rem]`;
 type InboxTabsProps = {
   renderNotification?: NotificationRenderer;
+  renderSubject?: SubjectRenderer;
+  renderBody?: BodyRenderer;
   onNotificationClick?: NotificationClickHandler;
   onPrimaryActionClick?: NotificationActionClickHandler;
   onSecondaryActionClick?: NotificationActionClickHandler;
@@ -124,6 +128,8 @@ export const InboxTabs = (props: InboxTabsProps) => {
         >
           <NotificationList
             renderNotification={props.renderNotification}
+            renderSubject={props.renderSubject}
+            renderBody={props.renderBody}
             onNotificationClick={props.onNotificationClick}
             onPrimaryActionClick={props.onPrimaryActionClick}
             onSecondaryActionClick={props.onSecondaryActionClick}
