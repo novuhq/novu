@@ -708,8 +708,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/js
       '@novu/react':
-        specifier: https://pkg.pr.new/novuhq/novu/@novu/react@09f3aae
-        version: https://pkg.pr.new/novuhq/novu/@novu/react@09f3aae(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: https://pkg.pr.new/novuhq/novu/@novu/react@0bb2cd9
+        version: https://pkg.pr.new/novuhq/novu/@novu/react@0bb2cd9(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@novu/react-v2':
         specifier: npm:@novu/react@2.6.6
         version: '@novu/react@2.6.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1)'
@@ -10624,8 +10624,8 @@ packages:
   '@novu/js@2.6.6':
     resolution: {integrity: sha512-kX6vSQvrQ1A6gHU5QvgrBMg/xnoCp3y61BjGO73f7hOWl3WD8kC0AkQ91kAA8L6BdpwJff6hTt1yS5sLBYE/mg==}
 
-  '@novu/js@https://pkg.pr.new/novuhq/novu/@novu/js@09f3aae7effbbdb9ca8e9a99f84a143ba7836426':
-    resolution: {tarball: https://pkg.pr.new/novuhq/novu/@novu/js@09f3aae7effbbdb9ca8e9a99f84a143ba7836426}
+  '@novu/js@https://pkg.pr.new/novuhq/novu/@novu/js@0bb2cd97942650c3bd96fa52c3e05c5e216f4aab':
+    resolution: {tarball: https://pkg.pr.new/novuhq/novu/@novu/js@0bb2cd97942650c3bd96fa52c3e05c5e216f4aab}
     version: 2.6.6
 
   '@novu/ntfr-client@0.0.4':
@@ -10641,8 +10641,8 @@ packages:
       react-dom:
         optional: true
 
-  '@novu/react@https://pkg.pr.new/novuhq/novu/@novu/react@09f3aae':
-    resolution: {tarball: https://pkg.pr.new/novuhq/novu/@novu/react@09f3aae}
+  '@novu/react@https://pkg.pr.new/novuhq/novu/@novu/react@0bb2cd9':
+    resolution: {tarball: https://pkg.pr.new/novuhq/novu/@novu/react@0bb2cd9}
     version: 2.6.6
     peerDependencies:
       react: '>=17'
@@ -47561,7 +47561,7 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@novu/js@https://pkg.pr.new/novuhq/novu/@novu/js@09f3aae7effbbdb9ca8e9a99f84a143ba7836426':
+  '@novu/js@https://pkg.pr.new/novuhq/novu/@novu/js@0bb2cd97942650c3bd96fa52c3e05c5e216f4aab':
     dependencies:
       '@floating-ui/dom': 1.6.13
       class-variance-authority: 0.7.0
@@ -47601,9 +47601,9 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@novu/react@https://pkg.pr.new/novuhq/novu/@novu/react@09f3aae(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+  '@novu/react@https://pkg.pr.new/novuhq/novu/@novu/react@0bb2cd9(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
-      '@novu/js': https://pkg.pr.new/novuhq/novu/@novu/js@09f3aae7effbbdb9ca8e9a99f84a143ba7836426
+      '@novu/js': https://pkg.pr.new/novuhq/novu/@novu/js@0bb2cd97942650c3bd96fa52c3e05c5e216f4aab
       react: 18.3.1
     optionalDependencies:
       react-dom: 18.3.1(react@18.3.1)
