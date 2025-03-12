@@ -1,3 +1,4 @@
+import { htmlCodeBlock } from '@/components/workflow-editor/steps/email/extensions/html';
 import {
   BlockGroupItem,
   blockquote,
@@ -5,7 +6,6 @@ import {
   button,
   columns,
   divider,
-  footer,
   hardBreak,
   heading1,
   heading2,
@@ -24,12 +24,17 @@ export const DEFAULT_EDITOR_CONFIG = {
   bodyClassName: '!bg-transparent flex flex-col basis-full !border-none !mt-0 [&>div]:basis-full [&_.tiptap]:h-full',
 };
 
-export const DEFAULT_EDITOR_BLOCKS: BlockGroupItem[] = [
-  {
-    title: 'Highlights',
-    commands: [footer],
-  },
-  {
+export const getDefaultEditorBlocks = (isCustomEmailBlocksEnabled: boolean): BlockGroupItem[] => {
+  const blocks: BlockGroupItem[] = [];
+
+  if (isCustomEmailBlocksEnabled) {
+    blocks.push({
+      title: 'Highlights',
+      commands: [htmlCodeBlock],
+    });
+  }
+
+  blocks.push({
     title: 'All blocks',
     commands: [
       blockquote,
@@ -48,5 +53,7 @@ export const DEFAULT_EDITOR_BLOCKS: BlockGroupItem[] = [
       spacer,
       text,
     ],
-  },
-];
+  });
+
+  return blocks;
+};

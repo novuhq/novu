@@ -1,16 +1,19 @@
 import { Editor } from '@maily-to/core';
-import { VariableExtension, getVariableSuggestions } from '@maily-to/core/extensions';
+import { getVariableSuggestions, HTMLCodeBlockExtension, VariableExtension } from '@maily-to/core/extensions';
 import type { AnyExtension, Editor as TiptapEditor } from '@tiptap/core';
 import { ReactNodeViewRenderer } from '@tiptap/react';
 import { HTMLAttributes, useCallback, useMemo, useState } from 'react';
 
+import { HTMLCodeBlockView } from '@/components/workflow-editor/steps/email/extensions/html-view';
 import { MailyVariablesList } from '@/components/workflow-editor/steps/email/extensions/maily-variables-list';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { parseStepVariables } from '@/utils/parseStepVariablesToLiquidVariables';
 import { cn } from '@/utils/ui';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { ForExtension } from './extensions/for';
 import { VariableView } from './extensions/variable-view';
-import { DEFAULT_EDITOR_BLOCKS, DEFAULT_EDITOR_CONFIG } from './maily-config';
+import { DEFAULT_EDITOR_CONFIG, getDefaultEditorBlocks } from './maily-config';
 
 type MailyProps = HTMLAttributes<HTMLDivElement> & {
   value: string;
@@ -39,6 +42,7 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
     [mailyVariables.namespaces]
   );
   const [_, setEditor] = useState<TiptapEditor>();
+  const isCustomEmailBlocksEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CUSTOM_EMAIL_BLOCKS_ENABLED);
 
   const calculateVariables = useCallback(
     ({
@@ -123,6 +127,13 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
         variables: calculateVariables,
         variableSuggestionsPopover: MailyVariablesList,
       }),
+      HTMLCodeBlockExtension.extend({
+        addNodeView() {
+          return ReactNodeViewRenderer(HTMLCodeBlockView, {
+            className: 'mly-relative',
+          });
+        },
+      }),
     ];
   }, [calculateVariables]);
 
@@ -132,7 +143,7 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
         <Editor
           key="repeat-block-enabled"
           config={DEFAULT_EDITOR_CONFIG}
-          blocks={DEFAULT_EDITOR_BLOCKS}
+          blocks={getDefaultEditorBlocks(isCustomEmailBlocksEnabled)}
           extensions={extensions}
           contentJson={value ? JSON.parse(value) : undefined}
           onCreate={setEditor}
