@@ -1,0 +1,5 @@
+{
+  "main": "../dist/server/server.js",
+  "module": "../dist/server/server.mjs",
+  "types": "../dist/server/server.d.ts"
+}
