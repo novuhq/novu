@@ -59,53 +59,17 @@ contexts.forEach((context: Context) => {
     });
 
     it(`should trigger the bridge workflow with sync [${context.name}]`, async () => {
-      // Create a start time reference
-      const testStartTime = Date.now();
-
-      // Custom logging function to add relative timestamp
-      const logWithTime = (message: string) => {
-        const currentTime = Date.now();
-        const relativeTime = currentTime - testStartTime;
-        console.log(`[+${relativeTime}ms] ${message}`);
-      };
-
-      // Custom timing function to track durations with relative timestamp
-      const createTimerLog = () => {
-        const start = Date.now();
-
-        return {
-          end: (label: string) => {
-            const end = Date.now();
-            const duration = end - start;
-            logWithTime(`${label} completed in ${duration}ms`);
-
-            return duration;
-          },
-        };
-      };
-
-      logWithTime(`Starting workflow test for context: ${context.name}`);
-
       const workflowId = `hello-world-${`${context.name}`}`;
-      logWithTime(`Generated Workflow ID: ${workflowId}`);
-
       const newWorkflow = workflow(
         workflowId,
         async ({ step, payload }) => {
-          logWithTime('Entering workflow execution');
-
-          const emailTimer = createTimerLog();
           await step.email(
             'send-email',
             async (controls) => {
-              logWithTime(`Preparing email with controls: ${JSON.stringify(controls)}`);
-              const emailResult = {
+              return {
                 subject: `This is an email subject ${controls.name}`,
                 body: `Body result ${payload.name}`,
               };
-              logWithTime(`Email step result: ${JSON.stringify(emailResult)}`);
-
-              return emailResult;
             },
             {
               controlSchema: {
@@ -116,19 +80,13 @@ contexts.forEach((context: Context) => {
               } as const,
             }
           );
-          emailTimer.end('Email Step');
 
-          const inAppTimer = createTimerLog();
           await step.inApp(
             'send-in-app',
             async (controls) => {
-              logWithTime(`Preparing in-app message with controls: ${JSON.stringify(controls)}`);
-              const inAppResult = {
+              return {
                 body: `in-app result ${payload.name}`,
               };
-              logWithTime(`In-App step result: ${JSON.stringify(inAppResult)}`);
-
-              return inAppResult;
             },
             {
               controlSchema: {
@@ -139,19 +97,13 @@ contexts.forEach((context: Context) => {
               } as const,
             }
           );
-          inAppTimer.end('In-App Step');
 
-          const smsTimer = createTimerLog();
           await step.sms(
             'send-sms',
             async (controls) => {
-              logWithTime(`Preparing SMS with controls: ${JSON.stringify(controls)}`);
-              const smsResult = {
+              return {
                 body: `sms result ${payload.name}`,
               };
-              logWithTime(`SMS step result: ${JSON.stringify(smsResult)}`);
-
-              return smsResult;
             },
             {
               controlSchema: {
@@ -162,9 +114,6 @@ contexts.forEach((context: Context) => {
               } as const,
             }
           );
-          smsTimer.end('SMS Step');
-
-          logWithTime('Workflow execution completed');
         },
         {
           payloadSchema: {
@@ -178,19 +127,12 @@ contexts.forEach((context: Context) => {
         }
       );
 
-      logWithTime('Starting bridge server');
-      const bridgeStartTimer = createTimerLog();
       await bridgeServer.start({ workflows: [newWorkflow] });
-      bridgeStartTimer.end('Bridge Server Start');
 
       if (context.isStateful) {
-        logWithTime('Discovering and syncing bridge');
-        const syncTimer = createTimerLog();
         await discoverAndSyncBridge(session, workflowsRepository, workflowId, bridgeServer);
-        syncTimer.end('Bridge Sync');
 
         const foundWorkflow = await workflowsRepository.findByTriggerIdentifier(session.environment._id, workflowId);
-        logWithTime(`Workflow found: ${!!foundWorkflow}`);
         expect(foundWorkflow).to.be.ok;
 
         if (!foundWorkflow) {
@@ -198,48 +140,25 @@ contexts.forEach((context: Context) => {
         }
       }
 
-      logWithTime('Restarting bridge server');
-      const bridgeRestartTimer = createTimerLog();
       await bridgeServer.start({ workflows: [newWorkflow] });
-      bridgeRestartTimer.end('Bridge Server Restart');
-
-      logWithTime('Triggering event');
-      const triggerTimer = createTimerLog();
       await triggerEvent(session, workflowId, subscriber.subscriberId, { name: 'test_name' }, bridge);
-      triggerTimer.end('Event Trigger');
-
-      logWithTime('Waiting for job completion');
-      const jobCompletionTimer = createTimerLog();
       await session.waitForJobCompletion();
-      jobCompletionTimer.end('Job Completion');
 
-      logWithTime('Fetching messages');
-      const messagesFetchTimer = createTimerLog();
       const messages = await messageRepository.find({
         _environmentId: session.environment._id,
         _subscriberId: subscriber._id,
         channel: { $in: [StepTypeEnum.EMAIL, StepTypeEnum.IN_APP, StepTypeEnum.SMS] },
       });
-      messagesFetchTimer.end('Messages Fetch');
 
-      logWithTime(`Total messages found: ${messages.length}`);
       expect(messages.length).to.be.eq(3);
-
       const emailMessage = messages.find((message) => message.channel === ChannelTypeEnum.EMAIL);
-      logWithTime(`Email message: ${JSON.stringify(emailMessage)}`);
       expect(emailMessage?.subject).to.include('This is an email subject TEST');
-
       const inAppMessage = messages.find((message) => message.channel === ChannelTypeEnum.IN_APP);
-      logWithTime(`In-App message: ${JSON.stringify(inAppMessage)}`);
       expect(inAppMessage?.content).to.include('in-app result test_name');
-
       const smsMessage = messages.find((message) => message.channel === ChannelTypeEnum.SMS);
-      logWithTime(`SMS message: ${JSON.stringify(smsMessage)}`);
       expect(smsMessage?.content).to.include('sms result test_name');
-
-      const testEndTime = Date.now();
-      logWithTime(`Total test execution time: ${testEndTime - testStartTime}ms`);
     });
+
     it(`should skip by static value [${context.name}]`, async () => {
       const workflowIdSkipByStatic = `skip-by-static-value-workflow-${`${context.name}`}`;
       const newWorkflow = workflow(
