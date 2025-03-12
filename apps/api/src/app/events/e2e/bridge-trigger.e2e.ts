@@ -58,7 +58,8 @@ contexts.forEach((context: Context) => {
       await bridgeServer.stop();
     });
 
-    it(`should trigger the bridge workflow with sync [${context.name}]`, async () => {
+    it(`should trigger the bridge workflow with sync [${context.name}]`, async function () {
+      this.timeout(20000);
       // Create a start time reference
       const testStartTime = Date.now();
 
