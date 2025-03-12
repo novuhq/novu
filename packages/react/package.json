@@ -42,6 +42,16 @@
         "types": "./dist/themes/index.d.ts",
         "default": "./dist/themes/index.js"
       }
+    },
+    "./server": {
+      "import": {
+        "types": "./dist/server/server.d.mts",
+        "default": "./dist/server/server.mjs"
+      },
+      "require": {
+        "types": "./dist/server/server.d.ts",
+        "default": "./dist/server/server.js"
+      }
     }
   },
   "files": [
@@ -51,7 +61,8 @@
     "dist/hooks/**/*",
     "dist/themes/**/*",
     "hooks/**/*",
-    "themes/**/*"
+    "themes/**/*",
+    "server/**/*"
   ],
   "sideEffects": false,
   "private": false,
