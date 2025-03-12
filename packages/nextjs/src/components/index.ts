@@ -7,7 +7,6 @@ import {
   BellRenderer,
   DefaultInboxProps,
   DefaultProps,
-  Inbox,
   InboxContent,
   InboxContentProps,
   InboxProps,
@@ -19,7 +18,7 @@ import {
   WithChildrenProps,
 } from '@novu/react';
 
-export * from './Inbox';
+export { Inbox } from './Inbox';
 
 export { Bell, InboxContent, Notifications, Preferences };
 
