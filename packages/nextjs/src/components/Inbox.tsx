@@ -8,7 +8,7 @@ export function Inbox(props: InboxProps) {
 
   if (!router) {
     throw new Error(
-      `[@novu/nextjs]: Failed to resolve Next.js Page Router. Pleace contact support@novu.co.
+      `[@novu/nextjs]: Failed to resolve Next.js Page Router. Please contact support@novu.co.
       Meanwhile, try using @novu/react instead.`
     );
   }
