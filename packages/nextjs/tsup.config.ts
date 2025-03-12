@@ -19,15 +19,6 @@ export default defineConfig([
   },
   {
     ...baseConfig,
-    entry: ['src/server/index.ts'], // Entry point for server-side code
-    format: ['esm', 'cjs'],
-    target: 'node14', // Target environment for server-side build
-    platform: 'node',
-    outDir: 'dist/server', // Output directory for server-side build
-    splitting: false,
-  },
-  {
-    ...baseConfig,
     entry: ['src/hooks/index.ts'],
     format: ['esm', 'cjs'],
     target: 'esnext',
