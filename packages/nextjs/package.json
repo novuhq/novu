@@ -5,18 +5,22 @@
   "description": "Novu's Next.js SDK for building custom inbox notification experiences",
   "author": "",
   "license": "ISC",
-  "main": "dist/client/index.js",
+  "main": "dist/server/index.js",
   "module": "dist/client/index.mjs",
   "types": "dist/client/index.d.ts",
+  "browser": {
+    "./dist/server/index.js": "./dist/client/index.js",
+    "./dist/server/index.mjs": "./dist/client/index.mjs"
+  },
   "exports": {
     ".": {
       "import": {
         "types": "./dist/client/index.d.mts",
-        "default": "./dist/client/index.mjs"
+        "default": "./dist/server/index.mjs"
       },
       "require": {
-        "types": "./dist/client/index.d.ts",
-        "default": "./dist/client/index.js"
+        "types": "./dist/server/index.d.ts",
+        "default": "./dist/server/index.js"
       }
     },
     "./hooks": {
