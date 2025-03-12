@@ -182,7 +182,7 @@ export const SubscriberList = (props: SubscriberListProps) => {
             key={subscriber.id}
             subscriber={subscriber}
             subscribersCount={data.data.length}
-            firstSubscriberInternalId={data.data[0]._id!}
+            firstSubscriberInternalId={data.data[0].id!}
           />
         ))}
       </SubscriberListTable>
