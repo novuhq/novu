@@ -146,7 +146,7 @@
     "@babel/preset-env": "^7.23.2",
     "@babel/preset-react": "^7.13.13",
     "@babel/preset-typescript": "^7.13.0",
-    "@babel/runtime": "^7.20.13",
+    "@babel/runtime": "^7.26.10",
     "@clerk/types": "^4.30.0",
     "@faker-js/faker": "^6.0.0",
     "@novu/dal": "workspace:*",

@@ -57,7 +57,7 @@
     "@babel/preset-env": "^7.23.2",
     "@babel/preset-react": "^7.13.13",
     "@babel/preset-typescript": "^7.13.0",
-    "@babel/runtime": "^7.20.13",
+    "@babel/runtime": "^7.26.10",
     "@emotion/babel-plugin": "^11.7.2",
     "@emotion/react": "^11.7.1",
     "@emotion/styled": "^11.6.0",
