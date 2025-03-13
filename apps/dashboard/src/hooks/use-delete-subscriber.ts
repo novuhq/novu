@@ -15,10 +15,6 @@ export const useDeleteSubscriber = (
     mutationFn: (args: DeleteSubscriberParameters) => deleteSubscriber({ environment: currentEnvironment!, ...args }),
     ...options,
     onSuccess: (data, variables, ctx) => {
-      // queryClient.invalidateQueries({
-      //   queryKey: [QueryKeys.fetchSubscribers],
-      // });
-
       options?.onSuccess?.(data, variables, ctx);
     },
   });

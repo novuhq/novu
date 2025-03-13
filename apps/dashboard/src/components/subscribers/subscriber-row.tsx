@@ -38,7 +38,7 @@ const toastOptions: ExternalToast = {
 type SubscriberRowProps = {
   subscriber: ISubscriberResponseDto;
   subscribersCount: number;
-  firstSubscriberInternalId: string;
+  firstTwoSubscribersInternalIds: string[];
 };
 
 type SubscriberLinkTableCellProps = ComponentProps<typeof TableCell>;
@@ -54,7 +54,7 @@ const SubscriberTableCell = (props: SubscriberLinkTableCellProps) => {
   );
 };
 
-export const SubscriberRow = ({ subscriber, subscribersCount, firstSubscriberInternalId }: SubscriberRowProps) => {
+export const SubscriberRow = ({ subscriber, subscribersCount, firstTwoSubscribersInternalIds }: SubscriberRowProps) => {
   const { currentEnvironment } = useEnvironment();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const subscriberTitle = getSubscriberTitle(subscriber);
@@ -95,6 +95,38 @@ export const SubscriberRow = ({ subscriber, subscribersCount, firstSubscriberInt
   const stopPropagation = (e: React.MouseEvent) => {
     // don't propagate the click event to the row
     e.stopPropagation();
+  };
+
+  const handleDeletion = async () => {
+    await deleteSubscriber({ subscriberId: subscriber.subscriberId });
+    setIsDeleteModalOpen(false);
+
+    const hasSingleSubscriber = subscribersCount === 1;
+
+    if (hasSingleSubscriber) {
+      navigateToSubscribersFirstPage();
+      return;
+    }
+
+    const hasTwoSubscribersInternalIds = firstTwoSubscribersInternalIds.length === 2 && !hasSingleSubscriber;
+    const firstSubscriberInternalId = firstTwoSubscribersInternalIds[0];
+    const isFirstSubscriberBeingDeleted = subscriber._id === firstSubscriberInternalId;
+    let afterCursor = firstSubscriberInternalId;
+
+    /**
+     * If the first subscriber is being deleted and there are more than one subscribers on the list then
+     * fecth the list from the second subscriber onwards.
+     */
+    if (isFirstSubscriberBeingDeleted && hasTwoSubscribersInternalIds) {
+      afterCursor = firstTwoSubscribersInternalIds[1];
+    }
+
+    const newParams = new URLSearchParams(searchParams);
+    newParams.delete('before');
+    newParams.set('after', afterCursor);
+    newParams.set('includeCursor', 'true');
+
+    navigate(`${location.pathname}?${newParams}`, { replace: true });
   };
 
   return (
@@ -188,24 +220,7 @@ export const SubscriberRow = ({ subscriber, subscribersCount, firstSubscriberInt
       <ConfirmationModal
         open={isDeleteModalOpen}
         onOpenChange={setIsDeleteModalOpen}
-        onConfirm={async () => {
-          await deleteSubscriber({ subscriberId: subscriber.subscriberId });
-          setIsDeleteModalOpen(false);
-
-          if (subscribersCount === 1) {
-            navigateToSubscribersFirstPage();
-            return;
-          }
-
-          if (firstSubscriberInternalId) {
-            const newParams = new URLSearchParams(searchParams);
-            newParams.delete('before');
-            newParams.set('after', firstSubscriberInternalId);
-            newParams.set('includeCursor', 'true');
-
-            navigate(`${location.pathname}?${newParams}`, { replace: true });
-          }
-        }}
+        onConfirm={handleDeletion}
         title={`Delete subscriber`}
         description={
           <span>
