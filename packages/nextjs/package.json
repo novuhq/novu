@@ -8,6 +8,10 @@
   "main": "dist/server/server.js",
   "module": "dist/client/index.mjs",
   "types": "dist/client/index.d.ts",
+  "browser": {
+    "./dist/server/server.js": "./dist/client/index.js",
+    "./dist/server/server.mjs": "./dist/client/index.mjs"
+  },
   "exports": {
     ".": {
       "import": {

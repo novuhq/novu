@@ -1,7 +1,5 @@
 /* eslint-disable no-restricted-imports */
 
-'use client';
-
 export type {
   BaseProps,
   DefaultInboxProps,
