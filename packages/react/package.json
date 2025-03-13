@@ -10,7 +10,7 @@
     ".": {
       "import": {
         "types": "./dist/components/index.d.mts",
-        "default": "./dist/components/client.mjs"
+        "default": "./dist/components/index.mjs"
       },
       "require": {
         "types": "./dist/components/index.d.ts",
