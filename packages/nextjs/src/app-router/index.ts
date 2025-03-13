@@ -1,4 +1,4 @@
-export { Bell, Inbox, InboxContent, Notifications, Preferences } from './Inbox';
+export { Inbox, Bell, Preferences, Notifications, InboxContent, NovuProvider } from './Inbox';
 
 export type {
   BaseProps,
@@ -8,8 +8,8 @@ export type {
   DefaultProps,
   InboxContentProps,
   InboxProps,
+  Notification,
   NotificationProps,
   NotificationsRenderer,
   WithChildrenProps,
-  Notification,
-} from './Inbox';
+} from '@novu/react';

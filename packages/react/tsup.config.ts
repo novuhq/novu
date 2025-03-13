@@ -17,16 +17,21 @@ export default defineConfig([
   {
     ...baseConfig,
     entry: ['src/index.ts'],
-    outDir: 'dist/components',
+    outDir: 'dist/client/components',
   },
   {
     ...baseConfig,
     entry: ['src/hooks/index.ts'],
-    outDir: 'dist/hooks',
+    outDir: 'dist/client/hooks',
   },
   {
     ...baseConfig,
     entry: ['src/themes/index.ts'],
-    outDir: 'dist/themes',
+    outDir: 'dist/client/themes',
+  },
+  {
+    ...baseConfig,
+    entry: ['src/server/index.ts'],
+    outDir: 'dist/server',
   },
 ]);

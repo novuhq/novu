@@ -5,47 +5,55 @@
   "description": "Novu <Inbox /> React SDK",
   "author": "Novu",
   "license": "ISC",
-  "main": "dist/components/index.js",
+  "main": "./dist/server/index.js",
+  "browser": "./dist/client/components/index.js",
+  "types": "./dist/client/components/index.d.ts",
   "exports": {
     ".": {
+      "browser": {
+        "import": {
+          "types": "./dist/client/components/index.d.mts",
+          "default": "./dist/client/components/index.mjs"
+        },
+        "require": {
+          "types": "./dist/client/components/index.d.ts",
+          "default": "./dist/client/components/index.js"
+        }
+      },
       "import": {
-        "types": "./dist/components/index.d.mts",
-        "default": "./dist/components/index.mjs"
+        "types": "./dist/client/components/index.d.mts",
+        "default": "./dist/server/index.mjs"
       },
       "require": {
-        "types": "./dist/components/index.d.ts",
-        "default": "./dist/components/index.js"
+        "types": "./dist/client/components/index.d.ts",
+        "default": "./dist/server/index.js"
       }
     },
     "./hooks": {
       "import": {
-        "types": "./dist/hooks/index.d.mts",
-        "default": "./dist/hooks/index.mjs"
+        "types": "./dist/client/hooks/index.d.mts",
+        "default": "./dist/client/hooks/index.mjs"
       },
       "require": {
-        "types": "./dist/hooks/index.d.ts",
-        "default": "./dist/hooks/index.js"
+        "types": "./dist/client/hooks/index.d.ts",
+        "default": "./dist/client/hooks/index.js"
       }
     },
     "./themes": {
       "import": {
-        "types": "./dist/themes/index.d.mts",
-        "default": "./dist/themes/index.mjs"
+        "types": "./dist/client/themes/index.d.mts",
+        "default": "./dist/client/themes/index.mjs"
       },
       "require": {
-        "types": "./dist/themes/index.d.ts",
-        "default": "./dist/themes/index.js"
+        "types": "./dist/client/themes/index.d.ts",
+        "default": "./dist/client/themes/index.js"
       }
     }
   },
   "files": [
-    "dist",
-    "dist/components/**/*",
-    "dist/hooks/**/*",
-    "dist/themes/**/*",
+    "dist/**/*",
     "hooks/**/*",
-    "themes/**/*",
-    "server/**/*"
+    "themes/**/*"
   ],
   "sideEffects": false,
   "private": false,

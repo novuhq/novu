@@ -1,26 +1,4 @@
-'use client';
-
-import {
-  BaseProps,
-  Bell,
-  BellProps,
-  BellRenderer,
-  DefaultInboxProps,
-  DefaultProps,
-  InboxContent,
-  InboxContentProps,
-  InboxProps,
-  Notification,
-  NotificationProps,
-  Notifications,
-  NotificationsRenderer,
-  Preferences,
-  WithChildrenProps,
-} from '@novu/react';
-
-export { Inbox } from './Inbox';
-
-export { Bell, InboxContent, Notifications, Preferences };
+export { Inbox, Bell, Preferences, Notifications, InboxContent, NovuProvider } from './Inbox';
 
 export type {
   BaseProps,
@@ -30,8 +8,8 @@ export type {
   DefaultProps,
   InboxContentProps,
   InboxProps,
+  Notification,
   NotificationProps,
   NotificationsRenderer,
   WithChildrenProps,
-  Notification,
-};
+} from '@novu/react';

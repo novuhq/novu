@@ -1,5 +1,5 @@
 {
-  "main": "../dist/themes/index.js",
-  "module": "../dist/themes/index.mjs",
-  "types": "../dist/themes/index.d.ts"
+  "main": "../dist/client/themes/index.js",
+  "module": "../dist/client/themes/index.mjs",
+  "types": "../dist/client/themes/index.d.ts"
 }
