@@ -2,11 +2,10 @@ import './instrument';
 
 import helmet from 'helmet';
 import { INestApplication, Logger, ValidationPipe, VersioningType } from '@nestjs/common';
-import { NestFactory, Reflector } from '@nestjs/core';
+import { NestFactory } from '@nestjs/core';
 import bodyParser from 'body-parser';
 
 import { BullMqService, getErrorInterceptor, Logger as PinoLogger } from '@novu/application-generic';
-import { ExpressAdapter } from '@nestjs/platform-express';
 import { CONTEXT_PATH, corsOptionsDelegate, validateEnv } from './config';
 import { AppModule } from './app.module';
 import { setupSwagger } from './app/shared/framework/swagger/swagger.controller';
@@ -52,12 +51,7 @@ export async function bootstrap(
     };
   }
 
-  let app: INestApplication;
-  if (bootstrapOptions?.expressApp) {
-    app = await NestFactory.create(AppModule, new ExpressAdapter(bootstrapOptions?.expressApp), nestOptions);
-  } else {
-    app = await NestFactory.create(AppModule, { bufferLogs: true, ...nestOptions });
-  }
+  const app = await NestFactory.create(AppModule, { bufferLogs: true, ...nestOptions });
 
   app.enableVersioning({
     type: VersioningType.URI,
