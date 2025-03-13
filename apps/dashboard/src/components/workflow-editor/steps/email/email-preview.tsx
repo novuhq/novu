@@ -48,7 +48,13 @@ export const EmailPreviewBody = (props: EmailPreviewBodyProps) => {
   return (
     <div
       className={cn('mx-auto min-h-96 w-full overflow-auto px-8 py-6', className)}
-      dangerouslySetInnerHTML={{ __html: body }}
+      // use shadow DOM to isolate the styles
+      ref={(node) => {
+        if (node && !node.shadowRoot) {
+          const shadow = node.attachShadow({ mode: 'open' });
+          shadow.innerHTML = body;
+        }
+      }}
       {...rest}
     />
   );

@@ -61,20 +61,27 @@ function PreviewView(props: { node: NodeViewRendererProps['node']; onClick: () =
     const text = parseNodeContent(nodeContent);
     const htmlDoc = new DOMParser().parseFromString(text, 'text/html');
 
-    return htmlDoc.body.innerHTML;
-  }, [node.content]);
+    // get styles from head
+    const styles = Array.from(htmlDoc.head.getElementsByTagName('style'))
+      .map((style) => style.outerHTML)
+      .join('');
 
-  const isEmpty = html === '';
+    // combine styles with body content
+    return styles + htmlDoc.body.innerHTML;
+  }, [node.content]);
 
   return (
     <div className="group relative cursor-pointer" onClick={onClick}>
       <div
-        className={cn(
-          'rounded-[10px] border border-transparent group-hover:border-[#C1DDFB]',
-          isEmpty && 'min-h-[42px]'
-        )}
-        dangerouslySetInnerHTML={{ __html: html }}
+        className={cn('min-h-[42px] rounded-[10px] border border-transparent group-hover:border-[#C1DDFB]')}
         contentEditable={false}
+        // use shadow DOM to isolate the styles
+        ref={(node) => {
+          if (node && !node.shadowRoot) {
+            const shadow = node.attachShadow({ mode: 'open' });
+            shadow.innerHTML = html;
+          }
+        }}
       />
       <div className="absolute -right-[3px] -top-[5px] hidden items-center rounded-lg border border-solid bg-white p-1 shadow-[0px_1px_2px_0px_rgba(10,13,20,0.03)] group-hover:flex">
         <RiCodeBlock className="h-4 w-4 text-gray-600" />
