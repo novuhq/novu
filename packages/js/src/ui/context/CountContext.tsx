@@ -70,7 +70,7 @@ export const CountProvider = (props: ParentProps) => {
   const updateNewNotificationCountsOrCache = (notification: Notification, tags: string[]) => {
     const notificationsCache = novu.notifications.cache;
     const limitValue = limit();
-    const tabFilter = { ...filter(), tags, offset: 0, limit: limitValue };
+    const tabFilter = { ...filter(), tags, after: undefined, limit: limitValue };
     const hasEmptyCache = !notificationsCache.has(tabFilter);
     if (!isOpened() && hasEmptyCache) {
       return;
@@ -103,11 +103,17 @@ export const CountProvider = (props: ParentProps) => {
         return;
       }
 
-      const allTabs = tabs();
-      if (allTabs.length > 0) {
-        for (let i = 0; i < allTabs.length; i += 1) {
-          const tab = allTabs[i];
-          const tags = getTagsFromTab(tab);
+      const tagsMap = tabs().reduce((acc, tab) => {
+        const tags = getTagsFromTab(tab);
+        const tagsKey = createKey(tags);
+        acc.set(tagsKey, tags);
+
+        return acc;
+      }, new Map<string, string[]>());
+      const uniqueTags = Array.from(tagsMap.values());
+      if (uniqueTags.length > 0) {
+        for (let i = 0; i < uniqueTags.length; i += 1) {
+          const tags = uniqueTags[i];
           const allNotifications = tags.length === 0;
           const includesAtLeastOneTag = tags.some((tag) => notification.tags?.includes(tag));
           if (!allNotifications && !includesAtLeastOneTag) {

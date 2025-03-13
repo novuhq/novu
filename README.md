@@ -38,11 +38,13 @@
 <br/>
   <a href="https://github.com/novuhq/novu/issues/new?assignees=&labels=type%3A+bug&template=bug_report.yml&title=%F0%9F%90%9B+Bug+Report%3A+">Report a bug</a>
   ·
+  <a href="https://docs.novu.co">Docs</a>
+  ·
   <a href="https://go.novu.co/github">Website</a>
   ·
-<a href="https://bit.ly/novu-github-discord">Join our Discord</a>
+  <a href="https://discord.novu.co">Join our Discord</a>
   ·
-  <a href="https://bit.ly/novu-github-roadmap">Roadmap</a>
+  <a href="https://go.novu.co/roadmap">Roadmap</a>
   ·
   <a href="https://twitter.com/novuhq">X</a>
   ·
