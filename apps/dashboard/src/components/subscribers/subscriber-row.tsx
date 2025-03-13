@@ -21,12 +21,12 @@ import { useDeleteSubscriber } from '@/hooks/use-delete-subscriber';
 import { formatDateSimple } from '@/utils/format-date';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
-import { SubscriberResponseDto } from '@novu/api/models/components';
+import { useSubscribersNavigate } from '@/components/subscribers/hooks/use-subscribers-navigate';
 import { ComponentProps, useState } from 'react';
 import { RiDeleteBin2Line, RiFileCopyLine, RiMore2Fill, RiPulseFill } from 'react-icons/ri';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ExternalToast } from 'sonner';
-import { useSubscribersNavigate } from '@/components/subscribers/hooks/use-subscribers-navigate';
+import { ISubscriberResponseDto } from '@novu/shared';
 
 const toastOptions: ExternalToast = {
   position: 'bottom-right',
@@ -36,7 +36,7 @@ const toastOptions: ExternalToast = {
 };
 
 type SubscriberRowProps = {
-  subscriber: SubscriberResponseDto;
+  subscriber: ISubscriberResponseDto;
   subscribersCount: number;
   firstSubscriberInternalId: string;
 };

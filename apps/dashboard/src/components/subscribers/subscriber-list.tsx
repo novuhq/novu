@@ -179,10 +179,10 @@ export const SubscriberList = (props: SubscriberListProps) => {
       >
         {data.data.map((subscriber) => (
           <SubscriberRow
-            key={subscriber.id}
+            key={subscriber._id}
             subscriber={subscriber}
             subscribersCount={data.data.length}
-            firstSubscriberInternalId={data.data[0].id!}
+            firstSubscriberInternalId={data.data[0]._id!}
           />
         ))}
       </SubscriberListTable>
