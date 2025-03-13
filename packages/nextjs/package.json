@@ -60,7 +60,7 @@
     "build:watch": "tsup --watch",
     "build": "tsup && pnpm run check-exports",
     "lint": "eslint src",
-    "check-exports": "attw --pack ."
+    "check-exports": "attw --pack . --profile node16 --ignore-rules unexpected-module-syntax false-esm"
   },
   "browserslist": {
     "production": [
@@ -75,7 +75,7 @@
     ]
   },
   "devDependencies": {
-    "@arethetypeswrong/cli": "^0.16.4",
+    "@arethetypeswrong/cli": "^0.17.4",
     "@types/node": "^20.14.12",
     "@types/react": "*",
     "@types/react-dom": "*",
