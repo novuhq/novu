@@ -2,7 +2,7 @@
 import { render as mailyRender, JSONContent as MailyJSONContent } from '@maily-to/render';
 import { Injectable } from '@nestjs/common';
 import { EmailRenderOutput } from '@novu/shared';
-import { InstrumentUsecase } from '@novu/application-generic';
+import { InstrumentUsecase, sanitizeHTML } from '@novu/application-generic';
 
 import { FullPayloadForRender, RenderCommand } from './render-command';
 import { WrapMailyInLiquidUseCase } from './maily-to-liquid/wrap-maily-in-liquid.usecase';
@@ -37,13 +37,15 @@ export class EmailOutputRendererUsecase {
     const parsedMaily = await this.parseMailyContentByLiquid(transformedMaily, renderCommand.fullPayloadForRender);
     const strippedMaily = this.removeTrailingEmptyLines(parsedMaily);
     const renderedHtml = await mailyRender(strippedMaily);
+    // todo: the assumption was wrong, we can remove this as mailyRender already sanitizes the html
+    const sanitizedHtml = sanitizeHTML(renderedHtml);
 
     /**
      * Force type mapping in case undefined control.
      * This passes responsibility to framework to throw type validation exceptions
      * rather than handling invalid types here.
      */
-    return { subject: subject as string, body: renderedHtml };
+    return { subject: subject as string, body: sanitizedHtml };
   }
 
   private removeTrailingEmptyLines(node: MailyJSONContent): MailyJSONContent {

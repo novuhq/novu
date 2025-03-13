@@ -174,7 +174,7 @@ export class ConstructFrameworkWorkflow {
       ...this.constructCommonStepOptions(staticStep, fullPayloadForRender),
       // TODO: resolve this from the Step options
       disableOutputSanitization:
-        (staticStep.controlVariables?.disableOutputSanitization as boolean | undefined) ?? false,
+        (staticStep.controlVariables?.disableOutputSanitization as boolean | undefined) ?? true,
       // TODO: add providers
       providers: {},
     };

@@ -32,6 +32,7 @@ import type {
   Schema,
   Skip,
   State,
+  StepType,
   ValidationError,
   Workflow,
 } from './types';
@@ -358,12 +359,7 @@ export class Client {
         resolve: stepResolve as typeof step.resolve,
       });
 
-      if (
-        Object.values(ChannelStepEnum).includes(step.type as ChannelStepEnum) &&
-        // TODO: Update return type to include ChannelStep and fix typings
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (options as any)?.disableOutputSanitization !== true
-      ) {
+      if (this.shouldSanitize({ stepType: step.type, options })) {
         // Sanitize the outputs to avoid XSS attacks via Channel content.
         stepResult = {
           ...stepResult,
@@ -382,6 +378,24 @@ export class Client {
 
       return stepResult.outputs;
     };
+  }
+
+  private shouldSanitize({ stepType, options }: { stepType: StepType; options: ChannelStepOption | undefined }) {
+    if (options?.disableOutputSanitization === true) {
+      return false;
+    }
+
+    const isChannelStep = Object.values(ChannelStepEnum as unknown as string).includes(stepType);
+    if (!isChannelStep) {
+      return false;
+    }
+
+    const trustedChannels: ChannelStepEnum[] = [ChannelStepEnum.SMS, ChannelStepEnum.CHAT, ChannelStepEnum.PUSH];
+    if (trustedChannels.includes(stepType as ChannelStepEnum)) {
+      return false;
+    }
+
+    return true;
   }
 
   private async shouldSkip<T_Controls extends Record<string, unknown>>(
@@ -838,3 +852,8 @@ function buildSteps(stateArray: State[]) {
 
   return result;
 }
+
+type ChannelStepOption = {
+  disableOutputSanitization?: boolean;
+  [key: string]: unknown;
+};

@@ -1,7 +1,13 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 
 import { ChangeRepository, MessageTemplateEntity, MessageTemplateRepository, MessageRepository } from '@novu/dal';
-import { ChangeEntityTypeEnum, isBridgeWorkflow, StepTypeEnum } from '@novu/shared';
+import {
+  ChangeEntityTypeEnum,
+  ChannelTypeEnum,
+  isBridgeWorkflow,
+  MessageTemplateContentType,
+  StepTypeEnum,
+} from '@novu/shared';
 
 import { UpdateMessageTemplateCommand } from './update-message-template.command';
 import { CreateChange, CreateChangeCommand } from '../../create-change';
@@ -37,8 +43,12 @@ export class UpdateMessageTemplate {
     }
 
     if (command.content !== null || command.content !== undefined) {
-      const shouldSanitize = command.contentType === 'editor' && command.type !== StepTypeEnum.CHAT;
-      updatePayload.content = shouldSanitize ? sanitizeMessageContent(command.content) : command.content;
+      updatePayload.content = this.shouldSanitize({
+        channelType: existingTemplate.type,
+        contentType: command.contentType,
+      })
+        ? sanitizeMessageContent(command.content)
+        : command.content;
     }
 
     if (command.variables) {
@@ -180,5 +190,25 @@ export class UpdateMessageTemplate {
     }
 
     return item;
+  }
+
+  private shouldSanitize({
+    channelType,
+    contentType,
+  }: {
+    channelType: StepTypeEnum;
+    contentType?: MessageTemplateContentType;
+  }) {
+    const isChannelStep = Object.values(ChannelTypeEnum as unknown as string).includes(channelType);
+    if (!isChannelStep) {
+      return false;
+    }
+
+    const isTrustedChannels = [StepTypeEnum.SMS, StepTypeEnum.CHAT, StepTypeEnum.PUSH].includes(channelType);
+    if (isTrustedChannels) {
+      return false;
+    }
+
+    return contentType === 'editor';
   }
 }
