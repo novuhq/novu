@@ -115,7 +115,7 @@ export const SubscriberRow = ({ subscriber, subscribersCount, firstTwoSubscriber
 
     /**
      * If the first subscriber is being deleted and there are more than one subscribers on the list then
-     * fecth the list from the second subscriber onwards.
+     * fetch the list from the second subscriber onwards.
      */
     if (isFirstSubscriberBeingDeleted && hasTwoSubscribersInternalIds) {
       afterCursor = firstTwoSubscribersInternalIds[1];
