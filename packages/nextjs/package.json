@@ -6,14 +6,14 @@
   "author": "Novu",
   "license": "ISC",
   "main": "dist/server/server.js",
-  "module": "dist/client/index.mjs",
+  "module": "dist/client/esm/index.js",
   "types": "dist/client/index.d.ts",
   "exports": {
     ".": {
       "import": {
         "types": "./dist/client/index.d.mts",
-        "react-server": "./dist/app-router/index.mjs",
-        "default": "./dist/client/index.mjs"
+        "react-server": "./dist/app-router/esm/index.js",
+        "default": "./dist/client/esm/index.js"
       },
       "require": {
         "types": "./dist/client/index.d.ts",
@@ -24,7 +24,7 @@
     "./hooks": {
       "import": {
         "types": "./dist/hooks/index.d.mts",
-        "default": "./dist/hooks/index.mjs"
+        "default": "./dist/hooks/esm/index.js"
       },
       "require": {
         "types": "./dist/hooks/index.d.ts",
@@ -34,7 +34,7 @@
     "./themes": {
       "import": {
         "types": "./dist/themes/index.d.mts",
-        "default": "./dist/themes/index.mjs"
+        "default": "./dist/themes/esm/index.js"
       },
       "require": {
         "types": "./dist/themes/index.d.ts",
@@ -58,7 +58,7 @@
   },
   "scripts": {
     "build:watch": "tsup --watch",
-    "build": "tsup",
+    "build": "tsup && pnpm run check-exports",
     "lint": "eslint src",
     "check-exports": "attw --pack ."
   },

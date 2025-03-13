@@ -11,6 +11,7 @@ const baseConfig: Options = {
   minify: false,
   sourcemap: true,
   target: 'esnext',
+  legacyOutput: true,
 };
 
 export default defineConfig([
