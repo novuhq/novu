@@ -10,7 +10,8 @@ export function InboxContent() {}
 export function Notifications() {}
 export function Preferences() {}
 export function Bell() {}
-
-// Hooks
-export { NovuProvider } from './index';
-export * from './hooks';
+export function NovuProvider() {}
+export function useNovu() {}
+export function useCounts() {}
+export function useNotifications() {}
+export function usePreferences() {}

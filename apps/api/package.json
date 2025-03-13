@@ -96,8 +96,6 @@
     "passport-headerapikey": "^1.2.2",
     "passport-jwt": "^4.0.1",
     "passport-oauth2": "^1.8.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
     "recursive-diff": "^1.0.8",
     "redlock": "5.0.0-beta.2",
     "reflect-metadata": "0.2.2",

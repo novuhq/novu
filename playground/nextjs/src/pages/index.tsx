@@ -1,5 +1,5 @@
 /* eslint-disable import/extensions */
-import { dark } from '@novu/react/themes';
+import { dark } from '@novu/nextjs/themes';
 import { useState } from 'react';
 import { Inbox } from '@novu/nextjs';
 import Title from '@/components/Title';
