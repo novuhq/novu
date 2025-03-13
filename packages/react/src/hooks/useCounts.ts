@@ -8,13 +8,13 @@ type Count = {
   filter: NotificationFilter;
 };
 
-type UseCountsProps = {
+export type UseCountsProps = {
   filters: NotificationFilter[];
   onSuccess?: (data: Count[]) => void;
   onError?: (error: NovuError) => void;
 };
 
-type UseCountsResult = {
+export type UseCountsResult = {
   counts?: Count[];
   error?: NovuError;
   isLoading: boolean; // initial loading

@@ -2,13 +2,13 @@ import { NovuError, Preference } from '@novu/js';
 import { useEffect, useState } from 'react';
 import { useNovu } from './NovuProvider';
 
-type UsePreferencesProps = {
+export type UsePreferencesProps = {
   filter?: { tags?: string[] };
   onSuccess?: (data: Preference[]) => void;
   onError?: (error: NovuError) => void;
 };
 
-type UsePreferencesResult = {
+export type UsePreferencesResult = {
   preferences?: Preference[];
   error?: NovuError;
   isLoading: boolean; // initial loading

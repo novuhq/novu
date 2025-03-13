@@ -19,7 +19,7 @@ export default defineConfig([
   },
   {
     ...baseConfig,
-    entry: ['src/server.ts'], // Entry point for server-side code
+    entry: ['src/server.tsx'], // Entry point for server-side code
     format: ['esm', 'cjs'],
     target: 'node14', // Target environment for server-side build
     platform: 'node',
