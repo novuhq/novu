@@ -3,7 +3,7 @@
 import React from 'react';
 import { InboxProps, Inbox as RInbox } from '@novu/react';
 import { useRouter as usePageRouter } from 'next/compat/router';
-import type { useRouter as useAppRouter } from 'next/navigation';
+import { useRouter as useAppRouter } from 'next/navigation';
 
 export const Inbox = React.memo((props: InboxProps) => {
   let router: ReturnType<typeof usePageRouter> | ReturnType<typeof useAppRouter> = usePageRouter();
@@ -15,8 +15,7 @@ export const Inbox = React.memo((props: InboxProps) => {
    */
 
   if (!router) {
-    // eslint-disable-next-line global-require
-    router = (require('next/navigation') as typeof import('next/navigation')).useRouter();
+    router = useAppRouter();
   }
 
   if (!router) {
