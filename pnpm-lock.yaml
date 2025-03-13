@@ -4591,8 +4591,8 @@ importers:
         version: 18.3.1
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.4
+        version: 0.17.4
       '@types/node':
         specifier: ^20.14.12
         version: 20.16.5
@@ -4898,19 +4898,10 @@ packages:
     resolution: {integrity: sha512-JgG32LQRLphHRWsn64vIt7wD2m+JH46swM6ZrY7g1rdiGiKV5m+A+TBrJKoUUQRmS14azMgePNZY30NauWqzLg==}
     engines: {node: '>=10.4.0'}
 
-  '@arethetypeswrong/cli@0.16.4':
-    resolution: {integrity: sha512-qMmdVlJon5FtA+ahn0c1oAVNxiq4xW5lqFiTZ21XHIeVwAVIQ+uRz4UEivqRMsjVV1grzRgJSKqaOrq1MvlVyQ==}
-    engines: {node: '>=18'}
-    hasBin: true
-
   '@arethetypeswrong/cli@0.17.4':
     resolution: {integrity: sha512-AeiKxtf67XD/NdOqXgBOE5TZWH3EOCt+0GkbUpekOzngc+Q/cRZ5azjWyMxISxxfp0EItgm5NoSld9p7BAA5xQ==}
     engines: {node: '>=18'}
     hasBin: true
-
-  '@arethetypeswrong/core@0.16.4':
-    resolution: {integrity: sha512-RI3HXgSuKTfcBf1hSEg1P9/cOvmI0flsMm6/QL3L3wju4AlHDqd55JFPfXs4pzgEAgy5L9pul4/HPPz99x2GvA==}
-    engines: {node: '>=18'}
 
   '@arethetypeswrong/core@0.17.4':
     resolution: {integrity: sha512-Izvir8iIoU+X4SKtDAa5kpb+9cpifclzsbA8x/AZY0k0gIfXYQ1fa1B6Epfe6vNA2YfDX8VtrZFgvnXB6aPEoQ==}
@@ -36002,16 +35993,6 @@ snapshots:
     dependencies:
       tslib: 2.8.1
 
-  '@arethetypeswrong/cli@0.16.4':
-    dependencies:
-      '@arethetypeswrong/core': 0.16.4
-      chalk: 4.1.2
-      cli-table3: 0.6.5
-      commander: 10.0.1
-      marked: 9.1.6
-      marked-terminal: 7.1.0(marked@9.1.6)
-      semver: 7.6.3
-
   '@arethetypeswrong/cli@0.17.4':
     dependencies:
       '@arethetypeswrong/core': 0.17.4
@@ -36021,16 +36002,6 @@ snapshots:
       marked: 9.1.6
       marked-terminal: 7.1.0(marked@9.1.6)
       semver: 7.6.3
-
-  '@arethetypeswrong/core@0.16.4':
-    dependencies:
-      '@andrewbranch/untar.js': 1.0.3
-      cjs-module-lexer: 1.4.1
-      fflate: 0.8.2
-      lru-cache: 10.4.3
-      semver: 7.6.3
-      typescript: 5.6.1-rc
-      validate-npm-package-name: 5.0.1
 
   '@arethetypeswrong/core@0.17.4':
     dependencies:
