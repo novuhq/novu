@@ -1,5 +1,5 @@
 {
-  "include": ["src"],
+  "include": ["src/**/*", "src/**/*.d.ts"],
   "compilerOptions": {
     "lib": ["dom", "dom.iterable", "esnext"],
     "target": "ES6",
@@ -9,9 +9,12 @@
     "jsx": "react-jsx",
     "forceConsistentCasingInFileNames": true,
     "moduleResolution": "NodeNext",
+    "emitDecoratorMetadata": false,
     "skipLibCheck": true,
     "strict": true,
-    "noEmit": true
+    "noEmit": true,
+    "outDir": "./dist/esm",
+    "rootDir": "./src"
   },
   "exclude": ["src/**/*.test.*", "src/*.test.*", "node_modules", "**/node_modules/*"]
 }

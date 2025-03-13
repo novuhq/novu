@@ -2,64 +2,68 @@
   "name": "@novu/react",
   "version": "2.6.6",
   "repository": "https://github.com/novuhq/novu",
-  "description": "Novu's React SDK for building custom inbox notification experiences",
-  "author": "",
+  "description": "Novu <Inbox /> React SDK",
+  "author": "Novu",
   "license": "ISC",
-  "main": "dist/server/server.js",
-  "module": "dist/client/index.mjs",
-  "types": "dist/client/index.d.ts",
-  "browser": {
-    "./dist/server/server.js": "./dist/client/index.js",
-    "./dist/server/server.mjs": "./dist/client/index.mjs"
-  },
+  "main": "./dist/cjs/index.js",
+  "browser": "./dist/esm/index.mjs",
+  "types": "./dist/esm/index.d.mts",
   "exports": {
     ".": {
+      "browser": {
+        "import": {
+          "types": "./dist/esm/index.d.mts",
+          "default": "./dist/esm/index.mjs"
+        },
+        "require": {
+          "types": "./dist/cjs/index.d.ts",
+          "default": "./dist/cjs/index.js"
+        }
+      },
       "import": {
-        "types": "./dist/client/index.d.mts",
-        "default": "./dist/server/server.mjs"
+        "types": "./dist/esm/index.d.mts",
+        "default": "./dist/esm/server/index.mjs"
       },
       "require": {
-        "types": "./dist/server/server.d.ts",
-        "default": "./dist/server/server.js"
+        "types": "./dist/cjs/index.d.ts",
+        "default": "./dist/cjs/server/index.js"
       }
     },
     "./hooks": {
       "import": {
-        "types": "./dist/hooks/index.d.mts",
-        "default": "./dist/hooks/index.mjs"
+        "types": "./dist/esm/hooks/index.d.mts",
+        "default": "./dist/esm/hooks/index.mjs"
       },
       "require": {
-        "types": "./dist/hooks/index.d.ts",
-        "default": "./dist/hooks/index.js"
+        "types": "./dist/cjs/hooks/index.d.ts",
+        "default": "./dist/cjs/hooks/index.js"
       }
     },
     "./themes": {
       "import": {
-        "types": "./dist/themes/index.d.mts",
-        "default": "./dist/themes/index.mjs"
+        "types": "./dist/esm/themes/index.d.mts",
+        "default": "./dist/esm/themes/index.mjs"
       },
       "require": {
-        "types": "./dist/themes/index.d.ts",
-        "default": "./dist/themes/index.js"
+        "types": "./dist/cjs/themes/index.d.ts",
+        "default": "./dist/cjs/themes/index.js"
       }
     },
     "./server": {
       "import": {
-        "types": "./dist/server/server.d.mts",
-        "default": "./dist/server/server.mjs"
+        "types": "./dist/esm/index.d.mts",
+        "default": "./dist/esm/server/index.mjs"
       },
       "require": {
-        "types": "./dist/server/server.d.ts",
-        "default": "./dist/server/server.js"
+        "types": "./dist/cjs/index.d.ts",
+        "default": "./dist/cjs/server/index.js"
       }
     }
   },
   "files": [
     "dist",
-    "dist/client/**/*",
-    "dist/server/**/*",
-    "dist/hooks/**/*",
-    "dist/themes/**/*",
+    "dist/esm/**/*",
+    "dist/cjs/**/*",
     "hooks/**/*",
     "themes/**/*",
     "server/**/*"

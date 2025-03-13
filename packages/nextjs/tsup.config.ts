@@ -2,6 +2,11 @@ import { defineConfig, Options } from 'tsup';
 import { name, version } from './package.json';
 
 const baseConfig: Options = {
+  // we want to preserve the folders structure together with
+  // 'use client' directives, the combination of bundle: false and entry is required
+  entry: ['src/**/*.{ts,tsx}'],
+  bundle: false,
+  minify: false,
   sourcemap: true,
   clean: true,
   dts: true,
@@ -11,37 +16,18 @@ const baseConfig: Options = {
 export default defineConfig([
   {
     ...baseConfig,
-    entry: ['src/index.ts'], // Entry point for client-side code
-    format: ['esm', 'cjs'],
+    format: 'cjs',
+    target: 'node14',
+    platform: 'node',
+    outDir: 'dist/cjs',
+    tsconfig: 'tsconfig.cjs.json',
+  },
+  {
+    ...baseConfig,
+    format: 'esm',
     target: 'esnext',
     platform: 'browser',
-    outDir: 'dist/client', // Output directory for client-side build
-  },
-  {
-    ...baseConfig,
-    entry: ['src/server.ts'], // Entry point for server-side code
-    format: ['esm', 'cjs'],
-    target: 'node14', // Target environment for server-side build
-    platform: 'node',
-    outDir: 'dist/server', // Output directory for server-side build
-    splitting: false,
-  },
-  {
-    ...baseConfig,
-    entry: ['src/hooks/index.ts'],
-    format: ['esm', 'cjs'],
-    target: 'esnext',
-    platform: 'neutral',
-    outDir: 'dist/hooks',
-    splitting: false,
-  },
-  {
-    ...baseConfig,
-    entry: ['src/themes/index.ts'],
-    format: ['esm', 'cjs'],
-    target: 'esnext',
-    platform: 'neutral',
-    outDir: 'dist/themes',
-    splitting: false,
+    outDir: 'dist/esm',
+    tsconfig: 'tsconfig.json',
   },
 ]);

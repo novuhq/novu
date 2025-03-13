@@ -2,54 +2,51 @@
   "name": "@novu/nextjs",
   "version": "2.6.6",
   "repository": "https://github.com/novuhq/novu",
-  "description": "Novu's Next.js SDK for building custom inbox notification experiences",
-  "author": "",
+  "description": "Novu <Inbox /> Next.js SDK",
+  "author": "Novu",
   "license": "ISC",
-  "main": "dist/server/server.js",
-  "module": "dist/client/index.mjs",
-  "types": "dist/client/index.d.ts",
-  "browser": {
-    "./dist/server/server.js": "./dist/client/index.js",
-    "./dist/server/server.mjs": "./dist/client/index.mjs"
-  },
+  "main": "dist/server/index.js",
+  "module": "dist/esm/pages-router/index.mjs",
+  "types": "dist/esm/pages-router/index.d.mts",
   "exports": {
     ".": {
       "import": {
-        "types": "./dist/client/index.d.mts",
-        "default": "./dist/server/server.mjs"
+        "types": "./dist/esm/pages-router/index.d.mts",
+        "react-server": "./dist/esm/app-router/index.mjs",
+        "default": "./dist/esm/pages-router/index.mjs"
       },
       "require": {
-        "types": "./dist/server/server.d.ts",
-        "default": "./dist/server/server.js"
+        "types": "./dist/cjs/pages-router/index.d.ts",
+        "react-server": "./dist/cjs/app-router/index.js",
+        "default": "./dist/cjs/pages-router/index.js"
       }
     },
     "./hooks": {
       "import": {
-        "types": "./dist/hooks/index.d.mts",
-        "default": "./dist/hooks/index.mjs"
+        "types": "./dist/esm/hooks/index.d.mts",
+        "default": "./dist/esm/hooks/index.mjs"
       },
       "require": {
-        "types": "./dist/hooks/index.d.ts",
-        "default": "./dist/hooks/index.js"
+        "types": "./dist/cjs/hooks/index.d.ts",
+        "default": "./dist/cjs/hooks/index.js"
       }
     },
     "./themes": {
       "import": {
-        "types": "./dist/themes/index.d.mts",
-        "default": "./dist/themes/index.mjs"
+        "types": "./dist/esm/themes/index.d.mts",
+        "default": "./dist/esm/themes/index.mjs"
       },
       "require": {
-        "types": "./dist/themes/index.d.ts",
-        "default": "./dist/themes/index.js"
+        "types": "./dist/cjs/themes/index.d.ts",
+        "default": "./dist/cjs/themes/index.js"
       }
     }
   },
   "files": [
     "dist",
-    "dist/client/**/*",
-    "dist/server/**/*",
-    "dist/hooks/**/*",
-    "dist/themes/**/*",
+    "dist/cjs/**/*",
+    "dist/esm/**/*",
+    "server/**/*",
     "hooks/**/*",
     "themes/**/*"
   ],
