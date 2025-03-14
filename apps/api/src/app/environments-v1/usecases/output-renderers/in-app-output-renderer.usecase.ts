@@ -1,6 +1,6 @@
 import { InAppRenderOutput } from '@novu/shared';
 import { Injectable } from '@nestjs/common';
-import { InstrumentUsecase } from '@novu/application-generic';
+import { InstrumentUsecase, sanitizeMessageContent } from '@novu/application-generic';
 import { RenderCommand } from './render-command';
 
 @Injectable()
@@ -9,6 +9,15 @@ export class InAppOutputRendererUsecase {
   execute(renderCommand: RenderCommand): InAppRenderOutput {
     const { skip, disableOutputSanitization, ...outputControls } = renderCommand.controlValues ?? {};
 
-    return outputControls as any;
+    if (disableOutputSanitization) {
+      return outputControls as any;
+    } else {
+      const { body, ...rest } = outputControls as any;
+
+      return {
+        ...rest,
+        body: sanitizeMessageContent(body),
+      };
+    }
   }
 }
