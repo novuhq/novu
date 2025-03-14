@@ -198,7 +198,7 @@ export class MergeOrCreateDigest {
         digestResult: DigestCreationResultEnum.SKIPPED,
       };
     }
-    const isMyJobBefore = isBefore(job.createdAt, otherJobsWithSameDigest.createdAt);
+    const isMyJobBefore = isBefore(new Date(job.createdAt), new Date(earliestOtherJobDate.createdAt));
 
     if (isMyJobBefore) {
       return {
