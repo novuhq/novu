@@ -1,7 +1,7 @@
 import { Liquid } from 'liquidjs';
 import { digest } from './filters/digest';
 
-import { ChannelStepEnum, PostActionEnum } from './constants';
+import { PostActionEnum } from './constants';
 import {
   ExecutionEventControlsInvalidError,
   ExecutionEventPayloadInvalidError,
@@ -385,17 +385,7 @@ export class Client {
       return false;
     }
 
-    const isChannelStep = Object.values(ChannelStepEnum as unknown as string).includes(stepType);
-    if (!isChannelStep) {
-      return false;
-    }
-
-    const trustedChannels: ChannelStepEnum[] = [ChannelStepEnum.SMS, ChannelStepEnum.CHAT, ChannelStepEnum.PUSH];
-    if (trustedChannels.includes(stepType as ChannelStepEnum)) {
-      return false;
-    }
-
-    return true;
+    return (['email', 'in_app'] as StepType[]).includes(stepType);
   }
 
   private async shouldSkip<T_Controls extends Record<string, unknown>>(

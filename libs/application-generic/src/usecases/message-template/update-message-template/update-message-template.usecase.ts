@@ -14,6 +14,7 @@ import { CreateChange, CreateChangeCommand } from '../../create-change';
 import { UpdateChange, UpdateChangeCommand } from '../../update-change';
 import { sanitizeMessageContent } from '../../../services';
 import { normalizeVariantDefault } from '../../../utils/variants';
+import { shouldSanitize } from '../shared';
 
 @Injectable()
 export class UpdateMessageTemplate {
@@ -43,10 +44,7 @@ export class UpdateMessageTemplate {
     }
 
     if (command.content !== null || command.content !== undefined) {
-      updatePayload.content = this.shouldSanitize({
-        channelType: existingTemplate.type,
-        contentType: command.contentType,
-      })
+      updatePayload.content = shouldSanitize(existingTemplate.type, command.contentType)
         ? sanitizeMessageContent(command.content)
         : command.content;
     }
@@ -190,25 +188,5 @@ export class UpdateMessageTemplate {
     }
 
     return item;
-  }
-
-  private shouldSanitize({
-    channelType,
-    contentType,
-  }: {
-    channelType: StepTypeEnum;
-    contentType?: MessageTemplateContentType;
-  }) {
-    const isChannelStep = Object.values(ChannelTypeEnum as unknown as string).includes(channelType);
-    if (!isChannelStep) {
-      return false;
-    }
-
-    const isTrustedChannels = [StepTypeEnum.SMS, StepTypeEnum.CHAT, StepTypeEnum.PUSH].includes(channelType);
-    if (isTrustedChannels) {
-      return false;
-    }
-
-    return contentType === 'editor';
   }
 }
