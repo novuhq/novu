@@ -20,7 +20,6 @@ export default defineConfig([
     target: 'node14',
     platform: 'node',
     outDir: 'dist/cjs',
-    tsconfig: 'tsconfig.cjs.json',
   },
   {
     ...baseConfig,
@@ -28,6 +27,9 @@ export default defineConfig([
     target: 'esnext',
     platform: 'browser',
     outDir: 'dist/esm',
-    tsconfig: 'tsconfig.json',
+    outExtension: () => ({
+      js: '.js',
+      dts: '.d.ts',
+    }),
   },
 ]);

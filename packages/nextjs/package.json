@@ -1,44 +1,50 @@
 {
   "name": "@novu/nextjs",
   "version": "2.6.6",
-  "repository": "https://github.com/novuhq/novu",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/novuhq/novu",
+    "directory": "packages/nextjs"
+  },
+  "homepage": "https://novu.co",
   "description": "Novu <Inbox /> Next.js SDK",
   "author": "Novu",
   "license": "ISC",
-  "main": "dist/server/index.js",
-  "module": "dist/esm/pages-router/index.mjs",
-  "types": "dist/esm/pages-router/index.d.mts",
+  "type": "module",
+  "main": "./dist/cjs/server/index.cjs",
+  "module": "./dist/esm/pages-router/index.js",
+  "types": "./dist/esm/pages-router/index.d.ts",
   "exports": {
     ".": {
       "import": {
-        "types": "./dist/esm/pages-router/index.d.mts",
-        "react-server": "./dist/esm/app-router/index.mjs",
-        "default": "./dist/esm/pages-router/index.mjs"
+        "types": "./dist/esm/pages-router/index.d.ts",
+        "react-server": "./dist/esm/app-router/index.js",
+        "default": "./dist/esm/pages-router/index.js"
       },
       "require": {
-        "types": "./dist/cjs/pages-router/index.d.ts",
-        "react-server": "./dist/cjs/app-router/index.js",
-        "default": "./dist/cjs/pages-router/index.js"
+        "types": "./dist/cjs/pages-router/index.d.cts",
+        "react-server": "./dist/cjs/app-router/index.cjs",
+        "default": "./dist/cjs/pages-router/index.cjs"
       }
     },
     "./hooks": {
       "import": {
-        "types": "./dist/esm/hooks/index.d.mts",
-        "default": "./dist/esm/hooks/index.mjs"
+        "types": "./dist/esm/hooks/index.d.ts",
+        "default": "./dist/esm/hooks/index.js"
       },
       "require": {
-        "types": "./dist/cjs/hooks/index.d.ts",
-        "default": "./dist/cjs/hooks/index.js"
+        "types": "./dist/cjs/hooks/index.d.cts",
+        "default": "./dist/cjs/hooks/index.cjs"
       }
     },
     "./themes": {
       "import": {
-        "types": "./dist/esm/themes/index.d.mts",
-        "default": "./dist/esm/themes/index.mjs"
+        "types": "./dist/esm/themes/index.d.ts",
+        "default": "./dist/esm/themes/index.js"
       },
       "require": {
-        "types": "./dist/cjs/themes/index.d.ts",
-        "default": "./dist/cjs/themes/index.js"
+        "types": "./dist/cjs/themes/index.d.cts",
+        "default": "./dist/cjs/themes/index.cjs"
       }
     }
   },
