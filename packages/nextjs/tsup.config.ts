@@ -1,11 +1,11 @@
 import { defineConfig, Options } from 'tsup';
+import { esbuildPluginFilePathExtensions } from 'esbuild-plugin-file-path-extensions';
 import { name, version } from './package.json';
 
 const baseConfig: Options = {
   // we want to preserve the folders structure together with
-  // 'use client' directives, the combination of bundle: false and entry is required
+  // 'use client' directives
   entry: ['src/**/*.{ts,tsx}'],
-  bundle: false,
   minify: false,
   sourcemap: true,
   clean: true,
@@ -20,6 +20,7 @@ export default defineConfig([
     target: 'node14',
     platform: 'node',
     outDir: 'dist/cjs',
+    esbuildPlugins: [esbuildPluginFilePathExtensions({ cjsExtension: 'cjs' })],
   },
   {
     ...baseConfig,
@@ -27,6 +28,7 @@ export default defineConfig([
     target: 'esnext',
     platform: 'browser',
     outDir: 'dist/esm',
+    esbuildPlugins: [esbuildPluginFilePathExtensions({ esmExtension: 'js' })],
     outExtension: () => ({
       js: '.js',
       dts: '.d.ts',

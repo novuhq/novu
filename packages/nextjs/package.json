@@ -84,6 +84,7 @@
     "@types/node": "^20.14.12",
     "@types/react": "*",
     "@types/react-dom": "*",
+    "esbuild-plugin-file-path-extensions": "^2.1.4",
     "tsup": "^8.2.1",
     "typescript": "5.6.2"
   },
