@@ -1,4 +1,14 @@
-import { DynamicModule, ForwardReference, Logger, Module, Provider, Type } from '@nestjs/common';
+import {
+  DynamicModule,
+  ForwardReference,
+  Logger,
+  Module,
+  Provider,
+  Type,
+  OnApplicationShutdown,
+  OnApplicationBootstrap,
+  OnModuleDestroy,
+} from '@nestjs/common';
 
 import { APP_FILTER } from '@nestjs/core';
 import { SentryGlobalFilter, SentryModule } from '@sentry/nestjs/setup';
@@ -29,8 +39,18 @@ if (process.env.SENTRY_DSN) {
   controllers: [],
   providers,
 })
-export class AppModule {
-  constructor() {
-    Logger.log(`BOOTSTRAPPED NEST APPLICATION`);
+export class AppModule implements OnApplicationBootstrap, OnApplicationShutdown, OnModuleDestroy {
+  onModuleDestroy() {
+    Logger.log(`[@novu/worker]: AppModule is shuttind down...`);
+    Logger.flush();
+  }
+
+  onApplicationBootstrap() {
+    Logger.log(`[@novu/worker]: Bootstrapped successfully!`);
+  }
+
+  onApplicationShutdown(signal: string) {
+    Logger.log(`[@novu/worker]: Application shutdown with signal ${signal}.`);
+    Logger.flush();
   }
 }

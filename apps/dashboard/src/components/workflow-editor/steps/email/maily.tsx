@@ -137,9 +137,36 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
     ];
   }, [calculateVariables]);
 
+  /*
+   * Override Maily tippy box styles as a temporary solution.
+   * Note: These styles affect both the bubble menu and block manipulation buttons (drag & drop, add).
+   * TODO: Request Maily to expose these components or provide specific CSS selectors for individual targeting.
+   */
+  const overrideTippyBoxStyles = () => (
+    <style>
+      {`
+          .tippy-box {
+            padding-right: 20px;
+            pointer-events: auto;
+
+            .mly-cursor-grab {
+              background-color: #fff;
+              border-radius: 4px;
+              box-shadow: 0px 0px 2px 0px rgba(0, 0, 0, 0.04), 0px 1px 2px 0px rgba(0, 0, 0, 0.02);
+              border-radius: 4px;
+            }
+          }
+        `}
+    </style>
+  );
+
   return (
     <>
-      <div className={cn('mx-auto flex h-full flex-col items-start', className)} {...rest}>
+      {overrideTippyBoxStyles()}
+      <div
+        className={cn('shadow-xs mx-auto flex h-full flex-col items-start rounded-lg bg-white', className)}
+        {...rest}
+      >
         <Editor
           key="repeat-block-enabled"
           config={DEFAULT_EDITOR_CONFIG}

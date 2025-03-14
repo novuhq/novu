@@ -1,16 +1,16 @@
 import axios from 'axios';
 import { expect } from 'chai';
-import { getTime, parseISO } from 'date-fns';
 import {
+  JobRepository,
+  JobStatusEnum,
   MessageRepository,
   NotificationTemplateEntity,
   SubscriberEntity,
-  JobRepository,
-  JobStatusEnum,
-  JobEntity,
 } from '@novu/dal';
-import { StepTypeEnum, DigestTypeEnum, DigestUnitEnum, IDigestRegularMetadata } from '@novu/shared';
-import { UserSession, SubscribersService, JobsService } from '@novu/testing';
+import { DigestTypeEnum, DigestUnitEnum, IDigestRegularMetadata, StepTypeEnum } from '@novu/shared';
+import { JobsService, SubscribersService, UserSession } from '@novu/testing';
+import { Novu } from '@novu/api';
+import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 const axiosInstance = axios.create();
 
@@ -21,31 +21,27 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST) #n
   let subscriberService: SubscribersService;
   const jobRepository = new JobRepository();
   const messageRepository = new MessageRepository();
-
-  const triggerEvent = async (payload, transactionId?: string): Promise<void> => {
-    await axiosInstance.post(
-      `${session.serverUrl}/v1/events/trigger`,
-      {
-        transactionId,
-        name: template.triggers[0].identifier,
-        to: [subscriber.subscriberId],
-        payload,
-      },
-      {
-        headers: {
-          authorization: `ApiKey ${session.apiKey}`,
-        },
-      }
-    );
-  };
-
+  const jobsService = new JobsService();
+  let novuClient: Novu;
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
     template = await session.createTemplate();
     subscriberService = new SubscribersService(session.organization._id, session.environment._id);
     subscriber = await subscriberService.createSubscriber();
+    novuClient = initNovuClassSdk(session);
   });
+  const triggerEvent = async (payload: { [k: string]: any } | undefined, transactionId?: string): Promise<void> => {
+    await novuClient.trigger(
+      {
+        transactionId,
+        workflowId: template.triggers[0].identifier,
+        to: [subscriber.subscriberId],
+        payload,
+      },
+      transactionId
+    );
+  };
 
   it('should digest events within time interval', async function () {
     template = await session.createTemplate({

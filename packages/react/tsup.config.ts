@@ -1,6 +1,7 @@
 import { defineConfig, Options } from 'tsup';
-import { name, version } from './package.json';
 import { esbuildPluginFilePathExtensions } from 'esbuild-plugin-file-path-extensions';
+import { name, version } from './package.json';
+
 const baseConfig: Options = {
   // we want to preserve the folders structure together with
   // 'use client' directives
@@ -8,8 +9,13 @@ const baseConfig: Options = {
   minify: false,
   sourcemap: true,
   clean: true,
-  dts: true,
   define: { PACKAGE_NAME: `"${name}"`, PACKAGE_VERSION: `"${version}"` },
+  dts: true,
+  external: ['react', 'react-dom'],
+  format: ['esm', 'cjs'],
+  minify: false,
+  sourcemap: true,
+  target: 'esnext',
 };
 
 export default defineConfig([

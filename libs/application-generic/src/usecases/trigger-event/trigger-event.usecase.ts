@@ -49,7 +49,6 @@ export class TriggerEvent {
 
   @InstrumentUsecase()
   async execute(command: TriggerEventCommand) {
-    this.logger.info(command, 'TriggerEventUseCase - START');
     try {
       const mappedCommand = {
         ...command,

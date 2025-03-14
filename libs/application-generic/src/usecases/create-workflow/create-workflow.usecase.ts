@@ -5,15 +5,15 @@ import { ModuleRef } from '@nestjs/core';
 import { NotificationGroupEntity, NotificationGroupRepository, NotificationTemplateRepository } from '@novu/dal';
 import {
   ChangeEntityTypeEnum,
+  DEFAULT_WORKFLOW_PREFERENCES,
   INotificationTemplateStep,
   INotificationTrigger,
   isBridgeWorkflow,
   IStepVariant,
+  slugify,
   TriggerTypeEnum,
   WorkflowOriginEnum,
   WorkflowTypeEnum,
-  slugify,
-  DEFAULT_WORKFLOW_PREFERENCES,
 } from '@novu/shared';
 
 import { PinoLogger } from 'nestjs-pino';
@@ -31,7 +31,7 @@ import {
   UpsertWorkflowPreferencesCommand,
 } from '../upsert-preferences';
 import { GetPreferences } from '../get-preferences';
-import { GetWorkflowByIdsCommand, WorkflowInternalResponseDto, GetWorkflowByIdsUseCase } from '../workflow';
+import { GetWorkflowByIdsCommand, GetWorkflowByIdsUseCase, WorkflowInternalResponseDto } from '../workflow';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import { ResourceValidatorService } from '../../services/resource-validator.service';
 
@@ -42,8 +42,8 @@ import { ResourceValidatorService } from '../../services/resource-validator.serv
 export class CreateWorkflow {
   constructor(
     private notificationTemplateRepository: NotificationTemplateRepository,
-    private createMessageTemplate: CreateMessageTemplate,
     private notificationGroupRepository: NotificationGroupRepository,
+    private createMessageTemplate: CreateMessageTemplate,
     private createChange: CreateChange,
     @Inject(forwardRef(() => AnalyticsService))
     private analyticsService: AnalyticsService,
