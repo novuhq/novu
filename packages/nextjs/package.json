@@ -10,41 +10,40 @@
   "description": "Novu <Inbox /> Next.js SDK",
   "author": "Novu",
   "license": "ISC",
-  "type": "module",
-  "main": "./dist/cjs/server/index.cjs",
+  "main": "./dist/cjs/server/index.js",
   "module": "./dist/esm/pages-router/index.js",
-  "types": "./dist/esm/pages-router/index.d.ts",
+  "types": "./dist/types/pages-router/index.d.ts",
   "exports": {
     ".": {
       "import": {
-        "types": "./dist/esm/pages-router/index.d.ts",
+        "types": "./dist/types/pages-router/index.d.ts",
         "react-server": "./dist/esm/app-router/index.js",
         "default": "./dist/esm/pages-router/index.js"
       },
       "require": {
-        "types": "./dist/cjs/pages-router/index.d.cts",
-        "react-server": "./dist/cjs/app-router/index.cjs",
-        "default": "./dist/cjs/pages-router/index.cjs"
+        "types": "./dist/types/pages-router/index.d.ts",
+        "react-server": "./dist/cjs/app-router/index.js",
+        "default": "./dist/cjs/pages-router/index.js"
       }
     },
     "./hooks": {
       "import": {
-        "types": "./dist/esm/hooks/index.d.ts",
+        "types": "./dist/types/hooks/index.d.ts",
         "default": "./dist/esm/hooks/index.js"
       },
       "require": {
-        "types": "./dist/cjs/hooks/index.d.cts",
-        "default": "./dist/cjs/hooks/index.cjs"
+        "types": "./dist/types/hooks/index.d.ts",
+        "default": "./dist/cjs/hooks/index.js"
       }
     },
     "./themes": {
       "import": {
-        "types": "./dist/esm/themes/index.d.ts",
+        "types": "./dist/types/themes/index.d.ts",
         "default": "./dist/esm/themes/index.js"
       },
       "require": {
-        "types": "./dist/cjs/themes/index.d.cts",
-        "default": "./dist/cjs/themes/index.cjs"
+        "types": "./dist/types/themes/index.d.ts",
+        "default": "./dist/cjs/themes/index.js"
       }
     }
   },
@@ -52,6 +51,7 @@
     "dist",
     "dist/cjs/**/*",
     "dist/esm/**/*",
+    "dist/types/**/*",
     "server/**/*",
     "hooks/**/*",
     "themes/**/*"
@@ -63,9 +63,10 @@
   },
   "scripts": {
     "build:watch": "tsup --watch",
-    "build": "tsup && pnpm run check-exports",
+    "build": "tsup && pnpm run build:declarations && pnpm run check-exports",
+    "build:declarations": "tsc -p tsconfig.declarations.json",
     "lint": "eslint src",
-    "check-exports": "attw --pack ."
+    "check-exports": "attw --pack . --ignore-rules unexpected-module-syntax"
   },
   "browserslist": {
     "production": [

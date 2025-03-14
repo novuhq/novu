@@ -9,7 +9,7 @@ const baseConfig: Options = {
   minify: false,
   sourcemap: true,
   clean: true,
-  dts: true,
+  dts: false,
   define: { PACKAGE_NAME: `"${name}"`, PACKAGE_VERSION: `"${version}"` },
 };
 
@@ -20,7 +20,7 @@ export default defineConfig([
     target: 'node14',
     platform: 'node',
     outDir: 'dist/cjs',
-    esbuildPlugins: [esbuildPluginFilePathExtensions({ cjsExtension: 'cjs' })],
+    esbuildPlugins: [esbuildPluginFilePathExtensions({ cjsExtension: 'js' })],
   },
   {
     ...baseConfig,
