@@ -6,7 +6,8 @@ export type SizeType = 'default' | 'small';
 export interface FilterOption {
   label: string;
   value: string;
-  icon?: ComponentType<{ className?: string }>;
+  disabled?: boolean;
+  icon?: React.ReactNode;
 }
 
 export interface FacetedFilterProps {

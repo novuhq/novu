@@ -72,7 +72,7 @@ export function ActivityTable({
           transition={{ duration: 0.2 }}
           className="flex h-full w-full items-center justify-center"
         >
-          <ActivityEmptyState emptySearchResults={hasActiveFilters} onClearFilters={onClearFilters} />
+          <ActivityEmptyState filters={filters} emptySearchResults={hasActiveFilters} onClearFilters={onClearFilters} />
         </motion.div>
       ) : (
         <motion.div
