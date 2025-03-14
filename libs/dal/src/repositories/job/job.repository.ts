@@ -223,18 +223,13 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
   ): Promise<JobEntity[] | undefined> {
     const otherDigestJobsWithSameDigestKeyValue = await this.find(this.buildLookBackDigestQuery(metadata, job));
 
-    return await this.find(this.buildGetTriggerJobsByTransactions(job, otherDigestJobsWithSameDigestKeyValue));
-  }
-
-  private buildGetTriggerJobsByTransactions(job: JobEntity, otherDigestJobsWithSameDigestKeyValue: JobEntity[]) {
-    return {
+    return await this.find({
       status: JobStatusEnum.COMPLETED,
       type: StepTypeEnum.TRIGGER,
       _organizationId: job._organizationId,
       transactionId: { $in: otherDigestJobsWithSameDigestKeyValue.map((job1) => job1.transactionId) },
-    };
+    });
   }
-
   private buildLookBackDigestQuery(metadata: IDigestRegularMetadata | undefined, job: JobEntity) {
     return {
       createdAt: {

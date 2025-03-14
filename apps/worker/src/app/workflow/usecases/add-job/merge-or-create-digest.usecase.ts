@@ -39,7 +39,7 @@ export class MergeOrCreateDigest {
     const digestMeta = job.digest as IDigestBaseMetadata;
     const digestAction = command.filtered
       ? { digestResult: DigestCreationResultEnum.SKIPPED }
-      : await this.shouldDelayDigestOrMergeWithRetry(job, digestMeta);
+      : await this.computeDigestLogicBasedOnExistingDigestState(job, digestMeta);
 
     switch (digestAction.digestResult) {
       case DigestCreationResultEnum.MERGED: {
@@ -139,17 +139,18 @@ export class MergeOrCreateDigest {
     maxRetries: 3,
     delay: 500,
   })
-  private async shouldDelayDigestOrMergeWithRetry(
+  private async computeDigestLogicBasedOnExistingDigestState(
     job: JobEntity,
     digestMeta?: IDigestBaseMetadata
   ): Promise<IDelayOrDigestJobResult> {
     if (this.isBackOffDigestType(job, digestMeta)) {
-      const digestResult = await this.backoffLogic(job, digestMeta);
-      if (digestResult) {
-        return digestResult;
-      }
+      return await this.backoffLogic(job, digestMeta);
     }
 
+    return await this.isMasterDigestOrShouldMergeToExisting(job, digestMeta);
+  }
+
+  private async isMasterDigestOrShouldMergeToExisting(job: JobEntity, digestMeta: IDigestBaseMetadata | undefined) {
     const delayedDigestJob = await this.jobRepository.getExistingDelayedJobWithTheSameDigestValue(job, digestMeta);
     if (!delayedDigestJob) {
       await this.jobRepository.markJobAsDigestMaster(job);
@@ -196,7 +197,7 @@ export class MergeOrCreateDigest {
         digestResult: DigestCreationResultEnum.SKIPPED,
       };
     }
-    const isMyJobBefore = this.isDateBefore(job, earliestOtherJobDate);
+    const isMyJobBefore = isBefore(job.createAt, otherJobsWithSameDigest.createdAt);
 
     if (isMyJobBefore) {
       return {
@@ -204,12 +205,7 @@ export class MergeOrCreateDigest {
       };
     }
 
-    return undefined;
-  }
-  private isDateBefore(myJob: JobEntity, otherEarlierJob: JobEntity): boolean {
-    const difference = new Date(myJob.createdAt).getTime() - new Date(otherEarlierJob.createdAt).getTime();
-
-    return difference < 0;
+    return await this.isMasterDigestOrShouldMergeToExisting(job, digestMeta);
   }
 
   private async digestMergedExecutionDetails(job: JobEntity): Promise<void> {

@@ -409,7 +409,7 @@ jobSchema.index(
     type: 1,
   },
   {
-    name: 'no two master jobs for same digest key and value for the same workflow and subscriber',
+    name: 'Guard from having two master jobs for same digest key, digest value, workflow and subscriber',
     unique: true,
     partialFilterExpression: {
       status: 'delayed',
