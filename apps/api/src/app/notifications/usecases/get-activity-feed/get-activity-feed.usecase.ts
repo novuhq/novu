@@ -12,8 +12,6 @@ import { ActivitiesResponseDto, ActivityNotificationResponseDto } from '../../dt
 import { GetActivityFeedCommand } from './get-activity-feed.command';
 import { mapFeedItemToDto } from './map-feed-item-to.dto';
 
-const DEFAULT_AFTER_DATE = new Date(Date.now() - 24 * 60 * 60 * 1000); // 24 hours ago
-
 @Injectable()
 export class GetActivityFeed {
   constructor(
@@ -78,8 +76,8 @@ export class GetActivityFeed {
 
     const earliestAllowedDate = new Date(Date.now() - maxRetentionMs);
 
-    // If no after date is provided, default to 24 hours ago
-    const effectiveAfterDate = after ? new Date(after) : DEFAULT_AFTER_DATE;
+    // If no after date is provided, default to the earliest allowed date
+    const effectiveAfterDate = after ? new Date(after) : earliestAllowedDate;
     const effectiveBeforeDate = before ? new Date(before) : new Date();
 
     this.validateDateRange(earliestAllowedDate, effectiveAfterDate, effectiveBeforeDate);
