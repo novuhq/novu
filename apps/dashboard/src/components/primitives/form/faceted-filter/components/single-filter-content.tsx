@@ -82,7 +82,7 @@ export function SingleFilterContent({
                   {option.label}
                 </Label>
               </div>
-              {option.icon}
+              {option.icon && <option.icon />}
             </div>
           );
         })}

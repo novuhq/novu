@@ -24,6 +24,24 @@ export type ActivityFilters = {
   className?: string;
 };
 
+const UpgradeCtaIcon: React.ComponentType<{ className?: string }> = () => {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Link
+          to={ROUTES.SETTINGS_BILLING + '?utm_source=activity-feed-retention'}
+          className="block transition-all duration-200 hover:scale-110"
+        >
+          <LockUpgrade className="h-4 w-4 text-neutral-300 hover:text-neutral-400" />
+        </Link>
+      </TooltipTrigger>
+      <TooltipPortal>
+        <TooltipContent>Upgrade plan to unlock longer retention periods</TooltipContent>
+      </TooltipPortal>
+    </Tooltip>
+  );
+};
+
 export function ActivityFilters({
   onFiltersChange,
   filters,
@@ -42,22 +60,6 @@ export function ActivityFilters({
     true
   );
 
-  const upgradeCtaIcon = (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Link
-          to={ROUTES.SETTINGS_BILLING + '?utm_source=activity-feed-retention'}
-          className="block transition-all duration-200 hover:scale-110"
-        >
-          <LockUpgrade className="h-4 w-4 text-neutral-300 hover:text-neutral-400" />
-        </Link>
-      </TooltipTrigger>
-      <TooltipPortal>
-        <TooltipContent>Upgrade plan to unlock longer retention periods</TooltipContent>
-      </TooltipPortal>
-    </Tooltip>
-  );
-
   const maxActivityFeedRetentionOptions = DATE_RANGE_OPTIONS.map((option) => {
     const isLegacyFreeTier =
       subscription?.apiServiceLevel === ApiServiceLevelEnum.FREE &&
@@ -72,7 +74,7 @@ export function ActivityFilters({
       disabled: option.ms > maxRetentionMs,
       label: option.label,
       value: option.value,
-      icon: option.ms > maxRetentionMs ? upgradeCtaIcon : undefined,
+      icon: option.ms > maxRetentionMs ? UpgradeCtaIcon : undefined,
     };
   });
 

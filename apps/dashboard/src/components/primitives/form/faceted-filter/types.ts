@@ -7,7 +7,7 @@ export interface FilterOption {
   label: string;
   value: string;
   disabled?: boolean;
-  icon?: React.ReactNode;
+  icon?: ComponentType<{ className?: string }>;
 }
 
 export interface FacetedFilterProps {
