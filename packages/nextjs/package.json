@@ -11,7 +11,7 @@
   "exports": {
     ".": {
       "import": {
-        "types": "./dist/client/index.d.mts",
+        "types": "./dist/client/index.d.ts",
         "react-server": "./dist/app-router/esm/index.js",
         "default": "./dist/client/esm/index.js"
       },
@@ -23,7 +23,7 @@
     },
     "./hooks": {
       "import": {
-        "types": "./dist/hooks/index.d.mts",
+        "types": "./dist/hooks/index.d.ts",
         "default": "./dist/hooks/esm/index.js"
       },
       "require": {
@@ -33,7 +33,7 @@
     },
     "./themes": {
       "import": {
-        "types": "./dist/themes/index.d.mts",
+        "types": "./dist/themes/index.d.ts",
         "default": "./dist/themes/esm/index.js"
       },
       "require": {
@@ -60,7 +60,7 @@
     "build:watch": "tsup --watch",
     "build": "tsup && pnpm run check-exports",
     "lint": "eslint src",
-    "check-exports": "attw --pack . --profile node16 --ignore-rules unexpected-module-syntax false-esm"
+    "check-exports": "attw --pack . --profile node16 --ignore-rules unexpected-module-syntax"
   },
   "browserslist": {
     "production": [
