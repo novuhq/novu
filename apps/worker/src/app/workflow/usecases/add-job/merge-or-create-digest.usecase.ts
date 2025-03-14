@@ -19,6 +19,7 @@ import {
   InstrumentUsecase,
   RetryOnError,
 } from '@novu/application-generic';
+import { isBefore } from 'date-fns';
 import { MergeOrCreateDigestCommand } from './merge-or-create-digest.command';
 
 type MergeOrCreateDigestResultType = DigestCreationResultEnum;
@@ -197,7 +198,7 @@ export class MergeOrCreateDigest {
         digestResult: DigestCreationResultEnum.SKIPPED,
       };
     }
-    const isMyJobBefore = isBefore(job.createAt, otherJobsWithSameDigest.createdAt);
+    const isMyJobBefore = isBefore(job.createdAt, otherJobsWithSameDigest.createdAt);
 
     if (isMyJobBefore) {
       return {
