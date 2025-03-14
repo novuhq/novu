@@ -2,46 +2,36 @@ import { defineConfig, Options } from 'tsup';
 import { name, version } from './package.json';
 
 const baseConfig: Options = {
-  sourcemap: true,
+  bundle: true,
   clean: true,
-  dts: true,
   define: { PACKAGE_NAME: `"${name}"`, PACKAGE_VERSION: `"${version}"` },
+  dts: true,
+  external: ['react', 'react-dom'],
+  format: ['esm', 'cjs'],
+  minify: false,
+  sourcemap: true,
+  target: 'esnext',
 };
 
 export default defineConfig([
   {
     ...baseConfig,
-    entry: ['src/index.ts'], // Entry point for client-side code
-    format: ['esm', 'cjs'],
-    target: 'esnext',
-    platform: 'browser',
-    outDir: 'dist/client', // Output directory for client-side build
-  },
-  {
-    ...baseConfig,
-    entry: ['src/server.ts'], // Entry point for server-side code
-    format: ['esm', 'cjs'],
-    target: 'node14', // Target environment for server-side build
-    platform: 'node',
-    outDir: 'dist/server', // Output directory for server-side build
-    splitting: false,
+    entry: ['src/index.ts'],
+    outDir: 'dist/client/components',
   },
   {
     ...baseConfig,
     entry: ['src/hooks/index.ts'],
-    format: ['esm', 'cjs'],
-    target: 'esnext',
-    platform: 'neutral',
-    outDir: 'dist/hooks',
-    splitting: false,
+    outDir: 'dist/client/hooks',
   },
   {
     ...baseConfig,
     entry: ['src/themes/index.ts'],
-    format: ['esm', 'cjs'],
-    target: 'esnext',
-    platform: 'neutral',
-    outDir: 'dist/themes',
-    splitting: false,
+    outDir: 'dist/client/themes',
+  },
+  {
+    ...baseConfig,
+    entry: ['src/server/index.ts'],
+    outDir: 'dist/server',
   },
 ]);

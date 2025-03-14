@@ -2,27 +2,29 @@
   "name": "@novu/nextjs",
   "version": "2.6.6",
   "repository": "https://github.com/novuhq/novu",
-  "description": "Novu's Next.js SDK for building custom inbox notification experiences",
-  "author": "",
+  "description": "Novu <Inbox /> Next.js SDK",
+  "author": "Novu",
   "license": "ISC",
-  "main": "dist/client/index.js",
-  "module": "dist/client/index.mjs",
+  "main": "dist/server/server.js",
+  "module": "dist/client/esm/index.js",
   "types": "dist/client/index.d.ts",
   "exports": {
     ".": {
       "import": {
-        "types": "./dist/client/index.d.mts",
-        "default": "./dist/client/index.mjs"
+        "types": "./dist/client/index.d.ts",
+        "react-server": "./dist/app-router/esm/index.js",
+        "default": "./dist/client/esm/index.js"
       },
       "require": {
         "types": "./dist/client/index.d.ts",
+        "react-server": "./dist/app-router/index.js",
         "default": "./dist/client/index.js"
       }
     },
     "./hooks": {
       "import": {
-        "types": "./dist/hooks/index.d.mts",
-        "default": "./dist/hooks/index.mjs"
+        "types": "./dist/hooks/index.d.ts",
+        "default": "./dist/hooks/esm/index.js"
       },
       "require": {
         "types": "./dist/hooks/index.d.ts",
@@ -31,8 +33,8 @@
     },
     "./themes": {
       "import": {
-        "types": "./dist/themes/index.d.mts",
-        "default": "./dist/themes/index.mjs"
+        "types": "./dist/themes/index.d.ts",
+        "default": "./dist/themes/esm/index.js"
       },
       "require": {
         "types": "./dist/themes/index.d.ts",
@@ -43,6 +45,7 @@
   "files": [
     "dist",
     "dist/client/**/*",
+    "dist/server/**/*",
     "dist/hooks/**/*",
     "dist/themes/**/*",
     "hooks/**/*",
@@ -57,7 +60,7 @@
     "build:watch": "tsup --watch",
     "build": "tsup && pnpm run check-exports",
     "lint": "eslint src",
-    "check-exports": "attw --pack ."
+    "check-exports": "attw --pack . --profile node16 --ignore-rules unexpected-module-syntax"
   },
   "browserslist": {
     "production": [
@@ -72,7 +75,7 @@
     ]
   },
   "devDependencies": {
-    "@arethetypeswrong/cli": "^0.16.4",
+    "@arethetypeswrong/cli": "^0.17.4",
     "@types/node": "^20.14.12",
     "@types/react": "*",
     "@types/react-dom": "*",
@@ -80,9 +83,9 @@
     "typescript": "5.6.2"
   },
   "peerDependencies": {
-    "react": ">=17",
-    "react-dom": ">=17",
-    "next": ">=13"
+    "next": ">=13.5.2",
+    "react": "^18.0.0 || ^19.0.0",
+    "react-dom": "^18.0.0 || ^19.0.0"
   },
   "peerDependenciesMeta": {
     "react-dom": {
