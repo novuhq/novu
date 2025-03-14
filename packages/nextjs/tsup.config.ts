@@ -11,13 +11,6 @@ const baseConfig: Options = {
   clean: true,
   dts: false,
   define: { PACKAGE_NAME: `"${name}"`, PACKAGE_VERSION: `"${version}"` },
-  dts: true,
-  external: ['react', 'react-dom'],
-  format: ['esm', 'cjs'],
-  minify: false,
-  sourcemap: true,
-  target: 'esnext',
-  legacyOutput: true,
 };
 
 export default defineConfig([
