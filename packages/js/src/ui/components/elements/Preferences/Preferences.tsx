@@ -62,7 +62,7 @@ export const Preferences = () => {
         when={allPreferences().workflowPreferences?.length}
         fallback={<PreferencesListSkeleton loading={loading()} />}
       >
-        {/* We iterate over the workflow preferences ids to avoid loosing the preferences row state, otherwise the row will be mounted */}
+        {/* We iterate over the workflow preferences ids to avoid losing the preferences row state, otherwise the row will be mounted */}
         <For each={allPreferences().workflowPreferencesIds}>
           {(_, index) => {
             const preference = () => allPreferences().workflowPreferences?.[index()] as Preference;
