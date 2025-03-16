@@ -19,7 +19,10 @@ export function WorkflowCard({
   onClick,
 }: WorkflowCardProps) {
   return (
-    <Card className="border-stroke-soft min-h-[120px] w-full border shadow-none hover:cursor-pointer" onClick={onClick}>
+    <Card
+      className="border-stroke-soft min-h-[120px] w-full min-w-[250px] border shadow-none hover:cursor-pointer"
+      onClick={onClick}
+    >
       <CardContent className="p-3">
         <div className="overflow-hidden rounded-lg border border-neutral-100">
           <div className="bg-bg-weak relative h-[100px] bg-[url(/images/dots.svg)] bg-cover">
