@@ -1,16 +1,7 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 
-import {
-  ChangeRepository,
-  MessageTemplateEntity,
-  MessageTemplateRepository,
-  MessageRepository,
-} from '@novu/dal';
-import { ChangeEntityTypeEnum, isBridgeWorkflow } from '@novu/shared';
+import { ChangeRepository, MessageTemplateEntity, MessageTemplateRepository, MessageRepository } from '@novu/dal';
+import { ChangeEntityTypeEnum, isBridgeWorkflow, StepTypeEnum } from '@novu/shared';
 
 import { UpdateMessageTemplateCommand } from './update-message-template.command';
 import { CreateChange, CreateChangeCommand } from '../../create-change';
@@ -25,36 +16,29 @@ export class UpdateMessageTemplate {
     private messageRepository: MessageRepository,
     private changeRepository: ChangeRepository,
     private createChange: CreateChange,
-    private updateChange: UpdateChange,
+    private updateChange: UpdateChange
   ) {}
 
-  async execute(
-    command: UpdateMessageTemplateCommand,
-  ): Promise<MessageTemplateEntity> {
+  async execute(command: UpdateMessageTemplateCommand): Promise<MessageTemplateEntity> {
     const existingTemplate = await this.messageTemplateRepository.findOne({
       _id: command.templateId,
       _environmentId: command.environmentId,
     });
     if (!existingTemplate) {
-      throw new NotFoundException(
-        `Message template with id ${command.templateId} not found`,
-      );
+      throw new NotFoundException(`Message template with id ${command.templateId} not found`);
     }
 
     const updatePayload: Partial<MessageTemplateEntity> = {};
 
-    const unsetPayload: Partial<Record<keyof MessageTemplateEntity, string>> =
-      {};
+    const unsetPayload: Partial<Record<keyof MessageTemplateEntity, string>> = {};
 
     if (command.name) {
       updatePayload.name = command.name;
     }
 
     if (command.content !== null || command.content !== undefined) {
-      updatePayload.content =
-        command.content && command.contentType === 'editor'
-          ? sanitizeMessageContent(command.content)
-          : command.content;
+      const shouldSanitize = command.contentType === 'editor' && command.type !== StepTypeEnum.CHAT;
+      updatePayload.content = shouldSanitize ? sanitizeMessageContent(command.content) : command.content;
     }
 
     if (command.variables) {
@@ -131,23 +115,20 @@ export class UpdateMessageTemplate {
       {
         $set: updatePayload,
         $unset: unsetPayload,
-      },
+      }
     );
 
     const item = await this.messageTemplateRepository.findOne({
       _id: command.templateId,
       _organizationId: command.organizationId,
     });
-    if (!item)
-      throw new NotFoundException(
-        `Message template with id ${command.templateId} is not found`,
-      );
+    if (!item) throw new NotFoundException(`Message template with id ${command.templateId} is not found`);
 
     if (command.feedId || (!command.feedId && existingTemplate._feedId)) {
       await this.messageRepository.updateFeedByMessageTemplateId(
         command.environmentId,
         command.templateId,
-        command.feedId,
+        command.feedId
       );
     }
 
@@ -155,7 +136,7 @@ export class UpdateMessageTemplate {
       const changeId = await this.changeRepository.getChangeId(
         command.environmentId,
         ChangeEntityTypeEnum.MESSAGE_TEMPLATE,
-        item._id,
+        item._id
       );
       if (!isBridgeWorkflow(command.workflowType)) {
         await this.createChange.execute(
@@ -167,7 +148,7 @@ export class UpdateMessageTemplate {
             type: ChangeEntityTypeEnum.MESSAGE_TEMPLATE,
             parentChangeId: command.parentChangeId,
             changeId,
-          }),
+          })
         );
       }
     }
@@ -181,7 +162,7 @@ export class UpdateMessageTemplate {
           environmentId: command.environmentId,
           organizationId: command.organizationId,
           userId: command.userId,
-        }),
+        })
       );
     }
 
@@ -194,7 +175,7 @@ export class UpdateMessageTemplate {
           environmentId: command.environmentId,
           organizationId: command.organizationId,
           userId: command.userId,
-        }),
+        })
       );
     }
 

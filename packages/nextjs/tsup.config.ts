@@ -2,37 +2,40 @@ import { defineConfig, Options } from 'tsup';
 import { name, version } from './package.json';
 
 const baseConfig: Options = {
-  sourcemap: true,
+  bundle: true,
   clean: true,
-  dts: true,
   define: { PACKAGE_NAME: `"${name}"`, PACKAGE_VERSION: `"${version}"` },
+  dts: true,
+  external: ['react', 'react-dom'],
+  format: ['esm', 'cjs'],
+  minify: false,
+  sourcemap: true,
+  target: 'esnext',
+  legacyOutput: true,
 };
 
 export default defineConfig([
   {
     ...baseConfig,
-    entry: ['src/index.ts'], // Entry point for client-side code
-    format: ['esm', 'cjs'],
-    target: 'esnext',
-    platform: 'browser',
-    outDir: 'dist/client', // Output directory for client-side build
+
+    entry: ['src/components/index.ts'],
+    outDir: 'dist/client',
+  },
+  {
+    ...baseConfig,
+    // Preserve original file structure along with the "use client" directives
+    bundle: false,
+    entry: ['./src/app-router/index.ts', './src/app-router/Inbox.tsx'],
+    outDir: 'dist/app-router',
   },
   {
     ...baseConfig,
     entry: ['src/hooks/index.ts'],
-    format: ['esm', 'cjs'],
-    target: 'esnext',
-    platform: 'neutral',
     outDir: 'dist/hooks',
-    splitting: false,
   },
   {
     ...baseConfig,
     entry: ['src/themes/index.ts'],
-    format: ['esm', 'cjs'],
-    target: 'esnext',
-    platform: 'neutral',
     outDir: 'dist/themes',
-    splitting: false,
   },
 ]);

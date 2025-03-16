@@ -76,47 +76,38 @@ export const InAppActionDropdown = ({ onMenuItemClick }: { onMenuItemClick?: () 
             )}
             {primaryAction && (
               <ConfigureActionPopover title="Primary action" asChild fields={{ actionKey: primaryActionKey }}>
-                <>
-                  {isInboxV3Enabled ? (
-                    <button
-                      className={inboxButtonVariants({
-                        variant: 'default',
-                        className: 'z-10 h-6 min-w-16 max-w-48 truncate',
-                      })}
-                    >
-                      {primaryAction.label || 'Primary action'}
-                    </button>
-                  ) : (
-                    <Button variant="primary" size="2xs" className="z-10 h-6 min-w-16 max-w-48 truncate">
-                      {primaryAction.label || 'Primary action'}
-                    </Button>
-                  )}
-                </>
+                {isInboxV3Enabled ? (
+                  <button
+                    className={inboxButtonVariants({
+                      variant: 'default',
+                      className: 'z-10 h-6 min-w-16 max-w-48 truncate',
+                    })}
+                  >
+                    {primaryAction.label || 'Primary action'}
+                  </button>
+                ) : (
+                  <Button variant="primary" size="2xs" className="z-10 h-6 min-w-16 max-w-48 truncate">
+                    {primaryAction.label || 'Primary action'}
+                  </Button>
+                )}
               </ConfigureActionPopover>
             )}
             {secondaryAction && (
               <ConfigureActionPopover title="Secondary action" asChild fields={{ actionKey: secondaryActionKey }}>
-                <>
-                  {isInboxV3Enabled ? (
-                    <button
-                      className={inboxButtonVariants({
-                        variant: 'secondary',
-                        className: 'z-10 h-6 min-w-16 max-w-48 truncate',
-                      })}
-                    >
-                      {secondaryAction.label || 'Secondary action'}
-                    </button>
-                  ) : (
-                    <Button
-                      variant="secondary"
-                      mode="outline"
-                      size="2xs"
-                      className="z-10 h-6 min-w-16 max-w-48 truncate"
-                    >
-                      {secondaryAction.label || 'Secondary action'}
-                    </Button>
-                  )}
-                </>
+                {isInboxV3Enabled ? (
+                  <button
+                    className={inboxButtonVariants({
+                      variant: 'secondary',
+                      className: 'z-10 h-6 min-w-16 max-w-48 truncate',
+                    })}
+                  >
+                    {secondaryAction.label || 'Secondary action'}
+                  </button>
+                ) : (
+                  <Button variant="secondary" mode="outline" size="2xs" className="z-10 h-6 min-w-16 max-w-48 truncate">
+                    {secondaryAction.label || 'Secondary action'}
+                  </Button>
+                )}
               </ConfigureActionPopover>
             )}
             <DropdownMenuTrigger className="absolute size-full" tabIndex={-1} />
@@ -180,22 +171,20 @@ export const InAppActionDropdown = ({ onMenuItemClick }: { onMenuItemClick?: () 
               onMenuItemClick?.();
             }}
           >
-            <>
-              {isInboxV3Enabled ? (
-                <button
-                  className={inboxButtonVariants({
-                    variant: 'default',
-                    className: 'z-10 h-6 min-w-16 max-w-48 truncate',
-                  })}
-                >
-                  Primary action
-                </button>
-              ) : (
-                <Button variant="primary" size="2xs" className="pointer-events-none h-6">
-                  Primary action
-                </Button>
-              )}
-            </>
+            {isInboxV3Enabled ? (
+              <button
+                className={inboxButtonVariants({
+                  variant: 'default',
+                  className: 'z-10 h-6 min-w-16 max-w-48 truncate',
+                })}
+              >
+                Primary action
+              </button>
+            ) : (
+              <Button variant="primary" size="2xs" className="pointer-events-none h-6">
+                Primary action
+              </Button>
+            )}
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => {
@@ -215,35 +204,31 @@ export const InAppActionDropdown = ({ onMenuItemClick }: { onMenuItemClick?: () 
               onMenuItemClick?.();
             }}
           >
-            <>
-              {isInboxV3Enabled ? (
-                <>
-                  <button
-                    className={inboxButtonVariants({
-                      variant: 'default',
-                      className: 'z-10 h-6 min-w-16 max-w-48 truncate',
-                    })}
-                  >
-                    Primary action
-                  </button>
-                  <button
-                    className={inboxButtonVariants({ variant: 'secondary', className: 'pointer-events-none h-6' })}
-                  >
-                    Secondary action
-                  </button>
-                </>
-              ) : (
-                <>
-                  <Button variant="primary" size="2xs" className="pointer-events-none h-6">
-                    Primary action
-                  </Button>
+            {isInboxV3Enabled ? (
+              <>
+                <button
+                  className={inboxButtonVariants({
+                    variant: 'default',
+                    className: 'z-10 h-6 min-w-16 max-w-48 truncate',
+                  })}
+                >
+                  Primary action
+                </button>
+                <button className={inboxButtonVariants({ variant: 'secondary', className: 'pointer-events-none h-6' })}>
+                  Secondary action
+                </button>
+              </>
+            ) : (
+              <>
+                <Button variant="primary" size="2xs" className="pointer-events-none h-6">
+                  Primary action
+                </Button>
 
-                  <Button variant="secondary" mode="outline" size="2xs" className="pointer-events-none h-6">
-                    Secondary action
-                  </Button>
-                </>
-              )}
-            </>
+                <Button variant="secondary" mode="outline" size="2xs" className="pointer-events-none h-6">
+                  Secondary action
+                </Button>
+              </>
+            )}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

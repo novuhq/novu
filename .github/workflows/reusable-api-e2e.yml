@@ -52,7 +52,7 @@ jobs:
         shell: bash
         env:
           NOVU_ENTERPRISE: ${{ inputs.ee }}
-        run: cd apps/worker && pnpm start:test &
+        run: cd apps/worker && pnpm start:test 2>&1 &
 
       - name: Wait on worker
         shell: bash

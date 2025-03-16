@@ -65,7 +65,6 @@ export class ParseEventRequest {
 
   @InstrumentUsecase()
   public async execute(command: ParseEventRequestCommand) {
-    this.logger.info(command, 'TriggerEventUseCase - START');
     const transactionId = command.transactionId || uuidv4();
 
     const { environment, statelessWorkflowAllowed } = await this.isStatelessWorkflowAllowed(

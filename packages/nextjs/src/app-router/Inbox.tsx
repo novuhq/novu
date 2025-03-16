@@ -1,7 +1,7 @@
 'use client';
 
-import { InboxProps, Inbox as RInbox } from '@novu/react';
-import { useRouter } from 'next/router';
+import { Inbox as RInbox, type InboxProps } from '@novu/react';
+import { useRouter } from 'next/navigation';
 
 export function Inbox(props: InboxProps) {
   const router = useRouter();
