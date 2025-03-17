@@ -1,5 +1,5 @@
 import { forwardRef, useMemo, useState } from 'react';
-import { RiEdit2Line, RiImageEditFill } from 'react-icons/ri';
+import { RiImageEditFill } from 'react-icons/ri';
 
 import { Avatar, AvatarImage } from '@/components/primitives/avatar';
 import { Button } from '@/components/primitives/button';
