@@ -1,3 +1,36 @@
+# 3.0.0 (2025-03-17)
+
+### 🚀 Features
+
+- **js,react:** inbox subject, body render props ([#7886](https://github.com/novuhq/novu/pull/7886))
+- **js:** better control over socket connection ([#7865](https://github.com/novuhq/novu/pull/7865))
+- **js:** Inbox retheme improvements ([#7867](https://github.com/novuhq/novu/pull/7867))
+- **js:** Inbox retheme ([#7759](https://github.com/novuhq/novu/pull/7759))
+
+### 🩹 Fixes
+
+- **headless:** update Preferences.tsx ([#7928](https://github.com/novuhq/novu/pull/7928))
+- **js:** Stop appending / to all fetch requests ([#7922](https://github.com/novuhq/novu/pull/7922))
+- **js:** inbox calculation for the cta unread count when multiple tabs ([#7907](https://github.com/novuhq/novu/pull/7907))
+- **js:** Fix count context filter ([#7905](https://github.com/novuhq/novu/pull/7905))
+- **js:** Fix body color of default notification ([#7904](https://github.com/novuhq/novu/pull/7904))
+- **js:** preferences collapsible state ([#7902](https://github.com/novuhq/novu/pull/7902))
+- **js:** Fix hidden global preferences ([#7901](https://github.com/novuhq/novu/pull/7901))
+- **js:** Generate line heights and adjust actions position ([#7895](https://github.com/novuhq/novu/pull/7895))
+- **js:** fix the bell unread dot ([#7887](https://github.com/novuhq/novu/pull/7887))
+- **js:** Removing tailwind base styles as they are already under .novu ([#7884](https://github.com/novuhq/novu/pull/7884))
+- **js:** Fix infinite scroll behaviour ([#7888](https://github.com/novuhq/novu/pull/7888))
+- **js:** Align pref header, hide preferences with 0 channels ([#7878](https://github.com/novuhq/novu/pull/7878))
+- **js:** Fix deprecated JSDoc annotation ([#7873](https://github.com/novuhq/novu/pull/7873))
+
+### ❤️ Thank You
+
+- GalTidhar @tatarco
+- George Desipris @desiprisg
+- Ikko Eltociear Ashimine
+- Paweł Tymczuk @LetItRock
+- Sokratis Vidros @SokratisVidros
+
 ## 2.6.6 (2025-02-25)
 
 ### 🚀 Features
@@ -14,7 +47,6 @@
 
 - GalTidhar @tatarco
 - George Djabarov @djabarovgeorge
-
 
 ## 2.6.5 (2025-02-07)
 
@@ -62,7 +94,6 @@
 - Paweł Tymczuk @LetItRock
 - Sokratis Vidros @SokratisVidros
 
-
 ## 2.6.4 (2024-12-24)
 
 ### 🩹 Fixes
@@ -80,7 +111,6 @@
 - Pasha
 - Pawan Jain
 - Sokratis Vidros @SokratisVidros
-
 
 ## 2.6.3 (2024-11-26)
 
@@ -102,7 +132,7 @@
 
 - Updated @novu/client to 2.0.3
 
-### ❤️  Thank You
+### ❤️ Thank You
 
 - Biswajeet Das @BiswaViraj
 - George Desipris @desiprisg
@@ -220,7 +250,7 @@
 - **js:** Export NovuUI from ui directory only ([#5998](https://github.com/novuhq/novu/pull/5998))
 - **js:** Use key prefix instead of id for alpha shades ([#5890](https://github.com/novuhq/novu/pull/5890))
 
-### ❤️  Thank You
+### ❤️ Thank You
 
 - Adam Chmara
 - Biswajeet Das @BiswaViraj

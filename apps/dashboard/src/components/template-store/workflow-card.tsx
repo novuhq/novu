@@ -20,7 +20,7 @@ export function WorkflowCard({
 }: WorkflowCardProps) {
   return (
     <Card
-      className="border-stroke-soft min-h-[120px] w-[250px] border shadow-none hover:cursor-pointer"
+      className="border-stroke-soft min-h-[120px] w-full min-w-[250px] border shadow-none hover:cursor-pointer"
       onClick={onClick}
     >
       <CardContent className="p-3">
