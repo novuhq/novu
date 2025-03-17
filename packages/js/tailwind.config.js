@@ -77,7 +77,7 @@ module.exports = {
       },
       backgroundImage: {
         'dev-stripes-gradient':
-          'repeating-linear-gradient(135deg, rgba(255,132,71,0.07) 25%, rgba(255,132,71,0.07) 50%, rgba(255,132,71,0.11) 50%, rgba(255,132,71,0.11) 75%)',
+          'repeating-linear-gradient(135deg, hsl(var(--stripes-color),0.07) 25%, hsl(var(--stripes-color),0.07) 50%, hsl(var(--stripes-color),0.15) 50%, hsl(var(--stripes-color),0.15) 75%)',
       },
       animation: {
         stripes: 'stripes 1s linear infinite',
