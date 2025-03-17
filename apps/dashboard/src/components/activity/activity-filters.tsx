@@ -36,7 +36,7 @@ const UpgradeCtaIcon: React.ComponentType<{ className?: string }> = () => {
         </Link>
       </TooltipTrigger>
       <TooltipPortal>
-        <TooltipContent>Upgrade plan to unlock longer retention periods</TooltipContent>
+        <TooltipContent>Upgrade your plan to unlock extended retention periods</TooltipContent>
       </TooltipPortal>
     </Tooltip>
   );
