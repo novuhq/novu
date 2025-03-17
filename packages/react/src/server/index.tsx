@@ -16,9 +16,7 @@ export * from '../utils/types';
  * This will be replaced with actual components
  * when we implement the SSR components in @novu/js/ui
  */
-export function Inbox(props: InboxProps) {
-  return <>{props.children}</>;
-}
+export function Inbox(props: InboxProps) {}
 
 export function InboxContent() {}
 
@@ -28,9 +26,7 @@ export function Preferences() {}
 
 export function Bell() {}
 
-export function NovuProvider(props: NovuProviderProps) {
-  return <>{props.children}</>;
-}
+export function NovuProvider(props: NovuProviderProps) {}
 
 export function useNovu() {
   return null;
