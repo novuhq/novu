@@ -122,7 +122,7 @@ export class Session {
       token,
       totalUnreadCount,
       removeNovuBranding,
-      isDevelopmentMode: environment.name !== 'Production',
+      isDevelopmentMode: environment.name.toLowerCase() !== 'production',
     };
   }
 }
