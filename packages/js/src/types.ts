@@ -60,6 +60,7 @@ export type Session = {
   token: string;
   totalUnreadCount: number;
   removeNovuBranding: boolean;
+  isDevelopmentMode: boolean;
 };
 
 export type MessageButton = {
