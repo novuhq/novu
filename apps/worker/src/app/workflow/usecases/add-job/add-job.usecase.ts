@@ -10,6 +10,7 @@ import {
   DigestTypeEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
+  IDigestBaseMetadata,
   IDigestRegularMetadata,
   IDigestTimedMetadata,
   IWorkflowStepMetadata,
@@ -20,9 +21,9 @@ import {
   ComputeJobWaitDurationService,
   ConditionsFilter,
   ConditionsFilterCommand,
-  DetailEnum,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
+  DetailEnum,
   getDigestType,
   IFilterVariables,
   InstrumentUsecase,
@@ -270,9 +271,10 @@ export class AddJob {
 
     return response;
   }
-
   private async updateMetadata(response: ExecuteOutput, command: AddJobCommand) {
     let metadata = {} as IWorkflowStepMetadata;
+    const digest = command.job.digest as IDigestBaseMetadata;
+
     const outputs = response.outputs as DigestOutput;
     // digest value is pre-computed by framework and passed as digestKey
     const outputDigestValue = outputs?.digestKey;
@@ -281,10 +283,10 @@ export class AddJob {
     if (isTimedDigestOutput(outputs)) {
       metadata = {
         type: DigestTypeEnum.TIMED,
-        digestValue: outputDigestValue,
+        digestValue: outputDigestValue || 'No-Value-Provided',
+        digestKey: digest.digestKey || 'No-Key-Provided',
         timed: { cronExpression: outputs?.cron },
       } as IDigestTimedMetadata;
-
       await this.jobRepository.updateOne(
         {
           _id: command.job._id,
@@ -294,6 +296,7 @@ export class AddJob {
           $set: {
             'digest.type': metadata.type,
             'digest.digestValue': metadata.digestValue,
+            'digest.digestKey': metadata.digestKey,
             'digest.amount': metadata.amount,
             'digest.unit': metadata.unit,
             'digest.timed.cronExpression': metadata.timed?.cronExpression,
@@ -306,7 +309,8 @@ export class AddJob {
       metadata = {
         type: digestType,
         amount: outputs?.amount,
-        digestValue: outputDigestValue,
+        digestValue: outputDigestValue || 'No-Value-Provided',
+        digestKey: digest.digestKey || 'No-Key-Provided',
         unit: outputs.unit ? castUnitToDigestUnitEnum(outputs?.unit) : undefined,
         backoff: digestType === DigestTypeEnum.BACKOFF,
         backoffAmount: outputs.lookBackWindow?.amount,
@@ -322,6 +326,7 @@ export class AddJob {
           $set: {
             'digest.type': metadata.type,
             'digest.digestValue': metadata.digestValue,
+            'digest.digestKey': metadata.digestKey,
             'digest.amount': metadata.amount,
             'digest.unit': metadata.unit,
             'digest.backoff': metadata.backoff,
@@ -336,7 +341,8 @@ export class AddJob {
       metadata = {
         type: digestType,
         amount: outputs?.amount,
-        digestValue: outputDigestValue,
+        digestKey: digest.digestKey || 'No-Key-Provided',
+        digestValue: outputDigestValue || 'No-Value-Provided',
         unit: outputs.unit ? castUnitToDigestUnitEnum(outputs?.unit) : undefined,
       } as IDigestRegularMetadata;
 
@@ -348,6 +354,7 @@ export class AddJob {
         {
           $set: {
             'digest.type': metadata.type,
+            'digest.digestKey': metadata.digestKey,
             'digest.digestValue': metadata.digestValue,
             'digest.amount': metadata.amount,
             'digest.unit': metadata.unit,

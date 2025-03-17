@@ -6,7 +6,6 @@ import { useRenderer } from '../context/RendererContext';
 import { InternalNovuProvider, useNovu, useUnsafeNovu } from '../hooks/NovuProvider';
 import { NovuUI } from './NovuUI';
 import { withRenderer } from './Renderer';
-import { useDataRef } from '../hooks/internal/useDataRef';
 
 export type InboxProps = DefaultProps | WithChildrenProps;
 

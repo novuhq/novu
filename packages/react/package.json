@@ -1,57 +1,78 @@
 {
   "name": "@novu/react",
-  "version": "2.6.6",
-  "repository": "https://github.com/novuhq/novu",
-  "description": "Novu's React SDK for building custom inbox notification experiences",
-  "author": "",
-  "license": "ISC",
-  "main": "dist/server/server.js",
-  "module": "dist/client/index.mjs",
-  "types": "dist/client/index.d.ts",
-  "browser": {
-    "./dist/server/server.js": "./dist/client/index.js",
-    "./dist/server/server.mjs": "./dist/client/index.mjs"
+  "version": "3.0.0-canary.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/novuhq/novu",
+    "directory": "packages/react"
   },
+  "homepage": "https://novu.co",
+  "description": "Novu <Inbox /> React SDK",
+  "author": "Novu",
+  "license": "ISC",
+  "type": "module",
+  "main": "./dist/cjs/server/index.cjs",
+  "browser": "./dist/esm/index.js",
+  "types": "./dist/esm/index.d.ts",
   "exports": {
     ".": {
+      "browser": {
+        "import": {
+          "types": "./dist/esm/index.d.ts",
+          "default": "./dist/esm/index.js"
+        },
+        "require": {
+          "types": "./dist/cjs/index.d.cts",
+          "default": "./dist/cjs/index.cjs"
+        }
+      },
       "import": {
-        "types": "./dist/client/index.d.mts",
-        "default": "./dist/server/server.mjs"
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/server/index.js"
       },
       "require": {
-        "types": "./dist/server/server.d.ts",
-        "default": "./dist/server/server.js"
+        "types": "./dist/cjs/index.d.cts",
+        "default": "./dist/cjs/server/index.cjs"
       }
     },
     "./hooks": {
       "import": {
-        "types": "./dist/hooks/index.d.mts",
-        "default": "./dist/hooks/index.mjs"
+        "types": "./dist/esm/hooks/index.d.ts",
+        "default": "./dist/esm/hooks/index.js"
       },
       "require": {
-        "types": "./dist/hooks/index.d.ts",
-        "default": "./dist/hooks/index.js"
+        "types": "./dist/cjs/hooks/index.d.cts",
+        "default": "./dist/cjs/hooks/index.cjs"
       }
     },
     "./themes": {
       "import": {
-        "types": "./dist/themes/index.d.mts",
-        "default": "./dist/themes/index.mjs"
+        "types": "./dist/esm/themes/index.d.ts",
+        "default": "./dist/esm/themes/index.js"
       },
       "require": {
-        "types": "./dist/themes/index.d.ts",
-        "default": "./dist/themes/index.js"
+        "types": "./dist/cjs/themes/index.d.cts",
+        "default": "./dist/cjs/themes/index.cjs"
+      }
+    },
+    "./server": {
+      "import": {
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/server/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/index.d.cts",
+        "default": "./dist/cjs/server/index.cjs"
       }
     }
   },
   "files": [
     "dist",
-    "dist/client/**/*",
-    "dist/server/**/*",
-    "dist/hooks/**/*",
-    "dist/themes/**/*",
+    "dist/esm/**/*",
+    "dist/cjs/**/*",
     "hooks/**/*",
-    "themes/**/*"
+    "themes/**/*",
+    "server/**/*"
   ],
   "sideEffects": false,
   "private": false,
@@ -77,16 +98,17 @@
     ]
   },
   "devDependencies": {
-    "@arethetypeswrong/cli": "^0.16.4",
+    "@arethetypeswrong/cli": "^0.17.4",
     "@types/node": "^20.14.12",
     "@types/react": "*",
     "@types/react-dom": "*",
+    "esbuild-plugin-file-path-extensions": "^2.1.4",
     "tsup": "^8.2.1",
     "typescript": "5.6.2"
   },
   "peerDependencies": {
-    "react": ">=17",
-    "react-dom": ">=17"
+    "react": "^18.0.0 || ^19.0.0 || ^19.0.0-0",
+    "react-dom": "^18.0.0 || ^19.0.0 || ^19.0.0-0"
   },
   "peerDependenciesMeta": {
     "react-dom": {

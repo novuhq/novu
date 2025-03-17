@@ -1,11 +1,10 @@
 'use client';
 
-import React from 'react';
-import { InboxProps, Inbox as RInbox } from '@novu/react';
+import { Inbox as RInbox, type InboxProps } from '@novu/react';
 import { useRouter } from 'next/navigation';
 
-export const Inbox = React.memo((props: InboxProps) => {
+export function Inbox(props: InboxProps) {
   const router = useRouter();
 
   return <RInbox routerPush={router.push} {...props} />;
-});
+}
