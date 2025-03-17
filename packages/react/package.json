@@ -1,6 +1,6 @@
 {
   "name": "@novu/react",
-  "version": "2.6.6",
+  "version": "3.0.0-canary.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/novuhq/novu",
