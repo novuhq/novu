@@ -175,6 +175,12 @@ services:
     ports:
       - 4200:4200
     command: ['/bin/sh', '-c', 'pnpm run envsetup:docker && pnpm run start:static:build']
+    healthcheck:
+      test:
+        [CMD-SHELL, "node ./healthchecks/web-server.mjs"]
+      interval: 5s
+      timeout: 5s
+      retries: 3
 
 volumes:
   mongodb: ~
