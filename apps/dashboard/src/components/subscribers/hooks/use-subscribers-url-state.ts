@@ -179,7 +179,7 @@ export function useSubscribersUrlState(props: UseSubscribersUrlStateProps = {}):
    * - If staying on the same page or on the first page, it invalidates
    *   the query cache for re-fetching subscribers.
    * - Otherwise, it updates the URL search parameters to navigate to
-   *   the appropriate page after deletion which then refetches automatically.
+   *   the appropriate page after deletion which then re-fetches automatically.
    */
   const handleNavigationAfterDelete = (afterCursor: string) => {
     const newParams = new URLSearchParams(searchParams);
