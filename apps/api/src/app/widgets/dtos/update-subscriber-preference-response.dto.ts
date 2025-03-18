@@ -119,6 +119,12 @@ class TemplateResponse implements ITemplateConfiguration {
     type: [NotificationTriggerResponse], // Use an array syntax
   })
   triggers: NotificationTriggerResponse[];
+
+  @ApiPropertyOptional({
+    description: "The date and time the workflow was last updated. It's in ISO 8601 format.",
+    type: String,
+  })
+  updatedAt?: string;
 }
 export class UpdateSubscriberPreferenceResponseDto {
   @ApiProperty({

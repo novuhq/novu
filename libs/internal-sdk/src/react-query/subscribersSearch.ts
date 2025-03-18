@@ -90,6 +90,7 @@ export function setSubscribersSearchData(
       limit?: number | undefined;
       orderDirection?: operations.OrderDirection | undefined;
       orderBy?: any | undefined;
+      includeCursor?: boolean | undefined;
       idempotencyKey?: string | undefined;
     },
   ],
@@ -113,6 +114,7 @@ export function invalidateSubscribersSearch(
       limit?: number | undefined;
       orderDirection?: operations.OrderDirection | undefined;
       orderBy?: any | undefined;
+      includeCursor?: boolean | undefined;
       idempotencyKey?: string | undefined;
     }]
   >,
@@ -155,6 +157,7 @@ export function buildSubscribersSearchQuery(
       limit: request.limit,
       orderDirection: request.orderDirection,
       orderBy: request.orderBy,
+      includeCursor: request.includeCursor,
       idempotencyKey: request.idempotencyKey,
     }),
     queryFn: async function subscribersSearchQueryFn(
@@ -186,6 +189,7 @@ export function queryKeySubscribersSearch(
     limit?: number | undefined;
     orderDirection?: operations.OrderDirection | undefined;
     orderBy?: any | undefined;
+    includeCursor?: boolean | undefined;
     idempotencyKey?: string | undefined;
   },
 ): QueryKey {

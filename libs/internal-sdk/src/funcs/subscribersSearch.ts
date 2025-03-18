@@ -96,6 +96,7 @@ async function $do(
     "after": payload.after,
     "before": payload.before,
     "email": payload.email,
+    "includeCursor": payload.includeCursor,
     "limit": payload.limit,
     "name": payload.name,
     "orderBy": payload.orderBy,

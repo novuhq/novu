@@ -44,6 +44,7 @@ export type SubscribersControllerSearchSubscribersRequest = {
   limit?: number | undefined;
   orderDirection?: OrderDirection | undefined;
   orderBy?: any | undefined;
+  includeCursor?: boolean | undefined;
   /**
    * A header for idempotency purposes
    */
@@ -92,6 +93,7 @@ export const SubscribersControllerSearchSubscribersRequest$inboundSchema:
     limit: z.number().optional(),
     orderDirection: OrderDirection$inboundSchema.optional(),
     orderBy: z.any().optional(),
+    includeCursor: z.boolean().optional(),
     "idempotency-key": z.string().optional(),
   }).transform((v) => {
     return remap$(v, {
@@ -110,6 +112,7 @@ export type SubscribersControllerSearchSubscribersRequest$Outbound = {
   limit?: number | undefined;
   orderDirection?: string | undefined;
   orderBy?: any | undefined;
+  includeCursor?: boolean | undefined;
   "idempotency-key"?: string | undefined;
 };
 
@@ -129,6 +132,7 @@ export const SubscribersControllerSearchSubscribersRequest$outboundSchema:
     limit: z.number().optional(),
     orderDirection: OrderDirection$outboundSchema.optional(),
     orderBy: z.any().optional(),
+    includeCursor: z.boolean().optional(),
     idempotencyKey: z.string().optional(),
   }).transform((v) => {
     return remap$(v, {
