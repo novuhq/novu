@@ -702,11 +702,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/js
       '@novu/react':
-        specifier: https://pkg.pr.new/novuhq/novu/@novu/react@1e540b2
-        version: https://pkg.pr.new/novuhq/novu/@novu/react@1e540b2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@novu/react-v2':
-        specifier: npm:@novu/react@2.6.6
-        version: '@novu/react@2.6.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1)'
+        specifier: workspace:*
+        version: link:../../packages/react
       '@novu/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -10726,35 +10723,9 @@ packages:
   '@nothing-but/utils@0.12.1':
     resolution: {integrity: sha512-1qZU1Q5El0IjE7JT/ucvJNzdr2hL3W8Rm27xNf1p6gb3Nw8pGnZmxp6/GEW9h+I1k1cICxXNq25hBwknTQ7yhg==}
 
-  '@novu/js@2.6.6':
-    resolution: {integrity: sha512-kX6vSQvrQ1A6gHU5QvgrBMg/xnoCp3y61BjGO73f7hOWl3WD8kC0AkQ91kAA8L6BdpwJff6hTt1yS5sLBYE/mg==}
-
-  '@novu/js@https://pkg.pr.new/novuhq/novu/@novu/js@1e540b2ca51f1b1a0633058be7c70848c0a361b1':
-    resolution: {tarball: https://pkg.pr.new/novuhq/novu/@novu/js@1e540b2ca51f1b1a0633058be7c70848c0a361b1}
-    version: 2.6.6
-
   '@novu/ntfr-client@0.0.4':
     resolution: {integrity: sha512-/9q+qGFHHFwMsuqoLwTADMjSx2JPagpJpm7jOZRzQZgSEDg9kwNAhADneRzVYhMyjdEXIQyjTmX/oP8ABAavFw==}
     engines: {node: '>=18.0.0'}
-
-  '@novu/react@2.6.6':
-    resolution: {integrity: sha512-CCLEPpE7AITflEx0sIH5dC6UuBaqYZHsnhumQNv+gPVYcsk+BVxz9N0/tq81KjOuTBA/bnQLxu+llbTObQ1QnQ==}
-    peerDependencies:
-      react: '>=17'
-      react-dom: '>=17'
-    peerDependenciesMeta:
-      react-dom:
-        optional: true
-
-  '@novu/react@https://pkg.pr.new/novuhq/novu/@novu/react@1e540b2':
-    resolution: {tarball: https://pkg.pr.new/novuhq/novu/@novu/react@1e540b2}
-    version: 2.6.6
-    peerDependencies:
-      react: '>=17'
-      react-dom: '>=17'
-    peerDependenciesMeta:
-      react-dom:
-        optional: true
 
   '@nrwl/nx-cloud@19.1.0':
     resolution: {integrity: sha512-krngXVPfX0Zf6+zJDtcI59/Pt3JfcMPMZ9C/+/x6rvz4WGgyv1s0MI4crEUM0Lx5ZpS4QI0WNDCFVQSfGEBXUg==}
@@ -47862,38 +47833,6 @@ snapshots:
 
   '@nothing-but/utils@0.12.1': {}
 
-  '@novu/js@2.6.6':
-    dependencies:
-      '@floating-ui/dom': 1.6.13
-      class-variance-authority: 0.7.0
-      clsx: 2.1.1
-      mitt: 3.0.1
-      socket.io-client: 4.7.2
-      solid-floating-ui: 0.3.1(@floating-ui/dom@1.6.13)(solid-js@1.8.17)
-      solid-js: 1.8.17
-      solid-motionone: 1.0.3(solid-js@1.8.17)
-      tailwind-merge: 2.5.5
-    transitivePeerDependencies:
-      - bufferutil
-      - supports-color
-      - utf-8-validate
-
-  '@novu/js@https://pkg.pr.new/novuhq/novu/@novu/js@1e540b2ca51f1b1a0633058be7c70848c0a361b1':
-    dependencies:
-      '@floating-ui/dom': 1.6.13
-      class-variance-authority: 0.7.0
-      clsx: 2.1.1
-      mitt: 3.0.1
-      socket.io-client: 4.7.2
-      solid-floating-ui: 0.3.1(@floating-ui/dom@1.6.13)(solid-js@1.8.17)
-      solid-js: 1.8.17
-      solid-motionone: 1.0.3(solid-js@1.8.17)
-      tailwind-merge: 2.5.5
-    transitivePeerDependencies:
-      - bufferutil
-      - supports-color
-      - utf-8-validate
-
   '@novu/ntfr-client@0.0.4':
     dependencies:
       https: 1.0.0
@@ -47902,28 +47841,6 @@ snapshots:
       proxy-agent: 6.3.0
       ws: 8.18.0
       zod: 3.22.3
-    transitivePeerDependencies:
-      - bufferutil
-      - supports-color
-      - utf-8-validate
-
-  '@novu/react@2.6.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
-    dependencies:
-      '@novu/js': 2.6.6
-      react: 18.3.1
-    optionalDependencies:
-      react-dom: 18.3.1(react@18.3.1)
-    transitivePeerDependencies:
-      - bufferutil
-      - supports-color
-      - utf-8-validate
-
-  '@novu/react@https://pkg.pr.new/novuhq/novu/@novu/react@1e540b2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
-    dependencies:
-      '@novu/js': https://pkg.pr.new/novuhq/novu/@novu/js@1e540b2ca51f1b1a0633058be7c70848c0a361b1
-      react: 18.3.1
-    optionalDependencies:
-      react-dom: 18.3.1(react@18.3.1)
     transitivePeerDependencies:
       - bufferutil
       - supports-color
