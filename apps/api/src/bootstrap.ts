@@ -27,9 +27,9 @@ const extendedBodySizeRoutes = [
 // Validate the ENV variables after launching SENTRY, so missing variables will report to sentry
 validateEnv();
 class BootstrapOptions {
-  expressApp?: any;
   internalSdkGeneration?: boolean;
 }
+
 export async function bootstrap(
   bootstrapOptions?: BootstrapOptions
 ): Promise<{ app: INestApplication; document: any }> {
