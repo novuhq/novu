@@ -165,6 +165,22 @@ export function useSubscribersUrlState(props: UseSubscribersUrlStateProps = {}):
     navigate(`${location.pathname}?${newParams}`, { replace: true });
   };
 
+  /**
+   * Handles navigation logic after a subscriber is deleted.
+   * Updates the URL search parameters and invalidates the query cache
+   * for fetching subscribers if necessary.
+   *
+   * @param afterCursor - The cursor pointing to the next set of subscribers
+   *                       after the deletion.
+   *
+   * The function performs the following:
+   * - Checks if the current page is the first page or if the navigation
+   *   would result in staying on the same page.
+   * - If staying on the same page or on the first page, it invalidates
+   *   the query cache for re-fetching subscribers.
+   * - Otherwise, it updates the URL search parameters to navigate to
+   *   the appropriate page after deletion which then refetches automatically.
+   */
   const handleNavigationAfterDelete = (afterCursor: string) => {
     const newParams = new URLSearchParams(searchParams);
     const currentIncludeCursor = searchParams.get('includeCursor');
@@ -181,9 +197,35 @@ export function useSubscribersUrlState(props: UseSubscribersUrlStateProps = {}):
       return;
     }
 
-    newParams.delete('before');
+    /**
+     * Why are `afterCursor` and `includeCursor` needed?
+     *
+     * On deletion, switch to `after` pagination to avoid fetching items from the previous page.
+     * Use `includeCursor=true` to ensure the first item (after cursor) is included in the result.
+     * This prevents skipping the first item on the current page after a deletion.
+     *
+     * Example:
+     * - From page 3, click the previous button to go to page 2.
+     * - Page 2 initially has items with IDs: 11 → 20 (before cursor = 21).
+     * - After deleting item 12:
+     *   - Remove the `before` cursor from the URL and add the `after` cursor
+     *     (set to the first element in the list).
+     *   - Without `includeCursor`: Page 2 → 13 → 20, 21 ❌ (skips item 11).
+     *   - With `includeCursor`: Page 2 → 11, 13 → 20, 21 ✅ (includes item 11).
+     */
     newParams.set('after', afterCursor);
     newParams.set('includeCursor', 'true');
+    /**
+     * Why delete the `before` cursor?
+     * - When using `before` pagination, the query fetches items *before* the cursor, which can
+     *   include items from the previous page.
+     * - After deleting an item, keeping the `before` cursor causes the page to incorrectly
+     *   include an item from the previous page.
+     * - Deleting the `before` cursor and switching to `after` pagination ensures that the
+     *   next item (from the current page or beyond) is fetched instead.
+     */
+    newParams.delete('before');
+
     navigate(`${location.pathname}?${newParams}`, { replace: true });
   };
 
