@@ -13,6 +13,7 @@ import { Skeleton } from '@/components/primitives/skeleton';
 import { ToastIcon } from '@/components/primitives/sonner';
 import { showToast } from '@/components/primitives/sonner-helpers';
 import { TableCell, TableRow } from '@/components/primitives/table';
+import { useSubscribersNavigate } from '@/components/subscribers/hooks/use-subscribers-navigate';
 import { getSubscriberTitle } from '@/components/subscribers/utils';
 import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
 import TruncatedText from '@/components/truncated-text';
@@ -21,12 +22,12 @@ import { useDeleteSubscriber } from '@/hooks/use-delete-subscriber';
 import { formatDateSimple } from '@/utils/format-date';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
-import { useSubscribersNavigate } from '@/components/subscribers/hooks/use-subscribers-navigate';
+import { ISubscriberResponseDto } from '@novu/shared';
 import { ComponentProps, useState } from 'react';
 import { RiDeleteBin2Line, RiFileCopyLine, RiMore2Fill, RiPulseFill } from 'react-icons/ri';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { ExternalToast } from 'sonner';
-import { ISubscriberResponseDto } from '@novu/shared';
+import { useSubscribersUrlState } from './hooks/use-subscribers-url-state';
 
 const toastOptions: ExternalToast = {
   position: 'bottom-right',
@@ -59,9 +60,7 @@ export const SubscriberRow = ({ subscriber, subscribersCount, firstTwoSubscriber
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const subscriberTitle = getSubscriberTitle(subscriber);
   const { navigateToSubscribersFirstPage, navigateToEditSubscriberPage } = useSubscribersNavigate();
-
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const { handleNavigationAfterDelete } = useSubscribersUrlState();
 
   const { deleteSubscriber, isPending: isDeleteSubscriberPending } = useDeleteSubscriber({
     onSuccess: () => {
@@ -121,12 +120,7 @@ export const SubscriberRow = ({ subscriber, subscribersCount, firstTwoSubscriber
       afterCursor = firstTwoSubscribersInternalIds[1];
     }
 
-    const newParams = new URLSearchParams(searchParams);
-    newParams.delete('before');
-    newParams.set('after', afterCursor);
-    newParams.set('includeCursor', 'true');
-
-    navigate(`${location.pathname}?${newParams}`, { replace: true });
+    handleNavigationAfterDelete(afterCursor);
   };
 
   return (

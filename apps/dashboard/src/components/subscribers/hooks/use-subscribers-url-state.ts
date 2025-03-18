@@ -2,6 +2,8 @@ import { DirectionEnum } from '@novu/shared';
 import { useCallback, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useDebounce } from '../../../hooks/use-debounce';
+import { useQueryClient } from '@tanstack/react-query';
+import { QueryKeys } from '@/utils/query-keys';
 
 export type SubscribersSortableColumn = '_id' | 'updatedAt';
 export interface SubscribersFilter {
@@ -36,6 +38,7 @@ export interface SubscribersUrlState {
   handleNext: () => void;
   handlePrevious: () => void;
   handleFirst: () => void;
+  handleNavigationAfterDelete: (afterCursor: string) => void;
 }
 
 type UseSubscribersUrlStateProps = {
@@ -48,6 +51,7 @@ export function useSubscribersUrlState(props: UseSubscribersUrlStateProps = {}):
   const { after, before, debounceMs = 300 } = props;
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const filterValues = useMemo(
     () => ({
       email: searchParams.get('email') || '',
@@ -161,6 +165,28 @@ export function useSubscribersUrlState(props: UseSubscribersUrlStateProps = {}):
     navigate(`${location.pathname}?${newParams}`, { replace: true });
   };
 
+  const handleNavigationAfterDelete = (afterCursor: string) => {
+    const newParams = new URLSearchParams(searchParams);
+    const currentIncludeCursor = searchParams.get('includeCursor');
+    const currentAfterCursor = searchParams.get('after');
+    const currentBeforeCursor = searchParams.get('before');
+    const isFirstPage = !currentBeforeCursor && !currentAfterCursor;
+    const isSamePage = currentIncludeCursor === 'true' && currentAfterCursor === afterCursor;
+
+    if (isSamePage || isFirstPage) {
+      queryClient.invalidateQueries({
+        queryKey: [QueryKeys.fetchSubscribers],
+      });
+
+      return;
+    }
+
+    newParams.delete('before');
+    newParams.set('after', afterCursor);
+    newParams.set('includeCursor', 'true');
+    navigate(`${location.pathname}?${newParams}`, { replace: true });
+  };
+
   return {
     filterValues,
     handleFiltersChange: debouncedUpdateParams,
@@ -169,5 +195,6 @@ export function useSubscribersUrlState(props: UseSubscribersUrlStateProps = {}):
     handleNext,
     handlePrevious,
     handleFirst,
+    handleNavigationAfterDelete,
   };
 }
