@@ -96,11 +96,7 @@ export async function bootstrap(
 
   app.useGlobalFilters(new AllExceptionsFilter(app.get(PinoLogger)));
 
-  if (bootstrapOptions?.expressApp) {
-    await app.init();
-  } else {
-    await app.listen(process.env.PORT || 3000);
-  }
+  await app.listen(process.env.PORT || 3000);
 
   app.enableShutdownHooks();
 
