@@ -12,6 +12,7 @@ import { InAppRedirect } from '@/components/workflow-editor/steps/in-app/in-app-
 import { InAppSubject } from '@/components/workflow-editor/steps/in-app/in-app-subject';
 import { BaseBody } from './base/base-body';
 import { BaseSubject } from './base/base-subject';
+import { DataObject } from './base/data-object';
 import { BypassSanitizationSwitch } from './shared/bypass-sanitization-switch';
 
 export const getComponentByType = ({ component }: { component?: UiComponentEnum }) => {
@@ -32,9 +33,12 @@ export const getComponentByType = ({ component }: { component?: UiComponentEnum 
       return <InAppAction />;
     }
 
-    case UiComponentEnum.DISABLE_SANITIZATION_SWITCH:
     case UiComponentEnum.IN_APP_DISABLE_SANITIZATION_SWITCH:
       return <BypassSanitizationSwitch />;
+
+    case UiComponentEnum.DATA: {
+      return <DataObject />;
+    }
 
     case UiComponentEnum.URL_TEXT_BOX: {
       return <InAppRedirect />;

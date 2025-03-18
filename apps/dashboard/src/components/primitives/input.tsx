@@ -102,7 +102,7 @@ export const inputVariants = tv({
       sm: {
         root: 'rounded-lg',
         wrapper: 'gap-2 px-2.5',
-        input: 'h-9 text-paragraph-xs',
+        input: 'h-[2.35rem] text-paragraph-xs',
         affix: 'text-paragraph-xs',
         inlineAffix: 'text-paragraph-xs',
       },

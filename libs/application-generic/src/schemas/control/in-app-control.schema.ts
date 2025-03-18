@@ -94,5 +94,9 @@ export const inAppUiSchema: UiSchema = {
       component: UiComponentEnum.IN_APP_DISABLE_SANITIZATION_SWITCH,
       placeholder: false,
     },
+    data: {
+      component: UiComponentEnum.DATA,
+      placeholder: null,
+    },
   },
 };

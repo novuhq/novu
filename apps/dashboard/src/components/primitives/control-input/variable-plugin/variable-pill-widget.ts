@@ -1,5 +1,5 @@
-import { CSSProperties } from 'react';
 import { WidgetType } from '@uiw/react-codemirror';
+import { CSSProperties } from 'react';
 
 export class VariablePillWidget extends WidgetType {
   private clickHandler: (e: MouseEvent) => void;

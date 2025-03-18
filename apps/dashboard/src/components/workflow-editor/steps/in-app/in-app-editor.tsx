@@ -1,9 +1,10 @@
-import { UiSchemaGroupEnum, type UiSchema } from '@novu/shared';
+import { FeatureFlagsKeysEnum, UiSchemaGroupEnum, type UiSchema } from '@novu/shared';
 
 import { Notification5Fill } from '@/components/icons';
 import { Separator } from '@/components/primitives/separator';
 import { getComponentByType } from '@/components/workflow-editor/steps/component-utils';
 import { InAppTabsSection } from '@/components/workflow-editor/steps/in-app/in-app-tabs-section';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 
 const avatarKey = 'avatar';
 const subjectKey = 'subject';
@@ -12,8 +13,11 @@ const redirectKey = 'redirect';
 const primaryActionKey = 'primaryAction';
 const secondaryActionKey = 'secondaryAction';
 const disableOutputSanitizationKey = 'disableOutputSanitization';
+const dataObjectKey = 'data';
 
 export const InAppEditor = ({ uiSchema }: { uiSchema: UiSchema }) => {
+  const isDataObjectEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_DATA_OBJECT_ENABLED);
+
   if (uiSchema.group !== UiSchemaGroupEnum.IN_APP) {
     return null;
   }
@@ -26,6 +30,7 @@ export const InAppEditor = ({ uiSchema }: { uiSchema: UiSchema }) => {
     [primaryActionKey]: primaryAction,
     [secondaryActionKey]: secondaryAction,
     [disableOutputSanitizationKey]: disableOutputSanitization,
+    [dataObjectKey]: dataObject,
   } = uiSchema.properties ?? {};
 
   return (
@@ -57,11 +62,19 @@ export const InAppEditor = ({ uiSchema }: { uiSchema: UiSchema }) => {
       </InAppTabsSection>
 
       {redirect && (
+        <InAppTabsSection className="pt-0">
+          {getComponentByType({
+            component: redirect.component,
+          })}
+        </InAppTabsSection>
+      )}
+
+      {dataObject && isDataObjectEnabled && (
         <>
-          <Separator className="before:bg-neutral-100" />
+          <Separator />
           <InAppTabsSection>
             {getComponentByType({
-              component: redirect.component,
+              component: dataObject.component,
             })}
           </InAppTabsSection>
         </>

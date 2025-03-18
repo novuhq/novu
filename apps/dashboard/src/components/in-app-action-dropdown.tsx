@@ -17,6 +17,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives
 import { Separator } from '@/components/primitives/separator';
 import { URLInput } from '@/components/workflow-editor/url-input';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
+import { inboxButtonVariants } from '@/utils/inbox';
 import { parseStepVariablesToLiquidVariables } from '@/utils/parseStepVariablesToLiquidVariables';
 import { cn } from '@/utils/ui';
 import { urlTargetTypes } from '@/utils/url';
@@ -27,7 +28,6 @@ import { RiEdit2Line, RiExpandUpDownLine, RiForbid2Line } from 'react-icons/ri';
 import { CompactButton } from './primitives/button-compact';
 import { ControlInput } from './primitives/control-input';
 import { InputRoot } from './primitives/input';
-import { inboxButtonVariants } from '@/utils/inbox';
 
 const primaryActionKey = 'primaryAction';
 const secondaryActionKey = 'secondaryAction';
@@ -51,7 +51,7 @@ export const InAppActionDropdown = ({ onMenuItemClick }: { onMenuItemClick?: () 
     <>
       <DropdownMenu modal={false}>
         <div className={cn('mt-3 flex items-center gap-1')}>
-          <div className="border-neutral-alpha-200 relative flex min-h-10 w-full flex-wrap items-center justify-end gap-1 rounded-md border p-1 shadow-sm">
+          <div className="border-neutral-alpha-200 shadow-input relative flex min-h-10 w-full flex-wrap items-center justify-end gap-1 rounded-md border p-1">
             {!primaryAction && !secondaryAction && (
               <Button
                 variant="secondary"
