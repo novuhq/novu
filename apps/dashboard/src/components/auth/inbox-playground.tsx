@@ -1,7 +1,7 @@
 import { useEnvironment } from '@/context/environment/hooks';
 import { useTriggerWorkflow } from '@/hooks/use-trigger-workflow';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { FeatureFlagsKeysEnum, IEnvironment, StepTypeEnum, WorkflowCreationSourceEnum } from '@novu/shared';
+import { IEnvironment, StepTypeEnum, WorkflowCreationSourceEnum } from '@novu/shared';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { RiNotification2Fill } from 'react-icons/ri';
@@ -20,7 +20,6 @@ import { showErrorToast, showSuccessToast } from '../primitives/sonner-helpers';
 import { UsecasePlaygroundHeader } from '../usecase-playground-header';
 import { CustomizeInbox } from './customize-inbox-playground';
 import { InboxPreviewContent } from './inbox-preview-content';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 
 export interface ActionConfig {
   label: string;
@@ -66,10 +65,10 @@ const formSchema = z.object({
     .nullable(),
 });
 
-const defaultFormValues = (isInboxV3Enabled: boolean): InboxPlaygroundFormData => ({
+const defaultFormValues = (): InboxPlaygroundFormData => ({
   subject: '**Welcome to Inbox!**',
   body: 'This is your first notification. Customize and explore more features.',
-  primaryColor: isInboxV3Enabled ? '#7D52F4' : '#DD2450',
+  primaryColor: '#7D52F4',
   foregroundColor: '#0E121B',
   selectedStyle: 'popover',
   openAccordion: 'layout',
@@ -84,12 +83,11 @@ const defaultFormValues = (isInboxV3Enabled: boolean): InboxPlaygroundFormData =
 });
 
 export function InboxPlayground() {
-  const isInboxV3Enabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_INBOX_V3_ENABLED);
   const { currentEnvironment } = useEnvironment();
   const form = useForm<InboxPlaygroundFormData>({
     mode: 'onSubmit',
     resolver: zodResolver(formSchema),
-    defaultValues: defaultFormValues(isInboxV3Enabled),
+    defaultValues: defaultFormValues(),
     shouldFocusError: true,
   });
 

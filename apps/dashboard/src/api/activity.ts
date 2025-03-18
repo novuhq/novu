@@ -1,4 +1,4 @@
-import { IActivity, IEnvironment } from '@novu/shared';
+import { getDateRangeInMs, IActivity, IEnvironment } from '@novu/shared';
 import { get } from './api.client';
 
 export type ActivityFilters = {
@@ -58,7 +58,7 @@ export function getActivityList({
   }
 
   if (filters?.dateRange) {
-    const after = new Date(Date.now() - getDateRangeInDays(filters?.dateRange) * 24 * 60 * 60 * 1000);
+    const after = new Date(Date.now() - getDateRangeInMs(filters?.dateRange));
     searchParams.append('after', after.toISOString());
   }
 
@@ -66,18 +66,6 @@ export function getActivityList({
     environment,
     signal,
   });
-}
-
-function getDateRangeInDays(range: string): number {
-  switch (range) {
-    case '24h':
-      return 1;
-    case '7d':
-      return 7;
-    case '30d':
-    default:
-      return 30;
-  }
 }
 
 export async function getNotification(notificationId: string, environment: IEnvironment): Promise<IActivity> {

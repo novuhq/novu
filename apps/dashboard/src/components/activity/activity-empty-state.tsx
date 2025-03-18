@@ -1,29 +1,32 @@
+import { ActivityFilters } from '@/api/activity';
+import { defaultActivityFilters } from '@/components/activity/constants';
 import { Button } from '@/components/primitives/button';
 import { useEnvironment } from '@/context/environment/hooks';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { AnimatePresence, motion } from 'motion/react';
+import { useMemo } from 'react';
 import { RiCloseCircleLine, RiPlayCircleLine } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
 import { ExternalLink } from '../shared/external-link';
 
 interface ActivityEmptyStateProps {
   className?: string;
+  filters?: ActivityFilters;
   emptySearchResults?: boolean;
   emptySearchTitle?: string;
   emptySearchDescription?: string;
-  emptyFiltersTitle?: string;
   emptyFiltersDescription?: string;
   onClearFilters?: () => void;
 }
 
 export function ActivityEmptyState({
   className,
+  filters = defaultActivityFilters,
   emptySearchResults,
   onClearFilters,
   emptySearchTitle = 'No activity matches that filter',
   emptySearchDescription = 'Try adjusting your filters to see more results.',
-  emptyFiltersTitle = 'No activity in the past 30 days',
   emptyFiltersDescription = 'Your activity feed is empty. Once you trigger your first workflow, you can monitor notifications and view delivery details.',
 }: ActivityEmptyStateProps) {
   const navigate = useNavigate();
@@ -32,6 +35,10 @@ export function ActivityEmptyState({
   const handleNavigateToWorkflows = () => {
     navigate(buildRoute(ROUTES.WORKFLOWS, { environmentSlug: currentEnvironment?.slug ?? '' }));
   };
+
+  const emptyFiltersTitle = useMemo(() => {
+    return `No activity in the past ${filters?.dateRange}`;
+  }, [filters]);
 
   return (
     <AnimatePresence mode="wait">

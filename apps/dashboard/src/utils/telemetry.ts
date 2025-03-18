@@ -62,4 +62,5 @@ export enum TelemetryEvent {
   SIGN_IN_PAGE_VIEWED = 'Signin page viewed',
   STEP_CONDITIONS_ADDED = 'Step conditions added',
   STEP_CONDITIONS_UPDATED = 'Step conditions updated',
+  EMAIL_BLOCK_ADDED = 'Email block added',
 }

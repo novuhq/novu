@@ -4,7 +4,7 @@ import { useEnvironment } from '@/context/environment/hooks';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { useOrganization } from '@clerk/clerk-react';
-import { ChannelTypeEnum, FeatureFlagsKeysEnum } from '@novu/shared';
+import { ChannelTypeEnum } from '@novu/shared';
 import * as Sentry from '@sentry/react';
 import { useMutation } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
@@ -19,7 +19,6 @@ import { PageMeta } from '../components/page-meta';
 import { Button } from '../components/primitives/button';
 import { LinkButton } from '../components/primitives/button-link';
 import { ROUTES } from '../utils/routes';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -45,7 +44,6 @@ export function UsecaseSelectPage() {
   const track = useTelemetry();
   const [selectedUseCases, setSelectedUseCases] = useState<ChannelTypeEnum[]>([]);
   const [hoveredUseCase, setHoveredUseCase] = useState<ChannelTypeEnum | null>(null);
-  const isInboxV3Enabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_INBOX_V3_ENABLED);
 
   useEffect(() => {
     track(TelemetryEvent.USECASE_SELECT_PAGE_VIEWED);
@@ -107,7 +105,7 @@ export function UsecaseSelectPage() {
     handleContinue();
   }
 
-  const channelOptions = getChannelOptions(isInboxV3Enabled);
+  const channelOptions = getChannelOptions();
 
   return (
     <>

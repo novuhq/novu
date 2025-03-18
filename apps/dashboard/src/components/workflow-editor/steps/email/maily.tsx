@@ -1,6 +1,6 @@
 import { Editor } from '@maily-to/core';
 import { getVariableSuggestions, HTMLCodeBlockExtension, VariableExtension } from '@maily-to/core/extensions';
-import type { AnyExtension, Editor as TiptapEditor } from '@tiptap/core';
+import type { Editor as TiptapEditor } from '@tiptap/core';
 import { ReactNodeViewRenderer } from '@tiptap/react';
 import { HTMLAttributes, useCallback, useMemo, useState } from 'react';
 
@@ -8,12 +8,13 @@ import { HTMLCodeBlockView } from '@/components/workflow-editor/steps/email/exte
 import { MailyVariablesList } from '@/components/workflow-editor/steps/email/extensions/maily-variables-list';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { useTelemetry } from '@/hooks/use-telemetry';
 import { parseStepVariables } from '@/utils/parseStepVariablesToLiquidVariables';
 import { cn } from '@/utils/ui';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { ForExtension } from './extensions/for';
 import { VariableView } from './extensions/variable-view';
-import { DEFAULT_EDITOR_CONFIG, getDefaultEditorBlocks } from './maily-config';
+import { createDefaultEditorBlocks, DEFAULT_EDITOR_CONFIG } from './maily-config';
 
 type MailyProps = HTMLAttributes<HTMLDivElement> & {
   value: string;
@@ -41,8 +42,9 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
     () => mailyVariables.namespaces.map((v) => ({ name: v.label, required: false })),
     [mailyVariables.namespaces]
   );
-  const [_, setEditor] = useState<TiptapEditor>();
+  const [_, setEditor] = useState<any>();
   const isCustomEmailBlocksEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CUSTOM_EMAIL_BLOCKS_ENABLED);
+  const track = useTelemetry();
 
   const calculateVariables = useCallback(
     ({
@@ -112,10 +114,11 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
     [arrays, namespaces, primitives]
   );
 
-  const extensions = useMemo<AnyExtension[]>(() => {
+  const extensions = useMemo(() => {
     return [
       ForExtension,
       VariableExtension.extend({
+        // @ts-expect-error - TODO: Polish Maily typing when extending Maily core and update accordingly
         addNodeView() {
           return ReactNodeViewRenderer(VariableView, {
             className: 'relative inline-block',
@@ -124,10 +127,12 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
         },
       }).configure({
         suggestion: getVariableSuggestions(VARIABLE_TRIGGER_CHARACTER),
+        // @ts-expect-error - TODO: Polish Maily typing when extending Maily core and update accordingly
         variables: calculateVariables,
         variableSuggestionsPopover: MailyVariablesList,
       }),
       HTMLCodeBlockExtension.extend({
+        // @ts-expect-error - TODO: Polish Maily typing when extending Maily core and update accordingly
         addNodeView() {
           return ReactNodeViewRenderer(HTMLCodeBlockView, {
             className: 'mly-relative',
@@ -170,7 +175,8 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
         <Editor
           key="repeat-block-enabled"
           config={DEFAULT_EDITOR_CONFIG}
-          blocks={getDefaultEditorBlocks(isCustomEmailBlocksEnabled)}
+          blocks={createDefaultEditorBlocks({ track, isCustomEmailBlocksEnabled })}
+          // @ts-expect-error - TODO: Polish Maily typing when extending Maily core and update accordingly
           extensions={extensions}
           contentJson={value ? JSON.parse(value) : undefined}
           onCreate={setEditor}

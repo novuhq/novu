@@ -79,14 +79,14 @@ export class ActivitiesRequestDto {
 
   @ApiPropertyOptional({
     type: String,
-    description: 'Date filter for records after this timestamp',
+    description: 'Date filter for records after this timestamp. Defaults to earliest date allowed by subscription plan',
   })
   @IsOptional()
   after?: string;
 
   @ApiPropertyOptional({
     type: String,
-    description: 'Date filter for records before this timestamp',
+    description: 'Date filter for records before this timestamp. Defaults to current time of request (now)',
   })
   @IsOptional()
   before?: string;
