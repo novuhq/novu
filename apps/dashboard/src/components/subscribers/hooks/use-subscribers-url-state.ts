@@ -171,7 +171,7 @@ export function useSubscribersUrlState(props: UseSubscribersUrlStateProps = {}):
    * for fetching subscribers if necessary.
    *
    * @param afterCursor - The cursor pointing to the next set of subscribers
-   *                       after the deletion.
+   *                      after the deletion.
    *
    * The function performs the following:
    * - Checks if the current page is the first page or if the navigation
