@@ -104,7 +104,12 @@ export const CreateSubscriberForm = (props: CreateSubscriberFormProps) => {
         </div>
       </header>
       <Form {...form}>
-        <FormRoot autoComplete="off" noValidate onSubmit={form.handleSubmit(onSubmit)} className="flex h-full flex-col">
+        <FormRoot
+          autoComplete="off"
+          noValidate
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="flex h-full flex-col overflow-y-auto"
+        >
           <div className="flex flex-col items-stretch gap-6 p-5">
             <div className="flex items-center gap-3">
               <Tooltip>
