@@ -131,7 +131,7 @@ export const WorkflowsPage = () => {
         <div className="flex h-full w-full flex-col gap-2.5 p-2.5">
           <div className="flex justify-between">
             <Form {...form}>
-              <FormRoot>
+              <FormRoot onSubmit={form.handleSubmit(() => {})}>
                 <FormField
                   control={form.control}
                   name="query"
