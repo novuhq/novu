@@ -83,14 +83,14 @@ export function setSubscribersSearchData(
     parameters: {
       after?: string | undefined;
       before?: string | undefined;
+      limit?: number | undefined;
+      orderDirection?: operations.OrderDirection | undefined;
+      orderBy?: string | undefined;
+      includeCursor?: boolean | undefined;
       email?: string | undefined;
       name?: string | undefined;
       phone?: string | undefined;
       subscriberId?: string | undefined;
-      limit?: number | undefined;
-      orderDirection?: operations.OrderDirection | undefined;
-      orderBy?: any | undefined;
-      includeCursor?: boolean | undefined;
       idempotencyKey?: string | undefined;
     },
   ],
@@ -107,14 +107,14 @@ export function invalidateSubscribersSearch(
     [parameters: {
       after?: string | undefined;
       before?: string | undefined;
+      limit?: number | undefined;
+      orderDirection?: operations.OrderDirection | undefined;
+      orderBy?: string | undefined;
+      includeCursor?: boolean | undefined;
       email?: string | undefined;
       name?: string | undefined;
       phone?: string | undefined;
       subscriberId?: string | undefined;
-      limit?: number | undefined;
-      orderDirection?: operations.OrderDirection | undefined;
-      orderBy?: any | undefined;
-      includeCursor?: boolean | undefined;
       idempotencyKey?: string | undefined;
     }]
   >,
@@ -150,14 +150,14 @@ export function buildSubscribersSearchQuery(
     queryKey: queryKeySubscribersSearch({
       after: request.after,
       before: request.before,
-      email: request.email,
-      name: request.name,
-      phone: request.phone,
-      subscriberId: request.subscriberId,
       limit: request.limit,
       orderDirection: request.orderDirection,
       orderBy: request.orderBy,
       includeCursor: request.includeCursor,
+      email: request.email,
+      name: request.name,
+      phone: request.phone,
+      subscriberId: request.subscriberId,
       idempotencyKey: request.idempotencyKey,
     }),
     queryFn: async function subscribersSearchQueryFn(
@@ -182,14 +182,14 @@ export function queryKeySubscribersSearch(
   parameters: {
     after?: string | undefined;
     before?: string | undefined;
+    limit?: number | undefined;
+    orderDirection?: operations.OrderDirection | undefined;
+    orderBy?: string | undefined;
+    includeCursor?: boolean | undefined;
     email?: string | undefined;
     name?: string | undefined;
     phone?: string | undefined;
     subscriberId?: string | undefined;
-    limit?: number | undefined;
-    orderDirection?: operations.OrderDirection | undefined;
-    orderBy?: any | undefined;
-    includeCursor?: boolean | undefined;
     idempotencyKey?: string | undefined;
   },
 ): QueryKey {
