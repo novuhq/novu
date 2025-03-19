@@ -40,10 +40,12 @@ export const useSubscribersNavigate = () => {
     const newParams = new URLSearchParams(location.search);
     const hasAfter = newParams.has('after');
     const hasBefore = newParams.has('before');
+    const hasIncludeCursor = newParams.has('includeCursor');
 
-    if (hasAfter || hasBefore) {
+    if (hasAfter || hasBefore || hasIncludeCursor) {
       newParams.delete('after');
       newParams.delete('before');
+      newParams.delete('includeCursor');
 
       // reset the query to trigger a subscribers table loading state
       queryClient.resetQueries({

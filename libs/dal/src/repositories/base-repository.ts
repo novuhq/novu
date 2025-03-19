@@ -352,6 +352,7 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
     sortDirection = DirectionEnum.DESC,
     paginateField,
     enhanceQuery,
+    includeCursor,
   }: {
     query?: FilterQuery<T_DBModel> & T_Enforcement;
     limit: number;
@@ -361,6 +362,7 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
     sortDirection: DirectionEnum;
     paginateField: string;
     enhanceQuery?: (query: QueryWithHelpers<Array<T_DBModel>, T_DBModel>) => any;
+    includeCursor?: boolean;
   }): Promise<{ data: T_MappedEntity[]; next: string | null; previous: string | null }> {
     if (before && after) {
       throw new DalException('Cannot specify both "before" and "after" cursors at the same time.');
@@ -375,12 +377,18 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
     if (before) {
       paginationQuery.$or = [
         {
-          [sortBy]: isDesc ? { $gt: before.sortBy } : { $lt: before.sortBy },
+          [sortBy]: isDesc
+            ? { [includeCursor ? '$gte' : '$gt']: before.sortBy }
+            : { [includeCursor ? '$lte' : '$lt']: before.sortBy },
         },
         {
           $and: [
             { [sortBy]: { $eq: before.sortBy } },
-            { [paginateField]: isDesc ? { $gt: before.paginateField } : { $lt: before.paginateField } },
+            {
+              [paginateField]: isDesc
+                ? { [includeCursor ? '$gte' : '$gt']: before.paginateField }
+                : { [includeCursor ? '$lte' : '$lt']: before.paginateField },
+            },
           ],
         },
       ];
@@ -390,12 +398,18 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
     } else if (after) {
       paginationQuery.$or = [
         {
-          [sortBy]: isDesc ? { $lt: after.sortBy } : { $gt: after.sortBy },
+          [sortBy]: isDesc
+            ? { [includeCursor ? '$lte' : '$lt']: after.sortBy }
+            : { [includeCursor ? '$gte' : '$gt']: after.sortBy },
         },
         {
           $and: [
             { [sortBy]: { $eq: after.sortBy } },
-            { [paginateField]: isDesc ? { $lt: after.paginateField } : { $gt: after.paginateField } },
+            {
+              [paginateField]: isDesc
+                ? { [includeCursor ? '$lte' : '$lt']: after.paginateField }
+                : { [includeCursor ? '$gte' : '$gt']: after.paginateField },
+            },
           ],
         },
       ];
@@ -464,7 +478,9 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
         {
           $and: [
             { [sortBy]: { $eq: lastItem[sortBy] } },
-            { [paginateField]: isDesc ? { $lt: lastItem[paginateField] } : { $gt: lastItem[paginateField] } },
+            {
+              [paginateField]: isDesc ? { $lt: lastItem[paginateField] } : { $gt: lastItem[paginateField] },
+            },
           ],
         },
       ];

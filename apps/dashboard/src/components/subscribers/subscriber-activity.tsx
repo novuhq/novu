@@ -88,7 +88,7 @@ export const SubscriberActivity = ({ subscriberId }: { subscriberId: string }) =
           onClearFilters={handleClearFilters}
           onActivitySelect={handleActivitySelect}
         />
-        <span className="text-paragraph-2xs text-text-soft border-border-soft mt-auto border-t px-3 pb-3 pt-2 text-center">
+        <span className="text-paragraph-2xs text-text-soft border-border-soft mt-auto border-t p-3 text-center">
           To view more detailed activity, View{' '}
           <Link
             className="underline"

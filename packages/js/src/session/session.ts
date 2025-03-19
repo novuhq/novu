@@ -17,6 +17,14 @@ export class Session {
     this.#options = options;
   }
 
+  public get applicationIdentifier() {
+    return this.#options.applicationIdentifier;
+  }
+
+  public get subscriberId() {
+    return this.#options.subscriberId;
+  }
+
   public async initialize(): Promise<void> {
     try {
       const { applicationIdentifier, subscriberId, subscriberHash } = this.#options;

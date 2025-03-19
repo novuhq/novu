@@ -165,6 +165,11 @@ export const SubscriberList = (props: SubscriberListProps) => {
     );
   }
 
+  const firstTwoSubscribersInternalIds = data.data.reduce<string[]>((acc, s) => {
+    if (s._id) acc.push(s._id);
+    return acc.length < 2 ? acc : acc.slice(0, 2);
+  }, []);
+
   return (
     <SubscriberListWrapper
       filterValues={filterValues}
@@ -178,7 +183,12 @@ export const SubscriberList = (props: SubscriberListProps) => {
         toggleSort={toggleSort}
       >
         {data.data.map((subscriber) => (
-          <SubscriberRow key={subscriber.id} subscriber={subscriber} subscribersCount={data.data.length} />
+          <SubscriberRow
+            key={subscriber._id}
+            subscriber={subscriber}
+            subscribersCount={data.data.length}
+            firstTwoSubscribersInternalIds={firstTwoSubscribersInternalIds}
+          />
         ))}
       </SubscriberListTable>
 

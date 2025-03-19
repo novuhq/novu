@@ -1,14 +1,19 @@
 import {
   CreateSubscriberRequestDto,
   GetSubscriberPreferencesDto,
-  ListSubscribersResponseDto,
   PatchSubscriberPreferencesDto,
   PatchSubscriberRequestDto,
   RemoveSubscriberResponseDto,
   SubscriberResponseDto,
 } from '@novu/api/models/components';
-import type { DirectionEnum, IEnvironment } from '@novu/shared';
+import type { DirectionEnum, IEnvironment, ISubscriberResponseDto } from '@novu/shared';
 import { delV2, getV2, patchV2, postV2 } from './api.client';
+
+export type ListSubscribersResponse = {
+  data: Array<ISubscriberResponseDto>;
+  next: string | null;
+  previous: string | null;
+};
 
 export const getSubscribers = async ({
   environment,
@@ -21,6 +26,7 @@ export const getSubscribers = async ({
   phone,
   subscriberId,
   name,
+  includeCursor,
 }: {
   environment: IEnvironment;
   after?: string;
@@ -32,7 +38,8 @@ export const getSubscribers = async ({
   name?: string;
   orderDirection?: DirectionEnum;
   orderBy?: string;
-}): Promise<ListSubscribersResponseDto> => {
+  includeCursor?: boolean;
+}): Promise<ListSubscribersResponse> => {
   const params = new URLSearchParams({
     limit: limit.toString(),
     ...(after && { after }),
@@ -44,8 +51,9 @@ export const getSubscribers = async ({
     ...(name && { name }),
     ...(orderBy && { orderBy }),
     ...(orderDirection && { orderDirection }),
+    ...(includeCursor && { includeCursor: includeCursor.toString() }),
   });
-  const response = await getV2<ListSubscribersResponseDto>(`/subscribers?${params}`, {
+  const response = await getV2<ListSubscribersResponse>(`/subscribers?${params}`, {
     environment,
   });
 
