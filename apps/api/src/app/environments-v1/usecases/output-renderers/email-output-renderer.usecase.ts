@@ -18,7 +18,7 @@ export class EmailOutputRendererUsecase {
 
   @InstrumentUsecase()
   async execute(renderCommand: EmailOutputRendererCommand): Promise<EmailRenderOutput> {
-    const { body, subject } = renderCommand.controlValues;
+    const { body, subject: controlSubject, disableOutputSanitization } = renderCommand.controlValues;
 
     if (!body || typeof body !== 'string') {
       /**
@@ -27,7 +27,7 @@ export class EmailOutputRendererUsecase {
        * rather than handling invalid types here.
        */
       return {
-        subject: subject as string,
+        subject: controlSubject as string,
         body: body as string,
       };
     }
@@ -37,15 +37,19 @@ export class EmailOutputRendererUsecase {
     const parsedMaily = await this.parseMailyContentByLiquid(transformedMaily, renderCommand.fullPayloadForRender);
     const strippedMaily = this.removeTrailingEmptyLines(parsedMaily);
     const renderedHtml = await mailyRender(strippedMaily);
-    // todo: the assumption was wrong, we can remove this as mailyRender already sanitizes the html
-    const sanitizedHtml = sanitizeHTML(renderedHtml);
 
     /**
      * Force type mapping in case undefined control.
      * This passes responsibility to framework to throw type validation exceptions
      * rather than handling invalid types here.
      */
-    return { subject: subject as string, body: sanitizedHtml };
+    const subject = controlSubject as string;
+
+    if (disableOutputSanitization) {
+      return { subject, body: renderedHtml };
+    }
+
+    return { subject: sanitizeHTML(subject), body: sanitizeHTML(renderedHtml) };
   }
 
   private removeTrailingEmptyLines(node: MailyJSONContent): MailyJSONContent {
