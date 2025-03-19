@@ -12,7 +12,7 @@ import { InAppRedirect } from '@/components/workflow-editor/steps/in-app/in-app-
 import { InAppSubject } from '@/components/workflow-editor/steps/in-app/in-app-subject';
 import { BaseBody } from './base/base-body';
 import { BaseSubject } from './base/base-subject';
-import { InAppBypassSanitizationSwitch } from './in-app/in-app-bypass-sanitization-switch';
+import { BypassSanitizationSwitch } from './shared/bypass-sanitization-switch';
 
 export const getComponentByType = ({ component }: { component?: UiComponentEnum }) => {
   switch (component) {
@@ -32,9 +32,9 @@ export const getComponentByType = ({ component }: { component?: UiComponentEnum 
       return <InAppAction />;
     }
 
-    case UiComponentEnum.IN_APP_DISABLE_SANITIZATION_SWITCH: {
-      return <InAppBypassSanitizationSwitch />;
-    }
+    case UiComponentEnum.DISABLE_SANITIZATION_SWITCH:
+    case UiComponentEnum.IN_APP_DISABLE_SANITIZATION_SWITCH:
+      return <BypassSanitizationSwitch />;
 
     case UiComponentEnum.URL_TEXT_BOX: {
       return <InAppRedirect />;
@@ -42,9 +42,8 @@ export const getComponentByType = ({ component }: { component?: UiComponentEnum 
 
     case UiComponentEnum.DELAY_AMOUNT:
     case UiComponentEnum.DELAY_UNIT:
-    case UiComponentEnum.DELAY_TYPE: {
+    case UiComponentEnum.DELAY_TYPE:
       return <DelayAmount />;
-    }
 
     case UiComponentEnum.BLOCK_EDITOR: {
       return <EmailBodyEditor />;
@@ -60,9 +59,8 @@ export const getComponentByType = ({ component }: { component?: UiComponentEnum 
 
     case UiComponentEnum.DIGEST_AMOUNT:
     case UiComponentEnum.DIGEST_UNIT:
-    case UiComponentEnum.DIGEST_CRON: {
+    case UiComponentEnum.DIGEST_CRON:
       return <DigestWindow />;
-    }
 
     case UiComponentEnum.PUSH_BODY: {
       return <BaseBody />;
