@@ -1,4 +1,4 @@
-import type { User } from '@clerk/backend';
+import type { Organization, OrganizationMembership, User } from '@clerk/backend';
 import type { UserAPI, OrganizationAPI } from '@clerk/backend/dist/api/endpoints';
 import {
   CLERK_USER_1,
@@ -7,12 +7,6 @@ import {
   CLERK_ORGANIZATION_2,
   CLERK_ORGANIZATION_1_MEMBERSHIP_1,
 } from './clerk-mock-data';
-
-type MakeWritable<T, K extends keyof T> = {
-  -readonly [P in K]: T[P];
-} & {
-  [P in Exclude<keyof T, K>]: T[P];
-};
 
 export class ClerkClientMock {
   private clerkUsers = new Map([
@@ -47,9 +41,11 @@ export class ClerkClientMock {
 
     const updateUserMetadata: UserAPI['updateUserMetadata'] = async (userId, params) => {
       const user = this.getUserById(userId);
-      const newUser = { ...user } as MakeWritable<User, 'publicMetadata' | 'privateMetadata'>;
-      newUser.publicMetadata = { ...user.publicMetadata, ...params.publicMetadata };
-      newUser.privateMetadata = { ...user.privateMetadata, ...params.privateMetadata };
+      const newUser = {
+        ...user,
+        publicMetadata: { ...user.publicMetadata, ...params.publicMetadata },
+        privateMetadata: { ...user.privateMetadata, ...params.privateMetadata },
+      } as User;
       this.clerkUsers.set(userId, newUser);
 
       return newUser;
@@ -62,7 +58,7 @@ export class ClerkClientMock {
     const getUserList: UserAPI['getUserList'] = async (params = {}) => {
       const users = Array.from(this.clerkUsers.values()).filter((user) => {
         if (params.emailAddress && params.emailAddress.length > 0) {
-          return user.emailAddresses.some((emailAddress) => emailAddress.emailAddress === params.emailAddress[0]);
+          return user.emailAddresses.some((emailAddress) => emailAddress.emailAddress === params.emailAddress?.[0]);
         }
 
         return true;
@@ -105,11 +101,17 @@ export class ClerkClientMock {
   get organizations() {
     const getOrganization: OrganizationAPI['getOrganization'] = async (params) => {
       if ('organizationId' in params) {
-        return this.clerkOrganizations.get(params.organizationId);
+        const org = this.clerkOrganizations.get(params.organizationId);
+        if (!org) throw new Error(`Organization not found with id ${params.organizationId}`);
+
+        return org;
       }
 
       if ('slug' in params) {
-        return Array.from(this.clerkOrganizations.values()).find((org) => org.slug === params.slug);
+        const org = Array.from(this.clerkOrganizations.values()).find((_org) => _org.slug === params.slug);
+        if (!org) throw new Error(`Organization not found with slug ${params.slug}`);
+
+        return org;
       }
 
       throw new Error('Invalid parameters: must provide either organizationId or slug');
@@ -135,7 +137,7 @@ export class ClerkClientMock {
         publicMetadata: {},
         privateMetadata: {},
         organization: CLERK_ORGANIZATION_1,
-      };
+      } as unknown as OrganizationMembership;
       this.clerkOrganizationMemberships.push(newMembership);
 
       return newMembership;
@@ -143,7 +145,9 @@ export class ClerkClientMock {
 
     const updateOrganization: OrganizationAPI['updateOrganization'] = async (organizationId, params) => {
       const organization = this.clerkOrganizations.get(organizationId);
-      const updatedOrganization = { ...organization, ...params };
+      if (!organization) throw new Error(`Organization not found with id ${organizationId}`);
+
+      const updatedOrganization = { ...organization, ...params } as Organization;
       this.clerkOrganizations.set(organizationId, updatedOrganization);
 
       return updatedOrganization;
@@ -154,7 +158,9 @@ export class ClerkClientMock {
       params
     ) => {
       const organization = this.clerkOrganizations.get(organizationId);
-      const updatedOrganization = { ...organization, ...params };
+      if (!organization) throw new Error(`Organization not found with id ${organizationId}`);
+
+      const updatedOrganization = { ...organization, ...params } as Organization;
       this.clerkOrganizations.set(organizationId, updatedOrganization);
 
       return updatedOrganization;
@@ -162,6 +168,8 @@ export class ClerkClientMock {
 
     const deleteOrganization: OrganizationAPI['deleteOrganization'] = async (organizationId) => {
       const organization = this.clerkOrganizations.get(organizationId);
+      if (!organization) throw new Error(`Organization not found with id ${organizationId}`);
+
       this.clerkOrganizations.delete(organizationId);
 
       return organization;

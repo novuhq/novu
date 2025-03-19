@@ -45,6 +45,7 @@ export const CountProvider = (props: ParentProps) => {
   };
 
   onMount(() => {
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     updateTabCounts();
   });
 
@@ -52,6 +53,7 @@ export const CountProvider = (props: ParentProps) => {
     event: 'notifications.unread_count_changed',
     eventHandler: (data) => {
       setTotalUnreadCount(data.result);
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       updateTabCounts();
     },
   });

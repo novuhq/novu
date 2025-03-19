@@ -57,8 +57,9 @@
 <h4 align="center">
   Support our launch on Producthunt today!
 </h4>
+
 <p align="center">
-<a href="https://www.producthunt.com/posts/inbox-by-novu?embed=true&utm_source=badge-featured&utm_medium=badge&utm_souce=badge-inbox&#0045;by&#0045;novu" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=938143&theme=light&t=1742281937829" alt="Inbox&#0032;by&#0032;Novu - The&#0032;open&#0045;source&#0032;notification&#0032;&#0060;Inbox&#0032;&#0047;&#0062;&#0032;for&#0032;modern&#0032;products&#0046; | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" /></a>
+<a href="https://go.novu.co/hunt?utm_source=github" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=938143&theme=light&t=1742281937829" alt="Inbox&#0032;by&#0032;Novu - The&#0032;open&#0045;source&#0032;notification&#0032;&#0060;Inbox&#0032;&#0047;&#0062;&#0032;for&#0032;modern&#0032;products&#0046; | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" /></a>
 </p>
 
 ## ⭐️ Why Novu?

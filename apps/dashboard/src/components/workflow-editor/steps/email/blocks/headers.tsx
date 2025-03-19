@@ -181,7 +181,6 @@ export const createHeaderLogoWithCoverImage: (props: { track: ReturnType<typeof 
                 src: 'https://prod-novu-app-bucket.s3.us-east-1.amazonaws.com/assets/email-editor/header-hero-image.png',
                 alt: null,
                 title: null,
-                width: 600,
                 alignment: 'center',
                 externalLink: null,
                 isExternalLinkVariable: false,

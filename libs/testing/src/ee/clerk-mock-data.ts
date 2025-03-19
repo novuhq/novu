@@ -1,7 +1,7 @@
 import { JobTitleEnum } from '@novu/shared';
 import type { User, Organization, OrganizationMembership } from '@clerk/backend';
 
-export const CLERK_USER_1: User = {
+export const CLERK_USER_1 = {
   id: 'clerk_user_1',
   externalId: null,
   firstName: 'firstName',
@@ -46,9 +46,10 @@ export const CLERK_USER_1: User = {
   twoFactorEnabled: true,
   locked: false,
   createOrganizationsLimit: 10,
-};
+  deleteSelfEnabled: true,
+} as unknown as User;
 
-export const CLERK_USER_2: User = {
+export const CLERK_USER_2 = {
   ...CLERK_USER_1,
   id: 'clerk_user_2',
   externalId: null,
@@ -72,9 +73,9 @@ export const CLERK_USER_2: User = {
   },
   primaryPhoneNumber: null,
   primaryWeb3Wallet: null,
-};
+} as unknown as User;
 
-export const CLERK_ORGANIZATION_1: Organization = {
+export const CLERK_ORGANIZATION_1 = {
   id: 'clerk_org_1',
   name: 'Organization 1',
   slug: 'organization-1',
@@ -88,9 +89,9 @@ export const CLERK_ORGANIZATION_1: Organization = {
   maxAllowedMemberships: 10,
   adminDeleteEnabled: true,
   membersCount: 10,
-};
+} as unknown as Organization;
 
-export const CLERK_ORGANIZATION_2: Organization = {
+export const CLERK_ORGANIZATION_2 = {
   id: 'clerk_org_2',
   name: 'Organization 2',
   slug: 'organization-2',
@@ -104,9 +105,9 @@ export const CLERK_ORGANIZATION_2: Organization = {
   maxAllowedMemberships: 10,
   adminDeleteEnabled: true,
   membersCount: 10,
-};
+} as unknown as Organization;
 
-export const CLERK_ORGANIZATION_1_MEMBERSHIP_1: OrganizationMembership = {
+export const CLERK_ORGANIZATION_1_MEMBERSHIP_1 = {
   id: 'clerk_membership_1',
   role: 'admin',
   publicMetadata: {},
@@ -122,4 +123,4 @@ export const CLERK_ORGANIZATION_1_MEMBERSHIP_1: OrganizationMembership = {
     hasImage: true,
     userId: 'clerk_user_1',
   },
-};
+} as unknown as OrganizationMembership;
