@@ -76,6 +76,7 @@ export class TopicsController {
         key: body.key,
         name: body.name,
         organizationId: user.organizationId,
+        userId: user._id,
       })
     );
 

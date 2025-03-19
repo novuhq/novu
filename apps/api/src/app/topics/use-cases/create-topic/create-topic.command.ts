@@ -2,9 +2,9 @@ import { IsDefined, IsString } from 'class-validator';
 
 import { TopicKey, TopicName } from '../../types';
 
-import { EnvironmentCommand } from '../../../shared/commands/project.command';
+import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
-export class CreateTopicCommand extends EnvironmentCommand {
+export class CreateTopicCommand extends EnvironmentWithUserCommand {
   @IsString()
   @IsDefined()
   key: TopicKey;
