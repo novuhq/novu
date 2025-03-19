@@ -104,6 +104,7 @@ export class TopicsController {
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         subscribers: body.subscribers,
+        userId: user._id,
         topicKey,
       })
     );

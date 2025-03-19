@@ -84,7 +84,7 @@ export class CreateTopicUseCase {
   }
 
   private isValidTopicKey(key: string): boolean {
-    return key.trim().length > 0 && key.match(TOPIC_KEYS_REGEX) !== null;
+    return key.length > 0 && key.match(TOPIC_KEYS_REGEX) !== null;
   }
 
   private async validateTopicKey({
@@ -108,8 +108,16 @@ export class CreateTopicUseCase {
 
     const isValidKey = this.isValidTopicKey(key);
 
-    if (!isValidKey && isDryRun) {
-      Logger.warn(`[Dry run] Invalid topic key: ${key}`, 'CreateTopicUseCase');
+    if (!isValidKey) {
+      if (isDryRun) {
+        Logger.warn(`[Dry run] Invalid topic key: ${key}`, 'CreateTopicUseCase');
+      }
+
+      if (!isDryRun) {
+        throw new UnprocessableEntityException(
+          `Invalid topic key: ${key}, only alphanumeric characters, underscores or valid email are allowed`
+        );
+      }
     }
   }
 }
