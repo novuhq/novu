@@ -17,6 +17,16 @@ import { DelayOutputRendererUsecase } from './usecases/output-renderers/delay-ou
 import { DigestOutputRendererUsecase } from './usecases/output-renderers/digest-output-renderer.usecase';
 import { WrapMailyInLiquidUseCase } from './usecases/output-renderers/maily-to-liquid/wrap-maily-in-liquid.usecase';
 
+export const featureFlagsService = {
+  provide: FeatureFlagsService,
+  useFactory: async (): Promise<FeatureFlagsService> => {
+    const instance = new FeatureFlagsService();
+    await instance.initialize();
+
+    return instance;
+  },
+};
+
 @Module({
   controllers: [NovuBridgeController],
   providers: [
@@ -37,7 +47,7 @@ import { WrapMailyInLiquidUseCase } from './usecases/output-renderers/maily-to-l
     WrapMailyInLiquidUseCase,
     DelayOutputRendererUsecase,
     DigestOutputRendererUsecase,
-    FeatureFlagsService,
+    featureFlagsService,
   ],
 })
 export class NovuBridgeModule {}
