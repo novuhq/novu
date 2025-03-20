@@ -45,10 +45,6 @@ topicSubscribersSchema.index({
 });
 
 topicSubscribersSchema.index({
-  _organizationId: 1,
-});
-
-topicSubscribersSchema.index({
   _subscriberId: 1,
 });
 

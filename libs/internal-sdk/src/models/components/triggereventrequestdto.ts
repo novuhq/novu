@@ -43,7 +43,7 @@ export type To =
  * @remarks
  *     If a new actor object is provided, we will create a new subscriber in our system
  */
-export type TriggerEventRequestDtoActor = SubscriberPayloadDto | string;
+export type Actor = SubscriberPayloadDto | string;
 
 /**
  * It is used to specify a tenant context during trigger event.
@@ -51,7 +51,7 @@ export type TriggerEventRequestDtoActor = SubscriberPayloadDto | string;
  * @remarks
  *     Existing tenants will be updated with the provided details.
  */
-export type TriggerEventRequestDtoTenant = TenantPayloadDto | string;
+export type Tenant = TenantPayloadDto | string;
 
 export type TriggerEventRequestDto = {
   /**
@@ -212,106 +212,84 @@ export function toFromJSON(
 }
 
 /** @internal */
-export const TriggerEventRequestDtoActor$inboundSchema: z.ZodType<
-  TriggerEventRequestDtoActor,
-  z.ZodTypeDef,
-  unknown
-> = z.union([SubscriberPayloadDto$inboundSchema, z.string()]);
+export const Actor$inboundSchema: z.ZodType<Actor, z.ZodTypeDef, unknown> = z
+  .union([SubscriberPayloadDto$inboundSchema, z.string()]);
 
 /** @internal */
-export type TriggerEventRequestDtoActor$Outbound =
-  | SubscriberPayloadDto$Outbound
-  | string;
+export type Actor$Outbound = SubscriberPayloadDto$Outbound | string;
 
 /** @internal */
-export const TriggerEventRequestDtoActor$outboundSchema: z.ZodType<
-  TriggerEventRequestDtoActor$Outbound,
+export const Actor$outboundSchema: z.ZodType<
+  Actor$Outbound,
   z.ZodTypeDef,
-  TriggerEventRequestDtoActor
+  Actor
 > = z.union([SubscriberPayloadDto$outboundSchema, z.string()]);
 
 /**
  * @internal
  * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
  */
-export namespace TriggerEventRequestDtoActor$ {
-  /** @deprecated use `TriggerEventRequestDtoActor$inboundSchema` instead. */
-  export const inboundSchema = TriggerEventRequestDtoActor$inboundSchema;
-  /** @deprecated use `TriggerEventRequestDtoActor$outboundSchema` instead. */
-  export const outboundSchema = TriggerEventRequestDtoActor$outboundSchema;
-  /** @deprecated use `TriggerEventRequestDtoActor$Outbound` instead. */
-  export type Outbound = TriggerEventRequestDtoActor$Outbound;
+export namespace Actor$ {
+  /** @deprecated use `Actor$inboundSchema` instead. */
+  export const inboundSchema = Actor$inboundSchema;
+  /** @deprecated use `Actor$outboundSchema` instead. */
+  export const outboundSchema = Actor$outboundSchema;
+  /** @deprecated use `Actor$Outbound` instead. */
+  export type Outbound = Actor$Outbound;
 }
 
-export function triggerEventRequestDtoActorToJSON(
-  triggerEventRequestDtoActor: TriggerEventRequestDtoActor,
-): string {
-  return JSON.stringify(
-    TriggerEventRequestDtoActor$outboundSchema.parse(
-      triggerEventRequestDtoActor,
-    ),
-  );
+export function actorToJSON(actor: Actor): string {
+  return JSON.stringify(Actor$outboundSchema.parse(actor));
 }
 
-export function triggerEventRequestDtoActorFromJSON(
+export function actorFromJSON(
   jsonString: string,
-): SafeParseResult<TriggerEventRequestDtoActor, SDKValidationError> {
+): SafeParseResult<Actor, SDKValidationError> {
   return safeParse(
     jsonString,
-    (x) => TriggerEventRequestDtoActor$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'TriggerEventRequestDtoActor' from JSON`,
+    (x) => Actor$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'Actor' from JSON`,
   );
 }
 
 /** @internal */
-export const TriggerEventRequestDtoTenant$inboundSchema: z.ZodType<
-  TriggerEventRequestDtoTenant,
-  z.ZodTypeDef,
-  unknown
-> = z.union([TenantPayloadDto$inboundSchema, z.string()]);
+export const Tenant$inboundSchema: z.ZodType<Tenant, z.ZodTypeDef, unknown> = z
+  .union([TenantPayloadDto$inboundSchema, z.string()]);
 
 /** @internal */
-export type TriggerEventRequestDtoTenant$Outbound =
-  | TenantPayloadDto$Outbound
-  | string;
+export type Tenant$Outbound = TenantPayloadDto$Outbound | string;
 
 /** @internal */
-export const TriggerEventRequestDtoTenant$outboundSchema: z.ZodType<
-  TriggerEventRequestDtoTenant$Outbound,
+export const Tenant$outboundSchema: z.ZodType<
+  Tenant$Outbound,
   z.ZodTypeDef,
-  TriggerEventRequestDtoTenant
+  Tenant
 > = z.union([TenantPayloadDto$outboundSchema, z.string()]);
 
 /**
  * @internal
  * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
  */
-export namespace TriggerEventRequestDtoTenant$ {
-  /** @deprecated use `TriggerEventRequestDtoTenant$inboundSchema` instead. */
-  export const inboundSchema = TriggerEventRequestDtoTenant$inboundSchema;
-  /** @deprecated use `TriggerEventRequestDtoTenant$outboundSchema` instead. */
-  export const outboundSchema = TriggerEventRequestDtoTenant$outboundSchema;
-  /** @deprecated use `TriggerEventRequestDtoTenant$Outbound` instead. */
-  export type Outbound = TriggerEventRequestDtoTenant$Outbound;
+export namespace Tenant$ {
+  /** @deprecated use `Tenant$inboundSchema` instead. */
+  export const inboundSchema = Tenant$inboundSchema;
+  /** @deprecated use `Tenant$outboundSchema` instead. */
+  export const outboundSchema = Tenant$outboundSchema;
+  /** @deprecated use `Tenant$Outbound` instead. */
+  export type Outbound = Tenant$Outbound;
 }
 
-export function triggerEventRequestDtoTenantToJSON(
-  triggerEventRequestDtoTenant: TriggerEventRequestDtoTenant,
-): string {
-  return JSON.stringify(
-    TriggerEventRequestDtoTenant$outboundSchema.parse(
-      triggerEventRequestDtoTenant,
-    ),
-  );
+export function tenantToJSON(tenant: Tenant): string {
+  return JSON.stringify(Tenant$outboundSchema.parse(tenant));
 }
 
-export function triggerEventRequestDtoTenantFromJSON(
+export function tenantFromJSON(
   jsonString: string,
-): SafeParseResult<TriggerEventRequestDtoTenant, SDKValidationError> {
+): SafeParseResult<Tenant, SDKValidationError> {
   return safeParse(
     jsonString,
-    (x) => TriggerEventRequestDtoTenant$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'TriggerEventRequestDtoTenant' from JSON`,
+    (x) => Tenant$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'Tenant' from JSON`,
   );
 }
 

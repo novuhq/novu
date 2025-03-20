@@ -45,11 +45,11 @@ export type NotificationsControllerListNotificationsRequest = {
    */
   transactionId?: string | undefined;
   /**
-   * Date filter for records after this timestamp
+   * Date filter for records after this timestamp. Defaults to earliest date allowed by subscription plan
    */
   after?: string | undefined;
   /**
-   * Date filter for records before this timestamp
+   * Date filter for records before this timestamp. Defaults to current time of request (now)
    */
   before?: string | undefined;
   /**

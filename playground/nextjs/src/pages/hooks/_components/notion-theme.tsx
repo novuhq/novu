@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useRef } from 'react';
-import { useCounts, useNotifications } from '@novu/nextjs';
+import { useCounts, useNotifications } from '@novu/nextjs/hooks';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import { FiChevronDown, FiHome, FiInbox, FiSearch, FiSettings } from 'react-icons/fi';
 import { BsFillFileTextFill, BsTrash } from 'react-icons/bs';
@@ -83,7 +83,7 @@ export const NotionTheme = () => {
     return { archived: false };
   }, [status]);
 
-  const { counts } = useCounts({ filters: [{ read: false }] });
+  const { counts } = useCounts({ filters: [{ read: false, tags: ['chat'] }] });
   const { notifications, isLoading, isFetching, hasMore, fetchMore, error } = useNotifications(filter);
 
   return (

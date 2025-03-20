@@ -31,7 +31,7 @@ export const useCounts = (props: UseCountsProps): UseCountsResult => {
   const [isFetching, setIsFetching] = useState(false);
 
   const sync = async (notification?: Notification) => {
-    const existingCounts = counts ?? (new Array(filters.length).fill(undefined) as (Count | undefined)[]);
+    const existingCounts = counts ?? filters.map((filter) => ({ count: 0, filter }));
     let countFiltersToFetch: NotificationFilter[] = [];
     if (notification) {
       // eslint-disable-next-line no-plusplus
@@ -68,9 +68,11 @@ export const useCounts = (props: UseCountsProps): UseCountsResult => {
 
       // eslint-disable-next-line no-plusplus
       for (let i = 0; i < existingCounts.length; i++) {
-        const countReceived = countsReceived.find((c) => areTagsEqual(c.filter.tags, existingCounts[i]?.filter.tags));
-
-        newCounts.push(countReceived || oldCounts![i]);
+        const countReceived = countsReceived.find((c) => areTagsEqual(c.filter.tags, existingCounts[i].filter.tags));
+        const count = countReceived || (oldCounts && oldCounts[i]);
+        if (count) {
+          newCounts.push(count);
+        }
       }
 
       return newCounts;

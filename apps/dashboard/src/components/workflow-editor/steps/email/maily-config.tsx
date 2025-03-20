@@ -1,4 +1,7 @@
-import { htmlCodeBlock } from '@/components/workflow-editor/steps/email/extensions/html';
+import { createFooters } from '@/components/workflow-editor/steps/email/blocks/footers';
+import { createHeaders } from '@/components/workflow-editor/steps/email/blocks/headers';
+import { createHtmlCodeBlock } from '@/components/workflow-editor/steps/email/extensions/html';
+import { useTelemetry } from '@/hooks/use-telemetry';
 import {
   BlockGroupItem,
   blockquote,
@@ -16,6 +19,7 @@ import {
   section,
   spacer,
   text,
+  inlineImage,
 } from '@maily-to/core/blocks';
 
 export const DEFAULT_EDITOR_CONFIG = {
@@ -24,13 +28,17 @@ export const DEFAULT_EDITOR_CONFIG = {
   bodyClassName: '!bg-transparent flex flex-col basis-full !border-none !mt-0 [&>div]:basis-full [&_.tiptap]:h-full',
 };
 
-export const getDefaultEditorBlocks = (isCustomEmailBlocksEnabled: boolean): BlockGroupItem[] => {
+export const createDefaultEditorBlocks = (props: {
+  isCustomEmailBlocksEnabled: boolean;
+  track: ReturnType<typeof useTelemetry>;
+}): BlockGroupItem[] => {
+  const { isCustomEmailBlocksEnabled, track } = props;
   const blocks: BlockGroupItem[] = [];
 
   if (isCustomEmailBlocksEnabled) {
     blocks.push({
       title: 'Highlights',
-      commands: [htmlCodeBlock],
+      commands: [createHtmlCodeBlock({ track }), createHeaders({ track }), createFooters({ track })],
     });
   }
 
@@ -47,6 +55,7 @@ export const getDefaultEditorBlocks = (isCustomEmailBlocksEnabled: boolean): Blo
       heading2,
       heading3,
       image,
+      inlineImage,
       orderedList,
       repeat,
       section,

@@ -57,8 +57,11 @@ export const StatusItem = (props: {
       onClick={props.onClick}
     >
       <span class={style('inboxStatus__dropdownItemLabelContainer', 'nt-flex nt-gap-2 nt-items-center')}>
-        <span class={style('inboxStatus__dropdownItemLeft__icon', 'nt-size-3')}>{props.icon()}</span>
-        <span data-localization={props.localizationKey} class={style('inboxStatus__dropdownItemLabel')}>
+        <span class={style('inboxStatus__dropdownItemLeft__icon', 'nt-size-4')}>{props.icon()}</span>
+        <span
+          data-localization={props.localizationKey}
+          class={style('inboxStatus__dropdownItemLabel', 'nt-leading-none')}
+        >
           {t(props.localizationKey)}
         </span>
       </span>

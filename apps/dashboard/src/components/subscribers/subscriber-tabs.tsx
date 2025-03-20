@@ -11,6 +11,7 @@ import useFetchSubscriberPreferences from '@/hooks/use-fetch-subscriber-preferen
 import { useFormProtection } from '@/hooks/use-form-protection';
 import { useState } from 'react';
 import { RiGroup2Line } from 'react-icons/ri';
+import { motion } from 'motion/react';
 
 type SubscriberOverviewProps = {
   subscriberId: string;
@@ -49,7 +50,7 @@ const SubscriberPreferences = (props: SubscriberPreferencesProps) => {
 };
 
 const tabTriggerClasses =
-  'hover:data-[state=inactive]:text-foreground-950 h-11 data-[state=active]:border-b data-[state=active]:border-primary-base data-[state=active]:border-b-2 py-3 rounded-none [&>span]:h-5 px-0';
+  'hover:data-[state=inactive]:text-foreground-950 h-11 py-3 rounded-none [&>span]:h-5 px-0 relative';
 
 type SubscriberTabsProps = {
   subscriberId: string;
@@ -84,12 +85,15 @@ export function SubscriberTabs(props: SubscriberTabsProps) {
       <TabsList className="border-bg-soft h-auto w-full items-center gap-6 rounded-none border-b bg-transparent px-3 py-0">
         <TabsTrigger value="overview" className={tabTriggerClasses}>
           <span>Overview</span>
+          {tab === 'overview' && <ActiveTabIndicator />}
         </TabsTrigger>
         <TabsTrigger value="preferences" className={tabTriggerClasses}>
           <span>Preferences</span>
+          {tab === 'preferences' && <ActiveTabIndicator />}
         </TabsTrigger>
         <TabsTrigger value="activity-feed" className={tabTriggerClasses}>
           <span>Activity Feed</span>
+          {tab === 'activity-feed' && <ActiveTabIndicator />}
         </TabsTrigger>
       </TabsList>
       <TabsContent value="overview" className="h-full w-full overflow-y-auto">
@@ -107,3 +111,7 @@ export function SubscriberTabs(props: SubscriberTabsProps) {
     </Tabs>
   );
 }
+
+const ActiveTabIndicator = () => {
+  return <motion.div layoutId="active-tab" className="bg-primary-base absolute bottom-0 left-0 right-0 z-10 h-[2px]" />;
+};

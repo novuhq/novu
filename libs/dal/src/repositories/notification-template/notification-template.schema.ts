@@ -281,13 +281,6 @@ notificationTemplateSchema.index({
   name: 1,
 });
 
-// TODO: Deprecate this index. Use the envId, triggerId instead
-notificationTemplateSchema.index({
-  _environmentId: 1,
-  'triggers.identifier': 1,
-  name: 1,
-});
-
 notificationTemplateSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, overrideMethods: 'all' });
 
 export const NotificationTemplate =

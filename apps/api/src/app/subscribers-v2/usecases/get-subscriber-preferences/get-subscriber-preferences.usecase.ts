@@ -74,6 +74,7 @@ export class GetSubscriberPreferences {
         slug: buildSlug(template.name, ShortIsPrefixEnum.WORKFLOW, template._id),
         identifier: template.triggers[0].identifier,
         name: template.name,
+        updatedAt: template.updatedAt,
       },
     };
   }

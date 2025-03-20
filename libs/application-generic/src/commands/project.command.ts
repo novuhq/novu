@@ -107,4 +107,6 @@ export abstract class CursorBasedPaginatedCommand<T, K extends KeysOfT<T>> exten
 
   orderBy: K;
   orderDirection?: DirectionEnum;
+
+  includeCursor?: boolean;
 }

@@ -1,12 +1,9 @@
 import { Popover, PopoverContent, PopoverPortal, PopoverTrigger } from '@/components/primitives/popover';
 import { API_HOSTNAME, APP_ID, WEBSOCKET_HOSTNAME } from '@/config';
 import { useEnvironment } from '@/context/environment/hooks';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useTestPage } from '@/hooks/use-test-page';
 import { useUser } from '@clerk/clerk-react';
-import { Bell as BellV3, InboxContent as InboxContentV3, Inbox as InboxV3, useNovu as useNovuV3 } from '@novu/react';
-import { Bell as BellV2, InboxContent as InboxContentV2, Inbox as InboxV2, useNovu as useNovuV2 } from '@novu/react-v2';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { Bell, InboxContent, Inbox, useNovu } from '@novu/react';
 import { useEffect, useState } from 'react';
 import { HeaderButton } from './header-navigation/header-button';
 import { InboxBellFilled } from './icons/inbox-bell-filled';
@@ -25,10 +22,8 @@ const InboxInner = () => {
   const [open, setOpen] = useState(false);
   const [jingle, setJingle] = useState(false);
   const { isTestPage } = useTestPage();
-  const isInboxV3Enabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_INBOX_V3_ENABLED);
 
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const novu = isInboxV3Enabled ? useNovuV3() : useNovuV2();
+  const novu = useNovu();
   useEffect(() => {
     // Store a timeout to debounce the jingle animation, preventing the bell from
     // becoming jittery when multiple notifications are received in quick succession.
@@ -45,9 +40,6 @@ const InboxInner = () => {
       cleanup();
     };
   }, [novu]);
-
-  const Bell = isInboxV3Enabled ? BellV3 : BellV2;
-  const InboxContent = isInboxV3Enabled ? InboxContentV3 : InboxContentV2;
 
   return (
     <Popover onOpenChange={setOpen}>
@@ -95,7 +87,6 @@ export const InboxButton = () => {
   const { user } = useUser();
   const { currentEnvironment } = useEnvironment();
   const { isTestPage } = useTestPage();
-  const isInboxV3Enabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_INBOX_V3_ENABLED);
 
   if (!user || !currentEnvironment) {
     return null;
@@ -110,8 +101,6 @@ export const InboxButton = () => {
   const appId = isTestPage ? currentEnvironment?.identifier : APP_ID;
 
   const localizationTestSuffix = isTestPage ? ' (Test)' : '';
-
-  const Inbox = isInboxV3Enabled ? InboxV3 : InboxV2;
 
   return (
     <Inbox

@@ -111,6 +111,7 @@ describe('Session', () => {
       _id: 'env-id',
       _organizationId: 'org-id',
       apiKeys: [{ key: 'api-key', _userId: 'user-id' }],
+      name: 'Development',
     } as any);
     selectIntegration.execute.resolves(mockIntegration);
     createSubscriber.execute.resolves(subscriber as any);

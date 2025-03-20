@@ -1,9 +1,18 @@
-import type { FromSchema, FromSchemaUnvalidated, Schema, JsonSchema, ZodSchema } from '../types/schema.types';
+import type {
+  FromSchema,
+  FromSchemaUnvalidated,
+  Schema,
+  JsonSchema,
+  ZodSchema,
+  ClassValidatorSchema,
+} from '../types/schema.types';
 import type { ValidateResult } from '../types/validator.types';
 import { JsonSchemaValidator } from './json-schema.validator';
 import { ZodValidator } from './zod.validator';
+import { ClassValidatorValidator } from './class-validator.validator';
 
 const zodValidator = new ZodValidator();
+const classValidatorValidator = new ClassValidatorValidator();
 const jsonSchemaValidator = new JsonSchemaValidator();
 
 /**
@@ -28,6 +37,8 @@ export const validateData = async <
    */
   if (await zodValidator.canHandle(schema)) {
     return zodValidator.validate(data, schema as ZodSchema);
+  } else if (await classValidatorValidator.canHandle(schema)) {
+    return classValidatorValidator.validate(data, schema as ClassValidatorSchema);
   } else if (await jsonSchemaValidator.canHandle(schema)) {
     return jsonSchemaValidator.validate(data, schema as JsonSchema);
   }
@@ -44,6 +55,8 @@ export const validateData = async <
 export const transformSchema = async (schema: Schema): Promise<JsonSchema> => {
   if (await zodValidator.canHandle(schema)) {
     return zodValidator.transformToJsonSchema(schema as ZodSchema);
+  } else if (await classValidatorValidator.canHandle(schema)) {
+    return classValidatorValidator.transformToJsonSchema(schema as ClassValidatorSchema);
   } else if (await jsonSchemaValidator.canHandle(schema)) {
     return jsonSchemaValidator.transformToJsonSchema(schema as JsonSchema);
   }

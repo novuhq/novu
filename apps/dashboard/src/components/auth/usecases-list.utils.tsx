@@ -13,14 +13,14 @@ export interface Usecase {
   image: string;
 }
 
-export const getChannelOptions = (isInboxV3Enabled: boolean) => [
+export const getChannelOptions = () => [
   {
     icon: STEP_TYPE_TO_ICON[StepTypeEnum.IN_APP],
     title: 'Inbox',
     color: STEP_TYPE_TO_COLOR[StepTypeEnum.IN_APP],
     id: ChannelTypeEnum.IN_APP,
     description: 'Embed real-time <Inbox/> in your product',
-    image: isInboxV3Enabled ? 'in_app-preview-v3.webp' : 'in_app-preview.webp',
+    image: 'in_app-preview-v3.webp',
   },
   {
     icon: STEP_TYPE_TO_ICON[StepTypeEnum.EMAIL],

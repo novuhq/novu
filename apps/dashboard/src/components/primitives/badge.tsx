@@ -26,7 +26,7 @@ export const badgeVariants = tv({
   variants: {
     size: {
       sm: {
-        root: 'h-4 gap-1.5 px-2 text-subheading-2xs uppercase has-[>.dot]:gap-2',
+        root: 'h-4 gap-1.5 px-2 text-subheading-2xs has-[>.dot]:gap-2',
         icon: '-mx-1 size-3',
         dot: '-mx-2 size-4',
       },

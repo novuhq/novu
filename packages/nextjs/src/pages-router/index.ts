@@ -1,3 +1,5 @@
+'use client';
+
 export { Inbox } from './Inbox';
 export { Bell, Preferences, Notifications, InboxContent, NovuProvider } from '@novu/react';
 
