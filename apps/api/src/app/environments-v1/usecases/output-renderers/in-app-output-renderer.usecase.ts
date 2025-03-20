@@ -1,6 +1,6 @@
 import { InAppRenderOutput } from '@novu/shared';
 import { Injectable } from '@nestjs/common';
-import { InstrumentUsecase, sanitizeHTML } from '@novu/application-generic';
+import { InstrumentUsecase, sanitizeHTML, sanitizeHtmlInObject } from '@novu/application-generic';
 import { RenderCommand } from './render-command';
 
 @Injectable()
@@ -11,33 +11,8 @@ export class InAppOutputRendererUsecase {
 
     if (disableOutputSanitization) {
       return outputControls as any;
-    } else {
-      const { subject, body, avatar, primaryAction, secondaryAction, data, redirect } = outputControls as any;
-
-      return {
-        subject: sanitizeHTML(subject),
-        body: sanitizeHTML(body),
-        avatar: sanitizeHTML(avatar),
-        primaryAction: {
-          label: sanitizeHTML(primaryAction.label),
-          redirect: {
-            url: sanitizeHTML(primaryAction.redirect.url),
-            target: primaryAction.redirect.target,
-          },
-        },
-        secondaryAction: {
-          label: sanitizeHTML(secondaryAction.label),
-          redirect: {
-            url: sanitizeHTML(secondaryAction.redirect.url),
-            target: secondaryAction.redirect.target,
-          },
-        },
-        redirect: {
-          url: sanitizeHTML(redirect.url),
-          target: redirect.target,
-        },
-        data,
-      };
     }
+
+    return sanitizeHtmlInObject(outputControls) as any;
   }
 }
