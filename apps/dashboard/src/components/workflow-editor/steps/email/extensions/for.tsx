@@ -24,7 +24,7 @@ declare module '@tiptap/core' {
  * @see https://github.com/arikchakma/maily.to/blob/d7ea26e6b28201fc66c241200adaebc689018b03/packages/core/src/editor/nodes/for/for.ts
  */
 export const ForExtension = Node.create({
-  name: 'for',
+  name: 'repeat',
   group: 'block',
   content: '(block|columns)+',
   draggable: true,

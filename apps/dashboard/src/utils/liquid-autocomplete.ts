@@ -1,4 +1,4 @@
-import { FILTERS } from '@/components/primitives/control-input/variable-popover/constants';
+import { FILTERS } from '@/components/variable/constants';
 import { LiquidVariable } from '@/utils/parseStepVariablesToLiquidVariables';
 import { Completion, CompletionContext, CompletionResult } from '@codemirror/autocomplete';
 import { EditorView } from '@uiw/react-codemirror';
@@ -90,6 +90,7 @@ export const completions =
 
     // Handle pipe filters
     const afterPipe = getContentAfterPipe(searchText);
+
     if (afterPipe !== null) {
       return {
         from: pos - afterPipe.length,
@@ -146,6 +147,7 @@ function isValidDynamicPath(searchText: string): boolean {
 
 function validateSubscriberField(searchText: string, matches: LiquidVariable[]): LiquidVariable[] {
   const parts = searchText.split('.');
+
   if (parts.length === 2 && parts[0] === 'subscriber') {
     if (!matches.some((v) => v.label === searchText)) {
       return [];

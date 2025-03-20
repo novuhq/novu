@@ -1,13 +1,12 @@
 import { RiArrowRightSLine, RiGuideFill } from 'react-icons/ri';
 import { RQBJsonLogic } from 'react-querybuilder';
 import { Link } from 'react-router-dom';
-import { FeatureFlagsKeysEnum, StepResponseDto, WorkflowOriginEnum } from '@novu/shared';
+import { StepResponseDto, WorkflowOriginEnum } from '@novu/shared';
 
 import { Button } from '@/components/primitives/button';
 import { Separator } from '@/components/primitives/separator';
 import { SidebarContent } from '@/components/side-navigation/sidebar';
 import { useConditionsCount } from '@/hooks/use-conditions-count';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 
 export function SkipConditionsButton({
   origin,
@@ -18,8 +17,7 @@ export function SkipConditionsButton({
   step: StepResponseDto;
   inSidebar?: boolean;
 }) {
-  const isStepConditionsFeatureEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_STEP_CONDITIONS_ENABLED);
-  const canEditStepConditions = isStepConditionsFeatureEnabled && origin === WorkflowOriginEnum.NOVU_CLOUD;
+  const canEditStepConditions = origin === WorkflowOriginEnum.NOVU_CLOUD;
   const uiSchema = step.controls.uiSchema;
   const skip = uiSchema?.properties?.skip;
 

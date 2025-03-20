@@ -6,12 +6,13 @@ import {
   Get,
   Param,
   Patch,
+  Post,
   Query,
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ExternalApiAccessible, UserSession } from '@novu/application-generic';
-import { UserSessionData } from '@novu/shared';
+import { ApiRateLimitCategoryEnum, UserSessionData } from '@novu/shared';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
 import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
 import { ListSubscribersCommand } from './usecases/list-subscribers/list-subscribers.command';
@@ -35,7 +36,12 @@ import { GetSubscriberPreferencesDto } from './dtos/get-subscriber-preferences.d
 import { PatchSubscriberPreferencesDto } from './dtos/patch-subscriber-preferences.dto';
 import { UpdateSubscriberPreferencesCommand } from './usecases/update-subscriber-preferences/update-subscriber-preferences.command';
 import { UpdateSubscriberPreferences } from './usecases/update-subscriber-preferences/update-subscriber-preferences.usecase';
+import { ThrottlerCategory } from '../rate-limiting/guards/throttler.decorator';
+import { CreateSubscriber } from './usecases/create-subscriber/create-subscriber.usecase';
+import { CreateSubscriberCommand } from './usecases/create-subscriber/create-subscriber.command';
+import { CreateSubscriberRequestDto } from './dtos/create-subscriber.dto';
 
+@ThrottlerCategory(ApiRateLimitCategoryEnum.CONFIGURATION)
 @Controller({ path: '/subscribers', version: '2' })
 @UseInterceptors(ClassSerializerInterceptor)
 @ApiTags('Subscribers')
@@ -48,7 +54,8 @@ export class SubscribersController {
     private patchSubscriberUsecase: PatchSubscriber,
     private removeSubscriberUsecase: RemoveSubscriber,
     private getSubscriberPreferencesUsecase: GetSubscriberPreferences,
-    private updateSubscriberPreferencesUsecase: UpdateSubscriberPreferences
+    private updateSubscriberPreferencesUsecase: UpdateSubscriberPreferences,
+    private createSubscriberUsecase: CreateSubscriber
   ) {}
 
   @Get('')
@@ -73,6 +80,7 @@ export class SubscribersController {
         phone: query.phone,
         subscriberId: query.subscriberId,
         name: query.name,
+        includeCursor: query.includeCursor,
       })
     );
   }
@@ -95,6 +103,28 @@ export class SubscribersController {
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         subscriberId,
+      })
+    );
+  }
+
+  @Post('')
+  @UserAuthentication()
+  @ExternalApiAccessible()
+  @ApiOperation({
+    summary: 'Create subscriber',
+    description: 'Create subscriber with the given data',
+  })
+  @ApiResponse(SubscriberResponseDto, 201)
+  @SdkMethodName('create')
+  async createSubscriber(
+    @UserSession() user: UserSessionData,
+    @Body() body: CreateSubscriberRequestDto
+  ): Promise<SubscriberResponseDto> {
+    return await this.createSubscriberUsecase.execute(
+      CreateSubscriberCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        createSubscriberRequestDto: body,
       })
     );
   }
@@ -124,7 +154,7 @@ export class SubscribersController {
   }
 
   @Delete('/:subscriberId')
-  @ApiResponse(RemoveSubscriberResponseDto)
+  @ApiResponse(RemoveSubscriberResponseDto, 200)
   @UserAuthentication()
   @ExternalApiAccessible()
   @ApiOperation({
@@ -154,7 +184,7 @@ export class SubscribersController {
   })
   @ApiResponse(GetSubscriberPreferencesDto)
   @SdkGroupName('Subscribers.Preferences')
-  @SdkMethodName('retrieve')
+  @SdkMethodName('list')
   async getSubscriberPreferences(
     @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string

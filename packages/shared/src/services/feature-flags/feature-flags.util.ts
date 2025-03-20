@@ -5,3 +5,14 @@ export const prepareBooleanStringFeatureFlag = (value: string | undefined, defau
 
   return value === 'true';
 };
+
+export const prepareNumberStringFeatureFlag = (
+  value: string | undefined,
+  defaultValue: number | undefined
+): number | undefined => {
+  if (value) {
+    return parseInt(value, 10);
+  }
+
+  return defaultValue;
+};

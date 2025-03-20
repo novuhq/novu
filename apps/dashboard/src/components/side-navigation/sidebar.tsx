@@ -3,6 +3,7 @@ import { cva, VariantProps } from 'class-variance-authority';
 import { HTMLAttributes } from 'react';
 
 type SidebarHeaderProps = HTMLAttributes<HTMLDivElement>;
+
 export const SidebarHeader = (props: SidebarHeaderProps) => {
   const { className, ...rest } = props;
   return <div className={cn('flex gap-2.5 px-2 py-3.5', className)} {...rest} />;
@@ -21,12 +22,14 @@ const sidebarContentVariants = cva(`flex flex-col`, {
   },
 });
 type SidebarContentProps = HTMLAttributes<HTMLDivElement> & VariantProps<typeof sidebarContentVariants>;
+
 export const SidebarContent = (props: SidebarContentProps) => {
   const { className, size, ...rest } = props;
   return <div className={cn(sidebarContentVariants({ size }), className)} {...rest} />;
 };
 
 type SidebarFooterProps = HTMLAttributes<HTMLDivElement>;
+
 export const SidebarFooter = (props: SidebarFooterProps) => {
   const { className, ...rest } = props;
   return <div className={cn('mt-auto space-y-2.5 px-2 py-3.5', className)} {...rest} />;

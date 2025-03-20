@@ -48,9 +48,7 @@ describe('test onesignal notification user api', () => {
       iosBadgeCount: 1,
     });
     expect(mockedAxios.request).toHaveBeenCalled();
-    const data = JSON.parse(
-      (mockedAxios.request.mock.calls[0][0].data as string) || '{}',
-    );
+    const data = JSON.parse((mockedAxios.request.mock.calls[0][0].data as string) || '{}');
 
     expect(data).toEqual({
       include_aliases: {

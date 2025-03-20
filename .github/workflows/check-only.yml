@@ -1,0 +1,20 @@
+name: Check for .only flags
+
+on:
+  pull_request:
+    branches: [ "**" ]
+
+jobs:
+  check-only:
+    name: Check for .only in tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check for .only flags
+        run: |
+          chmod +x .github/workflows/scripts/stop-only.sh
+          .github/workflows/scripts/stop-only.sh .

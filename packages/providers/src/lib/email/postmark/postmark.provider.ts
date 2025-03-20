@@ -13,10 +13,7 @@ import { Errors, ServerClient, Message, Models } from 'postmark';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
-export class PostmarkEmailProvider
-  extends BaseProvider
-  implements IEmailProvider
-{
+export class PostmarkEmailProvider extends BaseProvider implements IEmailProvider {
   id = EmailProviderIdEnum.Postmark;
   protected casing = CasingEnum.PASCAL_CASE;
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
@@ -26,7 +23,7 @@ export class PostmarkEmailProvider
     private config: {
       apiKey: string;
       from: string;
-    },
+    }
   ) {
     super();
     this.client = new ServerClient(this.config.apiKey);
@@ -34,14 +31,11 @@ export class PostmarkEmailProvider
 
   async sendMessage(
     options: IEmailOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const mailData = this.createMailData(options);
     const response = await this.client.sendEmail(
-      this.transform<Message>(
-        bridgeProviderData,
-        mailData as unknown as Record<string, unknown>,
-      ).body,
+      this.transform<Message>(bridgeProviderData, mailData as unknown as Record<string, unknown>).body
     );
 
     return {
@@ -50,9 +44,7 @@ export class PostmarkEmailProvider
     };
   }
 
-  async checkIntegration(
-    options: IEmailOptions,
-  ): Promise<ICheckIntegrationResponse> {
+  async checkIntegration(options: IEmailOptions): Promise<ICheckIntegrationResponse> {
     try {
       const mailData = this.createMailData(options);
       await this.client.sendEmail(mailData);
@@ -89,12 +81,7 @@ export class PostmarkEmailProvider
       Cc: getFormattedTo(options.cc),
       Bcc: getFormattedTo(options.bcc),
       Attachments: options.attachments?.map(
-        (attachment) =>
-          new Models.Attachment(
-            attachment.name,
-            attachment.file.toString('base64'),
-            attachment.mime,
-          ),
+        (attachment) => new Models.Attachment(attachment.name, attachment.file.toString('base64'), attachment.mime)
       ),
     };
 
@@ -113,10 +100,7 @@ export class PostmarkEmailProvider
     return [body.MessageID];
   }
 
-  parseEventBody(
-    body: any | any[],
-    identifier: string,
-  ): IEmailEventBody | undefined {
+  parseEventBody(body: any | any[], identifier: string): IEmailEventBody | undefined {
     if (Array.isArray(body)) {
       // eslint-disable-next-line no-param-reassign
       body = body.find((item) => item.MessageID === identifier);

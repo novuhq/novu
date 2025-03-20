@@ -1,9 +1,9 @@
 /* eslint-disable no-param-reassign */
+import { JSONSchemaDto } from '@novu/shared';
 import difference from 'lodash/difference';
 import isArray from 'lodash/isArray';
 import isObject from 'lodash/isObject';
 import reduce from 'lodash/reduce';
-import { JSONSchemaDto } from '@novu/shared';
 import { MAILY_ITERABLE_MARK } from '../../environments-v1/usecases/output-renderers/maily-to-liquid/maily.types';
 
 export function findMissingKeys(requiredRecord: object, actualRecord: object) {

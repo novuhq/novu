@@ -1,5 +1,10 @@
 export enum MailyContentTypeEnum {
   VARIABLE = 'variable',
+  REPEAT = 'repeat',
+  /**
+   * Legacy enum value maintained for backwards compatibility
+   * @deprecated
+   */
   FOR = 'for',
   BUTTON = 'button',
   IMAGE = 'image',

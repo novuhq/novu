@@ -2,7 +2,7 @@ import { createMemo, createSignal, onMount } from 'solid-js';
 import { appearanceKeys } from '../config';
 import { useAppearance } from '../context';
 import type { AppearanceKey, Elements } from '../types';
-import { cn } from './utils';
+import { cn, publicFacingTwMerge } from './utils';
 
 export const useStyle = () => {
   const appearance = useAppearance();
@@ -46,12 +46,28 @@ export const useStyle = () => {
       .filter((className) => !(finalAppearanceKeys as string[]).includes(className))
       .join(' ');
 
-    const appearanceClassnames = [];
-    for (let i = 0; i < finalAppearanceKeys.length; i += 1) {
+    let appearanceClassnames: string[] = [];
+    for (let i = 0; i < finalAppearanceKeys.reverse().length; i += 1) {
       if (typeof appearance.elements()?.[finalAppearanceKeys[i]] === 'string') {
-        appearanceClassnames.push(appearance.elements()?.[finalAppearanceKeys[i]]);
+        appearanceClassnames.push(appearance.elements()?.[finalAppearanceKeys[i]] as string);
       }
     }
+
+    /*
+     ** Attempt to fix any classname clashes here when a specific appearance key is changing the same
+     ** css property.
+     **
+     ** For example:
+     ** back__button: 'bg-blue-500',
+     ** button: 'bg-red-500',
+     **
+     ** The above will clash, so we need to merge them together.
+     **
+     ** We do this by reversing the appearance keys (to have the more specific ones last) and merging them together.
+     ** Currently only using twMerge so it won't work for other css frameworks but we can allow
+     ** passing a custom merge function in the future, or just wrap with more logic to support more frameworks.
+     */
+    appearanceClassnames = [publicFacingTwMerge(appearanceClassnames)];
 
     const cssInJsClasses =
       !!finalAppearanceKeys.length && !isServer()

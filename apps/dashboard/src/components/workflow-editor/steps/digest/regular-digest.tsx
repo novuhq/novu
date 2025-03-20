@@ -14,6 +14,7 @@ export const RegularDigest = () => {
 
   const minAmountValue = useMemo(() => {
     const fixedDurationSchema = dataSchema?.anyOf?.[0];
+
     if (typeof fixedDurationSchema === 'object') {
       const amountField = fixedDurationSchema.properties?.amount;
 
@@ -36,6 +37,7 @@ export const RegularDigest = () => {
         onValueChange={() => saveForm()}
         showError={false}
         min={minAmountValue}
+        dataTestId="regular-digest-amount-input"
       />
     </div>
   );

@@ -47,6 +47,7 @@ export const DigestWindow = () => {
 
     // restore the preserved form values
     const preservedFormValues = preservedFormValuesByType[value];
+
     if (preservedFormValues) {
       setValue(AMOUNT_KEY, preservedFormValues['amount'], { shouldDirty: true });
       setValue(UNIT_KEY, preservedFormValues['unit'], { shouldDirty: true });
@@ -60,6 +61,7 @@ export const DigestWindow = () => {
       setValue(UNIT_KEY, TimeUnitEnum.SECONDS, { shouldDirty: true });
       setValue(CRON_KEY, undefined, { shouldDirty: true });
     }
+
     await trigger();
     saveForm();
   };

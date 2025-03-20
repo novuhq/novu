@@ -4,6 +4,7 @@ import { HTMLAttributes } from 'react';
 import { RiArrowDownSFill } from 'react-icons/ri';
 
 type EmailPreviewHeaderProps = HTMLAttributes<HTMLDivElement>;
+
 export const EmailPreviewHeader = (props: EmailPreviewHeaderProps) => {
   const { className, ...rest } = props;
   return (
@@ -26,6 +27,7 @@ export const EmailPreviewHeader = (props: EmailPreviewHeaderProps) => {
 type EmailPreviewSubjectProps = HTMLAttributes<HTMLHeadingElement> & {
   subject: string;
 };
+
 export const EmailPreviewSubject = (props: EmailPreviewSubjectProps) => {
   const { subject, className, ...rest } = props;
 
@@ -39,19 +41,27 @@ export const EmailPreviewSubject = (props: EmailPreviewSubjectProps) => {
 type EmailPreviewBodyProps = HTMLAttributes<HTMLDivElement> & {
   body: string;
 };
+
 export const EmailPreviewBody = (props: EmailPreviewBodyProps) => {
   const { body, className, ...rest } = props;
 
   return (
     <div
       className={cn('mx-auto min-h-96 w-full overflow-auto px-8 py-6', className)}
-      dangerouslySetInnerHTML={{ __html: body }}
+      // use shadow DOM to isolate the styles
+      ref={(node) => {
+        if (node && !node.shadowRoot) {
+          const shadow = node.attachShadow({ mode: 'open' });
+          shadow.innerHTML = body;
+        }
+      }}
       {...rest}
     />
   );
 };
 
 type EmailPreviewContentMobileProps = HTMLAttributes<HTMLDivElement>;
+
 export const EmailPreviewContentMobile = (props: EmailPreviewContentMobileProps) => {
   const { className, ...rest } = props;
 
@@ -61,6 +71,7 @@ export const EmailPreviewContentMobile = (props: EmailPreviewContentMobileProps)
 type EmailPreviewBodyMobileProps = HTMLAttributes<HTMLDivElement> & {
   body: string;
 };
+
 export const EmailPreviewBodyMobile = (props: EmailPreviewBodyMobileProps) => {
   const { body, className, ...rest } = props;
 
@@ -76,6 +87,7 @@ export const EmailPreviewBodyMobile = (props: EmailPreviewBodyMobileProps) => {
 type EmailPreviewSubjectMobileProps = HTMLAttributes<HTMLDivElement> & {
   subject: string;
 };
+
 export const EmailPreviewSubjectMobile = (props: EmailPreviewSubjectMobileProps) => {
   const { subject, className, ...rest } = props;
 

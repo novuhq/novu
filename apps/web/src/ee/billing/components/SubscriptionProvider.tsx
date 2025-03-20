@@ -24,6 +24,7 @@ const SubscriptionContext = React.createContext<UseSubscriptionType>({
     daysTotal: 0,
     daysLeft: 0,
   },
+  cancelAt: null,
 });
 
 export const useSubscriptionContext = () => useContext(SubscriptionContext);

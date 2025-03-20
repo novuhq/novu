@@ -1,8 +1,8 @@
 import { expect } from 'chai';
-import { encryptOldCredentialsMigration } from './encrypt-credentials-migration';
 import { UserSession } from '@novu/testing';
 import { ChannelTypeEnum } from '@novu/stateless';
 import { IntegrationRepository } from '@novu/dal';
+import { encryptOldCredentialsMigration } from './encrypt-credentials-migration';
 
 describe('Encrypt Old Credentials', function () {
   let session: UserSession;
@@ -30,7 +30,7 @@ describe('Encrypt Old Credentials', function () {
         channel: data.channel,
         credentials: {
           apiKey: '123',
-          user: 'smith' + i,
+          user: `smith${i}`,
           secretKey: '123',
           domain: 'domain',
           password: '123',
@@ -63,7 +63,7 @@ describe('Encrypt Old Credentials', function () {
       const integration = encryptIntegration[integrationKey];
 
       expect(integration.credentials.apiKey).to.contains('nvsk.');
-      expect(integration.credentials.user).to.equal('smith' + integrationKey);
+      expect(integration.credentials.user).to.equal(`smith${integrationKey}`);
       expect(integration.credentials.secretKey).to.contains('nvsk.');
       expect(integration.credentials.domain).to.equal('domain');
       expect(integration.credentials.password).to.contains('nvsk.');

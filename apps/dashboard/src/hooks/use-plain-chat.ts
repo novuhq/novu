@@ -129,6 +129,7 @@ export const usePlainChat = () => {
         Sentry.captureException(error);
       }
     }
+
     setIsFirstRender(false);
   }, [isFirstRender, isLiveChatVisible, currentUser]);
 

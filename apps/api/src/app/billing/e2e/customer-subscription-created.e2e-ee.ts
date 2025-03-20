@@ -1,9 +1,7 @@
 /* eslint-disable global-require */
 import sinon from 'sinon';
 import { expect } from 'chai';
-import { ApiServiceLevelEnum } from '@novu/shared';
-// eslint-disable-next-line no-restricted-imports
-import { StripeBillingIntervalEnum } from '@novu/ee-billing/src/stripe/types';
+import { ApiServiceLevelEnum, StripeBillingIntervalEnum } from '@novu/shared';
 
 const mockCustomerSubscriptionCreatedEvent = {
   data: {
@@ -44,9 +42,6 @@ const verifyCustomerMock = {
     subscriptions: {
       data: [{ id: 'subscription_id' }],
     },
-  },
-  adminUser: {
-    _id: 'admin_user_id',
   },
   organization: { _id: 'organization_id', apiServiceLevel: ApiServiceLevelEnum.FREE },
   subscriptions: [

@@ -2,8 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { hash } from 'bcrypt';
 import { isBefore, subDays } from 'date-fns';
 import { UserRepository } from '@novu/dal';
-import { AuthService, buildUserKey, InvalidateCacheService } from '@novu/application-generic';
-
+import { InvalidateCacheService, buildUserKey } from '@novu/application-generic';
+import { AuthService } from '../../services/auth.service';
 import { PasswordResetCommand } from './password-reset.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 

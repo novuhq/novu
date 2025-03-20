@@ -1,14 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  constantCase,
-  dotCase,
-  kebabCase,
-  pascalCase,
-  pathCase,
-  sentenceCase,
-  snakeCase,
-  trainCase,
-} from './index';
+import { constantCase, dotCase, kebabCase, pascalCase, pathCase, sentenceCase, snakeCase, trainCase } from './index';
 
 const stubPrimitiveObject = {
   primitiveString: 'string',

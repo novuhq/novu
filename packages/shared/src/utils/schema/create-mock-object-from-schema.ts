@@ -38,36 +38,39 @@ export function createMockObjectFromSchema(
     throw new Error('Schema must define an object with properties.');
   }
 
-  return Object.entries(schema.properties).reduce((acc, [key, definition]) => {
-    if (typeof definition === 'boolean') {
+  return Object.entries(schema.properties).reduce(
+    (acc, [key, definition]) => {
+      if (typeof definition === 'boolean') {
+        return acc;
+      }
+
+      const currentPath = path && path.length > 0 ? `${path}.${key}` : key;
+
+      if (definition.type === 'array' && definition.items) {
+        // handle array type by creating a mock object for the first item
+        acc[key] = [
+          createMockObjectFromSchema(
+            {
+              type: 'object',
+              properties:
+                typeof definition.items === 'object' && 'properties' in definition.items
+                  ? definition.items.properties
+                  : {},
+            },
+            `${currentPath}.0`,
+            depth + 1
+          ),
+        ];
+      } else if (definition.default) {
+        acc[key] = definition.default;
+      } else if (definition.type === 'object' && definition.properties) {
+        acc[key] = createMockObjectFromSchema(definition, currentPath, depth + 1);
+      } else {
+        acc[key] = `{{${currentPath}}}`;
+      }
+
       return acc;
-    }
-
-    const currentPath = path && path.length > 0 ? `${path}.${key}` : key;
-
-    if (definition.type === 'array' && definition.items) {
-      // handle array type by creating a mock object for the first item
-      acc[key] = [
-        createMockObjectFromSchema(
-          {
-            type: 'object',
-            properties:
-              typeof definition.items === 'object' && 'properties' in definition.items
-                ? definition.items.properties
-                : {},
-          },
-          `${currentPath}.0`,
-          depth + 1
-        ),
-      ];
-    } else if (definition.default) {
-      acc[key] = definition.default;
-    } else if (definition.type === 'object' && definition.properties) {
-      acc[key] = createMockObjectFromSchema(definition, currentPath, depth + 1);
-    } else {
-      acc[key] = `{{${currentPath}}}`;
-    }
-
-    return acc;
-  }, {});
+    },
+    {} as Record<string, unknown>
+  );
 }

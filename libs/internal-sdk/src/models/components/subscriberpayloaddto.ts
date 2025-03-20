@@ -13,7 +13,11 @@ import {
   SubscriberChannelDto$outboundSchema,
 } from "./subscriberchanneldto.js";
 
-export type Data = string | Array<string> | boolean | number;
+export type SubscriberPayloadDtoData =
+  | string
+  | Array<string>
+  | boolean
+  | number;
 
 export type SubscriberPayloadDto = {
   /**
@@ -52,43 +56,61 @@ export type SubscriberPayloadDto = {
    * An optional array of subscriber channels.
    */
   channels?: Array<SubscriberChannelDto> | undefined;
+  /**
+   * The timezone of the subscriber.
+   */
+  timezone?: string | undefined;
 };
 
 /** @internal */
-export const Data$inboundSchema: z.ZodType<Data, z.ZodTypeDef, unknown> = z
-  .union([z.string(), z.array(z.string()), z.boolean(), z.number()]);
+export const SubscriberPayloadDtoData$inboundSchema: z.ZodType<
+  SubscriberPayloadDtoData,
+  z.ZodTypeDef,
+  unknown
+> = z.union([z.string(), z.array(z.string()), z.boolean(), z.number()]);
 
 /** @internal */
-export type Data$Outbound = string | Array<string> | boolean | number;
+export type SubscriberPayloadDtoData$Outbound =
+  | string
+  | Array<string>
+  | boolean
+  | number;
 
 /** @internal */
-export const Data$outboundSchema: z.ZodType<Data$Outbound, z.ZodTypeDef, Data> =
-  z.union([z.string(), z.array(z.string()), z.boolean(), z.number()]);
+export const SubscriberPayloadDtoData$outboundSchema: z.ZodType<
+  SubscriberPayloadDtoData$Outbound,
+  z.ZodTypeDef,
+  SubscriberPayloadDtoData
+> = z.union([z.string(), z.array(z.string()), z.boolean(), z.number()]);
 
 /**
  * @internal
  * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
  */
-export namespace Data$ {
-  /** @deprecated use `Data$inboundSchema` instead. */
-  export const inboundSchema = Data$inboundSchema;
-  /** @deprecated use `Data$outboundSchema` instead. */
-  export const outboundSchema = Data$outboundSchema;
-  /** @deprecated use `Data$Outbound` instead. */
-  export type Outbound = Data$Outbound;
+export namespace SubscriberPayloadDtoData$ {
+  /** @deprecated use `SubscriberPayloadDtoData$inboundSchema` instead. */
+  export const inboundSchema = SubscriberPayloadDtoData$inboundSchema;
+  /** @deprecated use `SubscriberPayloadDtoData$outboundSchema` instead. */
+  export const outboundSchema = SubscriberPayloadDtoData$outboundSchema;
+  /** @deprecated use `SubscriberPayloadDtoData$Outbound` instead. */
+  export type Outbound = SubscriberPayloadDtoData$Outbound;
 }
 
-export function dataToJSON(data: Data): string {
-  return JSON.stringify(Data$outboundSchema.parse(data));
+export function subscriberPayloadDtoDataToJSON(
+  subscriberPayloadDtoData: SubscriberPayloadDtoData,
+): string {
+  return JSON.stringify(
+    SubscriberPayloadDtoData$outboundSchema.parse(subscriberPayloadDtoData),
+  );
 }
 
-export function dataFromJSON(
+export function subscriberPayloadDtoDataFromJSON(
   jsonString: string,
-): SafeParseResult<Data, SDKValidationError> {
+): SafeParseResult<SubscriberPayloadDtoData, SDKValidationError> {
   return safeParse(
     jsonString,
-    (x) => Data$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'Data' from JSON`,
+    (x) => SubscriberPayloadDtoData$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'SubscriberPayloadDtoData' from JSON`,
   );
 }
 
@@ -109,6 +131,7 @@ export const SubscriberPayloadDto$inboundSchema: z.ZodType<
     z.union([z.string(), z.array(z.string()), z.boolean(), z.number()]),
   ).optional(),
   channels: z.array(SubscriberChannelDto$inboundSchema).optional(),
+  timezone: z.string().optional(),
 });
 
 /** @internal */
@@ -122,6 +145,7 @@ export type SubscriberPayloadDto$Outbound = {
   locale?: string | undefined;
   data?: { [k: string]: string | Array<string> | boolean | number } | undefined;
   channels?: Array<SubscriberChannelDto$Outbound> | undefined;
+  timezone?: string | undefined;
 };
 
 /** @internal */
@@ -141,6 +165,7 @@ export const SubscriberPayloadDto$outboundSchema: z.ZodType<
     z.union([z.string(), z.array(z.string()), z.boolean(), z.number()]),
   ).optional(),
   channels: z.array(SubscriberChannelDto$outboundSchema).optional(),
+  timezone: z.string().optional(),
 });
 
 /**

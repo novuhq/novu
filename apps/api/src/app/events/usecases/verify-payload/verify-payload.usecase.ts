@@ -5,6 +5,8 @@ import { VerifyPayloadService, InstrumentUsecase } from '@novu/application-gener
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { VerifyPayloadCommand } from './verify-payload.command';
 
+const ISO_DATE_REGEX = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z/;
+
 export class VerifyPayload {
   @InstrumentUsecase()
   execute(command: VerifyPayloadCommand): Record<string, unknown> {
@@ -41,17 +43,14 @@ export class VerifyPayload {
   }
 
   private checkRequiredDelayPath(delayPath: string, payload: Record<string, unknown>): string | undefined {
-    const invalidKey = `${delayPath} (ISO Date)`;
-
-    if (!payload.hasOwnProperty(delayPath)) {
-      return invalidKey;
+    if (!delayPath) {
+      return 'Missing delay path';
     }
 
-    const delayDate = payload[delayPath];
-    const isoRegExp = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z/;
-    const isoDate = (delayDate as unknown as string).match(isoRegExp);
+    const delayDate = (payload[delayPath] as string) || '';
+    const isoDate = delayDate.match(ISO_DATE_REGEX);
     if (!isoDate) {
-      return invalidKey;
+      return `${delayPath} (ISO Date)`;
     }
   }
 }

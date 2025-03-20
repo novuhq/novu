@@ -1,6 +1,7 @@
 import type { HTMLAttributes } from 'react';
 
 type VersionControlProdProps = HTMLAttributes<HTMLOrSVGElement>;
+
 export const VersionControlProd = (props: VersionControlProdProps) => {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" width="137" height="126" fill="none" {...props}>

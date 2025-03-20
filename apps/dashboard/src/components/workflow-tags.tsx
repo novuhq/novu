@@ -11,6 +11,7 @@ export const WorkflowTags = (props: WorkflowTagsProps) => {
   const sliceFactor = 3;
   let firstTags: string[] = [];
   let restTags: string[] = [];
+
   if (tags.length > sliceFactor) {
     firstTags = tags.slice(0, sliceFactor - 1);
     restTags = tags.slice(sliceFactor - 1);

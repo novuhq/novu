@@ -227,7 +227,7 @@ export function fullCodeSnippet() {
             },
             content: [
               {
-                type: 'for',
+                type: 'repeat',
                 attrs: {
                   each: 'payload.origins',
                   isUpdatingKey: false,
@@ -307,7 +307,7 @@ export function fullCodeSnippet() {
             },
             content: [
               {
-                type: 'for',
+                type: 'repeat',
                 attrs: {
                   each: 'payload.students',
                   isUpdatingKey: false,
@@ -400,12 +400,12 @@ export function fullCodeSnippet() {
         content: [
           {
             type: 'text',
-            text: 'This will be a nested for block',
+            text: 'This will be a nested repeat block',
           },
         ],
       },
       {
-        type: 'for',
+        type: 'repeat',
         attrs: {
           each: 'payload.food.items',
           isUpdatingKey: false,

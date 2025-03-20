@@ -30,9 +30,6 @@ jobs:
         with:
           submodules: true
 
-      - name: build worker
-        run: pnpm build:worker --skip-nx-cache
-
       - name: Set Up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:

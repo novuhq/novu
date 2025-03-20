@@ -4,8 +4,10 @@ import { EnvironmentWithUserCommand } from '../../../shared/commands/project.com
 
 export class GetActivityFeedCommand extends EnvironmentWithUserCommand {
   @IsNumber()
-  @IsOptional()
   page: number;
+
+  @IsNumber()
+  limit: number;
 
   @IsOptional()
   @IsEnum(ChannelTypeEnum, {

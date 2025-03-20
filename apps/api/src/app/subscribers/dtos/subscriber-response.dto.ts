@@ -122,4 +122,10 @@ export class SubscriberResponseDto {
     nullable: true,
   })
   data?: Record<string, unknown>;
+
+  @ApiPropertyOptional({
+    description: 'Timezone of the subscriber',
+    type: String,
+  })
+  timezone?: string;
 }

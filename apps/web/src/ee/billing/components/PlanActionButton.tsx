@@ -10,16 +10,26 @@ import { useSegment } from '../../../components/providers/SegmentProvider';
 const checkoutUrl = '/v1/billing/checkout-session';
 const billingPortalUrl = '/v1/billing/portal';
 
-export const PlanActionButton = ({ selectedBillingInterval }: { selectedBillingInterval: 'month' | 'year' }) => {
+export const PlanActionButton = ({
+  selectedBillingInterval,
+  checkoutServiceLevel,
+}: {
+  selectedBillingInterval: 'month' | 'year';
+  checkoutServiceLevel?: ApiServiceLevelEnum;
+}) => {
   const segment = useSegment();
   const { isActive, trial, apiServiceLevel } = useSubscriptionContext();
-  const isPaidSubscriptionActive = isActive && !trial.isActive && apiServiceLevel !== ApiServiceLevelEnum.FREE;
+  const isPaidSubscriptionActive =
+    isActive &&
+    !trial.isActive &&
+    apiServiceLevel !== ApiServiceLevelEnum.FREE &&
+    apiServiceLevel === checkoutServiceLevel;
 
   const { mutateAsync: checkout, isLoading: isCheckingOut } = useMutation<{ stripeCheckoutUrl: string }, Error>(
     () =>
       api.post(checkoutUrl, {
         billingInterval: selectedBillingInterval,
-        apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
+        apiServiceLevel: checkoutServiceLevel,
       }),
     {
       onSuccess: (data) => {
@@ -58,11 +68,11 @@ export const PlanActionButton = ({ selectedBillingInterval }: { selectedBillingI
           Manage subscription
         </Button>
       </When>
-      <When truthy={!isPaidSubscriptionActive}>
+      <When truthy={!isPaidSubscriptionActive && checkoutServiceLevel}>
         <Button
           className={styles.planActionButton}
           loading={isCheckingOut}
-          data-test-id="plan-business-upgrade"
+          data-test-id={`plan-${checkoutServiceLevel}-upgrade`}
           onClick={() => checkout()}
         >
           Upgrade plan

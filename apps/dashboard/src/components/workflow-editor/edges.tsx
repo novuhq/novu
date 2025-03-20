@@ -1,6 +1,6 @@
 import { createStep } from '@/components/workflow-editor/step-utils';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
-import { TEMPLATE_CONFIGURABLE_STEP_TYPES } from '@/utils/constants';
+import { INLINE_CONFIGURABLE_STEP_TYPES, TEMPLATE_CONFIGURABLE_STEP_TYPES } from '@/utils/constants';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { WorkflowOriginEnum } from '@novu/shared';
 import { BaseEdge, Edge, EdgeLabelRenderer, EdgeProps, getBezierPath } from '@xyflow/react';
@@ -73,7 +73,12 @@ export function AddNodeEdge({
                           if (TEMPLATE_CONFIGURABLE_STEP_TYPES.includes(stepType)) {
                             navigate(
                               buildRoute(ROUTES.EDIT_STEP_TEMPLATE, {
-                                workflowSlug: workflow.slug,
+                                stepSlug: data.steps[indexToAdd].slug,
+                              })
+                            );
+                          } else if (INLINE_CONFIGURABLE_STEP_TYPES.includes(stepType)) {
+                            navigate(
+                              buildRoute(ROUTES.EDIT_STEP, {
                                 stepSlug: data.steps[indexToAdd].slug,
                               })
                             );

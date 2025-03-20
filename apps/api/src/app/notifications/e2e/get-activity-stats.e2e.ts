@@ -62,7 +62,7 @@ describe('Get activity stats - /notifications/stats (GET) #novu-v2', async () =>
       payload: { firstName: 'Test' },
     });
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
 
     const existing = await messageRepository.find(
       {

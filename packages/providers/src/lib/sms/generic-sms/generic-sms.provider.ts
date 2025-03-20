@@ -1,10 +1,5 @@
 import { SmsProviderIdEnum } from '@novu/shared';
-import {
-  ChannelTypeEnum,
-  ISendMessageSuccessResponse,
-  ISmsOptions,
-  ISmsProvider,
-} from '@novu/stateless';
+import { ChannelTypeEnum, ISendMessageSuccessResponse, ISmsOptions, ISmsProvider } from '@novu/stateless';
 
 import axios, { AxiosInstance } from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
@@ -30,7 +25,7 @@ export class GenericSmsProvider extends BaseProvider implements ISmsProvider {
       authenticateByToken?: boolean;
       domain?: string;
       authenticationTokenKey?: string;
-    },
+    }
   ) {
     super();
     this.headers = {
@@ -51,7 +46,7 @@ export class GenericSmsProvider extends BaseProvider implements ISmsProvider {
 
   async sendMessage(
     options: ISmsOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const data = this.transform(bridgeProviderData, {
       ...options,
@@ -64,8 +59,7 @@ export class GenericSmsProvider extends BaseProvider implements ISmsProvider {
         headers: this.headers,
       });
 
-      const token =
-        tokenAxiosInstance.data.data[this.config.authenticationTokenKey];
+      const token = tokenAxiosInstance.data.data[this.config.authenticationTokenKey];
 
       this.axiosInstance = axios.create({
         baseURL: this.config.baseUrl,
@@ -85,9 +79,7 @@ export class GenericSmsProvider extends BaseProvider implements ISmsProvider {
 
     return {
       id: this.getResponseValue(this.config.idPath || 'id', responseData),
-      date:
-        this.getResponseValue(this.config.datePath || 'date', responseData) ||
-        new Date().toISOString(),
+      date: this.getResponseValue(this.config.datePath || 'date', responseData) || new Date().toISOString(),
     };
   }
 

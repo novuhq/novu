@@ -18,8 +18,6 @@ import {
 } from '@novu/shared';
 import {
   buildGroupedBlueprintsKey,
-  buildNotificationTemplateIdentifierKey,
-  buildNotificationTemplateKey,
   DeletePreferencesCommand,
   DeletePreferencesUseCase,
   InvalidateCacheService,
@@ -234,9 +232,6 @@ export class PromoteNotificationTemplateChange {
     );
     await this.updateWorkflowPreferences(item._id, command, newItem.critical, newItem.preferenceSettings);
 
-    // Invalidate after mutations
-    await this.invalidateNotificationTemplate(item, command.organizationId);
-
     return updatedTemplate;
   }
 
@@ -314,27 +309,5 @@ export class PromoteNotificationTemplateChange {
         });
       }
     }
-  }
-
-  private async invalidateNotificationTemplate(item: NotificationTemplateEntity, organizationId: string) {
-    const productionEnvironmentId = await this.getProductionEnvironmentId(organizationId);
-
-    /**
-     * Only invalidate cache of Production environment cause the development environment cache invalidation is handled
-     * during the CRUD operations itself
-     */
-    await this.invalidateCache.invalidateByKey({
-      key: buildNotificationTemplateKey({
-        _id: item._id,
-        _environmentId: productionEnvironmentId,
-      }),
-    });
-
-    await this.invalidateCache.invalidateByKey({
-      key: buildNotificationTemplateIdentifierKey({
-        templateIdentifier: item.triggers[0].identifier,
-        _environmentId: productionEnvironmentId,
-      }),
-    });
   }
 }

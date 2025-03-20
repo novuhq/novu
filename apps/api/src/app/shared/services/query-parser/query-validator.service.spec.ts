@@ -8,7 +8,15 @@ describe('QueryValidatorService', () => {
   let queryValidatorService: QueryValidatorService;
 
   beforeEach(() => {
-    queryValidatorService = new QueryValidatorService();
+    const allowedVariables = [
+      'payload.foo',
+      'payload.bar',
+      'subscriber.firstName',
+      'subscriber.email',
+      'allowed.field',
+    ];
+    const allowedNamespaces = ['payload.', 'subscriber.data.'];
+    queryValidatorService = new QueryValidatorService(allowedVariables, allowedNamespaces);
   });
 
   describe('validateQueryRules', () => {
@@ -26,7 +34,7 @@ describe('QueryValidatorService', () => {
       [JsonLogicOperatorEnum.AND, JsonLogicOperatorEnum.OR].forEach((operator) => {
         it(`should validate valid ${operator} operation`, () => {
           const rule: RulesLogic<AdditionalOperation> = {
-            [operator]: [{ '==': [{ var: 'field1' }, 'value1'] }, { '==': [{ var: 'field2' }, 'value2'] }],
+            [operator]: [{ '==': [{ var: 'payload.foo' }, 'value1'] }, { '==': [{ var: 'payload.bar' }, 'value2'] }],
           };
 
           const issues = queryValidatorService.validateQueryRules(rule);
@@ -36,7 +44,7 @@ describe('QueryValidatorService', () => {
 
         it(`should detect invalid ${operator} structure`, () => {
           const rule: any = {
-            [operator]: { '==': [{ var: 'field' }, 'value'] }, // Invalid: and should be an array
+            [operator]: { '==': [{ var: 'payload.foo' }, 'value'] }, // Invalid: and should be an array
           };
 
           const issues = queryValidatorService.validateQueryRules(rule);
@@ -50,7 +58,7 @@ describe('QueryValidatorService', () => {
 
       it('should validate NOT operation', () => {
         const rule: RulesLogic<AdditionalOperation> = {
-          '!': { '==': [{ var: 'field' }, 'value'] },
+          '!': { '==': [{ var: 'payload.foo' }, 'value'] },
         };
 
         const issues = queryValidatorService.validateQueryRules(rule);
@@ -60,7 +68,7 @@ describe('QueryValidatorService', () => {
 
       it('should detect invalid NOT operation', () => {
         const rule: RulesLogic<AdditionalOperation> = {
-          '!': { '==': [{ var: 'field' }, ''] },
+          '!': { '==': [{ var: 'payload.foo' }, ''] },
         };
 
         const issues = queryValidatorService.validateQueryRules(rule);
@@ -89,7 +97,7 @@ describe('QueryValidatorService', () => {
       describe('"in" operation', () => {
         it('should validate valid "in" operation', () => {
           const rule: RulesLogic<AdditionalOperation> = {
-            in: [{ var: 'field' }, ['value1', 'value2']],
+            in: [{ var: 'subscriber.firstName' }, ['value1', 'value2']],
           };
 
           const issues = queryValidatorService.validateQueryRules(rule);
@@ -112,7 +120,7 @@ describe('QueryValidatorService', () => {
 
         it('should detect empty array in "in" operation', () => {
           const rule: RulesLogic<AdditionalOperation> = {
-            in: [{ var: 'field' }, []],
+            in: [{ var: 'payload.foo' }, []],
           };
 
           const issues = queryValidatorService.validateQueryRules(rule);
@@ -127,7 +135,7 @@ describe('QueryValidatorService', () => {
       describe('"contains" operation', () => {
         it('should validate valid "contains" operation', () => {
           const rule: RulesLogic<AdditionalOperation> = {
-            in: ['search', { var: 'field' }],
+            in: ['search', { var: 'payload.foo' }],
           };
 
           const issues = queryValidatorService.validateQueryRules(rule);
@@ -150,7 +158,7 @@ describe('QueryValidatorService', () => {
 
         it('should detect invalid value in "contains" operation', () => {
           const rule: RulesLogic<AdditionalOperation> = {
-            in: ['', { var: 'field' }],
+            in: ['', { var: 'payload.foo' }],
           };
 
           const issues = queryValidatorService.validateQueryRules(rule);
@@ -166,7 +174,7 @@ describe('QueryValidatorService', () => {
     describe('between operation', () => {
       it('should validate valid between operation', () => {
         const rule: RulesLogic<AdditionalOperation> = {
-          '<=': [1, { var: 'field' }, 10],
+          '<=': [1, { var: 'payload.foo' }, 10],
         };
 
         const issues = queryValidatorService.validateQueryRules(rule);
@@ -176,7 +184,7 @@ describe('QueryValidatorService', () => {
 
       it('should detect invalid between structure from lower bound', () => {
         const rule: any = {
-          '<=': [undefined, { var: 'field' }, 10], // Missing lower bound
+          '<=': [undefined, { var: 'payload.foo' }, 10], // Missing lower bound
         };
 
         const issues = queryValidatorService.validateQueryRules(rule);
@@ -189,7 +197,7 @@ describe('QueryValidatorService', () => {
 
       it('should detect invalid between structure from upper bound', () => {
         const rule: any = {
-          '<=': [1, { var: 'field' }, undefined], // Missing upper bound
+          '<=': [1, { var: 'payload.foo' }, undefined], // Missing upper bound
         };
 
         const issues = queryValidatorService.validateQueryRules(rule);
@@ -218,7 +226,7 @@ describe('QueryValidatorService', () => {
       COMPARISON_OPERATORS.forEach((operator) => {
         it(`should validate a valid simple ${operator} rule`, () => {
           const rule: RulesLogic<AdditionalOperation> = {
-            [operator]: [{ var: 'field' }, 'value'],
+            [operator]: [{ var: 'subscriber.firstName' }, 'value'],
           };
 
           const issues = queryValidatorService.validateQueryRules(rule);
@@ -228,7 +236,7 @@ describe('QueryValidatorService', () => {
 
         it(`should detect invalid ${operator} structure`, () => {
           const rule: any = {
-            [operator]: [{ var: 'field' }], // Missing second operand
+            [operator]: [{ var: 'subscriber.firstName' }], // Missing second operand
           };
 
           const issues = queryValidatorService.validateQueryRules(rule);
@@ -254,12 +262,12 @@ describe('QueryValidatorService', () => {
 
       it('should validate valid comparison operations', () => {
         const validOperations: RulesLogic<AdditionalOperation>[] = [
-          { '<': [{ var: 'field' }, 5] },
-          { '>': [{ var: 'field' }, 5] },
-          { '<=': [{ var: 'field' }, 5] },
-          { '>=': [{ var: 'field' }, 5] },
-          { '==': [{ var: 'field' }, 'value'] },
-          { '!=': [{ var: 'field' }, 'value'] },
+          { '<': [{ var: 'payload.foo' }, 5] },
+          { '>': [{ var: 'payload.foo' }, 5] },
+          { '<=': [{ var: 'payload.foo' }, 5] },
+          { '>=': [{ var: 'payload.foo' }, 5] },
+          { '==': [{ var: 'payload.foo' }, 'value'] },
+          { '!=': [{ var: 'payload.foo' }, 'value'] },
         ];
 
         validOperations.forEach((operation) => {
@@ -270,7 +278,7 @@ describe('QueryValidatorService', () => {
 
       it('should handle null values correctly for isNull', () => {
         const rule: RulesLogic<AdditionalOperation> = {
-          '==': [{ var: 'field' }, null],
+          '==': [{ var: 'payload.foo' }, null],
         };
 
         const issues = queryValidatorService.validateQueryRules(rule);
@@ -280,7 +288,7 @@ describe('QueryValidatorService', () => {
 
       it('should handle null values correctly for !isNull', () => {
         const rule: RulesLogic<AdditionalOperation> = {
-          '!=': [{ var: 'field' }, null],
+          '!=': [{ var: 'payload.foo' }, null],
         };
 
         const issues = queryValidatorService.validateQueryRules(rule);
@@ -290,7 +298,7 @@ describe('QueryValidatorService', () => {
 
       it('should detect null values for non-equality operators', () => {
         const rule: RulesLogic<AdditionalOperation> = {
-          '>': [{ var: 'field' }, null],
+          '>': [{ var: 'payload.foo' }, null],
         };
 
         const issues = queryValidatorService.validateQueryRules(rule);
@@ -475,6 +483,97 @@ describe('QueryValidatorService', () => {
           expect(issues[0].type).to.equal(QueryIssueTypeEnum.MISSING_VALUE);
         });
       });
+    });
+  });
+
+  describe('field validation', () => {
+    it('should validate allowed fields', () => {
+      const rule: RulesLogic<AdditionalOperation> = {
+        '==': [{ var: 'allowed.field' }, 'value'],
+      };
+
+      const issues = queryValidatorService.validateQueryRules(rule);
+
+      expect(issues).to.be.empty;
+    });
+
+    it('should validate fields with allowed prefixes', () => {
+      const rule: RulesLogic<AdditionalOperation> = {
+        '==': [{ var: 'subscriber.data.foo' }, 'value'],
+      };
+
+      const issues = queryValidatorService.validateQueryRules(rule);
+
+      expect(issues).to.be.empty;
+    });
+
+    it('should detect invalid field that is not in allowed list', () => {
+      const rule: RulesLogic<AdditionalOperation> = {
+        '==': [{ var: 'not_allowed_field' }, 'value'],
+      };
+
+      const issues = queryValidatorService.validateQueryRules(rule);
+
+      expect(issues).to.have.lengthOf(1);
+      expect(issues[0].message).to.include('Value is not valid');
+      expect(issues[0].path).to.deep.equal([]);
+      expect(issues[0].type).to.equal(QueryIssueTypeEnum.INVALID_FIELD_VALUE);
+    });
+
+    it('should detect empty field value', () => {
+      const rule: RulesLogic<AdditionalOperation> = {
+        '==': [{ var: '' }, 'value'],
+      };
+
+      const issues = queryValidatorService.validateQueryRules(rule);
+
+      expect(issues).to.have.lengthOf(1);
+      expect(issues[0].message).to.include('Value is not valid');
+      expect(issues[0].path).to.deep.equal([]);
+      expect(issues[0].type).to.equal(QueryIssueTypeEnum.INVALID_FIELD_VALUE);
+    });
+
+    it('should detect invalid prefix', () => {
+      const rule: RulesLogic<AdditionalOperation> = {
+        '==': [{ var: 'invalid.prefix.field' }, 'value'],
+      };
+
+      const issues = queryValidatorService.validateQueryRules(rule);
+
+      expect(issues).to.have.lengthOf(1);
+      expect(issues[0].message).to.include('Value is not valid');
+      expect(issues[0].path).to.deep.equal([]);
+      expect(issues[0].type).to.equal(QueryIssueTypeEnum.INVALID_FIELD_VALUE);
+    });
+
+    it('should detect invalid field with allowed prefixes', () => {
+      const rule: RulesLogic<AdditionalOperation> = {
+        '==': [{ var: 'payload.' }, 'value'],
+      };
+
+      const issues = queryValidatorService.validateQueryRules(rule);
+
+      expect(issues).to.have.lengthOf(1);
+      expect(issues[0].message).to.include('Value is not valid');
+      expect(issues[0].path).to.deep.equal([]);
+      expect(issues[0].type).to.equal(QueryIssueTypeEnum.INVALID_FIELD_VALUE);
+    });
+
+    it('should validate complex query with multiple field references', () => {
+      const rule: RulesLogic<AdditionalOperation> = {
+        and: [
+          { '==': [{ var: 'payload.foo' }, 'value1'] },
+          { '==': [{ var: 'subscriber.data.bar' }, 'value2'] },
+          { '!=': [{ var: 'invalid.field' }, 'value3'] },
+        ],
+      };
+
+      const issues = queryValidatorService.validateQueryRules(rule);
+
+      expect(issues).to.have.lengthOf(1);
+      expect(issues[0].message).to.include('Value is not valid');
+      expect(issues[0].path).to.deep.equal([2]);
+      expect(issues[0].type).to.equal(QueryIssueTypeEnum.INVALID_FIELD_VALUE);
     });
   });
 });

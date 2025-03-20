@@ -45,7 +45,7 @@ describe('Mark All Subscriber Messages - /subscribers/:subscriberId/messages/mar
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
 
     const notificationsFeedResponse = await getSubscriberNotifications(subscriberId);
     expect(notificationsFeedResponse.totalCount).to.equal(5);
@@ -77,7 +77,7 @@ describe('Mark All Subscriber Messages - /subscribers/:subscriberId/messages/mar
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
 
     const notificationsFeedResponse = await getSubscriberNotifications(subscriberId);
     expect(notificationsFeedResponse.totalCount).to.equal(5);
@@ -120,7 +120,7 @@ describe('Mark All Subscriber Messages - /subscribers/:subscriberId/messages/mar
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
 
     const notificationsFeedResponse = await getSubscriberNotifications(subscriberId);
     expect(notificationsFeedResponse.totalCount).to.equal(5);
@@ -163,7 +163,7 @@ describe('Mark All Subscriber Messages - /subscribers/:subscriberId/messages/mar
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
 
     const notificationsFeedResponse = await getSubscriberNotifications(subscriberId);
     expect(notificationsFeedResponse.totalCount).to.equal(5);
@@ -195,7 +195,7 @@ describe('Mark All Subscriber Messages - /subscribers/:subscriberId/messages/mar
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
 
     const notificationsFeedResponse = await getSubscriberNotifications(subscriberId);
     expect(notificationsFeedResponse.totalCount).to.equal(5);

@@ -3,11 +3,11 @@ import { expect } from 'chai';
 import { UserSession, SubscribersService } from '@novu/testing';
 import { SubscriberEntity } from '@novu/dal';
 import { workflow } from '@novu/framework';
-import { BridgeServer } from '../../../../e2e/bridge.server';
+import { TestBridgeServer } from '../../../../e2e/test-bridge-server';
 
 describe('Bridge Health Check #novu-v2', async () => {
   let session: UserSession;
-  let frameworkClient: BridgeServer;
+  let frameworkClient: TestBridgeServer;
   let subscriber: SubscriberEntity;
   let subscriberService: SubscribersService;
 
@@ -20,7 +20,7 @@ describe('Bridge Health Check #novu-v2', async () => {
         };
       });
     });
-    frameworkClient = new BridgeServer();
+    frameworkClient = new TestBridgeServer();
     await frameworkClient.start({ workflows: [healthCheckWorkflow] });
   });
 

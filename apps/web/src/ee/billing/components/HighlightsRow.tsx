@@ -1,9 +1,7 @@
 import { css } from '@novu/novui/css';
 import { Text } from '@novu/novui';
 import styled from '@emotion/styled';
-import { List } from '@mantine/core';
 import { ApiServiceLevelEnum } from '@novu/shared';
-import { Badge } from './Badge';
 
 const Cell = styled.div`
   display: flex;
@@ -15,55 +13,30 @@ const Cell = styled.div`
   gap: 16px;
 `;
 
-type Highlight = {
-  text: string;
-  badgeLabel?: string;
+const descriptions = {
+  [ApiServiceLevelEnum.FREE]: 'For testing and small-scale.',
+  [ApiServiceLevelEnum.PRO]:
+    'Perfect for startups and indie hackers looking to add <Inbox /> and connect to Email and digest engine.',
+  [ApiServiceLevelEnum.BUSINESS]:
+    'Ideal for teams looking to add <Inbox/> in minutes, and manage system notification experience from one system.',
+  [ApiServiceLevelEnum.ENTERPRISE]:
+    'For organizations with privacy, and compliance demands. Looking to add the best OS notification technology, while maintaining flexibility.',
 };
-
-type PlanHighlights = {
-  [key in ApiServiceLevelEnum]?: Highlight[];
-};
-
-const highlights: PlanHighlights = {
-  [ApiServiceLevelEnum.FREE]: [
-    { text: 'Up to 30,000 events per month' },
-    { text: '3 teammates' },
-    { text: '30 days Activity Feed retention' },
-  ],
-  [ApiServiceLevelEnum.BUSINESS]: [
-    { text: 'Up to 250,000 events per month' },
-    { text: 'Unlimited teammates' },
-    { text: '90 days Activity Feed retention' },
-  ],
-  [ApiServiceLevelEnum.ENTERPRISE]: [
-    { text: 'Up to 5,000,000 events per month' },
-    { text: 'Unlimited teammates' },
-    { text: 'SAML SSO' },
-  ],
-};
-
-const PlanHighlights = ({ planHighlights }: { planHighlights: Highlight[] }) => (
-  <Cell>
-    <List classNames={styles.list} listStyleType="disc">
-      {planHighlights.map((item, index) => (
-        <List.Item key={index}>
-          <span className={styles.listBadgeItem}>
-            {item.text} {item.badgeLabel && <Badge size="xs" label={item.badgeLabel} />}
-          </span>
-        </List.Item>
-      ))}
-    </List>
-  </Cell>
-);
 
 export const HighlightsRow = () => {
+  return <Descriptions />;
+};
+
+export const Descriptions = () => {
   return (
     <div className={styles.container}>
       <Cell>
-        <Text color="typography.text.secondary">Highlights</Text>
+        <Text color="typography.text.secondary">Description</Text>
       </Cell>
-      {Object.entries(highlights).map(([planName, planHighlights]) => (
-        <PlanHighlights key={planName} planHighlights={planHighlights} />
+      {Object.entries(descriptions).map(([planName, description]) => (
+        <Cell key={planName}>
+          <Text>{description}</Text>
+        </Cell>
       ))}
     </div>
   );

@@ -3,16 +3,15 @@ import { EnvironmentRepository } from '@novu/dal';
 import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
 import {
   AnalyticsService,
-  LogDecorator,
-  CreateSubscriber,
-  CreateSubscriberCommand,
-  SelectIntegrationCommand,
-  SelectIntegration,
-  AuthService,
   createHash,
+  CreateOrUpdateSubscriberCommand,
+  CreateOrUpdateSubscriberUseCase,
   decryptApiKey,
+  LogDecorator,
+  SelectIntegration,
+  SelectIntegrationCommand,
 } from '@novu/application-generic';
-
+import { AuthService } from '../../../auth/services/auth.service';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { InitializeSessionCommand } from './initialize-session.command';
 
@@ -22,7 +21,7 @@ import { SessionInitializeResponseDto } from '../../dtos/session-initialize-resp
 export class InitializeSession {
   constructor(
     private environmentRepository: EnvironmentRepository,
-    private createSubscriber: CreateSubscriber,
+    private createOrUpdateSubscriberUsecase: CreateOrUpdateSubscriberUseCase,
     private authService: AuthService,
     private selectIntegration: SelectIntegration,
     private analyticsService: AnalyticsService
@@ -54,7 +53,7 @@ export class InitializeSession {
       validateNotificationCenterEncryption(environment, command);
     }
 
-    const commandos = CreateSubscriberCommand.create({
+    const commandos = CreateOrUpdateSubscriberCommand.create({
       environmentId: environment._id,
       organizationId: environment._organizationId,
       subscriberId: command.subscriberId,
@@ -63,7 +62,7 @@ export class InitializeSession {
       email: command.email,
       phone: command.phone,
     });
-    const subscriber = await this.createSubscriber.execute(commandos);
+    const subscriber = await this.createOrUpdateSubscriberUsecase.execute(commandos);
 
     this.analyticsService.mixpanelTrack('Initialize Widget Session - [Notification Center]', '', {
       _organization: environment._organizationId,

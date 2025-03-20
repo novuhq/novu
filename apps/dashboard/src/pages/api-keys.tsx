@@ -57,8 +57,8 @@ export function ApiKeysPage() {
                   </ExternalLink>
                 </p>
               </CardHeader>
-              <CardContent className="rounded-b-xl border-t bg-neutral-50 bg-white p-3">
-                <div className="space-y-4 p-3">
+              <CardContent className="rounded-b-xl border-t bg-neutral-50 bg-white p-4">
+                <div className="space-y-4">
                   <SettingField
                     label="Application Identifier"
                     tooltip={`This is unique for the ${currentEnvironment.name} environment.`}
@@ -79,8 +79,8 @@ export function ApiKeysPage() {
                 </p>
               </CardHeader>
 
-              <CardContent className="rounded-b-xl border-t bg-neutral-50 bg-white p-3">
-                <div className="space-y-4 p-3">
+              <CardContent className="rounded-b-xl border-t bg-neutral-50 bg-white p-4">
+                <div className="space-y-4">
                   <SettingField
                     label="Secret Key"
                     tooltip="Keep it secure and never share it publicly"
@@ -101,8 +101,8 @@ export function ApiKeysPage() {
                   </ExternalLink>
                 </p>
               </CardHeader>
-              <CardContent className="rounded-b-xl border-t bg-neutral-50 bg-white p-3">
-                <div className="space-y-4 p-3">
+              <CardContent className="rounded-b-xl border-t bg-neutral-50 bg-white p-4">
+                <div className="space-y-4">
                   <SettingField
                     label="Novu API Hostname"
                     tooltip={`For Novu Cloud in the ${region} region`}
@@ -142,14 +142,14 @@ function SettingField({
   };
 
   const maskSecret = (secret: string) => {
-    return `${'•'.repeat(28)} ${secret.slice(-4)}`;
+    return `${'•'.repeat(28)}${secret.slice(-4)}`;
   };
 
   return (
-    <div className="grid grid-cols-[1fr,400px] items-start gap-3">
-      <label className={`text-foreground-950 text-xs font-medium`}>
+    <div className="grid grid-cols-[1fr,400px] items-center gap-3">
+      <label className="text-foreground-600 font-medium\\ inline-flex items-center gap-1 text-xs">
         {label}
-        {tooltip && <HelpTooltipIndicator text={tooltip} className="relative top-[5px] ml-1" />}
+        {tooltip && <HelpTooltipIndicator text={tooltip} />}
       </label>
       <div className="flex items-center gap-2">
         {isLoading ? (
@@ -160,22 +160,17 @@ function SettingField({
         ) : (
           <>
             <Input
-              className="cursor-default !text-neutral-500"
+              className="cursor-default font-mono !text-neutral-500"
               value={secret ? (showSecret ? value : maskSecret(value ?? '')) : value}
               readOnly={readOnly}
-              trailingNode={
-                <CopyButton
-                  valueToCopy={value ?? ''}
-                  className="rounded-none border-l border-neutral-200 shadow-none ring-0"
-                />
-              }
+              trailingNode={<CopyButton valueToCopy={value ?? ''} />}
               inlineTrailingNode={
                 secret && (
                   <button type="button" onClick={toggleSecretVisibility}>
                     {showSecret ? (
-                      <RiEyeOffLine className="text-text-soft group-has-[disabled]:text-text-disabled size-5" />
+                      <RiEyeOffLine className="text-text-sub group-has-[disabled]:text-text-disabled" />
                     ) : (
-                      <RiEyeLine className="text-text-soft group-has-[disabled]:text-text-disabled size-5" />
+                      <RiEyeLine className="text-text-sub group-has-[disabled]:text-text-disabled" />
                     )}
                   </button>
                 )

@@ -122,8 +122,10 @@ export const CustomStepControls = (props: CustomStepControlsProps) => {
               setIsRestoreDefaultModalOpen(true);
               return;
             }
+
             setIsOverridden(checked);
           }}
+          data-testid="override-defaults-switch"
         />
       </div>
       <Separator className="mb-3" />

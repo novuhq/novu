@@ -53,6 +53,7 @@ export const getWorkflows = async ({
   if (orderBy) {
     params.append('orderBy', orderBy);
   }
+
   if (orderDirection) {
     params.append('orderDirection', orderDirection.toUpperCase());
   }
@@ -92,7 +93,8 @@ export async function triggerWorkflow({
     body: {
       name,
       to,
-      payload: { ...(payload ?? {}), __source: 'dashboard' },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      payload: { ...(payload ?? {}), __source: (payload as any)?.__source ?? 'dashboard' },
     },
   });
 }

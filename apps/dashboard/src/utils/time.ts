@@ -32,6 +32,7 @@ export function getValidNumber(value: string, { max, min = 0, loop = false }: Ge
       if (numericValue > max) numericValue = min;
       if (numericValue < min) numericValue = max;
     }
+
     return numericValue.toString().padStart(2, '0');
   }
 
@@ -61,10 +62,12 @@ type GetValidArrowNumberConfig = {
 
 export function getValidArrowNumber(value: string, { min, max, step }: GetValidArrowNumberConfig) {
   let numericValue = parseInt(value, 10);
+
   if (!isNaN(numericValue)) {
     numericValue += step;
     return getValidNumber(String(numericValue), { min, max, loop: true });
   }
+
   return '00';
 }
 
@@ -116,10 +119,12 @@ export function setDateByType(date: Date, value: string, type: TimePickerType, p
       return setSeconds(date, value);
     case 'hours':
       return setHours(date, value);
+
     case '12hours': {
       if (!period) return date;
       return set12Hours(date, value, period);
     }
+
     default:
       return date;
   }
@@ -171,6 +176,7 @@ export function convert12HourTo24Hour(hour: number, period: Period) {
     if (hour === 12) return 0;
     return hour;
   }
+
   return hour;
 }
 

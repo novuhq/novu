@@ -1,7 +1,7 @@
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
-describe('Rename Organization - /organizations (PATCH) #novu-v1-os', function () {
+describe('Rename Organization - /organizations (PATCH) #novu-v0-os', function () {
   let session: UserSession;
 
   beforeEach(async () => {

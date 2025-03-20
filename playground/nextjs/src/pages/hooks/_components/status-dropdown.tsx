@@ -24,7 +24,7 @@ const STATUS_OPTIONS_TEXT: Record<string, string> = {
 };
 
 const dropdownItemVariants = () =>
-  'focus:outline-none rounded-lg items-center hover:bg-neutral-alpha-50 focus-visible:bg-neutral-alpha-50 py-1 px-3';
+  'focus:outline-hidden rounded-lg items-center hover:bg-neutral-alpha-50 focus-visible:bg-neutral-alpha-50 py-1 px-3';
 
 export const StatusItem = (props: {
   onClick: () => void;

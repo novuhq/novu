@@ -35,7 +35,7 @@ describe('Mark as Seen - /widgets/messages/mark-as (POST) #novu-v2', async () =>
 
   beforeEach(async () => {
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
 
     subscriber = await getSubscriber(session, subscriberRepository, subscriberId);
     message = await getMessage(session, messageRepository, subscriber);

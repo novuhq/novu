@@ -19,30 +19,24 @@ import {
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import { PinoLogger } from '../../logging';
 import { AnalyticsService } from '../../services/analytics.service';
-import {
-  buildNotificationTemplateIdentifierKey,
-  CachedEntity,
-} from '../../services/cache';
 import { ApiException } from '../../utils/exceptions';
-import {
-  ProcessSubscriber,
-  ProcessSubscriberCommand,
-} from '../process-subscriber';
 import { ProcessTenant, ProcessTenantCommand } from '../process-tenant';
 import { TriggerBroadcastCommand } from '../trigger-broadcast/trigger-broadcast.command';
 import { TriggerBroadcast } from '../trigger-broadcast/trigger-broadcast.usecase';
-import {
-  TriggerMulticast,
-  TriggerMulticastCommand,
-} from '../trigger-multicast';
+import { TriggerMulticast, TriggerMulticastCommand } from '../trigger-multicast';
 import { TriggerEventCommand } from './trigger-event.command';
+import { CreateOrUpdateSubscriberCommand, CreateOrUpdateSubscriberUseCase } from '../create-or-update-subscriber';
 
 const LOG_CONTEXT = 'TriggerEventUseCase';
+
+function getActiveWorker() {
+  return process.env.ACTIVE_WORKER;
+}
 
 @Injectable()
 export class TriggerEvent {
   constructor(
-    private processSubscriber: ProcessSubscriber,
+    private createOrUpdateSubscriberUsecase: CreateOrUpdateSubscriberUseCase,
     private environmentRepository: EnvironmentRepository,
     private jobRepository: JobRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
@@ -50,7 +44,7 @@ export class TriggerEvent {
     private logger: PinoLogger,
     private triggerBroadcast: TriggerBroadcast,
     private triggerMulticast: TriggerMulticast,
-    private analyticsService: AnalyticsService,
+    private analyticsService: AnalyticsService
   ) {}
 
   @InstrumentUsecase()
@@ -62,8 +56,7 @@ export class TriggerEvent {
         actor: this.mapActor(command.actor),
       };
 
-      const { environmentId, identifier, organizationId, userId } =
-        mappedCommand;
+      const { environmentId, identifier, organizationId, userId } = mappedCommand;
 
       const environment = await this.environmentRepository.findOne({
         _id: environmentId,
@@ -81,10 +74,7 @@ export class TriggerEvent {
 
       Logger.debug(mappedCommand.actor);
 
-      await this.validateTransactionIdProperty(
-        mappedCommand.transactionId,
-        environmentId,
-      );
+      await this.validateTransactionIdProperty(mappedCommand.transactionId, environmentId);
 
       addBreadcrumb({
         message: 'Sending trigger',
@@ -115,17 +105,17 @@ export class TriggerEvent {
             organizationId,
             userId,
             tenant: mappedCommand.tenant,
-          }),
+          })
         );
 
         if (!tenantProcessed) {
           Logger.warn(
             `Tenant with identifier ${JSON.stringify(
-              mappedCommand.tenant.identifier,
+              mappedCommand.tenant.identifier
             )} of organization ${mappedCommand.organizationId} in transaction ${
               mappedCommand.transactionId
             } could not be processed.`,
-            LOG_CONTEXT,
+            LOG_CONTEXT
           );
         }
       }
@@ -133,13 +123,9 @@ export class TriggerEvent {
       // We might have a single actor for every trigger, so we only need to check for it once
       let actorProcessed: SubscriberEntity | undefined;
       if (mappedCommand.actor) {
-        actorProcessed = await this.processSubscriber.execute(
-          ProcessSubscriberCommand.create({
-            environmentId,
-            organizationId,
-            userId,
-            subscriber: mappedCommand.actor,
-          }),
+        this.logger.info(mappedCommand, 'Processing actor');
+        actorProcessed = await this.createOrUpdateSubscriberUsecase.execute(
+          this.buildCommand(environmentId, organizationId, mappedCommand.actor)
         );
       }
 
@@ -150,10 +136,8 @@ export class TriggerEvent {
               ...mappedCommand,
               actor: actorProcessed,
               environmentName: environment.name,
-              template:
-                storedWorkflow ||
-                (command.bridgeWorkflow as unknown as NotificationTemplateEntity),
-            }),
+              template: storedWorkflow || (command.bridgeWorkflow as unknown as NotificationTemplateEntity),
+            })
           );
           break;
         }
@@ -163,10 +147,8 @@ export class TriggerEvent {
               ...mappedCommand,
               actor: actorProcessed,
               environmentName: environment.name,
-              template:
-                storedWorkflow ||
-                (command.bridgeWorkflow as unknown as NotificationTemplateEntity),
-            }),
+              template: storedWorkflow || (command.bridgeWorkflow as unknown as NotificationTemplateEntity),
+            })
           );
           break;
         }
@@ -177,10 +159,8 @@ export class TriggerEvent {
               ...(mappedCommand as TriggerMulticastCommand),
               actor: actorProcessed,
               environmentName: environment.name,
-              template:
-                storedWorkflow ||
-                (command.bridgeWorkflow as unknown as NotificationTemplateEntity),
-            }),
+              template: storedWorkflow || (command.bridgeWorkflow as unknown as NotificationTemplateEntity),
+            })
           );
           break;
         }
@@ -195,23 +175,33 @@ export class TriggerEvent {
           error: e,
         },
         'Unexpected error has occurred when triggering event',
-        LOG_CONTEXT,
+        LOG_CONTEXT
       );
 
       throw e;
     }
   }
 
-  @CachedEntity({
-    builder: (command: { triggerIdentifier: string; environmentId: string }) =>
-      buildNotificationTemplateIdentifierKey({
-        _environmentId: command.environmentId,
-        templateIdentifier: command.triggerIdentifier,
-      }),
-    options: {
-      ttl: 120, // seconds
-    },
-  })
+  private buildCommand(
+    environmentId: string,
+    organizationId: string,
+    subscriberPayload: ISubscribersDefine
+  ): CreateOrUpdateSubscriberCommand {
+    return CreateOrUpdateSubscriberCommand.create({
+      environmentId,
+      organizationId,
+      subscriberId: subscriberPayload?.subscriberId,
+      email: subscriberPayload?.email,
+      firstName: subscriberPayload?.firstName,
+      lastName: subscriberPayload?.lastName,
+      phone: subscriberPayload?.phone,
+      avatar: subscriberPayload?.avatar,
+      locale: subscriberPayload?.locale,
+      data: subscriberPayload?.data,
+      channels: subscriberPayload?.channels,
+      activeWorkerName: getActiveWorker(),
+    });
+  }
   private async getAndUpdateWorkflowById(command: {
     triggerIdentifier: string;
     environmentId: string;
@@ -221,27 +211,22 @@ export class TriggerEvent {
   }) {
     const lastTriggeredAt = new Date();
 
-    const workflow =
-      await this.notificationTemplateRepository.findByTriggerIdentifierAndUpdate(
-        command.environmentId,
-        command.triggerIdentifier,
-        lastTriggeredAt,
-      );
+    const workflow = await this.notificationTemplateRepository.findByTriggerIdentifierAndUpdate(
+      command.environmentId,
+      command.triggerIdentifier,
+      lastTriggeredAt
+    );
 
     if (workflow) {
       // We only consider trigger when it's coming from the backend SDK
       if (!command.payload?.__source) {
         if (!workflow.lastTriggeredAt) {
-          this.analyticsService.track(
-            'Workflow Connected to Backend SDK - [API]',
-            command.userId,
-            {
-              name: workflow.name,
-              origin: workflow.origin,
-              _organization: command.organizationId,
-              _environment: command.environmentId,
-            },
-          );
+          this.analyticsService.track('Workflow Connected to Backend SDK - [API]', command.userId, {
+            name: workflow.name,
+            origin: workflow.origin,
+            _organization: command.organizationId,
+            _environment: command.environmentId,
+          });
         }
 
         /**
@@ -255,21 +240,18 @@ export class TriggerEvent {
   }
 
   @Instrument()
-  private async validateTransactionIdProperty(
-    transactionId: string,
-    environmentId: string,
-  ): Promise<void> {
+  private async validateTransactionIdProperty(transactionId: string, environmentId: string): Promise<void> {
     const found = (await this.jobRepository.findOne(
       {
         transactionId,
         _environmentId: environmentId,
       },
-      '_id',
+      '_id'
     )) as Pick<JobEntity, '_id'>;
 
     if (found) {
       throw new ApiException(
-        'transactionId property is not unique, please make sure all triggers have a unique transactionId',
+        'transactionId property is not unique, please make sure all triggers have a unique transactionId'
       );
     }
   }
@@ -284,9 +266,7 @@ export class TriggerEvent {
     return tenant;
   }
 
-  private mapActor(
-    subscriber: TriggerRecipientSubscriber,
-  ): ISubscribersDefine | null {
+  private mapActor(subscriber: TriggerRecipientSubscriber): ISubscribersDefine | null {
     if (!subscriber) return null;
 
     if (typeof subscriber === 'string') {

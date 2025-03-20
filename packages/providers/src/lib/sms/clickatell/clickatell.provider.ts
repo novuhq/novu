@@ -1,19 +1,11 @@
 import { SmsProviderIdEnum } from '@novu/shared';
-import {
-  ChannelTypeEnum,
-  ISendMessageSuccessResponse,
-  ISmsOptions,
-  ISmsProvider,
-} from '@novu/stateless';
+import { ChannelTypeEnum, ISendMessageSuccessResponse, ISmsOptions, ISmsProvider } from '@novu/stateless';
 
 import axios from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
-export class ClickatellSmsProvider
-  extends BaseProvider
-  implements ISmsProvider
-{
+export class ClickatellSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.Clickatell;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   protected casing = CasingEnum.CAMEL_CASE;
@@ -22,14 +14,14 @@ export class ClickatellSmsProvider
     private config: {
       apiKey?: string;
       isTwoWayIntegration?: boolean;
-    },
+    }
   ) {
     super();
   }
 
   async sendMessage(
     options: ISmsOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const url = 'https://platform.clickatell.com/messages';
 

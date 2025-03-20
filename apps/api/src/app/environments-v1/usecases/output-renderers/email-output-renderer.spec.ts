@@ -559,13 +559,13 @@ describe('EmailOutputRendererUsecase', () => {
     });
   });
 
-  describe('for block transformation and expansion', () => {
-    it('should handle for loop block transformation with array of objects', async () => {
+  describe('repeat block transformation and expansion', () => {
+    it('should handle repeat loop block transformation with array of objects', async () => {
       const mockTipTapNode: MailyJSONContent = {
         type: 'doc',
         content: [
           {
-            type: 'for',
+            type: 'repeat',
             attrs: {
               each: 'payload.comments',
               isUpdatingKey: false,
@@ -610,7 +610,7 @@ describe('EmailOutputRendererUsecase', () => {
 
       const renderCommand = {
         controlValues: {
-          subject: 'For Loop Test',
+          subject: 'Repeat Loop Test',
           body: JSON.stringify(mockTipTapNode),
         },
         fullPayloadForRender: {
@@ -626,12 +626,12 @@ describe('EmailOutputRendererUsecase', () => {
       expect(result.body).to.include('This is an author: <!-- -->Jane<!-- -->Post Title');
     });
 
-    it('should handle for loop block transformation with array of primitives', async () => {
+    it('should handle repeat loop block transformation with array of primitives', async () => {
       const mockTipTapNode: MailyJSONContent = {
         type: 'doc',
         content: [
           {
-            type: 'for',
+            type: 'repeat',
             attrs: {
               each: 'payload.names',
               isUpdatingKey: false,
@@ -662,7 +662,7 @@ describe('EmailOutputRendererUsecase', () => {
 
       const renderCommand = {
         controlValues: {
-          subject: 'For Loop Test',
+          subject: 'Repeat Loop Test',
           body: JSON.stringify(mockTipTapNode),
         },
         fullPayloadForRender: {

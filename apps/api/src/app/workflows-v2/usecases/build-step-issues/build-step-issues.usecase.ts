@@ -4,25 +4,26 @@ import isEmpty from 'lodash/isEmpty';
 import Ajv, { ErrorObject } from 'ajv';
 import addFormats from 'ajv-formats';
 import { AdditionalOperation, RulesLogic } from 'json-logic-js';
-import { Injectable } from '@nestjs/common';
-import { ControlValuesRepository } from '@novu/dal';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { ControlValuesRepository, IntegrationRepository } from '@novu/dal';
 import {
-  ContentIssue,
-  JSONSchemaDto,
-  StepContentIssueEnum,
-  StepIssuesDto,
-  UserSessionData,
-  StepTypeEnum,
-  WorkflowOriginEnum,
   ControlValuesLevelEnum,
+  JSONSchemaDto,
+  StepContentIssue,
+  StepContentIssueEnum,
+  StepIntegrationIssueEnum,
+  StepIssuesDto,
+  StepTypeEnum,
+  UserSessionData,
+  WorkflowOriginEnum,
 } from '@novu/shared';
 import {
-  InstrumentUsecase,
-  TierRestrictionsValidateUsecase,
-  TierRestrictionsValidateCommand,
   dashboardSanitizeControlValues,
-  PinoLogger,
   Instrument,
+  InstrumentUsecase,
+  PinoLogger,
+  TierRestrictionsValidateCommand,
+  TierRestrictionsValidateUsecase,
 } from '@novu/application-generic';
 
 import { buildVariables } from '../../util/build-variables';
@@ -32,14 +33,20 @@ import {
   QueryIssueTypeEnum,
   QueryValidatorService,
 } from '../../../shared/services/query-parser/query-validator.service';
+import { parseStepVariables } from '../../util/parse-step-variables';
+
+const PAYLOAD_FIELD_PREFIX = 'payload.';
+const SUBSCRIBER_DATA_FIELD_PREFIX = 'subscriber.data.';
 
 @Injectable()
 export class BuildStepIssuesUsecase {
   constructor(
     private buildAvailableVariableSchemaUsecase: BuildVariableSchemaUsecase,
     private controlValuesRepository: ControlValuesRepository,
+    @Inject(forwardRef(() => TierRestrictionsValidateUsecase))
     private tierRestrictionsValidateUsecase: TierRestrictionsValidateUsecase,
-    private logger: PinoLogger
+    private logger: PinoLogger,
+    private integrationsRepository: IntegrationRepository
   ) {}
 
   @InstrumentUsecase()
@@ -84,10 +91,15 @@ export class BuildStepIssuesUsecase {
     const liquidIssues = this.processControlValuesByLiquid(variableSchema, newControlValues || {});
     const customIssues = await this.processControlValuesByCustomeRules(user, stepTypeDto, sanitizedControlValues || {});
     const skipLogicIssues = sanitizedControlValues?.skip
-      ? this.validateSkipField(sanitizedControlValues.skip as RulesLogic<AdditionalOperation>)
+      ? this.validateSkipField(variableSchema, sanitizedControlValues.skip as RulesLogic<AdditionalOperation>)
       : {};
+    const integrationIssues = await this.validateIntegration({
+      stepTypeDto,
+      environmentId: user.environmentId,
+      organizationId: user.organizationId,
+    });
 
-    return merge(schemaIssues, liquidIssues, customIssues, skipLogicIssues);
+    return merge(schemaIssues, liquidIssues, customIssues, skipLogicIssues, integrationIssues);
   }
 
   @Instrument()
@@ -173,7 +185,7 @@ export class BuildStepIssuesUsecase {
 
             return acc;
           },
-          {} as Record<string, ContentIssue[]>
+          {} as Record<string, StepContentIssue[]>
         ),
       };
 
@@ -203,7 +215,7 @@ export class BuildStepIssuesUsecase {
       return {};
     }
 
-    const result: Record<string, ContentIssue[]> = {};
+    const result: Record<string, StepContentIssue[]> = {};
     for (const restrictionsError of restrictionsErrors) {
       result[restrictionsError.controlKey] = [
         {
@@ -276,10 +288,13 @@ export class BuildStepIssuesUsecase {
   }
 
   @Instrument()
-  private validateSkipField(skipLogic: RulesLogic<AdditionalOperation>): StepIssuesDto {
+  private validateSkipField(variableSchema: JSONSchemaDto, skipLogic: RulesLogic<AdditionalOperation>): StepIssuesDto {
     const issues: StepIssuesDto = {};
+    const { primitives } = parseStepVariables(variableSchema);
+    const allowedVariables = primitives.map((variable) => variable.label);
+    const allowedNamespaces = [PAYLOAD_FIELD_PREFIX, SUBSCRIBER_DATA_FIELD_PREFIX];
 
-    const queryValidatorService = new QueryValidatorService();
+    const queryValidatorService = new QueryValidatorService(allowedVariables, allowedNamespaces);
     const skipRulesIssues = queryValidatorService.validateQueryRules(skipLogic);
 
     if (skipRulesIssues.length > 0) {
@@ -296,5 +311,50 @@ export class BuildStepIssuesUsecase {
     }
 
     return issues.controls?.skip.length ? issues : {};
+  }
+
+  @Instrument()
+  private async validateIntegration(args: {
+    stepTypeDto: StepTypeEnum;
+    environmentId: string;
+    organizationId: string;
+  }): Promise<StepIssuesDto> {
+    const issues: StepIssuesDto = {};
+
+    const integrationNeeded = [
+      StepTypeEnum.EMAIL,
+      StepTypeEnum.SMS,
+      StepTypeEnum.IN_APP,
+      StepTypeEnum.PUSH,
+      StepTypeEnum.CHAT,
+    ].includes(args.stepTypeDto);
+
+    if (!integrationNeeded) {
+      return issues;
+    }
+
+    const primaryNeeded = args.stepTypeDto === StepTypeEnum.EMAIL || args.stepTypeDto === StepTypeEnum.SMS;
+    const validIntegrationForStep = await this.integrationsRepository.findOne({
+      _environmentId: args.environmentId,
+      _organizationId: args.organizationId,
+      active: true,
+      ...(primaryNeeded && { primary: true }),
+      channel: args.stepTypeDto,
+    });
+
+    if (validIntegrationForStep) {
+      return issues;
+    }
+
+    issues.integration = {
+      [args.stepTypeDto]: [
+        {
+          issueType: StepIntegrationIssueEnum.MISSING_INTEGRATION,
+          message: `Missing active ${primaryNeeded ? 'primary' : ''} integration provider`,
+        },
+      ],
+    };
+
+    return issues;
   }
 }

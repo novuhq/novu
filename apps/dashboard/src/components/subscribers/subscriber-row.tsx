@@ -1,4 +1,7 @@
 import { ConfirmationModal } from '@/components/confirmation-modal';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/primitives/avatar';
+import { CompactButton } from '@/components/primitives/button-compact';
+import { CopyButton } from '@/components/primitives/copy-button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,6 +13,8 @@ import { Skeleton } from '@/components/primitives/skeleton';
 import { ToastIcon } from '@/components/primitives/sonner';
 import { showToast } from '@/components/primitives/sonner-helpers';
 import { TableCell, TableRow } from '@/components/primitives/table';
+import { useSubscribersNavigate } from '@/components/subscribers/hooks/use-subscribers-navigate';
+import { getSubscriberTitle } from '@/components/subscribers/utils';
 import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
 import TruncatedText from '@/components/truncated-text';
 import { useEnvironment } from '@/context/environment/hooks';
@@ -17,14 +22,12 @@ import { useDeleteSubscriber } from '@/hooks/use-delete-subscriber';
 import { formatDateSimple } from '@/utils/format-date';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
-import { SubscriberResponseDto } from '@novu/api/models/components';
+import { ISubscriberResponseDto } from '@novu/shared';
 import { ComponentProps, useState } from 'react';
 import { RiDeleteBin2Line, RiFileCopyLine, RiMore2Fill, RiPulseFill } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
 import { ExternalToast } from 'sonner';
-import { Avatar, AvatarFallback, AvatarImage } from '../primitives/avatar';
-import { CompactButton } from '../primitives/button-compact';
-import { CopyButton } from '../primitives/copy-button';
+import { useSubscribersUrlState } from './hooks/use-subscribers-url-state';
 
 const toastOptions: ExternalToast = {
   position: 'bottom-right',
@@ -33,33 +36,31 @@ const toastOptions: ExternalToast = {
   },
 };
 
-const getSubscriberTitle = (subscriber: SubscriberResponseDto) => {
-  const fullName = `${subscriber.firstName || ''} ${subscriber.lastName || ''}`.trim();
-  return fullName || subscriber.email || subscriber.phone || subscriber.subscriberId;
-};
-
 type SubscriberRowProps = {
-  subscriber: SubscriberResponseDto;
+  subscriber: ISubscriberResponseDto;
+  subscribersCount: number;
+  firstTwoSubscribersInternalIds: string[];
 };
 
-type SubscriberLinkTableCellProps = ComponentProps<typeof TableCell> & {
-  subscriber: SubscriberResponseDto;
-};
+type SubscriberLinkTableCellProps = ComponentProps<typeof TableCell>;
 
-const SubscriberLinkTableCell = (props: SubscriberLinkTableCellProps) => {
-  const { subscriber, children, className, ...rest } = props;
+const SubscriberTableCell = (props: SubscriberLinkTableCellProps) => {
+  const { children, className, ...rest } = props;
 
   return (
     <TableCell className={cn('group-hover:bg-neutral-alpha-50 text-text-sub relative', className)} {...rest}>
       {children}
+      <span className="sr-only">Edit subscriber</span>
     </TableCell>
   );
 };
 
-export const SubscriberRow = ({ subscriber }: SubscriberRowProps) => {
+export const SubscriberRow = ({ subscriber, subscribersCount, firstTwoSubscribersInternalIds }: SubscriberRowProps) => {
   const { currentEnvironment } = useEnvironment();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const subscriberTitle = getSubscriberTitle(subscriber);
+  const { navigateToSubscribersFirstPage, navigateToEditSubscriberPage } = useSubscribersNavigate();
+  const { handleNavigationAfterDelete } = useSubscribersUrlState();
 
   const { deleteSubscriber, isPending: isDeleteSubscriberPending } = useDeleteSubscriber({
     onSuccess: () => {
@@ -90,14 +91,52 @@ export const SubscriberRow = ({ subscriber }: SubscriberRowProps) => {
     },
   });
 
+  const stopPropagation = (e: React.MouseEvent) => {
+    // don't propagate the click event to the row
+    e.stopPropagation();
+  };
+
+  const handleDeletion = async () => {
+    await deleteSubscriber({ subscriberId: subscriber.subscriberId });
+    setIsDeleteModalOpen(false);
+
+    const hasSingleSubscriber = subscribersCount === 1;
+
+    if (hasSingleSubscriber) {
+      navigateToSubscribersFirstPage();
+      return;
+    }
+
+    const hasTwoSubscribersInternalIds = firstTwoSubscribersInternalIds.length === 2 && !hasSingleSubscriber;
+    const firstSubscriberInternalId = firstTwoSubscribersInternalIds[0];
+    const isFirstSubscriberBeingDeleted = subscriber._id === firstSubscriberInternalId;
+    let afterCursor = firstSubscriberInternalId;
+
+    /**
+     * If the first subscriber is being deleted and there are more than one subscribers on the list then
+     * fetch the list from the second subscriber onwards.
+     */
+    if (isFirstSubscriberBeingDeleted && hasTwoSubscribersInternalIds) {
+      afterCursor = firstTwoSubscribersInternalIds[1];
+    }
+
+    handleNavigationAfterDelete(afterCursor);
+  };
+
   return (
     <>
-      <TableRow key={subscriber.subscriberId} className="group relative isolate">
-        <SubscriberLinkTableCell subscriber={subscriber}>
+      <TableRow
+        key={subscriber.subscriberId}
+        className="group relative isolate cursor-pointer"
+        onClick={() => {
+          navigateToEditSubscriberPage(subscriber.subscriberId);
+        }}
+      >
+        <SubscriberTableCell>
           <div className="flex items-center gap-3">
             <Avatar>
               <AvatarImage src={subscriber.avatar || undefined} />
-              <AvatarFallback className="bg-neutral-alpha-100">{subscriberTitle[0]}</AvatarFallback>
+              <AvatarFallback>{subscriberTitle[0]}</AvatarFallback>
             </Avatar>
             <div className="flex flex-col">
               <TruncatedText className="text-text-strong max-w-[32ch] font-medium">{subscriberTitle}</TruncatedText>
@@ -109,30 +148,31 @@ export const SubscriberRow = ({ subscriber }: SubscriberRowProps) => {
                   className="z-10 flex size-2 p-0 px-1 opacity-0 group-hover:opacity-100"
                   valueToCopy={subscriber.subscriberId}
                   size="2xs"
-                  mode="ghost"
                 />
               </div>
             </div>
           </div>
-        </SubscriberLinkTableCell>
-        <SubscriberLinkTableCell subscriber={subscriber}>{subscriber.email || '-'}</SubscriberLinkTableCell>
-        <SubscriberLinkTableCell subscriber={subscriber}>{subscriber.phone || '-'}</SubscriberLinkTableCell>
-        <SubscriberLinkTableCell subscriber={subscriber}>
+        </SubscriberTableCell>
+        <SubscriberTableCell>
+          <TruncatedText className="relative z-10 max-w-[28ch]">{subscriber.email || '-'}</TruncatedText>
+        </SubscriberTableCell>
+        <SubscriberTableCell>{subscriber.phone || '-'}</SubscriberTableCell>
+        <SubscriberTableCell>
           <TimeDisplayHoverCard date={new Date(subscriber.createdAt)}>
             {formatDateSimple(subscriber.createdAt)}
           </TimeDisplayHoverCard>
-        </SubscriberLinkTableCell>
-        <SubscriberLinkTableCell subscriber={subscriber}>
+        </SubscriberTableCell>
+        <SubscriberTableCell>
           <TimeDisplayHoverCard date={new Date(subscriber.updatedAt)}>
             {formatDateSimple(subscriber.updatedAt)}
           </TimeDisplayHoverCard>
-        </SubscriberLinkTableCell>
-        <SubscriberLinkTableCell subscriber={subscriber} className="w-1">
-          <DropdownMenu modal={false}>
+        </SubscriberTableCell>
+        <SubscriberTableCell className="w-1">
+          <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <CompactButton icon={RiMore2Fill} variant="ghost" className="z-10 h-8 w-8 p-0" />
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56">
+            <DropdownMenuContent className="w-56" onClick={stopPropagation}>
               <DropdownMenuGroup>
                 <DropdownMenuItem
                   className="cursor-pointer"
@@ -160,7 +200,7 @@ export const SubscriberRow = ({ subscriber }: SubscriberRowProps) => {
                 <DropdownMenuItem
                   className="text-destructive cursor-pointer"
                   onClick={() => {
-                    setIsDeleteModalOpen(true);
+                    setTimeout(() => setIsDeleteModalOpen(true), 0);
                   }}
                 >
                   <RiDeleteBin2Line />
@@ -169,20 +209,18 @@ export const SubscriberRow = ({ subscriber }: SubscriberRowProps) => {
               </DropdownMenuGroup>
             </DropdownMenuContent>
           </DropdownMenu>
-        </SubscriberLinkTableCell>
+        </SubscriberTableCell>
       </TableRow>
       <ConfirmationModal
         open={isDeleteModalOpen}
         onOpenChange={setIsDeleteModalOpen}
-        onConfirm={async () => {
-          await deleteSubscriber({ subscriberId: subscriber.subscriberId });
-          setIsDeleteModalOpen(false);
-        }}
+        onConfirm={handleDeletion}
         title={`Delete subscriber`}
         description={
           <span>
-            Are you sure you want to delete subscriber <span className="font-bold">{subscriberTitle}</span>? This action
-            cannot be undone.
+            Are you sure you want to delete subscriber{' '}
+            <TruncatedText className="max-w-[20ch] font-bold">{subscriberTitle}</TruncatedText>? This action cannot be
+            undone.
           </span>
         }
         confirmButtonText="Delete subscriber"

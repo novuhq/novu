@@ -36,6 +36,7 @@ export function TextWidget(props: WidgetProps) {
                     field.onChange('');
                     return;
                   }
+
                   const val = Number(e.target.value);
                   const isNaN = Number.isNaN(val);
                   const finalValue = isNaN ? '' : val;

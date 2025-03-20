@@ -112,9 +112,3 @@ jobs:
         with:
           name: cypress-videos
           path: apps/widget/cypress/videos
-
-      - name: Send Slack notifications
-        uses: ./.github/actions/slack-notify-on-failure
-        if: failure()
-        with:
-          slackWebhookURL: ${{ secrets.SLACK_WEBHOOK_URL_ENG_FEED_GITHUB }}

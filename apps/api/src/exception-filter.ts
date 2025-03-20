@@ -128,12 +128,6 @@ export class AllExceptionsFilter implements ExceptionFilter {
   }
 }
 
-class ResponseMetadata {
-  status: number;
-  message: string;
-  ctx?: object | Object;
-}
-
 function hasMessage(response: unknown): response is { message: string } {
   return typeof response === 'object' && response !== null && 'message' in response;
 }

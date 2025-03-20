@@ -96,7 +96,7 @@ type TabsTriggerProps = React.ComponentPropsWithoutRef<typeof TabsPrimitive.Trig
 
 const TabsTrigger = React.forwardRef<React.ElementRef<typeof TabsPrimitive.Trigger>, TabsTriggerProps>(
   ({ className, variant, ...props }, ref) => (
-    <TabsPrimitive.Trigger ref={ref} className={tabsTriggerVariants({ variant, className })} {...props} />
+    <TabsPrimitive.Trigger ref={ref} className={cn(tabsTriggerVariants({ variant, className }))} {...props} />
   )
 );
 TabsTrigger.displayName = TabsPrimitive.Trigger.displayName;

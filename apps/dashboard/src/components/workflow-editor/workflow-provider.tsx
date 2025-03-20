@@ -74,37 +74,33 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
 
   const { patchWorkflow, isPending: isPatchPending } = usePatchWorkflow({
     onMutate: () => {
-      // when the navigation is blocked, we don't want to show the toast
       if (!isBlocked) {
         showSavingToast(setToastId);
       }
     },
     onSuccess: async () => {
-      // when the navigation is blocked, we don't want to show the toast
       if (!isBlocked) {
         showSuccessToast(toastId);
       }
     },
-    onError: () => {
-      showErrorToast(toastId);
+    onError: (error) => {
+      showErrorToast(toastId, error);
     },
   });
 
   const { updateWorkflow, isPending: isUpdatePending } = useUpdateWorkflow({
     onMutate: () => {
-      // when the navigation is blocked, we don't want to show the toast
       if (!isBlocked) {
         showSavingToast(setToastId);
       }
     },
     onSuccess: async () => {
-      // when the navigation is blocked, we don't want to show the toast
       if (!isBlocked) {
         showSuccessToast(toastId);
       }
     },
-    onError: () => {
-      showErrorToast(toastId);
+    onError: (error) => {
+      showErrorToast(toastId, error);
     },
   });
 

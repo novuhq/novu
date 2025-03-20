@@ -33,7 +33,7 @@ test('should trigger bulk-sms library correctly', async () => {
         Authorization: 'Basic dGVzdC1rZXk=',
         'Content-Type': 'application/json',
       },
-    },
+    }
   );
 });
 
@@ -64,6 +64,6 @@ test('should trigger bulk-sms library correctly with _passthrough', async () => 
         Authorization: 'Basic dGVzdC1rZXk=',
         'Content-Type': 'application/json',
       },
-    },
+    }
   );
 });

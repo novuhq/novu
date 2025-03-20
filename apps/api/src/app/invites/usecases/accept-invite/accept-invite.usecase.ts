@@ -2,9 +2,8 @@ import { Injectable, Logger, NotFoundException, Scope } from '@nestjs/common';
 
 import { MemberEntity, MemberRepository, OrganizationRepository, UserEntity, UserRepository } from '@novu/dal';
 import { MemberStatusEnum } from '@novu/shared';
-import { AuthService } from '@novu/application-generic';
-
 import { Novu } from '@novu/api';
+import { AuthService } from '../../../auth/services/auth.service';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { AcceptInviteCommand } from './accept-invite.command';
 import { capitalize } from '../../../shared/services/helper/helper.service';

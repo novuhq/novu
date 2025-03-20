@@ -1,0 +1,62 @@
+name: Validate Submodule Sync
+
+# This workflow validates submodule synchronization when PRs are opened/updated and when changes are pushed to main branches.
+# Logic:
+# 1. Triggers on PR events (open/update) and pushes to next/main/prod branches
+# 2. First checks if SUBMODULES_TOKEN secret exists
+# 3. If token exists, proceeds to validate submodule sync
+# 4. Uses a validation script to ensure submodules are properly synchronized
+
+on:
+  pull_request:
+    branches:
+      - next
+      - main
+      - prod
+    types:
+      - opened
+      - synchronize
+  push:
+    branches:
+      - next
+      - main
+      - prod
+
+jobs:
+  check_submodule_token:
+    name: Check if the secret exists or not.
+    runs-on: ubuntu-latest
+    outputs:
+      has_token: ${{ steps.secret-check.outputs.has_token }}
+    steps:
+      - name: Check if secret exists
+        id: secret-check
+        run: |
+          if [[ -n "${{ secrets.SUBMODULES_TOKEN }}" ]]; then
+            echo "::set-output name=has_token::true"
+          else
+            echo "::set-output name=has_token::false"
+          fi
+
+  validate-submodule-sync:
+    runs-on: ubuntu-latest
+    needs: [check_submodule_token]
+    if: needs.check_submodule_token.outputs.has_token == 'true'
+
+    steps:
+      - name: Checkout main repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: true
+          token: ${{ secrets.SUBMODULES_TOKEN }}
+
+      - name: Run validation script
+        run: |
+          # Ensure the script is executable
+          chmod +x .github/workflows/scripts/validate-submodule-sync.sh
+
+          # Run the script with arguments
+          .github/workflows/scripts/validate-submodule-sync.sh ${{ github.base_ref }}
+        env:
+          SUBMODULES_TOKEN: ${{ secrets.SUBMODULES_TOKEN }}

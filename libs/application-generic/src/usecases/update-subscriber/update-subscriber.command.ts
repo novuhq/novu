@@ -33,6 +33,9 @@ export class UpdateSubscriberCommand extends EnvironmentCommand {
   locale?: string;
 
   @IsOptional()
+  timezone?: string;
+
+  @IsOptional()
   data?: SubscriberCustomData;
 
   @IsOptional()

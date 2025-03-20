@@ -30,6 +30,43 @@ interface WorkflowListProps {
   onClearFilters?: () => void;
 }
 
+interface WorkflowListSkeletonProps {
+  limit: number;
+}
+
+function WorkflowListSkeleton({ limit }: WorkflowListSkeletonProps) {
+  return (
+    <>
+      {new Array(limit).fill(0).map((_, index) => (
+        <TableRow key={index}>
+          <TableCell className="flex flex-col gap-1 font-medium">
+            <Skeleton className="h-5 w-[20ch]" />
+            <Skeleton className="h-3 w-[15ch] rounded-full" />
+          </TableCell>
+          <TableCell>
+            <Skeleton className="h-5 w-[6ch] rounded-full" />
+          </TableCell>
+          <TableCell>
+            <Skeleton className="h-5 w-[8ch] rounded-full" />
+          </TableCell>
+          <TableCell>
+            <Skeleton className="h-5 w-[7ch] rounded-full" />
+          </TableCell>
+          <TableCell className="text-foreground-600 text-sm font-medium">
+            <Skeleton className="h-5 w-[14ch] rounded-full" />
+          </TableCell>
+          <TableCell className="text-foreground-600 text-sm font-medium">
+            <Skeleton className="h-5 w-[14ch] rounded-full" />
+          </TableCell>
+          <TableCell className="text-foreground-600 text-sm font-medium">
+            <RiMore2Fill className="size-4 opacity-50" />
+          </TableCell>
+        </TableRow>
+      ))}
+    </>
+  );
+}
+
 export function WorkflowList({
   data,
   isLoading,
@@ -108,34 +145,7 @@ export function WorkflowList({
         </TableHeader>
         <TableBody>
           {isLoading ? (
-            <>
-              {new Array(limit).fill(0).map((_, index) => (
-                <TableRow key={index}>
-                  <TableCell className="flex flex-col gap-1 font-medium">
-                    <Skeleton className="h-5 w-[20ch]" />
-                    <Skeleton className="h-3 w-[15ch] rounded-full" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-5 w-[6ch] rounded-full" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-5 w-[8ch] rounded-full" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-5 w-[7ch] rounded-full" />
-                  </TableCell>
-                  <TableCell className="text-foreground-600 text-sm font-medium">
-                    <Skeleton className="h-5 w-[14ch] rounded-full" />
-                  </TableCell>
-                  <TableCell className="text-foreground-600 text-sm font-medium">
-                    <Skeleton className="h-5 w-[14ch] rounded-full" />
-                  </TableCell>
-                  <TableCell className="text-foreground-600 text-sm font-medium">
-                    <RiMore2Fill className="size-4 opacity-50" />
-                  </TableCell>
-                </TableRow>
-              ))}
-            </>
+            <WorkflowListSkeleton limit={limit} />
           ) : (
             <>{data?.workflows.map((workflow) => <WorkflowRow key={workflow._id} workflow={workflow} />)}</>
           )}

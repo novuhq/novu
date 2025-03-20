@@ -10,7 +10,7 @@ export type NotificationFeedItemEntity = Omit<NotificationEntity, 'template'> & 
   subscriber?: SubscriberFeedItem;
   jobs: JobFeedItem[];
 };
-export type TemplateFeedItem = Pick<NotificationTemplateEntity, '_id' | 'name' | 'triggers'>;
+export type TemplateFeedItem = Pick<NotificationTemplateEntity, '_id' | 'name' | 'triggers' | 'origin'>;
 
 export type SubscriberFeedItem = Pick<
   SubscriberEntity,
@@ -19,7 +19,7 @@ export type SubscriberFeedItem = Pick<
 
 export type JobFeedItem = Pick<
   JobEntity,
-  '_id' | 'status' | 'payload' | 'step' | 'type' | 'providerId' | 'createdAt' | 'updatedAt' | 'digest'
+  '_id' | 'status' | 'overrides' | 'payload' | 'step' | 'type' | 'providerId' | 'createdAt' | 'updatedAt' | 'digest'
 > & {
   executionDetails: ExecutionDetailFeedItem[]; // Assuming ExecutionDetailFeedItem is defined
   type: StepTypeEnum;

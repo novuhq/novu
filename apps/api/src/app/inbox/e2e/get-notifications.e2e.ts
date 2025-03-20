@@ -103,7 +103,7 @@ describe('Get Notifications - /inbox/notifications (GET) #novu-v2', async () => 
     }
 
     await Promise.all(promises);
-    await session.awaitRunningJobs(templateToTrigger._id);
+    await session.waitForJobCompletion(templateToTrigger._id);
   };
 
   const removeUndefinedDeep = (obj) => {

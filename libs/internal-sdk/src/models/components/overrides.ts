@@ -11,7 +11,7 @@ import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 /**
  * The channel type which is overridden
  */
-export const OverridesChannel = {
+export const Channel = {
   InApp: "in_app",
   Email: "email",
   Sms: "sms",
@@ -21,7 +21,7 @@ export const OverridesChannel = {
 /**
  * The channel type which is overridden
  */
-export type OverridesChannel = ClosedEnum<typeof OverridesChannel>;
+export type Channel = ClosedEnum<typeof Channel>;
 
 /**
  * The source of overrides
@@ -40,7 +40,7 @@ export type Overrides = {
   /**
    * The channel type which is overridden
    */
-  channel: OverridesChannel;
+  channel: Channel;
   /**
    * The source of overrides
    */
@@ -48,24 +48,22 @@ export type Overrides = {
 };
 
 /** @internal */
-export const OverridesChannel$inboundSchema: z.ZodNativeEnum<
-  typeof OverridesChannel
-> = z.nativeEnum(OverridesChannel);
+export const Channel$inboundSchema: z.ZodNativeEnum<typeof Channel> = z
+  .nativeEnum(Channel);
 
 /** @internal */
-export const OverridesChannel$outboundSchema: z.ZodNativeEnum<
-  typeof OverridesChannel
-> = OverridesChannel$inboundSchema;
+export const Channel$outboundSchema: z.ZodNativeEnum<typeof Channel> =
+  Channel$inboundSchema;
 
 /**
  * @internal
  * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
  */
-export namespace OverridesChannel$ {
-  /** @deprecated use `OverridesChannel$inboundSchema` instead. */
-  export const inboundSchema = OverridesChannel$inboundSchema;
-  /** @deprecated use `OverridesChannel$outboundSchema` instead. */
-  export const outboundSchema = OverridesChannel$outboundSchema;
+export namespace Channel$ {
+  /** @deprecated use `Channel$inboundSchema` instead. */
+  export const inboundSchema = Channel$inboundSchema;
+  /** @deprecated use `Channel$outboundSchema` instead. */
+  export const outboundSchema = Channel$outboundSchema;
 }
 
 /** @internal */
@@ -93,7 +91,7 @@ export const Overrides$inboundSchema: z.ZodType<
   z.ZodTypeDef,
   unknown
 > = z.object({
-  channel: OverridesChannel$inboundSchema,
+  channel: Channel$inboundSchema,
   source: Source$inboundSchema,
 });
 
@@ -109,7 +107,7 @@ export const Overrides$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   Overrides
 > = z.object({
-  channel: OverridesChannel$outboundSchema,
+  channel: Channel$outboundSchema,
   source: Source$outboundSchema,
 });
 

@@ -113,6 +113,10 @@ export class UpsertWorkflowDataCommand {
 
 export class UpsertWorkflowCommand extends EnvironmentWithUserObjectCommand {
   @IsOptional()
+  @IsBoolean()
+  preserveWorkflowId?: boolean;
+
+  @IsOptional()
   @IsString()
   workflowIdOrInternalId?: string;
 

@@ -5,7 +5,7 @@ import { expect } from 'chai';
 import { Novu } from '@novu/api';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-describe('Mark all as read - /widgets/messages/seen (POST) #novu-v1', function () {
+describe('Mark all as read - /widgets/messages/seen (POST) #novu-v0', function () {
   const messageRepository = new MessageRepository();
   let session: UserSession;
   let template: NotificationTemplateEntity;
@@ -47,7 +47,7 @@ describe('Mark all as read - /widgets/messages/seen (POST) #novu-v1', function (
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
 
     const unseenMessagesBefore = await getFeedCount({ seen: false });
     expect(unseenMessagesBefore.data.count).to.equal(3);
@@ -71,7 +71,7 @@ describe('Mark all as read - /widgets/messages/seen (POST) #novu-v1', function (
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
 
     const unseenMessagesBefore = await getNotificationCount('read=false');
 

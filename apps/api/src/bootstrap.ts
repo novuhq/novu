@@ -2,15 +2,13 @@ import './instrument';
 
 import helmet from 'helmet';
 import { INestApplication, Logger, ValidationPipe, VersioningType } from '@nestjs/common';
-import { NestFactory, Reflector } from '@nestjs/core';
+import { NestFactory } from '@nestjs/core';
 import bodyParser from 'body-parser';
 
 import { BullMqService, getErrorInterceptor, Logger as PinoLogger } from '@novu/application-generic';
-import { ExpressAdapter } from '@nestjs/platform-express';
 import { CONTEXT_PATH, corsOptionsDelegate, validateEnv } from './config';
 import { AppModule } from './app.module';
 import { setupSwagger } from './app/shared/framework/swagger/swagger.controller';
-import { SubscriberRouteGuard } from './app/auth/framework/subscriber-route.guard';
 import { ResponseInterceptor } from './app/shared/framework/response.interceptor';
 import { AllExceptionsFilter } from './exception-filter';
 
@@ -29,9 +27,9 @@ const extendedBodySizeRoutes = [
 // Validate the ENV variables after launching SENTRY, so missing variables will report to sentry
 validateEnv();
 class BootstrapOptions {
-  expressApp?: any;
   internalSdkGeneration?: boolean;
 }
+
 export async function bootstrap(
   bootstrapOptions?: BootstrapOptions
 ): Promise<{ app: INestApplication; document: any }> {
@@ -53,12 +51,7 @@ export async function bootstrap(
     };
   }
 
-  let app: INestApplication;
-  if (bootstrapOptions?.expressApp) {
-    app = await NestFactory.create(AppModule, new ExpressAdapter(bootstrapOptions?.expressApp), nestOptions);
-  } else {
-    app = await NestFactory.create(AppModule, { bufferLogs: true, ...nestOptions });
-  }
+  const app = await NestFactory.create(AppModule, { bufferLogs: true, ...nestOptions });
 
   app.enableVersioning({
     type: VersioningType.URI,
@@ -91,8 +84,6 @@ export async function bootstrap(
   app.useGlobalInterceptors(new ResponseInterceptor());
   app.useGlobalInterceptors(getErrorInterceptor());
 
-  app.useGlobalGuards(new SubscriberRouteGuard(app.get(Reflector), app.get(PinoLogger)));
-
   app.use(extendedBodySizeRoutes, bodyParser.json({ limit: '20mb' }));
   app.use(extendedBodySizeRoutes, bodyParser.urlencoded({ limit: '20mb', extended: true }));
 
@@ -105,11 +96,7 @@ export async function bootstrap(
 
   app.useGlobalFilters(new AllExceptionsFilter(app.get(PinoLogger)));
 
-  if (bootstrapOptions?.expressApp) {
-    await app.init();
-  } else {
-    await app.listen(process.env.PORT || 3000);
-  }
+  await app.listen(process.env.PORT || 3000);
 
   app.enableShutdownHooks();
 

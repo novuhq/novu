@@ -54,6 +54,7 @@ function buildTemplate(template: TemplateFeedItem): ActivityNotificationTemplate
     _id: template._id,
     name: template.name,
     triggers: template.triggers,
+    origin: template.origin,
   };
 }
 
@@ -236,6 +237,7 @@ function mapJobToDto(item: JobFeedItem): ActivityNotificationJobResponseDto {
     digest: mapDigest(item.digest),
     executionDetails: item.executionDetails.map(convertExecutionDetail),
     step: convertStepToResponse(item.step),
+    overrides: item.overrides,
     payload: item.payload,
     providerId: item.providerId as ProvidersIdEnum,
     status: item.status,

@@ -1,15 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import {
-  MessageTemplateEntity,
-  MessageTemplateRepository,
-  LayoutRepository,
-} from '@novu/dal';
-import {
-  ChangeEntityTypeEnum,
-  IMessageAction,
-  isBridgeWorkflow,
-  StepTypeEnum,
-} from '@novu/shared';
+import { MessageTemplateEntity, MessageTemplateRepository, LayoutRepository } from '@novu/dal';
+import { ChangeEntityTypeEnum, IMessageAction, isBridgeWorkflow, StepTypeEnum } from '@novu/shared';
 
 import { CreateMessageTemplateCommand } from './create-message-template.command';
 import { CreateChange, CreateChangeCommand } from '../../create-change';
@@ -24,54 +15,45 @@ export class CreateMessageTemplate {
     private messageTemplateRepository: MessageTemplateRepository,
     private layoutRepository: LayoutRepository,
     private createChange: CreateChange,
-    private updateChange: UpdateChange,
+    private updateChange: UpdateChange
   ) {}
 
-  async execute(
-    command: CreateMessageTemplateCommand,
-  ): Promise<MessageTemplateEntity> {
+  async execute(command: CreateMessageTemplateCommand): Promise<MessageTemplateEntity> {
     if ((command?.cta?.action as IMessageAction | undefined | '') === '') {
       throw new ApiException('Please provide a valid CTA action');
     }
 
     let layoutId: string | undefined | null;
     if (command.type === StepTypeEnum.EMAIL && !command.layoutId) {
-      const defaultLayout = await this.layoutRepository.findDefault(
-        command.environmentId,
-        command.organizationId,
-      );
+      const defaultLayout = await this.layoutRepository.findDefault(command.environmentId, command.organizationId);
       layoutId = defaultLayout?._id;
     } else {
       layoutId = command.layoutId;
     }
 
-    let item: MessageTemplateEntity =
-      await this.messageTemplateRepository.create({
-        cta: command.cta,
-        name: command.name,
-        variables: command.variables
-          ? normalizeVariantDefault(command.variables)
-          : undefined,
-        content:
-          command.contentType === 'editor'
-            ? sanitizeMessageContent(command.content)
-            : command.content,
-        contentType: command.contentType,
-        subject: command.subject,
-        title: command.title,
-        type: command.type,
-        _feedId: command.feedId ? command.feedId : null,
-        _layoutId: layoutId,
-        _organizationId: command.organizationId,
-        _environmentId: command.environmentId,
-        _creatorId: command.userId,
-        preheader: command.preheader,
-        senderName: command.senderName,
-        controls: command.controls,
-        output: command.output,
-        actor: command.actor,
-        code: command.code,
-      });
+    const shouldSanitize = command.contentType === 'editor' && command.type !== StepTypeEnum.CHAT;
+
+    let item: MessageTemplateEntity = await this.messageTemplateRepository.create({
+      cta: command.cta,
+      name: command.name,
+      variables: command.variables ? normalizeVariantDefault(command.variables) : undefined,
+      content: shouldSanitize ? sanitizeMessageContent(command.content) : command.content,
+      contentType: command.contentType,
+      subject: command.subject,
+      title: command.title,
+      type: command.type,
+      _feedId: command.feedId ? command.feedId : null,
+      _layoutId: layoutId,
+      _organizationId: command.organizationId,
+      _environmentId: command.environmentId,
+      _creatorId: command.userId,
+      preheader: command.preheader,
+      senderName: command.senderName,
+      controls: command.controls,
+      output: command.output,
+      actor: command.actor,
+      code: command.code,
+    });
 
     if (item?._id) {
       item = (await this.messageTemplateRepository.findOne({
@@ -90,7 +72,7 @@ export class CreateMessageTemplate {
           type: ChangeEntityTypeEnum.MESSAGE_TEMPLATE,
           parentChangeId: command.parentChangeId,
           changeId: MessageTemplateRepository.createObjectId(),
-        }),
+        })
       );
     }
 
@@ -103,7 +85,7 @@ export class CreateMessageTemplate {
           environmentId: command.environmentId,
           organizationId: command.organizationId,
           userId: command.userId,
-        }),
+        })
       );
     }
 
@@ -116,7 +98,7 @@ export class CreateMessageTemplate {
           environmentId: command.environmentId,
           organizationId: command.organizationId,
           userId: command.userId,
-        }),
+        })
       );
     }
 

@@ -24,6 +24,7 @@ export class ListSubscribersUseCase {
       subscriberId: command.subscriberId,
       environmentId: command.user.environmentId,
       organizationId: command.user.organizationId,
+      includeCursor: command.includeCursor,
     });
 
     return {

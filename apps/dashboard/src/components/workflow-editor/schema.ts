@@ -40,20 +40,24 @@ export const buildDynamicFormSchema = ({
   const requiredFields = typeof to === 'object' ? (to.required ?? []) : [];
   const keys: Record<string, z.ZodTypeAny> = Object.keys(properties).reduce((acc, key) => {
     const value = properties[key];
+
     if (typeof value !== 'object') {
       return acc;
     }
 
     const isRequired = requiredFields.includes(key);
     let zodValue: z.ZodString | z.ZodNumber | z.ZodOptional<z.ZodString | z.ZodNumber>;
+
     if (value.type === 'string') {
       zodValue = z.string().min(1);
+
       if (value.format === 'email') {
         zodValue = zodValue.email();
       }
     } else {
       zodValue = z.number().min(1);
     }
+
     if (!isRequired) {
       zodValue = zodValue.optional();
     }

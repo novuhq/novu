@@ -28,6 +28,7 @@ export function ArrayFieldTemplate(props: ArrayFieldTemplateProps) {
     if (!isEditorOpen) {
       setIsEditorOpen(true);
     }
+
     onAddClick();
     /**
      * If the array field has a default value, append it to the array

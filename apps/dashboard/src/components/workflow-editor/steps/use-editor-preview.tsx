@@ -22,6 +22,7 @@ export const useEditorPreview = ({
   } = usePreviewStep({
     onSuccess: (res) => {
       const newValue = JSON.stringify(res.previewPayloadExample, null, 2);
+
       if (!isEqual(editorValue, newValue)) {
         setEditorValueSafe(newValue);
       }

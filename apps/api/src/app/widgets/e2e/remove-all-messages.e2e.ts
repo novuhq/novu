@@ -6,7 +6,7 @@ import { ChannelTypeEnum } from '@novu/shared';
 import { Novu } from '@novu/api';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-describe('Remove all messages - /widgets/messages (DELETE) #novu-v1', function () {
+describe('Remove all messages - /widgets/messages (DELETE) #novu-v0', function () {
   const messageRepository = new MessageRepository();
   let session: UserSession;
   let template: NotificationTemplateEntity;
@@ -48,7 +48,7 @@ describe('Remove all messages - /widgets/messages (DELETE) #novu-v1', function (
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
 
     const messagesBefore = await messageRepository.find({
       _environmentId: session.environment._id,
@@ -83,8 +83,8 @@ describe('Remove all messages - /widgets/messages (DELETE) #novu-v1', function (
     await novuClient.trigger({ workflowId: templateWithFeed.triggers[0].identifier, to: subscriberId });
     await novuClient.trigger({ workflowId: templateWithFeed.triggers[0].identifier, to: subscriberId });
 
-    await session.awaitRunningJobs(templateWithFeed._id);
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(templateWithFeed._id);
+    await session.waitForJobCompletion(template._id);
 
     const messagesBefore = await messageRepository.find({
       _environmentId: session.environment._id,

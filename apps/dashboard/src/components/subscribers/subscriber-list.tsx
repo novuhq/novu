@@ -10,25 +10,42 @@ import {
   SubscribersSortableColumn,
   SubscribersUrlState,
   useSubscribersUrlState,
-} from '@/hooks/use-subscribers-url-state';
+} from '@/components/subscribers/hooks/use-subscribers-url-state';
 import { cn } from '@/utils/ui';
 import { DirectionEnum } from '@novu/shared';
 import { HTMLAttributes, useEffect, useState } from 'react';
+import { Button } from '../primitives/button';
+import { RiUserSharedLine } from 'react-icons/ri';
+import { useSubscribersNavigate } from '@/components/subscribers/hooks/use-subscribers-navigate';
 
 type SubscriberListFiltersProps = HTMLAttributes<HTMLDivElement> &
   Pick<SubscribersUrlState, 'filterValues' | 'handleFiltersChange' | 'resetFilters'>;
 
 const SubscriberListWrapper = (props: SubscriberListFiltersProps) => {
   const { className, children, filterValues, handleFiltersChange, resetFilters, ...rest } = props;
+  const { navigateToCreateSubscriberPage } = useSubscribersNavigate();
 
   return (
     <div className={cn('flex h-full flex-col p-2', className)} {...rest}>
-      <SubscribersFilters
-        onFiltersChange={handleFiltersChange}
-        filterValues={filterValues}
-        onReset={resetFilters}
-        className="py-2"
-      />
+      <div className="flex items-center justify-between">
+        <SubscribersFilters
+          onFiltersChange={handleFiltersChange}
+          filterValues={filterValues}
+          onReset={resetFilters}
+          className="py-2"
+        />
+
+        <Button
+          mode="gradient"
+          className="rounded-l-lg border-none px-1.5 py-2 text-white"
+          variant="primary"
+          size="xs"
+          leadingIcon={RiUserSharedLine}
+          onClick={navigateToCreateSubscriberPage}
+        >
+          Add subscriber
+        </Button>
+      </div>
       {children}
     </div>
   );
@@ -39,6 +56,7 @@ type SubscriberListTableProps = HTMLAttributes<HTMLTableElement> & {
   orderBy?: SubscribersSortableColumn;
   orderDirection?: DirectionEnum;
 };
+
 const SubscriberListTable = (props: SubscriberListTableProps) => {
   const { children, orderBy, orderDirection, toggleSort, ...rest } = props;
   return (
@@ -78,7 +96,6 @@ export const SubscriberList = (props: SubscriberListProps) => {
   const [previousPageBefore, setPreviousPageBefore] = useState<string | undefined>(undefined);
   const { filterValues, handleFiltersChange, toggleSort, resetFilters, handleNext, handlePrevious, handleFirst } =
     useSubscribersUrlState({
-      debounceMs: 300,
       after: nextPageAfter,
       before: previousPageBefore,
     });
@@ -95,6 +112,7 @@ export const SubscriberList = (props: SubscriberListProps) => {
     if (data?.next) {
       setNextPageAfter(data.next);
     }
+
     if (data?.previous) {
       setPreviousPageBefore(data.previous);
     }
@@ -147,6 +165,11 @@ export const SubscriberList = (props: SubscriberListProps) => {
     );
   }
 
+  const firstTwoSubscribersInternalIds = data.data.reduce<string[]>((acc, s) => {
+    if (s._id) acc.push(s._id);
+    return acc.length < 2 ? acc : acc.slice(0, 2);
+  }, []);
+
   return (
     <SubscriberListWrapper
       filterValues={filterValues}
@@ -160,7 +183,12 @@ export const SubscriberList = (props: SubscriberListProps) => {
         toggleSort={toggleSort}
       >
         {data.data.map((subscriber) => (
-          <SubscriberRow key={subscriber.subscriberId} subscriber={subscriber} />
+          <SubscriberRow
+            key={subscriber._id}
+            subscriber={subscriber}
+            subscribersCount={data.data.length}
+            firstTwoSubscribersInternalIds={firstTwoSubscribersInternalIds}
+          />
         ))}
       </SubscriberListTable>
 

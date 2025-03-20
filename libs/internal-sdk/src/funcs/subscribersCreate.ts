@@ -22,22 +22,23 @@ import * as errors from "../models/errors/index.js";
 import { SDKError } from "../models/errors/sdkerror.js";
 import { SDKValidationError } from "../models/errors/sdkvalidationerror.js";
 import * as operations from "../models/operations/index.js";
+import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
  * Create subscriber
  *
  * @remarks
- * Creates a subscriber entity, in the Novu platform. The subscriber will be later used to receive notifications, and access notification feeds. Communication credentials such as email, phone number, and 3 rd party credentials i.e slack tokens could be later associated to this entity.
+ * Create subscriber with the given data
  */
-export async function subscribersCreate(
+export function subscribersCreate(
   client: NovuCore,
   createSubscriberRequestDto: components.CreateSubscriberRequestDto,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
-): Promise<
+): APIPromise<
   Result<
-    operations.SubscribersV1ControllerCreateSubscriberResponse,
+    operations.SubscribersControllerCreateSubscriberResponse,
     | errors.ErrorDto
     | errors.ErrorDto
     | errors.ValidationErrorDto
@@ -51,7 +52,39 @@ export async function subscribersCreate(
     | ConnectionError
   >
 > {
-  const input: operations.SubscribersV1ControllerCreateSubscriberRequest = {
+  return new APIPromise($do(
+    client,
+    createSubscriberRequestDto,
+    idempotencyKey,
+    options,
+  ));
+}
+
+async function $do(
+  client: NovuCore,
+  createSubscriberRequestDto: components.CreateSubscriberRequestDto,
+  idempotencyKey?: string | undefined,
+  options?: RequestOptions,
+): Promise<
+  [
+    Result<
+      operations.SubscribersControllerCreateSubscriberResponse,
+      | errors.ErrorDto
+      | errors.ErrorDto
+      | errors.ValidationErrorDto
+      | errors.ErrorDto
+      | SDKError
+      | SDKValidationError
+      | UnexpectedClientError
+      | InvalidRequestError
+      | RequestAbortedError
+      | RequestTimeoutError
+      | ConnectionError
+    >,
+    APICall,
+  ]
+> {
+  const input: operations.SubscribersControllerCreateSubscriberRequest = {
     createSubscriberRequestDto: createSubscriberRequestDto,
     idempotencyKey: idempotencyKey,
   };
@@ -59,19 +92,19 @@ export async function subscribersCreate(
   const parsed = safeParse(
     input,
     (value) =>
-      operations.SubscribersV1ControllerCreateSubscriberRequest$outboundSchema
+      operations.SubscribersControllerCreateSubscriberRequest$outboundSchema
         .parse(value),
     "Input validation failed",
   );
   if (!parsed.ok) {
-    return parsed;
+    return [parsed, { status: "invalid" }];
   }
   const payload = parsed.value;
   const body = encodeJSON("body", payload.CreateSubscriberRequestDto, {
     explode: true,
   });
 
-  const path = pathToFunc("/v1/subscribers")();
+  const path = pathToFunc("/v2/subscribers")();
 
   const headers = new Headers(compactMap({
     "Content-Type": "application/json",
@@ -87,7 +120,8 @@ export async function subscribersCreate(
   const requestSecurity = resolveGlobalSecurity(securityInput);
 
   const context = {
-    operationID: "SubscribersV1Controller_createSubscriber",
+    baseURL: options?.serverURL ?? client._baseURL ?? "",
+    operationID: "SubscribersController_createSubscriber",
     oAuth2Scopes: [],
 
     resolvedSecurity: requestSecurity,
@@ -119,7 +153,7 @@ export async function subscribersCreate(
     timeoutMs: options?.timeoutMs || client._options.timeoutMs || -1,
   }, options);
   if (!requestRes.ok) {
-    return requestRes;
+    return [requestRes, { status: "invalid" }];
   }
   const req = requestRes.value;
 
@@ -146,7 +180,7 @@ export async function subscribersCreate(
     retryCodes: context.retryCodes,
   });
   if (!doResult.ok) {
-    return doResult;
+    return [doResult, { status: "request-error", request: req }];
   }
   const response = doResult.value;
 
@@ -155,7 +189,7 @@ export async function subscribersCreate(
   };
 
   const [result] = await M.match<
-    operations.SubscribersV1ControllerCreateSubscriberResponse,
+    operations.SubscribersControllerCreateSubscriberResponse,
     | errors.ErrorDto
     | errors.ErrorDto
     | errors.ValidationErrorDto
@@ -170,7 +204,7 @@ export async function subscribersCreate(
   >(
     M.json(
       201,
-      operations.SubscribersV1ControllerCreateSubscriberResponse$inboundSchema,
+      operations.SubscribersControllerCreateSubscriberResponse$inboundSchema,
       { hdrs: true, key: "Result" },
     ),
     M.jsonErr(414, errors.ErrorDto$inboundSchema),
@@ -187,8 +221,8 @@ export async function subscribersCreate(
     M.fail("5XX"),
   )(response, { extraFields: responseFields });
   if (!result.ok) {
-    return result;
+    return [result, { status: "complete", request: req, response }];
   }
 
-  return result;
+  return [result, { status: "complete", request: req, response }];
 }

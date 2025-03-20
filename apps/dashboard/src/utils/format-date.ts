@@ -4,7 +4,14 @@ export function formatDate(date: string) {
   return format(new Date(date), 'MMM d yyyy, HH:mm:ss');
 }
 
-export function formatDateSimple(date: string) {
+export function formatDateSimple(
+  date: string,
+  options: Intl.DateTimeFormatOptions = {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  }
+) {
   const dateObj = new Date(date);
   const oneDayAgo = subDays(new Date(), 1);
 
@@ -17,9 +24,5 @@ export function formatDateSimple(date: string) {
     return timeAgo.replace('about ', '');
   }
 
-  return dateObj.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
+  return dateObj.toLocaleDateString('en-US', options);
 }

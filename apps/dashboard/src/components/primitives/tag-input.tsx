@@ -30,11 +30,13 @@ const TagInput = forwardRef<HTMLInputElement, TagInputProps>((props, ref) => {
 
   const addTag = (tag: string) => {
     const newTag = tag.trim();
+
     if (newTag === '') {
       return;
     }
 
     const newTags = [...tags, tag];
+
     if (new Set(newTags).size !== newTags.length) {
       return;
     }
@@ -47,9 +49,11 @@ const TagInput = forwardRef<HTMLInputElement, TagInputProps>((props, ref) => {
   const removeTag = (tag: string) => {
     const newTags = [...tags];
     const index = newTags.indexOf(tag);
+
     if (index !== -1) {
       newTags.splice(index, 1);
     }
+
     onChange(newTags);
     setInputValue('');
   };
@@ -67,6 +71,7 @@ const TagInput = forwardRef<HTMLInputElement, TagInputProps>((props, ref) => {
               placeholder="Type a tag and press Enter"
               onValueChange={(value) => {
                 setInputValue(value);
+
                 if (value) {
                   setIsOpen(true);
                 }
@@ -82,8 +87,20 @@ const TagInput = forwardRef<HTMLInputElement, TagInputProps>((props, ref) => {
           </PopoverAnchor>
           <div className="flex flex-wrap gap-2">
             {tags.map((tag, index) => (
-              <Tag key={index} variant="stroke" onDismiss={() => removeTag(tag)}>
-                <span style={{ wordBreak: 'break-all' }}>{tag}</span>
+              <Tag
+                key={index}
+                variant="stroke"
+                onDismiss={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+
+                  removeTag(tag);
+                }}
+                dismissTestId={`tags-badge-remove-${tag}`}
+              >
+                <span style={{ wordBreak: 'break-all' }} data-testid="tags-badge-value">
+                  {tag}
+                </span>
               </Tag>
             ))}
           </div>

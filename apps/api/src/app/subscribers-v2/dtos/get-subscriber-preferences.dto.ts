@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { PreferenceChannels } from '../../shared/dtos/preference-channels';
 import { Overrides } from '../../subscribers/dtos/get-subscriber-preferences-response.dto';
@@ -12,6 +12,11 @@ export class WorkflowInfoDto {
 
   @ApiProperty({ description: 'Display name of the workflow' })
   name: string;
+
+  @ApiPropertyOptional({
+    description: 'last updated date',
+  })
+  updatedAt?: string;
 }
 
 export class GlobalPreferenceDto {

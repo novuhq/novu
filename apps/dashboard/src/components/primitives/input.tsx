@@ -221,6 +221,7 @@ function InputWrapper({
     </Component>
   );
 }
+
 InputWrapper.displayName = INPUT_WRAPPER_NAME;
 
 const InputEl = React.forwardRef<
@@ -280,7 +281,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ) => {
     return (
       <InputRoot size={size} hasError={hasError}>
-        {leadingNode}
+        {leadingNode && <div className="space-y-1">{trailingNode}</div>}
         <InputWrapper>
           {inlineLeadingNode}
           {LeadingIcon && <InputIcon as={LeadingIcon} />}
@@ -288,7 +289,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           {TrailingIcon && <InputIcon as={TrailingIcon} />}
           {inlineTrailingNode}
         </InputWrapper>
-        {trailingNode}
+        {trailingNode && <div className="space-y-1">{trailingNode}</div>}
       </InputRoot>
     );
   }
@@ -308,6 +309,7 @@ function InputIcon<T extends React.ElementType = 'div'>({
 
   return <Component className={icon({ class: className })} {...rest} />;
 }
+
 InputIcon.displayName = INPUT_ICON_NAME;
 
 function InputAffix({
@@ -328,6 +330,7 @@ function InputAffix({
     </div>
   );
 }
+
 InputAffix.displayName = INPUT_AFFIX_NAME;
 
 function InputInlineAffix({
@@ -348,6 +351,7 @@ function InputInlineAffix({
     </span>
   );
 }
+
 InputInlineAffix.displayName = INPUT_INLINE_AFFIX_NAME;
 
 export {

@@ -2,7 +2,7 @@ import { type StepResponseDto, StepTypeEnum, StepUpdateDto, type WorkflowRespons
 import { useCallback, useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { Form } from '@/components/primitives/form/form';
+import { Form, FormRoot } from '@/components/primitives/form/form';
 import { getStepDefaultValues } from '@/components/workflow-editor/step-default-values';
 import { flattenIssues, updateStepInWorkflow } from '@/components/workflow-editor/step-utils';
 import { ChatTabs } from '@/components/workflow-editor/steps/chat/chat-tabs';
@@ -94,11 +94,11 @@ export const ConfigureStepTemplateForm = (props: ConfigureStepTemplateFormProps)
 
   return (
     <Form {...form}>
-      <form className="flex h-full flex-col" onBlur={onBlur}>
+      <FormRoot className="flex h-full flex-col" onBlur={onBlur}>
         <SaveFormContext.Provider value={value}>
           <TemplateForm workflow={workflow} step={step} />
         </SaveFormContext.Provider>
-      </form>
+      </FormRoot>
     </Form>
   );
 };

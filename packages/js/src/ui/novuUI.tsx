@@ -1,4 +1,4 @@
-import { Accessor, Setter, ComponentProps, createSignal } from 'solid-js';
+import { Accessor, ComponentProps, createSignal, Setter } from 'solid-js';
 import { MountableElement, render } from 'solid-js/web';
 import type { NovuOptions } from '../types';
 import { NovuComponent, NovuComponentName, novuComponents, Renderer } from './components/Renderer';
@@ -15,12 +15,17 @@ import type {
 
 // @ts-ignore
 const isDev = __DEV__;
+// @ts-ignore
+const previewLastCommitHash = __PREVIEW_LAST_COMMIT_HASH__;
 
 // @ts-ignore
 const version = PACKAGE_VERSION;
+// eslint-disable-next-line no-nested-ternary
 const cssHref = isDev
   ? 'http://localhost:4010/index.css'
-  : `https://cdn.jsdelivr.net/npm/@novu/js@${version}/dist/index.css`;
+  : previewLastCommitHash
+    ? `https://esm.sh/pkg.pr.new/novuhq/novu/@novu/js@${previewLastCommitHash}/dist/index.css`
+    : `https://cdn.jsdelivr.net/npm/@novu/js@${version}/dist/index.css`;
 
 export type NovuUIOptions = NovuProviderProps;
 export type BaseNovuUIOptions = BaseNovuProviderProps;

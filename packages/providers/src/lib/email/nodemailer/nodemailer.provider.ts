@@ -87,20 +87,16 @@ export class NodemailerProvider extends BaseProvider implements IEmailProvider {
     try {
       JSON.parse(JSON.stringify(this.config.tlsOptions));
     } catch {
-      throw new Error(
-        'TLS options is not a valid JSON. Check again the value set for NODEMAILER_TLS_OPTIONS',
-      );
+      throw new Error('TLS options is not a valid JSON. Check again the value set for NODEMAILER_TLS_OPTIONS');
     }
   }
 
   async sendMessage(
     options: IEmailOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const mailData = this.createMailData(options);
-    const info = await this.transports.sendMail(
-      this.transform(bridgeProviderData, mailData).body,
-    );
+    const info = await this.transports.sendMail(this.transform(bridgeProviderData, mailData).body);
 
     return {
       id: info?.messageId,
@@ -108,9 +104,7 @@ export class NodemailerProvider extends BaseProvider implements IEmailProvider {
     };
   }
 
-  async checkIntegration(
-    options: IEmailOptions,
-  ): Promise<ICheckIntegrationResponse> {
+  async checkIntegration(options: IEmailOptions): Promise<ICheckIntegrationResponse> {
     try {
       const mailData = this.createMailData(options);
       await this.transports.sendMail(mailData);

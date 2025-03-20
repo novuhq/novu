@@ -80,6 +80,10 @@ export type ActivityNotificationJobResponseDto = {
    */
   step: ActivityNotificationStepResponseDto;
   /**
+   * Optional context object for additional error details.
+   */
+  overrides?: { [k: string]: any } | undefined;
+  /**
    * Optional payload for the job
    */
   payload?: Payload | undefined;
@@ -175,6 +179,7 @@ export const ActivityNotificationJobResponseDto$inboundSchema: z.ZodType<
     ActivityNotificationExecutionDetailResponseDto$inboundSchema,
   ),
   step: ActivityNotificationStepResponseDto$inboundSchema,
+  overrides: z.record(z.any()).optional(),
   payload: z.lazy(() => Payload$inboundSchema).optional(),
   providerId: ProvidersIdEnum$inboundSchema,
   status: z.string(),
@@ -194,6 +199,7 @@ export type ActivityNotificationJobResponseDto$Outbound = {
     ActivityNotificationExecutionDetailResponseDto$Outbound
   >;
   step: ActivityNotificationStepResponseDto$Outbound;
+  overrides?: { [k: string]: any } | undefined;
   payload?: Payload$Outbound | undefined;
   providerId: string;
   status: string;
@@ -213,6 +219,7 @@ export const ActivityNotificationJobResponseDto$outboundSchema: z.ZodType<
     ActivityNotificationExecutionDetailResponseDto$outboundSchema,
   ),
   step: ActivityNotificationStepResponseDto$outboundSchema,
+  overrides: z.record(z.any()).optional(),
   payload: z.lazy(() => Payload$outboundSchema).optional(),
   providerId: ProvidersIdEnum$outboundSchema,
   status: z.string(),

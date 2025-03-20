@@ -37,6 +37,7 @@ export const ConfigurePreviewAccordion = ({
   const setEditorValueCallback = useCallback(
     (value: string) => {
       const error = setEditorValue(value);
+
       if (error) {
         setPayloadError(error.message);
       } else {

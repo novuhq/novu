@@ -1,6 +1,7 @@
+import { Type } from 'class-transformer';
+import { IsOptional, IsInt, Max, Min } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { ChannelTypeEnum } from '@novu/shared';
-import { IsOptional } from 'class-validator';
 
 export class ActivitiesRequestDto {
   @ApiPropertyOptional({
@@ -50,7 +51,24 @@ export class ActivitiesRequestDto {
     description: 'Page number for pagination',
   })
   @IsOptional()
-  page?: number;
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  page: number = 0;
+
+  @ApiPropertyOptional({
+    type: Number,
+    default: 10,
+    minimum: 1,
+    maximum: 50,
+    description: 'Limit for pagination',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(50)
+  limit: number = 10;
 
   @ApiPropertyOptional({
     type: String,
@@ -61,14 +79,14 @@ export class ActivitiesRequestDto {
 
   @ApiPropertyOptional({
     type: String,
-    description: 'Date filter for records after this timestamp',
+    description: 'Date filter for records after this timestamp. Defaults to earliest date allowed by subscription plan',
   })
   @IsOptional()
   after?: string;
 
   @ApiPropertyOptional({
     type: String,
-    description: 'Date filter for records before this timestamp',
+    description: 'Date filter for records before this timestamp. Defaults to current time of request (now)',
   })
   @IsOptional()
   before?: string;

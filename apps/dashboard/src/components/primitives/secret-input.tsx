@@ -27,14 +27,7 @@ export function SecretInput({ className, value, onChange, copyButton = false, ..
           )}
         </button>
       }
-      trailingNode={
-        copyButton ? (
-          <CopyButton
-            valueToCopy={value ?? ''}
-            className="rounded-none border-l border-neutral-200 shadow-none ring-0"
-          />
-        ) : null
-      }
+      trailingNode={copyButton ? <CopyButton valueToCopy={value ?? ''} /> : null}
     />
   );
 }

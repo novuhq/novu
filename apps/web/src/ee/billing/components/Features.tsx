@@ -3,7 +3,6 @@ import { Text } from '@novu/novui';
 import styled from '@emotion/styled';
 import { ApiServiceLevelEnum } from '@novu/shared';
 import { IconCheck as _IconCheck } from '@novu/novui/icons';
-import { Badge } from './Badge';
 
 const TitleCell = styled.div`
   display: flex;
@@ -36,9 +35,16 @@ const IconCheck = () => (
   />
 );
 
-enum SupportedPlansEnum {
+enum LegacySupportedPlansEnum {
   FREE = ApiServiceLevelEnum.FREE,
   BUSINESS = ApiServiceLevelEnum.BUSINESS,
+  ENTERPRISE = ApiServiceLevelEnum.ENTERPRISE,
+}
+
+enum SupportedPlansEnum {
+  FREE = ApiServiceLevelEnum.FREE,
+  PRO = ApiServiceLevelEnum.PRO,
+  TEAM = ApiServiceLevelEnum.BUSINESS,
   ENTERPRISE = ApiServiceLevelEnum.ENTERPRISE,
 }
 
@@ -46,105 +52,158 @@ type FeatureValue = {
   value: React.ReactNode;
 };
 
-type Feature = {
+type Feature<T extends LegacySupportedPlansEnum | SupportedPlansEnum> = {
   label: string;
   isTitle?: boolean;
   isContrast?: boolean;
   values: {
-    [SupportedPlansEnum.FREE]: FeatureValue;
-    [SupportedPlansEnum.BUSINESS]: FeatureValue;
-    [SupportedPlansEnum.ENTERPRISE]: FeatureValue;
+    [K in T]: FeatureValue;
   };
 };
 
-const features: Feature[] = [
+const featuresDefinition: Feature<SupportedPlansEnum>[] = [
   {
     label: 'Platform',
     isTitle: true,
     values: {
       [SupportedPlansEnum.FREE]: { value: '' },
-      [SupportedPlansEnum.BUSINESS]: { value: '' },
+      [SupportedPlansEnum.PRO]: { value: '' },
+      [SupportedPlansEnum.TEAM]: { value: '' },
       [SupportedPlansEnum.ENTERPRISE]: { value: '' },
     },
   },
   {
-    label: 'Monthly events',
+    label: 'Max API Requests (RPS)',
     values: {
-      [SupportedPlansEnum.FREE]: { value: 'Up to 30,000' },
-      [SupportedPlansEnum.BUSINESS]: { value: 'Up to 250,000' },
-      [SupportedPlansEnum.ENTERPRISE]: { value: '5,000,000' },
+      [SupportedPlansEnum.FREE]: { value: '60/20/30 per second' },
+      [SupportedPlansEnum.PRO]: { value: '240/80/120 per second' },
+      [SupportedPlansEnum.TEAM]: { value: '600/200/300 per second' },
+      [SupportedPlansEnum.ENTERPRISE]: { value: '6K/2K/3K per second' },
     },
   },
   {
-    label: 'Additional Events',
+    label: 'Cost per additional 1k events',
     values: {
       [SupportedPlansEnum.FREE]: { value: '-' },
-      [SupportedPlansEnum.BUSINESS]: { value: '$0.0012 per event' },
+      [SupportedPlansEnum.PRO]: { value: '$1.20' },
+      [SupportedPlansEnum.TEAM]: { value: '$1.20' },
       [SupportedPlansEnum.ENTERPRISE]: { value: 'Custom' },
     },
   },
   {
-    label: 'Email, InApp, SMS, Chat, Push Channels',
+    label: 'Channels supported: Email, In-app, SMS, Chat, Push',
     values: {
       [SupportedPlansEnum.FREE]: { value: <IconCheck /> },
-      [SupportedPlansEnum.BUSINESS]: { value: <IconCheck /> },
+      [SupportedPlansEnum.PRO]: { value: <IconCheck /> },
+      [SupportedPlansEnum.TEAM]: { value: <IconCheck /> },
       [SupportedPlansEnum.ENTERPRISE]: { value: <IconCheck /> },
     },
   },
   {
-    label: 'Notification subscribers',
+    label: 'Subscribers',
     values: {
       [SupportedPlansEnum.FREE]: { value: 'Unlimited' },
-      [SupportedPlansEnum.BUSINESS]: { value: 'Unlimited' },
+      [SupportedPlansEnum.PRO]: { value: 'Unlimited' },
+      [SupportedPlansEnum.TEAM]: { value: 'Unlimited' },
       [SupportedPlansEnum.ENTERPRISE]: { value: 'Unlimited' },
     },
   },
   {
-    label: 'Framework',
-    isTitle: true,
+    label: 'Max workflows',
     values: {
-      [SupportedPlansEnum.FREE]: { value: '' },
-      [SupportedPlansEnum.BUSINESS]: { value: '' },
-      [SupportedPlansEnum.ENTERPRISE]: { value: '' },
+      [SupportedPlansEnum.FREE]: { value: '20' },
+      [SupportedPlansEnum.PRO]: { value: '20' },
+      [SupportedPlansEnum.TEAM]: { value: 'Unlimited' },
+      [SupportedPlansEnum.ENTERPRISE]: { value: 'Unlimited' },
     },
   },
   {
-    label: 'Total workflows',
+    label: 'GUI-Based Workflow Management',
     values: {
-      [SupportedPlansEnum.FREE]: { value: 'Unlimited' },
-      [SupportedPlansEnum.BUSINESS]: { value: 'Unlimited' },
+      [SupportedPlansEnum.FREE]: { value: <IconCheck /> },
+      [SupportedPlansEnum.PRO]: { value: <IconCheck /> },
+      [SupportedPlansEnum.TEAM]: { value: <IconCheck /> },
+      [SupportedPlansEnum.ENTERPRISE]: { value: <IconCheck /> },
+    },
+  },
+  {
+    label: 'Code-Based Workflow Management',
+    values: {
+      [SupportedPlansEnum.FREE]: { value: <IconCheck /> },
+      [SupportedPlansEnum.PRO]: { value: <IconCheck /> },
+      [SupportedPlansEnum.TEAM]: { value: <IconCheck /> },
+      [SupportedPlansEnum.ENTERPRISE]: { value: <IconCheck /> },
+    },
+  },
+  {
+    label: 'Subscriber Management',
+    values: {
+      [SupportedPlansEnum.FREE]: { value: <IconCheck /> },
+      [SupportedPlansEnum.PRO]: { value: <IconCheck /> },
+      [SupportedPlansEnum.TEAM]: { value: <IconCheck /> },
+      [SupportedPlansEnum.ENTERPRISE]: { value: <IconCheck /> },
+    },
+  },
+  {
+    label: 'Environments',
+    values: {
+      [SupportedPlansEnum.FREE]: { value: '2' },
+      [SupportedPlansEnum.PRO]: { value: '2' },
+      [SupportedPlansEnum.TEAM]: { value: '10' },
       [SupportedPlansEnum.ENTERPRISE]: { value: 'Unlimited' },
+    },
+  },
+  {
+    label: 'Multi-org/multi-tenancy',
+    values: {
+      [SupportedPlansEnum.FREE]: { value: '-' },
+      [SupportedPlansEnum.PRO]: { value: '-' },
+      [SupportedPlansEnum.TEAM]: { value: 'Q2 2025' },
+      [SupportedPlansEnum.ENTERPRISE]: { value: 'Q2 2025' },
     },
   },
   {
     label: 'Provider integrations',
     values: {
       [SupportedPlansEnum.FREE]: { value: 'Unlimited' },
-      [SupportedPlansEnum.BUSINESS]: { value: 'Unlimited' },
+      [SupportedPlansEnum.PRO]: { value: 'Unlimited' },
+      [SupportedPlansEnum.TEAM]: { value: 'Unlimited' },
       [SupportedPlansEnum.ENTERPRISE]: { value: 'Unlimited' },
     },
   },
   {
     label: 'Activity Feed retention',
     values: {
-      [SupportedPlansEnum.FREE]: { value: '30 days' },
-      [SupportedPlansEnum.BUSINESS]: { value: '90 days' },
+      [SupportedPlansEnum.FREE]: { value: '24hr' },
+      [SupportedPlansEnum.PRO]: { value: '7 days' },
+      [SupportedPlansEnum.TEAM]: { value: '90 days' },
       [SupportedPlansEnum.ENTERPRISE]: { value: 'Unlimited' },
     },
   },
   {
-    label: 'Digests',
+    label: 'Max Digest Window/Time',
+    values: {
+      [SupportedPlansEnum.FREE]: { value: '24hr' },
+      [SupportedPlansEnum.PRO]: { value: '7 days' },
+      [SupportedPlansEnum.TEAM]: { value: '30 days' },
+      [SupportedPlansEnum.ENTERPRISE]: { value: 'Yes' },
+    },
+  },
+  {
+    label: 'Block-Based Email Editor',
     values: {
       [SupportedPlansEnum.FREE]: { value: <IconCheck /> },
-      [SupportedPlansEnum.BUSINESS]: { value: <IconCheck /> },
+      [SupportedPlansEnum.PRO]: { value: <IconCheck /> },
+      [SupportedPlansEnum.TEAM]: { value: <IconCheck /> },
       [SupportedPlansEnum.ENTERPRISE]: { value: <IconCheck /> },
     },
   },
   {
-    label: 'Step controls',
+    label: 'Remove Novu branding',
     values: {
-      [SupportedPlansEnum.FREE]: { value: <IconCheck /> },
-      [SupportedPlansEnum.BUSINESS]: { value: <IconCheck /> },
+      [SupportedPlansEnum.FREE]: { value: '-' },
+      [SupportedPlansEnum.PRO]: { value: <IconCheck /> },
+      [SupportedPlansEnum.TEAM]: { value: <IconCheck /> },
       [SupportedPlansEnum.ENTERPRISE]: { value: <IconCheck /> },
     },
   },
@@ -153,31 +212,53 @@ const features: Feature[] = [
     isTitle: true,
     values: {
       [SupportedPlansEnum.FREE]: { value: '' },
-      [SupportedPlansEnum.BUSINESS]: { value: '' },
+      [SupportedPlansEnum.PRO]: { value: '' },
+      [SupportedPlansEnum.TEAM]: { value: '' },
       [SupportedPlansEnum.ENTERPRISE]: { value: '' },
     },
   },
   {
-    label: 'Inbox component',
+    label: 'Inbox Component',
     values: {
       [SupportedPlansEnum.FREE]: { value: <IconCheck /> },
-      [SupportedPlansEnum.BUSINESS]: { value: <IconCheck /> },
+      [SupportedPlansEnum.PRO]: { value: <IconCheck /> },
+      [SupportedPlansEnum.TEAM]: { value: <IconCheck /> },
       [SupportedPlansEnum.ENTERPRISE]: { value: <IconCheck /> },
     },
   },
   {
-    label: 'User preferences component',
+    label: 'User Preferences Component',
     values: {
       [SupportedPlansEnum.FREE]: { value: <IconCheck /> },
-      [SupportedPlansEnum.BUSINESS]: { value: <IconCheck /> },
+      [SupportedPlansEnum.PRO]: { value: <IconCheck /> },
+      [SupportedPlansEnum.TEAM]: { value: <IconCheck /> },
       [SupportedPlansEnum.ENTERPRISE]: { value: <IconCheck /> },
     },
   },
   {
-    label: 'Remove Novu branding',
+    label: 'Bell Component',
     values: {
-      [SupportedPlansEnum.FREE]: { value: '-' },
-      [SupportedPlansEnum.BUSINESS]: { value: <IconCheck /> },
+      [SupportedPlansEnum.FREE]: { value: <IconCheck /> },
+      [SupportedPlansEnum.PRO]: { value: <IconCheck /> },
+      [SupportedPlansEnum.TEAM]: { value: <IconCheck /> },
+      [SupportedPlansEnum.ENTERPRISE]: { value: <IconCheck /> },
+    },
+  },
+  {
+    label: 'Notifications Component',
+    values: {
+      [SupportedPlansEnum.FREE]: { value: <IconCheck /> },
+      [SupportedPlansEnum.PRO]: { value: <IconCheck /> },
+      [SupportedPlansEnum.TEAM]: { value: <IconCheck /> },
+      [SupportedPlansEnum.ENTERPRISE]: { value: <IconCheck /> },
+    },
+  },
+  {
+    label: 'Inbox Content Component',
+    values: {
+      [SupportedPlansEnum.FREE]: { value: <IconCheck /> },
+      [SupportedPlansEnum.PRO]: { value: <IconCheck /> },
+      [SupportedPlansEnum.TEAM]: { value: <IconCheck /> },
       [SupportedPlansEnum.ENTERPRISE]: { value: <IconCheck /> },
     },
   },
@@ -186,105 +267,108 @@ const features: Feature[] = [
     isTitle: true,
     values: {
       [SupportedPlansEnum.FREE]: { value: '' },
-      [SupportedPlansEnum.BUSINESS]: { value: '' },
+      [SupportedPlansEnum.PRO]: { value: '' },
+      [SupportedPlansEnum.TEAM]: { value: '' },
       [SupportedPlansEnum.ENTERPRISE]: { value: '' },
     },
   },
   {
-    label: 'Team members',
+    label: 'Max Team Members',
     values: {
       [SupportedPlansEnum.FREE]: { value: '3' },
-      [SupportedPlansEnum.BUSINESS]: { value: 'Unlimited' },
+      [SupportedPlansEnum.PRO]: { value: '3' },
+      [SupportedPlansEnum.TEAM]: { value: 'Unlimited' },
       [SupportedPlansEnum.ENTERPRISE]: { value: 'Unlimited' },
     },
   },
   {
-    label: 'RBAC',
+    label: 'Role-Based Access Control (RBAC)',
     values: {
       [SupportedPlansEnum.FREE]: { value: '-' },
-      [SupportedPlansEnum.BUSINESS]: { value: <IconCheck /> },
-      [SupportedPlansEnum.ENTERPRISE]: { value: <IconCheck /> },
+      [SupportedPlansEnum.PRO]: { value: '-' },
+      [SupportedPlansEnum.TEAM]: { value: 'Q2 2025' },
+      [SupportedPlansEnum.ENTERPRISE]: { value: 'Q2 2025' },
     },
   },
   {
-    label: 'GDPR compliance',
+    label: 'Standard Built-In Authentication (Google, Github)',
     values: {
       [SupportedPlansEnum.FREE]: { value: <IconCheck /> },
-      [SupportedPlansEnum.BUSINESS]: { value: <IconCheck /> },
+      [SupportedPlansEnum.PRO]: { value: <IconCheck /> },
+      [SupportedPlansEnum.TEAM]: { value: <IconCheck /> },
       [SupportedPlansEnum.ENTERPRISE]: { value: <IconCheck /> },
     },
   },
   {
-    label: 'SAML SSO and Enterprise SSO providers',
+    label: 'Custom SAML SSO, OIDC, Enterprise Providers',
     values: {
       [SupportedPlansEnum.FREE]: { value: '-' },
-      [SupportedPlansEnum.BUSINESS]: { value: '-' },
+      [SupportedPlansEnum.PRO]: { value: '-' },
+      [SupportedPlansEnum.TEAM]: { value: '-' },
       [SupportedPlansEnum.ENTERPRISE]: { value: <IconCheck /> },
     },
   },
   {
-    label: 'Support and account management',
+    label: 'Multi-Factor Authentication (MFA)',
+    values: {
+      [SupportedPlansEnum.FREE]: { value: <IconCheck /> },
+      [SupportedPlansEnum.PRO]: { value: <IconCheck /> },
+      [SupportedPlansEnum.TEAM]: { value: <IconCheck /> },
+      [SupportedPlansEnum.ENTERPRISE]: { value: <IconCheck /> },
+    },
+  },
+  {
+    label: 'Compliance',
     isTitle: true,
     values: {
       [SupportedPlansEnum.FREE]: { value: '' },
-      [SupportedPlansEnum.BUSINESS]: { value: '' },
+      [SupportedPlansEnum.PRO]: { value: '' },
+      [SupportedPlansEnum.TEAM]: { value: '' },
       [SupportedPlansEnum.ENTERPRISE]: { value: '' },
     },
   },
   {
-    label: 'Support SLA',
+    label: 'GDPR',
+    values: {
+      [SupportedPlansEnum.FREE]: { value: <IconCheck /> },
+      [SupportedPlansEnum.PRO]: { value: <IconCheck /> },
+      [SupportedPlansEnum.TEAM]: { value: <IconCheck /> },
+      [SupportedPlansEnum.ENTERPRISE]: { value: 'Installation dependent' },
+    },
+  },
+  {
+    label: 'SOC 2 / ISO 27001 Report',
     values: {
       [SupportedPlansEnum.FREE]: { value: '-' },
-      [SupportedPlansEnum.BUSINESS]: { value: '48 hours' },
-      [SupportedPlansEnum.ENTERPRISE]: { value: '24 hours' },
+      [SupportedPlansEnum.PRO]: { value: '-' },
+      [SupportedPlansEnum.TEAM]: { value: <IconCheck /> },
+      [SupportedPlansEnum.ENTERPRISE]: { value: <IconCheck /> },
     },
   },
   {
-    label: 'Support channels',
-    values: {
-      [SupportedPlansEnum.FREE]: { value: 'Community & Discord' },
-      [SupportedPlansEnum.BUSINESS]: { value: 'Slack & Email' },
-      [SupportedPlansEnum.ENTERPRISE]: { value: 'Dedicated' },
-    },
-  },
-  {
-    label: 'Legal & Vendor management',
-    isTitle: true,
-    values: {
-      [SupportedPlansEnum.FREE]: { value: '' },
-      [SupportedPlansEnum.BUSINESS]: { value: '' },
-      [SupportedPlansEnum.ENTERPRISE]: { value: '' },
-    },
-  },
-  {
-    label: 'Payment method',
+    label: 'HIPAA BAA',
     values: {
       [SupportedPlansEnum.FREE]: { value: '-' },
-      [SupportedPlansEnum.BUSINESS]: { value: 'Credit card only' },
-      [SupportedPlansEnum.ENTERPRISE]: { value: 'Credit card & PO and Invoicing' },
+      [SupportedPlansEnum.PRO]: { value: '-' },
+      [SupportedPlansEnum.TEAM]: { value: '-' },
+      [SupportedPlansEnum.ENTERPRISE]: { value: <IconCheck /> },
     },
   },
   {
-    label: 'Terms of service',
+    label: 'Custom Security Reviews',
+    values: {
+      [SupportedPlansEnum.FREE]: { value: '-' },
+      [SupportedPlansEnum.PRO]: { value: '-' },
+      [SupportedPlansEnum.TEAM]: { value: '-' },
+      [SupportedPlansEnum.ENTERPRISE]: { value: <IconCheck /> },
+    },
+  },
+  {
+    label: 'Data Processing Agreements',
     values: {
       [SupportedPlansEnum.FREE]: { value: 'Standard' },
-      [SupportedPlansEnum.BUSINESS]: { value: 'Standard' },
-      [SupportedPlansEnum.ENTERPRISE]: { value: 'Custom' },
-    },
-  },
-  {
-    label: 'DPA',
-    values: {
-      [SupportedPlansEnum.FREE]: { value: 'Standard' },
-      [SupportedPlansEnum.BUSINESS]: { value: 'Standard' },
-      [SupportedPlansEnum.ENTERPRISE]: { value: 'Custom' },
-    },
-  },
-  {
-    label: 'Security review',
-    values: {
-      [SupportedPlansEnum.FREE]: { value: 'SOC 2 and ISO 27001 upon request' },
-      [SupportedPlansEnum.BUSINESS]: { value: 'Custom' },
+      [SupportedPlansEnum.PRO]: { value: 'Standard' },
+      [SupportedPlansEnum.TEAM]: { value: 'Standard' },
       [SupportedPlansEnum.ENTERPRISE]: { value: 'Custom' },
     },
   },
@@ -293,14 +377,20 @@ const features: Feature[] = [
 export const Features = () => {
   return (
     <div className={styles.featureList}>
-      {features.map((feature, index) => (
+      {featuresDefinition.map((feature, index) => (
         <FeatureRow key={index} feature={feature} index={index} />
       ))}
     </div>
   );
 };
 
-const FeatureRow = ({ feature, index }: { feature: Feature; index: number }) => (
+const FeatureRow = ({
+  feature,
+  index,
+}: {
+  feature: Feature<LegacySupportedPlansEnum | SupportedPlansEnum>;
+  index: number;
+}) => (
   <div className={styles.rowContainer(index % 2 === 1, feature.isTitle)}>
     <TitleCell>
       <Text

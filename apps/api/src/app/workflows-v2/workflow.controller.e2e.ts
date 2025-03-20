@@ -2,9 +2,13 @@ import { expect } from 'chai';
 import { UserSession } from '@novu/testing';
 import { randomBytes } from 'crypto';
 import {
+  ApiServiceLevelEnum,
   createWorkflowClient,
   CreateWorkflowDto,
   DEFAULT_WORKFLOW_PREFERENCES,
+  FeatureFlagsKeysEnum,
+  FeatureNameEnum,
+  getFeatureForTierAsNumber,
   isStepUpdateBody,
   JSONSchemaDefinition,
   JSONSchemaDto,
@@ -203,13 +207,14 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
         expect(res.error?.responseText, res.error?.responseText).to.contain('name');
       });
 
-      it('should remove issues when no longer', async () => {
+      it('should remove control issues when no longer present', async () => {
         const inAppStep = { ...buildInAppStep(), controlValues: {}, name: 'some name' };
         const workflowCreated = await createWorkflowAndReturn({ steps: [inAppStep] });
-        const firstStepIssues = workflowCreated.steps[0].issues;
+        const firstStepIssues = workflowCreated.steps[0].issues?.controls;
         expect(firstStepIssues).to.be.ok;
-        expect(firstStepIssues?.controls?.body).to.be.ok;
-        expect(firstStepIssues?.controls?.body[0].issueType).to.be.eq(StepContentIssueEnum.MISSING_VALUE);
+        expect(firstStepIssues?.body).to.be.ok;
+        expect(firstStepIssues?.body[0].issueType).to.be.eq(StepContentIssueEnum.MISSING_VALUE);
+
         const novuRestResult = await workflowsClient.updateWorkflow(workflowCreated._id, {
           ...workflowCreated,
           steps: [{ ...inAppStep, name: 'New Name', controlValues: { body: 'some body here' } }],
@@ -217,10 +222,12 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
         if (!novuRestResult.isSuccessResult()) {
           throw new Error(novuRestResult.error!.responseText);
         }
+
         const updatedWorkflow = novuRestResult.value;
         const firstStep = updatedWorkflow.steps[0];
-        expect(firstStep.issues, JSON.stringify(firstStep)).to.be.empty;
-        expect(firstStep.issues, JSON.stringify(firstStep.issues)).to.be.empty;
+
+        // Only check that control issues are removed
+        expect(firstStep.issues?.controls?.body).to.be.undefined;
       });
     });
 
@@ -307,6 +314,23 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
       const payloadProperties = properties?.payload as JSONSchemaDto;
       expect(payloadProperties).to.be.ok;
       expect(payloadProperties.properties?.name).to.be.ok;
+    });
+
+    it('should not allow to create more than 20 workflows for a free organization', async () => {
+      // @ts-ignore
+      await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.FREE);
+      getFeatureForTierAsNumber(FeatureNameEnum.PLATFORM_MAX_WORKFLOWS, ApiServiceLevelEnum.FREE, false);
+      for (let i = 0; i < 20; i += 1) {
+        const createWorkflowDto: CreateWorkflowDto = buildCreateWorkflowDto(new Date().toISOString() + i);
+        const res = await workflowsClient.createWorkflow(createWorkflowDto);
+      }
+
+      const createWorkflowDto: CreateWorkflowDto = buildCreateWorkflowDto(new Date().toISOString() + 30);
+      const res = await workflowsClient.createWorkflow(createWorkflowDto);
+
+      expect(res.isSuccessResult()).to.be.false;
+      const { error } = res;
+      expect(error?.status).eq(400);
     });
   });
 
@@ -517,6 +541,11 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
     it('should promote by creating a new workflow in production environment with the same properties', async () => {
       // Create a workflow in the development environment
       let devWorkflow = await createWorkflowAndValidate('-promote-workflow');
+      // Update the workflow name to make sure the workflow identifier is the same after promotion
+      devWorkflow = await updateWorkflowRest(devWorkflow._id, {
+        ...devWorkflow,
+        name: `${devWorkflow.name}-updated`,
+      });
       await workflowsClient.patchWorkflowStepData(devWorkflow._id, devWorkflow.steps[0]._id, {
         controlValues: { vinyl: 'vinyl', color: 'red', band: 'beatles' },
       });
@@ -1018,7 +1047,6 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
       expect(step.slug, stringify(step)).to.be.ok;
       expect(step.name, stringify(step)).to.be.equal(stepInRequest.name);
       expect(step.type, stringify(step)).to.be.equal(stepInRequest.type);
-      expect(Object.keys(step.issues?.body || {}).length, stringify(step)).to.be.eq(0);
     }
   }
 
@@ -1409,7 +1437,7 @@ function removeFields<T>(obj: T, ...keysToRemove: (keyof T)[]): T {
 interface ApiResponse {
   req: {
     method: string; // e.g., "GET"
-    url: string; // e.g., "http://127.0.0.1:1337/v1/v2/workflows/66e929c6667852862a1e5145"
+    url: string; // e.g., "http://127.0.0.1:1336/v1/v2/workflows/66e929c6667852862a1e5145"
     headers: {
       authorization: string; // e.g., "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpX5cJ9..."
       'novu-environment-id': string; // e.g., "66e929c6667852862a1e50e4"

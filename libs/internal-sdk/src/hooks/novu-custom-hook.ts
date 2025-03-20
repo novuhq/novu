@@ -1,11 +1,11 @@
-import {RequestInput} from "../lib/http.js";
+import { RequestInput } from "../lib/http.js";
 import {
-    AfterSuccessContext,
-    AfterSuccessHook,
-    BeforeCreateRequestHook,
-    BeforeRequestContext,
-    BeforeRequestHook,
-    HookContext
+  AfterSuccessContext,
+  AfterSuccessHook,
+  BeforeCreateRequestHook,
+  BeforeRequestContext,
+  BeforeRequestHook,
+  HookContext
 } from "./types.js";
 
 export class NovuCustomHook
@@ -25,10 +25,11 @@ export class NovuCustomHook
         const authKey = 'authorization';
         const hasAuthorization = request.headers.has(authKey);
         const apiKeyPrefix = 'ApiKey';
+        const bearer = 'Bearer';
         if (hasAuthorization) {
             const key = request.headers.get(authKey);
 
-            if (key && !key.includes(apiKeyPrefix)) {
+            if (key && !key.includes(apiKeyPrefix) && !key.includes(bearer)  ) {
                 request.headers.set(authKey, `${apiKeyPrefix} ${key}`)
             }
         }

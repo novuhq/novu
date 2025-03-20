@@ -11,7 +11,29 @@ export type UseNotificationsProps = {
   onError?: (error: NovuError) => void;
 };
 
-export const useNotifications = (props?: UseNotificationsProps) => {
+export type UseNotificationsResult = {
+  notifications?: Notification[];
+  error?: NovuError;
+  isLoading: boolean;
+  isFetching: boolean;
+  hasMore: boolean;
+  readAll: () => Promise<{
+    data?: void | undefined;
+    error?: NovuError | undefined;
+  }>;
+  archiveAll: () => Promise<{
+    data?: void | undefined;
+    error?: NovuError | undefined;
+  }>;
+  archiveAllRead: () => Promise<{
+    data?: void | undefined;
+    error?: NovuError | undefined;
+  }>;
+  refetch: () => Promise<void>;
+  fetchMore: () => Promise<void>;
+};
+
+export const useNotifications = (props?: UseNotificationsProps): UseNotificationsResult => {
   const { tags, read, archived = false, limit, onSuccess, onError } = props || {};
   const filterRef = useRef<NotificationFilter | undefined>(undefined);
   const { notifications, on } = useNovu();

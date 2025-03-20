@@ -13,7 +13,9 @@ export const Header = (props: HeaderProps) => {
     <div
       class={style(
         'inboxHeader',
-        cn('nt-flex nt-shrink-0 nt-justify-between nt-items-center nt-w-full nt-py-5 nt-px-6')
+        cn(
+          'nt-flex nt-bg-neutral-alpha-25 nt-shrink-0 nt-justify-between nt-items-center nt-w-full nt-pb-2 nt-pt-2.5 nt-px-4'
+        )
       )}
     >
       <StatusDropdown />

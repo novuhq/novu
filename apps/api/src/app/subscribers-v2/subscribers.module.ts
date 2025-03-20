@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import {
+  IntegrationRepository,
   MessageTemplateRepository,
   NotificationTemplateRepository,
   PreferencesRepository,
@@ -10,12 +11,16 @@ import {
 } from '@novu/dal';
 import {
   analyticsService,
+  CacheInMemoryProviderService,
   cacheService,
+  CreateOrUpdateSubscriberUseCase,
+  DistributedLockService,
+  EventsDistributedLockService,
   GetPreferences,
-  GetSubscriberGlobalPreference,
-  GetSubscriberPreference,
   GetSubscriberTemplatePreference,
   InvalidateCacheService,
+  UpdateSubscriber,
+  UpdateSubscriberChannel,
   UpsertPreferences,
 } from '@novu/application-generic';
 import { ListSubscribersUseCase } from './usecases/list-subscribers/list-subscribers.usecase';
@@ -26,9 +31,26 @@ import { RemoveSubscriber } from './usecases/remove-subscriber/remove-subscriber
 import { SubscribersController } from './subscribers.controller';
 import { UpdateSubscriberPreferences } from './usecases/update-subscriber-preferences/update-subscriber-preferences.usecase';
 import { UpdatePreferences } from '../inbox/usecases/update-preferences/update-preferences.usecase';
+import { GetSubscriberGlobalPreference } from '../subscribers/usecases/get-subscriber-global-preference';
+import { GetSubscriberPreference } from '../subscribers/usecases/get-subscriber-preference';
+import { CreateSubscriber } from './usecases/create-subscriber/create-subscriber.usecase';
 
 const USE_CASES = [
   ListSubscribersUseCase,
+  CreateOrUpdateSubscriberUseCase,
+  UpdateSubscriber,
+  UpdateSubscriberChannel,
+  EventsDistributedLockService,
+  IntegrationRepository,
+  DistributedLockService,
+  CacheInMemoryProviderService,
+  CreateOrUpdateSubscriberUseCase,
+  UpdateSubscriber,
+  UpdateSubscriberChannel,
+  EventsDistributedLockService,
+  IntegrationRepository,
+  DistributedLockService,
+  CacheInMemoryProviderService,
   GetSubscriber,
   PatchSubscriber,
   RemoveSubscriber,
@@ -40,6 +62,7 @@ const USE_CASES = [
   UpdatePreferences,
   GetSubscriberTemplatePreference,
   UpsertPreferences,
+  CreateSubscriber,
 ];
 
 const DAL_MODELS = [

@@ -1,17 +1,28 @@
+import { Editor } from '@maily-to/core';
+import { getVariableSuggestions, HTMLCodeBlockExtension, VariableExtension } from '@maily-to/core/extensions';
+import type { Editor as TiptapEditor } from '@tiptap/core';
+import { ReactNodeViewRenderer } from '@tiptap/react';
+import { HTMLAttributes, useCallback, useMemo, useState } from 'react';
+
+import { HTMLCodeBlockView } from '@/components/workflow-editor/steps/email/extensions/html-view';
+import { MailyVariablesList } from '@/components/workflow-editor/steps/email/extensions/maily-variables-list';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { useTelemetry } from '@/hooks/use-telemetry';
 import { parseStepVariables } from '@/utils/parseStepVariablesToLiquidVariables';
 import { cn } from '@/utils/ui';
-import { Editor } from '@maily-to/core';
-import type { Editor as TiptapEditor } from '@tiptap/core';
-import { HTMLAttributes, useMemo, useState } from 'react';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { ForExtension } from './extensions/for';
-import { DEFAULT_EDITOR_CONFIG, DEFAULT_EDITOR_BLOCKS } from './maily-config';
+import { VariableView } from './extensions/variable-view';
+import { createDefaultEditorBlocks, DEFAULT_EDITOR_CONFIG } from './maily-config';
 
 type MailyProps = HTMLAttributes<HTMLDivElement> & {
   value: string;
   onChange?: (value: string) => void;
   className?: string;
 };
+
+const VARIABLE_TRIGGER_CHARACTER = '{{';
 
 export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
   const { step } = useWorkflow();
@@ -31,69 +42,142 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
     () => mailyVariables.namespaces.map((v) => ({ name: v.label, required: false })),
     [mailyVariables.namespaces]
   );
+  const [_, setEditor] = useState<any>();
+  const isCustomEmailBlocksEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CUSTOM_EMAIL_BLOCKS_ENABLED);
+  const track = useTelemetry();
 
-  const [_, setEditor] = useState<TiptapEditor>();
+  const calculateVariables = useCallback(
+    ({
+      query,
+      editor,
+      from,
+    }: {
+      query: string;
+      editor: TiptapEditor;
+      from: 'content-variable' | 'bubble-variable' | 'repeat-variable';
+    }) => {
+      const queryWithoutSuffix = query.replace(/}+$/, '');
+      const filteredVariables: { name: string; required: boolean }[] = [];
+
+      function addInlineVariable() {
+        if (!query.endsWith('}}')) {
+          return;
+        }
+
+        if (filteredVariables.every((variable) => variable.name !== queryWithoutSuffix)) {
+          return;
+        }
+
+        const from = editor?.state.selection.from - queryWithoutSuffix.length - 4; /* for prefix */
+        const to = editor?.state.selection.from;
+
+        editor?.commands.deleteRange({ from, to });
+        editor?.commands.insertContent({
+          type: 'variable',
+          attrs: {
+            id: queryWithoutSuffix,
+            label: null,
+            fallback: null,
+            showIfKey: null,
+            required: false,
+          },
+        });
+      }
+
+      if (from === 'repeat-variable') {
+        filteredVariables.push(...arrays, ...namespaces);
+
+        if (namespaces.some((namespace) => queryWithoutSuffix.includes(namespace.name))) {
+          filteredVariables.push({ name: queryWithoutSuffix, required: false });
+        }
+
+        addInlineVariable();
+        return dedupAndSortVariables(filteredVariables, queryWithoutSuffix);
+      }
+
+      const iterableName = editor?.getAttributes('repeat')?.each;
+
+      const newNamespaces = [...namespaces, ...(iterableName ? [{ name: iterableName, required: false }] : [])];
+
+      filteredVariables.push(...primitives, ...newNamespaces);
+
+      if (newNamespaces.some((namespace) => queryWithoutSuffix.includes(namespace.name))) {
+        filteredVariables.push({ name: queryWithoutSuffix, required: false });
+      }
+
+      if (from === 'content-variable') {
+        addInlineVariable();
+      }
+
+      return dedupAndSortVariables(filteredVariables, queryWithoutSuffix);
+    },
+    [arrays, namespaces, primitives]
+  );
+
+  const extensions = useMemo(() => {
+    return [
+      ForExtension,
+      VariableExtension.extend({
+        // @ts-expect-error - TODO: Polish Maily typing when extending Maily core and update accordingly
+        addNodeView() {
+          return ReactNodeViewRenderer(VariableView, {
+            className: 'relative inline-block',
+            as: 'div',
+          });
+        },
+      }).configure({
+        suggestion: getVariableSuggestions(VARIABLE_TRIGGER_CHARACTER),
+        // @ts-expect-error - TODO: Polish Maily typing when extending Maily core and update accordingly
+        variables: calculateVariables,
+        variableSuggestionsPopover: MailyVariablesList,
+      }),
+      HTMLCodeBlockExtension.extend({
+        // @ts-expect-error - TODO: Polish Maily typing when extending Maily core and update accordingly
+        addNodeView() {
+          return ReactNodeViewRenderer(HTMLCodeBlockView, {
+            className: 'mly-relative',
+          });
+        },
+      }),
+    ];
+  }, [calculateVariables]);
+
+  /*
+   * Override Maily tippy box styles as a temporary solution.
+   * Note: These styles affect both the bubble menu and block manipulation buttons (drag & drop, add).
+   * TODO: Request Maily to expose these components or provide specific CSS selectors for individual targeting.
+   */
+  const overrideTippyBoxStyles = () => (
+    <style>
+      {`
+          .tippy-box {
+            padding-right: 20px;
+            pointer-events: auto;
+
+            .mly-cursor-grab {
+              background-color: #fff;
+              border-radius: 4px;
+              box-shadow: 0px 0px 2px 0px rgba(0, 0, 0, 0.04), 0px 1px 2px 0px rgba(0, 0, 0, 0.02);
+              border-radius: 4px;
+            }
+          }
+        `}
+    </style>
+  );
 
   return (
     <>
-      <div className={cn('mx-auto flex h-full flex-col items-start', className)} {...rest}>
+      {overrideTippyBoxStyles()}
+      <div
+        className={cn('shadow-xs mx-auto flex h-full flex-col items-start rounded-lg bg-white', className)}
+        {...rest}
+      >
         <Editor
-          key="for-block-enabled"
+          key="repeat-block-enabled"
           config={DEFAULT_EDITOR_CONFIG}
-          blocks={DEFAULT_EDITOR_BLOCKS}
-          extensions={[ForExtension]}
-          variableTriggerCharacter="{{"
-          variables={({ query, editor, from }) => {
-            const queryWithoutSuffix = query.replace(/}+$/, '');
-            const filteredVariables: { name: string; required: boolean }[] = [];
-
-            function addInlineVariable() {
-              if (!query.endsWith('}}')) {
-                return;
-              }
-              if (filteredVariables.every((variable) => variable.name !== queryWithoutSuffix)) {
-                return;
-              }
-              const from = editor?.state.selection.from - queryWithoutSuffix.length - 4; /* for prefix */
-              const to = editor?.state.selection.from;
-
-              editor?.commands.deleteRange({ from, to });
-              editor?.commands.insertContent({
-                type: 'variable',
-                attrs: {
-                  id: queryWithoutSuffix,
-                  label: null,
-                  fallback: null,
-                  showIfKey: null,
-                  required: false,
-                },
-              });
-            }
-
-            if (from === 'for-variable') {
-              filteredVariables.push(...arrays, ...namespaces);
-              if (namespaces.some((namespace) => queryWithoutSuffix.includes(namespace.name))) {
-                filteredVariables.push({ name: queryWithoutSuffix, required: false });
-              }
-
-              addInlineVariable();
-              return dedupAndSortVariables(filteredVariables, queryWithoutSuffix);
-            }
-
-            const iterableName = editor?.getAttributes('for')?.each;
-
-            const newNamespaces = [...namespaces, ...(iterableName ? [{ name: iterableName, required: false }] : [])];
-
-            filteredVariables.push(...primitives, ...newNamespaces);
-            if (newNamespaces.some((namespace) => queryWithoutSuffix.includes(namespace.name))) {
-              filteredVariables.push({ name: queryWithoutSuffix, required: false });
-            }
-
-            if (from === 'content-variable') {
-              addInlineVariable();
-            }
-            return dedupAndSortVariables(filteredVariables, queryWithoutSuffix);
-          }}
+          blocks={createDefaultEditorBlocks({ track, isCustomEmailBlocksEnabled })}
+          // @ts-expect-error - TODO: Polish Maily typing when extending Maily core and update accordingly
+          extensions={extensions}
           contentJson={value ? JSON.parse(value) : undefined}
           onCreate={setEditor}
           onUpdate={(editor) => {

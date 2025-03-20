@@ -1,5 +1,5 @@
 import { FilterQuery } from 'mongoose';
-import { DirectionEnum, EnvironmentId, ISubscribersDefine, OrganizationId, SubscriberDto } from '@novu/shared';
+import { DirectionEnum, EnvironmentId, ISubscribersDefine, OrganizationId } from '@novu/shared';
 import { SubscriberDBModel, SubscriberEntity } from './subscriber.entity';
 import { Subscriber } from './subscriber.schema';
 import { IExternalSubscribersEntity } from './types';
@@ -173,6 +173,7 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
     phone?: string;
     subscriberId?: string;
     name?: string;
+    includeCursor?: boolean;
   }): Promise<{ subscribers: SubscriberEntity[]; next: string | null; previous: string | null }> {
     if (query.before && query.after) {
       throw new DalException('Cannot specify both "before" and "after" cursors at the same time.');
@@ -207,26 +208,43 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
       limit: query.limit,
       sortDirection: query.sortDirection,
       sortBy: query.sortBy,
+      includeCursor: query.includeCursor,
       query: {
         _environmentId: query.environmentId,
         _organizationId: query.organizationId,
         $and: [
           {
-            ...(query.email && { email: query.email }),
-            ...(query.phone && { phone: query.phone }),
-            ...(query.subscriberId && { subscriberId: query.subscriberId }),
+            ...(query.email && {
+              email: {
+                $regex: regExpEscape(query.email),
+                $options: 'i',
+              },
+            }),
+            ...(query.phone && {
+              phone: {
+                $regex: regExpEscape(query.phone),
+                $options: 'i',
+              },
+            }),
+            ...(query.subscriberId && {
+              subscriberId: {
+                $regex: regExpEscape(query.subscriberId),
+                $options: 'i',
+              },
+            }),
             ...(query.name && {
               $expr: {
-                $eq: [
-                  {
+                $regexMatch: {
+                  input: {
                     $trim: {
                       input: {
                         $concat: [{ $ifNull: ['$firstName', ''] }, ' ', { $ifNull: ['$lastName', ''] }],
                       },
                     },
                   },
-                  query.name,
-                ],
+                  regex: regExpEscape(query.name),
+                  options: 'i',
+                },
               },
             }),
           },

@@ -59,14 +59,11 @@ test('should trigger ring-central library correctly', async () => {
   expect(spyonLoggedIn).toHaveBeenCalledTimes(1);
   expect(spyOnLogin).toHaveBeenCalledTimes(1);
   expect(spyOnPost).toHaveBeenCalled();
-  expect(spyOnPost).toHaveBeenCalledWith(
-    '/restapi/v1.0/account/~/extension/~/sms',
-    {
-      from: { phoneNumber: '+112345' },
-      to: [{ phoneNumber: '+176543' }],
-      text: 'SMS Content',
-    },
-  );
+  expect(spyOnPost).toHaveBeenCalledWith('/restapi/v1.0/account/~/extension/~/sms', {
+    from: { phoneNumber: '+112345' },
+    to: [{ phoneNumber: '+176543' }],
+    text: 'SMS Content',
+  });
 });
 
 test('should not login if already logged in', async () => {
@@ -126,14 +123,11 @@ test('should not login if already logged in', async () => {
   expect(spyonLoggedIn).toHaveBeenCalledTimes(1);
   expect(spyOnLogin).toHaveBeenCalledTimes(0);
   expect(spyOnPost).toHaveBeenCalled();
-  expect(spyOnPost).toHaveBeenCalledWith(
-    '/restapi/v1.0/account/~/extension/~/sms',
-    {
-      from: { phoneNumber: '+112345' },
-      to: [{ phoneNumber: '+176543' }],
-      text: 'SMS Content',
-    },
-  );
+  expect(spyOnPost).toHaveBeenCalledWith('/restapi/v1.0/account/~/extension/~/sms', {
+    from: { phoneNumber: '+112345' },
+    to: [{ phoneNumber: '+176543' }],
+    text: 'SMS Content',
+  });
 });
 
 test('should only use config.from if options.from is not provided', async () => {
@@ -178,14 +172,11 @@ test('should only use config.from if options.from is not provided', async () => 
   });
 
   expect(spyOnPost).toHaveBeenCalled();
-  expect(spyOnPost).toHaveBeenCalledWith(
-    '/restapi/v1.0/account/~/extension/~/sms',
-    {
-      from: { phoneNumber: '+112345' },
-      to: [{ phoneNumber: '+176543' }],
-      text: 'SMS Content',
-    },
-  );
+  expect(spyOnPost).toHaveBeenCalledWith('/restapi/v1.0/account/~/extension/~/sms', {
+    from: { phoneNumber: '+112345' },
+    to: [{ phoneNumber: '+176543' }],
+    text: 'SMS Content',
+  });
 });
 
 test('should trigger ring-central library correctly with _passthrough', async () => {
@@ -236,17 +227,14 @@ test('should trigger ring-central library correctly with _passthrough', async ()
           text: 'SMS Content _passthrough',
         },
       },
-    },
+    }
   );
 
   expect(spyonLoggedIn).toHaveBeenCalledTimes(1);
   expect(spyOnPost).toHaveBeenCalled();
-  expect(spyOnPost).toHaveBeenCalledWith(
-    '/restapi/v1.0/account/~/extension/~/sms',
-    {
-      from: { phoneNumber: '+112345' },
-      to: [{ phoneNumber: '+176543' }],
-      text: 'SMS Content _passthrough',
-    },
-  );
+  expect(spyOnPost).toHaveBeenCalledWith('/restapi/v1.0/account/~/extension/~/sms', {
+    from: { phoneNumber: '+112345' },
+    to: [{ phoneNumber: '+176543' }],
+    text: 'SMS Content _passthrough',
+  });
 });

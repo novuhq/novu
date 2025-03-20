@@ -128,8 +128,8 @@ describe('Trigger bulk events - /v1/events/trigger/bulk (POST) #novu-v2', functi
       ],
     });
 
-    await session.awaitRunningJobs(template._id);
-    await session.awaitRunningJobs(secondTemplate._id);
+    await session.waitForJobCompletion(template._id);
+    await session.waitForJobCompletion(secondTemplate._id);
 
     const notifications = await notificationRepository.findBySubscriberId(session.environment._id, subscriber._id);
     expect(notifications.length).to.equal(1);

@@ -1,6 +1,7 @@
 /* eslint-disable no-param-reassign */
 import { Injectable } from '@nestjs/common';
 import { JSONContent as MailyJSONContent } from '@maily-to/render';
+
 import { WrapMailyInLiquidCommand } from './wrap-maily-in-liquid.command';
 import {
   MailyContentTypeEnum,
@@ -8,14 +9,15 @@ import {
   MAILY_ITERABLE_MARK,
   MAILY_FIRST_CITIZEN_VARIABLE_KEY,
 } from './maily.types';
+import { hasAttrs, hasMarks, isRepeatNode } from './maily-utils';
 
 /**
- * Enriches Maily JSON content with Liquid syntax for variables.
+ * Enriches Maily JSON content with Liquid syntax repeat variables.
  *
  * @example
  * Input:
  * {
- *   type: "for",
+ *   type: "repeat",
  *   attrs: { each: "payload.comments" },
  *   content: [{
  *     type: "variable",
@@ -53,7 +55,7 @@ export class WrapMailyInLiquidUseCase {
     const newNode = { ...node } as MailyJSONContent & { attrs: Record<string, any> };
 
     // if this is a for loop node, track its variable
-    if (this.isForNode(node)) {
+    if (isRepeatNode(node)) {
       parentForLoopKey = node.attrs[MailyAttrsEnum.EACH_KEY];
     }
 
@@ -61,11 +63,11 @@ export class WrapMailyInLiquidUseCase {
       newNode.content = node.content.map((child) => this.wrapVariablesInLiquid(child, parentForLoopKey));
     }
 
-    if (this.hasAttrs(node)) {
+    if (hasAttrs(node)) {
       newNode.attrs = this.processVariableNodeAttributes(node, parentForLoopKey);
     }
 
-    if (this.hasMarks(node)) {
+    if (hasMarks(node)) {
       newNode.marks = this.processNodeMarks(node);
     }
 
@@ -143,25 +145,6 @@ export class WrapMailyInLiquidUseCase {
     const fallbackSuffix = fallback ? ` | default: '${fallback}'` : '';
 
     return `{{ ${variableName}${fallbackSuffix} }}`;
-  }
-
-  private hasAttrs(node: MailyJSONContent): node is MailyJSONContent & { attrs: Record<string, any> } {
-    return !!node.attrs;
-  }
-
-  private hasMarks(node: MailyJSONContent): node is MailyJSONContent & { marks: Record<string, any>[] } {
-    return !!node.marks;
-  }
-
-  private isForNode(
-    node: MailyJSONContent
-  ): node is MailyJSONContent & { attrs: { [MailyAttrsEnum.EACH_KEY]: string } } {
-    return !!(
-      node.type === MailyContentTypeEnum.FOR &&
-      node.attrs &&
-      node.attrs[MailyAttrsEnum.EACH_KEY] !== undefined &&
-      typeof node.attrs[MailyAttrsEnum.EACH_KEY] === 'string'
-    );
   }
 }
 

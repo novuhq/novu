@@ -34,7 +34,7 @@ export const TemplateTabs = ({
 
   return (
     <Tabs defaultValue="editor" value={tabsValue} onValueChange={onTabChange} className="flex h-full flex-1 flex-col">
-      <header className="flex flex-row items-center gap-3 px-3 py-1.5">
+      <header className="flex h-12 w-full flex-row items-center justify-between gap-3 border-b py-4 pl-3 pr-3">
         <div className="mr-auto flex items-center gap-2.5 text-sm font-medium">
           <RiEdit2Line className="size-4" />
           <span>Configure Template</span>
@@ -59,11 +59,11 @@ export const TemplateTabs = ({
             e.stopPropagation();
             navigate('../', { relative: 'path' });
           }}
+          data-testid="tabs-close-button"
         >
           <span className="sr-only">Close</span>
         </CompactButton>
       </header>
-      <Separator />
       <TabsContent value="editor" className="h-full w-full overflow-y-auto">
         {editorContent}
       </TabsContent>

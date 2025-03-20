@@ -133,6 +133,7 @@ function StatusBadgeIcon<T extends React.ElementType = 'div'>({
 
   return <Component className={icon({ class: className })} />;
 }
+
 StatusBadgeIcon.displayName = STATUS_BADGE_ICON_NAME;
 
 function StatusBadgeDot({
@@ -145,6 +146,7 @@ function StatusBadgeDot({
 
   return <div className={dot({ class: className })} {...rest} />;
 }
+
 StatusBadgeDot.displayName = STATUS_BADGE_DOT_NAME;
 
 export {

@@ -24,6 +24,9 @@ import {
   TopicSubscribersRepository,
   UserRepository,
   WorkflowOverrideRepository,
+  CommunityUserRepository,
+  CommunityMemberRepository,
+  CommunityOrganizationRepository,
 } from '@novu/dal';
 import {
   analyticsService,
@@ -35,11 +38,8 @@ import {
   DalServiceHealthIndicator,
   distributedLockService,
   ExecuteBridgeRequest,
-  ExecutionLogRoute,
   featureFlagsService,
   GetDecryptedSecretKey,
-  getFeatureFlag,
-  injectCommunityAuthProviders,
   InvalidateCacheService,
   LoggerModule,
   QueuesModule,
@@ -56,7 +56,22 @@ function getDynamicAuthProviders() {
 
     return eeAuthPackage.injectEEAuthProviders();
   } else {
-    return injectCommunityAuthProviders();
+    const userRepositoryProvider = {
+      provide: 'USER_REPOSITORY',
+      useClass: CommunityUserRepository,
+    };
+
+    const memberRepositoryProvider = {
+      provide: 'MEMBER_REPOSITORY',
+      useClass: CommunityMemberRepository,
+    };
+
+    const organizationRepositoryProvider = {
+      provide: 'ORGANIZATION_REPOSITORY',
+      useClass: CommunityOrganizationRepository,
+    };
+
+    return [userRepositoryProvider, memberRepositoryProvider, organizationRepositoryProvider];
   }
 }
 
@@ -107,10 +122,8 @@ const PROVIDERS = [
   InvalidateCacheService,
   storageService,
   ...DAL_MODELS,
-  ExecutionLogRoute,
   CreateExecutionDetails,
   ExecuteBridgeRequest,
-  getFeatureFlag,
   GetDecryptedSecretKey,
 ];
 

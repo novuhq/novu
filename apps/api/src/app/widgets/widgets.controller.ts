@@ -16,7 +16,7 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiExcludeController, ApiOperation, ApiQuery } from '@nestjs/swagger';
-import { AnalyticsService, GetSubscriberPreference, GetSubscriberPreferenceCommand } from '@novu/application-generic';
+import { AnalyticsService } from '@novu/application-generic';
 import { MessageEntity, SubscriberEntity } from '@novu/dal';
 import {
   ButtonTypeEnum,
@@ -26,6 +26,10 @@ import {
   PreferenceLevelEnum,
   TriggerTypeEnum,
 } from '@novu/shared';
+import {
+  GetSubscriberPreference,
+  GetSubscriberPreferenceCommand,
+} from '../subscribers/usecases/get-subscriber-preference';
 
 import { SubscriberSession } from '../shared/framework/user.decorator';
 import { LogUsageRequestDto } from './dtos/log-usage-request.dto';

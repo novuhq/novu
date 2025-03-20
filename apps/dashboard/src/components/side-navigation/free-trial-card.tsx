@@ -75,8 +75,7 @@ export const FreeTrialCard = ({ subscription, daysLeft }: { subscription?: GetSu
   const daysTotal = subscription && subscription.trial.daysTotal > 0 ? subscription.trial.daysTotal : 100;
   const pluralizedDays = pluralizeDaysLeft(daysLeft);
 
-  const cardClassName =
-    'bg-background group relative left-2 mb-2 flex w-[calc(100%-1rem)] cursor-pointer flex-col gap-2 rounded-lg p-3 shadow';
+  const cardClassName = 'bg-background group relative mb-2 flex cursor-pointer flex-col gap-2 rounded-lg p-3 shadow';
 
   return (
     <Link to={ROUTES.SETTINGS_BILLING} className={cardClassName}>

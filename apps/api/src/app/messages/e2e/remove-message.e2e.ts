@@ -43,7 +43,7 @@ describe('Delete Message - /messages/:messageId (DELETE) #novu-v2', function () 
       },
     });
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
 
     const messages = await messageRepository.findBySubscriberChannel(
       session.environment._id,

@@ -17,7 +17,7 @@ import {
   BuilderFieldType,
   BuilderGroupValues,
   ChannelCTATypeEnum,
-  ContentIssue as ContentIssueDto,
+  StepContentIssue as StepContentIssueDto,
   CustomDataType,
   FilterParts,
   IMessageAction,
@@ -39,11 +39,7 @@ import { Type } from 'class-transformer';
 import { RuntimeIssue } from '@novu/dal';
 import { EnvironmentWithUserCommand } from '../../commands';
 import { PreferencesRequired } from '../upsert-preferences';
-import {
-  MAX_DESCRIPTION_LENGTH,
-  MAX_NAME_LENGTH,
-  MAX_TAG_LENGTH,
-} from '../workflow';
+import { MAX_DESCRIPTION_LENGTH, MAX_NAME_LENGTH, MAX_TAG_LENGTH } from '../workflow';
 
 export class CreateWorkflowCommand extends EnvironmentWithUserCommand {
   @IsDefined()
@@ -166,7 +162,7 @@ export class ChannelCTACommand {
   action?: IMessageAction[];
 }
 
-export class ContentIssue implements ContentIssueDto {
+export class ContentIssue implements StepContentIssueDto {
   @IsOptional()
   @IsString()
   variableName?: string;
@@ -180,7 +176,7 @@ export class ContentIssue implements ContentIssueDto {
 
 export class StepIssue implements StepIssueDto {
   @IsEnum(StepIssueEnum)
-  issueType: StepIssueEnum;
+  issueType: StepIssueEnum; // Union of both
 
   @IsOptional()
   @IsString()

@@ -37,15 +37,19 @@ export type NotificationsControllerListNotificationsRequest = {
    */
   page?: number | undefined;
   /**
+   * Limit for pagination
+   */
+  limit?: number | undefined;
+  /**
    * Transaction ID for filtering
    */
   transactionId?: string | undefined;
   /**
-   * Date filter for records after this timestamp
+   * Date filter for records after this timestamp. Defaults to earliest date allowed by subscription plan
    */
   after?: string | undefined;
   /**
-   * Date filter for records before this timestamp
+   * Date filter for records before this timestamp. Defaults to current time of request (now)
    */
   before?: string | undefined;
   /**
@@ -72,6 +76,7 @@ export const NotificationsControllerListNotificationsRequest$inboundSchema:
     search: z.string().optional(),
     subscriberIds: z.array(z.string()).optional(),
     page: z.number().default(0),
+    limit: z.number().default(10),
     transactionId: z.string().optional(),
     after: z.string().optional(),
     before: z.string().optional(),
@@ -90,6 +95,7 @@ export type NotificationsControllerListNotificationsRequest$Outbound = {
   search?: string | undefined;
   subscriberIds?: Array<string> | undefined;
   page: number;
+  limit: number;
   transactionId?: string | undefined;
   after?: string | undefined;
   before?: string | undefined;
@@ -109,6 +115,7 @@ export const NotificationsControllerListNotificationsRequest$outboundSchema:
     search: z.string().optional(),
     subscriberIds: z.array(z.string()).optional(),
     page: z.number().default(0),
+    limit: z.number().default(10),
     transactionId: z.string().optional(),
     after: z.string().optional(),
     before: z.string().optional(),

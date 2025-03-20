@@ -1,188 +1,154 @@
-import { ChannelTypeEnum } from '@novu/shared';
+import { LockUpgrade } from '@/components/icons/lock-upgrade';
+import { Tooltip, TooltipContent, TooltipPortal, TooltipTrigger } from '@/components/primitives/tooltip';
+import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
+import { ActivityFiltersData } from '@/types/activity';
+import { ROUTES } from '@/utils/routes';
+import { cn } from '@/utils/ui';
+import { useOrganization } from '@clerk/clerk-react';
+import { ApiServiceLevelEnum, ChannelTypeEnum, FeatureNameEnum, getFeatureForTierAsNumber } from '@novu/shared';
 import { CalendarIcon } from 'lucide-react';
-import { useEffect, useMemo } from 'react';
-import { useForm } from 'react-hook-form';
+import { Link } from 'react-router-dom';
 import { useFetchWorkflows } from '../../hooks/use-fetch-workflows';
 import { Button } from '../primitives/button';
 import { FacetedFormFilter } from '../primitives/form/faceted-filter/facated-form-filter';
-import { Form, FormField, FormItem } from '../primitives/form/form';
+import { CHANNEL_OPTIONS, DATE_RANGE_OPTIONS } from './constants';
+
+type Fields = 'dateRange' | 'workflows' | 'channels' | 'transactionId' | 'subscriberId';
 
 export type ActivityFilters = {
+  filters: ActivityFiltersData;
+  showReset?: boolean;
   onFiltersChange: (filters: ActivityFiltersData) => void;
-  initialValues: ActivityFiltersData;
   onReset?: () => void;
+  hide?: Fields[];
+  className?: string;
 };
 
-export type ActivityFiltersData = {
-  dateRange: string;
-  channels: ChannelTypeEnum[];
-  workflows: string[];
-  transactionId: string;
-  subscriberId: string;
+const UpgradeCtaIcon: React.ComponentType<{ className?: string }> = () => {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Link
+          to={ROUTES.SETTINGS_BILLING + '?utm_source=activity-feed-retention'}
+          className="block transition-all duration-200 hover:scale-110"
+        >
+          <LockUpgrade className="h-4 w-4 text-neutral-300 hover:text-neutral-400" />
+        </Link>
+      </TooltipTrigger>
+      <TooltipPortal>
+        <TooltipContent>Upgrade your plan to unlock extended retention periods</TooltipContent>
+      </TooltipPortal>
+    </Tooltip>
+  );
 };
 
-const DATE_RANGE_OPTIONS = [
-  { value: '24h', label: 'Last 24 hours' },
-  { value: '7d', label: 'Last 7 days' },
-  { value: '30d', label: 'Last 30 days' },
-];
+export function ActivityFilters({
+  onFiltersChange,
+  filters,
+  onReset,
+  showReset = false,
+  hide = [],
+  className,
+}: ActivityFilters) {
+  const { data: workflowTemplates } = useFetchWorkflows({ limit: 100 });
+  const { organization } = useOrganization();
+  const { subscription } = useFetchSubscription();
 
-const CHANNEL_OPTIONS = [
-  { value: ChannelTypeEnum.SMS, label: 'SMS' },
-  { value: ChannelTypeEnum.EMAIL, label: 'Email' },
-  { value: ChannelTypeEnum.IN_APP, label: 'In-App' },
-  { value: ChannelTypeEnum.PUSH, label: 'Push' },
-  { value: ChannelTypeEnum.CHAT, label: 'Chat' },
-];
+  const maxActivityFeedRetentionMs = getFeatureForTierAsNumber(
+    FeatureNameEnum.PLATFORM_ACTIVITY_FEED_RETENTION,
+    subscription?.apiServiceLevel ?? ApiServiceLevelEnum.FREE,
+    true
+  );
 
-export const defaultActivityFilters: ActivityFiltersData = {
-  dateRange: '30d',
-  channels: [],
-  workflows: [],
-  transactionId: '',
-  subscriberId: '',
-} as const;
+  const maxActivityFeedRetentionOptions = DATE_RANGE_OPTIONS.map((option) => {
+    const isLegacyFreeTier =
+      subscription?.apiServiceLevel === ApiServiceLevelEnum.FREE &&
+      organization &&
+      organization.createdAt < new Date('2025-02-28');
 
-export function ActivityFilters({ onFiltersChange, initialValues, onReset }: ActivityFilters) {
-  const form = useForm<ActivityFiltersData>({
-    defaultValues: initialValues || defaultActivityFilters,
+    // legacy free can go up to 30 days
+    const legacyFreeMaxRetentionMs = 30 * 24 * 60 * 60 * 1000;
+    const maxRetentionMs = isLegacyFreeTier ? legacyFreeMaxRetentionMs : maxActivityFeedRetentionMs;
+
+    return {
+      disabled: option.ms > maxRetentionMs,
+      label: option.label,
+      value: option.value,
+      icon: option.ms > maxRetentionMs ? UpgradeCtaIcon : undefined,
+    };
   });
 
-  const watchedValues = form.watch();
-
-  const hasChanges = useMemo(() => {
-    return (
-      watchedValues.dateRange !== defaultActivityFilters.dateRange ||
-      watchedValues.channels.length > 0 ||
-      watchedValues.workflows.length > 0 ||
-      watchedValues.transactionId !== defaultActivityFilters.transactionId ||
-      watchedValues.subscriberId !== defaultActivityFilters.subscriberId
-    );
-  }, [watchedValues]);
-
-  const { data: workflowTemplates } = useFetchWorkflows({ limit: 100 });
-
-  useEffect(() => {
-    const subscription = form.watch((value) => {
-      onFiltersChange(value as ActivityFiltersData);
-    });
-
-    return () => subscription.unsubscribe();
-  }, [form, onFiltersChange]);
-
-  useEffect(() => {
-    form.reset(initialValues);
-  }, [form, initialValues]);
-
-  const handleReset = () => {
-    form.reset(defaultActivityFilters);
-    onFiltersChange(defaultActivityFilters);
-    onReset?.();
-  };
-
   return (
-    <Form {...form}>
-      <form className="flex items-center gap-2 p-2 py-[11px]">
-        <FormField
-          control={form.control}
-          name="dateRange"
-          render={({ field }) => (
-            <FormItem className="space-y-0">
-              <FacetedFormFilter
-                size="small"
-                type="single"
-                hideClear
-                hideSearch
-                hideTitle
-                title="Time period"
-                options={DATE_RANGE_OPTIONS}
-                selected={[field.value]}
-                onSelect={(values) => field.onChange(values[0])}
-                icon={CalendarIcon}
-              />
-            </FormItem>
-          )}
+    <div className={cn('flex items-center gap-2 p-2 py-[11px]', className)}>
+      {!hide.includes('dateRange') && (
+        <FacetedFormFilter
+          size="small"
+          type="single"
+          hideClear
+          hideSearch
+          hideTitle
+          title="Time period"
+          options={maxActivityFeedRetentionOptions}
+          selected={[filters.dateRange]}
+          onSelect={(values) => onFiltersChange({ ...filters, dateRange: values[0] })}
+          icon={CalendarIcon}
         />
+      )}
 
-        <FormField
-          control={form.control}
-          name="workflows"
-          render={({ field }) => (
-            <FormItem className="space-y-0">
-              <FacetedFormFilter
-                size="small"
-                type="multi"
-                title="Workflows"
-                options={
-                  workflowTemplates?.workflows?.map((workflow) => ({
-                    label: workflow.name,
-                    value: workflow._id,
-                  })) || []
-                }
-                selected={field.value}
-                onSelect={(values) => field.onChange(values)}
-              />
-            </FormItem>
-          )}
+      {!hide.includes('workflows') && (
+        <FacetedFormFilter
+          size="small"
+          type="multi"
+          title="Workflows"
+          options={
+            workflowTemplates?.workflows?.map((workflow) => ({
+              label: workflow.name,
+              value: workflow._id,
+            })) || []
+          }
+          selected={filters.workflows}
+          onSelect={(values) => onFiltersChange({ ...filters, workflows: values })}
         />
+      )}
 
-        <FormField
-          control={form.control}
-          name="channels"
-          render={({ field }) => (
-            <FormItem className="space-y-0">
-              <FacetedFormFilter
-                size="small"
-                type="multi"
-                title="Channels"
-                options={CHANNEL_OPTIONS}
-                selected={field.value}
-                onSelect={(values) => field.onChange(values)}
-              />
-            </FormItem>
-          )}
+      {!hide.includes('channels') && (
+        <FacetedFormFilter
+          size="small"
+          type="multi"
+          title="Channels"
+          options={CHANNEL_OPTIONS}
+          selected={filters.channels}
+          onSelect={(values) => onFiltersChange({ ...filters, channels: values as ChannelTypeEnum[] })}
         />
+      )}
 
-        <FormField
-          control={form.control}
-          name="transactionId"
-          render={({ field }) => (
-            <FormItem className="relative">
-              <FacetedFormFilter
-                type="text"
-                size="small"
-                title="Transaction ID"
-                value={field.value}
-                onChange={field.onChange}
-                placeholder="Search by Transaction ID"
-              />
-            </FormItem>
-          )}
+      {!hide.includes('transactionId') && (
+        <FacetedFormFilter
+          type="text"
+          size="small"
+          title="Transaction ID"
+          value={filters.transactionId}
+          onChange={(value) => onFiltersChange({ ...filters, transactionId: value })}
+          placeholder="Search by Transaction ID"
         />
+      )}
 
-        <FormField
-          control={form.control}
-          name="subscriberId"
-          render={({ field }) => (
-            <FormItem className="relative">
-              <FacetedFormFilter
-                type="text"
-                size="small"
-                title="Subscriber ID"
-                value={field.value}
-                onChange={field.onChange}
-                placeholder="Search by Subscriber ID"
-              />
-            </FormItem>
-          )}
+      {!hide.includes('subscriberId') && (
+        <FacetedFormFilter
+          type="text"
+          size="small"
+          title="Subscriber ID"
+          value={filters.subscriberId}
+          onChange={(value) => onFiltersChange({ ...filters, subscriberId: value })}
+          placeholder="Search by Subscriber ID"
         />
+      )}
 
-        {hasChanges && (
-          <Button variant="secondary" mode="ghost" size="2xs" onClick={handleReset}>
-            Reset
-          </Button>
-        )}
-      </form>
-    </Form>
+      {showReset && (
+        <Button variant="secondary" mode="ghost" size="2xs" onClick={onReset}>
+          Reset
+        </Button>
+      )}
+    </div>
   );
 }

@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../utils/routes';
 
 type ClerkProviderProps = PropsWithChildren;
+
 export const ClerkProvider = (props: ClerkProviderProps) => {
   const navigate = useNavigate();
   const { children } = props;

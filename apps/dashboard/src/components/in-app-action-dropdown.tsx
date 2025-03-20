@@ -27,6 +27,7 @@ import { RiEdit2Line, RiExpandUpDownLine, RiForbid2Line } from 'react-icons/ri';
 import { CompactButton } from './primitives/button-compact';
 import { ControlInput } from './primitives/control-input';
 import { InputRoot } from './primitives/input';
+import { inboxButtonVariants } from '@/utils/inbox';
 
 const primaryActionKey = 'primaryAction';
 const secondaryActionKey = 'secondaryAction';
@@ -56,7 +57,10 @@ export const InAppActionDropdown = ({ onMenuItemClick }: { onMenuItemClick?: () 
                 variant="secondary"
                 mode="outline"
                 size="2xs"
-                className="h-6 border-[1px] border-dashed shadow-none ring-0"
+                className={inboxButtonVariants({
+                  variant: 'secondary',
+                  className: 'border-[1px] border-dashed shadow-none ring-0',
+                })}
                 trailingIcon={RiForbid2Line}
                 tabIndex={-1}
               >
@@ -65,22 +69,37 @@ export const InAppActionDropdown = ({ onMenuItemClick }: { onMenuItemClick?: () 
             )}
             {primaryAction && (
               <ConfigureActionPopover title="Primary action" asChild fields={{ actionKey: primaryActionKey }}>
-                <Button variant="primary" size="2xs" className="z-10 h-6 min-w-16 max-w-48 truncate">
+                <button
+                  className={inboxButtonVariants({
+                    variant: 'default',
+                    className: 'z-10 h-6 min-w-16 max-w-48 truncate',
+                  })}
+                >
                   {primaryAction.label || 'Primary action'}
-                </Button>
+                </button>
               </ConfigureActionPopover>
             )}
             {secondaryAction && (
               <ConfigureActionPopover title="Secondary action" asChild fields={{ actionKey: secondaryActionKey }}>
-                <Button variant="secondary" mode="outline" size="2xs" className="z-10 h-6 min-w-16 max-w-48 truncate">
+                <button
+                  className={inboxButtonVariants({
+                    variant: 'secondary',
+                    className: 'z-10 h-6 min-w-16 max-w-48 truncate',
+                  })}
+                >
                   {secondaryAction.label || 'Secondary action'}
-                </Button>
+                </button>
               </ConfigureActionPopover>
             )}
             <DropdownMenuTrigger className="absolute size-full" tabIndex={-1} />
           </div>
           <DropdownMenuTrigger asChild>
-            <CompactButton icon={RiExpandUpDownLine} size="lg" variant="ghost">
+            <CompactButton
+              icon={RiExpandUpDownLine}
+              size="lg"
+              variant="ghost"
+              data-testid="in-app-action-dropdown-trigger"
+            >
               <span className="sr-only">Actions</span>
             </CompactButton>
           </DropdownMenuTrigger>
@@ -106,7 +125,10 @@ export const InAppActionDropdown = ({ onMenuItemClick }: { onMenuItemClick?: () 
               mode="outline"
               variant="secondary"
               size="2xs"
-              className="h-6 border-[1px] border-dashed shadow-none ring-0"
+              className={inboxButtonVariants({
+                variant: 'secondary',
+                className: 'h-6 border-[1px] border-dashed shadow-none ring-0',
+              })}
               trailingIcon={RiForbid2Line}
             >
               No action
@@ -126,9 +148,14 @@ export const InAppActionDropdown = ({ onMenuItemClick }: { onMenuItemClick?: () 
               onMenuItemClick?.();
             }}
           >
-            <Button variant="primary" size="2xs" className="pointer-events-none h-6">
+            <button
+              className={inboxButtonVariants({
+                variant: 'default',
+                className: 'z-10 h-6 min-w-16 max-w-48 truncate',
+              })}
+            >
               Primary action
-            </Button>
+            </button>
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => {
@@ -148,13 +175,19 @@ export const InAppActionDropdown = ({ onMenuItemClick }: { onMenuItemClick?: () 
               onMenuItemClick?.();
             }}
           >
-            <Button variant="primary" size="2xs" className="pointer-events-none h-6">
-              Primary action
-            </Button>
-
-            <Button variant="secondary" mode="outline" size="2xs" className="pointer-events-none h-6">
-              Secondary action
-            </Button>
+            <>
+              <button
+                className={inboxButtonVariants({
+                  variant: 'default',
+                  className: 'z-10 h-6 min-w-16 max-w-48 truncate',
+                })}
+              >
+                Primary action
+              </button>
+              <button className={inboxButtonVariants({ variant: 'secondary', className: 'pointer-events-none h-6' })}>
+                Secondary action
+              </button>
+            </>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

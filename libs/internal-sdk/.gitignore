@@ -1,3 +1,5 @@
+/mcp-server
+/bin
 /.eslintcache
 /models
 /models/errors

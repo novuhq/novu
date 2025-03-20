@@ -2,10 +2,7 @@ import Redlock, { Lock } from 'redlock';
 import { setTimeout } from 'timers/promises';
 import { Injectable, Logger } from '@nestjs/common';
 
-import {
-  InMemoryProviderClient,
-  CacheInMemoryProviderService,
-} from '../in-memory-provider';
+import { InMemoryProviderClient, CacheInMemoryProviderService } from '../in-memory-provider';
 
 const LOG_CONTEXT = 'DistributedLock';
 
@@ -21,9 +18,7 @@ export class DistributedLockService {
   public lockCounter = {};
   public shuttingDown = false;
 
-  constructor(
-    private cacheInMemoryProviderService: CacheInMemoryProviderService,
-  ) {}
+  constructor(private cacheInMemoryProviderService: CacheInMemoryProviderService) {}
 
   async initialize(): Promise<void> {
     await this.cacheInMemoryProviderService.initialize();
@@ -37,7 +32,7 @@ export class DistributedLockService {
       retryCount: 50,
       retryDelay: 100,
       retryJitter: 200,
-    },
+    }
   ): void {
     if (this.distributedLock) {
       return;
@@ -63,11 +58,7 @@ export class DistributedLockService {
        * when an "error" event is emitted in the absence of listeners.
        */
       this.distributedLock.on('error', (error) => {
-        Logger.verbose(
-          error,
-          'There has been an error in the Distributed Lock service',
-          LOG_CONTEXT,
-        );
+        Logger.verbose(error, 'There has been an error in the Distributed Lock service', LOG_CONTEXT);
       });
     }
   }
@@ -98,14 +89,11 @@ export class DistributedLockService {
           this.shuttingDown = true;
           await this.distributedLock.quit();
         } catch (error: any) {
-          Logger.verbose(
-            `Error quitting redlock: ${error.message}`,
-            LOG_CONTEXT,
-          );
+          Logger.verbose(`Error quitting redlock: ${error.message}`, LOG_CONTEXT);
         } finally {
           this.shuttingDown = false;
           this.distributedLock = undefined;
-          await this.cacheInMemoryProviderService.shutdown();
+          // await this.cacheInMemoryProviderService.shutdown();
           Logger.verbose('Redlock shutdown', LOG_CONTEXT);
         }
       }
@@ -135,9 +123,7 @@ export class DistributedLockService {
    */
   public buildResourceWithPrefix(resource: string): string {
     const resourceParts = resource.split(':');
-    const environmentResourceIndex = resourceParts.findIndex(
-      (el) => el === 'environment',
-    );
+    const environmentResourceIndex = resourceParts.findIndex((el) => el === 'environment');
 
     if (environmentResourceIndex === -1) {
       return resource;
@@ -148,10 +134,7 @@ export class DistributedLockService {
     return `{environmentId:${environmentId}}${resource}`;
   }
 
-  public async applyLock<T>(
-    { resource, ttl }: ILockOptions,
-    handler: () => Promise<T>,
-  ): Promise<T> {
+  public async applyLock<T>({ resource, ttl }: ILockOptions, handler: () => Promise<T>): Promise<T> {
     if (!this.isDistributedLockEnabled()) {
       return await handler();
     }
@@ -166,42 +149,29 @@ export class DistributedLockService {
     const releaseLock = await this.lock(resourceWithPrefix, ttl);
 
     try {
-      Logger.debug(
-        `Lock ${resourceWithPrefix} for ${handler.name}`,
-        LOG_CONTEXT,
-      );
+      Logger.debug(`Lock ${resourceWithPrefix} for ${handler.name}`, LOG_CONTEXT);
 
       const result = await handler();
 
       return result;
     } finally {
       await releaseLock();
-      Logger.debug(
-        `Lock ${resourceWithPrefix} released for ${handler.name}`,
-        LOG_CONTEXT,
-      );
+      Logger.debug(`Lock ${resourceWithPrefix} released for ${handler.name}`, LOG_CONTEXT);
     }
   }
 
   public async lock(
     resource: string,
     ttl: number,
-    settings: { retryCount: number } = this.distributedLock.settings,
+    settings: { retryCount: number } = this.distributedLock.settings
   ): Promise<() => Promise<void>> {
     try {
-      const acquiredLock = await this.distributedLock.acquire(
-        [resource],
-        ttl,
-        settings,
-      );
+      const acquiredLock = await this.distributedLock.acquire([resource], ttl, settings);
       Logger.verbose(`Lock ${resource} acquired for ${ttl} ms`, LOG_CONTEXT);
 
       return this.createLockRelease(resource, acquiredLock);
     } catch (error: any) {
-      Logger.verbose(
-        `Lock ${resource} threw an error: ${error.message}`,
-        LOG_CONTEXT,
-      );
+      Logger.verbose(`Lock ${resource} threw an error: ${error.message}`, LOG_CONTEXT);
       throw error;
     }
   }
@@ -211,16 +181,10 @@ export class DistributedLockService {
 
     return async (): Promise<void> => {
       try {
-        Logger.debug(
-          `Lock ${resource} counter at ${this.lockCounter[resource]}`,
-          LOG_CONTEXT,
-        );
+        Logger.debug(`Lock ${resource} counter at ${this.lockCounter[resource]}`, LOG_CONTEXT);
         await lock.release();
       } catch (error: any) {
-        Logger.error(
-          `Releasing lock ${resource} threw an error: ${error.message}`,
-          LOG_CONTEXT,
-        );
+        Logger.error(`Releasing lock ${resource} threw an error: ${error.message}`, LOG_CONTEXT);
       } finally {
         this.decreaseLockCounter(resource);
       }

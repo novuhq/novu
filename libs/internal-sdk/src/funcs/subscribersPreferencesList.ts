@@ -3,7 +3,7 @@
  */
 
 import { NovuCore } from "../core.js";
-import { encodeFormQuery, encodeSimple } from "../lib/encodings.js";
+import { encodeSimple } from "../lib/encodings.js";
 import * as M from "../lib/matchers.js";
 import { compactMap } from "../lib/primitives.js";
 import { safeParse } from "../lib/schemas.js";
@@ -21,20 +21,23 @@ import * as errors from "../models/errors/index.js";
 import { SDKError } from "../models/errors/sdkerror.js";
 import { SDKValidationError } from "../models/errors/sdkvalidationerror.js";
 import * as operations from "../models/operations/index.js";
+import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
  * Get subscriber preferences
+ *
+ * @remarks
+ * Get subscriber global and workflow specific preferences
  */
-export async function subscribersPreferencesList(
+export function subscribersPreferencesList(
   client: NovuCore,
   subscriberId: string,
-  includeInactiveChannels?: boolean | undefined,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
-): Promise<
+): APIPromise<
   Result<
-    operations.SubscribersV1ControllerListSubscriberPreferencesResponse,
+    operations.SubscribersControllerGetSubscriberPreferencesResponse,
     | errors.ErrorDto
     | errors.ErrorDto
     | errors.ValidationErrorDto
@@ -48,10 +51,41 @@ export async function subscribersPreferencesList(
     | ConnectionError
   >
 > {
-  const input:
-    operations.SubscribersV1ControllerListSubscriberPreferencesRequest = {
+  return new APIPromise($do(
+    client,
+    subscriberId,
+    idempotencyKey,
+    options,
+  ));
+}
+
+async function $do(
+  client: NovuCore,
+  subscriberId: string,
+  idempotencyKey?: string | undefined,
+  options?: RequestOptions,
+): Promise<
+  [
+    Result<
+      operations.SubscribersControllerGetSubscriberPreferencesResponse,
+      | errors.ErrorDto
+      | errors.ErrorDto
+      | errors.ValidationErrorDto
+      | errors.ErrorDto
+      | SDKError
+      | SDKValidationError
+      | UnexpectedClientError
+      | InvalidRequestError
+      | RequestAbortedError
+      | RequestTimeoutError
+      | ConnectionError
+    >,
+    APICall,
+  ]
+> {
+  const input: operations.SubscribersControllerGetSubscriberPreferencesRequest =
+    {
       subscriberId: subscriberId,
-      includeInactiveChannels: includeInactiveChannels,
       idempotencyKey: idempotencyKey,
     };
 
@@ -59,12 +93,12 @@ export async function subscribersPreferencesList(
     input,
     (value) =>
       operations
-        .SubscribersV1ControllerListSubscriberPreferencesRequest$outboundSchema
+        .SubscribersControllerGetSubscriberPreferencesRequest$outboundSchema
         .parse(value),
     "Input validation failed",
   );
   if (!parsed.ok) {
-    return parsed;
+    return [parsed, { status: "invalid" }];
   }
   const payload = parsed.value;
   const body = null;
@@ -76,13 +110,9 @@ export async function subscribersPreferencesList(
     }),
   };
 
-  const path = pathToFunc("/v1/subscribers/{subscriberId}/preferences")(
+  const path = pathToFunc("/v2/subscribers/{subscriberId}/preferences")(
     pathParams,
   );
-
-  const query = encodeFormQuery({
-    "includeInactiveChannels": payload.includeInactiveChannels,
-  });
 
   const headers = new Headers(compactMap({
     Accept: "application/json",
@@ -97,7 +127,8 @@ export async function subscribersPreferencesList(
   const requestSecurity = resolveGlobalSecurity(securityInput);
 
   const context = {
-    operationID: "SubscribersV1Controller_listSubscriberPreferences",
+    baseURL: options?.serverURL ?? client._baseURL ?? "",
+    operationID: "SubscribersController_getSubscriberPreferences",
     oAuth2Scopes: [],
 
     resolvedSecurity: requestSecurity,
@@ -125,12 +156,11 @@ export async function subscribersPreferencesList(
     baseURL: options?.serverURL,
     path: path,
     headers: headers,
-    query: query,
     body: body,
     timeoutMs: options?.timeoutMs || client._options.timeoutMs || -1,
   }, options);
   if (!requestRes.ok) {
-    return requestRes;
+    return [requestRes, { status: "invalid" }];
   }
   const req = requestRes.value;
 
@@ -157,7 +187,7 @@ export async function subscribersPreferencesList(
     retryCodes: context.retryCodes,
   });
   if (!doResult.ok) {
-    return doResult;
+    return [doResult, { status: "request-error", request: req }];
   }
   const response = doResult.value;
 
@@ -166,7 +196,7 @@ export async function subscribersPreferencesList(
   };
 
   const [result] = await M.match<
-    operations.SubscribersV1ControllerListSubscriberPreferencesResponse,
+    operations.SubscribersControllerGetSubscriberPreferencesResponse,
     | errors.ErrorDto
     | errors.ErrorDto
     | errors.ValidationErrorDto
@@ -182,7 +212,7 @@ export async function subscribersPreferencesList(
     M.json(
       200,
       operations
-        .SubscribersV1ControllerListSubscriberPreferencesResponse$inboundSchema,
+        .SubscribersControllerGetSubscriberPreferencesResponse$inboundSchema,
       { hdrs: true, key: "Result" },
     ),
     M.jsonErr(414, errors.ErrorDto$inboundSchema),
@@ -199,8 +229,8 @@ export async function subscribersPreferencesList(
     M.fail("5XX"),
   )(response, { extraFields: responseFields });
   if (!result.ok) {
-    return result;
+    return [result, { status: "complete", request: req, response }];
   }
 
-  return result;
+  return [result, { status: "complete", request: req, response }];
 }

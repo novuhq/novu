@@ -6,7 +6,7 @@ import { expect } from 'chai';
 import { Novu } from '@novu/api';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-describe('Mark as Seen - /widgets/messages/markAs (POST) #novu-v1', async () => {
+describe('Mark as Seen - /widgets/messages/markAs (POST) #novu-v0', async () => {
   const messageRepository = new MessageRepository();
   let session: UserSession;
   let template: NotificationTemplateEntity;
@@ -33,9 +33,7 @@ describe('Mark as Seen - /widgets/messages/markAs (POST) #novu-v1', async () => 
       .expect(201);
 
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
-
-    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
     const { token } = body.data;
     const messages = await messageRepository.findBySubscriberChannel(
       session.environment._id,

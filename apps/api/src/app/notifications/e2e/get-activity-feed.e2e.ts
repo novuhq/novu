@@ -45,7 +45,7 @@ describe('Get activity feed - /notifications (GET) #novu-v2', async () => {
       payload: { firstName: 'Test' },
     });
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
     const body = await novuClient.notifications.list({ page: 0 });
     const activities = body.result;
 
@@ -85,7 +85,7 @@ describe('Get activity feed - /notifications (GET) #novu-v2', async () => {
       },
     });
 
-    await session.awaitRunningJobs([template._id, smsOnlyTemplate._id]);
+    await session.waitForJobCompletion([template._id, smsOnlyTemplate._id]);
     await novuClient.notifications.list({ page: 0, transactionId: ChannelTypeEnum.Sms });
 
     const body = await novuClient.notifications.list({ page: 0, channels: [ChannelTypeEnum.Sms] });
@@ -122,7 +122,7 @@ describe('Get activity feed - /notifications (GET) #novu-v2', async () => {
       to: subscriberId,
       payload: { firstName: 'Test' },
     });
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
     const body = await novuClient.notifications.list({ page: 0, templates: [template._id] });
     const activities = body.result;
 
@@ -189,7 +189,7 @@ describe('Get activity feed - /notifications (GET) #novu-v2', async () => {
       },
     });
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
     const activities = (await novuClient.notifications.list({ page: 0, emails: ['test@email.coms'] })).result.data;
 
     expect(activities.length).to.equal(1);
@@ -232,7 +232,7 @@ describe('Get activity feed - /notifications (GET) #novu-v2', async () => {
       },
     });
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
     const { result } = await novuClient.notifications.list({ page: 0, subscriberIds: [subscriberIdToCreate] });
     const activities = result.data;
 
@@ -252,7 +252,7 @@ describe('Get activity feed - /notifications (GET) #novu-v2', async () => {
       payload: { firstName: 'Test' },
     });
 
-    await session.awaitRunningJobs(templateToDelete._id);
+    await session.waitForJobCompletion(templateToDelete._id);
 
     await notificationTemplateRepository.delete({ _id: templateToDelete._id, _environmentId: session.environment._id });
     const subscriberToDelete = await subscriberRepository.findOne({

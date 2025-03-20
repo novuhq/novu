@@ -44,7 +44,7 @@ describe('Update All Notifications - /inbox/notifications/{read,archive,read-arc
     }
 
     await Promise.all(promises);
-    await session.awaitRunningJobs(templateToTrigger._id);
+    await session.waitForJobCompletion(templateToTrigger._id);
   };
 
   const removeUndefinedDeep = (obj) => {

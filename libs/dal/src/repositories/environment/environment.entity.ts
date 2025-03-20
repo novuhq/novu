@@ -52,6 +52,10 @@ export class EnvironmentEntity {
   bridge: {
     url: string;
   };
+
+  createdAt?: string;
+
+  updatedAt?: string;
 }
 
 export type EnvironmentDBModel = ChangePropsValueType<

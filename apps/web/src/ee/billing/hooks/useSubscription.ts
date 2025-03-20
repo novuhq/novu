@@ -35,6 +35,7 @@ export const useSubscription = () => {
           end: today.toISOString(),
           daysTotal: 0,
         },
+        cancelAt: null,
       },
       select: (data) => {
         return {
