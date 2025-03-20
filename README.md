@@ -54,14 +54,6 @@
   <a href="https://novu.co/contact-us/?utm_campaign=github-readme">Contact us</a>
 </p>
 
-<h4 align="center">
-  Support our launch on Producthunt today!
-</h4>
-
-<p align="center">
-<a href="https://go.novu.co/hunt?utm_source=github" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=938143&theme=light&t=1742281937829" alt="Inbox&#0032;by&#0032;Novu - The&#0032;open&#0045;source&#0032;notification&#0032;&#0060;Inbox&#0032;&#0047;&#0062;&#0032;for&#0032;modern&#0032;products&#0046; | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" /></a>
-</p>
-
 ## ⭐️ Why Novu?
 
 Novu provides a unified API that makes it simple to send notifications through multiple channels, including Inbox/In-App, Push, Email, SMS, and Chat.
