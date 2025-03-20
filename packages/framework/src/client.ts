@@ -60,7 +60,16 @@ export class Client {
 
   private templateEngine = new Liquid({
     outputEscape: (output) => {
-      return stringifyDataStructureWithSingleQuotes(output);
+      // For objects and arrays, use the existing function
+      if (Array.isArray(output) || (typeof output === 'object' && output !== null)) {
+        return stringifyDataStructureWithSingleQuotes(output);
+      }
+      // For strings that might contain newlines, ensure proper escaping
+      else if (typeof output === 'string' && output.includes('\n')) {
+        return output.replace(/\n/g, '\\n');
+      } else {
+        return String(output);
+      }
     },
   });
 
