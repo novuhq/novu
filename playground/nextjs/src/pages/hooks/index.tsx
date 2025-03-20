@@ -1,5 +1,5 @@
 import React from 'react';
-import { NovuProvider } from '@novu/nextjs';
+import { NovuProvider } from '@novu/nextjs/hooks';
 import { NotionTheme } from './_components/notion-theme';
 import { novuConfig } from '../../utils/config';
 import { StatusProvider } from './_components/status-context';

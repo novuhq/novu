@@ -38,7 +38,8 @@
     "build:watch": "tsup --watch",
     "postbuild": "pnpm run check:exports && pnpm check:circulars",
     "check:exports": "attw --pack .",
-    "check:circulars": "madge --circular --extensions ts ./src",
+    "check:circulars": "madge --circular --extensions ts --exclude ../../shared ./src",
+    "$comment:bump:prerelease": "This is a workaround to support `npm version prerelease` with lerna",
     "bump:prerelease": "npm version prerelease --preid=alpha & PID=$!; (sleep 1 && kill -9 $PID) & wait $PID",
     "release:alpha": "pnpm bump:prerelease || pnpm build && npm publish",
     "devtool": "tsx ./scripts/devtool.ts"
@@ -168,9 +169,13 @@
     "@sveltejs/kit": ">=1.27.3",
     "@vercel/node": ">=2.15.9",
     "aws-lambda": ">=1.0.7",
+    "class-transformer": ">=0.5.1",
+    "class-validator": ">=0.14.0",
+    "class-validator-jsonschema": ">=5.0.0",
     "express": ">=4.19.2",
     "h3": ">=1.8.1",
     "next": ">=12.0.0",
+    "reflect-metadata": ">=0.2.2",
     "zod": ">=3.0.0",
     "zod-to-json-schema": ">=3.0.0"
   },
@@ -199,6 +204,18 @@
     "next": {
       "optional": true
     },
+    "class-transformer": {
+      "optional": true
+    },
+    "class-validator": {
+      "optional": true
+    },
+    "class-validator-jsonschema": {
+      "optional": true
+    },
+    "reflect-metadata": {
+      "optional": true
+    },
     "zod": {
       "optional": true
     },
@@ -217,11 +234,15 @@
     "@types/sanitize-html": "2.11.0",
     "@vercel/node": "^2.15.9",
     "aws-lambda": "^1.0.7",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.1",
+    "class-validator-jsonschema": "^5.0.1",
     "express": "^4.19.2",
     "h3": "^1.11.1",
     "madge": "^8.0.0",
     "next": "^13.5.4",
     "prettier": "^3.2.5",
+    "reflect-metadata": "^0.2.2",
     "ts-node": "^10.9.2",
     "tsup": "^8.0.2",
     "tsx": "4.16.2",

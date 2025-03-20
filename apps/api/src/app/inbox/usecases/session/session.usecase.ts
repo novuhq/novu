@@ -122,6 +122,7 @@ export class Session {
       token,
       totalUnreadCount,
       removeNovuBranding,
+      isDevelopmentMode: environment.name.toLowerCase() !== 'production',
     };
   }
 }

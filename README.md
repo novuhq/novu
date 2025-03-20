@@ -22,6 +22,8 @@
   </a>
 </p>
 
+
+
 <h1 align="center">
   The open source notification platform
 </h1>
@@ -34,6 +36,7 @@
   <br />
   <a href="https://go.novu.co/github" rel="dofollow"><strong>Learn More »</strong></a>
   <br />
+  
 
 <br/>
   <a href="https://github.com/novuhq/novu/issues/new?assignees=&labels=type%3A+bug&template=bug_report.yml&title=%F0%9F%90%9B+Bug+Report%3A+">Report a bug</a>

@@ -1,12 +1,12 @@
-import type { InboxProps } from '../components/Inbox';
 import type {
   UseNotificationsProps,
   UseNotificationsResult,
   UsePreferencesProps,
   UsePreferencesResult,
 } from '../hooks';
-import type { NovuProviderProps } from '../hooks/NovuProvider';
 import type { UseCountsProps, UseCountsResult } from '../hooks/useCounts';
+import type { InboxProps } from '../components/Inbox';
+import type { NovuProviderProps } from '../hooks/NovuProvider';
 
 export * from '../utils/types';
 

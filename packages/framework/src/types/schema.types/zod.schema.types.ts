@@ -3,7 +3,7 @@ import type zod from 'zod';
 /**
  * A ZodSchema used to validate a JSON object.
  */
-export type ZodSchema = zod.ZodType<Record<string, unknown>, zod.ZodTypeDef, Record<string, unknown>>;
+export type ZodSchema = zod.ZodType<unknown, zod.ZodTypeDef, unknown>;
 
 /**
  * A minimal ZodSchema type.

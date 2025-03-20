@@ -1,4 +1,4 @@
-import { checkIsResponseError } from '../shared';
+import { checkIsResponseError } from './platform.utils';
 import { BridgeError, MissingSecretKeyError, PlatformError } from '../errors';
 
 export const initApiClient = (secretKey: string, apiUrl: string) => {

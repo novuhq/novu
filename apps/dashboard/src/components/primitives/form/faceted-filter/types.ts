@@ -6,6 +6,7 @@ export type SizeType = 'default' | 'small';
 export interface FilterOption {
   label: string;
   value: string;
+  disabled?: boolean;
   icon?: ComponentType<{ className?: string }>;
 }
 

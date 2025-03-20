@@ -23,6 +23,14 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
    */
   public off: <Key extends EventNames>(eventName: Key, listener: EventHandler<Events[Key]>) => void;
 
+  public get applicationIdentifier() {
+    return this.#session.applicationIdentifier;
+  }
+
+  public get subscriberId() {
+    return this.#session.subscriberId;
+  }
+
   constructor(options: NovuOptions) {
     this.#inboxService = new InboxService({
       apiUrl: options.apiUrl || options.backendUrl,
