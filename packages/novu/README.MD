@@ -34,16 +34,16 @@ npx novu@latest dev
 
 ## 🔥 Flags
 
-| flag | long form usage example | description                 | default value               |
-|------|-------------------------|-----------------------------| --------------------------- |
-| -p   | --port <port>           | Bridge application port     | 4000                        |
-| -r   | --route <route>         | Bridge application route    | /api/novu                   |
-| -o   | --origin <origin>       | Bridge application origin   | http://localhost            |
-| -d   | --dashboard-url <url>   | Novu Cloud dashboard URL    | https://dashboard.novu.co   |
-| -sp  | --studio-port <port>    | Local Studio server port    | 2022                        |
-| -sh  | --studio-host <host>    | Local Studio server host    | localhost                   |
-| -t   | --tunnel <url>          | Self hosted tunnel url      | null                        |
-| -H   | --headless              | Run bridge in headless mode | false                       |
+| flag | long form usage example | description                 | default value             |
+| ---- | ----------------------- | --------------------------- | ------------------------- |
+| -p   | --port <port>           | Bridge application port     | 4000                      |
+| -r   | --route <route>         | Bridge application route    | /api/novu                 |
+| -o   | --origin <origin>       | Bridge application origin   | http://localhost          |
+| -d   | --dashboard-url <url>   | Novu Cloud dashboard URL    | https://dashboard.novu.co |
+| -sp  | --studio-port <port>    | Local Studio server port    | 2022                      |
+| -sh  | --studio-host <host>    | Local Studio server host    | localhost                 |
+| -t   | --tunnel <url>          | Self hosted tunnel url      | null                      |
+| -H   | --headless              | Run bridge in headless mode | false                     |
 
 Example: If bridge application is running on port `3002` and Novu account is in `EU` region.
 
@@ -74,20 +74,20 @@ To start using Novu, run the following command. You'll be guided through the set
 npx novu init
 ```
 
-After setting up your account using the cloud or docker version you can trigger the API using the `@novu/node` package.
+After setting up your account using the cloud or docker version you can trigger the API using the `@novu/api` package.
 
 ```bash
-npm install @novu/node
+npm install @novu/api
 ```
 
 ```ts
-import { Novu } from '@novu/node';
+import { Novu } from '@novu/api';
 
-const novu = new Novu(process.env.NOVU_API_KEY);
+const novu = new Novu({ secretKey: process.env.NOVU_API_KEY });
 
-await novu.trigger('<TRIGGER_NAME>', {
+await novu.trigger('<WORKFLOW_ID>', {
   to: {
-    subscriberId: '<UNIQUE_IDENTIFIER>',
+    subscriberId: '<SUBSCRIBER_ID>',
     email: 'john@doemail.com',
     firstName: 'John',
     lastName: 'Doe',
@@ -101,14 +101,14 @@ await novu.trigger('<TRIGGER_NAME>', {
 });
 ```
 
-## Embeddable notification center
+## Inbox
 
-Using the Novu API and admin panel you can easily add real-time notification center to your web-app without the hassle of building it yourself. You can use our React component or an iframe embed if you are not using React.
+Using the Novu API and admin panel you can easily add real-time notification center to your Next.js or React application without the hassle of building it yourself.
 
 <div align="center">
 <img width="762" alt="notification-center-912bb96e009fb3a69bafec23bcde00b0" src="https://github.com/iampearceman/Design-assets/blob/main/Untitled%20design%20(8).gif?raw=true">
   
-  Read more about how to add a notification center to your app with the Novu API [here](https://docs.novu.co/notification-center/introduction?utm_campaign=inapp-cli-readme)
+  Read more about how to add a notification center to your app with the Novu API [here](https://docs.novu.co/platform/inbox/overview?utm_campaign=inapp-cli-readme)
 
 </div>
 

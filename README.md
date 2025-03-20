@@ -17,6 +17,7 @@
   <a href="https://www.npmjs.com/package/@novu/react">
     <img src="https://img.shields.io/npm/v/@novu/react" alt="NPM">
   </a>
+  <!-- TODO: Replace this with @novu/api as soon as the NPM download traffic switches to the new package -->
   <a href="https://www.npmjs.com/package/@novu/node">
     <img src="https://img.shields.io/npm/dm/@novu/node" alt="npm downloads">
   </a>
