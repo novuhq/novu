@@ -46,6 +46,7 @@ module.exports = {
         'neutral-alpha': generateColorShades('nv-color-neutral-alpha'),
         shadow: defaultColor('nv-color-shadow'),
         ring: defaultColor('nv-color-ring'),
+        stripes: defaultColor('nv-color-stripes'),
         border: defaultColor('nv-color-neutral-alpha-100'),
       },
       borderRadius: {
@@ -77,10 +78,10 @@ module.exports = {
       },
       backgroundImage: {
         'dev-stripes-gradient':
-          'repeating-linear-gradient(135deg, hsl(var(--stripes-color),0.07) 25%, hsl(var(--stripes-color),0.07) 50%, hsl(var(--stripes-color),0.15) 50%, hsl(var(--stripes-color),0.15) 75%)',
+          'repeating-linear-gradient(135deg, oklch(from var(--nv-color-stripes) l c h / 0.1) 25%, oklch(from var(--nv-color-stripes) l c h / 0.1) 50%, oklch(from var(--nv-color-stripes) l c h / 0.2) 50%, oklch(from var(--nv-color-stripes) l c h / 0.2) 75%)',
       },
       animation: {
-        stripes: 'stripes 1s linear infinite',
+        stripes: 'stripes 1s linear infinite paused',
       },
       keyframes: {
         stripes: {

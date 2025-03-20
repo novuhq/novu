@@ -42,6 +42,7 @@ export type Variables = {
   colorRing?: string;
   fontSize?: string;
   borderRadius?: string;
+  colorStripes?: string;
 };
 
 export type AppearanceKey = (typeof appearanceKeys)[number];
