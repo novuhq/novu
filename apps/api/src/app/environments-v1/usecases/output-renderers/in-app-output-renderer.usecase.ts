@@ -13,6 +13,11 @@ export class InAppOutputRendererUsecase {
       return outputControls as any;
     }
 
-    return sanitizeHtmlInObject(outputControls) as any;
+    const { data, ...restOutputControls } = outputControls;
+
+    return {
+      ...sanitizeHtmlInObject(restOutputControls),
+      ...(data ? { data } : {}),
+    } as any;
   }
 }

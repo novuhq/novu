@@ -16,7 +16,6 @@ import {
 import { EmailTabsSection } from '@/components/workflow-editor/steps/email/email-tabs-section';
 import { TabsContent } from '@radix-ui/react-tabs';
 import { ConfigurePreviewAccordion } from '../shared/configure-preview-accordion';
-import { Notification5Fill } from '../../../icons';
 
 type EmailEditorPreviewProps = {
   editorValue: string;
@@ -41,7 +40,6 @@ export const EmailEditorPreview = ({
         <EmailTabsSection className="flex h-full flex-col gap-3">
           <div className={'flex items-center justify-between gap-2.5 text-sm font-medium'}>
             <div className="flex items-center gap-2.5">
-              <Notification5Fill className="size-3" />
               <span>Email template editor</span>
             </div>
             <div>

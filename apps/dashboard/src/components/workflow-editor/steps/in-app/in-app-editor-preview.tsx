@@ -1,4 +1,3 @@
-import { Notification5Fill } from '@/components/icons';
 import { InAppTabsSection } from '@/components/workflow-editor/steps/in-app/in-app-tabs-section';
 import { GeneratePreviewResponseDto } from '@novu/shared';
 import { ConfigurePreviewAccordion } from '../shared/configure-preview-accordion';
@@ -22,10 +21,7 @@ export const InAppEditorPreview = ({
   return (
     <InAppTabsSection>
       <div className="relative flex flex-col gap-3">
-        <div className="flex items-center gap-2.5 text-sm font-medium">
-          <Notification5Fill className="size-3" />
-          In-App template editor
-        </div>
+        <div className="flex items-center gap-2.5 text-sm font-medium">In-App template editor</div>
         <InboxPreview isPreviewPending={isPreviewPending} previewData={previewData} />
         <ConfigurePreviewAccordion editorValue={editorValue} setEditorValue={setEditorValue} onUpdate={previewStep} />
       </div>

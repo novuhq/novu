@@ -3,7 +3,6 @@ import { getComponentByType } from '@/components/workflow-editor/steps/component
 import { EmailPreviewHeader } from '@/components/workflow-editor/steps/email/email-preview';
 import { EmailTabsSection } from '@/components/workflow-editor/steps/email/email-tabs-section';
 import { UiSchemaGroupEnum, type UiSchema } from '@novu/shared';
-import { Notification5Fill } from '../../../icons';
 
 type EmailEditorProps = { uiSchema: UiSchema };
 
@@ -21,7 +20,6 @@ export const EmailEditor = (props: EmailEditorProps) => {
       <EmailTabsSection className="flex h-full flex-col gap-3">
         <div className={'flex h-9 items-center justify-between gap-2.5 text-sm font-medium'}>
           <div className="flex items-center gap-2.5">
-            <Notification5Fill className="size-3" />
             <span>Email template editor</span>
           </div>
           {disableOutputSanitization &&
