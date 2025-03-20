@@ -40,7 +40,7 @@
   },
   "dependencies": {
     "@novu/shared": "workspace:*",
-    "axios": "^1.6.8",
+    "axios": "^1.8.2",
     "axios-retry": "^3.8.0",
     "handlebars": "^4.7.7",
     "lodash.get": "^4.4.2",
