@@ -24,12 +24,11 @@
     "@codemirror/autocomplete": "^6.18.3",
     "@hookform/resolvers": "^3.9.0",
     "@lezer/highlight": "^1.2.1",
-    "@maily-to/core": "^0.2.5",
+    "@maily-to/core": "^0.2.6",
     "@novu/api": "workspace:*",
     "@novu/framework": "workspace:*",
-    "@novu/js": "workspace:*",
-    "@novu/react": "https://pkg.pr.new/novuhq/novu/@novu/react@1e540b2",
-    "@novu/react-v2": "npm:@novu/react@2.6.6",
+    "@novu/js": "^3.0.0",
+    "@novu/react": "^3.0.0",
     "@novu/shared": "workspace:*",
     "@radix-ui/react-accordion": "^1.2.1",
     "@radix-ui/react-alert-dialog": "^1.1.6",
@@ -107,7 +106,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@clerk/backend": "^1.6.2",
+    "@clerk/backend": "^1.25.2",
     "@clerk/testing": "^1.3.27",
     "@clerk/types": "^4.30.0",
     "@eslint/js": "^9.9.0",
@@ -149,9 +148,6 @@
     "vite": "^5.4.1",
     "vite-plugin-ejs": "^1.7.0",
     "vite-plugin-static-copy": "^1.0.6"
-  },
-  "peerDependencies": {
-    "@novu/web": "workspace:*"
   },
   "nx": {
     "tags": [

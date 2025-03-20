@@ -75,6 +75,19 @@ module.exports = {
         '3xl': ['var(--nv-font-size-3xl)', { lineHeight: 'var(--nv-line-height-3xl)' }],
         '4xl': ['var(--nv-font-size-4xl)', { lineHeight: 'var(--nv-line-height-4xl)' }],
       },
+      backgroundImage: {
+        'dev-stripes-gradient':
+          'repeating-linear-gradient(135deg, hsl(var(--stripes-color),0.07) 25%, hsl(var(--stripes-color),0.07) 50%, hsl(var(--stripes-color),0.15) 50%, hsl(var(--stripes-color),0.15) 75%)',
+      },
+      animation: {
+        stripes: 'stripes 1s linear infinite',
+      },
+      keyframes: {
+        stripes: {
+          '0%': { transform: 'translateX(0)' },
+          '100%': { transform: 'translateX(calc(var(--stripes-size) * -1))' },
+        },
+      },
     },
   },
   plugins: [require('tailwindcss-animate')],

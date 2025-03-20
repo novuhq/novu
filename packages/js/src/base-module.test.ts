@@ -41,6 +41,7 @@ describe('callWithSession(fn)', () => {
         token: 'cafebabe',
         totalUnreadCount: 10,
         removeNovuBranding: true,
+        isDevelopmentMode: true,
       },
     });
 

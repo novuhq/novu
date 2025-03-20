@@ -1,5 +1,5 @@
 import { FilterQuery } from 'mongoose';
-import { DirectionEnum, EnvironmentId, ISubscribersDefine, OrganizationId, SubscriberDto } from '@novu/shared';
+import { DirectionEnum, EnvironmentId, ISubscribersDefine, OrganizationId } from '@novu/shared';
 import { SubscriberDBModel, SubscriberEntity } from './subscriber.entity';
 import { Subscriber } from './subscriber.schema';
 import { IExternalSubscribersEntity } from './types';
@@ -173,6 +173,7 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
     phone?: string;
     subscriberId?: string;
     name?: string;
+    includeCursor?: boolean;
   }): Promise<{ subscribers: SubscriberEntity[]; next: string | null; previous: string | null }> {
     if (query.before && query.after) {
       throw new DalException('Cannot specify both "before" and "after" cursors at the same time.');
@@ -207,6 +208,7 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
       limit: query.limit,
       sortDirection: query.sortDirection,
       sortBy: query.sortBy,
+      includeCursor: query.includeCursor,
       query: {
         _environmentId: query.environmentId,
         _organizationId: query.organizationId,

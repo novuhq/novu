@@ -275,22 +275,22 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
     [ApiServiceLevelEnum.FREE]: { label: '24 hours', value: 24, timeSuffix: 'h' },
     [ApiServiceLevelEnum.PRO]: { label: '7 days', value: 7, timeSuffix: 'd' },
     [ApiServiceLevelEnum.BUSINESS]: { label: '90 days', value: 90, timeSuffix: 'd' },
-    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Unlimited', value: UNLIMITED_VALUE },
-    [ApiServiceLevelEnum.UNLIMITED]: { label: 'Unlimited', value: UNLIMITED_VALUE },
+    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Unlimited', value: UNLIMITED_VALUE, timeSuffix: 'd' },
+    [ApiServiceLevelEnum.UNLIMITED]: { label: 'Unlimited', value: UNLIMITED_VALUE, timeSuffix: 'd' },
   },
   [FeatureNameEnum.PLATFORM_MAX_DIGEST_WINDOW_TIME]: {
     [ApiServiceLevelEnum.FREE]: { label: '24 Hours', value: 24, timeSuffix: 'h' },
     [ApiServiceLevelEnum.PRO]: { label: '7 days', value: 7, timeSuffix: 'd' },
     [ApiServiceLevelEnum.BUSINESS]: { label: '90 days', value: 90, timeSuffix: 'd' },
-    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Custom', value: UNLIMITED_VALUE },
-    [ApiServiceLevelEnum.UNLIMITED]: { label: 'Unlimited', value: UNLIMITED_VALUE },
+    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Custom', value: UNLIMITED_VALUE, timeSuffix: 'd' },
+    [ApiServiceLevelEnum.UNLIMITED]: { label: 'Unlimited', value: UNLIMITED_VALUE, timeSuffix: 'd' },
   },
   [FeatureNameEnum.PLATFORM_MAX_DELAY_DURATION]: {
     [ApiServiceLevelEnum.FREE]: { label: '24 Hours', value: 24, timeSuffix: 'h' },
     [ApiServiceLevelEnum.PRO]: { label: '7 days', value: 7, timeSuffix: 'd' },
     [ApiServiceLevelEnum.BUSINESS]: { label: '90 days', value: 90, timeSuffix: 'd' },
-    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Custom', value: UNLIMITED_VALUE },
-    [ApiServiceLevelEnum.UNLIMITED]: { label: 'Unlimited', value: UNLIMITED_VALUE },
+    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Custom', value: UNLIMITED_VALUE, timeSuffix: 'd' },
+    [ApiServiceLevelEnum.UNLIMITED]: { label: 'Unlimited', value: UNLIMITED_VALUE, timeSuffix: 'd' },
   },
   [FeatureNameEnum.PLATFORM_BLOCK_BASED_EMAIL_EDITOR_BOOLEAN]: {
     [ApiServiceLevelEnum.FREE]: 1,
@@ -441,6 +441,43 @@ export function getFeatureForTier(featureName: FeatureNameEnum, tier: ApiService
   throw new Error(`Invalid feature type for ${featureName} at tier ${tier}`);
 }
 
+/**
+ * Converts a date range string to milliseconds.
+ * @param dateRange - The date range string to convert (e.g. '1d', '24h', '7d', '1w')
+ * @returns The date range in milliseconds.
+ */
+export function getDateRangeInMs(dateRange: string): number {
+  if (!dateRange) return 0;
+
+  const value = parseInt(dateRange, 10);
+  if (Number.isNaN(value)) return 0;
+
+  const unit = dateRange.slice(-1);
+  const MS_PER_SECOND = 1000;
+  const MS_PER_MINUTE = 60 * MS_PER_SECOND;
+  const MS_PER_HOUR = 60 * MS_PER_MINUTE;
+  const MS_PER_DAY = 24 * MS_PER_HOUR;
+  const MS_PER_WEEK = 7 * MS_PER_DAY;
+  const MS_PER_MONTH = 30 * MS_PER_DAY;
+
+  switch (unit) {
+    case 's':
+      return value * MS_PER_SECOND;
+    case 'm':
+      return value * MS_PER_MINUTE;
+    case 'h':
+      return value * MS_PER_HOUR;
+    case 'd':
+      return value * MS_PER_DAY;
+    case 'w':
+      return value * MS_PER_WEEK;
+    case 'M':
+      return value * MS_PER_MONTH;
+    default:
+      return 0;
+  }
+}
+
 function getConvertToMs(conversionToMs: boolean | undefined) {
   return (value: number, timeSuffix?: 'h' | 'd' | 'm' | 's' | 'ms'): number => {
     if (!conversionToMs || !timeSuffix) return value;
@@ -527,6 +564,16 @@ export function getFeatureForTierAsText(featureName: FeatureNameEnum, tier: ApiS
   }
 
   return JSON.stringify(feature);
+}
+
+export function getFeatureForTierAsDateRangeValue(featureName: FeatureNameEnum, tier: ApiServiceLevelEnum): string {
+  const feature = novuServiceTiers[featureName][tier];
+
+  if (isDetailedPriceListItem(feature)) {
+    return `${feature.value}${feature.timeSuffix}`;
+  }
+
+  throw new Error(`Cannot convert feature ${featureName} at tier ${tier} to date range`);
 }
 
 function handleDetailedPriceListItem(feature: DetailedPriceListItem, conversionToMs: boolean | undefined) {

@@ -1,6 +1,6 @@
 {
   "name": "@novu/nextjs",
-  "version": "3.0.0-canary.0",
+  "version": "3.0.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/novuhq/novu",

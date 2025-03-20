@@ -80,6 +80,7 @@ export class SubscribersController {
         phone: query.phone,
         subscriberId: query.subscriberId,
         name: query.name,
+        includeCursor: query.includeCursor,
       })
     );
   }

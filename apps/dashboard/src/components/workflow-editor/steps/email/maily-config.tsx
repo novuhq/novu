@@ -19,6 +19,7 @@ import {
   section,
   spacer,
   text,
+  inlineImage,
 } from '@maily-to/core/blocks';
 
 export const DEFAULT_EDITOR_CONFIG = {
@@ -54,6 +55,7 @@ export const createDefaultEditorBlocks = (props: {
       heading2,
       heading3,
       image,
+      inlineImage,
       orderedList,
       repeat,
       section,

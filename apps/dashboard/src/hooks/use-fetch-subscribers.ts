@@ -14,6 +14,7 @@ interface UseSubscribersParams {
   name?: string;
   subscriberId?: string;
   limit?: number;
+  includeCursor?: boolean;
 }
 
 type SubscribersResponse = Awaited<ReturnType<typeof getSubscribers>>;
@@ -29,6 +30,7 @@ export function useFetchSubscribers(
     name = '',
     subscriberId = '',
     limit = 10,
+    includeCursor,
   }: UseSubscribersParams = {},
   options: Omit<UseQueryOptions<SubscribersResponse, Error>, 'queryKey' | 'queryFn'> = {}
 ) {
@@ -38,7 +40,7 @@ export function useFetchSubscribers(
     queryKey: [
       QueryKeys.fetchSubscribers,
       currentEnvironment?._id,
-      { after, before, limit, email, phone, subscriberId, name, orderDirection, orderBy },
+      { after, before, limit, email, phone, subscriberId, name, orderDirection, orderBy, includeCursor },
     ],
     queryFn: () =>
       getSubscribers({
@@ -52,6 +54,7 @@ export function useFetchSubscribers(
         name,
         orderDirection,
         orderBy,
+        includeCursor,
       }),
     placeholderData: keepPreviousData,
     enabled: !!currentEnvironment?._id,

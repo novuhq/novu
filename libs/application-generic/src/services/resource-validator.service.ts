@@ -12,6 +12,14 @@ import { NotificationStep } from '../usecases';
 import { FeatureFlagsService } from './feature-flags';
 
 export const DAY_IN_MS = 24 * 60 * 60 * 1000;
+const DEMO_WORKFLOWS_IDENTIFIER = [
+  'demo-apartment-review',
+  'a-new-member-joining-the-team',
+  'demo-verify-otp',
+  'demo-password-reset',
+  'demo-recent-login',
+  'demo-comment-on-task',
+];
 
 /* The absolute maximum values allowed by the system */
 export const SYSTEM_LIMITS = {
@@ -62,6 +70,7 @@ export class ResourceValidatorService {
   async validateWorkflowLimit(environmentId: string): Promise<void> {
     const workflowsCount = await this.notificationTemplateRepository.count({
       _environmentId: environmentId,
+      'triggers.identifier': { $nin: DEMO_WORKFLOWS_IDENTIFIER },
     });
 
     if (workflowsCount < MIN_VALIDATION_LIMITS.WORKFLOWS) {
