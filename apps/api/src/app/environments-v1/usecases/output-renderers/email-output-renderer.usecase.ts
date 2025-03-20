@@ -39,15 +39,12 @@ export class EmailOutputRendererUsecase {
     const strippedMaily = this.removeTrailingEmptyLines(parsedMaily);
     const renderedHtml = await mailyRender(strippedMaily);
 
-    // convert style tags to inline styles for better email client compatibility
-    const inlineStylesHtml = juice(renderedHtml, { removeStyleTags: true });
-
     /**
      * Force type mapping in case undefined control.
      * This passes responsibility to framework to throw type validation exceptions
      * rather than handling invalid types here.
      */
-    return { subject: subject as string, body: inlineStylesHtml };
+    return { subject: subject as string, body: renderedHtml };
   }
 
   private removeTrailingEmptyLines(node: MailyJSONContent): MailyJSONContent {
