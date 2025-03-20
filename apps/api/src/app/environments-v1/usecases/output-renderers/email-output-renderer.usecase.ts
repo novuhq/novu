@@ -4,7 +4,6 @@ import { Injectable } from '@nestjs/common';
 import { EmailRenderOutput } from '@novu/shared';
 import { InstrumentUsecase } from '@novu/application-generic';
 
-import juice from 'juice';
 import { FullPayloadForRender, RenderCommand } from './render-command';
 import { WrapMailyInLiquidUseCase } from './maily-to-liquid/wrap-maily-in-liquid.usecase';
 import { MAILY_ITERABLE_MARK, MailyAttrsEnum } from './maily-to-liquid/maily.types';
