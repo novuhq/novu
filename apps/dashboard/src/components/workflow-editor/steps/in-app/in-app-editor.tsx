@@ -1,5 +1,6 @@
 import { UiSchemaGroupEnum, type UiSchema } from '@novu/shared';
 
+import { Notification5Fill } from '@/components/icons';
 import { Separator } from '@/components/primitives/separator';
 import { getComponentByType } from '@/components/workflow-editor/steps/component-utils';
 import { InAppTabsSection } from '@/components/workflow-editor/steps/in-app/in-app-tabs-section';
@@ -32,6 +33,7 @@ export const InAppEditor = ({ uiSchema }: { uiSchema: UiSchema }) => {
       <InAppTabsSection className="flex flex-col gap-3">
         <div className={'flex items-center justify-between gap-2.5 text-sm font-medium'}>
           <div className="flex items-center gap-2.5">
+            <Notification5Fill className="size-3" />
             <span>In-App template editor</span>
           </div>
           {disableOutputSanitization &&
