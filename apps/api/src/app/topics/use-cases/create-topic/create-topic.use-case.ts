@@ -9,7 +9,7 @@ import {
 } from '@novu/dal';
 import { ConflictException, Injectable, Logger, UnprocessableEntityException } from '@nestjs/common';
 
-import { FeatureFlagsKeysEnum, TOPIC_KEYS_REGEX } from '@novu/shared';
+import { FeatureFlagsKeysEnum, VALID_ID_REGEX } from '@novu/shared';
 import { FeatureFlagsService } from '@novu/application-generic';
 import { CreateTopicCommand } from './create-topic.command';
 
@@ -32,12 +32,12 @@ export class CreateTopicUseCase {
       this.communityOrganizationRepository.findOne({ _id: command.organizationId }),
     ]);
 
-    if (!environment) {
-      throw new UnprocessableEntityException('Environment not found');
-    }
-
     if (!organization) {
       throw new UnprocessableEntityException('Organization not found');
+    }
+
+    if (!environment) {
+      throw new UnprocessableEntityException('Environment not found');
     }
 
     const topicExists = await this.topicRepository.findTopicByKey(
@@ -84,7 +84,7 @@ export class CreateTopicUseCase {
   }
 
   private isValidTopicKey(key: string): boolean {
-    return key.length > 0 && key.match(TOPIC_KEYS_REGEX) !== null;
+    return key.length > 0 && key.match(VALID_ID_REGEX) !== null;
   }
 
   private async validateTopicKey({
@@ -106,18 +106,16 @@ export class CreateTopicUseCase {
       defaultValue: true,
     });
 
-    const isValidKey = this.isValidTopicKey(key);
+    if (this.isValidTopicKey(key)) {
+      return;
+    }
 
-    if (!isValidKey) {
-      if (isDryRun) {
-        Logger.warn(`[Dry run] Invalid topic key: ${key}`, 'CreateTopicUseCase');
-      }
-
-      if (!isDryRun) {
-        throw new UnprocessableEntityException(
-          `Invalid topic key: ${key}, only alphanumeric characters, underscores or valid email are allowed`
-        );
-      }
+    if (isDryRun) {
+      Logger.warn(`[Dry run] Invalid topic key: ${key}`, 'CreateTopicUseCase');
+    } else {
+      throw new UnprocessableEntityException(
+        `Invalid topic key: ${key}, only alphanumeric characters, underscores or valid email addresses are allowed`
+      );
     }
   }
 }
