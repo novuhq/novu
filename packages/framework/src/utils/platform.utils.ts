@@ -1,4 +1,4 @@
-import type { IResponseError } from '@novu/shared';
+import type { IResponseError } from '../shared';
 
 /**
  * Validate (type-guard) that an error response matches our IResponseError interface.
