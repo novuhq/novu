@@ -75,12 +75,12 @@ export class ParseEventRequest {
       this.communityOrganizationRepository.findOne({ _id: command.organizationId }),
     ]);
 
-    if (!environment) {
-      throw new UnprocessableEntityException('Environment not found');
-    }
-
     if (!organization) {
       throw new UnprocessableEntityException('Organization not found');
+    }
+
+    if (!environment) {
+      throw new UnprocessableEntityException('Environment not found');
     }
 
     const statelessWorkflowAllowed = this.isStatelessWorkflowAllowed(command.bridgeUrl);
@@ -247,6 +247,10 @@ export class ParseEventRequest {
         );
       }
 
+      /**
+       * If all the recipients are invalid, we should return with status INVALID_RECIPIENTS,
+       * otherwise we should continue with the valid recipients.
+       */
       if (!validRecipients && !isDryRun) {
         return {
           acknowledged: true,
