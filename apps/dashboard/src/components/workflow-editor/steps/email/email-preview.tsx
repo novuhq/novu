@@ -6,19 +6,22 @@ import { RiArrowDownSFill } from 'react-icons/ri';
 type EmailPreviewHeaderProps = HTMLAttributes<HTMLDivElement>;
 
 export const EmailPreviewHeader = (props: EmailPreviewHeaderProps) => {
-  const { className, ...rest } = props;
+  const { className, children, ...rest } = props;
   return (
     <div className={cn('flex gap-2', className)} {...rest}>
       <Avatar className="size-8">
         <AvatarImage src="/images/building.svg" />
       </Avatar>
-      <div>
+      <div className="flex flex-1 justify-between">
         <div>
-          Acme Inc. <span className="text-foreground-600 text-xs">{`<noreply@novu.co>`}</span>
+          <div>
+            Acme Inc. <span className="text-foreground-600 text-xs">{`<noreply@novu.co>`}</span>
+          </div>
+          <div className="text-foreground-600 flex items-center gap-1 text-xs">
+            to me <RiArrowDownSFill />
+          </div>
         </div>
-        <div className="text-foreground-600 flex items-center gap-1 text-xs">
-          to me <RiArrowDownSFill />
-        </div>
+        <div className="flex items-center">{children}</div>
       </div>
     </div>
   );

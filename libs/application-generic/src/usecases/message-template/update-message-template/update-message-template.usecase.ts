@@ -1,13 +1,20 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 
 import { ChangeRepository, MessageTemplateEntity, MessageTemplateRepository, MessageRepository } from '@novu/dal';
-import { ChangeEntityTypeEnum, isBridgeWorkflow, StepTypeEnum } from '@novu/shared';
+import {
+  ChangeEntityTypeEnum,
+  ChannelTypeEnum,
+  isBridgeWorkflow,
+  MessageTemplateContentType,
+  StepTypeEnum,
+} from '@novu/shared';
 
 import { UpdateMessageTemplateCommand } from './update-message-template.command';
 import { CreateChange, CreateChangeCommand } from '../../create-change';
 import { UpdateChange, UpdateChangeCommand } from '../../update-change';
 import { sanitizeMessageContent } from '../../../services';
 import { normalizeVariantDefault } from '../../../utils/variants';
+import { shouldSanitize } from '../shared';
 
 @Injectable()
 export class UpdateMessageTemplate {
@@ -37,8 +44,9 @@ export class UpdateMessageTemplate {
     }
 
     if (command.content !== null || command.content !== undefined) {
-      const shouldSanitize = command.contentType === 'editor' && command.type !== StepTypeEnum.CHAT;
-      updatePayload.content = shouldSanitize ? sanitizeMessageContent(command.content) : command.content;
+      updatePayload.content = shouldSanitize(existingTemplate.type, command.contentType)
+        ? sanitizeMessageContent(command.content)
+        : command.content;
     }
 
     if (command.variables) {
