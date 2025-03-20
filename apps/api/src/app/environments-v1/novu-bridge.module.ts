@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { NovuClient, NovuHandler } from '@novu/framework/nest';
 
 import { EnvironmentRepository, NotificationTemplateRepository } from '@novu/dal';
-import { GetDecryptedSecretKey } from '@novu/application-generic';
+import { GetDecryptedSecretKey, FeatureFlagsService } from '@novu/application-generic';
 import { NovuBridgeClient } from './novu-bridge-client';
 import { ConstructFrameworkWorkflow } from './usecases/construct-framework-workflow';
 import { NovuBridgeController } from './novu-bridge.controller';
@@ -34,10 +34,10 @@ import { WrapMailyInLiquidUseCase } from './usecases/output-renderers/maily-to-l
     SmsOutputRendererUsecase,
     ChatOutputRendererUsecase,
     PushOutputRendererUsecase,
-    EmailOutputRendererUsecase,
     WrapMailyInLiquidUseCase,
     DelayOutputRendererUsecase,
     DigestOutputRendererUsecase,
+    FeatureFlagsService,
   ],
 })
 export class NovuBridgeModule {}
