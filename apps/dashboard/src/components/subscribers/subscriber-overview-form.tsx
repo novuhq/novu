@@ -141,46 +141,134 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
     <div className={cn('flex h-full flex-col')}>
       <Form {...form}>
         <FormRoot autoComplete="off" noValidate onSubmit={form.handleSubmit(onSubmit)} className="flex h-full flex-col">
-          <div className="flex flex-col items-stretch gap-6 p-5">
-            <div className="flex items-center gap-3">
-              <Tooltip>
-                <TooltipTrigger
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                  }}
-                >
-                  <Avatar className="size-[3.75rem] cursor-default">
-                    <AvatarImage
-                      src={subscriber?.avatar ?? (firstNameChar || lastNameChar ? '' : '/images/avatar.svg')}
-                    />
-                    <AvatarFallback>
-                      {firstNameChar || lastNameChar ? firstNameChar + lastNameChar : null}
-                    </AvatarFallback>
-                  </Avatar>
-                </TooltipTrigger>
-                <TooltipContent className="max-w-56">
-                  Subscriber profile Image can only be updated via API
-                </TooltipContent>
-              </Tooltip>
-              <div className="grid flex-1 grid-cols-2 gap-2.5">
+          <div className="flex flex-1 flex-col items-stretch overflow-y-auto">
+            <div className="flex flex-col items-stretch gap-6 p-5">
+              <div className="flex items-center gap-3">
+                <Tooltip>
+                  <TooltipTrigger
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                  >
+                    <Avatar className="size-[3.75rem] cursor-default">
+                      <AvatarImage
+                        src={subscriber?.avatar ?? (firstNameChar || lastNameChar ? '' : '/images/avatar.svg')}
+                      />
+                      <AvatarFallback>
+                        {firstNameChar || lastNameChar ? firstNameChar + lastNameChar : null}
+                      </AvatarFallback>
+                    </Avatar>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-56">
+                    Subscriber profile Image can only be updated via API
+                  </TooltipContent>
+                </Tooltip>
+                <div className="grid flex-1 grid-cols-2 gap-2.5">
+                  <FormField
+                    control={form.control}
+                    name="firstName"
+                    render={({ field, fieldState }) => (
+                      <FormItem>
+                        <FormLabel>First Name</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            readOnly={readOnly}
+                            placeholder="John"
+                            id={field.name}
+                            value={field.value}
+                            onChange={field.onChange}
+                            hasError={!!fieldState.error}
+                            size="xs"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="lastName"
+                    render={({ field, fieldState }) => (
+                      <FormItem>
+                        <FormLabel>Last Name</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            readOnly={readOnly}
+                            placeholder="Doe"
+                            id={field.name}
+                            value={field.value}
+                            onChange={field.onChange}
+                            hasError={!!fieldState.error}
+                            size="xs"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+              <div>
+                <FormItem className="w-full">
+                  <div className="flex items-center">
+                    <FormLabel
+                      tooltip="Provide a unique ID for the user as the subscriberId (e.g., your app's internal user ID)."
+                      className="gap-1"
+                    >
+                      SubscriberId
+                    </FormLabel>
+                    <span className="ml-auto">
+                      <Link
+                        to="https://docs.novu.co/concepts/subscribers"
+                        className="text-xs font-medium text-neutral-600 hover:underline"
+                        target="_blank"
+                      >
+                        How it works?
+                      </Link>
+                    </span>
+                  </div>
+                  <Input
+                    value={subscriber.subscriberId}
+                    size="xs"
+                    className="disabled:text-neutral-900"
+                    trailingNode={
+                      <CopyButton
+                        valueToCopy={subscriber.subscriberId}
+                        className="group-has-[input:focus]:border-l-stroke-strong"
+                      />
+                    }
+                    readOnly
+                    disabled
+                  />
+                </FormItem>
+              </div>
+              <div className="grid grid-cols-2 gap-2.5">
                 <FormField
                   control={form.control}
-                  name="firstName"
+                  name="email"
                   render={({ field, fieldState }) => (
                     <FormItem>
-                      <FormLabel>First Name</FormLabel>
+                      <FormLabel>Email address</FormLabel>
                       <FormControl>
                         <Input
                           {...field}
                           readOnly={readOnly}
-                          placeholder="John"
+                          type="email"
+                          placeholder="hello@novu.co"
                           id={field.name}
-                          value={field.value}
-                          onChange={field.onChange}
+                          value={field.value || undefined}
+                          onChange={(event) => {
+                            const { value } = event.target;
+                            const finalValue = value === '' ? null : value;
+                            field.onChange(finalValue);
+                          }}
                           hasError={!!fieldState.error}
                           size="xs"
+                          leadingIcon={RiMailLine}
                         />
                       </FormControl>
                       <FormMessage />
@@ -189,20 +277,17 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
                 />
                 <FormField
                   control={form.control}
-                  name="lastName"
-                  render={({ field, fieldState }) => (
+                  name="phone"
+                  render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Last Name</FormLabel>
+                      <FormLabel>Phone number</FormLabel>
                       <FormControl>
-                        <Input
+                        <PhoneInput
                           {...field}
                           readOnly={readOnly}
-                          placeholder="Doe"
+                          placeholder="+1234567890"
                           id={field.name}
-                          value={field.value}
-                          onChange={field.onChange}
-                          hasError={!!fieldState.error}
-                          size="xs"
+                          value={field.value || ''}
                         />
                       </FormControl>
                       <FormMessage />
@@ -210,84 +295,77 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
                   )}
                 />
               </div>
-            </div>
-            <div>
-              <FormItem className="w-full">
-                <div className="flex items-center">
-                  <FormLabel
-                    tooltip="Provide a unique ID for the user as the subscriberId (e.g., your app's internal user ID)."
-                    className="gap-1"
-                  >
-                    SubscriberId
-                  </FormLabel>
-                  <span className="ml-auto">
-                    <Link
-                      to="https://docs.novu.co/concepts/subscribers"
-                      className="text-xs font-medium text-neutral-600 hover:underline"
-                      target="_blank"
-                    >
-                      How it works?
-                    </Link>
-                  </span>
-                </div>
-                <Input
-                  value={subscriber.subscriberId}
-                  size="xs"
-                  className="disabled:text-neutral-900"
-                  trailingNode={
-                    <CopyButton
-                      valueToCopy={subscriber.subscriberId}
-                      className="group-has-[input:focus]:border-l-stroke-strong"
-                    />
-                  }
-                  readOnly
-                  disabled
+              <Separator />
+
+              <div className="grid grid-cols-[1fr_3fr] gap-2.5">
+                <FormField
+                  control={form.control}
+                  name="locale"
+                  render={({ field }) => (
+                    <FormItem className="w-full">
+                      <FormLabel>Locale</FormLabel>
+                      <FormControl>
+                        <LocaleSelect
+                          value={field.value ?? undefined}
+                          onChange={(val) => {
+                            const finalValue = field.value === val ? null : val;
+                            field.onChange(finalValue);
+                          }}
+                          readOnly={readOnly}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </FormItem>
-            </div>
-            <div className="grid grid-cols-2 gap-2.5">
+                <FormField
+                  control={form.control}
+                  name="timezone"
+                  render={({ field }) => (
+                    <FormItem className="w-full grow-0 overflow-hidden">
+                      <FormLabel>Timezone</FormLabel>
+                      <FormControl>
+                        <TimezoneSelect
+                          value={field.value ?? undefined}
+                          onChange={(val) => {
+                            const finalValue = field.value === val ? null : val;
+                            field.onChange(finalValue);
+                          }}
+                          readOnly={readOnly}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
               <FormField
                 control={form.control}
-                name="email"
+                name="data"
                 render={({ field, fieldState }) => (
-                  <FormItem>
-                    <FormLabel>Email address</FormLabel>
+                  <FormItem className="w-full">
+                    <FormLabel tooltip="Store additional user info as key-value pairs, like address, height, or nationality, in the data field.">
+                      Custom data (JSON)
+                    </FormLabel>
                     <FormControl>
-                      <Input
-                        {...field}
-                        readOnly={readOnly}
-                        type="email"
-                        placeholder="hello@novu.co"
-                        id={field.name}
-                        value={field.value || undefined}
-                        onChange={(event) => {
-                          const { value } = event.target;
-                          const finalValue = value === '' ? null : value;
-                          field.onChange(finalValue);
-                        }}
-                        hasError={!!fieldState.error}
-                        size="xs"
-                        leadingIcon={RiMailLine}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="phone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Phone number</FormLabel>
-                    <FormControl>
-                      <PhoneInput
-                        {...field}
-                        readOnly={readOnly}
-                        placeholder="+1234567890"
-                        id={field.name}
-                        value={field.value || ''}
-                      />
+                      <InputRoot hasError={!!fieldState.error} className="h-32 p-1 py-2">
+                        <Editor
+                          readOnly={readOnly}
+                          lang="json"
+                          className="overflow-auto"
+                          extensions={extensions}
+                          basicSetup={basicSetup}
+                          placeholder="{}"
+                          height="100%"
+                          multiline
+                          {...field}
+                          value={field.value}
+                          onChange={(val) => {
+                            field.onChange(val);
+                            form.trigger(field.name);
+                          }}
+                        />
+                      </InputRoot>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -295,98 +373,22 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
               />
             </div>
             <Separator />
-
-            <div className="grid grid-cols-[1fr_3fr] gap-2.5">
-              <FormField
-                control={form.control}
-                name="locale"
-                render={({ field }) => (
-                  <FormItem className="w-full">
-                    <FormLabel>Locale</FormLabel>
-                    <FormControl>
-                      <LocaleSelect
-                        value={field.value ?? undefined}
-                        onChange={(val) => {
-                          const finalValue = field.value === val ? null : val;
-                          field.onChange(finalValue);
-                        }}
-                        readOnly={readOnly}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="timezone"
-                render={({ field }) => (
-                  <FormItem className="w-full grow-0 overflow-hidden">
-                    <FormLabel>Timezone</FormLabel>
-                    <FormControl>
-                      <TimezoneSelect
-                        value={field.value ?? undefined}
-                        onChange={(val) => {
-                          const finalValue = field.value === val ? null : val;
-                          field.onChange(finalValue);
-                        }}
-                        readOnly={readOnly}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            <FormField
-              control={form.control}
-              name="data"
-              render={({ field, fieldState }) => (
-                <FormItem className="w-full">
-                  <FormLabel tooltip="Store additional user info as key-value pairs, like address, height, or nationality, in the data field.">
-                    Custom data (JSON)
-                  </FormLabel>
-                  <FormControl>
-                    <InputRoot hasError={!!fieldState.error} className="h-32 p-1 py-2">
-                      <Editor
-                        readOnly={readOnly}
-                        lang="json"
-                        className="overflow-auto"
-                        extensions={extensions}
-                        basicSetup={basicSetup}
-                        placeholder="{}"
-                        height="100%"
-                        multiline
-                        {...field}
-                        value={field.value}
-                        onChange={(val) => {
-                          field.onChange(val);
-                          form.trigger(field.name);
-                        }}
-                      />
-                    </InputRoot>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {subscriber.updatedAt && (
+              <span className="text-2xs px-5 py-2 text-right text-neutral-400" key={subscriber.updatedAt}>
+                Updated at{' '}
+                {formatDateSimple(subscriber.updatedAt, {
+                  month: 'short',
+                  day: '2-digit',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  hour12: false,
+                  timeZone: 'UTC',
+                })}{' '}
+                UTC
+              </span>
+            )}
           </div>
-          <Separator />
-          {subscriber.updatedAt && (
-            <span className="text-2xs px-5 py-2 text-right text-neutral-400" key={subscriber.updatedAt}>
-              Updated at{' '}
-              {formatDateSimple(subscriber.updatedAt, {
-                month: 'short',
-                day: '2-digit',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: false,
-                timeZone: 'UTC',
-              })}{' '}
-              UTC
-            </span>
-          )}
 
           {!readOnly && (
             <div className="mt-auto">
