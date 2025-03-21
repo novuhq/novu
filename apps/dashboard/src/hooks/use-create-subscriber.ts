@@ -5,7 +5,7 @@ import { OmitEnvironmentFromParameters } from '@/utils/types';
 import { SubscriberResponseDto } from '@novu/api/models/components';
 import { useMutation, UseMutationOptions, useQueryClient } from '@tanstack/react-query';
 
-type CreateSubscriberParameters = OmitEnvironmentFromParameters<typeof createSubscriber>;
+export type CreateSubscriberParameters = OmitEnvironmentFromParameters<typeof createSubscriber>;
 
 export const useCreateSubscriber = (
   options?: UseMutationOptions<SubscriberResponseDto, unknown, CreateSubscriberParameters>
