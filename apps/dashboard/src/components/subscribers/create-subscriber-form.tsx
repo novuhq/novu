@@ -1,16 +1,14 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/primitives/avatar';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
-import { useCreateSubscriber } from '@/hooks/use-create-subscriber';
-import { useTelemetry } from '@/hooks/use-telemetry';
-import { TelemetryEvent } from '@/utils/telemetry';
+import { CreateSubscriberParameters } from '@/hooks/use-create-subscriber';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { SubscriberResponseDto } from '@novu/api/models/components';
+import { UseMutateAsyncFunction } from '@tanstack/react-query';
 import { loadLanguage } from '@uiw/codemirror-extensions-langs';
 import { useForm } from 'react-hook-form';
-import { RiCloseCircleLine, RiGroup2Line, RiInformationFill, RiMailLine } from 'react-icons/ri';
+import { RiCloseCircleLine, RiMailLine } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
-import { ExternalToast } from 'sonner';
 import { z } from 'zod';
-import { Button } from '../primitives/button';
 import { CompactButton } from '../primitives/button-compact';
 import { Editor } from '../primitives/editor';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormRoot } from '../primitives/form/form';
@@ -18,30 +16,18 @@ import { InlineToast } from '../primitives/inline-toast';
 import { Input, InputRoot } from '../primitives/input';
 import { PhoneInput } from '../primitives/phone-input';
 import { Separator } from '../primitives/separator';
-import { showErrorToast, showSuccessToast } from '../primitives/sonner-helpers';
-import TruncatedText from '../truncated-text';
 import { LocaleSelect } from './locale-select';
 import { CreateSubscriberFormSchema } from './schema';
 import { TimezoneSelect } from './timezone-select';
-import { useSubscribersNavigate } from '@/components/subscribers/hooks/use-subscribers-navigate';
 
 const extensions = [loadLanguage('json')?.extension ?? []];
 const basicSetup = { lineNumbers: true, defaultKeymap: true };
-const toastOptions: ExternalToast = {
-  position: 'bottom-right',
-  classNames: {
-    toast: 'mb-4 right-0',
-  },
-};
-
 type CreateSubscriberFormProps = {
-  onSuccess?: () => void;
+  createSubscriber: UseMutateAsyncFunction<SubscriberResponseDto, unknown, CreateSubscriberParameters, unknown>;
 };
 
 export const CreateSubscriberForm = (props: CreateSubscriberFormProps) => {
-  const { onSuccess } = props;
-  const track = useTelemetry();
-  const { navigateToSubscribersFirstPage } = useSubscribersNavigate();
+  const { createSubscriber } = props;
   const form = useForm<z.infer<typeof CreateSubscriberFormSchema>>({
     defaultValues: {
       data: '',
@@ -57,19 +43,6 @@ export const CreateSubscriberForm = (props: CreateSubscriberFormProps) => {
     resolver: zodResolver(CreateSubscriberFormSchema),
     shouldFocusError: false,
     mode: 'onBlur',
-  });
-
-  const { createSubscriber, isPending } = useCreateSubscriber({
-    onSuccess: () => {
-      showSuccessToast('Created subscriber successfully', undefined, toastOptions);
-      onSuccess?.();
-      track(TelemetryEvent.SUBSCRIBER_CREATED);
-      navigateToSubscribersFirstPage();
-    },
-    onError: (error) => {
-      const errMsg = error instanceof Error ? error.message : 'Failed to create subscriber';
-      showErrorToast(errMsg, undefined, toastOptions);
-    },
   });
 
   const onSubmit = async (formData: z.infer<typeof CreateSubscriberFormSchema>) => {
@@ -97,14 +70,13 @@ export const CreateSubscriberForm = (props: CreateSubscriberFormProps) => {
 
   return (
     <div className="flex h-full flex-col">
-      <header className="border-bg-soft flex h-12 w-full flex-row items-center gap-3 border-b p-3.5">
-        <div className="flex flex-1 items-center gap-1 overflow-hidden text-sm font-medium">
-          <RiGroup2Line className="size-5 p-0.5" />
-          <TruncatedText className="flex-1">Add subscriber</TruncatedText>
-        </div>
-      </header>
       <Form {...form}>
-        <FormRoot autoComplete="off" noValidate onSubmit={form.handleSubmit(onSubmit)} className="flex h-full flex-col">
+        <FormRoot
+          autoComplete="off"
+          noValidate
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="flex h-full flex-col overflow-y-auto"
+        >
           <div className="flex flex-col items-stretch gap-6 p-5">
             <div className="flex items-center gap-3">
               <Tooltip>
@@ -368,28 +340,6 @@ export const CreateSubscriberForm = (props: CreateSubscriberFormProps) => {
               variant="success"
               className="border-neutral-100 bg-neutral-50"
             />
-          </div>
-          <div className="mt-auto">
-            <Separator />
-            <div className="flex items-center justify-between gap-3 p-3">
-              <div className="text-2xs flex items-center gap-1 text-neutral-600">
-                <RiInformationFill className="size-4" />
-                <span>
-                  Looking for no-PII handling?{' '}
-                  <Link
-                    className="text-2xs text-neutral-600 underline"
-                    to="https://docs.novu.co/additional-resources/security#what-should-i-do-if-i-have-regulatory-or-security-issues-with-pii"
-                    target="_blank"
-                  >
-                    Learn more
-                  </Link>
-                </span>
-              </div>
-
-              <Button variant="secondary" type="submit" disabled={isPending} isLoading={isPending}>
-                Create subscriber
-              </Button>
-            </div>
           </div>
         </FormRoot>
       </Form>
