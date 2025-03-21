@@ -8,6 +8,7 @@ import { UpdateChange, UpdateChangeCommand } from '../../update-change';
 import { sanitizeMessageContent } from '../../../services';
 import { normalizeVariantDefault } from '../../../utils/variants';
 import { ApiException } from '../../../utils/exceptions';
+import { shouldSanitize } from '../shared';
 
 @Injectable()
 export class CreateMessageTemplate {
@@ -31,13 +32,13 @@ export class CreateMessageTemplate {
       layoutId = command.layoutId;
     }
 
-    const shouldSanitize = command.contentType === 'editor' && command.type !== StepTypeEnum.CHAT;
-
     let item: MessageTemplateEntity = await this.messageTemplateRepository.create({
       cta: command.cta,
       name: command.name,
       variables: command.variables ? normalizeVariantDefault(command.variables) : undefined,
-      content: shouldSanitize ? sanitizeMessageContent(command.content) : command.content,
+      content: shouldSanitize(command.type, command.contentType)
+        ? sanitizeMessageContent(command.content)
+        : command.content,
       contentType: command.contentType,
       subject: command.subject,
       title: command.title,

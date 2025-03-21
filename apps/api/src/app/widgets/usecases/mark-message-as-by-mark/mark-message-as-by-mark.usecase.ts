@@ -7,7 +7,7 @@ import {
   buildFeedKey,
   buildMessageCountKey,
   buildSubscriberKey,
-  CachedEntity,
+  CachedResponse,
   InvalidateCacheService,
   WebSocketsQueueService,
 } from '@novu/application-generic';
@@ -100,7 +100,7 @@ export class MarkMessageAsByMark {
     });
   }
 
-  @CachedEntity({
+  @CachedResponse({
     builder: (command: { subscriberId: string; _environmentId: string }) =>
       buildSubscriberKey({
         _environmentId: command._environmentId,

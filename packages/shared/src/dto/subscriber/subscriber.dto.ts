@@ -55,4 +55,11 @@ export interface ISubscriberResponseDto {
   createdAt: string;
   updatedAt: string;
   __v?: number;
+  timezone?: string;
 }
+
+export type SubscribersListResponseDto = {
+  data: Array<ISubscriberResponseDto>;
+  next: string | null;
+  previous: string | null;
+};

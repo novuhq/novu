@@ -1,12 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
 
-import { IPreferenceChannels, ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, IPreferenceChannels } from '@novu/shared';
 import {
   buildSubscriberKey,
-  CachedEntity,
-  GetPreferences,
+  CachedResponse,
   filteredPreference,
+  GetPreferences,
   Instrument,
   InstrumentUsecase,
 } from '@novu/application-generic';
@@ -93,7 +93,7 @@ export class GetSubscriberGlobalPreference {
     return Array.from(activeChannels);
   }
 
-  @CachedEntity({
+  @CachedResponse({
     builder: (command: { subscriberId: string; _environmentId: string }) =>
       buildSubscriberKey({
         _environmentId: command._environmentId,

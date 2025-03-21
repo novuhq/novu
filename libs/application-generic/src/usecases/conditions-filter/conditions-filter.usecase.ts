@@ -3,42 +3,39 @@ import axios from 'axios';
 import {
   EnvironmentRepository,
   ExecutionDetailsRepository,
+  JobRepository,
   MessageRepository,
   StepFilter,
   SubscriberEntity,
   SubscriberRepository,
-  JobRepository,
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
+  ExecutionDetailsSourceEnum,
+  ExecutionDetailsStatusEnum,
+  FieldLogicalOperatorEnum,
+  FieldOperatorEnum,
   FILTER_TO_LABEL,
   FilterParts,
   FilterPartTypeEnum,
   ICondition,
+  IJob,
   IOnlineInLastFilterPart,
   IPreviousStepFilterPart,
   IRealtimeOnlineFilterPart,
   IWebhookFilterPart,
   PreviousStepTypeEnum,
   TimeOperatorEnum,
-  FieldOperatorEnum,
-  FieldLogicalOperatorEnum,
-  ExecutionDetailsSourceEnum,
-  IJob,
-  ExecutionDetailsStatusEnum,
 } from '@novu/shared';
 import { differenceInDays, differenceInHours, differenceInMinutes, parseISO } from 'date-fns';
 import { EmailEventStatusEnum } from '@novu/stateless';
-import { Filter } from '../../utils/filter';
-import { FilterProcessingDetails, IFilterVariables } from '../../utils/filter-processing-details';
+import { createHash, Filter, FilterProcessingDetails, IFilterVariables, PlatformException } from '../../utils';
 import { ConditionsFilterCommand } from './conditions-filter.command';
-import { PlatformException } from '../../utils/exceptions';
-import { createHash } from '../../utils/hmac';
-import { CachedEntity } from '../../services/cache/interceptors/cached-entity.interceptor';
-import { buildSubscriberKey } from '../../services/cache/key-builders/entities';
+import { buildSubscriberKey } from '../../services';
 import { CompileTemplate } from '../compile-template';
-import { DetailEnum, CreateExecutionDetails, CreateExecutionDetailsCommand } from '../create-execution-details';
+import { CreateExecutionDetails, CreateExecutionDetailsCommand, DetailEnum } from '../create-execution-details';
 import { decryptApiKey } from '../../encryption';
+import { CachedResponse } from '../../services/cache/interceptors/cached-return.interceptor';
 
 export interface IConditionsFilterResponse {
   passed: boolean;
@@ -475,7 +472,7 @@ export class ConditionsFilter extends Filter {
     }
   }
 
-  @CachedEntity({
+  @CachedResponse({
     builder: (command: { subscriberId: string; _environmentId: string }) =>
       buildSubscriberKey({
         _environmentId: command._environmentId,

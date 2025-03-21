@@ -91,7 +91,7 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
     shouldFocusError: false,
   });
 
-  const { patchSubscriber } = usePatchSubscriber({
+  const { patchSubscriber, isPending } = usePatchSubscriber({
     onSuccess: (data) => {
       showSuccessToast(`Updated subscriber: ${getSubscriberTitle(data)}`, undefined, toastOptions);
       form.reset(createDefaultSubscriberValues(data));
@@ -400,7 +400,7 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
                 >
                   Delete subscriber
                 </Button>
-                <Button variant="secondary" type="submit" disabled={!form.formState.isDirty}>
+                <Button variant="secondary" type="submit" disabled={!form.formState.isDirty} isLoading={isPending}>
                   Save changes
                 </Button>
               </div>

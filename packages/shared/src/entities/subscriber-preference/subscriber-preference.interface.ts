@@ -32,6 +32,7 @@ export interface ITemplateConfiguration {
   critical: boolean;
   tags?: string[];
   triggers: INotificationTrigger[];
+  updatedAt?: string;
 }
 
 export enum PreferenceLevelEnum {
