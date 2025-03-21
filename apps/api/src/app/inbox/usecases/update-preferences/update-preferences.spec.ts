@@ -50,6 +50,7 @@ const mockedWorkflow: any = {
   critical: false,
   triggers: [{ identifier: 'test-trigger' }],
   tags: [],
+  data: undefined,
 };
 
 describe('UpdatePreferences', () => {
@@ -213,6 +214,7 @@ describe('UpdatePreferences', () => {
         name: mockedWorkflow.name,
         critical: mockedWorkflow.critical,
         tags: mockedWorkflow.tags,
+        data: mockedWorkflow.data,
       },
     });
   });
