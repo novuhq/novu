@@ -177,7 +177,7 @@ const featuresDefinition: Feature<SupportedPlansEnum>[] = [
       [SupportedPlansEnum.FREE]: { value: '24hr' },
       [SupportedPlansEnum.PRO]: { value: '7 days' },
       [SupportedPlansEnum.TEAM]: { value: '90 days' },
-      [SupportedPlansEnum.ENTERPRISE]: { value: 'Unlimited' },
+      [SupportedPlansEnum.ENTERPRISE]: { value: 'Custom' },
     },
   },
   {
@@ -185,8 +185,17 @@ const featuresDefinition: Feature<SupportedPlansEnum>[] = [
     values: {
       [SupportedPlansEnum.FREE]: { value: '24hr' },
       [SupportedPlansEnum.PRO]: { value: '7 days' },
-      [SupportedPlansEnum.TEAM]: { value: '30 days' },
-      [SupportedPlansEnum.ENTERPRISE]: { value: 'Yes' },
+      [SupportedPlansEnum.TEAM]: { value: '90 days' },
+      [SupportedPlansEnum.ENTERPRISE]: { value: 'Custom' },
+    },
+  },
+  {
+    label: 'Max Delay Duration',
+    values: {
+      [SupportedPlansEnum.FREE]: { value: '24hr' },
+      [SupportedPlansEnum.PRO]: { value: '7 days' },
+      [SupportedPlansEnum.TEAM]: { value: '90 days' },
+      [SupportedPlansEnum.ENTERPRISE]: { value: 'Custom' },
     },
   },
   {

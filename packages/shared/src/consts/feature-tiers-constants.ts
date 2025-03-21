@@ -218,9 +218,9 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
   [FeatureNameEnum.PLATFORM_MAX_WORKFLOWS]: {
     [ApiServiceLevelEnum.FREE]: { value: 20 },
     [ApiServiceLevelEnum.PRO]: { value: 20 },
-    [ApiServiceLevelEnum.BUSINESS]: { value: UNLIMITED_VALUE, label: 'unlimited' },
-    [ApiServiceLevelEnum.ENTERPRISE]: { value: UNLIMITED_VALUE, label: 'unlimited' },
-    [ApiServiceLevelEnum.UNLIMITED]: { value: UNLIMITED_VALUE, label: 'unlimited' },
+    [ApiServiceLevelEnum.BUSINESS]: { value: UNLIMITED_VALUE, label: 'Unlimited' },
+    [ApiServiceLevelEnum.ENTERPRISE]: { value: UNLIMITED_VALUE, label: 'Unlimited' },
+    [ApiServiceLevelEnum.UNLIMITED]: { value: UNLIMITED_VALUE, label: 'Unlimited' },
   },
   [FeatureNameEnum.PLATFORM_GUI_BASED_WORKFLOW_MANAGEMENT_BOOLEAN]: {
     [ApiServiceLevelEnum.FREE]: 1,
@@ -275,7 +275,7 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
     [ApiServiceLevelEnum.FREE]: { label: '24 hours', value: 24, timeSuffix: 'h' },
     [ApiServiceLevelEnum.PRO]: { label: '7 days', value: 7, timeSuffix: 'd' },
     [ApiServiceLevelEnum.BUSINESS]: { label: '90 days', value: 90, timeSuffix: 'd' },
-    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Unlimited', value: UNLIMITED_VALUE, timeSuffix: 'd' },
+    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Custom', value: UNLIMITED_VALUE, timeSuffix: 'd' },
     [ApiServiceLevelEnum.UNLIMITED]: { label: 'Unlimited', value: UNLIMITED_VALUE, timeSuffix: 'd' },
   },
   [FeatureNameEnum.PLATFORM_MAX_DIGEST_WINDOW_TIME]: {
