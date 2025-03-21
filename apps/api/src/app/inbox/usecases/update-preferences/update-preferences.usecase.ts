@@ -130,6 +130,7 @@ export class UpdatePreferences {
           name: workflow.name,
           critical: workflow.critical,
           tags: workflow.tags,
+          data: workflow.data,
         },
       };
     }

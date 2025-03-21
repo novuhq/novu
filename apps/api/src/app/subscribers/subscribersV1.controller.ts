@@ -493,6 +493,8 @@ export class SubscribersV1Controller {
         _id: result.workflow.id,
         name: result.workflow.name,
         critical: result.workflow.critical,
+        tags: result.workflow.tags,
+        data: result.workflow.data,
         triggers: [
           {
             identifier: result.workflow.identifier,

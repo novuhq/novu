@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
+  CustomDataType,
   INotificationTrigger,
   INotificationTriggerVariable,
   ITemplateConfiguration,
@@ -119,6 +120,18 @@ class TemplateResponse implements ITemplateConfiguration {
     type: [NotificationTriggerResponse], // Use an array syntax
   })
   triggers: NotificationTriggerResponse[];
+
+  @ApiProperty({
+    description: 'Tags applied to the workflow.',
+    type: [String],
+  })
+  tags?: string[];
+
+  @ApiProperty({
+    description: 'The custom data of the workflow.',
+    type: Object,
+  })
+  data?: CustomDataType;
 
   @ApiPropertyOptional({
     description: "The date and time the workflow was last updated. It's in ISO 8601 format.",
