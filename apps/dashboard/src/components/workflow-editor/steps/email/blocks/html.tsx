@@ -8,7 +8,7 @@ export const createHtmlCodeBlock = (props: { track: ReturnType<typeof useTelemet
 
   return {
     title: 'Custom HTML code',
-    description: 'Render components from HTML',
+    description: 'Add a block of HTML',
     searchTerms: ['html', 'code', 'custom'],
     icon: <CodeXmlIcon className="mly-h-4 mly-w-4" />,
     preview: '/images/email-editor/html-block-preview.png',
