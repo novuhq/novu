@@ -187,7 +187,7 @@ export const CreateSubscriberForm = (props: CreateSubscriberFormProps) => {
                       </FormLabel>
                       <span className="ml-auto">
                         <Link
-                          to="https://docs.novu.co/concepts/subscribers"
+                          to="https://docs.novu.co/platform/concepts/subscribers"
                           className="text-xs font-medium text-neutral-600 hover:underline"
                           target="_blank"
                         >
@@ -357,7 +357,7 @@ export const CreateSubscriberForm = (props: CreateSubscriberFormProps) => {
                     notifications.
                   </span>
                   <Link
-                    to="https://docs.novu.co/concepts/subscribers#just-in-time"
+                    to="https://docs.novu.co/platform/concepts/subscribers#just-in-time"
                     className="text-xs font-medium text-neutral-600 underline"
                     target="_blank"
                   >

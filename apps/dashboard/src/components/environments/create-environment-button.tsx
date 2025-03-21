@@ -120,7 +120,7 @@ export const CreateEnvironmentButton = (props: CreateEnvironmentButtonProps) => 
           <div>
             <SheetDescription>
               Create a new environment to manage your notifications.{' '}
-              <ExternalLink href="https://docs.novu.co/concepts/environments">Learn more</ExternalLink>
+              <ExternalLink href="https://docs.novu.co/platform/concepts/environments">Learn more</ExternalLink>
             </SheetDescription>
           </div>
         </SheetHeader>

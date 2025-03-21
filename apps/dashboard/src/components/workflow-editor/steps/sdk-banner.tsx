@@ -10,7 +10,7 @@ export function SdkBanner() {
       <span className="text-foreground-600 text-xs">
         We're bringing support for all step types to the dashboard. In the meantime, you can continue to use our{' '}
         <a
-          href="https://docs.novu.co/sdks/framework/typescript/overview"
+          href="https://docs.novu.co/framework/typescript/overview"
           target="_blank"
           rel="noreferrer noopener"
           className="underline"

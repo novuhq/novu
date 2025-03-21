@@ -44,7 +44,7 @@ export function CreateWorkflowPage() {
           <div>
             <SheetDescription>
               Define the steps to notify subscribers using channels like in-app, email, and more.{' '}
-              <ExternalLink href="https://docs.novu.co/concepts/workflows">Learn more</ExternalLink>
+              <ExternalLink href="https://docs.novu.co/platform/concepts/workflows">Learn more</ExternalLink>
             </SheetDescription>
           </div>
         </SheetHeader>

@@ -52,7 +52,7 @@ export function ApiKeysPage() {
                 {'<Inbox />'}
                 <p className="text-foreground-500 mt-1 text-xs font-normal">
                   {'Use the public application identifier in Novu <Inbox />. '}
-                  <ExternalLink href="https://docs.novu.co/inbox/overview" className="text-foreground-500">
+                  <ExternalLink href="https://docs.novu.co/platform/inbox/overview" className="text-foreground-500">
                     Learn more
                   </ExternalLink>
                 </p>
@@ -73,7 +73,7 @@ export function ApiKeysPage() {
                 Secret Keys
                 <p className="text-foreground-500 mt-1 text-xs font-normal">
                   {'Use the secret key to authenticate your SDK requests. Keep it secure and never share it publicly. '}
-                  <ExternalLink href="https://docs.novu.co/sdks/overview" className="text-foreground-500">
+                  <ExternalLink href="https://docs.novu.co/platform/sdks/overview" className="text-foreground-500">
                     Learn more
                   </ExternalLink>
                 </p>
