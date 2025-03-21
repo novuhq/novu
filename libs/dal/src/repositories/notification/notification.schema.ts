@@ -153,6 +153,19 @@ notificationSchema.index({
   _environmentId: 1,
   createdAt: -1,
 });
+notificationSchema.index(
+  {
+    _environmentId: 1,
+    createdAt: 1,
+  },
+  {
+    partialFilterExpression: {
+      createdAt: {
+        $gte: new Date('2025-01-01T00:00:00Z'),
+      },
+    },
+  }
+);
 
 /*
  * This index was created to push entries to Online Archive

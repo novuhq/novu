@@ -22,21 +22,18 @@
   </a>
 </p>
 
-
-
 <h1 align="center">
-  The open source notification platform
+  The <Inbox /> infrastructure for modern products
 </h1>
 
 <div align="center">
-  Novu is the easy button for developer teams that need to quickly integrate notifications into their application, and enables product teams to own notifications content and messaging.
+  The notification platform that turns complex multi-channel delivery into a single component. Built for developers, designed for growth, powered by open source.
 </div>
 
 <p align="center">
   <br />
   <a href="https://go.novu.co/github" rel="dofollow"><strong>Learn More »</strong></a>
   <br />
-  
 
 <br/>
   <a href="https://github.com/novuhq/novu/issues/new?assignees=&labels=type%3A+bug&template=bug_report.yml&title=%F0%9F%90%9B+Bug+Report%3A+">Report a bug</a>

@@ -1,16 +1,35 @@
 import { Test } from '@nestjs/testing';
 import { expect } from 'chai';
 import { JSONContent as MailyJSONContent } from '@maily-to/render';
+import { FeatureFlagsService } from '@novu/application-generic';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { EmailOutputRendererUsecase } from './email-output-renderer.usecase';
 import { FullPayloadForRender } from './render-command';
 import { WrapMailyInLiquidUseCase } from './maily-to-liquid/wrap-maily-in-liquid.usecase';
+
+const mockFeatureFlagsService = {
+  getFlag: async (context) => {
+    if (context.key === FeatureFlagsKeysEnum.IS_EMAIL_SANITIZATION_ENABLED) {
+      return true;
+    }
+
+    return process.env[context.key] === 'true';
+  },
+};
 
 describe('EmailOutputRendererUsecase', () => {
   let emailOutputRendererUsecase: EmailOutputRendererUsecase;
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
-      providers: [EmailOutputRendererUsecase, WrapMailyInLiquidUseCase],
+      providers: [
+        EmailOutputRendererUsecase,
+        WrapMailyInLiquidUseCase,
+        {
+          provide: FeatureFlagsService,
+          useValue: mockFeatureFlagsService,
+        },
+      ],
     }).compile();
 
     emailOutputRendererUsecase = moduleRef.get<EmailOutputRendererUsecase>(EmailOutputRendererUsecase);
@@ -612,6 +631,7 @@ describe('EmailOutputRendererUsecase', () => {
         controlValues: {
           subject: 'Repeat Loop Test',
           body: JSON.stringify(mockTipTapNode),
+          disableOutputSanitization: true,
         },
         fullPayloadForRender: {
           ...mockFullPayload,

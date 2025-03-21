@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { SubscriberEntity, SubscriberRepository, TopicSubscribersRepository } from '@novu/dal';
-import { CachedEntity, buildSubscriberKey, buildSubscriberTopicsKey } from '@novu/application-generic';
+import { buildSubscriberKey, CachedResponse } from '@novu/application-generic';
 
 import { GetSubscriberCommand } from './get-subscriber.command';
 
@@ -31,7 +31,7 @@ export class GetSubscriber {
     return subscriber;
   }
 
-  @CachedEntity({
+  @CachedResponse({
     builder: (command: { subscriberId: string; _environmentId: string }) =>
       buildSubscriberKey({
         _environmentId: command._environmentId,

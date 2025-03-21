@@ -15,6 +15,7 @@ export interface ICacheService {
   set(key: string, value: string, options?: CachingConfig);
   get(key: string);
   del(key: string);
+  incr(key: string): Promise<number>;
   delByPattern(pattern: string);
   keys(pattern?: string);
   getStatus();
@@ -108,6 +109,9 @@ export class CacheService implements ICacheService {
     const keys = Array.isArray(key) ? key : [key];
 
     return this.client?.del(keys);
+  }
+  public async incr(key: string): Promise<number> {
+    return this.client?.incr(key);
   }
 
   public async delQuery(key: string): Promise<void | unknown[]> {

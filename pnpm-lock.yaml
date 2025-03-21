@@ -549,9 +549,6 @@ importers:
       recursive-diff:
         specifier: ^1.0.8
         version: 1.0.9
-      redlock:
-        specifier: 5.0.0-beta.2
-        version: 5.0.0-beta.2
       reflect-metadata:
         specifier: 0.2.2
         version: 0.2.2
@@ -2859,9 +2856,6 @@ importers:
       recursive-diff:
         specifier: ^1.0.8
         version: 1.0.9
-      redlock:
-        specifier: 5.0.0-beta.2
-        version: 5.0.0-beta.2
       reflect-metadata:
         specifier: 0.2.2
         version: 0.2.2
@@ -31550,10 +31544,6 @@ packages:
   redis-parser@3.0.0:
     resolution: {integrity: sha512-DJnGAeenTdpMEH6uAJRK/uiyEIH9WVsUmoLwzudwGJUwZPp80PDBWPHXSAGNPwNvIXAbe7MSUB1zQFugFml66A==}
     engines: {node: '>=4'}
-
-  redlock@5.0.0-beta.2:
-    resolution: {integrity: sha512-2RDWXg5jgRptDrB1w9O/JgSZC0j7y4SlaXnor93H/UJm/QyDiFgBKNtrh0TI6oCXqYSaSoXxFh6Sd3VtYfhRXw==}
-    engines: {node: '>=12'}
 
   reduce-flatten@2.0.0:
     resolution: {integrity: sha512-EJ4UNY/U1t2P/2k6oqotuX2Cc3T6nxJwsM0N0asT7dhrtH1ltUxDn4NalSYmPE2rCkVpcf/X6R0wDwcFpzhd4w==}
@@ -79022,10 +79012,6 @@ snapshots:
   redis-parser@3.0.0:
     dependencies:
       redis-errors: 1.2.0
-
-  redlock@5.0.0-beta.2:
-    dependencies:
-      node-abort-controller: 3.1.1
 
   reduce-flatten@2.0.0: {}
 

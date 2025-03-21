@@ -21,10 +21,11 @@ import {
 
 import { GetSubscriberTemplatePreferenceCommand } from './get-subscriber-template-preference.command';
 
-import { ApiException } from '../../utils/exceptions';
-import { buildSubscriberKey, CachedEntity } from '../../services/cache';
+import { ApiException } from '../../utils';
 import { GetPreferences } from '../get-preferences';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
+import { CachedResponse } from '../../services/cache/interceptors/cached-return.interceptor';
+import { buildSubscriberKey } from '../../services';
 
 const PRIORITY_ORDER = [
   PreferenceOverrideSourceEnum.TEMPLATE,
@@ -193,7 +194,7 @@ export class GetSubscriberTemplatePreference {
     return channels as unknown as ChannelTypeEnum[];
   }
 
-  @CachedEntity({
+  @CachedResponse({
     builder: (command: GetSubscriberTemplatePreferenceCommand) =>
       buildSubscriberKey({
         _environmentId: command.environmentId,

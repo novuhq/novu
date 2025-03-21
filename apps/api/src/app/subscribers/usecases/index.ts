@@ -1,6 +1,5 @@
 import {
   CreateOrUpdateSubscriberUseCase,
-  EventsDistributedLockService,
   GetSubscriberTemplatePreference,
   UpdateSubscriber,
   UpdateSubscriberChannel,
@@ -47,7 +46,6 @@ export const USE_CASES = [
   GetSubscriberGlobalPreference,
   CreateIntegration,
   CheckIntegration,
-  EventsDistributedLockService,
   CheckIntegrationEMail,
   UpdatePreferences,
 ];
