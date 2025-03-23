@@ -101,7 +101,7 @@ export function CreateSubscriberPage() {
                 type="submit"
                 disabled={isPending}
                 isLoading={isPending}
-                form="create-subscriber"
+                form="create-subscriber-form"
               >
                 Create subscriber
               </Button>

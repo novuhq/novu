@@ -36,24 +36,6 @@ describe('Create Subscriber - /subscribers (POST) #novu-v2', () => {
     expect(subscriber.data).to.deep.equal(payload.data);
   });
 
-  it('should return 409 if subscriberId already exists', async () => {
-    const subscriberId = `test-subscriber-${`${randomBytes(4).toString('hex')}`}`;
-    const payload = {
-      subscriberId,
-      firstName: 'First Name',
-      lastName: 'Last Name',
-      locale: 'en_US',
-      timezone: 'America/New_York',
-    };
-
-    await novuClient.subscribers.create(payload);
-
-    const { error, successfulBody } = await expectSdkExceptionGeneric(() => novuClient.subscribers.create(payload));
-    expect(successfulBody).to.be.undefined;
-    expect(error).to.be.ok;
-    expect(error?.statusCode).to.equal(409);
-  });
-
   it('should upsert an existing subscriber if the subscriberId matches', async () => {
     const subscriberId = `test-subscriber-${`${randomBytes(4).toString('hex')}`}`;
     const payload1 = {

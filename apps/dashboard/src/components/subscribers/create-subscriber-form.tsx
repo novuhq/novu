@@ -72,11 +72,11 @@ export const CreateSubscriberForm = (props: CreateSubscriberFormProps) => {
     <div className="flex h-full flex-col">
       <Form {...form}>
         <FormRoot
+          id="create-subscriber-form"
           autoComplete="off"
           noValidate
           onSubmit={form.handleSubmit(onSubmit)}
           className="flex h-full flex-col overflow-y-auto"
-          id="create-subscriber"
         >
           <div className="flex flex-col items-stretch gap-6 p-5">
             <div className="flex items-center gap-3">
