@@ -18,6 +18,8 @@ const mapSingleItem = ({
   cta,
   tags,
   data,
+  templateIdentifier,
+  _templateId,
 }: MessageEntity): InboxNotification => {
   const to: Subscriber = {
     id: subscriber?._id ?? '',
@@ -71,6 +73,8 @@ const mapSingleItem = ({
         }
       : undefined,
     data,
+    workflowIdentifier: templateIdentifier,
+    workflowId: _templateId,
   };
 };
 
