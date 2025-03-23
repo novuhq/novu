@@ -11,8 +11,13 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { ExternalApiAccessible, UserSession } from '@novu/application-generic';
-import { ApiRateLimitCategoryEnum, UserSessionData } from '@novu/shared';
+import {
+  ExternalApiAccessible,
+  UserSession,
+  CreateOrUpdateSubscriberUseCase,
+  CreateOrUpdateSubscriberCommand,
+} from '@novu/application-generic';
+import { ApiRateLimitCategoryEnum, SubscriberCustomData, UserSessionData } from '@novu/shared';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
 import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
 import { ListSubscribersCommand } from './usecases/list-subscribers/list-subscribers.command';
@@ -37,9 +42,8 @@ import { PatchSubscriberPreferencesDto } from './dtos/patch-subscriber-preferenc
 import { UpdateSubscriberPreferencesCommand } from './usecases/update-subscriber-preferences/update-subscriber-preferences.command';
 import { UpdateSubscriberPreferences } from './usecases/update-subscriber-preferences/update-subscriber-preferences.usecase';
 import { ThrottlerCategory } from '../rate-limiting/guards/throttler.decorator';
-import { CreateSubscriber } from './usecases/create-subscriber/create-subscriber.usecase';
-import { CreateSubscriberCommand } from './usecases/create-subscriber/create-subscriber.command';
 import { CreateSubscriberRequestDto } from './dtos/create-subscriber.dto';
+import { mapSubscriberEntityToDto } from './usecases/list-subscribers/map-subscriber-entity-to.dto';
 
 @ThrottlerCategory(ApiRateLimitCategoryEnum.CONFIGURATION)
 @Controller({ path: '/subscribers', version: '2' })
@@ -55,7 +59,7 @@ export class SubscribersController {
     private removeSubscriberUsecase: RemoveSubscriber,
     private getSubscriberPreferencesUsecase: GetSubscriberPreferences,
     private updateSubscriberPreferencesUsecase: UpdateSubscriberPreferences,
-    private createSubscriberUsecase: CreateSubscriber
+    private createOrUpdateSubscriberUsecase: CreateOrUpdateSubscriberUseCase
   ) {}
 
   @Get('')
@@ -120,13 +124,28 @@ export class SubscribersController {
     @UserSession() user: UserSessionData,
     @Body() body: CreateSubscriberRequestDto
   ): Promise<SubscriberResponseDto> {
-    return await this.createSubscriberUsecase.execute(
-      CreateSubscriberCommand.create({
+    const subscriberEntity = await this.createOrUpdateSubscriberUsecase.execute(
+      CreateOrUpdateSubscriberCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
-        createSubscriberRequestDto: body,
+        subscriberId: body.subscriberId,
+        email: body.email || undefined,
+        firstName: body.firstName || undefined,
+        lastName: body.lastName || undefined,
+        phone: body.phone || undefined,
+        avatar: body.avatar || undefined,
+        locale: body.locale || undefined,
+        timezone: body.timezone || undefined,
+        // TODO: Change shared type to
+        data: (body.data || {}) as SubscriberCustomData,
+        /*
+         * TODO: In Subscriber V2 API endpoint we haven't added channels yet.
+         * channels: body.channels || [],
+         */
       })
     );
+
+    return mapSubscriberEntityToDto(subscriberEntity);
   }
 
   @Patch('/:subscriberId')

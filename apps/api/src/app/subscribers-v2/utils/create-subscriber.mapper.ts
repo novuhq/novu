@@ -1,48 +1,8 @@
 import { SubscriberCustomData, UserSessionData } from '@novu/shared';
 import { CreateOrUpdateSubscriberCommand } from '@novu/application-generic';
 import { IChannelCredentials, IChannelSettings, SubscriberEntity } from '@novu/dal';
-import { CreateSubscriberRequestDto } from '../dtos/create-subscriber.dto';
 import { ChannelSettingsDto, SubscriberResponseDto } from '../../subscribers/dtos';
 import { ChannelCredentials } from '../../shared/dtos/subscriber-channel';
-import { CreateSubscriberCommand } from '../usecases/create-subscriber/create-subscriber.command';
-
-export function mapSubscriberRequestToCommand(command: CreateSubscriberCommand): CreateOrUpdateSubscriberCommand {
-  const dto = command.createSubscriberRequestDto;
-
-  return {
-    organizationId: command.organizationId,
-    environmentId: command.environmentId,
-    subscriberId: dto.subscriberId,
-    email: dto.email ?? undefined,
-    firstName: dto.firstName ?? undefined,
-    lastName: dto.lastName ?? undefined,
-    phone: dto.phone ?? undefined,
-    avatar: dto.avatar ?? undefined,
-    locale: dto.locale ?? undefined,
-    data: dto.data ? mapCustomData(dto.data) : undefined,
-    timezone: dto.timezone,
-  };
-}
-
-function isAllowedType(value: unknown): value is string | number | boolean | string[] | undefined {
-  return (
-    value === undefined ||
-    typeof value === 'string' ||
-    typeof value === 'number' ||
-    typeof value === 'boolean' ||
-    (Array.isArray(value) && value.every((item) => typeof item === 'string'))
-  );
-}
-
-function mapCustomData(data: Record<string, unknown>): SubscriberCustomData {
-  return Object.entries(data).reduce((acc, [key, value]) => {
-    if (isAllowedType(value)) {
-      acc[key] = value;
-    }
-
-    return acc;
-  }, {} as SubscriberCustomData);
-}
 
 export function mapSubscriberEntityToResponseDto(entity: SubscriberEntity): SubscriberResponseDto {
   return {
