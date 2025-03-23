@@ -1,8 +1,8 @@
 /* eslint-disable no-param-reassign */
 import { render as mailyRender, JSONContent as MailyJSONContent } from '@maily-to/render';
 import { Injectable } from '@nestjs/common';
-import { EmailRenderOutput } from '@novu/shared';
-import { InstrumentUsecase } from '@novu/application-generic';
+import { EmailRenderOutput, FeatureFlagsKeysEnum } from '@novu/shared';
+import { InstrumentUsecase, sanitizeHTML, FeatureFlagsService } from '@novu/application-generic';
 
 import { FullPayloadForRender, RenderCommand } from './render-command';
 import { WrapMailyInLiquidUseCase } from './maily-to-liquid/wrap-maily-in-liquid.usecase';
@@ -14,11 +14,14 @@ export class EmailOutputRendererCommand extends RenderCommand {}
 
 @Injectable()
 export class EmailOutputRendererUsecase {
-  constructor(private wrapMailyInLiquidUsecase: WrapMailyInLiquidUseCase) {}
+  constructor(
+    private wrapMailyInLiquidUsecase: WrapMailyInLiquidUseCase,
+    private featureFlagsService: FeatureFlagsService
+  ) {}
 
   @InstrumentUsecase()
   async execute(renderCommand: EmailOutputRendererCommand): Promise<EmailRenderOutput> {
-    const { body, subject } = renderCommand.controlValues;
+    const { body, subject: controlSubject, disableOutputSanitization } = renderCommand.controlValues;
 
     if (!body || typeof body !== 'string') {
       /**
@@ -27,7 +30,7 @@ export class EmailOutputRendererUsecase {
        * rather than handling invalid types here.
        */
       return {
-        subject: subject as string,
+        subject: controlSubject as string,
         body: body as string,
       };
     }
@@ -43,7 +46,26 @@ export class EmailOutputRendererUsecase {
      * This passes responsibility to framework to throw type validation exceptions
      * rather than handling invalid types here.
      */
-    return { subject: subject as string, body: renderedHtml };
+    const subject = controlSubject as string;
+
+    const isEmailSanitizationFeatureEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_EMAIL_SANITIZATION_ENABLED,
+      defaultValue: false,
+      user: { _id: 'system' },
+    });
+
+    if (!isEmailSanitizationFeatureEnabled) {
+      return {
+        subject: sanitizeHTML(subject),
+        body: sanitizeHTML(renderedHtml),
+      };
+    }
+
+    if (disableOutputSanitization) {
+      return { subject, body: renderedHtml };
+    }
+
+    return { subject: sanitizeHTML(subject), body: sanitizeHTML(renderedHtml) };
   }
 
   private removeTrailingEmptyLines(node: MailyJSONContent): MailyJSONContent {

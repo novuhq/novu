@@ -4,16 +4,65 @@ import { FromSchema, FromSchemaUnvalidated, Schema } from './base.schema.types';
 
 describe('FromSchema', () => {
   it('should infer an unknown record type when a generic schema is provided', () => {
-    expectTypeOf<FromSchema<Schema>>().toEqualTypeOf<Record<string, unknown>>();
+    type Test = FromSchema<Schema>;
+
+    expectTypeOf<Test>().toEqualTypeOf<Record<string, unknown>>();
   });
 
-  it('should not compile when the schema is primitive', () => {
-    const primitiveSchema = { type: 'string' } as const;
+  it('should not compile and infer an unknown record type when the schema is undefined', () => {
+    // @ts-expect-error - Type 'undefined' does not satisfy the constraint 'Schema'.
+    type Test = FromSchema<undefined>;
 
-    // @ts-expect-error - Type '{ type: string; }' is not assignable to type '{ type: "object"; }'.
+    expectTypeOf<Test>().toEqualTypeOf<Record<string, unknown>>();
+  });
+
+  it('not compile when the schema is undefined', () => {
+    // @ts-expect-error - Type 'undefined' does not satisfy the constraint 'Schema'.
+    type Test = FromSchemaUnvalidated<undefined>;
+
+    expectTypeOf<Test>().toEqualTypeOf<Record<string, unknown>>();
+  });
+
+  it('should infer an error message type when the schema describes a primitive type', () => {
+    const primitiveSchema = { type: 'string' } as const;
     type Test = FromSchema<typeof primitiveSchema>;
 
-    expectTypeOf<Test>().toEqualTypeOf<never>();
+    expectTypeOf<Test>().toEqualTypeOf<{
+      SchemaError: `Schema must describe an object data structure. Received data type: 'string'`;
+    }>();
+  });
+
+  it('should infer an error message type when the schema describes an array of primitive types', () => {
+    const primitiveSchema = { type: 'array', items: { type: 'string' } } as const;
+    type Test = FromSchema<typeof primitiveSchema>;
+
+    expectTypeOf<Test>().toEqualTypeOf<{
+      SchemaError: `Schema must describe an object data structure. Received data type: 'string[]'`;
+    }>();
+  });
+
+  it('should infer an error message type when the schema describes an array of objects', () => {
+    const primitiveSchema = {
+      type: 'array',
+      items: { type: 'object' },
+    } as const;
+    type Test = FromSchema<typeof primitiveSchema>;
+
+    expectTypeOf<Test>().toEqualTypeOf<{
+      SchemaError: `Schema must describe an object data structure. Received data type: '{ [x: string]: unknown; }[]'`;
+    }>();
+  });
+
+  it('should infer an error message type when the schema describes an array of unknown types', () => {
+    const primitiveSchema = {
+      type: 'array',
+      items: {},
+    } as const;
+    type Test = FromSchema<typeof primitiveSchema>;
+
+    expectTypeOf<Test>().toEqualTypeOf<{
+      SchemaError: `Schema must describe an object data structure. Received data type: 'unknown[]'`;
+    }>();
   });
 
   it('should infer a Json Schema type', () => {
@@ -26,7 +75,9 @@ describe('FromSchema', () => {
       additionalProperties: false,
     } as const;
 
-    expectTypeOf<FromSchema<typeof testJsonSchema>>().toEqualTypeOf<{ foo: string; bar?: string }>();
+    type Test = FromSchema<typeof testJsonSchema>;
+
+    expectTypeOf<Test>().toEqualTypeOf<{ foo: string; bar?: string }>();
   });
 
   it('should infer a Zod Schema type', () => {
@@ -35,22 +86,28 @@ describe('FromSchema', () => {
       bar: z.string().optional(),
     });
 
-    expectTypeOf<FromSchema<typeof testZodSchema>>().toEqualTypeOf<{ foo: string; bar?: string }>();
+    type Test = FromSchema<typeof testZodSchema>;
+
+    expectTypeOf<Test>().toEqualTypeOf<{ foo: string; bar?: string }>();
+  });
+
+  it('should infer a Class Schema type', () => {
+    class TestSchema {
+      foo: string = 'bar';
+      bar?: string;
+    }
+
+    type Test = FromSchema<typeof TestSchema>;
+
+    expectTypeOf<Test>().toEqualTypeOf<{ foo: string; bar?: string }>();
   });
 });
 
 describe('FromSchemaUnvalidated', () => {
   it('should infer an unknown record type when a generic schema is provided', () => {
-    expectTypeOf<FromSchemaUnvalidated<Schema>>().toEqualTypeOf<Record<string, unknown>>();
-  });
+    type Test = FromSchemaUnvalidated<Schema>;
 
-  it('should not compile when the schema is primitive', () => {
-    const primitiveSchema = { type: 'string' } as const;
-
-    // @ts-expect-error - Type '{ type: string; }' is not assignable to type '{ type: "object"; }'.
-    type Test = FromSchemaUnvalidated<typeof primitiveSchema>;
-
-    expectTypeOf<Test>().toEqualTypeOf<never>();
+    expectTypeOf<Test>().toEqualTypeOf<Record<string, unknown>>();
   });
 
   it('should infer a Json Schema type', () => {
@@ -63,7 +120,9 @@ describe('FromSchemaUnvalidated', () => {
       additionalProperties: false,
     } as const;
 
-    expectTypeOf<FromSchemaUnvalidated<typeof testJsonSchema>>().toEqualTypeOf<{ foo?: string; bar?: string }>();
+    type Test = FromSchemaUnvalidated<typeof testJsonSchema>;
+
+    expectTypeOf<Test>().toEqualTypeOf<{ foo?: string; bar?: string }>();
   });
 
   it('should infer a Zod Schema type', () => {
@@ -72,6 +131,19 @@ describe('FromSchemaUnvalidated', () => {
       bar: z.string().optional(),
     });
 
-    expectTypeOf<FromSchemaUnvalidated<typeof testZodSchema>>().toEqualTypeOf<{ foo?: string; bar?: string }>();
+    type Test = FromSchemaUnvalidated<typeof testZodSchema>;
+
+    expectTypeOf<Test>().toEqualTypeOf<{ foo?: string; bar?: string }>();
+  });
+
+  it('should infer a Class Schema type', () => {
+    class TestClassSchema {
+      foo?: string = 'bar';
+      bar?: string;
+    }
+
+    type Test = FromSchemaUnvalidated<typeof TestClassSchema>;
+
+    expectTypeOf<Test>().toEqualTypeOf<{ foo?: string; bar?: string }>();
   });
 });

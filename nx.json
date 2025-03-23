@@ -52,7 +52,6 @@
           "@novu/react",
           "@novu/react-native",
           "@novu/nextjs",
-          "@novu/node",
           "@novu/providers",
           "@novu/shared",
           "@novu/stateless"

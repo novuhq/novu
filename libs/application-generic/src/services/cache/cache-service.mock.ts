@@ -21,11 +21,7 @@ export const MockCacheService = {
         if (!preFixSuffixTuple) return;
 
         for (const key in data) {
-          if (
-            key.startsWith(preFixSuffixTuple[0]) &&
-            key.endsWith(preFixSuffixTuple[1])
-          )
-            delete data[key];
+          if (key.startsWith(preFixSuffixTuple[0]) && key.endsWith(preFixSuffixTuple[1])) delete data[key];
         }
       },
       keys(pattern?: string) {
@@ -40,9 +36,7 @@ export const MockCacheService = {
       async sadd(key, ...members) {
         const dataVal = data[key];
         if (dataVal && !Array.isArray(dataVal)) {
-          throw new Error(
-            'Wrong operation against a key holding the wrong kind of value',
-          );
+          throw new Error('Wrong operation against a key holding the wrong kind of value');
         }
 
         const newVal = new Set(data[key]);
@@ -58,11 +52,7 @@ export const MockCacheService = {
 
         return addCount;
       },
-      async eval<TData = unknown>(
-        script: string,
-        keys: string[],
-        args: (string | Buffer | number)[],
-      ): Promise<TData> {
+      async eval<TData = unknown>(script: string, keys: string[], args: (string | Buffer | number)[]): Promise<TData> {
         return mockClient.eval(script, keys.length, ...keys, ...args) as TData;
       },
     };

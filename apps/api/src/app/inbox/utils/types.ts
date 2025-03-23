@@ -1,4 +1,4 @@
-import type { ChannelTypeEnum, Redirect, IPreferenceChannels, PreferenceLevelEnum } from '@novu/shared';
+import type { ChannelTypeEnum, Redirect, IPreferenceChannels, PreferenceLevelEnum, CustomDataType } from '@novu/shared';
 
 export type Subscriber = {
   id: string;
@@ -45,6 +45,7 @@ export type Workflow = {
   name: string;
   critical: boolean;
   tags?: string[];
+  data?: CustomDataType;
 };
 
 export type InboxPreference = {

@@ -42,6 +42,32 @@ export function sanitizeHTML(html: string) {
   return sanitizeTypes(html, sanitizeOptions);
 }
 
+export const sanitizeHtmlInObject = <T extends Record<string, unknown>>(object: T): T => {
+  return Object.keys(object).reduce((acc, key: keyof T) => {
+    const value = object[key];
+
+    if (typeof value === 'string') {
+      acc[key] = sanitizeHTML(value) as T[keyof T];
+    } else if (Array.isArray(value)) {
+      acc[key] = value.map((item) => {
+        if (typeof item === 'string') {
+          return sanitizeHTML(item);
+        } else if (typeof item === 'object') {
+          return sanitizeHtmlInObject(item);
+        } else {
+          return item;
+        }
+      }) as T[keyof T];
+    } else if (typeof value === 'object' && value !== null) {
+      acc[key] = sanitizeHtmlInObject(value as Record<string, unknown>) as T[keyof T];
+    } else {
+      acc[key] = value;
+    }
+
+    return acc;
+  }, {} as T);
+};
+
 export function sanitizeMessageContent(content: string | IEmailBlock[]) {
   if (typeof content === 'string') {
     return sanitizeHTML(content);

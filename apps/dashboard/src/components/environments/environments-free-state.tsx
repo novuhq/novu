@@ -96,7 +96,7 @@ export function FreeTierState() {
           >
             Upgrade to Team Tier
           </Button>
-          <Link to={'https://docs.novu.co/concepts/environments'} target="_blank">
+          <Link to={'https://docs.novu.co/platform/concepts/environments'} target="_blank">
             <LinkButton size="sm" leadingIcon={RiBookMarkedLine}>
               How does this help?
             </LinkButton>

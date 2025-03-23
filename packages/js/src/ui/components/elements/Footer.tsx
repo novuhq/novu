@@ -5,14 +5,10 @@ import { isBrowser } from 'src/utils/is-browser';
 import { Novu } from '../../icons';
 import { cn } from '../../helpers';
 
-const hue = 20;
-const saturation = 100;
-const stripeColor = `${hue},${saturation}%,64%`;
-const gradientBackground = `${hue},${saturation}%,98%`;
-const stripes = `before:nt-content-[""] before:nt-absolute before:nt-inset-0 before:-nt-right-[calc(0+var(--stripes-size))] before:nt-bg-dev-stripes-gradient before:nt-bg-[length:var(--stripes-size)_var(--stripes-size)] before:hover:nt-animate-stripes`;
-const commonAfter = 'after:nt-content-[""] after:nt-absolute after:nt-inset-0 after:-nt-top-8';
-const devModeGradient = `${commonAfter} after:nt-bg-[linear-gradient(180deg,#0000_0,hsl(var(--gradient-background))_50%,#0000)]`;
-const prodModeGradient = `${commonAfter} after:nt-bg-[linear-gradient(180deg,#0000_0,#fff_50%,#0000)]`;
+const stripes = `before:nt-content-[""] before:nt-absolute before:nt-inset-0 before:-nt-right-[calc(0+var(--stripes-size))] before:[mask-image:linear-gradient(transparent_0%,black)] before:nt-bg-dev-stripes-gradient before:nt-bg-[length:var(--stripes-size)_var(--stripes-size)] before:nt-animate-stripes before:hover:[animation-play-state:running]`;
+const commonAfter = 'after:nt-content-[""] after:nt-absolute after:nt-inset-0 after:-nt-top-12';
+const devModeGradient = `${commonAfter} after:nt-bg-[linear-gradient(180deg,transparent,oklch(from_var(--nv-color-stripes)_l_c_h_/_0.07)_55%,transparent),linear-gradient(180deg,transparent,oklch(from_var(--nv-color-background)_l_c_h_/_0.9)_55%,transparent)]`;
+const prodModeGradient = `${commonAfter} after:nt-bg-[linear-gradient(180deg,transparent,oklch(from_var(--nv-color-background)_l_c_h_/_0.9)_55%,transparent)]`;
 
 export const Footer = () => {
   const { hideBranding, isDevelopmentMode } = useInboxContext();
@@ -25,17 +21,16 @@ export const Footer = () => {
           {
             [stripes]: isDevelopmentMode(),
             [devModeGradient]: isDevelopmentMode(),
+            'nt-bg-[oklch(from_var(--nv-color-stripes)_l_c_h_/_0.1)]': isDevelopmentMode(),
             [prodModeGradient]: !isDevelopmentMode(),
           }
         )}
         style={{
           '--stripes-size': '15px',
-          '--stripes-color': stripeColor,
-          '--gradient-background': gradientBackground,
         }}
       >
         <Show when={isDevelopmentMode()}>
-          <span class="nt-z-10 nt-text-xs nt-text-[hsl(var(--stripes-color))]">Development mode</span>
+          <span class="nt-z-10 nt-text-xs nt-text-stripes">Development mode</span>
         </Show>
         <Show when={isDevelopmentMode() && !hideBranding()}>
           <span class="nt-z-10 nt-text-xs">•</span>

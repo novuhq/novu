@@ -36,9 +36,7 @@ export function CachedEntity<T_Output = any>({
   lockOptions?: CacheLockOptions;
 }) {
   const injectCache = Inject(CacheService);
-  const injectLock = lockOptions?.enableLock
-    ? Inject(DistributedLockService)
-    : undefined;
+  const injectLock = lockOptions?.enableLock ? Inject(DistributedLockService) : undefined;
 
   return (target: any, key: string, descriptor: any) => {
     const originalMethod = descriptor.value;
@@ -72,7 +70,7 @@ export function CachedEntity<T_Output = any>({
         Logger.error(
           err,
           `An error has occurred when extracting "key: ${cacheKey}" in "method: ${methodName}"`,
-          LOG_CONTEXT,
+          LOG_CONTEXT
         );
       }
 
@@ -84,14 +82,8 @@ export function CachedEntity<T_Output = any>({
             retryCount: lockOptions.retryCount,
           });
         } catch (err) {
-          Logger.error(
-            err,
-            `Failed to acquire lock for key: ${cacheKey} in "method: ${methodName}"`,
-            LOG_CONTEXT,
-          );
-          throw new ConflictException(
-            `Failed to acquire cache lock. Please try again later.`,
-          );
+          Logger.error(err, `Failed to acquire lock for key: ${cacheKey} in "method: ${methodName}"`, LOG_CONTEXT);
+          throw new ConflictException(`Failed to acquire cache lock. Please try again later.`);
         }
       }
 
@@ -117,7 +109,7 @@ export function CachedEntity<T_Output = any>({
         Logger.error(
           err,
           `An error has occurred when inserting key: ${cacheKey} in "method: ${methodName}`,
-          LOG_CONTEXT,
+          LOG_CONTEXT
         );
       } finally {
         if (unlock) {

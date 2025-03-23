@@ -18,7 +18,7 @@ export function IntegrationSheetHeader({ provider, mode, onBack, step }: Integra
         <SheetTitle className="text-lg">Connect Integration</SheetTitle>
         <p className="text-foreground-400 text-xs">
           Select an integration to connect with your application.{' '}
-          <a href="https://docs.novu.co/docs/integrations" target="_blank" className="underline">
+          <a href="https://docs.novu.co/platform/integrations/overview" target="_blank" className="underline">
             Learn More
           </a>
         </p>

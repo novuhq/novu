@@ -9,6 +9,7 @@ import { useState } from 'react';
 import { RiContractUpDownLine, RiExpandUpDownLine } from 'react-icons/ri';
 import { STEP_TYPE_TO_COLOR } from '../../../utils/color';
 import { formatDateSimple } from '@/utils/format-date';
+import { cn } from '@/utils/ui';
 
 type WorkflowPreferencesProps = {
   workflowPreferences: WorkflowPreferenceDto;
@@ -23,7 +24,9 @@ export function WorkflowPreferences(props: WorkflowPreferencesProps) {
   return (
     <Card className="border-1 rounded-lg border border-neutral-100 bg-neutral-50 p-1 shadow-none">
       <CardHeader
-        className="flex w-full flex-row items-center justify-between p-1 hover:cursor-pointer"
+        className={cn('flex w-full flex-row items-center justify-between p-1 hover:cursor-pointer', {
+          'pb-2': isExpanded,
+        })}
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <span className="text-foreground-600 text-xs">{workflow.name}</span>
@@ -52,7 +55,7 @@ export function WorkflowPreferences(props: WorkflowPreferencesProps) {
         }}
         className="overflow-hidden"
       >
-        <CardContent className="rounded-lg bg-white p-2">
+        <CardContent className="space-y-2 rounded-lg bg-white p-2">
           {Object.entries(channels).map(([channel, enabled]) => (
             <PreferencesItem
               channel={channel as ChannelTypeEnum}
@@ -62,7 +65,7 @@ export function WorkflowPreferences(props: WorkflowPreferencesProps) {
             />
           ))}
         </CardContent>
-        <CardFooter className="p-0">
+        <CardFooter className="p-1 pb-0">
           {workflow.updatedAt && (
             <span className="text-2xs py-1 text-neutral-400">
               Updated at{' '}

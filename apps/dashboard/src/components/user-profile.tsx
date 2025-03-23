@@ -20,7 +20,7 @@ export function UserProfile() {
       {organization && organization.createdAt < new Date('2024-12-24') && (
         <UserButton.MenuItems>
           <UserButton.Action
-            label="Go back to the legacy Dashboard"
+            label="Go back to legacy V0 Dashboard"
             labelIcon={<RiSignpostFill size="16" color="var(--nv-colors-typography-text-main)" />}
             onClick={optOut}
           />

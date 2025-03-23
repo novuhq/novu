@@ -1,12 +1,16 @@
 /* eslint-disable import/extensions */
 import { dark } from '@novu/nextjs/themes';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Inbox } from '@novu/nextjs';
 import Title from '@/components/Title';
 import { novuConfig } from '@/utils/config';
 
 export default function Home() {
   const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark');
+  }, [isDark]);
 
   return (
     <>

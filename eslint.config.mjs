@@ -48,7 +48,7 @@ const noRestrictedImportsMultiLevelNovuPattern = {
     ...['framework', 'js', 'novui'].flatMap((pkg) => [`!@novu/${pkg}/**/*`, `@novu/${pkg}/*/**/*`]),
   ],
   message:
-    "Please import only from the root package entry point. For example, use 'import { Client } from '@novu/node';' instead of 'import { Client } from '@novu/node/src';'",
+    "Please import only from the root package entry point. For example, use 'import { Client } from '@novu/api';' instead of 'import { Client } from '@novu/api/src';'",
 };
 
 export default tsEslint.config(

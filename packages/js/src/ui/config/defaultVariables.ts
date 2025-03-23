@@ -14,4 +14,5 @@ export const defaultVariables: Required<Variables> = {
   colorShadow: 'rgb(0,0,0)',
   fontSize: '1rem',
   borderRadius: '0.375rem',
+  colorStripes: '#FF9A68',
 };
