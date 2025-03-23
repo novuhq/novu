@@ -1,6 +1,6 @@
 import { Injectable, InternalServerErrorException, Logger, OnModuleInit } from '@nestjs/common';
 import { CommunityOrganizationRepository, EnvironmentRepository } from '@novu/dal';
-import { buildMaximumApiRateLimitKey, CachedEntity, Instrument, InstrumentUsecase } from '@novu/application-generic';
+import { buildMaximumApiRateLimitKey, CachedResponse, Instrument, InstrumentUsecase } from '@novu/application-generic';
 import {
   ApiRateLimitCategoryEnum,
   ApiRateLimitCategoryToFeatureName,
@@ -35,7 +35,7 @@ export class GetApiRateLimitMaximum implements OnModuleInit {
     });
   }
 
-  @CachedEntity({
+  @CachedResponse({
     builder: (command: { apiRateLimitCategory: ApiRateLimitCategoryEnum; _environmentId: string }) =>
       buildMaximumApiRateLimitKey({
         _environmentId: command._environmentId,

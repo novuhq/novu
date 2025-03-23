@@ -4,8 +4,8 @@ import {
   AnalyticsService,
   buildFeedKey,
   buildSubscriberKey,
-  CachedEntity,
   CachedQuery,
+  CachedResponse,
   InstrumentUsecase,
 } from '@novu/application-generic';
 import { MessageRepository, SubscriberEntity, SubscriberRepository } from '@novu/dal';
@@ -116,7 +116,7 @@ export class GetNotificationsFeed {
     };
   }
 
-  @CachedEntity({
+  @CachedResponse({
     builder: (command: { subscriberId: string; _environmentId: string }) =>
       buildSubscriberKey({
         _environmentId: command._environmentId,

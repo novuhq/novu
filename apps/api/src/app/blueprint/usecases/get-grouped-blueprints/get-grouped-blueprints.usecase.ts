@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { NotificationTemplateRepository, NotificationTemplateEntity } from '@novu/dal';
-import { buildGroupedBlueprintsKey, CachedEntity } from '@novu/application-generic';
+import { NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
+import { buildGroupedBlueprintsKey, CachedResponse } from '@novu/application-generic';
 import { IGroupedBlueprint } from '@novu/shared';
 
 import { GroupedBlueprintResponse } from '../../dto/grouped-blueprint.response.dto';
@@ -12,7 +12,7 @@ const WEEK_IN_SECONDS = 60 * 60 * 24 * 7;
 export class GetGroupedBlueprints {
   constructor(private notificationTemplateRepository: NotificationTemplateRepository) {}
 
-  @CachedEntity({
+  @CachedResponse({
     builder: (command: GetGroupedBlueprintsCommand) => buildGroupedBlueprintsKey(command.environmentId),
     options: { ttl: WEEK_IN_SECONDS },
   })
