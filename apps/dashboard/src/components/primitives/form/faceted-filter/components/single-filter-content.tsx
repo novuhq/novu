@@ -67,7 +67,7 @@ export function SingleFilterContent({
               className={cn(
                 'flex items-center justify-between rounded-[4px] p-1.5',
                 isFocused && 'bg-neutral-50 ring-1 ring-neutral-200',
-                isDisabled && 'cursor-not-allowed'
+                isDisabled && 'cursor-default'
               )}
               onMouseEnter={() => setFocusedIndex(index)}
               onClick={() => !isDisabled && onSelect(option.value)}
@@ -75,7 +75,7 @@ export function SingleFilterContent({
               <div className="flex items-center gap-2">
                 <RadioGroupItem value={option.value} id={option.value} disabled={isDisabled} />
                 <Label
-                  className={cn('text-xs font-medium', isDisabled && 'cursor-not-allowed')}
+                  className={cn('text-xs font-medium', isDisabled && 'cursor-default')}
                   htmlFor={option.value}
                   disabled={isDisabled}
                 >

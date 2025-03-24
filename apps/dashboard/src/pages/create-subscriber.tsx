@@ -20,7 +20,7 @@ import { ExternalToast } from 'sonner';
 const toastOptions: ExternalToast = {
   position: 'bottom-right',
   classNames: {
-    toast: 'mb-4 right-0',
+    toast: 'mb-4 right-0 pointer-events-none',
   },
 };
 
@@ -96,7 +96,13 @@ export function CreateSubscriberPage() {
                   </Link>
                 </span>
               </div>
-              <Button variant="secondary" type="submit" disabled={isPending} isLoading={isPending}>
+              <Button
+                variant="secondary"
+                type="submit"
+                disabled={isPending}
+                isLoading={isPending}
+                form="create-subscriber"
+              >
                 Create subscriber
               </Button>
             </div>

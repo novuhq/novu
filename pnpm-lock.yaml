@@ -699,11 +699,11 @@ importers:
         specifier: workspace:*
         version: link:../../packages/framework
       '@novu/js':
-        specifier: ^3.0.0
-        version: 3.0.0
+        specifier: workspace:*
+        version: link:../../packages/js
       '@novu/react':
-        specifier: ^3.0.0
-        version: 3.0.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: workspace:*
+        version: link:../../packages/react
       '@novu/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -3714,15 +3714,6 @@ importers:
       aws-lambda:
         specifier: ^1.0.7
         version: 1.0.7
-      class-transformer:
-        specifier: ^0.5.1
-        version: 0.5.1
-      class-validator:
-        specifier: ^0.14.1
-        version: 0.14.1
-      class-validator-jsonschema:
-        specifier: ^5.0.1
-        version: 5.0.1(class-transformer@0.5.1)(class-validator@0.14.1)
       express:
         specifier: ^4.19.2
         version: 4.19.2
@@ -3738,9 +3729,6 @@ importers:
       prettier:
         specifier: ^3.2.5
         version: 3.3.2
-      reflect-metadata:
-        specifier: ^0.2.2
-        version: 0.2.2
       ts-node:
         specifier: ^10.9.2
         version: 10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@20.16.5)(typescript@5.6.2)
@@ -10485,21 +10473,9 @@ packages:
   '@nothing-but/utils@0.12.1':
     resolution: {integrity: sha512-1qZU1Q5El0IjE7JT/ucvJNzdr2hL3W8Rm27xNf1p6gb3Nw8pGnZmxp6/GEW9h+I1k1cICxXNq25hBwknTQ7yhg==}
 
-  '@novu/js@3.0.0':
-    resolution: {integrity: sha512-DFRgWWRmIgpxYhC9Cwp9djjHBGyAm1HAB+YJuKrO8nMa6gTVIyeJbk+bEw8uibrDwDGYa0HXDlxL3gHzD1gw6w==}
-
   '@novu/ntfr-client@0.0.4':
     resolution: {integrity: sha512-/9q+qGFHHFwMsuqoLwTADMjSx2JPagpJpm7jOZRzQZgSEDg9kwNAhADneRzVYhMyjdEXIQyjTmX/oP8ABAavFw==}
     engines: {node: '>=18.0.0'}
-
-  '@novu/react@3.0.0':
-    resolution: {integrity: sha512-XFo4yLZS9NoDI7H2eEc5a5uD78NanQ7L040RSPQ/g4/ueLXbmJ/gJNLHtvKXPwVjpduvQ8kbbmHICOEWv0RcjA==}
-    peerDependencies:
-      react: ^18.0.0 || ^19.0.0 || ^19.0.0-0
-      react-dom: ^18.0.0 || ^19.0.0 || ^19.0.0-0
-    peerDependenciesMeta:
-      react-dom:
-        optional: true
 
   '@nrwl/nx-cloud@19.1.0':
     resolution: {integrity: sha512-krngXVPfX0Zf6+zJDtcI59/Pt3JfcMPMZ9C/+/x6rvz4WGgyv1s0MI4crEUM0Lx5ZpS4QI0WNDCFVQSfGEBXUg==}
@@ -20433,12 +20409,6 @@ packages:
     resolution: {integrity: sha512-qOhPa/Fj7s6TY8H8esGu5QNpMMQxz79h+urzrNYN6mn+9BnxlDGf5QZ+XeCDsxSjPqsSR56XOZOJmpeurnLMeg==}
     engines: {node: '>=0.10.0'}
 
-  class-validator-jsonschema@5.0.1:
-    resolution: {integrity: sha512-9uTdo5jSnJUj7f0dS8YZDqM0Fv1Uky0BWefswnNa2F4nRcKPCiEb5z3nDUaXyEzcERCrizE+0AGDSao1uSNX9g==}
-    peerDependencies:
-      class-transformer: ^0.4.0 || ^0.5.0
-      class-validator: ^0.14.0
-
   class-validator@0.14.1:
     resolution: {integrity: sha512-2VEG9JICxIqTpoK1eMzZqaV+u/EiwEJkMGzTrZf6sU/fwsnOITVgYJ8yojSy6CaXtO9V0Cc6ZQZ8h8m4UBuLwQ==}
 
@@ -26616,9 +26586,6 @@ packages:
     resolution: {integrity: sha512-z+Uw/vLuy6gQe8cfaFWD7p0wVv8fJl3mbzXh33RS+0oW2wvUqiRXiQ69gLWSLpgB5/6sU+r6BlQR0MBILadqTQ==}
     deprecated: This package is deprecated. Use the optional chaining (?.) operator instead.
 
-  lodash.groupby@4.6.0:
-    resolution: {integrity: sha512-5dcWxm23+VAoz+awKmBaiBvzox8+RqMgFhi7UvX9DHZr2HdxHXM/Wrf8cfKpsW37RNrvtPn6hSwNqurSILbmJw==}
-
   lodash.includes@4.3.0:
     resolution: {integrity: sha512-W3Bx6mdkRTGtlJISOvVD/lbqjTlPPUDTMnlXZFnVwi9NKJ6tiAk6LVdlhZMm17VZisqhKcgzpO5Wz91PCt5b0w==}
 
@@ -28426,9 +28393,6 @@ packages:
   open@8.4.2:
     resolution: {integrity: sha512-7x81NCL719oNbsq/3mh+hVrAWmFuEYUqrq/Iw3kUzH8ReypT9QQ0BLoJS7/G9k6N81XjW4qHWtjWwe/9eLy1EQ==}
     engines: {node: '>=12'}
-
-  openapi3-ts@3.2.0:
-    resolution: {integrity: sha512-/ykNWRV5Qs0Nwq7Pc0nJ78fgILvOT/60OxEmB3v7yQ8a8Bwcm43D4diaYazG/KBn6czA+52XYy931WFLMCUeSg==}
 
   opener@1.5.2:
     resolution: {integrity: sha512-ur5UIdyw5Y7yEj9wLzhqXiy6GZ3Mwx0yGI+5sMn2r0N0v3cKJvUmFH5yPP+WXh9e0xfyzyJX95D8l088DNFj7A==}
@@ -31277,9 +31241,6 @@ packages:
   refa@0.12.1:
     resolution: {integrity: sha512-J8rn6v4DBb2nnFqkqwy6/NnTYMcgLA+sLr0iIO41qpv0n+ngb7ksag2tMRl0inb1bbO/esUwzW1vbJi7K0sI0g==}
     engines: {node: ^12.0.0 || ^14.0.0 || >=16.0.0}
-
-  reflect-metadata@0.1.14:
-    resolution: {integrity: sha512-ZhYeb6nRaXCfhnndflDK8qI6ZQ/YcWZCISRAWICW9XYqMUwjZM9Z0DveWX/ABN01oxSHwVxKQmxeYZSsm0jh5A==}
 
   reflect-metadata@0.2.2:
     resolution: {integrity: sha512-urBwgfrvVP/eAyXx4hluJivBKzuEbSQs9rKWCrCkbSxNv8mxPcUZKeuoF3Uy4mJl3Lwprp6yy5/39VWigZ4K6Q==}
@@ -47294,22 +47255,6 @@ snapshots:
 
   '@nothing-but/utils@0.12.1': {}
 
-  '@novu/js@3.0.0':
-    dependencies:
-      '@floating-ui/dom': 1.6.13
-      class-variance-authority: 0.7.0
-      clsx: 2.1.1
-      mitt: 3.0.1
-      socket.io-client: 4.7.2
-      solid-floating-ui: 0.3.1(@floating-ui/dom@1.6.13)(solid-js@1.8.17)
-      solid-js: 1.8.17
-      solid-motionone: 1.0.3(solid-js@1.8.17)
-      tailwind-merge: 2.5.5
-    transitivePeerDependencies:
-      - bufferutil
-      - supports-color
-      - utf-8-validate
-
   '@novu/ntfr-client@0.0.4':
     dependencies:
       https: 1.0.0
@@ -47318,17 +47263,6 @@ snapshots:
       proxy-agent: 6.3.0
       ws: 8.18.0
       zod: 3.22.3
-    transitivePeerDependencies:
-      - bufferutil
-      - supports-color
-      - utf-8-validate
-
-  '@novu/react@3.0.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
-    dependencies:
-      '@novu/js': 3.0.0
-      react: 18.3.1
-    optionalDependencies:
-      react-dom: 18.3.1(react@18.3.1)
     transitivePeerDependencies:
       - bufferutil
       - supports-color
@@ -62982,16 +62916,6 @@ snapshots:
       isobject: 3.0.1
       static-extend: 0.1.2
 
-  class-validator-jsonschema@5.0.1(class-transformer@0.5.1)(class-validator@0.14.1):
-    dependencies:
-      class-transformer: 0.5.1
-      class-validator: 0.14.1
-      lodash.groupby: 4.6.0
-      lodash.merge: 4.6.2
-      openapi3-ts: 3.2.0
-      reflect-metadata: 0.1.14
-      tslib: 2.7.0
-
   class-validator@0.14.1:
     dependencies:
       '@types/validator': 13.12.1
@@ -71845,8 +71769,6 @@ snapshots:
 
   lodash.get@4.4.2: {}
 
-  lodash.groupby@4.6.0: {}
-
   lodash.includes@4.3.0: {}
 
   lodash.isarguments@3.1.0: {}
@@ -74537,10 +74459,6 @@ snapshots:
       define-lazy-prop: 2.0.0
       is-docker: 2.2.1
       is-wsl: 2.2.0
-
-  openapi3-ts@3.2.0:
-    dependencies:
-      yaml: 2.5.0
 
   opener@1.5.2: {}
 
@@ -78284,8 +78202,6 @@ snapshots:
   refa@0.12.1:
     dependencies:
       '@eslint-community/regexpp': 4.11.0
-
-  reflect-metadata@0.1.14: {}
 
   reflect-metadata@0.2.2: {}
 

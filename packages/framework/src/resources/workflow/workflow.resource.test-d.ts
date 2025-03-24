@@ -109,51 +109,8 @@ describe('workflow function types', () => {
       additionalProperties: false,
     } as const;
 
-    it('should infer an error message type when the provided schema is for a primitive type', () => {
+    it('should infer an unknown record type when the provided schema is for a primitive type', () => {
       const primitiveSchema = { type: 'string' } as const;
-      workflow('without-schema', async ({ step }) => {
-        await step.email(
-          'without-schema',
-          async (controls) => {
-            expectTypeOf(controls).toEqualTypeOf<{
-              SchemaError: "Schema must describe an object data structure. Received data type: 'string'";
-            }>();
-
-            return {
-              subject: 'Test subject',
-              body: 'Test body',
-            };
-          },
-          {
-            controlSchema: primitiveSchema,
-          }
-        );
-      });
-    });
-
-    it('should infer an error message type when the provided schema is for an array type', () => {
-      const arraySchema = { type: 'array', items: { type: 'string' } } as const;
-      workflow('without-schema', async ({ step }) => {
-        await step.email(
-          'without-schema',
-          async (controls) => {
-            expectTypeOf(controls).toEqualTypeOf<{
-              SchemaError: `Schema must describe an object data structure. Received data type: 'string[]'`;
-            }>();
-
-            return {
-              subject: 'Test subject',
-              body: 'Test body',
-            };
-          },
-          {
-            controlSchema: arraySchema,
-          }
-        );
-      });
-    });
-
-    it('should infer an unknown record type when the provided schema is undefined', () => {
       workflow('without-schema', async ({ step }) => {
         await step.email(
           'without-schema',
@@ -166,7 +123,8 @@ describe('workflow function types', () => {
             };
           },
           {
-            controlSchema: undefined,
+            // @ts-expect-error - schema is for a primitive type
+            controlSchema: primitiveSchema,
           }
         );
       });

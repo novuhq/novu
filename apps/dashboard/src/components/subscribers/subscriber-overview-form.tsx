@@ -37,7 +37,7 @@ const basicSetup = { lineNumbers: true, defaultKeymap: true };
 const toastOptions: ExternalToast = {
   position: 'bottom-right',
   classNames: {
-    toast: 'mb-4 right-0',
+    toast: 'mb-4 right-0 pointer-events-none',
   },
 };
 
