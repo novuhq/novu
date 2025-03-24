@@ -1,3 +1,25 @@
+## 3.0.1 (2025-03-24)
+
+### 🚀 Features
+
+- **js:** create channel per env subscriber ([#7939](https://github.com/novuhq/novu/pull/7939))
+- **js,api-service:** inbox dev mode footer ([#7937](https://github.com/novuhq/novu/pull/7937))
+
+### 🩹 Fixes
+
+- **js:** inbox align dropdown icons and labels ([4ceed203f](https://github.com/novuhq/novu/commit/4ceed203f))
+
+### ❤️ Thank You
+
+- Aaron Ritter @Aaron-Ritter
+- GalTidhar @tatarco
+- George Djabarov @djabarovgeorge
+- Pawan Jain
+- Paweł
+- Paweł Tymczuk @LetItRock
+- Sokratis Vidros @SokratisVidros
+
+
 # 3.0.0 (2025-03-17)
 
 ### 🚀 Features

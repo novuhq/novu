@@ -1,3 +1,24 @@
+## 3.0.1 (2025-03-24)
+
+### 🩹 Fixes
+
+- **react,nextjs:** Add use-client to exports ([#7934](https://github.com/novuhq/novu/pull/7934))
+- **react:** use counts hooks used with not existing tags ([#7933](https://github.com/novuhq/novu/pull/7933))
+
+### 🧱 Updated Dependencies
+
+- Updated @novu/js to 3.0.1
+
+### ❤️ Thank You
+
+- Aaron Ritter @Aaron-Ritter
+- GalTidhar @tatarco
+- George Desipris @desiprisg
+- Pawan Jain
+- Paweł Tymczuk @LetItRock
+- Sokratis Vidros @SokratisVidros
+
+
 # 3.0.0 (2025-03-17)
 
 ### 🚀 Features

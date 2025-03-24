@@ -1,18 +1,19 @@
-import { LockUpgrade } from '@/components/icons/lock-upgrade';
 import { Tooltip, TooltipContent, TooltipPortal, TooltipTrigger } from '@/components/primitives/tooltip';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import { ActivityFiltersData } from '@/types/activity';
 import { ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { useOrganization } from '@clerk/clerk-react';
-import { ApiServiceLevelEnum, ChannelTypeEnum, FeatureNameEnum, getFeatureForTierAsNumber } from '@novu/shared';
+import { ChannelTypeEnum } from '@novu/shared';
 import { CalendarIcon } from 'lucide-react';
+import { Badge } from '@/components/primitives/badge';
 import { Link } from 'react-router-dom';
 import { useFetchWorkflows } from '../../hooks/use-fetch-workflows';
 import { Button } from '../primitives/button';
 import { FacetedFormFilter } from '../primitives/form/faceted-filter/facated-form-filter';
-import { CHANNEL_OPTIONS, DATE_RANGE_OPTIONS } from './constants';
-
+import { CHANNEL_OPTIONS } from './constants';
+import { buildActivityDateFilters } from '@/utils/activityFilters';
+import { useMemo } from 'react';
 type Fields = 'dateRange' | 'workflows' | 'channels' | 'transactionId' | 'subscriberId';
 
 export type ActivityFilters = {
@@ -32,7 +33,9 @@ const UpgradeCtaIcon: React.ComponentType<{ className?: string }> = () => {
           to={ROUTES.SETTINGS_BILLING + '?utm_source=activity-feed-retention'}
           className="block transition-all duration-200 hover:scale-110"
         >
-          <LockUpgrade className="h-4 w-4 text-neutral-300 hover:text-neutral-400" />
+          <Badge color="purple" size="sm" variant="lighter">
+            Upgrade
+          </Badge>
         </Link>
       </TooltipTrigger>
       <TooltipPortal>
@@ -54,29 +57,19 @@ export function ActivityFilters({
   const { organization } = useOrganization();
   const { subscription } = useFetchSubscription();
 
-  const maxActivityFeedRetentionMs = getFeatureForTierAsNumber(
-    FeatureNameEnum.PLATFORM_ACTIVITY_FEED_RETENTION,
-    subscription?.apiServiceLevel ?? ApiServiceLevelEnum.FREE,
-    true
-  );
+  const maxActivityFeedRetentionOptions = useMemo(() => {
+    if (!organization || !subscription) {
+      return [];
+    }
 
-  const maxActivityFeedRetentionOptions = DATE_RANGE_OPTIONS.map((option) => {
-    const isLegacyFreeTier =
-      subscription?.apiServiceLevel === ApiServiceLevelEnum.FREE &&
-      organization &&
-      organization.createdAt < new Date('2025-02-28');
-
-    // legacy free can go up to 30 days
-    const legacyFreeMaxRetentionMs = 30 * 24 * 60 * 60 * 1000;
-    const maxRetentionMs = isLegacyFreeTier ? legacyFreeMaxRetentionMs : maxActivityFeedRetentionMs;
-
-    return {
-      disabled: option.ms > maxRetentionMs,
-      label: option.label,
-      value: option.value,
-      icon: option.ms > maxRetentionMs ? UpgradeCtaIcon : undefined,
-    };
-  });
+    return buildActivityDateFilters({
+      organization,
+      subscription,
+    }).map((option) => ({
+      ...option,
+      icon: option.disabled ? UpgradeCtaIcon : undefined,
+    }));
+  }, [organization, subscription]);
 
   return (
     <div className={cn('flex items-center gap-2 p-2 py-[11px]', className)}>

@@ -3,7 +3,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip';
 import { cn } from '../../utils/ui';
 
 interface HelpTooltipIndicatorProps {
-  text: string;
+  text: React.ReactNode;
   className?: string;
   size?: '3' | '4' | '5';
 }

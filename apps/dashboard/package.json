@@ -1,7 +1,7 @@
 {
   "name": "@novu/dashboard",
   "private": true,
-  "version": "2.1.11",
+  "version": "2.1.13",
   "type": "module",
   "scripts": {
     "start": "vite",
@@ -27,8 +27,8 @@
     "@maily-to/core": "github:novuhq/maily.to.git#main&path:/packages/core",
     "@novu/api": "workspace:*",
     "@novu/framework": "workspace:*",
-    "@novu/js": "^3.0.0",
-    "@novu/react": "^3.0.0",
+    "@novu/js": "workspace:*",
+    "@novu/react": "workspace:*",
     "@novu/shared": "workspace:*",
     "@radix-ui/react-accordion": "^1.2.1",
     "@radix-ui/react-alert-dialog": "^1.1.6",

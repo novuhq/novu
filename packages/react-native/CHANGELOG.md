@@ -1,3 +1,16 @@
+## 3.0.1 (2025-03-24)
+
+### 🧱 Updated Dependencies
+
+- Updated @novu/react to 3.0.1
+
+### ❤️ Thank You
+
+- Aaron Ritter @Aaron-Ritter
+- GalTidhar @tatarco
+- Pawan Jain
+- Sokratis Vidros @SokratisVidros
+
 ## 2.6.6 (2025-02-25)
 
 ### 🚀 Features
@@ -18,7 +31,6 @@
 
 - GalTidhar @tatarco
 - George Djabarov @djabarovgeorge
-
 
 ## 2.6.5 (2025-02-07)
 
@@ -64,7 +76,6 @@
 - Paweł Tymczuk @LetItRock
 - Sokratis Vidros @SokratisVidros
 
-
 ## 2.3.5 (2024-12-24)
 
 ### 🧱 Updated Dependencies
@@ -77,7 +88,6 @@
 - George Desipris @desiprisg
 - George Djabarov @djabarovgeorge
 - Pawan Jain
-
 
 ## 2.3.3 (2024-11-26)
 
@@ -96,7 +106,7 @@
 
 - Updated @novu/react to 2.6.2
 
-### ❤️  Thank You
+### ❤️ Thank You
 
 - George Desipris @desiprisg
 - Himanshu Garg @merrcury
@@ -113,7 +123,7 @@
 
 - **react-native:** Do not create a tarball locally during build ([0cea280c1](https://github.com/novuhq/novu/commit/0cea280c1))
 
-### ❤️  Thank You
+### ❤️ Thank You
 
 - Dima Grossman
 - Sokratis Vidros @SokratisVidros

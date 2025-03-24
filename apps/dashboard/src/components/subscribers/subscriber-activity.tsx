@@ -1,27 +1,44 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AnimatePresence } from 'motion/react';
-
+import { useOrganization } from '@clerk/clerk-react';
 import { ActivityFilters } from '@/components/activity/activity-filters';
 import { defaultActivityFilters } from '@/components/activity/constants';
 import { ActivityFiltersData } from '@/types/activity';
 import { useFetchActivities } from '@/hooks/use-fetch-activities';
+import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import { SubscriberActivityList } from '@/components/subscribers/subscriber-activity-list';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { useEnvironment } from '@/context/environment/hooks';
 import { ActivityDetailsDrawer } from '@/components/subscribers/subscriber-activity-drawer';
+import { getMaxAvailableActivityFeedDateRange } from '@/utils/activityFilters';
 
-const getInitialFilters = (subscriberId: string): ActivityFiltersData => ({
-  dateRange: '30d',
+const getInitialFilters = (subscriberId: string, dateRange: string): ActivityFiltersData => ({
   channels: [],
-  workflows: [],
-  transactionId: '',
+  dateRange: dateRange || '24h',
   subscriberId,
+  transactionId: '',
+  workflows: [],
 });
 
 export const SubscriberActivity = ({ subscriberId }: { subscriberId: string }) => {
+  const { organization } = useOrganization();
   const { currentEnvironment } = useEnvironment();
-  const [filters, setFilters] = useState<ActivityFiltersData>(getInitialFilters(subscriberId));
+  const { subscription } = useFetchSubscription();
+
+  const maxAvailableActivityFeedDateRange = useMemo(
+    () =>
+      getMaxAvailableActivityFeedDateRange({
+        organization,
+        subscription,
+      }),
+    [organization, subscription]
+  );
+
+  const [filters, setFilters] = useState<ActivityFiltersData>(
+    getInitialFilters(subscriberId, maxAvailableActivityFeedDateRange)
+  );
+
   const [activityItemId, setActivityItemId] = useState<string>('');
   const { activities, isLoading } = useFetchActivities(
     {
@@ -35,7 +52,7 @@ export const SubscriberActivity = ({ subscriberId }: { subscriberId: string }) =
   );
 
   const handleClearFilters = () => {
-    setFilters(getInitialFilters(subscriberId));
+    setFilters(getInitialFilters(subscriberId, maxAvailableActivityFeedDateRange));
   };
 
   const hasChangesInFilters = useMemo(() => {

@@ -1,3 +1,23 @@
+## 3.0.2 (2025-03-24)
+
+### 🩹 Fixes
+
+- **nextjs:** Fix router compat when use client is used ([#7951](https://github.com/novuhq/novu/pull/7951))
+- **react,nextjs:** Add use-client to exports ([#7934](https://github.com/novuhq/novu/pull/7934))
+
+### 🧱 Updated Dependencies
+
+- Updated @novu/react to 3.0.1
+
+### ❤️ Thank You
+
+- Aaron Ritter @Aaron-Ritter
+- GalTidhar @tatarco
+- George Desipris @desiprisg
+- Pawan Jain
+- Sokratis Vidros @SokratisVidros
+
+
 # 3.0.0 (2025-03-17)
 
 ### 🚀 Features

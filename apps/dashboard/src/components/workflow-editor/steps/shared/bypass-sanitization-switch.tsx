@@ -30,10 +30,27 @@ export const BypassSanitizationSwitch = () => {
           </FormItem>
         )}
       />
-      <FormLabel className="text-foreground-600 text-xs">Bypass sanitization</FormLabel>
+      <FormLabel className="text-foreground-600 text-xs">Disable content sanitization</FormLabel>
       <HelpTooltipIndicator
         size="4"
-        text="Disabling content sanitization may expose your app to security risks such as XSS attacks. Only use with trusted input."
+        text={
+          <>
+            <p>
+              By default, Novu sanitizes subject and body to ensure it is safe to render in In-app and email
+              notifications.
+            </p>
+            <br />
+            <p>
+              The sanitization applies to suspicious HTML tags such as <script /> and entities such as &amp;, &lt;,
+              &gt;.
+            </p>
+            <br />
+            <p>
+              Disabling content sanitization should be used with trusted trigger payload so as not to expose your app to
+              security risks such as XSS attacks.
+            </p>
+          </>
+        }
       />
     </div>
   );
