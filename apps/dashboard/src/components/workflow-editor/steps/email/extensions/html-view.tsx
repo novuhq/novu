@@ -21,6 +21,23 @@ type NodeContent = {
   };
 };
 
+/**
+ * Reset default margin styles in email clients
+ *
+ * Email clients can have inconsistent default margins for common HTML elements
+ * which can break email layouts. This CSS resets margins to 0 and sets a consistent
+ * line height to ensure predictable spacing across different email clients.
+ */
+const EMAIL_RESET_MARGIN_STYLES = `
+  <style>
+    blockquote, h1, h2, h3, img, li, ol, p, ul {
+      margin-top: 0;
+      margin-bottom: 0;
+      line-height: 1.5rem;
+    }
+  </style>
+`;
+
 function CodeView() {
   return (
     <div className="rounded-[10px] border border-solid p-[2px]">
@@ -79,7 +96,7 @@ function PreviewView(props: { node: NodeViewRendererProps['node']; onClick: () =
         ref={(node) => {
           if (node && !node.shadowRoot) {
             const shadow = node.attachShadow({ mode: 'open' });
-            shadow.innerHTML = html;
+            shadow.innerHTML = EMAIL_RESET_MARGIN_STYLES + html;
           }
         }}
       />
