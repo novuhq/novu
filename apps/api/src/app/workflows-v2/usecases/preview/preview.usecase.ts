@@ -1,5 +1,7 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import _ from 'lodash';
+import set from 'lodash/set';
+import get from 'lodash/get';
 import Ajv, { ErrorObject } from 'ajv';
 import addFormats from 'ajv-formats';
 import { captureException } from '@sentry/node';
@@ -28,10 +30,10 @@ import { JSONContent as MailyJSONContent } from '@maily-to/render';
 import { PreviewStep, PreviewStepCommand } from '../../../bridge/usecases/preview-step';
 import { FrameworkPreviousStepsOutputState } from '../../../bridge/usecases/preview-step/preview-step.command';
 import { BuildStepDataUsecase } from '../build-step-data';
-import { GeneratePreviewCommand } from './generate-preview.command';
+import { PreviewCommand } from './preview.command';
 import { ExtractVariablesCommand } from '../extract-variables/extract-variables.command';
 import { ExtractVariables } from '../extract-variables/extract-variables.usecase';
-import { Variable } from '../../util/template-parser/liquid-parser';
+import { buildLiquidParser, Variable } from '../../util/template-parser/liquid-parser';
 import { buildVariables } from '../../util/build-variables';
 import { keysToObject, mergeCommonObjectKeys, multiplyArrayItems } from '../../util/utils';
 import { buildVariablesSchema } from '../../util/create-schema';
@@ -40,7 +42,7 @@ import { isObjectMailyJSONContent } from '../../../environments-v1/usecases/outp
 const LOG_CONTEXT = 'GeneratePreviewUsecase';
 
 @Injectable()
-export class GeneratePreviewUsecase {
+export class PreviewUsecase {
   constructor(
     private previewStepUsecase: PreviewStep,
     private buildStepDataUsecase: BuildStepDataUsecase,
@@ -50,7 +52,7 @@ export class GeneratePreviewUsecase {
   ) {}
 
   @InstrumentUsecase()
-  async execute(command: GeneratePreviewCommand): Promise<GeneratePreviewResponseDto> {
+  async execute(command: PreviewCommand): Promise<GeneratePreviewResponseDto> {
     try {
       const {
         stepData,
@@ -83,6 +85,7 @@ export class GeneratePreviewUsecase {
 
       for (const [controlKey, controlValue] of Object.entries(sanitizedValidatedControls || {})) {
         const variables = buildVariables(variableSchema, controlValue, this.logger);
+
         const processedControlValues = this.fixControlValueInvalidVariables(controlValue, variables.invalidVariables);
         const showIfVariables: string[] = this.findShowIfVariables(processedControlValues);
         const validVariableNames = variables.validVariables.map((variable) => variable.name);
@@ -172,7 +175,10 @@ export class GeneratePreviewUsecase {
   private sanitizeControlsForPreview(initialControlValues: Record<string, unknown>, stepData: StepResponseDto) {
     const sanitizedValues = dashboardSanitizeControlValues(this.logger, initialControlValues, stepData.type);
 
-    return sanitizeControlValuesByOutputSchema(sanitizedValues || {}, stepData.type);
+    const sanitizedByOutputSchema = sanitizeControlValuesByOutputSchema(sanitizedValues || {}, stepData.type);
+    const sanitizedByLiquidCompilation = sanitizeControlValuesByLiquidCompilationFailure(sanitizedByOutputSchema || {});
+
+    return sanitizedByLiquidCompilation;
   }
 
   private mergeVariablesExample(
@@ -202,7 +208,7 @@ export class GeneratePreviewUsecase {
     return variablesExample;
   }
 
-  private async initializePreviewContext(command: GeneratePreviewCommand) {
+  private async initializePreviewContext(command: PreviewCommand) {
     const stepData = await this.getStepData(command);
     const controlValues = command.generatePreviewRequestDto.controlValues || stepData.controls.values || {};
     const workflow = await this.findWorkflow(command);
@@ -214,7 +220,7 @@ export class GeneratePreviewUsecase {
   @Instrument()
   private async buildVariablesSchema(
     variables: Record<string, unknown>,
-    command: GeneratePreviewCommand,
+    command: PreviewCommand,
     controlValues: Record<string, unknown>
   ) {
     const { payload } = await this.extractVariables.execute(
@@ -236,7 +242,7 @@ export class GeneratePreviewUsecase {
   }
 
   @Instrument()
-  private async findWorkflow(command: GeneratePreviewCommand) {
+  private async findWorkflow(command: PreviewCommand) {
     return await this.getWorkflowByIdsUseCase.execute(
       GetWorkflowByIdsCommand.create({
         workflowIdOrInternalId: command.workflowIdOrInternalId,
@@ -248,7 +254,7 @@ export class GeneratePreviewUsecase {
   }
 
   @Instrument()
-  private async getStepData(command: GeneratePreviewCommand) {
+  private async getStepData(command: PreviewCommand) {
     return await this.buildStepDataUsecase.execute({
       workflowIdOrInternalId: command.workflowIdOrInternalId,
       stepIdOrInternalId: command.stepIdOrInternalId,
@@ -262,7 +268,7 @@ export class GeneratePreviewUsecase {
 
   @Instrument()
   private async executePreviewUsecase(
-    command: GeneratePreviewCommand,
+    command: PreviewCommand,
     stepData: StepResponseDto,
     hydratedPayload: PreviewPayload,
     controlValues: Record<string, unknown>
@@ -381,6 +387,26 @@ function sanitizeControlValuesByOutputSchema(
   }
 
   return replaceInvalidControlValues(controlValues, errors);
+}
+
+function sanitizeControlValuesByLiquidCompilationFailure(
+  controlValues: Record<string, unknown>
+): Record<string, unknown> {
+  const parserEngine = buildLiquidParser();
+  const fixedValues = _.cloneDeep(controlValues);
+
+  for (const [key, value] of Object.entries(controlValues)) {
+    try {
+      parserEngine.parse(JSON.stringify(value));
+
+      continue;
+    } catch (error) {
+      const defaultValue = get(previewControlValueDefault, key);
+      set(fixedValues, key, defaultValue);
+    }
+  }
+
+  return fixedValues;
 }
 
 /**

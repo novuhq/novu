@@ -34,12 +34,15 @@ import {
   QueryValidatorService,
 } from '../../../shared/services/query-parser/query-validator.service';
 import { parseStepVariables } from '../../util/parse-step-variables';
+import { buildLiquidParser } from '../../util/template-parser/liquid-parser';
 
 const PAYLOAD_FIELD_PREFIX = 'payload.';
 const SUBSCRIBER_DATA_FIELD_PREFIX = 'subscriber.data.';
 
 @Injectable()
 export class BuildStepIssuesUsecase {
+  private parserEngine = buildLiquidParser();
+
   constructor(
     private buildAvailableVariableSchemaUsecase: BuildVariableSchemaUsecase,
     private controlValuesRepository: ControlValuesRepository,
@@ -119,37 +122,72 @@ export class BuildStepIssuesUsecase {
     controlValues: Record<string, unknown> | null
   ): StepIssuesDto {
     const issues: StepIssuesDto = {};
+    this.processNestedControlValues(controlValues, [], issues, variableSchema);
 
-    function processNestedControlValues(currentValue: unknown, currentPath: string[] = []) {
-      if (!currentValue || typeof currentValue !== 'object') {
-        const liquidTemplateIssues = buildVariables(variableSchema, currentValue);
+    return issues;
+  }
 
-        if (liquidTemplateIssues.invalidVariables.length > 0) {
-          const controlKey = currentPath.join('.');
-          issues.controls = issues.controls || {};
-
-          issues.controls[controlKey] = liquidTemplateIssues.invalidVariables.map((error) => {
-            const message = error.message ? error.message.split(' line:')[0] : '';
-
-            return {
-              message: `Variable ${error.output} ${message}`.trim(),
-              issueType: StepContentIssueEnum.ILLEGAL_VARIABLE_IN_CONTROL_VALUE,
-              variableName: error.output,
-            };
-          });
-        }
+  @Instrument()
+  private processNestedControlValues(
+    currentValue: unknown,
+    currentPath: string[],
+    issues: StepIssuesDto,
+    variableSchema: JSONSchemaDto | undefined
+  ): void {
+    if (!currentValue || typeof currentValue !== 'object') {
+      const contentControlKey = currentPath.join('.');
+      const contentIssue = this.validateContentCompilation(contentControlKey, currentValue);
+      if (contentIssue) {
+        // eslint-disable-next-line no-param-reassign
+        issues.controls = issues.controls || {};
+        // eslint-disable-next-line no-param-reassign
+        issues.controls[contentControlKey] = [contentIssue];
 
         return;
       }
 
-      for (const [key, value] of Object.entries(currentValue)) {
-        processNestedControlValues(value, [...currentPath, key]);
+      const liquidTemplateIssues = buildVariables(variableSchema, currentValue);
+
+      if (liquidTemplateIssues.invalidVariables.length > 0) {
+        const controlKey = currentPath.join('.');
+
+        // eslint-disable-next-line no-param-reassign
+        issues.controls = issues.controls || {};
+
+        // eslint-disable-next-line no-param-reassign
+        issues.controls[controlKey] = liquidTemplateIssues.invalidVariables.map((error) => {
+          const message = error.message ? error.message.split(' line:')[0] : '';
+
+          return {
+            message: `Variable ${error.output} ${message}`.trim(),
+            issueType: StepContentIssueEnum.ILLEGAL_VARIABLE_IN_CONTROL_VALUE,
+            variableName: error.output,
+          };
+        });
       }
+
+      return;
     }
 
-    processNestedControlValues(controlValues);
+    for (const [key, value] of Object.entries(currentValue)) {
+      this.processNestedControlValues(value, [...currentPath, key], issues, variableSchema);
+    }
+  }
 
-    return issues;
+  private validateContentCompilation(controlKey: string, currentValue: unknown): StepContentIssue | null {
+    try {
+      this.parserEngine.parse(JSON.stringify(currentValue));
+
+      return null;
+    } catch (error) {
+      const message = error.message ? error.message.split(', line:1')[0] || error.message.split(' line:1')[0] : '';
+
+      return {
+        message: `Content compilation error: ${message}`.trim(),
+        issueType: StepContentIssueEnum.ILLEGAL_VARIABLE_IN_CONTROL_VALUE,
+        variableName: controlKey,
+      };
+    }
   }
 
   @Instrument()

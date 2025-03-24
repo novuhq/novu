@@ -9,7 +9,6 @@ import {
   Post,
   Put,
   Query,
-  UseGuards,
   UseInterceptors,
 } from '@nestjs/common/decorators';
 import { ApiTags } from '@nestjs/swagger';
@@ -31,7 +30,6 @@ import {
   WorkflowResponseDto,
   WorkflowTestDataResponseDto,
 } from '@novu/shared';
-import { EnvironmentRepository } from '@novu/dal';
 import { ApiCommonResponses } from '../shared/framework/response.decorator';
 import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
 import { ParseSlugEnvironmentIdPipe } from './pipes/parse-slug-env-id.pipe';
@@ -42,8 +40,8 @@ import {
   BuildWorkflowTestDataUseCase,
   WorkflowTestDataCommand,
 } from './usecases';
-import { GeneratePreviewCommand } from './usecases/generate-preview/generate-preview.command';
-import { GeneratePreviewUsecase } from './usecases/generate-preview/generate-preview.usecase';
+import { PreviewCommand } from './usecases/preview/preview.command';
+import { PreviewUsecase } from './usecases/preview/preview.usecase';
 import { GetWorkflowCommand } from './usecases/get-workflow/get-workflow.command';
 import { GetWorkflowUseCase } from './usecases/get-workflow/get-workflow.usecase';
 import { ListWorkflowsUseCase } from './usecases/list-workflows/list-workflow.usecase';
@@ -69,7 +67,7 @@ export class WorkflowController {
     private listWorkflowsUseCase: ListWorkflowsUseCase,
     private deleteWorkflowUsecase: DeleteWorkflowUseCase,
     private syncToEnvironmentUseCase: SyncToEnvironmentUseCase,
-    private generatePreviewUseCase: GeneratePreviewUsecase,
+    private previewUsecase: PreviewUsecase,
     private buildWorkflowTestDataUseCase: BuildWorkflowTestDataUseCase,
     private buildStepDataUsecase: BuildStepDataUsecase,
     private patchStepDataUsecase: PatchStepUsecase,
@@ -176,8 +174,8 @@ export class WorkflowController {
     @Param('stepId', ParseSlugIdPipe) stepIdOrInternalId: string,
     @Body() generatePreviewRequestDto: GeneratePreviewRequestDto
   ): Promise<GeneratePreviewResponseDto> {
-    return await this.generatePreviewUseCase.execute(
-      GeneratePreviewCommand.create({
+    return await this.previewUsecase.execute(
+      PreviewCommand.create({
         user,
         workflowIdOrInternalId,
         stepIdOrInternalId,
