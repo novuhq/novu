@@ -8,9 +8,11 @@ import { Label, LabelAsterisk, LabelSub } from '@/components/primitives/label';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { cn } from '@/utils/ui';
 import { BsFillInfoCircleFill } from 'react-icons/bs';
-import { RiErrorWarningFill, RiInformationFill } from 'react-icons/ri';
+import { RiErrorWarningFill, RiLightbulbFlashLine } from 'react-icons/ri';
 import { Hint, HintIcon } from '../hint';
 import { FormFieldContext, FormItemContext, useFormField } from './form-context';
+import { AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 
 const Form = FormProvider;
 
@@ -46,7 +48,7 @@ const FormItem = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivEl
 
     return (
       <FormItemContext.Provider value={{ id }}>
-        <div ref={ref} className={cn('space-y-1', className)} {...props} />
+        <div ref={ref} className={cn('space-y-1.5', className)} {...props} />
       </FormItemContext.Provider>
     );
   }
@@ -119,10 +121,19 @@ const FormMessagePure = React.forwardRef<
   }
 
   return (
-    <Hint hasError={!!error} {...props}>
-      <HintIcon as={error ? RiErrorWarningFill : RiInformationFill} />
-      {body}
-    </Hint>
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0, y: -5 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -5 }}
+        transition={{ duration: 0.3 }}
+      >
+        <Hint hasError={!!error} {...props}>
+          <HintIcon as={error ? RiErrorWarningFill : RiLightbulbFlashLine} />
+          {body}
+        </Hint>
+      </motion.div>
+    </AnimatePresence>
   );
 });
 FormMessagePure.displayName = 'FormMessagePure';
