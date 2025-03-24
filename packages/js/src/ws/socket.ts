@@ -42,7 +42,6 @@ const mapToNotification = ({
   cta,
   tags,
   data,
-  workflowIdentifier,
   workflowId,
 }: TODO): InboxNotification => {
   const to: Subscriber = {
@@ -97,7 +96,6 @@ const mapToNotification = ({
         }
       : undefined,
     data,
-    workflowIdentifier,
     workflowId,
   };
 };

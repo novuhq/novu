@@ -114,7 +114,6 @@ export type InboxNotification = {
   tags?: string[];
   data?: Record<string, unknown>;
   redirect?: Redirect;
-  workflowIdentifier: string;
   workflowId: string;
 };
 

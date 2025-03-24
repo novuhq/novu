@@ -73,8 +73,7 @@ const mapSingleItem = ({
         }
       : undefined,
     data,
-    workflowIdentifier: templateIdentifier,
-    workflowId: _templateId,
+    workflowId: templateIdentifier,
   };
 };
 
