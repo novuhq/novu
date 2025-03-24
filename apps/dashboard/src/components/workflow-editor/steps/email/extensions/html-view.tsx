@@ -90,7 +90,10 @@ function PreviewView(props: { node: NodeViewRendererProps['node']; onClick: () =
   return (
     <div className="group relative cursor-pointer" onClick={onClick}>
       <div
-        className={cn('min-h-[42px] rounded-[10px] border border-transparent group-hover:border-[#C1DDFB]')}
+        className={cn(
+          'min-h-[42px] rounded-[10px] border border-transparent group-hover:border-[#C1DDFB]',
+          'flex flex-col justify-center'
+        )}
         contentEditable={false}
         // use shadow DOM to isolate the styles
         ref={(node) => {
