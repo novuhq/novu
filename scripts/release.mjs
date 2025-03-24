@@ -5,6 +5,16 @@
  *
  * Known issues:
  * - nx release with independent versioning and updateDependents: "auto" increases patch by the amount of dependencies updated (https://github.com/nrwl/nx/issues/27823)
+ *
+ * Alternative options:
+ *
+ * If the global release script fails for any reason, you can run the following independent NX commands to release the packages individually:
+ *
+ * pnpm nx release version v3.0.0 --projects=@novu/js,@novu/react,@novu/nextjs
+ * pnpm nx release changelog v3.0.0 --projects=@novu/js,@novu/react,@novu/nextjs
+ * pnpm run build:packages
+ * pnpm nx release publish --projects=@novu/js,@novu/react,@novu/nextjs
+ *
  */
 
 import { hideBin } from 'yargs/helpers';
