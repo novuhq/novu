@@ -24,6 +24,14 @@ type MailyProps = HTMLAttributes<HTMLDivElement> & {
 
 const VARIABLE_TRIGGER_CHARACTER = '{{';
 
+/**
+ * Fixed width (600px) for the email editor and rendered content.
+ * This width ensures optimal compatibility across email clients
+ * while maintaining good readability on all devices.
+ * (Hardcoded in Maily)
+ */
+export const MAILY_EMAIL_WIDTH = 600;
+
 export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
   const { step } = useWorkflow();
   const mailyVariables = useMemo(
@@ -169,7 +177,10 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
     <>
       {overrideTippyBoxStyles()}
       <div
-        className={cn('shadow-xs mx-auto flex h-full flex-col items-start rounded-lg bg-white', className)}
+        className={cn(
+          `shadow-xs mx-auto flex h-full max-w-[${MAILY_EMAIL_WIDTH}px] flex-col items-start rounded-lg bg-white`,
+          className
+        )}
         {...rest}
       >
         <Editor
