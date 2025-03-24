@@ -74,6 +74,9 @@ export const sanitizeHtmlInObjectLegacy = <T extends Record<string, unknown>>(ob
   }, {} as T);
 };
 
+/**
+ * @deprecated Use sanitizer.service.ts instead
+ */
 export function sanitizeMessageContent(content: string | IEmailBlock[]) {
   if (typeof content === 'string') {
     return sanitizeHTMLLegacy(content);
