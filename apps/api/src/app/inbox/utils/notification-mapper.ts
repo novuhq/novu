@@ -19,7 +19,6 @@ const mapSingleItem = ({
   tags,
   data,
   templateIdentifier,
-  _templateId,
 }: MessageEntity): InboxNotification => {
   const to: Subscriber = {
     id: subscriber?._id ?? '',
