@@ -23,7 +23,6 @@ export class Notification implements Pick<NovuEventEmitter, 'on'>, InboxNotifica
   readonly tags: InboxNotification['tags'];
   readonly redirect: InboxNotification['redirect'];
   readonly data?: InboxNotification['data'];
-  readonly workflowIdentifier: InboxNotification['workflowIdentifier'];
   readonly workflowId: InboxNotification['workflowId'];
 
   constructor(notification: InboxNotification, emitter: NovuEventEmitter, inboxService: InboxService) {
