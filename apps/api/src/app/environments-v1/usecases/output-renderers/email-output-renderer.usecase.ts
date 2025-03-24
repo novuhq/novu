@@ -1,8 +1,8 @@
 /* eslint-disable no-param-reassign */
 import { render as mailyRender, JSONContent as MailyJSONContent } from '@maily-to/render';
 import { Injectable } from '@nestjs/common';
-import { EmailRenderOutput, FeatureFlagsKeysEnum } from '@novu/shared';
-import { InstrumentUsecase, sanitizeHTML, FeatureFlagsService } from '@novu/application-generic';
+import { EmailRenderOutput } from '@novu/shared';
+import { InstrumentUsecase, sanitizeHTML } from '@novu/application-generic';
 
 import { FullPayloadForRender, RenderCommand } from './render-command';
 import { WrapMailyInLiquidUseCase } from './maily-to-liquid/wrap-maily-in-liquid.usecase';
@@ -14,10 +14,7 @@ export class EmailOutputRendererCommand extends RenderCommand {}
 
 @Injectable()
 export class EmailOutputRendererUsecase {
-  constructor(
-    private wrapMailyInLiquidUsecase: WrapMailyInLiquidUseCase,
-    private featureFlagsService: FeatureFlagsService
-  ) {}
+  constructor(private wrapMailyInLiquidUsecase: WrapMailyInLiquidUseCase) {}
 
   @InstrumentUsecase()
   async execute(renderCommand: EmailOutputRendererCommand): Promise<EmailRenderOutput> {
@@ -47,19 +44,6 @@ export class EmailOutputRendererUsecase {
      * rather than handling invalid types here.
      */
     const subject = controlSubject as string;
-
-    const isEmailSanitizationFeatureEnabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_EMAIL_SANITIZATION_ENABLED,
-      defaultValue: false,
-      user: { _id: 'system' },
-    });
-
-    if (!isEmailSanitizationFeatureEnabled) {
-      return {
-        subject: sanitizeHTML(subject),
-        body: sanitizeHTML(renderedHtml),
-      };
-    }
 
     if (disableOutputSanitization) {
       return { subject, body: renderedHtml };

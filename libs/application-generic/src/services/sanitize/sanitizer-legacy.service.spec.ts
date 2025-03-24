@@ -1,20 +1,16 @@
 import { expect } from 'chai';
 import { EmailBlockTypeEnum, IEmailBlock } from '@novu/shared';
 
-import { sanitizeHTML, sanitizeMessageContent } from './sanitizer.service';
+import { sanitizeHTMLLegacy as sanitizeHTML, sanitizeMessageContent } from './sanitizer-legacy.service';
 
 describe('HTML Sanitizer', function () {
   it('should sanitize bad html', function () {
-    const sanitizedHtml = sanitizeHTML(
-      'hello <b>bold</b> <script>alert(123)</script>',
-    );
+    const sanitizedHtml = sanitizeHTML('hello <b>bold</b> <script>alert(123)</script>');
     expect(sanitizedHtml).to.equal('hello <b>bold</b> ');
   });
 
   it('should sanitized message text content', function () {
-    const result = sanitizeMessageContent(
-      'hello <b>bold</b> <script>alert(123)</script>',
-    );
+    const result = sanitizeMessageContent('hello <b>bold</b> <script>alert(123)</script>');
     expect(result).to.equal('hello <b>bold</b> ');
   });
 
@@ -39,9 +35,7 @@ describe('HTML Sanitizer', function () {
       },
     ]) as IEmailBlock[];
 
-    expect(result[0].content).to.equal(
-      '<style>p { color: red; }</style><p>Red Text</p>',
-    );
+    expect(result[0].content).to.equal('<style>p { color: red; }</style><p>Red Text</p>');
   });
 
   it('should NOT sanitize style attributes', function () {
@@ -72,14 +66,11 @@ describe('HTML Sanitizer', function () {
     const result = sanitizeMessageContent([
       {
         type: EmailBlockTypeEnum.TEXT,
-        content:
-          '<img src="https://example.com/image.jpg" alt="Example Image">',
+        content: '<img src="https://example.com/image.jpg" alt="Example Image">',
         url: '',
       },
     ]) as IEmailBlock[];
 
-    expect(result[0].content).to.equal(
-      '<img src="https://example.com/image.jpg" alt="Example Image" />',
-    );
+    expect(result[0].content).to.equal('<img src="https://example.com/image.jpg" alt="Example Image" />');
   });
 });

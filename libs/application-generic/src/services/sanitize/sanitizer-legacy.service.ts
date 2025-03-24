@@ -1,10 +1,8 @@
 import sanitizeTypes, { IOptions } from 'sanitize-html';
+import { IEmailBlock } from '@novu/shared';
 
 /**
  * Options for the sanitize-html library.
- *
- * We are providing a permissive approach by default, with the exception of
- * disabling `script` tags.
  *
  * @see https://www.npmjs.com/package/sanitize-html#default-options
  */
@@ -12,18 +10,15 @@ const sanitizeOptions: IOptions = {
   /**
    * Additional tags to allow.
    */
-  allowedTags: sanitizeTypes.defaults.allowedTags.concat([
-    'style',
-    'img',
-    'html',
-    'head',
-    'body',
-    'link',
-    'meta',
-    'title',
-  ]),
-  // Setting this to false to allow all attributes.
-  allowedAttributes: false,
+  allowedTags: sanitizeTypes.defaults.allowedTags.concat(['style', 'img']),
+  allowedAttributes: {
+    ...sanitizeTypes.defaults.allowedAttributes,
+    /**
+     * Additional attributes to allow on all tags.
+     */
+    '*': ['style'],
+    img: ['src', 'srcset', 'alt', 'title', 'width', 'height', 'loading'],
+  },
   /**
    * Required to disable console warnings when allowing style tags.
    *
@@ -39,45 +34,38 @@ const sanitizeOptions: IOptions = {
    * formatting of style attributes in the In-App Editor.
    */
   parseStyleAttributes: false,
-  parser: {
-    // Convert the case of attribute names to lowercase.
-    lowerCaseAttributeNames: true,
-  },
 };
 
-export const sanitizeHTML = (html: string): string => {
-  if (!html) {
-    return html;
-  }
+/**
+ * @deprecated Use sanitizeHTML from sanitizer.service.ts instead
+ */
+export function sanitizeHTMLLegacy(html: string) {
+  if (!html) return html;
 
-  // Sanitize-html removes the DOCTYPE tag, so we need to add it back.
-  const doctypeRegex = /^<!DOCTYPE .*?>/;
-  const doctypeTags = html.match(doctypeRegex);
-  const cleanHtml = sanitizeTypes(html, sanitizeOptions);
+  return sanitizeTypes(html, sanitizeOptions);
+}
 
-  const cleanHtmlWithDocType = doctypeTags ? doctypeTags[0] + cleanHtml : cleanHtml;
-
-  return cleanHtmlWithDocType;
-};
-
-export const sanitizeHtmlInObject = <T extends Record<string, unknown>>(object: T): T => {
+/**
+ * @deprecated Use sanitizeHtmlInObject from sanitizer.service.ts instead
+ */
+export const sanitizeHtmlInObjectLegacy = <T extends Record<string, unknown>>(object: T): T => {
   return Object.keys(object).reduce((acc, key: keyof T) => {
     const value = object[key];
 
     if (typeof value === 'string') {
-      acc[key] = sanitizeHTML(value) as T[keyof T];
+      acc[key] = sanitizeHTMLLegacy(value) as T[keyof T];
     } else if (Array.isArray(value)) {
       acc[key] = value.map((item) => {
         if (typeof item === 'string') {
-          return sanitizeHTML(item);
+          return sanitizeHTMLLegacy(item);
         } else if (typeof item === 'object') {
-          return sanitizeHtmlInObject(item);
+          return sanitizeHtmlInObjectLegacy(item);
         } else {
           return item;
         }
       }) as T[keyof T];
     } else if (typeof value === 'object' && value !== null) {
-      acc[key] = sanitizeHtmlInObject(value as Record<string, unknown>) as T[keyof T];
+      acc[key] = sanitizeHtmlInObjectLegacy(value as Record<string, unknown>) as T[keyof T];
     } else {
       acc[key] = value;
     }
@@ -85,3 +73,20 @@ export const sanitizeHtmlInObject = <T extends Record<string, unknown>>(object: 
     return acc;
   }, {} as T);
 };
+
+export function sanitizeMessageContent(content: string | IEmailBlock[]) {
+  if (typeof content === 'string') {
+    return sanitizeHTMLLegacy(content);
+  }
+
+  if (Array.isArray(content)) {
+    return content.map((i) => {
+      return {
+        ...i,
+        content: sanitizeHTMLLegacy(i.content),
+      };
+    });
+  }
+
+  return content;
+}
