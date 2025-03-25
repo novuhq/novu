@@ -21,8 +21,7 @@ export class CreateSubscriberRequestDto {
   })
   @IsString()
   @Matches(VALID_ID_REGEX, {
-    message:
-      'SubscriberId must be a string of alphanumeric characters, hyphens, and underscores or a valid email address',
+    message: 'SubscriberId must be a string of alphanumeric characters, -, and _ or a valid email address.',
   })
   @IsDefined()
   @IsNotEmpty({

@@ -1,4 +1,4 @@
-import { Injectable, Logger, UnprocessableEntityException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, UnprocessableEntityException } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import {
   ExecuteBridgeRequest,
@@ -76,11 +76,11 @@ export class ParseEventRequest {
     ]);
 
     if (!organization) {
-      throw new UnprocessableEntityException('Organization not found');
+      throw new BadRequestException('Organization not found');
     }
 
     if (!environment) {
-      throw new UnprocessableEntityException('Environment not found');
+      throw new BadRequestException('Environment not found');
     }
 
     const statelessWorkflowAllowed = this.isStatelessWorkflowAllowed(command.bridgeUrl);
