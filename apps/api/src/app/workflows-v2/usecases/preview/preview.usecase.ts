@@ -1,6 +1,5 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import _ from 'lodash';
-import set from 'lodash/set';
 import get from 'lodash/get';
 import Ajv, { ErrorObject } from 'ajv';
 import addFormats from 'ajv-formats';
@@ -86,7 +85,19 @@ export class PreviewUsecase {
       for (const [controlKey, controlValue] of Object.entries(sanitizedValidatedControls || {})) {
         const variables = buildVariables(variableSchema, controlValue, this.logger);
 
-        const processedControlValues = this.fixControlValueInvalidVariables(controlValue, variables.invalidVariables);
+        const controlValueWithFixedVariables = this.fixControlValueInvalidVariables(
+          controlValue,
+          variables.invalidVariables
+        );
+
+        /*
+         * Sanitize control values after fixing (by fixControlValueInvalidVariables) invalid variables,
+         * to avoid defaulting (by previewControlValueDefault) all values
+         */
+        const processedControlValues = this.sanitizeControlValuesByLiquidCompilationFailure(
+          controlKey,
+          controlValueWithFixedVariables
+        );
         const showIfVariables: string[] = this.findShowIfVariables(processedControlValues);
         const validVariableNames = variables.validVariables.map((variable) => variable.name);
         const variablesExampleResult = keysToObject(validVariableNames, showIfVariables);
@@ -149,7 +160,7 @@ export class PreviewUsecase {
    * Extracts showIf variables from TipTap nodes to transform template variables
    * (e.g. {{payload.foo}}) into true - for preview purposes
    */
-  private findShowIfVariables(processedControlValues: Record<string, unknown>) {
+  private findShowIfVariables(processedControlValues: unknown) {
     const showIfVariables: string[] = [];
     if (typeof processedControlValues === 'string') {
       try {
@@ -174,11 +185,9 @@ export class PreviewUsecase {
 
   private sanitizeControlsForPreview(initialControlValues: Record<string, unknown>, stepData: StepResponseDto) {
     const sanitizedValues = dashboardSanitizeControlValues(this.logger, initialControlValues, stepData.type);
-
     const sanitizedByOutputSchema = sanitizeControlValuesByOutputSchema(sanitizedValues || {}, stepData.type);
-    const sanitizedByLiquidCompilation = sanitizeControlValuesByLiquidCompilationFailure(sanitizedByOutputSchema || {});
 
-    return sanitizedByLiquidCompilation;
+    return sanitizedByOutputSchema;
   }
 
   private mergeVariablesExample(
@@ -298,10 +307,7 @@ export class PreviewUsecase {
     }
   }
 
-  private fixControlValueInvalidVariables(
-    controlValues: unknown,
-    invalidVariables: Variable[]
-  ): Record<string, unknown> {
+  private fixControlValueInvalidVariables(controlValues: unknown, invalidVariables: Variable[]): unknown {
     try {
       let controlValuesString = JSON.stringify(controlValues);
 
@@ -314,13 +320,24 @@ export class PreviewUsecase {
         controlValuesString = replaceAll(controlValuesString, invalidVariable.output, EMPTY_STRING);
       }
 
-      return JSON.parse(controlValuesString) as Record<string, unknown>;
+      return JSON.parse(controlValuesString);
     } catch (error) {
-      return controlValues as Record<string, unknown>;
+      return controlValues;
+    }
+  }
+
+  private sanitizeControlValuesByLiquidCompilationFailure(key: string, value: unknown): unknown {
+    const parserEngine = buildLiquidParser();
+
+    try {
+      parserEngine.parse(JSON.stringify(value));
+
+      return value;
+    } catch (error) {
+      return get(previewControlValueDefault, key);
     }
   }
 }
-
 function buildState(steps: Record<string, unknown> | undefined): FrameworkPreviousStepsOutputState[] {
   const outputArray: FrameworkPreviousStepsOutputState[] = [];
   for (const [stepId, value] of Object.entries(steps || {})) {
@@ -387,26 +404,6 @@ function sanitizeControlValuesByOutputSchema(
   }
 
   return replaceInvalidControlValues(controlValues, errors);
-}
-
-function sanitizeControlValuesByLiquidCompilationFailure(
-  controlValues: Record<string, unknown>
-): Record<string, unknown> {
-  const parserEngine = buildLiquidParser();
-  const fixedValues = _.cloneDeep(controlValues);
-
-  for (const [key, value] of Object.entries(controlValues)) {
-    try {
-      parserEngine.parse(JSON.stringify(value));
-
-      continue;
-    } catch (error) {
-      const defaultValue = get(previewControlValueDefault, key);
-      set(fixedValues, key, defaultValue);
-    }
-  }
-
-  return fixedValues;
 }
 
 /**

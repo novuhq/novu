@@ -135,19 +135,9 @@ export class BuildStepIssuesUsecase {
     variableSchema: JSONSchemaDto | undefined
   ): void {
     if (!currentValue || typeof currentValue !== 'object') {
-      const contentControlKey = currentPath.join('.');
-      const contentIssue = this.validateContentCompilation(contentControlKey, currentValue);
-      if (contentIssue) {
-        // eslint-disable-next-line no-param-reassign
-        issues.controls = issues.controls || {};
-        // eslint-disable-next-line no-param-reassign
-        issues.controls[contentControlKey] = [contentIssue];
-
-        return;
-      }
-
       const liquidTemplateIssues = buildVariables(variableSchema, currentValue);
 
+      // Prioritize invalid variable validation over content compilation since it provides more granular error details
       if (liquidTemplateIssues.invalidVariables.length > 0) {
         const controlKey = currentPath.join('.');
 
@@ -164,6 +154,17 @@ export class BuildStepIssuesUsecase {
             variableName: error.output,
           };
         });
+      } else {
+        const contentControlKey = currentPath.join('.');
+        const contentIssue = this.validateContentCompilation(contentControlKey, currentValue);
+        if (contentIssue) {
+          // eslint-disable-next-line no-param-reassign
+          issues.controls = issues.controls || {};
+          // eslint-disable-next-line no-param-reassign
+          issues.controls[contentControlKey] = [contentIssue];
+
+          return;
+        }
       }
 
       return;
