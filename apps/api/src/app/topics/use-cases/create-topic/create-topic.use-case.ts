@@ -1,3 +1,4 @@
+import { BadRequestException, ConflictException, Injectable, Logger } from '@nestjs/common';
 import {
   CommunityOrganizationRepository,
   EnvironmentEntity,
@@ -7,10 +8,8 @@ import {
   TopicRepository,
   UserEntity,
 } from '@novu/dal';
-import { ConflictException, Injectable, Logger, UnprocessableEntityException } from '@nestjs/common';
-
-import { FeatureFlagsKeysEnum, VALID_ID_REGEX } from '@novu/shared';
 import { FeatureFlagsService } from '@novu/application-generic';
+import { FeatureFlagsKeysEnum, VALID_ID_REGEX } from '@novu/shared';
 import { CreateTopicCommand } from './create-topic.command';
 
 import { TopicDto } from '../../dtos/topic.dto';
@@ -33,11 +32,11 @@ export class CreateTopicUseCase {
     ]);
 
     if (!organization) {
-      throw new UnprocessableEntityException('Organization not found');
+      throw new BadRequestException('Organization not found');
     }
 
     if (!environment) {
-      throw new UnprocessableEntityException('Environment not found');
+      throw new BadRequestException('Environment not found');
     }
 
     const topicExists = await this.topicRepository.findTopicByKey(
@@ -113,7 +112,7 @@ export class CreateTopicUseCase {
     if (isDryRun) {
       Logger.warn(`[Dry run] Invalid topic key: ${key}`, 'CreateTopicUseCase');
     } else {
-      throw new UnprocessableEntityException(
+      throw new BadRequestException(
         `Invalid topic key: ${key}, only alphanumeric characters, underscores or valid email addresses are allowed`
       );
     }
