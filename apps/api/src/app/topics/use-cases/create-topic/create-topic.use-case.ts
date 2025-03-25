@@ -1,16 +1,43 @@
-import { TopicEntity, TopicRepository } from '@novu/dal';
-import { ConflictException, Injectable } from '@nestjs/common';
-
+import { BadRequestException, ConflictException, Injectable, Logger } from '@nestjs/common';
+import {
+  CommunityOrganizationRepository,
+  EnvironmentEntity,
+  EnvironmentRepository,
+  OrganizationEntity,
+  TopicEntity,
+  TopicRepository,
+  UserEntity,
+} from '@novu/dal';
+import { FeatureFlagsService } from '@novu/application-generic';
+import { FeatureFlagsKeysEnum, VALID_ID_REGEX } from '@novu/shared';
 import { CreateTopicCommand } from './create-topic.command';
 
 import { TopicDto } from '../../dtos/topic.dto';
 
 @Injectable()
 export class CreateTopicUseCase {
-  constructor(private topicRepository: TopicRepository) {}
+  constructor(
+    private topicRepository: TopicRepository,
+    private featureFlagService: FeatureFlagsService,
+    private environmentRepository: EnvironmentRepository,
+    private communityOrganizationRepository: CommunityOrganizationRepository
+  ) {}
 
   async execute(command: CreateTopicCommand) {
     const entity = this.mapToEntity(command);
+
+    const [environment, organization] = await Promise.all([
+      this.environmentRepository.findOne({ _id: command.environmentId }),
+      this.communityOrganizationRepository.findOne({ _id: command.organizationId }),
+    ]);
+
+    if (!organization) {
+      throw new BadRequestException('Organization not found');
+    }
+
+    if (!environment) {
+      throw new BadRequestException('Environment not found');
+    }
 
     const topicExists = await this.topicRepository.findTopicByKey(
       entity.key,
@@ -23,6 +50,13 @@ export class CreateTopicUseCase {
         `Topic exists with key ${entity.key} in the environment ${entity._environmentId} of the organization ${entity._organizationId}`
       );
     }
+
+    await this.validateTopicKey({
+      environment,
+      organization,
+      userId: command.userId,
+      key: entity.key,
+    });
 
     const topic = await this.topicRepository.createTopic(entity);
 
@@ -46,5 +80,41 @@ export class CreateTopicUseCase {
       _environmentId: topic._environmentId,
       subscribers: [],
     };
+  }
+
+  private isValidTopicKey(key: string): boolean {
+    return key.length > 0 && key.match(VALID_ID_REGEX) !== null;
+  }
+
+  private async validateTopicKey({
+    key,
+    userId,
+    environment,
+    organization,
+  }: {
+    key: string;
+    environment?: EnvironmentEntity;
+    organization?: OrganizationEntity;
+    userId: string;
+  }): Promise<void> {
+    const isDryRun = await this.featureFlagService.getFlag({
+      environment,
+      organization,
+      user: { _id: userId } as UserEntity,
+      key: FeatureFlagsKeysEnum.IS_TOPIC_KEYS_VALIDATION_DRY_RUN_ENABLED,
+      defaultValue: true,
+    });
+
+    if (this.isValidTopicKey(key)) {
+      return;
+    }
+
+    if (isDryRun) {
+      Logger.warn(`[Dry run] Invalid topic key: ${key}`, 'CreateTopicUseCase');
+    } else {
+      throw new BadRequestException(
+        `Invalid topic key: ${key}, only alphanumeric characters, underscores or valid email addresses are allowed`
+      );
+    }
   }
 }
