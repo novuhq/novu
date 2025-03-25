@@ -5,7 +5,7 @@ import { ChangeEntityTypeEnum, IMessageAction, isBridgeWorkflow, StepTypeEnum } 
 import { CreateMessageTemplateCommand } from './create-message-template.command';
 import { CreateChange, CreateChangeCommand } from '../../create-change';
 import { UpdateChange, UpdateChangeCommand } from '../../update-change';
-import { sanitizeMessageContent } from '../../../services';
+import { sanitizeMessageContentV0 } from '../../../services';
 import { normalizeVariantDefault } from '../../../utils/variants';
 import { ApiException } from '../../../utils/exceptions';
 import { shouldSanitize } from '../shared';
@@ -37,7 +37,7 @@ export class CreateMessageTemplate {
       name: command.name,
       variables: command.variables ? normalizeVariantDefault(command.variables) : undefined,
       content: shouldSanitize(command.type, command.contentType)
-        ? sanitizeMessageContent(command.content)
+        ? sanitizeMessageContentV0(command.content)
         : command.content,
       contentType: command.contentType,
       subject: command.subject,

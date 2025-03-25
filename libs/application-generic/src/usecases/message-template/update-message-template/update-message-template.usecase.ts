@@ -6,7 +6,7 @@ import { ChangeEntityTypeEnum, isBridgeWorkflow } from '@novu/shared';
 import { UpdateMessageTemplateCommand } from './update-message-template.command';
 import { CreateChange, CreateChangeCommand } from '../../create-change';
 import { UpdateChange, UpdateChangeCommand } from '../../update-change';
-import { sanitizeMessageContent } from '../../../services';
+import { sanitizeMessageContentV0 } from '../../../services';
 import { normalizeVariantDefault } from '../../../utils/variants';
 import { shouldSanitize } from '../shared';
 
@@ -39,7 +39,7 @@ export class UpdateMessageTemplate {
 
     if (command.content !== null || command.content !== undefined) {
       updatePayload.content = shouldSanitize(existingTemplate.type, command.contentType)
-        ? sanitizeMessageContent(command.content)
+        ? sanitizeMessageContentV0(command.content)
         : command.content;
     }
 

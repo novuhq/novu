@@ -39,7 +39,8 @@ const sanitizeOptions: IOptions = {
 /**
  * @deprecated Use sanitizeHTML from sanitizer.service.ts instead
  */
-export function sanitizeHTMLLegacy(html: string) {
+// cspell:disable-next-line
+export function sanitizeHTMLV0(html: string) {
   if (!html) return html;
 
   return sanitizeTypes(html, sanitizeOptions);
@@ -48,24 +49,27 @@ export function sanitizeHTMLLegacy(html: string) {
 /**
  * @deprecated Use sanitizeHtmlInObject from sanitizer.service.ts instead
  */
-export const sanitizeHtmlInObjectLegacy = <T extends Record<string, unknown>>(object: T): T => {
+export const sanitizeHtmlInObjectV0 = <T extends Record<string, unknown>>(object: T): T => {
   return Object.keys(object).reduce((acc, key: keyof T) => {
     const value = object[key];
 
     if (typeof value === 'string') {
-      acc[key] = sanitizeHTMLLegacy(value) as T[keyof T];
+      // cspell:disable-next-line
+      acc[key] = sanitizeHTMLV0(value) as T[keyof T];
     } else if (Array.isArray(value)) {
+      // cspell:disable-next-line
       acc[key] = value.map((item) => {
         if (typeof item === 'string') {
-          return sanitizeHTMLLegacy(item);
+          // cspell:disable-next-line
+          return sanitizeHTMLV0(item);
         } else if (typeof item === 'object') {
-          return sanitizeHtmlInObjectLegacy(item);
+          return sanitizeHtmlInObjectV0(item);
         } else {
           return item;
         }
       }) as T[keyof T];
     } else if (typeof value === 'object' && value !== null) {
-      acc[key] = sanitizeHtmlInObjectLegacy(value as Record<string, unknown>) as T[keyof T];
+      acc[key] = sanitizeHtmlInObjectV0(value as Record<string, unknown>) as T[keyof T];
     } else {
       acc[key] = value;
     }
@@ -77,16 +81,18 @@ export const sanitizeHtmlInObjectLegacy = <T extends Record<string, unknown>>(ob
 /**
  * @deprecated Use sanitizer.service.ts instead
  */
-export function sanitizeMessageContent(content: string | IEmailBlock[]) {
+export function sanitizeMessageContentV0(content: string | IEmailBlock[]) {
   if (typeof content === 'string') {
-    return sanitizeHTMLLegacy(content);
+    // cspell:disable-next-line
+    return sanitizeHTMLV0(content);
   }
 
   if (Array.isArray(content)) {
     return content.map((i) => {
       return {
         ...i,
-        content: sanitizeHTMLLegacy(i.content),
+        // cspell:disable-next-line
+        content: sanitizeHTMLV0(i.content),
       };
     });
   }

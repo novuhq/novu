@@ -28,4 +28,4 @@ export * from './auth';
 export * from './cron';
 export * from './content.service';
 export * from './sanitize/sanitizer.service';
-export * from './sanitize/sanitizer-legacy.service';
+export * from './sanitize/sanitizer-v0.service';
