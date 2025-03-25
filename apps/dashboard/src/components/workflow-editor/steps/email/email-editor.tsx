@@ -24,10 +24,10 @@ export const EmailEditor = (props: EmailEditorProps) => {
             })}
         </EmailPreviewHeader>
       </EmailTabsSection>
-      <EmailTabsSection className="-mx-[2px] -my-[3px] px-7 py-2">
+      <EmailTabsSection className="min-h-[68px]">
         {getComponentByType({ component: subject.component })}
       </EmailTabsSection>
-      <EmailTabsSection className="flex-1 overflow-auto bg-neutral-50 pl-16 pr-16 pt-5">
+      <EmailTabsSection className="flex-1 bg-neutral-50 pl-16 pr-16 pt-5">
         {getComponentByType({ component: body.component })}
       </EmailTabsSection>
     </div>
