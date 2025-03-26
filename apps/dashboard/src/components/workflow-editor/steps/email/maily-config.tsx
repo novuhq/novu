@@ -38,19 +38,14 @@ export const DEFAULT_EDITOR_CONFIG = {
   autofocus: false,
 };
 
-export const createDefaultEditorBlocks = (props: {
-  isCustomEmailBlocksEnabled: boolean;
-  track: ReturnType<typeof useTelemetry>;
-}): BlockGroupItem[] => {
-  const { isCustomEmailBlocksEnabled, track } = props;
+export const createDefaultEditorBlocks = (props: { track: ReturnType<typeof useTelemetry> }): BlockGroupItem[] => {
+  const { track } = props;
   const blocks: BlockGroupItem[] = [];
 
-  if (isCustomEmailBlocksEnabled) {
-    blocks.push({
-      title: 'Highlights',
-      commands: [createHtmlCodeBlock({ track }), createHeaders({ track }), createFooters({ track })],
-    });
-  }
+  blocks.push({
+    title: 'Highlights',
+    commands: [createHtmlCodeBlock({ track }), createHeaders({ track }), createFooters({ track })],
+  });
 
   blocks.push({
     title: 'All blocks',
@@ -71,9 +66,9 @@ export const createDefaultEditorBlocks = (props: {
       section,
       spacer,
       text,
-      ...(isCustomEmailBlocksEnabled
-        ? [createHtmlCodeBlock({ track }), createHeaders({ track }), createFooters({ track })]
-        : []),
+      createHtmlCodeBlock({ track }),
+      createHeaders({ track }),
+      createFooters({ track }),
     ],
   });
 

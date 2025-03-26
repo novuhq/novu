@@ -51,7 +51,6 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
     [mailyVariables.namespaces]
   );
   const [_, setEditor] = useState<any>();
-  const isCustomEmailBlocksEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CUSTOM_EMAIL_BLOCKS_ENABLED);
   const track = useTelemetry();
 
   const calculateVariables = useCallback(
@@ -186,7 +185,7 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
         <Editor
           key="repeat-block-enabled"
           config={DEFAULT_EDITOR_CONFIG}
-          blocks={createDefaultEditorBlocks({ track, isCustomEmailBlocksEnabled })}
+          blocks={createDefaultEditorBlocks({ track })}
           // @ts-expect-error - TODO: Polish Maily typing when extending Maily core and update accordingly
           extensions={extensions}
           contentJson={value ? JSON.parse(value) : undefined}
