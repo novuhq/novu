@@ -77,7 +77,7 @@ export const createDefaultEditorBlocks = (props: {
     ],
   });
 
-  // sort command titles alhpabetically within each block group
+  // sort command titles alphabetically within each block group
   blocks.forEach((blockGroup) => {
     blockGroup.commands.sort((a, b) => a.title.localeCompare(b.title));
   });
