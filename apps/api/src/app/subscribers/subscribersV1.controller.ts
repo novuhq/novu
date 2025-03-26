@@ -249,10 +249,10 @@ export class SubscribersV1Controller {
   @UserAuthentication()
   @ApiResponse(SubscriberResponseDto)
   @ApiOperation({
-    summary: 'Update subscriber',
-    description: 'Used to update the subscriber entity with new information',
+    summary: 'Upsert subscriber',
+    description: 'Used to upsert the subscriber entity with new information',
   })
-  @ApiExcludeEndpoint()
+  @SdkMethodName('upsert')
   async updateSubscriber(
     @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string,
