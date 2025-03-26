@@ -1,10 +1,10 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsBoolean, IsDefined, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsBoolean, IsOptional, ValidateNested } from 'class-validator';
 
 import { IUpdateWorkflowOverrideRequestDto } from '@novu/shared';
 
-import { PreferenceChannels } from '../../shared/dtos/preference-channels';
+import { SubscriberPreferenceChannels } from '../../shared/dtos/preference-channels';
 
 export class UpdateWorkflowOverrideRequestDto implements IUpdateWorkflowOverrideRequestDto {
   @ApiPropertyOptional()
@@ -13,10 +13,10 @@ export class UpdateWorkflowOverrideRequestDto implements IUpdateWorkflowOverride
   active?: boolean;
 
   @ApiPropertyOptional({
-    type: PreferenceChannels,
+    type: SubscriberPreferenceChannels,
   })
   @IsOptional()
   @ValidateNested()
-  @Type(() => PreferenceChannels)
-  preferenceSettings?: PreferenceChannels;
+  @Type(() => SubscriberPreferenceChannels)
+  preferenceSettings?: SubscriberPreferenceChannels;
 }

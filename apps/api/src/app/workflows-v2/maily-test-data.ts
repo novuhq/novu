@@ -113,7 +113,7 @@ export function fullCodeSnippet() {
               {
                 type: 'variable',
                 attrs: {
-                  id: 'subscriber.fullName',
+                  id: 'subscriber.firstName',
                   label: null,
                   fallback: 'should be the fallback value',
                 },
@@ -526,7 +526,7 @@ export function previewPayloadExample() {
       },
     },
     subscriber: {
-      fullName: 'fullName',
+      firstName: 'firstName',
     },
   };
 }

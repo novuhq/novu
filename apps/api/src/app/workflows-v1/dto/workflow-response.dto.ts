@@ -4,7 +4,7 @@ import { IsOptional } from 'class-validator';
 import { CustomDataType, INotificationTemplate, TriggerTypeEnum, WorkflowIntegrationStatus } from '@novu/shared';
 
 import { NotificationStepDto } from '../../shared/dtos/notification-step-dto';
-import { PreferenceChannels } from '../../shared/dtos/preference-channels';
+import { SubscriberPreferenceChannels } from '../../shared/dtos/preference-channels';
 
 /**
  * @deprecated use dto's in /workflows directory
@@ -69,9 +69,9 @@ export class WorkflowResponse implements INotificationTemplate {
   draft: boolean;
 
   @ApiProperty({
-    type: PreferenceChannels,
+    type: SubscriberPreferenceChannels,
   })
-  preferenceSettings: PreferenceChannels;
+  preferenceSettings: SubscriberPreferenceChannels;
 
   @ApiProperty()
   critical: boolean;

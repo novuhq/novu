@@ -4,7 +4,7 @@ import { Type } from 'class-transformer';
 
 import { ICreateWorkflowOverrideRequestDto } from '@novu/shared';
 
-import { PreferenceChannels } from '../../shared/dtos/preference-channels';
+import { SubscriberPreferenceChannels } from '../../shared/dtos/preference-channels';
 
 export class CreateWorkflowOverrideRequestDto implements ICreateWorkflowOverrideRequestDto {
   @ApiProperty()
@@ -23,10 +23,10 @@ export class CreateWorkflowOverrideRequestDto implements ICreateWorkflowOverride
   active?: boolean;
 
   @ApiPropertyOptional({
-    type: PreferenceChannels,
+    type: SubscriberPreferenceChannels,
   })
   @IsOptional()
   @ValidateNested()
-  @Type(() => PreferenceChannels)
-  preferenceSettings?: PreferenceChannels;
+  @Type(() => SubscriberPreferenceChannels)
+  preferenceSettings?: SubscriberPreferenceChannels;
 }

@@ -7,27 +7,27 @@ import { safeParse } from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 import {
-  GlobalPreferenceDto,
-  GlobalPreferenceDto$inboundSchema,
-  GlobalPreferenceDto$Outbound,
-  GlobalPreferenceDto$outboundSchema,
-} from "./globalpreferencedto.js";
+  SubscriberGlobalPreferenceDto,
+  SubscriberGlobalPreferenceDto$inboundSchema,
+  SubscriberGlobalPreferenceDto$Outbound,
+  SubscriberGlobalPreferenceDto$outboundSchema,
+} from "./subscriberglobalpreferencedto.js";
 import {
-  WorkflowPreferenceDto,
-  WorkflowPreferenceDto$inboundSchema,
-  WorkflowPreferenceDto$Outbound,
-  WorkflowPreferenceDto$outboundSchema,
-} from "./workflowpreferencedto.js";
+  SubscriberWorkflowPreferenceDto,
+  SubscriberWorkflowPreferenceDto$inboundSchema,
+  SubscriberWorkflowPreferenceDto$Outbound,
+  SubscriberWorkflowPreferenceDto$outboundSchema,
+} from "./subscriberworkflowpreferencedto.js";
 
 export type GetSubscriberPreferencesDto = {
   /**
    * Global preference settings
    */
-  global: GlobalPreferenceDto;
+  global: SubscriberGlobalPreferenceDto;
   /**
    * Workflow-specific preference settings
    */
-  workflows: Array<WorkflowPreferenceDto>;
+  workflows: Array<SubscriberWorkflowPreferenceDto>;
 };
 
 /** @internal */
@@ -36,14 +36,14 @@ export const GetSubscriberPreferencesDto$inboundSchema: z.ZodType<
   z.ZodTypeDef,
   unknown
 > = z.object({
-  global: GlobalPreferenceDto$inboundSchema,
-  workflows: z.array(WorkflowPreferenceDto$inboundSchema),
+  global: SubscriberGlobalPreferenceDto$inboundSchema,
+  workflows: z.array(SubscriberWorkflowPreferenceDto$inboundSchema),
 });
 
 /** @internal */
 export type GetSubscriberPreferencesDto$Outbound = {
-  global: GlobalPreferenceDto$Outbound;
-  workflows: Array<WorkflowPreferenceDto$Outbound>;
+  global: SubscriberGlobalPreferenceDto$Outbound;
+  workflows: Array<SubscriberWorkflowPreferenceDto$Outbound>;
 };
 
 /** @internal */
@@ -52,8 +52,8 @@ export const GetSubscriberPreferencesDto$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   GetSubscriberPreferencesDto
 > = z.object({
-  global: GlobalPreferenceDto$outboundSchema,
-  workflows: z.array(WorkflowPreferenceDto$outboundSchema),
+  global: SubscriberGlobalPreferenceDto$outboundSchema,
+  workflows: z.array(SubscriberWorkflowPreferenceDto$outboundSchema),
 });
 
 /**

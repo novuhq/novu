@@ -5,25 +5,22 @@
 import * as z from "zod";
 import { safeParse } from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
+import * as components from "../components/index.js";
 import { SDKValidationError } from "./sdkvalidationerror.js";
 
-export type Value =
+export type Message5 = string | number | boolean | { [k: string]: any };
+
+export type Message4 = {};
+
+/**
+ * Value that failed validation
+ */
+export type ValidationErrorDtoMessage =
+  | Message4
   | string
   | number
   | boolean
-  | { [k: string]: any }
-  | Array<{ [k: string]: any }>;
-
-export type Errors = {
-  messages: Array<string>;
-  value:
-    | string
-    | number
-    | boolean
-    | { [k: string]: any }
-    | Array<{ [k: string]: any }>
-    | null;
-};
+  | Array<string | number | boolean | { [k: string]: any } | null>;
 
 export type ValidationErrorDtoData = {
   /**
@@ -39,9 +36,16 @@ export type ValidationErrorDtoData = {
    */
   path: string;
   /**
-   * A detailed error message.
+   * Value that failed validation
    */
-  message: string;
+  message?:
+    | Message4
+    | string
+    | number
+    | boolean
+    | Array<string | number | boolean | { [k: string]: any } | null>
+    | null
+    | undefined;
   /**
    * Optional context object for additional error details.
    */
@@ -56,7 +60,7 @@ export type ValidationErrorDtoData = {
   /**
    * A record of validation errors keyed by field name
    */
-  errors: { [k: string]: Errors };
+  errors: { [k: string]: components.ConstraintValidation };
 };
 
 export class ValidationErrorDto extends Error {
@@ -86,7 +90,7 @@ export class ValidationErrorDto extends Error {
   /**
    * A record of validation errors keyed by field name
    */
-  errors: { [k: string]: Errors };
+  errors: { [k: string]: components.ConstraintValidation };
 
   /** The original data that was passed to this error instance. */
   data$: ValidationErrorDtoData;
@@ -110,132 +114,165 @@ export class ValidationErrorDto extends Error {
 }
 
 /** @internal */
-export const Value$inboundSchema: z.ZodType<Value, z.ZodTypeDef, unknown> = z
-  .union([
-    z.string(),
-    z.number(),
-    z.boolean(),
-    z.record(z.any()),
-    z.array(z.record(z.any())),
-  ]);
-
-/** @internal */
-export type Value$Outbound =
-  | string
-  | number
-  | boolean
-  | { [k: string]: any }
-  | Array<{ [k: string]: any }>;
-
-/** @internal */
-export const Value$outboundSchema: z.ZodType<
-  Value$Outbound,
+export const Message5$inboundSchema: z.ZodType<
+  Message5,
   z.ZodTypeDef,
-  Value
+  unknown
+> = z.union([z.string(), z.number(), z.boolean(), z.record(z.any())]);
+
+/** @internal */
+export type Message5$Outbound = string | number | boolean | {
+  [k: string]: any;
+};
+
+/** @internal */
+export const Message5$outboundSchema: z.ZodType<
+  Message5$Outbound,
+  z.ZodTypeDef,
+  Message5
+> = z.union([z.string(), z.number(), z.boolean(), z.record(z.any())]);
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace Message5$ {
+  /** @deprecated use `Message5$inboundSchema` instead. */
+  export const inboundSchema = Message5$inboundSchema;
+  /** @deprecated use `Message5$outboundSchema` instead. */
+  export const outboundSchema = Message5$outboundSchema;
+  /** @deprecated use `Message5$Outbound` instead. */
+  export type Outbound = Message5$Outbound;
+}
+
+export function message5ToJSON(message5: Message5): string {
+  return JSON.stringify(Message5$outboundSchema.parse(message5));
+}
+
+export function message5FromJSON(
+  jsonString: string,
+): SafeParseResult<Message5, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => Message5$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'Message5' from JSON`,
+  );
+}
+
+/** @internal */
+export const Message4$inboundSchema: z.ZodType<
+  Message4,
+  z.ZodTypeDef,
+  unknown
+> = z.object({});
+
+/** @internal */
+export type Message4$Outbound = {};
+
+/** @internal */
+export const Message4$outboundSchema: z.ZodType<
+  Message4$Outbound,
+  z.ZodTypeDef,
+  Message4
+> = z.object({});
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace Message4$ {
+  /** @deprecated use `Message4$inboundSchema` instead. */
+  export const inboundSchema = Message4$inboundSchema;
+  /** @deprecated use `Message4$outboundSchema` instead. */
+  export const outboundSchema = Message4$outboundSchema;
+  /** @deprecated use `Message4$Outbound` instead. */
+  export type Outbound = Message4$Outbound;
+}
+
+export function message4ToJSON(message4: Message4): string {
+  return JSON.stringify(Message4$outboundSchema.parse(message4));
+}
+
+export function message4FromJSON(
+  jsonString: string,
+): SafeParseResult<Message4, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => Message4$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'Message4' from JSON`,
+  );
+}
+
+/** @internal */
+export const ValidationErrorDtoMessage$inboundSchema: z.ZodType<
+  ValidationErrorDtoMessage,
+  z.ZodTypeDef,
+  unknown
 > = z.union([
+  z.lazy(() => Message4$inboundSchema),
   z.string(),
   z.number(),
   z.boolean(),
-  z.record(z.any()),
-  z.array(z.record(z.any())),
+  z.array(
+    z.nullable(
+      z.union([z.string(), z.number(), z.boolean(), z.record(z.any())]),
+    ),
+  ),
+]);
+
+/** @internal */
+export type ValidationErrorDtoMessage$Outbound =
+  | Message4$Outbound
+  | string
+  | number
+  | boolean
+  | Array<string | number | boolean | { [k: string]: any } | null>;
+
+/** @internal */
+export const ValidationErrorDtoMessage$outboundSchema: z.ZodType<
+  ValidationErrorDtoMessage$Outbound,
+  z.ZodTypeDef,
+  ValidationErrorDtoMessage
+> = z.union([
+  z.lazy(() => Message4$outboundSchema),
+  z.string(),
+  z.number(),
+  z.boolean(),
+  z.array(
+    z.nullable(
+      z.union([z.string(), z.number(), z.boolean(), z.record(z.any())]),
+    ),
+  ),
 ]);
 
 /**
  * @internal
  * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
  */
-export namespace Value$ {
-  /** @deprecated use `Value$inboundSchema` instead. */
-  export const inboundSchema = Value$inboundSchema;
-  /** @deprecated use `Value$outboundSchema` instead. */
-  export const outboundSchema = Value$outboundSchema;
-  /** @deprecated use `Value$Outbound` instead. */
-  export type Outbound = Value$Outbound;
+export namespace ValidationErrorDtoMessage$ {
+  /** @deprecated use `ValidationErrorDtoMessage$inboundSchema` instead. */
+  export const inboundSchema = ValidationErrorDtoMessage$inboundSchema;
+  /** @deprecated use `ValidationErrorDtoMessage$outboundSchema` instead. */
+  export const outboundSchema = ValidationErrorDtoMessage$outboundSchema;
+  /** @deprecated use `ValidationErrorDtoMessage$Outbound` instead. */
+  export type Outbound = ValidationErrorDtoMessage$Outbound;
 }
 
-export function valueToJSON(value: Value): string {
-  return JSON.stringify(Value$outboundSchema.parse(value));
-}
-
-export function valueFromJSON(
-  jsonString: string,
-): SafeParseResult<Value, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => Value$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'Value' from JSON`,
+export function validationErrorDtoMessageToJSON(
+  validationErrorDtoMessage: ValidationErrorDtoMessage,
+): string {
+  return JSON.stringify(
+    ValidationErrorDtoMessage$outboundSchema.parse(validationErrorDtoMessage),
   );
 }
 
-/** @internal */
-export const Errors$inboundSchema: z.ZodType<Errors, z.ZodTypeDef, unknown> = z
-  .object({
-    messages: z.array(z.string()),
-    value: z.nullable(
-      z.union([
-        z.string(),
-        z.number(),
-        z.boolean(),
-        z.record(z.any()),
-        z.array(z.record(z.any())),
-      ]),
-    ),
-  });
-
-/** @internal */
-export type Errors$Outbound = {
-  messages: Array<string>;
-  value:
-    | string
-    | number
-    | boolean
-    | { [k: string]: any }
-    | Array<{ [k: string]: any }>
-    | null;
-};
-
-/** @internal */
-export const Errors$outboundSchema: z.ZodType<
-  Errors$Outbound,
-  z.ZodTypeDef,
-  Errors
-> = z.object({
-  messages: z.array(z.string()),
-  value: z.nullable(
-    z.union([
-      z.string(),
-      z.number(),
-      z.boolean(),
-      z.record(z.any()),
-      z.array(z.record(z.any())),
-    ]),
-  ),
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace Errors$ {
-  /** @deprecated use `Errors$inboundSchema` instead. */
-  export const inboundSchema = Errors$inboundSchema;
-  /** @deprecated use `Errors$outboundSchema` instead. */
-  export const outboundSchema = Errors$outboundSchema;
-  /** @deprecated use `Errors$Outbound` instead. */
-  export type Outbound = Errors$Outbound;
-}
-
-export function errorsToJSON(errors: Errors): string {
-  return JSON.stringify(Errors$outboundSchema.parse(errors));
-}
-
-export function errorsFromJSON(
+export function validationErrorDtoMessageFromJSON(
   jsonString: string,
-): SafeParseResult<Errors, SDKValidationError> {
+): SafeParseResult<ValidationErrorDtoMessage, SDKValidationError> {
   return safeParse(
     jsonString,
-    (x) => Errors$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'Errors' from JSON`,
+    (x) => ValidationErrorDtoMessage$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'ValidationErrorDtoMessage' from JSON`,
   );
 }
 
@@ -248,10 +285,22 @@ export const ValidationErrorDto$inboundSchema: z.ZodType<
   statusCode: z.number(),
   timestamp: z.string(),
   path: z.string(),
-  message: z.string(),
+  message: z.nullable(
+    z.union([
+      z.lazy(() => Message4$inboundSchema),
+      z.string(),
+      z.number(),
+      z.boolean(),
+      z.array(
+        z.nullable(
+          z.union([z.string(), z.number(), z.boolean(), z.record(z.any())]),
+        ),
+      ),
+    ]),
+  ).optional(),
   ctx: z.record(z.any()).optional(),
   errorId: z.string().optional(),
-  errors: z.record(z.lazy(() => Errors$inboundSchema)),
+  errors: z.record(components.ConstraintValidation$inboundSchema),
 })
   .transform((v) => {
     return new ValidationErrorDto(v);
@@ -262,10 +311,17 @@ export type ValidationErrorDto$Outbound = {
   statusCode: number;
   timestamp: string;
   path: string;
-  message: string;
+  message?:
+    | Message4$Outbound
+    | string
+    | number
+    | boolean
+    | Array<string | number | boolean | { [k: string]: any } | null>
+    | null
+    | undefined;
   ctx?: { [k: string]: any } | undefined;
   errorId?: string | undefined;
-  errors: { [k: string]: Errors$Outbound };
+  errors: { [k: string]: components.ConstraintValidation$Outbound };
 };
 
 /** @internal */
@@ -279,10 +335,22 @@ export const ValidationErrorDto$outboundSchema: z.ZodType<
     statusCode: z.number(),
     timestamp: z.string(),
     path: z.string(),
-    message: z.string(),
+    message: z.nullable(
+      z.union([
+        z.lazy(() => Message4$outboundSchema),
+        z.string(),
+        z.number(),
+        z.boolean(),
+        z.array(
+          z.nullable(
+            z.union([z.string(), z.number(), z.boolean(), z.record(z.any())]),
+          ),
+        ),
+      ]),
+    ).optional(),
     ctx: z.record(z.any()).optional(),
     errorId: z.string().optional(),
-    errors: z.record(z.lazy(() => Errors$outboundSchema)),
+    errors: z.record(components.ConstraintValidation$outboundSchema),
   }));
 
 /**

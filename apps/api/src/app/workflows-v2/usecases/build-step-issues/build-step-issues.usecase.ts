@@ -8,7 +8,6 @@ import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { ControlValuesRepository, IntegrationRepository } from '@novu/dal';
 import {
   ControlValuesLevelEnum,
-  JSONSchemaDto,
   StepContentIssue,
   StepContentIssueEnum,
   StepIntegrationIssueEnum,
@@ -34,6 +33,7 @@ import {
   QueryValidatorService,
 } from '../../../shared/services/query-parser/query-validator.service';
 import { parseStepVariables } from '../../util/parse-step-variables';
+import { JSONSchemaDto } from '../../dtos';
 import { buildLiquidParser } from '../../util/template-parser/liquid-parser';
 
 const PAYLOAD_FIELD_PREFIX = 'payload.';

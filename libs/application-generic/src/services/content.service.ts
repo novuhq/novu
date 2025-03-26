@@ -1,21 +1,21 @@
 import Handlebars from 'handlebars';
 import {
-  StepTypeEnum,
+  DelayTypeEnum,
+  FilterParts,
+  FilterPartTypeEnum,
   getTemplateVariables,
+  IFieldFilterPart,
   IMustacheVariable,
+  ITriggerReservedVariable,
+  ReservedVariablesMap,
+  StepTypeEnum,
   TemplateSystemVariables,
   TemplateVariableTypeEnum,
-  DelayTypeEnum,
-  IFieldFilterPart,
-  FilterPartTypeEnum,
-  TriggerReservedVariables,
-  ReservedVariablesMap,
   TriggerContextTypeEnum,
-  ITriggerReservedVariable,
-  FilterParts,
+  TriggerReservedVariables,
 } from '@novu/shared';
-import { NotificationStep } from '../usecases/create-workflow';
 import { BadRequestException } from '@nestjs/common';
+import { NotificationStep } from '../value-objects';
 
 export class ContentService {
   replaceVariables(content: string, variables: { [key: string]: string }) {

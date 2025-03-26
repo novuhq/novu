@@ -28,7 +28,10 @@ export class GetGroupedBlueprints {
 
     const popularGroup = { name: POPULAR_GROUPED_NAME, blueprints: updatePopularBlueprints };
 
-    return { general: generalGroups as IGroupedBlueprint[], popular: popularGroup as IGroupedBlueprint };
+    return {
+      general: generalGroups as unknown as IGroupedBlueprint[],
+      popular: popularGroup as unknown as IGroupedBlueprint,
+    };
   }
 
   private async fetchGroupedBlueprints() {

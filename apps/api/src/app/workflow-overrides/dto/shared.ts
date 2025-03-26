@@ -6,7 +6,7 @@ import {
   WorkflowOverrideId,
 } from '@novu/shared';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { PreferenceChannels } from '../../shared/dtos/preference-channels';
+import { SubscriberPreferenceChannels } from '../../shared/dtos/preference-channels';
 
 export class OverrideResponseDto implements IWorkflowOverride {
   @ApiProperty()
@@ -28,7 +28,7 @@ export class OverrideResponseDto implements IWorkflowOverride {
   active: boolean;
 
   @ApiProperty({
-    type: PreferenceChannels,
+    type: SubscriberPreferenceChannels,
   })
   preferenceSettings: IPreferenceChannels;
 
