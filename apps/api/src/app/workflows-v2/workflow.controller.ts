@@ -16,6 +16,7 @@ import { DeleteWorkflowCommand, DeleteWorkflowUseCase, UserSession } from '@novu
 import {
   CreateWorkflowDto,
   DirectionEnum,
+  DuplicateWorkflowDto,
   GeneratePreviewRequestDto,
   GeneratePreviewResponseDto,
   GetListQueryParams,
@@ -40,20 +41,15 @@ import {
   BuildWorkflowTestDataUseCase,
   WorkflowTestDataCommand,
 } from './usecases';
-import { PreviewCommand } from './usecases/preview/preview.command';
-import { PreviewUsecase } from './usecases/preview/preview.usecase';
-import { GetWorkflowCommand } from './usecases/get-workflow/get-workflow.command';
-import { GetWorkflowUseCase } from './usecases/get-workflow/get-workflow.usecase';
-import { ListWorkflowsUseCase } from './usecases/list-workflows/list-workflow.usecase';
-import { ListWorkflowsCommand } from './usecases/list-workflows/list-workflows.command';
-import { PatchStepCommand } from './usecases/patch-step-data';
-import { PatchStepUsecase } from './usecases/patch-step-data/patch-step.usecase';
+import { PreviewCommand, PreviewUsecase } from './usecases/preview';
+import { GetWorkflowCommand, GetWorkflowUseCase } from './usecases/get-workflow';
+import { ListWorkflowsCommand, ListWorkflowsUseCase } from './usecases/list-workflows';
+import { PatchStepCommand, PatchStepUsecase } from './usecases/patch-step-data';
 import { PatchWorkflowCommand, PatchWorkflowUsecase } from './usecases/patch-workflow';
-import { SyncToEnvironmentCommand } from './usecases/sync-to-environment/sync-to-environment.command';
-import { SyncToEnvironmentUseCase } from './usecases/sync-to-environment/sync-to-environment.usecase';
-import { UpsertWorkflowCommand } from './usecases/upsert-workflow/upsert-workflow.command';
-import { UpsertWorkflowUseCase } from './usecases/upsert-workflow/upsert-workflow.usecase';
+import { SyncToEnvironmentCommand, SyncToEnvironmentUseCase } from './usecases/sync-to-environment';
+import { UpsertWorkflowCommand, UpsertWorkflowUseCase } from './usecases/upsert-workflow';
 import { SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
+import { DuplicateWorkflowCommand, DuplicateWorkflowUseCase } from './usecases/duplicate-workflow';
 
 @ApiCommonResponses()
 @Controller({ path: `/workflows`, version: '2' })
@@ -71,7 +67,8 @@ export class WorkflowController {
     private buildWorkflowTestDataUseCase: BuildWorkflowTestDataUseCase,
     private buildStepDataUsecase: BuildStepDataUsecase,
     private patchStepDataUsecase: PatchStepUsecase,
-    private patchWorkflowUsecase: PatchWorkflowUsecase
+    private patchWorkflowUsecase: PatchWorkflowUsecase,
+    private duplicateWorkflowUseCase: DuplicateWorkflowUseCase
   ) {}
 
   @Post('')
@@ -163,6 +160,21 @@ export class WorkflowController {
         orderBy: query.orderBy ?? 'createdAt',
         searchQuery: query.query,
         user,
+      })
+    );
+  }
+
+  @Post(':workflowId/duplicate')
+  async duplicateWorkflow(
+    @UserSession(ParseSlugEnvironmentIdPipe) user: UserSessionData,
+    @Param('workflowId', ParseSlugIdPipe) workflowIdOrInternalId: string,
+    @Body() duplicateWorkflowDto: DuplicateWorkflowDto
+  ): Promise<WorkflowResponseDto> {
+    return this.duplicateWorkflowUseCase.execute(
+      DuplicateWorkflowCommand.create({
+        user,
+        workflowIdOrInternalId,
+        overrides: duplicateWorkflowDto,
       })
     );
   }
