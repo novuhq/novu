@@ -19,6 +19,8 @@ export class TwilioSmsProvider implements ISmsProvider {
       accountSid?: string;
       authToken?: string;
       from?: string;
+      messagingServiceSid?: string;
+      shortenUrls?: boolean;
     }
   ) {
     this.twilioClient = new Twilio(config.accountSid, config.authToken);
@@ -31,6 +33,8 @@ export class TwilioSmsProvider implements ISmsProvider {
       body: options.content,
       to: options.to,
       from: options.from || this.config.from,
+      messagingServiceSid: this.config.messagingServiceSid,
+      shortenUrls: this.config.shortenUrls,
     });
 
     return {

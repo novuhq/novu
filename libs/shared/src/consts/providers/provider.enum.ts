@@ -44,6 +44,8 @@ export enum CredentialsKeyEnum {
   imageUrl = 'imageUrl',
   state = 'state',
   externalLink = 'externalLink',
+  MessagingServiceSid = 'messagingServiceSid',
+  ShortenUrls = 'shortenUrls',
 }
 
 export enum EmailProviderIdEnum {

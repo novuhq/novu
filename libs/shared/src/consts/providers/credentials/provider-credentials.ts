@@ -460,6 +460,20 @@ export const twilioConfig: IConfigCredentials[] = [
     type: 'string',
     required: true,
   },
+  {
+    key: CredentialsKeyEnum.MessagingServiceSid,
+    displayName: 'Messaging Service SID',
+    type: 'string',
+    required: false,
+    description: 'Optional: The Messaging Service SID to use for sending messages',
+  },
+  {
+    key: CredentialsKeyEnum.ShortenUrls,
+    displayName: 'Shorten URLs',
+    type: 'boolean',
+    required: false,
+    description: 'Optional: Whether to shorten URLs in messages',
+  },
   ...smsConfigBase,
 ];
 
