@@ -63,7 +63,7 @@ export class CacheService implements ICacheService {
     return isEnabled;
   }
 
-  public async set(key: string, value: string, options?: CachingConfig): Promise<string | null> {
+  public async set(key: string, value: string | number, options?: CachingConfig): Promise<string | null> {
     const result = await this.client?.set(key, value, 'EX', this.getTtlInSeconds(options));
 
     if (result === null) {
