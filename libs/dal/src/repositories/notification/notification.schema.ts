@@ -153,6 +153,10 @@ notificationSchema.index({
   _environmentId: 1,
   createdAt: -1,
 });
+/*
+ * There was no point indexing old records,
+ * we are not searching anything more than a month back
+ */
 notificationSchema.index(
   {
     _environmentId: 1,
