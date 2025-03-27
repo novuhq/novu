@@ -34,7 +34,13 @@ describe('NotificationsCache', () => {
         to: { id: '1', subscriberId: '1' },
         createdAt: new Date().toISOString(),
         channelType: ChannelType.IN_APP,
-        workflowId: 'test-workflow-1',
+        workflow: {
+          id: 'test-workflow-1',
+          critical: true,
+          identifier: 'test-workflow-1',
+          name: 'Test Workflow 1',
+          tags: ['tag1'],
+        },
       },
       mockEmitter,
       mockInboxService
@@ -48,7 +54,13 @@ describe('NotificationsCache', () => {
         to: { id: '2', subscriberId: '2' },
         createdAt: new Date().toISOString(),
         channelType: ChannelType.IN_APP,
-        workflowId: 'test-workflow-2',
+        workflow: {
+          id: 'test-workflow-2',
+          critical: false,
+          identifier: 'test-workflow-2',
+          name: 'Test Workflow 2',
+          tags: ['tag1'],
+        },
       },
       mockEmitter,
       mockInboxService
