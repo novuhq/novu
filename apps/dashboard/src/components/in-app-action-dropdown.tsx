@@ -191,7 +191,8 @@ export const InAppActionDropdown = ({ onMenuItemClick }: { onMenuItemClick?: () 
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-      <FormMessagePure error={error ? String(error.message) : undefined} />
+      {/* TODO: Use <FormMessage /> instead, see how we did it in <URLInput /> */}
+      {error && <FormMessagePure hasError={!!error}>{String(error?.message || '')}</FormMessagePure>}
     </>
   );
 };
@@ -250,7 +251,6 @@ const ConfigureActionPopover = (
                 urlKey: `${actionKey}.redirect.url`,
                 targetKey: `${actionKey}.redirect.target`,
               }}
-              withHint={false}
               variables={variables}
             />
           </div>

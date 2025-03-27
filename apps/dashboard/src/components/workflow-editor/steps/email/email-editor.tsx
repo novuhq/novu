@@ -1,6 +1,5 @@
 import { getComponentByType } from '@/components/workflow-editor/steps/component-utils';
 import { EmailPreviewHeader } from '@/components/workflow-editor/steps/email/email-preview';
-import { EmailTabsSection } from '@/components/workflow-editor/steps/email/email-tabs-section';
 import { UiSchemaGroupEnum, type UiSchema } from '@novu/shared';
 
 type EmailEditorProps = { uiSchema: UiSchema };
@@ -16,20 +15,18 @@ export const EmailEditor = (props: EmailEditorProps) => {
 
   return (
     <div className="flex h-full flex-col">
-      <EmailTabsSection>
+      <div className="border-b px-4 pb-0 pt-4">
         <EmailPreviewHeader>
           {disableOutputSanitization &&
             getComponentByType({
               component: disableOutputSanitization.component,
             })}
         </EmailPreviewHeader>
-      </EmailTabsSection>
-      <EmailTabsSection className="min-h-[68px]">
         {getComponentByType({ component: subject.component })}
-      </EmailTabsSection>
-      <EmailTabsSection className="flex-1 bg-neutral-50 pl-16 pr-16 pt-5">
+      </div>
+      <div className="relative flex-1 overflow-y-auto bg-neutral-50 px-16 pt-8">
         {getComponentByType({ component: body.component })}
-      </EmailTabsSection>
+      </div>
     </div>
   );
 };

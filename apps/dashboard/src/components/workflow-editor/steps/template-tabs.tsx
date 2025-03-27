@@ -64,7 +64,7 @@ export const TemplateTabs = ({
           <span className="sr-only">Close</span>
         </CompactButton>
       </header>
-      <TabsContent value="editor" className="h-full w-full overflow-y-auto">
+      <TabsContent value="editor" className="h-full w-full overflow-hidden">
         {editorContent}
       </TabsContent>
       <TabsContent value="preview" className="h-full w-full overflow-y-auto">

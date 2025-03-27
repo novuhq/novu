@@ -56,7 +56,7 @@ export class VariablePillWidget extends WidgetType {
       borderRadius: '0.25rem',
       gap: '4px',
       padding: '1px 6px',
-      margin: '-1px 0',
+      marginTop: '-1px',
       fontFamily: 'inherit',
       display: 'inline-flex',
       alignItems: 'center',
@@ -73,7 +73,7 @@ export class VariablePillWidget extends WidgetType {
 
   createContentStyles(): CSSProperties {
     return {
-      lineHeight: '1',
+      lineHeight: 'calc(1em - 2px)',
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       '-webkit-font-smoothing': 'antialiased',

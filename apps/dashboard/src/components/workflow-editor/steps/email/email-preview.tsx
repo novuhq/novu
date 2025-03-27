@@ -51,7 +51,7 @@ export const EmailPreviewBody = (props: EmailPreviewBodyProps) => {
 
   return (
     <div
-      className={cn(`shadow-xs mx-auto min-h-96 w-full max-w-[${MAILY_EMAIL_WIDTH}px] overflow-auto p-2`, className)}
+      className={cn(`shadow-xs mx-auto min-h-80 w-full max-w-[${MAILY_EMAIL_WIDTH}px] overflow-auto p-2`, className)}
       // use shadow DOM to isolate the styles
       ref={(node) => {
         if (node && !node.shadowRoot) {

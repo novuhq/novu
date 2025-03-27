@@ -107,8 +107,7 @@ export function ControlInput({
         multiline={multiline}
         indentWithTab={indentWithTab}
         size={size}
-        // TODO for Sokratis
-        className={cn('flex-1', { 'overflow-hidden': !multiline })}
+        className={cn('flex-1')}
         autoFocus={autoFocus}
         placeholder={placeholder}
         id={id}

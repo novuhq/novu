@@ -30,13 +30,17 @@ const baseTheme = (options: { multiline?: boolean }) =>
     '&light': {
       backgroundColor: 'transparent',
     },
-    ...(!options.multiline
+    ...(options.multiline
       ? {
+          '.cm-scroller': {
+            maxHeight: '1rem',
+          },
+        }
+      : {
           '.cm-scroller': {
             overflow: 'hidden',
           },
-        }
-      : {}),
+        }),
     '.cm-tooltip-autocomplete .cm-completionIcon-variable': {
       '&:before': {
         content: 'Suggestions',
@@ -113,6 +117,7 @@ const baseTheme = (options: { multiline?: boolean }) =>
     // important to show the cursor at the beginning of the line
     '.cm-line': {
       marginLeft: '1px',
+      lineHeight: '1rem',
     },
     'div.cm-content': {
       padding: 0,
@@ -209,7 +214,7 @@ export const Editor = React.forwardRef<ReactCodeMirrorRef, EditorProps>(
         ref={ref}
         className={variants({ size, className })}
         extensions={extensions}
-        height={height}
+        height="auto"
         placeholder={placeholder}
         basicSetup={basicSetup}
         value={value}
