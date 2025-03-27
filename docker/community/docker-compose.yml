@@ -174,10 +174,14 @@ services:
       REACT_APP_WS_URL: ${REACT_APP_WS_URL}
     ports:
       - 4200:4200
-    command: ['/bin/sh', '-c', 'pnpm run envsetup:docker && pnpm run start:static:build']
+    command:
+      [
+        '/bin/sh',
+        '-c',
+        'pnpm run envsetup:docker && pnpm run start:static:build',
+      ]
     healthcheck:
-      test:
-        [CMD-SHELL, "node ./healthchecks/web-server.mjs"]
+      test: [CMD-SHELL, 'node ./healthchecks/web-healthcheck.mjs']
       interval: 5s
       timeout: 5s
       retries: 3

@@ -22,18 +22,20 @@ async function webHealthcheck() {
     const response = await fetch(webServerUrl);
 
     if (response.status === 200) {
-      console.info(`Healthcheck passed for 'web' container at ${webServerUrl}`);
+      const successMessage = `Healthcheck passed for 'web' container at ${webServerUrl}`;
+
+      process.stdout.write(successMessage);
 
       process.exit(0);
     }
 
-    console.error(`Unexpected response status: ${response.status}`);
+    process.stderr.write(`Unexpected response status: ${response.status}`);
 
     process.exit(1);
   } catch (error) {
-    console.info(`Healthcheck failed for 'web' container at ${webServerUrl}`);
+    const errorMessage = `Healthcheck failed for 'web' container at ${webServerUrl}`;
 
-    console.error(error);
+    process.stdout.write(errorMessage + error);
 
     process.exit(1);
   }
