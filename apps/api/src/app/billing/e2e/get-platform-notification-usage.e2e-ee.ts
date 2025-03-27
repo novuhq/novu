@@ -3,6 +3,7 @@ import { expect } from 'chai';
 import { CommunityOrganizationRepository, EnvironmentRepository, NotificationRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import { ApiServiceLevelEnum, isClerkEnabled } from '@novu/shared';
+import { MockCacheService } from '@novu/application-generic';
 
 describe('GetPlatformNotificationUsage #novu-v2', () => {
   const eeBilling = require('@novu/ee-billing');
@@ -17,7 +18,12 @@ describe('GetPlatformNotificationUsage #novu-v2', () => {
   const communityOrganizationRepo = new CommunityOrganizationRepository();
 
   const createUseCase = () => {
-    const useCase = new GetPlatformNotificationUsage(environmentRepo, notificationRepo, communityOrganizationRepo);
+    const useCase = new GetPlatformNotificationUsage(
+      environmentRepo,
+      notificationRepo,
+      communityOrganizationRepo,
+      MockCacheService.createClient()
+    );
 
     return useCase;
   };
