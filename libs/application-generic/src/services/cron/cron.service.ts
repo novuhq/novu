@@ -5,6 +5,7 @@ import {
   ObservabilityBackgroundTransactionEnum,
   TimezoneEnum,
 } from '@novu/shared';
+import { captureException } from '@sentry/node';
 import { MetricsService } from '../metrics';
 import { CronJobData, CronJobProcessor, CronMetrics, CronMetricsEventEnum, CronOptions } from './cron.types';
 
@@ -244,6 +245,9 @@ export abstract class CronService implements OnApplicationBootstrap, OnApplicati
     const logMessage = `${eventName}: '${jobName}' job`;
 
     if (error) {
+      if (process.env.SENTRY_DSN) {
+        captureException(error, { tags: { jobName, event, eventName } });
+      }
       Logger.error(logMessage, error, LOG_CONTEXT);
     } else {
       Logger.verbose(logMessage, LOG_CONTEXT);
