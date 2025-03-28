@@ -5,6 +5,7 @@ import { Separator } from '@/components/primitives/separator';
 import { getComponentByType } from '@/components/workflow-editor/steps/component-utils';
 import { InAppTabsSection } from '@/components/workflow-editor/steps/in-app/in-app-tabs-section';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { RiInstanceLine } from 'react-icons/ri';
 
 const avatarKey = 'avatar';
 const subjectKey = 'subject';
@@ -72,7 +73,18 @@ export const InAppEditor = ({ uiSchema }: { uiSchema: UiSchema }) => {
       {dataObject && isDataObjectEnabled && (
         <>
           <Separator />
-          <InAppTabsSection>
+          <InAppTabsSection className="px-4 pb-0 pt-3">
+            <div className="flex items-center gap-2.5 text-sm">
+              <RiInstanceLine className="size-4" />
+              <span>Advanced controls</span>
+            </div>
+          </InAppTabsSection>
+        </>
+      )}
+
+      {dataObject && isDataObjectEnabled && (
+        <>
+          <InAppTabsSection className="pb-0 pt-3">
             {getComponentByType({
               component: dataObject.component,
             })}

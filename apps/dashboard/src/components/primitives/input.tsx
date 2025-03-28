@@ -19,7 +19,7 @@ export const inputVariants = tv({
     root: [
       // base
       'ring-stroke-soft',
-      'group relative flex w-full overflow-hidden bg-bg-white-0 text-text-strong shadow-xs',
+      'group relative flex w-full overflow-hidden bg-bg-white text-text-strong shadow-xs',
       'transition duration-200 ease-out',
       'divide-x divide-stroke-soft',
       // before

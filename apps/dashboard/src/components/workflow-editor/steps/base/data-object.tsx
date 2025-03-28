@@ -6,13 +6,13 @@ import { Card, CardContent } from '@/components/primitives/card';
 import { ControlInput } from '@/components/primitives/control-input';
 import { FormField, FormItem, FormMessagePure } from '@/components/primitives/form/form';
 import { useFormField } from '@/components/primitives/form/form-context';
+import { HelpTooltipIndicator } from '@/components/primitives/help-tooltip-indicator';
 import { Input, InputRoot } from '@/components/primitives/input';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { parseStepVariablesToLiquidVariables } from '@/utils/parseStepVariablesToLiquidVariables';
 import React from 'react';
-import { RiAddLine, RiDeleteBin6Line, RiInputField, RiQuestionLine } from 'react-icons/ri';
+import { RiAddLine, RiDeleteBin6Line, RiInputField } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
 
 const dataObjectKey = 'data';
@@ -67,10 +67,28 @@ const InnerDataObject = ({ field }: { field: FieldValues }) => {
   };
 
   return (
-    <FormItem className="bg-neutral-alpha-50 flex flex-col gap-2 rounded-lg border border-neutral-200 p-2">
+    <FormItem className="bg-bg-weak flex flex-col gap-2 rounded-lg border border-neutral-200 p-2">
       <div className="flex items-center gap-2">
         <RiInputField className="text-feature size-4" />
         <span className="text-xs">Data object</span>
+        <HelpTooltipIndicator
+          text={
+            <>
+              <p>Custom data to be sent with the notification.</p>
+              <p>
+                This data can be used to{' '}
+                <Link
+                  className="text-primary"
+                  to="https://docs.novu.co/platform/inbox/react/components/inbox#data-object"
+                  target="_blank"
+                >
+                  customize the notification item rendered
+                </Link>
+                {` in the <Inbox />.`}
+              </p>
+            </>
+          }
+        />
       </div>
       <Card className="rounded-md">
         <CardContent className="flex flex-col gap-1 p-2">
@@ -118,21 +136,6 @@ const InnerDataObject = ({ field }: { field: FieldValues }) => {
           )}
         </CardContent>
       </Card>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Link
-            className="text-foreground-600 flex items-center gap-1 text-xs"
-            to={`https://docs.novu.co/platform/inbox/react/components/inbox#data-object`}
-            target="_blank"
-          >
-            <RiQuestionLine className="text-foreground-400 size-4" />
-            Learn more about the data object in Novu
-          </Link>
-        </TooltipTrigger>
-        <TooltipContent>
-          {`The Data object will be exposed through the notification object in the <Inbox />`}
-        </TooltipContent>
-      </Tooltip>
     </FormItem>
   );
 };
