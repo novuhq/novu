@@ -63,6 +63,7 @@ export function NewWorkflowDrawer({ mode, workflowId }: NewWorkflowDrawerProps) 
 
   const title = mode === 'create' ? 'Create workflow' : 'Duplicate workflow';
   const buttonText = mode === 'create' ? 'Create workflow' : 'Duplicate workflow';
+  const isLoadingTemplate = mode === 'duplicate' && isLoadingWorkflow;
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -78,7 +79,7 @@ export function NewWorkflowDrawer({ mode, workflowId }: NewWorkflowDrawerProps) 
         </SheetHeader>
         <Separator />
         <SheetMain>
-          {isLoadingWorkflow ? (
+          {isLoadingTemplate ? (
             <CreateWorkflowFormSkeleton />
           ) : (
             <CreateWorkflowForm onSubmit={submit} template={template} />
