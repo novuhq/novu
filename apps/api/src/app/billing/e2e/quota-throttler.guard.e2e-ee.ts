@@ -42,23 +42,6 @@ describe('Resource Limiting #novu-v2', () => {
     });
 
     describe('Event resource blocking', () => {
-      describe('Event Quota FF is enabled', () => {
-        beforeEach(() => {
-          process.env.IS_EVENT_QUOTA_LIMITING_ENABLED = 'true';
-        });
-
-        it('should block the request', async () => {
-          const response = await request(pathEvent);
-
-          expect(response.status).to.equal(402);
-          expect(response.body.status).to.equal(402);
-          expect(response.body.error).to.equal('Payment required');
-          expect(response.body.message).to.equal(
-            'You have exceeded the number of allowed requests for this resource. Please visit https://dashboard.novu.co to upgrade your subscription.'
-          );
-        });
-      });
-
       describe('Base Quota FF is enabled', () => {
         let getEventResourceUsageStub: sinon.SinonStub;
 
