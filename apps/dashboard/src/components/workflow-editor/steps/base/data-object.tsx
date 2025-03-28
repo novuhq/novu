@@ -153,7 +153,13 @@ const FormMessage = React.forwardRef<
 
   const errorMessage = typedError?.[props.keyName]?.message;
 
+  if (!errorMessage) {
+    return null;
+  }
+
   return (
-    <FormMessagePure ref={ref} id={formMessageId} error={errorMessage ? String(errorMessage) : undefined} {...props} />
+    <FormMessagePure ref={ref} id={formMessageId} hasError={!!errorMessage} {...props}>
+      {errorMessage}
+    </FormMessagePure>
   );
 });
