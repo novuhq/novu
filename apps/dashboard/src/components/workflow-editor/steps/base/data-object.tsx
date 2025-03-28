@@ -122,7 +122,7 @@ const InnerDataObject = ({ field }: { field: FieldValues }) => {
         <TooltipTrigger asChild>
           <Link
             className="text-foreground-600 flex items-center gap-1 text-xs"
-            to={`https://docs.novu.co/platform/inbox/overview`}
+            to={`https://docs.novu.co/platform/inbox/react/components/inbox#data-object`}
             target="_blank"
           >
             <RiQuestionLine className="text-foreground-400 size-4" />
