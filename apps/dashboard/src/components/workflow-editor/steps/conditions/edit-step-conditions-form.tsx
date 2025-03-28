@@ -91,8 +91,8 @@ export const EditStepConditionsForm = () => {
     [hasConditions, step]
   );
 
-  const { fields, variables } = useMemo(() => {
-    if (!step) return { fields: [], variables: [] };
+  const { fields, variables, namespaces } = useMemo(() => {
+    if (!step) return { fields: [], variables: [], namespaces: [] };
 
     const parsedVariables = parseStepVariables(step.variables);
     return {
@@ -102,6 +102,7 @@ export const EditStepConditionsForm = () => {
         value: primitive.label,
       })),
       variables: [...parsedVariables.primitives, ...parsedVariables.namespaces],
+      namespaces: parsedVariables.namespaces,
     };
   }, [step]);
 
@@ -192,6 +193,7 @@ export const EditStepConditionsForm = () => {
                 onQueryChange={field.onChange}
                 fields={fields}
                 variables={variables}
+                namespaces={namespaces}
               />
             )}
           />

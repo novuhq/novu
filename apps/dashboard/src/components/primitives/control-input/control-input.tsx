@@ -35,6 +35,7 @@ type ControlInputProps = {
   value: string;
   onChange: (value: string) => void;
   variables: LiquidVariable[];
+  namespaces: LiquidVariable[];
   placeholder?: string;
   autoFocus?: boolean;
   size?: 'md' | 'sm' | '2xs';
@@ -54,6 +55,7 @@ export function ControlInput({
   multiline = false,
   size = 'sm',
   indentWithTab,
+  namespaces,
 }: ControlInputProps) {
   const viewRef = useRef<EditorView | null>(null);
   const lastCompletionRef = useRef<CompletionRange | null>(null);
@@ -119,6 +121,8 @@ export function ControlInput({
         open={!!selectedVariable}
         onOpenChange={handleOpenChange}
         variable={selectedVariable?.value}
+        variables={variables}
+        namespaces={namespaces}
         onUpdate={(newValue) => {
           handleVariableUpdate(newValue);
           // Focus back to the editor after updating the variable

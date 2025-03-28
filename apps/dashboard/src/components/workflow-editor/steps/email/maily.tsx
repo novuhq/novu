@@ -11,7 +11,7 @@ import { useTelemetry } from '@/hooks/use-telemetry';
 import { parseStepVariables } from '@/utils/parseStepVariablesToLiquidVariables';
 import { cn } from '@/utils/ui';
 import { ForExtension } from './extensions/for';
-import { VariableView } from './extensions/variable-view';
+import { createVariableView } from './extensions/variable-view';
 import { createDefaultEditorBlocks, DEFAULT_EDITOR_CONFIG } from './maily-config';
 
 type MailyProps = HTMLAttributes<HTMLDivElement> & {
@@ -33,7 +33,7 @@ export const MAILY_EMAIL_WIDTH = 600;
 export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
   const { step } = useWorkflow();
   const mailyVariables = useMemo(
-    () => (step ? parseStepVariables(step.variables) : { primitives: [], arrays: [], namespaces: [] }),
+    () => (step ? parseStepVariables(step.variables) : { primitives: [], arrays: [], namespaces: [], variables: [] }),
     [step]
   );
   const primitives = useMemo(
@@ -125,7 +125,7 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
       VariableExtension.extend({
         // @ts-expect-error - TODO: Polish Maily typing when extending Maily core and update accordingly
         addNodeView() {
-          return ReactNodeViewRenderer(VariableView, {
+          return ReactNodeViewRenderer(createVariableView(mailyVariables.variables, mailyVariables.namespaces), {
             className: 'relative inline-block',
             as: 'div',
           });

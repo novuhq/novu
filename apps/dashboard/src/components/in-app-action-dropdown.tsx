@@ -18,7 +18,7 @@ import { Separator } from '@/components/primitives/separator';
 import { URLInput } from '@/components/workflow-editor/url-input';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { inboxButtonVariants } from '@/utils/inbox';
-import { parseStepVariablesToLiquidVariables } from '@/utils/parseStepVariablesToLiquidVariables';
+import { parseStepVariables } from '@/utils/parseStepVariablesToLiquidVariables';
 import { cn } from '@/utils/ui';
 import { urlTargetTypes } from '@/utils/url';
 import merge from 'lodash.merge';
@@ -207,7 +207,10 @@ const ConfigureActionPopover = (
   } = props;
   const { control } = useFormContext();
   const { step } = useWorkflow();
-  const variables = useMemo(() => (step ? parseStepVariablesToLiquidVariables(step.variables) : []), [step]);
+  const { variables, namespaces } = useMemo(
+    () => (step ? parseStepVariables(step.variables) : { variables: [], namespaces: [] }),
+    [step]
+  );
 
   return (
     <Popover>
@@ -231,6 +234,7 @@ const ConfigureActionPopover = (
                   <InputRoot className="overflow-visible" hasError={!!fieldState.error}>
                     <ControlInput
                       variables={variables}
+                      namespaces={namespaces}
                       multiline={false}
                       indentWithTab={false}
                       placeholder={title}
@@ -252,6 +256,7 @@ const ConfigureActionPopover = (
                 targetKey: `${actionKey}.redirect.target`,
               }}
               variables={variables}
+              namespaces={namespaces}
             />
           </div>
         </div>

@@ -4,7 +4,7 @@ import { useFormContext } from 'react-hook-form';
 import { ControlInput } from '@/components/primitives/control-input';
 import { FormControl, FormField, FormItem, FormMessage } from '@/components/primitives/form/form';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
-import { parseStepVariablesToLiquidVariables } from '@/utils/parseStepVariablesToLiquidVariables';
+import { parseStepVariables } from '@/utils/parseStepVariablesToLiquidVariables';
 import { capitalize, containsHTMLEntities, containsVariables } from '@/utils/string';
 import { InputRoot } from '../../../primitives/input';
 
@@ -13,7 +13,10 @@ const bodyKey = 'body';
 export const InAppBody = () => {
   const { control, getValues } = useFormContext();
   const { step } = useWorkflow();
-  const variables = useMemo(() => (step ? parseStepVariablesToLiquidVariables(step.variables) : []), [step]);
+  const { variables, namespaces } = useMemo(
+    () => (step ? parseStepVariables(step.variables) : { variables: [], namespaces: [] }),
+    [step]
+  );
 
   return (
     <FormField
@@ -31,6 +34,7 @@ export const InAppBody = () => {
                 value={field.value}
                 onChange={field.onChange}
                 variables={variables}
+                namespaces={namespaces}
                 autoFocus
                 multiline
               />

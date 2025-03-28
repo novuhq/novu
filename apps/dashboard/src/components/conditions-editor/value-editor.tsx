@@ -1,5 +1,5 @@
-import { useValueEditor, ValueEditorProps } from 'react-querybuilder';
 import { useFormContext } from 'react-hook-form';
+import { useValueEditor, ValueEditorProps } from 'react-querybuilder';
 
 import { InputRoot } from '@/components/primitives/input';
 import { LiquidVariable } from '@/utils/parseStepVariablesToLiquidVariables';
@@ -9,7 +9,8 @@ export const ValueEditor = (props: ValueEditorProps) => {
   const form = useFormContext();
   const queryPath = 'query.rules.' + props.path.join('.rules.') + '.value';
   const { error } = form.getFieldState(queryPath, form.formState);
-  const { variables = [] } = (props.context as { variables: LiquidVariable[] }) ?? {};
+  const { variables = [], namespaces = [] } =
+    (props.context as { variables: LiquidVariable[]; namespaces: LiquidVariable[] }) ?? {};
   const { value, handleOnChange, operator, type } = props;
   const { valueAsArray, multiValueHandler } = useValueEditor(props);
 
@@ -28,6 +29,7 @@ export const ValueEditor = (props: ValueEditorProps) => {
             value={valueAsArray[i] ?? ''}
             onChange={(newValue) => multiValueHandler(newValue, i)}
             variables={variables}
+            namespaces={namespaces}
             size="2xs"
           />
         </InputRoot>
@@ -56,6 +58,7 @@ export const ValueEditor = (props: ValueEditorProps) => {
           value={value ?? ''}
           onChange={handleOnChange}
           variables={variables}
+          namespaces={namespaces}
           size="2xs"
         />
       </InputRoot>

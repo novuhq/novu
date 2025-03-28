@@ -1,13 +1,20 @@
-import { useCallback, useMemo, useState } from 'react';
 import { NodeViewProps } from '@tiptap/core';
 import { NodeViewWrapper } from '@tiptap/react';
+import { useCallback, useMemo, useState } from 'react';
 
-import { EditVariablePopover } from '@/components/variable/edit-variable-popover';
-import { parseVariable } from '@/components/primitives/control-input/variable-plugin/utils';
 import { VARIABLE_REGEX_STRING } from '@/components/primitives/control-input/variable-plugin';
+import { parseVariable } from '@/components/primitives/control-input/variable-plugin/utils';
+import { EditVariablePopover } from '@/components/variable/edit-variable-popover';
 import { VariablePill } from '@/components/variable/variable-pill';
+import { LiquidVariable } from '@/utils/parseStepVariablesToLiquidVariables';
 
-export function VariableView({ node, updateAttributes, editor }: NodeViewProps) {
+type InternalVariableViewProps = NodeViewProps & {
+  variables: LiquidVariable[];
+  namespaces: LiquidVariable[];
+};
+
+function InternalVariableView(props: InternalVariableViewProps) {
+  const { node, updateAttributes, editor, variables, namespaces } = props;
   const { id } = node.attrs;
   const [variable, setVariable] = useState(`{{${id}}}`);
   const [isOpen, setIsOpen] = useState(false);
@@ -31,6 +38,8 @@ export function VariableView({ node, updateAttributes, editor }: NodeViewProps) 
         open={isOpen}
         onOpenChange={setIsOpen}
         variable={variable}
+        variables={variables}
+        namespaces={namespaces}
         onUpdate={(newValue) => {
           const { fullLiquidExpression } = parseVariableCallback(newValue);
           updateAttributes({ id: fullLiquidExpression });
@@ -48,4 +57,11 @@ export function VariableView({ node, updateAttributes, editor }: NodeViewProps) 
       </EditVariablePopover>
     </NodeViewWrapper>
   );
+}
+
+// HOC that takes namespaces prop
+export function createVariableView(variables: LiquidVariable[], namespaces: LiquidVariable[]) {
+  return function VariableView(props: NodeViewProps) {
+    return <InternalVariableView {...props} variables={variables} namespaces={namespaces} />;
+  };
 }

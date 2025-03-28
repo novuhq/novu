@@ -9,6 +9,7 @@ export interface ParsedVariables {
   primitives: LiquidVariable[];
   arrays: LiquidVariable[];
   namespaces: LiquidVariable[];
+  variables: LiquidVariable[];
 }
 
 /**
@@ -21,6 +22,7 @@ export function parseStepVariables(schema: JSONSchemaDefinition): ParsedVariable
     primitives: [],
     arrays: [],
     namespaces: [],
+    variables: [],
   };
 
   function extractProperties(obj: JSONSchemaDefinition, path = ''): void {
@@ -83,10 +85,5 @@ export function parseStepVariables(schema: JSONSchemaDefinition): ParsedVariable
   }
 
   extractProperties(schema);
-  return result;
+  return { ...result, variables: [...result.primitives, ...result.namespaces] };
 }
-
-export const parseStepVariablesToLiquidVariables = (schema: JSONSchemaDefinition) => {
-  const variables = parseStepVariables(schema);
-  return [...variables.primitives, ...variables.namespaces];
-};

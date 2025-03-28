@@ -4,14 +4,17 @@ import { useFormContext } from 'react-hook-form';
 import { Code2 } from '@/components/icons/code-2';
 import { FormField, FormItem, FormLabel, FormMessage } from '@/components/primitives/form/form';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
-import { parseStepVariablesToLiquidVariables } from '@/utils/parseStepVariablesToLiquidVariables';
+import { parseStepVariables } from '@/utils/parseStepVariablesToLiquidVariables';
 import { ControlInput } from '../../../primitives/control-input';
 import { InputRoot, InputWrapper } from '../../../primitives/input';
 
 export const DigestKey = () => {
   const { control } = useFormContext();
   const { step } = useWorkflow();
-  const variables = useMemo(() => (step ? parseStepVariablesToLiquidVariables(step.variables) : []), [step]);
+  const { variables, namespaces } = useMemo(
+    () => (step ? parseStepVariables(step.variables) : { variables: [], namespaces: [] }),
+    [step]
+  );
 
   return (
     <FormField
@@ -40,6 +43,7 @@ export const DigestKey = () => {
                   value={field.value}
                   onChange={field.onChange}
                   variables={variables}
+                  namespaces={namespaces}
                   size="sm"
                 />
               </InputWrapper>

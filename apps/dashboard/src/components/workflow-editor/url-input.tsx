@@ -14,9 +14,16 @@ type URLInputProps = Omit<InputProps, 'value' | 'onChange'> & {
     targetKey: string;
   };
   variables: LiquidVariable[];
+  namespaces: LiquidVariable[];
 };
 
-export const URLInput = ({ options, placeholder, fields: { urlKey, targetKey }, variables = [] }: URLInputProps) => {
+export const URLInput = ({
+  options,
+  placeholder,
+  fields: { urlKey, targetKey },
+  variables = [],
+  namespaces = [],
+}: URLInputProps) => {
   const { control, getFieldState } = useFormContext();
   const { saveForm } = useSaveForm();
   const url = getFieldState(`${urlKey}`);
@@ -40,6 +47,7 @@ export const URLInput = ({ options, placeholder, fields: { urlKey, targetKey }, 
                     value={field.value}
                     onChange={field.onChange}
                     variables={variables}
+                    namespaces={namespaces}
                   />
                 </FormItem>
               )}
