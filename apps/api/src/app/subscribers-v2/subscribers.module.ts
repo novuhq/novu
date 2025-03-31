@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import {
+  CommunityOrganizationRepository,
+  EnvironmentRepository,
   IntegrationRepository,
   MessageTemplateRepository,
   NotificationTemplateRepository,
@@ -14,6 +16,7 @@ import {
   CacheInMemoryProviderService,
   cacheService,
   CreateOrUpdateSubscriberUseCase,
+  featureFlagsService,
   GetPreferences,
   GetSubscriberTemplatePreference,
   InvalidateCacheService,
@@ -69,6 +72,15 @@ const DAL_MODELS = [
 
 @Module({
   controllers: [SubscribersController],
-  providers: [...USE_CASES, ...DAL_MODELS, cacheService, InvalidateCacheService, analyticsService],
+  providers: [
+    ...USE_CASES,
+    ...DAL_MODELS,
+    cacheService,
+    InvalidateCacheService,
+    analyticsService,
+    CommunityOrganizationRepository,
+    featureFlagsService,
+    EnvironmentRepository,
+  ],
 })
 export class SubscribersModule {}
