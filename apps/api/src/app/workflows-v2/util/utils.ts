@@ -144,7 +144,10 @@ function buildObjectFromPaths(
   paths.forEach((path) => {
     if (!arrayPaths.includes(path)) {
       const normalizedPath = path.replace(/\[\d+\]/g, '[0]');
-      const lastPart = path.split('.').pop()?.replace(/[[\]]/g, '');
+      const lastPart = path
+        .split('.')
+        .pop()
+        ?.replace(/[[\]\d]/g, '');
       set(result, normalizedPath, showIfVariablesPaths?.includes(path) ? true : lastPart);
     }
   });
@@ -181,7 +184,10 @@ export function multiplyArrayItems(obj: Record<string, unknown>, multiplyBy = 3)
     if (Array.isArray(value)) {
       result[key] = Array(multiplyBy)
         .fill(null)
-        .map(() => ({ ...value[0] }));
+        .map(() => {
+          // Handle both primitive and object values
+          return typeof value[0] === 'object' && value[0] !== null ? { ...value[0] } : value[0];
+        });
     } else if (typeof value === 'object' && value !== null) {
       result[key] = multiplyArrayItems(value as Record<string, unknown>, multiplyBy);
     }
