@@ -108,6 +108,14 @@ export type Action = {
   redirect?: Redirect;
 };
 
+export type Workflow = {
+  id: string;
+  identifier: string;
+  name: string;
+  critical: boolean;
+  tags?: string[];
+};
+
 export type InboxNotification = {
   id: string;
   subject?: string;
@@ -125,21 +133,13 @@ export type InboxNotification = {
   tags?: string[];
   data?: NotificationData;
   redirect?: Redirect;
-  workflowId: string;
+  workflow?: Workflow;
 };
 
 export type NotificationFilter = {
   tags?: string[];
   read?: boolean;
   archived?: boolean;
-};
-
-export type Workflow = {
-  id: string;
-  identifier: string;
-  name: string;
-  critical: boolean;
-  tags?: string[];
 };
 
 export type ChannelPreference = {
