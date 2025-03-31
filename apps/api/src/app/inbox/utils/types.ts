@@ -31,7 +31,7 @@ export type InboxNotification = {
   tags?: string[];
   data?: Record<string, unknown>;
   redirect?: Redirect;
-  workflow: Workflow | null;
+  workflow?: Workflow;
 };
 
 export type NotificationFilter = {

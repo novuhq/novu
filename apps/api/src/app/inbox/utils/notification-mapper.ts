@@ -74,14 +74,14 @@ const mapSingleItem = ({
     data,
     workflow: template
       ? {
-          critical: template?.critical!,
-          id: template?._id!,
-          identifier: template?.triggers?.[0]?.identifier!,
-          name: template?.name!,
-          data: template?.data,
-          tags: template?.tags,
+          critical: template.critical,
+          id: template._id,
+          identifier: template.triggers?.[0]?.identifier,
+          name: template.name,
+          data: template.data,
+          tags: template.tags,
         }
-      : null,
+      : undefined,
   };
 };
 

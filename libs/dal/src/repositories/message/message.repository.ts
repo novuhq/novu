@@ -186,7 +186,13 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
           .read('secondaryPreferred')
           .populate('subscriber', '_id firstName lastName avatar subscriberId')
           .populate('actorSubscriber', '_id firstName lastName avatar subscriberId')
-          .populate('template', '_id name tags data critical triggers'),
+          .populate({
+            path: 'template',
+            select: '_id name tags data critical triggers',
+            options: {
+              withDeleted: true,
+            },
+          }),
     });
   }
 

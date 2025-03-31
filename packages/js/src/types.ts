@@ -133,7 +133,7 @@ export type InboxNotification = {
   tags?: string[];
   data?: NotificationData;
   redirect?: Redirect;
-  workflow: Workflow | null;
+  workflow?: Workflow;
 };
 
 export type NotificationFilter = {
