@@ -78,7 +78,6 @@ const mapSingleItem = ({
           id: template._id,
           identifier: template.triggers?.[0]?.identifier,
           name: template.name,
-          data: template.data,
           tags: template.tags,
         }
       : undefined,
