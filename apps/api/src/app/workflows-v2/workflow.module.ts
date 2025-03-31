@@ -31,7 +31,7 @@ import {
 } from './usecases';
 import { PatchWorkflowUsecase } from './usecases/patch-workflow';
 import { PatchStepUsecase } from './usecases/patch-step-data';
-import { ExtractVariables } from './usecases/extract-variables/extract-variables.usecase';
+import { CreateVariablesObject } from './usecases/create-variables-object/create-variables-object.usecase';
 import { BuildStepIssuesUsecase } from './usecases/build-step-issues/build-step-issues.usecase';
 import { WorkflowController } from './workflow.controller';
 
@@ -60,7 +60,7 @@ const DAL_REPOSITORIES = [CommunityOrganizationRepository];
     BuildVariableSchemaUsecase,
     PatchStepUsecase,
     PatchWorkflowUsecase,
-    ExtractVariables,
+    CreateVariablesObject,
     BuildStepIssuesUsecase,
     ResourceValidatorService,
     TierRestrictionsValidateUsecase,

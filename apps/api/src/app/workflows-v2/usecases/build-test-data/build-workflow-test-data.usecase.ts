@@ -1,12 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { ControlValuesRepository, NotificationStepEntity, NotificationTemplateEntity } from '@novu/dal';
-import {
-  ControlValuesLevelEnum,
-  JSONSchemaDto,
-  StepTypeEnum,
-  UserSessionData,
-  WorkflowTestDataResponseDto,
-} from '@novu/shared';
+import { NotificationStepEntity, NotificationTemplateEntity } from '@novu/dal';
+import { JSONSchemaDto, StepTypeEnum, UserSessionData, WorkflowTestDataResponseDto } from '@novu/shared';
 import {
   GetWorkflowByIdsCommand,
   GetWorkflowByIdsUseCase,
@@ -16,15 +10,15 @@ import {
 import { WorkflowTestDataCommand } from './build-workflow-test-data.command';
 import { parsePayloadSchema } from '../../shared/parse-payload-schema';
 import { mockSchemaDefaults } from '../../util/utils';
-import { ExtractVariables } from '../extract-variables/extract-variables.usecase';
-import { ExtractVariablesCommand } from '../extract-variables/extract-variables.command';
+import { CreateVariablesObject } from '../create-variables-object/create-variables-object.usecase';
+import { CreateVariablesObjectCommand } from '../create-variables-object/create-variables-object.command';
 import { buildVariablesSchema } from '../../util/create-schema';
 
 @Injectable()
 export class BuildWorkflowTestDataUseCase {
   constructor(
     private readonly getWorkflowByIdsUseCase: GetWorkflowByIdsUseCase,
-    private readonly extractVariables: ExtractVariables
+    private readonly createVariablesObject: CreateVariablesObject
   ) {}
 
   @InstrumentUsecase()
@@ -49,8 +43,8 @@ export class BuildWorkflowTestDataUseCase {
       return parsePayloadSchema(workflow.payloadSchema, { safe: true }) || {};
     }
 
-    const { payload } = await this.extractVariables.execute(
-      ExtractVariablesCommand.create({
+    const { payload } = await this.createVariablesObject.execute(
+      CreateVariablesObjectCommand.create({
         environmentId: command.user.environmentId,
         organizationId: command.user.organizationId,
         userId: command.user._id,
