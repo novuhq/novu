@@ -34,4 +34,3 @@ export * from './useVariablesManager';
 export * from './useVercelIntegration';
 export * from './useVercelParams';
 export * from './useApiKey';
-export * from './useContainer';

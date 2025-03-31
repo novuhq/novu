@@ -75,7 +75,7 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
       const updatedToken = await acceptInvite(invitationTokenFromGithub);
 
       if (updatedToken) {
-        await login(updatedToken, isRedirectedFromLoginPage === 'true' ? ROUTES.WORKFLOWS : ROUTES.AUTH_APPLICATION);
+        await login(updatedToken, ROUTES.WORKFLOWS);
 
         return;
       }
@@ -84,7 +84,7 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
     if (currentOrganization) {
       navigate(ROUTES.WORKFLOWS);
     } else {
-      await login(tokenInQuery, ROUTES.AUTH_APPLICATION);
+      await login(tokenInQuery, ROUTES.WORKFLOWS);
     }
 
     await handleVercelFlow();
@@ -94,7 +94,7 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
         widget: sourceWidget || 'unknown',
         source: 'cli',
       });
-      await login(tokenInQuery, ROUTES.GET_STARTED);
+      await login(tokenInQuery, ROUTES.WORKFLOWS);
 
       return;
     }

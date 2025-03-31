@@ -18,9 +18,6 @@ export class DalService {
       ...config,
     };
     const instance = await mongoose.connect(url, finalConfig);
-    console.log(`[original config] Connecting to Mongo: ${JSON.stringify(baseConfig)}`);
-    console.log(`[override config] Connecting to Mongo: ${JSON.stringify(config)}`);
-    console.log(`[final config] Connecting to Mongo: ${JSON.stringify(finalConfig)}`);
 
     this.connection = instance.connection;
 

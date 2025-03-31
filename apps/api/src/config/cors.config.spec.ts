@@ -2,6 +2,10 @@ import { spy } from 'sinon';
 import { expect } from 'chai';
 import { corsOptionsDelegate } from './cors.config';
 
+const dashboardOrigin = 'https://dashboard.novu.co';
+const widgetOrigin = 'https://widget.novu.co';
+const previewOrigin = 'https://preview.novu.co';
+
 describe('CORS Configuration', () => {
   describe('Local Environment', () => {
     beforeEach(() => {
@@ -29,9 +33,8 @@ describe('CORS Configuration', () => {
       beforeEach(() => {
         process.env.NODE_ENV = environment;
 
-        process.env.FRONT_BASE_URL = 'https://test.com';
-        process.env.LEGACY_STAGING_DASHBOARD_URL = 'https://test-legacy-staging-dashboard.com';
-        process.env.WIDGET_BASE_URL = 'https://widget.com';
+        process.env.FRONT_BASE_URL = dashboardOrigin;
+        process.env.WIDGET_BASE_URL = widgetOrigin;
       });
 
       afterEach(() => {
@@ -46,7 +49,7 @@ describe('CORS Configuration', () => {
           {
             url: '/v1/test',
             headers: {
-              origin: 'https://test.novu.com',
+              origin: environment === 'dev' ? previewOrigin : dashboardOrigin,
             },
           },
           callbackSpy
@@ -54,14 +57,11 @@ describe('CORS Configuration', () => {
 
         expect(callbackSpy.calledOnce).to.be.ok;
         expect(callbackSpy.firstCall.firstArg).to.be.null;
-        expect(callbackSpy.firstCall.lastArg.origin.length).to.equal(environment === 'dev' ? 4 : 3);
-        expect(callbackSpy.firstCall.lastArg.origin[0]).to.equal(process.env.FRONT_BASE_URL);
-        expect(callbackSpy.firstCall.lastArg.origin[1]).to.equal(process.env.LEGACY_STAGING_DASHBOARD_URL);
-        expect(callbackSpy.firstCall.lastArg.origin[2]).to.equal(process.env.WIDGET_BASE_URL);
-
-        if (environment === 'dev') {
-          expect(callbackSpy.firstCall.lastArg.origin[3]).to.equal('https://test.novu.com');
-        }
+        expect(callbackSpy.firstCall.lastArg.origin.length).to.equal(2);
+        expect(callbackSpy.firstCall.lastArg.origin[0]).to.equal(
+          environment === 'dev' ? previewOrigin : dashboardOrigin
+        );
+        expect(callbackSpy.firstCall.lastArg.origin[1]).to.equal(widgetOrigin);
       });
 
       it('widget routes should be wildcarded', () => {

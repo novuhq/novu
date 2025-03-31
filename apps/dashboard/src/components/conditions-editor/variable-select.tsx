@@ -1,17 +1,19 @@
-import React, { useMemo, useState, useRef } from 'react';
+import React, { HTMLAttributes, useMemo, useRef, useState } from 'react';
 
-import { Popover, PopoverAnchor, PopoverContent } from '@/components/primitives/popover';
 import { InputPure, InputRoot, InputWrapper } from '@/components/primitives/input';
-import { AUTOCOMPLETE_PASSWORD_MANAGERS_OFF } from '@/utils/constants';
+import { Popover, PopoverAnchor, PopoverContent } from '@/components/primitives/popover';
 import { VariableList, VariableListRef } from '@/components/variable/variable-list';
+import { AUTOCOMPLETE_PASSWORD_MANAGERS_OFF } from '@/utils/constants';
+import { cn } from '@/utils/ui';
 
-type VariableSelectProps = {
+type VariableSelectProps = HTMLAttributes<HTMLDivElement> & {
   disabled?: boolean;
   value?: string;
   options: Array<{ label: string; value: string }>;
   onChange: (value: string) => void;
   leftIcon?: React.ReactNode;
   title?: string;
+  placeholder?: string;
   error?: string;
 };
 
@@ -25,15 +27,19 @@ type VariableSelectProps = {
  * - Visual feedback for selected items
  * - Support for custom left icon
  */
-export const VariableSelect = ({
-  disabled,
-  value,
-  options,
-  onChange,
-  leftIcon,
-  title = 'Variables',
-  error,
-}: VariableSelectProps) => {
+export const VariableSelect = (props: VariableSelectProps) => {
+  const {
+    className,
+    disabled,
+    value,
+    options,
+    onChange,
+    leftIcon,
+    title = 'Variables',
+    error,
+    placeholder,
+    ...rest
+  } = props;
   const [inputValue, setInputValue] = useState(value ?? '');
   const [filterValue, setFilterValue] = useState('');
   const [isOpen, setIsOpen] = useState(false);
@@ -98,8 +104,8 @@ export const VariableSelect = ({
   return (
     <Popover open={isOpen}>
       <PopoverAnchor asChild>
-        <div className="flex w-40 flex-col gap-1">
-          <InputRoot size="2xs" className="w-40" hasError={!!error}>
+        <div className={cn('flex w-40 flex-col gap-1', className)} {...rest}>
+          <InputRoot size="2xs" hasError={!!error}>
             <InputWrapper>
               {leftIcon}
               <InputPure
@@ -110,7 +116,7 @@ export const VariableSelect = ({
                 onFocusCapture={onFocusCapture}
                 // use blur only when there are no filtered options, otherwise it closes the popover on keyboard navigation
                 onBlurCapture={filteredOptions.length === 0 ? onClose : undefined}
-                placeholder="Field"
+                placeholder={placeholder ?? 'Field'}
                 disabled={disabled}
                 onKeyDown={onInputKeyDown}
                 {...AUTOCOMPLETE_PASSWORD_MANAGERS_OFF}

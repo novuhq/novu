@@ -164,6 +164,7 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
               border-radius: 4px;
               box-shadow: 0px 0px 2px 0px rgba(0, 0, 0, 0.04), 0px 1px 2px 0px rgba(0, 0, 0, 0.02);
               border-radius: 4px;
+              margin: 2px;
             }
           }
         `}
@@ -175,7 +176,7 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
       {overrideTippyBoxStyles()}
       <div
         className={cn(
-          `shadow-xs mx-auto flex h-full max-w-[${MAILY_EMAIL_WIDTH}px] flex-col items-start rounded-lg bg-white`,
+          `shadow-xs mx-auto flex min-h-full max-w-[${MAILY_EMAIL_WIDTH}px] flex-col items-start rounded-lg bg-white`,
           className
         )}
         {...rest}

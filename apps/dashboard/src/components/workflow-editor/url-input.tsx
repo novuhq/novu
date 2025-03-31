@@ -1,7 +1,7 @@
 import { useFormContext } from 'react-hook-form';
 
 import { ControlInput } from '@/components/primitives/control-input';
-import { FormControl, FormField, FormItem, FormMessagePure } from '@/components/primitives/form/form';
+import { FormControl, FormField, FormItem, FormMessage } from '@/components/primitives/form/form';
 import { InputProps, InputRoot } from '@/components/primitives/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
@@ -9,7 +9,6 @@ import { LiquidVariable } from '@/utils/parseStepVariablesToLiquidVariables';
 
 type URLInputProps = Omit<InputProps, 'value' | 'onChange'> & {
   options: string[];
-  withHint?: boolean;
   fields: {
     urlKey: string;
     targetKey: string;
@@ -17,13 +16,7 @@ type URLInputProps = Omit<InputProps, 'value' | 'onChange'> & {
   variables: LiquidVariable[];
 };
 
-export const URLInput = ({
-  options,
-  placeholder,
-  fields: { urlKey, targetKey },
-  withHint = true,
-  variables = [],
-}: URLInputProps) => {
+export const URLInput = ({ options, placeholder, fields: { urlKey, targetKey }, variables = [] }: URLInputProps) => {
   const { control, getFieldState } = useFormContext();
   const { saveForm } = useSaveForm();
   const url = getFieldState(`${urlKey}`);
@@ -82,9 +75,7 @@ export const URLInput = ({
           </InputRoot>
         </div>
       </div>
-      <FormMessagePure error={error ? String(error.message) : undefined}>
-        {withHint && 'Type {{ for variables'}
-      </FormMessagePure>
+      <FormField control={control} name={urlKey} render={() => <FormMessage />} />
     </div>
   );
 };

@@ -5,13 +5,13 @@ import { ControlInput } from '@/components/primitives/control-input';
 import { FormControl, FormField, FormItem, FormMessage } from '@/components/primitives/form/form';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { parseStepVariablesToLiquidVariables } from '@/utils/parseStepVariablesToLiquidVariables';
-import { capitalize } from '@/utils/string';
+import { capitalize, containsHTMLEntities, containsVariables } from '@/utils/string';
 import { InputRoot } from '../../../primitives/input';
 
 const bodyKey = 'body';
 
 export const InAppBody = () => {
-  const { control } = useFormContext();
+  const { control, getValues } = useFormContext();
   const { step } = useWorkflow();
   const variables = useMemo(() => (step ? parseStepVariablesToLiquidVariables(step.variables) : []), [step]);
 
@@ -24,7 +24,7 @@ export const InAppBody = () => {
           <FormControl>
             <InputRoot hasError={!!fieldState.error}>
               <ControlInput
-                className="min-h-[7.75rem]"
+                className="min-h-[7rem]"
                 indentWithTab={false}
                 placeholder={capitalize(field.name)}
                 id={field.name}
@@ -36,7 +36,13 @@ export const InAppBody = () => {
               />
             </InputRoot>
           </FormControl>
-          <FormMessage>{`Type {{ for variables, or wrap text in ** for bold.`}</FormMessage>
+          <FormMessage>
+            {containsHTMLEntities(field.value) && !getValues('disableOutputSanitization')
+              ? 'HTML entities detected. Consider disabling content sanitization for proper rendering'
+              : field.value.length > 2 && !containsVariables(field.value)
+                ? `Type {{ for variables, or wrap text in ** for bold.`
+                : ''}
+          </FormMessage>
         </FormItem>
       )}
     />

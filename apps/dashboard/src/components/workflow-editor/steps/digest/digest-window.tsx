@@ -139,9 +139,16 @@ export const DigestWindow = () => {
           </div>
         </div>
       </Tabs>
-      <FormMessagePure
-        error={digestType === REGULAR_DIGEST_TYPE ? regularDigestError?.message : scheduledDigestError?.message}
-      />
+      {/* TODO: Use <FormMessage /> instead, see how we did it in <URLInput /> */}
+      {(regularDigestError || scheduledDigestError) && (
+        <FormMessagePure
+          hasError={
+            digestType === REGULAR_DIGEST_TYPE ? !!regularDigestError?.message : !!scheduledDigestError?.message
+          }
+        >
+          {digestType === REGULAR_DIGEST_TYPE ? regularDigestError?.message : scheduledDigestError?.message}
+        </FormMessagePure>
+      )}
     </div>
   );
 };

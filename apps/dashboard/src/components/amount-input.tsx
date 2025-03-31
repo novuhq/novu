@@ -205,7 +205,8 @@ const AmountInput = ({
           )}
         />
       </AmountInputContainer>
-      {showError && <FormMessagePure error={error ? String(error.message) : undefined} />}
+      {/* TODO: Use <FormMessage /> instead, see how we did it in <URLInput /> */}
+      {showError && error && <FormMessagePure hasError>{String(error?.message || '')}</FormMessagePure>}
     </>
   );
 };

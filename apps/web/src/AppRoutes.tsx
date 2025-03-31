@@ -8,11 +8,9 @@ import { ActivitiesPage } from './pages/activities/ActivitiesPage';
 import InvitationPage from './pages/auth/InvitationPage';
 import LoginPage from './pages/auth/LoginPage';
 import { PasswordResetPage } from './pages/auth/PasswordResetPage';
-import QuestionnairePage from './pages/auth/QuestionnairePage';
 import SignUpPage from './pages/auth/SignUpPage';
 import { BrandingPage } from './pages/brand/BrandingPage';
 import { PromoteChangesPage } from './pages/changes/PromoteChangesPage';
-import { GetStartedPage } from './pages/get-started/GetStartedPage';
 import HomePage from './pages/HomePage';
 import {
   ApiKeysPage,
@@ -28,12 +26,6 @@ import { IntegrationsListPage } from './pages/integrations/IntegrationsListPage'
 import { UpdateProviderPage } from './pages/integrations/UpdateProviderPage';
 import { MembersInvitePage } from './pages/invites/MembersInvitePage';
 import { LinkVercelProjectPage } from './pages/partner-integrations/LinkVercelProjectPage';
-import { DigestPreview } from './pages/quick-start/steps/DigestPreview';
-import { FrameworkSetup } from './pages/quick-start/steps/FrameworkSetup';
-import { GetStarted } from './pages/quick-start/steps/GetStarted';
-import { InAppSuccess } from './pages/quick-start/steps/InAppSuccess';
-import { NotificationCenter } from './pages/quick-start/steps/NotificationCenter';
-import { Setup } from './pages/quick-start/steps/Setup';
 import SubscribersList from './pages/subscribers/SubscribersListPage';
 import { ChannelPreview } from './pages/templates/components/ChannelPreview';
 import { ChannelStepEditor } from './pages/templates/components/ChannelStepEditor';
@@ -65,8 +57,6 @@ import { IS_EE_AUTH_ENABLED } from './config/index';
 import { EnterpriseAuthRoutes } from './ee/clerk/EnterpriseAuthRoutes';
 import { novuOnboardedCookie } from './utils/cookies';
 import { EnterprisePrivatePageLayout } from './ee/clerk/components/EnterprisePrivatePageLayout';
-import { OnboardingPage } from './pages/playground/onboarding/Onboarding';
-import { PlaygroundPage } from './pages/playground/onboarding/PlaygroundPage';
 import { StudioStepEditorPage } from './studio/pages/StudioStepEditorPage';
 
 const AuthRoutes = () => {
@@ -77,7 +67,6 @@ const AuthRoutes = () => {
       <Route path={ROUTES.AUTH_RESET_REQUEST} element={<PasswordResetPage />} />
       <Route path={ROUTES.AUTH_RESET_TOKEN} element={<PasswordResetPage />} />
       <Route path={ROUTES.AUTH_INVITATION_TOKEN} element={<InvitationPage />} />
-      <Route path={ROUTES.AUTH_APPLICATION} element={<QuestionnairePage />} />
     </Route>
   );
 
@@ -90,8 +79,6 @@ export const AppRoutes = () => {
   return (
     <Routes>
       {AuthRoutes()}
-      <Route path={ROUTES.DASHBOARD_ONBOARDING} element={<OnboardingPage />} />
-      <Route path={ROUTES.DASHBOARD_PLAYGROUND} element={<PlaygroundPage />} />
       <Route element={!IS_EE_AUTH_ENABLED ? <PrivatePageLayout /> : <EnterprisePrivatePageLayout />}>
         <Route
           path={ROUTES.PARTNER_INTEGRATIONS_VERCEL_LINK_PROJECTS}
@@ -123,16 +110,6 @@ export const AppRoutes = () => {
           <Route path="create" element={<CreateTenantPage />} />
           <Route path=":identifier" element={<UpdateTenantPage />} />
         </Route>
-        {isV2Enabled ? (
-          <Route path={ROUTES.GET_STARTED} element={<GetStartedPage />} />
-        ) : (
-          <Route path={ROUTES.GET_STARTED} element={<GetStarted />} />
-        )}
-        <Route path={ROUTES.GET_STARTED_PREVIEW} element={<DigestPreview />} />
-        <Route path={ROUTES.QUICK_START_NOTIFICATION_CENTER} element={<NotificationCenter />} />
-        <Route path={ROUTES.QUICK_START_SETUP} element={<FrameworkSetup />} />
-        <Route path={ROUTES.QUICK_START_SETUP_FRAMEWORK} element={<Setup />} />
-        <Route path={ROUTES.QUICK_START_SETUP_SUCCESS} element={<InAppSuccess />} />
         <Route path={ROUTES.ACTIVITIES} element={<ActivitiesPage />} />
         {!IS_EE_AUTH_ENABLED ? (
           <Route path={ROUTES.SETTINGS} element={<SettingsPage />}>

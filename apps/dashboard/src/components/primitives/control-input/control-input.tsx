@@ -1,16 +1,16 @@
-import { useCallback, useMemo, useRef } from 'react';
+import { cn } from '@/utils/ui';
 import { autocompletion } from '@codemirror/autocomplete';
 import { EditorView } from '@uiw/react-codemirror';
-import { cn } from '@/utils/ui';
 import { cva } from 'class-variance-authority';
+import { useCallback, useMemo, useRef } from 'react';
 
 import { Editor } from '@/components/primitives/editor';
+import { EditVariablePopover } from '@/components/variable/edit-variable-popover';
 import { createAutocompleteSource } from '@/utils/liquid-autocomplete';
 import { LiquidVariable } from '@/utils/parseStepVariablesToLiquidVariables';
 import { useVariables } from './hooks/use-variables';
 import { createVariableExtension } from './variable-plugin';
 import { variablePillTheme } from './variable-plugin/variable-theme';
-import { EditVariablePopover } from '@/components/variable/edit-variable-popover';
 
 const variants = cva('relative w-full', {
   variants: {
@@ -101,14 +101,13 @@ export function ControlInput({
   );
 
   return (
-    <div className={variants({ size, className })}>
+    <div className={cn(variants({ size }), className)}>
       <Editor
         fontFamily="inherit"
         multiline={multiline}
         indentWithTab={indentWithTab}
         size={size}
-        // TODO for Sokratis
-        className={cn('flex-1', { 'overflow-hidden': !multiline })}
+        className={cn('flex-1')}
         autoFocus={autoFocus}
         placeholder={placeholder}
         id={id}

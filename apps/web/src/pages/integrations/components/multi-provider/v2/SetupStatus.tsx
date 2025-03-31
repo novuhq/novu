@@ -3,8 +3,8 @@ import { useEffect } from 'react';
 
 import styled from '@emotion/styled';
 import { Button, colors, Text, Label } from '@novu/design-system';
-import { When } from '../../../components/utils/When';
-import { useDataRef } from '../../../hooks';
+import { When } from '../../../../../components/utils/When';
+import { useDataRef } from '../../../../../hooks';
 
 export function SetupStatus({
   appInitialized,

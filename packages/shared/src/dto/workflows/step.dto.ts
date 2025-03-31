@@ -91,6 +91,7 @@ export enum UiComponentEnum {
   PUSH_BODY = 'PUSH_BODY',
   PUSH_SUBJECT = 'PUSH_SUBJECT',
   QUERY_EDITOR = 'QUERY_EDITOR',
+  DATA = 'DATA',
 }
 
 export class UiSchemaProperty {

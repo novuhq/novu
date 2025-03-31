@@ -93,11 +93,7 @@ export class Session {
      * We want to prevent the playground inbox demo from marking the integration as connected
      * And only treat the real customer domain or local environment as valid origins
      */
-    const isOriginFromNovu =
-      command.origin &&
-      ((process.env.DASHBOARD_V2_BASE_URL && command.origin?.includes(process.env.DASHBOARD_V2_BASE_URL as string)) ||
-        (process.env.FRONT_BASE_URL && command.origin?.includes(process.env.FRONT_BASE_URL as string)));
-
+    const isOriginFromNovu = new RegExp(process.env.FRONT_BASE_URL).test(command.origin ?? '');
     if (!isOriginFromNovu && !inAppIntegration.connected) {
       this.analyticsService.mixpanelTrack(AnalyticsEventsEnum.INBOX_CONNECTED, '', {
         _organization: environment._organizationId,

@@ -1,5 +1,4 @@
 import { DashboardLayout } from '@/components/dashboard-layout';
-import { OptInModal } from '@/components/opt-in-modal';
 import { PageMeta } from '@/components/page-meta';
 import { Button } from '@/components/primitives/button';
 import { ButtonGroupItem, ButtonGroupRoot } from '@/components/primitives/button-group';
@@ -127,7 +126,6 @@ export const WorkflowsPage = () => {
     <>
       <PageMeta title="Workflows" />
       <DashboardLayout headerStartItems={<h1 className="text-foreground-950 flex items-center gap-1">Workflows</h1>}>
-        <OptInModal />
         <div className="flex h-full w-full flex-col gap-2.5 p-2.5">
           <div className="flex justify-between">
             <Form {...form}>

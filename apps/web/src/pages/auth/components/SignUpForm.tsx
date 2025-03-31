@@ -16,7 +16,7 @@ import { ROUTES } from '../../../constants/routes';
 import { OAuth } from './OAuth';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { useStudioState } from '../../../studio/hooks';
-import { navigateToAuthApplication } from '../../../utils';
+import { navigateToWorkflows } from '../../../utils';
 
 type SignUpFormProps = {
   invitationToken?: string;
@@ -84,10 +84,10 @@ export function SignUpForm({ invitationToken, email }: SignUpFormProps) {
       if (updatedToken) {
         await login(updatedToken);
       }
-      navigateToAuthApplication();
+      navigateToWorkflows();
     } else {
       const navigateParams = isFromVercel ? `?${params.toString()}` : '';
-      navigateToAuthApplication(navigateParams);
+      navigateToWorkflows();
     }
   };
 

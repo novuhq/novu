@@ -42,12 +42,6 @@ describe('Resource Limiting #novu-v2', () => {
     });
 
     describe('Event resource blocking', () => {
-      describe('Event Quota FF is enabled', () => {
-        beforeEach(() => {
-          process.env.IS_EVENT_QUOTA_THROTTLER_ENABLED = 'true';
-        });
-      });
-
       describe('Base Quota FF is enabled', () => {
         let getEventResourceUsageStub: sinon.SinonStub;
 
