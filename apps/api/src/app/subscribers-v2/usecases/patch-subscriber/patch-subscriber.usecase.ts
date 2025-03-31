@@ -114,7 +114,7 @@ export class PatchSubscriber {
       Logger.warn(`[Dry run] Invalid recipients: ${itemId}`, 'PatchSubscriber');
     } else {
       throw new BadRequestException(
-        `Invalid subscriberId: ${itemId}, only alphanumeric characters, underscores or valid email addresses are allowed`
+        `Invalid subscriberId: ${itemId}, only alphanumeric characters, - and _ or valid email addresses are allowed`
       );
     }
   }
