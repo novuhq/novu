@@ -1,7 +1,7 @@
 import { Avatar, AvatarImage } from '@/components/primitives/avatar';
 import { MAILY_EMAIL_WIDTH } from '@/components/workflow-editor/steps/email/maily';
 import { cn } from '@/utils/ui';
-import { HTMLAttributes, useEffect, useRef } from 'react';
+import { HTMLAttributes } from 'react';
 import { RiArrowDownSFill } from 'react-icons/ri';
 
 type EmailPreviewHeaderProps = HTMLAttributes<HTMLDivElement>;
@@ -48,12 +48,6 @@ type EmailPreviewBodyProps = HTMLAttributes<HTMLDivElement> & {
 
 export const EmailPreviewBody = (props: EmailPreviewBodyProps) => {
   const { body, className, ...rest } = props;
-  const shadowRootRef = useRef<ShadowRoot | null>(null);
-
-  useEffect(() => {
-    if (!shadowRootRef.current) return;
-    shadowRootRef.current.innerHTML = body;
-  }, [body]);
 
   return (
     <div
@@ -61,8 +55,8 @@ export const EmailPreviewBody = (props: EmailPreviewBodyProps) => {
       // use shadow DOM to isolate the styles
       ref={(node) => {
         if (node && !node.shadowRoot) {
-          shadowRootRef.current = node.attachShadow({ mode: 'open' });
-          shadowRootRef.current.innerHTML = body;
+          const shadow = node.attachShadow({ mode: 'open' });
+          shadow.innerHTML = body;
         }
       }}
       {...rest}
