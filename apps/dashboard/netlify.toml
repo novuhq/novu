@@ -7,7 +7,7 @@
 
 [context.deploy-preview]
   command = "pnpm run build:dashboard --skip-nx-cache"
-  ignore = "pnpm nx show projects --affected --base=origin/next --head=HEAD | grep -q '@novu/dashboard' && echo 1 || echo 0"
+  ignore = "npx nx show projects --affected --base=origin/next --head=HEAD | grep -q '@novu/dashboard' && echo 1 || echo 0"
 
 [[redirects]]
   from = "/legacy/*"

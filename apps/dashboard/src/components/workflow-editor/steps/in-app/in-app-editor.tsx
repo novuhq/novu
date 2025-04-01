@@ -18,8 +18,6 @@ const disableOutputSanitizationKey = 'disableOutputSanitization';
 const dataObjectKey = 'data';
 
 export const InAppEditor = ({ uiSchema }: { uiSchema: UiSchema }) => {
-  const isDataObjectEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_DATA_OBJECT_ENABLED);
-
   if (uiSchema.group !== UiSchemaGroupEnum.IN_APP) {
     return null;
   }
@@ -71,13 +69,13 @@ export const InAppEditor = ({ uiSchema }: { uiSchema: UiSchema }) => {
         </InAppTabsSection>
       )}
 
-      {dataObject && isDataObjectEnabled && (
+      {dataObject && (
         <>
           <Separator />
           <InAppTabsSection className="px-4 pb-0 pt-3">
             <div className="flex items-center gap-2.5 text-sm">
               <RiInstanceLine className="size-4" />
-              <span>Advanced controls</span>
+              <span>Developers</span>
               <Badge color="orange" size="sm" variant="lighter">
                 New
               </Badge>
@@ -86,7 +84,7 @@ export const InAppEditor = ({ uiSchema }: { uiSchema: UiSchema }) => {
         </>
       )}
 
-      {dataObject && isDataObjectEnabled && (
+      {dataObject && (
         <>
           <InAppTabsSection className="pb-0 pt-3">
             {getComponentByType({

@@ -73,20 +73,16 @@ const InnerDataObject = ({ field }: { field: FieldValues }) => {
         <span className="text-xs">Data object</span>
         <HelpTooltipIndicator
           text={
-            <>
-              <p>Custom data to be sent with the notification.</p>
-              <p>
-                This data can be used to{' '}
-                <Link
-                  className="text-primary"
-                  to="https://docs.novu.co/platform/inbox/react/components/inbox#data-object"
-                  target="_blank"
-                >
-                  customize the notification item rendered
-                </Link>
-                {` in the <Inbox />.`}
-              </p>
-            </>
+            <p>
+              {`Add extra information about each notification entry that is not part of the standard notification fields, and customize each notification item rendering in <Inbox />. `}
+              <Link
+                className="text-primary"
+                to="https://docs.novu.co/platform/inbox/react/components/inbox#data-object"
+                target="_blank"
+              >
+                Learn more
+              </Link>
+            </p>
           }
         />
       </div>
