@@ -116,6 +116,6 @@ export class CreateVariablesObject {
    * "payload.items[0].bar" returns "payload.items"
    */
   private extractArrayPath(value: string): string | undefined {
-    return value.match(/([a-zA-Z0-9._]+)\[\d+\]/)?.[1];
+    return value.match(/([^[]+)\[\d+\]/)?.[1];
   }
 }
