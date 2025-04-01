@@ -9,7 +9,7 @@ import { WorkflowEditorPage } from './page-object-models/workflow-editor-page';
 import { StepConfigSidebar } from './page-object-models/step-config-sidebar';
 import { TriggerWorkflowPage } from './page-object-models/trigger-workflow-page';
 
-test.only('manage workflows', async ({ page }) => {
+test('manage workflows', async ({ page }) => {
   const workflowName = 'test-workflow';
   const workflowId = workflowName;
   const workflowDescription = 'Test workflow description';
