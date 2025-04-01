@@ -6,15 +6,14 @@ import { VARIABLE_REGEX_STRING } from '@/components/primitives/control-input/var
 import { parseVariable } from '@/components/primitives/control-input/variable-plugin/utils';
 import { EditVariablePopover } from '@/components/variable/edit-variable-popover';
 import { VariablePill } from '@/components/variable/variable-pill';
-import { LiquidVariable } from '@/utils/parseStepVariablesToLiquidVariables';
+import { IsAllowedVariable } from '@/utils/parseStepVariables';
 
 type InternalVariableViewProps = NodeViewProps & {
-  variables: LiquidVariable[];
-  namespaces: LiquidVariable[];
+  isAllowedVariable: IsAllowedVariable;
 };
 
 function InternalVariableView(props: InternalVariableViewProps) {
-  const { node, updateAttributes, editor, variables, namespaces } = props;
+  const { node, updateAttributes, editor, isAllowedVariable } = props;
   const { id } = node.attrs;
   const [variable, setVariable] = useState(`{{${id}}}`);
   const [isOpen, setIsOpen] = useState(false);
@@ -38,8 +37,7 @@ function InternalVariableView(props: InternalVariableViewProps) {
         open={isOpen}
         onOpenChange={setIsOpen}
         variable={variable}
-        variables={variables}
-        namespaces={namespaces}
+        isAllowedVariable={isAllowedVariable}
         onUpdate={(newValue) => {
           const { fullLiquidExpression } = parseVariableCallback(newValue);
           updateAttributes({ id: fullLiquidExpression });
@@ -59,9 +57,9 @@ function InternalVariableView(props: InternalVariableViewProps) {
   );
 }
 
-// HOC that takes namespaces prop
-export function createVariableView(variables: LiquidVariable[], namespaces: LiquidVariable[]) {
+// HOC that takes isAllowedVariable prop
+export function createVariableView(isAllowedVariable: IsAllowedVariable) {
   return function VariableView(props: NodeViewProps) {
-    return <InternalVariableView {...props} variables={variables} namespaces={namespaces} />;
+    return <InternalVariableView {...props} isAllowedVariable={isAllowedVariable} />;
   };
 }

@@ -15,7 +15,6 @@ import { Separator } from '@/components/primitives/separator';
 import { Switch } from '@/components/primitives/switch';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { useTelemetry } from '@/hooks/use-telemetry';
-import { LiquidVariable } from '@/utils/parseStepVariablesToLiquidVariables';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { RiAddFill, RiQuestionLine } from 'react-icons/ri';
@@ -29,12 +28,11 @@ import type { Filters, FilterWithParam, VariablePopoverProps } from './types';
 import { formatLiquidVariable, getDefaultSampleValue } from './utils';
 
 type EditVariablePopoverContentProps = VariablePopoverProps & {
-  variables: LiquidVariable[];
-  namespaces: LiquidVariable[];
+  isAllowedVariable: (variable: string) => boolean;
 };
 
 export function EditVariablePopoverContent(props: EditVariablePopoverContentProps) {
-  const { variable, onUpdate, onEscapeKeyDown, variables, namespaces } = props;
+  const { variable, onUpdate, onEscapeKeyDown, isAllowedVariable } = props;
   const { parsedName, parsedDefaultValue, parsedFilters, originalVariable, parseRawInput } = useVariableParser(
     variable || ''
   );
@@ -104,12 +102,7 @@ export function EditVariablePopoverContent(props: EditVariablePopoverContentProp
   );
 
   const handleSave = useCallback(() => {
-    if (
-      !(
-        namespaces.some((namespace) => name.startsWith(`${namespace.label}.`)) ||
-        variables.some((variable) => variable.label === name)
-      )
-    ) {
+    if (!isAllowedVariable(name)) {
       setNameError('Not a valid variable');
       return;
     }
@@ -141,7 +134,7 @@ export function EditVariablePopoverContent(props: EditVariablePopoverContentProp
               <div className="grid gap-1">
                 <label className="text-text-sub text-label-xs">Variable name</label>
                 <Input value={name} onChange={(e) => handleNameChange(e.target.value)} className="h-7 text-sm" />
-                <FormMessagePure error={nameError} />
+                <FormMessagePure>{nameError}</FormMessagePure>
               </div>
             </FormControl>
           </FormItem>

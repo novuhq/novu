@@ -1,17 +1,12 @@
-import { useMemo } from 'react';
-
 import { FormLabel, FormMessage } from '@/components/primitives/form/form';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
-import { parseStepVariables } from '@/utils/parseStepVariablesToLiquidVariables';
+import { useParseVariables } from '@/hooks/use-parse-variables';
 import { urlTargetTypes } from '@/utils/url';
 import { URLInput } from '../../url-input';
 
 export const InAppRedirect = () => {
   const { step } = useWorkflow();
-  const { variables, namespaces } = useMemo(
-    () => (step ? parseStepVariables(step.variables) : { variables: [], namespaces: [] }),
-    [step]
-  );
+  const { variables, isAllowedVariable } = useParseVariables(step?.variables);
 
   return (
     <div className="flex flex-col gap-1">
@@ -34,7 +29,7 @@ export const InAppRedirect = () => {
           targetKey: 'redirect.target',
         }}
         variables={variables}
-        namespaces={namespaces}
+        isAllowedVariable={isAllowedVariable}
       />
       <FormMessage />
     </div>

@@ -10,7 +10,7 @@ import { FieldSelector } from '@/components/conditions-editor/field-selector';
 import { OperatorSelector } from '@/components/conditions-editor/operator-selector';
 import { RuleActions } from '@/components/conditions-editor/rule-actions';
 import { ValueEditor } from '@/components/conditions-editor/value-editor';
-import { LiquidVariable } from '@/utils/parseStepVariablesToLiquidVariables';
+import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
 
 const ruleActionsClassName = `[&>[data-actions="true"]]:opacity-0 [&:hover>[data-actions="true"]]:opacity-100 [&>[data-actions="true"]:has(~[data-radix-popper-content-wrapper])]:opacity-100`;
 const groupActionsClassName = `[&_.ruleGroup-header>[data-actions="true"]]:opacity-0 [&_.ruleGroup-header:hover>[data-actions="true"]]:opacity-100 [&_.ruleGroup-header>[data-actions="true"]:has(~[data-radix-popper-content-wrapper])]:opacity-100`;
@@ -52,17 +52,17 @@ const controlElements = {
 function InternalConditionsEditor({
   fields,
   variables,
-  namespaces,
+  isAllowedVariable,
   query,
   onQueryChange,
 }: {
   fields: Field[];
   variables: LiquidVariable[];
-  namespaces: LiquidVariable[];
+  isAllowedVariable: IsAllowedVariable;
   query: RuleGroupType;
   onQueryChange: (query: RuleGroupType) => void;
 }) {
-  const context = useMemo(() => ({ variables, namespaces }), [variables, namespaces]);
+  const context = useMemo(() => ({ variables, isAllowedVariable }), [variables, isAllowedVariable]);
 
   return (
     <QueryBuilder
@@ -84,20 +84,20 @@ export function ConditionsEditor({
   onQueryChange,
   fields,
   variables,
-  namespaces,
+  isAllowedVariable,
 }: {
   query: RuleGroupType;
   onQueryChange: (query: RuleGroupType) => void;
   fields: Field[];
   variables: LiquidVariable[];
-  namespaces: LiquidVariable[];
+  isAllowedVariable: IsAllowedVariable;
 }) {
   return (
     <ConditionsEditorProvider query={query} onQueryChange={onQueryChange}>
       <InternalConditionsEditor
         fields={fields}
         variables={variables}
-        namespaces={namespaces}
+        isAllowedVariable={isAllowedVariable}
         query={query}
         onQueryChange={onQueryChange}
       />

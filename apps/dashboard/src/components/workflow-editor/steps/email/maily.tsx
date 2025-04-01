@@ -7,8 +7,8 @@ import { HTMLAttributes, useCallback, useMemo, useState } from 'react';
 import { HTMLCodeBlockView } from '@/components/workflow-editor/steps/email/extensions/html-view';
 import { MailyVariablesList } from '@/components/workflow-editor/steps/email/extensions/maily-variables-list';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
+import { useParseVariables } from '@/hooks/use-parse-variables';
 import { useTelemetry } from '@/hooks/use-telemetry';
-import { parseStepVariables } from '@/utils/parseStepVariablesToLiquidVariables';
 import { cn } from '@/utils/ui';
 import { ForExtension } from './extensions/for';
 import { createVariableView } from './extensions/variable-view';
@@ -32,21 +32,18 @@ export const MAILY_EMAIL_WIDTH = 600;
 
 export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
   const { step } = useWorkflow();
-  const mailyVariables = useMemo(
-    () => (step ? parseStepVariables(step.variables) : { primitives: [], arrays: [], namespaces: [], variables: [] }),
-    [step]
-  );
+  const parsedVariables = useParseVariables(step?.variables);
   const primitives = useMemo(
-    () => mailyVariables.primitives.map((v) => ({ name: v.label, required: false })),
-    [mailyVariables.primitives]
+    () => parsedVariables.primitives.map((v) => ({ name: v.label, required: false })),
+    [parsedVariables.primitives]
   );
   const arrays = useMemo(
-    () => mailyVariables.arrays.map((v) => ({ name: v.label, required: false })),
-    [mailyVariables.arrays]
+    () => parsedVariables.arrays.map((v) => ({ name: v.label, required: false })),
+    [parsedVariables.arrays]
   );
   const namespaces = useMemo(
-    () => mailyVariables.namespaces.map((v) => ({ name: v.label, required: false })),
-    [mailyVariables.namespaces]
+    () => parsedVariables.namespaces.map((v) => ({ name: v.label, required: false })),
+    [parsedVariables.namespaces]
   );
   const [_, setEditor] = useState<any>();
   const track = useTelemetry();
@@ -125,7 +122,7 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
       VariableExtension.extend({
         // @ts-expect-error - TODO: Polish Maily typing when extending Maily core and update accordingly
         addNodeView() {
-          return ReactNodeViewRenderer(createVariableView(mailyVariables.variables, mailyVariables.namespaces), {
+          return ReactNodeViewRenderer(createVariableView(parsedVariables.isAllowedVariable), {
             className: 'relative inline-block',
             as: 'div',
           });

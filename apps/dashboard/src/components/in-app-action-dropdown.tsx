@@ -17,12 +17,12 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives
 import { Separator } from '@/components/primitives/separator';
 import { URLInput } from '@/components/workflow-editor/url-input';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
+import { useParseVariables } from '@/hooks/use-parse-variables';
 import { inboxButtonVariants } from '@/utils/inbox';
-import { parseStepVariables } from '@/utils/parseStepVariablesToLiquidVariables';
 import { cn } from '@/utils/ui';
 import { urlTargetTypes } from '@/utils/url';
 import merge from 'lodash.merge';
-import { ComponentProps, useMemo } from 'react';
+import { ComponentProps } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { RiEdit2Line, RiExpandUpDownLine, RiForbid2Line } from 'react-icons/ri';
 import { CompactButton } from './primitives/button-compact';
@@ -207,10 +207,7 @@ const ConfigureActionPopover = (
   } = props;
   const { control } = useFormContext();
   const { step } = useWorkflow();
-  const { variables, namespaces } = useMemo(
-    () => (step ? parseStepVariables(step.variables) : { variables: [], namespaces: [] }),
-    [step]
-  );
+  const { variables, isAllowedVariable } = useParseVariables(step?.variables);
 
   return (
     <Popover>
@@ -234,7 +231,7 @@ const ConfigureActionPopover = (
                   <InputRoot className="overflow-visible" hasError={!!fieldState.error}>
                     <ControlInput
                       variables={variables}
-                      namespaces={namespaces}
+                      isAllowedVariable={isAllowedVariable}
                       multiline={false}
                       indentWithTab={false}
                       placeholder={title}
@@ -256,7 +253,7 @@ const ConfigureActionPopover = (
                 targetKey: `${actionKey}.redirect.target`,
               }}
               variables={variables}
-              namespaces={namespaces}
+              isAllowedVariable={isAllowedVariable}
             />
           </div>
         </div>

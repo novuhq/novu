@@ -1,16 +1,15 @@
 import { Popover, PopoverTrigger } from '@/components/primitives/popover';
 import { EditVariablePopoverContent } from '@/components/variable/edit-variable-popover-content';
-import { LiquidVariable } from '@/utils/parseStepVariablesToLiquidVariables';
+import { IsAllowedVariable } from '@/utils/parseStepVariables';
 import { ReactNode } from 'react';
 
 type EditVariablePopoverProps = {
   children: ReactNode;
   open: boolean;
   variable?: string;
-  variables: LiquidVariable[];
-  namespaces: LiquidVariable[];
   onOpenChange: (open: boolean) => void;
   onUpdate: (newValue: string) => void;
+  isAllowedVariable: IsAllowedVariable;
 };
 
 export const EditVariablePopover = ({
@@ -19,8 +18,7 @@ export const EditVariablePopover = ({
   onOpenChange,
   variable,
   onUpdate,
-  variables,
-  namespaces,
+  isAllowedVariable,
 }: EditVariablePopoverProps) => {
   return (
     <Popover open={open} onOpenChange={onOpenChange}>
@@ -28,8 +26,7 @@ export const EditVariablePopover = ({
       <EditVariablePopoverContent
         variable={variable}
         onUpdate={onUpdate}
-        variables={variables}
-        namespaces={namespaces}
+        isAllowedVariable={isAllowedVariable}
         onEscapeKeyDown={(event) => {
           event.preventDefault();
           event.stopPropagation();
