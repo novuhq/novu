@@ -1,6 +1,7 @@
 import { FeatureFlagsKeysEnum, UiSchemaGroupEnum, type UiSchema } from '@novu/shared';
 
 import { Notification5Fill } from '@/components/icons';
+import { Badge } from '@/components/primitives/badge';
 import { Separator } from '@/components/primitives/separator';
 import { getComponentByType } from '@/components/workflow-editor/steps/component-utils';
 import { InAppTabsSection } from '@/components/workflow-editor/steps/in-app/in-app-tabs-section';
@@ -77,6 +78,9 @@ export const InAppEditor = ({ uiSchema }: { uiSchema: UiSchema }) => {
             <div className="flex items-center gap-2.5 text-sm">
               <RiInstanceLine className="size-4" />
               <span>Advanced controls</span>
+              <Badge color="orange" size="sm" variant="lighter">
+                New
+              </Badge>
             </div>
           </InAppTabsSection>
         </>

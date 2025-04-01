@@ -1,4 +1,3 @@
-import { Badge } from '@/components/primitives/badge';
 import { SidebarContent } from '@/components/side-navigation/sidebar';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useTelemetry } from '@/hooks/use-telemetry';
@@ -79,9 +78,6 @@ export const SideNavigation = () => {
               <NavigationLink to={buildRoute(ROUTES.SUBSCRIBERS, { environmentSlug: currentEnvironment?.slug ?? '' })}>
                 <RiGroup2Line className="size-4" />
                 <span>Subscribers</span>
-                <Badge color="orange" size="sm" variant="lighter">
-                  New
-                </Badge>
               </NavigationLink>
             </NavigationGroup>
             <NavigationGroup label="Monitor">
