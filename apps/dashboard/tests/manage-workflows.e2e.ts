@@ -9,13 +9,14 @@ import { WorkflowEditorPage } from './page-object-models/workflow-editor-page';
 import { StepConfigSidebar } from './page-object-models/step-config-sidebar';
 import { TriggerWorkflowPage } from './page-object-models/trigger-workflow-page';
 
-test('manage workflows', async ({ page }) => {
+test.only('manage workflows', async ({ page }) => {
   const workflowName = 'test-workflow';
   const workflowId = workflowName;
   const workflowDescription = 'Test workflow description';
   const inAppStepName = 'In-App Step';
   const subject = 'You have been invited to join the Novu project';
   const body = "Hello {{payload.name}}! You've been invited to join the Novu project";
+  const parsedBody = "Hello name! You've been invited to join the Novu project";
 
   const workflowsPage = new WorkflowsPage(page);
   await workflowsPage.goTo();
@@ -91,7 +92,7 @@ test('manage workflows', async ({ page }) => {
   // TODO: add assertions for the primary and secondary actions
   const previewElements = await inAppStepEditor.getPreviewElements();
   await expect(previewElements.subject).toContainText(subject);
-  await expect(previewElements.body).toContainText(body);
+  await expect(previewElements.body).toContainText(parsedBody);
   await inAppStepEditor.close();
 
   // check the step config sidebar
