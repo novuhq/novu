@@ -185,7 +185,14 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
         queryBuilder
           .read('secondaryPreferred')
           .populate('subscriber', '_id firstName lastName avatar subscriberId')
-          .populate('actorSubscriber', '_id firstName lastName avatar subscriberId'),
+          .populate('actorSubscriber', '_id firstName lastName avatar subscriberId')
+          .populate({
+            path: 'template',
+            select: '_id name tags data critical triggers',
+            options: {
+              withDeleted: true,
+            },
+          }),
     });
   }
 

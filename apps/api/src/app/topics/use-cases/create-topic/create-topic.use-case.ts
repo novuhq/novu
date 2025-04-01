@@ -113,7 +113,7 @@ export class CreateTopicUseCase {
       Logger.warn(`[Dry run] Invalid topic key: ${key}`, 'CreateTopicUseCase');
     } else {
       throw new BadRequestException(
-        `Invalid topic key: ${key}, only alphanumeric characters, underscores or valid email addresses are allowed`
+        `Invalid topic key: ${key}, only alphanumeric characters, - and _ or valid email addresses are allowed`
       );
     }
   }

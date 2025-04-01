@@ -168,6 +168,7 @@ export class SubscribersController {
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         patchSubscriberRequestDto: body,
+        userId: user._id,
       })
     );
   }

@@ -41,6 +41,7 @@ export * from "./subscribersPreferencesUpdate.js";
 export * from "./subscribersPropertiesUpdateOnlineFlag.js";
 export * from "./subscribersRetrieve.js";
 export * from "./subscribersSearch.js";
+export * from "./subscribersUpsert.js";
 export * from "./topicsCreate.js";
 export * from "./topicsDelete.js";
 export * from "./topicsList.js";
