@@ -139,7 +139,6 @@ const WorkflowCanvasChild = ({ steps, readOnly }: { steps: Step[]; readOnly?: bo
   const { workflow: currentWorkflow } = useWorkflow();
   const navigate = useNavigate();
   const { user } = useUser();
-  const isWorkflowChecklistEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_WORKFLOW_CHECK_LIST_ENABLED);
 
   const [nodes, edges] = useMemo(() => {
     const triggerNode: Node<NodeData, 'trigger'> = {
