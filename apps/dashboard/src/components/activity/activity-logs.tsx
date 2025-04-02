@@ -31,7 +31,7 @@ export function ActivityLogs({
   activity: IActivity;
   className?: string;
   onActivitySelect: (activityId: string) => void;
-  onTransactionIdChange?: (transactionId: string, activityId?: string) => void;
+  onTransactionIdChange?: (transactionId: string, activityId: string) => void;
   children?: React.ReactNode;
 }): JSX.Element {
   const isMerged = activity.jobs.some((job) => job.status === 'merged');
