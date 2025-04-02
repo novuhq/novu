@@ -14,22 +14,22 @@ on:
           - production-both
 
       deploy_api:
-        description: 'Deploy API?'
+        description: 'Deploy API'
         required: true
         type: boolean
         default: true
       deploy_worker:
-        description: 'Deploy Worker?'
+        description: 'Deploy Worker'
         required: true
         type: boolean
         default: false
       deploy_ws:
-        description: 'Deploy WS?'
+        description: 'Deploy WS'
         required: true
         type: boolean
         default: false
       deploy_webhook:
-        description: 'Deploy Webhook?'
+        description: 'Deploy Webhook'
         required: true
         type: boolean
         default: false
