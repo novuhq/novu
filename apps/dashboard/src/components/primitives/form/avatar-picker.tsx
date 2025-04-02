@@ -1,4 +1,4 @@
-import { forwardRef, useMemo, useState } from 'react';
+import { forwardRef, useState } from 'react';
 import { RiImageEditFill } from 'react-icons/ri';
 
 import { Avatar, AvatarImage } from '@/components/primitives/avatar';
@@ -9,10 +9,10 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives
 import { Separator } from '@/components/primitives/separator';
 import TextSeparator from '@/components/primitives/text-separator';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
-import { parseStepVariablesToLiquidVariables } from '@/utils/parseStepVariablesToLiquidVariables';
+import { useParseVariables } from '@/hooks/use-parse-variables';
+import { ControlInput } from '../control-input';
 import { InputRoot } from '../input';
 import { useFormField } from './form-context';
-import { ControlInput } from '../control-input';
 
 const DEFAULT_AVATARS = Object.freeze([
   `/images/avatar.svg`,
@@ -38,7 +38,7 @@ type AvatarPickerProps = {
 
 export const AvatarPicker = forwardRef<HTMLInputElement, AvatarPickerProps>(({ name, value, onChange, onPick }) => {
   const { step } = useWorkflow();
-  const variables = useMemo(() => (step ? parseStepVariablesToLiquidVariables(step.variables) : []), [step]);
+  const { variables, isAllowedVariable } = useParseVariables(step?.variables);
   const [isOpen, setIsOpen] = useState(false);
   const { error } = useFormField();
 
@@ -94,6 +94,7 @@ export const AvatarPicker = forwardRef<HTMLInputElement, AvatarPickerProps>(({ n
                 className="flex h-full items-center"
                 multiline={false}
                 variables={variables}
+                isAllowedVariable={isAllowedVariable}
               />
             </InputRoot>
           </div>

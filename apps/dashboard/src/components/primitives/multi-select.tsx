@@ -17,6 +17,7 @@ export const MultiSelect = <T extends string | number>({
   placeholderAll,
   className,
   onValuesChange,
+  size = 'default',
 }: {
   values: T[];
   options: Array<{ value: T; label: string }>;
@@ -26,6 +27,7 @@ export const MultiSelect = <T extends string | number>({
   placeholderAll?: string;
   className?: string;
   onValuesChange: (values: T[]) => void;
+  size?: 'default' | '2xs';
 }) => {
   const [openCombobox, setOpenCombobox] = useState(false);
   const selectedValues = useMemo(
@@ -48,19 +50,19 @@ export const MultiSelect = <T extends string | number>({
   };
 
   return (
-    <Popover open={openCombobox} onOpenChange={onComboboxOpenChange}>
+    <Popover open={openCombobox} onOpenChange={onComboboxOpenChange} modal={false}>
       <PopoverTrigger asChild>
         <button
           role="combobox"
           aria-expanded={openCombobox}
-          className={cn(selectTriggerVariants({ size: '2xs', className }))}
+          className={cn(selectTriggerVariants({ size, className }))}
           disabled={isDisabled}
         >
-          <TruncatedText className="text-xs">
+          <TruncatedText className="text-sm">
             {selectedValues.length === 0 && (placeholder ?? 'Select options')}
             {selectedValues.length === 1 && selectedValues[0].label}
             {selectedValues.length === 2 && selectedValues.map(({ label }) => label).join(', ')}
-            {selectedValues.length === options.length
+            {selectedValues.length !== 0 && selectedValues.length === options.length
               ? (placeholderAll ?? 'All selected')
               : selectedValues.length > 2 && `${selectedValues.length} ${placeholderSelected ?? 'selected'}`}
             {}
@@ -69,14 +71,19 @@ export const MultiSelect = <T extends string | number>({
         </button>
       </PopoverTrigger>
       <PopoverPortal>
-        <Command loop>
-          <PopoverContent className="min-w-[150px] p-0">
+        <Command loop className="h-0 w-0">
+          <PopoverContent className="min-w-[8rem] p-0" align="end">
             <CommandList>
-              <CommandGroup className="max-h-[145px] overflow-auto">
+              <CommandGroup className="max-h-96 overflow-auto">
                 {options.map(({ value, label }) => {
                   const isActive = values.includes(value);
                   return (
-                    <CommandItem key={value} value={`${value}`} onSelect={() => onSelectValue(value)}>
+                    <CommandItem
+                      className="gap-1 text-sm"
+                      key={value}
+                      value={`${value}`}
+                      onSelect={() => onSelectValue(value)}
+                    >
                       <span className="flex-1">{label}</span>
                       <RiCheckLine className={cn('h-4 w-4', isActive ? 'opacity-100' : 'opacity-0')} />
                     </CommandItem>

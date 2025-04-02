@@ -5,7 +5,6 @@ import AuthLayout from '../../components/layout/components/AuthLayout';
 import { PasswordResetRequestForm } from './components/PasswordResetRequestForm';
 import { PasswordResetForm } from './components/PasswordResetForm';
 import { ROUTES } from '../../constants/routes';
-import { useVercelParams } from '../../hooks';
 
 const title = 'Reset password';
 
@@ -13,9 +12,7 @@ export function PasswordResetPage() {
   const navigate = useNavigate();
   const { token } = useParams<{ token: string }>();
   const [showSentSuccess, setShowSentSuccess] = useState<boolean>();
-  const { isFromVercel, params } = useVercelParams();
 
-  const loginLink = isFromVercel ? `${ROUTES.AUTH_LOGIN}?${params.toString()}` : ROUTES.AUTH_LOGIN;
   if (showSentSuccess) {
     return (
       <AuthLayout title="Reset Sent!">
@@ -23,7 +20,7 @@ export function PasswordResetPage() {
         <Text size="lg" color={colors.B60} mb={60} mt={20}>
           We've sent a password reset link to the account associated with your email
         </Text>
-        <Button data-test-id="success-screen-reset" onClick={() => navigate(loginLink)} inherit>
+        <Button data-test-id="success-screen-reset" onClick={() => navigate(ROUTES.AUTH_LOGIN)} inherit>
           Go Back
         </Button>
       </AuthLayout>

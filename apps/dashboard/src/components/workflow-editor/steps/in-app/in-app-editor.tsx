@@ -1,11 +1,10 @@
-import { FeatureFlagsKeysEnum, UiSchemaGroupEnum, type UiSchema } from '@novu/shared';
+import { UiSchemaGroupEnum, type UiSchema } from '@novu/shared';
 
 import { Notification5Fill } from '@/components/icons';
 import { Badge } from '@/components/primitives/badge';
 import { Separator } from '@/components/primitives/separator';
 import { getComponentByType } from '@/components/workflow-editor/steps/component-utils';
 import { InAppTabsSection } from '@/components/workflow-editor/steps/in-app/in-app-tabs-section';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { RiInstanceLine } from 'react-icons/ri';
 
 const avatarKey = 'avatar';
@@ -18,8 +17,6 @@ const disableOutputSanitizationKey = 'disableOutputSanitization';
 const dataObjectKey = 'data';
 
 export const InAppEditor = ({ uiSchema }: { uiSchema: UiSchema }) => {
-  const isDataObjectEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_DATA_OBJECT_ENABLED);
-
   if (uiSchema.group !== UiSchemaGroupEnum.IN_APP) {
     return null;
   }
@@ -71,7 +68,7 @@ export const InAppEditor = ({ uiSchema }: { uiSchema: UiSchema }) => {
         </InAppTabsSection>
       )}
 
-      {dataObject && isDataObjectEnabled && (
+      {dataObject && (
         <>
           <Separator />
           <InAppTabsSection className="px-4 pb-0 pt-3">
@@ -86,7 +83,7 @@ export const InAppEditor = ({ uiSchema }: { uiSchema: UiSchema }) => {
         </>
       )}
 
-      {dataObject && isDataObjectEnabled && (
+      {dataObject && (
         <>
           <InAppTabsSection className="pb-0 pt-3">
             {getComponentByType({

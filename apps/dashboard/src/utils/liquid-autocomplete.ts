@@ -1,5 +1,5 @@
 import { FILTERS } from '@/components/variable/constants';
-import { LiquidVariable } from '@/utils/parseStepVariablesToLiquidVariables';
+import { LiquidVariable } from '@/utils/parseStepVariables';
 import { Completion, CompletionContext, CompletionResult } from '@codemirror/autocomplete';
 import { EditorView } from '@uiw/react-codemirror';
 

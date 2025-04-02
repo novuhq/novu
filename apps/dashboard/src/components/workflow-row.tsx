@@ -40,6 +40,8 @@ import {
   RiPlayCircleLine,
   RiPulseFill,
 } from 'react-icons/ri';
+
+import { FilesIcon } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { type ExternalToast } from 'sonner';
 import { ConfirmationModal } from './confirmation-modal';
@@ -273,6 +275,17 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
                   <DropdownMenuItem className="cursor-pointer">
                     <RiPulseFill />
                     View activity
+                  </DropdownMenuItem>
+                </Link>
+                <Link
+                  to={buildRoute(ROUTES.WORKFLOWS_DUPLICATE, {
+                    environmentSlug: currentEnvironment?.slug ?? '',
+                    workflowId: workflow.workflowId,
+                  })}
+                >
+                  <DropdownMenuItem className="cursor-pointer">
+                    <FilesIcon />
+                    Duplicate workflow
                   </DropdownMenuItem>
                 </Link>
               </DropdownMenuGroup>

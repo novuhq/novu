@@ -25,7 +25,6 @@ import { CreateProviderPage } from './pages/integrations/CreateProviderPage';
 import { IntegrationsListPage } from './pages/integrations/IntegrationsListPage';
 import { UpdateProviderPage } from './pages/integrations/UpdateProviderPage';
 import { MembersInvitePage } from './pages/invites/MembersInvitePage';
-import { LinkVercelProjectPage } from './pages/partner-integrations/LinkVercelProjectPage';
 import SubscribersList from './pages/subscribers/SubscribersListPage';
 import { ChannelPreview } from './pages/templates/components/ChannelPreview';
 import { ChannelStepEditor } from './pages/templates/components/ChannelStepEditor';
@@ -80,14 +79,6 @@ export const AppRoutes = () => {
     <Routes>
       {AuthRoutes()}
       <Route element={!IS_EE_AUTH_ENABLED ? <PrivatePageLayout /> : <EnterprisePrivatePageLayout />}>
-        <Route
-          path={ROUTES.PARTNER_INTEGRATIONS_VERCEL_LINK_PROJECTS}
-          element={<LinkVercelProjectPage type="create" />}
-        />
-        <Route
-          path={ROUTES.PARTNER_INTEGRATIONS_VERCEL_LINK_PROJECTS_EDIT}
-          element={<LinkVercelProjectPage type="edit" />}
-        />
         <Route path={ROUTES.WORKFLOWS_DIGEST_PLAYGROUND} element={<TemplatesDigestPlaygroundPage />} />
         <Route path={ROUTES.WORKFLOWS_CREATE} element={<TemplateEditorPage />} />
         <Route path={ROUTES.WORKFLOWS_V2_STEP_EDIT} element={<WorkflowsStepEditorPageV2 />} />

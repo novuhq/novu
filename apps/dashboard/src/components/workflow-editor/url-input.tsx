@@ -5,7 +5,7 @@ import { FormControl, FormField, FormItem, FormMessage } from '@/components/prim
 import { InputProps, InputRoot } from '@/components/primitives/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
-import { LiquidVariable } from '@/utils/parseStepVariablesToLiquidVariables';
+import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
 
 type URLInputProps = Omit<InputProps, 'value' | 'onChange'> & {
   options: string[];
@@ -14,9 +14,16 @@ type URLInputProps = Omit<InputProps, 'value' | 'onChange'> & {
     targetKey: string;
   };
   variables: LiquidVariable[];
+  isAllowedVariable: IsAllowedVariable;
 };
 
-export const URLInput = ({ options, placeholder, fields: { urlKey, targetKey }, variables = [] }: URLInputProps) => {
+export const URLInput = ({
+  options,
+  placeholder,
+  fields: { urlKey, targetKey },
+  variables = [],
+  isAllowedVariable,
+}: URLInputProps) => {
   const { control, getFieldState } = useFormContext();
   const { saveForm } = useSaveForm();
   const url = getFieldState(`${urlKey}`);
@@ -40,6 +47,7 @@ export const URLInput = ({ options, placeholder, fields: { urlKey, targetKey }, 
                     value={field.value}
                     onChange={field.onChange}
                     variables={variables}
+                    isAllowedVariable={isAllowedVariable}
                   />
                 </FormItem>
               )}

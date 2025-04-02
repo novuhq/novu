@@ -9,10 +9,6 @@ import { WrapMailyInLiquidUseCase } from './maily-to-liquid/wrap-maily-in-liquid
 
 const mockFeatureFlagsService = {
   getFlag: async (context) => {
-    if (context.key === FeatureFlagsKeysEnum.IS_EMAIL_SANITIZATION_ENABLED) {
-      return true;
-    }
-
     return process.env[context.key] === 'true';
   },
 };

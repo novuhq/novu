@@ -57,12 +57,15 @@ export type WorkflowResponseDto = WorkflowCommonsFields & {
   issues?: Record<WorkflowCreateAndUpdateKeys, RuntimeIssueDto>;
   lastTriggeredAt?: string;
 };
+
 export type WorkflowCreateAndUpdateKeys = keyof CreateWorkflowDto | keyof UpdateWorkflowDto;
+
 export class RuntimeIssueDto {
   issueType: WorkflowIssueTypeEnum;
   variableName?: string;
   message: string;
 }
+
 export enum WorkflowIssueTypeEnum {
   MISSING_VALUE = 'MISSING_VALUE',
   MAX_LENGTH_ACCESSED = 'MAX_LENGTH_ACCESSED',
@@ -101,6 +104,8 @@ export type UpsertWorkflowBody = Omit<UpdateWorkflowDto, 'steps'> & {
 export type UpsertStepBody = StepCreateBody | UpdateStepBody;
 export type StepCreateBody = StepCreateDto;
 export type UpdateStepBody = StepUpdateDto;
+
+export type DuplicateWorkflowDto = Pick<CreateWorkflowDto, 'name' | 'tags' | 'description'>;
 
 export function isStepCreateBody(step: UpsertStepBody): step is StepCreateDto {
   return step && typeof step === 'object' && !(step as UpdateStepBody)._id;

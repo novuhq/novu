@@ -102,7 +102,14 @@ export const VariableSelect = (props: VariableSelectProps) => {
   };
 
   return (
-    <Popover open={isOpen}>
+    <Popover
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) {
+          onClose();
+        }
+      }}
+    >
       <PopoverAnchor asChild>
         <div className={cn('flex w-40 flex-col gap-1', className)} {...rest}>
           <InputRoot size="2xs" hasError={!!error}>

@@ -21,7 +21,7 @@ import { SharedModule } from '../shared/shared.module';
 import { BridgeController } from './bridge.controller';
 import { USECASES } from './usecases';
 import { BuildVariableSchemaUsecase } from '../workflows-v2/usecases';
-import { ExtractVariables } from '../workflows-v2/usecases/extract-variables/extract-variables.usecase';
+import { CreateVariablesObject } from '../workflows-v2/usecases/create-variables-object/create-variables-object.usecase';
 import { BuildStepIssuesUsecase } from '../workflows-v2/usecases/build-step-issues/build-step-issues.usecase';
 
 const PROVIDERS = [
@@ -42,7 +42,7 @@ const PROVIDERS = [
   UpsertControlValuesUseCase,
   BuildVariableSchemaUsecase,
   CommunityOrganizationRepository,
-  ExtractVariables,
+  CreateVariablesObject,
   BuildStepIssuesUsecase,
   ResourceValidatorService,
   TierRestrictionsValidateUsecase,

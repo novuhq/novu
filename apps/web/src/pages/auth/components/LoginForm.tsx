@@ -6,7 +6,7 @@ import { captureException } from '@sentry/react';
 import { Center } from '@mantine/core';
 import { PasswordInput, Button, colors, Input, Text } from '@novu/design-system';
 import type { IResponseError } from '@novu/shared';
-import { useAuth, useRedirectURL, useVercelIntegration, useVercelParams } from '../../../hooks';
+import { useAuth, useRedirectURL } from '../../../hooks';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { api } from '../../../api/api.client';
 import { useAcceptInvite } from './useAcceptInvite';
@@ -33,21 +33,18 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
   useEffect(() => setRedirectURL(), []);
 
   const { login, currentUser, currentOrganization } = useAuth();
-  const { startVercelSetup } = useVercelIntegration();
-  const { isFromVercel, params: vercelParams } = useVercelParams();
   const [params] = useSearchParams();
   const tokenInQuery = params.get('token');
   const source = params.get('source');
   const sourceWidget = params.get('source_widget');
   // TODO: Deprecate the legacy cameCased format in search param
   const invitationTokenFromGithub = params.get('invitationToken') || params.get('invitation_token') || '';
-  const isRedirectedFromLoginPage = params.get('isLoginPage') || params.get('is_login_page') || '';
 
   const { isLoading: isLoadingAcceptInvite, acceptInvite } = useAcceptInvite();
   const navigate = useNavigate();
   const location = useLocation();
   const state = location.state as LocationState;
-  const { isLoading, mutateAsync, isError, error } = useMutation<
+  const { isLoading, mutateAsync, error } = useMutation<
     { token: string },
     IResponseError,
     {
@@ -59,8 +56,6 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
   const handleLoginInUseEffect = async () => {
     // if currentUser is true, it means user exists, then while accepting invitation, InvitationPage will handle accept this case
     if (currentUser) {
-      handleVercelFlow();
-
       return;
     }
 
@@ -87,8 +82,6 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
       await login(tokenInQuery, ROUTES.WORKFLOWS);
     }
 
-    await handleVercelFlow();
-
     if (source === 'cli') {
       segment.track('Dashboard Visit', {
         widget: sourceWidget || 'unknown',
@@ -102,25 +95,10 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
     await login(tokenInQuery, ROUTES.WORKFLOWS);
   };
 
-  async function handleVercelFlow() {
-    if (isFromVercel) {
-      if (tokenInQuery) {
-        await login(tokenInQuery);
-      }
-
-      startVercelSetup();
-    }
-  }
-
   useEffect(() => {
     handleLoginInUseEffect();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [login, currentUser]);
-
-  const signupLink = isFromVercel ? `${ROUTES.AUTH_SIGNUP}?${params.toString()}` : ROUTES.AUTH_SIGNUP;
-  const resetPasswordLink = isFromVercel
-    ? `${ROUTES.AUTH_RESET_REQUEST}?${params.toString()}`
-    : ROUTES.AUTH_RESET_REQUEST;
 
   const {
     register,
@@ -143,12 +121,6 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
       const response = await mutateAsync(itemData);
       const { token } = response as any;
       await login(token);
-
-      if (isFromVercel) {
-        startVercelSetup();
-
-        return;
-      }
 
       if (invitationToken) {
         const updatedToken = await acceptInvite(invitationToken);
@@ -203,7 +175,7 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
           data-test-id="password"
         />
 
-        <Link to={resetPasswordLink}>
+        <Link to={ROUTES.AUTH_RESET_REQUEST}>
           <Text my={30} gradient align="center">
             Forgot Your Password?
           </Text>
@@ -223,7 +195,7 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
           <Text mr={10} size="md" color={colors.B60}>
             Don't have an account yet?
           </Text>
-          <Link to={signupLink}>
+          <Link to={ROUTES.AUTH_SIGNUP}>
             <Text gradient>Sign Up</Text>
           </Link>
         </Center>
