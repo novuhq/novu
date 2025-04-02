@@ -525,5 +525,8 @@ export function previewPayloadExample() {
         ],
       },
     },
+    subscriber: {
+      fullName: 'fullName',
+    },
   };
 }

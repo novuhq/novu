@@ -140,16 +140,28 @@ function buildObjectFromPaths(
     set(result, arrayPath, [{}]);
   });
 
+  // Sort paths by number of dots (depth) in ascending order
+  const sortedPaths = [...paths].sort((a, b) => (a.match(/\./g) || []).length - (b.match(/\./g) || []).length);
+
   // Set all other paths
-  paths.forEach((path) => {
-    if (!arrayPaths.includes(path)) {
-      const normalizedPath = path.replace(/\[\d+\]/g, '[0]');
-      const lastPart = path
-        .split('.')
-        .pop()
-        ?.replace(/[[\]\d]/g, '');
-      set(result, normalizedPath, showIfVariablesPaths?.includes(path) ? true : lastPart);
+  sortedPaths.forEach((path) => {
+    const lastPart = path
+      .split('.')
+      .pop()
+      ?.replace(/\[\d+\]/g, ''); // Remove array indices from the value
+    const value = showIfVariablesPaths?.includes(path) ? true : lastPart;
+
+    const arrayParent = arrayPaths.find((arrayPath) => arrayPath === path || path.startsWith(`${arrayPath}.`));
+    if (!arrayParent) {
+      set(result, path.replace(/\[\d+\]/g, '[0]'), value);
+
+      return;
     }
+
+    const isDirectArrayPath = arrayParent === path;
+    const targetPath = isDirectArrayPath ? path : `${arrayParent}[0].${path.slice(arrayParent.length + 1)}`;
+
+    set(result, targetPath, isDirectArrayPath ? [value] : value);
   });
 
   return result;

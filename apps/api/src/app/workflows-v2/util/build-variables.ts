@@ -75,18 +75,29 @@ function isPropertyAllowed(schema: Record<string, unknown>, propertyPath: string
     .flat();
 
   for (const part of pathParts) {
-    const { properties, additionalProperties } = currentSchema;
+    const { properties, additionalProperties, type } = currentSchema;
 
+    // Handle direct property access
     if (properties?.[part]) {
       currentSchema = properties[part];
       continue;
     }
 
-    const isArrayIndex = !Number.isNaN(Number(part)) && Number(part) >= 0;
+    // Handle array paths - valid if schema is array type
+    if (type === 'array') {
+      // Valid array index or property access
+      const isArrayIndex = !Number.isNaN(Number(part)) && Number(part) >= 0;
+      const arrayItemSchema = currentSchema.items as Record<string, unknown>;
 
-    if (isArrayIndex && currentSchema.type === 'array') {
-      currentSchema = currentSchema.items as Record<string, unknown>;
-      continue;
+      if (isArrayIndex) {
+        currentSchema = arrayItemSchema;
+        continue;
+      }
+
+      if (arrayItemSchema?.properties?.[part]) {
+        currentSchema = arrayItemSchema.properties[part];
+        continue;
+      }
     }
 
     if (additionalProperties === true) {
