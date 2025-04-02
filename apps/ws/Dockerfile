@@ -1,13 +1,4 @@
-FROM node:20-alpine3.19
-
-ENV NX_DAEMON=false
-
-RUN npm install -g pnpm@9.11.0 --loglevel notice
-RUN npm i pm2 -g
-RUN apk --no-cache add g++ make py3-pip
-
-USER 1000
-WORKDIR /usr/src/app
+FROM ghcr.io/novuhq/novu/base:1.0.0
 
 COPY --chown=1000:1000 .npmrc .
 COPY --chown=1000:1000 .npmrc-cloud .
