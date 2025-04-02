@@ -70,17 +70,32 @@ export const ConfigurePreviewAccordion = ({
             className="border-neutral-alpha-200 bg-background text-foreground-600 mx-0 mt-0 rounded-lg border border-dashed p-3"
           />
           {payloadError && <p className="text-destructive text-xs">{payloadError}</p>}
-          <Button
-            size="2xs"
-            type="button"
-            variant="secondary"
-            mode="outline"
-            className="self-end"
-            disabled={payloadError !== null}
-            onClick={onUpdate}
-          >
-            Apply
-          </Button>
+          <div className="flex justify-end gap-1">
+            <Button
+              size="2xs"
+              type="button"
+              variant="secondary"
+              mode="outline"
+              className="self-end"
+              onClick={() => {
+                setEditorValueCallback('{}');
+                onUpdate();
+              }}
+            >
+              Reset
+            </Button>
+            <Button
+              size="2xs"
+              type="button"
+              variant="primary"
+              mode="outline"
+              className="self-end"
+              disabled={payloadError !== null}
+              onClick={onUpdate}
+            >
+              Apply
+            </Button>
+          </div>
         </AccordionContent>
       </AccordionItem>
     </Accordion>

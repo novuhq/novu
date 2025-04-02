@@ -5,10 +5,14 @@ export interface LiquidVariable {
   label: string;
 }
 
+export type IsAllowedVariable = (variable: string) => boolean;
+
 export interface ParsedVariables {
   primitives: LiquidVariable[];
   arrays: LiquidVariable[];
   namespaces: LiquidVariable[];
+  variables: LiquidVariable[];
+  isAllowedVariable: IsAllowedVariable;
 }
 
 /**
@@ -21,6 +25,8 @@ export function parseStepVariables(schema: JSONSchemaDefinition): ParsedVariable
     primitives: [],
     arrays: [],
     namespaces: [],
+    variables: [],
+    isAllowedVariable: () => false,
   };
 
   function extractProperties(obj: JSONSchemaDefinition, path = ''): void {
@@ -83,10 +89,14 @@ export function parseStepVariables(schema: JSONSchemaDefinition): ParsedVariable
   }
 
   extractProperties(schema);
-  return result;
-}
 
-export const parseStepVariablesToLiquidVariables = (schema: JSONSchemaDefinition) => {
-  const variables = parseStepVariables(schema);
-  return [...variables.primitives, ...variables.namespaces];
-};
+  const isAllowedVariable = (variable: string) => {
+    if (result.primitives.some((primitive) => primitive.label === variable)) {
+      return true;
+    }
+
+    return result.namespaces.some((namespace) => variable.startsWith(namespace.label + '.'));
+  };
+
+  return { ...result, variables: [...result.primitives, ...result.namespaces], isAllowedVariable };
+}

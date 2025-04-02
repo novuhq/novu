@@ -5,14 +5,14 @@ import { Instrument } from '@novu/application-generic';
 import { computeResultSchema } from '../../shared';
 import { BuildVariableSchemaCommand } from './build-available-variable-schema.command';
 import { parsePayloadSchema } from '../../shared/parse-payload-schema';
-import { ExtractVariablesCommand } from '../extract-variables/extract-variables.command';
-import { ExtractVariables } from '../extract-variables/extract-variables.usecase';
+import { CreateVariablesObjectCommand } from '../create-variables-object/create-variables-object.command';
+import { CreateVariablesObject } from '../create-variables-object/create-variables-object.usecase';
 import { emptyJsonSchema } from '../../util/jsonToSchema';
 import { buildVariablesSchema } from '../../util/create-schema';
 
 @Injectable()
 export class BuildVariableSchemaUsecase {
-  constructor(private readonly extractVariables: ExtractVariables) {}
+  constructor(private readonly createVariablesObject: CreateVariablesObject) {}
 
   async execute(command: BuildVariableSchemaCommand): Promise<JSONSchemaDto> {
     const { workflow, stepInternalId } = command;
@@ -20,8 +20,8 @@ export class BuildVariableSchemaUsecase {
       0,
       workflow?.steps.findIndex((stepItem) => stepItem._id === stepInternalId)
     );
-    const { payload, subscriber } = await this.extractVariables.execute(
-      ExtractVariablesCommand.create({
+    const { payload, subscriber } = await this.createVariablesObject.execute(
+      CreateVariablesObjectCommand.create({
         environmentId: command.environmentId,
         organizationId: command.organizationId,
         userId: command.userId,

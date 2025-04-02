@@ -7,7 +7,7 @@ import { useCallback, useMemo, useRef } from 'react';
 import { Editor } from '@/components/primitives/editor';
 import { EditVariablePopover } from '@/components/variable/edit-variable-popover';
 import { createAutocompleteSource } from '@/utils/liquid-autocomplete';
-import { LiquidVariable } from '@/utils/parseStepVariablesToLiquidVariables';
+import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
 import { useVariables } from './hooks/use-variables';
 import { createVariableExtension } from './variable-plugin';
 import { variablePillTheme } from './variable-plugin/variable-theme';
@@ -35,6 +35,7 @@ type ControlInputProps = {
   value: string;
   onChange: (value: string) => void;
   variables: LiquidVariable[];
+  isAllowedVariable: IsAllowedVariable;
   placeholder?: string;
   autoFocus?: boolean;
   size?: 'md' | 'sm' | '2xs';
@@ -54,6 +55,7 @@ export function ControlInput({
   multiline = false,
   size = 'sm',
   indentWithTab,
+  isAllowedVariable,
 }: ControlInputProps) {
   const viewRef = useRef<EditorView | null>(null);
   const lastCompletionRef = useRef<CompletionRange | null>(null);
@@ -82,6 +84,7 @@ export function ControlInput({
         viewRef,
         lastCompletionRef,
         onSelect: handleVariableSelect,
+        isAllowedVariable,
       }),
     [handleVariableSelect]
   );
@@ -119,6 +122,7 @@ export function ControlInput({
         open={!!selectedVariable}
         onOpenChange={handleOpenChange}
         variable={selectedVariable?.value}
+        isAllowedVariable={isAllowedVariable}
         onUpdate={(newValue) => {
           handleVariableUpdate(newValue);
           // Focus back to the editor after updating the variable

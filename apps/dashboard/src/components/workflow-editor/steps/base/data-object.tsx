@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { FieldError, FieldValues, useFormContext } from 'react-hook-form';
 
 import { Button } from '@/components/primitives/button';
@@ -10,7 +10,7 @@ import { HelpTooltipIndicator } from '@/components/primitives/help-tooltip-indic
 import { Input, InputRoot } from '@/components/primitives/input';
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
-import { parseStepVariablesToLiquidVariables } from '@/utils/parseStepVariablesToLiquidVariables';
+import { useParseVariables } from '@/hooks/use-parse-variables';
 import React from 'react';
 import { RiAddLine, RiDeleteBin6Line, RiInputField } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
@@ -21,7 +21,7 @@ const InnerDataObject = ({ field }: { field: FieldValues }) => {
   const { saveForm } = useSaveForm();
   const { step } = useWorkflow();
 
-  const variables = useMemo(() => (step ? parseStepVariablesToLiquidVariables(step.variables) : []), [step]);
+  const { variables, isAllowedVariable } = useParseVariables(step?.variables);
 
   const [currentPairs, setCurrentPairs] = useState(() => {
     const obj = field.value ?? {};
@@ -73,20 +73,16 @@ const InnerDataObject = ({ field }: { field: FieldValues }) => {
         <span className="text-xs">Data object</span>
         <HelpTooltipIndicator
           text={
-            <>
-              <p>Custom data to be sent with the notification.</p>
-              <p>
-                This data can be used to{' '}
-                <Link
-                  className="text-primary"
-                  to="https://docs.novu.co/platform/inbox/react/components/inbox#data-object"
-                  target="_blank"
-                >
-                  customize the notification item rendered
-                </Link>
-                {` in the <Inbox />.`}
-              </p>
-            </>
+            <p>
+              {`Add extra information about each notification entry that is not part of the standard notification fields, and customize each notification item rendering in <Inbox />. `}
+              <Link
+                className="text-primary"
+                to="https://docs.novu.co/platform/inbox/react/components/inbox#data-object"
+                target="_blank"
+              >
+                Learn more
+              </Link>
+            </p>
           }
         />
       </div>
@@ -110,6 +106,7 @@ const InnerDataObject = ({ field }: { field: FieldValues }) => {
                         multiline={false}
                         indentWithTab={false}
                         value={pair.value}
+                        isAllowedVariable={isAllowedVariable}
                         placeholder="Insert text or variable..."
                         onChange={(newValue) => {
                           handleUpdatePair(index, 'value', typeof newValue === 'string' ? newValue : '');

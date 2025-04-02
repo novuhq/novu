@@ -1,13 +1,19 @@
-import { useCallback, useMemo, useState } from 'react';
 import { NodeViewProps } from '@tiptap/core';
 import { NodeViewWrapper } from '@tiptap/react';
+import { useCallback, useMemo, useState } from 'react';
 
-import { EditVariablePopover } from '@/components/variable/edit-variable-popover';
-import { parseVariable } from '@/components/primitives/control-input/variable-plugin/utils';
 import { VARIABLE_REGEX_STRING } from '@/components/primitives/control-input/variable-plugin';
+import { parseVariable } from '@/components/primitives/control-input/variable-plugin/utils';
+import { EditVariablePopover } from '@/components/variable/edit-variable-popover';
 import { VariablePill } from '@/components/variable/variable-pill';
+import { IsAllowedVariable } from '@/utils/parseStepVariables';
 
-export function VariableView({ node, updateAttributes, editor }: NodeViewProps) {
+type InternalVariableViewProps = NodeViewProps & {
+  isAllowedVariable: IsAllowedVariable;
+};
+
+function InternalVariableView(props: InternalVariableViewProps) {
+  const { node, updateAttributes, editor, isAllowedVariable } = props;
   const { id } = node.attrs;
   const [variable, setVariable] = useState(`{{${id}}}`);
   const [isOpen, setIsOpen] = useState(false);
@@ -31,6 +37,7 @@ export function VariableView({ node, updateAttributes, editor }: NodeViewProps) 
         open={isOpen}
         onOpenChange={setIsOpen}
         variable={variable}
+        isAllowedVariable={isAllowedVariable}
         onUpdate={(newValue) => {
           const { fullLiquidExpression } = parseVariableCallback(newValue);
           updateAttributes({ id: fullLiquidExpression });
@@ -48,4 +55,11 @@ export function VariableView({ node, updateAttributes, editor }: NodeViewProps) 
       </EditVariablePopover>
     </NodeViewWrapper>
   );
+}
+
+// HOC that takes isAllowedVariable prop
+export function createVariableView(isAllowedVariable: IsAllowedVariable) {
+  return function VariableView(props: NodeViewProps) {
+    return <InternalVariableView {...props} isAllowedVariable={isAllowedVariable} />;
+  };
 }

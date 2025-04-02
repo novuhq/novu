@@ -32,6 +32,7 @@ export const ROUTES = {
   ACTIVITY_FEED: '/env/:environmentSlug/activity-feed',
   TEMPLATE_STORE: '/env/:environmentSlug/workflows/templates',
   WORKFLOWS_CREATE: '/env/:environmentSlug/workflows/create',
+  WORKFLOWS_DUPLICATE: '/env/:environmentSlug/workflows/duplicate/:workflowId',
   TEMPLATE_STORE_CREATE_WORKFLOW: '/env/:environmentSlug/workflows/templates/:templateId',
   SUBSCRIBERS: '/env/:environmentSlug/subscribers',
   EDIT_SUBSCRIBER: '/env/:environmentSlug/subscribers/:subscriberId',

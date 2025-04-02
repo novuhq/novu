@@ -4,7 +4,7 @@ import difference from 'lodash/difference';
 import isArray from 'lodash/isArray';
 import isObject from 'lodash/isObject';
 import reduce from 'lodash/reduce';
-import { MAILY_ITERABLE_MARK } from '../../environments-v1/usecases/output-renderers/maily-to-liquid/maily.types';
+import set from 'lodash/set';
 
 export function findMissingKeys(requiredRecord: object, actualRecord: object) {
   const requiredKeys = collectKeys(requiredRecord);
@@ -101,81 +101,58 @@ export function mockSchemaDefaults(schema: JSONSchemaDto, parentPath = 'payload'
  * Handles both object and array paths (using .0. notation for arrays).
  *
  * @example
- * Input: ['user.name', 'user.addresses.0.street']
+ * Input: ['user.name', 'user.addresses[0].street']
  * Output: {
  *   user: {
  *     name: '{{user.name}}',
  *     addresses: [
- *       { street: '{{user.addresses.street}}' },
+ *       { street: '{{user.addresses[0].street}}' },
  *     ]
  *   }
  * }
  */
-export function keysToObject(paths: string[], showIfVariablesPath?: string[]): Record<string, unknown> {
-  const result = {};
-
+export function keysToObject(
+  paths: string[],
+  arrayVariables?: string[],
+  showIfVariablesPaths?: string[]
+): Record<string, unknown> {
   const validPaths = paths
     .filter(hasNamespace)
     // remove paths that are a prefix of another path
     .filter((path) => !paths.some((otherPath) => otherPath !== path && otherPath.startsWith(`${path}.`)));
 
-  validPaths.filter(hasNamespace).forEach((path) => buildPathInObject(path, result, showIfVariablesPath));
-
-  return result;
+  return buildObjectFromPaths(validPaths, arrayVariables || [], showIfVariablesPaths || []);
 }
 
 function hasNamespace(path: string): boolean {
   return path.includes('.');
 }
 
-function buildPathInObject(path: string, result: Record<string, any>, showIfVariablesPath?: string[]): void {
-  const parts = path.split('.');
-  let current = result;
+function buildObjectFromPaths(
+  paths: string[],
+  arrayPaths: string[],
+  showIfVariablesPaths?: string[]
+): Record<string, unknown> {
+  const result = {};
 
-  for (let i = 0; i < parts.length - 1; i += 1) {
-    const key = parts[i];
+  // Initialize arrays with single empty object
+  arrayPaths.forEach((arrayPath) => {
+    set(result, arrayPath, [{}]);
+  });
 
-    if (isArrayNotation(parts[i + 1])) {
-      current = handleArrayPath(current, key);
-      i += 1; // Skip the index path part ("0")
-      continue;
+  // Set all other paths
+  paths.forEach((path) => {
+    if (!arrayPaths.includes(path)) {
+      const normalizedPath = path.replace(/\[\d+\]/g, '[0]');
+      const lastPart = path
+        .split('.')
+        .pop()
+        ?.replace(/[[\]\d]/g, '');
+      set(result, normalizedPath, showIfVariablesPaths?.includes(path) ? true : lastPart);
     }
+  });
 
-    current = handleObjectPath(current, key);
-  }
-
-  setFinalLeafValue(current, parts[parts.length - 1], path, showIfVariablesPath);
-}
-
-function isArrayNotation(part: string): boolean {
-  return part === MAILY_ITERABLE_MARK;
-}
-
-function handleArrayPath(current: Record<string, any>, key: string): Record<string, any> {
-  if (!Array.isArray(current[key])) {
-    current[key] = [{}];
-  }
-
-  return current[key][0];
-}
-
-function handleObjectPath(current: Record<string, any>, key: string): Record<string, any> {
-  current[key] = current[key] || {};
-
-  return current[key];
-}
-
-function setFinalLeafValue(
-  current: Record<string, any>,
-  lastPart: string,
-  fullPath: string,
-  showIfVariablesPath?: string[]
-): void {
-  if (lastPart !== '0') {
-    const currentPath = fullPath.replace('.0.', '.');
-    const showIfPath = showIfVariablesPath?.find((path) => path.includes(currentPath));
-    current[lastPart] = showIfPath ? true : `{{${currentPath}}}`;
-  }
+  return result;
 }
 
 /**
@@ -207,7 +184,10 @@ export function multiplyArrayItems(obj: Record<string, unknown>, multiplyBy = 3)
     if (Array.isArray(value)) {
       result[key] = Array(multiplyBy)
         .fill(null)
-        .map(() => ({ ...value[0] }));
+        .map(() => {
+          // Handle both primitive and object values
+          return typeof value[0] === 'object' && value[0] !== null ? { ...value[0] } : value[0];
+        });
     } else if (typeof value === 'object' && value !== null) {
       result[key] = multiplyArrayItems(value as Record<string, unknown>, multiplyBy);
     }
