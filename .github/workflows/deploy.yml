@@ -152,7 +152,7 @@ jobs:
             --output=type=image,name=$REGISTRY/$REPOSITORY,push-by-digest=true,name-canonical=true
         run: |
           cp scripts/dotenvcreate.mjs apps/$SERVICE/src/dotenvcreate.mjs
-          cd apps/$SERVICE && pnpm --silent --workspace-root pnpm-context -- apps/$SERVICE/Dockerfile | BULL_MQ_PRO_NPM_TOKEN=${BULL_MQ_PRO_NPM_TOKEN} docker buildx build --secret id=BULL_MQ_PRO_NPM_TOKEN --build-arg PACKAGE_PATH=apps/$SERVICE - -t novu-$SERVICE --load $DOCKER_BUILD_ARGUMENTS
+          cd apps/$SERVICE && pnpm run docker:build
           docker tag novu-$SERVICE $REGISTRY/$REPOSITORY:latest
           docker tag novu-$SERVICE $REGISTRY/$REPOSITORY:$IMAGE_TAG
           docker push $REGISTRY/$REPOSITORY:latest
