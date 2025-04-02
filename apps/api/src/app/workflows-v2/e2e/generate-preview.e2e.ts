@@ -57,19 +57,19 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
       data: {
         result: {
           preview: {
-            subject: 'Welcome {{subscriber.firstName}}',
+            subject: 'Welcome firstName',
             // cspell:disable-next-line
-            body: 'Hello {{subscriber.firstName}} {{subscriber.lastName}}, Welcome to {{PAYLOAD.ORGANIZATIONNAME}}!',
+            body: 'Hello firstName lastName, Welcome to ORGANIZATIONNAME!',
           },
           type: 'in_app',
         },
         previewPayloadExample: {
           subscriber: {
-            firstName: '{{subscriber.firstName}}',
-            lastName: '{{subscriber.lastName}}',
+            firstName: 'firstName',
+            lastName: 'lastName',
           },
           payload: {
-            organizationName: '{{payload.organizationName}}',
+            organizationName: 'organizationName',
           },
         },
       },
@@ -118,11 +118,11 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
     expect(body.data).to.deep.equal({
       result: {
         preview: {
-          subject: '{{subscriber.firstName}} Hello, World! ',
-          body: 'Hello, World! {{payload.placeholder.body}} {{payload.placeholder.random}}',
+          subject: 'firstName Hello, World! ',
+          body: 'Hello, World! body random',
           avatar: 'https://www.example.com/avatar.png',
           primaryAction: {
-            label: '{{payload.primaryUrlLabel}}',
+            label: 'primaryUrlLabel',
             redirect: {
               url: '/home/primary-action',
               target: '_blank',
@@ -147,14 +147,14 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
       },
       previewPayloadExample: {
         subscriber: {
-          firstName: '{{subscriber.firstName}}',
+          firstName: 'firstName',
         },
         payload: {
           placeholder: {
-            body: '{{payload.placeholder.body}}',
-            random: '{{payload.placeholder.random}}',
+            body: 'body',
+            random: 'random',
           },
-          primaryUrlLabel: '{{payload.primaryUrlLabel}}',
+          primaryUrlLabel: 'primaryUrlLabel',
         },
       },
     });
@@ -313,6 +313,9 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
       },
       payload: {
         primaryUrlLabel: 'New Click Here',
+        placeholder: {
+          random: 'random',
+        },
       },
     };
     const { status, body } = await session.testAgent.post(`/v2/workflows/${workflow._id}/step/${stepId}/preview`).send({
@@ -325,7 +328,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
       result: {
         preview: {
           subject: 'First Name Hello, World! ',
-          body: 'Hello, World! Default body text {{payload.placeholder.random}}',
+          body: 'Hello, World! Default body text random',
           avatar: 'https://www.example.com/avatar.png',
           primaryAction: {
             label: 'New Click Here',
@@ -358,7 +361,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
         payload: {
           placeholder: {
             body: 'Default body text',
-            random: '{{payload.placeholder.random}}',
+            random: 'random',
           },
           primaryUrlLabel: 'New Click Here',
           organizationName: 'Pokemon Organization',
@@ -408,7 +411,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
         preview: {
           subject: 'Welcome John',
           // missing orderId will be replaced with placeholder "{{payload.orderId}}"
-          body: 'Hello John, your order #{{payload.orderId}} is ready!',
+          body: 'Hello John, your order #orderId is ready!',
         },
         type: 'in_app',
       },
@@ -417,7 +420,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
           lastName: '{{payload.lastName}}',
           organizationName: '{{payload.organizationName}}',
           firstName: 'John',
-          orderId: '{{payload.orderId}}',
+          orderId: 'orderId',
         },
       },
     });
