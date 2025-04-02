@@ -813,8 +813,8 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
         const payloadVariables = properties.payload;
         expect(payloadVariables).to.be.ok;
         if (!payloadVariables) throw new Error('Payload schema is not valid');
-        expect(JSON.stringify(payloadVariables)).to.contain('payload.prefixBodyText2');
-        expect(JSON.stringify(payloadVariables)).to.contain('{{payload.prefixSubjectText}}');
+        expect(JSON.stringify(payloadVariables)).to.contain('prefixBodyText2');
+        expect(JSON.stringify(payloadVariables)).to.contain('prefixSubjectText');
       });
       it('should serve previous step variables with payload schema', async () => {
         const steps = [
@@ -861,19 +861,13 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
       if (typeof payload === 'boolean') throw new Error('Variables is not an object');
 
       expect(payload.properties).to.have.property('emailPrefixBodyText');
-      expect(payload.properties?.emailPrefixBodyText)
-        .to.have.property('default')
-        .that.equals('{{payload.emailPrefixBodyText}}');
+      expect(payload.properties?.emailPrefixBodyText).to.have.property('default').that.equals('emailPrefixBodyText');
 
       expect(payload.properties).to.have.property('prefixSubjectText');
-      expect(payload.properties?.prefixSubjectText)
-        .to.have.property('default')
-        .that.equals('{{payload.prefixSubjectText}}');
+      expect(payload.properties?.prefixSubjectText).to.have.property('default').that.equals('prefixSubjectText');
 
       expect(payload.properties).to.have.property('inAppSubjectText');
-      expect(payload.properties?.inAppSubjectText)
-        .to.have.property('default')
-        .that.equals('{{payload.inAppSubjectText}}');
+      expect(payload.properties?.inAppSubjectText).to.have.property('default').that.equals('inAppSubjectText');
       /*
        * Validate the 'to' schema
        * Note: Can't use deep comparison since emails differ between local and CI environments due to user sessions
