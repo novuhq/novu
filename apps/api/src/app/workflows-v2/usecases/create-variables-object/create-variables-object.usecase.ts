@@ -95,7 +95,7 @@ export class CreateVariablesObject {
     controlValues.forEach((value) => {
       if (!isStringifiedMailyJSONContent(value)) return;
 
-      const unescapedString = decodeURIComponent(value);
+      const unescapedString = unescape(value);
       const matches = unescapedString.matchAll(pattern);
 
       for (const match of matches) {
