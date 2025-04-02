@@ -6,8 +6,7 @@ import { colors, GitHub, Text } from '@novu/design-system';
 import { PropsWithChildren } from 'react';
 import { When } from '../../../components/utils/When';
 import { IS_SELF_HOSTED } from '../../../config';
-import { buildGithubLink, buildVercelGithubLink } from './gitHubUtils';
-import { useVercelParams } from '../../../hooks';
+import { buildGithubLink } from './gitHubUtils';
 
 export function OAuth({
   invitationToken,
@@ -16,11 +15,7 @@ export function OAuth({
   invitationToken?: string | undefined;
   isLoginPage?: boolean;
 }) {
-  const { isFromVercel, code, next, configurationId } = useVercelParams();
-
-  const githubLink = isFromVercel
-    ? buildVercelGithubLink({ code, next, configurationId })
-    : buildGithubLink({ invitationToken, isLoginPage });
+  const githubLink = buildGithubLink({ invitationToken, isLoginPage });
 
   return (
     <When truthy={!IS_SELF_HOSTED}>

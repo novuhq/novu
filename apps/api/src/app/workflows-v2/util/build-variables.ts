@@ -4,7 +4,6 @@ import { PinoLogger } from '@novu/application-generic';
 
 import { Variable, extractLiquidTemplateVariables, TemplateVariables } from './template-parser/liquid-parser';
 import { WrapMailyInLiquidUseCase } from '../../environments-v1/usecases/output-renderers/maily-to-liquid/wrap-maily-in-liquid.usecase';
-import { MAILY_ITERABLE_MARK } from '../../environments-v1/usecases/output-renderers/maily-to-liquid/maily.types';
 import { isStringifiedMailyJSONContent } from '../../environments-v1/usecases/output-renderers/maily-to-liquid/wrap-maily-in-liquid.command';
 import { extractFieldsFromRules, isValidRule } from '../../shared/services/query-parser/query-parser.service';
 
@@ -65,7 +64,15 @@ function isPropertyAllowed(schema: Record<string, unknown>, propertyPath: string
     return false;
   }
 
-  const pathParts = propertyPath.split('.');
+  const pathParts = propertyPath
+    .split('.')
+    .map((part) => {
+      // Split array notation into [propName, index]
+      const arrayMatch = part.match(/^(.+?)\[(\d+)\]$/);
+
+      return arrayMatch ? [arrayMatch[1], arrayMatch[2]] : [part];
+    })
+    .flat();
 
   for (const part of pathParts) {
     const { properties, additionalProperties } = currentSchema;
@@ -75,7 +82,9 @@ function isPropertyAllowed(schema: Record<string, unknown>, propertyPath: string
       continue;
     }
 
-    if (part === MAILY_ITERABLE_MARK && currentSchema.type === 'array') {
+    const isArrayIndex = !Number.isNaN(Number(part)) && Number(part) >= 0;
+
+    if (isArrayIndex && currentSchema.type === 'array') {
       currentSchema = currentSchema.items as Record<string, unknown>;
       continue;
     }

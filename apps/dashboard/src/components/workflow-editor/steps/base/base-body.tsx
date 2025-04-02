@@ -1,10 +1,9 @@
-import { useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { ControlInput } from '@/components/primitives/control-input';
 import { FormControl, FormField, FormItem, FormMessage } from '@/components/primitives/form/form';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
-import { parseStepVariablesToLiquidVariables } from '@/utils/parseStepVariablesToLiquidVariables';
+import { useParseVariables } from '@/hooks/use-parse-variables';
 import { capitalize } from '@/utils/string';
 import { InputRoot } from '../../../primitives/input';
 
@@ -13,7 +12,7 @@ const bodyKey = 'body';
 export const BaseBody = () => {
   const { control } = useFormContext();
   const { step } = useWorkflow();
-  const variables = useMemo(() => (step ? parseStepVariablesToLiquidVariables(step.variables) : []), [step]);
+  const { variables, isAllowedVariable } = useParseVariables(step?.variables);
 
   return (
     <FormField
@@ -24,10 +23,11 @@ export const BaseBody = () => {
           <FormControl>
             <InputRoot hasError={!!fieldState.error}>
               <ControlInput
-                className="h-[7.75rem]"
+                className="min-h-[7rem]"
                 placeholder={capitalize(field.name)}
                 id={field.name}
                 variables={variables}
+                isAllowedVariable={isAllowedVariable}
                 value={field.value}
                 multiline
                 onChange={field.onChange}

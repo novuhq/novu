@@ -10,9 +10,9 @@ import { ConditionsEditor } from '@/components/conditions-editor/conditions-edit
 import { Form, FormField } from '@/components/primitives/form/form';
 import { updateStepInWorkflow } from '@/components/workflow-editor/step-utils';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
+import { useParseVariables } from '@/hooks/use-parse-variables';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { countConditions, getUniqueFieldNamespaces, getUniqueOperators } from '@/utils/conditions';
-import { parseStepVariables } from '@/utils/parseStepVariablesToLiquidVariables';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { EditStepConditionsLayout } from './edit-step-conditions-layout';
 
@@ -91,19 +91,13 @@ export const EditStepConditionsForm = () => {
     [hasConditions, step]
   );
 
-  const { fields, variables } = useMemo(() => {
-    if (!step) return { fields: [], variables: [] };
+  const { variables, isAllowedVariable } = useParseVariables(step?.variables);
 
-    const parsedVariables = parseStepVariables(step.variables);
-    return {
-      fields: parsedVariables.primitives.map((primitive) => ({
-        name: primitive.label,
-        label: primitive.label,
-        value: primitive.label,
-      })),
-      variables: [...parsedVariables.primitives, ...parsedVariables.namespaces],
-    };
-  }, [step]);
+  const fields = variables.map((variable) => ({
+    name: variable.label,
+    label: variable.label,
+    value: variable.label,
+  }));
 
   const form = useForm<FormQuery>({
     mode: 'onSubmit',
@@ -192,6 +186,7 @@ export const EditStepConditionsForm = () => {
                 onQueryChange={field.onChange}
                 fields={fields}
                 variables={variables}
+                isAllowedVariable={isAllowedVariable}
               />
             )}
           />

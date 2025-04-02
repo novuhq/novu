@@ -30,11 +30,11 @@ import { PreviewStep, PreviewStepCommand } from '../../../bridge/usecases/previe
 import { FrameworkPreviousStepsOutputState } from '../../../bridge/usecases/preview-step/preview-step.command';
 import { BuildStepDataUsecase } from '../build-step-data';
 import { PreviewCommand } from './preview.command';
-import { ExtractVariablesCommand } from '../extract-variables/extract-variables.command';
-import { ExtractVariables } from '../extract-variables/extract-variables.usecase';
+import { CreateVariablesObjectCommand } from '../create-variables-object/create-variables-object.command';
+import { CreateVariablesObject } from '../create-variables-object/create-variables-object.usecase';
 import { buildLiquidParser, Variable } from '../../util/template-parser/liquid-parser';
 import { buildVariables } from '../../util/build-variables';
-import { keysToObject, mergeCommonObjectKeys, multiplyArrayItems } from '../../util/utils';
+import { mergeCommonObjectKeys, multiplyArrayItems } from '../../util/utils';
 import { buildVariablesSchema } from '../../util/create-schema';
 import { isObjectMailyJSONContent } from '../../../environments-v1/usecases/output-renderers/maily-to-liquid/wrap-maily-in-liquid.command';
 
@@ -46,7 +46,7 @@ export class PreviewUsecase {
     private previewStepUsecase: PreviewStep,
     private buildStepDataUsecase: BuildStepDataUsecase,
     private getWorkflowByIdsUseCase: GetWorkflowByIdsUseCase,
-    private extractVariables: ExtractVariables,
+    private createVariablesObject: CreateVariablesObject,
     private readonly logger: PinoLogger
   ) {}
 
@@ -57,6 +57,7 @@ export class PreviewUsecase {
         stepData,
         controlValues: initialControlValues,
         variableSchema,
+        variablesObject,
         workflow,
       } = await this.initializePreviewContext(command);
       const commandVariablesExample = command.generatePreviewRequestDto.previewPayload;
@@ -98,12 +99,9 @@ export class PreviewUsecase {
           controlKey,
           controlValueWithFixedVariables
         );
-        const showIfVariables: string[] = this.findShowIfVariables(processedControlValues);
-        const validVariableNames = variables.validVariables.map((variable) => variable.name);
-        const variablesExampleResult = keysToObject(validVariableNames, showIfVariables);
 
         // multiply array items by 3 for preview example purposes
-        const multipliedVariablesExampleResult = multiplyArrayItems(variablesExampleResult, 3);
+        const multipliedVariablesExampleResult = multiplyArrayItems(variablesObject, 3);
 
         previewTemplateData = {
           variablesExample: _.merge(previewTemplateData.variablesExample, multipliedVariablesExampleResult),
@@ -117,7 +115,6 @@ export class PreviewUsecase {
       }
 
       const mergedVariablesExample = this.mergeVariablesExample(workflow, previewTemplateData, commandVariablesExample);
-
       const executeOutput = await this.executePreviewUsecase(
         command,
         stepData,
@@ -154,33 +151,6 @@ export class PreviewUsecase {
         previewPayloadExample: {},
       } as any;
     }
-  }
-
-  /**
-   * Extracts showIf variables from TipTap nodes to transform template variables
-   * (e.g. {{payload.foo}}) into true - for preview purposes
-   */
-  private findShowIfVariables(processedControlValues: unknown) {
-    const showIfVariables: string[] = [];
-    if (typeof processedControlValues === 'string') {
-      try {
-        const parsed = JSON.parse(processedControlValues);
-        const extractShowIfKeys = (node: any) => {
-          if (node?.attrs?.showIfKey) {
-            const key = node.attrs.showIfKey;
-            showIfVariables.push(key);
-          }
-          if (node.content) {
-            node.content.forEach((child: any) => extractShowIfKeys(child));
-          }
-        };
-        extractShowIfKeys(parsed);
-      } catch (e) {
-        // If parsing fails, continue with empty showIfVariables
-      }
-    }
-
-    return showIfVariables;
   }
 
   private sanitizeControlsForPreview(initialControlValues: Record<string, unknown>, stepData: StepResponseDto) {
@@ -221,19 +191,9 @@ export class PreviewUsecase {
     const stepData = await this.getStepData(command);
     const controlValues = command.generatePreviewRequestDto.controlValues || stepData.controls.values || {};
     const workflow = await this.findWorkflow(command);
-    const variableSchema = await this.buildVariablesSchema(stepData.variables, command, controlValues);
 
-    return { stepData, controlValues, variableSchema, workflow };
-  }
-
-  @Instrument()
-  private async buildVariablesSchema(
-    variables: Record<string, unknown>,
-    command: PreviewCommand,
-    controlValues: Record<string, unknown>
-  ) {
-    const { payload } = await this.extractVariables.execute(
-      ExtractVariablesCommand.create({
+    const variablesObject = await this.createVariablesObject.execute(
+      CreateVariablesObjectCommand.create({
         environmentId: command.user.environmentId,
         organizationId: command.user.organizationId,
         userId: command.user._id,
@@ -241,6 +201,15 @@ export class PreviewUsecase {
         controlValues,
       })
     );
+
+    const variableSchema = await this.buildVariablesSchema(variablesObject, stepData.variables);
+
+    return { stepData, controlValues, variableSchema, variablesObject, workflow };
+  }
+
+  @Instrument()
+  private async buildVariablesSchema(variablesObject: Record<string, unknown>, variables: Record<string, unknown>) {
+    const { payload } = variablesObject;
     const payloadSchema = buildVariablesSchema(payload);
 
     if (Object.keys(payloadSchema).length === 0) {

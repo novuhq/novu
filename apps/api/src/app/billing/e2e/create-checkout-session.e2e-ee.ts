@@ -4,6 +4,7 @@ import { expect } from 'chai';
 
 import { ApiServiceLevelEnum, StripeBillingIntervalEnum } from '@novu/shared';
 
+const dashboardOrigin = process.env.FRONT_BASE_URL;
 const checkoutSessionCreateParamsMock = {
   mode: 'subscription',
   customer: 'customer_id',
@@ -19,8 +20,8 @@ const checkoutSessionCreateParamsMock = {
     name: 'auto',
     address: 'auto',
   },
-  success_url: `${process.env.FRONT_BASE_URL}/manage-account/billing?result=success&session_id={CHECKOUT_SESSION_ID}`,
-  cancel_url: `${process.env.FRONT_BASE_URL}/manage-account/billing?result=canceled`,
+  success_url: `${dashboardOrigin}/manage-account/billing?result=success&session_id={CHECKOUT_SESSION_ID}`,
+  cancel_url: `${dashboardOrigin}/manage-account/billing?result=canceled`,
 };
 
 describe('Create checkout session #novu-v2', async () => {
@@ -66,6 +67,7 @@ describe('Create checkout session #novu-v2', async () => {
       userId: 'user_id',
       billingInterval: StripeBillingIntervalEnum.MONTH,
       apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
+      origin: dashboardOrigin,
     });
 
     expect(checkoutCreateStub.lastCall.args.at(0)).to.deep.equal({
@@ -88,6 +90,7 @@ describe('Create checkout session #novu-v2', async () => {
       userId: 'user_id',
       billingInterval: StripeBillingIntervalEnum.YEAR,
       apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
+      origin: dashboardOrigin,
     });
 
     expect(checkoutCreateStub.lastCall.args.at(0)).to.deep.equal({

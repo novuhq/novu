@@ -52,11 +52,12 @@ import { useDeleteWorkflow } from '@/hooks/use-delete-workflow';
 import { useFormAutosave } from '@/hooks/use-form-autosave';
 import { useSyncWorkflow } from '@/hooks/use-sync-workflow';
 import { useTags } from '@/hooks/use-tags';
-import { ROUTES } from '@/utils/routes';
+import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { WorkflowOriginEnum, WorkflowResponseDto } from '@novu/shared';
+import { FilesIcon } from 'lucide-react';
 import {
   RiArrowRightSLine,
   RiCodeSSlashLine,
@@ -253,6 +254,17 @@ export const ConfigureWorkflowForm = (props: ConfigureWorkflowFormProps) => {
                     </TooltipPortal>
                   </Tooltip>
                 )}
+                <Link
+                  to={buildRoute(ROUTES.WORKFLOWS_DUPLICATE, {
+                    environmentSlug: currentEnvironment?.slug ?? '',
+                    workflowId: workflow.workflowId,
+                  })}
+                >
+                  <DropdownMenuItem className="cursor-pointer">
+                    <FilesIcon />
+                    Duplicate workflow
+                  </DropdownMenuItem>
+                </Link>
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
               <DropdownMenuGroup className="*:cursor-pointer">

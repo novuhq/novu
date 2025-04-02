@@ -26,8 +26,8 @@ export default function OrganizationListPage() {
         }}
         hidePersonal
         skipInvitationScreen
-        afterSelectOrganizationUrl={ROUTES.GET_STARTED}
-        afterCreateOrganizationUrl={ROUTES.AUTH_APPLICATION}
+        afterSelectOrganizationUrl={ROUTES.WORKFLOWS}
+        afterCreateOrganizationUrl={ROUTES.WORKFLOWS}
       />
     </AuthLayout>
   );

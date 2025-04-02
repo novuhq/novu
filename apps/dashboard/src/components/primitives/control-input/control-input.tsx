@@ -1,16 +1,16 @@
-import { useCallback, useMemo, useRef } from 'react';
+import { cn } from '@/utils/ui';
 import { autocompletion } from '@codemirror/autocomplete';
 import { EditorView } from '@uiw/react-codemirror';
-import { cn } from '@/utils/ui';
 import { cva } from 'class-variance-authority';
+import { useCallback, useMemo, useRef } from 'react';
 
 import { Editor } from '@/components/primitives/editor';
+import { EditVariablePopover } from '@/components/variable/edit-variable-popover';
 import { createAutocompleteSource } from '@/utils/liquid-autocomplete';
-import { LiquidVariable } from '@/utils/parseStepVariablesToLiquidVariables';
+import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
 import { useVariables } from './hooks/use-variables';
 import { createVariableExtension } from './variable-plugin';
 import { variablePillTheme } from './variable-plugin/variable-theme';
-import { EditVariablePopover } from '@/components/variable/edit-variable-popover';
 
 const variants = cva('relative w-full', {
   variants: {
@@ -35,6 +35,7 @@ type ControlInputProps = {
   value: string;
   onChange: (value: string) => void;
   variables: LiquidVariable[];
+  isAllowedVariable: IsAllowedVariable;
   placeholder?: string;
   autoFocus?: boolean;
   size?: 'md' | 'sm' | '2xs';
@@ -54,6 +55,7 @@ export function ControlInput({
   multiline = false,
   size = 'sm',
   indentWithTab,
+  isAllowedVariable,
 }: ControlInputProps) {
   const viewRef = useRef<EditorView | null>(null);
   const lastCompletionRef = useRef<CompletionRange | null>(null);
@@ -82,6 +84,7 @@ export function ControlInput({
         viewRef,
         lastCompletionRef,
         onSelect: handleVariableSelect,
+        isAllowedVariable,
       }),
     [handleVariableSelect]
   );
@@ -101,14 +104,13 @@ export function ControlInput({
   );
 
   return (
-    <div className={variants({ size, className })}>
+    <div className={cn(variants({ size }), className)}>
       <Editor
         fontFamily="inherit"
         multiline={multiline}
         indentWithTab={indentWithTab}
         size={size}
-        // TODO for Sokratis
-        className={cn('flex-1', { 'overflow-hidden': !multiline })}
+        className={cn('flex-1')}
         autoFocus={autoFocus}
         placeholder={placeholder}
         id={id}
@@ -120,6 +122,7 @@ export function ControlInput({
         open={!!selectedVariable}
         onOpenChange={handleOpenChange}
         variable={selectedVariable?.value}
+        isAllowedVariable={isAllowedVariable}
         onUpdate={(newValue) => {
           handleVariableUpdate(newValue);
           // Focus back to the editor after updating the variable

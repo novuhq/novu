@@ -1,18 +1,12 @@
-/* eslint-disable no-param-reassign */
 import { Injectable } from '@nestjs/common';
 import { JSONContent as MailyJSONContent } from '@maily-to/render';
 
 import { WrapMailyInLiquidCommand } from './wrap-maily-in-liquid.command';
-import {
-  MailyContentTypeEnum,
-  MailyAttrsEnum,
-  MAILY_ITERABLE_MARK,
-  MAILY_FIRST_CITIZEN_VARIABLE_KEY,
-} from './maily.types';
-import { hasAttrs, hasMarks, isRepeatNode } from './maily-utils';
+import { MailyContentTypeEnum, MailyAttrsEnum, MAILY_FIRST_CITIZEN_VARIABLE_KEY } from './maily.types';
+import { hasAttrs, hasMarks } from './maily-utils';
 
 /**
- * Enriches Maily JSON content with Liquid syntax repeat variables.
+ * Enriches Maily JSON content with Liquid syntax.
  *
  * @example
  * Input:
@@ -32,10 +26,10 @@ import { hasAttrs, hasMarks, isRepeatNode } from './maily-utils';
  * Output:
  * {
  *   type: "paragraph",
- *   attrs: { each: "{{ payload.comments[0] }}" },
+ *   attrs: { each: "{{ payload.comments }}" },
  *   content: [{
  *     type: "variable",
- *     text: "{{ payload.comments[0].name }}"
+ *     text: "{{ payload.comments.name }}"
  *   }]
  * },
  * {
@@ -51,20 +45,15 @@ export class WrapMailyInLiquidUseCase {
     return this.wrapVariablesInLiquid(mailyJSONContent);
   }
 
-  private wrapVariablesInLiquid(node: MailyJSONContent, parentForLoopKey?: string): MailyJSONContent {
+  private wrapVariablesInLiquid(node: MailyJSONContent): MailyJSONContent {
     const newNode = { ...node } as MailyJSONContent & { attrs: Record<string, any> };
 
-    // if this is a for loop node, track its variable
-    if (isRepeatNode(node)) {
-      parentForLoopKey = node.attrs[MailyAttrsEnum.EACH_KEY];
-    }
-
     if (node.content) {
-      newNode.content = node.content.map((child) => this.wrapVariablesInLiquid(child, parentForLoopKey));
+      newNode.content = node.content.map((child) => this.wrapVariablesInLiquid(child));
     }
 
     if (hasAttrs(node)) {
-      newNode.attrs = this.processVariableNodeAttributes(node, parentForLoopKey);
+      newNode.attrs = this.processVariableNodeAttributes(node);
     }
 
     if (hasMarks(node)) {
@@ -74,10 +63,7 @@ export class WrapMailyInLiquidUseCase {
     return newNode;
   }
 
-  private processVariableNodeAttributes(
-    node: MailyJSONContent & { attrs: Record<string, string> },
-    parentForLoopKey?: string
-  ) {
+  private processVariableNodeAttributes(node: MailyJSONContent & { attrs: Record<string, string> }) {
     const { attrs, type } = node;
     const config = variableAttributeConfig(type as MailyContentTypeEnum);
     const processedAttrs = { ...attrs };
@@ -90,14 +76,7 @@ export class WrapMailyInLiquidUseCase {
         return;
       }
 
-      let processedValue = attrValue;
-
-      // add special indicator for attributes that belong to the for loop and to the for loop itself
-      if (parentForLoopKey && processedValue.startsWith(`${parentForLoopKey}`)) {
-        processedValue = processedValue.replace(`${parentForLoopKey}`, `${parentForLoopKey}[${MAILY_ITERABLE_MARK}]`);
-      }
-
-      processedAttrs[attr] = this.wrapInLiquidOutput(processedValue, attrs.fallback);
+      processedAttrs[attr] = this.wrapInLiquidOutput(attrValue, attrs.fallback);
 
       if (!MAILY_FIRST_CITIZEN_VARIABLE_KEY.includes(flag)) {
         processedAttrs[flag] = false;

@@ -8,16 +8,16 @@ import {
   CommandList,
   CommandSeparator,
 } from '@/components/primitives/command';
-import { FormControl, FormItem } from '@/components/primitives/form/form';
+import { FormControl, FormItem, FormMessagePure } from '@/components/primitives/form/form';
 import { Input } from '@/components/primitives/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives/popover';
+import { Separator } from '@/components/primitives/separator';
 import { Switch } from '@/components/primitives/switch';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { RiAddFill, RiQuestionLine } from 'react-icons/ri';
-import { Separator } from '@/components/primitives/separator';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { FilterItem } from './components/filter-item';
 import { FilterPreview } from './components/filter-preview';
 import { ReorderFiltersGroup } from './components/reorder-filters-group';
@@ -27,11 +27,17 @@ import { useVariableParser } from './hooks/use-variable-parser';
 import type { Filters, FilterWithParam, VariablePopoverProps } from './types';
 import { formatLiquidVariable, getDefaultSampleValue } from './utils';
 
-export function EditVariablePopoverContent({ variable, onUpdate, onEscapeKeyDown }: VariablePopoverProps) {
+type EditVariablePopoverContentProps = VariablePopoverProps & {
+  isAllowedVariable: (variable: string) => boolean;
+};
+
+export function EditVariablePopoverContent(props: EditVariablePopoverContentProps) {
+  const { variable, onUpdate, onEscapeKeyDown, isAllowedVariable } = props;
   const { parsedName, parsedDefaultValue, parsedFilters, originalVariable, parseRawInput } = useVariableParser(
     variable || ''
   );
   const [name, setName] = useState(parsedName);
+  const [nameError, setNameError] = useState<string>();
   const [defaultVal, setDefaultVal] = useState(parsedDefaultValue);
   const [previewValue, setPreviewValue] = useState('');
   const [showRawLiquid, setShowRawLiquid] = useState(false);
@@ -96,6 +102,11 @@ export function EditVariablePopoverContent({ variable, onUpdate, onEscapeKeyDown
   );
 
   const handleSave = useCallback(() => {
+    if (!isAllowedVariable(name)) {
+      setNameError('Not a valid variable');
+      return;
+    }
+
     track(TelemetryEvent.VARIABLE_POPOVER_APPLIED, {
       variableName: name,
       hasDefaultValue: !!defaultVal,
@@ -103,6 +114,8 @@ export function EditVariablePopoverContent({ variable, onUpdate, onEscapeKeyDown
       filters: filters.map((filter) => filter.value),
     });
     onUpdate(formatLiquidVariable(name, defaultVal, filters));
+
+    setNameError(undefined);
   }, [name, defaultVal, filters, onUpdate, track]);
 
   return (
@@ -121,6 +134,7 @@ export function EditVariablePopoverContent({ variable, onUpdate, onEscapeKeyDown
               <div className="grid gap-1">
                 <label className="text-text-sub text-label-xs">Variable name</label>
                 <Input value={name} onChange={(e) => handleNameChange(e.target.value)} className="h-7 text-sm" />
+                <FormMessagePure>{nameError}</FormMessagePure>
               </div>
             </FormControl>
           </FormItem>

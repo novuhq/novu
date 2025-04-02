@@ -3,10 +3,7 @@ import { validateSync, ValidationError } from 'class-validator';
 import { BadRequestException } from '@nestjs/common';
 
 export abstract class BaseCommand {
-  static create<T extends BaseCommand>(
-    this: new (...args: unknown[]) => T,
-    data: T,
-  ): T {
+  static create<T extends BaseCommand>(this: new (...args: unknown[]) => T, data: T): T {
     const convertedObject = plainToInstance<T, unknown>(this, {
       ...data,
     });
@@ -26,10 +23,7 @@ export class ConstraintValidation {
   value: any;
 }
 
-function flattenErrors(
-  errors: ValidationError[],
-  prefix: string = '',
-): Record<string, ConstraintValidation> {
+function flattenErrors(errors: ValidationError[], prefix: string = ''): Record<string, ConstraintValidation> {
   const result: Record<string, ConstraintValidation> = {};
 
   for (const error of errors) {
@@ -59,7 +53,7 @@ function flattenErrors(
 export class CommandValidationException extends BadRequestException {
   constructor(
     public className: string,
-    public constraintsViolated: Record<string, ConstraintValidation>,
+    public constraintsViolated: Record<string, ConstraintValidation>
   ) {
     super({ message: 'Validation failed', className, constraintsViolated });
   }

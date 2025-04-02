@@ -1,5 +1,5 @@
-import * as React from 'react';
 import * as AccordionPrimitive from '@radix-ui/react-accordion';
+import * as React from 'react';
 import { RiArrowDownSLine } from 'react-icons/ri';
 
 import { cn } from '@/utils/ui';
@@ -28,7 +28,7 @@ const AccordionTrigger = React.forwardRef<React.ElementRef<typeof AccordionPrimi
       <AccordionPrimitive.Trigger
         ref={ref}
         className={cn(
-          'flex flex-1 items-center justify-between text-sm font-medium transition-all [&[data-state=open]>svg]:rotate-180',
+          'flex flex-1 items-center justify-between text-xs transition-all [&[data-state=open]>svg]:rotate-180',
           className
         )}
         {...props}
@@ -57,4 +57,4 @@ const AccordionContent = React.forwardRef<
 ));
 AccordionContent.displayName = AccordionPrimitive.Content.displayName;
 
-export { Accordion, AccordionItem, AccordionTrigger, AccordionContent };
+export { Accordion, AccordionContent, AccordionItem, AccordionTrigger };

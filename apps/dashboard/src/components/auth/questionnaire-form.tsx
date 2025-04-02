@@ -74,12 +74,14 @@ export function QuestionnaireForm() {
       hubspotContext: hubspotContext || '',
     });
 
+    // TODO: Make this more robust for all new sign-ups
     if (!user?.unsafeMetadata?.newDashboardOptInStatus) {
       await user?.update({
         unsafeMetadata: {
           newDashboardOptInStatus: NewDashboardOptInStatusEnum.OPTED_IN,
         },
       });
+      // TODO: Reload shouldn't be necessary as user.update already returns the updated user
       await user?.reload();
     }
   };

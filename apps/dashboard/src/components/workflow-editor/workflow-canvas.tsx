@@ -1,4 +1,4 @@
-import { EnvironmentEnum, FeatureFlagsKeysEnum, WorkflowOriginEnum } from '@novu/shared';
+import { EnvironmentEnum, WorkflowOriginEnum } from '@novu/shared';
 import {
   Background,
   BackgroundVariant,
@@ -16,7 +16,6 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import { getFirstErrorMessage } from '@/components/workflow-editor/step-utils';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useEnvironment } from '@/context/environment/hooks';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { StepTypeEnum } from '@/utils/enums';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { Step } from '@/utils/types';
@@ -139,7 +138,6 @@ const WorkflowCanvasChild = ({ steps, readOnly }: { steps: Step[]; readOnly?: bo
   const { workflow: currentWorkflow } = useWorkflow();
   const navigate = useNavigate();
   const { user } = useUser();
-  const isWorkflowChecklistEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_WORKFLOW_CHECK_LIST_ENABLED);
 
   const [nodes, edges] = useMemo(() => {
     const triggerNode: Node<NodeData, 'trigger'> = {
@@ -269,8 +267,9 @@ const WorkflowCanvasChild = ({ steps, readOnly }: { steps: Step[]; readOnly?: bo
       {currentWorkflow &&
         currentEnvironment?.name === EnvironmentEnum.DEVELOPMENT &&
         currentWorkflow.origin === WorkflowOriginEnum.NOVU_CLOUD &&
-        !user?.unsafeMetadata?.workflowChecklistCompleted &&
-        isWorkflowChecklistEnabled && <WorkflowChecklist steps={steps} workflow={currentWorkflow} />}
+        !user?.unsafeMetadata?.workflowChecklistCompleted && (
+          <WorkflowChecklist steps={steps} workflow={currentWorkflow} />
+        )}
     </div>
   );
 };

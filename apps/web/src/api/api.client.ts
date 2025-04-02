@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { CustomDataType, WorkflowPreferences } from '@novu/shared';
+import { CustomDataType, IPaginationWithQueryParams, WorkflowPreferences } from '@novu/shared';
 import { API_ROOT } from '../config';
 import { getToken } from '../components/providers/AuthProvider';
 import { getEnvironmentId, clearEnvironmentId } from '../components/providers/EnvironmentProvider';
@@ -153,6 +153,12 @@ export function buildApiHttpClient({
   return {
     async getNotifications(params?: { page?: number; transactionId?: string }) {
       return get(`/v1/notifications`, params);
+    },
+
+    async getNotificationsList({ page = 0, limit = 10, query }: IPaginationWithQueryParams) {
+      const params = { page, limit, ...(query && { query }) };
+
+      return get(`/v1/notification-templates`, params);
     },
 
     async getNotification(notificationId: string) {

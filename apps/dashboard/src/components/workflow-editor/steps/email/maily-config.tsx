@@ -24,7 +24,7 @@ import {
 
 export const DEFAULT_EDITOR_CONFIG = {
   hasMenuBar: false,
-  wrapClassName: 'min-h-0 max-h-full flex flex-col w-full h-full overflow-y-auto',
+  wrapClassName: 'min-h-0 max-h-full flex flex-col w-full h-full',
   bodyClassName: '!bg-transparent flex flex-col basis-full !border-none !mt-0 [&>div]:basis-full [&_.tiptap]:h-full',
   /**
    * Special characters like "{{" and "/" can trigger event menus in the editor.

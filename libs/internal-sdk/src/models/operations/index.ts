@@ -39,6 +39,7 @@ export * from "./subscribersv1controllermarkactionasseen.js";
 export * from "./subscribersv1controllermarkallunreadasread.js";
 export * from "./subscribersv1controllermarkmessagesas.js";
 export * from "./subscribersv1controllermodifysubscriberchannel.js";
+export * from "./subscribersv1controllerupdatesubscriber.js";
 export * from "./subscribersv1controllerupdatesubscriberchannel.js";
 export * from "./subscribersv1controllerupdatesubscriberonlineflag.js";
 export * from "./topicscontrollerassign.js";
