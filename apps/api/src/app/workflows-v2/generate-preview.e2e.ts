@@ -118,7 +118,9 @@ describe('Generate Preview #novu-v2', () => {
       if (previewResponseDto.result?.type !== 'in_app') {
         throw new Error('should have a in-app preview ');
       }
-      expect(previewResponseDto.result.preview.subject).to.deep.equal(controlValues.subject);
+      expect(previewResponseDto.result.preview.subject).to.deep.equal(
+        'firstName Hello, World! this is the replacement text for the placeholder'
+      );
     });
 
     describe('Happy Path, no payload, expected same response as requested', () => {
