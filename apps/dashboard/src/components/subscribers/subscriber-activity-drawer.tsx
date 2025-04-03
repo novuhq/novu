@@ -1,4 +1,4 @@
-import React, { forwardRef, useEffect, useState } from 'react';
+import React, { forwardRef } from 'react';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 
 import { SheetContent, SheetDescription, SheetTitle } from '@/components/primitives/sheet';
@@ -22,7 +22,7 @@ export const ActivityDetailsDrawer = forwardRef<HTMLDivElement, ActivityPanelDra
   const isOpen = !!activityId;
   const { activity, isPending, error } = usePullActivity(activityId);
 
-  function handleTransactionIdChange(newTransactionId: string, activityId: string) {
+  function handleTransactionIdChange(_newTransactionId: string, activityId: string) {
     onActivitySelect(activityId);
   }
 
