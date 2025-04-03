@@ -211,8 +211,10 @@ messageSchema.index({
   _subscriberId: 1,
   _environmentId: 1,
   channel: 1,
-  seen: 1,
   read: 1,
+  archived: 1,
+  deleted: 1,
+  seen: 1,
   createdAt: -1,
 });
 
