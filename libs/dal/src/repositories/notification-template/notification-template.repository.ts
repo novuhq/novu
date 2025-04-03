@@ -274,10 +274,7 @@ export class NotificationTemplateRepository extends BaseRepository<
   }
 
   async delete(query: NotificationTemplateQuery) {
-    const item = await this.findOne({ _id: query._id, _environmentId: query._environmentId });
-    if (!item) throw new DalException(`Could not find workflow with id ${query._id}`);
-
-    return await this.notificationTemplate.delete({ _id: item._id, _environmentId: item._environmentId });
+    return await this.notificationTemplate.delete({ _id: query._id, _environmentId: query._environmentId });
   }
 
   async findDeleted(query: NotificationTemplateQuery): Promise<NotificationTemplateEntity> {
