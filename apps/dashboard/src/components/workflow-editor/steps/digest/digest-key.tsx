@@ -59,6 +59,10 @@ export const DigestKey = () => {
                 value={parseLiquidVariables(field.value)}
                 placeholder="add additional digest key..."
                 className="w-full"
+                emptyStateMessage={{
+                  primary: 'No digest key configured',
+                  secondary: 'Type "payload." to configure the digest key',
+                }}
               />
               <div className="transition-all duration-200 ease-in-out">
                 {field.value && (

@@ -15,6 +15,10 @@ type VariableSelectProps = HTMLAttributes<HTMLDivElement> & {
   title?: string;
   placeholder?: string;
   error?: string;
+  emptyStateMessage?: {
+    primary: string;
+    secondary: string;
+  };
 };
 
 /**
@@ -26,6 +30,7 @@ type VariableSelectProps = HTMLAttributes<HTMLDivElement> & {
  * - Auto-creation of new options when typing custom values
  * - Visual feedback for selected items
  * - Support for custom left icon
+ * - Empty state when no variables are available
  */
 export const VariableSelect = (props: VariableSelectProps) => {
   const {
@@ -38,6 +43,7 @@ export const VariableSelect = (props: VariableSelectProps) => {
     title = 'Variables',
     error,
     placeholder,
+    emptyStateMessage,
     ...rest
   } = props;
   const [inputValue, setInputValue] = useState(value ?? '');
@@ -133,17 +139,17 @@ export const VariableSelect = (props: VariableSelectProps) => {
           {error && <span className="text-destructive text-xs">{error}</span>}
         </div>
       </PopoverAnchor>
-      {filteredOptions.length > 0 && (
-        <PopoverContent
-          className="min-w-[250px] max-w-[250px] p-0"
-          side="bottom"
-          align="start"
-          onOpenAutoFocus={(e) => {
-            // prevent the input from being blurred when the popover opens
-            e.preventDefault();
-          }}
-          onFocusOutside={onClose}
-        >
+      <PopoverContent
+        className="min-w-[250px] max-w-[250px] p-0"
+        side="bottom"
+        align="start"
+        onOpenAutoFocus={(e) => {
+          // prevent the input from being blurred when the popover opens
+          e.preventDefault();
+        }}
+        onFocusOutside={onClose}
+      >
+        {filteredOptions.length > 0 ? (
           <VariableList
             ref={variablesListRef}
             options={filteredOptions}
@@ -151,8 +157,15 @@ export const VariableSelect = (props: VariableSelectProps) => {
             selectedValue={value}
             title={title}
           />
-        </PopoverContent>
-      )}
+        ) : (
+          <div className="flex flex-col items-center justify-center p-4 text-center">
+            <p className="text-foreground-600 text-sm">{emptyStateMessage?.primary ?? 'No variables available'}</p>
+            <p className="text-foreground-400 mt-1 text-xs">
+              {emptyStateMessage?.secondary ?? 'Add variables to your workflow to see them here'}
+            </p>
+          </div>
+        )}
+      </PopoverContent>
     </Popover>
   );
 };
