@@ -61,7 +61,7 @@ export const DigestKey = () => {
                 className="w-full"
                 emptyStateMessage={{
                   primary: 'No digest key configured',
-                  secondary: 'Type "payload." to configure the digest key',
+                  secondary: 'Refine the key using "payload." variables',
                 }}
               />
               <div className="transition-all duration-200 ease-in-out">

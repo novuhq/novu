@@ -139,17 +139,17 @@ export const VariableSelect = (props: VariableSelectProps) => {
           {error && <span className="text-destructive text-xs">{error}</span>}
         </div>
       </PopoverAnchor>
-      <PopoverContent
-        className="min-w-[250px] max-w-[250px] p-0"
-        side="bottom"
-        align="start"
-        onOpenAutoFocus={(e) => {
-          // prevent the input from being blurred when the popover opens
-          e.preventDefault();
-        }}
-        onFocusOutside={onClose}
-      >
-        {filteredOptions.length > 0 ? (
+      {filteredOptions.length > 0 && (
+        <PopoverContent
+          className="min-w-[250px] max-w-[250px] p-0"
+          side="bottom"
+          align="start"
+          onOpenAutoFocus={(e) => {
+            // prevent the input from being blurred when the popover opens
+            e.preventDefault();
+          }}
+          onFocusOutside={onClose}
+        >
           <VariableList
             ref={variablesListRef}
             options={filteredOptions}
@@ -157,15 +157,29 @@ export const VariableSelect = (props: VariableSelectProps) => {
             selectedValue={value}
             title={title}
           />
-        ) : (
+        </PopoverContent>
+      )}
+
+      {filteredOptions.length === 0 && !inputValue && (
+        <PopoverContent
+          className="min-w-[250px] max-w-[250px] p-0"
+          side="bottom"
+          align="start"
+          onOpenAutoFocus={(e) => {
+            // prevent the input from being blurred when the popover opens
+            e.preventDefault();
+          }}
+          onFocusOutside={onClose}
+        >
           <div className="flex flex-col items-center justify-center p-4 text-center">
-            <p className="text-foreground-600 text-sm">{emptyStateMessage?.primary ?? 'No variables available'}</p>
+            <p className="text-foreground-600 text-sm">{emptyStateMessage?.primary ?? 'Refine the key'}</p>
             <p className="text-foreground-400 mt-1 text-xs">
-              {emptyStateMessage?.secondary ?? 'Add variables to your workflow to see them here'}
+              {emptyStateMessage?.secondary ??
+                'Type "payload." to specify a payload variable to refine the key further'}
             </p>
           </div>
-        )}
-      </PopoverContent>
+        </PopoverContent>
+      )}
     </Popover>
   );
 };
