@@ -301,7 +301,7 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
                     <TooltipPortal>
                       <TooltipContent>
                         {workflow.origin === WorkflowOriginEnum.NOVU_CLOUD_V1
-                          ? 'V1 workflows cannot be duplicated. Please visit the legacy portal.'
+                          ? 'V1 workflows cannot be duplicated using dashboard. Please visit the legacy portal.'
                           : 'External workflows cannot be duplicated using dashboard.'}
                       </TooltipContent>
                     </TooltipPortal>
