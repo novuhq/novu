@@ -213,7 +213,6 @@ messageSchema.index({
   channel: 1,
   read: 1,
   archived: 1,
-  deleted: 1,
   seen: 1,
   createdAt: -1,
 });
