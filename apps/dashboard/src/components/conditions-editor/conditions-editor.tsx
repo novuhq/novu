@@ -49,6 +49,8 @@ const controlElements = {
   cloneRuleAction: null,
 };
 
+const accessibleDescriptionGenerator = () => '';
+
 function InternalConditionsEditor({
   fields,
   variables,
@@ -73,7 +75,7 @@ function InternalConditionsEditor({
       onQueryChange={onQueryChange}
       controlClassnames={controlClassnames}
       translations={translations}
-      accessibleDescriptionGenerator={() => ''}
+      accessibleDescriptionGenerator={accessibleDescriptionGenerator}
       resetOnFieldChange={false}
     />
   );
