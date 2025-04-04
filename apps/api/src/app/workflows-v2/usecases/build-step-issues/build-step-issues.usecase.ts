@@ -64,6 +64,12 @@ export class BuildStepIssuesUsecase {
       stepType: stepTypeDto,
     } = command;
 
+    // Do not build issues for a step that has not persisted yet.
+    // This is to avoid displaying issues in the UI for a step that was just created.
+    if (!stepInternalId) {
+      return {};
+    }
+
     const variableSchema = await this.buildAvailableVariableSchemaUsecase.execute(
       BuildVariableSchemaCommand.create({
         environmentId: user.environmentId,
