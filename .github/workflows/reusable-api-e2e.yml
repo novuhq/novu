@@ -52,7 +52,25 @@ jobs:
         shell: bash
         env:
           NOVU_ENTERPRISE: ${{ inputs.ee }}
-        run: cd apps/worker && pnpm start:test 2>&1 &
+        run: |
+          # Start the worker service in the background
+          pnpm start:worker:test 2>&1 &
+
+          # Get the PID of the last background command
+          WORKER_PID=$!
+
+          # Start a background process to monitor the worker service. This ensures that the worker service is restarted if it stops in the CI environment
+          (
+            while true; do
+              # Check if the worker service is running
+              if ! kill -0 $WORKER_PID 2> /dev/null; then
+                echo "Worker service has stopped. Restarting..."
+                pnpm start:test 2>&1 &
+                WORKER_PID=$!
+              fi
+              sleep 1 # Check every 1 second
+            done
+          ) &
 
       - name: Wait on worker
         shell: bash
