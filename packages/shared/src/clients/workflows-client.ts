@@ -55,6 +55,20 @@ export const createWorkflowClient = (baseUrl: string, headers: HeadersInit = {})
     return await baseClient.safePatch<WorkflowResponseDto>(`/v2/workflows/${workflowId}`, patchWorkflowDto);
   };
 
+  const deleteWorkflow = async (workflowId: string): Promise<NovuRestResult<void, HttpError>> => {
+    return await baseClient.safeDelete(`/v2/workflows/${workflowId}`);
+  };
+
+  const duplicateWorkflow = async (
+    workflowId: string,
+    duplicateWorkflowDto: DuplicateWorkflowDto
+  ): Promise<NovuRestResult<WorkflowResponseDto, HttpError>> => {
+    return await baseClient.safePost<WorkflowResponseDto>(
+      `/v2/workflows/${workflowId}/duplicate`,
+      duplicateWorkflowDto
+    );
+  };
+
   const searchWorkflows = async (
     queryParams: GetListQueryParams
   ): Promise<NovuRestResult<ListWorkflowResponse, HttpError>> => {
@@ -135,7 +149,6 @@ export const createWorkflowClient = (baseUrl: string, headers: HeadersInit = {})
     searchWorkflows,
     getWorkflowTestData,
     getWorkflowStepData,
-    patchWorkflowStepData,
     patchWorkflow,
     duplicateWorkflow,
     searchWorkflowsV1,
