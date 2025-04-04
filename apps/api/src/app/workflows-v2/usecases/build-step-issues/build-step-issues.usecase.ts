@@ -62,13 +62,8 @@ export class BuildStepIssuesUsecase {
       controlSchema,
       controlsDto: controlValuesDto,
       stepType: stepTypeDto,
+      skipControlValueIssues,
     } = command;
-
-    // Do not build issues for a step that has not persisted yet.
-    // This is to avoid displaying issues in the UI for a step that was just created.
-    if (!stepInternalId) {
-      return {};
-    }
 
     const variableSchema = await this.buildAvailableVariableSchemaUsecase.execute(
       BuildVariableSchemaCommand.create({
@@ -96,7 +91,10 @@ export class BuildStepIssuesUsecase {
     }
 
     const sanitizedControlValues = this.sanitizeControlValues(newControlValues, workflowOrigin, stepTypeDto);
-    const schemaIssues = this.processControlValuesBySchema(controlSchema, sanitizedControlValues || {});
+
+    const schemaIssues = skipControlValueIssues
+      ? {}
+      : this.processControlValuesBySchema(controlSchema, sanitizedControlValues || {});
     const liquidIssues = this.processControlValuesByLiquid(variableSchema, newControlValues || {});
     const customIssues = await this.processControlValuesByCustomeRules(user, stepTypeDto, sanitizedControlValues || {});
     const skipLogicIssues = sanitizedControlValues?.skip
