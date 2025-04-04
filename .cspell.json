@@ -730,7 +730,8 @@
     "autoload",
     "novugo",
     "titleize",
-    "oklch"
+    "oklch",
+    "Duplicable"
   ],
   "flagWords": [],
   "patterns": [
