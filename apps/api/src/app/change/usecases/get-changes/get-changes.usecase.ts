@@ -13,7 +13,7 @@ import { ChangeEntityTypeEnum } from '@novu/shared';
 import { ModuleRef } from '@nestjs/core';
 import { ChangesResponseDto } from '../../dtos/change-response.dto';
 import { GetChangesCommand } from './get-changes.command';
-import { ApiException } from '../../../shared/exceptions/api.exception';
+import { BadRequestException } from '@nestjs/common';
 
 interface IViewEntity {
   templateName: string;
@@ -151,7 +151,7 @@ export class GetChanges {
     try {
       if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
         if (!require('@novu/ee-shared-services')?.TranslationsService) {
-          throw new ApiException('Translation module is not loaded');
+          throw new BadRequestException('Translation module is not loaded');
         }
         const service = this.moduleRef.get(require('@novu/ee-shared-services')?.TranslationsService, { strict: false });
         const { name, identifier } = await service.getTranslationGroupData(environmentId, entityId);
@@ -175,7 +175,7 @@ export class GetChanges {
     try {
       if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
         if (!require('@novu/ee-shared-services')?.TranslationsService) {
-          throw new ApiException('Translation module is not loaded');
+          throw new BadRequestException('Translation module is not loaded');
         }
         const service = this.moduleRef.get(require('@novu/ee-shared-services')?.TranslationsService, { strict: false });
         const { name, group } = await service.getTranslationData(environmentId, entityId);

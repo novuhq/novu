@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { NotificationGroupRepository, DalException } from '@novu/dal';
 import { DeleteNotificationGroupCommand } from './delete-notification-group.command';
-import { ApiException } from '../../../shared/exceptions/api.exception';
+import { BadRequestException } from '@nestjs/common';
 
 @Injectable()
 export class DeleteNotificationGroup {
@@ -23,7 +23,7 @@ export class DeleteNotificationGroup {
       });
     } catch (e) {
       if (e instanceof DalException) {
-        throw new ApiException(e.message);
+        throw new BadRequestException(e.message);
       }
       throw e;
     }

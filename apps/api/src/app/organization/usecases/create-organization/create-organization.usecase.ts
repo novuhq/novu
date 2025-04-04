@@ -11,7 +11,7 @@ import { AddMemberCommand } from '../membership/add-member/add-member.command';
 import { AddMember } from '../membership/add-member/add-member.usecase';
 import { CreateOrganizationCommand } from './create-organization.command';
 
-import { ApiException } from '../../../shared/exceptions/api.exception';
+import { BadRequestException } from '@nestjs/common';
 
 @Injectable({
   scope: Scope.REQUEST,
@@ -28,7 +28,7 @@ export class CreateOrganization {
 
   async execute(command: CreateOrganizationCommand): Promise<OrganizationEntity> {
     const user = await this.userRepository.findById(command.userId);
-    if (!user) throw new ApiException('User not found');
+    if (!user) throw new BadRequestException('User not found');
 
     const createdOrganization = await this.organizationRepository.create({
       logo: command.logo,

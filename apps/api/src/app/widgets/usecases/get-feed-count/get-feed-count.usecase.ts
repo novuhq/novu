@@ -4,7 +4,7 @@ import { ChannelTypeEnum } from '@novu/shared';
 import { buildMessageCountKey, CachedQuery, InstrumentUsecase } from '@novu/application-generic';
 
 import { GetFeedCountCommand } from './get-feed-count.command';
-import { ApiException } from '../../../shared/exceptions/api.exception';
+import { BadRequestException } from '@nestjs/common';
 
 @Injectable()
 export class GetFeedCount {
@@ -30,7 +30,7 @@ export class GetFeedCount {
     );
 
     if (!subscriber) {
-      throw new ApiException(
+      throw new BadRequestException(
         `Subscriber ${command.subscriberId} is not exist in environment ${command.environmentId}, ` +
           `please provide a valid subscriber identifier`
       );

@@ -1,5 +1,5 @@
 /* eslint-disable global-require */
-import { forwardRef, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 
 import { NotificationGroupEntity, NotificationGroupRepository, NotificationTemplateRepository } from '@novu/dal';
@@ -23,7 +23,7 @@ import { AnalyticsService } from '../../services';
 import { ContentService } from '../../services/content.service';
 import { isVariantEmpty } from '../../utils/variants';
 import { CreateMessageTemplate, CreateMessageTemplateCommand } from '../message-template';
-import { ApiException, PlatformException } from '../../utils/exceptions';
+import { PlatformException } from '../../utils/exceptions';
 import { shortId } from '../../utils/generate-id';
 import {
   UpsertPreferences,
@@ -151,7 +151,9 @@ export class CreateWorkflow {
 
     for (const variant of variants) {
       if (isVariantEmpty(variant)) {
-        throw new ApiException(`Variant conditions are required, variant name ${variant.name} id ${variant._id}`);
+        throw new BadRequestException(
+          `Variant conditions are required, variant name ${variant.name} id ${variant._id}`
+        );
       }
     }
   }
@@ -215,7 +217,7 @@ export class CreateWorkflow {
     }
 
     if (!identifier) {
-      throw new ApiException(
+      throw new BadRequestException(
         `Unable to generate a unique identifier. Please provide a different workflow name.${command.name}`
       );
     }
@@ -332,7 +334,7 @@ export class CreateWorkflow {
     const templateSteps: INotificationTemplateStep[] = [];
 
     for (const step of command.steps) {
-      if (!step.template) throw new ApiException(`Unexpected error: message template is missing`);
+      if (!step.template) throw new BadRequestException(`Unexpected error: message template is missing`);
 
       const createdMessageTemplate = await this.createMessageTemplate.execute(
         CreateMessageTemplateCommand.create({
@@ -420,7 +422,7 @@ export class CreateWorkflow {
     let parentVariantId: string | null = null;
 
     for (const variant of variants) {
-      if (!variant.template) throw new ApiException(`Unexpected error: variants message template is missing`);
+      if (!variant.template) throw new BadRequestException(`Unexpected error: variants message template is missing`);
 
       const variantTemplate = await this.createMessageTemplate.execute(
         CreateMessageTemplateCommand.create({

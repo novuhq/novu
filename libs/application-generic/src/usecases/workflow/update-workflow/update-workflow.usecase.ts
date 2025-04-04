@@ -25,7 +25,7 @@ import {
 import { AnalyticsService, ContentService, InvalidateCacheService } from '../../../services';
 import { UpdateWorkflowCommand } from './update-workflow.command';
 import { isVariantEmpty } from '../../../utils/variants';
-import { ApiException, PlatformException } from '../../../utils/exceptions';
+import { PlatformException } from '../../../utils/exceptions';
 import {
   CreateChange,
   CreateChangeCommand,
@@ -342,7 +342,7 @@ export class UpdateWorkflow {
 
     for (const variant of variants) {
       if (isVariantEmpty(variant)) {
-        throw new ApiException(`Variant filters are required, variant name ${variant.name} id ${variant._id}`);
+        throw new BadRequestException(`Variant filters are required, variant name ${variant.name} id ${variant._id}`);
       }
     }
   }
@@ -360,7 +360,7 @@ export class UpdateWorkflow {
       let messageTemplateId = message._id;
 
       if (!message.template) {
-        throw new ApiException(`Something un-expected happened, template couldn't be found`);
+        throw new BadRequestException(`Something un-expected happened, template couldn't be found`);
       }
 
       const updatedVariants = await this.updateVariants(message.variants, command, parentChangeId!);
@@ -573,7 +573,7 @@ export class UpdateWorkflow {
     let parentVariantId: string | null = null;
 
     for (const variant of variants) {
-      if (!variant.template) throw new ApiException(`Unexpected error: variants message template is missing`);
+      if (!variant.template) throw new BadRequestException(`Unexpected error: variants message template is missing`);
 
       const messageTemplatePayload: CreateMessageTemplateCommand | UpdateMessageTemplateCommand = {
         organizationId: command.organizationId,
@@ -606,7 +606,8 @@ export class UpdateWorkflow {
           )
         : await this.createMessageTemplate.execute(CreateMessageTemplateCommand.create(messageTemplatePayload));
 
-      if (!updatedVariant._id) throw new ApiException(`Unexpected error: variants message template was not created`);
+      if (!updatedVariant._id)
+        throw new BadRequestException(`Unexpected error: variants message template was not created`);
 
       variantsList.push({
         _id: updatedVariant._id,

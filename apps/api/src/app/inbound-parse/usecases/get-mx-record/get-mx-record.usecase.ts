@@ -4,7 +4,7 @@ import { EnvironmentEntity, EnvironmentRepository } from '@novu/dal';
 
 import { GetMxRecordCommand } from './get-mx-record.command';
 import { GetMxRecordResponseDto } from '../../dtos/get-mx-record.dto';
-import { ApiException } from '../../../shared/exceptions/api.exception';
+import { BadRequestException } from '@nestjs/common';
 
 @Injectable({
   scope: Scope.REQUEST,
@@ -14,7 +14,7 @@ export class GetMxRecord {
 
   async execute(command: GetMxRecordCommand): Promise<GetMxRecordResponseDto> {
     const env = await this.environmentRepository.findOne({ _id: command.environmentId });
-    if (!env) throw new ApiException('Environment is not found');
+    if (!env) throw new BadRequestException('Environment is not found');
 
     const inboundParseDomain = env.dns?.inboundParseDomain;
 
@@ -49,7 +49,7 @@ export class GetMxRecord {
     const relativeDnsRecords = await this.getMxRecords(inboundParseDomain);
     const INBOUND_DOMAIN = process.env.MAIL_SERVER_DOMAIN?.replace('https://', '').replace('/', '');
     if (!INBOUND_DOMAIN) {
-      throw new ApiException('MAIL_SERVER_DOMAIN is not defined as an environment variable');
+      throw new BadRequestException('MAIL_SERVER_DOMAIN is not defined as an environment variable');
     }
 
     return relativeDnsRecords.some((record: MxRecord) => record.exchange === INBOUND_DOMAIN);

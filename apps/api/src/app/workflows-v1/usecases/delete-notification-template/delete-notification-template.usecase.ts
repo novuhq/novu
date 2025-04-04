@@ -10,7 +10,7 @@ import {
 } from '@novu/application-generic';
 
 import { DeleteNotificationTemplateCommand } from './delete-notification-template.command';
-import { ApiException } from '../../../shared/exceptions/api.exception';
+import { BadRequestException } from '@nestjs/common';
 
 /**
  * @deprecated
@@ -73,7 +73,7 @@ export class DeleteNotificationTemplate {
       });
     } catch (e) {
       if (e instanceof DalException) {
-        throw new ApiException(e.message);
+        throw new BadRequestException(e.message);
       }
       throw e;
     }

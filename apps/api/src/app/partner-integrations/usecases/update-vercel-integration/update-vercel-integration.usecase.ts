@@ -10,7 +10,7 @@ import {
 } from '@novu/dal';
 import { AnalyticsService, decryptApiKey } from '@novu/application-generic';
 
-import { ApiException } from '../../../shared/exceptions/api.exception';
+import { BadRequestException } from '@nestjs/common';
 import { UpdateVercelIntegrationCommand } from './update-vercel-integration.command';
 import { Sync } from '../../../bridge/usecases/sync';
 
@@ -105,7 +105,7 @@ export class UpdateVercelIntegration {
 
       return { success: true };
     } catch (error) {
-      throw new ApiException(error.message);
+      throw new BadRequestException(error.message);
     }
   }
 
@@ -143,12 +143,12 @@ export class UpdateVercelIntegration {
 
       const orgAdmin = await this.memberRepository.getOrganizationAdminAccount(organizationId);
       if (!orgAdmin) {
-        throw new ApiException('Organization admin not found');
+        throw new BadRequestException('Organization admin not found');
       }
 
       const internalUser = await this.communityUserRepository.findOne({ externalId: orgAdmin?._userId });
       if (!internalUser) {
-        throw new ApiException('User not found');
+        throw new BadRequestException('User not found');
       }
 
       await this.syncUsecase.execute({
@@ -226,7 +226,7 @@ export class UpdateVercelIntegration {
           )
         );
       } catch (error) {
-        throw new ApiException(error.response?.data?.error || error.response?.data);
+        throw new BadRequestException(error.response?.data?.error || error.response?.data);
       }
     };
 
@@ -242,7 +242,7 @@ export class UpdateVercelIntegration {
     });
 
     if (orgsWithIntegration.length === 0) {
-      throw new ApiException({
+      throw new BadRequestException({
         message: 'No partner configuration found.',
         type: 'vercel',
       });
@@ -251,7 +251,7 @@ export class UpdateVercelIntegration {
     const firstOrg = orgsWithIntegration[0];
     const configuration = firstOrg.partnerConfigurations?.find((config) => config.configurationId === configurationId);
     if (!firstOrg.partnerConfigurations?.length || !configuration) {
-      throw new ApiException({
+      throw new BadRequestException({
         message: 'No partner configuration found.',
         type: 'vercel',
       });

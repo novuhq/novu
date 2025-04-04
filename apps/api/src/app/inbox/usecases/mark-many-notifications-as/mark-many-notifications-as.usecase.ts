@@ -8,7 +8,7 @@ import {
 import { MessageRepository } from '@novu/dal';
 import { WebSocketEventEnum } from '@novu/shared';
 
-import { ApiException } from '../../../shared/exceptions/api.exception';
+import { BadRequestException } from '@nestjs/common';
 import { GetSubscriber } from '../../../subscribers/usecases/get-subscriber';
 import { MarkManyNotificationsAsCommand } from './mark-many-notifications-as.command';
 
@@ -28,7 +28,7 @@ export class MarkManyNotificationsAs {
       subscriberId: command.subscriberId,
     });
     if (!subscriber) {
-      throw new ApiException(`Subscriber with id: ${command.subscriberId} is not found.`);
+      throw new BadRequestException(`Subscriber with id: ${command.subscriberId} is not found.`);
     }
 
     await this.messageRepository.updateMessagesStatusByIds({

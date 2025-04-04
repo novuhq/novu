@@ -4,7 +4,7 @@ import { AnalyticsService } from '@novu/application-generic';
 
 import { UpdateMessageActionsCommand } from './update-message-actions.command';
 
-import { ApiException } from '../../../shared/exceptions/api.exception';
+import { BadRequestException } from '@nestjs/common';
 
 @Injectable()
 export class UpdateMessageActions {
@@ -40,7 +40,7 @@ export class UpdateMessageActions {
     const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
 
     if (!subscriber) {
-      throw new ApiException(
+      throw new BadRequestException(
         `Subscriber with the id: ${command.subscriberId} was not found for this environment. ` +
           `Make sure to create a subscriber before trying to modify it.`
       );
@@ -58,7 +58,7 @@ export class UpdateMessageActions {
     );
 
     if (!modificationResponse.modified) {
-      throw new ApiException(
+      throw new BadRequestException(
         `Message with the id: ${command.messageId} was not found for this environment. ` +
           `Make sure to address correct message before trying to modify it.`
       );

@@ -1,8 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 
 import {
   AnalyticsService,
-  ApiException,
   CreateNotificationJobs,
   CreateNotificationJobsCommand,
   CreateOrUpdateSubscriberCommand,
@@ -69,7 +68,7 @@ export class SubscriberJobBound {
       }));
 
     if (!template) {
-      throw new ApiException(`Workflow id ${templateId} was not found`);
+      throw new BadRequestException(`Workflow id ${templateId} was not found`);
     }
 
     const templateProviderIds = await this.getProviderIdsForTemplate(environmentId, template);
@@ -220,7 +219,7 @@ export class SubscriberJobBound {
     const subscriberIdExists = typeof subscriber === 'string' ? subscriber : subscriber.subscriberId;
 
     if (!subscriberIdExists) {
-      throw new ApiException(
+      throw new BadRequestException(
         'subscriberId under property to is not configured, please make sure all subscribers contains subscriberId property'
       );
     }

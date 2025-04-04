@@ -17,7 +17,7 @@ import {
 } from '@novu/application-generic';
 
 import { RemoveAllMessagesCommand } from './remove-all-messages.command';
-import { ApiException } from '../../../shared/exceptions/api.exception';
+import { BadRequestException } from '@nestjs/common';
 import { MarkEnum } from '../mark-message-as/mark-message-as.command';
 
 @Injectable()
@@ -82,7 +82,7 @@ export class RemoveAllMessages {
       });
     } catch (e) {
       if (e instanceof DalException) {
-        throw new ApiException(e.message);
+        throw new BadRequestException(e.message);
       }
       throw e;
     }

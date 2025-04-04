@@ -6,7 +6,7 @@ import { AnalyticsService, CreateOrUpdateSubscriberUseCase, SelectIntegration } 
 import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
 import { AuthService } from '../../../auth/services/auth.service';
 import { Session } from './session.usecase';
-import { ApiException } from '../../../shared/exceptions/api.exception';
+import { BadRequestException } from '@nestjs/common';
 import { SessionCommand } from './session.command';
 import { SubscriberSessionResponseDto } from '../../dtos/subscriber-session-response.dto';
 import { AnalyticsEventsEnum } from '../../utils';
@@ -71,7 +71,7 @@ describe('Session', () => {
     try {
       await session.execute(command);
     } catch (error) {
-      expect(error).to.be.instanceOf(ApiException);
+      expect(error).to.be.instanceOf(BadRequestException);
       expect(error.message).to.equal('Please provide a valid application identifier');
     }
   });

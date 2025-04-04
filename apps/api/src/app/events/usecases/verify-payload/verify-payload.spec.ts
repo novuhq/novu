@@ -4,7 +4,7 @@ import { ITemplateVariable, TemplateVariableTypeEnum } from '@novu/shared';
 import { merge } from 'lodash';
 import { VerifyPayloadCommand } from './verify-payload.command';
 import { VerifyPayload } from './verify-payload.usecase';
-import { ApiException } from '../../../shared/exceptions/api.exception';
+import { BadRequestException } from '@nestjs/common';
 
 describe('Verify Payload Usecase', function () {
   const verifyPayload = new VerifyPayload();

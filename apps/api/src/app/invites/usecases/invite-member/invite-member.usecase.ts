@@ -4,7 +4,7 @@ import { MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
 import { AnalyticsService } from '@novu/application-generic';
 
 import { Novu } from '@novu/api';
-import { ApiException } from '../../../shared/exceptions/api.exception';
+import { BadRequestException } from '@nestjs/common';
 import { InviteMemberCommand } from './invite-member.command';
 import { capitalize, createGuid } from '../../../shared/services/helper/helper.service';
 
@@ -21,11 +21,11 @@ export class InviteMember {
 
   async execute(command: InviteMemberCommand) {
     const organization = await this.organizationRepository.findById(command.organizationId);
-    if (!organization) throw new ApiException('No organization found');
+    if (!organization) throw new BadRequestException('No organization found');
 
     const foundInvitee = await this.memberRepository.findInviteeByEmail(organization._id, command.email);
 
-    if (foundInvitee) throw new ApiException('Already invited');
+    if (foundInvitee) throw new BadRequestException('Already invited');
 
     const inviterUser = await this.userRepository.findById(command.userId);
     if (!inviterUser) throw new NotFoundException(`Inviter ${command.userId} is not found`);

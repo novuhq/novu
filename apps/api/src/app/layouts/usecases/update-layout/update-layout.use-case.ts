@@ -6,7 +6,7 @@ import { UpdateLayoutCommand } from './update-layout.command';
 import { CreateLayoutChangeCommand, CreateLayoutChangeUseCase } from '../create-layout-change';
 import { SetDefaultLayoutCommand, SetDefaultLayoutUseCase } from '../set-default-layout';
 import { LayoutDto } from '../../dtos/layout.dto';
-import { ApiException } from '../../../shared/exceptions/api.exception';
+import { BadRequestException } from '@nestjs/common';
 
 @Injectable()
 export class UpdateLayoutUseCase {
@@ -48,7 +48,7 @@ export class UpdateLayoutUseCase {
     const patchedEntity = this.applyUpdatesToEntity(this.mapToEntity(databaseEntity), command);
     const hasBody = patchedEntity.content.includes('{{{body}}}');
     if (!hasBody) {
-      throw new ApiException('Layout content must contain {{{body}}}');
+      throw new BadRequestException('Layout content must contain {{{body}}}');
     }
 
     const updatedEntity = await this.layoutRepository.updateLayout(patchedEntity);

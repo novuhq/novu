@@ -1,6 +1,5 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { MemberRepository, UserRepository } from '@novu/dal';
-import { ApiException } from '../../../shared/exceptions/api.exception';
 import { AuthService } from '../../services/auth.service';
 import { SwitchOrganizationCommand } from './switch-organization.command';
 
@@ -22,10 +21,10 @@ export class SwitchOrganization {
     }
 
     const member = await this.memberRepository.findMemberByUserId(command.newOrganizationId, command.userId);
-    if (!member) throw new ApiException('Member not found');
+    if (!member) throw new BadRequestException('Member not found');
 
     const user = await this.userRepository.findById(command.userId);
-    if (!user) throw new ApiException(`User ${command.userId} not found`);
+    if (!user) throw new BadRequestException(`User ${command.userId} not found`);
 
     const token = await this.authService.getSignedToken(user, command.newOrganizationId, member);
 

@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, Scope } from '@nestjs/common';
 import { MemberRepository, EnvironmentRepository } from '@novu/dal';
 import { RemoveMemberCommand } from './remove-member.command';
-import { ApiException } from '../../../../shared/exceptions/api.exception';
+import { BadRequestException } from '@nestjs/common';
 
 @Injectable({
   scope: Scope.REQUEST,
@@ -18,7 +18,7 @@ export class RemoveMember {
 
     if (!memberToRemove) throw new NotFoundException('Member not found');
     if (memberToRemove._userId && memberToRemove._userId && memberToRemove._userId === command.userId) {
-      throw new ApiException('Cannot remove self from members');
+      throw new BadRequestException('Cannot remove self from members');
     }
 
     await this.memberRepository.removeMemberById(command.organizationId, memberToRemove._id);

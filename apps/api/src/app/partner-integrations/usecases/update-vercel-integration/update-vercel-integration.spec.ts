@@ -8,7 +8,7 @@ import { CommunityUserRepository, EnvironmentRepository, MemberRepository, Organ
 import { AnalyticsService } from '@novu/application-generic';
 
 import { UpdateVercelIntegration } from './update-vercel-integration.usecase';
-import { ApiException } from '../../../shared/exceptions/api.exception';
+import { BadRequestException } from '@nestjs/common';
 import { Sync } from '../../../bridge/usecases/sync';
 
 describe('UpdateVercelIntegration', function () {
@@ -329,7 +329,7 @@ describe('UpdateVercelIntegration', function () {
     assert.notCalled(httpServiceMock.delete);
   });
 
-  it('should throw ApiException when configuration not found', async function () {
+  it('should throw BadRequestException when configuration not found', async function () {
     organizationRepositoryMock.findByPartnerConfigurationId.resolves([]);
 
     try {
@@ -342,7 +342,7 @@ describe('UpdateVercelIntegration', function () {
       });
       throw new Error('Should not reach here');
     } catch (error) {
-      expect(error).to.be.instanceOf(ApiException);
+      expect(error).to.be.instanceOf(BadRequestException);
       expect(error.message).to.equal('No partner configuration found.');
       assert.notCalled(httpServiceMock.get);
       assert.notCalled(httpServiceMock.delete);
@@ -364,7 +364,7 @@ describe('UpdateVercelIntegration', function () {
       });
       throw new Error('Should not reach here');
     } catch (error) {
-      expect(error).to.be.instanceOf(ApiException);
+      expect(error).to.be.instanceOf(BadRequestException);
       expect(error.message).to.equal('HTTP Error');
       assert.notCalled(httpServiceMock.delete);
     }
@@ -385,7 +385,7 @@ describe('UpdateVercelIntegration', function () {
       });
       throw new Error('Should not reach here');
     } catch (error) {
-      expect(error).to.be.instanceOf(ApiException);
+      expect(error).to.be.instanceOf(BadRequestException);
       expect(error.message).to.equal('Delete Error');
       assert.called(httpServiceMock.get);
       assert.called(httpServiceMock.delete);

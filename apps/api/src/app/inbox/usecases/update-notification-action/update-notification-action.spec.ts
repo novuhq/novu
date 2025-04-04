@@ -8,7 +8,7 @@ import { AnalyticsService, buildFeedKey, InvalidateCacheService } from '@novu/ap
 import { GetSubscriber } from '../../../subscribers/usecases/get-subscriber';
 import { UpdateNotificationAction } from './update-notification-action.usecase';
 import type { UpdateNotificationActionCommand } from './update-notification-action.command';
-import { ApiException } from '../../../shared/exceptions/api.exception';
+import { BadRequestException } from '@nestjs/common';
 import { mapToDto } from '../../utils/notification-mapper';
 import { AnalyticsEventsEnum } from '../../utils';
 
@@ -90,7 +90,7 @@ describe('UpdateNotificationAction', () => {
     try {
       await updateNotificationAction.execute(command);
     } catch (error) {
-      expect(error).to.be.instanceOf(ApiException);
+      expect(error).to.be.instanceOf(BadRequestException);
       expect(error.message).to.equal(`Subscriber with id: ${command.subscriberId} is not found.`);
     }
   });
@@ -132,7 +132,7 @@ describe('UpdateNotificationAction', () => {
     try {
       await updateNotificationAction.execute(command);
     } catch (error) {
-      expect(error).to.be.instanceOf(ApiException);
+      expect(error).to.be.instanceOf(BadRequestException);
       expect(error.message).to.equal(`Could not perform action on the primary button because it does not exist.`);
     }
   });
@@ -153,7 +153,7 @@ describe('UpdateNotificationAction', () => {
     try {
       await updateNotificationAction.execute(command);
     } catch (error) {
-      expect(error).to.be.instanceOf(ApiException);
+      expect(error).to.be.instanceOf(BadRequestException);
       expect(error.message).to.equal(`Could not perform action on the secondary button because it does not exist.`);
     }
   });
