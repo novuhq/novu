@@ -11,6 +11,8 @@ import { Input, InputRoot } from '@/components/primitives/input';
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useParseVariables } from '@/hooks/use-parse-variables';
+import { useTelemetry } from '@/hooks/use-telemetry';
+import { TelemetryEvent } from '@/utils/telemetry';
 import React from 'react';
 import { RiAddLine, RiDeleteBin6Line, RiInputField } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
@@ -20,6 +22,7 @@ const dataObjectKey = 'data';
 const InnerDataObject = ({ field }: { field: FieldValues }) => {
   const { saveForm } = useSaveForm();
   const { step } = useWorkflow();
+  const track = useTelemetry();
 
   const { variables, isAllowedVariable } = useParseVariables(step?.variables);
 
@@ -126,7 +129,15 @@ const InnerDataObject = ({ field }: { field: FieldValues }) => {
             })}
           </div>
           {currentPairs.length < 10 && (
-            <Button variant="secondary" mode="lighter" className="self-start" onClick={handleAddPair}>
+            <Button
+              variant="secondary"
+              mode="lighter"
+              className="self-start"
+              onClick={() => {
+                handleAddPair();
+                track(TelemetryEvent.INBOX_DATA_OBJECT_PROPERTY_ADDED);
+              }}
+            >
               <RiAddLine className="size-4" />
               Add property
             </Button>

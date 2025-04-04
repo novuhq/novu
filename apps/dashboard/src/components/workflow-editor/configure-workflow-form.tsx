@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import type { ExternalToast } from 'sonner';
@@ -168,6 +168,8 @@ export const ConfigureWorkflowForm = (props: ConfigureWorkflowFormProps) => {
 
   const otherEnvironments = environments.filter((env) => env._id !== currentEnvironment?._id);
 
+  const isDuplicable = useMemo(() => workflow.origin === WorkflowOriginEnum.NOVU_CLOUD, [workflow.origin]);
+
   return (
     <>
       <ConfirmationModal
@@ -254,17 +256,19 @@ export const ConfigureWorkflowForm = (props: ConfigureWorkflowFormProps) => {
                     </TooltipPortal>
                   </Tooltip>
                 )}
-                <Link
-                  to={buildRoute(ROUTES.WORKFLOWS_DUPLICATE, {
-                    environmentSlug: currentEnvironment?.slug ?? '',
-                    workflowId: workflow.workflowId,
-                  })}
-                >
-                  <DropdownMenuItem className="cursor-pointer">
-                    <FilesIcon />
-                    Duplicate workflow
-                  </DropdownMenuItem>
-                </Link>
+                {isDuplicable && (
+                  <Link
+                    to={buildRoute(ROUTES.WORKFLOWS_DUPLICATE, {
+                      environmentSlug: currentEnvironment?.slug ?? '',
+                      workflowId: workflow.workflowId,
+                    })}
+                  >
+                    <DropdownMenuItem className="cursor-pointer">
+                      <FilesIcon />
+                      Duplicate workflow
+                    </DropdownMenuItem>
+                  </Link>
+                )}
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
               <DropdownMenuGroup className="*:cursor-pointer">
