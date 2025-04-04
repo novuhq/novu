@@ -1,9 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { OrganizationRepository, MemberRepository } from '@novu/dal';
 import { MemberRoleEnum } from '@novu/shared';
 
 import { ChangeMemberRoleCommand } from './change-member-role.command';
-import { BadRequestException } from '@nestjs/common';
 
 @Injectable()
 export class ChangeMemberRole {

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import {
   MessageEntity,
   DalException,
@@ -17,7 +17,6 @@ import {
 } from '@novu/application-generic';
 
 import { RemoveAllMessagesCommand } from './remove-all-messages.command';
-import { BadRequestException } from '@nestjs/common';
 import { MarkEnum } from '../mark-message-as/mark-message-as.command';
 
 @Injectable()

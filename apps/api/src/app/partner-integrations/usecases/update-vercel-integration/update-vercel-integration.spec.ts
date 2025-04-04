@@ -7,8 +7,8 @@ import { of } from 'rxjs';
 import { CommunityUserRepository, EnvironmentRepository, MemberRepository, OrganizationRepository } from '@novu/dal';
 import { AnalyticsService } from '@novu/application-generic';
 
-import { UpdateVercelIntegration } from './update-vercel-integration.usecase';
 import { BadRequestException } from '@nestjs/common';
+import { UpdateVercelIntegration } from './update-vercel-integration.usecase';
 import { Sync } from '../../../bridge/usecases/sync';
 
 describe('UpdateVercelIntegration', function () {

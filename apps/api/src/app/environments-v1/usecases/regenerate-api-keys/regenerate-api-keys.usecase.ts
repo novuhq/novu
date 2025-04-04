@@ -1,10 +1,9 @@
 import { createHash } from 'crypto';
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 
 import { EnvironmentRepository } from '@novu/dal';
 import { decryptApiKey, encryptApiKey } from '@novu/application-generic';
 
-import { BadRequestException } from '@nestjs/common';
 import { GenerateUniqueApiKey } from '../generate-unique-api-key/generate-unique-api-key.usecase';
 import { GetApiKeysCommand } from '../get-api-keys/get-api-keys.command';
 

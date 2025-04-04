@@ -4,10 +4,10 @@ import { ChannelCTATypeEnum } from '@novu/shared';
 import { ChannelTypeEnum, MessageRepository } from '@novu/dal';
 import { AnalyticsService } from '@novu/application-generic';
 
+import { BadRequestException } from '@nestjs/common';
 import { GetNotifications } from './get-notifications.usecase';
 import { GetSubscriber } from '../../../subscribers/usecases/get-subscriber';
 import type { GetNotificationsCommand } from './get-notifications.command';
-import { BadRequestException } from '@nestjs/common';
 import { mapToDto } from '../../utils/notification-mapper';
 import { AnalyticsEventsEnum } from '../../utils';
 

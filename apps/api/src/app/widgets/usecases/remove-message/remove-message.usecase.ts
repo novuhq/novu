@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { MessageEntity, DalException, MessageRepository, SubscriberRepository, SubscriberEntity } from '@novu/dal';
 import {
   WebSocketsQueueService,
@@ -10,7 +10,6 @@ import {
 import { WebSocketEventEnum } from '@novu/shared';
 
 import { RemoveMessageCommand } from './remove-message.command';
-import { BadRequestException } from '@nestjs/common';
 import { MarkEnum } from '../mark-message-as/mark-message-as.command';
 
 @Injectable()

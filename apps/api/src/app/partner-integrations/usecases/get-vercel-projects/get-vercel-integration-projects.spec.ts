@@ -6,8 +6,8 @@ import { OrganizationRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import { of } from 'rxjs';
 
-import { GetVercelIntegrationProjects } from './get-vercel-integration-projects.usecase';
 import { BadRequestException } from '@nestjs/common';
+import { GetVercelIntegrationProjects } from './get-vercel-integration-projects.usecase';
 
 describe('GetVercelIntegrationProjects', function () {
   let getVercelIntegrationProjects: GetVercelIntegrationProjects;

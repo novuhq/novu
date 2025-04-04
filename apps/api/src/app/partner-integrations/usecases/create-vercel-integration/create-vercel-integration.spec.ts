@@ -7,8 +7,8 @@ import { UserSession } from '@novu/testing';
 import { of } from 'rxjs';
 import { AnalyticsService } from '@novu/application-generic';
 
-import { CreateVercelIntegration } from './create-vercel-integration.usecase';
 import { BadRequestException } from '@nestjs/common';
+import { CreateVercelIntegration } from './create-vercel-integration.usecase';
 
 describe('CreateVercelIntegration', function () {
   let createVercelIntegration: CreateVercelIntegration;

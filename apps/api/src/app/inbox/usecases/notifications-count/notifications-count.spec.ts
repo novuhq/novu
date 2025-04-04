@@ -4,9 +4,9 @@ import { MessageRepository, SubscriberRepository } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/shared';
 import { buildMessageCountKey, CachedQuery } from '@novu/application-generic';
 
+import { BadRequestException } from '@nestjs/common';
 import { NotificationsCount } from './notifications-count.usecase';
 import { NotificationsCountCommand } from './notifications-count.command';
-import { BadRequestException } from '@nestjs/common';
 
 sinon.stub(CachedQuery);
 sinon.stub(buildMessageCountKey);

@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, Inject } from '@nestjs/common';
+import { ConflictException, Injectable, Inject, BadRequestException } from '@nestjs/common';
 import { LayoutEntity, LayoutRepository } from '@novu/dal';
 import { AnalyticsService, GetLayoutCommand, GetLayoutUseCase } from '@novu/application-generic';
 
@@ -6,7 +6,6 @@ import { UpdateLayoutCommand } from './update-layout.command';
 import { CreateLayoutChangeCommand, CreateLayoutChangeUseCase } from '../create-layout-change';
 import { SetDefaultLayoutCommand, SetDefaultLayoutUseCase } from '../set-default-layout';
 import { LayoutDto } from '../../dtos/layout.dto';
-import { BadRequestException } from '@nestjs/common';
 
 @Injectable()
 export class UpdateLayoutUseCase {

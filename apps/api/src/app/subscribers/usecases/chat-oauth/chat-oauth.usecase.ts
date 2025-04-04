@@ -1,11 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 
 import { ChannelTypeEnum } from '@novu/stateless';
 import { IntegrationEntity, IntegrationRepository, EnvironmentRepository, ICredentialsEntity } from '@novu/dal';
 import { createHash } from '@novu/application-generic';
 
 import { ChatOauthCommand } from './chat-oauth.command';
-import { BadRequestException } from '@nestjs/common';
 
 @Injectable()
 export class ChatOauth {

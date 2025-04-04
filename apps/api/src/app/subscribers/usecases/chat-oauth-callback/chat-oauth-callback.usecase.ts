@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import axios from 'axios';
 
 import {
@@ -19,7 +19,6 @@ import {
   IntegrationRepository,
 } from '@novu/dal';
 import { ChatOauthCallbackCommand } from './chat-oauth-callback.command';
-import { BadRequestException } from '@nestjs/common';
 import { validateEncryption } from '../chat-oauth/chat-oauth.usecase';
 import { ChatOauthCallbackResult, ResponseTypeEnum } from './chat-oauth-callback.result';
 

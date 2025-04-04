@@ -1,10 +1,9 @@
-import { Injectable, Scope } from '@nestjs/common';
+import { Injectable, Scope, BadRequestException } from '@nestjs/common';
 import { promises, type MxRecord } from 'node:dns';
 import { EnvironmentEntity, EnvironmentRepository } from '@novu/dal';
 
 import { GetMxRecordCommand } from './get-mx-record.command';
 import { GetMxRecordResponseDto } from '../../dtos/get-mx-record.dto';
-import { BadRequestException } from '@nestjs/common';
 
 @Injectable({
   scope: Scope.REQUEST,

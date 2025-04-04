@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import {
   buildFeedKey,
   buildMessageCountKey,
@@ -8,7 +8,6 @@ import {
 import { MessageRepository } from '@novu/dal';
 import { WebSocketEventEnum } from '@novu/shared';
 
-import { BadRequestException } from '@nestjs/common';
 import { GetSubscriber } from '../../../subscribers/usecases/get-subscriber';
 import { MarkManyNotificationsAsCommand } from './mark-many-notifications-as.command';
 

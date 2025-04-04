@@ -1,7 +1,6 @@
-import { Injectable, NotFoundException, Scope } from '@nestjs/common';
+import { Injectable, NotFoundException, Scope, BadRequestException } from '@nestjs/common';
 import { MemberRepository, EnvironmentRepository } from '@novu/dal';
 import { RemoveMemberCommand } from './remove-member.command';
-import { BadRequestException } from '@nestjs/common';
 
 @Injectable({
   scope: Scope.REQUEST,

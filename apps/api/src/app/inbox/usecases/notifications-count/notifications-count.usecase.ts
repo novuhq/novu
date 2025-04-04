@@ -1,10 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { MessageRepository, SubscriberRepository } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/shared';
 import { buildMessageCountKey, CachedQuery } from '@novu/application-generic';
 
 import type { NotificationsCountCommand } from './notifications-count.command';
-import { BadRequestException } from '@nestjs/common';
 import type { NotificationFilter } from '../../utils/types';
 
 const MAX_NOTIFICATIONS_COUNT = 99;

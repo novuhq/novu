@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { EnvironmentRepository } from '@novu/dal';
 import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
 import {
@@ -12,7 +12,6 @@ import {
   SelectIntegrationCommand,
 } from '@novu/application-generic';
 import { AuthService } from '../../../auth/services/auth.service';
-import { BadRequestException } from '@nestjs/common';
 import { InitializeSessionCommand } from './initialize-session.command';
 
 import { SessionInitializeResponseDto } from '../../dtos/session-initialize-response.dto';

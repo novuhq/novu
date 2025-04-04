@@ -1,5 +1,5 @@
 import { HttpService } from '@nestjs/axios';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { lastValueFrom } from 'rxjs';
 import {
   CommunityUserRepository,
@@ -10,7 +10,6 @@ import {
 } from '@novu/dal';
 import { AnalyticsService, decryptApiKey } from '@novu/application-generic';
 
-import { BadRequestException } from '@nestjs/common';
 import { UpdateVercelIntegrationCommand } from './update-vercel-integration.command';
 import { Sync } from '../../../bridge/usecases/sync';
 

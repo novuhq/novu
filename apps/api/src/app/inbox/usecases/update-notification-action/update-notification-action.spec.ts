@@ -1,6 +1,6 @@
 import sinon from 'sinon';
 import { expect } from 'chai';
-import { NotFoundException } from '@nestjs/common';
+import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { ButtonTypeEnum, ChannelCTATypeEnum, MessageActionStatusEnum } from '@novu/shared';
 import { ChannelTypeEnum, MessageRepository } from '@novu/dal';
 import { AnalyticsService, buildFeedKey, InvalidateCacheService } from '@novu/application-generic';
@@ -8,7 +8,6 @@ import { AnalyticsService, buildFeedKey, InvalidateCacheService } from '@novu/ap
 import { GetSubscriber } from '../../../subscribers/usecases/get-subscriber';
 import { UpdateNotificationAction } from './update-notification-action.usecase';
 import type { UpdateNotificationActionCommand } from './update-notification-action.command';
-import { BadRequestException } from '@nestjs/common';
 import { mapToDto } from '../../utils/notification-mapper';
 import { AnalyticsEventsEnum } from '../../utils';
 

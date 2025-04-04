@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { ChangeRepository, DalException, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
 import {
@@ -10,7 +10,6 @@ import {
 } from '@novu/application-generic';
 
 import { DeleteNotificationTemplateCommand } from './delete-notification-template.command';
-import { BadRequestException } from '@nestjs/common';
 
 /**
  * @deprecated

@@ -1,12 +1,11 @@
 import bcrypt from 'bcrypt';
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { differenceInMinutes, parseISO } from 'date-fns';
 import { UserRepository, UserEntity, OrganizationRepository } from '@novu/dal';
 import { AnalyticsService, createHash } from '@novu/application-generic';
 import { normalizeEmail } from '@novu/shared';
 import { AuthService } from '../../services/auth.service';
 import { LoginCommand } from './login.command';
-import { BadRequestException } from '@nestjs/common';
 
 @Injectable()
 export class Login {

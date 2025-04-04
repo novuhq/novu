@@ -1,5 +1,5 @@
 /* eslint-disable global-require */
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import {
   ChangeEntity,
   ChangeRepository,
@@ -13,7 +13,6 @@ import { ChangeEntityTypeEnum } from '@novu/shared';
 import { ModuleRef } from '@nestjs/core';
 import { ChangesResponseDto } from '../../dtos/change-response.dto';
 import { GetChangesCommand } from './get-changes.command';
-import { BadRequestException } from '@nestjs/common';
 
 interface IViewEntity {
   templateName: string;

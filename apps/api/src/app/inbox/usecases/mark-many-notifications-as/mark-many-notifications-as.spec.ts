@@ -9,10 +9,10 @@ import {
   WebSocketsQueueService,
 } from '@novu/application-generic';
 
+import { BadRequestException } from '@nestjs/common';
 import { GetSubscriber } from '../../../subscribers/usecases/get-subscriber';
 import type { MarkManyNotificationsAsCommand } from './mark-many-notifications-as.command';
 import { MarkManyNotificationsAs } from './mark-many-notifications-as.usecase';
-import { BadRequestException } from '@nestjs/common';
 
 const mockSubscriber: any = { _id: '123', subscriberId: 'test-mockSubscriber' };
 const mockMessage: any = {
