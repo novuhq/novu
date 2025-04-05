@@ -102,6 +102,9 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
               onChange(JSON.stringify(editor.getJSON()));
             }
           }}
+          repeatMenuConfig={{
+            description: (editor) => <RepeatMenuDescription editor={editor as unknown as TiptapEditor} />,
+          }}
         />
       </div>
     </>
