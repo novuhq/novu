@@ -7,7 +7,7 @@ export const emailControlZodSchema = z
   .object({
     skip: skipZodSchema,
     body: z.string().optional().default(''),
-    subject: z.string().optional().default(''),
+    subject: z.string(),
     disableOutputSanitization: z.boolean().optional(),
   })
   .strict();
