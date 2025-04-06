@@ -62,7 +62,6 @@ export class BuildStepIssuesUsecase {
       controlSchema,
       controlsDto: controlValuesDto,
       stepType: stepTypeDto,
-      skipControlValueIssues,
     } = command;
 
     const variableSchema = await this.buildAvailableVariableSchemaUsecase.execute(
@@ -92,9 +91,7 @@ export class BuildStepIssuesUsecase {
 
     const sanitizedControlValues = this.sanitizeControlValues(newControlValues, workflowOrigin, stepTypeDto);
 
-    const schemaIssues = skipControlValueIssues
-      ? {}
-      : this.processControlValuesBySchema(controlSchema, sanitizedControlValues || {});
+    const schemaIssues = this.processControlValuesBySchema(controlSchema, sanitizedControlValues || {});
     const liquidIssues = this.processControlValuesByLiquid(variableSchema, newControlValues || {});
     const customIssues = await this.processControlValuesByCustomeRules(user, stepTypeDto, sanitizedControlValues || {});
     const skipLogicIssues = sanitizedControlValues?.skip

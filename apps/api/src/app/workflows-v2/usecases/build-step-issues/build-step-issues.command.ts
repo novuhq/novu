@@ -30,8 +30,4 @@ export class BuildStepIssuesCommand extends EnvironmentWithUserObjectCommand {
   @IsObject()
   @IsDefined()
   controlSchema: JSONSchemaDto;
-
-  @IsBoolean()
-  @IsOptional()
-  skipControlValueIssues?: boolean;
 }

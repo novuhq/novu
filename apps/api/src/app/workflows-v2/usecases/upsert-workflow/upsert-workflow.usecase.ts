@@ -165,7 +165,6 @@ export class UpsertWorkflowUseCase {
       const {
         user,
         workflowDto: { origin: workflowOrigin },
-        skipControlValueIssues,
       } = command;
 
       const controlSchemas: ControlSchemas = existingStep?.template?.controls || stepTypeToControlSchema[step.type];
@@ -177,7 +176,6 @@ export class UpsertWorkflowUseCase {
         stepType: step.type,
         controlSchema: controlSchemas.schema,
         controlsDto: step.controlValues,
-        skipControlValueIssues: skipControlValueIssues && !existingStep,
       });
 
       const finalStep = {

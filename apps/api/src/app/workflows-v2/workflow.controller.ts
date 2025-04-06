@@ -80,13 +80,10 @@ export class WorkflowController {
     @UserSession(ParseSlugEnvironmentIdPipe) user: UserSessionData,
     @Body() createWorkflowDto: CreateWorkflowDto
   ): Promise<WorkflowResponseDto> {
-    const isRequestFromDashboard = user.scheme === ApiAuthSchemeEnum.BEARER;
-
     return this.upsertWorkflowUseCase.execute(
       UpsertWorkflowCommand.create({
         workflowDto: { ...createWorkflowDto, origin: WorkflowOriginEnum.NOVU_CLOUD },
         user,
-        skipControlValueIssues: isRequestFromDashboard,
       })
     );
   }
@@ -114,14 +111,11 @@ export class WorkflowController {
     @Param('workflowId', ParseSlugIdPipe) workflowIdOrInternalId: string,
     @Body() updateWorkflowDto: UpdateWorkflowDto
   ): Promise<WorkflowResponseDto> {
-    const isRequestFromDashboard = user.scheme === ApiAuthSchemeEnum.BEARER;
-
     return await this.upsertWorkflowUseCase.execute(
       UpsertWorkflowCommand.create({
         workflowDto: updateWorkflowDto,
         user,
         workflowIdOrInternalId,
-        skipControlValueIssues: isRequestFromDashboard,
       })
     );
   }

@@ -1,7 +1,7 @@
-import { type StepResponseDto, StepTypeEnum, StepUpdateDto, type WorkflowResponseDto } from '@novu/shared';
 import { useCallback, useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
-
+import { useLocation } from 'react-router-dom';
+import { type StepResponseDto, StepTypeEnum, StepUpdateDto, type WorkflowResponseDto } from '@novu/shared';
 import { Form, FormRoot } from '@/components/primitives/form/form';
 import { getStepDefaultValues } from '@/components/workflow-editor/step-default-values';
 import { flattenIssues, updateStepInWorkflow } from '@/components/workflow-editor/step-utils';
@@ -39,6 +39,7 @@ type ConfigureStepTemplateFormProps = StepEditorProps & {
 
 export const ConfigureStepTemplateForm = (props: ConfigureStepTemplateFormProps) => {
   const { workflow, step, update } = props;
+  const { hideValidationErrorsOnFirstRender } = useLocation().state || {};
 
   const defaultValues = useMemo(() => getStepDefaultValues(step), [step]);
 
@@ -78,11 +79,13 @@ export const ConfigureStepTemplateForm = (props: ConfigureStepTemplateFormProps)
       }
     });
 
-    // Set new errors from stepIssues
-    Object.entries(stepIssues).forEach(([key, value]) => {
-      form.setError(key as string, { message: value });
-    });
-  }, [form, step]);
+    if (!hideValidationErrorsOnFirstRender) {
+      // Set new errors from stepIssues
+      Object.entries(stepIssues).forEach(([key, value]) => {
+        form.setError(key as string, { message: value });
+      });
+    }
+  }, [form, step, hideValidationErrorsOnFirstRender]);
 
   useEffect(() => {
     setIssuesFromStep();

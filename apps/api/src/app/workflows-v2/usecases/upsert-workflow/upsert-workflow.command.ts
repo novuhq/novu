@@ -118,10 +118,6 @@ export class UpsertWorkflowCommand extends EnvironmentWithUserObjectCommand {
 
   @IsOptional()
   @IsBoolean()
-  skipControlValueIssues?: boolean;
-
-  @IsOptional()
-  @IsBoolean()
   preserveWorkflowId?: boolean;
 
   @IsOptional()
