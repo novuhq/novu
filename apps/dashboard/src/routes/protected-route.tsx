@@ -1,5 +1,4 @@
 import { RedirectToSignIn, SignedIn, SignedOut } from '@clerk/clerk-react';
-import { ROUTES } from '@/utils/routes';
 import { EnvironmentProvider } from '@/context/environment/environment-provider';
 
 export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
