@@ -62,7 +62,7 @@ export function HeaderNav() {
             {
               icon: 'support',
               text: 'Contact Sales',
-              url: 'https://notify.novu.co/meetings/novuhq/novu-discovery-session-rr?utm_campaign=in_app_live_chat',
+              url: 'https://cal.com/team/novu/intro?utm_campaign=in_app_live_chat',
             },
           ],
           entryPoint: 'default',
