@@ -45,7 +45,7 @@ jobs:
       - name: Generate Environment, Service, and Deploy Matrices
         id: set-matrix
         env:
-          WORKER_SERVICE: ${{ secrets.WORKER_SERVICE }}
+          WORKER_SERVICE: ${{ vars.WORKER_SERVICE }}
         run: |
           envs=()
           services=()
