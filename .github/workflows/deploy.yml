@@ -6,9 +6,9 @@ on:
         description: 'Environment to deploy to'
         required: true
         type: choice
-        default: Development
+        default: staging
         options:
-          - Development
+          - staging
           - production-us
           - production-eu
           - production-both
@@ -48,18 +48,18 @@ jobs:
           services=()
 
           # Collect selected environments
-          if [ "${{ github.event.inputs.environment }}" == "Development" ]; then
-            envs+=("\"Development\"")
+          if [ "${{ github.event.inputs.environment }}" == "staging" ]; then
+            envs+=("\"staging-eu\"")
           fi
           if [ "${{ github.event.inputs.environment }}" == "production-us" ]; then
-            envs+=("\"production-us\"")
+            envs+=("\"prod-us\"")
           fi
           if [ "${{ github.event.inputs.environment }}" == "production-eu" ]; then
-            envs+=("\"production-eu\"")
+            envs+=("\"prod-eu\"")
           fi
           if [ "${{ github.event.inputs.environment }}" == "production-both" ]; then
-            envs+=("\"production-us\"")
-            envs+=("\"production-eu\"")
+            envs+=("\"prod-us\"")
+            envs+=("\"prod-eu\"")
           fi
 
           # Collect selected services
@@ -134,7 +134,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID}}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          aws-region: ${{ vars.AWS_REGION }}
       
       - name: Login to Amazon ECR
         id: login-ecr
@@ -144,7 +144,7 @@ jobs:
         id: build-image
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          REPOSITORY: ${{ secrets.ECR_REPO_PREFIX }}/${{ matrix.service }}
+          REPOSITORY: ${{ vars.ECR_REPO_PREFIX }}/${{ matrix.service }}
           SERVICE: ${{ matrix.service }}
           IMAGE_TAG: ${{ github.sha }}
           DOCKER_BUILD_ARGUMENTS: >
