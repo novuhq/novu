@@ -104,7 +104,7 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
             }
           }}
           repeatMenuConfig={{
-            description: (editor) => <RepeatMenuDescription editor={editor as unknown as TiptapEditor} />,
+            description: (editor) => <RepeatMenuDescription editor={editor} />,
           }}
         />
       </div>
