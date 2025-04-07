@@ -1,10 +1,10 @@
 import {
   CreateWorkflowDto,
+  DuplicateWorkflowDto,
   GeneratePreviewRequestDto,
   GeneratePreviewResponseDto,
   GetListQueryParams,
   ListWorkflowResponse,
-  PatchStepDataDto,
   PatchWorkflowDto,
   StepResponseDto,
   SyncWorkflowDto,
@@ -48,14 +48,6 @@ export const createWorkflowClient = (baseUrl: string, headers: HeadersInit = {})
     return await baseClient.safeGet<StepResponseDto>(`/v2/workflows/${workflowId}/steps/${stepId}`);
   };
 
-  const patchWorkflowStepData = async (
-    workflowId: string,
-    stepId: string,
-    patchStepDataDto: PatchStepDataDto
-  ): Promise<NovuRestResult<StepResponseDto, HttpError>> => {
-    return await baseClient.safePatch<StepResponseDto>(`/v2/workflows/${workflowId}/steps/${stepId}`, patchStepDataDto);
-  };
-
   const patchWorkflow = async (
     workflowId: string,
     patchWorkflowDto: PatchWorkflowDto
@@ -65,6 +57,16 @@ export const createWorkflowClient = (baseUrl: string, headers: HeadersInit = {})
 
   const deleteWorkflow = async (workflowId: string): Promise<NovuRestResult<void, HttpError>> => {
     return await baseClient.safeDelete(`/v2/workflows/${workflowId}`);
+  };
+
+  const duplicateWorkflow = async (
+    workflowId: string,
+    duplicateWorkflowDto: DuplicateWorkflowDto
+  ): Promise<NovuRestResult<WorkflowResponseDto, HttpError>> => {
+    return await baseClient.safePost<WorkflowResponseDto>(
+      `/v2/workflows/${workflowId}/duplicate`,
+      duplicateWorkflowDto
+    );
   };
 
   const searchWorkflows = async (
@@ -147,8 +149,8 @@ export const createWorkflowClient = (baseUrl: string, headers: HeadersInit = {})
     searchWorkflows,
     getWorkflowTestData,
     getWorkflowStepData,
-    patchWorkflowStepData,
     patchWorkflow,
+    duplicateWorkflow,
     searchWorkflowsV1,
     createWorkflowsV1,
   };

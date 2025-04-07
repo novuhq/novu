@@ -18,6 +18,7 @@ type InboxContextType = {
   setIsOpened: Setter<boolean>;
   navigate: (url?: string, target?: Redirect['target']) => void;
   hideBranding: Accessor<boolean>;
+  isDevelopmentMode: Accessor<boolean>;
 };
 
 const InboxContext = createContext<InboxContextType | undefined>(undefined);
@@ -47,6 +48,7 @@ export const InboxProvider = (props: InboxProviderProps) => {
     tags: props.tabs.length > 0 ? getTagsFromTab(props.tabs[0]) : [],
   });
   const [hideBranding, setHideBranding] = createSignal(false);
+  const [isDevelopmentMode, setIsDevelopmentMode] = createSignal(false);
   const [preferencesFilter, setPreferencesFilter] = createSignal<PreferencesFilter | undefined>(
     props.preferencesFilter
   );
@@ -107,6 +109,7 @@ export const InboxProvider = (props: InboxProviderProps) => {
       }
 
       setHideBranding(data.removeNovuBranding);
+      setIsDevelopmentMode(data.isDevelopmentMode);
     },
   });
 
@@ -126,6 +129,7 @@ export const InboxProvider = (props: InboxProviderProps) => {
         navigate,
         hideBranding,
         preferencesFilter,
+        isDevelopmentMode,
       }}
     >
       {props.children}

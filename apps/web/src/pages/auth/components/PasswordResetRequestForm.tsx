@@ -7,7 +7,6 @@ import { Button, colors, Input, Text } from '@novu/design-system';
 import type { IResponseError } from '@novu/shared';
 
 import { api } from '../../../api/api.client';
-import { useVercelParams } from '../../../hooks';
 import { ROUTES } from '../../../constants/routes';
 
 type Props = {
@@ -22,11 +21,6 @@ export function PasswordResetRequestForm({ onSent }: Props) {
       email: string;
     }
   >((data) => api.post(`/v1/auth/reset/request`, data));
-
-  const { isFromVercel, code, next, configurationId } = useVercelParams();
-
-  const vercelQueryParams = `code=${code}&next=${next}&configurationId=${configurationId}`;
-  const loginLink = isFromVercel ? `/auth/login?${vercelQueryParams}` : ROUTES.AUTH_LOGIN;
 
   const onForgotPassword = async (data) => {
     const itemData = {
@@ -71,7 +65,7 @@ export function PasswordResetRequestForm({ onSent }: Props) {
           <Text mr={10} size="md" color={colors.B60}>
             Know your password?
           </Text>
-          <Link to={loginLink}>
+          <Link to={ROUTES.AUTH_LOGIN}>
             <Text gradient>Sign In</Text>
           </Link>
         </Center>

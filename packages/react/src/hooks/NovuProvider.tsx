@@ -7,7 +7,7 @@ const version = PACKAGE_VERSION;
 const name = PACKAGE_NAME;
 const baseUserAgent = `${name}@${version}`;
 
-type NovuProviderProps = NovuOptions & {
+export type NovuProviderProps = NovuOptions & {
   children: ReactNode;
 };
 

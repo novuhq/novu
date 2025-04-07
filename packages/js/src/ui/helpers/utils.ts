@@ -136,8 +136,9 @@ export function generateFontSizeRules(props: { id: string; baseFontSize: string 
 
   Object.entries(sizeRatios).forEach(([key, ratio]) => {
     const size = `calc(${baseFontSize} * ${ratio})`;
+    const lineHeight = `calc(${baseFontSize} * ${ratio} * 1.33)`;
 
-    const cssVariableRule = `.${id} { --nv-font-size-${key}: ${size}; }`;
+    const cssVariableRule = `.${id} { --nv-font-size-${key}: ${size}; --nv-line-height-${key}: ${lineHeight}; }`;
     rules.push(cssVariableRule);
   });
 
@@ -184,6 +185,7 @@ export const parseVariables = (variables: Required<Variables>, id: string) => {
     generateDefaultColor({ color: variables.colorCounterForeground, key: 'color-counter-foreground', id }),
     generateDefaultColor({ color: variables.colorShadow, key: 'color-shadow', id }),
     generateDefaultColor({ color: variables.colorRing, key: 'color-ring', id }),
+    generateDefaultColor({ color: variables.colorStripes, key: 'color-stripes', id }),
     ...generateAlphaShadeRulesFromColor({ color: variables.colorBackground, key: 'color-background-alpha', id }),
     ...generateAlphaShadeRulesFromColor({ color: variables.colorForeground, key: 'color-foreground-alpha', id }),
     ...generateSolidShadeRulesFromColor({ color: variables.colorPrimary, key: 'color-primary', id }),

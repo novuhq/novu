@@ -133,22 +133,16 @@ describe('Workflow Test Data', function () {
       workflowId: `test-workflow-${Date.now()}`,
       __source: WorkflowCreationSourceEnum.EDITOR,
       active: true,
-      steps: steps.map((step, index) => ({
+      steps: steps.map(({ type, ...rest }, index) => ({
+        ...rest,
         name: `Test Step ${index + 1}`,
-        type: step.type,
+        type,
       })),
     };
 
     const { body } = await session.testAgent.post('/v2/workflows').send(createWorkflowDto);
-    const workflow = body.data;
 
-    for (const [index, step] of steps.entries()) {
-      await session.testAgent
-        .patch(`/v2/workflows/${workflow._id}/steps/${workflow.steps[index]._id}`)
-        .send({ controlValues: step.controlValues });
-    }
-
-    return workflow;
+    return body.data;
   }
 
   async function getWorkflowTestData(workflowId: string): Promise<WorkflowTestDataResponseDto> {

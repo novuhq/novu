@@ -1,3 +1,47 @@
+## v3.0.3 (2025-03-31)
+
+### 🚀 Features
+
+- **js:** Inbox retheme ([#7759](https://github.com/novuhq/novu/pull/7759))
+- **api-service:** system limits & update pricing pages ([#7718](https://github.com/novuhq/novu/pull/7718))
+- **root:** add no only github action ([#7692](https://github.com/novuhq/novu/pull/7692))
+
+### 🩹 Fixes
+
+- **api-service:** Remove lock from cached entity 2nd try ([#7979](https://github.com/novuhq/novu/pull/7979))
+- **root:** simplify service dependencies in docker-compose.yml ([#7993](https://github.com/novuhq/novu/pull/7993))
+- **root:** Stop updating lock-file when releasing new packages ([2107336ae2](https://github.com/novuhq/novu/commit/2107336ae2))
+- **api-service:** remove-lock-from-cached-entity ([#7923](https://github.com/novuhq/novu/pull/7923))
+- **root:** add NEW_RELIC_ENABLED to docker community ([#7943](https://github.com/novuhq/novu/pull/7943))
+- **root:** remove healthcheck option in docker-compose.yml ([#7929](https://github.com/novuhq/novu/pull/7929))
+- **api-service:** Remove redlock ([#7845](https://github.com/novuhq/novu/pull/7845))
+- **api-service:** fix idices not created in mongo-test ([#7857](https://github.com/novuhq/novu/pull/7857))
+- **root:** unhandled promise reject and undefined ff kind ([#7732](https://github.com/novuhq/novu/pull/7732))
+- **api-service:** remove only on e2e ([#7691](https://github.com/novuhq/novu/pull/7691))
+
+### ❤️ Thank You
+
+- Aaron Ritter @Aaron-Ritter
+- GalTidhar @tatarco
+- George Desipris @desiprisg
+- George Djabarov @djabarovgeorge
+- Himanshu Garg @merrcury
+- Pawan Jain
+- Sokratis Vidros @SokratisVidros
+
+## 3.0.1 (2025-03-24)
+
+### 🧱 Updated Dependencies
+
+- Updated @novu/react to 3.0.1
+
+### ❤️ Thank You
+
+- Aaron Ritter @Aaron-Ritter
+- GalTidhar @tatarco
+- Pawan Jain
+- Sokratis Vidros @SokratisVidros
+
 ## 2.6.6 (2025-02-25)
 
 ### 🚀 Features
@@ -18,7 +62,6 @@
 
 - GalTidhar @tatarco
 - George Djabarov @djabarovgeorge
-
 
 ## 2.6.5 (2025-02-07)
 
@@ -64,7 +107,6 @@
 - Paweł Tymczuk @LetItRock
 - Sokratis Vidros @SokratisVidros
 
-
 ## 2.3.5 (2024-12-24)
 
 ### 🧱 Updated Dependencies
@@ -77,7 +119,6 @@
 - George Desipris @desiprisg
 - George Djabarov @djabarovgeorge
 - Pawan Jain
-
 
 ## 2.3.3 (2024-11-26)
 
@@ -96,7 +137,7 @@
 
 - Updated @novu/react to 2.6.2
 
-### ❤️  Thank You
+### ❤️ Thank You
 
 - George Desipris @desiprisg
 - Himanshu Garg @merrcury
@@ -113,7 +154,7 @@
 
 - **react-native:** Do not create a tarball locally during build ([0cea280c1](https://github.com/novuhq/novu/commit/0cea280c1))
 
-### ❤️  Thank You
+### ❤️ Thank You
 
 - Dima Grossman
 - Sokratis Vidros @SokratisVidros

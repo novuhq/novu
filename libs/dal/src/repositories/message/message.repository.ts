@@ -185,7 +185,14 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
         queryBuilder
           .read('secondaryPreferred')
           .populate('subscriber', '_id firstName lastName avatar subscriberId')
-          .populate('actorSubscriber', '_id firstName lastName avatar subscriberId'),
+          .populate('actorSubscriber', '_id firstName lastName avatar subscriberId')
+          .populate({
+            path: 'template',
+            select: '_id name tags data critical triggers',
+            options: {
+              withDeleted: true,
+            },
+          }),
     });
   }
 
@@ -638,16 +645,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
   }
 
   async delete(query: MessageQuery) {
-    const message = await this.findOne({
-      _id: query._id,
-      _environmentId: query._environmentId,
-    });
-
-    if (!message) {
-      throw new DalException(`Could not find a message with id ${query._id}`);
-    }
-
-    return await this.message.delete({ _id: message._id, _environmentId: message._environmentId });
+    return await this.message.delete({ _id: query._id, _environmentId: query._environmentId });
   }
 
   async deleteMany(query: MessageQuery) {

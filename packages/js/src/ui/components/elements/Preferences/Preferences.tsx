@@ -10,7 +10,7 @@ import { ArrowDropDown } from '../../../icons';
 import { AppearanceKey } from '../../../types';
 import { Collapsible } from '../../primitives/Collapsible';
 import { ChannelRow, getLabel } from './ChannelRow';
-import { LoadingScreen } from './LoadingScreen';
+import { PreferencesListSkeleton } from './PreferencesListSkeleton';
 
 /* This is also going to be exported as a separate component. Keep it pure. */
 export const Preferences = () => {
@@ -53,15 +53,16 @@ export const Preferences = () => {
     <div
       class={style('preferencesContainer', 'nt-px-3 nt-py-4 nt-flex nt-flex-col nt-gap-1 nt-overflow-y-auto nt-h-full')}
     >
-      <Show when={loading()}>
-        <LoadingScreen />
-      </Show>
-      <Show when={!loading() && preferences()}>
-        <PreferencesRow
-          localizationKey="preferences.global"
-          channels={allPreferences().globalPreference?.channels || {}}
-          onChange={optimisticUpdate(allPreferences().globalPreference)}
-        />
+      <PreferencesRow
+        localizationKey="preferences.global"
+        channels={allPreferences().globalPreference?.channels || {}}
+        onChange={optimisticUpdate(allPreferences().globalPreference)}
+      />
+      <Show
+        when={allPreferences().workflowPreferences?.length}
+        fallback={<PreferencesListSkeleton loading={loading()} />}
+      >
+        {/* We iterate over the workflow preferences ids to avoid losing the preferences row state, otherwise the row will be mounted */}
         <For each={allPreferences().workflowPreferencesIds}>
           {(_, index) => {
             const preference = () => allPreferences().workflowPreferences?.[index()] as Preference;
@@ -138,7 +139,7 @@ const PreferencesRow = (props: {
   const [isOpenChannels, setIsOpenChannels] = createSignal(false);
   const { t } = useLocalization();
 
-  const channels = createMemo(() => Object.keys(props.channels || {}));
+  const channels = createMemo(() => Object.keys(props.channels));
 
   return (
     <Show when={channels().length > 0}>

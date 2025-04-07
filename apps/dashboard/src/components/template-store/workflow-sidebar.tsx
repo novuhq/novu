@@ -175,7 +175,7 @@ export function WorkflowSidebar({ selectedCategory, onCategorySelect, mode }: Wo
           whileHover="hover"
           whileTap="tap"
           className="border-stroke-soft flex flex-col items-start rounded-xl border bg-white p-3 hover:cursor-pointer"
-          onClick={() => window.open('https://docs.novu.co/workflow/overview', '_blank')}
+          onClick={() => window.open('https://docs.novu.co/platform/workflow/overview', '_blank')}
         >
           <div className="mb-1 flex items-center gap-1.5">
             <motion.div variants={iconVariants} className="rounded-lg bg-gray-50 p-1.5">

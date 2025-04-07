@@ -1,5 +1,3 @@
-'use client';
-
 import { CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/primitives/command';
 import { Popover, PopoverAnchor, PopoverContent } from '@/components/primitives/popover';
 import { cn } from '@/utils/ui';

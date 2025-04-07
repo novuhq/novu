@@ -32,7 +32,7 @@ export const OrganizationDropdown = () => {
     <ClerkOrganizationSwitcher
       hidePersonal
       skipInvitationScreen
-      afterCreateOrganizationUrl={ROUTES.USECASE_SELECT + '?v2_opt_in=true'}
+      afterCreateOrganizationUrl={ROUTES.USECASE_SELECT}
       appearance={OrganizationSwitcherAppearance}
     />
   );

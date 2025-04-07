@@ -55,21 +55,19 @@ export const NotificationListSkeleton = (props: NotificationListSkeletonProps) =
             </div>
           </Motion.div>
         ))}
-        <Show when={!props.loading}>
-          <div
-            class={style(
-              'notificationListEmptyNoticeOverlay',
-              'nt-absolute nt-size-full nt-z-10 nt-inset-0 nt-bg-gradient-to-b nt-from-transparent nt-to-background'
-            )}
-          />
-        </Show>
+        <div
+          class={style(
+            'notificationListEmptyNoticeOverlay',
+            'nt-absolute nt-size-full nt-z-10 nt-inset-0 nt-bg-gradient-to-b nt-from-transparent nt-to-background'
+          )}
+        />
       </Motion.div>
       <Show when={!props.loading}>
         <Motion.p
           initial={{ opacity: 0, y: -4, filter: 'blur(4px)' }}
           animate={{ opacity: props.loading ? 0 : 1, y: 0, filter: 'blur(0px)' }}
           transition={{ duration: 0.7, easing: [0.39, 0.24, 0.3, 1], delay: 0.6 }}
-          class={(style('notificationListEmptyNotice'), 'nt-text-center')}
+          class={style('notificationListEmptyNotice', 'nt-text-center')}
           data-localization="notifications.emptyNotice"
         >
           {t('notifications.emptyNotice')}

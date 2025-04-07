@@ -470,60 +470,63 @@ export function previewPayloadExample() {
     payload: {
       subject: {
         test: {
-          payload: '{{payload.subject.test.payload}}',
+          payload: 'payload',
         },
       },
       params: {
         isPayedUser: true,
       },
       hidden: {
-        section: '{{payload.hidden.section}}',
+        section: 'section',
       },
-      body: '{{payload.body}}',
+      body: 'body',
       origins: [
         {
-          country: '{{payload.origins.country}}',
-          id: '{{payload.origins.id}}',
-          time: '{{payload.origins.time}}',
+          country: 'country',
+          id: 'id',
+          time: 'time',
         },
         {
-          country: '{{payload.origins.country}}',
-          id: '{{payload.origins.id}}',
-          time: '{{payload.origins.time}}',
+          country: 'country',
+          id: 'id',
+          time: 'time',
         },
         {
-          country: '{{payload.origins.country}}',
-          id: '{{payload.origins.id}}',
-          time: '{{payload.origins.time}}',
+          country: 'country',
+          id: 'id',
+          time: 'time',
         },
       ],
       students: [
         {
-          id: '{{payload.students.id}}',
-          name: '{{payload.students.name}}',
+          id: 'id',
+          name: 'name',
         },
         {
-          id: '{{payload.students.id}}',
-          name: '{{payload.students.name}}',
+          id: 'id',
+          name: 'name',
         },
         {
-          id: '{{payload.students.id}}',
-          name: '{{payload.students.name}}',
+          id: 'id',
+          name: 'name',
         },
       ],
       food: {
         items: [
           {
-            name: '{{payload.food.items.name}}',
+            name: 'name',
           },
           {
-            name: '{{payload.food.items.name}}',
+            name: 'name',
           },
           {
-            name: '{{payload.food.items.name}}',
+            name: 'name',
           },
         ],
       },
+    },
+    subscriber: {
+      fullName: 'fullName',
     },
   };
 }

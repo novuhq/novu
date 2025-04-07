@@ -97,7 +97,9 @@ export default defineConfig((config: Options) => {
         exclude: ['**/*.map'],
       }),
     ],
-    onSuccess: async () => await buildCSS(),
+    onSuccess: async () => {
+      await buildCSS();
+    },
   };
 
   return [cjs, esm, umd];

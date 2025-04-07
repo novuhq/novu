@@ -1,7 +1,7 @@
 /* eslint-disable global-require */
 import { DynamicModule, Logger, Module, Provider } from '@nestjs/common';
 import { APP_INTERCEPTOR } from '@nestjs/core';
-import { TracingModule } from '@novu/application-generic';
+import { cacheService, TracingModule } from '@novu/application-generic';
 import { Client, NovuModule } from '@novu/framework/nest';
 
 import { Type } from '@nestjs/common/interfaces/type.interface';
@@ -140,6 +140,7 @@ const providers: Provider[] = [
     provide: APP_INTERCEPTOR,
     useClass: IdempotencyInterceptor,
   },
+  cacheService,
 ];
 
 if (process.env.SENTRY_DSN) {

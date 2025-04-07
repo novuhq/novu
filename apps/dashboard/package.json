@@ -1,7 +1,7 @@
 {
   "name": "@novu/dashboard",
   "private": true,
-  "version": "2.1.11",
+  "version": "2.1.13",
   "type": "module",
   "scripts": {
     "start": "vite",
@@ -24,12 +24,11 @@
     "@codemirror/autocomplete": "^6.18.3",
     "@hookform/resolvers": "^3.9.0",
     "@lezer/highlight": "^1.2.1",
-    "@maily-to/core": "^0.0.27",
+    "@maily-to/core": "github:novuhq/maily.to.git#release/v0.2.7-novu.6-core&path:/packages/core",
     "@novu/api": "workspace:*",
     "@novu/framework": "workspace:*",
     "@novu/js": "workspace:*",
-    "@novu/react-v2": "npm:@novu/react@2.6.6",
-    "@novu/react": "https://pkg.pr.new/novuhq/novu/@novu/react@9d07c13",
+    "@novu/react": "workspace:*",
     "@novu/shared": "workspace:*",
     "@radix-ui/react-accordion": "^1.2.1",
     "@radix-ui/react-alert-dialog": "^1.1.6",
@@ -107,18 +106,18 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@clerk/backend": "^1.6.2",
+    "@clerk/backend": "^1.25.2",
     "@clerk/testing": "^1.3.27",
     "@clerk/types": "^4.30.0",
     "@eslint/js": "^9.9.0",
     "@faker-js/faker": "^9.5.0",
-    "@novu/ee-auth": "workspace:*",
     "@hookform/devtools": "^4.3.0",
     "@novu/dal": "workspace:*",
+    "@novu/ee-auth": "workspace:*",
     "@novu/testing": "workspace:*",
     "@playwright/test": "^1.46.1",
     "@sentry/vite-plugin": "^2.22.6",
-    "@tiptap/core": "^2.10.3",
+    "@tiptap/core": "^2.11.5",
     "@types/lodash.debounce": "^4.0.9",
     "@types/lodash.isequal": "^4.5.8",
     "@types/lodash.merge": "^4.6.6",
@@ -149,9 +148,6 @@
     "vite": "^5.4.1",
     "vite-plugin-ejs": "^1.7.0",
     "vite-plugin-static-copy": "^1.0.6"
-  },
-  "peerDependencies": {
-    "@novu/web": "workspace:*"
   },
   "nx": {
     "tags": [

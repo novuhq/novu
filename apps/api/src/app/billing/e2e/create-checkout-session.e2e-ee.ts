@@ -4,6 +4,7 @@ import { expect } from 'chai';
 
 import { ApiServiceLevelEnum, StripeBillingIntervalEnum } from '@novu/shared';
 
+const dashboardOrigin = process.env.FRONT_BASE_URL;
 const checkoutSessionCreateParamsMock = {
   mode: 'subscription',
   customer: 'customer_id',
@@ -19,8 +20,8 @@ const checkoutSessionCreateParamsMock = {
     name: 'auto',
     address: 'auto',
   },
-  success_url: `${process.env.FRONT_BASE_URL}/manage-account/billing?result=success&session_id={CHECKOUT_SESSION_ID}`,
-  cancel_url: `${process.env.FRONT_BASE_URL}/manage-account/billing?result=canceled`,
+  success_url: `${dashboardOrigin}/manage-account/billing?result=success&session_id={CHECKOUT_SESSION_ID}`,
+  cancel_url: `${dashboardOrigin}/manage-account/billing?result=canceled`,
 };
 
 describe('Create checkout session #novu-v2', async () => {
@@ -49,29 +50,24 @@ describe('Create checkout session #novu-v2', async () => {
     },
   };
   let checkoutCreateStub: sinon.SinonStub;
-  let featureFlagsServiceStub: { getFlag: sinon.SinonStub };
-  const IS_2025_Q1_TIERING_ENABLED = true;
 
   beforeEach(() => {
     checkoutCreateStub = sinon.stub(stripeStub.checkout.sessions, 'create').resolves({ url: 'url' });
-    featureFlagsServiceStub = {
-      getFlag: sinon.stub().resolves(IS_2025_Q1_TIERING_ENABLED),
-    };
   });
 
   afterEach(() => {
     checkoutCreateStub.reset();
-    featureFlagsServiceStub.getFlag.reset();
   });
 
   it('Create checkout session with 1 subscription containing 1 licensed item and 1 metered item for monthly billing interval', async () => {
-    const usecase = new CreateCheckoutSession(stripeStub, getOrCreateCustomer, getPrices, featureFlagsServiceStub);
+    const usecase = new CreateCheckoutSession(stripeStub, getOrCreateCustomer, getPrices);
 
     const result = await usecase.execute({
       organizationId: 'organization_id',
       userId: 'user_id',
       billingInterval: StripeBillingIntervalEnum.MONTH,
       apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
+      origin: dashboardOrigin,
     });
 
     expect(checkoutCreateStub.lastCall.args.at(0)).to.deep.equal({
@@ -87,13 +83,14 @@ describe('Create checkout session #novu-v2', async () => {
   });
 
   it('Create checkout session with 1 subscription containing 1 licensed item for annual billing interval', async () => {
-    const usecase = new CreateCheckoutSession(stripeStub, getOrCreateCustomer, getPrices, featureFlagsServiceStub);
+    const usecase = new CreateCheckoutSession(stripeStub, getOrCreateCustomer, getPrices);
 
     const result = await usecase.execute({
       organizationId: 'organization_id',
       userId: 'user_id',
       billingInterval: StripeBillingIntervalEnum.YEAR,
       apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
+      origin: dashboardOrigin,
     });
 
     expect(checkoutCreateStub.lastCall.args.at(0)).to.deep.equal({

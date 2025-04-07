@@ -218,9 +218,9 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
   [FeatureNameEnum.PLATFORM_MAX_WORKFLOWS]: {
     [ApiServiceLevelEnum.FREE]: { value: 20 },
     [ApiServiceLevelEnum.PRO]: { value: 20 },
-    [ApiServiceLevelEnum.BUSINESS]: { value: UNLIMITED_VALUE, label: 'unlimited' },
-    [ApiServiceLevelEnum.ENTERPRISE]: { value: UNLIMITED_VALUE, label: 'unlimited' },
-    [ApiServiceLevelEnum.UNLIMITED]: { value: UNLIMITED_VALUE, label: 'unlimited' },
+    [ApiServiceLevelEnum.BUSINESS]: { value: UNLIMITED_VALUE, label: 'Unlimited' },
+    [ApiServiceLevelEnum.ENTERPRISE]: { value: UNLIMITED_VALUE, label: 'Unlimited' },
+    [ApiServiceLevelEnum.UNLIMITED]: { value: UNLIMITED_VALUE, label: 'Unlimited' },
   },
   [FeatureNameEnum.PLATFORM_GUI_BASED_WORKFLOW_MANAGEMENT_BOOLEAN]: {
     [ApiServiceLevelEnum.FREE]: 1,
@@ -275,22 +275,22 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
     [ApiServiceLevelEnum.FREE]: { label: '24 hours', value: 24, timeSuffix: 'h' },
     [ApiServiceLevelEnum.PRO]: { label: '7 days', value: 7, timeSuffix: 'd' },
     [ApiServiceLevelEnum.BUSINESS]: { label: '90 days', value: 90, timeSuffix: 'd' },
-    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Unlimited', value: UNLIMITED_VALUE },
-    [ApiServiceLevelEnum.UNLIMITED]: { label: 'Unlimited', value: UNLIMITED_VALUE },
+    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Custom', value: UNLIMITED_VALUE, timeSuffix: 'd' },
+    [ApiServiceLevelEnum.UNLIMITED]: { label: 'Unlimited', value: UNLIMITED_VALUE, timeSuffix: 'd' },
   },
   [FeatureNameEnum.PLATFORM_MAX_DIGEST_WINDOW_TIME]: {
     [ApiServiceLevelEnum.FREE]: { label: '24 Hours', value: 24, timeSuffix: 'h' },
     [ApiServiceLevelEnum.PRO]: { label: '7 days', value: 7, timeSuffix: 'd' },
     [ApiServiceLevelEnum.BUSINESS]: { label: '90 days', value: 90, timeSuffix: 'd' },
-    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Custom', value: UNLIMITED_VALUE },
-    [ApiServiceLevelEnum.UNLIMITED]: { label: 'Unlimited', value: UNLIMITED_VALUE },
+    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Custom', value: UNLIMITED_VALUE, timeSuffix: 'd' },
+    [ApiServiceLevelEnum.UNLIMITED]: { label: 'Unlimited', value: UNLIMITED_VALUE, timeSuffix: 'd' },
   },
   [FeatureNameEnum.PLATFORM_MAX_DELAY_DURATION]: {
     [ApiServiceLevelEnum.FREE]: { label: '24 Hours', value: 24, timeSuffix: 'h' },
     [ApiServiceLevelEnum.PRO]: { label: '7 days', value: 7, timeSuffix: 'd' },
     [ApiServiceLevelEnum.BUSINESS]: { label: '90 days', value: 90, timeSuffix: 'd' },
-    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Custom', value: UNLIMITED_VALUE },
-    [ApiServiceLevelEnum.UNLIMITED]: { label: 'Unlimited', value: UNLIMITED_VALUE },
+    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Custom', value: UNLIMITED_VALUE, timeSuffix: 'd' },
+    [ApiServiceLevelEnum.UNLIMITED]: { label: 'Unlimited', value: UNLIMITED_VALUE, timeSuffix: 'd' },
   },
   [FeatureNameEnum.PLATFORM_BLOCK_BASED_EMAIL_EDITOR_BOOLEAN]: {
     [ApiServiceLevelEnum.FREE]: 1,
@@ -417,7 +417,7 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
   },
 };
 
-export function isDetailedPriceListItem(item: any): item is DetailedPriceListItem {
+export function isDetailedPriceListItem(item: FeatureValue): item is DetailedPriceListItem {
   return (
     item !== null &&
     typeof item === 'object' &&
@@ -441,6 +441,43 @@ export function getFeatureForTier(featureName: FeatureNameEnum, tier: ApiService
   throw new Error(`Invalid feature type for ${featureName} at tier ${tier}`);
 }
 
+/**
+ * Converts a date range string to milliseconds.
+ * @param dateRange - The date range string to convert (e.g. '1d', '24h', '7d', '1w')
+ * @returns The date range in milliseconds.
+ */
+export function getDateRangeInMs(dateRange: string): number {
+  if (!dateRange) return 0;
+
+  const value = parseInt(dateRange, 10);
+  if (Number.isNaN(value)) return 0;
+
+  const unit = dateRange.slice(-1);
+  const MS_PER_SECOND = 1000;
+  const MS_PER_MINUTE = 60 * MS_PER_SECOND;
+  const MS_PER_HOUR = 60 * MS_PER_MINUTE;
+  const MS_PER_DAY = 24 * MS_PER_HOUR;
+  const MS_PER_WEEK = 7 * MS_PER_DAY;
+  const MS_PER_MONTH = 30 * MS_PER_DAY;
+
+  switch (unit) {
+    case 's':
+      return value * MS_PER_SECOND;
+    case 'm':
+      return value * MS_PER_MINUTE;
+    case 'h':
+      return value * MS_PER_HOUR;
+    case 'd':
+      return value * MS_PER_DAY;
+    case 'w':
+      return value * MS_PER_WEEK;
+    case 'M':
+      return value * MS_PER_MONTH;
+    default:
+      return 0;
+  }
+}
+
 function getConvertToMs(conversionToMs: boolean | undefined) {
   return (value: number, timeSuffix?: 'h' | 'd' | 'm' | 's' | 'ms'): number => {
     if (!conversionToMs || !timeSuffix) return value;
@@ -462,12 +499,8 @@ function getConvertToMs(conversionToMs: boolean | undefined) {
   };
 }
 
-export function getFeatureForTierAsBoolean(
-  featureName: FeatureNameEnum,
-  tier: ApiServiceLevelEnum,
-  featureFlags: Partial<FeatureFlags>
-): boolean {
-  const feature: FeatureValue = getOriginalFeatureOrAugments(featureName, tier, featureFlags);
+export function getFeatureForTierAsBoolean(featureName: FeatureNameEnum, tier: ApiServiceLevelEnum): boolean {
+  const feature: FeatureValue = novuServiceTiers[featureName][tier];
 
   // Handle DetailedPriceListItem
   if (isDetailedPriceListItem(feature)) {
@@ -518,50 +551,9 @@ function getTextFromItem(feature: DetailedPriceListItem) {
   return `${String(feature.value)} ${feature.timeSuffix || ''}`;
 }
 
-function getOriginalFeatureOrAugments(
-  featureName: FeatureNameEnum,
-  tier: ApiServiceLevelEnum,
-  featureFlags: Partial<FeatureFlags> = {}
-): FeatureValue {
-  if (!tier) {
-    throw new Error(`Invalid tier [${tier}] for feature ${featureName}`);
-  }
-  const originalFeature = novuServiceTiers[featureName][tier];
-  if (originalFeature === undefined) {
-    throw new Error(
-      `Invalid feature [${featureName}] for tier [${tier}]: Original: ${JSON.stringify(novuServiceTiers[featureName], null, 2)}`
-    );
-  }
-  for (const inActiveFunctionFF of Object.keys(inActiveFeatureFlagRecordGetters)) {
-    const featureFlagGetter = inActiveFeatureFlagRecordGetters[inActiveFunctionFF];
+export function getFeatureForTierAsText(featureName: FeatureNameEnum, tier: ApiServiceLevelEnum): string {
+  const feature = novuServiceTiers[featureName][tier];
 
-    if (featureFlagGetter && !featureFlags[inActiveFunctionFF as FeatureFlagsKeysEnum]) {
-      const potentiallyAugmentsFeatureValue = featureFlagGetter(featureName, originalFeature, tier);
-      if (!isEqual(potentiallyAugmentsFeatureValue, originalFeature)) {
-        return potentiallyAugmentsFeatureValue;
-      }
-    }
-  }
-
-  return originalFeature;
-}
-function isEqual(a: FeatureValue, b: FeatureValue): boolean {
-  // Handle null cases
-  if (a === null && b === null) return true;
-  if (a === null || b === null) return false;
-
-  // Use JSON.stringify for comparison
-  return JSON.stringify(a) === JSON.stringify(b);
-}
-export function getFeatureForTierAsText(
-  featureName: FeatureNameEnum,
-  tier: ApiServiceLevelEnum,
-  featureFlagsEnabled: FeatureFlags
-): string {
-  const feature: FeatureValue = getOriginalFeatureOrAugments(featureName, tier, featureFlagsEnabled);
-
-  if (feature === null) return '';
-  if (feature === undefined) return '';
   if (feature === UNLIMITED_VALUE) return 'Unlimited';
   if (typeof feature === 'string') {
     return feature;
@@ -572,6 +564,16 @@ export function getFeatureForTierAsText(
   }
 
   return JSON.stringify(feature);
+}
+
+export function getFeatureForTierAsDateRangeValue(featureName: FeatureNameEnum, tier: ApiServiceLevelEnum): string {
+  const feature = novuServiceTiers[featureName][tier];
+
+  if (isDetailedPriceListItem(feature)) {
+    return `${feature.value}${feature.timeSuffix}`;
+  }
+
+  throw new Error(`Cannot convert feature ${featureName} at tier ${tier} to date range`);
 }
 
 function handleDetailedPriceListItem(feature: DetailedPriceListItem, conversionToMs: boolean | undefined) {
@@ -593,10 +595,9 @@ function handleDetailedPriceListItem(feature: DetailedPriceListItem, conversionT
 export function getFeatureForTierAsNumber(
   featureName: FeatureNameEnum,
   tier: ApiServiceLevelEnum,
-  featureFlags: Partial<FeatureFlags> = {},
   conversionToMs?: boolean
 ): number {
-  const featureValue: FeatureValue = getOriginalFeatureOrAugments(featureName, tier, featureFlags);
+  const featureValue: FeatureValue = novuServiceTiers[featureName][tier];
   if (isDetailedPriceListItem(featureValue)) {
     return handleDetailedPriceListItem(featureValue, conversionToMs);
   }
@@ -623,32 +624,3 @@ function stringAsNumber(feature: string, featureName: FeatureNameEnum, tier: Api
 
   return parsed;
 }
-type FeatureAugmentFunction = (
-  featureKey: FeatureNameEnum,
-  featureValue: FeatureValue,
-  serviceLevel: ApiServiceLevelEnum
-) => FeatureValue;
-
-const inActiveFeatureFlagRecordGetters: Record<string, FeatureAugmentFunction> = {
-  [FeatureFlagsKeysEnum.IS_2025_Q1_TIERING_ENABLED]: (featureKey, featureValue, serviceLevel) => {
-    if (serviceLevel === ApiServiceLevelEnum.FREE) {
-      switch (featureKey) {
-        case FeatureNameEnum.PLATFORM_MONTHLY_EVENTS_INCLUDED:
-          return { value: 30000, label: '30,000' };
-        case FeatureNameEnum.PLATFORM_MAX_WORKFLOWS:
-          return { value: UNLIMITED_VALUE, label: 'Unlimited' };
-        case FeatureNameEnum.PLATFORM_ACTIVITY_FEED_RETENTION:
-          return { label: '30 days', value: 7, timeSuffix: 'd' };
-        case FeatureNameEnum.PLATFORM_MAX_DIGEST_WINDOW_TIME:
-          return { label: '7 days', value: 7, timeSuffix: 'd' };
-        case FeatureNameEnum.PLATFORM_MAX_DELAY_DURATION:
-          return { label: '7 days', value: 7, timeSuffix: 'd' };
-
-        default:
-          break;
-      }
-    }
-
-    return featureValue;
-  },
-};

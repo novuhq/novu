@@ -17,8 +17,6 @@ export const useOptInRedirect = () => {
       const newDashboardUrl = NEW_DASHBOARD_URL || window.location.origin;
 
       switch (currentRoute) {
-        case ROUTES.GET_STARTED:
-          return `${newDashboardUrl}/env/${environment?.slug}/welcome`;
         case ROUTES.WORKFLOWS:
           return `${newDashboardUrl}/env/${environment?.slug}/workflows`;
         case ROUTES.ACTIVITIES:
@@ -38,7 +36,7 @@ export const useOptInRedirect = () => {
     if (!IS_EE_AUTH_ENABLED) return false;
     if (!isLoaded || !status || status !== NewDashboardOptInStatusEnum.OPTED_IN) return false;
 
-    const newDashboardUrl = getNewDashboardUrl(pathname.replace('/legacy', ''));
+    const newDashboardUrl = getNewDashboardUrl(pathname);
     if (newDashboardUrl) {
       window.location.href = newDashboardUrl;
 

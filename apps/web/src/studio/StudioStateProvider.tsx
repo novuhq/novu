@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import type { IUserEntity } from '@novu/shared';
 import { useAuth } from '../hooks/useAuth';
@@ -60,7 +60,7 @@ export const StudioStateProvider = ({ children }: { children: React.ReactNode })
     setBridgeURL(computeBridgeURL(state));
   }, [state]);
 
-  const value = { ...state, bridgeURL, setBridgeURL };
+  const value = useMemo(() => ({ ...state, bridgeURL, setBridgeURL }), [state, bridgeURL, setBridgeURL]);
 
   return <StudioStateContext.Provider value={value}>{children}</StudioStateContext.Provider>;
 };

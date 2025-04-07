@@ -1,5 +1,5 @@
-import { CSSProperties } from 'react';
 import { WidgetType } from '@uiw/react-codemirror';
+import { CSSProperties } from 'react';
 
 export class VariablePillWidget extends WidgetType {
   private clickHandler: (e: MouseEvent) => void;
@@ -30,7 +30,7 @@ export class VariablePillWidget extends WidgetType {
     return {
       width: 'calc(1em - 2px)',
       minWidth: 'calc(1em - 2px)',
-      height: 'calc(1em - 2px)',
+      height: 'calc(1em)',
       backgroundImage: `url("/images/code.svg")`,
       backgroundRepeat: 'no-repeat',
       backgroundPosition: 'center',
@@ -53,10 +53,10 @@ export class VariablePillWidget extends WidgetType {
       backgroundColor: 'hsl(var(--bg-weak))',
       color: 'hsl(var(--text-sub))',
       border: '1px solid hsl(var(--stroke-soft))',
-      borderRadius: '0.5rem',
+      borderRadius: '0.25rem',
       gap: '4px',
-      padding: '2px 6px',
-      margin: 0,
+      padding: '1px 6px',
+      marginTop: '-1px',
       fontFamily: 'inherit',
       display: 'inline-flex',
       alignItems: 'center',
@@ -73,7 +73,7 @@ export class VariablePillWidget extends WidgetType {
 
   createContentStyles(): CSSProperties {
     return {
-      lineHeight: '1.2',
+      lineHeight: 'calc(1em - 2px)',
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       '-webkit-font-smoothing': 'antialiased',

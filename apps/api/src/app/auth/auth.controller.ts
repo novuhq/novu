@@ -162,26 +162,6 @@ export class AuthController {
     return this.switchOrganizationUsecase.execute(command);
   }
 
-  // @deprecated - Will be removed after full deployment of Api and Dashboard.
-  @Post('/environments/:environmentId/switch')
-  @Header('Cache-Control', 'no-store')
-  @UserAuthentication()
-  @HttpCode(200)
-  async projectSwitch(
-    @UserSession() user: UserSessionData,
-    @Param('environmentId') environmentId: string
-  ): Promise<{ token: string }> {
-    const command = SwitchEnvironmentCommand.create({
-      userId: user._id,
-      newEnvironmentId: environmentId,
-      organizationId: user.organizationId,
-    });
-
-    return {
-      token: await this.switchEnvironmentUsecase.execute(command),
-    };
-  }
-
   @Post('/update-password')
   @Header('Cache-Control', 'no-store')
   @UserAuthentication()

@@ -47,19 +47,18 @@ export async function bootstrap(): Promise<INestApplication> {
 
   app.enableShutdownHooks();
 
-  Logger.log('BOOTSTRAPPED SUCCESSFULLY');
-
   await app.init();
 
   try {
     await startAppInfra(app);
   } catch (e) {
+    Logger.error('[@novu/worker]: Failed to start app infra', e.message, e.start);
     process.exit(1);
   }
 
   await app.listen(process.env.PORT);
 
-  Logger.log(`Started application in NODE_ENV=${process.env.NODE_ENV} on port ${process.env.PORT}`);
+  Logger.log(`[@novu/worker]: Listening for NODE_ENV=${process.env.NODE_ENV} on port ${process.env.PORT}`);
 
   return app;
 }

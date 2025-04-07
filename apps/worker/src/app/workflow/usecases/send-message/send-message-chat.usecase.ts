@@ -142,8 +142,10 @@ export class SendMessageChat extends SendMessageBase {
     let allFailed = true;
     for (const channel of chatChannels) {
       try {
-        await this.sendChannelMessage(command, channel, step, content);
-        allFailed = false;
+        const result = await this.sendChannelMessage(command, channel, step, content);
+        if (result.status === 'success') {
+          allFailed = false;
+        }
       } catch (e) {
         /*
          * Do nothing, one chat channel failed, perhaps another one succeeds
@@ -235,6 +237,17 @@ export class SendMessageChat extends SendMessageBase {
         };
       }
     } else if (!integration) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+        })
+      );
+
       /**
        * TODO: Need to handle a proper execution log error for this case
        */

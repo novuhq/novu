@@ -45,8 +45,11 @@ export const ActionsItem = (props: {
       class={style('moreActions__dropdownItem', cn(dropdownItemVariants(), 'nt-flex nt-gap-2'))}
       onClick={props.onClick}
     >
-      <span class={style('moreActions__dropdownItemLeft__icon', 'nt-size-3')}>{props.icon()}</span>
-      <span data-localization={props.localizationKey} class={style('moreActions__dropdownItemLabel')}>
+      <span class={style('moreActions__dropdownItemLeft__icon', 'nt-size-4')}>{props.icon()}</span>
+      <span
+        data-localization={props.localizationKey}
+        class={style('moreActions__dropdownItemLabel', 'nt-leading-none')}
+      >
         {t(props.localizationKey)}
       </span>
     </Dropdown.Item>

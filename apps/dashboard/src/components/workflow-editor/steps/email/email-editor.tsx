@@ -1,7 +1,5 @@
-import { Separator } from '@/components/primitives/separator';
 import { getComponentByType } from '@/components/workflow-editor/steps/component-utils';
 import { EmailPreviewHeader } from '@/components/workflow-editor/steps/email/email-preview';
-import { EmailTabsSection } from '@/components/workflow-editor/steps/email/email-tabs-section';
 import { UiSchemaGroupEnum, type UiSchema } from '@novu/shared';
 
 type EmailEditorProps = { uiSchema: UiSchema };
@@ -13,21 +11,22 @@ export const EmailEditor = (props: EmailEditorProps) => {
     return null;
   }
 
-  const { body, subject } = uiSchema.properties ?? {};
+  const { body, subject, disableOutputSanitization } = uiSchema.properties ?? {};
 
   return (
     <div className="flex h-full flex-col">
-      <EmailTabsSection>
-        <EmailPreviewHeader />
-      </EmailTabsSection>
-      <EmailTabsSection className="-mx-[2px] -my-[3px] px-7 py-2">
+      <div className="border-b px-4 pb-0 pt-4">
+        <EmailPreviewHeader>
+          {disableOutputSanitization &&
+            getComponentByType({
+              component: disableOutputSanitization.component,
+            })}
+        </EmailPreviewHeader>
         {getComponentByType({ component: subject.component })}
-      </EmailTabsSection>
-      <Separator className="before:bg-neutral-100" />
-      {/* extra padding on the left to account for the drag handle */}
-      <EmailTabsSection className="basis-full overflow-hidden pl-10">
+      </div>
+      <div className="relative flex-1 overflow-y-visible bg-neutral-50 px-16 pt-8">
         {getComponentByType({ component: body.component })}
-      </EmailTabsSection>
+      </div>
     </div>
   );
 };

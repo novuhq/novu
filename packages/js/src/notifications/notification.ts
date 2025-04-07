@@ -23,6 +23,7 @@ export class Notification implements Pick<NovuEventEmitter, 'on'>, InboxNotifica
   readonly tags: InboxNotification['tags'];
   readonly redirect: InboxNotification['redirect'];
   readonly data?: InboxNotification['data'];
+  readonly workflow?: InboxNotification['workflow'];
 
   constructor(notification: InboxNotification, emitter: NovuEventEmitter, inboxService: InboxService) {
     this.#emitter = emitter;
@@ -44,6 +45,7 @@ export class Notification implements Pick<NovuEventEmitter, 'on'>, InboxNotifica
     this.tags = notification.tags;
     this.redirect = notification.redirect;
     this.data = notification.data;
+    this.workflow = notification.workflow;
   }
 
   read(): Result<Notification> {

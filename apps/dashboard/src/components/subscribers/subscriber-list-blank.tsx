@@ -16,7 +16,10 @@ export const SubscriberListBlank = () => {
       </div>
 
       <div className="flex items-center justify-center gap-6">
-        <Link to={'https://docs.novu.co/concepts/subscribers#migration-optional'} target="_blank">
+        <Link
+          to="https://docs.novu.co/api-reference/subscribers/subscribers-controller_create-subscriber"
+          target="_blank"
+        >
           <LinkButton variant="gray" trailingIcon={RiBookMarkedLine}>
             Import via API
           </LinkButton>

@@ -48,7 +48,6 @@ export const SubscriberActivityList = ({
         <ActivityEmptyState
           emptySearchResults={hasChangesInFilters}
           onClearFilters={onClearFilters}
-          emptyFiltersTitle="No activity in the past 30 days"
           emptyFiltersDescription="This subscriber hasn't received any notifications yet. Once a workflow is triggered for them, you'll see their notification history and delivery details here."
         />
       </motion.div>

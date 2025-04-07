@@ -4,7 +4,7 @@ import { OrganizationEntity } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import { MemberRoleEnum, UserSessionData } from '@novu/shared';
 
-describe('Switch Organization - /auth/organizations/:id/switch (POST) #novu-v1-os', async () => {
+describe('Switch Organization - /auth/organizations/:id/switch (POST) #novu-v0-os', async () => {
   let session: UserSession;
 
   describe('no organization for user', () => {

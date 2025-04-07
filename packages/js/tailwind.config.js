@@ -46,6 +46,7 @@ module.exports = {
         'neutral-alpha': generateColorShades('nv-color-neutral-alpha'),
         shadow: defaultColor('nv-color-shadow'),
         ring: defaultColor('nv-color-ring'),
+        stripes: defaultColor('nv-color-stripes'),
         border: defaultColor('nv-color-neutral-alpha-100'),
       },
       borderRadius: {
@@ -74,6 +75,19 @@ module.exports = {
         '2xl': ['var(--nv-font-size-2xl)', { lineHeight: 'var(--nv-line-height-2xl)' }],
         '3xl': ['var(--nv-font-size-3xl)', { lineHeight: 'var(--nv-line-height-3xl)' }],
         '4xl': ['var(--nv-font-size-4xl)', { lineHeight: 'var(--nv-line-height-4xl)' }],
+      },
+      backgroundImage: {
+        'dev-stripes-gradient':
+          'repeating-linear-gradient(135deg, oklch(from var(--nv-color-stripes) l c h / 0.1) 25%, oklch(from var(--nv-color-stripes) l c h / 0.1) 50%, oklch(from var(--nv-color-stripes) l c h / 0.2) 50%, oklch(from var(--nv-color-stripes) l c h / 0.2) 75%)',
+      },
+      animation: {
+        stripes: 'stripes 1s linear infinite paused',
+      },
+      keyframes: {
+        stripes: {
+          '0%': { transform: 'translateX(0)' },
+          '100%': { transform: 'translateX(calc(var(--stripes-size) * -1))' },
+        },
       },
     },
   },

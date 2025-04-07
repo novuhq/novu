@@ -13,7 +13,7 @@ export const NewMessagesCta: Component<{
     <Show when={shouldRender()}>
       <Button
         appearanceKey="notificationListNewNotificationsNotice__button"
-        class="nt-absolute nt-w-fit nt-top-0 nt-mx-auto nt-inset-2 nt-z-10 nt-rounded-full hover:nt-bg-primary-600 nt-animate-in nt-slide-in-from-top-2 nt-fade-in"
+        class="nt-absolute nt-w-fit nt-h-fit nt-top-0 nt-mx-auto nt-inset-2 nt-z-10 nt-rounded-full hover:nt-bg-primary-600 nt-animate-in nt-slide-in-from-top-2 nt-fade-in"
         onClick={props.onClick}
         data-localization="notifications.newNotifications"
       >

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { NotificationRepository } from '@novu/dal';
 import { AnalyticsService } from '@novu/application-generic';
 
@@ -23,6 +23,12 @@ export class GetActivity {
       command.environmentId,
       command.organizationId
     );
+
+    if (!feedItem) {
+      throw new NotFoundException('Notification not found', {
+        cause: `Notification with id ${command.notificationId} not found`,
+      });
+    }
 
     return mapFeedItemToDto(feedItem);
   }

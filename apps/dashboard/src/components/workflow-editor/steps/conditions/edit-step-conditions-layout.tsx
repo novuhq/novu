@@ -28,7 +28,7 @@ export const EditStepConditionsLayout = ({
         </Panel>
         <Link
           target="_blank"
-          to={'https://docs.novu.co/workflow/step-conditions'}
+          to={'https://docs.novu.co/platform/workflow/step-conditions'}
           className="mt-2 flex w-max items-center gap-1 text-xs text-neutral-600 hover:underline"
         >
           <RiQuestionLine className="size-4" /> Learn more about conditional step execution

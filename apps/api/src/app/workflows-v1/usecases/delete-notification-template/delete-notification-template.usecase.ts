@@ -7,8 +7,6 @@ import {
   CreateChangeCommand,
   DeleteWorkflowUseCase,
   DeleteWorkflowCommand,
-  GetWorkflowByIdsUseCase,
-  GetWorkflowByIdsCommand,
 } from '@novu/application-generic';
 
 import { DeleteNotificationTemplateCommand } from './delete-notification-template.command';

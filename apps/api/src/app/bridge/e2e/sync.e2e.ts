@@ -1,5 +1,6 @@
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
+import getPort from 'get-port';
 import {
   EnvironmentRepository,
   NotificationTemplateRepository,
@@ -8,7 +9,7 @@ import {
 } from '@novu/dal';
 import { WorkflowOriginEnum, WorkflowTypeEnum } from '@novu/shared';
 import { workflow } from '@novu/framework';
-import { BridgeServer } from '../../../../e2e/bridge.server';
+import { TestBridgeServer } from '../../../../e2e/test-bridge-server';
 
 describe('Bridge Sync - /bridge/sync (POST) #novu-v2', async () => {
   let session: UserSession;
@@ -26,11 +27,12 @@ describe('Bridge Sync - /bridge/sync (POST) #novu-v2', async () => {
     },
   } as const;
 
-  let bridgeServer: BridgeServer;
+  let bridgeServer: TestBridgeServer;
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
-    bridgeServer = new BridgeServer();
+    const port = await getPort();
+    bridgeServer = new TestBridgeServer(port);
   });
 
   afterEach(async () => {
@@ -249,7 +251,7 @@ describe('Bridge Sync - /bridge/sync (POST) #novu-v2', async () => {
 
     await bridgeServer.stop();
 
-    bridgeServer = new BridgeServer();
+    bridgeServer = new TestBridgeServer();
     const workflowId2 = 'hello-world-2';
     const newWorkflow2 = workflow(
       workflowId2,
@@ -447,7 +449,7 @@ describe('Bridge Sync - /bridge/sync (POST) #novu-v2', async () => {
 
     await bridgeServer.stop();
 
-    bridgeServer = new BridgeServer();
+    bridgeServer = new TestBridgeServer();
     const newWorkflowWithName = workflow(
       workflowId,
       async ({ step }) => {
@@ -537,7 +539,7 @@ describe('Bridge Sync - /bridge/sync (POST) #novu-v2', async () => {
 
     await bridgeServer.stop();
 
-    bridgeServer = new BridgeServer();
+    bridgeServer = new TestBridgeServer();
     const newWorkflowWithName = workflow(workflowId, async ({ step }) => {
       await step.email('send-email', () => ({
         subject: 'Welcome!',

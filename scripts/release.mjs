@@ -5,6 +5,16 @@
  *
  * Known issues:
  * - nx release with independent versioning and updateDependents: "auto" increases patch by the amount of dependencies updated (https://github.com/nrwl/nx/issues/27823)
+ *
+ * Alternative options:
+ *
+ * If the global release script fails for any reason, you can run the following independent NX commands to release the packages individually:
+ *
+ * pnpm nx release version v3.0.0 --projects=@novu/js,@novu/react,@novu/nextjs
+ * pnpm nx release changelog v3.0.0 --projects=@novu/js,@novu/react,@novu/nextjs
+ * pnpm run build:packages
+ * pnpm nx release publish --projects=@novu/js,@novu/react,@novu/nextjs
+ *
  */
 
 import { hideBin } from 'yargs/helpers';
@@ -16,7 +26,7 @@ import { execa } from 'execa';
 const groups = ['packages'];
 
 (async () => {
-  const { dryRun, verbose, from, firstRelease, ...rest } = yargs(hideBin(process.argv))
+  const { dryRun, verbose, from, firstRelease, projects, ...rest } = yargs(hideBin(process.argv))
     .version(false)
     .option('dryRun', {
       alias: 'd',
@@ -25,19 +35,27 @@ const groups = ['packages'];
       default: true,
     })
     .option('verbose', {
+      alias: 'v',
       description: 'Whether or not to enable verbose logging, defaults to false',
       type: 'boolean',
       default: false,
     })
     .option('from', {
+      alias: 'f',
       description:
         'The git reference to use as the start of the changelog. If not set it will attempt to resolve the latest tag and use that.',
       type: 'string',
     })
     .option('first-release', {
+      alias: 'r',
       description: 'Whether or not this is the first release, defaults to false',
       type: 'boolean',
       default: false,
+    })
+    .option('projects', {
+      alias: 'p',
+      description: 'The projects to release, defaults to all',
+      type: 'array',
     })
     .help()
     .parse();
@@ -55,6 +73,7 @@ const groups = ['packages'];
     dryRun,
     verbose,
     firstRelease,
+    projects,
   });
 
   await releaseChangelog({
@@ -67,6 +86,7 @@ const groups = ['packages'];
     from,
     interactive: 'projects',
     firstRelease,
+    projects,
   });
 
   await execa({
@@ -89,5 +109,6 @@ const groups = ['packages'];
     verbose,
     otp: answers.otp,
     firstRelease,
+    projects,
   });
 })();

@@ -14,6 +14,7 @@
     "start:proxy": "ngrok http http://localhost:3000"
   },
   "dependencies": {
+    "@date-fns/utc": "^2.1.0",
     "@novu/application-generic": "workspace:*",
     "@novu/ee-dal": "workspace:*",
     "@novu/ee-auth": "workspace:*",
@@ -21,7 +22,7 @@
     "@novu/notifications": "workspace:*",
     "class-transformer": "0.5.1",
     "class-validator": "0.14.1",
-    "date-fns": "^2.29.2",
+    "date-fns": "^4.1.0",
     "mongoose": "^7.5.0",
     "rxjs": "7.8.1",
     "shortid": "^2.2.16",

@@ -3,7 +3,7 @@ import { ChannelType } from '../../../../types';
 import { useStyle } from '../../../helpers';
 import { Chat, Email, InApp, Push, Sms } from '../../../icons';
 import { AppearanceKey } from '../../../types';
-import { Switch } from './Switch';
+import { Switch } from '../../primitives/Switch';
 
 type ChannelRowProps = {
   channel: ChannelType;

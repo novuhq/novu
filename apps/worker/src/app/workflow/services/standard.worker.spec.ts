@@ -215,7 +215,6 @@ describe('Standard Worker', () => {
     await jobsService.waitForJobCompletion({
       templateId: _templateId,
       organizationId: organization._id,
-      delay: false,
     });
 
     const jobs = await jobRepository.find({ _environmentId, _organizationId, _notificationId });
@@ -278,7 +277,6 @@ describe('Standard Worker', () => {
     await jobsService.waitForJobCompletion({
       templateId: _templateId,
       organizationId: organization._id,
-      delay: false,
     });
 
     /**

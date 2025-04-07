@@ -8,6 +8,7 @@ import { workflowsGetStepData } from "../funcs/workflowsGetStepData.js";
 import { workflowsGetWorkflowTestData } from "../funcs/workflowsGetWorkflowTestData.js";
 import { workflowsRetrieve } from "../funcs/workflowsRetrieve.js";
 import { workflowsUpdate } from "../funcs/workflowsUpdate.js";
+import { workflowsWorkflowControllerDuplicateWorkflow } from "../funcs/workflowsWorkflowControllerDuplicateWorkflow.js";
 import { workflowsWorkflowControllerGeneratePreview } from "../funcs/workflowsWorkflowControllerGeneratePreview.js";
 import { workflowsWorkflowControllerPatchWorkflow } from "../funcs/workflowsWorkflowControllerPatchWorkflow.js";
 import { workflowsWorkflowControllerPatchWorkflowStepData } from "../funcs/workflowsWorkflowControllerPatchWorkflowStepData.js";
@@ -19,10 +20,10 @@ import { unwrapAsync } from "../types/fp.js";
 
 export class Workflows extends ClientSDK {
   /**
-   * Topic creation
+   * Create subscriber
    *
    * @remarks
-   * Create a topic
+   * Create subscriber with the given data
    */
   async create(
     idempotencyKey?: string | undefined,
@@ -46,24 +47,11 @@ export class Workflows extends ClientSDK {
     ));
   }
 
-  async workflowControllerSync(
-    workflowId: string,
-    idempotencyKey?: string | undefined,
-    options?: RequestOptions,
-  ): Promise<operations.WorkflowControllerSyncResponse> {
-    return unwrapAsync(workflowsWorkflowControllerSync(
-      this,
-      workflowId,
-      idempotencyKey,
-      options,
-    ));
-  }
-
   /**
-   * Update subscriber global or workflow specific preferences
+   * Update subscriber credentials
    *
    * @remarks
-   * Update subscriber global or workflow specific preferences
+   * Subscriber credentials associated to the delivery methods such as slack and push tokens.
    */
   async update(
     workflowId: string,
@@ -79,10 +67,10 @@ export class Workflows extends ClientSDK {
   }
 
   /**
-   * Get topic
+   * Get subscriber
    *
    * @remarks
-   * Get a topic by its topic key
+   * Get subscriber by your internal id used to identify the subscriber
    */
   async retrieve(
     workflowId: string,
@@ -100,10 +88,10 @@ export class Workflows extends ClientSDK {
   }
 
   /**
-   * Delete topic
+   * Delete subscriber
    *
    * @remarks
-   * Delete a topic by its topic key if it has no subscribers
+   * Deletes a subscriber entity from the Novu platform
    */
   async delete(
     workflowId: string,
@@ -124,6 +112,19 @@ export class Workflows extends ClientSDK {
     options?: RequestOptions,
   ): Promise<operations.WorkflowControllerPatchWorkflowResponse> {
     return unwrapAsync(workflowsWorkflowControllerPatchWorkflow(
+      this,
+      workflowId,
+      idempotencyKey,
+      options,
+    ));
+  }
+
+  async workflowControllerDuplicateWorkflow(
+    workflowId: string,
+    idempotencyKey?: string | undefined,
+    options?: RequestOptions,
+  ): Promise<operations.WorkflowControllerDuplicateWorkflowResponse> {
+    return unwrapAsync(workflowsWorkflowControllerDuplicateWorkflow(
       this,
       workflowId,
       idempotencyKey,
@@ -171,6 +172,19 @@ export class Workflows extends ClientSDK {
       this,
       workflowId,
       stepId,
+      idempotencyKey,
+      options,
+    ));
+  }
+
+  async workflowControllerSync(
+    workflowId: string,
+    idempotencyKey?: string | undefined,
+    options?: RequestOptions,
+  ): Promise<operations.WorkflowControllerSyncResponse> {
+    return unwrapAsync(workflowsWorkflowControllerSync(
+      this,
+      workflowId,
       idempotencyKey,
       options,
     ));

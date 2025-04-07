@@ -55,13 +55,11 @@ export function PlanActionButton({
 
     const indexRequested = getFeatureForTierAsNumber(
       FeatureNameEnum.TIERS_ORDER_INDEX,
-      requestedServiceLevel || ApiServiceLevelEnum.FREE,
-      {}
+      requestedServiceLevel || ApiServiceLevelEnum.FREE
     );
     const indexActive = getFeatureForTierAsNumber(
       FeatureNameEnum.TIERS_ORDER_INDEX,
-      activeServiceLevel || ApiServiceLevelEnum.FREE,
-      {}
+      activeServiceLevel || ApiServiceLevelEnum.FREE
     );
 
     if (indexRequested >= indexActive) {

@@ -1,5 +1,6 @@
 import type {
   CreateWorkflowDto,
+  DuplicateWorkflowDto,
   IEnvironment,
   ListWorkflowResponse,
   PatchWorkflowDto,
@@ -163,4 +164,19 @@ export const patchWorkflow = async ({
   });
 
   return res.data;
+};
+
+export const duplicateWorkflow = async ({
+  environment,
+  workflow,
+  workflowSlug,
+}: {
+  environment: IEnvironment;
+  workflow: DuplicateWorkflowDto;
+  workflowSlug: string;
+}) => {
+  return postV2<{ data: WorkflowResponseDto }>(`/workflows/${workflowSlug}/duplicate`, {
+    environment,
+    body: workflow,
+  });
 };

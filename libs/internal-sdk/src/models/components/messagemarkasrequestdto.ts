@@ -10,17 +10,19 @@ import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 
 export type MessageId = string | Array<string>;
 
-export const MarkAs = {
+export const MessageMarkAsRequestDtoMarkAs = {
   Read: "read",
   Seen: "seen",
   Unread: "unread",
   Unseen: "unseen",
 } as const;
-export type MarkAs = ClosedEnum<typeof MarkAs>;
+export type MessageMarkAsRequestDtoMarkAs = ClosedEnum<
+  typeof MessageMarkAsRequestDtoMarkAs
+>;
 
 export type MessageMarkAsRequestDto = {
   messageId: string | Array<string>;
-  markAs: MarkAs;
+  markAs: MessageMarkAsRequestDtoMarkAs;
 };
 
 /** @internal */
@@ -68,22 +70,24 @@ export function messageIdFromJSON(
 }
 
 /** @internal */
-export const MarkAs$inboundSchema: z.ZodNativeEnum<typeof MarkAs> = z
-  .nativeEnum(MarkAs);
+export const MessageMarkAsRequestDtoMarkAs$inboundSchema: z.ZodNativeEnum<
+  typeof MessageMarkAsRequestDtoMarkAs
+> = z.nativeEnum(MessageMarkAsRequestDtoMarkAs);
 
 /** @internal */
-export const MarkAs$outboundSchema: z.ZodNativeEnum<typeof MarkAs> =
-  MarkAs$inboundSchema;
+export const MessageMarkAsRequestDtoMarkAs$outboundSchema: z.ZodNativeEnum<
+  typeof MessageMarkAsRequestDtoMarkAs
+> = MessageMarkAsRequestDtoMarkAs$inboundSchema;
 
 /**
  * @internal
  * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
  */
-export namespace MarkAs$ {
-  /** @deprecated use `MarkAs$inboundSchema` instead. */
-  export const inboundSchema = MarkAs$inboundSchema;
-  /** @deprecated use `MarkAs$outboundSchema` instead. */
-  export const outboundSchema = MarkAs$outboundSchema;
+export namespace MessageMarkAsRequestDtoMarkAs$ {
+  /** @deprecated use `MessageMarkAsRequestDtoMarkAs$inboundSchema` instead. */
+  export const inboundSchema = MessageMarkAsRequestDtoMarkAs$inboundSchema;
+  /** @deprecated use `MessageMarkAsRequestDtoMarkAs$outboundSchema` instead. */
+  export const outboundSchema = MessageMarkAsRequestDtoMarkAs$outboundSchema;
 }
 
 /** @internal */
@@ -93,7 +97,7 @@ export const MessageMarkAsRequestDto$inboundSchema: z.ZodType<
   unknown
 > = z.object({
   messageId: z.union([z.string(), z.array(z.string())]),
-  markAs: MarkAs$inboundSchema,
+  markAs: MessageMarkAsRequestDtoMarkAs$inboundSchema,
 });
 
 /** @internal */
@@ -109,7 +113,7 @@ export const MessageMarkAsRequestDto$outboundSchema: z.ZodType<
   MessageMarkAsRequestDto
 > = z.object({
   messageId: z.union([z.string(), z.array(z.string())]),
-  markAs: MarkAs$outboundSchema,
+  markAs: MessageMarkAsRequestDtoMarkAs$outboundSchema,
 });
 
 /**

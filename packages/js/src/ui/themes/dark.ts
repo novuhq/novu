@@ -9,5 +9,6 @@ export const dark: Theme = {
     colorSecondaryForeground: '#EDEDEF',
     colorShadow: 'black',
     colorRing: '#E1E4EA',
+    colorStripes: '#FF8447',
   },
 };

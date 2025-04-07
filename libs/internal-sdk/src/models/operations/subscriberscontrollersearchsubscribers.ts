@@ -10,10 +10,16 @@ import { Result as SafeParseResult } from "../../types/fp.js";
 import * as components from "../components/index.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 
+/**
+ * Direction of sorting
+ */
 export const OrderDirection = {
   Asc: "ASC",
   Desc: "DESC",
 } as const;
+/**
+ * Direction of sorting
+ */
 export type OrderDirection = ClosedEnum<typeof OrderDirection>;
 
 export type SubscribersControllerSearchSubscribersRequest = {
@@ -25,6 +31,22 @@ export type SubscribersControllerSearchSubscribersRequest = {
    * Cursor for pagination indicating the ending point before which to fetch results.
    */
   before?: string | undefined;
+  /**
+   * Limit the number of items to return
+   */
+  limit?: number | undefined;
+  /**
+   * Direction of sorting
+   */
+  orderDirection?: OrderDirection | undefined;
+  /**
+   * Field to order by
+   */
+  orderBy?: string | undefined;
+  /**
+   * Include cursor item in response
+   */
+  includeCursor?: boolean | undefined;
   /**
    * Email address of the subscriber to filter results.
    */
@@ -41,9 +63,6 @@ export type SubscribersControllerSearchSubscribersRequest = {
    * Unique identifier of the subscriber to filter results.
    */
   subscriberId?: string | undefined;
-  limit?: number | undefined;
-  orderDirection?: OrderDirection | undefined;
-  orderBy?: any | undefined;
   /**
    * A header for idempotency purposes
    */
@@ -85,13 +104,14 @@ export const SubscribersControllerSearchSubscribersRequest$inboundSchema:
   > = z.object({
     after: z.string().optional(),
     before: z.string().optional(),
+    limit: z.number().optional(),
+    orderDirection: OrderDirection$inboundSchema.optional(),
+    orderBy: z.string().optional(),
+    includeCursor: z.boolean().optional(),
     email: z.string().optional(),
     name: z.string().optional(),
     phone: z.string().optional(),
     subscriberId: z.string().optional(),
-    limit: z.number().optional(),
-    orderDirection: OrderDirection$inboundSchema.optional(),
-    orderBy: z.any().optional(),
     "idempotency-key": z.string().optional(),
   }).transform((v) => {
     return remap$(v, {
@@ -103,13 +123,14 @@ export const SubscribersControllerSearchSubscribersRequest$inboundSchema:
 export type SubscribersControllerSearchSubscribersRequest$Outbound = {
   after?: string | undefined;
   before?: string | undefined;
+  limit?: number | undefined;
+  orderDirection?: string | undefined;
+  orderBy?: string | undefined;
+  includeCursor?: boolean | undefined;
   email?: string | undefined;
   name?: string | undefined;
   phone?: string | undefined;
   subscriberId?: string | undefined;
-  limit?: number | undefined;
-  orderDirection?: string | undefined;
-  orderBy?: any | undefined;
   "idempotency-key"?: string | undefined;
 };
 
@@ -122,13 +143,14 @@ export const SubscribersControllerSearchSubscribersRequest$outboundSchema:
   > = z.object({
     after: z.string().optional(),
     before: z.string().optional(),
+    limit: z.number().optional(),
+    orderDirection: OrderDirection$outboundSchema.optional(),
+    orderBy: z.string().optional(),
+    includeCursor: z.boolean().optional(),
     email: z.string().optional(),
     name: z.string().optional(),
     phone: z.string().optional(),
     subscriberId: z.string().optional(),
-    limit: z.number().optional(),
-    orderDirection: OrderDirection$outboundSchema.optional(),
-    orderBy: z.any().optional(),
     idempotencyKey: z.string().optional(),
   }).transform((v) => {
     return remap$(v, {
