@@ -117,7 +117,7 @@
     "@novu/testing": "workspace:*",
     "@playwright/test": "^1.46.1",
     "@sentry/vite-plugin": "^2.22.6",
-    "@tiptap/core": "^2.10.3",
+    "@tiptap/core": "^2.11.5",
     "@types/lodash.debounce": "^4.0.9",
     "@types/lodash.isequal": "^4.5.8",
     "@types/lodash.merge": "^4.6.6",

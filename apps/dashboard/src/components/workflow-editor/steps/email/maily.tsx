@@ -1,34 +1,20 @@
 import { Editor } from '@maily-to/core';
-import { getVariableSuggestions, HTMLCodeBlockExtension, VariableExtension } from '@maily-to/core/extensions';
+
 import type { Editor as TiptapEditor } from '@tiptap/core';
-import { ReactNodeViewRenderer } from '@tiptap/react';
 import { HTMLAttributes, useCallback, useMemo, useState } from 'react';
 
-import { HTMLCodeBlockView } from '@/components/workflow-editor/steps/email/extensions/html-view';
-import { MailyVariablesList } from '@/components/workflow-editor/steps/email/extensions/maily-variables-list';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useParseVariables } from '@/hooks/use-parse-variables';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { cn } from '@/utils/ui';
-import { ForExtension } from './extensions/for';
-import { createVariableView } from './extensions/variable-view';
-import { createDefaultEditorBlocks, DEFAULT_EDITOR_CONFIG } from './maily-config';
+import { createEditorBlocks, createExtensions, DEFAULT_EDITOR_CONFIG, MAILY_EMAIL_WIDTH } from './maily-config';
+import { calculateVariables, VariableFrom } from './variables/variables';
 
 type MailyProps = HTMLAttributes<HTMLDivElement> & {
   value: string;
   onChange?: (value: string) => void;
   className?: string;
 };
-
-const VARIABLE_TRIGGER_CHARACTER = '{{';
-
-/**
- * Fixed width (600px) for the email editor and rendered content.
- * This width ensures optimal compatibility across email clients
- * while maintaining good readability on all devices.
- * (Hardcoded in Maily)
- */
-export const MAILY_EMAIL_WIDTH = 600;
 
 export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
   const { step } = useWorkflow();
@@ -48,101 +34,25 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
   const [_, setEditor] = useState<any>();
   const track = useTelemetry();
 
-  const calculateVariables = useCallback(
-    ({
-      query,
-      editor,
-      from,
-    }: {
-      query: string;
-      editor: TiptapEditor;
-      from: 'content-variable' | 'bubble-variable' | 'repeat-variable';
-    }) => {
-      const queryWithoutSuffix = query.replace(/}+$/, '');
-      const filteredVariables: { name: string; required: boolean }[] = [];
-
-      function addInlineVariable() {
-        if (!query.endsWith('}}')) {
-          return;
-        }
-
-        if (filteredVariables.every((variable) => variable.name !== queryWithoutSuffix)) {
-          return;
-        }
-
-        const from = editor?.state.selection.from - queryWithoutSuffix.length - 4; /* for prefix */
-        const to = editor?.state.selection.from;
-
-        editor?.commands.deleteRange({ from, to });
-        editor?.commands.insertContent({
-          type: 'variable',
-          attrs: {
-            id: queryWithoutSuffix,
-            label: null,
-            fallback: null,
-            showIfKey: null,
-            required: false,
-          },
-        });
-      }
-
-      if (from === 'repeat-variable') {
-        filteredVariables.push(...arrays, ...namespaces);
-
-        if (parsedVariables.isAllowedVariable(queryWithoutSuffix)) {
-          filteredVariables.push({ name: queryWithoutSuffix, required: false });
-        }
-
-        addInlineVariable();
-        return dedupAndSortVariables(filteredVariables, queryWithoutSuffix);
-      }
-
-      const iterableName = editor?.getAttributes('repeat')?.each;
-
-      const newNamespaces = [...namespaces, ...(iterableName ? [{ name: iterableName, required: false }] : [])];
-
-      filteredVariables.push(...primitives, ...newNamespaces);
-
-      if (newNamespaces.some((namespace) => queryWithoutSuffix.includes(namespace.name))) {
-        filteredVariables.push({ name: queryWithoutSuffix, required: false });
-      }
-
-      if (from === 'content-variable') {
-        addInlineVariable();
-      }
-
-      return dedupAndSortVariables(filteredVariables, queryWithoutSuffix);
+  const handleCalculateVariables = useCallback(
+    ({ query, editor, from }: { query: string; editor: TiptapEditor; from: VariableFrom }) => {
+      return calculateVariables({
+        query,
+        editor,
+        from,
+        primitives,
+        arrays,
+        namespaces,
+        isAllowedVariable: parsedVariables.isAllowedVariable,
+      });
     },
-    [arrays, namespaces, primitives]
+    [primitives, arrays, namespaces, parsedVariables.isAllowedVariable]
   );
 
-  const extensions = useMemo(() => {
-    return [
-      ForExtension,
-      VariableExtension.extend({
-        // @ts-expect-error - TODO: Polish Maily typing when extending Maily core and update accordingly
-        addNodeView() {
-          return ReactNodeViewRenderer(createVariableView(parsedVariables.isAllowedVariable), {
-            className: 'relative inline-block',
-            as: 'div',
-          });
-        },
-      }).configure({
-        suggestion: getVariableSuggestions(VARIABLE_TRIGGER_CHARACTER),
-        // @ts-expect-error - TODO: Polish Maily typing when extending Maily core and update accordingly
-        variables: calculateVariables,
-        variableSuggestionsPopover: MailyVariablesList,
-      }),
-      HTMLCodeBlockExtension.extend({
-        // @ts-expect-error - TODO: Polish Maily typing when extending Maily core and update accordingly
-        addNodeView() {
-          return ReactNodeViewRenderer(HTMLCodeBlockView, {
-            className: 'mly-relative',
-          });
-        },
-      }),
-    ];
-  }, [calculateVariables]);
+  const extensions = useMemo(
+    () => createExtensions({ calculateVariables: handleCalculateVariables, parsedVariables }),
+    [handleCalculateVariables, parsedVariables]
+  );
 
   /*
    * Override Maily tippy box styles as a temporary solution.
@@ -181,8 +91,7 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
         <Editor
           key="repeat-block-enabled"
           config={DEFAULT_EDITOR_CONFIG}
-          blocks={createDefaultEditorBlocks({ track })}
-          // @ts-expect-error - TODO: Polish Maily typing when extending Maily core and update accordingly
+          blocks={createEditorBlocks({ track })}
           extensions={extensions}
           contentJson={value ? JSON.parse(value) : undefined}
           onCreate={setEditor}
@@ -197,30 +106,4 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
       </div>
     </>
   );
-};
-
-const dedupAndSortVariables = (
-  variables: { name: string; required: boolean }[],
-  query: string
-): { name: string; required: boolean }[] => {
-  // Filter variables that match the query
-  const filteredVariables = variables.filter((variable) => variable.name.toLowerCase().includes(query.toLowerCase()));
-
-  // Deduplicate based on name property
-  const uniqueVariables = Array.from(new Map(filteredVariables.map((item) => [item.name, item])).values());
-
-  // Sort variables: exact matches first, then starts with query, then alphabetically
-  return uniqueVariables.sort((a, b) => {
-    const aExactMatch = a.name.toLowerCase() === query.toLowerCase();
-    const bExactMatch = b.name.toLowerCase() === query.toLowerCase();
-    const aStartsWithQuery = a.name.toLowerCase().startsWith(query.toLowerCase());
-    const bStartsWithQuery = b.name.toLowerCase().startsWith(query.toLowerCase());
-
-    if (aExactMatch && !bExactMatch) return -1;
-    if (!aExactMatch && bExactMatch) return 1;
-    if (aStartsWithQuery && !bStartsWithQuery) return -1;
-    if (!aStartsWithQuery && bStartsWithQuery) return 1;
-
-    return a.name.localeCompare(b.name);
-  });
 };
