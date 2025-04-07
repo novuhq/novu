@@ -9,6 +9,7 @@ import { useTelemetry } from '@/hooks/use-telemetry';
 import { cn } from '@/utils/ui';
 import { createEditorBlocks, createExtensions, DEFAULT_EDITOR_CONFIG, MAILY_EMAIL_WIDTH } from './maily-config';
 import { calculateVariables, VariableFrom } from './variables/variables';
+import { RepeatMenuDescription } from './views/repeat-menu-description';
 
 type MailyProps = HTMLAttributes<HTMLDivElement> & {
   value: string;
