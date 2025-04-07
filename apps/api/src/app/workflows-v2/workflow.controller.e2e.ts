@@ -1,31 +1,22 @@
+// TODO: Move this file under e2e folder and merge it with the one that has the same name
+
 import { expect } from 'chai';
-import { UserSession } from '@novu/testing';
-import { randomBytes } from 'crypto';
 import {
   ApiServiceLevelEnum,
   createWorkflowClient,
   CreateWorkflowDto,
   DEFAULT_WORKFLOW_PREFERENCES,
-  FeatureFlagsKeysEnum,
   FeatureNameEnum,
   getFeatureForTierAsNumber,
-  isStepUpdateBody,
   JSONSchemaDefinition,
   JSONSchemaDto,
   ListWorkflowResponse,
-  PatchStepDataDto,
-  PreferencesRequestDto,
   ShortIsPrefixEnum,
   slugify,
   StepContentIssueEnum,
   StepCreateDto,
   StepTypeEnum,
-  StepUpdateDto,
-  UpdateStepBody,
   UpdateWorkflowDto,
-  UpsertStepBody,
-  UpsertWorkflowBody,
-  WorkflowCommonsFields,
   WorkflowCreationSourceEnum,
   WorkflowListResponseDto,
   WorkflowOriginEnum,
@@ -33,20 +24,53 @@ import {
   WorkflowStatusEnum,
 } from '@novu/shared';
 import { PreferencesRepository } from '@novu/dal';
-import { after } from 'mocha';
-import { sleep } from '@nestjs/terminus/dist/utils';
-import { encodeBase62 } from '../shared/helpers';
+import { UserSession } from '@novu/testing';
 import { stepTypeToControlSchema } from './shared';
+import { buildSlug } from '../shared/helpers/build-slug';
 
-const v2Prefix = '/v2';
-const PARTIAL_UPDATED_NAME = 'Updated';
-const TEST_WORKFLOW_UPDATED_NAME = `${PARTIAL_UPDATED_NAME} Workflow Name`;
-const TEST_WORKFLOW_NAME = 'Test Workflow Name';
+// TODO: Introduce test factories for steps and workflows and move the following build functions there
+function buildInAppStep(overrides: Partial<StepCreateDto> = {}): StepCreateDto {
+  return {
+    name: 'In-App Test Step',
+    type: StepTypeEnum.IN_APP,
+    ...overrides,
+  };
+}
 
-const TEST_TAGS = ['test'];
+function buildDigestStep(overrides: Partial<StepCreateDto> = {}): StepCreateDto {
+  return {
+    name: 'Digest Test Step',
+    type: StepTypeEnum.DIGEST,
+    ...overrides,
+  };
+}
+
+function buildEmailStep(overrides: Partial<StepCreateDto> = {}): StepCreateDto {
+  return {
+    name: 'Email Test Step',
+    type: StepTypeEnum.EMAIL,
+    ...overrides,
+  };
+}
+
+export function buildWorkflow(overrides: Partial<CreateWorkflowDto> = {}): CreateWorkflowDto {
+  const name = overrides.name || 'Test Workflow';
+
+  return {
+    __source: WorkflowCreationSourceEnum.EDITOR,
+    name,
+    workflowId: slugify(name),
+    description: 'This is a test workflow',
+    active: true,
+    tags: ['tag1', 'tag2'],
+    steps: [buildEmailStep(), buildInAppStep()],
+    ...overrides,
+  };
+}
+
 let session: UserSession;
 
-function getHeaders(overrideEnv?: string): HeadersInit {
+function setHeaders(overrideEnv?: string): HeadersInit {
   return {
     Authorization: session.token,
     'Novu-Environment-Id': overrideEnv || session.environment._id,
@@ -54,231 +78,24 @@ function getHeaders(overrideEnv?: string): HeadersInit {
 }
 
 describe('Workflow Controller E2E API Testing #novu-v2', () => {
-  let workflowsClient: ReturnType<typeof createWorkflowClient>;
+  let apiClient: ReturnType<typeof createWorkflowClient>;
 
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
-    workflowsClient = createWorkflowClient(session.serverUrl, getHeaders());
-  });
-  after(async () => {
-    await sleep(1000);
+    apiClient = createWorkflowClient(session.serverUrl, setHeaders());
   });
 
-  it('Smoke Testing', async () => {
-    const workflowCreated = await createWorkflowAndValidate();
-    await getWorkflowAndValidate(workflowCreated);
-    const updateRequest = buildUpdateRequest(workflowCreated);
-    await updateWorkflowAndValidate(workflowCreated._id, workflowCreated.updatedAt, updateRequest);
-    await updateWorkflowAndValidate(workflowCreated._id, workflowCreated.updatedAt, {
-      ...updateRequest,
-      description: 'Updated Description',
-    });
-    await getAllAndValidate({ searchQuery: PARTIAL_UPDATED_NAME, expectedTotalResults: 1, expectedArraySize: 1 });
-    await deleteWorkflowAndValidateDeletion(workflowCreated._id);
-  });
-
-  describe('Error Handling', () => {
-    describe('Should show status ok when no problems', () => {
-      it('should show status ok when no problems', async () => {
-        const workflowCreated = await createWorkflowAndValidate();
-        await getWorkflowAndValidate(workflowCreated);
-      });
-    });
-
-    describe('Workflow Body Issues', () => {
-      it('should respond with 400 when name is empty', async () => {
-        const createWorkflowDto: CreateWorkflowDto = buildCreateWorkflowDto('nameSuffix', {
-          name: '',
-        });
-
-        const res = await workflowsClient.createWorkflow(createWorkflowDto);
-        expect(res.isSuccessResult()).to.be.false;
-        expect(res.error?.responseText).to.include('name must be longer than or equal to 1 characters');
-      });
-
-      it('should respond with 400 when name is too long', async () => {
-        const createWorkflowDto: CreateWorkflowDto = buildCreateWorkflowDto('nameSuffix', {
-          name: Array.from({ length: 80 }).join('X'),
-        });
-
-        const res = await workflowsClient.createWorkflow(createWorkflowDto);
-        expect(res.isSuccessResult()).to.be.false;
-        expect(res.error?.responseText).to.include('name must be shorter than or equal to 64 characters');
-      });
-
-      it('should respond with 400 when description is too long', async () => {
-        const createWorkflowDto: CreateWorkflowDto = buildCreateWorkflowDto('nameSuffix', {
-          description: Array.from({ length: 260 }).join('X'),
-        });
-
-        const res = await workflowsClient.createWorkflow(createWorkflowDto);
-        expect(res.isSuccessResult()).to.be.false;
-        expect(res.error?.responseText).to.include('description must be shorter than or equal to 256 characters');
-      });
-      it('should respond with 400 when description is too long on an update call', async () => {
-        const createWorkflowDto: CreateWorkflowDto = buildCreateWorkflowDto('nameSuffix');
-
-        const res = await workflowsClient.createWorkflow(createWorkflowDto);
-        expect(res.isSuccessResult()).to.be.true;
-        if (res.isSuccessResult()) {
-          const updateWorkflowDto = {
-            ...buildUpdateRequest(res.value),
-            description: Array.from({ length: 260 }).join('X'),
-          };
-          const updateResult = await workflowsClient.updateWorkflow(res.value?._id, updateWorkflowDto);
-          expect(updateResult.isSuccessResult(), JSON.stringify(updateResult.value)).to.be.false;
-          if (!updateResult.isSuccessResult()) {
-            expect(updateResult.error?.responseText).to.include(
-              'description must be shorter than or equal to 256 characters'
-            );
-          }
-        }
-      });
-
-      it('should respond with 400 when a tag is too long', async () => {
-        const createWorkflowDto: CreateWorkflowDto = buildCreateWorkflowDto('nameSuffix', {
-          tags: ['tag1', Array.from({ length: 50 }).join('X')],
-        });
-
-        const res = await workflowsClient.createWorkflow(createWorkflowDto);
-        expect(res.isSuccessResult()).to.be.false;
-        expect(res.error?.responseText).to.include(
-          'each value in tags must be longer than or equal to 1 and shorter than or equal to 32 characters'
-        );
-      });
-
-      it('should respond with 400 when a tag is empty', async () => {
-        const createWorkflowDto: CreateWorkflowDto = buildCreateWorkflowDto('nameSuffix', {
-          tags: ['tag1', ''],
-        });
-
-        const res = await workflowsClient.createWorkflow(createWorkflowDto);
-        expect(res.isSuccessResult()).to.be.false;
-        expect(res.error?.responseText).to.include(
-          'each value in tags must be longer than or equal to 1 and shorter than or equal to 32 characters'
-        );
-      });
-
-      it('should respond with 400 when a duplicate tag is provided', async () => {
-        const createWorkflowDto: CreateWorkflowDto = buildCreateWorkflowDto('nameSuffix', {
-          tags: ['tag1', 'tag1'],
-        });
-
-        const res = await workflowsClient.createWorkflow(createWorkflowDto);
-        expect(res.isSuccessResult()).to.be.false;
-        expect(res.error?.responseText).to.include("All tags's elements must be unique");
-      });
-
-      it('should respond with 400 when more than 16 tags are provided', async () => {
-        const createWorkflowDto: CreateWorkflowDto = buildCreateWorkflowDto('nameSuffix', {
-          tags: Array.from({ length: 17 }).map((_, index) => `tag${index}`),
-        });
-
-        const res = await workflowsClient.createWorkflow(createWorkflowDto);
-        expect(res.isSuccessResult()).to.be.false;
-        expect(res.error?.responseText).to.include('tags must contain no more than 16 elements');
-      });
-    });
-
-    describe('Workflow Step Body Issues', () => {
-      it('should throw 400 on name missing', async () => {
-        // @ts-ignore
-        const overrideDto = { steps: [{ ...buildEmailStep(), name: undefined } as unknown as StepCreateDto] };
-        const createWorkflowDto: CreateWorkflowDto = buildCreateWorkflowDto('nameSuffix');
-        const dtoWithoutName = { ...createWorkflowDto, ...overrideDto };
-
-        const res = await workflowsClient.createWorkflow(dtoWithoutName);
-        if (res.isSuccessResult()) {
-          throw new Error(`should fail${JSON.stringify(res.value)}`);
-        }
-        expect(res.error?.responseText, res.error?.responseText).to.contain('name');
-      });
-      it('should throw 400 on name empty', async () => {
-        // @ts-ignore
-        const overrideDto = { steps: [{ ...buildEmailStep(), name: '' } as unknown as StepCreateDto] };
-        const createWorkflowDto: CreateWorkflowDto = buildCreateWorkflowDto('nameSuffix');
-        const dtoWithoutName = { ...createWorkflowDto, ...overrideDto };
-
-        const res = await workflowsClient.createWorkflow(dtoWithoutName);
-        if (res.isSuccessResult()) {
-          throw new Error(`should fail${JSON.stringify(res.value)}`);
-        }
-        expect(res.error?.responseText, res.error?.responseText).to.contain('name');
-      });
-
-      it('should remove control issues when no longer present', async () => {
-        const inAppStep = { ...buildInAppStep(), controlValues: {}, name: 'some name' };
-        const workflowCreated = await createWorkflowAndReturn({ steps: [inAppStep] });
-        const firstStepIssues = workflowCreated.steps[0].issues?.controls;
-        expect(firstStepIssues).to.be.ok;
-        expect(firstStepIssues?.body).to.be.ok;
-        expect(firstStepIssues?.body[0].issueType).to.be.eq(StepContentIssueEnum.MISSING_VALUE);
-
-        const novuRestResult = await workflowsClient.updateWorkflow(workflowCreated._id, {
-          ...workflowCreated,
-          steps: [{ ...inAppStep, name: 'New Name', controlValues: { body: 'some body here' } }],
-        });
-        if (!novuRestResult.isSuccessResult()) {
-          throw new Error(novuRestResult.error!.responseText);
-        }
-
-        const updatedWorkflow = novuRestResult.value;
-        const firstStep = updatedWorkflow.steps[0];
-
-        // Only check that control issues are removed
-        expect(firstStep.issues?.controls?.body).to.be.undefined;
-      });
-    });
-
-    describe('Workflow Step content Issues', () => {
-      it('should show control value required when missing', async () => {
-        const { issues, status } = await createWorkflowAndReturnStepIssues({ steps: [{ ...buildInAppStep() }] }, 0);
-        expect(status, JSON.stringify(issues)).to.equal(WorkflowStatusEnum.ERROR);
-        expect(issues).to.be.ok;
-        if (issues.controls) {
-          expect(issues.controls?.body).to.be.ok;
-          if (issues.controls?.body) {
-            expect(issues.controls?.body[0].issueType).to.be.equal(StepContentIssueEnum.MISSING_VALUE);
-          }
-        }
-      });
-      it('should show control value required when empty', async () => {
-        const { issues, status } = await createWorkflowAndReturnStepIssues(
-          { steps: [{ ...buildInAppStep(), controlValues: { body: '' } }] },
-          0
-        );
-        expect(status, JSON.stringify(issues)).to.equal(WorkflowStatusEnum.ERROR);
-        expect(issues).to.be.ok;
-        if (issues.controls) {
-          expect(issues.controls?.body).to.be.ok;
-          if (issues.controls?.body) {
-            expect(issues.controls?.body[0].issueType).to.be.equal(StepContentIssueEnum.MISSING_VALUE);
-          }
-        }
-      });
-
-      it('should show digest control value issues when illegal value provided', async () => {
-        const steps = [{ ...buildDigestStep({ controlValues: { amount: '555', unit: 'days' } }) }];
-        const workflowCreated = await createWorkflowAndReturn({ steps });
-        const step = workflowCreated.steps[0];
-
-        expect(step.issues?.controls?.amount[0].issueType).to.deep.equal(StepContentIssueEnum.TIER_LIMIT_EXCEEDED);
-        expect(step.issues?.controls?.unit[0].issueType).to.deep.equal(StepContentIssueEnum.TIER_LIMIT_EXCEEDED);
-      });
-    });
-  });
-
-  describe('Create Workflow Permutations', () => {
+  describe('Create workflow', () => {
     it('should allow creating two workflows for the same user with the same name', async () => {
-      const nameSuffix = `Test Workflow${new Date().toISOString()}`;
-      await createWorkflowAndValidate(nameSuffix);
-      const createWorkflowDto: CreateWorkflowDto = buildCreateWorkflowDto(nameSuffix);
-      const res = await workflowsClient.createWorkflow(createWorkflowDto);
+      const name = `Test Workflow${new Date().toISOString()}`;
+      await createWorkflowAndValidate(name);
+      const createWorkflowDto: CreateWorkflowDto = buildWorkflow({ name });
+      const res = await apiClient.createWorkflow(createWorkflowDto);
       expect(res.isSuccessResult()).to.be.true;
       if (res.isSuccessResult()) {
         const workflowCreated: WorkflowResponseDto = res.value;
-        expect(workflowCreated.workflowId).to.include(`${slugify(nameSuffix)}-`);
+        expect(workflowCreated.workflowId).to.include(`${slugify(name)}-`);
         await assertValuesInSteps(workflowCreated);
       }
     });
@@ -294,10 +111,8 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
         },
       ];
 
-      const nameSuffix = `Test Workflow${new Date().toISOString()}`;
-
-      const createWorkflowDto: CreateWorkflowDto = buildCreateWorkflowDto(`${nameSuffix}`, { steps });
-      const res = await workflowsClient.createWorkflow(createWorkflowDto);
+      const createWorkflowDto: CreateWorkflowDto = buildWorkflow({ steps });
+      const res = await apiClient.createWorkflow(createWorkflowDto);
       expect(res.isSuccessResult()).to.be.true;
 
       const workflow = res.value as WorkflowResponseDto;
@@ -317,16 +132,15 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
     });
 
     it('should not allow to create more than 20 workflows for a free organization', async () => {
-      // @ts-ignore
       await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.FREE);
       getFeatureForTierAsNumber(FeatureNameEnum.PLATFORM_MAX_WORKFLOWS, ApiServiceLevelEnum.FREE, false);
       for (let i = 0; i < 20; i += 1) {
-        const createWorkflowDto: CreateWorkflowDto = buildCreateWorkflowDto(new Date().toISOString() + i);
-        const res = await workflowsClient.createWorkflow(createWorkflowDto);
+        const createWorkflowDto: CreateWorkflowDto = buildWorkflow({ name: new Date().toISOString() + i });
+        const res = await apiClient.createWorkflow(createWorkflowDto);
       }
 
-      const createWorkflowDto: CreateWorkflowDto = buildCreateWorkflowDto(new Date().toISOString() + 30);
-      const res = await workflowsClient.createWorkflow(createWorkflowDto);
+      const createWorkflowDto: CreateWorkflowDto = buildWorkflow({ name: new Date().toISOString() });
+      const res = await apiClient.createWorkflow(createWorkflowDto);
 
       expect(res.isSuccessResult()).to.be.false;
       const { error } = res;
@@ -334,12 +148,12 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
     });
   });
 
-  describe('Update Workflow Permutations', () => {
+  describe('Update workflow', () => {
     it('should update control values', async () => {
       const nameSuffix = `Test Workflow${new Date().toISOString()}`;
       const workflowCreated: WorkflowResponseDto = await createWorkflowAndValidate(nameSuffix);
-      const inAppControlValue = `test-${generateUUID()}`;
-      const emailControlValue = `test-${generateUUID()}`;
+      const inAppControlValue = 'In-App Test';
+      const emailControlValue = 'Email Test';
       const updateRequest: UpdateWorkflowDto = {
         origin: WorkflowOriginEnum.NOVU_CLOUD,
         name: workflowCreated.name,
@@ -352,10 +166,11 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
         ],
         workflowId: workflowCreated.workflowId,
       };
-      const updatedWorkflow: WorkflowResponseDto = await updateWorkflowRest(
+      const updatedWorkflow: WorkflowResponseDto = await updateWorkflow(
         workflowCreated._id,
         updateRequest as UpdateWorkflowDto
       );
+      // TODO: Control values must be typed and accept only valid control values
       expect(updatedWorkflow.steps[0].controls.values.test).to.be.equal(inAppControlValue);
       expect(updatedWorkflow.steps[1].controls.values.test).to.be.equal(emailControlValue);
     });
@@ -363,20 +178,18 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
     it('should keep the step id on updated ', async () => {
       const nameSuffix = `Test Workflow${new Date().toISOString()}`;
       const workflowCreated: WorkflowResponseDto = await createWorkflowAndValidate(nameSuffix);
-      const updateDto = convertResponseToUpdateDto(workflowCreated);
-      const updatedWorkflow = await updateWorkflowRest(workflowCreated._id, updateDto);
+      const updatedWorkflow = await updateWorkflow(workflowCreated._id, workflowCreated);
       const updatedStep = updatedWorkflow.steps[0];
       const originalStep = workflowCreated.steps[0];
       expect(updatedStep._id).to.be.ok;
       expect(updatedStep._id).to.be.equal(originalStep._id);
     });
 
-    it('adding user preferences', async () => {
+    it('should update user preferences', async () => {
       const nameSuffix = `Test Workflow${new Date().toISOString()}`;
       const workflowCreated: WorkflowResponseDto = await createWorkflowAndValidate(nameSuffix);
-      const updateDto = convertResponseToUpdateDto(workflowCreated);
-      const updatedWorkflow = await updateWorkflowRest(workflowCreated._id, {
-        ...updateDto,
+      const updatedWorkflow = await updateWorkflow(workflowCreated._id, {
+        ...workflowCreated,
         preferences: {
           user: { ...DEFAULT_WORKFLOW_PREFERENCES, all: { ...DEFAULT_WORKFLOW_PREFERENCES.all, enabled: false } },
         },
@@ -384,8 +197,8 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
       expect(updatedWorkflow.preferences.user, JSON.stringify(updatedWorkflow, null, 2)).to.be.ok;
       expect(updatedWorkflow.preferences?.user?.all.enabled, JSON.stringify(updatedWorkflow, null, 2)).to.be.false;
 
-      const updatedWorkflow2 = await updateWorkflowRest(workflowCreated._id, {
-        ...updateDto,
+      const updatedWorkflow2 = await updateWorkflow(workflowCreated._id, {
+        ...workflowCreated,
         preferences: {
           user: null,
         },
@@ -395,22 +208,16 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
     });
 
     it('should update by slugify ids', async () => {
-      const nameSuffix = `Test Workflow${new Date().toISOString()}`;
-      const workflowCreated: WorkflowResponseDto = await createWorkflowAndValidate(nameSuffix);
-      const updateDtoWithValues = await buildUpdateDto(workflowCreated);
+      const workflowCreated = await createWorkflowAndValidate();
+      const { _id, workflowId, slug, updatedAt } = workflowCreated;
 
-      const internalId = workflowCreated._id;
-      await updateWorkflowAndValidate(internalId, workflowCreated.updatedAt, updateDtoWithValues);
-
-      const slugPrefixAndEncodedInternalId = `workflow-name-${ShortIsPrefixEnum.WORKFLOW}${encodeBase62(internalId)}`;
-      await updateWorkflowAndValidate(slugPrefixAndEncodedInternalId, workflowCreated.updatedAt, updateDtoWithValues);
-
-      const { workflowId } = workflowCreated;
-      await updateWorkflowAndValidate(workflowId, workflowCreated.updatedAt, updateDtoWithValues);
+      await updateWorkflowAndValidate(_id, updatedAt, { ...workflowCreated, name: 'Test Workflow 1' });
+      await updateWorkflowAndValidate(workflowId, updatedAt, { ...workflowCreated, name: 'Test Workflow 2' });
+      await updateWorkflowAndValidate(slug, updatedAt, { ...workflowCreated, name: 'Test Workflow 3' });
     });
   });
 
-  describe('List Workflow Permutations', () => {
+  describe('List workflows', () => {
     it('should not return workflows with if not matching query', async () => {
       await createWorkflowAndValidate('XYZ');
       await createWorkflowAndValidate('XYZ2');
@@ -423,10 +230,9 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
     });
 
     it('should not return workflows if offset is bigger than the amount of available workflows', async () => {
-      const uuid = generateUUID();
-      await create10Workflows(uuid);
+      await create10Workflows('Test Workflow');
       await getAllAndValidate({
-        searchQuery: uuid,
+        searchQuery: 'Test Workflow',
         offset: 11,
         limit: 15,
         expectedTotalResults: 10,
@@ -435,11 +241,9 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
     });
 
     it('should return all results within range', async () => {
-      const uuid = generateUUID();
-
-      await create10Workflows(uuid);
+      await create10Workflows('Test Workflow');
       await getAllAndValidate({
-        searchQuery: uuid,
+        searchQuery: 'Test Workflow',
         offset: 0,
         limit: 15,
         expectedTotalResults: 10,
@@ -448,10 +252,9 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
     });
 
     it('should return results without query', async () => {
-      const uuid = generateUUID();
-      await create10Workflows(uuid);
+      await create10Workflows('Test Workflow');
       await getAllAndValidate({
-        searchQuery: uuid,
+        searchQuery: 'Test Workflow',
         offset: 0,
         limit: 15,
         expectedTotalResults: 10,
@@ -459,44 +262,46 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
       });
     });
 
-    it('page workflows without overlap', async () => {
-      const uuid = generateUUID();
-      await create10Workflows(uuid);
+    it('paginate workflows without overlap', async () => {
+      await create10Workflows('Test Workflow');
       const listWorkflowResponse1 = await getAllAndValidate({
-        searchQuery: uuid,
+        searchQuery: 'Test Workflow',
         offset: 0,
         limit: 5,
         expectedTotalResults: 10,
         expectedArraySize: 5,
       });
       const listWorkflowResponse2 = await getAllAndValidate({
-        searchQuery: uuid,
+        searchQuery: 'Test Workflow',
         offset: 5,
         limit: 5,
         expectedTotalResults: 10,
         expectedArraySize: 5,
       });
-      const idsDeduplicated = buildIdSet(listWorkflowResponse1, listWorkflowResponse2);
+      const idsDeduplicated = new Set([
+        ...listWorkflowResponse1.map((workflow) => workflow._id),
+        ...listWorkflowResponse2.map((workflow) => workflow._id),
+      ]);
       expect(idsDeduplicated.size).to.be.equal(10);
     });
 
-    async function createV1Workflow() {
-      const novuRestResult = await workflowsClient.createWorkflowsV1({
-        name: `test api template: ${generateUUID()}`,
+    async function createV0Workflow() {
+      const novuRestResult = await apiClient.createWorkflowsV1({
+        name: `Test V0 Workflow`,
         description: 'This is a test description',
         tags: ['test-tag-api'],
         notificationGroupId: session.notificationGroups[0]._id,
         steps: [],
       });
       if (!novuRestResult.isSuccessResult()) {
-        throw new Error(`Failed to create V1 Workflow ${JSON.stringify(novuRestResult.error)}`);
+        throw new Error(`Failed to create V0 Workflow ${JSON.stringify(novuRestResult.error)}`);
       }
 
       return novuRestResult.value;
     }
 
-    async function searchWorkflowsV1(workflowId?: string) {
-      const novuRestResult = await workflowsClient.searchWorkflowsV1(workflowId);
+    async function searchWorkflowsV0(workflowId?: string) {
+      const novuRestResult = await apiClient.searchWorkflowsV1(workflowId);
       if (!novuRestResult.isSuccessResult()) {
         throw new Error('should not fail to get list ');
       }
@@ -504,52 +309,57 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
       return novuRestResult.value;
     }
 
-    async function getV2WorkflowIdAndExternalId(uuid: string) {
-      await create10Workflows(uuid);
-      const listWorkflowResponse: ListWorkflowResponse = await getListWorkflows(uuid, 0, 5);
+    async function getV2WorkflowIdAndExternalId(prefix: string) {
+      await create10Workflows(prefix);
+      const listWorkflowResponse: ListWorkflowResponse = await listWorkflows(prefix, 0, 5);
       const workflowV2Id = listWorkflowResponse.workflows[0]._id;
       const { workflowId } = listWorkflowResponse.workflows[0];
 
       return { workflowV2Id, workflowId, name: listWorkflowResponse.workflows[0].name };
     }
 
-    async function create3V1Workflows() {
-      await createV1Workflow();
-      await createV1Workflow();
-
-      return await createV1Workflow();
-    }
-
     it('old list endpoint should not retreive the new workflow', async () => {
-      const uuid = generateUUID();
-      const { workflowV2Id, name } = await getV2WorkflowIdAndExternalId(uuid);
-      const workflowV1Created = await create3V1Workflows();
-      let workflowsFromSearch = await searchWorkflowsV1(workflowV1Created?.name);
-      expect(workflowsFromSearch[0]._id).to.deep.eq(workflowV1Created._id);
+      const { workflowV2Id, name } = await getV2WorkflowIdAndExternalId('Test Workflow');
+      const [, , workflowV0Created] = await Promise.all([createV0Workflow(), createV0Workflow(), createV0Workflow()]);
+      let workflowsFromSearch = await searchWorkflowsV0(workflowV0Created?.name);
+      expect(workflowsFromSearch[0]._id).to.deep.eq(workflowV0Created._id);
 
-      workflowsFromSearch = await searchWorkflowsV1();
+      workflowsFromSearch = await searchWorkflowsV0();
       const ids = workflowsFromSearch?.map((workflow) => workflow._id);
       const found = ids?.some((localId) => localId === workflowV2Id);
       expect(found, `FoundIds:${ids} SearchedID:${workflowV2Id}`).to.be.false;
 
-      workflowsFromSearch = await searchWorkflowsV1(name);
+      workflowsFromSearch = await searchWorkflowsV0(name);
       expect(workflowsFromSearch?.length).to.eq(0);
     });
   });
 
-  describe('Promote Workflow Permutations', () => {
+  describe('Promote workflow', () => {
     it('should promote by creating a new workflow in production environment with the same properties', async () => {
       // Create a workflow in the development environment
-      let devWorkflow = await createWorkflowAndValidate('-promote-workflow');
+      const createWorkflowDto = buildWorkflow({
+        name: 'Promote Workflow',
+        steps: [
+          buildEmailStep({
+            controlValues: { body: 'Example body', subject: 'Example subject' },
+          }),
+          buildInAppStep({
+            controlValues: { body: 'Example body' },
+          }),
+        ],
+      });
+      const res = await apiClient.createWorkflow(createWorkflowDto);
+      if (!res.isSuccessResult()) {
+        throw new Error(res.error!.responseText);
+      }
+      let devWorkflow = res.value;
+
       // Update the workflow name to make sure the workflow identifier is the same after promotion
-      devWorkflow = await updateWorkflowRest(devWorkflow._id, {
+      devWorkflow = await updateWorkflow(devWorkflow._id, {
         ...devWorkflow,
         name: `${devWorkflow.name}-updated`,
       });
-      await workflowsClient.patchWorkflowStepData(devWorkflow._id, devWorkflow.steps[0]._id, {
-        controlValues: { vinyl: 'vinyl', color: 'red', band: 'beatles' },
-      });
-      devWorkflow = await getWorkflowRest(devWorkflow._id);
+      devWorkflow = await getWorkflow(devWorkflow._id);
 
       // Switch to production environment and get its ID
       await session.switchToProdEnvironment();
@@ -589,10 +399,25 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
       await session.switchToDevEnvironment();
 
       // Create a workflow in the development environment
-      const devWorkflow = await createWorkflowAndValidate('-promote-workflow');
+      const createWorkflowDto = buildWorkflow({
+        name: 'Promote Workflow',
+        steps: [
+          buildEmailStep({
+            controlValues: { body: 'Example body', subject: 'Example subject' },
+          }),
+          buildInAppStep({
+            controlValues: { body: 'Example body' },
+          }),
+        ],
+      });
+      const res = await apiClient.createWorkflow(createWorkflowDto);
+      if (!res.isSuccessResult()) {
+        throw new Error(res.error!.responseText);
+      }
+      const devWorkflow = res.value;
 
       // Promote the workflow to production
-      const resPromoteCreate = await session.testAgent.put(`${v2Prefix}/workflows/${devWorkflow._id}/sync`).send({
+      const resPromoteCreate = await session.testAgent.put(`/v2/workflows/${devWorkflow._id}/sync`).send({
         targetEnvironmentId: prodEnvironmentId,
       });
       expect(resPromoteCreate.status).to.equal(200);
@@ -600,23 +425,23 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
 
       // Update the workflow in the development environment
       const updateDto: UpdateWorkflowDto = {
-        ...convertResponseToUpdateDto(devWorkflow),
+        ...devWorkflow,
         name: 'Updated Name',
         description: 'Updated Description',
         // modify existing Email Step, add new InApp Steps, previously existing InApp Step is removed
         steps: [
           {
-            ...buildEmailStep({ controlValues: { test: 'test' } }),
+            ...buildEmailStep({ controlValues: { body: 'Example body', subject: 'Example subject' } }),
             _id: devWorkflow.steps[0]._id,
             name: 'Updated Email Step',
           },
-          { ...buildInAppStep(), name: 'New InApp Step' },
+          { ...buildInAppStep({ controlValues: { body: 'Example body' } }), name: 'New InApp Step' },
         ],
       };
       await updateWorkflowAndValidate(devWorkflow._id, devWorkflow.updatedAt, updateDto);
 
       // Promote the updated workflow to production
-      const resPromoteUpdate = await session.testAgent.put(`${v2Prefix}/workflows/${devWorkflow._id}/sync`).send({
+      const resPromoteUpdate = await session.testAgent.put(`/v2/workflows/${devWorkflow._id}/sync`).send({
         targetEnvironmentId: prodEnvironmentId,
       });
 
@@ -640,18 +465,24 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
       expect(prodWorkflowUpdated.steps[0].name).to.equal('Updated Email Step');
       expect(prodWorkflowUpdated.steps[0]._id).to.equal(prodWorkflowCreated.steps[0]._id);
       expect(prodWorkflowUpdated.steps[0].stepId).to.equal(prodWorkflowCreated.steps[0].stepId);
-      expect(prodWorkflowUpdated.steps[0].controls.values).to.deep.equal({ test: 'test' });
+      expect(prodWorkflowUpdated.steps[0].controls.values).to.deep.equal({
+        body: 'Example body',
+        subject: 'Example subject',
+      });
 
       // Verify new created step
       expect(prodWorkflowUpdated.steps[1].name).to.equal('New InApp Step');
       expect(prodWorkflowUpdated.steps[1]._id).to.not.equal(prodWorkflowCreated.steps[1]._id);
       expect(prodWorkflowUpdated.steps[1].stepId).to.equal('new-in-app-step');
+      expect(prodWorkflowUpdated.steps[1].controls.values).to.deep.equal({
+        body: 'Example body',
+      });
     });
 
     it('should throw an error if trying to promote to the same environment', async () => {
       const devWorkflow = await createWorkflowAndValidate('-promote-workflow');
 
-      const res = await session.testAgent.put(`${v2Prefix}/workflows/${devWorkflow._id}/sync`).send({
+      const res = await session.testAgent.put(`/v2/workflows/${devWorkflow._id}/sync`).send({
         targetEnvironmentId: session.environment._id,
       });
 
@@ -660,7 +491,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
     });
 
     it('should throw an error if the workflow to promote is not found', async () => {
-      const res = await session.testAgent.put(`${v2Prefix}/workflows/123/sync`).send({ targetEnvironmentId: '123' });
+      const res = await session.testAgent.put(`/v2/workflows/123/sync`).send({ targetEnvironmentId: '123' });
 
       expect(res.status).to.equal(404);
       expect(res.body.message).to.equal('Workflow cannot be found');
@@ -668,27 +499,26 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
     });
   });
 
-  describe('Get Workflow Permutations', () => {
+  describe('Get workflow', () => {
     it('should get by slugify ids', async () => {
       const workflowCreated = await createWorkflowAndValidate('XYZ');
 
       const internalId = workflowCreated._id;
-      const workflowRetrievedByInternalId = await getWorkflowRest(internalId);
+      const workflowRetrievedByInternalId = await getWorkflow(internalId);
       expect(workflowRetrievedByInternalId._id).to.equal(internalId);
 
-      const base62InternalId = encodeBase62(internalId);
-      const slugPrefixAndEncodedInternalId = `my-workflow-${ShortIsPrefixEnum.WORKFLOW}${base62InternalId}`;
-      const workflowRetrievedBySlugPrefixAndEncodedInternalId = await getWorkflowRest(slugPrefixAndEncodedInternalId);
+      const slugPrefixAndEncodedInternalId = buildSlug(`my-workflow`, ShortIsPrefixEnum.WORKFLOW, internalId);
+      const workflowRetrievedBySlugPrefixAndEncodedInternalId = await getWorkflow(slugPrefixAndEncodedInternalId);
       expect(workflowRetrievedBySlugPrefixAndEncodedInternalId._id).to.equal(internalId);
 
       const workflowIdentifier = workflowCreated.workflowId;
-      const workflowRetrievedByWorkflowIdentifier = await getWorkflowRest(workflowIdentifier);
+      const workflowRetrievedByWorkflowIdentifier = await getWorkflow(workflowIdentifier);
       expect(workflowRetrievedByWorkflowIdentifier._id).to.equal(internalId);
     });
 
     it('should return 404 if workflow does not exist', async () => {
       const notExistingId = '123';
-      const novuRestResult = await workflowsClient.getWorkflow(notExistingId);
+      const novuRestResult = await apiClient.getWorkflow(notExistingId);
       expect(novuRestResult.isSuccess).to.be.false;
       expect(novuRestResult.error).to.be.ok;
       expect(novuRestResult.error!.status).to.equal(404);
@@ -698,10 +528,10 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
     });
   });
 
-  describe('Duplicate Workflow Permutations', () => {
+  describe('Duplicate workflow', () => {
     it('should duplicate a workflow', async () => {
       const workflowCreated = await createWorkflowAndValidate('XYZ');
-      const duplicatedWorkflow = await workflowsClient.duplicateWorkflow(workflowCreated._id, {
+      const duplicatedWorkflow = await apiClient.duplicateWorkflow(workflowCreated._id, {
         name: 'Duplicated Workflow',
       });
       expect(duplicatedWorkflow.isSuccessResult()).to.be.true;
@@ -721,7 +551,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
 
     it('should duplicate a workflow with overrides', async () => {
       const workflowCreated = await createWorkflowAndValidate('XYZ');
-      const duplicatedWorkflow = await workflowsClient.duplicateWorkflow(workflowCreated._id, {
+      const duplicatedWorkflow = await apiClient.duplicateWorkflow(workflowCreated._id, {
         name: 'Duplicated Workflow',
         tags: ['tag1', 'tag2'],
         description: 'New Description',
@@ -735,7 +565,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
     });
 
     it('should throw an error if the workflow to duplicate is not found', async () => {
-      const res = await workflowsClient.duplicateWorkflow('123', { name: 'Duplicated Workflow' });
+      const res = await apiClient.duplicateWorkflow('123', { name: 'Duplicated Workflow' });
       expect(res.isSuccessResult()).to.be.false;
       expect(res.error!.status).to.equal(404);
       expect(res.error!.responseText).to.contain('Workflow');
@@ -744,7 +574,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
     });
   });
 
-  describe('Get Step Data Permutations', () => {
+  describe('Get step data', () => {
     it('should get step by worflow slugify ids', async () => {
       const workflowCreated = await createWorkflowAndValidate('XYZ');
       const internalWorkflowId = workflowCreated._id;
@@ -753,8 +583,11 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
       const stepRetrievedByWorkflowInternalId = await getStepData(internalWorkflowId, stepId);
       expect(stepRetrievedByWorkflowInternalId._id).to.equal(stepId);
 
-      const base62WorkflowIdInternalId = encodeBase62(internalWorkflowId);
-      const slugPrefixAndEncodedWorkflowInternalId = `my-workflow-${ShortIsPrefixEnum.WORKFLOW}${base62WorkflowIdInternalId}`;
+      const slugPrefixAndEncodedWorkflowInternalId = buildSlug(
+        `my-workflow`,
+        ShortIsPrefixEnum.WORKFLOW,
+        internalWorkflowId
+      );
       const stepRetrievedBySlugPrefixAndEncodedWorkflowInternalId = await getStepData(
         slugPrefixAndEncodedWorkflowInternalId,
         stepId
@@ -774,8 +607,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
       const stepRetrievedByStepInternalId = await getStepData(internalWorkflowId, stepId);
       expect(stepRetrievedByStepInternalId._id).to.equal(stepId);
 
-      const base62StepIdInternalId = encodeBase62(stepId);
-      const slugPrefixAndEncodedStepId = `my-step-${ShortIsPrefixEnum.STEP}${base62StepIdInternalId}`;
+      const slugPrefixAndEncodedStepId = buildSlug(`my-step`, ShortIsPrefixEnum.STEP, stepId);
       const stepRetrievedBySlugPrefixAndEncodedStepId = await getStepData(
         internalWorkflowId,
         slugPrefixAndEncodedStepId
@@ -786,59 +618,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
       const stepRetrievedByStepIdentifier = await getStepData(internalWorkflowId, stepIdentifier);
       expect(stepRetrievedByStepIdentifier._id).to.equal(stepId);
     });
-    describe('Variables', () => {
-      it('should get step available variables', async () => {
-        const steps = [
-          {
-            ...buildEmailStep(),
-            controlValues: {
-              body: 'Welcome to our newsletter {{subscriber.nonExistentValue}}{{payload.prefixBodyText2}}{{payload.prefixBodyText}}',
-              subject: 'Welcome to our newsletter {{subjectText}} {{payload.prefixSubjectText}}',
-            },
-          },
-          { ...buildInAppStep(), controlValues: { subject: 'Welcome to our newsletter {{inAppSubjectText}}' } },
-        ];
-        const createWorkflowDto: CreateWorkflowDto = buildCreateWorkflowDto('', { steps });
-        const res = await workflowsClient.createWorkflow(createWorkflowDto);
-        if (!res.isSuccessResult()) {
-          throw new Error(res.error!.responseText);
-        }
-        const stepData = await getStepData(res.value._id, res.value.steps[0]._id);
-        const { variables } = stepData;
 
-        if (typeof variables === 'boolean') throw new Error('Variables is not an object');
-        const { properties } = variables;
-        expect(properties).to.be.ok;
-        if (!properties) throw new Error('Payload schema is not valid');
-        const payloadVariables = properties.payload;
-        expect(payloadVariables).to.be.ok;
-        if (!payloadVariables) throw new Error('Payload schema is not valid');
-        expect(JSON.stringify(payloadVariables)).to.contain('prefixBodyText2');
-        expect(JSON.stringify(payloadVariables)).to.contain('prefixSubjectText');
-      });
-      it('should serve previous step variables with payload schema', async () => {
-        const steps = [
-          buildDigestStep(),
-          { ...buildInAppStep(), controlValues: { subject: 'Welcome to our newsletter {{payload.inAppSubjectText}}' } },
-        ];
-        const createWorkflowDto: CreateWorkflowDto = buildCreateWorkflowDto('', { steps });
-        const res = await workflowsClient.createWorkflow(createWorkflowDto);
-        if (!res.isSuccessResult()) {
-          throw new Error(res.error!.responseText);
-        }
-        const novuRestResult = await workflowsClient.getWorkflowStepData(res.value._id, res.value.steps[1]._id);
-        if (!novuRestResult.isSuccessResult()) {
-          throw new Error(novuRestResult.error!.responseText);
-        }
-        const { variables } = novuRestResult.value;
-        const variableList = getJsonSchemaPrimitiveProperties(variables as JSONSchemaDto);
-        const hasStepVariables = variableList.some((variable) => variable.startsWith('steps.'));
-        expect(hasStepVariables, JSON.stringify(variableList)).to.be.true;
-      });
-    });
-  });
-
-  describe('Get Test Data Permutations', () => {
     it('should get test data', async () => {
       const steps = [
         {
@@ -850,8 +630,8 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
         },
         { ...buildInAppStep(), controlValues: { subject: 'Welcome to our newsletter {{payload.inAppSubjectText}}' } },
       ];
-      const createWorkflowDto: CreateWorkflowDto = buildCreateWorkflowDto('', { steps });
-      const res = await session.testAgent.post(`${v2Prefix}/workflows`).send(createWorkflowDto);
+      const createWorkflowDto: CreateWorkflowDto = buildWorkflow({ steps });
+      const res = await session.testAgent.post(`/v2/workflows`).send(createWorkflowDto);
       expect(res.status).to.be.equal(201);
       const workflowCreated: WorkflowResponseDto = res.body.data;
       const workflowTestData = await getWorkflowTestData(workflowCreated._id);
@@ -893,89 +673,317 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
       expect(toSchema.required).to.deep.equal(['subscriberId', 'email']);
       expect(toSchema.additionalProperties).to.be.false;
     });
-  });
 
-  describe('Patch Workflow Step Data Permutations', () => {
-    it('when patch one control values the second step stays untouched', async () => {
-      const response = await createWorkflowRest(buildCreateWorkflowDto('', {}));
-      const workflowDatabaseId = response._id;
-      const stepId1 = response.steps[0]._id;
-      const stepId2 = response.steps[1]._id;
-      const controlValues1 = { body: 'body1', subject: 'subject1' };
-      await patchStepRest(workflowDatabaseId, stepId1, { controlValues: controlValues1 });
-      const newVar = await getStepData(workflowDatabaseId, stepId1);
-      expect(newVar.controls.values).to.deep.equal(controlValues1);
-      const stepData2 = await getStepData(workflowDatabaseId, stepId2);
-      expect(stepData2.controls.values).to.not.deep.equal(controlValues1);
-      const controlValues2 = { body: 'body2', subject: 'subject2' };
-      await patchStepRest(workflowDatabaseId, stepId2, { controlValues: controlValues2 });
-      const stepData2Updated = await getStepData(workflowDatabaseId, stepId2);
-      expect(stepData2Updated.controls.values).to.deep.equal(controlValues2);
+    describe('Variables', () => {
+      it('should get step available variables', async () => {
+        const steps = [
+          {
+            ...buildEmailStep(),
+            controlValues: {
+              body: 'Welcome to our newsletter {{subscriber.nonExistentValue}}{{payload.prefixBodyText2}}{{payload.prefixBodyText}}',
+              subject: 'Welcome to our newsletter {{subjectText}} {{payload.prefixSubjectText}}',
+            },
+          },
+          { ...buildInAppStep(), controlValues: { subject: 'Welcome to our newsletter {{inAppSubjectText}}' } },
+        ];
+        const createWorkflowDto: CreateWorkflowDto = buildWorkflow({ steps });
+        const res = await apiClient.createWorkflow(createWorkflowDto);
+        if (!res.isSuccessResult()) {
+          throw new Error(res.error!.responseText);
+        }
+        const stepData = await getStepData(res.value._id, res.value.steps[0]._id);
+        const { variables } = stepData;
+
+        if (typeof variables === 'boolean') throw new Error('Variables is not an object');
+        const { properties } = variables;
+        expect(properties).to.be.ok;
+        if (!properties) throw new Error('Payload schema is not valid');
+        const payloadVariables = properties.payload;
+        expect(payloadVariables).to.be.ok;
+        if (!payloadVariables) throw new Error('Payload schema is not valid');
+        expect(JSON.stringify(payloadVariables)).to.contain('prefixBodyText2');
+        expect(JSON.stringify(payloadVariables)).to.contain('prefixSubjectText');
+      });
+      it('should serve previous step variables with payload schema', async () => {
+        const steps = [
+          buildDigestStep(),
+          { ...buildInAppStep(), controlValues: { subject: 'Welcome to our newsletter {{payload.inAppSubjectText}}' } },
+        ];
+        const createWorkflowDto: CreateWorkflowDto = buildWorkflow({ steps });
+        const res = await apiClient.createWorkflow(createWorkflowDto);
+        if (!res.isSuccessResult()) {
+          throw new Error(res.error!.responseText);
+        }
+        const novuRestResult = await apiClient.getWorkflowStepData(res.value._id, res.value.steps[1]._id);
+        if (!novuRestResult.isSuccessResult()) {
+          throw new Error(novuRestResult.error!.responseText);
+        }
+        const { variables } = novuRestResult.value;
+        const variableList = getJsonSchemaPrimitiveProperties(variables as JSONSchemaDto);
+        const hasStepVariables = variableList.some((variable) => variable.startsWith('steps.'));
+        expect(hasStepVariables, JSON.stringify(variableList)).to.be.true;
+      });
     });
   });
 
-  async function patchWorkflowAndReturnResponse(workflowId: string, active: boolean) {
-    const novuRestResult = await workflowsClient.patchWorkflow(workflowId, {
+  describe('Patch workflow', () => {
+    it('should work and allow us to turn workflow active on / off and have the status change accordingly', async () => {
+      const workflowDto = await createWorkflow(buildWorkflow());
+      let updatedWorkflow = await patchWorkflow(workflowDto._id, false);
+      expect(updatedWorkflow.status).to.equal(WorkflowStatusEnum.INACTIVE);
+      updatedWorkflow = await patchWorkflow(workflowDto._id, true);
+      expect(updatedWorkflow.status).to.equal(WorkflowStatusEnum.ACTIVE);
+    });
+  });
+
+  describe('Delete workflow', () => {
+    it('should delete a workflow', async () => {
+      const { _id, workflowId } = await createWorkflowAndValidate();
+      await session.testAgent.del(`/v2/workflows/${workflowId}`).expect(204);
+      await session.testAgent.get(`/v2/workflows/${workflowId}`).expect(404);
+
+      const preferencesRepository = new PreferencesRepository();
+      const preferences = await preferencesRepository.find({
+        _templateId: _id,
+        _organizationId: session.organization._id,
+      });
+      expect(preferences.length).to.equal(0);
+    });
+  });
+
+  describe('Error handling', () => {
+    it('should show status ok when no problems', async () => {
+      const workflowCreated = await createWorkflowAndValidate();
+      await getWorkflowAndValidate(workflowCreated);
+    });
+
+    describe('workflow validation issues', () => {
+      it('should respond with 400 when name is empty', async () => {
+        const createWorkflowDto: CreateWorkflowDto = buildWorkflow({ name: '' });
+
+        const res = await apiClient.createWorkflow(createWorkflowDto);
+        expect(res.isSuccessResult()).to.be.false;
+        expect(res.error?.responseText).to.include('name must be longer than or equal to 1 characters');
+      });
+
+      it('should respond with 400 when name is too long', async () => {
+        const createWorkflowDto: CreateWorkflowDto = buildWorkflow({
+          name: Array.from({ length: 80 }).join('X'),
+        });
+
+        const res = await apiClient.createWorkflow(createWorkflowDto);
+        expect(res.isSuccessResult()).to.be.false;
+        expect(res.error?.responseText).to.include('name must be shorter than or equal to 64 characters');
+      });
+
+      it('should respond with 400 when description is too long', async () => {
+        const createWorkflowDto: CreateWorkflowDto = buildWorkflow({
+          description: Array.from({ length: 260 }).join('X'),
+        });
+
+        const res = await apiClient.createWorkflow(createWorkflowDto);
+        expect(res.isSuccessResult()).to.be.false;
+        expect(res.error?.responseText).to.include('description must be shorter than or equal to 256 characters');
+      });
+
+      it('should respond with 400 when description is too long on an update call', async () => {
+        const createWorkflowDto = buildWorkflow();
+
+        const res = await apiClient.createWorkflow(createWorkflowDto);
+        expect(res.isSuccessResult()).to.be.true;
+
+        if (res.isSuccessResult()) {
+          const updateWorkflowDto = {
+            ...res.value,
+            description: Array.from({ length: 260 }).join('X'),
+          };
+          const updateResult = await apiClient.updateWorkflow(res.value?._id, updateWorkflowDto);
+          expect(updateResult.isSuccessResult(), JSON.stringify(updateResult.value)).to.be.false;
+          if (!updateResult.isSuccessResult()) {
+            expect(updateResult.error?.responseText).to.include(
+              'description must be shorter than or equal to 256 characters'
+            );
+          }
+        }
+      });
+
+      it('should respond with 400 when a tag is too long', async () => {
+        const createWorkflowDto: CreateWorkflowDto = buildWorkflow({
+          tags: ['tag1', Array.from({ length: 50 }).join('X')],
+        });
+
+        const res = await apiClient.createWorkflow(createWorkflowDto);
+        expect(res.isSuccessResult()).to.be.false;
+        expect(res.error?.responseText).to.include(
+          'each value in tags must be longer than or equal to 1 and shorter than or equal to 32 characters'
+        );
+      });
+
+      it('should respond with 400 when a tag is empty', async () => {
+        const createWorkflowDto: CreateWorkflowDto = buildWorkflow({
+          tags: ['tag1', ''],
+        });
+
+        const res = await apiClient.createWorkflow(createWorkflowDto);
+        expect(res.isSuccessResult()).to.be.false;
+        expect(res.error?.responseText).to.include(
+          'each value in tags must be longer than or equal to 1 and shorter than or equal to 32 characters'
+        );
+      });
+
+      it('should respond with 400 when a duplicate tag is provided', async () => {
+        const createWorkflowDto: CreateWorkflowDto = buildWorkflow({
+          tags: ['tag1', 'tag1'],
+        });
+
+        const res = await apiClient.createWorkflow(createWorkflowDto);
+        expect(res.isSuccessResult()).to.be.false;
+        expect(res.error?.responseText).to.include("All tags's elements must be unique");
+      });
+
+      it('should respond with 400 when more than 16 tags are provided', async () => {
+        const createWorkflowDto: CreateWorkflowDto = buildWorkflow({
+          tags: Array.from({ length: 17 }).map((_, index) => `tag${index}`),
+        });
+
+        const res = await apiClient.createWorkflow(createWorkflowDto);
+        expect(res.isSuccessResult()).to.be.false;
+        expect(res.error?.responseText).to.include('tags must contain no more than 16 elements');
+      });
+    });
+
+    describe('steps validation', () => {
+      it('should throw 400 when name is empty', async () => {
+        // @ts-ignore
+        const overrideDto = { steps: [{ ...buildEmailStep(), name: '' } as unknown as StepCreateDto] };
+        const createWorkflowDto: CreateWorkflowDto = buildWorkflow();
+        const dtoWithoutName = { ...createWorkflowDto, ...overrideDto };
+
+        const res = await apiClient.createWorkflow(dtoWithoutName);
+        if (res.isSuccessResult()) {
+          throw new Error(`should fail${JSON.stringify(res.value)}`);
+        }
+        expect(res.error?.responseText, res.error?.responseText).to.contain('name');
+      });
+
+      describe('step control issues', () => {
+        it('should return issues for all steps immediately', async () => {
+          const createWorkflowDto: CreateWorkflowDto = buildWorkflow({
+            steps: [
+              {
+                name: 'In-App Test Step',
+                type: StepTypeEnum.IN_APP,
+                controlValues: {
+                  // body is missing on purpose
+                  redirect: { url: 'not-good-url-please-replace', target: '_blank' },
+                  primaryAction: {
+                    label: 'primary',
+                    redirect: { url: 'not-good-url-please-replace', target: '_blank' },
+                  },
+                  secondaryAction: {
+                    label: 'secondary',
+                    redirect: { url: 'not-good-url-please-replace', target: '_blank' },
+                  },
+                },
+              },
+            ],
+          });
+
+          const { value: createdWorkflow } = await apiClient.createWorkflow(createWorkflowDto);
+
+          const stepData = await getStepData(createdWorkflow!._id, createdWorkflow!.steps[0]._id);
+          expect(stepData.issues!.controls!.body).to.eql([
+            { message: 'Body is required', issueType: 'MISSING_VALUE', variableName: 'body' },
+          ]);
+
+          // TODO: This should return a different type such as 'INVALID_URL'
+          expect(stepData.issues!.controls!['redirect.url'][0].issueType).to.equal('MISSING_VALUE');
+          expect(stepData.issues!.controls!['primaryAction.redirect.url'][0].issueType).to.equal('MISSING_VALUE');
+          expect(stepData.issues!.controls!['secondaryAction.redirect.url'][0].issueType).to.equal('MISSING_VALUE');
+        });
+
+        it('should always show digest control value issues when illegal value provided', async () => {
+          const steps = [{ ...buildDigestStep({ controlValues: { amount: '555', unit: 'days' } }) }];
+          const workflowCreated = await createWorkflow(buildWorkflow({ steps }));
+          const step = workflowCreated.steps[0];
+
+          expect(step.issues?.controls?.amount[0].issueType).to.deep.equal(StepContentIssueEnum.TIER_LIMIT_EXCEEDED);
+          expect(step.issues?.controls?.unit[0].issueType).to.deep.equal(StepContentIssueEnum.TIER_LIMIT_EXCEEDED);
+        });
+
+        it('should always show issues for illegal variables in control values', async () => {
+          const createWorkflowDto: CreateWorkflowDto = buildWorkflow({
+            steps: [
+              {
+                name: 'Email Test Step',
+                type: StepTypeEnum.EMAIL,
+                controlValues: { body: 'Welcome {{}}' },
+              },
+            ],
+          });
+
+          const res = await apiClient.createWorkflow(createWorkflowDto);
+          expect(res.isSuccessResult()).to.be.true;
+          if (res.isSuccessResult()) {
+            const workflow = res.value;
+
+            const stepData = await getStepData(workflow._id, workflow.steps[0]._id);
+            expect(stepData.issues, 'Step data should have issues').to.exist;
+            expect(stepData.issues?.controls?.body, 'Step data should have body issues').to.exist;
+            expect(stepData.issues?.controls?.body?.[0]?.variableName).to.equal('{{}}');
+            expect(stepData.issues?.controls?.body?.[0]?.issueType).to.equal('ILLEGAL_VARIABLE_IN_CONTROL_VALUE');
+          }
+        });
+      });
+    });
+  });
+
+  /*
+   * =======================================================================================================
+   * TODO: All helper functions below should be replaced by the internal Novu SDK autogenerated by Speakeasy
+   * ==================================================================================================
+   */
+
+  async function createWorkflow(newVar: CreateWorkflowDto): Promise<WorkflowResponseDto> {
+    const res = await apiClient.createWorkflow(newVar);
+    if (!res.isSuccessResult()) {
+      throw new Error(res.error!.responseText);
+    }
+
+    return res.value;
+  }
+
+  async function getWorkflow(id: string): Promise<WorkflowResponseDto> {
+    const res = await apiClient.getWorkflow(id);
+    if (!res.isSuccessResult()) {
+      throw new Error(res.error!.responseText);
+    }
+
+    return res.value;
+  }
+
+  async function patchWorkflow(workflowId: string, active: boolean) {
+    const res = await apiClient.patchWorkflow(workflowId, {
       active,
     });
-    if (!novuRestResult.isSuccessResult()) {
-      throw new Error(novuRestResult.error!.responseText);
-    }
-    const updatedWorkflow = novuRestResult.value;
-
-    return updatedWorkflow;
-  }
-
-  describe('Patch Workflow Permutations', () => {
-    it('Patch should work and allow us to turn workflow active on / off and have the status change accordingly', async () => {
-      const workflowDto = await createWorkflowRest(buildCreateWorkflowDto('', { steps: [buildInAppStep()] }));
-      await patchStepRest(workflowDto._id, workflowDto.steps[0]._id, {
-        controlValues: { body: 'body1', subject: 'subject1' },
-      });
-      let updatedWorkflow = await patchWorkflowAndReturnResponse(workflowDto._id, false);
-      expect(updatedWorkflow.status).to.equal(WorkflowStatusEnum.INACTIVE);
-      updatedWorkflow = await patchWorkflowAndReturnResponse(workflowDto._id, true);
-      expect(updatedWorkflow.status).to.equal(WorkflowStatusEnum.ACTIVE);
-      await patchStepRest(workflowDto._id, workflowDto.steps[0]._id, { controlValues: {} });
-      updatedWorkflow = await patchWorkflowAndReturnResponse(workflowDto._id, false);
-      expect(updatedWorkflow.status).to.equal(WorkflowStatusEnum.INACTIVE);
-      updatedWorkflow = await patchWorkflowAndReturnResponse(workflowDto._id, true);
-      expect(updatedWorkflow.status).to.equal(WorkflowStatusEnum.ACTIVE);
-    });
-  });
-
-  async function createWorkflowRest(newVar: CreateWorkflowDto): Promise<WorkflowResponseDto> {
-    const novuRestResult = await workflowsClient.createWorkflow(newVar);
-    if (!novuRestResult.isSuccessResult()) {
-      throw new Error(novuRestResult.error!.responseText);
+    if (!res.isSuccessResult()) {
+      throw new Error(res.error!.responseText);
     }
 
-    return novuRestResult.value;
+    return res.value;
   }
 
-  async function patchStepRest(workflowDatabaseId: string, stepId1: string, patchStepDataDto: PatchStepDataDto) {
-    const novuRestResult = await workflowsClient.patchWorkflowStepData(workflowDatabaseId, stepId1, patchStepDataDto);
-    if (!novuRestResult.isSuccessResult()) {
-      throw new Error(novuRestResult.error!.responseText);
+  async function updateWorkflow(id: string, workflow: UpdateWorkflowDto): Promise<WorkflowResponseDto> {
+    const res = await apiClient.updateWorkflow(id, workflow);
+    if (!res.isSuccessResult()) {
+      throw new Error(res.error!.responseText);
     }
 
-    return novuRestResult.value;
-  }
-
-  async function updateWorkflowRest(id: string, workflow: UpdateWorkflowDto): Promise<WorkflowResponseDto> {
-    const novuRestResult = await workflowsClient.updateWorkflow(id, workflow);
-    if (novuRestResult.isSuccessResult()) {
-      return novuRestResult.value;
-    }
-    throw new Error(novuRestResult.error!.responseText);
-  }
-
-  function constructSlugForStepRequest(stepInRequest: StepUpdateDto) {
-    return `${slugify(stepInRequest.name)}_${ShortIsPrefixEnum.STEP}${encodeBase62((stepInRequest as StepUpdateDto)._id)}`;
+    return res.value;
   }
 
   async function syncWorkflow(devWorkflow: WorkflowResponseDto, prodEnvironmentId: string) {
-    const res = await workflowsClient.syncWorkflow(devWorkflow._id, {
+    const res = await apiClient.syncWorkflow(devWorkflow._id, {
       targetEnvironmentId: prodEnvironmentId,
     });
     if (res.isSuccessResult()) {
@@ -985,7 +993,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
   }
 
   async function getStepData(workflowId: string, stepId: string, envId?: string) {
-    const novuRestResult = await createWorkflowClient(session.serverUrl, getHeaders(envId)).getWorkflowStepData(
+    const novuRestResult = await createWorkflowClient(session.serverUrl, setHeaders(envId)).getWorkflowStepData(
       workflowId,
       stepId
     );
@@ -998,7 +1006,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
   }
 
   async function getWorkflowTestData(workflowId: string, envId?: string) {
-    const novuRestResult = await createWorkflowClient(session.serverUrl, getHeaders(envId)).getWorkflowTestData(
+    const novuRestResult = await createWorkflowClient(session.serverUrl, setHeaders(envId)).getWorkflowTestData(
       workflowId
     );
     if (!novuRestResult.isSuccessResult()) {
@@ -1014,8 +1022,9 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
     expectedPastUpdatedAt: string,
     updateRequest: UpdateWorkflowDto
   ): Promise<void> {
-    const updatedWorkflow: WorkflowResponseDto = await updateWorkflowRest(workflowRequestId, updateRequest);
-    const slug = `${slugify(updateRequest.name)}_${ShortIsPrefixEnum.WORKFLOW}${encodeBase62(updatedWorkflow._id)}`;
+    const updatedWorkflow: WorkflowResponseDto = await updateWorkflow(workflowRequestId, updateRequest);
+    const slug = buildSlug(updateRequest.name, ShortIsPrefixEnum.WORKFLOW, updatedWorkflow._id);
+
     expect(updatedWorkflow.slug).to.equal(slug);
     // eslint-disable-next-line no-plusplus
     for (let i = 0; i < updateRequest.steps.length; i++) {
@@ -1028,11 +1037,15 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
       }
 
       if ('_id' in stepInRequest) {
-        expect(constructSlugForStepRequest(stepInRequest)).to.equal(updatedWorkflow.steps[i].slug);
+        expect(buildSlug(stepInRequest.name, ShortIsPrefixEnum.STEP, stepInRequest._id)).to.equal(
+          updatedWorkflow.steps[i].slug
+        );
       }
     }
-    expect(convertToDate(updatedWorkflow.updatedAt)).to.be.greaterThan(convertToDate(expectedPastUpdatedAt));
+
+    expect(new Date(updatedWorkflow.updatedAt)).to.be.greaterThan(new Date(expectedPastUpdatedAt));
   }
+
   async function assertValuesInSteps(workflowCreated: WorkflowResponseDto) {
     for (const step of workflowCreated.steps) {
       expect(step).to.be.ok;
@@ -1047,22 +1060,54 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
       }
     }
   }
-  async function create10Workflows(prefix: string) {
+
+  async function create10Workflows(prefix: string = 'Test Workflow') {
     // eslint-disable-next-line no-plusplus
     for (let i = 0; i < 10; i++) {
-      await createWorkflowAndValidate(`${prefix}-ABC${i}`);
+      await createWorkflowAndValidate(`${prefix}-${i}`);
     }
   }
 
-  async function createWorkflowAndValidate(nameSuffix: string = ''): Promise<WorkflowResponseDto> {
-    const createWorkflowDto: CreateWorkflowDto = buildCreateWorkflowDto(nameSuffix);
-    const res = await workflowsClient.createWorkflow(createWorkflowDto);
+  async function createWorkflowAndValidate(name: string = 'Test Workflow'): Promise<WorkflowResponseDto> {
+    const createWorkflowDto: CreateWorkflowDto = buildWorkflow({ name });
+    const res = await apiClient.createWorkflow(createWorkflowDto);
     if (!res.isSuccessResult()) {
       throw new Error(res.error!.responseText);
     }
     validateCreateWorkflowResponse(res.value, createWorkflowDto);
 
     return res.value;
+  }
+
+  async function getWorkflowAndValidate(workflowCreated: WorkflowResponseDto) {
+    const workflowRetrieved = await getWorkflow(workflowCreated._id);
+    expect(workflowRetrieved).to.deep.equal(workflowCreated);
+  }
+
+  async function listWorkflows(query: string, offset: number, limit: number): Promise<ListWorkflowResponse> {
+    return (await session.testAgent.get(`/v2/workflows?query=${query}&offset=${offset}&limit=${limit}`)).body.data;
+  }
+
+  async function getAllAndValidate({
+    msgPrefix = '',
+    searchQuery = '',
+    offset = 0,
+    limit = 50,
+    expectedTotalResults,
+    expectedArraySize,
+  }: {
+    msgPrefix?: string;
+    searchQuery: string;
+    offset?: number;
+    limit?: number;
+    expectedTotalResults: number;
+    expectedArraySize: number;
+  }): Promise<WorkflowListResponseDto[]> {
+    const listWorkflowResponse: ListWorkflowResponse = await listWorkflows(searchQuery, offset, limit);
+    expect(listWorkflowResponse.workflows).lengthOf(expectedArraySize);
+    expect(listWorkflowResponse.totalCount).to.be.equal(expectedTotalResults);
+
+    return listWorkflowResponse.workflows;
   }
 
   function stringify(workflowResponseDto: any) {
@@ -1092,40 +1137,6 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
     }
   }
 
-  async function createWorkflowAndReturn(
-    overrideDto: Partial<
-      WorkflowCommonsFields & {
-        workflowId: string;
-        steps: StepCreateDto[];
-        __source: WorkflowCreationSourceEnum;
-        preferences?: PreferencesRequestDto;
-      }
-    >
-  ) {
-    const createWorkflowDto: CreateWorkflowDto = buildCreateWorkflowDto('nameSuffix');
-    const dtoWithoutName = { ...createWorkflowDto, ...overrideDto };
-
-    const res = await workflowsClient.createWorkflow(dtoWithoutName);
-    if (!res.isSuccessResult()) {
-      throw new Error(res.error!.responseText);
-    }
-    const workflowCreated: WorkflowResponseDto = res.value;
-
-    return workflowCreated;
-  }
-
-  async function createWorkflowAndReturnStepIssues(overrideDto: Partial<CreateWorkflowDto>, stepIndex: number) {
-    const workflowCreated = await createWorkflowAndReturn(overrideDto);
-    const { steps } = workflowCreated;
-    expect(steps, JSON.stringify(workflowCreated)).to.be.ok;
-    const step = steps[stepIndex];
-    const { issues } = step;
-    expect(issues, JSON.stringify(step)).to.be.ok;
-    if (issues) {
-      return { issues, status: workflowCreated.status };
-    }
-    throw new Error('Issues not found');
-  }
   function validateCreateWorkflowResponse(
     workflowResponseDto: WorkflowResponseDto,
     createWorkflowDto: CreateWorkflowDto
@@ -1133,6 +1144,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
     assertWorkflowResponseBodyData(workflowResponseDto);
     assertStepResponse(workflowResponseDto, createWorkflowDto);
   }
+
   function getJsonSchemaPrimitiveProperties(
     schema: JSONSchemaDto | JSONSchemaDefinition[] | boolean,
     prefix: string = ''
@@ -1173,381 +1185,15 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
 
     return properties;
   }
+
   function isJSONSchemaDto(obj: any): obj is JSONSchemaDto {
     // Check if the object has a 'type' property and is of type 'string'
     return typeof obj === 'object' && obj !== null && typeof obj.type === 'string';
   }
+
   function isPrimitiveType(schema: JSONSchemaDto): boolean {
     const primitiveTypes = ['string', 'number', 'boolean', 'null'];
 
     return primitiveTypes.includes((schema.type && (schema.type as string)) || '');
   }
-  async function addValueToExistingStep(steps: UpsertStepBody[], workflowDatabaseId: string): Promise<UpdateStepBody> {
-    const stepToUpdate = steps[0];
-
-    if (isStepUpdateBody(stepToUpdate)) {
-      stepToUpdate.name = `Updated Step Name- ${generateUUID()}`;
-      await workflowsClient.patchWorkflowStepData(workflowDatabaseId, stepToUpdate._id, {
-        controlValues: { test: `test-${generateUUID()}` },
-      });
-
-      return stepToUpdate;
-    }
-
-    throw new Error('Step to update is not a StepUpdateDto');
-  }
-  async function buildUpdateDto(workflowCreated: WorkflowResponseDto): Promise<UpsertWorkflowBody> {
-    const updateDto = convertResponseToUpdateDto(workflowCreated);
-    const updatedStep = await addValueToExistingStep(updateDto.steps, workflowCreated._id);
-    const newStep = buildInAppStep();
-
-    return {
-      ...updateDto,
-      name: `${TEST_WORKFLOW_UPDATED_NAME}-${generateUUID()}`,
-      steps: [updatedStep, newStep],
-    };
-  }
-
-  describe('Workflow Step Issues', () => {
-    it('should show issues for illegal variables in control values', async () => {
-      const createWorkflowDto: CreateWorkflowDto = buildCreateWorkflowDto('test-issues', {
-        steps: [
-          {
-            name: 'Email Test Step',
-            type: StepTypeEnum.EMAIL,
-            controlValues: { body: 'Welcome {{}}' },
-          },
-        ],
-      });
-
-      const res = await workflowsClient.createWorkflow(createWorkflowDto);
-      expect(res.isSuccessResult()).to.be.true;
-      if (res.isSuccessResult()) {
-        const workflow = res.value;
-
-        const stepData = await getStepData(workflow._id, workflow.steps[0]._id);
-        expect(stepData.issues, 'Step data should have issues').to.exist;
-        expect(stepData.issues?.controls?.body, 'Step data should have body issues').to.exist;
-        expect(stepData.issues?.controls?.body?.[0]?.variableName).to.equal('{{}}');
-        expect(stepData.issues?.controls?.body?.[0]?.issueType).to.equal('ILLEGAL_VARIABLE_IN_CONTROL_VALUE');
-      }
-    });
-
-    // todo add validation for invalid URLs
-    it.skip('should show issues for invalid URLs', async () => {
-      const createWorkflowDto: CreateWorkflowDto = buildCreateWorkflowDto('test-issues', {
-        steps: [
-          {
-            name: 'In-App Test Step',
-            type: StepTypeEnum.IN_APP,
-            controlValues: {
-              redirect: { url: 'not-good-url-please-replace' },
-              primaryAction: { redirect: { url: 'not-good-url-please-replace' } },
-              secondaryAction: { redirect: { url: 'not-good-url-please-replace' } },
-            },
-          },
-        ],
-      });
-
-      const res = await workflowsClient.createWorkflow(createWorkflowDto);
-      expect(res.isSuccessResult()).to.be.true;
-      if (res.isSuccessResult()) {
-        const workflow = res.value;
-
-        const stepData = await getStepData(workflow._id, workflow.steps[0]._id);
-        expect(stepData.issues, 'Step data should have issues').to.exist;
-        expect(stepData.issues?.controls?.['redirect.url']?.[0]?.issueType).to.equal('INVALID_URL');
-        expect(stepData.issues?.controls?.['primaryAction.redirect.url']?.[0]?.issueType).to.equal('INVALID_URL');
-        expect(stepData.issues?.controls?.['secondaryAction.redirect.url']?.[0]?.issueType).to.equal('INVALID_URL');
-      }
-    });
-
-    it('should show issues for missing required control values', async () => {
-      const createWorkflowDto: CreateWorkflowDto = buildCreateWorkflowDto('test-issues', {
-        steps: [
-          {
-            name: 'In-App Test Step',
-            type: StepTypeEnum.IN_APP,
-          },
-        ],
-      });
-
-      const res = await workflowsClient.createWorkflow(createWorkflowDto);
-      expect(res.isSuccessResult()).to.be.true;
-      if (res.isSuccessResult()) {
-        const workflow = res.value;
-        const stepData = await getStepData(workflow._id, workflow.steps[0]._id);
-        expect(stepData.issues, 'Step data should have issues').to.exist;
-        expect(stepData.issues?.controls, 'Step data should have control issues').to.exist;
-        expect(stepData.issues?.controls?.body?.[0]?.issueType).to.equal('MISSING_VALUE');
-      }
-    });
-  });
 });
-
-function buildEmailStep(overrides: Partial<StepCreateDto> = {}): StepCreateDto {
-  return {
-    name: 'Email Test Step',
-    type: StepTypeEnum.EMAIL,
-    ...overrides,
-  };
-}
-function buildDigestStep(overrides: Partial<StepCreateDto> = {}): StepCreateDto {
-  return {
-    name: 'Digest Test Step',
-    type: StepTypeEnum.DIGEST,
-    ...overrides,
-  };
-}
-
-function buildInAppStep(overrides: Partial<StepCreateDto> = {}): StepCreateDto {
-  return {
-    name: 'In-App Test Step',
-    type: StepTypeEnum.IN_APP,
-    ...overrides,
-  };
-}
-
-export function buildCreateWorkflowDto(
-  nameSuffix: string,
-  overrides: Partial<CreateWorkflowDto> = {}
-): CreateWorkflowDto {
-  return {
-    __source: WorkflowCreationSourceEnum.EDITOR,
-    name: TEST_WORKFLOW_NAME + nameSuffix,
-    workflowId: `${slugify(TEST_WORKFLOW_NAME + nameSuffix)}`,
-    description: 'This is a test workflow',
-    active: true,
-    tags: TEST_TAGS,
-    steps: [buildEmailStep(), buildInAppStep()],
-    ...overrides,
-  };
-}
-
-function convertToDate(dateString: string) {
-  const timestamp = Date.parse(dateString);
-
-  return new Date(timestamp);
-}
-
-function parseAndReturnJson(res: ApiResponse, url: string) {
-  let parse: any;
-  try {
-    parse = JSON.parse(res.text);
-  } catch (e) {
-    expect.fail(
-      '',
-      '',
-      `'Expected response to be JSON' text: ${res.text}, url: ${url}, method: ${res.req.method}, status: ${res.status}`
-    );
-  }
-  expect(parse).to.be.ok;
-
-  return parse.data;
-}
-
-async function safeRest<T>(
-  url: string,
-  method: () => Promise<ApiResponse>,
-  expectedStatus: number = 200
-): Promise<unknown> {
-  const res: ApiResponse = await method();
-  expect(res.status).to.eq(
-    expectedStatus,
-    `[${res.req.method}]  Failed for URL: ${url} 
-    with text: 
-    ${res.text}
-     full response:
-      ${JSON.stringify(res, null, 2)}`
-  ); // Check if the status code is 200
-
-  if (res.status !== 200) {
-    return res.text;
-  }
-
-  return parseAndReturnJson(res, url);
-}
-
-async function getWorkflowRest(workflowId: string): Promise<WorkflowResponseDto> {
-  return await safeGet(`${v2Prefix}/workflows/${workflowId}`);
-}
-
-async function validateWorkflowDeleted(workflowId: string): Promise<void> {
-  await session.testAgent.get(`${v2Prefix}/workflows/${workflowId}`).expect(404);
-  await validatePreferencesDeleted(workflowId);
-}
-
-async function validatePreferencesDeleted(workflowId: string): Promise<void> {
-  const preferencesRepository = new PreferencesRepository();
-  const preferences = await preferencesRepository.find({
-    _templateId: workflowId,
-    _organizationId: session.organization._id,
-  });
-  expect(preferences.length).to.equal(0);
-}
-
-async function getWorkflowAndValidate(workflowCreated: WorkflowResponseDto) {
-  const workflowRetrieved = await getWorkflowRest(workflowCreated._id);
-  expect(workflowRetrieved).to.deep.equal(workflowCreated);
-}
-
-async function getListWorkflows(query: string, offset: number, limit: number): Promise<ListWorkflowResponse> {
-  return await safeGet(`${v2Prefix}/workflows?query=${query}&offset=${offset}&limit=${limit}`);
-}
-
-// eslint-disable-next-line @typescript-eslint/naming-convention
-interface AllAndValidate {
-  msgPrefix?: string;
-  searchQuery: string;
-  offset?: number;
-  limit?: number;
-  expectedTotalResults: number;
-  expectedArraySize: number;
-}
-
-function buildLogMsg(
-  { msgPrefix = '', searchQuery = '', offset = 0, limit = 50, expectedTotalResults, expectedArraySize }: AllAndValidate,
-  listWorkflowResponse: ListWorkflowResponse
-): string {
-  return `Log - msgPrefix: ${msgPrefix}, 
-  searchQuery: ${searchQuery}, 
-  offset: ${offset}, 
-  limit: ${limit}, 
-  expectedTotalResults: ${expectedTotalResults ?? 'Not specified'}, 
-  expectedArraySize: ${expectedArraySize ?? 'Not specified'}
-  response: 
-  ${JSON.stringify(listWorkflowResponse || 'Not specified', null, 2)}`;
-}
-
-async function getAllAndValidate({
-  msgPrefix = '',
-  searchQuery = '',
-  offset = 0,
-  limit = 50,
-  expectedTotalResults,
-  expectedArraySize,
-}: AllAndValidate): Promise<WorkflowListResponseDto[]> {
-  const listWorkflowResponse: ListWorkflowResponse = await getListWorkflows(searchQuery, offset, limit);
-  const summery: string = buildLogMsg(
-    {
-      msgPrefix,
-      searchQuery,
-      offset,
-      limit,
-      expectedTotalResults,
-      expectedArraySize,
-    },
-    listWorkflowResponse
-  );
-  expect(listWorkflowResponse.workflows).to.be.an('array', summery);
-  expect(listWorkflowResponse.workflows).lengthOf(expectedArraySize, ` workflowSummaries length${summery}`);
-  expect(listWorkflowResponse.totalCount).to.be.equal(expectedTotalResults, `total Results don't match${summery}`);
-
-  return listWorkflowResponse.workflows;
-}
-
-async function deleteWorkflowRest(_id: string): Promise<void> {
-  await safeDelete(`${v2Prefix}/workflows/${_id}`);
-}
-
-async function deleteWorkflowAndValidateDeletion(_id: string): Promise<void> {
-  await deleteWorkflowRest(_id);
-  await validateWorkflowDeleted(_id);
-}
-
-function extractIDs(workflowSummaries: WorkflowListResponseDto[]) {
-  return workflowSummaries.map((workflow) => workflow._id);
-}
-
-function buildIdSet(
-  listWorkflowResponse1: WorkflowListResponseDto[],
-  listWorkflowResponse2: WorkflowListResponseDto[]
-) {
-  return new Set([...extractIDs(listWorkflowResponse1), ...extractIDs(listWorkflowResponse2)]);
-}
-
-function removeFields<T>(obj: T, ...keysToRemove: (keyof T)[]): T {
-  const objCopy = JSON.parse(JSON.stringify(obj));
-  keysToRemove.forEach((key) => {
-    delete objCopy[key as keyof T];
-  });
-
-  return objCopy;
-}
-
-// eslint-disable-next-line @typescript-eslint/naming-convention
-interface ApiResponse {
-  req: {
-    method: string; // e.g., "GET"
-    url: string; // e.g., "http://127.0.0.1:1336/v1/v2/workflows/66e929c6667852862a1e5145"
-    headers: {
-      authorization: string; // e.g., "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpX5cJ9..."
-      'novu-environment-id': string; // e.g., "66e929c6667852862a1e50e4"
-    };
-  };
-  header: {
-    'content-security-policy': string;
-    'cross-origin-embedder-policy': string;
-    'cross-origin-opener-policy': string;
-    'cross-origin-resource-policy': string;
-    'x-dns-prefetch-control': string;
-    'x-frame-options': string;
-    'strict-transport-security': string;
-    'x-download-options': string;
-    'x-content-type-options': string;
-    'origin-agent-cluster': string;
-    'x-permitted-cross-domain-policies': string;
-    'referrer-policy': string;
-    'x-xss-protection': string;
-    'access-control-allow-origin': string;
-    'content-type': string;
-    'content-length': string;
-    etag: string;
-    vary: string;
-    date: string;
-    connection: string;
-  };
-  status: number; // e.g., 400
-  text: string; // e.g., "{\"message\":\"Workflow not found with id: 66e929c6667852862a1e5145\",\"error\":\"Bad Request\",\"statusCode\":400}"
-}
-
-async function safeGet<T>(url: string): Promise<T> {
-  return (await safeRest(url, () => session.testAgent.get(url) as unknown as Promise<ApiResponse>)) as T;
-}
-
-async function safeDelete<T>(url: string): Promise<void> {
-  await safeRest(url, () => session.testAgent.delete(url) as unknown as Promise<ApiResponse>, 204);
-}
-
-function generateUUID(): string {
-  // Generate a random 4-byte hex string
-  const randomHex = () => randomBytes(2).toString('hex');
-
-  // Construct the UUID using the random hex values
-  return `${randomHex()}${randomHex()}-${randomHex()}-${randomHex()}-${randomHex()}-${randomHex()}${randomHex()}${randomHex()}`;
-}
-
-function convertResponseToUpdateDto(workflowCreated: WorkflowResponseDto): UpsertWorkflowBody {
-  const workflowWithoutResponseFields = removeFields(workflowCreated, 'updatedAt', '_id', 'status');
-  const steps: UpsertStepBody[] = workflowWithoutResponseFields.steps.map((step) => removeFields(step, 'stepId'));
-
-  return { ...workflowWithoutResponseFields, steps };
-}
-
-function createStep(): StepCreateDto {
-  return {
-    name: 'someStep',
-    type: StepTypeEnum.SMS,
-  };
-}
-
-function buildUpdateRequest(workflowCreated: WorkflowResponseDto): UpdateWorkflowDto {
-  const steps = [createStep()];
-  const updateRequest = removeFields(workflowCreated, 'updatedAt', '_id', 'status') as UpdateWorkflowDto;
-
-  return {
-    ...updateRequest,
-    name: TEST_WORKFLOW_UPDATED_NAME,
-    steps,
-  };
-}

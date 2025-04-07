@@ -364,13 +364,19 @@ export const AddNode = (_props: NodeProps<NodeType>) => {
                   navigate(
                     buildRoute(ROUTES.EDIT_STEP_TEMPLATE, {
                       stepSlug: data.steps[data.steps.length - 1].slug,
-                    })
+                    }),
+                    {
+                      state: { hideValidationErrorsOnFirstRender: true },
+                    }
                   );
                 } else if (INLINE_CONFIGURABLE_STEP_TYPES.includes(stepType)) {
                   navigate(
                     buildRoute(ROUTES.EDIT_STEP, {
                       stepSlug: data.steps[data.steps.length - 1].slug,
-                    })
+                    }),
+                    {
+                      state: { hideValidationErrorsOnFirstRender: true },
+                    }
                   );
                 }
               },

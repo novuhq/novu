@@ -6,9 +6,7 @@ import {
   StepTypeEnum,
   UpdateWorkflowDto,
   WorkflowCreationSourceEnum,
-  WorkflowOriginEnum,
   WorkflowResponseDto,
-  WorkflowTestDataResponseDto,
 } from '@novu/shared';
 
 interface ITestStepConfig {

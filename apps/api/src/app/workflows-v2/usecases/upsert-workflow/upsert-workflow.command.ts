@@ -112,6 +112,10 @@ export class UpsertWorkflowDataCommand {
 }
 
 export class UpsertWorkflowCommand extends EnvironmentWithUserObjectCommand {
+  @ValidateNested()
+  @Type(() => UpsertWorkflowDataCommand)
+  workflowDto: UpsertWorkflowDataCommand;
+
   @IsOptional()
   @IsBoolean()
   preserveWorkflowId?: boolean;
@@ -119,8 +123,4 @@ export class UpsertWorkflowCommand extends EnvironmentWithUserObjectCommand {
   @IsOptional()
   @IsString()
   workflowIdOrInternalId?: string;
-
-  @ValidateNested()
-  @Type(() => UpsertWorkflowDataCommand)
-  workflowDto: UpsertWorkflowDataCommand;
 }

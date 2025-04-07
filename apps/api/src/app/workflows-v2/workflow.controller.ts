@@ -12,7 +12,12 @@ import {
   UseInterceptors,
 } from '@nestjs/common/decorators';
 import { ApiTags } from '@nestjs/swagger';
-import { DeleteWorkflowCommand, DeleteWorkflowUseCase, UserSession } from '@novu/application-generic';
+import {
+  DeleteWorkflowCommand,
+  DeleteWorkflowUseCase,
+  ExternalApiAccessible,
+  UserSession,
+} from '@novu/application-generic';
 import {
   CreateWorkflowDto,
   DirectionEnum,
@@ -21,7 +26,6 @@ import {
   GeneratePreviewResponseDto,
   GetListQueryParams,
   ListWorkflowResponse,
-  PatchStepDataDto,
   PatchWorkflowDto,
   StepResponseDto,
   SyncWorkflowDto,
@@ -30,6 +34,7 @@ import {
   WorkflowOriginEnum,
   WorkflowResponseDto,
   WorkflowTestDataResponseDto,
+  ApiAuthSchemeEnum,
 } from '@novu/shared';
 import { ApiCommonResponses } from '../shared/framework/response.decorator';
 import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
@@ -44,7 +49,6 @@ import {
 import { PreviewCommand, PreviewUsecase } from './usecases/preview';
 import { GetWorkflowCommand, GetWorkflowUseCase } from './usecases/get-workflow';
 import { ListWorkflowsCommand, ListWorkflowsUseCase } from './usecases/list-workflows';
-import { PatchStepCommand, PatchStepUsecase } from './usecases/patch-step-data';
 import { PatchWorkflowCommand, PatchWorkflowUsecase } from './usecases/patch-workflow';
 import { SyncToEnvironmentCommand, SyncToEnvironmentUseCase } from './usecases/sync-to-environment';
 import { UpsertWorkflowCommand, UpsertWorkflowUseCase } from './usecases/upsert-workflow';
@@ -66,12 +70,12 @@ export class WorkflowController {
     private previewUsecase: PreviewUsecase,
     private buildWorkflowTestDataUseCase: BuildWorkflowTestDataUseCase,
     private buildStepDataUsecase: BuildStepDataUsecase,
-    private patchStepDataUsecase: PatchStepUsecase,
     private patchWorkflowUsecase: PatchWorkflowUsecase,
     private duplicateWorkflowUseCase: DuplicateWorkflowUseCase
   ) {}
 
   @Post('')
+  @ExternalApiAccessible()
   async create(
     @UserSession(ParseSlugEnvironmentIdPipe) user: UserSessionData,
     @Body() createWorkflowDto: CreateWorkflowDto
@@ -85,6 +89,7 @@ export class WorkflowController {
   }
 
   @Put(':workflowId/sync')
+  @ExternalApiAccessible()
   async sync(
     @UserSession() user: UserSessionData,
     @Param('workflowId', ParseSlugIdPipe) workflowIdOrInternalId: string,
@@ -100,6 +105,7 @@ export class WorkflowController {
   }
 
   @Put(':workflowId')
+  @ExternalApiAccessible()
   async update(
     @UserSession(ParseSlugEnvironmentIdPipe) user: UserSessionData,
     @Param('workflowId', ParseSlugIdPipe) workflowIdOrInternalId: string,
@@ -115,6 +121,7 @@ export class WorkflowController {
   }
 
   @Get(':workflowId')
+  @ExternalApiAccessible()
   async getWorkflow(
     @UserSession(ParseSlugEnvironmentIdPipe) user: UserSessionData,
     @Param('workflowId', ParseSlugIdPipe) workflowIdOrInternalId: string,
@@ -132,6 +139,7 @@ export class WorkflowController {
   }
 
   @Delete(':workflowId')
+  @ExternalApiAccessible()
   @HttpCode(HttpStatus.NO_CONTENT)
   async removeWorkflow(
     @UserSession(ParseSlugEnvironmentIdPipe) user: UserSessionData,
@@ -148,6 +156,7 @@ export class WorkflowController {
   }
 
   @Get('')
+  @ExternalApiAccessible()
   async searchWorkflows(
     @UserSession(ParseSlugEnvironmentIdPipe) user: UserSessionData,
     @Query() query: GetListQueryParams
@@ -208,24 +217,8 @@ export class WorkflowController {
     );
   }
 
-  @Patch('/:workflowId/steps/:stepId')
-  async patchWorkflowStepData(
-    @UserSession(ParseSlugEnvironmentIdPipe) user: UserSessionData,
-    @Param('workflowId', ParseSlugIdPipe) workflowIdOrInternalId: string,
-    @Param('stepId', ParseSlugIdPipe) stepIdOrInternalId: string,
-    @Body() patchStepDataDto: PatchStepDataDto
-  ): Promise<StepResponseDto> {
-    return await this.patchStepDataUsecase.execute(
-      PatchStepCommand.create({
-        user,
-        workflowIdOrInternalId,
-        stepIdOrInternalId,
-        ...patchStepDataDto,
-      })
-    );
-  }
-
   @Patch('/:workflowId')
+  @ExternalApiAccessible()
   async patchWorkflow(
     @UserSession(ParseSlugEnvironmentIdPipe) user: UserSessionData,
     @Param('workflowId', ParseSlugIdPipe) workflowIdOrInternalId: string,

@@ -3,7 +3,7 @@ import { Slug, StepTypeEnum, WorkflowOriginEnum } from '../../types';
 import { StepContentIssueEnum, StepIntegrationIssueEnum, StepIssueEnum } from './step-content-issue.enum';
 
 export type StepResponseDto = {
-  controls: ControlsMetadata;
+  controls: Controls;
   variables: JSONSchemaDto;
   stepId: string;
   _id: string;
@@ -21,11 +21,7 @@ export type StepUpdateDto = StepCreateDto & {
 };
 
 export type StepCreateDto = StepDto & {
-  controlValues?: Record<string, unknown> | null;
-};
-
-export type PatchStepDataDto = {
-  name?: string;
+  // TODO: Rename to controls to align naming with the response DTO
   controlValues?: Record<string, unknown> | null;
 };
 
@@ -104,7 +100,7 @@ export class UiSchema {
   properties?: Record<string, UiSchemaProperty>;
 }
 
-export class ControlsMetadata {
+export class Controls {
   dataSchema?: JSONSchemaDto;
   uiSchema?: UiSchema;
   values: Record<string, unknown>;
