@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Instrument, InstrumentUsecase } from '@novu/application-generic';
+import { InstrumentUsecase } from '@novu/application-generic';
 
 import {
   PreferencesTypeEnum,
@@ -17,6 +17,9 @@ import { UpsertWorkflowUseCase } from '../upsert-workflow/upsert-workflow.usecas
 import { DuplicateWorkflowCommand } from './duplicate-workflow.command';
 import { GetWorkflowCommand } from '../get-workflow';
 import { UpsertWorkflowCommand, UpsertWorkflowDataCommand } from '../upsert-workflow/upsert-workflow.command';
+import { WorkflowNotDuplicableException } from '../../exceptions/workflow-not-duplicable-exception';
+
+export const DUPLICABLE_WORKFLOW_ORIGINS = [WorkflowOriginEnum.NOVU_CLOUD];
 
 @Injectable()
 export class DuplicateWorkflowUseCase {
@@ -34,6 +37,11 @@ export class DuplicateWorkflowUseCase {
         user: command.user,
       })
     );
+
+    if (!this.isDuplicable(workflow)) {
+      throw new WorkflowNotDuplicableException(workflow);
+    }
+
     const preferences = await this.getWorkflowPreferences(workflow._id, command.user.environmentId);
     const duplicateWorkflowDto = await this.buildDuplicateWorkflowDto(workflow, command.overrides, preferences);
 
@@ -47,7 +55,10 @@ export class DuplicateWorkflowUseCase {
     return duplicatedWorkflow;
   }
 
-  @Instrument()
+  private isDuplicable(workflow: WorkflowResponseDto): boolean {
+    return DUPLICABLE_WORKFLOW_ORIGINS.includes(workflow.origin);
+  }
+
   private async buildDuplicateWorkflowDto(
     originWorkflow: WorkflowResponseDto,
     overrides: DuplicateWorkflowDto,
@@ -65,7 +76,6 @@ export class DuplicateWorkflowUseCase {
     };
   }
 
-  @Instrument()
   private async mapStepsToDuplicate(steps: StepResponseDto[]): Promise<StepCreateDto[]> {
     return steps.map((step) => ({
       name: step.name ?? '',

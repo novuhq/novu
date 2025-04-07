@@ -1,8 +1,9 @@
+// TODO: Move this file under e2e folder and merge it with the one that has the same name
+
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { randomUUID } from 'node:crypto';
-import { after, beforeEach } from 'mocha';
-import { sleep } from '@nestjs/terminus/dist/utils';
+import { beforeEach } from 'mocha';
 import {
   ChannelTypeEnum,
   createWorkflowClient,
@@ -16,9 +17,11 @@ import {
   RedirectTargetEnum,
   StepTypeEnum,
   WorkflowCreationSourceEnum,
+  WorkflowResponseDto,
+  UpdateWorkflowDto,
 } from '@novu/shared';
-import { EmailControlType, InAppControlType } from '@novu/application-generic';
-import { buildCreateWorkflowDto } from './workflow.controller.e2e';
+import { EmailControlType } from '@novu/application-generic';
+import { buildWorkflow } from './workflow.controller.e2e';
 import { fullCodeSnippet, previewPayloadExample } from './maily-test-data';
 
 const SUBJECT_TEST_PAYLOAD = '{{payload.subject.test.payload}}';
@@ -34,19 +37,14 @@ describe('Generate Preview #novu-v2', () => {
     await session.initialize();
     workflowsClient = createWorkflowClient(session.serverUrl, getHeaders());
   });
-  after(async () => {
-    await sleep(1000);
-  });
 
-  async function patchStepWithControlValues(workflowSlug: string, stepSlug: string, controlValues: InAppControlType) {
-    const novuRestResult1 = await workflowsClient.patchWorkflowStepData(workflowSlug, stepSlug, {
-      controlValues,
-    });
-    if (!novuRestResult1.isSuccessResult()) {
-      throw new Error('shoud patch');
+  async function updateWorkflow(id: string, workflow: UpdateWorkflowDto): Promise<WorkflowResponseDto> {
+    const res = await workflowsClient.updateWorkflow(id, workflow);
+    if (!res.isSuccessResult()) {
+      throw new Error(res.error!.responseText);
     }
 
-    return novuRestResult1.value;
+    return res.value;
   }
 
   describe('Generate Preview', () => {
@@ -230,7 +228,7 @@ describe('Generate Preview #novu-v2', () => {
 
       it('Should not fail if inApp is providing partial URL in redirect', async () => {
         const steps = [{ name: 'IN_APP_STEP_SHOULD_NOT_FAIL', type: StepTypeEnum.IN_APP }];
-        const createDto = buildCreateWorkflowDto('', { steps });
+        const createDto = buildWorkflow({ steps });
         const novuRestResult = await workflowsClient.createWorkflow(createDto);
         if (!novuRestResult.isSuccessResult()) {
           throw new Error('should create workflow');
@@ -253,7 +251,15 @@ describe('Generate Preview #novu-v2', () => {
         };
         const workflowSlug = novuRestResult.value?.slug;
         const stepSlug = novuRestResult.value?.steps[0].slug;
-        const stepDataDto = await patchStepWithControlValues(workflowSlug, stepSlug, controlValues);
+        const stepDataDto = await updateWorkflow(workflowSlug, {
+          ...novuRestResult.value,
+          steps: [
+            {
+              ...novuRestResult.value.steps[0],
+              controlValues,
+            },
+          ],
+        });
         const generatePreviewResponseDto = await generatePreview(
           workflowsClient,
           workflowSlug,
@@ -285,18 +291,22 @@ describe('Generate Preview #novu-v2', () => {
 
       it('Should not fail if inApp url ref is a placeholder without payload', async () => {
         const steps = [{ name: 'IN_APP_STEP_SHOULD_NOT_FAIL', type: StepTypeEnum.IN_APP }];
-        const createDto = buildCreateWorkflowDto('', { steps });
+        const createDto = buildWorkflow({ steps });
         const novuRestResult = await workflowsClient.createWorkflow(createDto);
         if (!novuRestResult.isSuccessResult()) {
           throw new Error('should create workflow');
         }
         const workflowSlug = novuRestResult.value?.slug;
         const stepSlug = novuRestResult.value?.steps[0].slug;
-        const stepDataDto = await patchStepWithControlValues(
-          workflowSlug,
-          stepSlug,
-          buildInAppControlValueWithAPlaceholderInTheUrl()
-        );
+        const stepDataDto = await updateWorkflow(workflowSlug, {
+          ...novuRestResult.value,
+          steps: [
+            {
+              ...novuRestResult.value.steps[0],
+              ...buildInAppControlValueWithAPlaceholderInTheUrl(),
+            },
+          ],
+        });
         const generatePreviewResponseDto = await generatePreview(
           workflowsClient,
           workflowSlug,
@@ -520,7 +530,7 @@ export async function createWorkflowAndReturnId(
   workflowsClient: ReturnType<typeof createWorkflowClient>,
   type: StepTypeEnum
 ) {
-  const createWorkflowDto = buildCreateWorkflowDto(`${type}:${randomUUID()}`);
+  const createWorkflowDto = buildWorkflow();
   createWorkflowDto.steps[0].type = type;
   const workflowResult = await workflowsClient.createWorkflow(createWorkflowDto);
   if (!workflowResult.isSuccessResult()) {
