@@ -177,13 +177,6 @@ export class NotificationFeedItemDto implements INotificationDto {
   })
   seen: boolean;
 
-  @ApiProperty({
-    description: 'Indicates whether the notification has been deleted.',
-    example: false,
-    type: Boolean,
-  })
-  deleted: boolean;
-
   @ApiPropertyOptional({
     description: 'Device tokens for push notifications, if applicable.',
     type: [String],
