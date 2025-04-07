@@ -1,9 +1,5 @@
 import { DigestTypeEnum } from '@novu/shared';
-import {
-  DigestOutput,
-  DigestRegularOutput,
-  DigestTimedOutput,
-} from '@novu/framework/internal';
+import { DigestOutput, DigestRegularOutput, DigestTimedOutput } from '@novu/framework/internal';
 
 export function getDigestType(outputs: DigestOutput): DigestTypeEnum {
   if (isTimedDigestOutput(outputs)) {
@@ -15,24 +11,18 @@ export function getDigestType(outputs: DigestOutput): DigestTypeEnum {
   return DigestTypeEnum.REGULAR;
 }
 
-export const isTimedDigestOutput = (
-  outputs: DigestOutput | undefined,
-): outputs is DigestTimedOutput => {
+export const isTimedDigestOutput = (outputs: DigestOutput | undefined): outputs is DigestTimedOutput => {
   return (outputs as DigestTimedOutput)?.cron != null;
 };
 
-export const isLookBackDigestOutput = (
-  outputs: DigestOutput,
-): outputs is DigestRegularOutput => {
+export const isLookBackDigestOutput = (outputs: DigestOutput): outputs is DigestRegularOutput => {
   return (
     (outputs as DigestRegularOutput)?.lookBackWindow?.amount != null &&
     (outputs as DigestRegularOutput)?.lookBackWindow?.unit != null
   );
 };
 
-export const isRegularDigestOutput = (
-  outputs: DigestOutput,
-): outputs is DigestRegularOutput => {
+export const isRegularDigestOutput = (outputs: DigestOutput): outputs is DigestRegularOutput => {
   return !isTimedDigestOutput(outputs) && !isLookBackDigestOutput(outputs);
 };
 
@@ -90,8 +80,11 @@ export const BRIDGE_EXECUTION_ERROR = {
   },
   SELF_SIGNED_CERTIFICATE: {
     code: 'SelfSignedCertificate',
-    message: (url: string) =>
-      `Bridge Endpoint can't use a self signed certificate in production environments.`,
+    message: (url: string) => `Bridge Endpoint can't use a self signed certificate in production environments.`,
+  },
+  PAYLOAD_TOO_LARGE: {
+    code: 'PayloadTooLarge',
+    message: (url: string) => `Payload too large for \`${url}\``,
   },
   UNKNOWN_BRIDGE_REQUEST_ERROR: {
     code: 'UnknownBridgeRequestError',
@@ -99,7 +92,6 @@ export const BRIDGE_EXECUTION_ERROR = {
   },
   UNKNOWN_BRIDGE_NON_REQUEST_ERROR: {
     code: 'UnknownBridgeNonRequestError',
-    message: (url: string) =>
-      `Unknown bridge non-request error calling \`${url}\``,
+    message: (url: string) => `Unknown bridge non-request error calling \`${url}\``,
   },
 } satisfies Record<string, { code: string; message: (url: string) => string }>;

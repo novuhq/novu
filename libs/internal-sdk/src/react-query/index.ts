@@ -59,6 +59,7 @@ export * from "./workflowsGetStepData.js";
 export * from "./workflowsGetWorkflowTestData.js";
 export * from "./workflowsRetrieve.js";
 export * from "./workflowsUpdate.js";
+export * from "./workflowsWorkflowControllerDuplicateWorkflow.js";
 export * from "./workflowsWorkflowControllerGeneratePreview.js";
 export * from "./workflowsWorkflowControllerPatchWorkflow.js";
 export * from "./workflowsWorkflowControllerPatchWorkflowStepData.js";

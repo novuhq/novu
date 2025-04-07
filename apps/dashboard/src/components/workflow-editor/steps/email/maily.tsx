@@ -89,7 +89,7 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
       if (from === 'repeat-variable') {
         filteredVariables.push(...arrays, ...namespaces);
 
-        if (namespaces.some((namespace) => queryWithoutSuffix.includes(namespace.name))) {
+        if (parsedVariables.isAllowedVariable(queryWithoutSuffix)) {
           filteredVariables.push({ name: queryWithoutSuffix, required: false });
         }
 

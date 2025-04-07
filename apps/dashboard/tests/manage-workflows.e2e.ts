@@ -76,8 +76,8 @@ test('manage workflows', async ({ page }) => {
   // Wait for navigation and check title
   await expect(page).toHaveTitle(`Edit ${inAppStepName} | Novu Cloud Dashboard`);
 
-  // check the validation errors
-  await expect(await inAppStepEditor.getBodyValidationError()).toBeVisible();
+  // check that validation errors don't show right after a step was created
+  await expect(await inAppStepEditor.getBodyValidationError()).not.toBeVisible();
 
   await inAppStepEditor.fillForm({
     subject,

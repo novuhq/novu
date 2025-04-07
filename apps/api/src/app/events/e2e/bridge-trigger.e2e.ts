@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { expect } from 'chai';
 import sinon from 'sinon';
+import getPort from 'get-port';
 
 import { SubscribersService, UserSession } from '@novu/testing';
 import {
@@ -46,7 +47,8 @@ contexts.forEach((context: Context) => {
     let bridge;
 
     beforeEach(async () => {
-      bridgeServer = new TestBridgeServer();
+      const port = await getPort();
+      bridgeServer = new TestBridgeServer(port);
       bridge = context.isStateful ? undefined : { url: `${bridgeServer.serverPath}/novu` };
       session = new UserSession();
       await session.initialize();
@@ -59,6 +61,7 @@ contexts.forEach((context: Context) => {
     });
 
     it(`should trigger the bridge workflow with sync [${context.name}]`, async function () {
+      this.timeout(10000);
       const workflowId = `hello-world-${`${context.name}`}`;
       const newWorkflow = workflow(
         workflowId,

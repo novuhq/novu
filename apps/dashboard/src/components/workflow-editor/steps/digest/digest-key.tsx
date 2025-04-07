@@ -57,8 +57,13 @@ export const DigestKey = () => {
                   value: variable.label,
                 }))}
                 value={parseLiquidVariables(field.value)}
-                placeholder="add additional digest key..."
+                placeholder="payload."
                 className="w-full"
+                emptyState={
+                  <p className="text-foreground-600 mt-1 p-1 text-xs">
+                    Refine the digest aggregation key further by specifying a payload variable
+                  </p>
+                }
               />
               <div className="transition-all duration-200 ease-in-out">
                 {field.value && (

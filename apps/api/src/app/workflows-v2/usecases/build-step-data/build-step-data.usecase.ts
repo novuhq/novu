@@ -1,12 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ControlValuesLevelEnum, ShortIsPrefixEnum, StepResponseDto, WorkflowOriginEnum } from '@novu/shared';
 import { ControlValuesRepository, NotificationStepEntity, NotificationTemplateEntity } from '@novu/dal';
-import {
-  GetWorkflowByIdsUseCase,
-  Instrument,
-  InstrumentUsecase,
-  WorkflowInternalResponseDto,
-} from '@novu/application-generic';
+import { GetWorkflowByIdsUseCase, Instrument, InstrumentUsecase } from '@novu/application-generic';
+
 import { BuildStepDataCommand } from './build-step-data.command';
 import { InvalidStepException } from '../../exceptions/invalid-step.exception';
 import { BuildVariableSchemaUsecase } from '../build-variable-schema';
@@ -22,7 +18,7 @@ export class BuildStepDataUsecase {
 
   @InstrumentUsecase()
   async execute(command: BuildStepDataCommand): Promise<StepResponseDto> {
-    const workflow: WorkflowInternalResponseDto = await this.fetchWorkflow(command);
+    const workflow = await this.fetchWorkflow(command);
 
     const { currentStep } = await this.loadStepsFromDb(command, workflow);
     if (!currentStep._templateId || currentStep.stepId === undefined || !currentStep.template?.type) {
@@ -56,7 +52,7 @@ export class BuildStepDataUsecase {
   private async buildAvailableVariableSchema(
     command: BuildStepDataCommand,
     currentStep: NotificationStepEntity,
-    workflow: WorkflowInternalResponseDto
+    workflow: NotificationTemplateEntity
   ) {
     return await this.buildAvailableVariableSchemaUsecase.execute({
       environmentId: command.user.environmentId,
@@ -73,7 +69,6 @@ export class BuildStepDataUsecase {
       workflowIdOrInternalId: command.workflowIdOrInternalId,
       environmentId: command.user.environmentId,
       organizationId: command.user.organizationId,
-      userId: command.user._id,
     });
   }
 

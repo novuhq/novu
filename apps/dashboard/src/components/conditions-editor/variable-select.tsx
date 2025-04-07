@@ -15,6 +15,7 @@ type VariableSelectProps = HTMLAttributes<HTMLDivElement> & {
   title?: string;
   placeholder?: string;
   error?: string;
+  emptyState?: React.ReactNode;
 };
 
 /**
@@ -26,6 +27,7 @@ type VariableSelectProps = HTMLAttributes<HTMLDivElement> & {
  * - Auto-creation of new options when typing custom values
  * - Visual feedback for selected items
  * - Support for custom left icon
+ * - Empty state when no variables are available
  */
 export const VariableSelect = (props: VariableSelectProps) => {
   const {
@@ -38,6 +40,7 @@ export const VariableSelect = (props: VariableSelectProps) => {
     title = 'Variables',
     error,
     placeholder,
+    emptyState,
     ...rest
   } = props;
   const [inputValue, setInputValue] = useState(value ?? '');
@@ -151,6 +154,21 @@ export const VariableSelect = (props: VariableSelectProps) => {
             selectedValue={value}
             title={title}
           />
+        </PopoverContent>
+      )}
+
+      {filteredOptions.length === 0 && !inputValue && emptyState && (
+        <PopoverContent
+          className="max-w-[250px] p-1"
+          side="bottom"
+          align="start"
+          onOpenAutoFocus={(e) => {
+            // prevent the input from being blurred when the popover opens
+            e.preventDefault();
+          }}
+          onFocusOutside={onClose}
+        >
+          {emptyState}
         </PopoverContent>
       )}
     </Popover>

@@ -238,7 +238,7 @@ export class SubscribersController {
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         subscriberId,
-        workflowId: body.workflowId,
+        workflowIdOrInternalId: body.workflowId,
         channels: body.channels,
       })
     );

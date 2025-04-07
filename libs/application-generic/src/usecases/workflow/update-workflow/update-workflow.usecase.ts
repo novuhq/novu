@@ -34,15 +34,15 @@ import {
   DeletePreferencesCommand,
   DeletePreferencesUseCase,
   GetPreferences,
-  GetWorkflowByIdsCommand,
-  GetWorkflowByIdsUseCase,
   NotificationStep,
   NotificationStepVariantCommand,
   UpsertPreferences,
   UpsertUserWorkflowPreferencesCommand,
   UpsertWorkflowPreferencesCommand,
-  WorkflowInternalResponseDto,
 } from '../..';
+import { GetWorkflowWithPreferencesCommand } from '../get-workflow-with-preferences/get-workflow-with-preferences.command';
+import { GetWorkflowWithPreferencesUseCase } from '../get-workflow-with-preferences/get-workflow-with-preferences.usecase';
+import { WorkflowWithPreferencesResponseDto } from '../get-workflow-with-preferences/get-workflow-with-preferences.dto';
 import {
   DeleteMessageTemplate,
   DeleteMessageTemplateCommand,
@@ -77,27 +77,26 @@ export class UpdateWorkflow {
     private upsertPreferences: UpsertPreferences,
     @Inject(forwardRef(() => DeletePreferencesUseCase))
     private deletePreferencesUsecase: DeletePreferencesUseCase,
-    @Inject(forwardRef(() => GetWorkflowByIdsUseCase))
-    private getWorkflowByIdsUseCase: GetWorkflowByIdsUseCase,
+    @Inject(forwardRef(() => GetWorkflowWithPreferencesUseCase))
+    private getWorkflowWithPreferencesUseCase: GetWorkflowWithPreferencesUseCase,
     private controlValuesRepository: ControlValuesRepository,
     private resourceValidatorService: ResourceValidatorService
   ) {}
 
   @InstrumentUsecase()
-  async execute(command: UpdateWorkflowCommand): Promise<WorkflowInternalResponseDto> {
+  async execute(command: UpdateWorkflowCommand): Promise<WorkflowWithPreferencesResponseDto> {
     await this.validatePayload(command);
 
-    const existingTemplate = await this.getWorkflowByIdsUseCase.execute(
-      GetWorkflowByIdsCommand.create({
+    const existingTemplate = await this.getWorkflowWithPreferencesUseCase.execute(
+      GetWorkflowWithPreferencesCommand.create({
         workflowIdOrInternalId: command.id,
         environmentId: command.environmentId,
         organizationId: command.organizationId,
-        userId: command.userId,
       })
     );
     if (!existingTemplate) throw new NotFoundException(`Notification template with id ${command.id} not found`);
 
-    let updatePayload: Partial<WorkflowInternalResponseDto> = {};
+    let updatePayload: Partial<WorkflowWithPreferencesResponseDto> = {};
     if (command.name) {
       updatePayload.name = command.name;
     }
@@ -143,7 +142,7 @@ export class UpdateWorkflow {
       existingTemplate._id
     );
 
-    let notificationTemplateWithStepTemplate: WorkflowInternalResponseDto;
+    let notificationTemplateWithStepTemplate: WorkflowWithPreferencesResponseDto;
     await this.notificationTemplateRepository.withTransaction(async () => {
       if (command.steps) {
         updatePayload = this.updateTriggers(updatePayload, command.steps);
@@ -274,9 +273,8 @@ export class UpdateWorkflow {
         }
       );
 
-      notificationTemplateWithStepTemplate = await this.getWorkflowByIdsUseCase.execute(
-        GetWorkflowByIdsCommand.create({
-          userId: command.userId,
+      notificationTemplateWithStepTemplate = await this.getWorkflowWithPreferencesUseCase.execute(
+        GetWorkflowWithPreferencesCommand.create({
           environmentId: command.environmentId,
           organizationId: command.organizationId,
           workflowIdOrInternalId: command.id,
@@ -439,10 +437,10 @@ export class UpdateWorkflow {
 
   @Instrument()
   private updateTriggers(
-    updatePayload: Partial<WorkflowInternalResponseDto>,
+    updatePayload: Partial<WorkflowWithPreferencesResponseDto>,
     steps: NotificationStep[]
-  ): Partial<WorkflowInternalResponseDto> {
-    const updatePayloadResult: Partial<WorkflowInternalResponseDto> = {
+  ): Partial<WorkflowWithPreferencesResponseDto> {
+    const updatePayloadResult: Partial<WorkflowWithPreferencesResponseDto> = {
       ...updatePayload,
     };
 

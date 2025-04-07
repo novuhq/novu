@@ -83,6 +83,7 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
   const navigate = useNavigate();
   const { safeSync, isSyncable, tooltipContent, PromoteConfirmModal } = useSyncWorkflow(workflow);
   const isV1Workflow = workflow.origin === WorkflowOriginEnum.NOVU_CLOUD_V1;
+  const isDuplicable = workflow.origin === WorkflowOriginEnum.NOVU_CLOUD;
   const workflowLink = isV1Workflow
     ? buildRoute(`${LEGACY_DASHBOARD_URL}/workflows/edit/:workflowId`, {
         workflowId: workflow._id,
@@ -277,17 +278,35 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
                     View activity
                   </DropdownMenuItem>
                 </Link>
-                <Link
-                  to={buildRoute(ROUTES.WORKFLOWS_DUPLICATE, {
-                    environmentSlug: currentEnvironment?.slug ?? '',
-                    workflowId: workflow.workflowId,
-                  })}
-                >
-                  <DropdownMenuItem className="cursor-pointer">
-                    <FilesIcon />
-                    Duplicate workflow
-                  </DropdownMenuItem>
-                </Link>
+                {isDuplicable ? (
+                  <Link
+                    to={buildRoute(ROUTES.WORKFLOWS_DUPLICATE, {
+                      environmentSlug: currentEnvironment?.slug ?? '',
+                      workflowId: workflow.workflowId,
+                    })}
+                  >
+                    <DropdownMenuItem className="cursor-pointer">
+                      <FilesIcon />
+                      Duplicate workflow
+                    </DropdownMenuItem>
+                  </Link>
+                ) : (
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <DropdownMenuItem className="cursor-not-allowed opacity-60">
+                        <FilesIcon />
+                        Duplicate workflow
+                      </DropdownMenuItem>
+                    </TooltipTrigger>
+                    <TooltipPortal>
+                      <TooltipContent>
+                        {workflow.origin === WorkflowOriginEnum.NOVU_CLOUD_V1
+                          ? 'V1 workflows cannot be duplicated using dashboard. Please visit the legacy portal.'
+                          : 'External workflows cannot be duplicated using dashboard.'}
+                      </TooltipContent>
+                    </TooltipPortal>
+                  </Tooltip>
+                )}
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
               <DropdownMenuGroup className="*:cursor-pointer">

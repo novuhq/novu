@@ -40,8 +40,6 @@
       <excludeFolder url="file://$MODULE_DIR$/providers/telnyx/build" />
       <excludeFolder url="file://$MODULE_DIR$/providers/twilio/build" />
       <excludeFolder url="file://$MODULE_DIR$/packages/react/storybook-static" />
-      <excludeFolder url="file://$MODULE_DIR$/packages/notification-center/.storybook" />
-      <excludeFolder url="file://$MODULE_DIR$/packages/notification-center/build" />
       <excludeFolder url="file://$MODULE_DIR$/.source" />
       <excludeFolder url="file://$MODULE_DIR$/apps/web/src/styled-system" />
       <excludeFolder url="file://$MODULE_DIR$/libs/novui/styled-system" />

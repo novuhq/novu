@@ -8,6 +8,7 @@ import { workflowsGetStepData } from "../funcs/workflowsGetStepData.js";
 import { workflowsGetWorkflowTestData } from "../funcs/workflowsGetWorkflowTestData.js";
 import { workflowsRetrieve } from "../funcs/workflowsRetrieve.js";
 import { workflowsUpdate } from "../funcs/workflowsUpdate.js";
+import { workflowsWorkflowControllerDuplicateWorkflow } from "../funcs/workflowsWorkflowControllerDuplicateWorkflow.js";
 import { workflowsWorkflowControllerGeneratePreview } from "../funcs/workflowsWorkflowControllerGeneratePreview.js";
 import { workflowsWorkflowControllerPatchWorkflow } from "../funcs/workflowsWorkflowControllerPatchWorkflow.js";
 import { workflowsWorkflowControllerPatchWorkflowStepData } from "../funcs/workflowsWorkflowControllerPatchWorkflowStepData.js";
@@ -111,6 +112,19 @@ export class Workflows extends ClientSDK {
     options?: RequestOptions,
   ): Promise<operations.WorkflowControllerPatchWorkflowResponse> {
     return unwrapAsync(workflowsWorkflowControllerPatchWorkflow(
+      this,
+      workflowId,
+      idempotencyKey,
+      options,
+    ));
+  }
+
+  async workflowControllerDuplicateWorkflow(
+    workflowId: string,
+    idempotencyKey?: string | undefined,
+    options?: RequestOptions,
+  ): Promise<operations.WorkflowControllerDuplicateWorkflowResponse> {
+    return unwrapAsync(workflowsWorkflowControllerDuplicateWorkflow(
       this,
       workflowId,
       idempotencyKey,

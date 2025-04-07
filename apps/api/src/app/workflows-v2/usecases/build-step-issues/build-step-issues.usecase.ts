@@ -90,6 +90,7 @@ export class BuildStepIssuesUsecase {
     }
 
     const sanitizedControlValues = this.sanitizeControlValues(newControlValues, workflowOrigin, stepTypeDto);
+
     const schemaIssues = this.processControlValuesBySchema(controlSchema, sanitizedControlValues || {});
     const liquidIssues = this.processControlValuesByLiquid(variableSchema, newControlValues || {});
     const customIssues = await this.processControlValuesByCustomeRules(user, stepTypeDto, sanitizedControlValues || {});

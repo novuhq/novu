@@ -5,13 +5,14 @@ export interface LiquidVariable {
   label: string;
 }
 
-export type IsAllowedVariable = (variable: string) => boolean;
+export type IsAllowedVariable = (path: string) => boolean;
+export type IsArbitraryNamespace = (path: string) => boolean;
 
 export interface ParsedVariables {
   primitives: LiquidVariable[];
   arrays: LiquidVariable[];
-  namespaces: LiquidVariable[];
   variables: LiquidVariable[];
+  namespaces: LiquidVariable[];
   isAllowedVariable: IsAllowedVariable;
 }
 
@@ -24,8 +25,8 @@ export function parseStepVariables(schema: JSONSchemaDefinition): ParsedVariable
   const result: ParsedVariables = {
     primitives: [],
     arrays: [],
-    namespaces: [],
     variables: [],
+    namespaces: [],
     isAllowedVariable: () => false,
   };
 
@@ -90,13 +91,66 @@ export function parseStepVariables(schema: JSONSchemaDefinition): ParsedVariable
 
   extractProperties(schema);
 
-  const isAllowedVariable = (variable: string) => {
-    if (result.primitives.some((primitive) => primitive.label === variable)) {
+  function parseVariablePath(path: string): string[] | null {
+    const parts = path
+      .split(/\.|\[(\d+)\]/)
+      .filter(Boolean)
+      .map((part): string | null => {
+        const num = parseInt(part);
+
+        if (!isNaN(num)) {
+          if (num < 0) return null;
+          return num.toString();
+        }
+
+        return part;
+      });
+
+    return parts.includes(null) ? null : (parts as string[]);
+  }
+
+  function isAllowedVariable(path: string): boolean {
+    if (typeof schema === 'boolean') return false;
+
+    if (result.primitives.some((primitive) => primitive.label === path)) {
       return true;
     }
 
-    return result.namespaces.some((namespace) => variable.startsWith(namespace.label + '.'));
-  };
+    const parts = parseVariablePath(path);
+    if (!parts) return false;
 
-  return { ...result, variables: [...result.primitives, ...result.namespaces], isAllowedVariable };
+    let currentObj: JSONSchemaDefinition = schema;
+
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i];
+
+      if (typeof currentObj === 'boolean' || !('type' in currentObj)) return false;
+
+      if (currentObj.type === 'array') {
+        const items = Array.isArray(currentObj.items) ? currentObj.items[0] : currentObj.items;
+        currentObj = items as JSONSchemaDefinition;
+        continue;
+      }
+
+      if (currentObj.type !== 'object') return false;
+
+      if (currentObj.additionalProperties === true) {
+        return true;
+      }
+
+      if (!currentObj.properties || !(part in currentObj.properties)) {
+        return false;
+      }
+
+      currentObj = currentObj.properties[part];
+    }
+
+    return true;
+  }
+
+  return {
+    ...result,
+    variables: [...result.primitives, ...result.namespaces],
+    isAllowedVariable,
+  };
 }

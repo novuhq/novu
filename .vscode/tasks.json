@@ -36,7 +36,7 @@
           "beginsPattern": "Successfully compiled",
           "endsPattern": "Started application in NODE_ENV"
         }
-      },
+      }
     },
     {
       "type": "npm",
@@ -208,14 +208,6 @@
       "label": "NOVUI",
       "path": "/libs/novui",
       "problemMatcher": "$tsc"
-    },
-    {
-      "type": "npm",
-      "script": "build",
-      "label": "NOTIFICATION CENTER",
-      "path": "/packages/notification-center",
-      "problemMatcher": "$tsc",
-      "dependsOn": ["NC CLIENT", "SHARED"]
     },
     {
       "type": "npm",

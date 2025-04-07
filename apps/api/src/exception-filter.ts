@@ -1,4 +1,4 @@
-import { ArgumentsHost, ExceptionFilter, HttpException, HttpStatus } from '@nestjs/common';
+import { ArgumentsHost, ExceptionFilter, HttpException, HttpStatus, PayloadTooLargeException } from '@nestjs/common';
 import { Response } from 'express';
 import { CommandValidationException, PinoLogger } from '@novu/application-generic';
 import { randomUUID } from 'node:crypto';
@@ -62,7 +62,15 @@ export class AllExceptionsFilter implements ExceptionFilter {
       return this.handleOtherHttpExceptions(exception, request);
     }
 
+    if (this.isPayloadTooLargeError(exception)) {
+      return this.handleOtherHttpExceptions(new PayloadTooLargeException(), request);
+    }
+
     return this.buildA5xxError(request, exception);
+  }
+
+  private isPayloadTooLargeError(exception: unknown) {
+    return exception?.constructor?.name === 'PayloadTooLargeError';
   }
 
   private buildA5xxError(request: Request, exception: unknown) {

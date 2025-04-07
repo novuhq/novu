@@ -69,7 +69,6 @@ export class BuildWorkflowTestDataUseCase {
       GetWorkflowByIdsCommand.create({
         environmentId: command.user.environmentId,
         organizationId: command.user.organizationId,
-        userId: command.user._id,
         workflowIdOrInternalId: command.workflowIdOrInternalId,
       })
     );

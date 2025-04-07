@@ -8,12 +8,16 @@ import {
   WorkflowOriginEnum,
   WorkflowPreferences,
   WorkflowResponseDto,
+  WorkflowStatusEnum,
 } from '@novu/shared';
 import { PreferencesEntity, PreferencesRepository } from '@novu/dal';
 import { Instrument, InstrumentUsecase } from '@novu/application-generic';
 import { SyncToEnvironmentCommand } from './sync-to-environment.command';
 import { GetWorkflowCommand, GetWorkflowUseCase } from '../get-workflow';
 import { UpsertWorkflowCommand, UpsertWorkflowDataCommand, UpsertWorkflowUseCase } from '../upsert-workflow';
+import { WorkflowNotSyncableException } from '../../exceptions/workflow-not-syncable-exception';
+
+export const SYNCABLE_WORKFLOW_ORIGINS = [WorkflowOriginEnum.NOVU_CLOUD];
 
 /**
  * This usecase is used to sync a workflow from one environment to another.
@@ -39,6 +43,11 @@ export class SyncToEnvironmentUseCase {
     }
 
     const originWorkflow = await this.getWorkflowToClone(command);
+
+    if (!this.isSyncable(originWorkflow)) {
+      throw new WorkflowNotSyncableException(originWorkflow);
+    }
+
     const preferencesToClone = await this.getWorkflowPreferences(originWorkflow._id, command.user.environmentId);
     const externalId = originWorkflow.workflowId;
     const targetWorkflow = await this.findWorkflowInTargetEnvironment(command, externalId);
@@ -54,7 +63,10 @@ export class SyncToEnvironmentUseCase {
     );
   }
 
-  @Instrument()
+  private isSyncable(workflow: WorkflowResponseDto): boolean {
+    return SYNCABLE_WORKFLOW_ORIGINS.includes(workflow.origin) && workflow.status !== WorkflowStatusEnum.ERROR;
+  }
+
   private async buildRequestDto(
     originWorkflow: WorkflowResponseDto,
     preferencesToClone: PreferencesEntity[],
@@ -94,7 +106,6 @@ export class SyncToEnvironmentUseCase {
     }
   }
 
-  @Instrument()
   private async mapWorkflowToCreateWorkflowDto(
     originWorkflow: WorkflowResponseDto,
     preferences: PreferencesEntity[]
@@ -112,7 +123,6 @@ export class SyncToEnvironmentUseCase {
     };
   }
 
-  @Instrument()
   private async mapWorkflowToUpdateWorkflowDto(
     originWorkflow: WorkflowResponseDto,
     existingTargetEnvWorkflow: WorkflowResponseDto | undefined,
@@ -130,7 +140,6 @@ export class SyncToEnvironmentUseCase {
     };
   }
 
-  @Instrument()
   private async mapStepsToCreateOrUpdateDto(
     originSteps: StepResponseDto[],
     targetEnvSteps?: StepResponseDto[]

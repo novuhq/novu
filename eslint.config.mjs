@@ -337,13 +337,7 @@ export default tsEslint.config(
 
   /* ******************** WEB PACKAGES ******************** */
   {
-    files: [
-      'libs/design-system/**',
-      'libs/novui/**',
-      'apps/widget/**',
-      'apps/web/**',
-      'packages/notification-center/**',
-    ],
+    files: ['libs/design-system/**', 'libs/novui/**', 'apps/widget/**', 'apps/web/**'],
     extends: [pluginCypress.configs.recommended],
     plugins: {
       '@pandacss': panda,

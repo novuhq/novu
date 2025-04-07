@@ -5,6 +5,7 @@ import {
   DeleteWorkflowUseCase,
   GetPreferences,
   GetWorkflowByIdsUseCase,
+  GetWorkflowWithPreferencesUseCase,
   ResourceValidatorService,
   TierRestrictionsValidateUsecase,
   UpdateWorkflow,
@@ -30,7 +31,6 @@ import {
   UpsertWorkflowUseCase,
 } from './usecases';
 import { PatchWorkflowUsecase } from './usecases/patch-workflow';
-import { PatchStepUsecase } from './usecases/patch-step-data';
 import { CreateVariablesObject } from './usecases/create-variables-object/create-variables-object.usecase';
 import { BuildStepIssuesUsecase } from './usecases/build-step-issues/build-step-issues.usecase';
 import { WorkflowController } from './workflow.controller';
@@ -53,6 +53,7 @@ const DAL_REPOSITORIES = [CommunityOrganizationRepository];
     UpsertControlValuesUseCase,
     GetPreferences,
     GetWorkflowByIdsUseCase,
+    GetWorkflowWithPreferencesUseCase,
     SyncToEnvironmentUseCase,
     BuildStepDataUsecase,
     PreviewUsecase,
@@ -60,7 +61,6 @@ const DAL_REPOSITORIES = [CommunityOrganizationRepository];
     GetWorkflowUseCase,
     DuplicateWorkflowUseCase,
     BuildVariableSchemaUsecase,
-    PatchStepUsecase,
     PatchWorkflowUsecase,
     CreateVariablesObject,
     BuildStepIssuesUsecase,

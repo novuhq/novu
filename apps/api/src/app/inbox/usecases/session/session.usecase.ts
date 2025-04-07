@@ -18,6 +18,8 @@ import { NotificationsCountCommand } from '../notifications-count/notifications-
 import { NotificationsCount } from '../notifications-count/notifications-count.usecase';
 import { SessionCommand } from './session.command';
 
+const ALLOWED_ORIGINS_REGEX = new RegExp(process.env.FRONT_BASE_URL || '');
+
 @Injectable()
 export class Session {
   constructor(
@@ -93,7 +95,7 @@ export class Session {
      * We want to prevent the playground inbox demo from marking the integration as connected
      * And only treat the real customer domain or local environment as valid origins
      */
-    const isOriginFromNovu = new RegExp(process.env.FRONT_BASE_URL).test(command.origin ?? '');
+    const isOriginFromNovu = ALLOWED_ORIGINS_REGEX.test(command.origin ?? '');
     if (!isOriginFromNovu && !inAppIntegration.connected) {
       this.analyticsService.mixpanelTrack(AnalyticsEventsEnum.INBOX_CONNECTED, '', {
         _organization: environment._organizationId,

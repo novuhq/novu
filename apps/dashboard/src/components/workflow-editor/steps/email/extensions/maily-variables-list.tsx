@@ -41,6 +41,10 @@ export const MailyVariablesList = React.forwardRef(
       },
     }));
 
+    if (items.length === 0) {
+      return null;
+    }
+
     return (
       <VariableList
         ref={variablesListRef}

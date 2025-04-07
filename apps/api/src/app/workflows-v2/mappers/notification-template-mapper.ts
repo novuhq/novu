@@ -1,4 +1,4 @@
-import { WorkflowInternalResponseDto } from '@novu/application-generic';
+import { WorkflowWithPreferencesResponseDto } from '@novu/application-generic';
 import { NotificationStepEntity, NotificationTemplateEntity } from '@novu/dal';
 import {
   PreferencesResponseDto,
@@ -16,7 +16,7 @@ import {
 import { buildSlug } from '../../shared/helpers/build-slug';
 
 export function toResponseWorkflowDto(
-  workflow: WorkflowInternalResponseDto,
+  workflow: WorkflowWithPreferencesResponseDto,
   steps: StepResponseDto[]
 ): WorkflowResponseDto {
   const preferencesDto: PreferencesResponseDto = {

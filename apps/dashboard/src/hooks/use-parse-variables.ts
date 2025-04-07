@@ -6,7 +6,13 @@ export function useParseVariables(schema?: JSONSchemaDefinition) {
   const parsedVariables = useMemo(() => {
     return schema
       ? parseStepVariables(schema)
-      : { variables: [], namespaces: [], primitives: [], arrays: [], isAllowedVariable: () => false };
+      : {
+          variables: [],
+          namespaces: [],
+          primitives: [],
+          arrays: [],
+          isAllowedVariable: () => false,
+        };
   }, [schema]);
 
   return parsedVariables;
