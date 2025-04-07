@@ -34,6 +34,7 @@ type ProjectDetails = {
   clientAppIdEnv?: string;
   secretKeyEnv?: string;
   nextClientAppIdEnv?: string;
+  nextApplicationIdentifierEnv?: string;
 };
 
 @Injectable()
@@ -188,12 +189,20 @@ export class UpdateVercelIntegration {
         type,
         value: applicationIdentifier,
         key: 'NEXT_PUBLIC_NOVU_CLIENT_APP_ID',
+        legacy: true,
       },
       {
         target,
         type,
         value: applicationIdentifier,
         key: 'NOVU_CLIENT_APP_ID',
+        legacy: true,
+      },
+      {
+        target,
+        type,
+        value: applicationIdentifier,
+        key: 'NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER',
       },
       {
         target,
@@ -209,6 +218,10 @@ export class UpdateVercelIntegration {
     };
 
     const setEnvVariable = async (projectId: string, variable: (typeof environmentVariables)[0]) => {
+      if (variable.legacy) {
+        return;
+      }
+
       try {
         const queryParams = new URLSearchParams();
         queryParams.set('upsert', 'true');
@@ -278,9 +291,14 @@ export class UpdateVercelIntegration {
       filteredVercelProjects.map<ProjectDetails>((project) => {
         const { id } = project;
         const vercelEnvs = project?.env;
+        const nextApplicationIdentifierEnv = vercelEnvs?.find(
+          (e) => e.key === 'NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER' && e.target.includes(vercelEnvironment)
+        );
+        // Legacy env variable for existing Vercel integrations
         const nextClientAppIdEnv = vercelEnvs?.find(
           (e) => e.key === 'NEXT_PUBLIC_NOVU_CLIENT_APP_ID' && e.target.includes(vercelEnvironment)
         );
+        // Legacy env variable for existing Vercel integrations
         const clientAppIdEnv = vercelEnvs?.find(
           (e) => e.key === 'NOVU_CLIENT_APP_ID' && e.target.includes(vercelEnvironment)
         );
@@ -293,6 +311,7 @@ export class UpdateVercelIntegration {
           clientAppIdEnv: clientAppIdEnv?.id,
           secretKeyEnv: secretKeyEnv?.id,
           nextClientAppIdEnv: nextClientAppIdEnv?.id,
+          nextApplicationIdentifierEnv: nextApplicationIdentifierEnv?.id,
         };
       })
     );
@@ -328,6 +347,12 @@ export class UpdateVercelIntegration {
     await Promise.all(
       vercelLinkedProjects.map((detail) => {
         const urls: string[] = [];
+        if (detail.nextApplicationIdentifierEnv) {
+          urls.push(
+            `${projectApiUrl}/${detail.projectId}/env/${detail.nextApplicationIdentifierEnv}${teamId ? `?teamId=${teamId}` : ''}`
+          );
+        }
+
         if (detail.nextClientAppIdEnv) {
           urls.push(
             `${projectApiUrl}/${detail.projectId}/env/${detail.nextClientAppIdEnv}${teamId ? `?teamId=${teamId}` : ''}`

@@ -21,6 +21,7 @@ function sanitizeEmptyInput<T_Type>(input: T_Type, defaultValue: T_Type = undefi
 }
 
 export function sanitizeRedirect(redirect: InAppRedirectType | undefined) {
+  // TODO: There is a bug here, if the redirect doesn't contain both a url and a target it is removed from the new controlValues
   if (!redirect?.url || redirect.url.length === 0 || !redirect?.target) {
     return undefined;
   }
@@ -32,6 +33,7 @@ export function sanitizeRedirect(redirect: InAppRedirectType | undefined) {
 }
 
 function sanitizeAction(action: InAppActionType) {
+  // TODO: There is a bug here, if the action doesn't contain both a label and a redirect it is removed from the new controlValues
   if (!action?.label) {
     return undefined;
   }
