@@ -67,3 +67,5 @@ export type DefaultProps = BaseProps &
 export type WithChildrenProps = BaseProps & {
   children: React.ReactNode;
 };
+
+export type { Notification };

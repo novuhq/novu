@@ -8,6 +8,8 @@ import type { UseCountsProps, UseCountsResult } from '../hooks/useCounts';
 import type { InboxProps } from '../components/Inbox';
 import type { NovuProviderProps } from '../hooks/NovuProvider';
 
+export * from '../utils/types';
+
 /**
  * Exporting all components from the components folder
  * as empty functions to fix build errors in SSR
@@ -58,59 +60,3 @@ export function usePreferences(_: UsePreferencesProps): UsePreferencesResult {
     refetch: () => Promise.resolve(),
   };
 }
-
-export type {
-  FiltersCountResponse,
-  ListNotificationsResponse,
-  NovuError,
-  Preference,
-  ChannelPreference,
-  Notification,
-  ChannelType,
-  InboxNotification,
-  NotificationFilter,
-  NotificationStatus,
-  NovuOptions,
-  PreferenceLevel,
-} from '@novu/js';
-
-export type {
-  Appearance,
-  AppearanceKey,
-  Elements,
-  ElementStyles,
-  Localization,
-  LocalizationKey,
-  NotificationActionClickHandler,
-  NotificationClickHandler,
-  NotificationRenderer,
-  PreferencesFilter,
-  RouterPush,
-  Tab,
-  Variables,
-} from '@novu/js/ui';
-
-export type { InboxProps, BellProps, InboxContentProps, NotificationProps, NovuProviderProps } from '../components';
-
-export type {
-  UseCountsProps,
-  UseCountsResult,
-  UseNotificationsProps,
-  UseNotificationsResult,
-  UsePreferencesProps,
-  UsePreferencesResult,
-} from '../hooks';
-
-export type {
-  NotificationsRenderer,
-  SubjectRenderer,
-  BodyRenderer,
-  BellRenderer,
-  DefaultInboxProps,
-  BaseProps,
-  NotificationRendererProps,
-  SubjectBodyRendererProps,
-  NoRendererProps,
-  DefaultProps,
-  WithChildrenProps,
-} from '../utils/types';
