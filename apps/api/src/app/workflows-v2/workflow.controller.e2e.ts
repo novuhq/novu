@@ -87,7 +87,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
   });
 
   describe('Create workflow', () => {
-    it('should allow creating two workflows for the same user with the same name', async () => {
+    it.only('should allow creating two workflows for the same user with the same name', async () => {
       const name = `Test Workflow${new Date().toISOString()}`;
       await createWorkflowAndValidate(name);
       const createWorkflowDto: CreateWorkflowDto = buildWorkflow({ name });
@@ -96,6 +96,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
       if (res.isSuccessResult()) {
         const workflowCreated: WorkflowResponseDto = res.value;
         expect(workflowCreated.workflowId).to.include(`${slugify(name)}-`);
+        console.log('>>>', workflowCreated);
         await assertValuesInSteps(workflowCreated);
       }
     });
@@ -1053,6 +1054,8 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
       if (step.controls) {
         expect(step.controls.values).to.be.ok;
         expect(step.controls.dataSchema).to.be.ok;
+        console.log('>>> 2', step.controls.dataSchema);
+        console.log('>>> 3', stepTypeToControlSchema[step.type]);
         expect(Object.keys(step.controls.dataSchema?.properties || {}).length).to.deep.equal(
           Object.keys(stepTypeToControlSchema[step.type].schema.properties).length
         );
