@@ -65,7 +65,7 @@ const baseTheme = (options: { multiline?: boolean }) =>
     },
     '.cm-tooltip-autocomplete.cm-tooltip': {
       position: 'relative',
-      overflow: 'hidden',
+      overflow: 'visible',
       borderRadius: 'var(--radius)',
       border: '1px solid var(--neutral-100)',
       backgroundColor: 'hsl(var(--background))',
@@ -140,6 +140,14 @@ const baseTheme = (options: { multiline?: boolean }) =>
     },
     '.cm-placeholder': {
       fontWeight: 'normal',
+    },
+    '.cm-tooltip .cm-completionInfo': {
+      marginInline: '0.375rem',
+      borderRadius: '0.5rem',
+      boxShadow: '0px 1px 3px 0px rgba(16, 24, 40, 0.10), 0px 1px 2px 0px rgba(16, 24, 40, 0.06)',
+      borderColor: 'transparent',
+      padding: '0.25rem',
+      backgroundColor: 'white',
     },
   });
 
