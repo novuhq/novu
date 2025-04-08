@@ -21,7 +21,7 @@ export interface ParsedVariables {
  * @param schema - The JSON Schema to parse.
  * @returns An object containing three arrays: primitives, arrays, and namespaces.
  */
-export function parseStepVariables(schema: JSONSchemaDefinition): ParsedVariables {
+export function parseStepVariables(schema: JSONSchemaDefinition, isEnhancedDigestEnabled: boolean): ParsedVariables {
   const result: ParsedVariables = {
     primitives: [],
     arrays: [],
@@ -150,7 +150,9 @@ export function parseStepVariables(schema: JSONSchemaDefinition): ParsedVariable
 
   return {
     ...result,
-    variables: [...result.primitives, ...result.namespaces],
+    variables: isEnhancedDigestEnabled
+      ? [...result.primitives, ...result.arrays, ...result.namespaces]
+      : [...result.primitives, ...result.namespaces],
     isAllowedVariable,
   };
 }

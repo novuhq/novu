@@ -16,7 +16,7 @@
     "start": "pnpm start:dev",
     "start:dev": "nest start --watch",
     "start:test": "cross-env NODE_ENV=test nest start",
-    "start:debug": "nest start --debug",
+    "start:debug": "nest start --debug --watch --inspect",
     "start:prod": "node dist/main.js",
     "build:metadata": "cross-env ts-node scripts/generate-metadata.ts",
     "lint": "eslint src",

@@ -2,6 +2,7 @@ import { Editor } from '@maily-to/core';
 
 import type { Editor as TiptapEditor } from '@tiptap/core';
 import { HTMLAttributes, useCallback, useMemo, useState } from 'react';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useParseVariables } from '@/hooks/use-parse-variables';
@@ -10,6 +11,7 @@ import { cn } from '@/utils/ui';
 import { createEditorBlocks, createExtensions, DEFAULT_EDITOR_CONFIG, MAILY_EMAIL_WIDTH } from './maily-config';
 import { calculateVariables, VariableFrom } from './variables/variables';
 import { RepeatMenuDescription } from './views/repeat-menu-description';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 
 type MailyProps = HTMLAttributes<HTMLDivElement> & {
   value: string;
@@ -19,6 +21,7 @@ type MailyProps = HTMLAttributes<HTMLDivElement> & {
 
 export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
   const { step } = useWorkflow();
+  const isEnhancedDigestEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_ENHANCED_DIGEST_ENABLED);
   const parsedVariables = useParseVariables(step?.variables);
   const primitives = useMemo(
     () => parsedVariables.primitives.map((v) => ({ name: v.label, required: false })),
@@ -45,9 +48,10 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
         arrays,
         namespaces,
         isAllowedVariable: parsedVariables.isAllowedVariable,
+        isEnhancedDigestEnabled,
       });
     },
-    [primitives, arrays, namespaces, parsedVariables.isAllowedVariable]
+    [primitives, arrays, namespaces, parsedVariables.isAllowedVariable, isEnhancedDigestEnabled]
   );
 
   const extensions = useMemo(

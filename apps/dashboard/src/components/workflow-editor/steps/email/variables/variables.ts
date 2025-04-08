@@ -15,6 +15,7 @@ export type CalculateVariablesProps = {
   arrays: Array<Variable>;
   namespaces: Array<Variable>;
   isAllowedVariable: (variable: string) => boolean;
+  isEnhancedDigestEnabled: boolean;
 };
 
 function insertVariable({
@@ -52,13 +53,18 @@ export const calculateVariables = ({
   arrays,
   namespaces,
   isAllowedVariable,
+  isEnhancedDigestEnabled,
 }: CalculateVariablesProps): Variables | undefined => {
   const queryWithoutSuffix = query.replace(/}+$/, '');
   const filteredVariables: Array<Variable> = [];
 
   const newNamespaces = [...namespaces, ...getRepeatBlockEachVariable(editor)];
 
-  filteredVariables.push(...primitives, ...newNamespaces);
+  if (isEnhancedDigestEnabled) {
+    filteredVariables.push(...primitives, ...arrays, ...newNamespaces);
+  } else {
+    filteredVariables.push(...primitives, ...newNamespaces);
+  }
 
   if (isAllowedVariable(queryWithoutSuffix) && isNamespaceVariableName(queryWithoutSuffix, newNamespaces)) {
     filteredVariables.push({ name: queryWithoutSuffix, required: false });

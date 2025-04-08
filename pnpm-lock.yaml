@@ -345,6 +345,9 @@ importers:
       ts-node:
         specifier: ~10.9.1
         version: 10.9.1(@swc/core@1.3.107(@swc/helpers@0.5.15))(@types/node@18.16.9)(typescript@5.6.2)
+      tsconfig-paths:
+        specifier: ^4.2.0
+        version: 4.2.0
       typescript:
         specifier: 5.6.2
         version: 5.6.2
@@ -9912,9 +9915,11 @@ packages:
   '@novu/client@2.6.6':
     resolution: {integrity: sha512-XQSZVJaNMxCmrB9UkIC/06bQPdDwYiYEkJOjrgXFLU5N2WVnB75A25jptZuHzR2fLIsE+b1Vw1y2G2+OkzqFyw==}
     engines: {node: '>=10'}
+    deprecated: April 3, 2025 marks the end of support for @novu/client. Users can migrate to the new @novu/js package. For more information, visit https://docs.novu.co/platform/sdks/javascript
 
   '@novu/notification-center@2.0.0':
     resolution: {integrity: sha512-jzhk+KebehYkc2XSUMnkp+Zd18lfPLCSMBwnsYy5V+yE2QIRM1Lb73LQyNhRw71LfriSFFfAown7xlD1+L4/Vw==}
+    deprecated: April 3, 2025 marks the end of support for @novu/notification-center. Users can migrate to the new @novu/js package. For more information, visit https://docs.novu.co/platform/inbox/overview. To migrate to the new Novu <Inbox /> refer to https://docs.novu.co/platform/inbox/react/migration-guide
     peerDependencies:
       react: '>=16.8.0'
       react-dom: '>=16.8.0'
@@ -31203,11 +31208,11 @@ packages:
 
   shikiji-core@0.9.19:
     resolution: {integrity: sha512-AFJu/vcNT21t0e6YrfadZ+9q86gvPum6iywRyt1OtIPjPFe25RQnYJyxHQPMLKCCWA992TPxmEmbNcOZCAJclw==}
-    deprecated: Shikiji is merged back to Shiki v1.0, please migrate over to get the latest updates
+    deprecated: Deprecated, use @shikijs/core instead
 
   shikiji@0.9.19:
     resolution: {integrity: sha512-Kw2NHWktdcdypCj1GkKpXH4o6Vxz8B8TykPlPuLHOGSV8VkhoCLcFOH4k19K4LXAQYRQmxg+0X/eM+m2sLhAkg==}
-    deprecated: Shikiji is merged back to Shiki v1.0, please migrate over to get the latest updates
+    deprecated: Deprecated, use shiki instead
 
   shimmer@1.2.1:
     resolution: {integrity: sha512-sQTKC1Re/rM6XyFM6fIAGHRPVGvyXfgzIDvzoq608vM+jeyVD0Tu1E6Np0Kc2zAIFWIj963V2800iF/9LPieQw==}
@@ -33658,7 +33663,6 @@ packages:
   verdaccio@5.32.1:
     resolution: {integrity: sha512-GU8a+van7cQzzv6/pXWW8jMlQ7OoWNYPqRpvCW7F2QmxzpKp9hWb3yX9iLY3CJNrODuQYnUDjJ/hmBa8rUq+Aw==}
     engines: {node: '>=14'}
-    deprecated: this version is deprecated, please migrate to 6.x versions
     hasBin: true
 
   verror@1.10.0:
@@ -62877,6 +62881,7 @@ snapshots:
       ms: 2.1.3
     optionalDependencies:
       supports-color: 8.1.1
+    optional: true
 
   debug@4.3.1(supports-color@8.1.1):
     dependencies:
@@ -64109,7 +64114,7 @@ snapshots:
 
   eslint-import-resolver-node@0.3.9:
     dependencies:
-      debug: 3.2.7(supports-color@8.1.1)
+      debug: 3.2.7(supports-color@5.5.0)
       is-core-module: 2.15.1
       resolve: 1.22.8
     transitivePeerDependencies:
@@ -64118,7 +64123,7 @@ snapshots:
   eslint-import-resolver-webpack@0.13.8(eslint-plugin-import@2.29.1)(webpack@5.94.0(@swc/core@1.3.107(@swc/helpers@0.5.15))):
     dependencies:
       array.prototype.find: 2.2.3
-      debug: 3.2.7(supports-color@8.1.1)
+      debug: 3.2.7(supports-color@5.5.0)
       enhanced-resolve: 0.9.1
       eslint-plugin-import: 2.29.1(@typescript-eslint/parser@8.18.2(eslint@8.57.1)(typescript@5.6.2))(eslint-import-resolver-webpack@0.13.8)(eslint@8.57.1)
       find-root: 1.1.0
@@ -64135,7 +64140,7 @@ snapshots:
 
   eslint-module-utils@2.8.2(@typescript-eslint/parser@5.62.0(eslint@9.19.0(jiti@2.4.2))(typescript@5.6.2))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-webpack@0.13.8(eslint-plugin-import@2.29.1)(webpack@5.94.0(@swc/core@1.3.107(@swc/helpers@0.5.15))))(eslint@9.19.0(jiti@2.4.2)):
     dependencies:
-      debug: 3.2.7(supports-color@8.1.1)
+      debug: 3.2.7(supports-color@5.5.0)
     optionalDependencies:
       '@typescript-eslint/parser': 5.62.0(eslint@9.19.0(jiti@2.4.2))(typescript@5.6.2)
       eslint: 9.19.0(jiti@2.4.2)
@@ -64146,7 +64151,7 @@ snapshots:
 
   eslint-module-utils@2.8.2(@typescript-eslint/parser@8.18.2(eslint@8.57.1)(typescript@5.6.2))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-webpack@0.13.8(eslint-plugin-import@2.29.1)(webpack@5.94.0(@swc/core@1.3.107(@swc/helpers@0.5.15))))(eslint@8.57.1):
     dependencies:
-      debug: 3.2.7(supports-color@8.1.1)
+      debug: 3.2.7(supports-color@5.5.0)
     optionalDependencies:
       '@typescript-eslint/parser': 8.18.2(eslint@8.57.1)(typescript@5.6.2)
       eslint: 8.57.1
@@ -64220,7 +64225,7 @@ snapshots:
       array.prototype.findlastindex: 1.2.5
       array.prototype.flat: 1.3.2
       array.prototype.flatmap: 1.3.2
-      debug: 3.2.7(supports-color@8.1.1)
+      debug: 3.2.7(supports-color@5.5.0)
       doctrine: 2.1.0
       eslint: 9.19.0(jiti@2.4.2)
       eslint-import-resolver-node: 0.3.9
@@ -64247,7 +64252,7 @@ snapshots:
       array.prototype.findlastindex: 1.2.5
       array.prototype.flat: 1.3.2
       array.prototype.flatmap: 1.3.2
-      debug: 3.2.7(supports-color@8.1.1)
+      debug: 3.2.7(supports-color@5.5.0)
       doctrine: 2.1.0
       eslint: 8.57.1
       eslint-import-resolver-node: 0.3.9
@@ -71937,7 +71942,7 @@ snapshots:
 
   needle@2.4.0:
     dependencies:
-      debug: 3.2.7(supports-color@8.1.1)
+      debug: 3.2.7(supports-color@5.5.0)
       iconv-lite: 0.4.24
       sax: 1.4.1
     transitivePeerDependencies:
@@ -71945,7 +71950,7 @@ snapshots:
 
   needle@3.2.0:
     dependencies:
-      debug: 3.2.7(supports-color@8.1.1)
+      debug: 3.2.7(supports-color@5.5.0)
       iconv-lite: 0.6.3
       sax: 1.2.4
     transitivePeerDependencies:
@@ -73475,7 +73480,7 @@ snapshots:
   portfinder@1.0.32:
     dependencies:
       async: 2.6.4
-      debug: 3.2.7(supports-color@8.1.1)
+      debug: 3.2.7(supports-color@5.5.0)
       mkdirp: 0.5.6
     transitivePeerDependencies:
       - supports-color
