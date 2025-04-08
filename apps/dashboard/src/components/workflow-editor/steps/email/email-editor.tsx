@@ -24,7 +24,7 @@ export const EmailEditor = (props: EmailEditorProps) => {
         </EmailPreviewHeader>
         {getComponentByType({ component: subject.component })}
       </div>
-      <div className="relative flex-1 overflow-y-auto bg-neutral-50 px-16 pt-8">
+      <div className="relative flex-1 overflow-y-visible bg-neutral-50 px-16 pt-8">
         {getComponentByType({ component: body.component })}
       </div>
     </div>
