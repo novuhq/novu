@@ -1,4 +1,5 @@
 import { Liquid } from 'liquidjs';
+import { toSentence, pluralize } from '@novu/framework/internal';
 
 export const parseLiquid = async (value: string, variables: object): Promise<string> => {
   const client = new Liquid({
@@ -6,6 +7,8 @@ export const parseLiquid = async (value: string, variables: object): Promise<str
       return stringifyDataStructureWithSingleQuotes(output);
     },
   });
+  client.registerFilter('toSentence', toSentence);
+  client.registerFilter('pluralize', pluralize);
 
   const template = client.parse(value);
 

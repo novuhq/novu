@@ -24,6 +24,22 @@ describe('createLiquidEngine', () => {
     expect(result).toBe('John, Jane and 2 others');
   });
 
+  it('should register the toSentence filter', async () => {
+    const engine = createLiquidEngine();
+    const template = `{{ names | toSentence: '', 2, 'other' }}`;
+    const data = { names: ['John', 'Jane', 'Bob', 'Alice'] };
+    const result = await engine.parseAndRender(template, data);
+    expect(result).toBe('John, Jane, and 2 others');
+  });
+
+  it('should register the pluralize filter', async () => {
+    const engine = createLiquidEngine();
+    const template = `{{ count | pluralize: 'other' }}`;
+    const data = { count: 1 };
+    const result = await engine.parseAndRender(template, data);
+    expect(result).toBe('1 other');
+  });
+
   it('should correctly handle complex templates with multiple filters', async () => {
     const engine = createLiquidEngine();
 
