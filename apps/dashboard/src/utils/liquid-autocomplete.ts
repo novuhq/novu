@@ -108,8 +108,8 @@ export const completions =
         to: pos,
         options:
           matchingVariables.length > 0
-            ? matchingVariables.map((v) => createCompletionOption(v.label, 'variable'))
-            : variables.map((v) => createCompletionOption(v.label, 'variable')),
+            ? matchingVariables.map((v) => createCompletionOption(v.label, v.type ?? 'variable', v.boost))
+            : variables.map((v) => createCompletionOption(v.label, v.type ?? 'variable', v.boost)),
       };
     }
 
