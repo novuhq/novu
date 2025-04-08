@@ -45,14 +45,14 @@ const commonInAppProperties = {
 };
 
 const subjectRequiredSchema = z.object({
-  subject: z.string(),
+  subject: z.string().min(1),
   body: z.string().optional(),
   ...commonInAppProperties,
 });
 
 const bodyRequiredSchema = z.object({
   subject: z.string().optional(),
-  body: z.string(),
+  body: z.string().min(1),
   ...commonInAppProperties,
 });
 
