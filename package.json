@@ -192,6 +192,9 @@
     }
   },
   "lint-staged": {
+    "*.{e2e,e2e-ee,spec}.{js,ts}": [
+      "stop-only --file"
+    ],
     "apps/**/*.{ts,tsx,json}": [
       "prettier --ignore-path ./.prettierignore --write"
     ],

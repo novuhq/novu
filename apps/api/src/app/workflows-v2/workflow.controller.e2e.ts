@@ -1,6 +1,7 @@
 // TODO: Move this file under e2e folder and merge it with the one that has the same name
 
-import { expect } from 'chai';
+import chai, { expect } from 'chai';
+import chaiSubset from 'chai-subset';
 import {
   ApiServiceLevelEnum,
   createWorkflowClient,
@@ -25,8 +26,11 @@ import {
 } from '@novu/shared';
 import { PreferencesRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
+
 import { stepTypeToControlSchema } from './shared';
 import { buildSlug } from '../shared/helpers/build-slug';
+
+chai.use(chaiSubset);
 
 // TODO: Introduce test factories for steps and workflows and move the following build functions there
 function buildInAppStep(overrides: Partial<StepCreateDto> = {}): StepCreateDto {
@@ -87,7 +91,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
   });
 
   describe('Create workflow', () => {
-    it.only('should allow creating two workflows for the same user with the same name', async () => {
+    it('should allow creating two workflows for the same user with the same name', async () => {
       const name = `Test Workflow${new Date().toISOString()}`;
       await createWorkflowAndValidate(name);
       const createWorkflowDto: CreateWorkflowDto = buildWorkflow({ name });
@@ -96,7 +100,6 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
       if (res.isSuccessResult()) {
         const workflowCreated: WorkflowResponseDto = res.value;
         expect(workflowCreated.workflowId).to.include(`${slugify(name)}-`);
-        console.log('>>>', workflowCreated);
         await assertValuesInSteps(workflowCreated);
       }
     });
@@ -1054,11 +1057,8 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
       if (step.controls) {
         expect(step.controls.values).to.be.ok;
         expect(step.controls.dataSchema).to.be.ok;
-        console.log('>>> 2', step.controls.dataSchema);
-        console.log('>>> 3', stepTypeToControlSchema[step.type]);
-        expect(Object.keys(step.controls.dataSchema?.properties || {}).length).to.deep.equal(
-          Object.keys(stepTypeToControlSchema[step.type].schema.properties).length
-        );
+        // @ts-expect-error containsSubset is not typed
+        expect(stepTypeToControlSchema[step.type].schema).to.containSubset(step.controls.dataSchema);
         expect(step.controls.uiSchema).to.deep.equal(stepTypeToControlSchema[step.type].uiSchema);
       }
     }
