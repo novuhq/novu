@@ -14,7 +14,7 @@ type VariableSuggestionsPopoverRef = {
   select: () => void;
 };
 
-export const MailyVariablesList = React.forwardRef(
+export const MailyVariablesListView = React.forwardRef(
   ({ items, onSelectItem }: VariableSuggestionsPopoverProps, ref: React.Ref<VariableSuggestionsPopoverRef>) => {
     const options = useMemo(() => items.map((item) => ({ label: item.name, value: item.name })), [items]);
     const variablesListRef = useRef<VariableListRef>(null);
