@@ -56,13 +56,13 @@ jobs:
             envs+=("\"staging-eu\"")
           fi
           if [ "${{ github.event.inputs.environment }}" == "production-us" ]; then
-            envs+=("\"prod\"")
+            envs+=("\"prod-us\"")
           fi
           if [ "${{ github.event.inputs.environment }}" == "production-eu" ]; then
             envs+=("\"prod-eu\"")
           fi
           if [ "${{ github.event.inputs.environment }}" == "production-both" ]; then
-            envs+=("\"prod\"")
+            envs+=("\"prod-us\"")
             envs+=("\"prod-eu\"")
           fi
 
@@ -184,7 +184,7 @@ jobs:
         id: build-image
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          REPOSITORY: ${{ vars.ECR_REPO_PREFIX }}
+          REPOSITORY: ${{ vars.ECR_PREFIX }}
           SERVICE: ${{ matrix.service }}
           IMAGE_TAG: ${{ github.sha }}
           DOCKER_BUILD_ARGUMENTS: >
@@ -214,10 +214,10 @@ jobs:
           IMAGE_TAG: ${{ github.sha }}
           REGISTRY: ${{ needs.build.outputs.registry }}
           AWS_REGION: ${{ vars.AWS_REGION }}
+          ECS_PREFIX: ${{ vars.ECS_PREFIX }}
         run: |
-          echo "Deploying to cluster: ${{matrix.env}}-${{ matrix.service.cluster_name }}"
-          echo "Deploying to service: ${{matrix.env}}-${{ matrix.service.service_name }}"
-          echo "Deploying to container: ${{ matrix.service.container_name }}"
-          echo "Deploying to task: ${{ matrix.service.task_name }}"
+          echo "Deploying to cluster: ${ECS_PREFIX}-${{ matrix.service.cluster_name }}"
+          echo "Deploying to service: ${ECS_PREFIX}-${{ matrix.service.service_name }}"
+          echo "Deploying to container: ${ECS_PREFIX}-${{ matrix.service.container_name }}"
+          echo "Deploying to task: ${ECS_PREFIX}-${{ matrix.service.task_name }}"
           echo "Deploying to region: ${AWS_REGION}"
-          echo "Deploying to environment: ${{ matrix.env }}"
