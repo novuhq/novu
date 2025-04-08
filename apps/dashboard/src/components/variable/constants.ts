@@ -331,7 +331,7 @@ export const getFilters = (isEnhancedDigestEnabled: boolean): Filters[] => {
         label: 'toSentence',
         value: 'toSentence',
         hasParam: true,
-        description: 'Joins array into a sentence.',
+        description: 'Converts the array to a comma-separated sentence.',
         example: 'names | toSentence: "", 2, "other" → John, Jane, and 3 others',
         params: [
           { placeholder: 'Insert key to be summarized on...', type: 'string' },
