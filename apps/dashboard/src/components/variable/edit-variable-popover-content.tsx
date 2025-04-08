@@ -26,6 +26,8 @@ import { useSuggestedFilters } from './hooks/use-suggested-filters';
 import { useVariableParser } from './hooks/use-variable-parser';
 import type { Filters, FilterWithParam, VariablePopoverProps } from './types';
 import { formatLiquidVariable, getDefaultSampleValue } from './utils';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 type EditVariablePopoverContentProps = VariablePopoverProps & {
   isAllowedVariable: (variable: string) => boolean;
@@ -33,6 +35,7 @@ type EditVariablePopoverContentProps = VariablePopoverProps & {
 
 export function EditVariablePopoverContent(props: EditVariablePopoverContentProps) {
   const { variable, onUpdate, onEscapeKeyDown, isAllowedVariable } = props;
+  const isEnhancedDigestEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_ENHANCED_DIGEST_ENABLED);
   const { parsedName, parsedDefaultValue, parsedFilters, originalVariable, parseRawInput } = useVariableParser(
     variable || ''
   );
@@ -60,7 +63,7 @@ export function EditVariablePopoverContent(props: EditVariablePopoverContentProp
     // Set a default test value based on the first filter, if any
     if (filters.length > 0) {
       const firstFilter = filters[0];
-      const sampleValue = getDefaultSampleValue(firstFilter.value);
+      const sampleValue = getDefaultSampleValue(firstFilter.value, isEnhancedDigestEnabled);
 
       if (sampleValue) {
         setPreviewValue(sampleValue);
@@ -69,7 +72,7 @@ export function EditVariablePopoverContent(props: EditVariablePopoverContentProp
       // Default to a simple string if no filters
       setPreviewValue('Hello World');
     }
-  }, [filters, track]);
+  }, [filters, track, isEnhancedDigestEnabled]);
 
   const handleNameChange = useCallback((newName: string) => {
     setName(newName);
@@ -97,8 +100,8 @@ export function EditVariablePopoverContent(props: EditVariablePopoverContentProp
   const filteredFilters = useMemo(() => getFilteredFilters(searchQuery), [getFilteredFilters, searchQuery]);
 
   const currentLiquidValue = useMemo(
-    () => originalVariable || formatLiquidVariable(name, defaultVal, filters),
-    [originalVariable, name, defaultVal, filters]
+    () => originalVariable || formatLiquidVariable(name, defaultVal, filters, isEnhancedDigestEnabled),
+    [originalVariable, name, defaultVal, filters, isEnhancedDigestEnabled]
   );
 
   const handleSave = useCallback(() => {
@@ -113,10 +116,10 @@ export function EditVariablePopoverContent(props: EditVariablePopoverContentProp
       filtersCount: filters.length,
       filters: filters.map((filter) => filter.value),
     });
-    onUpdate(formatLiquidVariable(name, defaultVal, filters));
+    onUpdate(formatLiquidVariable(name, defaultVal, filters, isEnhancedDigestEnabled));
 
     setNameError(undefined);
-  }, [name, defaultVal, filters, onUpdate, track]);
+  }, [name, defaultVal, filters, onUpdate, track, isAllowedVariable, isEnhancedDigestEnabled]);
 
   return (
     <PopoverContent className="w-72 p-0" onOpenAutoFocus={handlePopoverOpen} onEscapeKeyDown={onEscapeKeyDown}>
@@ -219,7 +222,7 @@ export function EditVariablePopoverContent(props: EditVariablePopoverContentProp
                                   handleFilterToggle(filter.value);
                                   setSearchQuery('');
                                   setIsCommandOpen(false);
-                                  const sampleValue = getDefaultSampleValue(filter.value);
+                                  const sampleValue = getDefaultSampleValue(filter.value, isEnhancedDigestEnabled);
 
                                   if (sampleValue) {
                                     setPreviewValue(sampleValue);
