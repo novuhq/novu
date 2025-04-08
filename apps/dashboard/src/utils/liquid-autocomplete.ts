@@ -108,8 +108,8 @@ export const completions =
         to: pos,
         options:
           matchingVariables.length > 0
-            ? matchingVariables.map((v) => createCompletionOption(v.label, v.type ?? 'variable', v.boost))
-            : variables.map((v) => createCompletionOption(v.label, v.type ?? 'variable', v.boost)),
+            ? matchingVariables.map((v) => createCompletionOption(v.label, v.type ?? 'variable', v.boost, v.info))
+            : variables.map((v) => createCompletionOption(v.label, v.type ?? 'variable', v.boost, v.info)),
       };
     }
 
@@ -129,8 +129,13 @@ function getContentAfterPipe(content: string): string | null {
   return content.slice(pipeIndex + 1).trimStart();
 }
 
-function createCompletionOption(label: string, type: string, boost?: number): CompletionOption {
-  return { label, type, ...(boost && { boost }) };
+function createCompletionOption(
+  label: string,
+  type: string,
+  boost?: number,
+  info?: Completion['info']
+): CompletionOption {
+  return { label, type, ...(boost && { boost }), ...(info && { info }) };
 }
 
 function getFilterCompletions(afterPipe: string, isEnhancedDigestEnabled: boolean): CompletionOption[] {
