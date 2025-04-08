@@ -89,7 +89,7 @@ jobs:
                 container_name=$(echo "$worker_service" | jq -r '.container_name')
                 service_name=$(echo "$worker_service" | jq -r '.service')
                 task_name=$(echo "$worker_service" | jq -r '.task_name')
-                deploy_matrix+=("{\"cluster_name\": \"$cluster_name\", \"container_name\": \"$container_name\", \"service\": \"$service_name\", \"task_name\": \"$task_name\"}")
+                deploy_matrix+=("{\"cluster_name\": \"$cluster_name\", \"container_name\": \"$container_name\", \"service_name\": \"$service_name\", \"task_name\": \"$task_name\"}")
               done
             elif [ "$service" == "\"api\"" ]; then
               cluster_name=api-cluster
