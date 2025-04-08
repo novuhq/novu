@@ -11,8 +11,8 @@ const subjectKey = 'subject';
 
 export const InAppSubject = () => {
   const { control, getValues } = useFormContext();
-  const { step } = useWorkflow();
-  const { variables, isAllowedVariable } = useParseVariables(step?.variables);
+  const { step, isStepAfterDigest } = useWorkflow();
+  const { variables, isAllowedVariable } = useParseVariables(step?.variables, isStepAfterDigest);
 
   return (
     <FormField

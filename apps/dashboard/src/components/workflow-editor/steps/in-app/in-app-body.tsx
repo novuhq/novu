@@ -11,8 +11,8 @@ const bodyKey = 'body';
 
 export const InAppBody = () => {
   const { control, getValues } = useFormContext();
-  const { step } = useWorkflow();
-  const { variables, isAllowedVariable } = useParseVariables(step?.variables);
+  const { step, isStepAfterDigest } = useWorkflow();
+  const { variables, isAllowedVariable } = useParseVariables(step?.variables, isStepAfterDigest);
 
   return (
     <FormField

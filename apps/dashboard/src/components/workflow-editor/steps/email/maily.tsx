@@ -20,9 +20,9 @@ type MailyProps = HTMLAttributes<HTMLDivElement> & {
 };
 
 export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
-  const { step } = useWorkflow();
+  const { step, isStepAfterDigest } = useWorkflow();
   const isEnhancedDigestEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_ENHANCED_DIGEST_ENABLED);
-  const parsedVariables = useParseVariables(step?.variables);
+  const parsedVariables = useParseVariables(step?.variables, isStepAfterDigest);
   const primitives = useMemo(
     () => parsedVariables.primitives.map((v) => ({ name: v.label, required: false })),
     [parsedVariables.primitives]
