@@ -134,7 +134,7 @@ export function parseStepVariables(
   function isAllowedVariable(path: string): boolean {
     if (typeof schema === 'boolean') return false;
 
-    if (addDigestVariables && DIGEST_VARIABLES.some((variable) => variable.label === path)) {
+    if (isEnhancedDigestEnabled && addDigestVariables && DIGEST_VARIABLES.some((variable) => variable.label === path)) {
       return true;
     }
 
