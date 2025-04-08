@@ -1,8 +1,9 @@
 import type { JSONSchemaDefinition } from '@novu/shared';
 
 export interface LiquidVariable {
-  type: 'variable';
+  type: 'variable' | 'digest';
   label: string;
+  boost?: number;
 }
 
 export type IsAllowedVariable = (path: string) => boolean;
