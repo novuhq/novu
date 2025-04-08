@@ -188,7 +188,7 @@ export const WorkflowsPage = () => {
                         }}
                       >
                         <RiFileAddLine />
-                        Blank Workflow
+                        From Blank
                       </div>
                     </DropdownMenuItem>
                     <DropdownMenuItem
@@ -202,7 +202,7 @@ export const WorkflowsPage = () => {
                       }}
                     >
                       <RiFileMarkedLine />
-                      View Workflow Gallery
+                      From Template
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -212,7 +212,7 @@ export const WorkflowsPage = () => {
           {shouldShowStartWithTemplatesSection && (
             <div className="mb-2">
               <div className="my-2 flex items-center justify-between">
-                <div className="text-label-xs text-text-soft">Start with</div>
+                <div className="text-label-xs text-text-soft">Quick start</div>
                 <LinkButton
                   size="sm"
                   variant="gray"

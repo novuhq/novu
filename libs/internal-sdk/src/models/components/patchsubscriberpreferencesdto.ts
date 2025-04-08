@@ -19,7 +19,7 @@ export type PatchSubscriberPreferencesDto = {
    */
   channels: PatchPreferenceChannelsDto;
   /**
-   * If provided, update workflow specific preferences, otherwise update global preferences
+   * Workflow internal _id, identifier or slug. If provided, update workflow specific preferences, otherwise update global preferences
    */
   workflowId?: string | undefined;
 };

@@ -3,6 +3,7 @@
  */
 
 import * as components from "../models/components/index.js";
+
 type OAuth2PasswordFlow = {
   username: string;
   password?: string | undefined;
@@ -84,7 +85,9 @@ type SecurityInputOAuth2ClientCredentials = {
   value:
     | { clientID?: string | undefined; clientSecret?: string | undefined }
     | null
+    | string
     | undefined;
+  fieldName?: string;
 };
 
 type SecurityInputOAuth2PasswordCredentials = {
@@ -93,13 +96,13 @@ type SecurityInputOAuth2PasswordCredentials = {
     | string
     | null
     | undefined;
-  fieldName: string;
+  fieldName?: string;
 };
 
 type SecurityInputCustom = {
   type: "http:custom";
   value: any | null | undefined;
-  fieldName: string;
+  fieldName?: string;
 };
 
 export type SecurityInput =
@@ -136,6 +139,9 @@ export function resolveSecurity(
           typeof o.value === "string" && !!o.value
         );
       } else if (o.type === "oauth2:client_credentials") {
+        if (typeof o.value == "string") {
+          return !!o.value;
+        }
         return o.value.clientID != null || o.value.clientSecret != null;
       } else if (typeof o.value === "string") {
         return !!o.value;
@@ -224,7 +230,9 @@ function applyBearer(
     value = `Bearer ${value}`;
   }
 
-  state.headers[spec.fieldName] = value;
+  if (spec.fieldName !== undefined) {
+    state.headers[spec.fieldName] = value;
+  }
 }
 
 export function resolveGlobalSecurity(

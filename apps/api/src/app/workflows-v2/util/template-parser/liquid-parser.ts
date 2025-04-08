@@ -142,7 +142,16 @@ function parseByLiquid(rawOutput: string): TemplateVariables {
       const result = extractProps(template);
 
       if (result.valid && result.props.length > 0) {
-        validVariables.push({ name: result.props.join('.'), output: rawOutput });
+        const path = result.props.reduce((acc, prop, i) => {
+          // if the prop is a number, preserve array notation (.[idx])
+          if (typeof prop === 'number') {
+            return `${acc}[${prop}]`;
+          }
+
+          return i === 0 ? prop : `${acc}.${prop}`;
+        }, '');
+
+        validVariables.push({ name: path, output: rawOutput });
       }
 
       if (!result.valid) {

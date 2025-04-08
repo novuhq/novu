@@ -1,9 +1,8 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject, Injectable } from '@nestjs/common';
 
 import { JobRepository, JobStatusEnum } from '@novu/dal';
 import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, StepTypeEnum } from '@novu/shared';
 import {
-  ApiException,
   ComputeJobWaitDurationService,
   DetailEnum,
   CreateExecutionDetails,
@@ -27,7 +26,7 @@ export class AddDelayJob {
   public async execute(command: AddJobCommand): Promise<number | undefined> {
     const data = command.job;
 
-    if (!data) throw new ApiException(`Job with id ${command.jobId} not found`);
+    if (!data) throw new BadRequestException(`Job with id ${command.jobId} not found`);
 
     const isDelayStep = data.type === StepTypeEnum.DELAY;
 

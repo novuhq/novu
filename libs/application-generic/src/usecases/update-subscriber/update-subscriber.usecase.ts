@@ -1,8 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
 
 import { buildSubscriberKey, InvalidateCacheService } from '../../services';
-import { ApiException, subscriberNeedUpdate } from '../../utils';
+import { subscriberNeedUpdate } from '../../utils';
 
 import { UpdateSubscriberCommand } from './update-subscriber.command';
 import { OAuthHandlerEnum, UpdateSubscriberChannel, UpdateSubscriberChannelCommand } from '../subscribers';
@@ -25,7 +25,7 @@ export class UpdateSubscriber {
         });
 
     if (!foundSubscriber) {
-      throw new ApiException(`SubscriberId: ${command.subscriberId} not found`);
+      throw new BadRequestException(`SubscriberId: ${command.subscriberId} not found`);
     }
 
     const updatePayload: Partial<SubscriberEntity> = {};

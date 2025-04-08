@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import {
   AnalyticsService,
   GetSubscriberTemplatePreference,
@@ -21,7 +21,6 @@ import {
   WorkflowPreferences,
   WorkflowPreferencesPartial,
 } from '@novu/shared';
-import { ApiException } from '../../../shared/exceptions/api.exception';
 import { AnalyticsEventsEnum } from '../../utils';
 import { InboxPreference } from '../../utils/types';
 import { UpdatePreferencesCommand } from './update-preferences.command';
@@ -55,7 +54,7 @@ export class UpdatePreferences {
         throw new NotFoundException(`Workflow with id: ${command.workflowId} is not found`);
       }
       if (workflow.critical) {
-        throw new ApiException(`Critical workflow with id: ${command.workflowId} can not be updated`);
+        throw new BadRequestException(`Critical workflow with id: ${command.workflowId} can not be updated`);
       }
     }
 

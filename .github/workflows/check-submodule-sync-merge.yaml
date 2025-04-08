@@ -1,0 +1,61 @@
+name: Validate Submodule Sync Post-Merge
+
+# This workflow validates submodule synchronization specifically after merges to main branches
+# It runs separately from the PR/push validation to provide dedicated post-merge verification
+# Logic:
+# 1. Triggers only on successful merges (push events with merged PRs)
+# 2. Checks if SUBMODULES_TOKEN secret exists
+# 3. If token exists, validates that submodules are properly synchronized
+# 4. Can provide notifications or take corrective actions if issues are found
+
+on:
+  push:
+    branches:
+      - next
+      - main
+      - prod
+
+jobs:
+  check_submodule_token:
+    name: Check if submodule token exists
+    runs-on: ubuntu-latest
+    outputs:
+      has_token: ${{ steps.secret-check.outputs.has_token }}
+    steps:
+      - name: Check if secret exists
+        id: secret-check
+        run: |
+          if [[ -n "${{ secrets.SUBMODULES_TOKEN }}" ]]; then
+            echo "has_token=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_token=false" >> $GITHUB_OUTPUT
+          fi
+
+  validate-submodule-sync:
+    runs-on: ubuntu-latest
+    needs: [check_submodule_token]
+    if: needs.check_submodule_token.outputs.has_token == 'true'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: true
+          token: ${{ secrets.SUBMODULES_TOKEN }}
+
+      - name: Run validation script
+        run: |
+          # Ensure the script is executable
+          chmod +x .github/workflows/scripts/validate-submodule-sync.sh
+
+          # Run the script with the current branch as reference
+          .github/workflows/scripts/validate-submodule-sync.sh ${GITHUB_REF#refs/heads/}
+        env:
+          SUBMODULES_TOKEN: ${{ secrets.SUBMODULES_TOKEN }}
+
+      - name: Send Slack notification on failure
+        if: failure()
+        uses: ./.github/actions/slack-notify-on-failure
+        with:
+          slackWebhookURL: ${{ secrets.SLACK_WEBHOOK_URL_ENG_FEED_GITHUB }}

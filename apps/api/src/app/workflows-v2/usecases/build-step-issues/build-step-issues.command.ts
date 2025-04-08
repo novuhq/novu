@@ -1,7 +1,7 @@
 import { WorkflowOriginEnum, JSONSchemaDto, StepTypeEnum } from '@novu/shared';
 import { NotificationTemplateEntity } from '@novu/dal';
 import { EnvironmentWithUserObjectCommand } from '@novu/application-generic';
-import { IsEnum, IsObject, IsDefined, IsString, IsOptional } from 'class-validator';
+import { IsBoolean, IsEnum, IsObject, IsDefined, IsString, IsOptional } from 'class-validator';
 
 export class BuildStepIssuesCommand extends EnvironmentWithUserObjectCommand {
   /**

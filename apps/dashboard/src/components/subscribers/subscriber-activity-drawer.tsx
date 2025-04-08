@@ -22,6 +22,10 @@ export const ActivityDetailsDrawer = forwardRef<HTMLDivElement, ActivityPanelDra
   const isOpen = !!activityId;
   const { activity, isPending, error } = usePullActivity(activityId);
 
+  function handleTransactionIdChange(_newTransactionId: string, activityId: string) {
+    onActivitySelect(activityId);
+  }
+
   return (
     <Sheet
       modal={false}
@@ -57,7 +61,11 @@ export const ActivityDetailsDrawer = forwardRef<HTMLDivElement, ActivityPanelDra
             <React.Fragment key={activityId}>
               <ActivityHeader title={activity.template?.name} className="h-12 py-3" />
               <ActivityOverview activity={activity} />
-              <ActivityLogs activity={activity} onActivitySelect={onActivitySelect} />
+              <ActivityLogs
+                activity={activity}
+                onActivitySelect={onActivitySelect}
+                onTransactionIdChange={handleTransactionIdChange}
+              />
             </React.Fragment>
           )}
         </ActivityPanel>

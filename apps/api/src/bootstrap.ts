@@ -22,6 +22,7 @@ const extendedBodySizeRoutes = [
   '/v1/layouts',
   '/v1/bridge/sync',
   '/v1/bridge/diff',
+  '/v1/environments/:environmentId/bridge',
 ];
 
 // Validate the ENV variables after launching SENTRY, so missing variables will report to sentry

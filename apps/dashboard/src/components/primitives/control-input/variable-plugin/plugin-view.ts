@@ -1,3 +1,4 @@
+import { IsAllowedVariable } from '@/utils/parseStepVariables';
 import { Decoration, DecorationSet, EditorView, Range } from '@uiw/react-codemirror';
 import { MutableRefObject } from 'react';
 import { VARIABLE_REGEX_STRING } from './';
@@ -15,6 +16,7 @@ export class VariablePluginView {
     view: EditorView,
     private viewRef: MutableRefObject<EditorView | null>,
     private lastCompletionRef: MutableRefObject<{ from: number; to: number } | null>,
+    private isAllowedVariable: IsAllowedVariable,
     private onSelect?: (value: string, from: number, to: number) => void
   ) {
     this.decorations = this.createDecorations(view);
@@ -50,6 +52,10 @@ export class VariablePluginView {
       // Skip creating pills for variables that are currently being edited
       // This allows users to modify variables without the pill getting in the way
       if (this.isTypingVariable && pos > start && pos < end) {
+        continue;
+      }
+
+      if (!this.isAllowedVariable(name)) {
         continue;
       }
 

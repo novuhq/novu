@@ -4,9 +4,9 @@ import { MessageRepository, SubscriberRepository } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/shared';
 import { buildMessageCountKey, CachedQuery } from '@novu/application-generic';
 
+import { BadRequestException } from '@nestjs/common';
 import { NotificationsCount } from './notifications-count.usecase';
 import { NotificationsCountCommand } from './notifications-count.command';
-import { ApiException } from '../../../shared/exceptions/api.exception';
 
 sinon.stub(CachedQuery);
 sinon.stub(buildMessageCountKey);
@@ -24,7 +24,7 @@ describe('NotificationsCount', () => {
   });
 
   describe('execute', () => {
-    it('should throw ApiException if subscriber is not found', async () => {
+    it('should throw BadRequestException if subscriber is not found', async () => {
       subscriberRepository.findBySubscriberId.resolves(null);
 
       const command: NotificationsCountCommand = {
@@ -37,7 +37,7 @@ describe('NotificationsCount', () => {
       try {
         await notificationsCount.execute(command);
       } catch (error) {
-        expect(error).to.be.instanceOf(ApiException);
+        expect(error).to.be.instanceOf(BadRequestException);
         expect(error.message).to.equal(
           `Subscriber ${command.subscriberId} doesn't exist in environment ${command.environmentId}`
         );
@@ -58,7 +58,7 @@ describe('NotificationsCount', () => {
       try {
         await notificationsCount.execute(command);
       } catch (error) {
-        expect(error).to.be.instanceOf(ApiException);
+        expect(error).to.be.instanceOf(BadRequestException);
         expect(error.message).to.equal(`Filtering for unread and archived notifications is not supported.`);
       }
     });

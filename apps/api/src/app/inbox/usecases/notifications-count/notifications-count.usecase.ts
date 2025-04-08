@@ -1,10 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { MessageRepository, SubscriberRepository } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/shared';
 import { buildMessageCountKey, CachedQuery } from '@novu/application-generic';
 
 import type { NotificationsCountCommand } from './notifications-count.command';
-import { ApiException } from '../../../shared/exceptions/api.exception';
 import type { NotificationFilter } from '../../utils/types';
 
 const MAX_NOTIFICATIONS_COUNT = 99;
@@ -34,14 +33,14 @@ export class NotificationsCount {
     );
 
     if (!subscriber) {
-      throw new ApiException(
+      throw new BadRequestException(
         `Subscriber ${command.subscriberId} doesn't exist in environment ${command.environmentId}`
       );
     }
 
     const hasUnsupportedFilter = command.filters.some((filter) => filter.read === false && filter.archived === true);
     if (hasUnsupportedFilter) {
-      throw new ApiException('Filtering for unread and archived notifications is not supported.');
+      throw new BadRequestException('Filtering for unread and archived notifications is not supported.');
     }
 
     const getCountPromises = command.filters.map((filter) =>

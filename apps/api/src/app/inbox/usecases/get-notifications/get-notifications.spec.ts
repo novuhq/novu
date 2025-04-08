@@ -4,10 +4,10 @@ import { ChannelCTATypeEnum } from '@novu/shared';
 import { ChannelTypeEnum, MessageRepository } from '@novu/dal';
 import { AnalyticsService } from '@novu/application-generic';
 
+import { BadRequestException } from '@nestjs/common';
 import { GetNotifications } from './get-notifications.usecase';
 import { GetSubscriber } from '../../../subscribers/usecases/get-subscriber';
 import type { GetNotificationsCommand } from './get-notifications.command';
-import { ApiException } from '../../../shared/exceptions/api.exception';
 import { mapToDto } from '../../utils/notification-mapper';
 import { AnalyticsEventsEnum } from '../../utils';
 
@@ -66,7 +66,7 @@ describe('GetNotifications', () => {
     try {
       await getNotifications.execute(command);
     } catch (error) {
-      expect(error).to.be.instanceOf(ApiException);
+      expect(error).to.be.instanceOf(BadRequestException);
       expect(error.message).to.equal(`Subscriber with id: ${command.subscriberId} is not found.`);
     }
   });
@@ -87,7 +87,7 @@ describe('GetNotifications', () => {
     try {
       await getNotifications.execute(command);
     } catch (error) {
-      expect(error).to.be.instanceOf(ApiException);
+      expect(error).to.be.instanceOf(BadRequestException);
       expect(error.message).to.equal(`Filtering for unread and archived notifications is not supported.`);
     }
   });

@@ -4,11 +4,13 @@ import { UserSession } from '@novu/testing';
 import { NotificationTemplateEntity } from '@novu/dal';
 import { SubscriberResponseDto, PatchSubscriberPreferencesDto } from '@novu/api/models/components';
 import { Novu } from '@novu/api';
+import { ShortIsPrefixEnum } from '@novu/shared';
 import {
   expectSdkExceptionGeneric,
   expectSdkValidationExceptionGeneric,
   initNovuClassSdk,
 } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
+import { buildSlug } from '../../shared/helpers/build-slug';
 
 let session: UserSession;
 
@@ -29,9 +31,9 @@ describe('Patch Subscriber Preferences - /subscribers/:subscriberId/preferences 
   });
 
   it('should patch workflow channel preferences', async () => {
+    // Patch with workflow id
     const workflowId = workflow._id;
-
-    const patchData: PatchSubscriberPreferencesDto = {
+    const patchWithWorkflowId: PatchSubscriberPreferencesDto = {
       channels: {
         email: false,
         inApp: true,
@@ -39,14 +41,49 @@ describe('Patch Subscriber Preferences - /subscribers/:subscriberId/preferences 
       workflowId,
     };
 
-    const response = await novuClient.subscribers.preferences.update(patchData, subscriber.subscriberId);
-
-    const { global, workflows } = response.result;
+    const responseOne = await novuClient.subscribers.preferences.update(patchWithWorkflowId, subscriber.subscriberId);
+    const { global, workflows: workflowsOne } = responseOne.result;
 
     expect(global.channels).to.deep.equal({ inApp: true, email: true });
-    expect(workflows).to.have.lengthOf(1);
-    expect(workflows[0].channels).to.deep.equal({ inApp: true, email: false });
-    expect(workflows[0].workflow).to.deep.include({ name: workflow.name, identifier: workflow.triggers[0].identifier });
+    expect(workflowsOne).to.have.lengthOf(1);
+    expect(workflowsOne[0].channels).to.deep.equal({ inApp: true, email: false });
+    expect(workflowsOne[0].workflow).to.deep.include({
+      name: workflow.name,
+      identifier: workflow.triggers[0].identifier,
+    });
+
+    // Patch with trigger identifier
+    const triggerIdentifier = workflow.triggers[0].identifier;
+    const patchWithTriggerIdentifier: PatchSubscriberPreferencesDto = {
+      channels: {
+        email: true,
+        inApp: false,
+      },
+      workflowId: triggerIdentifier,
+    };
+
+    const responseTwo = await novuClient.subscribers.preferences.update(
+      patchWithTriggerIdentifier,
+      subscriber.subscriberId
+    );
+    const { workflows: workflowsTwo } = responseTwo.result;
+
+    expect(workflowsTwo[0].channels).to.deep.equal({ inApp: false, email: true });
+
+    // Patch with slug
+    const slug = buildSlug(workflow.name, ShortIsPrefixEnum.WORKFLOW, workflow._id);
+    const patchData: PatchSubscriberPreferencesDto = {
+      channels: {
+        email: false,
+        inApp: true,
+      },
+      workflowId: slug,
+    };
+
+    const response = await novuClient.subscribers.preferences.update(patchData, subscriber.subscriberId);
+    const { workflows: workflowsThree } = response.result;
+
+    expect(workflowsThree[0].channels).to.deep.equal({ inApp: true, email: false });
   });
 
   it('should patch global channel preferences', async () => {

@@ -51,6 +51,7 @@ export * from "./topicscontrollerlisttopics.js";
 export * from "./topicscontrollerremovesubscribers.js";
 export * from "./topicscontrollerrenametopic.js";
 export * from "./workflowcontrollercreate.js";
+export * from "./workflowcontrollerduplicateworkflow.js";
 export * from "./workflowcontrollergeneratepreview.js";
 export * from "./workflowcontrollergetworkflow.js";
 export * from "./workflowcontrollergetworkflowstepdata.js";

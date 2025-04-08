@@ -23,6 +23,7 @@ import {
   UpdateSubscriber,
   UpdateSubscriberChannel,
   UpsertPreferences,
+  GetWorkflowByIdsUseCase,
 } from '@novu/application-generic';
 import { ListSubscribersUseCase } from './usecases/list-subscribers/list-subscribers.usecase';
 import { GetSubscriber } from './usecases/get-subscriber/get-subscriber.usecase';
@@ -58,6 +59,7 @@ const USE_CASES = [
   UpdatePreferences,
   GetSubscriberTemplatePreference,
   UpsertPreferences,
+  GetWorkflowByIdsUseCase,
 ];
 
 const DAL_MODELS = [

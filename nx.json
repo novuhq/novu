@@ -31,7 +31,6 @@
           "@novu/inbound-mail",
           "@novu/web",
           "@novu/webhook",
-          "@novu/widget",
           "@novu/worker",
           "@novu/ws"
         ],
@@ -45,9 +44,7 @@
       "packages": {
         "projects": [
           "novu",
-          "@novu/client",
           "@novu/framework",
-          "@novu/headless",
           "@novu/js",
           "@novu/react",
           "@novu/react-native",

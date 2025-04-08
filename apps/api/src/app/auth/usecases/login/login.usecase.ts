@@ -1,12 +1,11 @@
 import bcrypt from 'bcrypt';
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { differenceInMinutes, parseISO } from 'date-fns';
 import { UserRepository, UserEntity, OrganizationRepository } from '@novu/dal';
 import { AnalyticsService, createHash } from '@novu/application-generic';
 import { normalizeEmail } from '@novu/shared';
 import { AuthService } from '../../services/auth.service';
 import { LoginCommand } from './login.command';
-import { ApiException } from '../../../shared/exceptions/api.exception';
 
 @Injectable()
 export class Login {
@@ -44,7 +43,7 @@ export class Login {
     }
 
     // TODO: Trigger a password reset flow automatically for existing OAuth users instead of throwing an error
-    if (!user.password) throw new ApiException('Please sign in using Github.');
+    if (!user.password) throw new BadRequestException('Please sign in using Github.');
 
     const isMatching = await bcrypt.compare(command.password, user.password);
     if (!isMatching) {

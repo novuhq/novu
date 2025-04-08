@@ -8,7 +8,7 @@ import { useSaveForm } from '@/components/workflow-editor/steps/save-form-contex
 import { WorkflowOriginEnum } from '@/utils/enums';
 import { buildDefaultValuesOfDataSchema } from '@/utils/schema';
 import { cn } from '@/utils/ui';
-import { type ControlsMetadata } from '@novu/shared';
+import { type Controls } from '@novu/shared';
 import { RJSFSchema } from '@rjsf/utils';
 import { motion } from 'motion/react';
 import { useState } from 'react';
@@ -19,7 +19,7 @@ import { useWorkflow } from '../../workflow-provider';
 import { JsonForm } from './json-form';
 
 type CustomStepControlsProps = {
-  dataSchema: ControlsMetadata['dataSchema'];
+  dataSchema: Controls['dataSchema'];
   origin: WorkflowOriginEnum;
   className?: string;
 };

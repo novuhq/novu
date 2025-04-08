@@ -1,8 +1,9 @@
+// TODO: Move this file under e2e folder and merge it with the one that has the same name
+
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { randomUUID } from 'node:crypto';
-import { after, beforeEach } from 'mocha';
-import { sleep } from '@nestjs/terminus/dist/utils';
+import { beforeEach } from 'mocha';
 import {
   ChannelTypeEnum,
   createWorkflowClient,
@@ -16,9 +17,11 @@ import {
   RedirectTargetEnum,
   StepTypeEnum,
   WorkflowCreationSourceEnum,
+  WorkflowResponseDto,
+  UpdateWorkflowDto,
 } from '@novu/shared';
-import { EmailControlType, InAppControlType } from '@novu/application-generic';
-import { buildCreateWorkflowDto } from './workflow.controller.e2e';
+import { EmailControlType } from '@novu/application-generic';
+import { buildWorkflow } from './workflow.controller.e2e';
 import { fullCodeSnippet, previewPayloadExample } from './maily-test-data';
 
 const SUBJECT_TEST_PAYLOAD = '{{payload.subject.test.payload}}';
@@ -34,19 +37,14 @@ describe('Generate Preview #novu-v2', () => {
     await session.initialize();
     workflowsClient = createWorkflowClient(session.serverUrl, getHeaders());
   });
-  after(async () => {
-    await sleep(1000);
-  });
 
-  async function patchStepWithControlValues(workflowSlug: string, stepSlug: string, controlValues: InAppControlType) {
-    const novuRestResult1 = await workflowsClient.patchWorkflowStepData(workflowSlug, stepSlug, {
-      controlValues,
-    });
-    if (!novuRestResult1.isSuccessResult()) {
-      throw new Error('shoud patch');
+  async function updateWorkflow(id: string, workflow: UpdateWorkflowDto): Promise<WorkflowResponseDto> {
+    const res = await workflowsClient.updateWorkflow(id, workflow);
+    if (!res.isSuccessResult()) {
+      throw new Error(res.error!.responseText);
     }
 
-    return novuRestResult1.value;
+    return res.value;
   }
 
   describe('Generate Preview', () => {
@@ -88,7 +86,7 @@ describe('Generate Preview #novu-v2', () => {
         expect(previewResponseDto.previewPayloadExample).to.exist;
         expect(previewResponseDto.previewPayloadExample?.steps).to.be.ok;
         if (previewResponseDto.result?.type === 'sms' && previewResponseDto.result?.preview.body) {
-          expect(previewResponseDto.result!.preview.body).to.contain(`[[{{steps.${inAppStepId}.seen}}]]`);
+          expect(previewResponseDto.result!.preview.body).to.contain(`[[seen]]`);
         }
       });
     });
@@ -118,7 +116,9 @@ describe('Generate Preview #novu-v2', () => {
       if (previewResponseDto.result?.type !== 'in_app') {
         throw new Error('should have a in-app preview ');
       }
-      expect(previewResponseDto.result.preview.subject).to.deep.equal(controlValues.subject);
+      expect(previewResponseDto.result.preview.subject).to.deep.equal(
+        'firstName Hello, World! this is the replacement text for the placeholder'
+      );
     });
 
     describe('Happy Path, no payload, expected same response as requested', () => {
@@ -134,7 +134,12 @@ describe('Generate Preview #novu-v2', () => {
           throw new Error('should be in app preview type');
         }
         const inApp = getTestControlValues().in_app;
-        const previewRequestWithoutTheRedirect = { ...inApp, primaryAction: { label: inApp.primaryAction.label } };
+        const previewRequestWithoutTheRedirect = {
+          ...inApp,
+          subject: 'firstName Hello, World! subject',
+          body: 'Hello, World! body',
+          primaryAction: { label: 'primaryUrlLabel' },
+        };
         expect(previewResponseDto.result!.preview).to.deep.equal(previewRequestWithoutTheRedirect);
       });
 
@@ -146,7 +151,7 @@ describe('Generate Preview #novu-v2', () => {
         expect(previewResponseDto.previewPayloadExample.subscriber, 'Expecting to find subscriber in the payload').to
           .exist;
 
-        expect(previewResponseDto.result!.preview).to.deep.equal(getTestControlValues()[StepTypeEnum.SMS]);
+        expect(previewResponseDto.result!.preview).to.deep.equal({ body: ' Hello, World! firstName' });
       });
 
       it('push: should match the body in the preview response', async () => {
@@ -157,7 +162,10 @@ describe('Generate Preview #novu-v2', () => {
         expect(previewResponseDto.previewPayloadExample.subscriber, 'Expecting to find subscriber in the payload').to
           .exist;
 
-        expect(previewResponseDto.result!.preview).to.deep.equal(getTestControlValues()[StepTypeEnum.PUSH]);
+        expect(previewResponseDto.result!.preview).to.deep.equal({
+          subject: 'Hello, World!',
+          body: 'Hello, World! firstName',
+        });
       });
 
       it('chat: should match the body in the preview response', async () => {
@@ -168,7 +176,7 @@ describe('Generate Preview #novu-v2', () => {
         expect(previewResponseDto.previewPayloadExample.subscriber, 'Expecting to find subscriber in the payload').to
           .exist;
 
-        expect(previewResponseDto.result!.preview).to.deep.equal(getTestControlValues()[StepTypeEnum.CHAT]);
+        expect(previewResponseDto.result!.preview).to.deep.equal({ body: 'Hello, World! firstName' });
       });
 
       it('email: should match the body in the preview response', async () => {
@@ -181,7 +189,7 @@ describe('Generate Preview #novu-v2', () => {
         expect(preview.body).to.exist;
         expect(preview.subject).to.exist;
         expect(preview.body).to.contain(previewPayloadExample().payload.body);
-        expect(preview.subject).to.contain(`Hello, World! ${SUBJECT_TEST_PAYLOAD}`);
+        expect(preview.subject).to.contain(`Hello, World! payload`);
         expect(previewResponseDto.previewPayloadExample).to.exist;
         expect(previewResponseDto.previewPayloadExample).to.deep.equal(previewPayloadExample());
       });
@@ -213,14 +221,14 @@ describe('Generate Preview #novu-v2', () => {
         if (previewResponseDto.result!.type !== 'sms') {
           throw new Error('Expected sms');
         }
-        expect(previewResponseDto.result!.preview.body).to.contain('{{PAYLOAD.VARIABLENAME}}');
+        expect(previewResponseDto.result!.preview.body).to.contain('VARIABLENAME');
         expect(previewResponseDto.previewPayloadExample).to.exist;
-        expect(previewResponseDto?.previewPayloadExample?.payload?.variableName).to.equal('{{payload.variableName}}');
+        expect(previewResponseDto?.previewPayloadExample?.payload?.variableName).to.equal('variableName');
       });
 
       it('Should not fail if inApp is providing partial URL in redirect', async () => {
         const steps = [{ name: 'IN_APP_STEP_SHOULD_NOT_FAIL', type: StepTypeEnum.IN_APP }];
-        const createDto = buildCreateWorkflowDto('', { steps });
+        const createDto = buildWorkflow({ steps });
         const novuRestResult = await workflowsClient.createWorkflow(createDto);
         if (!novuRestResult.isSuccessResult()) {
           throw new Error('should create workflow');
@@ -243,7 +251,15 @@ describe('Generate Preview #novu-v2', () => {
         };
         const workflowSlug = novuRestResult.value?.slug;
         const stepSlug = novuRestResult.value?.steps[0].slug;
-        const stepDataDto = await patchStepWithControlValues(workflowSlug, stepSlug, controlValues);
+        const stepDataDto = await updateWorkflow(workflowSlug, {
+          ...novuRestResult.value,
+          steps: [
+            {
+              ...novuRestResult.value.steps[0],
+              controlValues,
+            },
+          ],
+        });
         const generatePreviewResponseDto = await generatePreview(
           workflowsClient,
           workflowSlug,
@@ -255,7 +271,7 @@ describe('Generate Preview #novu-v2', () => {
           expect(generatePreviewResponseDto.result.preview.body).to.equal(
             {
               subject: `{{subscriber.firstName}} Hello, World! ${PLACEHOLDER_SUBJECT_INAPP}`,
-              body: `Hello, World! {{payload.placeholder.body}}`,
+              body: `Hello, World! body`,
               avatar: 'https://www.example.com/avatar.png',
               primaryAction: {
                 label: '{{payload.secondaryUrl}}',
@@ -275,18 +291,22 @@ describe('Generate Preview #novu-v2', () => {
 
       it('Should not fail if inApp url ref is a placeholder without payload', async () => {
         const steps = [{ name: 'IN_APP_STEP_SHOULD_NOT_FAIL', type: StepTypeEnum.IN_APP }];
-        const createDto = buildCreateWorkflowDto('', { steps });
+        const createDto = buildWorkflow({ steps });
         const novuRestResult = await workflowsClient.createWorkflow(createDto);
         if (!novuRestResult.isSuccessResult()) {
           throw new Error('should create workflow');
         }
         const workflowSlug = novuRestResult.value?.slug;
         const stepSlug = novuRestResult.value?.steps[0].slug;
-        const stepDataDto = await patchStepWithControlValues(
-          workflowSlug,
-          stepSlug,
-          buildInAppControlValueWithAPlaceholderInTheUrl()
-        );
+        const stepDataDto = await updateWorkflow(workflowSlug, {
+          ...novuRestResult.value,
+          steps: [
+            {
+              ...novuRestResult.value.steps[0],
+              ...buildInAppControlValueWithAPlaceholderInTheUrl(),
+            },
+          ],
+        });
         const generatePreviewResponseDto = await generatePreview(
           workflowsClient,
           workflowSlug,
@@ -296,7 +316,7 @@ describe('Generate Preview #novu-v2', () => {
         );
 
         if (generatePreviewResponseDto.result?.type === ChannelTypeEnum.IN_APP) {
-          expect(generatePreviewResponseDto.result.preview.body).to.equal('Hello, World! {{payload.placeholder.body}}');
+          expect(generatePreviewResponseDto.result.preview.body).to.equal('Hello, World! body');
         }
       });
     });
@@ -510,7 +530,7 @@ export async function createWorkflowAndReturnId(
   workflowsClient: ReturnType<typeof createWorkflowClient>,
   type: StepTypeEnum
 ) {
-  const createWorkflowDto = buildCreateWorkflowDto(`${type}:${randomUUID()}`);
+  const createWorkflowDto = buildWorkflow();
   createWorkflowDto.steps[0].type = type;
   const workflowResult = await workflowsClient.createWorkflow(createWorkflowDto);
   if (!workflowResult.isSuccessResult()) {

@@ -1,4 +1,4 @@
-import { Injectable, ConflictException } from '@nestjs/common';
+import { Injectable, ConflictException, BadRequestException } from '@nestjs/common';
 
 import { LayoutEntity, LayoutRepository } from '@novu/dal';
 import { isReservedVariableName } from '@novu/shared';
@@ -9,7 +9,6 @@ import { CreateLayoutChangeCommand, CreateLayoutChangeUseCase } from '../create-
 import { SetDefaultLayoutCommand, SetDefaultLayoutUseCase } from '../set-default-layout';
 import { LayoutDto } from '../../dtos';
 import { ChannelTypeEnum, ITemplateVariable, LayoutId } from '../../types';
-import { ApiException } from '../../../shared/exceptions/api.exception';
 
 @Injectable()
 export class CreateLayoutUseCase {
@@ -24,7 +23,7 @@ export class CreateLayoutUseCase {
     const variables = this.getExtractedVariables(command.variables as ITemplateVariable[], command.content);
     const hasBody = command.content.includes('{{{body}}}');
     if (!hasBody) {
-      throw new ApiException('Layout content must contain {{{body}}}');
+      throw new BadRequestException('Layout content must contain {{{body}}}');
     }
     const layoutIdentifierExist = await this.layoutRepository.findOne({
       _organizationId: command.organizationId,

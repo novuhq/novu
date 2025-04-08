@@ -415,6 +415,13 @@ export class ExecuteBridgeRequest {
           code: BRIDGE_EXECUTION_ERROR.BRIDGE_METHOD_NOT_CONFIGURED.code,
           statusCode: HttpStatus.BAD_REQUEST,
         };
+      } else if (error.response.statusCode === 413) {
+        Logger.error(`Payload too large for \`${url}\``, LOG_CONTEXT);
+        bridgeErrorData = {
+          message: BRIDGE_EXECUTION_ERROR.PAYLOAD_TOO_LARGE.message(url),
+          code: BRIDGE_EXECUTION_ERROR.PAYLOAD_TOO_LARGE.code,
+          statusCode: HttpStatus.PAYLOAD_TOO_LARGE,
+        };
       } else {
         Logger.error(
           `Unknown bridge request error calling \`${url}\`: \`${JSON.stringify(body)}\``,

@@ -6,8 +6,6 @@ export enum ROUTES {
   AUTH_RESET_REQUEST = '/auth/reset/request',
   AUTH_RESET_TOKEN = '/auth/reset/:token',
   AUTH_INVITATION_TOKEN = '/auth/invitation/:token',
-  PARTNER_INTEGRATIONS_VERCEL_LINK_PROJECTS = '/partner-integrations/vercel/link-projects',
-  PARTNER_INTEGRATIONS_VERCEL_LINK_PROJECTS_EDIT = '/partner-integrations/vercel/link-projects/edit',
   ANY = '/*',
   WORKFLOWS_DIGEST_PLAYGROUND = '/workflows/:templateId/digest-playground',
   WORKFLOWS_CREATE = '/workflows/create',

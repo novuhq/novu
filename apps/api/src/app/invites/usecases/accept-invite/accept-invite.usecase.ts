@@ -1,10 +1,9 @@
-import { Injectable, Logger, NotFoundException, Scope } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, Scope, BadRequestException } from '@nestjs/common';
 
 import { MemberEntity, MemberRepository, OrganizationRepository, UserEntity, UserRepository } from '@novu/dal';
 import { MemberStatusEnum } from '@novu/shared';
 import { Novu } from '@novu/api';
 import { AuthService } from '../../../auth/services/auth.service';
-import { ApiException } from '../../../shared/exceptions/api.exception';
 import { AcceptInviteCommand } from './accept-invite.command';
 import { capitalize } from '../../../shared/services/helper/helper.service';
 
@@ -23,8 +22,8 @@ export class AcceptInvite {
 
   async execute(command: AcceptInviteCommand): Promise<string> {
     const member = await this.memberRepository.findByInviteToken(command.token);
-    if (!member) throw new ApiException('No organization found');
-    if (!member.invite) throw new ApiException('No active invite found for user');
+    if (!member) throw new BadRequestException('No organization found');
+    if (!member.invite) throw new BadRequestException('No active invite found for user');
 
     const organization = await this.organizationRepository.findById(member._organizationId);
     if (!organization) throw new NotFoundException('No organization found');
@@ -34,7 +33,7 @@ export class AcceptInvite {
 
     this.organizationId = organization._id;
 
-    if (member.memberStatus !== MemberStatusEnum.INVITED) throw new ApiException('Token expired');
+    if (member.memberStatus !== MemberStatusEnum.INVITED) throw new BadRequestException('Token expired');
 
     const inviter = await this.userRepository.findById(member.invite._inviterId);
     if (!inviter) throw new NotFoundException('No inviter entity found');

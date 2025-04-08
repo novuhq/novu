@@ -2,15 +2,15 @@ import { useMemo } from 'react';
 import { type Field, QueryBuilder, RuleGroupType, Translations } from 'react-querybuilder';
 import 'react-querybuilder/dist/query-builder.css';
 
-import { LiquidVariable } from '@/utils/parseStepVariablesToLiquidVariables';
-import { ConditionsEditorProvider } from '@/components/conditions-editor/conditions-editor-context';
 import { AddConditionAction } from '@/components/conditions-editor/add-condition-action';
 import { AddGroupAction } from '@/components/conditions-editor/add-group-action';
-import { OperatorSelector } from '@/components/conditions-editor/operator-selector';
 import { CombinatorSelector } from '@/components/conditions-editor/combinator-selector';
-import { ValueEditor } from '@/components/conditions-editor/value-editor';
+import { ConditionsEditorProvider } from '@/components/conditions-editor/conditions-editor-context';
 import { FieldSelector } from '@/components/conditions-editor/field-selector';
+import { OperatorSelector } from '@/components/conditions-editor/operator-selector';
 import { RuleActions } from '@/components/conditions-editor/rule-actions';
+import { ValueEditor } from '@/components/conditions-editor/value-editor';
+import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
 
 const ruleActionsClassName = `[&>[data-actions="true"]]:opacity-0 [&:hover>[data-actions="true"]]:opacity-100 [&>[data-actions="true"]:has(~[data-radix-popper-content-wrapper])]:opacity-100`;
 const groupActionsClassName = `[&_.ruleGroup-header>[data-actions="true"]]:opacity-0 [&_.ruleGroup-header:hover>[data-actions="true"]]:opacity-100 [&_.ruleGroup-header>[data-actions="true"]:has(~[data-radix-popper-content-wrapper])]:opacity-100`;
@@ -52,15 +52,17 @@ const controlElements = {
 function InternalConditionsEditor({
   fields,
   variables,
+  isAllowedVariable,
   query,
   onQueryChange,
 }: {
   fields: Field[];
   variables: LiquidVariable[];
+  isAllowedVariable: IsAllowedVariable;
   query: RuleGroupType;
   onQueryChange: (query: RuleGroupType) => void;
 }) {
-  const context = useMemo(() => ({ variables }), [variables]);
+  const context = useMemo(() => ({ variables, isAllowedVariable }), [variables, isAllowedVariable]);
 
   return (
     <QueryBuilder
@@ -82,15 +84,23 @@ export function ConditionsEditor({
   onQueryChange,
   fields,
   variables,
+  isAllowedVariable,
 }: {
   query: RuleGroupType;
   onQueryChange: (query: RuleGroupType) => void;
   fields: Field[];
   variables: LiquidVariable[];
+  isAllowedVariable: IsAllowedVariable;
 }) {
   return (
     <ConditionsEditorProvider query={query} onQueryChange={onQueryChange}>
-      <InternalConditionsEditor fields={fields} variables={variables} query={query} onQueryChange={onQueryChange} />
+      <InternalConditionsEditor
+        fields={fields}
+        variables={variables}
+        isAllowedVariable={isAllowedVariable}
+        query={query}
+        onQueryChange={onQueryChange}
+      />
     </ConditionsEditorProvider>
   );
 }

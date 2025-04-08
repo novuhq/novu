@@ -1,14 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { UserSessionData, WorkflowResponseDto, WorkflowStatusEnum } from '@novu/shared';
 import { NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
-import { GetWorkflowByIdsUseCase, WorkflowInternalResponseDto } from '@novu/application-generic';
+import { GetWorkflowWithPreferencesUseCase, WorkflowWithPreferencesResponseDto } from '@novu/application-generic';
 import { PatchWorkflowCommand } from './patch-workflow.command';
 import { GetWorkflowUseCase } from '../get-workflow';
 
 @Injectable()
 export class PatchWorkflowUsecase {
   constructor(
-    private getWorkflowByIdsUseCase: GetWorkflowByIdsUseCase,
+    private getWorkflowWithPreferencesUseCase: GetWorkflowWithPreferencesUseCase,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private getWorkflowUseCase: GetWorkflowUseCase
   ) {}
@@ -25,9 +25,9 @@ export class PatchWorkflowUsecase {
   }
 
   private patchWorkflowFields(
-    persistedWorkflow: WorkflowInternalResponseDto,
+    persistedWorkflow: NotificationTemplateEntity,
     command: PatchWorkflowCommand
-  ): WorkflowInternalResponseDto {
+  ): NotificationTemplateEntity {
     const transientWorkflow = { ...persistedWorkflow };
     if (command.active !== undefined && command.active !== null) {
       transientWorkflow.active = command.active;
@@ -64,12 +64,11 @@ export class PatchWorkflowUsecase {
     );
   }
 
-  private async fetchWorkflow(command: PatchWorkflowCommand): Promise<WorkflowInternalResponseDto> {
-    return await this.getWorkflowByIdsUseCase.execute({
+  private async fetchWorkflow(command: PatchWorkflowCommand): Promise<WorkflowWithPreferencesResponseDto> {
+    return await this.getWorkflowWithPreferencesUseCase.execute({
       workflowIdOrInternalId: command.workflowIdOrInternalId,
       environmentId: command.user.environmentId,
       organizationId: command.user.organizationId,
-      userId: command.user._id,
     });
   }
 }

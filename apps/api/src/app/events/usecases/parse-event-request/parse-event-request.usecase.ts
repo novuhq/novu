@@ -38,7 +38,6 @@ import { addBreadcrumb } from '@sentry/node';
 import { randomBytes } from 'crypto';
 import { merge } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
-import { ApiException } from '../../../shared/exceptions/api.exception';
 import { RecipientSchema, RecipientsSchema } from '../../utils/trigger-recipient-validation';
 import { VerifyPayload, VerifyPayloadCommand } from '../verify-payload';
 import {
@@ -327,7 +326,7 @@ export class ParseEventRequest {
     }
 
     if (invalidKeys.length) {
-      throw new ApiException(`Trigger is missing: ${invalidKeys.join(', ')}`);
+      throw new BadRequestException(`Trigger is missing: ${invalidKeys.join(', ')}`);
     }
   }
 

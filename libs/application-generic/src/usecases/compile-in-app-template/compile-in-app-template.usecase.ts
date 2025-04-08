@@ -4,7 +4,7 @@ import { IMessageButton } from '@novu/shared';
 import { ModuleRef } from '@nestjs/core';
 
 import { CompileTemplate, CompileTemplateBase } from '../compile-template';
-import { ApiException } from '../../utils/exceptions';
+import { BadRequestException } from '@nestjs/common';
 import { CompileInAppTemplateCommand } from './compile-in-app-template.command';
 
 @Injectable()
@@ -12,7 +12,7 @@ export class CompileInAppTemplate extends CompileTemplateBase {
   constructor(
     private compileTemplate: CompileTemplate,
     protected communityOrganizationRepository: CommunityOrganizationRepository,
-    protected moduleRef: ModuleRef,
+    protected moduleRef: ModuleRef
   ) {
     super(communityOrganizationRepository, moduleRef);
   }
@@ -20,7 +20,7 @@ export class CompileInAppTemplate extends CompileTemplateBase {
   public async execute(
     command: CompileInAppTemplateCommand,
     // we need i18nInstance outside the command on order to avoid command serialization on it.
-    i18nInstance?: any,
+    i18nInstance?: any
   ) {
     const organization = await this.getOrganization(command.organizationId);
     const payload = command.payload || {};
@@ -31,38 +31,21 @@ export class CompileInAppTemplate extends CompileTemplateBase {
 
     try {
       content = command.content
-        ? await this.compileInAppTemplate(
-            command.content,
-            payload,
-            organization,
-            i18nInstance,
-          )
+        ? await this.compileInAppTemplate(command.content, payload, organization, i18nInstance)
         : '';
 
       if (command.cta?.data?.url) {
-        url = await this.compileInAppTemplate(
-          command.cta?.data?.url,
-          payload,
-          organization,
-          i18nInstance,
-        );
+        url = await this.compileInAppTemplate(command.cta?.data?.url, payload, organization, i18nInstance);
       }
 
       if (command.cta?.action?.buttons) {
         for (const action of command.cta.action.buttons) {
-          const buttonContent = await this.compileInAppTemplate(
-            action.content,
-            payload,
-            organization,
-            i18nInstance,
-          );
+          const buttonContent = await this.compileInAppTemplate(action.content, payload, organization, i18nInstance);
           ctaButtons.push({ type: action.type, content: buttonContent });
         }
       }
     } catch (e: any) {
-      throw new ApiException(
-        e?.message || `In-App Message content could not be generated`,
-      );
+      throw new BadRequestException(e?.message || `In-App Message content could not be generated`);
     }
 
     return { content, ctaButtons, url };
@@ -72,7 +55,7 @@ export class CompileInAppTemplate extends CompileTemplateBase {
     content: string,
     payload: any,
     organization: OrganizationEntity | null,
-    i18nInstance: any,
+    i18nInstance: any
   ): Promise<string> {
     return await this.compileTemplate.execute(
       {
@@ -85,7 +68,7 @@ export class CompileInAppTemplate extends CompileTemplateBase {
           },
         },
       },
-      i18nInstance,
+      i18nInstance
     );
   }
 }
