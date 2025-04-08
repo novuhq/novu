@@ -62,7 +62,7 @@ const inAppOutputSchema = {
     data: { type: 'object', additionalProperties: true },
     redirect: redirectSchema,
   },
-  required: ['body'],
+  anyOf: [{ required: ['subject'] }, { required: ['body'] }],
   additionalProperties: false,
 } as const satisfies JsonSchema;
 

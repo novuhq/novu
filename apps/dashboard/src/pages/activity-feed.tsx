@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 
 import { ActivityFilters } from '@/components/activity/activity-filters';
@@ -18,7 +18,6 @@ import { ActivityError } from '@/components/activity/activity-error';
 
 export function ActivityFeed() {
   const { activityItemId, filters, filterValues, handleActivitySelect, handleFiltersChange } = useActivityUrlState();
-
   const { activity, isPending, error } = usePullActivity(activityItemId);
 
   const hasActiveFilters = Object.entries(filters).some(([key, value]) => {
@@ -45,6 +44,20 @@ export function ActivityFeed() {
       filterValues.subscriberId !== defaultActivityFilters.subscriberId
     );
   }, [filterValues]);
+
+  const handleTransactionIdChange = useCallback(
+    (newTransactionId: string, activityId?: string) => {
+      if (activityId) {
+        handleActivitySelect(activityId);
+      } else {
+        handleFiltersChange({
+          ...filterValues,
+          ...(newTransactionId && { transactionId: newTransactionId }),
+        });
+      }
+    },
+    [filterValues, handleFiltersChange, handleActivitySelect]
+  );
 
   return (
     <>
@@ -97,7 +110,11 @@ export function ActivityFeed() {
                           <>
                             <ActivityHeader title={activity.template?.name} />
                             <ActivityOverview activity={activity} />
-                            <ActivityLogs activity={activity} onActivitySelect={handleActivitySelect} />
+                            <ActivityLogs
+                              activity={activity}
+                              onActivitySelect={handleActivitySelect}
+                              onTransactionIdChange={handleTransactionIdChange}
+                            />
                           </>
                         )}
                       </ActivityPanel>
