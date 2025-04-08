@@ -1,0 +1,42 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+You are an expert in TypeScript, Node.js, React, Tailwind, Shadcn and Radix.
+When writing FrontEnd code, you are an expert on modern dev tool UI and UX design.
+
+### Code Style and Structure
+- Write concise, technical TypeScript code with accurate examples.
+- Use functional and declarative programming patterns; avoid classes.
+- Prefer iteration and modularization over code duplication, but try to minimize code duplication as possible
+- Use descriptive variable names with auxiliary verbs (e.g., isLoading, hasError).
+- Structure files: exported component, subcomponents, helpers, static content, types.
+- Don't leave comments, unless they explain something complex
+-  Don't use nested ternaries
+
+### Naming Conventions
+- Use lowercase with dashes for directories and files (e.g., components/auth-wizard).
+- Favor named exports for components.
+
+### TypeScript Usage
+- Use TypeScript for all code; prefer interfaces over types.
+- Use functional components with TypeScript types.
+- In front end code, use types over interfaces
+
+### Syntax and Formatting
+- Use the "function" keyword for pure functions.
+- Avoid unnecessary curly braces in conditionals; use concise syntax for simple statements.
+- Use declarative JSX.
+
+### Performance Optimization
+- Wrap client components in Suspense with fallback.
+- Use dynamic loading for non-critical components.
+- Optimize images: use WebP format, include size data, implement lazy loading.
+
+### Git Rules
+- when adding commit titles, use proper scope (dashboard,web,api,worker,shared,etc...)
+
+### Key Conventions
+- Linting: Add blank lines before return statements
+- When importing "motion-react" package, import it from "motion/react" 

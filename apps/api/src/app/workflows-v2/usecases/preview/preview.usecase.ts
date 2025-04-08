@@ -190,7 +190,7 @@ export class PreviewUsecase {
         properties: { payload: workflow.payloadSchema },
       });
 
-      return _.merge(payloadExample, schemaBasedPayloadExample);
+      return _.merge(payloadExample, schemaBasedPayloadExample, userPayloadExample);
     }
 
     if (userPayloadExample && Object.keys(userPayloadExample).length > 0) {
