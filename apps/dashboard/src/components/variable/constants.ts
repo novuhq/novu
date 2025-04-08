@@ -321,6 +321,19 @@ const FILTERS: Filters[] = [
     ],
     sampleValue: '[{ name: "John" }, { name: "Jane" }]',
   },
+  {
+    label: 'toSentence',
+    value: 'toSentence',
+    hasParam: true,
+    description: 'Format a list of names with optional key path and separator',
+    example: 'events | digest: 2, "name", ", " → John, Jane and 3 others',
+    params: [
+      { placeholder: 'Max names to show', type: 'number' },
+      { placeholder: 'Object key path (optional)', type: 'string' },
+      { placeholder: 'Custom separator (optional)', type: 'string' },
+    ],
+    sampleValue: '[{ name: "John" }, { name: "Jane" }]',
+  },
 ];
 
 export const getFilters = (isEnhancedDigestEnabled: boolean): Filters[] => {

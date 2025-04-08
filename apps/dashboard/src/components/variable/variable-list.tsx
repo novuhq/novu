@@ -5,6 +5,17 @@ import { Code2 } from '@/components/icons/code-2';
 import { cn } from '@/utils/ui';
 import TruncatedText from '@/components/truncated-text';
 
+const DIGEST_VARIABLES = [
+  {
+    label: 'step.digest.countSummary',
+    value: "{{step.digest.eventCount | pluralize: 'notification', 'notifications'}}",
+  },
+  {
+    label: 'step.digest.sentenceSummary',
+    value: "{{step.digest.events | toSentence: '', 2, 'others'}}",
+  },
+];
+
 const KeyboardItem = ({ children, className }: { children: React.ReactNode; className?: string }) => {
   return (
     <span
@@ -116,7 +127,7 @@ export const VariableList = React.forwardRef<VariableListRef, VariablesListProps
           // relative is to set offset parent and is important to make the scroll and navigation work
           className="relative flex max-h-[200px] flex-col gap-0.5 overflow-y-auto overflow-x-hidden p-1"
         >
-          {options.map((option, index) => (
+          {[...DIGEST_VARIABLES, ...options].map((option, index) => (
             <li
               className={cn(
                 'text-paragraph-xs font-code text-foreground-950 flex cursor-pointer items-center gap-1 rounded-sm p-1 hover:bg-neutral-100',

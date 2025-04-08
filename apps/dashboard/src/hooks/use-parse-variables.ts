@@ -4,12 +4,12 @@ import { useMemo } from 'react';
 import { useFeatureFlag } from './use-feature-flag';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 
-export function useParseVariables(schema?: JSONSchemaDefinition) {
+export function useParseVariables(schema?: JSONSchemaDefinition, addDigestVariables = false) {
   const isEnhancedDigestEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_ENHANCED_DIGEST_ENABLED);
 
   const parsedVariables = useMemo(() => {
     return schema
-      ? parseStepVariables(schema, isEnhancedDigestEnabled)
+      ? parseStepVariables(schema, { isEnhancedDigestEnabled, addDigestVariables })
       : {
           variables: [],
           namespaces: [],
@@ -17,7 +17,7 @@ export function useParseVariables(schema?: JSONSchemaDefinition) {
           arrays: [],
           isAllowedVariable: () => false,
         };
-  }, [schema, isEnhancedDigestEnabled]);
+  }, [schema, isEnhancedDigestEnabled, addDigestVariables]);
 
   return parsedVariables;
 }

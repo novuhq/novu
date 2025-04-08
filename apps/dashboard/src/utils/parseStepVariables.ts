@@ -1,5 +1,20 @@
 import type { JSONSchemaDefinition } from '@novu/shared';
 
+const DIGEST_VARIABLES: LiquidVariable[] = [
+  {
+    label: 'step.digest.countSummary',
+    // value: "{{step.digest.eventCount | pluralize: 'notification', 'notifications'}}",
+    type: 'digest',
+    boost: 99,
+  },
+  {
+    label: 'step.digest.sentenceSummary',
+    // value: "{{step.digest.events | toSentence: '', 2, 'others'}}",
+    type: 'digest',
+    boost: 98,
+  },
+];
+
 export interface LiquidVariable {
   type: 'variable' | 'digest';
   label: string;
@@ -22,7 +37,13 @@ export interface ParsedVariables {
  * @param schema - The JSON Schema to parse.
  * @returns An object containing three arrays: primitives, arrays, and namespaces.
  */
-export function parseStepVariables(schema: JSONSchemaDefinition, isEnhancedDigestEnabled: boolean): ParsedVariables {
+export function parseStepVariables(
+  schema: JSONSchemaDefinition,
+  {
+    addDigestVariables = false,
+    isEnhancedDigestEnabled,
+  }: { isEnhancedDigestEnabled: boolean; addDigestVariables: boolean }
+): ParsedVariables {
   const result: ParsedVariables = {
     primitives: [],
     arrays: [],
@@ -113,6 +134,10 @@ export function parseStepVariables(schema: JSONSchemaDefinition, isEnhancedDiges
   function isAllowedVariable(path: string): boolean {
     if (typeof schema === 'boolean') return false;
 
+    if (addDigestVariables && DIGEST_VARIABLES.some((variable) => variable.label === path)) {
+      return true;
+    }
+
     if (result.primitives.some((primitive) => primitive.label === path)) {
       return true;
     }
@@ -151,9 +176,12 @@ export function parseStepVariables(schema: JSONSchemaDefinition, isEnhancedDiges
 
   return {
     ...result,
-    variables: isEnhancedDigestEnabled
-      ? [...result.primitives, ...result.arrays, ...result.namespaces]
-      : [...result.primitives, ...result.namespaces],
+
+    variables:
+      isEnhancedDigestEnabled && addDigestVariables
+        ? [...DIGEST_VARIABLES, ...result.primitives, ...result.arrays, ...result.namespaces]
+        : [...result.primitives, ...result.namespaces],
+
     isAllowedVariable,
   };
 }
