@@ -89,26 +89,30 @@ jobs:
                 container_name=$(echo "$worker_service" | jq -r '.container_name')
                 service_name=$(echo "$worker_service" | jq -r '.service')
                 task_name=$(echo "$worker_service" | jq -r '.task_name')
-                deploy_matrix+=("{\"cluster_name\": \"$cluster_name\", \"container_name\": \"$container_name\", \"service_name\": \"$service_name\", \"task_name\": \"$task_name\"}")
+                image=$(echo "$worker_service" | jq -r '.image')
+                deploy_matrix+=("{\"cluster_name\": \"$cluster_name\", \"container_name\": \"$container_name\", \"service_name\": \"$service_name\", \"task_name\": \"$task_name\", \"image\": \"$image\"}")
               done
             elif [ "$service" == "\"api\"" ]; then
               cluster_name=api-cluster
               container_name=api-container
               service_name=api-service
               task_name=api-task
-              deploy_matrix+=("{\"cluster_name\": \"$cluster_name\", \"container_name\": \"$container_name\", \"service_name\": \"$service_name\", \"task_name\": \"$task_name\"}")
+              image=api
+              deploy_matrix+=("{\"cluster_name\": \"$cluster_name\", \"container_name\": \"$container_name\", \"service_name\": \"$service_name\", \"task_name\": \"$task_name\", \"image\": \"$image\"}")
             elif [ "$service" == "\"ws\"" ]; then
               cluster_name=ws-cluster
               container_name=ws-container
               service_name=ws-service
               task_name=ws-task
-              deploy_matrix+=("{\"cluster_name\": \"$cluster_name\", \"container_name\": \"$container_name\", \"service_name\": \"$service_name\", \"task_name\": \"$task_name\"}")
+              image=ws
+              deploy_matrix+=("{\"cluster_name\": \"$cluster_name\", \"container_name\": \"$container_name\", \"service_name\": \"$service_name\", \"task_name\": \"$task_name\", \"image\": \"$image\"}")
             elif [ "$service" == "\"webhook\"" ]; then
               cluster_name=webhook-cluster
               container_name=webhook-container
               service_name=webhook-service
               task_name=webhook-task
-              deploy_matrix+=("{\"cluster_name\": \"$cluster_name\", \"container_name\": \"$container_name\", \"service_name\": \"$service_name\", \"task_name\": \"$task_name\"}")
+              image=webhook
+              deploy_matrix+=("{\"cluster_name\": \"$cluster_name\", \"container_name\": \"$container_name\", \"service_name\": \"$service_name\", \"task_name\": \"$task_name\", \"image\": \"$image\"}")
             fi
           done
 
@@ -209,15 +213,33 @@ jobs:
 
     environment: ${{ matrix.env }}
     steps:
-      - name: Print Important Info
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+      
+      - name: Download task definition
         env:
-          IMAGE_TAG: ${{ github.sha }}
-          REGISTRY: ${{ needs.build.outputs.registry }}
-          AWS_REGION: ${{ vars.AWS_REGION }}
           ECS_PREFIX: ${{ vars.ECS_PREFIX }}
+          TASK_NAME: ${{ matrix.service.task_name }}
         run: |
-          echo "Deploying to cluster: ${ECS_PREFIX}-${{ matrix.service.cluster_name }}"
-          echo "Deploying to service: ${ECS_PREFIX}-${{ matrix.service.service_name }}"
-          echo "Deploying to container: ${ECS_PREFIX}-${{ matrix.service.container_name }}"
-          echo "Deploying to task: ${ECS_PREFIX}-${{ matrix.service.task_name }}"
-          echo "Deploying to region: ${AWS_REGION}"
+          aws ecs describe-task-definition --task-definition ${ECS_PREFIX}-${TASK_NAME} \
+          --query taskDefinition > task-definition.json
+
+      - name: Render Amazon ECS task definition
+        id: render-web-container
+        uses: aws-actions/amazon-ecs-render-task-definition@39c13cf530718ffeb524ec8ee0c15882bcb13842
+        with:
+          task-definition: task-definition.json
+          container-name: ${{ vars.ECS_PREFIX }}-${{ matrix.service.container_name }}
+          image: ${{secrets.ECR_URI}}/${{ vars.ECR_PREFIX }}/${{ matrix.service.image }}:${{ github.sha }}
+      
+      - name: Deploy to Amazon ECS service
+        uses: aws-actions/amazon-ecs-deploy-task-definition@3e7310352de91b71a906e60c22af629577546002
+        with:
+          task-definition: ${{ steps.render-web-container.outputs.task-definition }}
+          service: ${{ vars.ECS_PREFIX }}-${{ matrix.service.service_name }}
+          cluster: ${{ vars.ECS_PREFIX }}-${{ matrix.service.cluster_name }}
+          wait-for-service-stability: true
