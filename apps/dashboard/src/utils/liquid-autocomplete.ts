@@ -241,6 +241,10 @@ export function createAutocompleteSource(variables: LiquidVariable[], isEnhanced
 
           const wrappedValue = `${needsOpening ? '{{' : ''}${selectedValue}${needsClosing ? '}}' : ''}`;
 
+          /**
+           * TODO: add the filtes vallue for DIgest variables here
+           */
+
           // Calculate the final cursor position
           // Add 2 if we need to account for closing brackets
           const finalCursorPos = from + wrappedValue.length + (needsClosing ? 0 : 2);

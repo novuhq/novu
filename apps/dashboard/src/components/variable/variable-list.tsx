@@ -4,17 +4,7 @@ import { CheckIcon } from '@radix-ui/react-icons';
 import { Code2 } from '@/components/icons/code-2';
 import { cn } from '@/utils/ui';
 import TruncatedText from '@/components/truncated-text';
-
-const DIGEST_VARIABLES = [
-  {
-    label: 'step.digest.countSummary',
-    value: "{{step.digest.eventCount | pluralize: 'notification', 'notifications'}}",
-  },
-  {
-    label: 'step.digest.sentenceSummary',
-    value: "{{step.digest.events | toSentence: '', 2, 'others'}}",
-  },
-];
+import { Tooltip, TooltipContent, TooltipPortal, TooltipTrigger } from '../primitives/tooltip';
 
 const KeyboardItem = ({ children, className }: { children: React.ReactNode; className?: string }) => {
   return (
@@ -30,7 +20,7 @@ const KeyboardItem = ({ children, className }: { children: React.ReactNode; clas
 };
 
 export type VariablesListProps = {
-  options: Array<{ label: string; value: string }>;
+  options: Array<{ label: string; value: string; preview?: React.ReactNode }>;
   onSelect: (value: string) => void;
   selectedValue?: string;
   title: string;
@@ -127,27 +117,16 @@ export const VariableList = React.forwardRef<VariableListRef, VariablesListProps
           // relative is to set offset parent and is important to make the scroll and navigation work
           className="relative flex max-h-[200px] flex-col gap-0.5 overflow-y-auto overflow-x-hidden p-1"
         >
-          {[...DIGEST_VARIABLES, ...options].map((option, index) => (
-            <li
-              className={cn(
-                'text-paragraph-xs font-code text-foreground-950 flex cursor-pointer items-center gap-1 rounded-sm p-1 hover:bg-neutral-100',
-                hoveredOptionIndex === index ? 'bg-neutral-100' : ''
-              )}
+          {options.map((option, index) => (
+            <VariableListItem
               key={option.value}
-              value={option.value}
-              onClick={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-
-                onSelect(option.value ?? '');
-              }}
-            >
-              <Code2 className="text-feature size-3 min-w-3" />
-              <TruncatedText>{option.label}</TruncatedText>
-              <CheckIcon
-                className={cn('ml-auto size-4', selectedValue === option.value ? 'opacity-50' : 'opacity-0')}
-              />
-            </li>
+              option={option}
+              index={index}
+              selectedValue={selectedValue}
+              hoveredOptionIndex={hoveredOptionIndex}
+              setHoveredOptionIndex={setHoveredOptionIndex}
+              onSelect={onSelect}
+            />
           ))}
         </ul>
         <footer className="flex items-center gap-1 border-t border-neutral-100 p-1">
@@ -162,3 +141,51 @@ export const VariableList = React.forwardRef<VariableListRef, VariablesListProps
     );
   }
 );
+
+const VariableListItem = ({
+  option,
+  index,
+  selectedValue,
+  hoveredOptionIndex,
+  setHoveredOptionIndex,
+  onSelect,
+}: {
+  option: VariablesListProps['options'][number];
+  index: number;
+  selectedValue?: string;
+  hoveredOptionIndex: number;
+  setHoveredOptionIndex: (index: number) => void;
+  onSelect: (value: string) => void;
+}) => {
+  const hasPreview = !!option.preview;
+  return (
+    <Tooltip open={hoveredOptionIndex === index && hasPreview} key={option.value}>
+      <TooltipTrigger>
+        <li
+          className={cn(
+            'text-paragraph-xs font-code text-foreground-950 flex cursor-pointer items-center gap-1 rounded-sm p-1 hover:bg-neutral-100',
+            hoveredOptionIndex === index ? 'bg-neutral-100' : ''
+          )}
+          value={option.value}
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+
+            onSelect(option.value ?? '');
+          }}
+          onMouseEnter={() => setHoveredOptionIndex(index)}
+          onMouseLeave={() => setHoveredOptionIndex(-1)}
+        >
+          <Code2 className="text-feature size-3 min-w-3" />
+          <TruncatedText>{option.label}</TruncatedText>
+          <CheckIcon className={cn('ml-auto size-4', selectedValue === option.value ? 'opacity-50' : 'opacity-0')} />
+        </li>
+      </TooltipTrigger>
+      <TooltipPortal>
+        <TooltipContent side="right" className="bg-bg-weak border-0 px-1" sideOffset={10}>
+          {option.preview}
+        </TooltipContent>
+      </TooltipPortal>
+    </Tooltip>
+  );
+};
