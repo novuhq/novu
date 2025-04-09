@@ -9,6 +9,8 @@ import { VariablePill } from '@/components/variable/variable-pill';
 import { IsAllowedVariable } from '@/utils/parseStepVariables';
 import { resolveRepeatBlockAlias } from '../variables/variables';
 import { VariableWithContext } from '@/components/variable/types';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 
 type InternalVariableViewProps = NodeViewProps & {
   isAllowedVariable: IsAllowedVariable;
@@ -19,6 +21,7 @@ function InternalVariableView(props: InternalVariableViewProps) {
   const { id, aliasFor } = node.attrs;
   const [variableValue, setVariableValue] = useState(`{{${id}}}`);
   const [isOpen, setIsOpen] = useState(false);
+  const isEnhancedDigestEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_ENHANCED_DIGEST_ENABLED);
 
   const parseVariableCallback = useCallback((variable: string) => {
     const regex = new RegExp(VARIABLE_REGEX_STRING, 'g');
@@ -51,7 +54,7 @@ function InternalVariableView(props: InternalVariableViewProps) {
           const { fullLiquidExpression } = parseVariableCallback(newValue);
           updateAttributes({
             id: fullLiquidExpression,
-            aliasFor: resolveRepeatBlockAlias(fullLiquidExpression, editor),
+            aliasFor: resolveRepeatBlockAlias(fullLiquidExpression, editor, isEnhancedDigestEnabled),
           });
           setVariableValue(newValue);
           // Focus back to the editor after updating the variable

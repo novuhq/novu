@@ -22,6 +22,7 @@ export type CalculateVariablesProps = {
   arrays: Array<Variable>;
   namespaces: Array<Variable>;
   isAllowedVariable: IsAllowedVariable;
+  isEnhancedDigestEnabled: boolean;
 };
 
 const insertNodeToEditor = ({
@@ -63,11 +64,13 @@ export const insertVariableToEditor = ({
   query,
   editor,
   isAllowedVariable,
+  isEnhancedDigestEnabled,
   range,
 }: {
   query: string;
   editor: TiptapEditor;
   isAllowedVariable: IsAllowedVariable;
+  isEnhancedDigestEnabled: boolean;
   range?: { from: number; to: number };
 }) => {
   // if we type then we need to close, if we accept suggestion then it has range
@@ -76,7 +79,7 @@ export const insertVariableToEditor = ({
 
   const queryWithoutSuffix = query.replace(/}+$/, '');
 
-  const aliasFor = resolveRepeatBlockAlias(queryWithoutSuffix, editor);
+  const aliasFor = resolveRepeatBlockAlias(queryWithoutSuffix, editor, isEnhancedDigestEnabled);
   const variable: VariableWithContext = { name: queryWithoutSuffix, aliasFor };
 
   if (!isAllowedVariable(variable)) return;
@@ -110,6 +113,7 @@ export const calculateVariables = ({
   arrays,
   namespaces,
   isAllowedVariable,
+  isEnhancedDigestEnabled,
 }: CalculateVariablesProps): Variables | undefined => {
   const queryWithoutSuffix = query.replace(/}+$/, '');
   const filteredVariables: Array<Variable> = [];
@@ -119,13 +123,16 @@ export const calculateVariables = ({
     // Case 1: Inside repeat block's "each" key input - only allow iterables
     if (from === VariableFrom.RepeatEachKey) {
       filteredVariables.push(...iterables);
-      updateRepeatBlockChildAliases(editor);
+      updateRepeatBlockChildAliases(editor, isEnhancedDigestEnabled);
     }
 
     // Case 2: Inside repeat block's content - allow all variables + iterable alias
     if (from === VariableFrom.Content) {
       filteredVariables.push(...primitives, ...namespaces, ...iterables);
-      filteredVariables.push({ name: REPEAT_BLOCK_ITERABLE_ALIAS, required: false });
+
+      if (isEnhancedDigestEnabled) {
+        filteredVariables.push({ name: REPEAT_BLOCK_ITERABLE_ALIAS, required: false });
+      }
     }
   } else {
     // Case 3: Regular content outside repeat block - allow all variables except iterable alias
@@ -142,12 +149,18 @@ export const calculateVariables = ({
     filteredVariables.push({ name: queryWithoutSuffix, required: false });
   }
 
-  insertVariableToEditor({ query, editor, isAllowedVariable });
+  insertVariableToEditor({ query, editor, isAllowedVariable, isEnhancedDigestEnabled });
 
   return dedupAndSortVariables(filteredVariables, queryWithoutSuffix);
 };
 
-export const resolveRepeatBlockAlias = (variable: string, editor: Editor): string | null => {
+export const resolveRepeatBlockAlias = (
+  variable: string,
+  editor: Editor,
+  isEnhancedDigestEnabled: boolean
+): string | null => {
+  if (!isEnhancedDigestEnabled) return null;
+
   if (variable.startsWith(REPEAT_BLOCK_ITERABLE_ALIAS) && isInsideRepeatBlock(editor)) {
     return variable.replace(REPEAT_BLOCK_ITERABLE_ALIAS, editor.getAttributes('repeat')?.each);
   }
@@ -175,7 +188,8 @@ const findRepeatBlock = (editor: Editor) => {
  * iterable: 'payload.comments' => 'payload.blogs'
  * variable aliasFor: 'payload.comments.author' => 'payload.blogs.author'
  */
-const updateRepeatBlockChildAliases = (editor: Editor) => {
+const updateRepeatBlockChildAliases = (editor: Editor, isEnhancedDigestEnabled: boolean) => {
+  if (!isEnhancedDigestEnabled) return;
   const repeat = findRepeatBlock(editor);
 
   if (!repeat) return;
@@ -188,7 +202,7 @@ const updateRepeatBlockChildAliases = (editor: Editor) => {
 
       block.content.descendants((node, pos) => {
         if (node.type.name === 'variable' && node.attrs.aliasFor) {
-          const newAlias = resolveRepeatBlockAlias(node.attrs.id, editor);
+          const newAlias = resolveRepeatBlockAlias(node.attrs.id, editor, isEnhancedDigestEnabled);
           tr.setNodeMarkup(repeatPos + pos + 1, null, { ...node.attrs, aliasFor: newAlias });
         }
       });
