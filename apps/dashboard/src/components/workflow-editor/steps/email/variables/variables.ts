@@ -169,8 +169,8 @@ export const resolveRepeatBlockAlias = (
 
   const variableRoot = variable.split('.')[0];
 
-  if (variableRoot === REPEAT_BLOCK_ITERABLE_ALIAS && isInsideRepeatBlock(editor)) {
-    return variable.replace(REPEAT_BLOCK_ITERABLE_ALIAS, editor.getAttributes('repeat')?.each);
+  if (isAllowedAlias(variableRoot) && isInsideRepeatBlock(editor)) {
+    return variable.replace(variableRoot, editor.getAttributes('repeat')?.each);
   }
 
   return null;
