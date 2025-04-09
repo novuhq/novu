@@ -897,7 +897,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
 
           const stepData = await getStepData(createdWorkflow!._id, createdWorkflow!.steps[0]._id);
           expect(stepData.issues!.controls!.body).to.eql([
-            { message: 'Body is required', issueType: 'MISSING_VALUE', variableName: 'body' },
+            { message: 'Subject or body is required', issueType: 'MISSING_VALUE', variableName: 'body' },
           ]);
 
           // TODO: This should return a different type such as 'INVALID_URL'
