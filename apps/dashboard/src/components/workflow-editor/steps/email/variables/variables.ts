@@ -105,6 +105,67 @@ export const insertVariableToEditor = ({
   });
 };
 
+const getVariablesByContext = (
+  editor: TiptapEditor,
+  from: VariableFrom,
+  isEnhancedDigestEnabled: boolean,
+  primitives: Array<LiquidVariable>,
+  arrays: Array<LiquidVariable>,
+  namespaces: Array<LiquidVariable>
+): LiquidVariable[] => {
+  const iterables = [...arrays, ...getRepeatBlockEachVariables(editor)];
+  const isInRepeatBlock = isInsideRepeatBlock(editor);
+
+  switch (from) {
+    // Case 1: Inside repeat block's "each" key input - only allow iterables
+    case VariableFrom.RepeatEachKey:
+      if (isInRepeatBlock) {
+        updateRepeatBlockChildAliases(editor, isEnhancedDigestEnabled);
+        return iterables;
+      }
+
+      return [];
+
+    // Case 2: Bubble menu (showIf) - allow only primitives and namespaces
+    case VariableFrom.Bubble:
+      return [...primitives, ...namespaces];
+
+    // Case 3: Regular content
+    case VariableFrom.Content: {
+      const baseVariables = [...primitives, ...namespaces, ...iterables];
+
+      // If we're not in a repeat block, return all variables
+      if (!isInRepeatBlock || !isEnhancedDigestEnabled) {
+        return baseVariables;
+      }
+
+      // If we're in a repeat block, return only the iterable properties (current + children)
+      const iterableName = editor?.getAttributes('repeat')?.each;
+      if (!iterableName) return baseVariables;
+
+      // Get all variables that are children of the iterable/alias
+      const iterableProperties = [...namespaces, ...arrays, ...primitives]
+        .filter((variable) => variable.name.startsWith(iterableName))
+        .flatMap((variable) => {
+          // If the variable name is exactly the iterableName, return just the alias
+          if (variable.name === iterableName) {
+            return [{ name: REPEAT_BLOCK_ITERABLE_ALIAS }];
+          }
+
+          // Otherwise, get the last part after the iterableName
+          const suffix = variable.name.split('.').pop();
+          return suffix ? [{ name: `${REPEAT_BLOCK_ITERABLE_ALIAS}.${suffix}` }] : [];
+        });
+
+      // Return all variables, including the iterable alias and its properties
+      return [...baseVariables, ...iterableProperties];
+    }
+
+    default:
+      return [];
+  }
+};
+
 export const calculateVariables = ({
   query,
   editor,
@@ -116,42 +177,24 @@ export const calculateVariables = ({
   isEnhancedDigestEnabled,
 }: CalculateVariablesProps): Array<LiquidVariable> | undefined => {
   const queryWithoutSuffix = query.replace(/}+$/, '');
-  const filteredVariables: Array<LiquidVariable> = [];
-  const iterables = [...arrays, ...getRepeatBlockEachVariable(editor)];
 
-  if (isInsideRepeatBlock(editor)) {
-    // Case 1: Inside repeat block's "each" key input - only allow iterables
-    if (from === VariableFrom.RepeatEachKey) {
-      filteredVariables.push(...iterables);
-      updateRepeatBlockChildAliases(editor, isEnhancedDigestEnabled);
-    }
+  // Get available variables by context (where we are in the editor)
+  const variables = getVariablesByContext(editor, from, isEnhancedDigestEnabled, primitives, arrays, namespaces);
 
-    // Case 2: Inside repeat block's content - allow all variables + iterable alias
-    if (from === VariableFrom.Content) {
-      filteredVariables.push(...primitives, ...namespaces, ...iterables);
-
-      if (isEnhancedDigestEnabled) {
-        filteredVariables.push({ name: REPEAT_BLOCK_ITERABLE_ALIAS });
-      }
-    }
-  } else {
-    // Case 3: Regular content outside repeat block - allow all variables except iterable alias
-    filteredVariables.push(...primitives, ...namespaces, ...iterables);
-  }
-
-  // Case 4: Bubble menu (showIf) - allow only primitives and namespaces
-  if (from === VariableFrom.Bubble) {
-    filteredVariables.push(...primitives, ...namespaces);
-  }
-
-  // Otherwise, add what's being typed if it's allowed
-  if (queryWithoutSuffix.trim() !== '' && isAllowedVariable({ name: queryWithoutSuffix })) {
-    filteredVariables.push({ name: queryWithoutSuffix });
+  // Add currently typed variable if allowed
+  if (
+    queryWithoutSuffix.trim() &&
+    isAllowedVariable({
+      name: queryWithoutSuffix,
+      aliasFor: resolveRepeatBlockAlias(queryWithoutSuffix, editor, isEnhancedDigestEnabled),
+    })
+  ) {
+    variables.push({ name: queryWithoutSuffix });
   }
 
   insertVariableToEditor({ query, editor, isAllowedVariable, isEnhancedDigestEnabled });
 
-  return dedupAndSortVariables(filteredVariables, queryWithoutSuffix);
+  return dedupAndSortVariables(variables, queryWithoutSuffix);
 };
 
 export function isAllowedAlias(variableName: string): boolean {
@@ -223,7 +266,7 @@ const isInsideRepeatBlock = (editor: TiptapEditor): boolean => {
   return findRepeatBlock(editor) !== null;
 };
 
-const getRepeatBlockEachVariable = (editor: TiptapEditor): Array<LiquidVariable> => {
+const getRepeatBlockEachVariables = (editor: TiptapEditor): Array<LiquidVariable> => {
   const iterableName = editor?.getAttributes('repeat')?.each;
 
   if (!iterableName) return [];

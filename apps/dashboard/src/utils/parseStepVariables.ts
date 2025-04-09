@@ -132,22 +132,29 @@ export function parseStepVariables(schema: JSONSchemaDefinition): ParsedVariable
       if (typeof currentObj === 'boolean' || !('type' in currentObj)) return false;
 
       if (currentObj.type === 'array') {
-        const items = Array.isArray(currentObj.items) ? currentObj.items[0] : currentObj.items;
-        currentObj = items as JSONSchemaDefinition;
-        continue;
+        if (!currentObj.items) return false;
+
+        const items: JSONSchemaDefinition = Array.isArray(currentObj.items) ? currentObj.items[0] : currentObj.items;
+        if (typeof items === 'boolean') return false;
+
+        currentObj = items;
       }
 
-      if (currentObj.type !== 'object') return false;
+      if (typeof currentObj === 'boolean' || !('type' in currentObj)) return false;
 
-      if (currentObj.additionalProperties === true) {
-        return true;
-      }
+      if (currentObj.type === 'object') {
+        if (currentObj.additionalProperties === true) {
+          return true;
+        }
 
-      if (!currentObj.properties || !(part in currentObj.properties)) {
+        if (!currentObj.properties || !(part in currentObj.properties)) {
+          return false;
+        }
+
+        currentObj = currentObj.properties[part];
+      } else {
         return false;
       }
-
-      currentObj = currentObj.properties[part];
     }
 
     return true;
