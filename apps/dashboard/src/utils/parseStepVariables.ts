@@ -1,6 +1,6 @@
 import { Completion } from '@codemirror/autocomplete';
 import type { JSONSchemaDefinition } from '@novu/shared';
-import { DIGEST_VARIABLES } from '../components/variable/utils/digest-variables';
+import { DIGEST_VARIABLES, DIGEST_VARIABLES_VALUE_ROOT_PATHS } from '../components/variable/utils/digest-variables';
 
 export interface LiquidVariable {
   type: 'variable' | 'digest';
@@ -122,7 +122,11 @@ export function parseStepVariables(
   function isAllowedVariable(path: string): boolean {
     if (typeof schema === 'boolean') return false;
 
-    if (isEnhancedDigestEnabled && addDigestVariables && DIGEST_VARIABLES.some((variable) => variable.label === path)) {
+    if (
+      isEnhancedDigestEnabled &&
+      addDigestVariables &&
+      DIGEST_VARIABLES_VALUE_ROOT_PATHS.some((variable) => variable === path)
+    ) {
       return true;
     }
 

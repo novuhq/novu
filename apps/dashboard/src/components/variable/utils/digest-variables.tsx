@@ -53,6 +53,7 @@ export const DIGEST_PREVIEW_MAP = {
   [DIGEST_VARIABLES_ENUM.SENTENCE_SUMMARY]: <DigestSentenceSummaryPreview />,
 } as const;
 
+export const DIGEST_VARIABLES_VALUE_ROOT_PATHS = ['step.digest.eventCount', 'step.digest.events'] as const;
 export const DIGEST_VARIABLES_VALUE_MAP = {
   [DIGEST_VARIABLES_ENUM.COUNT_SUMMARY]: 'step.digest.eventCount | pluralize: "notification", "notifications"',
   [DIGEST_VARIABLES_ENUM.SENTENCE_SUMMARY]: 'step.digest.events | toSentence: "", 2, "others"',
