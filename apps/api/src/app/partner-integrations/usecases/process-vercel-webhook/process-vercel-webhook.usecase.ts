@@ -9,7 +9,6 @@ import {
   MemberRepository,
 } from '@novu/dal';
 
-import { ApiException } from '../../../shared/exceptions/api.exception';
 import { ProcessVercelWebhookCommand } from './process-vercel-webhook.command';
 import { Sync } from '../../../bridge/usecases/sync';
 
@@ -59,7 +58,7 @@ export class ProcessVercelWebhook {
     if (!organizations || organizations.length === 0) {
       Logger.error({ teamId, projectId }, 'Organization not found for vercel webhook integration');
 
-      throw new ApiException('Organization not found');
+      throw new BadRequestException('Organization not found');
     }
 
     for (const organization of organizations) {
@@ -79,18 +78,18 @@ export class ProcessVercelWebhook {
       }
 
       if (!environment) {
-        throw new ApiException('Environment Not Found');
+        throw new BadRequestException('Environment Not Found');
       }
 
       const orgAdmin = await this.memberRepository.getOrganizationAdminAccount(environment._organizationId);
       if (!orgAdmin) {
-        throw new ApiException('Organization admin not found');
+        throw new BadRequestException('Organization admin not found');
       }
 
       const internalUser = await this.communityUserRepository.findOne({ externalId: orgAdmin?._userId });
 
       if (!internalUser) {
-        throw new ApiException('User not found');
+        throw new BadRequestException('User not found');
       }
 
       await this.syncUsecase.execute({

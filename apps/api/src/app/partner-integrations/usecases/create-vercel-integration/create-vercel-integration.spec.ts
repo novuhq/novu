@@ -7,8 +7,8 @@ import { UserSession } from '@novu/testing';
 import { of } from 'rxjs';
 import { AnalyticsService } from '@novu/application-generic';
 
+import { BadRequestException } from '@nestjs/common';
 import { CreateVercelIntegration } from './create-vercel-integration.usecase';
-import { ApiException } from '../../../shared/exceptions/api.exception';
 
 describe('CreateVercelIntegration', function () {
   let createVercelIntegration: CreateVercelIntegration;
@@ -121,7 +121,7 @@ describe('CreateVercelIntegration', function () {
     );
   });
 
-  it('should throw ApiException when Vercel returns an error', async function () {
+  it('should throw BadRequestException when Vercel returns an error', async function () {
     httpServiceMock.post.throws(new Error('Vercel error'));
 
     try {
@@ -134,7 +134,7 @@ describe('CreateVercelIntegration', function () {
       });
       throw new Error('Should not reach here');
     } catch (error) {
-      expect(error).to.be.instanceOf(ApiException);
+      expect(error).to.be.instanceOf(BadRequestException);
       expect(error.message).to.equal('Vercel error');
       assert.notCalled(organizationRepositoryMock.upsertPartnerConfiguration);
     }

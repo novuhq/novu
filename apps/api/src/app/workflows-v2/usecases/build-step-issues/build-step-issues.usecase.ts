@@ -61,7 +61,7 @@ export class BuildStepIssuesUsecase {
       workflow: persistedWorkflow,
       controlSchema,
       controlsDto: controlValuesDto,
-      stepType: stepTypeDto,
+      stepType,
     } = command;
 
     const variableSchema = await this.buildAvailableVariableSchemaUsecase.execute(
@@ -89,16 +89,16 @@ export class BuildStepIssuesUsecase {
       )?.controls;
     }
 
-    const sanitizedControlValues = this.sanitizeControlValues(newControlValues, workflowOrigin, stepTypeDto);
+    const sanitizedControlValues = this.sanitizeControlValues(newControlValues, workflowOrigin, stepType);
 
-    const schemaIssues = this.processControlValuesBySchema(controlSchema, sanitizedControlValues || {});
+    const schemaIssues = this.processControlValuesBySchema(controlSchema, sanitizedControlValues || {}, stepType);
     const liquidIssues = this.processControlValuesByLiquid(variableSchema, newControlValues || {});
-    const customIssues = await this.processControlValuesByCustomeRules(user, stepTypeDto, sanitizedControlValues || {});
+    const customIssues = await this.processControlValuesByCustomeRules(user, stepType, sanitizedControlValues || {});
     const skipLogicIssues = sanitizedControlValues?.skip
       ? this.validateSkipField(variableSchema, sanitizedControlValues.skip as RulesLogic<AdditionalOperation>)
       : {};
     const integrationIssues = await this.validateIntegration({
-      stepTypeDto,
+      stepType,
       environmentId: user.environmentId,
       organizationId: user.organizationId,
     });
@@ -110,10 +110,10 @@ export class BuildStepIssuesUsecase {
   private sanitizeControlValues(
     newControlValues: Record<string, unknown> | undefined,
     workflowOrigin: WorkflowOriginEnum,
-    stepTypeDto: StepTypeEnum
+    stepType: StepTypeEnum
   ) {
     return newControlValues && workflowOrigin === WorkflowOriginEnum.NOVU_CLOUD
-      ? dashboardSanitizeControlValues(this.logger, newControlValues, stepTypeDto) || {}
+      ? dashboardSanitizeControlValues(this.logger, newControlValues, stepType) || {}
       : this.frameworkSanitizeEmptyStringsToNull(newControlValues) || {};
   }
 
@@ -195,7 +195,8 @@ export class BuildStepIssuesUsecase {
   @Instrument()
   private processControlValuesBySchema(
     controlSchema: JSONSchemaDto | undefined,
-    controlValues: Record<string, unknown> | null
+    controlValues: Record<string, unknown> | null,
+    stepType: StepTypeEnum
   ): StepIssuesDto {
     let issues: StepIssuesDto = {};
 
@@ -218,7 +219,7 @@ export class BuildStepIssuesUsecase {
               acc[path] = [];
             }
             acc[path].push({
-              message: this.mapAjvErrorToMessage(error),
+              message: this.mapAjvErrorToMessage(error, stepType),
               issueType: this.mapAjvErrorToIssueType(error),
               variableName: path,
             });
@@ -311,9 +312,24 @@ export class BuildStepIssuesUsecase {
     }
   }
 
-  private mapAjvErrorToMessage(error: ErrorObject<string, Record<string, unknown>, unknown>): string {
+  private mapAjvErrorToMessage(
+    error: ErrorObject<string, Record<string, unknown>, unknown>,
+    stepType: StepTypeEnum
+  ): string {
+    if (stepType === StepTypeEnum.IN_APP) {
+      if (error.keyword === 'required') {
+        return 'Subject or body is required';
+      }
+      if (error.keyword === 'minLength') {
+        return `${capitalize(error.instancePath.replace('/', ''))} is required`;
+      }
+    }
+
     if (error.keyword === 'required') {
       return `${capitalize(error.params.missingProperty)} is required`;
+    }
+    if (error.keyword === 'minLength') {
+      return `${capitalize(error.instancePath.replace('/', ''))} is required`;
     }
     if (
       error.keyword === 'pattern' &&
@@ -355,7 +371,7 @@ export class BuildStepIssuesUsecase {
 
   @Instrument()
   private async validateIntegration(args: {
-    stepTypeDto: StepTypeEnum;
+    stepType: StepTypeEnum;
     environmentId: string;
     organizationId: string;
   }): Promise<StepIssuesDto> {
@@ -367,19 +383,19 @@ export class BuildStepIssuesUsecase {
       StepTypeEnum.IN_APP,
       StepTypeEnum.PUSH,
       StepTypeEnum.CHAT,
-    ].includes(args.stepTypeDto);
+    ].includes(args.stepType);
 
     if (!integrationNeeded) {
       return issues;
     }
 
-    const primaryNeeded = args.stepTypeDto === StepTypeEnum.EMAIL || args.stepTypeDto === StepTypeEnum.SMS;
+    const primaryNeeded = args.stepType === StepTypeEnum.EMAIL || args.stepType === StepTypeEnum.SMS;
     const validIntegrationForStep = await this.integrationsRepository.findOne({
       _environmentId: args.environmentId,
       _organizationId: args.organizationId,
       active: true,
       ...(primaryNeeded && { primary: true }),
-      channel: args.stepTypeDto,
+      channel: args.stepType,
     });
 
     if (validIntegrationForStep) {
@@ -387,7 +403,7 @@ export class BuildStepIssuesUsecase {
     }
 
     issues.integration = {
-      [args.stepTypeDto]: [
+      [args.stepType]: [
         {
           issueType: StepIntegrationIssueEnum.MISSING_INTEGRATION,
           message: `Missing active ${primaryNeeded ? 'primary' : ''} integration provider`,

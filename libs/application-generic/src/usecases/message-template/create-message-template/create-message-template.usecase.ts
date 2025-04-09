@@ -7,7 +7,7 @@ import { CreateChange, CreateChangeCommand } from '../../create-change';
 import { UpdateChange, UpdateChangeCommand } from '../../update-change';
 import { sanitizeMessageContentV0 } from '../../../services';
 import { normalizeVariantDefault } from '../../../utils/variants';
-import { ApiException } from '../../../utils/exceptions';
+import { BadRequestException } from '@nestjs/common';
 import { shouldSanitize } from '../shared';
 
 @Injectable()
@@ -21,7 +21,7 @@ export class CreateMessageTemplate {
 
   async execute(command: CreateMessageTemplateCommand): Promise<MessageTemplateEntity> {
     if ((command?.cta?.action as IMessageAction | undefined | '') === '') {
-      throw new ApiException('Please provide a valid CTA action');
+      throw new BadRequestException('Please provide a valid CTA action');
     }
 
     let layoutId: string | undefined | null;

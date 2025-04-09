@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { EnvironmentRepository } from '@novu/dal';
 import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
 import {
@@ -12,7 +12,6 @@ import {
   SelectIntegrationCommand,
 } from '@novu/application-generic';
 import { AuthService } from '../../../auth/services/auth.service';
-import { ApiException } from '../../../shared/exceptions/api.exception';
 import { InitializeSessionCommand } from './initialize-session.command';
 
 import { SessionInitializeResponseDto } from '../../dtos/session-initialize-response.dto';
@@ -32,7 +31,7 @@ export class InitializeSession {
     const environment = await this.environmentRepository.findEnvironmentByIdentifier(command.applicationIdentifier);
 
     if (!environment) {
-      throw new ApiException('Please provide a valid app identifier');
+      throw new BadRequestException('Please provide a valid app identifier');
     }
 
     const inAppIntegration = await this.selectIntegration.execute(
@@ -86,6 +85,6 @@ function validateNotificationCenterEncryption(environment, command: InitializeSe
   const key = decryptApiKey(environment.apiKeys[0].key);
   const hmacHash = createHash(key, command.subscriberId);
   if (hmacHash !== command.hmacHash) {
-    throw new ApiException('Please provide a valid HMAC hash');
+    throw new BadRequestException('Please provide a valid HMAC hash');
   }
 }

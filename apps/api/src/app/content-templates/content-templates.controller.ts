@@ -1,11 +1,10 @@
 /* eslint-disable global-require */
-import { Body, Controller, Logger, Post } from '@nestjs/common';
+import { Body, Controller, Logger, Post, BadRequestException } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { format } from 'date-fns';
 import i18next from 'i18next';
 import { ModuleRef } from '@nestjs/core';
 import {
-  ApiException,
   CompileEmailTemplate,
   CompileEmailTemplateCommand,
   CompileInAppTemplate,
@@ -152,7 +151,7 @@ export class ContentTemplatesController {
     try {
       if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
         if (!require('@novu/ee-shared-services')?.TranslationsService) {
-          throw new ApiException('Translation module is not loaded');
+          throw new BadRequestException('Translation module is not loaded');
         }
         const service = this.moduleRef.get(require('@novu/ee-shared-services')?.TranslationsService, { strict: false });
         const { namespaces, resources, defaultLocale } = await service.getTranslationsList(

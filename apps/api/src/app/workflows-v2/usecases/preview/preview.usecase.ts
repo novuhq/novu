@@ -4,7 +4,7 @@ import get from 'lodash/get';
 import Ajv, { ErrorObject } from 'ajv';
 import addFormats from 'ajv-formats';
 import { captureException } from '@sentry/node';
-import { NotificationTemplateEntity } from '@novu/dal';
+import { EnvironmentEntity, NotificationTemplateEntity, OrganizationEntity, UserEntity } from '@novu/dal';
 
 import {
   ChannelTypeEnum,
@@ -15,8 +15,10 @@ import {
   StepResponseDto,
   WorkflowOriginEnum,
   StepTypeEnum,
+  FeatureFlagsKeysEnum,
 } from '@novu/shared';
 import {
+  FeatureFlagsService,
   GetWorkflowByIdsCommand,
   GetWorkflowByIdsUseCase,
   Instrument,
@@ -47,12 +49,22 @@ export class PreviewUsecase {
     private buildStepDataUsecase: BuildStepDataUsecase,
     private getWorkflowByIdsUseCase: GetWorkflowByIdsUseCase,
     private createVariablesObject: CreateVariablesObject,
-    private readonly logger: PinoLogger
+    private readonly logger: PinoLogger,
+    private readonly featureFlagService: FeatureFlagsService
   ) {}
 
   @InstrumentUsecase()
   async execute(command: PreviewCommand): Promise<GeneratePreviewResponseDto> {
     try {
+      const { user, generatePreviewRequestDto } = command;
+      const isEnhancedDigestEnabled = await this.featureFlagService.getFlag({
+        user: { _id: user._id } as UserEntity,
+        environment: { _id: user.environmentId } as EnvironmentEntity,
+        organization: { _id: user.organizationId } as OrganizationEntity,
+        key: FeatureFlagsKeysEnum.IS_ENHANCED_DIGEST_ENABLED,
+        defaultValue: false,
+      });
+
       const {
         stepData,
         controlValues: initialControlValues,
@@ -60,7 +72,7 @@ export class PreviewUsecase {
         variablesObject,
         workflow,
       } = await this.initializePreviewContext(command);
-      const commandVariablesExample = command.generatePreviewRequestDto.previewPayload;
+      const userPayloadExample = generatePreviewRequestDto.previewPayload;
 
       /**
        * We don't want to sanitize control values for code workflows,
@@ -79,7 +91,7 @@ export class PreviewUsecase {
       }
 
       let previewTemplateData = {
-        variablesExample: {},
+        payloadExample: {},
         controlValues: {},
       };
 
@@ -91,20 +103,13 @@ export class PreviewUsecase {
           variables.invalidVariables
         );
 
-        /*
-         * Sanitize control values after fixing (by fixControlValueInvalidVariables) invalid variables,
-         * to avoid defaulting (by previewControlValueDefault) all values
-         */
         const processedControlValues = this.sanitizeControlValuesByLiquidCompilationFailure(
           controlKey,
           controlValueWithFixedVariables
         );
 
-        // multiply array items by 3 for preview example purposes
-        const multipliedVariablesExampleResult = multiplyArrayItems(variablesObject, 3);
-
         previewTemplateData = {
-          variablesExample: _.merge(previewTemplateData.variablesExample, multipliedVariablesExampleResult),
+          payloadExample: _.merge(previewTemplateData.payloadExample, multiplyArrayItems(variablesObject, 3)),
           controlValues: {
             ...previewTemplateData.controlValues,
             [controlKey]: isObjectMailyJSONContent(processedControlValues)
@@ -114,11 +119,18 @@ export class PreviewUsecase {
         };
       }
 
-      const mergedVariablesExample = this.mergeVariablesExample(workflow, previewTemplateData, commandVariablesExample);
+      const previewPayloadExample = this.mergePayloadExample(
+        workflow,
+        isEnhancedDigestEnabled
+          ? enhanceEventCountValue(previewTemplateData.payloadExample)
+          : previewTemplateData.payloadExample,
+        userPayloadExample
+      );
+
       const executeOutput = await this.executePreviewUsecase(
         command,
         stepData,
-        mergedVariablesExample,
+        previewPayloadExample,
         previewTemplateData.controlValues
       );
 
@@ -127,7 +139,9 @@ export class PreviewUsecase {
           preview: executeOutput.outputs as any,
           type: stepData.type as unknown as ChannelTypeEnum,
         },
-        previewPayloadExample: mergedVariablesExample,
+        previewPayloadExample: isEnhancedDigestEnabled
+          ? cleanPreviewExamplePayload(previewPayloadExample)
+          : previewPayloadExample,
       };
     } catch (error) {
       this.logger.error(
@@ -160,38 +174,42 @@ export class PreviewUsecase {
     return sanitizedByOutputSchema;
   }
 
-  private mergeVariablesExample(
+  /**
+   * Merge the payload example with the user payload example.
+   * Preserve only values of common keys between payloadExample and userPayloadExample.
+   */
+  private mergePayloadExample(
     workflow: NotificationTemplateEntity,
-    previewTemplateData: { variablesExample: {}; controlValues: {} },
-    commandVariablesExample: PreviewPayload | undefined
+    payloadExample: Record<string, unknown>,
+    userPayloadExample: PreviewPayload | undefined
   ) {
-    let { variablesExample } = previewTemplateData;
-
     if (workflow.origin === WorkflowOriginEnum.EXTERNAL) {
       // if external workflow, we need to override with stored payload schema
-      const schemaBasedVariables = createMockObjectFromSchema({
+      const schemaBasedPayloadExample = createMockObjectFromSchema({
         type: 'object',
         properties: { payload: workflow.payloadSchema },
       });
-      variablesExample = _.merge(variablesExample, schemaBasedVariables);
+
+      return _.merge(payloadExample, schemaBasedPayloadExample, userPayloadExample);
     }
 
-    if (commandVariablesExample && Object.keys(commandVariablesExample).length > 0) {
-      // merge only values of common keys between variablesExample and commandVariablesExample
-      variablesExample = mergeCommonObjectKeys(
-        variablesExample as Record<string, unknown>,
-        commandVariablesExample as Record<string, unknown>
+    if (userPayloadExample && Object.keys(userPayloadExample).length > 0) {
+      return mergeCommonObjectKeys(
+        payloadExample as Record<string, unknown>,
+        userPayloadExample as Record<string, unknown>
       );
     }
 
-    return variablesExample;
+    return payloadExample;
   }
 
   private async initializePreviewContext(command: PreviewCommand) {
+    // get step with control values, variables, issues etc.
     const stepData = await this.getStepData(command);
     const controlValues = command.generatePreviewRequestDto.controlValues || stepData.controls.values || {};
     const workflow = await this.findWorkflow(command);
 
+    // extract all variables from the control values and build the variables object
     const variablesObject = await this.createVariablesObject.execute(
       CreateVariablesObjectCommand.create({
         environmentId: command.user.environmentId,
@@ -202,6 +220,7 @@ export class PreviewUsecase {
       })
     );
 
+    // build the payload schema and merge it with the variables schema
     const variableSchema = await this.buildVariablesSchema(variablesObject, stepData.variables);
 
     return { stepData, controlValues, variableSchema, variablesObject, workflow };
@@ -247,15 +266,16 @@ export class PreviewUsecase {
   private async executePreviewUsecase(
     command: PreviewCommand,
     stepData: StepResponseDto,
-    hydratedPayload: PreviewPayload,
+    previewPayloadExample: PreviewPayload,
     controlValues: Record<string, unknown>
   ) {
-    const state = buildState(hydratedPayload.steps);
+    const state = buildState(previewPayloadExample.steps);
+
     try {
       return await this.previewStepUsecase.execute(
         PreviewStepCommand.create({
-          payload: hydratedPayload.payload || {},
-          subscriber: hydratedPayload.subscriber,
+          payload: previewPayloadExample.payload || {},
+          subscriber: previewPayloadExample.subscriber,
           controls: controlValues || {},
           environmentId: command.user.environmentId,
           organizationId: command.user.organizationId,
@@ -275,6 +295,9 @@ export class PreviewUsecase {
     }
   }
 
+  /**
+   * Fix the control values that have invalid variables used and replace them with empty strings
+   */
   private fixControlValueInvalidVariables(controlValues: unknown, invalidVariables: Variable[]): unknown {
     try {
       let controlValuesString = JSON.stringify(controlValues);
@@ -294,6 +317,10 @@ export class PreviewUsecase {
     }
   }
 
+  /*
+   * Sanitize control values after fixing (by fixControlValueInvalidVariables) invalid variables,
+   * to avoid defaulting (by previewControlValueDefault) all values
+   */
   private sanitizeControlValuesByLiquidCompilationFailure(key: string, value: unknown): unknown {
     const parserEngine = buildLiquidParser();
 
@@ -306,6 +333,56 @@ export class PreviewUsecase {
     }
   }
 }
+
+/**
+ * Clean the preview payload example before returning to remove digest eventCount, events.length and ensure events array exists
+ */
+function cleanPreviewExamplePayload(payloadExample: Record<string, unknown>): Record<string, unknown> {
+  const cleanedPayloadExample = _.cloneDeep(payloadExample);
+
+  if (cleanedPayloadExample.steps && typeof cleanedPayloadExample.steps === 'object') {
+    const steps = cleanedPayloadExample.steps as Record<string, unknown>;
+
+    Object.keys(steps)
+      .filter((stepId) => typeof steps[stepId] === 'object')
+      .forEach((stepId) => {
+        const step = steps[stepId] as Record<string, unknown>;
+
+        // remove eventCount prop
+        delete step.eventCount;
+
+        // remove events.length prop
+        if (step.events && typeof step.events === 'object' && !Array.isArray(step.events)) {
+          delete (step.events as Record<string, unknown>).length;
+        }
+      });
+  }
+
+  return cleanedPayloadExample;
+}
+
+/**
+ * Prepares the payload for the bridge request by ensuring eventCount is calculated from events length
+ */
+function enhanceEventCountValue(payloadExample: PreviewPayload): Record<string, Record<string, unknown>> {
+  const preparedPayload = _.cloneDeep(payloadExample);
+
+  if (preparedPayload.steps && typeof preparedPayload.steps === 'object') {
+    const steps = preparedPayload.steps as Record<string, unknown>;
+
+    Object.keys(steps)
+      .filter((stepId) => typeof steps[stepId] === 'object')
+      .forEach((stepId) => {
+        const step = steps[stepId] as Record<string, unknown>;
+
+        // calculate eventCount based on events array length
+        step.eventCount = Array.isArray(step.events) ? step.events.length : 0;
+      });
+  }
+
+  return preparedPayload;
+}
+
 function buildState(steps: Record<string, unknown> | undefined): FrameworkPreviousStepsOutputState[] {
   const outputArray: FrameworkPreviousStepsOutputState[] = [];
   for (const [stepId, value] of Object.entries(steps || {})) {

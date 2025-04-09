@@ -21,7 +21,7 @@ import {
 
 import { GetSubscriberTemplatePreferenceCommand } from './get-subscriber-template-preference.command';
 
-import { ApiException } from '../../utils';
+import { BadRequestException } from '@nestjs/common';
 import { GetPreferences } from '../get-preferences';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import { CachedResponse } from '../../services/cache/interceptors/cached-return.interceptor';
@@ -209,7 +209,7 @@ export class GetSubscriberTemplatePreference {
     const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
 
     if (!subscriber) {
-      throw new ApiException(`Subscriber ${command.subscriberId} not found`);
+      throw new BadRequestException(`Subscriber ${command.subscriberId} not found`);
     }
 
     return subscriber;

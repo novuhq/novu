@@ -198,7 +198,11 @@ export function multiplyArrayItems(obj: Record<string, unknown>, multiplyBy = 3)
         .fill(null)
         .map(() => {
           // Handle both primitive and object values
-          return typeof value[0] === 'object' && value[0] !== null ? { ...value[0] } : value[0];
+          if (typeof value[0] === 'object' && value[0] !== null) {
+            return { ...value[0] };
+          }
+
+          return key === 'events' ? { payload: {} } : value[0];
         });
     } else if (typeof value === 'object' && value !== null) {
       result[key] = multiplyArrayItems(value as Record<string, unknown>, multiplyBy);

@@ -10,10 +10,10 @@ import {
   WebSocketsQueueService,
 } from '@novu/application-generic';
 
+import { BadRequestException } from '@nestjs/common';
 import { UpdateAllNotifications } from './update-all-notifications.usecase';
 import type { UpdateAllNotificationsCommand } from './update-all-notifications.command';
 import { GetSubscriber } from '../../../subscribers/usecases/get-subscriber';
-import { ApiException } from '../../../shared/exceptions/api.exception';
 import { AnalyticsEventsEnum } from '../../utils';
 
 const mockSubscriber: any = { _id: '6447aff5d89122e250412c79', subscriberId: '6447aff5d89122e250412c79' };
@@ -60,7 +60,7 @@ describe('UpdateAllNotifications', () => {
     try {
       await updateAllNotifications.execute(command);
     } catch (error) {
-      expect(error).to.be.instanceOf(ApiException);
+      expect(error).to.be.instanceOf(BadRequestException);
       expect(error.message).to.equal(`Subscriber with id: ${command.subscriberId} is not found.`);
     }
   });

@@ -12,12 +12,13 @@
     },
     {
       "name": "API",
-      "request": "launch",
-      "runtimeArgs": ["run-script", "start"],
-      "runtimeExecutable": "npm",
       "cwd": "${workspaceFolder}/apps/api",
-      "skipFiles": ["<node_internals>/**"],
-      "type": "node"
+      "type": "node",
+      "request": "launch",
+      "args": ["${workspaceFolder}/apps/api/src/main.ts"],
+      "runtimeArgs": ["--nolazy", "-r", "ts-node/register", "-r", "tsconfig-paths/register"],
+      "sourceMaps": true,
+      "protocol": "inspector"
     },
     {
       "name": "worker",

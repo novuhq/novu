@@ -1,10 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { FeedRepository, ChangeRepository, DalException } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
 
 import { CreateChange, CreateChangeCommand } from '@novu/application-generic';
 import { DeleteFeedCommand } from './delete-feed.command';
-import { ApiException } from '../../../shared/exceptions/api.exception';
 
 @Injectable()
 export class DeleteFeed {
@@ -45,7 +44,7 @@ export class DeleteFeed {
       );
     } catch (e) {
       if (e instanceof DalException) {
-        throw new ApiException(e.message);
+        throw new BadRequestException(e.message);
       }
       throw e;
     }

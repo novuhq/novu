@@ -126,42 +126,43 @@ const FormMessagePure = React.forwardRef<HTMLParagraphElement, FormMessagePurePr
 );
 FormMessagePure.displayName = 'FormMessagePure';
 
-const FormMessage = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLParagraphElement>>(
-  ({ children, ...rest }, ref) => {
-    const { error, formMessageId } = useFormField();
-    const content = error ? String(error.message) : children;
-    const icon = error ? RiErrorWarningFill : RiInformationLine;
+const FormMessage = React.forwardRef<
+  HTMLParagraphElement,
+  React.HTMLAttributes<HTMLParagraphElement> & { suppressError?: boolean }
+>(({ children, suppressError, ...rest }, ref) => {
+  const { error, formMessageId } = useFormField();
+  const content = !suppressError && error ? String(error.message) : children;
+  const icon = error ? RiErrorWarningFill : RiInformationLine;
 
-    const isFirstMount = useRef(true);
-    const prevContent = useRef(content);
+  const isFirstMount = useRef(true);
+  const prevContent = useRef(content);
 
-    useEffect(() => {
-      if (content !== prevContent.current) {
-        isFirstMount.current = false;
-      }
+  useEffect(() => {
+    if (content !== prevContent.current) {
+      isFirstMount.current = false;
+    }
 
-      prevContent.current = content;
-    }, [content]);
+    prevContent.current = content;
+  }, [content]);
 
-    return (
-      <AnimatePresence mode="wait">
-        {content && (
-          <motion.div
-            key={content ? String(content) : 'empty'}
-            initial={isFirstMount.current ? false : { opacity: 0, y: -5, height: 0 }}
-            animate={{ opacity: 1, y: 0, height: 'auto' }}
-            exit={{ opacity: 0, y: -5, height: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <FormMessagePure ref={ref} id={formMessageId} hasError={!!error} icon={icon} {...rest}>
-              {content}
-            </FormMessagePure>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    );
-  }
-);
+  return (
+    <AnimatePresence mode="wait">
+      {content && (
+        <motion.div
+          key={content ? String(content) : 'empty'}
+          initial={isFirstMount.current ? false : { opacity: 0, y: -5, height: 0 }}
+          animate={{ opacity: 1, y: 0, height: 'auto' }}
+          exit={{ opacity: 0, y: -5, height: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <FormMessagePure ref={ref} id={formMessageId} hasError={!!error} icon={icon} {...rest}>
+            {content}
+          </FormMessagePure>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+});
 
 const FormTextInput = React.forwardRef<HTMLInputElement, React.ComponentPropsWithoutRef<typeof Input>>((props, ref) => {
   const { error } = useFormField();

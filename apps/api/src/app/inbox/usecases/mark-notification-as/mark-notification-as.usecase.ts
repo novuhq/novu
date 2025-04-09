@@ -1,8 +1,7 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { AnalyticsService } from '@novu/application-generic';
 import { MessageEntity, MessageRepository } from '@novu/dal';
 
-import { ApiException } from '../../../shared/exceptions/api.exception';
 import { GetSubscriber } from '../../../subscribers/usecases/get-subscriber';
 import { AnalyticsEventsEnum } from '../../utils';
 import { mapToDto } from '../../utils/notification-mapper';
@@ -27,7 +26,7 @@ export class MarkNotificationAs {
       subscriberId: command.subscriberId,
     });
     if (!subscriber) {
-      throw new ApiException(`Subscriber with id: ${command.subscriberId} is not found.`);
+      throw new BadRequestException(`Subscriber with id: ${command.subscriberId} is not found.`);
     }
 
     const message = await this.messageRepository.findOne({

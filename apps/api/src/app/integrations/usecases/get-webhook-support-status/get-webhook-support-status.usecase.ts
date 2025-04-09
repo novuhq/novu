@@ -1,11 +1,10 @@
-import { Injectable, NotFoundException, Scope } from '@nestjs/common';
+import { Injectable, NotFoundException, Scope, BadRequestException } from '@nestjs/common';
 import { IntegrationEntity, IntegrationQuery, IntegrationRepository } from '@novu/dal';
 import { IEmailProvider, ISmsProvider } from '@novu/stateless';
 import { IMailHandler, ISmsHandler, MailFactory, SmsFactory } from '@novu/application-generic';
 import { ChannelTypeEnum, providers } from '@novu/shared';
 
 import { GetWebhookSupportStatusCommand } from './get-webhook-support-status.command';
-import { ApiException } from '../../../shared/exceptions/api.exception';
 
 @Injectable({ scope: Scope.REQUEST })
 export class GetWebhookSupportStatus {
@@ -23,12 +22,12 @@ export class GetWebhookSupportStatus {
 
     const hasNoCredentials = !integration.credentials || Object.keys(integration.credentials).length === 0;
     if (hasNoCredentials) {
-      throw new ApiException(`Integration ${integration._id} doesn't have credentials set up`);
+      throw new BadRequestException(`Integration ${integration._id} doesn't have credentials set up`);
     }
 
     const { channel, providerId } = integration;
     if (![ChannelTypeEnum.EMAIL, ChannelTypeEnum.SMS].includes(channel)) {
-      throw new ApiException(`Webhook for ${providerId}-${channel} is not supported yet`);
+      throw new BadRequestException(`Webhook for ${providerId}-${channel} is not supported yet`);
     }
 
     this.createProvider(integration);

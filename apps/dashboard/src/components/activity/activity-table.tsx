@@ -22,6 +22,7 @@ export interface ActivityTableProps {
   filters?: ActivityFilters;
   hasActiveFilters: boolean;
   onClearFilters: () => void;
+  isLoading?: boolean;
 }
 
 export function ActivityTable({

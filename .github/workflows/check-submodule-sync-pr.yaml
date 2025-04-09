@@ -24,7 +24,7 @@ on:
 
 jobs:
   check_submodule_token:
-    name: Check if the secret exists or not.
+    name: Check if submodule token exists
     runs-on: ubuntu-latest
     outputs:
       has_token: ${{ steps.secret-check.outputs.has_token }}

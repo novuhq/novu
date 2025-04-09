@@ -1,11 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { hash } from 'bcrypt';
 import { isBefore, subDays } from 'date-fns';
 import { UserRepository } from '@novu/dal';
 import { InvalidateCacheService, buildUserKey } from '@novu/application-generic';
 import { AuthService } from '../../services/auth.service';
 import { PasswordResetCommand } from './password-reset.command';
-import { ApiException } from '../../../shared/exceptions/api.exception';
 
 @Injectable()
 export class PasswordReset {
@@ -18,11 +17,11 @@ export class PasswordReset {
   async execute(command: PasswordResetCommand): Promise<{ token: string }> {
     const user = await this.userRepository.findUserByToken(command.token);
     if (!user) {
-      throw new ApiException('Bad token provided');
+      throw new BadRequestException('Bad token provided');
     }
 
     if (user.resetTokenDate && isBefore(new Date(user.resetTokenDate), subDays(new Date(), 7))) {
-      throw new ApiException('Token has expired');
+      throw new BadRequestException('Token has expired');
     }
 
     const passwordHash = await hash(command.password, 10);

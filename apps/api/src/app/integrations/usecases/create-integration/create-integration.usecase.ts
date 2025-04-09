@@ -20,7 +20,6 @@ import {
 } from '@novu/application-generic';
 
 import { CreateIntegrationCommand } from './create-integration.command';
-import { ApiException } from '../../../shared/exceptions/api.exception';
 import { CheckIntegrationCommand } from '../check-integration/check-integration.command';
 import { CheckIntegration } from '../check-integration/check-integration.usecase';
 
@@ -177,7 +176,7 @@ export class CreateIntegration {
       return integrationEntity;
     } catch (e) {
       if (e instanceof DalException) {
-        throw new ApiException(e.message);
+        throw new BadRequestException(e.message);
       }
       throw e;
     }
