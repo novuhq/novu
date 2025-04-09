@@ -35,8 +35,11 @@ export const InAppSubject = () => {
               />
             </InputRoot>
           </FormControl>
-          {/* Use only form message for hints, not for errors */}
-          <FormMessage suppressError>
+          {/**
+           * In app, either subject or body must be present. When both are missing, the errors should be shown once under the body.
+           * To do that, this is a quick hack to only hide "Subject or Body is required" from the In-App subject.
+           */}
+          <FormMessage suppressError={fieldState.error?.message?.includes('is required')}>
             {containsHTMLEntities(field.value) &&
               !getValues('disableOutputSanitization') &&
               'HTML entities detected. Consider disabling content sanitization for proper rendering'}
