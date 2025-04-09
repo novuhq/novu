@@ -4,7 +4,7 @@ type VariablePreviewProps = {
 };
 
 export function VariablePreview({ children, className = '' }: VariablePreviewProps) {
-  return <div className={`flex max-w-56 flex-col justify-center gap-1 py-1.5 ${className}`}>{children}</div>;
+  return <div className={`flex max-w-56 flex-col justify-center gap-1 p-1 ${className}`}>{children}</div>;
 }
 
 type VariablePreviewContentProps = {
