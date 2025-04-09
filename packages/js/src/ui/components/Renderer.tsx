@@ -1,3 +1,5 @@
+// @ts-expect-error inline import esbuild syntax
+import css from 'directcss:../index.directcss';
 import { For, onCleanup, onMount } from 'solid-js';
 import { MountableElement, Portal } from 'solid-js/web';
 import { NovuUI } from '..';
@@ -78,11 +80,10 @@ export const Renderer = (props: RendererProps) => {
       return;
     }
 
-    const link = document.createElement('link');
-    link.id = id;
-    link.rel = 'stylesheet';
-    link.href = props.cssHref;
-    document.head.insertBefore(link, document.head.firstChild);
+    const styleEl = document.createElement('style');
+    styleEl.id = id;
+    document.head.insertBefore(styleEl, document.head.firstChild);
+    styleEl.innerHTML = css;
 
     onCleanup(() => {
       const element = document.getElementById(id);
