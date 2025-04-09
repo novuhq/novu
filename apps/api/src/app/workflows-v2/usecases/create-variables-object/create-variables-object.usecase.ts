@@ -41,31 +41,29 @@ export class CreateVariablesObject {
 
     const variablesObject = keysToObject(variables, arrayVariables, showIfVariables);
     if (isEnhancedDigestEnabled) {
-      return this.ensureEventsArray(variablesObject);
+      return this.ensureEventsVariableIsAnArray(variablesObject);
     }
 
     return variablesObject;
   }
 
-  private ensureEventsArray(variablesObject: Record<string, unknown>) {
+  private ensureEventsVariableIsAnArray(variablesObject: Record<string, unknown>) {
     const stepsObject = (variablesObject.steps as Record<string, unknown>) ?? {};
 
-    Object.keys(stepsObject)
-      .filter((stepId) => typeof stepsObject[stepId] === 'object')
-      .forEach((stepId) => {
-        const step = stepsObject[stepId] as Record<string, unknown>;
-        const hasUsedEventCount = !!step.eventCount;
-        const hasUsedEventsLength = !!(
-          step.events &&
-          typeof step.events === 'object' &&
-          !Array.isArray(step.events) &&
-          'length' in step.events
-        );
-        const hasUsedEvents = !!(step.events && typeof step.events === 'string');
-        if (hasUsedEventCount || hasUsedEventsLength || hasUsedEvents) {
-          step.events = [];
-        }
-      });
+    Object.keys(stepsObject).forEach((stepId) => {
+      const step = stepsObject[stepId] as Record<string, unknown>;
+      const hasUsedEventCount = !!step.eventCount;
+      const hasUsedEventsLength = !!(
+        step.events &&
+        typeof step.events === 'object' &&
+        !Array.isArray(step.events) &&
+        'length' in step.events
+      );
+      const hasUsedEvents = !!(step.events && typeof step.events === 'string');
+      if (hasUsedEventCount || hasUsedEventsLength || hasUsedEvents) {
+        step.events = [];
+      }
+    });
 
     return variablesObject;
   }
