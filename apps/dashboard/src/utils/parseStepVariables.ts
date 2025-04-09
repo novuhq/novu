@@ -1,24 +1,12 @@
+import { Completion } from '@codemirror/autocomplete';
 import type { JSONSchemaDefinition } from '@novu/shared';
-
-const DIGEST_VARIABLES: LiquidVariable[] = [
-  {
-    label: 'step.digest.countSummary',
-    // value: "{{step.digest.eventCount | pluralize: 'notification', 'notifications'}}",
-    type: 'digest',
-    boost: 99,
-  },
-  {
-    label: 'step.digest.sentenceSummary',
-    // value: "{{step.digest.events | toSentence: '', 2, 'others'}}",
-    type: 'digest',
-    boost: 98,
-  },
-];
+import { DIGEST_VARIABLES } from '../components/variable/utils/digest-variables';
 
 export interface LiquidVariable {
   type: 'variable' | 'digest';
   label: string;
   boost?: number;
+  info?: Completion['info'];
 }
 
 export type IsAllowedVariable = (path: string) => boolean;
