@@ -12,7 +12,7 @@ export class InAppStepEditor {
   }
 
   async getBodyValidationError() {
-    return this.page.getByText('Body is required');
+    return this.page.getByText('Subject or body is required');
   }
 
   async fillForm({
