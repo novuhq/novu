@@ -40,6 +40,7 @@ describe('EmailOutputRendererUsecase', () => {
   describe('general flow', () => {
     it('should return subject and body when body is not string', async () => {
       let renderCommand = {
+        environmentId: 'fake_env_id',
         controlValues: {
           subject: 'Test Subject',
           body: undefined,
@@ -55,6 +56,7 @@ describe('EmailOutputRendererUsecase', () => {
       });
 
       renderCommand = {
+        environmentId: 'fake_env_id',
         controlValues: {
           subject: 'Test Subject',
           body: 123 as any,
@@ -87,6 +89,7 @@ describe('EmailOutputRendererUsecase', () => {
       };
 
       const renderCommand = {
+        environmentId: 'fake_env_id',
         controlValues: {
           subject: 'Welcome Email',
           body: JSON.stringify(mockTipTapNode),
@@ -120,6 +123,7 @@ describe('EmailOutputRendererUsecase', () => {
       };
 
       const renderCommand = {
+        environmentId: 'fake_env_id',
         controlValues: {
           subject: 'Order Update',
           body: JSON.stringify(mockTipTapNode),
@@ -158,6 +162,7 @@ describe('EmailOutputRendererUsecase', () => {
       };
 
       const renderCommand = {
+        environmentId: 'fake_env_id',
         controlValues: {
           subject: 'Welcome',
           body: JSON.stringify(mockTipTapNode),
@@ -219,6 +224,7 @@ describe('EmailOutputRendererUsecase', () => {
       };
 
       const renderCommand = {
+        environmentId: 'fake_env_id',
         controlValues: {
           subject: 'Order Status',
           body: JSON.stringify(mockTipTapNode),
@@ -296,6 +302,7 @@ describe('EmailOutputRendererUsecase', () => {
       };
 
       const renderCommand = {
+        environmentId: 'fake_env_id',
         controlValues: {
           subject: 'Subscription Update',
           body: JSON.stringify(mockTipTapNode),
@@ -320,6 +327,7 @@ describe('EmailOutputRendererUsecase', () => {
 
       // Test with partial data
       const renderCommandWithPartialData = {
+        environmentId: 'fake_env_id',
         controlValues: {
           subject: 'Subscription Update',
           body: JSON.stringify(mockTipTapNode),
@@ -399,6 +407,7 @@ describe('EmailOutputRendererUsecase', () => {
       truthyValues.forEach(({ value, desc }) => {
         it(`should render content when showIfKey is ${desc}`, async () => {
           const renderCommand = {
+            environmentId: 'fake_env_id',
             controlValues: {
               subject: 'Conditional Test',
               body: JSON.stringify(mockTipTapNode),
@@ -469,6 +478,7 @@ describe('EmailOutputRendererUsecase', () => {
       falsyValues.forEach(({ value, desc }) => {
         it(`should not render content when showIfKey is ${desc}`, async () => {
           const renderCommand = {
+            environmentId: 'fake_env_id',
             controlValues: {
               subject: 'Conditional Test',
               body: JSON.stringify(mockTipTapNode),
@@ -537,6 +547,7 @@ describe('EmailOutputRendererUsecase', () => {
       };
 
       const renderCommand = {
+        environmentId: 'fake_env_id',
         controlValues: {
           subject: 'Nested Conditional Test',
           body: JSON.stringify(mockTipTapNode),
@@ -624,6 +635,7 @@ describe('EmailOutputRendererUsecase', () => {
       };
 
       const renderCommand = {
+        environmentId: 'fake_env_id',
         controlValues: {
           subject: 'Repeat Loop Test',
           body: JSON.stringify(mockTipTapNode),
@@ -677,6 +689,7 @@ describe('EmailOutputRendererUsecase', () => {
       };
 
       const renderCommand = {
+        environmentId: 'fake_env_id',
         controlValues: {
           subject: 'Repeat Loop Test',
           body: JSON.stringify(mockTipTapNode),
@@ -730,6 +743,7 @@ describe('EmailOutputRendererUsecase', () => {
       };
 
       const renderCommand = {
+        environmentId: 'fake_env_id',
         controlValues: {
           subject: 'Link Test',
           body: JSON.stringify(mockTipTapNode),
@@ -768,6 +782,7 @@ describe('EmailOutputRendererUsecase', () => {
       };
 
       const renderCommand = {
+        environmentId: 'fake_env_id',
         controlValues: {
           subject: 'Image Test',
           body: JSON.stringify(mockTipTapNode),
@@ -810,6 +825,7 @@ describe('EmailOutputRendererUsecase', () => {
       };
 
       const renderCommand = {
+        environmentId: 'fake_env_id',
         controlValues: {
           subject: 'Color Test',
           body: JSON.stringify(mockTipTapNode),
