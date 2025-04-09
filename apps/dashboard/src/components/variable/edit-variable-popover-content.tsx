@@ -106,7 +106,7 @@ export function EditVariablePopoverContent(props: EditVariablePopoverContentProp
   );
 
   const handleSave = useCallback(() => {
-    if (!variable || !isAllowedVariable(variable)) {
+    if (!variable || !isAllowedVariable({ ...variable, name })) {
       setNameError('Not a valid variable');
       return;
     }
@@ -120,7 +120,7 @@ export function EditVariablePopoverContent(props: EditVariablePopoverContentProp
     onUpdate(formatLiquidVariable(name, defaultVal, filters, isEnhancedDigestEnabled));
 
     setNameError(undefined);
-  }, [name, defaultVal, filters, onUpdate, track, isAllowedVariable, isEnhancedDigestEnabled]);
+  }, [variable, isAllowedVariable, track, name, defaultVal, filters, onUpdate, isEnhancedDigestEnabled]);
 
   return (
     <PopoverContent className="w-72 p-0" onOpenAutoFocus={handlePopoverOpen} onEscapeKeyDown={onEscapeKeyDown}>

@@ -3,6 +3,8 @@ import type { Editor, Editor as TiptapEditor, Range } from '@tiptap/core';
 
 export const REPEAT_BLOCK_ITERABLE_ALIAS = 'current';
 
+export const ALLOWED_ALIASES = [REPEAT_BLOCK_ITERABLE_ALIAS];
+
 export enum VariableFrom {
   // variable coming from bubble menu (e.g. 'showIf')
   Bubble = 'bubble-variable',
@@ -152,6 +154,12 @@ export const calculateVariables = ({
   return dedupAndSortVariables(filteredVariables, queryWithoutSuffix);
 };
 
+export function isAllowedAlias(variableName: string): boolean {
+  const nameRoot = variableName.split('.')[0];
+
+  return ALLOWED_ALIASES.includes(nameRoot);
+}
+
 export const resolveRepeatBlockAlias = (
   variable: string,
   editor: Editor,
@@ -159,7 +167,9 @@ export const resolveRepeatBlockAlias = (
 ): string | null => {
   if (!isEnhancedDigestEnabled) return null;
 
-  if (variable.startsWith(REPEAT_BLOCK_ITERABLE_ALIAS) && isInsideRepeatBlock(editor)) {
+  const variableRoot = variable.split('.')[0];
+
+  if (variableRoot === REPEAT_BLOCK_ITERABLE_ALIAS && isInsideRepeatBlock(editor)) {
     return variable.replace(REPEAT_BLOCK_ITERABLE_ALIAS, editor.getAttributes('repeat')?.each);
   }
 

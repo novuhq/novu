@@ -1,3 +1,4 @@
+import { isAllowedAlias } from '@/components/workflow-editor/steps/email/variables/variables';
 import type { JSONSchemaDefinition } from '@novu/shared';
 
 export type LiquidVariable = {
@@ -108,6 +109,11 @@ export function parseStepVariables(schema: JSONSchemaDefinition, isEnhancedDiges
 
   function isAllowedVariable(variable: LiquidVariable): boolean {
     if (typeof schema === 'boolean') return false;
+
+    // if it has aliasFor, then the name must start with the alias
+    if (variable.aliasFor && !isAllowedAlias(variable.name)) {
+      return false;
+    }
 
     const path = variable.aliasFor || variable.name;
 
