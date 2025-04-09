@@ -2,11 +2,12 @@ import { Popover, PopoverTrigger } from '@/components/primitives/popover';
 import { EditVariablePopoverContent } from '@/components/variable/edit-variable-popover-content';
 import { IsAllowedVariable } from '@/utils/parseStepVariables';
 import { ReactNode } from 'react';
+import { VariableWithContext } from './types';
 
 type EditVariablePopoverProps = {
   children: ReactNode;
   open: boolean;
-  variable?: string;
+  variable?: VariableWithContext;
   onOpenChange: (open: boolean) => void;
   onUpdate: (newValue: string) => void;
   isAllowedVariable: IsAllowedVariable;

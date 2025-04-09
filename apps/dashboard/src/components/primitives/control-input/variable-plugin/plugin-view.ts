@@ -4,6 +4,7 @@ import { MutableRefObject } from 'react';
 import { VARIABLE_REGEX_STRING } from './';
 import { isTypingVariable, parseVariable } from './utils';
 import { VariablePillWidget } from './variable-pill-widget';
+import { VariableWithContext } from '@/components/variable/types';
 
 export class VariablePluginView {
   decorations: DecorationSet;
@@ -55,7 +56,7 @@ export class VariablePluginView {
         continue;
       }
 
-      if (!this.isAllowedVariable(name)) {
+      if (!this.isAllowedVariable({ name })) {
         continue;
       }
 

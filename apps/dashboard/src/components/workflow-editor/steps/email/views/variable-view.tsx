@@ -7,6 +7,8 @@ import { parseVariable } from '@/components/primitives/control-input/variable-pl
 import { EditVariablePopover } from '@/components/variable/edit-variable-popover';
 import { VariablePill } from '@/components/variable/variable-pill';
 import { IsAllowedVariable } from '@/utils/parseStepVariables';
+import { resolveRepeatBlockAlias } from '../variables/variables';
+import { VariableWithContext } from '@/components/variable/types';
 
 type InternalVariableViewProps = NodeViewProps & {
   isAllowedVariable: IsAllowedVariable;
@@ -14,8 +16,8 @@ type InternalVariableViewProps = NodeViewProps & {
 
 function InternalVariableView(props: InternalVariableViewProps) {
   const { node, updateAttributes, editor, isAllowedVariable } = props;
-  const { id } = node.attrs;
-  const [variable, setVariable] = useState(`{{${id}}}`);
+  const { id, aliasFor } = node.attrs;
+  const [variableValue, setVariableValue] = useState(`{{${id}}}`);
   const [isOpen, setIsOpen] = useState(false);
 
   const parseVariableCallback = useCallback((variable: string) => {
@@ -29,26 +31,36 @@ function InternalVariableView(props: InternalVariableViewProps) {
     return parseVariable(match);
   }, []);
 
-  const { name, filters } = useMemo(() => parseVariableCallback(variable), [variable, parseVariableCallback]);
+  const variableWithContext: VariableWithContext = useMemo(() => {
+    return {
+      name: id,
+      aliasFor,
+    };
+  }, [id, aliasFor]);
+
+  const { filters } = useMemo(() => parseVariableCallback(variableValue), [variableValue, parseVariableCallback]);
 
   return (
     <NodeViewWrapper className="react-component mly-inline-block mly-leading-none" draggable="false">
       <EditVariablePopover
         open={isOpen}
         onOpenChange={setIsOpen}
-        variable={variable}
+        variable={variableWithContext}
         isAllowedVariable={isAllowedVariable}
         onUpdate={(newValue) => {
           const { fullLiquidExpression } = parseVariableCallback(newValue);
-          updateAttributes({ id: fullLiquidExpression });
-          setVariable(newValue);
+          updateAttributes({
+            id: fullLiquidExpression,
+            aliasFor: resolveRepeatBlockAlias(fullLiquidExpression, editor),
+          });
+          setVariableValue(newValue);
           // Focus back to the editor after updating the variable
           editor.view.focus();
         }}
       >
         <VariablePill
-          variable={name}
-          hasFilters={filters?.length > 0}
+          variableName={variableWithContext.name}
+          hasFilters={!!filters?.length}
           onClick={() => setIsOpen(true)}
           className="-mt-[2px]"
         />

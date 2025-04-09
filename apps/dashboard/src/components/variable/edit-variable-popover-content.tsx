@@ -26,15 +26,16 @@ import { useSuggestedFilters } from './hooks/use-suggested-filters';
 import { useVariableParser } from './hooks/use-variable-parser';
 import type { Filters, FilterWithParam, VariablePopoverProps } from './types';
 import { formatLiquidVariable, getDefaultSampleValue } from './utils';
+import { IsAllowedVariable } from '@/utils/parseStepVariables';
 
 type EditVariablePopoverContentProps = VariablePopoverProps & {
-  isAllowedVariable: (variable: string) => boolean;
+  isAllowedVariable: IsAllowedVariable;
 };
 
 export function EditVariablePopoverContent(props: EditVariablePopoverContentProps) {
   const { variable, onUpdate, onEscapeKeyDown, isAllowedVariable } = props;
   const { parsedName, parsedDefaultValue, parsedFilters, originalVariable, parseRawInput } = useVariableParser(
-    variable || ''
+    variable?.name || ''
   );
   const [name, setName] = useState(parsedName);
   const [nameError, setNameError] = useState<string>();
@@ -102,7 +103,7 @@ export function EditVariablePopoverContent(props: EditVariablePopoverContentProp
   );
 
   const handleSave = useCallback(() => {
-    if (!isAllowedVariable(name)) {
+    if (!variable || !isAllowedVariable(variable)) {
       setNameError('Not a valid variable');
       return;
     }
@@ -116,7 +117,7 @@ export function EditVariablePopoverContent(props: EditVariablePopoverContentProp
     onUpdate(formatLiquidVariable(name, defaultVal, filters));
 
     setNameError(undefined);
-  }, [name, defaultVal, filters, onUpdate, track]);
+  }, [name, defaultVal, filters, onUpdate, track, variable, isAllowedVariable]);
 
   return (
     <PopoverContent className="w-72 p-0" onOpenAutoFocus={handlePopoverOpen} onEscapeKeyDown={onEscapeKeyDown}>

@@ -1,3 +1,12 @@
+/**
+ * Variable with optionally additional context
+ * depending on where the variable was inserted
+ */
+export type VariableWithContext = {
+  name: string;
+  aliasFor?: string | null;
+};
+
 export type Filters = {
   label: string;
   value: string;
@@ -19,7 +28,7 @@ export type FilterWithParam = {
 };
 
 export type VariablePopoverProps = {
-  variable?: string;
+  variable?: VariableWithContext;
   onUpdate: (newValue: string) => void;
   onEscapeKeyDown?: (event: KeyboardEvent) => void;
 };

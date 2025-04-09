@@ -11,6 +11,7 @@ import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
 import { useVariables } from './hooks/use-variables';
 import { createVariableExtension } from './variable-plugin';
 import { variablePillTheme } from './variable-plugin/variable-theme';
+import { VariableWithContext } from '@/components/variable/types';
 
 const variants = cva('relative w-full', {
   variants: {
@@ -65,6 +66,14 @@ export function ControlInput({
     onChange
   );
 
+  const variable: VariableWithContext | undefined = useMemo(() => {
+    if (!selectedVariable) return undefined;
+
+    return {
+      name: selectedVariable.value,
+    };
+  }, [selectedVariable]);
+
   const completionSource = useMemo(() => createAutocompleteSource(variables), [variables]);
 
   const autocompletionExtension = useMemo(
@@ -86,7 +95,7 @@ export function ControlInput({
         onSelect: handleVariableSelect,
         isAllowedVariable,
       }),
-    [handleVariableSelect]
+    [handleVariableSelect, isAllowedVariable]
   );
 
   const extensions = useMemo(() => {
@@ -121,7 +130,7 @@ export function ControlInput({
       <EditVariablePopover
         open={!!selectedVariable}
         onOpenChange={handleOpenChange}
-        variable={selectedVariable?.value}
+        variable={variable}
         isAllowedVariable={isAllowedVariable}
         onUpdate={(newValue) => {
           handleVariableUpdate(newValue);

@@ -1,3 +1,4 @@
+import type { VariableWithContext } from '@/components/variable/types';
 import type { JSONSchemaDefinition } from '@novu/shared';
 
 export interface LiquidVariable {
@@ -5,7 +6,7 @@ export interface LiquidVariable {
   label: string;
 }
 
-export type IsAllowedVariable = (path: string) => boolean;
+export type IsAllowedVariable = (variable: VariableWithContext) => boolean;
 export type IsArbitraryNamespace = (path: string) => boolean;
 
 export interface ParsedVariables {
@@ -109,8 +110,10 @@ export function parseStepVariables(schema: JSONSchemaDefinition): ParsedVariable
     return parts.includes(null) ? null : (parts as string[]);
   }
 
-  function isAllowedVariable(path: string): boolean {
+  function isAllowedVariable(variable: VariableWithContext): boolean {
     if (typeof schema === 'boolean') return false;
+
+    const path = variable.aliasFor || variable.name;
 
     if (result.primitives.some((primitive) => primitive.label === path)) {
       return true;
