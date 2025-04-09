@@ -48,6 +48,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const hasOrganizations = clerkUser.organizationMemberships.length > 0;
 
+    /**
+     * If the user didn't yet create any organization, or the current org is empty (e.g. the deleted his org),
+     * we redirect to the organization list page.
+     */
     if ((!hasOrganizations || !clerkOrganization) && window.location.pathname !== ROUTES.SIGNUP_ORGANIZATION_LIST) {
       return redirectTo({ url: ROUTES.SIGNUP_ORGANIZATION_LIST });
     }
