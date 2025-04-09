@@ -1,6 +1,7 @@
 import { Liquid } from 'liquidjs';
 import { digest } from '../filters/digest';
-
+import { toSentence } from '../filters/to-sentence';
+import { pluralize } from '../filters/pluralize';
 /**
  * Default output escape function that properly handles objects, arrays, and strings with newlines.
  *
@@ -49,6 +50,8 @@ export function createLiquidEngine(): Liquid {
   // Register default filters
   liquidEngine.registerFilter('json', (value, spaces) => stringifyDataStructureWithSingleQuotes(value, spaces));
   liquidEngine.registerFilter('digest', digest);
+  liquidEngine.registerFilter('toSentence', toSentence);
+  liquidEngine.registerFilter('pluralize', pluralize);
 
   return liquidEngine;
 }

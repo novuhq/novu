@@ -1,6 +1,9 @@
 import { useMemo } from 'react';
-import { FILTERS } from '../constants';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
+
+import { getFilters } from '../constants';
 import { Filters, FilterWithParam } from '../types';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 
 type SuggestionGroup = {
   label: string;
@@ -8,12 +11,17 @@ type SuggestionGroup = {
 };
 
 export function useSuggestedFilters(variableName: string, currentFilters: FilterWithParam[]): SuggestionGroup[] {
+  const isEnhancedDigestEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_ENHANCED_DIGEST_ENABLED);
+  const liquidFilters = useMemo(() => getFilters(isEnhancedDigestEnabled), [isEnhancedDigestEnabled]);
+
   return useMemo(() => {
     const currentFilterValues = new Set(currentFilters.map((f) => f.value));
     const suggestedFilters: Filters[] = [];
 
     const addSuggestions = (filterValues: string[]) => {
-      const newFilters = FILTERS.filter((f) => filterValues.includes(f.value) && !currentFilterValues.has(f.value));
+      const newFilters = liquidFilters.filter(
+        (f) => filterValues.includes(f.value) && !currentFilterValues.has(f.value)
+      );
 
       suggestedFilters.push(...newFilters);
     };
@@ -39,7 +47,7 @@ export function useSuggestedFilters(variableName: string, currentFilters: Filter
     }
 
     return suggestedFilters.length > 0 ? [{ label: 'Suggested', filters: suggestedFilters }] : [];
-  }, [variableName, currentFilters]);
+  }, [variableName, currentFilters, liquidFilters]);
 }
 
 function isDateVariable(name: string): boolean {

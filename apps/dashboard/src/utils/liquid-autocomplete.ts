@@ -1,4 +1,4 @@
-import { FILTERS } from '@/components/variable/constants';
+import { getFilters } from '@/components/variable/constants';
 import { LiquidVariable } from '@/utils/parseStepVariables';
 import { Completion, CompletionContext, CompletionResult } from '@codemirror/autocomplete';
 import { EditorView } from '@uiw/react-codemirror';
@@ -73,7 +73,7 @@ const VALID_DYNAMIC_PATHS = ['subscriber.data.', 'payload.', /^steps\.[^.]+\.eve
  *    - steps.{valid-step}.events[n].payload.* (any new field)
  */
 export const completions =
-  (variables: LiquidVariable[]) =>
+  (variables: LiquidVariable[], isEnhancedDigestEnabled: boolean) =>
   (context: CompletionContext): CompletionResult | null => {
     const { state, pos } = context;
     const beforeCursor = state.sliceDoc(0, pos);
@@ -95,7 +95,7 @@ export const completions =
       return {
         from: pos - afterPipe.length,
         to: pos,
-        options: getFilterCompletions(afterPipe),
+        options: getFilterCompletions(afterPipe, isEnhancedDigestEnabled),
       };
     }
 
@@ -133,10 +133,10 @@ function createCompletionOption(label: string, type: string, boost?: number): Co
   return { label, type, ...(boost && { boost }) };
 }
 
-function getFilterCompletions(afterPipe: string): CompletionOption[] {
-  return FILTERS.filter((f) => f.label.toLowerCase().startsWith(afterPipe.toLowerCase())).map((f) =>
-    createCompletionOption(f.value, 'function')
-  );
+function getFilterCompletions(afterPipe: string, isEnhancedDigestEnabled: boolean): CompletionOption[] {
+  return getFilters(isEnhancedDigestEnabled)
+    .filter((f) => f.label.toLowerCase().startsWith(afterPipe.toLowerCase()))
+    .map((f) => createCompletionOption(f.value, 'function'));
 }
 
 function isValidDynamicPath(searchText: string): boolean {
@@ -208,13 +208,13 @@ function getMatchingVariables(searchText: string, variables: LiquidVariable[]): 
   return variables.filter((v) => v.label.toLowerCase().includes(searchLower));
 }
 
-export function createAutocompleteSource(variables: LiquidVariable[]) {
+export function createAutocompleteSource(variables: LiquidVariable[], isEnhancedDigestEnabled: boolean) {
   return (context: CompletionContext) => {
     // Match text that starts with {{ and capture everything after it until the cursor position
     const word = context.matchBefore(/\{\{([^}]*)/);
     if (!word) return null;
 
-    const options = completions(variables)(context);
+    const options = completions(variables, isEnhancedDigestEnabled)(context);
     if (!options) return null;
 
     const { from, to } = options;
