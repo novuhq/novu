@@ -1,6 +1,4 @@
-import { VariableWithContext } from '@/components/variable/types';
-import { IsAllowedVariable } from '@/utils/parseStepVariables';
-import { Variable, Variables } from '@maily-to/core/extensions';
+import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
 import type { Editor, Editor as TiptapEditor, Range } from '@tiptap/core';
 
 export const REPEAT_BLOCK_ITERABLE_ALIAS = 'current';
@@ -18,9 +16,9 @@ export type CalculateVariablesProps = {
   query: string;
   editor: TiptapEditor;
   from: VariableFrom;
-  primitives: Array<Variable>;
-  arrays: Array<Variable>;
-  namespaces: Array<Variable>;
+  primitives: Array<LiquidVariable>;
+  arrays: Array<LiquidVariable>;
+  namespaces: Array<LiquidVariable>;
   isAllowedVariable: IsAllowedVariable;
   isEnhancedDigestEnabled: boolean;
 };
@@ -80,7 +78,7 @@ export const insertVariableToEditor = ({
   const queryWithoutSuffix = query.replace(/}+$/, '');
 
   const aliasFor = resolveRepeatBlockAlias(queryWithoutSuffix, editor, isEnhancedDigestEnabled);
-  const variable: VariableWithContext = { name: queryWithoutSuffix, aliasFor };
+  const variable: LiquidVariable = { name: queryWithoutSuffix, aliasFor };
 
   if (!isAllowedVariable(variable)) return;
 
@@ -114,9 +112,9 @@ export const calculateVariables = ({
   namespaces,
   isAllowedVariable,
   isEnhancedDigestEnabled,
-}: CalculateVariablesProps): Variables | undefined => {
+}: CalculateVariablesProps): Array<LiquidVariable> | undefined => {
   const queryWithoutSuffix = query.replace(/}+$/, '');
-  const filteredVariables: Array<Variable> = [];
+  const filteredVariables: Array<LiquidVariable> = [];
   const iterables = [...arrays, ...getRepeatBlockEachVariable(editor)];
 
   if (isInsideRepeatBlock(editor)) {
@@ -131,7 +129,7 @@ export const calculateVariables = ({
       filteredVariables.push(...primitives, ...namespaces, ...iterables);
 
       if (isEnhancedDigestEnabled) {
-        filteredVariables.push({ name: REPEAT_BLOCK_ITERABLE_ALIAS, required: false });
+        filteredVariables.push({ name: REPEAT_BLOCK_ITERABLE_ALIAS });
       }
     }
   } else {
@@ -146,7 +144,7 @@ export const calculateVariables = ({
 
   // Otherwise, add what's being typed if it's allowed
   if (queryWithoutSuffix.trim() !== '' && isAllowedVariable({ name: queryWithoutSuffix })) {
-    filteredVariables.push({ name: queryWithoutSuffix, required: false });
+    filteredVariables.push({ name: queryWithoutSuffix });
   }
 
   insertVariableToEditor({ query, editor, isAllowedVariable, isEnhancedDigestEnabled });
@@ -215,15 +213,15 @@ const isInsideRepeatBlock = (editor: TiptapEditor): boolean => {
   return findRepeatBlock(editor) !== null;
 };
 
-const getRepeatBlockEachVariable = (editor: TiptapEditor): Array<Variable> => {
+const getRepeatBlockEachVariable = (editor: TiptapEditor): Array<LiquidVariable> => {
   const iterableName = editor?.getAttributes('repeat')?.each;
 
   if (!iterableName) return [];
 
-  return [{ name: iterableName, required: false }];
+  return [{ name: iterableName }];
 };
 
-const dedupAndSortVariables = (variables: Array<Variable>, query: string): Array<Variable> => {
+const dedupAndSortVariables = (variables: Array<LiquidVariable>, query: string): Array<LiquidVariable> => {
   const filteredVariables = variables.filter((variable) => variable.name.toLowerCase().includes(query.toLowerCase()));
 
   const uniqueVariables = Array.from(new Map(filteredVariables.map((item) => [item.name, item])).values());

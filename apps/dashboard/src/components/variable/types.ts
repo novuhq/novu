@@ -1,11 +1,4 @@
-/**
- * Variable with optionally additional context
- * depending on where the variable was inserted
- */
-export type VariableWithContext = {
-  name: string;
-  aliasFor?: string | null;
-};
+import { LiquidVariable } from '@/utils/parseStepVariables';
 
 export type Filters = {
   label: string;
@@ -28,7 +21,7 @@ export type FilterWithParam = {
 };
 
 export type VariablePopoverProps = {
-  variable?: VariableWithContext;
+  variable?: LiquidVariable;
   onUpdate: (newValue: string) => void;
   onEscapeKeyDown?: (event: KeyboardEvent) => void;
 };

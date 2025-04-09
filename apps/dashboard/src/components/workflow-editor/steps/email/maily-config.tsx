@@ -103,8 +103,9 @@ export const createEditorBlocks = (props: { track: ReturnType<typeof useTelemetr
 export const createExtensions = (props: {
   calculateVariables: (props: CalculateVariablesProps) => Variables | undefined;
   parsedVariables: { isAllowedVariable: IsAllowedVariable };
+  isEnhancedDigestEnabled: boolean;
 }) => {
-  const { calculateVariables, parsedVariables } = props;
+  const { calculateVariables, parsedVariables, isEnhancedDigestEnabled } = props;
 
   return [
     RepeatExtension.extend({
@@ -142,7 +143,13 @@ export const createExtensions = (props: {
         ...getVariableSuggestions(VARIABLE_TRIGGER_CHARACTER),
         command: ({ editor, range, props }) => {
           const query = props.id + '}}';
-          insertVariableToEditor({ query, editor, range, isAllowedVariable: parsedVariables.isAllowedVariable });
+          insertVariableToEditor({
+            query,
+            editor,
+            range,
+            isAllowedVariable: parsedVariables.isAllowedVariable,
+            isEnhancedDigestEnabled,
+          });
         },
       },
       variables: calculateVariables as Variables,

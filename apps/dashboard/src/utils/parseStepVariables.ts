@@ -1,12 +1,11 @@
-import type { VariableWithContext } from '@/components/variable/types';
 import type { JSONSchemaDefinition } from '@novu/shared';
 
-export interface LiquidVariable {
-  type: 'variable';
-  label: string;
-}
+export type LiquidVariable = {
+  name: string;
+  aliasFor?: string | null;
+};
 
-export type IsAllowedVariable = (variable: VariableWithContext) => boolean;
+export type IsAllowedVariable = (variable: LiquidVariable) => boolean;
 export type IsArbitraryNamespace = (path: string) => boolean;
 
 export interface ParsedVariables {
@@ -38,8 +37,7 @@ export function parseStepVariables(schema: JSONSchemaDefinition, isEnhancedDiges
       // Handle object with additionalProperties
       if (obj.additionalProperties === true) {
         result.namespaces.push({
-          type: 'variable',
-          label: path,
+          name: path,
         });
       }
 
@@ -51,8 +49,7 @@ export function parseStepVariables(schema: JSONSchemaDefinition, isEnhancedDiges
         if (typeof value === 'object') {
           if (value.type === 'array') {
             result.arrays.push({
-              type: 'variable',
-              label: fullPath,
+              name: fullPath,
             });
 
             if (value.properties) {
@@ -67,8 +64,7 @@ export function parseStepVariables(schema: JSONSchemaDefinition, isEnhancedDiges
             extractProperties(value, fullPath);
           } else if (value.type && ['string', 'number', 'boolean', 'integer'].includes(value.type as string)) {
             result.primitives.push({
-              type: 'variable',
-              label: fullPath,
+              name: fullPath,
             });
           }
         }
@@ -110,12 +106,12 @@ export function parseStepVariables(schema: JSONSchemaDefinition, isEnhancedDiges
     return parts.includes(null) ? null : (parts as string[]);
   }
 
-  function isAllowedVariable(variable: VariableWithContext): boolean {
+  function isAllowedVariable(variable: LiquidVariable): boolean {
     if (typeof schema === 'boolean') return false;
 
     const path = variable.aliasFor || variable.name;
 
-    if (result.primitives.some((primitive) => primitive.label === path)) {
+    if (result.primitives.some((primitive) => primitive.name === path)) {
       return true;
     }
 

@@ -6,9 +6,8 @@ import { VARIABLE_REGEX_STRING } from '@/components/primitives/control-input/var
 import { parseVariable } from '@/components/primitives/control-input/variable-plugin/utils';
 import { EditVariablePopover } from '@/components/variable/edit-variable-popover';
 import { VariablePill } from '@/components/variable/variable-pill';
-import { IsAllowedVariable } from '@/utils/parseStepVariables';
+import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
 import { resolveRepeatBlockAlias } from '../variables/variables';
-import { VariableWithContext } from '@/components/variable/types';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 
@@ -34,7 +33,7 @@ function InternalVariableView(props: InternalVariableViewProps) {
     return parseVariable(match);
   }, []);
 
-  const variableWithContext: VariableWithContext = useMemo(() => {
+  const variable: LiquidVariable = useMemo(() => {
     return {
       name: id,
       aliasFor,
@@ -48,7 +47,7 @@ function InternalVariableView(props: InternalVariableViewProps) {
       <EditVariablePopover
         open={isOpen}
         onOpenChange={setIsOpen}
-        variable={variableWithContext}
+        variable={variable}
         isAllowedVariable={isAllowedVariable}
         onUpdate={(newValue) => {
           const { fullLiquidExpression } = parseVariableCallback(newValue);
@@ -62,7 +61,7 @@ function InternalVariableView(props: InternalVariableViewProps) {
         }}
       >
         <VariablePill
-          variableName={variableWithContext.name}
+          variableName={variable.name}
           hasFilters={!!filters?.length}
           onClick={() => setIsOpen(true)}
           className="-mt-[2px]"

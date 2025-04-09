@@ -11,7 +11,6 @@ import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
 import { useVariables } from './hooks/use-variables';
 import { createVariableExtension } from './variable-plugin';
 import { variablePillTheme } from './variable-plugin/variable-theme';
-import { VariableWithContext } from '@/components/variable/types';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 
@@ -68,7 +67,7 @@ export function ControlInput({
     onChange
   );
 
-  const variable: VariableWithContext | undefined = useMemo(() => {
+  const variable: LiquidVariable | undefined = useMemo(() => {
     if (!selectedVariable) return undefined;
 
     return {
