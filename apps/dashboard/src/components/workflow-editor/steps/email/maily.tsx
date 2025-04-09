@@ -49,9 +49,10 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
         namespaces,
         isAllowedVariable: parsedVariables.isAllowedVariable,
         isEnhancedDigestEnabled,
+        addDigestVariables: isStepAfterDigest,
       });
     },
-    [primitives, arrays, namespaces, parsedVariables.isAllowedVariable, isEnhancedDigestEnabled]
+    [primitives, arrays, namespaces, parsedVariables.isAllowedVariable, isEnhancedDigestEnabled, isStepAfterDigest]
   );
 
   const extensions = useMemo(
