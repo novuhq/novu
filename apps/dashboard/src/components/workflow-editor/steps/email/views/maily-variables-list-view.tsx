@@ -37,16 +37,18 @@ export const MailyVariablesListView = React.forwardRef(
         return;
       }
 
+      let selectedItem = item;
+
       /**
        *  If the variable is a digest variable,
        * we need to change the name to the value of the variable.
        */
-      if (item.name in DIGEST_VARIABLES_VALUE_MAP) {
-        const digestValue = DIGEST_VARIABLES_VALUE_MAP[item.name as keyof typeof DIGEST_VARIABLES_VALUE_MAP];
-        item.name = digestValue;
+      if (selectedItem.name in DIGEST_VARIABLES_VALUE_MAP) {
+        const digestValue = DIGEST_VARIABLES_VALUE_MAP[selectedItem.name as keyof typeof DIGEST_VARIABLES_VALUE_MAP];
+        selectedItem = { ...selectedItem, name: digestValue };
       }
 
-      onSelectItem(item);
+      onSelectItem(selectedItem);
     };
 
     useImperativeHandle(ref, () => ({
