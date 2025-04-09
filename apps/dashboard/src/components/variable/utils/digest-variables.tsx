@@ -3,10 +3,14 @@ import { LiquidVariable } from '../../../utils/parseStepVariables';
 import { DigestCountSummaryPreview } from '@/components/variable/components/digest-count-summary-preview';
 import { DigestSentenceSummaryPreview } from '@/components/variable/components/digest-sentence-summary-preview';
 
+enum DIGEST_VARIABLES_ENUM {
+  COUNT_SUMMARY = 'step.digest.countSummary',
+  SENTENCE_SUMMARY = 'step.digest.sentenceSummary',
+}
+
 export const DIGEST_VARIABLES: LiquidVariable[] = [
   {
-    label: 'step.digest.countSummary',
-    // value: "{{step.digest.eventCount | pluralize: 'notification', 'notifications'}}",
+    label: DIGEST_VARIABLES_ENUM.COUNT_SUMMARY,
     type: 'digest',
     boost: 99,
     info: () => {
@@ -20,8 +24,7 @@ export const DIGEST_VARIABLES: LiquidVariable[] = [
     },
   },
   {
-    label: 'step.digest.sentenceSummary',
-    // value: "{{step.digest.events | toSentence: '', 2, 'others'}}",
+    label: DIGEST_VARIABLES_ENUM.SENTENCE_SUMMARY,
     type: 'digest',
     boost: 98,
     info: () => {
@@ -36,6 +39,9 @@ export const DIGEST_VARIABLES: LiquidVariable[] = [
   },
 ];
 
+/**
+ * Create a DOM element to render the info panel in Codemirror.
+ */
 const createInfoPanel = ({ component }: { component: React.ReactNode }) => {
   const dom = document.createElement('div');
   createRoot(dom).render(component);
@@ -43,6 +49,11 @@ const createInfoPanel = ({ component }: { component: React.ReactNode }) => {
 };
 
 export const DIGEST_PREVIEW_MAP = {
-  'step.digest.countSummary': <DigestCountSummaryPreview />,
-  'step.digest.sentenceSummary': <DigestSentenceSummaryPreview />,
+  [DIGEST_VARIABLES_ENUM.COUNT_SUMMARY]: <DigestCountSummaryPreview />,
+  [DIGEST_VARIABLES_ENUM.SENTENCE_SUMMARY]: <DigestSentenceSummaryPreview />,
+} as const;
+
+export const DIGEST_VARIABLES_VALUE_MAP = {
+  [DIGEST_VARIABLES_ENUM.COUNT_SUMMARY]: 'step.digest.eventCount | pluralize: "notification", "notifications"',
+  [DIGEST_VARIABLES_ENUM.SENTENCE_SUMMARY]: 'step.digest.events | toSentence: "", 2, "others"',
 } as const;

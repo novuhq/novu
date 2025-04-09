@@ -1,8 +1,7 @@
 import { Variable } from '@maily-to/core/extensions';
 import React, { useImperativeHandle, useMemo, useRef } from 'react';
-
 import { VariableList, VariableListRef } from '@/components/variable/variable-list';
-import { DIGEST_PREVIEW_MAP } from '@/components/variable/utils/digest-variables';
+import { DIGEST_PREVIEW_MAP, DIGEST_VARIABLES_VALUE_MAP } from '@/components/variable/utils/digest-variables';
 
 type VariableSuggestionsPopoverProps = {
   items: Variable[];
@@ -38,7 +37,15 @@ export const MailyVariablesListView = React.forwardRef(
         return;
       }
 
-      /**TODO: add the filter value for digest variables here */
+      /**
+       *  If the variable is a digest variable,
+       * we need to change the name to the value of the variable.
+       */
+      if (item.name in DIGEST_VARIABLES_VALUE_MAP) {
+        const digestValue = DIGEST_VARIABLES_VALUE_MAP[item.name as keyof typeof DIGEST_VARIABLES_VALUE_MAP];
+        item.name = digestValue;
+      }
+
       onSelectItem(item);
     };
 

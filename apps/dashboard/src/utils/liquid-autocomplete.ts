@@ -1,4 +1,5 @@
 import { getFilters } from '@/components/variable/constants';
+import { DIGEST_VARIABLES_VALUE_MAP } from '@/components/variable/utils/digest-variables';
 import { LiquidVariable } from '@/utils/parseStepVariables';
 import { Completion, CompletionContext, CompletionResult } from '@codemirror/autocomplete';
 import { EditorView } from '@uiw/react-codemirror';
@@ -230,7 +231,17 @@ export function createAutocompleteSource(variables: LiquidVariable[], isEnhanced
       options: options.options.map((option) => ({
         ...option,
         apply: (view: EditorView, completion: Completion, from: number, to: number) => {
-          const selectedValue = completion.label;
+          let selectedValue = completion.label;
+
+          /**
+           * If the selected value is a digest variable,
+           * we need to replace it with its corresponding value.
+           */
+          if (selectedValue in DIGEST_VARIABLES_VALUE_MAP) {
+            const digestValue = DIGEST_VARIABLES_VALUE_MAP[selectedValue as keyof typeof DIGEST_VARIABLES_VALUE_MAP];
+            selectedValue = digestValue;
+          }
+
           const content = view.state.doc.toString();
           const beforeCursor = content.slice(0, from);
           const afterCursor = content.slice(to);
@@ -240,10 +251,6 @@ export function createAutocompleteSource(variables: LiquidVariable[], isEnhanced
           const needsClosing = !afterCursor.startsWith('}}');
 
           const wrappedValue = `${needsOpening ? '{{' : ''}${selectedValue}${needsClosing ? '}}' : ''}`;
-
-          /**
-           * TODO: add the filtes vallue for DIgest variables here
-           */
 
           // Calculate the final cursor position
           // Add 2 if we need to account for closing brackets
