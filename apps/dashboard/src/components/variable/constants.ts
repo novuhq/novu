@@ -321,31 +321,6 @@ const FILTERS: Filters[] = [
     ],
     sampleValue: '[{ name: "John" }, { name: "Jane" }]',
   },
-  {
-    label: 'toSentence',
-    value: 'toSentence',
-    hasParam: true,
-    description: 'Joins array into a sentence.',
-    example: 'names | toSentence: "", 2, "other" → John, Jane, and 3 others',
-    params: [
-      { placeholder: 'Insert key to be summarized on...', type: 'string' },
-      { placeholder: 'Limit of words to show', type: 'number' },
-      { placeholder: 'Overflow suffix', type: 'string' },
-    ],
-    sampleValue: "['John', 'Jane', ...]",
-  },
-  {
-    label: 'Pluralize',
-    value: 'pluralize',
-    hasParam: true,
-    description: 'Converts word to singular or plural based on count',
-    example: 'events | pluralize: "event", "events" → 1 apple, 2 apples',
-    params: [
-      { placeholder: 'Singular word', type: 'string' },
-      { placeholder: 'Plural word', type: 'string' },
-    ],
-    sampleValue: '10',
-  },
 ];
 
 export const getFilters = (isEnhancedDigestEnabled: boolean): Filters[] => {
