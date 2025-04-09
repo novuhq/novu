@@ -67,13 +67,11 @@ export function ControlInput({
     onChange
   );
 
-  const variable: LiquidVariable | undefined = useMemo(() => {
-    if (!selectedVariable) return undefined;
-
-    return {
-      name: selectedVariable.value,
-    };
-  }, [selectedVariable]);
+  const variable: LiquidVariable | undefined = selectedVariable
+    ? {
+        name: selectedVariable.value,
+      }
+    : undefined;
 
   const completionSource = useMemo(
     () => createAutocompleteSource(variables, isEnhancedDigestEnabled),
