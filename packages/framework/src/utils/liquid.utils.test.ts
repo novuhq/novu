@@ -309,7 +309,7 @@ describe('defaultOutputEscape', () => {
     expect(defaultOutputEscape(true)).toBe('true');
     expect(defaultOutputEscape(false)).toBe('false');
     expect(defaultOutputEscape(null)).toBe('null');
-    expect(defaultOutputEscape(undefined)).toBe('undefined');
+    expect(defaultOutputEscape(undefined)).toBe('');
   });
 });
 
@@ -358,15 +358,15 @@ describe('stringifyDataStructureWithSingleQuotes', () => {
     expect(converted).toStrictEqual('true');
   });
 
-  it('should convert null to a string without single quotes', () => {
+  it('should convert null to an empty string', () => {
     const myTestNull = null;
     const converted = stringifyDataStructureWithSingleQuotes(myTestNull);
-    expect(converted).toStrictEqual('null');
+    expect(converted).toStrictEqual('');
   });
 
   it('should convert undefined to an empty string', () => {
     const myTestUndefined = undefined;
     const converted = stringifyDataStructureWithSingleQuotes(myTestUndefined);
-    expect(converted).toStrictEqual('undefined');
+    expect(converted).toStrictEqual('');
   });
 });

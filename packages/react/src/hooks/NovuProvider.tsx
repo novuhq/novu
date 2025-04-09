@@ -19,6 +19,7 @@ export const NovuProvider = ({
   subscriberId,
   subscriberHash,
   backendUrl,
+  apiUrl,
   socketUrl,
   useCache,
 }: NovuProviderProps) => {
@@ -28,6 +29,7 @@ export const NovuProvider = ({
       subscriberId={subscriberId}
       subscriberHash={subscriberHash}
       backendUrl={backendUrl}
+      apiUrl={apiUrl}
       socketUrl={socketUrl}
       useCache={useCache}
       userAgentType="hooks"
@@ -48,6 +50,7 @@ export const InternalNovuProvider = ({
   subscriberId,
   subscriberHash,
   backendUrl,
+  apiUrl,
   socketUrl,
   useCache,
   userAgentType,
@@ -59,11 +62,12 @@ export const InternalNovuProvider = ({
         subscriberId,
         subscriberHash,
         backendUrl,
+        apiUrl,
         socketUrl,
         useCache,
         __userAgent: `${baseUserAgent} ${userAgentType}`,
       }),
-    [applicationIdentifier, subscriberId, subscriberHash, backendUrl, socketUrl, useCache, userAgentType]
+    [applicationIdentifier, subscriberId, subscriberHash, backendUrl, apiUrl, socketUrl, useCache, userAgentType]
   );
 
   return <NovuContext.Provider value={novu}>{children}</NovuContext.Provider>;

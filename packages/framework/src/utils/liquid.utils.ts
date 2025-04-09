@@ -17,7 +17,7 @@ export function defaultOutputEscape(output: unknown): string {
   else if (typeof output === 'string' && output.includes('\n')) {
     return output.replace(/\n/g, '\\n');
   } else {
-    return String(output);
+    return output === undefined ? '' : String(output as unknown);
   }
 }
 
@@ -35,7 +35,7 @@ export const stringifyDataStructureWithSingleQuotes = (value: unknown, spaces: n
 
     return valueEscapedNewLines;
   } else {
-    return String(value);
+    return value == null ? '' : String(value as unknown);
   }
 };
 

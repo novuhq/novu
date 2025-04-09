@@ -29,6 +29,6 @@ const stringifyDataStructureWithSingleQuotes = (value: unknown, spaces: number =
 
     return valueEscapedNewLines;
   } else {
-    return String(value);
+    return value == null ? '' : String(value as unknown);
   }
 };
