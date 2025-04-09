@@ -3,7 +3,7 @@ import { IsAllowedVariable } from '@/utils/parseStepVariables';
 import { Variable, Variables } from '@maily-to/core/extensions';
 import type { Editor, Editor as TiptapEditor, Range } from '@tiptap/core';
 
-const REPEAT_BLOCK_ITERABLE_ALIAS = 'current';
+export const REPEAT_BLOCK_ITERABLE_ALIAS = 'current';
 
 export enum VariableFrom {
   // variable coming from bubble menu (e.g. 'showIf')
