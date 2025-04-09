@@ -31,7 +31,6 @@ export class SubscriberJobBound {
     private storeSubscriberJobs: StoreSubscriberJobs,
     private createNotificationJobs: CreateNotificationJobs,
     private createOrUpdateSubscriberUsecase: CreateOrUpdateSubscriberUseCase,
-
     private integrationRepository: IntegrationRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private logger: PinoLogger,
@@ -60,12 +59,12 @@ export class SubscriberJobBound {
       environmentName,
     } = command;
 
-    const template =
-      this.mapBridgeWorkflow(command) ??
-      (await this.getNotificationTemplate({
-        _id: templateId,
-        environmentId,
-      }));
+    const template = command.bridge?.workflow
+      ? await this.mapBridgeWorkflow(command)
+      : await this.getNotificationTemplate({
+          _id: templateId,
+          environmentId,
+        });
 
     if (!template) {
       throw new BadRequestException(`Workflow id ${templateId} was not found`);
@@ -170,12 +169,19 @@ export class SubscriberJobBound {
     );
   }
 
-  private mapBridgeWorkflow(command: SubscriberJobBoundCommand): NotificationTemplateEntity | null {
+  private async mapBridgeWorkflow(command: SubscriberJobBoundCommand): Promise<NotificationTemplateEntity | null> {
     const bridgeWorkflow = command.bridge?.workflow;
 
     if (!bridgeWorkflow) {
       return null;
     }
+
+    const storedWorkflowId = (
+      await this.notificationTemplateRepository.findByTriggerIdentifier(
+        command.environmentId,
+        bridgeWorkflow.workflowId
+      )
+    )?._id;
 
     /*
      * Cast used to convert data type for further processing.
@@ -184,6 +190,7 @@ export class SubscriberJobBound {
     return {
       ...bridgeWorkflow,
       type: WorkflowTypeEnum.BRIDGE,
+      _id: storedWorkflowId,
       steps: bridgeWorkflow.steps.map((step) => {
         const stepControlVariables = command.controls?.steps?.[step.stepId];
 
