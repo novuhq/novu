@@ -60,8 +60,8 @@ export class SubscriberJobBound {
     } = command;
 
     const template = command.bridge?.workflow
-      ? await this.mapBridgeWorkflow(command)
-      : await this.getNotificationTemplate({
+      ? await this.getCodeFirstWorkflow(command)
+      : await this.getWorkflow({
           _id: templateId,
           environmentId,
         });
@@ -169,14 +169,14 @@ export class SubscriberJobBound {
     );
   }
 
-  private async mapBridgeWorkflow(command: SubscriberJobBoundCommand): Promise<NotificationTemplateEntity | null> {
+  private async getCodeFirstWorkflow(command: SubscriberJobBoundCommand): Promise<NotificationTemplateEntity | null> {
     const bridgeWorkflow = command.bridge?.workflow;
 
     if (!bridgeWorkflow) {
       return null;
     }
 
-    const storedWorkflowId = (
+    const syncedWorkflowId = (
       await this.notificationTemplateRepository.findByTriggerIdentifier(
         command.environmentId,
         bridgeWorkflow.workflowId
@@ -190,7 +190,7 @@ export class SubscriberJobBound {
     return {
       ...bridgeWorkflow,
       type: WorkflowTypeEnum.BRIDGE,
-      _id: storedWorkflowId,
+      _id: syncedWorkflowId,
       steps: bridgeWorkflow.steps.map((step) => {
         const stepControlVariables = command.controls?.steps?.[step.stepId];
 
@@ -234,7 +234,7 @@ export class SubscriberJobBound {
     return true;
   }
 
-  private async getNotificationTemplate({ _id, environmentId }: { _id: string; environmentId: string }) {
+  private async getWorkflow({ _id, environmentId }: { _id: string; environmentId: string }) {
     return await this.notificationTemplateRepository.findById(_id, environmentId);
   }
 
