@@ -116,7 +116,7 @@ const FormMessagePure = React.forwardRef<HTMLParagraphElement, FormMessagePurePr
   ({ className, children, hasError = false, icon, ...props }, _ref) => {
     return (
       children && (
-        <Hint hasError={hasError} {...props}>
+        <Hint hasError={hasError} className={className} {...props}>
           {icon && <HintIcon as={icon} />}
           {children}
         </Hint>
