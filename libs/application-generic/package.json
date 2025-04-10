@@ -85,7 +85,7 @@
     "mixpanel": "^0.17.0",
     "nanoid": "^3.1.20",
     "nestjs-otel": "6.1.1",
-    "nestjs-pino": "4.1.0",
+    "nestjs-pino": "4.2.0",
     "node-fetch": "^3.2.10",
     "pino-http": "^8.3.3",
     "pino-pretty": "^9.4.0",

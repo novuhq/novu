@@ -159,7 +159,7 @@ jobs:
       - name: Run Lint, Build, Test
         uses: mansagroup/nrwl-nx-action@v3
         env:
-          LOGGING_LEVEL: 'info'
+          LOG_LEVEL: 'info'
         with:
           targets: lint,build,test
           projects: ${{join(fromJson(needs.get-affected.outputs.test-packages), ',')}}
