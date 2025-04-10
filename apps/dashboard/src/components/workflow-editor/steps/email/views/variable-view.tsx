@@ -33,14 +33,17 @@ function InternalVariableView(props: InternalVariableViewProps) {
     return parseVariable(match);
   }, []);
 
-  const { name, filters } = useMemo(() => parseVariableCallback(variableValue), [variableValue, parseVariableCallback]);
+  const { name, filters, fullLiquidExpression } = useMemo(
+    () => parseVariableCallback(variableValue),
+    [variableValue, parseVariableCallback]
+  );
 
   const variable: LiquidVariable = useMemo(() => {
     return {
-      name,
+      name: fullLiquidExpression,
       aliasFor,
     };
-  }, [aliasFor, name]);
+  }, [aliasFor, fullLiquidExpression]);
 
   return (
     <NodeViewWrapper className="react-component mly-inline-block mly-leading-none" draggable="false">
