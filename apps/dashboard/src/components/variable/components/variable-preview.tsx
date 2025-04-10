@@ -15,7 +15,7 @@ type VariablePreviewContentProps = {
 function Content({ children, className = '' }: VariablePreviewContentProps) {
   return (
     <div
-      className={`border-stroke-soft flex flex-col justify-center gap-2 rounded-sm border bg-white p-1 ${className}`}
+      className={`border-stroke-soft flex flex-col justify-center gap-2 rounded-sm border bg-white p-1 py-2 ${className}`}
     >
       {children}
     </div>
