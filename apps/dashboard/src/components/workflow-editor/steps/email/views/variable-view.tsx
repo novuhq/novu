@@ -33,14 +33,14 @@ function InternalVariableView(props: InternalVariableViewProps) {
     return parseVariable(match);
   }, []);
 
+  const { name, filters } = useMemo(() => parseVariableCallback(variableValue), [variableValue, parseVariableCallback]);
+
   const variable: LiquidVariable = useMemo(() => {
     return {
-      name: id,
+      name,
       aliasFor,
     };
-  }, [id, aliasFor]);
-
-  const { filters } = useMemo(() => parseVariableCallback(variableValue), [variableValue, parseVariableCallback]);
+  }, [aliasFor, name]);
 
   return (
     <NodeViewWrapper className="react-component mly-inline-block mly-leading-none" draggable="false">
@@ -61,7 +61,7 @@ function InternalVariableView(props: InternalVariableViewProps) {
         }}
       >
         <VariablePill
-          variableName={variable.name}
+          variableName={name}
           hasFilters={!!filters?.length}
           onClick={() => setIsOpen(true)}
           className="-mt-[2px]"

@@ -147,9 +147,9 @@ const getVariablesByContext = (
       const iterableProperties = [...namespaces, ...arrays, ...primitives]
         .filter((variable) => variable.name.startsWith(iterableName))
         .flatMap((variable) => {
-          // If the variable name is exactly the iterableName, return just the alias
+          // If the variable name is exactly the iterableName, skip
           if (variable.name === iterableName) {
-            return [{ name: REPEAT_BLOCK_ITERABLE_ALIAS }];
+            return [];
           }
 
           // Otherwise, get the last part after the iterableName
@@ -158,7 +158,7 @@ const getVariablesByContext = (
         });
 
       // Return all variables, including the iterable alias and its properties
-      return [...baseVariables, ...iterableProperties];
+      return [...baseVariables, ...iterableProperties, { name: REPEAT_BLOCK_ITERABLE_ALIAS }];
     }
 
     default:
