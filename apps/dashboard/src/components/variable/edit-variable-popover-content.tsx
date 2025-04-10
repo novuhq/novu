@@ -26,18 +26,19 @@ import { useSuggestedFilters } from './hooks/use-suggested-filters';
 import { useVariableParser } from './hooks/use-variable-parser';
 import type { Filters, FilterWithParam, VariablePopoverProps } from './types';
 import { formatLiquidVariable, getDefaultSampleValue } from './utils';
+import { IsAllowedVariable } from '@/utils/parseStepVariables';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 type EditVariablePopoverContentProps = VariablePopoverProps & {
-  isAllowedVariable: (variable: string) => boolean;
+  isAllowedVariable: IsAllowedVariable;
 };
 
 export function EditVariablePopoverContent(props: EditVariablePopoverContentProps) {
   const { variable, onUpdate, onEscapeKeyDown, isAllowedVariable } = props;
   const isEnhancedDigestEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_ENHANCED_DIGEST_ENABLED);
   const { parsedName, parsedDefaultValue, parsedFilters, originalVariable, parseRawInput } = useVariableParser(
-    variable || ''
+    variable?.name || ''
   );
   const [name, setName] = useState(parsedName);
   const [nameError, setNameError] = useState<string>();
@@ -105,7 +106,7 @@ export function EditVariablePopoverContent(props: EditVariablePopoverContentProp
   );
 
   const handleSave = useCallback(() => {
-    if (!isAllowedVariable(name)) {
+    if (!variable || !isAllowedVariable({ ...variable, name })) {
       setNameError('Not a valid variable');
       return;
     }
@@ -119,7 +120,7 @@ export function EditVariablePopoverContent(props: EditVariablePopoverContentProp
     onUpdate(formatLiquidVariable(name, defaultVal, filters, isEnhancedDigestEnabled));
 
     setNameError(undefined);
-  }, [name, defaultVal, filters, onUpdate, track, isAllowedVariable, isEnhancedDigestEnabled]);
+  }, [variable, isAllowedVariable, track, name, defaultVal, filters, onUpdate, isEnhancedDigestEnabled]);
 
   return (
     <PopoverContent className="w-72 p-0" onOpenAutoFocus={handlePopoverOpen} onEscapeKeyDown={onEscapeKeyDown}>

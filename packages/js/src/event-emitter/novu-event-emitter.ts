@@ -1,5 +1,5 @@
 import mitt, { Emitter } from 'mitt';
-import { EventHandler, Events, EventNames } from './types';
+import { EventHandler, EventNames, Events } from './types';
 
 export class NovuEventEmitter {
   #mittEmitter: Emitter<Events>;

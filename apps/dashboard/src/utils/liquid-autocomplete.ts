@@ -108,8 +108,8 @@ export const completions =
         to: pos,
         options:
           matchingVariables.length > 0
-            ? matchingVariables.map((v) => createCompletionOption(v.label, 'variable'))
-            : variables.map((v) => createCompletionOption(v.label, 'variable')),
+            ? matchingVariables.map((v) => createCompletionOption(v.name, 'variable'))
+            : variables.map((v) => createCompletionOption(v.name, 'variable')),
       };
     }
 
@@ -149,7 +149,7 @@ function validateSubscriberField(searchText: string, matches: LiquidVariable[]):
   const parts = searchText.split('.');
 
   if (parts.length === 2 && parts[0] === 'subscriber') {
-    if (!matches.some((v) => v.label === searchText)) {
+    if (!matches.some((v) => v.name === searchText)) {
       return [];
     }
   }
@@ -164,7 +164,7 @@ function validateStepId(searchText: string, variables: LiquidVariable[]): boolea
   if (!stepMatch) return true;
 
   const stepId = stepMatch[1];
-  return variables.some((v) => v.label.startsWith(`steps.${stepId}.`));
+  return variables.some((v) => v.name.startsWith(`steps.${stepId}.`));
 }
 
 function getMatchingVariables(searchText: string, variables: LiquidVariable[]): LiquidVariable[] {
@@ -175,7 +175,7 @@ function getMatchingVariables(searchText: string, variables: LiquidVariable[]): 
   // Handle root prefixes and their partials
   for (const [root, prefix] of Object.entries(ROOT_PREFIXES)) {
     if (searchLower.startsWith(root) || root.startsWith(searchLower)) {
-      let matches = variables.filter((v) => v.label.startsWith(prefix));
+      let matches = variables.filter((v) => v.name.startsWith(prefix));
 
       // Special handling for subscriber fields
       if (prefix === 'subscriber.') {
@@ -184,8 +184,8 @@ function getMatchingVariables(searchText: string, variables: LiquidVariable[]): 
 
       // Allow new paths for dynamic paths
       if (isValidDynamicPath(searchText)) {
-        if (!matches.some((v) => v.label === searchText)) {
-          matches.push({ label: searchText, type: 'variable' } as LiquidVariable);
+        if (!matches.some((v) => v.name === searchText)) {
+          matches.push({ name: searchText } as LiquidVariable);
         }
       }
 
@@ -196,7 +196,7 @@ function getMatchingVariables(searchText: string, variables: LiquidVariable[]): 
   // Handle dot endings
   if (searchText.endsWith('.')) {
     const prefix = searchText.slice(0, -1);
-    return variables.filter((v) => v.label.startsWith(prefix));
+    return variables.filter((v) => v.name.startsWith(prefix));
   }
 
   // Validate step ID exists
@@ -205,7 +205,7 @@ function getMatchingVariables(searchText: string, variables: LiquidVariable[]): 
   }
 
   // Default case: show any variables containing the search text
-  return variables.filter((v) => v.label.toLowerCase().includes(searchLower));
+  return variables.filter((v) => v.name.toLowerCase().includes(searchLower));
 }
 
 export function createAutocompleteSource(variables: LiquidVariable[], isEnhancedDigestEnabled: boolean) {

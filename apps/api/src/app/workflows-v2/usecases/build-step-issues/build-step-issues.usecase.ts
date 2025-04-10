@@ -347,7 +347,7 @@ export class BuildStepIssuesUsecase {
   private validateSkipField(variableSchema: JSONSchemaDto, skipLogic: RulesLogic<AdditionalOperation>): StepIssuesDto {
     const issues: StepIssuesDto = {};
     const { primitives } = parseStepVariables(variableSchema);
-    const allowedVariables = primitives.map((variable) => variable.label);
+    const allowedVariables = primitives.map((variable) => variable.name);
     const allowedNamespaces = [PAYLOAD_FIELD_PREFIX, SUBSCRIBER_DATA_FIELD_PREFIX];
 
     const queryValidatorService = new QueryValidatorService(allowedVariables, allowedNamespaces);

@@ -1,23 +1,15 @@
 import { useEffect, useState } from 'react';
-import { Editor, useEditorState } from '@tiptap/react';
+import { Editor } from '@tiptap/react';
 import { AnimatePresence, motion } from 'motion/react';
 import { Lightbulb } from 'lucide-react';
 import { Separator } from '@/components/primitives/separator';
+import { REPEAT_BLOCK_ITERABLE_ALIAS } from '../variables/variables';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 export function RepeatMenuDescription({ editor }: { editor: Editor }) {
   const [currentProperty, setCurrentProperty] = useState('\u00A0}}');
-  const state = useEditorState({
-    editor,
-    selector: (ctx) => {
-      return {
-        each: ctx.editor.getAttributes('repeat')?.each,
-        currentShowIfKey: ctx.editor.getAttributes('repeat')?.showIfKey || '',
-
-        isSectionActive: ctx.editor.isActive('section'),
-      };
-    },
-  });
-  const forNodeEachKey = state.each;
+  const isEnhancedDigestEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_ENHANCED_DIGEST_ENABLED);
 
   function isOnEmptyLine(editor: Editor, cursorPos: number) {
     const currentLineContent = editor.state.doc
@@ -44,6 +36,8 @@ export function RepeatMenuDescription({ editor }: { editor: Editor }) {
 
   const shouldShow = isOnEmptyLine(editor, editor.state.selection.from);
 
+  const iterableKey = isEnhancedDigestEnabled ? REPEAT_BLOCK_ITERABLE_ALIAS : editor.getAttributes('repeat')?.each;
+
   return (
     <AnimatePresence mode="wait">
       {shouldShow && (
@@ -62,7 +56,7 @@ export function RepeatMenuDescription({ editor }: { editor: Editor }) {
               <div>Access each 'repeat' key via</div>
               <span>
                 <code className="mly-py-0.5 mly-bg-gray-50 mly-rounded mly-font-mono mly-text-gray-400">
-                  {`{{ ${forNodeEachKey}`}
+                  {`{{ ${iterableKey}`}
                   <span className="inline-block pr-1">
                     <AnimatePresence mode="wait">
                       <motion.span
