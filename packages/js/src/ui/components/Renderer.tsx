@@ -59,7 +59,6 @@ export type NovuComponentControls = {
 
 type RendererProps = {
   novuUI: NovuUI;
-  cssHref: string;
   appearance?: Appearance;
   nodes: Map<MountableElement, NovuComponent>;
   localization?: Localization;
