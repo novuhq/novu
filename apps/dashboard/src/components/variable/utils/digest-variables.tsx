@@ -4,8 +4,8 @@ import { DigestCountSummaryPreview } from '@/components/variable/components/dige
 import { DigestSentenceSummaryPreview } from '@/components/variable/components/digest-sentence-summary-preview';
 
 export enum DIGEST_VARIABLES_ENUM {
-  COUNT_SUMMARY = 'step.digest.countSummary',
-  SENTENCE_SUMMARY = 'step.digest.sentenceSummary',
+  COUNT_SUMMARY = 'countSummary',
+  SENTENCE_SUMMARY = 'sentenceSummary',
 }
 
 const DIGEST_VARIABLE_TO_NAME_MAP = {
@@ -81,11 +81,11 @@ export const DIGEST_PREVIEW_MAP = {
 } as const;
 
 export const DIGEST_VARIABLES_FILTER_MAP = {
-  [DIGEST_VARIABLES_ENUM.COUNT_SUMMARY]: '| pluralize: "notification", "notifications"',
-  [DIGEST_VARIABLES_ENUM.SENTENCE_SUMMARY]: '| toSentence: "", 2, "others"',
+  [DIGEST_VARIABLES_ENUM.COUNT_SUMMARY]: "| pluralize: 'notification', 'notifications'",
+  [DIGEST_VARIABLES_ENUM.SENTENCE_SUMMARY]: "| toSentence: '', 2, 'others'",
 } as const;
 
-export const applyDigestVariableValue = ({
+const applyDigestVariableValue = ({
   digestStepName,
   type,
 }: {
@@ -101,4 +101,46 @@ export const applyDigestVariableValue = ({
   const finalValueWithFilter = 'steps.' + digestStepName + variableName + digestFilterValue;
 
   return finalValueWithFilter;
+};
+
+const applyDigestVariableName = ({
+  digestStepName,
+  type,
+}: {
+  type: DIGEST_VARIABLES_ENUM;
+  digestStepName?: string;
+}) => {
+  if (!digestStepName) {
+    return '';
+  }
+
+  const finalValueWithFilter = 'steps.' + digestStepName + '.' + type;
+
+  return finalValueWithFilter;
+};
+
+export const getDynamicDigestVariable = ({
+  digestStepName,
+  type,
+}: {
+  type: DIGEST_VARIABLES_ENUM;
+  digestStepName?: string;
+}) => {
+  if (!digestStepName) {
+    return {
+      value: '',
+      label: '',
+    };
+  }
+
+  return {
+    value: applyDigestVariableValue({
+      digestStepName,
+      type,
+    }),
+    label: applyDigestVariableName({
+      digestStepName,
+      type,
+    }),
+  };
 };

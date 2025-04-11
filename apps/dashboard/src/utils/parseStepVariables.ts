@@ -1,9 +1,9 @@
 import { Completion } from '@codemirror/autocomplete';
 import type { JSONSchemaDefinition } from '@novu/shared';
 import {
-  applyDigestVariableValue,
   DIGEST_VARIABLES,
   DIGEST_VARIABLES_ENUM,
+  getDynamicDigestVariable,
 } from '../components/variable/utils/digest-variables';
 
 export interface LiquidVariable {
@@ -167,13 +167,14 @@ export function parseStepVariables(
       isEnhancedDigestEnabled && digestStepId
         ? [
             ...DIGEST_VARIABLES.map((variable) => {
-              const label = applyDigestVariableValue({
+              const { label: displayLabel, value } = getDynamicDigestVariable({
                 digestStepName: digestStepId,
                 type: variable.label as DIGEST_VARIABLES_ENUM,
               });
               return {
                 ...variable,
-                label,
+                label: value,
+                displayLabel,
               };
             }),
             ...result.primitives,

@@ -2,10 +2,10 @@ import { Variable } from '@maily-to/core/extensions';
 import React, { useImperativeHandle, useMemo, useRef } from 'react';
 import { VariableList, VariableListRef } from '@/components/variable/variable-list';
 import {
-  applyDigestVariableValue,
   DIGEST_PREVIEW_MAP,
   DIGEST_VARIABLES_ENUM,
   DIGEST_VARIABLES_FILTER_MAP,
+  getDynamicDigestVariable,
 } from '@/components/variable/utils/digest-variables';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 
@@ -26,14 +26,17 @@ export const MailyVariablesListView = React.forwardRef(
     const options = useMemo(
       () =>
         items.map((item) => ({
-          label: item.name,
+          label: getDynamicDigestVariable({
+            type: item.name as DIGEST_VARIABLES_ENUM,
+            digestStepName: digestStepBeforeCurrent?.digestStepId,
+          }).label,
           value: item.name,
           preview:
             item.name in DIGEST_PREVIEW_MAP
               ? DIGEST_PREVIEW_MAP[item.name as keyof typeof DIGEST_PREVIEW_MAP]
               : undefined,
         })),
-      [items]
+      [digestStepBeforeCurrent?.digestStepId, items]
     );
     const variablesListRef = useRef<VariableListRef>(null);
 
@@ -51,11 +54,11 @@ export const MailyVariablesListView = React.forwardRef(
        * we need to change the name to the dynamic value of the variable.
        */
       if (selectedItem.name in DIGEST_VARIABLES_FILTER_MAP) {
-        const digestValue = applyDigestVariableValue({
+        const { value } = getDynamicDigestVariable({
           type: item.name as DIGEST_VARIABLES_ENUM,
           digestStepName: digestStepBeforeCurrent?.digestStepId,
         });
-        selectedItem = { ...selectedItem, name: digestValue };
+        selectedItem = { ...selectedItem, name: value };
       }
 
       onSelectItem(selectedItem);
