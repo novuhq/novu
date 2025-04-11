@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import axios from 'axios';
 
 import {
@@ -19,7 +19,6 @@ import {
   IntegrationRepository,
 } from '@novu/dal';
 import { ChatOauthCallbackCommand } from './chat-oauth-callback.command';
-import { ApiException } from '../../../shared/exceptions/api.exception';
 import { validateEncryption } from '../chat-oauth/chat-oauth.usecase';
 import { ChatOauthCallbackResult, ResponseTypeEnum } from './chat-oauth-callback.result';
 
@@ -126,13 +125,13 @@ export class ChatOauthCallback {
 
     if (res?.data?.ok === false) {
       const metaData = res?.data?.response_metadata?.messages?.join(', ');
-      throw new ApiException(
+      throw new BadRequestException(
         `Provider ${command.providerId} returned error ${res.data.error}${metaData ? `, metadata:${metaData}` : ''}`
       );
     }
 
     if (!webhook) {
-      throw new ApiException(`Provider ${command.providerId} did not return a webhook url`);
+      throw new BadRequestException(`Provider ${command.providerId} did not return a webhook url`);
     }
 
     return webhook;
@@ -178,7 +177,9 @@ export class ChatOauthCallback {
   }) {
     if (credentialHmac) {
       if (!externalHmacHash) {
-        throw new ApiException('Hmac is enabled on the integration, please provide a HMAC hash on the request params');
+        throw new BadRequestException(
+          'Hmac is enabled on the integration, please provide a HMAC hash on the request params'
+        );
       }
 
       validateEncryption({

@@ -33,7 +33,6 @@ import { PasswordResetRequestCommand } from './usecases/password-reset-request/p
 import { PasswordResetRequest } from './usecases/password-reset-request/password-reset-request.usecase';
 import { PasswordResetCommand } from './usecases/password-reset/password-reset.command';
 import { PasswordReset } from './usecases/password-reset/password-reset.usecase';
-import { ApiException } from '../shared/exceptions/api.exception';
 import { PasswordResetBodyDto, PasswordResetRequestBodyDto } from './dtos/password-reset.dto';
 import { ApiCommonResponses } from '../shared/framework/response.decorator';
 import { UpdatePasswordBodyDto } from './dtos/update-password.dto';
@@ -70,7 +69,7 @@ export class AuthController {
     Logger.verbose('Checking Github Auth');
 
     if (!process.env.GITHUB_OAUTH_CLIENT_ID || !process.env.GITHUB_OAUTH_CLIENT_SECRET) {
-      throw new ApiException(
+      throw new BadRequestException(
         'GitHub auth is not configured, please provide GITHUB_OAUTH_CLIENT_ID and GITHUB_OAUTH_CLIENT_SECRET as env variables'
       );
     }

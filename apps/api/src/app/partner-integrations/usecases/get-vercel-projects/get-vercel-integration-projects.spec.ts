@@ -6,8 +6,8 @@ import { OrganizationRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import { of } from 'rxjs';
 
+import { BadRequestException } from '@nestjs/common';
 import { GetVercelIntegrationProjects } from './get-vercel-integration-projects.usecase';
-import { ApiException } from '../../../shared/exceptions/api.exception';
 
 describe('GetVercelIntegrationProjects', function () {
   let getVercelIntegrationProjects: GetVercelIntegrationProjects;
@@ -101,7 +101,7 @@ describe('GetVercelIntegrationProjects', function () {
     });
   });
 
-  it('should throw ApiException when no configuration found', async function () {
+  it('should throw BadRequestException when no configuration found', async function () {
     organizationRepositoryMock.findByPartnerConfigurationId.resolves([]);
 
     try {
@@ -113,13 +113,13 @@ describe('GetVercelIntegrationProjects', function () {
       });
       throw new Error('Should not reach here');
     } catch (error) {
-      expect(error).to.be.instanceOf(ApiException);
+      expect(error).to.be.instanceOf(BadRequestException);
       expect(error.message).to.equal('No partner configuration found.');
       assert.notCalled(httpServiceMock.get);
     }
   });
 
-  it('should throw ApiException when HTTP request fails', async function () {
+  it('should throw BadRequestException when HTTP request fails', async function () {
     httpServiceMock.get.throws(new Error('HTTP Error'));
 
     try {
@@ -131,7 +131,7 @@ describe('GetVercelIntegrationProjects', function () {
       });
       throw new Error('Should not reach here');
     } catch (error) {
-      expect(error).to.be.instanceOf(ApiException);
+      expect(error).to.be.instanceOf(BadRequestException);
       expect(error.message).to.equal('HTTP Error');
       assert.called(httpServiceMock.get);
     }

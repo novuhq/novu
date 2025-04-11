@@ -1,6 +1,4 @@
-import { Navigate } from 'react-router-dom';
-import { SignedIn, SignedOut } from '@clerk/clerk-react';
-import { ROUTES } from '@/utils/routes';
+import { RedirectToSignIn, SignedIn, SignedOut } from '@clerk/clerk-react';
 import { EnvironmentProvider } from '@/context/environment/environment-provider';
 
 export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -10,7 +8,7 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
         <EnvironmentProvider>{children}</EnvironmentProvider>
       </SignedIn>
       <SignedOut>
-        <Navigate to={ROUTES.SIGN_IN} replace />
+        <RedirectToSignIn />
       </SignedOut>
     </>
   );

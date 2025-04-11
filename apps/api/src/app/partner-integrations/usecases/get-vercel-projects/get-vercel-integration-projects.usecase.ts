@@ -1,10 +1,9 @@
 import { HttpService } from '@nestjs/axios';
-import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { lastValueFrom } from 'rxjs';
 import { OrganizationRepository } from '@novu/dal';
 
 import { GetVercelIntegrationProjectsCommand } from './get-vercel-integration-projects.command';
-import { ApiException } from '../../../shared/exceptions/api.exception';
 
 @Injectable()
 export class GetVercelIntegrationProjects {
@@ -21,7 +20,7 @@ export class GetVercelIntegrationProjects {
       });
 
       if (!configuration || !configuration.accessToken) {
-        throw new ApiException({
+        throw new BadRequestException({
           message: 'No partner configuration found.',
           type: 'vercel',
         });
@@ -31,7 +30,7 @@ export class GetVercelIntegrationProjects {
 
       return projects;
     } catch (error) {
-      throw new ApiException(error.message);
+      throw new BadRequestException(error.message);
     }
   }
 
@@ -42,7 +41,7 @@ export class GetVercelIntegrationProjects {
     });
 
     if (orgsWithIntegration.length === 0) {
-      throw new ApiException({
+      throw new BadRequestException({
         message: 'No partner configuration found.',
         type: 'vercel',
       });
@@ -51,7 +50,7 @@ export class GetVercelIntegrationProjects {
     const firstOrg = orgsWithIntegration[0];
     const configuration = firstOrg.partnerConfigurations?.find((config) => config.configurationId === configurationId);
     if (!firstOrg.partnerConfigurations?.length || !configuration) {
-      throw new ApiException({
+      throw new BadRequestException({
         message: 'No partner configuration found',
         type: 'vercel',
       });

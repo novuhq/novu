@@ -11,7 +11,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { HTMLAttributes, ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { RiArrowLeftSLine, RiArrowRightSLine, RiCloseFill, RiDeleteBin2Line, RiPencilRuler2Fill } from 'react-icons/ri';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 
 import { ConfirmationModal } from '@/components/confirmation-modal';
@@ -88,6 +88,7 @@ type ConfigureStepFormProps = {
 export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
   const { step, workflow, update, environment } = props;
   const navigate = useNavigate();
+  const { hideValidationErrorsOnFirstRender } = useLocation().state || {};
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const supportedStepTypes = [
     StepTypeEnum.IN_APP,
@@ -188,11 +189,15 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
       });
     });
 
-    // Set new errors from stepIssues
-    Object.entries(stepIssues).forEach(([key, value]) => {
-      // @ts-expect-error - dynamic key
-      form.setError(`controlValues.${key}`, { message: value });
-    });
+    if (!hideValidationErrorsOnFirstRender) {
+      // Set new errors from stepIssues
+      Object.entries(stepIssues).forEach(([key, value]) => {
+        // @ts-expect-error - dynamic key
+        form.setError(`controlValues.${key}`, { message: value });
+      });
+    }
+    // Do not add hideValidationErrorsOnFirstRender so as not to trigger a rerender on the navigation that happens as soon as drawer is closing
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form, step]);
 
   useEffect(() => {
@@ -349,7 +354,6 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
 
           {!isReadOnly && (
             <SidebarFooter>
-              <Separator />
               <ConfirmationModal
                 open={isDeleteModalOpen}
                 onOpenChange={setIsDeleteModalOpen}

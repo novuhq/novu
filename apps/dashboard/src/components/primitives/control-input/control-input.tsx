@@ -11,6 +11,8 @@ import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
 import { useVariables } from './hooks/use-variables';
 import { createVariableExtension } from './variable-plugin';
 import { variablePillTheme } from './variable-plugin/variable-theme';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 const variants = cva('relative w-full', {
   variants: {
@@ -59,13 +61,22 @@ export function ControlInput({
 }: ControlInputProps) {
   const viewRef = useRef<EditorView | null>(null);
   const lastCompletionRef = useRef<CompletionRange | null>(null);
-
+  const isEnhancedDigestEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_ENHANCED_DIGEST_ENABLED);
   const { selectedVariable, setSelectedVariable, handleVariableSelect, handleVariableUpdate } = useVariables(
     viewRef,
     onChange
   );
 
-  const completionSource = useMemo(() => createAutocompleteSource(variables), [variables]);
+  const variable: LiquidVariable | undefined = selectedVariable
+    ? {
+        name: selectedVariable.value,
+      }
+    : undefined;
+
+  const completionSource = useMemo(
+    () => createAutocompleteSource(variables, isEnhancedDigestEnabled),
+    [variables, isEnhancedDigestEnabled]
+  );
 
   const autocompletionExtension = useMemo(
     () =>
@@ -86,7 +97,7 @@ export function ControlInput({
         onSelect: handleVariableSelect,
         isAllowedVariable,
       }),
-    [handleVariableSelect]
+    [handleVariableSelect, isAllowedVariable]
   );
 
   const extensions = useMemo(() => {
@@ -121,7 +132,7 @@ export function ControlInput({
       <EditVariablePopover
         open={!!selectedVariable}
         onOpenChange={handleOpenChange}
-        variable={selectedVariable?.value}
+        variable={variable}
         isAllowedVariable={isAllowedVariable}
         onUpdate={(newValue) => {
           handleVariableUpdate(newValue);

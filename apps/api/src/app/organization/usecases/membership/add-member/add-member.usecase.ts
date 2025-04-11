@@ -1,8 +1,7 @@
-import { Injectable, Scope } from '@nestjs/common';
+import { Injectable, Scope, BadRequestException } from '@nestjs/common';
 import { MemberRepository } from '@novu/dal';
 import { MemberStatusEnum } from '@novu/shared';
 import { AddMemberCommand } from './add-member.command';
-import { ApiException } from '../../../../shared/exceptions/api.exception';
 
 @Injectable({
   scope: Scope.REQUEST,
@@ -16,7 +15,7 @@ export class AddMember {
     this.organizationId = command.organizationId;
 
     const isAlreadyMember = await this.isMember(command.userId);
-    if (isAlreadyMember) throw new ApiException('Member already exists');
+    if (isAlreadyMember) throw new BadRequestException('Member already exists');
 
     await this.memberRepository.addMember(command.organizationId, {
       _userId: command.userId,

@@ -15,7 +15,7 @@ import { flushSync } from 'react-dom';
 const variants = cva('h-full w-full flex-1 [&_.cm-focused]:outline-none', {
   variants: {
     size: {
-      md: 'text-base',
+      md: 'text-sm',
       sm: 'text-xs',
       '2xs': 'text-xs',
     },
@@ -113,7 +113,6 @@ const baseTheme = (options: { multiline?: boolean }) =>
     // important to show the cursor at the beginning of the line
     '.cm-line': {
       marginLeft: '1px',
-      lineHeight: '1rem',
     },
     'div.cm-content': {
       padding: 0,

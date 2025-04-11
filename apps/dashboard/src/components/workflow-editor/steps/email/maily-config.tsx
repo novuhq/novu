@@ -21,6 +21,26 @@ import {
   spacer,
   text,
 } from '@maily-to/core/blocks';
+import { HTMLCodeBlockExtension, Variables } from '@maily-to/core/extensions';
+import { getVariableSuggestions } from '@maily-to/core/extensions';
+import { RepeatExtension, VariableExtension } from '@maily-to/core/extensions';
+import { ReactNodeViewRenderer } from '@tiptap/react';
+import { ForView } from './views/for-view';
+import { createVariableView } from './views/variable-view';
+import { MailyVariablesListView } from './views/maily-variables-list-view';
+import { HTMLCodeBlockView } from './views/html-view';
+import { CalculateVariablesProps, insertVariableToEditor } from './variables/variables';
+import { IsAllowedVariable } from '@/utils/parseStepVariables';
+
+export const VARIABLE_TRIGGER_CHARACTER = '{{';
+
+/**
+ * Fixed width (600px) for the email editor and rendered content.
+ * This width ensures optimal compatibility across email clients
+ * while maintaining good readability on all devices.
+ * (Hardcoded in Maily)
+ */
+export const MAILY_EMAIL_WIDTH = 600;
 
 export const DEFAULT_EDITOR_CONFIG = {
   hasMenuBar: false,
@@ -38,7 +58,7 @@ export const DEFAULT_EDITOR_CONFIG = {
   autofocus: false,
 };
 
-export const createDefaultEditorBlocks = (props: { track: ReturnType<typeof useTelemetry> }): BlockGroupItem[] => {
+export const createEditorBlocks = (props: { track: ReturnType<typeof useTelemetry> }): BlockGroupItem[] => {
   const { track } = props;
   const blocks: BlockGroupItem[] = [];
 
@@ -78,4 +98,69 @@ export const createDefaultEditorBlocks = (props: { track: ReturnType<typeof useT
   });
 
   return blocks;
+};
+
+export const createExtensions = (props: {
+  calculateVariables: (props: CalculateVariablesProps) => Variables | undefined;
+  parsedVariables: { isAllowedVariable: IsAllowedVariable };
+  isEnhancedDigestEnabled: boolean;
+}) => {
+  const { calculateVariables, parsedVariables, isEnhancedDigestEnabled } = props;
+
+  return [
+    RepeatExtension.extend({
+      addNodeView() {
+        return ReactNodeViewRenderer(ForView, {
+          className: 'mly-relative',
+        });
+      },
+      addAttributes() {
+        return {
+          each: {
+            default: 'payload.items',
+          },
+        };
+      },
+    }),
+    VariableExtension.extend({
+      addNodeView() {
+        return ReactNodeViewRenderer(createVariableView(parsedVariables.isAllowedVariable), {
+          className: 'relative inline-block',
+          as: 'div',
+        });
+      },
+      addAttributes() {
+        const attributes = this.parent?.();
+        return {
+          ...attributes,
+          aliasFor: {
+            default: null,
+          },
+        };
+      },
+    }).configure({
+      suggestion: {
+        ...getVariableSuggestions(VARIABLE_TRIGGER_CHARACTER),
+        command: ({ editor, range, props }) => {
+          const query = props.id + '}}';
+          insertVariableToEditor({
+            query,
+            editor,
+            range,
+            isAllowedVariable: parsedVariables.isAllowedVariable,
+            isEnhancedDigestEnabled,
+          });
+        },
+      },
+      variables: calculateVariables as Variables,
+      variableSuggestionsPopover: MailyVariablesListView,
+    }),
+    HTMLCodeBlockExtension.extend({
+      addNodeView() {
+        return ReactNodeViewRenderer(HTMLCodeBlockView, {
+          className: 'mly-relative',
+        });
+      },
+    }),
+  ];
 };

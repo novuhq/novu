@@ -1,10 +1,9 @@
 import { HttpService } from '@nestjs/axios';
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { lastValueFrom } from 'rxjs';
 import { OrganizationRepository, PartnerTypeEnum } from '@novu/dal';
 import { AnalyticsService } from '@novu/application-generic';
 
-import { ApiException } from '../../../shared/exceptions/api.exception';
 import { CreateVercelIntegrationResponseDto } from '../../dtos/create-vercel-integration-response.dto';
 import { CreateVercelIntegrationCommand } from './create-vercel-integration.command';
 
@@ -40,7 +39,7 @@ export class CreateVercelIntegration {
         success: true,
       };
     } catch (error) {
-      throw new ApiException(
+      throw new BadRequestException(
         error?.response?.data?.error_description || error?.response?.data?.message || error.message
       );
     }
@@ -73,7 +72,7 @@ export class CreateVercelIntegration {
         teamId: data.team_id,
       };
     } catch (error) {
-      throw new ApiException(
+      throw new BadRequestException(
         error?.response?.data?.error_description || error?.response?.data?.message || error.message
       );
     }

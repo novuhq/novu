@@ -65,17 +65,13 @@ export class ExternalServicesRoute {
       return;
     }
 
-    let unreadCount = this.extractCount(command.payload?.unreadCount);
-
-    if (unreadCount === undefined) {
-      unreadCount = await this.messageRepository.getCount(
-        command._environmentId,
-        command.userId,
-        ChannelTypeEnum.IN_APP,
-        { read: false },
-        { limit: 101 }
-      );
-    }
+    const unreadCount = await this.messageRepository.getCount(
+      command._environmentId,
+      command.userId,
+      ChannelTypeEnum.IN_APP,
+      { read: false },
+      { limit: 101 }
+    );
     const paginationIndication: IUnreadCountPaginationIndication =
       unreadCount > 100 ? { unreadCount: 100, hasMore: true } : { unreadCount, hasMore: false };
 
@@ -92,17 +88,13 @@ export class ExternalServicesRoute {
       return;
     }
 
-    let unseenCount = this.extractCount(command.payload?.unseenCount);
-
-    if (unseenCount === undefined) {
-      unseenCount = await this.messageRepository.getCount(
-        command._environmentId,
-        command.userId,
-        ChannelTypeEnum.IN_APP,
-        { seen: false },
-        { limit: 101 }
-      );
-    }
+    const unseenCount = await this.messageRepository.getCount(
+      command._environmentId,
+      command.userId,
+      ChannelTypeEnum.IN_APP,
+      { seen: false },
+      { limit: 101 }
+    );
 
     const paginationIndication: IUnseenCountPaginationIndication =
       unseenCount > 100 ? { unseenCount: 100, hasMore: true } : { unseenCount, hasMore: false };
@@ -111,18 +103,6 @@ export class ExternalServicesRoute {
       unseenCount: paginationIndication.unseenCount,
       hasMore: paginationIndication.hasMore,
     });
-  }
-
-  private extractCount(count: unknown): number | undefined {
-    if (count === null || count === undefined) return undefined;
-
-    if (typeof count === 'number') {
-      return count;
-    }
-
-    if (typeof count === 'string') {
-      return parseInt(count, 10);
-    }
   }
 
   private async connectionExist(command: ExternalServicesRouteCommand): Promise<boolean | undefined> {

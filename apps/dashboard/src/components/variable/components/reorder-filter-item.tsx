@@ -4,9 +4,11 @@ import { InputPure } from '@/components/primitives/input';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { GripVertical } from 'lucide-react';
 import { Reorder } from 'motion/react';
-import { ComponentProps } from 'react';
+import { ComponentProps, useMemo } from 'react';
 import { RiCloseLine } from 'react-icons/ri';
-import { FILTERS } from '../constants';
+import { getFilters } from '../constants';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 type ReorderFilterItemProps = ComponentProps<typeof Reorder.Item<FilterWithParam>> & {
   index: number;
@@ -17,7 +19,10 @@ type ReorderFilterItemProps = ComponentProps<typeof Reorder.Item<FilterWithParam
 
 export const ReorderFilterItem = (props: ReorderFilterItemProps) => {
   const { index, isLast, onRemove, onParamChange, value, ...rest } = props;
-  const filterDef = FILTERS.find((t) => t.value === value.value);
+  const isEnhancedDigestEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_ENHANCED_DIGEST_ENABLED);
+  const liquidFilters = useMemo(() => getFilters(isEnhancedDigestEnabled), [isEnhancedDigestEnabled]);
+
+  const filterDef = liquidFilters.find((t) => t.value === value.value);
 
   return (
     <Reorder.Item

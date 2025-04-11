@@ -1051,7 +1051,7 @@ describe('Novu Client', () => {
       const emailExecutionResult = await client.executeWorkflow(event);
 
       expect(emailExecutionResult.outputs).toEqual({
-        body: 'Hi undefined',
+        body: 'Hi ',
         subject: 'Test subject',
       });
     });

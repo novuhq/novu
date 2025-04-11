@@ -1,5 +1,12 @@
 import { createHash } from 'crypto';
-import { forwardRef, Inject, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import {
+  forwardRef,
+  Inject,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+  BadRequestException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 
 import {
@@ -25,7 +32,6 @@ import {
 
 import {
   AnalyticsService,
-  ApiException,
   buildSubscriberKey,
   buildUserKey,
   CachedResponse,
@@ -147,7 +153,7 @@ export class CommunityAuthService implements IAuthService {
       );
 
       const dbUser = await this.userRepository.findById(user._id);
-      if (!dbUser) throw new ApiException('User not found');
+      if (!dbUser) throw new BadRequestException('User not found');
       // eslint-disable-next-line no-param-reassign
       user = dbUser;
     }

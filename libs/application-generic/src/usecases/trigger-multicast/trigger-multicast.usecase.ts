@@ -12,7 +12,7 @@ import {
 
 import { PinoLogger } from 'nestjs-pino';
 import { InstrumentUsecase } from '../../instrumentation';
-import { ApiException } from '../../utils/exceptions';
+import { BadRequestException } from '@nestjs/common';
 import { SubscriberProcessQueueService } from '../../services/queues/subscriber-process-queue.service';
 import { TriggerMulticastCommand } from './trigger-multicast.command';
 import { IProcessSubscriberBulkJobDto } from '../../dtos';
@@ -178,19 +178,19 @@ export const buildSubscriberDefine = (recipient: TriggerRecipientSubscriber): IS
 
 export const validateSubscriberDefine = (recipient: ISubscribersDefine) => {
   if (!recipient) {
-    throw new ApiException(
+    throw new BadRequestException(
       'subscriberId under property to is not configured, please make sure all subscribers contains subscriberId property'
     );
   }
 
   if (Array.isArray(recipient)) {
-    throw new ApiException(
+    throw new BadRequestException(
       'subscriberId under property to is type array, which is not allowed please make sure all subscribers ids are strings'
     );
   }
 
   if (!recipient.subscriberId) {
-    throw new ApiException(
+    throw new BadRequestException(
       'subscriberId under property to is not configured, please make sure all subscribers contains subscriberId property'
     );
   }

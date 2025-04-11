@@ -1,6 +1,6 @@
 import sinon from 'sinon';
 import { expect } from 'chai';
-import { NotFoundException } from '@nestjs/common';
+import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { ChannelCTATypeEnum } from '@novu/shared';
 import { ChannelTypeEnum, MessageRepository } from '@novu/dal';
 import { AnalyticsService } from '@novu/application-generic';
@@ -8,7 +8,6 @@ import { AnalyticsService } from '@novu/application-generic';
 import { MarkNotificationAs } from './mark-notification-as.usecase';
 import { GetSubscriber } from '../../../subscribers/usecases/get-subscriber';
 import type { MarkNotificationAsCommand } from './mark-notification-as.command';
-import { ApiException } from '../../../shared/exceptions/api.exception';
 import { mapToDto } from '../../utils/notification-mapper';
 import { AnalyticsEventsEnum } from '../../utils';
 import { MarkManyNotificationsAs } from '../mark-many-notifications-as/mark-many-notifications-as.usecase';
@@ -70,7 +69,7 @@ describe('MarkNotificationAs', () => {
     try {
       await updateNotification.execute(command);
     } catch (error) {
-      expect(error).to.be.instanceOf(ApiException);
+      expect(error).to.be.instanceOf(BadRequestException);
       expect(error.message).to.equal(`Subscriber with id: ${command.subscriberId} is not found.`);
     }
   });

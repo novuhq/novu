@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { ControlValuesRepository } from '@novu/dal';
-import { ControlValuesLevelEnum } from '@novu/shared';
-import { Instrument, InstrumentUsecase } from '@novu/application-generic';
+import { ControlValuesRepository, EnvironmentEntity, OrganizationEntity, UserEntity } from '@novu/dal';
+import { ControlValuesLevelEnum, FeatureFlagsKeysEnum } from '@novu/shared';
+import { FeatureFlagsService, Instrument, InstrumentUsecase } from '@novu/application-generic';
 
 import { keysToObject } from '../../util/utils';
 import { buildVariables } from '../../util/build-variables';
@@ -9,12 +9,27 @@ import { CreateVariablesObjectCommand } from './create-variables-object.command'
 import { isStringifiedMailyJSONContent } from '../../../environments-v1/usecases/output-renderers/maily-to-liquid/wrap-maily-in-liquid.command';
 import { MailyAttrsEnum } from '../../../environments-v1/usecases/output-renderers/maily-to-liquid/maily.types';
 
+/**
+ * Extracts all the variables used in the step control values.
+ * Then it creates the object representation of those variables.
+ */
 @Injectable()
 export class CreateVariablesObject {
-  constructor(private readonly controlValuesRepository: ControlValuesRepository) {}
+  constructor(
+    private readonly controlValuesRepository: ControlValuesRepository,
+    private readonly featureFlagService: FeatureFlagsService
+  ) {}
 
   @InstrumentUsecase()
   async execute(command: CreateVariablesObjectCommand): Promise<Record<string, unknown>> {
+    const { userId, environmentId, organizationId } = command;
+    const isEnhancedDigestEnabled = await this.featureFlagService.getFlag({
+      user: { _id: userId } as UserEntity,
+      environment: { _id: environmentId } as EnvironmentEntity,
+      organization: { _id: organizationId } as OrganizationEntity,
+      key: FeatureFlagsKeysEnum.IS_ENHANCED_DIGEST_ENABLED,
+      defaultValue: false,
+    });
     const controlValues = await this.getControlValues(command);
 
     const variables = this.extractAllVariables(controlValues);
@@ -24,7 +39,33 @@ export class CreateVariablesObject {
     ];
     const showIfVariables = this.extractMailyAttribute(controlValues, MailyAttrsEnum.SHOW_IF_KEY);
 
-    return keysToObject(variables, arrayVariables, showIfVariables);
+    const variablesObject = keysToObject(variables, arrayVariables, showIfVariables);
+    if (isEnhancedDigestEnabled) {
+      return this.ensureEventsVariableIsAnArray(variablesObject);
+    }
+
+    return variablesObject;
+  }
+
+  private ensureEventsVariableIsAnArray(variablesObject: Record<string, unknown>) {
+    const stepsObject = (variablesObject.steps as Record<string, unknown>) ?? {};
+
+    Object.keys(stepsObject).forEach((stepId) => {
+      const step = stepsObject[stepId] as Record<string, unknown>;
+      const hasUsedEventCount = !!step.eventCount;
+      const hasUsedEventsLength = !!(
+        step.events &&
+        typeof step.events === 'object' &&
+        !Array.isArray(step.events) &&
+        'length' in step.events
+      );
+      const hasUsedEvents = !!(step.events && typeof step.events === 'string');
+      if (hasUsedEventCount || hasUsedEventsLength || hasUsedEvents) {
+        step.events = [];
+      }
+    });
+
+    return variablesObject;
   }
 
   private async getControlValues(command: CreateVariablesObjectCommand) {

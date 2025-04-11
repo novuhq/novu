@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, BadRequestException } from '@nestjs/common';
 import { IDelayOrDigestJobResult, JobEntity, JobRepository, NotificationRepository } from '@novu/dal';
 import {
   DigestCreationResultEnum,
@@ -11,7 +11,6 @@ import {
   JobStatusEnum,
 } from '@novu/shared';
 import {
-  ApiException,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   DetailEnum,
@@ -45,7 +44,7 @@ export class MergeOrCreateDigest {
     switch (digestAction.digestResult) {
       case DigestCreationResultEnum.MERGED: {
         if (!digestAction.activeDigestId || !digestAction.activeNotificationId) {
-          throw new ApiException(
+          throw new BadRequestException(
             `Active digest or notification id is missing, active digest id ${digestAction.activeDigestId},` +
               `active notification id ${digestAction.activeNotificationId}`
           );
@@ -58,7 +57,7 @@ export class MergeOrCreateDigest {
       case DigestCreationResultEnum.CREATED:
         return await this.processCreatedDigest(digestMeta as IDigestBaseMetadata, job);
       default:
-        throw new ApiException('Something went wrong with digest creation');
+        throw new BadRequestException('Something went wrong with digest creation');
     }
   }
 
@@ -73,7 +72,7 @@ export class MergeOrCreateDigest {
 
     const regularDigestMeta = digestMeta as IDigestRegularMetadata | undefined;
     if (!regularDigestMeta?.amount || !regularDigestMeta?.unit) {
-      throw new ApiException(`Somehow ${job._id} had wrong digest settings and escaped validation`);
+      throw new BadRequestException(`Somehow ${job._id} had wrong digest settings and escaped validation`);
     }
 
     return DigestCreationResultEnum.CREATED;

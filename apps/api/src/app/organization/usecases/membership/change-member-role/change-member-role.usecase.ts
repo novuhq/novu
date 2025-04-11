@@ -1,9 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { OrganizationRepository, MemberRepository } from '@novu/dal';
 import { MemberRoleEnum } from '@novu/shared';
 
 import { ChangeMemberRoleCommand } from './change-member-role.command';
-import { ApiException } from '../../../../shared/exceptions/api.exception';
 
 @Injectable()
 export class ChangeMemberRole {
@@ -14,11 +13,11 @@ export class ChangeMemberRole {
 
   async execute(command: ChangeMemberRoleCommand) {
     if (![MemberRoleEnum.MEMBER, MemberRoleEnum.ADMIN].includes(command.role)) {
-      throw new ApiException('Not supported role type');
+      throw new BadRequestException('Not supported role type');
     }
 
     if (command.role !== MemberRoleEnum.ADMIN) {
-      throw new ApiException(`The change of role to an ${command.role} type is not supported`);
+      throw new BadRequestException(`The change of role to an ${command.role} type is not supported`);
     }
 
     const organization = await this.organizationRepository.findById(command.organizationId);

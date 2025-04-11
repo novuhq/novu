@@ -11,7 +11,6 @@ import {
 import { MessageRepository, SubscriberEntity, SubscriberRepository } from '@novu/dal';
 
 import { GetNotificationsFeedCommand } from './get-notifications-feed.command';
-import { ApiException } from '../../../shared/exceptions/api.exception';
 import { FeedResponseDto } from '../../dtos/feeds-response.dto';
 
 @Injectable()
@@ -52,7 +51,7 @@ export class GetNotificationsFeed {
     });
 
     if (!subscriber) {
-      throw new ApiException(
+      throw new BadRequestException(
         `Subscriber not found for this environment with the id: ${
           command.subscriberId
         }. Make sure to create a subscriber before fetching the feed.`

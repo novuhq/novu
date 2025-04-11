@@ -1,11 +1,20 @@
 import { Liquid } from 'liquidjs';
+import { toSentence, pluralize } from '@novu/framework/internal';
 
-export const parseLiquid = async (value: string, variables: object): Promise<string> => {
+export const parseLiquid = async (
+  value: string,
+  variables: object,
+  isEnhancedDigestEnabled: boolean
+): Promise<string> => {
   const client = new Liquid({
     outputEscape: (output) => {
       return stringifyDataStructureWithSingleQuotes(output);
     },
   });
+  if (isEnhancedDigestEnabled) {
+    client.registerFilter('toSentence', toSentence);
+    client.registerFilter('pluralize', pluralize);
+  }
 
   const template = client.parse(value);
 
@@ -20,6 +29,6 @@ const stringifyDataStructureWithSingleQuotes = (value: unknown, spaces: number =
 
     return valueEscapedNewLines;
   } else {
-    return String(value);
+    return value == null ? '' : String(value as unknown);
   }
 };

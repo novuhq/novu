@@ -7,8 +7,8 @@ import { of } from 'rxjs';
 import { CommunityUserRepository, EnvironmentRepository, MemberRepository, OrganizationRepository } from '@novu/dal';
 import { AnalyticsService } from '@novu/application-generic';
 
+import { BadRequestException } from '@nestjs/common';
 import { UpdateVercelIntegration } from './update-vercel-integration.usecase';
-import { ApiException } from '../../../shared/exceptions/api.exception';
 import { Sync } from '../../../bridge/usecases/sync';
 
 describe('UpdateVercelIntegration', function () {
@@ -38,6 +38,7 @@ describe('UpdateVercelIntegration', function () {
                     { id: 'env-1', key: 'NEXT_PUBLIC_NOVU_CLIENT_APP_ID', target: ['production'] },
                     { id: 'env-2', key: 'NOVU_CLIENT_APP_ID', target: ['production'] },
                     { id: 'env-3', key: 'NOVU_SECRET_KEY', target: ['production'] },
+                    { id: 'env-4', key: 'NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER', target: ['production'] },
                   ],
                 },
               ],
@@ -194,6 +195,15 @@ describe('UpdateVercelIntegration', function () {
         },
       }
     );
+    assert.calledWith(
+      httpServiceMock.delete,
+      `${process.env.VERCEL_BASE_URL}/v9/projects/project-1/env/env-4?teamId=test-team-id`,
+      {
+        headers: {
+          Authorization: 'Bearer test-token',
+        },
+      }
+    );
 
     assert.calledWith(organizationRepositoryMock.bulkUpdatePartnerConfiguration, {
       userId: command.userId,
@@ -220,7 +230,7 @@ describe('UpdateVercelIntegration', function () {
           target: ['production'],
           type: 'encrypted',
           value: 'prod',
-          key: 'NEXT_PUBLIC_NOVU_CLIENT_APP_ID',
+          key: 'NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER',
         },
       ],
       {
@@ -329,7 +339,7 @@ describe('UpdateVercelIntegration', function () {
     assert.notCalled(httpServiceMock.delete);
   });
 
-  it('should throw ApiException when configuration not found', async function () {
+  it('should throw BadRequestException when configuration not found', async function () {
     organizationRepositoryMock.findByPartnerConfigurationId.resolves([]);
 
     try {
@@ -342,7 +352,7 @@ describe('UpdateVercelIntegration', function () {
       });
       throw new Error('Should not reach here');
     } catch (error) {
-      expect(error).to.be.instanceOf(ApiException);
+      expect(error).to.be.instanceOf(BadRequestException);
       expect(error.message).to.equal('No partner configuration found.');
       assert.notCalled(httpServiceMock.get);
       assert.notCalled(httpServiceMock.delete);
@@ -364,7 +374,7 @@ describe('UpdateVercelIntegration', function () {
       });
       throw new Error('Should not reach here');
     } catch (error) {
-      expect(error).to.be.instanceOf(ApiException);
+      expect(error).to.be.instanceOf(BadRequestException);
       expect(error.message).to.equal('HTTP Error');
       assert.notCalled(httpServiceMock.delete);
     }
@@ -385,7 +395,7 @@ describe('UpdateVercelIntegration', function () {
       });
       throw new Error('Should not reach here');
     } catch (error) {
-      expect(error).to.be.instanceOf(ApiException);
+      expect(error).to.be.instanceOf(BadRequestException);
       expect(error.message).to.equal('Delete Error');
       assert.called(httpServiceMock.get);
       assert.called(httpServiceMock.delete);

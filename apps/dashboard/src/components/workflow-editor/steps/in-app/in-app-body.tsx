@@ -31,7 +31,6 @@ export const InAppBody = () => {
                 onChange={field.onChange}
                 variables={variables}
                 isAllowedVariable={isAllowedVariable}
-                autoFocus
                 multiline
               />
             </InputRoot>

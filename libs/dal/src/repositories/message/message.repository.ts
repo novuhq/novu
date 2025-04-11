@@ -88,14 +88,10 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       requestQuery.tags = { $in: query.tags };
     }
 
-    if (typeof query.archived === 'boolean') {
-      if (!query.archived) {
-        requestQuery.$or = [{ archived: { $exists: false } }, { archived: false }];
-      } else {
-        requestQuery.archived = true;
-      }
+    if (query.archived != null) {
+      requestQuery.archived = query.archived;
     } else {
-      requestQuery.$or = [{ archived: { $exists: false } }, { archived: { $in: [true, false] } }];
+      requestQuery.archived = { $in: [true, false] };
     }
 
     if (query.payload) {

@@ -1,6 +1,6 @@
 import { Filters } from './types';
 
-export const FILTERS: Filters[] = [
+const FILTERS: Filters[] = [
   // Text Transformations
   {
     label: 'Uppercase',
@@ -322,3 +322,38 @@ export const FILTERS: Filters[] = [
     sampleValue: '[{ name: "John" }, { name: "Jane" }]',
   },
 ];
+
+export const getFilters = (isEnhancedDigestEnabled: boolean): Filters[] => {
+  if (isEnhancedDigestEnabled) {
+    return [
+      ...FILTERS,
+      {
+        label: 'toSentence',
+        value: 'toSentence',
+        hasParam: true,
+        description: 'Converts the array to a comma-separated sentence.',
+        example: 'names | toSentence: "", 2, "other" → John, Jane, and 3 others',
+        params: [
+          { placeholder: 'Insert key to be summarized on...', type: 'string' },
+          { placeholder: 'Limit of words to show', type: 'number' },
+          { placeholder: 'Overflow suffix', type: 'string' },
+        ],
+        sampleValue: "['John', 'Jane', ...]",
+      },
+      {
+        label: 'Pluralize',
+        value: 'pluralize',
+        hasParam: true,
+        description: 'Converts word to singular or plural based on count',
+        example: 'events | pluralize: "event", "events" → 1 apple, 2 apples',
+        params: [
+          { placeholder: 'Singular word', type: 'string' },
+          { placeholder: 'Plural word', type: 'string' },
+        ],
+        sampleValue: '10',
+      },
+    ];
+  }
+
+  return FILTERS;
+};
