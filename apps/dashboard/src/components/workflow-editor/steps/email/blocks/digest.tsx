@@ -20,7 +20,7 @@ export const createDigestBlock = (props: {
     preview: '/images/email-editor/digest-block-preview.webp',
     command: ({ editor, range }) => {
       track(TelemetryEvent.DIGEST_BLOCK_ADDED, {
-        type: 'custom_html',
+        type: 'digest',
       });
 
       editor
