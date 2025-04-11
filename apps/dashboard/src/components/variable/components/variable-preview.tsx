@@ -18,7 +18,7 @@ function Content({ children, className = '' }: VariablePreviewContentProps) {
   return (
     <div
       className={cn(
-        `border-stroke-soft flex flex-col justify-center gap-2 rounded-sm border bg-white p-1 py-2`,
+        `border-stroke-soft flex flex-col justify-center gap-2 rounded-sm border bg-white p-1.5`,
         className
       )}
     >
@@ -28,7 +28,7 @@ function Content({ children, className = '' }: VariablePreviewContentProps) {
 }
 
 function Description({ children, className = '' }: VariablePreviewContentProps) {
-  return <div className={cn(`p-1 pb-0`, className)}>{children}</div>;
+  return <div className={cn(`p-1 py-0`, className)}>{children}</div>;
 }
 
 VariablePreview.Content = Content;
