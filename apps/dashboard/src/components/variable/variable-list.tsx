@@ -185,7 +185,7 @@ const VariableListItem = ({
         </li>
       </TooltipTrigger>
       <TooltipPortal>
-        <TooltipContent side="right" className="bg-bg-weak border-0 p-0.5 shadow-md" sideOffset={10}>
+        <TooltipContent side="right" className="bg-bg-weak border-0 p-0.5" sideOffset={10} hideWhenDetached>
           {option.preview}
         </TooltipContent>
       </TooltipPortal>
