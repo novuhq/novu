@@ -149,6 +149,9 @@ const baseTheme = (options: { multiline?: boolean }) =>
       padding: '0px !important',
       backgroundColor: 'hsl(var(--bg-weak))',
     },
+    '.cm-tooltip-autocomplete.cm-tooltip > ul > li:hover': {
+      backgroundColor: 'hsl(var(--neutral-100))',
+    },
   });
 
 export type EditorProps = {
