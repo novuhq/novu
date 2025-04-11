@@ -60,7 +60,7 @@ export const createDigestBlock = (props: {
                 {
                   type: 'variable',
                   attrs: {
-                    id: `steps.digest-step.eventCount | minus: ${maxIterations} | pluralize: 'more comment', ''`,
+                    id: `steps.${digestStepBeforeCurrent.stepId}.eventCount | minus: ${maxIterations} | pluralize: 'more comment', ''`,
                     label: null,
                     fallback: null,
                     required: false,
