@@ -29,7 +29,8 @@ import { ForView } from './views/for-view';
 import { createVariableView } from './views/variable-view';
 import { MailyVariablesListView } from './views/maily-variables-list-view';
 import { HTMLCodeBlockView } from './views/html-view';
-import { CalculateVariablesProps } from './variables/variables';
+import { CalculateVariablesProps, insertVariableToEditor } from './variables/variables';
+import { IsAllowedVariable } from '@/utils/parseStepVariables';
 
 export const VARIABLE_TRIGGER_CHARACTER = '{{';
 
@@ -101,9 +102,10 @@ export const createEditorBlocks = (props: { track: ReturnType<typeof useTelemetr
 
 export const createExtensions = (props: {
   calculateVariables: (props: CalculateVariablesProps) => Variables | undefined;
-  parsedVariables: { isAllowedVariable: (variable: string) => boolean };
+  parsedVariables: { isAllowedVariable: IsAllowedVariable };
+  isEnhancedDigestEnabled: boolean;
 }) => {
-  const { calculateVariables, parsedVariables } = props;
+  const { calculateVariables, parsedVariables, isEnhancedDigestEnabled } = props;
 
   return [
     RepeatExtension.extend({
@@ -127,8 +129,29 @@ export const createExtensions = (props: {
           as: 'div',
         });
       },
+      addAttributes() {
+        const attributes = this.parent?.();
+        return {
+          ...attributes,
+          aliasFor: {
+            default: null,
+          },
+        };
+      },
     }).configure({
-      suggestion: getVariableSuggestions(VARIABLE_TRIGGER_CHARACTER),
+      suggestion: {
+        ...getVariableSuggestions(VARIABLE_TRIGGER_CHARACTER),
+        command: ({ editor, range, props }) => {
+          const query = props.id + '}}';
+          insertVariableToEditor({
+            query,
+            editor,
+            range,
+            isAllowedVariable: parsedVariables.isAllowedVariable,
+            isEnhancedDigestEnabled,
+          });
+        },
+      },
       variables: calculateVariables as Variables,
       variableSuggestionsPopover: MailyVariablesListView,
     }),
