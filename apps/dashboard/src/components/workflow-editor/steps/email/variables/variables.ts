@@ -1,14 +1,12 @@
-
 import { DIGEST_VARIABLES } from '@/components/variable/utils/digest-variables';
-import { Variable, Variables } from '@maily-to/core/extensions';
+import { Variable } from '@maily-to/core/extensions';
 
 import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
-import type { Editor, Editor as TiptapEditor, Range } from '@tiptap/core';
+import type { Editor, Range, Editor as TiptapEditor } from '@tiptap/core';
 
 export const REPEAT_BLOCK_ITERABLE_ALIAS = 'current';
 
 export const ALLOWED_ALIASES = [REPEAT_BLOCK_ITERABLE_ALIAS];
-
 
 export enum VariableFrom {
   // variable coming from bubble menu (e.g. 'showIf')
@@ -188,15 +186,12 @@ export const calculateVariables = ({
   // Get available variables by context (where we are in the editor)
   const variables = getVariablesByContext(editor, from, isEnhancedDigestEnabled, primitives, arrays, namespaces);
 
-
   if (isEnhancedDigestEnabled && addDigestVariables) {
     const mappedDigestVariables = DIGEST_VARIABLES.map((variable) => ({
-      name: variable.label,
-      required: false,
+      name: variable.name,
     }));
-    filteredVariables.push(...mappedDigestVariables, ...primitives, ...arrays, ...newNamespaces);
-  } else {
-    filteredVariables.push(...primitives, ...newNamespaces);
+    variables.push(...mappedDigestVariables);
+  }
 
   // Add currently typed variable if allowed
   if (
@@ -296,11 +291,10 @@ const dedupAndSortVariables = (variables: Array<Variable>, query: string): Array
 
   const filteredVariables = variables.filter((variable) => variable.name.toLowerCase().includes(lowerQuery));
 
-
   const uniqueVariables = Array.from(new Map(filteredVariables.map((item) => [item.name, item])).values());
 
   // Separate digest variables that match the query
-  const digestLabels = new Set(DIGEST_VARIABLES.map((v) => v.label));
+  const digestLabels = new Set(DIGEST_VARIABLES.map((v) => v.name));
   const matchedDigestVariables: Variable[] = [];
   const others: Variable[] = [];
 

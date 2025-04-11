@@ -1,5 +1,4 @@
 import { getFilters } from '@/components/variable/constants';
-import { DIGEST_VARIABLES_FILTER_MAP } from '@/components/variable/utils/digest-variables';
 import { LiquidVariable } from '@/utils/parseStepVariables';
 import { Completion, CompletionContext, CompletionResult } from '@codemirror/autocomplete';
 import { EditorView } from '@uiw/react-codemirror';
@@ -110,12 +109,11 @@ export const completions =
         options:
           matchingVariables.length > 0
             ? matchingVariables.map((v) =>
-                createCompletionOption(v.label, v.type ?? 'variable', v.boost, v.info, v.displayLabel)
+                createCompletionOption(v.name, v.type ?? 'variable', v.boost, v.info, v.displayLabel)
               )
             : variables.map((v) =>
-                createCompletionOption(v.label, v.type ?? 'variable', v.boost, v.info, v.displayLabel)
+                createCompletionOption(v.name, v.type ?? 'variable', v.boost, v.info, v.displayLabel)
               ),
-
       };
     }
 

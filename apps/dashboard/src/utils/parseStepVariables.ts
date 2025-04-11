@@ -1,4 +1,3 @@
-
 import { Completion } from '@codemirror/autocomplete';
 
 import { isAllowedAlias } from '@/components/workflow-editor/steps/email/variables/variables';
@@ -10,15 +9,14 @@ import {
   getDynamicDigestVariable,
 } from '../components/variable/utils/digest-variables';
 
-
 export interface LiquidVariable {
-  type: 'variable' | 'digest';
-  label: string;
+  type?: 'variable' | 'digest';
+  name: string;
   boost?: number;
   info?: Completion['info'];
   displayLabel?: string;
+  aliasFor?: string | null;
 }
-
 
 export type IsAllowedVariable = (variable: LiquidVariable) => boolean;
 export type IsArbitraryNamespace = (path: string) => boolean;
@@ -41,7 +39,6 @@ export function parseStepVariables(
   schema: JSONSchemaDefinition,
   { isEnhancedDigestEnabled, digestStepId }: { isEnhancedDigestEnabled: boolean; digestStepId?: string }
 ): ParsedVariables {
-
   const result: ParsedVariables = {
     primitives: [],
     arrays: [],
@@ -182,18 +179,18 @@ export function parseStepVariables(
   return {
     ...result,
 
-
     variables:
       isEnhancedDigestEnabled && digestStepId
         ? [
             ...DIGEST_VARIABLES.map((variable) => {
               const { label: displayLabel, value } = getDynamicDigestVariable({
                 digestStepName: digestStepId,
-                type: variable.label as DIGEST_VARIABLES_ENUM,
+                type: variable.name as DIGEST_VARIABLES_ENUM,
               });
+
               return {
                 ...variable,
-                label: value,
+                name: value,
                 displayLabel,
               };
             }),
@@ -202,7 +199,6 @@ export function parseStepVariables(
             ...result.namespaces,
           ]
         : [...result.primitives, ...result.namespaces],
-
 
     isAllowedVariable,
   };

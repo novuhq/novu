@@ -21,7 +21,7 @@ export const DIGEST_VARIABLES: LiquidVariable[] = [
      * The value is then overwritten to the correct dynamic value
      * in parseStepVariables.ts
      */
-    label: DIGEST_VARIABLES_ENUM.COUNT_SUMMARY,
+    name: DIGEST_VARIABLES_ENUM.COUNT_SUMMARY,
     /**
      * DisplayLabel is used to show the variable name in the Codemirror.
      */
@@ -47,7 +47,7 @@ export const DIGEST_VARIABLES: LiquidVariable[] = [
     },
   },
   {
-    label: DIGEST_VARIABLES_ENUM.SENTENCE_SUMMARY,
+    name: DIGEST_VARIABLES_ENUM.SENTENCE_SUMMARY,
     displayLabel: DIGEST_VARIABLES_ENUM.SENTENCE_SUMMARY,
     type: 'digest',
     boost: 98,
@@ -98,7 +98,7 @@ const applyDigestVariableValue = ({
 
   const digestFilterValue = DIGEST_VARIABLES_FILTER_MAP[type];
   const variableName = DIGEST_VARIABLE_TO_NAME_MAP[type];
-  const finalValueWithFilter = 'steps.' + digestStepName + variableName + digestFilterValue;
+  const finalValueWithFilter = 'steps.' + digestStepName + variableName + ' ' + digestFilterValue;
 
   return finalValueWithFilter;
 };
@@ -114,9 +114,9 @@ const applyDigestVariableName = ({
     return '';
   }
 
-  const finalValueWithFilter = 'steps.' + digestStepName + '.' + type;
+  const variableName = 'steps.' + digestStepName + '.' + type;
 
-  return finalValueWithFilter;
+  return variableName;
 };
 
 export const getDynamicDigestVariable = ({

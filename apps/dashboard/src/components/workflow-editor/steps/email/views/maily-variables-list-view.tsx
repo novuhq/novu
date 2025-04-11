@@ -29,11 +29,12 @@ export const MailyVariablesListView = React.forwardRef(
           const isDigestVariable = item.name in DIGEST_VARIABLES_FILTER_MAP;
 
           if (isDigestVariable) {
+            const { label } = getDynamicDigestVariable({
+              type: item.name as DIGEST_VARIABLES_ENUM,
+              digestStepName: digestStepBeforeCurrent?.digestStepId,
+            });
             return {
-              label: getDynamicDigestVariable({
-                type: item.name as DIGEST_VARIABLES_ENUM,
-                digestStepName: digestStepBeforeCurrent?.digestStepId,
-              }).label,
+              label,
               value: item.name,
               preview:
                 item.name in DIGEST_PREVIEW_MAP
@@ -45,10 +46,6 @@ export const MailyVariablesListView = React.forwardRef(
           return {
             label: item.name,
             value: item.name,
-            preview:
-              item.name in DIGEST_PREVIEW_MAP
-                ? DIGEST_PREVIEW_MAP[item.name as keyof typeof DIGEST_PREVIEW_MAP]
-                : undefined,
           };
         }),
       [digestStepBeforeCurrent?.digestStepId, items]
