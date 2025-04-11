@@ -16,7 +16,10 @@ export function ReorderFiltersGroup({ filters, onReorder, onRemove, onParamChang
   if (filters.length === 0) return null;
 
   return (
-    <div className="rounded-8 border-stroke-soft flex flex-col gap-0.5 border px-1 py-1.5" data-filters-container>
+    <div
+      className="rounded-8 border-stroke-soft flex max-h-56 flex-col gap-0.5 overflow-y-auto border px-1 py-1.5"
+      data-filters-container
+    >
       <Reorder.Group ref={groupRef} axis="y" values={filters} onReorder={onReorder}>
         {filters.map((filter, index) => (
           <ReorderFilterItem

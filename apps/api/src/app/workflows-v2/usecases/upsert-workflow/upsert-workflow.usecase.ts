@@ -185,7 +185,9 @@ export class UpsertWorkflowUseCase {
           controls: controlSchemas,
           content: '',
         },
-        stepId: existingStep?.stepId || this.generateUniqueStepId(step, steps),
+        stepId:
+          existingStep?.stepId ||
+          this.generateUniqueStepId(step, existingWorkflow ? existingWorkflow.steps : command.workflowDto.steps),
         name: step.name,
         issues,
       };

@@ -1,22 +1,22 @@
 import { CursorPagination } from '@/components/cursor-pagination';
 import { Table, TableBody, TableHead, TableHeader, TableRow } from '@/components/primitives/table';
-import { SubscriberListBlank } from '@/components/subscribers/subscriber-list-blank';
-import { SubscriberListNoResults } from '@/components/subscribers/subscriber-list-no-results';
-import { SubscriberRow, SubscriberRowSkeleton } from '@/components/subscribers/subscriber-row';
-import { SubscribersFilters } from '@/components/subscribers/subscribers-filters';
-import { useFetchSubscribers } from '@/hooks/use-fetch-subscribers';
+import { useSubscribersNavigate } from '@/components/subscribers/hooks/use-subscribers-navigate';
 import {
   SubscribersFilter,
   SubscribersSortableColumn,
   SubscribersUrlState,
   useSubscribersUrlState,
 } from '@/components/subscribers/hooks/use-subscribers-url-state';
+import { SubscriberListBlank } from '@/components/subscribers/subscriber-list-blank';
+import { SubscriberListNoResults } from '@/components/subscribers/subscriber-list-no-results';
+import { SubscriberRow, SubscriberRowSkeleton } from '@/components/subscribers/subscriber-row';
+import { SubscribersFilters } from '@/components/subscribers/subscribers-filters';
+import { useFetchSubscribers } from '@/hooks/use-fetch-subscribers';
 import { cn } from '@/utils/ui';
 import { DirectionEnum } from '@novu/shared';
 import { HTMLAttributes, useEffect, useState } from 'react';
-import { Button } from '../primitives/button';
 import { RiUserSharedLine } from 'react-icons/ri';
-import { useSubscribersNavigate } from '@/components/subscribers/hooks/use-subscribers-navigate';
+import { Button } from '../primitives/button';
 
 type SubscriberListFiltersProps = HTMLAttributes<HTMLDivElement> &
   Pick<SubscribersUrlState, 'filterValues' | 'handleFiltersChange' | 'resetFilters'>;
@@ -26,7 +26,7 @@ const SubscriberListWrapper = (props: SubscriberListFiltersProps) => {
   const { navigateToCreateSubscriberPage } = useSubscribersNavigate();
 
   return (
-    <div className={cn('flex h-full flex-col p-2', className)} {...rest}>
+    <div className={cn('flex flex-col p-2', className)} {...rest}>
       <div className="flex items-center justify-between">
         <SubscribersFilters
           onFiltersChange={handleFiltersChange}

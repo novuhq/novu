@@ -146,7 +146,7 @@ with Novu(
     api_key=${renderedSecretKey},
 ) as novu:
     res = novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
-        workflowId="${identifier}",
+        workflow_id="${identifier}",
         to={
             "subscriber_id": "${(to as { subscriberId: string }).subscriberId}",
         },
@@ -175,7 +175,7 @@ func main() {
 	)
 
 	res, err := s.Trigger(ctx, components.TriggerEventRequestDto{
-		WorkflowId: "${identifier}",
+		WorkflowID: "${identifier}",
 		Payload: ${JSON.stringify(safeParsePayload(payload))},
 		To: components.CreateToSubscriberPayloadDto(
 			components.SubscriberPayloadDto{
