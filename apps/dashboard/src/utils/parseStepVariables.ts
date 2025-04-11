@@ -1,12 +1,17 @@
 import { Completion } from '@codemirror/autocomplete';
 import type { JSONSchemaDefinition } from '@novu/shared';
-import { DIGEST_VARIABLES, DIGEST_VARIABLES_VALUE_ROOT_PATHS } from '../components/variable/utils/digest-variables';
+import {
+  applyDigestVariableValue,
+  DIGEST_VARIABLES,
+  DIGEST_VARIABLES_ENUM,
+} from '../components/variable/utils/digest-variables';
 
 export interface LiquidVariable {
   type: 'variable' | 'digest';
   label: string;
   boost?: number;
   info?: Completion['info'];
+  displayLabel?: string;
 }
 
 export type IsAllowedVariable = (path: string) => boolean;
@@ -27,10 +32,7 @@ export interface ParsedVariables {
  */
 export function parseStepVariables(
   schema: JSONSchemaDefinition,
-  {
-    addDigestVariables = false,
-    isEnhancedDigestEnabled,
-  }: { isEnhancedDigestEnabled: boolean; addDigestVariables: boolean }
+  { isEnhancedDigestEnabled, digestStepId }: { isEnhancedDigestEnabled: boolean; digestStepId?: string }
 ): ParsedVariables {
   const result: ParsedVariables = {
     primitives: [],
@@ -122,14 +124,6 @@ export function parseStepVariables(
   function isAllowedVariable(path: string): boolean {
     if (typeof schema === 'boolean') return false;
 
-    if (
-      isEnhancedDigestEnabled &&
-      addDigestVariables &&
-      DIGEST_VARIABLES_VALUE_ROOT_PATHS.some((variable) => variable === path)
-    ) {
-      return true;
-    }
-
     if (result.primitives.some((primitive) => primitive.label === path)) {
       return true;
     }
@@ -170,8 +164,22 @@ export function parseStepVariables(
     ...result,
 
     variables:
-      isEnhancedDigestEnabled && addDigestVariables
-        ? [...DIGEST_VARIABLES, ...result.primitives, ...result.arrays, ...result.namespaces]
+      isEnhancedDigestEnabled && digestStepId
+        ? [
+            ...DIGEST_VARIABLES.map((variable) => {
+              const label = applyDigestVariableValue({
+                digestStepName: digestStepId,
+                type: variable.label as DIGEST_VARIABLES_ENUM,
+              });
+              return {
+                ...variable,
+                label,
+              };
+            }),
+            ...result.primitives,
+            ...result.arrays,
+            ...result.namespaces,
+          ]
         : [...result.primitives, ...result.namespaces],
 
     isAllowedVariable,

@@ -1,5 +1,5 @@
 import { getFilters } from '@/components/variable/constants';
-import { DIGEST_VARIABLES_VALUE_MAP } from '@/components/variable/utils/digest-variables';
+import { DIGEST_VARIABLES_FILTER_MAP } from '@/components/variable/utils/digest-variables';
 import { LiquidVariable } from '@/utils/parseStepVariables';
 import { Completion, CompletionContext, CompletionResult } from '@codemirror/autocomplete';
 import { EditorView } from '@uiw/react-codemirror';
@@ -109,8 +109,12 @@ export const completions =
         to: pos,
         options:
           matchingVariables.length > 0
-            ? matchingVariables.map((v) => createCompletionOption(v.label, v.type ?? 'variable', v.boost, v.info))
-            : variables.map((v) => createCompletionOption(v.label, v.type ?? 'variable', v.boost, v.info)),
+            ? matchingVariables.map((v) =>
+                createCompletionOption(v.label, v.type ?? 'variable', v.boost, v.info, v.displayLabel)
+              )
+            : variables.map((v) =>
+                createCompletionOption(v.label, v.type ?? 'variable', v.boost, v.info, v.displayLabel)
+              ),
       };
     }
 
@@ -134,9 +138,10 @@ function createCompletionOption(
   label: string,
   type: string,
   boost?: number,
-  info?: Completion['info']
+  info?: Completion['info'],
+  displayLabel?: Completion['displayLabel']
 ): CompletionOption {
-  return { label, type, ...(boost && { boost }), ...(info && { info }) };
+  return { label, type, ...(boost && { boost }), ...(info && { info }), ...(displayLabel && { displayLabel }) };
 }
 
 function getFilterCompletions(afterPipe: string, isEnhancedDigestEnabled: boolean): CompletionOption[] {
@@ -231,16 +236,7 @@ export function createAutocompleteSource(variables: LiquidVariable[], isEnhanced
       options: options.options.map((option) => ({
         ...option,
         apply: (view: EditorView, completion: Completion, from: number, to: number) => {
-          let selectedValue = completion.label;
-
-          /**
-           * If the selected value is a digest variable,
-           * we need to replace it with its corresponding value.
-           */
-          if (selectedValue in DIGEST_VARIABLES_VALUE_MAP) {
-            const digestValue = DIGEST_VARIABLES_VALUE_MAP[selectedValue as keyof typeof DIGEST_VARIABLES_VALUE_MAP];
-            selectedValue = digestValue;
-          }
+          const selectedValue = completion.label;
 
           const content = view.state.doc.toString();
           const beforeCursor = content.slice(0, from);

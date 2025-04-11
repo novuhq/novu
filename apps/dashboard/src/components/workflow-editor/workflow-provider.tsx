@@ -36,7 +36,8 @@ export type WorkflowContextType = {
   step?: StepResponseDto;
   update: UpdateWorkflowFn;
   patch: (data: PatchWorkflowDto) => void;
-  isStepAfterDigest: boolean;
+
+  digestStepBeforeCurrent?: { digestStep?: StepResponseDto; digestStepId?: string };
 };
 
 export const WorkflowContext = createContext<WorkflowContextType>({} as WorkflowContextType);
@@ -77,6 +78,27 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
 
     return Boolean(hasDigestStepInBetween);
   }, [getStep, workflow?.steps]);
+
+  const digestStepBeforeCurrent = useMemo(() => {
+    if (!workflow || !isStepAfterDigest) return undefined;
+
+    const index = workflow.steps.findIndex(
+      (step) =>
+        getWorkflowIdFromSlug({ slug: stepSlug, divider: STEP_DIVIDER }) ===
+        getWorkflowIdFromSlug({ slug: step.slug, divider: STEP_DIVIDER })
+    );
+
+    if (index === -1) return undefined;
+
+    const stepsBeforeCurrent = workflow.steps.slice(0, index);
+
+    const digestStep = stepsBeforeCurrent.reverse().find((step) => step.type === 'digest');
+
+    return {
+      digestStep,
+      digestStepId: digestStep?.stepId,
+    };
+  }, [workflow, isStepAfterDigest, stepSlug]);
 
   const { enqueue, hasPendingItems } = useInvocationQueue();
   const blocker = useBlocker(({ nextLocation }) => {
@@ -185,8 +207,8 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
   }, [isAllowedToUnblock, blocker]);
 
   const value = useMemo(
-    () => ({ update, patch, isPending, workflow, step: getStep(), isStepAfterDigest }),
-    [update, patch, isPending, workflow, getStep, isStepAfterDigest]
+    () => ({ update, patch, isPending, workflow, step: getStep(), digestStepBeforeCurrent }),
+    [update, patch, isPending, workflow, getStep, digestStepBeforeCurrent]
   );
 
   return (
