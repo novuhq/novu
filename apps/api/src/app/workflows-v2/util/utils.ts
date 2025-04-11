@@ -5,6 +5,7 @@ import isArray from 'lodash/isArray';
 import isObject from 'lodash/isObject';
 import reduce from 'lodash/reduce';
 import set from 'lodash/set';
+import { ArrayVariable } from '../usecases/create-variables-object/create-variables-object.usecase';
 
 export function findMissingKeys(requiredRecord: object, actualRecord: object) {
   const requiredKeys = collectKeys(requiredRecord);
@@ -113,7 +114,7 @@ export function mockSchemaDefaults(schema: JSONSchemaDto, parentPath = 'payload'
  */
 export function keysToObject(
   paths: string[],
-  arrayVariables?: string[],
+  arrayVariables?: Array<ArrayVariable>,
   showIfVariablesPaths?: string[]
 ): Record<string, unknown> {
   const validPaths = paths
@@ -130,14 +131,14 @@ function hasNamespace(path: string): boolean {
 
 function buildObjectFromPaths(
   paths: string[],
-  arrayPaths: string[],
+  arrayVariables: Array<ArrayVariable>,
   showIfVariablesPaths?: string[]
 ): Record<string, unknown> {
   const result = {};
 
-  // Initialize arrays with single empty object
-  arrayPaths.forEach((arrayPath) => {
-    set(result, arrayPath, [{}]);
+  // Initialize arrays with the correct number of iterations
+  arrayVariables.forEach((arrayVariable) => {
+    set(result, arrayVariable.path, Array(arrayVariable.iterations).fill({}));
   });
 
   // Sort paths by number of dots (depth) in ascending order
@@ -151,61 +152,22 @@ function buildObjectFromPaths(
       ?.replace(/\[\d+\]/g, ''); // Remove array indices from the value
     const value = showIfVariablesPaths?.includes(path) ? true : lastPart;
 
-    const arrayParent = arrayPaths.find((arrayPath) => arrayPath === path || path.startsWith(`${arrayPath}.`));
+    const arrayParent = arrayVariables.find(
+      (arrayVariable) => arrayVariable.path === path || path.startsWith(`${arrayVariable.path}.`)
+    );
     if (!arrayParent) {
       set(result, path.replace(/\[\d+\]/g, '[0]'), value);
 
       return;
     }
 
-    const isDirectArrayPath = arrayParent === path;
-    const targetPath = isDirectArrayPath ? path : `${arrayParent}[0].${path.slice(arrayParent.length + 1)}`;
+    const isDirectArrayPath = arrayParent.path === path;
+    const targetPath = isDirectArrayPath ? path : `${arrayParent.path}[0].${path.slice(arrayParent.path.length + 1)}`;
 
-    set(result, targetPath, isDirectArrayPath ? [value] : value);
-  });
-
-  return result;
-}
-
-/**
- * Duplicates array items within an object structure to create sample data.
- * Recursively processes nested objects and arrays, creating multiple copies of array items.
- *
- * @example
- * const input = {
- *   users: [{
- *     name: "John",
- *     addresses: [{ city: "NYC" }]
- *   }]
- * };
- *
- * duplicateArrayItems(input);
- *  Returns:
- *  {
- *    users: [
- *      { name: "John", addresses: [{ city: "NYC" }] },
- *      { name: "John", addresses: [{ city: "NYC" }] },
- *      { name: "John", addresses: [{ city: "NYC" }] }
- *    ]
- *  }
- */
-export function multiplyArrayItems(obj: Record<string, unknown>, multiplyBy = 3): Record<string, unknown> {
-  const result = { ...obj };
-
-  Object.entries(result).forEach(([key, value]) => {
-    if (Array.isArray(value)) {
-      result[key] = Array(multiplyBy)
-        .fill(null)
-        .map(() => {
-          // Handle both primitive and object values
-          if (typeof value[0] === 'object' && value[0] !== null) {
-            return { ...value[0] };
-          }
-
-          return key === 'events' ? { payload: {} } : value[0];
-        });
-    } else if (typeof value === 'object' && value !== null) {
-      result[key] = multiplyArrayItems(value as Record<string, unknown>, multiplyBy);
+    if (isDirectArrayPath) {
+      set(result, targetPath, Array(arrayParent.iterations).fill(value));
+    } else {
+      set(result, targetPath, value);
     }
   });
 
