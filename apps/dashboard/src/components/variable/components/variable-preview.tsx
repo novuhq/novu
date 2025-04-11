@@ -1,10 +1,12 @@
+import { cn } from '@/utils/ui';
+
 type VariablePreviewProps = {
   children: React.ReactNode;
   className?: string;
 };
 
 export function VariablePreview({ children, className = '' }: VariablePreviewProps) {
-  return <div className={`flex max-w-56 flex-col justify-center gap-1 p-1 ${className}`}>{children}</div>;
+  return <div className={cn(`flex max-w-56 flex-col justify-center gap-1 p-1`, className)}>{children}</div>;
 }
 
 type VariablePreviewContentProps = {
@@ -15,7 +17,10 @@ type VariablePreviewContentProps = {
 function Content({ children, className = '' }: VariablePreviewContentProps) {
   return (
     <div
-      className={`border-stroke-soft flex flex-col justify-center gap-2 rounded-sm border bg-white p-1 py-2 ${className}`}
+      className={cn(
+        `border-stroke-soft flex flex-col justify-center gap-2 rounded-sm border bg-white p-1 py-2`,
+        className
+      )}
     >
       {children}
     </div>
@@ -23,11 +28,7 @@ function Content({ children, className = '' }: VariablePreviewContentProps) {
 }
 
 function Description({ children, className = '' }: VariablePreviewContentProps) {
-  return (
-    <div className={`p-0.5 pb-0 ${className}`}>
-      <p className="text-text-sub text-xs">{children}</p>
-    </div>
-  );
+  return <div className={cn(`p-0.5 pb-0`, className)}>{children}</div>;
 }
 
 VariablePreview.Content = Content;
