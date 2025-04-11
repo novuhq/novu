@@ -21,10 +21,10 @@ const dataObjectKey = 'data';
 
 const InnerDataObject = ({ field }: { field: FieldValues }) => {
   const { saveForm } = useSaveForm();
-  const { step, isStepAfterDigest } = useWorkflow();
+  const { step, digestStepBeforeCurrent } = useWorkflow();
   const track = useTelemetry();
 
-  const { variables, isAllowedVariable } = useParseVariables(step?.variables, isStepAfterDigest);
+  const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.digestStepId);
 
   const [currentPairs, setCurrentPairs] = useState(() => {
     const obj = field.value ?? {};

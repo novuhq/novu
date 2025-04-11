@@ -20,9 +20,9 @@ type MailyProps = HTMLAttributes<HTMLDivElement> & {
 };
 
 export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
-  const { step, isStepAfterDigest } = useWorkflow();
+  const { step, digestStepBeforeCurrent } = useWorkflow();
   const isEnhancedDigestEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_ENHANCED_DIGEST_ENABLED);
-  const parsedVariables = useParseVariables(step?.variables, isStepAfterDigest);
+  const parsedVariables = useParseVariables(step?.variables, digestStepBeforeCurrent?.digestStepId);
   const primitives = useMemo(
     () => parsedVariables.primitives.map((v) => ({ name: v.label, required: false })),
     [parsedVariables.primitives]
@@ -49,10 +49,17 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
         namespaces,
         isAllowedVariable: parsedVariables.isAllowedVariable,
         isEnhancedDigestEnabled,
-        addDigestVariables: isStepAfterDigest,
+        addDigestVariables: !!digestStepBeforeCurrent?.digestStepId,
       });
     },
-    [primitives, arrays, namespaces, parsedVariables.isAllowedVariable, isEnhancedDigestEnabled, isStepAfterDigest]
+    [
+      primitives,
+      arrays,
+      namespaces,
+      parsedVariables.isAllowedVariable,
+      isEnhancedDigestEnabled,
+      digestStepBeforeCurrent?.digestStepId,
+    ]
   );
 
   const extensions = useMemo(

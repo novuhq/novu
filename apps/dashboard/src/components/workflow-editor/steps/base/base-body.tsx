@@ -11,8 +11,8 @@ const bodyKey = 'body';
 
 export const BaseBody = () => {
   const { control } = useFormContext();
-  const { step, isStepAfterDigest } = useWorkflow();
-  const { variables, isAllowedVariable } = useParseVariables(step?.variables, isStepAfterDigest);
+  const { step, digestStepBeforeCurrent } = useWorkflow();
+  const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.digestStepId);
 
   return (
     <FormField
