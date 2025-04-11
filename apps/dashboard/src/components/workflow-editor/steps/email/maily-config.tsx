@@ -31,6 +31,8 @@ import { MailyVariablesListView } from './views/maily-variables-list-view';
 import { HTMLCodeBlockView } from './views/html-view';
 import { CalculateVariablesProps, insertVariableToEditor } from './variables/variables';
 import { IsAllowedVariable } from '@/utils/parseStepVariables';
+import { StepResponseDto } from '@novu/shared';
+import { createDigestBlock } from './blocks/digest';
 
 export const VARIABLE_TRIGGER_CHARACTER = '{{';
 
@@ -58,38 +60,48 @@ export const DEFAULT_EDITOR_CONFIG = {
   autofocus: false,
 };
 
-export const createEditorBlocks = (props: { track: ReturnType<typeof useTelemetry> }): BlockGroupItem[] => {
-  const { track } = props;
+export const createEditorBlocks = (props: {
+  track: ReturnType<typeof useTelemetry>;
+  digestStepBeforeCurrent?: StepResponseDto;
+  isEnhancedDigestEnabled: boolean;
+}): BlockGroupItem[] => {
+  const { track, digestStepBeforeCurrent, isEnhancedDigestEnabled } = props;
   const blocks: BlockGroupItem[] = [];
+
+  const highlightBlocks = [createHtmlCodeBlock({ track }), createHeaders({ track }), createFooters({ track })];
+
+  if (isEnhancedDigestEnabled && digestStepBeforeCurrent) {
+    highlightBlocks.unshift(createDigestBlock({ track, digestStepBeforeCurrent }));
+  }
 
   blocks.push({
     title: 'Highlights',
-    commands: [createHtmlCodeBlock({ track }), createHeaders({ track }), createFooters({ track })],
+    commands: highlightBlocks,
   });
+
+  const allBlocks = [
+    blockquote,
+    bulletList,
+    button,
+    columns,
+    divider,
+    hardBreak,
+    heading1,
+    heading2,
+    heading3,
+    image,
+    inlineImage,
+    orderedList,
+    repeat,
+    section,
+    spacer,
+    text,
+    ...highlightBlocks,
+  ];
 
   blocks.push({
     title: 'All blocks',
-    commands: [
-      blockquote,
-      bulletList,
-      button,
-      columns,
-      divider,
-      hardBreak,
-      heading1,
-      heading2,
-      heading3,
-      image,
-      inlineImage,
-      orderedList,
-      repeat,
-      section,
-      spacer,
-      text,
-      createHtmlCodeBlock({ track }),
-      createHeaders({ track }),
-      createFooters({ track }),
-    ],
+    commands: allBlocks,
   });
 
   // sort command titles alphabetically within each block group

@@ -189,12 +189,17 @@ function buildObjectFromPaths(
  *    ]
  *  }
  */
-export function multiplyArrayItems(obj: Record<string, unknown>, multiplyBy = 3): Record<string, unknown> {
+export function multiplyArrayItems(
+  obj: Record<string, unknown>,
+  ref?: Record<string, unknown>,
+  multiplyBy = 3
+): Record<string, unknown> {
   const result = { ...obj };
 
   Object.entries(result).forEach(([key, value]) => {
     if (Array.isArray(value)) {
-      result[key] = Array(multiplyBy)
+      const itemsLength = Array.isArray(ref?.[key]) ? ref?.[key].length : multiplyBy;
+      result[key] = Array(itemsLength)
         .fill(null)
         .map(() => {
           // Handle both primitive and object values
@@ -205,7 +210,8 @@ export function multiplyArrayItems(obj: Record<string, unknown>, multiplyBy = 3)
           return key === 'events' ? { payload: {} } : value[0];
         });
     } else if (typeof value === 'object' && value !== null) {
-      result[key] = multiplyArrayItems(value as Record<string, unknown>, multiplyBy);
+      const refValue = ref?.[key] as Record<string, unknown> | undefined;
+      result[key] = multiplyArrayItems(value as Record<string, unknown>, refValue, multiplyBy);
     }
   });
 

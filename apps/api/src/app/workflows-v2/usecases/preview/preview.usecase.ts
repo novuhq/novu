@@ -109,7 +109,10 @@ export class PreviewUsecase {
         );
 
         previewTemplateData = {
-          payloadExample: _.merge(previewTemplateData.payloadExample, multiplyArrayItems(variablesObject, 3)),
+          payloadExample: _.merge(
+            previewTemplateData.payloadExample,
+            multiplyArrayItems(variablesObject, userPayloadExample as Record<string, unknown> | undefined, 3)
+          ),
           controlValues: {
             ...previewTemplateData.controlValues,
             [controlKey]: isObjectMailyJSONContent(processedControlValues)
