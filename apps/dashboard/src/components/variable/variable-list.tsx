@@ -161,7 +161,7 @@ const VariableListItem = ({
   const hasPreview = !!option.preview;
   return (
     <Tooltip open={hoveredOptionIndex === index && hasPreview} key={option.value}>
-      <TooltipTrigger>
+      <TooltipTrigger asChild>
         <li
           className={cn(
             'text-paragraph-xs font-code text-foreground-950 flex cursor-pointer items-center gap-1 rounded-sm p-1 hover:bg-neutral-100',

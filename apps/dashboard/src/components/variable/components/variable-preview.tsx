@@ -28,7 +28,7 @@ function Content({ children, className = '' }: VariablePreviewContentProps) {
 }
 
 function Description({ children, className = '' }: VariablePreviewContentProps) {
-  return <div className={cn(`p-0.5 pb-0`, className)}>{children}</div>;
+  return <div className={cn(`p-1 pb-0`, className)}>{children}</div>;
 }
 
 VariablePreview.Content = Content;
