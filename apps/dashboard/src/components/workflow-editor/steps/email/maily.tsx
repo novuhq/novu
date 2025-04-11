@@ -1,7 +1,7 @@
-import { Editor } from '@maily-to/core';
-
-import type { Editor as TiptapEditor } from '@tiptap/core';
 import { HTMLAttributes, useCallback, useMemo, useState } from 'react';
+import { Editor } from '@maily-to/core';
+import type { Editor as TiptapEditor } from '@tiptap/core';
+import { Editor as TiptapEditorReact } from '@tiptap/react';
 
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useParseVariables } from '@/hooks/use-parse-variables';
@@ -83,6 +83,27 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
     </style>
   );
 
+  const repeatMenuConfig = useMemo(() => {
+    return {
+      description: (editor: TiptapEditorReact) => <RepeatMenuDescription editor={editor} />,
+    };
+  }, []);
+
+  const onUpdate = useCallback(
+    (editor: TiptapEditorReact) => {
+      setEditor(editor);
+
+      if (onChange) {
+        onChange(JSON.stringify(editor.getJSON()));
+      }
+    },
+    [onChange]
+  );
+
+  const blocks = useMemo(() => {
+    return createEditorBlocks({ track });
+  }, [track]);
+
   return (
     <>
       {overrideTippyBoxStyles()}
@@ -96,20 +117,12 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
         <Editor
           key="repeat-block-enabled"
           config={DEFAULT_EDITOR_CONFIG}
-          blocks={createEditorBlocks({ track })}
+          blocks={blocks}
           extensions={extensions}
           contentJson={value ? JSON.parse(value) : undefined}
           onCreate={setEditor}
-          onUpdate={(editor) => {
-            setEditor(editor);
-
-            if (onChange) {
-              onChange(JSON.stringify(editor.getJSON()));
-            }
-          }}
-          repeatMenuConfig={{
-            description: (editor) => <RepeatMenuDescription editor={editor} />,
-          }}
+          onUpdate={onUpdate}
+          repeatMenuConfig={repeatMenuConfig}
         />
       </div>
     </>

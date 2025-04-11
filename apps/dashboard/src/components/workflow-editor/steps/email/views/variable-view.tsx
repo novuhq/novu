@@ -16,7 +16,7 @@ type InternalVariableViewProps = NodeViewProps & {
 };
 
 function InternalVariableView(props: InternalVariableViewProps) {
-  const { node, updateAttributes, editor, isAllowedVariable } = props;
+  const { node, updateAttributes, editor, isAllowedVariable, deleteNode } = props;
   const { id, aliasFor } = node.attrs;
   const [variableValue, setVariableValue] = useState(`{{${id}}}`);
   const [isOpen, setIsOpen] = useState(false);
@@ -38,18 +38,32 @@ function InternalVariableView(props: InternalVariableViewProps) {
     [variableValue, parseVariableCallback]
   );
 
-  const variable: LiquidVariable = useMemo(() => {
-    return {
-      name: fullLiquidExpression,
-      aliasFor,
-    };
-  }, [aliasFor, fullLiquidExpression]);
+  const variable: LiquidVariable = {
+    name: fullLiquidExpression,
+    aliasFor,
+  };
+
+  const handleOpenChange = (open: boolean, newValue: string) => {
+    if (!open) {
+      const { name } = parseVariableCallback(newValue);
+
+      if (!name) {
+        deleteNode();
+
+        setTimeout(() => {
+          editor.view.focus();
+        }, 0);
+      }
+    }
+
+    setIsOpen(open);
+  };
 
   return (
     <NodeViewWrapper className="react-component mly-inline-block mly-leading-none" draggable="false">
       <EditVariablePopover
         open={isOpen}
-        onOpenChange={setIsOpen}
+        onOpenChange={handleOpenChange}
         variable={variable}
         isAllowedVariable={isAllowedVariable}
         onUpdate={(newValue) => {

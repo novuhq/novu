@@ -115,12 +115,22 @@ type FormMessagePureProps = React.HTMLAttributes<HTMLParagraphElement> & { hasEr
 const FormMessagePure = React.forwardRef<HTMLParagraphElement, FormMessagePureProps>(
   ({ className, children, hasError = false, icon, ...props }, _ref) => {
     return (
-      children && (
-        <Hint hasError={hasError} {...props}>
-          {icon && <HintIcon as={icon} />}
-          {children}
-        </Hint>
-      )
+      <AnimatePresence mode="wait">
+        {children && (
+          <motion.div
+            key={hasError ? 'error' : 'empty'}
+            initial={{ opacity: 0, y: -5, height: 0 }}
+            animate={{ opacity: 1, y: 0, height: 'auto' }}
+            exit={{ opacity: 0, y: -5, height: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <Hint hasError={hasError} {...props}>
+              {icon && <HintIcon as={icon} />}
+              {children}
+            </Hint>
+          </motion.div>
+        )}
+      </AnimatePresence>
     );
   }
 );
@@ -134,33 +144,10 @@ const FormMessage = React.forwardRef<
   const content = !suppressError && error ? String(error.message) : children;
   const icon = error ? RiErrorWarningFill : RiInformationLine;
 
-  const isFirstMount = useRef(true);
-  const prevContent = useRef(content);
-
-  useEffect(() => {
-    if (content !== prevContent.current) {
-      isFirstMount.current = false;
-    }
-
-    prevContent.current = content;
-  }, [content]);
-
   return (
-    <AnimatePresence mode="wait">
-      {content && (
-        <motion.div
-          key={content ? String(content) : 'empty'}
-          initial={isFirstMount.current ? false : { opacity: 0, y: -5, height: 0 }}
-          animate={{ opacity: 1, y: 0, height: 'auto' }}
-          exit={{ opacity: 0, y: -5, height: 0 }}
-          transition={{ duration: 0.3 }}
-        >
-          <FormMessagePure ref={ref} id={formMessageId} hasError={!!error} icon={icon} {...rest}>
-            {content}
-          </FormMessagePure>
-        </motion.div>
-      )}
-    </AnimatePresence>
+    <FormMessagePure ref={ref} id={formMessageId} hasError={!!error} icon={icon} {...rest}>
+      {content}
+    </FormMessagePure>
   );
 });
 

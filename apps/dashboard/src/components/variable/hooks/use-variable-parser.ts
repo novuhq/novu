@@ -43,7 +43,7 @@ export function useVariableParser(variable: string): {
       console.error('Error parsing variable:', error);
       return { parsedName: '', parsedDefaultValue: '', parsedFilters: [], originalVariable: variable };
     }
-  }, [variable]);
+  }, [variable, isEnhancedDigestEnabled]);
 
   const parseRawInput = useCallback(
     (value: string) => parseRawLiquid(value, isEnhancedDigestEnabled),

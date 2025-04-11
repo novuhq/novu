@@ -2,6 +2,17 @@ import { useDataRef } from '@/hooks/use-data-ref';
 import { EditorView } from '@uiw/react-codemirror';
 import { useCallback, useRef, useState } from 'react';
 
+const stripBrackets = (value: string): string => {
+  return value.replace(/[{}]/g, '').trim();
+};
+
+// Function to normalize variable syntax by reducing multiple brackets to two
+const normalizeVariableSyntax = (value: string): string => {
+  const strippedValue = stripBrackets(value);
+
+  return `{{${strippedValue}}}`;
+};
+
 type SelectedVariable = {
   value: string;
   from: number;
@@ -35,15 +46,13 @@ export function useVariables(viewRef: React.RefObject<EditorView>, onChange: (va
         isUpdatingRef.current = true;
         const { from, to } = selectedVariable;
         const view = viewRef.current;
+        const strippedValue = stripBrackets(newValue);
+        let newVariableText = newValue.match(/^\{+.*\}+$/) ? normalizeVariableSyntax(newValue) : `{{${newValue}}}`;
 
-        // Function to normalize variable syntax by reducing multiple brackets to two
-        const normalizeVariableSyntax = (value: string): string => {
-          const strippedValue = value.replace(/[{}]/g, '').trim();
-
-          return `{{${strippedValue}}}`;
-        };
-
-        const newVariableText = newValue.match(/^\{+.*\}+$/) ? normalizeVariableSyntax(newValue) : `{{${newValue}}}`;
+        if (!strippedValue) {
+          // if the value is empty, remove the variable
+          newVariableText = '';
+        }
 
         // Calculate the actual end position including closing brackets
         const currentContent = view.state.doc.toString();
@@ -67,7 +76,7 @@ export function useVariables(viewRef: React.RefObject<EditorView>, onChange: (va
         onChangeRef.current(view.state.doc.toString());
 
         // Update the selected variable with new bounds
-        setSelectedVariable(null);
+        setSelectedVariable({ value: newValue, from, to: actualEnd });
       } finally {
         isUpdatingRef.current = false;
       }

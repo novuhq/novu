@@ -3,6 +3,7 @@ import { showToast } from '@/components/primitives/sonner-helpers';
 import { TooltipProvider } from '@/components/primitives/tooltip';
 import { AuthProvider } from '@/context/auth/auth-provider';
 import { ClerkProvider } from '@/context/clerk-provider';
+import { EscapeKeyManagerProvider } from '@/context/escape-key-manager/escape-key-manager';
 import { IdentityProvider } from '@/context/identity-provider';
 import { SegmentProvider } from '@/context/segment';
 import { ErrorBoundary, withProfiler } from '@sentry/react';
@@ -65,7 +66,9 @@ const RootRouteInternal = () => {
               <IdentityProvider>
                 <HelmetProvider>
                   <TooltipProvider delayDuration={100}>
-                    <Outlet />
+                    <EscapeKeyManagerProvider>
+                      <Outlet />
+                    </EscapeKeyManagerProvider>
                   </TooltipProvider>
                 </HelmetProvider>
               </IdentityProvider>
