@@ -2,6 +2,7 @@ import { createFooters } from '@/components/workflow-editor/steps/email/blocks/f
 import { createHeaders } from '@/components/workflow-editor/steps/email/blocks/headers';
 import { createHtmlCodeBlock } from '@/components/workflow-editor/steps/email/blocks/html';
 import { useTelemetry } from '@/hooks/use-telemetry';
+import { IsAllowedVariable } from '@/utils/parseStepVariables';
 import {
   BlockGroupItem,
   blockquote,
@@ -21,16 +22,19 @@ import {
   spacer,
   text,
 } from '@maily-to/core/blocks';
-import { HTMLCodeBlockExtension, Variables } from '@maily-to/core/extensions';
-import { getVariableSuggestions } from '@maily-to/core/extensions';
-import { RepeatExtension, VariableExtension } from '@maily-to/core/extensions';
+import {
+  getVariableSuggestions,
+  HTMLCodeBlockExtension,
+  RepeatExtension,
+  VariableExtension,
+  Variables,
+} from '@maily-to/core/extensions';
 import { ReactNodeViewRenderer } from '@tiptap/react';
+import { CalculateVariablesProps, insertVariableToEditor } from './variables/variables';
 import { ForView } from './views/for-view';
-import { createVariableView } from './views/variable-view';
-import { MailyVariablesListView } from './views/maily-variables-list-view';
 import { HTMLCodeBlockView } from './views/html-view';
-import { CalculateVariablesProps } from './variables/variables';
-import { IsAllowedVariable } from '@/utils/parseStepVariables';
+import { MailyVariablesListView } from './views/maily-variables-list-view';
+import { createVariableView } from './views/variable-view';
 
 export const VARIABLE_TRIGGER_CHARACTER = '{{';
 
@@ -105,7 +109,7 @@ export const createExtensions = (props: {
   parsedVariables: { isAllowedVariable: IsAllowedVariable };
   isEnhancedDigestEnabled: boolean;
 }) => {
-  const { calculateVariables, parsedVariables } = props;
+  const { calculateVariables, parsedVariables, isEnhancedDigestEnabled } = props;
 
   return [
     RepeatExtension.extend({
@@ -141,6 +145,17 @@ export const createExtensions = (props: {
     }).configure({
       suggestion: {
         ...getVariableSuggestions(VARIABLE_TRIGGER_CHARACTER),
+        command: ({ editor, range, props }) => {
+          const query = props.id + '}}';
+
+          insertVariableToEditor({
+            query,
+            editor,
+            range,
+            isAllowedVariable: parsedVariables.isAllowedVariable,
+            isEnhancedDigestEnabled,
+          });
+        },
       },
       variables: calculateVariables as Variables,
       variableSuggestionsPopover: MailyVariablesListView,
