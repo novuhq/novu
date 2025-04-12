@@ -3,6 +3,8 @@ import { Variable } from '@maily-to/core/extensions';
 
 import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
 import type { Editor, Range, Editor as TiptapEditor } from '@tiptap/core';
+import { VARIABLE_REGEX_STRING } from '@/components/primitives/control-input/variable-plugin';
+import { parseVariable } from '@/components/primitives/control-input/variable-plugin/utils';
 
 export const REPEAT_BLOCK_ITERABLE_ALIAS = 'current';
 
@@ -82,9 +84,13 @@ export const insertVariableToEditor = ({
   if (!isClosedVariable) return;
 
   const queryWithoutSuffix = query.replace(/}+$/, '');
+  const queryWithPrefixAndSuffix = '{{' + queryWithoutSuffix + '}}';
+  const regex = new RegExp(VARIABLE_REGEX_STRING, 'g');
+  const match = regex.exec(queryWithPrefixAndSuffix);
+  const { name } = parseVariable(match!);
 
   const aliasFor = resolveRepeatBlockAlias(queryWithoutSuffix, editor, isEnhancedDigestEnabled);
-  const variable: LiquidVariable = { name: queryWithoutSuffix, aliasFor };
+  const variable: LiquidVariable = { name: name, aliasFor };
 
   if (!isAllowedVariable(variable)) return;
 
