@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { CacheService } from '../cache.service';
-import { CachedResponse } from './cached-return.interceptor';
+import { CachedResponse } from './cached-response.decorator';
 
 // Mock class to demonstrate the decorator
 class TestClass {
