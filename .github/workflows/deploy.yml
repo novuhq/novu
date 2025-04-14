@@ -258,9 +258,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        env: ${{ fromJson(needs.prepare-matrix.outputs.env_matrix).environment[0] }}
+        env: ${{ fromJson(needs.prepare-matrix.outputs.env_matrix).environment }}
         service: ${{ fromJson(needs.prepare-matrix.outputs.service_matrix).service }}
-
     environment: ${{ matrix.env }}
     
     steps:  
