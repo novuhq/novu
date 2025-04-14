@@ -126,7 +126,8 @@ export const createExtensions = (props: {
     VariableExtension.extend({
       addNodeView() {
         return ReactNodeViewRenderer(createVariableView(parsedVariables.isAllowedVariable), {
-          className: 'relative inline-block text-xs h-5',
+          // the variable pill is 3px smaller than the default text size, but never smaller than 12px
+          className: 'relative inline-block text-[max(12px,calc(1em-3px))] h-5',
           as: 'div',
         });
       },

@@ -62,7 +62,7 @@ export class VariablePillWidget extends WidgetType {
       alignItems: 'center',
       height: '100%',
       lineHeight: 'inherit',
-      fontSize: 'inherit',
+      fontSize: 'max(12px, calc(1em - 3px))',
       cursor: 'pointer',
       position: 'relative',
       verticalAlign: 'middle',
