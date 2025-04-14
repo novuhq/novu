@@ -334,6 +334,9 @@
     --ring: var(--novu-500);
 
     --radius: 0.5rem;
+
+    --font-code: 'JetBrains Mono';
+    --font-code-fallback: monospace;
   }
 }
 
@@ -353,4 +356,14 @@
     height: 100%;
     scroll-behavior: smooth;
   }
+}
+
+/* Chrome, Safari and Opera */
+.nv-no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.nv-no-scrollbar {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
 }

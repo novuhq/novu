@@ -21,15 +21,20 @@ import {
   spacer,
   text,
 } from '@maily-to/core/blocks';
-import { HTMLCodeBlockExtension, Variables } from '@maily-to/core/extensions';
-import { getVariableSuggestions } from '@maily-to/core/extensions';
-import { RepeatExtension, VariableExtension } from '@maily-to/core/extensions';
+import {
+  getVariableSuggestions,
+  HTMLCodeBlockExtension,
+  RepeatExtension,
+  VariableExtension,
+  Variables,
+} from '@maily-to/core/extensions';
 import { ReactNodeViewRenderer } from '@tiptap/react';
 import { ForView } from './views/for-view';
 import { createVariableView } from './views/variable-view';
 import { MailyVariablesListView } from './views/maily-variables-list-view';
 import { HTMLCodeBlockView } from './views/html-view';
-import { CalculateVariablesProps, insertVariableToEditor } from './variables/variables';
+import { CalculateVariablesProps, insertVariableToEditor, VariableFrom } from './variables/variables';
+import { VariablePill } from '@/components/variable/variable-pill';
 import { IsAllowedVariable } from '@/utils/parseStepVariables';
 import { StepResponseDto } from '@novu/shared';
 import { createDigestBlock } from './blocks/digest';
@@ -137,7 +142,8 @@ export const createExtensions = (props: {
     VariableExtension.extend({
       addNodeView() {
         return ReactNodeViewRenderer(createVariableView(parsedVariables.isAllowedVariable), {
-          className: 'relative inline-block',
+          // the variable pill is 3px smaller than the default text size, but never smaller than 12px
+          className: 'relative inline-block text-[max(12px,calc(1em-3px))] h-5',
           as: 'div',
         });
       },
@@ -155,6 +161,7 @@ export const createExtensions = (props: {
         ...getVariableSuggestions(VARIABLE_TRIGGER_CHARACTER),
         command: ({ editor, range, props }) => {
           const query = props.id + '}}';
+
           insertVariableToEditor({
             query,
             editor,
@@ -163,6 +170,17 @@ export const createExtensions = (props: {
             isEnhancedDigestEnabled,
           });
         },
+      },
+      // variable pills in bubble menus (repeat, showIf...)
+      renderVariable: (opts) => {
+        return (
+          <VariablePill
+            variableName={opts.variable.name}
+            hasFilters={false}
+            className="h-5 text-xs"
+            from={opts.from as VariableFrom}
+          />
+        );
       },
       variables: calculateVariables as Variables,
       variableSuggestionsPopover: MailyVariablesListView,

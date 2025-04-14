@@ -15,6 +15,7 @@ export enum MailyAttrsEnum {
   ID = 'id',
   SHOW_IF_KEY = 'showIfKey',
   EACH_KEY = 'each',
+  ITERATIONS_KEY = 'iterations',
   FALLBACK = 'fallback',
   ALIAS_FOR = 'aliasFor',
   IS_SRC_VARIABLE = 'isSrcVariable',

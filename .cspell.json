@@ -731,7 +731,8 @@
     "novugo",
     "titleize",
     "oklch",
-    "Duplicable"
+    "Duplicable",
+    "Radek"
   ],
   "flagWords": [],
   "patterns": [
@@ -835,6 +836,7 @@
     "websockets",
     "apps/dashboard/src/hooks/use-plain-chat.ts",
     "apps/dashboard/src/components/variable/constants.ts",
-    "apps/dashboard/src/utils/locales.ts"
+    "apps/dashboard/src/utils/locales.ts",
+    "apps/dashboard/src/components/primitives/constants.ts"
   ]
 }
