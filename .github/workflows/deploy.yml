@@ -1,4 +1,6 @@
 name: Deploy to Novu Cloud
+run-name: Deploy to api ${{github.event.inputs.deploy_api}} worker ${{github.event.inputs.deploy_worker}} ws ${{github.event.inputs.deploy_ws}} webhook ${{github.event.inputs.deploy_webhook}} to ${{github.event.inputs.environment}}
+
 on:
   workflow_dispatch:
     inputs:
