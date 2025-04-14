@@ -6,7 +6,10 @@ import { VARIABLE_REGEX_STRING } from '@/components/primitives/control-input/var
 import { parseVariable } from '@/components/primitives/control-input/variable-plugin/utils';
 import { EditVariablePopover } from '@/components/variable/edit-variable-popover';
 import { VariablePill } from '@/components/variable/variable-pill';
-import { IsAllowedVariable } from '@/utils/parseStepVariables';
+import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
+import { resolveRepeatBlockAlias } from '../variables/variables';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 
 type InternalVariableViewProps = NodeViewProps & {
   isAllowedVariable: IsAllowedVariable;
@@ -14,9 +17,10 @@ type InternalVariableViewProps = NodeViewProps & {
 
 function InternalVariableView(props: InternalVariableViewProps) {
   const { node, updateAttributes, editor, isAllowedVariable } = props;
-  const { id } = node.attrs;
-  const [variable, setVariable] = useState(`{{${id}}}`);
+  const { id, aliasFor } = node.attrs;
+  const [variableValue, setVariableValue] = useState(`{{${id}}}`);
   const [isOpen, setIsOpen] = useState(false);
+  const isEnhancedDigestEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_ENHANCED_DIGEST_ENABLED);
 
   const parseVariableCallback = useCallback((variable: string) => {
     const regex = new RegExp(VARIABLE_REGEX_STRING, 'g');
@@ -29,7 +33,17 @@ function InternalVariableView(props: InternalVariableViewProps) {
     return parseVariable(match);
   }, []);
 
-  const { name, filters } = useMemo(() => parseVariableCallback(variable), [variable, parseVariableCallback]);
+  const { name, filters, fullLiquidExpression } = useMemo(
+    () => parseVariableCallback(variableValue),
+    [variableValue, parseVariableCallback]
+  );
+
+  const variable: LiquidVariable = useMemo(() => {
+    return {
+      name: fullLiquidExpression,
+      aliasFor,
+    };
+  }, [aliasFor, fullLiquidExpression]);
 
   return (
     <NodeViewWrapper className="react-component mly-inline-block mly-leading-none" draggable="false">
@@ -40,15 +54,18 @@ function InternalVariableView(props: InternalVariableViewProps) {
         isAllowedVariable={isAllowedVariable}
         onUpdate={(newValue) => {
           const { fullLiquidExpression } = parseVariableCallback(newValue);
-          updateAttributes({ id: fullLiquidExpression });
-          setVariable(newValue);
+          updateAttributes({
+            id: fullLiquidExpression,
+            aliasFor: resolveRepeatBlockAlias(fullLiquidExpression, editor, isEnhancedDigestEnabled),
+          });
+          setVariableValue(newValue);
           // Focus back to the editor after updating the variable
           editor.view.focus();
         }}
       >
         <VariablePill
-          variable={name}
-          hasFilters={filters?.length > 0}
+          variableName={name}
+          hasFilters={!!filters?.length}
           onClick={() => setIsOpen(true)}
           className="-mt-[2px]"
         />

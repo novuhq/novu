@@ -21,7 +21,7 @@ export const DigestKey = () => {
   const { step } = useWorkflow();
   const { variables } = useParseVariables(step?.variables);
   const payloadVariables = useMemo(
-    () => variables.filter((variable) => variable.label.startsWith('payload.')),
+    () => variables.filter((variable) => variable.name.startsWith('payload.')),
     [variables]
   );
   const form = useFormContext();
@@ -53,8 +53,8 @@ export const DigestKey = () => {
                   }
                 }}
                 options={payloadVariables.map((variable) => ({
-                  label: variable.label,
-                  value: variable.label,
+                  label: variable.name,
+                  value: variable.name,
                 }))}
                 value={parseLiquidVariables(field.value)}
                 placeholder="payload."

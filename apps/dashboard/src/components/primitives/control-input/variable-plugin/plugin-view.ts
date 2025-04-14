@@ -55,7 +55,7 @@ export class VariablePluginView {
         continue;
       }
 
-      if (!this.isAllowedVariable(name)) {
+      if (!this.isAllowedVariable({ name })) {
         continue;
       }
 

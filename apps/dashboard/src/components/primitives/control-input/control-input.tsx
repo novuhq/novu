@@ -67,6 +67,12 @@ export function ControlInput({
     onChange
   );
 
+  const variable: LiquidVariable | undefined = selectedVariable
+    ? {
+        name: selectedVariable.value,
+      }
+    : undefined;
+
   const completionSource = useMemo(
     () => createAutocompleteSource(variables, isEnhancedDigestEnabled),
     [variables, isEnhancedDigestEnabled]
@@ -91,7 +97,7 @@ export function ControlInput({
         onSelect: handleVariableSelect,
         isAllowedVariable,
       }),
-    [handleVariableSelect]
+    [handleVariableSelect, isAllowedVariable]
   );
 
   const extensions = useMemo(() => {
@@ -126,7 +132,7 @@ export function ControlInput({
       <EditVariablePopover
         open={!!selectedVariable}
         onOpenChange={handleOpenChange}
-        variable={selectedVariable?.value}
+        variable={variable}
         isAllowedVariable={isAllowedVariable}
         onUpdate={(newValue) => {
           handleVariableUpdate(newValue);

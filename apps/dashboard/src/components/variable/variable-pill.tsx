@@ -4,12 +4,12 @@ import React from 'react';
 export const VariablePill = React.forwardRef<
   HTMLSpanElement,
   {
-    variable: string;
+    variableName: string;
     hasFilters: boolean;
     className?: string;
     onClick?: () => void;
   }
->(({ variable, hasFilters, className, onClick }, ref) => {
+>(({ variableName, hasFilters, className, onClick }, ref) => {
   return (
     <span
       ref={ref}
@@ -22,7 +22,7 @@ export const VariablePill = React.forwardRef<
       <span
         className={`bg-url-code bg-repeat-no-repeat h-[calc(1em-2px)] w-[calc(1em-2px)] min-w-[calc(1em-2px)] bg-[url("/images/code.svg")] bg-contain bg-center`}
       ></span>
-      <span className="leading-[1.2]">{variable}</span>
+      <span className="leading-[1.2]">{variableName}</span>
       {hasFilters && <span className="bg-feature-base h-[0.275em] w-[0.275em] rounded-full" />}
     </span>
   );
