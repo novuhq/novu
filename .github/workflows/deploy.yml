@@ -286,6 +286,7 @@ jobs:
 
   new_relic_release:
     needs: [deploy, prepare-matrix]
+    if: ${{ fromJson(needs.prepare-matrix.outputs.nr_matrix) != '[]' }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
