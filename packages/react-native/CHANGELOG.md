@@ -1,3 +1,13 @@
+## v3.1.0 (2025-04-11)
+
+### 🧱 Updated Dependencies
+
+- Updated @novu/react to 3.1.0
+
+### ❤️ Thank You
+
+- Sokratis Vidros @SokratisVidros
+
 ## v3.0.3 (2025-03-31)
 
 ### 🚀 Features

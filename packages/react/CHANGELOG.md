@@ -1,3 +1,18 @@
+## v3.1.0 (2025-04-11)
+
+### 🩹 Fixes
+
+- **react:** apiUrl prop passing to novu/js ([#8104](https://github.com/novuhq/novu/pull/8104))
+
+### 🧱 Updated Dependencies
+
+- Updated @novu/js to 3.1.0
+
+### ❤️ Thank You
+
+- Dima Grossman @scopsy
+- Sokratis Vidros @SokratisVidros
+
 ## v3.0.3 (2025-03-31)
 
 ### 🚀 Features
@@ -53,7 +68,6 @@
 - Pawan Jain
 - Paweł Tymczuk @LetItRock
 - Sokratis Vidros @SokratisVidros
-
 
 # 3.0.0 (2025-03-17)
 

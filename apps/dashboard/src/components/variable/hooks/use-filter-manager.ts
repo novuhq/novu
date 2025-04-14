@@ -1,4 +1,4 @@
-import { useCallback, useState, useMemo } from 'react';
+import { useCallback, useState, useMemo, useEffect } from 'react';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
@@ -14,6 +14,10 @@ export function useFilterManager({ initialFilters, onUpdate }: UseFilterManagerP
   const isEnhancedDigestEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_ENHANCED_DIGEST_ENABLED);
   const liquidFilters = useMemo(() => getFilters(isEnhancedDigestEnabled), [isEnhancedDigestEnabled]);
   const [filters, setFilters] = useState<FilterWithParam[]>(initialFilters.filter((t) => t.value !== 'default'));
+
+  useEffect(() => {
+    setFilters(initialFilters.filter((t) => t.value !== 'default'));
+  }, [initialFilters]);
 
   const handleReorder = useCallback(
     (newFilters: FilterWithParam[]) => {

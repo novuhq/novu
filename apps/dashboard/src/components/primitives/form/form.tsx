@@ -124,7 +124,7 @@ const FormMessagePure = React.forwardRef<HTMLParagraphElement, FormMessagePurePr
             exit={{ opacity: 0, y: -5, height: 0 }}
             transition={{ duration: 0.3 }}
           >
-            <Hint hasError={hasError} {...props}>
+            <Hint hasError={hasError} className={className} {...props}>
               {icon && <HintIcon as={icon} />}
               {children}
             </Hint>

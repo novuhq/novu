@@ -34,7 +34,7 @@ export const EmailSubject = () => {
                 onChange={(val) => field.onChange(val)}
               />
             </FormControl>
-            <FormMessage>
+            <FormMessage className="mb-2">
               {containsHTMLEntities(field.value) &&
                 !getValues('disableOutputSanitization') &&
                 'HTML entities detected. Consider disabling content sanitization for proper rendering'}

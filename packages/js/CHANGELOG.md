@@ -1,16 +1,24 @@
+## v3.1.0 (2025-04-11)
+
+### 🚀 Features
+
+- **js:** Include CSS in bundle ([#8105](https://github.com/novuhq/novu/pull/8105))
+
+### 🩹 Fixes
+
+- **js,react,nextjs:** Named type exports ([#8084](https://github.com/novuhq/novu/pull/8084))
+- **js:** Fix event triggering ([#8102](https://github.com/novuhq/novu/pull/8102))
+- **js:** inbox align dropdown icons and labels ([4ceed203f3](https://github.com/novuhq/novu/commit/4ceed203f3))
+- **headless:** update Preferences.tsx ([#7928](https://github.com/novuhq/novu/pull/7928))
+
+### ❤️ Thank You
+
+- George Desipris @desiprisg
+
 ## v3.0.3 (2025-03-31)
 
 ### 🚀 Features
 
-- **js:** Typed notification data object ([#8020](https://github.com/novuhq/novu/pull/8020))
-- **js:** add workflowIdentifier and workflowId to InboxNotification ([#7985](https://github.com/novuhq/novu/pull/7985))
-- **js:** create channel per env subscriber ([#7939](https://github.com/novuhq/novu/pull/7939))
-- **js,api-service:** inbox dev mode footer ([#7937](https://github.com/novuhq/novu/pull/7937))
-- **js,react:** inbox subject, body render props ([#7886](https://github.com/novuhq/novu/pull/7886))
-- **js:** better control over socket connection ([#7865](https://github.com/novuhq/novu/pull/7865))
-- **js:** Inbox retheme improvements ([#7867](https://github.com/novuhq/novu/pull/7867))
-- **js:** Inbox retheme ([#7759](https://github.com/novuhq/novu/pull/7759))
-- **api-service:** system limits & update pricing pages ([#7718](https://github.com/novuhq/novu/pull/7718))
 - **root:** add no only github action ([#7692](https://github.com/novuhq/novu/pull/7692))
 
 ### 🩹 Fixes
@@ -74,7 +82,6 @@
 - Paweł
 - Paweł Tymczuk @LetItRock
 - Sokratis Vidros @SokratisVidros
-
 
 # 3.0.0 (2025-03-17)
 
