@@ -59,6 +59,16 @@ jobs:
       deploy_matrix: ${{ steps.set-matrix.outputs.deploy_matrix }}
       nr_matrix: ${{ steps.set-matrix.outputs.nr_matrix }}
     steps:
+      - name: Validate Selected Services
+        run: |
+          if [ "${{ github.event.inputs.deploy_api }}" != "true" ] && \
+             [ "${{ github.event.inputs.deploy_worker }}" != "true" ] && \
+             [ "${{ github.event.inputs.deploy_ws }}" != "true" ] && \
+             [ "${{ github.event.inputs.deploy_webhook }}" != "true" ]; then
+            echo "Error: At least one service must be selected for deployment."
+            exit 1
+          fi
+    
       - name: Generate Environment, Service, and Deploy Matrices
         id: set-matrix
         env:
@@ -67,6 +77,7 @@ jobs:
           envs=()
           services=()
           deploy_matrix=()
+          nr=()
 
           # Collect selected environments
           if [ "${{ github.event.inputs.environment }}" == "staging" ]; then
@@ -147,12 +158,6 @@ jobs:
           nr_matrix="[$(
             IFS=','; echo "${nr[*]}"
           )]"
-
-          if service_matrix == "{\"service\": []}"; then
-            echo "No services selected. Exiting."
-            exit 1
-          fi
-
           echo "env_matrix=$env_matrix" >> $GITHUB_OUTPUT
           echo "service_matrix=$service_matrix" >> $GITHUB_OUTPUT
           echo "deploy_matrix=$deploy_matrix" >> $GITHUB_OUTPUT
