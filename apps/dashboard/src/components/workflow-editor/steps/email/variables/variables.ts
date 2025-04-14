@@ -198,7 +198,8 @@ export const calculateVariables = ({
 };
 
 export function isAllowedAlias(variableName: string): boolean {
-  const nameRoot = variableName.split('.')[0];
+  const [variablePart] = variableName.split('|');
+  const nameRoot = variablePart.split('.')[0];
 
   return ALLOWED_ALIASES.includes(nameRoot);
 }
@@ -210,10 +211,19 @@ export const resolveRepeatBlockAlias = (
 ): string | null => {
   if (!isEnhancedDigestEnabled) return null;
 
-  const variableRoot = variable.split('.')[0];
+  // Split variable into parts (name and filters)
+  const [variablePart, ...filterParts] = variable.split('|');
+  const filters = filterParts.length > 0 ? `|${filterParts.join('|')}` : '';
+
+  // Extract the root of the variable name (before any dots)
+  const variableRoot = variablePart.trim().split('.')[0];
 
   if (isAllowedAlias(variableRoot) && isInsideRepeatBlock(editor)) {
-    return variable.replace(variableRoot, editor.getAttributes('repeat')?.each);
+    // Replace only the variable name part, keeping the filters separate
+    const replacedVariable = variablePart.replace(variableRoot, editor.getAttributes('repeat')?.each);
+
+    // Return the replaced variable with filters appended
+    return replacedVariable + filters;
   }
 
   return null;

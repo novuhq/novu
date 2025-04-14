@@ -101,11 +101,11 @@ export const createEditorBlocks = (props: { track: ReturnType<typeof useTelemetr
 };
 
 export const createExtensions = (props: {
-  calculateVariables: (props: CalculateVariablesProps) => Variables | undefined;
+  handleCalculateVariables: (props: CalculateVariablesProps) => Variables | undefined;
   parsedVariables: { isAllowedVariable: IsAllowedVariable };
   isEnhancedDigestEnabled: boolean;
 }) => {
-  const { calculateVariables, parsedVariables, isEnhancedDigestEnabled } = props;
+  const { handleCalculateVariables, parsedVariables, isEnhancedDigestEnabled } = props;
 
   return [
     RepeatExtension.extend({
@@ -152,7 +152,7 @@ export const createExtensions = (props: {
           });
         },
       },
-      variables: calculateVariables as Variables,
+      variables: handleCalculateVariables as Variables,
       variableSuggestionsPopover: MailyVariablesListView,
     }),
     HTMLCodeBlockExtension.extend({

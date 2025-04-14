@@ -23,11 +23,11 @@ export function parseVariable(match: RegExpExecArray): VariableMatch {
   const end = start + match[0].length;
   const fullLiquidExpression = match[1].trim();
   const parts = fullLiquidExpression.split('|').map((part) => part.trim());
-  const name = parts[0];
+  const name = parts[0].trim();
   const hasFilters = parts.length > 1;
 
   return {
-    fullLiquidExpression,
+    fullLiquidExpression: name ? fullLiquidExpression : '',
     name,
     start,
     end,

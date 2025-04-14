@@ -55,7 +55,7 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
   );
 
   const extensions = useMemo(
-    () => createExtensions({ calculateVariables: handleCalculateVariables, parsedVariables, isEnhancedDigestEnabled }),
+    () => createExtensions({ handleCalculateVariables, parsedVariables, isEnhancedDigestEnabled }),
     [handleCalculateVariables, parsedVariables, isEnhancedDigestEnabled]
   );
 

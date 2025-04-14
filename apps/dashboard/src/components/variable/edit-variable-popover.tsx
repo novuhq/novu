@@ -32,6 +32,19 @@ import { useDebounce } from '@/hooks/use-debounce';
 import { EscapeKeyManagerPriority } from '@/context/escape-key-manager/priority';
 import { useEscapeKeyManager } from '@/context/escape-key-manager/hooks';
 
+const calculateAliasFor = (name: string, parsedAliasRoot: string): string => {
+  const variableRest = name.split('.').slice(1).join('.');
+  const normalizedVariableRest = variableRest.startsWith('.') ? variableRest.substring(1) : variableRest;
+  let aliasFor =
+    parsedAliasRoot && normalizedVariableRest ? `${parsedAliasRoot}.${normalizedVariableRest}` : parsedAliasRoot;
+
+  if (name.trim() === '') {
+    aliasFor = '';
+  }
+
+  return aliasFor;
+};
+
 type EditVariablePopoverProps = {
   children: ReactNode;
   open: boolean;
@@ -50,9 +63,8 @@ export const EditVariablePopover = ({
   isAllowedVariable,
 }: EditVariablePopoverProps) => {
   const isEnhancedDigestEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_ENHANCED_DIGEST_ENABLED);
-  const { parsedName, parsedDefaultValue, parsedFilters, originalVariable, parseRawInput } = useVariableParser(
-    variable?.name || ''
-  );
+  const { parsedName, parsedAliasForRoot, parsedDefaultValue, parsedFilters, originalVariable, parseRawInput } =
+    useVariableParser(variable?.name || '', variable?.aliasFor || '');
   const id = useId();
   const nameInputRef = useRef<HTMLInputElement>(null);
   const [name, setName] = useState(parsedName);
@@ -79,8 +91,8 @@ export const EditVariablePopover = ({
   }, [parsedName, parsedDefaultValue, parsedFilters]);
 
   const validateVariable = useCallback(
-    (name: string) => {
-      if (!variable || !isAllowedVariable({ ...variable, name })) {
+    (variable: LiquidVariable) => {
+      if (!variable || !isAllowedVariable({ ...variable })) {
         setVariableError('Not a valid variable');
         nameInputRef.current?.focus();
         return false;
@@ -89,7 +101,7 @@ export const EditVariablePopover = ({
       setVariableError('');
       return true;
     },
-    [variable, isAllowedVariable]
+    [isAllowedVariable]
   );
 
   const validateVariableDebounced = useDebounce(validateVariable, 2000);
@@ -114,10 +126,12 @@ export const EditVariablePopover = ({
 
   const handleNameChange = useCallback(
     (newName: string) => {
+      const aliasFor = calculateAliasFor(newName, parsedAliasForRoot);
+
       setName(newName);
-      validateVariableDebounced(newName);
+      validateVariableDebounced({ name: newName, aliasFor });
     },
-    [setName, validateVariableDebounced]
+    [setName, validateVariableDebounced, parsedAliasForRoot]
   );
 
   const handleDefaultValueChange = useCallback(
@@ -151,7 +165,9 @@ export const EditVariablePopover = ({
 
   const handleOpenChange = useCallback(
     (open: boolean) => {
-      if (!open && !validateVariable(name)) {
+      const aliasFor = calculateAliasFor(name, parsedAliasForRoot);
+
+      if (!open && !validateVariable({ name, aliasFor })) {
         return;
       }
 
@@ -170,7 +186,17 @@ export const EditVariablePopover = ({
 
       onOpenChange(open, newValue);
     },
-    [validateVariable, onOpenChange, name, defaultVal, filters, track, onUpdate, isEnhancedDigestEnabled]
+    [
+      validateVariable,
+      onOpenChange,
+      name,
+      defaultVal,
+      filters,
+      track,
+      onUpdate,
+      isEnhancedDigestEnabled,
+      parsedAliasForRoot,
+    ]
   );
 
   const handleClosePopover = useCallback(() => {

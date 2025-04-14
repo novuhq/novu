@@ -46,7 +46,8 @@ export function useVariables(viewRef: React.RefObject<EditorView>, onChange: (va
         isUpdatingRef.current = true;
         const { from, to } = selectedVariable;
         const view = viewRef.current;
-        const strippedValue = stripBrackets(newValue);
+        const [valueWithoutFilters] = newValue.split('|');
+        const strippedValue = stripBrackets(valueWithoutFilters);
         let newVariableText = newValue.match(/^\{+.*\}+$/) ? normalizeVariableSyntax(newValue) : `{{${newValue}}}`;
 
         if (!strippedValue) {
