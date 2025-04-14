@@ -104,6 +104,14 @@ export const texts = {
       fontWeight: '500',
     },
   ],
+  'label-2xs': [
+    '.625rem',
+    {
+      lineHeight: '0.875rem',
+      letterSpacing: '0em',
+      fontWeight: '500',
+    },
+  ],
   'paragraph-xl': [
     '1.5rem',
     {
