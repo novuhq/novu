@@ -10,6 +10,7 @@ import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
 import { resolveRepeatBlockAlias } from '../variables/variables';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { getFilters } from '@/components/variable/constants';
 
 type InternalVariableViewProps = NodeViewProps & {
   isAllowedVariable: IsAllowedVariable;
@@ -22,20 +23,69 @@ function InternalVariableView(props: InternalVariableViewProps) {
   const [isOpen, setIsOpen] = useState(false);
   const isEnhancedDigestEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_ENHANCED_DIGEST_ENABLED);
 
-  const parseVariableCallback = useCallback((variable: string) => {
+  const parseVariableCallback = useCallback((variable: string, isEnhancedDigestEnabled: boolean) => {
     const regex = new RegExp(VARIABLE_REGEX_STRING, 'g');
     const match = regex.exec(variable);
 
     if (!match) {
-      return { name: '', fullLiquidExpression: '', start: 0, end: 0, filters: [] };
+      return {
+        name: '',
+        fullLiquidExpression: '',
+        start: 0,
+        end: 0,
+        filters: [],
+        issues: [],
+      };
     }
 
-    return parseVariable(match);
+    const parsedVariable = parseVariable(match);
+
+    const allFilters = getFilters(isEnhancedDigestEnabled);
+
+    const filtersWithIssues = parsedVariable.filters
+      .map((filterStr) => {
+        if (!filterStr) return null;
+
+        const [filterNameRaw, filterParamsRaw = ''] = filterStr.split(':');
+        const filterName = filterNameRaw?.trim();
+        const filterParams = filterParamsRaw?.split(',').map((p) => (p ?? '').trim());
+
+        if (!filterName) return null;
+
+        const filterDefinition = allFilters.find((f) => f.value === filterName);
+        if (!filterDefinition || !Array.isArray(filterDefinition.params)) return null;
+
+        const issues = filterDefinition.params
+          .map((paramDef, index) => {
+            const isRequired = paramDef.required;
+            const paramValue = filterParams[index];
+
+            const isMissing = isRequired && Boolean(!paramValue || paramValue.trim() === '');
+
+            if (isMissing) {
+              return {
+                param: paramDef.placeholder,
+                issue: 'Missing or empty value',
+              };
+            }
+
+            return null;
+          })
+          .filter((issue) => issue !== null);
+
+        return issues.length > 0 ? { filterName, issues } : null;
+      })
+      .filter((f): f is { filterName: string; issues: { param: string; issue: string }[] } => f !== null);
+
+    return {
+      ...parsedVariable,
+      issues: filtersWithIssues,
+    };
   }, []);
 
-  const { name, filters, fullLiquidExpression } = useMemo(
-    () => parseVariableCallback(variableValue),
-    [variableValue, parseVariableCallback]
+  const { name, filters, fullLiquidExpression, issues } = useMemo(
+    () => parseVariableCallback(variableValue, isEnhancedDigestEnabled),
+    [variableValue, parseVariableCallback, isEnhancedDigestEnabled]
   );
 
   const variable: LiquidVariable = useMemo(() => {
@@ -45,6 +95,8 @@ function InternalVariableView(props: InternalVariableViewProps) {
     };
   }, [aliasFor, fullLiquidExpression]);
 
+  console.log({ fff: filters });
+
   return (
     <NodeViewWrapper className="react-component mly-inline-block mly-leading-none" draggable="false">
       <EditVariablePopover
@@ -53,7 +105,7 @@ function InternalVariableView(props: InternalVariableViewProps) {
         variable={variable}
         isAllowedVariable={isAllowedVariable}
         onUpdate={(newValue) => {
-          const { fullLiquidExpression } = parseVariableCallback(newValue);
+          const { fullLiquidExpression } = parseVariableCallback(newValue, isEnhancedDigestEnabled);
           updateAttributes({
             id: fullLiquidExpression,
             aliasFor: resolveRepeatBlockAlias(fullLiquidExpression, editor, isEnhancedDigestEnabled),
@@ -64,8 +116,9 @@ function InternalVariableView(props: InternalVariableViewProps) {
         }}
       >
         <VariablePill
+          issues={issues}
           variableName={name}
-          hasFilters={!!filters?.length}
+          filters={filters}
           onClick={() => setIsOpen(true)}
           className="-mt-[2px]"
         />
