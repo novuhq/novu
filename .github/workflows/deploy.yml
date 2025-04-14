@@ -8,7 +8,7 @@ run-name: >
   }}${{
     github.event.inputs.deploy_ws == 'true' && 'ws, ' || ''
   }}${{
-    github.event.inputs.deploy_webhook == 'true' && 'webhook, ' || ''
+    github.event.inputs.deploy_webhook == 'true' && 'webhook ' || ''
   }}on ${{ github.event.inputs.environment }}
 description: |
   This workflow deploys the Novu Cloud application to different environments and services based on the selected options.

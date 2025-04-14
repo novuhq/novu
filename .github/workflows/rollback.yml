@@ -8,14 +8,17 @@ run-name: >
   }}${{
     github.event.inputs.rollback_ws == 'true' && 'ws, ' || ''
   }}${{
-    github.event.inputs.rollback_webhook == 'true' && 'webhook, ' || ''
+    github.event.inputs.rollback_webhook == 'true' && 'webhook ' || ''
   }}on ${{ github.event.inputs.environment }}
+description: Rollback deployment to the previous task definition for selected services in the specified environment.
+concurrency:
+  group: "rollback-${{ github.event.inputs.environment }}"
 
 on:
   workflow_dispatch:
     inputs:
       environment:
-        description: 'Environment to rollback'
+        description: 'Environment to rollback. This will not rollback any environment variable changes. Only the task definition will be rolled back.'
         required: true
         type: choice
         default: staging
