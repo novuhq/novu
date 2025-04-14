@@ -1,4 +1,5 @@
 import { Editor } from '@maily-to/core';
+import { Editor as EditorDigest } from '@maily-to/core-digest';
 
 import type { Editor as TiptapEditor } from '@tiptap/core';
 import { HTMLAttributes, useCallback, useMemo, useState } from 'react';
@@ -83,6 +84,8 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
     </style>
   );
 
+  const _Editor = isEnhancedDigestEnabled ? EditorDigest : Editor;
+
   return (
     <>
       {overrideTippyBoxStyles()}
@@ -93,7 +96,7 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
         )}
         {...rest}
       >
-        <Editor
+        <_Editor
           key="repeat-block-enabled"
           config={DEFAULT_EDITOR_CONFIG}
           blocks={createEditorBlocks({ track })}
