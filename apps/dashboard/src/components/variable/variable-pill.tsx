@@ -3,7 +3,6 @@ import React, { useMemo } from 'react';
 import { VariableFrom } from '../workflow-editor/steps/email/variables/variables';
 import { VariableIcon } from './components/variable-icon';
 
-
 export const VariablePill = React.forwardRef<
   HTMLSpanElement,
   {
@@ -16,11 +15,11 @@ export const VariablePill = React.forwardRef<
   }
 >(({ variableName, filters, issues, className, onClick }, ref) => {
   const displayVariableName = useMemo(() => {
+    if (!variableName) return '';
     const variableParts = variableName.split('.');
 
     return variableParts.length >= 3 ? '..' + variableParts.slice(-2).join('.') : variableName;
   }, [variableName]);
-
 
   return (
     <span
@@ -31,13 +30,9 @@ export const VariablePill = React.forwardRef<
         className
       )}
     >
-      <span
-        className={`bg-url-code bg-repeat-no-repeat h-[calc(1em-2px)] w-[calc(1em-2px)] min-w-[calc(1em-2px)] bg-[url("/images/code.svg")] bg-contain bg-center`}
-      ></span>
-        <VariableIcon variableName={variableName} />
+      <VariableIcon variableName={variableName} />
       <span className="leading-[1.2]">{displayVariableName}</span>
       <FiltersSection filters={filters} issues={issues} />
-
     </span>
   );
 });
