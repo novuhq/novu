@@ -37,7 +37,7 @@
     "@aws-sdk/client-secrets-manager": "^3.716.0",
     "@godaddy/terminus": "^4.12.1",
     "@google-cloud/storage": "^6.2.3",
-    "@maily-to/render": "github:novuhq/maily.to#release/v0.1.3-novu.2-render&path:/packages/render",
+    "@maily-to/render": "github:novuhq/maily.to#release/v0.1.3-novu.3-render&path:/packages/render",
     "@nestjs/axios": "3.0.3",
     "@nestjs/common": "10.4.1",
     "@nestjs/core": "10.4.1",

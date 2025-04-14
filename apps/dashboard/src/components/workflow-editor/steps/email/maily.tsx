@@ -23,7 +23,7 @@ type MailyProps = HTMLAttributes<HTMLDivElement> & {
 export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
   const { step, digestStepBeforeCurrent } = useWorkflow();
   const isEnhancedDigestEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_ENHANCED_DIGEST_ENABLED);
-  const parsedVariables = useParseVariables(step?.variables, digestStepBeforeCurrent?.digestStepId);
+  const parsedVariables = useParseVariables(step?.variables, digestStepBeforeCurrent?.stepId);
   const primitives = useMemo(
     () => parsedVariables.primitives.map((v) => ({ name: v.name, required: false })),
     [parsedVariables.primitives]
@@ -50,7 +50,7 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
         namespaces,
         isAllowedVariable: parsedVariables.isAllowedVariable,
         isEnhancedDigestEnabled,
-        addDigestVariables: !!digestStepBeforeCurrent?.digestStepId,
+        addDigestVariables: !!digestStepBeforeCurrent?.stepId,
       });
     },
     [
@@ -59,7 +59,7 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
       namespaces,
       parsedVariables.isAllowedVariable,
       isEnhancedDigestEnabled,
-      digestStepBeforeCurrent?.digestStepId,
+      digestStepBeforeCurrent?.stepId,
     ]
   );
 
@@ -107,7 +107,7 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
         <_Editor
           key="repeat-block-enabled"
           config={DEFAULT_EDITOR_CONFIG}
-          blocks={createEditorBlocks({ track })}
+          blocks={createEditorBlocks({ track, digestStepBeforeCurrent, isEnhancedDigestEnabled })}
           extensions={extensions}
           contentJson={value ? JSON.parse(value) : undefined}
           onCreate={setEditor}

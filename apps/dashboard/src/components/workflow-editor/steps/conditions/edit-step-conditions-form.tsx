@@ -91,7 +91,7 @@ export const EditStepConditionsForm = () => {
     [hasConditions, step]
   );
 
-  const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.digestStepId);
+  const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.stepId);
 
   const fields = variables.map((variable) => ({
     name: variable.name,

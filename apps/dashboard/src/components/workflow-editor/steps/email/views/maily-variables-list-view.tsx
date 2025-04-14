@@ -31,7 +31,7 @@ export const MailyVariablesListView = React.forwardRef(
           if (isDigestVariable) {
             const { label } = getDynamicDigestVariable({
               type: item.name as DIGEST_VARIABLES_ENUM,
-              digestStepName: digestStepBeforeCurrent?.digestStepId,
+              digestStepName: digestStepBeforeCurrent?.stepId,
             });
             return {
               label,
@@ -48,7 +48,7 @@ export const MailyVariablesListView = React.forwardRef(
             value: item.name,
           };
         }),
-      [digestStepBeforeCurrent?.digestStepId, items]
+      [digestStepBeforeCurrent?.stepId, items]
     );
     const variablesListRef = useRef<VariableListRef>(null);
 
@@ -68,7 +68,7 @@ export const MailyVariablesListView = React.forwardRef(
       if (selectedItem.name in DIGEST_VARIABLES_FILTER_MAP) {
         const { value } = getDynamicDigestVariable({
           type: item.name as DIGEST_VARIABLES_ENUM,
-          digestStepName: digestStepBeforeCurrent?.digestStepId,
+          digestStepName: digestStepBeforeCurrent?.stepId,
         });
         selectedItem = { ...selectedItem, name: value };
       }

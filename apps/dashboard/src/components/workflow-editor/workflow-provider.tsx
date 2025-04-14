@@ -36,8 +36,7 @@ export type WorkflowContextType = {
   step?: StepResponseDto;
   update: UpdateWorkflowFn;
   patch: (data: PatchWorkflowDto) => void;
-
-  digestStepBeforeCurrent?: { digestStep?: StepResponseDto; digestStepId?: string };
+  digestStepBeforeCurrent?: StepResponseDto;
 };
 
 export const WorkflowContext = createContext<WorkflowContextType>({} as WorkflowContextType);
@@ -94,10 +93,7 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
 
     const digestStep = stepsBeforeCurrent.reverse().find((step) => step.type === 'digest');
 
-    return {
-      digestStep,
-      digestStepId: digestStep?.stepId,
-    };
+    return digestStep;
   }, [workflow, isStepAfterDigest, stepSlug]);
 
   const { enqueue, hasPendingItems } = useInvocationQueue();

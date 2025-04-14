@@ -38,7 +38,7 @@ type AvatarPickerProps = {
 
 export const AvatarPicker = forwardRef<HTMLInputElement, AvatarPickerProps>(({ name, value, onChange, onPick }) => {
   const { step, digestStepBeforeCurrent } = useWorkflow();
-  const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.digestStepId);
+  const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.stepId);
   const [isOpen, setIsOpen] = useState(false);
   const { error } = useFormField();
 

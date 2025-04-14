@@ -24,7 +24,7 @@ const InnerDataObject = ({ field }: { field: FieldValues }) => {
   const { step, digestStepBeforeCurrent } = useWorkflow();
   const track = useTelemetry();
 
-  const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.digestStepId);
+  const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.stepId);
 
   const [currentPairs, setCurrentPairs] = useState(() => {
     const obj = field.value ?? {};
