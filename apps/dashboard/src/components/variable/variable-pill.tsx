@@ -1,5 +1,8 @@
 import { cn } from '@/utils/ui';
 import React, { useMemo } from 'react';
+import { VariableFrom } from '../workflow-editor/steps/email/variables/variables';
+import { VariableIcon } from './components/variable-icon';
+
 
 export const VariablePill = React.forwardRef<
   HTMLSpanElement,
@@ -9,6 +12,7 @@ export const VariablePill = React.forwardRef<
     issues?: { filterName: string; issues: { param: string; issue: string }[] }[];
     className?: string;
     onClick?: () => void;
+    from?: VariableFrom;
   }
 >(({ variableName, filters, issues, className, onClick }, ref) => {
   const displayVariableName = useMemo(() => {
@@ -17,20 +21,23 @@ export const VariablePill = React.forwardRef<
     return variableParts.length >= 3 ? '..' + variableParts.slice(-2).join('.') : variableName;
   }, [variableName]);
 
+
   return (
     <span
       ref={ref}
       onClick={onClick}
       className={cn(
-        'bg-bg-weak text-text-sub border-stroke-soft relative m-0 box-border inline-flex h-full cursor-pointer items-center gap-[0.25em] rounded-lg border px-1.5 py-0.5 align-middle font-[inherit] font-medium leading-[inherit] text-inherit',
+        'bg-bg-white border-stroke-soft font-code relative m-0 box-border inline-flex h-full cursor-pointer items-center gap-[0.25em] rounded-lg border px-1.5 py-0.5 align-middle font-medium leading-[inherit] text-inherit',
         className
       )}
     >
       <span
         className={`bg-url-code bg-repeat-no-repeat h-[calc(1em-2px)] w-[calc(1em-2px)] min-w-[calc(1em-2px)] bg-[url("/images/code.svg")] bg-contain bg-center`}
       ></span>
+        <VariableIcon variableName={variableName} />
       <span className="leading-[1.2]">{displayVariableName}</span>
       <FiltersSection filters={filters} issues={issues} />
+
     </span>
   );
 });

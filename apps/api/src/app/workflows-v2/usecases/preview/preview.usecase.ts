@@ -36,7 +36,7 @@ import { CreateVariablesObjectCommand } from '../create-variables-object/create-
 import { CreateVariablesObject } from '../create-variables-object/create-variables-object.usecase';
 import { buildLiquidParser, Variable } from '../../util/template-parser/liquid-parser';
 import { buildVariables } from '../../util/build-variables';
-import { mergeCommonObjectKeys, multiplyArrayItems } from '../../util/utils';
+import { mergeCommonObjectKeys } from '../../util/utils';
 import { buildVariablesSchema } from '../../util/create-schema';
 import { isObjectMailyJSONContent } from '../../../environments-v1/usecases/output-renderers/maily-to-liquid/wrap-maily-in-liquid.command';
 
@@ -109,7 +109,7 @@ export class PreviewUsecase {
         );
 
         previewTemplateData = {
-          payloadExample: _.merge(previewTemplateData.payloadExample, multiplyArrayItems(variablesObject, 3)),
+          payloadExample: _.merge(previewTemplateData.payloadExample, variablesObject),
           controlValues: {
             ...previewTemplateData.controlValues,
             [controlKey]: isObjectMailyJSONContent(processedControlValues)

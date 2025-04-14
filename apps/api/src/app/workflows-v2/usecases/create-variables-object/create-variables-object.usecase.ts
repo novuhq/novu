@@ -9,6 +9,12 @@ import { CreateVariablesObjectCommand } from './create-variables-object.command'
 import { isStringifiedMailyJSONContent } from '../../../environments-v1/usecases/output-renderers/maily-to-liquid/wrap-maily-in-liquid.command';
 import { MailyAttrsEnum } from '../../../environments-v1/usecases/output-renderers/maily-to-liquid/maily.types';
 
+export type ArrayVariable = {
+  path: string;
+  iterations: number;
+};
+
+export const DEFAULT_ARRAY_ELEMENTS = 3;
 /**
  * Extracts all the variables used in the step control values.
  * Then it creates the object representation of those variables.
@@ -33,13 +39,11 @@ export class CreateVariablesObject {
     const controlValues = await this.getControlValues(command);
 
     const variables = this.extractAllVariables(controlValues);
-    const arrayVariables = [
-      ...this.extractMailyAttribute(controlValues, MailyAttrsEnum.EACH_KEY),
-      ...this.extractMailyAttribute(controlValues, MailyAttrsEnum.ID, this.extractArrayPath),
-    ];
+    const arrayVariables = this.extractArrayVariables(controlValues);
     const showIfVariables = this.extractMailyAttribute(controlValues, MailyAttrsEnum.SHOW_IF_KEY);
 
     const variablesObject = keysToObject(variables, arrayVariables, showIfVariables);
+
     if (isEnhancedDigestEnabled) {
       return this.ensureEventsVariableIsAnArray(variablesObject);
     }
@@ -61,7 +65,7 @@ export class CreateVariablesObject {
       );
       const hasUsedEvents = !!(step.events && typeof step.events === 'string');
       if (hasUsedEventCount || hasUsedEventsLength || hasUsedEvents) {
-        step.events = [];
+        step.events = Array.isArray(step.events) ? step.events : Array(DEFAULT_ARRAY_ELEMENTS).fill('events');
       }
     });
 
@@ -151,6 +155,22 @@ export class CreateVariablesObject {
     return Array.from(variables);
   }
 
+  private extractArrayVariables(controlValues: unknown[]): ArrayVariable[] {
+    // Extract 'Repeat' block iterable variables ('each' key) together with their set iterations
+    const eachKeyVars = this.extractMailyAttribute(controlValues, MailyAttrsEnum.EACH_KEY).map((path) => ({
+      path,
+      iterations: this.getIterationsForVariable(path, controlValues) || DEFAULT_ARRAY_ELEMENTS,
+    }));
+
+    // Extract iterable variables outside of 'Repeat' blocks, always with 3 iterations
+    const idVars = this.extractMailyAttribute(controlValues, MailyAttrsEnum.ID, this.extractArrayPath).map((path) => ({
+      path,
+      iterations: DEFAULT_ARRAY_ELEMENTS,
+    }));
+
+    return [...eachKeyVars, ...idVars];
+  }
+
   /**
    * Extracts the base path from an array notation path
    * @example
@@ -158,5 +178,27 @@ export class CreateVariablesObject {
    */
   private extractArrayPath(value: string): string | undefined {
     return value.match(/([^[]+)\[\d+\]/)?.[1];
+  }
+
+  private getIterationsForVariable(variable: string, controlValues: unknown[]): number | undefined {
+    const pattern = new RegExp(
+      `"${MailyAttrsEnum.EACH_KEY}"\\s*:\\s*"${variable}"[^}]*"iterations"\\s*:\\s*(\\d+)`,
+      'g'
+    );
+
+    for (const value of controlValues) {
+      if (!isStringifiedMailyJSONContent(value)) continue;
+
+      const unescapedString = unescape(value);
+      const match = pattern.exec(unescapedString);
+      if (match) {
+        const iterations = parseInt(match[1], 10);
+        if (!Number.isNaN(iterations)) {
+          return iterations;
+        }
+      }
+    }
+
+    return undefined;
   }
 }

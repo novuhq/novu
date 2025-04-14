@@ -1,11 +1,11 @@
-import React, { useCallback, useImperativeHandle, useRef, useState } from 'react';
 import { CheckIcon } from '@radix-ui/react-icons';
+import React, { useCallback, useImperativeHandle, useRef, useState } from 'react';
 
-import { Code2 } from '@/components/icons/code-2';
 import { cn } from '@/utils/ui';
 import TruncatedText from '@/components/truncated-text';
 import { Tooltip, TooltipContent, TooltipPortal, TooltipTrigger } from '../primitives/tooltip';
-import { DigestVariableIcon } from '../icons/digest-variable-icon';
+import { VariableIcon } from './components/variable-icon';
+
 
 const KeyboardItem = ({ children, className }: { children: React.ReactNode; className?: string }) => {
   return (
@@ -178,7 +178,7 @@ const VariableListItem = ({
           onMouseLeave={() => setHoveredOptionIndex(-1)}
         >
           <div className="flex size-3 items-center justify-center">
-            {hasPreview ? <DigestVariableIcon className="size-full" /> : <Code2 className="text-feature size-full" />}
+            <VariableIcon variableName={option.value} />
           </div>
           <TruncatedText>{option.label}</TruncatedText>
           <CheckIcon className={cn('ml-auto size-4', selectedValue === option.value ? 'opacity-50' : 'opacity-0')} />
