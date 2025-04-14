@@ -334,7 +334,7 @@ export const getFilters = (isEnhancedDigestEnabled: boolean): Filters[] => {
         description: 'Converts the array to a comma-separated sentence.',
         example: 'names | toSentence: "", 2, "other" → John, Jane, and 3 others',
         params: [
-          { placeholder: 'Insert key to be summarized on...', type: 'string' },
+          { placeholder: 'Insert key to be summarized on...', type: 'string', required: true },
           { placeholder: 'Limit of words to show', type: 'number' },
           { placeholder: 'Overflow suffix', type: 'string' },
         ],
