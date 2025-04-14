@@ -24,7 +24,6 @@ import {
 import { HTMLCodeBlockExtension, Variables } from '@maily-to/core/extensions';
 import { getVariableSuggestions } from '@maily-to/core/extensions';
 import { RepeatExtension, VariableExtension } from '@maily-to/core/extensions';
-import { RepeatExtension as RepeatExtensionDigest } from '@maily-to/core-digest/extensions';
 import { ReactNodeViewRenderer } from '@tiptap/react';
 import { ForView } from './views/for-view';
 import { createVariableView } from './views/variable-view';
@@ -109,10 +108,8 @@ export const createExtensions = (props: {
 }) => {
   const { calculateVariables, parsedVariables, isEnhancedDigestEnabled } = props;
 
-  const _RepeatExtension = isEnhancedDigestEnabled ? RepeatExtensionDigest : RepeatExtension;
-
   return [
-    _RepeatExtension.extend({
+    RepeatExtension.extend({
       addNodeView() {
         return ReactNodeViewRenderer(ForView, {
           className: 'mly-relative',
