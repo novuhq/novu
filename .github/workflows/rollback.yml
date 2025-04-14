@@ -221,7 +221,7 @@ jobs:
             SERVICE_NAME: ${{ vars.ECS_PREFIX }}-${{ matrix.service.service_name }}
             CLUSTER_NAME: ${{ vars.ECS_PREFIX }}-${{ matrix.service.cluster_name }}
           run: |
-            aws ecs update-service --cluster ${CLUSTER_NAME}--service ${SERVICE_NAME} --task-definition ${{ env.PREVIOUS_TASK }}
+            aws ecs update-service --cluster ${CLUSTER_NAME} --service ${SERVICE_NAME} --task-definition ${{ env.PREVIOUS_TASK }}
             aws ecs wait services-stable --cluster  ${CLUSTER_NAME} --service ${SERVICE_NAME}
             echo "After Rollback:"
             echo "The previous task definition: $(echo $CURRENT_TASK | awk -F'task-definition/' '{print $2}')"
