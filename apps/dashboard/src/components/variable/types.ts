@@ -12,6 +12,7 @@ export type Filters = {
     description?: string;
     type?: 'string' | 'number';
     defaultValue?: string;
+    required?: boolean;
   }[];
 };
 
