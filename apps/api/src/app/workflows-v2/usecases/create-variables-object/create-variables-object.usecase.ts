@@ -43,6 +43,7 @@ export class CreateVariablesObject {
     const showIfVariables = this.extractMailyAttribute(controlValues, MailyAttrsEnum.SHOW_IF_KEY);
 
     const variablesObject = keysToObject(variables, arrayVariables, showIfVariables);
+
     if (isEnhancedDigestEnabled) {
       return this.ensureEventsVariableIsAnArray(variablesObject);
     }
@@ -64,7 +65,7 @@ export class CreateVariablesObject {
       );
       const hasUsedEvents = !!(step.events && typeof step.events === 'string');
       if (hasUsedEventCount || hasUsedEventsLength || hasUsedEvents) {
-        step.events = [];
+        step.events = Array.isArray(step.events) ? step.events : Array(DEFAULT_ARRAY_ELEMENTS).fill('events');
       }
     });
 
