@@ -98,7 +98,7 @@ export class UpdateVercelIntegration {
             env._organizationId
           );
         } catch (error) {
-          this.logger.error(error, 'Error updating bridge url');
+          this.logger.error({ err: error }, 'Error updating bridge url');
         }
       }
 
@@ -162,7 +162,7 @@ export class UpdateVercelIntegration {
         source: 'vercel',
       });
     } catch (error) {
-      this.logger.error(error, 'Error updating bridge url');
+      this.logger.error({ err: error }, 'Error updating bridge url');
     }
   }
 

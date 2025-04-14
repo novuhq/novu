@@ -162,7 +162,7 @@ export class ExecuteBridgeRequest {
             return delay;
           }
 
-          this.logger.info('Error is not retryable. Stopping retry attempts.', error);
+          this.logger.info({ err: error }, 'Error is not retryable. Stopping retry attempts.');
 
           return 0; // Don't retry for other errors
         },

@@ -165,7 +165,7 @@ export class GetChanges {
         };
       }
     } catch (e) {
-      this.logger.error(e, `Unexpected error while importing enterprise modules`);
+      this.logger.error({ err: e }, `Unexpected error while importing enterprise modules`);
     }
 
     return {};
@@ -189,7 +189,7 @@ export class GetChanges {
         };
       }
     } catch (e) {
-      this.logger.error(e, `Unexpected error while importing enterprise modules`);
+      this.logger.error({ err: e }, `Unexpected error while importing enterprise modules`);
     }
 
     return {};

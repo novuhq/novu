@@ -116,7 +116,7 @@ export class SyncExternalOrganization {
         });
       }
     } catch (e) {
-      this.logger.error(e, `Unexpected error while importing enterprise modules`);
+      this.logger.error({ err: e }, `Unexpected error while importing enterprise modules`);
     }
   }
 }

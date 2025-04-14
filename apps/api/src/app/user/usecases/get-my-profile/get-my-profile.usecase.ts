@@ -17,9 +17,9 @@ export class GetMyProfileUsecase extends BaseUserProfileUsecase {
     this.logger.setContext(this.constructor.name);
   }
 
-  async execute(command: GetMyProfileCommand, logger: PinoLogger): Promise<UserResponseDto> {
-    logger.trace('Getting User from user repository in Command');
-    logger.debug(`Getting user data for ${command.userId}`);
+  async execute(command: GetMyProfileCommand): Promise<UserResponseDto> {
+    this.logger.trace('Getting User from user repository in Command');
+    this.logger.debug(`Getting user data for ${command.userId}`);
     const profile = await this.userRepository.findById(command.userId);
 
     if (!profile) {

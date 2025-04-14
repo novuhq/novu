@@ -29,6 +29,10 @@ export class GetWorkflowUseCase {
     this.logger.info(error, 'Executing get workflow use case 1');
     this.logger.info({ error }, 'Executing get workflow use case 2');
     this.logger.info({ err: error }, 'Executing get workflow use case 3');
+    this.logger.info('Executing get workflow use case 4', {
+      err: error,
+      message: 'Executing get workflow use case 4.4',
+    });
     const workflowWithPreferences = await this.getWorkflowWithPreferencesUseCase.execute(
       GetWorkflowWithPreferencesCommand.create({
         environmentId: command.user.environmentId,

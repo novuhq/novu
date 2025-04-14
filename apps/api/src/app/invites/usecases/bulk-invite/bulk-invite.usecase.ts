@@ -49,7 +49,7 @@ export class BulkInvite {
             email: invitee.email,
           });
         } else {
-          this.logger.error(e);
+          this.logger.error({ err: e });
           captureException(e);
           invites.push({
             success: false,

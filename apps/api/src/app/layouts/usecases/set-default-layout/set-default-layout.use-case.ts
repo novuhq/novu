@@ -61,7 +61,7 @@ export class SetDefaultLayoutUseCase {
         previousDefaultLayout: existingDefaultLayoutId,
       });
     } catch (error) {
-      this.logger.error(error);
+      this.logger.error({ err: error });
       // TODO: Rollback through transactions
     }
   }
