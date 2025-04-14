@@ -354,3 +354,13 @@
     scroll-behavior: smooth;
   }
 }
+
+/* Chrome, Safari and Opera */
+.nv-no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.nv-no-scrollbar {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}

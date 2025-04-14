@@ -116,7 +116,7 @@ export const VariableList = React.forwardRef<VariableListRef, VariablesListProps
         <ul
           ref={variablesListRef}
           // relative is to set offset parent and is important to make the scroll and navigation work
-          className="relative flex max-h-[200px] flex-col gap-0.5 overflow-y-auto overflow-x-hidden p-1"
+          className="nv-no-scrollbar relative flex max-h-[200px] flex-col gap-0.5 overflow-y-auto overflow-x-hidden p-1"
         >
           {options.map((option, index) => (
             <VariableListItem

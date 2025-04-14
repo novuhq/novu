@@ -198,7 +198,7 @@ export function parseStepVariables(
             ...result.arrays,
             ...result.namespaces,
           ]
-        : [...result.primitives, ...result.namespaces],
+        : [...result.primitives, ...result.arrays, ...result.namespaces],
 
     isAllowedVariable,
   };
