@@ -1,6 +1,6 @@
 name: Deploy to Novu Cloud
 run-name: >
-  Deploy to
+  Deploying to
   ${{
     github.event.inputs.deploy_api == 'true' && 'api, ' || ''
   }}${{
@@ -155,6 +155,7 @@ jobs:
 
   build:
     needs: prepare-matrix
+    if: ${{ fromJson(needs.prepare-matrix.outputs.service_matrix).service != '[]' }}
     timeout-minutes: 60
     runs-on: ubuntu-latest
     environment: ${{ fromJson(needs.prepare-matrix.outputs.env_matrix).environment[0] }}
