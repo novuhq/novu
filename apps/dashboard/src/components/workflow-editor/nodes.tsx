@@ -360,6 +360,8 @@ export const AddNode = (_props: NodeProps<NodeType>) => {
             },
             {
               onSuccess: (data) => {
+                console.log('data', data);
+
                 if (TEMPLATE_CONFIGURABLE_STEP_TYPES.includes(stepType)) {
                   navigate(
                     buildRoute(ROUTES.EDIT_STEP_TEMPLATE, {

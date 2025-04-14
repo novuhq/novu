@@ -16,6 +16,7 @@ import {
   slugify,
   StepContentIssueEnum,
   StepCreateDto,
+  StepResponseDto,
   StepTypeEnum,
   UpdateWorkflowDto,
   WorkflowCreationSourceEnum,
@@ -187,6 +188,27 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
       const originalStep = workflowCreated.steps[0];
       expect(updatedStep._id).to.be.ok;
       expect(updatedStep._id).to.be.equal(originalStep._id);
+    });
+
+    it('should keep the step id on updated ', async () => {
+      const nameSuffix = `Test Workflow${new Date().toISOString()}`;
+      const workflowCreated: WorkflowResponseDto = await createWorkflowAndValidate(nameSuffix);
+      expect(workflowCreated.steps.length).to.be.equal(2);
+
+      // Verify that all step ids are unique
+      const stepIds1 = workflowCreated.steps.map((step) => step._id);
+      const uniqueStepIds1 = [...new Set(stepIds1)];
+      expect(stepIds1.length).to.equal(uniqueStepIds1.length, 'All step ids should be unique on creation');
+
+      // Add a step of an existing channel at the beginning of the steps array
+      workflowCreated.steps = [buildInAppStep() as unknown as StepResponseDto, ...workflowCreated.steps];
+      const updatedWorkflow = await updateWorkflow(workflowCreated._id, workflowCreated);
+      expect(updatedWorkflow.steps.length).to.be.equal(3);
+
+      // Verify that all step ids are unique
+      const stepIds2 = workflowCreated.steps.map((step) => step._id);
+      const uniqueStepIds2 = [...new Set(stepIds2)];
+      expect(stepIds2.length).to.equal(uniqueStepIds2.length, 'All step ids should be unique after update');
     });
 
     it('should update user preferences', async () => {

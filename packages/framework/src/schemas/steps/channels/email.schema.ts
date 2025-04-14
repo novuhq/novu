@@ -3,7 +3,7 @@ import type { JsonSchema } from '../../../types/schema.types';
 const emailOutputSchema = {
   type: 'object',
   properties: {
-    subject: { type: 'string' },
+    subject: { type: 'string', minLength: 1 },
     body: { type: 'string' },
   },
   required: ['subject', 'body'],

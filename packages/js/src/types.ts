@@ -33,10 +33,6 @@ export enum NotificationActionStatus {
   DONE = 'done',
 }
 
-export enum CtaType {
-  REDIRECT = 'redirect',
-}
-
 export enum PreferenceLevel {
   GLOBAL = 'global',
   TEMPLATE = 'template',
@@ -50,21 +46,10 @@ export enum ChannelType {
   PUSH = 'push',
 }
 
-export enum PreferenceOverrideSource {
-  SUBSCRIBER = 'subscriber',
-  TEMPLATE = 'template',
-  WORKFLOW_OVERRIDE = 'workflowOverride',
-}
-
 export enum WebSocketEvent {
   RECEIVED = 'notification_received',
   UNREAD = 'unread_count_changed',
   UNSEEN = 'unseen_count_changed',
-}
-
-export enum ActionTypeEnum {
-  PRIMARY = 'primary',
-  SECONDARY = 'secondary',
 }
 
 export type Session = {
@@ -72,21 +57,6 @@ export type Session = {
   totalUnreadCount: number;
   removeNovuBranding: boolean;
   isDevelopmentMode: boolean;
-};
-
-export type MessageButton = {
-  type: NotificationButton;
-  content: string;
-  resultContent?: string;
-};
-
-export type MessageAction = {
-  status?: NotificationActionStatus;
-  buttons?: MessageButton[];
-  result: {
-    payload?: Record<string, unknown>;
-    type?: NotificationButton;
-  };
 };
 
 export type Subscriber = {
@@ -101,6 +71,11 @@ export type Redirect = {
   url: string;
   target?: '_self' | '_blank' | '_parent' | '_top' | '_unfencedTop';
 };
+
+export enum ActionTypeEnum {
+  PRIMARY = 'primary',
+  SECONDARY = 'secondary',
+}
 
 export type Action = {
   label: string;

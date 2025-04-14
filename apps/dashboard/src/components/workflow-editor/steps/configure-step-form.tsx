@@ -196,7 +196,9 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
         form.setError(`controlValues.${key}`, { message: value });
       });
     }
-  }, [form, step, hideValidationErrorsOnFirstRender]);
+    // Do not add hideValidationErrorsOnFirstRender so as not to trigger a rerender on the navigation that happens as soon as drawer is closing
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form, step]);
 
   useEffect(() => {
     setControlValuesIssues();

@@ -71,12 +71,13 @@ export class WrapMailyInLiquidUseCase {
     config.forEach(({ attr, flag }) => {
       const attrValue = attrs[attr];
       const flagValue = attrs[flag];
+      const { fallback, aliasFor } = attrs;
 
       if (!flagValue || !attrValue) {
         return;
       }
 
-      processedAttrs[attr] = this.wrapInLiquidOutput(attrValue, attrs.fallback);
+      processedAttrs[attr] = this.wrapInLiquidOutput(attrValue, fallback, aliasFor);
 
       if (!MAILY_FIRST_CITIZEN_VARIABLE_KEY.includes(flag)) {
         processedAttrs[flag] = false;
@@ -120,10 +121,11 @@ export class WrapMailyInLiquidUseCase {
     });
   }
 
-  private wrapInLiquidOutput(variableName: string, fallback?: string): string {
+  private wrapInLiquidOutput(variableName: string, fallback?: string, aliasFor?: string): string {
+    const actualVariableName = aliasFor || variableName;
     const fallbackSuffix = fallback ? ` | default: '${fallback}'` : '';
 
-    return `{{ ${variableName}${fallbackSuffix} }}`;
+    return `{{ ${actualVariableName}${fallbackSuffix} }}`;
   }
 }
 

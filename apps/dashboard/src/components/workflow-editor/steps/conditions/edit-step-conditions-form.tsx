@@ -94,9 +94,9 @@ export const EditStepConditionsForm = () => {
   const { variables, isAllowedVariable } = useParseVariables(step?.variables);
 
   const fields = variables.map((variable) => ({
-    name: variable.label,
-    label: variable.label,
-    value: variable.label,
+    name: variable.name,
+    label: variable.name,
+    value: variable.name,
   }));
 
   const form = useForm<FormQuery>({
