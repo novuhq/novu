@@ -10,8 +10,8 @@ const subjectKey = 'subject';
 
 export const EmailSubject = () => {
   const { control, getValues } = useFormContext();
-  const { step } = useWorkflow();
-  const { variables, isAllowedVariable } = useParseVariables(step?.variables);
+  const { step, digestStepBeforeCurrent } = useWorkflow();
+  const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.digestStepId);
 
   return (
     <FormField

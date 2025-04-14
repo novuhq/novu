@@ -5,8 +5,8 @@ import { urlTargetTypes } from '@/utils/url';
 import { URLInput } from '../../url-input';
 
 export const InAppRedirect = () => {
-  const { step } = useWorkflow();
-  const { variables, isAllowedVariable } = useParseVariables(step?.variables);
+  const { step, digestStepBeforeCurrent } = useWorkflow();
+  const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.digestStepId);
 
   return (
     <div className="flex flex-col gap-1">

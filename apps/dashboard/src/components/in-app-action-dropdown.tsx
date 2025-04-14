@@ -206,8 +206,8 @@ const ConfigureActionPopover = (
     ...rest
   } = props;
   const { control } = useFormContext();
-  const { step } = useWorkflow();
-  const { variables, isAllowedVariable } = useParseVariables(step?.variables);
+  const { step, digestStepBeforeCurrent } = useWorkflow();
+  const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.digestStepId);
 
   return (
     <Popover>

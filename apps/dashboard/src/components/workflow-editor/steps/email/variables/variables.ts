@@ -1,5 +1,10 @@
+import { DIGEST_VARIABLES } from '@/components/variable/utils/digest-variables';
+import { Variable } from '@maily-to/core/extensions';
+
 import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
-import type { Editor, Editor as TiptapEditor, Range } from '@tiptap/core';
+import type { Editor, Range, Editor as TiptapEditor } from '@tiptap/core';
+import { VARIABLE_REGEX_STRING } from '@/components/primitives/control-input/variable-plugin';
+import { parseVariable } from '@/components/primitives/control-input/variable-plugin/utils';
 
 export const REPEAT_BLOCK_ITERABLE_ALIAS = 'current';
 
@@ -23,6 +28,7 @@ export type CalculateVariablesProps = {
   namespaces: Array<LiquidVariable>;
   isAllowedVariable: IsAllowedVariable;
   isEnhancedDigestEnabled: boolean;
+  addDigestVariables?: boolean;
 };
 
 const insertNodeToEditor = ({
@@ -78,9 +84,13 @@ export const insertVariableToEditor = ({
   if (!isClosedVariable) return;
 
   const queryWithoutSuffix = query.replace(/}+$/, '');
+  const queryWithPrefixAndSuffix = '{{' + queryWithoutSuffix + '}}';
+  const regex = new RegExp(VARIABLE_REGEX_STRING, 'g');
+  const match = regex.exec(queryWithPrefixAndSuffix);
+  const { name } = parseVariable(match!);
 
   const aliasFor = resolveRepeatBlockAlias(queryWithoutSuffix, editor, isEnhancedDigestEnabled);
-  const variable: LiquidVariable = { name: queryWithoutSuffix, aliasFor };
+  const variable: LiquidVariable = { name: name, aliasFor };
 
   if (!isAllowedVariable(variable)) return;
 
@@ -175,11 +185,19 @@ export const calculateVariables = ({
   namespaces,
   isAllowedVariable,
   isEnhancedDigestEnabled,
+  addDigestVariables = false,
 }: CalculateVariablesProps): Array<LiquidVariable> | undefined => {
   const queryWithoutSuffix = query.replace(/}+$/, '');
 
   // Get available variables by context (where we are in the editor)
   const variables = getVariablesByContext(editor, from, isEnhancedDigestEnabled, primitives, arrays, namespaces);
+
+  if (isEnhancedDigestEnabled && addDigestVariables) {
+    const mappedDigestVariables = DIGEST_VARIABLES.map((variable) => ({
+      name: variable.name,
+    }));
+    variables.push(...mappedDigestVariables);
+  }
 
   // Add currently typed variable if allowed
   if (
@@ -274,22 +292,40 @@ const getRepeatBlockEachVariables = (editor: TiptapEditor): Array<LiquidVariable
   return [{ name: iterableName }];
 };
 
-const dedupAndSortVariables = (variables: Array<LiquidVariable>, query: string): Array<LiquidVariable> => {
-  const filteredVariables = variables.filter((variable) => variable.name.toLowerCase().includes(query.toLowerCase()));
+const dedupAndSortVariables = (variables: Array<Variable>, query: string): Array<Variable> => {
+  const lowerQuery = query.toLowerCase();
+
+  const filteredVariables = variables.filter((variable) => variable.name.toLowerCase().includes(lowerQuery));
 
   const uniqueVariables = Array.from(new Map(filteredVariables.map((item) => [item.name, item])).values());
 
-  return uniqueVariables.sort((a, b) => {
-    const aExactMatch = a.name.toLowerCase() === query.toLowerCase();
-    const bExactMatch = b.name.toLowerCase() === query.toLowerCase();
-    const aStartsWithQuery = a.name.toLowerCase().startsWith(query.toLowerCase());
-    const bStartsWithQuery = b.name.toLowerCase().startsWith(query.toLowerCase());
+  // Separate digest variables that match the query
+  const digestLabels = new Set(DIGEST_VARIABLES.map((v) => v.name));
+  const matchedDigestVariables: Variable[] = [];
+  const others: Variable[] = [];
 
-    if (aExactMatch && !bExactMatch) return -1;
-    if (!aExactMatch && bExactMatch) return 1;
-    if (aStartsWithQuery && !bStartsWithQuery) return -1;
-    if (!aStartsWithQuery && bStartsWithQuery) return 1;
+  for (const variable of uniqueVariables) {
+    if (digestLabels.has(variable.name)) {
+      matchedDigestVariables.push(variable);
+    } else {
+      others.push(variable);
+    }
+  }
+
+  // Sort the non-digest variables
+  const sortedOthers = others.sort((a, b) => {
+    const aExact = a.name.toLowerCase() === lowerQuery;
+    const bExact = b.name.toLowerCase() === lowerQuery;
+    const aStarts = a.name.toLowerCase().startsWith(lowerQuery);
+    const bStarts = b.name.toLowerCase().startsWith(lowerQuery);
+
+    if (aExact && !bExact) return -1;
+    if (!aExact && bExact) return 1;
+    if (aStarts && !bStarts) return -1;
+    if (!aStarts && bStarts) return 1;
 
     return a.name.localeCompare(b.name);
   });
+
+  return [...matchedDigestVariables, ...sortedOthers];
 };

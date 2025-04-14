@@ -1,10 +1,22 @@
-import { isAllowedAlias } from '@/components/workflow-editor/steps/email/variables/variables';
-import type { JSONSchemaDefinition } from '@novu/shared';
+import { Completion } from '@codemirror/autocomplete';
 
-export type LiquidVariable = {
+import { isAllowedAlias } from '@/components/workflow-editor/steps/email/variables/variables';
+
+import type { JSONSchemaDefinition } from '@novu/shared';
+import {
+  DIGEST_VARIABLES,
+  DIGEST_VARIABLES_ENUM,
+  getDynamicDigestVariable,
+} from '../components/variable/utils/digest-variables';
+
+export interface LiquidVariable {
+  type?: 'variable' | 'digest';
   name: string;
+  boost?: number;
+  info?: Completion['info'];
+  displayLabel?: string;
   aliasFor?: string | null;
-};
+}
 
 export type IsAllowedVariable = (variable: LiquidVariable) => boolean;
 export type IsArbitraryNamespace = (path: string) => boolean;
@@ -22,7 +34,11 @@ export interface ParsedVariables {
  * @param schema - The JSON Schema to parse.
  * @returns An object containing three arrays: primitives, arrays, and namespaces.
  */
-export function parseStepVariables(schema: JSONSchemaDefinition): ParsedVariables {
+
+export function parseStepVariables(
+  schema: JSONSchemaDefinition,
+  { isEnhancedDigestEnabled, digestStepId }: { isEnhancedDigestEnabled: boolean; digestStepId?: string }
+): ParsedVariables {
   const result: ParsedVariables = {
     primitives: [],
     arrays: [],
@@ -162,7 +178,28 @@ export function parseStepVariables(schema: JSONSchemaDefinition): ParsedVariable
 
   return {
     ...result,
-    variables: [...result.primitives, ...result.arrays, ...result.namespaces],
+
+    variables:
+      isEnhancedDigestEnabled && digestStepId
+        ? [
+            ...DIGEST_VARIABLES.map((variable) => {
+              const { label: displayLabel, value } = getDynamicDigestVariable({
+                digestStepName: digestStepId,
+                type: variable.name as DIGEST_VARIABLES_ENUM,
+              });
+
+              return {
+                ...variable,
+                name: value,
+                displayLabel,
+              };
+            }),
+            ...result.primitives,
+            ...result.arrays,
+            ...result.namespaces,
+          ]
+        : [...result.primitives, ...result.arrays, ...result.namespaces],
+
     isAllowedVariable,
   };
 }

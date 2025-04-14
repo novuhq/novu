@@ -1,7 +1,13 @@
 import { Variable } from '@maily-to/core/extensions';
 import React, { useImperativeHandle, useMemo, useRef } from 'react';
-
 import { VariableList, VariableListRef } from '@/components/variable/variable-list';
+import {
+  DIGEST_PREVIEW_MAP,
+  DIGEST_VARIABLES_ENUM,
+  DIGEST_VARIABLES_FILTER_MAP,
+  getDynamicDigestVariable,
+} from '@/components/variable/utils/digest-variables';
+import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 
 type VariableSuggestionsPopoverProps = {
   items: Variable[];
@@ -16,7 +22,34 @@ type VariableSuggestionsPopoverRef = {
 
 export const MailyVariablesListView = React.forwardRef(
   ({ items, onSelectItem }: VariableSuggestionsPopoverProps, ref: React.Ref<VariableSuggestionsPopoverRef>) => {
-    const options = useMemo(() => items.map((item) => ({ label: item.name, value: item.name })), [items]);
+    const { digestStepBeforeCurrent } = useWorkflow();
+    const options = useMemo(
+      () =>
+        items.map((item) => {
+          const isDigestVariable = item.name in DIGEST_VARIABLES_FILTER_MAP;
+
+          if (isDigestVariable) {
+            const { label } = getDynamicDigestVariable({
+              type: item.name as DIGEST_VARIABLES_ENUM,
+              digestStepName: digestStepBeforeCurrent?.digestStepId,
+            });
+            return {
+              label,
+              value: item.name,
+              preview:
+                item.name in DIGEST_PREVIEW_MAP
+                  ? DIGEST_PREVIEW_MAP[item.name as keyof typeof DIGEST_PREVIEW_MAP]
+                  : undefined,
+            };
+          }
+
+          return {
+            label: item.name,
+            value: item.name,
+          };
+        }),
+      [digestStepBeforeCurrent?.digestStepId, items]
+    );
     const variablesListRef = useRef<VariableListRef>(null);
 
     const onSelect = (value: string) => {
@@ -26,7 +59,21 @@ export const MailyVariablesListView = React.forwardRef(
         return;
       }
 
-      onSelectItem(item);
+      let selectedItem = item;
+
+      /**
+       *  If the variable is a digest variable,
+       * we need to change the name to the dynamic value of the variable.
+       */
+      if (selectedItem.name in DIGEST_VARIABLES_FILTER_MAP) {
+        const { value } = getDynamicDigestVariable({
+          type: item.name as DIGEST_VARIABLES_ENUM,
+          digestStepName: digestStepBeforeCurrent?.digestStepId,
+        });
+        selectedItem = { ...selectedItem, name: value };
+      }
+
+      onSelectItem(selectedItem);
     };
 
     useImperativeHandle(ref, () => ({

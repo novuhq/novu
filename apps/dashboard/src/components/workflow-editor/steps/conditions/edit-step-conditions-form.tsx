@@ -79,7 +79,7 @@ const getConditionsSchema = (fields: Array<{ value: string }>): z.ZodType<FormQu
 
 export const EditStepConditionsForm = () => {
   const track = useTelemetry();
-  const { workflow, step, update } = useWorkflow();
+  const { workflow, step, update, digestStepBeforeCurrent } = useWorkflow();
   const hasConditions = !!step?.controls.values.skip;
   const query = useMemo(
     () =>
@@ -91,7 +91,7 @@ export const EditStepConditionsForm = () => {
     [hasConditions, step]
   );
 
-  const { variables, isAllowedVariable } = useParseVariables(step?.variables);
+  const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.digestStepId);
 
   const fields = variables.map((variable) => ({
     name: variable.name,

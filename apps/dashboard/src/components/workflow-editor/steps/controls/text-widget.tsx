@@ -12,8 +12,8 @@ import { getFieldName } from './template-utils';
 export function TextWidget(props: WidgetProps) {
   const { label, readonly, disabled, id, required } = props;
   const { control } = useFormContext();
-  const { step } = useWorkflow();
-  const { variables, isAllowedVariable } = useParseVariables(step?.variables);
+  const { step, digestStepBeforeCurrent } = useWorkflow();
+  const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.digestStepId);
 
   const extractedName = useMemo(() => getFieldName(id), [id]);
   const isNumberType = useMemo(() => props.schema.type === 'number', [props.schema.type]);
