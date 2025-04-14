@@ -62,7 +62,7 @@ export class VariablePluginView {
       if (name) {
         decorations.push(
           Decoration.replace({
-            widget: new VariablePillWidget(name, fullLiquidExpression, start, end, filters?.length > 0, this.onSelect),
+            widget: new VariablePillWidget(name, fullLiquidExpression, start, end, filters, this.onSelect),
             inclusive: false,
             side: -1,
           }).range(start, end)

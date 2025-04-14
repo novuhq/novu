@@ -9,7 +9,7 @@ export class VariablePillWidget extends WidgetType {
     private fullVariableName: string,
     private start: number,
     private end: number,
-    private hasFilters: boolean,
+    private filters: string[],
     private onSelect?: (value: string, from: number, to: number) => void
   ) {
     super();
@@ -38,16 +38,6 @@ export class VariablePillWidget extends WidgetType {
     };
   }
 
-  createAfterStyles(): CSSProperties {
-    return {
-      width: '0.275em',
-      height: '0.275em',
-      backgroundColor: 'hsl(var(--feature-base))',
-      borderRadius: '100%',
-      marginLeft: '3px',
-    };
-  }
-
   createPillStyles(): CSSProperties {
     return {
       backgroundColor: 'hsl(var(--bg-weak))',
@@ -60,7 +50,7 @@ export class VariablePillWidget extends WidgetType {
       fontFamily: 'inherit',
       display: 'inline-flex',
       alignItems: 'center',
-      height: '100%',
+      height: '16px',
       lineHeight: 'inherit',
       fontSize: 'inherit',
       cursor: 'pointer',
@@ -74,6 +64,19 @@ export class VariablePillWidget extends WidgetType {
   createContentStyles(): CSSProperties {
     return {
       lineHeight: 'calc(1em - 2px)',
+      color: 'hsl(var(--text-sub))',
+
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      '-webkit-font-smoothing': 'antialiased',
+      '-moz-osx-font-smoothing': 'grayscale',
+    };
+  }
+
+  createFilterStyles(): CSSProperties {
+    return {
+      color: 'hsl(var(--text-soft))',
+
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       '-webkit-font-smoothing': 'antialiased',
@@ -108,11 +111,46 @@ export class VariablePillWidget extends WidgetType {
     span.appendChild(before);
     span.appendChild(content);
 
-    if (this.hasFilters) {
-      const after = document.createElement('span');
-      const afterStyles = this.createAfterStyles();
-      Object.assign(after.style, afterStyles);
-      span.appendChild(after);
+    if (this.filters?.length === 1) {
+      const filterSpan = document.createElement('span');
+      const filterParts = this.filters[0].split(/:(.+)/); // Split into filter name and arguments
+
+      const filterNameSpan = document.createElement('span');
+      filterNameSpan.textContent = ` | ${filterParts[0]}`;
+      Object.assign(filterNameSpan.style, this.createFilterStyles());
+      filterSpan.appendChild(filterNameSpan);
+
+      if (filterParts[1]) {
+        const argsSpan = document.createElement('span');
+        argsSpan.textContent = `: ${filterParts[1]}`;
+        Object.assign(argsSpan.style, this.createContentStyles());
+        filterSpan.appendChild(argsSpan);
+      }
+
+      span.appendChild(filterSpan);
+    } else if (this.filters?.length > 1) {
+      const filterSpan = document.createElement('span');
+
+      const filterParts = this.filters[0].split(/:(.+)/); // Split into filter name and arguments
+
+      const filterNameSpan = document.createElement('span');
+      filterNameSpan.textContent = ` | ${filterParts[0]}`;
+      Object.assign(filterNameSpan.style, this.createFilterStyles());
+      filterSpan.appendChild(filterNameSpan);
+
+      if (filterParts[1]) {
+        const argsSpan = document.createElement('span');
+        argsSpan.textContent = `: ${filterParts[1]}`;
+        Object.assign(argsSpan.style, this.createContentStyles());
+        filterSpan.appendChild(argsSpan);
+      }
+
+      const countSpan = document.createElement('span');
+      countSpan.textContent = ` +${this.filters.length - 1} more`;
+      Object.assign(countSpan.style, { ...this.createFilterStyles(), fontStyle: 'italic' });
+      filterSpan.appendChild(countSpan);
+
+      span.appendChild(filterSpan);
     }
 
     span.addEventListener('mousedown', this.clickHandler);
