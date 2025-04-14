@@ -191,8 +191,12 @@ export function mergeCommonObjectKeys(
       const sourceValue = source[key];
 
       if (Array.isArray(targetValue) && Array.isArray(sourceValue)) {
-        merged[key] = targetValue.map((_, index) => {
-          if (index < sourceValue.length) {
+        const sourceValueLength = sourceValue.length;
+        const targetValueLength = targetValue.length;
+        const maxLength = Math.max(sourceValueLength, targetValueLength);
+
+        merged[key] = Array.from({ length: maxLength }, (_, index) => {
+          if (index < sourceValueLength) {
             // if we have a corresponding source item, use it
             return sourceValue[index];
           }

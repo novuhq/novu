@@ -119,13 +119,15 @@ export class PreviewUsecase {
         };
       }
 
-      const previewPayloadExample = this.mergePayloadExample(
+      let previewPayloadExample = this.mergePayloadExample(
         workflow,
-        isEnhancedDigestEnabled
-          ? enhanceEventCountValue(previewTemplateData.payloadExample)
-          : previewTemplateData.payloadExample,
+        previewTemplateData.payloadExample,
         userPayloadExample
       );
+
+      if (isEnhancedDigestEnabled) {
+        previewPayloadExample = enhanceEventCountValue(previewPayloadExample);
+      }
 
       const executeOutput = await this.executePreviewUsecase(
         command,
