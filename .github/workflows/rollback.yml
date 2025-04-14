@@ -18,7 +18,7 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        description: 'Environment to rollback. This will not rollback any environment variable changes. Only the task definition will be rolled back.'
+        description: 'Environment to rollback'
         required: true
         type: choice
         default: staging
@@ -51,10 +51,20 @@ on:
         required: true
         type: boolean
         default: true
-
+      
+      rollback_signoff:
+        description: "This will rollback the selected services to the previous task definition. This won't rollback any database migration or environment changes. Do you want to continue?"
+        required: true
+        type: choice
+        default: no
+        options:
+          - yes
+          - no
+       
 jobs:
   prepare-matrix:
     runs-on: ubuntu-latest
+    if : ${{ github.event.inputs.rollback_signoff == 'yes' }}
     outputs:
       env_matrix: ${{ steps.set-matrix.outputs.env_matrix }}
       service_matrix: ${{ steps.set-matrix.outputs.service_matrix }}
