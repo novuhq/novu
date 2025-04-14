@@ -41,6 +41,7 @@ jobs:
       env_matrix: ${{ steps.set-matrix.outputs.env_matrix }}
       service_matrix: ${{ steps.set-matrix.outputs.service_matrix }}
       deploy_matrix: ${{ steps.set-matrix.outputs.deploy_matrix }}
+      nr_matrix: ${{ steps.set-matrix.outputs.nr_matrix }}
     steps:
       - name: Generate Environment, Service, and Deploy Matrices
         id: set-matrix
@@ -69,9 +70,11 @@ jobs:
           # Collect selected services
           if [ "${{ github.event.inputs.deploy_api }}" == "true" ]; then
             services+=("\"api\"")
+            nr+=("\"api\"")
           fi
           if [ "${{ github.event.inputs.deploy_worker }}" == "true" ]; then
             services+=("\"worker\"")
+            nr+=("\"worker\"")
           fi
           if [ "${{ github.event.inputs.deploy_ws }}" == "true" ]; then
             services+=("\"ws\"")
@@ -125,10 +128,14 @@ jobs:
           deploy_matrix="[$(
             IFS=','; echo "${deploy_matrix[*]}"
           )]"
+          nr_matrix="[$(
+            IFS=','; echo "${nr[*]}"
+          )]"
 
           echo "env_matrix=$env_matrix" >> $GITHUB_OUTPUT
           echo "service_matrix=$service_matrix" >> $GITHUB_OUTPUT
           echo "deploy_matrix=$deploy_matrix" >> $GITHUB_OUTPUT
+          echo "nr_matrix=$nr_matrix" >> $GITHUB_OUTPUT
 
   build:
     needs: prepare-matrix
@@ -212,6 +219,7 @@ jobs:
         service: ${{ fromJson(needs.prepare-matrix.outputs.deploy_matrix) }}
 
     environment: ${{ matrix.env }}
+    
     steps:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -243,3 +251,57 @@ jobs:
           service: ${{ vars.ECS_PREFIX }}-${{ matrix.service.service_name }}
           cluster: ${{ vars.ECS_PREFIX }}-${{ matrix.service.cluster_name }}
           wait-for-service-stability: true
+
+    
+  sentry_release:
+    needs: [deploy, prepare-matrix]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        env: ${{ fromJson(needs.prepare-matrix.outputs.env_matrix).environment[0] }}
+        service: ${{ fromJson(needs.prepare-matrix.outputs.service_matrix).service }}
+
+    environment: ${{ matrix.env }}
+    
+    steps:  
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Get NPM Version
+        id: package-version
+        uses: martinbeentjes/npm-get-version-action@main
+        with:
+          path: apps/${{ matrix.service }}
+
+      - name: Create Sentry release
+        uses: getsentry/action-release@v1
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ vars.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ matrix.service }}
+        with:
+          version: ${{ steps.package-version.outputs.current-version}}
+          version_prefix: v
+          environment: ${{vars.SENTRY_ENV}}
+          ignore_empty: true
+          ignore_missing: true
+
+  new_relic_release:
+    needs: [deploy, prepare-matrix]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        env: ${{ fromJson(needs.prepare-matrix.outputs.env_matrix).environment }}
+        nr: ${{ fromJson(needs.prepare-matrix.outputs.nr_matrix) }}
+    environment: ${{ matrix.env }}
+
+    steps:
+      - name: New Relic Application Deployment Marker
+        uses: newrelic/deployment-marker-action@v2.3.0
+        with:
+          region: EU
+          apiKey: ${{ secrets.NEW_RELIC_API_KEY }}
+          guid: ${{ matrix.nr == 'api' && secrets.NEW_RELIC_API_GUID || matrix.nr == 'worker' && secrets.NEW_RELIC_Worker_GUID }}
+          version: '${{ github.sha }}'
+          user: '${{ github.actor }}'
+          description: 'Novu Cloud Deployment'
