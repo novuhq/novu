@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import {
   ChangeRepository,
   EnvironmentRepository,
@@ -21,6 +21,7 @@ import {
   DeletePreferencesCommand,
   DeletePreferencesUseCase,
   InvalidateCacheService,
+  PinoLogger,
   UpsertPreferences,
   UpsertUserWorkflowPreferencesCommand,
   UpsertWorkflowPreferencesCommand,
@@ -48,8 +49,11 @@ export class PromoteNotificationTemplateChange {
     @Inject(forwardRef(() => ApplyChange)) private applyChange: ApplyChange,
     private changeRepository: ChangeRepository,
     private upsertPreferences: UpsertPreferences,
-    private deletePreferences: DeletePreferencesUseCase
-  ) {}
+    private deletePreferences: DeletePreferencesUseCase,
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   async execute(command: PromoteTypeChangeCommand) {
     await this.invalidateBlueprints(command);
@@ -123,7 +127,7 @@ export class PromoteNotificationTemplateChange {
       : [];
 
     if (missingMessages.length > 0 && steps.length > 0 && item) {
-      Logger.error(
+      this.logger.error(
         `Message templates with ids ${missingMessages.join(', ')} are missing for notification template ${item._id}`
       );
     }

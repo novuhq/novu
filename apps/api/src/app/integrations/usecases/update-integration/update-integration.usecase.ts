@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import {
   CommunityOrganizationRepository,
   IntegrationEntity,
@@ -11,6 +11,7 @@ import {
   encryptCredentials,
   InvalidateCacheService,
   FeatureFlagsService,
+  PinoLogger,
 } from '@novu/application-generic';
 import { ApiServiceLevelEnum, CHANNELS_WITH_PRIMARY, FeatureFlagsKeysEnum } from '@novu/shared';
 
@@ -27,8 +28,11 @@ export class UpdateIntegration {
     private integrationRepository: IntegrationRepository,
     private analyticsService: AnalyticsService,
     private featureFlagService: FeatureFlagsService,
-    private communityOrganizationRepository: CommunityOrganizationRepository
-  ) {}
+    private communityOrganizationRepository: CommunityOrganizationRepository,
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   private async calculatePriorityAndPrimaryForActive({
     existingIntegration,
@@ -123,7 +127,7 @@ export class UpdateIntegration {
   }
 
   async execute(command: UpdateIntegrationCommand): Promise<IntegrationEntity> {
-    Logger.verbose('Executing Update Integration Command');
+    this.logger.trace('Executing Update Integration Command');
 
     const existingIntegration = await this.integrationRepository.findOne({
       _id: command.integrationId,

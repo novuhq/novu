@@ -1,8 +1,8 @@
 /* eslint-disable global-require */
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { SystemVariablesWithTypes } from '@novu/shared';
-import { buildVariablesKey, CachedResponse } from '@novu/application-generic';
+import { buildVariablesKey, CachedResponse, PinoLogger } from '@novu/application-generic';
 import { GetWorkflowVariablesCommand } from './get-workflow-variables.command';
 
 /**
@@ -10,7 +10,12 @@ import { GetWorkflowVariablesCommand } from './get-workflow-variables.command';
  */
 @Injectable()
 export class GetWorkflowVariables {
-  constructor(private moduleRef: ModuleRef) {}
+  constructor(
+    private moduleRef: ModuleRef,
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   async execute(command: GetWorkflowVariablesCommand) {
     const { environmentId, organizationId } = command;
@@ -46,7 +51,7 @@ export class GetWorkflowVariables {
         translationVariables = await service.getTranslationVariables(_environmentId, _organizationId);
       }
     } catch (e) {
-      Logger.error(e, `Unexpected error while importing enterprise modules`, 'TranslationsService');
+      this.logger.error({ err: e }, `Unexpected error while importing enterprise modules`, 'TranslationsService');
     }
 
     return {

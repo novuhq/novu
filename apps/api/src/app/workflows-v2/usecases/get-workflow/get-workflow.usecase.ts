@@ -4,6 +4,7 @@ import {
   GetWorkflowWithPreferencesCommand,
   GetWorkflowWithPreferencesUseCase,
   InstrumentUsecase,
+  PinoLogger,
 } from '@novu/application-generic';
 import { NotificationStepEntity, NotificationTemplateEntity } from '@novu/dal';
 
@@ -16,11 +17,18 @@ import { BuildStepDataCommand } from '../build-step-data/build-step-data.command
 export class GetWorkflowUseCase {
   constructor(
     private getWorkflowWithPreferencesUseCase: GetWorkflowWithPreferencesUseCase,
-    private buildStepDataUsecase: BuildStepDataUsecase
-  ) {}
+    private buildStepDataUsecase: BuildStepDataUsecase,
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   @InstrumentUsecase()
   async execute(command: GetWorkflowCommand): Promise<WorkflowResponseDto> {
+    const error = { message: 'test 1111' };
+    this.logger.info(error, 'Executing get workflow use case 1');
+    this.logger.info({ error }, 'Executing get workflow use case 2');
+    this.logger.info({ err: error }, 'Executing get workflow use case 3');
     const workflowWithPreferences = await this.getWorkflowWithPreferencesUseCase.execute(
       GetWorkflowWithPreferencesCommand.create({
         environmentId: command.user.environmentId,

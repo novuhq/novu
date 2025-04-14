@@ -7,13 +7,14 @@ import {
   ThrottlerRequest,
   ThrottlerStorage,
 } from '@nestjs/throttler';
-import { CallHandler, ExecutionContext, Injectable, Logger, NestInterceptor } from '@nestjs/common';
+import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import {
   Instrument,
   HttpRequestHeaderKeysEnum,
   HttpResponseHeaderKeysEnum,
   FeatureFlagsService,
+  PinoLogger,
 } from '@novu/application-generic';
 import {
   ApiAuthSchemeEnum,
@@ -44,9 +45,11 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
     @InjectThrottlerStorage() protected readonly storageService: ThrottlerStorage,
     reflector: Reflector,
     private evaluateApiRateLimit: EvaluateApiRateLimit,
-    private featureFlagService: FeatureFlagsService
+    private featureFlagService: FeatureFlagsService,
+    private logger: PinoLogger
   ) {
     super(options, storageService, reflector);
+    this.logger.setContext(this.constructor.name);
   }
 
   /**
@@ -162,7 +165,7 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
 
     if (isDryRun) {
       if (!success) {
-        Logger.warn(`[Dry run] ${THROTTLED_EXCEPTION_MESSAGE}`, 'ApiRateLimitInterceptor');
+        this.logger.warn(`[Dry run] ${THROTTLED_EXCEPTION_MESSAGE}`);
       }
 
       return true;

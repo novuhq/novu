@@ -1,5 +1,5 @@
 /* eslint-disable global-require */
-import { DynamicModule, Logger, Module, Provider } from '@nestjs/common';
+import { DynamicModule, Module, Provider } from '@nestjs/common';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { cacheService, TracingModule } from '@novu/application-generic';
 import { Client, NovuModule } from '@novu/framework/nest';
@@ -175,8 +175,4 @@ modules.push(
   controllers: [],
   providers,
 })
-export class AppModule {
-  constructor() {
-    Logger.log(`BOOTSTRAPPED NEST APPLICATION`);
-  }
-}
+export class AppModule {}
