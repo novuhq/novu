@@ -53,18 +53,19 @@ on:
         default: true
       
       rollback_signoff:
-        description: "This will rollback the selected services to the previous task definition. This won't rollback any database migration or environment changes. Do you want to continue?"
+        description: "This will rollback the selected services to the previous task definition. This won't rollback any database migration or environment changes. Do you agree?"
         required: true
         type: choice
-        default: no
+        default: 'I do not agree'
         options:
-          - yes
-          - no
+          - 'I agree'
+          - 'I do not agree'
+
        
 jobs:
   prepare-matrix:
     runs-on: ubuntu-latest
-    if : ${{ github.event.inputs.rollback_signoff == 'yes' }}
+    if : "${{ github.event.inputs.rollback_signoff == 'I agree' }}"
     outputs:
       env_matrix: ${{ steps.set-matrix.outputs.env_matrix }}
       service_matrix: ${{ steps.set-matrix.outputs.service_matrix }}
