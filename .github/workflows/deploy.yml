@@ -1,5 +1,9 @@
 name: Deploy to Novu Cloud
-run-name: Deploy to api ${{github.event.inputs.deploy_api}} worker ${{github.event.inputs.deploy_worker}} ws ${{github.event.inputs.deploy_ws}} webhook ${{github.event.inputs.deploy_webhook}} to ${{github.event.inputs.environment}}
+run-name: Deploy to [api- ${{github.event.inputs.deploy_api}}], [worker- ${{github.event.inputs.deploy_worker}}], [ws- ${{github.event.inputs.deploy_ws}}], [webhook- ${{github.event.inputs.deploy_webhook}}] on [${{ github.event.inputs.environment }}]
+description: |
+  This workflow deploys the Novu Cloud application to different environments and services based on the selected options.
+  It builds Docker images, pushes them to Amazon ECR, and deploys them to Amazon ECS.
+  Additionally, it creates Sentry releases and New Relic deployment markers.
 
 on:
   workflow_dispatch:
