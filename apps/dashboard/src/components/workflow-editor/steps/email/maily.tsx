@@ -1,5 +1,6 @@
 import { HTMLAttributes, useCallback, useMemo, useState } from 'react';
 import { Editor } from '@maily-to/core';
+import { Editor as EditorDigest } from '@maily-to/core-digest';
 import type { Editor as TiptapEditor } from '@tiptap/core';
 import { Editor as TiptapEditorReact } from '@tiptap/react';
 
@@ -20,9 +21,9 @@ type MailyProps = HTMLAttributes<HTMLDivElement> & {
 };
 
 export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
-  const { step } = useWorkflow();
+  const { step, digestStepBeforeCurrent } = useWorkflow();
   const isEnhancedDigestEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_ENHANCED_DIGEST_ENABLED);
-  const parsedVariables = useParseVariables(step?.variables);
+  const parsedVariables = useParseVariables(step?.variables, digestStepBeforeCurrent?.stepId);
   const primitives = useMemo(
     () => parsedVariables.primitives.map((v) => ({ name: v.name, required: false })),
     [parsedVariables.primitives]
@@ -49,9 +50,17 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
         namespaces,
         isAllowedVariable: parsedVariables.isAllowedVariable,
         isEnhancedDigestEnabled,
+        addDigestVariables: !!digestStepBeforeCurrent?.stepId,
       });
     },
-    [primitives, arrays, namespaces, parsedVariables.isAllowedVariable, isEnhancedDigestEnabled]
+    [
+      primitives,
+      arrays,
+      namespaces,
+      parsedVariables.isAllowedVariable,
+      isEnhancedDigestEnabled,
+      digestStepBeforeCurrent?.stepId,
+    ]
   );
 
   const extensions = useMemo(
@@ -101,8 +110,10 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
   );
 
   const blocks = useMemo(() => {
-    return createEditorBlocks({ track });
+    return createEditorBlocks({ track, digestStepBeforeCurrent, isEnhancedDigestEnabled });
   }, [track]);
+
+  const _Editor = isEnhancedDigestEnabled ? EditorDigest : Editor;
 
   return (
     <>
@@ -114,7 +125,7 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
         )}
         {...rest}
       >
-        <Editor
+        <_Editor
           key="repeat-block-enabled"
           config={DEFAULT_EDITOR_CONFIG}
           blocks={blocks}

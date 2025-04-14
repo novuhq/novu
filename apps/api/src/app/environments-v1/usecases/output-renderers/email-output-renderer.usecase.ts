@@ -193,13 +193,17 @@ export class EmailOutputRendererUsecase {
 
   /**
    * For 'each' node, multiply the content by the number of items in the iterable array
-   * and add indexes to the placeholders.
+   * and add indexes to the placeholders. If iterations attribute is set, limits the number
+   * of iterations to that value, otherwise renders all items.
    *
    * @example
    * node:
    * {
    *   type: 'each',
-   *   attrs: { each: '{{ payload.comments }}' },
+   *   attrs: {
+   *     each: '{{ payload.comments }}',
+   *     iterations: 2 // Optional - limits to first 2 items only
+   *   },
    *   content: [
    *     { type: 'variable', text: '{{ payload.comments.author }}' }
    *   ]
@@ -221,10 +225,12 @@ export class EmailOutputRendererUsecase {
     isEnhancedDigestEnabled: boolean
   ): Promise<MailyJSONContent[]> {
     const iterablePath = node.attrs[MailyAttrsEnum.EACH_KEY];
+    const iterations = node.attrs[MailyAttrsEnum.ITERATIONS_KEY];
     const forEachNodes = node.content || [];
     const iterableArray = await this.getIterableArray(iterablePath, variables, isEnhancedDigestEnabled);
+    const limitedIterableArray = iterations ? iterableArray.slice(0, iterations) : iterableArray;
 
-    return iterableArray.flatMap((_, index) => this.processForEachNodes(forEachNodes, iterablePath, index));
+    return limitedIterableArray.flatMap((_, index) => this.processForEachNodes(forEachNodes, iterablePath, index));
   }
 
   private async getIterableArray(

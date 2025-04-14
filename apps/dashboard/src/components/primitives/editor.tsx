@@ -1,4 +1,4 @@
-import { autocompleteFooter, autocompleteHeader, functionIcon } from '@/components/primitives/constants';
+import { autocompleteFooter, autocompleteHeader, digestIcon, functionIcon } from '@/components/primitives/constants';
 import { useDataRef } from '@/hooks/use-data-ref';
 import { tags as t } from '@lezer/highlight';
 import createTheme from '@uiw/codemirror-themes';
@@ -50,9 +50,22 @@ const baseTheme = (options: { multiline?: boolean }) =>
         backgroundImage: `url('${functionIcon}')`,
       },
     },
+    '.cm-tooltip-autocomplete .cm-completionIcon-digest': {
+      '&:before': {
+        content: 'Suggestions',
+      },
+      '&:after': {
+        content: "''",
+        height: '16px',
+        width: '16px',
+        display: 'block',
+        backgroundRepeat: 'no-repeat',
+        backgroundImage: `url('${digestIcon}')`,
+      },
+    },
     '.cm-tooltip-autocomplete.cm-tooltip': {
       position: 'relative',
-      overflow: 'hidden',
+      overflow: 'visible',
       borderRadius: 'var(--radius)',
       border: '1px solid var(--neutral-100)',
       backgroundColor: 'hsl(var(--background))',
@@ -126,6 +139,17 @@ const baseTheme = (options: { multiline?: boolean }) =>
     },
     '.cm-placeholder': {
       fontWeight: 'normal',
+    },
+    '.cm-tooltip .cm-completionInfo': {
+      marginInline: '0.375rem',
+      borderRadius: '0.5rem',
+      boxShadow: '0px 1px 3px 0px rgba(16, 24, 40, 0.10), 0px 1px 2px 0px rgba(16, 24, 40, 0.06)',
+      borderColor: 'transparent',
+      padding: '0px !important',
+      backgroundColor: 'hsl(var(--bg-weak))',
+    },
+    '.cm-tooltip-autocomplete.cm-tooltip > ul > li:hover': {
+      backgroundColor: 'hsl(var(--neutral-100))',
     },
   });
 
