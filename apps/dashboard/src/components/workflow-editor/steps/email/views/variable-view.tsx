@@ -1,7 +1,6 @@
 import { NodeViewProps } from '@tiptap/core';
 import { NodeViewWrapper } from '@tiptap/react';
 import { useCallback, useMemo, useState } from 'react';
-
 import { VARIABLE_REGEX_STRING } from '@/components/primitives/control-input/variable-plugin';
 import { parseVariable } from '@/components/primitives/control-input/variable-plugin/utils';
 import { EditVariablePopover } from '@/components/variable/edit-variable-popover';

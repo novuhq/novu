@@ -1,3 +1,4 @@
+import { VariablePill } from '@/components/variable/variable-pill';
 import { createFooters } from '@/components/workflow-editor/steps/email/blocks/footers';
 import { createHeaders } from '@/components/workflow-editor/steps/email/blocks/headers';
 import { createHtmlCodeBlock } from '@/components/workflow-editor/steps/email/blocks/html';
@@ -30,13 +31,11 @@ import {
   Variables,
 } from '@maily-to/core/extensions';
 import { ReactNodeViewRenderer } from '@tiptap/react';
-import { CalculateVariablesProps, insertVariableToEditor } from './variables/variables';
+import { CalculateVariablesProps, insertVariableToEditor, VariableFrom } from './variables/variables';
 import { ForView } from './views/for-view';
 import { HTMLCodeBlockView } from './views/html-view';
 import { MailyVariablesListView } from './views/maily-variables-list-view';
 import { createVariableView } from './views/variable-view';
-import { CalculateVariablesProps, insertVariableToEditor, VariableFrom } from './variables/variables';
-import { VariablePill } from '@/components/variable/variable-pill';
 
 export const VARIABLE_TRIGGER_CHARACTER = '{{';
 
@@ -163,12 +162,7 @@ export const createExtensions = (props: {
       // variable pills in bubble menus (repeat, showIf...)
       renderVariable: (opts) => {
         return (
-          <VariablePill
-            variableName={opts.variable.name}
-            hasFilters={false}
-            className="h-5 text-xs"
-            from={opts.from as VariableFrom}
-          />
+          <VariablePill variableName={opts.variable.name} className="h-5 text-xs" from={opts.from as VariableFrom} />
         );
       },
       variables: calculateVariables as Variables,

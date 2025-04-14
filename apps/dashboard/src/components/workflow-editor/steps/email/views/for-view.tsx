@@ -7,11 +7,7 @@ function TooltipContent() {
     <p className="shadow-xs absolute left-0 top-[calc(100%+8px)] z-10 flex items-center justify-center gap-2 rounded-md border border-neutral-100 bg-white px-2 py-1">
       <Lightbulb className="size-3.5" />
       <span className="text-xs font-medium">Use iterable variables to access the current item in the loop, e.g.</span>
-      <VariablePill
-        variableName="current."
-        hasFilters={false}
-        className="bg-bg-weak pointer-events-none text-xs font-medium"
-      />
+      <VariablePill variableName="current." className="bg-bg-weak pointer-events-none text-xs font-medium" />
     </p>
   );
 }
