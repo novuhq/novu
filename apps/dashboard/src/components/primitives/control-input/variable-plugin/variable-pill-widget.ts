@@ -50,14 +50,14 @@ export class VariablePillWidget extends WidgetType {
 
   createPillStyles(): CSSProperties {
     return {
-      backgroundColor: 'hsl(var(--bg-white))',
+      backgroundColor: 'hsl(var(--bg-weak))',
       color: 'hsl(var(--text-sub))',
       border: '1px solid hsl(var(--stroke-soft))',
-      borderRadius: 'var(--radius)',
-      gap: '0.25rem',
-      padding: '0.125rem 0.375rem',
-      margin: '0',
-      fontFamily: 'var(--font-code)',
+      borderRadius: '0.25rem',
+      gap: '4px',
+      padding: '1px 6px',
+      marginTop: '-1px',
+      fontFamily: 'inherit',
       display: 'inline-flex',
       alignItems: 'center',
       height: '100%',

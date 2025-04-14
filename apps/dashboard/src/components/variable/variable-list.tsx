@@ -1,9 +1,9 @@
 import React, { useCallback, useImperativeHandle, useRef, useState } from 'react';
 import { CheckIcon } from '@radix-ui/react-icons';
 
+import { Code2 } from '@/components/icons/code-2';
 import { cn } from '@/utils/ui';
 import TruncatedText from '@/components/truncated-text';
-import { VariableIcon } from './components/variable-icon';
 
 const KeyboardItem = ({ children, className }: { children: React.ReactNode; className?: string }) => {
   return (
@@ -131,7 +131,7 @@ export const VariableList = React.forwardRef<VariableListRef, VariablesListProps
                 onSelect(option.value ?? '');
               }}
             >
-              <VariableIcon variableName={option.value} />
+              <Code2 className="text-feature size-3 min-w-3" />
               <TruncatedText>{option.label}</TruncatedText>
               <CheckIcon
                 className={cn('ml-auto size-4', selectedValue === option.value ? 'opacity-50' : 'opacity-0')}
