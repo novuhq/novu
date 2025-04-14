@@ -2,6 +2,7 @@ import { cn } from '@/utils/ui';
 import React, { useMemo } from 'react';
 import { VariableFrom } from '../workflow-editor/steps/email/variables/variables';
 import { VariableIcon } from './components/variable-icon';
+import { Tooltip, TooltipContent, TooltipPortal, TooltipTrigger } from '../primitives/tooltip';
 
 export const VariablePill = React.forwardRef<
   HTMLSpanElement,
@@ -14,6 +15,7 @@ export const VariablePill = React.forwardRef<
     from?: VariableFrom;
   }
 >(({ variableName, filters, issues, className, onClick }, ref) => {
+  const [isHovered, setIsHovered] = React.useState(false);
   const displayVariableName = useMemo(() => {
     if (!variableName) return '';
     const variableParts = variableName.split('.');
@@ -22,18 +24,38 @@ export const VariablePill = React.forwardRef<
   }, [variableName]);
 
   return (
-    <span
-      ref={ref}
-      onClick={onClick}
-      className={cn(
-        'bg-bg-white border-stroke-soft font-code relative m-0 box-border inline-flex h-full cursor-pointer items-center gap-[0.25em] rounded-lg border px-1.5 py-0.5 align-middle font-medium leading-[inherit] text-inherit',
-        className
-      )}
-    >
-      <VariableIcon variableName={variableName} />
-      <span className="leading-[1.2]">{displayVariableName}</span>
-      <FiltersSection filters={filters} issues={issues} />
-    </span>
+    <Tooltip open={isHovered && !!issues?.length}>
+      <TooltipTrigger asChild>
+        <span
+          ref={ref}
+          onClick={onClick}
+          className={cn(
+            'bg-bg-white border-stroke-soft font-code relative m-0 box-border inline-flex h-full cursor-pointer items-center gap-[0.25em] rounded-lg border px-1.5 py-0.5 align-middle font-medium leading-[inherit] text-inherit',
+            { 'hover:bg-error-base/2.5': !!issues?.length },
+            className
+          )}
+          onMouseLeave={() => setIsHovered(false)}
+          onMouseEnter={() => setIsHovered(true)}
+        >
+          <VariableIcon variableName={variableName} hasError={!!issues?.length} />
+          <span className="leading-[1.2]">{displayVariableName}</span>
+          <FiltersSection filters={filters} issues={issues} />
+        </span>
+      </TooltipTrigger>
+      <TooltipPortal>
+        <TooltipContent side="top" className="border-bg-soft bg-bg-weak border p-0.5 shadow-sm">
+          <div className="border-stroke-soft/70 rounded-sm border bg-white p-1">
+            <span className="text-error-base text-label-2xs">
+              {issues?.map((issue, index) => (
+                <div key={index} className="text-error">
+                  {issue.filterName} is missing a value.
+                </div>
+              ))}
+            </span>
+          </div>
+        </TooltipContent>
+      </TooltipPortal>
+    </Tooltip>
   );
 });
 

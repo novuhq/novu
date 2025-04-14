@@ -59,12 +59,14 @@ function InternalVariableView(props: InternalVariableViewProps) {
             const isRequired = paramDef.required;
             const paramValue = filterParams[index];
 
-            const isMissing = isRequired && Boolean(!paramValue || paramValue.trim() === '');
+            const isMissing =
+              isRequired &&
+              (!paramValue || paramValue.trim() === '' || paramValue.trim() === "''" || paramValue.trim() === '""');
 
             if (isMissing) {
               return {
                 param: paramDef.placeholder,
-                issue: 'Missing or empty value',
+                issue: `${paramDef.placeholder} is required`,
               };
             }
 
@@ -94,7 +96,7 @@ function InternalVariableView(props: InternalVariableViewProps) {
     };
   }, [aliasFor, fullLiquidExpression]);
 
-  console.log({ fff: filters });
+  console.log({ fff: filters, issues });
 
   return (
     <NodeViewWrapper className="react-component mly-inline-block mly-leading-none" draggable="false">

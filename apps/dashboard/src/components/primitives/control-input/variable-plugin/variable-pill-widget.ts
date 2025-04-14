@@ -26,6 +26,13 @@ export class VariablePillWidget extends WidgetType {
     };
   }
 
+  getDisplayVariableName(): string {
+    if (!this.variableName) return '';
+    const variableParts = this.variableName.split('.');
+
+    return variableParts.length >= 3 ? '..' + variableParts.slice(-2).join('.') : this.variableName;
+  }
+
   createBeforeStyles(): CSSProperties {
     return {
       width: 'calc(1em - 2px)',
@@ -87,7 +94,7 @@ export class VariablePillWidget extends WidgetType {
   toDOM() {
     const span = document.createElement('span');
     const content = document.createElement('span');
-    content.textContent = this.variableName;
+    content.textContent = this.getDisplayVariableName();
     const before = document.createElement('span');
 
     const pillStyles = this.createPillStyles();
