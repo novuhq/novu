@@ -1,8 +1,8 @@
-export const Code2: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+export const RepeatVariable: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" {...props}>
-    <g clip-path="url(#clip0_17031_167822)">
+    <g clip-path="url(#clip0_17031_103430)">
       <mask
-        id="mask0_17031_167822"
+        id="mask0_17031_103430"
         style={{ maskType: 'luminance' }}
         maskUnits="userSpaceOnUse"
         x="0"
@@ -12,7 +12,7 @@ export const Code2: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
       >
         <path d="M14 0H0V14H14V0Z" fill="white" />
       </mask>
-      <g mask="url(#mask0_17031_167822)">
+      <g mask="url(#mask0_17031_103430)">
         <path
           fill-rule="evenodd"
           clip-rule="evenodd"
@@ -38,21 +38,16 @@ export const Code2: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
           fill="#7D52F4"
         />
         <path
-          fill-rule="evenodd"
-          clip-rule="evenodd"
-          d="M5.1103 5.11422C5.32509 4.89943 5.67333 4.89943 5.88812 5.11422L8.88812 8.11422C9.10291 8.329 9.10291 8.67725 8.88812 8.89203C8.67333 9.10682 8.32509 9.10682 8.1103 8.89203L5.1103 5.89203C4.89552 5.67725 4.89552 5.329 5.1103 5.11422Z"
-          fill="#7D52F4"
-        />
-        <path
-          fill-rule="evenodd"
-          clip-rule="evenodd"
-          d="M8.88813 5.11422C8.67334 4.89943 8.3251 4.89943 8.11031 5.11422L5.11031 8.11422C4.89552 8.329 4.89552 8.67725 5.11031 8.89203C5.3251 9.10682 5.67334 9.10682 5.88813 8.89203L8.88813 5.89203C9.10291 5.67725 9.10291 5.329 8.88813 5.11422Z"
-          fill="#7D52F4"
+          d="M5 6.6403C5 5.46313 5.96313 4.5 7.1403 4.5C8.31746 4.5 9.2806 5.46313 9.2806 6.6403C9.2806 7.81746 8.31746 8.7806 7.1403 8.7806H5M5 8.7806L6.07015 9.85075M5 8.7806L6.07015 7.71045"
+          stroke="#7D52F4"
+          stroke-width="0.9"
+          stroke-linecap="round"
+          stroke-linejoin="round"
         />
       </g>
     </g>
     <defs>
-      <clipPath id="clip0_17031_167822">
+      <clipPath id="clip0_17031_103430">
         <rect width="14" height="14" fill="white" />
       </clipPath>
     </defs>

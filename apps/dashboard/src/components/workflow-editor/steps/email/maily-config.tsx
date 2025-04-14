@@ -29,8 +29,9 @@ import { ForView } from './views/for-view';
 import { createVariableView } from './views/variable-view';
 import { MailyVariablesListView } from './views/maily-variables-list-view';
 import { HTMLCodeBlockView } from './views/html-view';
-import { CalculateVariablesProps, insertVariableToEditor } from './variables/variables';
+import { CalculateVariablesProps, insertVariableToEditor, VariableFrom } from './variables/variables';
 import { IsAllowedVariable } from '@/utils/parseStepVariables';
+import { VariablePill } from '@/components/variable/variable-pill';
 
 export const VARIABLE_TRIGGER_CHARACTER = '{{';
 
@@ -125,7 +126,7 @@ export const createExtensions = (props: {
     VariableExtension.extend({
       addNodeView() {
         return ReactNodeViewRenderer(createVariableView(parsedVariables.isAllowedVariable), {
-          className: 'relative inline-block',
+          className: 'relative inline-block text-xs h-5',
           as: 'div',
         });
       },
@@ -151,6 +152,17 @@ export const createExtensions = (props: {
             isEnhancedDigestEnabled,
           });
         },
+      },
+      // variable pills in bubble menus (repeat, showIf...)
+      renderVariable: (opts) => {
+        return (
+          <VariablePill
+            variableName={opts.variable.name}
+            hasFilters={false}
+            className="h-5 text-xs"
+            from={opts.from as VariableFrom}
+          />
+        );
       },
       variables: calculateVariables as Variables,
       variableSuggestionsPopover: MailyVariablesListView,
