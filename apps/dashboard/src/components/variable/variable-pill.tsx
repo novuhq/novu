@@ -28,7 +28,7 @@ export const VariablePill = React.forwardRef<
       ref={ref}
       onClick={onClick}
       className={cn(
-        'bg-bg-white text-text-sub border-stroke-soft font-code relative m-0 box-border inline-flex h-full cursor-pointer items-center gap-[0.25em] rounded-lg border px-1.5 py-0.5 align-middle font-medium leading-[inherit] text-inherit',
+        'bg-bg-white border-stroke-soft font-code relative m-0 box-border inline-flex h-full cursor-pointer items-center gap-[0.25em] rounded-lg border px-1.5 py-0.5 align-middle font-medium leading-[inherit] text-inherit',
         className
       )}
     >

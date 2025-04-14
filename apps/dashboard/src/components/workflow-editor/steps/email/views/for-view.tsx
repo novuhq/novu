@@ -4,7 +4,7 @@ import { VariablePill } from '@/components/variable/variable-pill';
 
 function TooltipContent() {
   return (
-    <p className="shadow-xs absolute left-0 top-[calc(100%+8px)] flex items-center justify-center gap-2 rounded-md border border-neutral-100 bg-white px-2 py-1">
+    <p className="shadow-xs absolute left-0 top-[calc(100%+8px)] z-10 flex items-center justify-center gap-2 rounded-md border border-neutral-100 bg-white px-2 py-1">
       <Lightbulb className="size-3.5" />
       <span className="text-xs font-medium">Use iterable variables to access the current item in the loop, e.g.</span>
       <VariablePill
@@ -32,14 +32,11 @@ export function ForView(props: NodeViewProps) {
   const isOnEmptyForNodeLine = isOnEmptyLine(editor, cursorPos) && isCursorInForNode;
 
   function isOnEmptyLine(editor: Editor, cursorPos: number) {
-    const currentLineContent = editor.state.doc
-      .textBetween(
-        Math.max(0, editor.state.doc.resolve(cursorPos).start()),
-        Math.min(editor.state.doc.content.size, editor.state.doc.resolve(cursorPos).end())
-      )
-      .trim();
+    const $pos = editor.state.doc.resolve(cursorPos);
+    const node = $pos.parent;
+    const hasContent = node.content.size > 0;
 
-    return currentLineContent === '';
+    return !hasContent;
   }
 
   return (
