@@ -148,6 +148,11 @@ jobs:
             IFS=','; echo "${nr[*]}"
           )]"
 
+          if service_matrix == "{\"service\": []}"; then
+            echo "No services selected. Exiting."
+            exit 1
+          fi
+
           echo "env_matrix=$env_matrix" >> $GITHUB_OUTPUT
           echo "service_matrix=$service_matrix" >> $GITHUB_OUTPUT
           echo "deploy_matrix=$deploy_matrix" >> $GITHUB_OUTPUT
@@ -155,7 +160,6 @@ jobs:
 
   build:
     needs: prepare-matrix
-    if: ${{ fromJson(needs.prepare-matrix.outputs.service_matrix).service != '[]' }}
     timeout-minutes: 60
     runs-on: ubuntu-latest
     environment: ${{ fromJson(needs.prepare-matrix.outputs.env_matrix).environment[0] }}
