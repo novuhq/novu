@@ -23,6 +23,5 @@ export type FilterWithParam = {
 
 export type VariablePopoverProps = {
   variable?: LiquidVariable;
-  onUpdate: (newValue: string) => void;
   onEscapeKeyDown?: (event: KeyboardEvent) => void;
 };

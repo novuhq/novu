@@ -3,8 +3,7 @@ import { Variable } from '@maily-to/core/extensions';
 
 import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
 import type { Editor, Range, Editor as TiptapEditor } from '@tiptap/core';
-import { VARIABLE_REGEX_STRING } from '@/components/primitives/control-input/variable-plugin';
-import { parseVariable } from '@/components/primitives/control-input/variable-plugin/utils';
+import { parseVariable } from '@/utils/liquid';
 
 export const REPEAT_BLOCK_ITERABLE_ALIAS = 'current';
 
@@ -85,12 +84,10 @@ export const insertVariableToEditor = ({
 
   const queryWithoutSuffix = query.replace(/}+$/, '');
   const queryWithPrefixAndSuffix = '{{' + queryWithoutSuffix + '}}';
-  const regex = new RegExp(VARIABLE_REGEX_STRING, 'g');
-  const match = regex.exec(queryWithPrefixAndSuffix);
-  const { name } = parseVariable(match!);
+  const parsedVariable = parseVariable(queryWithPrefixAndSuffix);
 
   const aliasFor = resolveRepeatBlockAlias(queryWithoutSuffix, editor, isEnhancedDigestEnabled);
-  const variable: LiquidVariable = { name: name, aliasFor };
+  const variable: LiquidVariable = { name: parsedVariable?.name ?? '', aliasFor };
 
   if (!isAllowedVariable(variable)) return;
 
@@ -216,7 +213,8 @@ export const calculateVariables = ({
 };
 
 export function isAllowedAlias(variableName: string): boolean {
-  const nameRoot = variableName.split('.')[0];
+  const [variablePart] = variableName.split('|');
+  const nameRoot = variablePart.split('.')[0];
 
   return ALLOWED_ALIASES.includes(nameRoot);
 }
@@ -228,10 +226,18 @@ export const resolveRepeatBlockAlias = (
 ): string | null => {
   if (!isEnhancedDigestEnabled) return null;
 
-  const variableRoot = variable.split('.')[0];
+  // Extract the root of the variable name (before any dots)
+  const parsedVariable = parseVariable(variable);
+  if (!parsedVariable) return null;
 
-  if (isAllowedAlias(variableRoot) && isInsideRepeatBlock(editor)) {
-    return variable.replace(variableRoot, editor.getAttributes('repeat')?.each);
+  const { nameRoot, name, filters } = parsedVariable;
+
+  if (isAllowedAlias(nameRoot) && isInsideRepeatBlock(editor)) {
+    // Replace only the variable name part, keeping the filters separate
+    const replacedVariable = name.replace(nameRoot, editor.getAttributes('repeat')?.each);
+
+    // Return the replaced variable with filters appended
+    return replacedVariable + filters;
   }
 
   return null;

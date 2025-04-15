@@ -1,9 +1,10 @@
 import { IsAllowedVariable } from '@/utils/parseStepVariables';
 import { Decoration, DecorationSet, EditorView, Range } from '@uiw/react-codemirror';
 import { MutableRefObject } from 'react';
-import { VARIABLE_REGEX_STRING } from './';
-import { isTypingVariable, parseVariable } from './utils';
+import { isTypingVariable } from './utils';
 import { VariablePillWidget } from './variable-pill-widget';
+import { parseVariable } from '@/utils/liquid';
+import { VARIABLE_REGEX_STRING } from '@/utils/liquid';
 
 export class VariablePluginView {
   decorations: DecorationSet;
@@ -48,7 +49,13 @@ export class VariablePluginView {
 
     // Iterate through all variable matches in the content and add the pills
     while ((match = regex.exec(content)) !== null) {
-      const { fullLiquidExpression, name, start, end, filters } = parseVariable(match);
+      const parsedVariable = parseVariable(match[0]);
+
+      if (!parsedVariable) {
+        continue;
+      }
+
+      const { fullLiquidExpression, name, start, end, filtersArray } = parsedVariable;
 
       // Skip creating pills for variables that are currently being edited
       // This allows users to modify variables without the pill getting in the way

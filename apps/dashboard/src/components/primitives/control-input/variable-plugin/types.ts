@@ -9,11 +9,3 @@ export type PluginState = {
   isAllowedVariable: IsAllowedVariable;
   isEnhancedDigestEnabled: boolean;
 };
-
-export type VariableMatch = {
-  fullLiquidExpression: string;
-  name: string;
-  start: number;
-  end: number;
-  filters: string[];
-};

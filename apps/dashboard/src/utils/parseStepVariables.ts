@@ -114,10 +114,10 @@ export function parseStepVariables(
 
         if (!isNaN(num)) {
           if (num < 0) return null;
-          return num.toString();
+          return num.toString().trim();
         }
 
-        return part;
+        return part.trim();
       });
 
     return parts.includes(null) ? null : (parts as string[]);
@@ -131,7 +131,8 @@ export function parseStepVariables(
       return false;
     }
 
-    const path = variable.aliasFor || variable.name;
+    const pathWithFilters = variable.aliasFor || variable.name;
+    const [path] = pathWithFilters.split('|');
 
     if (result.primitives.some((primitive) => primitive.name === path)) {
       return true;

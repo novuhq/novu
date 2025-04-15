@@ -68,10 +68,15 @@ function InternalVariableView(props: InternalVariableViewProps) {
         isAllowedVariable={isAllowedVariable}
         onUpdate={(newValue) => {
           const { fullLiquidExpression } = parseVariableCallback(newValue, isEnhancedDigestEnabled);
-          updateAttributes({
-            id: fullLiquidExpression,
-            aliasFor: resolveRepeatBlockAlias(fullLiquidExpression, editor, isEnhancedDigestEnabled),
-          });
+          const aliasFor = resolveRepeatBlockAlias(fullLiquidExpression, editor, isEnhancedDigestEnabled);
+
+          if (fullLiquidExpression) {
+            updateAttributes({
+              id: fullLiquidExpression,
+              aliasFor,
+            });
+          }
+
           setVariableValue(newValue);
           // Focus back to the editor after updating the variable
           editor.view.focus();
