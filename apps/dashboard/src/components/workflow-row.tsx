@@ -1,5 +1,4 @@
 import { PAUSE_MODAL_TITLE, PauseModalDescription } from '@/components/pause-workflow-dialog';
-import { Badge } from '@/components/primitives/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,6 +29,7 @@ import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { IEnvironment, WorkflowListResponseDto } from '@novu/shared';
 import { ComponentProps, useState } from 'react';
+import { CgBolt } from 'react-icons/cg';
 import { FaCode } from 'react-icons/fa6';
 import {
   RiDeleteBin2Line,
@@ -39,6 +39,7 @@ import {
   RiPauseCircleLine,
   RiPlayCircleLine,
   RiPulseFill,
+  RiRouteFill,
 } from 'react-icons/ri';
 
 import { FilesIcon } from 'lucide-react';
@@ -198,25 +199,29 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
   return (
     <>
       <TableRow key={workflow._id} className="group relative isolate cursor-pointer" onClick={handleRowClick}>
-        <WorkflowLinkTableCell className="font-medium">
-          <div className="flex items-center gap-1">
-            {workflow.origin === WorkflowOriginEnum.EXTERNAL && (
-              <Badge color="yellow" size="sm" variant="lighter">
-                <FaCode className="size-3" />
-              </Badge>
-            )}
-            <TruncatedText className="max-w-[32ch]">{workflow.name}</TruncatedText>
-          </div>
-          <div className="flex items-center gap-1 transition-opacity duration-200">
-            <TruncatedText className="text-foreground-400 font-code block max-w-[40ch] text-xs">
-              {workflow.workflowId}
-            </TruncatedText>
+        <WorkflowLinkTableCell className="flex items-center gap-2 font-medium">
+          {workflow.origin === WorkflowOriginEnum.EXTERNAL ? (
+            <FaCode className="text-warning size-4" />
+          ) : workflow.origin === WorkflowOriginEnum.NOVU_CLOUD_V1 ? (
+            <CgBolt className="text-feature size-4" />
+          ) : (
+            <RiRouteFill className="text-feature size-4" />
+          )}
+          <div>
+            <div className="flex items-center gap-1">
+              <TruncatedText className="max-w-[32ch]">{workflow.name}</TruncatedText>
+            </div>
+            <div className="flex items-center gap-1 transition-opacity duration-200">
+              <TruncatedText className="text-foreground-400 font-code block max-w-[40ch] text-xs">
+                {workflow.workflowId}
+              </TruncatedText>
 
-            <CopyButton
-              className="z-10 flex size-2 p-0 px-1 opacity-0 group-hover:opacity-100"
-              valueToCopy={workflow.workflowId}
-              size="2xs"
-            />
+              <CopyButton
+                className="z-10 flex size-2 p-0 px-1 opacity-0 group-hover:opacity-100"
+                valueToCopy={workflow.workflowId}
+                size="2xs"
+              />
+            </div>
           </div>
         </WorkflowLinkTableCell>
         <WorkflowLinkTableCell className="min-w-[200px]">
@@ -234,13 +239,6 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
             {formatDateSimple(workflow.updatedAt)}
           </TimeDisplayHoverCard>
         </WorkflowLinkTableCell>
-        {/* <WorkflowLinkTableCell  className="text-foreground-600 text-sm font-medium">
-        {workflow.lastTriggeredAt ? (
-          <TimeDisplayHoverCard date={workflow.lastTriggeredAt}>
-            {formatDateSimple(workflow.lastTriggeredAt)}
-          </TimeDisplayHoverCard>
-        ) : null}
-      </WorkflowLinkTableCell> */}
 
         <WorkflowLinkTableCell className="w-1">
           <DropdownMenu>
@@ -250,7 +248,7 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
                 variant="ghost"
                 className="z-10 h-8 w-8 p-0"
                 data-testid="workflow-actions-menu"
-              ></CompactButton>
+              />
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56" onClick={stopPropagation}>
               <DropdownMenuGroup>

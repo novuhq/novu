@@ -11,8 +11,12 @@ type ParsedVariable = {
   parsedFilters: FilterWithParam[];
 };
 
-export function useVariableParser(variable: string): {
+export function useVariableParser(
+  variable: string,
+  aliasFor?: string
+): {
   parsedName: string;
+  parsedAliasForRoot: string;
   parsedDefaultValue: string;
   parsedFilters: FilterWithParam[];
   originalVariable: string;
@@ -22,7 +26,13 @@ export function useVariableParser(variable: string): {
 
   const parseResult = useMemo(() => {
     if (!variable) {
-      return { parsedName: '', parsedDefaultValue: '', parsedFilters: [], originalVariable: '' };
+      return {
+        parsedName: '',
+        parsedAliasForRoot: '',
+        parsedDefaultValue: '',
+        parsedFilters: [],
+        originalVariable: '',
+      };
     }
 
     try {
@@ -33,17 +43,40 @@ export function useVariableParser(variable: string): {
         parsedFilters = [],
       } = parseVariableContent(cleanVariable, isEnhancedDigestEnabled);
 
+      if (aliasFor) {
+        const variableRest = variable.split('.').slice(1).join('.');
+        const normalizedVariableRest = variableRest.startsWith('.') ? variableRest.substring(1) : variableRest;
+        const parsedAliasForRoot = normalizedVariableRest
+          ? aliasFor.replace(`.${normalizedVariableRest}`, '')
+          : aliasFor;
+
+        return {
+          parsedName,
+          parsedAliasForRoot,
+          parsedDefaultValue,
+          parsedFilters,
+          originalVariable: variable,
+        };
+      }
+
       return {
         parsedName,
+        parsedAliasForRoot: '',
         parsedDefaultValue,
         parsedFilters,
         originalVariable: variable,
       };
     } catch (error) {
       console.error('Error parsing variable:', error);
-      return { parsedName: '', parsedDefaultValue: '', parsedFilters: [], originalVariable: variable };
+      return {
+        parsedName: '',
+        parsedAliasForRoot: '',
+        parsedDefaultValue: '',
+        parsedFilters: [],
+        originalVariable: variable,
+      };
     }
-  }, [variable]);
+  }, [variable, aliasFor, isEnhancedDigestEnabled]);
 
   const parseRawInput = useCallback(
     (value: string) => parseRawLiquid(value, isEnhancedDigestEnabled),

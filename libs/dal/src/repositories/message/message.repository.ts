@@ -1,5 +1,4 @@
-import { SoftDeleteModel } from 'mongoose-delete';
-import { FilterQuery, Types } from 'mongoose';
+import { FilterQuery, QueryWithHelpers, Types, UpdateQuery } from 'mongoose';
 import {
   ActorTypeEnum,
   ButtonTypeEnum,
@@ -27,11 +26,9 @@ const getFlatObject = (obj: object) => {
 };
 
 export class MessageRepository extends BaseRepository<MessageDBModel, MessageEntity, EnforceEnvId> {
-  private message: SoftDeleteModel;
   private feedRepository = new FeedRepository();
   constructor() {
     super(Message, MessageEntity);
-    this.message = Message;
   }
 
   private async getFilterQueryForMessage(
@@ -45,7 +42,10 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       read?: boolean;
       archived?: boolean;
       payload?: object;
-    } = {}
+    } = {},
+    createdAt?: {
+      $gte: Date;
+    }
   ): Promise<MessageQuery & EnforceEnvId> {
     let requestQuery: MessageQuery & EnforceEnvId = {
       _environmentId: environmentId,
@@ -94,6 +94,10 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       requestQuery.archived = { $in: [true, false] };
     }
 
+    if (createdAt != null) {
+      requestQuery.createdAt = createdAt;
+    }
+
     if (query.payload) {
       requestQuery = {
         ...requestQuery,
@@ -102,6 +106,14 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     }
 
     return requestQuery;
+  }
+
+  /**
+   * if aggregation is needed, make sure to filter with {deleted: { $ne: true }}.
+   * todo: aggregate method should be implemented after all the soft deletes are removed task nv-5688
+   */
+  async aggregate(query: any[], options: { readPreference?: 'secondaryPreferred' | 'primary' } = {}): Promise<any> {
+    throw new Error('Not implemented');
   }
 
   async findBySubscriberChannel(
@@ -204,16 +216,25 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       archived?: boolean;
       payload?: object;
     } = {},
-    options: { limit: number; skip?: number } = { limit: 100, skip: 0 }
+    options: { limit: number; skip?: number } = { limit: 100, skip: 0 },
+    createdAt?: {
+      $gte: Date;
+    }
   ) {
-    const requestQuery = await this.getFilterQueryForMessage(environmentId, subscriberId, channel, {
-      feedId: query.feedId,
-      seen: query.seen,
-      tags: query.tags,
-      read: query.read,
-      archived: query.archived,
-      payload: query.payload,
-    });
+    const requestQuery = await this.getFilterQueryForMessage(
+      environmentId,
+      subscriberId,
+      channel,
+      {
+        feedId: query.feedId,
+        seen: query.seen,
+        tags: query.tags,
+        read: query.read,
+        archived: query.archived,
+        payload: query.payload,
+      },
+      createdAt
+    );
 
     return this.MongooseModel.countDocuments(requestQuery, options).read('secondaryPreferred');
   }
@@ -640,28 +661,6 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     );
   }
 
-  async delete(query: MessageQuery) {
-    return await this.message.delete({ _id: query._id, _environmentId: query._environmentId });
-  }
-
-  async deleteMany(query: MessageQuery) {
-    try {
-      return await this.message.delete({ ...query, deleted: false });
-    } catch (e: unknown) {
-      if (e instanceof Error) {
-        throw new DalException(e.message);
-      } else {
-        throw new DalException('An unknown error occurred');
-      }
-    }
-  }
-
-  async findDeleted(query: MessageQuery): Promise<MessageEntity> {
-    const res: MessageEntity = await this.message.findDeleted(query);
-
-    return this.mapEntity(res);
-  }
-
   async findMessageById(query: { _id: string; _environmentId: string }): Promise<MessageEntity | null> {
     const res = await this.MongooseModel.findOne({ _id: query._id, _environmentId: query._environmentId })
       .populate('subscriber')
@@ -718,7 +717,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     if (query.transactionId) {
       filterQuery.transactionId = { $in: query.transactionId };
     }
-    const data = await this.MongooseModel.find(query, select, {
+    const data = await this.MongooseModel.find(filterQuery, select, {
       sort: options?.sort,
       limit: options?.limit,
       skip: options?.skip,

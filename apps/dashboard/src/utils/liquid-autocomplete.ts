@@ -108,8 +108,12 @@ export const completions =
         to: pos,
         options:
           matchingVariables.length > 0
-            ? matchingVariables.map((v) => createCompletionOption(v.name, 'variable'))
-            : variables.map((v) => createCompletionOption(v.name, 'variable')),
+            ? matchingVariables.map((v) =>
+                createCompletionOption(v.name, v.type ?? 'variable', v.boost, v.info, v.displayLabel)
+              )
+            : variables.map((v) =>
+                createCompletionOption(v.name, v.type ?? 'variable', v.boost, v.info, v.displayLabel)
+              ),
       };
     }
 
@@ -129,8 +133,14 @@ function getContentAfterPipe(content: string): string | null {
   return content.slice(pipeIndex + 1).trimStart();
 }
 
-function createCompletionOption(label: string, type: string, boost?: number): CompletionOption {
-  return { label, type, ...(boost && { boost }) };
+function createCompletionOption(
+  label: string,
+  type: string,
+  boost?: number,
+  info?: Completion['info'],
+  displayLabel?: Completion['displayLabel']
+): CompletionOption {
+  return { label, type, ...(boost && { boost }), ...(info && { info }), ...(displayLabel && { displayLabel }) };
 }
 
 function getFilterCompletions(afterPipe: string, isEnhancedDigestEnabled: boolean): CompletionOption[] {
@@ -226,6 +236,7 @@ export function createAutocompleteSource(variables: LiquidVariable[], isEnhanced
         ...option,
         apply: (view: EditorView, completion: Completion, from: number, to: number) => {
           const selectedValue = completion.label;
+
           const content = view.state.doc.toString();
           const beforeCursor = content.slice(0, from);
           const afterCursor = content.slice(to);

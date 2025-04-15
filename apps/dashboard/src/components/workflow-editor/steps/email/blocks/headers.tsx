@@ -156,7 +156,7 @@ export const createHeaderLogoWithCoverImage: (props: { track: ReturnType<typeof 
     description: 'Header with logo & cover image',
     searchTerms: ['logo', 'cover', 'image'],
     icon: <EmailHeaderLogoWithCoverImage className="size-4" />,
-    preview: '/images/email-editor/header-logo-with-cover-image-preview.png',
+    preview: '/images/email-editor/header-logo-with-cover-image-preview.webp',
     command: ({ editor, range }) => {
       track(TelemetryEvent.EMAIL_BLOCK_ADDED, {
         type: 'header',
@@ -178,7 +178,7 @@ export const createHeaderLogoWithCoverImage: (props: { track: ReturnType<typeof 
             {
               type: 'image',
               attrs: {
-                src: 'https://prod-novu-app-bucket.s3.us-east-1.amazonaws.com/assets/email-editor/header-hero-image.png',
+                src: 'https://prod-novu-app-bucket.s3.us-east-1.amazonaws.com/assets/email-editor/header-hero-image.webp',
                 alt: null,
                 title: null,
                 alignment: 'center',
@@ -262,7 +262,7 @@ export const createHeaders = (props: { track: ReturnType<typeof useTelemetry> })
     description: 'Add a pre-made header block.',
     searchTerms: ['header', 'headers'],
     icon: <EmailHeader className="size-4" />,
-    preview: '/images/email-editor/header-logo-with-cover-image-preview.png',
+    preview: '/images/email-editor/header-logo-with-cover-image-preview.webp',
     commands: [
       createHeaderLogoWithCoverImage({ track }),
       createHeaderCenteredLogoWithBorder({ track }),

@@ -4,8 +4,6 @@ import mongoose, { Schema } from 'mongoose';
 import { schemaOptions } from '../schema-default.options';
 import { MessageDBModel } from './message.entity';
 
-const mongooseDelete = require('mongoose-delete');
-
 const messageSchema = new Schema<MessageDBModel>(
   {
     _templateId: {
@@ -121,6 +119,25 @@ const messageSchema = new Schema<MessageDBModel>(
   schemaOptions
 );
 
+/**
+ * todo: all the pre hooks should be removed after all the soft deletes are removed task nv-5688
+ */
+messageSchema.pre('find', function filterDeletedFind() {
+  this.where({ deleted: { $ne: true } });
+});
+messageSchema.pre('findOne', function filterDeletedFindOne() {
+  this.where({ deleted: { $ne: true } });
+});
+messageSchema.pre('findOneAndUpdate', function filterDeletedFindOneAndUpdate() {
+  this.where({ deleted: { $ne: true } });
+});
+messageSchema.pre('countDocuments', function filterDeletedCountDocuments() {
+  this.where({ deleted: { $ne: true } });
+});
+messageSchema.pre('count', function filterDeletedCount() {
+  this.where({ deleted: { $ne: true } });
+});
+
 messageSchema.virtual('subscriber', {
   ref: 'Subscriber',
   localField: '_subscriberId',
@@ -140,24 +157,6 @@ messageSchema.virtual('actorSubscriber', {
   localField: '_actorId',
   foreignField: '_id',
   justOne: true,
-});
-
-messageSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, overrideMethods: 'all' });
-
-/*
- * This index was initially created to optimize:
- *
- * Path : apps/webhook/src/webhooks/usecases/webhook/webhook.usecase.ts
- * Context : parseEvent()
- *  Query : findOne({
- *    identifier: messageIdentifier,
- *    _environmentId: command.environmentId,
- *    _organizationId: command.organizationId,
- *  });
- */
-messageSchema.index({
-  identifier: 1,
-  _environmentId: 1,
 });
 
 /*
@@ -245,7 +244,7 @@ messageSchema.index({
  * });
  *
  *
- * Path: apps/api/src/app/events/usecases/message-matcher/message-matcher.usecase.ts
+ * Path: libs/application-generic/src/usecases/conditions-filter/conditions-filter.usecase.ts
  * Context: processPreviousStep
  * Query: findOne({
  *   _jobId: job._id,
@@ -293,6 +292,9 @@ messageSchema.index({
  */
 messageSchema.index({ createdAt: 1 });
 
+/**
+ * todo: remove deleted field after all the soft deletes are removed task nv-5688
+ */
 messageSchema.index({ _environmentId: 1, _jobId: 1, deleted: 1 });
 
 export const Message =
