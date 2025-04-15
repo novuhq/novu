@@ -13,7 +13,7 @@ const createHorizontalCardWithCta: (props: { track: ReturnType<typeof useTelemet
     title: 'Horizontal card with image',
     description: 'Card: Horizontal information card with CTA',
     searchTerms: ['logo', 'text', 'image', 'horizontal', 'card'],
-    preview: '/images/email-editor/horizontal-card-with-image-preview.png',
+    preview: '/images/email-editor/horizontal-card-with-image-preview.webp',
     icon: <HorizontalCardWithImage className="size-4" />,
     command: ({ editor, range }) => {
       track(TelemetryEvent.EMAIL_BLOCK_ADDED, {
@@ -111,7 +111,7 @@ const createCardWithImageAndCta: (props: { track: ReturnType<typeof useTelemetry
     description: 'Card with paragraph, CTA & image',
     searchTerms: ['card', 'cta', 'image', 'paragraph'],
     icon: <ParagraphWithImage className="size-4" />,
-    preview: '/images/email-editor/paragraph-with-image-preview.png',
+    preview: '/images/email-editor/paragraph-with-image-preview.webp',
     command: ({ editor, range }) => {
       track(TelemetryEvent.EMAIL_BLOCK_ADDED, {
         type: 'header',
@@ -227,7 +227,7 @@ const createInformationCardWithLogo: (props: { track: ReturnType<typeof useTelem
     title: 'Information card with logo',
     description: 'Card: information card with logo',
     searchTerms: ['logo', 'text', 'information', 'card'],
-    preview: '/images/email-editor/information-card-with-logo-preview.png',
+    preview: '/images/email-editor/information-card-with-logo-preview.webp',
     icon: <InformationCardWithLogo className="size-4" />,
     command: ({ editor, range }) => {
       track(TelemetryEvent.EMAIL_BLOCK_ADDED, {
@@ -337,7 +337,7 @@ export const createCards = (props: { track: ReturnType<typeof useTelemetry> }) =
     description: 'Add a pre-made cards',
     searchTerms: ['card', 'cards'],
     icon: <CardBlocks className="size-4" />,
-    preview: '/images/email-editor/horizontal-card-with-image-preview.png',
+    preview: '/images/email-editor/horizontal-card-with-image-preview.webp',
     commands: [
       createCardWithImageAndCta({ track }),
       createHorizontalCardWithCta({ track }),
