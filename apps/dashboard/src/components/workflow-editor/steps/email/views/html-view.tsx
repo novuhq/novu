@@ -40,8 +40,8 @@ const EMAIL_RESET_MARGIN_STYLES = `
 
 function CodeView() {
   return (
-    <div className="rounded-[10px] border border-solid p-[2px]">
-      <pre className="mly-text-black font-code my-0 rounded-lg border border-dashed border-gray-300 bg-white p-2 text-xs leading-[18px]">
+    <div className="mx-[-0.5rem] rounded-md border p-[2px]">
+      <pre className="mly-text-black font-code my-0 rounded-md border border-dashed border-gray-300 bg-white p-2 text-xs leading-[18px]">
         <NodeViewContent as="code" className={'is-editable language-html'} />
       </pre>
     </div>
@@ -91,7 +91,8 @@ function PreviewView(props: { node: NodeViewRendererProps['node']; onClick: () =
     <div className="group relative cursor-pointer" onClick={onClick}>
       <div
         className={cn(
-          'min-h-[42px] rounded-[10px] border border-transparent group-hover:border-[#C1DDFB]',
+          'mx-[-0.5rem] min-h-[42px] rounded-md border px-2',
+          'border-transparent group-hover:border-[#E4E4E7]',
           'flex flex-col justify-center'
         )}
         contentEditable={false}
@@ -103,8 +104,9 @@ function PreviewView(props: { node: NodeViewRendererProps['node']; onClick: () =
           }
         }}
       />
-      <div className="absolute -right-[3px] -top-[5px] hidden items-center rounded-lg border border-solid bg-white p-1 shadow-[0px_1px_2px_0px_rgba(10,13,20,0.03)] group-hover:flex">
-        <RiCodeBlock className="h-4 w-4 text-gray-600" />
+      <div className="border-soft-100 absolute right-[-10px] top-[-3px] hidden cursor-grab items-center justify-center gap-[2px] rounded border bg-white px-1 py-[2px] group-hover:flex">
+        <RiCodeBlock className="size-2.5 flex-shrink-0" />
+        <span className="text-2xs font-medium leading-[1]">html</span>
       </div>
     </div>
   );

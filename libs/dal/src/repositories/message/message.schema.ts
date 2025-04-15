@@ -162,22 +162,6 @@ messageSchema.virtual('actorSubscriber', {
 /*
  * This index was initially created to optimize:
  *
- * Path : apps/webhook/src/webhooks/usecases/webhook/webhook.usecase.ts
- * Context : parseEvent()
- *  Query : findOne({
- *    identifier: messageIdentifier,
- *    _environmentId: command.environmentId,
- *    _organizationId: command.organizationId,
- *  });
- */
-messageSchema.index({
-  identifier: 1,
-  _environmentId: 1,
-});
-
-/*
- * This index was initially created to optimize:
- *
  * Path : libs/dal/src/repositories/message/message.repository.ts
  * Context : findBySubscriberChannel()
  * Query : find({
@@ -226,8 +210,9 @@ messageSchema.index({
   _subscriberId: 1,
   _environmentId: 1,
   channel: 1,
-  seen: 1,
   read: 1,
+  archived: 1,
+  seen: 1,
   createdAt: -1,
 });
 
@@ -259,7 +244,7 @@ messageSchema.index({
  * });
  *
  *
- * Path: apps/api/src/app/events/usecases/message-matcher/message-matcher.usecase.ts
+ * Path: libs/application-generic/src/usecases/conditions-filter/conditions-filter.usecase.ts
  * Context: processPreviousStep
  * Query: findOne({
  *   _jobId: job._id,

@@ -10,8 +10,8 @@ const subjectKey = 'subject';
 
 export const EmailSubject = () => {
   const { control, getValues } = useFormContext();
-  const { step } = useWorkflow();
-  const { variables, isAllowedVariable } = useParseVariables(step?.variables);
+  const { step, digestStepBeforeCurrent } = useWorkflow();
+  const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.stepId);
 
   return (
     <FormField
@@ -34,7 +34,7 @@ export const EmailSubject = () => {
                 onChange={(val) => field.onChange(val)}
               />
             </FormControl>
-            <FormMessage>
+            <FormMessage className="mb-2">
               {containsHTMLEntities(field.value) &&
                 !getValues('disableOutputSanitization') &&
                 'HTML entities detected. Consider disabling content sanitization for proper rendering'}

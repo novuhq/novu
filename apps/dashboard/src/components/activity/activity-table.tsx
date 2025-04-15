@@ -22,6 +22,7 @@ export interface ActivityTableProps {
   filters?: ActivityFilters;
   hasActiveFilters: boolean;
   onClearFilters: () => void;
+  isLoading?: boolean;
 }
 
 export function ActivityTable({
@@ -81,7 +82,7 @@ export function ActivityTable({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="flex min-h-full flex-1 flex-col"
+          className="flex flex-col"
         >
           <Table
             isLoading={isLoading}

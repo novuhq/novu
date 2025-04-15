@@ -1,8 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { AnalyticsService, buildFeedKey, CachedQuery } from '@novu/application-generic';
 import { ChannelTypeEnum, MessageRepository } from '@novu/dal';
 
-import { ApiException } from '../../../shared/exceptions/api.exception';
 import { GetSubscriber } from '../../../subscribers/usecases/get-subscriber';
 import type { GetNotificationsResponseDto } from '../../dtos/get-notifications-response.dto';
 import { AnalyticsEventsEnum } from '../../utils';
@@ -33,11 +32,11 @@ export class GetNotifications {
     });
 
     if (!subscriber) {
-      throw new ApiException(`Subscriber with id: ${command.subscriberId} is not found.`);
+      throw new BadRequestException(`Subscriber with id: ${command.subscriberId} is not found.`);
     }
 
     if (command.read === false && command.archived === true) {
-      throw new ApiException('Filtering for unread and archived notifications is not supported.');
+      throw new BadRequestException('Filtering for unread and archived notifications is not supported.');
     }
 
     const { data: feed, hasMore } = await this.messageRepository.paginate(

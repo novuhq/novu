@@ -1,5 +1,6 @@
 import { execSync } from 'child_process';
 import { compress } from 'esbuild-plugin-compress';
+import inlineImportPlugin from 'esbuild-plugin-inline-import';
 import { solidPlugin } from 'esbuild-plugin-solid';
 import fs from 'fs';
 import path from 'path';
@@ -40,7 +41,17 @@ const baseConfig: Options = {
   splitting: true,
   sourcemap: false,
   clean: true,
-  esbuildPlugins: [solidPlugin()],
+  esbuildPlugins: [
+    inlineImportPlugin({
+      filter: /^directcss:/,
+      transform: async (contents, args) => {
+        const processedCss = processCSS(contents, args.path);
+
+        return processedCss;
+      },
+    }),
+    solidPlugin(),
+  ],
 };
 
 const baseModuleConfig: Options = {

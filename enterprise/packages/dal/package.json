@@ -20,7 +20,7 @@
   "dependencies": {
     "@novu/dal": "workspace:*",
     "@novu/shared": "workspace:*",
-    "mongoose": "^7.5.0",
+    "mongoose": "^7.8.4",
     "mongoose-delete": "^1.0.1",
     "rimraf": "^3.0.2"
   },

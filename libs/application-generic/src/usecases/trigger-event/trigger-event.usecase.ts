@@ -19,7 +19,7 @@ import {
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import { PinoLogger } from '../../logging';
 import { AnalyticsService } from '../../services/analytics.service';
-import { ApiException } from '../../utils/exceptions';
+import { BadRequestException } from '@nestjs/common';
 import { ProcessTenant, ProcessTenantCommand } from '../process-tenant';
 import { TriggerBroadcastCommand } from '../trigger-broadcast/trigger-broadcast.command';
 import { TriggerBroadcast } from '../trigger-broadcast/trigger-broadcast.usecase';
@@ -63,7 +63,7 @@ export class TriggerEvent {
       });
 
       if (!environment) {
-        throw new ApiException('Environment not found');
+        throw new BadRequestException('Environment not found');
       }
 
       this.logger.assign({
@@ -95,7 +95,7 @@ export class TriggerEvent {
       }
 
       if (!storedWorkflow && !command.bridgeWorkflow) {
-        throw new ApiException('Notification template could not be found');
+        throw new BadRequestException('Notification template could not be found');
       }
 
       if (mappedCommand.tenant) {
@@ -250,7 +250,7 @@ export class TriggerEvent {
     )) as Pick<JobEntity, '_id'>;
 
     if (found) {
-      throw new ApiException(
+      throw new BadRequestException(
         'transactionId property is not unique, please make sure all triggers have a unique transactionId'
       );
     }

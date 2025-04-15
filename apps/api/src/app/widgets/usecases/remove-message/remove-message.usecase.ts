@@ -1,5 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
 import { DalException, MessageRepository, SubscriberRepository, SubscriberEntity } from '@novu/dal';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import {
   WebSocketsQueueService,
   AnalyticsService,
@@ -10,7 +10,6 @@ import {
 import { WebSocketEventEnum } from '@novu/shared';
 
 import { RemoveMessageCommand } from './remove-message.command';
-import { ApiException } from '../../../shared/exceptions/api.exception';
 import { MarkEnum } from '../mark-message-as/mark-message-as.command';
 
 @Injectable()
@@ -57,7 +56,7 @@ export class RemoveMessage {
       }
     } catch (e) {
       if (e instanceof DalException) {
-        throw new ApiException(e.message);
+        throw new BadRequestException(e.message);
       }
       throw e;
     }

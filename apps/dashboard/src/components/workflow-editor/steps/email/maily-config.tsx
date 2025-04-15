@@ -21,15 +21,23 @@ import {
   spacer,
   text,
 } from '@maily-to/core/blocks';
-import { HTMLCodeBlockExtension, Variables } from '@maily-to/core/extensions';
-import { getVariableSuggestions } from '@maily-to/core/extensions';
-import { RepeatExtension, VariableExtension } from '@maily-to/core/extensions';
+import {
+  getVariableSuggestions,
+  HTMLCodeBlockExtension,
+  RepeatExtension,
+  VariableExtension,
+  Variables,
+} from '@maily-to/core/extensions';
 import { ReactNodeViewRenderer } from '@tiptap/react';
 import { ForView } from './views/for-view';
 import { createVariableView } from './views/variable-view';
 import { MailyVariablesListView } from './views/maily-variables-list-view';
 import { HTMLCodeBlockView } from './views/html-view';
-import { CalculateVariablesProps } from './variables/variables';
+import { CalculateVariablesProps, insertVariableToEditor, VariableFrom } from './variables/variables';
+import { VariablePill } from '@/components/variable/variable-pill';
+import { IsAllowedVariable } from '@/utils/parseStepVariables';
+import { StepResponseDto } from '@novu/shared';
+import { createDigestBlock } from './blocks/digest';
 
 export const VARIABLE_TRIGGER_CHARACTER = '{{';
 
@@ -57,38 +65,48 @@ export const DEFAULT_EDITOR_CONFIG = {
   autofocus: false,
 };
 
-export const createEditorBlocks = (props: { track: ReturnType<typeof useTelemetry> }): BlockGroupItem[] => {
-  const { track } = props;
+export const createEditorBlocks = (props: {
+  track: ReturnType<typeof useTelemetry>;
+  digestStepBeforeCurrent?: StepResponseDto;
+  isEnhancedDigestEnabled: boolean;
+}): BlockGroupItem[] => {
+  const { track, digestStepBeforeCurrent, isEnhancedDigestEnabled } = props;
   const blocks: BlockGroupItem[] = [];
+
+  const highlightBlocks = [createHtmlCodeBlock({ track }), createHeaders({ track }), createFooters({ track })];
+
+  if (isEnhancedDigestEnabled && digestStepBeforeCurrent) {
+    highlightBlocks.unshift(createDigestBlock({ track, digestStepBeforeCurrent }));
+  }
 
   blocks.push({
     title: 'Highlights',
-    commands: [createHtmlCodeBlock({ track }), createHeaders({ track }), createFooters({ track })],
+    commands: highlightBlocks,
   });
+
+  const allBlocks = [
+    blockquote,
+    bulletList,
+    button,
+    columns,
+    divider,
+    hardBreak,
+    heading1,
+    heading2,
+    heading3,
+    image,
+    inlineImage,
+    orderedList,
+    repeat,
+    section,
+    spacer,
+    text,
+    ...highlightBlocks,
+  ];
 
   blocks.push({
     title: 'All blocks',
-    commands: [
-      blockquote,
-      bulletList,
-      button,
-      columns,
-      divider,
-      hardBreak,
-      heading1,
-      heading2,
-      heading3,
-      image,
-      inlineImage,
-      orderedList,
-      repeat,
-      section,
-      spacer,
-      text,
-      createHtmlCodeBlock({ track }),
-      createHeaders({ track }),
-      createFooters({ track }),
-    ],
+    commands: allBlocks,
   });
 
   // sort command titles alphabetically within each block group
@@ -100,10 +118,11 @@ export const createEditorBlocks = (props: { track: ReturnType<typeof useTelemetr
 };
 
 export const createExtensions = (props: {
-  calculateVariables: (props: CalculateVariablesProps) => Variables | undefined;
-  parsedVariables: { isAllowedVariable: (variable: string) => boolean };
+  handleCalculateVariables: (props: CalculateVariablesProps) => Variables | undefined;
+  parsedVariables: { isAllowedVariable: IsAllowedVariable };
+  isEnhancedDigestEnabled: boolean;
 }) => {
-  const { calculateVariables, parsedVariables } = props;
+  const { handleCalculateVariables, parsedVariables, isEnhancedDigestEnabled } = props;
 
   return [
     RepeatExtension.extend({
@@ -123,13 +142,47 @@ export const createExtensions = (props: {
     VariableExtension.extend({
       addNodeView() {
         return ReactNodeViewRenderer(createVariableView(parsedVariables.isAllowedVariable), {
-          className: 'relative inline-block',
+          // the variable pill is 3px smaller than the default text size, but never smaller than 12px
+          className: 'relative inline-block text-[max(12px,calc(1em-3px))] h-5',
           as: 'div',
         });
       },
+      addAttributes() {
+        const attributes = this.parent?.();
+        return {
+          ...attributes,
+          aliasFor: {
+            default: null,
+          },
+        };
+      },
     }).configure({
-      suggestion: getVariableSuggestions(VARIABLE_TRIGGER_CHARACTER),
-      variables: calculateVariables as Variables,
+      suggestion: {
+        ...getVariableSuggestions(VARIABLE_TRIGGER_CHARACTER),
+        command: ({ editor, range, props }) => {
+          const query = props.id + '}}';
+
+          insertVariableToEditor({
+            query,
+            editor,
+            range,
+            isAllowedVariable: parsedVariables.isAllowedVariable,
+            isEnhancedDigestEnabled,
+          });
+        },
+      },
+      // variable pills in bubble menus (repeat, showIf...)
+      renderVariable: (opts) => {
+        return (
+          <VariablePill
+            variableName={opts.variable.name}
+            hasFilters={false}
+            className="h-5 text-xs"
+            from={opts.from as VariableFrom}
+          />
+        );
+      },
+      variables: handleCalculateVariables as Variables,
       variableSuggestionsPopover: MailyVariablesListView,
     }),
     HTMLCodeBlockExtension.extend({

@@ -11,7 +11,6 @@ import { GetOrganization } from '../../get-organization/get-organization.usecase
 
 import { CreateNovuIntegrationsCommand } from '../../../../integrations/usecases/create-novu-integrations/create-novu-integrations.command';
 import { CreateNovuIntegrations } from '../../../../integrations/usecases/create-novu-integrations/create-novu-integrations.usecase';
-import { ApiException } from '../../../../shared/exceptions/api.exception';
 import { SyncExternalOrganizationCommand } from './sync-external-organization.command';
 
 // TODO: eventually move to @novu/ee-auth
@@ -38,7 +37,7 @@ export class SyncExternalOrganization {
 
   async execute(command: SyncExternalOrganizationCommand): Promise<OrganizationEntity> {
     const user = await this.userRepository.findById(command.userId);
-    if (!user) throw new ApiException('User not found');
+    if (!user) throw new BadRequestException('User not found');
 
     const organization = await this.organizationRepository.create({
       externalId: command.externalId,

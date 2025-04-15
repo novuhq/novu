@@ -1,9 +1,8 @@
 /* eslint-disable global-require */
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { SystemVariablesWithTypes } from '@novu/shared';
 import { buildVariablesKey, CachedResponse } from '@novu/application-generic';
-import { ApiException } from '../../../shared/exceptions/api.exception';
 import { GetWorkflowVariablesCommand } from './get-workflow-variables.command';
 
 /**
@@ -41,7 +40,7 @@ export class GetWorkflowVariables {
     try {
       if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
         if (!require('@novu/ee-shared-services')?.TranslationsService) {
-          throw new ApiException('Translation module is not loaded');
+          throw new BadRequestException('Translation module is not loaded');
         }
         const service = this.moduleRef.get(require('@novu/ee-shared-services')?.TranslationsService, { strict: false });
         translationVariables = await service.getTranslationVariables(_environmentId, _organizationId);

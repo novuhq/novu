@@ -580,7 +580,7 @@ export default {
     },
     extend: {
       fontFamily: {
-        code: ['JetBrains Mono', 'monospace'],
+        code: ['var(--font-code)', 'var(--font-code-fallback)'],
       },
       opacity: {
         2.5: 0.025,

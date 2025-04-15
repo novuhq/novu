@@ -68,7 +68,7 @@ export function HeaderNav() {
           entryPoint: 'default',
           theme: 'light',
           logo: {
-            url: 'https://dashboard.novu.co/static/images/novu.png',
+            url: 'https://dashboard-v0.novu.co/static/images/novu.png',
             alt: 'Novu Logo',
           },
           customerDetails: {

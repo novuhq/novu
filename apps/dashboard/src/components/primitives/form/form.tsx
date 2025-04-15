@@ -1,7 +1,6 @@
 import * as LabelPrimitive from '@radix-ui/react-label';
 import { Slot } from '@radix-ui/react-slot';
 import * as React from 'react';
-import { useEffect, useRef } from 'react';
 import { Controller, ControllerProps, FieldPath, FieldValues, FormProvider, useFormContext } from 'react-hook-form';
 
 import { Input } from '@/components/primitives/input';
@@ -115,53 +114,41 @@ type FormMessagePureProps = React.HTMLAttributes<HTMLParagraphElement> & { hasEr
 const FormMessagePure = React.forwardRef<HTMLParagraphElement, FormMessagePureProps>(
   ({ className, children, hasError = false, icon, ...props }, _ref) => {
     return (
-      children && (
-        <Hint hasError={hasError} {...props}>
-          {icon && <HintIcon as={icon} />}
-          {children}
-        </Hint>
-      )
-    );
-  }
-);
-FormMessagePure.displayName = 'FormMessagePure';
-
-const FormMessage = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLParagraphElement>>(
-  ({ children, ...rest }, ref) => {
-    const { error, formMessageId } = useFormField();
-    const content = error ? String(error.message) : children;
-    const icon = error ? RiErrorWarningFill : RiInformationLine;
-
-    const isFirstMount = useRef(true);
-    const prevContent = useRef(content);
-
-    useEffect(() => {
-      if (content !== prevContent.current) {
-        isFirstMount.current = false;
-      }
-
-      prevContent.current = content;
-    }, [content]);
-
-    return (
       <AnimatePresence mode="wait">
-        {content && (
+        {children && (
           <motion.div
-            key={content ? String(content) : 'empty'}
-            initial={isFirstMount.current ? false : { opacity: 0, y: -5, height: 0 }}
+            key={hasError ? 'error' : 'empty'}
+            initial={{ opacity: 0, y: -5, height: 0 }}
             animate={{ opacity: 1, y: 0, height: 'auto' }}
             exit={{ opacity: 0, y: -5, height: 0 }}
             transition={{ duration: 0.3 }}
           >
-            <FormMessagePure ref={ref} id={formMessageId} hasError={!!error} icon={icon} {...rest}>
-              {content}
-            </FormMessagePure>
+            <Hint hasError={hasError} className={className} {...props}>
+              {icon && <HintIcon as={icon} />}
+              {children}
+            </Hint>
           </motion.div>
         )}
       </AnimatePresence>
     );
   }
 );
+FormMessagePure.displayName = 'FormMessagePure';
+
+const FormMessage = React.forwardRef<
+  HTMLParagraphElement,
+  React.HTMLAttributes<HTMLParagraphElement> & { suppressError?: boolean }
+>(({ children, suppressError, ...rest }, ref) => {
+  const { error, formMessageId } = useFormField();
+  const content = !suppressError && error ? String(error.message) : children;
+  const icon = error ? RiErrorWarningFill : RiInformationLine;
+
+  return (
+    <FormMessagePure ref={ref} id={formMessageId} hasError={!!error} icon={icon} {...rest}>
+      {content}
+    </FormMessagePure>
+  );
+});
 
 const FormTextInput = React.forwardRef<HTMLInputElement, React.ComponentPropsWithoutRef<typeof Input>>((props, ref) => {
   const { error } = useFormField();

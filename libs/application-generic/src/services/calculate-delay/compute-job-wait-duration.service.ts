@@ -11,7 +11,7 @@ import {
   IDelayRegularMetadata,
 } from '@novu/shared';
 
-import { ApiException } from '../../utils/exceptions';
+import { BadRequestException } from '@nestjs/common';
 import { isRegularDigest } from '../../utils/digest';
 import { TimedDigestDelayService } from './timed-digest-delay.service';
 
@@ -26,20 +26,20 @@ export class ComputeJobWaitDurationService {
     overrides: any;
   }): number {
     if (!stepMetadata) {
-      throw new ApiException(`Step metadata not found`);
+      throw new BadRequestException(`Step metadata not found`);
     }
 
     const digestType = stepMetadata.type;
 
     if (digestType === DelayTypeEnum.SCHEDULED) {
       const { delayPath } = stepMetadata as IDelayScheduledMetadata;
-      if (!delayPath) throw new ApiException(`Delay path not found`);
+      if (!delayPath) throw new BadRequestException(`Delay path not found`);
 
       const delayDate = payload[delayPath];
       const delay = differenceInMilliseconds(new Date(delayDate), new Date());
 
       if (delay < 0) {
-        throw new ApiException({
+        throw new BadRequestException({
           message: `Delay date at path must be a future date`,
           delayPath,
         });

@@ -1,8 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 
 import {
   AnalyticsService,
-  ApiException,
   CreateNotificationJobs,
   CreateNotificationJobsCommand,
   CreateOrUpdateSubscriberCommand,
@@ -32,7 +31,6 @@ export class SubscriberJobBound {
     private storeSubscriberJobs: StoreSubscriberJobs,
     private createNotificationJobs: CreateNotificationJobs,
     private createOrUpdateSubscriberUsecase: CreateOrUpdateSubscriberUseCase,
-
     private integrationRepository: IntegrationRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private logger: PinoLogger,
@@ -61,15 +59,15 @@ export class SubscriberJobBound {
       environmentName,
     } = command;
 
-    const template =
-      this.mapBridgeWorkflow(command) ??
-      (await this.getNotificationTemplate({
-        _id: templateId,
-        environmentId,
-      }));
+    const template = command.bridge?.workflow
+      ? await this.getCodeFirstWorkflow(command)
+      : await this.getWorkflow({
+          _id: templateId,
+          environmentId,
+        });
 
     if (!template) {
-      throw new ApiException(`Workflow id ${templateId} was not found`);
+      throw new BadRequestException(`Workflow id ${templateId} was not found`);
     }
 
     const templateProviderIds = await this.getProviderIdsForTemplate(environmentId, template);
@@ -171,12 +169,19 @@ export class SubscriberJobBound {
     );
   }
 
-  private mapBridgeWorkflow(command: SubscriberJobBoundCommand): NotificationTemplateEntity | null {
+  private async getCodeFirstWorkflow(command: SubscriberJobBoundCommand): Promise<NotificationTemplateEntity | null> {
     const bridgeWorkflow = command.bridge?.workflow;
 
     if (!bridgeWorkflow) {
       return null;
     }
+
+    const syncedWorkflowId = (
+      await this.notificationTemplateRepository.findByTriggerIdentifier(
+        command.environmentId,
+        bridgeWorkflow.workflowId
+      )
+    )?._id;
 
     /*
      * Cast used to convert data type for further processing.
@@ -185,6 +190,7 @@ export class SubscriberJobBound {
     return {
       ...bridgeWorkflow,
       type: WorkflowTypeEnum.BRIDGE,
+      _id: syncedWorkflowId,
       steps: bridgeWorkflow.steps.map((step) => {
         const stepControlVariables = command.controls?.steps?.[step.stepId];
 
@@ -220,7 +226,7 @@ export class SubscriberJobBound {
     const subscriberIdExists = typeof subscriber === 'string' ? subscriber : subscriber.subscriberId;
 
     if (!subscriberIdExists) {
-      throw new ApiException(
+      throw new BadRequestException(
         'subscriberId under property to is not configured, please make sure all subscribers contains subscriberId property'
       );
     }
@@ -228,7 +234,7 @@ export class SubscriberJobBound {
     return true;
   }
 
-  private async getNotificationTemplate({ _id, environmentId }: { _id: string; environmentId: string }) {
+  private async getWorkflow({ _id, environmentId }: { _id: string; environmentId: string }) {
     return await this.notificationTemplateRepository.findById(_id, environmentId);
   }
 

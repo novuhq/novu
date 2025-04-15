@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import {
   AnalyticsService,
   CreateOrUpdateSubscriberCommand,
@@ -10,7 +10,6 @@ import {
 import { EnvironmentRepository, IntegrationRepository } from '@novu/dal';
 import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
 import { AuthService } from '../../../auth/services/auth.service';
-import { ApiException } from '../../../shared/exceptions/api.exception';
 import { SubscriberSessionResponseDto } from '../../dtos/subscriber-session-response.dto';
 import { AnalyticsEventsEnum } from '../../utils';
 import { validateHmacEncryption } from '../../utils/encryption';
@@ -37,7 +36,7 @@ export class Session {
     const environment = await this.environmentRepository.findEnvironmentByIdentifier(command.applicationIdentifier);
 
     if (!environment) {
-      throw new ApiException('Please provide a valid application identifier');
+      throw new BadRequestException('Please provide a valid application identifier');
     }
 
     const inAppIntegration = await this.selectIntegration.execute(

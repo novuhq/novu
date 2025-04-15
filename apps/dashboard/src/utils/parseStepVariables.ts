@@ -1,11 +1,24 @@
+import { Completion } from '@codemirror/autocomplete';
+
+import { isAllowedAlias } from '@/components/workflow-editor/steps/email/variables/variables';
+
 import type { JSONSchemaDefinition } from '@novu/shared';
+import {
+  DIGEST_VARIABLES,
+  DIGEST_VARIABLES_ENUM,
+  getDynamicDigestVariable,
+} from '../components/variable/utils/digest-variables';
 
 export interface LiquidVariable {
-  type: 'variable';
-  label: string;
+  type?: 'variable' | 'digest';
+  name: string;
+  boost?: number;
+  info?: Completion['info'];
+  displayLabel?: string;
+  aliasFor?: string | null;
 }
 
-export type IsAllowedVariable = (path: string) => boolean;
+export type IsAllowedVariable = (variable: LiquidVariable) => boolean;
 export type IsArbitraryNamespace = (path: string) => boolean;
 
 export interface ParsedVariables {
@@ -21,7 +34,11 @@ export interface ParsedVariables {
  * @param schema - The JSON Schema to parse.
  * @returns An object containing three arrays: primitives, arrays, and namespaces.
  */
-export function parseStepVariables(schema: JSONSchemaDefinition): ParsedVariables {
+
+export function parseStepVariables(
+  schema: JSONSchemaDefinition,
+  { isEnhancedDigestEnabled, digestStepId }: { isEnhancedDigestEnabled: boolean; digestStepId?: string }
+): ParsedVariables {
   const result: ParsedVariables = {
     primitives: [],
     arrays: [],
@@ -37,8 +54,7 @@ export function parseStepVariables(schema: JSONSchemaDefinition): ParsedVariable
       // Handle object with additionalProperties
       if (obj.additionalProperties === true) {
         result.namespaces.push({
-          type: 'variable',
-          label: path,
+          name: path,
         });
       }
 
@@ -50,8 +66,7 @@ export function parseStepVariables(schema: JSONSchemaDefinition): ParsedVariable
         if (typeof value === 'object') {
           if (value.type === 'array') {
             result.arrays.push({
-              type: 'variable',
-              label: fullPath,
+              name: fullPath,
             });
 
             if (value.properties) {
@@ -66,8 +81,7 @@ export function parseStepVariables(schema: JSONSchemaDefinition): ParsedVariable
             extractProperties(value, fullPath);
           } else if (value.type && ['string', 'number', 'boolean', 'integer'].includes(value.type as string)) {
             result.primitives.push({
-              type: 'variable',
-              label: fullPath,
+              name: fullPath,
             });
           }
         }
@@ -100,19 +114,27 @@ export function parseStepVariables(schema: JSONSchemaDefinition): ParsedVariable
 
         if (!isNaN(num)) {
           if (num < 0) return null;
-          return num.toString();
+          return num.toString().trim();
         }
 
-        return part;
+        return part.trim();
       });
 
     return parts.includes(null) ? null : (parts as string[]);
   }
 
-  function isAllowedVariable(path: string): boolean {
+  function isAllowedVariable(variable: LiquidVariable): boolean {
     if (typeof schema === 'boolean') return false;
 
-    if (result.primitives.some((primitive) => primitive.label === path)) {
+    // if it has aliasFor, then the name must start with the alias
+    if (variable.aliasFor && !isAllowedAlias(variable.name)) {
+      return false;
+    }
+
+    const pathWithFilters = variable.aliasFor || variable.name;
+    const [path] = pathWithFilters.split('|');
+
+    if (result.primitives.some((primitive) => primitive.name === path)) {
       return true;
     }
 
@@ -127,22 +149,29 @@ export function parseStepVariables(schema: JSONSchemaDefinition): ParsedVariable
       if (typeof currentObj === 'boolean' || !('type' in currentObj)) return false;
 
       if (currentObj.type === 'array') {
-        const items = Array.isArray(currentObj.items) ? currentObj.items[0] : currentObj.items;
-        currentObj = items as JSONSchemaDefinition;
-        continue;
+        if (!currentObj.items) return false;
+
+        const items: JSONSchemaDefinition = Array.isArray(currentObj.items) ? currentObj.items[0] : currentObj.items;
+        if (typeof items === 'boolean') return false;
+
+        currentObj = items;
       }
 
-      if (currentObj.type !== 'object') return false;
+      if (typeof currentObj === 'boolean' || !('type' in currentObj)) return false;
 
-      if (currentObj.additionalProperties === true) {
-        return true;
-      }
+      if (currentObj.type === 'object') {
+        if (currentObj.additionalProperties === true) {
+          return true;
+        }
 
-      if (!currentObj.properties || !(part in currentObj.properties)) {
+        if (!currentObj.properties || !(part in currentObj.properties)) {
+          return false;
+        }
+
+        currentObj = currentObj.properties[part];
+      } else {
         return false;
       }
-
-      currentObj = currentObj.properties[part];
     }
 
     return true;
@@ -150,7 +179,28 @@ export function parseStepVariables(schema: JSONSchemaDefinition): ParsedVariable
 
   return {
     ...result,
-    variables: [...result.primitives, ...result.namespaces],
+
+    variables:
+      isEnhancedDigestEnabled && digestStepId
+        ? [
+            ...DIGEST_VARIABLES.map((variable) => {
+              const { label: displayLabel, value } = getDynamicDigestVariable({
+                digestStepName: digestStepId,
+                type: variable.name as DIGEST_VARIABLES_ENUM,
+              });
+
+              return {
+                ...variable,
+                name: value,
+                displayLabel,
+              };
+            }),
+            ...result.primitives,
+            ...result.arrays,
+            ...result.namespaces,
+          ]
+        : [...result.primitives, ...result.arrays, ...result.namespaces],
+
     isAllowedVariable,
   };
 }

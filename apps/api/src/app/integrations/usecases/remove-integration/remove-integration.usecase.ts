@@ -4,7 +4,6 @@ import { CHANNELS_WITH_PRIMARY, ChannelTypeEnum, EmailProviderIdEnum, SmsProvide
 import { buildIntegrationKey, InvalidateCacheService } from '@novu/application-generic';
 
 import { RemoveIntegrationCommand } from './remove-integration.command';
-import { ApiException } from '../../../shared/exceptions/api.exception';
 
 @Injectable({
   scope: Scope.REQUEST,
@@ -50,7 +49,7 @@ export class RemoveIntegration {
       }
     } catch (e) {
       if (e instanceof DalException) {
-        throw new ApiException(e.message);
+        throw new BadRequestException(e.message);
       }
       throw e;
     }

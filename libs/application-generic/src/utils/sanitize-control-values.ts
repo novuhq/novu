@@ -46,7 +46,7 @@ function sanitizeAction(action: InAppActionType) {
 
 function sanitizeInApp(controlValues: InAppControlType) {
   const normalized: InAppControlType = {
-    subject: controlValues.subject,
+    subject: sanitizeEmptyInput<string>(controlValues.subject),
     body: sanitizeEmptyInput<string>(controlValues.body),
     avatar: sanitizeEmptyInput<string>(controlValues.avatar),
     primaryAction: undefined,
