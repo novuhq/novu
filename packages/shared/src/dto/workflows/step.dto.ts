@@ -18,6 +18,7 @@ export type StepResponseDto = {
 
 export type StepUpdateDto = StepCreateDto & {
   _id: string;
+  stepId: string;
 };
 
 export type StepCreateDto = StepDto & {
