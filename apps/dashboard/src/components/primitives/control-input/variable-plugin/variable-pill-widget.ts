@@ -1,8 +1,10 @@
+import { extractIssuesFromVariable, parseParams } from '@/components/variable/utils';
 import { WidgetType } from '@uiw/react-codemirror';
 import { CSSProperties } from 'react';
 
 export class VariablePillWidget extends WidgetType {
   private clickHandler: (e: MouseEvent) => void;
+  private tooltipElement: HTMLElement | null = null; // Add a class property to store the tooltip element
 
   constructor(
     private variableName: string,
@@ -10,6 +12,7 @@ export class VariablePillWidget extends WidgetType {
     private start: number,
     private end: number,
     private filters: string[],
+    private isEnhancedDigestEnabled: boolean,
     private onSelect?: (value: string, from: number, to: number) => void
   ) {
     super();
@@ -42,6 +45,16 @@ export class VariablePillWidget extends WidgetType {
       backgroundRepeat: 'no-repeat',
       backgroundPosition: 'center',
       backgroundSize: 'contain',
+    };
+  }
+
+  createAfterStyles(): CSSProperties {
+    return {
+      width: '0.275em',
+      height: '0.275em',
+      backgroundColor: 'hsl(var(--feature-base))',
+      borderRadius: '100%',
+      marginLeft: '3px',
     };
   }
 
@@ -102,67 +115,130 @@ export class VariablePillWidget extends WidgetType {
 
     const beforeStyles = this.createBeforeStyles();
     Object.assign(before.style, beforeStyles);
+    const hasIssues = this.getVariableIssues().length > 0;
+
+    if (hasIssues) {
+      before.style.color = 'hsl(var(--error-base))';
+      before.style.backgroundImage = `url("/images/error-circle-outline.svg")`;
+      before.style.backgroundSize = 'cover';
+    }
 
     const contentStyles = this.createContentStyles();
     Object.assign(content.style, contentStyles);
 
-    // Stores the complete variable expression including any filters
     span.setAttribute('data-variable', this.fullVariableName);
-
     span.setAttribute('data-start', this.start.toString());
     span.setAttribute('data-end', this.end.toString());
-
-    // Contains the clean variable name shown to the user
     span.setAttribute('data-display', this.variableName);
 
     span.appendChild(before);
     span.appendChild(content);
 
-    if (this.filters?.length === 1) {
-      const filterSpan = document.createElement('span');
-      const filterParts = this.filters[0].split(/:(.+)/); // Split into filter name and arguments
-
-      const filterNameSpan = document.createElement('span');
-      filterNameSpan.textContent = ` | ${filterParts[0]}`;
-      Object.assign(filterNameSpan.style, this.createFilterStyles());
-      filterSpan.appendChild(filterNameSpan);
-
-      if (filterParts[1]) {
-        const argsSpan = document.createElement('span');
-        argsSpan.textContent = `: ${filterParts[1]}`;
-        Object.assign(argsSpan.style, this.createContentStyles());
-        filterSpan.appendChild(argsSpan);
-      }
-
-      span.appendChild(filterSpan);
-    } else if (this.filters?.length > 1) {
-      const filterSpan = document.createElement('span');
-
-      const filterParts = this.filters[0].split(/:(.+)/); // Split into filter name and arguments
-
-      const filterNameSpan = document.createElement('span');
-      filterNameSpan.textContent = ` | ${filterParts[0]}`;
-      Object.assign(filterNameSpan.style, this.createFilterStyles());
-      filterSpan.appendChild(filterNameSpan);
-
-      if (filterParts[1]) {
-        const argsSpan = document.createElement('span');
-        argsSpan.textContent = `: ${filterParts[1]}`;
-        Object.assign(argsSpan.style, this.createContentStyles());
-        filterSpan.appendChild(argsSpan);
-      }
-
-      const countSpan = document.createElement('span');
-      countSpan.textContent = ` +${this.filters.length - 1} more`;
-      Object.assign(countSpan.style, { ...this.createFilterStyles(), fontStyle: 'italic' });
-      filterSpan.appendChild(countSpan);
-
-      span.appendChild(filterSpan);
-    }
-
     span.addEventListener('mousedown', this.clickHandler);
 
+    this.renderFilters(span);
+
+    span.addEventListener('mouseenter', () => {
+      if (!this.tooltipElement) {
+        this.tooltipElement = this.renderTooltip(span);
+      }
+
+      if (hasIssues) {
+        span.style.backgroundColor = 'hsl(var(--error-base) / 0.025)';
+      }
+    });
+
+    span.addEventListener('mouseleave', () => {
+      if (this.tooltipElement) {
+        document.body.removeChild(this.tooltipElement);
+        this.tooltipElement = null;
+      }
+
+      span.style.backgroundColor = 'hsl(var(--bg-white))';
+    });
+
     return span;
+  }
+
+  renderFilters(parent: HTMLElement) {
+    if (!this.filters?.length) return;
+
+    const firstFilter = this.filters[0];
+    const firstFilterName = firstFilter.split(':')[0];
+    const firstFilterParams = firstFilter.split(':')[1]?.split(',')?.[0];
+    const parsedFilterParams = parseParams(firstFilterParams);
+    const finalParam = parsedFilterParams.length > 0 ? ': ' + parsedFilterParams : null;
+
+    if (this.filters?.length > 0) {
+      const filterSpan = document.createElement('span');
+      const filterNameSpan = document.createElement('span');
+      filterNameSpan.textContent = `| ${firstFilterName}`;
+      Object.assign(filterNameSpan.style, this.createFilterStyles());
+      filterSpan.appendChild(filterNameSpan);
+      const argsSpan = document.createElement('span');
+      argsSpan.textContent = finalParam;
+      Object.assign(argsSpan.style, this.createContentStyles());
+      filterSpan.appendChild(argsSpan);
+
+      if (this.filters.length > 1) {
+        const countSpan = document.createElement('span');
+        countSpan.textContent = `, +${this.filters.length - 1} more`;
+        Object.assign(countSpan.style, { ...this.createFilterStyles(), fontStyle: 'italic' });
+        filterSpan.appendChild(countSpan);
+      }
+
+      parent.appendChild(filterSpan);
+    }
+  }
+
+  renderTooltip(parent: HTMLElement) {
+    const tooltip = document.createElement('div');
+    tooltip.className = 'border-bg-soft bg-bg-weak border p-0.5 shadow-sm rounded-md';
+
+    const innerContainer = document.createElement('div');
+    innerContainer.className = 'border-stroke-soft/70 text-label-2xs rounded-sm border bg-white p-1';
+    tooltip.appendChild(innerContainer);
+
+    const issues = this.getVariableIssues();
+
+    if (this.filters && this.filters.length > 0) {
+      tooltip.style.position = 'fixed';
+      tooltip.style.zIndex = '9999';
+
+      const rect = parent.getBoundingClientRect();
+      tooltip.style.left = `${rect.left}px`;
+      tooltip.style.top = `${rect.top - 32}px`;
+
+      if (issues.length > 0) {
+        const firstIssue = issues[0];
+        innerContainer.textContent = `${firstIssue.filterName} is missing a value.`;
+        tooltip.style.color = 'hsl(var(--error-base))';
+        document.body.appendChild(tooltip);
+        return tooltip;
+      } else if (this.filters.length > 1) {
+        const otherFilterNames = this.filters
+          .slice(1)
+          .map((f) => f.split(':')[0].trim())
+          .join(', ');
+        innerContainer.textContent = 'Other filters: ';
+        innerContainer.style.color = 'hsl(var(--text-soft))';
+        const otherFilterNamesSpan = document.createElement('span');
+        otherFilterNamesSpan.textContent = otherFilterNames;
+        otherFilterNamesSpan.style.color = 'hsl(var(--feature))';
+        innerContainer.appendChild(otherFilterNamesSpan);
+        // tooltip.style.color = 'hsl(var(--feature))';
+        document.body.appendChild(tooltip);
+        return tooltip;
+      }
+    }
+
+    return null;
+  }
+
+  getVariableIssues() {
+    const issues = extractIssuesFromVariable(this.filters, this.isEnhancedDigestEnabled);
+
+    return issues;
   }
 
   /**
