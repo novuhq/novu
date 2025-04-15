@@ -3,6 +3,7 @@ import React, { useMemo } from 'react';
 import { VariableFrom } from '../workflow-editor/steps/email/variables/variables';
 import { VariableIcon } from './components/variable-icon';
 import { VariableTooltip } from './variable-tooltip';
+import { parseParams } from './utils';
 
 export const VariablePill = React.forwardRef<
   HTMLSpanElement,
@@ -47,22 +48,6 @@ const FiltersSection = ({
   filters?: string[];
   issues?: { filterName: string; issues: { param: string; issue: string }[] }[];
 }) => {
-  const parseParams = (input: string) => {
-    if (!input) return '';
-    return input
-      .split(',')
-      .map((param) => {
-        const trimmed = param.trim();
-
-        if ((trimmed.startsWith("'") && trimmed.endsWith("'")) || (trimmed.startsWith('"') && trimmed.endsWith('"'))) {
-          return trimmed.slice(1, -1);
-        }
-
-        return trimmed;
-      })
-      .join(', ');
-  };
-
   if (!filters || filters.length === 0) return null;
 
   const firstFilter = filters[0];
