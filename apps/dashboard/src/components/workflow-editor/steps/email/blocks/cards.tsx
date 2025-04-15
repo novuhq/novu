@@ -334,7 +334,7 @@ export const createCards = (props: { track: ReturnType<typeof useTelemetry> }) =
   return {
     id: 'cards',
     title: 'Cards',
-    description: 'Add a pre-made cards',
+    description: 'Add pre-made cards',
     searchTerms: ['card', 'cards'],
     icon: <CardBlocks className="size-4" />,
     preview: '/images/email-editor/horizontal-card-with-image-preview.webp',
