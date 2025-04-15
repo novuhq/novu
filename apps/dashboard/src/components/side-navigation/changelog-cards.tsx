@@ -1,10 +1,9 @@
-import { useState, useEffect } from 'react';
-import { motion } from 'motion/react';
-import { RiCloseLine } from 'react-icons/ri';
-import { useQuery } from '@tanstack/react-query';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { useUser } from '@clerk/clerk-react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { motion } from 'motion/react';
+import { RiCloseLine } from 'react-icons/ri';
 
 type Changelog = {
   id: string;
@@ -23,12 +22,13 @@ const CONSTANTS = {
   SCALE_FACTOR: 0.06,
   MAX_DISMISSED_IDS: 15,
   MONTHS_TO_SHOW: 2,
+  QUERY_KEY: ['changelogs'],
 } as const;
 
 export function ChangelogStack() {
-  const [changelogs, setChangelogs] = useState<Changelog[]>([]);
   const track = useTelemetry();
   const { user } = useUser();
+  const queryClient = useQueryClient();
 
   const getDismissedChangelogs = (): string[] => {
     return user?.unsafeMetadata?.dismissed_changelogs ?? [];
@@ -46,6 +46,12 @@ export function ChangelogStack() {
         dismissed_changelogs: updatedDismissed,
       },
     });
+
+    // Update the cache with the new dismissed IDs
+    queryClient.setQueryData(CONSTANTS.QUERY_KEY, (oldData: Changelog[] | undefined) => {
+      if (!oldData) return [];
+      return filterChangelogs(oldData, updatedDismissed);
+    });
   };
 
   const fetchChangelogs = async (): Promise<Changelog[]> => {
@@ -55,25 +61,18 @@ export function ChangelogStack() {
     return filterChangelogs(rawData, getDismissedChangelogs());
   };
 
-  const { data: fetchedChangelogs } = useQuery({
-    queryKey: ['changelogs'],
+  const { data: changelogs = [] } = useQuery({
+    queryKey: CONSTANTS.QUERY_KEY,
     queryFn: fetchChangelogs,
     // Refetch every hour to ensure users see new changelogs
     staleTime: 60 * 60 * 1000,
   });
-
-  useEffect(() => {
-    if (fetchedChangelogs) {
-      setChangelogs(fetchedChangelogs);
-    }
-  }, [fetchedChangelogs]);
 
   const handleChangelogClick = async (changelog: Changelog) => {
     track(TelemetryEvent.CHANGELOG_ITEM_CLICKED, { title: changelog.title });
     window.open('https://roadmap.novu.co/changelog/' + changelog.id, '_blank');
 
     await updateDismissedChangelogs(changelog.id);
-    setChangelogs((prev) => prev.filter((log) => log.id !== changelog.id));
   };
 
   const handleDismiss = async (e: React.MouseEvent, changelog: Changelog) => {
@@ -81,7 +80,6 @@ export function ChangelogStack() {
     track(TelemetryEvent.CHANGELOG_ITEM_DISMISSED, { title: changelog.title });
 
     await updateDismissedChangelogs(changelog.id);
-    setChangelogs((prev) => prev.filter((log) => log.id !== changelog.id));
   };
 
   if (!changelogs.length) {
