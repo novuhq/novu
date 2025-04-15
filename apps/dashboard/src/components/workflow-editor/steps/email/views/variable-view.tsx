@@ -2,14 +2,13 @@ import { NodeViewProps } from '@tiptap/core';
 import { NodeViewWrapper } from '@tiptap/react';
 import { useCallback, useMemo, useState } from 'react';
 
-import { VARIABLE_REGEX_STRING } from '@/components/primitives/control-input/variable-plugin';
-import { parseVariable } from '@/components/primitives/control-input/variable-plugin/utils';
 import { EditVariablePopover } from '@/components/variable/edit-variable-popover';
 import { VariablePill } from '@/components/variable/variable-pill';
 import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
 import { resolveRepeatBlockAlias } from '../variables/variables';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { parseVariable } from '@/utils/liquid';
 
 type InternalVariableViewProps = NodeViewProps & {
   isAllowedVariable: IsAllowedVariable;
@@ -23,17 +22,16 @@ function InternalVariableView(props: InternalVariableViewProps) {
   const isEnhancedDigestEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_ENHANCED_DIGEST_ENABLED);
 
   const parseVariableCallback = useCallback((variable: string) => {
-    const regex = new RegExp(VARIABLE_REGEX_STRING, 'g');
-    const match = regex.exec(variable);
+    const parsedVariable = parseVariable(variable);
 
-    if (!match) {
-      return { name: '', fullLiquidExpression: '', start: 0, end: 0, filters: [] };
+    if (!parsedVariable) {
+      return { name: '', fullLiquidExpression: '', start: 0, end: 0, filtersArray: [] };
     }
 
-    return parseVariable(match);
+    return parsedVariable;
   }, []);
 
-  const { name, filters, fullLiquidExpression } = useMemo(
+  const { name, filtersArray, fullLiquidExpression } = useMemo(
     () => parseVariableCallback(variableValue),
     [variableValue, parseVariableCallback]
   );
@@ -84,7 +82,7 @@ function InternalVariableView(props: InternalVariableViewProps) {
       >
         <VariablePill
           variableName={name}
-          hasFilters={!!filters?.length}
+          hasFilters={!!filtersArray?.length}
           onClick={() => setIsOpen(true)}
           className="-mt-[2px]"
         />

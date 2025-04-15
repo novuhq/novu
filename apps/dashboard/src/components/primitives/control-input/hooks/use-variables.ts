@@ -1,17 +1,7 @@
-import { useDataRef } from '@/hooks/use-data-ref';
-import { EditorView } from '@uiw/react-codemirror';
 import { useCallback, useRef, useState } from 'react';
-
-const stripBrackets = (value: string): string => {
-  return value.replace(/[{}]/g, '').trim();
-};
-
-// Function to normalize variable syntax by reducing multiple brackets to two
-const normalizeVariableSyntax = (value: string): string => {
-  const strippedValue = stripBrackets(value);
-
-  return `{{${strippedValue}}}`;
-};
+import { EditorView } from '@uiw/react-codemirror';
+import { useDataRef } from '@/hooks/use-data-ref';
+import { parseVariable } from '@/utils/liquid';
 
 type SelectedVariable = {
   value: string;
@@ -46,11 +36,10 @@ export function useVariables(viewRef: React.RefObject<EditorView>, onChange: (va
         isUpdatingRef.current = true;
         const { from, to } = selectedVariable;
         const view = viewRef.current;
-        const [valueWithoutFilters] = newValue.split('|');
-        const strippedValue = stripBrackets(valueWithoutFilters);
-        let newVariableText = newValue.match(/^\{+.*\}+$/) ? normalizeVariableSyntax(newValue) : `{{${newValue}}}`;
+        const parsedVariable = parseVariable(newValue);
+        let newVariableText = parsedVariable?.liquidVariable ?? '';
 
-        if (!strippedValue) {
+        if (!parsedVariable?.name) {
           // if the value is empty, remove the variable
           newVariableText = '';
         }
