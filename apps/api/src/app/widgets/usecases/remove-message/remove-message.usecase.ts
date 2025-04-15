@@ -1,5 +1,5 @@
+import { DalException, MessageRepository, SubscriberRepository, SubscriberEntity } from '@novu/dal';
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { MessageEntity, DalException, MessageRepository, SubscriberRepository, SubscriberEntity } from '@novu/dal';
 import {
   WebSocketsQueueService,
   AnalyticsService,
@@ -22,7 +22,7 @@ export class RemoveMessage {
     private subscriberRepository: SubscriberRepository
   ) {}
 
-  async execute(command: RemoveMessageCommand): Promise<MessageEntity> {
+  async execute(command: RemoveMessageCommand): Promise<void> {
     await this.invalidateCache.invalidateQuery({
       key: buildFeedKey().invalidate({
         subscriberId: command.subscriberId,
@@ -40,28 +40,19 @@ export class RemoveMessage {
     const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
     if (!subscriber) throw new NotFoundException(`Subscriber ${command.subscriberId} not found`);
 
-    let deletedMessage;
     try {
-      await this.messageRepository.delete({
+      const deletedMessage = await this.messageRepository.delete({
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
         _id: command.messageId,
         _subscriberId: command.subscriberId,
       });
-      const item = await this.messageRepository.findDeleted({
-        _environmentId: command.environmentId,
-        _organizationId: command.organizationId,
-        _id: command.messageId,
-      });
 
-      // eslint-disable-next-line prefer-destructuring
-      deletedMessage = item[0];
-
-      if (!deletedMessage.read) {
-        await this.updateServices(command, subscriber, deletedMessage, MarkEnum.READ);
-      }
-      if (!deletedMessage.seen) {
-        await this.updateServices(command, subscriber, deletedMessage, MarkEnum.SEEN);
+      if (deletedMessage.deletedCount) {
+        await Promise.all([
+          this.updateServices(command, subscriber, command.messageId, MarkEnum.READ),
+          this.updateServices(command, subscriber, command.messageId, MarkEnum.SEEN),
+        ]);
       }
     } catch (e) {
       if (e instanceof DalException) {
@@ -69,12 +60,10 @@ export class RemoveMessage {
       }
       throw e;
     }
-
-    return deletedMessage;
   }
 
   private async updateServices(command: RemoveMessageCommand, subscriber, message, marked: MarkEnum) {
-    this.updateSocketCount(subscriber, marked);
+    await this.updateSocketCount(subscriber, marked);
 
     this.analyticsService.track(`Removed Message - [Notification Center]`, command.organizationId, {
       _subscriber: message._subscriberId,
@@ -83,10 +72,10 @@ export class RemoveMessage {
     });
   }
 
-  private updateSocketCount(subscriber: SubscriberEntity, mark: MarkEnum) {
+  private async updateSocketCount(subscriber: SubscriberEntity, mark: MarkEnum) {
     const eventMessage = mark === MarkEnum.READ ? WebSocketEventEnum.UNREAD : WebSocketEventEnum.UNSEEN;
 
-    this.webSocketsQueueService.add({
+    await this.webSocketsQueueService.add({
       name: 'sendMessage',
       data: {
         event: eventMessage,

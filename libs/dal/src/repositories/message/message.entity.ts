@@ -53,6 +53,9 @@ export class MessageEntity {
 
   archived: boolean;
 
+  /**
+   * todo: remove deleted field after all the soft deletes are removed task nv-5688
+   */
   deleted: boolean;
 
   email?: string;

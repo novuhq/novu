@@ -3,6 +3,7 @@ import plur from 'pluralize';
 /**
  * Creates a pluralized string based on the count of the item.
  * Example:
+ * - 0, "event" -> ""
  * - 1, "event" -> 1 event
  * - 2, "event" -> 2 events
  *
@@ -30,6 +31,10 @@ export function pluralize(item: unknown, singular: string = '', plural: string =
 
   if (Number.isNaN(count)) {
     count = 0;
+  }
+
+  if (count <= 0) {
+    return '';
   }
 
   if (plural) {

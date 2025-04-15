@@ -1,7 +1,8 @@
-import { Editor } from '@maily-to/core';
-
-import type { Editor as TiptapEditor } from '@tiptap/core';
 import { HTMLAttributes, useCallback, useMemo, useState } from 'react';
+import { Editor } from '@maily-to/core';
+import { Editor as EditorDigest } from '@maily-to/core-digest';
+import type { Editor as TiptapEditor } from '@tiptap/core';
+import { Editor as TiptapEditorReact } from '@tiptap/react';
 
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useParseVariables } from '@/hooks/use-parse-variables';
@@ -20,9 +21,9 @@ type MailyProps = HTMLAttributes<HTMLDivElement> & {
 };
 
 export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
-  const { step } = useWorkflow();
+  const { step, digestStepBeforeCurrent } = useWorkflow();
   const isEnhancedDigestEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_ENHANCED_DIGEST_ENABLED);
-  const parsedVariables = useParseVariables(step?.variables);
+  const parsedVariables = useParseVariables(step?.variables, digestStepBeforeCurrent?.stepId);
   const primitives = useMemo(
     () => parsedVariables.primitives.map((v) => ({ name: v.name, required: false })),
     [parsedVariables.primitives]
@@ -49,13 +50,21 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
         namespaces,
         isAllowedVariable: parsedVariables.isAllowedVariable,
         isEnhancedDigestEnabled,
+        addDigestVariables: !!digestStepBeforeCurrent?.stepId,
       });
     },
-    [primitives, arrays, namespaces, parsedVariables.isAllowedVariable, isEnhancedDigestEnabled]
+    [
+      primitives,
+      arrays,
+      namespaces,
+      parsedVariables.isAllowedVariable,
+      isEnhancedDigestEnabled,
+      digestStepBeforeCurrent?.stepId,
+    ]
   );
 
   const extensions = useMemo(
-    () => createExtensions({ calculateVariables: handleCalculateVariables, parsedVariables, isEnhancedDigestEnabled }),
+    () => createExtensions({ handleCalculateVariables, parsedVariables, isEnhancedDigestEnabled }),
     [handleCalculateVariables, parsedVariables, isEnhancedDigestEnabled]
   );
 
@@ -83,6 +92,29 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
     </style>
   );
 
+  const repeatMenuConfig = useMemo(() => {
+    return {
+      description: (editor: TiptapEditorReact) => <RepeatMenuDescription editor={editor} />,
+    };
+  }, []);
+
+  const onUpdate = useCallback(
+    (editor: TiptapEditorReact) => {
+      setEditor(editor);
+
+      if (onChange) {
+        onChange(JSON.stringify(editor.getJSON()));
+      }
+    },
+    [onChange]
+  );
+
+  const blocks = useMemo(() => {
+    return createEditorBlocks({ track, digestStepBeforeCurrent, isEnhancedDigestEnabled });
+  }, [track]);
+
+  const _Editor = isEnhancedDigestEnabled ? EditorDigest : Editor;
+
   return (
     <>
       {overrideTippyBoxStyles()}
@@ -93,23 +125,15 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
         )}
         {...rest}
       >
-        <Editor
+        <_Editor
           key="repeat-block-enabled"
           config={DEFAULT_EDITOR_CONFIG}
-          blocks={createEditorBlocks({ track })}
+          blocks={blocks}
           extensions={extensions}
           contentJson={value ? JSON.parse(value) : undefined}
           onCreate={setEditor}
-          onUpdate={(editor) => {
-            setEditor(editor);
-
-            if (onChange) {
-              onChange(JSON.stringify(editor.getJSON()));
-            }
-          }}
-          repeatMenuConfig={{
-            description: (editor) => <RepeatMenuDescription editor={editor} />,
-          }}
+          onUpdate={onUpdate}
+          repeatMenuConfig={repeatMenuConfig}
         />
       </div>
     </>

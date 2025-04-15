@@ -8,11 +8,3 @@ export type PluginState = {
   onSelect?: (value: string, from: number, to: number) => void;
   isAllowedVariable: IsAllowedVariable;
 };
-
-export type VariableMatch = {
-  fullLiquidExpression: string;
-  name: string;
-  start: number;
-  end: number;
-  filters: string[];
-};
