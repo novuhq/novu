@@ -23,8 +23,15 @@ export const VariablePill = React.forwardRef<
     return variableParts.length >= 3 ? '..' + variableParts.slice(-2).join('.') : variableName;
   }, [variableName]);
 
+  const getFilterNames = useMemo(() => {
+    return filters
+      ?.slice(1)
+      .map((f) => f.split(':')[0].trim())
+      .join(', ');
+  }, [filters]);
+
   return (
-    <Tooltip open={isHovered && !!issues?.length}>
+    <Tooltip open={isHovered && (!!issues?.length || (filters && filters?.length > 1))}>
       <TooltipTrigger asChild>
         <span
           ref={ref}
@@ -44,14 +51,12 @@ export const VariablePill = React.forwardRef<
       </TooltipTrigger>
       <TooltipPortal>
         <TooltipContent side="top" className="border-bg-soft bg-bg-weak border p-0.5 shadow-sm">
-          <div className="border-stroke-soft/70 rounded-sm border bg-white p-1">
-            <span className="text-error-base text-label-2xs">
-              {issues?.map((issue, index) => (
-                <div key={index} className="text-error">
-                  {issue.filterName} is missing a value.
-                </div>
-              ))}
-            </span>
+          <div className="border-stroke-soft/70 text-label-2xs rounded-sm border bg-white p-1">
+            {issues && issues.length > 0 ? (
+              <span className="text-error-base">{issues?.[0].filterName} is missing a value.</span>
+            ) : (
+              <span className="text-feature">{getFilterNames}</span>
+            )}
           </div>
         </TooltipContent>
       </TooltipPortal>
@@ -66,6 +71,7 @@ const FiltersSection = ({
   issues?: { filterName: string; issues: { param: string; issue: string }[] }[];
 }) => {
   const parseParams = (input: string) => {
+    if (!input) return '';
     return input
       .split(',')
       .map((param) => {
@@ -84,7 +90,7 @@ const FiltersSection = ({
 
   const firstFilter = filters[0];
   const firstFilterName = firstFilter.split(':')[0];
-  const firstFilterParams = firstFilter.split(':')[1].split(',')[0];
+  const firstFilterParams = firstFilter.split(':')[1]?.split(',')?.[0];
   const parsedFilterParams = parseParams(firstFilterParams);
   const finalParam = parsedFilterParams.length > 0 ? ': ' + parsedFilterParams : null;
 
