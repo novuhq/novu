@@ -1,9 +1,8 @@
-import { VARIABLE_REGEX_STRING } from '@/components/primitives/control-input/variable-plugin';
-import { parseVariable } from '@/components/primitives/control-input/variable-plugin/utils';
 import { EditVariablePopover } from '@/components/variable/edit-variable-popover';
 import { extractIssuesFromVariable } from '@/components/variable/utils';
 import { VariablePill } from '@/components/variable/variable-pill';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { parseVariable } from '@/utils/liquid';
 import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { NodeViewProps } from '@tiptap/core';
@@ -23,23 +22,21 @@ function InternalVariableView(props: InternalVariableViewProps) {
   const isEnhancedDigestEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_ENHANCED_DIGEST_ENABLED);
 
   const parseVariableCallback = useCallback((variable: string, isEnhancedDigestEnabled: boolean) => {
-    const regex = new RegExp(VARIABLE_REGEX_STRING, 'g');
-    const match = regex.exec(variable);
+    const parsedVariable = parseVariable(variable);
 
-    if (!match) {
+    if (!parsedVariable?.filtersArray) {
       return {
         name: '',
         fullLiquidExpression: '',
         start: 0,
         end: 0,
-        filters: [],
+        filters: '',
+        filtersArray: [],
         issues: [],
       };
     }
 
-    const parsedVariable = parseVariable(match);
-
-    const filtersWithIssues = extractIssuesFromVariable(parsedVariable.filters, isEnhancedDigestEnabled);
+    const filtersWithIssues = extractIssuesFromVariable(parsedVariable.filtersArray, isEnhancedDigestEnabled);
 
     return {
       ...parsedVariable,
@@ -47,7 +44,7 @@ function InternalVariableView(props: InternalVariableViewProps) {
     };
   }, []);
 
-  const { name, filters, fullLiquidExpression, issues } = useMemo(
+  const { name, filtersArray, fullLiquidExpression, issues } = useMemo(
     () => parseVariableCallback(variableValue, isEnhancedDigestEnabled),
     [variableValue, parseVariableCallback, isEnhancedDigestEnabled]
   );
@@ -85,7 +82,7 @@ function InternalVariableView(props: InternalVariableViewProps) {
         <VariablePill
           issues={issues}
           variableName={name}
-          filters={filters}
+          filters={filtersArray}
           onClick={() => setIsOpen(true)}
           className="-mt-[2px]"
         />

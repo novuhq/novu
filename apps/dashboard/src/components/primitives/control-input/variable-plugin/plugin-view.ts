@@ -75,7 +75,7 @@ export class VariablePluginView {
               fullLiquidExpression,
               start,
               end,
-              filters,
+              filtersArray,
               this.isEnhancedDigestEnabled,
               this.onSelect
             ),
