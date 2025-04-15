@@ -87,3 +87,19 @@ export function extractIssuesFromVariable(filters: string[], isEnhancedDigestEna
 
   return filtersWithIssues;
 }
+
+export const parseParams = (input: string) => {
+  if (!input) return '';
+  return input
+    .split(',')
+    .map((param) => {
+      const trimmed = param.trim();
+
+      if ((trimmed.startsWith("'") && trimmed.endsWith("'")) || (trimmed.startsWith('"') && trimmed.endsWith('"'))) {
+        return trimmed.slice(1, -1);
+      }
+
+      return trimmed;
+    })
+    .join(', ');
+};
