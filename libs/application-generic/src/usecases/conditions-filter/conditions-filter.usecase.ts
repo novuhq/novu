@@ -138,8 +138,7 @@ export class ConditionsFilter extends Filter {
   ): Promise<boolean> {
     const job = await this.jobRepository.findOne({
       transactionId: command.job.transactionId,
-      // backward compatibility - ternary needed to be removed once the queue renewed
-      _subscriberId: command.job._subscriberId ? command.job._subscriberId : command.job.subscriberId,
+      _subscriberId: command.job._subscriberId,
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       'step.uuid': filter.step,
@@ -152,8 +151,7 @@ export class ConditionsFilter extends Filter {
     const message = await this.messageRepository.findOne({
       _jobId: job._id,
       _environmentId: command.environmentId,
-      // backward compatibility - ternary needed to be removed once the queue renewed
-      _subscriberId: command.job._subscriberId ? command.job._subscriberId : command.job.subscriberId,
+      _subscriberId: command.job._subscriberId,
       transactionId: command.job.transactionId,
     });
 
