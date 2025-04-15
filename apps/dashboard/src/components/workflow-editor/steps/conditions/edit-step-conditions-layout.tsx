@@ -1,23 +1,21 @@
 import { RiInputField, RiQuestionLine } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
 
-import { Button } from '@/components/primitives/button';
 import { FormRoot } from '@/components/primitives/form/form';
 import { Panel, PanelContent, PanelHeader } from '@/components/primitives/panel';
+import { ComponentProps } from 'react';
 
-export const EditStepConditionsLayout = ({
-  stepName,
-  disabled,
-  onSubmit,
-  children,
-}: {
+type EditStepConditionsLayoutProps = ComponentProps<typeof FormRoot> & {
   stepName?: string;
-  disabled?: boolean;
-  onSubmit?: () => void;
   children: React.ReactNode;
-}) => {
+  disabled?: boolean;
+};
+
+export const EditStepConditionsLayout = (props: EditStepConditionsLayoutProps) => {
+  const { stepName, children, ...rest } = props;
+
   return (
-    <FormRoot className="flex h-full flex-col overflow-hidden" onSubmit={onSubmit}>
+    <FormRoot className="flex h-full flex-col overflow-hidden" {...rest}>
       <div className="flex flex-col gap-3 overflow-y-auto overflow-x-hidden px-3 py-5">
         <Panel className="overflow-initial">
           <PanelHeader>
@@ -33,11 +31,6 @@ export const EditStepConditionsLayout = ({
         >
           <RiQuestionLine className="size-4" /> Learn more about conditional step execution
         </Link>
-      </div>
-      <div className="mt-auto flex justify-end border-t border-neutral-200 p-3">
-        <Button type="submit" variant="secondary" disabled={disabled}>
-          Save Conditions
-        </Button>
       </div>
     </FormRoot>
   );
