@@ -1,0 +1,347 @@
+import { CardBlocks } from '@/components/icons/cards-blocks';
+import { HorizontalCardWithImage } from '@/components/icons/horizontal-card-with-image';
+import { InformationCardWithLogo } from '@/components/icons/information-card-with-logo';
+import { ParagraphWithImage } from '@/components/icons/paragraph-with-image';
+import { useTelemetry } from '@/hooks/use-telemetry';
+import { TelemetryEvent } from '@/utils/telemetry';
+import { BlockItem } from '@maily-to/core/blocks';
+
+const createHorizontalCardWithCta: (props: { track: ReturnType<typeof useTelemetry> }) => BlockItem = (props) => {
+  const { track } = props;
+
+  return {
+    title: 'Horizontal card with image',
+    description: 'Card: Horizontal information card with CTA',
+    searchTerms: ['logo', 'text', 'image', 'horizontal', 'card'],
+    preview: '/images/email-editor/horizontal-card-with-image-preview.png',
+    icon: <HorizontalCardWithImage className="size-4" />,
+    command: ({ editor, range }) => {
+      track(TelemetryEvent.EMAIL_BLOCK_ADDED, {
+        type: 'header',
+      });
+
+      editor
+        .chain()
+        .deleteRange(range)
+        .insertContent({
+          type: 'columns',
+          attrs: { showIfKey: null, gap: 8 },
+          content: [
+            {
+              type: 'column',
+              attrs: {
+                width: 'auto',
+              },
+              content: [
+                {
+                  type: 'image',
+                  attrs: {
+                    src: 'https://prod-novu-app-bucket.s3.us-east-1.amazonaws.com/assets/email-editor/header-hero-image.webp',
+                    alt: null,
+                    title: null,
+                    alignment: 'center',
+                    externalLink: null,
+                    isExternalLinkVariable: false,
+                    isSrcVariable: false,
+                    showIfKey: null,
+                    height: '204',
+                    width: '282',
+                    borderRadius: 8,
+                    lockAspectRatio: false,
+                  },
+                },
+              ],
+            },
+            {
+              type: 'column',
+              attrs: {
+                width: 'auto',
+              },
+              content: [
+                {
+                  type: 'paragraph',
+                  attrs: { textAlign: null, showIfKey: null },
+                  content: [
+                    {
+                      type: 'text',
+                      marks: [{ type: 'bold' }],
+                      text: 'Multi-Environment support',
+                    },
+                  ],
+                },
+                { type: 'spacer', attrs: { height: 8, showIfKey: null } },
+                {
+                  type: 'paragraph',
+                  attrs: { textAlign: null, showIfKey: null },
+                  content: [
+                    {
+                      type: 'text',
+                      text: "Novu's Multi-Environment Support introduces a structured, secure, and efficient way to handle your notification workflows at every stage.",
+                    },
+                  ],
+                },
+                {
+                  type: 'button',
+                  attrs: {
+                    text: 'Learn more',
+                    isTextVariable: false,
+                    isUrlVariable: false,
+                    alignment: 'right',
+                    variant: 'filled',
+                    borderRadius: 'smooth',
+                    buttonColor: '#f8f8f8',
+                    textColor: '#141313',
+                    showIfKey: null,
+                  },
+                },
+              ],
+            },
+          ],
+        })
+        .run();
+    },
+  };
+};
+
+const createCardWithImageAndCta: (props: { track: ReturnType<typeof useTelemetry> }) => BlockItem = (props) => {
+  const { track } = props;
+
+  return {
+    title: 'Paragraph with image',
+    description: 'Card with paragraph, CTA & image',
+    searchTerms: ['card', 'cta', 'image', 'paragraph'],
+    icon: <ParagraphWithImage className="size-4" />,
+    preview: '/images/email-editor/paragraph-with-image-preview.png',
+    command: ({ editor, range }) => {
+      track(TelemetryEvent.EMAIL_BLOCK_ADDED, {
+        type: 'header',
+      });
+
+      editor
+        .chain()
+        .deleteRange(range)
+        .insertContent({
+          type: 'section',
+          attrs: { showIfKey: null, backgroundColor: '#FFFFFF', borderWidth: 0 },
+          content: [
+            {
+              type: 'image',
+              attrs: {
+                src: 'https://prod-novu-app-bucket.s3.us-east-1.amazonaws.com/assets/email-editor/header-hero-image.webp',
+                alt: null,
+                title: null,
+                alignment: 'center',
+                externalLink: null,
+                isExternalLinkVariable: false,
+                isSrcVariable: false,
+                showIfKey: null,
+              },
+            },
+            { type: 'spacer', attrs: { height: 8, showIfKey: null } },
+            {
+              type: 'heading',
+              attrs: { textAlign: null, level: 3, showIfKey: null },
+              content: [
+                { type: 'text', text: 'Your free trial ends on ' },
+                {
+                  type: 'variable',
+                  attrs: {
+                    id: 'payload.dueDate',
+                    label: null,
+                    fallback: null,
+                    required: false,
+                    aliasFor: null,
+                  },
+                },
+                { type: 'text', text: ' ' },
+              ],
+            },
+            {
+              type: 'section',
+              attrs: { showIfKey: null, backgroundColor: '#FFFFFF', borderWidth: 0 },
+              content: [
+                {
+                  type: 'paragraph',
+                  attrs: { textAlign: null, showIfKey: null },
+                  content: [
+                    {
+                      type: 'text',
+                      text: 'Your free trial for Novu Business Events and 1 more product with Novu US, Inc. will end soon. You have an upcoming payment on',
+                    },
+                    {
+                      type: 'variable',
+                      attrs: {
+                        id: 'payload.dueDate',
+                        label: null,
+                        fallback: null,
+                        required: false,
+                        aliasFor: null,
+                      },
+                    },
+                  ],
+                },
+                {
+                  type: 'paragraph',
+                  attrs: { textAlign: null, showIfKey: null },
+                  content: [
+                    {
+                      type: 'text',
+                      marks: [{ type: 'textStyle', attrs: { color: '' } }],
+                      text: 'If you add a payment method, the added payment method will be charged $250.00 or more every month, depending on usage.',
+                    },
+                  ],
+                },
+                {
+                  type: 'button',
+                  attrs: {
+                    text: 'Pay now',
+                    isTextVariable: false,
+                    url: '',
+                    isUrlVariable: false,
+                    alignment: 'center',
+                    variant: 'filled',
+                    borderRadius: 'smooth',
+                    buttonColor: '#f8f8f8',
+                    textColor: '#141313',
+                    showIfKey: null,
+                    width: '100%',
+                  },
+                },
+                {
+                  type: 'paragraph',
+                  attrs: { textAlign: null, showIfKey: null },
+                },
+              ],
+            },
+          ],
+        })
+        .run();
+    },
+  };
+};
+
+const createInformationCardWithLogo: (props: { track: ReturnType<typeof useTelemetry> }) => BlockItem = (props) => {
+  const { track } = props;
+
+  return {
+    title: 'Information card with logo',
+    description: 'Card: information card with logo',
+    searchTerms: ['logo', 'text', 'information', 'card'],
+    preview: '/images/email-editor/information-card-with-logo-preview.png',
+    icon: <InformationCardWithLogo className="size-4" />,
+    command: ({ editor, range }) => {
+      track(TelemetryEvent.EMAIL_BLOCK_ADDED, {
+        type: 'header',
+      });
+
+      editor
+        .chain()
+        .deleteRange(range)
+        .insertContent({
+          type: 'section',
+          attrs: {
+            borderRadius: 6,
+            backgroundColor: '#f8f8f8',
+            align: 'left',
+            borderWidth: 2,
+            borderColor: '#f8f8f8',
+            paddingTop: 0,
+            paddingRight: 0,
+            paddingBottom: 0,
+            paddingLeft: 0,
+            marginTop: 0,
+            marginRight: 0,
+            marginBottom: 0,
+            marginLeft: 0,
+            showIfKey: null,
+          },
+          content: [
+            {
+              type: 'columns',
+              attrs: { showIfKey: null, gap: 0 },
+              content: [
+                {
+                  type: 'column',
+                  attrs: {
+                    width: '5',
+                    verticalAlign: 'top',
+                  },
+                  content: [
+                    {
+                      type: 'paragraph',
+                      attrs: { textAlign: 'center', showIfKey: null },
+                      content: [
+                        {
+                          type: 'inlineImage',
+                          attrs: {
+                            height: 16,
+                            width: 16,
+                            src: '/images/email-editor/check-icon.svg',
+                            isSrcVariable: false,
+                            alt: null,
+                            title: null,
+                            externalLink: null,
+                            isExternalLinkVariable: false,
+                          },
+                        },
+                      ],
+                    },
+                  ],
+                },
+                {
+                  type: 'column',
+                  attrs: {
+                    width: 'auto',
+                    verticalAlign: 'top',
+                  },
+                  content: [
+                    {
+                      type: 'paragraph',
+                      attrs: { textAlign: null, showIfKey: null },
+                      content: [
+                        {
+                          type: 'text',
+                          marks: [{ type: 'bold' }],
+                          text: 'Discover new automation techniques.',
+                        },
+                      ],
+                    },
+                    { type: 'spacer', attrs: { height: 8, showIfKey: null } },
+                    {
+                      type: 'paragraph',
+                      attrs: { textAlign: null, showIfKey: null },
+                      content: [
+                        {
+                          type: 'text',
+                          text: 'Get insider tips on how to achieve powerful outcomes from pro automators, including John Doe, the #1 New York.',
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        })
+        .run();
+    },
+  };
+};
+
+export const createCards = (props: { track: ReturnType<typeof useTelemetry> }) => {
+  const { track } = props;
+
+  return {
+    id: 'cards',
+    title: 'Cards',
+    description: 'Add a pre-made cards',
+    searchTerms: ['card', 'cards'],
+    icon: <CardBlocks className="size-4" />,
+    preview: '/images/email-editor/horizontal-card-with-image-preview.png',
+    commands: [
+      createCardWithImageAndCta({ track }),
+      createHorizontalCardWithCta({ track }),
+      createInformationCardWithLogo({ track }),
+    ],
+  };
+};

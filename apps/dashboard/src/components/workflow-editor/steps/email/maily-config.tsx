@@ -38,6 +38,7 @@ import { ForView } from './views/for-view';
 import { HTMLCodeBlockView } from './views/html-view';
 import { MailyVariablesListView } from './views/maily-variables-list-view';
 import { createVariableView } from './views/variable-view';
+import { createCards } from './blocks/cards';
 
 export const VARIABLE_TRIGGER_CHARACTER = '{{';
 
@@ -73,7 +74,12 @@ export const createEditorBlocks = (props: {
   const { track, digestStepBeforeCurrent, isEnhancedDigestEnabled } = props;
   const blocks: BlockGroupItem[] = [];
 
-  const highlightBlocks = [createHtmlCodeBlock({ track }), createHeaders({ track }), createFooters({ track })];
+  const highlightBlocks = [
+    createHtmlCodeBlock({ track }),
+    createHeaders({ track }),
+    createFooters({ track }),
+    createCards({ track }),
+  ];
 
   if (isEnhancedDigestEnabled && digestStepBeforeCurrent) {
     highlightBlocks.unshift(createDigestBlock({ track, digestStepBeforeCurrent }));
