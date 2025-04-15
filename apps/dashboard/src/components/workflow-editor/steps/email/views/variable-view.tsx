@@ -1,15 +1,15 @@
-import { NodeViewProps } from '@tiptap/core';
-import { NodeViewWrapper } from '@tiptap/react';
-import { useCallback, useMemo, useState } from 'react';
 import { VARIABLE_REGEX_STRING } from '@/components/primitives/control-input/variable-plugin';
 import { parseVariable } from '@/components/primitives/control-input/variable-plugin/utils';
 import { EditVariablePopover } from '@/components/variable/edit-variable-popover';
+import { extractIssuesFromVariable } from '@/components/variable/utils';
 import { VariablePill } from '@/components/variable/variable-pill';
-import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
-import { resolveRepeatBlockAlias } from '../variables/variables';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
-import { getFilters } from '@/components/variable/constants';
+import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { NodeViewProps } from '@tiptap/core';
+import { NodeViewWrapper } from '@tiptap/react';
+import { useCallback, useMemo, useState } from 'react';
+import { resolveRepeatBlockAlias } from '../variables/variables';
 
 type InternalVariableViewProps = NodeViewProps & {
   isAllowedVariable: IsAllowedVariable;
@@ -39,44 +39,7 @@ function InternalVariableView(props: InternalVariableViewProps) {
 
     const parsedVariable = parseVariable(match);
 
-    const allFilters = getFilters(isEnhancedDigestEnabled);
-
-    const filtersWithIssues = parsedVariable.filters
-      .map((filterStr) => {
-        if (!filterStr) return null;
-
-        const [filterNameRaw, filterParamsRaw = ''] = filterStr.split(':');
-        const filterName = filterNameRaw?.trim();
-        const filterParams = filterParamsRaw?.split(',').map((p) => (p ?? '').trim());
-
-        if (!filterName) return null;
-
-        const filterDefinition = allFilters.find((f) => f.value === filterName);
-        if (!filterDefinition || !Array.isArray(filterDefinition.params)) return null;
-
-        const issues = filterDefinition.params
-          .map((paramDef, index) => {
-            const isRequired = paramDef.required;
-            const paramValue = filterParams[index];
-
-            const isMissing =
-              isRequired &&
-              (!paramValue || paramValue.trim() === '' || paramValue.trim() === "''" || paramValue.trim() === '""');
-
-            if (isMissing) {
-              return {
-                param: paramDef.placeholder,
-                issue: `${paramDef.placeholder} is required`,
-              };
-            }
-
-            return null;
-          })
-          .filter((issue) => issue !== null);
-
-        return issues.length > 0 ? { filterName, issues } : null;
-      })
-      .filter((f): f is { filterName: string; issues: { param: string; issue: string }[] } => f !== null);
+    const filtersWithIssues = extractIssuesFromVariable(parsedVariable.filters, isEnhancedDigestEnabled);
 
     return {
       ...parsedVariable,
