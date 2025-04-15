@@ -59,8 +59,6 @@ function InternalVariableView(props: InternalVariableViewProps) {
     };
   }, [aliasFor, fullLiquidExpression]);
 
-  console.log({ fff: filters, issues });
-
   return (
     <NodeViewWrapper className="react-component mly-inline-block mly-leading-none" draggable="false">
       <EditVariablePopover
