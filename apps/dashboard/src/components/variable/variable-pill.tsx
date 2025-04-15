@@ -2,7 +2,7 @@ import { cn } from '@/utils/ui';
 import React, { useMemo } from 'react';
 import { VariableFrom } from '../workflow-editor/steps/email/variables/variables';
 import { VariableIcon } from './components/variable-icon';
-import { Tooltip, TooltipContent, TooltipPortal, TooltipTrigger } from '../primitives/tooltip';
+import { VariableTooltip } from './variable-tooltip';
 
 export const VariablePill = React.forwardRef<
   HTMLSpanElement,
@@ -15,7 +15,6 @@ export const VariablePill = React.forwardRef<
     from?: VariableFrom;
   }
 >(({ variableName, filters, issues, className, onClick }, ref) => {
-  const [isHovered, setIsHovered] = React.useState(false);
   const displayVariableName = useMemo(() => {
     if (!variableName) return '';
     const variableParts = variableName.split('.');
@@ -23,44 +22,22 @@ export const VariablePill = React.forwardRef<
     return variableParts.length >= 3 ? '..' + variableParts.slice(-2).join('.') : variableName;
   }, [variableName]);
 
-  const getFilterNames = useMemo(() => {
-    return filters
-      ?.slice(1)
-      .map((f) => f.split(':')[0].trim())
-      .join(', ');
-  }, [filters]);
-
   return (
-    <Tooltip open={isHovered && (!!issues?.length || (filters && filters?.length > 1))}>
-      <TooltipTrigger asChild>
-        <span
-          ref={ref}
-          onClick={onClick}
-          className={cn(
-            'bg-bg-white border-stroke-soft font-code relative m-0 box-border inline-flex h-full cursor-pointer items-center gap-[0.25em] rounded-lg border px-1.5 py-0.5 align-middle font-medium leading-[inherit] text-inherit',
-            { 'hover:bg-error-base/2.5': !!issues?.length },
-            className
-          )}
-          onMouseLeave={() => setIsHovered(false)}
-          onMouseEnter={() => setIsHovered(true)}
-        >
-          <VariableIcon variableName={variableName} hasError={!!issues?.length} />
-          <span className="leading-[1.2]">{displayVariableName}</span>
-          <FiltersSection filters={filters} issues={issues} />
-        </span>
-      </TooltipTrigger>
-      <TooltipPortal>
-        <TooltipContent side="top" className="border-bg-soft bg-bg-weak border p-0.5 shadow-sm">
-          <div className="border-stroke-soft/70 text-label-2xs rounded-sm border bg-white p-1">
-            {issues && issues.length > 0 ? (
-              <span className="text-error-base">{issues?.[0].filterName} is missing a value.</span>
-            ) : (
-              <span className="text-feature">{getFilterNames}</span>
-            )}
-          </div>
-        </TooltipContent>
-      </TooltipPortal>
-    </Tooltip>
+    <VariableTooltip issues={issues} filters={filters}>
+      <span
+        ref={ref}
+        onClick={onClick}
+        className={cn(
+          'bg-bg-white border-stroke-soft font-code relative m-0 box-border inline-flex h-full cursor-pointer items-center gap-[0.25em] rounded-lg border px-1.5 py-0.5 align-middle font-medium leading-[inherit] text-inherit',
+          { 'hover:bg-error-base/2.5': !!issues?.length },
+          className
+        )}
+      >
+        <VariableIcon variableName={variableName} hasError={!!issues?.length} />
+        <span className="leading-[1.2]">{displayVariableName}</span>
+        <FiltersSection filters={filters} issues={issues} />
+      </span>
+    </VariableTooltip>
   );
 });
 
@@ -96,25 +73,15 @@ const FiltersSection = ({
 
   return (
     <div className="flex flex-col gap-2">
-      {filters?.length === 1 && (
+      {filters?.length > 0 && (
         <span className="flex items-center whitespace-nowrap">
           <span className="text-text-soft"> | {firstFilterName}</span>
-          {filters[0].includes(':') && <span className="text-text-sub">{finalParam}</span>}
+          {firstFilter.includes(':') && <span className="text-text-sub">{finalParam}</span>}
+          {filters && filters?.length > 1 && (
+            <span className="text-text-soft italic">, +{filters.length - 1} more</span>
+          )}
         </span>
       )}
-      {filters && filters?.length > 1 && (
-        <span className="flex items-center whitespace-nowrap">
-          <span className="text-text-soft"> | {firstFilterName}</span>
-          {filters[0].includes(':') && <span className="text-text-sub">{finalParam}</span>}
-          <span className="text-text-soft italic">&nbsp;+{filters.length - 1} more</span>
-        </span>
-      )}
-
-      {/* {issues.map((issue, index) => (
-        <div key={index} className="text-error">
-          {issue.filterName}: {issue.issues.map((i) => i.param).join(', ')}
-        </div>
-      ))} */}
     </div>
   );
 };
