@@ -286,8 +286,8 @@ const updateRepeatBlockChildAliases = (editor: Editor, isEnhancedDigestEnabled: 
     .run();
 };
 
-const isInsideRepeatBlock = (editor: TiptapEditor): boolean => {
-  return findRepeatBlock(editor) !== null;
+export const isInsideRepeatBlock = (editor: TiptapEditor): boolean => {
+  return editor?.isActive('repeat') ?? false;
 };
 
 const getRepeatBlockEachVariables = (editor: TiptapEditor): Array<LiquidVariable> => {

@@ -22,23 +22,32 @@ import {
   text,
 } from '@maily-to/core/blocks';
 import {
+  getSlashCommandSuggestions,
   getVariableSuggestions,
   HTMLCodeBlockExtension,
   RepeatExtension,
+  SlashCommandExtension,
   VariableExtension,
   Variables,
 } from '@maily-to/core/extensions';
 import { ReactNodeViewRenderer } from '@tiptap/react';
+import { searchSlashCommands } from '@maily-to/core-digest/extensions';
+import { StepResponseDto } from '@novu/shared';
+import { createDigestBlock } from './blocks/digest';
+import {
+  CalculateVariablesProps,
+  insertVariableToEditor,
+  isInsideRepeatBlock,
+  VariableFrom,
+} from './variables/variables';
 import { ForView } from './views/for-view';
 import { createVariableView } from './views/variable-view';
 import { MailyVariablesListView } from './views/maily-variables-list-view';
 import { HTMLCodeBlockView } from './views/html-view';
-import { CalculateVariablesProps, insertVariableToEditor, VariableFrom } from './variables/variables';
 import { VariablePill } from '@/components/variable/variable-pill';
 import { IsAllowedVariable } from '@/utils/parseStepVariables';
-import { StepResponseDto } from '@novu/shared';
-import { createDigestBlock } from './blocks/digest';
 
+import type { Editor as TiptapEditor } from '@tiptap/core';
 export const VARIABLE_TRIGGER_CHARACTER = '{{';
 
 /**
@@ -117,12 +126,29 @@ export const createEditorBlocks = (props: {
   return blocks;
 };
 
+const getAvailableBlocks = (blocks: BlockGroupItem[], editor: TiptapEditor | null) => {
+  // 'Repeat' and 'Digest' blocks can't be used inside another 'Repeat' block
+  const isInsideRepeat = editor && isInsideRepeatBlock(editor);
+
+  if (isInsideRepeat) {
+    const filteredBlocks = ['Repeat', 'Digest block'];
+
+    return blocks.map((block) => ({
+      ...block,
+      commands: block.commands.filter((cmd) => !filteredBlocks.includes(cmd.title)),
+    }));
+  }
+
+  return blocks;
+};
+
 export const createExtensions = (props: {
   handleCalculateVariables: (props: CalculateVariablesProps) => Variables | undefined;
   parsedVariables: { isAllowedVariable: IsAllowedVariable };
+  blocks: BlockGroupItem[];
   isEnhancedDigestEnabled: boolean;
 }) => {
-  const { handleCalculateVariables, parsedVariables, isEnhancedDigestEnabled } = props;
+  const { handleCalculateVariables, parsedVariables, blocks, isEnhancedDigestEnabled } = props;
 
   return [
     RepeatExtension.extend({
@@ -137,6 +163,14 @@ export const createExtensions = (props: {
             default: 'payload.items',
           },
         };
+      },
+    }),
+    SlashCommandExtension.configure({
+      suggestion: {
+        ...getSlashCommandSuggestions(blocks),
+        items: ({ query, editor }) => {
+          return searchSlashCommands(query, editor, getAvailableBlocks(blocks, editor));
+        },
       },
     }),
     VariableExtension.extend({
