@@ -25,7 +25,7 @@
     "@hookform/resolvers": "^3.9.0",
     "@lezer/highlight": "^1.2.1",
     "@maily-to/core": "github:novuhq/maily.to.git#release/v0.2.7-novu.6-core&path:/packages/core",
-    "@maily-to/core-digest": "github:novuhq/maily.to.git#release/v0.2.7-novu.8-core&path:/packages/core",
+    "@maily-to/core-digest": "github:novuhq/maily.to.git#release/v0.2.7-novu.9-core&path:/packages/core",
     "@novu/api": "workspace:*",
     "@novu/framework": "workspace:*",
     "@novu/js": "workspace:*",
