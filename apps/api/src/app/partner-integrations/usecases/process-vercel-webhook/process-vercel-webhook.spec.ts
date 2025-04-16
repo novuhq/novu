@@ -58,6 +58,7 @@ describe('ProcessVercelWebhook', function () {
       warn: stub(),
       debug: stub(),
       trace: stub(),
+      setContext: stub(),
     };
 
     const moduleRef = await Test.createTestingModule({

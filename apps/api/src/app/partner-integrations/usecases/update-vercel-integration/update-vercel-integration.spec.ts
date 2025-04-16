@@ -119,13 +119,13 @@ describe('UpdateVercelIntegration', function () {
     };
 
     loggerMock = {
-      log: stub().resolves(),
-      error: stub().resolves(),
-      warn: stub().resolves(),
-      debug: stub().resolves(),
-      info: stub().resolves(),
-      trace: stub().resolves(),
-      setContext: stub().resolves(),
+      log: stub(),
+      error: stub(),
+      warn: stub(),
+      debug: stub(),
+      info: stub(),
+      trace: stub(),
+      setContext: stub(),
     };
 
     const moduleRef = await Test.createTestingModule({
