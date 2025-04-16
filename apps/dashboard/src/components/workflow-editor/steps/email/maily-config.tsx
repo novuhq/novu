@@ -49,6 +49,7 @@ import { MailyVariablesListView } from './views/maily-variables-list-view';
 import { createVariableView } from './views/variable-view';
 
 import type { Editor as TiptapEditor } from '@tiptap/core';
+import { VariablePillOld } from '@/components/variable/variable-pill-old';
 export const VARIABLE_TRIGGER_CHARACTER = '{{';
 
 /**
@@ -208,8 +209,15 @@ export const createExtensions = (props: {
       },
       // variable pills in bubble menus (repeat, showIf...)
       renderVariable: (opts) => {
-        return (
+        return isEnhancedDigestEnabled ? (
           <VariablePill variableName={opts.variable.name} className="h-5 text-xs" from={opts.from as VariableFrom} />
+        ) : (
+          <VariablePillOld
+            variableName={opts.variable.name}
+            className="h-5 text-xs"
+            from={opts.from as VariableFrom}
+            hasFilters={false}
+          />
         );
       },
       variables: handleCalculateVariables as Variables,

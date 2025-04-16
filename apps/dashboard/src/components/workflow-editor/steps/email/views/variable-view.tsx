@@ -9,6 +9,7 @@ import { NodeViewProps } from '@tiptap/core';
 import { NodeViewWrapper } from '@tiptap/react';
 import { useCallback, useMemo, useState } from 'react';
 import { resolveRepeatBlockAlias } from '../variables/variables';
+import { VariablePillOld } from '@/components/variable/variable-pill-old';
 
 type InternalVariableViewProps = NodeViewProps & {
   isAllowedVariable: IsAllowedVariable;
@@ -79,13 +80,22 @@ function InternalVariableView(props: InternalVariableViewProps) {
           editor.view.focus();
         }}
       >
-        <VariablePill
-          issues={issues}
-          variableName={name}
-          filters={filtersArray}
-          onClick={() => setIsOpen(true)}
-          className="-mt-[2px]"
-        />
+        {isEnhancedDigestEnabled ? (
+          <VariablePill
+            issues={issues}
+            variableName={name}
+            filters={filtersArray}
+            onClick={() => setIsOpen(true)}
+            className="-mt-[2px]"
+          />
+        ) : (
+          <VariablePillOld
+            variableName={name}
+            hasFilters={filtersArray.length > 0}
+            onClick={() => setIsOpen(true)}
+            className="-mt-[2px]"
+          />
+        )}
       </EditVariablePopover>
     </NodeViewWrapper>
   );

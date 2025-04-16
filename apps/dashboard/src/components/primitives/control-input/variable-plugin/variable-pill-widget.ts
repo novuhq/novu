@@ -70,7 +70,7 @@ export class VariablePillWidget extends WidgetType {
       fontFamily: 'var(--font-code)',
       display: 'inline-flex',
       alignItems: 'center',
-      height: '16px',
+      height: '100%',
       lineHeight: 'inherit',
       fontSize: 'max(12px, calc(1em - 3px))',
       cursor: 'pointer',
@@ -107,7 +107,7 @@ export class VariablePillWidget extends WidgetType {
   toDOM() {
     const span = document.createElement('span');
     const content = document.createElement('span');
-    content.textContent = this.getDisplayVariableName();
+    content.textContent = this.variableName;
     const before = document.createElement('span');
 
     const pillStyles = this.createPillStyles();
@@ -115,13 +115,6 @@ export class VariablePillWidget extends WidgetType {
 
     const beforeStyles = this.createBeforeStyles();
     Object.assign(before.style, beforeStyles);
-    const hasIssues = this.getVariableIssues().length > 0;
-
-    if (hasIssues) {
-      before.style.color = 'hsl(var(--error-base))';
-      before.style.backgroundImage = `url("/images/error-circle-outline.svg")`;
-      before.style.backgroundSize = 'cover';
-    }
 
     const contentStyles = this.createContentStyles();
     Object.assign(content.style, contentStyles);
@@ -136,26 +129,45 @@ export class VariablePillWidget extends WidgetType {
 
     span.addEventListener('mousedown', this.clickHandler);
 
-    this.renderFilters(span);
+    if (this.isEnhancedDigestEnabled) {
+      content.textContent = this.getDisplayVariableName();
 
-    span.addEventListener('mouseenter', () => {
-      if (!this.tooltipElement) {
-        this.tooltipElement = this.renderTooltip(span);
-      }
+      const hasIssues = this.getVariableIssues().length > 0;
 
       if (hasIssues) {
-        span.style.backgroundColor = 'hsl(var(--error-base) / 0.025)';
-      }
-    });
-
-    span.addEventListener('mouseleave', () => {
-      if (this.tooltipElement) {
-        document.body.removeChild(this.tooltipElement);
-        this.tooltipElement = null;
+        before.style.color = 'hsl(var(--error-base))';
+        before.style.backgroundImage = `url("/images/error-circle-outline.svg")`;
+        before.style.backgroundSize = 'cover';
       }
 
-      span.style.backgroundColor = 'hsl(var(--bg-white))';
-    });
+      this.renderFilters(span);
+
+      span.addEventListener('mouseenter', () => {
+        if (!this.tooltipElement) {
+          this.tooltipElement = this.renderTooltip(span);
+        }
+
+        if (hasIssues) {
+          span.style.backgroundColor = 'hsl(var(--error-base) / 0.025)';
+        }
+      });
+
+      span.addEventListener('mouseleave', () => {
+        if (this.tooltipElement) {
+          document.body.removeChild(this.tooltipElement);
+          this.tooltipElement = null;
+        }
+
+        span.style.backgroundColor = 'hsl(var(--bg-white))';
+      });
+    } else {
+      if (this.filters?.length) {
+        const after = document.createElement('span');
+        const afterStyles = this.createAfterStyles();
+        Object.assign(after.style, afterStyles);
+        span.appendChild(after);
+      }
+    }
 
     return span;
   }
