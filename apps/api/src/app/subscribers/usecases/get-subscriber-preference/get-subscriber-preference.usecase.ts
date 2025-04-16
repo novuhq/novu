@@ -1,10 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import {
-  NotificationTemplateRepository,
-  SubscriberRepository,
-  PreferencesRepository,
   NotificationTemplateEntity,
+  NotificationTemplateRepository,
   PreferencesEntity,
+  PreferencesRepository,
+  SubscriberRepository,
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
@@ -15,16 +15,16 @@ import {
 } from '@novu/shared';
 
 import {
+  GetPreferences,
+  GetPreferencesResponseDto,
   Instrument,
   InstrumentUsecase,
   MergePreferences,
-  GetPreferences,
-  GetPreferencesResponseDto,
+  MergePreferencesCommand,
   PreferenceSet,
   filteredPreference,
-  overridePreferences,
-  MergePreferencesCommand,
   mapTemplateConfiguration,
+  overridePreferences,
 } from '@novu/application-generic';
 import { GetSubscriberPreferenceCommand } from './get-subscriber-preference.command';
 
@@ -113,7 +113,7 @@ export class GetSubscriberPreference {
       return acc;
     }, {});
 
-    const workflowPreferences: (ISubscriberPreferenceResponse | undefined)[] = this.calculateWorkflowPreferences(
+    const workflowPreferences = await this.calculateWorkflowPreferences(
       workflowList,
       workflowPreferenceSets,
       subscriberGlobalPreference,
@@ -129,49 +129,63 @@ export class GetSubscriberPreference {
   }
 
   @Instrument()
-  private calculateWorkflowPreferences(
+  private async calculateWorkflowPreferences(
     workflowList: NotificationTemplateEntity[],
     workflowPreferenceSets: Record<string, PreferenceSet>,
     subscriberGlobalPreference: PreferencesEntity | null,
     includeInactiveChannels: boolean
-  ): (ISubscriberPreferenceResponse | undefined)[] {
-    return workflowList.map((workflow) => {
-      const preferences = workflowPreferenceSets[workflow._id];
+  ): Promise<(ISubscriberPreferenceResponse | undefined)[]> {
+    // Process workflows in chunks to avoid blocking the event loop
+    const chunkSize = 50; // Adjust based on performance testing
+    const results: (ISubscriberPreferenceResponse | undefined)[] = [];
 
-      if (!preferences) {
-        return;
-      }
+    for (let i = 0; i < workflowList.length; i += chunkSize) {
+      // Use setImmediate to yield to the event loop between chunks
+      await new Promise<void>((resolve) => setImmediate(() => resolve()));
 
-      const merged = this.mergePreferences(preferences, subscriberGlobalPreference);
+      const chunk = workflowList.slice(i, i + chunkSize);
+      const chunkResults = chunk.map((workflow) => {
+        const preferences = workflowPreferenceSets[workflow._id];
 
-      const includedChannels = this.getChannels(workflow, includeInactiveChannels);
+        if (!preferences) {
+          return;
+        }
 
-      const initialChannels = filteredPreference(
-        {
-          email: true,
-          sms: true,
-          in_app: true,
-          chat: true,
-          push: true,
-        },
-        includedChannels
-      );
+        const merged = this.mergePreferences(preferences, subscriberGlobalPreference);
 
-      const { channels, overrides } = this.calculateChannelsAndOverrides(merged, initialChannels);
+        const includedChannels = this.getChannels(workflow, includeInactiveChannels);
 
-      return {
-        preference: {
-          channels,
-          enabled: true,
-          overrides,
-        },
-        template: mapTemplateConfiguration({
-          ...workflow,
-          critical: merged.preferences.all.readOnly,
-        }),
-        type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
-      };
-    });
+        const initialChannels = filteredPreference(
+          {
+            email: true,
+            sms: true,
+            in_app: true,
+            chat: true,
+            push: true,
+          },
+          includedChannels
+        );
+
+        const { channels, overrides } = this.calculateChannelsAndOverrides(merged, initialChannels);
+
+        return {
+          preference: {
+            channels,
+            enabled: true,
+            overrides,
+          },
+          template: mapTemplateConfiguration({
+            ...workflow,
+            critical: merged.preferences.all.readOnly,
+          }),
+          type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
+        };
+      });
+
+      results.push(...chunkResults);
+    }
+
+    return results;
   }
 
   @Instrument()
