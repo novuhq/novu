@@ -70,7 +70,7 @@ export class VariablePillWidget extends WidgetType {
       fontFamily: 'var(--font-code)',
       display: 'inline-flex',
       alignItems: 'center',
-      height: '100%',
+      height: '20px',
       lineHeight: 'inherit',
       fontSize: 'max(12px, calc(1em - 3px))',
       cursor: 'pointer',
@@ -129,7 +129,7 @@ export class VariablePillWidget extends WidgetType {
 
     span.addEventListener('mousedown', this.clickHandler);
 
-    if (!this.isEnhancedDigestEnabled) {
+    if (this.isEnhancedDigestEnabled) {
       content.textContent = this.getDisplayVariableName();
 
       const hasIssues = this.getVariableIssues().length > 0;
