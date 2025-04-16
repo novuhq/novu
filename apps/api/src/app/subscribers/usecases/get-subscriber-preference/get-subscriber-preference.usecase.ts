@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { chunk } from 'lodash';
 import {
   NotificationTemplateEntity,
   NotificationTemplateRepository,
@@ -139,13 +140,14 @@ export class GetSubscriberPreference {
     const chunkSize = 50;
     const results: (ISubscriberPreferenceResponse | undefined)[] = [];
 
-    for (let i = 0; i < workflowList.length; i += chunkSize) {
+    const chunks = chunk(workflowList, chunkSize);
+
+    for (const chunk of chunks) {
       // Use setImmediate to yield to the event loop between chunks
       await new Promise<void>((resolve) => {
         setImmediate(() => resolve());
       });
 
-      const chunk = workflowList.slice(i, i + chunkSize);
       const chunkResults = chunk.map((workflow) => {
         const preferences = workflowPreferenceSets[workflow._id];
 
