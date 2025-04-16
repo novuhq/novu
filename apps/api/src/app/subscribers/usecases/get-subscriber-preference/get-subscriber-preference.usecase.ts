@@ -142,7 +142,7 @@ export class GetSubscriberPreference {
     for (let i = 0; i < workflowList.length; i += chunkSize) {
       // Use setImmediate to yield to the event loop between chunks
       await new Promise<void>((resolve) => {
-        void setImmediate(resolve);
+        setImmediate(() => resolve());
       });
 
       const chunk = workflowList.slice(i, i + chunkSize);
