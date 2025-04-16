@@ -65,4 +65,5 @@ export enum TelemetryEvent {
   EMAIL_BLOCK_ADDED = 'Email block added',
   DIGEST_BLOCK_ADDED = 'Digest block added',
   INBOX_DATA_OBJECT_PROPERTY_ADDED = 'Inbox data object property added',
+  CARD_BLOCK_ADDED = 'Card block added',
 }

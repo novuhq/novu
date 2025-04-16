@@ -23,8 +23,8 @@ const createHorizontalCardWithCta: (props: { track: ReturnType<typeof useTelemet
     ),
     icon: <HorizontalCardWithImage className="size-4" />,
     command: ({ editor, range }) => {
-      track(TelemetryEvent.EMAIL_BLOCK_ADDED, {
-        type: 'header',
+      track(TelemetryEvent.CARD_BLOCK_ADDED, {
+        type: 'card',
       });
 
       editor
@@ -131,8 +131,8 @@ const createCardWithImageAndCta: (props: { track: ReturnType<typeof useTelemetry
       />
     ),
     command: ({ editor, range }) => {
-      track(TelemetryEvent.EMAIL_BLOCK_ADDED, {
-        type: 'header',
+      track(TelemetryEvent.CARD_BLOCK_ADDED, {
+        type: 'card',
       });
 
       editor
@@ -259,8 +259,8 @@ const createInformationCardWithLogo: (props: { track: ReturnType<typeof useTelem
     ),
     icon: <InformationCardWithLogo className="size-4" />,
     command: ({ editor, range }) => {
-      track(TelemetryEvent.EMAIL_BLOCK_ADDED, {
-        type: 'header',
+      track(TelemetryEvent.CARD_BLOCK_ADDED, {
+        type: 'card',
       });
 
       editor
