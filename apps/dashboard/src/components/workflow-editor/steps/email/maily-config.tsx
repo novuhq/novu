@@ -4,6 +4,7 @@ import { createHeaders } from '@/components/workflow-editor/steps/email/blocks/h
 import { createHtmlCodeBlock } from '@/components/workflow-editor/steps/email/blocks/html';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { IsAllowedVariable } from '@/utils/parseStepVariables';
+import { searchSlashCommands } from '@maily-to/core-digest/extensions';
 import {
   BlockGroupItem,
   blockquote,
@@ -34,8 +35,6 @@ import {
 } from '@maily-to/core/extensions';
 import { StepResponseDto } from '@novu/shared';
 import { ReactNodeViewRenderer } from '@tiptap/react';
-import { searchSlashCommands } from '@maily-to/core-digest/extensions';
-import { StepResponseDto } from '@novu/shared';
 import { createDigestBlock } from './blocks/digest';
 import {
   CalculateVariablesProps,
@@ -48,10 +47,6 @@ import { HTMLCodeBlockView } from './views/html-view';
 
 import { MailyVariablesListView } from './views/maily-variables-list-view';
 import { createVariableView } from './views/variable-view';
-
-import { VariablePill } from '@/components/variable/variable-pill';
-import { IsAllowedVariable } from '@/utils/parseStepVariables';
-
 
 import type { Editor as TiptapEditor } from '@tiptap/core';
 export const VARIABLE_TRIGGER_CHARACTER = '{{';
