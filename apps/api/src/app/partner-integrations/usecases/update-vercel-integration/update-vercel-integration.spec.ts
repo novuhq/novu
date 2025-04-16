@@ -125,6 +125,7 @@ describe('UpdateVercelIntegration', function () {
       debug: stub().resolves(),
       info: stub().resolves(),
       trace: stub().resolves(),
+      setContext: stub().resolves(),
     };
 
     const moduleRef = await Test.createTestingModule({
