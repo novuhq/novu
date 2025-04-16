@@ -1,5 +1,7 @@
-import { expect } from 'chai';
-import { v4 as uuid } from 'uuid';
+import { Novu } from '@novu/api';
+import { CreateIntegrationRequestDto, TriggerEventResponseDto } from '@novu/api/models/components';
+import { SubscriberPayloadDto } from '@novu/api/src/models/components/subscriberpayloaddto';
+import { DetailEnum } from '@novu/application-generic';
 import {
   EnvironmentRepository,
   ExecutionDetailsRepository,
@@ -14,7 +16,6 @@ import {
   SubscriberRepository,
   TenantRepository,
 } from '@novu/dal';
-import { SubscribersService, UserSession, WorkflowOverrideService } from '@novu/testing';
 import {
   ActorTypeEnum,
   ChannelTypeEnum,
@@ -39,10 +40,9 @@ import {
   WorkflowResponseDto,
 } from '@novu/shared';
 import { EmailEventStatusEnum } from '@novu/stateless';
-import { DetailEnum } from '@novu/application-generic';
-import { Novu } from '@novu/api';
-import { SubscriberPayloadDto } from '@novu/api/src/models/components/subscriberpayloaddto';
-import { CreateIntegrationRequestDto, TriggerEventResponseDto } from '@novu/api/models/components';
+import { SubscribersService, UserSession, WorkflowOverrideService } from '@novu/testing';
+import { expect } from 'chai';
+import { v4 as uuid } from 'uuid';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 import { createTenant } from '../../tenant/e2e/create-tenant.e2e';
 
@@ -3271,7 +3271,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
 
   describe('Trigger Event v2 workflow - /v1/events/trigger (POST)', function () {
     afterEach(async () => {
-      await messageRepository.deleteMany({
+      await messageRepository.delete({
         _environmentId: session.environment._id,
       });
     });
