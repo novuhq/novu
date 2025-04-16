@@ -1,5 +1,5 @@
 /* eslint-disable global-require */
-import { Body, Controller, Logger, Post, BadRequestException } from '@nestjs/common';
+import { Body, Controller, Post, BadRequestException } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { format } from 'date-fns';
 import i18next from 'i18next';
@@ -11,6 +11,7 @@ import {
   CompileInAppTemplateCommand,
   CompileStepTemplate,
   CompileStepTemplateCommand,
+  PinoLogger,
 } from '@novu/application-generic';
 import { IEmailBlock, IMessageCTA, MessageTemplateContentType, UserSessionData } from '@novu/shared';
 import { UserSession } from '../shared/framework/user.decorator';
@@ -24,8 +25,11 @@ export class ContentTemplatesController {
     private compileEmailTemplateUsecase: CompileEmailTemplate,
     private compileInAppTemplate: CompileInAppTemplate,
     private compileStepTemplate: CompileStepTemplate,
-    private moduleRef: ModuleRef
-  ) {}
+    private moduleRef: ModuleRef,
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   @Post('/preview/email')
   public async previewEmail(
@@ -182,7 +186,7 @@ export class ContentTemplatesController {
         return instance;
       }
     } catch (e) {
-      Logger.error(e, `Unexpected error while importing enterprise modules`, 'TranslationsService');
+      this.logger.error({ err: e }, `Unexpected error while importing enterprise modules`);
     }
   }
 }

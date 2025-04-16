@@ -34,7 +34,6 @@ import {
   WorkflowOriginEnum,
   WorkflowResponseDto,
   WorkflowTestDataResponseDto,
-  ApiAuthSchemeEnum,
 } from '@novu/shared';
 import { ApiCommonResponses } from '../shared/framework/response.decorator';
 import { UserAuthentication } from '../shared/framework/swagger/api.key.security';

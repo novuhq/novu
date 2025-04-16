@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import {
   MessageTemplateRepository,
   NotificationTemplateEntity,
@@ -21,11 +21,9 @@ import {
 
 import { GetSubscriberTemplatePreferenceCommand } from './get-subscriber-template-preference.command';
 
-import { BadRequestException } from '@nestjs/common';
 import { GetPreferences } from '../get-preferences';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
-import { CachedResponse } from '../../services/cache/interceptors/cached-return.interceptor';
-import { buildSubscriberKey } from '../../services';
+import { buildSubscriberKey, CachedResponse } from '../../services';
 
 const PRIORITY_ORDER = [
   PreferenceOverrideSourceEnum.TEMPLATE,

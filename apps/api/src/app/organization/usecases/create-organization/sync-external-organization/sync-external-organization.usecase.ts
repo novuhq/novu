@@ -1,6 +1,6 @@
 /* eslint-disable global-require */
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-import { AnalyticsService } from '@novu/application-generic';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { AnalyticsService, PinoLogger } from '@novu/application-generic';
 import { OrganizationEntity, OrganizationRepository, UserRepository } from '@novu/dal';
 
 import { ModuleRef } from '@nestjs/core';
@@ -32,8 +32,11 @@ export class SyncExternalOrganization {
     private readonly createEnvironmentUsecase: CreateEnvironment,
     private readonly createNovuIntegrations: CreateNovuIntegrations,
     private analyticsService: AnalyticsService,
-    private moduleRef: ModuleRef
-  ) {}
+    private moduleRef: ModuleRef,
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   async execute(command: SyncExternalOrganizationCommand): Promise<OrganizationEntity> {
     const user = await this.userRepository.findById(command.userId);
@@ -113,7 +116,7 @@ export class SyncExternalOrganization {
         });
       }
     } catch (e) {
-      Logger.error(e, `Unexpected error while importing enterprise modules`, 'StartReverseFreeTrial');
+      this.logger.error({ err: e }, `Unexpected error while importing enterprise modules`);
     }
   }
 }
