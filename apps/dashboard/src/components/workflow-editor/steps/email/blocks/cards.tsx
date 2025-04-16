@@ -166,7 +166,7 @@ const createCardWithImageAndCta: (props: { track: ReturnType<typeof useTelemetry
                   content: [
                     {
                       type: 'text',
-                      text: 'Your free trial for Novu Business Events and 1 more product with Novu US, Inc. will end soon. You have an upcoming payment on',
+                      text: 'Your free trial for Novu Business Events and 1 more product with Novu US, Inc. will end soon. You have an upcoming payment on ',
                     },
                     {
                       type: 'variable',
