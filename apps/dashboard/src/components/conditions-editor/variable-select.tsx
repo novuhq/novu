@@ -6,7 +6,7 @@ import { VariableList, VariableListRef } from '@/components/variable/variable-li
 import { AUTOCOMPLETE_PASSWORD_MANAGERS_OFF } from '@/utils/constants';
 import { cn } from '@/utils/ui';
 
-type VariableSelectProps = HTMLAttributes<HTMLDivElement> & {
+type VariableSelectProps = Omit<HTMLAttributes<HTMLDivElement>, 'onChange'> & {
   disabled?: boolean;
   value?: string;
   options: Array<{ label: string; value: string }>;
@@ -16,6 +16,7 @@ type VariableSelectProps = HTMLAttributes<HTMLDivElement> & {
   placeholder?: string;
   error?: string;
   emptyState?: React.ReactNode;
+  isClearable?: boolean;
 };
 
 /**
@@ -41,6 +42,7 @@ export const VariableSelect = (props: VariableSelectProps) => {
     error,
     placeholder,
     emptyState,
+    isClearable = false,
     ...rest
   } = props;
   const [inputValue, setInputValue] = useState(value ?? '');
@@ -95,7 +97,14 @@ export const VariableSelect = (props: VariableSelectProps) => {
   const onClose = () => {
     setIsOpen(false);
     setFilterValue('');
-    const newInputValue = inputValue !== '' ? inputValue : (value ?? '');
+    let newInputValue = '';
+
+    if (inputValue !== '' || (inputValue === '' && isClearable)) {
+      newInputValue = inputValue;
+    } else {
+      newInputValue = value ?? '';
+    }
+
     setInputValue(newInputValue);
     onChange(newInputValue);
   };

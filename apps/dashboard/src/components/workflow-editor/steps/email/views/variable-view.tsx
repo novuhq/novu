@@ -11,11 +11,12 @@ import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { parseVariable } from '@/utils/liquid';
 
 type InternalVariableViewProps = NodeViewProps & {
+  variables: LiquidVariable[];
   isAllowedVariable: IsAllowedVariable;
 };
 
 function InternalVariableView(props: InternalVariableViewProps) {
-  const { node, updateAttributes, editor, isAllowedVariable, deleteNode } = props;
+  const { node, updateAttributes, editor, isAllowedVariable, deleteNode, variables } = props;
   const { id, aliasFor } = node.attrs;
   const [variableValue, setVariableValue] = useState(`{{${id}}}`);
   const [isOpen, setIsOpen] = useState(false);
@@ -63,6 +64,7 @@ function InternalVariableView(props: InternalVariableViewProps) {
         open={isOpen}
         onOpenChange={handleOpenChange}
         variable={variable}
+        variables={variables}
         isAllowedVariable={isAllowedVariable}
         onUpdate={(newValue) => {
           const { fullLiquidExpression } = parseVariableCallback(newValue);
@@ -79,6 +81,13 @@ function InternalVariableView(props: InternalVariableViewProps) {
           // Focus back to the editor after updating the variable
           editor.view.focus();
         }}
+        onDeleteClick={() => {
+          deleteNode();
+
+          setTimeout(() => {
+            editor.view.focus();
+          }, 0);
+        }}
       >
         <VariablePill
           variableName={name}
@@ -92,8 +101,8 @@ function InternalVariableView(props: InternalVariableViewProps) {
 }
 
 // HOC that takes isAllowedVariable prop
-export function createVariableView(isAllowedVariable: IsAllowedVariable) {
+export function createVariableView(variables: LiquidVariable[], isAllowedVariable: IsAllowedVariable) {
   return function VariableView(props: NodeViewProps) {
-    return <InternalVariableView {...props} isAllowedVariable={isAllowedVariable} />;
+    return <InternalVariableView {...props} variables={variables} isAllowedVariable={isAllowedVariable} />;
   };
 }
