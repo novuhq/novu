@@ -3,7 +3,7 @@ import { Decoration, DecorationSet, EditorView, Range } from '@uiw/react-codemir
 import { MutableRefObject } from 'react';
 import { isTypingVariable } from './utils';
 import { VariablePillWidget } from './variable-pill-widget';
-import { parseVariable, parseVariableForCodeMirror } from '@/utils/liquid';
+import { parseVariableForCodeMirror } from '@/utils/liquid';
 import { VARIABLE_REGEX_STRING } from '@/utils/liquid';
 
 export class VariablePluginView {
