@@ -245,13 +245,11 @@ export class NotificationTemplateRepository extends BaseRepository<
     environmentId,
     tags,
     critical,
-    limit,
   }: {
     organizationId: string;
     environmentId: string;
     tags?: string[];
     critical?: boolean;
-    limit?: number;
   }) {
     const requestQuery: NotificationTemplateQuery = {
       _environmentId: environmentId,
@@ -270,8 +268,7 @@ export class NotificationTemplateRepository extends BaseRepository<
     const items = await this.MongooseModel.find(requestQuery)
       .populate('steps.template', { type: 1 })
       .populate('notificationGroup')
-      .read('secondaryPreferred')
-      .limit(limit ?? 500);
+      .read('secondaryPreferred');
 
     return this.mapEntities(items);
   }
