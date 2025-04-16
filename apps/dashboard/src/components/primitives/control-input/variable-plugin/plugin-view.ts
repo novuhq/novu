@@ -54,7 +54,9 @@ export class VariablePluginView {
         continue;
       }
 
-      const { fullLiquidExpression, name, start, end, filtersArray } = parsedVariable;
+      const { fullLiquidExpression, name, filtersArray } = parsedVariable;
+      const start = match.index;
+      const end = start + match[0].length;
 
       // Skip creating pills for variables that are currently being edited
       // This allows users to modify variables without the pill getting in the way

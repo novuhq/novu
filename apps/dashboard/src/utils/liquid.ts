@@ -3,8 +3,6 @@ export type VariableMatch = {
   liquidVariable: string;
   name: string;
   nameRoot: string;
-  start: number;
-  end: number;
   filtersArray: string[];
   filters: string;
 };
@@ -52,8 +50,6 @@ export function parseVariable(variable: string): VariableMatch | undefined {
     return;
   }
 
-  const start = match.index;
-  const end = start + match[0].length;
   const fullLiquidExpression = match[1].trim();
   const parts = fullLiquidExpression.split('|').map((part) => part.trim());
   const name = parts[0];
@@ -64,8 +60,6 @@ export function parseVariable(variable: string): VariableMatch | undefined {
     liquidVariable,
     name,
     nameRoot: name.trim().split('.')[0],
-    start,
-    end,
     filtersArray: hasFilters ? parts.slice(1) : [],
     filters: hasFilters ? `| ${parts.slice(1).join(' | ')}` : '',
   };
