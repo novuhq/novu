@@ -3,7 +3,7 @@ import React, { useMemo } from 'react';
 import { VariableFrom } from '../workflow-editor/steps/email/variables/variables';
 import { VariableIcon } from './components/variable-icon';
 import { VariableTooltip } from './variable-tooltip';
-import { parseParams } from './utils';
+import { getFirstFilterAndItsArgs } from './utils';
 
 export const VariablePill = React.forwardRef<
   HTMLSpanElement,
@@ -50,18 +50,14 @@ const FiltersSection = ({
 }) => {
   if (!filters || filters.length === 0) return null;
 
-  const firstFilter = filters[0];
-  const firstFilterName = firstFilter.split(':')[0];
-  const firstFilterParams = firstFilter.split(':')[1]?.split(',')?.[0];
-  const parsedFilterParams = parseParams(firstFilterParams);
-  const finalParam = parsedFilterParams.length > 0 ? ': ' + parsedFilterParams : null;
+  const { finalParam, firstFilterName, firstFilter } = getFirstFilterAndItsArgs(filters);
 
   return (
     <div className="flex flex-col gap-2">
       {filters?.length > 0 && (
         <span className="flex items-center whitespace-nowrap">
           <span className="text-text-soft"> | {firstFilterName}</span>
-          {firstFilter.includes(':') && <span className="text-text-sub">{finalParam}</span>}
+          {firstFilter.includes(':') && filters.length === 1 && <span className="text-text-sub">{finalParam}</span>}
           {filters && filters?.length > 1 && (
             <span className="text-text-soft italic">, +{filters.length - 1} more</span>
           )}

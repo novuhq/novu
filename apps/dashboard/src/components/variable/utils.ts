@@ -103,3 +103,17 @@ export const parseParams = (input: string) => {
     })
     .join(', ');
 };
+
+export const getFirstFilterAndItsArgs = (filters: string[]) => {
+  const firstFilter = filters[0];
+  const firstFilterName = firstFilter.split(':')[0];
+  const firstFilterParams = firstFilter.split(':')[1]?.split(',')?.[0];
+  const parsedFilterParams = parseParams(firstFilterParams);
+  const finalParam = parsedFilterParams.length > 0 ? ': ' + parsedFilterParams : null;
+
+  return {
+    firstFilterName,
+    finalParam,
+    firstFilter,
+  };
+};

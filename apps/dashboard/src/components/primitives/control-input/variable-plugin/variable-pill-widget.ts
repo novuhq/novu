@@ -1,4 +1,4 @@
-import { extractIssuesFromVariable, parseParams } from '@/components/variable/utils';
+import { extractIssuesFromVariable, getFirstFilterAndItsArgs } from '@/components/variable/utils';
 import { WidgetType } from '@uiw/react-codemirror';
 import { CSSProperties } from 'react';
 
@@ -129,7 +129,7 @@ export class VariablePillWidget extends WidgetType {
 
     span.addEventListener('mousedown', this.clickHandler);
 
-    if (this.isEnhancedDigestEnabled) {
+    if (!this.isEnhancedDigestEnabled) {
       content.textContent = this.getDisplayVariableName();
 
       const hasIssues = this.getVariableIssues().length > 0;
@@ -175,11 +175,7 @@ export class VariablePillWidget extends WidgetType {
   renderFilters(parent: HTMLElement) {
     if (!this.filters?.length) return;
 
-    const firstFilter = this.filters[0];
-    const firstFilterName = firstFilter.split(':')[0];
-    const firstFilterParams = firstFilter.split(':')[1]?.split(',')?.[0];
-    const parsedFilterParams = parseParams(firstFilterParams);
-    const finalParam = parsedFilterParams.length > 0 ? ': ' + parsedFilterParams : null;
+    const { finalParam, firstFilterName } = getFirstFilterAndItsArgs(this.filters);
 
     if (this.filters?.length > 0) {
       const filterSpan = document.createElement('span');
@@ -187,10 +183,13 @@ export class VariablePillWidget extends WidgetType {
       filterNameSpan.textContent = `| ${firstFilterName}`;
       Object.assign(filterNameSpan.style, this.createFilterStyles());
       filterSpan.appendChild(filterNameSpan);
-      const argsSpan = document.createElement('span');
-      argsSpan.textContent = finalParam;
-      Object.assign(argsSpan.style, this.createContentStyles());
-      filterSpan.appendChild(argsSpan);
+
+      if (this.filters.length === 1) {
+        const argsSpan = document.createElement('span');
+        argsSpan.textContent = finalParam;
+        Object.assign(argsSpan.style, this.createContentStyles());
+        filterSpan.appendChild(argsSpan);
+      }
 
       if (this.filters.length > 1) {
         const countSpan = document.createElement('span');
