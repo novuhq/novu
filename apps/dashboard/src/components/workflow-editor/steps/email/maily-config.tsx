@@ -84,15 +84,14 @@ export const createEditorBlocks = (props: {
   const { track, digestStepBeforeCurrent, isEnhancedDigestEnabled } = props;
   const blocks: BlockGroupItem[] = [];
 
-  const highlightBlocks = [
-    createHtmlCodeBlock({ track }),
-    createHeaders({ track }),
-    createFooters({ track }),
-    createCards({ track }),
-  ];
+  const highlightBlocks = [createHtmlCodeBlock({ track }), createHeaders({ track }), createFooters({ track })];
 
-  if (isEnhancedDigestEnabled && digestStepBeforeCurrent) {
-    highlightBlocks.unshift(createDigestBlock({ track, digestStepBeforeCurrent }));
+  if (isEnhancedDigestEnabled) {
+    highlightBlocks.unshift(createCards({ track }));
+
+    if (digestStepBeforeCurrent) {
+      highlightBlocks.unshift(createDigestBlock({ track, digestStepBeforeCurrent }));
+    }
   }
 
   blocks.push({
