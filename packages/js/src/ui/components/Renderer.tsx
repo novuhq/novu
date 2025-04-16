@@ -105,7 +105,8 @@ export const Renderer = (props: RendererProps) => {
 
                     onMount(() => {
                       /*
-                       ** return here if not `<Notifications /> or `<Preferences />` since we only want to override some styles for those to work properly
+                       ** return here if not `<Notifications /> or `<Preferences />`
+                       ** since we only want to override some styles for those to work properly
                        ** due to the extra divs being introduced by the renderer/mounter
                        */
                       if (!['Notifications', 'Preferences', 'InboxContent'].includes(novuComponent().name)) return;

@@ -17,4 +17,16 @@ export class SessionCommand extends BaseCommand {
   @IsOptional()
   @IsString()
   readonly origin?: string;
+
+  @IsOptional()
+  @IsString()
+  readonly firstName?: string;
+
+  @IsOptional()
+  @IsString()
+  readonly lastName?: string;
+
+  @IsOptional()
+  @IsString()
+  readonly email?: string;
 }

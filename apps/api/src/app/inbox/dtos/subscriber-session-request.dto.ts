@@ -12,4 +12,16 @@ export class SubscriberSessionRequestDto {
   @IsString()
   @IsOptional()
   readonly subscriberHash?: string;
+
+  @IsString()
+  @IsOptional()
+  readonly firstName?: string;
+
+  @IsString()
+  @IsOptional()
+  readonly lastName?: string;
+
+  @IsString()
+  @IsOptional()
+  readonly email?: string;
 }

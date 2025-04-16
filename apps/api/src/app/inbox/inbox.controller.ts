@@ -73,6 +73,9 @@ export class InboxController {
         applicationIdentifier: body.applicationIdentifier,
         subscriberHash: body.subscriberHash,
         origin,
+        firstName: body.firstName,
+        lastName: body.lastName,
+        email: body.email,
       })
     );
   }

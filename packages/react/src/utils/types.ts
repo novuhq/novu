@@ -39,6 +39,9 @@ export type BaseProps = {
   tabs?: Array<Tab>;
   preferencesFilter?: PreferencesFilter;
   routerPush?: RouterPush;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
 };
 
 export type NotificationRendererProps = {

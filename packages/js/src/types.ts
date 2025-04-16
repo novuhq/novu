@@ -171,6 +171,9 @@ export type NovuOptions = {
   useCache?: boolean;
   /** @internal Should be used internally for testing purposes */
   __userAgent?: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
 };
 
 export type Prettify<T> = { [K in keyof T]: T[K] } & {};
