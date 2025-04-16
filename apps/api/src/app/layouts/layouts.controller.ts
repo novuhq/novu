@@ -6,7 +6,6 @@ import {
   Get,
   HttpCode,
   HttpStatus,
-  Logger,
   Param,
   Patch,
   Post,
@@ -14,7 +13,7 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { OrderByEnum, OrderDirectionEnum, UserSessionData } from '@novu/shared';
-import { GetLayoutCommand, GetLayoutUseCase, OtelSpan } from '@novu/application-generic';
+import { GetLayoutCommand, GetLayoutUseCase, OtelSpan, PinoLogger } from '@novu/application-generic';
 import { ApiExcludeController } from '@nestjs/swagger/dist/decorators/api-exclude-controller.decorator';
 import {
   ApiBadRequestResponse,
@@ -65,8 +64,11 @@ export class LayoutsController {
     private filterLayoutsUseCase: FilterLayoutsUseCase,
     private getLayoutUseCase: GetLayoutUseCase,
     private setDefaultLayoutUseCase: SetDefaultLayoutUseCase,
-    private updateLayoutUseCase: UpdateLayoutUseCase
-  ) {}
+    private updateLayoutUseCase: UpdateLayoutUseCase,
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   @Post('')
   @ExternalApiAccessible()
@@ -78,7 +80,7 @@ export class LayoutsController {
     @UserSession() user: UserSessionData,
     @Body() body: CreateLayoutRequestDto
   ): Promise<CreateLayoutResponseDto> {
-    Logger.verbose('Executing new layout command');
+    this.logger.trace('Executing new layout command');
 
     const layout = await this.createLayoutUseCase.execute(
       CreateLayoutCommand.create({
@@ -94,7 +96,7 @@ export class LayoutsController {
       })
     );
 
-    Logger.verbose(`Created new Layout${layout._id}`);
+    this.logger.trace(`Created new Layout${layout._id}`);
 
     return {
       _id: layout._id,
@@ -209,6 +211,7 @@ export class LayoutsController {
   })
   @ApiConflictResponse({
     description:
+      // eslint-disable-next-line max-len
       'One default layout is needed. If you are trying to turn a default layout as not default, you should turn a different layout as default first and automatically it will be done by the system.',
     schema: { example: `One default layout is required` },
   })

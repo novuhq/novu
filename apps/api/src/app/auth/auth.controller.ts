@@ -7,7 +7,6 @@ import {
   Header,
   HttpCode,
   HttpStatus,
-  Logger,
   NotFoundException,
   Param,
   Post,
@@ -21,7 +20,7 @@ import { MemberEntity, MemberRepository, UserRepository } from '@novu/dal';
 import { AuthGuard } from '@nestjs/passport';
 import { PasswordResetFlowEnum, UserSessionData } from '@novu/shared';
 import { ApiExcludeController, ApiTags } from '@nestjs/swagger';
-import { buildOauthRedirectUrl } from '@novu/application-generic';
+import { buildOauthRedirectUrl, PinoLogger } from '@novu/application-generic';
 import { UserRegistrationBodyDto } from './dtos/user-registration.dto';
 import { UserRegister } from './usecases/register/user-register.usecase';
 import { UserRegisterCommand } from './usecases/register/user-register.command';
@@ -56,17 +55,19 @@ export class AuthController {
     private authService: AuthService,
     private userRegisterUsecase: UserRegister,
     private loginUsecase: Login,
-    private switchEnvironmentUsecase: SwitchEnvironment,
     private switchOrganizationUsecase: SwitchOrganization,
     private memberRepository: MemberRepository,
     private passwordResetRequestUsecase: PasswordResetRequest,
     private passwordResetUsecase: PasswordReset,
-    private updatePasswordUsecase: UpdatePassword
-  ) {}
+    private updatePasswordUsecase: UpdatePassword,
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   @Get('/github')
   githubAuth() {
-    Logger.verbose('Checking Github Auth');
+    this.logger.trace('Checking Github Auth');
 
     if (!process.env.GITHUB_OAUTH_CLIENT_ID || !process.env.GITHUB_OAUTH_CLIENT_SECRET) {
       throw new BadRequestException(
@@ -74,7 +75,7 @@ export class AuthController {
       );
     }
 
-    Logger.verbose('Github Auth has all variables.');
+    this.logger.trace('Github Auth has all variables.');
 
     return {
       success: true,

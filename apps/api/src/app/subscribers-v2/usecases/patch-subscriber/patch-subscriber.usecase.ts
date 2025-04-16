@@ -1,5 +1,5 @@
-import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { FeatureFlagsService } from '@novu/application-generic';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { FeatureFlagsService, PinoLogger } from '@novu/application-generic';
 import {
   CommunityOrganizationRepository,
   EnvironmentEntity,
@@ -21,8 +21,11 @@ export class PatchSubscriber {
     private subscriberRepository: SubscriberRepository,
     private featureFlagService: FeatureFlagsService,
     private environmentRepository: EnvironmentRepository,
-    private communityOrganizationRepository: CommunityOrganizationRepository
-  ) {}
+    private communityOrganizationRepository: CommunityOrganizationRepository,
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   async execute(command: PatchSubscriberCommand): Promise<SubscriberResponseDto> {
     const nonUndefinedEntries = Object.entries(command.patchSubscriberRequestDto).filter(
@@ -111,7 +114,7 @@ export class PatchSubscriber {
     }
 
     if (isDryRun) {
-      Logger.warn(`[Dry run] Invalid recipients: ${itemId}`, 'PatchSubscriber');
+      this.logger.warn(`[Dry run] Invalid recipients: ${itemId}`);
     } else {
       throw new BadRequestException(
         `Invalid subscriberId: ${itemId}, only alphanumeric characters, - and _ or valid email addresses are allowed`

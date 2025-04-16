@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
 import {
   CommunityOrganizationRepository,
   EnvironmentEntity,
@@ -8,7 +8,7 @@ import {
   TopicRepository,
   UserEntity,
 } from '@novu/dal';
-import { FeatureFlagsService } from '@novu/application-generic';
+import { FeatureFlagsService, PinoLogger } from '@novu/application-generic';
 import { FeatureFlagsKeysEnum, VALID_ID_REGEX } from '@novu/shared';
 import { CreateTopicCommand } from './create-topic.command';
 
@@ -20,8 +20,11 @@ export class CreateTopicUseCase {
     private topicRepository: TopicRepository,
     private featureFlagService: FeatureFlagsService,
     private environmentRepository: EnvironmentRepository,
-    private communityOrganizationRepository: CommunityOrganizationRepository
-  ) {}
+    private communityOrganizationRepository: CommunityOrganizationRepository,
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   async execute(command: CreateTopicCommand) {
     const entity = this.mapToEntity(command);
@@ -110,7 +113,7 @@ export class CreateTopicUseCase {
     }
 
     if (isDryRun) {
-      Logger.warn(`[Dry run] Invalid topic key: ${key}`, 'CreateTopicUseCase');
+      this.logger.warn(`[Dry run] Invalid topic key: ${key}`);
     } else {
       throw new BadRequestException(
         `Invalid topic key: ${key}, only alphanumeric characters, - and _ or valid email addresses are allowed`

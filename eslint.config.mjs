@@ -287,12 +287,21 @@ export default tsEslint.config(
   {
     files: ['apps/api/**'],
     rules: {
-      'func-names': 'off',
       'no-restricted-imports': [
         'error',
         {
           patterns: [
             noRestrictedImportsMultiLevelNovuPattern,
+            {
+              group: ['@nestjs/common'],
+              importNames: ['Logger'],
+              message: 'Please use the PinoLogger from @novu/application-generic instead',
+            },
+            {
+              group: ['@novu/application-generic'],
+              importNames: ['Logger'],
+              message: 'Please use the PinoLogger from @novu/application-generic instead',
+            },
             {
               /**
                * This rule ensures that the overridden Swagger decorators are used,

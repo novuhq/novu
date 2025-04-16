@@ -1,8 +1,9 @@
-import { Injectable, Logger, NotFoundException, Scope, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, Scope, BadRequestException } from '@nestjs/common';
 
 import { MemberEntity, MemberRepository, OrganizationRepository, UserEntity, UserRepository } from '@novu/dal';
 import { MemberStatusEnum } from '@novu/shared';
 import { Novu } from '@novu/api';
+import { PinoLogger } from '@novu/application-generic';
 import { AuthService } from '../../../auth/services/auth.service';
 import { AcceptInviteCommand } from './accept-invite.command';
 import { capitalize } from '../../../shared/services/helper/helper.service';
@@ -17,8 +18,11 @@ export class AcceptInvite {
     private organizationRepository: OrganizationRepository,
     private memberRepository: MemberRepository,
     private userRepository: UserRepository,
-    private authService: AuthService
-  ) {}
+    private authService: AuthService,
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   async execute(command: AcceptInviteCommand): Promise<string> {
     const member = await this.memberRepository.findByInviteToken(command.token);
@@ -44,7 +48,7 @@ export class AcceptInvite {
       answerDate: new Date(),
     });
 
-    this.sendInviterAcceptedEmail(inviter, member);
+    await this.sendInviterAcceptedEmail(inviter, member);
 
     return this.authService.generateUserToken(user);
   }
@@ -73,7 +77,7 @@ export class AcceptInvite {
         });
       }
     } catch (e) {
-      Logger.error(e.message, e.stack, 'Accept inviter send email');
+      this.logger.error({ message: e.message, stack: e.stack }, 'Accept inviter send email');
     }
   }
 }

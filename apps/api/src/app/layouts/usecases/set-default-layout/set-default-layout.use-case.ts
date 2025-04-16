@@ -1,7 +1,7 @@
-import { Injectable, Logger, Inject } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ChangeRepository, LayoutRepository } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
-import { AnalyticsService, GetLayoutUseCase } from '@novu/application-generic';
+import { AnalyticsService, GetLayoutUseCase, PinoLogger } from '@novu/application-generic';
 
 import { EnvironmentId, LayoutId, OrganizationId } from '../../types';
 import { CreateDefaultLayoutChangeCommand } from '../create-default-layout-change/create-default-layout-change.command';
@@ -15,8 +15,11 @@ export class SetDefaultLayoutUseCase {
     private createDefaultLayoutChange: CreateDefaultLayoutChangeUseCase,
     private layoutRepository: LayoutRepository,
     private changeRepository: ChangeRepository,
-    private analyticsService: AnalyticsService
-  ) {}
+    private analyticsService: AnalyticsService,
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   async execute(command: SetDefaultLayoutCommand) {
     const layout = await this.getLayout.execute(command);
@@ -58,7 +61,7 @@ export class SetDefaultLayoutUseCase {
         previousDefaultLayout: existingDefaultLayoutId,
       });
     } catch (error) {
-      Logger.error(error);
+      this.logger.error({ err: error });
       // TODO: Rollback through transactions
     }
   }

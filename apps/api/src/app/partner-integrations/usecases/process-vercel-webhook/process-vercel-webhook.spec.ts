@@ -11,6 +11,7 @@ import {
 } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 
+import { PinoLogger } from '@novu/application-generic';
 import { ProcessVercelWebhook } from './process-vercel-webhook.usecase';
 import { Sync } from '../../../bridge/usecases/sync';
 
@@ -22,7 +23,7 @@ describe('ProcessVercelWebhook', function () {
   let memberRepositoryMock;
   let communityUserRepositoryMock;
   let syncUsecaseMock;
-
+  let loggerMock;
   beforeEach(async () => {
     organizationRepositoryMock = {
       find: stub().resolves([{ _id: 'test-org-id' }]),
@@ -51,6 +52,14 @@ describe('ProcessVercelWebhook', function () {
       execute: stub().resolves(true),
     };
 
+    loggerMock = {
+      info: stub(),
+      error: stub(),
+      warn: stub(),
+      debug: stub(),
+      trace: stub(),
+    };
+
     const moduleRef = await Test.createTestingModule({
       providers: [
         ProcessVercelWebhook,
@@ -73,6 +82,10 @@ describe('ProcessVercelWebhook', function () {
         {
           provide: Sync,
           useValue: syncUsecaseMock,
+        },
+        {
+          provide: PinoLogger,
+          useValue: loggerMock,
         },
       ],
     }).compile();

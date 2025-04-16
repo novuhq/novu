@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, Logger, UnprocessableEntityException } from '@nestjs/common';
+import { BadRequestException, Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import {
   ExecuteBridgeRequest,
@@ -46,8 +46,6 @@ import {
   ParseEventRequestMulticastCommand,
 } from './parse-event-request.command';
 
-const LOG_CONTEXT = 'ParseEventRequest';
-
 @Injectable()
 export class ParseEventRequest {
   constructor(
@@ -63,7 +61,9 @@ export class ParseEventRequest {
     private logger: PinoLogger,
     private featureFlagService: FeatureFlagsService,
     protected moduleRef: ModuleRef
-  ) {}
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   @InstrumentUsecase()
   public async execute(command: ParseEventRequestCommand) {
@@ -141,10 +141,6 @@ export class ParseEventRequest {
     const inactiveWorkflowOverride = workflowOverride && !workflowOverride.active;
 
     if (inactiveWorkflowOverride || inactiveWorkflow) {
-      const message = workflowOverride ? 'Workflow is not active by workflow override' : 'Workflow is not active';
-      Logger.log(message, LOG_CONTEXT);
-      this.logger.info(command, `${LOG_CONTEXT}:${message}`);
-
       return {
         acknowledged: true,
         status: TriggerEventStatusEnum.NOT_ACTIVE,
@@ -240,9 +236,8 @@ export class ParseEventRequest {
       const { validRecipients, invalidRecipients } = this.parseRecipients(commandArgs.to);
 
       if (invalidRecipients.length > 0 && isDryRun) {
-        Logger.warn(
-          `[Dry run] Invalid recipients: ${invalidRecipients.map((recipient) => JSON.stringify(recipient)).join(', ')}`,
-          'ParseEventRequest'
+        this.logger.warn(
+          `[Dry run] Invalid recipients: ${invalidRecipients.map((recipient) => JSON.stringify(recipient)).join(', ')}`
         );
       }
 
@@ -273,7 +268,7 @@ export class ParseEventRequest {
     await this.workflowQueueService.add({ name: transactionId, data: jobData, groupId: command.organizationId });
     this.logger.info(
       { ...command, transactionId, discoveredWorkflowId: discoveredWorkflow?.workflowId },
-      'TriggerEventUseCase - Event dispatched to [Workflow] Queue'
+      'Event dispatched to [Workflow] Queue'
     );
 
     return {

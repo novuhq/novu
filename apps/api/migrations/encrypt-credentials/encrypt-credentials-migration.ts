@@ -1,24 +1,23 @@
-import { IntegrationEntity } from '@novu/dal';
-import { IntegrationRepository } from '@novu/dal';
+import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import { ICredentialsDto, secureCredentials } from '@novu/shared';
 import { encryptSecret } from '@novu/application-generic';
+import { getLogger } from '../../src/app/shared/services/logger.service';
+
+const logger = getLogger('EncryptCredentialsMigration');
 
 export async function encryptOldCredentialsMigration() {
-  // eslint-disable-next-line no-console
-  console.log('start migration - encrypt credentials');
+  logger.info('start migration - encrypt credentials');
 
   const integrationRepository = new IntegrationRepository();
   const integrations = await integrationRepository.find({} as any);
 
   for (const integration of integrations) {
-    // eslint-disable-next-line no-console
-    console.log(`integration ${integration._id}`);
+    logger.info(`integration ${integration._id}`);
 
     const updatePayload: Partial<IntegrationEntity> = {};
 
     if (!integration.credentials) {
-      // eslint-disable-next-line no-console
-      console.log(`integration ${integration._id} - is not contains credentials, skipping..`);
+      logger.info(`integration ${integration._id} - is not contains credentials, skipping..`);
       continue;
     }
 
@@ -30,16 +29,14 @@ export async function encryptOldCredentialsMigration() {
         $set: updatePayload,
       }
     );
-    // eslint-disable-next-line no-console
-    console.log(`integration ${integration._id} - credentials updated`);
+    logger.info(`integration ${integration._id} - credentials updated`);
   }
-  // eslint-disable-next-line no-console
-  console.log('end migration');
+  logger.info('end migration');
 }
 
 export function encryptCredentialsWithGuard(integration: IntegrationEntity): ICredentialsDto {
   const encryptedCredentials: ICredentialsDto = {};
-  const credentials = integration.credentials;
+  const { credentials } = integration;
 
   for (const key in credentials) {
     const credential = credentials[key];
@@ -66,8 +63,7 @@ function alreadyEncrypted(credential: string, integration: IntegrationEntity, cr
   const encrypted = credential.includes('nvsk.');
 
   if (encrypted) {
-    // eslint-disable-next-line no-console
-    console.log(`integration ${integration._id} - credential ${credentialKey} is already updated`);
+    logger.info(`integration ${integration._id} - credential ${credentialKey} is already updated`);
   }
 
   return encrypted;
