@@ -52,12 +52,7 @@ export function parseVariable(variable: string): VariableMatch | undefined {
     return;
   }
 
-  const start = match.index;
-  const end = start + match[0].length;
-  const fullLiquidExpression = match[1].trim();
-  const parts = fullLiquidExpression.split('|').map((part) => part.trim());
-  const name = parts[0];
-  const hasFilters = parts.length > 1;
+  const { end, fullLiquidExpression, hasFilters, name, start, parts } = getFilterDetails(match);
 
   return {
     fullLiquidExpression: name ? fullLiquidExpression : '',
@@ -72,12 +67,7 @@ export function parseVariable(variable: string): VariableMatch | undefined {
 }
 
 export function parseVariableForCodeMirror(match: RegExpExecArray): VariableMatch {
-  const start = match.index;
-  const end = start + match[0].length;
-  const fullLiquidExpression = match[1].trim();
-  const parts = fullLiquidExpression.split('|').map((part) => part.trim());
-  const name = parts[0];
-  const hasFilters = parts.length > 1;
+  const { end, fullLiquidExpression, hasFilters, name, start, parts } = getFilterDetails(match);
 
   const liquidVariable = hasFilters
     ? normalizeVariableSyntax(match[0])
@@ -94,3 +84,21 @@ export function parseVariableForCodeMirror(match: RegExpExecArray): VariableMatc
     filters: hasFilters ? `| ${parts.slice(1).join(' | ')}` : '',
   };
 }
+
+const getFilterDetails = (match: RegExpExecArray) => {
+  const start = match.index;
+  const end = start + match[0].length;
+  const fullLiquidExpression = match[1].trim();
+  const parts = fullLiquidExpression.split('|').map((part) => part.trim());
+  const name = parts[0];
+  const hasFilters = parts.length > 1;
+
+  return {
+    start,
+    end,
+    fullLiquidExpression,
+    name,
+    hasFilters,
+    parts,
+  };
+};
