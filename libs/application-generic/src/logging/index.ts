@@ -5,11 +5,11 @@ import { storage, Store } from 'nestjs-pino/storage';
 import { sensitiveFields } from './masking';
 
 export * from './LogDecorator';
+export { getLoggerToken, Logger, LoggerModule, PinoLogger, storage, Store };
 
 export function getErrorInterceptor(): NestInterceptor {
   return new LoggerErrorInterceptor();
 }
-export { Logger, LoggerModule, PinoLogger, storage, Store, getLoggerToken };
 
 const loggingLevelSet = {
   trace: 10,
@@ -76,6 +76,13 @@ export function createNestLoggingModuleOptions(settings: ILoggerSettings): Param
       level: configSet.level,
       redact: {
         paths: redactFields,
+        censor() {
+          /**
+           * This makes sure that the redact doesn't mutate the original object
+           * And only does it on the object that is being logged, 
+           * It's strange but it works. No return value needed.
+           */
+        },
       },
       base: {
         pid: process.pid,
