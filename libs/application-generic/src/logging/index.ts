@@ -76,12 +76,12 @@ export function createNestLoggingModuleOptions(settings: ILoggerSettings): Param
       level: configSet.level,
       redact: {
         paths: redactFields,
-        censor(value) {
+        censor() {
           /**
            * This makes sure that the redact doesn't mutate the original object
-           * And only does it on the object that is being logged
+           * And only does it on the object that is being logged, 
+           * It's strange but it works. No return value needed.
            */
-          return JSON.parse(JSON.stringify(value));
         },
       },
       base: {
