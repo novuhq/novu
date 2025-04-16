@@ -3271,7 +3271,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
 
   describe('Trigger Event v2 workflow - /v1/events/trigger (POST)', function () {
     afterEach(async () => {
-      await messageRepository.deleteMany({
+      await messageRepository.delete({
         _environmentId: session.environment._id,
       });
     });

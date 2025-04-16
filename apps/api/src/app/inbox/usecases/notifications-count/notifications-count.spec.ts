@@ -20,12 +20,7 @@ describe('NotificationsCount', () => {
   beforeEach(() => {
     messageRepository = sinon.createStubInstance(MessageRepository);
     subscriberRepository = sinon.createStubInstance(SubscriberRepository);
-    organizationRepository = sinon.createStubInstance(OrganizationRepository);
-    notificationsCount = new NotificationsCount(
-      messageRepository as any,
-      subscriberRepository as any,
-      organizationRepository as any
-    );
+    notificationsCount = new NotificationsCount(messageRepository as any, subscriberRepository as any);
   });
 
   describe('execute', () => {
