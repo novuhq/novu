@@ -5,6 +5,7 @@ import { ParagraphWithImage } from '@/components/icons/paragraph-with-image';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { BlockItem } from '@maily-to/core/blocks';
+import { BlockCustomPreview } from './block-custom-preview';
 
 const createHorizontalCardWithCta: (props: { track: ReturnType<typeof useTelemetry> }) => BlockItem = (props) => {
   const { track } = props;
@@ -13,7 +14,13 @@ const createHorizontalCardWithCta: (props: { track: ReturnType<typeof useTelemet
     title: 'Horizontal card with image',
     description: 'Card: Horizontal information card with CTA',
     searchTerms: ['logo', 'text', 'image', 'horizontal', 'card'],
-    preview: '/images/email-editor/horizontal-card-with-image-preview.webp',
+    preview: () => (
+      <BlockCustomPreview
+        src="/images/email-editor/horizontal-card-with-image-preview.webp"
+        alt="Cards"
+        description="Card: Horizontal information card with CTA"
+      />
+    ),
     icon: <HorizontalCardWithImage className="size-4" />,
     command: ({ editor, range }) => {
       track(TelemetryEvent.EMAIL_BLOCK_ADDED, {
@@ -116,7 +123,13 @@ const createCardWithImageAndCta: (props: { track: ReturnType<typeof useTelemetry
     description: 'Card with paragraph, CTA & image',
     searchTerms: ['card', 'cta', 'image', 'paragraph'],
     icon: <ParagraphWithImage className="size-4" />,
-    preview: '/images/email-editor/paragraph-with-image-preview.webp',
+    preview: () => (
+      <BlockCustomPreview
+        src="/images/email-editor/paragraph-with-image-preview.webp"
+        description="Card with paragraph, CTA & image"
+        alt="Paragraph with image"
+      />
+    ),
     command: ({ editor, range }) => {
       track(TelemetryEvent.EMAIL_BLOCK_ADDED, {
         type: 'header',
@@ -237,7 +250,13 @@ const createInformationCardWithLogo: (props: { track: ReturnType<typeof useTelem
     title: 'Information card with logo',
     description: 'Card: information card with logo',
     searchTerms: ['logo', 'text', 'information', 'card'],
-    preview: '/images/email-editor/information-card-with-logo-preview.webp',
+    preview: () => (
+      <BlockCustomPreview
+        src="/images/email-editor/information-card-with-logo-preview.webp"
+        alt="Information card with logo"
+        description="Card: information card with logo"
+      />
+    ),
     icon: <InformationCardWithLogo className="size-4" />,
     command: ({ editor, range }) => {
       track(TelemetryEvent.EMAIL_BLOCK_ADDED, {
@@ -347,7 +366,16 @@ export const createCards = (props: { track: ReturnType<typeof useTelemetry> }) =
     description: 'Add pre-made cards',
     searchTerms: ['card', 'cards'],
     icon: <CardBlocks className="size-4" />,
-    preview: '/images/email-editor/horizontal-card-with-image-preview.webp',
+    preview: () => (
+      <>
+        <figure className="mly-relative mly-w-full mly-overflow-hidden mly-rounded-md mly-border mly-border-gray-200">
+          <img src="/images/email-editor/horizontal-card-with-image-preview.webp" alt="Cards" />
+          {/* <img src="/images/email-editor/horizontal-card-with-image-preview.webp" /> */}
+        </figure>
+        <p className="mly-mt-2 mly-px-0.5 mly-text-gray-500">Add pre-made cards</p>
+      </>
+    ),
+
     commands: [
       createCardWithImageAndCta({ track }),
       createHorizontalCardWithCta({ track }),
