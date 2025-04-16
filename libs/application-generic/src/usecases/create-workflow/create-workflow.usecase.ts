@@ -16,7 +16,6 @@ import {
   WorkflowTypeEnum,
 } from '@novu/shared';
 
-import { PinoLogger } from 'nestjs-pino';
 import { CreateWorkflowCommand, NotificationStep, NotificationStepVariantCommand } from './create-workflow.command';
 import { CreateChange, CreateChangeCommand } from '../create-change';
 import { AnalyticsService } from '../../services';
@@ -38,6 +37,7 @@ import {
 } from '../workflow';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import { ResourceValidatorService } from '../../services/resource-validator.service';
+import { PinoLogger } from '../..';
 
 /**
  * @deprecated - use `UpsertWorkflow` instead

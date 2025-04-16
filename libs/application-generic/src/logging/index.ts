@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { NestInterceptor, RequestMethod } from '@nestjs/common';
 import { getLoggerToken, Logger, LoggerErrorInterceptor, LoggerModule, Params, PinoLogger } from 'nestjs-pino';
 import { storage, Store } from 'nestjs-pino/storage';
@@ -10,134 +11,84 @@ export function getErrorInterceptor(): NestInterceptor {
 }
 export { Logger, LoggerModule, PinoLogger, storage, Store, getLoggerToken };
 
-const loggingLevelArr = ['error', 'warn', 'info', 'verbose', 'debug'];
-
 const loggingLevelSet = {
-  error: 50,
-  warn: 40,
+  trace: 10,
+  debug: 20,
   info: 30,
-  verbose: 20,
-  debug: 10,
+  warn: 40,
+  error: 50,
+  fatal: 60,
+  none: 70,
 };
-
-interface ILoggingVariables {
-  env: string;
-  level: string;
-
-  hostingPlatform: string;
-  tenant: string;
-}
+const loggingLevelArr = Object.keys(loggingLevelSet);
 
 export function getLogLevel() {
-  let logLevel = process.env.LOGGING_LEVEL ?? 'info';
+  let logLevel = null;
 
-  if (loggingLevelArr.indexOf(logLevel) === -1) {
-    // eslint-disable-next-line no-console
-    console.log(`${logLevel}is not a valid log level of ${loggingLevelArr}. Reverting to info.`);
-
+  if (process.env.LOGGING_LEVEL || process.env.LOG_LEVEL) {
+    logLevel = process.env.LOGGING_LEVEL || process.env.LOG_LEVEL;
+  } else {
+    console.log(`Environment variable LOG_LEVEL is not set. Falling back to info level.`);
     logLevel = 'info';
   }
-  // eslint-disable-next-line no-console
-  console.log(`Log Level Chosen: ${logLevel}`);
+
+  if (!loggingLevelArr.includes(logLevel)) {
+    console.log(`${logLevel}is not a valid log level of ${loggingLevelArr}. Falling back to info level.`);
+
+    return 'info';
+  }
 
   return logLevel;
 }
 
-// TODO: should be moved into a config framework
-function getLoggingVariables(): ILoggingVariables {
-  const env = process.env.NODE_ENV ?? 'local';
-
-  // eslint-disable-next-line no-console
-  console.log(`Environment: ${env}`);
-
-  const hostingPlatform = process.env.HOSTING_PLATFORM ?? 'Docker';
-
-  // eslint-disable-next-line no-console
-  console.log(`Platform: ${hostingPlatform}`);
-
-  const tenant = process.env.TENANT ?? 'OS';
-
-  // eslint-disable-next-line no-console
-  console.log(`Tenant: ${tenant}`);
-
-  return {
-    env,
-    level: getLogLevel(),
-    hostingPlatform,
-    tenant,
-  };
-}
-
 export function createNestLoggingModuleOptions(settings: ILoggerSettings): Params {
-  const values: ILoggingVariables = getLoggingVariables();
-
-  let redactFields: string[] = sensitiveFields.map((val) => val);
-
+  let redactFields: string[] = sensitiveFields;
   redactFields.push('req.headers.authorization');
-
   const baseWildCards = '*.';
   const baseArrayWildCards = '*[*].';
   for (let i = 1; i <= 6; i += 1) {
     redactFields = redactFields.concat(sensitiveFields.map((val) => baseWildCards.repeat(i) + val));
-
     redactFields = redactFields.concat(sensitiveFields.map((val) => baseArrayWildCards.repeat(i) + val));
   }
 
-  const transport = ['local', 'test', 'debug'].includes(process.env.NODE_ENV) ? { target: 'pino-pretty' } : undefined;
-
-  // eslint-disable-next-line no-console
-  console.log(loggingLevelSet);
-
-  // eslint-disable-next-line no-console
-  console.log(`Selected Log Transport ${!transport ? 'None' : 'pino-pretty'}`, loggingLevelSet);
+  const configSet = {
+    transport: ['local', 'test', 'debug'].includes(process.env.NODE_ENV) ? { target: 'pino-pretty' } : undefined,
+    platform: process.env.HOSTING_PLATFORM ?? 'Docker',
+    tenant: process.env.TENANT ?? 'OS',
+    level: getLogLevel(),
+    levels: loggingLevelSet,
+  };
+  console.log('Logging Configuration:', {
+    level: configSet.level,
+    environment: process.env.NODE_ENV,
+    transport: !configSet.transport ? 'None' : 'pino-pretty',
+    platform: configSet.platform,
+    tenant: configSet.tenant,
+    levels: JSON.stringify(configSet.levels),
+  });
 
   return {
     exclude: [{ path: '*/health-check', method: RequestMethod.GET }],
+    assignResponse: true,
     pinoHttp: {
-      customLevels: loggingLevelSet,
-      level: values.level,
+      useOnlyCustomLevels: true,
+      customLevels: configSet.levels,
+      level: configSet.level,
       redact: {
         paths: redactFields,
-        censor: customRedaction,
       },
       base: {
         pid: process.pid,
         serviceName: settings.serviceName,
         serviceVersion: settings.version,
-        platform: values.hostingPlatform,
-        tenant: values.tenant,
+        platform: configSet.platform,
+        tenant: configSet.tenant,
       },
-      transport,
-      autoLogging: !['test', 'local'].includes(process.env.NODE_ENV),
-      /**
-       * These custom props are only added to 'request completed' and 'request errored' logs.
-       * Logs generated during request processing won't have these props by default.
-       * To include these or any other custom props in mid-request logs,
-       * use `PinoLogger.assign(<props>)` explicitly before logging.
-       */
-      customProps: (req: any, res: any) => ({
-        user: {
-          userId: req?.user?._id || null,
-          environmentId: req?.user?.environmentId || null,
-          organizationId: req?.user?.organizationId || null,
-        },
-        authScheme: req?.authScheme,
-        rateLimitPolicy: res?.rateLimitPolicy,
-      }),
+      transport: configSet.transport,
+      autoLogging: !['test'].includes(process.env.NODE_ENV),
     },
   };
 }
-
-const customRedaction = (value: any, path: string[]) => {
-  /*
-   * Logger.
-   * if (obj.email && typeof obj.email === 'string') {
-   *   obj.email = '[REDACTED]';
-   * }
-   *
-   * return JSON.parse(JSON.stringify(obj));
-   */
-};
 
 interface ILoggerSettings {
   serviceName: string;
