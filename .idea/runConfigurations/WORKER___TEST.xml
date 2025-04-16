@@ -9,7 +9,7 @@
     <envs>
       <env name="MONGO_AUTO_CREATE_INDEXES" value="true" />
       <env name="NOVU_ENTERPRISE" value="true" />
-      <env name="LOGGING_LEVEL" value="ERROR" />
+      <env name="LOG_LEVEL" value="ERROR" />
     </envs>
     <method v="2" />
   </configuration>
