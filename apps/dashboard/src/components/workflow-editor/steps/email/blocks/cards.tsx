@@ -25,7 +25,7 @@ const createHorizontalCardWithCta: (props: { track: ReturnType<typeof useTelemet
         .deleteRange(range)
         .insertContent({
           type: 'columns',
-          attrs: { showIfKey: null, gap: 8 },
+          attrs: { showIfKey: null, gap: 18 },
           content: [
             {
               type: 'column',
@@ -44,7 +44,7 @@ const createHorizontalCardWithCta: (props: { track: ReturnType<typeof useTelemet
                     isExternalLinkVariable: false,
                     isSrcVariable: false,
                     showIfKey: null,
-                    height: '204',
+                    height: '208',
                     width: '282',
                     borderRadius: 8,
                     lockAspectRatio: false,
@@ -80,6 +80,7 @@ const createHorizontalCardWithCta: (props: { track: ReturnType<typeof useTelemet
                     },
                   ],
                 },
+                { type: 'spacer', attrs: { height: 32, showIfKey: null } },
                 {
                   type: 'button',
                   attrs: {
@@ -92,6 +93,10 @@ const createHorizontalCardWithCta: (props: { track: ReturnType<typeof useTelemet
                     buttonColor: '#f8f8f8',
                     textColor: '#141313',
                     showIfKey: null,
+                    paddingTop: 6,
+                    paddingRight: 24,
+                    paddingBottom: 6,
+                    paddingLeft: 24,
                   },
                 },
               ],
@@ -180,6 +185,7 @@ const createCardWithImageAndCta: (props: { track: ReturnType<typeof useTelemetry
                     },
                   ],
                 },
+                { type: 'spacer', attrs: { height: 24, showIfKey: null } },
                 {
                   type: 'paragraph',
                   attrs: { textAlign: null, showIfKey: null },
@@ -191,6 +197,7 @@ const createCardWithImageAndCta: (props: { track: ReturnType<typeof useTelemetry
                     },
                   ],
                 },
+                { type: 'spacer', attrs: { height: 24, showIfKey: null } },
                 {
                   type: 'button',
                   attrs: {
@@ -205,12 +212,15 @@ const createCardWithImageAndCta: (props: { track: ReturnType<typeof useTelemetry
                     textColor: '#141313',
                     showIfKey: null,
                     width: '100%',
+                    paddingTop: 6,
+                    paddingRight: 24,
+                    paddingBottom: 6,
+                    paddingLeft: 24,
                   },
                 },
-                {
-                  type: 'paragraph',
-                  attrs: { textAlign: null, showIfKey: null },
-                },
+                { type: 'spacer', attrs: { height: 16, showIfKey: null } },
+
+                { type: 'horizontalRule' },
               ],
             },
           ],
@@ -245,10 +255,10 @@ const createInformationCardWithLogo: (props: { track: ReturnType<typeof useTelem
             align: 'left',
             borderWidth: 2,
             borderColor: '#f8f8f8',
-            paddingTop: 0,
-            paddingRight: 0,
-            paddingBottom: 0,
-            paddingLeft: 0,
+            paddingTop: 16,
+            paddingRight: 16,
+            paddingBottom: 16,
+            paddingLeft: 16,
             marginTop: 0,
             marginRight: 0,
             marginBottom: 0,
@@ -258,7 +268,7 @@ const createInformationCardWithLogo: (props: { track: ReturnType<typeof useTelem
           content: [
             {
               type: 'columns',
-              attrs: { showIfKey: null, gap: 0 },
+              attrs: { showIfKey: null, gap: 12 },
               content: [
                 {
                   type: 'column',
