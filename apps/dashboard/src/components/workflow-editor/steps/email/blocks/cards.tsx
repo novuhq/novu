@@ -367,13 +367,11 @@ export const createCards = (props: { track: ReturnType<typeof useTelemetry> }) =
     searchTerms: ['card', 'cards'],
     icon: <CardBlocks className="size-4" />,
     preview: () => (
-      <>
-        <figure className="mly-relative mly-w-full mly-overflow-hidden mly-rounded-md mly-border mly-border-gray-200">
-          <img src="/images/email-editor/horizontal-card-with-image-preview.webp" alt="Cards" />
-          {/* <img src="/images/email-editor/horizontal-card-with-image-preview.webp" /> */}
-        </figure>
-        <p className="mly-mt-2 mly-px-0.5 mly-text-gray-500">Add pre-made cards</p>
-      </>
+      <BlockCustomPreview
+        src="/images/email-editor/horizontal-card-with-image-preview.webp"
+        alt="Cards"
+        description="Add pre-made cards"
+      />
     ),
 
     commands: [
