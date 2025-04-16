@@ -119,7 +119,7 @@ export class ExecuteBridgeRequest {
       command.action
     );
 
-    this.logger.log(
+    this.logger.info(
       `Resolved bridge URL: ${bridgeUrl} for environment ${command.environmentId} and origin ${command.workflowOrigin}`
     );
 
