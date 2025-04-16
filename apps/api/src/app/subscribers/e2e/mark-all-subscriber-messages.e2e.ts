@@ -16,7 +16,7 @@ describe('Mark All Subscriber Messages - /subscribers/:subscriberId/messages/mar
     await session.initialize();
     template = await session.createTemplate();
     novuClient = initNovuClassSdk(session);
-    await messageRepository.deleteMany({
+    await messageRepository.delete({
       _environmentId: session.environment._id,
       _subscriberId: session.subscriberId,
     });
