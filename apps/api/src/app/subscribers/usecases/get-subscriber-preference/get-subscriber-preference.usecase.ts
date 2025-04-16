@@ -136,7 +136,7 @@ export class GetSubscriberPreference {
     includeInactiveChannels: boolean
   ): Promise<(ISubscriberPreferenceResponse | undefined)[]> {
     // Process workflows in chunks to avoid blocking the event loop
-    const chunkSize = 50; // Adjust based on performance testing
+    const chunkSize = 50;
     const results: (ISubscriberPreferenceResponse | undefined)[] = [];
 
     for (let i = 0; i < workflowList.length; i += chunkSize) {
