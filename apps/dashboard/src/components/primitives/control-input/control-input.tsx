@@ -96,8 +96,9 @@ export function ControlInput({
         lastCompletionRef,
         onSelect: handleVariableSelect,
         isAllowedVariable,
+        isEnhancedDigestEnabled,
       }),
-    [handleVariableSelect, isAllowedVariable]
+    [handleVariableSelect, isAllowedVariable, isEnhancedDigestEnabled]
   );
 
   const extensions = useMemo(() => {

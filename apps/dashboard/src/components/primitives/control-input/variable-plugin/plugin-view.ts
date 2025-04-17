@@ -18,6 +18,7 @@ export class VariablePluginView {
     private viewRef: MutableRefObject<EditorView | null>,
     private lastCompletionRef: MutableRefObject<{ from: number; to: number } | null>,
     private isAllowedVariable: IsAllowedVariable,
+    private isEnhancedDigestEnabled: boolean,
     private onSelect?: (value: string, from: number, to: number) => void
   ) {
     this.decorations = this.createDecorations(view);
@@ -76,7 +77,8 @@ export class VariablePluginView {
               fullLiquidExpression,
               start,
               end,
-              filtersArray?.length > 0,
+              filtersArray,
+              this.isEnhancedDigestEnabled,
               this.onSelect
             ),
             inclusive: false,

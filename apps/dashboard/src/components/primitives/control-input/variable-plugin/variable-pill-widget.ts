@@ -1,15 +1,18 @@
+import { extractIssuesFromVariable, getFirstFilterAndItsArgs } from '@/components/variable/utils';
 import { WidgetType } from '@uiw/react-codemirror';
 import { CSSProperties } from 'react';
 
 export class VariablePillWidget extends WidgetType {
   private clickHandler: (e: MouseEvent) => void;
+  private tooltipElement: HTMLElement | null = null;
 
   constructor(
     private variableName: string,
     private fullVariableName: string,
     private start: number,
     private end: number,
-    private hasFilters: boolean,
+    private filters: string[],
+    private isEnhancedDigestEnabled: boolean,
     private onSelect?: (value: string, from: number, to: number) => void
   ) {
     super();
@@ -24,6 +27,13 @@ export class VariablePillWidget extends WidgetType {
         this.onSelect?.(this.fullVariableName, this.start, this.end);
       }, 0);
     };
+  }
+
+  getDisplayVariableName(): string {
+    if (!this.variableName) return '';
+    const variableParts = this.variableName.split('.');
+
+    return variableParts.length >= 3 ? '..' + variableParts.slice(-2).join('.') : this.variableName;
   }
 
   createBeforeStyles(): CSSProperties {
@@ -60,7 +70,7 @@ export class VariablePillWidget extends WidgetType {
       fontFamily: 'var(--font-code)',
       display: 'inline-flex',
       alignItems: 'center',
-      height: '100%',
+      height: '20px',
       lineHeight: 'inherit',
       fontSize: 'max(12px, calc(1em - 3px))',
       cursor: 'pointer',
@@ -74,6 +84,19 @@ export class VariablePillWidget extends WidgetType {
   createContentStyles(): CSSProperties {
     return {
       lineHeight: 'calc(1em - 2px)',
+      color: 'hsl(var(--text-sub))',
+
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      '-webkit-font-smoothing': 'antialiased',
+      '-moz-osx-font-smoothing': 'grayscale',
+    };
+  }
+
+  createFilterStyles(): CSSProperties {
+    return {
+      color: 'hsl(var(--text-soft))',
+
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       '-webkit-font-smoothing': 'antialiased',
@@ -96,28 +119,137 @@ export class VariablePillWidget extends WidgetType {
     const contentStyles = this.createContentStyles();
     Object.assign(content.style, contentStyles);
 
-    // Stores the complete variable expression including any filters
     span.setAttribute('data-variable', this.fullVariableName);
-
     span.setAttribute('data-start', this.start.toString());
     span.setAttribute('data-end', this.end.toString());
-
-    // Contains the clean variable name shown to the user
     span.setAttribute('data-display', this.variableName);
 
     span.appendChild(before);
     span.appendChild(content);
 
-    if (this.hasFilters) {
-      const after = document.createElement('span');
-      const afterStyles = this.createAfterStyles();
-      Object.assign(after.style, afterStyles);
-      span.appendChild(after);
-    }
-
     span.addEventListener('mousedown', this.clickHandler);
 
+    if (this.isEnhancedDigestEnabled) {
+      content.textContent = this.getDisplayVariableName();
+
+      const hasIssues = this.getVariableIssues().length > 0;
+
+      if (hasIssues) {
+        before.style.color = 'hsl(var(--error-base))';
+        before.style.backgroundImage = `url("/images/error-circle-outline.svg")`;
+        before.style.backgroundSize = 'cover';
+      }
+
+      this.renderFilters(span);
+
+      span.addEventListener('mouseenter', () => {
+        if (!this.tooltipElement) {
+          this.tooltipElement = this.renderTooltip(span);
+        }
+
+        if (hasIssues) {
+          span.style.backgroundColor = 'hsl(var(--error-base) / 0.025)';
+        }
+      });
+
+      span.addEventListener('mouseleave', () => {
+        if (this.tooltipElement) {
+          document.body.removeChild(this.tooltipElement);
+          this.tooltipElement = null;
+        }
+
+        span.style.backgroundColor = 'hsl(var(--bg-white))';
+      });
+    } else {
+      if (this.filters?.length) {
+        const after = document.createElement('span');
+        const afterStyles = this.createAfterStyles();
+        Object.assign(after.style, afterStyles);
+        span.appendChild(after);
+      }
+    }
+
     return span;
+  }
+
+  renderFilters(parent: HTMLElement) {
+    if (!this.filters?.length) return;
+
+    const { finalParam, firstFilterName } = getFirstFilterAndItsArgs(this.filters);
+
+    if (this.filters?.length > 0) {
+      const filterSpan = document.createElement('span');
+      const filterNameSpan = document.createElement('span');
+      filterNameSpan.textContent = `| ${firstFilterName}`;
+      Object.assign(filterNameSpan.style, this.createFilterStyles());
+      filterSpan.appendChild(filterNameSpan);
+
+      if (this.filters.length === 1) {
+        const argsSpan = document.createElement('span');
+        argsSpan.textContent = finalParam;
+        Object.assign(argsSpan.style, this.createContentStyles());
+        filterSpan.appendChild(argsSpan);
+      }
+
+      if (this.filters.length > 1) {
+        const countSpan = document.createElement('span');
+        countSpan.textContent = `, +${this.filters.length - 1} more`;
+        Object.assign(countSpan.style, { ...this.createFilterStyles(), fontStyle: 'italic' });
+        filterSpan.appendChild(countSpan);
+      }
+
+      parent.appendChild(filterSpan);
+    }
+  }
+
+  renderTooltip(parent: HTMLElement) {
+    const tooltip = document.createElement('div');
+    tooltip.className = 'border-bg-soft bg-bg-weak border p-0.5 shadow-sm rounded-md';
+
+    const innerContainer = document.createElement('div');
+    innerContainer.className = 'border-stroke-soft/70 text-label-2xs rounded-sm border bg-white p-1';
+    tooltip.appendChild(innerContainer);
+
+    const issues = this.getVariableIssues();
+
+    if (this.filters && this.filters.length > 0) {
+      tooltip.style.position = 'fixed';
+      tooltip.style.zIndex = '9999';
+
+      const rect = parent.getBoundingClientRect();
+      tooltip.style.left = `${rect.left}px`;
+      tooltip.style.top = `${rect.top - 32}px`;
+
+      if (issues.length > 0) {
+        const firstIssue = issues[0];
+        innerContainer.textContent = `${firstIssue.filterName} is missing a value.`;
+        tooltip.style.color = 'hsl(var(--error-base))';
+        document.body.appendChild(tooltip);
+        return tooltip;
+      } else if (this.filters.length > 1) {
+        const otherFilterNames = this.filters
+          .slice(1)
+          .map((f) => f.split(':')[0].trim())
+          .join(', ');
+        innerContainer.textContent = 'Other filters: ';
+        innerContainer.style.color = 'hsl(var(--text-soft))';
+        const otherFilterNamesSpan = document.createElement('span');
+        otherFilterNamesSpan.textContent = otherFilterNames;
+        otherFilterNamesSpan.style.color = 'hsl(var(--feature))';
+        innerContainer.appendChild(otherFilterNamesSpan);
+        // tooltip.style.color = 'hsl(var(--feature))';
+        document.body.appendChild(tooltip);
+        return tooltip;
+      }
+    }
+
+    return null;
+  }
+
+  getVariableIssues() {
+    const issues = extractIssuesFromVariable(this.filters, this.isEnhancedDigestEnabled);
+
+    return issues;
   }
 
   /**

@@ -1,14 +1,15 @@
+import { EditVariablePopover } from '@/components/variable/edit-variable-popover';
+import { extractIssuesFromVariable } from '@/components/variable/utils';
+import { VariablePill } from '@/components/variable/variable-pill';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { parseVariable } from '@/utils/liquid';
+import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { NodeViewProps } from '@tiptap/core';
 import { NodeViewWrapper } from '@tiptap/react';
 import { useCallback, useMemo, useState } from 'react';
-
-import { EditVariablePopover } from '@/components/variable/edit-variable-popover';
-import { VariablePill } from '@/components/variable/variable-pill';
-import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
 import { resolveRepeatBlockAlias } from '../variables/variables';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
-import { parseVariable } from '@/utils/liquid';
+import { VariablePillOld } from '@/components/variable/variable-pill-old';
 
 type InternalVariableViewProps = NodeViewProps & {
   variables: LiquidVariable[];
@@ -22,52 +23,51 @@ function InternalVariableView(props: InternalVariableViewProps) {
   const [isOpen, setIsOpen] = useState(false);
   const isEnhancedDigestEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_ENHANCED_DIGEST_ENABLED);
 
-  const parseVariableCallback = useCallback((variable: string) => {
+  const parseVariableCallback = useCallback((variable: string, isEnhancedDigestEnabled: boolean) => {
     const parsedVariable = parseVariable(variable);
 
-    if (!parsedVariable) {
-      return { name: '', fullLiquidExpression: '', start: 0, end: 0, filtersArray: [] };
+    if (!parsedVariable?.filtersArray) {
+      return {
+        name: '',
+        fullLiquidExpression: '',
+        start: 0,
+        end: 0,
+        filters: '',
+        filtersArray: [],
+        issues: [],
+      };
     }
 
-    return parsedVariable;
+    const filtersWithIssues = extractIssuesFromVariable(parsedVariable.filtersArray, isEnhancedDigestEnabled);
+
+    return {
+      ...parsedVariable,
+      issues: filtersWithIssues,
+    };
   }, []);
 
-  const { name, filtersArray, fullLiquidExpression } = useMemo(
-    () => parseVariableCallback(variableValue),
-    [variableValue, parseVariableCallback]
+  const { name, filtersArray, fullLiquidExpression, issues } = useMemo(
+    () => parseVariableCallback(variableValue, isEnhancedDigestEnabled),
+    [variableValue, parseVariableCallback, isEnhancedDigestEnabled]
   );
 
-  const variable: LiquidVariable = {
-    name: fullLiquidExpression,
-    aliasFor,
-  };
-
-  const handleOpenChange = (open: boolean, newValue: string) => {
-    if (!open) {
-      const { name } = parseVariableCallback(newValue);
-
-      if (!name) {
-        deleteNode();
-
-        setTimeout(() => {
-          editor.view.focus();
-        }, 0);
-      }
-    }
-
-    setIsOpen(open);
-  };
+  const variable: LiquidVariable = useMemo(() => {
+    return {
+      name: fullLiquidExpression,
+      aliasFor,
+    };
+  }, [aliasFor, fullLiquidExpression]);
 
   return (
     <NodeViewWrapper className="react-component mly-inline-block mly-leading-none" draggable="false">
       <EditVariablePopover
         open={isOpen}
-        onOpenChange={handleOpenChange}
+        onOpenChange={setIsOpen}
         variable={variable}
         variables={variables}
         isAllowedVariable={isAllowedVariable}
         onUpdate={(newValue) => {
-          const { fullLiquidExpression } = parseVariableCallback(newValue);
+          const { fullLiquidExpression } = parseVariableCallback(newValue, isEnhancedDigestEnabled);
           const aliasFor = resolveRepeatBlockAlias(fullLiquidExpression, editor, isEnhancedDigestEnabled);
 
           if (fullLiquidExpression) {
@@ -89,12 +89,22 @@ function InternalVariableView(props: InternalVariableViewProps) {
           }, 0);
         }}
       >
-        <VariablePill
-          variableName={name}
-          hasFilters={!!filtersArray?.length}
-          onClick={() => setIsOpen(true)}
-          className="-mt-[2px]"
-        />
+        {isEnhancedDigestEnabled ? (
+          <VariablePill
+            issues={issues}
+            variableName={name}
+            filters={filtersArray}
+            onClick={() => setIsOpen(true)}
+            className="-mt-[2px]"
+          />
+        ) : (
+          <VariablePillOld
+            variableName={name}
+            hasFilters={filtersArray.length > 0}
+            onClick={() => setIsOpen(true)}
+            className="-mt-[2px]"
+          />
+        )}
       </EditVariablePopover>
     </NodeViewWrapper>
   );

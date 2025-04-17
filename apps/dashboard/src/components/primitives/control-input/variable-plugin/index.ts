@@ -2,13 +2,26 @@ import { Decoration, EditorView, ViewPlugin } from '@uiw/react-codemirror';
 import { VariablePluginView } from './plugin-view';
 import type { PluginState } from './types';
 
-export function createVariableExtension({ viewRef, lastCompletionRef, onSelect, isAllowedVariable }: PluginState) {
+export function createVariableExtension({
+  viewRef,
+  lastCompletionRef,
+  onSelect,
+  isAllowedVariable,
+  isEnhancedDigestEnabled,
+}: PluginState) {
   return ViewPlugin.fromClass(
     class {
       private view: VariablePluginView;
 
       constructor(view: EditorView) {
-        this.view = new VariablePluginView(view, viewRef, lastCompletionRef, isAllowedVariable, onSelect);
+        this.view = new VariablePluginView(
+          view,
+          viewRef,
+          lastCompletionRef,
+          isAllowedVariable,
+          isEnhancedDigestEnabled,
+          onSelect
+        );
       }
 
       update(update: any) {

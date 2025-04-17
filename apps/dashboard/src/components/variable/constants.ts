@@ -340,6 +340,7 @@ export const getFilters = (isEnhancedDigestEnabled: boolean): Filters[] => {
             placeholder: 'Insert key to be summarized on...',
             tip: 'Path to the property to extract from objects (e.g., "name" or "profile.name")',
             type: 'variable',
+            required: true,
           },
           {
             label: 'Limit',

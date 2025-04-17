@@ -14,6 +14,7 @@ export type Filters = {
     type?: 'string' | 'number' | 'variable';
     defaultValue?: string;
     label: string;
+    required?: boolean;
   }[];
 };
 
