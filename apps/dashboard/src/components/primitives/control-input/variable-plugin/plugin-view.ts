@@ -3,7 +3,7 @@ import { Decoration, DecorationSet, EditorView, Range } from '@uiw/react-codemir
 import { MutableRefObject } from 'react';
 import { isTypingVariable } from './utils';
 import { VariablePillWidget } from './variable-pill-widget';
-import { parseVariableForCodeMirror } from '@/utils/liquid';
+import { parseVariable } from '@/utils/liquid';
 import { VARIABLE_REGEX_STRING } from '@/utils/liquid';
 
 export class VariablePluginView {
@@ -49,7 +49,7 @@ export class VariablePluginView {
 
     // Iterate through all variable matches in the content and add the pills
     while ((match = regex.exec(content)) !== null) {
-      const parsedVariable = parseVariableForCodeMirror(match);
+      const parsedVariable = parseVariable(match[0]);
 
       if (!parsedVariable) {
         continue;
