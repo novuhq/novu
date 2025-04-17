@@ -93,7 +93,7 @@ export const insertVariableToEditor = ({
 
   // Calculate range for manual typing if not provided by suggestion
   const calculatedRange = range || {
-    from: editor.state.selection.from - queryWithoutSuffix.length - 4, // -4 for '{{ }}'
+    from: Math.max(0, editor.state.selection.from - queryWithoutSuffix.length), // -4 for '{{ }}'
     to: editor.state.selection.from,
   };
 
