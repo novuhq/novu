@@ -4,7 +4,7 @@ import { CSSProperties } from 'react';
 
 export class VariablePillWidget extends WidgetType {
   private clickHandler: (e: MouseEvent) => void;
-  private tooltipElement: HTMLElement | null = null; // Add a class property to store the tooltip element
+  private tooltipElement: HTMLElement | null = null;
 
   constructor(
     private variableName: string,
