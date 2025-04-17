@@ -168,8 +168,6 @@ jobs:
     timeout-minutes: 60
     runs-on: ubuntu-latest
     environment: ${{ fromJson(needs.prepare-matrix.outputs.env_matrix).environment[0] }}
-    outputs:
-      registry: ${{ steps.build-image.outputs.registry }}
     strategy:
       matrix:
         service: ${{ fromJson(needs.prepare-matrix.outputs.service_matrix).service }}
@@ -234,7 +232,6 @@ jobs:
           docker tag novu-$SERVICE $REGISTRY/$REPOSITORY/$SERVICE:$IMAGE_TAG
           docker push $REGISTRY/$REPOSITORY/$SERVICE:latest
           docker push $REGISTRY/$REPOSITORY/$SERVICE:$IMAGE_TAG
-          echo "registry=$REGISTRY/$REPOSITORY" >> $GITHUB_OUTPUT
 
   deploy:
     needs: [build, prepare-matrix]
