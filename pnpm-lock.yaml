@@ -699,8 +699,8 @@ importers:
         specifier: github:novuhq/maily.to.git#release/v0.2.7-novu.6-core&path:/packages/core
         version: https://codeload.github.com/novuhq/maily.to/tar.gz/8d708b4657e05482fbbde6a102d1608fc5e9413c#path:/packages/core(@tiptap/extension-code-block@2.11.5(@tiptap/core@2.11.5(@tiptap/pm@2.11.5))(@tiptap/pm@2.11.5))(@types/react-dom@18.3.0)(@types/react@18.3.3)(prosemirror-model@1.22.3)(prosemirror-state@1.4.3)(prosemirror-view@1.38.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.7.4)(typescript@5.6.2))(y-protocols@1.0.6(yjs@13.6.24))(yjs@13.6.24)
       '@maily-to/core-digest':
-        specifier: github:novuhq/maily.to.git#release/v0.2.7-novu.9-core&path:/packages/core
-        version: '@maily-to/core@https://codeload.github.com/novuhq/maily.to/tar.gz/3ff958c7f34234bb099ddbef795d814f37157b2d#path:/packages/core(@tiptap/extension-code-block@2.11.5(@tiptap/core@2.11.5(@tiptap/pm@2.11.5))(@tiptap/pm@2.11.5))(@types/react-dom@18.3.0)(@types/react@18.3.3)(prosemirror-model@1.22.3)(prosemirror-state@1.4.3)(prosemirror-view@1.38.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.7.4)(typescript@5.6.2))(y-protocols@1.0.6(yjs@13.6.24))(yjs@13.6.24)'
+        specifier: github:novuhq/maily.to.git#release/v0.2.7-novu.11-core&path:/packages/core
+        version: '@maily-to/core@https://codeload.github.com/novuhq/maily.to/tar.gz/547b5c0ff3f8ec4d49444c2e935e6fca91ca2755#path:/packages/core(@tiptap/extension-code-block@2.11.5(@tiptap/core@2.11.5(@tiptap/pm@2.11.5))(@tiptap/pm@2.11.5))(@types/react-dom@18.3.0)(@types/react@18.3.3)(prosemirror-model@1.22.3)(prosemirror-state@1.4.3)(prosemirror-view@1.38.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.7.4)(typescript@5.6.2))(y-protocols@1.0.6(yjs@13.6.24))(yjs@13.6.24)'
       '@novu/api':
         specifier: workspace:*
         version: link:../../libs/internal-sdk
@@ -9228,9 +9228,9 @@ packages:
     resolution: {integrity: sha512-SaNFseFPSDQlOYM9JTyYY6wauMu6qJ8eExo+jssFyb20ZaVvxKX1eTb3Gm5aW/4aWuxn6nofU+02sCk51//wdw==}
     engines: {node: '>=10.0.0'}
 
-  '@maily-to/core@https://codeload.github.com/novuhq/maily.to/tar.gz/3ff958c7f34234bb099ddbef795d814f37157b2d#path:/packages/core':
-    resolution: {path: /packages/core, tarball: https://codeload.github.com/novuhq/maily.to/tar.gz/3ff958c7f34234bb099ddbef795d814f37157b2d}
-    version: 0.2.7-novu.9-core
+  '@maily-to/core@https://codeload.github.com/novuhq/maily.to/tar.gz/547b5c0ff3f8ec4d49444c2e935e6fca91ca2755#path:/packages/core':
+    resolution: {path: /packages/core, tarball: https://codeload.github.com/novuhq/maily.to/tar.gz/547b5c0ff3f8ec4d49444c2e935e6fca91ca2755}
+    version: 0.2.7-novu.11-core
     engines: {node: '>=18.0.0'}
     peerDependencies:
       react: ^18.3.1
@@ -45414,7 +45414,7 @@ snapshots:
     transitivePeerDependencies:
       - debug
 
-  '@maily-to/core@https://codeload.github.com/novuhq/maily.to/tar.gz/3ff958c7f34234bb099ddbef795d814f37157b2d#path:/packages/core(@tiptap/extension-code-block@2.11.5(@tiptap/core@2.11.5(@tiptap/pm@2.11.5))(@tiptap/pm@2.11.5))(@types/react-dom@18.3.0)(@types/react@18.3.3)(prosemirror-model@1.22.3)(prosemirror-state@1.4.3)(prosemirror-view@1.38.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.7.4)(typescript@5.6.2))(y-protocols@1.0.6(yjs@13.6.24))(yjs@13.6.24)':
+  '@maily-to/core@https://codeload.github.com/novuhq/maily.to/tar.gz/547b5c0ff3f8ec4d49444c2e935e6fca91ca2755#path:/packages/core(@tiptap/extension-code-block@2.11.5(@tiptap/core@2.11.5(@tiptap/pm@2.11.5))(@tiptap/pm@2.11.5))(@types/react-dom@18.3.0)(@types/react@18.3.3)(prosemirror-model@1.22.3)(prosemirror-state@1.4.3)(prosemirror-view@1.38.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.7.4)(typescript@5.6.2))(y-protocols@1.0.6(yjs@13.6.24))(yjs@13.6.24)':
     dependencies:
       '@radix-ui/react-dropdown-menu': 2.1.6(@types/react-dom@18.3.0)(@types/react@18.3.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@radix-ui/react-popover': 1.1.6(@types/react-dom@18.3.0)(@types/react@18.3.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)

@@ -47,6 +47,7 @@ import { HTMLCodeBlockView } from './views/html-view';
 
 import { MailyVariablesListView } from './views/maily-variables-list-view';
 import { createVariableView } from './views/variable-view';
+import { createCards } from './blocks/cards';
 
 import type { Editor as TiptapEditor } from '@tiptap/core';
 import { VariablePillOld } from '@/components/variable/variable-pill-old';
@@ -86,8 +87,12 @@ export const createEditorBlocks = (props: {
 
   const highlightBlocks = [createHtmlCodeBlock({ track }), createHeaders({ track }), createFooters({ track })];
 
-  if (isEnhancedDigestEnabled && digestStepBeforeCurrent) {
-    highlightBlocks.unshift(createDigestBlock({ track, digestStepBeforeCurrent }));
+  if (isEnhancedDigestEnabled) {
+    highlightBlocks.unshift(createCards({ track }));
+
+    if (digestStepBeforeCurrent) {
+      highlightBlocks.unshift(createDigestBlock({ track, digestStepBeforeCurrent }));
+    }
   }
 
   blocks.push({
