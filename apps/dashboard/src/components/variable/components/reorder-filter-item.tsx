@@ -10,10 +10,6 @@ import { Input } from '@/components/primitives/input';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { getFilters } from '../constants';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
-import { AccordionContent } from '@/components/primitives/accordion';
-import { AccordionTrigger } from '@/components/primitives/accordion';
-import { AccordionItem } from '@/components/primitives/accordion';
-import { Accordion } from '@/components/primitives/accordion';
 import { cn } from '@/utils/ui';
 import { VariableSelect } from '@/components/conditions-editor/variable-select';
 import { LiquidVariable } from '@/utils/parseStepVariables';
@@ -56,7 +52,7 @@ export const ReorderFilterItem = (props: ReorderFilterItemProps) => {
     <Reorder.Item
       ref={itemRef}
       value={value}
-      className="group mb-0 flex items-center gap-1.5 rounded-md p-0.5"
+      className="bg-bg-weak group mb-0 flex flex-col items-center gap-1.5 rounded-md p-1"
       whileDrag={{ scale: 1.02 }}
       transition={{
         type: 'keyframes',
@@ -82,101 +78,91 @@ export const ReorderFilterItem = (props: ReorderFilterItemProps) => {
       }}
       {...rest}
     >
-      <Accordion className={'bg-bg-weak flex w-full flex-col gap-2 rounded-lg'} type="single" collapsible>
-        <AccordionItem value="filter" className="bg-transparent p-1">
-          <AccordionTrigger withChevron={false}>
-            <div
-              className={cn('flex w-full items-center justify-between', {
-                'cursor-default': !hasParams,
-                'cursor-pointer': hasParams,
-              })}
-            >
-              <div className="flex items-center gap-1">
-                <GripVertical
-                  className="reorder-handle text-text-soft h-3.5 w-3.5"
-                  onPointerDown={(e) => controls.start(e)}
-                  onClick={preventClick}
-                />
+      <div
+        className={cn('flex w-full items-center justify-between gap-2 rounded-lg', {
+          'cursor-default': !hasParams,
+          'cursor-pointer': hasParams,
+        })}
+      >
+        <div className="flex items-center gap-1">
+          <GripVertical
+            className="reorder-handle text-text-soft h-3.5 w-3.5"
+            onPointerDown={(e) => controls.start(e)}
+            onClick={preventClick}
+          />
 
-                <span className="text-code-sm select-none">{filterDef?.label}</span>
-                <Tooltip>
-                  <TooltipTrigger className="cursor-pointer" asChild>
-                    <span>
-                      <RiQuestionLine className="text-text-soft size-4" onClick={preventClick} />
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent side="top" align="center" className="max-w-xs">
-                    <p className="text-label-xs">{filterDef?.description}</p>
-                    <p className="text-label-xs">Example: {filterDef?.example}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-              <span
-                className={cn(
-                  buttonVariants({ variant: 'secondary', mode: 'ghost', size: 'sm', className: 'h-5 p-1' })
-                )}
-                onClick={(e) => {
-                  preventClick(e);
-                  onRemove(value.value);
-                }}
-              >
-                <RiCloseLine className="size-3.5 text-neutral-400" />
+          <span className="text-code-sm select-none">{filterDef?.label}</span>
+          <Tooltip>
+            <TooltipTrigger className="cursor-pointer" asChild>
+              <span>
+                <RiQuestionLine className="text-text-soft size-4" onClick={preventClick} />
               </span>
+            </TooltipTrigger>
+            <TooltipContent side="top" align="center" className="max-w-xs">
+              <p className="text-label-xs">{filterDef?.description}</p>
+              <p className="text-label-xs">Example: {filterDef?.example}</p>
+            </TooltipContent>
+          </Tooltip>
+        </div>
+        <span
+          className={cn(buttonVariants({ variant: 'secondary', mode: 'ghost', size: 'sm', className: 'h-5 p-1' }))}
+          onClick={(e) => {
+            preventClick(e);
+            onRemove(value.value);
+          }}
+        >
+          <RiCloseLine className="size-3.5 text-neutral-400" />
+        </span>
+      </div>
+      {hasParams && (
+        <div className="flex w-full flex-col gap-1 py-1">
+          {filterDef?.params?.map((param, paramIndex) => (
+            <div className="flex flex-col gap-1" key={paramIndex}>
+              <label className="text-text-sub text-label-xs flex select-none gap-1">
+                {param.label}
+                {param.tip && (
+                  <Tooltip>
+                    <TooltipTrigger className="relative cursor-pointer">
+                      <RiQuestionLine className="text-text-soft size-4" />
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-xs">
+                      <p className="text-label-xs">{param.tip}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+              </label>
+              {param.type === 'variable' ? (
+                <VariableSelect
+                  leftIcon={<Code2 className="text-feature size-3 min-w-3" />}
+                  onChange={(newValue) => {
+                    const newParams = [...(value.params || [])];
+                    newParams[paramIndex] = newValue;
+                    onParamChange(index, newParams);
+                  }}
+                  options={options}
+                  className="w-full"
+                  placeholder={param.placeholder}
+                  title={param.description}
+                  value={value.params?.[paramIndex] || ''}
+                  isClearable
+                />
+              ) : (
+                <Input
+                  value={value.params?.[paramIndex] || ''}
+                  onChange={(e) => {
+                    const newParams = [...(value.params || [])];
+                    newParams[paramIndex] = e.target.value;
+                    onParamChange(index, newParams);
+                  }}
+                  placeholder={param.placeholder}
+                  title={param.description}
+                  size="2xs"
+                />
+              )}
             </div>
-          </AccordionTrigger>
-          {hasParams && (
-            <AccordionContent onClick={preventClick}>
-              <div className="flex flex-1 flex-col gap-1 py-1">
-                {filterDef?.params?.map((param, paramIndex) => (
-                  <div className="flex flex-col gap-1" key={paramIndex}>
-                    <label className="text-text-sub text-label-xs flex gap-1">
-                      {param.label}
-                      {param.tip && (
-                        <Tooltip>
-                          <TooltipTrigger className="relative cursor-pointer">
-                            <RiQuestionLine className="text-text-soft size-4" />
-                          </TooltipTrigger>
-                          <TooltipContent side="top" className="max-w-xs">
-                            <p className="text-label-xs">{param.tip}</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      )}
-                    </label>
-                    {param.type === 'variable' ? (
-                      <VariableSelect
-                        leftIcon={<Code2 className="text-feature size-3 min-w-3" />}
-                        onChange={(newValue) => {
-                          const newParams = [...(value.params || [])];
-                          newParams[paramIndex] = newValue;
-                          onParamChange(index, newParams);
-                        }}
-                        options={options}
-                        className="w-full"
-                        placeholder={param.placeholder}
-                        title={param.description}
-                        value={value.params?.[paramIndex] || ''}
-                        isClearable
-                      />
-                    ) : (
-                      <Input
-                        value={value.params?.[paramIndex] || ''}
-                        onChange={(e) => {
-                          const newParams = [...(value.params || [])];
-                          newParams[paramIndex] = e.target.value;
-                          onParamChange(index, newParams);
-                        }}
-                        placeholder={param.placeholder}
-                        title={param.description}
-                        size="2xs"
-                      />
-                    )}
-                  </div>
-                ))}
-              </div>
-            </AccordionContent>
-          )}
-        </AccordionItem>
-      </Accordion>
+          ))}
+        </div>
+      )}
     </Reorder.Item>
   );
 };

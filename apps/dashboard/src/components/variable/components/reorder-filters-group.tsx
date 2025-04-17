@@ -27,7 +27,7 @@ export function ReorderFiltersGroup({
       className="rounded-8 border-stroke-soft flex max-h-56 flex-col gap-0.5 overflow-y-auto border px-1 py-1.5"
       data-filters-container
     >
-      <Reorder.Group axis="y" values={filters} onReorder={onReorder}>
+      <Reorder.Group axis="y" values={filters} onReorder={onReorder} className="flex flex-col gap-2">
         {filters.map((filter, index) => (
           <ReorderFilterItem
             key={filter.value}
