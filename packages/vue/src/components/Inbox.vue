@@ -21,8 +21,8 @@ const novu = useUnsafeNovu();
     </NovuUIProvider>
   </NovuProvider>
 
-  <NovuUIProvider :appearance="props.appearance" :localization="props.localization" :options="props" :tabs="props.tabs"
-    :preferences-filter="props.preferencesFilter" :router-push="props.routerPush">
+  <NovuUIProvider v-else :appearance="props.appearance" :localization="props.localization" :options="props"
+    :tabs="props.tabs" :preferences-filter="props.preferencesFilter" :router-push="props.routerPush">
     <DefaultInbox v-bind="{ ...$props, ...$slots }" />
   </NovuUIProvider>
 </template>

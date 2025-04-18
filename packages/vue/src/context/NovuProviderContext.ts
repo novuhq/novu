@@ -8,18 +8,16 @@ export type NovuProviderProps = NovuOptions & { userAgentType: 'components' | 'h
 /**
  * **useNovu** - Provides access to the Novu instance
  */
-export function useNovu(): Ref<Novu> {
-  const novu = inject(NovuKey) as Ref<Novu> | undefined;
-  if (!novu?.value) {
-    throw new Error('useNovu must be used within a <NovuProvider />');
-  }
+export function useNovu(): Novu {
+  const novu = inject(NovuKey, undefined) as Novu | undefined;
+  if (!novu) throw new Error('useNovu must be used within a <NovuProvider />');
 
-  return novu as Ref<Novu>;
+  return novu as Novu;
 }
 
 /**
  * **useUnsafeNovu** - Provides access to the Novu instance without throwing an error if undefined
  */
-export function useUnsafeNovu(): Ref<Novu> | undefined {
-  return inject(NovuKey) as Ref<Novu> | undefined;
+export function useUnsafeNovu(): Novu | undefined {
+  return inject(NovuKey, undefined) as Novu | undefined;
 }

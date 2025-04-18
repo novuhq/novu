@@ -17,7 +17,7 @@ const slots = useSlots() as unknown as Slots; // Get access to the slot content
 
 const novuUI = useNovuUI();
 
-const mount = (element: HTMLElement, mountElement: (el: HTMLElement, mountedElement: any) => void) => novuUI.value.mountComponent({
+const mount = (element: HTMLElement, mountElement: (el: HTMLElement, mountedElement: any) => void) => novuUI.mountComponent({
   name: 'Inbox',
   props: {
     ...props,

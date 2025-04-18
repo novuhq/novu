@@ -6,7 +6,7 @@ import Mounter from './Mounter.vue';  // Assuming Mounter is a Vue component
 const novuUI = useNovuUI();
 
 // Mounting the component when the element is ready
-const mount = (element: HTMLElement) => novuUI.value.mountComponent({
+const mount = (element: HTMLElement) => novuUI.mountComponent({
   name: 'Preferences',
   element,
 });

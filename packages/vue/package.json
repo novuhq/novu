@@ -22,7 +22,7 @@
           "default": "./dist/esm/index.js"
         },
         "require": {
-          "types": "./dist/cjs/index.d.cts",
+          "types": "./dist/cjs/index.d.ts",
           "default": "./dist/cjs/index.cjs"
         }
       },
@@ -31,7 +31,7 @@
         "default": "./dist/esm/server/index.js"
       },
       "require": {
-        "types": "./dist/cjs/index.d.cts",
+        "types": "./dist/cjs/index.d.ts",
         "default": "./dist/cjs/server/index.cjs"
       }
     },
@@ -90,8 +90,10 @@
     "access": "public"
   },
   "scripts": {
-    "build:watch": "tsup --watch",
-    "build": "tsup && pnpm run check-exports",
+    "build:watch": "vite",
+    "build": "pnpm build:esm && pnpm build:cjs && pnpm run check-exports",
+    "build:esm": "cross-env BUILD_TYPE=esm vite build",
+    "build:cjs": "cross-env BUILD_TYPE=cjs vite build",
     "lint": "eslint src",
     "check-exports": "attw --pack ."
   },
@@ -113,8 +115,9 @@
     "@types/vue": "*",
     "@vue/compiler-sfc": "^3.5.13",
     "@vue/runtime-core": "^3.5.13",
-    "esbuild-plugin-vue": "^0.2.4",
+    "cross-env": "^7.0.3",
     "esbuild-plugin-file-path-extensions": "^2.1.4",
+    "esbuild-plugin-vue": "^0.2.4",
     "tsup": "^8.2.1",
     "typescript": "5.5.4",
     "unplugin-vue": "^6.0.1",
@@ -124,7 +127,10 @@
     "vue": ">=3"
   },
   "dependencies": {
-    "@novu/js": "^3.0.3"
+    "@novu/js": "^3.0.3",
+    "@vitejs/plugin-vue": "^5.2.3",
+    "vite": "^6.2.6",
+    "vite-plugin-dts": "^3.6.0"
   },
   "nx": {
     "tags": [

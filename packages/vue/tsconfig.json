@@ -1,13 +1,13 @@
 {
-  "include": ["types/**/*.d.ts", "src/**/*"],
+  "include": ["types/**/*.d.ts", "src/**/*", "vite.config.ts"],
   "compilerOptions": {
     "lib": ["dom", "dom.iterable", "esnext"],
     "target": "ES2020",
     "esModuleInterop": true,
-    "module": "ESNext",
+    "module": "NodeNext",
     "isolatedModules": true,
     "forceConsistentCasingInFileNames": true,
-    "moduleResolution": "Bundler",
+    "moduleResolution": "NodeNext",
     "emitDecoratorMetadata": false,
     "skipLibCheck": true,
     "strict": true,

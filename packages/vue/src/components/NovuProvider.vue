@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { provide, computed } from 'vue';
+import { provide } from 'vue';
 import { Novu } from '@novu/js';
 import { NovuKey, NovuProviderProps } from '../context/NovuProviderContext';
 
@@ -12,15 +12,13 @@ const baseUserAgent = `${name}@${version}`;
 // Define props with types
 const props = defineProps<NovuProviderProps>();
 
-const novu = computed(
-  () =>
-    new Novu({
-      ...props,
-      __userAgent: `${baseUserAgent} ${props?.userAgentType}`,
-    })
-);
+// the Novu instance
+const novu = new Novu({
+  ...props,
+  __userAgent: `${baseUserAgent} ${props?.userAgentType}`,
+});
 
-// Provide the novu instance to child components
+// Provide the novu instance
 provide(NovuKey, novu);
 </script>
 
