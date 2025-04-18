@@ -105,7 +105,7 @@ export const getFirstFilterAndItsArgs = (filters: string[]) => {
   const firstFilterName = firstFilter.split(':')[0];
   const firstFilterParams = firstFilter.split(':')[1]?.split(',')?.[0];
   const parsedFilterParams = parseParams(firstFilterParams);
-  const finalParam = parsedFilterParams.length > 0 ? ': ' + parsedFilterParams : null;
+  const finalParam = parsedFilterParams.length > 0 ? parsedFilterParams : null;
 
   return {
     firstFilterName,
