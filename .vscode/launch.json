@@ -93,15 +93,6 @@
       "type": "node"
     },
     {
-      "name": "EMBED",
-      "request": "launch",
-      "runtimeArgs": ["run-script", "start:dev"],
-      "runtimeExecutable": "npm",
-      "cwd": "${workspaceFolder}/libs/embed",
-      "skipFiles": ["<node_internals>/**"],
-      "type": "node"
-    },
-    {
       "name": "SHARED",
       "request": "launch",
       "runtimeArgs": ["run-script", "start:dev"],
@@ -118,33 +109,6 @@
       "cwd": "${workspaceFolder}/apps/web",
       "skipFiles": ["<node_internals>/**"],
       "type": "node"
-    },
-    {
-      "name": "CORE",
-      "request": "launch",
-      "runtimeArgs": ["run-script", "start:dev"],
-      "runtimeExecutable": "npm",
-      "cwd": "${workspaceFolder}/packages/node",
-      "skipFiles": ["<node_internals>/**"],
-      "type": "node"
-    },
-    {
-      "name": "Cypress open - web",
-      "request": "launch",
-      "runtimeArgs": ["run-script", "cypress:open"],
-      "runtimeExecutable": "npm",
-      "cwd": "${workspaceFolder}/apps/web",
-      "skipFiles": ["<node_internals>/**"],
-      "type": "node"
-    },
-    {
-      "name": "Cypress open - widget",
-      "request": "launch",
-      "runtimeArgs": ["run-script", "cypress:open"],
-      "runtimeExecutable": "npm",
-      "cwd": "${workspaceFolder}/apps/widget",
-      "skipFiles": ["<node_internals>/**"],
-      "type": "node"
     }
   ],
   "compounds": [
@@ -157,7 +121,6 @@
       "configurations": [
         "API - TEST ENV",
         "DAL",
-        "EMBED",
         "SHARED",
         "TESTING LIB",
         "WS - TEST ENV",

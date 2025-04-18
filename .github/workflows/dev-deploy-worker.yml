@@ -17,7 +17,6 @@ on:
       - 'libs/testing/**'
       - 'libs/application-generic/**'
       - 'packages/stateless/**'
-      - 'packages/node/**'
 
 env:
   TF_WORKSPACE: novu-dev
