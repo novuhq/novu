@@ -38,9 +38,9 @@ export class VariablePillWidget extends WidgetType {
 
   createBeforeStyles(): CSSProperties {
     return {
-      width: 'calc(1em - 2px)',
+      width: '1em',
       minWidth: 'calc(1em - 2px)',
-      height: 'calc(1em)',
+      height: '1em',
       backgroundImage: `url("/images/code.svg")`,
       backgroundRepeat: 'no-repeat',
       backgroundPosition: 'center',
@@ -136,8 +136,7 @@ export class VariablePillWidget extends WidgetType {
 
       if (hasIssues) {
         before.style.color = 'hsl(var(--error-base))';
-        before.style.backgroundImage = `url("/images/error-circle-outline.svg")`;
-        before.style.backgroundSize = 'cover';
+        before.style.backgroundImage = `url("/images/error-warning-line.svg")`;
       }
 
       this.renderFilters(span);
