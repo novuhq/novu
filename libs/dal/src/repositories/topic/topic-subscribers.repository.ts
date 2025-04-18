@@ -1,14 +1,15 @@
 import { ExternalSubscriberId } from '@novu/shared';
 
+import mongoose from 'mongoose';
 import {
   CreateTopicSubscribersEntity,
-  TopicSubscribersEntity,
   TopicSubscribersDBModel,
+  TopicSubscribersEntity,
 } from './topic-subscribers.entity';
 import { TopicSubscribers } from './topic-subscribers.schema';
 import { EnvironmentId, OrganizationId, TopicId, TopicKey } from './types';
 import { BaseRepository } from '../base-repository';
-import type { EnforceEnvOrOrgIds } from '../../types/enforce';
+import type { EnforceEnvOrOrgIds } from '../../types';
 
 export class TopicSubscribersRepository extends BaseRepository<
   TopicSubscribersDBModel,
@@ -85,6 +86,34 @@ export class TopicSubscribersRepository extends BaseRepository<
     });
   }
 
+  async fetchSubscriberTopics({
+    subscriberIds,
+    _environmentId,
+  }: {
+    subscriberIds: string[];
+    _environmentId: string;
+  }): Promise<Record<string, string[]>> {
+    const subscriberTopics = await this._model.aggregate([
+      {
+        $match: {
+          _environmentId: new mongoose.Types.ObjectId(_environmentId),
+          externalSubscriberId: { $in: subscriberIds },
+        },
+      },
+      {
+        $group: {
+          _id: '$externalSubscriberId',
+          topics: { $addToSet: '$topicKey' },
+        },
+      },
+    ]);
+
+    return subscriberTopics.reduce((acc, item) => {
+      acc[item._id] = item.topics;
+
+      return acc;
+    }, {});
+  }
   async removeSubscribers(
     _environmentId: EnvironmentId,
     _organizationId: OrganizationId,

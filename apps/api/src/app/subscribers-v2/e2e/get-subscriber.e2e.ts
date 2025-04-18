@@ -24,7 +24,13 @@ describe('Get Subscriber - /subscribers/:subscriberId (GET) #novu-v2', () => {
 
     validateSubscriber(res.result, subscriber);
   });
-
+  it('should fetch subscriber topics', async () => {
+    const topicKey = 'test-topic';
+    await novuClient.topics.subscribers.assign({ subscribers: [subscriber.subscriberId] }, topicKey);
+    const res = await novuClient.subscribers.retrieve(subscriber.subscriberId);
+    expect(res.result.topics).to.not.be.empty;
+    expect(res.result.topics![0]).to.equal(topicKey);
+  });
   it('should return 404 if subscriberId does not exist', async () => {
     const invalidSubscriberId = `non-existent-${randomBytes(2).toString('hex')}`;
     const { error } = await expectSdkExceptionGeneric(() => novuClient.subscribers.retrieve(invalidSubscriberId));

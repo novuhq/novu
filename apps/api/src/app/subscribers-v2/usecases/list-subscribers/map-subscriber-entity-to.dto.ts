@@ -1,7 +1,7 @@
 import { SubscriberEntity } from '@novu/dal';
 import { SubscriberResponseDto } from '../../../subscribers/dtos';
 
-export function mapSubscriberEntityToDto(subscriber: SubscriberEntity): SubscriberResponseDto {
+export function mapSubscriberEntityToDto(subscriber: SubscriberEntity, topics?: string[]): SubscriberResponseDto {
   return {
     _id: subscriber._id,
     firstName: subscriber.firstName,
@@ -17,7 +17,7 @@ export function mapSubscriberEntityToDto(subscriber: SubscriberEntity): Subscrib
     data: subscriber.data,
     lastOnlineAt: subscriber.lastOnlineAt,
     isOnline: subscriber.isOnline,
-    topics: subscriber.topics,
+    topics,
     channels: subscriber.channels,
     locale: subscriber.locale,
     timezone: subscriber.timezone,

@@ -11,9 +11,9 @@ import {
 } from '@novu/dal';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { SubscriberResponseDto } from '../../../subscribers/dtos';
-import { mapSubscriberEntityToDto } from '../list-subscribers/map-subscriber-entity-to.dto';
 import { PatchSubscriberCommand } from './patch-subscriber.command';
 import { subscriberIdSchema } from '../../../events/utils/trigger-recipient-validation';
+import { GetSubscriber } from '../get-subscriber/get-subscriber.usecase';
 
 @Injectable()
 export class PatchSubscriber {
@@ -22,6 +22,7 @@ export class PatchSubscriber {
     private featureFlagService: FeatureFlagsService,
     private environmentRepository: EnvironmentRepository,
     private communityOrganizationRepository: CommunityOrganizationRepository,
+    private getSubscriber: GetSubscriber,
     private logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -86,7 +87,11 @@ export class PatchSubscriber {
       throw new NotFoundException(`Subscriber: ${command.subscriberId} was not found`);
     }
 
-    return mapSubscriberEntityToDto(updatedSubscriber);
+    return this.getSubscriber.execute({
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+      subscriberId: updatedSubscriber.subscriberId,
+    });
   }
 
   private async validateItem({

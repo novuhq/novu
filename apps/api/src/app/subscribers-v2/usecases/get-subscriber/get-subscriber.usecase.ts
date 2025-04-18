@@ -1,12 +1,15 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
+import { SubscriberEntity, SubscriberRepository, TopicSubscribersRepository } from '@novu/dal';
 import { GetSubscriberCommand } from './get-subscriber.command';
 import { mapSubscriberEntityToDto } from '../list-subscribers/map-subscriber-entity-to.dto';
 import { SubscriberResponseDto } from '../../../subscribers/dtos';
 
 @Injectable()
 export class GetSubscriber {
-  constructor(private subscriberRepository: SubscriberRepository) {}
+  constructor(
+    private subscriberRepository: SubscriberRepository,
+    private topicSubscribersRepository: TopicSubscribersRepository
+  ) {}
 
   async execute(command: GetSubscriberCommand): Promise<SubscriberResponseDto> {
     const subscriber = await this.fetchSubscriber({
@@ -14,12 +17,15 @@ export class GetSubscriber {
       subscriberId: command.subscriberId,
       _organizationId: command.organizationId,
     });
-
+    const topics = await this.topicSubscribersRepository.fetchSubscriberTopics({
+      _environmentId: command.environmentId,
+      subscriberIds: [command.subscriberId],
+    });
     if (!subscriber) {
       throw new NotFoundException(`Subscriber: ${command.subscriberId} was not found`);
     }
 
-    return mapSubscriberEntityToDto(subscriber);
+    return mapSubscriberEntityToDto(subscriber, topics[command.subscriberId]);
   }
 
   private async fetchSubscriber({

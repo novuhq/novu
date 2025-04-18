@@ -16,8 +16,10 @@ describe('Get Subscribers - /subscribers (GET) #novu-v2', function () {
   });
 
   it('should list created subscriber', async function () {
+    const subscriberId = '123';
+    const topicKey = 'test-topic';
     await novuClient.subscribers.create({
-      subscriberId: '123',
+      subscriberId,
       firstName: 'John',
       lastName: 'Doe',
       email: 'john@doe.com',
@@ -29,5 +31,25 @@ describe('Get Subscribers - /subscribers (GET) #novu-v2', function () {
     expect(filteredData.length).to.equal(1);
     const subscriber = filteredData[0];
     expect(subscriber.subscriberId).to.equal('123');
+  });
+  it('should search created subscriber', async function () {
+    const subscriberId = '123';
+    const topicKey = 'test-topic';
+    await novuClient.subscribers.create({
+      subscriberId,
+      firstName: 'John',
+      lastName: 'Doe',
+      email: 'john@doe.com',
+      phone: '+972523333333',
+    });
+    await novuClient.topics.subscribers.assign({ subscribers: [subscriberId] }, topicKey);
+    const response = await novuClient.subscribers.search({});
+
+    const filteredData = response.result.data.filter((user) => user.lastName !== 'Test');
+    expect(filteredData.length).to.equal(1);
+    const subscriber = filteredData[0];
+    expect(subscriber.subscriberId).to.equal('123');
+    expect(subscriber.topics).to.not.be.empty;
+    expect(subscriber.topics![0]).to.equal(topicKey);
   });
 });

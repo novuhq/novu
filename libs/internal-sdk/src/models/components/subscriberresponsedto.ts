@@ -53,8 +53,6 @@ export type SubscriberResponseDto = {
   channels?: Array<ChannelSettingsDto> | undefined;
   /**
    * An array of topics that the subscriber is subscribed to.
-   *
-   * @deprecated field: This will be removed in a future release, please migrate away from it as soon as possible.
    */
   topics?: Array<string> | undefined;
   /**

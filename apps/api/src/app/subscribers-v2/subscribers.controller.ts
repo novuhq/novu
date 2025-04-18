@@ -12,10 +12,10 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
+  CreateOrUpdateSubscriberCommand,
+  CreateOrUpdateSubscriberUseCase,
   ExternalApiAccessible,
   UserSession,
-  CreateOrUpdateSubscriberUseCase,
-  CreateOrUpdateSubscriberCommand,
 } from '@novu/application-generic';
 import { ApiRateLimitCategoryEnum, SubscriberCustomData, UserSessionData } from '@novu/shared';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';

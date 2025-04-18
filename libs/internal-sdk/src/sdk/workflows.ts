@@ -66,10 +66,10 @@ export class Workflows extends ClientSDK {
   }
 
   /**
-   * Get subscriber
+   * Get webhook support status for provider
    *
    * @remarks
-   * Get subscriber by your internal id used to identify the subscriber
+   * Return the status of the webhook for this provider, if it is supported or if it is not based on a boolean value
    */
   async retrieve(
     workflowId: string,
@@ -87,10 +87,10 @@ export class Workflows extends ClientSDK {
   }
 
   /**
-   * Delete topic
+   * Delete subscriber credentials by providerId
    *
    * @remarks
-   * Delete a topic by its topic key if it has no subscribers
+   * Delete subscriber credentials such as slack and expo tokens.
    */
   async delete(
     workflowId: string,
