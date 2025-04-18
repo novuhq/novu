@@ -41,47 +41,27 @@ export function formatLiquidVariable(
   return `{{${parts.join(' | ')}}}`;
 }
 
-export function extractIssuesFromVariable(filters: string[], isEnhancedDigestEnabled: boolean) {
-  const allFilters = getFilters(isEnhancedDigestEnabled);
+export function validateEnhancedDigestFilters(
+  filters: string[],
+  isEnhancedDigestEnabled: boolean
+): {
+  message: string;
+  name: string;
+} | null {
+  if (!isEnhancedDigestEnabled) return null;
 
-  const filtersWithIssues = filters
-    .map((filterStr) => {
-      if (!filterStr) return null;
+  const toSentenceFilter = filters.find((f) => f.startsWith('toSentence'));
 
-      const [filterNameRaw, filterParamsRaw = ''] = filterStr.split(':');
-      const filterName = filterNameRaw?.trim();
-      const filterParams = filterParamsRaw?.split(',').map((p) => (p ?? '').trim());
+  if (toSentenceFilter) {
+    const firstParam = toSentenceFilter.split(':')[1]?.split(',')[0]?.trim();
+    const isFirstParamEmpty = !firstParam || firstParam === '' || firstParam === "''" || firstParam === '""';
 
-      if (!filterName) return null;
+    if (isFirstParamEmpty) {
+      return { message: 'Object key path is required', name: 'toSentence' };
+    }
+  }
 
-      const filterDefinition = allFilters.find((f) => f.value === filterName);
-      if (!filterDefinition || !Array.isArray(filterDefinition.params)) return null;
-
-      const issues = filterDefinition.params
-        .map((paramDef, index) => {
-          const isRequired = paramDef.required;
-          const paramValue = filterParams[index];
-
-          const isMissing =
-            isRequired &&
-            (!paramValue || paramValue.trim() === '' || paramValue.trim() === "''" || paramValue.trim() === '""');
-
-          if (isMissing) {
-            return {
-              param: paramDef.placeholder,
-              issue: `${paramDef.placeholder} is required`,
-            };
-          }
-
-          return null;
-        })
-        .filter((issue) => issue !== null);
-
-      return issues.length > 0 ? { filterName, issues } : null;
-    })
-    .filter((f): f is { filterName: string; issues: { param: string; issue: string }[] } => f !== null);
-
-  return filtersWithIssues;
+  return null;
 }
 
 export const parseParams = (input: string) => {

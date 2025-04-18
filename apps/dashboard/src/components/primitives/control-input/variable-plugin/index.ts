@@ -8,6 +8,7 @@ export function createVariableExtension({
   onSelect,
   isAllowedVariable,
   isEnhancedDigestEnabled,
+  isDigestEventsVariable,
 }: PluginState) {
   return ViewPlugin.fromClass(
     class {
@@ -20,7 +21,8 @@ export function createVariableExtension({
           lastCompletionRef,
           isAllowedVariable,
           isEnhancedDigestEnabled,
-          onSelect
+          onSelect,
+          isDigestEventsVariable
         );
       }
 

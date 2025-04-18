@@ -1,4 +1,4 @@
-import { extractIssuesFromVariable, getFirstFilterAndItsArgs } from '@/components/variable/utils';
+import { validateEnhancedDigestFilters, getFirstFilterAndItsArgs } from '@/components/variable/utils';
 import { WidgetType } from '@uiw/react-codemirror';
 import { CSSProperties } from 'react';
 
@@ -13,7 +13,8 @@ export class VariablePillWidget extends WidgetType {
     private end: number,
     private filters: string[],
     private isEnhancedDigestEnabled: boolean,
-    private onSelect?: (value: string, from: number, to: number) => void
+    private onSelect?: (value: string, from: number, to: number) => void,
+    private isDigestEventsVariable?: (variableName: string) => boolean
   ) {
     super();
 
@@ -145,7 +146,7 @@ export class VariablePillWidget extends WidgetType {
     if (this.isEnhancedDigestEnabled) {
       content.textContent = this.getDisplayVariableName();
 
-      const hasIssues = this.getVariableIssues().length > 0;
+      const hasIssues = !!this.getVariableIssues();
 
       if (hasIssues) {
         before.style.color = 'hsl(var(--error-base))';
@@ -157,11 +158,11 @@ export class VariablePillWidget extends WidgetType {
       span.addEventListener('mouseenter', () => {
         if (!this.tooltipElement) {
           const issues = this.getVariableIssues();
-          const firstIssue = issues[0];
+          if (!issues) return;
 
           this.tooltipElement = this.renderTooltip({
             parent: span,
-            content: `${firstIssue.filterName} is missing a value.`,
+            content: `${issues.name}: ${issues.message}`,
             type: 'error',
           });
           this.tooltipElement.setAttribute('data-state', 'open');
@@ -312,9 +313,13 @@ export class VariablePillWidget extends WidgetType {
   }
 
   getVariableIssues() {
-    const issues = extractIssuesFromVariable(this.filters, this.isEnhancedDigestEnabled);
+    if (this.isDigestEventsVariable && this.isDigestEventsVariable(this.variableName)) {
+      const issues = validateEnhancedDigestFilters(this.filters, this.isEnhancedDigestEnabled);
 
-    return issues;
+      return issues;
+    }
+
+    return null;
   }
 
   /**

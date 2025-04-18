@@ -1,23 +1,16 @@
 import React, { PropsWithChildren } from 'react';
 import { Tooltip, TooltipContent, TooltipPortal, TooltipTrigger } from '../primitives/tooltip';
+import { validateEnhancedDigestFilters } from './utils';
 
 type Props = PropsWithChildren<{
-  issues?:
-    | {
-        filterName: string;
-        issues: {
-          param: string;
-          issue: string;
-        }[];
-      }[]
-    | undefined;
+  issues?: ReturnType<typeof validateEnhancedDigestFilters>;
 }>;
 
 export function VariableTooltip({ issues, children }: Props) {
   const [isHovered, setIsHovered] = React.useState(false);
 
   return (
-    <Tooltip open={isHovered && !!issues?.length}>
+    <Tooltip open={isHovered && !!issues}>
       <TooltipTrigger asChild>
         <div onMouseLeave={() => setIsHovered(false)} onMouseEnter={() => setIsHovered(true)}>
           {children}
@@ -26,8 +19,10 @@ export function VariableTooltip({ issues, children }: Props) {
       <TooltipPortal>
         <TooltipContent side="top" className="border-bg-soft bg-bg-weak border p-0.5 shadow-sm">
           <div className="border-stroke-soft/70 text-label-2xs text-text-soft rounded-sm border bg-white p-1">
-            {issues && issues.length > 0 && (
-              <span className="text-error-base">{issues?.[0].filterName} is missing a value.</span>
+            {issues && (
+              <span className="text-error-base">
+                {issues.name}: {issues.message}
+              </span>
             )}
           </div>
         </TooltipContent>

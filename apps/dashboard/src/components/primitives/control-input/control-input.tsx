@@ -13,6 +13,8 @@ import { createVariableExtension } from './variable-plugin';
 import { variablePillTheme } from './variable-plugin/variable-theme';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { DIGEST_VARIABLES_ENUM, getDynamicDigestVariable } from '@/components/variable/utils/digest-variables';
+import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 
 const variants = cva('relative w-full', {
   variants: {
@@ -73,6 +75,8 @@ export function ControlInput({
       }
     : undefined;
 
+  const { digestStepBeforeCurrent } = useWorkflow();
+
   const completionSource = useMemo(
     () => createAutocompleteSource(variables, isEnhancedDigestEnabled),
     [variables, isEnhancedDigestEnabled]
@@ -89,17 +93,31 @@ export function ControlInput({
     [completionSource]
   );
 
-  const variablePluginExtension = useMemo(
-    () =>
-      createVariableExtension({
-        viewRef,
-        lastCompletionRef,
-        onSelect: handleVariableSelect,
-        isAllowedVariable,
-        isEnhancedDigestEnabled,
-      }),
-    [handleVariableSelect, isAllowedVariable, isEnhancedDigestEnabled]
+  const isDigestEventsVariable = useCallback(
+    (variableName: string) => {
+      const { value } = getDynamicDigestVariable({
+        type: DIGEST_VARIABLES_ENUM.SENTENCE_SUMMARY,
+        digestStepName: digestStepBeforeCurrent?.stepId,
+      });
+
+      if (!value) return false;
+
+      const valueWithoutFilters = value.split('|')[0].trim();
+      return variableName === valueWithoutFilters;
+    },
+    [digestStepBeforeCurrent?.stepId]
   );
+
+  const variablePluginExtension = useMemo(() => {
+    return createVariableExtension({
+      viewRef,
+      lastCompletionRef,
+      onSelect: handleVariableSelect,
+      isAllowedVariable,
+      isEnhancedDigestEnabled,
+      isDigestEventsVariable,
+    });
+  }, [handleVariableSelect, isAllowedVariable, isDigestEventsVariable, isEnhancedDigestEnabled]);
 
   const extensions = useMemo(() => {
     const baseExtensions = [...(multiline ? [EditorView.lineWrapping] : []), variablePillTheme];

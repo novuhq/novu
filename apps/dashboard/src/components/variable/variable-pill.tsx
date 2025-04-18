@@ -1,19 +1,17 @@
 import { cn } from '@/utils/ui';
 import React, { useMemo } from 'react';
+import { Tooltip, TooltipContent, TooltipPortal, TooltipTrigger } from '../primitives/tooltip';
 import { VariableFrom } from '../workflow-editor/steps/email/variables/variables';
 import { VariableIcon } from './components/variable-icon';
+import { getFirstFilterAndItsArgs, validateEnhancedDigestFilters } from './utils';
 import { VariableTooltip } from './variable-tooltip';
-import { getFirstFilterAndItsArgs } from './utils';
-import { TooltipContent, TooltipPortal } from '../primitives/tooltip';
-import { TooltipTrigger } from '../primitives/tooltip';
-import { Tooltip } from '../primitives/tooltip';
 
 export const VariablePill = React.forwardRef<
   HTMLSpanElement,
   {
     variableName: string;
     filters?: string[];
-    issues?: { filterName: string; issues: { param: string; issue: string }[] }[];
+    issues?: ReturnType<typeof validateEnhancedDigestFilters>;
     className?: string;
     onClick?: () => void;
     from?: VariableFrom;
@@ -33,26 +31,21 @@ export const VariablePill = React.forwardRef<
         onClick={onClick}
         className={cn(
           'bg-bg-white border-stroke-soft font-code relative m-0 box-border inline-flex h-full cursor-pointer items-center gap-[0.25em] rounded-lg border px-1.5 py-0.5 align-middle font-medium leading-[inherit] text-inherit',
-          { 'hover:bg-error-base/2.5': !!issues?.length },
+          { 'hover:bg-error-base/2.5': !!issues },
           className
         )}
       >
-        <VariableIcon variableName={variableName} hasError={!!issues?.length} />
+        <VariableIcon variableName={variableName} hasError={!!issues} />
         <span className="max-w-[24ch] truncate leading-[1.2]" title={displayVariableName}>
           {displayVariableName}
         </span>
-        <FiltersSection filters={filters} issues={issues} />
+        <FiltersSection filters={filters} />
       </span>
     </VariableTooltip>
   );
 });
 
-const FiltersSection = ({
-  filters,
-}: {
-  filters?: string[];
-  issues?: { filterName: string; issues: { param: string; issue: string }[] }[];
-}) => {
+const FiltersSection = ({ filters }: { filters?: string[] }) => {
   const getFilterNames = useMemo(() => {
     return filters
       ?.slice(1)
