@@ -8,10 +8,12 @@ export type Filters = {
   example?: string;
   sampleValue?: string;
   params?: {
-    placeholder: string;
+    placeholder?: string;
+    tip?: string;
     description?: string;
-    type?: 'string' | 'number';
+    type?: 'string' | 'number' | 'variable';
     defaultValue?: string;
+    label: string;
     required?: boolean;
   }[];
 };

@@ -12,11 +12,12 @@ import { resolveRepeatBlockAlias } from '../variables/variables';
 import { VariablePillOld } from '@/components/variable/variable-pill-old';
 
 type InternalVariableViewProps = NodeViewProps & {
+  variables: LiquidVariable[];
   isAllowedVariable: IsAllowedVariable;
 };
 
 function InternalVariableView(props: InternalVariableViewProps) {
-  const { node, updateAttributes, editor, isAllowedVariable } = props;
+  const { node, updateAttributes, editor, isAllowedVariable, deleteNode, variables } = props;
   const { id, aliasFor } = node.attrs;
   const [variableValue, setVariableValue] = useState(`{{${id}}}`);
   const [isOpen, setIsOpen] = useState(false);
@@ -63,6 +64,7 @@ function InternalVariableView(props: InternalVariableViewProps) {
         open={isOpen}
         onOpenChange={setIsOpen}
         variable={variable}
+        variables={variables}
         isAllowedVariable={isAllowedVariable}
         onUpdate={(newValue) => {
           const { fullLiquidExpression } = parseVariableCallback(newValue, isEnhancedDigestEnabled);
@@ -78,6 +80,13 @@ function InternalVariableView(props: InternalVariableViewProps) {
           setVariableValue(newValue);
           // Focus back to the editor after updating the variable
           editor.view.focus();
+        }}
+        onDeleteClick={() => {
+          deleteNode();
+
+          setTimeout(() => {
+            editor.view.focus();
+          }, 0);
         }}
       >
         {isEnhancedDigestEnabled ? (
@@ -102,8 +111,8 @@ function InternalVariableView(props: InternalVariableViewProps) {
 }
 
 // HOC that takes isAllowedVariable prop
-export function createVariableView(isAllowedVariable: IsAllowedVariable) {
+export function createVariableView(variables: LiquidVariable[], isAllowedVariable: IsAllowedVariable) {
   return function VariableView(props: NodeViewProps) {
-    return <InternalVariableView {...props} isAllowedVariable={isAllowedVariable} />;
+    return <InternalVariableView {...props} variables={variables} isAllowedVariable={isAllowedVariable} />;
   };
 }

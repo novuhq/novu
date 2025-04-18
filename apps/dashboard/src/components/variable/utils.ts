@@ -5,16 +5,12 @@ function escapeString(str: string): string {
   return str.replace(/'/g, "\\'");
 }
 
-export function formatParamValue(param: string, type?: 'string' | 'number') {
+export function formatParamValue(param: string, type?: string) {
   if (type === 'number') {
     return param;
   }
 
   return `'${escapeString(param)}'`;
-}
-
-export function getDefaultSampleValue(filterValue: string, isEnhancedDigestEnabled: boolean): string {
-  return getFilters(isEnhancedDigestEnabled).find((filter) => filter.value === filterValue)?.sampleValue ?? '';
 }
 
 export function formatLiquidVariable(

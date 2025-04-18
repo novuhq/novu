@@ -8,12 +8,12 @@ import bodyParser from 'body-parser';
 
 // eslint-disable-next-line no-restricted-imports
 import { BullMqService, getErrorInterceptor, Logger } from '@novu/application-generic';
-import { CONTEXT_PATH, corsOptionsDelegate, validateEnv } from './config';
 import { AppModule } from './app.module';
-import { setupSwagger } from './app/shared/framework/swagger/swagger.controller';
 import { ResponseInterceptor } from './app/shared/framework/response.interceptor';
-import { AllExceptionsFilter } from './exception-filter';
+import { setupSwagger } from './app/shared/framework/swagger/swagger.controller';
 import { getLogger } from './app/shared/services/logger.service';
+import { CONTEXT_PATH, corsOptionsDelegate, validateEnv } from './config';
+import { AllExceptionsFilter } from './exception-filter';
 
 const passport = require('passport');
 const compression = require('compression');
@@ -90,8 +90,8 @@ export async function bootstrap(
   app.useGlobalInterceptors(new ResponseInterceptor());
   app.useGlobalInterceptors(getErrorInterceptor());
 
-  app.use(extendedBodySizeRoutes, bodyParser.json({ limit: '20mb' }));
-  app.use(extendedBodySizeRoutes, bodyParser.urlencoded({ limit: '20mb', extended: true }));
+  app.use(extendedBodySizeRoutes, bodyParser.json({ limit: '26mb' }));
+  app.use(extendedBodySizeRoutes, bodyParser.urlencoded({ limit: '26mb', extended: true }));
 
   app.use(bodyParser.json({ verify: rawBodyBuffer }));
   app.use(bodyParser.urlencoded({ extended: true, verify: rawBodyBuffer }));

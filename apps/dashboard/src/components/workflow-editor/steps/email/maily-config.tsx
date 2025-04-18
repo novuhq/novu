@@ -1,9 +1,3 @@
-import { VariablePill } from '@/components/variable/variable-pill';
-import { createFooters } from '@/components/workflow-editor/steps/email/blocks/footers';
-import { createHeaders } from '@/components/workflow-editor/steps/email/blocks/headers';
-import { createHtmlCodeBlock } from '@/components/workflow-editor/steps/email/blocks/html';
-import { useTelemetry } from '@/hooks/use-telemetry';
-import { IsAllowedVariable } from '@/utils/parseStepVariables';
 import { searchSlashCommands } from '@maily-to/core-digest/extensions';
 import {
   BlockGroupItem,
@@ -33,8 +27,15 @@ import {
   VariableExtension,
   Variables,
 } from '@maily-to/core/extensions';
-import { StepResponseDto } from '@novu/shared';
 import { ReactNodeViewRenderer } from '@tiptap/react';
+import type { Editor as TiptapEditor } from '@tiptap/core';
+import { StepResponseDto } from '@novu/shared';
+
+import { VariablePill } from '@/components/variable/variable-pill';
+import { createFooters } from '@/components/workflow-editor/steps/email/blocks/footers';
+import { createHeaders } from '@/components/workflow-editor/steps/email/blocks/headers';
+import { createHtmlCodeBlock } from '@/components/workflow-editor/steps/email/blocks/html';
+import { useTelemetry } from '@/hooks/use-telemetry';
 import { createDigestBlock } from './blocks/digest';
 import {
   CalculateVariablesProps,
@@ -44,12 +45,10 @@ import {
 } from './variables/variables';
 import { ForView } from './views/for-view';
 import { HTMLCodeBlockView } from './views/html-view';
-
+import { ParsedVariables } from '@/utils/parseStepVariables';
 import { MailyVariablesListView } from './views/maily-variables-list-view';
 import { createVariableView } from './views/variable-view';
 import { createCards } from './blocks/cards';
-
-import type { Editor as TiptapEditor } from '@tiptap/core';
 import { VariablePillOld } from '@/components/variable/variable-pill-old';
 export const VARIABLE_TRIGGER_CHARACTER = '{{';
 
@@ -151,7 +150,7 @@ const getAvailableBlocks = (blocks: BlockGroupItem[], editor: TiptapEditor | nul
 
 export const createExtensions = (props: {
   handleCalculateVariables: (props: CalculateVariablesProps) => Variables | undefined;
-  parsedVariables: { isAllowedVariable: IsAllowedVariable };
+  parsedVariables: ParsedVariables;
   blocks: BlockGroupItem[];
   isEnhancedDigestEnabled: boolean;
 }) => {
@@ -182,11 +181,14 @@ export const createExtensions = (props: {
     }),
     VariableExtension.extend({
       addNodeView() {
-        return ReactNodeViewRenderer(createVariableView(parsedVariables.isAllowedVariable), {
-          // the variable pill is 3px smaller than the default text size, but never smaller than 12px
-          className: 'relative inline-block text-[max(12px,calc(1em-3px))] h-5',
-          as: 'div',
-        });
+        return ReactNodeViewRenderer(
+          createVariableView(parsedVariables.primitives, parsedVariables.isAllowedVariable),
+          {
+            // the variable pill is 3px smaller than the default text size, but never smaller than 12px
+            className: 'relative inline-block text-[max(12px,calc(1em-3px))] h-5',
+            as: 'div',
+          }
+        );
       },
       addAttributes() {
         const attributes = this.parent?.();
