@@ -305,7 +305,7 @@ const createInformationCardWithLogo: (props: { track: ReturnType<typeof useTelem
                           attrs: {
                             height: 16,
                             width: 16,
-                            src: '/images/email-editor/check-icon.svg',
+                            src: '/images/email-editor/check-icon.png',
                             isSrcVariable: false,
                             alt: null,
                             title: null,
