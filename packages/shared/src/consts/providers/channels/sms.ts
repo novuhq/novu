@@ -290,7 +290,7 @@ export const smsProviders: IProviderConfig[] = [
   },
   {
     id: SmsProviderIdEnum.AfroSms,
-    displayName: 'AfroSMS',
+    displayName: 'Afro Message',
     channel: ChannelTypeEnum.SMS,
     credentials: afroSmsConfig,
     docReference: 'https://afromessage.com/developers',
