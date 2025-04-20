@@ -17,11 +17,12 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives
 import { Separator } from '@/components/primitives/separator';
 import { URLInput } from '@/components/workflow-editor/url-input';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
-import { parseStepVariablesToLiquidVariables } from '@/utils/parseStepVariablesToLiquidVariables';
+import { useParseVariables } from '@/hooks/use-parse-variables';
+import { inboxButtonVariants } from '@/utils/inbox';
 import { cn } from '@/utils/ui';
 import { urlTargetTypes } from '@/utils/url';
 import merge from 'lodash.merge';
-import { ComponentProps, useMemo } from 'react';
+import { ComponentProps } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { RiEdit2Line, RiExpandUpDownLine, RiForbid2Line } from 'react-icons/ri';
 import { CompactButton } from './primitives/button-compact';
@@ -50,13 +51,16 @@ export const InAppActionDropdown = ({ onMenuItemClick }: { onMenuItemClick?: () 
     <>
       <DropdownMenu modal={false}>
         <div className={cn('mt-3 flex items-center gap-1')}>
-          <div className="border-neutral-alpha-200 relative flex min-h-10 w-full flex-wrap items-center justify-end gap-1 rounded-md border p-1 shadow-sm">
+          <div className="border-neutral-alpha-200 shadow-input relative flex min-h-10 w-full flex-wrap items-center justify-end gap-1 rounded-md border p-1">
             {!primaryAction && !secondaryAction && (
               <Button
                 variant="secondary"
                 mode="outline"
                 size="2xs"
-                className="h-6 border-[1px] border-dashed shadow-none ring-0"
+                className={inboxButtonVariants({
+                  variant: 'secondary',
+                  className: 'border-[1px] border-dashed shadow-none ring-0',
+                })}
                 trailingIcon={RiForbid2Line}
                 tabIndex={-1}
               >
@@ -65,22 +69,37 @@ export const InAppActionDropdown = ({ onMenuItemClick }: { onMenuItemClick?: () 
             )}
             {primaryAction && (
               <ConfigureActionPopover title="Primary action" asChild fields={{ actionKey: primaryActionKey }}>
-                <Button variant="primary" size="2xs" className="z-10 h-6 min-w-16 max-w-48 truncate">
+                <button
+                  className={inboxButtonVariants({
+                    variant: 'default',
+                    className: 'z-10 h-6 min-w-16 max-w-48 truncate',
+                  })}
+                >
                   {primaryAction.label || 'Primary action'}
-                </Button>
+                </button>
               </ConfigureActionPopover>
             )}
             {secondaryAction && (
               <ConfigureActionPopover title="Secondary action" asChild fields={{ actionKey: secondaryActionKey }}>
-                <Button variant="secondary" mode="outline" size="2xs" className="z-10 h-6 min-w-16 max-w-48 truncate">
+                <button
+                  className={inboxButtonVariants({
+                    variant: 'secondary',
+                    className: 'z-10 h-6 min-w-16 max-w-48 truncate',
+                  })}
+                >
                   {secondaryAction.label || 'Secondary action'}
-                </Button>
+                </button>
               </ConfigureActionPopover>
             )}
             <DropdownMenuTrigger className="absolute size-full" tabIndex={-1} />
           </div>
           <DropdownMenuTrigger asChild>
-            <CompactButton icon={RiExpandUpDownLine} size="lg" variant="ghost">
+            <CompactButton
+              icon={RiExpandUpDownLine}
+              size="lg"
+              variant="ghost"
+              data-testid="in-app-action-dropdown-trigger"
+            >
               <span className="sr-only">Actions</span>
             </CompactButton>
           </DropdownMenuTrigger>
@@ -106,7 +125,10 @@ export const InAppActionDropdown = ({ onMenuItemClick }: { onMenuItemClick?: () 
               mode="outline"
               variant="secondary"
               size="2xs"
-              className="h-6 border-[1px] border-dashed shadow-none ring-0"
+              className={inboxButtonVariants({
+                variant: 'secondary',
+                className: 'h-6 border-[1px] border-dashed shadow-none ring-0',
+              })}
               trailingIcon={RiForbid2Line}
             >
               No action
@@ -126,9 +148,14 @@ export const InAppActionDropdown = ({ onMenuItemClick }: { onMenuItemClick?: () 
               onMenuItemClick?.();
             }}
           >
-            <Button variant="primary" size="2xs" className="pointer-events-none h-6">
+            <button
+              className={inboxButtonVariants({
+                variant: 'default',
+                className: 'z-10 h-6 min-w-16 max-w-48 truncate',
+              })}
+            >
               Primary action
-            </Button>
+            </button>
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => {
@@ -148,17 +175,24 @@ export const InAppActionDropdown = ({ onMenuItemClick }: { onMenuItemClick?: () 
               onMenuItemClick?.();
             }}
           >
-            <Button variant="primary" size="2xs" className="pointer-events-none h-6">
-              Primary action
-            </Button>
-
-            <Button variant="secondary" mode="outline" size="2xs" className="pointer-events-none h-6">
-              Secondary action
-            </Button>
+            <>
+              <button
+                className={inboxButtonVariants({
+                  variant: 'default',
+                  className: 'z-10 h-6 min-w-16 max-w-48 truncate',
+                })}
+              >
+                Primary action
+              </button>
+              <button className={inboxButtonVariants({ variant: 'secondary', className: 'pointer-events-none h-6' })}>
+                Secondary action
+              </button>
+            </>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-      <FormMessagePure error={error ? String(error.message) : undefined} />
+      {/* TODO: Use <FormMessage /> instead, see how we did it in <URLInput /> */}
+      {error && <FormMessagePure hasError={!!error}>{String(error?.message || '')}</FormMessagePure>}
     </>
   );
 };
@@ -172,8 +206,8 @@ const ConfigureActionPopover = (
     ...rest
   } = props;
   const { control } = useFormContext();
-  const { step } = useWorkflow();
-  const variables = useMemo(() => (step ? parseStepVariablesToLiquidVariables(step.variables) : []), [step]);
+  const { step, digestStepBeforeCurrent } = useWorkflow();
+  const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.stepId);
 
   return (
     <Popover>
@@ -197,6 +231,7 @@ const ConfigureActionPopover = (
                   <InputRoot className="overflow-visible" hasError={!!fieldState.error}>
                     <ControlInput
                       variables={variables}
+                      isAllowedVariable={isAllowedVariable}
                       multiline={false}
                       indentWithTab={false}
                       placeholder={title}
@@ -217,8 +252,8 @@ const ConfigureActionPopover = (
                 urlKey: `${actionKey}.redirect.url`,
                 targetKey: `${actionKey}.redirect.target`,
               }}
-              withHint={false}
               variables={variables}
+              isAllowedVariable={isAllowedVariable}
             />
           </div>
         </div>

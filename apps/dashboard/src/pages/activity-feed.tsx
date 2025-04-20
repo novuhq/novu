@@ -1,24 +1,23 @@
-import { useMemo } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
+import { useCallback, useMemo } from 'react';
 
+import { ActivityError } from '@/components/activity/activity-error';
 import { ActivityFilters } from '@/components/activity/activity-filters';
+import { ActivityHeader } from '@/components/activity/activity-header';
+import { ActivityLogs } from '@/components/activity/activity-logs';
 import { ActivityPanel } from '@/components/activity/activity-panel';
+import { ActivitySkeleton } from '@/components/activity/activity-skeleton';
 import { ActivityTable } from '@/components/activity/activity-table';
+import { ActivityOverview } from '@/components/activity/components/activity-overview';
+import { defaultActivityFilters } from '@/components/activity/constants';
 import { DashboardLayout } from '@/components/dashboard-layout';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/primitives/resizable';
 import { useActivityUrlState } from '@/hooks/use-activity-url-state';
-import { PageMeta } from '../components/page-meta';
-import { defaultActivityFilters } from '@/components/activity/constants';
 import { usePullActivity } from '@/hooks/use-pull-activity';
-import { ActivityHeader } from '@/components/activity/activity-header';
-import { ActivityOverview } from '@/components/activity/components/activity-overview';
-import { ActivityLogs } from '@/components/activity/activity-logs';
-import { ActivitySkeleton } from '@/components/activity/activity-skeleton';
-import { ActivityError } from '@/components/activity/activity-error';
+import { PageMeta } from '../components/page-meta';
 
 export function ActivityFeed() {
   const { activityItemId, filters, filterValues, handleActivitySelect, handleFiltersChange } = useActivityUrlState();
-
   const { activity, isPending, error } = usePullActivity(activityItemId);
 
   const hasActiveFilters = Object.entries(filters).some(([key, value]) => {
@@ -45,6 +44,20 @@ export function ActivityFeed() {
       filterValues.subscriberId !== defaultActivityFilters.subscriberId
     );
   }, [filterValues]);
+
+  const handleTransactionIdChange = useCallback(
+    (newTransactionId: string, activityId?: string) => {
+      if (activityId) {
+        handleActivitySelect(activityId);
+      } else {
+        handleFiltersChange({
+          ...filterValues,
+          ...(newTransactionId && { transactionId: newTransactionId }),
+        });
+      }
+    },
+    [filterValues, handleFiltersChange, handleActivitySelect]
+  );
 
   return (
     <>
@@ -97,7 +110,11 @@ export function ActivityFeed() {
                           <>
                             <ActivityHeader title={activity.template?.name} />
                             <ActivityOverview activity={activity} />
-                            <ActivityLogs activity={activity} onActivitySelect={handleActivitySelect} />
+                            <ActivityLogs
+                              activity={activity}
+                              onActivitySelect={handleActivitySelect}
+                              onTransactionIdChange={handleTransactionIdChange}
+                            />
                           </>
                         )}
                       </ActivityPanel>

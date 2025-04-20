@@ -1,18 +1,24 @@
+import { IsAllowedVariable } from '@/utils/parseStepVariables';
 import { Decoration, DecorationSet, EditorView, Range } from '@uiw/react-codemirror';
 import { MutableRefObject } from 'react';
-import { VARIABLE_REGEX_STRING } from './';
-import { isTypingVariable, parseVariable } from './utils';
+import { isTypingVariable } from './utils';
 import { VariablePillWidget } from './variable-pill-widget';
+import { parseVariable } from '@/utils/liquid';
+import { VARIABLE_REGEX_STRING } from '@/utils/liquid';
 
 export class VariablePluginView {
   decorations: DecorationSet;
+
   lastCursor: number = 0;
+
   isTypingVariable: boolean = false;
 
   constructor(
     view: EditorView,
     private viewRef: MutableRefObject<EditorView | null>,
     private lastCompletionRef: MutableRefObject<{ from: number; to: number } | null>,
+    private isAllowedVariable: IsAllowedVariable,
+    private isEnhancedDigestEnabled: boolean,
     private onSelect?: (value: string, from: number, to: number) => void
   ) {
     this.decorations = this.createDecorations(view);
@@ -40,9 +46,18 @@ export class VariablePluginView {
     let match: RegExpExecArray | null = null;
 
     const regex = new RegExp(VARIABLE_REGEX_STRING, 'g');
+
     // Iterate through all variable matches in the content and add the pills
     while ((match = regex.exec(content)) !== null) {
-      const { fullLiquidExpression, name, start, end, filters } = parseVariable(match);
+      const parsedVariable = parseVariable(match[0]);
+
+      if (!parsedVariable) {
+        continue;
+      }
+
+      const { fullLiquidExpression, name, filtersArray } = parsedVariable;
+      const start = match.index;
+      const end = start + match[0].length;
 
       // Skip creating pills for variables that are currently being edited
       // This allows users to modify variables without the pill getting in the way
@@ -50,10 +65,22 @@ export class VariablePluginView {
         continue;
       }
 
+      if (!this.isAllowedVariable({ name })) {
+        continue;
+      }
+
       if (name) {
         decorations.push(
           Decoration.replace({
-            widget: new VariablePillWidget(name, fullLiquidExpression, start, end, filters?.length > 0, this.onSelect),
+            widget: new VariablePillWidget(
+              name,
+              fullLiquidExpression,
+              start,
+              end,
+              filtersArray,
+              this.isEnhancedDigestEnabled,
+              this.onSelect
+            ),
             inclusive: false,
             side: -1,
           }).range(start, end)

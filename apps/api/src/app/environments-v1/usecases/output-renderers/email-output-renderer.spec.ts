@@ -1,16 +1,30 @@
 import { Test } from '@nestjs/testing';
 import { expect } from 'chai';
 import { JSONContent as MailyJSONContent } from '@maily-to/render';
+import { FeatureFlagsService } from '@novu/application-generic';
 import { EmailOutputRendererUsecase } from './email-output-renderer.usecase';
 import { FullPayloadForRender } from './render-command';
 import { WrapMailyInLiquidUseCase } from './maily-to-liquid/wrap-maily-in-liquid.usecase';
+
+const mockFeatureFlagsService = {
+  getFlag: async (context) => {
+    return process.env[context.key] === 'true';
+  },
+};
 
 describe('EmailOutputRendererUsecase', () => {
   let emailOutputRendererUsecase: EmailOutputRendererUsecase;
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
-      providers: [EmailOutputRendererUsecase, WrapMailyInLiquidUseCase],
+      providers: [
+        EmailOutputRendererUsecase,
+        WrapMailyInLiquidUseCase,
+        {
+          provide: FeatureFlagsService,
+          useValue: mockFeatureFlagsService,
+        },
+      ],
     }).compile();
 
     emailOutputRendererUsecase = moduleRef.get<EmailOutputRendererUsecase>(EmailOutputRendererUsecase);
@@ -25,6 +39,7 @@ describe('EmailOutputRendererUsecase', () => {
   describe('general flow', () => {
     it('should return subject and body when body is not string', async () => {
       let renderCommand = {
+        environmentId: 'fake_env_id',
         controlValues: {
           subject: 'Test Subject',
           body: undefined,
@@ -40,6 +55,7 @@ describe('EmailOutputRendererUsecase', () => {
       });
 
       renderCommand = {
+        environmentId: 'fake_env_id',
         controlValues: {
           subject: 'Test Subject',
           body: 123 as any,
@@ -72,6 +88,7 @@ describe('EmailOutputRendererUsecase', () => {
       };
 
       const renderCommand = {
+        environmentId: 'fake_env_id',
         controlValues: {
           subject: 'Welcome Email',
           body: JSON.stringify(mockTipTapNode),
@@ -105,6 +122,7 @@ describe('EmailOutputRendererUsecase', () => {
       };
 
       const renderCommand = {
+        environmentId: 'fake_env_id',
         controlValues: {
           subject: 'Order Update',
           body: JSON.stringify(mockTipTapNode),
@@ -143,6 +161,7 @@ describe('EmailOutputRendererUsecase', () => {
       };
 
       const renderCommand = {
+        environmentId: 'fake_env_id',
         controlValues: {
           subject: 'Welcome',
           body: JSON.stringify(mockTipTapNode),
@@ -204,6 +223,7 @@ describe('EmailOutputRendererUsecase', () => {
       };
 
       const renderCommand = {
+        environmentId: 'fake_env_id',
         controlValues: {
           subject: 'Order Status',
           body: JSON.stringify(mockTipTapNode),
@@ -281,6 +301,7 @@ describe('EmailOutputRendererUsecase', () => {
       };
 
       const renderCommand = {
+        environmentId: 'fake_env_id',
         controlValues: {
           subject: 'Subscription Update',
           body: JSON.stringify(mockTipTapNode),
@@ -305,6 +326,7 @@ describe('EmailOutputRendererUsecase', () => {
 
       // Test with partial data
       const renderCommandWithPartialData = {
+        environmentId: 'fake_env_id',
         controlValues: {
           subject: 'Subscription Update',
           body: JSON.stringify(mockTipTapNode),
@@ -384,6 +406,7 @@ describe('EmailOutputRendererUsecase', () => {
       truthyValues.forEach(({ value, desc }) => {
         it(`should render content when showIfKey is ${desc}`, async () => {
           const renderCommand = {
+            environmentId: 'fake_env_id',
             controlValues: {
               subject: 'Conditional Test',
               body: JSON.stringify(mockTipTapNode),
@@ -454,6 +477,7 @@ describe('EmailOutputRendererUsecase', () => {
       falsyValues.forEach(({ value, desc }) => {
         it(`should not render content when showIfKey is ${desc}`, async () => {
           const renderCommand = {
+            environmentId: 'fake_env_id',
             controlValues: {
               subject: 'Conditional Test',
               body: JSON.stringify(mockTipTapNode),
@@ -522,6 +546,7 @@ describe('EmailOutputRendererUsecase', () => {
       };
 
       const renderCommand = {
+        environmentId: 'fake_env_id',
         controlValues: {
           subject: 'Nested Conditional Test',
           body: JSON.stringify(mockTipTapNode),
@@ -609,9 +634,11 @@ describe('EmailOutputRendererUsecase', () => {
       };
 
       const renderCommand = {
+        environmentId: 'fake_env_id',
         controlValues: {
           subject: 'Repeat Loop Test',
           body: JSON.stringify(mockTipTapNode),
+          disableOutputSanitization: true,
         },
         fullPayloadForRender: {
           ...mockFullPayload,
@@ -624,6 +651,10 @@ describe('EmailOutputRendererUsecase', () => {
       const result = await emailOutputRendererUsecase.execute(renderCommand);
       expect(result.body).to.include('This is an author: <!-- -->John<!-- -->Post Title');
       expect(result.body).to.include('This is an author: <!-- -->Jane<!-- -->Post Title');
+
+      // Verify exact number of items rendered matches input array
+      const matches = result.body.match(/This is an author:/g);
+      expect(matches).to.have.length(2);
     });
 
     it('should handle repeat loop block transformation with array of primitives', async () => {
@@ -661,6 +692,7 @@ describe('EmailOutputRendererUsecase', () => {
       };
 
       const renderCommand = {
+        environmentId: 'fake_env_id',
         controlValues: {
           subject: 'Repeat Loop Test',
           body: JSON.stringify(mockTipTapNode),
@@ -675,6 +707,132 @@ describe('EmailOutputRendererUsecase', () => {
       const result = await emailOutputRendererUsecase.execute(renderCommand);
       expect(result.body).to.include('John');
       expect(result.body).to.include('Jane');
+    });
+
+    it('should limit iterations when iterations attribute is smaller than array length', async () => {
+      const mockTipTapNode: MailyJSONContent = {
+        type: 'doc',
+        content: [
+          {
+            type: 'repeat',
+            attrs: {
+              each: 'payload.items',
+              iterations: 2,
+              isUpdatingKey: false,
+              showIfKey: null,
+            },
+            content: [
+              {
+                type: 'paragraph',
+                attrs: {
+                  textAlign: 'left',
+                },
+                content: [
+                  {
+                    type: 'text',
+                    text: 'Item ',
+                  },
+                  {
+                    type: 'variable',
+                    attrs: {
+                      id: 'payload.items',
+                      label: null,
+                      fallback: null,
+                      required: false,
+                    },
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      };
+
+      const renderCommand = {
+        environmentId: 'fake_env_id',
+        controlValues: {
+          subject: 'Repeat Loop Test Limited Iterations',
+          body: JSON.stringify(mockTipTapNode),
+        },
+        fullPayloadForRender: {
+          ...mockFullPayload,
+          payload: {
+            items: ['item1', 'item2', 'item3', 'item4'],
+          },
+        },
+      };
+
+      const result = await emailOutputRendererUsecase.execute(renderCommand);
+
+      // Should only create 2 items as iterations is set to 2
+      expect(result.body).to.include('Item item1');
+      expect(result.body).to.include('Item item2');
+      expect(result.body).to.not.include('Item item3');
+      expect(result.body).to.not.include('Item item4');
+    });
+
+    it('should render entire array when iterations attribute is larger than array length', async () => {
+      const mockTipTapNode: MailyJSONContent = {
+        type: 'doc',
+        content: [
+          {
+            type: 'repeat',
+            attrs: {
+              each: 'payload.items',
+              iterations: 10,
+              isUpdatingKey: false,
+              showIfKey: null,
+            },
+            content: [
+              {
+                type: 'paragraph',
+                attrs: {
+                  textAlign: 'left',
+                },
+                content: [
+                  {
+                    type: 'text',
+                    text: 'Item ',
+                  },
+                  {
+                    type: 'variable',
+                    attrs: {
+                      id: 'payload.items',
+                      label: null,
+                      fallback: null,
+                      required: false,
+                    },
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      };
+
+      const renderCommand = {
+        environmentId: 'fake_env_id',
+        controlValues: {
+          subject: 'Repeat Loop Test More Iterations',
+          body: JSON.stringify(mockTipTapNode),
+        },
+        fullPayloadForRender: {
+          ...mockFullPayload,
+          payload: {
+            items: ['item1', 'item2', 'item3'],
+          },
+        },
+      };
+
+      const result = await emailOutputRendererUsecase.execute(renderCommand);
+
+      // Should render all 3 items even though iterations is set to 10
+      expect(result.body).to.include('Item item1');
+      expect(result.body).to.include('Item item2');
+      expect(result.body).to.include('Item item3');
+
+      const matches = result.body.match(/Item item/g);
+      expect(matches).to.have.length(3);
     });
   });
 
@@ -714,6 +872,7 @@ describe('EmailOutputRendererUsecase', () => {
       };
 
       const renderCommand = {
+        environmentId: 'fake_env_id',
         controlValues: {
           subject: 'Link Test',
           body: JSON.stringify(mockTipTapNode),
@@ -752,6 +911,7 @@ describe('EmailOutputRendererUsecase', () => {
       };
 
       const renderCommand = {
+        environmentId: 'fake_env_id',
         controlValues: {
           subject: 'Image Test',
           body: JSON.stringify(mockTipTapNode),
@@ -794,6 +954,7 @@ describe('EmailOutputRendererUsecase', () => {
       };
 
       const renderCommand = {
+        environmentId: 'fake_env_id',
         controlValues: {
           subject: 'Color Test',
           body: JSON.stringify(mockTipTapNode),

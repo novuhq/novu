@@ -1,4 +1,4 @@
-import { forwardRef } from 'react';
+import React, { forwardRef } from 'react';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 
 import { SheetContent, SheetDescription, SheetTitle } from '@/components/primitives/sheet';
@@ -21,6 +21,10 @@ export const ActivityDetailsDrawer = forwardRef<HTMLDivElement, ActivityPanelDra
   const { activityId, onActivitySelect } = props;
   const isOpen = !!activityId;
   const { activity, isPending, error } = usePullActivity(activityId);
+
+  function handleTransactionIdChange(_newTransactionId: string, activityId: string) {
+    onActivitySelect(activityId);
+  }
 
   return (
     <Sheet
@@ -54,11 +58,15 @@ export const ActivityDetailsDrawer = forwardRef<HTMLDivElement, ActivityPanelDra
           ) : error || !activity ? (
             <ActivityError />
           ) : (
-            <>
+            <React.Fragment key={activityId}>
               <ActivityHeader title={activity.template?.name} className="h-12 py-3" />
               <ActivityOverview activity={activity} />
-              <ActivityLogs activity={activity} onActivitySelect={onActivitySelect} />
-            </>
+              <ActivityLogs
+                activity={activity}
+                onActivitySelect={onActivitySelect}
+                onTransactionIdChange={handleTransactionIdChange}
+              />
+            </React.Fragment>
           )}
         </ActivityPanel>
       </SheetContent>

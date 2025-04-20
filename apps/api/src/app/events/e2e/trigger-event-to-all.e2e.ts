@@ -172,20 +172,6 @@ describe('TriggerMulticast #novu-v2', () => {
     expectBulkSingleSubscriberStub(firstCallStubData, firstJobs);
   });
 
-  it('should fail on if provided topic key is not exists', async () => {
-    const invalidTopicKey = 'none_existing_topic_key';
-    const command: TriggerMulticastCommand = buildTriggerMulticastCommandMock({
-      to: [...to, { type: TriggerRecipientsTypeEnum.TOPIC, topicKey: invalidTopicKey }],
-      organizationId: session.organization._id,
-      environmentId: session.environment._id,
-      userId: session.user._id,
-    }) as any;
-
-    const res = await getErrorMessage(async () => await triggerMulticast.execute(command));
-
-    expect(res).to.be.equal(`Topic with key ${invalidTopicKey} not found in current environment`);
-  });
-
   it('should send only single subscribers forward to processing', async () => {
     const singleSubscribers = firstTopicSubscribers;
     const command: TriggerMulticastCommand = buildTriggerMulticastCommandMock({

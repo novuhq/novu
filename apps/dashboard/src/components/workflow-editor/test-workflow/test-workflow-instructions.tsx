@@ -178,7 +178,7 @@ export function TestWorkflowInstructions({ isOpen, onClose, workflow, to, payloa
           <SheetTitle className="text-label-lg">Trigger workflow from your application</SheetTitle>
           <SheetDescription className="text-paragraph-xs text-text-soft mt-1 block">
             It's time to integrate the workflow with your application.{' '}
-            <ExternalLink href="https://docs.novu.co/concepts/workflows">Learn more</ExternalLink>
+            <ExternalLink href="https://docs.novu.co/platform/concepts/workflows">Learn more</ExternalLink>
           </SheetDescription>
         </SheetHeader>
         <Separator />

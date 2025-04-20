@@ -1,17 +1,16 @@
-import { useCallback, useEffect, useReducer, useState } from 'react';
+import { useCallback, useEffect, useReducer } from 'react';
 import { Group, Modal, ActionIcon, createStyles, MantineTheme } from '@mantine/core';
-import { ChannelTypeEnum, FeatureFlagsKeysEnum } from '@novu/shared';
-
-import { colors, Close } from '@novu/design-system';
 import { Row } from 'react-table';
-import { useFeatureFlag, useKeyDown } from '../../hooks';
+import { ChannelTypeEnum } from '@novu/shared';
+import { colors, Close } from '@novu/design-system';
+
+import { useKeyDown } from '../../hooks';
 import { useSegment } from '../../components/providers/SegmentProvider';
 import { IntegrationsStoreModalAnalytics } from './constants';
 import type { IIntegratedProvider, ITableIntegration } from './types';
 import { IntegrationsList } from './IntegrationsList';
 import { SelectProviderSidebar } from './components/multi-provider/SelectProviderSidebar';
 import { CreateProviderInstanceSidebar } from './components/multi-provider/CreateProviderInstanceSidebar';
-import { UpdateProviderSidebar as UpdateProviderSidebarOld } from './components/multi-provider/UpdateProviderSidebar';
 import { UpdateProviderSidebar } from './components/multi-provider/v2';
 
 enum SidebarType {
@@ -85,8 +84,6 @@ export function IntegrationsListModal({
     sidebarType: scrollToProp ? SidebarType.SELECT : undefined,
     provider: selectedProvider,
   });
-
-  const isV2Enabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_ENABLED);
 
   const segment = useSegment();
   const { classes } = useModalStyles();
@@ -189,21 +186,12 @@ export function IntegrationsListModal({
         channel={provider?.channel}
       />
 
-      {isV2Enabled ? (
-        <UpdateProviderSidebar
-          key={integrationIdToEdit}
-          isOpened={sidebarType === SidebarType.UPDATE}
-          onClose={onSidebarClose}
-          integrationId={integrationIdToEdit}
-        />
-      ) : (
-        <UpdateProviderSidebarOld
-          key={integrationIdToEdit}
-          isOpened={sidebarType === SidebarType.UPDATE}
-          onClose={onSidebarClose}
-          integrationId={integrationIdToEdit}
-        />
-      )}
+      <UpdateProviderSidebar
+        key={integrationIdToEdit}
+        isOpened={sidebarType === SidebarType.UPDATE}
+        onClose={onSidebarClose}
+        integrationId={integrationIdToEdit}
+      />
     </Modal>
   );
 }

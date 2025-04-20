@@ -9,13 +9,7 @@ import {
 } from '@novu/dal';
 import { UserSession, SubscribersService } from '@novu/testing';
 import { ChannelTypeEnum, ISubscribersDefine, IUpdateNotificationTemplateDto, StepTypeEnum } from '@novu/shared';
-import {
-  buildNotificationTemplateIdentifierKey,
-  buildNotificationTemplateKey,
-  CacheInMemoryProviderService,
-  CacheService,
-  InvalidateCacheService,
-} from '@novu/application-generic';
+import { CacheInMemoryProviderService, CacheService, InvalidateCacheService } from '@novu/application-generic';
 
 import { UpdateSubscriberPreferenceRequestDto } from '../../widgets/dtos/update-subscriber-preference-request.dto';
 
@@ -194,14 +188,6 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST) #novu-v2'
     });
 
     expect(message.length).to.equal(2);
-
-    const notificationTemplateKey = buildNotificationTemplateKey({
-      _id: template._id,
-      _environmentId: session.environment._id,
-    });
-    await invalidateCache.invalidateByKey({
-      key: notificationTemplateKey,
-    });
 
     const updateData = {
       channel: {

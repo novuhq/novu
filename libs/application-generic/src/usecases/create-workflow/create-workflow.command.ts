@@ -39,11 +39,7 @@ import { Type } from 'class-transformer';
 import { RuntimeIssue } from '@novu/dal';
 import { EnvironmentWithUserCommand } from '../../commands';
 import { PreferencesRequired } from '../upsert-preferences';
-import {
-  MAX_DESCRIPTION_LENGTH,
-  MAX_NAME_LENGTH,
-  MAX_TAG_LENGTH,
-} from '../workflow';
+import { MAX_DESCRIPTION_LENGTH, MAX_NAME_LENGTH, MAX_TAG_LENGTH } from '../workflow';
 
 export class CreateWorkflowCommand extends EnvironmentWithUserCommand {
   @IsDefined()

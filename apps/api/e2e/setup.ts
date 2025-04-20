@@ -1,21 +1,16 @@
-import { testServer, TestingQueueService, JobsService } from '@novu/testing';
+import { testServer } from '@novu/testing';
 import sinon from 'sinon';
 import chai from 'chai';
-import mongoose from 'mongoose';
-import { JobRepository } from '@novu/dal';
-import { JobTopicNameEnum } from '@novu/shared';
+import { Connection } from 'mongoose';
+import { DalService } from '@novu/dal';
 import { bootstrap } from '../src/bootstrap';
 
-const jobRepository = new JobRepository();
-const workflowQueue = new TestingQueueService(JobTopicNameEnum.WORKFLOW).queue;
-const standardQueue = new TestingQueueService(JobTopicNameEnum.STANDARD).queue;
-const subscriberProcessQueue = new TestingQueueService(JobTopicNameEnum.PROCESS_SUBSCRIBER).queue;
-
-let connection: typeof mongoose;
+let connection: Connection;
+const dalService = new DalService();
 
 async function getConnection() {
   if (!connection) {
-    connection = await mongoose.connect(process.env.MONGO_URL);
+    connection = await dalService.connect(process.env.MONGO_URL);
   }
 
   return connection;
@@ -24,8 +19,9 @@ async function getConnection() {
 async function dropDatabase() {
   try {
     const conn = await getConnection();
-    await conn.connection.db.dropDatabase();
+    await conn.db.dropDatabase();
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('Error dropping the database:', error);
   }
 }
@@ -43,37 +39,10 @@ after(async () => {
   await testServer.teardown();
   await dropDatabase();
   if (connection) {
-    await connection.disconnect();
+    await connection.close();
   }
 });
 
-async function cleanup() {
-  const jobsService = new JobsService();
-  await jobsService.runAllDelayedJobsImmediately();
-  await jobsService.awaitAllJobs();
-
-  await Promise.all([workflowQueue.drain(), standardQueue.drain(), subscriberProcessQueue.drain()]);
-
-  await jobRepository._model.deleteMany({});
-}
-
-function timeoutPromise(ms: number) {
-  // eslint-disable-next-line no-promise-executor-return
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 afterEach(async function () {
-  const TIMEOUT = 4500;
   sinon.restore();
-
-  try {
-    await Promise.race([
-      cleanup(),
-      timeoutPromise(TIMEOUT).then(() => {
-        console.warn('Cleanup operation timed out after 5000ms - continuing with tests');
-      }),
-    ]);
-  } catch (error) {
-    console.error('Error during cleanup:', error);
-  }
 });

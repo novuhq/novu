@@ -63,13 +63,20 @@ export class InMemoryProviderService {
       await setTimeout(timeout);
     }
 
-    Logger.warn(
-      this.descriptiveLogMessage(`Is being delayed ${times} times up to a total of ${retries}.`),
-      LOG_CONTEXT
-    );
-
-    if (times === retries) {
-      Logger.error(this.descriptiveLogMessage('It reached the limit of retries waiting for readiness.'), LOG_CONTEXT);
+    if (this.isClientReady()) {
+      Logger.warn(
+        this.descriptiveLogMessage(
+          `In-memory provider service is ready! It was delayed ${times} times up to a total of ${retries}.`
+        ),
+        LOG_CONTEXT
+      );
+    } else {
+      Logger.error(
+        this.descriptiveLogMessage(
+          'In-memory provider service is not ready! It reached the limit of retries waiting for readiness.'
+        ),
+        LOG_CONTEXT
+      );
     }
   }
 

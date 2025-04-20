@@ -1,9 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { buildUserKey, InvalidateCacheService } from '@novu/application-generic';
 import { UserRepository } from '@novu/dal';
 import { hash, compare } from 'bcrypt';
 
-import { ApiException } from '../../../shared/exceptions/api.exception';
 import { UpdatePasswordCommand } from './update-password.command';
 
 @Injectable()
@@ -15,7 +14,7 @@ export class UpdatePassword {
 
   async execute(command: UpdatePasswordCommand) {
     if (command.newPassword !== command.confirmPassword) {
-      throw new ApiException('Passwords do not match.');
+      throw new BadRequestException('Passwords do not match.');
     }
 
     const user = await this.userRepository.findById(command.userId);
@@ -23,7 +22,7 @@ export class UpdatePassword {
       throw new UnauthorizedException();
     }
     if (!user.password) {
-      throw new ApiException('OAuth user cannot change password.');
+      throw new BadRequestException('OAuth user cannot change password.');
     }
 
     const isAuthorized = await compare(command.currentPassword, user.password);

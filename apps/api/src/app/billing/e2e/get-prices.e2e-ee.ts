@@ -1,9 +1,7 @@
 /* eslint-disable global-require */
 import sinon from 'sinon';
 import { expect } from 'chai';
-import { ApiServiceLevelEnum } from '@novu/shared';
-// eslint-disable-next-line no-restricted-imports
-import { StripeBillingIntervalEnum } from '@novu/ee-billing/src/stripe/types';
+import { ApiServiceLevelEnum, StripeBillingIntervalEnum } from '@novu/shared';
 
 describe('GetPrices #novu-v2', () => {
   const eeBilling = require('@novu/ee-billing');
@@ -19,14 +17,8 @@ describe('GetPrices #novu-v2', () => {
     },
   };
   let listPricesStub: sinon.SinonStub;
-  let featureFlagsServiceStub: { getFlag: sinon.SinonStub };
-  const IS_2025_Q1_TIERING_ENABLED = true;
 
   beforeEach(() => {
-    featureFlagsServiceStub = {
-      getFlag: sinon.stub().resolves(IS_2025_Q1_TIERING_ENABLED),
-    };
-
     listPricesStub = stripeStub.prices.list;
     listPricesStub.onFirstCall().resolves({
       data: [{ id: 'licensed_price_id_1' }],
@@ -38,16 +30,21 @@ describe('GetPrices #novu-v2', () => {
 
   afterEach(() => {
     listPricesStub.reset();
-    featureFlagsServiceStub.getFlag.reset();
   });
 
-  const createUseCase = () => new GetPrices(stripeStub, featureFlagsServiceStub);
+  const createUseCase = () => new GetPrices(stripeStub);
 
-  const freeMeteredPriceLookupKey = IS_2025_Q1_TIERING_ENABLED
-    ? ['free_usage_notifications_10k']
-    : ['free_usage_notifications'];
+  const freeMeteredPriceLookupKey = ['free_usage_notifications_10k'];
 
-  const proPrices = [
+  const expectedPrices = [
+    {
+      apiServiceLevel: ApiServiceLevelEnum.FREE,
+      billingInterval: StripeBillingIntervalEnum.MONTH,
+      prices: {
+        licensed: ['free_flat_monthly'],
+        metered: freeMeteredPriceLookupKey,
+      },
+    },
     {
       apiServiceLevel: ApiServiceLevelEnum.PRO,
       billingInterval: StripeBillingIntervalEnum.MONTH,
@@ -64,18 +61,6 @@ describe('GetPrices #novu-v2', () => {
         metered: ['pro_usage_notifications'],
       },
     },
-  ];
-
-  const expectedPrices = [
-    {
-      apiServiceLevel: ApiServiceLevelEnum.FREE,
-      billingInterval: StripeBillingIntervalEnum.MONTH,
-      prices: {
-        licensed: ['free_flat_monthly'],
-        metered: freeMeteredPriceLookupKey,
-      },
-    },
-    ...(IS_2025_Q1_TIERING_ENABLED ? proPrices : []),
     {
       apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
       billingInterval: StripeBillingIntervalEnum.MONTH,
@@ -121,6 +106,7 @@ describe('GetPrices #novu-v2', () => {
               GetPricesCommand.create({
                 apiServiceLevel,
                 billingInterval,
+                organizationId: 'system',
               })
             );
 
@@ -149,6 +135,7 @@ describe('GetPrices #novu-v2', () => {
         GetPricesCommand.create({
           apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
           billingInterval: StripeBillingIntervalEnum.MONTH,
+          organizationId: 'system',
         })
       );
     } catch (e) {

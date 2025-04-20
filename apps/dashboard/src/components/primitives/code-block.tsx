@@ -2,10 +2,10 @@ import { tags as t } from '@lezer/highlight';
 import { langs, loadLanguage } from '@uiw/codemirror-extensions-langs';
 import { createTheme } from '@uiw/codemirror-themes';
 import CodeMirror from '@uiw/react-codemirror';
-import { Check, Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 import { useState } from 'react';
-import { RiFileCopyLine } from 'react-icons/ri';
 import { cn } from '../../utils/ui';
+import { CopyToClipboard } from './copy-to-clipboard';
 
 loadLanguage('tsx');
 loadLanguage('json');
@@ -79,7 +79,7 @@ const lightTheme = createTheme({
   ],
 });
 
-interface CodeBlockProps {
+export interface CodeBlockProps {
   code: string;
   language?: Language;
   theme?: 'dark' | 'light';
@@ -90,6 +90,7 @@ interface CodeBlockProps {
     maskStart?: number;
     maskEnd?: number;
   }[];
+  actionButtons?: React.ReactNode;
 }
 
 /**
@@ -136,15 +137,9 @@ export function CodeBlock({
   title,
   className,
   secretMask = [],
+  actionButtons,
 }: CodeBlockProps) {
-  const [isCopied, setIsCopied] = useState(false);
   const [showSecrets, setShowSecrets] = useState(false);
-
-  const copyToClipboard = async () => {
-    await navigator.clipboard.writeText(code);
-    setIsCopied(true);
-    setTimeout(() => setIsCopied(false), 2000);
-  };
 
   const hasSecrets = secretMask.length > 0;
 
@@ -189,33 +184,21 @@ export function CodeBlock({
           {showSecrets ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
         </button>
       )}
-      <button
-        onClick={copyToClipboard}
-        type="button"
-        className={cn(
-          'rounded-md p-2 transition-all duration-200 active:scale-95',
-          theme === 'light'
-            ? 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
-            : 'text-foreground-400 hover:text-foreground-50 hover:bg-[#32424a]'
-        )}
-        title="Copy code"
-      >
-        {isCopied ? <Check className="h-4 w-4" /> : <RiFileCopyLine className="h-4 w-4" />}
-      </button>
+      {actionButtons ?? <CopyToClipboard content={code} theme={theme} title="Copy code" />}
     </>
   );
 
   return (
     <div
       className={cn(
-        'w-full rounded-xl border px-2 py-1',
+        'w-full overflow-hidden rounded-xl border',
         theme === 'light' ? 'border-neutral-200 bg-white' : 'border-neutral-700 bg-neutral-800',
-        !title && 'rounded-b-none py-3',
+        !title && 'rounded-b-none',
         className
       )}
     >
       {title ? (
-        <div className={cn('-mx-[5px] -mt-[5px] mb-0 flex items-center justify-between px-2 py-1')}>
+        <div className={cn('flex items-center justify-between border-b border-neutral-100 px-2 py-1')}>
           <span className={cn('text-xs', theme === 'light' ? 'text-gray-600' : 'text-foreground-400')}>{title}</span>
           <div className="ml-auto flex items-center gap-1">
             <ActionButtons />
@@ -245,7 +228,7 @@ export function CodeBlock({
           foldGutter: false,
         }}
         editable={false}
-        className={cn('overflow-hidden rounded-lg text-xs [&_.cm-editor]:py-3 [&_.cm-scroller]:font-mono')}
+        className={cn('overflow-auto text-xs [&_.cm-editor]:py-3 [&_.cm-scroller]:font-mono', className)}
       />
     </div>
   );

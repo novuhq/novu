@@ -2,6 +2,8 @@
 import sinon from 'sinon';
 import { expect } from 'chai';
 
+const dashboardOrigin = process.env.FRONT_BASE_URL;
+
 describe('Get portal link #novu-v2', async () => {
   it('Get portal link', async () => {
     if (!require('@novu/ee-billing').GetPortalLink) {
@@ -32,10 +34,11 @@ describe('Get portal link #novu-v2', async () => {
       environmentId: 'environment_dd',
       organizationId: 'organization_id',
       userId: 'user_id',
+      origin: dashboardOrigin,
     });
 
     expect(stub.lastCall.args.at(0)).to.deep.equal({
-      return_url: `${process.env.FRONT_BASE_URL}/manage-account/billing`,
+      return_url: `${dashboardOrigin}/manage-account/billing`,
       customer: 'customer_id',
     });
 

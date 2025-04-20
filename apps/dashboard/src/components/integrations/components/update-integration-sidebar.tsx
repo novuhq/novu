@@ -15,6 +15,7 @@ import { IntegrationSheet } from './integration-sheet';
 import { DeleteIntegrationModal } from './modals/delete-integration-modal';
 import { SelectPrimaryIntegrationModal } from './modals/select-primary-integration-modal';
 import { handleIntegrationError } from './utils/handle-integration-error';
+import { isDemoIntegration } from './utils/helpers';
 
 type UpdateIntegrationSidebarProps = {
   isOpened: boolean;
@@ -121,6 +122,9 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
 
   if (!integration || !provider) return null;
 
+  const isIntegrationDeletionAllowed =
+    !isDemoIntegration(integration?.providerId) || integration?.channel !== ChannelTypeEnum.IN_APP;
+
   return (
     <>
       <IntegrationSheet isOpened={isOpened} onClose={handleClose} provider={provider} mode="update">
@@ -136,11 +140,12 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
         </div>
 
         <div className="bg-background flex justify-between gap-2 border-t p-3">
-          {integration.channel !== ChannelTypeEnum.IN_APP && (
+          {isIntegrationDeletionAllowed && (
             <Button variant="error" mode="ghost" isLoading={isDeleting} onClick={() => setIsDeleteDialogOpen(true)}>
               Delete Integration
             </Button>
           )}
+
           <Button
             type="submit"
             form="integration-configuration-form"

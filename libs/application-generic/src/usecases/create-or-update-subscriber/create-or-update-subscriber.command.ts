@@ -1,15 +1,9 @@
-import {
-  IsEmail,
-  IsLocale,
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-} from 'class-validator';
+import { IsEmail, IsLocale, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { SubscriberEntity } from '@novu/dal';
 import { ISubscriberChannel, SubscriberCustomData } from '@novu/shared';
 
-import { EnvironmentCommand } from '../../commands/project.command';
+import { EnvironmentCommand } from '../../commands';
 
 export class CreateOrUpdateSubscriberCommand extends EnvironmentCommand {
   @IsString()
@@ -44,6 +38,9 @@ export class CreateOrUpdateSubscriberCommand extends EnvironmentCommand {
   @IsOptional()
   data?: SubscriberCustomData;
 
+  @IsOptional()
+  timezone?: string | null;
+
   /**
    * Represents existing entity that will be used for updating subscriber instead of creating one
    * @optional
@@ -53,4 +50,9 @@ export class CreateOrUpdateSubscriberCommand extends EnvironmentCommand {
 
   @IsOptional()
   channels?: ISubscriberChannel[];
+  /**
+   * Represents the name of the active worker that is processing the subscriber for debugging and logging
+   */
+  @IsOptional()
+  activeWorkerName?: string;
 }

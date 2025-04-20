@@ -1,3 +1,33 @@
+## 2.6.6 (2025-02-25)
+
+### 🚀 Features
+
+- **api-service:** system limits & update pricing pages ([#7718](https://github.com/novuhq/novu/pull/7718))
+- **api-service:** Nv 5353 allow only a za z0 1  characters for subscriberid ([#7700](https://github.com/novuhq/novu/pull/7700))
+- **api-service:** add resources limits ([#7624](https://github.com/novuhq/novu/pull/7624))
+- **api-service:** add FFs for the new tiering ([#7717](https://github.com/novuhq/novu/pull/7717))
+- **root:** add no only github action ([#7692](https://github.com/novuhq/novu/pull/7692))
+- **dashboard,shared:** subscriber activity details sidebar ([#7702](https://github.com/novuhq/novu/pull/7702))
+- **api-service,dashboard:** Step integration issues ([#7655](https://github.com/novuhq/novu/pull/7655))
+- **api-service,dashboard:** subscriber activity list and filters ([#7677](https://github.com/novuhq/novu/pull/7677))
+
+### 🩹 Fixes
+
+- **shared:** Remove used feature flags ([5b84df4f0](https://github.com/novuhq/novu/commit/5b84df4f0))
+- **root:** unhandled promise reject and undefined ff kind ([#7732](https://github.com/novuhq/novu/pull/7732))
+- **api-service:** remove only on e2e ([#7691](https://github.com/novuhq/novu/pull/7691))
+
+### ❤️ Thank You
+
+- Adam Chmara @ChmaraX
+- Biswajeet Das @BiswaViraj
+- GalTidhar @tatarco
+- George Desipris @desiprisg
+- George Djabarov @djabarovgeorge
+- Paweł Tymczuk @LetItRock
+- Sokratis Vidros @SokratisVidros
+
+
 ## 2.6.5 (2025-02-07)
 
 ### 🚀 Features

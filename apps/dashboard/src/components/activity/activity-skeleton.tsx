@@ -2,10 +2,11 @@ import { motion } from 'motion/react';
 
 import { Skeleton } from '@/components/primitives/skeleton';
 import { cn } from '@/utils/ui';
+import { fadeIn } from '@/utils/animation';
 
 export function ActivitySkeleton({ headerClassName }: { headerClassName?: string }) {
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}>
+    <motion.div {...fadeIn} data-testid="activity-panel-skeleton">
       <div
         className={cn(
           'flex items-center gap-2 border-b border-t border-neutral-200 border-b-neutral-100 p-2',

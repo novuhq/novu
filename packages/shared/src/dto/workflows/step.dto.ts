@@ -3,7 +3,7 @@ import { Slug, StepTypeEnum, WorkflowOriginEnum } from '../../types';
 import { StepContentIssueEnum, StepIntegrationIssueEnum, StepIssueEnum } from './step-content-issue.enum';
 
 export type StepResponseDto = {
-  controls: ControlsMetadata;
+  controls: Controls;
   variables: JSONSchemaDto;
   stepId: string;
   _id: string;
@@ -18,14 +18,11 @@ export type StepResponseDto = {
 
 export type StepUpdateDto = StepCreateDto & {
   _id: string;
+  stepId: string;
 };
 
 export type StepCreateDto = StepDto & {
-  controlValues?: Record<string, unknown> | null;
-};
-
-export type PatchStepDataDto = {
-  name?: string;
+  // TODO: Rename to controls to align naming with the response DTO
   controlValues?: Record<string, unknown> | null;
 };
 
@@ -77,6 +74,7 @@ export enum UiComponentEnum {
   IN_APP_SUBJECT = 'IN_APP_PRIMARY_SUBJECT',
   IN_APP_BUTTON_DROPDOWN = 'IN_APP_BUTTON_DROPDOWN',
   IN_APP_DISABLE_SANITIZATION_SWITCH = 'IN_APP_DISABLE_SANITIZATION_SWITCH',
+  DISABLE_SANITIZATION_SWITCH = 'DISABLE_SANITIZATION_SWITCH',
   URL_TEXT_BOX = 'URL_TEXT_BOX',
   DIGEST_AMOUNT = 'DIGEST_AMOUNT',
   DIGEST_UNIT = 'DIGEST_UNIT',
@@ -90,6 +88,7 @@ export enum UiComponentEnum {
   PUSH_BODY = 'PUSH_BODY',
   PUSH_SUBJECT = 'PUSH_SUBJECT',
   QUERY_EDITOR = 'QUERY_EDITOR',
+  DATA = 'DATA',
 }
 
 export class UiSchemaProperty {
@@ -102,7 +101,7 @@ export class UiSchema {
   properties?: Record<string, UiSchemaProperty>;
 }
 
-export class ControlsMetadata {
+export class Controls {
   dataSchema?: JSONSchemaDto;
   uiSchema?: UiSchema;
   values: Record<string, unknown>;

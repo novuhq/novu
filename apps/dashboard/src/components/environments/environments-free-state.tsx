@@ -70,7 +70,6 @@ export function FreeTierState() {
                           className="z-10 flex size-2 p-0 px-1 opacity-0 group-hover:opacity-100"
                           valueToCopy={environment.identifier}
                           size="2xs"
-                          mode="ghost"
                         />
                       </div>
                     </TableCell>
@@ -88,16 +87,16 @@ export function FreeTierState() {
             size="xs"
             className="mb-3.5"
             onClick={() => {
-              track(TelemetryEvent.UPGRADE_TO_BUSINESS_TIER_CLICK, {
+              track(TelemetryEvent.UPGRADE_TO_TEAM_TIER_CLICK, {
                 source: 'environments-page',
               });
               navigate(ROUTES.SETTINGS_BILLING);
             }}
             leadingIcon={RiSparkling2Line}
           >
-            Upgrade to Business Tier
+            Upgrade to Team Tier
           </Button>
-          <Link to={'https://docs.novu.co/concepts/environments'} target="_blank">
+          <Link to={'https://docs.novu.co/platform/concepts/environments'} target="_blank">
             <LinkButton size="sm" leadingIcon={RiBookMarkedLine}>
               How does this help?
             </LinkButton>

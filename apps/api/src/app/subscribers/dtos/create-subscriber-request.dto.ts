@@ -13,13 +13,7 @@ import {
   Matches,
   ValidateNested,
 } from 'class-validator';
-import {
-  ChatProviderIdEnum,
-  IChannelCredentials,
-  PushProviderIdEnum,
-  SUBSCRIBER_ID_REGEX,
-  SubscriberCustomData,
-} from '@novu/shared';
+import { ChatProviderIdEnum, IChannelCredentials, PushProviderIdEnum, SubscriberCustomData } from '@novu/shared';
 import { Type } from 'class-transformer';
 
 export class ChannelCredentialsDto implements IChannelCredentials {

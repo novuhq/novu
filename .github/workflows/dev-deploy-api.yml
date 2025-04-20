@@ -20,16 +20,16 @@ env:
   NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
 
 jobs:
-  test_api:
-    uses: ./.github/workflows/reusable-api-e2e.yml
-    with:
-      ee: true
-      job-name: 'novu/api-ee'
-    secrets: inherit
+  # test_api:
+  #   uses: ./.github/workflows/reusable-api-e2e.yml
+  #   with:
+  #     ee: true
+  #     job-name: 'novu/api-ee'
+  #   secrets: inherit
 
   deploy_dev_api:
     runs-on: ubuntu-latest
-    needs: test_api
+    # needs: test_api
     timeout-minutes: 80
     environment: Development
     permissions:

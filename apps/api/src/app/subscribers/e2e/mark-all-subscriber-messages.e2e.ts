@@ -1,8 +1,8 @@
-import { expect } from 'chai';
+import { Novu } from '@novu/api';
+import { MessageRepository, NotificationTemplateEntity, SubscriberRepository } from '@novu/dal';
 import { ChannelTypeEnum, MessagesStatusEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
-import { MessageRepository, NotificationTemplateEntity, SubscriberRepository } from '@novu/dal';
-import { Novu } from '@novu/api';
+import { expect } from 'chai';
 import { expectSdkExceptionGeneric, initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 describe('Mark All Subscriber Messages - /subscribers/:subscriberId/messages/mark-all (POST) #novu-v2', function () {
@@ -16,7 +16,7 @@ describe('Mark All Subscriber Messages - /subscribers/:subscriberId/messages/mar
     await session.initialize();
     template = await session.createTemplate();
     novuClient = initNovuClassSdk(session);
-    await messageRepository.deleteMany({
+    await messageRepository.delete({
       _environmentId: session.environment._id,
       _subscriberId: session.subscriberId,
     });

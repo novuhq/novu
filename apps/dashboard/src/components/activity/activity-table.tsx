@@ -22,6 +22,7 @@ export interface ActivityTableProps {
   filters?: ActivityFilters;
   hasActiveFilters: boolean;
   onClearFilters: () => void;
+  isLoading?: boolean;
 }
 
 export function ActivityTable({
@@ -72,7 +73,7 @@ export function ActivityTable({
           transition={{ duration: 0.2 }}
           className="flex h-full w-full items-center justify-center"
         >
-          <ActivityEmptyState emptySearchResults={hasActiveFilters} onClearFilters={onClearFilters} />
+          <ActivityEmptyState filters={filters} emptySearchResults={hasActiveFilters} onClearFilters={onClearFilters} />
         </motion.div>
       ) : (
         <motion.div
@@ -81,7 +82,7 @@ export function ActivityTable({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="flex min-h-full flex-1 flex-col"
+          className="flex flex-col"
         >
           <Table
             isLoading={isLoading}
@@ -91,6 +92,7 @@ export function ActivityTable({
             <TableHeader className="shadow-none">
               <TableRow className="border-b border-neutral-200 shadow-none [&>th]:border-b [&>th]:border-neutral-200">
                 <TableHead className="h-9 px-3 py-0">Event</TableHead>
+                <TableHead className="h-9 px-3 py-0">Subscriber</TableHead>
                 <TableHead className="h-9 px-3 py-0">Status</TableHead>
                 <TableHead className="h-9 px-3 py-0">Steps</TableHead>
                 <TableHead className="h-9 px-3 py-0">Triggered at</TableHead>
@@ -112,8 +114,20 @@ export function ActivityTable({
                       <span className="text-foreground-950 font-medium">
                         {activity.template?.name || 'Deleted workflow'}
                       </span>
-                      <span className="text-foreground-400 text-[10px] leading-[14px]">
-                        {activity.transactionId}{' '}
+                      <span className="text-foreground-400 text-[10px] leading-[14px]" title={'Transaction ID'}>
+                        {activity.transactionId || '-'}
+                      </span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-foreground-600 px-3">
+                    <div className="flex flex-col">
+                      <span
+                        className="inline-block max-w-[200px] truncate"
+                        title={'Subscriber ID: ' + activity.subscriber?.subscriberId || ''}
+                      >
+                        {activity.subscriber?.subscriberId || '-'}
+                      </span>
+                      <span className="text-foreground-400 text-[10px] leading-[14px]" title={'Subscriber Name'}>
                         {getSubscriberDisplay(
                           activity.subscriber as Pick<ISubscriber, '_id' | 'subscriberId' | 'firstName' | 'lastName'>
                         )}
@@ -178,7 +192,7 @@ function getSubscriberDisplay(subscriber?: Pick<ISubscriber, '_id' | 'subscriber
   if (!subscriber) return '';
 
   if (subscriber.firstName || subscriber.lastName) {
-    return `• ${subscriber.firstName || ''} ${subscriber.lastName || ''}`.trim();
+    return `${subscriber.firstName || ''} ${subscriber.lastName || ''}`.trim();
   }
 
   return '';

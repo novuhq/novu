@@ -1,12 +1,12 @@
-import { IsDefined, IsMongoId, IsOptional } from 'class-validator';
+import { IsDefined, IsOptional, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
 import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';
 import { PatchPreferenceChannelsDto } from '../../dtos/patch-subscriber-preferences.dto';
 
 export class UpdateSubscriberPreferencesCommand extends EnvironmentWithSubscriber {
   @IsOptional()
-  @IsMongoId()
-  readonly workflowId?: string;
+  @IsString()
+  readonly workflowIdOrInternalId?: string;
 
   @IsDefined()
   @Type(() => PatchPreferenceChannelsDto)

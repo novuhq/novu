@@ -26,7 +26,7 @@ export const badgeVariants = tv({
   variants: {
     size: {
       sm: {
-        root: 'h-4 gap-1.5 px-2 text-subheading-2xs uppercase has-[>.dot]:gap-2',
+        root: 'h-4 gap-1.5 px-2 text-subheading-2xs has-[>.dot]:gap-2',
         icon: '-mx-1 size-3',
         dot: '-mx-2 size-4',
       },
@@ -444,6 +444,7 @@ function BadgeIcon<T extends React.ElementType>({
 
   return <Component className={icon({ class: className })} {...rest} />;
 }
+
 BadgeIcon.displayName = BADGE_ICON_NAME;
 
 type BadgeDotProps = BadgeSharedProps & Omit<React.HTMLAttributes<HTMLDivElement>, 'color'>;
@@ -453,6 +454,7 @@ function BadgeDot({ size, variant, color, className, ...rest }: BadgeDotProps) {
 
   return <div className={dot({ class: className })} {...rest} />;
 }
+
 BadgeDot.displayName = BADGE_DOT_NAME;
 
 export { BadgeRoot as Badge, BadgeIcon, BadgeDot as Dot, BadgeRoot as Root };

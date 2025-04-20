@@ -1,3 +1,5 @@
+// @ts-expect-error inline import esbuild syntax
+import css from 'directcss:../index.directcss';
 import { For, onCleanup, onMount } from 'solid-js';
 import { MountableElement, Portal } from 'solid-js/web';
 import { NovuUI } from '..';
@@ -19,12 +21,28 @@ export const novuComponents = {
   Inbox,
   InboxContent,
   Bell,
-  Notifications: (props: Omit<InboxContentProps, 'hideNav' | 'initialPage'>) => (
-    <InboxContent {...props} hideNav={true} initialPage={InboxPage.Notifications} />
-  ),
-  Preferences: (props: Omit<InboxContentProps, 'hideNav' | 'initialPage'>) => (
-    <InboxContent {...props} hideNav={true} initialPage={InboxPage.Preferences} />
-  ),
+  Notifications: (props: Omit<InboxContentProps, 'hideNav' | 'initialPage'>) => {
+    if (props.renderNotification) {
+      const { renderBody, renderSubject, ...propsWithoutBodyAndSubject } = props;
+
+      return <InboxContent {...propsWithoutBodyAndSubject} hideNav={true} initialPage={InboxPage.Notifications} />;
+    }
+
+    const { renderNotification, ...propsWithoutRenderNotification } = props;
+
+    return <InboxContent {...propsWithoutRenderNotification} hideNav={true} initialPage={InboxPage.Notifications} />;
+  },
+  Preferences: (props: Omit<InboxContentProps, 'hideNav' | 'initialPage'>) => {
+    if (props.renderNotification) {
+      const { renderBody, renderSubject, ...propsWithoutBodyAndSubject } = props;
+
+      return <InboxContent {...propsWithoutBodyAndSubject} hideNav={true} initialPage={InboxPage.Preferences} />;
+    }
+
+    const { renderNotification, ...propsWithoutRenderNotification } = props;
+
+    return <InboxContent {...propsWithoutRenderNotification} hideNav={true} initialPage={InboxPage.Preferences} />;
+  },
 };
 
 export type NovuComponent = { name: NovuComponentName; props?: any };
@@ -41,7 +59,6 @@ export type NovuComponentControls = {
 
 type RendererProps = {
   novuUI: NovuUI;
-  cssHref: string;
   appearance?: Appearance;
   nodes: Map<MountableElement, NovuComponent>;
   localization?: Localization;
@@ -62,11 +79,10 @@ export const Renderer = (props: RendererProps) => {
       return;
     }
 
-    const link = document.createElement('link');
-    link.id = id;
-    link.rel = 'stylesheet';
-    link.href = props.cssHref;
-    document.head.insertBefore(link, document.head.firstChild);
+    const styleEl = document.createElement('style');
+    styleEl.id = id;
+    document.head.insertBefore(styleEl, document.head.firstChild);
+    styleEl.innerHTML = css;
 
     onCleanup(() => {
       const element = document.getElementById(id);
@@ -89,15 +105,18 @@ export const Renderer = (props: RendererProps) => {
 
                     onMount(() => {
                       /*
-                       * return here if not `<Notifications /> or `<Preferences />` since we only want to override some styles for those to work properly
-                       * due to the extra divs being introduces by the renderer/mounter
+                       ** return here if not `<Notifications /> or `<Preferences />` since we only want to override some styles for those to work properly
+                       ** due to the extra divs being introduced by the renderer/mounter
                        */
-                      if (!['Notifications', 'Preferences'].includes(novuComponent().name)) return;
+                      if (!['Notifications', 'Preferences', 'InboxContent'].includes(novuComponent().name)) return;
 
                       if (node instanceof HTMLElement) {
-                        node.classList.add('nt-h-full');
+                        // eslint-disable-next-line no-param-reassign
+                        node.style.height = '100%';
                       }
-                      portalDivElement.classList.add('nt-h-full');
+                      if (portalDivElement) {
+                        portalDivElement.style.height = '100%';
+                      }
                     });
 
                     return (

@@ -48,7 +48,7 @@ const noRestrictedImportsMultiLevelNovuPattern = {
     ...['framework', 'js', 'novui'].flatMap((pkg) => [`!@novu/${pkg}/**/*`, `@novu/${pkg}/*/**/*`]),
   ],
   message:
-    "Please import only from the root package entry point. For example, use 'import { Client } from '@novu/node';' instead of 'import { Client } from '@novu/node/src';'",
+    "Please import only from the root package entry point. For example, use 'import { Client } from '@novu/api';' instead of 'import { Client } from '@novu/api/src';'",
 };
 
 export default tsEslint.config(
@@ -287,12 +287,21 @@ export default tsEslint.config(
   {
     files: ['apps/api/**'],
     rules: {
-      'func-names': 'off',
       'no-restricted-imports': [
         'error',
         {
           patterns: [
             noRestrictedImportsMultiLevelNovuPattern,
+            {
+              group: ['@nestjs/common'],
+              importNames: ['Logger'],
+              message: 'Please use the PinoLogger from @novu/application-generic instead',
+            },
+            {
+              group: ['@novu/application-generic'],
+              importNames: ['Logger'],
+              message: 'Please use the PinoLogger from @novu/application-generic instead',
+            },
             {
               /**
                * This rule ensures that the overridden Swagger decorators are used,
@@ -337,13 +346,7 @@ export default tsEslint.config(
 
   /* ******************** WEB PACKAGES ******************** */
   {
-    files: [
-      'libs/design-system/**',
-      'libs/novui/**',
-      'apps/widget/**',
-      'apps/web/**',
-      'packages/notification-center/**',
-    ],
+    files: ['libs/design-system/**', 'libs/novui/**', 'apps/widget/**', 'apps/web/**'],
     extends: [pluginCypress.configs.recommended],
     plugins: {
       '@pandacss': panda,

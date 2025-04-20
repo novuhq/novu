@@ -1,5 +1,6 @@
 import type {
   CreateWorkflowDto,
+  DuplicateWorkflowDto,
   IEnvironment,
   ListWorkflowResponse,
   PatchWorkflowDto,
@@ -53,6 +54,7 @@ export const getWorkflows = async ({
   if (orderBy) {
     params.append('orderBy', orderBy);
   }
+
   if (orderDirection) {
     params.append('orderDirection', orderDirection.toUpperCase());
   }
@@ -92,7 +94,8 @@ export async function triggerWorkflow({
     body: {
       name,
       to,
-      payload: { ...(payload ?? {}), __source: 'dashboard' },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      payload: { ...(payload ?? {}), __source: (payload as any)?.__source ?? 'dashboard' },
     },
   });
 }
@@ -161,4 +164,19 @@ export const patchWorkflow = async ({
   });
 
   return res.data;
+};
+
+export const duplicateWorkflow = async ({
+  environment,
+  workflow,
+  workflowSlug,
+}: {
+  environment: IEnvironment;
+  workflow: DuplicateWorkflowDto;
+  workflowSlug: string;
+}) => {
+  return postV2<{ data: WorkflowResponseDto }>(`/workflows/${workflowSlug}/duplicate`, {
+    environment,
+    body: workflow,
+  });
 };

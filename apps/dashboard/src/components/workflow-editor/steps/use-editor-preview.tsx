@@ -22,6 +22,7 @@ export const useEditorPreview = ({
   } = usePreviewStep({
     onSuccess: (res) => {
       const newValue = JSON.stringify(res.previewPayloadExample, null, 2);
+
       if (!isEqual(editorValue, newValue)) {
         setEditorValueSafe(newValue);
       }
@@ -52,6 +53,10 @@ export const useEditorPreview = ({
     try {
       JSON.parse(value);
       setEditorValue(value);
+      dataRef.current = {
+        ...dataRef.current,
+        editorValue: value,
+      };
       return null;
     } catch (e) {
       return e as Error;
@@ -62,9 +67,12 @@ export const useEditorPreview = ({
     return previewStep({
       workflowSlug,
       stepSlug,
-      previewData: { controlValues, previewPayload: JSON.parse(editorValue) },
+      previewData: {
+        controlValues,
+        previewPayload: JSON.parse(dataRef.current.editorValue),
+      },
     });
-  }, [workflowSlug, stepSlug, controlValues, editorValue, previewStep]);
+  }, [previewStep, workflowSlug, stepSlug, controlValues, dataRef]);
 
   return {
     editorValue,

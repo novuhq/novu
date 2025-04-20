@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import {
   AnalyticsService,
   CreateOrUpdateSubscriberCommand,
@@ -10,13 +10,14 @@ import {
 import { EnvironmentRepository, IntegrationRepository } from '@novu/dal';
 import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
 import { AuthService } from '../../../auth/services/auth.service';
-import { ApiException } from '../../../shared/exceptions/api.exception';
 import { SubscriberSessionResponseDto } from '../../dtos/subscriber-session-response.dto';
 import { AnalyticsEventsEnum } from '../../utils';
 import { validateHmacEncryption } from '../../utils/encryption';
 import { NotificationsCountCommand } from '../notifications-count/notifications-count.command';
 import { NotificationsCount } from '../notifications-count/notifications-count.usecase';
 import { SessionCommand } from './session.command';
+
+const ALLOWED_ORIGINS_REGEX = new RegExp(process.env.FRONT_BASE_URL || '');
 
 @Injectable()
 export class Session {
@@ -35,7 +36,7 @@ export class Session {
     const environment = await this.environmentRepository.findEnvironmentByIdentifier(command.applicationIdentifier);
 
     if (!environment) {
-      throw new ApiException('Please provide a valid application identifier');
+      throw new BadRequestException('Please provide a valid application identifier');
     }
 
     const inAppIntegration = await this.selectIntegration.execute(
@@ -93,11 +94,7 @@ export class Session {
      * We want to prevent the playground inbox demo from marking the integration as connected
      * And only treat the real customer domain or local environment as valid origins
      */
-    const isOriginFromNovu =
-      command.origin &&
-      ((process.env.DASHBOARD_V2_BASE_URL && command.origin?.includes(process.env.DASHBOARD_V2_BASE_URL as string)) ||
-        (process.env.FRONT_BASE_URL && command.origin?.includes(process.env.FRONT_BASE_URL as string)));
-
+    const isOriginFromNovu = ALLOWED_ORIGINS_REGEX.test(command.origin ?? '');
     if (!isOriginFromNovu && !inAppIntegration.connected) {
       this.analyticsService.mixpanelTrack(AnalyticsEventsEnum.INBOX_CONNECTED, '', {
         _organization: environment._organizationId,
@@ -122,6 +119,7 @@ export class Session {
       token,
       totalUnreadCount,
       removeNovuBranding,
+      isDevelopmentMode: environment.name.toLowerCase() !== 'production',
     };
   }
 }

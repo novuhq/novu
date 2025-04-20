@@ -1,10 +1,9 @@
-import { Loader2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
-
-import { ActivityPanel } from '@/components/activity/activity-panel';
-import { WorkflowResponseDto } from '@novu/shared';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { RiCheckboxCircleFill } from 'react-icons/ri';
+import { WorkflowResponseDto } from '@novu/shared';
+
+import { ActivityPanel } from '@/components/activity/activity-panel';
 import { useFetchActivities } from '../../../hooks/use-fetch-activities';
 import { WorkflowTriggerInboxIllustration } from '../../icons/workflow-trigger-inbox';
 import { Button } from '../../primitives/button';
@@ -15,20 +14,27 @@ import { ActivityError } from '@/components/activity/activity-error';
 import { ActivityHeader } from '@/components/activity/activity-header';
 import { ActivityOverview } from '@/components/activity/components/activity-overview';
 import { ActivityLogs } from '@/components/activity/activity-logs';
+import { usePullActivity } from '@/hooks/use-pull-activity';
 
 type TestWorkflowLogsSidebarProps = {
   transactionId?: string;
   workflow?: WorkflowResponseDto;
 };
 
-export const TestWorkflowLogsSidebar = ({ transactionId, workflow }: TestWorkflowLogsSidebarProps) => {
+export const TestWorkflowLogsSidebar = (props: TestWorkflowLogsSidebarProps) => {
   const { control } = useFormContext<TestWorkflowFormType>();
   const [parentActivityId, setParentActivityId] = useState<string | undefined>(undefined);
   const [shouldRefetch, setShouldRefetch] = useState(true);
   const [showInstructions, setShowInstructions] = useState(false);
   const to = useWatch({ name: 'to', control });
   const payload = useWatch({ name: 'payload', control });
-  const { activities, isPending, error } = useFetchActivities(
+  const [transactionId, setTransactionId] = useState<string | undefined>(props.transactionId);
+
+  const {
+    activities,
+    isPending: areActivitiesPending,
+    error: activitiesError,
+  } = useFetchActivities(
     {
       filters: transactionId ? { transactionId } : undefined,
     },
@@ -37,8 +43,12 @@ export const TestWorkflowLogsSidebar = ({ transactionId, workflow }: TestWorkflo
       refetchInterval: shouldRefetch ? 1000 : false,
     }
   );
-  const activity = activities?.[0];
-  const activityId: string | undefined = parentActivityId ?? activity?._id;
+
+  const activityId: string | undefined = parentActivityId ?? activities?.[0]?._id;
+  const { activity: latestActivity, isPending: isActivityPending, error: activityError } = usePullActivity(activityId);
+  const activity = latestActivity ?? activities?.[0];
+  const isPending = areActivitiesPending || isActivityPending;
+  const error = activitiesError || activityError;
 
   useEffect(() => {
     if (activityId) {
@@ -46,26 +56,23 @@ export const TestWorkflowLogsSidebar = ({ transactionId, workflow }: TestWorkflo
     }
   }, [activityId]);
 
-  // Reset refetch when transaction ID changes
+  const handleTransactionIdChange = useCallback((newTransactionId: string) => {
+    setTransactionId(newTransactionId);
+    setParentActivityId(undefined);
+  }, []);
+
   useEffect(() => {
-    if (!transactionId) {
+    if (!props.transactionId) {
       return;
     }
 
     setShouldRefetch(true);
-    setParentActivityId(undefined);
-  }, [transactionId]);
+    setTransactionId(props.transactionId);
+  }, [props.transactionId]);
 
   return (
     <aside className="flex h-full max-h-full flex-1 flex-col overflow-auto">
-      {transactionId && !activityId ? (
-        <div className="flex h-full items-center justify-center">
-          <div className="flex flex-col items-center gap-4">
-            <Loader2 className="size-8 animate-spin text-neutral-500" />
-            <div className="text-foreground-600 text-sm">Waiting for activity...</div>
-          </div>
-        </div>
-      ) : activityId ? (
+      {transactionId ? (
         <>
           <ActivityPanel>
             {isPending ? (
@@ -73,13 +80,17 @@ export const TestWorkflowLogsSidebar = ({ transactionId, workflow }: TestWorkflo
             ) : error || !activity ? (
               <ActivityError />
             ) : (
-              <>
+              <React.Fragment key={activityId}>
                 <ActivityHeader title={activity.template?.name} className="h-[49px] border-t-0" />
                 <ActivityOverview activity={activity} />
-                <ActivityLogs activity={activity} onActivitySelect={setParentActivityId} />
-              </>
+                <ActivityLogs
+                  activity={activity}
+                  onActivitySelect={setParentActivityId}
+                  onTransactionIdChange={handleTransactionIdChange}
+                />
+              </React.Fragment>
             )}
-            {!workflow?.lastTriggeredAt && (
+            {!props.workflow?.lastTriggeredAt && (
               <div className="border-t border-neutral-100 p-3">
                 <div className="border-stroke-soft bg-bg-weak rounded-8 flex items-center justify-between gap-3 border p-3 py-2">
                   <div className="flex items-center gap-3">
@@ -115,7 +126,7 @@ export const TestWorkflowLogsSidebar = ({ transactionId, workflow }: TestWorkflo
       <TestWorkflowInstructions
         isOpen={showInstructions}
         onClose={() => setShowInstructions(false)}
-        workflow={workflow}
+        workflow={props.workflow}
         to={to}
         payload={payload}
       />

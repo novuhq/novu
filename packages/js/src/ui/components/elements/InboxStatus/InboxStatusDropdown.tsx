@@ -15,19 +15,19 @@ export const StatusDropdown = () => {
       <Dropdown.Trigger
         class={style(
           'inboxStatus__dropdownTrigger',
-          cn(buttonVariants({ variant: 'unstyled', size: 'none' }), 'nt-gap-2')
+          cn(buttonVariants({ variant: 'unstyled', size: 'none' }), 'nt-gap-0.5')
         )}
         asChild={(triggerProps) => (
           <Button variant="unstyled" size="none" {...triggerProps}>
             <span
               data-localization={inboxFilterLocalizationKeys[status()]}
-              class={style('inboxStatus__title', 'nt-text-xl nt-font-semibold')}
+              class={style('inboxStatus__title', 'nt-text-base')}
             >
               {t(inboxFilterLocalizationKeys[status()])}
             </span>
-            <span class={style('inboxStatus__dropdownItemRight__icon', 'nt-text-foreground-alpha-600')}>
-              <ArrowDropDown />
-            </span>
+            <ArrowDropDown
+              class={style('inboxStatus__dropdownItemRight__icon', 'nt-text-foreground-alpha-600 nt-size-4')}
+            />
           </Button>
         )}
       />

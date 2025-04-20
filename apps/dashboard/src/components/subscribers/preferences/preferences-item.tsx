@@ -26,7 +26,7 @@ export function PreferencesItem(props: PreferencesItemProps) {
 
   return (
     <div>
-      <div className="mt-2 flex w-full items-center justify-between space-y-1">
+      <div className="flex w-full items-center justify-between space-y-1">
         <div className="flex items-center gap-2">
           <Step variant={STEP_TYPE_TO_COLOR[channel]} className="size-5">
             <Icon />

@@ -44,7 +44,7 @@ export const SubscriberDrawer = forwardRef<HTMLDivElement, SubscriberDrawerProps
         </SheetContent>
       </Sheet>
 
-      <ProtectionAlert />
+      {ProtectionAlert}
     </>
   );
 });
@@ -53,6 +53,7 @@ type SubscriberDrawerButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement>
   subscriberId: string;
   readOnly?: boolean;
 };
+
 export const SubscriberDrawerButton = (props: SubscriberDrawerButtonProps) => {
   const { subscriberId, onClick, readOnly = false, ...rest } = props;
   const [open, setOpen] = useState(false);

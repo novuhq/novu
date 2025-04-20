@@ -36,5 +36,5 @@ export async function readableStreamToArrayBuffer(
     offset += chunk.length;
   }
 
-  return concatenatedChunks.buffer;
+  return concatenatedChunks.buffer as ArrayBuffer;
 }

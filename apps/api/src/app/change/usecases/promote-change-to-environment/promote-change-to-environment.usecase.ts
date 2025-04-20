@@ -1,8 +1,9 @@
-import { forwardRef, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { ChangeRepository, EnvironmentRepository } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
 
 import { applyDiff } from 'recursive-diff';
+import { PinoLogger } from '@novu/application-generic';
 import { PromoteChangeToEnvironmentCommand } from './promote-change-to-environment.command';
 import { PromoteTypeChangeCommand } from '../promote-type-change.command';
 import { PromoteLayoutChange } from '../promote-layout-change';
@@ -25,8 +26,11 @@ export class PromoteChangeToEnvironment {
     private promoteNotificationGroupChange: PromoteNotificationGroupChange,
     private promoteFeedChange: PromoteFeedChange,
     private promoteTranslationChange: PromoteTranslationChange,
-    private promoteTranslationGroupChange: PromoteTranslationGroupChange
-  ) {}
+    private promoteTranslationGroupChange: PromoteTranslationGroupChange,
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   async execute(command: PromoteChangeToEnvironmentCommand) {
     const changes = await this.changeRepository.getEntityChanges(command.organizationId, command.type, command.itemId);
@@ -72,7 +76,9 @@ export class PromoteChangeToEnvironment {
         await this.promoteTranslationGroupChange.execute(typeCommand);
         break;
       default:
-        Logger.error(`Change with type ${command.type} could not be enabled from environment ${command.environmentId}`);
+        this.logger.error(
+          `Change with type ${command.type} could not be enabled from environment ${command.environmentId}`
+        );
     }
   }
 }

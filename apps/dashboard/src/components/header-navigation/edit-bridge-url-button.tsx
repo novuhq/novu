@@ -46,6 +46,7 @@ export const EditBridgeUrlButton = () => {
 
   const onSubmit = async ({ bridgeUrl }: z.infer<typeof formSchema>) => {
     const { isValid } = await validateBridgeUrl({ bridgeUrl });
+
     if (isValid) {
       await updateBridgeUrl({ url: bridgeUrl, environmentId: currentEnvironment?._id ?? '' });
       setBridgeUrl(bridgeUrl);
@@ -59,6 +60,7 @@ export const EditBridgeUrlButton = () => {
       open={isPopoverOpen}
       onOpenChange={(newIsOpen) => {
         setIsPopoverOpen(newIsOpen);
+
         if (!newIsOpen && isDirty) {
           reset({ bridgeUrl: envBridgeUrl });
         }
@@ -103,7 +105,7 @@ export const EditBridgeUrlButton = () => {
               </div>
               <div className="flex items-center justify-between border-t border-neutral-200 px-5 py-3">
                 <a
-                  href="https://docs.novu.co/concepts/endpoint#bridge-endpoint"
+                  href="https://docs.novu.co/platform/concepts/endpoint#bridge-endpoint"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-xs"

@@ -1,23 +1,33 @@
 import { Reorder } from 'motion/react';
-import { useRef } from 'react';
 import { FilterWithParam } from '../types';
 import { ReorderFilterItem } from './reorder-filter-item';
+import { LiquidVariable } from '@/utils/parseStepVariables';
 
 type FiltersListProps = {
+  variables: LiquidVariable[];
+  variableName: string;
   filters: FilterWithParam[];
   onReorder: (newOrder: FilterWithParam[]) => void;
   onRemove: (value: string) => void;
   onParamChange: (index: number, params: string[]) => void;
 };
 
-export function ReorderFiltersGroup({ filters, onReorder, onRemove, onParamChange }: FiltersListProps) {
-  const groupRef = useRef<HTMLDivElement>(null);
-
+export function ReorderFiltersGroup({
+  filters,
+  onReorder,
+  onRemove,
+  onParamChange,
+  variableName,
+  variables,
+}: FiltersListProps) {
   if (filters.length === 0) return null;
 
   return (
-    <div className="rounded-8 border-stroke-soft flex flex-col gap-0.5 border px-1 py-1.5" data-filters-container>
-      <Reorder.Group ref={groupRef} axis="y" values={filters} onReorder={onReorder}>
+    <div
+      className="rounded-8 border-stroke-soft flex max-h-56 flex-col gap-0.5 overflow-y-auto border px-1 py-1.5"
+      data-filters-container
+    >
+      <Reorder.Group axis="y" values={filters} onReorder={onReorder} className="flex flex-col gap-2">
         {filters.map((filter, index) => (
           <ReorderFilterItem
             key={filter.value}
@@ -25,8 +35,9 @@ export function ReorderFiltersGroup({ filters, onReorder, onRemove, onParamChang
             index={index}
             isLast={index === filters.length - 1}
             onRemove={onRemove}
-            dragConstraints={groupRef}
             onParamChange={onParamChange}
+            variableName={variableName}
+            variables={variables}
           />
         ))}
       </Reorder.Group>

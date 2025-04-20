@@ -20,6 +20,10 @@ export type WorkflowInfoDto = {
    * Display name of the workflow
    */
   name: string;
+  /**
+   * last updated date
+   */
+  updatedAt?: string | undefined;
 };
 
 /** @internal */
@@ -31,6 +35,7 @@ export const WorkflowInfoDto$inboundSchema: z.ZodType<
   slug: z.string(),
   identifier: z.string(),
   name: z.string(),
+  updatedAt: z.string().optional(),
 });
 
 /** @internal */
@@ -38,6 +43,7 @@ export type WorkflowInfoDto$Outbound = {
   slug: string;
   identifier: string;
   name: string;
+  updatedAt?: string | undefined;
 };
 
 /** @internal */
@@ -49,6 +55,7 @@ export const WorkflowInfoDto$outboundSchema: z.ZodType<
   slug: z.string(),
   identifier: z.string(),
   name: z.string(),
+  updatedAt: z.string().optional(),
 });
 
 /**

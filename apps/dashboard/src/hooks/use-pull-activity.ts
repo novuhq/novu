@@ -5,6 +5,7 @@ import { JobStatusEnum } from '@novu/shared';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchActivity } from '@/hooks/use-fetch-activity';
 import { QueryKeys } from '@/utils/query-keys';
+import { ActivityResponse } from '@/api/activity';
 
 export const usePullActivity = (activityId?: string | null) => {
   const queryClient = useQueryClient();
@@ -29,11 +30,27 @@ export const usePullActivity = (activityId?: string | null) => {
     );
 
     // Only stop refetching if we have an activity and it's not pending
-    setShouldRefetch(isPending || !activity?.jobs?.length);
+    const newShouldRefetch = isPending || !activity?.jobs?.length;
+    setShouldRefetch(newShouldRefetch);
 
-    queryClient.invalidateQueries({
-      queryKey: [QueryKeys.fetchActivity, currentEnvironment?._id, activityId],
-    });
+    // invalidate that single activity in the activities list cache
+    queryClient.setQueriesData(
+      { queryKey: [QueryKeys.fetchActivities, currentEnvironment?._id] },
+      (activityResponse: ActivityResponse | undefined) => {
+        if (!activityResponse) return activityResponse;
+
+        return {
+          ...activityResponse,
+          data: activityResponse.data.map((el) => {
+            if (el._id === activity._id) {
+              return { ...activity };
+            }
+
+            return el;
+          }),
+        };
+      }
+    );
   }, [activity, queryClient, currentEnvironment, activityId]);
 
   return {

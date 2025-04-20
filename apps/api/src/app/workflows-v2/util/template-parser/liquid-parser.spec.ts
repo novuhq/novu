@@ -86,7 +86,7 @@ describe('parseLiquidVariables', () => {
     const { validVariables, invalidVariables } = extractLiquidTemplateVariables(template);
     const validVariablesNames = validVariables.map((variable) => variable.name);
 
-    expect(validVariablesNames).to.have.members(['payload.comments.0.author', 'payload.comments.1.author']);
+    expect(validVariablesNames).to.have.members(['payload.comments[0].author', 'payload.comments[1].author']);
     expect(invalidVariables).to.have.lengthOf(0);
   });
 

@@ -43,5 +43,5 @@ jobs:
       netlify_site_id: 45396446-dc86-4ad6-81e4-86d3eb78d06f
       clerk_publishable_key: pk_live_Y2xlcmsubm92dS1zdGFnaW5nLmNvJA
       clerk_is_ee_auth_enabled: true
-      new_dashboard_url: https://dashboard-v2.novu-staging.co
+      new_dashboard_url: https://dashboard.novu-staging.co
     secrets: inherit

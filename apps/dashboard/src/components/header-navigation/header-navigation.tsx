@@ -9,6 +9,7 @@ type HeaderNavigationProps = HTMLAttributes<HTMLDivElement> & {
   startItems?: ReactNode;
   hideBridgeUrl?: boolean;
 };
+
 export const HeaderNavigation = (props: HeaderNavigationProps) => {
   const { startItems, hideBridgeUrl = false, className, ...rest } = props;
   return (

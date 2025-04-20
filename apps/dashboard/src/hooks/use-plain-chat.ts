@@ -44,7 +44,7 @@ export const usePlainChat = () => {
             {
               icon: 'email',
               text: 'Contact Sales',
-              url: 'https://notify.novu.co/meetings/novuhq/novu-discovery-session-rr?utm_campaign=in_app_live_chat',
+              url: 'https://cal.com/team/novu/intro?utm_campaign=in_app_live_chat',
             },
           ],
           theme: 'light',
@@ -54,7 +54,7 @@ export const usePlainChat = () => {
             launcherIconColor: '#FFFFFF',
           },
           logo: {
-            url: 'https://dashboard.novu.co/static/images/novu.png',
+            url: 'https://dashboard-v0.novu.co/static/images/novu.png',
             alt: 'Novu Logo',
           },
           chatButtons: [
@@ -129,6 +129,7 @@ export const usePlainChat = () => {
         Sentry.captureException(error);
       }
     }
+
     setIsFirstRender(false);
   }, [isFirstRender, isLiveChatVisible, currentUser]);
 

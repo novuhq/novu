@@ -1,3 +1,25 @@
+## 2.6.6 (2025-02-25)
+
+### 🚀 Features
+
+- **api-service:** system limits & update pricing pages ([#7718](https://github.com/novuhq/novu/pull/7718))
+- **root:** add no only github action ([#7692](https://github.com/novuhq/novu/pull/7692))
+
+### 🩹 Fixes
+
+- **root:** unhandled promise reject and undefined ff kind ([#7732](https://github.com/novuhq/novu/pull/7732))
+- **api-service:** remove only on e2e ([#7691](https://github.com/novuhq/novu/pull/7691))
+
+### 🧱 Updated Dependencies
+
+- Updated @novu/shared to 2.6.6
+
+### ❤️ Thank You
+
+- GalTidhar @tatarco
+- George Djabarov @djabarovgeorge
+
+
 ## 2.6.5 (2025-02-07)
 
 ### 🚀 Features

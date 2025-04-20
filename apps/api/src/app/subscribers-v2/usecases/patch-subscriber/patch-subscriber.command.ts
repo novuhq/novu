@@ -1,9 +1,9 @@
-import { IsDefined, IsString, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
-import { EnvironmentCommand } from '../../../shared/commands/project.command';
+import { IsDefined, IsString, ValidateNested } from 'class-validator';
+import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 import { PatchSubscriberRequestDto } from '../../dtos/patch-subscriber.dto';
 
-export class PatchSubscriberCommand extends EnvironmentCommand {
+export class PatchSubscriberCommand extends EnvironmentWithUserCommand {
   @IsString()
   @IsDefined()
   subscriberId: string;

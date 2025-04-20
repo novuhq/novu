@@ -8,6 +8,7 @@
     <node-interpreter value="project" />
     <envs>
       <env name="NOVU_SECRET_KEY" value="''" />
+      <env name="NOVU_ENTERPRISE" value="true" />
     </envs>
     <method v="2" />
   </configuration>

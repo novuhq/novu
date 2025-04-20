@@ -1,3 +1,9 @@
+import '@maily-to/core/style.css';
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import './index.css';
+
 import ErrorPage from '@/components/error-page';
 import { ConfigureWorkflow } from '@/components/workflow-editor/configure-workflow';
 import { EditStepConditions } from '@/components/workflow-editor/steps/conditions/edit-step-conditions';
@@ -18,16 +24,14 @@ import {
   WelcomePage,
   WorkflowsPage,
 } from '@/pages';
-
+import { DuplicateWorkflowPage } from '@/pages/duplicate-workflow';
 import { SubscribersPage } from '@/pages/subscribers';
-import { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { CreateIntegrationSidebar } from './components/integrations/components/create-integration-sidebar';
 import { UpdateIntegrationSidebar } from './components/integrations/components/update-integration-sidebar';
 import { ChannelPreferences } from './components/workflow-editor/channel-preferences';
 import { FeatureFlagsProvider } from './context/feature-flags-provider';
-import './index.css';
+import { CreateSubscriberPage } from './pages/create-subscriber';
+import { EditSubscriberPage } from './pages/edit-subscriber-page';
 import { EditWorkflowPage } from './pages/edit-workflow';
 import { EnvironmentsPage } from './pages/environments';
 import { InboxEmbedPage } from './pages/inbox-embed-page';
@@ -40,8 +44,7 @@ import { OnboardingParentRoute } from './routes/onboarding';
 import { ROUTES } from './utils/routes';
 import { initializeSentry } from './utils/sentry';
 import { overrideZodErrorMap } from './utils/validation';
-import { EditSubscriberPage } from './pages/edit-subscriber-page';
-import { CreateSubscriberPage } from './pages/create-subscriber';
+import { VercelIntegrationPage } from './pages/vercel-integration-page';
 
 initializeSentry();
 overrideZodErrorMap();
@@ -120,6 +123,10 @@ const router = createBrowserRouter([
                   {
                     path: ROUTES.WORKFLOWS_CREATE,
                     element: <CreateWorkflowPage />,
+                  },
+                  {
+                    path: ROUTES.WORKFLOWS_DUPLICATE,
+                    element: <DuplicateWorkflowPage />,
                   },
                 ],
               },
@@ -207,6 +214,10 @@ const router = createBrowserRouter([
           {
             path: ROUTES.INTEGRATIONS,
             element: <IntegrationsListPage />,
+          },
+          {
+            path: ROUTES.PARTNER_INTEGRATIONS_VERCEL,
+            element: <VercelIntegrationPage />,
           },
           {
             path: ROUTES.SETTINGS,

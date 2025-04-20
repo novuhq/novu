@@ -1,27 +1,43 @@
 import { Injectable } from '@nestjs/common';
-import { NotificationStepEntity, NotificationTemplateEntity } from '@novu/dal';
-import { JSONSchemaDto } from '@novu/shared';
-import { Instrument } from '@novu/application-generic';
+import {
+  EnvironmentEntity,
+  NotificationStepEntity,
+  NotificationTemplateEntity,
+  OrganizationEntity,
+  UserEntity,
+} from '@novu/dal';
+import { FeatureFlagsKeysEnum, JSONSchemaDto } from '@novu/shared';
+import { FeatureFlagsService, Instrument } from '@novu/application-generic';
 import { computeResultSchema } from '../../shared';
 import { BuildVariableSchemaCommand } from './build-available-variable-schema.command';
 import { parsePayloadSchema } from '../../shared/parse-payload-schema';
-import { ExtractVariablesCommand } from '../extract-variables/extract-variables.command';
-import { ExtractVariables } from '../extract-variables/extract-variables.usecase';
+import { CreateVariablesObjectCommand } from '../create-variables-object/create-variables-object.command';
+import { CreateVariablesObject } from '../create-variables-object/create-variables-object.usecase';
 import { emptyJsonSchema } from '../../util/jsonToSchema';
 import { buildVariablesSchema } from '../../util/create-schema';
 
 @Injectable()
 export class BuildVariableSchemaUsecase {
-  constructor(private readonly extractVariables: ExtractVariables) {}
+  constructor(
+    private readonly createVariablesObject: CreateVariablesObject,
+    private readonly featureFlagService: FeatureFlagsService
+  ) {}
 
   async execute(command: BuildVariableSchemaCommand): Promise<JSONSchemaDto> {
+    const isEnhancedDigestEnabled = await this.featureFlagService.getFlag({
+      user: { _id: command.userId } as UserEntity,
+      environment: { _id: command.environmentId } as EnvironmentEntity,
+      organization: { _id: command.organizationId } as OrganizationEntity,
+      key: FeatureFlagsKeysEnum.IS_ENHANCED_DIGEST_ENABLED,
+      defaultValue: false,
+    });
     const { workflow, stepInternalId } = command;
     const previousSteps = workflow?.steps.slice(
       0,
       workflow?.steps.findIndex((stepItem) => stepItem._id === stepInternalId)
     );
-    const { payload, subscriber } = await this.extractVariables.execute(
-      ExtractVariablesCommand.create({
+    const { payload, subscriber } = await this.createVariablesObject.execute(
+      CreateVariablesObjectCommand.create({
         environmentId: command.environmentId,
         organizationId: command.organizationId,
         userId: command.userId,
@@ -57,7 +73,11 @@ export class BuildVariableSchemaUsecase {
           required: ['firstName', 'lastName', 'email', 'subscriberId'],
           additionalProperties: false,
         },
-        steps: buildPreviousStepsSchema(previousSteps, workflow?.payloadSchema),
+        steps: buildPreviousStepsSchema({
+          previousSteps,
+          payloadSchema: workflow?.payloadSchema,
+          isEnhancedDigestEnabled,
+        }),
         payload: await this.resolvePayloadSchema(workflow, payload),
       },
       additionalProperties: false,
@@ -85,14 +105,23 @@ export class BuildVariableSchemaUsecase {
   }
 }
 
-function buildPreviousStepsProperties(
-  previousSteps: NotificationStepEntity[] | undefined,
-  payloadSchema?: JSONSchemaDto
-) {
+function buildPreviousStepsProperties({
+  previousSteps,
+  payloadSchema,
+  isEnhancedDigestEnabled,
+}: {
+  previousSteps: NotificationStepEntity[] | undefined;
+  payloadSchema?: JSONSchemaDto;
+  isEnhancedDigestEnabled: boolean;
+}) {
   return (previousSteps || []).reduce(
     (acc, step) => {
       if (step.stepId && step.template?.type) {
-        acc[step.stepId] = computeResultSchema(step.template.type, payloadSchema);
+        acc[step.stepId] = computeResultSchema({
+          stepType: step.template.type,
+          payloadSchema,
+          isEnhancedDigestEnabled,
+        });
       }
 
       return acc;
@@ -101,13 +130,22 @@ function buildPreviousStepsProperties(
   );
 }
 
-function buildPreviousStepsSchema(
-  previousSteps: NotificationStepEntity[] | undefined,
-  payloadSchema?: JSONSchemaDto
-): JSONSchemaDto {
+function buildPreviousStepsSchema({
+  previousSteps,
+  payloadSchema,
+  isEnhancedDigestEnabled,
+}: {
+  previousSteps: NotificationStepEntity[] | undefined;
+  payloadSchema?: JSONSchemaDto;
+  isEnhancedDigestEnabled: boolean;
+}): JSONSchemaDto {
   return {
     type: 'object',
-    properties: buildPreviousStepsProperties(previousSteps, payloadSchema),
+    properties: buildPreviousStepsProperties({
+      previousSteps,
+      payloadSchema,
+      isEnhancedDigestEnabled,
+    }),
     required: [],
     additionalProperties: false,
     description: 'Previous Steps Results',

@@ -1,6 +1,6 @@
 /* eslint-disable global-require */
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-import { AnalyticsService } from '@novu/application-generic';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { AnalyticsService, PinoLogger } from '@novu/application-generic';
 import { OrganizationEntity, OrganizationRepository, UserRepository } from '@novu/dal';
 
 import { ModuleRef } from '@nestjs/core';
@@ -11,7 +11,6 @@ import { GetOrganization } from '../../get-organization/get-organization.usecase
 
 import { CreateNovuIntegrationsCommand } from '../../../../integrations/usecases/create-novu-integrations/create-novu-integrations.command';
 import { CreateNovuIntegrations } from '../../../../integrations/usecases/create-novu-integrations/create-novu-integrations.usecase';
-import { ApiException } from '../../../../shared/exceptions/api.exception';
 import { SyncExternalOrganizationCommand } from './sync-external-organization.command';
 
 // TODO: eventually move to @novu/ee-auth
@@ -33,12 +32,15 @@ export class SyncExternalOrganization {
     private readonly createEnvironmentUsecase: CreateEnvironment,
     private readonly createNovuIntegrations: CreateNovuIntegrations,
     private analyticsService: AnalyticsService,
-    private moduleRef: ModuleRef
-  ) {}
+    private moduleRef: ModuleRef,
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   async execute(command: SyncExternalOrganizationCommand): Promise<OrganizationEntity> {
     const user = await this.userRepository.findById(command.userId);
-    if (!user) throw new ApiException('User not found');
+    if (!user) throw new BadRequestException('User not found');
 
     const organization = await this.organizationRepository.create({
       externalId: command.externalId,
@@ -93,13 +95,13 @@ export class SyncExternalOrganization {
     );
 
     if (organizationAfterChanges !== null) {
-      await this.startFreeTrial(user._id, organizationAfterChanges._id);
+      await this.startFreeTrial(user.email, organizationAfterChanges._id);
     }
 
     return organizationAfterChanges as OrganizationEntity;
   }
 
-  private async startFreeTrial(userId: string, organizationId: string) {
+  private async startFreeTrial(billingEmail: string, organizationId: string) {
     try {
       if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
         if (!require('@novu/ee-billing')?.StartReverseFreeTrial) {
@@ -109,12 +111,12 @@ export class SyncExternalOrganization {
           strict: false,
         });
         await usecase.execute({
-          userId,
           organizationId,
+          billingEmail,
         });
       }
     } catch (e) {
-      Logger.error(e, `Unexpected error while importing enterprise modules`, 'StartReverseFreeTrial');
+      this.logger.error({ err: e }, `Unexpected error while importing enterprise modules`);
     }
   }
 }

@@ -78,7 +78,7 @@ export class ClientSDK {
   readonly #httpClient: HTTPClient;
   readonly #hooks: SDKHooks;
   readonly #logger?: Logger | undefined;
-  protected readonly _baseURL: URL | null;
+  public readonly _baseURL: URL | null;
   public readonly _options: SDKOptions & { hooks?: SDKHooks };
 
   constructor(options: SDKOptions = {}) {
@@ -191,14 +191,9 @@ export class ClientSDK {
 
     if (conf.body instanceof ReadableStream) {
       if (!fetchOptions) {
-        fetchOptions = {
-          // @ts-expect-error see https://github.com/node-fetch/node-fetch/issues/1769
-          duplex: "half",
-        };
-      } else {
-        // @ts-expect-error see https://github.com/node-fetch/node-fetch/issues/1769
-        fetchOptions.duplex = "half";
+        fetchOptions = {};
       }
+      Object.assign(fetchOptions, { duplex: "half" });
     }
 
     let input;
@@ -303,7 +298,9 @@ export class ClientSDK {
   }
 }
 
-const jsonLikeContentTypeRE = /^application\/(?:.{0,100}\+)?json/;
+const jsonLikeContentTypeRE = /(application|text)\/.*?\+*json.*/;
+const jsonlLikeContentTypeRE =
+  /(application|text)\/(.*?\+*\bjsonl\b.*|.*?\+*\bx-ndjson\b.*)/;
 async function logRequest(logger: Logger | undefined, req: Request) {
   if (!logger) {
     return;
@@ -369,8 +366,12 @@ async function logResponse(
   logger.group("Body:");
   switch (true) {
     case matchContentType(res, "application/json")
-      || jsonLikeContentTypeRE.test(ct):
+      || jsonLikeContentTypeRE.test(ct) && !jsonlLikeContentTypeRE.test(ct):
       logger.log(await res.clone().json());
+      break;
+    case matchContentType(res, "application/jsonl")
+      || jsonlLikeContentTypeRE.test(ct):
+      logger.log(await res.clone().text());
       break;
     case matchContentType(res, "text/event-stream"):
       logger.log(`<${contentType}>`);

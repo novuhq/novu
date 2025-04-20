@@ -5,7 +5,7 @@ import { Text } from '@novu/novui';
 import { css } from '@novu/novui/css';
 import { useColorScheme } from '@novu/design-system';
 import type { HealthCheck } from '@novu/framework/internal';
-import { CodeSnippet } from '../../get-started/legacy-onboarding/components/CodeSnippet';
+import { CodeSnippet } from './CodeSnippet';
 import { useStudioState } from '../../../studio/StudioStateProvider';
 import { timelineRecipe } from './SetupTimeline.recipe';
 

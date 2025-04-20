@@ -9,7 +9,7 @@ import { SecurityState } from "../lib/security.js";
 export type HookContext = {
   baseURL: string | URL;
   operationID: string;
-  oAuth2Scopes?: string[];
+  oAuth2Scopes: string[] | null;
   securitySource?: any | (() => Promise<any>);
   retryConfig: RetryConfig;
   resolvedSecurity: SecurityState | null;

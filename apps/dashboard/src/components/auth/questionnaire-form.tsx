@@ -12,7 +12,13 @@ import { hubspotCookie } from '@/utils/cookies';
 import { ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { useOrganization, useUser } from '@clerk/clerk-react';
-import { CompanySizeEnum, JobTitleEnum, jobTitleToLabelMapper, OrganizationTypeEnum } from '@novu/shared';
+import {
+  CompanySizeEnum,
+  JobTitleEnum,
+  jobTitleToLabelMapper,
+  NewDashboardOptInStatusEnum,
+  OrganizationTypeEnum,
+} from '@novu/shared';
 import { useMutation } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
 import React from 'react';
@@ -68,12 +74,14 @@ export function QuestionnaireForm() {
       hubspotContext: hubspotContext || '',
     });
 
+    // TODO: Make this more robust for all new sign-ups
     if (!user?.unsafeMetadata?.newDashboardOptInStatus) {
       await user?.update({
         unsafeMetadata: {
-          newDashboardOptInStatus: 'opted_in',
+          newDashboardOptInStatus: NewDashboardOptInStatusEnum.OPTED_IN,
         },
       });
+      // TODO: Reload shouldn't be necessary as user.update already returns the updated user
       await user?.reload();
     }
   };

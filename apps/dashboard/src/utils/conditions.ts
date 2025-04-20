@@ -34,6 +34,7 @@ function recursiveGetUniqueFields(query: RuleGroupType): string[] {
     } else {
       // add field from individual rule
       const field = rule.field.split('.').shift();
+
       if (field) {
         fields.add(field);
       }

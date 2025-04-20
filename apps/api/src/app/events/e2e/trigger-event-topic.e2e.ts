@@ -336,7 +336,10 @@ describe('Topic Trigger Event #novu-v2', () => {
     });
 
     it('should trigger an event successfully', async () => {
-      const response = await novuClient.trigger(buildTriggerRequestPayload(template, to));
+      const localTo = [...to, { type: TriggerRecipientsTypeEnum.Topic, topicKey: 'non-existing-topic-key' }];
+      const response = await novuClient.trigger(buildTriggerRequestPayload(template, localTo));
+
+      await session.waitForJobCompletion(template._id);
 
       const body = response.result;
 
@@ -344,6 +347,13 @@ describe('Topic Trigger Event #novu-v2', () => {
       expect(body.status).to.equal('processed');
       expect(body.acknowledged).to.equal(true);
       expect(body.transactionId).to.exist;
+
+      const messageCount = await messageRepository.count({
+        _environmentId: session.environment._id,
+        transactionId: body.transactionId,
+      });
+
+      expect(messageCount).to.equal(12);
     });
 
     it('should generate message and notification based on event', async () => {
@@ -478,7 +488,7 @@ describe('Topic Trigger Event #novu-v2', () => {
         id: 'key-2',
       });
 
-      await session.waitForJobCompletion(template?._id, false, 0);
+      await session.waitForJobCompletion(template._id);
 
       for (const subscriber of firstTopicSubscribers) {
         const messages = await messageRepository.findBySubscriberChannel(

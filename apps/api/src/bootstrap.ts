@@ -1,20 +1,24 @@
 import './instrument';
 
 import helmet from 'helmet';
-import { INestApplication, Logger, ValidationPipe, VersioningType } from '@nestjs/common';
-import { NestFactory, Reflector } from '@nestjs/core';
+
+import { INestApplication, ValidationPipe, VersioningType } from '@nestjs/common';
+import { NestFactory } from '@nestjs/core';
 import bodyParser from 'body-parser';
 
-import { BullMqService, getErrorInterceptor, Logger as PinoLogger } from '@novu/application-generic';
-import { ExpressAdapter } from '@nestjs/platform-express';
-import { CONTEXT_PATH, corsOptionsDelegate, validateEnv } from './config';
+// eslint-disable-next-line no-restricted-imports
+import { BullMqService, getErrorInterceptor, Logger } from '@novu/application-generic';
 import { AppModule } from './app.module';
-import { setupSwagger } from './app/shared/framework/swagger/swagger.controller';
 import { ResponseInterceptor } from './app/shared/framework/response.interceptor';
+import { setupSwagger } from './app/shared/framework/swagger/swagger.controller';
+import { getLogger } from './app/shared/services/logger.service';
+import { CONTEXT_PATH, corsOptionsDelegate, validateEnv } from './config';
 import { AllExceptionsFilter } from './exception-filter';
 
 const passport = require('passport');
 const compression = require('compression');
+
+const logger = getLogger('Bootstrap');
 
 const extendedBodySizeRoutes = [
   '/v1/events',
@@ -23,14 +27,15 @@ const extendedBodySizeRoutes = [
   '/v1/layouts',
   '/v1/bridge/sync',
   '/v1/bridge/diff',
+  '/v1/environments/:environmentId/bridge',
 ];
 
 // Validate the ENV variables after launching SENTRY, so missing variables will report to sentry
 validateEnv();
 class BootstrapOptions {
-  expressApp?: any;
   internalSdkGeneration?: boolean;
 }
+
 export async function bootstrap(
   bootstrapOptions?: BootstrapOptions
 ): Promise<{ app: INestApplication; document: any }> {
@@ -52,12 +57,7 @@ export async function bootstrap(
     };
   }
 
-  let app: INestApplication;
-  if (bootstrapOptions?.expressApp) {
-    app = await NestFactory.create(AppModule, new ExpressAdapter(bootstrapOptions?.expressApp), nestOptions);
-  } else {
-    app = await NestFactory.create(AppModule, { bufferLogs: true, ...nestOptions });
-  }
+  const app = await NestFactory.create(AppModule, { bufferLogs: true, ...nestOptions });
 
   app.enableVersioning({
     type: VersioningType.URI,
@@ -65,15 +65,15 @@ export async function bootstrap(
     defaultVersion: '1',
   });
 
-  app.useLogger(app.get(PinoLogger));
+  app.useLogger(app.get(Logger));
   app.flushLogs();
 
   const server = app.getHttpServer();
-  Logger.verbose(`Server timeout: ${server.timeout}`);
+  logger.trace(`Server timeout: ${server.timeout}`);
   server.keepAliveTimeout = 61 * 1000;
-  Logger.verbose(`Server keepAliveTimeout: ${server.keepAliveTimeout / 1000}s `);
+  logger.trace(`Server keepAliveTimeout: ${server.keepAliveTimeout / 1000}s `);
   server.headersTimeout = 65 * 1000;
-  Logger.verbose(`Server headersTimeout: ${server.headersTimeout / 1000}s `);
+  logger.trace(`Server headersTimeout: ${server.headersTimeout / 1000}s `);
 
   app.use(helmet());
   app.enableCors(corsOptionsDelegate);
@@ -90,8 +90,8 @@ export async function bootstrap(
   app.useGlobalInterceptors(new ResponseInterceptor());
   app.useGlobalInterceptors(getErrorInterceptor());
 
-  app.use(extendedBodySizeRoutes, bodyParser.json({ limit: '20mb' }));
-  app.use(extendedBodySizeRoutes, bodyParser.urlencoded({ limit: '20mb', extended: true }));
+  app.use(extendedBodySizeRoutes, bodyParser.json({ limit: '26mb' }));
+  app.use(extendedBodySizeRoutes, bodyParser.urlencoded({ limit: '26mb', extended: true }));
 
   app.use(bodyParser.json({ verify: rawBodyBuffer }));
   app.use(bodyParser.urlencoded({ extended: true, verify: rawBodyBuffer }));
@@ -100,17 +100,13 @@ export async function bootstrap(
 
   const document = await setupSwagger(app, bootstrapOptions?.internalSdkGeneration);
 
-  app.useGlobalFilters(new AllExceptionsFilter(app.get(PinoLogger)));
+  app.useGlobalFilters(new AllExceptionsFilter(app.get(Logger)));
 
-  if (bootstrapOptions?.expressApp) {
-    await app.init();
-  } else {
-    await app.listen(process.env.PORT || 3000);
-  }
+  await app.listen(process.env.PORT || 3000);
 
   app.enableShutdownHooks();
 
-  Logger.log(`Started application in NODE_ENV=${process.env.NODE_ENV} on port ${process.env.PORT}`);
+  logger.info(`Started application in NODE_ENV=${process.env.NODE_ENV} on port ${process.env.PORT}`);
 
   return { app, document };
 }

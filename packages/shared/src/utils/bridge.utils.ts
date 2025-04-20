@@ -16,7 +16,7 @@ export const isBridgeWorkflow = (workflowType?: WorkflowTypeEnum): boolean => {
  */
 type InAppOutput = {
   subject?: string;
-  body: string;
+  body?: string;
   avatar?: string;
   primaryAction?: {
     label: string;

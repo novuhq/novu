@@ -52,6 +52,7 @@ export function FacetedFormFilter({
     }
 
     const newSelectedValues = new Set(selectedValues);
+
     if (newSelectedValues.has(selectedValue)) {
       newSelectedValues.delete(selectedValue);
     } else {
@@ -67,6 +68,7 @@ export function FacetedFormFilter({
     } else {
       onSelect?.([]);
     }
+
     setSearchQuery('');
   };
 

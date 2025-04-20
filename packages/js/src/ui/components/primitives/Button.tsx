@@ -5,22 +5,27 @@ import { cn, useStyle } from '../../helpers';
 import type { AppearanceKey } from '../../types';
 
 export const buttonVariants = cva(
-  'nt-inline-flex nt-gap-4 nt-items-center nt-justify-center nt-whitespace-nowrap nt-rounded-lg nt-text-sm nt-font-medium nt-ring-offset-background nt-transition-colors focus-visible:nt-outline-none focus-visible:nt-ring-2 focus-visible:nt-ring-primary nt-focus-visible:nt-ring-offset-2 disabled:nt-pointer-events-none disabled:nt-opacity-50',
+  cn(
+    'nt-inline-flex nt-gap-4 nt-items-center nt-justify-center nt-whitespace-nowrap nt-text-sm nt-font-medium nt-transition-colors disabled:nt-pointer-events-none disabled:nt-opacity-50 after:nt-absolute after:nt-content-[""] before:nt-content-[""] before:nt-absolute [&_svg]:nt-pointer-events-none [&_svg]:nt-shrink-0',
+    `focus-visible:nt-outline-none focus-visible:nt-ring-2 focus-visible:nt-rounded-md focus-visible:nt-ring-ring focus-visible:nt-ring-offset-2`
+  ),
   {
     variants: {
       variant: {
-        default: 'nt-bg-primary nt-text-primary-foreground hover:nt-bg-primary-alpha-900',
-        secondary: 'nt-bg-secondary nt-text-secondary-foreground hover:nt-bg-secondary-alpha-800',
-        icon: 'nt-text-secondary-foreground-alpha-500 hover:nt-bg-neutral-alpha-50',
-        ghost: 'hover:nt-bg-neutral-alpha-50',
+        default:
+          'nt-bg-gradient-to-b nt-from-20% nt-from-primary-foreground-alpha-200 nt-to-transparent nt-bg-primary nt-text-primary-foreground nt-shadow-[0_0_0_0.5px_var(--nv-color-primary-600)] nt-relative before:nt-absolute before:nt-inset-0 before:nt-border before:nt-border-primary-foreground-alpha-100 after:nt-absolute after:nt-inset-0 after:nt-opacity-0 hover:after:nt-opacity-100 after:nt-transition-opacity after:nt-bg-gradient-to-b after:nt-from-primary-foreground-alpha-50 after:nt-to-transparent',
+        secondary:
+          'nt-bg-secondary nt-text-secondary-foreground nt-shadow-[0_0_0_0.5px_var(--nv-color-secondary-600)] nt-relative before:nt-absolute before:nt-inset-0 before:nt-border before:nt-border-secondary-foreground-alpha-100 after:nt-absolute after:nt-inset-0 after:nt-opacity-0 hover:after:nt-opacity-100 after:nt-transition-opacity after:nt-bg-gradient-to-b after:nt-from-secondary-foreground-alpha-50 after:nt-to-transparent',
+        ghost: 'hover:nt-bg-neutral-alpha-100 nt-text-foreground-alpha-600 hover:nt-text-foreground-alpha-800',
         unstyled: '',
       },
       size: {
         none: '',
-        icon: 'nt-p-1',
-        default: 'nt-h-8 nt-px-3',
-        sm: 'nt-h-7 nt-rounded-md nt-px-3',
-        lg: 'nt-h-10 nt-px-8',
+        iconSm: 'nt-p-1 nt-rounded-md after:nt-rounded-md before:nt-rounded-md focus-visible:nt-rounded-md',
+        icon: 'nt-p-2.5 nt-rounded-xl before:nt-rounded-xl after:nt-rounded-xl focus-visible:nt-rounded-xl',
+        default: 'nt-px-2 nt-py-1 nt-rounded-lg focus-visible:nt-rounded-lg before:nt-rounded-lg after:nt-rounded-lg',
+        sm: 'nt-px-1 nt-py-px nt-rounded-md nt-text-xs nt-px-1 before:nt-rounded-md focus-visible:nt-rounded-md after:nt-rounded-md',
+        lg: 'nt-px-8 nt-py-2 nt-text-base before:nt-rounded-lg after:nt-rounded-lg focus-visible:nt-rounded-lg',
       },
     },
     defaultVariants: {

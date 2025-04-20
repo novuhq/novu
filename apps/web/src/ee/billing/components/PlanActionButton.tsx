@@ -19,7 +19,11 @@ export const PlanActionButton = ({
 }) => {
   const segment = useSegment();
   const { isActive, trial, apiServiceLevel } = useSubscriptionContext();
-  const isPaidSubscriptionActive = isActive && !trial.isActive && apiServiceLevel !== ApiServiceLevelEnum.FREE;
+  const isPaidSubscriptionActive =
+    isActive &&
+    !trial.isActive &&
+    apiServiceLevel !== ApiServiceLevelEnum.FREE &&
+    apiServiceLevel === checkoutServiceLevel;
 
   const { mutateAsync: checkout, isLoading: isCheckingOut } = useMutation<{ stripeCheckoutUrl: string }, Error>(
     () =>

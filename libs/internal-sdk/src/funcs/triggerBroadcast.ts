@@ -22,6 +22,7 @@ import * as errors from "../models/errors/index.js";
 import { SDKError } from "../models/errors/sdkerror.js";
 import { SDKValidationError } from "../models/errors/sdkvalidationerror.js";
 import * as operations from "../models/operations/index.js";
+import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
@@ -31,12 +32,12 @@ import { Result } from "../types/fp.js";
  * Trigger a broadcast event to all existing subscribers, could be used to send announcements, etc.
  *       In the future could be used to trigger events to a subset of subscribers based on defined filters.
  */
-export async function triggerBroadcast(
+export function triggerBroadcast(
   client: NovuCore,
   triggerEventToAllRequestDto: components.TriggerEventToAllRequestDto,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
-): Promise<
+): APIPromise<
   Result<
     operations.EventsControllerBroadcastEventToAllResponse,
     | errors.ErrorDto
@@ -52,6 +53,38 @@ export async function triggerBroadcast(
     | ConnectionError
   >
 > {
+  return new APIPromise($do(
+    client,
+    triggerEventToAllRequestDto,
+    idempotencyKey,
+    options,
+  ));
+}
+
+async function $do(
+  client: NovuCore,
+  triggerEventToAllRequestDto: components.TriggerEventToAllRequestDto,
+  idempotencyKey?: string | undefined,
+  options?: RequestOptions,
+): Promise<
+  [
+    Result<
+      operations.EventsControllerBroadcastEventToAllResponse,
+      | errors.ErrorDto
+      | errors.ErrorDto
+      | errors.ValidationErrorDto
+      | errors.ErrorDto
+      | SDKError
+      | SDKValidationError
+      | UnexpectedClientError
+      | InvalidRequestError
+      | RequestAbortedError
+      | RequestTimeoutError
+      | ConnectionError
+    >,
+    APICall,
+  ]
+> {
   const input: operations.EventsControllerBroadcastEventToAllRequest = {
     triggerEventToAllRequestDto: triggerEventToAllRequestDto,
     idempotencyKey: idempotencyKey,
@@ -65,7 +98,7 @@ export async function triggerBroadcast(
     "Input validation failed",
   );
   if (!parsed.ok) {
-    return parsed;
+    return [parsed, { status: "invalid" }];
   }
   const payload = parsed.value;
   const body = encodeJSON("body", payload.TriggerEventToAllRequestDto, {
@@ -88,7 +121,7 @@ export async function triggerBroadcast(
   const requestSecurity = resolveGlobalSecurity(securityInput);
 
   const context = {
-    baseURL: options?.serverURL ?? "",
+    baseURL: options?.serverURL ?? client._baseURL ?? "",
     operationID: "EventsController_broadcastEventToAll",
     oAuth2Scopes: [],
 
@@ -121,7 +154,7 @@ export async function triggerBroadcast(
     timeoutMs: options?.timeoutMs || client._options.timeoutMs || -1,
   }, options);
   if (!requestRes.ok) {
-    return requestRes;
+    return [requestRes, { status: "invalid" }];
   }
   const req = requestRes.value;
 
@@ -148,7 +181,7 @@ export async function triggerBroadcast(
     retryCodes: context.retryCodes,
   });
   if (!doResult.ok) {
-    return doResult;
+    return [doResult, { status: "request-error", request: req }];
   }
   const response = doResult.value;
 
@@ -189,8 +222,8 @@ export async function triggerBroadcast(
     M.fail("5XX"),
   )(response, { extraFields: responseFields });
   if (!result.ok) {
-    return result;
+    return [result, { status: "complete", request: req, response }];
   }
 
-  return result;
+  return [result, { status: "complete", request: req, response }];
 }

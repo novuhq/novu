@@ -129,6 +129,7 @@ function CompactButtonIcon<T extends React.ElementType>({
 
   return <Component className={icon({ class: className })} {...rest} />;
 }
+
 CompactButtonIcon.displayName = COMPACT_BUTTON_ICON_NAME;
 
 const CompactButton = React.forwardRef<

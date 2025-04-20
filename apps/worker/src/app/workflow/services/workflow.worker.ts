@@ -1,18 +1,18 @@
 import { Injectable, Logger } from '@nestjs/common';
 import {
+  BullMqService,
   getWorkflowWorkerOptions,
+  IWorkflowDataDto,
   PinoLogger,
   storage,
   Store,
   TriggerEvent,
-  WorkflowWorkerService,
   WorkerOptions,
   WorkerProcessor,
-  BullMqService,
   WorkflowInMemoryProviderService,
-  IWorkflowDataDto,
+  WorkflowWorkerService,
 } from '@novu/application-generic';
-import { CommunityOrganizationRepository, CommunityUserRepository } from '@novu/dal';
+import { CommunityOrganizationRepository } from '@novu/dal';
 import { ObservabilityBackgroundTransactionEnum } from '@novu/shared';
 
 const nr = require('newrelic');
@@ -24,7 +24,8 @@ export class WorkflowWorker extends WorkflowWorkerService {
   constructor(
     private triggerEventUsecase: TriggerEvent,
     public workflowInMemoryProviderService: WorkflowInMemoryProviderService,
-    private organizationRepository: CommunityOrganizationRepository
+    private organizationRepository: CommunityOrganizationRepository,
+    private logger: PinoLogger
   ) {
     super(new BullMqService(workflowInMemoryProviderService));
 

@@ -1,7 +1,7 @@
 /* eslint-disable global-require */
-import { DynamicModule, Logger, Module, Provider } from '@nestjs/common';
+import { DynamicModule, Module, Provider } from '@nestjs/common';
 import { APP_INTERCEPTOR } from '@nestjs/core';
-import { TracingModule } from '@novu/application-generic';
+import { cacheService, TracingModule } from '@novu/application-generic';
 import { Client, NovuModule } from '@novu/framework/nest';
 
 import { Type } from '@nestjs/common/interfaces/type.interface';
@@ -50,6 +50,7 @@ import { WorkflowModuleV1 } from './app/workflows-v1/workflow-v1.module';
 import { EnvironmentsModuleV1 } from './app/environments-v1/environments-v1.module';
 import { EnvironmentsModule } from './app/environments-v2/environments.module';
 import { SubscribersModule } from './app/subscribers-v2/subscribers.module';
+import { SupportModule } from './app/support/support.module';
 
 const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> => {
   const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];
@@ -60,9 +61,7 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
     if (require('@novu/ee-billing')?.BillingModule) {
       modules.push(require('@novu/ee-billing')?.BillingModule.forRoot());
     }
-    if (require('./app/support/support.module')?.SupportModule) {
-      modules.push(require('./app/support/support.module')?.SupportModule);
-    }
+    modules.push(SupportModule);
   }
 
   return modules;
@@ -141,6 +140,7 @@ const providers: Provider[] = [
     provide: APP_INTERCEPTOR,
     useClass: IdempotencyInterceptor,
   },
+  cacheService,
 ];
 
 if (process.env.SENTRY_DSN) {
@@ -175,8 +175,4 @@ modules.push(
   controllers: [],
   providers,
 })
-export class AppModule {
-  constructor() {
-    Logger.log(`BOOTSTRAPPED NEST APPLICATION`);
-  }
-}
+export class AppModule {}

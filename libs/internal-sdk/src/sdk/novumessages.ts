@@ -12,19 +12,15 @@ import { unwrapAsync } from "../types/fp.js";
 
 export class NovuMessages extends ClientSDK {
   /**
-   * Mark a subscriber messages as seen, read, unseen or unread
+   * Mark message action as seen
    */
-  async markAllAs(
-    messageMarkAsRequestDto: components.MessageMarkAsRequestDto,
-    subscriberId: string,
-    idempotencyKey?: string | undefined,
+  async updateAsSeen(
+    request: operations.SubscribersV1ControllerMarkActionAsSeenRequest,
     options?: RequestOptions,
-  ): Promise<operations.SubscribersV1ControllerMarkMessagesAsResponse> {
-    return unwrapAsync(subscribersMessagesMarkAllAs(
+  ): Promise<operations.SubscribersV1ControllerMarkActionAsSeenResponse> {
+    return unwrapAsync(subscribersMessagesUpdateAsSeen(
       this,
-      messageMarkAsRequestDto,
-      subscriberId,
-      idempotencyKey,
+      request,
       options,
     ));
   }
@@ -48,15 +44,19 @@ export class NovuMessages extends ClientSDK {
   }
 
   /**
-   * Mark message action as seen
+   * Mark a subscriber messages as seen, read, unseen or unread
    */
-  async updateAsSeen(
-    request: operations.SubscribersV1ControllerMarkActionAsSeenRequest,
+  async markAllAs(
+    messageMarkAsRequestDto: components.MessageMarkAsRequestDto,
+    subscriberId: string,
+    idempotencyKey?: string | undefined,
     options?: RequestOptions,
-  ): Promise<operations.SubscribersV1ControllerMarkActionAsSeenResponse> {
-    return unwrapAsync(subscribersMessagesUpdateAsSeen(
+  ): Promise<operations.SubscribersV1ControllerMarkMessagesAsResponse> {
+    return unwrapAsync(subscribersMessagesMarkAllAs(
       this,
-      request,
+      messageMarkAsRequestDto,
+      subscriberId,
+      idempotencyKey,
       options,
     ));
   }

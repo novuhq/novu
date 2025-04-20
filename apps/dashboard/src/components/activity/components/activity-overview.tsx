@@ -1,13 +1,16 @@
+import { Link } from 'react-router-dom';
+import { motion } from 'motion/react';
+import { format } from 'date-fns';
+import { IActivity } from '@novu/shared';
+
 import { SubscriberDrawerButton } from '@/components/subscribers/subscriber-drawer';
 import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
 import { useEnvironment } from '@/context/environment/hooks';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
-import { IActivity } from '@novu/shared';
-import { format } from 'date-fns';
-import { Link } from 'react-router-dom';
 import { JOB_STATUS_CONFIG } from '../constants';
 import { OverviewItem } from './overview-item';
+import { fadeIn } from '@/utils/animation';
 
 export interface ActivityOverviewProps {
   activity: IActivity;
@@ -23,7 +26,7 @@ export function ActivityOverview({ activity }: ActivityOverviewProps) {
   });
 
   return (
-    <div className="px-3 py-2">
+    <motion.div {...fadeIn} className="px-3 py-2">
       <div className="mb-2 flex flex-col gap-[14px]">
         <OverviewItem label="Workflow Identifier" value={activity.template?.name || 'Deleted workflow'}>
           <Link
@@ -62,11 +65,14 @@ export function ActivityOverview({ activity }: ActivityOverviewProps) {
         </OverviewItem>
 
         <OverviewItem label="Status">
-          <span className={cn('font-mono text-xs uppercase', 'text-' + JOB_STATUS_CONFIG[status]?.color)}>
+          <span
+            className={cn('font-mono text-xs uppercase', 'text-' + JOB_STATUS_CONFIG[status]?.color)}
+            data-testid="activity-status"
+          >
             {status || 'QUEUED'}
           </span>
         </OverviewItem>
       </div>
-    </div>
+    </motion.div>
   );
 }

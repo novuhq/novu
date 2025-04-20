@@ -41,6 +41,7 @@ export const TestWorkflowTabs = ({ testData }: { testData?: WorkflowTestDataResp
       const {
         data: { transactionId: newTransactionId },
       } = await triggerWorkflow({ name: workflow?.workflowId ?? '', to: data.to, payload: data.payload });
+
       if (!newTransactionId) {
         return showToast({
           variant: 'lg',
@@ -62,6 +63,7 @@ export const TestWorkflowTabs = ({ testData }: { testData?: WorkflowTestDataResp
           },
         });
       }
+
       setTransactionId(newTransactionId);
     } catch (e) {
       toast.error('Failed to trigger workflow', {

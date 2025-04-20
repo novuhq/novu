@@ -1,11 +1,12 @@
-import { buttonVariants } from '@/components/primitives/button';
-import { CLERK_PUBLISHABLE_KEY } from '@/config';
-import { ClerkProvider as _ClerkProvider } from '@clerk/clerk-react';
 import { PropsWithChildren } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ROUTES } from '../utils/routes';
+import { ClerkProvider as _ClerkProvider } from '@clerk/clerk-react';
+import { CLERK_PUBLISHABLE_KEY } from '@/config';
+import { ROUTES } from '@/utils/routes';
+import { buttonVariants } from '@/components/primitives/button';
 
 type ClerkProviderProps = PropsWithChildren;
+
 export const ClerkProvider = (props: ClerkProviderProps) => {
   const navigate = useNavigate();
   const { children } = props;
@@ -15,6 +16,8 @@ export const ClerkProvider = (props: ClerkProviderProps) => {
       routerPush={(to) => navigate(to)}
       routerReplace={(to) => navigate(to, { replace: true })}
       publishableKey={CLERK_PUBLISHABLE_KEY}
+      signInUrl={ROUTES.SIGN_IN}
+      signUpUrl={ROUTES.SIGN_UP}
       afterSignOutUrl={ROUTES.SIGN_IN}
       appearance={{
         userButton: {

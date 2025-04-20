@@ -1,34 +1,32 @@
 import { CursorPagination } from '@/components/cursor-pagination';
 import { Table, TableBody, TableHead, TableHeader, TableRow } from '@/components/primitives/table';
-import { SubscriberListBlank } from '@/components/subscribers/subscriber-list-blank';
-import { SubscriberListNoResults } from '@/components/subscribers/subscriber-list-no-results';
-import { SubscriberRow, SubscriberRowSkeleton } from '@/components/subscribers/subscriber-row';
-import { SubscribersFilters } from '@/components/subscribers/subscribers-filters';
-import { useFetchSubscribers } from '@/hooks/use-fetch-subscribers';
+import { useSubscribersNavigate } from '@/components/subscribers/hooks/use-subscribers-navigate';
 import {
   SubscribersFilter,
   SubscribersSortableColumn,
   SubscribersUrlState,
   useSubscribersUrlState,
-} from '@/hooks/use-subscribers-url-state';
+} from '@/components/subscribers/hooks/use-subscribers-url-state';
+import { SubscriberListBlank } from '@/components/subscribers/subscriber-list-blank';
+import { SubscriberListNoResults } from '@/components/subscribers/subscriber-list-no-results';
+import { SubscriberRow, SubscriberRowSkeleton } from '@/components/subscribers/subscriber-row';
+import { SubscribersFilters } from '@/components/subscribers/subscribers-filters';
+import { useFetchSubscribers } from '@/hooks/use-fetch-subscribers';
 import { cn } from '@/utils/ui';
 import { DirectionEnum } from '@novu/shared';
 import { HTMLAttributes, useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { Button } from '../primitives/button';
 import { RiUserSharedLine } from 'react-icons/ri';
-import { buildRoute, ROUTES } from '@/utils/routes';
+import { Button } from '../primitives/button';
 
 type SubscriberListFiltersProps = HTMLAttributes<HTMLDivElement> &
   Pick<SubscribersUrlState, 'filterValues' | 'handleFiltersChange' | 'resetFilters'>;
 
 const SubscriberListWrapper = (props: SubscriberListFiltersProps) => {
   const { className, children, filterValues, handleFiltersChange, resetFilters, ...rest } = props;
-  const navigate = useNavigate();
-  const { environmentSlug } = useParams();
+  const { navigateToCreateSubscriberPage } = useSubscribersNavigate();
 
   return (
-    <div className={cn('flex h-full flex-col p-2', className)} {...rest}>
+    <div className={cn('flex flex-col p-2', className)} {...rest}>
       <div className="flex items-center justify-between">
         <SubscribersFilters
           onFiltersChange={handleFiltersChange}
@@ -43,7 +41,7 @@ const SubscriberListWrapper = (props: SubscriberListFiltersProps) => {
           variant="primary"
           size="xs"
           leadingIcon={RiUserSharedLine}
-          onClick={() => navigate(buildRoute(ROUTES.CREATE_SUBSCRIBER, { environmentSlug: environmentSlug || '' }))}
+          onClick={navigateToCreateSubscriberPage}
         >
           Add subscriber
         </Button>
@@ -58,6 +56,7 @@ type SubscriberListTableProps = HTMLAttributes<HTMLTableElement> & {
   orderBy?: SubscribersSortableColumn;
   orderDirection?: DirectionEnum;
 };
+
 const SubscriberListTable = (props: SubscriberListTableProps) => {
   const { children, orderBy, orderDirection, toggleSort, ...rest } = props;
   return (
@@ -97,7 +96,6 @@ export const SubscriberList = (props: SubscriberListProps) => {
   const [previousPageBefore, setPreviousPageBefore] = useState<string | undefined>(undefined);
   const { filterValues, handleFiltersChange, toggleSort, resetFilters, handleNext, handlePrevious, handleFirst } =
     useSubscribersUrlState({
-      debounceMs: 300,
       after: nextPageAfter,
       before: previousPageBefore,
     });
@@ -114,6 +112,7 @@ export const SubscriberList = (props: SubscriberListProps) => {
     if (data?.next) {
       setNextPageAfter(data.next);
     }
+
     if (data?.previous) {
       setPreviousPageBefore(data.previous);
     }
@@ -166,6 +165,11 @@ export const SubscriberList = (props: SubscriberListProps) => {
     );
   }
 
+  const firstTwoSubscribersInternalIds = data.data.reduce<string[]>((acc, s) => {
+    if (s._id) acc.push(s._id);
+    return acc.length < 2 ? acc : acc.slice(0, 2);
+  }, []);
+
   return (
     <SubscriberListWrapper
       filterValues={filterValues}
@@ -179,7 +183,12 @@ export const SubscriberList = (props: SubscriberListProps) => {
         toggleSort={toggleSort}
       >
         {data.data.map((subscriber) => (
-          <SubscriberRow key={subscriber.subscriberId} subscriber={subscriber} />
+          <SubscriberRow
+            key={subscriber._id}
+            subscriber={subscriber}
+            subscribersCount={data.data.length}
+            firstTwoSubscribersInternalIds={firstTwoSubscribersInternalIds}
+          />
         ))}
       </SubscriberListTable>
 

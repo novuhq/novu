@@ -48,6 +48,7 @@ export function useSyncWorkflow(workflow: WorkflowResponseDto | WorkflowListResp
   const safeSync = async (envId: string) => {
     try {
       setTargetEnvironmentId(envId);
+
       if (await isWorkflowInTargetEnvironment(envId)) {
         setShowConfirmModal(true);
 

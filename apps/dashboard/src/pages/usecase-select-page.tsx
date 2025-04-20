@@ -1,4 +1,4 @@
-import { channelOptions } from '@/components/auth/usecases-list.utils';
+import { getChannelOptions } from '@/components/auth/usecases-list.utils';
 import { AnimatedPage } from '@/components/onboarding/animated-page';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useTelemetry } from '@/hooks/use-telemetry';
@@ -104,6 +104,8 @@ export function UsecaseSelectPage() {
 
     handleContinue();
   }
+
+  const channelOptions = getChannelOptions();
 
   return (
     <>

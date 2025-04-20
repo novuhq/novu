@@ -1,7 +1,7 @@
 import { processTestAgentExpectedStatusCode, UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
-describe('Update Branding Details - /organizations/branding (PUT) #novu-v1-os', function () {
+describe('Update Branding Details - /organizations/branding (PUT) #novu-v0-os', function () {
   let session: UserSession;
 
   beforeEach(async () => {

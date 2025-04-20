@@ -4,11 +4,7 @@ import { SubscriberRepository } from '@novu/dal';
 
 import { CreateOrUpdateSubscriberCommand } from './create-or-update-subscriber.command';
 
-import {
-  CacheInMemoryProviderService,
-  CacheService,
-  InvalidateCacheService,
-} from '../../services';
+import { CacheInMemoryProviderService, CacheService, InvalidateCacheService } from '../../services';
 import { UpdateSubscriber } from '../update-subscriber';
 import { CreateOrUpdateSubscriberUseCase } from './create-or-update-subscriber.usecase';
 
@@ -22,8 +18,7 @@ const cacheInMemoryProviderService = {
 const cacheService = {
   provide: CacheService,
   useFactory: async () => {
-    const factoryCacheInMemoryProviderService =
-      await cacheInMemoryProviderService.useFactory();
+    const factoryCacheInMemoryProviderService = await cacheInMemoryProviderService.useFactory();
 
     const service = new CacheService(factoryCacheInMemoryProviderService);
     await service.initialize();
@@ -45,9 +40,7 @@ describe('Create Subscriber', function () {
     session = new UserSession();
     await session.initialize();
 
-    useCase = moduleRef.get<CreateOrUpdateSubscriberUseCase>(
-      CreateOrUpdateSubscriberUseCase,
-    );
+    useCase = moduleRef.get<CreateOrUpdateSubscriberUseCase>(CreateOrUpdateSubscriberUseCase);
   });
 
   it('should create a subscriber', async function () {
@@ -60,7 +53,7 @@ describe('Create Subscriber', function () {
         email: 'dima@asdasdas.com',
         firstName: 'ASDAS',
         locale,
-      }),
+      })
     );
 
     expect(result.locale).toEqual(locale);
@@ -79,7 +72,7 @@ describe('Create Subscriber', function () {
         email,
         firstName: 'First Name',
         locale: 'en',
-      }),
+      })
     );
 
     const result = await useCase.execute(
@@ -90,7 +83,7 @@ describe('Create Subscriber', function () {
         email,
         firstName: 'Second Name',
         locale: noLocale,
-      }),
+      })
     );
 
     expect(result.firstName).toEqual('Second Name');

@@ -1,6 +1,7 @@
 import { Text, Title } from '@novu/novui';
 import { MantineTheme } from '@mantine/core';
 import { css } from '@novu/novui/css';
+import { ApiServiceLevelEnum } from '@novu/shared';
 import { UsageProgress } from './UsageProgress';
 import { useSubscriptionContext, type UseSubscriptionType } from './SubscriptionProvider';
 import { capitalizeFirstLetter } from '../../../utils/string';
@@ -30,9 +31,15 @@ function PlanHeader({ apiServiceLevel, trial }: UseSubscriptionType) {
   const { daysLeft, isActive } = trial;
   const color = getColorByDaysLeft(daysLeft);
 
+  const renameBusinessToTeam = (plan: string) => {
+    if (plan === ApiServiceLevelEnum.BUSINESS) return 'team';
+
+    return plan.toLowerCase();
+  };
+
   return (
     <div className={styles.header}>
-      <Title variant="section">{capitalizeFirstLetter(apiServiceLevel)}</Title>
+      <Title variant="section">{capitalizeFirstLetter(renameBusinessToTeam(apiServiceLevel))}</Title>
       {isActive && (
         <>
           <Badge label="Trial" />

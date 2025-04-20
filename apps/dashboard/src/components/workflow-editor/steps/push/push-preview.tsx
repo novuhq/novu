@@ -46,6 +46,7 @@ type PushSubjectPreviewProps = HTMLAttributes<HTMLDivElement> & {
   subject?: string;
   isPending: boolean;
 };
+
 export const PushSubjectPreview = ({ subject, isPending, className, ...rest }: PushSubjectPreviewProps) => {
   if (isPending) {
     return <Skeleton className="h-3 w-2/3" />;
@@ -65,6 +66,7 @@ type PushBodyPreviewProps = HTMLAttributes<HTMLDivElement> & {
   body?: string;
   isPending: boolean;
 };
+
 export const PushBodyPreview = ({ body, isPending, className, ...rest }: PushBodyPreviewProps) => {
   if (isPending) {
     return (

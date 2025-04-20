@@ -3,7 +3,11 @@ import { DocumentBuilder, OpenAPIObject, SwaggerModule } from '@nestjs/swagger';
 import { INestApplication } from '@nestjs/common';
 import { SecuritySchemeObject } from '@nestjs/swagger/dist/interfaces/open-api-spec.interface';
 import { injectDocumentComponents } from './injection';
-import { overloadDocumentForSdkGeneration, removeEndpointsWithoutApiKey } from './open.api.manipulation.component';
+import {
+  overloadDocumentForSdkGeneration,
+  removeEndpointsWithoutApiKey,
+  sortOpenAPIDocument,
+} from './open.api.manipulation.component';
 import metadata from '../../../../metadata';
 import { API_KEY_SWAGGER_SECURITY_NAME, BEARER_SWAGGER_SECURITY_NAME } from '@novu/application-generic';
 
@@ -122,7 +126,7 @@ function buildOpenApiBaseDocument(internalSdkGeneration: boolean | undefined) {
     options.addSecurity(BEARER_SWAGGER_SECURITY_NAME, BEARER_SECURITY_DEFINITIONS);
     options.addSecurityRequirements(BEARER_SWAGGER_SECURITY_NAME);
   }
-  if (process.env.NOVU_ENTERPRISE === 'true') {
+  if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
     options.addTag(
       'Translations',
       `Translations are used to localize your messages for different languages and regions. Novu provides a way to create and manage translations for your messages. You can create translations for your messages in different languages and regions, and assign them to your subscribers based on their preferences.`,
@@ -208,6 +212,7 @@ function publishSdkSpecificDocumentAndReturnDocument(
   overloadNamingGuidelines(document);
   overloadGlobalSdkRetrySettings(document);
   let sdkDocument: OpenAPIObject = overloadDocumentForSdkGeneration(document, internalSdkGeneration);
+  sdkDocument = sortOpenAPIDocument(sdkDocument);
   SwaggerModule.setup('openapi.sdk', app, sdkDocument, {
     jsonDocumentUrl: 'openapi.sdk.json',
     yamlDocumentUrl: 'openapi.sdk.yaml',

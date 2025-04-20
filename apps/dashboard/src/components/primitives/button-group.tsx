@@ -139,6 +139,7 @@ function ButtonGroupIcon<T extends React.ElementType>({
 
   return <Component className={icon({ class: className })} {...rest} />;
 }
+
 ButtonGroupIcon.displayName = BUTTON_GROUP_ICON_NAME;
 
 export { ButtonGroupIcon, ButtonGroupItem, ButtonGroupRoot };

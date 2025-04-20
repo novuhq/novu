@@ -9,12 +9,8 @@ import {
 } from '@novu/dal';
 
 import { UpdateSubscriberChannelCommand } from './update-subscriber-channel.command';
-import { ApiException } from '../../../utils/exceptions';
-import {
-  AnalyticsService,
-  buildSubscriberKey,
-  InvalidateCacheService,
-} from '../../../services';
+import { BadRequestException } from '@nestjs/common';
+import { AnalyticsService, buildSubscriberKey, InvalidateCacheService } from '../../../services';
 
 @Injectable()
 export class UpdateSubscriberChannel {
@@ -24,19 +20,16 @@ export class UpdateSubscriberChannel {
     private subscriberRepository: SubscriberRepository,
     private integrationRepository: IntegrationRepository,
     @Inject(forwardRef(() => AnalyticsService))
-    private analyticsService: AnalyticsService,
+    private analyticsService: AnalyticsService
   ) {}
 
   async execute(command: UpdateSubscriberChannelCommand) {
     const foundSubscriber =
       command.subscriber ??
-      (await this.subscriberRepository.findBySubscriberId(
-        command.environmentId,
-        command.subscriberId,
-      ));
+      (await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId));
 
     if (!foundSubscriber) {
-      throw new ApiException(`SubscriberId: ${command.subscriberId} not found`);
+      throw new BadRequestException(`SubscriberId: ${command.subscriberId} not found`);
     }
 
     const query: Partial<IntegrationEntity> & { _environmentId: string } = {
@@ -48,25 +41,20 @@ export class UpdateSubscriberChannel {
       query.identifier = command.integrationIdentifier;
     }
 
-    const foundIntegration = await this.integrationRepository.findOne(
-      query,
-      undefined,
-      {
-        query: { sort: { createdAt: -1 } },
-      },
-    );
+    const foundIntegration = await this.integrationRepository.findOne(query, undefined, {
+      query: { sort: { createdAt: -1 } },
+    });
 
     if (!foundIntegration) {
-      throw new ApiException(
-        `Subscribers environment (${command.environmentId}) do not have active ${command.providerId} integration.`,
+      throw new BadRequestException(
+        `Subscribers environment (${command.environmentId}) do not have active ${command.providerId} integration.`
       );
     }
     const updatePayload = this.createUpdatePayload(command);
 
     const existingChannel = foundSubscriber?.channels?.find(
       (subscriberChannel) =>
-        subscriberChannel.providerId === command.providerId &&
-        subscriberChannel._integrationId === foundIntegration._id,
+        subscriberChannel.providerId === command.providerId && subscriberChannel._integrationId === foundIntegration._id
     );
 
     if (existingChannel) {
@@ -75,31 +63,22 @@ export class UpdateSubscriberChannel {
         existingChannel,
         updatePayload,
         foundSubscriber,
-        command.isIdempotentOperation,
+        command.isIdempotentOperation
       );
     } else {
-      await this.addChannelToSubscriber(
-        updatePayload,
-        foundIntegration,
-        command,
-        foundSubscriber,
-      );
+      await this.addChannelToSubscriber(updatePayload, foundIntegration, command, foundSubscriber);
     }
 
-    this.analyticsService.mixpanelTrack(
-      'Set Subscriber Credentials - [Subscribers]',
-      '',
-      {
-        providerId: command.providerId,
-        _organization: command.organizationId,
-        oauthHandler: command.oauthHandler,
-        _subscriberId: foundSubscriber._id,
-      },
-    );
+    this.analyticsService.mixpanelTrack('Set Subscriber Credentials - [Subscribers]', '', {
+      providerId: command.providerId,
+      _organization: command.organizationId,
+      oauthHandler: command.oauthHandler,
+      _subscriberId: foundSubscriber._id,
+    });
 
     return (await this.subscriberRepository.findBySubscriberId(
       command.environmentId,
-      command.subscriberId,
+      command.subscriberId
     )) as SubscriberEntity;
   }
 
@@ -107,7 +86,7 @@ export class UpdateSubscriberChannel {
     updatePayload: Partial<IChannelSettings>,
     foundIntegration,
     command: UpdateSubscriberChannelCommand,
-    foundSubscriber,
+    foundSubscriber
   ) {
     // eslint-disable-next-line no-param-reassign
     updatePayload._integrationId = foundIntegration._id;
@@ -127,7 +106,7 @@ export class UpdateSubscriberChannel {
         $push: {
           channels: updatePayload,
         },
-      },
+      }
     );
   }
 
@@ -136,12 +115,9 @@ export class UpdateSubscriberChannel {
     existingChannel: IChannelSettings,
     updatePayload: Partial<IChannelSettings>,
     foundSubscriber: SubscriberEntity,
-    isIdempotentOperation: boolean,
+    isIdempotentOperation: boolean
   ) {
-    const equal = isEqual(
-      existingChannel.credentials,
-      updatePayload.credentials,
-    );
+    const equal = isEqual(existingChannel.credentials, updatePayload.credentials);
 
     if (equal) {
       return;
@@ -151,14 +127,11 @@ export class UpdateSubscriberChannel {
 
     if (updatePayload.credentials?.deviceTokens) {
       if (isIdempotentOperation) {
-        deviceTokens = this.unionDeviceTokens(
-          [],
-          updatePayload.credentials.deviceTokens,
-        );
+        deviceTokens = this.unionDeviceTokens([], updatePayload.credentials.deviceTokens);
       } else {
         deviceTokens = this.unionDeviceTokens(
           existingChannel.credentials.deviceTokens ?? [],
-          updatePayload.credentials.deviceTokens,
+          updatePayload.credentials.deviceTokens
         );
       }
     }
@@ -170,11 +143,7 @@ export class UpdateSubscriberChannel {
       }),
     });
 
-    const mappedChannel: IChannelSettings = this.mapChannel(
-      updatePayload,
-      existingChannel,
-      deviceTokens,
-    );
+    const mappedChannel: IChannelSettings = this.mapChannel(updatePayload, existingChannel, deviceTokens);
 
     await this.subscriberRepository.update(
       {
@@ -182,18 +151,17 @@ export class UpdateSubscriberChannel {
         _id: foundSubscriber,
         'channels._integrationId': existingChannel._integrationId,
       },
-      { $set: { 'channels.$': mappedChannel } },
+      { $set: { 'channels.$': mappedChannel } }
     );
   }
 
   private mapChannel(
     updatePayload: Partial<IChannelSettings>,
     existingChannel: IChannelSettings,
-    deviceTokens: string[],
+    deviceTokens: string[]
   ): IChannelSettings {
     return {
-      _integrationId:
-        updatePayload._integrationId || existingChannel._integrationId,
+      _integrationId: updatePayload._integrationId || existingChannel._integrationId,
       providerId: updatePayload.providerId || existingChannel.providerId,
       credentials: {
         ...existingChannel.credentials,
@@ -203,10 +171,7 @@ export class UpdateSubscriberChannel {
     };
   }
 
-  private unionDeviceTokens(
-    existingDeviceTokens: string[],
-    updateDeviceTokens: string[],
-  ): string[] {
+  private unionDeviceTokens(existingDeviceTokens: string[], updateDeviceTokens: string[]): string[] {
     // in order to not have breaking change we will support [] update
     if (updateDeviceTokens?.length === 0) return [];
 
@@ -222,13 +187,8 @@ export class UpdateSubscriberChannel {
       if (command.credentials.webhookUrl != null && updatePayload.credentials) {
         updatePayload.credentials.webhookUrl = command.credentials.webhookUrl;
       }
-      if (
-        command.credentials.deviceTokens != null &&
-        updatePayload.credentials
-      ) {
-        updatePayload.credentials.deviceTokens = [
-          ...new Set([...command.credentials.deviceTokens]),
-        ];
+      if (command.credentials.deviceTokens != null && updatePayload.credentials) {
+        updatePayload.credentials.deviceTokens = [...new Set([...command.credentials.deviceTokens])];
       }
       if (command.credentials.channel != null && updatePayload.credentials) {
         updatePayload.credentials.channel = command.credentials.channel;

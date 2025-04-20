@@ -5,6 +5,7 @@ import {
   DeleteWorkflowUseCase,
   GetPreferences,
   GetWorkflowByIdsUseCase,
+  GetWorkflowWithPreferencesUseCase,
   ResourceValidatorService,
   TierRestrictionsValidateUsecase,
   UpdateWorkflow,
@@ -20,20 +21,20 @@ import { IntegrationModule } from '../integrations/integrations.module';
 import { MessageTemplateModule } from '../message-template/message-template.module';
 import { SharedModule } from '../shared/shared.module';
 import {
-  BuildVariableSchemaUsecase,
   BuildStepDataUsecase,
+  BuildVariableSchemaUsecase,
   BuildWorkflowTestDataUseCase,
-  GeneratePreviewUsecase,
+  PreviewUsecase,
   GetWorkflowUseCase,
   ListWorkflowsUseCase,
   SyncToEnvironmentUseCase,
   UpsertWorkflowUseCase,
 } from './usecases';
 import { PatchWorkflowUsecase } from './usecases/patch-workflow';
-import { PatchStepUsecase } from './usecases/patch-step-data/patch-step.usecase';
-import { ExtractVariables } from './usecases/extract-variables/extract-variables.usecase';
+import { CreateVariablesObject } from './usecases/create-variables-object/create-variables-object.usecase';
 import { BuildStepIssuesUsecase } from './usecases/build-step-issues/build-step-issues.usecase';
 import { WorkflowController } from './workflow.controller';
+import { DuplicateWorkflowUseCase } from './usecases/duplicate-workflow/duplicate-workflow.usecase';
 
 const DAL_REPOSITORIES = [CommunityOrganizationRepository];
 
@@ -52,18 +53,19 @@ const DAL_REPOSITORIES = [CommunityOrganizationRepository];
     UpsertControlValuesUseCase,
     GetPreferences,
     GetWorkflowByIdsUseCase,
+    GetWorkflowWithPreferencesUseCase,
     SyncToEnvironmentUseCase,
     BuildStepDataUsecase,
-    GeneratePreviewUsecase,
+    PreviewUsecase,
     BuildWorkflowTestDataUseCase,
     GetWorkflowUseCase,
+    DuplicateWorkflowUseCase,
     BuildVariableSchemaUsecase,
-    PatchStepUsecase,
     PatchWorkflowUsecase,
-    TierRestrictionsValidateUsecase,
-    ExtractVariables,
+    CreateVariablesObject,
     BuildStepIssuesUsecase,
     ResourceValidatorService,
+    TierRestrictionsValidateUsecase,
   ],
 })
 export class WorkflowModule implements NestModule {

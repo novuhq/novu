@@ -24,8 +24,9 @@ import { GetGroupedBlueprints, POPULAR_TEMPLATES_ID_LIST } from '../usecases/get
 // eslint-disable-next-line import/no-namespace
 import * as blueprintStaticModule from '../usecases/get-grouped-blueprints/consts';
 import { CreateWorkflowRequestDto } from '../../workflows-v1/dto';
+import { getLogger } from '../../shared/services/logger.service';
 
-describe('Get grouped notification template blueprints - /blueprints/group-by-category (GET) #novu-v1', async () => {
+describe('Get grouped notification template blueprints - /blueprints/group-by-category (GET) #novu-v0', async () => {
   let session: UserSession;
   const notificationTemplateRepository: NotificationTemplateRepository = new NotificationTemplateRepository();
   const environmentRepository: EnvironmentRepository = new EnvironmentRepository();
@@ -43,7 +44,10 @@ describe('Get grouped notification template blueprints - /blueprints/group-by-ca
     session = new UserSession();
     await session.initialize();
 
-    getGroupedBlueprints = new GetGroupedBlueprints(new NotificationTemplateRepository());
+    getGroupedBlueprints = new GetGroupedBlueprints(
+      new NotificationTemplateRepository(),
+      getLogger('GetGroupedBlueprintsE2E')
+    );
     indexModuleStub = sinon.stub(blueprintStaticModule, 'POPULAR_TEMPLATES_ID_LIST');
   });
 

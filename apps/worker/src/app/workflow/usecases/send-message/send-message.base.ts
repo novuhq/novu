@@ -22,10 +22,10 @@ import {
   GetNovuProviderCredentials,
   SelectVariantCommand,
   SelectVariant,
-  ExecutionLogRoute,
-  ExecutionLogRouteCommand,
+  CreateExecutionDetails,
+  CreateExecutionDetailsCommand,
 } from '@novu/application-generic';
-import { SendMessageType } from './send-message-type.usecase';
+import { SendMessageType, SendMessageResult } from './send-message-type.usecase';
 import { PlatformException } from '../../../shared/utils';
 import { SendMessageCommand } from './send-message.command';
 
@@ -33,14 +33,14 @@ export abstract class SendMessageBase extends SendMessageType {
   abstract readonly channelType: ChannelTypeEnum;
   protected constructor(
     protected messageRepository: MessageRepository,
-    protected executionLogRoute: ExecutionLogRoute,
+    protected createExecutionDetails: CreateExecutionDetails,
     protected subscriberRepository: SubscriberRepository,
     protected selectIntegration: SelectIntegration,
     protected getNovuProviderCredentials: GetNovuProviderCredentials,
     protected selectVariant: SelectVariant,
     protected moduleRef: ModuleRef
   ) {
-    super(messageRepository, executionLogRoute);
+    super(messageRepository, createExecutionDetails);
   }
 
   protected async getIntegration(params: {
@@ -84,10 +84,10 @@ export abstract class SendMessageBase extends SendMessageType {
     return { ...payload, ...rest };
   }
 
-  protected async sendErrorHandlebars(job: JobEntity, error: string) {
-    await this.executionLogRoute.execute(
-      ExecutionLogRouteCommand.create({
-        ...ExecutionLogRouteCommand.getDetailsFromJob(job),
+  protected async sendErrorHandlebars(job: JobEntity, error: string): Promise<SendMessageResult> {
+    await this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
         detail: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.FAILED,
@@ -96,12 +96,17 @@ export abstract class SendMessageBase extends SendMessageType {
         raw: JSON.stringify({ error }),
       })
     );
+
+    return {
+      status: 'failed',
+      reason: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
+    };
   }
 
   protected async sendSelectedIntegrationExecution(job: JobEntity, integration: IntegrationEntity) {
-    await this.executionLogRoute.execute(
-      ExecutionLogRouteCommand.create({
-        ...ExecutionLogRouteCommand.getDetailsFromJob(job),
+    await this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
         detail: DetailEnum.INTEGRATION_INSTANCE_SELECTED,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.PENDING,
@@ -131,9 +136,9 @@ export abstract class SendMessageBase extends SendMessageType {
     );
 
     if (conditions) {
-      await this.executionLogRoute.execute(
-        ExecutionLogRouteCommand.create({
-          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           detail: DetailEnum.VARIANT_CHOSEN,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.PENDING,

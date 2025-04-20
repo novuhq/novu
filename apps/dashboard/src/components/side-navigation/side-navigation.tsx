@@ -1,12 +1,9 @@
-import { Badge } from '@/components/primitives/badge';
 import { SidebarContent } from '@/components/side-navigation/sidebar';
-import { SubscribersStayTunedModal } from '@/components/side-navigation/subscribers-stay-tuned-modal';
 import { useEnvironment } from '@/context/environment/hooks';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { ApiServiceLevelEnum } from '@novu/shared';
 import * as Sentry from '@sentry/react';
 import { ReactNode } from 'react';
 import {
@@ -27,6 +24,7 @@ import { FreeTrialCard } from './free-trial-card';
 import { GettingStartedMenuItem } from './getting-started-menu-item';
 import { NavigationLink } from './navigation-link';
 import { OrganizationDropdown } from './organization-dropdown';
+import { UsageCard } from './usage-card';
 import { IS_SELF_HOSTED } from '../../config';
 
 const NavigationGroup = ({ children, label }: { children: ReactNode; label?: string }) => {
@@ -40,8 +38,8 @@ const NavigationGroup = ({ children, label }: { children: ReactNode; label?: str
 
 export const SideNavigation = () => {
   const { subscription, daysLeft, isLoading: isLoadingSubscription } = useFetchSubscription();
-  const isFreeTrialActive = subscription?.trial.isActive;
-  const isSubscribersPageEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_SUBSCRIBERS_PAGE_ENABLED);
+  const isTrialActive = subscription?.trial.isActive;
+  const isFreeTier = subscription?.apiServiceLevel === ApiServiceLevelEnum.FREE;
 
   const { currentEnvironment, environments, switchEnvironment } = useEnvironment();
   const track = useTelemetry();
@@ -61,6 +59,7 @@ export const SideNavigation = () => {
       console.error('Error opening plain chat:', error);
     }
   };
+
   return (
     <aside className="bg-neutral-alpha-50 relative flex h-full w-[275px] flex-shrink-0 flex-col">
       <SidebarContent className="h-full">
@@ -77,26 +76,10 @@ export const SideNavigation = () => {
                 <RiRouteFill className="size-4" />
                 <span>Workflows</span>
               </NavigationLink>
-              {isSubscribersPageEnabled ? (
-                <NavigationLink
-                  to={buildRoute(ROUTES.SUBSCRIBERS, { environmentSlug: currentEnvironment?.slug ?? '' })}
-                >
-                  <RiGroup2Line className="size-4" />
-                  <span>Subscribers</span>
-                  <Badge color="orange" size="sm" variant="lighter">
-                    New
-                  </Badge>
-                </NavigationLink>
-              ) : (
-                <SubscribersStayTunedModal>
-                  <span onClick={() => track(TelemetryEvent.SUBSCRIBERS_LINK_CLICKED)}>
-                    <NavigationLink>
-                      <RiGroup2Line className="size-4" />
-                      <span>Subscribers</span>
-                    </NavigationLink>
-                  </span>
-                </SubscribersStayTunedModal>
-              )}
+              <NavigationLink to={buildRoute(ROUTES.SUBSCRIBERS, { environmentSlug: currentEnvironment?.slug ?? '' })}>
+                <RiGroup2Line className="size-4" />
+                <span>Subscribers</span>
+              </NavigationLink>
             </NavigationGroup>
             <NavigationGroup label="Monitor">
               <NavigationLink
@@ -129,12 +112,15 @@ export const SideNavigation = () => {
               </NavigationGroup>
             ) : null}
           </div>
+
           {!IS_SELF_HOSTED && (
             <div className="relative mt-auto gap-8 pt-4">
-              {!isFreeTrialActive && !isLoadingSubscription && !IS_SELF_HOSTED && <ChangelogStack />}{' '}
-              {isFreeTrialActive && !isLoadingSubscription && (
+              {!isTrialActive && !isLoadingSubscription && !IS_SELF_HOSTED && <ChangelogStack />}
+              {isTrialActive && !isLoadingSubscription && (
                 <FreeTrialCard subscription={subscription} daysLeft={daysLeft} />
               )}
+
+              {!isTrialActive && isFreeTier && !isLoadingSubscription && <UsageCard subscription={subscription} />}
               <NavigationGroup>
                 <button onClick={showPlainLiveChat} className="w-full">
                   <NavigationLink>
@@ -146,7 +132,6 @@ export const SideNavigation = () => {
                   <RiUserAddLine className="size-4" />
                   <span>Invite teammates</span>
                 </NavigationLink>
-
                 <GettingStartedMenuItem />
               </NavigationGroup>
             </div>

@@ -1,6 +1,6 @@
 {
   "name": "@novu/stateless",
-  "version": "2.6.5",
+  "version": "2.6.6",
   "description": "Notification Management Framework",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",

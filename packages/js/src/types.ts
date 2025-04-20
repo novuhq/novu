@@ -5,6 +5,17 @@ export type { Notification } from './notifications';
 export type { Preference } from './preferences/preference';
 export type { NovuError } from './utils/errors';
 
+declare global {
+  /**
+   * If you want to provide custom types for the notification.data object,
+   * simply redeclare this rule in the global namespace.
+   * Every notification object will use the provided type.
+   */
+  interface NotificationData {
+    [k: string]: unknown;
+  }
+}
+
 export enum NotificationStatus {
   READ = 'read',
   SEEN = 'seen',
@@ -22,10 +33,6 @@ export enum NotificationActionStatus {
   DONE = 'done',
 }
 
-export enum CtaType {
-  REDIRECT = 'redirect',
-}
-
 export enum PreferenceLevel {
   GLOBAL = 'global',
   TEMPLATE = 'template',
@@ -39,42 +46,17 @@ export enum ChannelType {
   PUSH = 'push',
 }
 
-export enum PreferenceOverrideSource {
-  SUBSCRIBER = 'subscriber',
-  TEMPLATE = 'template',
-  WORKFLOW_OVERRIDE = 'workflowOverride',
-}
-
 export enum WebSocketEvent {
   RECEIVED = 'notification_received',
   UNREAD = 'unread_count_changed',
   UNSEEN = 'unseen_count_changed',
 }
 
-export enum ActionTypeEnum {
-  PRIMARY = 'primary',
-  SECONDARY = 'secondary',
-}
-
 export type Session = {
   token: string;
   totalUnreadCount: number;
   removeNovuBranding: boolean;
-};
-
-export type MessageButton = {
-  type: NotificationButton;
-  content: string;
-  resultContent?: string;
-};
-
-export type MessageAction = {
-  status?: NotificationActionStatus;
-  buttons?: MessageButton[];
-  result: {
-    payload?: Record<string, unknown>;
-    type?: NotificationButton;
-  };
+  isDevelopmentMode: boolean;
 };
 
 export type Subscriber = {
@@ -90,10 +72,23 @@ export type Redirect = {
   target?: '_self' | '_blank' | '_parent' | '_top' | '_unfencedTop';
 };
 
+export enum ActionTypeEnum {
+  PRIMARY = 'primary',
+  SECONDARY = 'secondary',
+}
+
 export type Action = {
   label: string;
   isCompleted: boolean;
   redirect?: Redirect;
+};
+
+export type Workflow = {
+  id: string;
+  identifier: string;
+  name: string;
+  critical: boolean;
+  tags?: string[];
 };
 
 export type InboxNotification = {
@@ -111,22 +106,15 @@ export type InboxNotification = {
   secondaryAction?: Action;
   channelType: ChannelType;
   tags?: string[];
-  data?: Record<string, unknown>;
+  data?: NotificationData;
   redirect?: Redirect;
+  workflow?: Workflow;
 };
 
 export type NotificationFilter = {
   tags?: string[];
   read?: boolean;
   archived?: boolean;
-};
-
-export type Workflow = {
-  id: string;
-  identifier: string;
-  name: string;
-  critical: boolean;
-  tags?: string[];
 };
 
 export type ChannelPreference = {
@@ -176,14 +164,12 @@ export type NovuOptions = {
   applicationIdentifier: string;
   subscriberId: string;
   subscriberHash?: string;
-  // @deprecated use apiUrl instead
+  /** @deprecated Use apiUrl instead  */
   backendUrl?: string;
   apiUrl?: string;
   socketUrl?: string;
   useCache?: boolean;
-  /**
-   * @internal Should be used internally
-   */
+  /** @internal Should be used internally for testing purposes */
   __userAgent?: string;
 };
 

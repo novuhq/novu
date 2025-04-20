@@ -145,7 +145,10 @@ function ColorPickerSection({ form }: { form: UseFormReturn<InboxPlaygroundFormD
         <Info className="text-foreground-400 mt-0.5 h-4 w-4" />
         <p className="text-foreground-400 leading-[21px]">
           The Inbox is completely customizable, using the{' '}
-          <a href="https://docs.novu.co/inbox/react/styling#appearance-prop" className="cursor-pointer underline">
+          <a
+            href="https://docs.novu.co/platform/inbox/react/styling#appearance-prop"
+            className="cursor-pointer underline"
+          >
             appearance prop
           </a>
         </p>

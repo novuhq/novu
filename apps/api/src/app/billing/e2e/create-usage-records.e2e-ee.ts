@@ -1,10 +1,11 @@
 /* eslint-disable global-require */
-import { Logger } from '@nestjs/common';
 import sinon from 'sinon';
 import { expect } from 'chai';
-import { ApiServiceLevelEnum } from '@novu/shared';
+import { ApiServiceLevelEnum, StripeBillingIntervalEnum } from '@novu/shared';
 // eslint-disable-next-line no-restricted-imports
-import { StripeBillingIntervalEnum, StripeUsageTypeEnum } from '@novu/ee-billing/src/stripe/types';
+import { StripeUsageTypeEnum } from '@novu/ee-billing/src/stripe/types';
+// eslint-disable-next-line no-restricted-imports
+import { Logger } from '@nestjs/common';
 
 const mockMonthlyBusinessSubscription = {
   id: 'subscription_id',
@@ -93,7 +94,7 @@ describe('CreateUsageRecords #novu-v2', () => {
   };
 
   it('should fetch the platform usage records with usage dates between the start and end date of the previous day', async () => {
-    const mockDate = new Date('2021-01-15T12:00:00Z');
+    const mockDate = new Date('2021-01-15T00:00:00Z');
     const useCase = createUseCase();
 
     await useCase.execute(
@@ -108,6 +109,7 @@ describe('CreateUsageRecords #novu-v2', () => {
     expect(getPlatformNotificationUsageStub.lastCall.args).to.deep.equal([
       {
         startDate: expectedStartDate,
+        skipCache: true,
         endDate: expectedEndDate,
       },
     ]);

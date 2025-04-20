@@ -2,7 +2,17 @@ import { expect } from 'chai';
 
 import { EnvironmentRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
-import { NOVU_ENCRYPTION_SUB_MASK } from '@novu/shared';
+import { ApiServiceLevelEnum, NOVU_ENCRYPTION_SUB_MASK } from '@novu/shared';
+
+async function createEnv(name: string, session) {
+  const demoEnvironment = {
+    name,
+    color: '#3A7F5C',
+  };
+  const { body } = await session.testAgent.post('/v1/environments').send(demoEnvironment);
+
+  return { demoEnvironment, body };
+}
 
 describe('Create Environment - /environments (POST)', async () => {
   let session: UserSession;
@@ -12,11 +22,13 @@ describe('Create Environment - /environments (POST)', async () => {
     await session.initialize({
       noEnvironment: true,
     });
+    session.updateOrganizationServiceLevel(ApiServiceLevelEnum.BUSINESS);
   });
 
   it('should create environment entity correctly', async () => {
     const demoEnvironment = {
       name: 'Hello App',
+      color: '#3A7F5C',
     };
     const { body } = await session.testAgent.post('/v1/environments').send(demoEnvironment).expect(201);
 

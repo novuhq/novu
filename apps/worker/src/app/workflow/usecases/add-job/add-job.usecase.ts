@@ -10,6 +10,7 @@ import {
   DigestTypeEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
+  IDigestBaseMetadata,
   IDigestRegularMetadata,
   IDigestTimedMetadata,
   IWorkflowStepMetadata,
@@ -20,22 +21,22 @@ import {
   ComputeJobWaitDurationService,
   ConditionsFilter,
   ConditionsFilterCommand,
+  CreateExecutionDetails,
+  CreateExecutionDetailsCommand,
   DetailEnum,
-  ExecutionLogRoute,
-  ExecutionLogRouteCommand,
+  getDigestType,
   IFilterVariables,
   InstrumentUsecase,
-  JobsOptions,
-  LogDecorator,
-  StandardQueueService,
-  NormalizeVariablesCommand,
-  NormalizeVariables,
-  getDigestType,
-  isTimedDigestOutput,
   isLookBackDigestOutput,
   isRegularDigestOutput,
-  TierRestrictionsValidateUsecase,
+  isTimedDigestOutput,
+  JobsOptions,
+  LogDecorator,
+  NormalizeVariables,
+  NormalizeVariablesCommand,
+  StandardQueueService,
   TierRestrictionsValidateCommand,
+  TierRestrictionsValidateUsecase,
 } from '@novu/application-generic';
 
 import { AddDelayJob } from './add-delay-job.usecase';
@@ -57,8 +58,8 @@ export class AddJob {
     private jobRepository: JobRepository,
     @Inject(forwardRef(() => StandardQueueService))
     private standardQueueService: StandardQueueService,
-    @Inject(forwardRef(() => ExecutionLogRoute))
-    private executionLogRoute: ExecutionLogRoute,
+    @Inject(forwardRef(() => CreateExecutionDetails))
+    private createExecutionDetails: CreateExecutionDetails,
     private mergeOrCreateDigestUsecase: MergeOrCreateDigest,
     private addDelayJob: AddDelayJob,
     @Inject(forwardRef(() => ComputeJobWaitDurationService))
@@ -91,9 +92,9 @@ export class AddJob {
       await this.executeNoneDeferredJob(command);
     }
 
-    await this.executionLogRoute.execute(
-      ExecutionLogRouteCommand.create({
-        ...ExecutionLogRouteCommand.getDetailsFromJob(job),
+    await this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
         detail: DetailEnum.STEP_QUEUED,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.PENDING,
@@ -167,12 +168,21 @@ export class AddJob {
 
     const delay = this.getExecutionDelayAmount(filtered, digestAmount, delayAmount);
 
-    await this.validateDeferDuration(delay, job, command, digestResult?.cronExpression);
+    const valid = await this.validateDeferDuration(delay, job, command, digestResult?.cronExpression);
+
+    if (!valid) {
+      throw new Error('Defer duration limit exceeded');
+    }
 
     await this.queueJob(job, delay);
   }
 
-  private async validateDeferDuration(delay: number, job: JobEntity, command: AddJobCommand, cronExpression?: string) {
+  private async validateDeferDuration(
+    delay: number,
+    job: JobEntity,
+    command: AddJobCommand,
+    cronExpression?: string
+  ): Promise<boolean> {
     const errors = await this.tierRestrictionsValidateUsecase.execute(
       TierRestrictionsValidateCommand.create({
         deferDurationMs: delay,
@@ -186,9 +196,9 @@ export class AddJob {
       const uniqueErrors = _.uniq(errors.map((error) => error.message));
       Logger.warn({ errors, jobId: job._id }, uniqueErrors, LOG_CONTEXT);
 
-      await this.executionLogRoute.execute(
-        ExecutionLogRouteCommand.create({
-          ...ExecutionLogRouteCommand.getDetailsFromJob(job),
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
           detail: DetailEnum.DEFER_DURATION_LIMIT_EXCEEDED,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
@@ -197,7 +207,11 @@ export class AddJob {
           raw: JSON.stringify({ errors: uniqueErrors }),
         })
       );
+
+      return false;
     }
+
+    return true;
   }
 
   private async executeNoneDeferredJob(command: AddJobCommand): Promise<void> {
@@ -257,9 +271,10 @@ export class AddJob {
 
     return response;
   }
-
   private async updateMetadata(response: ExecuteOutput, command: AddJobCommand) {
     let metadata = {} as IWorkflowStepMetadata;
+    const digest = command.job.digest as IDigestBaseMetadata;
+
     const outputs = response.outputs as DigestOutput;
     // digest value is pre-computed by framework and passed as digestKey
     const outputDigestValue = outputs?.digestKey;
@@ -268,10 +283,10 @@ export class AddJob {
     if (isTimedDigestOutput(outputs)) {
       metadata = {
         type: DigestTypeEnum.TIMED,
-        digestValue: outputDigestValue,
+        digestValue: outputDigestValue || 'No-Value-Provided',
+        digestKey: digest.digestKey || 'No-Key-Provided',
         timed: { cronExpression: outputs?.cron },
       } as IDigestTimedMetadata;
-
       await this.jobRepository.updateOne(
         {
           _id: command.job._id,
@@ -281,6 +296,7 @@ export class AddJob {
           $set: {
             'digest.type': metadata.type,
             'digest.digestValue': metadata.digestValue,
+            'digest.digestKey': metadata.digestKey,
             'digest.amount': metadata.amount,
             'digest.unit': metadata.unit,
             'digest.timed.cronExpression': metadata.timed?.cronExpression,
@@ -293,7 +309,8 @@ export class AddJob {
       metadata = {
         type: digestType,
         amount: outputs?.amount,
-        digestValue: outputDigestValue,
+        digestValue: outputDigestValue || 'No-Value-Provided',
+        digestKey: digest.digestKey || 'No-Key-Provided',
         unit: outputs.unit ? castUnitToDigestUnitEnum(outputs?.unit) : undefined,
         backoff: digestType === DigestTypeEnum.BACKOFF,
         backoffAmount: outputs.lookBackWindow?.amount,
@@ -309,6 +326,7 @@ export class AddJob {
           $set: {
             'digest.type': metadata.type,
             'digest.digestValue': metadata.digestValue,
+            'digest.digestKey': metadata.digestKey,
             'digest.amount': metadata.amount,
             'digest.unit': metadata.unit,
             'digest.backoff': metadata.backoff,
@@ -323,7 +341,8 @@ export class AddJob {
       metadata = {
         type: digestType,
         amount: outputs?.amount,
-        digestValue: outputDigestValue,
+        digestKey: digest.digestKey || 'No-Key-Provided',
+        digestValue: outputDigestValue || 'No-Value-Provided',
         unit: outputs.unit ? castUnitToDigestUnitEnum(outputs?.unit) : undefined,
       } as IDigestRegularMetadata;
 
@@ -335,6 +354,7 @@ export class AddJob {
         {
           $set: {
             'digest.type': metadata.type,
+            'digest.digestKey': metadata.digestKey,
             'digest.digestValue': metadata.digestValue,
             'digest.amount': metadata.amount,
             'digest.unit': metadata.unit,
@@ -485,9 +505,9 @@ export class AddJob {
 
       Logger.verbose(logMessage, LOG_CONTEXT);
 
-      await this.executionLogRoute.execute(
-        ExecutionLogRouteCommand.create({
-          ...ExecutionLogRouteCommand.getDetailsFromJob(job),
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
           detail: job.type === StepTypeEnum.DELAY ? DetailEnum.STEP_DELAYED : DetailEnum.STEP_DIGESTED,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.PENDING,

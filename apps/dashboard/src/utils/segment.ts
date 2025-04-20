@@ -6,7 +6,9 @@ import * as mixpanel from 'mixpanel-browser';
 
 export class SegmentService {
   private _segment: AnalyticsBrowser | null = null;
+
   private _segmentEnabled: boolean;
+
   public _mixpanelEnabled: boolean;
 
   constructor() {
@@ -36,6 +38,7 @@ export class SegmentService {
       if (!this._mixpanelEnabled) {
         return;
       }
+
       this._segment.addSourceMiddleware(({ payload, next }) => {
         try {
           if (payload.type() === 'track' || payload.type() === 'page') {
@@ -49,13 +52,16 @@ export class SegmentService {
               ...sessionReplayProperties,
             };
           }
+
           const { userId } = payload.obj;
+
           if (payload.type() === 'identify' && userId) {
             mixpanel.identify(userId);
           }
         } catch (e) {
           console.error(e);
         }
+
         next(payload);
       });
     }

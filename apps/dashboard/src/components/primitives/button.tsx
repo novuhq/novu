@@ -386,6 +386,7 @@ function ButtonIcon<T extends React.ElementType>({
 
   return <Component className={icon({ class: className })} {...rest} />;
 }
+
 ButtonIcon.displayName = BUTTON_ICON_NAME;
 
 export { Button, ButtonIcon, ButtonRoot };

@@ -282,7 +282,7 @@ export class WidgetsController {
   async removeMessage(
     @SubscriberSession() subscriberSession: SubscriberEntity,
     @Param('messageId') messageId: string
-  ): Promise<MessageEntity> {
+  ): Promise<void> {
     if (!messageId) throw new BadRequestException('messageId is required');
 
     const command = RemoveMessageCommand.create({
@@ -473,6 +473,8 @@ export class WidgetsController {
         _id: result.workflow.id,
         name: result.workflow.name,
         critical: result.workflow.critical,
+        tags: result.workflow.tags,
+        data: result.workflow.data,
         triggers: [
           {
             identifier: result.workflow.identifier,

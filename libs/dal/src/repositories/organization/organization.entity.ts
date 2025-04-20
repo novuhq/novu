@@ -48,7 +48,7 @@ export interface IPartnerConfiguration {
   accessToken: string;
   configurationId: string;
   projectIds?: string[];
-  teamId?: string;
+  teamId: string;
   partnerType: PartnerTypeEnum;
 }
 

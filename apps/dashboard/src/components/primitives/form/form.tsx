@@ -7,8 +7,9 @@ import { Input } from '@/components/primitives/input';
 import { Label, LabelAsterisk, LabelSub } from '@/components/primitives/label';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { cn } from '@/utils/ui';
-import { BsFillInfoCircleFill } from 'react-icons/bs';
-import { RiErrorWarningFill, RiInformationFill } from 'react-icons/ri';
+import { AnimatePresence, motion } from 'motion/react';
+import { IconType } from 'react-icons';
+import { RiErrorWarningFill, RiInformationLine, RiQuestionLine } from 'react-icons/ri';
 import { Hint, HintIcon } from '../hint';
 import { FormFieldContext, FormItemContext, useFormField } from './form-context';
 
@@ -46,7 +47,7 @@ const FormItem = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivEl
 
     return (
       <FormItemContext.Provider value={{ id }}>
-        <div ref={ref} className={cn('space-y-1', className)} {...props} />
+        <div ref={ref} className={cn('space-y-1.5', className)} {...props} />
       </FormItemContext.Provider>
     );
   }
@@ -59,7 +60,7 @@ const FormLabel = React.forwardRef<
     optional?: boolean;
     required?: boolean;
     hint?: string;
-    tooltip?: string;
+    tooltip?: React.ReactNode;
   }
 >(({ className, optional, required, tooltip, hint, children, ...props }, ref) => {
   const { formItemId } = useFormField();
@@ -81,7 +82,7 @@ const FormLabel = React.forwardRef<
               e.stopPropagation();
             }}
           >
-            <BsFillInfoCircleFill className="text-foreground-300 ml-1 inline size-3" />
+            <RiQuestionLine className="text-foreground-400 ml-1 inline size-3" />
           </TooltipTrigger>
           <TooltipContent className="max-w-56 whitespace-pre-wrap">{tooltip}</TooltipContent>
         </Tooltip>
@@ -108,31 +109,46 @@ const FormControl = React.forwardRef<React.ElementRef<typeof Slot>, React.Compon
 );
 FormControl.displayName = 'FormControl';
 
-const FormMessagePure = React.forwardRef<
-  HTMLParagraphElement,
-  React.HTMLAttributes<HTMLParagraphElement> & { error?: string }
->(({ className, children, error, id, ...props }, _ref) => {
-  const body = error ? error : children;
+type FormMessagePureProps = React.HTMLAttributes<HTMLParagraphElement> & { hasError?: boolean; icon?: IconType };
 
-  if (!body) {
-    return null;
+const FormMessagePure = React.forwardRef<HTMLParagraphElement, FormMessagePureProps>(
+  ({ className, children, hasError = false, icon, ...props }, _ref) => {
+    return (
+      <AnimatePresence mode="wait">
+        {children && (
+          <motion.div
+            key={hasError ? 'error' : 'empty'}
+            initial={{ opacity: 0, y: -5, height: 0 }}
+            animate={{ opacity: 1, y: 0, height: 'auto' }}
+            exit={{ opacity: 0, y: -5, height: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <Hint hasError={hasError} className={className} {...props}>
+              {icon && <HintIcon as={icon} />}
+              {children}
+            </Hint>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    );
   }
-
-  return (
-    <Hint hasError={!!error} {...props}>
-      <HintIcon as={error ? RiErrorWarningFill : RiInformationFill} />
-      {body}
-    </Hint>
-  );
-});
+);
 FormMessagePure.displayName = 'FormMessagePure';
 
-const FormMessage = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLParagraphElement>>((props, ref) => {
+const FormMessage = React.forwardRef<
+  HTMLParagraphElement,
+  React.HTMLAttributes<HTMLParagraphElement> & { suppressError?: boolean }
+>(({ children, suppressError, ...rest }, ref) => {
   const { error, formMessageId } = useFormField();
+  const content = !suppressError && error ? String(error.message) : children;
+  const icon = error ? RiErrorWarningFill : RiInformationLine;
 
-  return <FormMessagePure ref={ref} id={formMessageId} error={error ? String(error?.message) : undefined} {...props} />;
+  return (
+    <FormMessagePure ref={ref} id={formMessageId} hasError={!!error} icon={icon} {...rest}>
+      {content}
+    </FormMessagePure>
+  );
 });
-FormMessage.displayName = 'FormMessage';
 
 const FormTextInput = React.forwardRef<HTMLInputElement, React.ComponentPropsWithoutRef<typeof Input>>((props, ref) => {
   const { error } = useFormField();

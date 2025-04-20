@@ -47,6 +47,7 @@ export const DigestWindow = () => {
 
     // restore the preserved form values
     const preservedFormValues = preservedFormValuesByType[value];
+
     if (preservedFormValues) {
       setValue(AMOUNT_KEY, preservedFormValues['amount'], { shouldDirty: true });
       setValue(UNIT_KEY, preservedFormValues['unit'], { shouldDirty: true });
@@ -60,6 +61,7 @@ export const DigestWindow = () => {
       setValue(UNIT_KEY, TimeUnitEnum.SECONDS, { shouldDirty: true });
       setValue(CRON_KEY, undefined, { shouldDirty: true });
     }
+
     await trigger();
     saveForm();
   };
@@ -137,9 +139,16 @@ export const DigestWindow = () => {
           </div>
         </div>
       </Tabs>
-      <FormMessagePure
-        error={digestType === REGULAR_DIGEST_TYPE ? regularDigestError?.message : scheduledDigestError?.message}
-      />
+      {/* TODO: Use <FormMessage /> instead, see how we did it in <URLInput /> */}
+      {(regularDigestError || scheduledDigestError) && (
+        <FormMessagePure
+          hasError={
+            digestType === REGULAR_DIGEST_TYPE ? !!regularDigestError?.message : !!scheduledDigestError?.message
+          }
+        >
+          {digestType === REGULAR_DIGEST_TYPE ? regularDigestError?.message : scheduledDigestError?.message}
+        </FormMessagePure>
+      )}
     </div>
   );
 };

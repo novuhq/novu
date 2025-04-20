@@ -1,15 +1,16 @@
-import { useValueEditor, ValueEditorProps } from 'react-querybuilder';
 import { useFormContext } from 'react-hook-form';
+import { useValueEditor, ValueEditorProps } from 'react-querybuilder';
 
 import { InputRoot } from '@/components/primitives/input';
-import { LiquidVariable } from '@/utils/parseStepVariablesToLiquidVariables';
+import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
 import { ControlInput } from '../primitives/control-input/control-input';
 
 export const ValueEditor = (props: ValueEditorProps) => {
   const form = useFormContext();
   const queryPath = 'query.rules.' + props.path.join('.rules.') + '.value';
   const { error } = form.getFieldState(queryPath, form.formState);
-  const { variables = [] } = (props.context as { variables: LiquidVariable[] }) ?? {};
+  const { variables = [], isAllowedVariable } =
+    (props.context as { variables: LiquidVariable[]; isAllowedVariable: IsAllowedVariable }) ?? {};
   const { value, handleOnChange, operator, type } = props;
   const { valueAsArray, multiValueHandler } = useValueEditor(props);
 
@@ -28,6 +29,7 @@ export const ValueEditor = (props: ValueEditorProps) => {
             value={valueAsArray[i] ?? ''}
             onChange={(newValue) => multiValueHandler(newValue, i)}
             variables={variables}
+            isAllowedVariable={isAllowedVariable}
             size="2xs"
           />
         </InputRoot>
@@ -56,6 +58,7 @@ export const ValueEditor = (props: ValueEditorProps) => {
           value={value ?? ''}
           onChange={handleOnChange}
           variables={variables}
+          isAllowedVariable={isAllowedVariable}
           size="2xs"
         />
       </InputRoot>

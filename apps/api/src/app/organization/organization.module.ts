@@ -6,7 +6,6 @@ import {
   NestModule,
   RequestMethod,
   forwardRef,
-  Logger,
   ForwardReference,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
@@ -20,6 +19,9 @@ import { OrganizationController } from './organization.controller';
 import { USE_CASES } from './usecases';
 import { AuthModule } from '../auth/auth.module';
 import { EEOrganizationController } from './ee.organization.controller';
+import { getLogger } from '../shared/services/logger.service';
+
+const logger = getLogger('OrganizationModule');
 
 const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> => {
   const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];
@@ -30,7 +32,7 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
       }
     }
   } catch (e) {
-    Logger.error(e, `Unexpected error while importing enterprise modules`, 'EnterpriseImport');
+    logger.error(e, `Unexpected error while importing enterprise modules`);
   }
 
   return modules;

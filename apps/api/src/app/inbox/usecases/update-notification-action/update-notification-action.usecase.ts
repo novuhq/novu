@@ -1,9 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { AnalyticsService, buildFeedKey, InvalidateCacheService } from '@novu/application-generic';
 import { MessageEntity, MessageRepository } from '@novu/dal';
 import { ButtonTypeEnum } from '@novu/shared';
 
-import { ApiException } from '../../../shared/exceptions/api.exception';
 import { GetSubscriber } from '../../../subscribers/usecases/get-subscriber';
 import { AnalyticsEventsEnum } from '../../utils';
 import { mapToDto } from '../../utils/notification-mapper';
@@ -26,7 +25,7 @@ export class UpdateNotificationAction {
       subscriberId: command.subscriberId,
     });
     if (!subscriber) {
-      throw new ApiException(`Subscriber with id: ${command.subscriberId} is not found.`);
+      throw new BadRequestException(`Subscriber with id: ${command.subscriberId} is not found.`);
     }
 
     const message = await this.messageRepository.findOne({
@@ -43,7 +42,7 @@ export class UpdateNotificationAction {
     const primaryCta = message.cta.action?.buttons?.find((button) => button.type === ButtonTypeEnum.PRIMARY);
     const secondaryCta = message.cta.action?.buttons?.find((button) => button.type === ButtonTypeEnum.SECONDARY);
     if ((isUpdatingPrimaryCta && !primaryCta) || (isUpdatingSecondaryCta && !secondaryCta)) {
-      throw new ApiException(
+      throw new BadRequestException(
         `Could not perform action on the ${
           isUpdatingPrimaryCta && !primaryCta ? 'primary' : 'secondary'
         } button because it does not exist.`

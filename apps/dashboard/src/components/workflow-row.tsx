@@ -1,5 +1,4 @@
 import { PAUSE_MODAL_TITLE, PauseModalDescription } from '@/components/pause-workflow-dialog';
-import { Badge } from '@/components/primitives/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,6 +29,7 @@ import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { IEnvironment, WorkflowListResponseDto } from '@novu/shared';
 import { ComponentProps, useState } from 'react';
+import { CgBolt } from 'react-icons/cg';
 import { FaCode } from 'react-icons/fa6';
 import {
   RiDeleteBin2Line,
@@ -39,7 +39,10 @@ import {
   RiPauseCircleLine,
   RiPlayCircleLine,
   RiPulseFill,
+  RiRouteFill,
 } from 'react-icons/ri';
+
+import { FilesIcon } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { type ExternalToast } from 'sonner';
 import { ConfirmationModal } from './confirmation-modal';
@@ -81,6 +84,7 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
   const navigate = useNavigate();
   const { safeSync, isSyncable, tooltipContent, PromoteConfirmModal } = useSyncWorkflow(workflow);
   const isV1Workflow = workflow.origin === WorkflowOriginEnum.NOVU_CLOUD_V1;
+  const isDuplicable = workflow.origin === WorkflowOriginEnum.NOVU_CLOUD;
   const workflowLink = isV1Workflow
     ? buildRoute(`${LEGACY_DASHBOARD_URL}/workflows/edit/:workflowId`, {
         workflowId: workflow._id,
@@ -175,6 +179,7 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
       setTimeout(() => setIsPauseModalOpen(true), 0);
       return;
     }
+
     onPauseWorkflow();
   };
 
@@ -194,26 +199,59 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
   return (
     <>
       <TableRow key={workflow._id} className="group relative isolate cursor-pointer" onClick={handleRowClick}>
-        <PromoteConfirmModal />
-        <WorkflowLinkTableCell className="font-medium">
-          <div className="flex items-center gap-1">
-            {workflow.origin === WorkflowOriginEnum.EXTERNAL && (
-              <Badge color="yellow" size="sm" variant="lighter">
-                <FaCode className="size-3" />
-              </Badge>
-            )}
-            <TruncatedText className="max-w-[32ch]">{workflow.name}</TruncatedText>
-          </div>
-          <div className="flex items-center gap-1 transition-opacity duration-200">
-            <TruncatedText className="text-foreground-400 font-code block text-xs">{workflow.workflowId}</TruncatedText>
+        <WorkflowLinkTableCell className="flex items-center gap-2 font-medium">
+          {workflow.origin === WorkflowOriginEnum.EXTERNAL ? (
+            <Tooltip delayDuration={300}>
+              <TooltipTrigger>
+                <FaCode className="text-warning size-4" />
+              </TooltipTrigger>
+              <TooltipPortal>
+                <TooltipContent>
+                  <span className="font-medium">Code Workflow</span>
+                  <span className="text-foreground-400 block text-xs">Managed via your codebase</span>
+                </TooltipContent>
+              </TooltipPortal>
+            </Tooltip>
+          ) : workflow.origin === WorkflowOriginEnum.NOVU_CLOUD_V1 ? (
+            <Tooltip delayDuration={300}>
+              <TooltipTrigger>
+                <CgBolt className="text-feature size-4" />
+              </TooltipTrigger>
+              <TooltipPortal>
+                <TooltipContent>
+                  <span className="font-medium">Legacy Workflow</span>
+                  <span className="text-foreground-400 block text-xs">Opens in legacy dashboard</span>
+                </TooltipContent>
+              </TooltipPortal>
+            </Tooltip>
+          ) : (
+            <Tooltip delayDuration={300}>
+              <TooltipTrigger>
+                <RiRouteFill className="text-feature size-4" />
+              </TooltipTrigger>
+              <TooltipPortal>
+                <TooltipContent>
+                  <span className="font-medium">UI Workflow</span>
+                  <span className="text-foreground-400 block text-xs">Managed in Novu Dashboard</span>
+                </TooltipContent>
+              </TooltipPortal>
+            </Tooltip>
+          )}
+          <div>
+            <div className="flex items-center gap-1">
+              <TruncatedText className="max-w-[32ch]">{workflow.name}</TruncatedText>
+            </div>
+            <div className="flex items-center gap-1 transition-opacity duration-200">
+              <TruncatedText className="text-foreground-400 font-code block max-w-[40ch] text-xs">
+                {workflow.workflowId}
+              </TruncatedText>
 
-            <CopyButton
-              className="z-10 flex size-2 p-0 px-1 opacity-0 group-hover:opacity-100"
-              valueToCopy={workflow.workflowId}
-              size="2xs"
-              mode="ghost"
-              onClick={stopPropagation}
-            ></CopyButton>
+              <CopyButton
+                className="z-10 flex size-2 p-0 px-1 opacity-0 group-hover:opacity-100"
+                valueToCopy={workflow.workflowId}
+                size="2xs"
+              />
+            </div>
           </div>
         </WorkflowLinkTableCell>
         <WorkflowLinkTableCell className="min-w-[200px]">
@@ -231,18 +269,16 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
             {formatDateSimple(workflow.updatedAt)}
           </TimeDisplayHoverCard>
         </WorkflowLinkTableCell>
-        {/* <WorkflowLinkTableCell  className="text-foreground-600 text-sm font-medium">
-        {workflow.lastTriggeredAt ? (
-          <TimeDisplayHoverCard date={workflow.lastTriggeredAt}>
-            {formatDateSimple(workflow.lastTriggeredAt)}
-          </TimeDisplayHoverCard>
-        ) : null}
-      </WorkflowLinkTableCell> */}
 
         <WorkflowLinkTableCell className="w-1">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <CompactButton icon={RiMore2Fill} variant="ghost" className="z-10 h-8 w-8 p-0"></CompactButton>
+              <CompactButton
+                icon={RiMore2Fill}
+                variant="ghost"
+                className="z-10 h-8 w-8 p-0"
+                data-testid="workflow-actions-menu"
+              />
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56" onClick={stopPropagation}>
               <DropdownMenuGroup>
@@ -272,10 +308,43 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
                     View activity
                   </DropdownMenuItem>
                 </Link>
+                {isDuplicable ? (
+                  <Link
+                    to={buildRoute(ROUTES.WORKFLOWS_DUPLICATE, {
+                      environmentSlug: currentEnvironment?.slug ?? '',
+                      workflowId: workflow.workflowId,
+                    })}
+                  >
+                    <DropdownMenuItem className="cursor-pointer">
+                      <FilesIcon />
+                      Duplicate workflow
+                    </DropdownMenuItem>
+                  </Link>
+                ) : (
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <DropdownMenuItem className="cursor-not-allowed opacity-60">
+                        <FilesIcon />
+                        Duplicate workflow
+                      </DropdownMenuItem>
+                    </TooltipTrigger>
+                    <TooltipPortal>
+                      <TooltipContent>
+                        {workflow.origin === WorkflowOriginEnum.NOVU_CLOUD_V1
+                          ? 'V1 workflows cannot be duplicated using dashboard. Please visit the legacy portal.'
+                          : 'External workflows cannot be duplicated using dashboard.'}
+                      </TooltipContent>
+                    </TooltipPortal>
+                  </Tooltip>
+                )}
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
               <DropdownMenuGroup className="*:cursor-pointer">
-                <DropdownMenuItem onClick={handlePauseWorkflow} disabled={workflow.status === WorkflowStatusEnum.ERROR}>
+                <DropdownMenuItem
+                  onClick={handlePauseWorkflow}
+                  disabled={workflow.status === WorkflowStatusEnum.ERROR}
+                  data-testid={workflow.status === WorkflowStatusEnum.ACTIVE ? 'pause-workflow' : 'enable-workflow'}
+                >
                   {workflow.status === WorkflowStatusEnum.ACTIVE ? (
                     <>
                       <RiPauseCircleLine />
@@ -294,6 +363,7 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
                   onClick={() => {
                     setTimeout(() => setIsDeleteModalOpen(true), 0);
                   }}
+                  data-testid="delete-workflow"
                 >
                   <RiDeleteBin2Line />
                   Delete workflow
@@ -322,6 +392,7 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
         confirmButtonText="Proceed"
         isLoading={isPauseWorkflowPending}
       />
+      <PromoteConfirmModal />
     </>
   );
 };

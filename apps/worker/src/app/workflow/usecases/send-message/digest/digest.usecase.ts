@@ -18,8 +18,8 @@ import {
 } from '@novu/shared';
 import {
   DetailEnum,
-  ExecutionLogRoute,
-  ExecutionLogRouteCommand,
+  CreateExecutionDetails,
+  CreateExecutionDetailsCommand,
   FeatureFlagsService,
 } from '@novu/application-generic';
 
@@ -29,7 +29,7 @@ import { GetDigestEventsBackoff } from './get-digest-events-backoff.usecase';
 import { PlatformException } from '../../../../shared/utils';
 
 import { SendMessageCommand } from '../send-message.command';
-import { SendMessageType } from '../send-message-type.usecase';
+import { SendMessageResult, SendMessageType } from '../send-message-type.usecase';
 import { DigestEventsCommand } from './digest-events.command';
 
 const LOG_CONTEXT = 'Digest';
@@ -38,16 +38,16 @@ const LOG_CONTEXT = 'Digest';
 export class Digest extends SendMessageType {
   constructor(
     protected messageRepository: MessageRepository,
-    protected executionLogRoute: ExecutionLogRoute,
+    protected createExecutionDetails: CreateExecutionDetails,
     protected jobRepository: JobRepository,
     private getDigestEventsRegular: GetDigestEventsRegular,
     private getDigestEventsBackoff: GetDigestEventsBackoff,
     private featureFlagService: FeatureFlagsService
   ) {
-    super(messageRepository, executionLogRoute);
+    super(messageRepository, createExecutionDetails);
   }
 
-  public async execute(command: SendMessageCommand) {
+  public async execute(command: SendMessageCommand): Promise<SendMessageResult> {
     const currentJob = await this.getCurrentJob(command);
 
     const useMergedDigestIdEnabled = await this.featureFlagService.getFlag({
@@ -65,9 +65,9 @@ export class Digest extends SendMessageType {
     const events = await getEvents(command, currentJob);
     const nextJobs = await this.getJobsToUpdate(command);
 
-    await this.executionLogRoute.execute(
-      ExecutionLogRouteCommand.create({
-        ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
+    await this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
         detail: DetailEnum.DIGEST_TRIGGERED_EVENTS,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.SUCCESS,
@@ -92,6 +92,10 @@ export class Digest extends SendMessageType {
         },
       }
     );
+
+    return {
+      status: 'success',
+    };
   }
 
   private async getEvents(command: SendMessageCommand, currentJob: JobEntity) {

@@ -1,7 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
+import { IActivity } from '@novu/shared';
+
 import { getActivityList, ActivityFilters } from '@/api/activity';
 import { useEnvironment } from '../context/environment/hooks';
-import { IActivity } from '@novu/shared';
+import { QueryKeys } from '@/utils/query-keys';
 
 interface UseActivitiesOptions {
   filters?: ActivityFilters;
@@ -34,7 +36,7 @@ export function useFetchActivities(
   const { currentEnvironment } = useEnvironment();
 
   const { data, ...rest } = useQuery<ActivityResponse>({
-    queryKey: ['activitiesList', currentEnvironment?._id, page, limit, filters, limit],
+    queryKey: [QueryKeys.fetchActivities, currentEnvironment?._id, page, limit, filters, limit],
     queryFn: ({ signal }) => getActivityList({ environment: currentEnvironment!, page, limit, filters, signal }),
     staleTime,
     refetchOnWindowFocus,

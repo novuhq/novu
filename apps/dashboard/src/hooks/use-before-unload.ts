@@ -7,6 +7,7 @@ export function useBeforeUnload(hasUnsavedChanges: boolean) {
       // Included for legacy support, e.g. Chrome/Edge < 119
       event.returnValue = true;
     };
+
     if (hasUnsavedChanges) {
       window.addEventListener('beforeunload', beforeUnloadHandler);
     }

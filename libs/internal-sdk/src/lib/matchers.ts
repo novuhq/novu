@@ -10,6 +10,7 @@ import { isPlainObject } from "./is-plain-object.js";
 import { safeParse } from "./schemas.js";
 
 export type Encoding =
+  | "jsonl"
   | "json"
   | "text"
   | "bytes"
@@ -19,6 +20,7 @@ export type Encoding =
   | "fail";
 
 const DEFAULT_CONTENT_TYPES: Record<Encoding, string> = {
+  jsonl: "application/jsonl",
   json: "application/json",
   text: "text/plain",
   bytes: "application/octet-stream",
@@ -72,6 +74,21 @@ export function json<T>(
   return { ...options, enc: "json", codes, schema };
 }
 
+export function jsonl<T>(
+  codes: StatusCodePredicate,
+  schema: Schema<T>,
+  options?: MatchOptions,
+): ValueMatcher<T> {
+  return { ...options, enc: "jsonl", codes, schema };
+}
+
+export function jsonlErr<E>(
+  codes: StatusCodePredicate,
+  schema: Schema<E>,
+  options?: MatchOptions,
+): ErrorMatcher<E> {
+  return { ...options, err: true, enc: "jsonl", codes, schema };
+}
 export function textErr<E>(
   codes: StatusCodePredicate,
   schema: Schema<E>,
@@ -203,6 +220,9 @@ export function match<T, E>(
     switch (encoding) {
       case "json":
         raw = await response.json();
+        break;
+      case "jsonl":
+        raw = response.body;
         break;
       case "bytes":
         raw = new Uint8Array(await response.arrayBuffer());

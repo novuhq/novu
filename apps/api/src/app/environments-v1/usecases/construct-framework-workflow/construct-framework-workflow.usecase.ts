@@ -2,7 +2,7 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { workflow } from '@novu/framework/express';
 import { ActionStep, ChannelStep, JsonSchema, Step, StepOptions, StepOutput, Workflow } from '@novu/framework/internal';
 import { NotificationStepEntity, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
-import { JSONSchemaDefinition, StepTypeEnum, WorkflowOriginEnum } from '@novu/shared';
+import { JSONSchemaDefinition, StepTypeEnum } from '@novu/shared';
 import { Instrument, InstrumentUsecase, PinoLogger } from '@novu/application-generic';
 import { AdditionalOperation, RulesLogic } from 'json-logic-js';
 import _ from 'lodash';
@@ -58,7 +58,8 @@ export class ConstructFrameworkWorkflow {
           fullPayloadForRender.steps[staticStep.stepId || staticStep._templateId] = await this.constructStep(
             step,
             staticStep,
-            fullPayloadForRender
+            fullPayloadForRender,
+            dbWorkflow._environmentId
           );
         }
       },
@@ -81,7 +82,8 @@ export class ConstructFrameworkWorkflow {
   private constructStep(
     step: Step,
     staticStep: NotificationStepEntity,
-    fullPayloadForRender: FullPayloadForRender
+    fullPayloadForRender: FullPayloadForRender,
+    environmentId: string
   ): StepOutput<Record<string, unknown>> {
     const stepTemplate = staticStep.template;
 
@@ -116,7 +118,11 @@ export class ConstructFrameworkWorkflow {
         return step.email(
           stepId,
           async (controlValues) => {
-            return this.emailOutputRendererUseCase.execute({ controlValues, fullPayloadForRender });
+            return this.emailOutputRendererUseCase.execute({
+              controlValues,
+              fullPayloadForRender,
+              environmentId,
+            });
           },
           this.constructChannelStepOptions(staticStep, fullPayloadForRender)
         );
@@ -172,10 +178,7 @@ export class ConstructFrameworkWorkflow {
   ): Required<Parameters<ChannelStep>[2]> {
     return {
       ...this.constructCommonStepOptions(staticStep, fullPayloadForRender),
-      // TODO: resolve this from the Step options
-      disableOutputSanitization:
-        (staticStep.controlVariables?.disableOutputSanitization as boolean | undefined) ?? false,
-      // TODO: add providers
+      disableOutputSanitization: true,
       providers: {},
     };
   }

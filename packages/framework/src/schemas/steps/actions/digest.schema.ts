@@ -47,6 +47,7 @@ export const digestOutputSchema = {
 export const digestResultSchema = {
   type: 'object',
   properties: {
+    eventCount: { type: 'number' },
     events: {
       type: 'array',
       items: {

@@ -66,6 +66,7 @@ export function SelectPrimaryIntegrationModal({
         if (!open) {
           setSelectedIntegrationId('');
         }
+
         onOpenChange(open);
       }}
       onConfirm={() => onConfirm(mode === 'select' ? selectedIntegrationId : undefined)}

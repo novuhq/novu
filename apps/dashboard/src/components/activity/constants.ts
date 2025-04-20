@@ -1,8 +1,8 @@
+import { ActivityFiltersData } from '@/types/activity';
 import { ChannelTypeEnum, JobStatusEnum } from '@novu/shared';
 import { IconType } from 'react-icons/lib';
 import { RiCheckboxCircleFill, RiErrorWarningFill, RiForbidFill, RiLoader3Line, RiLoader4Fill } from 'react-icons/ri';
 import { StatusBadgeProps } from '../primitives/status-badge';
-import { ActivityFiltersData } from '@/types/activity';
 
 export const STATUS_STYLES = {
   completed: 'border-[#99e3bb] bg-[#e9faf0] text-[#99e3bb]',
@@ -62,6 +62,7 @@ export const JOB_STATUS_CONFIG: Record<
     icon: RiLoader3Line,
     color: 'warning',
     label: 'RUNNING',
+    animationClass: 'animate-spin',
   },
   [JobStatusEnum.DELAYED]: {
     variant: 'pending' as const,
@@ -79,10 +80,13 @@ export const JOB_STATUS_CONFIG: Record<
 };
 
 export const DATE_RANGE_OPTIONS = [
-  { value: '24h', label: 'Last 24 hours' },
-  { value: '7d', label: 'Last 7 days' },
-  { value: '30d', label: 'Last 30 days' },
+  { value: '24h', label: 'Last 24 hours', ms: 24 * 60 * 60 * 1000 },
+  { value: '7d', label: 'Last 7 days', ms: 7 * 24 * 60 * 60 * 1000 },
+  { value: '30d', label: 'Last 30 days', ms: 30 * 24 * 60 * 60 * 1000 },
+  { value: '90d', label: 'Last 90 days', ms: 90 * 24 * 60 * 60 * 1000 },
 ];
+
+export const DEFAULT_DATE_RANGE = '24h';
 
 export const CHANNEL_OPTIONS = [
   { value: ChannelTypeEnum.SMS, label: 'SMS' },
@@ -93,7 +97,7 @@ export const CHANNEL_OPTIONS = [
 ];
 
 export const defaultActivityFilters: ActivityFiltersData = {
-  dateRange: '30d',
+  dateRange: DEFAULT_DATE_RANGE,
   channels: [],
   workflows: [],
   transactionId: '',

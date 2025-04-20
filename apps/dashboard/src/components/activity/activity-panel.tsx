@@ -11,6 +11,7 @@ export function ActivityPanel({ children }: ActivityPanelProps) {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5, ease: 'easeOut' }}
       className="flex h-full flex-col"
+      data-testid="activity-panel"
     >
       {children}
     </motion.div>

@@ -17,6 +17,18 @@ export function initNovuClassSdk(session: UserSession, shouldRetry: boolean = fa
 
   return new Novu(options);
 }
+export function initNovuClassSdkInternalAuth(session: UserSession, shouldRetry: boolean = false): Novu {
+  const options: SDKOptions = {
+    security: { bearerAuth: session.token },
+    serverURL: session.serverUrl,
+    debugLogger: console,
+  };
+  if (!shouldRetry) {
+    options.retryConfig = { strategy: 'none' };
+  }
+
+  return new Novu(options);
+}
 export function initNovuFunctionSdk(session: UserSession): NovuCore {
   return new NovuCore({ security: { secretKey: session.apiKey }, serverURL: session.serverUrl });
 }
