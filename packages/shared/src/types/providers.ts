@@ -105,7 +105,7 @@ export enum SmsProviderIdEnum {
   BrevoSms = 'brevo-sms',
   EazySms = 'eazy-sms',
   Mobishastra = 'mobishastra',
-  AfroSms = 'afro-sms',
+  AfroSms = 'afro-message',
 }
 
 export enum ChatProviderIdEnum {
