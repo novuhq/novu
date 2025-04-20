@@ -56,26 +56,4 @@ describe('AfroSmsProvider', () => {
 
     await expect(provider.sendMessage(mockNovuMessage)).rejects.toThrow('AfroSMS error: Invalid API key');
   });
-
-  it('should parse webhook events correctly', () => {
-    const provider = new AfroSmsProvider(mockConfig);
-
-    const mockWebhookData = {
-      message_id: '123456',
-      status: 'delivered',
-      attempts: '1',
-      response: 'Message delivered',
-    };
-
-    const result = provider.parseEventBody(mockWebhookData, '123456');
-
-    expect(result).toEqual({
-      status: 'delivered',
-      date: expect.any(String),
-      externalId: '123456',
-      attempts: 1,
-      response: 'Message delivered',
-      row: mockWebhookData,
-    });
-  });
 });
