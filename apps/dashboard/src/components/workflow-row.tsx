@@ -201,7 +201,7 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
       <TableRow key={workflow._id} className="group relative isolate cursor-pointer" onClick={handleRowClick}>
         <WorkflowLinkTableCell className="flex items-center gap-2 font-medium">
           {workflow.origin === WorkflowOriginEnum.EXTERNAL ? (
-            <Tooltip delayDuration={100}>
+            <Tooltip delayDuration={300}>
               <TooltipTrigger>
                 <FaCode className="text-warning size-4" />
               </TooltipTrigger>
@@ -213,7 +213,7 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
               </TooltipPortal>
             </Tooltip>
           ) : workflow.origin === WorkflowOriginEnum.NOVU_CLOUD_V1 ? (
-            <Tooltip delayDuration={100}>
+            <Tooltip delayDuration={300}>
               <TooltipTrigger>
                 <CgBolt className="text-feature size-4" />
               </TooltipTrigger>
@@ -225,7 +225,7 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
               </TooltipPortal>
             </Tooltip>
           ) : (
-            <Tooltip delayDuration={100}>
+            <Tooltip delayDuration={300}>
               <TooltipTrigger>
                 <RiRouteFill className="text-feature size-4" />
               </TooltipTrigger>
