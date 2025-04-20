@@ -1,7 +1,4 @@
-import { createFooters } from '@/components/workflow-editor/steps/email/blocks/footers';
-import { createHeaders } from '@/components/workflow-editor/steps/email/blocks/headers';
-import { createHtmlCodeBlock } from '@/components/workflow-editor/steps/email/blocks/html';
-import { useTelemetry } from '@/hooks/use-telemetry';
+import { searchSlashCommands } from '@maily-to/core-digest/extensions';
 import {
   BlockGroupItem,
   blockquote,
@@ -31,8 +28,14 @@ import {
   Variables,
 } from '@maily-to/core/extensions';
 import { ReactNodeViewRenderer } from '@tiptap/react';
-import { searchSlashCommands } from '@maily-to/core-digest/extensions';
+import type { Editor as TiptapEditor } from '@tiptap/core';
 import { StepResponseDto } from '@novu/shared';
+
+import { VariablePill } from '@/components/variable/variable-pill';
+import { createFooters } from '@/components/workflow-editor/steps/email/blocks/footers';
+import { createHeaders } from '@/components/workflow-editor/steps/email/blocks/headers';
+import { createHtmlCodeBlock } from '@/components/workflow-editor/steps/email/blocks/html';
+import { useTelemetry } from '@/hooks/use-telemetry';
 import { createDigestBlock } from './blocks/digest';
 import {
   CalculateVariablesProps,
@@ -41,13 +44,12 @@ import {
   VariableFrom,
 } from './variables/variables';
 import { ForView } from './views/for-view';
-import { createVariableView } from './views/variable-view';
-import { MailyVariablesListView } from './views/maily-variables-list-view';
 import { HTMLCodeBlockView } from './views/html-view';
-import { VariablePill } from '@/components/variable/variable-pill';
-import { IsAllowedVariable } from '@/utils/parseStepVariables';
-
-import type { Editor as TiptapEditor } from '@tiptap/core';
+import { ParsedVariables } from '@/utils/parseStepVariables';
+import { MailyVariablesListView } from './views/maily-variables-list-view';
+import { createVariableView } from './views/variable-view';
+import { createCards } from './blocks/cards';
+import { VariablePillOld } from '@/components/variable/variable-pill-old';
 export const VARIABLE_TRIGGER_CHARACTER = '{{';
 
 /**
@@ -84,8 +86,12 @@ export const createEditorBlocks = (props: {
 
   const highlightBlocks = [createHtmlCodeBlock({ track }), createHeaders({ track }), createFooters({ track })];
 
-  if (isEnhancedDigestEnabled && digestStepBeforeCurrent) {
-    highlightBlocks.unshift(createDigestBlock({ track, digestStepBeforeCurrent }));
+  if (isEnhancedDigestEnabled) {
+    highlightBlocks.unshift(createCards({ track }));
+
+    if (digestStepBeforeCurrent) {
+      highlightBlocks.unshift(createDigestBlock({ track, digestStepBeforeCurrent }));
+    }
   }
 
   blocks.push({
@@ -144,7 +150,7 @@ const getAvailableBlocks = (blocks: BlockGroupItem[], editor: TiptapEditor | nul
 
 export const createExtensions = (props: {
   handleCalculateVariables: (props: CalculateVariablesProps) => Variables | undefined;
-  parsedVariables: { isAllowedVariable: IsAllowedVariable };
+  parsedVariables: ParsedVariables;
   blocks: BlockGroupItem[];
   isEnhancedDigestEnabled: boolean;
 }) => {
@@ -175,11 +181,14 @@ export const createExtensions = (props: {
     }),
     VariableExtension.extend({
       addNodeView() {
-        return ReactNodeViewRenderer(createVariableView(parsedVariables.isAllowedVariable), {
-          // the variable pill is 3px smaller than the default text size, but never smaller than 12px
-          className: 'relative inline-block text-[max(12px,calc(1em-3px))] h-5',
-          as: 'div',
-        });
+        return ReactNodeViewRenderer(
+          createVariableView(parsedVariables.primitives, parsedVariables.isAllowedVariable),
+          {
+            // the variable pill is 3px smaller than the default text size, but never smaller than 12px
+            className: 'relative inline-block text-[max(12px,calc(1em-3px))] h-5',
+            as: 'div',
+          }
+        );
       },
       addAttributes() {
         const attributes = this.parent?.();
@@ -207,12 +216,14 @@ export const createExtensions = (props: {
       },
       // variable pills in bubble menus (repeat, showIf...)
       renderVariable: (opts) => {
-        return (
-          <VariablePill
+        return isEnhancedDigestEnabled ? (
+          <VariablePill variableName={opts.variable.name} className="h-5 text-xs" from={opts.from as VariableFrom} />
+        ) : (
+          <VariablePillOld
             variableName={opts.variable.name}
-            hasFilters={false}
             className="h-5 text-xs"
             from={opts.from as VariableFrom}
+            hasFilters={false}
           />
         );
       },

@@ -11,6 +11,7 @@ export class CommunityUserAuthGuard extends AuthGuard([PassportStrategyEnum.JWT,
     private readonly logger: PinoLogger
   ) {
     super();
+    this.logger.setContext(this.constructor.name);
   }
 
   getAuthenticateOptions(context: ExecutionContext): IAuthModuleOptions<any> {

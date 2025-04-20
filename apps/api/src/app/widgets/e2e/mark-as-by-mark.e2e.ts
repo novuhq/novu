@@ -1,7 +1,7 @@
-import { expect } from 'chai';
 import axios from 'axios';
+import { expect } from 'chai';
 
-import { UserSession } from '@novu/testing';
+import { Novu } from '@novu/api';
 import {
   MessageEntity,
   MessageRepository,
@@ -10,7 +10,7 @@ import {
   SubscriberRepository,
 } from '@novu/dal';
 import { ChannelTypeEnum, MessagesStatusEnum } from '@novu/shared';
-import { Novu } from '@novu/api';
+import { UserSession } from '@novu/testing';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 describe('Mark as Seen - /widgets/messages/mark-as (POST) #novu-v0', async () => {
@@ -200,5 +200,5 @@ async function getSubscriber(
 }
 
 async function pruneMessages(messageRepository) {
-  await messageRepository.deleteMany({});
+  await messageRepository.delete({});
 }

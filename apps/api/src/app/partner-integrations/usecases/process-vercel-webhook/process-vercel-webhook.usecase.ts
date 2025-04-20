@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import crypto from 'node:crypto';
 
 import {
@@ -9,6 +9,7 @@ import {
   MemberRepository,
 } from '@novu/dal';
 
+import { PinoLogger } from '@novu/application-generic';
 import { ProcessVercelWebhookCommand } from './process-vercel-webhook.command';
 import { Sync } from '../../../bridge/usecases/sync';
 
@@ -19,13 +20,16 @@ export class ProcessVercelWebhook {
     private environmentRepository: EnvironmentRepository,
     private syncUsecase: Sync,
     private memberRepository: MemberRepository,
-    private communityUserRepository: CommunityUserRepository
-  ) {}
+    private communityUserRepository: CommunityUserRepository,
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   async execute(command: ProcessVercelWebhookCommand) {
     const eventType = command.body.type;
     if (eventType !== 'deployment.succeeded') {
-      Logger.log({ eventType }, `Skipping processing Vercel webhook event: ${eventType}`);
+      this.logger.info(`Skipping processing Vercel webhook event: ${eventType}`);
 
       return true;
     }
@@ -35,7 +39,7 @@ export class ProcessVercelWebhook {
     const deploymentUrl = command.body.payload.deployment.url;
     const vercelEnvironment = command.body.payload.target || 'preview';
 
-    Logger.log(
+    this.logger.info(
       {
         teamId,
         projectId,
@@ -56,7 +60,7 @@ export class ProcessVercelWebhook {
     );
 
     if (!organizations || organizations.length === 0) {
-      Logger.error({ teamId, projectId }, 'Organization not found for vercel webhook integration');
+      this.logger.error({ teamId, projectId }, 'Organization not found for vercel webhook integration');
 
       throw new BadRequestException('Organization not found');
     }

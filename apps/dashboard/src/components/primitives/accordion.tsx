@@ -33,10 +33,12 @@ const AccordionTrigger = React.forwardRef<React.ElementRef<typeof AccordionPrimi
         )}
         {...props}
       >
-        {children}
-        {withChevron && (
-          <RiArrowDownSLine className="text-foreground-400 h-4 w-4 shrink-0 transition-transform duration-200" />
-        )}
+        <>
+          {children}
+          {withChevron && (
+            <RiArrowDownSLine className="text-foreground-400 h-4 w-4 shrink-0 transition-transform duration-200" />
+          )}
+        </>
       </AccordionPrimitive.Trigger>
     </AccordionPrimitive.Header>
   )

@@ -7,4 +7,5 @@ export type PluginState = {
   lastCompletionRef: MutableRefObject<{ from: number; to: number } | null>;
   onSelect?: (value: string, from: number, to: number) => void;
   isAllowedVariable: IsAllowedVariable;
+  isEnhancedDigestEnabled: boolean;
 };

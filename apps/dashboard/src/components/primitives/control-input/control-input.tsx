@@ -96,8 +96,9 @@ export function ControlInput({
         lastCompletionRef,
         onSelect: handleVariableSelect,
         isAllowedVariable,
+        isEnhancedDigestEnabled,
       }),
-    [handleVariableSelect, isAllowedVariable]
+    [handleVariableSelect, isAllowedVariable, isEnhancedDigestEnabled]
   );
 
   const extensions = useMemo(() => {
@@ -132,12 +133,19 @@ export function ControlInput({
       />
       {isVariablePopoverOpen && (
         <EditVariablePopover
+          variables={variables}
           open={isVariablePopoverOpen}
           onOpenChange={handleOpenChange}
           variable={variable}
           isAllowedVariable={isAllowedVariable}
           onUpdate={(newValue) => {
             handleVariableUpdate(newValue);
+            // Focus back to the editor after updating the variable
+            setTimeout(() => viewRef.current?.focus(), 0);
+          }}
+          onDeleteClick={() => {
+            handleVariableUpdate('');
+            setSelectedVariable(null);
             // Focus back to the editor after updating the variable
             setTimeout(() => viewRef.current?.focus(), 0);
           }}

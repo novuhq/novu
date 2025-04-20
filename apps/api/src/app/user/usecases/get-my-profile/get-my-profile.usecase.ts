@@ -1,7 +1,7 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { UserRepository } from '@novu/dal';
-import { createHash } from '@novu/application-generic';
+import { createHash, PinoLogger } from '@novu/application-generic';
 
 import { GetMyProfileCommand } from './get-my-profile.dto';
 import type { UserResponseDto } from '../../dtos/user-response.dto';
@@ -9,13 +9,17 @@ import { BaseUserProfileUsecase } from '../base-user-profile.usecase';
 
 @Injectable()
 export class GetMyProfileUsecase extends BaseUserProfileUsecase {
-  constructor(private readonly userRepository: UserRepository) {
+  constructor(
+    private readonly userRepository: UserRepository,
+    private readonly logger: PinoLogger
+  ) {
     super();
+    this.logger.setContext(this.constructor.name);
   }
 
   async execute(command: GetMyProfileCommand): Promise<UserResponseDto> {
-    Logger.verbose('Getting User from user repository in Command');
-    Logger.debug(`Getting user data for ${command.userId}`);
+    this.logger.trace('Getting User from user repository in Command');
+    this.logger.debug(`Getting user data for ${command.userId}`);
     const profile = await this.userRepository.findById(command.userId);
 
     if (!profile) {
@@ -42,7 +46,7 @@ export class GetMyProfileUsecase extends BaseUserProfileUsecase {
       );
     }
 
-    Logger.verbose('Found User');
+    this.logger.trace('Found User');
 
     return this.mapToDto(profile);
   }

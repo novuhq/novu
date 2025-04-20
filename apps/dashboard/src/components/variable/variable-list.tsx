@@ -1,8 +1,7 @@
+import TruncatedText from '@/components/truncated-text';
+import { cn } from '@/utils/ui';
 import { CheckIcon } from '@radix-ui/react-icons';
 import React, { useCallback, useImperativeHandle, useRef, useState } from 'react';
-
-import { cn } from '@/utils/ui';
-import TruncatedText from '@/components/truncated-text';
 import { Tooltip, TooltipContent, TooltipPortal, TooltipTrigger } from '../primitives/tooltip';
 import { VariableIcon } from './components/variable-icon';
 
