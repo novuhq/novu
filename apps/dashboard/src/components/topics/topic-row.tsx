@@ -1,10 +1,18 @@
+import { ConfirmationModal } from '@/components/confirmation-modal';
+import { CompactButton } from '@/components/primitives/button-compact';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/primitives/dropdown-menu';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { TableCell, TableRow } from '@/components/primitives/table';
 import { format } from 'date-fns';
 import { useState } from 'react';
-import { RiDeleteBin2Line, RiEditLine } from 'react-icons/ri';
-import { MoreOptions } from '../more-options';
-import { useTopicsNavigate } from './hooks/use-topics-navigate';
+import { RiDeleteBin2Line, RiEditLine, RiMore2Fill } from 'react-icons/ri';
+import { useDeleteTopic } from './hooks/use-delete-topic';
 import { TopicDrawer } from './topic-drawer';
 import { Topic } from './types';
 
@@ -15,29 +23,33 @@ interface TopicRowProps {
 }
 
 export const TopicRow = ({ topic, topicsCount, firstTwoTopicsInternalIds }: TopicRowProps) => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const { navigateToEditTopicPage } = useTopicsNavigate();
-  const isFirstTwoTopics = firstTwoTopicsInternalIds.includes(topic._id);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const { deleteTopic, isDeleting } = useDeleteTopic();
 
   const createdAt = topic.createdAt ? format(new Date(topic.createdAt), 'dd/MM/yyyy HH:mm') : '-';
   const updatedAt = topic.updatedAt ? format(new Date(topic.updatedAt), 'dd/MM/yyyy HH:mm') : '-';
 
-  const handleRowClick = (e: React.MouseEvent) => {
-    // Don't open drawer if clicking on the more options menu
-    if ((e.target as HTMLElement).closest('[data-more-options]')) {
-      return;
-    }
-
+  const handleRowClick = () => {
     setIsDrawerOpen(true);
+  };
+
+  const stopPropagation = (e: React.MouseEvent) => {
+    // don't propagate the click event to the row
+    e.stopPropagation();
+  };
+
+  const handleDeletion = async () => {
+    await deleteTopic(topic._id);
+    setIsDeleteModalOpen(false);
   };
 
   return (
     <>
-      <TableRow className="cursor-pointer" onClick={handleRowClick}>
-        <TableCell className="font-medium">
-          <div className="flex items-center space-x-2">
-            <span className="max-w-[300px] truncate">{topic.name}</span>
+      <TableRow className="group relative isolate cursor-pointer" onClick={handleRowClick}>
+        <TableCell>
+          <div className="flex items-center">
+            <span className="max-w-[300px] truncate font-medium">{topic.name}</span>
           </div>
         </TableCell>
         <TableCell>
@@ -45,35 +57,52 @@ export const TopicRow = ({ topic, topicsCount, firstTwoTopicsInternalIds }: Topi
         </TableCell>
         <TableCell>{createdAt}</TableCell>
         <TableCell>{updatedAt}</TableCell>
-        <TableCell className="flex justify-end">
-          <MoreOptions
-            data-more-options
-            isOpen={isMenuOpen}
-            setIsOpen={setIsMenuOpen}
-            align="end"
-            items={[
-              {
-                type: 'link',
-                icon: <RiEditLine size={16} />,
-                label: 'Edit',
-                onClick: () => navigateToEditTopicPage(topic._id),
-              },
-              {
-                type: 'button',
-                icon: <RiDeleteBin2Line size={16} />,
-                label: 'Delete',
-                className: 'text-destructive hover:text-destructive',
-                disabled: topicsCount === 1,
-                onClick: () => {
-                  // TODO: Add delete functionality
-                  console.log('Delete topic', topic._id);
-                },
-              },
-            ]}
-          />
+        <TableCell className="w-1">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <CompactButton icon={RiMore2Fill} variant="ghost" className="z-10 h-8 w-8 p-0" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-44" onClick={stopPropagation}>
+              <DropdownMenuGroup>
+                <DropdownMenuItem
+                  className="cursor-pointer"
+                  onClick={() => {
+                    setIsDrawerOpen(true);
+                  }}
+                >
+                  <RiEditLine />
+                  Edit topic
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="text-destructive cursor-pointer"
+                  disabled={topicsCount === 1}
+                  onClick={() => {
+                    setTimeout(() => setIsDeleteModalOpen(true), 0);
+                  }}
+                >
+                  <RiDeleteBin2Line />
+                  Delete topic
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </TableCell>
       </TableRow>
       <TopicDrawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen} topicKey={topic.key} />
+      <ConfirmationModal
+        open={isDeleteModalOpen}
+        onOpenChange={setIsDeleteModalOpen}
+        onConfirm={handleDeletion}
+        title={`Delete topic`}
+        description={
+          <span>
+            Are you sure you want to delete topic <span className="font-bold">{topic.name}</span>? This action cannot be
+            undone.
+          </span>
+        }
+        confirmButtonText="Delete topic"
+        isLoading={isDeleting}
+      />
     </>
   );
 };
@@ -93,7 +122,9 @@ export const TopicRowSkeleton = () => {
       <TableCell>
         <Skeleton className="h-6 w-32" />
       </TableCell>
-      <TableCell />
+      <TableCell className="w-1">
+        <RiMore2Fill className="size-4 opacity-50" />
+      </TableCell>
     </TableRow>
   );
 };

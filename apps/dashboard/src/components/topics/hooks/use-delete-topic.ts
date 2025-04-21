@@ -1,12 +1,19 @@
 import { deleteTopic } from '@/api/topics';
+import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { useEnvironment } from '@/context/environment/hooks';
-import { useToast } from '@/hooks/use-toast';
 import { QueryKeys } from '@/utils/query-keys';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { ExternalToast } from 'sonner';
+
+const toastOptions: ExternalToast = {
+  position: 'bottom-right',
+  classNames: {
+    toast: 'mb-4 right-0',
+  },
+};
 
 export const useDeleteTopic = () => {
   const { currentEnvironment } = useEnvironment();
-  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const { mutate, isPending } = useMutation({
@@ -21,22 +28,18 @@ export const useDeleteTopic = () => {
       });
     },
     onSuccess: () => {
-      toast({
-        title: 'Topic deleted',
-        description: 'The topic has been successfully deleted',
-        variant: 'success',
-      });
+      showSuccessToast('Topic deleted', 'The topic has been successfully deleted', toastOptions);
 
       return queryClient.invalidateQueries({
         queryKey: [QueryKeys.fetchTopics, currentEnvironment?._id],
       });
     },
     onError: (error: Error) => {
-      toast({
-        title: 'Error deleting topic',
-        description: error.message || 'Something went wrong while deleting the topic',
-        variant: 'error',
-      });
+      showErrorToast(
+        error.message || 'Something went wrong while deleting the topic',
+        'Error deleting topic',
+        toastOptions
+      );
     },
   });
 
