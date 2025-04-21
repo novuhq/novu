@@ -45,4 +45,4 @@ RUN cp src/.env.test dist/.env.test
 RUN cp src/.env.development dist/.env.development
 RUN cp src/.env.production dist/.env.production
 
-ENTRYPOINT [ "sh", "-c", "node dist/dotenvcreate.mjs -s=novu/ws -r=$NOVU_REGION -e=$NOVU_ENTERPRISE -v=$NODE_ENV && pm2-runtime start dist/main.js" ]
+ENTRYPOINT [ "sh", "-c", "node dist/dotenvcreate.mjs -s=novu/ws -r=$NOVU_REGION -e=$NOVU_ENTERPRISE -v=$NODE_ENV && pm2-runtime start dist/main.js -i max" ]
