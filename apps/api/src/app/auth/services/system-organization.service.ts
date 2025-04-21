@@ -137,16 +137,16 @@ export class SystemOrganizationService implements OnModuleInit {
       throw new Error('System Organization not found');
     }
 
-    const admins = await this.memberRepository.getOrganizationMembers(systemOrg._id);
+    const users = await this.memberRepository.getOrganizationMembers(systemOrg._id);
 
-    if (!admins || admins.length === 0) {
+    if (!users || users.length === 0) {
       throw new Error('No admin users found for System Organization');
     }
 
     const token = await this.switchOrganizationUsecase.execute(
       SwitchOrganizationCommand.create({
         newOrganizationId: systemOrg._id!,
-        userId: admins[0]._userId,
+        userId: users[0]._userId,
       })
     );
 
