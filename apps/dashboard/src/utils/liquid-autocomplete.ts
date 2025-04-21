@@ -262,7 +262,6 @@ export function createAutocompleteSource(
             const lastElement = parts?.[parts.length - 1];
 
             if (lastElement && lastElement in DIGEST_VARIABLES_FILTER_MAP) {
-              console.log({ lastElement });
               track(TelemetryEvent.DIGEST_VARIABLE_SELECTED, {
                 variable: lastElement,
               });
