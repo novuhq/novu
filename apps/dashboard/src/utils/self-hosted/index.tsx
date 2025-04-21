@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { get } from '../api/api.client';
-import { Input } from '../components/primitives/input';
-import { createContextHook } from './context';
+import { get } from '../../api/api.client';
+import { Input } from '../../components/primitives/input';
+import { createContextHook } from '../context';
 
 export const AuthContext = React.createContext({});
 export const useAuth = createContextHook(AuthContext);
@@ -81,21 +81,35 @@ export function OrganizationContextProvider({ children }: any) {
 export const UserContext = React.createContext({});
 export const useUser = createContextHook(UserContext);
 
+type DecodedJwt = {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  organizationId: string;
+  environmentId: string | null;
+  roles: string[];
+  iat: number;
+  exp: number;
+  iss: string;
+};
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function UserContextProvider({ children }: any) {
+  const jwt = localStorage.getItem('self-hosted-jwt');
+  const decodedJwt: DecodedJwt | null = jwt ? JSON.parse(atob(jwt.split('.')[1])) : null;
   const value = {
     user: {
       update: async () => null,
-      externalId: 1,
+      externalId: decodedJwt?._id,
+      firstName: decodedJwt?.firstName,
+      lastName: decodedJwt?.lastName,
+      emailAddresses: [{ emailAddress: decodedJwt?.email }],
       createdAt: new Date(),
-      firstName: 'Sap',
       publicMetadata: { newDashboardOptInStatus: 'opted_in' },
       unsafeMetadata: { newDashboardOptInStatus: 'opted_in' },
-      lastName: 'saps',
-
       organizationMemberships: [{}],
       passwordEnabled: true,
-      emailAddresses: [{ emailAddress: 'dd@novu.co' }],
     },
     isLoaded: true,
   };

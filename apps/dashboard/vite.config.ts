@@ -45,7 +45,7 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),
-        ...(isSelfHosted ? { '@clerk/clerk-react': path.resolve(__dirname, './src/utils/clerk-mock.tsx') } : {}),
+        ...(isSelfHosted ? { '@clerk/clerk-react': path.resolve(__dirname, './src/utils/self-hosted/index.tsx') } : {}),
       },
     },
     server: {

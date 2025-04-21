@@ -41,7 +41,6 @@ import { UserAuthentication } from '../shared/framework/swagger/api.key.security
 import { SwitchOrganizationCommand } from './usecases/switch-organization/switch-organization.command';
 import { SwitchOrganization } from './usecases/switch-organization/switch-organization.usecase';
 import { AuthService } from './services/auth.service';
-import { CreateOrganization } from '../organization/usecases/create-organization/create-organization.usecase';
 import { SystemOrganizationService } from './services/system-organization.service';
 
 @ApiCommonResponses()
