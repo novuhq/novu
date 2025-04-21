@@ -8,7 +8,7 @@ import { DirectionEnum } from '@novu/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { HTMLAttributes, useEffect, useState } from 'react';
 import { CreateTopicButton } from './create-topic-drawer';
-import { TopicsFilter, TopicsSortableColumn, TopicsUrlState, useTopicsUrlState } from './hooks/use-topics-url-state';
+import { TopicsSortableColumn, TopicsUrlState, useTopicsUrlState } from './hooks/use-topics-url-state';
 import { TopicListBlank } from './topic-list-blank';
 import { TopicListNoResults } from './topic-list-no-results';
 import { TopicRow, TopicRowSkeleton } from './topic-row';
@@ -96,11 +96,8 @@ export const TopicList = (props: TopicListProps) => {
       before: previousPageBefore,
     });
 
-  const filterStrings = ['name', 'key', 'before', 'after'];
-  const areFiltersApplied = Object.keys(filterValues)
-    .filter((key) => filterStrings.includes(key))
-    .some((key) => filterValues[key as keyof TopicsFilter] !== '');
-
+  // Only check key filter now as we're focusing on filtering by key only
+  const areFiltersApplied = filterValues.key || filterValues.before || filterValues.after;
   const limit = 10;
 
   const { data, isPending } = useFetchTopics(filterValues, {

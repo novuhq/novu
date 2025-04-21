@@ -18,6 +18,7 @@ export const getTopics = async ({
   orderDirection,
   orderBy,
   includeCursor,
+  signal,
 }: {
   environment: IEnvironment;
   after?: string;
@@ -28,6 +29,7 @@ export const getTopics = async ({
   orderDirection?: DirectionEnum;
   orderBy?: string;
   includeCursor?: boolean;
+  signal?: AbortSignal;
 }): Promise<ListTopicsResponse> => {
   const params = new URLSearchParams({
     ...(limit && { limit: limit.toString() }),
@@ -43,6 +45,7 @@ export const getTopics = async ({
 
   const response = await get<ListTopicsResponse>(`/topics?${params}`, {
     environment,
+    signal,
   });
 
   return response;

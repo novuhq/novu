@@ -2,7 +2,7 @@ import { DirectionEnum } from '@novu/shared';
 import { useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
-export type TopicsSortableColumn = '_id' | 'updatedAt';
+export type TopicsSortableColumn = '_id' | 'updatedAt' | 'name';
 
 export interface TopicsFilter {
   key?: string;

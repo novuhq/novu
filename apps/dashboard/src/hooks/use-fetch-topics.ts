@@ -43,7 +43,7 @@ export function useFetchTopics(
       currentEnvironment?._id,
       { after, before, limit, key, name, orderDirection, orderBy, includeCursor },
     ],
-    queryFn: () =>
+    queryFn: ({ signal }) =>
       getTopics({
         environment: currentEnvironment!,
         after,
@@ -54,6 +54,7 @@ export function useFetchTopics(
         orderDirection,
         orderBy,
         includeCursor,
+        signal,
       }),
     placeholderData: keepPreviousData,
     enabled: !!currentEnvironment?._id,

@@ -1,66 +1,127 @@
 import { Button } from '@/components/primitives/button';
+import { FacetedFormFilter } from '@/components/primitives/form/faceted-filter/facated-form-filter';
+import { Form, FormField, FormItem, FormRoot } from '@/components/primitives/form/form';
+import { QueryKeys } from '@/utils/query-keys';
 import { cn } from '@/utils/ui';
-import { ChangeEvent, HTMLAttributes, useState } from 'react';
-import { RiSearchLine } from 'react-icons/ri';
+import { useQueryClient } from '@tanstack/react-query';
+import { HTMLAttributes, useEffect, useMemo, useRef, useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { TopicsFilter } from './hooks/use-topics-url-state';
 
-interface TopicsFiltersProps extends HTMLAttributes<HTMLDivElement> {
-  onFiltersChange: (filters: Partial<TopicsFilter>) => void;
+export type TopicsFiltersProps = HTMLAttributes<HTMLFormElement> & {
+  onFiltersChange: (filter: TopicsFilter) => void;
   filterValues: TopicsFilter;
-  onReset: () => void;
-}
+  onReset?: () => void;
+};
 
 export const TopicsFilters = (props: TopicsFiltersProps) => {
   const { className, onFiltersChange, filterValues, onReset, ...rest } = props;
-  const [searchTerm, setSearchTerm] = useState('');
+  const queryClient = useQueryClient();
+  const [localKey, setLocalKey] = useState(filterValues.key || '');
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-  };
+  const defaultValues = useMemo(
+    () => ({
+      key: filterValues.key || '',
+    }),
+    [filterValues.key]
+  );
 
-  const handleSearch = () => {
-    onFiltersChange({
-      key: searchTerm,
-      name: searchTerm,
-    });
-  };
+  const form = useForm({
+    defaultValues,
+  });
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      handleSearch();
+  useEffect(() => {
+    form.reset(defaultValues);
+  }, [form, defaultValues]);
+
+  // Update local state when filter values change (like after a reset)
+  useEffect(() => {
+    setLocalKey(filterValues.key || '');
+  }, [filterValues.key]);
+
+  const debouncedFilterChange = (value: string) => {
+    // Clear any existing timeout
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
     }
+
+    // Set a new timeout
+    debounceTimeoutRef.current = setTimeout(() => {
+      // Cancel any in-flight requests before applying new filters
+      queryClient.cancelQueries({ queryKey: [QueryKeys.fetchTopics] });
+
+      onFiltersChange({
+        key: value || undefined,
+        name: undefined, // Clear name filter as we only use key for filtering
+      });
+
+      debounceTimeoutRef.current = null;
+    }, 400);
+  };
+
+  const handleKeyChange = (value: string) => {
+    setLocalKey(value);
+    form.setValue('key', value);
+    debouncedFilterChange(value);
   };
 
   const handleReset = () => {
-    setSearchTerm('');
-    onReset();
+    // Clear any pending debounce
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
+
+    // Reset local state
+    setLocalKey('');
+    form.reset({ key: '' });
+
+    // Cancel any pending requests
+    queryClient.cancelQueries({ queryKey: [QueryKeys.fetchTopics] });
+
+    // Call the parent reset handler
+    if (onReset) {
+      onReset();
+    }
   };
 
-  const areFiltersApplied = filterValues.key || filterValues.name;
+  // Clean up timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const filterHasValue = !!filterValues.key || !!filterValues.name;
 
   return (
-    <div className={cn('flex items-center gap-2', className)} {...rest}>
-      <div className="relative">
-        <input
-          type="text"
-          placeholder="Search topics..."
-          value={searchTerm}
-          onChange={handleSearchChange}
-          onKeyDown={handleKeyDown}
-          className="border-foreground-200 focus:ring-primary w-[300px] rounded-md border px-3 py-1.5 pl-8 text-sm focus:outline-none focus:ring-1"
+    <Form {...form}>
+      <FormRoot className={cn('flex items-center gap-2', className)} {...rest}>
+        <FormField
+          control={form.control}
+          name="key"
+          render={({ field }) => (
+            <FormItem className="relative">
+              <FacetedFormFilter
+                type="text"
+                size="small"
+                title="Key"
+                value={localKey}
+                onChange={(value) => handleKeyChange(value)}
+                placeholder="Search by topic key"
+              />
+            </FormItem>
+          )}
         />
-        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2">
-          <RiSearchLine className="text-foreground-400 h-4 w-4" />
-        </div>
-      </div>
-      <Button variant="primary" size="xs" onClick={handleSearch}>
-        Search
-      </Button>
-      {areFiltersApplied && (
-        <Button variant="secondary" size="xs" onClick={handleReset}>
-          Reset
-        </Button>
-      )}
-    </div>
+
+        {filterHasValue && (
+          <Button variant="secondary" mode="ghost" size="2xs" onClick={handleReset}>
+            Reset
+          </Button>
+        )}
+      </FormRoot>
+    </Form>
   );
 };
