@@ -27,7 +27,7 @@ export const VariablePill = React.forwardRef<
   }, [variableName]);
 
   return (
-    <VariableTooltip issues={issues} filters={filters}>
+    <VariableTooltip issues={issues}>
       <span
         ref={ref}
         onClick={onClick}

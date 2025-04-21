@@ -305,7 +305,7 @@ const createInformationCardWithLogo: (props: { track: ReturnType<typeof useTelem
                           attrs: {
                             height: 16,
                             width: 16,
-                            src: '/images/email-editor/check-icon.svg',
+                            src: 'https://prod-novu-app-bucket.s3.us-east-1.amazonaws.com/assets/email-editor/check-icon.png',
                             isSrcVariable: false,
                             alt: null,
                             title: null,

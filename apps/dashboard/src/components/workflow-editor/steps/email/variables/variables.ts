@@ -93,7 +93,7 @@ export const insertVariableToEditor = ({
 
   // Calculate range for manual typing if not provided by suggestion
   const calculatedRange = range || {
-    from: editor.state.selection.from - queryWithoutSuffix.length - 4, // -4 for '{{ }}'
+    from: Math.max(0, editor.state.selection.from - queryWithoutSuffix.length - 4), // -4 for '{{ }}'
     to: editor.state.selection.from,
   };
 
@@ -207,7 +207,15 @@ export const calculateVariables = ({
     variables.push({ name: queryWithoutSuffix });
   }
 
-  insertVariableToEditor({ query, editor, isAllowedVariable, isEnhancedDigestEnabled });
+  /* Skip variable insertion by closing "}}" for bubble menus since they require special handling:
+   * 1. They use different positioning logic compared to content variables
+   * 2. Each menu type (repeat, button, etc.) handles variables differently
+   * 3. For now bubble variables can be only added via Enter key which triggers a separate insertion flow
+   *    (which is external somewhere in TipTap or Maily)
+   */
+  if (from === VariableFrom.Content) {
+    insertVariableToEditor({ query, editor, isAllowedVariable, isEnhancedDigestEnabled });
+  }
 
   return dedupAndSortVariables(variables, queryWithoutSuffix);
 };

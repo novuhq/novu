@@ -70,4 +70,4 @@ RUN --mount=type=cache,id=pnpm-store-worker,target=/root/.pnpm-store\
 ENV NEW_RELIC_NO_CONFIG_FILE=true
 
 WORKDIR /usr/src/app/apps/worker
-ENTRYPOINT [ "sh", "-c", "node dist/dotenvcreate.mjs -s=novu/worker -r=$NOVU_REGION -e=$NOVU_ENTERPRISE -v=$NODE_ENV && pm2-runtime start dist/main.js" ]
+ENTRYPOINT [ "sh", "-c", "node dist/dotenvcreate.mjs -s=novu/worker -r=$NOVU_REGION -e=$NOVU_ENTERPRISE -v=$NODE_ENV && pm2-runtime start dist/main.js -i max" ]

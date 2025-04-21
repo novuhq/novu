@@ -1173,3 +1173,13 @@ export const mobishastraConfig: IConfigCredentials[] = [
   },
   ...smsConfigBase,
 ];
+
+export const afroSmsConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'string',
+    required: true,
+  },
+  ...smsConfigBase,
+];

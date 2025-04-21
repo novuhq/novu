@@ -1,4 +1,4 @@
-import React, { PropsWithChildren, useMemo } from 'react';
+import React, { PropsWithChildren } from 'react';
 import { Tooltip, TooltipContent, TooltipPortal, TooltipTrigger } from '../primitives/tooltip';
 
 type Props = PropsWithChildren<{
@@ -11,18 +11,10 @@ type Props = PropsWithChildren<{
         }[];
       }[]
     | undefined;
-  filters?: string[];
 }>;
 
-export function VariableTooltip({ issues, filters, children }: Props) {
+export function VariableTooltip({ issues, children }: Props) {
   const [isHovered, setIsHovered] = React.useState(false);
-
-  const getFilterNames = useMemo(() => {
-    return filters
-      ?.slice(1)
-      .map((f) => f.split(':')[0].trim())
-      .join(', ');
-  }, [filters]);
 
   return (
     <Tooltip open={isHovered && !!issues?.length}>

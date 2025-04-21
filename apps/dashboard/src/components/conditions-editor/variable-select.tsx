@@ -67,7 +67,7 @@ export const VariableSelect = (props: VariableSelectProps) => {
     if (newValue !== inputValue) {
       setInputValue(newValue);
       setFilterValue(newValue);
-      onInputChange(newValue);
+      onInputChange?.(newValue);
     }
   };
 
