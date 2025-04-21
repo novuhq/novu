@@ -1,13 +1,13 @@
 import { getTopic } from '@/api/topics';
-import { useEnvController } from '@/hooks/use-env-controller';
+import { useEnvironment } from '@/context/environment/hooks';
 import { useQuery } from '@tanstack/react-query';
 
 export function useTopic(topicKey: string) {
-  const { environment } = useEnvController();
+  const { currentEnvironment } = useEnvironment();
 
   return useQuery({
-    queryKey: ['topic', environment?._id, topicKey],
-    queryFn: () => getTopic({ environment: environment!, topicKey }),
-    enabled: !!environment && !!topicKey,
+    queryKey: ['topic', currentEnvironment?._id, topicKey],
+    queryFn: () => getTopic({ environment: currentEnvironment!, topicKey }),
+    enabled: !!currentEnvironment && !!topicKey,
   });
 }

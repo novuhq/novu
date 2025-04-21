@@ -1,10 +1,10 @@
 import { FilterQuery } from 'mongoose';
 
-import { TopicEntity, TopicDBModel } from './topic.entity';
+import type { EnforceEnvOrOrgIds } from '../../types/enforce';
+import { BaseRepository } from '../base-repository';
+import { TopicDBModel, TopicEntity } from './topic.entity';
 import { Topic } from './topic.schema';
 import { EnvironmentId, ExternalSubscriberId, OrganizationId, TopicId, TopicKey, TopicName } from './types';
-import { BaseRepository } from '../base-repository';
-import type { EnforceEnvOrOrgIds } from '../../types/enforce';
 
 const TOPIC_SUBSCRIBERS_COLLECTION = 'topicsubscribers';
 
@@ -13,6 +13,8 @@ const topicWithSubscribersProjection = {
     _id: 1,
     _environmentId: 1,
     _organizationId: 1,
+    createdAt: 1,
+    updatedAt: 1,
     key: 1,
     name: 1,
     subscribers: '$topicSubscribers.externalSubscriberId',
