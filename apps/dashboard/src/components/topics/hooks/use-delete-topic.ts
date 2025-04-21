@@ -1,8 +1,7 @@
 import { deleteTopic } from '@/api/topics';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { useEnvironment } from '@/context/environment/hooks';
-import { QueryKeys } from '@/utils/query-keys';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { ExternalToast } from 'sonner';
 
 const toastOptions: ExternalToast = {
@@ -14,25 +13,20 @@ const toastOptions: ExternalToast = {
 
 export const useDeleteTopic = () => {
   const { currentEnvironment } = useEnvironment();
-  const queryClient = useQueryClient();
 
   const { mutate, isPending } = useMutation({
-    mutationFn: (topicId: string) => {
+    mutationFn: (topicKey: string) => {
       if (!currentEnvironment) {
         throw new Error('No environment selected');
       }
 
       return deleteTopic({
         environment: currentEnvironment,
-        topicId,
+        topicKey,
       });
     },
     onSuccess: () => {
       showSuccessToast('Topic deleted', 'The topic has been successfully deleted', toastOptions);
-
-      return queryClient.invalidateQueries({
-        queryKey: [QueryKeys.fetchTopics, currentEnvironment?._id],
-      });
     },
     onError: (error: Error) => {
       showErrorToast(

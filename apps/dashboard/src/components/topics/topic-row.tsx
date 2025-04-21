@@ -9,6 +9,8 @@ import {
 } from '@/components/primitives/dropdown-menu';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { TableCell, TableRow } from '@/components/primitives/table';
+import { QueryKeys } from '@/utils/query-keys';
+import { useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { useState } from 'react';
 import { RiDeleteBin2Line, RiEditLine, RiMore2Fill } from 'react-icons/ri';
@@ -26,6 +28,7 @@ export const TopicRow = ({ topic, topicsCount, firstTwoTopicsInternalIds }: Topi
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const { deleteTopic, isDeleting } = useDeleteTopic();
+  const queryClient = useQueryClient();
 
   const createdAt = topic.createdAt ? format(new Date(topic.createdAt), 'dd/MM/yyyy HH:mm') : '-';
   const updatedAt = topic.updatedAt ? format(new Date(topic.updatedAt), 'dd/MM/yyyy HH:mm') : '-';
@@ -40,8 +43,16 @@ export const TopicRow = ({ topic, topicsCount, firstTwoTopicsInternalIds }: Topi
   };
 
   const handleDeletion = async () => {
-    await deleteTopic(topic._id);
+    await deleteTopic(topic.key);
+
+    // Close both the delete modal and the drawer
     setIsDeleteModalOpen(false);
+    setIsDrawerOpen(false);
+
+    // Force a refetch of the topics list
+    queryClient.invalidateQueries({
+      queryKey: [QueryKeys.fetchTopics],
+    });
   };
 
   return (

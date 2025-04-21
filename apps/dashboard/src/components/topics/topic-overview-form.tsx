@@ -112,7 +112,7 @@ export function TopicOverviewForm({ topic, readOnly = false }: TopicOverviewForm
     try {
       await deleteTopic({
         environment: currentEnvironment,
-        topicId: topic._id,
+        topicKey: topic.key,
       });
 
       showSuccessToast(`Deleted topic: ${topic.name}`, undefined, toastOptions);

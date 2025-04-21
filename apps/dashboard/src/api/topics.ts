@@ -51,8 +51,8 @@ export const getTopics = async ({
   return response;
 };
 
-export const deleteTopic = async ({ environment, topicId }: { environment: IEnvironment; topicId: string }) => {
-  const response = await del<{ acknowledged: boolean }>(`/topics/${topicId}`, {
+export const deleteTopic = async ({ environment, topicKey }: { environment: IEnvironment; topicKey: string }) => {
+  const response = await del<{ acknowledged: boolean }>(`/topics/${topicKey}`, {
     environment,
   });
   return response;
