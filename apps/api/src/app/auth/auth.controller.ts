@@ -42,7 +42,7 @@ import { SwitchOrganizationCommand } from './usecases/switch-organization/switch
 import { SwitchOrganization } from './usecases/switch-organization/switch-organization.usecase';
 import { AuthService } from './services/auth.service';
 import { CreateOrganization } from '../organization/usecases/create-organization/create-organization.usecase';
-import { CreateOrganizationCommand } from '../organization/usecases/create-organization/create-organization.command';
+import { SystemOrganizationService } from './services/system-organization.service';
 
 @ApiCommonResponses()
 @Controller('/auth')
@@ -61,8 +61,7 @@ export class AuthController {
     private passwordResetUsecase: PasswordReset,
     private updatePasswordUsecase: UpdatePassword,
     private logger: PinoLogger,
-    private organizationRepository: OrganizationRepository,
-    private createOrganizationUsecase: CreateOrganization
+    private systemOrganizationService: SystemOrganizationService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -195,46 +194,6 @@ export class AuthController {
 
   @Get('/self-hosted')
   async logMeIn() {
-    const someOrg = await this.organizationRepository.findOne({ name: 'System Organization' });
-    let token: string;
-
-    if (!someOrg) {
-      const { user } = await this.userRegisterUsecase.execute(
-        UserRegisterCommand.create({
-          email: 'system@novu.co',
-          firstName: 'System',
-          lastName: 'User',
-          password: 'systemUser1q@W#',
-        })
-      );
-
-      const organization = await this.createOrganizationUsecase.execute(
-        CreateOrganizationCommand.create({
-          userId: user?._id!,
-          name: 'System Organization',
-        })
-      );
-
-      token = await this.switchOrganizationUsecase.execute(
-        SwitchOrganizationCommand.create({
-          newOrganizationId: organization?._id!,
-          userId: user?._id!,
-        })
-      );
-
-      return { token };
-    } else {
-      const admins = await this.memberRepository.getOrganizationMembers(someOrg?._id);
-      token = await this.switchOrganizationUsecase.execute(
-        SwitchOrganizationCommand.create({
-          newOrganizationId: someOrg?._id!,
-          userId: admins[0]?._userId,
-        })
-      );
-
-      return {
-        token,
-      };
-    }
+    return this.systemOrganizationService.getSystemOrganizationToken();
   }
 }

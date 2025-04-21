@@ -3,9 +3,7 @@ import { MemberRepository } from '@novu/dal';
 import { MemberStatusEnum } from '@novu/shared';
 import { AddMemberCommand } from './add-member.command';
 
-@Injectable({
-  scope: Scope.REQUEST,
-})
+@Injectable()
 export class AddMember {
   private organizationId: string;
 

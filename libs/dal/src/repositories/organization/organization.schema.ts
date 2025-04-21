@@ -66,6 +66,17 @@ const organizationSchema = new Schema<OrganizationDBModel>(
   schemaOptions
 );
 
+// Add conditional index for System Organization when self-hosted
+if (process.env.SELF_HOSTED === 'true') {
+  organizationSchema.index(
+    { name: 1 },
+    {
+      unique: true,
+      partialFilterExpression: { name: 'System Organization' },
+    }
+  );
+}
+
 export const Organization =
   (mongoose.models.Organization as mongoose.Model<OrganizationDBModel>) ||
   mongoose.model<OrganizationDBModel>('Organization', organizationSchema);

@@ -30,6 +30,35 @@ export function AuthContextProvider({ children }: any) {
 export const OrganizationContext = React.createContext({});
 export const useOrganization = createContextHook(OrganizationContext);
 
+export const useOrganizationList = () => {
+  return {
+    isLoaded: true,
+    organizationList: [
+      {
+        id: '1',
+        name: 'Organization 1',
+        slug: 'org-1',
+        logoUrl: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        publicMetadata: {},
+        privateMetadata: {},
+      },
+      {
+        id: '2',
+        name: 'Organization 2',
+        slug: 'org-2',
+        logoUrl: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        publicMetadata: {},
+        privateMetadata: {},
+      },
+    ],
+    setActive: async () => null,
+  };
+};
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function OrganizationContextProvider({ children }: any) {
   const value = {
@@ -114,16 +143,8 @@ export function SignIn() {
   const navigate = useNavigate();
   useEffect(() => {
     getJwt();
+    navigate('/');
   });
-
-  function getJwt() {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    get('/auth/self-hosted').then((result: any) => {
-      localStorage.setItem('self-hosted-jwt', result?.data.token);
-
-      navigate('/');
-    });
-  }
 
   return <>{'Loading...'}</>;
 }
@@ -150,9 +171,35 @@ export function SignedOut({ children }: { children: any }) {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function RedirectToSignIn({ children }: { children: any }) {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!(window as any).Clerk.loggedIn) {
+      getJwt();
+      navigate('/sign-in');
+    }
+  }, [navigate]);
+
+  // if (!(window as any).Clerk.loggedIn) {
+  //   console.log('RedirectToSignIn: return null');
+  //   return null;
+  // }
+
+  return <>{children}</>;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 (window as any).Clerk = {
   loggedIn: !!localStorage.getItem('self-hosted-jwt'),
   session: {
     getToken: () => localStorage.getItem('self-hosted-jwt'),
   },
 };
+
+function getJwt() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  get('/auth/self-hosted').then((result: any) => {
+    localStorage.setItem('self-hosted-jwt', result?.data.token);
+  });
+}
