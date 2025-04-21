@@ -11,6 +11,7 @@ import {
   RiChat1Line,
   RiDatabase2Line,
   RiGroup2Line,
+  RiHashtag,
   RiKey2Line,
   RiRouteFill,
   RiSettings4Line,
@@ -78,6 +79,10 @@ export const SideNavigation = () => {
               <NavigationLink to={buildRoute(ROUTES.SUBSCRIBERS, { environmentSlug: currentEnvironment?.slug ?? '' })}>
                 <RiGroup2Line className="size-4" />
                 <span>Subscribers</span>
+              </NavigationLink>
+              <NavigationLink to={buildRoute(ROUTES.TOPICS, { environmentSlug: currentEnvironment?.slug ?? '' })}>
+                <RiHashtag className="size-4" />
+                <span>Topics</span>
               </NavigationLink>
             </NavigationGroup>
             <NavigationGroup label="Monitor">
