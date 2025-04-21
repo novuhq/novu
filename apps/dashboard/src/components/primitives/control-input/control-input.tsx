@@ -15,6 +15,7 @@ import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { DIGEST_VARIABLES_ENUM, getDynamicDigestVariable } from '@/components/variable/utils/digest-variables';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
+import { useTelemetry } from '@/hooks/use-telemetry';
 
 const variants = cva('relative w-full', {
   variants: {
@@ -77,9 +78,10 @@ export function ControlInput({
 
   const { digestStepBeforeCurrent } = useWorkflow();
 
+  const track = useTelemetry();
   const completionSource = useMemo(
-    () => createAutocompleteSource(variables, isEnhancedDigestEnabled),
-    [variables, isEnhancedDigestEnabled]
+    () => createAutocompleteSource(variables, isEnhancedDigestEnabled, track),
+    [variables, isEnhancedDigestEnabled, track]
   );
 
   const autocompletionExtension = useMemo(
