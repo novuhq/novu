@@ -4,8 +4,9 @@ import { get } from '../../api/api.client';
 import { Input } from '../../components/primitives/input';
 import { createContextHook } from '../context';
 import { OrganizationSwitcher } from './organization-switcher';
+import { UserButton } from './user-button';
 
-export { OrganizationSwitcher };
+export { OrganizationSwitcher, UserButton };
 
 export const AuthContext = React.createContext({});
 export const useAuth = createContextHook(AuthContext);
@@ -134,10 +135,6 @@ export function ClerkProvider({ children }: any) {
       </UserContextProvider>
     </ClerkContext.Provider>
   );
-}
-
-export function UserButton() {
-  return <></>;
 }
 
 export function OrganizationList() {
