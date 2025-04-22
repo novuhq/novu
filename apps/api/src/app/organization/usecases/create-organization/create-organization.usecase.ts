@@ -29,7 +29,7 @@ export class CreateOrganization {
     const createdOrganization = await this.organizationRepository.create({
       logo: command.logo,
       name: command.name,
-      apiServiceLevel: ApiServiceLevelEnum.FREE,
+      apiServiceLevel: command.apiServiceLevel || ApiServiceLevelEnum.FREE,
       domain: command.domain,
       language: command.language,
     });

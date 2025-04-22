@@ -1,6 +1,7 @@
 import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { CommunityOrganizationRepository, MemberRepository, UserEntity, UserRepository } from '@novu/dal';
 import { PinoLogger } from '@novu/application-generic';
+import { ApiServiceLevelEnum } from '@novu/shared';
 import { CreateOrganization } from '../../organization/usecases/create-organization/create-organization.usecase';
 import { CreateOrganizationCommand } from '../../organization/usecases/create-organization/create-organization.command';
 import { UserRegister } from '../usecases/register/user-register.usecase';
@@ -60,6 +61,7 @@ export class SystemOrganizationService implements OnModuleInit {
           CreateOrganizationCommand.create({
             userId: user._id,
             name: this.SYSTEM_ORGANIZATION_NAME,
+            apiServiceLevel: ApiServiceLevelEnum.UNLIMITED,
           })
         );
 

@@ -5,6 +5,7 @@ import { OrganizationContextProvider, useOrganization } from './organization.res
 import { UserContextProvider, useUser } from './user.resource';
 import { AuthContextProvider, useAuth } from './auth.resource';
 import { IOrganizationEntity } from '@novu/shared';
+import { getJwtToken, isJwtValid } from './jwt-manager';
 
 import {
   OrganizationList,
@@ -66,9 +67,9 @@ export function ClerkProvider({ children }: any) {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 (window as any).Clerk = {
-  loggedIn: !!localStorage.getItem('self-hosted-jwt'),
+  loggedIn: isJwtValid(getJwtToken()),
   session: {
-    getToken: () => localStorage.getItem('self-hosted-jwt'),
+    getToken: () => getJwtToken(),
   },
 };
 

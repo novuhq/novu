@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Input } from '../../components/primitives/input';
-import { get } from '../../api/api.client';
+import { refreshJwt } from './jwt-manager';
 
 export function OrganizationList() {
   return <></>;
@@ -18,7 +17,7 @@ export function UserProfile() {
 export function SignIn() {
   const navigate = useNavigate();
   useEffect(() => {
-    getJwt();
+    refreshJwt();
     navigate('/');
   });
 
@@ -40,7 +39,7 @@ export function RedirectToSignIn({ children }: { children: any }) {
 
   useEffect(() => {
     if (!(window as any).Clerk.loggedIn) {
-      getJwt();
+      refreshJwt();
       navigate('/sign-in');
     }
   }, [navigate]);
@@ -63,11 +62,4 @@ export function SignedOut({ children }: { children: any }) {
   if ((window as any).Clerk.loggedIn) return null;
 
   return <>{children}</>;
-}
-
-function getJwt() {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  get('/auth/self-hosted').then((result: any) => {
-    localStorage.setItem('self-hosted-jwt', result?.data.token);
-  });
 }

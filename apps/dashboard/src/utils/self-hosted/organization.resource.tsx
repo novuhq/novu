@@ -4,14 +4,15 @@ import { useQuery } from '@tanstack/react-query';
 import { get } from '../../api/api.client';
 import { IOrganizationEntity } from '@novu/shared';
 import { QueryKeys } from '../../utils/query-keys';
+import { withJwtValidation } from './api-interceptor';
 
 export const OrganizationContext = React.createContext({});
 
 // Function to fetch the current organization
-async function getCurrentOrganization() {
+const getCurrentOrganization = withJwtValidation(async () => {
   const response = await get<{ data: IOrganizationEntity }>('/organizations/me');
   return response.data;
-}
+});
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function OrganizationContextProvider({ children }: any) {

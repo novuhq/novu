@@ -1,13 +1,14 @@
 import React from 'react';
 import { createContextHook } from '../context';
 import { DecodedJwt } from '.';
+import { getJwtToken, isJwtValid } from './jwt-manager';
 
 export const AuthContext = React.createContext({});
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function AuthContextProvider({ children }: any) {
-  const jwt = localStorage.getItem('self-hosted-jwt');
-  const decodedJwt: DecodedJwt | null = jwt ? JSON.parse(atob(jwt.split('.')[1])) : null;
+  const jwt = getJwtToken();
+  const decodedJwt: DecodedJwt | null = jwt && isJwtValid(jwt) ? JSON.parse(atob(jwt.split('.')[1])) : null;
 
   const value = {
     currentUser: {

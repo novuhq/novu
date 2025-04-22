@@ -1,5 +1,6 @@
 import { ApiServiceLevelEnum, FeatureNameEnum, getFeatureForTierAsNumber, type GetSubscriptionDto } from '@novu/shared';
 import { type OrganizationResource } from '@clerk/types';
+import { IS_SELF_HOSTED } from '../config';
 
 export const DATE_RANGE_OPTIONS = [
   { value: '24h', label: 'Last 24 hours', ms: 24 * 60 * 60 * 1000 },
@@ -17,7 +18,7 @@ export function buildActivityDateFilters({
 }) {
   const maxActivityFeedRetentionMs = getFeatureForTierAsNumber(
     FeatureNameEnum.PLATFORM_ACTIVITY_FEED_RETENTION,
-    subscription?.apiServiceLevel ?? ApiServiceLevelEnum.FREE,
+    subscription?.apiServiceLevel ?? (IS_SELF_HOSTED ? ApiServiceLevelEnum.UNLIMITED : ApiServiceLevelEnum.FREE),
     true
   );
 
