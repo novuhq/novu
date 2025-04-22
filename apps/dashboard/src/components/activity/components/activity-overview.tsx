@@ -1,11 +1,13 @@
 import { IActivity } from '@novu/shared';
 import { format } from 'date-fns';
 import { motion } from 'motion/react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { SubscriberDrawerButton } from '@/components/subscribers/subscriber-drawer';
 import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
+import { TopicDrawerButton } from '@/components/topics/topic-drawer';
 import { useEnvironment } from '@/context/environment/hooks';
 import { fadeIn } from '@/utils/animation';
 import { buildRoute, ROUTES } from '@/utils/routes';
@@ -32,7 +34,13 @@ export function ActivityOverview({ activity }: ActivityOverviewProps) {
     }
 
     if (activity.topics.length === 1) {
-      return <span className="text-foreground-600 font-mono text-xs">{activity.topics[0].topicKey}</span>;
+      return (
+        <TopicDrawerButton topicKey={activity.topics[0].topicKey} readOnly className="w-full text-start">
+          <span className="text-foreground-600 cursor-pointer font-mono text-xs group-hover:underline">
+            {activity.topics[0].topicKey}
+          </span>
+        </TopicDrawerButton>
+      );
     }
 
     const firstTopic = activity.topics[0].topicKey;
@@ -46,7 +54,20 @@ export function ActivityOverview({ activity }: ActivityOverviewProps) {
           </span>
         </TooltipTrigger>
         <TooltipContent className="max-w-sm">
-          <div className="font-mono text-xs">{activity.topics.map((topic) => `"${topic.topicKey}"`).join(', ')}</div>
+          <div className="font-mono text-xs">
+            {activity.topics.map((topic, index) => (
+              <React.Fragment key={topic.topicKey}>
+                {index > 0 && ', '}
+                <TopicDrawerButton
+                  topicKey={topic.topicKey}
+                  readOnly
+                  className="inline-block bg-transparent p-0 hover:bg-transparent"
+                >
+                  <span className="cursor-pointer group-hover:underline">"{topic.topicKey}"</span>
+                </TopicDrawerButton>
+              </React.Fragment>
+            ))}
+          </div>
         </TooltipContent>
       </Tooltip>
     );
@@ -87,7 +108,15 @@ export function ActivityOverview({ activity }: ActivityOverviewProps) {
             isDeleted={!activity.subscriber}
             value={(activity.subscriber?.subscriberId || activity._subscriberId) ?? ''}
             isCopyable
-          />
+          >
+            <span
+              className={cn('text-foreground-600 cursor-pointer font-mono text-xs group-hover:underline', {
+                'text-foreground-300 cursor-not-allowed': !activity.subscriber,
+              })}
+            >
+              {(activity.subscriber?.subscriberId || activity._subscriberId) ?? ''}
+            </span>
+          </OverviewItem>
         </SubscriberDrawerButton>
 
         <OverviewItem label="Triggered at" value={format(new Date(activity.createdAt), 'MMM d yyyy, HH:mm:ss')}>
