@@ -1,6 +1,6 @@
 import { FILTER_VALIDATORS, LiquidFilterIssue } from '@novu/framework/internal';
+import { type JSONSchemaDto } from '@novu/shared';
 import { Filter, Liquid, LiquidError, Output, RenderError, Template, TokenKind } from 'liquidjs';
-import { JSONSchemaDto } from '../../dtos';
 import { extractLiquidExpressions, isValidTemplate } from './parser-utils';
 
 const LIQUID_CONFIG = {
@@ -41,18 +41,6 @@ export type Variable = {
   /** The full liquid output string (e.g. "{{user.name | upcase}}") */
   output: string;
 };
-
-type InvalidContentVariable = Variable & {
-  /** Error message if the variable is invalid */
-  message?: string;
-};
-
-type InvalidFilterVariable = InvalidContentVariable & {
-  /** Error message if the variable filter is invalid */
-  filterMessage?: string;
-};
-
-export type InvalidVariable = InvalidContentVariable | InvalidFilterVariable;
 
 export type TemplateVariables = {
   validVariables: Array<Variable>;
@@ -132,7 +120,7 @@ function processLiquidRawOutput({
   const invalidVariables: Array<Variable> = [];
   const processedVariables = new Set<string>();
 
-  function addVariable(variable: Variable | InvalidVariable | InvalidFilterVariable, isValid: boolean) {
+  function addVariable(variable: Variable, isValid: boolean) {
     if (!processedVariables.has(variable.name)) {
       processedVariables.add(variable.name);
       (isValid ? validVariables : invalidVariables).push(variable);
