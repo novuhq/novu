@@ -33,6 +33,21 @@ const MiniEmailPreview = (props: MiniEmailPreviewProps) => {
 type ConfigureEmailStepPreviewProps = HTMLAttributes<HTMLDivElement>;
 
 export function ConfigureEmailStepPreview(props: ConfigureEmailStepPreviewProps) {
+  const { className, ...rest } = props;
+
+  const getPlainText = (html: string) => {
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = html;
+
+    ['style', 'script', 'head'].forEach((tag) => {
+      tempDiv.querySelectorAll(tag).forEach((el) => el.remove());
+    });
+
+    let text = tempDiv.textContent?.trim() || '';
+    text = text.replace(/\s+/g, ' ').replace(/(\.|!|\?)\s/g, '$1\n');
+    return text;
+  };
+
   const {
     previewStep,
     data: previewData,
@@ -40,6 +55,7 @@ export function ConfigureEmailStepPreview(props: ConfigureEmailStepPreviewProps)
   } = usePreviewStep({
     onError: (error) => Sentry.captureException(error),
   });
+
   const { step, isPending } = useWorkflow();
 
   const { workflowSlug, stepSlug } = useParams<{
@@ -59,7 +75,7 @@ export function ConfigureEmailStepPreview(props: ConfigureEmailStepPreviewProps)
 
   if (isPreviewPending || !previewData) {
     return (
-      <MiniEmailPreview>
+      <MiniEmailPreview className={className} {...rest}>
         <Skeleton className="h-5 w-full max-w-[25ch]" />
         <Skeleton className="h-5 w-full max-w-[15ch]" />
       </MiniEmailPreview>
@@ -68,8 +84,14 @@ export function ConfigureEmailStepPreview(props: ConfigureEmailStepPreviewProps)
 
   if (previewData.result.type === 'email') {
     return (
-      <MiniEmailPreview {...props}>
-        <div className="text-foreground-400 line-clamp-2 text-xs">{previewData.result.preview.subject}</div>
+      <MiniEmailPreview className={className} {...rest}>
+        <p className="text-foreground-400 line-clamp-3">
+          <span className="text-foreground-600 max-w-[20ch] truncate text-sm">
+            {previewData.result.preview.subject}
+          </span>
+          <span> - </span>
+          <span className="text-foreground-400 text-sm">{getPlainText(previewData.result.preview.body)}</span>
+        </p>
       </MiniEmailPreview>
     );
   }
