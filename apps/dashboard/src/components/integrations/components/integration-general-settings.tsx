@@ -9,6 +9,7 @@ import { ROUTES } from '@/utils/routes';
 import { ApiServiceLevelEnum } from '@novu/shared';
 import { Control } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
+import { IS_SELF_HOSTED } from '../../../config';
 
 type IntegrationFormData = {
   name: string;
@@ -96,7 +97,7 @@ export function GeneralSettings({
           </FormItem>
         )}
       />
-      {isForInAppStep && (
+      {isForInAppStep && !IS_SELF_HOSTED && (
         <FormField
           control={control}
           name="removeNovuBranding"

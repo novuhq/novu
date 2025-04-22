@@ -17,7 +17,7 @@ import TruncatedText from '@/components/truncated-text';
 import { WorkflowStatus } from '@/components/workflow-status';
 import { WorkflowSteps } from '@/components/workflow-steps';
 import { WorkflowTags } from '@/components/workflow-tags';
-import { LEGACY_DASHBOARD_URL } from '@/config';
+import { IS_SELF_HOSTED, LEGACY_DASHBOARD_URL } from '@/config';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment, useFetchEnvironments } from '@/context/environment/hooks';
 import { useDeleteWorkflow } from '@/hooks/use-delete-workflow';
@@ -83,9 +83,9 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
   const { currentEnvironment } = useEnvironment();
   const navigate = useNavigate();
   const { safeSync, isSyncable, tooltipContent, PromoteConfirmModal } = useSyncWorkflow(workflow);
-  const isV1Workflow = workflow.origin === WorkflowOriginEnum.NOVU_CLOUD_V1;
+  const isV0Workflow = workflow.origin === WorkflowOriginEnum.NOVU_CLOUD_V1;
   const isDuplicable = workflow.origin === WorkflowOriginEnum.NOVU_CLOUD;
-  const workflowLink = isV1Workflow
+  const workflowLink = isV0Workflow
     ? buildRoute(`${LEGACY_DASHBOARD_URL}/workflows/edit/:workflowId`, {
         workflowId: workflow._id,
       })
@@ -93,7 +93,7 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
         environmentSlug: currentEnvironment?.slug ?? '',
         workflowSlug: workflow.slug,
       });
-  const triggerWorkflowLink = isV1Workflow
+  const triggerWorkflowLink = isV0Workflow
     ? buildRoute(`${LEGACY_DASHBOARD_URL}/workflows/edit/:workflowId/test-workflow`, { workflowId: workflow._id })
     : buildRoute(ROUTES.TEST_WORKFLOW, {
         environmentSlug: currentEnvironment?.slug ?? '',
@@ -184,7 +184,11 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
   };
 
   const handleRowClick = () => {
-    if (isV1Workflow) {
+    if (isV0Workflow && IS_SELF_HOSTED) {
+      return;
+    }
+
+    if (isV0Workflow) {
       document.location.href = workflowLink;
     } else {
       navigate(workflowLink);
@@ -282,7 +286,7 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56" onClick={stopPropagation}>
               <DropdownMenuGroup>
-                <Link to={triggerWorkflowLink} reloadDocument={isV1Workflow}>
+                <Link to={triggerWorkflowLink} reloadDocument={isV0Workflow}>
                   <DropdownMenuItem className="cursor-pointer">
                     <RiPlayCircleLine />
                     Trigger workflow
