@@ -121,6 +121,15 @@ export const CreateTopicForm = (props: CreateTopicFormProps) => {
     });
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    // Prevent the form from submitting when pressing Enter in the input fields
+    // We'll handle the submission in the form's onSubmit
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      form.handleSubmit(onSubmit)();
+    }
+  };
+
   return (
     <div className="flex h-full flex-col">
       <Form {...form}>
@@ -159,6 +168,8 @@ export const CreateTopicForm = (props: CreateTopicFormProps) => {
                         if (e.key === 'Tab' && !e.shiftKey) {
                           e.preventDefault();
                           keyInputRef.current?.focus();
+                        } else if (e.key === 'Enter') {
+                          handleKeyDown(e);
                         }
                       }}
                     />
@@ -204,10 +215,22 @@ export const CreateTopicForm = (props: CreateTopicFormProps) => {
                           field.ref(element);
                           keyInputRef.current = element;
                         }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            handleKeyDown(e);
+                          }
+                        }}
                       />
                     </FormControl>
                     {watchedKey && (
-                      <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                      <div
+                        className="absolute right-2 top-1/2 -translate-y-1/2"
+                        onClick={(e) => {
+                          // Prevent the click from submitting the form
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }}
+                      >
                         <CopyButton valueToCopy={watchedKey} size="xs" className="ml-1" />
                       </div>
                     )}

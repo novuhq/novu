@@ -1,22 +1,33 @@
+import { AddSubscriberIllustration } from '@/components/icons/add-subscriber-illustration';
 import { Button } from '@/components/primitives/button';
-import { RiHashtag } from 'react-icons/ri';
+import { LinkButton } from '@/components/primitives/button-link';
+import { RiAddLine, RiBookMarkedLine } from 'react-icons/ri';
+import { Link } from 'react-router-dom';
 import { useTopicsNavigate } from './hooks/use-topics-navigate';
 
 export const TopicListBlank = () => {
   const { navigateToCreateTopicPage } = useTopicsNavigate();
 
   return (
-    <div className="flex flex-col items-center gap-4 py-10">
-      <div className="flex max-w-md flex-col items-center gap-4 text-center">
-        <div className="bg-primary-50 rounded-full p-3">
-          <RiHashtag className="text-primary h-5 w-5" aria-hidden="true" />
-        </div>
-        <h3 className="text-foreground-950 text-lg font-medium">No topics created yet</h3>
-        <p className="text-foreground-500">
-          Topics allow you to organize your subscribers and send notifications to groups of subscribers at once.
+    <div className="mt-[100px] flex h-full w-full flex-col items-center justify-center gap-6">
+      <AddSubscriberIllustration />
+      <div className="flex flex-col items-center gap-2 text-center">
+        <span className="text-text-sub text-label-md block font-medium">No topics created yet</span>
+        <p className="text-text-soft text-paragraph-sm max-w-[60ch]">
+          Topics allow you to organize your subscribers and send notifications to groups of subscribers at once. Create
+          topics and add subscribers to them via the UI or API.
         </p>
-        <Button onClick={navigateToCreateTopicPage} variant="primary" className="mt-2">
-          Create your first topic
+      </div>
+
+      <div className="flex items-center justify-center gap-6">
+        <Link to="https://docs.novu.co/platform/topics" target="_blank">
+          <LinkButton variant="gray" trailingIcon={RiBookMarkedLine}>
+            Learn more in docs
+          </LinkButton>
+        </Link>
+
+        <Button variant="primary" leadingIcon={RiAddLine} onClick={navigateToCreateTopicPage} className="gap-2">
+          Create topic
         </Button>
       </div>
     </div>
