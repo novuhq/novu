@@ -23,13 +23,13 @@ export class CreateOrUpdateSubscriberUseCase {
   async execute(command: CreateOrUpdateSubscriberCommand) {
     const persistedSubscriber = await this.getExistingSubscriber(command);
 
-    if (persistedSubscriber) {
+    if (persistedSubscriber && command.allowUpdate) {
       await this.updateSubscriber(command, persistedSubscriber);
     } else {
       await this.createSubscriber(command);
     }
 
-    if (command.channels?.length) {
+    if (command.channels?.length && command.allowUpdate) {
       await this.updateCredentials(command);
     }
 

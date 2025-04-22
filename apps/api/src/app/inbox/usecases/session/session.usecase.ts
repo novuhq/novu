@@ -12,7 +12,7 @@ import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
 import { AuthService } from '../../../auth/services/auth.service';
 import { SubscriberSessionResponseDto } from '../../dtos/subscriber-session-response.dto';
 import { AnalyticsEventsEnum } from '../../utils';
-import { validateHmacEncryption } from '../../utils/encryption';
+import { isHmacValid, validateHmacEncryption } from '../../utils/encryption';
 import { NotificationsCountCommand } from '../notifications-count/notifications-count.command';
 import { NotificationsCount } from '../notifications-count/notifications-count.usecase';
 import { SessionCommand } from './session.command';
@@ -61,6 +61,12 @@ export class Session {
       });
     }
 
+    const allowUpdate = isHmacValid({
+      apiKey: environment.apiKeys[0].key,
+      subscriberId: command.subscriberId,
+      subscriberHash: command.subscriberHash,
+    });
+
     const subscriber = await this.createSubscriber.execute(
       CreateOrUpdateSubscriberCommand.create({
         environmentId: environment._id,
@@ -69,6 +75,7 @@ export class Session {
         firstName: command.firstName,
         lastName: command.lastName,
         email: command.email,
+        allowUpdate,
       })
     );
 
