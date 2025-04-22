@@ -1,12 +1,14 @@
 import { Separator } from '@/components/primitives/separator';
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/primitives/sheet';
+import { Skeleton } from '@/components/primitives/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
 import { VisuallyHidden } from '@/components/primitives/visually-hidden';
 import TruncatedText from '@/components/truncated-text';
 import { useFormProtection } from '@/hooks/use-form-protection';
+import { itemVariants, listVariants } from '@/utils/animation';
 import { motion } from 'motion/react';
 import { forwardRef, useEffect, useState } from 'react';
-import { RiMailSettingsLine } from 'react-icons/ri';
+import { RiMailSettingsLine, RiUser3Fill } from 'react-icons/ri';
 import { cn } from '../../utils/ui';
 import { useTopic } from './hooks/use-topic';
 import { useTopicEvents } from './hooks/use-topic-events';
@@ -41,11 +43,72 @@ type TopicSubscribersProps = {
   readOnly?: boolean;
 };
 
-const TopicSubscribers = (props: TopicSubscribersProps) => {
+const TopicSubscribersEmptyState = () => {
   return (
-    <div className="p-4">
-      <p>Topic subscribers will be displayed here</p>
+    <div className="flex h-full w-full flex-col items-center justify-center py-12">
+      <RiUser3Fill className="size-12 text-neutral-300" />
+      <p className="text-foreground-600 mt-4 text-center text-sm">This topic doesn't have any subscribers yet.</p>
     </div>
+  );
+};
+
+const TopicSubscribers = (props: TopicSubscribersProps) => {
+  const { topicKey } = props;
+  const { data, isPending } = useTopic(topicKey);
+
+  if (isPending) {
+    return (
+      <motion.div
+        key="loading-state"
+        initial="hidden"
+        animate="visible"
+        variants={listVariants}
+        className="flex flex-1 flex-col overflow-y-auto border-t border-t-neutral-200"
+      >
+        {Array.from({ length: 5 }).map((_, index) => (
+          <motion.div key={index} variants={itemVariants} className="border-b-stroke-soft flex w-full border-b">
+            <div className="flex w-full items-center px-3 py-2">
+              <Skeleton className="h-4 w-40" />
+            </div>
+          </motion.div>
+        ))}
+      </motion.div>
+    );
+  }
+
+  const subscribers = data?.subscribers || [];
+
+  if (subscribers.length === 0) {
+    return <TopicSubscribersEmptyState />;
+  }
+
+  return (
+    <motion.div
+      key="subscribers-list"
+      initial="hidden"
+      animate="visible"
+      variants={{
+        visible: {
+          transition: {
+            staggerChildren: 0.03,
+          },
+        },
+      }}
+      className="flex flex-1 flex-col overflow-y-auto border-t border-t-neutral-200"
+    >
+      {subscribers.map((subscriberId, index) => (
+        <motion.div
+          key={`${subscriberId}-${index}`}
+          variants={itemVariants}
+          className="border-b-stroke-soft flex w-full border-b last:border-b-0"
+        >
+          <div className="flex w-full items-center px-3 py-2">
+            <RiUser3Fill className="mr-2 size-3.5 min-w-3.5 text-neutral-500" />
+            <span className="text-label-xs text-foreground-950">{subscriberId}</span>
+          </div>
+        </motion.div>
+      ))}
+    </motion.div>
   );
 };
 
