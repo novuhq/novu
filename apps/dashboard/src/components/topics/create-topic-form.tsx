@@ -1,3 +1,4 @@
+import { CopyButton } from '@/components/primitives/copy-button';
 import {
   Form,
   FormControl,
@@ -15,6 +16,7 @@ import { useCreateTopic } from '@/hooks/use-create-topic';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link } from 'react-router-dom';
 import { ExternalToast } from 'sonner';
@@ -38,9 +40,25 @@ type CreateTopicFormProps = {
   onSubmitStart?: () => void;
 };
 
+// Converts a name to a slug (kebab-case)
+function slugify(text: string): string {
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-') // Replace spaces with -
+    .replace(/[^\w-]+/g, '') // Remove all non-word chars
+    .replace(/--+/g, '-') // Replace multiple - with single -
+    .replace(/^-+/, '') // Trim - from start of text
+    .replace(/-+$/, ''); // Trim - from end of text
+}
+
 export const CreateTopicForm = (props: CreateTopicFormProps) => {
   const { onSuccess, onError, onSubmitStart } = props;
   const track = useTelemetry();
+  const nameInputRef = useRef<HTMLInputElement | null>(null);
+  const keyInputRef = useRef<HTMLInputElement | null>(null);
+  const [keyModifiedByUser, setKeyModifiedByUser] = useState(false);
 
   const { createTopic, isPending } = useCreateTopic({
     onSuccess: (data) => {
@@ -70,6 +88,25 @@ export const CreateTopicForm = (props: CreateTopicFormProps) => {
     shouldFocusError: false,
     mode: 'onBlur',
   });
+
+  useEffect(() => {
+    // Auto-focus the name input field when the component mounts
+    if (nameInputRef.current) {
+      nameInputRef.current.focus();
+    }
+  }, []);
+
+  // Watch the name field and update the key field accordingly
+  const watchedName = form.watch('name');
+  const watchedKey = form.watch('key');
+
+  useEffect(() => {
+    // Only auto-update the key if it hasn't been modified by the user
+    if (!keyModifiedByUser && watchedName) {
+      const slugifiedKey = slugify(watchedName);
+      form.setValue('key', slugifiedKey, { shouldValidate: true });
+    }
+  }, [watchedName, form, keyModifiedByUser]);
 
   const onSubmit = async (formData: z.infer<typeof TopicFormSchema>) => {
     if (onSubmitStart) {
@@ -109,9 +146,21 @@ export const CreateTopicForm = (props: CreateTopicFormProps) => {
                       placeholder="Topic name"
                       id={field.name}
                       value={field.value}
-                      onChange={field.onChange}
+                      onChange={(e) => {
+                        field.onChange(e);
+                      }}
                       hasError={!!fieldState.error}
                       size="xs"
+                      ref={(element) => {
+                        field.ref(element);
+                        nameInputRef.current = element;
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Tab' && !e.shiftKey) {
+                          e.preventDefault();
+                          keyInputRef.current?.focus();
+                        }
+                      }}
                     />
                   </FormControl>
                   <FormMessage />
@@ -137,17 +186,32 @@ export const CreateTopicForm = (props: CreateTopicFormProps) => {
                       </Link>
                     </span>
                   </div>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      placeholder="my-topic-key"
-                      id={field.name}
-                      value={field.value}
-                      onChange={field.onChange}
-                      hasError={!!fieldState.error}
-                      size="xs"
-                    />
-                  </FormControl>
+                  <div className="relative">
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder="my-topic-key"
+                        id={field.name}
+                        value={field.value}
+                        onChange={(e) => {
+                          field.onChange(e);
+                          // Mark that the user has modified the key field
+                          setKeyModifiedByUser(true);
+                        }}
+                        hasError={!!fieldState.error}
+                        size="xs"
+                        ref={(element) => {
+                          field.ref(element);
+                          keyInputRef.current = element;
+                        }}
+                      />
+                    </FormControl>
+                    {watchedKey && (
+                      <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                        <CopyButton valueToCopy={watchedKey} size="xs" className="ml-1" />
+                      </div>
+                    )}
+                  </div>
                   <FormMessage>Used to identify the topic in API calls</FormMessage>
                 </FormItem>
               )}

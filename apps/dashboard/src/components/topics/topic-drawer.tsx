@@ -5,10 +5,11 @@ import { VisuallyHidden } from '@/components/primitives/visually-hidden';
 import TruncatedText from '@/components/truncated-text';
 import { useFormProtection } from '@/hooks/use-form-protection';
 import { motion } from 'motion/react';
-import { forwardRef, useState } from 'react';
+import { forwardRef, useEffect, useState } from 'react';
 import { RiMailSettingsLine } from 'react-icons/ri';
 import { cn } from '../../utils/ui';
 import { useTopic } from './hooks/use-topic';
+import { useTopicEvents } from './hooks/use-topic-events';
 import { TopicOverviewForm, TopicOverviewSkeleton } from './topic-overview-form';
 
 const tabTriggerClasses =
@@ -109,6 +110,18 @@ type TopicDrawerProps = {
 
 export const TopicDrawer = forwardRef<HTMLDivElement, TopicDrawerProps>((props, forwardedRef) => {
   const { open, onOpenChange, topicKey, readOnly = false } = props;
+  const { subscribeToEvent } = useTopicEvents();
+
+  useEffect(() => {
+    // Close the drawer if the current topic is deleted
+    const unsubscribe = subscribeToEvent('deleted', (deletedTopicKey) => {
+      if (deletedTopicKey === topicKey && open) {
+        onOpenChange(false);
+      }
+    });
+
+    return unsubscribe;
+  }, [subscribeToEvent, topicKey, open, onOpenChange]);
 
   return (
     <>

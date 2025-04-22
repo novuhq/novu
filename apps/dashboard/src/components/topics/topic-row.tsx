@@ -1,5 +1,6 @@
 import { ConfirmationModal } from '@/components/confirmation-modal';
 import { CompactButton } from '@/components/primitives/button-compact';
+import { CopyButton } from '@/components/primitives/copy-button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,6 +17,7 @@ import { ComponentProps, useState } from 'react';
 import { RiDeleteBin2Line, RiFileCopyLine, RiMore2Fill } from 'react-icons/ri';
 import { cn } from '../../utils/ui';
 import { useDeleteTopic } from './hooks/use-delete-topic';
+import { useTopicEvents } from './hooks/use-topic-events';
 import { useTopicsNavigate } from './hooks/use-topics-navigate';
 import { Topic } from './types';
 
@@ -42,6 +44,7 @@ export const TopicRow = ({ topic, topicsCount }: TopicRowProps) => {
   const { deleteTopic, isDeleting } = useDeleteTopic();
   const queryClient = useQueryClient();
   const { navigateToEditTopicPage } = useTopicsNavigate();
+  const { emitEvent } = useTopicEvents();
 
   const createdAt = topic.createdAt ? format(new Date(topic.createdAt), 'dd/MM/yyyy HH:mm') : '-';
   const updatedAt = topic.updatedAt ? format(new Date(topic.updatedAt), 'dd/MM/yyyy HH:mm') : '-';
@@ -51,15 +54,25 @@ export const TopicRow = ({ topic, topicsCount }: TopicRowProps) => {
   };
 
   const handleDeletion = async () => {
-    await deleteTopic(topic.key);
+    try {
+      await deleteTopic(topic.key);
 
-    // Close the delete modal
-    setIsDeleteModalOpen(false);
+      // Close the delete modal
+      setIsDeleteModalOpen(false);
 
-    // Force a refetch of the topics list
-    queryClient.invalidateQueries({
-      queryKey: [QueryKeys.fetchTopics],
-    });
+      // Emit the delete event for any listeners (like the drawer)
+      emitEvent('deleted', topic.key);
+
+      // Force a refetch of the topics list - use exact:true to ensure invalidation works
+      queryClient.invalidateQueries({
+        queryKey: [QueryKeys.fetchTopics],
+        exact: false,
+        refetchType: 'all',
+      });
+    } catch (error) {
+      // Error is already handled by the useDeleteTopic hook
+      console.error('Failed to delete topic:', error);
+    }
   };
 
   return (
@@ -76,7 +89,14 @@ export const TopicRow = ({ topic, topicsCount }: TopicRowProps) => {
           </div>
         </TopicTableCell>
         <TopicTableCell>
-          <div className="max-w-[300px] truncate">{topic.key}</div>
+          <div className="flex items-center gap-1">
+            <div className="max-w-[300px] truncate">{topic.key}</div>
+            <CopyButton
+              className="z-10 flex size-2 p-0 px-1 opacity-0 group-hover:opacity-100"
+              valueToCopy={topic.key}
+              size="2xs"
+            />
+          </div>
         </TopicTableCell>
         <TopicTableCell>{createdAt}</TopicTableCell>
         <TopicTableCell>{updatedAt}</TopicTableCell>

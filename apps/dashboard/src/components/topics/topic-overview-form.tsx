@@ -18,9 +18,11 @@ import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner
 import { useEnvironment } from '@/context/environment/hooks';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { formatDateSimple } from '@/utils/format-date';
+import { QueryKeys } from '@/utils/query-keys';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { RiDeleteBin2Line } from 'react-icons/ri';
@@ -28,6 +30,7 @@ import { Link } from 'react-router-dom';
 import { ExternalToast } from 'sonner';
 import { z } from 'zod';
 import { ConfirmationModal } from '../confirmation-modal';
+import { useTopicEvents } from './hooks/use-topic-events';
 import { Topic } from './types';
 
 const TopicFormSchema = z.object({
@@ -53,6 +56,8 @@ export function TopicOverviewForm({ topic, readOnly = false }: TopicOverviewForm
   const [isDeleting, setIsDeleting] = useState(false);
   const track = useTelemetry();
   const { currentEnvironment } = useEnvironment();
+  const { emitEvent } = useTopicEvents();
+  const queryClient = useQueryClient();
 
   const form = useForm<z.infer<typeof TopicFormSchema>>({
     defaultValues: {
@@ -118,6 +123,16 @@ export function TopicOverviewForm({ topic, readOnly = false }: TopicOverviewForm
       showSuccessToast(`Deleted topic: ${topic.name}`, undefined, toastOptions);
       track(TelemetryEvent.SUBSCRIBER_DELETED);
       setIsDeleteModalOpen(false);
+
+      // Emit delete event
+      emitEvent('deleted', topic.key);
+
+      // Force a refetch of the topics list with exact:false to ensure it works
+      queryClient.invalidateQueries({
+        queryKey: [QueryKeys.fetchTopics],
+        exact: false,
+        refetchType: 'all',
+      });
     } catch (error) {
       showErrorToast('Failed to delete topic', undefined, toastOptions);
     } finally {

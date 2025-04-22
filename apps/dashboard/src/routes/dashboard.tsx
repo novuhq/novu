@@ -1,14 +1,17 @@
+import { Toaster } from '@/components/primitives/sonner';
+import { TopicEventsProvider } from '@/components/topics/hooks/use-topic-events';
+import { OptInProvider } from '@/context/opt-in-provider';
 import { Outlet } from 'react-router-dom';
 import { ProtectedRoute } from './protected-route';
-import { Toaster } from '@/components/primitives/sonner';
-import { OptInProvider } from '@/context/opt-in-provider';
 
 export const DashboardRoute = () => {
   return (
     <ProtectedRoute>
       <OptInProvider>
-        <Outlet />
-        <Toaster />
+        <TopicEventsProvider>
+          <Outlet />
+          <Toaster />
+        </TopicEventsProvider>
       </OptInProvider>
     </ProtectedRoute>
   );
