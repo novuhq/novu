@@ -8,4 +8,5 @@ export type PluginState = {
   onSelect?: (value: string, from: number, to: number) => void;
   isAllowedVariable: IsAllowedVariable;
   isEnhancedDigestEnabled: boolean;
+  isDigestEventsVariable?: (variableName: string) => boolean;
 };

@@ -1,36 +1,36 @@
 import { IntegrationEntity } from '@novu/dal';
 import {
-    AfricasTalkingSmsHandler,
-    AfroSmsHandler,
-    AzureSmsHandler,
-    BandwidthHandler,
-    BrevoSmsHandler,
-    BurstSmsHandler,
-    ClickatellHandler,
-    ClicksendSmsHandler,
-    EazySmsHandler,
-    FiretextSmsHandler,
-    FortySixElksHandler,
-    GenericSmsHandler,
-    GupshupSmsHandler,
-    InfobipSmsHandler,
-    ISendSmsHandler,
-    KannelSmsHandler,
-    MaqsamHandler,
-    MessageBirdHandler,
-    MobishastraHandler,
-    NexmoHandler,
-    NovuSmsHandler,
-    PlivoHandler,
-    RingCentralHandler,
-    SendchampSmsHandler,
-    SimpletextingSmsHandler,
-    Sms77Handler,
-    SmsCentralHandler,
-    SnsHandler,
-    TelnyxHandler,
-    TermiiSmsHandler,
-    TwilioHandler,
+  AfricasTalkingSmsHandler,
+  AfroSmsHandler,
+  AzureSmsHandler,
+  BandwidthHandler,
+  BrevoSmsHandler,
+  BurstSmsHandler,
+  ClickatellHandler,
+  ClicksendSmsHandler,
+  EazySmsHandler,
+  FiretextSmsHandler,
+  FortySixElksHandler,
+  GenericSmsHandler,
+  GupshupSmsHandler,
+  InfobipSmsHandler,
+  ISendSmsHandler,
+  KannelSmsHandler,
+  MaqsamHandler,
+  MessageBirdHandler,
+  MobishastraHandler,
+  NexmoHandler,
+  NovuSmsHandler,
+  PlivoHandler,
+  RingCentralHandler,
+  SendchampSmsHandler,
+  SimpletextingSmsHandler,
+  Sms77Handler,
+  SmsCentralHandler,
+  SnsHandler,
+  TelnyxHandler,
+  TermiiSmsHandler,
+  TwilioHandler,
 } from './handlers';
 import { ISmsFactory, ISmsHandler } from './interfaces';
 
@@ -71,9 +71,7 @@ export class SmsFactory implements ISmsFactory {
 
   getHandler(integration: IntegrationEntity) {
     const handler =
-      this.handlers.find((handlerItem) =>
-        handlerItem.canHandle(integration.providerId, integration.channel),
-      ) ?? null;
+      this.handlers.find((handlerItem) => handlerItem.canHandle(integration.providerId, integration.channel)) ?? null;
 
     if (!handler) return null;
 

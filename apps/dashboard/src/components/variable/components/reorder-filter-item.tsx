@@ -116,51 +116,52 @@ export const ReorderFilterItem = (props: ReorderFilterItemProps) => {
       </div>
       {hasParams && (
         <div className="flex w-full flex-col gap-1 py-1">
-          {filterDef?.params?.map((param, paramIndex) => (
-            <div className="flex flex-col gap-1" key={paramIndex}>
-              <label className="text-text-sub text-label-xs flex select-none gap-1">
-                {param.label}
-                {param.tip && (
-                  <Tooltip>
-                    <TooltipTrigger className="relative cursor-pointer">
-                      <RiQuestionLine className="text-text-soft size-4" />
-                    </TooltipTrigger>
-                    <TooltipContent side="top" className="max-w-xs">
-                      <p className="text-label-xs">{param.tip}</p>
-                    </TooltipContent>
-                  </Tooltip>
+          {filterDef?.params?.map((param, paramIndex) => {
+            const paramInputChangeHandler = (newValue: string) => {
+              const newParams = [...(value.params || [])];
+              newParams[paramIndex] = newValue;
+              onParamChange(index, newParams);
+            };
+
+            return (
+              <div className="flex flex-col gap-1" key={paramIndex}>
+                <label className="text-text-sub text-label-xs flex select-none gap-1">
+                  {param.label}
+                  {param.tip && (
+                    <Tooltip>
+                      <TooltipTrigger className="relative cursor-pointer">
+                        <RiQuestionLine className="text-text-soft size-4" />
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="max-w-xs">
+                        <p className="text-label-xs">{param.tip}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                </label>
+                {param.type === 'variable' ? (
+                  <VariableSelect
+                    leftIcon={<Code2 className="text-feature size-3 min-w-3" />}
+                    onChange={paramInputChangeHandler}
+                    onInputChange={paramInputChangeHandler}
+                    options={options}
+                    className="w-full"
+                    placeholder={param.placeholder}
+                    title={param.description}
+                    value={value.params?.[paramIndex] || ''}
+                    isClearable
+                  />
+                ) : (
+                  <Input
+                    value={value.params?.[paramIndex] || ''}
+                    onChange={(e) => paramInputChangeHandler(e.target.value)}
+                    placeholder={param.placeholder}
+                    title={param.description}
+                    size="2xs"
+                  />
                 )}
-              </label>
-              {param.type === 'variable' ? (
-                <VariableSelect
-                  leftIcon={<Code2 className="text-feature size-3 min-w-3" />}
-                  onChange={(newValue) => {
-                    const newParams = [...(value.params || [])];
-                    newParams[paramIndex] = newValue;
-                    onParamChange(index, newParams);
-                  }}
-                  options={options}
-                  className="w-full"
-                  placeholder={param.placeholder}
-                  title={param.description}
-                  value={value.params?.[paramIndex] || ''}
-                  isClearable
-                />
-              ) : (
-                <Input
-                  value={value.params?.[paramIndex] || ''}
-                  onChange={(e) => {
-                    const newParams = [...(value.params || [])];
-                    newParams[paramIndex] = e.target.value;
-                    onParamChange(index, newParams);
-                  }}
-                  placeholder={param.placeholder}
-                  title={param.description}
-                  size="2xs"
-                />
-              )}
-            </div>
-          ))}
+              </div>
+            );
+          })}
         </div>
       )}
     </Reorder.Item>

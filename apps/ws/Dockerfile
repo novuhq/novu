@@ -21,7 +21,6 @@ COPY --chown=1000:1000 libs/testing ./libs/testing
 COPY --chown=1000:1000 libs/application-generic ./libs/application-generic
 COPY --chown=1000:1000 packages/client ./packages/client
 COPY --chown=1000:1000 packages/stateless ./packages/stateless
-COPY --chown=1000:1000 packages/node ./packages/node
 COPY --chown=1000:1000 packages/framework ./packages/framework
 COPY --chown=1000:1000 packages/providers ./packages/providers
 

@@ -1,4 +1,4 @@
-import { extractIssuesFromVariable, getFirstFilterAndItsArgs } from '@/components/variable/utils';
+import { validateEnhancedDigestFilters, getFirstFilterAndItsArgs } from '@/components/variable/utils';
 import { WidgetType } from '@uiw/react-codemirror';
 import { CSSProperties } from 'react';
 
@@ -13,7 +13,8 @@ export class VariablePillWidget extends WidgetType {
     private end: number,
     private filters: string[],
     private isEnhancedDigestEnabled: boolean,
-    private onSelect?: (value: string, from: number, to: number) => void
+    private onSelect?: (value: string, from: number, to: number) => void,
+    private isDigestEventsVariable?: (variableName: string) => boolean
   ) {
     super();
 
@@ -38,9 +39,9 @@ export class VariablePillWidget extends WidgetType {
 
   createBeforeStyles(): CSSProperties {
     return {
-      width: '1em',
-      minWidth: 'calc(1em - 2px)',
-      height: '1em',
+      width: 'calc(1rem - 2px)',
+      minWidth: 'calc(1rem - 2px)',
+      height: 'calc(1rem - 2px)',
       backgroundImage: `url("/images/code.svg")`,
       backgroundRepeat: 'no-repeat',
       backgroundPosition: 'center',
@@ -83,8 +84,12 @@ export class VariablePillWidget extends WidgetType {
 
   createContentStyles(): CSSProperties {
     return {
-      lineHeight: 'calc(1em - 2px)',
+      lineHeight: '1.2',
       color: 'hsl(var(--text-sub))',
+      maxWidth: '24ch',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
 
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
@@ -93,8 +98,16 @@ export class VariablePillWidget extends WidgetType {
     };
   }
 
+  createFilterParentStyles(): CSSProperties {
+    return {
+      display: 'inline-flex',
+      alignItems: 'center',
+    };
+  }
+
   createFilterStyles(): CSSProperties {
     return {
+      lineHeight: '1.2',
       color: 'hsl(var(--text-soft))',
 
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -108,6 +121,7 @@ export class VariablePillWidget extends WidgetType {
     const span = document.createElement('span');
     const content = document.createElement('span');
     content.textContent = this.variableName;
+    content.title = this.variableName;
     const before = document.createElement('span');
 
     const pillStyles = this.createPillStyles();
@@ -132,7 +146,7 @@ export class VariablePillWidget extends WidgetType {
     if (this.isEnhancedDigestEnabled) {
       content.textContent = this.getDisplayVariableName();
 
-      const hasIssues = this.getVariableIssues().length > 0;
+      const hasIssues = !!this.getVariableIssues();
 
       if (hasIssues) {
         before.style.color = 'hsl(var(--error-base))';
@@ -143,7 +157,15 @@ export class VariablePillWidget extends WidgetType {
 
       span.addEventListener('mouseenter', () => {
         if (!this.tooltipElement) {
-          this.tooltipElement = this.renderTooltip(span);
+          const issues = this.getVariableIssues();
+          if (!issues) return;
+
+          this.tooltipElement = this.renderTooltip({
+            parent: span,
+            content: `${issues.name}: ${issues.message}`,
+            type: 'error',
+          });
+          this.tooltipElement.setAttribute('data-state', 'open');
         }
 
         if (hasIssues) {
@@ -153,8 +175,14 @@ export class VariablePillWidget extends WidgetType {
 
       span.addEventListener('mouseleave', () => {
         if (this.tooltipElement) {
-          document.body.removeChild(this.tooltipElement);
-          this.tooltipElement = null;
+          this.tooltipElement.setAttribute('data-state', 'closed');
+
+          setTimeout(() => {
+            if (this.tooltipElement) {
+              document.body.removeChild(this.tooltipElement);
+              this.tooltipElement = null;
+            }
+          }, 150);
         }
 
         span.style.backgroundColor = 'hsl(var(--bg-white))';
@@ -178,14 +206,17 @@ export class VariablePillWidget extends WidgetType {
 
     if (this.filters?.length > 0) {
       const filterSpan = document.createElement('span');
+      Object.assign(filterSpan.style, this.createFilterParentStyles());
       const filterNameSpan = document.createElement('span');
       filterNameSpan.textContent = `| ${firstFilterName}`;
       Object.assign(filterNameSpan.style, this.createFilterStyles());
       filterSpan.appendChild(filterNameSpan);
 
-      if (this.filters.length === 1) {
+      if (this.filters.length === 1 && finalParam) {
         const argsSpan = document.createElement('span');
+        filterNameSpan.textContent = `| ${firstFilterName}: `;
         argsSpan.textContent = finalParam;
+        argsSpan.title = finalParam;
         Object.assign(argsSpan.style, this.createContentStyles());
         filterSpan.appendChild(argsSpan);
       }
@@ -195,60 +226,100 @@ export class VariablePillWidget extends WidgetType {
         countSpan.textContent = `, +${this.filters.length - 1} more`;
         Object.assign(countSpan.style, { ...this.createFilterStyles(), fontStyle: 'italic' });
         filterSpan.appendChild(countSpan);
+
+        countSpan.addEventListener('mouseenter', () => {
+          if (!this.tooltipElement) {
+            const otherFilterNames = this.filters
+              .slice(1)
+              .map((f) => f.split(':')[0].trim())
+              .join(', ');
+            this.tooltipElement = this.renderTooltip({
+              parent: countSpan,
+              prefix: 'Other filters: ',
+              content: `${otherFilterNames}`,
+              type: 'other',
+            });
+            this.tooltipElement.setAttribute('data-state', 'open');
+          }
+        });
+
+        countSpan.addEventListener('mouseleave', () => {
+          if (this.tooltipElement) {
+            this.tooltipElement.setAttribute('data-state', 'closed');
+
+            setTimeout(() => {
+              if (this.tooltipElement) {
+                document.body.removeChild(this.tooltipElement);
+                this.tooltipElement = null;
+              }
+            }, 150);
+          }
+        });
       }
 
       parent.appendChild(filterSpan);
     }
   }
 
-  renderTooltip(parent: HTMLElement) {
+  renderTooltip({
+    parent,
+    prefix,
+    content,
+    type,
+  }: {
+    parent: HTMLElement;
+    prefix?: string;
+    content: string;
+    type: 'error' | 'other';
+  }) {
     const tooltip = document.createElement('div');
-    tooltip.className = 'border-bg-soft bg-bg-weak border p-0.5 shadow-sm rounded-md';
+    tooltip.className =
+      'border-bg-soft bg-bg-weak border p-0.5 shadow-sm rounded-md animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2';
+    tooltip.setAttribute('data-state', 'closed');
 
     const innerContainer = document.createElement('div');
     innerContainer.className = 'border-stroke-soft/70 text-label-2xs rounded-sm border bg-white p-1';
     tooltip.appendChild(innerContainer);
 
-    const issues = this.getVariableIssues();
+    tooltip.style.position = 'fixed';
+    tooltip.style.zIndex = '9999';
 
-    if (this.filters && this.filters.length > 0) {
-      tooltip.style.position = 'fixed';
-      tooltip.style.zIndex = '9999';
+    const rect = parent.getBoundingClientRect();
+    const tooltipWidth = 200; // Set an estimated width
+    tooltip.style.left = `${rect.left + rect.width / 2 - tooltipWidth / 2}px`;
+    tooltip.style.top = `${rect.top - 32}px`;
+    document.body.appendChild(tooltip);
 
-      const rect = parent.getBoundingClientRect();
-      tooltip.style.left = `${rect.left}px`;
-      tooltip.style.top = `${rect.top - 32}px`;
+    // Apply the tooltip after it's in the DOM to get its actual width and trigger fade in
+    setTimeout(() => {
+      const tooltipRect = tooltip.getBoundingClientRect();
+      tooltip.style.left = `${rect.left + rect.width / 2 - tooltipRect.width / 2}px`;
+      tooltip.classList.replace('opacity-0', 'opacity-100');
+    }, 0);
 
-      if (issues.length > 0) {
-        const firstIssue = issues[0];
-        innerContainer.textContent = `${firstIssue.filterName} is missing a value.`;
-        tooltip.style.color = 'hsl(var(--error-base))';
-        document.body.appendChild(tooltip);
-        return tooltip;
-      } else if (this.filters.length > 1) {
-        const otherFilterNames = this.filters
-          .slice(1)
-          .map((f) => f.split(':')[0].trim())
-          .join(', ');
-        innerContainer.textContent = 'Other filters: ';
-        innerContainer.style.color = 'hsl(var(--text-soft))';
-        const otherFilterNamesSpan = document.createElement('span');
-        otherFilterNamesSpan.textContent = otherFilterNames;
-        otherFilterNamesSpan.style.color = 'hsl(var(--feature))';
-        innerContainer.appendChild(otherFilterNamesSpan);
-        // tooltip.style.color = 'hsl(var(--feature))';
-        document.body.appendChild(tooltip);
-        return tooltip;
-      }
+    if (type === 'error') {
+      innerContainer.textContent = content;
+      tooltip.style.color = 'hsl(var(--error-base))';
+    } else {
+      innerContainer.textContent = prefix ?? '';
+      innerContainer.style.color = 'hsl(var(--text-soft))';
+      const otherFilterNamesSpan = document.createElement('span');
+      otherFilterNamesSpan.textContent = content;
+      otherFilterNamesSpan.style.color = 'hsl(var(--feature))';
+      innerContainer.appendChild(otherFilterNamesSpan);
     }
 
-    return null;
+    return tooltip;
   }
 
   getVariableIssues() {
-    const issues = extractIssuesFromVariable(this.filters, this.isEnhancedDigestEnabled);
+    if (this.isDigestEventsVariable && this.isDigestEventsVariable(this.variableName)) {
+      const issues = validateEnhancedDigestFilters(this.filters, this.isEnhancedDigestEnabled);
 
-    return issues;
+      return issues;
+    }
+
+    return null;
   }
 
   /**

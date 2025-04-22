@@ -1,7 +1,10 @@
 import React, { useMemo } from 'react';
-import { isRuleGroup, ActionWithRulesProps, getParentPath } from 'react-querybuilder';
 import { RiMore2Fill } from 'react-icons/ri';
+import { ActionWithRulesProps, getParentPath, isRuleGroup } from 'react-querybuilder';
 
+import { Delete } from '@/components/icons/delete';
+import { SquareTwoStack } from '@/components/icons/square-two-stack';
+import { CompactButton } from '@/components/primitives/button-compact';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,14 +12,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/primitives/dropdown-menu';
-import { useConditionsEditorContext } from './conditions-editor-context';
-import { CompactButton } from '@/components/primitives/button-compact';
-import { Delete } from '@/components/icons/delete';
-import { SquareTwoStack } from '@/components/icons/square-two-stack';
 import { Tooltip, TooltipContent, TooltipPortal, TooltipTrigger } from '@/components/primitives/tooltip';
+import { useConditionsEditorContext } from './conditions-editor-context';
 
 export const RuleActions = React.memo(
-  ({ path, ruleOrGroup }: ActionWithRulesProps) => {
+  ({ path, ruleOrGroup, context }: ActionWithRulesProps) => {
     const { removeRuleOrGroup, cloneRuleOrGroup, getParentGroup } = useConditionsEditorContext();
     const parentGroup = useMemo(() => getParentGroup(ruleOrGroup.id), [ruleOrGroup, getParentGroup]);
     const isGroup = isRuleGroup(ruleOrGroup);
@@ -40,6 +40,7 @@ export const RuleActions = React.memo(
                 <DropdownMenuItem
                   onClick={() => {
                     cloneRuleOrGroup(ruleOrGroup, getParentPath(path));
+                    context?.saveForm();
                   }}
                   className="text-foreground-600 text-label-xs h-7"
                   disabled={isDuplicateDisabled}
@@ -56,7 +57,13 @@ export const RuleActions = React.memo(
               </TooltipPortal>
             </Tooltip>
 
-            <DropdownMenuItem onClick={() => removeRuleOrGroup(path)} className="text-error-base text-label-xs h-7">
+            <DropdownMenuItem
+              onClick={() => {
+                removeRuleOrGroup(path);
+                context?.saveForm();
+              }}
+              className="text-error-base text-label-xs h-7"
+            >
               <Delete className="[&&]:size-3.5" />
               Delete {isGroup ? `group` : `condition`}
             </DropdownMenuItem>

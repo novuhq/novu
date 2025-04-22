@@ -63,9 +63,16 @@ export class CreateVariablesObject {
         !Array.isArray(step.events) &&
         'length' in step.events
       );
+
       const hasUsedEvents = !!(step.events && typeof step.events === 'string');
       if (hasUsedEventCount || hasUsedEventsLength || hasUsedEvents) {
-        step.events = Array.isArray(step.events) ? step.events : Array(DEFAULT_ARRAY_ELEMENTS).fill('events');
+        step.events = Array.isArray(step.events)
+          ? step.events
+          : Array.from({ length: DEFAULT_ARRAY_ELEMENTS }, (_, index) => {
+              return {
+                payload: { name: `event-${index}` },
+              };
+            });
       }
     });
 

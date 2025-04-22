@@ -1,16 +1,16 @@
-import { DalException, MessageRepository, SubscriberRepository, SubscriberEntity } from '@novu/dal';
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import {
-  WebSocketsQueueService,
   AnalyticsService,
   InvalidateCacheService,
+  WebSocketsQueueService,
   buildFeedKey,
   buildMessageCountKey,
 } from '@novu/application-generic';
+import { DalException, MessageRepository, SubscriberEntity, SubscriberRepository } from '@novu/dal';
 import { WebSocketEventEnum } from '@novu/shared';
 
-import { RemoveMessageCommand } from './remove-message.command';
 import { MarkEnum } from '../mark-message-as/mark-message-as.command';
+import { RemoveMessageCommand } from './remove-message.command';
 
 @Injectable()
 export class RemoveMessage {
@@ -45,7 +45,7 @@ export class RemoveMessage {
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
         _id: command.messageId,
-        _subscriberId: command.subscriberId,
+        _subscriberId: subscriber._id,
       });
 
       if (deletedMessage.deletedCount) {
