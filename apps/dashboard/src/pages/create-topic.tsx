@@ -1,13 +1,26 @@
-import { PageMeta } from '@/components/page-meta';
+import { CreateTopicDrawer } from '@/components/topics/create-topic-drawer';
+import { useTopicsNavigate } from '@/components/topics/hooks/use-topics-navigate';
+import { useOnElementUnmount } from '@/hooks/use-on-element-unmount';
+import { useState } from 'react';
 
 export const CreateTopicPage = () => {
+  const [isOpen, setIsOpen] = useState(true);
+  const { navigateToTopicsPage } = useTopicsNavigate();
+
+  const { ref: unmountRef } = useOnElementUnmount({
+    callback: () => {
+      navigateToTopicsPage();
+    },
+    condition: !isOpen,
+  });
+
   return (
-    <>
-      <PageMeta title="Create Topic" />
-      <div className="p-5">
-        <h1 className="text-2xl font-bold">Create Topic</h1>
-        <p className="mt-2">This is a placeholder for the create topic form.</p>
-      </div>
-    </>
+    <CreateTopicDrawer
+      ref={unmountRef}
+      isOpen={isOpen}
+      onOpenChange={setIsOpen}
+      onSuccess={() => navigateToTopicsPage()}
+      onCancel={() => navigateToTopicsPage()}
+    />
   );
 };

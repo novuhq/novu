@@ -151,7 +151,6 @@ const router = createBrowserRouter([
                 path: ROUTES.TOPICS,
                 element: <TopicsPage />,
                 children: [
-                  // Example: Add child routes here if needed
                   {
                     path: ROUTES.TOPICS_CREATE,
                     element: <CreateTopicPage />,

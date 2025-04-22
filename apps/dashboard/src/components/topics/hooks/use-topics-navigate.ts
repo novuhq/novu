@@ -10,14 +10,19 @@ export const useTopicsNavigate = () => {
   }, [navigate]);
 
   const navigateToEditTopicPage = useCallback(
-    (topicId: string) => {
-      navigate(`${ROUTES.TOPICS}/${topicId}/edit`);
+    (topicKey: string) => {
+      navigate(`${ROUTES.TOPICS}/${topicKey}/edit`);
     },
     [navigate]
   );
 
+  const navigateToTopicsPage = useCallback(() => {
+    navigate(ROUTES.TOPICS);
+  }, [navigate]);
+
   return {
     navigateToCreateTopicPage,
     navigateToEditTopicPage,
+    navigateToTopicsPage,
   };
 };

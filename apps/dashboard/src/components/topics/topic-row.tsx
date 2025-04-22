@@ -15,7 +15,7 @@ import { format } from 'date-fns';
 import { useState } from 'react';
 import { RiDeleteBin2Line, RiEditLine, RiMore2Fill } from 'react-icons/ri';
 import { useDeleteTopic } from './hooks/use-delete-topic';
-import { TopicDrawer } from './topic-drawer';
+import { useTopicsNavigate } from './hooks/use-topics-navigate';
 import { Topic } from './types';
 
 interface TopicRowProps {
@@ -25,16 +25,16 @@ interface TopicRowProps {
 }
 
 export const TopicRow = ({ topic, topicsCount, firstTwoTopicsInternalIds }: TopicRowProps) => {
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const { deleteTopic, isDeleting } = useDeleteTopic();
   const queryClient = useQueryClient();
+  const { navigateToEditTopicPage } = useTopicsNavigate();
 
   const createdAt = topic.createdAt ? format(new Date(topic.createdAt), 'dd/MM/yyyy HH:mm') : '-';
   const updatedAt = topic.updatedAt ? format(new Date(topic.updatedAt), 'dd/MM/yyyy HH:mm') : '-';
 
   const handleRowClick = () => {
-    setIsDrawerOpen(true);
+    navigateToEditTopicPage(topic.key);
   };
 
   const stopPropagation = (e: React.MouseEvent) => {
@@ -45,9 +45,8 @@ export const TopicRow = ({ topic, topicsCount, firstTwoTopicsInternalIds }: Topi
   const handleDeletion = async () => {
     await deleteTopic(topic.key);
 
-    // Close both the delete modal and the drawer
+    // Close the delete modal
     setIsDeleteModalOpen(false);
-    setIsDrawerOpen(false);
 
     // Force a refetch of the topics list
     queryClient.invalidateQueries({
@@ -70,15 +69,15 @@ export const TopicRow = ({ topic, topicsCount, firstTwoTopicsInternalIds }: Topi
         <TableCell>{updatedAt}</TableCell>
         <TableCell className="w-1">
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+            <DropdownMenuTrigger>
               <CompactButton icon={RiMore2Fill} variant="ghost" className="z-10 h-8 w-8 p-0" />
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-44" onClick={stopPropagation}>
+            <DropdownMenuContent className="w-44">
               <DropdownMenuGroup>
                 <DropdownMenuItem
                   className="cursor-pointer"
-                  onClick={() => {
-                    setIsDrawerOpen(true);
+                  onClick={(e) => {
+                    navigateToEditTopicPage(topic.key);
                   }}
                 >
                   <RiEditLine />
@@ -99,7 +98,6 @@ export const TopicRow = ({ topic, topicsCount, firstTwoTopicsInternalIds }: Topi
           </DropdownMenu>
         </TableCell>
       </TableRow>
-      <TopicDrawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen} topicKey={topic.key} />
       <ConfirmationModal
         open={isDeleteModalOpen}
         onOpenChange={setIsDeleteModalOpen}

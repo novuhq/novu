@@ -6,7 +6,7 @@ import { useCombinedRefs } from '@/hooks/use-combined-refs';
 import { useFormProtection } from '@/hooks/use-form-protection';
 import { useOnElementUnmount } from '@/hooks/use-on-element-unmount';
 import { cn } from '@/utils/ui';
-import { useState } from 'react';
+import { forwardRef, useState } from 'react';
 import { RiAddLine, RiMailSettingsLine } from 'react-icons/ri';
 import { CreateTopicForm } from './create-topic-form';
 
@@ -17,7 +17,7 @@ type CreateTopicDrawerProps = {
   onCancel?: () => void;
 };
 
-export function CreateTopicDrawer(props: CreateTopicDrawerProps) {
+export const CreateTopicDrawer = forwardRef<HTMLDivElement, CreateTopicDrawerProps>((props, forwardedRef) => {
   const { isOpen, onOpenChange, onSuccess, onCancel } = props;
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -38,7 +38,7 @@ export function CreateTopicDrawer(props: CreateTopicDrawerProps) {
     condition: !isOpen,
   });
 
-  const combinedRef = useCombinedRefs(unmountRef, protectionRef);
+  const combinedRef = useCombinedRefs(forwardedRef, unmountRef, protectionRef);
 
   const handleSuccess = () => {
     onOpenChange(false);
@@ -92,7 +92,7 @@ export function CreateTopicDrawer(props: CreateTopicDrawerProps) {
       {ProtectionAlert}
     </>
   );
-}
+});
 
 export function CreateTopicButton(props: { onSuccess?: () => void; className?: string }) {
   const { onSuccess, className } = props;

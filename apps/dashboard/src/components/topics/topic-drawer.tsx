@@ -5,10 +5,10 @@ import { VisuallyHidden } from '@/components/primitives/visually-hidden';
 import TruncatedText from '@/components/truncated-text';
 import { useCombinedRefs } from '@/hooks/use-combined-refs';
 import { useFormProtection } from '@/hooks/use-form-protection';
-import { cn } from '@/utils/ui';
 import { motion } from 'motion/react';
 import { forwardRef, useState } from 'react';
 import { RiMailSettingsLine } from 'react-icons/ri';
+import { cn } from '../../utils/ui';
 import { useTopic } from './hooks/use-topic';
 import { TopicOverviewForm, TopicOverviewSkeleton } from './topic-overview-form';
 
@@ -123,7 +123,7 @@ export const TopicDrawer = forwardRef<HTMLDivElement, TopicDrawerProps>((props, 
 
   return (
     <>
-      <Sheet modal={false} open={open} onOpenChange={protectedOnValueChange}>
+      <Sheet open={open} modal={false} onOpenChange={protectedOnValueChange}>
         {/* Custom overlay since SheetOverlay does not work with modal={false} */}
         <div
           className={cn('fade-in animate-in fixed inset-0 z-50 bg-black/20 transition-opacity duration-300', {

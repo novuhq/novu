@@ -1,13 +1,13 @@
 // Use pagination primitives from the dashboard project
 import { CursorPagination } from '@/components/cursor-pagination';
+import { Button } from '@/components/primitives/button';
 import { Table, TableBody, TableHead, TableHeader, TableRow } from '@/components/primitives/table';
 import { useFetchTopics } from '@/hooks/use-fetch-topics';
-import { QueryKeys } from '@/utils/query-keys';
 import { cn } from '@/utils/ui';
 import { DirectionEnum } from '@novu/shared';
-import { useQueryClient } from '@tanstack/react-query';
 import { HTMLAttributes, useEffect, useState } from 'react';
-import { CreateTopicButton } from './create-topic-drawer';
+import { RiAddLine } from 'react-icons/ri';
+import { useTopicsNavigate } from './hooks/use-topics-navigate';
 import { TopicsSortableColumn, TopicsUrlState, useTopicsUrlState } from './hooks/use-topics-url-state';
 import { TopicListBlank } from './topic-list-blank';
 import { TopicListNoResults } from './topic-list-no-results';
@@ -20,7 +20,7 @@ type TopicListProps = HTMLAttributes<HTMLDivElement>;
 // Wrapper similar to SubscriberListWrapper
 const TopicListWrapper = (props: TopicListFiltersProps) => {
   const { className, children, filterValues, handleFiltersChange, resetFilters, ...rest } = props;
-  const queryClient = useQueryClient();
+  const { navigateToCreateTopicPage } = useTopicsNavigate();
 
   return (
     <div className={cn('flex flex-col p-2', className)} {...rest}>
@@ -32,14 +32,9 @@ const TopicListWrapper = (props: TopicListFiltersProps) => {
           className="py-2"
         />
 
-        <CreateTopicButton
-          onSuccess={() => {
-            // Explicitly trigger a refetch of the topics list
-            queryClient.invalidateQueries({
-              queryKey: [QueryKeys.fetchTopics],
-            });
-          }}
-        />
+        <Button variant="primary" leadingIcon={RiAddLine} onClick={navigateToCreateTopicPage}>
+          Create Topic
+        </Button>
       </div>
       {children}
     </div>

@@ -44,7 +44,7 @@ export const CreateTopicForm = (props: CreateTopicFormProps) => {
 
   const { createTopic, isPending } = useCreateTopic({
     onSuccess: (data) => {
-      showSuccessToast(`Created topic: ${data.name}`, undefined, toastOptions);
+      showSuccessToast(`Topic created successfully`);
       track(TelemetryEvent.TOPICS_PAGE_VISIT); // Using closest available event
 
       if (onSuccess) {
@@ -53,7 +53,7 @@ export const CreateTopicForm = (props: CreateTopicFormProps) => {
     },
     onError: (error) => {
       const errorMessage = error instanceof Error ? error.message : 'Failed to create topic';
-      showErrorToast(errorMessage, undefined, toastOptions);
+      showErrorToast(errorMessage);
 
       if (onError && error instanceof Error) {
         onError(error);
