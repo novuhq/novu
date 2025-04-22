@@ -146,20 +146,20 @@ export class BuildStepIssuesUsecase {
         issues.controls = issues.controls || {};
 
         // eslint-disable-next-line no-param-reassign
-        issues.controls[controlKey] = liquidTemplateIssues.invalidVariables.map((error) => {
-          const message = error.message ? error.message.split(' line:')[0] : '';
-          if ('filterMessage' in error) {
+        issues.controls[controlKey] = liquidTemplateIssues.invalidVariables.map((invalidVariable) => {
+          const message = invalidVariable.message ? invalidVariable.message.split(' line:')[0] : '';
+          if ('filterMessage' in invalidVariable) {
             return {
-              message: `Variable ${error.output} filter ${error.filterMessage}`,
+              message: `Filter ${invalidVariable.filterMessage} in ${invalidVariable.name}`,
               issueType: StepContentIssueEnum.INVALID_FILTER_ARG_IN_VARIABLE,
-              variableName: error.output,
+              variableName: invalidVariable.output,
             };
           }
 
           return {
-            message: `Variable ${error.output} ${message}`.trim(),
+            message: `Variable ${invalidVariable.output} ${message}`.trim(),
             issueType: StepContentIssueEnum.ILLEGAL_VARIABLE_IN_CONTROL_VALUE,
-            variableName: error.output,
+            variableName: invalidVariable.output,
           };
         });
       } else {

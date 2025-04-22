@@ -1,5 +1,6 @@
-import { Filter, Liquid, LiquidError, Output, RenderError, Template, TokenKind, Value } from 'liquidjs';
+import { Filter, Liquid, LiquidError, Output, RenderError, Template, TokenKind } from 'liquidjs';
 import { FILTER_VALIDATORS, LiquidFilterIssue } from '@novu/framework/internal';
+import { type JSONSchemaDto } from '@novu/shared';
 import { extractLiquidExpressions, isValidTemplate } from './parser-utils';
 
 const LIQUID_CONFIG = {
@@ -31,25 +32,19 @@ export type Variable = {
   /** The surrounding context where the variable was found, useful for error messages */
   context?: string;
 
+  /** Error message if the variable is invalid */
+  message?: string;
+
+  /** Error message if the variable filter is invalid */
+  filterMessage?: string;
+
   /** The full liquid output string (e.g. "{{user.name | upcase}}") */
   output: string;
 };
 
-type InvalidContentVariable = Variable & {
-  /** Error message if the variable is invalid */
-  message?: string;
-};
-
-type InvalidFilterVariable = InvalidContentVariable & {
-  /** Error message if the variable filter is invalid */
-  filterMessage?: string;
-};
-
-export type InvalidVariable = InvalidContentVariable | InvalidFilterVariable;
-
 export type TemplateVariables = {
   validVariables: Array<Variable>;
-  invalidVariables: Array<InvalidVariable>;
+  invalidVariables: Array<Variable>;
 };
 
 /**
@@ -100,7 +95,7 @@ export function extractLiquidTemplateVariables({
   variableSchema,
 }: {
   template: string;
-  variableSchema?: Record<string, unknown>;
+  variableSchema?: JSONSchemaDto;
 }): TemplateVariables {
   if (!isValidTemplate(template)) {
     return { validVariables: [], invalidVariables: [] };
@@ -119,13 +114,13 @@ function processLiquidRawOutput({
   variableSchema,
 }: {
   rawOutputs: string[];
-  variableSchema?: Record<string, unknown>;
+  variableSchema?: JSONSchemaDto;
 }): TemplateVariables {
   const validVariables: Array<Variable> = [];
-  const invalidVariables: Array<InvalidVariable | InvalidFilterVariable> = [];
+  const invalidVariables: Array<Variable> = [];
   const processedVariables = new Set<string>();
 
-  function addVariable(variable: Variable | InvalidVariable | InvalidFilterVariable, isValid: boolean) {
+  function addVariable(variable: Variable, isValid: boolean) {
     if (!processedVariables.has(variable.name)) {
       processedVariables.add(variable.name);
       (isValid ? validVariables : invalidVariables).push(variable);
@@ -157,7 +152,7 @@ function processLiquidRawOutput({
   return { validVariables, invalidVariables };
 }
 
-function isPropertyAllowed(schema: Record<string, unknown> | undefined, propertyPath: string) {
+function isPropertyAllowed(schema: JSONSchemaDto | undefined, propertyPath: string) {
   if (!schema) {
     return true;
   }
@@ -182,7 +177,7 @@ function isPropertyAllowed(schema: Record<string, unknown> | undefined, property
 
     // Handle direct property access
     if (properties?.[part]) {
-      currentSchema = properties[part];
+      currentSchema = properties[part] as JSONSchemaDto;
       continue;
     }
 
@@ -218,10 +213,10 @@ function parseByLiquid({
   variableSchema,
 }: {
   rawOutput: string;
-  variableSchema?: Record<string, unknown>;
+  variableSchema?: JSONSchemaDto;
 }): TemplateVariables {
   const validVariables: Array<Variable> = [];
-  const invalidVariables: Array<InvalidVariable | InvalidFilterVariable> = [];
+  const invalidVariables: Array<Variable> = [];
   const parsed = parserEngine.parse(rawOutput);
 
   parsed
