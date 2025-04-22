@@ -8,7 +8,7 @@ import {
   SelectIntegrationCommand,
 } from '@novu/application-generic';
 import { EnvironmentRepository, IntegrationRepository } from '@novu/dal';
-import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
+import { ChannelTypeEnum, InAppProviderIdEnum, CustomDataType } from '@novu/shared';
 import { AuthService } from '../../../auth/services/auth.service';
 import { SubscriberSessionResponseDto } from '../../dtos/subscriber-session-response.dto';
 import { AnalyticsEventsEnum } from '../../utils';
@@ -68,7 +68,11 @@ export class Session {
         subscriberId: command.subscriber.subscriberId,
         firstName: command.subscriber.firstName,
         lastName: command.subscriber.lastName,
+        phone: command.subscriber.phone,
         email: command.subscriber.email,
+        avatar: command.subscriber.avatar,
+        data: command.subscriber.data as CustomDataType,
+        timezone: command.subscriber.timezone,
         allowUpdate: isHmacValid({
           apiKey: environment.apiKeys[0].key,
           subscriberId: command.subscriber.subscriberId,
