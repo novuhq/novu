@@ -5,16 +5,17 @@ import { OrganizationContextProvider, useOrganization } from './organization.res
 import { UserContextProvider, useUser } from './user.resource';
 import { AuthContextProvider, useAuth } from './auth.resource';
 import { IOrganizationEntity } from '@novu/shared';
+
 import {
   OrganizationList,
+  OrganizationProfile,
   RedirectToSignIn,
   SignedIn,
   SignedOut,
   SignIn,
   SignUp,
   UserProfile,
-} from '@clerk/clerk-react';
-import { OrganizationProfile } from '@clerk/clerk-react';
+} from './components';
 
 export {
   OrganizationSwitcher,

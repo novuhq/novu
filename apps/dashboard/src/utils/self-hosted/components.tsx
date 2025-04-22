@@ -26,12 +26,12 @@ export function SignIn() {
 }
 
 export function SignUp() {
-  return (
-    <>
-      <Input placeholder="Email" />
-      <Input placeholder="Password" />
-    </>
-  );
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    navigate('/');
+  });
+  return <></>;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
