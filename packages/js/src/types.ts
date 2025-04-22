@@ -162,6 +162,7 @@ export type Result<D = undefined, E = NovuError> = Promise<{
 
 export type NovuOptions = {
   applicationIdentifier: string;
+  /** @deprecated Use subscriber instead */
   subscriberId: string;
   subscriberHash?: string;
   /** @deprecated Use apiUrl instead  */
@@ -171,9 +172,7 @@ export type NovuOptions = {
   useCache?: boolean;
   /** @internal Should be used internally for testing purposes */
   __userAgent?: string;
-  firstName?: string;
-  lastName?: string;
-  email?: string;
+  subscriber?: Subscriber;
 };
 
 export type Prettify<T> = { [K in keyof T]: T[K] } & {};

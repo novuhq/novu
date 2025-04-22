@@ -56,7 +56,7 @@ export class Session {
     if (inAppIntegration.credentials.hmac) {
       validateHmacEncryption({
         apiKey: environment.apiKeys[0].key,
-        subscriberId: command.subscriberId,
+        subscriberId: command.subscriber.subscriberId,
         subscriberHash: command.subscriberHash,
       });
     }
@@ -71,10 +71,10 @@ export class Session {
       CreateOrUpdateSubscriberCommand.create({
         environmentId: environment._id,
         organizationId: environment._organizationId,
-        subscriberId: command.subscriberId,
-        firstName: command.firstName,
-        lastName: command.lastName,
-        email: command.email,
+        subscriberId: command.subscriber.subscriberId,
+        firstName: command.subscriber.firstName,
+        lastName: command.subscriber.lastName,
+        email: command.subscriber.email,
         allowUpdate,
       })
     );

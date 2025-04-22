@@ -27,15 +27,13 @@ export class Session {
 
   public async initialize(): Promise<void> {
     try {
-      const { applicationIdentifier, subscriberId, subscriberHash, firstName, lastName, email } = this.#options;
+      const { applicationIdentifier, subscriberId, subscriberHash, subscriber } = this.#options;
       this.#emitter.emit('session.initialize.pending', { args: this.#options });
       const response = await this.#inboxService.initializeSession({
         applicationIdentifier,
         subscriberId,
         subscriberHash,
-        firstName,
-        lastName,
-        email,
+        subscriber,
       });
 
       this.#emitter.emit('session.initialize.resolved', { args: this.#options, data: response });

@@ -25,24 +25,18 @@ export class InboxService {
     applicationIdentifier,
     subscriberId,
     subscriberHash,
-    firstName,
-    lastName,
-    email,
+    subscriber,
   }: {
     applicationIdentifier: string;
     subscriberId: string;
     subscriberHash?: string;
-    firstName?: string;
-    lastName?: string;
-    email?: string;
+    subscriber?: Subscriber | string;
   }): Promise<Session> {
     const response = (await this.#httpClient.post(`${INBOX_ROUTE}/session`, {
       applicationIdentifier,
       subscriberId,
       subscriberHash,
-      firstName,
-      lastName,
-      email,
+      subscriber,
     })) as Session;
     this.#httpClient.setAuthorizationToken(response.token);
     this.isSessionInitialized = true;

@@ -13,15 +13,7 @@ export class SubscriberSessionRequestDto {
   @IsOptional()
   readonly subscriberHash?: string;
 
-  @IsString()
   @IsOptional()
-  readonly firstName?: string;
-
-  @IsString()
-  @IsOptional()
-  readonly lastName?: string;
-
-  @IsString()
-  @IsOptional()
-  readonly email?: string;
+  readonly subscriber?: Subscriber | string;
+  // todo create subscriber dto
 }

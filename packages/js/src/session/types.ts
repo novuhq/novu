@@ -1,8 +1,7 @@
 export type InitializeSessionArgs = {
   applicationIdentifier: string;
+  /** @deprecated Use subscriber instead */
   subscriberId: string;
   subscriberHash?: string;
-  firstName?: string;
-  lastName?: string;
-  email?: string;
+  subscriber?: Subscriber;
 };

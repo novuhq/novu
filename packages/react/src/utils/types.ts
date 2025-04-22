@@ -28,8 +28,19 @@ export type DefaultInboxProps = {
   placementOffset?: InboxProps['placementOffset'];
 };
 
+export type Subscriber = {
+  subscriberId: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string;
+  data?: Record<string, unknown>;
+  timezone?: string;
+};
+
 export type BaseProps = {
   applicationIdentifier: string;
+  /** @deprecated Use subscriber instead */
   subscriberId: string;
   subscriberHash?: string;
   backendUrl?: string;
@@ -39,9 +50,7 @@ export type BaseProps = {
   tabs?: Array<Tab>;
   preferencesFilter?: PreferencesFilter;
   routerPush?: RouterPush;
-  firstName?: string;
-  lastName?: string;
-  email?: string;
+  subscriber?: Subscriber | string;
 };
 
 export type NotificationRendererProps = {

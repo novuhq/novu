@@ -11,12 +11,19 @@ export class SessionCommand extends BaseCommand {
   readonly subscriberHash?: string;
 
   @IsDefined()
-  @IsString()
-  readonly subscriberId: string;
+  @ValidateNested()
+  @Type(() => SubscriberCommand)
+  readonly subscriber: SubscriberCommand | string;
 
   @IsOptional()
   @IsString()
   readonly origin?: string;
+}
+
+export class SubscriberCommand {
+  @IsDefined()
+  @IsString()
+  readonly subscriberId: string;
 
   @IsOptional()
   @IsString()
@@ -29,4 +36,11 @@ export class SessionCommand extends BaseCommand {
   @IsOptional()
   @IsString()
   readonly email?: string;
+
+  @IsOptional()
+  @IsString()
+  readonly timezone?: string;
+
+  @IsOptional()
+  readonly data?: Record<string, unknown>;
 }

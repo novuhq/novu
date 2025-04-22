@@ -82,8 +82,7 @@ const _DefaultInbox = (props: DefaultInboxProps) => {
 const DefaultInbox = withRenderer(_DefaultInbox);
 
 export const Inbox = React.memo((props: InboxProps) => {
-  const { applicationIdentifier, subscriberId, subscriberHash, backendUrl, socketUrl, firstName, lastName, email } =
-    props;
+  const { applicationIdentifier, subscriberId, subscriberHash, backendUrl, socketUrl, subscriber } = props;
   const novu = useUnsafeNovu();
 
   if (novu) {
@@ -97,9 +96,7 @@ export const Inbox = React.memo((props: InboxProps) => {
       subscriberHash={subscriberHash}
       backendUrl={backendUrl}
       socketUrl={socketUrl}
-      firstName={firstName}
-      lastName={lastName}
-      email={email}
+      subscriber={subscriber}
       userAgentType="components"
     >
       <InboxChild {...props} />

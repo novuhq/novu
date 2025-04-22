@@ -69,13 +69,10 @@ export class InboxController {
   ): Promise<SubscriberSessionResponseDto> {
     return await this.initializeSessionUsecase.execute(
       SessionCommand.create({
-        subscriberId: body.subscriberId,
+        subscriber: body.subscriber,
         applicationIdentifier: body.applicationIdentifier,
         subscriberHash: body.subscriberHash,
         origin,
-        firstName: body.firstName,
-        lastName: body.lastName,
-        email: body.email,
       })
     );
   }
