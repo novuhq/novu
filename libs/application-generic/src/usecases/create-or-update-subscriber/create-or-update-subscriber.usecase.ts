@@ -23,8 +23,10 @@ export class CreateOrUpdateSubscriberUseCase {
   async execute(command: CreateOrUpdateSubscriberCommand) {
     const persistedSubscriber = await this.getExistingSubscriber(command);
 
-    if (persistedSubscriber && command.allowUpdate) {
-      await this.updateSubscriber(command, persistedSubscriber);
+    if (persistedSubscriber) {
+      if (command.allowUpdate) {
+        await this.updateSubscriber(command, persistedSubscriber);
+      }
     } else {
       await this.createSubscriber(command);
     }
@@ -40,7 +42,23 @@ export class CreateOrUpdateSubscriberUseCase {
   }
 
   private async updateSubscriber(command: CreateOrUpdateSubscriberCommand, existingSubscriber: SubscriberEntity) {
-    return await this.updateSubscriberUseCase.execute(this.buildUpdateSubscriberCommand(command, existingSubscriber));
+    return await this.updateSubscriberUseCase.execute(
+      UpdateSubscriberCommand.create({
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        firstName: command.firstName,
+        lastName: command.lastName,
+        subscriberId: command.subscriberId,
+        email: command.email,
+        phone: command.phone,
+        avatar: command.avatar,
+        locale: command.locale,
+        data: command.data,
+        subscriber: existingSubscriber,
+        channels: command.channels,
+        timezone: command.timezone,
+      })
+    );
   }
 
   private async getExistingSubscriber(command: CreateOrUpdateSubscriberCommand) {
@@ -63,24 +81,6 @@ export class CreateOrUpdateSubscriberUseCase {
       hasLocale: !!command.locale,
       hasData: !!command.data,
       hasCredentials: !!command.channels,
-    });
-  }
-
-  private buildUpdateSubscriberCommand(command: CreateOrUpdateSubscriberCommand, subscriber: SubscriberEntity) {
-    return UpdateSubscriberCommand.create({
-      environmentId: command.environmentId,
-      organizationId: command.organizationId,
-      firstName: command.firstName,
-      lastName: command.lastName,
-      subscriberId: command.subscriberId,
-      email: command.email,
-      phone: command.phone,
-      avatar: command.avatar,
-      locale: command.locale,
-      data: command.data,
-      subscriber,
-      channels: command.channels,
-      timezone: command.timezone,
     });
   }
 
