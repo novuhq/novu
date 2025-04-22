@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 
 export const EditTopicPage = () => {
-  const { topicKey } = useParams<{ topicKey: string }>();
+  const { topicKey = '' } = useParams<{ topicKey: string }>();
   const [open, setOpen] = useState(true);
   const { navigateToTopicsPage } = useTopicsNavigate();
 
@@ -15,10 +15,6 @@ export const EditTopicPage = () => {
     },
     condition: !open,
   });
-
-  if (!topicKey) {
-    return null;
-  }
 
   return <TopicDrawer ref={unmountRef} open={open} onOpenChange={setOpen} topicKey={topicKey} />;
 };

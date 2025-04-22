@@ -21,10 +21,9 @@ import { Topic } from './types';
 interface TopicRowProps {
   topic: Topic;
   topicsCount: number;
-  firstTwoTopicsInternalIds: string[];
 }
 
-export const TopicRow = ({ topic, topicsCount, firstTwoTopicsInternalIds }: TopicRowProps) => {
+export const TopicRow = ({ topic, topicsCount }: TopicRowProps) => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const { deleteTopic, isDeleting } = useDeleteTopic();
   const queryClient = useQueryClient();
@@ -35,11 +34,6 @@ export const TopicRow = ({ topic, topicsCount, firstTwoTopicsInternalIds }: Topi
 
   const handleRowClick = () => {
     navigateToEditTopicPage(topic.key);
-  };
-
-  const stopPropagation = (e: React.MouseEvent) => {
-    // don't propagate the click event to the row
-    e.stopPropagation();
   };
 
   const handleDeletion = async () => {
@@ -77,6 +71,8 @@ export const TopicRow = ({ topic, topicsCount, firstTwoTopicsInternalIds }: Topi
                 <DropdownMenuItem
                   className="cursor-pointer"
                   onClick={(e) => {
+                    e.stopPropagation();
+
                     navigateToEditTopicPage(topic.key);
                   }}
                 >

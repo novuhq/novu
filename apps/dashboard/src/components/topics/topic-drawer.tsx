@@ -3,7 +3,6 @@ import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
 import { VisuallyHidden } from '@/components/primitives/visually-hidden';
 import TruncatedText from '@/components/truncated-text';
-import { useCombinedRefs } from '@/hooks/use-combined-refs';
 import { useFormProtection } from '@/hooks/use-form-protection';
 import { motion } from 'motion/react';
 import { forwardRef, useState } from 'react';
@@ -111,26 +110,16 @@ type TopicDrawerProps = {
 export const TopicDrawer = forwardRef<HTMLDivElement, TopicDrawerProps>((props, forwardedRef) => {
   const { open, onOpenChange, topicKey, readOnly = false } = props;
 
-  const {
-    protectedOnValueChange,
-    ProtectionAlert,
-    ref: protectionRef,
-  } = useFormProtection({
-    onValueChange: onOpenChange,
-  });
-
-  const combinedRef = useCombinedRefs(forwardedRef, protectionRef);
-
   return (
     <>
-      <Sheet open={open} modal={false} onOpenChange={protectedOnValueChange}>
+      <Sheet open={open} modal={false} onOpenChange={onOpenChange}>
         {/* Custom overlay since SheetOverlay does not work with modal={false} */}
         <div
           className={cn('fade-in animate-in fixed inset-0 z-50 bg-black/20 transition-opacity duration-300', {
             'pointer-events-none opacity-0': !open,
           })}
         />
-        <SheetContent ref={combinedRef}>
+        <SheetContent ref={forwardedRef}>
           <VisuallyHidden>
             <SheetTitle />
             <SheetDescription />
@@ -138,8 +127,6 @@ export const TopicDrawer = forwardRef<HTMLDivElement, TopicDrawerProps>((props, 
           <TopicTabs topicKey={topicKey} readOnly={readOnly} />
         </SheetContent>
       </Sheet>
-
-      {ProtectionAlert}
     </>
   );
 });

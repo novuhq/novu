@@ -156,11 +156,6 @@ export const TopicList = (props: TopicListProps) => {
     );
   }
 
-  const firstTwoTopicsInternalIds = data.data.reduce<string[]>((acc, t) => {
-    if (t._id) acc.push(t._id);
-    return acc.length < 2 ? acc : acc.slice(0, 2);
-  }, []);
-
   return (
     <TopicListWrapper
       filterValues={filterValues}
@@ -174,12 +169,7 @@ export const TopicList = (props: TopicListProps) => {
         toggleSort={toggleSort}
       >
         {data.data.map((topic) => (
-          <TopicRow
-            key={topic._id}
-            topic={topic}
-            topicsCount={data.data.length}
-            firstTwoTopicsInternalIds={firstTwoTopicsInternalIds}
-          />
+          <TopicRow key={topic._id} topic={topic} topicsCount={data.data.length} />
         ))}
       </TopicListTable>
 
