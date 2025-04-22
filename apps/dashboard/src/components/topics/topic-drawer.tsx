@@ -10,6 +10,7 @@ import { RiMailSettingsLine } from 'react-icons/ri';
 import { cn } from '../../utils/ui';
 import { useTopic } from './hooks/use-topic';
 import { useTopicEvents } from './hooks/use-topic-events';
+import { TopicActivity } from './topic-activity';
 import { TopicOverviewForm, TopicOverviewSkeleton } from './topic-overview-form';
 
 const tabTriggerClasses =
@@ -87,12 +88,19 @@ function TopicTabs(props: TopicTabsProps) {
           <span>Subscribers</span>
           {tab === 'subscribers' && <ActiveTabIndicator />}
         </TabsTrigger>
+        <TabsTrigger value="activity-feed" className={tabTriggerClasses}>
+          <span>Activity Feed</span>
+          {tab === 'activity-feed' && <ActiveTabIndicator />}
+        </TabsTrigger>
       </TabsList>
       <TabsContent value="overview" className="h-full w-full overflow-y-auto">
         <TopicOverview topicKey={topicKey} readOnly={readOnly} />
       </TabsContent>
       <TabsContent value="subscribers" className="h-full w-full overflow-y-auto">
         <TopicSubscribers topicKey={topicKey} readOnly={readOnly} />
+      </TabsContent>
+      <TabsContent value="activity-feed" className="h-full w-full overflow-y-auto">
+        <TopicActivity topicKey={topicKey} />
       </TabsContent>
       <Separator />
 
@@ -132,7 +140,7 @@ export const TopicDrawer = forwardRef<HTMLDivElement, TopicDrawerProps>((props, 
             'pointer-events-none opacity-0': !open,
           })}
         />
-        <SheetContent ref={forwardedRef} className="w-[400px]">
+        <SheetContent ref={forwardedRef} className="w-[560px]">
           <VisuallyHidden>
             <SheetTitle />
             <SheetDescription />
