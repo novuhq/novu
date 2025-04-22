@@ -2,6 +2,17 @@ import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post
 import { ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { ApiRateLimitCategoryEnum, ExternalSubscriberId, TopicKey, UserSessionData } from '@novu/shared';
 
+import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
+import { ThrottlerCategory } from '../rate-limiting/guards';
+import {
+  ApiCommonResponses,
+  ApiNoContentResponse,
+  ApiOkResponse,
+  ApiResponse,
+} from '../shared/framework/response.decorator';
+import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
+import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
+import { UserSession } from '../shared/framework/user.decorator';
 import {
   AddSubscribersRequestDto,
   CreateTopicRequestDto,
@@ -14,6 +25,7 @@ import {
   RenameTopicResponseDto,
   TopicSubscriberDto,
 } from './dtos';
+import { AssignSubscriberToTopicDto } from './dtos/assignSubscriberToTopicDto';
 import {
   AddSubscribersCommand,
   AddSubscribersUseCase,
@@ -32,18 +44,6 @@ import {
   RenameTopicCommand,
   RenameTopicUseCase,
 } from './use-cases';
-import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
-import { UserSession } from '../shared/framework/user.decorator';
-import {
-  ApiCommonResponses,
-  ApiNoContentResponse,
-  ApiOkResponse,
-  ApiResponse,
-} from '../shared/framework/response.decorator';
-import { ThrottlerCategory } from '../rate-limiting/guards';
-import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
-import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
-import { AssignSubscriberToTopicDto } from './dtos/assignSubscriberToTopicDto';
 
 @ThrottlerCategory(ApiRateLimitCategoryEnum.CONFIGURATION)
 @ApiCommonResponses()
@@ -174,7 +174,7 @@ export class TopicsController {
     summary: 'Get topic list filtered ',
     description:
       'Returns a list of topics that can be paginated using the `page` query ' +
-      'parameter and filtered by the topic key with the `key` query parameter',
+      'parameter and filtered by the topic key with the `key` query parameter or by the topic name with the `name` query parameter',
   })
   async listTopics(
     @UserSession() user: UserSessionData,
@@ -184,6 +184,7 @@ export class TopicsController {
       FilterTopicsCommand.create({
         environmentId: user.environmentId,
         key: query?.key,
+        name: query?.name,
         organizationId: user.organizationId,
         page: query?.page,
         pageSize: query?.pageSize,

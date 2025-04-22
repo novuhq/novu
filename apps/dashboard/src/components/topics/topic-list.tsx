@@ -91,8 +91,8 @@ export const TopicList = (props: TopicListProps) => {
       before: previousPageBefore,
     });
 
-  // Only check key filter now as we're focusing on filtering by key only
-  const areFiltersApplied = filterValues.key || filterValues.before || filterValues.after;
+  // Check both key and name filters
+  const areFiltersApplied = filterValues.key || filterValues.name || filterValues.before || filterValues.after;
   const limit = 10;
 
   const { data, isPending } = useFetchTopics(filterValues, {
@@ -169,7 +169,7 @@ export const TopicList = (props: TopicListProps) => {
         toggleSort={toggleSort}
       >
         {data.data.map((topic) => (
-          <TopicRow key={topic._id} topic={topic} topicsCount={data.data.length} />
+          <TopicRow key={topic._id} topic={topic} />
         ))}
       </TopicListTable>
 

@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { EnvironmentId, OrganizationId, TopicEntity, TopicRepository } from '@novu/dal';
+import { TopicEntity, TopicRepository } from '@novu/dal';
 
 import { FilterTopicsCommand } from './filter-topics.command';
 
@@ -41,12 +41,13 @@ export class FilterTopicsUseCase {
 
   private mapFromCommandToEntity(
     command: FilterTopicsCommand
-  ): Pick<TopicEntity, '_environmentId' | 'key' | '_organizationId'> {
+  ): Pick<TopicEntity, '_environmentId' | 'key' | 'name' | '_organizationId'> {
     return {
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       ...(command.key && { key: command.key }),
-    } as Pick<TopicEntity, '_environmentId' | 'key' | '_organizationId'>;
+      ...(command.name && { name: command.name }),
+    } as Pick<TopicEntity, '_environmentId' | 'key' | 'name' | '_organizationId'>;
   }
 
   private mapFromEntityToDto(topic: TopicEntity & { subscribers: ExternalSubscriberId[] }): TopicDto {

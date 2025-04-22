@@ -36,6 +36,16 @@ export class FilterTopicsRequestDto {
   @IsString()
   @IsOptional()
   public key?: string;
+
+  @ApiProperty({
+    example: 'Example Topic',
+    required: false,
+    type: 'string',
+    description: 'A filter name to apply to the results',
+  })
+  @IsString()
+  @IsOptional()
+  public name?: string;
 }
 
 export class FilterTopicsResponseDto {

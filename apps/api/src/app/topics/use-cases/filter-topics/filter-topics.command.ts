@@ -1,11 +1,15 @@
 import { IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
-import { TopicKey } from '../../types';
 import { EnvironmentCommand } from '../../../shared/commands/project.command';
+import { TopicKey } from '../../types';
 
 export class FilterTopicsCommand extends EnvironmentCommand {
   @IsString()
   @IsOptional()
   key?: TopicKey;
+
+  @IsString()
+  @IsOptional()
+  name?: string;
 
   @IsOptional()
   @IsInt()
