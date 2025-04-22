@@ -1,3 +1,5 @@
+import { SubscriberEntity, TopicEntity } from '@novu/dal';
+import { DiscoverWorkflowOutput } from '@novu/framework/internal';
 import {
   ISubscribersDefine,
   ITenantDefine,
@@ -5,13 +7,8 @@ import {
   SubscriberSourceEnum,
   TriggerRequestCategoryEnum,
 } from '@novu/shared';
-import { SubscriberEntity } from '@novu/dal';
-import { DiscoverWorkflowOutput } from '@novu/framework/internal';
 
-import {
-  IBulkJobParams,
-  IJobParams,
-} from '../services/queues/queue-base.service';
+import { IBulkJobParams, IJobParams } from '../services/queues/queue-base.service';
 
 export interface IProcessSubscriberDataDto {
   environmentId: string;
@@ -27,6 +24,7 @@ export interface IProcessSubscriberDataDto {
   subscriber: ISubscribersDefine;
   templateId: string;
   _subscriberSource: SubscriberSourceEnum;
+  topic?: Pick<TopicEntity, '_id' | 'key'>;
   requestCategory?: TriggerRequestCategoryEnum;
   bridge?: { url: string; workflow: DiscoverWorkflowOutput };
   controls?: StatelessControls;

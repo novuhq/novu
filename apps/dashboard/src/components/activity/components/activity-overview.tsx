@@ -1,16 +1,16 @@
-import { Link } from 'react-router-dom';
-import { motion } from 'motion/react';
-import { format } from 'date-fns';
 import { IActivity } from '@novu/shared';
+import { format } from 'date-fns';
+import { motion } from 'motion/react';
+import { Link } from 'react-router-dom';
 
 import { SubscriberDrawerButton } from '@/components/subscribers/subscriber-drawer';
 import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
 import { useEnvironment } from '@/context/environment/hooks';
+import { fadeIn } from '@/utils/animation';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { JOB_STATUS_CONFIG } from '../constants';
 import { OverviewItem } from './overview-item';
-import { fadeIn } from '@/utils/animation';
 
 export interface ActivityOverviewProps {
   activity: IActivity;
@@ -40,6 +40,8 @@ export function ActivityOverview({ activity }: ActivityOverviewProps) {
         </OverviewItem>
 
         <OverviewItem label="Transaction ID" value={activity.transactionId} isCopyable />
+
+        {activity.topicKey && <OverviewItem label="Topic Key" value={activity.topicKey} isCopyable />}
 
         <SubscriberDrawerButton
           disabled={!activity.subscriber}

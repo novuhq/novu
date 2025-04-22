@@ -14,11 +14,11 @@ import {
   StepTypeEnum,
 } from '@novu/shared';
 
-import { DigestFilterSteps, DigestFilterStepsCommand } from '../digest-filter-steps';
 import { InstrumentUsecase } from '../../instrumentation';
-import { CreateNotificationJobsCommand } from './create-notification-jobs.command';
-import { PlatformException } from '../../utils/exceptions';
 import { getNestedValue } from '../../utils';
+import { PlatformException } from '../../utils/exceptions';
+import { DigestFilterSteps, DigestFilterStepsCommand } from '../digest-filter-steps';
+import { CreateNotificationJobsCommand } from './create-notification-jobs.command';
 
 const LOG_CONTEXT = 'CreateNotificationUseCase';
 type NotificationJob = Omit<JobEntity, '_id' | 'createdAt' | 'updatedAt'>;
@@ -80,6 +80,8 @@ export class CreateNotificationJobs {
       _organizationId: command.organizationId,
       _subscriberId: command.subscriber._id,
       _templateId: command.template._id,
+      _topicId: command.topic?._id,
+      topicKey: command.topic?.key,
       transactionId: command.transactionId,
       to: command.to,
       payload: command.payload,

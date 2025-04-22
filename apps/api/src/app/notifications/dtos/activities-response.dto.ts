@@ -422,6 +422,12 @@ export class ActivityNotificationResponseDto {
     type: Object, // Adjust type as necessary
   })
   to?: any; // Added to align with NotificationEntity
+
+  @ApiPropertyOptional({ description: 'Internal Topic ID of the notification', type: String })
+  _topicId?: string;
+
+  @ApiPropertyOptional({ description: 'Topic Key of the notification', type: String })
+  topicKey?: string;
 }
 // Activities Response DTO
 export class ActivitiesResponseDto {

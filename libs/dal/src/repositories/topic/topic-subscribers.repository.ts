@@ -1,14 +1,14 @@
 import { ExternalSubscriberId } from '@novu/shared';
 
+import type { EnforceEnvOrOrgIds } from '../../types/enforce';
+import { BaseRepository } from '../base-repository';
 import {
   CreateTopicSubscribersEntity,
-  TopicSubscribersEntity,
   TopicSubscribersDBModel,
+  TopicSubscribersEntity,
 } from './topic-subscribers.entity';
 import { TopicSubscribers } from './topic-subscribers.schema';
 import { EnvironmentId, OrganizationId, TopicId, TopicKey } from './types';
-import { BaseRepository } from '../base-repository';
-import type { EnforceEnvOrOrgIds } from '../../types/enforce';
 
 export class TopicSubscribersRepository extends BaseRepository<
   TopicSubscribersDBModel,
@@ -34,7 +34,7 @@ export class TopicSubscribersRepository extends BaseRepository<
       excludeSubscribers: string[];
     };
     batchSize?: number;
-  }) {
+  }): AsyncGenerator<{ _id: string; topics: string[] }, void, unknown> {
     const { _organizationId, _environmentId, topicIds, excludeSubscribers } = query;
     const mappedTopicIds = topicIds.map((id) => this.convertStringToObjectId(id));
 
@@ -50,12 +50,13 @@ export class TopicSubscribersRepository extends BaseRepository<
       {
         $group: {
           _id: '$externalSubscriberId',
+          topics: { $push: '$_topicId' },
         },
       },
     ];
 
     for await (const doc of this._model.aggregate(aggregatePipeline, { batchSize }).cursor()) {
-      yield this.mapEntity(doc);
+      yield doc;
     }
   }
 
