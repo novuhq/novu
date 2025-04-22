@@ -2,8 +2,6 @@ import { getFilters } from '@/components/variable/constants';
 import { LiquidVariable } from '@/utils/parseStepVariables';
 import { Completion, CompletionContext, CompletionResult } from '@codemirror/autocomplete';
 import { EditorView } from '@uiw/react-codemirror';
-import { TelemetryEvent } from './telemetry';
-import { DIGEST_VARIABLES_FILTER_MAP } from '@/components/variable/utils/digest-variables';
 
 interface CompletionOption {
   label: string;
@@ -223,7 +221,7 @@ function getMatchingVariables(searchText: string, variables: LiquidVariable[]): 
 export function createAutocompleteSource(
   variables: LiquidVariable[],
   isEnhancedDigestEnabled: boolean,
-  track: (event: TelemetryEvent, data?: Record<string, unknown>) => void
+  onVariableSelect?: (completion: Completion) => void
 ) {
   return (context: CompletionContext) => {
     // Match text that starts with {{ and capture everything after it until the cursor position
@@ -257,16 +255,7 @@ export function createAutocompleteSource(
           // Add 2 if we need to account for closing brackets
           const finalCursorPos = from + wrappedValue.length + (needsClosing ? 0 : 2);
 
-          if (completion.type === 'digest') {
-            const parts = completion.displayLabel?.split('.');
-            const lastElement = parts?.[parts.length - 1];
-
-            if (lastElement && lastElement in DIGEST_VARIABLES_FILTER_MAP) {
-              track(TelemetryEvent.DIGEST_VARIABLE_SELECTED, {
-                variable: lastElement,
-              });
-            }
-          }
+          onVariableSelect?.(completion);
 
           view.dispatch({
             changes: { from, to, insert: wrappedValue },
