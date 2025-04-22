@@ -115,3 +115,20 @@ export const addSubscribersToTopic = async ({
 
   return data;
 };
+
+export const removeSubscribersFromTopic = async ({
+  environment,
+  topicKey,
+  subscribers,
+}: {
+  environment: IEnvironment;
+  topicKey: string;
+  subscribers: string[];
+}) => {
+  await post(`/topics/${topicKey}/subscribers/removal`, {
+    environment,
+    body: { subscribers },
+  });
+
+  return { success: true };
+};

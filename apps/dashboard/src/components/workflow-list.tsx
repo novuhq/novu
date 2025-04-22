@@ -125,6 +125,7 @@ export function WorkflowList({
             <TableHead>Status</TableHead>
             <TableHead>Steps</TableHead>
             <TableHead>Tags</TableHead>
+            <TableHead>Last triggered</TableHead>
             <TableHead
               sortable
               sortDirection={orderBy === 'updatedAt' ? orderDirection : false}

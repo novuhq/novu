@@ -4,7 +4,6 @@ import { Skeleton } from '@/components/primitives/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
 import { VisuallyHidden } from '@/components/primitives/visually-hidden';
 import { ExternalLink } from '@/components/shared/external-link';
-import { SubscriberDrawerButton } from '@/components/subscribers/subscriber-drawer';
 import TruncatedText from '@/components/truncated-text';
 import { useFormProtection } from '@/hooks/use-form-protection';
 import { itemVariants, listVariants } from '@/utils/animation';
@@ -17,6 +16,7 @@ import { useTopic } from './hooks/use-topic';
 import { useTopicEvents } from './hooks/use-topic-events';
 import { TopicActivity } from './topic-activity';
 import { TopicOverviewForm, TopicOverviewSkeleton } from './topic-overview-form';
+import { TopicSubscriberItem } from './topic-subscriber-item';
 
 const tabTriggerClasses =
   'hover:data-[state=inactive]:text-foreground-950 h-11 py-3 rounded-none [&>span]:h-5 px-0 relative';
@@ -179,17 +179,12 @@ const TopicSubscribers = (props: TopicSubscribersProps) => {
         </div>
       )}
       {subscribers.map((subscriberId: string, index: number) => (
-        <SubscriberDrawerButton key={`${subscriberId}-${index}`} subscriberId={subscriberId} readOnly>
-          <motion.div
-            variants={itemVariants}
-            className="border-b-stroke-soft flex w-full cursor-pointer border-b last:border-b-0 hover:bg-neutral-50"
-          >
-            <div className="flex w-full items-center px-3 py-2">
-              <RiUser3Fill className="mr-2 size-3.5 min-w-3.5 text-neutral-500" />
-              <span className="text-label-xs text-foreground-950">{subscriberId}</span>
-            </div>
-          </motion.div>
-        </SubscriberDrawerButton>
+        <TopicSubscriberItem
+          key={`${subscriberId}-${index}`}
+          subscriberId={subscriberId}
+          topicKey={topicKey}
+          readOnly={readOnly}
+        />
       ))}
     </motion.div>
   );

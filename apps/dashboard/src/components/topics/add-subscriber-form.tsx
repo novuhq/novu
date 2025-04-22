@@ -44,7 +44,6 @@ export function AddSubscriberForm({ topicKey, onSuccess }: AddSubscriberFormProp
         type="submit"
         disabled={isPending || !subscriberId.trim()}
         variant="secondary"
-        mode="outline"
         size="xs"
         className="shrink-0"
         isLoading={isPending}
