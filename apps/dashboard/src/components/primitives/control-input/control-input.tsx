@@ -1,5 +1,5 @@
 import { cn } from '@/utils/ui';
-import { autocompletion } from '@codemirror/autocomplete';
+import { autocompletion, Completion } from '@codemirror/autocomplete';
 import { EditorView } from '@uiw/react-codemirror';
 import { cva } from 'class-variance-authority';
 import { useCallback, useMemo, useRef } from 'react';
@@ -15,6 +15,9 @@ import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { DIGEST_VARIABLES_ENUM, getDynamicDigestVariable } from '@/components/variable/utils/digest-variables';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
+import { useTelemetry } from '@/hooks/use-telemetry';
+import { TelemetryEvent } from '@/utils/telemetry';
+import { DIGEST_VARIABLES_FILTER_MAP } from '@/components/variable/utils/digest-variables';
 
 const variants = cva('relative w-full', {
   variants: {
@@ -76,10 +79,27 @@ export function ControlInput({
     : undefined;
 
   const { digestStepBeforeCurrent } = useWorkflow();
+  const track = useTelemetry();
+
+  const onVariableSelect = useCallback(
+    (completion: Completion) => {
+      if (completion.type === 'digest') {
+        const parts = completion.displayLabel?.split('.');
+        const lastElement = parts?.[parts.length - 1];
+
+        if (lastElement && lastElement in DIGEST_VARIABLES_FILTER_MAP) {
+          track(TelemetryEvent.DIGEST_VARIABLE_SELECTED, {
+            variable: lastElement,
+          });
+        }
+      }
+    },
+    [track]
+  );
 
   const completionSource = useMemo(
-    () => createAutocompleteSource(variables, isEnhancedDigestEnabled),
-    [variables, isEnhancedDigestEnabled]
+    () => createAutocompleteSource(variables, isEnhancedDigestEnabled, onVariableSelect),
+    [variables, isEnhancedDigestEnabled, onVariableSelect]
   );
 
   const autocompletionExtension = useMemo(

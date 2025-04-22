@@ -1,12 +1,12 @@
 import React, { useMemo } from 'react';
-import { FieldSelectorProps } from 'react-querybuilder';
 import { useFormContext } from 'react-hook-form';
+import { FieldSelectorProps } from 'react-querybuilder';
 
-import { Code2 } from '@/components/icons/code-2';
 import { VariableSelect } from '@/components/conditions-editor/variable-select';
+import { Code2 } from '@/components/icons/code-2';
 
 export const FieldSelector = React.memo(
-  ({ handleOnChange, options, path, value, disabled }: FieldSelectorProps) => {
+  ({ handleOnChange, options, path, value, disabled, context }: FieldSelectorProps) => {
     const form = useFormContext();
     const queryPath = 'query.rules.' + path.join('.rules.') + '.field';
     const { error } = form.getFieldState(queryPath, form.formState);
@@ -23,7 +23,10 @@ export const FieldSelector = React.memo(
     return (
       <VariableSelect
         leftIcon={<Code2 className="text-feature size-3 min-w-3" />}
-        onChange={handleOnChange}
+        onChange={(e) => {
+          handleOnChange(e);
+          context?.saveForm();
+        }}
         options={optionsArray}
         title="Fields"
         value={value}
