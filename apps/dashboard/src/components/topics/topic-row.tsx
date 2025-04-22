@@ -12,8 +12,9 @@ import { TableCell, TableRow } from '@/components/primitives/table';
 import { QueryKeys } from '@/utils/query-keys';
 import { useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { useState } from 'react';
-import { RiDeleteBin2Line, RiEditLine, RiMore2Fill } from 'react-icons/ri';
+import { ComponentProps, useState } from 'react';
+import { RiDeleteBin2Line, RiFileCopyLine, RiMore2Fill } from 'react-icons/ri';
+import { cn } from '../../utils/ui';
 import { useDeleteTopic } from './hooks/use-delete-topic';
 import { useTopicsNavigate } from './hooks/use-topics-navigate';
 import { Topic } from './types';
@@ -22,6 +23,19 @@ interface TopicRowProps {
   topic: Topic;
   topicsCount: number;
 }
+
+type TopicTableCellProps = ComponentProps<typeof TableCell>;
+
+const TopicTableCell = (props: TopicTableCellProps) => {
+  const { children, className, ...rest } = props;
+
+  return (
+    <TableCell className={cn('group-hover:bg-neutral-alpha-50 text-text-sub relative', className)} {...rest}>
+      {children}
+      <span className="sr-only">Edit topic</span>
+    </TableCell>
+  );
+};
 
 export const TopicRow = ({ topic, topicsCount }: TopicRowProps) => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -32,8 +46,8 @@ export const TopicRow = ({ topic, topicsCount }: TopicRowProps) => {
   const createdAt = topic.createdAt ? format(new Date(topic.createdAt), 'dd/MM/yyyy HH:mm') : '-';
   const updatedAt = topic.updatedAt ? format(new Date(topic.updatedAt), 'dd/MM/yyyy HH:mm') : '-';
 
-  const handleRowClick = () => {
-    navigateToEditTopicPage(topic.key);
+  const stopPropagation = (e: React.MouseEvent) => {
+    e.stopPropagation();
   };
 
   const handleDeletion = async () => {
@@ -50,38 +64,40 @@ export const TopicRow = ({ topic, topicsCount }: TopicRowProps) => {
 
   return (
     <>
-      <TableRow className="group relative isolate cursor-pointer" onClick={handleRowClick}>
-        <TableCell>
+      <TableRow
+        className="group relative isolate cursor-pointer"
+        onClick={() => {
+          navigateToEditTopicPage(topic.key);
+        }}
+      >
+        <TopicTableCell>
           <div className="flex items-center">
             <span className="max-w-[300px] truncate font-medium">{topic.name}</span>
           </div>
-        </TableCell>
-        <TableCell>
+        </TopicTableCell>
+        <TopicTableCell>
           <div className="max-w-[300px] truncate">{topic.key}</div>
-        </TableCell>
-        <TableCell>{createdAt}</TableCell>
-        <TableCell>{updatedAt}</TableCell>
-        <TableCell className="w-1">
+        </TopicTableCell>
+        <TopicTableCell>{createdAt}</TopicTableCell>
+        <TopicTableCell>{updatedAt}</TopicTableCell>
+        <TopicTableCell className="w-1">
           <DropdownMenu>
-            <DropdownMenuTrigger>
+            <DropdownMenuTrigger asChild>
               <CompactButton icon={RiMore2Fill} variant="ghost" className="z-10 h-8 w-8 p-0" />
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-44">
+            <DropdownMenuContent className="w-44" onClick={stopPropagation}>
               <DropdownMenuGroup>
                 <DropdownMenuItem
                   className="cursor-pointer"
-                  onClick={(e) => {
-                    e.stopPropagation();
-
-                    navigateToEditTopicPage(topic.key);
+                  onClick={() => {
+                    navigator.clipboard.writeText(topic.key);
                   }}
                 >
-                  <RiEditLine />
-                  Edit topic
+                  <RiFileCopyLine />
+                  Copy identifier
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="text-destructive cursor-pointer"
-                  disabled={topicsCount === 1}
                   onClick={() => {
                     setTimeout(() => setIsDeleteModalOpen(true), 0);
                   }}
@@ -92,7 +108,7 @@ export const TopicRow = ({ topic, topicsCount }: TopicRowProps) => {
               </DropdownMenuGroup>
             </DropdownMenuContent>
           </DropdownMenu>
-        </TableCell>
+        </TopicTableCell>
       </TableRow>
       <ConfirmationModal
         open={isDeleteModalOpen}
