@@ -1,7 +1,7 @@
-import { Type } from 'class-transformer';
-import { IsOptional, IsInt, Max, Min } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { ChannelTypeEnum } from '@novu/shared';
+import { Type } from 'class-transformer';
+import { IsInt, IsOptional, Max, Min } from 'class-validator';
 
 export class ActivitiesRequestDto {
   @ApiPropertyOptional({
@@ -76,6 +76,13 @@ export class ActivitiesRequestDto {
   })
   @IsOptional()
   transactionId?: string;
+
+  @ApiPropertyOptional({
+    type: String,
+    description: 'Topic Key for filtering notifications by topic',
+  })
+  @IsOptional()
+  topicKey?: string;
 
   @ApiPropertyOptional({
     type: String,

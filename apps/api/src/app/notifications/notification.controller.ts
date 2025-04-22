@@ -2,23 +2,23 @@ import { Controller, Get, Param, Query } from '@nestjs/common';
 import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { ChannelTypeEnum, UserSessionData } from '@novu/shared';
 
-import { GetActivityFeed } from './usecases/get-activity-feed/get-activity-feed.usecase';
-import { GetActivityFeedCommand } from './usecases/get-activity-feed/get-activity-feed.command';
-import { GetActivityStats, GetActivityStatsCommand } from './usecases/get-activity-stats';
-import { GetActivityGraphStats } from './usecases/get-activity-graph-states/get-activity-graph-states.usecase';
-import { GetActivityGraphStatsCommand } from './usecases/get-activity-graph-states/get-activity-graph-states.command';
-import { ActivityStatsResponseDto } from './dtos/activity-stats-response.dto';
+import { ActivitiesRequestDto } from './dtos/activities-request.dto';
 import { ActivitiesResponseDto, ActivityNotificationResponseDto } from './dtos/activities-response.dto';
 import { ActivityGraphStatesResponse } from './dtos/activity-graph-states-response.dto';
-import { ActivitiesRequestDto } from './dtos/activities-request.dto';
-import { GetActivity } from './usecases/get-activity/get-activity.usecase';
+import { ActivityStatsResponseDto } from './dtos/activity-stats-response.dto';
+import { GetActivityFeedCommand } from './usecases/get-activity-feed/get-activity-feed.command';
+import { GetActivityFeed } from './usecases/get-activity-feed/get-activity-feed.usecase';
+import { GetActivityGraphStatsCommand } from './usecases/get-activity-graph-states/get-activity-graph-states.command';
+import { GetActivityGraphStats } from './usecases/get-activity-graph-states/get-activity-graph-states.usecase';
+import { GetActivityStats, GetActivityStatsCommand } from './usecases/get-activity-stats';
 import { GetActivityCommand } from './usecases/get-activity/get-activity.command';
+import { GetActivity } from './usecases/get-activity/get-activity.usecase';
 
-import { UserSession } from '../shared/framework/user.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ApiCommonResponses, ApiOkResponse, ApiResponse } from '../shared/framework/response.decorator';
 import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
+import { UserSession } from '../shared/framework/user.decorator';
 
 @ApiCommonResponses()
 @Controller('/notifications')
@@ -77,6 +77,7 @@ export class NotificationsController {
         search: query.search,
         subscriberIds: subscribersQuery,
         transactionId: query.transactionId,
+        topicKey: query.topicKey,
         after: query.after,
         before: query.before,
       })

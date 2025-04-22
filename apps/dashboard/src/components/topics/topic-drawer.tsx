@@ -132,7 +132,7 @@ export const TopicDrawer = forwardRef<HTMLDivElement, TopicDrawerProps>((props, 
             'pointer-events-none opacity-0': !open,
           })}
         />
-        <SheetContent ref={forwardedRef}>
+        <SheetContent ref={forwardedRef} className="w-[400px]">
           <VisuallyHidden>
             <SheetTitle />
             <SheetDescription />

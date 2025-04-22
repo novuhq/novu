@@ -1,20 +1,20 @@
+import { Badge } from '@/components/primitives/badge';
 import { Tooltip, TooltipContent, TooltipPortal, TooltipTrigger } from '@/components/primitives/tooltip';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import { ActivityFiltersData } from '@/types/activity';
+import { buildActivityDateFilters } from '@/utils/activityFilters';
 import { ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { useOrganization } from '@clerk/clerk-react';
 import { ChannelTypeEnum } from '@novu/shared';
 import { CalendarIcon } from 'lucide-react';
-import { Badge } from '@/components/primitives/badge';
+import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useFetchWorkflows } from '../../hooks/use-fetch-workflows';
 import { Button } from '../primitives/button';
 import { FacetedFormFilter } from '../primitives/form/faceted-filter/facated-form-filter';
 import { CHANNEL_OPTIONS } from './constants';
-import { buildActivityDateFilters } from '@/utils/activityFilters';
-import { useMemo } from 'react';
-type Fields = 'dateRange' | 'workflows' | 'channels' | 'transactionId' | 'subscriberId';
+type Fields = 'dateRange' | 'workflows' | 'channels' | 'transactionId' | 'subscriberId' | 'topicKey';
 
 export type ActivityFilters = {
   filters: ActivityFiltersData;
@@ -134,6 +134,17 @@ export function ActivityFilters({
           value={filters.subscriberId}
           onChange={(value) => onFiltersChange({ ...filters, subscriberId: value })}
           placeholder="Search by Subscriber ID"
+        />
+      )}
+
+      {!hide.includes('topicKey') && (
+        <FacetedFormFilter
+          type="text"
+          size="small"
+          title="Topic Key"
+          value={filters.topicKey}
+          onChange={(value) => onFiltersChange({ ...filters, topicKey: value })}
+          placeholder="Search by Topic Key"
         />
       )}
 

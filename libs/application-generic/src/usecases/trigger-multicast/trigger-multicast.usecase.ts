@@ -1,12 +1,12 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { TopicEntity, TopicRepository, TopicSubscribersRepository } from '@novu/dal';
 import {
-  ISubscribersDefine,
-  ITopic,
-  SubscriberSourceEnum,
-  TriggerRecipient,
-  TriggerRecipientsTypeEnum,
-  TriggerRecipientSubscriber,
+    ISubscribersDefine,
+    ITopic,
+    SubscriberSourceEnum,
+    TriggerRecipient,
+    TriggerRecipientsTypeEnum,
+    TriggerRecipientSubscriber,
 } from '@novu/shared';
 import _ from 'lodash';
 
@@ -53,7 +53,7 @@ export class TriggerMulticast {
 
     const topicIds = topics.map((topic) => topic._id);
     const singleSubscriberIds = Array.from(singleSubscribers.keys());
-    let subscribersList: { subscriberId: string; topic: Pick<TopicEntity, '_id' | 'key'> }[] = [];
+    let subscribersList: ISubscribersDefine[] = [];
     const getTopicDistinctSubscribersGenerator = this.topicSubscribersRepository.getTopicDistinctSubscribers({
       query: {
         _organizationId: organizationId,
@@ -71,9 +71,7 @@ export class TriggerMulticast {
         continue;
       }
 
-      const topic = topics.find((item) => item._id === externalSubscriberIdGroup.topics[0]?.toString());
-
-      subscribersList.push({ subscriberId: externalSubscriberId, topic });
+      subscribersList.push({ subscriberId: externalSubscriberId });
 
       if (subscribersList.length === SUBSCRIBER_TOPIC_DISTINCT_BATCH_SIZE) {
         await this.sendToProcessSubscriberService(command, subscribersList, SubscriberSourceEnum.TOPIC);
@@ -125,7 +123,7 @@ export class TriggerMulticast {
 
   public async sendToProcessSubscriberService(
     command: TriggerMulticastCommand,
-    subscribers: { subscriberId: string; topic: Pick<TopicEntity, '_id' | 'key'> }[] | ISubscribersDefine[],
+    subscribers: ISubscribersDefine[],
     _subscriberSource: SubscriberSourceEnum
   ) {
     if (subscribers.length === 0) {
@@ -199,7 +197,7 @@ export const validateSubscriberDefine = (recipient: ISubscribersDefine) => {
 
 export const mapSubscribersToJobs = (
   _subscriberSource: SubscriberSourceEnum,
-  subscribers: { subscriberId: string; topic: Pick<TopicEntity, '_id' | 'key'> }[] | ISubscribersDefine[],
+  subscribers: ISubscribersDefine[],
   command: TriggerMulticastCommand
 ): IProcessSubscriberBulkJobDto[] => {
   return subscribers.map((subscriber) => {
@@ -216,7 +214,6 @@ export const mapSubscribersToJobs = (
         subscriber,
         templateId: command.template._id,
         _subscriberSource,
-        topic: subscriber.topic,
         requestCategory: command.requestCategory,
         controls: command.controls,
         bridge: {
