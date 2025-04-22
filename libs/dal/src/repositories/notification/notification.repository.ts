@@ -48,7 +48,7 @@ export class NotificationRepository extends BaseRepository<
     }
 
     if (query.topicKey) {
-      requestQuery.topicKey = query.topicKey;
+      requestQuery['topics.topicKey'] = query.topicKey;
     }
 
     if (query.after || query.before) {

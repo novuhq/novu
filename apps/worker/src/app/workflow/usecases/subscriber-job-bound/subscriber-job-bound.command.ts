@@ -41,7 +41,7 @@ export class SubscriberJobBoundCommand extends EnvironmentWithUserCommand {
   subscriber: ISubscribersDefine;
 
   @IsOptional()
-  topic?: Pick<TopicEntity, '_id' | 'key'>;
+  topics?: Pick<TopicEntity, '_id' | 'key'>[];
 
   @IsDefined()
   @IsEnum(SubscriberSourceEnum)

@@ -66,8 +66,11 @@ export function mapFeedItemToDto(entity: NotificationFeedItemEntity): ActivityNo
     _organizationId: entity._organizationId,
     _subscriberId: entity._subscriberId,
     _templateId: entity._templateId,
-    _topicId: entity._topicId,
-    topicKey: entity.topicKey,
+    topics:
+      entity.topics?.map((topic) => ({
+        _topicId: topic._topicId,
+        topicKey: topic.topicKey,
+      })) || null,
     channels: entity.channels,
     createdAt: entity.createdAt,
     jobs: entity.jobs.map(mapJobToDto),

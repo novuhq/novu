@@ -41,7 +41,12 @@ export function ActivityOverview({ activity }: ActivityOverviewProps) {
 
         <OverviewItem label="Transaction ID" value={activity.transactionId} isCopyable />
 
-        {activity.topicKey && <OverviewItem label="Topic Key" value={activity.topicKey} isCopyable />}
+        <OverviewItem
+          label="Topics"
+          value={
+            activity.topics?.length ? `[ ${activity.topics?.map((topic) => `"${topic.topicKey}"`).join(', ')} ]` : '-'
+          }
+        />
 
         <SubscriberDrawerButton
           disabled={!activity.subscriber}

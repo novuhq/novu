@@ -14,17 +14,19 @@ import { QueryKeys } from '@/utils/query-keys';
 import { useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { ComponentProps, useState } from 'react';
-import { RiDeleteBin2Line, RiFileCopyLine, RiMore2Fill } from 'react-icons/ri';
+import { RiDeleteBin2Line, RiFileCopyLine, RiMore2Fill, RiPulseFill } from 'react-icons/ri';
+import { Link } from 'react-router-dom';
+import { useEnvironment } from '../../context/environment/hooks';
+import { buildRoute, ROUTES } from '../../utils/routes';
 import { cn } from '../../utils/ui';
 import { useDeleteTopic } from './hooks/use-delete-topic';
 import { useTopicEvents } from './hooks/use-topic-events';
 import { useTopicsNavigate } from './hooks/use-topics-navigate';
 import { Topic } from './types';
 
-interface TopicRowProps {
+type TopicRowProps = {
   topic: Topic;
-  topicsCount: number;
-}
+};
 
 type TopicTableCellProps = ComponentProps<typeof TableCell>;
 
@@ -39,7 +41,8 @@ const TopicTableCell = (props: TopicTableCellProps) => {
   );
 };
 
-export const TopicRow = ({ topic, topicsCount }: TopicRowProps) => {
+export const TopicRow = ({ topic }: TopicRowProps) => {
+  const { currentEnvironment } = useEnvironment();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const { deleteTopic, isDeleting } = useDeleteTopic();
   const queryClient = useQueryClient();
@@ -115,6 +118,20 @@ export const TopicRow = ({ topic, topicsCount }: TopicRowProps) => {
                 >
                   <RiFileCopyLine />
                   Copy identifier
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild className="cursor-pointer">
+                  <Link
+                    to={
+                      buildRoute(ROUTES.ACTIVITY_FEED, {
+                        environmentSlug: currentEnvironment?.slug ?? '',
+                      }) +
+                      '?' +
+                      new URLSearchParams({ topicKey: topic.key }).toString()
+                    }
+                  >
+                    <RiPulseFill />
+                    View activity
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="text-destructive cursor-pointer"

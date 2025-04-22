@@ -36,7 +36,7 @@ export class CreateNotificationJobsCommand extends EnvironmentWithUserCommand {
   to: ISubscribersDefine;
 
   @IsOptional()
-  topic?: Pick<TopicEntity, '_id' | 'key'>;
+  topics?: Pick<TopicEntity, '_id' | 'key'>[];
 
   @IsString()
   @IsDefined()

@@ -16,9 +16,10 @@ export class NotificationEntity {
 
   _subscriberId: string;
 
-  _topicId?: string;
-
-  topicKey?: string;
+  topics: {
+    _topicId: string;
+    topicKey: string;
+  }[];
 
   transactionId: string;
 

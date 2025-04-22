@@ -24,7 +24,7 @@ export interface IProcessSubscriberDataDto {
   subscriber: ISubscribersDefine;
   templateId: string;
   _subscriberSource: SubscriberSourceEnum;
-  topic?: Pick<TopicEntity, '_id' | 'key'>;
+  topics?: Pick<TopicEntity, '_id' | 'key'>[];
   requestCategory?: TriggerRequestCategoryEnum;
   bridge?: { url: string; workflow: DiscoverWorkflowOutput };
   controls?: StatelessControls;

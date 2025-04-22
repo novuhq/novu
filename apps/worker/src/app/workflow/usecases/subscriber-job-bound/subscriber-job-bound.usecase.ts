@@ -57,7 +57,7 @@ export class SubscriberJobBound {
       _subscriberSource,
       requestCategory,
       environmentName,
-      topic,
+      topics,
     } = command;
 
     const template = command.bridge?.workflow
@@ -140,7 +140,7 @@ export class SubscriberJobBound {
       transactionId: command.transactionId,
       userId,
       tenant,
-      topic,
+      topics,
       bridgeUrl: command.bridge?.url,
       /*
        * Only populate preferences if the command contains a `bridge` property,
