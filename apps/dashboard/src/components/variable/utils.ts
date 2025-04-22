@@ -47,6 +47,7 @@ export function validateEnhancedDigestFilters(
 ): {
   message: string;
   name: string;
+  filterParam: string;
 } | null {
   if (!isEnhancedDigestEnabled) return null;
 
@@ -57,7 +58,7 @@ export function validateEnhancedDigestFilters(
     const isFirstParamEmpty = !firstParam || firstParam === '' || firstParam === "''" || firstParam === '""';
 
     if (isFirstParamEmpty) {
-      return { message: 'Object key path is required', name: 'toSentence' };
+      return { message: 'Object key path is required', name: 'toSentence', filterParam: 'Object key path' };
     }
   }
 

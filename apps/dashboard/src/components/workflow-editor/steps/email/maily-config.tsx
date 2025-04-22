@@ -181,14 +181,11 @@ export const createExtensions = (props: {
     }),
     VariableExtension.extend({
       addNodeView() {
-        return ReactNodeViewRenderer(
-          createVariableView(parsedVariables.primitives, parsedVariables.isAllowedVariable),
-          {
-            // the variable pill is 3px smaller than the default text size, but never smaller than 12px
-            className: 'relative inline-block text-[max(12px,calc(1em-3px))] h-5',
-            as: 'div',
-          }
-        );
+        return ReactNodeViewRenderer(createVariableView(parsedVariables.variables, parsedVariables.isAllowedVariable), {
+          // the variable pill is 3px smaller than the default text size, but never smaller than 12px
+          className: 'relative inline-block text-[max(12px,calc(1em-3px))] h-5',
+          as: 'div',
+        });
       },
       addAttributes() {
         const attributes = this.parent?.();
