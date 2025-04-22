@@ -70,7 +70,7 @@ export class CreateVariablesObject {
           ? step.events
           : Array.from({ length: DEFAULT_ARRAY_ELEMENTS }, (_, index) => {
               return {
-                payload: { name: `events-${index}` },
+                payload: { name: `event-${index}` },
               };
             });
       }
