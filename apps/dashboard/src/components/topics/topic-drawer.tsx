@@ -4,6 +4,7 @@ import { Skeleton } from '@/components/primitives/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
 import { VisuallyHidden } from '@/components/primitives/visually-hidden';
 import { ExternalLink } from '@/components/shared/external-link';
+import { SubscriberDrawerButton } from '@/components/subscribers/subscriber-drawer';
 import TruncatedText from '@/components/truncated-text';
 import { useFormProtection } from '@/hooks/use-form-protection';
 import { itemVariants, listVariants } from '@/utils/animation';
@@ -165,16 +166,17 @@ const TopicSubscribers = (props: TopicSubscribersProps) => {
       className="flex flex-1 flex-col overflow-y-auto border-t border-t-neutral-200"
     >
       {subscribers.map((subscriberId: string, index: number) => (
-        <motion.div
-          key={`${subscriberId}-${index}`}
-          variants={itemVariants}
-          className="border-b-stroke-soft flex w-full border-b last:border-b-0"
-        >
-          <div className="flex w-full items-center px-3 py-2">
-            <RiUser3Fill className="mr-2 size-3.5 min-w-3.5 text-neutral-500" />
-            <span className="text-label-xs text-foreground-950">{subscriberId}</span>
-          </div>
-        </motion.div>
+        <SubscriberDrawerButton key={`${subscriberId}-${index}`} subscriberId={subscriberId} readOnly>
+          <motion.div
+            variants={itemVariants}
+            className="border-b-stroke-soft flex w-full cursor-pointer border-b last:border-b-0 hover:bg-neutral-50"
+          >
+            <div className="flex w-full items-center px-3 py-2">
+              <RiUser3Fill className="mr-2 size-3.5 min-w-3.5 text-neutral-500" />
+              <span className="text-label-xs text-foreground-950">{subscriberId}</span>
+            </div>
+          </motion.div>
+        </SubscriberDrawerButton>
       ))}
     </motion.div>
   );
