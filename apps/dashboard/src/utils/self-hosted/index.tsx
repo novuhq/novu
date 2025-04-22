@@ -1,125 +1,51 @@
-import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { get } from '../../api/api.client';
-import { Input } from '../../components/primitives/input';
-import { createContextHook } from '../context';
+import React from 'react';
 import { OrganizationSwitcher } from './organization-switcher';
 import { UserButton } from './user-button';
+import { OrganizationContextProvider, useOrganization } from './organization.resource';
+import { UserContextProvider, useUser } from './user.resource';
+import { AuthContextProvider, useAuth } from './auth.resource';
+import { IOrganizationEntity } from '@novu/shared';
+import {
+  OrganizationList,
+  RedirectToSignIn,
+  SignedIn,
+  SignedOut,
+  SignIn,
+  SignUp,
+  UserProfile,
+} from '@clerk/clerk-react';
+import { OrganizationProfile } from '@clerk/clerk-react';
 
-export { OrganizationSwitcher, UserButton };
+export {
+  OrganizationSwitcher,
+  UserButton,
+  OrganizationContextProvider,
+  AuthContextProvider,
+  OrganizationList,
+  OrganizationProfile,
+  UserProfile,
+  SignIn,
+  SignUp,
+  RedirectToSignIn,
+  SignedIn,
+  SignedOut,
+};
 
-export const AuthContext = React.createContext({});
-export const useAuth = createContextHook(AuthContext);
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function AuthContextProvider({ children }: any) {
-  const value = {
-    currentUser: {
-      update: async () => null,
-      externalId: 1,
-      createdAt: new Date(),
-      firstName: 'Sap',
-      publicMetadata: { newDashboardOptInStatus: 'opted_in' },
-      unsafeMetadata: { newDashboardOptInStatus: 'opted_in' },
-      lastName: 'saps',
-      organizationMemberships: [{}],
-      passwordEnabled: true,
-      emailAddresses: [{ emailAddress: 'dd@novu.co' }],
-    },
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
-
-export const OrganizationContext = React.createContext({});
-export const useOrganization = createContextHook(OrganizationContext);
+// eslint-disable-next-line react-refresh/only-export-components
+export { useOrganization, useUser, useAuth };
 
 export const useOrganizationList = () => {
+  const { organization, isLoaded } = useOrganization() as {
+    organization: IOrganizationEntity;
+    isLoaded: boolean;
+  };
+
   return {
-    isLoaded: true,
-    organizationList: [
-      {
-        id: '1',
-        name: 'Organization 1',
-        slug: 'org-1',
-        logoUrl: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        publicMetadata: {},
-        privateMetadata: {},
-      },
-      {
-        id: '2',
-        name: 'Organization 2',
-        slug: 'org-2',
-        logoUrl: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        publicMetadata: {},
-        privateMetadata: {},
-      },
-    ],
+    isLoaded,
+    organizationList: organization ? [organization] : [],
     setActive: async () => null,
   };
 };
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function OrganizationContextProvider({ children }: any) {
-  const value = {
-    organization: {
-      name: 'aaa',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      externalOrgId: '1',
-      publicMetadata: {
-        externalOrgId: '123',
-      },
-      _id: '123124',
-    },
-    isLoaded: true,
-  };
-
-  return <OrganizationContext.Provider value={value}>{children}</OrganizationContext.Provider>;
-}
-
-export const UserContext = React.createContext({});
-export const useUser = createContextHook(UserContext);
-
-type DecodedJwt = {
-  _id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  organizationId: string;
-  environmentId: string | null;
-  roles: string[];
-  iat: number;
-  exp: number;
-  iss: string;
-};
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function UserContextProvider({ children }: any) {
-  const jwt = localStorage.getItem('self-hosted-jwt');
-  const decodedJwt: DecodedJwt | null = jwt ? JSON.parse(atob(jwt.split('.')[1])) : null;
-  const value = {
-    user: {
-      update: async () => null,
-      externalId: decodedJwt?._id,
-      firstName: decodedJwt?.firstName,
-      lastName: decodedJwt?.lastName,
-      emailAddresses: [{ emailAddress: decodedJwt?.email }],
-      createdAt: new Date(),
-      publicMetadata: { newDashboardOptInStatus: 'opted_in' },
-      unsafeMetadata: { newDashboardOptInStatus: 'opted_in' },
-      organizationMemberships: [{}],
-      passwordEnabled: true,
-    },
-    isLoaded: true,
-  };
-
-  return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
-}
 
 export const ClerkContext = React.createContext({});
 
@@ -137,68 +63,6 @@ export function ClerkProvider({ children }: any) {
   );
 }
 
-export function OrganizationList() {
-  return <></>;
-}
-
-export function OrganizationProfile() {
-  return <></>;
-}
-
-export function UserProfile() {
-  return <></>;
-}
-
-export function SignIn() {
-  const navigate = useNavigate();
-  useEffect(() => {
-    getJwt();
-    navigate('/');
-  });
-
-  return <>{'Loading...'}</>;
-}
-
-export function SignUp() {
-  return (
-    <>
-      <Input placeholder="Email" />
-      <Input placeholder="Password" />
-    </>
-  );
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function SignedIn({ children }: { children: any }) {
-  return <>{children}</>;
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function SignedOut({ children }: { children: any }) {
-  if ((window as any).Clerk.loggedIn) return null;
-
-  return <>{children}</>;
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function RedirectToSignIn({ children }: { children: any }) {
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (!(window as any).Clerk.loggedIn) {
-      getJwt();
-      navigate('/sign-in');
-    }
-  }, [navigate]);
-
-  // if (!(window as any).Clerk.loggedIn) {
-  //   console.log('RedirectToSignIn: return null');
-  //   return null;
-  // }
-
-  return <>{children}</>;
-}
-
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 (window as any).Clerk = {
   loggedIn: !!localStorage.getItem('self-hosted-jwt'),
@@ -207,9 +71,15 @@ export function RedirectToSignIn({ children }: { children: any }) {
   },
 };
 
-function getJwt() {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  get('/auth/self-hosted').then((result: any) => {
-    localStorage.setItem('self-hosted-jwt', result?.data.token);
-  });
-}
+export type DecodedJwt = {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  organizationId: string;
+  environmentId: string | null;
+  roles: string[];
+  iat: number;
+  exp: number;
+  iss: string;
+};

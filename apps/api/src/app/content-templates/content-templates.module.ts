@@ -20,6 +20,7 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
     }
   } catch (e) {
     logger.error(e, `Unexpected error while importing enterprise modules`);
+    throw e;
   }
 
   return modules;

@@ -11,7 +11,9 @@ import {
 import { ChevronDown, Settings, Cloud } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 
-function getInitials(name: string) {
+function getInitials(name: string | null) {
+  if (!name) return '';
+
   return name
     .split(' ')
     .map((n) => n[0])
