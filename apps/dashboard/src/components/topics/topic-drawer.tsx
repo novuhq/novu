@@ -12,6 +12,7 @@ import { motion } from 'motion/react';
 import { forwardRef, useEffect, useState } from 'react';
 import { RiMailSettingsLine, RiUser3Fill } from 'react-icons/ri';
 import { cn } from '../../utils/ui';
+import { AddSubscriberForm } from './add-subscriber-form';
 import { useTopic } from './hooks/use-topic';
 import { useTopicEvents } from './hooks/use-topic-events';
 import { TopicActivity } from './topic-activity';
@@ -45,11 +46,11 @@ type TopicSubscribersProps = {
   readOnly?: boolean;
 };
 
-const TopicSubscribersEmptyState = () => {
+const TopicSubscribersEmptyState = ({ topicKey, readOnly = false }: { topicKey: string; readOnly?: boolean }) => {
   return (
     <motion.div
       key="empty-state"
-      className="flex h-full w-full items-center justify-center border-t border-t-neutral-200"
+      className="flex h-full w-full flex-col border-t border-t-neutral-200"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -58,70 +59,77 @@ const TopicSubscribersEmptyState = () => {
         ease: [0.4, 0, 0.2, 1],
       }}
     >
-      <motion.div
-        initial={{ opacity: 0, scale: 0.98, y: 5 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.98, y: 5 }}
-        transition={{
-          duration: 0.25,
-          delay: 0.1,
-          ease: [0.4, 0, 0.2, 1],
-        }}
-        className="flex flex-col items-center gap-6"
-      >
+      {!readOnly && (
+        <div className="border-b border-b-neutral-200 px-5 py-3">
+          <AddSubscriberForm topicKey={topicKey} />
+        </div>
+      )}
+      <div className="flex flex-1 items-center justify-center">
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
+          initial={{ opacity: 0, scale: 0.98, y: 5 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.98, y: 5 }}
           transition={{
-            duration: 0.2,
-            delay: 0.2,
+            duration: 0.25,
+            delay: 0.1,
+            ease: [0.4, 0, 0.2, 1],
           }}
-          className="relative"
+          className="flex flex-col items-center gap-6"
         >
-          <RiUser3Fill className="size-12 text-neutral-300" />
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 5 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{
-            duration: 0.2,
-            delay: 0.25,
-          }}
-          className="flex flex-col items-center gap-1 text-center"
-        >
-          <h2 className="text-foreground-900 text-lg font-medium">This topic doesn't have any subscribers yet</h2>
-          <p className="text-foreground-600 max-w-md text-sm font-normal">
-            Subscribers can be added to this topic via the API. Once added, they will receive notifications when this
-            topic is triggered.
-          </p>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 5 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{
-            duration: 0.2,
-            delay: 0.3,
-          }}
-          className="flex items-center gap-6"
-        >
-          <ExternalLink
-            variant="documentation"
-            href="https://docs.novu.co/platform/concepts/topics#add-subscribers-to-a-topic"
-            target="_blank"
-            underline={false}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{
+              duration: 0.2,
+              delay: 0.2,
+            }}
+            className="relative"
           >
-            Learn More
-          </ExternalLink>
+            <RiUser3Fill className="size-12 text-neutral-300" />
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{
+              duration: 0.2,
+              delay: 0.25,
+            }}
+            className="flex flex-col items-center gap-1 text-center"
+          >
+            <h2 className="text-foreground-900 text-lg font-medium">This topic doesn't have any subscribers yet</h2>
+            <p className="text-foreground-600 max-w-md text-sm font-normal">
+              Subscribers can be added to this topic via the API. Once added, they will receive notifications when this
+              topic is triggered.
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{
+              duration: 0.2,
+              delay: 0.3,
+            }}
+            className="flex items-center gap-6"
+          >
+            <ExternalLink
+              variant="documentation"
+              href="https://docs.novu.co/platform/concepts/topics#add-subscribers-to-a-topic"
+              target="_blank"
+              underline={false}
+            >
+              Learn More
+            </ExternalLink>
+          </motion.div>
         </motion.div>
-      </motion.div>
+      </div>
     </motion.div>
   );
 };
 
 const TopicSubscribers = (props: TopicSubscribersProps) => {
-  const { topicKey } = props;
+  const { topicKey, readOnly = false } = props;
   const { data, isPending } = useTopic(topicKey);
 
   if (isPending) {
@@ -148,7 +156,7 @@ const TopicSubscribers = (props: TopicSubscribersProps) => {
   const subscribers = (data as any)?.subscribers || [];
 
   if (subscribers.length === 0) {
-    return <TopicSubscribersEmptyState />;
+    return <TopicSubscribersEmptyState topicKey={topicKey} readOnly={readOnly} />;
   }
 
   return (
@@ -165,6 +173,11 @@ const TopicSubscribers = (props: TopicSubscribersProps) => {
       }}
       className="flex flex-1 flex-col overflow-y-auto border-t border-t-neutral-200"
     >
+      {!readOnly && (
+        <div className="border-b border-b-neutral-200 px-5 py-3">
+          <AddSubscriberForm topicKey={topicKey} />
+        </div>
+      )}
       {subscribers.map((subscriberId: string, index: number) => (
         <SubscriberDrawerButton key={`${subscriberId}-${index}`} subscriberId={subscriberId} readOnly>
           <motion.div

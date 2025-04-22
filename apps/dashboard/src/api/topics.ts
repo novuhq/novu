@@ -91,3 +91,27 @@ export const updateTopic = async ({
 
   return data;
 };
+
+export const addSubscribersToTopic = async ({
+  environment,
+  topicKey,
+  subscribers,
+}: {
+  environment: IEnvironment;
+  topicKey: string;
+  subscribers: string[];
+}) => {
+  const { data } = await post<{
+    data: {
+      succeeded: string[];
+      failed?: {
+        notFound: string[];
+      };
+    };
+  }>(`/topics/${topicKey}/subscribers`, {
+    environment,
+    body: { subscribers },
+  });
+
+  return data;
+};
