@@ -9,6 +9,7 @@ import type {
   PreferencesFilter,
   InboxProps,
 } from '@novu/js/ui';
+import type { Subscriber } from '@novu/js';
 
 export type NotificationsRenderer = (notification: Notification) => React.ReactNode;
 export type SubjectRenderer = (notification: Notification) => React.ReactNode;
@@ -26,16 +27,6 @@ export type DefaultInboxProps = {
   onSecondaryActionClick?: NotificationActionClickHandler;
   placement?: InboxProps['placement'];
   placementOffset?: InboxProps['placementOffset'];
-};
-
-export type Subscriber = {
-  subscriberId: string;
-  firstName?: string;
-  lastName?: string;
-  email?: string;
-  phone?: string;
-  data?: Record<string, unknown>;
-  timezone?: string;
 };
 
 export type BaseProps = {

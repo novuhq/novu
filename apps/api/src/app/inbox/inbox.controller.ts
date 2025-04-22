@@ -10,15 +10,16 @@ import {
   Query,
   UseGuards,
   Headers,
+  BadRequestException,
 } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { SubscriberEntity } from '@novu/dal';
 import { MessageActionStatusEnum, PreferenceLevelEnum } from '@novu/shared';
 
-import { SubscriberSessionRequestDto } from './dtos/subscriber-session-request.dto';
+import { SubscriberDto, SubscriberSessionRequestDto } from './dtos/subscriber-session-request.dto';
 import { SubscriberSessionResponseDto } from './dtos/subscriber-session-response.dto';
-import { SessionCommand } from './usecases/session/session.command';
+import { SessionCommand, SubscriberCommand } from './usecases/session/session.command';
 import { Session } from './usecases/session/session.usecase';
 import { ApiCommonResponses } from '../shared/framework/response.decorator';
 import { SubscriberSession } from '../shared/framework/user.decorator';
@@ -67,9 +68,20 @@ export class InboxController {
     @Body() body: SubscriberSessionRequestDto,
     @Headers('origin') origin: string
   ): Promise<SubscriberSessionResponseDto> {
+    const subscriber: SubscriberDto =
+      typeof body.subscriber === 'string' ? { id: body.subscriber } : body.subscriber || {};
+    const subscriberId = body.subscriberId || subscriber.id;
+
+    if (!subscriberId) {
+      throw new BadRequestException('Subscriber ID is required');
+    }
+
     return await this.initializeSessionUsecase.execute(
       SessionCommand.create({
-        subscriber: body.subscriber,
+        subscriber: {
+          ...subscriber,
+          subscriberId,
+        } satisfies SubscriberCommand,
         applicationIdentifier: body.applicationIdentifier,
         subscriberHash: body.subscriberHash,
         origin,

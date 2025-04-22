@@ -5,6 +5,7 @@ import type {
   NotificationFilter,
   PreferencesResponse,
   Session,
+  Subscriber,
 } from '../types';
 import { HttpClient, HttpClientOptions } from './http-client';
 

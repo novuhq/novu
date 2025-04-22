@@ -52,16 +52,18 @@ export class InitializeSession {
       validateNotificationCenterEncryption(environment, command);
     }
 
-    const commandos = CreateOrUpdateSubscriberCommand.create({
-      environmentId: environment._id,
-      organizationId: environment._organizationId,
-      subscriberId: command.subscriberId,
-      firstName: command.firstName,
-      lastName: command.lastName,
-      email: command.email,
-      phone: command.phone,
-    });
-    const subscriber = await this.createOrUpdateSubscriberUsecase.execute(commandos);
+    const subscriber = await this.createOrUpdateSubscriberUsecase.execute(
+      CreateOrUpdateSubscriberCommand.create({
+        environmentId: environment._id,
+        organizationId: environment._organizationId,
+        subscriberId: command.subscriberId,
+        firstName: command.firstName,
+        lastName: command.lastName,
+        email: command.email,
+        phone: command.phone,
+        allowUpdate: isHmacValid(environment, command),
+      })
+    );
 
     this.analyticsService.mixpanelTrack('Initialize Widget Session - [Notification Center]', '', {
       _organization: environment._organizationId,
@@ -82,9 +84,14 @@ export class InitializeSession {
 }
 
 function validateNotificationCenterEncryption(environment, command: InitializeSessionCommand) {
-  const key = decryptApiKey(environment.apiKeys[0].key);
-  const hmacHash = createHash(key, command.subscriberId);
-  if (hmacHash !== command.hmacHash) {
+  if (!isHmacValid(environment, command)) {
     throw new BadRequestException('Please provide a valid HMAC hash');
   }
+}
+
+function isHmacValid(environment, command: InitializeSessionCommand) {
+  const key = decryptApiKey(environment.apiKeys[0].key);
+  const hmacHash = createHash(key, command.subscriberId);
+
+  return hmacHash === command.hmacHash;
 }

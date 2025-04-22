@@ -63,8 +63,12 @@ export type Subscriber = {
   id: string;
   firstName?: string;
   lastName?: string;
+  email?: string;
+  phone?: string;
   avatar?: string;
-  subscriberId: string;
+  locale?: string;
+  data?: Record<string, unknown>;
+  timezone?: string;
 };
 
 export type Redirect = {
@@ -161,18 +165,18 @@ export type Result<D = undefined, E = NovuError> = Promise<{
 }>;
 
 export type NovuOptions = {
-  applicationIdentifier: string;
   /** @deprecated Use subscriber instead */
   subscriberId: string;
-  subscriberHash?: string;
   /** @deprecated Use apiUrl instead  */
   backendUrl?: string;
+  /** @internal Should be used internally for testing purposes */
+  __userAgent?: string;
+  applicationIdentifier: string;
+  subscriberHash?: string;
   apiUrl?: string;
   socketUrl?: string;
   useCache?: boolean;
-  /** @internal Should be used internally for testing purposes */
-  __userAgent?: string;
-  subscriber?: Subscriber;
+  subscriber?: Subscriber | string;
 };
 
 export type Prettify<T> = { [K in keyof T]: T[K] } & {};

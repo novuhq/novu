@@ -61,12 +61,6 @@ export class Session {
       });
     }
 
-    const allowUpdate = isHmacValid({
-      apiKey: environment.apiKeys[0].key,
-      subscriberId: command.subscriberId,
-      subscriberHash: command.subscriberHash,
-    });
-
     const subscriber = await this.createSubscriber.execute(
       CreateOrUpdateSubscriberCommand.create({
         environmentId: environment._id,
@@ -75,7 +69,11 @@ export class Session {
         firstName: command.subscriber.firstName,
         lastName: command.subscriber.lastName,
         email: command.subscriber.email,
-        allowUpdate,
+        allowUpdate: isHmacValid({
+          apiKey: environment.apiKeys[0].key,
+          subscriberId: command.subscriber.subscriberId,
+          subscriberHash: command.subscriberHash,
+        }),
       })
     );
 
@@ -90,7 +88,7 @@ export class Session {
       NotificationsCountCommand.create({
         organizationId: environment._organizationId,
         environmentId: environment._id,
-        subscriberId: command.subscriberId,
+        subscriberId: command.subscriber.subscriberId,
         filters: [{ read: false }],
       })
     );
