@@ -1,11 +1,11 @@
-import { FILTERS } from './constants';
+import { getFilters } from './constants';
 import { FilterWithParam } from './types';
 
 function escapeString(str: string): string {
   return str.replace(/'/g, "\\'");
 }
 
-export function formatParamValue(param: string, type?: 'string' | 'number') {
+export function formatParamValue(param: string, type?: string) {
   if (type === 'number') {
     return param;
   }
@@ -13,11 +13,12 @@ export function formatParamValue(param: string, type?: 'string' | 'number') {
   return `'${escapeString(param)}'`;
 }
 
-export function getDefaultSampleValue(filterValue: string): string {
-  return FILTERS.find((filter) => filter.value === filterValue)?.sampleValue ?? '';
-}
-
-export function formatLiquidVariable(name: string, defaultValue: string, filters: FilterWithParam[]) {
+export function formatLiquidVariable(
+  name: string,
+  defaultValue: string,
+  filters: FilterWithParam[],
+  isEnhancedDigestEnabled: boolean
+) {
   const parts = [name.trim()];
 
   if (defaultValue) {
@@ -30,7 +31,7 @@ export function formatLiquidVariable(name: string, defaultValue: string, filters
     if (!t.params?.length) {
       parts.push(t.value);
     } else {
-      const filterDef = FILTERS.find((def) => def.value === t.value);
+      const filterDef = getFilters(isEnhancedDigestEnabled).find((def) => def.value === t.value);
       const formattedParams = t.params.map((param, index) => formatParamValue(param, filterDef?.params?.[index]?.type));
 
       parts.push(`${t.value}: ${formattedParams.join(', ')}`);
@@ -39,3 +40,56 @@ export function formatLiquidVariable(name: string, defaultValue: string, filters
 
   return `{{${parts.join(' | ')}}}`;
 }
+
+export function validateEnhancedDigestFilters(
+  filters: string[],
+  isEnhancedDigestEnabled: boolean
+): {
+  message: string;
+  name: string;
+} | null {
+  if (!isEnhancedDigestEnabled) return null;
+
+  const toSentenceFilter = filters.find((f) => f.startsWith('toSentence'));
+
+  if (toSentenceFilter) {
+    const firstParam = toSentenceFilter.split(':')[1]?.split(',')[0]?.trim();
+    const isFirstParamEmpty = !firstParam || firstParam === '' || firstParam === "''" || firstParam === '""';
+
+    if (isFirstParamEmpty) {
+      return { message: 'Object key path is required', name: 'toSentence' };
+    }
+  }
+
+  return null;
+}
+
+export const parseParams = (input: string) => {
+  if (!input) return '';
+  return input
+    .split(',')
+    .map((param) => {
+      const trimmed = param.trim();
+
+      if ((trimmed.startsWith("'") && trimmed.endsWith("'")) || (trimmed.startsWith('"') && trimmed.endsWith('"'))) {
+        return trimmed.slice(1, -1);
+      }
+
+      return trimmed;
+    })
+    .join(', ');
+};
+
+export const getFirstFilterAndItsArgs = (filters: string[]) => {
+  const firstFilter = filters[0];
+  const firstFilterName = firstFilter.split(':')[0];
+  const firstFilterParams = firstFilter.split(':')[1]?.split(',')?.[0];
+  const parsedFilterParams = parseParams(firstFilterParams);
+  const finalParam = parsedFilterParams.length > 0 ? parsedFilterParams : null;
+
+  return {
+    firstFilterName,
+    finalParam,
+    firstFilter,
+  };
+};

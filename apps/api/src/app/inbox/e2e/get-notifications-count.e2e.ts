@@ -18,6 +18,7 @@ describe('Get Notifications Count - /inbox/notifications/count (GET) #novu-v2', 
   let subscriber: SubscriberEntity | null;
   const messageRepository = new MessageRepository();
   const subscriberRepository = new SubscriberRepository();
+
   let novuClient: Novu;
   beforeEach(async () => {
     session = new UserSession();

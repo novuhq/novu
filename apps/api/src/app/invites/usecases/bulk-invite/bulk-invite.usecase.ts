@@ -1,6 +1,7 @@
 import { captureException } from '@sentry/node';
-import { Injectable, Logger, Scope } from '@nestjs/common';
+import { Injectable, Scope } from '@nestjs/common';
 import { MemberRoleEnum } from '@novu/shared';
+import { PinoLogger } from '@novu/application-generic';
 import { InviteMemberCommand } from '../invite-member/invite-member.command';
 import { InviteMember } from '../invite-member/invite-member.usecase';
 import { BulkInviteCommand } from './bulk-invite.command';
@@ -15,7 +16,12 @@ interface IBulkInviteResponse {
   scope: Scope.REQUEST,
 })
 export class BulkInvite {
-  constructor(private inviteMemberUsecase: InviteMember) {}
+  constructor(
+    private inviteMemberUsecase: InviteMember,
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   async execute(command: BulkInviteCommand): Promise<IBulkInviteResponse[]> {
     const invites: IBulkInviteResponse[] = [];
@@ -43,7 +49,7 @@ export class BulkInvite {
             email: invitee.email,
           });
         } else {
-          Logger.error(e);
+          this.logger.error({ err: e });
           captureException(e);
           invites.push({
             success: false,

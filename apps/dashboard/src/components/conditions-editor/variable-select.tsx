@@ -6,16 +6,18 @@ import { VariableList, VariableListRef } from '@/components/variable/variable-li
 import { AUTOCOMPLETE_PASSWORD_MANAGERS_OFF } from '@/utils/constants';
 import { cn } from '@/utils/ui';
 
-type VariableSelectProps = HTMLAttributes<HTMLDivElement> & {
+type VariableSelectProps = Omit<HTMLAttributes<HTMLDivElement>, 'onChange'> & {
   disabled?: boolean;
   value?: string;
   options: Array<{ label: string; value: string }>;
   onChange: (value: string) => void;
+  onInputChange?: (value: string) => void;
   leftIcon?: React.ReactNode;
   title?: string;
   placeholder?: string;
   error?: string;
   emptyState?: React.ReactNode;
+  isClearable?: boolean;
 };
 
 /**
@@ -36,11 +38,13 @@ export const VariableSelect = (props: VariableSelectProps) => {
     value,
     options,
     onChange,
+    onInputChange,
     leftIcon,
     title = 'Variables',
     error,
     placeholder,
     emptyState,
+    isClearable = false,
     ...rest
   } = props;
   const [inputValue, setInputValue] = useState(value ?? '');
@@ -57,12 +61,13 @@ export const VariableSelect = (props: VariableSelectProps) => {
   }, [options, filterValue]);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const onInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const onInputChangeHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value.trim();
 
     if (newValue !== inputValue) {
       setInputValue(newValue);
       setFilterValue(newValue);
+      onInputChange?.(newValue);
     }
   };
 
@@ -95,7 +100,14 @@ export const VariableSelect = (props: VariableSelectProps) => {
   const onClose = () => {
     setIsOpen(false);
     setFilterValue('');
-    const newInputValue = inputValue !== '' ? inputValue : (value ?? '');
+    let newInputValue = '';
+
+    if (inputValue !== '' || (inputValue === '' && isClearable)) {
+      newInputValue = inputValue;
+    } else {
+      newInputValue = value ?? '';
+    }
+
     setInputValue(newInputValue);
     onChange(newInputValue);
   };
@@ -122,7 +134,7 @@ export const VariableSelect = (props: VariableSelectProps) => {
                 ref={inputRef}
                 value={inputValue}
                 onClick={onOpen}
-                onChange={onInputChange}
+                onChange={onInputChangeHandler}
                 onFocusCapture={onFocusCapture}
                 // use blur only when there are no filtered options, otherwise it closes the popover on keyboard navigation
                 onBlurCapture={filteredOptions.length === 0 ? onClose : undefined}

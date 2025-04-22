@@ -58,7 +58,8 @@ export class ConstructFrameworkWorkflow {
           fullPayloadForRender.steps[staticStep.stepId || staticStep._templateId] = await this.constructStep(
             step,
             staticStep,
-            fullPayloadForRender
+            fullPayloadForRender,
+            dbWorkflow._environmentId
           );
         }
       },
@@ -81,7 +82,8 @@ export class ConstructFrameworkWorkflow {
   private constructStep(
     step: Step,
     staticStep: NotificationStepEntity,
-    fullPayloadForRender: FullPayloadForRender
+    fullPayloadForRender: FullPayloadForRender,
+    environmentId: string
   ): StepOutput<Record<string, unknown>> {
     const stepTemplate = staticStep.template;
 
@@ -116,7 +118,11 @@ export class ConstructFrameworkWorkflow {
         return step.email(
           stepId,
           async (controlValues) => {
-            return this.emailOutputRendererUseCase.execute({ controlValues, fullPayloadForRender });
+            return this.emailOutputRendererUseCase.execute({
+              controlValues,
+              fullPayloadForRender,
+              environmentId,
+            });
           },
           this.constructChannelStepOptions(staticStep, fullPayloadForRender)
         );

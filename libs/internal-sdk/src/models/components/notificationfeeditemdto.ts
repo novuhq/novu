@@ -133,10 +133,6 @@ export type NotificationFeedItemDto = {
    */
   seen: boolean;
   /**
-   * Indicates whether the notification has been deleted.
-   */
-  deleted: boolean;
-  /**
    * Device tokens for push notifications, if applicable.
    */
   deviceTokens?: Array<string> | null | undefined;
@@ -210,7 +206,6 @@ export const NotificationFeedItemDto$inboundSchema: z.ZodType<
   channel: ChannelTypeEnum$inboundSchema,
   read: z.boolean(),
   seen: z.boolean(),
-  deleted: z.boolean(),
   deviceTokens: z.nullable(z.array(z.string())).optional(),
   cta: MessageCTA$inboundSchema,
   status: NotificationFeedItemDtoStatus$inboundSchema,
@@ -253,7 +248,6 @@ export type NotificationFeedItemDto$Outbound = {
   channel: string;
   read: boolean;
   seen: boolean;
-  deleted: boolean;
   deviceTokens?: Array<string> | null | undefined;
   cta: MessageCTA$Outbound;
   status: string;
@@ -288,7 +282,6 @@ export const NotificationFeedItemDto$outboundSchema: z.ZodType<
   channel: ChannelTypeEnum$outboundSchema,
   read: z.boolean(),
   seen: z.boolean(),
-  deleted: z.boolean(),
   deviceTokens: z.nullable(z.array(z.string())).optional(),
   cta: MessageCTA$outboundSchema,
   status: NotificationFeedItemDtoStatus$outboundSchema,

@@ -11,7 +11,6 @@ import { workflowsUpdate } from "../funcs/workflowsUpdate.js";
 import { workflowsWorkflowControllerDuplicateWorkflow } from "../funcs/workflowsWorkflowControllerDuplicateWorkflow.js";
 import { workflowsWorkflowControllerGeneratePreview } from "../funcs/workflowsWorkflowControllerGeneratePreview.js";
 import { workflowsWorkflowControllerPatchWorkflow } from "../funcs/workflowsWorkflowControllerPatchWorkflow.js";
-import { workflowsWorkflowControllerPatchWorkflowStepData } from "../funcs/workflowsWorkflowControllerPatchWorkflowStepData.js";
 import { workflowsWorkflowControllerSearchWorkflows } from "../funcs/workflowsWorkflowControllerSearchWorkflows.js";
 import { workflowsWorkflowControllerSync } from "../funcs/workflowsWorkflowControllerSync.js";
 import { ClientSDK, RequestOptions } from "../lib/sdks.js";
@@ -88,10 +87,10 @@ export class Workflows extends ClientSDK {
   }
 
   /**
-   * Delete subscriber
+   * Delete topic
    *
    * @remarks
-   * Deletes a subscriber entity from the Novu platform
+   * Delete a topic by its topic key if it has no subscribers
    */
   async delete(
     workflowId: string,
@@ -154,21 +153,6 @@ export class Workflows extends ClientSDK {
     options?: RequestOptions,
   ): Promise<operations.WorkflowControllerGetWorkflowStepDataResponse> {
     return unwrapAsync(workflowsGetStepData(
-      this,
-      workflowId,
-      stepId,
-      idempotencyKey,
-      options,
-    ));
-  }
-
-  async workflowControllerPatchWorkflowStepData(
-    workflowId: string,
-    stepId: string,
-    idempotencyKey?: string | undefined,
-    options?: RequestOptions,
-  ): Promise<operations.WorkflowControllerPatchWorkflowStepDataResponse> {
-    return unwrapAsync(workflowsWorkflowControllerPatchWorkflowStepData(
       this,
       workflowId,
       stepId,

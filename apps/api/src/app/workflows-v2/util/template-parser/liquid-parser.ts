@@ -12,6 +12,8 @@ export const buildLiquidParser = () => {
   const parserEngine = new Liquid(LIQUID_CONFIG);
   // Register digest filter for validation of digest transformers
   parserEngine.registerFilter('digest', () => '');
+  parserEngine.registerFilter('toSentence', () => '');
+  parserEngine.registerFilter('pluralize', () => '');
 
   return parserEngine;
 };

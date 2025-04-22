@@ -11,8 +11,8 @@ const subjectKey = 'subject';
 
 export const InAppSubject = () => {
   const { control, getValues } = useFormContext();
-  const { step } = useWorkflow();
-  const { variables, isAllowedVariable } = useParseVariables(step?.variables);
+  const { step, digestStepBeforeCurrent } = useWorkflow();
+  const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.stepId);
 
   return (
     <FormField
@@ -35,7 +35,11 @@ export const InAppSubject = () => {
               />
             </InputRoot>
           </FormControl>
-          <FormMessage>
+          {/**
+           * In app, either subject or body must be present. When both are missing, the errors should be shown once under the body.
+           * To do that, this is a quick hack to only hide "Subject or Body is required" from the In-App subject.
+           */}
+          <FormMessage suppressError={fieldState.error?.message?.includes('is required')}>
             {containsHTMLEntities(field.value) &&
               !getValues('disableOutputSanitization') &&
               'HTML entities detected. Consider disabling content sanitization for proper rendering'}

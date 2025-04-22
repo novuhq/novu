@@ -62,6 +62,5 @@ export * from "./workflowsUpdate.js";
 export * from "./workflowsWorkflowControllerDuplicateWorkflow.js";
 export * from "./workflowsWorkflowControllerGeneratePreview.js";
 export * from "./workflowsWorkflowControllerPatchWorkflow.js";
-export * from "./workflowsWorkflowControllerPatchWorkflowStepData.js";
 export * from "./workflowsWorkflowControllerSearchWorkflows.js";
 export * from "./workflowsWorkflowControllerSync.js";

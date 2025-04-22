@@ -233,5 +233,5 @@ async function getSubscriber(
 }
 
 async function pruneMessages(messageRepository) {
-  await messageRepository.deleteMany({});
+  await messageRepository.delete({});
 }

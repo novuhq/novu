@@ -7,12 +7,6 @@ export type PluginState = {
   lastCompletionRef: MutableRefObject<{ from: number; to: number } | null>;
   onSelect?: (value: string, from: number, to: number) => void;
   isAllowedVariable: IsAllowedVariable;
-};
-
-export type VariableMatch = {
-  fullLiquidExpression: string;
-  name: string;
-  start: number;
-  end: number;
-  filters: string[];
+  isEnhancedDigestEnabled: boolean;
+  isDigestEventsVariable?: (variableName: string) => boolean;
 };

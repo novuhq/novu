@@ -67,6 +67,7 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
       if (this.socket.isSocketEvent(eventName)) {
         this.socket.connect();
       }
+
       const cleanup = this.#emitter.on(eventName, listener);
 
       return () => {

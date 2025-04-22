@@ -17,12 +17,7 @@ const passwordFields = [
 
 const phoneFields = ['homePhone', 'workPhone', 'phone'];
 
-const addressFields = [
-  'addressLine1',
-  'addressLine2',
-  'address',
-  'cardAddress',
-];
+const addressFields = ['addressLine1', 'addressLine2', 'address', 'cardAddress'];
 
 const httpFields = ['webhookUrl', 'avatar', 'avatar_url'];
 
@@ -34,5 +29,5 @@ export const sensitiveFields = cardFields.concat(
   phoneFields,
   addressFields,
   uuidFields,
-  httpFields,
+  httpFields
 );

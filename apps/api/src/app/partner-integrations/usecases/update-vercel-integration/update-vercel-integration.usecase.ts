@@ -1,5 +1,5 @@
 import { HttpService } from '@nestjs/axios';
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { lastValueFrom } from 'rxjs';
 import {
   CommunityUserRepository,
@@ -8,7 +8,7 @@ import {
   MemberRepository,
   OrganizationRepository,
 } from '@novu/dal';
-import { AnalyticsService, decryptApiKey } from '@novu/application-generic';
+import { AnalyticsService, decryptApiKey, PinoLogger } from '@novu/application-generic';
 
 import { UpdateVercelIntegrationCommand } from './update-vercel-integration.command';
 import { Sync } from '../../../bridge/usecases/sync';
@@ -46,8 +46,11 @@ export class UpdateVercelIntegration {
     private communityUserRepository: CommunityUserRepository,
     private environmentRepository: EnvironmentRepository,
     private syncUsecase: Sync,
-    private analyticsService: AnalyticsService
-  ) {}
+    private analyticsService: AnalyticsService,
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   async execute(command: UpdateVercelIntegrationCommand): Promise<{ success: boolean }> {
     try {
@@ -95,7 +98,7 @@ export class UpdateVercelIntegration {
             env._organizationId
           );
         } catch (error) {
-          Logger.error(error, 'Error updating bridge url');
+          this.logger.error({ err: error }, 'Error updating bridge url');
         }
       }
 
@@ -159,7 +162,7 @@ export class UpdateVercelIntegration {
         source: 'vercel',
       });
     } catch (error) {
-      Logger.error(error, 'Error updating bridge url');
+      this.logger.error({ err: error }, 'Error updating bridge url');
     }
   }
 

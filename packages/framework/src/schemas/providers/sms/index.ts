@@ -36,4 +36,5 @@ export const smsProviderSchemas = {
   telnyx: genericProviderSchemas,
   termii: genericProviderSchemas,
   twilio: twilioProviderSchemas,
+  'afro-message': genericProviderSchemas,
 } as const satisfies Record<SmsProviderIdEnum, { output: JsonSchema }>;

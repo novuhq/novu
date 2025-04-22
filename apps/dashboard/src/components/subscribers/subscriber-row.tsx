@@ -141,7 +141,7 @@ export const SubscriberRow = ({ subscriber, subscribersCount, firstTwoSubscriber
             <div className="flex flex-col">
               <TruncatedText className="text-text-strong max-w-[36ch] font-medium">{subscriberTitle}</TruncatedText>
               <div className="flex items-center gap-1 transition-opacity duration-200">
-                <TruncatedText className="text-text-soft font-code block text-xs">
+                <TruncatedText className="text-text-soft font-code block max-w-[40ch] text-xs">
                   {subscriber.subscriberId}
                 </TruncatedText>
                 <CopyButton

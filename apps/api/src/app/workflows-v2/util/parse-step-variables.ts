@@ -1,8 +1,8 @@
 import type { JSONSchemaDefinition } from '@novu/shared';
 
 export type LiquidVariable = {
-  type: 'variable';
-  label: string;
+  name: string;
+  aliasFor?: string;
 };
 
 export type ParsedVariables = {
@@ -30,8 +30,7 @@ export function parseStepVariables(schema: JSONSchemaDefinition): ParsedVariable
       // Handle object with additionalProperties
       if (obj.additionalProperties === true) {
         result.namespaces.push({
-          type: 'variable',
-          label: path,
+          name: path,
         });
       }
 
@@ -43,8 +42,7 @@ export function parseStepVariables(schema: JSONSchemaDefinition): ParsedVariable
         if (typeof value === 'object') {
           if (value.type === 'array') {
             result.arrays.push({
-              type: 'variable',
-              label: fullPath,
+              name: fullPath,
             });
             if (value.properties) {
               extractProperties({ type: 'object', properties: value.properties }, fullPath);
@@ -57,8 +55,7 @@ export function parseStepVariables(schema: JSONSchemaDefinition): ParsedVariable
             extractProperties(value, fullPath);
           } else if (value.type && ['string', 'number', 'boolean', 'integer'].includes(value.type as string)) {
             result.primitives.push({
-              type: 'variable',
-              label: fullPath,
+              name: fullPath,
             });
           }
         }

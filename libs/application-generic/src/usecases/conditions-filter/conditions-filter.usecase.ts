@@ -31,11 +31,10 @@ import { differenceInDays, differenceInHours, differenceInMinutes, parseISO } fr
 import { EmailEventStatusEnum } from '@novu/stateless';
 import { createHash, Filter, FilterProcessingDetails, IFilterVariables, PlatformException } from '../../utils';
 import { ConditionsFilterCommand } from './conditions-filter.command';
-import { buildSubscriberKey } from '../../services';
+import { buildSubscriberKey, CachedResponse } from '../../services';
 import { CompileTemplate } from '../compile-template';
 import { CreateExecutionDetails, CreateExecutionDetailsCommand, DetailEnum } from '../create-execution-details';
 import { decryptApiKey } from '../../encryption';
-import { CachedResponse } from '../../services/cache/interceptors/cached-return.interceptor';
 
 export interface IConditionsFilterResponse {
   passed: boolean;
@@ -138,8 +137,7 @@ export class ConditionsFilter extends Filter {
   ): Promise<boolean> {
     const job = await this.jobRepository.findOne({
       transactionId: command.job.transactionId,
-      // backward compatibility - ternary needed to be removed once the queue renewed
-      _subscriberId: command.job._subscriberId ? command.job._subscriberId : command.job.subscriberId,
+      _subscriberId: command.job._subscriberId,
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       'step.uuid': filter.step,
@@ -152,8 +150,7 @@ export class ConditionsFilter extends Filter {
     const message = await this.messageRepository.findOne({
       _jobId: job._id,
       _environmentId: command.environmentId,
-      // backward compatibility - ternary needed to be removed once the queue renewed
-      _subscriberId: command.job._subscriberId ? command.job._subscriberId : command.job.subscriberId,
+      _subscriberId: command.job._subscriberId,
       transactionId: command.job.transactionId,
     });
 

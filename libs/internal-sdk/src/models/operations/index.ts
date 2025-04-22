@@ -57,7 +57,6 @@ export * from "./workflowcontrollergetworkflow.js";
 export * from "./workflowcontrollergetworkflowstepdata.js";
 export * from "./workflowcontrollergetworkflowtestdata.js";
 export * from "./workflowcontrollerpatchworkflow.js";
-export * from "./workflowcontrollerpatchworkflowstepdata.js";
 export * from "./workflowcontrollerremoveworkflow.js";
 export * from "./workflowcontrollersearchworkflows.js";
 export * from "./workflowcontrollersync.js";

@@ -1,7 +1,7 @@
-import { Injectable, Logger, NotFoundException, Scope } from '@nestjs/common';
+import { Injectable, NotFoundException, Scope } from '@nestjs/common';
 
 import { EnvironmentEntity, EnvironmentRepository } from '@novu/dal';
-import { decryptApiKey } from '@novu/application-generic';
+import { decryptApiKey, PinoLogger } from '@novu/application-generic';
 import { ShortIsPrefixEnum, EnvironmentEnum } from '@novu/shared';
 
 import { GetMyEnvironmentsCommand } from './get-my-environments.command';
@@ -12,10 +12,15 @@ import { buildSlug } from '../../../shared/helpers/build-slug';
   scope: Scope.REQUEST,
 })
 export class GetMyEnvironments {
-  constructor(private environmentRepository: EnvironmentRepository) {}
+  constructor(
+    private environmentRepository: EnvironmentRepository,
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   async execute(command: GetMyEnvironmentsCommand): Promise<EnvironmentResponseDto[]> {
-    Logger.verbose('Getting Environments');
+    this.logger.trace('Getting Environments');
 
     const environments = await this.environmentRepository.findOrganizationEnvironments(command.organizationId);
 
