@@ -15,6 +15,7 @@ import { Input } from '@/components/primitives/input';
 import { Separator } from '@/components/primitives/separator';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
+import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { formatDateSimple } from '@/utils/format-date';
@@ -198,21 +199,26 @@ export function TopicOverviewForm({ topic, readOnly = false }: TopicOverviewForm
               />
             </div>
             <Separator />
-            {topic.updatedAt && (
-              <span className="text-2xs px-5 py-2 text-right text-neutral-400" key={topic.updatedAt}>
-                Updated at{' '}
-                {formatDateSimple(topic.updatedAt, {
-                  month: 'short',
-                  day: '2-digit',
-                  year: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit',
-                  hour12: false,
-                  timeZone: 'UTC',
-                })}{' '}
-                UTC
-              </span>
-            )}
+            <div className="flex flex-col gap-1">
+              {topic.createdAt && (
+                <div className="flex justify-between px-5 pt-2">
+                  <span className="text-2xs text-neutral-400" key={topic.createdAt}>
+                    Created at{' '}
+                    <TimeDisplayHoverCard date={topic.createdAt}>
+                      {formatDateSimple(topic.createdAt)}
+                    </TimeDisplayHoverCard>
+                  </span>
+                  {topic.updatedAt && (
+                    <span className="text-2xs text-neutral-400" key={topic.updatedAt}>
+                      Updated at{' '}
+                      <TimeDisplayHoverCard date={topic.updatedAt}>
+                        {formatDateSimple(topic.updatedAt)}
+                      </TimeDisplayHoverCard>
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
           {!readOnly && (

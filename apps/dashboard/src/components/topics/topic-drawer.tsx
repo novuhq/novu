@@ -3,6 +3,7 @@ import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/
 import { Skeleton } from '@/components/primitives/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
 import { VisuallyHidden } from '@/components/primitives/visually-hidden';
+import { ExternalLink } from '@/components/shared/external-link';
 import TruncatedText from '@/components/truncated-text';
 import { useFormProtection } from '@/hooks/use-form-protection';
 import { itemVariants, listVariants } from '@/utils/animation';
@@ -45,10 +46,76 @@ type TopicSubscribersProps = {
 
 const TopicSubscribersEmptyState = () => {
   return (
-    <div className="flex h-full w-full flex-col items-center justify-center py-12">
-      <RiUser3Fill className="size-12 text-neutral-300" />
-      <p className="text-foreground-600 mt-4 text-center text-sm">This topic doesn't have any subscribers yet.</p>
-    </div>
+    <motion.div
+      key="empty-state"
+      className="flex h-full w-full items-center justify-center border-t border-t-neutral-200"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{
+        duration: 0.15,
+        ease: [0.4, 0, 0.2, 1],
+      }}
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.98, y: 5 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.98, y: 5 }}
+        transition={{
+          duration: 0.25,
+          delay: 0.1,
+          ease: [0.4, 0, 0.2, 1],
+        }}
+        className="flex flex-col items-center gap-6"
+      >
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{
+            duration: 0.2,
+            delay: 0.2,
+          }}
+          className="relative"
+        >
+          <RiUser3Fill className="size-12 text-neutral-300" />
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 5 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{
+            duration: 0.2,
+            delay: 0.25,
+          }}
+          className="flex flex-col items-center gap-1 text-center"
+        >
+          <h2 className="text-foreground-900 text-lg font-medium">This topic doesn't have any subscribers yet</h2>
+          <p className="text-foreground-600 max-w-md text-sm font-normal">
+            Subscribers can be added to this topic via the API. Once added, they will receive notifications when this
+            topic is triggered.
+          </p>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 5 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{
+            duration: 0.2,
+            delay: 0.3,
+          }}
+          className="flex items-center gap-6"
+        >
+          <ExternalLink
+            variant="documentation"
+            href="https://docs.novu.co/platform/concepts/topics#add-subscribers-to-a-topic"
+            target="_blank"
+            underline={false}
+          >
+            Learn More
+          </ExternalLink>
+        </motion.div>
+      </motion.div>
+    </motion.div>
   );
 };
 
@@ -76,7 +143,8 @@ const TopicSubscribers = (props: TopicSubscribersProps) => {
     );
   }
 
-  const subscribers = data?.subscribers || [];
+  // Handle subscribers as an optional property with a fallback to empty array
+  const subscribers = (data as any)?.subscribers || [];
 
   if (subscribers.length === 0) {
     return <TopicSubscribersEmptyState />;
@@ -96,7 +164,7 @@ const TopicSubscribers = (props: TopicSubscribersProps) => {
       }}
       className="flex flex-1 flex-col overflow-y-auto border-t border-t-neutral-200"
     >
-      {subscribers.map((subscriberId, index) => (
+      {subscribers.map((subscriberId: string, index: number) => (
         <motion.div
           key={`${subscriberId}-${index}`}
           variants={itemVariants}

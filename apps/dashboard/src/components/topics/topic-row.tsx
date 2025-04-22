@@ -10,9 +10,10 @@ import {
 } from '@/components/primitives/dropdown-menu';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { TableCell, TableRow } from '@/components/primitives/table';
+import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
+import { formatDateSimple } from '@/utils/format-date';
 import { QueryKeys } from '@/utils/query-keys';
 import { useQueryClient } from '@tanstack/react-query';
-import { format } from 'date-fns';
 import { ComponentProps, useState } from 'react';
 import { RiDeleteBin2Line, RiFileCopyLine, RiMore2Fill, RiPulseFill } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
@@ -48,9 +49,6 @@ export const TopicRow = ({ topic }: TopicRowProps) => {
   const queryClient = useQueryClient();
   const { navigateToEditTopicPage } = useTopicsNavigate();
   const { emitEvent } = useTopicEvents();
-
-  const createdAt = topic.createdAt ? format(new Date(topic.createdAt), 'dd/MM/yyyy HH:mm') : '-';
-  const updatedAt = topic.updatedAt ? format(new Date(topic.updatedAt), 'dd/MM/yyyy HH:mm') : '-';
 
   const stopPropagation = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -101,8 +99,16 @@ export const TopicRow = ({ topic }: TopicRowProps) => {
             />
           </div>
         </TopicTableCell>
-        <TopicTableCell>{createdAt}</TopicTableCell>
-        <TopicTableCell>{updatedAt}</TopicTableCell>
+        <TopicTableCell>
+          {topic.createdAt && (
+            <TimeDisplayHoverCard date={topic.createdAt}>{formatDateSimple(topic.createdAt)}</TimeDisplayHoverCard>
+          )}
+        </TopicTableCell>
+        <TopicTableCell>
+          {topic.updatedAt && (
+            <TimeDisplayHoverCard date={topic.updatedAt}>{formatDateSimple(topic.updatedAt)}</TimeDisplayHoverCard>
+          )}
+        </TopicTableCell>
         <TopicTableCell className="w-1">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
