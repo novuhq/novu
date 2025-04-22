@@ -3,6 +3,7 @@ import { format } from 'date-fns';
 import { motion } from 'motion/react';
 import { Link } from 'react-router-dom';
 
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { SubscriberDrawerButton } from '@/components/subscribers/subscriber-drawer';
 import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
 import { useEnvironment } from '@/context/environment/hooks';
@@ -25,6 +26,32 @@ export function ActivityOverview({ activity }: ActivityOverviewProps) {
     workflowSlug: activity?.template?._id ?? '',
   });
 
+  const renderTopicsContent = () => {
+    if (!activity.topics?.length) {
+      return '-';
+    }
+
+    if (activity.topics.length === 1) {
+      return <span className="text-foreground-600 font-mono text-xs">{activity.topics[0].topicKey}</span>;
+    }
+
+    const firstTopic = activity.topics[0].topicKey;
+    const othersCount = activity.topics.length - 1;
+
+    return (
+      <Tooltip>
+        <TooltipTrigger>
+          <span className="text-foreground-600 cursor-help font-mono text-xs">
+            "{firstTopic}" + {othersCount} {othersCount === 1 ? 'other' : 'others'}
+          </span>
+        </TooltipTrigger>
+        <TooltipContent className="max-w-sm">
+          <div className="font-mono text-xs">{activity.topics.map((topic) => `"${topic.topicKey}"`).join(', ')}</div>
+        </TooltipContent>
+      </Tooltip>
+    );
+  };
+
   return (
     <motion.div {...fadeIn} className="px-3 py-2">
       <div className="mb-2 flex flex-col gap-[14px]">
@@ -43,10 +70,11 @@ export function ActivityOverview({ activity }: ActivityOverviewProps) {
 
         <OverviewItem
           label="Topics"
-          value={
-            activity.topics?.length ? `[ ${activity.topics?.map((topic) => `"${topic.topicKey}"`).join(', ')} ]` : '-'
-          }
-        />
+          value={activity.topics?.length === 1 ? activity.topics[0].topicKey : undefined}
+          isCopyable={activity.topics?.length === 1}
+        >
+          {renderTopicsContent()}
+        </OverviewItem>
 
         <SubscriberDrawerButton
           disabled={!activity.subscriber}
