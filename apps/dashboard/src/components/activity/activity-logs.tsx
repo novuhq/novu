@@ -41,7 +41,7 @@ export function ActivityLogs({
   const queryClient = useQueryClient();
   const { currentEnvironment } = useEnvironment();
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
-  const workflowDeletedExist = !!activity?.template;
+  const workflowExists = !!activity?.template;
 
   const resentMetadata = {
     __resent_transaction_id: activity.transactionId,
@@ -152,20 +152,20 @@ export function ActivityLogs({
             <div className="flex items-center justify-between border-b border-neutral-100 p-3">
               <h3 className="text-foreground-950 text-sm font-medium">Request payload</h3>
               <div className="flex items-center gap-2">
-                <Button
-                  variant="secondary"
-                  mode="ghost"
-                  size="sm"
-                  onClick={() => handleResend()}
-                  className="text-xs"
-                  disabled={isPending || !workflowDeletedExist}
-                  type="button"
-                >
-                  <RepeatPlay
-                    className={cn('size-3', isPending || (!workflowDeletedExist && 'text-text-disabled opacity-50'))}
-                  />
-                  Resend
-                </Button>
+                {workflowExists && (
+                  <Button
+                    variant="secondary"
+                    mode="ghost"
+                    size="sm"
+                    onClick={() => handleResend()}
+                    className="text-xs"
+                    disabled={isPending}
+                    type="button"
+                  >
+                    <RepeatPlay className={cn('size-3', { 'text-text-disabled opacity-50': isPending })} />
+                    Resend
+                  </Button>
+                )}
                 <PopoverClose asChild ref={popoverCloseRef}>
                   <CompactButton size="md" variant="ghost" icon={RiCloseFill} type="button">
                     <span className="sr-only">Close</span>
