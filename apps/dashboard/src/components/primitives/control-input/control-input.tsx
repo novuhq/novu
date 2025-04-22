@@ -79,7 +79,6 @@ export function ControlInput({
     : undefined;
 
   const { digestStepBeforeCurrent } = useWorkflow();
-
   const track = useTelemetry();
 
   const onVariableSelect = useCallback(
