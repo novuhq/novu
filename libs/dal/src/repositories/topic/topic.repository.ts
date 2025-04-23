@@ -1,6 +1,7 @@
-import { FilterQuery } from 'mongoose';
+import { FilterQuery, Types } from 'mongoose';
 
 import type { EnforceEnvOrOrgIds } from '../../types/enforce';
+import { SortOrder } from '../../types/sort-order';
 import { BaseRepository } from '../base-repository';
 import { TopicDBModel, TopicEntity } from './topic.entity';
 import { Topic } from './topic.schema';
@@ -149,5 +150,192 @@ export class TopicRepository extends BaseRepository<TopicDBModel, TopicEntity, E
 
   estimatedDocumentCount() {
     return this.MongooseModel.estimatedDocumentCount();
+  }
+
+  async listTopics({
+    organizationId,
+    environmentId,
+    limit = 10,
+    after,
+    before,
+    key,
+    name,
+    sortBy = '_id',
+    sortDirection = 1,
+    includeCursor = false,
+  }: {
+    organizationId: string;
+    environmentId: string;
+    limit?: number;
+    after?: string;
+    before?: string;
+    key?: string;
+    name?: string;
+    sortBy?: string;
+    sortDirection?: SortOrder;
+    includeCursor?: boolean;
+  }): Promise<{
+    topics: TopicEntity[];
+    next: string | null;
+    previous: string | null;
+  }> {
+    const match: any = {
+      _organizationId: new Types.ObjectId(organizationId),
+      _environmentId: new Types.ObjectId(environmentId),
+    };
+
+    if (key) {
+      match.key = { $regex: key, $options: 'i' };
+    }
+
+    if (name) {
+      match.name = { $regex: name, $options: 'i' };
+    }
+
+    const cursor: {
+      next: string | null;
+      previous: string | null;
+      topics: TopicEntity[];
+    } = {
+      next: null,
+      previous: null,
+      topics: [],
+    };
+
+    const sort = {
+      [sortBy]: sortDirection === 1 ? 1 : -1,
+      _id: 1,
+    };
+
+    const pipeline: any[] = [
+      {
+        $match: match,
+      },
+      { $sort: sort },
+    ];
+
+    if (before) {
+      const decodedCursor = Buffer.from(before, 'base64').toString('utf-8');
+      const parsedCursor = JSON.parse(decodedCursor);
+
+      const cursorMatch: any = { $or: [] };
+
+      // Handling reverse sorting
+      if (sortDirection === -1 && sortBy !== '_id') {
+        // Case: sortValue === cursorSortValue and _id > cursorId
+        cursorMatch.$or.push({
+          [sortBy]: parsedCursor[sortBy],
+          _id: { $gt: new Types.ObjectId(parsedCursor._id) },
+        });
+
+        // Case: sortValue > cursorSortValue
+        cursorMatch.$or.push({
+          [sortBy]: { $gt: parsedCursor[sortBy] },
+        });
+      } else {
+        // Case: sortValue === cursorSortValue and _id < cursorId
+        cursorMatch.$or.push({
+          [sortBy]: parsedCursor[sortBy],
+          _id: { $lt: new Types.ObjectId(parsedCursor._id) },
+        });
+
+        // Case: sortValue < cursorSortValue
+        cursorMatch.$or.push({
+          [sortBy]: { $lt: parsedCursor[sortBy] },
+        });
+      }
+
+      pipeline.unshift({
+        $match: cursorMatch,
+      });
+    }
+
+    if (after) {
+      const decodedCursor = Buffer.from(after, 'base64').toString('utf-8');
+      const parsedCursor = JSON.parse(decodedCursor);
+
+      const cursorMatch: any = { $or: [] };
+
+      // Handling reverse sorting
+      if (sortDirection === -1 && sortBy !== '_id') {
+        // Case: sortValue === cursorSortValue and _id < cursorId
+        cursorMatch.$or.push({
+          [sortBy]: parsedCursor[sortBy],
+          _id: { $lt: new Types.ObjectId(parsedCursor._id) },
+        });
+
+        // Case: sortValue < cursorSortValue
+        cursorMatch.$or.push({
+          [sortBy]: { $lt: parsedCursor[sortBy] },
+        });
+      } else {
+        // Case: sortValue === cursorSortValue and _id > cursorId
+        cursorMatch.$or.push({
+          [sortBy]: parsedCursor[sortBy],
+          _id: { $gt: new Types.ObjectId(parsedCursor._id) },
+        });
+
+        // Case: sortValue > cursorSortValue
+        cursorMatch.$or.push({
+          [sortBy]: { $gt: parsedCursor[sortBy] },
+        });
+      }
+
+      pipeline.unshift({
+        $match: cursorMatch,
+      });
+    }
+
+    pipeline.push({ $limit: limit + 1 });
+
+    // Using a cursor to loop through the results but limiting, will allow us to check if there are more results
+    const topics = await this.aggregate(pipeline);
+
+    const hasNext = topics.length > limit;
+    if (hasNext) {
+      topics.pop();
+    }
+
+    if (topics.length) {
+      let startCursor;
+      let endCursor;
+
+      // When going backward and the cursor was found, we need to reverse the results
+      if (before) {
+        topics.reverse();
+      }
+
+      if (!includeCursor) {
+        cursor.topics = this.mapEntities(topics);
+        if (topics.length > 0) {
+          startCursor = topics[0];
+          endCursor = topics[topics.length - 1];
+        }
+      } else {
+        cursor.topics = this.mapEntities(topics);
+        if (topics.length > 0) {
+          startCursor = topics[0];
+          endCursor = topics[topics.length - 1];
+        }
+      }
+
+      // Create the cursor for the first item
+      if (startCursor) {
+        const previous = Buffer.from(JSON.stringify({ [sortBy]: startCursor[sortBy], _id: startCursor._id })).toString(
+          'base64'
+        );
+        cursor.previous = previous;
+      }
+
+      // Create the cursor for the last item
+      if (endCursor && hasNext) {
+        const next = Buffer.from(JSON.stringify({ [sortBy]: endCursor[sortBy], _id: endCursor._id })).toString(
+          'base64'
+        );
+        cursor.next = next;
+      }
+    }
+
+    return cursor;
   }
 }
