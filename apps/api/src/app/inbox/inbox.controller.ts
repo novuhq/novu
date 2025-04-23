@@ -68,9 +68,9 @@ export class InboxController {
     @Body() body: SubscriberSessionRequestDto,
     @Headers('origin') origin: string
   ): Promise<SubscriberSessionResponseDto> {
-    const subscriber: SubscriberDto =
-      typeof body.subscriber === 'string' ? { subscriberId: body.subscriber } : body.subscriber;
-    const subscriberId = body.subscriberId || subscriber.subscriberId;
+    const subscriber: SubscriberDto | {} =
+      typeof body.subscriber === 'string' ? { subscriberId: body.subscriber } : body.subscriber || {};
+    const subscriberId: string | undefined = body.subscriberId || (subscriber as SubscriberDto).subscriberId;
 
     return await this.initializeSessionUsecase.execute(
       SessionCommand.create({
