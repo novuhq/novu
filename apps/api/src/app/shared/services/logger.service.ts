@@ -1,14 +1,20 @@
 import { createNestLoggingModuleOptions, PinoLogger } from '@novu/application-generic';
 import packageJson from '../../../../package.json';
 
-export const getLogger = (context: string) => {
-  const logger = new PinoLogger(
-    createNestLoggingModuleOptions({
-      serviceName: packageJson.name,
-      version: packageJson.version,
-    })
-  );
-  logger.setContext(context);
+let loggerInstance: PinoLogger | null = null;
 
-  return logger;
+export const getLogger = () => {
+  if (!loggerInstance) {
+    loggerInstance = new PinoLogger(
+      createNestLoggingModuleOptions({
+        serviceName: packageJson.name,
+        version: packageJson.version,
+        silent: true,
+      })
+    );
+  }
+
+  loggerInstance.setContext('Application');
+
+  return loggerInstance;
 };

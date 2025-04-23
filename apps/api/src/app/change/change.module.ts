@@ -14,7 +14,7 @@ import { USE_CASES } from './usecases';
 import { AuthModule } from '../auth/auth.module';
 import { getLogger } from '../shared/services/logger.service';
 
-const logger = getLogger('ChangeModule');
+const logger = getLogger();
 
 const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> => {
   const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];

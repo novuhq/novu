@@ -18,7 +18,7 @@ import { AllExceptionsFilter } from './exception-filter';
 const passport = require('passport');
 const compression = require('compression');
 
-const logger = getLogger('Bootstrap');
+const logger = getLogger();
 
 const extendedBodySizeRoutes = [
   '/v1/events',

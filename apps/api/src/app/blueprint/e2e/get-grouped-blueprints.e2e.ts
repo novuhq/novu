@@ -44,10 +44,7 @@ describe('Get grouped notification template blueprints - /blueprints/group-by-ca
     session = new UserSession();
     await session.initialize();
 
-    getGroupedBlueprints = new GetGroupedBlueprints(
-      new NotificationTemplateRepository(),
-      getLogger('GetGroupedBlueprintsE2E')
-    );
+    getGroupedBlueprints = new GetGroupedBlueprints(new NotificationTemplateRepository(), getLogger());
     indexModuleStub = sinon.stub(blueprintStaticModule, 'POPULAR_TEMPLATES_ID_LIST');
   });
 

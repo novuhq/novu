@@ -3,7 +3,7 @@ import { ICredentialsDto, secureCredentials } from '@novu/shared';
 import { encryptSecret } from '@novu/application-generic';
 import { getLogger } from '../../src/app/shared/services/logger.service';
 
-const logger = getLogger('EncryptCredentialsMigration');
+const logger = getLogger();
 
 export async function encryptOldCredentialsMigration() {
   logger.info('start migration - encrypt credentials');

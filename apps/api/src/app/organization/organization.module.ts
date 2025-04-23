@@ -21,7 +21,7 @@ import { AuthModule } from '../auth/auth.module';
 import { EEOrganizationController } from './ee.organization.controller';
 import { getLogger } from '../shared/services/logger.service';
 
-const logger = getLogger('OrganizationModule');
+const logger = getLogger();
 
 const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> => {
   const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];

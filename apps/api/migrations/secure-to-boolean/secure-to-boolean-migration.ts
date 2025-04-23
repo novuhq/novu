@@ -6,7 +6,7 @@ import { getLogger } from '../../src/app/shared/services/logger.service';
 
 const integrationRepository = new IntegrationRepository();
 
-const logger = getLogger('SecureToBooleanMigration');
+const logger = getLogger();
 
 export async function run() {
   const app = await NestFactory.create(AppModule);

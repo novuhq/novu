@@ -41,7 +41,11 @@ export function getLogLevel() {
   return logLevel;
 }
 
-export function createNestLoggingModuleOptions(settings: ILoggerSettings): Params {
+export function createNestLoggingModuleOptions(settings: {
+  serviceName: string;
+  version: string;
+  silent?: boolean;
+}): Params {
   let redactFields: string[] = sensitiveFields;
   redactFields.push('req.headers.authorization');
   const baseWildCards = '*.';
@@ -58,14 +62,17 @@ export function createNestLoggingModuleOptions(settings: ILoggerSettings): Param
     level: getLogLevel(),
     levels: loggingLevelSet,
   };
-  console.log('Logging Configuration:', {
-    level: configSet.level,
-    environment: process.env.NODE_ENV,
-    transport: !configSet.transport ? 'None' : 'pino-pretty',
-    platform: configSet.platform,
-    tenant: configSet.tenant,
-    levels: JSON.stringify(configSet.levels),
-  });
+
+  if (!settings.silent) {
+    console.log('Logging Configuration:', {
+      level: configSet.level,
+      environment: process.env.NODE_ENV,
+      transport: !configSet.transport ? 'None' : 'pino-pretty',
+      platform: configSet.platform,
+      tenant: configSet.tenant,
+      levels: JSON.stringify(configSet.levels),
+    });
+  }
 
   return {
     exclude: [{ path: '*/health-check', method: RequestMethod.GET }],
@@ -79,7 +86,7 @@ export function createNestLoggingModuleOptions(settings: ILoggerSettings): Param
         censor() {
           /**
            * This makes sure that the redact doesn't mutate the original object
-           * And only does it on the object that is being logged, 
+           * And only does it on the object that is being logged,
            * It's strange but it works. No return value needed.
            */
         },
@@ -95,9 +102,4 @@ export function createNestLoggingModuleOptions(settings: ILoggerSettings): Param
       autoLogging: !['test'].includes(process.env.NODE_ENV),
     },
   };
-}
-
-interface ILoggerSettings {
-  serviceName: string;
-  version: string;
 }

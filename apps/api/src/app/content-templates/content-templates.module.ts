@@ -9,7 +9,7 @@ import { SharedModule } from '../shared/shared.module';
 import { LayoutsModule } from '../layouts/layouts.module';
 import { getLogger } from '../shared/services/logger.service';
 
-const logger = getLogger('ContentTemplatesModule');
+const logger = getLogger();
 const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> => {
   const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];
   try {

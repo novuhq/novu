@@ -10,7 +10,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from '../../src/app.module';
 import { getLogger } from '../../src/app/shared/services/logger.service';
 
-const logger = getLogger('EncryptApiKeysMigration');
+const logger = getLogger();
 
 export async function encryptApiKeysMigration() {
   logger.info('start migration - encrypt api keys');
