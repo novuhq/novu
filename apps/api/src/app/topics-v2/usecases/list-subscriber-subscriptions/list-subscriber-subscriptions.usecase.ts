@@ -1,0 +1,155 @@
+import { Injectable } from '@nestjs/common';
+import { InstrumentUsecase } from '@novu/application-generic';
+import { SubscriberRepository, TopicSubscribersRepository } from '@novu/dal';
+import { DirectionEnum } from '@novu/shared';
+import { ListTopicSubscriptionsResponseDto } from '../../dtos/list-topic-subscriptions-response.dto';
+import { TopicSubscriptionResponseDto } from '../../dtos/topic-subscription-response.dto';
+import { ListSubscriberSubscriptionsCommand } from './list-subscriber-subscriptions.command';
+
+@Injectable()
+export class ListSubscriberSubscriptionsUseCase {
+  constructor(
+    private topicSubscribersRepository: TopicSubscribersRepository,
+    private subscriberRepository: SubscriberRepository
+  ) {}
+
+  @InstrumentUsecase()
+  async execute(command: ListSubscriberSubscriptionsCommand): Promise<ListTopicSubscriptionsResponseDto> {
+    // Find the subscriber to validate it exists
+    const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
+
+    // Build query for subscriber's topic subscriptions
+    const query: any = {
+      _environmentId: command.environmentId,
+      _organizationId: command.organizationId,
+      externalSubscriberId: command.subscriberId,
+    };
+
+    // Optional filtering by topic key
+    if (command.topicKey) {
+      query.topicKey = command.topicKey;
+    }
+
+    let afterCursor;
+    let beforeCursor;
+
+    const id = command.after || command.before;
+    if (id) {
+      const subscription = await this.topicSubscribersRepository.findOne({
+        _id: id,
+        _environmentId: command.environmentId,
+      });
+
+      if (subscription) {
+        const cursorValue = { _id: subscription._id };
+        if (command.after) {
+          afterCursor = cursorValue;
+        } else {
+          beforeCursor = cursorValue;
+        }
+      }
+    }
+
+    // Use cursor-based pagination
+    const subscriptionsPagination = await this.topicSubscribersRepository.findWithCursorBasedPagination({
+      query,
+      paginateField: '_id',
+      sortBy: '_id',
+      sortDirection: command.orderDirection === 1 ? DirectionEnum.ASC : DirectionEnum.DESC,
+      limit: command.limit || 10,
+      after: afterCursor,
+      before: beforeCursor,
+      includeCursor: command.includeCursor,
+    });
+
+    // Build detailed response with topic and subscriber info
+    const subscriptionsWithDetails = await this.populateSubscriptionsData(
+      subscriptionsPagination.data,
+      command.environmentId
+    );
+
+    return {
+      data: subscriptionsWithDetails,
+      next: subscriptionsPagination.next,
+      previous: subscriptionsPagination.previous,
+    };
+  }
+
+  private async populateSubscriptionsData(subscriptions, environmentId): Promise<TopicSubscriptionResponseDto[]> {
+    if (subscriptions.length === 0) {
+      return [];
+    }
+
+    // Get the subscriber from the first subscription since it's always the same subscriber
+    const subscriberId = subscriptions[0]._subscriberId;
+    const subscriber = await this.subscriberRepository.findOne({
+      _environmentId: environmentId,
+      _id: subscriberId,
+    });
+
+    if (!subscriber) {
+      return [];
+    }
+
+    // Need unique topic IDs
+    const topicKeys = subscriptions.map((subscription) => subscription.topicKey);
+
+    // Find all topic information
+    const topics = await this.topicSubscribersRepository._model.aggregate([
+      {
+        $match: {
+          _environmentId: environmentId,
+          topicKey: { $in: topicKeys },
+        },
+      },
+      {
+        $lookup: {
+          from: 'topics',
+          localField: '_topicId',
+          foreignField: '_id',
+          as: 'topic',
+        },
+      },
+      { $unwind: '$topic' },
+      {
+        $group: {
+          _id: '$topicKey',
+          topic: { $first: '$topic' },
+        },
+      },
+    ]);
+
+    // Create a map for quick lookup
+    const topicsMap = new Map(topics.map((result) => [result._id, result.topic]));
+
+    // Map subscriptions to response DTOs with topic and subscriber details
+    return subscriptions
+      .map((subscription) => {
+        const topic = topicsMap.get(subscription.topicKey);
+
+        if (!topic) {
+          return null;
+        }
+
+        return {
+          _id: subscription._id,
+          topic: {
+            _id: topic._id,
+            key: topic.key,
+            name: topic.name,
+            createdAt: topic.createdAt,
+            updatedAt: topic.updatedAt,
+          },
+          subscriber: {
+            _id: subscriber._id,
+            subscriberId: subscriber.subscriberId,
+            firstName: subscriber.firstName,
+            lastName: subscriber.lastName,
+            email: subscriber.email,
+            avatar: subscriber.avatar,
+          },
+        };
+      })
+      .filter(Boolean) as TopicSubscriptionResponseDto[];
+  }
+}

@@ -1,5 +1,19 @@
 import { Module } from '@nestjs/common';
 import {
+  analyticsService,
+  CacheInMemoryProviderService,
+  cacheService,
+  CreateOrUpdateSubscriberUseCase,
+  featureFlagsService,
+  GetPreferences,
+  GetSubscriberTemplatePreference,
+  GetWorkflowByIdsUseCase,
+  InvalidateCacheService,
+  UpdateSubscriber,
+  UpdateSubscriberChannel,
+  UpsertPreferences,
+} from '@novu/application-generic';
+import {
   CommunityOrganizationRepository,
   EnvironmentRepository,
   IntegrationRepository,
@@ -11,30 +25,17 @@ import {
   TopicSubscribersRepository,
   WorkflowOverrideRepository,
 } from '@novu/dal';
-import {
-  analyticsService,
-  CacheInMemoryProviderService,
-  cacheService,
-  CreateOrUpdateSubscriberUseCase,
-  featureFlagsService,
-  GetPreferences,
-  GetSubscriberTemplatePreference,
-  InvalidateCacheService,
-  UpdateSubscriber,
-  UpdateSubscriberChannel,
-  UpsertPreferences,
-  GetWorkflowByIdsUseCase,
-} from '@novu/application-generic';
-import { ListSubscribersUseCase } from './usecases/list-subscribers/list-subscribers.usecase';
-import { GetSubscriber } from './usecases/get-subscriber/get-subscriber.usecase';
-import { PatchSubscriber } from './usecases/patch-subscriber/patch-subscriber.usecase';
-import { GetSubscriberPreferences } from './usecases/get-subscriber-preferences/get-subscriber-preferences.usecase';
-import { RemoveSubscriber } from './usecases/remove-subscriber/remove-subscriber.usecase';
-import { SubscribersController } from './subscribers.controller';
-import { UpdateSubscriberPreferences } from './usecases/update-subscriber-preferences/update-subscriber-preferences.usecase';
 import { UpdatePreferences } from '../inbox/usecases/update-preferences/update-preferences.usecase';
 import { GetSubscriberGlobalPreference } from '../subscribers/usecases/get-subscriber-global-preference';
 import { GetSubscriberPreference } from '../subscribers/usecases/get-subscriber-preference';
+import { TopicsV2Module } from '../topics-v2/topics-v2.module';
+import { SubscribersController } from './subscribers.controller';
+import { GetSubscriberPreferences } from './usecases/get-subscriber-preferences/get-subscriber-preferences.usecase';
+import { GetSubscriber } from './usecases/get-subscriber/get-subscriber.usecase';
+import { ListSubscribersUseCase } from './usecases/list-subscribers/list-subscribers.usecase';
+import { PatchSubscriber } from './usecases/patch-subscriber/patch-subscriber.usecase';
+import { RemoveSubscriber } from './usecases/remove-subscriber/remove-subscriber.usecase';
+import { UpdateSubscriberPreferences } from './usecases/update-subscriber-preferences/update-subscriber-preferences.usecase';
 
 const USE_CASES = [
   ListSubscribersUseCase,
@@ -73,6 +74,7 @@ const DAL_MODELS = [
 ];
 
 @Module({
+  imports: [TopicsV2Module],
   controllers: [SubscribersController],
   providers: [
     ...USE_CASES,

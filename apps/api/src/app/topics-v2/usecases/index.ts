@@ -2,6 +2,7 @@ import { CreateTopicSubscriptionsUsecase } from './create-topic-subscriptions/cr
 import { DeleteTopicSubscriptionsUsecase } from './delete-topic-subscriptions/delete-topic-subscriptions.usecase';
 import { DeleteTopicUseCase } from './delete-topic/delete-topic.usecase';
 import { GetTopicUseCase } from './get-topic/get-topic.usecase';
+import { ListSubscriberSubscriptionsUseCase } from './list-subscriber-subscriptions/list-subscriber-subscriptions.usecase';
 import { ListTopicSubscriptionsUseCase } from './list-topic-subscriptions/list-topic-subscriptions.usecase';
 import { ListTopicsUseCase } from './list-topics/list-topics.usecase';
 import { UpdateTopicUseCase } from './update-topic/update-topic.usecase';
@@ -12,6 +13,7 @@ export const USE_CASES = [
   DeleteTopicSubscriptionsUsecase,
   DeleteTopicUseCase,
   GetTopicUseCase,
+  ListSubscriberSubscriptionsUseCase,
   ListTopicSubscriptionsUseCase,
   ListTopicsUseCase,
   UpdateTopicUseCase,
