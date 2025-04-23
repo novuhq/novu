@@ -20,6 +20,7 @@
     "test:e2e:merge-report": "playwright merge-reports --reporter html"
   },
   "dependencies": {
+    "@calcom/embed-react": "1.5.2",
     "@clerk/clerk-react": "^5.15.1",
     "@codemirror/autocomplete": "^6.18.3",
     "@hookform/resolvers": "^3.9.0",
