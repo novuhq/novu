@@ -25,6 +25,8 @@ import { CreateTopicSubscriptionsResponseDto } from './dtos/create-topic-subscri
 import { CreateTopicSubscriptionsRequestDto } from './dtos/create-topic-subscriptions.dto';
 import { CreateUpdateTopicRequestDto } from './dtos/create-update-topic.dto';
 import { DeleteTopicResponseDto } from './dtos/delete-topic-response.dto';
+import { DeleteTopicSubscriptionsResponseDto } from './dtos/delete-topic-subscriptions-response.dto';
+import { DeleteTopicSubscriptionsRequestDto } from './dtos/delete-topic-subscriptions.dto';
 import { ListTopicSubscriptionsQueryDto } from './dtos/list-topic-subscriptions-query.dto';
 import { ListTopicSubscriptionsResponseDto } from './dtos/list-topic-subscriptions-response.dto';
 import { ListTopicsQueryDto } from './dtos/list-topics-query.dto';
@@ -33,6 +35,8 @@ import { TopicResponseDto } from './dtos/topic-response.dto';
 import { UpdateTopicRequestDto } from './dtos/update-topic.dto';
 import { CreateTopicSubscriptionsCommand } from './usecases/create-topic-subscriptions/create-topic-subscriptions.command';
 import { CreateTopicSubscriptionsUsecase } from './usecases/create-topic-subscriptions/create-topic-subscriptions.usecase';
+import { DeleteTopicSubscriptionsCommand } from './usecases/delete-topic-subscriptions/delete-topic-subscriptions.command';
+import { DeleteTopicSubscriptionsUsecase } from './usecases/delete-topic-subscriptions/delete-topic-subscriptions.usecase';
 import { DeleteTopicCommand } from './usecases/delete-topic/delete-topic.command';
 import { DeleteTopicUseCase } from './usecases/delete-topic/delete-topic.usecase';
 import { GetTopicCommand } from './usecases/get-topic/get-topic.command';
@@ -60,7 +64,8 @@ export class TopicsController {
     private updateTopicUsecase: UpdateTopicUseCase,
     private deleteTopicUsecase: DeleteTopicUseCase,
     private listTopicSubscriptionsUsecase: ListTopicSubscriptionsUseCase,
-    private createTopicSubscriptionsUsecase: CreateTopicSubscriptionsUsecase
+    private createTopicSubscriptionsUsecase: CreateTopicSubscriptionsUsecase,
+    private deleteTopicSubscriptionsUsecase: DeleteTopicSubscriptionsUsecase
   ) {}
 
   @Get('')
@@ -232,5 +237,34 @@ export class TopicsController {
         subscriberIds: body.subscriberIds,
       })
     );
+  }
+
+  @Delete('/:topicKey/subscriptions')
+  @UserAuthentication()
+  @ExternalApiAccessible()
+  @SdkGroupName('Topics.Subscriptions')
+  @SdkMethodName('delete')
+  @ApiOperation({ summary: 'Delete topic subscriptions' })
+  @ApiParam({ name: 'topicKey', description: 'The key identifier of the topic', type: String })
+  @HttpCode(HttpStatus.OK)
+  @ApiResponse(DeleteTopicSubscriptionsResponseDto)
+  async deleteTopicSubscriptions(
+    @UserSession() user: UserSessionData,
+    @Param('topicKey') topicKey: string,
+    @Body() body: DeleteTopicSubscriptionsRequestDto
+  ): Promise<DeleteTopicSubscriptionsResponseDto> {
+    await this.deleteTopicSubscriptionsUsecase.execute(
+      DeleteTopicSubscriptionsCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+        topicKey,
+        subscriberIds: body.subscriberIds,
+      })
+    );
+
+    return {
+      acknowledged: true,
+    };
   }
 }
