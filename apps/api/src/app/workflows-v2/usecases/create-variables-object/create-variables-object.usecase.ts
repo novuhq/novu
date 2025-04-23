@@ -76,13 +76,13 @@ export class CreateVariablesObject {
         !Array.isArray(events) &&
         'payload' in events
       );
-      let variableNameAfterpayload = ['name'];
+      let variableNameAfterPayload = ['name'];
       if (hasUsedEventsWithPayload) {
         /**
          * If events is an object and has a payload property, collect keys from the payload.
          * e.g. [payload.foo.bar]
          */
-        variableNameAfterpayload = collectKeys(events.payload);
+        variableNameAfterPayload = collectKeys(events.payload);
       }
 
       if (hasUsedEventCount || hasUsedEventsLength || hasUsedEvents || hasUsedEventsWithPayload) {
@@ -90,7 +90,7 @@ export class CreateVariablesObject {
           ? events
           : Array.from({ length: DEFAULT_ARRAY_ELEMENTS }, (_, index) => {
               let payload = {};
-              for (const variableName of variableNameAfterpayload) {
+              for (const variableName of variableNameAfterPayload) {
                 payload = { ...payload, ...this.setNestedValue(payload, variableName, `event-${index}`) };
               }
 
