@@ -1,11 +1,11 @@
-import { useState } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { StepEditorProps } from '@/components/workflow-editor/steps/configure-step-template-form';
 import { InAppEditor } from '@/components/workflow-editor/steps/in-app/in-app-editor';
 import { InAppEditorPreview } from '@/components/workflow-editor/steps/in-app/in-app-editor-preview';
-import { CustomStepControls } from '../controls/custom-step-controls';
-import { StepEditorProps } from '@/components/workflow-editor/steps/configure-step-template-form';
 import { TemplateTabs } from '@/components/workflow-editor/steps/template-tabs';
 import { WorkflowOriginEnum } from '@/utils/enums';
+import { useState } from 'react';
+import { useFormContext } from 'react-hook-form';
+import { CustomStepControls } from '../controls/custom-step-controls';
 import { useEditorPreview } from '../use-editor-preview';
 
 export const InAppTabs = (props: StepEditorProps) => {

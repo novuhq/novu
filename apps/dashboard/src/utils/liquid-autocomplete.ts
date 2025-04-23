@@ -218,7 +218,11 @@ function getMatchingVariables(searchText: string, variables: LiquidVariable[]): 
   return variables.filter((v) => v.name.toLowerCase().includes(searchLower));
 }
 
-export function createAutocompleteSource(variables: LiquidVariable[], isEnhancedDigestEnabled: boolean) {
+export function createAutocompleteSource(
+  variables: LiquidVariable[],
+  isEnhancedDigestEnabled: boolean,
+  onVariableSelect?: (completion: Completion) => void
+) {
   return (context: CompletionContext) => {
     // Match text that starts with {{ and capture everything after it until the cursor position
     const word = context.matchBefore(/\{\{([^}]*)/);
@@ -250,6 +254,8 @@ export function createAutocompleteSource(variables: LiquidVariable[], isEnhanced
           // Calculate the final cursor position
           // Add 2 if we need to account for closing brackets
           const finalCursorPos = from + wrappedValue.length + (needsClosing ? 0 : 2);
+
+          onVariableSelect?.(completion);
 
           view.dispatch({
             changes: { from, to, insert: wrappedValue },

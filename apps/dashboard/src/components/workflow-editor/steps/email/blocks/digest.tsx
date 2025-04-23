@@ -13,7 +13,7 @@ export const createDigestBlock = (props: {
   const maxIterations = 5;
 
   return {
-    title: 'Digest block',
+    title: 'Digest',
     description: 'Display digested notifications in list.',
     searchTerms: ['digest', 'notification'],
     icon: <RiShadowLine className="mly-h-4 mly-w-4" />,

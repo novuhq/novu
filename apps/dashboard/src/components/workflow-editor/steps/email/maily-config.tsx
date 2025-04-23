@@ -137,7 +137,7 @@ const getAvailableBlocks = (blocks: BlockGroupItem[], editor: TiptapEditor | nul
   const isInsideRepeat = editor && isInsideRepeatBlock(editor);
 
   if (isInsideRepeat) {
-    const filteredBlocks = ['Repeat', 'Digest block'];
+    const filteredBlocks = ['Repeat', 'Digest'];
 
     return blocks.map((block) => ({
       ...block,
