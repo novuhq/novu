@@ -99,6 +99,7 @@ export const ReorderFilterItem = (props: ReorderFilterItemProps) => {
           itemRef.current.style.minHeight = '';
         }
       }}
+      layout="position"
       {...rest}
     >
       <div
