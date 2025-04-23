@@ -301,7 +301,7 @@ jobs:
           SENTRY_ORG: ${{ vars.SENTRY_ORG }}
           SENTRY_PROJECT: ${{ matrix.service }}
         with:
-          version: ${{ steps.package-version.outputs.current-version}}
+          version: '${{ github.sha }}'
           version_prefix: v
           environment: ${{vars.SENTRY_ENV}}
           ignore_empty: true
