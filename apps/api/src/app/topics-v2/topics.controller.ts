@@ -21,6 +21,8 @@ import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.de
 import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 import { UserSession } from '../shared/framework/user.decorator';
+import { CreateTopicSubscriptionsResponseDto } from './dtos/create-topic-subscriptions-response.dto';
+import { CreateTopicSubscriptionsRequestDto } from './dtos/create-topic-subscriptions.dto';
 import { CreateUpdateTopicRequestDto } from './dtos/create-update-topic.dto';
 import { DeleteTopicResponseDto } from './dtos/delete-topic-response.dto';
 import { ListTopicSubscriptionsQueryDto } from './dtos/list-topic-subscriptions-query.dto';
@@ -29,6 +31,8 @@ import { ListTopicsQueryDto } from './dtos/list-topics-query.dto';
 import { ListTopicsResponseDto } from './dtos/list-topics-response.dto';
 import { TopicResponseDto } from './dtos/topic-response.dto';
 import { UpdateTopicRequestDto } from './dtos/update-topic.dto';
+import { CreateTopicSubscriptionsCommand } from './usecases/create-topic-subscriptions/create-topic-subscriptions.command';
+import { CreateTopicSubscriptionsUsecase } from './usecases/create-topic-subscriptions/create-topic-subscriptions.usecase';
 import { DeleteTopicCommand } from './usecases/delete-topic/delete-topic.command';
 import { DeleteTopicUseCase } from './usecases/delete-topic/delete-topic.usecase';
 import { GetTopicCommand } from './usecases/get-topic/get-topic.command';
@@ -55,7 +59,8 @@ export class TopicsController {
     private getTopicUsecase: GetTopicUseCase,
     private updateTopicUsecase: UpdateTopicUseCase,
     private deleteTopicUsecase: DeleteTopicUseCase,
-    private listTopicSubscriptionsUsecase: ListTopicSubscriptionsUseCase
+    private listTopicSubscriptionsUsecase: ListTopicSubscriptionsUseCase,
+    private createTopicSubscriptionsUsecase: CreateTopicSubscriptionsUsecase
   ) {}
 
   @Get('')
@@ -200,6 +205,31 @@ export class TopicsController {
         orderDirection: query.orderDirection === DirectionEnum.ASC ? 1 : -1,
         orderBy: query.orderBy || '_id',
         includeCursor: query.includeCursor,
+      })
+    );
+  }
+
+  @Post('/:topicKey/subscriptions')
+  @UserAuthentication()
+  @ExternalApiAccessible()
+  @SdkGroupName('Topics.Subscriptions')
+  @SdkMethodName('subscribe')
+  @ApiOperation({ summary: 'Create topic subscriptions' })
+  @ApiParam({ name: 'topicKey', description: 'The key identifier of the topic', type: String })
+  @HttpCode(HttpStatus.OK)
+  @ApiResponse(CreateTopicSubscriptionsResponseDto)
+  async createTopicSubscriptions(
+    @UserSession() user: UserSessionData,
+    @Param('topicKey') topicKey: string,
+    @Body() body: CreateTopicSubscriptionsRequestDto
+  ): Promise<CreateTopicSubscriptionsResponseDto> {
+    return await this.createTopicSubscriptionsUsecase.execute(
+      CreateTopicSubscriptionsCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+        topicKey,
+        subscriberIds: body.subscriberIds,
       })
     );
   }

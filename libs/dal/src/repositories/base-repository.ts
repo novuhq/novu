@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { ClassConstructor, plainToInstance } from 'class-transformer';
 import { DirectionEnum } from '@novu/shared';
+import { ClassConstructor, plainToInstance } from 'class-transformer';
 import {
   ClientSession,
   FilterQuery,

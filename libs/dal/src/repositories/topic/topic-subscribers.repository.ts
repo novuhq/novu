@@ -19,8 +19,11 @@ export class TopicSubscribersRepository extends BaseRepository<
     super(TopicSubscribers, TopicSubscribersEntity);
   }
 
-  async addSubscribers(subscribers: CreateTopicSubscribersEntity[]): Promise<void> {
-    await this.upsertMany(subscribers);
+  async addSubscribers(subscribers: CreateTopicSubscribersEntity[]): Promise<any[]> {
+    const results = await this.upsertMany(subscribers);
+
+    // Return the MongoDB results to differentiate inserts from updates
+    return results;
   }
 
   async *getTopicDistinctSubscribers({
