@@ -25,7 +25,7 @@ import { NotificationTemplateEntity, SubscriberEntity } from '@novu/dal';
 
 import { SharedModule } from '../../shared/shared.module';
 import { EventsModule } from '../events.module';
-import { createTopic } from '../../topics/e2e/helpers/topic-e2e-helper';
+import { createTopic } from '../../topics-v1/e2e/helpers/topic-e2e-helper';
 
 const axiosInstance = axios.create();
 

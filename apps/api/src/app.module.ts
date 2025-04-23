@@ -32,7 +32,7 @@ import { FeedsModule } from './app/feeds/feeds.module';
 import { LayoutsModule } from './app/layouts/layouts.module';
 import { MessagesModule } from './app/messages/messages.module';
 import { PartnerIntegrationsModule } from './app/partner-integrations/partner-integrations.module';
-import { TopicsModule } from './app/topics/topics.module';
+import { TopicsV1Module } from './app/topics-v1/topics-v1.module';
 import { InboundParseModule } from './app/inbound-parse/inbound-parse.module';
 import { BlueprintModule } from './app/blueprint/blueprint.module';
 import { TenantModule } from './app/tenant/tenant.module';
@@ -102,7 +102,7 @@ const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | Forward
   LayoutsModule,
   MessagesModule,
   PartnerIntegrationsModule,
-  TopicsModule,
+  TopicsV1Module,
   BlueprintModule,
   TenantModule,
   StorageModule,

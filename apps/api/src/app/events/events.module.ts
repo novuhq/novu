@@ -13,7 +13,7 @@ import { AuthModule } from '../auth/auth.module';
 import { ContentTemplatesModule } from '../content-templates/content-templates.module';
 import { IntegrationModule } from '../integrations/integrations.module';
 import { ExecutionDetailsModule } from '../execution-details/execution-details.module';
-import { TopicsModule } from '../topics/topics.module';
+import { TopicsV1Module } from '../topics-v1/topics-v1.module';
 import { LayoutsModule } from '../layouts/layouts.module';
 import { TenantModule } from '../tenant/tenant.module';
 import { BridgeModule } from '../bridge';
@@ -31,7 +31,7 @@ const PROVIDERS = [GetNovuProviderCredentials, StorageHelperService, CommunityOr
     ContentTemplatesModule,
     IntegrationModule,
     ExecutionDetailsModule,
-    TopicsModule,
+    TopicsV1Module,
     LayoutsModule,
     TenantModule,
     BridgeModule,

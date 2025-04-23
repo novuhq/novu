@@ -50,7 +50,7 @@ import {
 @Controller('/topics')
 @UserAuthentication()
 @ApiTags('Topics')
-export class TopicsController {
+export class TopicsV1Controller {
   constructor(
     private addSubscribersUseCase: AddSubscribersUseCase,
     private createTopicUseCase: CreateTopicUseCase,
