@@ -60,7 +60,8 @@ export type Session = {
 };
 
 export type Subscriber = {
-  id: string;
+  id?: string;
+  subscriberId?: string;
   firstName?: string;
   lastName?: string;
   email?: string;

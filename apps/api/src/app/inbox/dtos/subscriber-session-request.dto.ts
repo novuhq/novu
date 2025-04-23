@@ -25,6 +25,10 @@ export class SubscriberDto {
   @IsString()
   readonly id?: string;
 
+  @IsDefined()
+  @IsString()
+  readonly subscriberId: string;
+
   @IsOptional()
   @IsString()
   readonly firstName?: string;

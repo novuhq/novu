@@ -46,6 +46,7 @@ const mapToNotification = ({
 }: TODO): InboxNotification => {
   const to: Subscriber = {
     id: subscriber?._id,
+    subscriberId: subscriber?.subscriberId,
     firstName: subscriber?.firstName,
     lastName: subscriber?.lastName,
     avatar: subscriber?.avatar,
