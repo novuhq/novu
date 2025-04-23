@@ -1,5 +1,5 @@
-import { getToken } from '@/utils/auth';
 import { API_HOSTNAME } from '@/config';
+import { getToken } from '@/utils/auth';
 import type { IEnvironment } from '@novu/shared';
 
 export class NovuApiError extends Error {
@@ -89,8 +89,8 @@ export const postV2 = <T>(endpoint: string, options: RequestOptions) =>
   request<T>(endpoint, { version: 'v2', method: 'POST', ...options });
 export const putV2 = <T>(endpoint: string, options: RequestOptions) =>
   request<T>(endpoint, { version: 'v2', method: 'PUT', ...options });
-export const delV2 = <T>(endpoint: string, { environment, signal }: RequestOptions = {}) =>
-  request<T>(endpoint, { version: 'v2', method: 'DELETE', environment, signal });
+export const delV2 = <T>(endpoint: string, options: RequestOptions) =>
+  request<T>(endpoint, { version: 'v2', method: 'DELETE', ...options });
 export const patchV2 = <T>(endpoint: string, options: RequestOptions) =>
   request<T>(endpoint, { version: 'v2', method: 'PATCH', ...options });
 

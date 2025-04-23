@@ -1,7 +1,44 @@
-import { addSubscribersToTopic, removeSubscribersFromTopic } from '@/api/topics';
+import { addSubscribersToTopic, getTopicSubscriptions, removeSubscribersFromTopic } from '@/api/topics';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { useEnvironment } from '@/context/environment/hooks';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
+export function useTopicSubscriptions(
+  topicKey: string,
+  {
+    limit = 100,
+    after,
+    before,
+    subscriberId,
+  }: {
+    limit?: number;
+    after?: string;
+    before?: string;
+    subscriberId?: string;
+  } = {}
+) {
+  const { currentEnvironment } = useEnvironment();
+
+  return useQuery({
+    queryKey: ['topic-subscriptions', currentEnvironment?._id, topicKey, { limit, after, before, subscriberId }],
+    queryFn: async () => {
+      if (!currentEnvironment) {
+        throw new Error('Environment not found');
+      }
+
+      return getTopicSubscriptions({
+        environment: currentEnvironment,
+        topicKey,
+        limit,
+        after,
+        before,
+        subscriberId,
+      });
+    },
+    enabled: !!currentEnvironment && !!topicKey,
+    placeholderData: keepPreviousData,
+  });
+}
 
 export function useAddTopicSubscribers() {
   const { currentEnvironment } = useEnvironment();
@@ -25,13 +62,12 @@ export function useAddTopicSubscribers() {
         queryKey: ['topic', currentEnvironment?._id, variables.topicKey],
       });
 
-      if (result.succeeded.length > 0) {
-        showSuccessToast('Subscriber was successfully added');
-      }
+      // Invalidate topic subscriptions query
+      queryClient.invalidateQueries({
+        queryKey: ['topic-subscriptions', currentEnvironment?._id, variables.topicKey],
+      });
 
-      if (result.failed?.notFound.length) {
-        showErrorToast('Subscriber was not found');
-      }
+      showSuccessToast('Subscriber was added');
     },
     onError: () => {
       showErrorToast('Error', 'Failed to add subscribers to topic');
@@ -59,6 +95,11 @@ export function useRemoveTopicSubscriber() {
       // Invalidate the topic query to refresh the data
       queryClient.invalidateQueries({
         queryKey: ['topic', currentEnvironment?._id, variables.topicKey],
+      });
+
+      // Invalidate topic subscriptions query
+      queryClient.invalidateQueries({
+        queryKey: ['topic-subscriptions', currentEnvironment?._id, variables.topicKey],
       });
 
       showSuccessToast('Subscriber removed', 'Successfully removed subscriber from topic');

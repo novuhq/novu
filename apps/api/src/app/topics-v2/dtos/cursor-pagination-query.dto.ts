@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { DirectionEnum } from '@novu/shared';
 import { Transform } from 'class-transformer';
-import { IsOptional, IsString } from 'class-validator';
+import { IsOptional, IsString, Max } from 'class-validator';
 
 export class CursorPaginationQueryDto<T, K extends keyof T> {
   @ApiProperty({
@@ -23,9 +23,11 @@ export class CursorPaginationQueryDto<T, K extends keyof T> {
   before?: string;
 
   @ApiPropertyOptional({
-    description: 'Limit the number of items to return',
+    description: 'Limit the number of items to return (max 100)',
     type: Number,
   })
+  @Transform(({ value }) => Number(value))
+  @Max(100)
   @IsOptional()
   limit?: number;
 

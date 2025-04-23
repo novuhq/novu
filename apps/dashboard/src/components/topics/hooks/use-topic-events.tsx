@@ -1,6 +1,6 @@
 import { createContext, ReactNode, useCallback, useContext, useState } from 'react';
 
-type TopicEventType = 'deleted';
+type TopicEventType = 'deleted' | 'updated';
 
 type TopicEventsContextType = {
   emitEvent: (event: TopicEventType, topicKey: string) => void;

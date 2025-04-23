@@ -103,6 +103,19 @@ export function TopicOverviewForm({ topic, readOnly = false }: TopicOverviewForm
       showSuccessToast(`Updated topic: ${formData.name}`, undefined, toastOptions);
       form.reset(formData);
       track(TelemetryEvent.SUBSCRIBER_EDITED);
+
+      // Force a refetch of the topics list
+      queryClient.invalidateQueries({
+        queryKey: [QueryKeys.fetchTopics],
+        exact: false,
+        refetchType: 'all',
+      });
+
+      // Also invalidate the specific topic query to refresh any open drawers
+      queryClient.invalidateQueries({
+        queryKey: ['topic', currentEnvironment._id, topic.key],
+        exact: true,
+      });
     } catch (error) {
       showErrorToast('Failed to update topic', undefined, toastOptions);
     } finally {
@@ -124,9 +137,6 @@ export function TopicOverviewForm({ topic, readOnly = false }: TopicOverviewForm
       showSuccessToast(`Deleted topic: ${topic.name}`, undefined, toastOptions);
       track(TelemetryEvent.SUBSCRIBER_DELETED);
       setIsDeleteModalOpen(false);
-
-      // Emit delete event
-      emitEvent('deleted', topic.key);
 
       // Force a refetch of the topics list with exact:false to ensure it works
       queryClient.invalidateQueries({

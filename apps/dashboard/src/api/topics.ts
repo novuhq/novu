@@ -1,11 +1,15 @@
 import { Topic } from '@/components/topics/types';
 import type { DirectionEnum, IEnvironment } from '@novu/shared';
-import { del, get, patch, post } from './api.client';
+import { delV2, getV2, patchV2, postV2 } from './api.client';
 
 export type ListTopicsResponse = {
   data: Array<Topic>;
   next: string | null;
   previous: string | null;
+};
+
+export type DeleteTopicSubscriptionsResponseDto = {
+  acknowledged: boolean;
 };
 
 export const getTopics = async ({
@@ -43,7 +47,7 @@ export const getTopics = async ({
     ...(includeCursor && { includeCursor: includeCursor.toString() }),
   });
 
-  const response = await get<ListTopicsResponse>(`/topics?${params}`, {
+  const response = await getV2<ListTopicsResponse>(`/topics?${params}`, {
     environment,
     signal,
   });
@@ -52,14 +56,14 @@ export const getTopics = async ({
 };
 
 export const deleteTopic = async ({ environment, topicKey }: { environment: IEnvironment; topicKey: string }) => {
-  const response = await del<{ acknowledged: boolean }>(`/topics/${topicKey}`, {
+  const response = await delV2<{ acknowledged: boolean }>(`/topics/${topicKey}`, {
     environment,
   });
   return response;
 };
 
 export const getTopic = async ({ environment, topicKey }: { environment: IEnvironment; topicKey: string }) => {
-  const { data } = await get<{ data: Topic }>(`/topics/${topicKey}`, {
+  const { data } = await getV2<{ data: Topic }>(`/topics/${topicKey}`, {
     environment,
   });
 
@@ -67,7 +71,7 @@ export const getTopic = async ({ environment, topicKey }: { environment: IEnviro
 };
 
 export const createTopic = async ({ environment, topic }: { environment: IEnvironment; topic: Partial<Topic> }) => {
-  const { data } = await post<{ data: Topic }>(`/topics`, {
+  const { data } = await postV2<{ data: Topic }>(`/topics`, {
     environment,
     body: topic,
   });
@@ -84,7 +88,7 @@ export const updateTopic = async ({
   topicKey: string;
   topic: Partial<Topic>;
 }) => {
-  const { data } = await patch<{ data: Topic }>(`/topics/${topicKey}`, {
+  const { data } = await patchV2<{ data: Topic }>(`/topics/${topicKey}`, {
     environment,
     body: topic,
   });
@@ -101,16 +105,16 @@ export const addSubscribersToTopic = async ({
   topicKey: string;
   subscribers: string[];
 }) => {
-  const { data } = await post<{
+  const { data } = await postV2<{
     data: {
       succeeded: string[];
       failed?: {
         notFound: string[];
       };
     };
-  }>(`/topics/${topicKey}/subscribers`, {
+  }>(`/topics/${topicKey}/subscriptions`, {
     environment,
-    body: { subscribers },
+    body: { subscriberIds: subscribers },
   });
 
   return data;
@@ -125,10 +129,71 @@ export const removeSubscribersFromTopic = async ({
   topicKey: string;
   subscribers: string[];
 }) => {
-  await post(`/topics/${topicKey}/subscribers/removal`, {
+  console.log(`/topics/${topicKey}/subscriptions`, {
     environment,
-    body: { subscribers },
+    body: { subscriberIds: subscribers },
   });
 
-  return { success: true };
+  await delV2<DeleteTopicSubscriptionsResponseDto>(`/topics/${topicKey}/subscriptions`, {
+    environment,
+    body: { subscriberIds: subscribers },
+  });
+
+  return { acknowledged: true };
+};
+
+export type TopicSubscription = {
+  _id: string;
+  topic: {
+    _id: string;
+    key: string;
+    name: string;
+    createdAt: string;
+    updatedAt: string;
+  };
+  subscriber: {
+    _id: string;
+    subscriberId: string;
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    avatar?: string;
+  };
+};
+
+export type ListTopicSubscriptionsResponse = {
+  data: TopicSubscription[];
+  next: string | null;
+  previous: string | null;
+};
+
+export const getTopicSubscriptions = async ({
+  environment,
+  topicKey,
+  limit = 100,
+  after,
+  before,
+  subscriberId,
+}: {
+  environment: IEnvironment;
+  topicKey: string;
+  limit?: number;
+  after?: string;
+  before?: string;
+  subscriberId?: string;
+}): Promise<ListTopicSubscriptionsResponse> => {
+  const params = new URLSearchParams();
+
+  if (limit) params.append('limit', limit.toString());
+  if (after) params.append('after', after);
+  if (before) params.append('before', before);
+  if (subscriberId) params.append('subscriberId', subscriberId);
+
+  const query = params.toString() ? `?${params.toString()}` : '';
+
+  const response = await getV2<ListTopicSubscriptionsResponse>(`/topics/${topicKey}/subscriptions${query}`, {
+    environment,
+  });
+
+  return response;
 };

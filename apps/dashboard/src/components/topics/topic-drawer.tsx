@@ -1,3 +1,4 @@
+import { TopicSubscription } from '@/api/topics';
 import { Separator } from '@/components/primitives/separator';
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/primitives/sheet';
 import { Skeleton } from '@/components/primitives/skeleton';
@@ -7,13 +8,14 @@ import { ExternalLink } from '@/components/shared/external-link';
 import TruncatedText from '@/components/truncated-text';
 import { useFormProtection } from '@/hooks/use-form-protection';
 import { itemVariants, listVariants } from '@/utils/animation';
+import { ISubscriber } from '@novu/shared';
 import { motion } from 'motion/react';
-import { forwardRef, useEffect, useState } from 'react';
+import { forwardRef, useState } from 'react';
 import { RiMailSettingsLine, RiUser3Fill } from 'react-icons/ri';
 import { cn } from '../../utils/ui';
 import { AddSubscriberForm } from './add-subscriber-form';
 import { useTopic } from './hooks/use-topic';
-import { useTopicEvents } from './hooks/use-topic-events';
+import { useTopicSubscriptions } from './hooks/use-topic-subscribers';
 import { TopicActivity } from './topic-activity';
 import { TopicOverviewForm, TopicOverviewSkeleton } from './topic-overview-form';
 import { TopicSubscriberItem } from './topic-subscriber-item';
@@ -130,7 +132,7 @@ const TopicSubscribersEmptyState = ({ topicKey, readOnly = false }: { topicKey: 
 
 const TopicSubscribers = (props: TopicSubscribersProps) => {
   const { topicKey, readOnly = false } = props;
-  const { data, isPending } = useTopic(topicKey);
+  const { data, isPending } = useTopicSubscriptions(topicKey);
 
   if (isPending) {
     return (
@@ -152,10 +154,9 @@ const TopicSubscribers = (props: TopicSubscribersProps) => {
     );
   }
 
-  // Handle subscribers as an optional property with a fallback to empty array
-  const subscribers = (data as any)?.subscribers || [];
+  const subscriptions = data?.data || [];
 
-  if (subscribers.length === 0) {
+  if (subscriptions.length === 0) {
     return <TopicSubscribersEmptyState topicKey={topicKey} readOnly={readOnly} />;
   }
 
@@ -178,10 +179,10 @@ const TopicSubscribers = (props: TopicSubscribersProps) => {
           <AddSubscriberForm topicKey={topicKey} />
         </div>
       )}
-      {subscribers.map((subscriberId: string, index: number) => (
+      {subscriptions.map((subscription: TopicSubscription) => (
         <TopicSubscriberItem
-          key={`${subscriberId}-${index}`}
-          subscriberId={subscriberId}
+          key={subscription._id}
+          subscriber={subscription.subscriber as ISubscriber}
           topicKey={topicKey}
           readOnly={readOnly}
         />
@@ -259,18 +260,6 @@ type TopicDrawerProps = {
 
 export const TopicDrawer = forwardRef<HTMLDivElement, TopicDrawerProps>((props, forwardedRef) => {
   const { open, onOpenChange, topicKey, readOnly = false } = props;
-  const { subscribeToEvent } = useTopicEvents();
-
-  useEffect(() => {
-    // Close the drawer if the current topic is deleted
-    const unsubscribe = subscribeToEvent('deleted', (deletedTopicKey) => {
-      if (deletedTopicKey === topicKey && open) {
-        onOpenChange(false);
-      }
-    });
-
-    return unsubscribe;
-  }, [subscribeToEvent, topicKey, open, onOpenChange]);
 
   return (
     <>
