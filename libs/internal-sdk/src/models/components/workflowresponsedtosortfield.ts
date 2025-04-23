@@ -6,6 +6,7 @@ import * as z from "zod";
 import { ClosedEnum } from "../../types/enums.js";
 
 export const WorkflowResponseDtoSortField = {
+  CreatedAt: "createdAt",
   UpdatedAt: "updatedAt",
   Name: "name",
   LastTriggeredAt: "lastTriggeredAt",
