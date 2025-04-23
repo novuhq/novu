@@ -6,3 +6,4 @@ export * from './get-workflow';
 export * from './list-workflows';
 export * from './sync-to-environment';
 export * from './upsert-workflow';
+export * from './duplicate-workflow';

@@ -6,6 +6,7 @@ import * as z from "zod";
 import { remap as remap$ } from "../../lib/primitives.js";
 import { safeParse } from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
+import * as components from "../components/index.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 
 export type WorkflowControllerGetWorkflowStepDataRequest = {
@@ -17,11 +18,9 @@ export type WorkflowControllerGetWorkflowStepDataRequest = {
   idempotencyKey?: string | undefined;
 };
 
-export type WorkflowControllerGetWorkflowStepDataResponseBody = {};
-
 export type WorkflowControllerGetWorkflowStepDataResponse = {
   headers: { [k: string]: Array<string> };
-  result: WorkflowControllerGetWorkflowStepDataResponseBody;
+  result: components.StepResponseDto;
 };
 
 /** @internal */
@@ -106,68 +105,6 @@ export function workflowControllerGetWorkflowStepDataRequestFromJSON(
 }
 
 /** @internal */
-export const WorkflowControllerGetWorkflowStepDataResponseBody$inboundSchema:
-  z.ZodType<
-    WorkflowControllerGetWorkflowStepDataResponseBody,
-    z.ZodTypeDef,
-    unknown
-  > = z.object({});
-
-/** @internal */
-export type WorkflowControllerGetWorkflowStepDataResponseBody$Outbound = {};
-
-/** @internal */
-export const WorkflowControllerGetWorkflowStepDataResponseBody$outboundSchema:
-  z.ZodType<
-    WorkflowControllerGetWorkflowStepDataResponseBody$Outbound,
-    z.ZodTypeDef,
-    WorkflowControllerGetWorkflowStepDataResponseBody
-  > = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace WorkflowControllerGetWorkflowStepDataResponseBody$ {
-  /** @deprecated use `WorkflowControllerGetWorkflowStepDataResponseBody$inboundSchema` instead. */
-  export const inboundSchema =
-    WorkflowControllerGetWorkflowStepDataResponseBody$inboundSchema;
-  /** @deprecated use `WorkflowControllerGetWorkflowStepDataResponseBody$outboundSchema` instead. */
-  export const outboundSchema =
-    WorkflowControllerGetWorkflowStepDataResponseBody$outboundSchema;
-  /** @deprecated use `WorkflowControllerGetWorkflowStepDataResponseBody$Outbound` instead. */
-  export type Outbound =
-    WorkflowControllerGetWorkflowStepDataResponseBody$Outbound;
-}
-
-export function workflowControllerGetWorkflowStepDataResponseBodyToJSON(
-  workflowControllerGetWorkflowStepDataResponseBody:
-    WorkflowControllerGetWorkflowStepDataResponseBody,
-): string {
-  return JSON.stringify(
-    WorkflowControllerGetWorkflowStepDataResponseBody$outboundSchema.parse(
-      workflowControllerGetWorkflowStepDataResponseBody,
-    ),
-  );
-}
-
-export function workflowControllerGetWorkflowStepDataResponseBodyFromJSON(
-  jsonString: string,
-): SafeParseResult<
-  WorkflowControllerGetWorkflowStepDataResponseBody,
-  SDKValidationError
-> {
-  return safeParse(
-    jsonString,
-    (x) =>
-      WorkflowControllerGetWorkflowStepDataResponseBody$inboundSchema.parse(
-        JSON.parse(x),
-      ),
-    `Failed to parse 'WorkflowControllerGetWorkflowStepDataResponseBody' from JSON`,
-  );
-}
-
-/** @internal */
 export const WorkflowControllerGetWorkflowStepDataResponse$inboundSchema:
   z.ZodType<
     WorkflowControllerGetWorkflowStepDataResponse,
@@ -175,9 +112,7 @@ export const WorkflowControllerGetWorkflowStepDataResponse$inboundSchema:
     unknown
   > = z.object({
     Headers: z.record(z.array(z.string())),
-    Result: z.lazy(() =>
-      WorkflowControllerGetWorkflowStepDataResponseBody$inboundSchema
-    ),
+    Result: components.StepResponseDto$inboundSchema,
   }).transform((v) => {
     return remap$(v, {
       "Headers": "headers",
@@ -188,7 +123,7 @@ export const WorkflowControllerGetWorkflowStepDataResponse$inboundSchema:
 /** @internal */
 export type WorkflowControllerGetWorkflowStepDataResponse$Outbound = {
   Headers: { [k: string]: Array<string> };
-  Result: WorkflowControllerGetWorkflowStepDataResponseBody$Outbound;
+  Result: components.StepResponseDto$Outbound;
 };
 
 /** @internal */
@@ -199,9 +134,7 @@ export const WorkflowControllerGetWorkflowStepDataResponse$outboundSchema:
     WorkflowControllerGetWorkflowStepDataResponse
   > = z.object({
     headers: z.record(z.array(z.string())),
-    result: z.lazy(() =>
-      WorkflowControllerGetWorkflowStepDataResponseBody$outboundSchema
-    ),
+    result: components.StepResponseDto$outboundSchema,
   }).transform((v) => {
     return remap$(v, {
       headers: "Headers",

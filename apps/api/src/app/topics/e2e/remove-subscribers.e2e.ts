@@ -51,8 +51,11 @@ describe('Remove subscribers to topic - /topics/:topicKey/subscribers/removal (P
   it('should throw validation error for missing request payload information', async () => {
     const { body } = await session.testAgent.post(removeSubscribersUrl).send({});
 
-    expect(body.statusCode).to.eql(400);
-    expect(body.message).to.eql(['subscribers should not be null or undefined', 'subscribers must be an array']);
+    expect(body.statusCode).to.eql(422);
+    expect(body.errors.general.messages).to.eql([
+      'subscribers should not be null or undefined',
+      'subscribers must be an array',
+    ]);
   });
 
   it('should remove subscriber from the topic', async () => {

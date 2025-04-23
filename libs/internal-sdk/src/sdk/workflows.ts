@@ -4,61 +4,76 @@
 
 import { workflowsCreate } from "../funcs/workflowsCreate.js";
 import { workflowsDelete } from "../funcs/workflowsDelete.js";
-import { workflowsGetStepData } from "../funcs/workflowsGetStepData.js";
-import { workflowsGetWorkflowTestData } from "../funcs/workflowsGetWorkflowTestData.js";
+import { workflowsDuplicate } from "../funcs/workflowsDuplicate.js";
+import { workflowsGetTestData } from "../funcs/workflowsGetTestData.js";
+import { workflowsPatch } from "../funcs/workflowsPatch.js";
 import { workflowsRetrieve } from "../funcs/workflowsRetrieve.js";
+import { workflowsSearch } from "../funcs/workflowsSearch.js";
+import { workflowsSync } from "../funcs/workflowsSync.js";
 import { workflowsUpdate } from "../funcs/workflowsUpdate.js";
-import { workflowsWorkflowControllerDuplicateWorkflow } from "../funcs/workflowsWorkflowControllerDuplicateWorkflow.js";
-import { workflowsWorkflowControllerGeneratePreview } from "../funcs/workflowsWorkflowControllerGeneratePreview.js";
-import { workflowsWorkflowControllerPatchWorkflow } from "../funcs/workflowsWorkflowControllerPatchWorkflow.js";
-import { workflowsWorkflowControllerSearchWorkflows } from "../funcs/workflowsWorkflowControllerSearchWorkflows.js";
-import { workflowsWorkflowControllerSync } from "../funcs/workflowsWorkflowControllerSync.js";
 import { ClientSDK, RequestOptions } from "../lib/sdks.js";
+import * as components from "../models/components/index.js";
 import * as operations from "../models/operations/index.js";
 import { unwrapAsync } from "../types/fp.js";
+import { Steps } from "./steps.js";
 
 export class Workflows extends ClientSDK {
+  private _steps?: Steps;
+  get steps(): Steps {
+    return (this._steps ??= new Steps(this._options));
+  }
+
   /**
-   * Create subscriber
+   * Create a new workflow
    *
    * @remarks
-   * Create subscriber with the given data
+   * Creates a new workflow in the Novu Cloud environment
    */
   async create(
+    createWorkflowDto: components.CreateWorkflowDto,
     idempotencyKey?: string | undefined,
     options?: RequestOptions,
   ): Promise<operations.WorkflowControllerCreateResponse> {
     return unwrapAsync(workflowsCreate(
       this,
-      idempotencyKey,
-      options,
-    ));
-  }
-
-  async workflowControllerSearchWorkflows(
-    idempotencyKey?: string | undefined,
-    options?: RequestOptions,
-  ): Promise<operations.WorkflowControllerSearchWorkflowsResponse> {
-    return unwrapAsync(workflowsWorkflowControllerSearchWorkflows(
-      this,
+      createWorkflowDto,
       idempotencyKey,
       options,
     ));
   }
 
   /**
-   * Update subscriber credentials
+   * Search workflows
    *
    * @remarks
-   * Subscriber credentials associated to the delivery methods such as slack and push tokens.
+   * Retrieves a list of workflows with optional filtering and pagination
+   */
+  async search(
+    request: operations.WorkflowControllerSearchWorkflowsRequest,
+    options?: RequestOptions,
+  ): Promise<operations.WorkflowControllerSearchWorkflowsResponse> {
+    return unwrapAsync(workflowsSearch(
+      this,
+      request,
+      options,
+    ));
+  }
+
+  /**
+   * Update an existing workflow
+   *
+   * @remarks
+   * Updates the details of an existing workflow
    */
   async update(
+    updateWorkflowDto: components.UpdateWorkflowDto,
     workflowId: string,
     idempotencyKey?: string | undefined,
     options?: RequestOptions,
   ): Promise<operations.WorkflowControllerUpdateResponse> {
     return unwrapAsync(workflowsUpdate(
       this,
+      updateWorkflowDto,
       workflowId,
       idempotencyKey,
       options,
@@ -66,14 +81,14 @@ export class Workflows extends ClientSDK {
   }
 
   /**
-   * Get subscriber
+   * Retrieve a workflow
    *
    * @remarks
-   * Get subscriber by your internal id used to identify the subscriber
+   * Fetches details of a specific workflow
    */
   async retrieve(
     workflowId: string,
-    environmentId: string,
+    environmentId?: string | undefined,
     idempotencyKey?: string | undefined,
     options?: RequestOptions,
   ): Promise<operations.WorkflowControllerGetWorkflowResponse> {
@@ -87,10 +102,10 @@ export class Workflows extends ClientSDK {
   }
 
   /**
-   * Delete topic
+   * Delete a workflow
    *
    * @remarks
-   * Delete a topic by its topic key if it has no subscribers
+   * Removes a specific workflow
    */
   async delete(
     workflowId: string,
@@ -105,81 +120,78 @@ export class Workflows extends ClientSDK {
     ));
   }
 
-  async workflowControllerPatchWorkflow(
+  /**
+   * Patch workflow
+   *
+   * @remarks
+   * Partially updates a workflow
+   */
+  async patch(
+    patchWorkflowDto: components.PatchWorkflowDto,
     workflowId: string,
     idempotencyKey?: string | undefined,
     options?: RequestOptions,
   ): Promise<operations.WorkflowControllerPatchWorkflowResponse> {
-    return unwrapAsync(workflowsWorkflowControllerPatchWorkflow(
+    return unwrapAsync(workflowsPatch(
       this,
+      patchWorkflowDto,
       workflowId,
       idempotencyKey,
       options,
     ));
   }
 
-  async workflowControllerDuplicateWorkflow(
+  /**
+   * Duplicate a workflow
+   */
+  async duplicate(
+    duplicateWorkflowDto: components.DuplicateWorkflowDto,
     workflowId: string,
     idempotencyKey?: string | undefined,
     options?: RequestOptions,
   ): Promise<operations.WorkflowControllerDuplicateWorkflowResponse> {
-    return unwrapAsync(workflowsWorkflowControllerDuplicateWorkflow(
+    return unwrapAsync(workflowsDuplicate(
       this,
+      duplicateWorkflowDto,
       workflowId,
       idempotencyKey,
       options,
     ));
   }
 
-  async workflowControllerGeneratePreview(
-    workflowId: string,
-    stepId: string,
-    idempotencyKey?: string | undefined,
-    options?: RequestOptions,
-  ): Promise<operations.WorkflowControllerGeneratePreviewResponse> {
-    return unwrapAsync(workflowsWorkflowControllerGeneratePreview(
-      this,
-      workflowId,
-      stepId,
-      idempotencyKey,
-      options,
-    ));
-  }
-
-  async getStepData(
-    workflowId: string,
-    stepId: string,
-    idempotencyKey?: string | undefined,
-    options?: RequestOptions,
-  ): Promise<operations.WorkflowControllerGetWorkflowStepDataResponse> {
-    return unwrapAsync(workflowsGetStepData(
-      this,
-      workflowId,
-      stepId,
-      idempotencyKey,
-      options,
-    ));
-  }
-
-  async workflowControllerSync(
+  /**
+   * Sync workflow to another environment
+   *
+   * @remarks
+   * Synchronizes a workflow to a target environment
+   */
+  async sync(
+    syncWorkflowDto: components.SyncWorkflowDto,
     workflowId: string,
     idempotencyKey?: string | undefined,
     options?: RequestOptions,
   ): Promise<operations.WorkflowControllerSyncResponse> {
-    return unwrapAsync(workflowsWorkflowControllerSync(
+    return unwrapAsync(workflowsSync(
       this,
+      syncWorkflowDto,
       workflowId,
       idempotencyKey,
       options,
     ));
   }
 
-  async getWorkflowTestData(
+  /**
+   * Get workflow test data
+   *
+   * @remarks
+   * Retrieves test data for a specific workflow
+   */
+  async getTestData(
     workflowId: string,
     idempotencyKey?: string | undefined,
     options?: RequestOptions,
   ): Promise<operations.WorkflowControllerGetWorkflowTestDataResponse> {
-    return unwrapAsync(workflowsGetWorkflowTestData(
+    return unwrapAsync(workflowsGetTestData(
       this,
       workflowId,
       idempotencyKey,

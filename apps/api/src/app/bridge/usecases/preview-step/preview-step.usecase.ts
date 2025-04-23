@@ -3,6 +3,8 @@ import { Event, ExecuteOutput, HttpQueryKeysEnum, PostActionEnum } from '@novu/f
 import { ExecuteBridgeRequest, ExecuteBridgeRequestCommand, InstrumentUsecase } from '@novu/application-generic';
 
 import { PreviewStepCommand } from './preview-step.command';
+import { Subscriber } from '../../../inbox/utils/types';
+import { SubscriberResponseDto } from '../../../subscribers/dtos';
 
 @Injectable()
 export class PreviewStep {
@@ -37,10 +39,29 @@ export class PreviewStep {
       controls: command.controls || {},
       payload: command.payload || {},
       state: command.state || [],
-      subscriber: command.subscriber || {},
+      subscriber: this.mapSubscriberResponseToSubscriber(command.subscriber),
       stepId: command.stepId,
       workflowId: command.workflowId,
       action: PostActionEnum.PREVIEW,
+    };
+  }
+
+  private mapSubscriberResponseToSubscriber(
+    subscriberResponse?: Partial<SubscriberResponseDto> | undefined
+  ): Subscriber {
+    if (!subscriberResponse) {
+      return {
+        id: '',
+        subscriberId: '',
+      };
+    }
+
+    return {
+      id: subscriberResponse._id || '',
+      firstName: subscriberResponse.firstName,
+      lastName: subscriberResponse.lastName,
+      avatar: subscriberResponse.avatar,
+      subscriberId: subscriberResponse.subscriberId || '',
     };
   }
 }

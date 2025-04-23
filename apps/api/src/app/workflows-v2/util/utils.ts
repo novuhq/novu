@@ -1,10 +1,10 @@
 /* eslint-disable no-param-reassign */
-import { JSONSchemaDto } from '@novu/shared';
 import difference from 'lodash/difference';
 import isArray from 'lodash/isArray';
 import isObject from 'lodash/isObject';
 import reduce from 'lodash/reduce';
 import set from 'lodash/set';
+import { JSONSchemaDto } from '../dtos';
 import { ArrayVariable } from '../usecases/create-variables-object/create-variables-object.usecase';
 
 export function findMissingKeys(requiredRecord: object, actualRecord: object) {
@@ -73,7 +73,7 @@ export function collectKeys(obj, prefix = '') {
  * //   }
  * // }
  */
-export function mockSchemaDefaults(schema: JSONSchemaDto, parentPath = 'payload', depth = 0) {
+export function mockSchemaDefaults(schema: JSONSchemaDto, parentPath = 'payload', depth = 0): JSONSchemaDto {
   const MAX_DEPTH = 10;
 
   if (depth >= MAX_DEPTH) {

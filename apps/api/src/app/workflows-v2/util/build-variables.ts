@@ -1,12 +1,12 @@
 import _ from 'lodash';
 import { AdditionalOperation, RulesLogic } from 'json-logic-js';
 import { PinoLogger } from '@novu/application-generic';
-import { type JSONSchemaDto } from '@novu/shared';
 
 import { extractLiquidTemplateVariables, TemplateVariables } from './template-parser/liquid-parser';
 import { WrapMailyInLiquidUseCase } from '../../environments-v1/usecases/output-renderers/maily-to-liquid/wrap-maily-in-liquid.usecase';
 import { isStringifiedMailyJSONContent } from '../../environments-v1/usecases/output-renderers/maily-to-liquid/wrap-maily-in-liquid.command';
 import { extractFieldsFromRules, isValidRule } from '../../shared/services/query-parser/query-parser.service';
+import { JSONSchemaDto } from '../dtos';
 
 export function buildVariables(
   variableSchema: JSONSchemaDto | undefined,

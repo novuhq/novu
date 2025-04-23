@@ -1,22 +1,7 @@
 import { EnvironmentWithUserObjectCommand } from '@novu/application-generic';
-import { DuplicateWorkflowDto } from '@novu/shared';
 import { Type } from 'class-transformer';
-import { IsArray, IsDefined, IsOptional, IsString, ValidateNested } from 'class-validator';
-
-export class DuplicateWorkflowDataCommand implements DuplicateWorkflowDto {
-  @IsString()
-  @IsDefined()
-  name: string;
-
-  @IsString()
-  @IsOptional()
-  description?: string;
-
-  @IsArray()
-  @IsOptional()
-  @IsString({ each: true })
-  tags?: string[];
-}
+import { IsDefined, IsString, ValidateNested } from 'class-validator';
+import { DuplicateWorkflowDto } from '../../dtos/duplicate-workflow.dto';
 
 export class DuplicateWorkflowCommand extends EnvironmentWithUserObjectCommand {
   @IsString()
@@ -24,6 +9,6 @@ export class DuplicateWorkflowCommand extends EnvironmentWithUserObjectCommand {
   workflowIdOrInternalId: string;
 
   @ValidateNested()
-  @Type(() => DuplicateWorkflowDataCommand)
-  overrides: DuplicateWorkflowDataCommand;
+  @Type(() => DuplicateWorkflowDto)
+  overrides: DuplicateWorkflowDto;
 }

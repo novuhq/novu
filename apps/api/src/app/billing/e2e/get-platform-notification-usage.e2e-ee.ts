@@ -18,15 +18,13 @@ describe('GetPlatformNotificationUsage #novu-v2', () => {
   const communityOrganizationRepo = new CommunityOrganizationRepository();
 
   const createUseCase = () => {
-    const useCase = new GetPlatformNotificationUsage(
+    return new GetPlatformNotificationUsage(
       environmentRepo,
       notificationRepo,
       communityOrganizationRepo,
       MockCacheService.createClient(),
       new PinoLogger({})
     );
-
-    return useCase;
   };
   let session: UserSession;
 

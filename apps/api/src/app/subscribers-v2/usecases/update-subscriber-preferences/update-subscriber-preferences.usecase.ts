@@ -6,8 +6,9 @@ import { GetWorkflowByIdsCommand, GetWorkflowByIdsUseCase } from '@novu/applicat
 import { UpdateSubscriberPreferencesCommand } from './update-subscriber-preferences.command';
 import { UpdatePreferences } from '../../../inbox/usecases/update-preferences/update-preferences.usecase';
 import { UpdatePreferencesCommand } from '../../../inbox/usecases/update-preferences/update-preferences.command';
-import { GetSubscriberPreferencesDto } from '../../dtos/get-subscriber-preferences.dto';
 import { GetSubscriberPreferences } from '../get-subscriber-preferences/get-subscriber-preferences.usecase';
+
+import { GetSubscriberPreferencesDto } from '../../dtos/get-subscriber-preferences.dto';
 
 @Injectable()
 export class UpdateSubscriberPreferences {

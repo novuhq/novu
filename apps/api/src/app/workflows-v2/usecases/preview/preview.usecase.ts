@@ -9,24 +9,21 @@ import { EnvironmentEntity, NotificationTemplateEntity, OrganizationEntity, User
 import {
   ChannelTypeEnum,
   createMockObjectFromSchema,
-  GeneratePreviewResponseDto,
-  JobStatusEnum,
-  PreviewPayload,
-  StepResponseDto,
-  WorkflowOriginEnum,
-  StepTypeEnum,
   FeatureFlagsKeysEnum,
+  JobStatusEnum,
+  StepTypeEnum,
+  WorkflowOriginEnum,
 } from '@novu/shared';
 import {
+  dashboardSanitizeControlValues,
   FeatureFlagsService,
   GetWorkflowByIdsCommand,
   GetWorkflowByIdsUseCase,
   Instrument,
   InstrumentUsecase,
   PinoLogger,
-  dashboardSanitizeControlValues,
 } from '@novu/application-generic';
-import { channelStepSchemas, actionStepSchemas } from '@novu/framework/internal';
+import { actionStepSchemas, channelStepSchemas } from '@novu/framework/internal';
 import { JSONContent as MailyJSONContent } from '@maily-to/render';
 import { PreviewStep, PreviewStepCommand } from '../../../bridge/usecases/preview-step';
 import { FrameworkPreviousStepsOutputState } from '../../../bridge/usecases/preview-step/preview-step.command';
@@ -39,6 +36,7 @@ import { buildVariables } from '../../util/build-variables';
 import { mergeCommonObjectKeys } from '../../util/utils';
 import { buildVariablesSchema } from '../../util/create-schema';
 import { isObjectMailyJSONContent } from '../../../environments-v1/usecases/output-renderers/maily-to-liquid/wrap-maily-in-liquid.command';
+import { GeneratePreviewResponseDto, JSONSchemaDto, PreviewPayloadDto, StepResponseDto } from '../../dtos';
 
 const LOG_CONTEXT = 'GeneratePreviewUsecase';
 
@@ -183,7 +181,7 @@ export class PreviewUsecase {
   private mergePayloadExample(
     workflow: NotificationTemplateEntity,
     payloadExample: Record<string, unknown>,
-    userPayloadExample: PreviewPayload | undefined
+    userPayloadExample: PreviewPayloadDto | undefined
   ) {
     if (workflow.origin === WorkflowOriginEnum.EXTERNAL) {
       // if external workflow, we need to override with stored payload schema
@@ -229,7 +227,7 @@ export class PreviewUsecase {
   }
 
   @Instrument()
-  private async buildVariablesSchema(variablesObject: Record<string, unknown>, variables: Record<string, unknown>) {
+  private async buildVariablesSchema(variablesObject: Record<string, unknown>, variables: JSONSchemaDto) {
     const { payload } = variablesObject;
     const payloadSchema = buildVariablesSchema(payload);
 
@@ -268,7 +266,7 @@ export class PreviewUsecase {
   private async executePreviewUsecase(
     command: PreviewCommand,
     stepData: StepResponseDto,
-    previewPayloadExample: PreviewPayload,
+    previewPayloadExample: PreviewPayloadDto,
     controlValues: Record<string, unknown>
   ) {
     const state = buildState(previewPayloadExample.steps);
@@ -366,7 +364,7 @@ function cleanPreviewExamplePayload(payloadExample: Record<string, unknown>): Re
 /**
  * Prepares the payload for the bridge request by ensuring eventCount is calculated from events length
  */
-function enhanceEventCountValue(payloadExample: PreviewPayload): Record<string, Record<string, unknown>> {
+function enhanceEventCountValue(payloadExample: PreviewPayloadDto): Record<string, Record<string, unknown>> {
   const preparedPayload = _.cloneDeep(payloadExample);
 
   if (preparedPayload.steps && typeof preparedPayload.steps === 'object') {

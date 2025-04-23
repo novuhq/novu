@@ -1,5 +1,5 @@
 /* eslint-disable global-require */
-import { forwardRef, Inject, Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 
 import { NotificationGroupEntity, NotificationGroupRepository, NotificationTemplateRepository } from '@novu/dal';
@@ -16,14 +16,10 @@ import {
   WorkflowTypeEnum,
 } from '@novu/shared';
 
-import { CreateWorkflowCommand, NotificationStep, NotificationStepVariantCommand } from './create-workflow.command';
 import { CreateChange, CreateChangeCommand } from '../create-change';
-import { AnalyticsService } from '../../services';
-import { ContentService } from '../../services/content.service';
-import { isVariantEmpty } from '../../utils/variants';
+import { AnalyticsService, ContentService } from '../../services';
 import { CreateMessageTemplate, CreateMessageTemplateCommand } from '../message-template';
-import { PlatformException } from '../../utils/exceptions';
-import { shortId } from '../../utils/generate-id';
+import { isVariantEmpty, PlatformException, shortId } from '../../utils';
 import {
   UpsertPreferences,
   UpsertUserWorkflowPreferencesCommand,
@@ -37,7 +33,8 @@ import {
 } from '../workflow';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import { ResourceValidatorService } from '../../services/resource-validator.service';
-import { PinoLogger } from '../..';
+import { CreateWorkflowCommand, PinoLogger } from '../..';
+import { NotificationStep, NotificationStepVariantCommand } from '../../value-objects';
 
 /**
  * @deprecated - use `UpsertWorkflow` instead
@@ -168,7 +165,7 @@ export class CreateWorkflow {
     const subscriberVariables = contentService.extractSubscriberMessageVariables(command.steps);
     const identifier = await this.generateUniqueIdentifier(command, triggerIdentifier);
 
-    const trigger: INotificationTrigger = {
+    return {
       type: TriggerTypeEnum.EVENT,
       identifier,
       variables: variables.map((i) => {
@@ -194,8 +191,6 @@ export class CreateWorkflow {
         };
       }),
     };
-
-    return trigger;
   }
 
   private async generateUniqueIdentifier(command: CreateWorkflowCommand, triggerIdentifier: string) {
@@ -541,8 +536,5 @@ export class CreateWorkflow {
     }
 
     return notificationGroup;
-  }
-  private get getBlueprintOrganizationId(): string {
-    return NotificationTemplateRepository.getBlueprintOrganizationId() as string;
   }
 }

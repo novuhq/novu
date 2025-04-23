@@ -28,9 +28,15 @@ import {
 export type WorkflowsRetrieveQueryData =
   operations.WorkflowControllerGetWorkflowResponse;
 
+/**
+ * Retrieve a workflow
+ *
+ * @remarks
+ * Fetches details of a specific workflow
+ */
 export function useWorkflowsRetrieve(
   workflowId: string,
-  environmentId: string,
+  environmentId?: string | undefined,
   idempotencyKey?: string | undefined,
   options?: QueryHookOptions<WorkflowsRetrieveQueryData>,
 ): UseQueryResult<WorkflowsRetrieveQueryData, Error> {
@@ -47,9 +53,15 @@ export function useWorkflowsRetrieve(
   });
 }
 
+/**
+ * Retrieve a workflow
+ *
+ * @remarks
+ * Fetches details of a specific workflow
+ */
 export function useWorkflowsRetrieveSuspense(
   workflowId: string,
-  environmentId: string,
+  environmentId?: string | undefined,
   idempotencyKey?: string | undefined,
   options?: SuspenseQueryHookOptions<WorkflowsRetrieveQueryData>,
 ): UseSuspenseQueryResult<WorkflowsRetrieveQueryData, Error> {
@@ -70,7 +82,7 @@ export function prefetchWorkflowsRetrieve(
   queryClient: QueryClient,
   client$: NovuCore,
   workflowId: string,
-  environmentId: string,
+  environmentId?: string | undefined,
   idempotencyKey?: string | undefined,
 ): Promise<void> {
   return queryClient.prefetchQuery({
@@ -87,7 +99,10 @@ export function setWorkflowsRetrieveData(
   client: QueryClient,
   queryKeyBase: [
     workflowId: string,
-    parameters: { environmentId: string; idempotencyKey?: string | undefined },
+    parameters: {
+      environmentId?: string | undefined;
+      idempotencyKey?: string | undefined;
+    },
   ],
   data: WorkflowsRetrieveQueryData,
 ): WorkflowsRetrieveQueryData | undefined {
@@ -102,7 +117,7 @@ export function invalidateWorkflowsRetrieve(
     [
       workflowId: string,
       parameters: {
-        environmentId: string;
+        environmentId?: string | undefined;
         idempotencyKey?: string | undefined;
       },
     ]
@@ -128,7 +143,7 @@ export function invalidateAllWorkflowsRetrieve(
 export function buildWorkflowsRetrieveQuery(
   client$: NovuCore,
   workflowId: string,
-  environmentId: string,
+  environmentId?: string | undefined,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): {
@@ -164,7 +179,10 @@ export function buildWorkflowsRetrieveQuery(
 
 export function queryKeyWorkflowsRetrieve(
   workflowId: string,
-  parameters: { environmentId: string; idempotencyKey?: string | undefined },
+  parameters: {
+    environmentId?: string | undefined;
+    idempotencyKey?: string | undefined;
+  },
 ): QueryKey {
   return ["@novu/api", "Workflows", "retrieve", workflowId, parameters];
 }

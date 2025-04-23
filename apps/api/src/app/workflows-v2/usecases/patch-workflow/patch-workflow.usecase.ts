@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { UserSessionData, WorkflowResponseDto, WorkflowStatusEnum } from '@novu/shared';
+import { UserSessionData, WorkflowStatusEnum } from '@novu/shared';
 import { NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
 import { GetWorkflowWithPreferencesUseCase, WorkflowWithPreferencesResponseDto } from '@novu/application-generic';
 import { PatchWorkflowCommand } from './patch-workflow.command';
 import { GetWorkflowUseCase } from '../get-workflow';
+import { WorkflowResponseDto } from '../../dtos';
 
 @Injectable()
 export class PatchWorkflowUsecase {

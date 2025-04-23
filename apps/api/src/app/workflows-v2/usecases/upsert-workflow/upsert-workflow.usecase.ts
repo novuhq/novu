@@ -16,22 +16,18 @@ import {
   UpsertControlValuesUseCase,
 } from '@novu/application-generic';
 import {
+  ControlSchemas,
   ControlValuesRepository,
   NotificationGroupRepository,
   NotificationStepEntity,
   NotificationTemplateEntity,
 } from '@novu/dal';
 import {
-  ControlSchemas,
   ControlValuesLevelEnum,
   DEFAULT_WORKFLOW_PREFERENCES,
   slugify,
-  StepCreateDto,
-  StepIssuesDto,
-  StepUpdateDto,
   WorkflowCreationSourceEnum,
   WorkflowOriginEnum,
-  WorkflowResponseDto,
   WorkflowTypeEnum,
 } from '@novu/shared';
 
@@ -39,7 +35,8 @@ import { stepTypeToControlSchema } from '../../shared';
 import { computeWorkflowStatus } from '../../shared/compute-workflow-status';
 import { BuildStepIssuesUsecase } from '../build-step-issues/build-step-issues.usecase';
 import { GetWorkflowCommand, GetWorkflowUseCase } from '../get-workflow';
-import { UpsertWorkflowCommand } from './upsert-workflow.command';
+import { UpsertStepDataCommand, UpsertWorkflowCommand } from './upsert-workflow.command';
+import { StepIssuesDto, WorkflowResponseDto } from '../../dtos';
 
 @Injectable()
 export class UpsertWorkflowUseCase {
@@ -158,7 +155,7 @@ export class UpsertWorkflowUseCase {
     const steps: NotificationStep[] = [];
 
     for (const step of command.workflowDto.steps) {
-      const existingStep =
+      const existingStep: NotificationStepEntity | null | undefined =
         // eslint-disable-next-line id-length
         '_id' in step ? existingWorkflow?.steps.find((s) => !!step._id && s._templateId === step._id) : null;
 
@@ -209,7 +206,7 @@ export class UpsertWorkflowUseCase {
     return steps;
   }
 
-  private generateUniqueStepId(step: StepCreateDto | StepUpdateDto, previousSteps: NotificationStep[]): string {
+  private generateUniqueStepId(step: UpsertStepDataCommand, previousSteps: NotificationStep[]): string {
     const slug = slugify(step.name);
 
     let finalStepId = slug;
@@ -313,7 +310,7 @@ export class UpsertWorkflowUseCase {
 
   private findControlValueInRequest(
     updatedStep: NotificationStepEntity,
-    commandSteps: (StepCreateDto | StepUpdateDto)[] | StepCreateDto[]
+    commandSteps: UpsertStepDataCommand[]
   ): Record<string, unknown> | undefined | null {
     const commandStep = commandSteps.find((commandStepX) => {
       const isStepUpdateDashboardDto = '_id' in commandStepX;

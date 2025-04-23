@@ -29,7 +29,7 @@ import {
 } from '@novu/dal';
 import { isSameDay } from 'date-fns';
 import axios from 'axios';
-import { CreateWorkflowRequestDto } from '../dto';
+import { CreateWorkflowRequestDto } from '../dtos';
 
 describe('Create Workflow - /workflows (POST) #novu-v0', async () => {
   let session: UserSession;

@@ -13,27 +13,14 @@ import {
   ValidateNested,
 } from 'class-validator';
 
-import {
-  CustomDataType,
-  JSONSchemaDto,
-  WorkflowStatusEnum,
-  WorkflowTypeEnum,
-} from '@novu/shared';
+import { CustomDataType, WorkflowStatusEnum, WorkflowTypeEnum } from '@novu/shared';
 
 import { Type } from 'class-transformer';
 import { RuntimeIssue } from '@novu/dal';
 import { EnvironmentWithUserCommand } from '../../../commands';
 import { PreferencesRequired } from '../../upsert-preferences';
-import {
-  MAX_DESCRIPTION_LENGTH,
-  MAX_NAME_LENGTH,
-  MAX_TAG_LENGTH,
-} from './upsert-validation-constants';
-import {
-  ContentIssue,
-  IStepControl,
-  NotificationStep,
-} from '../../create-workflow/create-workflow.command';
+import { MAX_DESCRIPTION_LENGTH, MAX_NAME_LENGTH, MAX_TAG_LENGTH } from './upsert-validation-constants';
+import { ContentIssue, IStepControl, JSONSchema, NotificationStep } from '../../../value-objects';
 
 export class UpdateWorkflowCommand extends EnvironmentWithUserCommand {
   @IsDefined()
@@ -106,7 +93,7 @@ export class UpdateWorkflowCommand extends EnvironmentWithUserCommand {
   rawData?: Record<string, unknown>;
 
   @IsOptional()
-  payloadSchema?: JSONSchemaDto;
+  payloadSchema?: JSONSchema;
 
   @IsEnum(WorkflowTypeEnum)
   @IsDefined()
