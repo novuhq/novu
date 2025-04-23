@@ -6,7 +6,7 @@ import { Notification5Fill } from '@/components/icons';
 import { Separator } from '@/components/primitives/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
 import { CompactButton } from '../../primitives/button-compact';
-import { Tooltip, TooltipArrow, TooltipContent, TooltipPortal, TooltipTrigger } from '@/components/primitives/tooltip';
+import { Tooltip, TooltipContent, TooltipPortal, TooltipTrigger } from '@/components/primitives/tooltip';
 
 interface TemplateTabsProps {
   editorContent: React.ReactNode;

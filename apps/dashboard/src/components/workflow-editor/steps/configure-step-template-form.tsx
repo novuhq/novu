@@ -34,7 +34,7 @@ export type StepEditorProps = {
   step: StepResponseDto;
 };
 
-type ConfigureStepTemplateFormProps = StepEditorProps & {
+type ConfigureStepTemplateFormProps = Omit<StepEditorProps, 'hasStepValidationErrors'> & {
   update: UpdateWorkflowFn;
 };
 
