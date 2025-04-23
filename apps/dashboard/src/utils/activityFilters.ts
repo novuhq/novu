@@ -11,22 +11,20 @@ export const DATE_RANGE_OPTIONS = [
 
 export function buildActivityDateFilters({
   organization,
-  subscription,
+  apiServiceLevel,
 }: {
   organization: OrganizationResource;
-  subscription: GetSubscriptionDto;
+  apiServiceLevel?: ApiServiceLevelEnum;
 }) {
   const maxActivityFeedRetentionMs = getFeatureForTierAsNumber(
     FeatureNameEnum.PLATFORM_ACTIVITY_FEED_RETENTION,
-    subscription?.apiServiceLevel ?? (IS_SELF_HOSTED ? ApiServiceLevelEnum.UNLIMITED : ApiServiceLevelEnum.FREE),
+    IS_SELF_HOSTED ? ApiServiceLevelEnum.UNLIMITED : apiServiceLevel || ApiServiceLevelEnum.FREE,
     true
   );
 
   return DATE_RANGE_OPTIONS.map((option) => {
     const isLegacyFreeTier =
-      subscription?.apiServiceLevel === ApiServiceLevelEnum.FREE &&
-      organization &&
-      organization.createdAt < new Date('2025-02-28');
+      apiServiceLevel === ApiServiceLevelEnum.FREE && organization && organization.createdAt < new Date('2025-02-28');
 
     // legacy free can go up to 30 days
     const legacyFreeMaxRetentionMs = 30 * 24 * 60 * 60 * 1000;
@@ -53,7 +51,7 @@ export function getMaxAvailableActivityFeedDateRange({
 
   const lastAvailableActivityFeedFilter = buildActivityDateFilters({
     organization,
-    subscription,
+    apiServiceLevel: subscription.apiServiceLevel,
   })
     .filter((option) => !option.disabled)
     .at(-1);

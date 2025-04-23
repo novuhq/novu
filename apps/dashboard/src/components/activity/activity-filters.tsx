@@ -67,7 +67,7 @@ export function ActivityFilters({
 
     return buildActivityDateFilters({
       organization,
-      subscription,
+      apiServiceLevel: subscription?.apiServiceLevel,
     }).map((option) => ({
       ...option,
       icon: option.disabled ? UpgradeCtaIcon : undefined,
