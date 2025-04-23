@@ -19,11 +19,11 @@ import {
   InvalidateCacheService,
 } from '@novu/application-generic';
 
-import { GroupedBlueprintResponse } from '../dto/grouped-blueprint.response.dto';
+import { GroupedBlueprintResponse } from '../dtos/grouped-blueprint.response.dto';
 import { GetGroupedBlueprints, POPULAR_TEMPLATES_ID_LIST } from '../usecases/get-grouped-blueprints';
 // eslint-disable-next-line import/no-namespace
 import * as blueprintStaticModule from '../usecases/get-grouped-blueprints/consts';
-import { CreateWorkflowRequestDto } from '../../workflows-v1/dto';
+import { CreateWorkflowRequestDto } from '../../workflows-v1/dtos';
 import { getLogger } from '../../shared/services/logger.service';
 
 describe('Get grouped notification template blueprints - /blueprints/group-by-category (GET) #novu-v0', async () => {

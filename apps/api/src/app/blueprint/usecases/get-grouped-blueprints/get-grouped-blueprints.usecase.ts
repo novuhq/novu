@@ -3,7 +3,7 @@ import { NotificationTemplateEntity, NotificationTemplateRepository } from '@nov
 import { buildGroupedBlueprintsKey, CachedResponse, PinoLogger } from '@novu/application-generic';
 import { IGroupedBlueprint } from '@novu/shared';
 
-import { GroupedBlueprintResponse } from '../../dto/grouped-blueprint.response.dto';
+import { GroupedBlueprintResponse } from '../../dtos/grouped-blueprint.response.dto';
 import { GetGroupedBlueprintsCommand, POPULAR_GROUPED_NAME, POPULAR_TEMPLATES_ID_LIST } from './index';
 
 const WEEK_IN_SECONDS = 60 * 60 * 24 * 7;
