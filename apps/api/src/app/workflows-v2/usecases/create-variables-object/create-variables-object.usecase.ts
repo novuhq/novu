@@ -1,9 +1,10 @@
+import lodash from 'lodash';
 import { Injectable } from '@nestjs/common';
 import { ControlValuesRepository, EnvironmentEntity, OrganizationEntity, UserEntity } from '@novu/dal';
 import { ControlValuesLevelEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { FeatureFlagsService, Instrument, InstrumentUsecase } from '@novu/application-generic';
 
-import { keysToObject } from '../../util/utils';
+import { collectKeys, keysToObject } from '../../util/utils';
 import { buildVariables } from '../../util/build-variables';
 import { CreateVariablesObjectCommand } from './create-variables-object.command';
 import { isStringifiedMailyJSONContent } from '../../../environments-v1/usecases/output-renderers/maily-to-liquid/wrap-maily-in-liquid.command';
@@ -65,18 +66,54 @@ export class CreateVariablesObject {
       );
 
       const hasUsedEvents = !!(step.events && typeof step.events === 'string');
-      if (hasUsedEventCount || hasUsedEventsLength || hasUsedEvents) {
-        step.events = Array.isArray(step.events)
-          ? step.events
-          : Array.from({ length: DEFAULT_ARRAY_ELEMENTS }, (_, index) => {
-              return {
-                payload: { name: `event-${index}` },
-              };
-            });
+      const { events } = step;
+      /**
+       * Check if events is an object and has a payload property.
+       */
+      const hasUsedEventsWithPayload = !!(
+        events &&
+        typeof events === 'object' &&
+        !Array.isArray(events) &&
+        'payload' in events
+      );
+      let variableNameAfterpayload = ['name'];
+      if (hasUsedEventsWithPayload) {
+        /**
+         * If events is an object and has a payload property, collect keys from the payload.
+         * e.g. [payload.foo.bar]
+         */
+        variableNameAfterpayload = collectKeys(events.payload);
+      }
+
+      if (hasUsedEventCount || hasUsedEventsLength || hasUsedEvents || hasUsedEventsWithPayload) {
+        const payloadArray = Array.from({ length: DEFAULT_ARRAY_ELEMENTS }, (_, index) => {
+          let payload = {};
+          for (const variableName of variableNameAfterpayload) {
+            payload = { ...payload, ...this.setNestedValue(payload, variableName, `event-${index}`) };
+          }
+
+          return { payload };
+        });
+
+        step.events = Array.isArray(events) ? events : payloadArray;
       }
     });
 
     return variablesObject;
+  }
+
+  private setNestedValue(obj: Record<string, unknown>, path: string, value: string) {
+    const keys = path.split('.');
+
+    const val = keys.reduceRight((acc, key, index) => {
+      if (index === keys.length - 1) {
+        return { [key]: value };
+      } else {
+        return { [key]: acc };
+      }
+    }, {});
+
+    return lodash.merge(obj, val);
   }
 
   private async getControlValues(command: CreateVariablesObjectCommand) {

@@ -245,6 +245,27 @@ function parseByLiquid({
         const isAllowedVariable = isPropertyAllowed(variableSchema, variableName);
         if (isAllowedVariable) {
           validVariables.push({ name: variableName, output: rawOutput });
+          if (filters.length > 0) {
+            filters.forEach((filter) => {
+              const { args } = filter;
+              const firstArg = args[0];
+              if (
+                filter.name === 'toSentence' &&
+                args.length > 0 &&
+                'content' in firstArg &&
+                typeof firstArg.content === 'string' &&
+                firstArg.content.startsWith('payload.')
+              ) {
+                const isFirstArgValid = isPropertyAllowed(variableSchema, firstArg.content);
+                if (isFirstArgValid) {
+                  validVariables.push({
+                    name: `${variableName}.${firstArg.content}`,
+                    output: `{{${firstArg.content}}}`,
+                  });
+                }
+              }
+            });
+          }
         } else {
           invalidVariables.push({
             name: variableName,
