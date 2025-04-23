@@ -1,18 +1,17 @@
 import { IsDefined } from 'class-validator';
 
-import { StepFilter } from '@novu/dal';
-import { IJob, INotificationTemplateStep } from '@novu/shared';
+import { JobEntity, NotificationStepEntity, StepFilter } from '@novu/dal';
 
 import { EnvironmentWithUserCommand } from '../../commands';
-import { IFilterVariables } from '../../utils/filter-processing-details';
+import { IFilterVariables } from '../../utils';
 
 export class ConditionsFilterCommand extends EnvironmentWithUserCommand {
   @IsDefined()
   filters: StepFilter[];
 
-  job?: IJob;
+  job?: JobEntity;
 
-  step?: INotificationTemplateStep;
+  step?: NotificationStepEntity;
 
   variables?: IFilterVariables;
 }

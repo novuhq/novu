@@ -1,4 +1,4 @@
-import { JSONSchemaDto } from '@novu/shared';
+import { JSONSchemaDto } from '../dtos';
 
 type ParsePayloadSchemaOptions = {
   safe?: boolean;

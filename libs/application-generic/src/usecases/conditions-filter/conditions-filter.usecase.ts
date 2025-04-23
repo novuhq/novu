@@ -3,6 +3,7 @@ import axios from 'axios';
 import {
   EnvironmentRepository,
   ExecutionDetailsRepository,
+  JobEntity,
   JobRepository,
   MessageRepository,
   StepFilter,
@@ -19,7 +20,6 @@ import {
   FilterParts,
   FilterPartTypeEnum,
   ICondition,
-  IJob,
   IOnlineInLastFilterPart,
   IPreviousStepFilterPart,
   IRealtimeOnlineFilterPart,
@@ -446,7 +446,7 @@ export class ConditionsFilter extends Filter {
     ));
   }
 
-  private async compileFilter(value: string, variables: IFilterVariables, job: IJob): Promise<string | undefined> {
+  private async compileFilter(value: string, variables: IFilterVariables, job: JobEntity): Promise<string | undefined> {
     try {
       return await this.compileTemplate.execute({
         template: value,

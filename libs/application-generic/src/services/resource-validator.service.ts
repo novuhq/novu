@@ -8,8 +8,8 @@ import {
 } from '@novu/dal';
 import { ApiServiceLevelEnum, FeatureFlagsKeysEnum, FeatureNameEnum, getFeatureForTierAsNumber } from '@novu/shared';
 
-import { NotificationStep } from '../usecases';
 import { FeatureFlagsService } from './feature-flags';
+import { NotificationStep } from '../value-objects/notification.step';
 
 export const DAY_IN_MS = 24 * 60 * 60 * 1000;
 const DEMO_WORKFLOWS_IDENTIFIER = [

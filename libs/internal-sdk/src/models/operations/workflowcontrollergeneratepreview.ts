@@ -16,6 +16,10 @@ export type WorkflowControllerGeneratePreviewRequest = {
    * A header for idempotency purposes
    */
   idempotencyKey?: string | undefined;
+  /**
+   * Preview generation details
+   */
+  generatePreviewRequestDto: components.GeneratePreviewRequestDto;
 };
 
 export type WorkflowControllerGeneratePreviewResponse = {
@@ -32,9 +36,11 @@ export const WorkflowControllerGeneratePreviewRequest$inboundSchema: z.ZodType<
   workflowId: z.string(),
   stepId: z.string(),
   "idempotency-key": z.string().optional(),
+  GeneratePreviewRequestDto: components.GeneratePreviewRequestDto$inboundSchema,
 }).transform((v) => {
   return remap$(v, {
     "idempotency-key": "idempotencyKey",
+    "GeneratePreviewRequestDto": "generatePreviewRequestDto",
   });
 });
 
@@ -43,6 +49,7 @@ export type WorkflowControllerGeneratePreviewRequest$Outbound = {
   workflowId: string;
   stepId: string;
   "idempotency-key"?: string | undefined;
+  GeneratePreviewRequestDto: components.GeneratePreviewRequestDto$Outbound;
 };
 
 /** @internal */
@@ -54,9 +61,12 @@ export const WorkflowControllerGeneratePreviewRequest$outboundSchema: z.ZodType<
   workflowId: z.string(),
   stepId: z.string(),
   idempotencyKey: z.string().optional(),
+  generatePreviewRequestDto:
+    components.GeneratePreviewRequestDto$outboundSchema,
 }).transform((v) => {
   return remap$(v, {
     idempotencyKey: "idempotency-key",
+    generatePreviewRequestDto: "GeneratePreviewRequestDto",
   });
 });
 

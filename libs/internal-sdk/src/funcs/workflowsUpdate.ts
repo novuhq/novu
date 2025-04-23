@@ -3,13 +3,14 @@
  */
 
 import { NovuCore } from "../core.js";
-import { encodeSimple } from "../lib/encodings.js";
+import { encodeJSON, encodeSimple } from "../lib/encodings.js";
 import * as M from "../lib/matchers.js";
 import { compactMap } from "../lib/primitives.js";
 import { safeParse } from "../lib/schemas.js";
 import { RequestOptions } from "../lib/sdks.js";
 import { extractSecurity, resolveGlobalSecurity } from "../lib/security.js";
 import { pathToFunc } from "../lib/url.js";
+import * as components from "../models/components/index.js";
 import {
   ConnectionError,
   InvalidRequestError,
@@ -24,8 +25,15 @@ import * as operations from "../models/operations/index.js";
 import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
+/**
+ * Update an existing workflow
+ *
+ * @remarks
+ * Updates the details of an existing workflow
+ */
 export function workflowsUpdate(
   client: NovuCore,
+  updateWorkflowDto: components.UpdateWorkflowDto,
   workflowId: string,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
@@ -47,6 +55,7 @@ export function workflowsUpdate(
 > {
   return new APIPromise($do(
     client,
+    updateWorkflowDto,
     workflowId,
     idempotencyKey,
     options,
@@ -55,6 +64,7 @@ export function workflowsUpdate(
 
 async function $do(
   client: NovuCore,
+  updateWorkflowDto: components.UpdateWorkflowDto,
   workflowId: string,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
@@ -78,6 +88,7 @@ async function $do(
   ]
 > {
   const input: operations.WorkflowControllerUpdateRequest = {
+    updateWorkflowDto: updateWorkflowDto,
     workflowId: workflowId,
     idempotencyKey: idempotencyKey,
   };
@@ -92,7 +103,7 @@ async function $do(
     return [parsed, { status: "invalid" }];
   }
   const payload = parsed.value;
-  const body = null;
+  const body = encodeJSON("body", payload.UpdateWorkflowDto, { explode: true });
 
   const pathParams = {
     workflowId: encodeSimple("workflowId", payload.workflowId, {
@@ -104,6 +115,7 @@ async function $do(
   const path = pathToFunc("/v2/workflows/{workflowId}")(pathParams);
 
   const headers = new Headers(compactMap({
+    "Content-Type": "application/json",
     Accept: "application/json",
     "idempotency-key": encodeSimple(
       "idempotency-key",
@@ -199,6 +211,7 @@ async function $do(
     | ConnectionError
   >(
     M.json(200, operations.WorkflowControllerUpdateResponse$inboundSchema, {
+      hdrs: true,
       key: "Result",
     }),
     M.jsonErr(414, errors.ErrorDto$inboundSchema),

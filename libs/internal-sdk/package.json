@@ -1,6 +1,6 @@
 {
   "name": "@novu/api",
-  "version": "0.1.19",
+  "version": "0.1.21",
   "author": "Novu",
   "main": "./index.js",
   "sideEffects": false,

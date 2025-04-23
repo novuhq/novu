@@ -5,13 +5,9 @@ import {
   CustomDataType,
   FilterParts,
   IMessageFilter,
-  IMessageTemplate,
-  INotificationTemplate,
-  INotificationTemplateStep,
   INotificationTrigger,
   INotificationTriggerVariable,
   IPreferenceChannels,
-  IStepVariant,
   ITriggerReservedVariable,
   IWorkflowStepMetadata,
   StepIssues,
@@ -26,8 +22,9 @@ import type { ChangePropsValueType } from '../../types';
 import type { EnvironmentId } from '../environment';
 import { NotificationGroupEntity } from '../notification-group';
 import type { OrganizationId } from '../organization';
+import { MessageTemplateEntity } from '../message-template';
 
-export class NotificationTemplateEntity implements INotificationTemplate {
+export class NotificationTemplateEntity {
   _id: string;
 
   name: string;
@@ -117,7 +114,7 @@ export class NotificationTriggerEntity implements INotificationTrigger {
   reservedVariables?: ITriggerReservedVariable[];
 }
 
-export class NotificationStepData implements IStepVariant {
+export class NotificationStepData {
   _id?: string;
 
   uuid?: string;
@@ -137,7 +134,7 @@ export class NotificationStepData implements IStepVariant {
     url: string;
   };
 
-  template?: IMessageTemplate;
+  template?: MessageTemplateEntity;
 
   filters?: StepFilter[];
 
@@ -159,7 +156,7 @@ export class NotificationStepData implements IStepVariant {
    */
   controls?: ControlSchemas;
 }
-export class NotificationStepEntity extends NotificationStepData implements INotificationTemplateStep {
+export class NotificationStepEntity extends NotificationStepData {
   variants?: NotificationStepData[];
 }
 

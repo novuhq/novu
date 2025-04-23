@@ -1,29 +1,48 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IPreferenceChannels } from '@novu/shared';
 import { IsBoolean, IsOptional } from 'class-validator';
 
-export class PreferenceChannels implements IPreferenceChannels {
-  @ApiPropertyOptional()
+export class SubscriberPreferenceChannels {
+  @ApiPropertyOptional({
+    type: Boolean,
+    description: 'Email channel preference',
+    example: true,
+  })
   @IsBoolean()
   @IsOptional()
   email?: boolean;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    type: Boolean,
+    description: 'SMS channel preference',
+    example: false,
+  })
   @IsBoolean()
   @IsOptional()
   sms?: boolean;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    type: Boolean,
+    description: 'In-app channel preference',
+    example: true,
+  })
   @IsBoolean()
   @IsOptional()
   in_app?: boolean;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    type: Boolean,
+    description: 'Chat channel preference',
+    example: false,
+  })
   @IsBoolean()
   @IsOptional()
   chat?: boolean;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    type: Boolean,
+    description: 'Push notification channel preference',
+    example: true,
+  })
   @IsBoolean()
   @IsOptional()
   push?: boolean;

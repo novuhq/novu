@@ -1,19 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 
-import { MessageTemplateRepository } from '@novu/dal';
-import { ICondition, IMessageTemplate } from '@novu/shared';
-
+import { MessageTemplateEntity, MessageTemplateRepository } from '@novu/dal';
+import { ICondition } from '@novu/shared';
 import { SelectVariantCommand } from './select-variant.command';
-import {
-  ConditionsFilter,
-  ConditionsFilterCommand,
-} from '../conditions-filter';
-import { PlatformException } from '../../utils/exceptions';
-import { IFilterVariables } from '../../utils/filter-processing-details';
-import {
-  NormalizeVariables,
-  NormalizeVariablesCommand,
-} from '../normalize-variables';
+import { ConditionsFilter, ConditionsFilterCommand } from '../conditions-filter';
+import { IFilterVariables, PlatformException } from '../../utils';
+import { NormalizeVariables, NormalizeVariablesCommand } from '../normalize-variables';
 
 const LOG_CONTEXT = 'SelectVariant';
 
@@ -22,11 +14,11 @@ export class SelectVariant {
   constructor(
     private conditionsFilter: ConditionsFilter,
     private messageTemplateRepository: MessageTemplateRepository,
-    private normalizeVariablesUsecase: NormalizeVariables,
+    private normalizeVariablesUsecase: NormalizeVariables
   ) {}
 
   async execute(command: SelectVariantCommand): Promise<{
-    messageTemplate: IMessageTemplate;
+    messageTemplate: MessageTemplateEntity;
     conditions?: ICondition[];
   }> {
     if (!command.step.variants?.length) {
@@ -51,7 +43,7 @@ export class SelectVariant {
           step: command.step,
           job: command.job,
           variables: command.filterData,
-        }),
+        })
       );
 
       const { passed, conditions } = await this.conditionsFilter.filter(
@@ -63,7 +55,7 @@ export class SelectVariant {
           step: command.step,
           job: command.job,
           variables,
-        }),
+        })
       );
 
       if (passed) {
@@ -84,7 +76,7 @@ export class SelectVariant {
               conditions,
             },
             errorMessage,
-            LOG_CONTEXT,
+            LOG_CONTEXT
           );
 
           throw new PlatformException(errorMessage);
@@ -98,11 +90,6 @@ export class SelectVariant {
   }
 
   private isFilterDataExist(filterData: IFilterVariables) {
-    return (
-      !!filterData.tenant ||
-      !!filterData.payload ||
-      !!filterData.subscriber ||
-      !!filterData.webhook
-    );
+    return !!filterData.tenant || !!filterData.payload || !!filterData.subscriber || !!filterData.webhook;
   }
 }
