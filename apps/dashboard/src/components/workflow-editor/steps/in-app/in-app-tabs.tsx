@@ -9,7 +9,7 @@ import { CustomStepControls } from '../controls/custom-step-controls';
 import { useEditorPreview } from '../use-editor-preview';
 
 export const InAppTabs = (props: StepEditorProps) => {
-  const { workflow, step } = props;
+  const { workflow, step, hasStepValidationErrors } = props;
   const { dataSchema, uiSchema } = step.controls;
   const form = useFormContext();
   const [tabsValue, setTabsValue] = useState('editor');
@@ -47,6 +47,7 @@ export const InAppTabs = (props: StepEditorProps) => {
       previewContent={previewContent}
       tabsValue={tabsValue}
       onTabChange={setTabsValue}
+      hasStepValidationErrors={hasStepValidationErrors}
     />
   );
 };
