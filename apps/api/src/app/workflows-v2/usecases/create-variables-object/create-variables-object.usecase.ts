@@ -86,16 +86,16 @@ export class CreateVariablesObject {
       }
 
       if (hasUsedEventCount || hasUsedEventsLength || hasUsedEvents || hasUsedEventsWithPayload) {
-        const payloadArray = Array.from({ length: DEFAULT_ARRAY_ELEMENTS }, (_, index) => {
-          let payload = {};
-          for (const variableName of variableNameAfterpayload) {
-            payload = { ...payload, ...this.setNestedValue(payload, variableName, `event-${index}`) };
-          }
+        step.events = Array.isArray(events)
+          ? events
+          : Array.from({ length: DEFAULT_ARRAY_ELEMENTS }, (_, index) => {
+              let payload = {};
+              for (const variableName of variableNameAfterpayload) {
+                payload = { ...payload, ...this.setNestedValue(payload, variableName, `event-${index}`) };
+              }
 
-          return { payload };
-        });
-
-        step.events = Array.isArray(events) ? events : payloadArray;
+              return { payload };
+            });
       }
     });
 
