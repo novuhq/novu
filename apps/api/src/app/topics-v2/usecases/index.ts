@@ -1,5 +1,13 @@
+import { DeleteTopicUseCase } from './delete-topic/delete-topic.usecase';
 import { GetTopicUseCase } from './get-topic/get-topic.usecase';
 import { ListTopicsUseCase } from './list-topics/list-topics.usecase';
+import { UpdateTopicUseCase } from './update-topic/update-topic.usecase';
 import { UpsertTopicUseCase } from './upsert-topic/upsert-topic.usecase';
 
-export const USE_CASES = [GetTopicUseCase, ListTopicsUseCase, UpsertTopicUseCase];
+export const USE_CASES = [
+  DeleteTopicUseCase,
+  GetTopicUseCase,
+  ListTopicsUseCase,
+  UpdateTopicUseCase,
+  UpsertTopicUseCase,
+];
