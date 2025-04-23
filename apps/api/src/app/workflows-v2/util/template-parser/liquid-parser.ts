@@ -1,7 +1,8 @@
 import { FILTER_VALIDATORS, LiquidFilterIssue } from '@novu/framework/internal';
-import { type JSONSchemaDto } from '@novu/shared';
+
 import { Filter, Liquid, LiquidError, Output, RenderError, Template, TokenKind } from 'liquidjs';
 import { extractLiquidExpressions, isValidTemplate } from './parser-utils';
+import { JSONSchemaDto } from '../../dtos';
 
 const LIQUID_CONFIG = {
   strictVariables: true,
