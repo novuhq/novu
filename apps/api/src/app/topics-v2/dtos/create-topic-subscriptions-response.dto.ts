@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { ISubscriptionData, ISubscriptionError, ITopicSubscriptionResult } from './subscription-interfaces';
 
-class TopicDto {
+export class TopicDto {
   @ApiProperty({
     description: 'The unique identifier of the topic',
     example: '64f5e95d3d7946d80d0cb677',
@@ -22,7 +22,7 @@ class TopicDto {
   name?: string;
 }
 
-class SubscriberDto {
+export class SubscriberDto {
   @ApiProperty({
     description: 'The unique identifier of the subscriber',
     example: '64f5e95d3d7946d80d0cb678',
@@ -78,7 +78,7 @@ class SubscriberDto {
   updatedAt?: string;
 }
 
-class SubscriptionDto implements ISubscriptionData {
+export class SubscriptionDto implements ISubscriptionData {
   @ApiProperty({
     description: 'The unique identifier of the subscription',
     example: '64f5e95d3d7946d80d0cb679',
@@ -111,7 +111,7 @@ class SubscriptionDto implements ISubscriptionData {
   updatedAt: string;
 }
 
-class ErrorDto implements ISubscriptionError {
+export class ErrorDto implements ISubscriptionError {
   @ApiProperty({
     description: 'The subscriber ID that failed',
     example: 'invalid-subscriber-id',
@@ -131,7 +131,7 @@ class ErrorDto implements ISubscriptionError {
   message: string;
 }
 
-class MetaDto {
+export class MetaDto {
   @ApiProperty({
     description: 'The total count of subscriber IDs provided',
     example: 3,
