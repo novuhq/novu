@@ -89,7 +89,7 @@ export class CreateTopicSubscriptionsUsecase {
       const subscriber = foundSubscribers.find((sub) => sub._id.toString() === subscription._subscriberId.toString());
 
       subscriptionData.push({
-        _id: subscription._id,
+        _id: subscription._id.toString(),
         topic: {
           _id: topic._id,
           key: topic.key,

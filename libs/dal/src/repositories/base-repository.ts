@@ -305,7 +305,9 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
   }
 
   async upsertMany(data: (FilterQuery<T_DBModel> & T_Enforcement)[]) {
-    const promises = data.map((entry) => this.MongooseModel.findOneAndUpdate(entry, entry, { upsert: true }));
+    const promises = data.map((entry) =>
+      this.MongooseModel.findOneAndUpdate(entry, entry, { upsert: true, new: true })
+    );
 
     return await Promise.all(promises);
   }
