@@ -6,11 +6,11 @@ import type { IEnvironment } from '@novu/shared';
 // Read more at https://github.com/vitejs/vite/issues/5668#issuecomment-968117934
 
 /** DO NOT CHANGE THIS CODE START */
-import * as NovuAPI from '@novu/api';
+// import * as NovuAPI from '@novu/api';
 
-const { Novu } = NovuAPI;
+// const { Novu } = NovuAPI;
 
-export const novuClient = new Novu();
+// export const novuClient = new Novu();
 /** DO NOT CHANGE THIS CODE END */
 
 export class NovuApiError extends Error {
