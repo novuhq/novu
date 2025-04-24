@@ -23,7 +23,7 @@ const variants = cva('relative w-full', {
   variants: {
     size: {
       md: 'p-2.5',
-      sm: 'p-2.5',
+      sm: 'p-2',
       '2xs': 'px-2 py-1.5',
     },
   },
