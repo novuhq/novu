@@ -2,7 +2,6 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InstrumentUsecase } from '@novu/application-generic';
 import { SubscriberRepository, TopicSubscribersRepository } from '@novu/dal';
 import { DirectionEnum } from '@novu/shared';
-import mongoose from 'mongoose';
 import { ListTopicSubscriptionsResponseDto } from '../../dtos/list-topic-subscriptions-response.dto';
 import { TopicSubscriptionResponseDto } from '../../dtos/topic-subscription-response.dto';
 import { ListSubscriberSubscriptionsCommand } from './list-subscriber-subscriptions.command';
@@ -16,6 +15,7 @@ export class ListSubscriberSubscriptionsUseCase {
 
   @InstrumentUsecase()
   async execute(command: ListSubscriberSubscriptionsCommand): Promise<ListTopicSubscriptionsResponseDto> {
+    // Find the subscriber to validate it exists
     const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
 
     if (!subscriber) {
@@ -103,29 +103,7 @@ export class ListSubscriberSubscriptionsUseCase {
     }
 
     // Find all topic information using the topic keys
-    const topics = await this.topicSubscribersRepository._model.aggregate([
-      {
-        $match: {
-          _environmentId: { $eq: new mongoose.Types.ObjectId(environmentId) },
-          topicKey: { $in: topicKeys },
-        },
-      },
-      {
-        $lookup: {
-          from: 'topics',
-          localField: '_topicId',
-          foreignField: '_id',
-          as: 'topic',
-        },
-      },
-      { $unwind: '$topic' },
-      {
-        $group: {
-          _id: '$topicKey',
-          topic: { $first: '$topic' },
-        },
-      },
-    ]);
+    const topics = await this.topicSubscribersRepository.findTopicsByTopicKeys(environmentId, topicKeys);
 
     // Create a map for quick lookup
     const topicsMap = new Map(topics.map((result) => [result._id, result.topic]));

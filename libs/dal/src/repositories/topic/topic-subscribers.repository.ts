@@ -19,6 +19,41 @@ export class TopicSubscribersRepository extends BaseRepository<
     super(TopicSubscribers, TopicSubscribersEntity);
   }
 
+  async findTopicsByTopicKeys(
+    environmentId: EnvironmentId,
+    topicKeys: TopicKey[]
+  ): Promise<{ _id: string; topic: Record<string, unknown> }[]> {
+    if (!topicKeys.length) {
+      return [];
+    }
+
+    const aggregationPipeline = [
+      {
+        $match: {
+          _environmentId: this.convertStringToObjectId(environmentId),
+          topicKey: { $in: topicKeys },
+        },
+      },
+      {
+        $lookup: {
+          from: 'topics',
+          localField: '_topicId',
+          foreignField: '_id',
+          as: 'topic',
+        },
+      },
+      { $unwind: '$topic' },
+      {
+        $group: {
+          _id: '$topicKey',
+          topic: { $first: '$topic' },
+        },
+      },
+    ];
+
+    return await this.aggregate(aggregationPipeline);
+  }
+
   async addSubscribers(subscribers: CreateTopicSubscribersEntity[]): Promise<any[]> {
     const results = await this.upsertMany(subscribers);
 
