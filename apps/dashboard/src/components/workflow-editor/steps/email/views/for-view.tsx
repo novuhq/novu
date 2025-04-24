@@ -1,16 +1,5 @@
 import { Editor, NodeViewContent, NodeViewProps, NodeViewWrapper } from '@tiptap/react';
-import { Lightbulb, Repeat2 } from 'lucide-react';
-import { VariablePill } from '@/components/variable/variable-pill';
-
-function TooltipContent() {
-  return (
-    <p className="shadow-xs absolute left-0 top-[calc(100%+8px)] z-10 flex items-center justify-center gap-2 rounded-md border border-neutral-100 bg-white px-2 py-1">
-      <Lightbulb className="size-3.5" />
-      <span className="text-xs font-medium">Use iterable variables to access the current item in the loop, e.g.</span>
-      <VariablePill variableName="current." className="bg-bg-weak pointer-events-none text-xs font-medium" />
-    </p>
-  );
-}
+import { Repeat2 } from 'lucide-react';
 
 /**
  * @see https://github.com/arikchakma/maily.to/blob/d7ea26e6b28201fc66c241200adaebc689018b03/packages/core/src/editor/nodes/for/for-view.tsx
@@ -43,7 +32,6 @@ export function ForView(props: NodeViewProps) {
       className="mly-relative border-soft-100 mx-[-0.5rem] rounded-md border px-2 py-2"
     >
       <NodeViewContent className="is-editable" />
-      {isOnEmptyForNodeLine && <TooltipContent />}
       <div
         role="button"
         data-repeat-indicator=""
