@@ -76,7 +76,7 @@ export class CreateVariablesObject {
         !Array.isArray(events) &&
         'payload' in events
       );
-      let variableNameAfterPayload = ['name'];
+      let variableNameAfterPayload = hasUsedEventsWithPayload ? ['name'] : [];
       if (hasUsedEventsWithPayload) {
         /**
          * If events is an object and has a payload property, collect keys from the payload.
