@@ -2,7 +2,6 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InstrumentUsecase } from '@novu/application-generic';
 import {
   CreateTopicSubscribersEntity,
-  SubscriberEntity,
   SubscriberRepository,
   TopicEntity,
   TopicRepository,
@@ -35,18 +34,16 @@ export class CreateTopicSubscriptionsUsecase {
 
     const errors: ISubscriptionError[] = [];
     const subscriptionData: ISubscriptionData[] = [];
-    // Find existing subscribers directly using the subscriberRepository
+
     const foundSubscribers = await this.subscriberRepository.searchByExternalSubscriberIds({
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       externalSubscriberIds: command.subscriberIds,
     });
 
-    // Identify which subscribers were not found
     const foundSubscriberIds = foundSubscribers.map((sub) => sub.subscriberId);
     const notFoundSubscriberIds = command.subscriberIds.filter((id) => !foundSubscriberIds.includes(id));
 
-    // Add errors for subscribers not found
     for (const subscriberId of notFoundSubscriberIds) {
       errors.push({
         subscriberId,
@@ -108,8 +105,8 @@ export class CreateTopicSubscriptionsUsecase {
             createdAt: subscriber.createdAt ? new Date(subscriber.createdAt).toISOString() : undefined,
             updatedAt: subscriber.updatedAt ? new Date(subscriber.updatedAt).toISOString() : undefined,
           },
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
+          createdAt: subscriber.createdAt,
+          updatedAt: subscriber.updatedAt,
         });
       }
     }
