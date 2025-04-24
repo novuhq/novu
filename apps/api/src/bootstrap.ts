@@ -7,18 +7,15 @@ import { NestFactory } from '@nestjs/core';
 import bodyParser from 'body-parser';
 
 // eslint-disable-next-line no-restricted-imports
-import { BullMqService, getErrorInterceptor, Logger } from '@novu/application-generic';
+import { BullMqService, getErrorInterceptor, Logger, PinoLogger } from '@novu/application-generic';
 import { AppModule } from './app.module';
 import { ResponseInterceptor } from './app/shared/framework/response.interceptor';
 import { setupSwagger } from './app/shared/framework/swagger/swagger.controller';
-import { getLogger } from './app/shared/services/logger.service';
 import { CONTEXT_PATH, corsOptionsDelegate, validateEnv } from './config';
 import { AllExceptionsFilter } from './exception-filter';
 
 const passport = require('passport');
 const compression = require('compression');
-
-const logger = getLogger('Bootstrap');
 
 const extendedBodySizeRoutes = [
   '/v1/events',
@@ -64,6 +61,9 @@ export async function bootstrap(
     prefix: `${CONTEXT_PATH}v`,
     defaultVersion: '1',
   });
+
+  const logger = await app.resolve(PinoLogger);
+  logger.setContext('Bootstrap');
 
   app.useLogger(app.get(Logger));
   app.flushLogs();

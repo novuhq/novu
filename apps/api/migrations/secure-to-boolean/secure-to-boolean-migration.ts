@@ -1,15 +1,17 @@
 import '../../src/config';
 import { IntegrationRepository } from '@novu/dal';
 import { NestFactory } from '@nestjs/core';
+import { PinoLogger } from '@novu/application-generic';
 import { AppModule } from '../../src/app.module';
-import { getLogger } from '../../src/app/shared/services/logger.service';
 
 const integrationRepository = new IntegrationRepository();
 
-const logger = getLogger('SecureToBooleanMigration');
-
 export async function run() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    logger: false,
+  });
+  const logger = await app.resolve(PinoLogger);
+  logger.setContext('SecureToBooleanMigration');
 
   logger.info('Start migration - update credentials.secure from string to boolean');
 
