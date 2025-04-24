@@ -1,7 +1,13 @@
 import { FILTER_VALIDATORS, LiquidFilterIssue } from '@novu/framework/internal';
 
 import { Filter, Liquid, LiquidError, Output, RenderError, Template, TokenKind } from 'liquidjs';
-import { extractLiquidExpressions, isValidTemplate } from './parser-utils';
+import {
+  DIGEST_EVENTS_VARIABLE_PATTERN,
+  extractLiquidExpressions,
+  isValidDynamicPath,
+  isValidTemplate,
+  VALID_DYNAMIC_PATHS,
+} from './parser-utils';
 import { JSONSchemaDto } from '../../dtos';
 
 const LIQUID_CONFIG = {
@@ -254,15 +260,28 @@ function parseByLiquid({
                 filter.name === 'toSentence' &&
                 args.length > 0 &&
                 'content' in firstArg &&
-                typeof firstArg.content === 'string' &&
-                firstArg.content.startsWith('payload.')
+                typeof firstArg.content === 'string'
               ) {
-                const isFirstArgValid = isPropertyAllowed(variableSchema, firstArg.content);
-                if (isFirstArgValid) {
-                  validVariables.push({
-                    name: `${variableName}.${firstArg.content}`,
-                    output: `{{${firstArg.content}}}`,
-                  });
+                /**
+                 * Check if the parent variable with the first argument is allowed
+                 * basically forcing it to check if additionalProperties is true by checking for final variable name
+                 * and if the parent variable is a valid dynamic path as variableSchema can be undefined.
+                 * OR
+                 * Check if the variable is a digest events array variable
+                 * and the first argument starts with payload.
+                 */
+                if (
+                  (isValidDynamicPath(variableName) &&
+                    isPropertyAllowed(variableSchema, `${variableName}.${firstArg.content}`)) ||
+                  (firstArg.content.startsWith('payload.') && DIGEST_EVENTS_VARIABLE_PATTERN.test(variableName))
+                ) {
+                  const isFirstArgValid = isPropertyAllowed(variableSchema, firstArg.content);
+                  if (isFirstArgValid) {
+                    validVariables.push({
+                      name: `${variableName}.${firstArg.content}`,
+                      output: `{{${firstArg.content}}}`,
+                    });
+                  }
                 }
               }
             });
