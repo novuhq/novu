@@ -31,8 +31,6 @@ export type DefaultInboxProps = {
 
 export type BaseProps = {
   applicationIdentifier: string;
-  /** @deprecated Use subscriber instead */
-  subscriberId: string;
   subscriberHash?: string;
   backendUrl?: string;
   socketUrl?: string;
@@ -41,8 +39,17 @@ export type BaseProps = {
   tabs?: Array<Tab>;
   preferencesFilter?: PreferencesFilter;
   routerPush?: RouterPush;
-  subscriber?: Subscriber | string;
-};
+} & (
+  | {
+      /** @deprecated Use subscriber instead */
+      subscriberId: string;
+      subscriber?: never;
+    }
+  | {
+      subscriber: Subscriber | string;
+      subscriberId?: never;
+    }
+);
 
 export type NotificationRendererProps = {
   renderNotification: NotificationsRenderer;

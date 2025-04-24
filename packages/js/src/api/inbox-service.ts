@@ -24,18 +24,15 @@ export class InboxService {
 
   async initializeSession({
     applicationIdentifier,
-    subscriberId,
     subscriberHash,
     subscriber,
   }: {
     applicationIdentifier: string;
-    subscriberId: string;
     subscriberHash?: string;
-    subscriber?: Subscriber | string;
+    subscriber: Subscriber;
   }): Promise<Session> {
     const response = (await this.#httpClient.post(`${INBOX_ROUTE}/session`, {
       applicationIdentifier,
-      subscriberId,
       subscriberHash,
       subscriber,
     })) as Session;

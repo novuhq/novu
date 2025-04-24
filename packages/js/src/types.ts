@@ -61,7 +61,7 @@ export type Session = {
 
 export type Subscriber = {
   id?: string;
-  subscriberId?: string;
+  subscriberId: string;
   firstName?: string;
   lastName?: string;
   email?: string;
@@ -166,8 +166,6 @@ export type Result<D = undefined, E = NovuError> = Promise<{
 }>;
 
 export type NovuOptions = {
-  /** @deprecated Use subscriber instead */
-  subscriberId: string;
   /** @deprecated Use apiUrl instead  */
   backendUrl?: string;
   /** @internal Should be used internally for testing purposes */
@@ -177,7 +175,16 @@ export type NovuOptions = {
   apiUrl?: string;
   socketUrl?: string;
   useCache?: boolean;
-  subscriber?: Subscriber | string;
-};
+} & (
+  | {
+      /** @deprecated Use subscriber instead */
+      subscriberId: string;
+      subscriber?: never;
+    }
+  | {
+      subscriber: Subscriber | string;
+      subscriberId?: never;
+    }
+);
 
 export type Prettify<T> = { [K in keyof T]: T[K] } & {};

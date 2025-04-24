@@ -1,4 +1,4 @@
-import { Novu, NovuOptions } from '@novu/js';
+import { Novu, NovuOptions, Subscriber } from '@novu/js';
 import { ReactNode, createContext, useContext, useMemo } from 'react';
 
 // @ts-ignore
@@ -27,14 +27,13 @@ export const NovuProvider = ({
   return (
     <InternalNovuProvider
       applicationIdentifier={applicationIdentifier}
-      subscriberId={subscriberId}
       subscriberHash={subscriberHash}
       backendUrl={backendUrl}
       apiUrl={apiUrl}
       socketUrl={socketUrl}
       useCache={useCache}
-      subscriber={subscriber}
       userAgentType="hooks"
+      subscriber={buildSubscriber(subscriberId, subscriber)}
     >
       {children}
     </InternalNovuProvider>
@@ -62,14 +61,13 @@ export const InternalNovuProvider = ({
     () =>
       new Novu({
         applicationIdentifier,
-        subscriberId,
         subscriberHash,
         backendUrl,
         apiUrl,
         socketUrl,
         useCache,
-        subscriber,
         __userAgent: `${baseUserAgent} ${userAgentType}`,
+        ...(subscriber ? { subscriber } : { subscriberId: subscriberId as string }),
       }),
     [
       applicationIdentifier,
@@ -101,3 +99,15 @@ export const useUnsafeNovu = () => {
 
   return context;
 };
+
+function buildSubscriber(subscriberId: string | undefined, subscriber: Subscriber | string | undefined): Subscriber {
+  let subscriberObj: Subscriber;
+
+  if (subscriber) {
+    subscriberObj = typeof subscriber === 'string' ? { subscriberId: subscriber } : subscriber;
+  } else {
+    subscriberObj = { subscriberId: subscriberId as string };
+  }
+
+  return subscriberObj;
+}

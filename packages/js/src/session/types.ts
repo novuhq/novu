@@ -1,9 +1,7 @@
 import { Subscriber } from '../types';
 
 export type InitializeSessionArgs = {
-  /** @deprecated Use subscriber instead */
-  subscriberId: string;
   applicationIdentifier: string;
+  subscriber: Subscriber;
   subscriberHash?: string;
-  subscriber?: Subscriber | string;
 };
