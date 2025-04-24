@@ -1,27 +1,28 @@
-import { JSONSchemaDto } from '@novu/shared';
+import { JsonSchemaTypeEnum } from '@novu/dal';
+import { JSONSchemaDto } from '../dtos';
 
 function determineSchemaType(value: unknown): JSONSchemaDto {
   if (value === null) {
-    return { type: 'null' };
+    return { type: JsonSchemaTypeEnum.NULL };
   }
 
   if (Array.isArray(value)) {
     return {
-      type: 'array',
-      items: value.length > 0 ? determineSchemaType(value[0]) : { type: 'null' },
+      type: JsonSchemaTypeEnum.ARRAY,
+      items: value.length > 0 ? determineSchemaType(value[0]) : { type: JsonSchemaTypeEnum.ARRAY },
     };
   }
 
   switch (typeof value) {
     case 'string':
-      return { type: 'string', default: value };
+      return { type: JsonSchemaTypeEnum.STRING, default: value };
     case 'number':
-      return { type: 'number', default: value };
+      return { type: JsonSchemaTypeEnum.NUMBER, default: value };
     case 'boolean':
-      return { type: 'boolean', default: value };
+      return { type: JsonSchemaTypeEnum.BOOLEAN, default: value };
     case 'object':
       return {
-        type: 'object',
+        type: JsonSchemaTypeEnum.OBJECT,
         properties: Object.entries(value).reduce(
           (acc, [key, val]) => {
             acc[key] = determineSchemaType(val);
@@ -34,13 +35,13 @@ function determineSchemaType(value: unknown): JSONSchemaDto {
       };
 
     default:
-      return { type: 'null' };
+      return { type: JsonSchemaTypeEnum.NULL };
   }
 }
 
 export function buildVariablesSchema(object: unknown) {
   const schema: JSONSchemaDto = {
-    type: 'object',
+    type: JsonSchemaTypeEnum.OBJECT,
     properties: {},
     required: [],
     additionalProperties: true,

@@ -4,7 +4,7 @@ import { extractLiquidTemplateVariables } from './liquid-parser';
 describe('parseLiquidVariables', () => {
   it('should not extract variable without namespace', () => {
     const template = '{{name}} {{age}}';
-    const { validVariables, invalidVariables } = extractLiquidTemplateVariables(template);
+    const { validVariables, invalidVariables } = extractLiquidTemplateVariables({ template });
     const validVariablesNames = validVariables.map((variable) => variable.name);
 
     expect(validVariablesNames).to.have.members([]);
@@ -15,7 +15,7 @@ describe('parseLiquidVariables', () => {
 
   it('should extract nested object paths', () => {
     const template = 'Hello {{user.profile.name}}, your address is {{user.address.street}}';
-    const { validVariables } = extractLiquidTemplateVariables(template);
+    const { validVariables } = extractLiquidTemplateVariables({ template });
     const validVariablesNames = validVariables.map((variable) => variable.name);
 
     expect(validVariablesNames).to.have.members(['user.profile.name', 'user.address.street']);
@@ -23,7 +23,7 @@ describe('parseLiquidVariables', () => {
 
   it('should handle multiple occurrences of the same variable', () => {
     const template = '{{user.name}} {{user.name}} {{user.name}} {{invalid..foo}} {{invalid..foo}}';
-    const { validVariables, invalidVariables } = extractLiquidTemplateVariables(template);
+    const { validVariables, invalidVariables } = extractLiquidTemplateVariables({ template });
     const validVariablesNames = validVariables.map((variable) => variable.name);
 
     expect(validVariablesNames).to.have.members(['user.name']);
@@ -33,7 +33,7 @@ describe('parseLiquidVariables', () => {
 
   it('should handle mixed content with HTML and variables', () => {
     const template = '<div>Hello {{user.name}}</div><span>{{status}}</span>';
-    const { validVariables, invalidVariables } = extractLiquidTemplateVariables(template);
+    const { validVariables, invalidVariables } = extractLiquidTemplateVariables({ template });
     const validVariablesNames = validVariables.map((variable) => variable.name);
 
     expect(validVariablesNames).to.have.members(['user.name']);
@@ -43,7 +43,7 @@ describe('parseLiquidVariables', () => {
 
   it('should handle whitespace in template syntax', () => {
     const template = '{{ user.name          }}';
-    const { validVariables } = extractLiquidTemplateVariables(template);
+    const { validVariables } = extractLiquidTemplateVariables({ template });
     const validVariablesNames = validVariables.map((variable) => variable.name);
 
     expect(validVariablesNames).to.have.members(['user.name']);
@@ -51,7 +51,7 @@ describe('parseLiquidVariables', () => {
 
   it('should handle empty template string', () => {
     const template = '';
-    const { validVariables, invalidVariables } = extractLiquidTemplateVariables(template);
+    const { validVariables, invalidVariables } = extractLiquidTemplateVariables({ template });
 
     expect(validVariables).to.have.lengthOf(0);
     expect(invalidVariables).to.have.lengthOf(0);
@@ -59,7 +59,7 @@ describe('parseLiquidVariables', () => {
 
   it('should handle template with no variables', () => {
     const template = 'Hello World!';
-    const { validVariables, invalidVariables } = extractLiquidTemplateVariables(template);
+    const { validVariables, invalidVariables } = extractLiquidTemplateVariables({ template });
 
     expect(validVariables).to.have.lengthOf(0);
     expect(invalidVariables).to.have.lengthOf(0);
@@ -67,7 +67,7 @@ describe('parseLiquidVariables', () => {
 
   it('should handle special characters in variable names', () => {
     const template = '{{subscriber.special_var_1}} {{subscriber.data-point}}';
-    const { validVariables } = extractLiquidTemplateVariables(template);
+    const { validVariables } = extractLiquidTemplateVariables({ template });
     const validVariablesNames = validVariables.map((variable) => variable.name);
 
     expect(validVariablesNames).to.have.members(['subscriber.special_var_1', 'subscriber.data-point']);
@@ -75,7 +75,7 @@ describe('parseLiquidVariables', () => {
 
   it('should handle whitespace in between template syntax', () => {
     const template = '{{ user. name }}';
-    const { validVariables } = extractLiquidTemplateVariables(template);
+    const { validVariables } = extractLiquidTemplateVariables({ template });
 
     expect(validVariables).to.have.lengthOf(1);
     expect(validVariables[0].name).to.equal('user.name');
@@ -83,7 +83,7 @@ describe('parseLiquidVariables', () => {
 
   it('should extract array variables from for loop syntax', () => {
     const template = '{{ payload.comments[0].author }} {{ payload.comments[1].author }}';
-    const { validVariables, invalidVariables } = extractLiquidTemplateVariables(template);
+    const { validVariables, invalidVariables } = extractLiquidTemplateVariables({ template });
     const validVariablesNames = validVariables.map((variable) => variable.name);
 
     expect(validVariablesNames).to.have.members(['payload.comments[0].author', 'payload.comments[1].author']);
@@ -92,9 +92,9 @@ describe('parseLiquidVariables', () => {
 
   describe('Error handling', () => {
     it('should handle invalid liquid syntax gracefully', () => {
-      const { validVariables, invalidVariables } = extractLiquidTemplateVariables(
-        '{{invalid..syntax}} {{invalid2..syntax}}'
-      );
+      const { validVariables, invalidVariables } = extractLiquidTemplateVariables({
+        template: '{{invalid..syntax}} {{invalid2..syntax}}',
+      });
 
       expect(validVariables).to.have.lengthOf(0);
       expect(invalidVariables).to.have.lengthOf(2);
@@ -104,9 +104,9 @@ describe('parseLiquidVariables', () => {
     });
 
     it('should handle invalid liquid syntax gracefully, return valid variables', () => {
-      const { validVariables, invalidVariables } = extractLiquidTemplateVariables(
-        '{{subscriber.name}} {{invalid..syntax}}'
-      );
+      const { validVariables, invalidVariables } = extractLiquidTemplateVariables({
+        template: '{{subscriber.name}} {{invalid..syntax}}',
+      });
       const validVariablesNames = validVariables.map((variable) => variable.name);
 
       expect(validVariablesNames).to.have.members(['subscriber.name']);
@@ -115,16 +115,16 @@ describe('parseLiquidVariables', () => {
     });
 
     it('should handle undefined input gracefully', () => {
-      expect(() => extractLiquidTemplateVariables(undefined as any)).to.not.throw();
-      const { validVariables } = extractLiquidTemplateVariables(undefined as any);
+      expect(() => extractLiquidTemplateVariables({ template: undefined as any })).to.not.throw();
+      const { validVariables } = extractLiquidTemplateVariables({ template: undefined as any });
       const validVariablesNames = validVariables.map((variable) => variable.name);
 
       expect(validVariablesNames).to.have.lengthOf(0);
     });
 
     it('should handle non-string input gracefully', () => {
-      expect(() => extractLiquidTemplateVariables({} as any)).to.not.throw();
-      const { validVariables } = extractLiquidTemplateVariables({} as any);
+      expect(() => extractLiquidTemplateVariables({ template: {} as any })).to.not.throw();
+      const { validVariables } = extractLiquidTemplateVariables({ template: {} as any });
       const validVariablesNames = validVariables.map((variable) => variable.name);
 
       expect(validVariablesNames).to.have.lengthOf(0);

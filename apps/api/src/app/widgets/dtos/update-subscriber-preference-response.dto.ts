@@ -9,7 +9,7 @@ import {
   TriggerContextTypeEnum,
   TriggerTypeEnum,
 } from '@novu/shared';
-import { PreferenceChannels } from '../../shared/dtos/preference-channels';
+import { SubscriberPreferenceChannels } from '../../shared/dtos/preference-channels';
 
 class Preference {
   @ApiProperty({
@@ -19,10 +19,10 @@ class Preference {
   enabled: boolean;
 
   @ApiProperty({
-    type: PreferenceChannels,
+    type: SubscriberPreferenceChannels,
     description: 'Subscriber preferences for the different channels regarding this workflow',
   })
-  channels: PreferenceChannels;
+  channels: SubscriberPreferenceChannels;
 }
 
 export class NotificationTriggerVariableResponse implements INotificationTriggerVariable {

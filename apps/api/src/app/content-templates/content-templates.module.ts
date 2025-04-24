@@ -7,19 +7,13 @@ import { USE_CASES } from './usecases';
 import { ContentTemplatesController } from './content-templates.controller';
 import { SharedModule } from '../shared/shared.module';
 import { LayoutsModule } from '../layouts/layouts.module';
-import { getLogger } from '../shared/services/logger.service';
 
-const logger = getLogger('ContentTemplatesModule');
 const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> => {
   const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];
-  try {
-    if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
-      if (require('@novu/ee-translation')?.EnterpriseTranslationModule) {
-        modules.push(require('@novu/ee-translation')?.EnterpriseTranslationModule);
-      }
+  if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
+    if (require('@novu/ee-translation')?.EnterpriseTranslationModule) {
+      modules.push(require('@novu/ee-translation')?.EnterpriseTranslationModule);
     }
-  } catch (e) {
-    logger.error(e, `Unexpected error while importing enterprise modules`);
   }
 
   return modules;

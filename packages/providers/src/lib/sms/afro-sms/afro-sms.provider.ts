@@ -16,6 +16,7 @@ export class AfroSmsProvider extends BaseProvider implements ISmsProvider {
     private config: {
       apiKey?: string;
       senderName?: string;
+      from?: string;
     }
   ) {
     super();
@@ -28,7 +29,8 @@ export class AfroSmsProvider extends BaseProvider implements ISmsProvider {
     const url = `${this.BASE_URL}${this.ENDPOINT}`;
 
     const queryParams = {
-      from: options.from,
+      from: this.config.from || options.from,
+      sender: this.config.senderName,
       to: options.to,
       message: options.content,
     };

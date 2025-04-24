@@ -1,12 +1,19 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { EnvironmentEntity, NotificationTemplateEntity, OrganizationEntity, UserEntity } from '@novu/dal';
-import { captureException } from '@sentry/node';
-import Ajv, { ErrorObject } from 'ajv';
-import addFormats from 'ajv-formats';
 import _ from 'lodash';
 import get from 'lodash/get';
+import Ajv, { ErrorObject } from 'ajv';
+import addFormats from 'ajv-formats';
+import { captureException } from '@sentry/node';
+import { EnvironmentEntity, NotificationTemplateEntity, OrganizationEntity, UserEntity } from '@novu/dal';
 
-import { JSONContent as MailyJSONContent } from '@maily-to/render';
+import {
+  ChannelTypeEnum,
+  createMockObjectFromSchema,
+  FeatureFlagsKeysEnum,
+  JobStatusEnum,
+  StepTypeEnum,
+  WorkflowOriginEnum,
+} from '@novu/shared';
 import {
   dashboardSanitizeControlValues,
   FeatureFlagsService,
@@ -17,28 +24,19 @@ import {
   PinoLogger,
 } from '@novu/application-generic';
 import { actionStepSchemas, channelStepSchemas } from '@novu/framework/internal';
-import {
-  ChannelTypeEnum,
-  createMockObjectFromSchema,
-  FeatureFlagsKeysEnum,
-  GeneratePreviewResponseDto,
-  JobStatusEnum,
-  PreviewPayload,
-  StepResponseDto,
-  StepTypeEnum,
-  WorkflowOriginEnum,
-} from '@novu/shared';
+import { JSONContent as MailyJSONContent } from '@maily-to/render';
 import { PreviewStep, PreviewStepCommand } from '../../../bridge/usecases/preview-step';
 import { FrameworkPreviousStepsOutputState } from '../../../bridge/usecases/preview-step/preview-step.command';
-import { isObjectMailyJSONContent } from '../../../environments-v1/usecases/output-renderers/maily-to-liquid/wrap-maily-in-liquid.command';
-import { buildVariables } from '../../util/build-variables';
-import { buildVariablesSchema } from '../../util/create-schema';
-import { buildLiquidParser, Variable } from '../../util/template-parser/liquid-parser';
-import { mergeCommonObjectKeys } from '../../util/utils';
 import { BuildStepDataUsecase } from '../build-step-data';
+import { PreviewCommand } from './preview.command';
 import { CreateVariablesObjectCommand } from '../create-variables-object/create-variables-object.command';
 import { CreateVariablesObject } from '../create-variables-object/create-variables-object.usecase';
-import { PreviewCommand } from './preview.command';
+import { buildLiquidParser, Variable } from '../../util/template-parser/liquid-parser';
+import { buildVariables } from '../../util/build-variables';
+import { mergeCommonObjectKeys } from '../../util/utils';
+import { buildVariablesSchema } from '../../util/create-schema';
+import { isObjectMailyJSONContent } from '../../../environments-v1/usecases/output-renderers/maily-to-liquid/wrap-maily-in-liquid.command';
+import { GeneratePreviewResponseDto, JSONSchemaDto, PreviewPayloadDto, StepResponseDto } from '../../dtos';
 
 const LOG_CONTEXT = 'GeneratePreviewUsecase';
 
@@ -183,7 +181,7 @@ export class PreviewUsecase {
   private mergePayloadExample(
     workflow: NotificationTemplateEntity,
     payloadExample: Record<string, unknown>,
-    userPayloadExample: PreviewPayload | undefined
+    userPayloadExample: PreviewPayloadDto | undefined
   ) {
     if (workflow.origin === WorkflowOriginEnum.EXTERNAL) {
       // if external workflow, we need to override with stored payload schema
@@ -229,7 +227,7 @@ export class PreviewUsecase {
   }
 
   @Instrument()
-  private async buildVariablesSchema(variablesObject: Record<string, unknown>, variables: Record<string, unknown>) {
+  private async buildVariablesSchema(variablesObject: Record<string, unknown>, variables: JSONSchemaDto) {
     const { payload } = variablesObject;
     const payloadSchema = buildVariablesSchema(payload);
 
@@ -268,7 +266,7 @@ export class PreviewUsecase {
   private async executePreviewUsecase(
     command: PreviewCommand,
     stepData: StepResponseDto,
-    previewPayloadExample: PreviewPayload,
+    previewPayloadExample: PreviewPayloadDto,
     controlValues: Record<string, unknown>
   ) {
     const state = buildState(previewPayloadExample.steps);
@@ -366,7 +364,7 @@ function cleanPreviewExamplePayload(payloadExample: Record<string, unknown>): Re
 /**
  * Prepares the payload for the bridge request by ensuring eventCount is calculated from events length
  */
-function enhanceEventCountValue(payloadExample: PreviewPayload): Record<string, Record<string, unknown>> {
+function enhanceEventCountValue(payloadExample: PreviewPayloadDto): Record<string, Record<string, unknown>> {
   const preparedPayload = _.cloneDeep(payloadExample);
 
   if (preparedPayload.steps && typeof preparedPayload.steps === 'object') {
@@ -495,7 +493,7 @@ function replaceInvalidControlValues(
  * Example: "/foo/bar" becomes "foo.bar"
  */
 function getErrorPath(error: ErrorObject): string {
-  return (error.instancePath.substring(1) || error.params.missingProperty)?.replace(/\//g, '.');
+  return (error.instancePath.substring(1) || error.params.missingProperty).replace(/\//g, '.');
 }
 
 const EMPTY_STRING = '';

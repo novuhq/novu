@@ -24,7 +24,15 @@ export class DigestTimedConfigDto {
   @IsString()
   atTime?: string;
 
-  @ApiPropertyOptional({ description: 'Days of the week for the digest', type: [String], enum: DaysEnum })
+  @ApiPropertyOptional({
+    description: 'Days of the week for the digest',
+    type: 'array',
+    items: {
+      type: 'string',
+      enum: Object.values(DaysEnum),
+    },
+    enumName: 'DaysEnum',
+  })
   @IsOptional()
   @IsArray()
   @IsEnum(DaysEnum, { each: true })

@@ -6,6 +6,7 @@ import { Notification5Fill } from '@/components/icons';
 import { Separator } from '@/components/primitives/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
 import { CompactButton } from '../../primitives/button-compact';
+import { Tooltip, TooltipContent, TooltipPortal, TooltipTrigger } from '@/components/primitives/tooltip';
 
 interface TemplateTabsProps {
   editorContent: React.ReactNode;
@@ -13,6 +14,7 @@ interface TemplateTabsProps {
   tabsValue: string;
   onTabChange: (tab: string) => void;
   previewStep?: () => void;
+  hasStepValidationErrors?: boolean;
 }
 
 export const TemplateTabs = ({
@@ -21,6 +23,7 @@ export const TemplateTabs = ({
   tabsValue,
   onTabChange,
   previewStep,
+  hasStepValidationErrors = false,
 }: TemplateTabsProps) => {
   const navigate = useNavigate();
 
@@ -44,9 +47,24 @@ export const TemplateTabs = ({
             <RiPencilRuler2Line className="size-5 p-0.5" />
             <span>Editor</span>
           </TabsTrigger>
-          <TabsTrigger value="preview" className="gap-1.5" disabled={!previewContent}>
-            <Notification5Fill className="size-5 p-0.5" />
-            <span>Preview</span>
+          <TabsTrigger value="preview" className="gap-1.5" disabled={!previewContent || hasStepValidationErrors}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex gap-1.5">
+                  <Notification5Fill className="size-5 p-0.5" />
+                  <span>Preview</span>
+                </div>
+              </TooltipTrigger>
+              <TooltipPortal>
+                {hasStepValidationErrors && (
+                  <TooltipContent className="flex min-w-min max-w-[200px]" side="bottom">
+                    <span className="text-xs font-normal">
+                      Preview is disabled due to validation issues that need to be addressed
+                    </span>
+                  </TooltipContent>
+                )}
+              </TooltipPortal>
+            </Tooltip>
           </TabsTrigger>
         </TabsList>
 

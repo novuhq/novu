@@ -19,20 +19,13 @@ import { OrganizationController } from './organization.controller';
 import { USE_CASES } from './usecases';
 import { AuthModule } from '../auth/auth.module';
 import { EEOrganizationController } from './ee.organization.controller';
-import { getLogger } from '../shared/services/logger.service';
-
-const logger = getLogger('OrganizationModule');
 
 const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> => {
   const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];
-  try {
-    if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
-      if (require('@novu/ee-billing')?.BillingModule) {
-        modules.push(require('@novu/ee-billing')?.BillingModule.forRoot());
-      }
+  if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
+    if (require('@novu/ee-billing')?.BillingModule) {
+      modules.push(require('@novu/ee-billing')?.BillingModule.forRoot());
     }
-  } catch (e) {
-    logger.error(e, `Unexpected error while importing enterprise modules`);
   }
 
   return modules;

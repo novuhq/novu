@@ -2,10 +2,10 @@ import { ClassSerializerInterceptor, Controller, Get, Param, UseInterceptors } f
 import { EnvironmentRepository, NotificationTemplateRepository } from '@novu/dal';
 
 import { ApiExcludeController } from '@nestjs/swagger';
-import { GroupedBlueprintResponse } from './dto/grouped-blueprint.response.dto';
+import { GroupedBlueprintResponse } from './dtos/grouped-blueprint.response.dto';
 import { GetBlueprint, GetBlueprintCommand } from './usecases/get-blueprint';
 import { GetGroupedBlueprints, GetGroupedBlueprintsCommand } from './usecases/get-grouped-blueprints';
-import { GetBlueprintResponse } from './dto/get-blueprint.response.dto';
+import { GetBlueprintResponse } from './dtos/get-blueprint.response.dto';
 import { ApiCommonResponses } from '../shared/framework/response.decorator';
 
 @ApiCommonResponses()

@@ -47,6 +47,26 @@ export async function bootstrap(): Promise<INestApplication> {
 
   app.enableShutdownHooks();
 
+  /*
+   * Handle unhandled promise rejections
+   * We explicitly crash the process on unhandled rejections as they indicate the application
+   * is in an undefined state. NestJS can't handle these as they occur outside the event lifecycle.
+   * According to Node.js docs, it's unsafe to resume normal operation after unhandled rejections.
+   * We log these rejections with fatal level to ensure they are properly monitored and tracked.
+   * See: https://nodejs.org/api/process.html#process_warning_using_uncaughtexception_correctly
+   */
+  process.on('unhandledRejection', (reason, promise) => {
+    app.get(PinoLogger).fatal(
+      {
+        err: reason,
+        message: 'Unhandled promise rejection',
+        promise,
+      },
+      'Bootstrap'
+    );
+    process.exit(1);
+  });
+
   await app.init();
 
   try {

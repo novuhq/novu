@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger'; // Ensure you have the correct import for ApiProperty
+import { ApiExtraModels, ApiProperty, getSchemaPath } from '@nestjs/swagger'; // Ensure you have the correct import for ApiProperty
 import { ConstraintValidation } from '@novu/application-generic';
 
 export class ErrorDto {
@@ -21,10 +21,28 @@ export class ErrorDto {
   path: string;
 
   @ApiProperty({
-    description: 'A detailed error message.',
-    example: 'Resource not found.',
+    required: false,
+    description: 'Value that failed validation',
+    oneOf: [
+      { type: 'string', nullable: true },
+      { type: 'number' },
+      { type: 'boolean' },
+      { type: 'object', nullable: true },
+      {
+        type: 'array',
+        items: {
+          anyOf: [
+            { type: 'string', nullable: true },
+            { type: 'number' },
+            { type: 'boolean' },
+            { type: 'object', additionalProperties: true },
+          ],
+        },
+      },
+    ],
+    example: 'xx xx xx ',
   })
-  message: string;
+  message?: unknown;
 
   @ApiProperty({
     description: 'Optional context object for additional error details.',
@@ -49,36 +67,13 @@ export class ErrorDto {
   })
   errorId?: string;
 }
-
+@ApiExtraModels(ConstraintValidation)
 export class ValidationErrorDto extends ErrorDto {
   @ApiProperty({
     description: 'A record of validation errors keyed by field name',
     type: 'object',
     additionalProperties: {
-      type: 'object',
-      properties: {
-        messages: {
-          type: 'array',
-          items: { type: 'string' },
-        },
-        value: {
-          oneOf: [
-            {
-              type: 'string',
-              nullable: true, // Allows value to be null
-            },
-            { type: 'number' },
-            { type: 'boolean' },
-            { type: 'object', additionalProperties: true },
-            { type: 'array', items: { type: 'object', additionalProperties: true } },
-          ],
-        },
-      },
-      required: ['messages', 'value'],
-      example: {
-        messages: ['Field is required', 'Invalid format'],
-        value: 'xx xx xx ',
-      },
+      $ref: getSchemaPath(ConstraintValidation),
     },
     example: {
       fieldName1: {
@@ -96,6 +91,13 @@ export class ValidationErrorDto extends ErrorDto {
       fieldName4: {
         messages: ['Must be a valid object'],
         value: { key: 'value' },
+      },
+      fieldName5: {
+        messages: ['Field is missing'],
+        value: null,
+      },
+      fieldName6: {
+        messages: ['Undefined value'],
       },
     },
   })

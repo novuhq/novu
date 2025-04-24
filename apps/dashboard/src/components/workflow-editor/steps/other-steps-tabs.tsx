@@ -3,7 +3,7 @@ import { CustomStepControls } from './controls/custom-step-controls';
 import { TemplateTabs } from './template-tabs';
 import type { StepEditorProps } from './configure-step-template-form';
 
-export const OtherStepTabs = ({ workflow, step }: StepEditorProps) => {
+export const OtherStepTabs = ({ workflow, step, hasStepValidationErrors }: StepEditorProps) => {
   const { dataSchema } = step.controls;
   const [tabsValue, setTabsValue] = useState('editor');
 
@@ -21,6 +21,7 @@ export const OtherStepTabs = ({ workflow, step }: StepEditorProps) => {
       previewContent={previewContent}
       tabsValue={tabsValue}
       onTabChange={setTabsValue}
+      hasStepValidationErrors={hasStepValidationErrors}
     />
   );
 };

@@ -13,6 +13,7 @@ import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { cn } from '@/utils/ui';
 import { VariableSelect } from '@/components/conditions-editor/variable-select';
 import { LiquidVariable } from '@/utils/parseStepVariables';
+import { validateEnhancedDigestFilters } from '../utils';
 
 const preventClick = (e: React.MouseEvent) => {
   e.stopPropagation();
@@ -39,14 +40,36 @@ export const ReorderFilterItem = (props: ReorderFilterItemProps) => {
   const filterDef = liquidFilters.find((t) => t.value === value.value);
   const hasParams = filterDef?.hasParam && filterDef.params;
 
+  const isDigestStepEventsVariable = useMemo(() => {
+    if (variableName.match(/^steps\..+\.events$/)) {
+      return true;
+    }
+
+    return false;
+  }, [variableName]);
+
   const options = useMemo(() => {
     // if it's digest step events variable then fill the options with the payload variables
-    if (variableName.match(/^steps\..+\.events$/)) {
+    if (isDigestStepEventsVariable) {
       return variables.filter((v) => v.name.startsWith('payload')).map((v) => ({ label: v.name, value: v.name }));
     }
 
     return [];
-  }, [variableName, variables]);
+  }, [isDigestStepEventsVariable, variables]);
+
+  const toSentenceIssue = useMemo(() => {
+    const hasToSentence = filterDef?.value === 'toSentence';
+
+    if (isDigestStepEventsVariable && hasToSentence && value.params && value.params?.length > 0) {
+      const variableWithParams = `${value.value}: ${value.params.join(', ')}`;
+
+      const issues = validateEnhancedDigestFilters([variableWithParams], isEnhancedDigestEnabled);
+
+      return issues;
+    }
+
+    return null;
+  }, [filterDef?.value, isDigestStepEventsVariable, isEnhancedDigestEnabled, value.params, value.value]);
 
   return (
     <Reorder.Item
@@ -76,6 +99,7 @@ export const ReorderFilterItem = (props: ReorderFilterItemProps) => {
           itemRef.current.style.minHeight = '';
         }
       }}
+      layout="position"
       {...rest}
     >
       <div
@@ -138,6 +162,7 @@ export const ReorderFilterItem = (props: ReorderFilterItemProps) => {
                     </Tooltip>
                   )}
                 </label>
+
                 {param.type === 'variable' ? (
                   <VariableSelect
                     leftIcon={<Code2 className="text-feature size-3 min-w-3" />}
@@ -149,6 +174,7 @@ export const ReorderFilterItem = (props: ReorderFilterItemProps) => {
                     title={param.description}
                     value={value.params?.[paramIndex] || ''}
                     isClearable
+                    error={toSentenceIssue?.filterParam === param.label ? toSentenceIssue.message : undefined}
                   />
                 ) : (
                   <Input
@@ -157,6 +183,7 @@ export const ReorderFilterItem = (props: ReorderFilterItemProps) => {
                     placeholder={param.placeholder}
                     title={param.description}
                     size="2xs"
+                    hasError={toSentenceIssue?.filterParam === param.label}
                   />
                 )}
               </div>
