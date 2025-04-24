@@ -5,6 +5,7 @@ import { PreferencesSkeleton } from '@/components/subscribers/preferences/prefer
 import { SubscriberActivity } from '@/components/subscribers/subscriber-activity';
 import { SubscriberOverviewForm } from '@/components/subscribers/subscriber-overview-form';
 import { SubscriberOverviewSkeleton } from '@/components/subscribers/subscriber-overview-skeleton';
+import { SubscriberSubscriptions } from '@/components/subscribers/subscriptions/subscriber-subscriptions';
 import TruncatedText from '@/components/truncated-text';
 import { useFetchSubscriber } from '@/hooks/use-fetch-subscriber';
 import useFetchSubscriberPreferences from '@/hooks/use-fetch-subscriber-preferences';
@@ -91,6 +92,10 @@ export function SubscriberTabs(props: SubscriberTabsProps) {
           <span>Preferences</span>
           {tab === 'preferences' && <ActiveTabIndicator />}
         </TabsTrigger>
+        <TabsTrigger value="subscriptions" className={tabTriggerClasses}>
+          <span>Subscriptions</span>
+          {tab === 'subscriptions' && <ActiveTabIndicator />}
+        </TabsTrigger>
         <TabsTrigger value="activity-feed" className={tabTriggerClasses}>
           <span>Activity Feed</span>
           {tab === 'activity-feed' && <ActiveTabIndicator />}
@@ -101,6 +106,9 @@ export function SubscriberTabs(props: SubscriberTabsProps) {
       </TabsContent>
       <TabsContent value="preferences" className="h-full w-full overflow-y-auto">
         <SubscriberPreferences subscriberId={subscriberId} readOnly={readOnly} />
+      </TabsContent>
+      <TabsContent value="subscriptions" className="h-full w-full overflow-y-auto">
+        <SubscriberSubscriptions subscriberId={subscriberId} />
       </TabsContent>
       <TabsContent value="activity-feed" className="h-full w-full overflow-y-auto">
         <SubscriberActivity subscriberId={subscriberId} />

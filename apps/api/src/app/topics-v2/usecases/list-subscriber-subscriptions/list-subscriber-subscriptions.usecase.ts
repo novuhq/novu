@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InstrumentUsecase } from '@novu/application-generic';
 import { SubscriberRepository, TopicSubscribersRepository } from '@novu/dal';
 import { DirectionEnum } from '@novu/shared';
+import mongoose from 'mongoose';
 import { ListTopicSubscriptionsResponseDto } from '../../dtos/list-topic-subscriptions-response.dto';
 import { TopicSubscriptionResponseDto } from '../../dtos/topic-subscription-response.dto';
 import { ListSubscriberSubscriptionsCommand } from './list-subscriber-subscriptions.command';
@@ -15,8 +16,11 @@ export class ListSubscriberSubscriptionsUseCase {
 
   @InstrumentUsecase()
   async execute(command: ListSubscriberSubscriptionsCommand): Promise<ListTopicSubscriptionsResponseDto> {
-    // Find the subscriber to validate it exists
     const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
+
+    if (!subscriber) {
+      throw new NotFoundException('Subscriber not found');
+    }
 
     // Build query for subscriber's topic subscriptions
     const query: any = {
@@ -54,7 +58,7 @@ export class ListSubscriberSubscriptionsUseCase {
     const subscriptionsPagination = await this.topicSubscribersRepository.findWithCursorBasedPagination({
       query,
       paginateField: '_id',
-      sortBy: '_id',
+      sortBy: command.orderBy || '_id',
       sortDirection: command.orderDirection === 1 ? DirectionEnum.ASC : DirectionEnum.DESC,
       limit: command.limit || 10,
       after: afterCursor,
@@ -94,11 +98,15 @@ export class ListSubscriberSubscriptionsUseCase {
     // Need unique topic IDs
     const topicKeys = subscriptions.map((subscription) => subscription.topicKey);
 
-    // Find all topic information
+    if (topicKeys.length === 0) {
+      return [];
+    }
+
+    // Find all topic information using the topic keys
     const topics = await this.topicSubscribersRepository._model.aggregate([
       {
         $match: {
-          _environmentId: environmentId,
+          _environmentId: { $eq: new mongoose.Types.ObjectId(environmentId) },
           topicKey: { $in: topicKeys },
         },
       },
