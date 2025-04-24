@@ -247,7 +247,7 @@ export class TopicsController {
   @ExternalApiAccessible()
   @SdkGroupName('Topics.Subscriptions')
   @SdkMethodName('subscribe')
-  @ApiOperation({ summary: 'Create topic subscriptions' })
+  @ApiOperation({ summary: 'Create topic subscriptions, if the topic does not exist, it will be created.' })
   @ApiParam({ name: 'topicKey', description: 'The key identifier of the topic', type: String })
   @ApiResponse(CreateTopicSubscriptionsResponseDto, 200, false, true, {
     description: 'Subscriptions created successfully',
@@ -263,6 +263,7 @@ export class TopicsController {
     @Param('topicKey') topicKey: string,
     @Body() body: CreateTopicSubscriptionsRequestDto
   ): Promise<CreateTopicSubscriptionsResponseDto> {
+    // Execute the use case to create topic subscriptions
     const result = await this.createTopicSubscriptionsUsecase.execute(
       CreateTopicSubscriptionsCommand.create({
         environmentId: user.environmentId,
@@ -273,17 +274,25 @@ export class TopicsController {
       })
     );
 
-    // Determine the appropriate HTTP status code based on the result
-    if (result.meta.failed > 0 && result.meta.successful > 0) {
+    const typeSafeResult: CreateTopicSubscriptionsResponseDto = {
+      data: result.data.map((item) => ({
+        ...item,
+        createdAt: item.createdAt || '',
+        updatedAt: item.updatedAt || '',
+      })),
+      meta: result.meta,
+      errors: result.errors,
+    };
+
+    if (typeSafeResult.meta.failed > 0 && typeSafeResult.meta.successful > 0) {
       // Partial success - some subscriptions were created, some failed
-      throw new HttpException(result, 207); // 207 Multi-Status
-    } else if (result.meta.failed > 0 && result.meta.successful === 0) {
+      throw new HttpException(typeSafeResult, 207); // 207 Multi-Status
+    } else if (typeSafeResult.meta.failed > 0 && typeSafeResult.meta.successful === 0) {
       // All subscriptions failed but with valid request format
-      throw new HttpException(result, HttpStatus.BAD_REQUEST);
+      throw new HttpException(typeSafeResult, HttpStatus.BAD_REQUEST);
     }
 
-    // All subscriptions were successful
-    return result;
+    return typeSafeResult;
   }
 
   @Delete('/:topicKey/subscriptions')
@@ -317,16 +326,27 @@ export class TopicsController {
       })
     );
 
+    // Ensure createdAt and updatedAt are always strings to match SubscriptionDto
+    const typeSafeResult: DeleteTopicSubscriptionsResponseDto = {
+      data: result.data.map((item) => ({
+        ...item,
+        createdAt: item.createdAt || '',
+        updatedAt: item.updatedAt || '',
+      })),
+      meta: result.meta,
+      errors: result.errors,
+    };
+
     // Determine the appropriate HTTP status code based on the result
-    if (result.meta.failed > 0 && result.meta.successful > 0) {
+    if (typeSafeResult.meta.failed > 0 && typeSafeResult.meta.successful > 0) {
       // Partial success - some subscriptions were deleted, some failed
-      throw new HttpException(result, 207); // 207 Multi-Status
-    } else if (result.meta.failed > 0 && result.meta.successful === 0) {
+      throw new HttpException(typeSafeResult, 207); // 207 Multi-Status
+    } else if (typeSafeResult.meta.failed > 0 && typeSafeResult.meta.successful === 0) {
       // All subscriptions failed but with valid request format
-      throw new HttpException(result, HttpStatus.BAD_REQUEST);
+      throw new HttpException(typeSafeResult, HttpStatus.BAD_REQUEST);
     }
 
     // All subscriptions were successfully deleted
-    return result;
+    return typeSafeResult;
   }
 }

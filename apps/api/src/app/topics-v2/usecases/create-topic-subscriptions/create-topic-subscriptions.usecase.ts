@@ -1,15 +1,16 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InstrumentUsecase } from '@novu/application-generic';
 import {
   CreateTopicSubscribersEntity,
+  SubscriberEntity,
   SubscriberRepository,
   TopicEntity,
   TopicRepository,
   TopicSubscribersEntity,
   TopicSubscribersRepository,
 } from '@novu/dal';
-import { SubscriberDto } from '@novu/shared';
 import { ISubscriptionData, ISubscriptionError, ITopicSubscriptionResult } from '../../dtos/subscription-interfaces';
+import { UpsertTopicUseCase } from '../upsert-topic/upsert-topic.usecase';
 import { CreateTopicSubscriptionsCommand } from './create-topic-subscriptions.command';
 
 @Injectable()
@@ -17,11 +18,21 @@ export class CreateTopicSubscriptionsUsecase {
   constructor(
     private topicRepository: TopicRepository,
     private topicSubscribersRepository: TopicSubscribersRepository,
-    private subscriberRepository: SubscriberRepository
+    private subscriberRepository: SubscriberRepository,
+    private upsertTopicUseCase: UpsertTopicUseCase
   ) {}
 
   @InstrumentUsecase()
   async execute(command: CreateTopicSubscriptionsCommand): Promise<ITopicSubscriptionResult> {
+    // Use upsert topic usecase to create the topic if it doesn't exist
+    await this.upsertTopicUseCase.execute({
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+      userId: command.userId,
+      key: command.topicKey,
+    });
+
+    // Get the topic entity from the repository after upsert
     const topic = await this.topicRepository.findTopicByKey(
       command.topicKey,
       command.organizationId,
@@ -29,7 +40,7 @@ export class CreateTopicSubscriptionsUsecase {
     );
 
     if (!topic) {
-      throw new NotFoundException(`Topic with key ${command.topicKey} not found`);
+      throw new Error(`Topic with key ${command.topicKey} not found after upsert`);
     }
 
     const errors: ISubscriptionError[] = [];
@@ -123,7 +134,7 @@ export class CreateTopicSubscriptionsUsecase {
     };
   }
 
-  private mapSubscribersToTopic(topic: TopicEntity, subscribers: SubscriberDto[]): CreateTopicSubscribersEntity[] {
+  private mapSubscribersToTopic(topic: TopicEntity, subscribers: SubscriberEntity[]): CreateTopicSubscribersEntity[] {
     return subscribers.map((subscriber) => ({
       _environmentId: subscriber._environmentId,
       _organizationId: subscriber._organizationId,

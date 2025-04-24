@@ -1,7 +1,7 @@
 import mongoose, { Schema } from 'mongoose';
 
-import { TopicDBModel } from './topic.entity';
 import { schemaOptions } from '../schema-default.options';
+import { TopicDBModel } from './topic.entity';
 
 const topicSchema = new Schema<TopicDBModel>(
   {
@@ -23,7 +23,6 @@ const topicSchema = new Schema<TopicDBModel>(
     },
     name: {
       type: Schema.Types.String,
-      required: true,
     },
   },
   schemaOptions

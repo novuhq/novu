@@ -21,6 +21,12 @@ export class UpsertTopicUseCase {
         name: command.name,
       });
     } else {
+      const updateBody: Record<string, unknown> = {};
+
+      if (command.name) {
+        updateBody.name = command.name;
+      }
+
       topic = await this.topicRepository.findOneAndUpdate(
         {
           _id: topic._id,
@@ -28,9 +34,7 @@ export class UpsertTopicUseCase {
           _organizationId: command.organizationId,
         },
         {
-          $set: {
-            name: command.name,
-          },
+          $set: updateBody,
         }
       );
     }
