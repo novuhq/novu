@@ -22,7 +22,6 @@ export class TopicSubscribersRepository extends BaseRepository<
   async addSubscribers(subscribers: CreateTopicSubscribersEntity[]): Promise<any[]> {
     const results = await this.upsertMany(subscribers);
 
-    // Return the MongoDB results to differentiate inserts from updates
     return results;
   }
 
