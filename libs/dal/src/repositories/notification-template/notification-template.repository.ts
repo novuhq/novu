@@ -268,6 +268,7 @@ export class NotificationTemplateRepository extends BaseRepository<
     const items = await this.MongooseModel.find(requestQuery)
       .populate('steps.template', { type: 1 })
       .populate('notificationGroup')
+      .limit(500) // protective limit
       .read('secondaryPreferred');
 
     return this.mapEntities(items);

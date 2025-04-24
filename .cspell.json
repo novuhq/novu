@@ -736,7 +736,8 @@
     "snooze",
     "unsnooze",
     "snoozed",
-    "unsnoozed"
+    "unsnoozed",
+    "automators"
   ],
   "flagWords": [],
   "patterns": [

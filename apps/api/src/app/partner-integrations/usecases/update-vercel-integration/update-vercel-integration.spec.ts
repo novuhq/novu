@@ -5,7 +5,7 @@ import { stub, restore, assert } from 'sinon';
 import { UserSession } from '@novu/testing';
 import { of } from 'rxjs';
 import { CommunityUserRepository, EnvironmentRepository, MemberRepository, OrganizationRepository } from '@novu/dal';
-import { AnalyticsService } from '@novu/application-generic';
+import { AnalyticsService, PinoLogger } from '@novu/application-generic';
 
 import { BadRequestException } from '@nestjs/common';
 import { UpdateVercelIntegration } from './update-vercel-integration.usecase';
@@ -21,6 +21,7 @@ describe('UpdateVercelIntegration', function () {
   let syncMock;
   let memberRepositoryMock;
   let communityUserRepositoryMock;
+  let loggerMock;
 
   beforeEach(async () => {
     // @ts-ignore
@@ -117,6 +118,16 @@ describe('UpdateVercelIntegration', function () {
       findOne: stub().resolves({ _id: 'internal-user-id' }),
     };
 
+    loggerMock = {
+      log: stub(),
+      error: stub(),
+      warn: stub(),
+      debug: stub(),
+      info: stub(),
+      trace: stub(),
+      setContext: stub(),
+    };
+
     const moduleRef = await Test.createTestingModule({
       providers: [
         UpdateVercelIntegration,
@@ -127,6 +138,7 @@ describe('UpdateVercelIntegration', function () {
         { provide: Sync, useValue: syncMock },
         { provide: MemberRepository, useValue: memberRepositoryMock },
         { provide: CommunityUserRepository, useValue: communityUserRepositoryMock },
+        { provide: PinoLogger, useValue: loggerMock },
       ],
     }).compile();
 

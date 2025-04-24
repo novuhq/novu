@@ -126,6 +126,7 @@ const baseTheme = (options: { multiline?: boolean }) =>
     // important to show the cursor at the beginning of the line
     '.cm-line': {
       marginLeft: '1px',
+      lineHeight: '20px',
     },
     'div.cm-content': {
       padding: 0,

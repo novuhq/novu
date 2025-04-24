@@ -30,7 +30,7 @@ export type SubscriberResponseDto = {
   /**
    * The email address of the subscriber.
    */
-  email?: string | null | undefined;
+  email?: string | undefined;
   /**
    * The phone number of the subscriber.
    */
@@ -43,10 +43,6 @@ export type SubscriberResponseDto = {
    * The locale setting of the subscriber, indicating their preferred language or region.
    */
   locale?: string | undefined;
-  /**
-   * The identifier used to create this subscriber, which typically corresponds to the user ID in your system.
-   */
-  subscriberId: string;
   /**
    * An array of channel settings associated with the subscriber.
    */
@@ -65,6 +61,22 @@ export type SubscriberResponseDto = {
    * The timestamp indicating when the subscriber was last online, in ISO 8601 format.
    */
   lastOnlineAt?: string | undefined;
+  /**
+   * The version of the subscriber document.
+   */
+  v?: number | undefined;
+  /**
+   * Additional custom data for the subscriber
+   */
+  data?: { [k: string]: any } | null | undefined;
+  /**
+   * Timezone of the subscriber
+   */
+  timezone?: string | undefined;
+  /**
+   * The identifier used to create this subscriber, which typically corresponds to the user ID in your system.
+   */
+  subscriberId: string;
   /**
    * The unique identifier of the organization to which the subscriber belongs.
    */
@@ -85,18 +97,6 @@ export type SubscriberResponseDto = {
    * The timestamp indicating when the subscriber was last updated, in ISO 8601 format.
    */
   updatedAt: string;
-  /**
-   * The version of the subscriber document.
-   */
-  v?: number | undefined;
-  /**
-   * Additional custom data for the subscriber
-   */
-  data?: { [k: string]: any } | null | undefined;
-  /**
-   * Timezone of the subscriber
-   */
-  timezone?: string | undefined;
 };
 
 /** @internal */
@@ -108,29 +108,29 @@ export const SubscriberResponseDto$inboundSchema: z.ZodType<
   _id: z.string().optional(),
   firstName: z.string().optional(),
   lastName: z.string().optional(),
-  email: z.nullable(z.string()).optional(),
+  email: z.string().optional(),
   phone: z.string().optional(),
   avatar: z.string().optional(),
   locale: z.string().optional(),
-  subscriberId: z.string(),
   channels: z.array(ChannelSettingsDto$inboundSchema).optional(),
   topics: z.array(z.string()).optional(),
   isOnline: z.boolean().optional(),
   lastOnlineAt: z.string().optional(),
+  __v: z.number().optional(),
+  data: z.nullable(z.record(z.any())).optional(),
+  timezone: z.string().optional(),
+  subscriberId: z.string(),
   _organizationId: z.string(),
   _environmentId: z.string(),
   deleted: z.boolean(),
   createdAt: z.string(),
   updatedAt: z.string(),
-  __v: z.number().optional(),
-  data: z.nullable(z.record(z.any())).optional(),
-  timezone: z.string().optional(),
 }).transform((v) => {
   return remap$(v, {
     "_id": "id",
+    "__v": "v",
     "_organizationId": "organizationId",
     "_environmentId": "environmentId",
-    "__v": "v",
   });
 });
 
@@ -139,23 +139,23 @@ export type SubscriberResponseDto$Outbound = {
   _id?: string | undefined;
   firstName?: string | undefined;
   lastName?: string | undefined;
-  email?: string | null | undefined;
+  email?: string | undefined;
   phone?: string | undefined;
   avatar?: string | undefined;
   locale?: string | undefined;
-  subscriberId: string;
   channels?: Array<ChannelSettingsDto$Outbound> | undefined;
   topics?: Array<string> | undefined;
   isOnline?: boolean | undefined;
   lastOnlineAt?: string | undefined;
+  __v?: number | undefined;
+  data?: { [k: string]: any } | null | undefined;
+  timezone?: string | undefined;
+  subscriberId: string;
   _organizationId: string;
   _environmentId: string;
   deleted: boolean;
   createdAt: string;
   updatedAt: string;
-  __v?: number | undefined;
-  data?: { [k: string]: any } | null | undefined;
-  timezone?: string | undefined;
 };
 
 /** @internal */
@@ -167,29 +167,29 @@ export const SubscriberResponseDto$outboundSchema: z.ZodType<
   id: z.string().optional(),
   firstName: z.string().optional(),
   lastName: z.string().optional(),
-  email: z.nullable(z.string()).optional(),
+  email: z.string().optional(),
   phone: z.string().optional(),
   avatar: z.string().optional(),
   locale: z.string().optional(),
-  subscriberId: z.string(),
   channels: z.array(ChannelSettingsDto$outboundSchema).optional(),
   topics: z.array(z.string()).optional(),
   isOnline: z.boolean().optional(),
   lastOnlineAt: z.string().optional(),
+  v: z.number().optional(),
+  data: z.nullable(z.record(z.any())).optional(),
+  timezone: z.string().optional(),
+  subscriberId: z.string(),
   organizationId: z.string(),
   environmentId: z.string(),
   deleted: z.boolean(),
   createdAt: z.string(),
   updatedAt: z.string(),
-  v: z.number().optional(),
-  data: z.nullable(z.record(z.any())).optional(),
-  timezone: z.string().optional(),
 }).transform((v) => {
   return remap$(v, {
     id: "_id",
+    v: "__v",
     organizationId: "_organizationId",
     environmentId: "_environmentId",
-    v: "__v",
   });
 });
 

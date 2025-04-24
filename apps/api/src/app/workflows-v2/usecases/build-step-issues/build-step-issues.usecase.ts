@@ -8,7 +8,6 @@ import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { ControlValuesRepository, IntegrationRepository } from '@novu/dal';
 import {
   ControlValuesLevelEnum,
-  JSONSchemaDto,
   StepContentIssue,
   StepContentIssueEnum,
   StepIntegrationIssueEnum,
@@ -34,6 +33,7 @@ import {
   QueryValidatorService,
 } from '../../../shared/services/query-parser/query-validator.service';
 import { parseStepVariables } from '../../util/parse-step-variables';
+import { JSONSchemaDto } from '../../dtos';
 import { buildLiquidParser } from '../../util/template-parser/liquid-parser';
 
 const PAYLOAD_FIELD_PREFIX = 'payload.';
@@ -146,13 +146,20 @@ export class BuildStepIssuesUsecase {
         issues.controls = issues.controls || {};
 
         // eslint-disable-next-line no-param-reassign
-        issues.controls[controlKey] = liquidTemplateIssues.invalidVariables.map((error) => {
-          const message = error.message ? error.message.split(' line:')[0] : '';
+        issues.controls[controlKey] = liquidTemplateIssues.invalidVariables.map((invalidVariable) => {
+          const message = invalidVariable.message ? invalidVariable.message.split(' line:')[0] : '';
+          if ('filterMessage' in invalidVariable) {
+            return {
+              message: `Filter ${invalidVariable.filterMessage} in ${invalidVariable.name}`,
+              issueType: StepContentIssueEnum.INVALID_FILTER_ARG_IN_VARIABLE,
+              variableName: invalidVariable.output,
+            };
+          }
 
           return {
-            message: `Variable ${error.output} ${message}`.trim(),
+            message: `Variable ${invalidVariable.output} ${message}`.trim(),
             issueType: StepContentIssueEnum.ILLEGAL_VARIABLE_IN_CONTROL_VALUE,
-            variableName: error.output,
+            variableName: invalidVariable.output,
           };
         });
       } else {

@@ -39,6 +39,10 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
   const [_, setEditor] = useState<any>();
   const track = useTelemetry();
 
+  const blocks = useMemo(() => {
+    return createEditorBlocks({ track, digestStepBeforeCurrent, isEnhancedDigestEnabled });
+  }, [digestStepBeforeCurrent, isEnhancedDigestEnabled, track]);
+
   const handleCalculateVariables = useCallback(
     ({ query, editor, from }: { query: string; editor: TiptapEditor; from: VariableFrom }) => {
       return calculateVariables({
@@ -64,8 +68,14 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
   );
 
   const extensions = useMemo(
-    () => createExtensions({ handleCalculateVariables, parsedVariables, isEnhancedDigestEnabled }),
-    [handleCalculateVariables, parsedVariables, isEnhancedDigestEnabled]
+    () =>
+      createExtensions({
+        handleCalculateVariables,
+        parsedVariables,
+        blocks,
+        isEnhancedDigestEnabled,
+      }),
+    [handleCalculateVariables, parsedVariables, blocks, isEnhancedDigestEnabled]
   );
 
   /*
@@ -108,10 +118,6 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
     },
     [onChange]
   );
-
-  const blocks = useMemo(() => {
-    return createEditorBlocks({ track, digestStepBeforeCurrent, isEnhancedDigestEnabled });
-  }, [track]);
 
   const _Editor = isEnhancedDigestEnabled ? EditorDigest : Editor;
 

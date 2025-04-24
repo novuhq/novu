@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import { NotificationTemplateService, UserSession } from '@novu/testing';
 import { ChannelCTATypeEnum, INotificationTemplate, INotificationTemplateStep, StepTypeEnum } from '@novu/shared';
 import { PreferencesRepository } from '@novu/dal';
-import { CreateWorkflowRequestDto } from '../dto';
+import { CreateWorkflowRequestDto } from '../dtos';
 
 describe('Get workflow by id - /workflows/:workflowId (GET) #novu-v0', async () => {
   let session: UserSession;

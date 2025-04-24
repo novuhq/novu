@@ -4,7 +4,6 @@
 
 import * as z from "zod";
 import { safeParse } from "../../lib/schemas.js";
-import { ClosedEnum } from "../../types/enums.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 import {
@@ -13,41 +12,17 @@ import {
   ChannelCredentials$Outbound,
   ChannelCredentials$outboundSchema,
 } from "./channelcredentials.js";
-
-/**
- * The provider identifier for the credentials
- */
-export const UpdateSubscriberChannelRequestDtoProviderId = {
-  Slack: "slack",
-  Discord: "discord",
-  Msteams: "msteams",
-  Mattermost: "mattermost",
-  Ryver: "ryver",
-  Zulip: "zulip",
-  GrafanaOnCall: "grafana-on-call",
-  Getstream: "getstream",
-  RocketChat: "rocket-chat",
-  WhatsappBusiness: "whatsapp-business",
-  Fcm: "fcm",
-  Apns: "apns",
-  Expo: "expo",
-  OneSignal: "one-signal",
-  Pushpad: "pushpad",
-  PushWebhook: "push-webhook",
-  PusherBeams: "pusher-beams",
-} as const;
-/**
- * The provider identifier for the credentials
- */
-export type UpdateSubscriberChannelRequestDtoProviderId = ClosedEnum<
-  typeof UpdateSubscriberChannelRequestDtoProviderId
->;
+import {
+  ChatOrPushProviderEnum,
+  ChatOrPushProviderEnum$inboundSchema,
+  ChatOrPushProviderEnum$outboundSchema,
+} from "./chatorpushproviderenum.js";
 
 export type UpdateSubscriberChannelRequestDto = {
   /**
    * The provider identifier for the credentials
    */
-  providerId: UpdateSubscriberChannelRequestDtoProviderId;
+  providerId: ChatOrPushProviderEnum;
   /**
    * The integration identifier
    */
@@ -59,35 +34,12 @@ export type UpdateSubscriberChannelRequestDto = {
 };
 
 /** @internal */
-export const UpdateSubscriberChannelRequestDtoProviderId$inboundSchema:
-  z.ZodNativeEnum<typeof UpdateSubscriberChannelRequestDtoProviderId> = z
-    .nativeEnum(UpdateSubscriberChannelRequestDtoProviderId);
-
-/** @internal */
-export const UpdateSubscriberChannelRequestDtoProviderId$outboundSchema:
-  z.ZodNativeEnum<typeof UpdateSubscriberChannelRequestDtoProviderId> =
-    UpdateSubscriberChannelRequestDtoProviderId$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace UpdateSubscriberChannelRequestDtoProviderId$ {
-  /** @deprecated use `UpdateSubscriberChannelRequestDtoProviderId$inboundSchema` instead. */
-  export const inboundSchema =
-    UpdateSubscriberChannelRequestDtoProviderId$inboundSchema;
-  /** @deprecated use `UpdateSubscriberChannelRequestDtoProviderId$outboundSchema` instead. */
-  export const outboundSchema =
-    UpdateSubscriberChannelRequestDtoProviderId$outboundSchema;
-}
-
-/** @internal */
 export const UpdateSubscriberChannelRequestDto$inboundSchema: z.ZodType<
   UpdateSubscriberChannelRequestDto,
   z.ZodTypeDef,
   unknown
 > = z.object({
-  providerId: UpdateSubscriberChannelRequestDtoProviderId$inboundSchema,
+  providerId: ChatOrPushProviderEnum$inboundSchema,
   integrationIdentifier: z.string().optional(),
   credentials: ChannelCredentials$inboundSchema,
 });
@@ -105,7 +57,7 @@ export const UpdateSubscriberChannelRequestDto$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   UpdateSubscriberChannelRequestDto
 > = z.object({
-  providerId: UpdateSubscriberChannelRequestDtoProviderId$outboundSchema,
+  providerId: ChatOrPushProviderEnum$outboundSchema,
   integrationIdentifier: z.string().optional(),
   credentials: ChannelCredentials$outboundSchema,
 });

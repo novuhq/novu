@@ -1,12 +1,13 @@
-import { ComponentProps } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { WorkflowOriginEnum } from '@novu/shared';
 import { Node as FlowNode, Handle, NodeProps, Position } from '@xyflow/react';
+import { ComponentProps } from 'react';
 import { RiFilter3Fill, RiPlayCircleLine } from 'react-icons/ri';
 import { RQBJsonLogic } from 'react-querybuilder';
-import { WorkflowOriginEnum } from '@novu/shared';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 
 import { createStep } from '@/components/workflow-editor/step-utils';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
+import { useConditionsCount } from '@/hooks/use-conditions-count';
 import { STEP_TYPE_TO_COLOR } from '@/utils/color';
 import { INLINE_CONFIGURABLE_STEP_TYPES, TEMPLATE_CONFIGURABLE_STEP_TYPES } from '@/utils/constants';
 import { StepTypeEnum } from '@/utils/enums';
@@ -16,7 +17,6 @@ import { cn } from '@/utils/ui';
 import { STEP_TYPE_TO_ICON } from '../icons/utils';
 import { AddStepMenu } from './add-step-menu';
 import { Node, NodeBody, NodeError, NodeHeader, NodeIcon, NodeName } from './base-node';
-import { useConditionsCount } from '@/hooks/use-conditions-count';
 
 export type NodeData = {
   addStepIndex?: number;
@@ -360,8 +360,6 @@ export const AddNode = (_props: NodeProps<NodeType>) => {
             },
             {
               onSuccess: (data) => {
-                console.log('data', data);
-
                 if (TEMPLATE_CONFIGURABLE_STEP_TYPES.includes(stepType)) {
                   navigate(
                     buildRoute(ROUTES.EDIT_STEP_TEMPLATE, {

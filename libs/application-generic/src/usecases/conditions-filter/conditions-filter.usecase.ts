@@ -3,6 +3,7 @@ import axios from 'axios';
 import {
   EnvironmentRepository,
   ExecutionDetailsRepository,
+  JobEntity,
   JobRepository,
   MessageRepository,
   StepFilter,
@@ -19,7 +20,6 @@ import {
   FilterParts,
   FilterPartTypeEnum,
   ICondition,
-  IJob,
   IOnlineInLastFilterPart,
   IPreviousStepFilterPart,
   IRealtimeOnlineFilterPart,
@@ -31,11 +31,10 @@ import { differenceInDays, differenceInHours, differenceInMinutes, parseISO } fr
 import { EmailEventStatusEnum } from '@novu/stateless';
 import { createHash, Filter, FilterProcessingDetails, IFilterVariables, PlatformException } from '../../utils';
 import { ConditionsFilterCommand } from './conditions-filter.command';
-import { buildSubscriberKey } from '../../services';
+import { buildSubscriberKey, CachedResponse } from '../../services';
 import { CompileTemplate } from '../compile-template';
 import { CreateExecutionDetails, CreateExecutionDetailsCommand, DetailEnum } from '../create-execution-details';
 import { decryptApiKey } from '../../encryption';
-import { CachedResponse } from '../../services/cache/interceptors/cached-return.interceptor';
 
 export interface IConditionsFilterResponse {
   passed: boolean;
@@ -447,7 +446,7 @@ export class ConditionsFilter extends Filter {
     ));
   }
 
-  private async compileFilter(value: string, variables: IFilterVariables, job: IJob): Promise<string | undefined> {
+  private async compileFilter(value: string, variables: IFilterVariables, job: JobEntity): Promise<string | undefined> {
     try {
       return await this.compileTemplate.execute({
         template: value,

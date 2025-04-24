@@ -1,22 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { InstrumentUsecase } from '@novu/application-generic';
 
-import {
-  PreferencesTypeEnum,
-  StepCreateDto,
-  StepResponseDto,
-  WorkflowCreationSourceEnum,
-  WorkflowOriginEnum,
-  WorkflowPreferences,
-  WorkflowResponseDto,
-  DuplicateWorkflowDto,
-} from '@novu/shared';
+import { PreferencesTypeEnum, WorkflowCreationSourceEnum, WorkflowOriginEnum } from '@novu/shared';
 import { PreferencesEntity, PreferencesRepository } from '@novu/dal';
-import { GetWorkflowUseCase } from '../get-workflow/get-workflow.usecase';
-import { UpsertWorkflowUseCase } from '../upsert-workflow/upsert-workflow.usecase';
+import { GetWorkflowCommand, GetWorkflowUseCase } from '../get-workflow';
+import { UpsertWorkflowCommand, UpsertWorkflowDataCommand, UpsertWorkflowUseCase } from '../upsert-workflow';
 import { DuplicateWorkflowCommand } from './duplicate-workflow.command';
-import { GetWorkflowCommand } from '../get-workflow';
-import { UpsertWorkflowCommand, UpsertWorkflowDataCommand } from '../upsert-workflow/upsert-workflow.command';
+import {
+  DuplicateWorkflowDto,
+  StepResponseDto,
+  StepUpsertDto,
+  WorkflowPreferencesDto,
+  WorkflowResponseDto,
+} from '../../dtos';
 import { WorkflowNotDuplicableException } from '../../exceptions/workflow-not-duplicable-exception';
 
 export const DUPLICABLE_WORKFLOW_ORIGINS = [WorkflowOriginEnum.NOVU_CLOUD];
@@ -45,14 +41,12 @@ export class DuplicateWorkflowUseCase {
     const preferences = await this.getWorkflowPreferences(workflow._id, command.user.environmentId);
     const duplicateWorkflowDto = await this.buildDuplicateWorkflowDto(workflow, command.overrides, preferences);
 
-    const duplicatedWorkflow = await this.upsertWorkflowUseCase.execute(
+    return await this.upsertWorkflowUseCase.execute(
       UpsertWorkflowCommand.create({
         workflowDto: duplicateWorkflowDto,
         user: command.user,
       })
     );
-
-    return duplicatedWorkflow;
   }
 
   private isDuplicable(workflow: WorkflowResponseDto): boolean {
@@ -76,7 +70,7 @@ export class DuplicateWorkflowUseCase {
     };
   }
 
-  private async mapStepsToDuplicate(steps: StepResponseDto[]): Promise<StepCreateDto[]> {
+  private async mapStepsToDuplicate(steps: StepResponseDto[]): Promise<StepUpsertDto[]> {
     return steps.map((step) => ({
       name: step.name ?? '',
       type: step.type,
@@ -85,14 +79,14 @@ export class DuplicateWorkflowUseCase {
   }
 
   private mapPreferences(preferences: PreferencesEntity[]): {
-    user: WorkflowPreferences | null;
-    workflow: WorkflowPreferences | null;
+    user: WorkflowPreferencesDto | null;
+    workflow: WorkflowPreferencesDto | null;
   } {
     return {
       user: preferences.find((pref) => pref.type === PreferencesTypeEnum.USER_WORKFLOW)
-        ?.preferences as WorkflowPreferences | null,
+        ?.preferences as WorkflowPreferencesDto | null,
       workflow: preferences.find((pref) => pref.type === PreferencesTypeEnum.WORKFLOW_RESOURCE)
-        ?.preferences as WorkflowPreferences | null,
+        ?.preferences as WorkflowPreferencesDto | null,
     };
   }
 

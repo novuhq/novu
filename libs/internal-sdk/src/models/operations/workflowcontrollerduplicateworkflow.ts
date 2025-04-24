@@ -6,6 +6,7 @@ import * as z from "zod";
 import { remap as remap$ } from "../../lib/primitives.js";
 import { safeParse } from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
+import * as components from "../components/index.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 
 export type WorkflowControllerDuplicateWorkflowRequest = {
@@ -14,13 +15,12 @@ export type WorkflowControllerDuplicateWorkflowRequest = {
    * A header for idempotency purposes
    */
   idempotencyKey?: string | undefined;
+  duplicateWorkflowDto: components.DuplicateWorkflowDto;
 };
-
-export type WorkflowControllerDuplicateWorkflowResponseBody = {};
 
 export type WorkflowControllerDuplicateWorkflowResponse = {
   headers: { [k: string]: Array<string> };
-  result: WorkflowControllerDuplicateWorkflowResponseBody;
+  result: components.WorkflowResponseDto;
 };
 
 /** @internal */
@@ -29,9 +29,11 @@ export const WorkflowControllerDuplicateWorkflowRequest$inboundSchema:
     z.object({
       workflowId: z.string(),
       "idempotency-key": z.string().optional(),
+      DuplicateWorkflowDto: components.DuplicateWorkflowDto$inboundSchema,
     }).transform((v) => {
       return remap$(v, {
         "idempotency-key": "idempotencyKey",
+        "DuplicateWorkflowDto": "duplicateWorkflowDto",
       });
     });
 
@@ -39,6 +41,7 @@ export const WorkflowControllerDuplicateWorkflowRequest$inboundSchema:
 export type WorkflowControllerDuplicateWorkflowRequest$Outbound = {
   workflowId: string;
   "idempotency-key"?: string | undefined;
+  DuplicateWorkflowDto: components.DuplicateWorkflowDto$Outbound;
 };
 
 /** @internal */
@@ -50,9 +53,11 @@ export const WorkflowControllerDuplicateWorkflowRequest$outboundSchema:
   > = z.object({
     workflowId: z.string(),
     idempotencyKey: z.string().optional(),
+    duplicateWorkflowDto: components.DuplicateWorkflowDto$outboundSchema,
   }).transform((v) => {
     return remap$(v, {
       idempotencyKey: "idempotency-key",
+      duplicateWorkflowDto: "DuplicateWorkflowDto",
     });
   });
 
@@ -99,68 +104,6 @@ export function workflowControllerDuplicateWorkflowRequestFromJSON(
 }
 
 /** @internal */
-export const WorkflowControllerDuplicateWorkflowResponseBody$inboundSchema:
-  z.ZodType<
-    WorkflowControllerDuplicateWorkflowResponseBody,
-    z.ZodTypeDef,
-    unknown
-  > = z.object({});
-
-/** @internal */
-export type WorkflowControllerDuplicateWorkflowResponseBody$Outbound = {};
-
-/** @internal */
-export const WorkflowControllerDuplicateWorkflowResponseBody$outboundSchema:
-  z.ZodType<
-    WorkflowControllerDuplicateWorkflowResponseBody$Outbound,
-    z.ZodTypeDef,
-    WorkflowControllerDuplicateWorkflowResponseBody
-  > = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace WorkflowControllerDuplicateWorkflowResponseBody$ {
-  /** @deprecated use `WorkflowControllerDuplicateWorkflowResponseBody$inboundSchema` instead. */
-  export const inboundSchema =
-    WorkflowControllerDuplicateWorkflowResponseBody$inboundSchema;
-  /** @deprecated use `WorkflowControllerDuplicateWorkflowResponseBody$outboundSchema` instead. */
-  export const outboundSchema =
-    WorkflowControllerDuplicateWorkflowResponseBody$outboundSchema;
-  /** @deprecated use `WorkflowControllerDuplicateWorkflowResponseBody$Outbound` instead. */
-  export type Outbound =
-    WorkflowControllerDuplicateWorkflowResponseBody$Outbound;
-}
-
-export function workflowControllerDuplicateWorkflowResponseBodyToJSON(
-  workflowControllerDuplicateWorkflowResponseBody:
-    WorkflowControllerDuplicateWorkflowResponseBody,
-): string {
-  return JSON.stringify(
-    WorkflowControllerDuplicateWorkflowResponseBody$outboundSchema.parse(
-      workflowControllerDuplicateWorkflowResponseBody,
-    ),
-  );
-}
-
-export function workflowControllerDuplicateWorkflowResponseBodyFromJSON(
-  jsonString: string,
-): SafeParseResult<
-  WorkflowControllerDuplicateWorkflowResponseBody,
-  SDKValidationError
-> {
-  return safeParse(
-    jsonString,
-    (x) =>
-      WorkflowControllerDuplicateWorkflowResponseBody$inboundSchema.parse(
-        JSON.parse(x),
-      ),
-    `Failed to parse 'WorkflowControllerDuplicateWorkflowResponseBody' from JSON`,
-  );
-}
-
-/** @internal */
 export const WorkflowControllerDuplicateWorkflowResponse$inboundSchema:
   z.ZodType<
     WorkflowControllerDuplicateWorkflowResponse,
@@ -168,9 +111,7 @@ export const WorkflowControllerDuplicateWorkflowResponse$inboundSchema:
     unknown
   > = z.object({
     Headers: z.record(z.array(z.string())),
-    Result: z.lazy(() =>
-      WorkflowControllerDuplicateWorkflowResponseBody$inboundSchema
-    ),
+    Result: components.WorkflowResponseDto$inboundSchema,
   }).transform((v) => {
     return remap$(v, {
       "Headers": "headers",
@@ -181,7 +122,7 @@ export const WorkflowControllerDuplicateWorkflowResponse$inboundSchema:
 /** @internal */
 export type WorkflowControllerDuplicateWorkflowResponse$Outbound = {
   Headers: { [k: string]: Array<string> };
-  Result: WorkflowControllerDuplicateWorkflowResponseBody$Outbound;
+  Result: components.WorkflowResponseDto$Outbound;
 };
 
 /** @internal */
@@ -192,9 +133,7 @@ export const WorkflowControllerDuplicateWorkflowResponse$outboundSchema:
     WorkflowControllerDuplicateWorkflowResponse
   > = z.object({
     headers: z.record(z.array(z.string())),
-    result: z.lazy(() =>
-      WorkflowControllerDuplicateWorkflowResponseBody$outboundSchema
-    ),
+    result: components.WorkflowResponseDto$outboundSchema,
   }).transform((v) => {
     return remap$(v, {
       headers: "Headers",

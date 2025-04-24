@@ -5,16 +5,12 @@ function escapeString(str: string): string {
   return str.replace(/'/g, "\\'");
 }
 
-export function formatParamValue(param: string, type?: 'string' | 'number') {
+export function formatParamValue(param: string, type?: string) {
   if (type === 'number') {
     return param;
   }
 
   return `'${escapeString(param)}'`;
-}
-
-export function getDefaultSampleValue(filterValue: string, isEnhancedDigestEnabled: boolean): string {
-  return getFilters(isEnhancedDigestEnabled).find((filter) => filter.value === filterValue)?.sampleValue ?? '';
 }
 
 export function formatLiquidVariable(
@@ -44,3 +40,57 @@ export function formatLiquidVariable(
 
   return `{{${parts.join(' | ')}}}`;
 }
+
+export function validateEnhancedDigestFilters(
+  filters: string[],
+  isEnhancedDigestEnabled: boolean
+): {
+  message: string;
+  name: string;
+  filterParam: string;
+} | null {
+  if (!isEnhancedDigestEnabled) return null;
+
+  const toSentenceFilter = filters.find((f) => f.startsWith('toSentence'));
+
+  if (toSentenceFilter) {
+    const firstParam = toSentenceFilter.split(':')[1]?.split(',')[0]?.trim();
+    const isFirstParamEmpty = !firstParam || firstParam === '' || firstParam === "''" || firstParam === '""';
+
+    if (isFirstParamEmpty) {
+      return { message: 'Object key path is required', name: 'toSentence', filterParam: 'Object key path' };
+    }
+  }
+
+  return null;
+}
+
+export const parseParams = (input: string) => {
+  if (!input) return '';
+  return input
+    .split(',')
+    .map((param) => {
+      const trimmed = param.trim();
+
+      if ((trimmed.startsWith("'") && trimmed.endsWith("'")) || (trimmed.startsWith('"') && trimmed.endsWith('"'))) {
+        return trimmed.slice(1, -1);
+      }
+
+      return trimmed;
+    })
+    .join(', ');
+};
+
+export const getFirstFilterAndItsArgs = (filters: string[]) => {
+  const firstFilter = filters[0];
+  const firstFilterName = firstFilter.split(':')[0];
+  const firstFilterParams = firstFilter.split(':')[1]?.split(',')?.[0];
+  const parsedFilterParams = parseParams(firstFilterParams);
+  const finalParam = parsedFilterParams.length > 0 ? parsedFilterParams : null;
+
+  return {
+    firstFilterName,
+    finalParam,
+    firstFilter,
+  };
+};

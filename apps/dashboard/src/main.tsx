@@ -4,7 +4,6 @@ import { createRoot } from 'react-dom/client';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import './index.css';
 
-import ErrorPage from '@/components/error-page';
 import { ConfigureWorkflow } from '@/components/workflow-editor/configure-workflow';
 import { EditStepConditions } from '@/components/workflow-editor/steps/conditions/edit-step-conditions';
 import { ConfigureStep } from '@/components/workflow-editor/steps/configure-step';
@@ -13,6 +12,7 @@ import {
   ActivityFeed,
   ApiKeysPage,
   CreateWorkflowPage,
+  ErrorPage,
   IntegrationsListPage,
   OrganizationListPage,
   QuestionnairePage,

@@ -9,7 +9,7 @@ import {
   WorkflowOverrideEntity,
 } from '@novu/dal';
 import { UpdateWorkflowOverrideCommand } from './update-workflow-override.command';
-import { UpdateWorkflowOverrideResponseDto } from '../../dto/update-workflow-override-response.dto';
+import { UpdateWorkflowOverrideResponseDto } from '../../dtos/update-workflow-override-response.dto';
 
 @Injectable()
 export class UpdateWorkflowOverride {

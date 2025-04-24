@@ -5,11 +5,11 @@ import { storage, Store } from 'nestjs-pino/storage';
 import { sensitiveFields } from './masking';
 
 export * from './LogDecorator';
+export { getLoggerToken, Logger, LoggerModule, PinoLogger, storage, Store };
 
 export function getErrorInterceptor(): NestInterceptor {
   return new LoggerErrorInterceptor();
 }
-export { Logger, LoggerModule, PinoLogger, storage, Store, getLoggerToken };
 
 const loggingLevelSet = {
   trace: 10,
@@ -41,7 +41,11 @@ export function getLogLevel() {
   return logLevel;
 }
 
-export function createNestLoggingModuleOptions(settings: ILoggerSettings): Params {
+export function createNestLoggingModuleOptions(settings: {
+  serviceName: string;
+  version: string;
+  silent?: boolean;
+}): Params {
   let redactFields: string[] = sensitiveFields;
   redactFields.push('req.headers.authorization');
   const baseWildCards = '*.';
@@ -58,14 +62,17 @@ export function createNestLoggingModuleOptions(settings: ILoggerSettings): Param
     level: getLogLevel(),
     levels: loggingLevelSet,
   };
-  console.log('Logging Configuration:', {
-    level: configSet.level,
-    environment: process.env.NODE_ENV,
-    transport: !configSet.transport ? 'None' : 'pino-pretty',
-    platform: configSet.platform,
-    tenant: configSet.tenant,
-    levels: JSON.stringify(configSet.levels),
-  });
+
+  if (!settings.silent) {
+    console.log('Logging Configuration:', {
+      level: configSet.level,
+      environment: process.env.NODE_ENV,
+      transport: !configSet.transport ? 'None' : 'pino-pretty',
+      platform: configSet.platform,
+      tenant: configSet.tenant,
+      levels: JSON.stringify(configSet.levels),
+    });
+  }
 
   return {
     exclude: [{ path: '*/health-check', method: RequestMethod.GET }],
@@ -76,6 +83,13 @@ export function createNestLoggingModuleOptions(settings: ILoggerSettings): Param
       level: configSet.level,
       redact: {
         paths: redactFields,
+        censor() {
+          /**
+           * This makes sure that the redact doesn't mutate the original object
+           * And only does it on the object that is being logged,
+           * It's strange but it works. No return value needed.
+           */
+        },
       },
       base: {
         pid: process.pid,
@@ -88,9 +102,4 @@ export function createNestLoggingModuleOptions(settings: ILoggerSettings): Param
       autoLogging: !['test'].includes(process.env.NODE_ENV),
     },
   };
-}
-
-interface ILoggerSettings {
-  serviceName: string;
-  version: string;
 }

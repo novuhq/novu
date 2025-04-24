@@ -6,42 +6,16 @@ import * as z from "zod";
 import { safeParse } from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
-import {
-  Overrides,
-  Overrides$inboundSchema,
-  Overrides$Outbound,
-  Overrides$outboundSchema,
-} from "./overrides.js";
-import {
-  PreferenceChannels,
-  PreferenceChannels$inboundSchema,
-  PreferenceChannels$Outbound,
-  PreferenceChannels$outboundSchema,
-} from "./preferencechannels.js";
-import {
-  WorkflowInfoDto,
-  WorkflowInfoDto$inboundSchema,
-  WorkflowInfoDto$Outbound,
-  WorkflowInfoDto$outboundSchema,
-} from "./workflowinfodto.js";
 
 export type WorkflowPreferenceDto = {
   /**
-   * Whether notifications are enabled for this workflow
+   * A flag specifying if notification delivery is enabled for the workflow. If true, notification delivery is enabled by default for all channels. This setting can be overridden by the channel preferences.
    */
-  enabled: boolean;
+  enabled?: boolean | undefined;
   /**
-   * Channel-specific preference settings for this workflow
+   * A flag specifying if the preference is read-only. If true, the preference cannot be changed by the Subscriber.
    */
-  channels: PreferenceChannels;
-  /**
-   * List of preference overrides
-   */
-  overrides: Array<Overrides>;
-  /**
-   * Workflow information
-   */
-  workflow: WorkflowInfoDto;
+  readOnly?: boolean | undefined;
 };
 
 /** @internal */
@@ -50,18 +24,14 @@ export const WorkflowPreferenceDto$inboundSchema: z.ZodType<
   z.ZodTypeDef,
   unknown
 > = z.object({
-  enabled: z.boolean(),
-  channels: PreferenceChannels$inboundSchema,
-  overrides: z.array(Overrides$inboundSchema),
-  workflow: WorkflowInfoDto$inboundSchema,
+  enabled: z.boolean().default(true),
+  readOnly: z.boolean().default(false),
 });
 
 /** @internal */
 export type WorkflowPreferenceDto$Outbound = {
   enabled: boolean;
-  channels: PreferenceChannels$Outbound;
-  overrides: Array<Overrides$Outbound>;
-  workflow: WorkflowInfoDto$Outbound;
+  readOnly: boolean;
 };
 
 /** @internal */
@@ -70,10 +40,8 @@ export const WorkflowPreferenceDto$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   WorkflowPreferenceDto
 > = z.object({
-  enabled: z.boolean(),
-  channels: PreferenceChannels$outboundSchema,
-  overrides: z.array(Overrides$outboundSchema),
-  workflow: WorkflowInfoDto$outboundSchema,
+  enabled: z.boolean().default(true),
+  readOnly: z.boolean().default(false),
 });
 
 /**

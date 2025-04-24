@@ -18,7 +18,9 @@ export class VariablePluginView {
     private viewRef: MutableRefObject<EditorView | null>,
     private lastCompletionRef: MutableRefObject<{ from: number; to: number } | null>,
     private isAllowedVariable: IsAllowedVariable,
-    private onSelect?: (value: string, from: number, to: number) => void
+    private isEnhancedDigestEnabled: boolean,
+    private onSelect?: (value: string, from: number, to: number) => void,
+    private isDigestEventsVariable?: (variableName: string) => boolean
   ) {
     this.decorations = this.createDecorations(view);
     viewRef.current = view;
@@ -54,7 +56,9 @@ export class VariablePluginView {
         continue;
       }
 
-      const { fullLiquidExpression, name, start, end, filtersArray } = parsedVariable;
+      const { fullLiquidExpression, name, filtersArray } = parsedVariable;
+      const start = match.index;
+      const end = start + match[0].length;
 
       // Skip creating pills for variables that are currently being edited
       // This allows users to modify variables without the pill getting in the way
@@ -74,8 +78,10 @@ export class VariablePluginView {
               fullLiquidExpression,
               start,
               end,
-              filtersArray?.length > 0,
-              this.onSelect
+              filtersArray,
+              this.isEnhancedDigestEnabled,
+              this.onSelect,
+              this.isDigestEventsVariable
             ),
             inclusive: false,
             side: -1,

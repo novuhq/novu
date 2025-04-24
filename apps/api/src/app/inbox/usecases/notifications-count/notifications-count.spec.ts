@@ -20,12 +20,7 @@ describe('NotificationsCount', () => {
   beforeEach(() => {
     messageRepository = sinon.createStubInstance(MessageRepository);
     subscriberRepository = sinon.createStubInstance(SubscriberRepository);
-    organizationRepository = sinon.createStubInstance(OrganizationRepository);
-    notificationsCount = new NotificationsCount(
-      messageRepository as any,
-      subscriberRepository as any,
-      organizationRepository as any
-    );
+    notificationsCount = new NotificationsCount(messageRepository as any, subscriberRepository as any);
   });
 
   describe('execute', () => {
@@ -74,11 +69,6 @@ describe('NotificationsCount', () => {
 
       subscriberRepository.findBySubscriberId.resolves(subscriber as any);
       messageRepository.getCount.resolves(count);
-      organizationRepository.findOne.resolves({
-        _id: 'organizationId',
-        apiServiceLevel: 'free',
-        createdAt: new Date('2025-02-28'),
-      } as any);
 
       const command: NotificationsCountCommand = {
         organizationId: 'organizationId',
@@ -107,11 +97,6 @@ describe('NotificationsCount', () => {
 
       subscriberRepository.findBySubscriberId.resolves(subscriber as any);
       messageRepository.getCount.resolves(count);
-      organizationRepository.findOne.resolves({
-        _id: 'organizationId',
-        apiServiceLevel: 'free',
-        createdAt: new Date('2025-02-28'),
-      } as any);
 
       await notificationsCount.execute({
         organizationId: 'organizationId',

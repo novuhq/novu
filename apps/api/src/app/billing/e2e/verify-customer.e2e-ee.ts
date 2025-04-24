@@ -1,4 +1,5 @@
 /* eslint-disable global-require */
+// eslint-disable-next-line no-restricted-imports
 import { Logger } from '@nestjs/common';
 import sinon from 'sinon';
 import { CommunityOrganizationRepository } from '@novu/dal';
