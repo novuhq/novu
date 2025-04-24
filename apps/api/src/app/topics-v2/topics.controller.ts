@@ -74,7 +74,9 @@ export class TopicsController {
   @ExternalApiAccessible()
   @SdkMethodName('list')
   @ApiOperation({ summary: 'Get topics list' })
-  @ApiResponse(ListTopicsResponseDto)
+  @ApiResponse(ListTopicsResponseDto, 200, true, true, {
+    description: 'Successful retrieval of topics list',
+  })
   async listTopics(
     @UserSession() user: UserSessionData,
     @Query() query: ListTopicsQueryDto
@@ -102,7 +104,9 @@ export class TopicsController {
     summary: 'Create or update a topic',
     description: 'Creates a new topic if it does not exist, or updates an existing topic if it already exists',
   })
-  @ApiResponse(TopicResponseDto, 201)
+  @ApiResponse(TopicResponseDto, 201, false, true, {
+    description: 'Topic successfully created/updated',
+  })
   async upsertTopic(
     @UserSession() user: UserSessionData,
     @Body() body: CreateUpdateTopicRequestDto
@@ -124,7 +128,12 @@ export class TopicsController {
   @SdkMethodName('get')
   @ApiOperation({ summary: 'Get topic by key' })
   @ApiParam({ name: 'topicKey', description: 'The key identifier of the topic', type: String })
-  @ApiResponse(TopicResponseDto)
+  @ApiResponse(TopicResponseDto, 200, false, true, {
+    description: 'Topic found and returned successfully',
+  })
+  @ApiResponse(TopicResponseDto, 404, false, true, {
+    description: 'Topic not found',
+  })
   async getTopic(@UserSession() user: UserSessionData, @Param('topicKey') topicKey: string): Promise<TopicResponseDto> {
     return await this.getTopicUsecase.execute(
       GetTopicCommand.create({
@@ -141,7 +150,12 @@ export class TopicsController {
   @SdkMethodName('update')
   @ApiOperation({ summary: 'Update topic by key' })
   @ApiParam({ name: 'topicKey', description: 'The key identifier of the topic', type: String })
-  @ApiResponse(TopicResponseDto)
+  @ApiResponse(TopicResponseDto, 200, false, true, {
+    description: 'Topic updated successfully',
+  })
+  @ApiResponse(TopicResponseDto, 404, false, true, {
+    description: 'Topic not found',
+  })
   async updateTopic(
     @UserSession() user: UserSessionData,
     @Param('topicKey') topicKey: string,
@@ -165,7 +179,15 @@ export class TopicsController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Delete topic by key' })
   @ApiParam({ name: 'topicKey', description: 'The key identifier of the topic', type: String })
-  @ApiResponse(DeleteTopicResponseDto)
+  @ApiResponse(DeleteTopicResponseDto, 200, false, true, {
+    description: 'Topic deleted successfully',
+  })
+  @ApiResponse(DeleteTopicResponseDto, 409, false, true, {
+    description: 'Conflict - topic has subscribers and force flag not provided',
+  })
+  @ApiResponse(DeleteTopicResponseDto, 404, false, true, {
+    description: 'Topic not found',
+  })
   async deleteTopic(
     @UserSession() user: UserSessionData,
     @Param('topicKey') topicKey: string,
@@ -193,7 +215,12 @@ export class TopicsController {
   @SdkMethodName('list')
   @ApiOperation({ summary: 'List topic subscriptions' })
   @ApiParam({ name: 'topicKey', description: 'The key identifier of the topic', type: String })
-  @ApiResponse(ListTopicSubscriptionsResponseDto)
+  @ApiResponse(ListTopicSubscriptionsResponseDto, 200, true, true, {
+    description: 'Subscriptions listed successfully',
+  })
+  @ApiResponse(ListTopicSubscriptionsResponseDto, 404, true, true, {
+    description: 'Topic not found',
+  })
   async listTopicSubscriptions(
     @UserSession() user: UserSessionData,
     @Param('topicKey') topicKey: string,
@@ -222,12 +249,14 @@ export class TopicsController {
   @SdkMethodName('subscribe')
   @ApiOperation({ summary: 'Create topic subscriptions' })
   @ApiParam({ name: 'topicKey', description: 'The key identifier of the topic', type: String })
-  @ApiResponse(CreateTopicSubscriptionsResponseDto, 200)
+  @ApiResponse(CreateTopicSubscriptionsResponseDto, 200, false, true, {
+    description: 'Subscriptions created successfully',
+  })
   @ApiResponse(CreateTopicSubscriptionsResponseDto, 207, false, true, {
     description: 'Partial success - some subscriptions created, some failed',
   })
-  @ApiResponse(CreateTopicSubscriptionsResponseDto, 400, false, true, {
-    description: 'Bad request - all subscriptions failed but with valid request format',
+  @ApiResponse(CreateTopicSubscriptionsResponseDto, 404, false, true, {
+    description: 'Topic not found',
   })
   async createTopicSubscriptions(
     @UserSession() user: UserSessionData,
@@ -264,12 +293,14 @@ export class TopicsController {
   @SdkMethodName('delete')
   @ApiOperation({ summary: 'Delete topic subscriptions' })
   @ApiParam({ name: 'topicKey', description: 'The key identifier of the topic', type: String })
-  @ApiResponse(DeleteTopicSubscriptionsResponseDto, 200)
+  @ApiResponse(DeleteTopicSubscriptionsResponseDto, 200, false, true, {
+    description: 'Subscriptions deleted successfully',
+  })
   @ApiResponse(DeleteTopicSubscriptionsResponseDto, 207, false, true, {
     description: 'Partial success - some subscriptions deleted, some failed',
   })
-  @ApiResponse(DeleteTopicSubscriptionsResponseDto, 400, false, true, {
-    description: 'Bad request - all subscriptions failed but with valid request format',
+  @ApiResponse(DeleteTopicSubscriptionsResponseDto, 404, false, true, {
+    description: 'Topic not found',
   })
   async deleteTopicSubscriptions(
     @UserSession() user: UserSessionData,
