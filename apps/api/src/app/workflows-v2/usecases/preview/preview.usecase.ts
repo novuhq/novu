@@ -35,7 +35,10 @@ import { buildLiquidParser, Variable } from '../../util/template-parser/liquid-p
 import { buildVariables } from '../../util/build-variables';
 import { mergeCommonObjectKeys } from '../../util/utils';
 import { buildVariablesSchema } from '../../util/create-schema';
-import { isObjectMailyJSONContent } from '../../../environments-v1/usecases/output-renderers/maily-to-liquid/wrap-maily-in-liquid.command';
+import {
+  isObjectMailyJSONContent,
+  isStringifiedMailyJSONContent,
+} from '../../../environments-v1/usecases/output-renderers/maily-to-liquid/wrap-maily-in-liquid.command';
 import { GeneratePreviewResponseDto, JSONSchemaDto, PreviewPayloadDto, StepResponseDto } from '../../dtos';
 
 const LOG_CONTEXT = 'GeneratePreviewUsecase';
@@ -301,14 +304,21 @@ export class PreviewUsecase {
   private fixControlValueInvalidVariables(controlValues: unknown, invalidVariables: Variable[]): unknown {
     try {
       let controlValuesString = JSON.stringify(controlValues);
+      const isMailyJSONContent = isStringifiedMailyJSONContent(controlValues);
 
       for (const invalidVariable of invalidVariables) {
-        if (!controlValuesString.includes(invalidVariable.output)) {
+        let variableOutput = invalidVariable.output;
+
+        if (isMailyJSONContent) {
+          variableOutput = variableOutput.replace(/\{\{|\}\}/g, '').trim();
+        }
+
+        if (!controlValuesString.includes(variableOutput)) {
           continue;
         }
 
         const EMPTY_STRING = '';
-        controlValuesString = replaceAll(controlValuesString, invalidVariable.output, EMPTY_STRING);
+        controlValuesString = replaceAll(controlValuesString, variableOutput, EMPTY_STRING);
       }
 
       return JSON.parse(controlValuesString);
