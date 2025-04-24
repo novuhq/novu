@@ -1,3 +1,4 @@
+import { Badge } from '@/components/primitives/badge';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { BlockItem } from '@maily-to/core/blocks';
@@ -16,8 +17,26 @@ export const createDigestBlock = (props: {
     title: 'Digest',
     description: 'Display digested notifications in list.',
     searchTerms: ['digest', 'notification'],
-    icon: <RiShadowLine className="mly-h-4 mly-w-4" />,
+    icon: <RiShadowLine className="h-4 w-4" />,
     preview: '/images/email-editor/digest-block-preview.webp',
+    render: () => {
+      return (
+        <>
+          <div className="flex h-6 w-6 shrink-0 items-center justify-center">
+            <RiShadowLine className="h-4 w-4" />
+          </div>
+          <div className="grow">
+            <p className="flex items-center gap-1 font-medium">
+              Digest
+              <Badge color="orange" size="sm" variant="lighter">
+                New
+              </Badge>
+            </p>
+            <p className="text-xs text-gray-400">Display digested notifications in list.</p>
+          </div>
+        </>
+      );
+    },
     command: ({ editor, range }) => {
       track(TelemetryEvent.DIGEST_BLOCK_ADDED, {
         type: 'digest',

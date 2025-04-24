@@ -6,6 +6,7 @@ import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { BlockItem } from '@maily-to/core/blocks';
 import { BlockCustomPreview } from './block-custom-preview';
+import { Badge } from '@/components/primitives/badge';
 
 const createHorizontalCardWithCta: (props: { track: ReturnType<typeof useTelemetry> }) => BlockItem = (props) => {
   const { track } = props;
@@ -373,6 +374,40 @@ export const createCards = (props: { track: ReturnType<typeof useTelemetry> }) =
         description="Add pre-made cards"
       />
     ),
+    render: () => {
+      return (
+        <>
+          <div className="flex h-6 w-6 shrink-0 items-center justify-center">
+            <CardBlocks className="size-4" />
+          </div>
+          <div className="grow">
+            <p className="flex items-center gap-1 font-medium">
+              Cards
+              <Badge color="orange" size="sm" variant="lighter">
+                New
+              </Badge>
+            </p>
+            <p className="text-xs text-gray-400">Add pre-made cards</p>
+          </div>
+          <span className="block px-1 text-gray-400">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="lucide lucide-chevron-right size-3.5 stroke-[2.5]"
+            >
+              <path d="m9 18 6-6-6-6"></path>
+            </svg>
+          </span>
+        </>
+      );
+    },
 
     commands: [
       createCardWithImageAndCta({ track }),
