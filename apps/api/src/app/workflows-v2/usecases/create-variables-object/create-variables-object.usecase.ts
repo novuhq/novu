@@ -1,4 +1,4 @@
-import lodash from 'lodash';
+import _ from 'lodash';
 import { Injectable } from '@nestjs/common';
 import { ControlValuesRepository, EnvironmentEntity, OrganizationEntity, UserEntity } from '@novu/dal';
 import { ControlValuesLevelEnum, FeatureFlagsKeysEnum } from '@novu/shared';
@@ -88,10 +88,12 @@ export class CreateVariablesObject {
       if (hasUsedEventCount || hasUsedEventsLength || hasUsedEvents || hasUsedEventsWithPayload) {
         step.events = Array.isArray(events)
           ? events
-          : Array.from({ length: DEFAULT_ARRAY_ELEMENTS }, (_, index) => {
+          : Array.from({ length: DEFAULT_ARRAY_ELEMENTS }, () => {
               let payload = {};
               for (const variableName of variableNameAfterPayload) {
-                payload = { ...payload, ...this.setNestedValue(payload, variableName, `event-${index}`) };
+                const key = variableName.split('.').pop() ?? variableName;
+
+                payload = { ...payload, ...this.setNestedValue(payload, variableName, key) };
               }
 
               return { payload };
@@ -113,7 +115,7 @@ export class CreateVariablesObject {
       }
     }, {});
 
-    return lodash.merge(obj, val);
+    return _.merge(obj, val);
   }
 
   private async getControlValues(command: CreateVariablesObjectCommand) {
