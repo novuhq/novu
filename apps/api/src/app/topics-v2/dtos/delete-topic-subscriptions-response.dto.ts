@@ -93,8 +93,9 @@ class SubscriptionDto {
   @ApiProperty({
     description: 'The subscriber information',
     type: SubscriberDto,
+    nullable: true,
   })
-  subscriber: SubscriberDto;
+  subscriber: SubscriberDto | null;
 
   @ApiProperty({
     description: 'The creation date of the subscription',

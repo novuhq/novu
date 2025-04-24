@@ -20,9 +20,9 @@ export interface ISubscriptionData {
     email?: string;
     createdAt?: string;
     updatedAt?: string;
-  };
-  createdAt: string;
-  updatedAt: string;
+  } | null;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface ITopicSubscriptionResult {

@@ -102,28 +102,27 @@ export class DeleteTopicSubscriptionsUsecase {
     // Map existing subscriptions to response format before deleting them
     for (const subscription of existingSubscriptions) {
       const subscriber = foundSubscribers.find((sub) => sub._id.toString() === subscription._subscriberId.toString());
-      if (subscriber) {
-        subscriptionData.push({
-          _id: subscription._id.toString(),
-          topic: {
-            _id: topic._id.toString(),
-            key: topic.key,
-            name: topic.name,
-          },
-          subscriber: {
-            _id: subscriber._id.toString(),
-            subscriberId: subscriber.subscriberId,
-            avatar: subscriber.avatar,
-            firstName: subscriber.firstName,
-            lastName: subscriber.lastName,
-            email: subscriber.email,
-            createdAt: subscriber.createdAt ? new Date(subscriber.createdAt).toISOString() : undefined,
-            updatedAt: subscriber.updatedAt ? new Date(subscriber.updatedAt).toISOString() : undefined,
-          },
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        });
-      }
+      
+      subscriptionData.push({
+        _id: subscription._id,
+        topic: {
+          _id: topic._id,
+          key: topic.key,
+          name: topic.name,
+        },
+        subscriber: subscriber ? {
+          _id: subscriber._id,
+          subscriberId: subscriber.subscriberId,
+          avatar: subscriber.avatar,
+          firstName: subscriber.firstName,
+          lastName: subscriber.lastName,
+          email: subscriber.email,
+          createdAt: subscriber.createdAt,
+          updatedAt: subscriber.updatedAt,
+        } : null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
     }
 
     // Only delete subscriptions if there are any to delete

@@ -87,28 +87,29 @@ export class CreateTopicSubscriptionsUsecase {
     // Map subscriptions to response format
     for (const subscription of allSubscriptions) {
       const subscriber = foundSubscribers.find((sub) => sub._id.toString() === subscription._subscriberId.toString());
-      if (subscriber) {
-        subscriptionData.push({
-          _id: subscription._id.toString(),
-          topic: {
-            _id: topic._id.toString(),
-            key: topic.key,
-            name: topic.name,
-          },
-          subscriber: {
-            _id: subscriber._id.toString(),
-            subscriberId: subscriber.subscriberId,
-            avatar: subscriber.avatar,
-            firstName: subscriber.firstName,
-            lastName: subscriber.lastName,
-            email: subscriber.email,
-            createdAt: subscriber.createdAt ? new Date(subscriber.createdAt).toISOString() : undefined,
-            updatedAt: subscriber.updatedAt ? new Date(subscriber.updatedAt).toISOString() : undefined,
-          },
-          createdAt: subscriber.createdAt,
-          updatedAt: subscriber.updatedAt,
-        });
-      }
+
+      subscriptionData.push({
+        _id: subscription._id,
+        topic: {
+          _id: topic._id,
+          key: topic.key,
+          name: topic.name,
+        },
+        subscriber: subscriber
+          ? {
+              _id: subscriber._id,
+              subscriberId: subscriber.subscriberId,
+              avatar: subscriber.avatar,
+              firstName: subscriber.firstName,
+              lastName: subscriber.lastName,
+              email: subscriber.email,
+              createdAt: subscriber.createdAt,
+              updatedAt: subscriber.updatedAt,
+            }
+          : null,
+        createdAt: subscription.createdAt,
+        updatedAt: subscription.updatedAt,
+      });
     }
 
     return {
