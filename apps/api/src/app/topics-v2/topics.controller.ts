@@ -5,6 +5,7 @@ import {
   Delete,
   Get,
   HttpCode,
+  HttpException,
   HttpStatus,
   Param,
   Patch,
@@ -221,14 +222,19 @@ export class TopicsController {
   @SdkMethodName('subscribe')
   @ApiOperation({ summary: 'Create topic subscriptions' })
   @ApiParam({ name: 'topicKey', description: 'The key identifier of the topic', type: String })
-  @HttpCode(HttpStatus.OK)
-  @ApiResponse(CreateTopicSubscriptionsResponseDto)
+  @ApiResponse(CreateTopicSubscriptionsResponseDto, 200)
+  @ApiResponse(CreateTopicSubscriptionsResponseDto, 207, false, true, {
+    description: 'Partial success - some subscriptions created, some failed',
+  })
+  @ApiResponse(CreateTopicSubscriptionsResponseDto, 400, false, true, {
+    description: 'Bad request - all subscriptions failed but with valid request format',
+  })
   async createTopicSubscriptions(
     @UserSession() user: UserSessionData,
     @Param('topicKey') topicKey: string,
     @Body() body: CreateTopicSubscriptionsRequestDto
   ): Promise<CreateTopicSubscriptionsResponseDto> {
-    return await this.createTopicSubscriptionsUsecase.execute(
+    const result = await this.createTopicSubscriptionsUsecase.execute(
       CreateTopicSubscriptionsCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
@@ -237,6 +243,18 @@ export class TopicsController {
         subscriberIds: body.subscriberIds,
       })
     );
+
+    // Determine the appropriate HTTP status code based on the result
+    if (result.meta.failed > 0 && result.meta.successful > 0) {
+      // Partial success - some subscriptions were created, some failed
+      throw new HttpException(result, 207); // 207 Multi-Status
+    } else if (result.meta.failed > 0 && result.meta.successful === 0) {
+      // All subscriptions failed but with valid request format
+      throw new HttpException(result, HttpStatus.BAD_REQUEST);
+    }
+
+    // All subscriptions were successful
+    return result;
   }
 
   @Delete('/:topicKey/subscriptions')
@@ -246,14 +264,19 @@ export class TopicsController {
   @SdkMethodName('delete')
   @ApiOperation({ summary: 'Delete topic subscriptions' })
   @ApiParam({ name: 'topicKey', description: 'The key identifier of the topic', type: String })
-  @HttpCode(HttpStatus.OK)
-  @ApiResponse(DeleteTopicSubscriptionsResponseDto)
+  @ApiResponse(DeleteTopicSubscriptionsResponseDto, 200)
+  @ApiResponse(DeleteTopicSubscriptionsResponseDto, 207, false, true, {
+    description: 'Partial success - some subscriptions deleted, some failed',
+  })
+  @ApiResponse(DeleteTopicSubscriptionsResponseDto, 400, false, true, {
+    description: 'Bad request - all subscriptions failed but with valid request format',
+  })
   async deleteTopicSubscriptions(
     @UserSession() user: UserSessionData,
     @Param('topicKey') topicKey: string,
     @Body() body: DeleteTopicSubscriptionsRequestDto
   ): Promise<DeleteTopicSubscriptionsResponseDto> {
-    await this.deleteTopicSubscriptionsUsecase.execute(
+    const result = await this.deleteTopicSubscriptionsUsecase.execute(
       DeleteTopicSubscriptionsCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
@@ -263,8 +286,16 @@ export class TopicsController {
       })
     );
 
-    return {
-      acknowledged: true,
-    };
+    // Determine the appropriate HTTP status code based on the result
+    if (result.meta.failed > 0 && result.meta.successful > 0) {
+      // Partial success - some subscriptions were deleted, some failed
+      throw new HttpException(result, 207); // 207 Multi-Status
+    } else if (result.meta.failed > 0 && result.meta.successful === 0) {
+      // All subscriptions failed but with valid request format
+      throw new HttpException(result, HttpStatus.BAD_REQUEST);
+    }
+
+    // All subscriptions were successfully deleted
+    return result;
   }
 }
