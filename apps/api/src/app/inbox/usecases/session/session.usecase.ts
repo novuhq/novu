@@ -81,7 +81,7 @@ export class Session {
         organizationId: environment._organizationId,
         environmentId: environment._id,
         subscriberId: command.subscriberId,
-        filters: [{ read: false }],
+        filters: [{ read: false, snoozed: false }],
       })
     );
     const [{ count: totalUnreadCount }] = data;

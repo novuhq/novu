@@ -36,6 +36,7 @@ export class MarkManyNotificationsAs {
       ids: command.ids,
       read: command.read,
       archived: command.archived,
+      snoozedUntilDate: command.snoozedUntilDate,
     });
 
     await this.invalidateCacheService.invalidateQuery({

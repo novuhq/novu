@@ -85,6 +85,8 @@ const messageSchema = new Schema<MessageDBModel>(
       type: Schema.Types.Boolean,
       default: false,
     },
+    snoozedUntilDate: Schema.Types.Date,
+    deliveryDates: [Schema.Types.Date],
     lastSeenDate: Schema.Types.Date,
     lastReadDate: Schema.Types.Date,
     archivedAt: Schema.Types.Date,
@@ -213,6 +215,7 @@ messageSchema.index({
   read: 1,
   archived: 1,
   seen: 1,
+  snoozedUntilDate: 1,
   createdAt: -1,
 });
 

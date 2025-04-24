@@ -30,6 +30,7 @@ export enum FeatureNameEnum {
   PLATFORM_ACTIVITY_FEED_RETENTION = 'platformActivityFeedRetention',
   PLATFORM_MAX_DIGEST_WINDOW_TIME = 'platformMaxDigestWindowTime',
   PLATFORM_MAX_DELAY_DURATION = 'platformMaxDelayDuration',
+  PLATFORM_MAX_SNOOZE_DURATION = 'platformMaxSnoozeDuration',
   PLATFORM_STEP_CONTROLS_BOOLEAN = 'platformStepControlsBoolean',
   PLATFORM_BLOCK_BASED_EMAIL_EDITOR_BOOLEAN = 'platformBlockBasedEmailEditorBoolean',
   PLATFORM_REMOVE_NOVU_BRANDING_BOOLEAN = 'platformRemoveNovuBrandingBoolean',
@@ -288,6 +289,13 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
   [FeatureNameEnum.PLATFORM_MAX_DELAY_DURATION]: {
     [ApiServiceLevelEnum.FREE]: { label: '24 Hours', value: 24, timeSuffix: 'h' },
     [ApiServiceLevelEnum.PRO]: { label: '7 days', value: 7, timeSuffix: 'd' },
+    [ApiServiceLevelEnum.BUSINESS]: { label: '90 days', value: 90, timeSuffix: 'd' },
+    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Custom', value: UNLIMITED_VALUE, timeSuffix: 'd' },
+    [ApiServiceLevelEnum.UNLIMITED]: { label: 'Unlimited', value: UNLIMITED_VALUE, timeSuffix: 'd' },
+  },
+  [FeatureNameEnum.PLATFORM_MAX_SNOOZE_DURATION]: {
+    [ApiServiceLevelEnum.FREE]: { label: 'No', value: 0 },
+    [ApiServiceLevelEnum.PRO]: { label: '90 days', value: 90, timeSuffix: 'd' },
     [ApiServiceLevelEnum.BUSINESS]: { label: '90 days', value: 90, timeSuffix: 'd' },
     [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Custom', value: UNLIMITED_VALUE, timeSuffix: 'd' },
     [ApiServiceLevelEnum.UNLIMITED]: { label: 'Unlimited', value: UNLIMITED_VALUE, timeSuffix: 'd' },

@@ -126,7 +126,12 @@ const PROVIDERS = [
 ];
 
 const IMPORTS = [
-  QueuesModule.forRoot([JobTopicNameEnum.WEB_SOCKETS, JobTopicNameEnum.WORKFLOW, JobTopicNameEnum.INBOUND_PARSE_MAIL]),
+  QueuesModule.forRoot([
+    JobTopicNameEnum.WEB_SOCKETS,
+    JobTopicNameEnum.WORKFLOW,
+    JobTopicNameEnum.INBOUND_PARSE_MAIL,
+    JobTopicNameEnum.STANDARD,
+  ]),
   LoggerModule.forRoot(
     createNestLoggingModuleOptions({
       serviceName: packageJson.name,
