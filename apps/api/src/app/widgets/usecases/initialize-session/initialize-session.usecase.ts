@@ -15,6 +15,7 @@ import { AuthService } from '../../../auth/services/auth.service';
 import { InitializeSessionCommand } from './initialize-session.command';
 
 import { SessionInitializeResponseDto } from '../../dtos/session-initialize-response.dto';
+import { isHmacValid } from '../../../shared/helpers/is-valid-hmac';
 
 @Injectable()
 export class InitializeSession {
@@ -61,7 +62,7 @@ export class InitializeSession {
         lastName: command.lastName,
         email: command.email,
         phone: command.phone,
-        allowUpdate: isHmacValid(environment, command),
+        allowUpdate: isHmacValid(environment.apiKeys[0].key, command.subscriberId, command.hmacHash),
       })
     );
 
@@ -84,14 +85,7 @@ export class InitializeSession {
 }
 
 function validateNotificationCenterEncryption(environment, command: InitializeSessionCommand) {
-  if (!isHmacValid(environment, command)) {
+  if (!isHmacValid(environment.apiKeys[0].key, command.subscriberId, command.hmacHash)) {
     throw new BadRequestException('Please provide a valid HMAC hash');
   }
-}
-
-function isHmacValid(environment, command: InitializeSessionCommand) {
-  const key = decryptApiKey(environment.apiKeys[0].key);
-  const hmacHash = createHash(key, command.subscriberId);
-
-  return hmacHash === command.hmacHash;
 }

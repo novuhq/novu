@@ -12,10 +12,11 @@ import { ChannelTypeEnum, InAppProviderIdEnum, CustomDataType } from '@novu/shar
 import { AuthService } from '../../../auth/services/auth.service';
 import { SubscriberSessionResponseDto } from '../../dtos/subscriber-session-response.dto';
 import { AnalyticsEventsEnum } from '../../utils';
-import { isHmacValid, validateHmacEncryption } from '../../utils/encryption';
+import { validateHmacEncryption } from '../../utils/encryption';
 import { NotificationsCountCommand } from '../notifications-count/notifications-count.command';
 import { NotificationsCount } from '../notifications-count/notifications-count.usecase';
 import { SessionCommand } from './session.command';
+import { isHmacValid } from '../../../shared/helpers/is-valid-hmac';
 
 const ALLOWED_ORIGINS_REGEX = new RegExp(process.env.FRONT_BASE_URL || '');
 
@@ -73,11 +74,7 @@ export class Session {
         avatar: command.subscriber.avatar,
         data: command.subscriber.data as CustomDataType,
         timezone: command.subscriber.timezone,
-        allowUpdate: isHmacValid({
-          apiKey: environment.apiKeys[0].key,
-          subscriberId: command.subscriber.subscriberId,
-          subscriberHash: command.subscriberHash,
-        }),
+        allowUpdate: isHmacValid(environment.apiKeys[0].key, command.subscriber.subscriberId, command.subscriberHash),
       })
     );
 

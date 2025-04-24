@@ -19,7 +19,7 @@ import { MessageActionStatusEnum, PreferenceLevelEnum } from '@novu/shared';
 
 import { SubscriberDto, SubscriberSessionRequestDto } from './dtos/subscriber-session-request.dto';
 import { SubscriberSessionResponseDto } from './dtos/subscriber-session-response.dto';
-import { SessionCommand, SubscriberCommand } from './usecases/session/session.command';
+import { SessionCommand } from './usecases/session/session.command';
 import { Session } from './usecases/session/session.usecase';
 import { ApiCommonResponses } from '../shared/framework/response.decorator';
 import { SubscriberSession } from '../shared/framework/user.decorator';
@@ -78,7 +78,7 @@ export class InboxController {
         subscriber: {
           ...subscriber,
           subscriberId,
-        } satisfies SubscriberCommand,
+        } satisfies SubscriberDto,
         applicationIdentifier: body.applicationIdentifier,
         subscriberHash: body.subscriberHash,
         origin,

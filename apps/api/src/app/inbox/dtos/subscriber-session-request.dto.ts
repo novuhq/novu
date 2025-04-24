@@ -57,4 +57,8 @@ export class SubscriberDto {
   @IsOptional()
   @IsString()
   readonly timezone?: string;
+
+  @IsOptional()
+  @IsString()
+  readonly locale?: string;
 }
