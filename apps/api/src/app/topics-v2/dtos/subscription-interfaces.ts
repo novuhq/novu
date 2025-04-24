@@ -9,7 +9,7 @@ export interface ISubscriptionData {
   topic: {
     _id: string;
     key: string;
-    name: string;
+    name?: string;
   };
   subscriber: {
     _id: string;

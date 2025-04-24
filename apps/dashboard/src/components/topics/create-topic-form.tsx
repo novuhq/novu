@@ -50,8 +50,8 @@ export const CreateTopicForm = (props: CreateTopicFormProps) => {
   const [keyModifiedByUser, setKeyModifiedByUser] = useState(false);
   const keyInputRef = useRef<HTMLInputElement>(null);
 
-  const { createTopic, isPending } = useCreateTopic({
-    onSuccess: (data) => {
+  const { createTopic } = useCreateTopic({
+    onSuccess: () => {
       showSuccessToast(`Topic created successfully`);
       track(TelemetryEvent.TOPICS_PAGE_VISIT); // Using closest available event
 

@@ -1,12 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InstrumentUsecase } from '@novu/application-generic';
-import {
-  SubscriberRepository,
-  TopicEntity,
-  TopicRepository,
-  TopicSubscribersEntity,
-  TopicSubscribersRepository,
-} from '@novu/dal';
+import { SubscriberRepository, TopicRepository, TopicSubscribersRepository } from '@novu/dal';
 import { ISubscriptionData, ISubscriptionError, ITopicSubscriptionResult } from '../../dtos/subscription-interfaces';
 import { DeleteTopicSubscriptionsCommand } from './delete-topic-subscriptions.command';
 
@@ -102,7 +96,7 @@ export class DeleteTopicSubscriptionsUsecase {
     // Map existing subscriptions to response format before deleting them
     for (const subscription of existingSubscriptions) {
       const subscriber = foundSubscribers.find((sub) => sub._id.toString() === subscription._subscriberId.toString());
-      
+
       subscriptionData.push({
         _id: subscription._id,
         topic: {
@@ -110,16 +104,18 @@ export class DeleteTopicSubscriptionsUsecase {
           key: topic.key,
           name: topic.name,
         },
-        subscriber: subscriber ? {
-          _id: subscriber._id,
-          subscriberId: subscriber.subscriberId,
-          avatar: subscriber.avatar,
-          firstName: subscriber.firstName,
-          lastName: subscriber.lastName,
-          email: subscriber.email,
-          createdAt: subscriber.createdAt,
-          updatedAt: subscriber.updatedAt,
-        } : null,
+        subscriber: subscriber
+          ? {
+              _id: subscriber._id,
+              subscriberId: subscriber.subscriberId,
+              avatar: subscriber.avatar,
+              firstName: subscriber.firstName,
+              lastName: subscriber.lastName,
+              email: subscriber.email,
+              createdAt: subscriber.createdAt,
+              updatedAt: subscriber.updatedAt,
+            }
+          : null,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });

@@ -16,8 +16,9 @@ export class TopicResponseDto {
   @ApiProperty({
     description: 'The name of the topic',
     example: 'Product Updates',
+    required: false,
   })
-  name: string;
+  name?: string;
 
   @ApiProperty({
     description: 'The date the topic was created',

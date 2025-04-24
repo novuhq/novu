@@ -1,11 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { TopicEntity, TopicRepository } from '@novu/dal';
 
 import { RenameTopicCommand } from './rename-topic.command';
 
-import { GetTopicUseCase } from '../get-topic';
 import { TopicDto } from '../../dtos/topic.dto';
 import { ExternalSubscriberId } from '../../types';
+import { GetTopicUseCase } from '../get-topic';
 
 @Injectable()
 export class RenameTopicUseCase {
@@ -19,6 +19,8 @@ export class RenameTopicUseCase {
     if (!topic) throw new NotFoundException(`Topic ${command.topicKey} not found`);
 
     const query = this.mapToQuery(command);
+    if (!query.name) throw new BadRequestException('Name is required');
+
     const renamedTopic = await this.topicRepository.renameTopic(topic._id, query._environmentId, query.name);
 
     return this.mapFromEntityToDto(renamedTopic);

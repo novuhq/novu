@@ -17,8 +17,9 @@ class TopicDto {
   @ApiProperty({
     description: 'The name of the topic',
     example: 'Product Updates',
+    required: false,
   })
-  name: string;
+  name?: string;
 }
 
 class SubscriberDto {

@@ -31,7 +31,6 @@ import { Link } from 'react-router-dom';
 import { ExternalToast } from 'sonner';
 import { z } from 'zod';
 import { ConfirmationModal } from '../confirmation-modal';
-import { useTopicEvents } from './hooks/use-topic-events';
 import { Topic } from './types';
 
 const TopicFormSchema = z.object({
@@ -57,7 +56,6 @@ export function TopicOverviewForm({ topic, readOnly = false }: TopicOverviewForm
   const [isDeleting, setIsDeleting] = useState(false);
   const track = useTelemetry();
   const { currentEnvironment } = useEnvironment();
-  const { emitEvent } = useTopicEvents();
   const queryClient = useQueryClient();
 
   const form = useForm<z.infer<typeof TopicFormSchema>>({

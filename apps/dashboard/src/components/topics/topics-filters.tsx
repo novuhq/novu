@@ -113,7 +113,7 @@ export const TopicsFilters = (props: TopicsFiltersProps) => {
         <FormField
           control={form.control}
           name="name"
-          render={({ field }) => (
+          render={() => (
             <FormItem className="relative">
               <FacetedFormFilter
                 type="text"
@@ -130,7 +130,7 @@ export const TopicsFilters = (props: TopicsFiltersProps) => {
         <FormField
           control={form.control}
           name="key"
-          render={({ field }) => (
+          render={() => (
             <FormItem className="relative">
               <FacetedFormFilter
                 type="text"

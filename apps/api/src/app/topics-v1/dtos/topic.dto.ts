@@ -14,8 +14,14 @@ export class TopicDto {
   key: string;
 
   @ApiProperty()
-  name: string;
+  name?: string;
 
   @ApiProperty()
   subscribers: string[];
+
+  @ApiProperty()
+  createdAt?: string;
+
+  @ApiProperty()
+  updatedAt?: string;
 }
