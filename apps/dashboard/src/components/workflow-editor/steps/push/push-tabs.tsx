@@ -9,7 +9,7 @@ import { useFormContext } from 'react-hook-form';
 import { useEditorPreview } from '../use-editor-preview';
 
 export const PushTabs = (props: StepEditorProps) => {
-  const { workflow, step, hasStepValidationErrors } = props;
+  const { workflow, step } = props;
   const { dataSchema, uiSchema } = step.controls;
   const [tabsValue, setTabsValue] = useState('editor');
   const form = useFormContext();
@@ -46,7 +46,6 @@ export const PushTabs = (props: StepEditorProps) => {
       previewContent={previewContent}
       tabsValue={tabsValue}
       onTabChange={setTabsValue}
-      hasStepValidationErrors={hasStepValidationErrors}
     />
   );
 };

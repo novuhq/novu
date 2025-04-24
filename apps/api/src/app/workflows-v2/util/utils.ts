@@ -28,7 +28,7 @@ export function collectKeys(obj, prefix = '') {
       return result;
     },
     []
-  );
+  ).filter(Boolean);
 }
 
 /**

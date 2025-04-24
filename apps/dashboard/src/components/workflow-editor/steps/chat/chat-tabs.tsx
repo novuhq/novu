@@ -10,7 +10,7 @@ import { ChatEditorPreview } from '@/components/workflow-editor/steps/chat/chat-
 import { useEditorPreview } from '../use-editor-preview';
 
 export const ChatTabs = (props: StepEditorProps) => {
-  const { workflow, step, hasStepValidationErrors } = props;
+  const { workflow, step } = props;
   const { dataSchema, uiSchema } = step.controls;
   const [tabsValue, setTabsValue] = useState('editor');
   const form = useFormContext();
@@ -47,7 +47,6 @@ export const ChatTabs = (props: StepEditorProps) => {
       tabsValue={tabsValue}
       onTabChange={setTabsValue}
       previewStep={previewStep}
-      hasStepValidationErrors={hasStepValidationErrors}
     />
   );
 };

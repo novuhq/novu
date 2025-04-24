@@ -29,12 +29,11 @@ const STEP_TYPE_TO_TEMPLATE_FORM: Record<StepTypeEnum, (args: StepEditorProps) =
 };
 
 export type StepEditorProps = {
-  hasStepValidationErrors: boolean;
   workflow: WorkflowResponseDto;
   step: StepResponseDto;
 };
 
-type ConfigureStepTemplateFormProps = Omit<StepEditorProps, 'hasStepValidationErrors'> & {
+type ConfigureStepTemplateFormProps = StepEditorProps & {
   update: UpdateWorkflowFn;
 };
 
@@ -98,16 +97,11 @@ export const ConfigureStepTemplateForm = (props: ConfigureStepTemplateFormProps)
 
   const value = useMemo(() => ({ saveForm }), [saveForm]);
 
-  const hasStepValidationErrors = useMemo(() => {
-    const stepIssues = flattenIssues(step.issues?.controls);
-    return hideValidationErrorsOnFirstRender ? false : Object.keys(stepIssues).length > 0;
-  }, [step.issues?.controls, hideValidationErrorsOnFirstRender]);
-
   return (
     <Form {...form}>
       <FormRoot className="flex h-full flex-col" onBlur={onBlur}>
         <SaveFormContext.Provider value={value}>
-          <TemplateForm workflow={workflow} step={step} hasStepValidationErrors={hasStepValidationErrors} />
+          <TemplateForm workflow={workflow} step={step} />
         </SaveFormContext.Provider>
       </FormRoot>
     </Form>
