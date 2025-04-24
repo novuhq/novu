@@ -21,7 +21,6 @@ import { useEnvironment } from '../../context/environment/hooks';
 import { buildRoute, ROUTES } from '../../utils/routes';
 import { cn } from '../../utils/ui';
 import { useDeleteTopic } from './hooks/use-delete-topic';
-import { useTopicEvents } from './hooks/use-topic-events';
 import { useTopicsNavigate } from './hooks/use-topics-navigate';
 import { Topic } from './types';
 
@@ -48,7 +47,6 @@ export const TopicRow = ({ topic }: TopicRowProps) => {
   const { deleteTopic, isDeleting } = useDeleteTopic();
   const queryClient = useQueryClient();
   const { navigateToEditTopicPage } = useTopicsNavigate();
-  const { emitEvent } = useTopicEvents();
 
   const stopPropagation = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -58,13 +56,8 @@ export const TopicRow = ({ topic }: TopicRowProps) => {
     try {
       await deleteTopic(topic.key);
 
-      // Close the delete modal
       setIsDeleteModalOpen(false);
 
-      // Emit the delete event for any listeners (like the drawer)
-      emitEvent('deleted', topic.key);
-
-      // Force a refetch of the topics list - use exact:true to ensure invalidation works
       queryClient.invalidateQueries({
         queryKey: [QueryKeys.fetchTopics],
         exact: false,
