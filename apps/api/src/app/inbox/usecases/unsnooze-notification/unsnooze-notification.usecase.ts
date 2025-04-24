@@ -40,7 +40,6 @@ export class UnsnoozeNotification {
 
     const snoozedNotification = await this.messageRepository.findOne({
       _id: command.notificationId,
-      _subscriberId: command.subscriberId,
       _environmentId: command.environmentId,
       channel: ChannelTypeEnum.IN_APP,
       snoozedUntilDate: { $exists: true, $ne: null },

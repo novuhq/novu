@@ -4,6 +4,7 @@ import {
   InternalServerErrorException,
   HttpException,
   NotImplementedException,
+  HttpStatus,
 } from '@nestjs/common';
 import {
   CreateExecutionDetails,
@@ -138,8 +139,26 @@ export class SnoozeNotification {
   private async validateDelayDuration(command: SnoozeNotificationCommand, delay: number) {
     const tierLimit = await this.getTierLimit(command);
 
+    if (tierLimit === -1) {
+      throw new HttpException(
+        {
+          message: 'Feature Not Available',
+          reason: 'Snooze functionality is not available on your current plan. Please upgrade to access this feature.',
+        },
+        HttpStatus.PAYMENT_REQUIRED
+      );
+    }
+
     if (delay > tierLimit) {
-      throw new HttpException('Payment Required', 402);
+      throw new HttpException(
+        {
+          message: 'Snooze Duration Limit Exceeded',
+          reason:
+            'The snooze duration you selected exceeds your current plan limit. ' +
+            'Please upgrade your plan for extended snooze durations.',
+        },
+        HttpStatus.PAYMENT_REQUIRED
+      );
     }
   }
 
@@ -171,7 +190,6 @@ export class SnoozeNotification {
 
   private async findNotification(command: SnoozeNotificationCommand): Promise<MessageEntity> {
     const message = await this.messageRepository.findOne({
-      _subscriberId: command.subscriberId,
       _environmentId: command.environmentId,
       channel: ChannelTypeEnum.IN_APP,
       _id: command.notificationId,
