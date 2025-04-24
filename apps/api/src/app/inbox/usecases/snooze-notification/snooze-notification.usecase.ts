@@ -1,6 +1,5 @@
 import {
   Injectable,
-  Logger,
   NotFoundException,
   InternalServerErrorException,
   HttpException,
@@ -13,6 +12,7 @@ import {
   StandardQueueService,
   FeatureFlagsService,
   SYSTEM_LIMITS,
+  PinoLogger,
 } from '@novu/application-generic';
 import {
   JobEntity,
@@ -41,12 +41,14 @@ import { MarkNotificationAs } from '../mark-notification-as/mark-notification-as
 import { MarkNotificationAsCommand } from '../mark-notification-as/mark-notification-as.command';
 import { InboxNotification } from '../../utils/types';
 
+const LOG_CONTEXT = 'SnoozeNotification';
+
 @Injectable()
 export class SnoozeNotification {
-  private readonly logger = new Logger(SnoozeNotification.name);
   private readonly RETRY_ATTEMPTS = 3;
 
   constructor(
+    private readonly logger: PinoLogger,
     private messageRepository: MessageRepository,
     private jobRepository: JobRepository,
     private standardQueueService: StandardQueueService,
@@ -86,7 +88,7 @@ export class SnoozeNotification {
           })
         )
         .catch((error) => {
-          this.logger.error(`Failed to create execution details: ${error.message}`, error.stack);
+          this.logger.error({ err: error }, 'Failed to create execution details', LOG_CONTEXT);
         });
 
       return snoozedNotification;
@@ -96,7 +98,7 @@ export class SnoozeNotification {
   }
 
   public async queueJob(job: JobEntity, delay: number) {
-    this.logger.verbose(`Adding snooze job ${job._id} to Standard Queue`);
+    this.logger.info({ jobId: job._id, delay }, 'Adding snooze job to Standard Queue', LOG_CONTEXT);
 
     const jobData = {
       _environmentId: job._environmentId,

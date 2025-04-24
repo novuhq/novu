@@ -8,18 +8,13 @@ import {
   OrganizationEntity,
   EnvironmentEntity,
 } from '@novu/dal';
-import {
-  Logger,
-  Injectable,
-  NotFoundException,
-  InternalServerErrorException,
-  NotImplementedException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, InternalServerErrorException, NotImplementedException } from '@nestjs/common';
 import {
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   DetailEnum,
   FeatureFlagsService,
+  PinoLogger,
 } from '@novu/application-generic';
 import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { UnsnoozeNotificationCommand } from './unsnooze-notification.command';
@@ -27,11 +22,12 @@ import { MarkNotificationAsCommand } from '../mark-notification-as/mark-notifica
 import { MarkNotificationAs } from '../mark-notification-as/mark-notification-as.usecase';
 import { InboxNotification } from '../../utils/types';
 
+const LOG_CONTEXT = 'UnsnoozeNotification';
+
 @Injectable()
 export class UnsnoozeNotification {
-  private logger = new Logger(UnsnoozeNotification.name);
-
   constructor(
+    private readonly logger: PinoLogger,
     private messageRepository: MessageRepository,
     private jobRepository: JobRepository,
     private markNotificationAs: MarkNotificationAs,
@@ -60,7 +56,7 @@ export class UnsnoozeNotification {
     try {
       return this.unsnoozeNotification(command, snoozedNotification._notificationId);
     } catch (error) {
-      this.logger.error(`Failed to unsnooze notification: ${command.notificationId}`, error.stack);
+      this.logger.error({ err: error }, `Failed to unsnooze notification: ${command.notificationId}`, LOG_CONTEXT);
       throw new InternalServerErrorException(`Failed to unsnooze notification: ${error.message}`);
     }
   }
@@ -106,12 +102,13 @@ export class UnsnoozeNotification {
           })
         )
         .catch((error) => {
-          this.logger.error(`Failed to create execution details: ${error.message}`, error.stack);
+          this.logger.error({ err: error }, 'Failed to create execution details', LOG_CONTEXT);
         });
     } else {
       this.logger.error(
         `Could not find a scheduled job for snoozed notification '${command.notificationId}'. ` +
-          'The notification may have already been unsnoozed or the scheduled job was deleted.'
+          'The notification may have already been unsnoozed or the scheduled job was deleted.',
+        LOG_CONTEXT
       );
     }
 

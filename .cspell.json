@@ -732,7 +732,11 @@
     "titleize",
     "oklch",
     "Duplicable",
-    "Radek"
+    "Radek",
+    "snooze",
+    "unsnooze",
+    "snoozed",
+    "unsnoozed"
   ],
   "flagWords": [],
   "patterns": [
