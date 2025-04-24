@@ -8,7 +8,7 @@ import { collectKeys, keysToObject } from '../../util/utils';
 import { buildVariables } from '../../util/build-variables';
 import { CreateVariablesObjectCommand } from './create-variables-object.command';
 import { isStringifiedMailyJSONContent } from '../../../environments-v1/usecases/output-renderers/maily-to-liquid/wrap-maily-in-liquid.command';
-import { MailyAttrsEnum } from '../../../environments-v1/usecases/output-renderers/maily-to-liquid/maily.types';
+import { MailyAttrsEnum } from '../../../shared/helpers/maily.types';
 
 export type ArrayVariable = {
   path: string;
