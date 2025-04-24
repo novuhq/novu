@@ -4,6 +4,7 @@ import { LimitOffsetPaginationQueryDto } from './limit-offset-pagination.dto';
 import { WorkflowResponseDto } from './workflow-response.dto';
 
 export class GetListQueryParamsDto extends LimitOffsetPaginationQueryDto(WorkflowResponseDto, [
+  'createdAt',
   'updatedAt',
   'name',
   'lastTriggeredAt',

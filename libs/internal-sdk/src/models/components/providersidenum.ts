@@ -60,6 +60,7 @@ export const ProvidersIdEnum = {
   BrevoSms: "brevo-sms",
   EazySms: "eazy-sms",
   Mobishastra: "mobishastra",
+  AfroMessage: "afro-message",
   Fcm: "fcm",
   Apns: "apns",
   Expo: "expo",
