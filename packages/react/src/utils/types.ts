@@ -41,7 +41,8 @@ export type BaseProps = {
   routerPush?: RouterPush;
 } & (
   | {
-      /** @deprecated Use subscriber instead */
+      // TODO: Backward compatibility support - remove in future versions (see NV-5801)
+      /** @deprecated Use subscriber prop instead */
       subscriberId: string;
       subscriber?: never;
     }

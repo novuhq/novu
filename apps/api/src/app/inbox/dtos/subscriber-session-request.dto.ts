@@ -8,6 +8,8 @@ export class SubscriberSessionRequestDto {
 
   @IsString()
   @IsOptional()
+  // TODO: Backward compatibility support - remove in future versions (see NV-5801)
+  /** @deprecated Use subscriber instead */
   readonly subscriberId?: string;
 
   @IsString()

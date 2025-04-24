@@ -68,6 +68,7 @@ export class InboxController {
     @Body() body: SubscriberSessionRequestDto,
     @Headers('origin') origin: string
   ): Promise<SubscriberSessionResponseDto> {
+    // TODO: Backward compatibility support - remove in future versions (see NV-5801)
     const subscriber: SubscriberDto | {} =
       typeof body.subscriber === 'string' ? { subscriberId: body.subscriber } : body.subscriber || {};
     const subscriberId: string | undefined = body.subscriberId || (subscriber as SubscriberDto).subscriberId;
