@@ -1,4 +1,3 @@
-import { CopyButton } from '@/components/primitives/copy-button';
 import {
   Form,
   FormControl,
@@ -19,20 +18,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link } from 'react-router-dom';
-import { ExternalToast } from 'sonner';
 import { z } from 'zod';
 
 const TopicFormSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   key: z.string().min(1, 'Key is required'),
 });
-
-const toastOptions: ExternalToast = {
-  position: 'bottom-right',
-  classNames: {
-    toast: 'mb-4 right-0 pointer-events-none',
-  },
-};
 
 type CreateTopicFormProps = {
   onSuccess?: () => void;
@@ -56,9 +47,8 @@ function slugify(text: string): string {
 export const CreateTopicForm = (props: CreateTopicFormProps) => {
   const { onSuccess, onError, onSubmitStart } = props;
   const track = useTelemetry();
-  const nameInputRef = useRef<HTMLInputElement | null>(null);
-  const keyInputRef = useRef<HTMLInputElement | null>(null);
   const [keyModifiedByUser, setKeyModifiedByUser] = useState(false);
+  const keyInputRef = useRef<HTMLInputElement>(null);
 
   const { createTopic, isPending } = useCreateTopic({
     onSuccess: (data) => {
@@ -89,16 +79,8 @@ export const CreateTopicForm = (props: CreateTopicFormProps) => {
     mode: 'onBlur',
   });
 
-  useEffect(() => {
-    // Auto-focus the name input field when the component mounts
-    if (nameInputRef.current) {
-      nameInputRef.current.focus();
-    }
-  }, []);
-
   // Watch the name field and update the key field accordingly
   const watchedName = form.watch('name');
-  const watchedKey = form.watch('key');
 
   useEffect(() => {
     // Only auto-update the key if it hasn't been modified by the user
@@ -107,6 +89,13 @@ export const CreateTopicForm = (props: CreateTopicFormProps) => {
       form.setValue('key', slugifiedKey, { shouldValidate: true });
     }
   }, [watchedName, form, keyModifiedByUser]);
+
+  // Auto-focus the first input when the form is mounted
+  useEffect(() => {
+    if (keyInputRef.current) {
+      keyInputRef.current.focus();
+    }
+  }, []);
 
   const onSubmit = async (formData: z.infer<typeof TopicFormSchema>) => {
     if (onSubmitStart) {
@@ -121,15 +110,6 @@ export const CreateTopicForm = (props: CreateTopicFormProps) => {
     });
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    // Prevent the form from submitting when pressing Enter in the input fields
-    // We'll handle the submission in the form's onSubmit
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      form.handleSubmit(onSubmit)();
-    }
-  };
-
   return (
     <div className="flex h-full flex-col">
       <Form {...form}>
@@ -141,43 +121,6 @@ export const CreateTopicForm = (props: CreateTopicFormProps) => {
           className="flex h-full flex-col overflow-y-auto"
         >
           <div className="flex flex-col items-stretch gap-6 p-5">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field, fieldState }) => (
-                <FormItem>
-                  <FormLabel>
-                    Name <span className="text-primary">*</span>
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      placeholder="Topic name"
-                      id={field.name}
-                      value={field.value}
-                      onChange={(e) => {
-                        field.onChange(e);
-                      }}
-                      hasError={!!fieldState.error}
-                      size="xs"
-                      ref={(element) => {
-                        field.ref(element);
-                        nameInputRef.current = element;
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Tab' && !e.shiftKey) {
-                          e.preventDefault();
-                          keyInputRef.current?.focus();
-                        } else if (e.key === 'Enter') {
-                          handleKeyDown(e);
-                        }
-                      }}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
             <FormField
               control={form.control}
               name="key"
@@ -211,31 +154,49 @@ export const CreateTopicForm = (props: CreateTopicFormProps) => {
                         }}
                         hasError={!!fieldState.error}
                         size="xs"
-                        ref={(element) => {
-                          field.ref(element);
-                          keyInputRef.current = element;
-                        }}
+                        ref={keyInputRef}
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') {
-                            handleKeyDown(e);
+                            e.preventDefault();
+                            form.handleSubmit(onSubmit)();
                           }
                         }}
                       />
                     </FormControl>
-                    {watchedKey && (
-                      <div
-                        className="absolute right-2 top-1/2 -translate-y-1/2"
-                        onClick={(e) => {
-                          // Prevent the click from submitting the form
-                          e.preventDefault();
-                          e.stopPropagation();
-                        }}
-                      >
-                        <CopyButton valueToCopy={watchedKey} size="xs" className="ml-1" />
-                      </div>
-                    )}
                   </div>
                   <FormMessage>Used to identify the topic in API calls</FormMessage>
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field, fieldState }) => (
+                <FormItem>
+                  <FormLabel>
+                    Name <span className="text-primary">*</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder="Topic name"
+                      id={field.name}
+                      value={field.value}
+                      onChange={(e) => {
+                        field.onChange(e);
+                      }}
+                      hasError={!!fieldState.error}
+                      size="xs"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          form.handleSubmit(onSubmit)();
+                        }
+                      }}
+                    />
+                  </FormControl>
+                  <FormMessage />
                 </FormItem>
               )}
             />
