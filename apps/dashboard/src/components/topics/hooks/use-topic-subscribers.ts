@@ -1,4 +1,5 @@
 import { addSubscribersToTopic, getTopicSubscriptions, removeSubscribersFromTopic } from '@/api/topics';
+import { NovuApiError } from '@/api/api.client';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { useEnvironment } from '@/context/environment/hooks';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -56,7 +57,7 @@ export function useAddTopicSubscribers() {
         subscribers,
       });
     },
-    onSuccess: (result, variables) => {
+    onSuccess: (_, variables) => {
       // Invalidate the topic query to refresh the data
       queryClient.invalidateQueries({
         queryKey: ['topic', currentEnvironment?._id, variables.topicKey],
@@ -69,8 +70,34 @@ export function useAddTopicSubscribers() {
 
       showSuccessToast('Subscriber was added');
     },
-    onError: () => {
-      showErrorToast('Error', 'Failed to add subscribers to topic');
+    onError: (error: NovuApiError) => {
+      // Extract error information from the API response
+      const errorResponse = error?.rawError as {
+        errors?: Array<{
+          subscriberId: string;
+          code: string;
+          message: string;
+        }>;
+      };
+
+      if (errorResponse?.errors && errorResponse.errors.length > 0) {
+        const firstError = errorResponse.errors[0];
+        const errorCode = firstError.code;
+        const errorMessage = firstError.message;
+        const subscriberId = firstError.subscriberId;
+
+        // Create a user-friendly error message based on the error code
+        let displayMessage = errorMessage;
+
+        if (errorCode === 'SUBSCRIBER_NOT_FOUND') {
+          displayMessage = `Subscriber '${subscriberId}' could not be found. Please check the ID and try again.`;
+        }
+
+        showErrorToast(displayMessage, 'Failed to add subscriber');
+      } else {
+        // Fallback error message if we can't extract specific error details
+        showErrorToast('Failed to add subscriber to topic. Please try again.');
+      }
     },
   });
 }
