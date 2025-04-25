@@ -99,7 +99,6 @@ export class TopicsController {
   @Post('')
   @UserAuthentication()
   @ExternalApiAccessible()
-  @SdkMethodName('create')
   @ApiOperation({
     summary: 'Create or update a topic',
     description: 'Creates a new topic if it does not exist, or updates an existing topic if it already exists',
@@ -175,7 +174,6 @@ export class TopicsController {
   @Delete('/:topicKey')
   @UserAuthentication()
   @ExternalApiAccessible()
-  @SdkMethodName('delete')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Delete topic by key' })
   @ApiParam({ name: 'topicKey', description: 'The key identifier of the topic', type: String })
@@ -190,8 +188,7 @@ export class TopicsController {
   })
   async deleteTopic(
     @UserSession() user: UserSessionData,
-    @Param('topicKey') topicKey: string,
-    @Query('force') force?: boolean
+    @Param('topicKey') topicKey: string
   ): Promise<DeleteTopicResponseDto> {
     await this.deleteTopicUsecase.execute(
       DeleteTopicCommand.create({
@@ -199,7 +196,7 @@ export class TopicsController {
         organizationId: user.organizationId,
         userId: user._id,
         topicKey,
-        force,
+        force: true,
       })
     );
 
@@ -212,7 +209,6 @@ export class TopicsController {
   @UserAuthentication()
   @ExternalApiAccessible()
   @SdkGroupName('Topics.Subscriptions')
-  @SdkMethodName('list')
   @ApiOperation({ summary: 'List topic subscriptions' })
   @ApiParam({ name: 'topicKey', description: 'The key identifier of the topic', type: String })
   @ApiResponse(ListTopicSubscriptionsResponseDto, 200, true, true, {
