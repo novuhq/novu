@@ -9,6 +9,7 @@ import { buildVariables } from '../../util/build-variables';
 import { CreateVariablesObjectCommand } from './create-variables-object.command';
 import { MailyAttrsEnum } from '../../../shared/helpers/maily.types';
 import { isStringifiedMailyJSONContent } from '../../../shared/helpers/maily-utils';
+import { DIGEST_EVENTS_VARIABLE_PATTERN } from '../../util/template-parser/parser-utils';
 
 export type ArrayVariable = {
   path: string;
@@ -85,19 +86,35 @@ export class CreateVariablesObject {
         variableNameAfterPayload = collectKeys(events.payload);
       }
 
+      if (Array.isArray(events)) {
+        const hasPayloadInEvents = events.every((evt) => {
+          return typeof evt === 'object' && 'payload' in evt;
+        });
+        if (!hasPayloadInEvents) {
+          step.events = events.map(() => ({ payload: {} }));
+        }
+      }
+
       if (hasUsedEventCount || hasUsedEventsLength || hasUsedEvents || hasUsedEventsWithPayload) {
-        step.events = Array.isArray(events)
-          ? events
-          : Array.from({ length: DEFAULT_ARRAY_ELEMENTS }, () => {
-              let payload = {};
-              for (const variableName of variableNameAfterPayload) {
-                const key = variableName.split('.').pop() ?? variableName;
+        if (Array.isArray(step.events)) {
+          const hasPayloadInEvents = step.events.every((evt) => {
+            return typeof evt === 'object' && 'payload' in evt;
+          });
+          if (!hasPayloadInEvents) {
+            step.events = step.events.map(() => ({ payload: {} }));
+          }
+        } else {
+          step.events = Array.from({ length: DEFAULT_ARRAY_ELEMENTS }, () => {
+            let payload = {};
+            for (const variableName of variableNameAfterPayload) {
+              const key = variableName.split('.').pop() ?? variableName;
 
-                payload = { ...payload, ...this.setNestedValue(payload, variableName, key) };
-              }
+              payload = { ...payload, ...this.setNestedValue(payload, variableName, key) };
+            }
 
-              return { payload };
-            });
+            return { payload };
+          });
+        }
       }
     });
 
@@ -203,10 +220,15 @@ export class CreateVariablesObject {
 
   private extractArrayVariables(controlValues: unknown[]): ArrayVariable[] {
     // Extract 'Repeat' block iterable variables ('each' key) together with their set iterations
-    const eachKeyVars = this.extractMailyAttribute(controlValues, MailyAttrsEnum.EACH_KEY).map((path) => ({
-      path,
-      iterations: this.getIterationsForVariable(path, controlValues) || DEFAULT_ARRAY_ELEMENTS,
-    }));
+    const eachKeyVars = this.extractMailyAttribute(controlValues, MailyAttrsEnum.EACH_KEY).map((path) => {
+      const isDigestEventsVariable = DIGEST_EVENTS_VARIABLE_PATTERN.test(path);
+      const finalPath = isDigestEventsVariable ? `${path}.payload` : path;
+
+      return {
+        path,
+        iterations: this.getIterationsForVariable(path, controlValues) || DEFAULT_ARRAY_ELEMENTS,
+      };
+    });
 
     // Extract iterable variables outside of 'Repeat' blocks, always with 3 iterations
     const idVars = this.extractMailyAttribute(controlValues, MailyAttrsEnum.ID, this.extractArrayPath).map((path) => ({
