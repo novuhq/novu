@@ -111,7 +111,7 @@ export class SubscriptionDto implements ISubscriptionData {
   updatedAt: string;
 }
 
-export class ErrorDto implements ISubscriptionError {
+export class SubscriptionErrorDto implements ISubscriptionError {
   @ApiProperty({
     description: 'The subscriber ID that failed',
     example: 'invalid-subscriber-id',
@@ -166,8 +166,8 @@ export class CreateTopicSubscriptionsResponseDto implements ITopicSubscriptionRe
 
   @ApiProperty({
     description: 'The list of errors for failed subscription attempts',
-    type: [ErrorDto],
+    type: [SubscriptionErrorDto],
     required: false,
   })
-  errors?: ErrorDto[];
+  errors?: SubscriptionErrorDto[];
 }

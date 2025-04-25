@@ -7,12 +7,6 @@ import { safeParse } from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 import {
-  ErrorDto,
-  ErrorDto$inboundSchema,
-  ErrorDto$Outbound,
-  ErrorDto$outboundSchema,
-} from "./errordto.js";
-import {
   MetaDto,
   MetaDto$inboundSchema,
   MetaDto$Outbound,
@@ -24,6 +18,12 @@ import {
   SubscriptionDto$Outbound,
   SubscriptionDto$outboundSchema,
 } from "./subscriptiondto.js";
+import {
+  SubscriptionErrorDto,
+  SubscriptionErrorDto$inboundSchema,
+  SubscriptionErrorDto$Outbound,
+  SubscriptionErrorDto$outboundSchema,
+} from "./subscriptionerrordto.js";
 
 export type CreateTopicSubscriptionsResponseDto = {
   /**
@@ -37,7 +37,7 @@ export type CreateTopicSubscriptionsResponseDto = {
   /**
    * The list of errors for failed subscription attempts
    */
-  errors?: Array<ErrorDto> | undefined;
+  errors?: Array<SubscriptionErrorDto> | undefined;
 };
 
 /** @internal */
@@ -48,14 +48,14 @@ export const CreateTopicSubscriptionsResponseDto$inboundSchema: z.ZodType<
 > = z.object({
   data: z.array(SubscriptionDto$inboundSchema),
   meta: MetaDto$inboundSchema,
-  errors: z.array(ErrorDto$inboundSchema).optional(),
+  errors: z.array(SubscriptionErrorDto$inboundSchema).optional(),
 });
 
 /** @internal */
 export type CreateTopicSubscriptionsResponseDto$Outbound = {
   data: Array<SubscriptionDto$Outbound>;
   meta: MetaDto$Outbound;
-  errors?: Array<ErrorDto$Outbound> | undefined;
+  errors?: Array<SubscriptionErrorDto$Outbound> | undefined;
 };
 
 /** @internal */
@@ -66,7 +66,7 @@ export const CreateTopicSubscriptionsResponseDto$outboundSchema: z.ZodType<
 > = z.object({
   data: z.array(SubscriptionDto$outboundSchema),
   meta: MetaDto$outboundSchema,
-  errors: z.array(ErrorDto$outboundSchema).optional(),
+  errors: z.array(SubscriptionErrorDto$outboundSchema).optional(),
 });
 
 /**
