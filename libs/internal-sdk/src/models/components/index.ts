@@ -71,6 +71,7 @@ export * from "./jsonschemadto.js";
 export * from "./jsonschemaformatenum.js";
 export * from "./jsonschematypeenum.js";
 export * from "./listsubscribersresponsedto.js";
+export * from "./listtopicsresponsedto.js";
 export * from "./listtopicsubscriptionsresponsedto.js";
 export * from "./listworkflowresponse.js";
 export * from "./markallmessageasrequestdto.js";

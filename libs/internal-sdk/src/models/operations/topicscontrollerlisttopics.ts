@@ -7,6 +7,7 @@ import { remap as remap$ } from "../../lib/primitives.js";
 import { safeParse } from "../../lib/schemas.js";
 import { ClosedEnum } from "../../types/enums.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
+import * as components from "../components/index.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 
 /**
@@ -66,6 +67,7 @@ export type TopicsControllerListTopicsRequest = {
 
 export type TopicsControllerListTopicsResponse = {
   headers: { [k: string]: Array<string> };
+  result: components.ListTopicsResponseDto;
 };
 
 /** @internal */
@@ -190,15 +192,18 @@ export const TopicsControllerListTopicsResponse$inboundSchema: z.ZodType<
   unknown
 > = z.object({
   Headers: z.record(z.array(z.string())),
+  Result: components.ListTopicsResponseDto$inboundSchema,
 }).transform((v) => {
   return remap$(v, {
     "Headers": "headers",
+    "Result": "result",
   });
 });
 
 /** @internal */
 export type TopicsControllerListTopicsResponse$Outbound = {
   Headers: { [k: string]: Array<string> };
+  Result: components.ListTopicsResponseDto$Outbound;
 };
 
 /** @internal */
@@ -208,9 +213,11 @@ export const TopicsControllerListTopicsResponse$outboundSchema: z.ZodType<
   TopicsControllerListTopicsResponse
 > = z.object({
   headers: z.record(z.array(z.string())),
+  result: components.ListTopicsResponseDto$outboundSchema,
 }).transform((v) => {
   return remap$(v, {
     headers: "Headers",
+    result: "Result",
   });
 });
 

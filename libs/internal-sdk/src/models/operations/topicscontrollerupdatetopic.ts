@@ -23,6 +23,7 @@ export type TopicsControllerUpdateTopicRequest = {
 
 export type TopicsControllerUpdateTopicResponse = {
   headers: { [k: string]: Array<string> };
+  result: components.TopicResponseDto;
 };
 
 /** @internal */
@@ -106,15 +107,18 @@ export const TopicsControllerUpdateTopicResponse$inboundSchema: z.ZodType<
   unknown
 > = z.object({
   Headers: z.record(z.array(z.string())),
+  Result: components.TopicResponseDto$inboundSchema,
 }).transform((v) => {
   return remap$(v, {
     "Headers": "headers",
+    "Result": "result",
   });
 });
 
 /** @internal */
 export type TopicsControllerUpdateTopicResponse$Outbound = {
   Headers: { [k: string]: Array<string> };
+  Result: components.TopicResponseDto$Outbound;
 };
 
 /** @internal */
@@ -124,9 +128,11 @@ export const TopicsControllerUpdateTopicResponse$outboundSchema: z.ZodType<
   TopicsControllerUpdateTopicResponse
 > = z.object({
   headers: z.record(z.array(z.string())),
+  result: components.TopicResponseDto$outboundSchema,
 }).transform((v) => {
   return remap$(v, {
     headers: "Headers",
+    result: "Result",
   });
 });
 

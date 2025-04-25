@@ -6,4 +6,7 @@ export * from "./errordto.js";
 export * from "./httpclienterrors.js";
 export * from "./sdkerror.js";
 export * from "./sdkvalidationerror.js";
+export * from "./topicscontrollergettopic.js";
+export * from "./topicscontrollerlisttopicsubscriptions.js";
+export * from "./topicscontrollerupdatetopic.js";
 export * from "./validationerrordto.js";

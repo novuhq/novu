@@ -26,8 +26,7 @@ import {
 } from "./_types.js";
 
 export type TopicsSubscriptionsListQueryData =
-  | operations.TopicsControllerListTopicSubscriptionsResponse
-  | undefined;
+  operations.TopicsControllerListTopicSubscriptionsResponse;
 
 /**
  * List topic subscriptions

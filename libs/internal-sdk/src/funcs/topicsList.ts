@@ -33,7 +33,7 @@ export function topicsList(
   options?: RequestOptions,
 ): APIPromise<
   Result<
-    operations.TopicsControllerListTopicsResponse | undefined,
+    operations.TopicsControllerListTopicsResponse,
     | errors.ErrorDto
     | errors.ErrorDto
     | errors.ValidationErrorDto
@@ -61,7 +61,7 @@ async function $do(
 ): Promise<
   [
     Result<
-      operations.TopicsControllerListTopicsResponse | undefined,
+      operations.TopicsControllerListTopicsResponse,
       | errors.ErrorDto
       | errors.ErrorDto
       | errors.ValidationErrorDto
@@ -185,7 +185,7 @@ async function $do(
   };
 
   const [result] = await M.match<
-    operations.TopicsControllerListTopicsResponse | undefined,
+    operations.TopicsControllerListTopicsResponse,
     | errors.ErrorDto
     | errors.ErrorDto
     | errors.ValidationErrorDto
@@ -198,11 +198,10 @@ async function $do(
     | RequestTimeoutError
     | ConnectionError
   >(
-    M.nil(
-      200,
-      operations.TopicsControllerListTopicsResponse$inboundSchema.optional(),
-      { hdrs: true },
-    ),
+    M.json(200, operations.TopicsControllerListTopicsResponse$inboundSchema, {
+      hdrs: true,
+      key: "Result",
+    }),
     M.jsonErr(414, errors.ErrorDto$inboundSchema),
     M.jsonErr(
       [400, 401, 403, 404, 405, 409, 413, 415],

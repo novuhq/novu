@@ -7,6 +7,7 @@ import { remap as remap$ } from "../../lib/primitives.js";
 import { safeParse } from "../../lib/schemas.js";
 import { ClosedEnum } from "../../types/enums.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
+import * as components from "../components/index.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 
 /**
@@ -67,6 +68,7 @@ export type TopicsControllerListTopicSubscriptionsRequest = {
 
 export type TopicsControllerListTopicSubscriptionsResponse = {
   headers: { [k: string]: Array<string> };
+  result: components.ListTopicSubscriptionsResponseDto;
 };
 
 /** @internal */
@@ -208,15 +210,18 @@ export const TopicsControllerListTopicSubscriptionsResponse$inboundSchema:
     unknown
   > = z.object({
     Headers: z.record(z.array(z.string())),
+    Result: components.ListTopicSubscriptionsResponseDto$inboundSchema,
   }).transform((v) => {
     return remap$(v, {
       "Headers": "headers",
+      "Result": "result",
     });
   });
 
 /** @internal */
 export type TopicsControllerListTopicSubscriptionsResponse$Outbound = {
   Headers: { [k: string]: Array<string> };
+  Result: components.ListTopicSubscriptionsResponseDto$Outbound;
 };
 
 /** @internal */
@@ -227,9 +232,11 @@ export const TopicsControllerListTopicSubscriptionsResponse$outboundSchema:
     TopicsControllerListTopicSubscriptionsResponse
   > = z.object({
     headers: z.record(z.array(z.string())),
+    result: components.ListTopicSubscriptionsResponseDto$outboundSchema,
   }).transform((v) => {
     return remap$(v, {
       headers: "Headers",
+      result: "Result",
     });
   });
 

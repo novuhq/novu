@@ -31,7 +31,7 @@ export class Topics extends ClientSDK {
   async list(
     request: operations.TopicsControllerListTopicsRequest,
     options?: RequestOptions,
-  ): Promise<operations.TopicsControllerListTopicsResponse | undefined> {
+  ): Promise<operations.TopicsControllerListTopicsResponse> {
     return unwrapAsync(topicsList(
       this,
       request,
@@ -49,7 +49,7 @@ export class Topics extends ClientSDK {
     createUpdateTopicRequestDto: components.CreateUpdateTopicRequestDto,
     idempotencyKey?: string | undefined,
     options?: RequestOptions,
-  ): Promise<operations.TopicsControllerUpsertTopicResponse | undefined> {
+  ): Promise<operations.TopicsControllerUpsertTopicResponse> {
     return unwrapAsync(topicsCreate(
       this,
       createUpdateTopicRequestDto,
@@ -65,7 +65,7 @@ export class Topics extends ClientSDK {
     topicKey: string,
     idempotencyKey?: string | undefined,
     options?: RequestOptions,
-  ): Promise<operations.TopicsControllerGetTopicResponse | undefined> {
+  ): Promise<operations.TopicsControllerGetTopicResponse> {
     return unwrapAsync(topicsGet(
       this,
       topicKey,
@@ -82,7 +82,7 @@ export class Topics extends ClientSDK {
     topicKey: string,
     idempotencyKey?: string | undefined,
     options?: RequestOptions,
-  ): Promise<operations.TopicsControllerUpdateTopicResponse | undefined> {
+  ): Promise<operations.TopicsControllerUpdateTopicResponse> {
     return unwrapAsync(topicsUpdate(
       this,
       updateTopicRequestDto,

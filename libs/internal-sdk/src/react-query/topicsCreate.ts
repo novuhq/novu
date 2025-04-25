@@ -24,8 +24,7 @@ export type TopicsCreateMutationVariables = {
 };
 
 export type TopicsCreateMutationData =
-  | operations.TopicsControllerUpsertTopicResponse
-  | undefined;
+  operations.TopicsControllerUpsertTopicResponse;
 
 /**
  * Create or update a topic

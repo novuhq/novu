@@ -25,9 +25,7 @@ import {
   TupleToPrefixes,
 } from "./_types.js";
 
-export type TopicsListQueryData =
-  | operations.TopicsControllerListTopicsResponse
-  | undefined;
+export type TopicsListQueryData = operations.TopicsControllerListTopicsResponse;
 
 /**
  * Get topics list

@@ -25,8 +25,7 @@ export type TopicsUpdateMutationVariables = {
 };
 
 export type TopicsUpdateMutationData =
-  | operations.TopicsControllerUpdateTopicResponse
-  | undefined;
+  operations.TopicsControllerUpdateTopicResponse;
 
 /**
  * Update topic by key

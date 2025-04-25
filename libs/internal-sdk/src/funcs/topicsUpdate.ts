@@ -36,7 +36,8 @@ export function topicsUpdate(
   options?: RequestOptions,
 ): APIPromise<
   Result<
-    operations.TopicsControllerUpdateTopicResponse | undefined,
+    operations.TopicsControllerUpdateTopicResponse,
+    | errors.TopicsControllerUpdateTopicResponseBody
     | errors.ErrorDto
     | errors.ErrorDto
     | errors.ValidationErrorDto
@@ -68,7 +69,8 @@ async function $do(
 ): Promise<
   [
     Result<
-      operations.TopicsControllerUpdateTopicResponse | undefined,
+      operations.TopicsControllerUpdateTopicResponse,
+      | errors.TopicsControllerUpdateTopicResponseBody
       | errors.ErrorDto
       | errors.ErrorDto
       | errors.ValidationErrorDto
@@ -196,7 +198,8 @@ async function $do(
   };
 
   const [result] = await M.match<
-    operations.TopicsControllerUpdateTopicResponse | undefined,
+    operations.TopicsControllerUpdateTopicResponse,
+    | errors.TopicsControllerUpdateTopicResponseBody
     | errors.ErrorDto
     | errors.ErrorDto
     | errors.ValidationErrorDto
@@ -209,9 +212,13 @@ async function $do(
     | RequestTimeoutError
     | ConnectionError
   >(
-    M.nil(
-      200,
-      operations.TopicsControllerUpdateTopicResponse$inboundSchema.optional(),
+    M.json(200, operations.TopicsControllerUpdateTopicResponse$inboundSchema, {
+      hdrs: true,
+      key: "Result",
+    }),
+    M.jsonErr(
+      404,
+      errors.TopicsControllerUpdateTopicResponseBody$inboundSchema,
       { hdrs: true },
     ),
     M.jsonErr(414, errors.ErrorDto$inboundSchema),
@@ -221,7 +228,7 @@ async function $do(
       { hdrs: true },
     ),
     M.jsonErr(422, errors.ValidationErrorDto$inboundSchema, { hdrs: true }),
-    M.fail([404, 429]),
+    M.fail(429),
     M.jsonErr(500, errors.ErrorDto$inboundSchema, { hdrs: true }),
     M.fail(503),
     M.fail("4XX"),

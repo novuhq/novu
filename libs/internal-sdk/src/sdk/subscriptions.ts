@@ -17,9 +17,7 @@ export class Subscriptions extends ClientSDK {
   async list(
     request: operations.TopicsControllerListTopicSubscriptionsRequest,
     options?: RequestOptions,
-  ): Promise<
-    operations.TopicsControllerListTopicSubscriptionsResponse | undefined
-  > {
+  ): Promise<operations.TopicsControllerListTopicSubscriptionsResponse> {
     return unwrapAsync(topicsSubscriptionsList(
       this,
       request,

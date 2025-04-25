@@ -74,9 +74,7 @@ export class TopicsController {
   @ExternalApiAccessible()
   @SdkMethodName('list')
   @ApiOperation({ summary: 'Get topics list' })
-  @ApiResponse(ListTopicsResponseDto, 200, true, true, {
-    description: 'Successful retrieval of topics list',
-  })
+  @ApiResponse(ListTopicsResponseDto)
   async listTopics(
     @UserSession() user: UserSessionData,
     @Query() query: ListTopicsQueryDto
@@ -103,9 +101,7 @@ export class TopicsController {
     summary: 'Create or update a topic',
     description: 'Creates a new topic if it does not exist, or updates an existing topic if it already exists',
   })
-  @ApiResponse(TopicResponseDto, 201, false, true, {
-    description: 'Topic successfully created/updated',
-  })
+  @ApiResponse(TopicResponseDto)
   @SdkMethodName('create')
   async upsertTopic(
     @UserSession() user: UserSessionData,
@@ -128,12 +124,8 @@ export class TopicsController {
   @SdkMethodName('get')
   @ApiOperation({ summary: 'Get topic by key' })
   @ApiParam({ name: 'topicKey', description: 'The key identifier of the topic', type: String })
-  @ApiResponse(TopicResponseDto, 200, false, true, {
-    description: 'Topic found and returned successfully',
-  })
-  @ApiResponse(TopicResponseDto, 404, false, true, {
-    description: 'Topic not found',
-  })
+  @ApiResponse(TopicResponseDto, 200)
+  @ApiResponse(TopicResponseDto, 404)
   async getTopic(@UserSession() user: UserSessionData, @Param('topicKey') topicKey: string): Promise<TopicResponseDto> {
     return await this.getTopicUsecase.execute(
       GetTopicCommand.create({
@@ -150,12 +142,8 @@ export class TopicsController {
   @SdkMethodName('update')
   @ApiOperation({ summary: 'Update topic by key' })
   @ApiParam({ name: 'topicKey', description: 'The key identifier of the topic', type: String })
-  @ApiResponse(TopicResponseDto, 200, false, true, {
-    description: 'Topic updated successfully',
-  })
-  @ApiResponse(TopicResponseDto, 404, false, true, {
-    description: 'Topic not found',
-  })
+  @ApiResponse(TopicResponseDto, 200)
+  @ApiResponse(TopicResponseDto, 404)
   async updateTopic(
     @UserSession() user: UserSessionData,
     @Param('topicKey') topicKey: string,
@@ -212,12 +200,8 @@ export class TopicsController {
   @SdkGroupName('Topics.Subscriptions')
   @ApiOperation({ summary: 'List topic subscriptions' })
   @ApiParam({ name: 'topicKey', description: 'The key identifier of the topic', type: String })
-  @ApiResponse(ListTopicSubscriptionsResponseDto, 200, true, true, {
-    description: 'Subscriptions listed successfully',
-  })
-  @ApiResponse(ListTopicSubscriptionsResponseDto, 404, true, true, {
-    description: 'Topic not found',
-  })
+  @ApiResponse(ListTopicSubscriptionsResponseDto, 200)
+  @ApiResponse(ListTopicSubscriptionsResponseDto, 404)
   async listTopicSubscriptions(
     @UserSession() user: UserSessionData,
     @Param('topicKey') topicKey: string,
