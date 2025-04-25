@@ -213,8 +213,10 @@ export function mergeCommonObjectKeys(target: Record<string, unknown>, source: R
     });
   }
 
+  const sIsObj = isObject(source);
+  const tIsObj = isObject(target);
   // If either is not an object, prefer target if both are primitives, otherwise source
-  if (!isObject(source) || !isObject(target)) {
+  if (!sIsObj || !tIsObj) {
     /*
      * If both are not objects, return target (FE payload)
      * because we want to keep the FE payload
@@ -227,7 +229,7 @@ export function mergeCommonObjectKeys(target: Record<string, unknown>, source: R
      * should be considered as source of truth. this fixes the issue
      * of stale/edited payload in FE
      */
-    return !isObject(source) && !isObject(target) ? target : source;
+    return !sIsObj && !tIsObj ? target : source;
   }
 
   const result: Record<string, unknown> = {};
