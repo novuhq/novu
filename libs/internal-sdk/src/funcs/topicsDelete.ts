@@ -34,7 +34,9 @@ export function topicsDelete(
   options?: RequestOptions,
 ): APIPromise<
   Result<
-    operations.TopicsControllerDeleteTopicResponse | undefined,
+    operations.TopicsControllerDeleteTopicResponse,
+    | errors.TopicsControllerDeleteTopicResponseBody
+    | errors.TopicsControllerDeleteTopicTopicsResponseBody
     | errors.ErrorDto
     | errors.ErrorDto
     | errors.ValidationErrorDto
@@ -64,7 +66,9 @@ async function $do(
 ): Promise<
   [
     Result<
-      operations.TopicsControllerDeleteTopicResponse | undefined,
+      operations.TopicsControllerDeleteTopicResponse,
+      | errors.TopicsControllerDeleteTopicResponseBody
+      | errors.TopicsControllerDeleteTopicTopicsResponseBody
       | errors.ErrorDto
       | errors.ErrorDto
       | errors.ValidationErrorDto
@@ -188,7 +192,9 @@ async function $do(
   };
 
   const [result] = await M.match<
-    operations.TopicsControllerDeleteTopicResponse | undefined,
+    operations.TopicsControllerDeleteTopicResponse,
+    | errors.TopicsControllerDeleteTopicResponseBody
+    | errors.TopicsControllerDeleteTopicTopicsResponseBody
     | errors.ErrorDto
     | errors.ErrorDto
     | errors.ValidationErrorDto
@@ -201,9 +207,18 @@ async function $do(
     | RequestTimeoutError
     | ConnectionError
   >(
-    M.nil(
-      200,
-      operations.TopicsControllerDeleteTopicResponse$inboundSchema.optional(),
+    M.json(200, operations.TopicsControllerDeleteTopicResponse$inboundSchema, {
+      hdrs: true,
+      key: "Result",
+    }),
+    M.jsonErr(
+      404,
+      errors.TopicsControllerDeleteTopicResponseBody$inboundSchema,
+      { hdrs: true },
+    ),
+    M.jsonErr(
+      409,
+      errors.TopicsControllerDeleteTopicTopicsResponseBody$inboundSchema,
       { hdrs: true },
     ),
     M.jsonErr(414, errors.ErrorDto$inboundSchema),
@@ -211,7 +226,7 @@ async function $do(
       hdrs: true,
     }),
     M.jsonErr(422, errors.ValidationErrorDto$inboundSchema, { hdrs: true }),
-    M.fail([404, 409, 429]),
+    M.fail(429),
     M.jsonErr(500, errors.ErrorDto$inboundSchema, { hdrs: true }),
     M.fail(503),
     M.fail("4XX"),

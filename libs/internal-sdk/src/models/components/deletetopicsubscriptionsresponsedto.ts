@@ -7,11 +7,11 @@ import { safeParse } from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 import {
-  ErrorDto,
-  ErrorDto$inboundSchema,
-  ErrorDto$Outbound,
-  ErrorDto$outboundSchema,
-} from "./errordto.js";
+  ErrorDto1,
+  ErrorDto1$inboundSchema,
+  ErrorDto1$Outbound,
+  ErrorDto1$outboundSchema,
+} from "./errordto1.js";
 import {
   MetaDto,
   MetaDto$inboundSchema,
@@ -37,7 +37,7 @@ export type DeleteTopicSubscriptionsResponseDto = {
   /**
    * The list of errors for failed deletion attempts
    */
-  errors?: Array<ErrorDto> | undefined;
+  errors?: Array<ErrorDto1> | undefined;
 };
 
 /** @internal */
@@ -48,14 +48,14 @@ export const DeleteTopicSubscriptionsResponseDto$inboundSchema: z.ZodType<
 > = z.object({
   data: z.array(SubscriptionDto$inboundSchema),
   meta: MetaDto$inboundSchema,
-  errors: z.array(ErrorDto$inboundSchema).optional(),
+  errors: z.array(ErrorDto1$inboundSchema).optional(),
 });
 
 /** @internal */
 export type DeleteTopicSubscriptionsResponseDto$Outbound = {
   data: Array<SubscriptionDto$Outbound>;
   meta: MetaDto$Outbound;
-  errors?: Array<ErrorDto$Outbound> | undefined;
+  errors?: Array<ErrorDto1$Outbound> | undefined;
 };
 
 /** @internal */
@@ -66,7 +66,7 @@ export const DeleteTopicSubscriptionsResponseDto$outboundSchema: z.ZodType<
 > = z.object({
   data: z.array(SubscriptionDto$outboundSchema),
   meta: MetaDto$outboundSchema,
-  errors: z.array(ErrorDto$outboundSchema).optional(),
+  errors: z.array(ErrorDto1$outboundSchema).optional(),
 });
 
 /**

@@ -23,8 +23,7 @@ export type TopicsDeleteMutationVariables = {
 };
 
 export type TopicsDeleteMutationData =
-  | operations.TopicsControllerDeleteTopicResponse
-  | undefined;
+  operations.TopicsControllerDeleteTopicResponse;
 
 /**
  * Delete topic by key

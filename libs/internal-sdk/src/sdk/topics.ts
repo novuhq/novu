@@ -99,7 +99,7 @@ export class Topics extends ClientSDK {
     topicKey: string,
     idempotencyKey?: string | undefined,
     options?: RequestOptions,
-  ): Promise<operations.TopicsControllerDeleteTopicResponse | undefined> {
+  ): Promise<operations.TopicsControllerDeleteTopicResponse> {
     return unwrapAsync(topicsDelete(
       this,
       topicKey,

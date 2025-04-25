@@ -6,14 +6,14 @@ import * as z from "zod";
 import * as components from "../components/index.js";
 
 /**
- * Not Found
+ * Topic not found
  */
 export type TopicsControllerDeleteTopicSubscriptionsResponseBodyData = {
   data?: components.DeleteTopicSubscriptionsResponseDto | undefined;
 };
 
 /**
- * Not Found
+ * Topic not found
  */
 export class TopicsControllerDeleteTopicSubscriptionsResponseBody
   extends Error

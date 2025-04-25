@@ -34,9 +34,7 @@ export class Subscriptions extends ClientSDK {
     topicKey: string,
     idempotencyKey?: string | undefined,
     options?: RequestOptions,
-  ): Promise<
-    operations.TopicsControllerCreateTopicSubscriptionsResponse | undefined
-  > {
+  ): Promise<operations.TopicsControllerCreateTopicSubscriptionsResponse> {
     return unwrapAsync(topicsSubscriptionsSubscribe(
       this,
       createTopicSubscriptionsRequestDto,

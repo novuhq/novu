@@ -26,8 +26,7 @@ export type TopicsSubscriptionsSubscribeMutationVariables = {
 };
 
 export type TopicsSubscriptionsSubscribeMutationData =
-  | operations.TopicsControllerCreateTopicSubscriptionsResponse
-  | undefined;
+  operations.TopicsControllerCreateTopicSubscriptionsResponse;
 
 /**
  * Create topic subscriptions, if the topic does not exist, it will be created.
