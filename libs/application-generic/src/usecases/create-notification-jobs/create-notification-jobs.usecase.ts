@@ -10,15 +10,18 @@ import {
   DigestTypeEnum,
   IDigestBaseMetadata,
   IWorkflowStepMetadata,
+  ResourceEnum,
   STEP_TYPE_TO_CHANNEL_TYPE,
   StepTypeEnum,
 } from '@novu/shared';
 
-import { DigestFilterSteps, DigestFilterStepsCommand } from '../digest-filter-steps';
 import { InstrumentUsecase } from '../../instrumentation';
-import { CreateNotificationJobsCommand } from './create-notification-jobs.command';
-import { PlatformException } from '../../utils/exceptions';
+import { CacheService } from '../../services';
+import { buildUsageKey } from '../../services/cache/key-builders';
 import { getNestedValue } from '../../utils';
+import { PlatformException } from '../../utils/exceptions';
+import { DigestFilterSteps, DigestFilterStepsCommand } from '../digest-filter-steps';
+import { CreateNotificationJobsCommand } from './create-notification-jobs.command';
 
 const LOG_CONTEXT = 'CreateNotificationUseCase';
 type NotificationJob = Omit<JobEntity, '_id' | 'createdAt' | 'updatedAt'>;
@@ -27,7 +30,8 @@ type NotificationJob = Omit<JobEntity, '_id' | 'createdAt' | 'updatedAt'>;
 export class CreateNotificationJobs {
   constructor(
     private digestFilterSteps: DigestFilterSteps,
-    private notificationRepository: NotificationRepository
+    private notificationRepository: NotificationRepository,
+    private cachingService: CacheService
   ) {}
 
   @InstrumentUsecase()
@@ -52,6 +56,21 @@ export class CreateNotificationJobs {
       const error = new PlatformException(message);
       Logger.error(error, message, LOG_CONTEXT);
       throw error;
+    }
+
+    if (process.env.NOVU_ENTERPRISE) {
+      /**
+       * Usage and billing are connected to a create notification entity,
+       * so we need to increment the usage only after the notification is created.
+       *
+       * This caching key, is not used for actual billing reporting, but rather for throttling triggers.
+       */
+      await this.cachingService.incr(
+        buildUsageKey({
+          _organizationId: command.organizationId,
+          resourceType: ResourceEnum.EVENTS,
+        })
+      );
     }
 
     const jobs: NotificationJob[] = [];
