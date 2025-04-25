@@ -5,6 +5,7 @@ import reduce from 'lodash/reduce';
 import set from 'lodash/set';
 import { JSONSchemaDto } from '../dtos';
 import { ArrayVariable } from '../usecases/create-variables-object/create-variables-object.usecase';
+import { DIGEST_EVENTS_VARIABLE_PATTERN } from './template-parser/parser-utils';
 
 export function findMissingKeys(requiredRecord: object, actualRecord: object) {
   const requiredKeys = collectKeys(requiredRecord);
@@ -149,7 +150,14 @@ function buildObjectFromPaths(
       .split('.')
       .pop()
       ?.replace(/\[\d+\]/g, ''); // Remove array indices from the value
-    const value = showIfVariablesPaths?.includes(path) ? true : lastPart;
+    let value: unknown = showIfVariablesPaths?.includes(path) ? true : lastPart;
+
+    const lastDot = path.lastIndexOf('.');
+    const finalPart = lastDot === -1 ? path : path.substring(0, lastDot);
+
+    if (lastPart === 'payload' && DIGEST_EVENTS_VARIABLE_PATTERN.test(finalPart)) {
+      value = {};
+    }
 
     const arrayParent = arrayVariables.find(
       (arrayVariable) => arrayVariable.path === path || path.startsWith(`${arrayVariable.path}.`)
@@ -198,7 +206,7 @@ function buildObjectFromPaths(
  */
 export function mergeCommonObjectKeys(target: Record<string, unknown>, source: Record<string, unknown>) {
   if (Array.isArray(source) && Array.isArray(target)) {
-    return source.map((sItem, i) => {
+    const mergedArray = source.map((sItem, i) => {
       const tItem = target[i];
       if (tItem === undefined) return sItem;
 
@@ -211,6 +219,8 @@ export function mergeCommonObjectKeys(target: Record<string, unknown>, source: R
 
       return mergeCommonObjectKeys(tItem, sItem);
     });
+
+    return mergedArray;
   }
 
   const sIsObj = isObject(source);
