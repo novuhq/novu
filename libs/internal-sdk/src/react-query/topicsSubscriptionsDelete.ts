@@ -26,8 +26,7 @@ export type TopicsSubscriptionsDeleteMutationVariables = {
 };
 
 export type TopicsSubscriptionsDeleteMutationData =
-  | operations.TopicsControllerDeleteTopicSubscriptionsResponse
-  | undefined;
+  operations.TopicsControllerDeleteTopicSubscriptionsResponse;
 
 /**
  * Delete topic subscriptions

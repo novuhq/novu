@@ -24,6 +24,7 @@ export type TopicsControllerDeleteTopicSubscriptionsRequest = {
 
 export type TopicsControllerDeleteTopicSubscriptionsResponse = {
   headers: { [k: string]: Array<string> };
+  result: components.DeleteTopicSubscriptionsResponseDto;
 };
 
 /** @internal */
@@ -122,15 +123,18 @@ export const TopicsControllerDeleteTopicSubscriptionsResponse$inboundSchema:
     unknown
   > = z.object({
     Headers: z.record(z.array(z.string())),
+    Result: components.DeleteTopicSubscriptionsResponseDto$inboundSchema,
   }).transform((v) => {
     return remap$(v, {
       "Headers": "headers",
+      "Result": "result",
     });
   });
 
 /** @internal */
 export type TopicsControllerDeleteTopicSubscriptionsResponse$Outbound = {
   Headers: { [k: string]: Array<string> };
+  Result: components.DeleteTopicSubscriptionsResponseDto$Outbound;
 };
 
 /** @internal */
@@ -141,9 +145,11 @@ export const TopicsControllerDeleteTopicSubscriptionsResponse$outboundSchema:
     TopicsControllerDeleteTopicSubscriptionsResponse
   > = z.object({
     headers: z.record(z.array(z.string())),
+    result: components.DeleteTopicSubscriptionsResponseDto$outboundSchema,
   }).transform((v) => {
     return remap$(v, {
       headers: "Headers",
+      result: "Result",
     });
   });
 

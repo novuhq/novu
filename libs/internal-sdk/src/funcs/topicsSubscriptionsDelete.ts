@@ -37,7 +37,8 @@ export function topicsSubscriptionsDelete(
   options?: RequestOptions,
 ): APIPromise<
   Result<
-    operations.TopicsControllerDeleteTopicSubscriptionsResponse | undefined,
+    operations.TopicsControllerDeleteTopicSubscriptionsResponse,
+    | errors.TopicsControllerDeleteTopicSubscriptionsResponseBody
     | errors.ErrorDto
     | errors.ErrorDto
     | errors.ValidationErrorDto
@@ -70,7 +71,8 @@ async function $do(
 ): Promise<
   [
     Result<
-      operations.TopicsControllerDeleteTopicSubscriptionsResponse | undefined,
+      operations.TopicsControllerDeleteTopicSubscriptionsResponse,
+      | errors.TopicsControllerDeleteTopicSubscriptionsResponseBody
       | errors.ErrorDto
       | errors.ErrorDto
       | errors.ValidationErrorDto
@@ -199,7 +201,8 @@ async function $do(
   };
 
   const [result] = await M.match<
-    operations.TopicsControllerDeleteTopicSubscriptionsResponse | undefined,
+    operations.TopicsControllerDeleteTopicSubscriptionsResponse,
+    | errors.TopicsControllerDeleteTopicSubscriptionsResponseBody
     | errors.ErrorDto
     | errors.ErrorDto
     | errors.ValidationErrorDto
@@ -212,10 +215,14 @@ async function $do(
     | RequestTimeoutError
     | ConnectionError
   >(
-    M.nil(
+    M.json(
       200,
-      operations.TopicsControllerDeleteTopicSubscriptionsResponse$inboundSchema
-        .optional(),
+      operations.TopicsControllerDeleteTopicSubscriptionsResponse$inboundSchema,
+      { hdrs: true, key: "Result" },
+    ),
+    M.jsonErr(
+      404,
+      errors.TopicsControllerDeleteTopicSubscriptionsResponseBody$inboundSchema,
       { hdrs: true },
     ),
     M.jsonErr(414, errors.ErrorDto$inboundSchema),
@@ -225,7 +232,7 @@ async function $do(
       { hdrs: true },
     ),
     M.jsonErr(422, errors.ValidationErrorDto$inboundSchema, { hdrs: true }),
-    M.fail([404, 429]),
+    M.fail(429),
     M.jsonErr(500, errors.ErrorDto$inboundSchema, { hdrs: true }),
     M.fail(503),
     M.fail("4XX"),

@@ -55,9 +55,7 @@ export class Subscriptions extends ClientSDK {
     topicKey: string,
     idempotencyKey?: string | undefined,
     options?: RequestOptions,
-  ): Promise<
-    operations.TopicsControllerDeleteTopicSubscriptionsResponse | undefined
-  > {
+  ): Promise<operations.TopicsControllerDeleteTopicSubscriptionsResponse> {
     return unwrapAsync(topicsSubscriptionsDelete(
       this,
       deleteTopicSubscriptionsRequestDto,
