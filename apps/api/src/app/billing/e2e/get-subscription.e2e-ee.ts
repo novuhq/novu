@@ -54,7 +54,7 @@ const mockedStripeCustomer: DeepPartial<Stripe.Customer> = {
   },
 };
 
-describe('GetSubscription #novu-v2', async () => {
+describe.only('GetSubscription #novu-v2', async () => {
   let session: UserSession;
 
   const eeBilling = require('@novu/ee-billing');
