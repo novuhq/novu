@@ -220,6 +220,31 @@ export function mergeCommonObjectKeys(target: Record<string, unknown>, source: R
       return mergeCommonObjectKeys(tItem, sItem);
     });
 
+    /**
+     * If the merged array is longer than the target array,
+     * slice it to match the target length.
+     */
+    if (mergedArray.length > target.length) {
+      return mergedArray.slice(0, target.length);
+    }
+
+    /**
+     * if merged array is shorter than target array,
+     * fill the difference with merged object of last item
+     * and the rest of the target array
+     */
+    if (mergedArray.length < target.length) {
+      const lastItem = mergedArray[mergedArray.length - 1];
+      const fillCount = target.length - mergedArray.length;
+      const remainingItems = target.slice(mergedArray.length);
+      for (let idx = 0; idx < fillCount; idx += 1) {
+        const mergedObject = mergeCommonObjectKeys(remainingItems[idx], lastItem);
+        mergedArray.push(mergedObject);
+      }
+
+      return mergedArray;
+    }
+
     return mergedArray;
   }
 
