@@ -5,9 +5,11 @@ export const defaultLocalization = {
   'inbox.filters.dropdownOptions.unread': 'Unread only',
   'inbox.filters.dropdownOptions.default': 'Unread & read',
   'inbox.filters.dropdownOptions.archived': 'Archived',
+  'inbox.filters.dropdownOptions.snoozed': 'Pending reminders',
   'inbox.filters.labels.unread': 'Unread',
   'inbox.filters.labels.default': 'Inbox',
   'inbox.filters.labels.archived': 'Archived',
+  'inbox.filters.labels.snoozed': 'Pending reminders',
   'notifications.emptyNotice': 'Quiet for now. Check back later.',
   'notifications.actions.readAll': 'Mark all as read',
   'notifications.actions.archiveAll': 'Archive all',
@@ -20,12 +22,19 @@ export const defaultLocalization = {
   'notification.actions.unread.tooltip': 'Mark as unread',
   'notification.actions.archive.tooltip': 'Archive',
   'notification.actions.unarchive.tooltip': 'Unarchive',
+  'notification.actions.snooze.tooltip': 'Remind me later',
+  'notification.actions.unsnooze.tooltip': 'Cancel reminder',
+  'notification.remindingLater': 'Reminding later',
   'preferences.title': 'Preferences',
   'preferences.emptyNotice': 'No notification specific preferences yet.',
   'preferences.global': 'Global Preferences',
   'preferences.workflow.disabled.notice':
     'Contact admin to enable subscription management for this critical notification.',
   'preferences.workflow.disabled.tooltip': 'Contact admin to edit',
+  'snooze.datePicker.timePickerLabel': 'Time',
+  'snooze.datePicker.apply': 'Apply',
+  'snooze.datePicker.cancel': 'Cancel',
+  'snooze.options.anHourFromNow': 'An hour from now',
 } as const;
 
 export const [dynamicLocalization, setDynamicLocalization] = createSignal<Record<string, string>>({});

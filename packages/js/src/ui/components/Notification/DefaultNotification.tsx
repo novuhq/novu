@@ -1,13 +1,16 @@
-import { createEffect, createMemo, createSignal, JSX, Show } from 'solid-js';
+import { createEffect, createMemo, createSignal, For, JSX, Show } from 'solid-js';
 
 import type { Notification } from '../../../notifications';
 import { ActionTypeEnum } from '../../../types';
 import { useInboxContext, useLocalization } from '../../context';
 import { cn, formatToRelativeTime, useStyle } from '../../helpers';
 import { MarkAsUnarchived } from '../../icons';
+import { Clock } from '../../icons/Clock';
 import { MarkAsArchived } from '../../icons/MarkAsArchived';
 import { MarkAsRead } from '../../icons/MarkAsRead';
 import { MarkAsUnread } from '../../icons/MarkAsUnread';
+import { Snooze } from '../../icons/Snooze';
+import { Unsnooze } from '../../icons/Unsnooze';
 import {
   NotificationStatus,
   type BodyRenderer,
@@ -17,8 +20,10 @@ import {
 } from '../../types';
 import Markdown from '../elements/Markdown';
 import { ExternalElementRenderer } from '../ExternalElementRenderer';
-import { Button } from '../primitives';
+import { Button, Dropdown, dropdownItemVariants, Popover } from '../primitives';
+import { Badge } from '../primitives/Badge';
 import { Tooltip } from '../primitives/Tooltip';
+import { SnoozeDateTimePicker } from './SnoozeDateTimePicker';
 
 type DefaultNotificationProps = {
   notification: Notification;
@@ -33,11 +38,31 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
   const style = useStyle();
   const { t, locale } = useLocalization();
   const { navigate, status } = useInboxContext();
+  const [isSnoozeDateTimePickerOpen, setIsSnoozeDateTimePickerOpen] = createSignal(false);
   const [minutesPassed, setMinutesPassed] = createSignal(0);
-  const date = createMemo(() => {
+  const createdAt = createMemo(() => {
     minutesPassed(); // register as dep
 
     return formatToRelativeTime({ fromDate: new Date(props.notification.createdAt), locale: locale() });
+  });
+  const snoozedUntil = createMemo(() => {
+    minutesPassed(); // register as dep
+    if (!props.notification.snoozedUntil) {
+      return null;
+    }
+
+    return formatToRelativeTime({ fromDate: new Date(props.notification.snoozedUntil), locale: locale() });
+  });
+  const deliveredAt = createMemo(() => {
+    minutesPassed(); // register as dep
+
+    if (!props.notification.deliveredAt || !Array.isArray(props.notification.deliveredAt)) {
+      return null;
+    }
+
+    return props.notification.deliveredAt.map((date) =>
+      formatToRelativeTime({ fromDate: new Date(date), locale: locale() })
+    );
   });
 
   createEffect(() => {
@@ -195,6 +220,141 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
               </Tooltip.Root>
             </Show>
           </Show>
+
+          <Show
+            when={props.notification.isSnoozed}
+            fallback={
+              <Tooltip.Root>
+                <Tooltip.Trigger
+                  asChild={(tooltipProps) => (
+                    <Dropdown.Root>
+                      <Dropdown.Trigger
+                        {...tooltipProps}
+                        asChild={(popoverProps) => (
+                          <Button
+                            appearanceKey="notificationSnooze__button"
+                            size="iconSm"
+                            variant="ghost"
+                            {...popoverProps}
+                          >
+                            <Snooze class={style('notificationSnooze__icon', 'nt-size-3')} />
+                          </Button>
+                        )}
+                      />
+                      <Dropdown.Content portal appearanceKey="notificationSnooze__dropdownContent">
+                        <Dropdown.Item
+                          appearanceKey="notificationSnooze__dropdownItem"
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            await props.notification.snooze(new Date(Date.now() + 2 * 60 * 1000).toUTCString());
+                          }}
+                        >
+                          <Clock
+                            class={style(
+                              'notificationSnooze__dropdownItem__icon',
+                              'nt-size-3 nt-text-foreground-alpha-400'
+                            )}
+                          />
+                          {t('snooze.options.anHourFromNow')}
+                        </Dropdown.Item>
+                        <Dropdown.Item
+                          appearanceKey="notificationSnooze__dropdownItem"
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            await props.notification.snooze(
+                              new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toUTCString()
+                            );
+                          }}
+                        >
+                          <Clock
+                            class={style(
+                              'notificationSnooze__dropdownItem__icon',
+                              'nt-size-3 nt-text-foreground-alpha-400'
+                            )}
+                          />
+                          {new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toLocaleString()}
+                        </Dropdown.Item>
+                        <Dropdown.Item
+                          appearanceKey="notificationSnooze__dropdownItem"
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            await props.notification.snooze(
+                              new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toUTCString()
+                            );
+                          }}
+                        >
+                          <Clock
+                            class={style(
+                              'notificationSnooze__dropdownItem__icon',
+                              'nt-size-3 nt-text-foreground-alpha-400'
+                            )}
+                          />
+                          {new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleString()}
+                        </Dropdown.Item>
+                        <Popover.Root open={isSnoozeDateTimePickerOpen()} onOpenChange={setIsSnoozeDateTimePickerOpen}>
+                          <Dropdown.Item
+                            asChild={(props) => (
+                              <Popover.Trigger
+                                class={style('notificationSnooze__dropdownItem', dropdownItemVariants())}
+                                {...props}
+                              >
+                                <Clock
+                                  class={style(
+                                    'notificationSnooze__dropdownItem__icon',
+                                    'nt-size-3 nt-text-foreground-alpha-400'
+                                  )}
+                                />
+                                Custom time...
+                              </Popover.Trigger>
+                            )}
+                          />
+                          <Popover.Content
+                            portal
+                            class={style('notificationSnoozeCustomTime_popoverContent', 'nt-size-fit')}
+                          >
+                            <SnoozeDateTimePicker
+                              onSelect={async (date) => {
+                                await props.notification.snooze(date.toUTCString());
+                              }}
+                              onCancel={() => {
+                                setIsSnoozeDateTimePickerOpen(false);
+                              }}
+                            />
+                          </Popover.Content>
+                        </Popover.Root>
+                      </Dropdown.Content>
+                    </Dropdown.Root>
+                  )}
+                />
+                <Tooltip.Content data-localization="notification.actions.read.tooltip">
+                  {t('notification.actions.snooze.tooltip')}
+                </Tooltip.Content>
+              </Tooltip.Root>
+            }
+          >
+            <Tooltip.Root>
+              <Tooltip.Trigger
+                asChild={(childProps) => (
+                  <Button
+                    appearanceKey="notificationUnsnooze__button"
+                    size="iconSm"
+                    variant="ghost"
+                    {...childProps}
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      await props.notification.unsnooze();
+                    }}
+                  >
+                    <Unsnooze class={style('notificationUnsnooze__icon', 'nt-size-3')} />
+                  </Button>
+                )}
+              />
+              <Tooltip.Content data-localization="notification.actions.unsnooze.tooltip">
+                {t('notification.actions.unsnooze.tooltip')}
+              </Tooltip.Content>
+            </Tooltip.Root>
+          </Show>
+
           <Show
             when={props.notification.isArchived}
             fallback={
@@ -270,7 +430,41 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
             </Show>
           </div>
         </Show>
-        <p class={style('notificationDate', 'nt-text-foreground-alpha-400')}>{date()}</p>
+        <div class={style('notificationDate', 'nt-text-foreground-alpha-400 nt-flex nt-items-center nt-gap-1')}>
+          <Show
+            when={snoozedUntil()}
+            fallback={
+              <>
+                <Show when={deliveredAt()} fallback={<>{createdAt()}</>}>
+                  {(deliveredAt) => (
+                    <Show when={deliveredAt().length > 2}>
+                      {' '}
+                      <For each={deliveredAt().slice(-2)}>
+                        {(date, index) => (
+                          <>
+                            <Show when={index() === 0}>{date} ·</Show>
+                            <Show when={index() === 1}>
+                              <Badge appearanceKey="notificationDeliveredAt__badge">
+                                <Clock class={style('notificationDeliveredAt__icon', 'nt-size-3')} />
+                                {date}
+                              </Badge>
+                            </Show>
+                          </>
+                        )}
+                      </For>
+                    </Show>
+                  )}
+                </Show>
+              </>
+            }
+          >
+            {(snoozedUntil) => (
+              <>
+                {t('notification.remindingLater')} · {snoozedUntil()}
+              </>
+            )}
+          </Show>
+        </div>
       </div>
 
       <Show when={!props.notification.isRead}>
