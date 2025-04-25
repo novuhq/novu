@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onBeforeUnmount, watch, provide } from 'vue';
+import { onBeforeUnmount, watch, provide } from 'vue';
 import { BaseNovuProviderProps, NovuUI } from '@novu/js/ui';
 import { NovuUIKey } from '../context/NovuUIProviderContext';
 

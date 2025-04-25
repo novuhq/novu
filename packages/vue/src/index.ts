@@ -8,11 +8,13 @@ import Notifications from './components/Notifications.vue';
 import Preferences from './components/Preferences.vue';
 import Bell from './components/Bell.vue';
 import NovuProvider from './components/NovuProvider.vue';
+import NovuUIProvider from './components/NovuUIProvider.vue';
 import { NovuKey, NovuProviderProps } from './components';
 
 export * from './components';
 export * from './hooks';
 export * from './context/NovuProviderContext';
+export * from './context/NovuUIProviderContext';
 
 // @ts-ignore
 const version = PACKAGE_VERSION;
@@ -29,21 +31,20 @@ export default {
     app.component('Preferences', Preferences);
     app.component('Bell', Bell);
     app.component('NovuProvider', NovuProvider);
+    app.component('NovuUIProvider', NovuUIProvider);
 
     if (options)
       provide(
         NovuKey,
-        ref(
-          new Novu({
-            applicationIdentifier: options.applicationIdentifier,
-            subscriberId: options.subscriberId,
-            subscriberHash: options.subscriberHash,
-            backendUrl: options.backendUrl,
-            socketUrl: options.socketUrl,
-            useCache: options.useCache,
-            __userAgent: `${baseUserAgent} ${options.userAgentType}`,
-          })
-        )
+        new Novu({
+          applicationIdentifier: options.applicationIdentifier,
+          subscriberId: options.subscriberId,
+          subscriberHash: options.subscriberHash,
+          backendUrl: options.backendUrl,
+          socketUrl: options.socketUrl,
+          useCache: options.useCache,
+          __userAgent: `${baseUserAgent} ${options.userAgentType}`,
+        })
       );
   },
 };

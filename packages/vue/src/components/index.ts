@@ -1,7 +1,11 @@
-export * as Bell from './Bell.vue';
-export * as Inbox from './Inbox.vue';
-export * as Preferences from './Preferences.vue';
-export * as Notifications from './Notifications.vue';
-export * as InboxContent from './InboxContent.vue';
-export * as NovuProvider from './NovuProvider.vue';
+import Bell from './Bell.vue';
+import Inbox from './Inbox.vue';
+import Preferences from './Preferences.vue';
+import Notifications from './Notifications.vue';
+import InboxContent from './InboxContent.vue';
+import NovuProvider from './NovuProvider.vue';
+import NovuUIProvider from './NovuUIProvider.vue';
+
+export { Bell, Inbox, Preferences, Notifications, InboxContent, NovuProvider, NovuUIProvider };
 export * from '../context/NovuProviderContext';
+export * from '../context/NovuUIProviderContext';

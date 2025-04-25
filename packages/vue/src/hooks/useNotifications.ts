@@ -76,7 +76,7 @@ export function useNotifications(props?: UseNotificationsProps): UseNotification
     }
     isFetching.value = true;
 
-    const response = await novu.value.notifications.list({
+    const response = await novu.notifications.list({
       tags: tags.value,
       read: read.value,
       archived: archived.value,
@@ -98,7 +98,7 @@ export function useNotifications(props?: UseNotificationsProps): UseNotification
   };
 
   const refetch = async () => {
-    novu.value.notifications.clearCache({ filter: { tags: tags.value, read: read.value, archived: archived.value } });
+    novu.notifications.clearCache({ filter: { tags: tags.value, read: read.value, archived: archived.value } });
     await fetchNotifications({ refetch: true });
   };
 
@@ -107,14 +107,14 @@ export function useNotifications(props?: UseNotificationsProps): UseNotification
     await fetchNotifications();
   };
 
-  const readAll = async () => await novu.value.notifications.readAll({ tags: tags.value });
+  const readAll = async () => await novu.notifications.readAll({ tags: tags.value });
 
-  const archiveAll = async () => await novu.value.notifications.archiveAll({ tags: tags.value });
+  const archiveAll = async () => await novu.notifications.archiveAll({ tags: tags.value });
 
-  const archiveAllRead = async () => await novu.value.notifications.archiveAllRead({ tags: tags.value });
+  const archiveAllRead = async () => await novu.notifications.archiveAllRead({ tags: tags.value });
 
   onMounted(() => {
-    const cleanup = novu.value.on('notifications.list.updated', sync);
+    const cleanup = novu.on('notifications.list.updated', sync);
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     fetchNotifications();
 
@@ -125,7 +125,7 @@ export function useNotifications(props?: UseNotificationsProps): UseNotification
     const newFilter = { tags: tags.value, read: read.value, archived: archived.value };
     if (filterRef.value && isSameFilter(filterRef.value, newFilter)) return;
 
-    novu.value.notifications.clearCache({ filter: filterRef.value });
+    novu.notifications.clearCache({ filter: filterRef.value });
     filterRef.value = newFilter;
 
     await fetchNotifications({ refetch: true });

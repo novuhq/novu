@@ -24,7 +24,7 @@ export type UseCountsResult = {
 };
 
 export function useCounts(props: UseCountsProps): UseCountsResult {
-  const { filters: filtersInput, onSuccess, onError } = props;
+  const { filters: filtersInput, onSuccess, onError } = props || {};
   const filters = toRefSafe(filtersInput);
   const novu = useNovu();
 
@@ -46,7 +46,7 @@ export function useCounts(props: UseCountsProps): UseCountsResult {
     if (countFiltersToFetch.length === 0) return;
 
     isFetching.value = true;
-    const countsRes = await novu.value.notifications.count({ filters: countFiltersToFetch });
+    const countsRes = await novu.notifications.count({ filters: countFiltersToFetch });
     isFetching.value = false;
     isLoading.value = false;
 

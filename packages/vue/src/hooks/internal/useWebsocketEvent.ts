@@ -17,7 +17,7 @@ export function useWebSocketEvent<E extends SocketEventNames>(event: E, eventHan
 
   onMounted(() => {
     const resolveLock = requestLock(`nv.${event}`, () => {
-      cleanup.value = novu.value.on(event, updateReadCount);
+      cleanup.value = novu.on(event, updateReadCount);
     });
 
     onUnmounted(() => {

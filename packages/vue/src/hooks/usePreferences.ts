@@ -35,7 +35,7 @@ export function usePreferences(props?: UsePreferencesProps): UsePreferencesResul
 
   const fetchPreferences = async () => {
     isFetching.value = true;
-    const response = await novu.value.preferences.list(filter.value);
+    const response = await novu.preferences.list(filter.value);
 
     if (response.error) {
       error.value = response.error;
@@ -50,7 +50,7 @@ export function usePreferences(props?: UsePreferencesProps): UsePreferencesResul
   };
 
   const refetch = async () => {
-    novu.value.preferences.cache.clearAll();
+    novu.preferences.cache.clearAll();
     await fetchPreferences();
   };
 
@@ -58,9 +58,9 @@ export function usePreferences(props?: UsePreferencesProps): UsePreferencesResul
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     fetchPreferences();
 
-    const listUpdatedCleanup = novu.value.on('preferences.list.updated', sync);
-    const listPendingCleanup = novu.value.on('preferences.list.pending', sync);
-    const listResolvedCleanup = novu.value.on('preferences.list.resolved', sync);
+    const listUpdatedCleanup = novu.on('preferences.list.updated', sync);
+    const listPendingCleanup = novu.on('preferences.list.pending', sync);
+    const listResolvedCleanup = novu.on('preferences.list.resolved', sync);
 
     onUnmounted(() => {
       listUpdatedCleanup();
