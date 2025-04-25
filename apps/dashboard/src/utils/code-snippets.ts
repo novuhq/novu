@@ -1,4 +1,4 @@
-import { API_HOSTNAME } from '@/config';
+import { API_HOSTNAME, IS_EU } from '@/config';
 
 export type CodeSnippet = {
   identifier: string;
@@ -19,11 +19,12 @@ const safeParsePayload = (payload: string) => {
 
 export const createNodeJsSnippet = ({ identifier, to, payload, secretKey }: CodeSnippet) => {
   const renderedSecretKey = secretKey ? `'${secretKey}'` : `process.env['${SECRET_KEY_ENV_KEY}']`;
+  const euServerUrl = IS_EU ? `,\n  serverURL: 'https://eu.api.novu.co'` : '';
 
   return `import { Novu } from '@novu/api'; 
 
 const novu = new Novu({ 
-  secretKey: ${renderedSecretKey}
+  secretKey: ${renderedSecretKey}${euServerUrl}
 });
 
 novu.trigger(${JSON.stringify(
@@ -108,6 +109,10 @@ export const createPhpSnippet = ({ identifier, to, payload, secretKey }: CodeSni
   const renderedSecretKey = secretKey
     ? `'${secretKey}'`
     : `$_ENV['${SECRET_KEY_ENV_KEY}'] ?? getenv('${SECRET_KEY_ENV_KEY}')`;
+  const euServerUrl = IS_EU
+    ? `
+    ->setServerURL('https://eu.api.novu.co')`
+    : '';
 
   return `use novu;
 use novu\\Models\\Components;
@@ -120,7 +125,7 @@ $dotenv->load();
 // Get API key from environment variable
 $apiKey = ${renderedSecretKey};
 
-$sdk = novu\\Novu::builder()
+$sdk = novu\\Novu::builder()${euServerUrl}
     ->setSecurity($apiKey)
     ->build();
 
@@ -137,13 +142,14 @@ $response = $sdk->events->trigger($request);`;
 
 export const createPythonSnippet = ({ identifier, to, payload, secretKey }: CodeSnippet) => {
   const renderedSecretKey = secretKey ? `'${secretKey}'` : `os.environ['${SECRET_KEY_ENV_KEY}']`;
+  const euServerUrl = IS_EU ? `,\n  server_url: 'https://eu.api.novu.co'` : '';
 
   return `import novu_py
 from novu_py import Novu
 import os
 
 with Novu(
-    api_key=${renderedSecretKey},
+  api_key=${renderedSecretKey}${euServerUrl}
 ) as novu:
     res = novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
         workflow_id="${identifier}",
@@ -156,6 +162,7 @@ with Novu(
 
 export const createGoSnippet = ({ identifier, to, payload, secretKey }: CodeSnippet) => {
   const renderedSecretKey = secretKey ? `"${secretKey}"` : `os.Getenv("${SECRET_KEY_ENV_KEY}")`;
+  const euServerUrl = IS_EU ? `\n		novugo.WithServerURL("https://eu.api.novu.co"),` : '';
 
   return `package main
 
@@ -171,7 +178,7 @@ func main() {
 	ctx := context.Background()
 
 	s := novugo.New(
-		novugo.WithSecurity(${renderedSecretKey}),
+		novugo.WithSecurity(${renderedSecretKey}),${euServerUrl}
 	)
 
 	res, err := s.Trigger(ctx, components.TriggerEventRequestDto{

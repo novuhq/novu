@@ -9,7 +9,7 @@ import { useFormContext } from 'react-hook-form';
 import { useEditorPreview } from '../use-editor-preview';
 
 export const SmsTabs = (props: StepEditorProps) => {
-  const { workflow, step, hasStepValidationErrors } = props;
+  const { workflow, step } = props;
   const { dataSchema, uiSchema } = step.controls;
   const form = useFormContext();
   const [tabsValue, setTabsValue] = useState('editor');
@@ -47,7 +47,6 @@ export const SmsTabs = (props: StepEditorProps) => {
       tabsValue={tabsValue}
       onTabChange={setTabsValue}
       previewStep={previewStep}
-      hasStepValidationErrors={hasStepValidationErrors}
     />
   );
 };
