@@ -35,12 +35,12 @@ import { buildLiquidParser, Variable } from '../../util/template-parser/liquid-p
 import { buildVariables } from '../../util/build-variables';
 import { mergeCommonObjectKeys } from '../../util/utils';
 import { buildVariablesSchema } from '../../util/create-schema';
-import {
-  isObjectMailyJSONContent,
-  isStringifiedMailyJSONContent,
-} from '../../../environments-v1/usecases/output-renderers/maily-to-liquid/wrap-maily-in-liquid.command';
 import { GeneratePreviewResponseDto, JSONSchemaDto, PreviewPayloadDto, StepResponseDto } from '../../dtos';
-import { replaceMailyVariables } from '../../../shared/helpers/maily-utils';
+import {
+  replaceMailyVariables,
+  isStringifiedMailyJSONContent,
+  isObjectMailyJSONContent,
+} from '../../../shared/helpers/maily-utils';
 
 const LOG_CONTEXT = 'GeneratePreviewUsecase';
 

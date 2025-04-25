@@ -1,7 +1,27 @@
 import { JSONContent as MailyJSONContent } from '@maily-to/render';
 
-import { MailyAttrsEnum, MailyContentTypeEnum } from './maily.types';
-import { Variable } from '../../workflows-v2/util/template-parser/liquid-parser';
+import { MAILY_FIRST_CITIZEN_VARIABLE_KEY, MailyAttrsEnum, MailyContentTypeEnum } from './maily.types';
+
+export const isStringifiedMailyJSONContent = (value: unknown): value is string => {
+  if (typeof value !== 'string') return false;
+
+  try {
+    const parsed = JSON.parse(value);
+
+    return isObjectMailyJSONContent(parsed);
+  } catch {
+    return false;
+  }
+};
+
+export const isObjectMailyJSONContent = (value: unknown): value is MailyJSONContent => {
+  if (!value || typeof value !== 'object') return false;
+
+  const doc = value as MailyJSONContent;
+  if (doc.type !== 'doc' || !Array.isArray(doc.content)) return false;
+
+  return true;
+};
 
 export const isRepeatNode = (
   node: MailyJSONContent
@@ -80,14 +100,41 @@ export const variableAttributeConfig = (type: MailyContentTypeEnum) => {
   return commonConfig;
 };
 
+const wrapInLiquidOutput = (variableName: string, fallback?: string, aliasFor?: string): string => {
+  const actualVariableName = aliasFor || variableName;
+  const fallbackSuffix = fallback ? ` | default: '${fallback}'` : '';
+
+  return `{{ ${actualVariableName}${fallbackSuffix} }}`;
+};
+
+type ProcessAttributesArgs = {
+  attrValue: string;
+  attrKey: MailyAttrsEnum;
+  attrs: Record<string, any>;
+};
+type ProcessAttributesFunction = (args: ProcessAttributesArgs) => string | boolean | number;
+type ShouldProcessAttrFunction = (args: ProcessAttributesArgs) => boolean;
+
+type ProcessFlagArgs = {
+  flagValue: string;
+  flagKey: MailyAttrsEnum;
+  attrs: Record<string, any>;
+};
+type ProcessFlagFunction = (args: ProcessFlagArgs) => string | boolean | number;
+type ShouldProcessFlagFunction = (args: ProcessFlagArgs) => boolean;
+
 const processVariableNodeAttributes = ({
   node,
-  shouldNotProcess,
+  shouldProcessAttr,
+  shouldProcessFlag,
   processAttr,
+  processFlag,
 }: {
   node: MailyJSONContent & { attrs: Record<string, string> };
-  shouldNotProcess: (attrValue: string) => boolean;
-  processAttr: (attrValue: string) => string;
+  shouldProcessAttr?: ShouldProcessAttrFunction;
+  shouldProcessFlag?: ShouldProcessFlagFunction;
+  processAttr?: ProcessAttributesFunction;
+  processFlag?: ProcessFlagFunction;
 }) => {
   const { attrs, type } = node;
   const config = variableAttributeConfig(type as MailyContentTypeEnum);
@@ -97,11 +144,19 @@ const processVariableNodeAttributes = ({
     const attrValue = attrs[attr];
     const flagValue = attrs[flag];
 
-    if (!flagValue || !attrValue || typeof attrValue !== 'string' || shouldNotProcess(attrValue)) {
+    if (!flagValue || !attrValue || typeof attrValue !== 'string') {
       return;
     }
 
-    processedAttrs[attr] = processAttr(attrValue);
+    const attrArgs = { attrValue, attrKey: attr, attrs };
+    if (shouldProcessAttr?.(attrArgs) && processAttr) {
+      processedAttrs[attr] = processAttr(attrArgs);
+    }
+
+    const flagArgs = { flagValue, flagKey: flag, attrs };
+    if (shouldProcessFlag?.(flagArgs) && processFlag) {
+      processedAttrs[flag] = processFlag(flagArgs);
+    }
   });
 
   return processedAttrs;
@@ -109,12 +164,16 @@ const processVariableNodeAttributes = ({
 
 const processNodeMarks = ({
   node,
-  shouldNotProcess,
+  shouldProcessAttr,
+  shouldProcessFlag,
   processAttr,
+  processFlag,
 }: {
   node: MailyJSONContent & { marks: Record<string, any>[] };
-  shouldNotProcess: (attrValue: string) => boolean;
-  processAttr: (attrValue: string) => string;
+  shouldProcessAttr?: ShouldProcessAttrFunction;
+  shouldProcessFlag?: ShouldProcessFlagFunction;
+  processAttr?: ProcessAttributesFunction;
+  processFlag?: ProcessFlagFunction;
 }) => {
   return node.marks.map((mark) => {
     if (!mark.attrs) {
@@ -133,45 +192,157 @@ const processNodeMarks = ({
       const attrValue = attrs[attr];
       const flagValue = attrs[flag];
 
-      if (!flagValue || !attrValue || typeof attrValue !== 'string' || shouldNotProcess(attrValue)) {
+      if (!flagValue || !attrValue || typeof attrValue !== 'string') {
         return;
       }
 
-      processedMark.attrs[attr] = processAttr(attrValue);
+      const attrArgs = { attrValue, attrKey: attr, attrs };
+      if (shouldProcessAttr?.(attrArgs) && processAttr) {
+        processedMark.attrs[attr] = processAttr(attrArgs);
+      }
+
+      const flagArgs = { flagValue, flagKey: flag, attrs };
+      if (shouldProcessFlag?.(flagValue) && processFlag) {
+        processedMark.attrs[flag] = processFlag(flagArgs);
+      }
     });
 
     return processedMark;
   });
 };
 
-const replaceVariable = (node: MailyJSONContent, variableToReplace: string, replacement: string): MailyJSONContent => {
+const processMailyNodes = ({
+  node,
+  shouldProcessAttr,
+  shouldProcessFlag,
+  processAttr,
+  processFlag,
+}: {
+  node: MailyJSONContent;
+  shouldProcessAttr?: ShouldProcessAttrFunction;
+  shouldProcessFlag?: ShouldProcessFlagFunction;
+  processAttr?: ProcessAttributesFunction;
+  processFlag?: ProcessFlagFunction;
+}): MailyJSONContent => {
   const newNode = { ...node } as MailyJSONContent & { attrs: Record<string, any> };
 
   if (node.content) {
-    newNode.content = node.content.map((child) => replaceVariable(child, variableToReplace, replacement));
+    newNode.content = node.content.map((child) =>
+      processMailyNodes({
+        node: child,
+        shouldProcessAttr,
+        shouldProcessFlag,
+        processAttr,
+        processFlag,
+      })
+    );
   }
 
   if (hasAttrs(node)) {
     newNode.attrs = processVariableNodeAttributes({
       node,
-      shouldNotProcess: (attrValue) => attrValue !== variableToReplace,
-      processAttr: () => replacement,
+      shouldProcessAttr,
+      shouldProcessFlag,
+      processAttr,
+      processFlag,
     });
   }
 
   if (hasMarks(node)) {
     newNode.marks = processNodeMarks({
       node,
-      shouldNotProcess: (attrValue) => attrValue !== variableToReplace,
-      processAttr: () => replacement,
+      shouldProcessAttr,
+      shouldProcessFlag,
+      processAttr,
+      processFlag,
     });
   }
 
   return newNode;
 };
 
+/**
+ * Replaces Maily variables in the content with a replacement string.
+ *
+ * @example
+ * Input:
+ * {
+ *   type: "repeat",
+ *   attrs: { each: "payload.comments" },
+ *   content: [{
+ *     type: "variable",
+ *     attrs: { id: "payload.comments.name" }
+ *   }]
+ * },
+ * 'payload.comments.name',
+ * 'FOO'
+ *
+ * Output:
+ * {
+ *   type: "repeat",
+ *   attrs: { each: "payload.comments" },
+ *   content: [{
+ *     type: "variable",
+ *     attrs: { id: "FOO" }
+ *   }]
+ * },
+ */
 export const replaceMailyVariables = (content: string, variableToReplace: string, replacement: string) => {
   const mailyJSONContent: MailyJSONContent = JSON.parse(content);
 
-  return replaceVariable(mailyJSONContent, variableToReplace, replacement);
+  return processMailyNodes({
+    node: mailyJSONContent,
+    shouldProcessAttr: ({ attrValue }) => attrValue === variableToReplace,
+    processAttr: () => replacement,
+  });
+};
+
+/**
+ * Enriches Maily JSON content with Liquid syntax.
+ *
+ * @example
+ * Input:
+ * {
+ *   type: "repeat",
+ *   attrs: { each: "payload.comments" },
+ *   content: [{
+ *     type: "variable",
+ *     attrs: { id: "payload.comments.name" }
+ *   }]
+ * },
+ * {
+ *   type: "variable",
+ *   attrs: { id: "payload.test" }
+ * }
+ *
+ * Output:
+ * {
+ *   type: "paragraph",
+ *   attrs: { each: "{{ payload.comments }}" },
+ *   content: [{
+ *     type: "variable",
+ *     text: "{{ payload.comments.name }}"
+ *   }]
+ * },
+ * {
+ *   type: "variable",
+ *   text: "{{ payload.test }}"
+ * }
+ */
+export const wrapMailyInLiquid = (content: string) => {
+  const mailyJSONContent: MailyJSONContent = JSON.parse(content);
+
+  return processMailyNodes({
+    node: mailyJSONContent,
+    shouldProcessAttr: () => true,
+    processAttr: ({ attrValue, attrs }) => {
+      const { fallback, aliasFor } = attrs;
+
+      return wrapInLiquidOutput(attrValue, fallback, aliasFor);
+    },
+    shouldProcessFlag: ({ flagKey }) => !MAILY_FIRST_CITIZEN_VARIABLE_KEY.includes(flagKey),
+    processFlag: () => {
+      return false;
+    },
+  });
 };

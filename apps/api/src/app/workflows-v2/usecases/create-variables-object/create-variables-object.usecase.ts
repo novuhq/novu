@@ -7,8 +7,8 @@ import { FeatureFlagsService, Instrument, InstrumentUsecase } from '@novu/applic
 import { collectKeys, keysToObject } from '../../util/utils';
 import { buildVariables } from '../../util/build-variables';
 import { CreateVariablesObjectCommand } from './create-variables-object.command';
-import { isStringifiedMailyJSONContent } from '../../../environments-v1/usecases/output-renderers/maily-to-liquid/wrap-maily-in-liquid.command';
 import { MailyAttrsEnum } from '../../../shared/helpers/maily.types';
+import { isStringifiedMailyJSONContent } from '../../../shared/helpers/maily-utils';
 
 export type ArrayVariable = {
   path: string;
