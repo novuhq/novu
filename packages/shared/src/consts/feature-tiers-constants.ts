@@ -294,9 +294,9 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
     [ApiServiceLevelEnum.UNLIMITED]: { label: 'Unlimited', value: UNLIMITED_VALUE, timeSuffix: 'd' },
   },
   [FeatureNameEnum.PLATFORM_MAX_SNOOZE_DURATION]: {
-    [ApiServiceLevelEnum.FREE]: { label: 'No', value: 0 },
-    [ApiServiceLevelEnum.PRO]: { label: '90 days', value: 90, timeSuffix: 'd' },
-    [ApiServiceLevelEnum.BUSINESS]: { label: '90 days', value: 90, timeSuffix: 'd' },
+    [ApiServiceLevelEnum.FREE]: { label: '-', value: 0 },
+    [ApiServiceLevelEnum.PRO]: { label: 'Up to 90 days', value: 90, timeSuffix: 'd' },
+    [ApiServiceLevelEnum.BUSINESS]: { label: 'Up to 90 days', value: 90, timeSuffix: 'd' },
     [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Custom', value: UNLIMITED_VALUE, timeSuffix: 'd' },
     [ApiServiceLevelEnum.UNLIMITED]: { label: 'Unlimited', value: UNLIMITED_VALUE, timeSuffix: 'd' },
   },

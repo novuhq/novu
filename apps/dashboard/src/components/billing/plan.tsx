@@ -219,6 +219,12 @@ const buildFeatureArray: (columns: ApiServiceLevelEnum[]) => Feature[] = (column
       }),
     },
     {
+      label: 'Notification snooze',
+      values: buildTableRowRecord({
+        featureName: FeatureNameEnum.PLATFORM_MAX_SNOOZE_DURATION,
+      }),
+    },
+    {
       label: 'Account administration and security',
       isTitle: true,
       values: buildEmptyRow(),
