@@ -9,7 +9,6 @@ import { buildVariables } from '../../util/build-variables';
 import { CreateVariablesObjectCommand } from './create-variables-object.command';
 import { MailyAttrsEnum } from '../../../shared/helpers/maily.types';
 import { isStringifiedMailyJSONContent } from '../../../shared/helpers/maily-utils';
-import { DIGEST_EVENTS_VARIABLE_PATTERN } from '../../util/template-parser/parser-utils';
 
 export type ArrayVariable = {
   path: string;
@@ -221,9 +220,6 @@ export class CreateVariablesObject {
   private extractArrayVariables(controlValues: unknown[]): ArrayVariable[] {
     // Extract 'Repeat' block iterable variables ('each' key) together with their set iterations
     const eachKeyVars = this.extractMailyAttribute(controlValues, MailyAttrsEnum.EACH_KEY).map((path) => {
-      const isDigestEventsVariable = DIGEST_EVENTS_VARIABLE_PATTERN.test(path);
-      const finalPath = isDigestEventsVariable ? `${path}.payload` : path;
-
       return {
         path,
         iterations: this.getIterationsForVariable(path, controlValues) || DEFAULT_ARRAY_ELEMENTS,
