@@ -7,8 +7,14 @@ import {
   SelectIntegration,
   SelectIntegrationCommand,
 } from '@novu/application-generic';
-import { EnvironmentRepository, IntegrationRepository } from '@novu/dal';
-import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
+import { CommunityOrganizationRepository, EnvironmentRepository, IntegrationRepository } from '@novu/dal';
+import {
+  ApiServiceLevelEnum,
+  ChannelTypeEnum,
+  FeatureNameEnum,
+  getFeatureForTierAsNumber,
+  InAppProviderIdEnum,
+} from '@novu/shared';
 import { AuthService } from '../../../auth/services/auth.service';
 import { SubscriberSessionResponseDto } from '../../dtos/subscriber-session-response.dto';
 import { AnalyticsEventsEnum } from '../../utils';
@@ -28,7 +34,8 @@ export class Session {
     private selectIntegration: SelectIntegration,
     private analyticsService: AnalyticsService,
     private notificationsCount: NotificationsCount,
-    private integrationRepository: IntegrationRepository
+    private integrationRepository: IntegrationRepository,
+    private organizationRepository: CommunityOrganizationRepository
   ) {}
 
   @LogDecorator()
@@ -89,6 +96,7 @@ export class Session {
     const token = await this.authService.getSubscriberWidgetToken(subscriber);
 
     const removeNovuBranding = inAppIntegration.removeNovuBranding || false;
+    const isSnoozeEnabled = await this.isSnoozeEnabled(environment._organizationId);
 
     /**
      * We want to prevent the playground inbox demo from marking the integration as connected
@@ -119,7 +127,22 @@ export class Session {
       token,
       totalUnreadCount,
       removeNovuBranding,
+      isSnoozeEnabled,
       isDevelopmentMode: environment.name.toLowerCase() !== 'production',
     };
+  }
+
+  private async isSnoozeEnabled(organizationId: string) {
+    const organization = await this.organizationRepository.findOne({
+      _id: organizationId,
+    });
+
+    const tierLimitMs = getFeatureForTierAsNumber(
+      FeatureNameEnum.PLATFORM_MAX_SNOOZE_DURATION,
+      organization?.apiServiceLevel || ApiServiceLevelEnum.FREE,
+      true
+    );
+
+    return tierLimitMs > 0;
   }
 }
