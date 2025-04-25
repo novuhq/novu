@@ -74,19 +74,13 @@ export function AddNodeEdge({
                             navigate(
                               buildRoute(ROUTES.EDIT_STEP_TEMPLATE, {
                                 stepSlug: data.steps[indexToAdd].slug,
-                              }),
-                              {
-                                state: { hideValidationErrorsOnFirstRender: true },
-                              }
+                              })
                             );
                           } else if (INLINE_CONFIGURABLE_STEP_TYPES.includes(stepType)) {
                             navigate(
                               buildRoute(ROUTES.EDIT_STEP, {
                                 stepSlug: data.steps[indexToAdd].slug,
-                              }),
-                              {
-                                state: { hideValidationErrorsOnFirstRender: true },
-                              }
+                              })
                             );
                           }
                         },

@@ -12,7 +12,7 @@ import { UpdateWorkflowFn } from '@/components/workflow-editor/workflow-provider
 import { useDataRef } from '@/hooks/use-data-ref';
 import { useFormAutosave } from '@/hooks/use-form-autosave';
 import { type StepResponseDto, StepTypeEnum, StepUpdateDto, type WorkflowResponseDto } from '@novu/shared';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { useLocation } from 'react-router-dom';
 
@@ -39,8 +39,6 @@ type ConfigureStepTemplateFormProps = StepEditorProps & {
 
 export const ConfigureStepTemplateForm = (props: ConfigureStepTemplateFormProps) => {
   const { workflow, step, update } = props;
-  const { hideValidationErrorsOnFirstRender } = useLocation().state || {};
-
   const defaultValues = useMemo(() => getStepDefaultValues(step), [step]);
 
   const form = useForm({
@@ -79,14 +77,12 @@ export const ConfigureStepTemplateForm = (props: ConfigureStepTemplateFormProps)
       }
     });
 
-    if (!hideValidationErrorsOnFirstRender) {
-      // Set new errors from stepIssues
+    // @ts-expect-error - isNew doesn't exist on StepResponseDto and it's too much work to override the @novu/shared types now. See useUpdateWorkflow.ts for more details
+    if (!step.isNew) {
       Object.entries(stepIssues).forEach(([key, value]) => {
         form.setError(key as string, { message: value });
       });
     }
-    // Do not add hideValidationErrorsOnFirstRender so as not to trigger a rerender on the navigation that happens as soon as drawer is closing
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form, step]);
 
   useEffect(() => {
