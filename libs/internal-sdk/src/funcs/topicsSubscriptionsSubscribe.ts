@@ -26,20 +26,18 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Subscribers addition
- *
- * @remarks
- * Add subscribers to a topic by key
+ * Create topic subscriptions, if the topic does not exist, it will be created.
  */
-export function topicsSubscribersAssign(
+export function topicsSubscriptionsSubscribe(
   client: NovuCore,
-  addSubscribersRequestDto: components.AddSubscribersRequestDto,
+  createTopicSubscriptionsRequestDto:
+    components.CreateTopicSubscriptionsRequestDto,
   topicKey: string,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): APIPromise<
   Result<
-    operations.TopicsControllerAssignResponse,
+    operations.TopicsControllerCreateTopicSubscriptionsResponse | undefined,
     | errors.ErrorDto
     | errors.ErrorDto
     | errors.ValidationErrorDto
@@ -55,7 +53,7 @@ export function topicsSubscribersAssign(
 > {
   return new APIPromise($do(
     client,
-    addSubscribersRequestDto,
+    createTopicSubscriptionsRequestDto,
     topicKey,
     idempotencyKey,
     options,
@@ -64,14 +62,15 @@ export function topicsSubscribersAssign(
 
 async function $do(
   client: NovuCore,
-  addSubscribersRequestDto: components.AddSubscribersRequestDto,
+  createTopicSubscriptionsRequestDto:
+    components.CreateTopicSubscriptionsRequestDto,
   topicKey: string,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): Promise<
   [
     Result<
-      operations.TopicsControllerAssignResponse,
+      operations.TopicsControllerCreateTopicSubscriptionsResponse | undefined,
       | errors.ErrorDto
       | errors.ErrorDto
       | errors.ValidationErrorDto
@@ -87,8 +86,8 @@ async function $do(
     APICall,
   ]
 > {
-  const input: operations.TopicsControllerAssignRequest = {
-    addSubscribersRequestDto: addSubscribersRequestDto,
+  const input: operations.TopicsControllerCreateTopicSubscriptionsRequest = {
+    createTopicSubscriptionsRequestDto: createTopicSubscriptionsRequestDto,
     topicKey: topicKey,
     idempotencyKey: idempotencyKey,
   };
@@ -96,14 +95,15 @@ async function $do(
   const parsed = safeParse(
     input,
     (value) =>
-      operations.TopicsControllerAssignRequest$outboundSchema.parse(value),
+      operations.TopicsControllerCreateTopicSubscriptionsRequest$outboundSchema
+        .parse(value),
     "Input validation failed",
   );
   if (!parsed.ok) {
     return [parsed, { status: "invalid" }];
   }
   const payload = parsed.value;
-  const body = encodeJSON("body", payload.AddSubscribersRequestDto, {
+  const body = encodeJSON("body", payload.CreateTopicSubscriptionsRequestDto, {
     explode: true,
   });
 
@@ -114,7 +114,7 @@ async function $do(
     }),
   };
 
-  const path = pathToFunc("/v1/topics/{topicKey}/subscribers")(pathParams);
+  const path = pathToFunc("/v2/topics/{topicKey}/subscriptions")(pathParams);
 
   const headers = new Headers(compactMap({
     "Content-Type": "application/json",
@@ -131,7 +131,7 @@ async function $do(
 
   const context = {
     baseURL: options?.serverURL ?? client._baseURL ?? "",
-    operationID: "TopicsController_assign",
+    operationID: "TopicsController_createTopicSubscriptions",
     oAuth2Scopes: [],
 
     resolvedSecurity: requestSecurity,
@@ -199,7 +199,7 @@ async function $do(
   };
 
   const [result] = await M.match<
-    operations.TopicsControllerAssignResponse,
+    operations.TopicsControllerCreateTopicSubscriptionsResponse | undefined,
     | errors.ErrorDto
     | errors.ErrorDto
     | errors.ValidationErrorDto
@@ -212,18 +212,20 @@ async function $do(
     | RequestTimeoutError
     | ConnectionError
   >(
-    M.json(200, operations.TopicsControllerAssignResponse$inboundSchema, {
-      hdrs: true,
-      key: "Result",
-    }),
+    M.nil(
+      200,
+      operations.TopicsControllerCreateTopicSubscriptionsResponse$inboundSchema
+        .optional(),
+      { hdrs: true },
+    ),
     M.jsonErr(414, errors.ErrorDto$inboundSchema),
     M.jsonErr(
-      [400, 401, 403, 404, 405, 409, 413, 415],
+      [400, 401, 403, 405, 409, 413, 415],
       errors.ErrorDto$inboundSchema,
       { hdrs: true },
     ),
     M.jsonErr(422, errors.ValidationErrorDto$inboundSchema, { hdrs: true }),
-    M.fail(429),
+    M.fail([404, 429]),
     M.jsonErr(500, errors.ErrorDto$inboundSchema, { hdrs: true }),
     M.fail(503),
     M.fail("4XX"),

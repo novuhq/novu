@@ -25,15 +25,15 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Get notifications
+ * List topic subscriptions
  */
-export function notificationsList(
+export function topicsSubscriptionsList(
   client: NovuCore,
-  request: operations.NotificationsControllerListNotificationsRequest,
+  request: operations.TopicsControllerListTopicSubscriptionsRequest,
   options?: RequestOptions,
 ): APIPromise<
   Result<
-    operations.NotificationsControllerListNotificationsResponse,
+    operations.TopicsControllerListTopicSubscriptionsResponse | undefined,
     | errors.ErrorDto
     | errors.ErrorDto
     | errors.ValidationErrorDto
@@ -56,12 +56,12 @@ export function notificationsList(
 
 async function $do(
   client: NovuCore,
-  request: operations.NotificationsControllerListNotificationsRequest,
+  request: operations.TopicsControllerListTopicSubscriptionsRequest,
   options?: RequestOptions,
 ): Promise<
   [
     Result<
-      operations.NotificationsControllerListNotificationsResponse,
+      operations.TopicsControllerListTopicSubscriptionsResponse | undefined,
       | errors.ErrorDto
       | errors.ErrorDto
       | errors.ValidationErrorDto
@@ -80,7 +80,7 @@ async function $do(
   const parsed = safeParse(
     request,
     (value) =>
-      operations.NotificationsControllerListNotificationsRequest$outboundSchema
+      operations.TopicsControllerListTopicSubscriptionsRequest$outboundSchema
         .parse(value),
     "Input validation failed",
   );
@@ -90,20 +90,23 @@ async function $do(
   const payload = parsed.value;
   const body = null;
 
-  const path = pathToFunc("/v1/notifications")();
+  const pathParams = {
+    topicKey: encodeSimple("topicKey", payload.topicKey, {
+      explode: false,
+      charEncoding: "percent",
+    }),
+  };
+
+  const path = pathToFunc("/v2/topics/{topicKey}/subscriptions")(pathParams);
 
   const query = encodeFormQuery({
     "after": payload.after,
     "before": payload.before,
-    "channels": payload.channels,
-    "emails": payload.emails,
+    "includeCursor": payload.includeCursor,
     "limit": payload.limit,
-    "page": payload.page,
-    "search": payload.search,
-    "subscriberIds": payload.subscriberIds,
-    "templates": payload.templates,
-    "topicKey": payload.topicKey,
-    "transactionId": payload.transactionId,
+    "orderBy": payload.orderBy,
+    "orderDirection": payload.orderDirection,
+    "subscriberId": payload.subscriberId,
   });
 
   const headers = new Headers(compactMap({
@@ -120,7 +123,7 @@ async function $do(
 
   const context = {
     baseURL: options?.serverURL ?? client._baseURL ?? "",
-    operationID: "NotificationsController_listNotifications",
+    operationID: "TopicsController_listTopicSubscriptions",
     oAuth2Scopes: [],
 
     resolvedSecurity: requestSecurity,
@@ -189,7 +192,7 @@ async function $do(
   };
 
   const [result] = await M.match<
-    operations.NotificationsControllerListNotificationsResponse,
+    operations.TopicsControllerListTopicSubscriptionsResponse | undefined,
     | errors.ErrorDto
     | errors.ErrorDto
     | errors.ValidationErrorDto
@@ -202,19 +205,20 @@ async function $do(
     | RequestTimeoutError
     | ConnectionError
   >(
-    M.json(
+    M.nil(
       200,
-      operations.NotificationsControllerListNotificationsResponse$inboundSchema,
-      { hdrs: true, key: "Result" },
+      operations.TopicsControllerListTopicSubscriptionsResponse$inboundSchema
+        .optional(),
+      { hdrs: true },
     ),
     M.jsonErr(414, errors.ErrorDto$inboundSchema),
     M.jsonErr(
-      [400, 401, 403, 404, 405, 409, 413, 415],
+      [400, 401, 403, 405, 409, 413, 415],
       errors.ErrorDto$inboundSchema,
       { hdrs: true },
     ),
     M.jsonErr(422, errors.ValidationErrorDto$inboundSchema, { hdrs: true }),
-    M.fail(429),
+    M.fail([404, 429]),
     M.jsonErr(500, errors.ErrorDto$inboundSchema, { hdrs: true }),
     M.fail(503),
     M.fail("4XX"),

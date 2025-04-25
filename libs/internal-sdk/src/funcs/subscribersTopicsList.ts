@@ -3,14 +3,13 @@
  */
 
 import { NovuCore } from "../core.js";
-import { encodeJSON, encodeSimple } from "../lib/encodings.js";
+import { encodeFormQuery, encodeSimple } from "../lib/encodings.js";
 import * as M from "../lib/matchers.js";
 import { compactMap } from "../lib/primitives.js";
 import { safeParse } from "../lib/schemas.js";
 import { RequestOptions } from "../lib/sdks.js";
 import { extractSecurity, resolveGlobalSecurity } from "../lib/security.js";
 import { pathToFunc } from "../lib/url.js";
-import * as components from "../models/components/index.js";
 import {
   ConnectionError,
   InvalidRequestError,
@@ -26,19 +25,18 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Topic creation
+ * List topic subscriptions for a subscriber
  *
  * @remarks
- * Create a topic
+ * List topic subscriptions for a subscriber with pagination and filtering
  */
-export function topicsCreate(
+export function subscribersTopicsList(
   client: NovuCore,
-  createTopicRequestDto: components.CreateTopicRequestDto,
-  idempotencyKey?: string | undefined,
+  request: operations.SubscribersControllerListSubscriberTopicsRequest,
   options?: RequestOptions,
 ): APIPromise<
   Result<
-    operations.TopicsControllerCreateTopicResponse,
+    operations.SubscribersControllerListSubscriberTopicsResponse,
     | errors.ErrorDto
     | errors.ErrorDto
     | errors.ValidationErrorDto
@@ -54,21 +52,19 @@ export function topicsCreate(
 > {
   return new APIPromise($do(
     client,
-    createTopicRequestDto,
-    idempotencyKey,
+    request,
     options,
   ));
 }
 
 async function $do(
   client: NovuCore,
-  createTopicRequestDto: components.CreateTopicRequestDto,
-  idempotencyKey?: string | undefined,
+  request: operations.SubscribersControllerListSubscriberTopicsRequest,
   options?: RequestOptions,
 ): Promise<
   [
     Result<
-      operations.TopicsControllerCreateTopicResponse,
+      operations.SubscribersControllerListSubscriberTopicsResponse,
       | errors.ErrorDto
       | errors.ErrorDto
       | errors.ValidationErrorDto
@@ -84,29 +80,41 @@ async function $do(
     APICall,
   ]
 > {
-  const input: operations.TopicsControllerCreateTopicRequest = {
-    createTopicRequestDto: createTopicRequestDto,
-    idempotencyKey: idempotencyKey,
-  };
-
   const parsed = safeParse(
-    input,
+    request,
     (value) =>
-      operations.TopicsControllerCreateTopicRequest$outboundSchema.parse(value),
+      operations.SubscribersControllerListSubscriberTopicsRequest$outboundSchema
+        .parse(value),
     "Input validation failed",
   );
   if (!parsed.ok) {
     return [parsed, { status: "invalid" }];
   }
   const payload = parsed.value;
-  const body = encodeJSON("body", payload.CreateTopicRequestDto, {
-    explode: true,
+  const body = null;
+
+  const pathParams = {
+    subscriberId: encodeSimple("subscriberId", payload.subscriberId, {
+      explode: false,
+      charEncoding: "percent",
+    }),
+  };
+
+  const path = pathToFunc("/v2/subscribers/{subscriberId}/subscriptions")(
+    pathParams,
+  );
+
+  const query = encodeFormQuery({
+    "after": payload.after,
+    "before": payload.before,
+    "includeCursor": payload.includeCursor,
+    "key": payload.key,
+    "limit": payload.limit,
+    "orderBy": payload.orderBy,
+    "orderDirection": payload.orderDirection,
   });
 
-  const path = pathToFunc("/v1/topics")();
-
   const headers = new Headers(compactMap({
-    "Content-Type": "application/json",
     Accept: "application/json",
     "idempotency-key": encodeSimple(
       "idempotency-key",
@@ -120,7 +128,7 @@ async function $do(
 
   const context = {
     baseURL: options?.serverURL ?? client._baseURL ?? "",
-    operationID: "TopicsController_createTopic",
+    operationID: "SubscribersController_listSubscriberTopics",
     oAuth2Scopes: [],
 
     resolvedSecurity: requestSecurity,
@@ -144,10 +152,11 @@ async function $do(
 
   const requestRes = client._createRequest(context, {
     security: requestSecurity,
-    method: "POST",
+    method: "GET",
     baseURL: options?.serverURL,
     path: path,
     headers: headers,
+    query: query,
     body: body,
     timeoutMs: options?.timeoutMs || client._options.timeoutMs || -1,
   }, options);
@@ -188,7 +197,7 @@ async function $do(
   };
 
   const [result] = await M.match<
-    operations.TopicsControllerCreateTopicResponse,
+    operations.SubscribersControllerListSubscriberTopicsResponse,
     | errors.ErrorDto
     | errors.ErrorDto
     | errors.ValidationErrorDto
@@ -201,10 +210,12 @@ async function $do(
     | RequestTimeoutError
     | ConnectionError
   >(
-    M.json(201, operations.TopicsControllerCreateTopicResponse$inboundSchema, {
-      hdrs: true,
-      key: "Result",
-    }),
+    M.json(
+      200,
+      operations
+        .SubscribersControllerListSubscriberTopicsResponse$inboundSchema,
+      { hdrs: true, key: "Result" },
+    ),
     M.jsonErr(414, errors.ErrorDto$inboundSchema),
     M.jsonErr(
       [400, 401, 403, 404, 405, 409, 413, 415],

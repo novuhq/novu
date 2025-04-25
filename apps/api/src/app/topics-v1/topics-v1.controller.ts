@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post, Query } from '@nestjs/common';
-import { ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import { ApiExcludeEndpoint, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { ApiRateLimitCategoryEnum, ExternalSubscriberId, TopicKey, UserSessionData } from '@novu/shared';
 
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
@@ -64,6 +64,7 @@ export class TopicsV1Controller {
 
   @Post('')
   @ExternalApiAccessible()
+  @ApiExcludeEndpoint()
   @ApiResponse(CreateTopicResponseDto, 201)
   @ApiOperation({ summary: 'Topic creation', description: 'Create a topic' })
   async createTopic(
@@ -88,6 +89,7 @@ export class TopicsV1Controller {
 
   @Post('/:topicKey/subscribers')
   @ExternalApiAccessible()
+  @ApiExcludeEndpoint()
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ type: AssignSubscriberToTopicDto })
   @ApiOperation({ summary: 'Subscribers addition', description: 'Add subscribers to a topic by key' })
@@ -144,6 +146,7 @@ export class TopicsV1Controller {
 
   @Post('/:topicKey/subscribers/removal')
   @ExternalApiAccessible()
+  @ApiExcludeEndpoint()
   @ApiNoContentResponse()
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Subscribers removal', description: 'Remove subscribers from a topic' })
@@ -176,6 +179,7 @@ export class TopicsV1Controller {
       'Returns a list of topics that can be paginated using the `page` query ' +
       'parameter and filtered by the topic key with the `key` query parameter or by the topic name with the `name` query parameter',
   })
+  @ApiExcludeEndpoint()
   async listTopics(
     @UserSession() user: UserSessionData,
     @Query() query?: FilterTopicsRequestDto
@@ -193,6 +197,7 @@ export class TopicsV1Controller {
   }
 
   @Delete('/:topicKey')
+  @ApiExcludeEndpoint()
   @ExternalApiAccessible()
   @ApiNoContentResponse({
     description: 'The topic has been deleted correctly',
@@ -211,6 +216,7 @@ export class TopicsV1Controller {
   }
 
   @Get('/:topicKey')
+  @ApiExcludeEndpoint()
   @ExternalApiAccessible()
   @ApiResponse(GetTopicResponseDto)
   @ApiOperation({ summary: 'Get topic', description: 'Get a topic by its topic key' })
@@ -229,6 +235,7 @@ export class TopicsV1Controller {
   }
 
   @Patch('/:topicKey')
+  @ApiExcludeEndpoint()
   @ExternalApiAccessible()
   @ApiResponse(RenameTopicResponseDto)
   @ApiOperation({ summary: 'Rename a topic', description: 'Rename a topic by providing a new name' })

@@ -26,20 +26,19 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Subscribers removal
+ * Create or update a topic
  *
  * @remarks
- * Remove subscribers from a topic
+ * Creates a new topic if it does not exist, or updates an existing topic if it already exists
  */
-export function topicsSubscribersRemove(
+export function topicsTopicsControllerUpsertTopic(
   client: NovuCore,
-  removeSubscribersRequestDto: components.RemoveSubscribersRequestDto,
-  topicKey: string,
+  createUpdateTopicRequestDto: components.CreateUpdateTopicRequestDto,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): APIPromise<
   Result<
-    operations.TopicsControllerRemoveSubscribersResponse | undefined,
+    operations.TopicsControllerUpsertTopicResponse | undefined,
     | errors.ErrorDto
     | errors.ErrorDto
     | errors.ValidationErrorDto
@@ -55,8 +54,7 @@ export function topicsSubscribersRemove(
 > {
   return new APIPromise($do(
     client,
-    removeSubscribersRequestDto,
-    topicKey,
+    createUpdateTopicRequestDto,
     idempotencyKey,
     options,
   ));
@@ -64,14 +62,13 @@ export function topicsSubscribersRemove(
 
 async function $do(
   client: NovuCore,
-  removeSubscribersRequestDto: components.RemoveSubscribersRequestDto,
-  topicKey: string,
+  createUpdateTopicRequestDto: components.CreateUpdateTopicRequestDto,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): Promise<
   [
     Result<
-      operations.TopicsControllerRemoveSubscribersResponse | undefined,
+      operations.TopicsControllerUpsertTopicResponse | undefined,
       | errors.ErrorDto
       | errors.ErrorDto
       | errors.ValidationErrorDto
@@ -87,38 +84,26 @@ async function $do(
     APICall,
   ]
 > {
-  const input: operations.TopicsControllerRemoveSubscribersRequest = {
-    removeSubscribersRequestDto: removeSubscribersRequestDto,
-    topicKey: topicKey,
+  const input: operations.TopicsControllerUpsertTopicRequest = {
+    createUpdateTopicRequestDto: createUpdateTopicRequestDto,
     idempotencyKey: idempotencyKey,
   };
 
   const parsed = safeParse(
     input,
     (value) =>
-      operations.TopicsControllerRemoveSubscribersRequest$outboundSchema.parse(
-        value,
-      ),
+      operations.TopicsControllerUpsertTopicRequest$outboundSchema.parse(value),
     "Input validation failed",
   );
   if (!parsed.ok) {
     return [parsed, { status: "invalid" }];
   }
   const payload = parsed.value;
-  const body = encodeJSON("body", payload.RemoveSubscribersRequestDto, {
+  const body = encodeJSON("body", payload.CreateUpdateTopicRequestDto, {
     explode: true,
   });
 
-  const pathParams = {
-    topicKey: encodeSimple("topicKey", payload.topicKey, {
-      explode: false,
-      charEncoding: "percent",
-    }),
-  };
-
-  const path = pathToFunc("/v1/topics/{topicKey}/subscribers/removal")(
-    pathParams,
-  );
+  const path = pathToFunc("/v2/topics")();
 
   const headers = new Headers(compactMap({
     "Content-Type": "application/json",
@@ -135,7 +120,7 @@ async function $do(
 
   const context = {
     baseURL: options?.serverURL ?? client._baseURL ?? "",
-    operationID: "TopicsController_removeSubscribers",
+    operationID: "TopicsController_upsertTopic",
     oAuth2Scopes: [],
 
     resolvedSecurity: requestSecurity,
@@ -203,7 +188,7 @@ async function $do(
   };
 
   const [result] = await M.match<
-    operations.TopicsControllerRemoveSubscribersResponse | undefined,
+    operations.TopicsControllerUpsertTopicResponse | undefined,
     | errors.ErrorDto
     | errors.ErrorDto
     | errors.ValidationErrorDto
@@ -217,9 +202,8 @@ async function $do(
     | ConnectionError
   >(
     M.nil(
-      204,
-      operations.TopicsControllerRemoveSubscribersResponse$inboundSchema
-        .optional(),
+      201,
+      operations.TopicsControllerUpsertTopicResponse$inboundSchema.optional(),
       { hdrs: true },
     ),
     M.jsonErr(414, errors.ErrorDto$inboundSchema),

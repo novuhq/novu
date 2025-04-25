@@ -45,6 +45,10 @@ export type NotificationsControllerListNotificationsRequest = {
    */
   transactionId?: string | undefined;
   /**
+   * Topic Key for filtering notifications by topic
+   */
+  topicKey?: string | undefined;
+  /**
    * Date filter for records after this timestamp. Defaults to earliest date allowed by subscription plan
    */
   after?: string | undefined;
@@ -78,6 +82,7 @@ export const NotificationsControllerListNotificationsRequest$inboundSchema:
     page: z.number().default(0),
     limit: z.number().default(10),
     transactionId: z.string().optional(),
+    topicKey: z.string().optional(),
     after: z.string().optional(),
     before: z.string().optional(),
     "idempotency-key": z.string().optional(),
@@ -97,6 +102,7 @@ export type NotificationsControllerListNotificationsRequest$Outbound = {
   page: number;
   limit: number;
   transactionId?: string | undefined;
+  topicKey?: string | undefined;
   after?: string | undefined;
   before?: string | undefined;
   "idempotency-key"?: string | undefined;
@@ -117,6 +123,7 @@ export const NotificationsControllerListNotificationsRequest$outboundSchema:
     page: z.number().default(0),
     limit: z.number().default(10),
     transactionId: z.string().optional(),
+    topicKey: z.string().optional(),
     after: z.string().optional(),
     before: z.string().optional(),
     idempotencyKey: z.string().optional(),

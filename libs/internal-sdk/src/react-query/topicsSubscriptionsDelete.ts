@@ -8,7 +8,7 @@ import {
   UseMutationResult,
 } from "@tanstack/react-query";
 import { NovuCore } from "../core.js";
-import { topicsSubscribersRemove } from "../funcs/topicsSubscribersRemove.js";
+import { topicsSubscriptionsDelete } from "../funcs/topicsSubscriptionsDelete.js";
 import { combineSignals } from "../lib/primitives.js";
 import { RequestOptions } from "../lib/sdks.js";
 import * as components from "../models/components/index.js";
@@ -17,62 +17,60 @@ import { unwrapAsync } from "../types/fp.js";
 import { useNovuContext } from "./_context.js";
 import { MutationHookOptions } from "./_types.js";
 
-export type TopicsSubscribersRemoveMutationVariables = {
-  removeSubscribersRequestDto: components.RemoveSubscribersRequestDto;
+export type TopicsSubscriptionsDeleteMutationVariables = {
+  deleteTopicSubscriptionsRequestDto:
+    components.DeleteTopicSubscriptionsRequestDto;
   topicKey: string;
   idempotencyKey?: string | undefined;
   options?: RequestOptions;
 };
 
-export type TopicsSubscribersRemoveMutationData =
-  | operations.TopicsControllerRemoveSubscribersResponse
+export type TopicsSubscriptionsDeleteMutationData =
+  | operations.TopicsControllerDeleteTopicSubscriptionsResponse
   | undefined;
 
 /**
- * Subscribers removal
- *
- * @remarks
- * Remove subscribers from a topic
+ * Delete topic subscriptions
  */
-export function useTopicsSubscribersRemoveMutation(
+export function useTopicsSubscriptionsDeleteMutation(
   options?: MutationHookOptions<
-    TopicsSubscribersRemoveMutationData,
+    TopicsSubscriptionsDeleteMutationData,
     Error,
-    TopicsSubscribersRemoveMutationVariables
+    TopicsSubscriptionsDeleteMutationVariables
   >,
 ): UseMutationResult<
-  TopicsSubscribersRemoveMutationData,
+  TopicsSubscriptionsDeleteMutationData,
   Error,
-  TopicsSubscribersRemoveMutationVariables
+  TopicsSubscriptionsDeleteMutationVariables
 > {
   const client = useNovuContext();
   return useMutation({
-    ...buildTopicsSubscribersRemoveMutation(client, options),
+    ...buildTopicsSubscriptionsDeleteMutation(client, options),
     ...options,
   });
 }
 
-export function mutationKeyTopicsSubscribersRemove(): MutationKey {
-  return ["@novu/api", "Subscribers", "remove"];
+export function mutationKeyTopicsSubscriptionsDelete(): MutationKey {
+  return ["@novu/api", "Subscriptions", "delete"];
 }
 
-export function buildTopicsSubscribersRemoveMutation(
+export function buildTopicsSubscriptionsDeleteMutation(
   client$: NovuCore,
   hookOptions?: RequestOptions,
 ): {
   mutationKey: MutationKey;
   mutationFn: (
-    variables: TopicsSubscribersRemoveMutationVariables,
-  ) => Promise<TopicsSubscribersRemoveMutationData>;
+    variables: TopicsSubscriptionsDeleteMutationVariables,
+  ) => Promise<TopicsSubscriptionsDeleteMutationData>;
 } {
   return {
-    mutationKey: mutationKeyTopicsSubscribersRemove(),
-    mutationFn: function topicsSubscribersRemoveMutationFn({
-      removeSubscribersRequestDto,
+    mutationKey: mutationKeyTopicsSubscriptionsDelete(),
+    mutationFn: function topicsSubscriptionsDeleteMutationFn({
+      deleteTopicSubscriptionsRequestDto,
       topicKey,
       idempotencyKey,
       options,
-    }): Promise<TopicsSubscribersRemoveMutationData> {
+    }): Promise<TopicsSubscriptionsDeleteMutationData> {
       const mergedOptions = {
         ...hookOptions,
         ...options,
@@ -85,9 +83,9 @@ export function buildTopicsSubscribersRemoveMutation(
           ),
         },
       };
-      return unwrapAsync(topicsSubscribersRemove(
+      return unwrapAsync(topicsSubscriptionsDelete(
         client$,
-        removeSubscribersRequestDto,
+        deleteTopicSubscriptionsRequestDto,
         topicKey,
         idempotencyKey,
         mergedOptions,

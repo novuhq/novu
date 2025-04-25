@@ -8,7 +8,7 @@ import {
   UseMutationResult,
 } from "@tanstack/react-query";
 import { NovuCore } from "../core.js";
-import { topicsCreate } from "../funcs/topicsCreate.js";
+import { topicsUpdate } from "../funcs/topicsUpdate.js";
 import { combineSignals } from "../lib/primitives.js";
 import { RequestOptions } from "../lib/sdks.js";
 import * as components from "../models/components/index.js";
@@ -17,59 +17,59 @@ import { unwrapAsync } from "../types/fp.js";
 import { useNovuContext } from "./_context.js";
 import { MutationHookOptions } from "./_types.js";
 
-export type TopicsCreateMutationVariables = {
-  createTopicRequestDto: components.CreateTopicRequestDto;
+export type TopicsUpdateMutationVariables = {
+  updateTopicRequestDto: components.UpdateTopicRequestDto;
+  topicKey: string;
   idempotencyKey?: string | undefined;
   options?: RequestOptions;
 };
 
-export type TopicsCreateMutationData =
-  operations.TopicsControllerCreateTopicResponse;
+export type TopicsUpdateMutationData =
+  | operations.TopicsControllerUpdateTopicResponse
+  | undefined;
 
 /**
- * Topic creation
- *
- * @remarks
- * Create a topic
+ * Update topic by key
  */
-export function useTopicsCreateMutation(
+export function useTopicsUpdateMutation(
   options?: MutationHookOptions<
-    TopicsCreateMutationData,
+    TopicsUpdateMutationData,
     Error,
-    TopicsCreateMutationVariables
+    TopicsUpdateMutationVariables
   >,
 ): UseMutationResult<
-  TopicsCreateMutationData,
+  TopicsUpdateMutationData,
   Error,
-  TopicsCreateMutationVariables
+  TopicsUpdateMutationVariables
 > {
   const client = useNovuContext();
   return useMutation({
-    ...buildTopicsCreateMutation(client, options),
+    ...buildTopicsUpdateMutation(client, options),
     ...options,
   });
 }
 
-export function mutationKeyTopicsCreate(): MutationKey {
-  return ["@novu/api", "Topics", "create"];
+export function mutationKeyTopicsUpdate(): MutationKey {
+  return ["@novu/api", "Topics", "update"];
 }
 
-export function buildTopicsCreateMutation(
+export function buildTopicsUpdateMutation(
   client$: NovuCore,
   hookOptions?: RequestOptions,
 ): {
   mutationKey: MutationKey;
   mutationFn: (
-    variables: TopicsCreateMutationVariables,
-  ) => Promise<TopicsCreateMutationData>;
+    variables: TopicsUpdateMutationVariables,
+  ) => Promise<TopicsUpdateMutationData>;
 } {
   return {
-    mutationKey: mutationKeyTopicsCreate(),
-    mutationFn: function topicsCreateMutationFn({
-      createTopicRequestDto,
+    mutationKey: mutationKeyTopicsUpdate(),
+    mutationFn: function topicsUpdateMutationFn({
+      updateTopicRequestDto,
+      topicKey,
       idempotencyKey,
       options,
-    }): Promise<TopicsCreateMutationData> {
+    }): Promise<TopicsUpdateMutationData> {
       const mergedOptions = {
         ...hookOptions,
         ...options,
@@ -82,9 +82,10 @@ export function buildTopicsCreateMutation(
           ),
         },
       };
-      return unwrapAsync(topicsCreate(
+      return unwrapAsync(topicsUpdate(
         client$,
-        createTopicRequestDto,
+        updateTopicRequestDto,
+        topicKey,
         idempotencyKey,
         mergedOptions,
       ));

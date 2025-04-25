@@ -3,13 +3,14 @@
  */
 
 import { NovuCore } from "../core.js";
-import { encodeSimple } from "../lib/encodings.js";
+import { encodeJSON, encodeSimple } from "../lib/encodings.js";
 import * as M from "../lib/matchers.js";
 import { compactMap } from "../lib/primitives.js";
 import { safeParse } from "../lib/schemas.js";
 import { RequestOptions } from "../lib/sdks.js";
 import { extractSecurity, resolveGlobalSecurity } from "../lib/security.js";
 import { pathToFunc } from "../lib/url.js";
+import * as components from "../models/components/index.js";
 import {
   ConnectionError,
   InvalidRequestError,
@@ -25,19 +26,18 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Get topic
- *
- * @remarks
- * Get a topic by its topic key
+ * Delete topic subscriptions
  */
-export function topicsRetrieve(
+export function topicsSubscriptionsDelete(
   client: NovuCore,
+  deleteTopicSubscriptionsRequestDto:
+    components.DeleteTopicSubscriptionsRequestDto,
   topicKey: string,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): APIPromise<
   Result<
-    operations.TopicsControllerGetTopicResponse,
+    operations.TopicsControllerDeleteTopicSubscriptionsResponse | undefined,
     | errors.ErrorDto
     | errors.ErrorDto
     | errors.ValidationErrorDto
@@ -53,6 +53,7 @@ export function topicsRetrieve(
 > {
   return new APIPromise($do(
     client,
+    deleteTopicSubscriptionsRequestDto,
     topicKey,
     idempotencyKey,
     options,
@@ -61,13 +62,15 @@ export function topicsRetrieve(
 
 async function $do(
   client: NovuCore,
+  deleteTopicSubscriptionsRequestDto:
+    components.DeleteTopicSubscriptionsRequestDto,
   topicKey: string,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): Promise<
   [
     Result<
-      operations.TopicsControllerGetTopicResponse,
+      operations.TopicsControllerDeleteTopicSubscriptionsResponse | undefined,
       | errors.ErrorDto
       | errors.ErrorDto
       | errors.ValidationErrorDto
@@ -83,7 +86,8 @@ async function $do(
     APICall,
   ]
 > {
-  const input: operations.TopicsControllerGetTopicRequest = {
+  const input: operations.TopicsControllerDeleteTopicSubscriptionsRequest = {
+    deleteTopicSubscriptionsRequestDto: deleteTopicSubscriptionsRequestDto,
     topicKey: topicKey,
     idempotencyKey: idempotencyKey,
   };
@@ -91,14 +95,17 @@ async function $do(
   const parsed = safeParse(
     input,
     (value) =>
-      operations.TopicsControllerGetTopicRequest$outboundSchema.parse(value),
+      operations.TopicsControllerDeleteTopicSubscriptionsRequest$outboundSchema
+        .parse(value),
     "Input validation failed",
   );
   if (!parsed.ok) {
     return [parsed, { status: "invalid" }];
   }
   const payload = parsed.value;
-  const body = null;
+  const body = encodeJSON("body", payload.DeleteTopicSubscriptionsRequestDto, {
+    explode: true,
+  });
 
   const pathParams = {
     topicKey: encodeSimple("topicKey", payload.topicKey, {
@@ -107,9 +114,10 @@ async function $do(
     }),
   };
 
-  const path = pathToFunc("/v1/topics/{topicKey}")(pathParams);
+  const path = pathToFunc("/v2/topics/{topicKey}/subscriptions")(pathParams);
 
   const headers = new Headers(compactMap({
+    "Content-Type": "application/json",
     Accept: "application/json",
     "idempotency-key": encodeSimple(
       "idempotency-key",
@@ -123,7 +131,7 @@ async function $do(
 
   const context = {
     baseURL: options?.serverURL ?? client._baseURL ?? "",
-    operationID: "TopicsController_getTopic",
+    operationID: "TopicsController_deleteTopicSubscriptions",
     oAuth2Scopes: [],
 
     resolvedSecurity: requestSecurity,
@@ -147,7 +155,7 @@ async function $do(
 
   const requestRes = client._createRequest(context, {
     security: requestSecurity,
-    method: "GET",
+    method: "DELETE",
     baseURL: options?.serverURL,
     path: path,
     headers: headers,
@@ -191,7 +199,7 @@ async function $do(
   };
 
   const [result] = await M.match<
-    operations.TopicsControllerGetTopicResponse,
+    operations.TopicsControllerDeleteTopicSubscriptionsResponse | undefined,
     | errors.ErrorDto
     | errors.ErrorDto
     | errors.ValidationErrorDto
@@ -204,18 +212,20 @@ async function $do(
     | RequestTimeoutError
     | ConnectionError
   >(
-    M.json(200, operations.TopicsControllerGetTopicResponse$inboundSchema, {
-      hdrs: true,
-      key: "Result",
-    }),
+    M.nil(
+      200,
+      operations.TopicsControllerDeleteTopicSubscriptionsResponse$inboundSchema
+        .optional(),
+      { hdrs: true },
+    ),
     M.jsonErr(414, errors.ErrorDto$inboundSchema),
     M.jsonErr(
-      [400, 401, 403, 404, 405, 409, 413, 415],
+      [400, 401, 403, 405, 409, 413, 415],
       errors.ErrorDto$inboundSchema,
       { hdrs: true },
     ),
     M.jsonErr(422, errors.ValidationErrorDto$inboundSchema, { hdrs: true }),
-    M.fail(429),
+    M.fail([404, 429]),
     M.jsonErr(500, errors.ErrorDto$inboundSchema, { hdrs: true }),
     M.fail(503),
     M.fail("4XX"),

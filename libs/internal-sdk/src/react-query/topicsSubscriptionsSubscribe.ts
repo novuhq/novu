@@ -8,7 +8,7 @@ import {
   UseMutationResult,
 } from "@tanstack/react-query";
 import { NovuCore } from "../core.js";
-import { topicsRename } from "../funcs/topicsRename.js";
+import { topicsSubscriptionsSubscribe } from "../funcs/topicsSubscriptionsSubscribe.js";
 import { combineSignals } from "../lib/primitives.js";
 import { RequestOptions } from "../lib/sdks.js";
 import * as components from "../models/components/index.js";
@@ -17,61 +17,60 @@ import { unwrapAsync } from "../types/fp.js";
 import { useNovuContext } from "./_context.js";
 import { MutationHookOptions } from "./_types.js";
 
-export type TopicsRenameMutationVariables = {
-  renameTopicRequestDto: components.RenameTopicRequestDto;
+export type TopicsSubscriptionsSubscribeMutationVariables = {
+  createTopicSubscriptionsRequestDto:
+    components.CreateTopicSubscriptionsRequestDto;
   topicKey: string;
   idempotencyKey?: string | undefined;
   options?: RequestOptions;
 };
 
-export type TopicsRenameMutationData =
-  operations.TopicsControllerRenameTopicResponse;
+export type TopicsSubscriptionsSubscribeMutationData =
+  | operations.TopicsControllerCreateTopicSubscriptionsResponse
+  | undefined;
 
 /**
- * Rename a topic
- *
- * @remarks
- * Rename a topic by providing a new name
+ * Create topic subscriptions, if the topic does not exist, it will be created.
  */
-export function useTopicsRenameMutation(
+export function useTopicsSubscriptionsSubscribeMutation(
   options?: MutationHookOptions<
-    TopicsRenameMutationData,
+    TopicsSubscriptionsSubscribeMutationData,
     Error,
-    TopicsRenameMutationVariables
+    TopicsSubscriptionsSubscribeMutationVariables
   >,
 ): UseMutationResult<
-  TopicsRenameMutationData,
+  TopicsSubscriptionsSubscribeMutationData,
   Error,
-  TopicsRenameMutationVariables
+  TopicsSubscriptionsSubscribeMutationVariables
 > {
   const client = useNovuContext();
   return useMutation({
-    ...buildTopicsRenameMutation(client, options),
+    ...buildTopicsSubscriptionsSubscribeMutation(client, options),
     ...options,
   });
 }
 
-export function mutationKeyTopicsRename(): MutationKey {
-  return ["@novu/api", "Topics", "rename"];
+export function mutationKeyTopicsSubscriptionsSubscribe(): MutationKey {
+  return ["@novu/api", "Subscriptions", "subscribe"];
 }
 
-export function buildTopicsRenameMutation(
+export function buildTopicsSubscriptionsSubscribeMutation(
   client$: NovuCore,
   hookOptions?: RequestOptions,
 ): {
   mutationKey: MutationKey;
   mutationFn: (
-    variables: TopicsRenameMutationVariables,
-  ) => Promise<TopicsRenameMutationData>;
+    variables: TopicsSubscriptionsSubscribeMutationVariables,
+  ) => Promise<TopicsSubscriptionsSubscribeMutationData>;
 } {
   return {
-    mutationKey: mutationKeyTopicsRename(),
-    mutationFn: function topicsRenameMutationFn({
-      renameTopicRequestDto,
+    mutationKey: mutationKeyTopicsSubscriptionsSubscribe(),
+    mutationFn: function topicsSubscriptionsSubscribeMutationFn({
+      createTopicSubscriptionsRequestDto,
       topicKey,
       idempotencyKey,
       options,
-    }): Promise<TopicsRenameMutationData> {
+    }): Promise<TopicsSubscriptionsSubscribeMutationData> {
       const mergedOptions = {
         ...hookOptions,
         ...options,
@@ -84,9 +83,9 @@ export function buildTopicsRenameMutation(
           ),
         },
       };
-      return unwrapAsync(topicsRename(
+      return unwrapAsync(topicsSubscriptionsSubscribe(
         client$,
-        renameTopicRequestDto,
+        createTopicSubscriptionsRequestDto,
         topicKey,
         idempotencyKey,
         mergedOptions,

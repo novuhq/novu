@@ -27,10 +27,7 @@ export type TopicsDeleteMutationData =
   | undefined;
 
 /**
- * Delete topic
- *
- * @remarks
- * Delete a topic by its topic key if it has no subscribers
+ * Delete topic by key
  */
 export function useTopicsDeleteMutation(
   options?: MutationHookOptions<

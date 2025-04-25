@@ -19,6 +19,7 @@ import { Authentication } from "./authentication.js";
 import { Credentials } from "./credentials.js";
 import { NovuMessages } from "./novumessages.js";
 import { NovuNotifications } from "./novunotifications.js";
+import { NovuTopics } from "./novutopics.js";
 import { Preferences } from "./preferences.js";
 import { Properties } from "./properties.js";
 
@@ -26,6 +27,11 @@ export class Subscribers extends ClientSDK {
   private _preferences?: Preferences;
   get preferences(): Preferences {
     return (this._preferences ??= new Preferences(this._options));
+  }
+
+  private _topics?: NovuTopics;
+  get topics(): NovuTopics {
+    return (this._topics ??= new NovuTopics(this._options));
   }
 
   private _credentials?: Credentials;

@@ -3,13 +3,14 @@
  */
 
 import { NovuCore } from "../core.js";
-import { encodeFormQuery, encodeSimple } from "../lib/encodings.js";
+import { encodeJSON, encodeSimple } from "../lib/encodings.js";
 import * as M from "../lib/matchers.js";
 import { compactMap } from "../lib/primitives.js";
 import { safeParse } from "../lib/schemas.js";
 import { RequestOptions } from "../lib/sdks.js";
 import { extractSecurity, resolveGlobalSecurity } from "../lib/security.js";
 import { pathToFunc } from "../lib/url.js";
+import * as components from "../models/components/index.js";
 import {
   ConnectionError,
   InvalidRequestError,
@@ -25,15 +26,17 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Get notifications
+ * Update topic by key
  */
-export function notificationsList(
+export function topicsUpdate(
   client: NovuCore,
-  request: operations.NotificationsControllerListNotificationsRequest,
+  updateTopicRequestDto: components.UpdateTopicRequestDto,
+  topicKey: string,
+  idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): APIPromise<
   Result<
-    operations.NotificationsControllerListNotificationsResponse,
+    operations.TopicsControllerUpdateTopicResponse | undefined,
     | errors.ErrorDto
     | errors.ErrorDto
     | errors.ValidationErrorDto
@@ -49,19 +52,23 @@ export function notificationsList(
 > {
   return new APIPromise($do(
     client,
-    request,
+    updateTopicRequestDto,
+    topicKey,
+    idempotencyKey,
     options,
   ));
 }
 
 async function $do(
   client: NovuCore,
-  request: operations.NotificationsControllerListNotificationsRequest,
+  updateTopicRequestDto: components.UpdateTopicRequestDto,
+  topicKey: string,
+  idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): Promise<
   [
     Result<
-      operations.NotificationsControllerListNotificationsResponse,
+      operations.TopicsControllerUpdateTopicResponse | undefined,
       | errors.ErrorDto
       | errors.ErrorDto
       | errors.ValidationErrorDto
@@ -77,36 +84,37 @@ async function $do(
     APICall,
   ]
 > {
+  const input: operations.TopicsControllerUpdateTopicRequest = {
+    updateTopicRequestDto: updateTopicRequestDto,
+    topicKey: topicKey,
+    idempotencyKey: idempotencyKey,
+  };
+
   const parsed = safeParse(
-    request,
+    input,
     (value) =>
-      operations.NotificationsControllerListNotificationsRequest$outboundSchema
-        .parse(value),
+      operations.TopicsControllerUpdateTopicRequest$outboundSchema.parse(value),
     "Input validation failed",
   );
   if (!parsed.ok) {
     return [parsed, { status: "invalid" }];
   }
   const payload = parsed.value;
-  const body = null;
-
-  const path = pathToFunc("/v1/notifications")();
-
-  const query = encodeFormQuery({
-    "after": payload.after,
-    "before": payload.before,
-    "channels": payload.channels,
-    "emails": payload.emails,
-    "limit": payload.limit,
-    "page": payload.page,
-    "search": payload.search,
-    "subscriberIds": payload.subscriberIds,
-    "templates": payload.templates,
-    "topicKey": payload.topicKey,
-    "transactionId": payload.transactionId,
+  const body = encodeJSON("body", payload.UpdateTopicRequestDto, {
+    explode: true,
   });
 
+  const pathParams = {
+    topicKey: encodeSimple("topicKey", payload.topicKey, {
+      explode: false,
+      charEncoding: "percent",
+    }),
+  };
+
+  const path = pathToFunc("/v2/topics/{topicKey}")(pathParams);
+
   const headers = new Headers(compactMap({
+    "Content-Type": "application/json",
     Accept: "application/json",
     "idempotency-key": encodeSimple(
       "idempotency-key",
@@ -120,7 +128,7 @@ async function $do(
 
   const context = {
     baseURL: options?.serverURL ?? client._baseURL ?? "",
-    operationID: "NotificationsController_listNotifications",
+    operationID: "TopicsController_updateTopic",
     oAuth2Scopes: [],
 
     resolvedSecurity: requestSecurity,
@@ -144,11 +152,10 @@ async function $do(
 
   const requestRes = client._createRequest(context, {
     security: requestSecurity,
-    method: "GET",
+    method: "PATCH",
     baseURL: options?.serverURL,
     path: path,
     headers: headers,
-    query: query,
     body: body,
     timeoutMs: options?.timeoutMs || client._options.timeoutMs || -1,
   }, options);
@@ -189,7 +196,7 @@ async function $do(
   };
 
   const [result] = await M.match<
-    operations.NotificationsControllerListNotificationsResponse,
+    operations.TopicsControllerUpdateTopicResponse | undefined,
     | errors.ErrorDto
     | errors.ErrorDto
     | errors.ValidationErrorDto
@@ -202,19 +209,19 @@ async function $do(
     | RequestTimeoutError
     | ConnectionError
   >(
-    M.json(
+    M.nil(
       200,
-      operations.NotificationsControllerListNotificationsResponse$inboundSchema,
-      { hdrs: true, key: "Result" },
+      operations.TopicsControllerUpdateTopicResponse$inboundSchema.optional(),
+      { hdrs: true },
     ),
     M.jsonErr(414, errors.ErrorDto$inboundSchema),
     M.jsonErr(
-      [400, 401, 403, 404, 405, 409, 413, 415],
+      [400, 401, 403, 405, 409, 413, 415],
       errors.ErrorDto$inboundSchema,
       { hdrs: true },
     ),
     M.jsonErr(422, errors.ValidationErrorDto$inboundSchema, { hdrs: true }),
-    M.fail(429),
+    M.fail([404, 429]),
     M.jsonErr(500, errors.ErrorDto$inboundSchema, { hdrs: true }),
     M.fail(503),
     M.fail("4XX"),

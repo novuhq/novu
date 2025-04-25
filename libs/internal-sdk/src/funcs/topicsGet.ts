@@ -3,14 +3,13 @@
  */
 
 import { NovuCore } from "../core.js";
-import { encodeJSON, encodeSimple } from "../lib/encodings.js";
+import { encodeSimple } from "../lib/encodings.js";
 import * as M from "../lib/matchers.js";
 import { compactMap } from "../lib/primitives.js";
 import { safeParse } from "../lib/schemas.js";
 import { RequestOptions } from "../lib/sdks.js";
 import { extractSecurity, resolveGlobalSecurity } from "../lib/security.js";
 import { pathToFunc } from "../lib/url.js";
-import * as components from "../models/components/index.js";
 import {
   ConnectionError,
   InvalidRequestError,
@@ -26,20 +25,16 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Rename a topic
- *
- * @remarks
- * Rename a topic by providing a new name
+ * Get topic by key
  */
-export function topicsRename(
+export function topicsGet(
   client: NovuCore,
-  renameTopicRequestDto: components.RenameTopicRequestDto,
   topicKey: string,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): APIPromise<
   Result<
-    operations.TopicsControllerRenameTopicResponse,
+    operations.TopicsControllerGetTopicResponse | undefined,
     | errors.ErrorDto
     | errors.ErrorDto
     | errors.ValidationErrorDto
@@ -55,7 +50,6 @@ export function topicsRename(
 > {
   return new APIPromise($do(
     client,
-    renameTopicRequestDto,
     topicKey,
     idempotencyKey,
     options,
@@ -64,14 +58,13 @@ export function topicsRename(
 
 async function $do(
   client: NovuCore,
-  renameTopicRequestDto: components.RenameTopicRequestDto,
   topicKey: string,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): Promise<
   [
     Result<
-      operations.TopicsControllerRenameTopicResponse,
+      operations.TopicsControllerGetTopicResponse | undefined,
       | errors.ErrorDto
       | errors.ErrorDto
       | errors.ValidationErrorDto
@@ -87,8 +80,7 @@ async function $do(
     APICall,
   ]
 > {
-  const input: operations.TopicsControllerRenameTopicRequest = {
-    renameTopicRequestDto: renameTopicRequestDto,
+  const input: operations.TopicsControllerGetTopicRequest = {
     topicKey: topicKey,
     idempotencyKey: idempotencyKey,
   };
@@ -96,16 +88,14 @@ async function $do(
   const parsed = safeParse(
     input,
     (value) =>
-      operations.TopicsControllerRenameTopicRequest$outboundSchema.parse(value),
+      operations.TopicsControllerGetTopicRequest$outboundSchema.parse(value),
     "Input validation failed",
   );
   if (!parsed.ok) {
     return [parsed, { status: "invalid" }];
   }
   const payload = parsed.value;
-  const body = encodeJSON("body", payload.RenameTopicRequestDto, {
-    explode: true,
-  });
+  const body = null;
 
   const pathParams = {
     topicKey: encodeSimple("topicKey", payload.topicKey, {
@@ -114,10 +104,9 @@ async function $do(
     }),
   };
 
-  const path = pathToFunc("/v1/topics/{topicKey}")(pathParams);
+  const path = pathToFunc("/v2/topics/{topicKey}")(pathParams);
 
   const headers = new Headers(compactMap({
-    "Content-Type": "application/json",
     Accept: "application/json",
     "idempotency-key": encodeSimple(
       "idempotency-key",
@@ -131,7 +120,7 @@ async function $do(
 
   const context = {
     baseURL: options?.serverURL ?? client._baseURL ?? "",
-    operationID: "TopicsController_renameTopic",
+    operationID: "TopicsController_getTopic",
     oAuth2Scopes: [],
 
     resolvedSecurity: requestSecurity,
@@ -155,7 +144,7 @@ async function $do(
 
   const requestRes = client._createRequest(context, {
     security: requestSecurity,
-    method: "PATCH",
+    method: "GET",
     baseURL: options?.serverURL,
     path: path,
     headers: headers,
@@ -199,7 +188,7 @@ async function $do(
   };
 
   const [result] = await M.match<
-    operations.TopicsControllerRenameTopicResponse,
+    operations.TopicsControllerGetTopicResponse | undefined,
     | errors.ErrorDto
     | errors.ErrorDto
     | errors.ValidationErrorDto
@@ -212,18 +201,19 @@ async function $do(
     | RequestTimeoutError
     | ConnectionError
   >(
-    M.json(200, operations.TopicsControllerRenameTopicResponse$inboundSchema, {
-      hdrs: true,
-      key: "Result",
-    }),
+    M.nil(
+      200,
+      operations.TopicsControllerGetTopicResponse$inboundSchema.optional(),
+      { hdrs: true },
+    ),
     M.jsonErr(414, errors.ErrorDto$inboundSchema),
     M.jsonErr(
-      [400, 401, 403, 404, 405, 409, 413, 415],
+      [400, 401, 403, 405, 409, 413, 415],
       errors.ErrorDto$inboundSchema,
       { hdrs: true },
     ),
     M.jsonErr(422, errors.ValidationErrorDto$inboundSchema, { hdrs: true }),
-    M.fail(429),
+    M.fail([404, 429]),
     M.jsonErr(500, errors.ErrorDto$inboundSchema, { hdrs: true }),
     M.fail(503),
     M.fail("4XX"),

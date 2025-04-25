@@ -25,10 +25,7 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Delete topic
- *
- * @remarks
- * Delete a topic by its topic key if it has no subscribers
+ * Delete topic by key
  */
 export function topicsDelete(
   client: NovuCore,
@@ -107,7 +104,7 @@ async function $do(
     }),
   };
 
-  const path = pathToFunc("/v1/topics/{topicKey}")(pathParams);
+  const path = pathToFunc("/v2/topics/{topicKey}")(pathParams);
 
   const headers = new Headers(compactMap({
     Accept: "application/json",
@@ -205,18 +202,16 @@ async function $do(
     | ConnectionError
   >(
     M.nil(
-      204,
+      200,
       operations.TopicsControllerDeleteTopicResponse$inboundSchema.optional(),
       { hdrs: true },
     ),
     M.jsonErr(414, errors.ErrorDto$inboundSchema),
-    M.jsonErr(
-      [400, 401, 403, 404, 405, 409, 413, 415],
-      errors.ErrorDto$inboundSchema,
-      { hdrs: true },
-    ),
+    M.jsonErr([400, 401, 403, 405, 413, 415], errors.ErrorDto$inboundSchema, {
+      hdrs: true,
+    }),
     M.jsonErr(422, errors.ValidationErrorDto$inboundSchema, { hdrs: true }),
-    M.fail(429),
+    M.fail([404, 409, 429]),
     M.jsonErr(500, errors.ErrorDto$inboundSchema, { hdrs: true }),
     M.fail(503),
     M.fail("4XX"),

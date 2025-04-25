@@ -13,7 +13,7 @@ import {
   UseSuspenseQueryResult,
 } from "@tanstack/react-query";
 import { NovuCore } from "../core.js";
-import { topicsRetrieve } from "../funcs/topicsRetrieve.js";
+import { topicsGet } from "../funcs/topicsGet.js";
 import { combineSignals } from "../lib/primitives.js";
 import { RequestOptions } from "../lib/sdks.js";
 import * as operations from "../models/operations/index.js";
@@ -25,23 +25,21 @@ import {
   TupleToPrefixes,
 } from "./_types.js";
 
-export type TopicsRetrieveQueryData =
-  operations.TopicsControllerGetTopicResponse;
+export type TopicsGetQueryData =
+  | operations.TopicsControllerGetTopicResponse
+  | undefined;
 
 /**
- * Get topic
- *
- * @remarks
- * Get a topic by its topic key
+ * Get topic by key
  */
-export function useTopicsRetrieve(
+export function useTopicsGet(
   topicKey: string,
   idempotencyKey?: string | undefined,
-  options?: QueryHookOptions<TopicsRetrieveQueryData>,
-): UseQueryResult<TopicsRetrieveQueryData, Error> {
+  options?: QueryHookOptions<TopicsGetQueryData>,
+): UseQueryResult<TopicsGetQueryData, Error> {
   const client = useNovuContext();
   return useQuery({
-    ...buildTopicsRetrieveQuery(
+    ...buildTopicsGetQuery(
       client,
       topicKey,
       idempotencyKey,
@@ -52,19 +50,16 @@ export function useTopicsRetrieve(
 }
 
 /**
- * Get topic
- *
- * @remarks
- * Get a topic by its topic key
+ * Get topic by key
  */
-export function useTopicsRetrieveSuspense(
+export function useTopicsGetSuspense(
   topicKey: string,
   idempotencyKey?: string | undefined,
-  options?: SuspenseQueryHookOptions<TopicsRetrieveQueryData>,
-): UseSuspenseQueryResult<TopicsRetrieveQueryData, Error> {
+  options?: SuspenseQueryHookOptions<TopicsGetQueryData>,
+): UseSuspenseQueryResult<TopicsGetQueryData, Error> {
   const client = useNovuContext();
   return useSuspenseQuery({
-    ...buildTopicsRetrieveQuery(
+    ...buildTopicsGetQuery(
       client,
       topicKey,
       idempotencyKey,
@@ -74,14 +69,14 @@ export function useTopicsRetrieveSuspense(
   });
 }
 
-export function prefetchTopicsRetrieve(
+export function prefetchTopicsGet(
   queryClient: QueryClient,
   client$: NovuCore,
   topicKey: string,
   idempotencyKey?: string | undefined,
 ): Promise<void> {
   return queryClient.prefetchQuery({
-    ...buildTopicsRetrieveQuery(
+    ...buildTopicsGetQuery(
       client$,
       topicKey,
       idempotencyKey,
@@ -89,20 +84,20 @@ export function prefetchTopicsRetrieve(
   });
 }
 
-export function setTopicsRetrieveData(
+export function setTopicsGetData(
   client: QueryClient,
   queryKeyBase: [
     topicKey: string,
     parameters: { idempotencyKey?: string | undefined },
   ],
-  data: TopicsRetrieveQueryData,
-): TopicsRetrieveQueryData | undefined {
-  const key = queryKeyTopicsRetrieve(...queryKeyBase);
+  data: TopicsGetQueryData,
+): TopicsGetQueryData | undefined {
+  const key = queryKeyTopicsGet(...queryKeyBase);
 
-  return client.setQueryData<TopicsRetrieveQueryData>(key, data);
+  return client.setQueryData<TopicsGetQueryData>(key, data);
 }
 
-export function invalidateTopicsRetrieve(
+export function invalidateTopicsGet(
   client: QueryClient,
   queryKeyBase: TupleToPrefixes<
     [topicKey: string, parameters: { idempotencyKey?: string | undefined }]
@@ -111,41 +106,39 @@ export function invalidateTopicsRetrieve(
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ["@novu/api", "Topics", "retrieve", ...queryKeyBase],
+    queryKey: ["@novu/api", "Topics", "get", ...queryKeyBase],
   });
 }
 
-export function invalidateAllTopicsRetrieve(
+export function invalidateAllTopicsGet(
   client: QueryClient,
   filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ["@novu/api", "Topics", "retrieve"],
+    queryKey: ["@novu/api", "Topics", "get"],
   });
 }
 
-export function buildTopicsRetrieveQuery(
+export function buildTopicsGetQuery(
   client$: NovuCore,
   topicKey: string,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): {
   queryKey: QueryKey;
-  queryFn: (context: QueryFunctionContext) => Promise<TopicsRetrieveQueryData>;
+  queryFn: (context: QueryFunctionContext) => Promise<TopicsGetQueryData>;
 } {
   return {
-    queryKey: queryKeyTopicsRetrieve(topicKey, { idempotencyKey }),
-    queryFn: async function topicsRetrieveQueryFn(
-      ctx,
-    ): Promise<TopicsRetrieveQueryData> {
+    queryKey: queryKeyTopicsGet(topicKey, { idempotencyKey }),
+    queryFn: async function topicsGetQueryFn(ctx): Promise<TopicsGetQueryData> {
       const sig = combineSignals(ctx.signal, options?.fetchOptions?.signal);
       const mergedOptions = {
         ...options,
         fetchOptions: { ...options?.fetchOptions, signal: sig },
       };
 
-      return unwrapAsync(topicsRetrieve(
+      return unwrapAsync(topicsGet(
         client$,
         topicKey,
         idempotencyKey,
@@ -155,9 +148,9 @@ export function buildTopicsRetrieveQuery(
   };
 }
 
-export function queryKeyTopicsRetrieve(
+export function queryKeyTopicsGet(
   topicKey: string,
   parameters: { idempotencyKey?: string | undefined },
 ): QueryKey {
-  return ["@novu/api", "Topics", "retrieve", topicKey, parameters];
+  return ["@novu/api", "Topics", "get", topicKey, parameters];
 }

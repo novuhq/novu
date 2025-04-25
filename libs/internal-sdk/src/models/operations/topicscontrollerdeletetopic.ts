@@ -10,7 +10,7 @@ import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 
 export type TopicsControllerDeleteTopicRequest = {
   /**
-   * The topic key
+   * The key identifier of the topic
    */
   topicKey: string;
   /**
