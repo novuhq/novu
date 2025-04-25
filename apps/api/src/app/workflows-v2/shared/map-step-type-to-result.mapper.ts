@@ -1,6 +1,7 @@
+import { JSONSchema } from '@novu/application-generic';
+import { JsonSchemaTypeEnum } from '@novu/dal';
 import { ActionStepEnum, actionStepSchemas, ChannelStepEnum, channelStepSchemas } from '@novu/framework/internal';
 import { StepTypeEnum } from '@novu/shared';
-import { JSONSchema } from 'json-schema-to-ts';
 
 export function computeResultSchema({
   stepType,
@@ -32,31 +33,31 @@ function buildDigestResult({
   isEnhancedDigestEnabled: boolean;
 }): JSONSchema {
   return {
-    type: 'object',
+    type: JsonSchemaTypeEnum.OBJECT,
     properties: {
-      ...(isEnhancedDigestEnabled ? { eventCount: { type: 'number' } } : {}),
+      ...(isEnhancedDigestEnabled ? { eventCount: { type: JsonSchemaTypeEnum.NUMBER } } : {}),
       events: {
-        type: 'array',
+        type: JsonSchemaTypeEnum.ARRAY,
         properties: {
           // the length property is JS native property on arrays
           length: {
-            type: 'number',
+            type: JsonSchemaTypeEnum.NUMBER,
           },
         },
         items: {
-          type: 'object',
+          type: JsonSchemaTypeEnum.OBJECT,
           properties: {
             id: {
-              type: 'string',
+              type: JsonSchemaTypeEnum.STRING,
             },
             time: {
-              type: 'string',
+              type: JsonSchemaTypeEnum.STRING,
             },
             payload:
               payloadSchema && typeof payloadSchema === 'object'
                 ? { ...payloadSchema, additionalProperties: true }
                 : {
-                    type: 'object',
+                    type: JsonSchemaTypeEnum.OBJECT,
                     additionalProperties: true,
                   },
           },

@@ -6,20 +6,39 @@ import * as z from "zod";
 import { remap as remap$ } from "../../lib/primitives.js";
 import { safeParse } from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
+import * as components from "../components/index.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 
 export type WorkflowControllerSearchWorkflowsRequest = {
+  /**
+   * Number of items to return per page
+   */
+  limit?: number | undefined;
+  /**
+   * Number of items to skip before starting to return results
+   */
+  offset?: number | undefined;
+  /**
+   * Direction of sorting
+   */
+  orderDirection?: components.DirectionEnum | undefined;
+  /**
+   * Field to sort the results by
+   */
+  orderBy?: components.WorkflowResponseDtoSortField | undefined;
+  /**
+   * Search query to filter workflows
+   */
+  query?: string | undefined;
   /**
    * A header for idempotency purposes
    */
   idempotencyKey?: string | undefined;
 };
 
-export type WorkflowControllerSearchWorkflowsResponseBody = {};
-
 export type WorkflowControllerSearchWorkflowsResponse = {
   headers: { [k: string]: Array<string> };
-  result: WorkflowControllerSearchWorkflowsResponseBody;
+  result: components.ListWorkflowResponse;
 };
 
 /** @internal */
@@ -28,6 +47,11 @@ export const WorkflowControllerSearchWorkflowsRequest$inboundSchema: z.ZodType<
   z.ZodTypeDef,
   unknown
 > = z.object({
+  limit: z.number().optional(),
+  offset: z.number().optional(),
+  orderDirection: components.DirectionEnum$inboundSchema.optional(),
+  orderBy: components.WorkflowResponseDtoSortField$inboundSchema.optional(),
+  query: z.string().optional(),
   "idempotency-key": z.string().optional(),
 }).transform((v) => {
   return remap$(v, {
@@ -37,6 +61,11 @@ export const WorkflowControllerSearchWorkflowsRequest$inboundSchema: z.ZodType<
 
 /** @internal */
 export type WorkflowControllerSearchWorkflowsRequest$Outbound = {
+  limit?: number | undefined;
+  offset?: number | undefined;
+  orderDirection?: string | undefined;
+  orderBy?: string | undefined;
+  query?: string | undefined;
   "idempotency-key"?: string | undefined;
 };
 
@@ -46,6 +75,11 @@ export const WorkflowControllerSearchWorkflowsRequest$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   WorkflowControllerSearchWorkflowsRequest
 > = z.object({
+  limit: z.number().optional(),
+  offset: z.number().optional(),
+  orderDirection: components.DirectionEnum$outboundSchema.optional(),
+  orderBy: components.WorkflowResponseDtoSortField$outboundSchema.optional(),
+  query: z.string().optional(),
   idempotencyKey: z.string().optional(),
 }).transform((v) => {
   return remap$(v, {
@@ -96,76 +130,13 @@ export function workflowControllerSearchWorkflowsRequestFromJSON(
 }
 
 /** @internal */
-export const WorkflowControllerSearchWorkflowsResponseBody$inboundSchema:
-  z.ZodType<
-    WorkflowControllerSearchWorkflowsResponseBody,
-    z.ZodTypeDef,
-    unknown
-  > = z.object({});
-
-/** @internal */
-export type WorkflowControllerSearchWorkflowsResponseBody$Outbound = {};
-
-/** @internal */
-export const WorkflowControllerSearchWorkflowsResponseBody$outboundSchema:
-  z.ZodType<
-    WorkflowControllerSearchWorkflowsResponseBody$Outbound,
-    z.ZodTypeDef,
-    WorkflowControllerSearchWorkflowsResponseBody
-  > = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace WorkflowControllerSearchWorkflowsResponseBody$ {
-  /** @deprecated use `WorkflowControllerSearchWorkflowsResponseBody$inboundSchema` instead. */
-  export const inboundSchema =
-    WorkflowControllerSearchWorkflowsResponseBody$inboundSchema;
-  /** @deprecated use `WorkflowControllerSearchWorkflowsResponseBody$outboundSchema` instead. */
-  export const outboundSchema =
-    WorkflowControllerSearchWorkflowsResponseBody$outboundSchema;
-  /** @deprecated use `WorkflowControllerSearchWorkflowsResponseBody$Outbound` instead. */
-  export type Outbound = WorkflowControllerSearchWorkflowsResponseBody$Outbound;
-}
-
-export function workflowControllerSearchWorkflowsResponseBodyToJSON(
-  workflowControllerSearchWorkflowsResponseBody:
-    WorkflowControllerSearchWorkflowsResponseBody,
-): string {
-  return JSON.stringify(
-    WorkflowControllerSearchWorkflowsResponseBody$outboundSchema.parse(
-      workflowControllerSearchWorkflowsResponseBody,
-    ),
-  );
-}
-
-export function workflowControllerSearchWorkflowsResponseBodyFromJSON(
-  jsonString: string,
-): SafeParseResult<
-  WorkflowControllerSearchWorkflowsResponseBody,
-  SDKValidationError
-> {
-  return safeParse(
-    jsonString,
-    (x) =>
-      WorkflowControllerSearchWorkflowsResponseBody$inboundSchema.parse(
-        JSON.parse(x),
-      ),
-    `Failed to parse 'WorkflowControllerSearchWorkflowsResponseBody' from JSON`,
-  );
-}
-
-/** @internal */
 export const WorkflowControllerSearchWorkflowsResponse$inboundSchema: z.ZodType<
   WorkflowControllerSearchWorkflowsResponse,
   z.ZodTypeDef,
   unknown
 > = z.object({
   Headers: z.record(z.array(z.string())),
-  Result: z.lazy(() =>
-    WorkflowControllerSearchWorkflowsResponseBody$inboundSchema
-  ),
+  Result: components.ListWorkflowResponse$inboundSchema,
 }).transform((v) => {
   return remap$(v, {
     "Headers": "headers",
@@ -176,7 +147,7 @@ export const WorkflowControllerSearchWorkflowsResponse$inboundSchema: z.ZodType<
 /** @internal */
 export type WorkflowControllerSearchWorkflowsResponse$Outbound = {
   Headers: { [k: string]: Array<string> };
-  Result: WorkflowControllerSearchWorkflowsResponseBody$Outbound;
+  Result: components.ListWorkflowResponse$Outbound;
 };
 
 /** @internal */
@@ -187,9 +158,7 @@ export const WorkflowControllerSearchWorkflowsResponse$outboundSchema:
     WorkflowControllerSearchWorkflowsResponse
   > = z.object({
     headers: z.record(z.array(z.string())),
-    result: z.lazy(() =>
-      WorkflowControllerSearchWorkflowsResponseBody$outboundSchema
-    ),
+    result: components.ListWorkflowResponse$outboundSchema,
   }).transform((v) => {
     return remap$(v, {
       headers: "Headers",

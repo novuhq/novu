@@ -1,13 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import {
   EnvironmentEntity,
+  JsonSchemaFormatEnum,
+  JsonSchemaTypeEnum,
   NotificationStepEntity,
   NotificationTemplateEntity,
   OrganizationEntity,
   UserEntity,
 } from '@novu/dal';
-import { FeatureFlagsKeysEnum, JSONSchemaDto } from '@novu/shared';
 import { FeatureFlagsService, Instrument } from '@novu/application-generic';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { computeResultSchema } from '../../shared';
 import { BuildVariableSchemaCommand } from './build-available-variable-schema.command';
 import { parsePayloadSchema } from '../../shared/parse-payload-schema';
@@ -15,6 +17,7 @@ import { CreateVariablesObjectCommand } from '../create-variables-object/create-
 import { CreateVariablesObject } from '../create-variables-object/create-variables-object.usecase';
 import { emptyJsonSchema } from '../../util/jsonToSchema';
 import { buildVariablesSchema } from '../../util/create-schema';
+import { JSONSchemaDto } from '../../dtos';
 
 @Injectable()
 export class BuildVariableSchemaUsecase {
@@ -47,23 +50,26 @@ export class BuildVariableSchemaUsecase {
     );
 
     return {
-      type: 'object',
+      type: JsonSchemaTypeEnum.OBJECT,
       properties: {
         subscriber: {
-          type: 'object',
+          type: JsonSchemaTypeEnum.OBJECT,
           description: 'Schema representing the subscriber entity',
           properties: {
-            firstName: { type: 'string', description: "Subscriber's first name" },
-            lastName: { type: 'string', description: "Subscriber's last name" },
-            email: { type: 'string', description: "Subscriber's email address" },
-            phone: { type: 'string', description: "Subscriber's phone number (optional)" },
-            avatar: { type: 'string', description: "URL to the subscriber's avatar image (optional)" },
-            locale: { type: 'string', description: 'Locale for the subscriber (optional)' },
-            subscriberId: { type: 'string', description: 'Unique identifier for the subscriber' },
-            isOnline: { type: 'boolean', description: 'Indicates if the subscriber is online (optional)' },
+            firstName: { type: JsonSchemaTypeEnum.STRING, description: "Subscriber's first name" },
+            lastName: { type: JsonSchemaTypeEnum.STRING, description: "Subscriber's last name" },
+            email: { type: JsonSchemaTypeEnum.STRING, description: "Subscriber's email address" },
+            phone: { type: JsonSchemaTypeEnum.STRING, description: "Subscriber's phone number (optional)" },
+            avatar: { type: JsonSchemaTypeEnum.STRING, description: "URL to the subscriber's avatar image (optional)" },
+            locale: { type: JsonSchemaTypeEnum.STRING, description: 'Locale for the subscriber (optional)' },
+            subscriberId: { type: JsonSchemaTypeEnum.STRING, description: 'Unique identifier for the subscriber' },
+            isOnline: {
+              type: JsonSchemaTypeEnum.BOOLEAN,
+              description: 'Indicates if the subscriber is online (optional)',
+            },
             lastOnlineAt: {
-              type: 'string',
-              format: 'date-time',
+              type: JsonSchemaTypeEnum.STRING,
+              format: JsonSchemaFormatEnum.DATETIME,
               description: 'The last time the subscriber was online (optional)',
             },
             data: buildVariablesSchema(
@@ -91,7 +97,7 @@ export class BuildVariableSchemaUsecase {
   ): Promise<JSONSchemaDto> {
     if (workflow && workflow.steps.length === 0) {
       return {
-        type: 'object',
+        type: JsonSchemaTypeEnum.OBJECT,
         properties: {},
         additionalProperties: true,
       };
@@ -140,7 +146,7 @@ function buildPreviousStepsSchema({
   isEnhancedDigestEnabled: boolean;
 }): JSONSchemaDto {
   return {
-    type: 'object',
+    type: JsonSchemaTypeEnum.OBJECT,
     properties: buildPreviousStepsProperties({
       previousSteps,
       payloadSchema,

@@ -10,6 +10,7 @@ export function getEnumValues<T>(enumObj: T): Array<T[keyof T]> {
 export class UpdateSubscriberChannelRequestDto implements ISubscriberChannel {
   @ApiProperty({
     enum: [...getEnumValues(ChatProviderIdEnum), ...getEnumValues(PushProviderIdEnum)],
+    enumName: 'ChatOrPushProviderEnum',
     description: 'The provider identifier for the credentials',
   })
   @IsEnum(

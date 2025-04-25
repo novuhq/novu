@@ -1,9 +1,8 @@
-import { IsNotEmpty, IsOptional, IsString, IsDate, IsMongoId } from 'class-validator';
-import { ExecutionDetailsEntity, ExecutionDetailsRepository } from '@novu/dal';
-import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, IJob, StepTypeEnum } from '@novu/shared';
+import { IsDate, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { ExecutionDetailsEntity, ExecutionDetailsRepository, JobEntity } from '@novu/dal';
+import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, StepTypeEnum } from '@novu/shared';
 import { EmailEventStatusEnum, SmsEventStatusEnum } from '@novu/stateless';
-
-import { EnvironmentWithSubscriber } from '../../commands/project.command';
+import { EnvironmentWithSubscriber } from '../../commands';
 
 export class CreateExecutionDetailsCommand extends EnvironmentWithSubscriber {
   @IsOptional()
@@ -61,7 +60,7 @@ export class CreateExecutionDetailsCommand extends EnvironmentWithSubscriber {
   webhookStatus?: EmailEventStatusEnum | SmsEventStatusEnum;
 
   static getDetailsFromJob(
-    job: IJob
+    job: JobEntity
   ): Pick<
     CreateExecutionDetailsCommand,
     | 'environmentId'

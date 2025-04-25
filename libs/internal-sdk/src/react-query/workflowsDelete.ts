@@ -26,6 +26,12 @@ export type WorkflowsDeleteMutationData =
   | operations.WorkflowControllerRemoveWorkflowResponse
   | undefined;
 
+/**
+ * Delete a workflow
+ *
+ * @remarks
+ * Removes a specific workflow
+ */
 export function useWorkflowsDeleteMutation(
   options?: MutationHookOptions<
     WorkflowsDeleteMutationData,

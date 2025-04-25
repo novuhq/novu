@@ -8,7 +8,7 @@ import {
 } from '@novu/dal';
 
 import { UpdateWorkflowOverrideByIdCommand } from './update-workflow-override-by-id.command';
-import { UpdateWorkflowOverrideResponseDto } from '../../dto';
+import { UpdateWorkflowOverrideResponseDto } from '../../dtos';
 
 @Injectable()
 export class UpdateWorkflowOverrideById {

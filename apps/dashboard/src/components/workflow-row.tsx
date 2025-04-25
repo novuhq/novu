@@ -201,11 +201,41 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
       <TableRow key={workflow._id} className="group relative isolate cursor-pointer" onClick={handleRowClick}>
         <WorkflowLinkTableCell className="flex items-center gap-2 font-medium">
           {workflow.origin === WorkflowOriginEnum.EXTERNAL ? (
-            <FaCode className="text-warning size-4" />
+            <Tooltip delayDuration={300}>
+              <TooltipTrigger>
+                <FaCode className="text-warning size-4" />
+              </TooltipTrigger>
+              <TooltipPortal>
+                <TooltipContent>
+                  <span className="font-medium">Code Workflow</span>
+                  <span className="text-foreground-400 block text-xs">Managed via your codebase</span>
+                </TooltipContent>
+              </TooltipPortal>
+            </Tooltip>
           ) : workflow.origin === WorkflowOriginEnum.NOVU_CLOUD_V1 ? (
-            <CgBolt className="text-feature size-4" />
+            <Tooltip delayDuration={300}>
+              <TooltipTrigger>
+                <CgBolt className="text-feature size-4" />
+              </TooltipTrigger>
+              <TooltipPortal>
+                <TooltipContent>
+                  <span className="font-medium">Legacy Workflow</span>
+                  <span className="text-foreground-400 block text-xs">Opens in legacy dashboard</span>
+                </TooltipContent>
+              </TooltipPortal>
+            </Tooltip>
           ) : (
-            <RiRouteFill className="text-feature size-4" />
+            <Tooltip delayDuration={300}>
+              <TooltipTrigger>
+                <RiRouteFill className="text-feature size-4" />
+              </TooltipTrigger>
+              <TooltipPortal>
+                <TooltipContent>
+                  <span className="font-medium">UI Workflow</span>
+                  <span className="text-foreground-400 block text-xs">Managed in Novu Dashboard</span>
+                </TooltipContent>
+              </TooltipPortal>
+            </Tooltip>
           )}
           <div>
             <div className="flex items-center gap-1">

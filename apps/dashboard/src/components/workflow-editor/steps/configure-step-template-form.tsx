@@ -1,7 +1,3 @@
-import { useCallback, useEffect, useMemo } from 'react';
-import { useForm } from 'react-hook-form';
-import { useLocation } from 'react-router-dom';
-import { type StepResponseDto, StepTypeEnum, StepUpdateDto, type WorkflowResponseDto } from '@novu/shared';
 import { Form, FormRoot } from '@/components/primitives/form/form';
 import { getStepDefaultValues } from '@/components/workflow-editor/step-default-values';
 import { flattenIssues, updateStepInWorkflow } from '@/components/workflow-editor/step-utils';
@@ -15,6 +11,10 @@ import { SmsTabs } from '@/components/workflow-editor/steps/sms/sms-tabs';
 import { UpdateWorkflowFn } from '@/components/workflow-editor/workflow-provider';
 import { useDataRef } from '@/hooks/use-data-ref';
 import { useFormAutosave } from '@/hooks/use-form-autosave';
+import { type StepResponseDto, StepTypeEnum, StepUpdateDto, type WorkflowResponseDto } from '@novu/shared';
+import { useCallback, useEffect, useMemo } from 'react';
+import { useForm } from 'react-hook-form';
+import { useLocation } from 'react-router-dom';
 
 const STEP_TYPE_TO_TEMPLATE_FORM: Record<StepTypeEnum, (args: StepEditorProps) => React.JSX.Element | null> = {
   [StepTypeEnum.EMAIL]: EmailTabs,

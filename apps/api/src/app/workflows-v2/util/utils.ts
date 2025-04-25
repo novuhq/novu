@@ -1,10 +1,10 @@
 /* eslint-disable no-param-reassign */
-import { JSONSchemaDto } from '@novu/shared';
 import difference from 'lodash/difference';
 import isArray from 'lodash/isArray';
 import isObject from 'lodash/isObject';
 import reduce from 'lodash/reduce';
 import set from 'lodash/set';
+import { JSONSchemaDto } from '../dtos';
 import { ArrayVariable } from '../usecases/create-variables-object/create-variables-object.usecase';
 
 export function findMissingKeys(requiredRecord: object, actualRecord: object) {
@@ -28,7 +28,7 @@ export function collectKeys(obj, prefix = '') {
       return result;
     },
     []
-  );
+  ).filter(Boolean);
 }
 
 /**
@@ -73,7 +73,7 @@ export function collectKeys(obj, prefix = '') {
  * //   }
  * // }
  */
-export function mockSchemaDefaults(schema: JSONSchemaDto, parentPath = 'payload', depth = 0) {
+export function mockSchemaDefaults(schema: JSONSchemaDto, parentPath = 'payload', depth = 0): JSONSchemaDto {
   const MAX_DEPTH = 10;
 
   if (depth >= MAX_DEPTH) {
@@ -191,18 +191,8 @@ export function mergeCommonObjectKeys(
       const sourceValue = source[key];
 
       if (Array.isArray(targetValue) && Array.isArray(sourceValue)) {
-        const sourceValueLength = sourceValue.length;
-        const targetValueLength = targetValue.length;
-        const maxLength = Math.max(sourceValueLength, targetValueLength);
-
-        merged[key] = Array.from({ length: maxLength }, (_, index) => {
-          if (index < sourceValueLength) {
-            // if we have a corresponding source item, use it
-            return sourceValue[index];
-          }
-
-          // otherwise keep the target item
-          return targetValue[index];
+        merged[key] = Array.from({ length: sourceValue.length }, (_, index) => {
+          return sourceValue[index];
         });
       } else if (isObject(targetValue) && isObject(sourceValue)) {
         merged[key] = mergeCommonObjectKeys(

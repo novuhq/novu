@@ -16,7 +16,7 @@ import { GetActiveIntegrations } from '../../../integrations/usecases/get-active
 import { GetActiveIntegrationsStatusCommand } from './get-active-integrations-status.command';
 
 import { IntegrationResponseDto } from '../../../integrations/dtos/integration-response.dto';
-import { WorkflowResponse } from '../../dto/workflow-response.dto';
+import { WorkflowResponse } from '../../dtos/workflow-response.dto';
 
 /**
  * @deprecated use usecases in /workflows directory

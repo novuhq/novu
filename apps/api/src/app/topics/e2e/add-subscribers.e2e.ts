@@ -43,8 +43,11 @@ describe('Add subscribers to topic - /topics/:topicKey/subscribers (POST) #novu-
     // Not changing to use SDK since the SDK would block wrong usage
     const { body } = await session.testAgent.post(addSubscribersUrl).send({});
 
-    expect(body.statusCode).to.eql(400);
-    expect(body.message).to.eql(['subscribers should not be null or undefined', 'subscribers must be an array']);
+    expect(body.statusCode).to.eql(422);
+    expect(body.errors.general.messages).to.eql([
+      'subscribers should not be null or undefined',
+      'subscribers must be an array',
+    ]);
   });
 
   it('should add subscriber to topic', async () => {

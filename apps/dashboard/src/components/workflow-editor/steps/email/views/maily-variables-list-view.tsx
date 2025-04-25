@@ -8,6 +8,8 @@ import {
   getDynamicDigestVariable,
 } from '@/components/variable/utils/digest-variables';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
+import { useTelemetry } from '@/hooks/use-telemetry';
+import { TelemetryEvent } from '@/utils/telemetry';
 
 type VariableSuggestionsPopoverProps = {
   items: Variable[];
@@ -23,6 +25,7 @@ type VariableSuggestionsPopoverRef = {
 export const MailyVariablesListView = React.forwardRef(
   ({ items, onSelectItem }: VariableSuggestionsPopoverProps, ref: React.Ref<VariableSuggestionsPopoverRef>) => {
     const { digestStepBeforeCurrent } = useWorkflow();
+    const track = useTelemetry();
     const options = useMemo(
       () =>
         items.map((item) => {
@@ -71,6 +74,10 @@ export const MailyVariablesListView = React.forwardRef(
           digestStepName: digestStepBeforeCurrent?.stepId,
         });
         selectedItem = { ...selectedItem, name: value };
+
+        track(TelemetryEvent.DIGEST_VARIABLE_SELECTED, {
+          type: item.name,
+        });
       }
 
       onSelectItem(selectedItem);

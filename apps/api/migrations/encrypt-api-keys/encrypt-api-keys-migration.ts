@@ -2,22 +2,23 @@
 import '../../src/config';
 
 import { EnvironmentRepository, IApiKey } from '@novu/dal';
-import { encryptSecret } from '@novu/application-generic';
+import { encryptSecret, PinoLogger } from '@novu/application-generic';
 import { EncryptedSecret } from '@novu/shared';
 import { createHash } from 'crypto';
 import { NestFactory } from '@nestjs/core';
 
 import { AppModule } from '../../src/app.module';
-import { getLogger } from '../../src/app/shared/services/logger.service';
-
-const logger = getLogger('EncryptApiKeysMigration');
 
 export async function encryptApiKeysMigration() {
-  logger.info('start migration - encrypt api keys');
-
   const app = await NestFactory.create(AppModule, {
     logger: false,
   });
+
+  const logger = await app.resolve(PinoLogger);
+  logger.setContext('EncryptApiKeysMigration');
+
+  logger.info('start migration - encrypt api keys');
+
   const environmentRepository = app.get(EnvironmentRepository);
   const environments = await environmentRepository.find({});
 
