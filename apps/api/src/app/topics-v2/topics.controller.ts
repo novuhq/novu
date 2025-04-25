@@ -106,6 +106,7 @@ export class TopicsController {
   @ApiResponse(TopicResponseDto, 201, false, true, {
     description: 'Topic successfully created/updated',
   })
+  @SdkMethodName('create')
   async upsertTopic(
     @UserSession() user: UserSessionData,
     @Body() body: CreateUpdateTopicRequestDto
