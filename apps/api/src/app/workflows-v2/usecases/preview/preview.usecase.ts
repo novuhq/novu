@@ -195,8 +195,8 @@ export class PreviewUsecase {
 
     if (userPayloadExample && Object.keys(userPayloadExample).length > 0) {
       return mergeCommonObjectKeys(
-        payloadExample as Record<string, unknown>,
-        userPayloadExample as Record<string, unknown>
+        userPayloadExample as Record<string, unknown>, // treat the FE payload as target
+        payloadExample as Record<string, unknown> // treat the BE payload as source
       );
     }
 
