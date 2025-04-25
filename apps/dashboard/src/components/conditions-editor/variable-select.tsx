@@ -6,9 +6,10 @@ import { VariableList, VariableListRef } from '@/components/variable/variable-li
 import { AUTOCOMPLETE_PASSWORD_MANAGERS_OFF } from '@/utils/constants';
 import { cn } from '@/utils/ui';
 
-type VariableSelectProps = Omit<HTMLAttributes<HTMLDivElement>, 'onChange'> & {
+type VariableSelectProps = Omit<HTMLAttributes<HTMLDivElement>, 'onChange' | 'defaultValue'> & {
   disabled?: boolean;
   value?: string;
+  defaultValue?: string;
   options: Array<{ label: string; value: string }>;
   onChange: (value: string) => void;
   onInputChange?: (value: string) => void;
@@ -45,9 +46,10 @@ export const VariableSelect = (props: VariableSelectProps) => {
     placeholder,
     emptyState,
     isClearable = false,
+    defaultValue,
     ...rest
   } = props;
-  const [inputValue, setInputValue] = useState(value ?? '');
+  const [inputValue, setInputValue] = useState(value ?? defaultValue ?? '');
   const [filterValue, setFilterValue] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const variablesListRef = useRef<VariableListRef>(null);

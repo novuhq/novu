@@ -1,4 +1,4 @@
-import { Editor, NodeViewContent, NodeViewProps, NodeViewWrapper } from '@tiptap/react';
+import { NodeViewContent, NodeViewProps, NodeViewWrapper } from '@tiptap/react';
 import { Repeat2 } from 'lucide-react';
 
 /**
@@ -6,23 +6,6 @@ import { Repeat2 } from 'lucide-react';
  */
 export function ForView(props: NodeViewProps) {
   const { editor, getPos } = props;
-
-  const pos = getPos();
-  const cursorPos = editor.state.selection.from;
-
-  const forNode = editor.state.doc.nodeAt(pos);
-  const forNodeEndPos = pos + (forNode?.nodeSize ?? 0);
-
-  const isCursorInForNode = cursorPos >= pos && cursorPos <= forNodeEndPos;
-  const isOnEmptyForNodeLine = isOnEmptyLine(editor, cursorPos) && isCursorInForNode;
-
-  function isOnEmptyLine(editor: Editor, cursorPos: number) {
-    const $pos = editor.state.doc.resolve(cursorPos);
-    const node = $pos.parent;
-    const hasContent = node.content.size > 0;
-
-    return !hasContent;
-  }
 
   return (
     <NodeViewWrapper
