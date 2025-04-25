@@ -1,7 +1,13 @@
 import { Badge } from '@/components/primitives/badge';
 import { Button } from '@/components/primitives/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
-import { ChannelTypeEnum, type IEnvironment, type IIntegration, type IProviderConfig } from '@novu/shared';
+import {
+  ApiServiceLevelEnum,
+  ChannelTypeEnum,
+  type IEnvironment,
+  type IIntegration,
+  type IProviderConfig,
+} from '@novu/shared';
 import { RiCheckboxCircleFill, RiCloseCircleFill, RiSettings4Line, RiStarSmileLine } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../../utils/routes';
@@ -11,6 +17,8 @@ import { StatusBadge, StatusBadgeIcon } from '../../primitives/status-badge';
 import { TableIntegration } from '../types';
 import { ProviderIcon } from './provider-icon';
 import { isDemoIntegration } from './utils/helpers';
+import { useFetchSubscription } from '../../../hooks/use-fetch-subscription';
+import { CalendarClock, CalendarOff, ExternalLink } from 'lucide-react';
 
 type IntegrationCardProps = {
   integration: IIntegration;
@@ -104,10 +112,13 @@ export function IntegrationCard({ integration, provider, environment, onClick }:
             Connect
           </Button>
         ) : (
-          <StatusBadge variant="light" status={integration.active ? 'completed' : 'disabled'}>
-            <StatusBadgeIcon as={integration.active ? RiCheckboxCircleFill : RiCloseCircleFill} />
-            {integration.active ? 'Active' : 'Inactive'}
-          </StatusBadge>
+          <>
+            <StatusBadge variant="light" status={integration.active ? 'completed' : 'disabled'}>
+              <StatusBadgeIcon as={integration.active ? RiCheckboxCircleFill : RiCloseCircleFill} />
+              {integration.active ? 'Active' : 'Inactive'}
+            </StatusBadge>
+            {integration.channel === ChannelTypeEnum.IN_APP && <SnoozeFeatureBadge />}
+          </>
         )}
         <StatusBadge variant="stroke" status="pending" className="gap-1 shadow-none">
           <EnvironmentBranchIcon size="xs" environment={environment} mode="ghost" />
@@ -115,5 +126,47 @@ export function IntegrationCard({ integration, provider, environment, onClick }:
         </StatusBadge>
       </div>
     </div>
+  );
+}
+
+function SnoozeFeatureBadge() {
+  const navigate = useNavigate();
+  const { subscription } = useFetchSubscription();
+  const isSnoozeFeatureEnabled = subscription?.apiServiceLevel !== ApiServiceLevelEnum.FREE;
+
+  const handleUpgradeClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigate(ROUTES.SETTINGS_BILLING + '?utm_source=snooze_feature_tooltip');
+  };
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <StatusBadge variant="light" status={isSnoozeFeatureEnabled ? 'completed' : 'disabled'}>
+          <StatusBadgeIcon as={isSnoozeFeatureEnabled ? CalendarClock : CalendarOff} />
+        </StatusBadge>
+      </TooltipTrigger>
+      <TooltipContent className="w-80">
+        {isSnoozeFeatureEnabled ? (
+          <>
+            Subscribers can schedule reminders for notifications in your{' '}
+            <span className="text-warning font-mono">{`<Inbox />`}</span> component
+          </>
+        ) : (
+          <div className="flex flex-col gap-2">
+            <div>
+              Allow subscribers to schedule reminders for notifications in your{' '}
+              <span className="text-warning font-mono">{`<Inbox />`}</span> component by upgrading to our paid plans
+            </div>
+            <button
+              onClick={handleUpgradeClick}
+              className="text-warning flex items-center gap-1 text-xs font-medium hover:underline"
+            >
+              Upgrade now <ExternalLink size={12} />
+            </button>
+          </div>
+        )}
+      </TooltipContent>
+    </Tooltip>
   );
 }

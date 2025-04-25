@@ -126,7 +126,5 @@ export class UnsnoozeNotification {
     if (!isSnoozeEnabled) {
       throw new NotImplementedException();
     }
-
-    // TODO: add per environment feature on/off on integration settings
   }
 }

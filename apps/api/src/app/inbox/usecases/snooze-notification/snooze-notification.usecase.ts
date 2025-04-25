@@ -129,17 +129,13 @@ export class SnoozeNotification {
       throw new NotImplementedException();
     }
 
-    // TODO: add per environment feature on/off on integration settings
-  }
+    const organization = await this.organizationRepository.findOne({
+      _id: command.organizationId,
+    });
 
-  private calculateDelayInMs(snoozeUntil: Date): number {
-    return snoozeUntil.getTime() - new Date().getTime();
-  }
+    const apiServiceLevel = organization?.apiServiceLevel || ApiServiceLevelEnum.FREE;
 
-  private async validateDelayDuration(command: SnoozeNotificationCommand, delay: number) {
-    const tierLimit = await this.getTierLimit(command);
-
-    if (tierLimit === -1) {
+    if (apiServiceLevel === ApiServiceLevelEnum.FREE) {
       throw new HttpException(
         {
           message: 'Feature Not Available',
@@ -148,6 +144,14 @@ export class SnoozeNotification {
         HttpStatus.PAYMENT_REQUIRED
       );
     }
+  }
+
+  private calculateDelayInMs(snoozeUntil: Date): number {
+    return snoozeUntil.getTime() - new Date().getTime();
+  }
+
+  private async validateDelayDuration(command: SnoozeNotificationCommand, delay: number) {
+    const tierLimit = await this.getTierLimit(command);
 
     if (delay > tierLimit) {
       throw new HttpException(
