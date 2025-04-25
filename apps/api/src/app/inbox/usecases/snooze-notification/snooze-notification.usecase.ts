@@ -135,15 +135,7 @@ export class SnoozeNotification {
   }
 
   private async validateDelayDuration(command: SnoozeNotificationCommand, delay: number) {
-    const organization = await this.organizationRepository.findOne({
-      _id: command.organizationId,
-    });
-
-    if (!organization) {
-      throw new NotFoundException(`Organization id: '${command.organizationId}' not found`);
-    }
-
-    const tierLimit = await this.getTierLimit(command, organization);
+    const tierLimit = await this.getTierLimit(command);
 
     if (tierLimit === 0) {
       throw new HttpException(
@@ -168,7 +160,7 @@ export class SnoozeNotification {
     }
   }
 
-  private async getTierLimit(command: SnoozeNotificationCommand, organization: OrganizationEntity) {
+  private async getTierLimit(command: SnoozeNotificationCommand) {
     const systemLimitMs = await this.featureFlagsService.getFlag({
       key: FeatureFlagsKeysEnum.MAX_DEFER_DURATION_IN_MS_NUMBER,
       defaultValue: SYSTEM_LIMITS.DEFER_DURATION_MS,
@@ -180,6 +172,10 @@ export class SnoozeNotification {
     if (isSpecialLimit) {
       return systemLimitMs;
     }
+
+    const organization = await this.organizationRepository.findOne({
+      _id: command.organizationId,
+    });
 
     const tierLimitMs = getFeatureForTierAsNumber(
       FeatureNameEnum.PLATFORM_MAX_SNOOZE_DURATION,
