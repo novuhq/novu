@@ -42,7 +42,7 @@ export class UnsnoozeNotification {
       _id: command.notificationId,
       _environmentId: command.environmentId,
       channel: ChannelTypeEnum.IN_APP,
-      snoozedUntilDate: { $exists: true, $ne: null },
+      snoozedUntil: { $exists: true, $ne: null },
     });
 
     if (!snoozedNotification) {
@@ -82,7 +82,7 @@ export class UnsnoozeNotification {
           organizationId: command.organizationId,
           subscriberId: command.subscriberId,
           notificationId: command.notificationId,
-          snoozedUntilDate: null,
+          snoozedUntil: null,
         })
       );
     });

@@ -40,7 +40,7 @@ export class ProcessUnsnoozeJob {
         _notificationId: job._notificationId,
         _environmentId: job._environmentId,
         channel: ChannelTypeEnum.IN_APP,
-        snoozedUntilDate: { $exists: true, $ne: null },
+        snoozedUntil: { $exists: true, $ne: null },
       });
 
       if (!snoozedNotification) {
@@ -54,11 +54,11 @@ export class ProcessUnsnoozeJob {
         { _environmentId: job._environmentId, _notificationId: job._notificationId },
         {
           $set: {
-            snoozedUntilDate: null,
+            snoozedUntil: null,
             createdAt: new Date(),
           },
-          $push: {
-            deliveryDates: { $each: [snoozedNotification.createdAt, new Date()] },
+          $addToSet: {
+            deliveredAt: { $each: [snoozedNotification.createdAt, new Date()] },
           },
         },
         {
@@ -67,36 +67,36 @@ export class ProcessUnsnoozeJob {
         }
       );
 
-      await this.webSocketsQueueService.add({
-        name: 'sendMessage',
-        data: {
-          event: WebSocketEventEnum.RECEIVED,
-          userId: job._subscriberId,
-          _environmentId: job._environmentId,
-          payload: {
-            messageId: snoozedNotification._id,
+      await Promise.all([
+        this.webSocketsQueueService.add({
+          name: 'sendMessage',
+          data: {
+            event: WebSocketEventEnum.RECEIVED,
+            userId: job._subscriberId,
+            _environmentId: job._environmentId,
+            payload: {
+              messageId: snoozedNotification._id,
+            },
           },
-        },
-        options: {
-          removeOnComplete: true,
-          removeOnFail: true,
-        },
-        groupId: job._organizationId,
-      });
-
-      await this.invalidateCache.invalidateQuery({
-        key: buildFeedKey().invalidate({
-          subscriberId: job.subscriberId,
-          _environmentId: job._environmentId,
+          options: {
+            removeOnComplete: true,
+            removeOnFail: true,
+          },
+          groupId: job._organizationId,
         }),
-      });
-
-      await this.invalidateCache.invalidateQuery({
-        key: buildMessageCountKey().invalidate({
-          subscriberId: job.subscriberId,
-          _environmentId: job._environmentId,
+        this.invalidateCache.invalidateQuery({
+          key: buildFeedKey().invalidate({
+            subscriberId: job.subscriberId,
+            _environmentId: job._environmentId,
+          }),
         }),
-      });
+        this.invalidateCache.invalidateQuery({
+          key: buildMessageCountKey().invalidate({
+            subscriberId: job.subscriberId,
+            _environmentId: job._environmentId,
+          }),
+        }),
+      ]);
 
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({

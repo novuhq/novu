@@ -72,7 +72,7 @@ export class SnoozeNotification {
       await this.messageRepository.withTransaction(async () => {
         scheduledJob = await this.createScheduledUnsnoozeJob(notification, delayAmount);
         snoozedNotification = await this.markNotificationAsSnoozed(command);
-        await this.queueJob(scheduledJob, delayAmount);
+        await this.enqueueJob(scheduledJob, delayAmount);
       });
 
       // fire and forget
@@ -97,7 +97,7 @@ export class SnoozeNotification {
     }
   }
 
-  public async queueJob(job: JobEntity, delay: number) {
+  public async enqueueJob(job: JobEntity, delay: number) {
     this.logger.info({ jobId: job._id, delay }, 'Adding snooze job to Standard Queue', LOG_CONTEXT);
 
     const jobData = {
@@ -235,7 +235,7 @@ export class SnoozeNotification {
         organizationId: command.organizationId,
         subscriberId: command.subscriberId,
         notificationId: command.notificationId,
-        snoozedUntilDate: command.snoozeUntil,
+        snoozedUntil: command.snoozeUntil,
       })
     );
   }

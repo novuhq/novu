@@ -19,5 +19,5 @@ export class MarkNotificationAsCommand extends EnvironmentWithSubscriber {
   @IsOptional()
   @Type(() => Date)
   @IsDate()
-  readonly snoozedUntilDate?: Date | null;
+  readonly snoozedUntil?: Date | null;
 }

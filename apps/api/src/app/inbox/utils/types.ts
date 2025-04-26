@@ -22,8 +22,8 @@ export type InboxNotification = {
   isRead: boolean;
   isArchived: boolean;
   isSnoozed: boolean;
-  snoozedUntilDate?: string | null;
-  deliveryDates: string[];
+  snoozedUntil?: string | null;
+  deliveredAt?: string[];
   createdAt: string;
   readAt?: string | null;
   archivedAt?: string | null;
