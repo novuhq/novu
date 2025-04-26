@@ -6,11 +6,20 @@ import {
   LogDecorator,
   SelectIntegration,
   SelectIntegrationCommand,
+  FeatureFlagsService,
 } from '@novu/application-generic';
-import { CommunityOrganizationRepository, EnvironmentRepository, IntegrationRepository } from '@novu/dal';
+import {
+  CommunityOrganizationRepository,
+  EnvironmentEntity,
+  EnvironmentRepository,
+  IntegrationRepository,
+  OrganizationEntity,
+  UserEntity,
+} from '@novu/dal';
 import {
   ApiServiceLevelEnum,
   ChannelTypeEnum,
+  FeatureFlagsKeysEnum,
   FeatureNameEnum,
   getFeatureForTierAsNumber,
   InAppProviderIdEnum,
@@ -35,7 +44,8 @@ export class Session {
     private analyticsService: AnalyticsService,
     private notificationsCount: NotificationsCount,
     private integrationRepository: IntegrationRepository,
-    private organizationRepository: CommunityOrganizationRepository
+    private organizationRepository: CommunityOrganizationRepository,
+    private featureFlagsService: FeatureFlagsService
   ) {}
 
   @LogDecorator()
@@ -96,7 +106,11 @@ export class Session {
     const token = await this.authService.getSubscriberWidgetToken(subscriber);
 
     const removeNovuBranding = inAppIntegration.removeNovuBranding || false;
-    const isSnoozeEnabled = await this.isSnoozeEnabled(environment._organizationId);
+    const isSnoozeEnabled = await this.isSnoozeEnabled(
+      environment._organizationId,
+      environment._id,
+      command.subscriberId
+    );
 
     /**
      * We want to prevent the playground inbox demo from marking the integration as connected
@@ -132,10 +146,22 @@ export class Session {
     };
   }
 
-  private async isSnoozeEnabled(organizationId: string) {
+  private async isSnoozeEnabled(organizationId: string, environmentId: string, subscriberId: string) {
     const organization = await this.organizationRepository.findOne({
       _id: organizationId,
     });
+
+    const isSnoozeEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_SNOOZE_ENABLED,
+      defaultValue: false,
+      organization: { _id: organizationId } as OrganizationEntity,
+      environment: { _id: environmentId } as EnvironmentEntity,
+      user: { _id: subscriberId } as UserEntity,
+    });
+
+    if (!isSnoozeEnabled) {
+      return false;
+    }
 
     const tierLimitMs = getFeatureForTierAsNumber(
       FeatureNameEnum.PLATFORM_MAX_SNOOZE_DURATION,
