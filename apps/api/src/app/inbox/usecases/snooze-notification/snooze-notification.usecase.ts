@@ -35,7 +35,6 @@ import {
   getFeatureForTierAsNumber,
   JobStatusEnum,
 } from '@novu/shared';
-import { Types } from 'mongoose';
 import { v4 as uuidv4 } from 'uuid';
 import { SnoozeNotificationCommand } from './snooze-notification.command';
 import { MarkNotificationAs } from '../mark-notification-as/mark-notification-as.usecase';
@@ -218,7 +217,7 @@ export class SnoozeNotification {
       status: JobStatusEnum.PENDING,
       delay,
       createdAt: Date.now().toString(),
-      id: new Types.ObjectId(),
+      id: JobRepository.createObjectId(),
       _parentId: null,
       payload: {
         ...originalJob.payload,
