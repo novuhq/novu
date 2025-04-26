@@ -62,7 +62,9 @@ describe('Session', () => {
   it('should throw an error if the environment is not found', async () => {
     const command: SessionCommand = {
       applicationIdentifier: 'invalid-app-id',
-      subscriberId: 'subscriber-id',
+      subscriber: {
+        subscriberId: 'subscriber-id',
+      },
     };
 
     environmentRepository.findEnvironmentByIdentifier.resolves(null);
@@ -78,7 +80,9 @@ describe('Session', () => {
   it('should throw an error if the in-app integration is not found', async () => {
     const command: SessionCommand = {
       applicationIdentifier: 'app-id',
-      subscriberId: 'subscriber-id',
+      subscriber: {
+        subscriberId: 'subscriber-id',
+      },
     };
 
     environmentRepository.findEnvironmentByIdentifier.resolves({
@@ -99,7 +103,9 @@ describe('Session', () => {
   it('should validate HMAC encryption and return the session response', async () => {
     const command: SessionCommand = {
       applicationIdentifier: 'app-id',
-      subscriberId: 'subscriber-id',
+      subscriber: {
+        subscriberId: 'subscriber-id',
+      },
       subscriberHash: 'hash',
     };
     const subscriber = { _id: 'subscriber-id' };
@@ -128,7 +134,9 @@ describe('Session', () => {
   it('should return correct removeNovuBranding value when is set on the integration', async () => {
     const command: SessionCommand = {
       applicationIdentifier: 'app-id',
-      subscriberId: 'subscriber-id',
+      subscriber: {
+        subscriberId: 'subscriber-id',
+      },
       subscriberHash: 'hash',
     };
     const subscriber = { _id: 'subscriber-id' };
@@ -173,7 +181,9 @@ describe('Session', () => {
   it('should create a subscriber and return the session response', async () => {
     const command: SessionCommand = {
       applicationIdentifier: 'app-id',
-      subscriberId: 'subscriber-id',
+      subscriber: {
+        subscriberId: 'subscriber-id',
+      },
       subscriberHash: 'hash',
       origin: 'origin',
     };
