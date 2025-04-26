@@ -1,19 +1,8 @@
-import { expect } from 'chai';
-import sinon from 'sinon';
 import { Test } from '@nestjs/testing';
 import axios from 'axios';
+import { expect } from 'chai';
+import sinon from 'sinon';
 
-import { SubscribersService, UserSession } from '@novu/testing';
-import {
-  ExternalSubscriberId,
-  ISubscribersDefine,
-  ITopic,
-  SubscriberSourceEnum,
-  TopicId,
-  TopicKey,
-  TriggerRecipients,
-  TriggerRecipientsTypeEnum,
-} from '@novu/shared';
 import {
   IProcessSubscriberBulkJobDto,
   mapSubscribersToJobs,
@@ -22,16 +11,42 @@ import {
   TriggerMulticastCommand,
 } from '@novu/application-generic';
 import { NotificationTemplateEntity, SubscriberEntity } from '@novu/dal';
+import {
+  ExternalSubscriberId,
+  ISubscribersDefine,
+  ITopic,
+  SubscriberSourceEnum,
+  TopicId,
+  TopicKey,
+  TopicName,
+  TriggerRecipients,
+  TriggerRecipientsTypeEnum,
+} from '@novu/shared';
+import { SubscribersService, UserSession } from '@novu/testing';
 
 import { SharedModule } from '../../shared/shared.module';
 import { EventsModule } from '../events.module';
-import { createTopic } from '../../topics-v1/e2e/helpers/topic-e2e-helper';
+import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 const axiosInstance = axios.create();
 
 const TOPIC_PATH = '/v1/topics';
 const TOPIC_KEY_PREFIX = 'topic-key-trigger-event_';
 const TOPIC_NAME_PREFIX = 'topic-name-trigger-event_';
+
+// Helper function to create a topic
+const createTopic = async (
+  session: UserSession,
+  key: TopicKey,
+  name: TopicName
+): Promise<{ _id: TopicId; key: TopicKey }> => {
+  const response = await initNovuClassSdk(session).topics.create({ key, name });
+
+  expect(response.result.id).to.exist;
+  expect(response.result.key).to.eql(key);
+
+  return { _id: response.result.id, key: response.result.key };
+};
 
 export class MockSubscriberProcessQueueService {
   addBulk(data: IProcessSubscriberBulkJobDto[]) {}
