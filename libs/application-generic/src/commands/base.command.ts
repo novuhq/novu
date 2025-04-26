@@ -15,7 +15,7 @@ export abstract class BaseCommand {
       throw new CommandValidationException(this.name, flattenedErrors);
     }
 
-    return data;
+    return convertedObject;
   }
 }
 
