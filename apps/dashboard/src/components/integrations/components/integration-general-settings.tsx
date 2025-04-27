@@ -35,7 +35,7 @@ function NovuBrandingSwitch({ value, onChange }: { value: boolean | undefined; o
   const navigate = useNavigate();
 
   const isFreePlan = subscription?.apiServiceLevel === ApiServiceLevelEnum.FREE;
-  const disabled = isFreePlan || isLoading;
+  const disabled = isFreePlan || isLoading || IS_SELF_HOSTED;
   const checked = disabled ? false : value;
 
   return (
@@ -44,24 +44,28 @@ function NovuBrandingSwitch({ value, onChange }: { value: boolean | undefined; o
         <PopoverTrigger asChild>
           <Switch onCheckedChange={onChange} checked={checked} />
         </PopoverTrigger>
-        {isFreePlan && (
+        {(isFreePlan || IS_SELF_HOSTED) && (
           <PopoverContent className="w-72" align="end" sideOffset={4}>
             <div className="flex flex-col gap-2 p-1">
               <div className="flex flex-col gap-1">
-                <h4 className="text-xs font-semibold">Premium Feature</h4>
+                <h4 className="text-xs font-semibold">{IS_SELF_HOSTED ? 'Cloud Feature' : 'Premium Feature'}</h4>
                 <p className="text-muted-foreground text-xs">
-                  Remove Novu branding from your inbox by upgrading to our paid plans.
+                  {IS_SELF_HOSTED
+                    ? 'Remove Novu branding is only available on cloud plans.'
+                    : 'Remove Novu branding from your inbox by upgrading to our paid plans.'}
                 </p>
               </div>
-              <div className="flex justify-end">
-                <LinkButton
-                  size="sm"
-                  variant="primary"
-                  onClick={() => navigate(ROUTES.SETTINGS_BILLING + '?utm_source=remove_branding_prompt')}
-                >
-                  Upgrade Plan
-                </LinkButton>
-              </div>
+              {!IS_SELF_HOSTED && (
+                <div className="flex justify-end">
+                  <LinkButton
+                    size="sm"
+                    variant="primary"
+                    onClick={() => navigate(ROUTES.SETTINGS_BILLING + '?utm_source=remove_branding_prompt')}
+                  >
+                    Upgrade Plan
+                  </LinkButton>
+                </div>
+              )}
             </div>
           </PopoverContent>
         )}
@@ -97,7 +101,7 @@ export function GeneralSettings({
           </FormItem>
         )}
       />
-      {isForInAppStep && !IS_SELF_HOSTED && (
+      {isForInAppStep && (
         <FormField
           control={control}
           name="removeNovuBranding"
