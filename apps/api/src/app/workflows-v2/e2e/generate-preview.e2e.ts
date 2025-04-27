@@ -1206,7 +1206,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
         subject: 'events length',
       };
 
-      const paylodWithExtraItemInTheArray = {
+      const payloadWithExtraItemInTheArray = {
         steps: {
           'digest-step': {
             events: [
@@ -1270,7 +1270,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
 
       const requestDto3 = {
         controlValues: controlValues3,
-        previewPayload: paylodWithExtraItemInTheArray,
+        previewPayload: payloadWithExtraItemInTheArray,
       };
       const previewResponse4 = await novuClient.workflows.steps.generatePreview({
         generatePreviewRequestDto: requestDto3,
