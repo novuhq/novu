@@ -5,7 +5,7 @@ import { SubscribersService, UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-describe.only('List topics - /v2/topics (GET) #novu-v2', async () => {
+describe('List topics - /v2/topics (GET) #novu-v2', async () => {
   let session: UserSession;
   let novuClient: Novu;
   let firstSubscriber: SubscriberEntity;

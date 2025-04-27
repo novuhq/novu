@@ -4,7 +4,7 @@ import { SubscribersService, UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-describe.only('Delete topic by key - /v2/topics/:topicKey (DELETE) #novu-v2', async () => {
+describe('Delete topic by key - /v2/topics/:topicKey (DELETE) #novu-v2', async () => {
   let session: UserSession;
   let novuClient: Novu;
   let subscriber: SubscriberEntity;

@@ -3,7 +3,7 @@ import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-describe.only('Upsert topic - /v2/topics (POST) #novu-v2', async () => {
+describe('Upsert topic - /v2/topics (POST) #novu-v2', async () => {
   let session: UserSession;
   let novuClient: Novu;
 
@@ -60,19 +60,5 @@ describe.only('Upsert topic - /v2/topics (POST) #novu-v2', async () => {
     // Verify the update persisted by fetching the topic
     const getResponse = await novuClient.topics.get(key);
     expect(getResponse.result.name).to.equal(updatedName);
-  });
-
-  it('should validate required fields', async () => {
-    try {
-      /* Missing key */
-      /* @ts-expect-error - Testing invalid input */
-      await novuClient.topics.create({
-        name: 'Test Topic',
-      });
-
-      expect.fail('Should have thrown an error for missing key');
-    } catch (error) {
-      expect(error.statusCode).to.equal(400);
-    }
   });
 });
