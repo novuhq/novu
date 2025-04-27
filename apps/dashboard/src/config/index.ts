@@ -18,6 +18,8 @@ if (!CLERK_PUBLISHABLE_KEY) {
 
 export const API_HOSTNAME = import.meta.env.VITE_API_HOSTNAME;
 
+export const IS_EU = API_HOSTNAME === 'https://eu.api.novu.co';
+
 export const WEBSOCKET_HOSTNAME = import.meta.env.VITE_WEBSOCKET_HOSTNAME;
 
 export const INTERCOM_APP_ID = import.meta.env.VITE_INTERCOM_APP_ID;

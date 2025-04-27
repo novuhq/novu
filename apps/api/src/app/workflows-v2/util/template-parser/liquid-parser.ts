@@ -1,5 +1,14 @@
-import { Liquid, LiquidError, RenderError, Template } from 'liquidjs';
-import { extractLiquidExpressions, isValidTemplate } from './parser-utils';
+import { FILTER_VALIDATORS, LiquidFilterIssue } from '@novu/framework/internal';
+
+import { Filter, Liquid, LiquidError, Output, RenderError, Template, TokenKind } from 'liquidjs';
+import {
+  DIGEST_EVENTS_VARIABLE_PATTERN,
+  extractLiquidExpressions,
+  isValidDynamicPath,
+  isValidTemplate,
+  VALID_DYNAMIC_PATHS,
+} from './parser-utils';
+import { JSONSchemaDto } from '../../dtos';
 
 const LIQUID_CONFIG = {
   strictVariables: true,
@@ -33,13 +42,16 @@ export type Variable = {
   /** Error message if the variable is invalid */
   message?: string;
 
+  /** Error message if the variable filter is invalid */
+  filterMessage?: string;
+
   /** The full liquid output string (e.g. "{{user.name | upcase}}") */
   output: string;
 };
 
 export type TemplateVariables = {
-  validVariables: Variable[];
-  invalidVariables: Variable[];
+  validVariables: Array<Variable>;
+  invalidVariables: Array<Variable>;
 };
 
 /**
@@ -82,9 +94,16 @@ function isLiquidErrors(error: unknown): error is LiquidErrors {
  * }
  *
  * @param template - The Liquid template string to parse
+ * @param variableSchema - The schema to validate the variables against
  * @returns Object containing arrays of valid and invalid variables found in the template
  */
-export function extractLiquidTemplateVariables(template: string): TemplateVariables {
+export function extractLiquidTemplateVariables({
+  template,
+  variableSchema,
+}: {
+  template: string;
+  variableSchema?: JSONSchemaDto;
+}): TemplateVariables {
   if (!isValidTemplate(template)) {
     return { validVariables: [], invalidVariables: [] };
   }
@@ -94,12 +113,18 @@ export function extractLiquidTemplateVariables(template: string): TemplateVariab
     return { validVariables: [], invalidVariables: [] };
   }
 
-  return processLiquidRawOutput(liquidRawOutput);
+  return processLiquidRawOutput({ rawOutputs: liquidRawOutput, variableSchema });
 }
 
-function processLiquidRawOutput(rawOutputs: string[]): TemplateVariables {
-  const validVariables: Variable[] = [];
-  const invalidVariables: Variable[] = [];
+function processLiquidRawOutput({
+  rawOutputs,
+  variableSchema,
+}: {
+  rawOutputs: string[];
+  variableSchema?: JSONSchemaDto;
+}): TemplateVariables {
+  const validVariables: Array<Variable> = [];
+  const invalidVariables: Array<Variable> = [];
   const processedVariables = new Set<string>();
 
   function addVariable(variable: Variable, isValid: boolean) {
@@ -111,7 +136,7 @@ function processLiquidRawOutput(rawOutputs: string[]): TemplateVariables {
 
   for (const rawOutput of rawOutputs) {
     try {
-      const result = parseByLiquid(rawOutput);
+      const result = parseByLiquid({ rawOutput, variableSchema });
       result.validVariables.forEach((variable) => addVariable(variable, true));
       result.invalidVariables.forEach((variable) => addVariable(variable, false));
     } catch (error: unknown) {
@@ -134,39 +159,168 @@ function processLiquidRawOutput(rawOutputs: string[]): TemplateVariables {
   return { validVariables, invalidVariables };
 }
 
-function parseByLiquid(rawOutput: string): TemplateVariables {
-  const validVariables: Variable[] = [];
-  const invalidVariables: Variable[] = [];
-  const parsed = parserEngine.parse(rawOutput) as unknown as Template[];
+function isPropertyAllowed(schema: JSONSchemaDto | undefined, propertyPath: string) {
+  if (!schema) {
+    return true;
+  }
 
-  parsed.forEach((template: Template) => {
-    if (isOutputToken(template)) {
+  let currentSchema = { ...schema };
+  if (typeof currentSchema !== 'object') {
+    return false;
+  }
+
+  const pathParts = propertyPath
+    .split('.')
+    .map((part) => {
+      // Split array notation into [propName, index]
+      const arrayMatch = part.match(/^(.+?)\[(\d+)\]$/);
+
+      return arrayMatch ? [arrayMatch[1], arrayMatch[2]] : [part];
+    })
+    .flat();
+
+  for (const part of pathParts) {
+    const { properties, additionalProperties, type } = currentSchema;
+
+    // Handle direct property access
+    if (properties?.[part]) {
+      currentSchema = properties[part] as JSONSchemaDto;
+      continue;
+    }
+
+    // Handle array paths - valid if schema is array type
+    if (type === 'array') {
+      // Valid array index or property access
+      const isArrayIndex = !Number.isNaN(Number(part)) && Number(part) >= 0;
+      const arrayItemSchema = currentSchema.items as Record<string, unknown>;
+
+      if (isArrayIndex) {
+        currentSchema = arrayItemSchema;
+        continue;
+      }
+
+      if (arrayItemSchema?.properties?.[part]) {
+        currentSchema = arrayItemSchema.properties[part];
+        continue;
+      }
+    }
+
+    if (additionalProperties === true) {
+      return true;
+    }
+
+    return false;
+  }
+
+  return true;
+}
+
+function parseByLiquid({
+  rawOutput,
+  variableSchema,
+}: {
+  rawOutput: string;
+  variableSchema?: JSONSchemaDto;
+}): TemplateVariables {
+  const validVariables: Array<Variable> = [];
+  const invalidVariables: Array<Variable> = [];
+  const parsed = parserEngine.parse(rawOutput);
+
+  parsed
+    .filter((template: Template) => isOutputToken(template))
+    .forEach((template: Template) => {
       const result = extractProps(template);
+      const variableName = buildVariable(result.props);
+      const isDigestEventsVariable = !!variableName.match(/^steps\..+\.events$/);
+      const filters = extractFilters(template);
+      const filterIssues = validateFilters(filters, isDigestEventsVariable);
+      const hasValidFilters = filterIssues.length === 0;
 
-      if (result.valid && result.props.length > 0) {
-        const path = result.props.reduce((acc, prop, i) => {
-          // if the prop is a number, preserve array notation (.[idx])
-          if (typeof prop === 'number') {
-            return `${acc}[${prop}]`;
+      if (!hasValidFilters) {
+        const token = template?.token;
+        invalidVariables.push({
+          name: token?.input,
+          filterMessage: filterIssues[0].message,
+          output: rawOutput,
+        });
+
+        return;
+      }
+
+      const isValidVariable = result.valid && result.props.length > 0;
+      if (isValidVariable) {
+        const isAllowedVariable = isPropertyAllowed(variableSchema, variableName);
+        if (isAllowedVariable) {
+          validVariables.push({ name: variableName, output: rawOutput });
+          if (filters.length > 0) {
+            filters.forEach((filter) => {
+              const { args } = filter;
+              const firstArg = args[0];
+              if (
+                filter.name === 'toSentence' &&
+                args.length > 0 &&
+                'content' in firstArg &&
+                typeof firstArg.content === 'string'
+              ) {
+                /**
+                 * Check if the parent variable with the first argument is allowed
+                 * basically forcing it to check if additionalProperties is true by checking for final variable name
+                 * and if the parent variable is a valid dynamic path as variableSchema can be undefined.
+                 * OR
+                 * Check if the variable is a digest events array variable
+                 * and the first argument starts with payload.
+                 */
+                if (
+                  (isValidDynamicPath(variableName) &&
+                    isPropertyAllowed(variableSchema, `${variableName}.${firstArg.content}`)) ||
+                  (firstArg.content.startsWith('payload.') && DIGEST_EVENTS_VARIABLE_PATTERN.test(variableName))
+                ) {
+                  const isFirstArgValid = isPropertyAllowed(variableSchema, firstArg.content);
+                  if (isFirstArgValid) {
+                    validVariables.push({
+                      name: `${variableName}.${firstArg.content}`,
+                      output: `{{${firstArg.content}}}`,
+                    });
+                  }
+                }
+              }
+            });
           }
-
-          return i === 0 ? prop : `${acc}.${prop}`;
-        }, '');
-
-        validVariables.push({ name: path, output: rawOutput });
+        } else {
+          invalidVariables.push({
+            name: variableName,
+            message: 'is not supported',
+            output: rawOutput,
+          });
+        }
       }
 
       if (!result.valid) {
-        invalidVariables.push({ name: template?.token?.input, message: result.error, output: rawOutput });
+        const token = template?.token;
+        invalidVariables.push({
+          name: token?.input,
+          message: result.error,
+          output: rawOutput,
+        });
       }
-    }
-  });
+    });
 
   return { validVariables, invalidVariables };
 }
 
+const buildVariable = (parts: string[]) => {
+  return parts.reduce((acc, prop, i) => {
+    // if the prop is a number, preserve array notation (.[idx])
+    if (typeof prop === 'number') {
+      return `${acc}[${prop}]`;
+    }
+
+    return i === 0 ? prop : `${acc}.${prop}`;
+  }, '');
+};
+
 function isOutputToken(template: Template): boolean {
-  return template.token?.constructor.name === 'OutputToken';
+  return template.token?.kind === TokenKind.Output;
 }
 
 function extractProps(template: any): { valid: boolean; props: string[]; error?: string } {
@@ -212,4 +366,28 @@ function extractProps(template: any): { valid: boolean; props: string[]; error?:
   }
 
   return { valid: true, props: validProps };
+}
+
+function extractFilters(template: Template): Filter[] {
+  if (template instanceof Output) {
+    return template.value.filters;
+  }
+
+  return [];
+}
+
+function validateFilters(filters: Filter[], isDigestEventsVariable: boolean): LiquidFilterIssue[] {
+  return filters.reduce((acc, filter) => {
+    const validator = FILTER_VALIDATORS[filter.name];
+    if (!validator) return acc;
+
+    let args: unknown[] = [...filter.args];
+    if (filter.name === 'toSentence') {
+      args = [{ requireKeyPath: isDigestEventsVariable }, ...filter.args];
+    }
+
+    const filterIssues = validator(...args);
+
+    return [...acc, ...filterIssues];
+  }, []);
 }

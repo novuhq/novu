@@ -17,3 +17,4 @@ export * from './usecases';
 export * from './utils';
 export * from './schemas/control';
 export * from './services/resource-validator.service';
+export * from './value-objects';

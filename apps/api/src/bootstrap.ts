@@ -7,18 +7,15 @@ import { NestFactory } from '@nestjs/core';
 import bodyParser from 'body-parser';
 
 // eslint-disable-next-line no-restricted-imports
-import { BullMqService, getErrorInterceptor, Logger } from '@novu/application-generic';
+import { BullMqService, getErrorInterceptor, Logger, PinoLogger } from '@novu/application-generic';
 import { AppModule } from './app.module';
 import { ResponseInterceptor } from './app/shared/framework/response.interceptor';
 import { setupSwagger } from './app/shared/framework/swagger/swagger.controller';
-import { getLogger } from './app/shared/services/logger.service';
 import { CONTEXT_PATH, corsOptionsDelegate, validateEnv } from './config';
 import { AllExceptionsFilter } from './exception-filter';
 
 const passport = require('passport');
 const compression = require('compression');
-
-const logger = getLogger('Bootstrap');
 
 const extendedBodySizeRoutes = [
   '/v1/events',
@@ -65,6 +62,9 @@ export async function bootstrap(
     defaultVersion: '1',
   });
 
+  const logger = await app.resolve(PinoLogger);
+  logger.setContext('Bootstrap');
+
   app.useLogger(app.get(Logger));
   app.flushLogs();
 
@@ -101,6 +101,23 @@ export async function bootstrap(
   const document = await setupSwagger(app, bootstrapOptions?.internalSdkGeneration);
 
   app.useGlobalFilters(new AllExceptionsFilter(app.get(Logger)));
+
+  /*
+   * Handle unhandled promise rejections
+   * We explicitly crash the process on unhandled rejections as they indicate the application
+   * is in an undefined state. NestJS can't handle these as they occur outside the event lifecycle.
+   * According to Node.js docs, it's unsafe to resume normal operation after unhandled rejections.
+   * We log these rejections with fatal level to ensure they are properly monitored and tracked.
+   * See: https://nodejs.org/api/process.html#process_warning_using_uncaughtexception_correctly
+   */
+  process.on('unhandledRejection', (reason, promise) => {
+    logger.fatal({
+      err: reason,
+      message: 'Unhandled promise rejection',
+      promise,
+    });
+    process.exit(1);
+  });
 
   await app.listen(process.env.PORT || 3000);
 

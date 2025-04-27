@@ -1,11 +1,17 @@
 import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import { ICredentialsDto, secureCredentials } from '@novu/shared';
-import { encryptSecret } from '@novu/application-generic';
-import { getLogger } from '../../src/app/shared/services/logger.service';
-
-const logger = getLogger('EncryptCredentialsMigration');
+import { encryptSecret, PinoLogger } from '@novu/application-generic';
+import { NestFactory } from '@nestjs/core';
+import { AppModule } from '../../src/app.module';
 
 export async function encryptOldCredentialsMigration() {
+  const app = await NestFactory.create(AppModule, {
+    logger: false,
+  });
+
+  const logger = await app.resolve(PinoLogger);
+  logger.setContext('EncryptCredentialsMigration');
+
   logger.info('start migration - encrypt credentials');
 
   const integrationRepository = new IntegrationRepository();

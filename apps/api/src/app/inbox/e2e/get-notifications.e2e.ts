@@ -122,15 +122,15 @@ describe('Get Notifications - /inbox/notifications (GET) #novu-v2', async () => 
   it('should validate that the offset is greater or equals to zero', async function () {
     const { body, status } = await getNotifications({ limit: 1, offset: -1 });
 
-    expect(status).to.equal(400);
-    expect(body.message[0]).to.equal('offset must not be less than 0');
+    expect(status).to.equal(422);
+    expect(body.errors.general.messages[0]).to.equal('offset must not be less than 0');
   });
 
   it('should validate the after to mongo id', async function () {
     const { body, status } = await getNotifications({ limit: 1, after: 'after' });
 
-    expect(status).to.equal(400);
-    expect(body.message[0]).to.equal('The after cursor must be a valid MongoDB ObjectId');
+    expect(status).to.equal(422);
+    expect(body.errors.general.messages[0]).to.equal('The after cursor must be a valid MongoDB ObjectId');
   });
 
   it('should throw exception when filtering for unread and archived notifications', async function () {
