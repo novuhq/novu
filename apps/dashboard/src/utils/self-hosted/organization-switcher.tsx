@@ -87,12 +87,10 @@ export function OrganizationSwitcher() {
 const OrganizationAvatar = ({ shining = false }: { shining?: boolean }) => {
   return (
     <Avatar className="relative h-6 w-6 overflow-hidden border-gray-200">
-      <AvatarFallback className="relative bg-gradient-to-r from-red-500 to-red-600 text-xs text-white">
-        <NovuLogoBlackBg />
-        {shining && (
-          <div className="absolute inset-0 before:absolute before:left-[-100%] before:top-0 before:h-full before:w-full before:bg-[linear-gradient(120deg,transparent,rgba(255,255,255,0.3),transparent)] before:transition-all before:duration-[10000ms] before:ease-in-out group-hover:before:left-[100%]"></div>
-        )}
-      </AvatarFallback>
+      <NovuLogoBlackBg />
+      {shining && (
+        <div className="absolute inset-0 before:absolute before:left-[-100%] before:top-0 before:h-full before:w-full before:bg-[linear-gradient(120deg,transparent,rgba(255,255,255,0.3),transparent)] before:transition-all before:duration-[10000ms] before:ease-in-out group-hover:before:left-[100%]"></div>
+      )}
     </Avatar>
   );
 };

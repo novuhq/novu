@@ -3,7 +3,7 @@ import { useEnvironment } from '@/context/environment/hooks';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
-import { ApiServiceLevelEnum } from '@novu/shared';
+import { ApiServiceLevelEnum, GetSubscriptionDto } from '@novu/shared';
 import * as Sentry from '@sentry/react';
 import { ReactNode } from 'react';
 import {
@@ -36,18 +36,22 @@ const NavigationGroup = ({ children, label }: { children: ReactNode; label?: str
   );
 };
 
-export const SideNavigation = () => {
-  const { subscription, daysLeft, isLoading: isLoadingSubscription } = useFetchSubscription();
-  const isTrialActive = subscription?.trial.isActive;
-  const isFreeTier = subscription?.apiServiceLevel === ApiServiceLevelEnum.FREE;
+type BottomNavigationProps = {
+  isTrialActive?: boolean;
+  isFreeTier?: boolean;
+  isLoadingSubscription: boolean;
+  subscription?: GetSubscriptionDto | undefined;
+  daysLeft?: number;
+};
 
-  const { currentEnvironment, environments, switchEnvironment } = useEnvironment();
+const BottomSection = ({
+  isTrialActive,
+  isFreeTier,
+  isLoadingSubscription,
+  subscription,
+  daysLeft,
+}: BottomNavigationProps) => {
   const track = useTelemetry();
-
-  const onEnvironmentChange = (value: string) => {
-    const environment = environments?.find((env) => env.name === value);
-    switchEnvironment(environment?.slug);
-  };
 
   const showPlainLiveChat = () => {
     track(TelemetryEvent.SHARE_FEEDBACK_LINK_CLICKED);
@@ -58,6 +62,51 @@ export const SideNavigation = () => {
       Sentry.captureException(error);
       console.error('Error opening plain chat:', error);
     }
+  };
+
+  if (IS_SELF_HOSTED) {
+    return (
+      <div className="relative mt-auto gap-8 pt-4">
+        <ChangelogStack />
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative mt-auto gap-8 pt-4">
+      {!isTrialActive && !isLoadingSubscription && <ChangelogStack />}
+      {isTrialActive && !isLoadingSubscription && daysLeft !== undefined && (
+        <FreeTrialCard subscription={subscription} daysLeft={daysLeft} />
+      )}
+
+      {!isTrialActive && isFreeTier && !isLoadingSubscription && <UsageCard subscription={subscription} />}
+      <NavigationGroup>
+        <button onClick={showPlainLiveChat} className="w-full">
+          <NavigationLink>
+            <RiChat1Line className="size-4" />
+            <span>Share Feedback</span>
+          </NavigationLink>
+        </button>
+        <NavigationLink to={ROUTES.SETTINGS_TEAM}>
+          <RiUserAddLine className="size-4" />
+          <span>Invite teammates</span>
+        </NavigationLink>
+        <GettingStartedMenuItem />
+      </NavigationGroup>
+    </div>
+  );
+};
+
+export const SideNavigation = () => {
+  const { subscription, daysLeft, isLoading: isLoadingSubscription } = useFetchSubscription();
+  const isTrialActive = subscription?.trial.isActive;
+  const isFreeTier = subscription?.apiServiceLevel === ApiServiceLevelEnum.FREE;
+
+  const { currentEnvironment, environments, switchEnvironment } = useEnvironment();
+
+  const onEnvironmentChange = (value: string) => {
+    const environment = environments?.find((env) => env.name === value);
+    switchEnvironment(environment?.slug);
   };
 
   return (
@@ -113,29 +162,13 @@ export const SideNavigation = () => {
             ) : null}
           </div>
 
-          {!IS_SELF_HOSTED && (
-            <div className="relative mt-auto gap-8 pt-4">
-              {!isTrialActive && !isLoadingSubscription && !IS_SELF_HOSTED && <ChangelogStack />}
-              {isTrialActive && !isLoadingSubscription && (
-                <FreeTrialCard subscription={subscription} daysLeft={daysLeft} />
-              )}
-
-              {!isTrialActive && isFreeTier && !isLoadingSubscription && <UsageCard subscription={subscription} />}
-              <NavigationGroup>
-                <button onClick={showPlainLiveChat} className="w-full">
-                  <NavigationLink>
-                    <RiChat1Line className="size-4" />
-                    <span>Share Feedback</span>
-                  </NavigationLink>
-                </button>
-                <NavigationLink to={ROUTES.SETTINGS_TEAM}>
-                  <RiUserAddLine className="size-4" />
-                  <span>Invite teammates</span>
-                </NavigationLink>
-                <GettingStartedMenuItem />
-              </NavigationGroup>
-            </div>
-          )}
+          <BottomSection
+            isTrialActive={isTrialActive}
+            isFreeTier={isFreeTier}
+            isLoadingSubscription={isLoadingSubscription}
+            subscription={subscription}
+            daysLeft={daysLeft}
+          />
         </nav>
       </SidebarContent>
     </aside>
