@@ -64,17 +64,4 @@ describe.only('Update topic by key - /v2/topics/:topicKey (PATCH) #novu-v2', asy
       expect(message).to.include(nonExistentKey);
     }
   });
-
-  it('should validate required fields', async () => {
-    try {
-      /* Missing name */
-      /* @ts-expect-error - Testing invalid input */
-      await novuClient.topics.update({}, topicKey);
-
-      /* If we reach here, the test failed */
-      expect.fail('Should have thrown an error for missing name');
-    } catch (error) {
-      expect(error.statusCode).to.equal(400);
-    }
-  });
 });

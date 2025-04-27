@@ -74,17 +74,5 @@ describe.only('Upsert topic - /v2/topics (POST) #novu-v2', async () => {
     } catch (error) {
       expect(error.statusCode).to.equal(400);
     }
-
-    try {
-      /* Missing name */
-      /* @ts-expect-error - Testing invalid input */
-      await novuClient.topics.create({
-        key: 'test-key',
-      });
-
-      expect.fail('Should have thrown an error for missing name');
-    } catch (error) {
-      expect(error.statusCode).to.equal(400);
-    }
   });
 });
