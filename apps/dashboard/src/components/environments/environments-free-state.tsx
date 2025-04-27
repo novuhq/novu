@@ -81,7 +81,10 @@ export function FreeTierState() {
           </div>
         </div>
 
-        <div>
+        <div className="flex flex-col items-center gap-1">
+          <p className="text-text-soft text-label-xs mb-3 text-center">
+            Unlock more environments and enhance your productivity
+          </p>
           <Button
             variant="primary"
             mode="gradient"
