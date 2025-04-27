@@ -224,9 +224,6 @@ export class TopicsController {
   @ApiResponse(CreateTopicSubscriptionsResponseDto, 201, false, true, {
     description: 'Subscriptions created successfully',
   })
-  @ApiResponse(CreateTopicSubscriptionsResponseDto, 207, false, true, {
-    description: 'Partial success - some subscriptions created, some failed',
-  })
   async createTopicSubscriptions(
     @UserSession() user: UserSessionData,
     @Param('topicKey') topicKey: string,
@@ -253,10 +250,7 @@ export class TopicsController {
       errors: result.errors,
     };
 
-    if (typeSafeResult.meta.failed > 0 && typeSafeResult.meta.successful > 0) {
-      // Partial success - some subscriptions were created, some failed
-      throw new HttpException(typeSafeResult, 207); // 207 Multi-Status
-    } else if (typeSafeResult.meta.failed > 0 && typeSafeResult.meta.successful === 0) {
+    if (typeSafeResult.meta.failed > 0 && typeSafeResult.meta.successful === 0) {
       // All subscriptions failed but with valid request format
       throw new HttpException(typeSafeResult, HttpStatus.BAD_REQUEST);
     }
@@ -271,11 +265,8 @@ export class TopicsController {
   @SdkMethodName('delete')
   @ApiOperation({ summary: 'Delete topic subscriptions' })
   @ApiParam({ name: 'topicKey', description: 'The key identifier of the topic', type: String })
-  @ApiResponse(DeleteTopicSubscriptionsResponseDto, 200, false, true, {
+  @ApiResponse(DeleteTopicSubscriptionsResponseDto, 200, false, false, {
     description: 'Subscriptions deleted successfully',
-  })
-  @ApiResponse(DeleteTopicSubscriptionsResponseDto, 207, false, true, {
-    description: 'Partial success - some subscriptions deleted, some failed',
   })
   async deleteTopicSubscriptions(
     @UserSession() user: UserSessionData,
@@ -303,11 +294,7 @@ export class TopicsController {
       errors: result.errors,
     };
 
-    // Determine the appropriate HTTP status code based on the result
-    if (typeSafeResult.meta.failed > 0 && typeSafeResult.meta.successful > 0) {
-      // Partial success - some subscriptions were deleted, some failed
-      throw new HttpException(typeSafeResult, 207); // 207 Multi-Status
-    } else if (typeSafeResult.meta.failed > 0 && typeSafeResult.meta.successful === 0) {
+    if (typeSafeResult.meta.failed > 0 && typeSafeResult.meta.successful === 0) {
       // All subscriptions failed but with valid request format
       throw new HttpException(typeSafeResult, HttpStatus.BAD_REQUEST);
     }

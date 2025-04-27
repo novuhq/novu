@@ -213,7 +213,7 @@ async function $do(
     | ConnectionError
   >(
     M.json(
-      [200, 201],
+      201,
       operations.TopicsControllerCreateTopicSubscriptionsResponse$inboundSchema,
       { hdrs: true, key: "Result" },
     ),
