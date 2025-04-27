@@ -676,9 +676,7 @@ export class SubscribersV1Controller {
   @UserAuthentication()
   @Post('/:subscriberId/messages/mark-all')
   @ApiOperation({
-    summary:
-      'Marks all the subscriber messages as read, unread, seen or unseen. ' +
-      'Optionally you can pass feed id (or array) to mark messages of a particular feed.',
+    summary: 'Marks all the subscriber messages as read, unread, seen or unseen.',
   })
   @ApiCreatedResponse({
     type: Number,
