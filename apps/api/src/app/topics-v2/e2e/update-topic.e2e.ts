@@ -58,8 +58,12 @@ describe.only('Update topic by key - /v2/topics/:topicKey (PATCH) #novu-v2', asy
       /* If we reach here, the test failed */
       expect.fail('Should have thrown an error for non-existent topic');
     } catch (error) {
-      expect(error.response?.status || error.status).to.equal(404);
-      expect(error.response?.data?.message || error.message).to.include(nonExistentKey);
+      // The Novu SDK throws errors with status in different locations depending on the error
+      const status = error.response?.status || error.status || error.statusCode || error.data?.statusCode;
+      expect(status).to.equal(404);
+
+      const message = error.response?.data?.message || error.message || error.data?.message;
+      expect(message).to.include(nonExistentKey);
     }
   });
 
@@ -72,7 +76,9 @@ describe.only('Update topic by key - /v2/topics/:topicKey (PATCH) #novu-v2', asy
       /* If we reach here, the test failed */
       expect.fail('Should have thrown an error for missing name');
     } catch (error) {
-      expect(error.response?.status || error.status).to.equal(400);
+      // The Novu SDK throws errors with status in different locations depending on the error
+      const status = error.response?.status || error.status || error.statusCode || error.data?.statusCode;
+      expect(status).to.equal(400);
     }
   });
 });

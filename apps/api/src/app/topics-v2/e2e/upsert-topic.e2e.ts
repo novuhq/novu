@@ -10,6 +10,7 @@ describe.only('Upsert topic - /v2/topics (POST) #novu-v2', async () => {
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
+
     novuClient = initNovuClassSdk(session);
   });
 
@@ -45,15 +46,20 @@ describe.only('Upsert topic - /v2/topics (POST) #novu-v2', async () => {
 
     // Now update the same topic by creating with the same key
     const updatedName = 'Updated Name';
-    const updateResponse = await novuClient.topics.create({
-      key,
-      name: updatedName,
-    });
+    const updateResponse = await novuClient.topics.update(
+      {
+        name: updatedName,
+      },
+      key
+    );
 
     expect(updateResponse.result).to.exist;
     expect(updateResponse.result.id).to.equal(originalId);
     expect(updateResponse.result.key).to.equal(key);
     expect(updateResponse.result.name).to.equal(updatedName);
+    // Verify the update persisted by fetching the topic
+    const getResponse = await novuClient.topics.get(key);
+    expect(getResponse.result.name).to.equal(updatedName);
   });
 
   it('should validate required fields', async () => {
@@ -64,10 +70,9 @@ describe.only('Upsert topic - /v2/topics (POST) #novu-v2', async () => {
         name: 'Test Topic',
       });
 
-      /* If we reach here, the test failed */
       expect.fail('Should have thrown an error for missing key');
     } catch (error) {
-      expect(error.response?.status || error.status).to.equal(400);
+      expect(error.statusCode).to.equal(400);
     }
 
     try {
@@ -77,10 +82,9 @@ describe.only('Upsert topic - /v2/topics (POST) #novu-v2', async () => {
         key: 'test-key',
       });
 
-      /* If we reach here, the test failed */
       expect.fail('Should have thrown an error for missing name');
     } catch (error) {
-      expect(error.response?.status || error.status).to.equal(400);
+      expect(error.statusCode).to.equal(400);
     }
   });
 });
