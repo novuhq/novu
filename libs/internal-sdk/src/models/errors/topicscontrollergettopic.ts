@@ -9,14 +9,14 @@ import * as components from "../components/index.js";
  * Not Found
  */
 export type TopicsControllerGetTopicResponseBodyData = {
-  data?: components.TopicResponseDto | undefined;
+  data?: components.NotFoundException | undefined;
 };
 
 /**
  * Not Found
  */
 export class TopicsControllerGetTopicResponseBody extends Error {
-  data?: components.TopicResponseDto | undefined;
+  data?: components.NotFoundException | undefined;
 
   /** The original data that was passed to this error instance. */
   data$: TopicsControllerGetTopicResponseBodyData;
@@ -40,7 +40,7 @@ export const TopicsControllerGetTopicResponseBody$inboundSchema: z.ZodType<
   z.ZodTypeDef,
   unknown
 > = z.object({
-  data: components.TopicResponseDto$inboundSchema.optional(),
+  data: components.NotFoundException$inboundSchema.optional(),
 })
   .transform((v) => {
     return new TopicsControllerGetTopicResponseBody(v);
@@ -48,7 +48,7 @@ export const TopicsControllerGetTopicResponseBody$inboundSchema: z.ZodType<
 
 /** @internal */
 export type TopicsControllerGetTopicResponseBody$Outbound = {
-  data?: components.TopicResponseDto$Outbound | undefined;
+  data?: components.NotFoundException$Outbound | undefined;
 };
 
 /** @internal */
@@ -59,7 +59,7 @@ export const TopicsControllerGetTopicResponseBody$outboundSchema: z.ZodType<
 > = z.instanceof(TopicsControllerGetTopicResponseBody)
   .transform(v => v.data$)
   .pipe(z.object({
-    data: components.TopicResponseDto$outboundSchema.optional(),
+    data: components.NotFoundException$outboundSchema.optional(),
   }));
 
 /**
