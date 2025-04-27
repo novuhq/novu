@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InstrumentUsecase } from '@novu/application-generic';
-import { SubscriberRepository, TopicRepository, TopicSubscribersRepository } from '@novu/dal';
+import { SubscriberRepository, TopicRepository, TopicSubscribersEntity, TopicSubscribersRepository } from '@novu/dal';
 import { DirectionEnum } from '@novu/shared';
 import { ListTopicSubscriptionsResponseDto } from '../../dtos/list-topic-subscriptions-response.dto';
 import { TopicSubscriptionResponseDto } from '../../dtos/topic-subscription-response.dto';
@@ -39,7 +39,7 @@ export class ListTopicSubscriptionsUseCase {
     }
 
     // Handle cursor-based pagination similar to list-topics
-    let subscription = null;
+    let subscription: TopicSubscribersEntity | null = null;
     const id = command.before || command.after;
 
     if (id) {
