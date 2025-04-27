@@ -18,8 +18,6 @@ describe('List topic subscriptions - /v2/topics/:topicKey/subscriptions (GET) #n
     await session.initialize();
     novuClient = initNovuClassSdk(session);
 
-    const result = await novuClient.topics.subscriptions.delete({ topicKey });
-
     // Create subscribers
     const subscribersService = new SubscribersService(session.organization._id, session.environment._id);
     subscriber1 = await subscribersService.createSubscriber();

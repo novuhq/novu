@@ -108,16 +108,12 @@ const createNewTopic = async (session: UserSession, topicKey: string) => {
 };
 
 const addSubscribersToTopic = async (session: UserSession, topicKey: TopicKey, subscribers: ExternalSubscriberId[]) => {
-  const result = await initNovuClassSdk(session).topics.subscribers.assign(
+  const result = await initNovuClassSdk(session).topics.subscriptions.subscribe(
     {
-      subscribers,
+      subscriberIds: subscribers,
     },
     topicKey
   );
 
-  expect(result.result).to.eql({
-    succeeded: subscribers,
-  });
-
-  return result;
+  expect(result.result.data).to.be.ok;
 };
