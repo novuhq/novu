@@ -43,7 +43,25 @@ export function ConfigureEmailStepPreview(props: ConfigureEmailStepPreviewProps)
       tempDiv.querySelectorAll(tag).forEach((el) => el.remove());
     });
 
+    // Replace <br> tags with a space
+    tempDiv.querySelectorAll('br').forEach((el) => {
+      el.replaceWith(' ');
+    });
+
+    // Add spaces between all block elements
+    const blockElements = tempDiv.querySelectorAll(
+      'div, p, h1, h2, h3, h4, h5, h6, ul, ol, li, table, tr, blockquote, form, fieldset, section, article, aside, header, footer, nav'
+    );
+
+    blockElements.forEach((el) => {
+      // Add space before the element
+      el.insertBefore(document.createTextNode(' '), el.firstChild);
+      // Add space after the element
+      el.appendChild(document.createTextNode(' '));
+    });
+
     let text = tempDiv.textContent?.trim() || '';
+    // Replace all whitespace sequences (including newlines) with a single space
     text = text.replace(/\s+/g, ' ').replace(/(\.|!|\?)\s/g, '$1\n');
     return text;
   };

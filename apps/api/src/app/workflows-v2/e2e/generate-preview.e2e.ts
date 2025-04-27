@@ -548,7 +548,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
     });
   });
 
-  it('should generate preview for the email step with digest eventCount and events variables and filters used', async () => {
+  it('should generate preview for the email step with digest variables', async () => {
     // @ts-ignore
     process.env.IS_ENHANCED_DIGEST_ENABLED = 'true';
     const createWorkflowDto: CreateWorkflowDto = {
@@ -576,44 +576,200 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
     }
 
     const stepId = workflow.steps[1].id;
-    const controlValues = {
-      body: '{"type":"doc","content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"variable","attrs":{"id":"steps.digest-step.eventCount | pluralize: \'event\', \'\'","label":null,"fallback":null,"required":false}},{"type":"text","text":" "}]},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"variable","attrs":{"id":"steps.digest-step.events | toSentence: \'payload.name\', 2, \'other\'","label":null,"fallback":null,"required":false}},{"type":"text","text":" "}]},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null}}]}',
-      subject: 'digest step variables',
+    const resultWithEventsPayload = {
+      steps: {
+        'digest-step': {
+          events: [
+            {
+              payload: {},
+            },
+            {
+              payload: {},
+            },
+            {
+              payload: {},
+            },
+          ],
+        },
+      },
     };
-    const previewPayload = {
+    const resultWithEventsPayloadFoo = {
       steps: {
         'digest-step': {
           events: [
             {
               payload: {
-                name: 'John',
+                foo: 'foo',
               },
             },
             {
               payload: {
-                name: 'Jane',
+                foo: 'foo',
               },
             },
             {
               payload: {
-                name: 'Joe',
+                foo: 'foo',
               },
             },
           ],
         },
       },
     };
-    const previewResponse = await novuClient.workflows.steps.generatePreview({
-      generatePreviewRequestDto: { controlValues, previewPayload },
+
+    // testing the steps.digest-step.events.length variable
+    const controlValues1 = {
+      body: '{"type":"doc","content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","text":"events length "},{"type":"variable","attrs":{"id":"steps.digest-step.events.length","label":null,"fallback":null,"required":false,"aliasFor":null}},{"type":"text","text":" "}]},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","text":" "}]}]}',
+      subject: 'events length',
+    };
+    const previewResponse1 = await novuClient.workflows.steps.generatePreview({
+      generatePreviewRequestDto: { controlValues: controlValues1, previewPayload: {} },
       stepId,
       workflowId: workflow.id,
     });
-    const { result } = previewResponse;
+    expect(previewResponse1.result.result.preview.body).to.contain('events length 3');
+    expect(previewResponse1.result.previewPayloadExample).to.deep.equal(resultWithEventsPayload);
 
-    expect(result.result.preview.subject).to.equal('digest step variables');
-    expect(result.result.preview.body).to.contain('3 events');
-    expect(result.result.preview.body).to.contain('John, Jane, and 1 other');
-    expect(result.previewPayloadExample).to.deep.equal(previewPayload);
+    // testing the steps.digest-step.eventCount variable
+    const controlValues2 = {
+      body: '{"type":"doc","content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","text":"eventCount "},{"type":"variable","attrs":{"id":"steps.digest-step.eventCount","label":null,"fallback":null,"required":false,"aliasFor":null}},{"type":"text","text":" "}]}]}',
+      subject: 'eventCount',
+    };
+    const previewResponse2 = await novuClient.workflows.steps.generatePreview({
+      generatePreviewRequestDto: { controlValues: controlValues2, previewPayload: {} },
+      stepId,
+      workflowId: workflow.id,
+    });
+    expect(previewResponse2.result.result.preview.body).to.contain('eventCount 3');
+    expect(previewResponse2.result.previewPayloadExample).to.deep.equal(resultWithEventsPayload);
+
+    // testing the steps.digest-step.events array and direct access to the first item
+    const controlValues3 = {
+      body: '{"type":"doc","content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"variable","attrs":{"id":"steps.digest-step.events","label":null,"fallback":null,"required":false,"aliasFor":null}},{"type":"text","text":" "}]},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","text":"single variable: {{steps.digest-step.events[0].payload.foo}}"}]}]}',
+      subject: 'events',
+    };
+    const previewResponse3 = await novuClient.workflows.steps.generatePreview({
+      generatePreviewRequestDto: { controlValues: controlValues3, previewPayload: {} },
+      stepId,
+      workflowId: workflow.id,
+    });
+    expect(previewResponse3.result.result.preview.body).to.contain(
+      "[{'payload':{'foo':'foo'}},{'payload':{'foo':'foo'}},{'payload':{'foo':'foo'}}]"
+    );
+    expect(previewResponse3.result.result.preview.body).to.contain('single variable: foo');
+    expect(previewResponse3.result.previewPayloadExample).to.deep.equal(resultWithEventsPayloadFoo);
+
+    // testing the steps.digest-step.events[0].payload.foo variable
+    const controlValues4 = {
+      body: '{"type":"doc","content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","text":"single variable: {{steps.digest-step.events[0].payload.foo}} "}]}]}',
+      subject: 'events',
+    };
+    const previewResponse4 = await novuClient.workflows.steps.generatePreview({
+      generatePreviewRequestDto: { controlValues: controlValues4, previewPayload: {} },
+      stepId,
+      workflowId: workflow.id,
+    });
+    expect(previewResponse4.result.result.preview.body).to.contain('single variable: foo');
+    expect(previewResponse4.result.previewPayloadExample).to.deep.equal(resultWithEventsPayloadFoo);
+
+    // testing the countSummary and sentenceSummary variables
+    const controlValues5 = {
+      body: `{"type":"doc","content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"variable","attrs":{"id":"steps.digest-step.eventCount | pluralize: 'notification', 'notifications'","label":null,"fallback":null,"required":false,"aliasFor":null}},{"type":"text","text":" "}]},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"variable","attrs":{"id":"steps.digest-step.events | toSentence: 'payload.name', 2, 'other'","label":null,"fallback":null,"required":false,"aliasFor":null}},{"type":"text","text":" "}]}]}`,
+      subject: 'countSummary and sentenceSummary',
+    };
+    const previewResponse5 = await novuClient.workflows.steps.generatePreview({
+      generatePreviewRequestDto: { controlValues: controlValues5, previewPayload: {} },
+      stepId,
+      workflowId: workflow.id,
+    });
+    expect(previewResponse5.result.result.preview.body).to.contain('3 notifications');
+    expect(previewResponse5.result.result.preview.body).to.contain('name, name, and 1 other');
+    expect(previewResponse5.result.previewPayloadExample).to.deep.equal({
+      steps: {
+        'digest-step': {
+          events: [
+            {
+              payload: {
+                name: 'name',
+              },
+            },
+            {
+              payload: {
+                name: 'name',
+              },
+            },
+            {
+              payload: {
+                name: 'name',
+              },
+            },
+          ],
+        },
+      },
+    });
+
+    // testing the digest block with 3 variables combining current and full variable
+    const controlValues6 = {
+      body: `{"type":"doc","content":[{"type":"section","attrs":{"borderRadius":0,"backgroundColor":"#FFFFFF","align":"left","borderWidth":0,"borderColor":"#e2e2e2","paddingTop":0,"paddingRight":0,"paddingBottom":0,"paddingLeft":0,"marginTop":0,"marginRight":0,"marginBottom":0,"marginLeft":0,"showIfKey":null},"content":[{"type":"repeat","attrs":{"each":"steps.digest-step.events","isUpdatingKey":false,"showIfKey":null,"iterations":5},"content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"variable","attrs":{"id":"steps.digest-step.events.payload.foo.bar.first","label":null,"fallback":null,"required":false,"aliasFor":null}},{"type":"text","text":" "}]},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"variable","attrs":{"id":"steps.digest-step.events.payload.foo.bar.baz.second","label":null,"fallback":null,"required":false,"aliasFor":null}},{"type":"text","text":" "}]},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"variable","attrs":{"id":"current.payload.third","label":null,"fallback":null,"required":false,"aliasFor":"steps.digest-step.events.payload.third"}},{"type":"text","text":" "}]}]},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"variable","attrs":{"id":"steps.digest-step.eventCount | minus: 5 | pluralize: 'more comment', ''","label":null,"fallback":null,"required":false,"aliasFor":null}}]}]}]}`,
+      subject: 'digest block',
+    };
+    const previewResponse6 = await novuClient.workflows.steps.generatePreview({
+      generatePreviewRequestDto: { controlValues: controlValues6, previewPayload: {} },
+      stepId,
+      workflowId: workflow.id,
+    });
+    const countOccurrences = (str: string, searchStr: string) => (str.match(new RegExp(searchStr, 'g')) || []).length;
+    expect(countOccurrences(previewResponse6.result.result.preview.body, 'first')).to.equal(3);
+    expect(countOccurrences(previewResponse6.result.result.preview.body, 'second')).to.equal(3);
+    expect(countOccurrences(previewResponse6.result.result.preview.body, 'third')).to.equal(3);
+    expect(previewResponse6.result.previewPayloadExample).to.deep.equal({
+      steps: {
+        'digest-step': {
+          events: [
+            {
+              payload: {
+                third: 'third',
+                foo: {
+                  bar: {
+                    first: 'first',
+                    baz: {
+                      second: 'second',
+                    },
+                  },
+                },
+              },
+            },
+            {
+              payload: {
+                third: 'third',
+                foo: {
+                  bar: {
+                    first: 'first',
+                    baz: {
+                      second: 'second',
+                    },
+                  },
+                },
+              },
+            },
+            {
+              payload: {
+                third: 'third',
+                foo: {
+                  bar: {
+                    first: 'first',
+                    baz: {
+                      second: 'second',
+                    },
+                  },
+                },
+              },
+            },
+          ],
+        },
+      },
+    });
+
     // @ts-ignore
     process.env.IS_ENHANCED_DIGEST_ENABLED = 'false';
   });

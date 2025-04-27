@@ -14,7 +14,7 @@ export function findMissingKeys(requiredRecord: object, actualRecord: object) {
   return difference(requiredKeys, actualKeys);
 }
 
-export function collectKeys(obj, prefix = '') {
+export function collectKeys(obj, prefix = ''): string[] {
   return reduce(
     obj,
     (result, value, key) => {
@@ -217,7 +217,7 @@ export function mergeCommonObjectKeys(target: Record<string, unknown>, source: R
         return tItem;
       }
 
-      return mergeCommonObjectKeys(tItem, sItem);
+      return mergeCommonObjectKeys(tItem as Record<string, unknown>, sItem as Record<string, unknown>);
     });
 
     /**
