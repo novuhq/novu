@@ -19,7 +19,7 @@ export function extractLiquidExpressions(str: string): string[] {
   return str.match(LIQUID_EXPRESSION_PATTERN) || [];
 }
 
-export const DIGEST_EVENTS_VARIABLE_PATTERN = /^steps\.[^.]+\.events/;
+export const DIGEST_EVENTS_VARIABLE_PATTERN = /^steps\.[^.]+\.events$/;
 export const VALID_DYNAMIC_PATHS = ['subscriber.data.', 'payload.', /^steps\.[^.]+\.events\[\d+\]\.payload\./] as const;
 
 export function isValidDynamicPath(variableName: string): boolean {

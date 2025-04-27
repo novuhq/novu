@@ -65,39 +65,36 @@ export class CreateVariablesObject {
         'length' in step.events
       );
 
-      const hasUsedEvents = !!(step.events && typeof step.events === 'string');
-      const { events } = step;
+      const hasUsedEvents = !!(step.events && typeof step.events === 'string') || Array.isArray(step.events);
       /**
-       * Check if events is an object and has a payload property.
+       * Check if events is an object and has a payload property, for example used in the repeat block like this:
+       * steps.digest-step.events.payload which is valid variable
        */
       const hasUsedEventsWithPayload = !!(
-        events &&
-        typeof events === 'object' &&
-        !Array.isArray(events) &&
-        'payload' in events
+        step.events &&
+        typeof step.events === 'object' &&
+        !Array.isArray(step.events) &&
+        'payload' in step.events
       );
-      let variableNameAfterPayload = hasUsedEventsWithPayload ? ['name'] : [];
-      if (hasUsedEventsWithPayload) {
-        /**
-         * If events is an object and has a payload property, collect keys from the payload.
-         * e.g. [payload.foo.bar]
-         */
-        variableNameAfterPayload = collectKeys(events.payload);
-      }
 
       if (hasUsedEventCount || hasUsedEventsLength || hasUsedEvents || hasUsedEventsWithPayload) {
-        step.events = Array.isArray(events)
-          ? events
-          : Array.from({ length: DEFAULT_ARRAY_ELEMENTS }, () => {
-              let payload = {};
-              for (const variableName of variableNameAfterPayload) {
-                const key = variableName.split('.').pop() ?? variableName;
+        let payload = {};
+        if (Array.isArray(step.events)) {
+          const hasPayloadInEvents = step.events.every((evt) => {
+            return typeof evt === 'object' && 'payload' in evt;
+          });
+          if (hasPayloadInEvents) {
+            payload = step.events[0].payload;
+          }
+        } else if (hasUsedEventsWithPayload) {
+          const variableNameAfterPayload = collectKeys((step.events as Record<string, unknown>).payload);
+          for (const variableName of variableNameAfterPayload) {
+            const key = variableName.split('.').pop() ?? variableName;
 
-                payload = { ...payload, ...this.setNestedValue(payload, variableName, key) };
-              }
-
-              return { payload };
-            });
+            payload = { ...payload, ...this.setNestedValue(payload, variableName, key) };
+          }
+        }
+        step.events = Array.from({ length: DEFAULT_ARRAY_ELEMENTS }, () => ({ payload }));
       }
     });
 
