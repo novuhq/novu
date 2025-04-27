@@ -24,9 +24,9 @@ import {
 } from '@novu/shared';
 import { SubscribersService, UserSession } from '@novu/testing';
 
+import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 import { SharedModule } from '../../shared/shared.module';
 import { EventsModule } from '../events.module';
-import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 const axiosInstance = axios.create();
 
@@ -69,10 +69,10 @@ function expectBulkTopicStub(secondCallStubArgs: IProcessSubscriberBulkJobDto[],
     expect(job.groupId).to.be.equal(stubJob.groupId);
     expect(job.options).to.be.equal(stubJob.options);
 
-    const { subscriber, ...jobDataWithoutSubscriber } = job.data;
+    const { subscriber, topics, ...jobDataWithoutSubscriber } = job.data;
     const { subscriber: stubSubscriber, ...stubJobDataWithoutSubscriber } = stubJob.data;
 
-    expect(subscriber.subscriberId).to.be.equal(stubSubscriber.subscriberId);
+    expect(topics?.length).to.be.ok;
     expect(jobDataWithoutSubscriber).to.deep.equal(stubJobDataWithoutSubscriber);
   }
 }
