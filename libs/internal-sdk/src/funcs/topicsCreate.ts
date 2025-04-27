@@ -201,7 +201,7 @@ async function $do(
     | RequestTimeoutError
     | ConnectionError
   >(
-    M.json(200, operations.TopicsControllerUpsertTopicResponse$inboundSchema, {
+    M.json(201, operations.TopicsControllerUpsertTopicResponse$inboundSchema, {
       hdrs: true,
       key: "Result",
     }),

@@ -101,7 +101,7 @@ export class TopicsController {
     summary: 'Create or update a topic',
     description: 'Creates a new topic if it does not exist, or updates an existing topic if it already exists',
   })
-  @ApiResponse(TopicResponseDto)
+  @ApiResponse(TopicResponseDto, 201)
   @SdkMethodName('create')
   async upsertTopic(
     @UserSession() user: UserSessionData,

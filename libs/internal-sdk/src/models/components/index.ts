@@ -87,6 +87,7 @@ export * from "./messagecta.js";
 export * from "./messagectadata.js";
 export * from "./messagemarkasrequestdto.js";
 export * from "./messageresponsedto.js";
+export * from "./messagesresponsedto.js";
 export * from "./messagestatusenum.js";
 export * from "./messagetemplate.js";
 export * from "./messagetemplatedto.js";
