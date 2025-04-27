@@ -53,69 +53,19 @@ function buildBaseOptions() {
       { url: 'https://docs.novu.co/subscribers/topics' }
     )
     .addTag(
-      'Notification',
-      'A notification conveys information from source to recipient, triggered by a workflow acting as a message blueprint. Notifications can be individual or bundled as digest for user-friendliness.',
-      { url: 'https://docs.novu.co/getting-started/introduction' }
-    )
-    .addTag(
       'Integrations',
       `With the help of the Integration Store, you can easily integrate your favorite delivery provider. During the runtime of the API, the Integrations Store is responsible for storing the configurations of all the providers.`,
       { url: 'https://docs.novu.co/channels-and-providers/integration-store' }
     )
-    .addTag(
-      'Layouts',
-      `Novu allows the creation of layouts - a specific HTML design or structure to wrap content of email notifications. Layouts can be manipulated and assigned to new or existing workflows within the Novu platform, allowing users to create, manage, and assign these layouts to workflows, so they can be reused to structure the appearance of notifications sent through the platform.`,
-      { url: 'https://docs.novu.co/content-creation-design/layouts' }
-    )
-    .addTag(
-      'Workflows',
-      `All notifications are sent via a workflow. Each workflow acts as a container for the logic and blueprint that are associated with a type of notification in your system.`,
-      { url: 'https://docs.novu.co/workflows' }
-    )
-    .addTag(
-      'Notification Templates',
-      `Deprecated. Use Workflows (/workflows) instead, which provide the same functionality under a new name.`
-    )
-    .addTag('Workflow groups', `Workflow groups are used to organize workflows into logical groups.`)
-    .addTag(
-      'Changes',
-      `Changes represent a change in state of an environment. They are analagous to a pending pull request in git, enabling you to test changes before they are applied to your environment and atomically apply them when you are ready.`,
-      { url: 'https://docs.novu.co/platform/environments#promoting-pending-changes-to-production' }
-    )
-    .addTag(
-      'Environments',
-      `Novu uses the concept of environments to ensure logical separation of your data and configuration. This means that subscribers, and preferences created in one environment are never accessible to another.`,
-      { url: 'https://docs.novu.co/platform/environments' }
-    )
-    .addTag(
-      'Inbound Parse',
-      `Inbound Webhook is a feature that allows processing of incoming emails for a domain or subdomain. The feature parses the contents of the email and POSTs the information to a specified URL in a multipart/form-data format.`,
-      { url: 'https://docs.novu.co/platform/inbound-parse-webhook' }
-    )
-    .addTag(
-      'Feeds',
-      `Novu provides a notification activity feed that monitors every outgoing message associated with its relevant metadata. This can be used to monitor activity and discover potential issues with a specific provider or a channel type.`,
-      { url: 'https://docs.novu.co/activity-feed' }
-    )
-    .addTag(
-      'Tenants',
-      `A tenant represents a group of users. As a developer, when your apps have organizations, they are referred to as tenants. Tenants in Novu provides the ability to tailor specific notification experiences to users of different groups or organizations.`,
-      { url: 'https://docs.novu.co/tenants' }
-    )
+    // .addTag(
+    //   'Workflows',
+    //   `All notifications are sent via a workflow. Each workflow acts as a container for the logic and blueprint that are associated with a type of notification in your system.`,
+    //   { url: 'https://docs.novu.co/workflows' }
+    // )
     .addTag(
       'Messages',
       `A message in Novu represents a notification delivered to a recipient on a particular channel. Messages contain information about the request that triggered its delivery, a view of the data sent to the recipient, and a timeline of its lifecycle events. Learn more about messages.`,
       { url: 'https://docs.novu.co/workflows/messages' }
-    )
-    .addTag(
-      'Organizations',
-      `An organization serves as a separate entity within your Novu account. Each organization you create has its own separate integration store, workflows, subscribers, and API keys. This separation of resources allows you to manage multi-tenant environments and separate domains within a single account.`,
-      { url: 'https://docs.novu.co/platform/organizations' }
-    )
-    .addTag(
-      'Execution Details',
-      `Execution details are used to track the execution of a workflow. They provided detailed information on the execution of a workflow, including the status of each step, the input and output of each step, and the overall status of the execution.`,
-      { url: 'https://docs.novu.co/activity-feed' }
     );
   return options;
 }
@@ -126,16 +76,8 @@ function buildOpenApiBaseDocument(internalSdkGeneration: boolean | undefined) {
     options.addSecurity(BEARER_SWAGGER_SECURITY_NAME, BEARER_SECURITY_DEFINITIONS);
     options.addSecurityRequirements(BEARER_SWAGGER_SECURITY_NAME);
   }
-  if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
-    options.addTag(
-      'Translations',
-      `Translations are used to localize your messages for different languages and regions. Novu provides a way to create and manage translations for your messages. You can create translations for your messages in different languages and regions, and assign them to your subscribers based on their preferences.`,
-      { url: 'https://docs.novu.co/content-creation-design/translations' }
-    );
-  }
 
-  const config = options.build();
-  return config;
+  return options.build();
 }
 
 function buildFullDocumentWithPath(app: INestApplication<any>, baseDocument: Omit<OpenAPIObject, 'paths'>) {

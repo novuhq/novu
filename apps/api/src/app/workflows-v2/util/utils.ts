@@ -1,4 +1,3 @@
-/* eslint-disable no-param-reassign */
 import difference from 'lodash/difference';
 import isArray from 'lodash/isArray';
 import isObject from 'lodash/isObject';
@@ -6,6 +5,7 @@ import reduce from 'lodash/reduce';
 import set from 'lodash/set';
 import { JSONSchemaDto } from '../dtos';
 import { ArrayVariable } from '../usecases/create-variables-object/create-variables-object.usecase';
+import { DIGEST_EVENTS_VARIABLE_PATTERN } from './template-parser/parser-utils';
 
 export function findMissingKeys(requiredRecord: object, actualRecord: object) {
   const requiredKeys = collectKeys(requiredRecord);
@@ -14,7 +14,7 @@ export function findMissingKeys(requiredRecord: object, actualRecord: object) {
   return difference(requiredKeys, actualKeys);
 }
 
-export function collectKeys(obj, prefix = '') {
+export function collectKeys(obj, prefix = ''): string[] {
   return reduce(
     obj,
     (result, value, key) => {
@@ -150,7 +150,14 @@ function buildObjectFromPaths(
       .split('.')
       .pop()
       ?.replace(/\[\d+\]/g, ''); // Remove array indices from the value
-    const value = showIfVariablesPaths?.includes(path) ? true : lastPart;
+    let value: unknown = showIfVariablesPaths?.includes(path) ? true : lastPart;
+
+    const lastDot = path.lastIndexOf('.');
+    const finalPart = lastDot === -1 ? path : path.substring(0, lastDot);
+
+    if (lastPart === 'payload' && DIGEST_EVENTS_VARIABLE_PATTERN.test(finalPart)) {
+      value = {};
+    }
 
     const arrayParent = arrayVariables.find(
       (arrayVariable) => arrayVariable.path === path || path.startsWith(`${arrayVariable.path}.`)
@@ -176,35 +183,85 @@ function buildObjectFromPaths(
 
 /**
  * Recursively merges common/overlapping object keys from source into target.
+ * in this case Target: FE Payload, Source: BE Payload
  *
  * @example
- * Target: { subscriber: { phone: '{{subscriber.phone}}', name: '{{subscriber.name}}' } }
- * Source: { subscriber: { phone: '123' }, payload: { someone: '{{payload.someone}}' }}
- * Result: { subscriber: { phone: '123', name: '{{subscriber.name}}' } }
+ * Target: {
+ *        "payload": {
+ *          "cat": "hello",
+ *        }
+ *      },
+ * Source: {
+ *        "payload": {
+ *          "cat": "cat",
+ *          "name": "name"
+ *        }
+ *      },
+ * Result: {
+ *        "payload": {
+ *          "cat": "hello",
+ *          "name": "name"
+ *        }
+ *      },
  */
-export function mergeCommonObjectKeys(
-  target: Record<string, unknown>,
-  source: Record<string, unknown>
-): Record<string, unknown> {
-  return Object.entries(target).reduce(
-    (merged, [key, targetValue]) => {
-      const sourceValue = source[key];
+export function mergeCommonObjectKeys(target: Record<string, unknown>, source: Record<string, unknown>) {
+  if (Array.isArray(source) && Array.isArray(target)) {
+    const mergedArray = source.map((sItem, i) => {
+      const tItem = target[i];
+      if (tItem === undefined) return sItem;
 
-      if (Array.isArray(targetValue) && Array.isArray(sourceValue)) {
-        merged[key] = Array.from({ length: sourceValue.length }, (_, index) => {
-          return sourceValue[index];
-        });
-      } else if (isObject(targetValue) && isObject(sourceValue)) {
-        merged[key] = mergeCommonObjectKeys(
-          targetValue as Record<string, unknown>,
-          sourceValue as Record<string, unknown>
-        );
-      } else {
-        merged[key] = key in source ? sourceValue : targetValue;
+      const sIsObj = isObject(sItem);
+      const tIsObj = isObject(tItem);
+
+      if (!sIsObj && !tIsObj) {
+        return tItem;
       }
 
-      return merged;
-    },
-    {} as Record<string, unknown>
-  );
+      return mergeCommonObjectKeys(tItem as Record<string, unknown>, sItem as Record<string, unknown>);
+    });
+
+    return mergedArray;
+  }
+
+  const sIsObj = isObject(source);
+  const tIsObj = isObject(target);
+  // If either is not an object, prefer target if both are primitives, otherwise source
+  if (!sIsObj || !tIsObj) {
+    /*
+     * If both are not objects, return target (FE payload)
+     * because we want to keep the FE payload
+     * e,g target: { cat: 'hello' }, source: { cat: 'cat' }
+     * return target ( cat: 'hello' ) as FE has higher priority for same keys
+     *
+     * if either of them is an object, return source
+     * e,g target: { cat: 'hello' }, source: { cat: { name: 'cat' } }
+     * return source ( cat: { name: 'cat' } ) as in this case BE payload
+     * should be considered as source of truth. this fixes the issue
+     * of stale/edited payload in FE
+     */
+    return !sIsObj && !tIsObj ? target : source;
+  }
+
+  const result: Record<string, unknown> = {};
+
+  /**
+   * use the keys of source (BE payload) instead of target (FE payload)
+   * because we want to remove the extra unused keys from target (FE payload)
+   * and this also fixes the issue of stale/edited payload in FE
+   * when a new variable is added in the content
+   * e.g target: { cat: 'hello' }, source: { cat: { name: 'cat' } }
+   * result: { cat: { name: 'cat' } }
+   */
+  for (const key of Object.keys(source)) {
+    const sVal = source[key];
+    const tVal = target?.[key];
+
+    if (tVal !== undefined && tVal !== null) {
+      result[key] = mergeCommonObjectKeys(tVal as Record<string, unknown>, sVal as Record<string, unknown>);
+    } else {
+      result[key] = sVal;
+    }
+  }
+
+  return result;
 }

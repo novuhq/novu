@@ -1,11 +1,10 @@
 import { PinoLogger } from '@novu/application-generic';
 import { AdditionalOperation, RulesLogic } from 'json-logic-js';
 
-import { isStringifiedMailyJSONContent } from '../../environments-v1/usecases/output-renderers/maily-to-liquid/wrap-maily-in-liquid.command';
-import { WrapMailyInLiquidUseCase } from '../../environments-v1/usecases/output-renderers/maily-to-liquid/wrap-maily-in-liquid.usecase';
 import { extractFieldsFromRules, isValidRule } from '../../shared/services/query-parser/query-parser.service';
 import { JSONSchemaDto } from '../dtos';
 import { extractLiquidTemplateVariables, TemplateVariables } from './template-parser/liquid-parser';
+import { isStringifiedMailyJSONContent, wrapMailyInLiquid } from '../../shared/helpers/maily-utils';
 
 export function buildVariables(
   variableSchema: JSONSchemaDto | undefined,
@@ -16,9 +15,7 @@ export function buildVariables(
 
   if (isStringifiedMailyJSONContent(variableControlValue)) {
     try {
-      variableControlValue = new WrapMailyInLiquidUseCase().execute({
-        emailEditor: variableControlValue,
-      });
+      variableControlValue = wrapMailyInLiquid(variableControlValue);
     } catch (error) {
       logger?.error(
         {

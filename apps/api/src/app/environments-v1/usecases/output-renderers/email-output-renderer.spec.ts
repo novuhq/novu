@@ -4,7 +4,6 @@ import { JSONContent as MailyJSONContent } from '@maily-to/render';
 import { FeatureFlagsService } from '@novu/application-generic';
 import { EmailOutputRendererUsecase } from './email-output-renderer.usecase';
 import { FullPayloadForRender } from './render-command';
-import { WrapMailyInLiquidUseCase } from './maily-to-liquid/wrap-maily-in-liquid.usecase';
 
 const mockFeatureFlagsService = {
   getFlag: async (context) => {
@@ -19,7 +18,6 @@ describe('EmailOutputRendererUsecase', () => {
     const moduleRef = await Test.createTestingModule({
       providers: [
         EmailOutputRendererUsecase,
-        WrapMailyInLiquidUseCase,
         {
           provide: FeatureFlagsService,
           useValue: mockFeatureFlagsService,
