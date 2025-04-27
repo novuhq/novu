@@ -29,7 +29,7 @@ const SUBJECT_TEST_PAYLOAD = '{{payload.subject.test.payload}}';
 const PLACEHOLDER_SUBJECT_INAPP = '{{payload.subject}}';
 const PLACEHOLDER_SUBJECT_INAPP_PAYLOAD_VALUE = 'this is the replacement text for the placeholder';
 
-describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v2', () => {
+describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v2', async () => {
   let session: UserSession;
   const notificationTemplateRepository = new NotificationTemplateRepository();
   const environmentRepository = new EnvironmentRepository();
@@ -1003,6 +1003,284 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
       if (generatePreviewResponseDto.result?.type === ChannelTypeEnum.InApp) {
         expect(generatePreviewResponseDto.result.preview.body).to.equal('Hello, World! body');
       }
+    });
+    it('should merge the user provided payload with the BE generated payload', async () => {
+      // @ts-ignore
+      process.env.IS_ENHANCED_DIGEST_ENABLED = 'true';
+      const createWorkflowDto: CreateWorkflowDto = {
+        source: WorkflowCreationSourceEnum.Editor,
+        name: TEST_WORKFLOW_NAME,
+        workflowId: `${slugify(TEST_WORKFLOW_NAME)}`,
+        description: 'This is a test workflow',
+        active: true,
+        steps: [
+          {
+            name: 'Digest Step',
+            type: StepTypeEnum.Digest,
+          },
+          {
+            name: 'Email Step',
+            type: StepTypeEnum.Email,
+          },
+        ],
+      };
+
+      const res = await novuClient.workflows.create(createWorkflowDto);
+      const workflow = res.result;
+      if (!workflow) {
+        throw new Error('Workflow not created');
+      }
+
+      const stepId = workflow.steps[1].id;
+      const resultWithEventsPayload = {
+        steps: {
+          'digest-step': {
+            events: [
+              {
+                payload: {},
+              },
+              {
+                payload: {},
+              },
+              {
+                payload: {},
+              },
+            ],
+          },
+        },
+      };
+      const resultWithEventsPayloadName = {
+        steps: {
+          'digest-step': {
+            events: [
+              {
+                payload: {
+                  name: 'name',
+                },
+              },
+              {
+                payload: {
+                  name: 'name',
+                },
+              },
+              {
+                payload: {
+                  name: 'name',
+                },
+              },
+            ],
+          },
+        },
+      };
+
+      const controlValues1 = {
+        body: '{"type":"doc","content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","text":"events length "},{"type":"variable","attrs":{"id":"steps.digest-step.events.length","label":null,"fallback":null,"required":false,"aliasFor":null}},{"type":"text","text":" "}]},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","text":" "}]}]}',
+        subject: 'events length',
+      };
+      const previewResponse1 = await novuClient.workflows.steps.generatePreview({
+        generatePreviewRequestDto: { controlValues: controlValues1, previewPayload: {} },
+        stepId,
+        workflowId: workflow.id,
+      });
+
+      expect(previewResponse1.result.previewPayloadExample).to.deep.equal(resultWithEventsPayload);
+
+      // testing the merging of the payload
+
+      const controlValues2 = {
+        body: `{
+"type": "doc",
+"content": [
+  {
+    "type": "paragraph",
+    "attrs": { "textAlign": null, "showIfKey": null },
+    "content": [
+      {
+        "type": "variable",
+        "attrs": {
+          "id": "steps.digest-step.events | toSentence: 'payload.name', 2, 'other'",
+          "label": null,
+          "fallback": null,
+          "required": false,
+          "aliasFor": null
+        }
+      },
+      { "type": "text", "text": " " }
+    ]
+  }
+]
+}
+`,
+        subject: 'events length',
+      };
+      const requestDto = {
+        controlValues: controlValues2,
+        previewPayload: resultWithEventsPayload,
+      };
+
+      const previewResponse2 = await novuClient.workflows.steps.generatePreview({
+        generatePreviewRequestDto: requestDto,
+        stepId,
+        workflowId: workflow.id,
+      });
+
+      expect(previewResponse2.result.previewPayloadExample).to.deep.equal(resultWithEventsPayloadName);
+
+      const editedPayloadName = {
+        steps: {
+          'digest-step': {
+            events: [
+              {
+                payload: {
+                  name: 'hello',
+                },
+              },
+              {
+                payload: {
+                  name: 'name',
+                },
+              },
+              {
+                payload: {
+                  name: 'name',
+                },
+              },
+            ],
+          },
+        },
+      };
+
+      const requestDto2 = {
+        controlValues: controlValues2,
+        previewPayload: editedPayloadName,
+      };
+      const previewResponse3 = await novuClient.workflows.steps.generatePreview({
+        generatePreviewRequestDto: requestDto2,
+        stepId,
+        workflowId: workflow.id,
+      });
+
+      expect(previewResponse3.result.previewPayloadExample).to.deep.equal(editedPayloadName);
+      expect(previewResponse3.result.result.preview.body).to.contain('hello, name, and 1 other');
+
+      const controlValues3 = {
+        body: `{
+              "type": "doc",
+              "content": [
+                {
+                  "type": "paragraph",
+                  "attrs": { "textAlign": null, "showIfKey": null },
+                  "content": [
+                    {
+                      "type": "variable",
+                      "attrs": {
+                        "id": "steps.digest-step.events | toSentence: 'payload.name', 2, 'other'",
+                        "label": null,
+                        "fallback": null,
+                        "required": false,
+                        "aliasFor": null
+                      }
+                    },
+                    { "type": "text", "text": " " }
+                  ]
+                },
+                {
+                  "type": "paragraph",
+                  "attrs": { "textAlign": null, "showIfKey": null },
+                  "content": [
+                    {
+                      "type": "variable",
+                      "attrs": {
+                        "id": "steps.digest-step.events | toSentence: 'payload.new', 2, 'other'",
+                        "label": null,
+                        "fallback": null,
+                        "required": false,
+                        "aliasFor": null
+                      }
+                    },
+                    { "type": "text", "text": " " }
+                  ]
+                }
+              ]
+            }`,
+        subject: 'events length',
+      };
+
+      const paylodWithExtraItemInTheArray = {
+        steps: {
+          'digest-step': {
+            events: [
+              {
+                payload: {
+                  name: 'hello',
+                },
+              },
+              {
+                payload: {
+                  name: 'name',
+                },
+              },
+              {
+                payload: {
+                  name: 'name',
+                },
+              },
+              {
+                payload: {
+                  name: 'extra name',
+                },
+              },
+            ],
+          },
+        },
+      };
+
+      const resultForExtraItemInTheArray = {
+        steps: {
+          'digest-step': {
+            events: [
+              {
+                payload: {
+                  name: 'hello',
+                  new: 'new',
+                },
+              },
+              {
+                payload: {
+                  name: 'name',
+                  new: 'new',
+                },
+              },
+              {
+                payload: {
+                  name: 'name',
+                  new: 'new',
+                },
+              },
+              {
+                payload: {
+                  name: 'extra name',
+                  new: 'new',
+                },
+              },
+            ],
+          },
+        },
+      };
+
+      const requestDto3 = {
+        controlValues: controlValues3,
+        previewPayload: paylodWithExtraItemInTheArray,
+      };
+      const previewResponse4 = await novuClient.workflows.steps.generatePreview({
+        generatePreviewRequestDto: requestDto3,
+        stepId,
+        workflowId: workflow.id,
+      });
+
+      expect(previewResponse4.result.previewPayloadExample).to.deep.equal(resultForExtraItemInTheArray);
+      expect(previewResponse4.result.result.preview.body).to.contain('hello, name, and 2 others');
+      expect(previewResponse4.result.result.preview.body).to.contain('new, new, and 2 others');
     });
   });
 
