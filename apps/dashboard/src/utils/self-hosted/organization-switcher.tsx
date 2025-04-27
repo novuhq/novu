@@ -1,4 +1,3 @@
-import { useNavigate } from 'react-router-dom';
 import { useOrganization } from './index';
 import { Button } from '@/components/primitives/button';
 import { Avatar, AvatarFallback } from '@/components/primitives/avatar';
@@ -71,8 +70,10 @@ export function OrganizationSwitcher() {
                   <span className="text-base font-medium">Create Organization</span>
                 </button>
               </TooltipTrigger>
-              <TooltipContent side="right" className="bg-neutral-950 text-white">
-                Switch to Novu Cloud to manage multiple organizations.
+              <TooltipContent side="right" className="ml-3 bg-neutral-950 text-white">
+                <span>Switch to Novu Cloud to</span>
+                <br />
+                <span>manage multiple organizations.</span>
               </TooltipContent>
             </Tooltip>
             {/* </div> */}
@@ -89,7 +90,7 @@ const OrganizationAvatar = ({ shining = false }: { shining?: boolean }) => {
       <AvatarFallback className="relative bg-gradient-to-r from-red-500 to-red-600 text-xs text-white">
         <NovuLogoBlackBg />
         {shining && (
-          <div className="absolute inset-0 before:absolute before:left-[-100%] before:top-0 before:h-full before:w-full before:bg-[linear-gradient(120deg,transparent,rgba(255,255,255,0.3),transparent)] before:transition-all before:duration-[650ms] before:ease-in-out group-hover:before:left-[100%]"></div>
+          <div className="absolute inset-0 before:absolute before:left-[-100%] before:top-0 before:h-full before:w-full before:bg-[linear-gradient(120deg,transparent,rgba(255,255,255,0.3),transparent)] before:transition-all before:duration-[10000ms] before:ease-in-out group-hover:before:left-[100%]"></div>
         )}
       </AvatarFallback>
     </Avatar>
