@@ -31,7 +31,8 @@ export class UpdateTopicUseCase {
         $set: {
           name: command.name,
         },
-      }
+      },
+      { new: true }
     );
 
     return mapTopicEntityToDto(updatedTopic!);
