@@ -120,21 +120,21 @@ export class ListSubscriberSubscriptionsUseCase {
         return {
           _id: subscription._id,
           topic: {
-            _id: topic._id,
+            _id: topic._id?.toString(),
             key: topic.key,
             name: topic.name,
             createdAt: topic.createdAt,
             updatedAt: topic.updatedAt,
           },
           subscriber: {
-            _id: subscriber._id,
+            _id: subscriber._id.toString(),
             subscriberId: subscriber.subscriberId,
             firstName: subscriber.firstName,
             lastName: subscriber.lastName,
             email: subscriber.email,
             avatar: subscriber.avatar,
           },
-        };
+        } as TopicSubscriptionResponseDto;
       })
       .filter(Boolean) as TopicSubscriptionResponseDto[];
   }
