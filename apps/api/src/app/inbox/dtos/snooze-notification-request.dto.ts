@@ -3,11 +3,11 @@ import { Type } from 'class-transformer';
 
 function IsFutureDate(
   options?: {
-    minBufferMs?: number;
+    leewayMs?: number;
   },
   validationOptions?: ValidationOptions
 ) {
-  const minBufferMs = options?.minBufferMs ?? 1000 * 60; // default 1 minute
+  const leewayMs = options?.leewayMs ?? 1000 * 60; // default 1 minute
 
   return function (object: Object, propertyName: string) {
     registerDecorator({
@@ -15,7 +15,7 @@ function IsFutureDate(
       target: object.constructor,
       propertyName,
       options: {
-        message: `Snooze time must be at least ${minBufferMs / 1000} seconds in the future`,
+        message: `Snooze time must be at least ${leewayMs / 1000} seconds in the future`,
         ...validationOptions,
       },
       validator: {
@@ -23,7 +23,7 @@ function IsFutureDate(
           const now = new Date();
           const delay = value.getTime() - now.getTime();
 
-          return delay >= minBufferMs;
+          return delay >= leewayMs;
         },
       },
     });
@@ -34,7 +34,7 @@ export class SnoozeNotificationRequestDto {
   @Type(() => Date)
   @IsDate()
   @IsFutureDate({
-    minBufferMs: 1000 * 60,
+    leewayMs: 1000 * 60,
   })
   readonly snoozeUntil: Date;
 }

@@ -35,7 +35,6 @@ import {
   getFeatureForTierAsNumber,
   JobStatusEnum,
 } from '@novu/shared';
-import { Types } from 'mongoose';
 import { v4 as uuidv4 } from 'uuid';
 import { SnoozeNotificationCommand } from './snooze-notification.command';
 import { MarkNotificationAs } from '../mark-notification-as/mark-notification-as.usecase';
@@ -73,7 +72,7 @@ export class SnoozeNotification {
       await this.messageRepository.withTransaction(async () => {
         scheduledJob = await this.createScheduledUnsnoozeJob(notification, delayAmount);
         snoozedNotification = await this.markNotificationAsSnoozed(command);
-        await this.queueJob(scheduledJob, delayAmount);
+        await this.enqueueJob(scheduledJob, delayAmount);
       });
 
       // fire and forget
@@ -98,7 +97,7 @@ export class SnoozeNotification {
     }
   }
 
-  public async queueJob(job: JobEntity, delay: number) {
+  public async enqueueJob(job: JobEntity, delay: number) {
     this.logger.info({ jobId: job._id, delay }, 'Adding snooze job to Standard Queue', LOG_CONTEXT);
 
     const jobData = {
@@ -216,7 +215,7 @@ export class SnoozeNotification {
       status: JobStatusEnum.PENDING,
       delay,
       createdAt: Date.now().toString(),
-      id: new Types.ObjectId(),
+      id: JobRepository.createObjectId(),
       _parentId: null,
       payload: {
         ...originalJob.payload,
@@ -234,7 +233,7 @@ export class SnoozeNotification {
         organizationId: command.organizationId,
         subscriberId: command.subscriberId,
         notificationId: command.notificationId,
-        snoozedUntilDate: command.snoozeUntil,
+        snoozedUntil: command.snoozeUntil,
       })
     );
   }

@@ -46,7 +46,7 @@ export class MarkNotificationAs {
         ids: [command.notificationId],
         read: command.read,
         archived: command.archived,
-        snoozedUntilDate: command.snoozedUntilDate,
+        snoozedUntil: command.snoozedUntil,
       })
     );
 
@@ -56,7 +56,7 @@ export class MarkNotificationAs {
       _notification: command.notificationId,
       read: command.read,
       archived: command.archived,
-      snoozedUntilDate: command.snoozedUntilDate,
+      snoozedUntil: command.snoozedUntil,
     });
 
     return mapToDto(

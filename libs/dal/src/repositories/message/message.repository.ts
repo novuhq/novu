@@ -96,9 +96,9 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     }
 
     if (query.snoozed != null) {
-      requestQuery.snoozedUntilDate = { $exists: true, $ne: null };
+      requestQuery.snoozedUntil = { $exists: true, $ne: null };
     } else {
-      requestQuery.snoozedUntilDate = { $exists: false };
+      requestQuery.snoozedUntil = { $exists: false };
     }
 
     if (createdAt != null) {
@@ -192,7 +192,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     }
 
     if (typeof snoozed === 'boolean') {
-      query.snoozedUntilDate = snoozed ? { $exists: true, $ne: null } : { $eq: null };
+      query.snoozedUntil = snoozed ? { $exists: true, $ne: null } : { $eq: null };
     }
 
     return await this.cursorPagination({
@@ -485,7 +485,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     seen,
     read,
     archived,
-    snoozedUntilDate,
+    snoozedUntil,
   }: {
     environmentId: string;
     subscriberId: string;
@@ -493,7 +493,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     seen?: boolean;
     read?: boolean;
     archived?: boolean;
-    snoozedUntilDate?: Date | null;
+    snoozedUntil?: Date | null;
   }) {
     const query: MessageQuery & EnforceEnvId = {
       _environmentId: environmentId,
@@ -510,7 +510,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       seen,
       read,
       archived,
-      snoozedUntilDate,
+      snoozedUntil,
     });
   }
 
@@ -572,26 +572,26 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
    * unseen -> { seen: false, read: false, archived: false }
    * unread -> { seen: true, read: false, archived: false }
    * unarchived -> { seen: true, read: true, archived: false }
-   * snoozed -> { seen: true, archived: false, snoozedUntilDate: snoozedUntilDate }
-   * unsnoozed -> { seen: true, archived: false, snoozedUntilDate: null }
+   * snoozed -> { seen: true, archived: false, snoozedUntil: snoozedUntil }
+   * unsnoozed -> { seen: true, archived: false, snoozedUntil: null }
    */
   private async updateMessagesStatus({
     query,
     seen,
     read,
     archived,
-    snoozedUntilDate,
+    snoozedUntil,
   }: {
     query: MessageQuery & EnforceEnvId;
     seen?: boolean;
     read?: boolean;
     archived?: boolean;
-    snoozedUntilDate?: Date | null;
+    snoozedUntil?: Date | null;
   }) {
     const isUpdatingSeen = seen !== undefined;
     const isUpdatingRead = read !== undefined;
     const isUpdatingArchived = archived !== undefined;
-    const isUpdatingSnoozed = snoozedUntilDate !== undefined;
+    const isUpdatingSnoozed = snoozedUntil !== undefined;
 
     let updatePayload: FilterQuery<MessageEntity> = {};
     if (isUpdatingArchived) {
@@ -623,7 +623,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       };
     } else if (isUpdatingSnoozed) {
       updatePayload = {
-        snoozedUntilDate,
+        snoozedUntil,
         seen: true,
         lastSeenDate: new Date(),
         archived: false,
