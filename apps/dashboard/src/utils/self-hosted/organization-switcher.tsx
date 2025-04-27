@@ -1,6 +1,6 @@
 import { useOrganization } from './index';
 import { Button } from '@/components/primitives/button';
-import { Avatar, AvatarFallback } from '@/components/primitives/avatar';
+import { Avatar } from '@/components/primitives/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,

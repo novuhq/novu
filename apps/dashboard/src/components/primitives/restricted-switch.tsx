@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { Switch } from './switch';
 import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip';
 import { ROUTES } from '../../utils/routes';
