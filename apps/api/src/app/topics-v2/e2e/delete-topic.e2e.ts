@@ -58,7 +58,7 @@ describe('Delete topic by key - /v2/topics/:topicKey (DELETE) #novu-v2', async (
     const topicId = createResponse.result.id;
 
     // Add subscriber to topic
-    await novuClient.topics.subscriptions.subscribe(
+    await novuClient.topics.subscriptions.create(
       {
         subscriberIds: [subscriber.subscriberId],
       },

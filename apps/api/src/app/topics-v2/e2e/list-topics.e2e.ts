@@ -122,7 +122,7 @@ const createNewTopic = async (session: UserSession, topicKey: string) => {
 };
 
 const addSubscribersToTopic = async (session: UserSession, topicKey: TopicKey, subscribers: ExternalSubscriberId[]) => {
-  const result = await initNovuClassSdk(session).topics.subscriptions.subscribe(
+  const result = await initNovuClassSdk(session).topics.subscriptions.create(
     {
       subscriberIds: subscribers,
     },

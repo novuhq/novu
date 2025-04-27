@@ -32,7 +32,7 @@ describe('List topic subscriptions - /v2/topics/:topicKey/subscriptions (GET) #n
     topicId = createResponse.result.id;
 
     // Add subscribers to topic
-    await novuClient.topics.subscriptions.subscribe(
+    await novuClient.topics.subscriptions.create(
       {
         subscriberIds: [subscriber1.subscriberId, subscriber2.subscriberId, subscriber3.subscriberId],
       },

@@ -524,7 +524,7 @@ const addSubscribersToTopic = async (
     (subscriber: SubscriberEntity) => subscriber.subscriberId
   );
 
-  const response = await initNovuClassSdk(session).topics.subscriptions.subscribe(
+  const response = await initNovuClassSdk(session).topics.subscriptions.create(
     {
       subscriberIds,
     },

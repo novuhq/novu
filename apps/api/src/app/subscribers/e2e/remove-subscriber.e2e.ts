@@ -78,7 +78,7 @@ describe('Delete Subscriber - /subscribers/:subscriberId (DELETE) #novu-v2', fun
       (subscriber: SubscriberEntity) => subscriber.subscriberId
     );
 
-    const response = await novuClient.topics.subscriptions.subscribe(
+    const response = await novuClient.topics.subscriptions.create(
       {
         subscriberIds,
       },
