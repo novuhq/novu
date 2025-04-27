@@ -11,6 +11,7 @@ describe('List subscriber subscriptions - /v2/subscribers/:subscriberId/subscrip
   let topicSubscribersRepository: TopicSubscribersRepository;
   const topicKeys: string[] = [];
 
+  before(async () => {
     session = new UserSession();
     await session.initialize();
     novuClient = initNovuClassSdk(session);
