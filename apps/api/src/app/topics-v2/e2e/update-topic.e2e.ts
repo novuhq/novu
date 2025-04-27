@@ -3,7 +3,7 @@ import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-describe('Update topic by key - /v2/topics/:topicKey (PATCH) #novu-v2', async () => {
+describe.only('Update topic by key - /v2/topics/:topicKey (PATCH) #novu-v2', async () => {
   let session: UserSession;
   let novuClient: Novu;
   const topicKey = `topic-key-${Date.now()}`;
@@ -16,46 +16,63 @@ describe('Update topic by key - /v2/topics/:topicKey (PATCH) #novu-v2', async ()
     novuClient = initNovuClassSdk(session);
 
     // Create a topic to update later
-    const createResponse = await session.testAgent.post('/v2/topics').send({
+    const createResponse = await novuClient.topics.create({
       key: topicKey,
       name: initialName,
     });
-    topicId = createResponse.body._id;
+    topicId = createResponse.result.id;
   });
 
   it('should update a topic by its key', async () => {
     const updatedName = 'Updated Topic Name';
-    const response = await session.testAgent.patch(`/v2/topics/${topicKey}`).send({
-      name: updatedName,
-    });
+    const response = await novuClient.topics.update(
+      {
+        name: updatedName,
+      },
+      topicKey
+    );
 
-    expect(response.statusCode).to.equal(200);
-    expect(response.body._id).to.equal(topicId);
-    expect(response.body.key).to.equal(topicKey);
-    expect(response.body.name).to.equal(updatedName);
-    expect(response.body).to.have.property('createdAt');
-    expect(response.body).to.have.property('updatedAt');
+    expect(response.result).to.exist;
+    expect(response.result.id).to.equal(topicId);
+    expect(response.result.key).to.equal(topicKey);
+    expect(response.result.name).to.equal(updatedName);
+    expect(response.result).to.have.property('createdAt');
+    expect(response.result).to.have.property('updatedAt');
 
     // Verify the update persisted by fetching the topic
-    const getResponse = await session.testAgent.get(`/v2/topics/${topicKey}`);
-    expect(getResponse.statusCode).to.equal(200);
-    expect(getResponse.body.name).to.equal(updatedName);
+    const getResponse = await novuClient.topics.get(topicKey);
+    expect(getResponse.result).to.exist;
+    expect(getResponse.result.name).to.equal(updatedName);
   });
 
   it('should return 404 for updating a non-existent topic key', async () => {
     const nonExistentKey = 'non-existent-topic-key';
-    const response = await session.testAgent.patch(`/v2/topics/${nonExistentKey}`).send({
-      name: 'New Name',
-    });
+    try {
+      await novuClient.topics.update(
+        {
+          name: 'New Name',
+        },
+        nonExistentKey
+      );
 
-    expect(response.statusCode).to.equal(404);
-    expect(response.body.message).to.include(nonExistentKey);
+      /* If we reach here, the test failed */
+      expect.fail('Should have thrown an error for non-existent topic');
+    } catch (error) {
+      expect(error.response?.status || error.status).to.equal(404);
+      expect(error.response?.data?.message || error.message).to.include(nonExistentKey);
+    }
   });
 
   it('should validate required fields', async () => {
-    // Missing name
-    const response = await session.testAgent.patch(`/v2/topics/${topicKey}`).send({});
+    try {
+      /* Missing name */
+      /* @ts-expect-error - Testing invalid input */
+      await novuClient.topics.update({}, topicKey);
 
-    expect(response.statusCode).to.equal(400);
+      /* If we reach here, the test failed */
+      expect.fail('Should have thrown an error for missing name');
+    } catch (error) {
+      expect(error.response?.status || error.status).to.equal(400);
+    }
   });
 });

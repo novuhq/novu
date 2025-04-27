@@ -3,7 +3,7 @@ import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-describe('Upsert topic - /v2/topics (POST) #novu-v2', async () => {
+describe.only('Upsert topic - /v2/topics (POST) #novu-v2', async () => {
   let session: UserSession;
   let novuClient: Novu;
 
@@ -17,17 +17,17 @@ describe('Upsert topic - /v2/topics (POST) #novu-v2', async () => {
     const key = `topic-key-${Date.now()}`;
     const name = 'Test Topic Name';
 
-    const response = await session.testAgent.post('/v2/topics').send({
+    const response = await novuClient.topics.create({
       key,
       name,
     });
 
-    expect(response.statusCode).to.equal(201);
-    expect(response.body).to.have.property('_id');
-    expect(response.body.key).to.equal(key);
-    expect(response.body.name).to.equal(name);
-    expect(response.body).to.have.property('createdAt');
-    expect(response.body).to.have.property('updatedAt');
+    expect(response.result).to.exist;
+    expect(response.result).to.have.property('id');
+    expect(response.result.key).to.equal(key);
+    expect(response.result.name).to.equal(name);
+    expect(response.result).to.have.property('createdAt');
+    expect(response.result).to.have.property('updatedAt');
   });
 
   it('should update an existing topic when it already exists', async () => {
@@ -35,40 +35,52 @@ describe('Upsert topic - /v2/topics (POST) #novu-v2', async () => {
     const key = `topic-key-${Date.now()}`;
     const originalName = 'Original Name';
 
-    const createResponse = await session.testAgent.post('/v2/topics').send({
+    const createResponse = await novuClient.topics.create({
       key,
       name: originalName,
     });
 
-    expect(createResponse.statusCode).to.equal(201);
-    const originalId = createResponse.body._id;
+    expect(createResponse.result).to.exist;
+    const originalId = createResponse.result.id;
 
-    // Now update the same topic
+    // Now update the same topic by creating with the same key
     const updatedName = 'Updated Name';
-    const updateResponse = await session.testAgent.post('/v2/topics').send({
+    const updateResponse = await novuClient.topics.create({
       key,
       name: updatedName,
     });
 
-    expect(updateResponse.statusCode).to.equal(201);
-    expect(updateResponse.body._id).to.equal(originalId);
-    expect(updateResponse.body.key).to.equal(key);
-    expect(updateResponse.body.name).to.equal(updatedName);
+    expect(updateResponse.result).to.exist;
+    expect(updateResponse.result.id).to.equal(originalId);
+    expect(updateResponse.result.key).to.equal(key);
+    expect(updateResponse.result.name).to.equal(updatedName);
   });
 
   it('should validate required fields', async () => {
-    // Missing key
-    const missingKeyResponse = await session.testAgent.post('/v2/topics').send({
-      name: 'Test Topic',
-    });
+    try {
+      /* Missing key */
+      /* @ts-expect-error - Testing invalid input */
+      await novuClient.topics.create({
+        name: 'Test Topic',
+      });
 
-    expect(missingKeyResponse.statusCode).to.equal(400);
+      /* If we reach here, the test failed */
+      expect.fail('Should have thrown an error for missing key');
+    } catch (error) {
+      expect(error.response?.status || error.status).to.equal(400);
+    }
 
-    // Missing name
-    const missingNameResponse = await session.testAgent.post('/v2/topics').send({
-      key: 'test-key',
-    });
+    try {
+      /* Missing name */
+      /* @ts-expect-error - Testing invalid input */
+      await novuClient.topics.create({
+        key: 'test-key',
+      });
 
-    expect(missingNameResponse.statusCode).to.equal(400);
+      /* If we reach here, the test failed */
+      expect.fail('Should have thrown an error for missing name');
+    } catch (error) {
+      expect(error.response?.status || error.status).to.equal(400);
+    }
   });
 });

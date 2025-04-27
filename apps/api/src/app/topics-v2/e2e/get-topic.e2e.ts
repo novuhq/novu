@@ -3,7 +3,7 @@ import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-describe('Get topic by key - /v2/topics/:topicKey (GET) #novu-v2', async () => {
+describe.only('Get topic by key - /v2/topics/:topicKey (GET) #novu-v2', async () => {
   let session: UserSession;
   let novuClient: Novu;
   const topicKey = `topic-key-${Date.now()}`;

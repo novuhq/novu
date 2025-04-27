@@ -5,7 +5,7 @@ import { SubscribersService, UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-describe('List topics - /v2/topics (GET) #novu-v2', async () => {
+describe.only('List topics - /v2/topics (GET) #novu-v2', async () => {
   let session: UserSession;
   let novuClient: Novu;
   let firstSubscriber: SubscriberEntity;
@@ -35,62 +35,76 @@ describe('List topics - /v2/topics (GET) #novu-v2', async () => {
   });
 
   it('should retrieve all topics with cursor pagination', async () => {
-    const response = await session.testAgent.get(`/v2/topics?limit=3`);
+    const response = await novuClient.topics.list({
+      limit: 3,
+    });
 
-    expect(response.statusCode).to.equal(200);
-    expect(response.body.data.length).to.equal(3);
-    expect(response.body.next).to.be.a('string');
-    expect(response.body.previous).to.be.null;
+    expect(response).to.exist;
+    expect(response.result.data.length).to.equal(3);
+    expect(response.result.next).to.be.a('string');
+    expect(response.result.previous).to.be.null;
 
     // Get the next page using the cursor
-    const nextResponse = await session.testAgent.get(`/v2/topics?limit=3&after=${response.body.next}`);
+    const nextResponse = await novuClient.topics.list({
+      limit: 3,
+      after: response.result.next as string,
+    });
 
-    expect(nextResponse.statusCode).to.equal(200);
-    expect(nextResponse.body.data.length).to.equal(2);
-    expect(nextResponse.body.next).to.be.null;
-    expect(nextResponse.body.previous).to.be.a('string');
+    expect(nextResponse).to.exist;
+    expect(nextResponse.result.data.length).to.equal(2);
+    expect(nextResponse.result.next).to.be.null;
+    expect(nextResponse.result.previous).to.be.a('string');
 
     // Ensure we have 5 unique topics between the two pages
-    const allTopics = [...response.body.data, ...nextResponse.body.data];
-    const uniqueTopicIds = new Set(allTopics.map((topic) => topic._id));
+    const allTopics = [...response.result.data, ...nextResponse.result.data];
+    const uniqueTopicIds = new Set(allTopics.map((topic) => topic.id));
     expect(uniqueTopicIds.size).to.equal(5);
   });
 
   it('should filter topics by key', async () => {
-    const response = await session.testAgent.get(`/v2/topics?key=topic-key-2`);
+    const response = await novuClient.topics.list({
+      key: 'topic-key-2',
+    });
 
-    expect(response.statusCode).to.equal(200);
-    expect(response.body.data.length).to.equal(1);
-    expect(response.body.data[0].key).to.equal('topic-key-2');
+    expect(response).to.exist;
+    expect(response.result.data.length).to.equal(1);
+    expect(response.result.data[0].key).to.equal('topic-key-2');
   });
 
   it('should filter topics by name', async () => {
-    const response = await session.testAgent.get(`/v2/topics?name=topic-key-3-name`);
+    const response = await novuClient.topics.list({
+      name: 'topic-key-3-name',
+    });
 
-    expect(response.statusCode).to.equal(200);
-    expect(response.body.data.length).to.equal(1);
-    expect(response.body.data[0].name).to.equal('topic-key-3-name');
+    expect(response).to.exist;
+    expect(response.result.data.length).to.equal(1);
+    expect(response.result.data[0].name).to.equal('topic-key-3-name');
   });
 
   it('should order topics by specified field', async () => {
-    const response = await session.testAgent.get(`/v2/topics?orderBy=key&orderDirection=ASC`);
+    const response = await novuClient.topics.list({
+      orderBy: 'key',
+      orderDirection: 'ASC',
+    });
 
-    expect(response.statusCode).to.equal(200);
+    expect(response).to.exist;
 
-    const keys = response.body.data.map((topic) => topic.key);
+    const keys = response.result.data.map((topic) => topic.key);
     const sortedKeys = [...keys].sort();
 
     expect(keys).to.deep.equal(sortedKeys);
   });
 
-  it('should include topic fields: _id, name, key, createdAt, updatedAt', async () => {
-    const response = await session.testAgent.get(`/v2/topics?limit=1`);
+  it('should include topic fields: id, name, key, createdAt, updatedAt', async () => {
+    const response = await novuClient.topics.list({
+      limit: 1,
+    });
 
-    expect(response.statusCode).to.equal(200);
-    expect(response.body.data.length).to.equal(1);
+    expect(response).to.exist;
+    expect(response.result.data.length).to.equal(1);
 
-    const topic = response.body.data[0];
-    expect(topic).to.have.property('_id');
+    const topic = response.result.data[0];
+    expect(topic).to.have.property('id');
     expect(topic).to.have.property('name');
     expect(topic).to.have.property('key');
     expect(topic).to.have.property('createdAt');

@@ -38,25 +38,40 @@ export class ListTopicSubscriptionsUseCase {
       query.externalSubscriberId = command.subscriberId;
     }
 
-    let afterCursor;
-    let beforeCursor;
+    // Handle cursor-based pagination similar to list-topics
+    let subscription = null;
+    const id = command.before || command.after;
 
-    const id = command.after || command.before;
     if (id) {
-      const subscription = await this.topicSubscribersRepository.findOne({
-        _id: id,
+      subscription = await this.topicSubscribersRepository.findOne({
         _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+        _id: id,
       });
 
-      if (subscription) {
-        const cursorValue = { _id: subscription._id };
-        if (command.after) {
-          afterCursor = cursorValue;
-        } else {
-          beforeCursor = cursorValue;
-        }
+      if (!subscription) {
+        return {
+          data: [],
+          next: null,
+          previous: null,
+        };
       }
     }
+
+    const afterCursor =
+      command.after && subscription
+        ? {
+            sortBy: subscription._id,
+            paginateField: subscription._id,
+          }
+        : undefined;
+    const beforeCursor =
+      command.before && subscription
+        ? {
+            sortBy: subscription._id,
+            paginateField: subscription._id,
+          }
+        : undefined;
 
     // Use cursor-based pagination
     const subscriptionsPagination = await this.topicSubscribersRepository.findWithCursorBasedPagination({
