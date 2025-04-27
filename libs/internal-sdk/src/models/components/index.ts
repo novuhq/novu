@@ -93,7 +93,6 @@ export * from "./messagetemplate.js";
 export * from "./messagetemplatedto.js";
 export * from "./metadto.js";
 export * from "./monthlytypeenum.js";
-export * from "./notfoundexception.js";
 export * from "./notificationfeeditemdto.js";
 export * from "./notificationgroup.js";
 export * from "./notificationstepdata.js";

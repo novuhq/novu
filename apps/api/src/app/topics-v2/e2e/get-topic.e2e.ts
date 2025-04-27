@@ -15,28 +15,31 @@ describe('Get topic by key - /v2/topics/:topicKey (GET) #novu-v2', async () => {
     novuClient = initNovuClassSdk(session);
 
     // Create a topic to retrieve later
-    await session.testAgent.post('/v2/topics').send({
+    await novuClient.topics.create({
       key: topicKey,
       name: topicName,
     });
   });
 
   it('should retrieve a topic by its key', async () => {
-    const response = await session.testAgent.get(`/v2/topics/${topicKey}`);
+    const response = await novuClient.topics.get(topicKey);
 
-    expect(response.statusCode).to.equal(200);
-    expect(response.body).to.have.property('_id');
-    expect(response.body.key).to.equal(topicKey);
-    expect(response.body.name).to.equal(topicName);
-    expect(response.body).to.have.property('createdAt');
-    expect(response.body).to.have.property('updatedAt');
+    expect(response).to.exist;
+    expect(response.result).to.have.property('id');
+    expect(response.result.key).to.equal(topicKey);
+    expect(response.result.name).to.equal(topicName);
+    expect(response.result).to.have.property('createdAt');
+    expect(response.result).to.have.property('updatedAt');
   });
 
   it('should return 404 for a non-existent topic key', async () => {
     const nonExistentKey = 'non-existent-topic-key';
-    const response = await session.testAgent.get(`/v2/topics/${nonExistentKey}`);
-
-    expect(response.statusCode).to.equal(404);
-    expect(response.body.message).to.include(nonExistentKey);
+    try {
+      await novuClient.topics.get(nonExistentKey);
+      throw new Error('Should have failed to get non-existent topic');
+    } catch (error) {
+      expect(error.statusCode).to.equal(404);
+      expect(error.message).to.include(nonExistentKey);
+    }
   });
 });

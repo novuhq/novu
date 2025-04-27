@@ -9,7 +9,6 @@ export * from "./sdkvalidationerror.js";
 export * from "./topicscontrollercreatetopicsubscriptions.js";
 export * from "./topicscontrollerdeletetopic.js";
 export * from "./topicscontrollerdeletetopicsubscriptions.js";
-export * from "./topicscontrollergettopic.js";
 export * from "./topicscontrollerlisttopicsubscriptions.js";
 export * from "./topicscontrollerupdatetopic.js";
 export * from "./validationerrordto.js";

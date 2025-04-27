@@ -35,7 +35,6 @@ export function topicsGet(
 ): APIPromise<
   Result<
     operations.TopicsControllerGetTopicResponse,
-    | errors.TopicsControllerGetTopicResponseBody
     | errors.ErrorDto
     | errors.ErrorDto
     | errors.ValidationErrorDto
@@ -66,7 +65,6 @@ async function $do(
   [
     Result<
       operations.TopicsControllerGetTopicResponse,
-      | errors.TopicsControllerGetTopicResponseBody
       | errors.ErrorDto
       | errors.ErrorDto
       | errors.ValidationErrorDto
@@ -191,7 +189,6 @@ async function $do(
 
   const [result] = await M.match<
     operations.TopicsControllerGetTopicResponse,
-    | errors.TopicsControllerGetTopicResponseBody
     | errors.ErrorDto
     | errors.ErrorDto
     | errors.ValidationErrorDto
@@ -208,12 +205,9 @@ async function $do(
       hdrs: true,
       key: "Result",
     }),
-    M.jsonErr(404, errors.TopicsControllerGetTopicResponseBody$inboundSchema, {
-      hdrs: true,
-    }),
     M.jsonErr(414, errors.ErrorDto$inboundSchema),
     M.jsonErr(
-      [400, 401, 403, 405, 409, 413, 415],
+      [400, 401, 403, 404, 405, 409, 413, 415],
       errors.ErrorDto$inboundSchema,
       { hdrs: true },
     ),

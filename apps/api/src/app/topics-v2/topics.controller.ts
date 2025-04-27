@@ -7,7 +7,6 @@ import {
   HttpCode,
   HttpException,
   HttpStatus,
-  NotFoundException,
   Param,
   Patch,
   Post,
@@ -126,7 +125,6 @@ export class TopicsController {
   @ApiOperation({ summary: 'Get topic by key' })
   @ApiParam({ name: 'topicKey', description: 'The key identifier of the topic', type: String })
   @ApiResponse(TopicResponseDto, 200)
-  @ApiResponse(NotFoundException, 404)
   async getTopic(@UserSession() user: UserSessionData, @Param('topicKey') topicKey: string): Promise<TopicResponseDto> {
     return await this.getTopicUsecase.execute(
       GetTopicCommand.create({
