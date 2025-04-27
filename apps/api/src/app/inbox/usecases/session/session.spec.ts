@@ -2,7 +2,12 @@ import sinon from 'sinon';
 import { expect } from 'chai';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { CommunityOrganizationRepository, EnvironmentRepository, IntegrationRepository } from '@novu/dal';
-import { AnalyticsService, CreateOrUpdateSubscriberUseCase, SelectIntegration } from '@novu/application-generic';
+import {
+  AnalyticsService,
+  CreateOrUpdateSubscriberUseCase,
+  FeatureFlagsService,
+  SelectIntegration,
+} from '@novu/application-generic';
 import { ApiServiceLevelEnum, ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
 import { AuthService } from '../../../auth/services/auth.service';
 import { Session } from './session.usecase';
@@ -40,6 +45,7 @@ describe('Session', () => {
   let notificationsCount: sinon.SinonStubbedInstance<NotificationsCount>;
   let integrationRepository: sinon.SinonStubbedInstance<IntegrationRepository>;
   let organizationRepository: sinon.SinonStubbedInstance<CommunityOrganizationRepository>;
+  let featureFlagsService: sinon.SinonStubbedInstance<FeatureFlagsService>;
 
   beforeEach(() => {
     environmentRepository = sinon.createStubInstance(EnvironmentRepository);
@@ -50,6 +56,7 @@ describe('Session', () => {
     notificationsCount = sinon.createStubInstance(NotificationsCount);
     integrationRepository = sinon.createStubInstance(IntegrationRepository);
     organizationRepository = sinon.createStubInstance(CommunityOrganizationRepository);
+    featureFlagsService = sinon.createStubInstance(FeatureFlagsService);
 
     session = new Session(
       environmentRepository as any,
@@ -59,7 +66,8 @@ describe('Session', () => {
       analyticsService as any,
       notificationsCount as any,
       integrationRepository as any,
-      organizationRepository as any
+      organizationRepository as any,
+      featureFlagsService as any
     );
   });
 
@@ -209,6 +217,8 @@ describe('Session', () => {
   });
 
   it('should return the correct isSnoozeEnabled value for different service levels', async () => {
+    featureFlagsService.getFlag.resolves(true);
+
     const command: SessionCommand = {
       applicationIdentifier: 'app-id',
       subscriberId: 'subscriber-id',
