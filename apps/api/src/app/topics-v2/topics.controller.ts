@@ -142,7 +142,6 @@ export class TopicsController {
   @ApiOperation({ summary: 'Update topic by key' })
   @ApiParam({ name: 'topicKey', description: 'The key identifier of the topic', type: String })
   @ApiResponse(TopicResponseDto, 200)
-  @ApiResponse(TopicResponseDto, 404)
   async updateTopic(
     @UserSession() user: UserSessionData,
     @Param('topicKey') topicKey: string,
@@ -167,12 +166,6 @@ export class TopicsController {
   @ApiParam({ name: 'topicKey', description: 'The key identifier of the topic', type: String })
   @ApiResponse(DeleteTopicResponseDto, 200, false, true, {
     description: 'Topic deleted successfully',
-  })
-  @ApiResponse(DeleteTopicResponseDto, 409, false, true, {
-    description: 'Conflict - topic has subscribers and force flag not provided',
-  })
-  @ApiResponse(DeleteTopicResponseDto, 404, false, true, {
-    description: 'Topic not found',
   })
   async deleteTopic(
     @UserSession() user: UserSessionData,
@@ -200,7 +193,6 @@ export class TopicsController {
   @ApiOperation({ summary: 'List topic subscriptions' })
   @ApiParam({ name: 'topicKey', description: 'The key identifier of the topic', type: String })
   @ApiResponse(ListTopicSubscriptionsResponseDto, 200)
-  @ApiResponse(ListTopicSubscriptionsResponseDto, 404)
   async listTopicSubscriptions(
     @UserSession() user: UserSessionData,
     @Param('topicKey') topicKey: string,
@@ -229,14 +221,11 @@ export class TopicsController {
   @SdkMethodName('subscribe')
   @ApiOperation({ summary: 'Create topic subscriptions, if the topic does not exist, it will be created.' })
   @ApiParam({ name: 'topicKey', description: 'The key identifier of the topic', type: String })
-  @ApiResponse(CreateTopicSubscriptionsResponseDto, 200, false, true, {
+  @ApiResponse(CreateTopicSubscriptionsResponseDto, 201, false, true, {
     description: 'Subscriptions created successfully',
   })
   @ApiResponse(CreateTopicSubscriptionsResponseDto, 207, false, true, {
     description: 'Partial success - some subscriptions created, some failed',
-  })
-  @ApiResponse(CreateTopicSubscriptionsResponseDto, 404, false, true, {
-    description: 'Topic not found',
   })
   async createTopicSubscriptions(
     @UserSession() user: UserSessionData,
@@ -287,9 +276,6 @@ export class TopicsController {
   })
   @ApiResponse(DeleteTopicSubscriptionsResponseDto, 207, false, true, {
     description: 'Partial success - some subscriptions deleted, some failed',
-  })
-  @ApiResponse(DeleteTopicSubscriptionsResponseDto, 404, false, true, {
-    description: 'Topic not found',
   })
   async deleteTopicSubscriptions(
     @UserSession() user: UserSessionData,

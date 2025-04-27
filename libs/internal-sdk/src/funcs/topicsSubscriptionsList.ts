@@ -34,7 +34,6 @@ export function topicsSubscriptionsList(
 ): APIPromise<
   Result<
     operations.TopicsControllerListTopicSubscriptionsResponse,
-    | errors.TopicsControllerListTopicSubscriptionsResponseBody
     | errors.ErrorDto
     | errors.ErrorDto
     | errors.ValidationErrorDto
@@ -63,7 +62,6 @@ async function $do(
   [
     Result<
       operations.TopicsControllerListTopicSubscriptionsResponse,
-      | errors.TopicsControllerListTopicSubscriptionsResponseBody
       | errors.ErrorDto
       | errors.ErrorDto
       | errors.ValidationErrorDto
@@ -195,7 +193,6 @@ async function $do(
 
   const [result] = await M.match<
     operations.TopicsControllerListTopicSubscriptionsResponse,
-    | errors.TopicsControllerListTopicSubscriptionsResponseBody
     | errors.ErrorDto
     | errors.ErrorDto
     | errors.ValidationErrorDto
@@ -213,14 +210,9 @@ async function $do(
       operations.TopicsControllerListTopicSubscriptionsResponse$inboundSchema,
       { hdrs: true, key: "Result" },
     ),
-    M.jsonErr(
-      404,
-      errors.TopicsControllerListTopicSubscriptionsResponseBody$inboundSchema,
-      { hdrs: true },
-    ),
     M.jsonErr(414, errors.ErrorDto$inboundSchema),
     M.jsonErr(
-      [400, 401, 403, 405, 409, 413, 415],
+      [400, 401, 403, 404, 405, 409, 413, 415],
       errors.ErrorDto$inboundSchema,
       { hdrs: true },
     ),
