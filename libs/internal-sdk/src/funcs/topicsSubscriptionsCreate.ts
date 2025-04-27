@@ -28,7 +28,7 @@ import { Result } from "../types/fp.js";
 /**
  * Create topic subscriptions, if the topic does not exist, it will be created.
  */
-export function topicsSubscriptionsSubscribe(
+export function topicsSubscriptionsCreate(
   client: NovuCore,
   createTopicSubscriptionsRequestDto:
     components.CreateTopicSubscriptionsRequestDto,

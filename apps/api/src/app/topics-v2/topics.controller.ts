@@ -218,7 +218,7 @@ export class TopicsController {
   @UserAuthentication()
   @ExternalApiAccessible()
   @SdkGroupName('Topics.Subscriptions')
-  @SdkMethodName('subscribe')
+  @SdkMethodName('create')
   @ApiOperation({ summary: 'Create topic subscriptions, if the topic does not exist, it will be created.' })
   @ApiParam({ name: 'topicKey', description: 'The key identifier of the topic', type: String })
   @ApiResponse(CreateTopicSubscriptionsResponseDto, 201, false, true, {

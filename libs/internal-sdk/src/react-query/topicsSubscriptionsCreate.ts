@@ -8,7 +8,7 @@ import {
   UseMutationResult,
 } from "@tanstack/react-query";
 import { NovuCore } from "../core.js";
-import { topicsSubscriptionsSubscribe } from "../funcs/topicsSubscriptionsSubscribe.js";
+import { topicsSubscriptionsCreate } from "../funcs/topicsSubscriptionsCreate.js";
 import { combineSignals } from "../lib/primitives.js";
 import { RequestOptions } from "../lib/sdks.js";
 import * as components from "../models/components/index.js";
@@ -17,7 +17,7 @@ import { unwrapAsync } from "../types/fp.js";
 import { useNovuContext } from "./_context.js";
 import { MutationHookOptions } from "./_types.js";
 
-export type TopicsSubscriptionsSubscribeMutationVariables = {
+export type TopicsSubscriptionsCreateMutationVariables = {
   createTopicSubscriptionsRequestDto:
     components.CreateTopicSubscriptionsRequestDto;
   topicKey: string;
@@ -25,51 +25,51 @@ export type TopicsSubscriptionsSubscribeMutationVariables = {
   options?: RequestOptions;
 };
 
-export type TopicsSubscriptionsSubscribeMutationData =
+export type TopicsSubscriptionsCreateMutationData =
   operations.TopicsControllerCreateTopicSubscriptionsResponse;
 
 /**
  * Create topic subscriptions, if the topic does not exist, it will be created.
  */
-export function useTopicsSubscriptionsSubscribeMutation(
+export function useTopicsSubscriptionsCreateMutation(
   options?: MutationHookOptions<
-    TopicsSubscriptionsSubscribeMutationData,
+    TopicsSubscriptionsCreateMutationData,
     Error,
-    TopicsSubscriptionsSubscribeMutationVariables
+    TopicsSubscriptionsCreateMutationVariables
   >,
 ): UseMutationResult<
-  TopicsSubscriptionsSubscribeMutationData,
+  TopicsSubscriptionsCreateMutationData,
   Error,
-  TopicsSubscriptionsSubscribeMutationVariables
+  TopicsSubscriptionsCreateMutationVariables
 > {
   const client = useNovuContext();
   return useMutation({
-    ...buildTopicsSubscriptionsSubscribeMutation(client, options),
+    ...buildTopicsSubscriptionsCreateMutation(client, options),
     ...options,
   });
 }
 
-export function mutationKeyTopicsSubscriptionsSubscribe(): MutationKey {
-  return ["@novu/api", "Subscriptions", "subscribe"];
+export function mutationKeyTopicsSubscriptionsCreate(): MutationKey {
+  return ["@novu/api", "Subscriptions", "create"];
 }
 
-export function buildTopicsSubscriptionsSubscribeMutation(
+export function buildTopicsSubscriptionsCreateMutation(
   client$: NovuCore,
   hookOptions?: RequestOptions,
 ): {
   mutationKey: MutationKey;
   mutationFn: (
-    variables: TopicsSubscriptionsSubscribeMutationVariables,
-  ) => Promise<TopicsSubscriptionsSubscribeMutationData>;
+    variables: TopicsSubscriptionsCreateMutationVariables,
+  ) => Promise<TopicsSubscriptionsCreateMutationData>;
 } {
   return {
-    mutationKey: mutationKeyTopicsSubscriptionsSubscribe(),
-    mutationFn: function topicsSubscriptionsSubscribeMutationFn({
+    mutationKey: mutationKeyTopicsSubscriptionsCreate(),
+    mutationFn: function topicsSubscriptionsCreateMutationFn({
       createTopicSubscriptionsRequestDto,
       topicKey,
       idempotencyKey,
       options,
-    }): Promise<TopicsSubscriptionsSubscribeMutationData> {
+    }): Promise<TopicsSubscriptionsCreateMutationData> {
       const mergedOptions = {
         ...hookOptions,
         ...options,
@@ -82,7 +82,7 @@ export function buildTopicsSubscriptionsSubscribeMutation(
           ),
         },
       };
-      return unwrapAsync(topicsSubscriptionsSubscribe(
+      return unwrapAsync(topicsSubscriptionsCreate(
         client$,
         createTopicSubscriptionsRequestDto,
         topicKey,
