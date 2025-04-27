@@ -13,6 +13,7 @@ import { EnvironmentBranchIcon } from '../primitives/environment-branch-icon';
 import { Separator } from '../primitives/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../primitives/table';
 import TruncatedText from '../truncated-text';
+import { IS_SELF_HOSTED } from '../../config';
 
 export function FreeTierState() {
   const track = useTelemetry();
@@ -90,11 +91,16 @@ export function FreeTierState() {
               track(TelemetryEvent.UPGRADE_TO_TEAM_TIER_CLICK, {
                 source: 'environments-page',
               });
-              navigate(ROUTES.SETTINGS_BILLING);
+
+              if (IS_SELF_HOSTED) {
+                window.open('https://docs.novu.co/platform/overview', '_blank');
+              } else {
+                navigate(ROUTES.SETTINGS_BILLING);
+              }
             }}
             leadingIcon={RiSparkling2Line}
           >
-            Upgrade to Team Tier
+            {IS_SELF_HOSTED ? 'Migrate to Cloud' : 'Upgrade to Team Tier'}
           </Button>
           <Link to={'https://docs.novu.co/platform/concepts/environments'} target="_blank">
             <LinkButton size="sm" leadingIcon={RiBookMarkedLine}>

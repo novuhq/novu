@@ -1,15 +1,12 @@
-import { LinkButton } from '@/components/primitives/button-link';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/primitives/form/form';
 import { Input } from '@/components/primitives/input';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives/popover';
 import { Separator } from '@/components/primitives/separator';
 import { Switch } from '@/components/primitives/switch';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
-import { ROUTES } from '@/utils/routes';
 import { ApiServiceLevelEnum } from '@novu/shared';
 import { Control } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
 import { IS_SELF_HOSTED } from '../../../config';
+import { RestrictedSwitch } from '@/components/primitives/restricted-switch';
 
 type IntegrationFormData = {
   name: string;
@@ -32,44 +29,23 @@ type GeneralSettingsProps = {
 
 function NovuBrandingSwitch({ value, onChange }: { value: boolean | undefined; onChange: (value: boolean) => void }) {
   const { subscription, isLoading } = useFetchSubscription();
-  const navigate = useNavigate();
 
   const isFreePlan = subscription?.apiServiceLevel === ApiServiceLevelEnum.FREE;
-  const disabled = isFreePlan || isLoading || IS_SELF_HOSTED;
-  const checked = disabled ? false : value;
+  const checked = value ?? false;
+
+  const handleSwitchChange = (newValue: boolean) => {
+    onChange(newValue);
+  };
 
   return (
     <div className="flex items-center">
-      <Popover modal>
-        <PopoverTrigger asChild>
-          <Switch onCheckedChange={onChange} checked={checked} />
-        </PopoverTrigger>
-        {(isFreePlan || IS_SELF_HOSTED) && (
-          <PopoverContent className="w-72" align="end" sideOffset={4}>
-            <div className="flex flex-col gap-2 p-1">
-              <div className="flex flex-col gap-1">
-                <h4 className="text-xs font-semibold">{IS_SELF_HOSTED ? 'Cloud Feature' : 'Premium Feature'}</h4>
-                <p className="text-muted-foreground text-xs">
-                  {IS_SELF_HOSTED
-                    ? 'Remove Novu branding is only available on cloud plans.'
-                    : 'Remove Novu branding from your inbox by upgrading to our paid plans.'}
-                </p>
-              </div>
-              {!IS_SELF_HOSTED && (
-                <div className="flex justify-end">
-                  <LinkButton
-                    size="sm"
-                    variant="primary"
-                    onClick={() => navigate(ROUTES.SETTINGS_BILLING + '?utm_source=remove_branding_prompt')}
-                  >
-                    Upgrade Plan
-                  </LinkButton>
-                </div>
-              )}
-            </div>
-          </PopoverContent>
-        )}
-      </Popover>
+      <RestrictedSwitch
+        isFreePlan={isFreePlan}
+        IS_SELF_HOSTED={IS_SELF_HOSTED}
+        checked={checked}
+        onChange={handleSwitchChange}
+        disabled={isLoading}
+      />
     </div>
   );
 }
