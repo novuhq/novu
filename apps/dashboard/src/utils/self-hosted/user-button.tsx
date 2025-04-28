@@ -1,6 +1,6 @@
 import { useUser } from './index';
 import { Button } from '@/components/primitives/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/primitives/avatar';
+import { Avatar, AvatarImage } from '@/components/primitives/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,11 +11,8 @@ import {
 import { Cloud } from 'lucide-react';
 import { useState, useRef } from 'react';
 import { UserAvatar } from './icons';
-
-function getInitials(firstName?: string, lastName?: string) {
-  if (!firstName && !lastName) return 'U';
-  return `${firstName?.[0] || ''}`.toUpperCase();
-}
+import { openInNewTab } from '../url';
+import { SELF_HOSTED_UPGRADE_REDIRECT_URL } from '../../config';
 
 export function UserButton() {
   const { user } = useUser() as {
@@ -27,7 +24,6 @@ export function UserButton() {
   if (!user) return null;
 
   const userEmail = user.emailAddresses?.[0]?.emailAddress || '';
-  const userInitials = getInitials(user.firstName, user.lastName);
   const userName = user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : userEmail;
 
   return (
@@ -41,10 +37,7 @@ export function UserButton() {
             className="h-6 w-6 rounded-full bg-white p-0 hover:bg-gray-50 focus:outline-none focus:ring-0 focus-visible:shadow-none"
           >
             <Avatar className="h-6 w-6 border border-gray-200">
-              <AvatarImage src={undefined} alt={userName} />
-              <AvatarFallback className="h-6 w-6 bg-gray-100 text-sm font-medium text-gray-700">
-                {userInitials}
-              </AvatarFallback>
+              <AvatarImage src={`${window.location.origin}/images/avatar.svg`} alt={userName} />
             </Avatar>
           </Button>
         </DropdownMenuTrigger>
@@ -59,10 +52,10 @@ export function UserButton() {
           <DropdownMenuSeparator />
           <DropdownMenuItem
             className="flex cursor-pointer items-center gap-2 text-gray-700 hover:bg-gray-50"
-            onClick={() => window.open('https://novu.co', '_blank')}
+            onClick={() => openInNewTab(SELF_HOSTED_UPGRADE_REDIRECT_URL + '?utm_campaign=user_button')}
           >
             <Cloud className="h-4 w-4 text-gray-500" />
-            <span>Try Novu Cloud</span>
+            <span>Switch to Managed Cloud or Enterprise Self-Hosted</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

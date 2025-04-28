@@ -12,6 +12,8 @@ import { ChevronDown } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { NovuLogoBlackBg } from './icons';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/primitives/tooltip';
+import { openInNewTab } from '../url';
+import { SELF_HOSTED_UPGRADE_REDIRECT_URL } from '../../config';
 
 export function OrganizationSwitcher() {
   const { organization } = useOrganization() as { organization: { name: string } | undefined };
@@ -56,13 +58,12 @@ export function OrganizationSwitcher() {
           </DropdownMenuItem>
           <DropdownMenuSeparator className="my-1" />
           <DropdownMenuItem className="flex items-center gap-2 text-gray-700 hover:bg-transparent" asChild>
-            {/* <div className="w-full"> */}
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
                   type="button"
-                  disabled
                   className="flex w-full items-center gap-2 rounded-md bg-white px-2 py-1.5 text-left text-gray-400 transition-colors duration-150 hover:bg-gray-50 focus:outline-none focus:ring-0"
+                  onClick={() => openInNewTab(SELF_HOSTED_UPGRADE_REDIRECT_URL + '?utm_campaign=create_organization')}
                 >
                   <span className="flex h-6 w-6 items-center justify-center rounded-full border border-dashed border-gray-300 text-2xl font-light">
                     <span className="-mt-0.5 leading-none">+</span>
@@ -71,12 +72,11 @@ export function OrganizationSwitcher() {
                 </button>
               </TooltipTrigger>
               <TooltipContent side="right" className="ml-3 bg-neutral-950 text-white">
-                <span>Switch to Novu Cloud to</span>
+                <span>Switch to Cloud or Enterprise Self-Hosted</span>
                 <br />
-                <span>manage multiple organizations.</span>
+                <span>to manage multiple organizations.</span>
               </TooltipContent>
             </Tooltip>
-            {/* </div> */}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
