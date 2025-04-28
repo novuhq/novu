@@ -103,6 +103,10 @@ export type MessageResponseDto = {
    */
   createdAt: string;
   /**
+   * Array of delivery dates for the message, if the message has multiple delivery dates, for example after being snoozed
+   */
+  deliveredAt?: Array<string> | undefined;
+  /**
    * Last seen date of the message, if available
    */
   lastSeenDate?: string | undefined;
@@ -134,6 +138,10 @@ export type MessageResponseDto = {
    * Indicates if the message has been seen
    */
   seen: boolean;
+  /**
+   * Date when the message will be unsnoozed
+   */
+  snoozedUntil?: string | undefined;
   /**
    * Email address associated with the message, if applicable
    */
@@ -344,6 +352,7 @@ export const MessageResponseDto$inboundSchema: z.ZodType<
   template: WorkflowResponse$inboundSchema.optional(),
   templateIdentifier: z.string().optional(),
   createdAt: z.string(),
+  deliveredAt: z.array(z.string()).optional(),
   lastSeenDate: z.string().optional(),
   lastReadDate: z.string().optional(),
   content: z.union([EmailBlock$inboundSchema, z.string()]),
@@ -352,6 +361,7 @@ export const MessageResponseDto$inboundSchema: z.ZodType<
   channel: ChannelTypeEnum$inboundSchema,
   read: z.boolean(),
   seen: z.boolean(),
+  snoozedUntil: z.string().optional(),
   email: z.string().optional(),
   phone: z.string().optional(),
   directWebhookUrl: z.string().optional(),
@@ -391,6 +401,7 @@ export type MessageResponseDto$Outbound = {
   template?: WorkflowResponse$Outbound | undefined;
   templateIdentifier?: string | undefined;
   createdAt: string;
+  deliveredAt?: Array<string> | undefined;
   lastSeenDate?: string | undefined;
   lastReadDate?: string | undefined;
   content: EmailBlock$Outbound | string;
@@ -399,6 +410,7 @@ export type MessageResponseDto$Outbound = {
   channel: string;
   read: boolean;
   seen: boolean;
+  snoozedUntil?: string | undefined;
   email?: string | undefined;
   phone?: string | undefined;
   directWebhookUrl?: string | undefined;
@@ -431,6 +443,7 @@ export const MessageResponseDto$outboundSchema: z.ZodType<
   template: WorkflowResponse$outboundSchema.optional(),
   templateIdentifier: z.string().optional(),
   createdAt: z.string(),
+  deliveredAt: z.array(z.string()).optional(),
   lastSeenDate: z.string().optional(),
   lastReadDate: z.string().optional(),
   content: z.union([EmailBlock$outboundSchema, z.string()]),
@@ -439,6 +452,7 @@ export const MessageResponseDto$outboundSchema: z.ZodType<
   channel: ChannelTypeEnum$outboundSchema,
   read: z.boolean(),
   seen: z.boolean(),
+  snoozedUntil: z.string().optional(),
   email: z.string().optional(),
   phone: z.string().optional(),
   directWebhookUrl: z.string().optional(),
