@@ -5,7 +5,7 @@ import { ApiServiceLevelEnum } from '@novu/shared';
 import { GetEventResourceUsage } from '@novu/ee-billing';
 
 process.env.LAUNCH_DARKLY_SDK_KEY = ''; // disable Launch Darkly to allow test to define FF state
-process.env.CLERK_ENABLED = 'false';
+// process.env.CLERK_ENABLED = 'true';
 describe.only('Resource Limiting #novu-v2', () => {
   let session: UserSession;
   const pathDefault = '/v1/testing/resource-limiting-default';
