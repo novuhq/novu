@@ -109,6 +109,7 @@ services:
       NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
       BROADCAST_QUEUE_CHUNK_SIZE: ${BROADCAST_QUEUE_CHUNK_SIZE}
       MULTICAST_QUEUE_CHUNK_SIZE: ${MULTICAST_QUEUE_CHUNK_SIZE}
+      API_ROOT_URL: http://api:${API_PORT}
 
   ws:
     image: 'ghcr.io/novuhq/novu/ws:2.1.1'
@@ -138,12 +139,12 @@ services:
     ports:
       - ${WS_PORT}:${WS_PORT}
 
-  web:
-    image: 'ghcr.io/novuhq/novu/web:2.1.1'
+  dashbord:
+    image: 'ghcr.io/novuhq/novu/dashboard:2.1.1'
     depends_on:
       - api
       - worker
-    container_name: web
+    container_name: dashbord
     restart: unless-stopped
     logging:
       driver: 'json-file'
@@ -151,14 +152,11 @@ services:
         max-size: '50m'
         max-file: '5'
     environment:
-      REACT_APP_API_URL: ${API_ROOT_URL}
-      REACT_APP_ENVIRONMENT: ${NODE_ENV}
-      REACT_APP_WIDGET_EMBED_PATH: ${WIDGET_EMBED_PATH}
-      REACT_APP_IS_SELF_HOSTED: 'true'
-      REACT_APP_WS_URL: ${REACT_APP_WS_URL}
+      VITE_API_HOSTNAME: ${VITE_API_HOSTNAME}
+      VITE_SELF_HOSTED: ${VITE_SELF_HOSTED}
+      VITE_WEBSOCKET_HOSTNAME: ${VITE_WEBSOCKET_HOSTNAME}
     ports:
-      - 4200:4200
-    command: ['/bin/sh', '-c', 'pnpm run envsetup:docker && pnpm run start:static:build']
+      - 4201:4201
 
 volumes:
   mongodb: ~
