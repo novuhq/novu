@@ -8,6 +8,8 @@ const mapSingleItem = ({
   content,
   read,
   archived,
+  snoozedUntil,
+  deliveredAt,
   createdAt,
   lastReadDate,
   archivedAt,
@@ -39,6 +41,13 @@ const mapSingleItem = ({
     to,
     isRead: read,
     isArchived: archived,
+    isSnoozed: !!snoozedUntil,
+    ...(deliveredAt && {
+      deliveredAt,
+    }),
+    ...(snoozedUntil && {
+      snoozedUntil,
+    }),
     createdAt,
     readAt: lastReadDate,
     archivedAt,

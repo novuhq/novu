@@ -16,6 +16,10 @@ export class NotificationsFilter implements NotificationFilter {
   @IsOptional()
   @IsBoolean()
   archived?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  snoozed?: boolean;
 }
 
 export class GetNotificationsCountRequestDto {

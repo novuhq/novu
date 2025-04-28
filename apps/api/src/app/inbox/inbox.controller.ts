@@ -47,6 +47,11 @@ import { UpdatePreferencesRequestDto } from './dtos/update-preferences-request.d
 import { UpdatePreferences } from './usecases/update-preferences/update-preferences.usecase';
 import { UpdatePreferencesCommand } from './usecases/update-preferences/update-preferences.command';
 import { GetPreferencesRequestDto } from './dtos/get-preferences-request.dto';
+import { SnoozeNotificationRequestDto } from './dtos/snooze-notification-request.dto';
+import { SnoozeNotificationCommand } from './usecases/snooze-notification/snooze-notification.command';
+import { SnoozeNotification } from './usecases/snooze-notification/snooze-notification.usecase';
+import { UnsnoozeNotificationCommand } from './usecases/unsnooze-notification/unsnooze-notification.command';
+import { UnsnoozeNotification } from './usecases/unsnooze-notification/unsnooze-notification.usecase';
 
 @ApiCommonResponses()
 @Controller('/inbox')
@@ -60,7 +65,9 @@ export class InboxController {
     private updateNotificationActionUsecase: UpdateNotificationAction,
     private updateAllNotifications: UpdateAllNotifications,
     private getInboxPreferencesUsecase: GetInboxPreferences,
-    private updatePreferencesUsecase: UpdatePreferences
+    private updatePreferencesUsecase: UpdatePreferences,
+    private snoozeNotificationUsecase: SnoozeNotification,
+    private unsnoozeNotificationUsecase: UnsnoozeNotification
   ) {}
 
   @Post('/session')
@@ -103,6 +110,7 @@ export class InboxController {
         tags: query.tags,
         read: query.read,
         archived: query.archived,
+        snoozed: query.snoozed,
       })
     );
   }
@@ -206,6 +214,40 @@ export class InboxController {
         environmentId: subscriberSession._environmentId,
         notificationId,
         archived: false,
+      })
+    );
+  }
+
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Patch('/notifications/:id/snooze')
+  async snoozeNotification(
+    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @Param('id') notificationId: string,
+    @Body() body: SnoozeNotificationRequestDto
+  ): Promise<InboxNotification> {
+    return await this.snoozeNotificationUsecase.execute(
+      SnoozeNotificationCommand.create({
+        organizationId: subscriberSession._organizationId,
+        subscriberId: subscriberSession.subscriberId,
+        environmentId: subscriberSession._environmentId,
+        notificationId,
+        snoozeUntil: body.snoozeUntil,
+      })
+    );
+  }
+
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Patch('/notifications/:id/unsnooze')
+  async unsnoozeNotification(
+    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @Param('id') notificationId: string
+  ): Promise<InboxNotification> {
+    return await this.unsnoozeNotificationUsecase.execute(
+      UnsnoozeNotificationCommand.create({
+        organizationId: subscriberSession._organizationId,
+        subscriberId: subscriberSession.subscriberId,
+        environmentId: subscriberSession._environmentId,
+        notificationId,
       })
     );
   }

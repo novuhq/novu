@@ -733,6 +733,10 @@
     "oklch",
     "Duplicable",
     "Radek",
+    "snooze",
+    "unsnooze",
+    "snoozed",
+    "unsnoozed",
     "automators",
     "calcom"
   ],

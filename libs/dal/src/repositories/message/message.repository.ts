@@ -41,6 +41,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       seen?: boolean;
       read?: boolean;
       archived?: boolean;
+      snoozed?: boolean;
       payload?: object;
     } = {},
     createdAt?: {
@@ -92,6 +93,12 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       requestQuery.archived = query.archived;
     } else {
       requestQuery.archived = { $in: [true, false] };
+    }
+
+    if (query.snoozed != null) {
+      requestQuery.snoozedUntil = { $exists: true, $ne: null };
+    } else {
+      requestQuery.snoozedUntil = { $exists: false };
     }
 
     if (createdAt != null) {
@@ -146,6 +153,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       tags,
       read,
       archived,
+      snoozed,
     }: {
       environmentId: string;
       subscriberId: string;
@@ -153,6 +161,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       tags?: string[];
       read?: boolean;
       archived?: boolean;
+      snoozed?: boolean;
     },
     options: { limit: number; offset: number; after?: string }
   ) {
@@ -180,6 +189,10 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       }
     } else {
       query.$or = [{ archived: { $exists: false } }, { archived: { $in: [true, false] } }];
+    }
+
+    if (typeof snoozed === 'boolean') {
+      query.snoozedUntil = snoozed ? { $exists: true, $ne: null } : { $eq: null };
     }
 
     return await this.cursorPagination({
@@ -214,6 +227,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       seen?: boolean;
       read?: boolean;
       archived?: boolean;
+      snoozed?: boolean;
       payload?: object;
     } = {},
     options: { limit: number; skip?: number } = { limit: 100, skip: 0 },
@@ -232,6 +246,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
         read: query.read,
         archived: query.archived,
         payload: query.payload,
+        snoozed: query.snoozed,
       },
       createdAt
     );
@@ -470,6 +485,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     seen,
     read,
     archived,
+    snoozedUntil,
   }: {
     environmentId: string;
     subscriberId: string;
@@ -477,6 +493,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     seen?: boolean;
     read?: boolean;
     archived?: boolean;
+    snoozedUntil?: Date | null;
   }) {
     const query: MessageQuery & EnforceEnvId = {
       _environmentId: environmentId,
@@ -493,6 +510,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       seen,
       read,
       archived,
+      snoozedUntil,
     });
   }
 
@@ -545,7 +563,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
 
   /**
    * Allows to update the status of queried messages at once.
-   * The status can be updated to seen, unseen, read, unread, archived or unarchived.
+   * The status can be updated to seen, unseen, read, unread, archived, unarchived, snoozed, unsnoozed.
    * Depending on the flag passed, the other flags will be updated accordingly.
    * For example:
    * seen -> { seen: true }
@@ -554,21 +572,26 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
    * unseen -> { seen: false, read: false, archived: false }
    * unread -> { seen: true, read: false, archived: false }
    * unarchived -> { seen: true, read: true, archived: false }
+   * snoozed -> { seen: true, archived: false, snoozedUntil: snoozedUntil }
+   * unsnoozed -> { seen: true, archived: false, snoozedUntil: null }
    */
   private async updateMessagesStatus({
     query,
     seen,
     read,
     archived,
+    snoozedUntil,
   }: {
     query: MessageQuery & EnforceEnvId;
     seen?: boolean;
     read?: boolean;
     archived?: boolean;
+    snoozedUntil?: Date | null;
   }) {
     const isUpdatingSeen = seen !== undefined;
     const isUpdatingRead = read !== undefined;
     const isUpdatingArchived = archived !== undefined;
+    const isUpdatingSnoozed = snoozedUntil !== undefined;
 
     let updatePayload: FilterQuery<MessageEntity> = {};
     if (isUpdatingArchived) {
@@ -597,6 +620,14 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
         lastReadDate: !seen ? null : undefined,
         archived: !seen ? false : undefined,
         archivedAt: !seen ? null : undefined,
+      };
+    } else if (isUpdatingSnoozed) {
+      updatePayload = {
+        snoozedUntil,
+        seen: true,
+        lastSeenDate: new Date(),
+        archived: false,
+        archivedAt: null,
       };
     }
 
