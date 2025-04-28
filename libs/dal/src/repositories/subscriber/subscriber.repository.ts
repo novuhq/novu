@@ -1,4 +1,5 @@
 import { DirectionEnum, EnvironmentId, ISubscribersDefine, OrganizationId } from '@novu/shared';
+import { FilterQuery } from 'mongoose';
 import { DalException } from '../../shared';
 import type { EnforceEnvOrOrgIds } from '../../types';
 import { BaseRepository } from '../base-repository';
@@ -249,7 +250,7 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
     }
 
     // Base query with environment and organization IDs
-    const baseQuery: FilterQuery<SubscriberEntity> = {
+    const baseQuery: FilterQuery<SubscriberEntity> & EnforceEnvOrOrgIds = {
       _environmentId: query.environmentId,
       _organizationId: query.organizationId,
     };
