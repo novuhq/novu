@@ -23,7 +23,7 @@ export const InAppRedirect = () => {
       </FormLabel>
       <URLInput
         options={urlTargetTypes}
-        placeholder="/tasks/{{taskId}}"
+        placeholder="/tasks/{{payload.taskId}}"
         fields={{
           urlKey: 'redirect.url',
           targetKey: 'redirect.target',

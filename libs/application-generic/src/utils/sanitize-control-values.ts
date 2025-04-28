@@ -79,7 +79,7 @@ function sanitizeEmail(controlValues: EmailControlType) {
   });
 
   const emailControls: EmailControlType = {
-    subject: controlValues.subject,
+    subject: sanitizeEmptyInput(controlValues.subject, ' '),
     body: sanitizeEmptyInput(controlValues.body, EMPTY_TIP_TAP),
     skip: controlValues.skip,
     disableOutputSanitization: controlValues.disableOutputSanitization,

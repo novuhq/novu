@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { CommunityOrganizationRepository } from '@novu/dal';
 import { AuthModule } from '../auth/auth.module';
 import { IntegrationModule } from '../integrations/integrations.module';
 import { SharedModule } from '../shared/shared.module';
@@ -9,7 +10,7 @@ import { PreferencesModule } from '../preferences';
 
 @Module({
   imports: [SharedModule, SubscribersV1Module, AuthModule, IntegrationModule, PreferencesModule],
-  providers: [...USE_CASES],
+  providers: [...USE_CASES, CommunityOrganizationRepository],
   exports: [...USE_CASES],
   controllers: [InboxController],
 })

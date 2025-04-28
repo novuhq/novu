@@ -220,11 +220,53 @@ export function mergeCommonObjectKeys(target: Record<string, unknown>, source: R
       return mergeCommonObjectKeys(tItem as Record<string, unknown>, sItem as Record<string, unknown>);
     });
 
+    /**
+     * If the merged array is longer than the target array,
+     * slice it to match the target length.
+     */
+    if (mergedArray.length > target.length) {
+      return mergedArray.slice(0, target.length);
+    }
+
+    /**
+     * if merged array is shorter than target array,
+     * fill the difference with merged object of last item
+     * and the rest of the target array
+     */
+    if (mergedArray.length < target.length) {
+      const lastItem = mergedArray[mergedArray.length - 1];
+      const fillCount = target.length - mergedArray.length;
+      const remainingItems = target.slice(mergedArray.length);
+      for (let idx = 0; idx < fillCount; idx += 1) {
+        const mergedObject = mergeCommonObjectKeys(remainingItems[idx], lastItem);
+        mergedArray.push(mergedObject);
+      }
+
+      return mergedArray;
+    }
+
     return mergedArray;
+  }
+
+  if (Array.isArray(target) && !Array.isArray(source)) {
+    console.log({ target, source });
+
+    return target.map((item) => {
+      if (isObject(item)) {
+        return mergeCommonObjectKeys(item as Record<string, unknown>, source);
+      }
+
+      return item;
+    });
   }
 
   const sIsObj = isObject(source);
   const tIsObj = isObject(target);
+
+  if (tIsObj && !sIsObj) {
+    // If source is an object and target is not, return source
+    return target;
+  }
   // If either is not an object, prefer target if both are primitives, otherwise source
   if (!sIsObj || !tIsObj) {
     /*

@@ -5,3 +5,4 @@ export * from './send-message';
 export * from './update-job-status';
 export * from './webhook-filter-backoff-strategy';
 export * from './execute-bridge-job';
+export * from './process-unsnooze-job';

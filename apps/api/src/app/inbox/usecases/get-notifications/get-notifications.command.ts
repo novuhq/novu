@@ -30,4 +30,8 @@ export class GetNotificationsCommand extends EnvironmentWithSubscriber implement
   @IsOptional()
   @IsBoolean()
   readonly archived?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  readonly snoozed?: boolean;
 }
