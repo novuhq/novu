@@ -119,7 +119,7 @@ export class Session {
     const isSnoozeEnabled = await this.isSnoozeEnabled(
       environment._organizationId,
       environment._id,
-      command.subscriberId
+      command.subscriber.subscriberId
     );
 
     /**
