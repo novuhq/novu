@@ -9,6 +9,7 @@ import type {
   PreferencesFilter,
   InboxProps,
 } from '@novu/js/ui';
+import type { Subscriber } from '@novu/js';
 
 export type NotificationsRenderer = (notification: Notification) => React.ReactNode;
 export type SubjectRenderer = (notification: Notification) => React.ReactNode;
@@ -30,7 +31,6 @@ export type DefaultInboxProps = {
 
 export type BaseProps = {
   applicationIdentifier: string;
-  subscriberId: string;
   subscriberHash?: string;
   backendUrl?: string;
   socketUrl?: string;
@@ -39,7 +39,18 @@ export type BaseProps = {
   tabs?: Array<Tab>;
   preferencesFilter?: PreferencesFilter;
   routerPush?: RouterPush;
-};
+} & (
+  | {
+      // TODO: Backward compatibility support - remove in future versions (see NV-5801)
+      /** @deprecated Use subscriber prop instead */
+      subscriberId: string;
+      subscriber?: never;
+    }
+  | {
+      subscriber: Subscriber | string;
+      subscriberId?: never;
+    }
+);
 
 export type NotificationRendererProps = {
   renderNotification: NotificationsRenderer;
