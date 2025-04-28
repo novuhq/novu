@@ -1,3 +1,5 @@
+import { DEFAULT_ARRAY_ELEMENTS } from './usecases/create-variables-object/create-variables-object.usecase';
+
 export function fullCodeSnippet() {
   return {
     type: 'doc',
@@ -480,49 +482,19 @@ export function previewPayloadExample() {
         section: 'section',
       },
       body: 'body',
-      origins: [
-        {
-          country: 'country',
-          id: 'id',
-          time: 'time',
-        },
-        {
-          country: 'country',
-          id: 'id',
-          time: 'time',
-        },
-        {
-          country: 'country',
-          id: 'id',
-          time: 'time',
-        },
-      ],
-      students: [
-        {
-          id: 'id',
-          name: 'name',
-        },
-        {
-          id: 'id',
-          name: 'name',
-        },
-        {
-          id: 'id',
-          name: 'name',
-        },
-      ],
+      origins: Array(DEFAULT_ARRAY_ELEMENTS).fill({
+        country: 'country',
+        id: 'id',
+        time: 'time',
+      }),
+      students: Array(DEFAULT_ARRAY_ELEMENTS).fill({
+        id: 'id',
+        name: 'name',
+      }),
       food: {
-        items: [
-          {
-            name: 'name',
-          },
-          {
-            name: 'name',
-          },
-          {
-            name: 'name',
-          },
-        ],
+        items: Array(DEFAULT_ARRAY_ELEMENTS).fill({
+          name: 'name',
+        }),
       },
     },
     subscriber: {
