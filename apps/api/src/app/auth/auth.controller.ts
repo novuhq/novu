@@ -41,7 +41,7 @@ import { UserAuthentication } from '../shared/framework/swagger/api.key.security
 import { SwitchOrganizationCommand } from './usecases/switch-organization/switch-organization.command';
 import { SwitchOrganization } from './usecases/switch-organization/switch-organization.usecase';
 import { AuthService } from './services/auth.service';
-import { SystemOrganizationService } from './services/system-organization.service';
+import { CommunityEditionService } from './services/system-organization.service';
 
 @ApiCommonResponses()
 @Controller('/auth')
@@ -60,7 +60,7 @@ export class AuthController {
     private passwordResetUsecase: PasswordReset,
     private updatePasswordUsecase: UpdatePassword,
     private logger: PinoLogger,
-    private systemOrganizationService: SystemOrganizationService
+    private systemOrganizationService: CommunityEditionService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -193,6 +193,6 @@ export class AuthController {
 
   @Get('/self-hosted')
   async logMeIn() {
-    return this.systemOrganizationService.getSystemOrganizationToken();
+    return this.systemOrganizationService.getCommunityEditionOrganizationToken();
   }
 }
