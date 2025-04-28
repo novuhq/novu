@@ -35,8 +35,12 @@ import { buildLiquidParser, Variable } from '../../util/template-parser/liquid-p
 import { buildVariables } from '../../util/build-variables';
 import { mergeCommonObjectKeys } from '../../util/utils';
 import { buildVariablesSchema } from '../../util/create-schema';
-import { isObjectMailyJSONContent } from '../../../environments-v1/usecases/output-renderers/maily-to-liquid/wrap-maily-in-liquid.command';
 import { GeneratePreviewResponseDto, JSONSchemaDto, PreviewPayloadDto, StepResponseDto } from '../../dtos';
+import {
+  replaceMailyVariables,
+  isStringifiedMailyJSONContent,
+  isObjectMailyJSONContent,
+} from '../../../shared/helpers/maily-utils';
 
 const LOG_CONTEXT = 'GeneratePreviewUsecase';
 
@@ -195,8 +199,8 @@ export class PreviewUsecase {
 
     if (userPayloadExample && Object.keys(userPayloadExample).length > 0) {
       return mergeCommonObjectKeys(
-        payloadExample as Record<string, unknown>,
-        userPayloadExample as Record<string, unknown>
+        userPayloadExample as Record<string, unknown>, // treat the FE payload as target
+        payloadExample as Record<string, unknown> // treat the BE payload as source
       );
     }
 
@@ -298,22 +302,33 @@ export class PreviewUsecase {
   /**
    * Fix the control values that have invalid variables used and replace them with empty strings
    */
-  private fixControlValueInvalidVariables(controlValues: unknown, invalidVariables: Variable[]): unknown {
+  private fixControlValueInvalidVariables(controlValue: unknown, invalidVariables: Variable[]): unknown {
     try {
-      let controlValuesString = JSON.stringify(controlValues);
+      const EMPTY_STRING = '';
+      const isMailyJSONContent = isStringifiedMailyJSONContent(controlValue);
+      let controlValuesString = isMailyJSONContent ? controlValue : JSON.stringify(controlValue);
 
       for (const invalidVariable of invalidVariables) {
-        if (!controlValuesString.includes(invalidVariable.output)) {
+        let variableOutput = invalidVariable.output;
+
+        if (isMailyJSONContent) {
+          variableOutput = variableOutput.replace(/\{\{|\}\}/g, '').trim();
+          controlValuesString = JSON.stringify(
+            replaceMailyVariables(controlValuesString, variableOutput, EMPTY_STRING)
+          );
           continue;
         }
 
-        const EMPTY_STRING = '';
-        controlValuesString = replaceAll(controlValuesString, invalidVariable.output, EMPTY_STRING);
+        if (!controlValuesString.includes(variableOutput)) {
+          continue;
+        }
+
+        controlValuesString = replaceAll(controlValuesString, variableOutput, EMPTY_STRING);
       }
 
       return JSON.parse(controlValuesString);
     } catch (error) {
-      return controlValues;
+      return controlValue;
     }
   }
 

@@ -10,7 +10,8 @@ export class AfroSmsHandler extends BaseSmsHandler {
   buildProvider(credentials: ICredentials) {
     this.provider = new AfroSmsProvider({
       apiKey: credentials.apiKey,
-      senderName: credentials.from,
+      senderName: credentials.senderName,
+      from: credentials.from,
     });
   }
 }
