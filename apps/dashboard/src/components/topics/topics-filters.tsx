@@ -4,12 +4,17 @@ import { Form, FormField, FormItem, FormRoot } from '@/components/primitives/for
 import { QueryKeys } from '@/utils/query-keys';
 import { cn } from '@/utils/ui';
 import { useQueryClient } from '@tanstack/react-query';
-import { HTMLAttributes, useEffect, useMemo, useRef, useState } from 'react';
+import { HTMLAttributes, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { TopicsFilter } from './hooks/use-topics-url-state';
 
+type FilterFormValues = {
+  key: string;
+  name: string;
+};
+
 export type TopicsFiltersProps = HTMLAttributes<HTMLFormElement> & {
-  onFiltersChange: (filter: TopicsFilter) => void;
+  onFiltersChange: (filter: Partial<TopicsFilter>) => void;
   filterValues: TopicsFilter;
   onReset?: () => void;
 };
@@ -17,11 +22,9 @@ export type TopicsFiltersProps = HTMLAttributes<HTMLFormElement> & {
 export const TopicsFilters = (props: TopicsFiltersProps) => {
   const { className, onFiltersChange, filterValues, onReset, ...rest } = props;
   const queryClient = useQueryClient();
-  const [localKey, setLocalKey] = useState(filterValues.key || '');
-  const [localName, setLocalName] = useState(filterValues.name || '');
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const defaultValues = useMemo(
+  const defaultValues = useMemo<FilterFormValues>(
     () => ({
       key: filterValues.key || '',
       name: filterValues.name || '',
@@ -29,62 +32,54 @@ export const TopicsFilters = (props: TopicsFiltersProps) => {
     [filterValues.key, filterValues.name]
   );
 
-  const form = useForm({
+  const form = useForm<FilterFormValues>({
     defaultValues,
   });
 
+  // Update form values when filter values change (like after a reset)
   useEffect(() => {
     form.reset(defaultValues);
   }, [form, defaultValues]);
 
-  // Update local state when filter values change (like after a reset)
-  useEffect(() => {
-    setLocalKey(filterValues.key || '');
-    setLocalName(filterValues.name || '');
-  }, [filterValues.key, filterValues.name]);
-
-  const debouncedFilterChange = (updatedFilters: Partial<TopicsFilter>) => {
-    // Clear any existing timeout
+  const clearDebounceTimeout = useCallback(() => {
     if (debounceTimeoutRef.current) {
       clearTimeout(debounceTimeoutRef.current);
-    }
-
-    // Set a new timeout
-    debounceTimeoutRef.current = setTimeout(() => {
-      // Cancel any in-flight requests before applying new filters
-      queryClient.cancelQueries({ queryKey: [QueryKeys.fetchTopics] });
-
-      onFiltersChange(updatedFilters);
-
       debounceTimeoutRef.current = null;
-    }, 400);
-  };
-
-  const handleKeyChange = (value: string) => {
-    setLocalKey(value);
-    form.setValue('key', value);
-    debouncedFilterChange({
-      key: value || undefined,
-    });
-  };
-
-  const handleNameChange = (value: string) => {
-    setLocalName(value);
-    form.setValue('name', value);
-    debouncedFilterChange({
-      name: value || undefined,
-    });
-  };
-
-  const handleReset = () => {
-    // Clear any pending debounce
-    if (debounceTimeoutRef.current) {
-      clearTimeout(debounceTimeoutRef.current);
     }
+  }, []);
 
-    // Reset local state
-    setLocalKey('');
-    setLocalName('');
+  const debouncedFilterChange = useCallback(
+    (fieldName: keyof FilterFormValues, value: string) => {
+      clearDebounceTimeout();
+
+      debounceTimeoutRef.current = setTimeout(() => {
+        // Cancel any in-flight requests
+        queryClient.cancelQueries({ queryKey: [QueryKeys.fetchTopics] });
+
+        // If empty, explicitly pass undefined to remove the filter
+        // Otherwise, pass the value to update the filter
+        onFiltersChange({
+          [fieldName]: value.trim() ? value : undefined,
+        });
+
+        debounceTimeoutRef.current = null;
+      }, 400);
+    },
+    [clearDebounceTimeout, onFiltersChange, queryClient]
+  );
+
+  const handleFieldChange = useCallback(
+    (fieldName: keyof FilterFormValues, value: string) => {
+      form.setValue(fieldName, value);
+      debouncedFilterChange(fieldName, value);
+    },
+    [form, debouncedFilterChange]
+  );
+
+  const handleReset = useCallback(() => {
+    clearDebounceTimeout();
+
+    // Reset form state
     form.reset({ key: '', name: '' });
 
     // Cancel any pending requests
@@ -94,18 +89,16 @@ export const TopicsFilters = (props: TopicsFiltersProps) => {
     if (onReset) {
       onReset();
     }
-  };
+  }, [clearDebounceTimeout, form, onReset, queryClient]);
 
   // Clean up timeout on unmount
   useEffect(() => {
-    return () => {
-      if (debounceTimeoutRef.current) {
-        clearTimeout(debounceTimeoutRef.current);
-      }
-    };
-  }, []);
+    return clearDebounceTimeout;
+  }, [clearDebounceTimeout]);
 
   const filterHasValue = !!filterValues.key || !!filterValues.name;
+  const keyValue = form.watch('key');
+  const nameValue = form.watch('name');
 
   return (
     <Form {...form}>
@@ -119,8 +112,8 @@ export const TopicsFilters = (props: TopicsFiltersProps) => {
                 type="text"
                 size="small"
                 title="Name"
-                value={localName}
-                onChange={(value) => handleNameChange(value)}
+                value={nameValue}
+                onChange={(value) => handleFieldChange('name', value)}
                 placeholder="Search by topic name"
               />
             </FormItem>
@@ -136,8 +129,8 @@ export const TopicsFilters = (props: TopicsFiltersProps) => {
                 type="text"
                 size="small"
                 title="Key"
-                value={localKey}
-                onChange={(value) => handleKeyChange(value)}
+                value={keyValue}
+                onChange={(value) => handleFieldChange('key', value)}
                 placeholder="Search by topic key"
               />
             </FormItem>

@@ -90,20 +90,16 @@ export const useTopicsUrlState = ({ after, before }: { after?: string; before?: 
           }
         }
 
-        if (filter.key !== undefined) {
-          if (filter.key) {
-            prev.set('key', filter.key);
-          } else {
-            prev.delete('key');
-          }
+        if (filter.key) {
+          prev.set('key', filter.key);
+        } else {
+          prev.delete('key');
         }
 
-        if (filter.name !== undefined) {
-          if (filter.name) {
-            prev.set('name', filter.name);
-          } else {
-            prev.delete('name');
-          }
+        if (filter.name) {
+          prev.set('name', filter.name);
+        } else {
+          prev.delete('name');
         }
 
         return prev;
