@@ -1004,34 +1004,12 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
         expect(generatePreviewResponseDto.result.preview.body).to.equal('Hello, World! body');
       }
     });
+
     it('should merge the user provided payload with the BE generated payload', async () => {
       // @ts-ignore
       process.env.IS_ENHANCED_DIGEST_ENABLED = 'true';
-      const createWorkflowDto: CreateWorkflowDto = {
-        source: WorkflowCreationSourceEnum.Editor,
-        name: TEST_WORKFLOW_NAME,
-        workflowId: `${slugify(TEST_WORKFLOW_NAME)}`,
-        description: 'This is a test workflow',
-        active: true,
-        steps: [
-          {
-            name: 'Digest Step',
-            type: StepTypeEnum.Digest,
-          },
-          {
-            name: 'Email Step',
-            type: StepTypeEnum.Email,
-          },
-        ],
-      };
+      const { workflowId, emailStepDatabaseId } = await createWorkflowWithEmailLookingAtDigestResult();
 
-      const res = await novuClient.workflows.create(createWorkflowDto);
-      const workflow = res.result;
-      if (!workflow) {
-        throw new Error('Workflow not created');
-      }
-
-      const stepId = workflow.steps[1].id;
       const resultWithEventsPayload = {
         steps: {
           'digest-step': {
@@ -1073,59 +1051,36 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
         },
       };
 
+      // testing the default preview payload is generated when no user payload is provided
       const controlValues1 = {
         body: '{"type":"doc","content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","text":"events length "},{"type":"variable","attrs":{"id":"steps.digest-step.events.length","label":null,"fallback":null,"required":false,"aliasFor":null}},{"type":"text","text":" "}]},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","text":" "}]}]}',
         subject: 'events length',
       };
       const previewResponse1 = await novuClient.workflows.steps.generatePreview({
         generatePreviewRequestDto: { controlValues: controlValues1, previewPayload: {} },
-        stepId,
-        workflowId: workflow.id,
+        stepId: emailStepDatabaseId,
+        workflowId,
       });
 
       expect(previewResponse1.result.previewPayloadExample).to.deep.equal(resultWithEventsPayload);
 
-      // testing the merging of the payload
-
+      // testing that the final payload has the events with payload.name
       const controlValues2 = {
-        body: `{
-"type": "doc",
-"content": [
-  {
-    "type": "paragraph",
-    "attrs": { "textAlign": null, "showIfKey": null },
-    "content": [
-      {
-        "type": "variable",
-        "attrs": {
-          "id": "steps.digest-step.events | toSentence: 'payload.name', 2, 'other'",
-          "label": null,
-          "fallback": null,
-          "required": false,
-          "aliasFor": null
-        }
-      },
-      { "type": "text", "text": " " }
-    ]
-  }
-]
-}
-`,
+        body: `{"type": "doc","content": [{"type": "paragraph","attrs": { "textAlign": null, "showIfKey": null },"content": [{"type": "variable","attrs": {"id": "steps.digest-step.events | toSentence: 'payload.name', 2, 'other'","label": null,"fallback": null,"required": false,"aliasFor": null}},{ "type": "text", "text": " " }]}]}`,
         subject: 'events length',
       };
-      const requestDto = {
-        controlValues: controlValues2,
-        previewPayload: resultWithEventsPayload,
-      };
-
       const previewResponse2 = await novuClient.workflows.steps.generatePreview({
-        generatePreviewRequestDto: requestDto,
-        stepId,
-        workflowId: workflow.id,
+        generatePreviewRequestDto: {
+          controlValues: controlValues2,
+          previewPayload: resultWithEventsPayload,
+        },
+        stepId: emailStepDatabaseId,
+        workflowId,
       });
 
       expect(previewResponse2.result.previewPayloadExample).to.deep.equal(resultWithEventsPayloadName);
 
+      // testing that the final payload doesn't change the user input
       const editedPayloadName = {
         steps: {
           'digest-step': {
@@ -1149,63 +1104,23 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
           },
         },
       };
-
-      const requestDto2 = {
-        controlValues: controlValues2,
-        previewPayload: editedPayloadName,
-      };
       const previewResponse3 = await novuClient.workflows.steps.generatePreview({
-        generatePreviewRequestDto: requestDto2,
-        stepId,
-        workflowId: workflow.id,
+        generatePreviewRequestDto: {
+          controlValues: controlValues2,
+          previewPayload: editedPayloadName,
+        },
+        stepId: emailStepDatabaseId,
+        workflowId,
       });
 
       expect(previewResponse3.result.previewPayloadExample).to.deep.equal(editedPayloadName);
       expect(previewResponse3.result.result.preview.body).to.contain('hello, name, and 1 other');
 
+      // testing that the final payload has the same amount of events as the user input, persists the user input and also merges the missing keys
       const controlValues3 = {
-        body: `{
-              "type": "doc",
-              "content": [
-                {
-                  "type": "paragraph",
-                  "attrs": { "textAlign": null, "showIfKey": null },
-                  "content": [
-                    {
-                      "type": "variable",
-                      "attrs": {
-                        "id": "steps.digest-step.events | toSentence: 'payload.name', 2, 'other'",
-                        "label": null,
-                        "fallback": null,
-                        "required": false,
-                        "aliasFor": null
-                      }
-                    },
-                    { "type": "text", "text": " " }
-                  ]
-                },
-                {
-                  "type": "paragraph",
-                  "attrs": { "textAlign": null, "showIfKey": null },
-                  "content": [
-                    {
-                      "type": "variable",
-                      "attrs": {
-                        "id": "steps.digest-step.events | toSentence: 'payload.new', 2, 'other'",
-                        "label": null,
-                        "fallback": null,
-                        "required": false,
-                        "aliasFor": null
-                      }
-                    },
-                    { "type": "text", "text": " " }
-                  ]
-                }
-              ]
-            }`,
+        body: `{"type": "doc","content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"variable","attrs":{"id":"steps.digest-step.events|toSentence:'payload.name',2,'other'","label":null,"fallback":null,"required":false,"aliasFor":null}},{"type":"text","text":""}]},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"variable","attrs":{"id":"steps.digest-step.events|toSentence:'payload.new',2,'other'","label":null,"fallback":null,"required":false,"aliasFor":null}},{"type":"text","text":""}]}]}`,
         subject: 'events length',
       };
-
       const payloadWithExtraItemInTheArray = {
         steps: {
           'digest-step': {
@@ -1234,7 +1149,6 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
           },
         },
       };
-
       const resultForExtraItemInTheArray = {
         steps: {
           'digest-step': {
@@ -1267,21 +1181,20 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
           },
         },
       };
-
-      const requestDto3 = {
-        controlValues: controlValues3,
-        previewPayload: payloadWithExtraItemInTheArray,
-      };
       const previewResponse4 = await novuClient.workflows.steps.generatePreview({
-        generatePreviewRequestDto: requestDto3,
-        stepId,
-        workflowId: workflow.id,
+        generatePreviewRequestDto: {
+          controlValues: controlValues3,
+          previewPayload: payloadWithExtraItemInTheArray,
+        },
+        stepId: emailStepDatabaseId,
+        workflowId,
       });
 
       expect(previewResponse4.result.previewPayloadExample).to.deep.equal(resultForExtraItemInTheArray);
       expect(previewResponse4.result.result.preview.body).to.contain('hello, name, and 2 others');
       expect(previewResponse4.result.result.preview.body).to.contain('new, new, and 2 others');
 
+      // testing that the final payload persists the user input even if the events array is empty
       const payloadWithEmptyArray = {
         steps: {
           'digest-step': {
@@ -1289,17 +1202,41 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
           },
         },
       };
-
-      const requestDto4 = {
-        controlValues: controlValues3,
-        previewPayload: payloadWithEmptyArray,
-      };
       const previewResponse5 = await novuClient.workflows.steps.generatePreview({
-        generatePreviewRequestDto: requestDto4,
-        stepId,
-        workflowId: workflow.id,
+        generatePreviewRequestDto: {
+          controlValues: controlValues3,
+          previewPayload: payloadWithEmptyArray,
+        },
+        stepId: emailStepDatabaseId,
+        workflowId,
       });
       expect(previewResponse5.result.previewPayloadExample).to.deep.equal(payloadWithEmptyArray);
+
+      // testing that the final payload persists the user input even if the events array has one item
+      const payloadWithOneItemInTheArray = {
+        steps: {
+          'digest-step': {
+            events: [{ payload: {} }],
+          },
+        },
+      };
+      const previewResponse6 = await novuClient.workflows.steps.generatePreview({
+        generatePreviewRequestDto: {
+          controlValues: controlValues3,
+          previewPayload: payloadWithOneItemInTheArray,
+        },
+        stepId: emailStepDatabaseId,
+        workflowId,
+      });
+      expect(previewResponse6.result.previewPayloadExample).to.deep.equal({
+        steps: {
+          'digest-step': {
+            events: [{ payload: { name: 'name', new: 'new' } }],
+          },
+        },
+      });
+      expect(previewResponse4.result.result.preview.body).to.contain('hello');
+      expect(previewResponse4.result.result.preview.body).to.contain('new');
     });
   });
 
@@ -1352,6 +1289,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
       digestStepId: workflowResult.result.steps[0].stepId,
     };
   }
+
   async function createWorkflowWithSmsLookingAtInAppResult() {
     const createWorkflowDto: CreateWorkflowDto = {
       tags: [],
