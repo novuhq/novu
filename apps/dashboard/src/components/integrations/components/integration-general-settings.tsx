@@ -1,23 +1,18 @@
-import { useNavigate } from 'react-router-dom';
-import { Control } from 'react-hook-form';
-
-import { ApiServiceLevelEnum } from '@novu/shared';
-
+import { LinkButton } from '@/components/primitives/button-link';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/primitives/form/form';
 import { Input } from '@/components/primitives/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives/popover';
 import { Separator } from '@/components/primitives/separator';
 import { Switch } from '@/components/primitives/switch';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives/popover';
-import { LinkButton } from '@/components/primitives/button-link';
-import { IS_SELF_HOSTED, SELF_HOSTED_UPGRADE_REDIRECT_URL } from '@/config';
 import { ROUTES } from '@/utils/routes';
 import { ApiServiceLevelEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { Control } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
-import { openInNewTab } from '@/utils/url';
+import { IS_SELF_HOSTED, SELF_HOSTED_UPGRADE_REDIRECT_URL } from '../../../config';
+import { openInNewTab } from '../../../utils/url';
 
 type IntegrationFormData = {
   name: string;
@@ -50,6 +45,10 @@ function EnableSnoozeSwitch({ id }: { id: string }) {
   const disabled = isFreePlan || IS_SELF_HOSTED || isLoading;
   const checked = disabled ? false : true; // Always checked for paid plans
 
+  const popoverContent = IS_SELF_HOSTED
+    ? 'Enable "Remind me later" functionality by upgrading to Cloud or Enterprise Self-Hosted plans'
+    : 'Enable "Remind me later" functionality by upgrading to our paid plans';
+
   const handleLinkClick = () => {
     if (IS_SELF_HOSTED) {
       openInNewTab(SELF_HOSTED_UPGRADE_REDIRECT_URL + '?utm_campaign=enable_snooze_prompt');
@@ -69,12 +68,10 @@ function EnableSnoozeSwitch({ id }: { id: string }) {
             <div className="flex flex-col gap-2 p-1">
               <div className="flex flex-col gap-1">
                 <h4 className="text-xs font-semibold">Premium Feature</h4>
-                <p className="text-muted-foreground text-xs">
-                  Enable "Remind me later" functionality by upgrading to our paid plans.
-                </p>
+                <p className="text-muted-foreground text-xs">{popoverContent}</p>
               </div>
               <div className="flex justify-end">
-                <LinkButton size="sm" variant="primary" onClick={() => handleLinkClick}>
+                <LinkButton size="sm" variant="primary" onClick={handleLinkClick}>
                   Upgrade Plan
                 </LinkButton>
               </div>
@@ -104,13 +101,14 @@ function NovuBrandingSwitch({
 }) {
   const { subscription, isLoading } = useFetchSubscription();
   const navigate = useNavigate();
-  const isFreePlan = subscription?.apiServiceLevel === ApiServiceLevelEnum.FREE;
-  const disabled = isFreePlan || isLoading;
-  const checked = disabled ? false : true; // Always checked for paid plans
 
-  const popoverText = IS_SELF_HOSTED
-    ? 'Novu branding removal is a premium feature available on cloud and enterprise self-hosted plans.'
-    : 'Remove Novu branding from your inbox by upgrading to our paid plans.';
+  const isFreePlan = subscription?.apiServiceLevel === ApiServiceLevelEnum.FREE;
+  const disabled = isFreePlan || IS_SELF_HOSTED || isLoading;
+  const checked = disabled ? false : value;
+
+  const popoverContent = IS_SELF_HOSTED
+    ? 'Remove Novu badge from your inbox by upgrading to Cloud or Enterprise Self-Hosted plans'
+    : 'Remove Novu badge from your inbox by upgrading to our paid plans';
 
   const handleLinkClick = () => {
     if (IS_SELF_HOSTED) {
@@ -122,7 +120,7 @@ function NovuBrandingSwitch({
 
   return (
     <div className="flex items-center">
-      {isFreePlan ? (
+      {isFreePlan || IS_SELF_HOSTED ? (
         <Popover modal>
           <PopoverTrigger asChild>
             <Switch id={id} checked={checked} />
@@ -131,12 +129,10 @@ function NovuBrandingSwitch({
             <div className="flex flex-col gap-2 p-1">
               <div className="flex flex-col gap-1">
                 <h4 className="text-xs font-semibold">Premium Feature</h4>
-                <p className="text-muted-foreground text-xs">
-                  Enable "Remind me later" functionality by upgrading to our paid plans.
-                </p>
+                <p className="text-muted-foreground text-xs">{popoverContent}</p>
               </div>
               <div className="flex justify-end">
-                <LinkButton size="sm" variant="primary" onClick={() => handleLinkClick}>
+                <LinkButton size="sm" variant="primary" onClick={handleLinkClick}>
                   Upgrade Plan
                 </LinkButton>
               </div>
@@ -144,12 +140,7 @@ function NovuBrandingSwitch({
           </PopoverContent>
         </Popover>
       ) : (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Switch id={id} checked={true} disabled={true} />
-          </TooltipTrigger>
-          <TooltipContent>This feature is automatically enabled with your plan and stays active.</TooltipContent>
-        </Tooltip>
+        <Switch id={id} onCheckedChange={onChange} checked={checked} />
       )}
     </div>
   );
