@@ -733,7 +733,12 @@
     "oklch",
     "Duplicable",
     "Radek",
-    "automators"
+    "snooze",
+    "unsnooze",
+    "snoozed",
+    "unsnoozed",
+    "automators",
+    "calcom"
   ],
   "flagWords": [],
   "patterns": [

@@ -1,8 +1,21 @@
 import { Badge } from '@/components/primitives/badge';
 import { Button } from '@/components/primitives/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
-import { ChannelTypeEnum, type IEnvironment, type IIntegration, type IProviderConfig } from '@novu/shared';
-import { RiCheckboxCircleFill, RiCloseCircleFill, RiSettings4Line, RiStarSmileLine } from 'react-icons/ri';
+import {
+  ApiServiceLevelEnum,
+  ChannelTypeEnum,
+  FeatureFlagsKeysEnum,
+  type IEnvironment,
+  type IIntegration,
+  type IProviderConfig,
+} from '@novu/shared';
+import {
+  RiCheckboxCircleFill,
+  RiCloseCircleFill,
+  RiLockStarLine,
+  RiSettings4Line,
+  RiStarSmileLine,
+} from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../../utils/routes';
 import { cn } from '../../../utils/ui';
@@ -11,6 +24,9 @@ import { StatusBadge, StatusBadgeIcon } from '../../primitives/status-badge';
 import { TableIntegration } from '../types';
 import { ProviderIcon } from './provider-icon';
 import { isDemoIntegration } from './utils/helpers';
+import { useFetchSubscription } from '../../../hooks/use-fetch-subscription';
+import { ExternalLink } from 'lucide-react';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 
 type IntegrationCardProps = {
   integration: IIntegration;
@@ -21,6 +37,8 @@ type IntegrationCardProps = {
 
 export function IntegrationCard({ integration, provider, environment, onClick }: IntegrationCardProps) {
   const navigate = useNavigate();
+  const { subscription } = useFetchSubscription();
+  const isSnoozeEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_SNOOZE_ENABLED);
 
   const handleConfigureClick = (e: React.MouseEvent<HTMLElement>) => {
     if (integration.channel === ChannelTypeEnum.IN_APP && !integration.connected) {
@@ -41,6 +59,7 @@ export function IntegrationCard({ integration, provider, environment, onClick }:
   };
 
   const isDemo = isDemoIntegration(provider.id);
+  const isFreePlan = subscription?.apiServiceLevel === ApiServiceLevelEnum.FREE;
 
   return (
     <div
@@ -51,7 +70,7 @@ export function IntegrationCard({ integration, provider, environment, onClick }:
       onClick={handleConfigureClick}
       data-test-id={`integration-${integration._id}-row`}
     >
-      <div className="flex items-start justify-between">
+      <div className="flex justify-between">
         <div className="flex items-center gap-1.5">
           <div className="relative h-6 w-6">
             <ProviderIcon
@@ -62,14 +81,19 @@ export function IntegrationCard({ integration, provider, environment, onClick }:
           </div>
           <span className="text-sm font-medium">{integration.name}</span>
         </div>
-        {integration.primary && (
-          <Tooltip>
-            <TooltipTrigger>
-              <RiStarSmileLine className="text-feature h-4 w-4" />
-            </TooltipTrigger>
-            <TooltipContent>This is your primary integration for the {provider.channel} channel.</TooltipContent>
-          </Tooltip>
-        )}
+        <div className="flex items-center gap-1">
+          {integration.primary && (
+            <Tooltip>
+              <TooltipTrigger>
+                <RiStarSmileLine className="text-feature h-4 w-4" />
+              </TooltipTrigger>
+              <TooltipContent>This is your primary integration for the {provider.channel} channel.</TooltipContent>
+            </Tooltip>
+          )}
+          {integration.channel === ChannelTypeEnum.IN_APP && isFreePlan && isSnoozeEnabled && (
+            <InAppPremiumFeaturesIcon />
+          )}
+        </div>
       </div>
       <div className="flex items-center gap-2">
         {isDemo && (
@@ -115,5 +139,33 @@ export function IntegrationCard({ integration, provider, environment, onClick }:
         </StatusBadge>
       </div>
     </div>
+  );
+}
+
+function InAppPremiumFeaturesIcon() {
+  const navigate = useNavigate();
+
+  const handleUpgradeClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigate(ROUTES.SETTINGS_BILLING + '?utm_source=in-app-upgrade-tooltip');
+  };
+
+  return (
+    <Tooltip>
+      <TooltipTrigger>
+        <RiLockStarLine className="text-warning h-4 w-4" />
+      </TooltipTrigger>
+      <TooltipContent>
+        <div className="flex flex-col gap-2">
+          <div>
+            Upgrade to remove the 'Inbox by Novu' badge and enable notification reminders in your{' '}
+            <span className="font-mono">{`<Inbox />`}</span> component.
+          </div>
+          <button onClick={handleUpgradeClick} className="flex items-center gap-1 text-xs font-medium hover:underline">
+            Upgrade now <ExternalLink size={12} />
+          </button>
+        </div>
+      </TooltipContent>
+    </Tooltip>
   );
 }

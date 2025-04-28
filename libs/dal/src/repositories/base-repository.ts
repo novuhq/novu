@@ -97,6 +97,13 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
     return await this.MongooseModel.deleteMany(query);
   }
 
+  async findOneAndDelete(query: FilterQuery<T_DBModel> & T_Enforcement): Promise<T_MappedEntity | null> {
+    const data = await this.MongooseModel.findOneAndDelete(query).lean();
+    if (!data) return null;
+
+    return this.mapEntity(data);
+  }
+
   async find(
     query: FilterQuery<T_DBModel> & T_Enforcement,
     select: ProjectionType<T_MappedEntity> = '',
@@ -274,13 +281,15 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
 
   async update(
     query: FilterQuery<T_DBModel> & T_Enforcement,
-    updateBody: UpdateQuery<T_DBModel>
+    updateBody: UpdateQuery<T_DBModel>,
+    options: QueryOptions<T_DBModel> = {}
   ): Promise<{
     matched: number;
     modified: number;
   }> {
     const saved = await this.MongooseModel.updateMany(query, updateBody, {
       multi: true,
+      ...options,
     });
 
     return {
