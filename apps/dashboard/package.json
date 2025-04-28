@@ -9,6 +9,7 @@
     "start:static:build": "http-server dist -p 4201 --proxy http://127.0.0.1:4201?",
     "dev": "pnpm start",
     "build": "tsc -b && vite build",
+    "docker:build": "docker buildx build --load -f ./dockerfile -t novu-dashboard ./../.. $DOCKER_BUILD_ARGUMENTS",
     "lint": "eslint .",
     "preview": "vite preview",
     "test:e2e": "playwright test",

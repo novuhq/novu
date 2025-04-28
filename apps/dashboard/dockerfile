@@ -1,0 +1,26 @@
+FROM ghcr.io/novuhq/novu/base:1.0.0 AS builder
+WORKDIR /usr/src/app
+COPY .npmrc .
+COPY package.json .
+
+COPY apps/dashboard ./apps/dashboard
+COPY libs ./libs
+COPY packages ./packages
+COPY enterprise ./enterprise
+COPY tsconfig.json .
+
+COPY nx.json .
+COPY pnpm-workspace.yaml .
+COPY pnpm-lock.yaml .
+
+RUN --mount=type=cache,id=pnpm-store-dashboard,target=/root/.pnpm-store\
+  pnpm install --frozen-lockfile
+COPY [".prettierrc",".prettierignore", "./"]
+RUN pnpm build:dashboard
+
+FROM alpine:latest
+RUN apk add --no-cache busybox
+WORKDIR /www
+COPY --from=builder /usr/src/app/apps/dashboard/build /www
+EXPOSE 80
+CMD ["busybox", "httpd", "-f", "-p", "80"]
