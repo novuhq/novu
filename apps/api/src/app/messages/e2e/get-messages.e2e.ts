@@ -66,6 +66,7 @@ describe('Get Message - /messages (GET) #novu-v2', function () {
 
     let response = await novuClient.messages.retrieve({ subscriberId: subscriber3.subscriberId });
     expect(response.result.data.length).to.be.equal(4);
+
     response = await novuClient.messages.retrieve({ transactionId: [transactionId1] });
     expect(response.result.data.length).to.be.equal(2);
 
