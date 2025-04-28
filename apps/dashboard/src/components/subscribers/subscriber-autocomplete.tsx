@@ -41,6 +41,7 @@ export function SubscriberAutocomplete({
   const prevLoadingRef = useRef(isLoading);
   const prevSubscribersRef = useRef<ISubscriberResponseDto[]>([]);
   const combinedLoading = isLoading || externalLoading;
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
 
   // Keep track of whether we're rendering in response to a user typing
   const userTypingRef = useRef(false);
@@ -92,6 +93,9 @@ export function SubscriberAutocomplete({
       prevSubscribersRef.current = subscribers;
       return;
     }
+
+    // Reset highlighted index when results change
+    setHighlightedIndex(-1);
 
     // When subscribers change, ensure focus is maintained
     if (JSON.stringify(prevSubscribersRef.current) !== JSON.stringify(subscribers)) {
@@ -153,12 +157,31 @@ export function SubscriberAutocomplete({
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === 'Enter' && onSubmit) {
+      if (open && subscribers.length > 0) {
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          setHighlightedIndex((prev) => (prev < subscribers.length - 1 ? prev + 1 : 0));
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : subscribers.length - 1));
+        } else if (e.key === 'Enter') {
+          e.preventDefault();
+
+          if (highlightedIndex >= 0 && highlightedIndex < subscribers.length) {
+            handleSelectSubscriber(subscribers[highlightedIndex]);
+          } else if (onSubmit) {
+            onSubmit();
+          }
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          setOpen(false);
+        }
+      } else if (e.key === 'Enter' && onSubmit) {
         e.preventDefault();
         onSubmit();
       }
     },
-    [onSubmit]
+    [onSubmit, open, subscribers, highlightedIndex, handleSelectSubscriber]
   );
 
   // Handle mouse events for text selection
@@ -311,7 +334,7 @@ export function SubscriberAutocomplete({
       >
         <div className="flex h-full flex-col" onMouseDown={(e) => e.stopPropagation()}>
           <Command>
-            <CommandList className="max-h-[200px] overflow-y-auto">
+            <CommandList className="overflow-y-auto">
               <Separator variant="solid-text" className="px-1.5 py-1">
                 <div className="flex w-full justify-between rounded-t-md bg-neutral-50">
                   <div className="text-[11px] text-xs uppercase leading-[16px]">Subscribers</div>
@@ -337,11 +360,12 @@ export function SubscriberAutocomplete({
               {/* Results */}
               {!isLoading && subscribers.length > 0 && (
                 <CommandGroup>
-                  {subscribers.map((subscriber) => (
+                  {subscribers.map((subscriber, index) => (
                     <CommandItem
                       key={subscriber._id}
                       onSelect={() => handleSelectSubscriber(subscriber)}
-                      className="flex items-center gap-2 py-2"
+                      className={cn('flex items-center gap-2 py-2', highlightedIndex === index && 'bg-neutral-100')}
+                      onMouseEnter={() => setHighlightedIndex(index)}
                     >
                       <Avatar className={cn('h-8 w-8', size === 'xs' && 'h-6 w-6')}>
                         {subscriber.avatar && <AvatarImage src={subscriber.avatar} />}
