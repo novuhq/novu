@@ -16,6 +16,7 @@ import { Separator } from '@/components/primitives/separator';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
+import { useTopicsNavigate } from '@/components/topics/hooks/use-topics-navigate';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { formatDateSimple } from '@/utils/format-date';
@@ -57,6 +58,7 @@ export function TopicOverviewForm({ topic, readOnly = false }: TopicOverviewForm
   const track = useTelemetry();
   const { currentEnvironment } = useEnvironment();
   const queryClient = useQueryClient();
+  const { navigateToTopicsPage } = useTopicsNavigate();
 
   const form = useForm<z.infer<typeof TopicFormSchema>>({
     defaultValues: {
@@ -142,6 +144,8 @@ export function TopicOverviewForm({ topic, readOnly = false }: TopicOverviewForm
         exact: false,
         refetchType: 'all',
       });
+
+      navigateToTopicsPage();
     } catch (error) {
       showErrorToast('Failed to delete topic', undefined, toastOptions);
     } finally {
@@ -154,35 +158,31 @@ export function TopicOverviewForm({ topic, readOnly = false }: TopicOverviewForm
       <Form {...form}>
         <FormRoot autoComplete="off" noValidate onSubmit={form.handleSubmit(onSubmit)} className="flex h-full flex-col">
           <div className="flex flex-1 flex-col items-stretch overflow-y-auto">
-            <div className="flex flex-col items-stretch gap-6 p-5">
-              <div>
-                <FormItem className="w-full">
-                  <div className="flex items-center">
-                    <FormLabel tooltip="Unique identifier for the topic used in API calls" className="gap-1">
-                      Topic Key
-                    </FormLabel>
-                    <span className="ml-auto">
-                      <Link
-                        to="https://docs.novu.co/platform/topics"
-                        className="text-xs font-medium text-neutral-600 hover:underline"
-                        target="_blank"
-                      >
-                        How it works?
-                      </Link>
-                    </span>
-                  </div>
-                  <Input
-                    value={topic.key}
-                    size="xs"
-                    className="disabled:text-neutral-900"
-                    trailingNode={
-                      <CopyButton valueToCopy={topic.key} className="group-has-[input:focus]:border-l-stroke-strong" />
-                    }
-                    readOnly
-                    disabled
-                  />
-                </FormItem>
-              </div>
+            <div className="flex flex-col items-stretch gap-4 p-5">
+              <FormItem className="w-full">
+                <div className="flex items-center">
+                  <FormLabel tooltip="Unique identifier for the topic used in API calls" className="gap-1">
+                    Topic Key
+                  </FormLabel>
+                  <span className="ml-auto">
+                    <Link
+                      to="https://docs.novu.co/platform/topics"
+                      className="text-xs font-medium text-neutral-600 hover:underline"
+                      target="_blank"
+                    >
+                      How it works?
+                    </Link>
+                  </span>
+                </div>
+                <Input
+                  value={topic.key}
+                  size="xs"
+                  className="disabled:text-neutral-900"
+                  trailingNode={<CopyButton valueToCopy={topic.key} />}
+                  readOnly
+                  disabled
+                />
+              </FormItem>
               <FormField
                 control={form.control}
                 name="name"
@@ -198,7 +198,6 @@ export function TopicOverviewForm({ topic, readOnly = false }: TopicOverviewForm
                         value={field.value}
                         onChange={field.onChange}
                         hasError={!!fieldState.error}
-                        size="xs"
                       />
                     </FormControl>
                     <FormMessage />
@@ -210,14 +209,14 @@ export function TopicOverviewForm({ topic, readOnly = false }: TopicOverviewForm
             <div className="flex flex-col gap-1">
               {topic.createdAt && (
                 <div className="flex justify-between px-5 pt-2">
-                  <span className="text-2xs text-neutral-400" key={topic.createdAt}>
+                  <span className="text-2xs text-neutral-400">
                     Created at{' '}
                     <TimeDisplayHoverCard date={topic.createdAt}>
                       {formatDateSimple(topic.createdAt)}
                     </TimeDisplayHoverCard>
                   </span>
                   {topic.updatedAt && (
-                    <span className="text-2xs text-neutral-400" key={topic.updatedAt}>
+                    <span className="text-2xs text-neutral-400">
                       Updated at{' '}
                       <TimeDisplayHoverCard date={topic.updatedAt}>
                         {formatDateSimple(topic.updatedAt)}
