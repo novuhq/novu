@@ -173,12 +173,14 @@ export const ReorderFilterItem = (props: ReorderFilterItemProps) => {
                     placeholder={param.placeholder}
                     title={param.description}
                     value={value.params?.[paramIndex] || ''}
+                    defaultValue={param.defaultValue}
                     isClearable
                     error={toSentenceIssue?.filterParam === param.label ? toSentenceIssue.message : undefined}
                   />
                 ) : (
                   <Input
                     value={value.params?.[paramIndex] || ''}
+                    defaultValue={param.defaultValue}
                     onChange={(e) => paramInputChangeHandler(e.target.value)}
                     placeholder={param.placeholder}
                     title={param.description}

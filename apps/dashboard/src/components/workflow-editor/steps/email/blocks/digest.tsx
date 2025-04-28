@@ -11,7 +11,7 @@ export const createDigestBlock = (props: {
 }): BlockItem => {
   const { track, digestStepBeforeCurrent } = props;
 
-  const maxIterations = 5;
+  const maxIterations = 3;
 
   return {
     title: 'Digest',
