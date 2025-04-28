@@ -5,7 +5,6 @@ import { RemoveMessage, RemoveMessageCommand } from './usecases/remove-message';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
 import { DeleteMessageResponseDto } from './dtos/delete-message-response.dto';
-import { ActivitiesResponseDto } from '../notifications/dtos/activities-response.dto';
 import { GetMessages, GetMessagesCommand } from './usecases/get-messages';
 import { MessagesResponseDto } from '../widgets/dtos/message-response.dto';
 import { DeleteMessageParams } from './params/delete-message.param';
@@ -36,7 +35,7 @@ export class MessagesController {
   @ExternalApiAccessible()
   @UserAuthentication()
   @ApiOkResponse({
-    type: ActivitiesResponseDto,
+    type: MessagesResponseDto,
   })
   @ApiOperation({
     summary: 'Get messages',

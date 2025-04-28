@@ -1,4 +1,4 @@
-import { IsDate, ValidationArguments, registerDecorator, ValidationOptions } from 'class-validator';
+import { IsDate, ValidationArguments, registerDecorator, ValidationOptions, IsDefined } from 'class-validator';
 import { Type } from 'class-transformer';
 
 function IsFutureDate(
@@ -20,6 +20,10 @@ function IsFutureDate(
       },
       validator: {
         validate(value: Date, args: ValidationArguments) {
+          if (!(value instanceof Date)) {
+            return false;
+          }
+
           const now = new Date();
           const delay = value.getTime() - now.getTime();
 

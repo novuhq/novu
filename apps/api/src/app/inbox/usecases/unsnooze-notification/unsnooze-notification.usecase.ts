@@ -22,8 +22,6 @@ import { MarkNotificationAsCommand } from '../mark-notification-as/mark-notifica
 import { MarkNotificationAs } from '../mark-notification-as/mark-notification-as.usecase';
 import { InboxNotification } from '../../utils/types';
 
-const LOG_CONTEXT = 'UnsnoozeNotification';
-
 @Injectable()
 export class UnsnoozeNotification {
   constructor(
@@ -55,7 +53,7 @@ export class UnsnoozeNotification {
     try {
       return this.unsnoozeNotification(command, snoozedNotification._notificationId);
     } catch (error) {
-      this.logger.error({ err: error }, `Failed to unsnooze notification: ${command.notificationId}`, LOG_CONTEXT);
+      this.logger.error({ err: error }, `Failed to unsnooze notification: ${command.notificationId}`);
       throw new InternalServerErrorException(`Failed to unsnooze notification: ${error.message}`);
     }
   }
@@ -101,13 +99,12 @@ export class UnsnoozeNotification {
           })
         )
         .catch((error) => {
-          this.logger.error({ err: error }, 'Failed to create execution details', LOG_CONTEXT);
+          this.logger.error({ err: error }, 'Failed to create execution details');
         });
     } else {
       this.logger.error(
         `Could not find a scheduled job for snoozed notification '${command.notificationId}'. ` +
-          'The notification may have already been unsnoozed or the scheduled job was deleted.',
-        LOG_CONTEXT
+          'The notification may have already been unsnoozed or the scheduled job was deleted.'
       );
     }
 

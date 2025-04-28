@@ -41,8 +41,6 @@ import { MarkNotificationAs } from '../mark-notification-as/mark-notification-as
 import { MarkNotificationAsCommand } from '../mark-notification-as/mark-notification-as.command';
 import { InboxNotification } from '../../utils/types';
 
-const LOG_CONTEXT = 'SnoozeNotification';
-
 @Injectable()
 export class SnoozeNotification {
   private readonly RETRY_ATTEMPTS = 3;
@@ -61,8 +59,8 @@ export class SnoozeNotification {
   public async execute(command: SnoozeNotificationCommand): Promise<InboxNotification> {
     await this.isSnoozeEnabled(command);
 
-    const delayAmount = this.calculateDelayInMs(command.snoozeUntil);
-    await this.validateDelayDuration(command, delayAmount);
+    const delayAmountMs = this.calculateDelayInMs(command.snoozeUntil);
+    await this.validateDelayDuration(command, delayAmountMs);
     const notification = await this.findNotification(command);
 
     try {
@@ -70,9 +68,9 @@ export class SnoozeNotification {
       let snoozedNotification = {} as InboxNotification;
 
       await this.messageRepository.withTransaction(async () => {
-        scheduledJob = await this.createScheduledUnsnoozeJob(notification, delayAmount);
+        scheduledJob = await this.createScheduledUnsnoozeJob(notification, delayAmountMs);
         snoozedNotification = await this.markNotificationAsSnoozed(command);
-        await this.enqueueJob(scheduledJob, delayAmount);
+        await this.enqueueJob(scheduledJob, delayAmountMs);
       });
 
       // fire and forget
@@ -88,7 +86,7 @@ export class SnoozeNotification {
           })
         )
         .catch((error) => {
-          this.logger.error({ err: error }, 'Failed to create execution details', LOG_CONTEXT);
+          this.logger.error({ err: error }, 'Failed to create execution details');
         });
 
       return snoozedNotification;
@@ -98,7 +96,7 @@ export class SnoozeNotification {
   }
 
   public async enqueueJob(job: JobEntity, delay: number) {
-    this.logger.info({ jobId: job._id, delay }, 'Adding snooze job to Standard Queue', LOG_CONTEXT);
+    this.logger.info({ jobId: job._id, delay }, 'Adding snooze job to Standard Queue');
 
     const jobData = {
       _environmentId: job._environmentId,
@@ -167,6 +165,10 @@ export class SnoozeNotification {
       organization: { _id: command.organizationId },
     });
 
+    /**
+     * If the system limit is not the default, we need to use it as the limit
+     * for the specific customer exceptions from the tier limit
+     */
     const isSpecialLimit = systemLimitMs !== SYSTEM_LIMITS.DEFER_DURATION_MS;
     if (isSpecialLimit) {
       return systemLimitMs;
