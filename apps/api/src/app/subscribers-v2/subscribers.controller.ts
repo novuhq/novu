@@ -120,7 +120,7 @@ export class SubscribersController {
   @ExternalApiAccessible()
   @ApiOperation({
     summary: 'Create subscriber',
-    description: 'Create subscriber with the given data',
+    description: 'Create subscriber with the given data, if the subscriber already exists, it will be updated',
   })
   @ApiResponse(SubscriberResponseDto, 201)
   @SdkMethodName('create')
