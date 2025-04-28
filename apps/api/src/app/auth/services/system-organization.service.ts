@@ -13,7 +13,7 @@ import { SwitchOrganizationCommand } from '../usecases/switch-organization/switc
 export class CommunityEditionService implements OnModuleInit {
   private readonly E11000_DUPLICATE_KEY_ERROR_CODE = 'E11000';
   private readonly COMMUNITY_EDITION_NAME = 'Community Edition';
-  private readonly COMMUNITY_EDITION_USER_EMAIL = 'no-reply@community.com';
+  private readonly COMMUNITY_EDITION_USER_EMAIL = 'no-reply@example.com';
 
   constructor(
     private memberRepository: MemberRepository,
