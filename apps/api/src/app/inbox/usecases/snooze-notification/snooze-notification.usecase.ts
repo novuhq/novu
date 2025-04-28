@@ -59,9 +59,9 @@ export class SnoozeNotification {
   public async execute(command: SnoozeNotificationCommand): Promise<InboxNotification> {
     await this.isSnoozeEnabled(command);
 
-    const notification = await this.findNotification(command);
     const delayAmountMs = this.calculateDelayInMs(command.snoozeUntil);
     await this.validateDelayDuration(command, delayAmountMs);
+    const notification = await this.findNotification(command);
 
     try {
       let scheduledJob = {} as JobEntity;
@@ -125,8 +125,6 @@ export class SnoozeNotification {
     if (!isSnoozeEnabled) {
       throw new NotImplementedException();
     }
-
-    // TODO: add per environment feature on/off on integration settings
   }
 
   private calculateDelayInMs(snoozeUntil: Date): number {
@@ -136,7 +134,7 @@ export class SnoozeNotification {
   private async validateDelayDuration(command: SnoozeNotificationCommand, delay: number) {
     const tierLimit = await this.getTierLimit(command);
 
-    if (tierLimit === -1) {
+    if (tierLimit === 0) {
       throw new HttpException(
         {
           message: 'Feature Not Available',
@@ -160,10 +158,6 @@ export class SnoozeNotification {
   }
 
   private async getTierLimit(command: SnoozeNotificationCommand) {
-    const organization = await this.organizationRepository.findOne({
-      _id: command.organizationId,
-    });
-
     const systemLimitMs = await this.featureFlagsService.getFlag({
       key: FeatureFlagsKeysEnum.MAX_DEFER_DURATION_IN_MS_NUMBER,
       defaultValue: SYSTEM_LIMITS.DEFER_DURATION_MS,
@@ -179,6 +173,10 @@ export class SnoozeNotification {
     if (isSpecialLimit) {
       return systemLimitMs;
     }
+
+    const organization = await this.organizationRepository.findOne({
+      _id: command.organizationId,
+    });
 
     const tierLimitMs = getFeatureForTierAsNumber(
       FeatureNameEnum.PLATFORM_MAX_SNOOZE_DURATION,

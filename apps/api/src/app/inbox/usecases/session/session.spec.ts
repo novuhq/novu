@@ -1,9 +1,14 @@
 import sinon from 'sinon';
 import { expect } from 'chai';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
-import { EnvironmentRepository, IntegrationRepository } from '@novu/dal';
-import { AnalyticsService, CreateOrUpdateSubscriberUseCase, SelectIntegration } from '@novu/application-generic';
-import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
+import { CommunityOrganizationRepository, EnvironmentRepository, IntegrationRepository } from '@novu/dal';
+import {
+  AnalyticsService,
+  CreateOrUpdateSubscriberUseCase,
+  FeatureFlagsService,
+  SelectIntegration,
+} from '@novu/application-generic';
+import { ApiServiceLevelEnum, ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
 import { AuthService } from '../../../auth/services/auth.service';
 import { Session } from './session.usecase';
 import { SessionCommand } from './session.command';
@@ -39,6 +44,9 @@ describe('Session', () => {
   let analyticsService: sinon.SinonStubbedInstance<AnalyticsService>;
   let notificationsCount: sinon.SinonStubbedInstance<NotificationsCount>;
   let integrationRepository: sinon.SinonStubbedInstance<IntegrationRepository>;
+  let organizationRepository: sinon.SinonStubbedInstance<CommunityOrganizationRepository>;
+  let featureFlagsService: sinon.SinonStubbedInstance<FeatureFlagsService>;
+
   beforeEach(() => {
     environmentRepository = sinon.createStubInstance(EnvironmentRepository);
     createSubscriber = sinon.createStubInstance(CreateOrUpdateSubscriberUseCase);
@@ -47,6 +55,8 @@ describe('Session', () => {
     analyticsService = sinon.createStubInstance(AnalyticsService);
     notificationsCount = sinon.createStubInstance(NotificationsCount);
     integrationRepository = sinon.createStubInstance(IntegrationRepository);
+    organizationRepository = sinon.createStubInstance(CommunityOrganizationRepository);
+    featureFlagsService = sinon.createStubInstance(FeatureFlagsService);
 
     session = new Session(
       environmentRepository as any,
@@ -55,7 +65,9 @@ describe('Session', () => {
       selectIntegration as any,
       analyticsService as any,
       notificationsCount as any,
-      integrationRepository as any
+      integrationRepository as any,
+      organizationRepository as any,
+      featureFlagsService as any
     );
   });
 
@@ -202,5 +214,47 @@ describe('Session', () => {
         origin: command.origin,
       })
     ).to.be.true;
+  });
+
+  it('should return the correct isSnoozeEnabled value for different service levels', async () => {
+    featureFlagsService.getFlag.resolves(true);
+
+    const command: SessionCommand = {
+      applicationIdentifier: 'app-id',
+      subscriberId: 'subscriber-id',
+      subscriberHash: 'hash',
+    };
+
+    const environment = { _id: 'env-id', _organizationId: 'org-id', name: 'env-name', apiKeys: [{ key: 'api-key' }] };
+    const integration = { ...mockIntegration, credentials: { hmac: false } };
+    const subscriber = { _id: 'subscriber-id' };
+    const notificationCount = { data: [{ count: 10, filter: {} }] };
+    const token = 'token';
+
+    environmentRepository.findEnvironmentByIdentifier.resolves(environment as any);
+    selectIntegration.execute.resolves(integration);
+    createSubscriber.execute.resolves(subscriber as any);
+    notificationsCount.execute.resolves(notificationCount);
+    authService.getSubscriberWidgetToken.resolves(token);
+
+    // FREE plan should have snooze disabled
+    organizationRepository.findOne.resolves({ apiServiceLevel: ApiServiceLevelEnum.FREE } as any);
+    const freeResponse: SubscriberSessionResponseDto = await session.execute(command);
+    expect(freeResponse.isSnoozeEnabled).to.equal(false);
+
+    // PRO plan should have snooze enabled
+    organizationRepository.findOne.resolves({ apiServiceLevel: ApiServiceLevelEnum.PRO } as any);
+    const proResponse: SubscriberSessionResponseDto = await session.execute(command);
+    expect(proResponse.isSnoozeEnabled).to.equal(true);
+
+    // BUSINESS/TEAM plan should have snooze enabled
+    organizationRepository.findOne.resolves({ apiServiceLevel: ApiServiceLevelEnum.BUSINESS } as any);
+    const businessResponse: SubscriberSessionResponseDto = await session.execute(command);
+    expect(businessResponse.isSnoozeEnabled).to.equal(true);
+
+    // ENTERPRISE plan should have snooze enabled
+    organizationRepository.findOne.resolves({ apiServiceLevel: ApiServiceLevelEnum.ENTERPRISE } as any);
+    const enterpriseResponse: SubscriberSessionResponseDto = await session.execute(command);
+    expect(enterpriseResponse.isSnoozeEnabled).to.equal(true);
   });
 });
