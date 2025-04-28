@@ -6,7 +6,7 @@ import { useFetchTopics } from '@/hooks/use-fetch-topics';
 import { cn } from '@/utils/ui';
 import { DirectionEnum } from '@novu/shared';
 import { HTMLAttributes, useEffect, useState } from 'react';
-import { RiAddLine } from 'react-icons/ri';
+import { RiAddCircleLine } from 'react-icons/ri';
 import { useTopicsNavigate } from './hooks/use-topics-navigate';
 import { TopicsSortableColumn, TopicsUrlState, useTopicsUrlState } from './hooks/use-topics-url-state';
 import { TopicListBlank } from './topic-list-blank';
@@ -29,10 +29,16 @@ const TopicListWrapper = (props: TopicListFiltersProps) => {
           onFiltersChange={handleFiltersChange}
           filterValues={filterValues}
           onReset={resetFilters}
-          className="py-2"
+          className="py-2.5"
         />
 
-        <Button variant="primary" leadingIcon={RiAddLine} onClick={navigateToCreateTopicPage}>
+        <Button
+          variant="primary"
+          mode="gradient"
+          size="xs"
+          leadingIcon={RiAddCircleLine}
+          onClick={navigateToCreateTopicPage}
+        >
           Create Topic
         </Button>
       </div>

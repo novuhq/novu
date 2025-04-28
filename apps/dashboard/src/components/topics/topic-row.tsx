@@ -85,7 +85,7 @@ export const TopicRow = ({ topic }: TopicRowProps) => {
         </TopicTableCell>
         <TopicTableCell>
           <div className="flex items-center gap-1">
-            <div className="text-mono text-text-soft max-w-[300px] truncate">{topic.key}</div>
+            <div className="font-code text-text-soft max-w-[300px] truncate">{topic.key}</div>
             <CopyButton
               className="z-10 flex size-2 p-0 px-1 opacity-0 group-hover:opacity-100"
               valueToCopy={topic.key}
