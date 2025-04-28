@@ -139,12 +139,12 @@ services:
     ports:
       - ${WS_PORT}:${WS_PORT}
 
-  dashbord:
+  dashboard:
     image: 'ghcr.io/novuhq/novu/dashboard:2.1.1'
     depends_on:
       - api
       - worker
-    container_name: dashbord
+    container_name: dashboard
     restart: unless-stopped
     logging:
       driver: 'json-file'
