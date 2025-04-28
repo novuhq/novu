@@ -13,7 +13,8 @@ import { EnvironmentBranchIcon } from '../primitives/environment-branch-icon';
 import { Separator } from '../primitives/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../primitives/table';
 import TruncatedText from '../truncated-text';
-import { IS_SELF_HOSTED } from '../../config';
+import { IS_SELF_HOSTED, SELF_HOSTED_UPGRADE_REDIRECT_URL } from '../../config';
+import { openInNewTab } from '@/utils/url';
 
 export function FreeTierState() {
   const track = useTelemetry();
@@ -96,7 +97,7 @@ export function FreeTierState() {
               });
 
               if (IS_SELF_HOSTED) {
-                window.open('https://docs.novu.co/platform/overview', '_blank');
+                openInNewTab(SELF_HOSTED_UPGRADE_REDIRECT_URL + '?utm_campaign=custom_environemnts');
               } else {
                 navigate(ROUTES.SETTINGS_BILLING);
               }
