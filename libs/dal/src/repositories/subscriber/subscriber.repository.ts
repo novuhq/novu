@@ -200,6 +200,65 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
     const before =
       query.before && subscriber ? { sortBy: subscriber[query.sortBy], paginateField: subscriber._id } : undefined;
 
+    // Build search conditions array for $or query
+    const searchConditions: FilterQuery<SubscriberEntity>[] = [];
+
+    if (query.email) {
+      searchConditions.push({
+        email: {
+          $regex: regExpEscape(query.email),
+          $options: 'i',
+        },
+      });
+    }
+
+    if (query.phone) {
+      searchConditions.push({
+        phone: {
+          $regex: regExpEscape(query.phone),
+          $options: 'i',
+        },
+      });
+    }
+
+    if (query.subscriberId) {
+      searchConditions.push({
+        subscriberId: {
+          $regex: regExpEscape(query.subscriberId),
+          $options: 'i',
+        },
+      });
+    }
+
+    if (query.name) {
+      searchConditions.push({
+        $expr: {
+          $regexMatch: {
+            input: {
+              $trim: {
+                input: {
+                  $concat: [{ $ifNull: ['$firstName', ''] }, ' ', { $ifNull: ['$lastName', ''] }],
+                },
+              },
+            },
+            regex: regExpEscape(query.name),
+            options: 'i',
+          },
+        },
+      });
+    }
+
+    // Base query with environment and organization IDs
+    const baseQuery: FilterQuery<SubscriberEntity> = {
+      _environmentId: query.environmentId,
+      _organizationId: query.organizationId,
+    };
+
+    // Only add $or if we have search conditions
+    if (searchConditions.length > 0) {
+      baseQuery.$or = searchConditions;
+    }
+
     const pagination = await this.findWithCursorBasedPagination({
       after,
       before,
@@ -208,47 +267,7 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
       sortDirection: query.sortDirection,
       sortBy: query.sortBy,
       includeCursor: query.includeCursor,
-      query: {
-        _environmentId: query.environmentId,
-        _organizationId: query.organizationId,
-        $or: [
-          {
-            ...(query.email && {
-              email: {
-                $regex: regExpEscape(query.email),
-                $options: 'i',
-              },
-            }),
-            ...(query.phone && {
-              phone: {
-                $regex: regExpEscape(query.phone),
-                $options: 'i',
-              },
-            }),
-            ...(query.subscriberId && {
-              subscriberId: {
-                $regex: regExpEscape(query.subscriberId),
-                $options: 'i',
-              },
-            }),
-            ...(query.name && {
-              $expr: {
-                $regexMatch: {
-                  input: {
-                    $trim: {
-                      input: {
-                        $concat: [{ $ifNull: ['$firstName', ''] }, ' ', { $ifNull: ['$lastName', ''] }],
-                      },
-                    },
-                  },
-                  regex: regExpEscape(query.name),
-                  options: 'i',
-                },
-              },
-            }),
-          },
-        ],
-      },
+      query: baseQuery,
     });
 
     return {
