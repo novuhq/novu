@@ -8,7 +8,13 @@ import { EnvironmentEntity } from '@novu/dal';
 import { FullPayloadForRender, RenderCommand } from './render-command';
 import { MailyAttrsEnum } from '../../../shared/helpers/maily.types';
 import { parseLiquid } from '../../../shared/helpers/liquid';
-import { hasShow, isRepeatNode, isVariableNode, wrapMailyInLiquid } from '../../../shared/helpers/maily-utils';
+import {
+  hasShow,
+  isButtonNode,
+  isRepeatNode,
+  isVariableNode,
+  wrapMailyInLiquid,
+} from '../../../shared/helpers/maily-utils';
 
 export class EmailOutputRendererCommand extends RenderCommand {
   environmentId: string;
@@ -257,6 +263,14 @@ export class EmailOutputRendererUsecase {
         this.processVariableNodeTypes(processedNode);
         if (processedNode.text) {
           processedNode.text = this.addIndexToLiquidExpression(processedNode.text, iterablePath, index);
+        }
+
+        return processedNode;
+      }
+
+      if (isButtonNode(processedNode)) {
+        if (processedNode.attrs?.text) {
+          processedNode.attrs.text = this.addIndexToLiquidExpression(processedNode.attrs.text, iterablePath, index);
         }
 
         return processedNode;

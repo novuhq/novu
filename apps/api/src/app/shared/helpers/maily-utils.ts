@@ -45,6 +45,17 @@ export const isVariableNode = (
   );
 };
 
+export const isButtonNode = (
+  node: MailyJSONContent
+): node is MailyJSONContent & { attrs: { [MailyAttrsEnum.ID]: string } } => {
+  return !!(
+    node.type === MailyContentTypeEnum.BUTTON &&
+    node.attrs &&
+    node.attrs[MailyAttrsEnum.TEXT] !== undefined &&
+    typeof node.attrs[MailyAttrsEnum.TEXT] === 'string'
+  );
+};
+
 export const hasShow = (
   node: MailyJSONContent
 ): node is MailyJSONContent & { attrs: { [MailyAttrsEnum.SHOW_IF_KEY]: string } } => {

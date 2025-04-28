@@ -696,6 +696,56 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
     process.env.IS_ENHANCED_DIGEST_ENABLED = 'false';
   });
 
+  it('should allow using the current and the payload variables in the repeat block with the list items and buttons', async () => {
+    // @ts-ignore
+    process.env.IS_ENHANCED_DIGEST_ENABLED = 'true';
+    const { workflowId, emailStepDatabaseId } = await createWorkflowWithEmailLookingAtDigestResult();
+
+    const controlValues = {
+      body: '{"type":"doc","content":[{"type":"repeat","attrs":{"each":"payload.items","isUpdatingKey":false,"showIfKey":null,"iterations":0},"content":[{"type":"bulletList","content":[{"type":"listItem","attrs":{"color":null},"content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"variable","attrs":{"id":"payload.items.foo","label":null,"fallback":null,"required":false,"aliasFor":null}},{"type":"text","text":" "}]}]}]},{"type":"button","attrs":{"text":"current.bar","isTextVariable":true,"url":"","isUrlVariable":false,"alignment":"left","variant":"filled","borderRadius":"smooth","buttonColor":"#000000","textColor":"#ffffff","showIfKey":null,"paddingTop":10,"paddingRight":32,"paddingBottom":10,"paddingLeft":32,"width":"auto","aliasFor":"payload.items.bar"}}]},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null}},{"type":"button","attrs":{"text":"payload.baz","isTextVariable":true,"url":"","isUrlVariable":false,"alignment":"left","variant":"filled","borderRadius":"smooth","buttonColor":"#000000","textColor":"#ffffff","showIfKey":null,"paddingTop":10,"paddingRight":32,"paddingBottom":10,"paddingLeft":32,"width":"auto","aliasFor":null}}]}',
+      subject: 'repeat block current variable and payload variable',
+    };
+    const previewResponse = await novuClient.workflows.steps.generatePreview({
+      generatePreviewRequestDto: { controlValues, previewPayload: {} },
+      stepId: emailStepDatabaseId,
+      workflowId,
+    });
+    const countOccurrences = (str: string, searchStr: string) => (str.match(new RegExp(searchStr, 'g')) || []).length;
+    expect(countOccurrences(previewResponse.result.result.preview.body, 'foo')).to.equal(DEFAULT_ARRAY_ELEMENTS);
+    expect(countOccurrences(previewResponse.result.result.preview.body, 'bar')).to.equal(DEFAULT_ARRAY_ELEMENTS);
+    expect(previewResponse.result.result.preview.body).to.contain('baz');
+    expect(previewResponse.result.previewPayloadExample).to.deep.equal({
+      payload: {
+        items: [
+          {
+            foo: 'foo',
+            bar: 'bar',
+          },
+          {
+            foo: 'foo',
+            bar: 'bar',
+          },
+          {
+            foo: 'foo',
+            bar: 'bar',
+          },
+          {
+            foo: 'foo',
+            bar: 'bar',
+          },
+          {
+            foo: 'foo',
+            bar: 'bar',
+          },
+        ],
+        baz: 'baz',
+      },
+    });
+
+    // @ts-ignore
+    process.env.IS_ENHANCED_DIGEST_ENABLED = 'false';
+  });
+
   describe('Hydration testing', () => {
     it.skip(` should hydrate previous step in iterator email --> digest`, async () => {
       const { workflowId, emailStepDatabaseId, digestStepId } = await createWorkflowWithEmailLookingAtDigestResult();

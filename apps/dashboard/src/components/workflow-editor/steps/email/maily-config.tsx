@@ -26,7 +26,10 @@ import {
   SlashCommandExtension,
   VariableExtension,
   Variables,
+  ButtonExtension,
+  ButtonAttributes as MailyButtonAttributes,
 } from '@maily-to/core/extensions';
+
 import { ReactNodeViewRenderer } from '@tiptap/react';
 import type { Editor as TiptapEditor } from '@tiptap/core';
 import { StepResponseDto } from '@novu/shared';
@@ -41,6 +44,7 @@ import {
   CalculateVariablesProps,
   insertVariableToEditor,
   isInsideRepeatBlock,
+  resolveRepeatBlockAlias,
   VariableFrom,
 } from './variables/variables';
 import { ForView } from './views/for-view';
@@ -51,6 +55,12 @@ import { createVariableView } from './views/variable-view';
 import { createCards } from './blocks/cards';
 import { VariablePillOld } from '@/components/variable/variable-pill-old';
 export const VARIABLE_TRIGGER_CHARACTER = '{{';
+
+declare module '@tiptap/core' {
+  interface ButtonAttributes extends MailyButtonAttributes {
+    aliasFor: string | null;
+  }
+}
 
 /**
  * Fixed width (600px) for the email editor and rendered content.
@@ -232,6 +242,49 @@ export const createExtensions = (props: {
         return ReactNodeViewRenderer(HTMLCodeBlockView, {
           className: 'mly-relative',
         });
+      },
+    }),
+    ButtonExtension.extend({
+      addAttributes() {
+        const attributes = this.parent?.();
+
+        if (!isEnhancedDigestEnabled) {
+          return {
+            ...attributes,
+          };
+        }
+
+        return {
+          ...attributes,
+          aliasFor: {
+            default: null,
+          },
+        };
+      },
+
+      addCommands() {
+        const commands = this.parent?.();
+        const editor = this.editor;
+
+        if (!commands) return {};
+
+        return {
+          ...commands,
+          updateButton: (attrs) => {
+            const { text, url, isTextVariable, isUrlVariable } = attrs;
+
+            if (isEnhancedDigestEnabled && (isTextVariable || isUrlVariable)) {
+              const aliasFor = resolveRepeatBlockAlias(
+                isTextVariable ? (text ?? '') : (url ?? ''),
+                editor,
+                isEnhancedDigestEnabled
+              );
+              return commands.updateButton?.({ ...attrs, aliasFor: aliasFor ?? null });
+            }
+
+            return commands.updateButton?.(attrs);
+          },
+        };
       },
     }),
   ];

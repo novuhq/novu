@@ -36,7 +36,8 @@ export const VariablePill = React.forwardRef<
         )}
       >
         <VariableIcon variableName={variableName} hasError={!!issues} />
-        <span className="leading-1 max-w-[24ch] truncate" title={displayVariableName}>
+        {/* INFO: Keep the color defined on the span to avoid overriding it in maily components for example button */}
+        <span className="leading-1 text-text-sub max-w-[24ch] truncate" title={displayVariableName}>
           {displayVariableName}
         </span>
         <FiltersSection filters={filters} />
