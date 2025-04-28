@@ -48,7 +48,7 @@ export const CreateTopicForm = (props: CreateTopicFormProps) => {
   const { onSuccess, onError, onSubmitStart } = props;
   const track = useTelemetry();
   const [keyModifiedByUser, setKeyModifiedByUser] = useState(false);
-  const keyInputRef = useRef<HTMLInputElement>(null);
+  const nameInputRef = useRef<HTMLInputElement>(null);
 
   const { createTopic } = useCreateTopic({
     onSuccess: () => {
@@ -90,10 +90,10 @@ export const CreateTopicForm = (props: CreateTopicFormProps) => {
     }
   }, [watchedName, form, keyModifiedByUser]);
 
-  // Auto-focus the first input when the form is mounted
+  // Auto-focus the name input when the form is mounted
   useEffect(() => {
-    if (keyInputRef.current) {
-      keyInputRef.current.focus();
+    if (nameInputRef.current) {
+      nameInputRef.current.focus();
     }
   }, []);
 
@@ -123,54 +123,6 @@ export const CreateTopicForm = (props: CreateTopicFormProps) => {
           <div className="flex flex-col items-stretch gap-6 p-5">
             <FormField
               control={form.control}
-              name="key"
-              render={({ field, fieldState }) => (
-                <FormItem className="w-full">
-                  <div className="flex">
-                    <FormLabel className="gap-1">
-                      Topic Key <span className="text-primary">*</span>
-                    </FormLabel>
-                    <span className="ml-auto">
-                      <Link
-                        to="https://docs.novu.co/platform/topics"
-                        className="text-xs font-medium text-neutral-600 hover:underline"
-                        target="_blank"
-                      >
-                        How it works?
-                      </Link>
-                    </span>
-                  </div>
-                  <div className="relative">
-                    <FormControl>
-                      <Input
-                        {...field}
-                        placeholder="my-topic-key"
-                        id={field.name}
-                        value={field.value}
-                        onChange={(e) => {
-                          field.onChange(e);
-                          // Mark that the user has modified the key field
-                          setKeyModifiedByUser(true);
-                        }}
-                        hasError={!!fieldState.error}
-                        size="xs"
-                        ref={keyInputRef}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            form.handleSubmit(onSubmit)();
-                          }
-                        }}
-                      />
-                    </FormControl>
-                  </div>
-                  <FormMessage>Used to identify the topic in API calls</FormMessage>
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
               name="name"
               render={({ field, fieldState }) => (
                 <FormItem>
@@ -188,6 +140,7 @@ export const CreateTopicForm = (props: CreateTopicFormProps) => {
                       }}
                       hasError={!!fieldState.error}
                       size="xs"
+                      ref={nameInputRef}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
                           e.preventDefault();
@@ -197,6 +150,44 @@ export const CreateTopicForm = (props: CreateTopicFormProps) => {
                     />
                   </FormControl>
                   <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="key"
+              render={({ field, fieldState }) => (
+                <FormItem className="w-full">
+                  <div className="flex">
+                    <FormLabel className="gap-1">
+                      Topic Key <span className="text-primary">*</span>
+                    </FormLabel>
+                  </div>
+                  <div className="relative">
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder="project:12345"
+                        id={field.name}
+                        value={field.value}
+                        onChange={(e) => {
+                          field.onChange(e);
+                          // Mark that the user has modified the key field
+                          setKeyModifiedByUser(true);
+                        }}
+                        hasError={!!fieldState.error}
+                        size="xs"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            form.handleSubmit(onSubmit)();
+                          }
+                        }}
+                      />
+                    </FormControl>
+                  </div>
+                  <FormMessage>Used to identify the topic in API calls</FormMessage>
                 </FormItem>
               )}
             />
@@ -211,7 +202,7 @@ export const CreateTopicForm = (props: CreateTopicFormProps) => {
                     programmatically.
                   </span>
                   <Link
-                    to="https://docs.novu.co/platform/topics"
+                    to="https://docs.novu.co/platform/concepts/topics"
                     className="text-xs font-medium text-neutral-600 underline"
                     target="_blank"
                   >

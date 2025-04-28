@@ -9,9 +9,9 @@ import * as Sentry from '@sentry/react';
 import { ReactNode } from 'react';
 import {
   RiBarChartBoxLine,
-  RiBook2Line,
   RiChat1Line,
   RiDatabase2Line,
+  RiDiscussLine,
   RiGroup2Line,
   RiKey2Line,
   RiRouteFill,
@@ -84,7 +84,7 @@ export const SideNavigation = () => {
               </NavigationLink>
               {isTopicsPageActive && (
                 <NavigationLink to={buildRoute(ROUTES.TOPICS, { environmentSlug: currentEnvironment?.slug ?? '' })}>
-                  <RiBook2Line className="size-4" />
+                  <RiDiscussLine className="size-4" />
                   <span>Topics</span>
                 </NavigationLink>
               )}

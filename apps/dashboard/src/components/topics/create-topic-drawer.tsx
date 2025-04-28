@@ -7,7 +7,7 @@ import { useFormProtection } from '@/hooks/use-form-protection';
 import { useOnElementUnmount } from '@/hooks/use-on-element-unmount';
 import { cn } from '@/utils/ui';
 import { forwardRef, useState } from 'react';
-import { RiAddLine, RiMailSettingsLine } from 'react-icons/ri';
+import { RiAddLine, RiArrowRightSLine, RiDiscussLine } from 'react-icons/ri';
 import { CreateTopicForm } from './create-topic-form';
 
 type CreateTopicDrawerProps = {
@@ -61,7 +61,7 @@ export const CreateTopicDrawer = forwardRef<HTMLDivElement, CreateTopicDrawerPro
           <SheetHeader className="p-0">
             <header className="border-bg-soft flex h-12 w-full flex-row items-center gap-3 border-b p-3.5">
               <div className="flex flex-1 items-center gap-1 overflow-hidden text-sm font-medium">
-                <RiMailSettingsLine className="size-5 p-0.5" />
+                <RiDiscussLine className="size-5 p-0.5" />
                 <TruncatedText className="flex-1">Add topic</TruncatedText>
               </div>
             </header>
@@ -78,9 +78,12 @@ export const CreateTopicDrawer = forwardRef<HTMLDivElement, CreateTopicDrawerPro
             <div className="flex w-full items-center justify-end gap-3 p-3">
               <Button
                 variant="secondary"
+                size="xs"
+                mode="gradient"
                 type="submit"
                 disabled={isSubmitting}
                 isLoading={isSubmitting}
+                trailingIcon={RiArrowRightSLine}
                 form="create-topic-form"
               >
                 Create topic

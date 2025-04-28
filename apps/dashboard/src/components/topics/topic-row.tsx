@@ -20,6 +20,7 @@ import { Link } from 'react-router-dom';
 import { useEnvironment } from '../../context/environment/hooks';
 import { buildRoute, ROUTES } from '../../utils/routes';
 import { cn } from '../../utils/ui';
+import { showErrorToast } from '../primitives/sonner-helpers';
 import { useDeleteTopic } from './hooks/use-delete-topic';
 import { useTopicsNavigate } from './hooks/use-topics-navigate';
 import { Topic } from './types';
@@ -65,7 +66,7 @@ export const TopicRow = ({ topic }: TopicRowProps) => {
       });
     } catch (error) {
       // Error is already handled by the useDeleteTopic hook
-      console.error('Failed to delete topic:', error);
+      showErrorToast('Failed to delete topic');
     }
   };
 
@@ -84,7 +85,7 @@ export const TopicRow = ({ topic }: TopicRowProps) => {
         </TopicTableCell>
         <TopicTableCell>
           <div className="flex items-center gap-1">
-            <div className="max-w-[300px] truncate">{topic.key}</div>
+            <div className="text-mono text-text-soft max-w-[300px] truncate">{topic.key}</div>
             <CopyButton
               className="z-10 flex size-2 p-0 px-1 opacity-0 group-hover:opacity-100"
               valueToCopy={topic.key}

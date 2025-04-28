@@ -10,7 +10,7 @@ export class UpsertTopicUseCase {
   constructor(private topicRepository: TopicRepository) {}
 
   @InstrumentUsecase()
-  async execute(command: UpsertTopicCommand): Promise<TopicResponseDto> {
+  async execute(command: UpsertTopicCommand): Promise<{ topic: TopicResponseDto; created: boolean }> {
     let topic = await this.topicRepository.findTopicByKey(command.key, command.organizationId, command.environmentId);
 
     if (!topic) {
@@ -39,6 +39,9 @@ export class UpsertTopicUseCase {
       );
     }
 
-    return mapTopicEntityToDto(topic!);
+    return {
+      topic: mapTopicEntityToDto(topic!),
+      created: !topic,
+    };
   }
 }

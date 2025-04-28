@@ -11,11 +11,13 @@ import {
   Patch,
   Post,
   Query,
+  Res,
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { ExternalApiAccessible } from '@novu/application-generic';
 import { ApiRateLimitCategoryEnum, UserSessionData } from '@novu/shared';
+import { Response } from 'express';
 import { ThrottlerCategory } from '../rate-limiting/guards/throttler.decorator';
 import { DirectionEnum } from '../shared/dtos/base-responses';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
@@ -102,12 +104,14 @@ export class TopicsController {
     description: 'Creates a new topic if it does not exist, or updates an existing topic if it already exists',
   })
   @ApiResponse(TopicResponseDto, 201)
+  @ApiResponse(TopicResponseDto, 200)
   @SdkMethodName('create')
   async upsertTopic(
     @UserSession() user: UserSessionData,
-    @Body() body: CreateUpdateTopicRequestDto
+    @Body() body: CreateUpdateTopicRequestDto,
+    @Res({ passthrough: true }) response: Response
   ): Promise<TopicResponseDto> {
-    return await this.upsertTopicUsecase.execute(
+    const result = await this.upsertTopicUsecase.execute(
       UpsertTopicCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
@@ -116,6 +120,12 @@ export class TopicsController {
         name: body.name,
       })
     );
+
+    if (result.created) {
+      response.status(HttpStatus.CREATED);
+    }
+
+    return result.topic;
   }
 
   @Get('/:topicKey')

@@ -11,7 +11,7 @@ import { itemVariants, listVariants } from '@/utils/animation';
 import { ISubscriber } from '@novu/shared';
 import { motion } from 'motion/react';
 import { forwardRef, useState } from 'react';
-import { RiMailSettingsLine, RiUser3Fill } from 'react-icons/ri';
+import { RiDiscussLine, RiUser3Fill } from 'react-icons/ri';
 import { cn } from '../../utils/ui';
 import { AddSubscriberForm } from './add-subscriber-form';
 import { useTopic } from './hooks/use-topic';
@@ -216,7 +216,7 @@ function TopicTabs(props: TopicTabsProps) {
     >
       <header className="border-bg-soft flex h-12 w-full flex-row items-center gap-3 border-b px-3 py-4">
         <div className="flex flex-1 items-center gap-1 overflow-hidden text-sm font-medium">
-          <RiMailSettingsLine className="size-5 p-0.5" />
+          <RiDiscussLine className="size-5 p-0.5" />
           <TruncatedText className="flex-1">Topic - {topicKey}</TruncatedText>
         </div>
       </header>

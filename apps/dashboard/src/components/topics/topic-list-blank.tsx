@@ -1,7 +1,7 @@
 import { AddSubscriberIllustration } from '@/components/icons/add-subscriber-illustration';
 import { Button } from '@/components/primitives/button';
 import { LinkButton } from '@/components/primitives/button-link';
-import { RiAddLine, RiBookMarkedLine } from 'react-icons/ri';
+import { RiAddCircleLine, RiBookMarkedLine } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
 import { useTopicsNavigate } from './hooks/use-topics-navigate';
 
@@ -22,11 +22,17 @@ export const TopicListBlank = () => {
       <div className="flex items-center justify-center gap-6">
         <Link to="https://docs.novu.co/platform/topics" target="_blank">
           <LinkButton variant="gray" trailingIcon={RiBookMarkedLine}>
-            Learn more in docs
+            View Docs
           </LinkButton>
         </Link>
 
-        <Button variant="primary" leadingIcon={RiAddLine} onClick={navigateToCreateTopicPage} className="gap-2">
+        <Button
+          variant="primary"
+          mode="gradient"
+          leadingIcon={RiAddCircleLine}
+          onClick={navigateToCreateTopicPage}
+          className="gap-2"
+        >
           Create topic
         </Button>
       </div>
