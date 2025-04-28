@@ -737,7 +737,8 @@
     "unsnooze",
     "snoozed",
     "unsnoozed",
-    "automators"
+    "automators",
+    "calcom"
   ],
   "flagWords": [],
   "patterns": [

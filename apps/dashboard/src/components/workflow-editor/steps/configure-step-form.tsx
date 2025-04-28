@@ -49,6 +49,7 @@ import { SaveFormContext } from '@/components/workflow-editor/steps/save-form-co
 import { SdkBanner } from '@/components/workflow-editor/steps/sdk-banner';
 import { SkipConditionsButton } from '@/components/workflow-editor/steps/skip-conditions-button';
 import { ConfigureSmsStepPreview } from '@/components/workflow-editor/steps/sms/configure-sms-step-preview';
+
 import { UpdateWorkflowFn } from '@/components/workflow-editor/workflow-provider';
 import { useFormAutosave } from '@/hooks/use-form-autosave';
 import { INLINE_CONFIGURABLE_STEP_TYPES, STEP_TYPE_LABELS, TEMPLATE_CONFIGURABLE_STEP_TYPES } from '@/utils/constants';
@@ -316,6 +317,8 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
                     <RiArrowRightSLine className="ml-auto h-4 w-4 text-neutral-600" />
                   </Button>
                 </Link>
+
+                <SkipConditionsButton origin={workflow.origin} step={step} />
               </SidebarContent>
               <Separator />
 
@@ -344,7 +347,14 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
             </>
           )}
 
-          <SkipConditionsButton origin={workflow.origin} step={step} inSidebar />
+          {isInlineConfigurableStep && (
+            <>
+              <SidebarContent>
+                <SkipConditionsButton origin={workflow.origin} step={step} />
+              </SidebarContent>
+              <Separator />
+            </>
+          )}
 
           {!isSupportedStep && (
             <SidebarContent>

@@ -84,7 +84,6 @@ export class WorkflowController {
   })
   @ApiBody({ type: CreateWorkflowDto, description: 'Workflow creation details' })
   @ApiResponse(WorkflowResponseDto, 201)
-  @ExternalApiAccessible()
   async create(
     @UserSession(ParseSlugEnvironmentIdPipe) user: UserSessionData,
     @Body() createWorkflowDto: CreateWorkflowDto
@@ -105,7 +104,6 @@ export class WorkflowController {
   @ApiBody({ type: SyncWorkflowDto, description: 'Sync workflow details' })
   @ApiResponse(WorkflowResponseDto)
   @SdkMethodName('sync')
-  @ExternalApiAccessible()
   async sync(
     @UserSession() user: UserSessionData,
     @Param('workflowId', ParseSlugIdPipe) workflowIdOrInternalId: string,
@@ -121,7 +119,6 @@ export class WorkflowController {
   }
 
   @Put(':workflowId')
-  @ExternalApiAccessible()
   @ApiOperation({
     summary: 'Update an existing workflow',
     description: 'Updates the details of an existing workflow',
@@ -143,7 +140,6 @@ export class WorkflowController {
   }
 
   @Get(':workflowId')
-  @ExternalApiAccessible()
   @ApiOperation({
     summary: 'Retrieve a workflow',
     description: 'Fetches details of a specific workflow',
@@ -172,7 +168,6 @@ export class WorkflowController {
   }
 
   @Delete(':workflowId')
-  @ExternalApiAccessible()
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
     summary: 'Delete a workflow',
@@ -200,7 +195,6 @@ export class WorkflowController {
   })
   @ApiResponse(ListWorkflowResponse)
   @SdkMethodName('search')
-  @ExternalApiAccessible()
   async searchWorkflows(
     @UserSession(ParseSlugEnvironmentIdPipe) user: UserSessionData,
     @Query() query: GetListQueryParamsDto
@@ -287,7 +281,6 @@ export class WorkflowController {
   @ApiBody({ type: PatchWorkflowDto, description: 'Workflow patch details' })
   @ApiResponse(WorkflowResponseDto)
   @SdkMethodName('patch')
-  @ExternalApiAccessible()
   async patchWorkflow(
     @UserSession(ParseSlugEnvironmentIdPipe) user: UserSessionData,
     @Param('workflowId', ParseSlugIdPipe) workflowIdOrInternalId: string,

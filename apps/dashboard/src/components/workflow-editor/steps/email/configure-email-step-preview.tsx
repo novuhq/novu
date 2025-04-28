@@ -24,7 +24,7 @@ const MiniEmailPreview = (props: MiniEmailPreviewProps) => {
       <div className="flex flex-col gap-1 py-1">
         <EmailPreviewHeader className="px-2 text-sm" />
         <Separator className="before:bg-neutral-alpha-100" />
-        <div className="relative z-10 space-y-1 px-2">{children}</div>
+        <div className="relative z-10 line-clamp-3 space-y-1 px-2 pt-2 text-xs">{children}</div>
       </div>
     </div>
   );
@@ -43,7 +43,25 @@ export function ConfigureEmailStepPreview(props: ConfigureEmailStepPreviewProps)
       tempDiv.querySelectorAll(tag).forEach((el) => el.remove());
     });
 
+    // Replace <br> tags with a space
+    tempDiv.querySelectorAll('br').forEach((el) => {
+      el.replaceWith(' ');
+    });
+
+    // Add spaces between all block elements
+    const blockElements = tempDiv.querySelectorAll(
+      'div, p, h1, h2, h3, h4, h5, h6, ul, ol, li, table, tr, blockquote, form, fieldset, section, article, aside, header, footer, nav'
+    );
+
+    blockElements.forEach((el) => {
+      // Add space before the element
+      el.insertBefore(document.createTextNode(' '), el.firstChild);
+      // Add space after the element
+      el.appendChild(document.createTextNode(' '));
+    });
+
     let text = tempDiv.textContent?.trim() || '';
+    // Replace all whitespace sequences (including newlines) with a single space
     text = text.replace(/\s+/g, ' ').replace(/(\.|!|\?)\s/g, '$1\n');
     return text;
   };
@@ -85,13 +103,9 @@ export function ConfigureEmailStepPreview(props: ConfigureEmailStepPreviewProps)
   if (previewData.result.type === 'email') {
     return (
       <MiniEmailPreview className={className} {...rest}>
-        <p className="text-foreground-400 line-clamp-3">
-          <span className="text-foreground-600 max-w-[20ch] truncate text-sm">
-            {previewData.result.preview.subject}
-          </span>
-          <span> - </span>
-          <span className="text-foreground-400 text-sm">{getPlainText(previewData.result.preview.body)}</span>
-        </p>
+        <span className="text-foreground-600 max-w-[20ch] truncate">{previewData.result.preview.subject}</span>
+        <span> - </span>
+        <span className="text-foreground-400">{getPlainText(previewData.result.preview.body)}</span>
       </MiniEmailPreview>
     );
   }
