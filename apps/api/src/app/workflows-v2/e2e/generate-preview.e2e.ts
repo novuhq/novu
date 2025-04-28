@@ -1281,6 +1281,25 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
       expect(previewResponse4.result.previewPayloadExample).to.deep.equal(resultForExtraItemInTheArray);
       expect(previewResponse4.result.result.preview.body).to.contain('hello, name, and 2 others');
       expect(previewResponse4.result.result.preview.body).to.contain('new, new, and 2 others');
+
+      const payloadWithEmptyArray = {
+        steps: {
+          'digest-step': {
+            events: [],
+          },
+        },
+      };
+
+      const requestDto4 = {
+        controlValues: controlValues3,
+        previewPayload: payloadWithEmptyArray,
+      };
+      const previewResponse5 = await novuClient.workflows.steps.generatePreview({
+        generatePreviewRequestDto: requestDto4,
+        stepId,
+        workflowId: workflow.id,
+      });
+      expect(previewResponse5.result.previewPayloadExample).to.deep.equal(payloadWithEmptyArray);
     });
   });
 
