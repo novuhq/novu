@@ -1,6 +1,6 @@
-import { Button } from '@/components/primitives/button';
-import { Input } from '@/components/primitives/input';
+import { ISubscriberResponseDto } from '@novu/shared';
 import { useState } from 'react';
+import { SubscriberAutocomplete } from '../subscribers/subscriber-autocomplete';
 import { useAddTopicSubscribers } from './hooks/use-topic-subscribers';
 
 type AddSubscriberFormProps = {
@@ -9,22 +9,20 @@ type AddSubscriberFormProps = {
 };
 
 export function AddSubscriberForm({ topicKey, onSuccess }: AddSubscriberFormProps) {
-  const [subscriberId, setSubscriberId] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const { mutate: addSubscribers, isPending } = useAddTopicSubscribers();
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-
-    if (!subscriberId.trim()) return;
+  const handleSubscriberSelected = (subscriber: ISubscriberResponseDto) => {
+    if (!subscriber.subscriberId?.trim()) return;
 
     addSubscribers(
       {
         topicKey,
-        subscribers: [subscriberId.trim()],
+        subscribers: [subscriber.subscriberId.trim()],
       },
       {
         onSuccess: () => {
-          setSubscriberId('');
+          setSearchQuery('');
           onSuccess?.();
         },
       }
@@ -32,24 +30,16 @@ export function AddSubscriberForm({ topicKey, onSuccess }: AddSubscriberFormProp
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex gap-2">
-      <Input
-        placeholder="Enter subscriberId to add to this topic"
-        value={subscriberId}
+    <div className="w-full">
+      <SubscriberAutocomplete
+        placeholder="Search for subscribers to add to this topic"
+        value={searchQuery}
+        onChange={setSearchQuery}
+        onSelectSubscriber={handleSubscriberSelected}
         size="xs"
-        onChange={(e) => setSubscriberId(e.target.value)}
-        className="flex-1"
-      />
-      <Button
-        type="submit"
-        disabled={isPending || !subscriberId.trim()}
-        variant="secondary"
-        size="xs"
-        className="shrink-0"
+        className="w-full"
         isLoading={isPending}
-      >
-        Add
-      </Button>
-    </form>
+      />
+    </div>
   );
 }
