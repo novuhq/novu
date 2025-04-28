@@ -17,12 +17,17 @@ export type TopicsFiltersProps = HTMLAttributes<HTMLFormElement> & {
   onFiltersChange: (filter: Partial<TopicsFilter>) => void;
   filterValues: TopicsFilter;
   onReset?: () => void;
+  isLoading?: boolean;
+  onLoadingChange?: (isLoading: boolean) => void;
 };
 
 export const TopicsFilters = (props: TopicsFiltersProps) => {
-  const { className, onFiltersChange, filterValues, onReset, ...rest } = props;
+  const { className, onFiltersChange, filterValues, onReset, isLoading, onLoadingChange, ...rest } = props;
   const queryClient = useQueryClient();
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Combine parent loading state with local loading state
+  const isFiltersLoading = isLoading;
 
   const defaultValues = useMemo<FilterFormValues>(
     () => ({
@@ -41,6 +46,13 @@ export const TopicsFilters = (props: TopicsFiltersProps) => {
     form.reset(defaultValues);
   }, [form, defaultValues]);
 
+  const setLoading = useCallback(
+    (loading: boolean) => {
+      onLoadingChange?.(loading);
+    },
+    [onLoadingChange]
+  );
+
   const clearDebounceTimeout = useCallback(() => {
     if (debounceTimeoutRef.current) {
       clearTimeout(debounceTimeoutRef.current);
@@ -53,6 +65,9 @@ export const TopicsFilters = (props: TopicsFiltersProps) => {
       clearDebounceTimeout();
 
       debounceTimeoutRef.current = setTimeout(() => {
+        // Set loading state when the debounce completes and we're about to make the API call
+        setLoading(true);
+
         // Cancel any in-flight requests
         queryClient.cancelQueries({ queryKey: [QueryKeys.fetchTopics] });
 
@@ -62,10 +77,12 @@ export const TopicsFilters = (props: TopicsFiltersProps) => {
           [fieldName]: value.trim() ? value : undefined,
         });
 
+        // Note: We don't immediately clear loading state here
+        // The parent component should handle this when data is loaded
         debounceTimeoutRef.current = null;
       }, 400);
     },
-    [clearDebounceTimeout, onFiltersChange, queryClient]
+    [clearDebounceTimeout, onFiltersChange, queryClient, setLoading]
   );
 
   const handleFieldChange = useCallback(
@@ -79,6 +96,9 @@ export const TopicsFilters = (props: TopicsFiltersProps) => {
   const handleReset = useCallback(() => {
     clearDebounceTimeout();
 
+    // Set loading state for reset (this should be immediate since reset isn't debounced)
+    setLoading(true);
+
     // Reset form state
     form.reset({ key: '', name: '' });
 
@@ -89,7 +109,7 @@ export const TopicsFilters = (props: TopicsFiltersProps) => {
     if (onReset) {
       onReset();
     }
-  }, [clearDebounceTimeout, form, onReset, queryClient]);
+  }, [clearDebounceTimeout, form, onReset, queryClient, setLoading]);
 
   // Clean up timeout on unmount
   useEffect(() => {
@@ -101,48 +121,50 @@ export const TopicsFilters = (props: TopicsFiltersProps) => {
   const nameValue = form.watch('name');
 
   return (
-    <Form {...form}>
-      <FormRoot className={cn('flex items-center gap-2', className)} {...rest}>
-        <FormField
-          control={form.control}
-          name="name"
-          render={() => (
-            <FormItem className="relative">
-              <FacetedFormFilter
-                type="text"
-                size="small"
-                title="Name"
-                value={nameValue}
-                onChange={(value) => handleFieldChange('name', value)}
-                placeholder="Search by topic name"
-              />
-            </FormItem>
-          )}
-        />
+    <div className={isFiltersLoading ? 'pointer-events-none opacity-70' : ''}>
+      <Form {...form}>
+        <FormRoot className={cn('flex items-center gap-2', className)} {...rest}>
+          <FormField
+            control={form.control}
+            name="name"
+            render={() => (
+              <FormItem className="relative">
+                <FacetedFormFilter
+                  type="text"
+                  size="small"
+                  title="Name"
+                  value={nameValue}
+                  onChange={(value) => handleFieldChange('name', value)}
+                  placeholder="Search by topic name"
+                />
+              </FormItem>
+            )}
+          />
 
-        <FormField
-          control={form.control}
-          name="key"
-          render={() => (
-            <FormItem className="relative">
-              <FacetedFormFilter
-                type="text"
-                size="small"
-                title="Key"
-                value={keyValue}
-                onChange={(value) => handleFieldChange('key', value)}
-                placeholder="Search by topic key"
-              />
-            </FormItem>
-          )}
-        />
+          <FormField
+            control={form.control}
+            name="key"
+            render={() => (
+              <FormItem className="relative">
+                <FacetedFormFilter
+                  type="text"
+                  size="small"
+                  title="Key"
+                  value={keyValue}
+                  onChange={(value) => handleFieldChange('key', value)}
+                  placeholder="Search by topic key"
+                />
+              </FormItem>
+            )}
+          />
 
-        {filterHasValue && (
-          <Button variant="secondary" mode="ghost" size="2xs" onClick={handleReset}>
-            Reset
-          </Button>
-        )}
-      </FormRoot>
-    </Form>
+          {filterHasValue && (
+            <Button variant="secondary" mode="ghost" size="2xs" onClick={handleReset} disabled={isFiltersLoading}>
+              Reset
+            </Button>
+          )}
+        </FormRoot>
+      </Form>
+    </div>
   );
 };

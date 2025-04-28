@@ -19,7 +19,8 @@ type TopicListProps = HTMLAttributes<HTMLDivElement>;
 
 // Wrapper similar to SubscriberListWrapper
 const TopicListWrapper = (props: TopicListFiltersProps) => {
-  const { className, children, filterValues, handleFiltersChange, resetFilters, ...rest } = props;
+  const { className, children, filterValues, handleFiltersChange, resetFilters, isLoading, onLoadingChange, ...rest } =
+    props;
   const { navigateToCreateTopicPage } = useTopicsNavigate();
 
   return (
@@ -29,6 +30,8 @@ const TopicListWrapper = (props: TopicListFiltersProps) => {
           onFiltersChange={handleFiltersChange}
           filterValues={filterValues}
           onReset={resetFilters}
+          isLoading={isLoading}
+          onLoadingChange={onLoadingChange}
           className="py-2.5"
         />
 
@@ -79,7 +82,10 @@ const TopicListTable = (props: TopicListTableProps) => {
 };
 
 type TopicListFiltersProps = HTMLAttributes<HTMLDivElement> &
-  Pick<TopicsUrlState, 'filterValues' | 'handleFiltersChange' | 'resetFilters'>;
+  Pick<TopicsUrlState, 'filterValues' | 'handleFiltersChange' | 'resetFilters'> & {
+    isLoading?: boolean;
+    onLoadingChange?: (isLoading: boolean) => void;
+  };
 
 type TopicListTableProps = HTMLAttributes<HTMLTableElement> & {
   toggleSort: ReturnType<typeof useTopicsUrlState>['toggleSort'];
@@ -91,6 +97,7 @@ export const TopicList = (props: TopicListProps) => {
   const { className, ...rest } = props;
   const [nextPageAfter, setNextPageAfter] = useState<string | undefined>(undefined);
   const [previousPageBefore, setPreviousPageBefore] = useState<string | undefined>(undefined);
+  const [isFilterLoading, setIsFilterLoading] = useState(false);
   const { filterValues, handleFiltersChange, toggleSort, resetFilters, handleNext, handlePrevious, handleFirst } =
     useTopicsUrlState({
       after: nextPageAfter,
@@ -105,6 +112,13 @@ export const TopicList = (props: TopicListProps) => {
     meta: { errorMessage: 'Issue fetching topics' },
   });
 
+  // When data is loaded, clear the loading state
+  useEffect(() => {
+    if (!isPending && isFilterLoading) {
+      setIsFilterLoading(false);
+    }
+  }, [isPending, isFilterLoading]);
+
   useEffect(() => {
     if (data?.next) {
       setNextPageAfter(data.next);
@@ -115,14 +129,23 @@ export const TopicList = (props: TopicListProps) => {
     }
   }, [data]);
 
-  if (isPending) {
-    return (
-      <TopicListWrapper
-        filterValues={filterValues}
-        handleFiltersChange={handleFiltersChange}
-        resetFilters={resetFilters}
-        {...rest}
-      >
+  // Combine filter loading with API loading
+  const isLoading = isPending || isFilterLoading;
+
+  // Common wrapper props
+  const wrapperProps = {
+    filterValues,
+    handleFiltersChange,
+    resetFilters,
+    isLoading,
+    onLoadingChange: setIsFilterLoading,
+    ...rest,
+  };
+
+  // Always render the same structure to avoid layout shifts
+  return (
+    <TopicListWrapper {...wrapperProps}>
+      {isLoading ? (
         <TopicListTable
           orderBy={filterValues.orderBy}
           orderDirection={filterValues.orderDirection}
@@ -132,61 +155,34 @@ export const TopicList = (props: TopicListProps) => {
             <TopicRowSkeleton key={index} />
           ))}
         </TopicListTable>
-      </TopicListWrapper>
-    );
-  }
+      ) : !data?.data.length ? (
+        !areFiltersApplied ? (
+          <TopicListBlank />
+        ) : (
+          <TopicListNoResults />
+        )
+      ) : (
+        <>
+          <TopicListTable
+            orderBy={filterValues.orderBy}
+            orderDirection={filterValues.orderDirection}
+            toggleSort={toggleSort}
+          >
+            {data.data.map((topic) => (
+              <TopicRow key={topic._id} topic={topic} />
+            ))}
+          </TopicListTable>
 
-  if (!areFiltersApplied && !data?.data.length) {
-    return (
-      <TopicListWrapper
-        filterValues={filterValues}
-        handleFiltersChange={handleFiltersChange}
-        resetFilters={resetFilters}
-        {...rest}
-      >
-        <TopicListBlank />
-      </TopicListWrapper>
-    );
-  }
-
-  if (!data?.data.length) {
-    return (
-      <TopicListWrapper
-        filterValues={filterValues}
-        handleFiltersChange={handleFiltersChange}
-        resetFilters={resetFilters}
-        {...rest}
-      >
-        <TopicListNoResults />
-      </TopicListWrapper>
-    );
-  }
-
-  return (
-    <TopicListWrapper
-      filterValues={filterValues}
-      handleFiltersChange={handleFiltersChange}
-      resetFilters={resetFilters}
-      {...rest}
-    >
-      <TopicListTable
-        orderBy={filterValues.orderBy}
-        orderDirection={filterValues.orderDirection}
-        toggleSort={toggleSort}
-      >
-        {data.data.map((topic) => (
-          <TopicRow key={topic._id} topic={topic} />
-        ))}
-      </TopicListTable>
-
-      {!!(data.next || data.previous) && (
-        <CursorPagination
-          hasNext={!!data.next}
-          hasPrevious={!!data.previous}
-          onNext={handleNext}
-          onPrevious={handlePrevious}
-          onFirst={handleFirst}
-        />
+          {!!(data.next || data.previous) && (
+            <CursorPagination
+              hasNext={!!data.next}
+              hasPrevious={!!data.previous}
+              onNext={handleNext}
+              onPrevious={handlePrevious}
+              onFirst={handleFirst}
+            />
+          )}
+        </>
       )}
     </TopicListWrapper>
   );
