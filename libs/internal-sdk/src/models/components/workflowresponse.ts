@@ -26,11 +26,11 @@ import {
   NotificationTrigger$outboundSchema,
 } from "./notificationtrigger.js";
 import {
-  PreferenceChannels,
-  PreferenceChannels$inboundSchema,
-  PreferenceChannels$Outbound,
-  PreferenceChannels$outboundSchema,
-} from "./preferencechannels.js";
+  SubscriberPreferenceChannels,
+  SubscriberPreferenceChannels$inboundSchema,
+  SubscriberPreferenceChannels$Outbound,
+  SubscriberPreferenceChannels$outboundSchema,
+} from "./subscriberpreferencechannels.js";
 
 export type WorkflowResponseData = {};
 
@@ -42,7 +42,7 @@ export type WorkflowResponse = {
   description: string;
   active: boolean;
   draft: boolean;
-  preferenceSettings: PreferenceChannels;
+  preferenceSettings: SubscriberPreferenceChannels;
   critical: boolean;
   tags: Array<string>;
   steps: Array<NotificationStepDto>;
@@ -167,7 +167,7 @@ export const WorkflowResponse$inboundSchema: z.ZodType<
   description: z.string(),
   active: z.boolean(),
   draft: z.boolean(),
-  preferenceSettings: PreferenceChannels$inboundSchema,
+  preferenceSettings: SubscriberPreferenceChannels$inboundSchema,
   critical: z.boolean(),
   tags: z.array(z.string()),
   steps: z.array(NotificationStepDto$inboundSchema),
@@ -203,7 +203,7 @@ export type WorkflowResponse$Outbound = {
   description: string;
   active: boolean;
   draft: boolean;
-  preferenceSettings: PreferenceChannels$Outbound;
+  preferenceSettings: SubscriberPreferenceChannels$Outbound;
   critical: boolean;
   tags: Array<string>;
   steps: Array<NotificationStepDto$Outbound>;
@@ -232,7 +232,7 @@ export const WorkflowResponse$outboundSchema: z.ZodType<
   description: z.string(),
   active: z.boolean(),
   draft: z.boolean(),
-  preferenceSettings: PreferenceChannels$outboundSchema,
+  preferenceSettings: SubscriberPreferenceChannels$outboundSchema,
   critical: z.boolean(),
   tags: z.array(z.string()),
   steps: z.array(NotificationStepDto$outboundSchema),

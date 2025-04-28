@@ -10,6 +10,8 @@ import { ConditionsEditor } from '@/components/conditions-editor/conditions-edit
 import { Form, FormField } from '@/components/primitives/form/form';
 import { updateStepInWorkflow } from '@/components/workflow-editor/step-utils';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
+import { useDataRef } from '@/hooks/use-data-ref';
+import { useFormAutosave } from '@/hooks/use-form-autosave';
 import { useParseVariables } from '@/hooks/use-parse-variables';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { countConditions, getUniqueFieldNamespaces, getUniqueOperators } from '@/utils/conditions';
@@ -106,46 +108,61 @@ export const EditStepConditionsForm = () => {
       query,
     },
   });
-  const { formState } = form;
 
-  const onSubmit = (values: z.infer<ReturnType<typeof getConditionsSchema>>) => {
-    if (!step || !workflow) return;
+  const { onBlur, saveForm } = useFormAutosave({
+    previousData: {
+      query,
+    },
+    form,
+    shouldClientValidate: true,
+    save: (data) => {
+      if (!step || !workflow) return;
 
-    const skip = formatQuery(values.query, 'jsonlogic');
-    const updateStepData: Partial<StepUpdateDto> = {
-      controlValues: { ...step.controls.values, skip },
+      const skip = formatQuery(data.query, 'jsonlogic');
+      const updateStepData: Partial<StepUpdateDto> = {
+        controlValues: { ...step.controls.values, skip },
+      };
+
+      if (!skip) {
+        updateStepData.controlValues!.skip = null;
+      }
+
+      update(updateStepInWorkflow(workflow, step.stepId, updateStepData), {
+        onSuccess: () => {
+          const uniqueFieldTypes: string[] = getUniqueFieldNamespaces(skip);
+          const uniqueOperators: string[] = getUniqueOperators(skip);
+
+          if (!hasConditions) {
+            track(TelemetryEvent.STEP_CONDITIONS_ADDED, {
+              stepType: step.type,
+              fieldTypes: uniqueFieldTypes,
+              operators: uniqueOperators,
+            });
+          } else {
+            const oldConditionsCount = countConditions(step.controls.values.skip as RQBJsonLogic);
+            const newConditionsCount = countConditions(skip);
+
+            track(TelemetryEvent.STEP_CONDITIONS_UPDATED, {
+              stepType: step.type,
+              fieldTypes: uniqueFieldTypes,
+              operators: uniqueOperators,
+              type: newConditionsCount < oldConditionsCount ? 'deletion' : 'update',
+            });
+          }
+        },
+      });
+      form.reset(data);
+    },
+  });
+
+  // Run saveForm on unmount
+  const saveFormRef = useDataRef(saveForm);
+  useEffect(() => {
+    return () => {
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      saveFormRef.current();
     };
-
-    if (!skip) {
-      updateStepData.controlValues!.skip = null;
-    }
-
-    update(updateStepInWorkflow(workflow, step.stepId, updateStepData), {
-      onSuccess: () => {
-        const uniqueFieldTypes: string[] = getUniqueFieldNamespaces(skip);
-        const uniqueOperators: string[] = getUniqueOperators(skip);
-
-        if (!hasConditions) {
-          track(TelemetryEvent.STEP_CONDITIONS_ADDED, {
-            stepType: step.type,
-            fieldTypes: uniqueFieldTypes,
-            operators: uniqueOperators,
-          });
-        } else {
-          const oldConditionsCount = countConditions(step.controls.values.skip as RQBJsonLogic);
-          const newConditionsCount = countConditions(skip);
-
-          track(TelemetryEvent.STEP_CONDITIONS_UPDATED, {
-            stepType: step.type,
-            fieldTypes: uniqueFieldTypes,
-            operators: uniqueOperators,
-            type: newConditionsCount < oldConditionsCount ? 'deletion' : 'update',
-          });
-        }
-      },
-    });
-    form.reset(values);
-  };
+  }, [saveFormRef]);
 
   useEffect(() => {
     if (!step) return;
@@ -173,15 +190,19 @@ export const EditStepConditionsForm = () => {
     <>
       <Form {...form}>
         <EditStepConditionsLayout
-          onSubmit={form.handleSubmit(onSubmit)}
           stepName={step?.name}
-          disabled={!formState.isDirty}
+          onBlur={onBlur}
+          onSubmit={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
         >
           <FormField
             control={form.control}
             name="query"
             render={({ field }) => (
               <ConditionsEditor
+                saveForm={saveForm}
                 query={field.value}
                 onQueryChange={field.onChange}
                 fields={fields}

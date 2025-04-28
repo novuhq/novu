@@ -1,20 +1,16 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import {
-  PreferencesTypeEnum,
-  StepCreateDto,
-  StepResponseDto,
-  StepUpdateDto,
-  WorkflowCreationSourceEnum,
-  WorkflowOriginEnum,
-  WorkflowPreferences,
-  WorkflowResponseDto,
-  WorkflowStatusEnum,
-} from '@novu/shared';
+import { PreferencesTypeEnum, WorkflowCreationSourceEnum, WorkflowOriginEnum, WorkflowStatusEnum } from '@novu/shared';
 import { PreferencesEntity, PreferencesRepository } from '@novu/dal';
 import { Instrument, InstrumentUsecase } from '@novu/application-generic';
 import { SyncToEnvironmentCommand } from './sync-to-environment.command';
 import { GetWorkflowCommand, GetWorkflowUseCase } from '../get-workflow';
-import { UpsertWorkflowCommand, UpsertWorkflowDataCommand, UpsertWorkflowUseCase } from '../upsert-workflow';
+import {
+  UpsertStepDataCommand,
+  UpsertWorkflowCommand,
+  UpsertWorkflowDataCommand,
+  UpsertWorkflowUseCase,
+} from '../upsert-workflow';
+import { StepResponseDto, WorkflowPreferencesDto, WorkflowResponseDto } from '../../dtos';
 import { WorkflowNotSyncableException } from '../../exceptions/workflow-not-syncable-exception';
 
 export const SYNCABLE_WORKFLOW_ORIGINS = [WorkflowOriginEnum.NOVU_CLOUD];
@@ -138,7 +134,7 @@ export class SyncToEnvironmentUseCase {
   private async mapStepsToCreateOrUpdateDto(
     sourceSteps: StepResponseDto[],
     targetEnvSteps?: StepResponseDto[]
-  ): Promise<(StepUpdateDto | StepCreateDto)[]> {
+  ): Promise<UpsertStepDataCommand[]> {
     return sourceSteps.map((sourceStep) => {
       // if we find matching step in target environment, we are updating
       const targetStepInternalId = targetEnvSteps?.find((targetStep) => targetStep.stepId === sourceStep.stepId)?._id;
@@ -150,7 +146,7 @@ export class SyncToEnvironmentUseCase {
   private buildStepCreateOrUpdateDto(
     sourceStep: StepResponseDto,
     targetStepInternalId?: string
-  ): StepUpdateDto | StepCreateDto {
+  ): UpsertStepDataCommand {
     return {
       ...(targetStepInternalId && { _id: targetStepInternalId }),
       stepId: sourceStep.stepId,
@@ -161,15 +157,15 @@ export class SyncToEnvironmentUseCase {
   }
 
   private mapPreferences(preferences: PreferencesEntity[]): {
-    user: WorkflowPreferences | null;
-    workflow: WorkflowPreferences | null;
+    user: WorkflowPreferencesDto | null;
+    workflow: WorkflowPreferencesDto | null;
   } {
     // we can typecast the preferences to WorkflowPreferences because user and workflow preferences are always full set
     return {
       user: preferences.find((pref) => pref.type === PreferencesTypeEnum.USER_WORKFLOW)
-        ?.preferences as WorkflowPreferences | null,
+        ?.preferences as WorkflowPreferencesDto | null,
       workflow: preferences.find((pref) => pref.type === PreferencesTypeEnum.WORKFLOW_RESOURCE)
-        ?.preferences as WorkflowPreferences | null,
+        ?.preferences as WorkflowPreferencesDto | null,
     };
   }
 

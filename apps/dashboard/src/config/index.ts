@@ -12,11 +12,9 @@ export const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY 
 
 export const APP_ID = import.meta.env.VITE_NOVU_APP_ID || '';
 
-if (!CLERK_PUBLISHABLE_KEY) {
-  throw new Error('Missing Clerk Publishable Key');
-}
-
 export const API_HOSTNAME = import.meta.env.VITE_API_HOSTNAME;
+
+export const IS_EU = API_HOSTNAME === 'https://eu.api.novu.co';
 
 export const WEBSOCKET_HOSTNAME = import.meta.env.VITE_WEBSOCKET_HOSTNAME;
 
@@ -33,3 +31,7 @@ export const PLAIN_SUPPORT_CHAT_APP_ID = import.meta.env.VITE_PLAIN_SUPPORT_CHAT
 export const ONBOARDING_DEMO_WORKFLOW_ID = 'onboarding-demo-workflow';
 
 export const IS_SELF_HOSTED = import.meta.env.VITE_SELF_HOSTED;
+
+if (!IS_SELF_HOSTED && !CLERK_PUBLISHABLE_KEY) {
+  throw new Error('Missing Clerk Publishable Key');
+}

@@ -14,14 +14,13 @@ import {
   DeleteWorkflowCommand,
   DeleteWorkflowUseCase,
   ExecuteBridgeRequest,
+  JSONSchema,
   NotificationStep,
   UpdateWorkflow,
   UpdateWorkflowCommand,
 } from '@novu/application-generic';
 import {
   buildWorkflowPreferences,
-  JSONSchemaDto,
-  StepIssuesDto,
   StepTypeEnum,
   UserSessionData,
   WorkflowCreationSourceEnum,
@@ -35,6 +34,7 @@ import { SyncCommand } from './sync.command';
 import { CreateBridgeResponseDto } from '../../dtos/create-bridge-response.dto';
 import { BuildStepIssuesUsecase } from '../../../workflows-v2/usecases/build-step-issues/build-step-issues.usecase';
 import { computeWorkflowStatus } from '../../../workflows-v2/shared/compute-workflow-status';
+import { JSONSchemaDto, StepIssuesDto } from '../../../workflows-v2/dtos';
 
 @Injectable()
 export class Sync {
@@ -183,9 +183,8 @@ export class Sync {
     return Promise.all(
       workflowsFromBridge.map(async (workflow, index) => {
         const existingFrameworkWorkflow = existingFrameworkWorkflows[index];
-        const savedWorkflow = await this.upsertWorkflow(command, workflow, existingFrameworkWorkflow);
 
-        return savedWorkflow;
+        return await this.upsertWorkflow(command, workflow, existingFrameworkWorkflow);
       })
     );
   }
@@ -235,10 +234,10 @@ export class Sync {
         __source: WorkflowCreationSourceEnum.BRIDGE,
         steps,
         controls: {
-          schema: workflow.controls?.schema as JSONSchemaDto,
+          schema: workflow.controls?.schema as unknown as JSONSchema,
         },
         rawData: workflow as unknown as Record<string, unknown>,
-        payloadSchema: workflow.payload?.schema as JSONSchemaDto,
+        payloadSchema: workflow.payload?.schema as unknown as JSONSchema,
         active: workflowActive,
         status: computeWorkflowStatus(workflowActive, steps),
         description: this.getWorkflowDescription(workflow),
@@ -266,7 +265,7 @@ export class Sync {
       workflowId: workflow.workflowId,
       steps,
       controls: {
-        schema: workflow.controls?.schema as JSONSchemaDto,
+        schema: workflow.controls?.schema as unknown as JSONSchemaDto,
       },
       rawData: workflow,
       payloadSchema: workflow.payload?.schema as unknown as JSONSchemaDto,
@@ -299,7 +298,7 @@ export class Sync {
           stepInternalId: foundStep?._id,
           workflow,
           stepType: step.type as StepTypeEnum,
-          controlSchema: step.controls?.schema as JSONSchemaDto,
+          controlSchema: step.controls?.schema as unknown as JSONSchemaDto,
         });
 
         const template = {

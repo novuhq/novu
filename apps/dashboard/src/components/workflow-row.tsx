@@ -202,7 +202,34 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
 
   return (
     <>
-      <TableRow key={workflow._id} className="group relative isolate cursor-pointer" onClick={handleRowClick}>
+      <TableRow
+        key={workflow._id}
+        className={cn('group relative isolate cursor-pointer', isV0Workflow && IS_SELF_HOSTED && 'cursor-not-allowed')}
+        onClick={handleRowClick}
+      >
+        {isV0Workflow && IS_SELF_HOSTED && (
+          <Tooltip delayDuration={300}>
+            <TooltipTrigger asChild>
+              <div className="absolute inset-0 z-50" />
+            </TooltipTrigger>
+            <TooltipPortal>
+              <TooltipContent side="bottom" align="center" className="z-50">
+                <div className="flex flex-col gap-1">
+                  <span className="font-medium">This workflow is not supported in this version</span>
+                  <a
+                    href="https://docs.novu.co/platform/overview"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary text-sm hover:underline"
+                    onClick={stopPropagation}
+                  >
+                    view migration guide
+                  </a>
+                </div>
+              </TooltipContent>
+            </TooltipPortal>
+          </Tooltip>
+        )}
         <WorkflowLinkTableCell className="flex items-center gap-2 font-medium">
           {workflow.origin === WorkflowOriginEnum.EXTERNAL ? (
             <Tooltip delayDuration={300}>

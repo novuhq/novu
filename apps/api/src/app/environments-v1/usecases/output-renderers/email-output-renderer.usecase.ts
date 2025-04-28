@@ -6,10 +6,9 @@ import { FeatureFlagsService, InstrumentUsecase, sanitizeHTML } from '@novu/appl
 import { EnvironmentEntity } from '@novu/dal';
 
 import { FullPayloadForRender, RenderCommand } from './render-command';
-import { WrapMailyInLiquidUseCase } from './maily-to-liquid/wrap-maily-in-liquid.usecase';
-import { MailyAttrsEnum } from './maily-to-liquid/maily.types';
+import { MailyAttrsEnum } from '../../../shared/helpers/maily.types';
 import { parseLiquid } from '../../../shared/helpers/liquid';
-import { hasShow, isRepeatNode, isVariableNode } from './maily-to-liquid/maily-utils';
+import { hasShow, isRepeatNode, isVariableNode, wrapMailyInLiquid } from '../../../shared/helpers/maily-utils';
 
 export class EmailOutputRendererCommand extends RenderCommand {
   environmentId: string;
@@ -17,10 +16,7 @@ export class EmailOutputRendererCommand extends RenderCommand {
 
 @Injectable()
 export class EmailOutputRendererUsecase {
-  constructor(
-    private wrapMailyInLiquidUsecase: WrapMailyInLiquidUseCase,
-    private readonly featureFlagService: FeatureFlagsService
-  ) {}
+  constructor(private readonly featureFlagService: FeatureFlagsService) {}
 
   @InstrumentUsecase()
   async execute(renderCommand: EmailOutputRendererCommand): Promise<EmailRenderOutput> {
@@ -43,7 +39,7 @@ export class EmailOutputRendererUsecase {
       };
     }
 
-    const liquifiedMaily = this.wrapMailyInLiquidUsecase.execute({ emailEditor: body });
+    const liquifiedMaily = wrapMailyInLiquid(body);
     const transformedMaily = await this.transformMailyContent(
       liquifiedMaily,
       renderCommand.fullPayloadForRender,

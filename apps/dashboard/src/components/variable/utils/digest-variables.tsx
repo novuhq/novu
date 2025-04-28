@@ -82,7 +82,7 @@ export const DIGEST_PREVIEW_MAP = {
 
 export const DIGEST_VARIABLES_FILTER_MAP = {
   [DIGEST_VARIABLES_ENUM.COUNT_SUMMARY]: "| pluralize: 'notification', 'notifications'",
-  [DIGEST_VARIABLES_ENUM.SENTENCE_SUMMARY]: "| toSentence: '', 2, 'other'",
+  [DIGEST_VARIABLES_ENUM.SENTENCE_SUMMARY]: "| toSentence: 'payload.name', 2, 'other'",
 } as const;
 
 const applyDigestVariableValue = ({

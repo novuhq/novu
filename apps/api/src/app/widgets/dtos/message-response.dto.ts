@@ -11,7 +11,7 @@ import {
   TextAlignEnum,
 } from '@novu/shared';
 import { SubscriberResponseDto } from '../../subscribers/dtos';
-import { WorkflowResponse } from '../../workflows-v1/dto/workflow-response.dto';
+import { WorkflowResponse } from '../../workflows-v1/dtos/workflow-response.dto';
 
 class EmailBlockStyles {
   @ApiProperty({

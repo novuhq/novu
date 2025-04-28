@@ -1,5 +1,5 @@
 import { EditVariablePopover } from '@/components/variable/edit-variable-popover';
-import { extractIssuesFromVariable } from '@/components/variable/utils';
+import { validateEnhancedDigestFilters } from '@/components/variable/utils';
 import { VariablePill } from '@/components/variable/variable-pill';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { parseVariable } from '@/utils/liquid';
@@ -10,6 +10,8 @@ import { NodeViewWrapper } from '@tiptap/react';
 import { useCallback, useMemo, useState } from 'react';
 import { resolveRepeatBlockAlias } from '../variables/variables';
 import { VariablePillOld } from '@/components/variable/variable-pill-old';
+import { DIGEST_VARIABLES_ENUM, getDynamicDigestVariable } from '@/components/variable/utils/digest-variables';
+import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 
 type InternalVariableViewProps = NodeViewProps & {
   variables: LiquidVariable[];
@@ -22,29 +24,41 @@ function InternalVariableView(props: InternalVariableViewProps) {
   const [variableValue, setVariableValue] = useState(`{{${id}}}`);
   const [isOpen, setIsOpen] = useState(false);
   const isEnhancedDigestEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_ENHANCED_DIGEST_ENABLED);
+  const { digestStepBeforeCurrent } = useWorkflow();
 
-  const parseVariableCallback = useCallback((variable: string, isEnhancedDigestEnabled: boolean) => {
-    const parsedVariable = parseVariable(variable);
+  const parseVariableCallback = useCallback(
+    (variable: string, isEnhancedDigestEnabled: boolean) => {
+      const parsedVariable = parseVariable(variable);
 
-    if (!parsedVariable?.filtersArray) {
+      if (!parsedVariable?.filtersArray) {
+        return {
+          name: '',
+          fullLiquidExpression: '',
+          start: 0,
+          end: 0,
+          filters: '',
+          filtersArray: [],
+          issues: null,
+        };
+      }
+
+      let issue: ReturnType<typeof validateEnhancedDigestFilters> = null;
+      const { value } = getDynamicDigestVariable({
+        type: DIGEST_VARIABLES_ENUM.SENTENCE_SUMMARY,
+        digestStepName: digestStepBeforeCurrent?.stepId,
+      });
+
+      if (value && value.split('|')[0].trim() === parsedVariable.name) {
+        issue = validateEnhancedDigestFilters(parsedVariable.filtersArray, isEnhancedDigestEnabled);
+      }
+
       return {
-        name: '',
-        fullLiquidExpression: '',
-        start: 0,
-        end: 0,
-        filters: '',
-        filtersArray: [],
-        issues: [],
+        ...parsedVariable,
+        issues: issue,
       };
-    }
-
-    const filtersWithIssues = extractIssuesFromVariable(parsedVariable.filtersArray, isEnhancedDigestEnabled);
-
-    return {
-      ...parsedVariable,
-      issues: filtersWithIssues,
-    };
-  }, []);
+    },
+    [digestStepBeforeCurrent?.stepId]
+  );
 
   const { name, filtersArray, fullLiquidExpression, issues } = useMemo(
     () => parseVariableCallback(variableValue, isEnhancedDigestEnabled),

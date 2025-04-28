@@ -15,7 +15,6 @@ import {
 } from './usecases/output-renderers';
 import { DelayOutputRendererUsecase } from './usecases/output-renderers/delay-output-renderer.usecase';
 import { DigestOutputRendererUsecase } from './usecases/output-renderers/digest-output-renderer.usecase';
-import { WrapMailyInLiquidUseCase } from './usecases/output-renderers/maily-to-liquid/wrap-maily-in-liquid.usecase';
 
 export const featureFlagsService = {
   provide: FeatureFlagsService,
@@ -44,7 +43,6 @@ export const featureFlagsService = {
     SmsOutputRendererUsecase,
     ChatOutputRendererUsecase,
     PushOutputRendererUsecase,
-    WrapMailyInLiquidUseCase,
     DelayOutputRendererUsecase,
     DigestOutputRendererUsecase,
     featureFlagsService,

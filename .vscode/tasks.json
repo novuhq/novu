@@ -146,14 +146,6 @@
       "type": "npm",
       "script": "start",
       "isBackground": true,
-      "label": "NODE",
-      "path": "/packages/node",
-      "problemMatcher": "$tsc-watch"
-    },
-    {
-      "type": "npm",
-      "script": "start",
-      "isBackground": true,
       "label": "TESTING",
       "path": "/libs/testing",
       "problemMatcher": "$tsc-watch",

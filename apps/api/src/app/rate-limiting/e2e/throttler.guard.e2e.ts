@@ -235,64 +235,6 @@ describe('API Rate Limiting #novu-v2', () => {
         expectedRetryAfter: 1,
         expectedThrottledRequests: 50,
       },
-      {
-        name: 'bulk trigger endpoint request',
-        requests: [{ path: '/trigger-category-bulk-cost', count: 1 }],
-        expectedStatus: 200,
-        expectedLimit: mockMaximumUnlimitedTrigger,
-        expectedCost: mockBulkCost * 1,
-        expectedReset: 1,
-        expectedThrottledRequests: 0,
-      },
-      {
-        name: 'bulk global endpoint request',
-        requests: [{ path: '/global-category-bulk-cost', count: 20 }],
-        expectedStatus: 429,
-        expectedLimit: mockMaximumUnlimitedGlobal,
-        expectedCost: mockBulkCost * 20,
-        expectedReset: 1,
-        expectedRetryAfter: 1,
-        expectedThrottledRequests: 10,
-      },
-      {
-        name: 'combination of single trigger and bulk trigger endpoint request',
-        requests: [
-          { path: '/trigger-category-single-cost', count: 2 },
-          { path: '/trigger-category-bulk-cost', count: 1 },
-        ],
-        expectedStatus: 200,
-        expectedLimit: mockMaximumUnlimitedTrigger,
-        expectedCost: mockSingleCost * 2 + mockBulkCost * 1,
-        expectedReset: 1,
-        expectedThrottledRequests: 0,
-      },
-      {
-        name: 'bulk trigger request with service level specified on organization and maximum rate limit specified on environment',
-        requests: [{ path: '/trigger-category-bulk-cost', count: 5 }],
-        expectedStatus: 429,
-        expectedLimit: 1,
-        expectedCost: mockBulkCost * 5,
-        expectedReset: 5,
-        expectedRetryAfter: 5,
-        expectedThrottledRequests: 3,
-        async setupTest(userSession) {
-          await userSession.updateOrganizationServiceLevel(ApiServiceLevelEnum.FREE);
-          await userSession.updateEnvironmentApiRateLimits({ [ApiRateLimitCategoryEnum.TRIGGER]: 1 });
-        },
-      },
-      {
-        name: 'combination of bulk trigger and bulk global endpoint request',
-        requests: [
-          { path: '/trigger-category-bulk-cost', count: 40 },
-          { path: '/global-category-bulk-cost', count: 40 },
-        ],
-        expectedStatus: 429,
-        expectedLimit: mockMaximumUnlimitedGlobal,
-        expectedCost: mockBulkCost * 40,
-        expectedReset: 1,
-        expectedRetryAfter: 1,
-        expectedThrottledRequests: 50,
-      },
     ];
 
     testCases

@@ -1,4 +1,20 @@
 name: Deploy to Novu Cloud
+run-name: >
+  Deploying to
+  ${{
+    github.event.inputs.deploy_api == 'true' && 'api, ' || ''
+  }}${{
+    github.event.inputs.deploy_worker == 'true' && 'worker, ' || ''
+  }}${{
+    github.event.inputs.deploy_ws == 'true' && 'ws, ' || ''
+  }}${{
+    github.event.inputs.deploy_webhook == 'true' && 'webhook ' || ''
+  }}on ${{ github.event.inputs.environment }}
+description: |
+  This workflow deploys the Novu Cloud application to different environments and services based on the selected options.
+  It builds Docker images, pushes them to Amazon ECR, and deploys them to Amazon ECS.
+  Additionally, it creates Sentry releases and New Relic deployment markers.
+
 on:
   workflow_dispatch:
     inputs:
@@ -6,30 +22,30 @@ on:
         description: 'Environment to deploy to'
         required: true
         type: choice
-        default: development
+        default: staging
         options:
-          - development
+          - staging
           - production-us
           - production-eu
           - production-both
 
       deploy_api:
-        description: 'Deploy API?'
+        description: 'Deploy API'
         required: true
         type: boolean
         default: true
       deploy_worker:
-        description: 'Deploy Worker?'
+        description: 'Deploy Worker'
         required: true
         type: boolean
         default: false
       deploy_ws:
-        description: 'Deploy WS?'
+        description: 'Deploy WS'
         required: true
         type: boolean
         default: false
       deploy_webhook:
-        description: 'Deploy Webhook?'
+        description: 'Deploy Webhook'
         required: true
         type: boolean
         default: false
@@ -40,34 +56,52 @@ jobs:
     outputs:
       env_matrix: ${{ steps.set-matrix.outputs.env_matrix }}
       service_matrix: ${{ steps.set-matrix.outputs.service_matrix }}
+      deploy_matrix: ${{ steps.set-matrix.outputs.deploy_matrix }}
+      nr_matrix: ${{ steps.set-matrix.outputs.nr_matrix }}
     steps:
-      - name: Generate Environment & Service Matrices
+      - name: Validate Selected Services
+        run: |
+          if [ "${{ github.event.inputs.deploy_api }}" != "true" ] && \
+             [ "${{ github.event.inputs.deploy_worker }}" != "true" ] && \
+             [ "${{ github.event.inputs.deploy_ws }}" != "true" ] && \
+             [ "${{ github.event.inputs.deploy_webhook }}" != "true" ]; then
+            echo "Error: At least one service must be selected for deployment."
+            exit 1
+          fi
+    
+      - name: Generate Environment, Service, and Deploy Matrices
         id: set-matrix
+        env:
+          WORKER_SERVICE: ${{ vars.WORKER_SERVICE }}
         run: |
           envs=()
           services=()
+          deploy_matrix=()
+          nr=()
 
           # Collect selected environments
-          if [ "${{ github.event.inputs.environment }}" == "development" ]; then
-            envs+=("\"development\"")
+          if [ "${{ github.event.inputs.environment }}" == "staging" ]; then
+            envs+=("\"staging-eu\"")
           fi
           if [ "${{ github.event.inputs.environment }}" == "production-us" ]; then
-            envs+=("\"production-us\"")
+            envs+=("\"prod-us\"")
           fi
           if [ "${{ github.event.inputs.environment }}" == "production-eu" ]; then
-            envs+=("\"production-eu\"")
+            envs+=("\"prod-eu\"")
           fi
           if [ "${{ github.event.inputs.environment }}" == "production-both" ]; then
-            envs+=("\"production-us\"")
-            envs+=("\"production-eu\"")
+            envs+=("\"prod-us\"")
+            envs+=("\"prod-eu\"")
           fi
 
           # Collect selected services
           if [ "${{ github.event.inputs.deploy_api }}" == "true" ]; then
             services+=("\"api\"")
+            nr+=("\"api\"")
           fi
           if [ "${{ github.event.inputs.deploy_worker }}" == "true" ]; then
             services+=("\"worker\"")
+            nr+=("\"worker\"")
           fi
           if [ "${{ github.event.inputs.deploy_ws }}" == "true" ]; then
             services+=("\"ws\"")
@@ -76,26 +110,68 @@ jobs:
             services+=("\"webhook\"")
           fi
 
+          # Parse service secrets and generate deploy_matrix
+          for service in "${services[@]}"; do
+            if [ "$service" == "\"worker\"" ]; then
+              IFS=',' read -r -a worker_services <<< "$WORKER_SERVICE"
+              for worker_service in $(echo "$WORKER_SERVICE" | jq -c '.[]'); do
+                cluster_name=$(echo "$worker_service" | jq -r '.cluster_name')
+                container_name=$(echo "$worker_service" | jq -r '.container_name')
+                service_name=$(echo "$worker_service" | jq -r '.service')
+                task_name=$(echo "$worker_service" | jq -r '.task_name')
+                image=$(echo "$worker_service" | jq -r '.image')
+                deploy_matrix+=("{\"cluster_name\": \"$cluster_name\", \"container_name\": \"$container_name\", \"service_name\": \"$service_name\", \"task_name\": \"$task_name\", \"image\": \"$image\"}")
+              done
+            elif [ "$service" == "\"api\"" ]; then
+              cluster_name=api-cluster
+              container_name=api-container
+              service_name=api-service
+              task_name=api-task
+              image=api
+              deploy_matrix+=("{\"cluster_name\": \"$cluster_name\", \"container_name\": \"$container_name\", \"service_name\": \"$service_name\", \"task_name\": \"$task_name\", \"image\": \"$image\"}")
+            elif [ "$service" == "\"ws\"" ]; then
+              cluster_name=ws-cluster
+              container_name=ws-container
+              service_name=ws-service
+              task_name=ws-task
+              image=ws
+              deploy_matrix+=("{\"cluster_name\": \"$cluster_name\", \"container_name\": \"$container_name\", \"service_name\": \"$service_name\", \"task_name\": \"$task_name\", \"image\": \"$image\"}")
+            elif [ "$service" == "\"webhook\"" ]; then
+              cluster_name=webhook-cluster
+              container_name=webhook-container
+              service_name=webhook-service
+              task_name=webhook-task
+              image=webhook
+              deploy_matrix+=("{\"cluster_name\": \"$cluster_name\", \"container_name\": \"$container_name\", \"service_name\": \"$service_name\", \"task_name\": \"$task_name\", \"image\": \"$image\"}")
+            fi
+          done
+
           env_matrix="{\"environment\": [$(
             IFS=','; echo "${envs[*]}"
           )]}"
           service_matrix="{\"service\": [$(
             IFS=','; echo "${services[*]}"
           )]}"
-
+          deploy_matrix="[$(
+            IFS=','; echo "${deploy_matrix[*]}"
+          )]"
+          nr_matrix="[$(
+            IFS=','; echo "${nr[*]}"
+          )]"
           echo "env_matrix=$env_matrix" >> $GITHUB_OUTPUT
           echo "service_matrix=$service_matrix" >> $GITHUB_OUTPUT
+          echo "deploy_matrix=$deploy_matrix" >> $GITHUB_OUTPUT
+          echo "nr_matrix=$nr_matrix" >> $GITHUB_OUTPUT
 
   build:
     needs: prepare-matrix
     timeout-minutes: 60
     runs-on: ubuntu-latest
-    outputs:
-      docker_image: ${{ steps.build-image.outputs.IMAGE }}
+    environment: ${{ fromJson(needs.prepare-matrix.outputs.env_matrix).environment[0] }}
     strategy:
       matrix:
         service: ${{ fromJson(needs.prepare-matrix.outputs.service_matrix).service }}
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -124,24 +200,17 @@ jobs:
         uses: docker/setup-buildx-action@v3
         with:
           driver-opts: 'image=moby/buildkit:v0.13.1'
-      
+
       - name: Prepare Variables
-        run: |
-          set -e
-          if [[ "$(echo ${{ fromJson(needs.prepare-matrix.outputs.env_matrix).environment }})" == "development" ]]; then
-            echo "AWS_REGION=eu-west-2" >> $GITHUB_ENV
-          else
-            echo "AWS_REGION=us-east-1" >> $GITHUB_ENV
-          fi
-          echo "BULL_MQ_PRO_NPM_TOKEN=${{ secrets.BULL_MQ_PRO_NPM_TOKEN }}" >> $GITHUB_ENV
+        run: echo "BULL_MQ_PRO_NPM_TOKEN=${{ secrets.BULL_MQ_PRO_NPM_TOKEN }}" >> $GITHUB_ENV
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID}}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
-      
+          aws-region: ${{ vars.AWS_REGION }}
+
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
@@ -150,23 +219,19 @@ jobs:
         id: build-image
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          REPOSITORY: novu/${{ matrix.service }}
+          REPOSITORY: ${{ vars.ECR_PREFIX }}
           SERVICE: ${{ matrix.service }}
           IMAGE_TAG: ${{ github.sha }}
           DOCKER_BUILD_ARGUMENTS: >
             --platform=linux/amd64
-            --output=type=image,name=$REGISTRY/$REPOSITORY,push-by-digest=true,name-canonical=true
+            --output=type=image,name=$REGISTRY/$REPOSITORY/$SERVICE,push-by-digest=true,name-canonical=true
         run: |
           cp scripts/dotenvcreate.mjs apps/$SERVICE/src/dotenvcreate.mjs
-          cd apps/$SERVICE && pnpm --silent --workspace-root pnpm-context -- apps/$SERVICE/Dockerfile | BULL_MQ_PRO_NPM_TOKEN=${BULL_MQ_PRO_NPM_TOKEN} docker buildx build --secret id=BULL_MQ_PRO_NPM_TOKEN --build-arg PACKAGE_PATH=apps/$SERVICE - -t novu-$SERVICE --load $DOCKER_BUILD_ARGUMENTS
-          docker tag novu-$SERVICE $REGISTRY/$REPOSITORY:latest
-          docker tag novu-$SERVICE $REGISTRY/$REPOSITORY:prod
-          docker tag novu-$SERVICE $REGISTRY/$REPOSITORY:$IMAGE_TAG
-
-          docker push $REGISTRY/$REPOSITORY:prod
-          docker push $REGISTRY/$REPOSITORY:latest
-          docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
-          echo "IMAGE=$REGISTRY/$REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+          cd apps/$SERVICE && pnpm run docker:build
+          docker tag novu-$SERVICE $REGISTRY/$REPOSITORY/$SERVICE:latest
+          docker tag novu-$SERVICE $REGISTRY/$REPOSITORY/$SERVICE:$IMAGE_TAG
+          docker push $REGISTRY/$REPOSITORY/$SERVICE:latest
+          docker push $REGISTRY/$REPOSITORY/$SERVICE:$IMAGE_TAG
 
   deploy:
     needs: [build, prepare-matrix]
@@ -174,9 +239,103 @@ jobs:
     strategy:
       matrix:
         env: ${{ fromJson(needs.prepare-matrix.outputs.env_matrix).environment }}
-        service: ${{ fromJson(needs.prepare-matrix.outputs.service_matrix).service }}
+        service: ${{ fromJson(needs.prepare-matrix.outputs.deploy_matrix) }}
+
+    environment: ${{ matrix.env }}
+    
     steps:
-      - name: Print Important Info
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+      
+      - name: Download task definition
+        env:
+          ECS_PREFIX: ${{ vars.ECS_PREFIX }}
+          TASK_NAME: ${{ matrix.service.task_name }}
         run: |
-          echo "Deploying ${{ matrix.service }} to ${{ matrix.env }}"
-          echo "Docker Image: ${{ needs.build.outputs.docker_image }}"
+          aws ecs describe-task-definition --task-definition ${ECS_PREFIX}-${TASK_NAME} \
+          --query taskDefinition > task-definition.json
+
+      - name: Render Amazon ECS task definition
+        id: render-web-container
+        uses: aws-actions/amazon-ecs-render-task-definition@39c13cf530718ffeb524ec8ee0c15882bcb13842
+        with:
+          task-definition: task-definition.json
+          container-name: ${{ vars.ECS_PREFIX }}-${{ matrix.service.container_name }}
+          image: ${{secrets.ECR_URI}}/${{ vars.ECR_PREFIX }}/${{ matrix.service.image }}:${{ github.sha }}
+      
+      - name: Deploy to Amazon ECS service
+        uses: aws-actions/amazon-ecs-deploy-task-definition@3e7310352de91b71a906e60c22af629577546002
+        with:
+          task-definition: ${{ steps.render-web-container.outputs.task-definition }}
+          service: ${{ vars.ECS_PREFIX }}-${{ matrix.service.service_name }}
+          cluster: ${{ vars.ECS_PREFIX }}-${{ matrix.service.cluster_name }}
+          wait-for-service-stability: true
+
+    
+  sentry_release:
+    needs: [deploy, prepare-matrix]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: ${{ fromJson(needs.prepare-matrix.outputs.service_matrix).service }}
+    environment: ${{ fromJson(needs.prepare-matrix.outputs.env_matrix).environment[0] }}
+    
+    steps:  
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Get NPM Version
+        id: package-version
+        uses: martinbeentjes/npm-get-version-action@main
+        with:
+          path: apps/${{ matrix.service }}
+
+      - name: Create Sentry release
+        uses: getsentry/action-release@v1
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ vars.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ matrix.service }}
+        with:
+          version: '${{ github.sha }}'
+          version_prefix: v
+          environment: ${{vars.SENTRY_ENV}}
+          ignore_empty: true
+          ignore_missing: true
+
+  new_relic_release:
+    needs: [deploy, prepare-matrix]
+    if: ${{ fromJson(needs.prepare-matrix.outputs.nr_matrix) != '[]' }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        env: ${{ fromJson(needs.prepare-matrix.outputs.env_matrix).environment }}
+        nr: ${{ fromJson(needs.prepare-matrix.outputs.nr_matrix) }}
+    environment: ${{ matrix.env }}
+
+    steps:
+      - name: New Relic Application Deployment Marker
+        uses: newrelic/deployment-marker-action@v2.3.0
+        with:
+          region: EU
+          apiKey: ${{ secrets.NEW_RELIC_API_KEY }}
+          guid: ${{ matrix.nr == 'api' && secrets.NEW_RELIC_API_GUID || matrix.nr == 'worker' && secrets.NEW_RELIC_Worker_GUID }}
+          version: '${{ github.sha }}'
+          user: '${{ github.actor }}'
+          description: 'Novu Cloud Deployment'
+  
+  sync_novu_state:
+    needs: [deploy, prepare-matrix]
+    runs-on: ubuntu-latest
+    if: github.event.inputs.deploy_api == 'true'
+    environment: ${{ fromJson(needs.prepare-matrix.outputs.env_matrix).environment[0] }}
+    steps:
+      - name: Sync State to Novu
+        uses: novuhq/actions-novu-sync@v2
+        with:
+          secret-key: ${{ secrets.NOVU_INTERNAL_SECRET_KEY }}
+          bridge-url: ${{ vars.NOVU_BRIDGE_URL }}

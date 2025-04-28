@@ -1,25 +1,27 @@
 import { WorkflowWithPreferencesResponseDto } from '@novu/application-generic';
 import { NotificationStepEntity, NotificationTemplateEntity } from '@novu/dal';
 import {
-  PreferencesResponseDto,
-  RuntimeIssueDto,
   ShortIsPrefixEnum,
-  StepResponseDto,
   StepTypeEnum,
-  WorkflowCreateAndUpdateKeys,
-  WorkflowListResponseDto,
   WorkflowOriginEnum,
-  WorkflowResponseDto,
   WorkflowStatusEnum,
   WorkflowTypeEnum,
 } from '@novu/shared';
 import { buildSlug } from '../../shared/helpers/build-slug';
+import {
+  RuntimeIssueDto,
+  StepResponseDto,
+  WorkflowCreateAndUpdateKeys,
+  WorkflowListResponseDto,
+  WorkflowPreferencesResponseDto,
+  WorkflowResponseDto,
+} from '../dtos';
 
 export function toResponseWorkflowDto(
   workflow: WorkflowWithPreferencesResponseDto,
   steps: StepResponseDto[]
 ): WorkflowResponseDto {
-  const preferencesDto: PreferencesResponseDto = {
+  const preferencesDto: WorkflowPreferencesResponseDto = {
     user: workflow.userPreferences,
     default: workflow.defaultPreferences,
   };

@@ -3,29 +3,34 @@ import i18next from 'i18next';
 import { ModuleRef } from '@nestjs/core';
 import { Logger } from '@nestjs/common';
 import { format } from 'date-fns';
-import { IntegrationEntity, JobEntity, MessageRepository, SubscriberRepository } from '@novu/dal';
+import {
+  IntegrationEntity,
+  JobEntity,
+  MessageRepository,
+  MessageTemplateEntity,
+  SubscriberRepository,
+} from '@novu/dal';
 import {
   ChannelTypeEnum,
   EmailProviderIdEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
-  IMessageTemplate,
   ITenantDefine,
   ProvidersIdEnum,
   SmsProviderIdEnum,
 } from '@novu/shared';
 
 import {
-  DetailEnum,
-  SelectIntegration,
-  SelectIntegrationCommand,
-  GetNovuProviderCredentials,
-  SelectVariantCommand,
-  SelectVariant,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
+  DetailEnum,
+  GetNovuProviderCredentials,
+  SelectIntegration,
+  SelectIntegrationCommand,
+  SelectVariant,
+  SelectVariantCommand,
 } from '@novu/application-generic';
-import { SendMessageType, SendMessageResult } from './send-message-type.usecase';
+import { SendMessageResult, SendMessageType } from './send-message-type.usecase';
 import { PlatformException } from '../../../shared/utils';
 import { SendMessageCommand } from './send-message.command';
 
@@ -123,7 +128,7 @@ export abstract class SendMessageBase extends SendMessageType {
     );
   }
 
-  protected async processVariants(command: SendMessageCommand): Promise<IMessageTemplate> {
+  protected async processVariants(command: SendMessageCommand): Promise<MessageTemplateEntity> {
     const { messageTemplate, conditions } = await this.selectVariant.execute(
       SelectVariantCommand.create({
         organizationId: command.organizationId,

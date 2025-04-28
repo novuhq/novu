@@ -6,6 +6,7 @@ import * as z from "zod";
 import { remap as remap$ } from "../../lib/primitives.js";
 import { safeParse } from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
+import * as components from "../components/index.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 
 export type WorkflowControllerUpdateRequest = {
@@ -14,13 +15,15 @@ export type WorkflowControllerUpdateRequest = {
    * A header for idempotency purposes
    */
   idempotencyKey?: string | undefined;
+  /**
+   * Workflow update details
+   */
+  updateWorkflowDto: components.UpdateWorkflowDto;
 };
-
-export type WorkflowControllerUpdateResponseBody = {};
 
 export type WorkflowControllerUpdateResponse = {
   headers: { [k: string]: Array<string> };
-  result: WorkflowControllerUpdateResponseBody;
+  result: components.WorkflowResponseDto;
 };
 
 /** @internal */
@@ -31,9 +34,11 @@ export const WorkflowControllerUpdateRequest$inboundSchema: z.ZodType<
 > = z.object({
   workflowId: z.string(),
   "idempotency-key": z.string().optional(),
+  UpdateWorkflowDto: components.UpdateWorkflowDto$inboundSchema,
 }).transform((v) => {
   return remap$(v, {
     "idempotency-key": "idempotencyKey",
+    "UpdateWorkflowDto": "updateWorkflowDto",
   });
 });
 
@@ -41,6 +46,7 @@ export const WorkflowControllerUpdateRequest$inboundSchema: z.ZodType<
 export type WorkflowControllerUpdateRequest$Outbound = {
   workflowId: string;
   "idempotency-key"?: string | undefined;
+  UpdateWorkflowDto: components.UpdateWorkflowDto$Outbound;
 };
 
 /** @internal */
@@ -51,9 +57,11 @@ export const WorkflowControllerUpdateRequest$outboundSchema: z.ZodType<
 > = z.object({
   workflowId: z.string(),
   idempotencyKey: z.string().optional(),
+  updateWorkflowDto: components.UpdateWorkflowDto$outboundSchema,
 }).transform((v) => {
   return remap$(v, {
     idempotencyKey: "idempotency-key",
+    updateWorkflowDto: "UpdateWorkflowDto",
   });
 });
 
@@ -91,66 +99,13 @@ export function workflowControllerUpdateRequestFromJSON(
 }
 
 /** @internal */
-export const WorkflowControllerUpdateResponseBody$inboundSchema: z.ZodType<
-  WorkflowControllerUpdateResponseBody,
-  z.ZodTypeDef,
-  unknown
-> = z.object({});
-
-/** @internal */
-export type WorkflowControllerUpdateResponseBody$Outbound = {};
-
-/** @internal */
-export const WorkflowControllerUpdateResponseBody$outboundSchema: z.ZodType<
-  WorkflowControllerUpdateResponseBody$Outbound,
-  z.ZodTypeDef,
-  WorkflowControllerUpdateResponseBody
-> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace WorkflowControllerUpdateResponseBody$ {
-  /** @deprecated use `WorkflowControllerUpdateResponseBody$inboundSchema` instead. */
-  export const inboundSchema =
-    WorkflowControllerUpdateResponseBody$inboundSchema;
-  /** @deprecated use `WorkflowControllerUpdateResponseBody$outboundSchema` instead. */
-  export const outboundSchema =
-    WorkflowControllerUpdateResponseBody$outboundSchema;
-  /** @deprecated use `WorkflowControllerUpdateResponseBody$Outbound` instead. */
-  export type Outbound = WorkflowControllerUpdateResponseBody$Outbound;
-}
-
-export function workflowControllerUpdateResponseBodyToJSON(
-  workflowControllerUpdateResponseBody: WorkflowControllerUpdateResponseBody,
-): string {
-  return JSON.stringify(
-    WorkflowControllerUpdateResponseBody$outboundSchema.parse(
-      workflowControllerUpdateResponseBody,
-    ),
-  );
-}
-
-export function workflowControllerUpdateResponseBodyFromJSON(
-  jsonString: string,
-): SafeParseResult<WorkflowControllerUpdateResponseBody, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) =>
-      WorkflowControllerUpdateResponseBody$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'WorkflowControllerUpdateResponseBody' from JSON`,
-  );
-}
-
-/** @internal */
 export const WorkflowControllerUpdateResponse$inboundSchema: z.ZodType<
   WorkflowControllerUpdateResponse,
   z.ZodTypeDef,
   unknown
 > = z.object({
   Headers: z.record(z.array(z.string())),
-  Result: z.lazy(() => WorkflowControllerUpdateResponseBody$inboundSchema),
+  Result: components.WorkflowResponseDto$inboundSchema,
 }).transform((v) => {
   return remap$(v, {
     "Headers": "headers",
@@ -161,7 +116,7 @@ export const WorkflowControllerUpdateResponse$inboundSchema: z.ZodType<
 /** @internal */
 export type WorkflowControllerUpdateResponse$Outbound = {
   Headers: { [k: string]: Array<string> };
-  Result: WorkflowControllerUpdateResponseBody$Outbound;
+  Result: components.WorkflowResponseDto$Outbound;
 };
 
 /** @internal */
@@ -171,7 +126,7 @@ export const WorkflowControllerUpdateResponse$outboundSchema: z.ZodType<
   WorkflowControllerUpdateResponse
 > = z.object({
   headers: z.record(z.array(z.string())),
-  result: z.lazy(() => WorkflowControllerUpdateResponseBody$outboundSchema),
+  result: components.WorkflowResponseDto$outboundSchema,
 }).transform((v) => {
   return remap$(v, {
     headers: "Headers",
