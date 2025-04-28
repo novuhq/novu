@@ -19,6 +19,8 @@ export function useSubscriberSearch(searchQuery: string, limit = 5) {
       limit,
       orderBy: '_id',
       orderDirection: DirectionEnum.DESC,
+      subscriberId: debouncedQuery,
+      email: debouncedQuery,
     },
     {
       enabled: debouncedQuery.length >= 2,
