@@ -154,8 +154,6 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
 
     const { status, body } = res;
 
-    console.log('22222 ', { res, status, body });
-
     expect(status).to.equal(201);
     expect(body.data.token).to.be.ok;
     expect(body.data.totalUnreadCount).to.equal(0);
@@ -352,8 +350,6 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
       applicationIdentifier: session.environment.identifier,
       subscriber,
     });
-
-    console.log('33333 ', JSON.stringify({ errors: body.errors }));
 
     expect(status).to.equal(422);
     expect(body.message).to.contain('Validation Error');
