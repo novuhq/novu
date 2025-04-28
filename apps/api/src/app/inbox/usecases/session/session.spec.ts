@@ -231,7 +231,7 @@ describe('Session', () => {
 
     const command: SessionCommand = {
       applicationIdentifier: 'app-id',
-      subscriberId: 'subscriber-id',
+      subscriber: { subscriberId: 'subscriber-id' },
       subscriberHash: 'hash',
     };
 
