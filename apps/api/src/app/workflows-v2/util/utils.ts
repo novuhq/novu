@@ -1,6 +1,6 @@
 import difference from 'lodash/difference';
-import isArray from 'lodash/isArray';
-import isObject from 'lodash/isObject';
+import { mergeWith, isArray, isObject } from 'lodash';
+
 import reduce from 'lodash/reduce';
 import set from 'lodash/set';
 import { JSONSchemaDto } from '../dtos';
@@ -204,89 +204,95 @@ function buildObjectFromPaths(
  *        }
  *      },
  */
+
 export function mergeCommonObjectKeys(target: Record<string, unknown>, source: Record<string, unknown>) {
-  if (Array.isArray(source) && Array.isArray(target)) {
-    const mergedArray = source.map((sItem, i) => {
-      const tItem = target[i];
-      if (tItem === undefined) return sItem;
+  return mergeWith({}, source, target, (sVal, tVal) => {
+    const sIsObj = isObject(sVal);
+    const tIsObj = isObject(tVal);
 
-      const sIsObj = isObject(sItem);
-      const tIsObj = isObject(tItem);
+    if (isArray(sVal) && isArray(tVal)) {
+      const mergedArray = sVal.map((sItem, i) => {
+        const tItem = tVal[i];
+        if (tItem === undefined) return sItem;
 
-      if (!sIsObj && !tIsObj) {
-        return tItem;
+        const sItemIsObj = isObject(sItem);
+        const tItemIsObj = isObject(tItem);
+
+        if (!sItemIsObj && !tItemIsObj) {
+          return tItem;
+        }
+
+        return mergeCommonObjectKeys(tItem as Record<string, unknown>, sItem as Record<string, unknown>);
+      });
+
+      /**
+       * If the merged array is longer than the target array,
+       * slice it to match the target length.
+       */
+      if (mergedArray.length > tVal.length) {
+        return mergedArray.slice(0, tVal.length);
       }
 
-      return mergeCommonObjectKeys(tItem as Record<string, unknown>, sItem as Record<string, unknown>);
-    });
+      /**
+       * If merged array is shorter than target array,
+       * fill the difference with merged object of last item
+       * and the rest of the target array.
+       */
+      if (mergedArray.length < tVal.length) {
+        const lastItem = mergedArray[mergedArray.length - 1];
+        const fillCount = tVal.length - mergedArray.length;
+        const remainingItems = tVal.slice(mergedArray.length);
+        for (let idx = 0; idx < fillCount; idx += 1) {
+          const mergedObject = mergeCommonObjectKeys(remainingItems[idx], lastItem);
+          mergedArray.push(mergedObject);
+        }
 
-    /**
-     * If the merged array is longer than the target array,
-     * slice it to match the target length.
-     */
-    if (mergedArray.length > target.length) {
-      return mergedArray.slice(0, target.length);
-    }
-
-    /**
-     * if merged array is shorter than target array,
-     * fill the difference with merged object of last item
-     * and the rest of the target array
-     */
-    if (mergedArray.length < target.length) {
-      const lastItem = mergedArray[mergedArray.length - 1];
-      const fillCount = target.length - mergedArray.length;
-      const remainingItems = target.slice(mergedArray.length);
-      for (let idx = 0; idx < fillCount; idx += 1) {
-        const mergedObject = mergeCommonObjectKeys(remainingItems[idx], lastItem);
-        mergedArray.push(mergedObject);
+        return mergedArray;
       }
 
       return mergedArray;
     }
 
-    return mergedArray;
-  }
+    if (isArray(tVal) && !isArray(sVal)) {
+      /**
+       * If target is an array and source is not,
+       * map over the target array and merge each object item with source.
+       */
+      return (tVal as unknown[]).map((item) => {
+        if (isObject(item)) {
+          return mergeCommonObjectKeys(item as Record<string, unknown>, sVal as Record<string, unknown>);
+        }
 
-  const sIsObj = isObject(source);
-  const tIsObj = isObject(target);
-  // If either is not an object, prefer target if both are primitives, otherwise source
-  if (!sIsObj || !tIsObj) {
-    /*
-     * If both are not objects, return target (FE payload)
-     * because we want to keep the FE payload
-     * e,g target: { cat: 'hello' }, source: { cat: 'cat' }
-     * return target ( cat: 'hello' ) as FE has higher priority for same keys
-     *
-     * if either of them is an object, return source
-     * e,g target: { cat: 'hello' }, source: { cat: { name: 'cat' } }
-     * return source ( cat: { name: 'cat' } ) as in this case BE payload
-     * should be considered as source of truth. this fixes the issue
-     * of stale/edited payload in FE
-     */
-    return !sIsObj && !tIsObj ? target : source;
-  }
-
-  const result: Record<string, unknown> = {};
-
-  /**
-   * use the keys of source (BE payload) instead of target (FE payload)
-   * because we want to remove the extra unused keys from target (FE payload)
-   * and this also fixes the issue of stale/edited payload in FE
-   * when a new variable is added in the content
-   * e.g target: { cat: 'hello' }, source: { cat: { name: 'cat' } }
-   * result: { cat: { name: 'cat' } }
-   */
-  for (const key of Object.keys(source)) {
-    const sVal = source[key];
-    const tVal = target?.[key];
-
-    if (tVal !== undefined && tVal !== null) {
-      result[key] = mergeCommonObjectKeys(tVal as Record<string, unknown>, sVal as Record<string, unknown>);
-    } else {
-      result[key] = sVal;
+        return item;
+      });
     }
-  }
 
-  return result;
+    if (tIsObj && !sIsObj) {
+      /**
+       * If target is an object and source is not, return target.
+       */
+      return tVal;
+    }
+
+    if (!sIsObj || !tIsObj) {
+      /*
+       * If both are not objects, return target (FE payload)
+       * because we want to keep the FE payload.
+       * e.g target: { cat: 'hello' }, source: { cat: 'cat' }
+       * return target ( cat: 'hello' ) as FE has higher priority for same keys.
+       *
+       * If either of them is an object, return source.
+       * e.g target: { cat: 'hello' }, source: { cat: { name: 'cat' } }
+       * return source ( cat: { name: 'cat' } ) as in this case BE payload
+       * should be considered as source of truth. This fixes the issue
+       * of stale/edited payload in FE.
+       */
+      return !sIsObj && !tIsObj ? tVal : sVal;
+    }
+
+    /**
+     * If both are objects, fallback to lodash's default merging.
+     */
+    return undefined;
+  });
 }
