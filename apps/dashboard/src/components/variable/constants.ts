@@ -346,11 +346,13 @@ export const getFilters = (isEnhancedDigestEnabled: boolean): Filters[] => {
             label: 'Limit',
             tip: 'Maximum number of words to show before the "overflow suffix" applies',
             type: 'number',
+            defaultValue: '2',
           },
           {
             label: 'Overflow suffix',
             tip: 'The word to use for the items above the limit, e.g. "other"',
             type: 'string',
+            defaultValue: 'other',
           },
         ],
         sampleValue: "['John', 'Jane', ...]",
