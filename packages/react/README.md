@@ -22,7 +22,7 @@ function Novu() {
   return (
     <Inbox
       options={{
-        subscriberId: 'SUBSCRIBER_ID',
+        subscriber: 'SUBSCRIBER_ID',
         applicationIdentifier: 'APPLICATION_IDENTIFIER',
       }}
     />
@@ -43,7 +43,7 @@ function Novu() {
       options={{
         backendUrl: 'YOUR_BACKEND_URL',
         socketUrl: 'YOUR_SOCKET_URL',
-        subscriberId: 'SUBSCRIBER_ID',
+        subscriber: 'SUBSCRIBER_ID',
         applicationIdentifier: 'APPLICATION_IDENTIFIER',
       }}
     />
@@ -65,7 +65,7 @@ function Novu() {
     <div>
       <Inbox
         options={{
-          subscriberId: 'SUBSCRIBER_ID',
+          subscriber: 'SUBSCRIBER_ID',
           applicationIdentifier: 'APPLICATION_IDENTIFIER',
         }}
         open={isOpen}
@@ -88,7 +88,7 @@ function Novu() {
   return (
     <Inbox
       options={{
-        subscriberId: 'SUBSCRIBER_ID',
+        subscriber: 'SUBSCRIBER_ID',
         applicationIdentifier: 'APPLICATION_IDENTIFIER',
       }}
       localization={{
@@ -109,7 +109,7 @@ function Novu() {
 
 ## HMAC Encryption
 
-When Novu's user adds the Inbox to their application they are required to pass a `subscriberId` which identifies the user's end-customer, and the application Identifier which is acted as a public key to communicate with the notification feed API.
+When Novu's user adds the Inbox component to their application, developers need to provide a subscriber prop with the value of their customer's subscriberId, along with an application identifier that serves as a public key for API communication.
 
 A malicious actor can access the user feed by accessing the API and passing another `subscriberId` using the public application identifier.
 
@@ -135,7 +135,7 @@ const hmacHash = createHmac('sha256', process.env.NOVU_API_KEY).update(subscribe
 
 ```jsx
 <Inbox
-  subscriberId={'SUBSCRIBER_ID_PLAIN_VALUE'}
+  subscriber={'SUBSCRIBER_ID_PLAIN_VALUE'}
   subscriberHash={'SUBSCRIBER_ID_HASH_VALUE'}
   applicationIdentifier={'APPLICATION_IDENTIFIER'}
 />
