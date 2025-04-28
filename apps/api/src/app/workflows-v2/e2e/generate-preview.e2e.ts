@@ -1182,7 +1182,6 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
       });
 
       expect(previewResponse8.result.previewPayloadExample).to.deep.equal(editedItemsToArray);
-
     });
   });
 
