@@ -38,11 +38,11 @@ function NovuBrandingSwitch({ value, onChange }: { value: boolean | undefined; o
   const navigate = useNavigate();
 
   const isFreePlan = subscription?.apiServiceLevel === ApiServiceLevelEnum.FREE;
-  const disabled = isFreePlan || isLoading;
+  const disabled = isFreePlan || IS_SELF_HOSTED || isLoading;
   const checked = disabled ? false : value;
 
   const popoverText = IS_SELF_HOSTED
-    ? 'Remove Novu branding is only available on cloud plans.'
+    ? 'Novu branding removal is a premium feature available on cloud and enterprise self-hosted plans.'
     : 'Remove Novu branding from your inbox by upgrading to our paid plans.';
 
   const handleLinkClick = () => {
@@ -59,21 +59,22 @@ function NovuBrandingSwitch({ value, onChange }: { value: boolean | undefined; o
         <PopoverTrigger asChild>
           <Switch onCheckedChange={onChange} checked={checked} />
         </PopoverTrigger>
-        {isFreePlan && (
-          <PopoverContent className="w-72" align="end" sideOffset={4}>
-            <div className="flex flex-col gap-2 p-1">
-              <div className="flex flex-col gap-1">
-                <h4 className="text-xs font-semibold">Premium Feature</h4>
-                <p className="text-muted-foreground text-xs">{popoverText}</p>
+        {isFreePlan ||
+          (IS_SELF_HOSTED && (
+            <PopoverContent className="w-72" align="end" sideOffset={4}>
+              <div className="flex flex-col gap-2 p-1">
+                <div className="flex flex-col gap-1">
+                  <h4 className="text-xs font-semibold">Premium Feature</h4>
+                  <p className="text-muted-foreground text-xs">{popoverText}</p>
+                </div>
+                <div className="flex justify-end">
+                  <LinkButton size="sm" variant="primary" onClick={handleLinkClick}>
+                    Upgrade Plan
+                  </LinkButton>
+                </div>
               </div>
-              <div className="flex justify-end">
-                <LinkButton size="sm" variant="primary" onClick={handleLinkClick}>
-                  Upgrade Plan
-                </LinkButton>
-              </div>
-            </div>
-          </PopoverContent>
-        )}
+            </PopoverContent>
+          ))}
       </Popover>
     </div>
   );
