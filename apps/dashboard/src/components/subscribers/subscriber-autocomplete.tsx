@@ -62,15 +62,44 @@ export function SubscriberAutocomplete({
   // Show field selector when input has content or is focused
   const showFieldSelector = isFocused || value.length > 0;
 
+  // Maintain focus when dropdown opens
+  useEffect(() => {
+    // If dropdown is open and input should have focus, refocus it
+    if (open && isFocused && document.activeElement !== inputRef.current) {
+      inputRef.current?.focus();
+    }
+  }, [open, isFocused]);
+
+  // Auto-focus after loading completes
+  useEffect(() => {
+    // When loading stops, ensure input has focus if it was focused before
+    if (!isLoading && isFocused && document.activeElement !== inputRef.current) {
+      inputRef.current?.focus();
+    }
+  }, [isLoading, isFocused]);
+
   // Open/close dropdown based on input value and search results
   useEffect(() => {
     if (value.length >= 2) {
-      // Only keep open if loading or has results
-      setOpen(isLoading || hasResults || (hasSearched && value.length >= 2));
+      // Only keep open if loading or has results or has searched
+      const shouldBeOpen = isLoading || hasResults || (hasSearched && value.length >= 2);
+
+      // Update open state
+      if (shouldBeOpen !== open) {
+        setOpen(shouldBeOpen);
+
+        // Ensure focus is maintained when dropdown opens
+        if (shouldBeOpen && isFocused) {
+          // Use requestAnimationFrame to ensure this happens after render
+          requestAnimationFrame(() => {
+            inputRef.current?.focus();
+          });
+        }
+      }
     } else {
       setOpen(false);
     }
-  }, [value, isLoading, hasResults, hasSearched]);
+  }, [value, isLoading, hasResults, hasSearched, open, isFocused]);
 
   // Reset highlighted index when results change
   useEffect(() => {
@@ -91,6 +120,10 @@ export function SubscriberAutocomplete({
       }
 
       setOpen(false);
+      // Ensure input maintains focus after submission
+      requestAnimationFrame(() => {
+        inputRef.current?.focus();
+      });
     } else if (onSubmit) {
       // Custom submit callback
       onSubmit();
@@ -100,6 +133,8 @@ export function SubscriberAutocomplete({
   // Input change handler
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onChange(e.target.value);
+    // Maintain focus state when typing
+    setIsFocused(true);
   };
 
   // Handle focus state
@@ -112,26 +147,37 @@ export function SubscriberAutocomplete({
     }
   };
 
-  // Handle blur state
+  // Handle blur state with native relatedTarget
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    // Check if we're focusing on a related element (like the dropdown)
+    // Check if focus is moving to a related component
     const relatedTarget = e.relatedTarget as HTMLElement;
-    const isSelectDropdown =
-      relatedTarget?.closest('[role="listbox"]') ||
-      relatedTarget?.hasAttribute('data-radix-select-trigger') ||
-      relatedTarget?.closest('[data-radix-select-content]');
 
-    // If we're clicking on the select dropdown, don't remove focus
-    if (isSelectDropdown) {
+    // If related target is null (outside document) or is not a dropdown element
+    // Note: we rely on element IDs and known container classes
+    const isMovingToPopover =
+      relatedTarget &&
+      // Moving to our dropdown
+      (relatedTarget.closest(`[id="${listboxId}"]`) ||
+        // Moving to command items
+        relatedTarget.closest('.cmdk-item') ||
+        // Moving to select items
+        relatedTarget.hasAttribute('data-radix-select-trigger') ||
+        relatedTarget.closest('[data-radix-select-content]'));
+
+    if (isMovingToPopover) {
+      // Don't change focus state if moving to dropdown elements
+      e.preventDefault();
+      // Re-focus the input after a slight delay
+      setTimeout(() => {
+        if (document.activeElement !== inputRef.current) {
+          inputRef.current?.focus();
+        }
+      }, 10);
       return;
     }
 
-    // Delay the focus change slightly to allow for transitions
-    setTimeout(() => {
-      if (document.activeElement !== inputRef.current) {
-        setIsFocused(false);
-      }
-    }, 100);
+    // Otherwise, update focus state
+    setIsFocused(false);
   };
 
   // Select subscriber from dropdown
@@ -143,7 +189,10 @@ export function SubscriberAutocomplete({
     }
 
     setOpen(false);
-    inputRef.current?.focus();
+    // Ensure input maintains focus after selection
+    requestAnimationFrame(() => {
+      inputRef.current?.focus();
+    });
   };
 
   // Keyboard navigation
@@ -162,6 +211,10 @@ export function SubscriberAutocomplete({
       case 'Escape':
         e.preventDefault();
         setOpen(false);
+        // Maintain focus on escape
+        requestAnimationFrame(() => {
+          inputRef.current?.focus();
+        });
         break;
     }
   };
@@ -178,7 +231,10 @@ export function SubscriberAutocomplete({
 
     // Clear input when changing search field
     onChange('');
-    inputRef.current?.focus();
+    // Ensure input keeps focus
+    requestAnimationFrame(() => {
+      inputRef.current?.focus();
+    });
   };
 
   // Get placeholder text based on search field
@@ -271,6 +327,13 @@ export function SubscriberAutocomplete({
                 // Reset highlighted index when closing
                 setHighlightedIndex(-1);
               }
+
+              // Keep input focused when dropdown state changes
+              requestAnimationFrame(() => {
+                if (isFocused && document.activeElement !== inputRef.current) {
+                  inputRef.current?.focus();
+                }
+              });
             }
           }}
         >
@@ -298,6 +361,8 @@ export function SubscriberAutocomplete({
               className="w-full transition-all duration-200"
               autoComplete="off"
               aria-busy={combinedLoading}
+              // Add tab index to ensure focusability
+              tabIndex={0}
             />
           </PopoverTrigger>
 
@@ -305,11 +370,42 @@ export function SubscriberAutocomplete({
             className="w-[var(--radix-popover-trigger-width)] min-w-[240px] overflow-hidden p-0"
             align="start"
             sideOffset={5}
-            onEscapeKeyDown={() => setOpen(false)}
-            onInteractOutside={() => setOpen(false)}
+            onEscapeKeyDown={() => {
+              setOpen(false);
+              // Ensure input is focused when pressing escape
+              requestAnimationFrame(() => {
+                inputRef.current?.focus();
+              });
+            }}
+            onInteractOutside={(e) => {
+              // Prevent closing when clicking inside our components
+              if (e.target === inputRef.current) {
+                e.preventDefault();
+                return;
+              }
+
+              setOpen(false);
+              // If we're clicking elsewhere, allow focus to move
+              setIsFocused(false);
+            }}
+            // Prevent PopoverContent from taking focus
+            onOpenAutoFocus={(e) => {
+              e.preventDefault();
+              // Keep input focused
+              requestAnimationFrame(() => {
+                inputRef.current?.focus();
+              });
+            }}
           >
             <Command className="h-full" shouldFilter={false}>
-              <CommandList id={listboxId} role="listbox">
+              <CommandList
+                id={listboxId}
+                role="listbox"
+                // Prevent list from stealing focus
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                }}
+              >
                 <Separator variant="solid-text" className="px-1.5 py-1">
                   <div className="flex w-full justify-between rounded-t-md bg-neutral-50">
                     <div className="text-[11px] text-xs uppercase leading-[16px]">Subscribers</div>
@@ -317,70 +413,74 @@ export function SubscriberAutocomplete({
                   </div>
                 </Separator>
 
-                {/* Loading state */}
-                {isLoading && LoadingSkeletons}
+                <div className="min-h-[120px]">
+                  {/* Loading state */}
+                  {isLoading && LoadingSkeletons}
 
-                {/* No results state */}
-                {!isLoading && subscribers.length === 0 && hasSearched && (
-                  <CommandEmpty className="py-6 text-center">
-                    <div className="text-foreground-300 mb-1 text-sm">No subscribers found</div>
-                    {value.length > 0 && (
-                      <div className="text-foreground-200 text-xs">
-                        Try a different search term or add a new subscriber
-                      </div>
-                    )}
-                  </CommandEmpty>
-                )}
-
-                {/* Results */}
-                {hasResults && (
-                  <CommandGroup>
-                    {subscribers.map((subscriber, index) => (
-                      <CommandItem
-                        key={subscriber._id}
-                        id={`${id}-option-${index}`}
-                        onSelect={() => handleSelectSubscriber(subscriber)}
-                        className={cn('flex items-center gap-2 py-2', highlightedIndex === index && 'bg-neutral-100')}
-                        onMouseEnter={() => setHighlightedIndex(index)}
-                        role="option"
-                        aria-selected={highlightedIndex === index}
-                      >
-                        <Avatar className={cn('h-8 w-8', size === 'xs' && 'h-6 w-6')}>
-                          {subscriber.avatar && <AvatarImage src={subscriber.avatar} />}
-                          <AvatarFallback>
-                            {`${subscriber.firstName?.[0] || ''}${subscriber.lastName?.[0] || ''}`}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex flex-col items-start">
-                          <span className="text-sm font-medium">
-                            {subscriber.firstName || ''} {subscriber.lastName || ''}
-                          </span>
-                          <span className="text-foreground-400 text-xs">
-                            {subscriber.email || subscriber.subscriberId}
-                          </span>
+                  {/* No results state */}
+                  {!isLoading && subscribers.length === 0 && hasSearched && (
+                    <CommandEmpty className="py-6 text-center">
+                      <div className="text-foreground-300 mb-1 text-sm">No subscribers found</div>
+                      {value.length > 0 && (
+                        <div className="text-foreground-200 text-xs">
+                          Try a different search term or add a new subscriber
                         </div>
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                )}
+                      )}
+                    </CommandEmpty>
+                  )}
 
-                {/* Keyboard navigation hint */}
-                {hasResults && (
-                  <div className="flex justify-between rounded-b-md border-t border-neutral-100 bg-white p-1">
-                    <div className="flex items-center gap-0.5">
-                      <div className="pointer-events-none shrink-0 rounded-[6px] border border-neutral-200 bg-white p-1 shadow-[0px_0px_0px_1px_rgba(14,18,27,0.02)_inset,_0px_1px_4px_0px_rgba(14,18,27,0.12)]">
-                        <RiArrowUpLine className="h-3 w-3 text-neutral-400" />
-                      </div>
-                      <div className="pointer-events-none shrink-0 rounded-[6px] border border-neutral-200 bg-white p-1 shadow-[0px_0px_0px_1px_rgba(14,18,27,0.02)_inset,_0px_1px_4px_0px_rgba(14,18,27,0.12)]">
-                        <RiArrowDownLine className="h-3 w-3 text-neutral-400" />
-                      </div>
-                      <span className="text-foreground-500 ml-1.5 text-xs font-normal">Navigate</span>
+                  {/* Results */}
+                  {hasResults && (
+                    <CommandGroup>
+                      {subscribers.map((subscriber, index) => (
+                        <CommandItem
+                          key={subscriber._id}
+                          id={`${id}-option-${index}`}
+                          onSelect={() => handleSelectSubscriber(subscriber)}
+                          className={cn('flex items-center gap-2 py-2', highlightedIndex === index && 'bg-neutral-100')}
+                          onMouseEnter={() => setHighlightedIndex(index)}
+                          onMouseDown={(e) => {
+                            // Prevent default to avoid focus change
+                            e.preventDefault();
+                            handleSelectSubscriber(subscriber);
+                          }}
+                          role="option"
+                          aria-selected={highlightedIndex === index}
+                        >
+                          <Avatar className={cn('h-8 w-8', size === 'xs' && 'h-6 w-6')}>
+                            {subscriber.avatar && <AvatarImage src={subscriber.avatar} />}
+                            <AvatarFallback>
+                              {`${subscriber.firstName?.[0] || ''}${subscriber.lastName?.[0] || ''}`}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex flex-col items-start">
+                            <span className="text-sm font-medium">
+                              {subscriber.firstName || ''} {subscriber.lastName || ''}
+                            </span>
+                            <span className="text-foreground-400 text-xs">
+                              {subscriber.email || subscriber.subscriberId}
+                            </span>
+                          </div>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  )}
+                </div>
+
+                <div className="flex justify-between rounded-b-md border-t border-neutral-100 bg-white p-1">
+                  <div className="flex items-center gap-0.5">
+                    <div className="pointer-events-none shrink-0 rounded-[6px] border border-neutral-200 bg-white p-1 shadow-[0px_0px_0px_1px_rgba(14,18,27,0.02)_inset,_0px_1px_4px_0px_rgba(14,18,27,0.12)]">
+                      <RiArrowUpLine className="h-3 w-3 text-neutral-400" />
                     </div>
                     <div className="pointer-events-none shrink-0 rounded-[6px] border border-neutral-200 bg-white p-1 shadow-[0px_0px_0px_1px_rgba(14,18,27,0.02)_inset,_0px_1px_4px_0px_rgba(14,18,27,0.12)]">
-                      <EnterLineIcon className="h-3 w-3 text-neutral-400" />
+                      <RiArrowDownLine className="h-3 w-3 text-neutral-400" />
                     </div>
+                    <span className="text-foreground-500 ml-1.5 text-xs font-normal">Navigate</span>
                   </div>
-                )}
+                  <div className="pointer-events-none shrink-0 rounded-[6px] border border-neutral-200 bg-white p-1 shadow-[0px_0px_0px_1px_rgba(14,18,27,0.02)_inset,_0px_1px_4px_0px_rgba(14,18,27,0.12)]">
+                    <EnterLineIcon className="h-3 w-3 text-neutral-400" />
+                  </div>
+                </div>
               </CommandList>
             </Command>
           </PopoverContent>
