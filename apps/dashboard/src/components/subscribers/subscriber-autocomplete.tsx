@@ -1,7 +1,7 @@
 import { cn } from '@/utils/ui';
 import { ISubscriberResponseDto } from '@novu/shared';
 import { AnimatePresence, motion } from 'motion/react';
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { RiAddFill, RiArrowDownLine, RiArrowUpLine, RiLoader4Line } from 'react-icons/ri';
 import { EnterLineIcon } from '../icons/enter-line';
 import { Avatar, AvatarFallback, AvatarImage } from '../primitives/avatar';
@@ -165,22 +165,14 @@ export function SubscriberAutocomplete({
         relatedTarget.hasAttribute('data-radix-select-trigger') ||
         relatedTarget.closest('[data-radix-select-content]'));
 
-    if (isMovingToPopover) {
-      // Don't change focus state if moving to dropdown elements
+    if (isMovingToPopover || isSelectOpen) {
+      // Don't change focus state if moving to dropdown elements or select is open
       e.preventDefault();
-      // Re-focus the input after a slight delay
-      setTimeout(() => {
-        if (document.activeElement !== inputRef.current) {
-          inputRef.current?.focus();
-        }
-      }, 10);
       return;
     }
 
-    // Only update focus state if select is not open
-    if (!isSelectOpen) {
-      setIsFocused(false);
-    }
+    // Otherwise, update focus state
+    setIsFocused(false);
   };
 
   // Select subscriber from dropdown
@@ -259,43 +251,61 @@ export function SubscriberAutocomplete({
     setIsSelectOpen(open);
   };
 
-  // Field selector component
-  const FieldSelector = (
-    <AnimatePresence>
-      {showFieldSelector && (
-        <motion.div
-          initial={{ opacity: 0, width: 0 }}
-          animate={{ opacity: 1, width: 'auto' }}
-          exit={{ opacity: 0, width: 0 }}
-          transition={{ duration: 0.2 }}
-          className="overflow-hidden"
-        >
-          <Select value={searchField} onValueChange={handleSearchFieldChange} onOpenChange={handleSelectOpenChange}>
-            <SelectTrigger
-              className={cn(
-                'border-stroke-soft min-w-[110px] rounded-r-none border-r-0',
-                size === 'xs' && 'h-8 px-2 text-xs',
-                size === 'sm' && 'h-9 px-3 text-sm',
-                size === 'md' && 'h-10 px-3 text-base'
-              )}
-            >
-              <SelectValue placeholder="Field" />
-            </SelectTrigger>
-            <SelectContent
-              onCloseAutoFocus={(e) => {
-                e.preventDefault();
-                inputRef.current?.focus();
-              }}
-            >
-              <SelectItem value="subscriberId">Subscriber Id</SelectItem>
-              <SelectItem value="email">Email</SelectItem>
-              <SelectItem value="phone">Phone</SelectItem>
-              <SelectItem value="name">Name</SelectItem>
-            </SelectContent>
-          </Select>
-        </motion.div>
-      )}
-    </AnimatePresence>
+  // Field selector component - memoized to prevent re-renders
+  const FieldSelector = useMemo(
+    () => (
+      <AnimatePresence mode="wait">
+        {showFieldSelector && (
+          <motion.div
+            initial={{ opacity: 0, width: 0 }}
+            animate={{ opacity: 1, width: 'auto' }}
+            exit={{ opacity: 0, width: 0 }}
+            transition={{ duration: 0.15, ease: 'easeInOut' }}
+            className="flex items-stretch overflow-hidden"
+          >
+            <Select value={searchField} onValueChange={handleSearchFieldChange} onOpenChange={handleSelectOpenChange}>
+              <SelectTrigger
+                className={cn(
+                  'border-stroke-soft min-w-[110px] rounded-r-none border-r-0',
+                  size === 'xs' && 'h-8 px-2 text-xs',
+                  size === 'sm' && 'h-9 px-3 text-sm',
+                  size === 'md' && 'h-10 px-3 text-base'
+                )}
+                onMouseDown={(e) => {
+                  // Prevent blur on the input when clicking the trigger
+                  e.preventDefault();
+                  setIsFocused(true);
+                }}
+              >
+                <SelectValue placeholder="Field" />
+              </SelectTrigger>
+              <SelectContent
+                onCloseAutoFocus={(e) => {
+                  e.preventDefault();
+                  // Keep input focused when select closes
+                  inputRef.current?.focus();
+                }}
+                onPointerDownOutside={(e) => {
+                  // If clicking the input or our select trigger, prevent closing
+                  if (
+                    e.target === inputRef.current ||
+                    (e.target as HTMLElement).closest('[data-radix-select-trigger]')
+                  ) {
+                    e.preventDefault();
+                  }
+                }}
+              >
+                <SelectItem value="subscriberId">Subscriber Id</SelectItem>
+                <SelectItem value="email">Email</SelectItem>
+                <SelectItem value="phone">Phone</SelectItem>
+                <SelectItem value="name">Name</SelectItem>
+              </SelectContent>
+            </Select>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    ),
+    [searchField, showFieldSelector, size, handleSearchFieldChange, handleSelectOpenChange]
   );
 
   // Loading skeletons
