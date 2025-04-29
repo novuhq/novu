@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { Subscriber } from '@novu/js';
 import { DefaultProps, DefaultInboxProps, WithChildrenProps } from '../utils/types';
 import { Mounter } from './Mounter';
 import { useNovuUI } from '../context/NovuUIContext';
@@ -82,7 +83,7 @@ const _DefaultInbox = (props: DefaultInboxProps) => {
 const DefaultInbox = withRenderer(_DefaultInbox);
 
 export const Inbox = React.memo((props: InboxProps) => {
-  const { applicationIdentifier, subscriberId, subscriberHash, backendUrl, socketUrl } = props;
+  const { applicationIdentifier, subscriberHash, backendUrl, socketUrl } = props;
   const novu = useUnsafeNovu();
 
   if (novu) {
@@ -92,10 +93,10 @@ export const Inbox = React.memo((props: InboxProps) => {
   return (
     <InternalNovuProvider
       applicationIdentifier={applicationIdentifier}
-      subscriberId={subscriberId}
       subscriberHash={subscriberHash}
       backendUrl={backendUrl}
       socketUrl={socketUrl}
+      subscriber={buildSubscriber(props)}
       userAgentType="components"
     >
       <InboxChild {...props} />
@@ -125,7 +126,13 @@ const InboxChild = React.memo((props: InboxProps) => {
       tabs,
       preferencesFilter,
       routerPush,
-      options: { applicationIdentifier, subscriberId, subscriberHash, backendUrl, socketUrl },
+      options: {
+        applicationIdentifier,
+        subscriberHash,
+        backendUrl,
+        socketUrl,
+        subscriber: buildSubscriber(props),
+      },
     };
   }, [
     localization,
@@ -137,6 +144,7 @@ const InboxChild = React.memo((props: InboxProps) => {
     subscriberHash,
     backendUrl,
     socketUrl,
+    props.subscriber,
   ]);
 
   if (isWithChildrenProps(props)) {
@@ -180,4 +188,16 @@ const InboxChild = React.memo((props: InboxProps) => {
 
 function isWithChildrenProps(props: InboxProps): props is WithChildrenProps {
   return 'children' in props;
+}
+
+function buildSubscriber(options: InboxProps): Subscriber {
+  let subscriberObj: Subscriber;
+
+  if (options.subscriber) {
+    subscriberObj = typeof options.subscriber === 'string' ? { subscriberId: options.subscriber } : options.subscriber;
+  } else {
+    subscriberObj = { subscriberId: options.subscriberId as string };
+  }
+
+  return subscriberObj;
 }

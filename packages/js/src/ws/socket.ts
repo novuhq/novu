@@ -45,11 +45,16 @@ const mapToNotification = ({
   workflow,
 }: TODO): InboxNotification => {
   const to: Subscriber = {
-    id: subscriber?._id ?? '',
+    id: subscriber?._id,
+    subscriberId: subscriber?.subscriberId,
     firstName: subscriber?.firstName,
     lastName: subscriber?.lastName,
     avatar: subscriber?.avatar,
-    subscriberId: subscriber?.subscriberId ?? '',
+    locale: subscriber?.locale,
+    data: subscriber?.data,
+    timezone: subscriber?.timezone,
+    email: subscriber?.email,
+    phone: subscriber?.phone,
   };
   const primaryCta = cta.action?.buttons?.find((button: any) => button.type === ActionTypeEnum.PRIMARY);
   const secondaryCta = cta.action?.buttons?.find((button: any) => button.type === ActionTypeEnum.SECONDARY);
