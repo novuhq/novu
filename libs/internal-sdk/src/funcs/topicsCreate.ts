@@ -201,10 +201,11 @@ async function $do(
     | RequestTimeoutError
     | ConnectionError
   >(
-    M.json(201, operations.TopicsControllerUpsertTopicResponse$inboundSchema, {
-      hdrs: true,
-      key: "Result",
-    }),
+    M.json(
+      [200, 201],
+      operations.TopicsControllerUpsertTopicResponse$inboundSchema,
+      { hdrs: true, key: "Result" },
+    ),
     M.jsonErr(414, errors.ErrorDto$inboundSchema),
     M.jsonErr(
       [400, 401, 403, 404, 405, 409, 413, 415],
