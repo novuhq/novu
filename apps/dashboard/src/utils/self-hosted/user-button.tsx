@@ -8,11 +8,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/primitives/dropdown-menu';
-import { Cloud } from 'lucide-react';
 import { useState, useRef } from 'react';
 import { UserAvatar } from './icons';
 import { openInNewTab } from '../url';
 import { SELF_HOSTED_UPGRADE_REDIRECT_URL } from '../../config';
+import { RiCalendarEventLine, RiExternalLinkLine, RiSignpostFill } from 'react-icons/ri';
 
 export function UserButton() {
   const { user } = useUser() as {
@@ -41,7 +41,7 @@ export function UserButton() {
             </Avatar>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-[320px] border border-gray-200 bg-white shadow-sm" sideOffset={5}>
+        <DropdownMenuContent align="end" className="w-[350px] border border-gray-200 bg-white shadow-sm" sideOffset={5}>
           <div className="flex items-center gap-3 p-3">
             <UserAvatar className="rounded-full" />
             <div className="flex flex-col">
@@ -52,10 +52,23 @@ export function UserButton() {
           <DropdownMenuSeparator />
           <DropdownMenuItem
             className="flex cursor-pointer items-center gap-2 text-gray-700 hover:bg-gray-50"
-            onClick={() => openInNewTab(SELF_HOSTED_UPGRADE_REDIRECT_URL + '?utm_campaign=user_button')}
+            onClick={() => openInNewTab(SELF_HOSTED_UPGRADE_REDIRECT_URL + '?utm_campaign=user_button_switch')}
           >
-            <Cloud className="h-4 w-4 text-gray-500" />
-            <span>Switch to Managed Cloud or Enterprise Self-Hosted</span>
+            <div className="flex min-w-0 flex-1 items-center gap-2">
+              <RiSignpostFill className="h-3.5 w-3.5 flex-shrink-0 text-gray-500" />
+              <span>Switch to Managed Cloud or Enterprise</span>
+              <RiExternalLinkLine className="m-1 ml-auto h-3 w-3 flex-shrink-0 text-gray-500" />
+            </div>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            className="flex cursor-pointer items-center gap-2 text-gray-700 hover:bg-gray-50"
+            onClick={() => openInNewTab(SELF_HOSTED_UPGRADE_REDIRECT_URL + '?utm_campaign=user_button_lets_chat')}
+          >
+            <div className="flex min-w-0 flex-1 items-center gap-2">
+              <RiCalendarEventLine className="h-3.5 w-3.5 flex-shrink-0 text-gray-500" />
+              <span>Let's chat (yes, a real human)</span>
+              <RiExternalLinkLine className="m-1 ml-auto h-3 w-3 flex-shrink-0 text-gray-500" />
+            </div>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
