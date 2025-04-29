@@ -1,7 +1,7 @@
 import { cn } from '@/utils/ui';
 import { ISubscriberResponseDto } from '@novu/shared';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { RiAddFill, RiArrowDownLine, RiArrowUpLine, RiLoader4Line, RiSearchLine } from 'react-icons/ri';
+import { RiAddFill, RiArrowDownLine, RiArrowUpLine, RiLoader4Line } from 'react-icons/ri';
 import { EnterLineIcon } from '../icons/enter-line';
 import { Avatar, AvatarFallback, AvatarImage } from '../primitives/avatar';
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from '../primitives/command';
@@ -69,13 +69,13 @@ export function SubscriberAutocomplete({
   const getPlaceholder = () => {
     switch (searchField) {
       case 'email':
-        return 'Search subscriber by email';
+        return 'Add subscriber to this topic by email';
       case 'phone':
-        return 'Search subscriber by phone';
+        return 'Add subscriber to this topic by phone';
       case 'name':
-        return 'Search subscriber by name';
+        return 'Add subscriber to this topic by name';
       default:
-        return 'Search subscriber by subscriberId';
+        return 'Add subscriber to this topic by subscriberId';
     }
   };
 
@@ -358,8 +358,7 @@ export function SubscriberAutocomplete({
             disabled={disabled}
             size={size}
             leadingNode={FieldSelector}
-            leadingIcon={RiAddFill}
-            trailingIcon={RiSearchLine}
+            trailingIcon={RiAddFill}
             className="w-full"
             autoComplete="off"
             aria-busy={combinedLoading}

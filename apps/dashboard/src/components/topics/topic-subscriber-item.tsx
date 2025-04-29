@@ -1,3 +1,4 @@
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/primitives/avatar';
 import { Button } from '@/components/primitives/button';
 import {
   Dialog,
@@ -12,7 +13,7 @@ import { itemVariants } from '@/utils/animation';
 import { ISubscriber } from '@novu/shared';
 import { motion } from 'motion/react';
 import { useState } from 'react';
-import { RiDeleteBinLine, RiMailLine, RiUser3Fill } from 'react-icons/ri';
+import { RiDeleteBinLine, RiMailLine } from 'react-icons/ri';
 import { SubscriberDrawerButton } from '../subscribers/subscriber-drawer';
 import { useRemoveTopicSubscriber } from './hooks/use-topic-subscribers';
 
@@ -52,6 +53,7 @@ export function TopicSubscriberItem({ subscriber, topicKey, readOnly = false }: 
   };
 
   const displayName = getDisplayName();
+  const subscriberTitle = displayName || subscriber.subscriberId;
 
   return (
     <>
@@ -60,24 +62,27 @@ export function TopicSubscriberItem({ subscriber, topicKey, readOnly = false }: 
           variants={itemVariants}
           className="border-b-stroke-soft group flex w-full cursor-pointer border-b last:border-b-0 hover:bg-neutral-50"
         >
-          <div className="flex w-full items-center justify-between px-3 py-2">
-            <div className="flex flex-col">
-              <div className="flex items-center">
-                <RiUser3Fill className="mr-2 size-3.5 min-w-3.5 text-neutral-500" />
-                <span className="text-label-xs text-foreground-950 font-medium">
+          <div className="grid w-full grid-cols-[150px_1fr_auto] items-center px-3 py-2">
+            <div className="flex max-w-[150px] items-center gap-3 overflow-hidden">
+              <Avatar className="size-8">
+                <AvatarImage src={subscriber.avatar || undefined} />
+                <AvatarFallback>{subscriberTitle[0]}</AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col overflow-hidden">
+                <span className="text-label-xs text-foreground-950 truncate font-medium">
                   {displayName || subscriber.subscriberId}
                 </span>
-                {displayName && (
-                  <span className="text-label-xs ml-2 text-neutral-500">({subscriber.subscriberId})</span>
+                {subscriber.email && (
+                  <div className="flex items-center">
+                    <RiMailLine className="mr-1.5 size-3 min-w-3 text-neutral-400" />
+                    <span className="text-label-xs truncate text-neutral-500">{subscriber.email}</span>
+                  </div>
                 )}
               </div>
+            </div>
 
-              {subscriber.email && (
-                <div className="ml-5 mt-1 flex items-center">
-                  <RiMailLine className="mr-1.5 size-3 min-w-3 text-neutral-400" />
-                  <span className="text-label-xs text-neutral-500">{subscriber.email}</span>
-                </div>
-              )}
+            <div className="overflow-hidden px-4 text-left">
+              <span className="text-label-xs truncate text-neutral-500">{subscriber.subscriberId}</span>
             </div>
 
             {!readOnly && (

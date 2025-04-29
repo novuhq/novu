@@ -62,7 +62,7 @@ const TopicSubscribersEmptyState = ({ topicKey, readOnly = false }: { topicKey: 
       }}
     >
       {!readOnly && (
-        <div className="border-b border-b-neutral-200 px-5 py-3">
+        <div className="border-b border-b-neutral-200 p-4">
           <AddSubscriberForm topicKey={topicKey} />
         </div>
       )}
@@ -175,7 +175,7 @@ const TopicSubscribers = (props: TopicSubscribersProps) => {
       className="flex flex-1 flex-col overflow-y-auto border-t border-t-neutral-200"
     >
       {!readOnly && (
-        <div className="border-b border-b-neutral-200 px-5 py-3">
+        <div className="border-b border-b-neutral-200 px-3 py-4">
           <AddSubscriberForm topicKey={topicKey} />
         </div>
       )}
