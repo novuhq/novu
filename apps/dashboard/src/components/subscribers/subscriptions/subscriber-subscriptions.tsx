@@ -27,8 +27,6 @@ export function SubscriberSubscriptions({ subscriberId }: SubscriberSubscription
     );
   }
 
-  console.log(data, 'dataaa');
-
   const subscriptions = data?.data || [];
 
   if (subscriptions.length === 0) {
