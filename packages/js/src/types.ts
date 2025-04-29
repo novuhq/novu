@@ -19,8 +19,10 @@ declare global {
 export enum NotificationStatus {
   READ = 'read',
   SEEN = 'seen',
+  SNOOZED = 'snoozed',
   UNREAD = 'unread',
   UNSEEN = 'unseen',
+  UNSNOOZED = 'unsnoozed',
 }
 
 export enum NotificationButton {
@@ -57,6 +59,7 @@ export type Session = {
   totalUnreadCount: number;
   removeNovuBranding: boolean;
   isDevelopmentMode: boolean;
+  isSnoozeEnabled: boolean;
 };
 
 export type Subscriber = {
@@ -98,6 +101,9 @@ export type InboxNotification = {
   to: Subscriber;
   isRead: boolean;
   isArchived: boolean;
+  isSnoozed: boolean;
+  snoozedUntil?: string | null;
+  deliveredAt?: string[];
   createdAt: string;
   readAt?: string | null;
   archivedAt?: string | null;
@@ -115,6 +121,7 @@ export type NotificationFilter = {
   tags?: string[];
   read?: boolean;
   archived?: boolean;
+  snoozed?: boolean;
 };
 
 export type ChannelPreference = {

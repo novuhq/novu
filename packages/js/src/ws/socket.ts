@@ -32,6 +32,8 @@ const mapToNotification = ({
   content,
   read,
   archived,
+  snoozedUntil,
+  deliveredAt,
   createdAt,
   lastReadDate,
   archivedAt,
@@ -63,6 +65,13 @@ const mapToNotification = ({
     to,
     isRead: read,
     isArchived: archived,
+    isSnoozed: !!snoozedUntil,
+    ...(deliveredAt && {
+      deliveredAt,
+    }),
+    ...(snoozedUntil && {
+      snoozedUntil,
+    }),
     createdAt,
     readAt: lastReadDate,
     archivedAt,

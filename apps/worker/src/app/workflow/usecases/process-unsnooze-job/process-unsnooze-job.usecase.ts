@@ -56,6 +56,8 @@ export class ProcessUnsnoozeJob {
           $set: {
             snoozedUntil: null,
             createdAt: new Date(),
+            read: false,
+            lastReadDate: null,
           },
           $addToSet: {
             deliveredAt: { $each: [snoozedNotification.createdAt, new Date()] },
