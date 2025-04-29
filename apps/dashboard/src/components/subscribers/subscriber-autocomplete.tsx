@@ -382,7 +382,6 @@ export function SubscriberAutocomplete({
               className="w-full transition-all duration-200"
               autoComplete="off"
               aria-busy={combinedLoading}
-              // Add tab index to ensure focusability
               tabIndex={0}
             />
           </PopoverTrigger>

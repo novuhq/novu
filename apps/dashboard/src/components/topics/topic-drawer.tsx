@@ -10,9 +10,10 @@ import { itemVariants, listVariants } from '@/utils/animation';
 import { ISubscriber } from '@novu/shared';
 import { motion } from 'motion/react';
 import { forwardRef, useEffect, useState } from 'react';
-import { RiDiscussLine, RiUser3Fill } from 'react-icons/ri';
+import { RiDiscussLine } from 'react-icons/ri';
 import { cn } from '../../utils/ui';
 import { AddSubscriberForm } from './add-subscriber-form';
+import { EmptyTopicsIllustration } from './empty-topics-illustration';
 import { useTopic } from './hooks/use-topic';
 import { useTopicSubscriptions } from './hooks/use-topic-subscribers';
 import { TopicActivity } from './topic-activity';
@@ -121,15 +122,7 @@ const TopicSubscribers = (props: TopicSubscribersProps) => {
       </div>
 
       {subscriptions.length === 0 ? (
-        <div className="flex flex-1 items-center justify-center p-8">
-          <div className="flex flex-col items-center gap-3 text-center">
-            <RiUser3Fill className="size-10 text-neutral-300" />
-            <h3 className="text-foreground-900 text-base font-medium">No subscribers found</h3>
-            <p className="text-foreground-600 max-w-xs text-sm">
-              {subscriberId ? 'No subscribers match the current filter' : "This topic doesn't have any subscribers yet"}
-            </p>
-          </div>
-        </div>
+        <TopicListBlank />
       ) : (
         subscriptions.map((subscription: TopicSubscription) => (
           <TopicSubscriberItem
@@ -203,6 +196,19 @@ function TopicTabs(props: TopicTabsProps) {
     </Tabs>
   );
 }
+
+export const TopicListBlank = () => {
+  return (
+    <div className="mt-[100px] flex h-full w-full flex-col items-center justify-center gap-6">
+      <EmptyTopicsIllustration />
+      <div className="flex flex-col items-center gap-2 text-center">
+        <p className="text-text-soft text-paragraph-sm max-w-[60ch]">
+          No subscribers added yet, Add subscribers via the API or manually to start sending notifications.
+        </p>
+      </div>
+    </div>
+  );
+};
 
 type TopicDrawerProps = {
   open: boolean;
