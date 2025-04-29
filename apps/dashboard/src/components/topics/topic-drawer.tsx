@@ -172,13 +172,13 @@ function TopicTabs(props: TopicTabsProps) {
         className="border-bg-soft h-auto w-full items-center gap-6 rounded-none border-b border-t-0 bg-transparent px-3 py-0"
       >
         <TabsTrigger value="overview" className={tabTriggerClasses}>
-          <span>Overview</span>
+          Overview
         </TabsTrigger>
         <TabsTrigger value="subscribers" className={tabTriggerClasses}>
-          <span>Subscribers</span>
+          Subscriptions
         </TabsTrigger>
         <TabsTrigger value="activity-feed" className={tabTriggerClasses}>
-          <span>Activity Feed</span>
+          Activity Feed
         </TabsTrigger>
       </TabsList>
       <TabsContent value="overview" className="h-full w-full overflow-y-auto">
