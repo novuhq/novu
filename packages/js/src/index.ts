@@ -14,6 +14,7 @@ export {
   Preference,
   PreferenceLevel,
   PreferencesResponse,
+  Subscriber,
   WebSocketEvent,
 } from './types';
 export { areTagsEqual, isSameFilter } from './utils/notification-utils';

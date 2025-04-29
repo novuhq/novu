@@ -1,4 +1,4 @@
-import { IsEmail, IsLocale, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsEmail, IsLocale, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { SubscriberEntity } from '@novu/dal';
 import { ISubscriberChannel, SubscriberCustomData } from '@novu/shared';
@@ -55,4 +55,8 @@ export class CreateOrUpdateSubscriberCommand extends EnvironmentCommand {
    */
   @IsOptional()
   activeWorkerName?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  allowUpdate?: boolean = true;
 }

@@ -15,6 +15,7 @@ import { AuthService } from '../../../auth/services/auth.service';
 import { InitializeSessionCommand } from './initialize-session.command';
 
 import { SessionInitializeResponseDto } from '../../dtos/session-initialize-response.dto';
+import { isHmacValid } from '../../../shared/helpers/is-valid-hmac';
 
 @Injectable()
 export class InitializeSession {
@@ -52,16 +53,18 @@ export class InitializeSession {
       validateNotificationCenterEncryption(environment, command);
     }
 
-    const commandos = CreateOrUpdateSubscriberCommand.create({
-      environmentId: environment._id,
-      organizationId: environment._organizationId,
-      subscriberId: command.subscriberId,
-      firstName: command.firstName,
-      lastName: command.lastName,
-      email: command.email,
-      phone: command.phone,
-    });
-    const subscriber = await this.createOrUpdateSubscriberUsecase.execute(commandos);
+    const subscriber = await this.createOrUpdateSubscriberUsecase.execute(
+      CreateOrUpdateSubscriberCommand.create({
+        environmentId: environment._id,
+        organizationId: environment._organizationId,
+        subscriberId: command.subscriberId,
+        firstName: command.firstName,
+        lastName: command.lastName,
+        email: command.email,
+        phone: command.phone,
+        allowUpdate: isHmacValid(environment.apiKeys[0].key, command.subscriberId, command.hmacHash),
+      })
+    );
 
     this.analyticsService.mixpanelTrack('Initialize Widget Session - [Notification Center]', '', {
       _organization: environment._organizationId,
@@ -82,9 +85,7 @@ export class InitializeSession {
 }
 
 function validateNotificationCenterEncryption(environment, command: InitializeSessionCommand) {
-  const key = decryptApiKey(environment.apiKeys[0].key);
-  const hmacHash = createHash(key, command.subscriberId);
-  if (hmacHash !== command.hmacHash) {
+  if (!isHmacValid(environment.apiKeys[0].key, command.subscriberId, command.hmacHash)) {
     throw new BadRequestException('Please provide a valid HMAC hash');
   }
 }
