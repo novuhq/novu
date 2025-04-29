@@ -207,22 +207,13 @@ export function TopicOverviewForm({ topic, readOnly = false }: TopicOverviewForm
             </div>
             <Separator />
             <div className="flex flex-col gap-1">
-              {topic.createdAt && (
+              {topic.updatedAt && (
                 <div className="flex justify-between px-5 pt-2">
                   <span className="text-2xs text-neutral-400">
-                    Created at{' '}
-                    <TimeDisplayHoverCard date={topic.createdAt}>
-                      {formatDateSimple(topic.createdAt)}
+                    <TimeDisplayHoverCard date={topic.updatedAt}>
+                      Updated at {formatDateSimple(topic.updatedAt)}
                     </TimeDisplayHoverCard>
                   </span>
-                  {topic.updatedAt && (
-                    <span className="text-2xs text-neutral-400">
-                      Updated at{' '}
-                      <TimeDisplayHoverCard date={topic.updatedAt}>
-                        {formatDateSimple(topic.updatedAt)}
-                      </TimeDisplayHoverCard>
-                    </span>
-                  )}
                 </div>
               )}
             </div>

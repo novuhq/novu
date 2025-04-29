@@ -7,9 +7,10 @@ import { Avatar, AvatarFallback, AvatarImage } from '../primitives/avatar';
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from '../primitives/command';
 import { Input } from '../primitives/input';
 import { Popover, PopoverContent, PopoverTrigger } from '../primitives/popover';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../primitives/select';
 import { Separator } from '../primitives/separator';
 import { Skeleton } from '../primitives/skeleton';
-import { useSubscriberSearch } from './hooks/use-subscriber-search';
+import { SearchField, useSubscriberSearch } from './hooks/use-subscriber-search';
 
 type SubscriberAutocompleteProps = {
   value: string;
@@ -21,6 +22,8 @@ type SubscriberAutocompleteProps = {
   isLoading?: boolean;
   onSubmit?: () => void;
   onSelectSubscriber?: (subscriber: ISubscriberResponseDto) => void;
+  searchField?: SearchField;
+  onSearchFieldChange?: (field: SearchField) => void;
 };
 
 export function SubscriberAutocomplete({
@@ -33,11 +36,20 @@ export function SubscriberAutocomplete({
   isLoading: externalLoading,
   onSubmit,
   onSelectSubscriber,
+  searchField: externalSearchField,
+  onSearchFieldChange,
 }: SubscriberAutocompleteProps) {
   const [open, setOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const popoverContentRef = useRef<HTMLDivElement>(null);
-  const { subscribers, isLoading, hasSearched } = useSubscriberSearch(value);
+
+  // Use internal state if external state management isn't provided
+  const [internalSearchField, setInternalSearchField] = useState<SearchField>('subscriberId');
+
+  // Use external search field if provided, otherwise use internal state
+  const searchField = externalSearchField || internalSearchField;
+
+  const { subscribers, isLoading, hasSearched } = useSubscriberSearch(value, searchField);
   const prevLoadingRef = useRef(isLoading);
   const prevSubscribersRef = useRef<ISubscriberResponseDto[]>([]);
   const combinedLoading = isLoading || externalLoading;
@@ -54,6 +66,20 @@ export function SubscriberAutocomplete({
 
   // Track focus state
   const [hasFocus, setHasFocus] = useState(false);
+
+  // Get placeholder based on search field
+  const getPlaceholder = () => {
+    switch (searchField) {
+      case 'email':
+        return 'Search subscriber by email';
+      case 'phone':
+        return 'Search subscriber by phone';
+      case 'name':
+        return 'Search subscriber by name';
+      default:
+        return 'Search subscriber by subscriberId';
+    }
+  };
 
   // Manage popover open state based on value length
   useEffect(() => {
@@ -280,6 +306,43 @@ export function SubscriberAutocomplete({
     return popoverContentRef.current.contains(node);
   }, []);
 
+  const handleSearchFieldChange = useCallback(
+    (value: string) => {
+      // Update internal state if no external handler provided
+      if (!onSearchFieldChange) {
+        setInternalSearchField(value as SearchField);
+      } else {
+        onSearchFieldChange(value as SearchField);
+      }
+
+      // Clear input when changing search field
+      onChange('');
+    },
+    [onSearchFieldChange, onChange]
+  );
+
+  // Field selector component to be used as leadingNode
+  const FieldSelector = (
+    <Select value={searchField} onValueChange={handleSearchFieldChange}>
+      <SelectTrigger
+        className={cn(
+          'border-stroke-soft min-w-[110px] rounded-r-none border-r-0',
+          size === 'xs' && 'h-8 px-2 text-xs',
+          size === 'sm' && 'h-9 px-3 text-sm',
+          size === 'md' && 'h-10 px-3 text-base'
+        )}
+      >
+        <SelectValue placeholder="Field" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="subscriberId">Subscriber Id</SelectItem>
+        <SelectItem value="email">Email</SelectItem>
+        <SelectItem value="phone">Phone</SelectItem>
+        <SelectItem value="name">Name</SelectItem>
+      </SelectContent>
+    </Select>
+  );
+
   return (
     <Popover open={open && value.length >= 2} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
@@ -287,7 +350,7 @@ export function SubscriberAutocomplete({
           <Input
             ref={inputRef}
             value={value}
-            placeholder={placeholder}
+            placeholder={getPlaceholder()}
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
             onFocus={handleFocus}
@@ -296,6 +359,7 @@ export function SubscriberAutocomplete({
             onMouseUp={handleMouseUp}
             disabled={disabled}
             size={size}
+            leadingNode={FieldSelector}
             leadingIcon={RiAddFill}
             trailingIcon={RiSearchLine}
             className="w-full"
