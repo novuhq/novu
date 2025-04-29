@@ -456,7 +456,6 @@ export function SubscriberAutocomplete({
                         <CommandItem
                           key={subscriber._id}
                           id={`${id}-option-${index}`}
-                          onSelect={() => handleSelectSubscriber(subscriber)}
                           className={cn('flex items-center gap-2 py-2', highlightedIndex === index && 'bg-neutral-100')}
                           onMouseEnter={() => setHighlightedIndex(index)}
                           onMouseDown={(e) => {
