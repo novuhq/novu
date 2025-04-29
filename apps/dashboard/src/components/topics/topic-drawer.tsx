@@ -10,7 +10,7 @@ import { useFormProtection } from '@/hooks/use-form-protection';
 import { itemVariants, listVariants } from '@/utils/animation';
 import { ISubscriber } from '@novu/shared';
 import { motion } from 'motion/react';
-import { forwardRef, useState } from 'react';
+import { forwardRef, useEffect, useState } from 'react';
 import { RiDiscussLine, RiUser3Fill } from 'react-icons/ri';
 import { cn } from '../../utils/ui';
 import { AddSubscriberForm } from './add-subscriber-form';
@@ -18,6 +18,7 @@ import { useTopic } from './hooks/use-topic';
 import { useTopicSubscriptions } from './hooks/use-topic-subscribers';
 import { TopicActivity } from './topic-activity';
 import { TopicOverviewForm, TopicOverviewSkeleton } from './topic-overview-form';
+import { TopicSubscriberFilter } from './topic-subscriber-filter';
 import { TopicSubscriberItem } from './topic-subscriber-item';
 
 const tabTriggerClasses =
@@ -132,9 +133,24 @@ const TopicSubscribersEmptyState = ({ topicKey, readOnly = false }: { topicKey: 
 
 const TopicSubscribers = (props: TopicSubscribersProps) => {
   const { topicKey, readOnly = false } = props;
-  const { data, isPending } = useTopicSubscriptions(topicKey);
+  const [subscriberId, setSubscriberId] = useState<string | undefined>(undefined);
+  const [isFilterLoading, setIsFilterLoading] = useState(false);
+  const { data, isPending } = useTopicSubscriptions(topicKey, { subscriberId });
 
-  if (isPending) {
+  const isLoading = isPending || isFilterLoading;
+
+  // When data is loaded, clear the loading state
+  useEffect(() => {
+    if (!isPending && isFilterLoading) {
+      setIsFilterLoading(false);
+    }
+  }, [isPending, isFilterLoading]);
+
+  const handleSubscriberIdChange = (newSubscriberId?: string) => {
+    setSubscriberId(newSubscriberId);
+  };
+
+  if (isLoading) {
     return (
       <motion.div
         key="loading-state"
@@ -156,10 +172,6 @@ const TopicSubscribers = (props: TopicSubscribersProps) => {
 
   const subscriptions = data?.data || [];
 
-  if (subscriptions.length === 0) {
-    return <TopicSubscribersEmptyState topicKey={topicKey} readOnly={readOnly} />;
-  }
-
   return (
     <motion.div
       key="subscribers-list"
@@ -172,21 +184,49 @@ const TopicSubscribers = (props: TopicSubscribersProps) => {
           },
         },
       }}
-      className="flex flex-1 flex-col overflow-y-auto border-t border-t-neutral-200"
+      className="flex flex-1 flex-col overflow-y-auto"
     >
-      {!readOnly && (
-        <div className="border-b border-b-neutral-200 px-3 py-4">
-          <AddSubscriberForm topicKey={topicKey} />
-        </div>
-      )}
-      {subscriptions.map((subscription: TopicSubscription) => (
-        <TopicSubscriberItem
-          key={subscription._id}
-          subscriber={subscription.subscriber as ISubscriber}
+      <div
+        className={cn('border-b border-b-neutral-200 px-3 py-4', {
+          'flex flex-col gap-4': !readOnly,
+        })}
+      >
+        {!readOnly && <AddSubscriberForm topicKey={topicKey} />}
+      </div>
+      <div
+        className={cn('border-b border-b-neutral-200 px-3 py-2', {
+          'flex flex-col gap-4': !readOnly,
+        })}
+      >
+        <TopicSubscriberFilter
           topicKey={topicKey}
-          readOnly={readOnly}
+          subscriberId={subscriberId}
+          onSubscriberIdChange={handleSubscriberIdChange}
+          isLoading={isLoading}
+          onLoadingChange={setIsFilterLoading}
         />
-      ))}
+      </div>
+
+      {subscriptions.length === 0 ? (
+        <div className="flex flex-1 items-center justify-center p-8">
+          <div className="flex flex-col items-center gap-3 text-center">
+            <RiUser3Fill className="size-10 text-neutral-300" />
+            <h3 className="text-foreground-900 text-base font-medium">No subscribers found</h3>
+            <p className="text-foreground-600 max-w-xs text-sm">
+              {subscriberId ? 'No subscribers match the current filter' : "This topic doesn't have any subscribers yet"}
+            </p>
+          </div>
+        </div>
+      ) : (
+        subscriptions.map((subscription: TopicSubscription) => (
+          <TopicSubscriberItem
+            key={subscription._id}
+            subscriber={subscription.subscriber as ISubscriber}
+            topicKey={topicKey}
+            readOnly={readOnly}
+          />
+        ))
+      )}
     </motion.div>
   );
 };
@@ -221,18 +261,18 @@ function TopicTabs(props: TopicTabsProps) {
         </div>
       </header>
 
-      <TabsList className="border-bg-soft h-auto w-full items-center gap-6 rounded-none border-b bg-transparent px-3 py-0">
+      <TabsList
+        variant={'regular'}
+        className="border-bg-soft h-auto w-full items-center gap-6 rounded-none border-b bg-transparent px-3 py-0"
+      >
         <TabsTrigger value="overview" className={tabTriggerClasses}>
           <span>Overview</span>
-          {tab === 'overview' && <ActiveTabIndicator />}
         </TabsTrigger>
         <TabsTrigger value="subscribers" className={tabTriggerClasses}>
           <span>Subscribers</span>
-          {tab === 'subscribers' && <ActiveTabIndicator />}
         </TabsTrigger>
         <TabsTrigger value="activity-feed" className={tabTriggerClasses}>
           <span>Activity Feed</span>
-          {tab === 'activity-feed' && <ActiveTabIndicator />}
         </TabsTrigger>
       </TabsList>
       <TabsContent value="overview" className="h-full w-full overflow-y-auto">

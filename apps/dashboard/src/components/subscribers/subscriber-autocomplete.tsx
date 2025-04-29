@@ -1,5 +1,6 @@
 import { cn } from '@/utils/ui';
 import { ISubscriberResponseDto } from '@novu/shared';
+import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { RiAddFill, RiArrowDownLine, RiArrowUpLine, RiLoader4Line } from 'react-icons/ri';
 import { EnterLineIcon } from '../icons/enter-line';
@@ -40,6 +41,7 @@ export function SubscriberAutocomplete({
   const [open, setOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const popoverContentRef = useRef<HTMLDivElement>(null);
+  const [showLeadingNode, setShowLeadingNode] = useState(false);
 
   // Use internal state if external state management isn't provided
   const [internalSearchField, setInternalSearchField] = useState<SearchField>('subscriberId');
@@ -79,14 +81,94 @@ export function SubscriberAutocomplete({
     }
   };
 
+  // Handle mouse events for text selection
+  const handleMouseDown = useCallback(() => {
+    isMouseDownRef.current = true;
+    isSelectingTextRef.current = true;
+  }, []);
+
+  const handleMouseUp = useCallback(() => {
+    isMouseDownRef.current = false;
+
+    // Keep the selecting text flag active for a short time
+    // to prevent focus loss during click and selection operations
+    setTimeout(() => {
+      isSelectingTextRef.current = false;
+    }, 150);
+  }, []);
+
+  // Handle focus and blur events
+  const handleFocus = useCallback(() => {
+    setHasFocus(true);
+    setShowLeadingNode(true);
+
+    if (value.length >= 2) {
+      setOpen(true);
+    }
+  }, [value]);
+
+  const handleBlur = useCallback(
+    (e: React.FocusEvent<HTMLInputElement>) => {
+      // Don't update focus state if we're in the middle of text selection
+      // or if we're handling results or typing
+      if (
+        isSelectingTextRef.current ||
+        isHandlingResultsRef.current ||
+        userTypingRef.current ||
+        isMouseDownRef.current
+      ) {
+        // If we're selecting text, refocus after a small delay
+        e.preventDefault();
+        setTimeout(() => {
+          inputRef.current?.focus();
+        }, 0);
+        return;
+      }
+
+      // Get the related target (the element receiving focus)
+      const relatedTarget = e.relatedTarget as HTMLElement;
+
+      // Check if we're focusing inside the popover
+      const isInPopover = popoverContentRef.current?.contains(relatedTarget);
+
+      // Check if the related target is part of a select dropdown
+      const isInSelectDropdown =
+        relatedTarget?.closest('[role="listbox"]') ||
+        relatedTarget?.hasAttribute('data-radix-select-trigger') ||
+        relatedTarget?.closest('[data-radix-select-content]');
+
+      // If focusing inside popover or select dropdown, maintain focus state
+      if (isInPopover || isInSelectDropdown) {
+        setTimeout(() => {
+          inputRef.current?.focus();
+        }, 0);
+        return;
+      }
+
+      setHasFocus(false);
+
+      // Only hide the leading node if the input is empty
+      if (value.length === 0) {
+        setShowLeadingNode(false);
+      }
+    },
+    [value]
+  );
+
   // Manage popover open state based on value length
   useEffect(() => {
     if (value.length >= 2) {
       setOpen(true);
+      setShowLeadingNode(true);
+    } else if (value.length === 0 && !hasFocus) {
+      setOpen(false);
+      setShowLeadingNode(false);
     } else {
       setOpen(false);
+      // Keep leading node visible if input has content or is focused
+      setShowLeadingNode(true);
     }
-  }, [value]);
+  }, [value, hasFocus]);
 
   // Force refocus on loading state changes
   useEffect(() => {
@@ -208,55 +290,6 @@ export function SubscriberAutocomplete({
     [onSubmit, open, subscribers, highlightedIndex, handleSelectSubscriber]
   );
 
-  // Handle mouse events for text selection
-  const handleMouseDown = useCallback(() => {
-    isMouseDownRef.current = true;
-    isSelectingTextRef.current = true;
-  }, []);
-
-  const handleMouseUp = useCallback(() => {
-    isMouseDownRef.current = false;
-
-    // Keep the selecting text flag active for a short time
-    // to prevent focus loss during click and selection operations
-    setTimeout(() => {
-      isSelectingTextRef.current = false;
-    }, 150);
-  }, []);
-
-  // Handle focus and blur events
-  const handleFocus = useCallback(() => {
-    setHasFocus(true);
-
-    if (value.length >= 2) {
-      setOpen(true);
-    }
-  }, [value]);
-
-  const handleBlur = useCallback((e: React.FocusEvent<HTMLInputElement>) => {
-    // Don't update focus state if we're in the middle of text selection
-    // or if we're handling results or typing
-    if (isSelectingTextRef.current || isHandlingResultsRef.current || userTypingRef.current || isMouseDownRef.current) {
-      // If we're selecting text, refocus after a small delay
-      e.preventDefault();
-      setTimeout(() => {
-        inputRef.current?.focus();
-      }, 0);
-      return;
-    }
-
-    // Check if we're focusing inside the popover
-    if (popoverContentRef.current?.contains(e.relatedTarget as Node)) {
-      // If focusing inside popover, don't lose focus state
-      setTimeout(() => {
-        inputRef.current?.focus();
-      }, 0);
-      return;
-    }
-
-    setHasFocus(false);
-  }, []);
-
   // Simple popover open change handler
   const handleOpenChange = useCallback(
     (newOpen: boolean) => {
@@ -321,24 +354,55 @@ export function SubscriberAutocomplete({
 
   // Field selector component to be used as leadingNode
   const FieldSelector = (
-    <Select value={searchField} onValueChange={handleSearchFieldChange}>
-      <SelectTrigger
-        className={cn(
-          'border-stroke-soft min-w-[110px] rounded-r-none border-r-0',
-          size === 'xs' && 'h-8 px-2 text-xs',
-          size === 'sm' && 'h-9 px-3 text-sm',
-          size === 'md' && 'h-10 px-3 text-base'
-        )}
-      >
-        <SelectValue placeholder="Field" />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value="subscriberId">Subscriber Id</SelectItem>
-        <SelectItem value="email">Email</SelectItem>
-        <SelectItem value="phone">Phone</SelectItem>
-        <SelectItem value="name">Name</SelectItem>
-      </SelectContent>
-    </Select>
+    <AnimatePresence>
+      {showLeadingNode && (
+        <motion.div
+          initial={{ opacity: 0, width: 0 }}
+          animate={{ opacity: 1, width: 'auto' }}
+          exit={{ opacity: 0, width: 0 }}
+          transition={{ duration: 0.2 }}
+          className="overflow-hidden"
+          onMouseDown={(e) => {
+            // Prevent the input from losing focus when clicking on the select
+            e.stopPropagation();
+            e.preventDefault();
+          }}
+        >
+          <Select value={searchField} onValueChange={handleSearchFieldChange}>
+            <SelectTrigger
+              className={cn(
+                'border-stroke-soft min-w-[110px] rounded-r-none border-r-0',
+                size === 'xs' && 'h-8 px-2 text-xs',
+                size === 'sm' && 'h-9 px-3 text-sm',
+                size === 'md' && 'h-10 px-3 text-base'
+              )}
+              // Prevent blur when clicking on the trigger
+              onMouseDown={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+              }}
+            >
+              <SelectValue placeholder="Field" />
+            </SelectTrigger>
+            <SelectContent
+              // Prevent close on item click
+              onCloseAutoFocus={(e) => {
+                e.preventDefault();
+                // Refocus the input after selection
+                setTimeout(() => {
+                  inputRef.current?.focus();
+                }, 0);
+              }}
+            >
+              <SelectItem value="subscriberId">Subscriber Id</SelectItem>
+              <SelectItem value="email">Email</SelectItem>
+              <SelectItem value="phone">Phone</SelectItem>
+              <SelectItem value="name">Name</SelectItem>
+            </SelectContent>
+          </Select>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 
   return (
@@ -359,7 +423,7 @@ export function SubscriberAutocomplete({
             size={size}
             leadingNode={FieldSelector}
             trailingIcon={RiAddFill}
-            className="w-full"
+            className="w-full transition-all duration-200"
             autoComplete="off"
             aria-busy={combinedLoading}
           />
