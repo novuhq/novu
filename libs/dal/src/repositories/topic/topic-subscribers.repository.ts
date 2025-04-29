@@ -1,5 +1,6 @@
 import { DirectionEnum, ExternalSubscriberId } from '@novu/shared';
 
+import { FilterQuery } from 'mongoose';
 import type { EnforceEnvOrOrgIds } from '../../types/enforce';
 import { BaseRepository } from '../base-repository';
 import {
@@ -152,7 +153,7 @@ export class TopicSubscribersRepository extends BaseRepository<
   }: {
     environmentId: EnvironmentId;
     organizationId: OrganizationId;
-    topicKey: TopicKey;
+    topicKey?: TopicKey;
     subscriberId?: ExternalSubscriberId;
     limit?: number;
     before?: string;
@@ -161,11 +162,14 @@ export class TopicSubscribersRepository extends BaseRepository<
     includeCursor?: boolean;
   }) {
     // Build query for topic subscriptions
-    const query: any = {
+    const query: FilterQuery<TopicSubscribersDBModel> & EnforceEnvOrOrgIds = {
       _environmentId: environmentId,
       _organizationId: organizationId,
-      topicKey,
     };
+
+    if (topicKey) {
+      query.topicKey = topicKey;
+    }
 
     if (subscriberId) {
       query.externalSubscriberId = subscriberId;

@@ -206,7 +206,7 @@ export class TopicRepository extends BaseRepository<TopicDBModel, TopicEntity, E
     const afterCursor = after && topic ? { sortBy: topic[sortBy], paginateField: topic._id } : undefined;
     const beforeCursor = before && topic ? { sortBy: topic[sortBy], paginateField: topic._id } : undefined;
 
-    const query: any = {
+    const query: FilterQuery<TopicDBModel> & EnforceEnvOrOrgIds = {
       _environmentId: environmentId,
       _organizationId: organizationId,
     };

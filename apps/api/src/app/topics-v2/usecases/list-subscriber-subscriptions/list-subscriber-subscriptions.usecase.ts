@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InstrumentUsecase } from '@novu/application-generic';
-import { SubscriberRepository, TopicSubscribersEntity, TopicSubscribersRepository } from '@novu/dal';
+import { SubscriberRepository, TopicSubscribersRepository } from '@novu/dal';
 import { DirectionEnum } from '@novu/shared';
 import { ListTopicSubscriptionsResponseDto } from '../../dtos/list-topic-subscriptions-response.dto';
 import { TopicSubscriptionResponseDto } from '../../dtos/topic-subscription-response.dto';
@@ -22,67 +22,20 @@ export class ListSubscriberSubscriptionsUseCase {
       throw new NotFoundException('Subscriber not found');
     }
 
-    // Build query for subscriber's topic subscriptions
-    const query: any = {
-      _environmentId: command.environmentId,
-      _organizationId: command.organizationId,
-      externalSubscriberId: command.subscriberId,
-    };
-
-    // Optional filtering by topic key
-    if (command.topicKey) {
-      query.topicKey = command.topicKey;
-    }
-
     if (command.before && command.after) {
       throw new Error('Cannot specify both "before" and "after" cursors at the same time.');
     }
 
-    let subscription: TopicSubscribersEntity | null = null;
-    const id = command.before || command.after;
-
-    if (id) {
-      subscription = await this.topicSubscribersRepository.findOne({
-        _id: id,
-        _environmentId: command.environmentId,
-      });
-
-      if (!subscription) {
-        return {
-          data: [],
-          next: null,
-          previous: null,
-        };
-      }
-    }
-
-    const sortField = command.orderBy || '_id';
-
-    const afterCursor =
-      command.after && subscription
-        ? {
-            sortBy: String(subscription[sortField as keyof TopicSubscribersEntity]),
-            paginateField: subscription._id,
-          }
-        : undefined;
-
-    const beforeCursor =
-      command.before && subscription
-        ? {
-            sortBy: String(subscription[sortField as keyof TopicSubscribersEntity]),
-            paginateField: subscription._id,
-          }
-        : undefined;
-
-    // Use cursor-based pagination
-    const subscriptionsPagination = await this.topicSubscribersRepository.findWithCursorBasedPagination({
-      query,
-      paginateField: '_id',
-      sortBy: sortField,
-      sortDirection: command.orderDirection === 1 ? DirectionEnum.ASC : DirectionEnum.DESC,
+    // Use the repository method for pagination
+    const subscriptionsPagination = await this.topicSubscribersRepository.findTopicSubscriptionsWithPagination({
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+      topicKey: command.topicKey,
+      subscriberId: command.subscriberId,
       limit: command.limit || 10,
-      after: afterCursor,
-      before: beforeCursor,
+      before: command.before,
+      after: command.after,
+      orderDirection: command.orderDirection === 1 ? DirectionEnum.ASC : DirectionEnum.DESC,
       includeCursor: command.includeCursor,
     });
 
