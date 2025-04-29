@@ -43,6 +43,7 @@ export function SubscriberAutocomplete({
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [internalSearchField, setInternalSearchField] = useState<SearchField>('subscriberId');
   const [isFocused, setIsFocused] = useState(false);
+  const [isSelectOpen, setIsSelectOpen] = useState(false);
 
   // Generate unique IDs for accessibility
   const id = useId();
@@ -59,8 +60,8 @@ export function SubscriberAutocomplete({
   // Check if there are search results
   const hasResults = !isLoading && subscribers.length > 0;
 
-  // Show field selector when input has content or is focused
-  const showFieldSelector = isFocused || value.length > 0;
+  // Show field selector when input has content or is focused or when select is open
+  const showFieldSelector = isFocused || value.length > 0 || isSelectOpen;
 
   // Maintain focus when dropdown opens
   useEffect(() => {
@@ -176,8 +177,10 @@ export function SubscriberAutocomplete({
       return;
     }
 
-    // Otherwise, update focus state
-    setIsFocused(false);
+    // Only update focus state if select is not open
+    if (!isSelectOpen) {
+      setIsFocused(false);
+    }
   };
 
   // Select subscriber from dropdown
@@ -251,6 +254,11 @@ export function SubscriberAutocomplete({
     }
   };
 
+  // Handle select open/close
+  const handleSelectOpenChange = (open: boolean) => {
+    setIsSelectOpen(open);
+  };
+
   // Field selector component
   const FieldSelector = (
     <AnimatePresence>
@@ -262,7 +270,7 @@ export function SubscriberAutocomplete({
           transition={{ duration: 0.2 }}
           className="overflow-hidden"
         >
-          <Select value={searchField} onValueChange={handleSearchFieldChange}>
+          <Select value={searchField} onValueChange={handleSearchFieldChange} onOpenChange={handleSelectOpenChange}>
             <SelectTrigger
               className={cn(
                 'border-stroke-soft min-w-[110px] rounded-r-none border-r-0',
