@@ -1,6 +1,7 @@
 import { DirectionEnum, ExternalSubscriberId } from '@novu/shared';
 
 import { FilterQuery } from 'mongoose';
+import { TopicEntity } from '../..';
 import type { EnforceEnvOrOrgIds } from '../../types/enforce';
 import { BaseRepository } from '../base-repository';
 import {
@@ -23,7 +24,7 @@ export class TopicSubscribersRepository extends BaseRepository<
   async findTopicsByTopicKeys(
     environmentId: EnvironmentId,
     topicKeys: TopicKey[]
-  ): Promise<{ _id: string; topic: Record<string, unknown> }[]> {
+  ): Promise<{ _id: string; topic: TopicEntity }[]> {
     if (!topicKeys.length) {
       return [];
     }

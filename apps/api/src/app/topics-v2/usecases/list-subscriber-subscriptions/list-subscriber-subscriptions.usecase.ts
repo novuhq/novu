@@ -1,9 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InstrumentUsecase } from '@novu/application-generic';
-import { SubscriberRepository, TopicSubscribersRepository } from '@novu/dal';
-import { DirectionEnum } from '@novu/shared';
+import { SubscriberRepository, TopicSubscribersEntity, TopicSubscribersRepository } from '@novu/dal';
+import { DirectionEnum, EnvironmentId } from '@novu/shared';
 import { ListTopicSubscriptionsResponseDto } from '../../dtos/list-topic-subscriptions-response.dto';
 import { TopicSubscriptionResponseDto } from '../../dtos/topic-subscription-response.dto';
+import { mapTopicSubscriptionsToDto } from '../list-topics/map-topic-entity-to.dto';
 import { ListSubscriberSubscriptionsCommand } from './list-subscriber-subscriptions.command';
 
 @Injectable()
@@ -52,7 +53,10 @@ export class ListSubscriberSubscriptionsUseCase {
     };
   }
 
-  private async populateSubscriptionsData(subscriptions, environmentId): Promise<TopicSubscriptionResponseDto[]> {
+  private async populateSubscriptionsData(
+    subscriptions: TopicSubscribersEntity[],
+    environmentId: EnvironmentId
+  ): Promise<TopicSubscriptionResponseDto[]> {
     if (subscriptions.length === 0) {
       return [];
     }
@@ -90,24 +94,7 @@ export class ListSubscriberSubscriptionsUseCase {
           return null;
         }
 
-        return {
-          _id: subscription._id,
-          topic: {
-            _id: topic._id?.toString(),
-            key: topic.key,
-            name: topic.name,
-            createdAt: topic.createdAt,
-            updatedAt: topic.updatedAt,
-          },
-          subscriber: {
-            _id: subscriber._id.toString(),
-            subscriberId: subscriber.subscriberId,
-            firstName: subscriber.firstName,
-            lastName: subscriber.lastName,
-            email: subscriber.email,
-            avatar: subscriber.avatar,
-          },
-        } as TopicSubscriptionResponseDto;
+        return mapTopicSubscriptionsToDto(subscription, subscriber, topic);
       })
       .filter(Boolean) as TopicSubscriptionResponseDto[];
   }

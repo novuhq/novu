@@ -1,10 +1,16 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InstrumentUsecase } from '@novu/application-generic';
-import { SubscriberRepository, TopicRepository, TopicSubscribersRepository } from '@novu/dal';
-import { DirectionEnum } from '@novu/shared';
+import {
+  SubscriberRepository,
+  TopicEntity,
+  TopicRepository,
+  TopicSubscribersEntity,
+  TopicSubscribersRepository,
+} from '@novu/dal';
+import { DirectionEnum, EnvironmentId } from '@novu/shared';
 import { ListTopicSubscriptionsResponseDto } from '../../dtos/list-topic-subscriptions-response.dto';
 import { TopicSubscriptionResponseDto } from '../../dtos/topic-subscription-response.dto';
-import { mapTopicEntityToDto } from '../list-topics/map-topic-entity-to.dto';
+import { mapTopicSubscriptionsToDto } from '../list-topics/map-topic-entity-to.dto';
 import { ListTopicSubscriptionsCommand } from './list-topic-subscriptions.command';
 
 @Injectable()
@@ -55,9 +61,9 @@ export class ListTopicSubscriptionsUseCase {
   }
 
   private async populateSubscriptionsData(
-    topic,
-    subscriptions,
-    environmentId
+    topic: TopicEntity,
+    subscriptions: TopicSubscribersEntity[],
+    environmentId: EnvironmentId
   ): Promise<TopicSubscriptionResponseDto[]> {
     if (subscriptions.length === 0) {
       return [];
@@ -84,18 +90,7 @@ export class ListTopicSubscriptionsUseCase {
           return null;
         }
 
-        return {
-          _id: subscription._id,
-          topic: mapTopicEntityToDto(topic),
-          subscriber: {
-            _id: subscriber._id,
-            subscriberId: subscriber.subscriberId,
-            firstName: subscriber.firstName,
-            lastName: subscriber.lastName,
-            email: subscriber.email,
-            avatar: subscriber.avatar,
-          },
-        };
+        return mapTopicSubscriptionsToDto(subscription, subscriber, topic);
       })
       .filter(Boolean) as TopicSubscriptionResponseDto[];
   }

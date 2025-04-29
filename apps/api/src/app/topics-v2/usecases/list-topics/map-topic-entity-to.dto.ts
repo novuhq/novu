@@ -1,5 +1,6 @@
-import { TopicEntity } from '@novu/dal';
+import { SubscriberEntity, TopicEntity, TopicSubscribersEntity } from '@novu/dal';
 import { TopicResponseDto } from '../../dtos/topic-response.dto';
+import { TopicSubscriptionResponseDto } from '../../dtos/topic-subscription-response.dto';
 
 export function mapTopicEntityToDto(topicEntity: TopicEntity): TopicResponseDto {
   return {
@@ -8,5 +9,24 @@ export function mapTopicEntityToDto(topicEntity: TopicEntity): TopicResponseDto 
     key: topicEntity.key,
     createdAt: topicEntity.createdAt,
     updatedAt: topicEntity.updatedAt,
+  };
+}
+
+export function mapTopicSubscriptionsToDto(
+  subscription: TopicSubscribersEntity,
+  subscriber: SubscriberEntity,
+  topic: TopicEntity
+): TopicSubscriptionResponseDto {
+  return {
+    _id: subscription._id,
+    topic: mapTopicEntityToDto(topic),
+    subscriber: {
+      _id: subscriber._id,
+      subscriberId: subscriber.subscriberId,
+      firstName: subscriber.firstName,
+      lastName: subscriber.lastName,
+      email: subscriber.email,
+      avatar: subscriber.avatar,
+    },
   };
 }
