@@ -1,7 +1,7 @@
 import { cn } from '@/utils/ui';
 import { ISubscriberResponseDto } from '@novu/shared';
 import { AnimatePresence, motion } from 'motion/react';
-import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { RiAddFill, RiArrowDownLine, RiArrowUpLine, RiLoader4Line } from 'react-icons/ri';
 import { EnterLineIcon } from '../icons/enter-line';
 import { Avatar, AvatarFallback, AvatarImage } from '../primitives/avatar';
@@ -215,22 +215,30 @@ export function SubscriberAutocomplete({
   };
 
   // Handle search field change
-  const handleSearchFieldChange = (value: string) => {
-    const newSearchField = value as SearchField;
+  const handleSearchFieldChange = useCallback(
+    (value: string) => {
+      const newSearchField = value as SearchField;
 
-    if (onSearchFieldChange) {
-      onSearchFieldChange(newSearchField);
-    } else {
-      setInternalSearchField(newSearchField);
-    }
+      if (onSearchFieldChange) {
+        onSearchFieldChange(newSearchField);
+      } else {
+        setInternalSearchField(newSearchField);
+      }
 
-    // Clear input when changing search field
-    onChange('');
-    // Ensure input keeps focus
-    requestAnimationFrame(() => {
-      inputRef.current?.focus();
-    });
-  };
+      // Clear input when changing search field
+      onChange('');
+      // Ensure input keeps focus
+      requestAnimationFrame(() => {
+        inputRef.current?.focus();
+      });
+    },
+    [onChange, onSearchFieldChange]
+  );
+
+  // Handle select open/close
+  const handleSelectOpenChange = useCallback((open: boolean) => {
+    setIsSelectOpen(open);
+  }, []);
 
   // Get placeholder text based on search field
   const getPlaceholder = () => {
@@ -244,11 +252,6 @@ export function SubscriberAutocomplete({
       default:
         return 'Add subscriber to this topic by subscriberId';
     }
-  };
-
-  // Handle select open/close
-  const handleSelectOpenChange = (open: boolean) => {
-    setIsSelectOpen(open);
   };
 
   // Field selector component - memoized to prevent re-renders

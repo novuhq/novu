@@ -4,7 +4,6 @@ import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/
 import { Skeleton } from '@/components/primitives/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
 import { VisuallyHidden } from '@/components/primitives/visually-hidden';
-import { ExternalLink } from '@/components/shared/external-link';
 import TruncatedText from '@/components/truncated-text';
 import { useFormProtection } from '@/hooks/use-form-protection';
 import { itemVariants, listVariants } from '@/utils/animation';
@@ -23,10 +22,6 @@ import { TopicSubscriberItem } from './topic-subscriber-item';
 
 const tabTriggerClasses =
   'hover:data-[state=inactive]:text-foreground-950 h-11 py-3 rounded-none [&>span]:h-5 px-0 relative';
-
-const ActiveTabIndicator = () => {
-  return <motion.div layoutId="active-tab" className="bg-primary-base absolute bottom-0 left-0 right-0 z-10 h-[2px]" />;
-};
 
 type TopicOverviewProps = {
   topicKey: string;
@@ -47,88 +42,6 @@ const TopicOverview = (props: TopicOverviewProps) => {
 type TopicSubscribersProps = {
   topicKey: string;
   readOnly?: boolean;
-};
-
-const TopicSubscribersEmptyState = ({ topicKey, readOnly = false }: { topicKey: string; readOnly?: boolean }) => {
-  return (
-    <motion.div
-      key="empty-state"
-      className="flex h-full w-full flex-col border-t border-t-neutral-200"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{
-        duration: 0.15,
-        ease: [0.4, 0, 0.2, 1],
-      }}
-    >
-      {!readOnly && (
-        <div className="border-b border-b-neutral-200 p-4">
-          <AddSubscriberForm topicKey={topicKey} />
-        </div>
-      )}
-      <div className="flex flex-1 items-center justify-center">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.98, y: 5 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.98, y: 5 }}
-          transition={{
-            duration: 0.25,
-            delay: 0.1,
-            ease: [0.4, 0, 0.2, 1],
-          }}
-          className="flex flex-col items-center gap-6"
-        >
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{
-              duration: 0.2,
-              delay: 0.2,
-            }}
-            className="relative"
-          >
-            <RiUser3Fill className="size-12 text-neutral-300" />
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 5 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{
-              duration: 0.2,
-              delay: 0.25,
-            }}
-            className="flex flex-col items-center gap-1 text-center"
-          >
-            <h2 className="text-foreground-900 text-lg font-medium">This topic doesn't have any subscribers yet</h2>
-            <p className="text-foreground-600 max-w-md text-sm font-normal">
-              Subscribers can be added to this topic via the API. Once added, they will receive notifications when this
-              topic is triggered.
-            </p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 5 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{
-              duration: 0.2,
-              delay: 0.3,
-            }}
-            className="flex items-center gap-6"
-          >
-            <ExternalLink
-              variant="documentation"
-              href="https://docs.novu.co/platform/concepts/topics#add-subscribers-to-a-topic"
-              target="_blank"
-              underline={false}
-            >
-              Learn More
-            </ExternalLink>
-          </motion.div>
-        </motion.div>
-      </div>
-    </motion.div>
-  );
 };
 
 const TopicSubscribers = (props: TopicSubscribersProps) => {
@@ -263,7 +176,7 @@ function TopicTabs(props: TopicTabsProps) {
 
       <TabsList
         variant={'regular'}
-        className="border-bg-soft h-auto w-full items-center gap-6 rounded-none border-b bg-transparent px-3 py-0"
+        className="border-bg-soft h-auto w-full items-center gap-6 rounded-none border-b border-t-0 bg-transparent px-3 py-0"
       >
         <TabsTrigger value="overview" className={tabTriggerClasses}>
           <span>Overview</span>
