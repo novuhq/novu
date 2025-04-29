@@ -226,7 +226,10 @@ export class MessageResponseDto implements IMessage {
   @ApiProperty({
     oneOf: [
       {
-        $ref: getSchemaPath(EmailBlock),
+        type: 'array',
+        items: {
+          $ref: getSchemaPath(EmailBlock),
+        },
       },
       {
         type: 'string',

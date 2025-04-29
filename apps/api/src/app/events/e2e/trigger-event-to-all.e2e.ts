@@ -70,7 +70,7 @@ function expectBulkTopicStub(secondCallStubArgs: IProcessSubscriberBulkJobDto[],
     expect(job.options).to.be.equal(stubJob.options);
 
     const { subscriber, topics, ...jobDataWithoutSubscriber } = job.data;
-    const { subscriber: stubSubscriber, ...stubJobDataWithoutSubscriber } = stubJob.data;
+    const { subscriber: stubSubscriber, topics: stubTopics, ...stubJobDataWithoutSubscriber } = stubJob.data;
 
     expect(jobDataWithoutSubscriber).to.deep.equal(stubJobDataWithoutSubscriber);
   }
