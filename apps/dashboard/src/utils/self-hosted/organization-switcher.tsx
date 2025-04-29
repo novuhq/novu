@@ -62,13 +62,13 @@ export function OrganizationSwitcher() {
               <TooltipTrigger asChild>
                 <button
                   type="button"
-                  className="flex w-full items-center gap-2 rounded-md bg-white px-2 py-1.5 text-left text-gray-400 transition-colors duration-150 hover:bg-gray-50 focus:outline-none focus:ring-0"
+                  className="flex w-full items-center gap-2 rounded-md bg-white px-2 py-1.5 text-left text-sm text-gray-300 transition-colors duration-150 hover:bg-gray-50 focus:outline-none focus:ring-0"
                   onClick={() => openInNewTab(SELF_HOSTED_UPGRADE_REDIRECT_URL + '?utm_campaign=create_organization')}
                 >
                   <span className="flex h-6 w-6 items-center justify-center rounded-full border border-dashed border-gray-300 text-2xl font-light">
                     <span className="-mt-0.5 leading-none">+</span>
                   </span>
-                  <span className="text-base font-medium">Create Organization</span>
+                  <span className="font-medium">Create Organization</span>
                 </button>
               </TooltipTrigger>
               <TooltipContent side="right" className="ml-3 bg-neutral-950 text-white">
