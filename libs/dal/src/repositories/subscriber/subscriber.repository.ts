@@ -211,7 +211,7 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
       query: {
         _environmentId: query.environmentId,
         _organizationId: query.organizationId,
-        $or: [
+        $and: [
           {
             ...(query.email && {
               email: {
