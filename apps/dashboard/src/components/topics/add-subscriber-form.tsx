@@ -32,7 +32,6 @@ export function AddSubscriberForm({ topicKey, onSuccess }: AddSubscriberFormProp
   return (
     <div className="w-full">
       <SubscriberAutocomplete
-        placeholder="Search for subscribers to add to this topic"
         value={searchQuery}
         onChange={setSearchQuery}
         onSelectSubscriber={handleSubscriberSelected}

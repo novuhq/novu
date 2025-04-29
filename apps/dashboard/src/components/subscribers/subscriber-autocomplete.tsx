@@ -15,7 +15,6 @@ import { SearchField, useSubscriberSearch } from './hooks/use-subscriber-search'
 type SubscriberAutocompleteProps = {
   value: string;
   onChange: (value: string) => void;
-  placeholder?: string;
   size?: 'xs' | 'sm' | 'md';
   disabled?: boolean;
   className?: string;
@@ -29,7 +28,6 @@ type SubscriberAutocompleteProps = {
 export function SubscriberAutocomplete({
   value,
   onChange,
-  placeholder = 'Enter subscriberId',
   size = 'xs',
   disabled,
   className,
