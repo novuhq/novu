@@ -1,4 +1,4 @@
-import { ExternalSubscriberId } from '@novu/shared';
+import { DirectionEnum, ExternalSubscriberId } from '@novu/shared';
 
 import type { EnforceEnvOrOrgIds } from '../../types/enforce';
 import { BaseRepository } from '../base-repository';
@@ -137,5 +137,87 @@ export class TopicSubscribersRepository extends BaseRepository<
         $in: externalSubscriberIds,
       },
     });
+  }
+
+  async findTopicSubscriptionsWithPagination({
+    environmentId,
+    organizationId,
+    topicKey,
+    subscriberId,
+    limit = 10,
+    before,
+    after,
+    orderDirection = DirectionEnum.DESC,
+    includeCursor,
+  }: {
+    environmentId: EnvironmentId;
+    organizationId: OrganizationId;
+    topicKey: TopicKey;
+    subscriberId?: ExternalSubscriberId;
+    limit?: number;
+    before?: string;
+    after?: string;
+    orderDirection?: DirectionEnum;
+    includeCursor?: boolean;
+  }) {
+    // Build query for topic subscriptions
+    const query: any = {
+      _environmentId: environmentId,
+      _organizationId: organizationId,
+      topicKey,
+    };
+
+    if (subscriberId) {
+      query.externalSubscriberId = subscriberId;
+    }
+
+    // Handle cursor-based pagination
+    let subscription: TopicSubscribersEntity | null = null;
+    const id = before || after;
+
+    if (id) {
+      subscription = await this.findOne({
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+        _id: id,
+      });
+
+      if (!subscription) {
+        return {
+          data: [],
+          next: null,
+          previous: null,
+        };
+      }
+    }
+
+    const afterCursor =
+      after && subscription
+        ? {
+            sortBy: subscription._id,
+            paginateField: subscription._id,
+          }
+        : undefined;
+    const beforeCursor =
+      before && subscription
+        ? {
+            sortBy: subscription._id,
+            paginateField: subscription._id,
+          }
+        : undefined;
+
+    // Use cursor-based pagination
+    const subscriptionsPagination = await this.findWithCursorBasedPagination({
+      query,
+      paginateField: '_id',
+      sortBy: '_id',
+      sortDirection: orderDirection,
+      limit,
+      after: afterCursor,
+      before: beforeCursor,
+      includeCursor,
+    });
+
+    return subscriptionsPagination;
   }
 }
