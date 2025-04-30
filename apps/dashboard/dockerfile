@@ -28,8 +28,7 @@ RUN CI='' pnpm build:dashboard --skip-nx-cache
 
 FROM node:20-alpine
 
-RUN apk add --no-cache bash
-RUN npm install -g pnpm@9.11.0 http-server --loglevel notice
+RUN npm install -g http-server --loglevel notice
 
 USER 1000
 WORKDIR /app
@@ -37,4 +36,4 @@ WORKDIR /app
 COPY --chown=1000:1000 --from=builder /usr/src/app/apps/dashboard/dist /app/dist
 COPY --chown=1000:1000 --from=builder /usr/src/app/apps/dashboard/package.json /app/package.json
 
-CMD [ "pnpm", "start:static:build" ]
+CMD [ "http-server", "dist", "-p", "4000" ]
