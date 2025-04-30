@@ -12,7 +12,6 @@ import {
   DetailEnum,
   StandardQueueService,
   FeatureFlagsService,
-  SYSTEM_LIMITS,
   PinoLogger,
 } from '@novu/application-generic';
 import {
@@ -57,10 +56,8 @@ export class SnoozeNotification {
   ) {}
 
   public async execute(command: SnoozeNotificationCommand): Promise<InboxNotification> {
-    await this.isSnoozeEnabled(command);
-
-    const delayAmountMs = this.calculateDelayInMs(command.snoozeUntil);
-    await this.validateDelayDuration(command, delayAmountMs);
+    const snoozeDurationMs = this.calculateDelayInMs(command.snoozeUntil);
+    await this.validateSnoozeDuration(command, snoozeDurationMs);
     const notification = await this.findNotification(command);
 
     try {
@@ -68,9 +65,9 @@ export class SnoozeNotification {
       let snoozedNotification = {} as InboxNotification;
 
       await this.messageRepository.withTransaction(async () => {
-        scheduledJob = await this.createScheduledUnsnoozeJob(notification, delayAmountMs);
+        scheduledJob = await this.createScheduledUnsnoozeJob(notification, snoozeDurationMs);
         snoozedNotification = await this.markNotificationAsSnoozed(command);
-        await this.enqueueJob(scheduledJob, delayAmountMs);
+        await this.enqueueJob(scheduledJob, snoozeDurationMs);
       });
 
       // fire and forget
@@ -113,7 +110,7 @@ export class SnoozeNotification {
     });
   }
 
-  private async isSnoozeEnabled(command: SnoozeNotificationCommand) {
+  private async validateSnoozeDuration(command: SnoozeNotificationCommand, snoozeDurationMs: number) {
     const isSnoozeEnabled = await this.featureFlagsService.getFlag({
       key: FeatureFlagsKeysEnum.IS_SNOOZE_ENABLED,
       defaultValue: false,
@@ -125,26 +122,16 @@ export class SnoozeNotification {
     if (!isSnoozeEnabled) {
       throw new NotImplementedException();
     }
-  }
 
-  private calculateDelayInMs(snoozeUntil: Date): number {
-    return snoozeUntil.getTime() - new Date().getTime();
-  }
+    const organization = await this.getOrganization(command.organizationId);
 
-  private async validateDelayDuration(command: SnoozeNotificationCommand, delay: number) {
-    const tierLimit = await this.getTierLimit(command);
+    const tierLimitMs = getFeatureForTierAsNumber(
+      FeatureNameEnum.PLATFORM_MAX_SNOOZE_DURATION,
+      organization?.apiServiceLevel || ApiServiceLevelEnum.FREE,
+      true
+    );
 
-    if (tierLimit === 0) {
-      throw new HttpException(
-        {
-          message: 'Feature Not Available',
-          reason: 'Snooze functionality is not available on your current plan. Please upgrade to access this feature.',
-        },
-        HttpStatus.PAYMENT_REQUIRED
-      );
-    }
-
-    if (delay > tierLimit) {
+    if (snoozeDurationMs > tierLimitMs) {
       throw new HttpException(
         {
           message: 'Snooze Duration Limit Exceeded',
@@ -157,34 +144,20 @@ export class SnoozeNotification {
     }
   }
 
-  private async getTierLimit(command: SnoozeNotificationCommand) {
-    const systemLimitMs = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.MAX_DEFER_DURATION_IN_MS_NUMBER,
-      defaultValue: SYSTEM_LIMITS.DEFER_DURATION_MS,
-      environment: { _id: command.environmentId },
-      organization: { _id: command.organizationId },
+  private calculateDelayInMs(snoozeUntil: Date): number {
+    return snoozeUntil.getTime() - new Date().getTime();
+  }
+
+  private async getOrganization(organizationId: string): Promise<OrganizationEntity> {
+    const organization = await this.organizationRepository.findOne({
+      _id: organizationId,
     });
 
-    /**
-     * If the system limit is not the default, we need to use it as the limit
-     * for the specific customer exceptions from the tier limit
-     */
-    const isSpecialLimit = systemLimitMs !== SYSTEM_LIMITS.DEFER_DURATION_MS;
-    if (isSpecialLimit) {
-      return systemLimitMs;
+    if (!organization) {
+      throw new NotFoundException(`Organization id: '${organizationId}' not found`);
     }
 
-    const organization = await this.organizationRepository.findOne({
-      _id: command.organizationId,
-    });
-
-    const tierLimitMs = getFeatureForTierAsNumber(
-      FeatureNameEnum.PLATFORM_MAX_SNOOZE_DURATION,
-      organization?.apiServiceLevel || ApiServiceLevelEnum.FREE,
-      true
-    );
-
-    return Math.min(systemLimitMs, tierLimitMs);
+    return organization;
   }
 
   private async findNotification(command: SnoozeNotificationCommand): Promise<MessageEntity> {

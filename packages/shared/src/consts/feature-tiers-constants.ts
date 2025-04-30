@@ -294,10 +294,10 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
     [ApiServiceLevelEnum.UNLIMITED]: { label: 'Unlimited', value: UNLIMITED_VALUE, timeSuffix: 'd' },
   },
   [FeatureNameEnum.PLATFORM_MAX_SNOOZE_DURATION]: {
-    [ApiServiceLevelEnum.FREE]: { label: '-', value: 0 },
+    [ApiServiceLevelEnum.FREE]: { label: 'Up to 24 hours', value: 24, timeSuffix: 'h' },
     [ApiServiceLevelEnum.PRO]: { label: 'Up to 90 days', value: 90, timeSuffix: 'd' },
     [ApiServiceLevelEnum.BUSINESS]: { label: 'Up to 90 days', value: 90, timeSuffix: 'd' },
-    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Custom', value: UNLIMITED_VALUE, timeSuffix: 'd' },
+    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Custom', value: 90, timeSuffix: 'd' },
     [ApiServiceLevelEnum.UNLIMITED]: { label: 'Unlimited', value: UNLIMITED_VALUE, timeSuffix: 'd' },
   },
   [FeatureNameEnum.PLATFORM_BLOCK_BASED_EMAIL_EDITOR_BOOLEAN]: {

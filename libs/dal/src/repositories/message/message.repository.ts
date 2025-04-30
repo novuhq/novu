@@ -624,7 +624,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     } else if (isUpdatingSnoozed) {
       updatePayload = {
         snoozedUntil,
-        read: !snoozedUntil ? false : undefined,
+        read: snoozedUntil ? undefined : false,
         seen: true,
         lastSeenDate: new Date(),
         archived: false,
