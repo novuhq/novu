@@ -18,10 +18,10 @@ export function mapTopicSubscriptionsToDto(
   topic: TopicEntity
 ): TopicSubscriptionResponseDto {
   return {
-    _id: subscription._id,
+    _id: String(subscription._id),
     topic: mapTopicEntityToDto(topic),
     subscriber: {
-      _id: subscriber._id,
+      _id: String(subscriber._id),
       subscriberId: subscriber.subscriberId,
       firstName: subscriber.firstName,
       lastName: subscriber.lastName,
