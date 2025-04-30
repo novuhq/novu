@@ -1,3 +1,13 @@
+## v3.2.0 (2025-04-30)
+
+### 🧱 Updated Dependencies
+
+- Updated @novu/react to 3.2.0
+
+### ❤️ Thank You
+
+- George Djabarov @djabarovgeorge
+
 ## v3.1.0 (2025-04-11)
 
 ### 🧱 Updated Dependencies

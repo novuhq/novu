@@ -10,10 +10,10 @@
  *
  * If the global release script fails for any reason, you can run the following independent NX commands to release the packages individually:
  *
- * pnpm nx release version v3.0.0 --projects=@novu/js,@novu/react,@novu/nextjs
- * pnpm nx release changelog v3.0.0 --projects=@novu/js,@novu/react,@novu/nextjs
+ * pnpm nx release version v3.0.0 --projects=@novu/js,@novu/react,@novu/nextjs,@novu/react-nativ
+ * pnpm nx release changelog v3.0.0 --projects=@novu/js,@novu/react,@novu/nextjs,@novu/react-native
  * pnpm run build:packages
- * pnpm nx release publish --projects=@novu/js,@novu/react,@novu/nextjs
+ * pnpm nx release publish --projects=@novu/js,@novu/react,@novu/nextjs,@novu/react-native --otp=123456
  *
  */
 
