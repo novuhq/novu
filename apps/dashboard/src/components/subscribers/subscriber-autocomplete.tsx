@@ -39,11 +39,14 @@ export function SubscriberAutocomplete({
   onSearchFieldChange,
 }: SubscriberAutocompleteProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const selectInteractionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Core state
   const [open, setOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [internalSearchField, setInternalSearchField] = useState<SearchField>('subscriberId');
-  const [isFocused, setIsFocused] = useState(false);
   const [isSelectOpen, setIsSelectOpen] = useState(false);
+  const [hasInteracted, setHasInteracted] = useState(false);
 
   // Generate unique IDs for accessibility
   const id = useId();
@@ -60,47 +63,24 @@ export function SubscriberAutocomplete({
   // Check if there are search results
   const hasResults = !isLoading && subscribers.length > 0;
 
-  // Show field selector when input has content or is focused or when select is open
-  const showFieldSelector = isFocused || value.length > 0 || isSelectOpen;
-
-  // Maintain focus when dropdown opens
+  // Clean up timeout on unmount
   useEffect(() => {
-    // If dropdown is open and input should have focus, refocus it
-    if (open && isFocused && document.activeElement !== inputRef.current) {
-      inputRef.current?.focus();
-    }
-  }, [open, isFocused]);
-
-  // Auto-focus after loading completes
-  useEffect(() => {
-    // When loading stops, ensure input has focus if it was focused before
-    if (!isLoading && isFocused && document.activeElement !== inputRef.current) {
-      inputRef.current?.focus();
-    }
-  }, [isLoading, isFocused]);
-
-  // Open/close dropdown based on input value and search results
-  useEffect(() => {
-    if (value.length >= 2) {
-      // Only keep open if loading or has results or has searched
-      const shouldBeOpen = isLoading || hasResults || (hasSearched && value.length >= 2);
-
-      // Update open state
-      if (shouldBeOpen !== open) {
-        setOpen(shouldBeOpen);
-
-        // Ensure focus is maintained when dropdown opens
-        if (shouldBeOpen && isFocused) {
-          // Use requestAnimationFrame to ensure this happens after render
-          requestAnimationFrame(() => {
-            inputRef.current?.focus();
-          });
-        }
+    return () => {
+      if (selectInteractionTimeoutRef.current) {
+        clearTimeout(selectInteractionTimeoutRef.current);
       }
-    } else {
-      setOpen(false);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!value?.length) {
+      // Only open the select field on first interaction
+      if (open && !hasInteracted) {
+        setIsSelectOpen(true);
+        setHasInteracted(true);
+      }
     }
-  }, [value, isLoading, hasResults, hasSearched, open, isFocused]);
+  }, [open, value, hasInteracted]);
 
   // Reset highlighted index when results change
   useEffect(() => {
@@ -121,6 +101,7 @@ export function SubscriberAutocomplete({
       }
 
       setOpen(false);
+
       // Ensure input maintains focus after submission
       requestAnimationFrame(() => {
         inputRef.current?.focus();
@@ -133,46 +114,8 @@ export function SubscriberAutocomplete({
 
   // Input change handler
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onChange(e.target.value);
-    // Maintain focus state when typing
-    setIsFocused(true);
-  };
-
-  // Handle focus state
-  const handleFocus = () => {
-    setIsFocused(true);
-
-    // Only open dropdown if there's search content
-    if (value.length >= 2 && (isLoading || hasResults || hasSearched)) {
-      setOpen(true);
-    }
-  };
-
-  // Handle blur state with native relatedTarget
-  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    // Check if focus is moving to a related component
-    const relatedTarget = e.relatedTarget as HTMLElement;
-
-    // If related target is null (outside document) or is not a dropdown element
-    // Note: we rely on element IDs and known container classes
-    const isMovingToPopover =
-      relatedTarget &&
-      // Moving to our dropdown
-      (relatedTarget.closest(`[id="${listboxId}"]`) ||
-        // Moving to command items
-        relatedTarget.closest('.cmdk-item') ||
-        // Moving to select items
-        relatedTarget.hasAttribute('data-radix-select-trigger') ||
-        relatedTarget.closest('[data-radix-select-content]'));
-
-    if (isMovingToPopover || isSelectOpen) {
-      // Don't change focus state if moving to dropdown elements or select is open
-      e.preventDefault();
-      return;
-    }
-
-    // Otherwise, update focus state
-    setIsFocused(false);
+    const newValue = e.target.value;
+    onChange(newValue);
   };
 
   // Select subscriber from dropdown
@@ -184,6 +127,7 @@ export function SubscriberAutocomplete({
     }
 
     setOpen(false);
+
     // Ensure input maintains focus after selection
     requestAnimationFrame(() => {
       inputRef.current?.focus();
@@ -206,10 +150,13 @@ export function SubscriberAutocomplete({
       case 'Escape':
         e.preventDefault();
         setOpen(false);
-        // Maintain focus on escape
-        requestAnimationFrame(() => {
-          inputRef.current?.focus();
-        });
+        break;
+      case 'Enter':
+        if (highlightedIndex >= 0) {
+          e.preventDefault();
+          handleSelectSubscriber(subscribers[highlightedIndex]);
+        }
+
         break;
     }
   };
@@ -217,6 +164,11 @@ export function SubscriberAutocomplete({
   // Handle search field change
   const handleSearchFieldChange = useCallback(
     (value: string) => {
+      // Clear any existing timeout
+      if (selectInteractionTimeoutRef.current) {
+        clearTimeout(selectInteractionTimeoutRef.current);
+      }
+
       const newSearchField = value as SearchField;
 
       if (onSearchFieldChange) {
@@ -227,17 +179,19 @@ export function SubscriberAutocomplete({
 
       // Clear input when changing search field
       onChange('');
-      // Ensure input keeps focus
-      requestAnimationFrame(() => {
-        inputRef.current?.focus();
-      });
     },
     [onChange, onSearchFieldChange]
   );
 
   // Handle select open/close
   const handleSelectOpenChange = useCallback((open: boolean) => {
-    setIsSelectOpen(open);
+    console.log('handleSelectOpenChange', open);
+
+    // If select is opening, make sure our popover stays closed
+    // This prevents both dropdowns competing for attention
+    if (open) {
+      setOpen(false);
+    }
   }, []);
 
   // Get placeholder text based on search field
@@ -254,22 +208,24 @@ export function SubscriberAutocomplete({
     }
   };
 
+  const showDropdown = open && value.length >= 2;
+
   // Field selector component - memoized to prevent re-renders
   const FieldSelector = useMemo(
     () => (
       <AnimatePresence mode="wait">
-        {showFieldSelector && (
+        {isSelectOpen && (
           <motion.div
             initial={{ opacity: 0, width: 0 }}
             animate={{ opacity: 1, width: 'auto' }}
             exit={{ opacity: 0, width: 0 }}
-            transition={{ duration: 0.15, ease: 'easeInOut' }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
             className="flex items-stretch overflow-hidden"
           >
             <Select value={searchField} onValueChange={handleSearchFieldChange} onOpenChange={handleSelectOpenChange}>
               <SelectTrigger
                 className={cn(
-                  'border-stroke-soft min-w-[110px] rounded-r-none border-r-0',
+                  'border-stroke-soft bg-bg-weak min-w-[110px] rounded-r-none border-r-0',
                   size === 'xs' && 'h-8 px-2 text-xs',
                   size === 'sm' && 'h-9 px-3 text-sm',
                   size === 'md' && 'h-10 px-3 text-base'
@@ -277,7 +233,6 @@ export function SubscriberAutocomplete({
                 onMouseDown={(e) => {
                   // Prevent blur on the input when clicking the trigger
                   e.preventDefault();
-                  setIsFocused(true);
                 }}
               >
                 <SelectValue placeholder="Field" />
@@ -297,6 +252,8 @@ export function SubscriberAutocomplete({
                     e.preventDefault();
                   }
                 }}
+                // Prevent events from bubbling up to the Popover
+                onClick={(e) => e.stopPropagation()}
               >
                 <SelectItem value="subscriberId">Subscriber Id</SelectItem>
                 <SelectItem value="email">Email</SelectItem>
@@ -308,7 +265,7 @@ export function SubscriberAutocomplete({
         )}
       </AnimatePresence>
     ),
-    [searchField, showFieldSelector, size, handleSearchFieldChange, handleSelectOpenChange]
+    [searchField, value, isSelectOpen, size, handleSearchFieldChange, handleSelectOpenChange]
   );
 
   // Loading skeletons
@@ -326,38 +283,10 @@ export function SubscriberAutocomplete({
     </div>
   );
 
-  // Determine if popover should be shown
-  const shouldShowPopover = value.length >= 2 && (isLoading || hasResults || hasSearched);
-
   return (
     <form onSubmit={handleSubmit} className={className}>
       <div className="relative w-full">
-        {/* Visually hidden label for screen readers */}
-        <label id={labelId} className="sr-only">
-          Search for subscribers by {searchField}
-        </label>
-
-        <Popover
-          open={open && shouldShowPopover}
-          onOpenChange={(isOpen) => {
-            // Only allow changing open state if there are results or loading
-            if (shouldShowPopover) {
-              setOpen(isOpen);
-
-              if (!isOpen) {
-                // Reset highlighted index when closing
-                setHighlightedIndex(-1);
-              }
-
-              // Keep input focused when dropdown state changes
-              requestAnimationFrame(() => {
-                if (isFocused && document.activeElement !== inputRef.current) {
-                  inputRef.current?.focus();
-                }
-              });
-            }
-          }}
-        >
+        <Popover open={showDropdown} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
             <Input
               ref={inputRef}
@@ -372,9 +301,6 @@ export function SubscriberAutocomplete({
               placeholder={getPlaceholder()}
               onChange={handleInputChange}
               onKeyDown={handleKeyDown}
-              onFocus={handleFocus}
-              onBlur={handleBlur}
-              onClick={handleFocus}
               disabled={disabled}
               size={size}
               leadingNode={FieldSelector}
@@ -390,31 +316,9 @@ export function SubscriberAutocomplete({
             className="w-[var(--radix-popover-trigger-width)] min-w-[240px] overflow-hidden p-0"
             align="start"
             sideOffset={5}
-            onEscapeKeyDown={() => {
-              setOpen(false);
-              // Ensure input is focused when pressing escape
-              requestAnimationFrame(() => {
-                inputRef.current?.focus();
-              });
-            }}
-            onInteractOutside={(e) => {
-              // Prevent closing when clicking inside our components
-              if (e.target === inputRef.current) {
-                e.preventDefault();
-                return;
-              }
-
-              setOpen(false);
-              // If we're clicking elsewhere, allow focus to move
-              setIsFocused(false);
-            }}
-            // Prevent PopoverContent from taking focus
             onOpenAutoFocus={(e) => {
               e.preventDefault();
-              // Keep input focused
-              requestAnimationFrame(() => {
-                inputRef.current?.focus();
-              });
+              // Prevent the popover from stealing focus
             }}
           >
             <Command className="h-full" shouldFilter={false}>
