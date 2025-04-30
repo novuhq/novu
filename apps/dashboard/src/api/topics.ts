@@ -56,14 +56,14 @@ export const getTopics = async ({
 };
 
 export const deleteTopic = async ({ environment, topicKey }: { environment: IEnvironment; topicKey: string }) => {
-  const response = await delV2<{ acknowledged: boolean }>(`/topics/${topicKey}`, {
+  const response = await delV2<{ acknowledged: boolean }>(`/topics/${encodeURIComponent(topicKey)}`, {
     environment,
   });
   return response;
 };
 
 export const getTopic = async ({ environment, topicKey }: { environment: IEnvironment; topicKey: string }) => {
-  const { data } = await getV2<{ data: Topic }>(`/topics/${topicKey}`, {
+  const { data } = await getV2<{ data: Topic }>(`/topics/${encodeURIComponent(topicKey)}`, {
     environment,
   });
 
@@ -112,7 +112,7 @@ export const addSubscribersToTopic = async ({
         notFound: string[];
       };
     };
-  }>(`/topics/${topicKey}/subscriptions`, {
+  }>(`/topics/${encodeURIComponent(topicKey)}/subscriptions`, {
     environment,
     body: { subscriberIds: subscribers },
   });
@@ -129,12 +129,7 @@ export const removeSubscribersFromTopic = async ({
   topicKey: string;
   subscribers: string[];
 }) => {
-  console.log(`/topics/${topicKey}/subscriptions`, {
-    environment,
-    body: { subscriberIds: subscribers },
-  });
-
-  await delV2<DeleteTopicSubscriptionsResponseDto>(`/topics/${topicKey}/subscriptions`, {
+  await delV2<DeleteTopicSubscriptionsResponseDto>(`/topics/${encodeURIComponent(topicKey)}/subscriptions`, {
     environment,
     body: { subscriberIds: subscribers },
   });
@@ -191,9 +186,12 @@ export const getTopicSubscriptions = async ({
 
   const query = params.toString() ? `?${params.toString()}` : '';
 
-  const response = await getV2<ListTopicSubscriptionsResponse>(`/topics/${topicKey}/subscriptions${query}`, {
-    environment,
-  });
+  const response = await getV2<ListTopicSubscriptionsResponse>(
+    `/topics/${encodeURIComponent(topicKey)}/subscriptions${query}`,
+    {
+      environment,
+    }
+  );
 
   return response;
 };

@@ -11,7 +11,7 @@ export const useTopicsNavigate = () => {
 
   const navigateToEditTopicPage = useCallback(
     (topicKey: string) => {
-      navigate(`${ROUTES.TOPICS}/${topicKey}/edit`);
+      navigate(`${ROUTES.TOPICS}/${encodeURIComponent(topicKey)}/edit`);
     },
     [navigate]
   );
