@@ -23,7 +23,6 @@ export function UserButton() {
 
   if (!user) return null;
 
-  const userEmail = user.emailAddresses?.[0]?.emailAddress || '';
   const userName = user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : userEmail;
 
   return (
@@ -44,10 +43,7 @@ export function UserButton() {
         <DropdownMenuContent align="end" className="w-[300px] border border-gray-200 bg-white shadow-sm" sideOffset={5}>
           <div className="flex items-center gap-3 p-3">
             <UserAvatar className="rounded-full" />
-            <div className="flex flex-col">
-              <span className="truncate text-sm font-medium text-gray-900">{userName}</span>
-              <span className="truncate text-sm text-gray-500">{userEmail}</span>
-            </div>
+            <span className="truncate text-sm font-medium text-gray-900">{userName}</span>
           </div>
           <DropdownMenuSeparator />
           <DropdownMenuItem
