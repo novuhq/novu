@@ -50,19 +50,27 @@ export class ProcessUnsnoozeJob {
         );
       }
 
+      const now = new Date();
+
       await this.messageRepository.update(
         { _environmentId: job._environmentId, _notificationId: job._notificationId },
-        {
-          $set: {
-            snoozedUntil: null,
-            createdAt: new Date(),
-            read: false,
-            lastReadDate: null,
+        [
+          {
+            $set: {
+              snoozedUntil: null,
+              createdAt: now,
+              read: false,
+              lastReadDate: null,
+              deliveredAt: {
+                $cond: {
+                  if: { $isArray: '$deliveredAt' },
+                  then: { $concatArrays: ['$deliveredAt', [now]] },
+                  else: [snoozedNotification.createdAt, now],
+                },
+              },
+            },
           },
-          $addToSet: {
-            deliveredAt: { $each: [snoozedNotification.createdAt, new Date()] },
-          },
-        },
+        ],
         {
           timestamps: false,
           strict: false,

@@ -71,7 +71,7 @@ export class UnsnoozeNotification {
         _environmentId: command.environmentId,
         delay: { $exists: true },
         status: JobStatusEnum.PENDING,
-        'payload.snooze': true,
+        'payload.unsnooze': true,
       });
 
       unsnoozedNotification = await this.markNotificationAs.execute(
@@ -103,7 +103,7 @@ export class UnsnoozeNotification {
         });
     } else {
       this.logger.error(
-        `Could not find a scheduled job for snoozed notification '${command.notificationId}'. ` +
+        `Could not find a scheduled job for snoozed notification '${notificationId}'. ` +
           'The notification may have already been unsnoozed or the scheduled job was deleted.'
       );
     }
