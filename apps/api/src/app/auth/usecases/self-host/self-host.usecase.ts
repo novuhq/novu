@@ -1,5 +1,5 @@
-import { NotFoundException } from '@nestjs/common';
-import { MemberRepository, OrganizationRepository } from '@novu/dal';
+import { Inject, NotFoundException } from '@nestjs/common';
+import { CommunityOrganizationRepository, MemberRepository } from '@novu/dal';
 import { SwitchOrganization } from '../switch-organization/switch-organization.usecase';
 import { SwitchOrganizationCommand } from '../switch-organization';
 
@@ -7,8 +7,9 @@ export class SelfHostUsecase {
   private readonly COMMUNITY_EDITION_NAME = 'Community Edition';
 
   constructor(
-    private readonly organizationRepository: OrganizationRepository,
-    private readonly memberRepository: MemberRepository,
+    @Inject('ORGANIZATION_REPOSITORY')
+    private organizationRepository: CommunityOrganizationRepository,
+    private memberRepository: MemberRepository,
     private readonly switchOrganizationUsecase: SwitchOrganization
   ) {}
 
