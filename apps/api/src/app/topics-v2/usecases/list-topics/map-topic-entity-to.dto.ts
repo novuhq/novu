@@ -4,7 +4,7 @@ import { TopicSubscriptionResponseDto } from '../../dtos/topic-subscription-resp
 
 export function mapTopicEntityToDto(topicEntity: TopicEntity): TopicResponseDto {
   return {
-    _id: topicEntity._id,
+    _id: String(topicEntity._id),
     name: topicEntity.name,
     key: topicEntity.key,
     createdAt: topicEntity.createdAt,
