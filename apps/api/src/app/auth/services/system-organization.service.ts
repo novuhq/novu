@@ -132,27 +132,4 @@ export class CommunityEditionService implements OnModuleInit {
       return user;
     }
   }
-
-  async getCommunityEditionOrganizationToken() {
-    const communityEditionOrg = await this.organizationRepository.findOne({ name: this.COMMUNITY_EDITION_NAME });
-
-    if (!communityEditionOrg) {
-      throw new Error('Community Edition not found');
-    }
-
-    const users = await this.memberRepository.getOrganizationMembers(communityEditionOrg._id);
-
-    if (!users || users.length === 0) {
-      throw new Error('No admin users found for Community Edition');
-    }
-
-    const token = await this.switchOrganizationUsecase.execute(
-      SwitchOrganizationCommand.create({
-        newOrganizationId: communityEditionOrg._id!,
-        userId: users[0]._userId,
-      })
-    );
-
-    return { token };
-  }
 }
