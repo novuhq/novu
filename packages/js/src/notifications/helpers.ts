@@ -196,8 +196,6 @@ export const snooze = async ({
     {
       isSnoozed: true,
       snoozedUntil: args.snoozeUntil,
-      isRead: false,
-      readAt: null,
     },
     {
       emitter,

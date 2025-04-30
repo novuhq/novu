@@ -573,7 +573,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
    * unread -> { seen: true, read: false, archived: false }
    * unarchived -> { seen: true, read: true, archived: false }
    * snoozed -> { seen: true, archived: false, snoozedUntil: snoozedUntil }
-   * unsnoozed -> { seen: true, read: false, archived: false, snoozedUntil: null }
+   * unsnoozed -> { seen: true, archived: false, snoozedUntil: null }
    */
   private async updateMessagesStatus({
     query,
@@ -624,7 +624,6 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     } else if (isUpdatingSnoozed) {
       updatePayload = {
         snoozedUntil,
-        read: snoozedUntil ? undefined : false,
         seen: true,
         lastSeenDate: new Date(),
         archived: false,
