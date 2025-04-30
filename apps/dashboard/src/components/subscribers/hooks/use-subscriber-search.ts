@@ -33,6 +33,7 @@ export function useSubscriberSearch(searchQuery: string, searchField: SearchFiel
 
   const { data, isError, isLoading, isFetching } = useFetchSubscribers(fetchParams, {
     enabled: debouncedQuery.length >= 2,
+    staleTime: 0,
   });
 
   return {

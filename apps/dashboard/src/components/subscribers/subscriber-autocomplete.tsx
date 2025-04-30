@@ -10,7 +10,6 @@ import { Input } from '../primitives/input';
 import { Popover, PopoverContent, PopoverTrigger } from '../primitives/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../primitives/select';
 import { Separator } from '../primitives/separator';
-import { Skeleton } from '../primitives/skeleton';
 import { SearchField, useSubscriberSearch } from './hooks/use-subscriber-search';
 
 type SubscriberAutocompleteProps = {
@@ -61,7 +60,7 @@ export function SubscriberAutocomplete({
   const combinedLoading = isLoading || externalLoading;
 
   // Check if there are search results
-  const hasResults = !isLoading && subscribers.length > 0;
+  const hasResults = subscribers.length > 0;
 
   // Clean up timeout on unmount
   useEffect(() => {
@@ -268,21 +267,6 @@ export function SubscriberAutocomplete({
     [searchField, value, isSelectOpen, size, handleSearchFieldChange, handleSelectOpenChange]
   );
 
-  // Loading skeletons
-  const LoadingSkeletons = (
-    <div className="space-y-2 p-2">
-      {Array.from({ length: 3 }).map((_, i) => (
-        <div key={i} className="flex items-center gap-2">
-          <Skeleton className={cn('h-8 w-8 rounded-full', size === 'xs' && 'h-6 w-6')} />
-          <div className="flex-1 space-y-1.5">
-            <Skeleton className="h-4 w-24" />
-            <Skeleton className="h-3 w-32" />
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-
   return (
     <form onSubmit={handleSubmit} className={className}>
       <div className="relative w-full">
@@ -339,11 +323,10 @@ export function SubscriberAutocomplete({
 
                 <div className="min-h-[120px]">
                   {/* Loading state */}
-                  {isLoading && LoadingSkeletons}
 
                   {/* No results state */}
                   {!isLoading && subscribers.length === 0 && hasSearched && (
-                    <CommandEmpty className="py-6 text-center">
+                    <CommandEmpty className="mt-4 py-6 text-center">
                       <div className="text-foreground-300 mb-1 text-sm">No subscribers found</div>
                       {value.length > 0 && (
                         <div className="text-foreground-200 text-xs">
