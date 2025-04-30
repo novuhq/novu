@@ -95,34 +95,36 @@ export const TopicActivity = ({ topicKey }: { topicKey: string }) => {
 
   return (
     <AnimatePresence mode="wait">
-      <div className="flex h-full flex-col">
-        <ActivityFilters
-          filters={filters}
-          showReset={hasChangesInFilters}
-          onFiltersChange={setFilters}
-          onReset={handleClearFilters}
-          hide={['dateRange', 'topicKey']}
-          className="min-h-max overflow-x-auto"
-        />
-        <SubscriberActivityList
-          isLoading={isLoading}
-          activities={activities}
-          hasChangesInFilters={hasChangesInFilters}
-          onClearFilters={handleClearFilters}
-          onActivitySelect={handleActivitySelect}
-        />
-        <span className="text-paragraph-2xs text-text-soft border-border-soft mt-auto border-t p-3 text-center">
-          To view more detailed activity, View{' '}
-          <Link
-            className="underline"
-            to={`${buildRoute(ROUTES.ACTIVITY_FEED, { environmentSlug: currentEnvironment?.slug ?? '' })}?${searchParams.toString()}`}
-          >
-            Activity Feed
-          </Link>{' '}
-          page.
-        </span>
+      <div key="topic-activity-content" className="relative h-full">
+        <div className="flex h-full flex-col">
+          <ActivityFilters
+            filters={filters}
+            showReset={hasChangesInFilters}
+            onFiltersChange={setFilters}
+            onReset={handleClearFilters}
+            hide={['dateRange', 'topicKey']}
+            className="min-h-max overflow-x-auto"
+          />
+          <SubscriberActivityList
+            isLoading={isLoading}
+            activities={activities}
+            hasChangesInFilters={hasChangesInFilters}
+            onClearFilters={handleClearFilters}
+            onActivitySelect={handleActivitySelect}
+          />
+          <span className="text-paragraph-2xs text-text-soft border-border-soft mt-auto border-t p-3 text-center">
+            To view more detailed activity, View{' '}
+            <Link
+              className="underline"
+              to={`${buildRoute(ROUTES.ACTIVITY_FEED, { environmentSlug: currentEnvironment?.slug ?? '' })}?${searchParams.toString()}`}
+            >
+              Activity Feed
+            </Link>{' '}
+            page.
+          </span>
+        </div>
+        <ActivityDetailsDrawer activityId={activityItemId} onActivitySelect={handleActivitySelect} />
       </div>
-      <ActivityDetailsDrawer activityId={activityItemId} onActivitySelect={handleActivitySelect} />
     </AnimatePresence>
   );
 };

@@ -1,6 +1,14 @@
 import { Button } from '@/components/primitives/button';
 import { Separator } from '@/components/primitives/separator';
-import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetMain } from '@/components/primitives/sheet';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetMain,
+  SheetTitle,
+} from '@/components/primitives/sheet';
 import TruncatedText from '@/components/truncated-text';
 import { useCombinedRefs } from '@/hooks/use-combined-refs';
 import { useFormProtection } from '@/hooks/use-form-protection';
@@ -57,8 +65,9 @@ export const CreateTopicDrawer = forwardRef<HTMLDivElement, CreateTopicDrawerPro
             'pointer-events-none opacity-0': !isOpen,
           })}
         />
-        <SheetContent ref={combinedRef} className="w-[400px]">
+        <SheetContent ref={combinedRef} className="w-[400px]" aria-describedby="create-topic-description">
           <SheetHeader className="p-0">
+            <SheetTitle className="sr-only">Add topic</SheetTitle>
             <header className="border-bg-soft flex h-12 w-full flex-row items-center gap-3 border-b p-3.5">
               <div className="flex flex-1 items-center gap-1 overflow-hidden text-sm font-medium">
                 <RiDiscussLine className="size-5 p-0.5" />
@@ -66,6 +75,9 @@ export const CreateTopicDrawer = forwardRef<HTMLDivElement, CreateTopicDrawerPro
               </div>
             </header>
           </SheetHeader>
+          <SheetDescription id="create-topic-description" className="sr-only">
+            Create a new topic to organize and manage your notifications
+          </SheetDescription>
           <SheetMain className="p-0">
             <CreateTopicForm
               onSuccess={handleSuccess}

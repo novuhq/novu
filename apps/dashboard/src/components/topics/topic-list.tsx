@@ -5,10 +5,11 @@ import { Table, TableBody, TableHead, TableHeader, TableRow } from '@/components
 import { useFetchTopics } from '@/hooks/use-fetch-topics';
 import { cn } from '@/utils/ui';
 import { DirectionEnum } from '@novu/shared';
-import { HTMLAttributes, useEffect, useState } from 'react';
+import { HTMLAttributes, useCallback, useEffect, useState } from 'react';
 import { RiAddCircleLine } from 'react-icons/ri';
+import { useSearchParams } from 'react-router-dom';
 import { useTopicsNavigate } from './hooks/use-topics-navigate';
-import { TopicsSortableColumn, TopicsUrlState, useTopicsUrlState } from './hooks/use-topics-url-state';
+import { TopicsFilter, TopicsSortableColumn, TopicsUrlState, useTopicsUrlState } from './hooks/use-topics-url-state';
 import { TopicListBlank } from './topic-list-blank';
 import { TopicListNoResults } from './topic-list-no-results';
 import { TopicRow, TopicRowSkeleton } from './topic-row';
@@ -95,44 +96,80 @@ type TopicListTableProps = HTMLAttributes<HTMLTableElement> & {
 
 export const TopicList = (props: TopicListProps) => {
   const { className, ...rest } = props;
-  const [nextPageAfter, setNextPageAfter] = useState<string | undefined>(undefined);
-  const [previousPageBefore, setPreviousPageBefore] = useState<string | undefined>(undefined);
   const [isFilterLoading, setIsFilterLoading] = useState(false);
-  const { filterValues, handleFiltersChange, toggleSort, resetFilters, handleNext, handlePrevious, handleFirst } =
-    useTopicsUrlState({
-      after: nextPageAfter,
-      before: previousPageBefore,
-    });
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  // Check both key and name filters
-  const areFiltersApplied = filterValues.key || filterValues.name || filterValues.before || filterValues.after;
+  // Read directly from URL params for data fetching
+  const afterParam = searchParams.get('after') || '';
+  const beforeParam = searchParams.get('before') || '';
+  const keyParam = searchParams.get('key') || '';
+  const nameParam = searchParams.get('name') || '';
+  const orderByParam = (searchParams.get('orderBy') as TopicsSortableColumn) || '_id';
+  const orderDirectionParam = (searchParams.get('orderDirection') as DirectionEnum) || DirectionEnum.DESC;
+
+  // Create filter values from URL params
+  const currentFilters: TopicsFilter = {
+    after: afterParam || undefined,
+    before: beforeParam || undefined,
+    key: keyParam || undefined,
+    name: nameParam || undefined,
+    orderBy: orderByParam,
+    orderDirection: orderDirectionParam,
+    limit: 10,
+  };
+
+  // Get utility functions from the hook but pass empty objects since we're handling URL state directly
+  const { filterValues, handleFiltersChange, toggleSort, resetFilters } = useTopicsUrlState({});
+
+  const areFiltersApplied = keyParam || nameParam || beforeParam || afterParam;
   const limit = 10;
 
-  const { data, isPending } = useFetchTopics(filterValues, {
+  // Use URL params directly for fetching data
+  const { data, isPending } = useFetchTopics(currentFilters, {
     meta: { errorMessage: 'Issue fetching topics' },
   });
 
-  // When data is loaded, clear the loading state
   useEffect(() => {
     if (!isPending && isFilterLoading) {
       setIsFilterLoading(false);
     }
   }, [isPending, isFilterLoading]);
 
-  useEffect(() => {
-    if (data?.next) {
-      setNextPageAfter(data.next);
-    }
-
-    if (data?.previous) {
-      setPreviousPageBefore(data.previous);
-    }
-  }, [data]);
-
-  // Combine filter loading with API loading
   const isLoading = isPending || isFilterLoading;
 
-  // Common wrapper props
+  // Define our own navigation functions using direct URL param manipulation
+  const handleNext = useCallback(() => {
+    setSearchParams((prev) => {
+      prev.delete('before');
+
+      if (data?.next) {
+        prev.set('after', data.next);
+      }
+
+      return prev;
+    });
+  }, [data?.next, setSearchParams]);
+
+  const handlePrevious = useCallback(() => {
+    setSearchParams((prev) => {
+      prev.delete('after');
+
+      if (data?.previous) {
+        prev.set('before', data.previous);
+      }
+
+      return prev;
+    });
+  }, [data?.previous, setSearchParams]);
+
+  const handleFirst = useCallback(() => {
+    setSearchParams((prev) => {
+      prev.delete('before');
+      prev.delete('after');
+      return prev;
+    });
+  }, [setSearchParams]);
+
   const wrapperProps = {
     filterValues,
     handleFiltersChange,
@@ -142,47 +179,58 @@ export const TopicList = (props: TopicListProps) => {
     ...rest,
   };
 
-  // Always render the same structure to avoid layout shifts
-  return (
-    <TopicListWrapper {...wrapperProps}>
-      {isLoading ? (
+  if (isLoading) {
+    return (
+      <TopicListWrapper {...wrapperProps}>
         <TopicListTable
-          orderBy={filterValues.orderBy}
-          orderDirection={filterValues.orderDirection}
+          orderBy={currentFilters.orderBy}
+          orderDirection={currentFilters.orderDirection}
           toggleSort={toggleSort}
         >
           {new Array(limit).fill(0).map((_, index) => (
             <TopicRowSkeleton key={index} />
           ))}
         </TopicListTable>
-      ) : !data?.data.length ? (
-        !areFiltersApplied ? (
-          <TopicListBlank />
-        ) : (
-          <TopicListNoResults />
-        )
-      ) : (
-        <>
-          <TopicListTable
-            orderBy={filterValues.orderBy}
-            orderDirection={filterValues.orderDirection}
-            toggleSort={toggleSort}
-          >
-            {data.data.map((topic) => (
-              <TopicRow key={topic._id} topic={topic} />
-            ))}
-          </TopicListTable>
+      </TopicListWrapper>
+    );
+  }
 
-          {!!(data.next || data.previous) && (
-            <CursorPagination
-              hasNext={!!data.next}
-              hasPrevious={!!data.previous}
-              onNext={handleNext}
-              onPrevious={handlePrevious}
-              onFirst={handleFirst}
-            />
-          )}
-        </>
+  if (!areFiltersApplied && !data?.data.length) {
+    return (
+      <TopicListWrapper {...wrapperProps}>
+        <TopicListBlank />
+      </TopicListWrapper>
+    );
+  }
+
+  if (!data?.data.length) {
+    return (
+      <TopicListWrapper {...wrapperProps}>
+        <TopicListNoResults />
+      </TopicListWrapper>
+    );
+  }
+
+  return (
+    <TopicListWrapper {...wrapperProps}>
+      <TopicListTable
+        orderBy={currentFilters.orderBy}
+        orderDirection={currentFilters.orderDirection}
+        toggleSort={toggleSort}
+      >
+        {data.data.map((topic) => (
+          <TopicRow key={topic._id} topic={topic} />
+        ))}
+      </TopicListTable>
+
+      {!!(data.next || data.previous) && (
+        <CursorPagination
+          hasNext={!!data.next}
+          hasPrevious={!!data.previous}
+          onNext={handleNext}
+          onPrevious={handlePrevious}
+          onFirst={handleFirst}
+        />
       )}
     </TopicListWrapper>
   );
