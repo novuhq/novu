@@ -108,7 +108,7 @@ const router = createBrowserRouter([
             children: [
               {
                 path: ROUTES.WELCOME,
-                element: IS_SELF_HOSTED ? <Navigate to={ROUTES.ROOT} replace /> : <WelcomePage />,
+                element: <WelcomePage />,
               },
               {
                 path: ROUTES.WORKFLOWS,

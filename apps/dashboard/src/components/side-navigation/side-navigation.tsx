@@ -68,6 +68,7 @@ const BottomSection = ({
     return (
       <div className="relative mt-auto gap-8 pt-4">
         <ChangelogStack />
+        <GettingStartedMenuItem />
       </div>
     );
   }
