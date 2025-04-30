@@ -8,6 +8,7 @@ export enum MailyContentTypeEnum {
   FOR = 'for',
   BUTTON = 'button',
   IMAGE = 'image',
+  INLINE_IMAGE = 'inlineImage',
   LINK = 'link',
 }
 

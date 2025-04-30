@@ -112,16 +112,62 @@ export const insertVariableToEditor = ({
   });
 };
 
-const getVariablesByContext = (
-  editor: TiptapEditor,
-  from: VariableFrom,
-  isEnhancedDigestEnabled: boolean,
-  primitives: Array<LiquidVariable>,
-  arrays: Array<LiquidVariable>,
-  namespaces: Array<LiquidVariable>
-): LiquidVariable[] => {
+const getVariablesByContext = ({
+  editor,
+  from,
+  isEnhancedDigestEnabled,
+  primitives,
+  arrays,
+  namespaces,
+  addDigestVariables,
+}: {
+  editor: TiptapEditor;
+  from: VariableFrom;
+  isEnhancedDigestEnabled: boolean;
+  primitives: Array<LiquidVariable>;
+  arrays: Array<LiquidVariable>;
+  namespaces: Array<LiquidVariable>;
+  addDigestVariables: boolean;
+}): LiquidVariable[] => {
   const iterables = [...arrays, ...getRepeatBlockEachVariables(editor)];
   const isInRepeatBlock = isInsideRepeatBlock(editor);
+
+  const getVariables = () => {
+    const baseVariables = [...primitives, ...namespaces, ...iterables];
+
+    if (!isInRepeatBlock && isEnhancedDigestEnabled && addDigestVariables) {
+      const mappedDigestVariables = DIGEST_VARIABLES.map((variable) => ({
+        name: variable.name,
+      }));
+      baseVariables.push(...mappedDigestVariables);
+    }
+
+    // If we're not in a repeat block, return all variables
+    if (!isInRepeatBlock || !isEnhancedDigestEnabled) {
+      return baseVariables;
+    }
+
+    // If we're in a repeat block, return only the iterable properties (current + children)
+    const iterableName = editor?.getAttributes('repeat')?.each;
+    if (!iterableName) return baseVariables;
+
+    // Get all variables that are children of the iterable/alias
+    const iterableProperties = [...namespaces, ...arrays, ...primitives]
+      .filter((variable) => variable.name.startsWith(iterableName))
+      .flatMap((variable) => {
+        // If the variable name is exactly the iterableName, skip
+        if (variable.name === iterableName) {
+          return [];
+        }
+
+        // Otherwise, get the last part after the iterableName
+        const suffix = variable.name.split('.').pop();
+        return suffix ? [{ name: `${REPEAT_BLOCK_ITERABLE_ALIAS}.${suffix}` }] : [];
+      });
+
+    // Return all variables, including the iterable alias and its properties
+    return [...baseVariables, ...iterableProperties, { name: REPEAT_BLOCK_ITERABLE_ALIAS }];
+  };
 
   switch (from) {
     // Case 1: Inside repeat block's "each" key input - only allow iterables
@@ -135,37 +181,11 @@ const getVariablesByContext = (
 
     // Case 2: Bubble menu (showIf) - allow only primitives and namespaces
     case VariableFrom.Bubble:
-      return [...primitives, ...namespaces];
+      return getVariables();
 
     // Case 3: Regular content
     case VariableFrom.Content: {
-      const baseVariables = [...primitives, ...namespaces, ...iterables];
-
-      // If we're not in a repeat block, return all variables
-      if (!isInRepeatBlock || !isEnhancedDigestEnabled) {
-        return baseVariables;
-      }
-
-      // If we're in a repeat block, return only the iterable properties (current + children)
-      const iterableName = editor?.getAttributes('repeat')?.each;
-      if (!iterableName) return baseVariables;
-
-      // Get all variables that are children of the iterable/alias
-      const iterableProperties = [...namespaces, ...arrays, ...primitives]
-        .filter((variable) => variable.name.startsWith(iterableName))
-        .flatMap((variable) => {
-          // If the variable name is exactly the iterableName, skip
-          if (variable.name === iterableName) {
-            return [];
-          }
-
-          // Otherwise, get the last part after the iterableName
-          const suffix = variable.name.split('.').pop();
-          return suffix ? [{ name: `${REPEAT_BLOCK_ITERABLE_ALIAS}.${suffix}` }] : [];
-        });
-
-      // Return all variables, including the iterable alias and its properties
-      return [...baseVariables, ...iterableProperties, { name: REPEAT_BLOCK_ITERABLE_ALIAS }];
+      return getVariables();
     }
 
     default:
@@ -187,14 +207,15 @@ export const calculateVariables = ({
   const queryWithoutSuffix = query.replace(/}+$/, '');
 
   // Get available variables by context (where we are in the editor)
-  const variables = getVariablesByContext(editor, from, isEnhancedDigestEnabled, primitives, arrays, namespaces);
-
-  if (isEnhancedDigestEnabled && addDigestVariables) {
-    const mappedDigestVariables = DIGEST_VARIABLES.map((variable) => ({
-      name: variable.name,
-    }));
-    variables.push(...mappedDigestVariables);
-  }
+  const variables = getVariablesByContext({
+    editor,
+    from,
+    isEnhancedDigestEnabled,
+    primitives,
+    arrays,
+    namespaces,
+    addDigestVariables,
+  });
 
   // Add currently typed variable if allowed
   if (

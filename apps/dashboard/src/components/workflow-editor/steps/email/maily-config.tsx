@@ -19,6 +19,17 @@ import {
   text,
 } from '@maily-to/core/blocks';
 import {
+  ButtonExtension,
+  ButtonAttributes as MailyButtonAttributes,
+  ImageExtension,
+  ImageAttributes as MailyImageAttributes,
+  InlineImageExtension,
+  InlineImageAttributes as MailyInlineImageAttributes,
+  LogoAttributes as MailyLogoAttributes,
+  LinkExtension,
+  LinkAttributes as MailyLinkAttributes,
+} from '@maily-to/core-digest/extensions';
+import {
   getSlashCommandSuggestions,
   getVariableSuggestions,
   HTMLCodeBlockExtension,
@@ -27,6 +38,7 @@ import {
   VariableExtension,
   Variables,
 } from '@maily-to/core/extensions';
+
 import { ReactNodeViewRenderer } from '@tiptap/react';
 import type { Editor as TiptapEditor } from '@tiptap/core';
 import { StepResponseDto } from '@novu/shared';
@@ -41,6 +53,7 @@ import {
   CalculateVariablesProps,
   insertVariableToEditor,
   isInsideRepeatBlock,
+  resolveRepeatBlockAlias,
   VariableFrom,
 } from './variables/variables';
 import { ForView } from './views/for-view';
@@ -51,6 +64,28 @@ import { createVariableView } from './views/variable-view';
 import { createCards } from './blocks/cards';
 import { VariablePillOld } from '@/components/variable/variable-pill-old';
 export const VARIABLE_TRIGGER_CHARACTER = '{{';
+
+declare module '@tiptap/core' {
+  interface ButtonAttributes extends MailyButtonAttributes {
+    aliasFor: string | null;
+  }
+
+  interface ImageAttributes extends MailyImageAttributes {
+    aliasFor: string | null;
+  }
+
+  interface InlineImageAttributes extends MailyInlineImageAttributes {
+    aliasFor: string | null;
+  }
+
+  interface LogoAttributes extends MailyLogoAttributes {
+    aliasFor: string | null;
+  }
+
+  interface LinkAttributes extends MailyLinkAttributes {
+    aliasFor: string | null;
+  }
+}
 
 /**
  * Fixed width (600px) for the email editor and rendered content.
@@ -157,7 +192,7 @@ export const createExtensions = (props: {
 }) => {
   const { handleCalculateVariables, parsedVariables, blocks, isEnhancedDigestEnabled } = props;
 
-  return [
+  const extensions = [
     RepeatExtension.extend({
       addNodeView() {
         return ReactNodeViewRenderer(ForView, {
@@ -236,4 +271,178 @@ export const createExtensions = (props: {
       },
     }),
   ];
+
+  if (isEnhancedDigestEnabled) {
+    extensions.push(
+      ButtonExtension.extend({
+        addAttributes() {
+          const attributes = this.parent?.();
+
+          if (!isEnhancedDigestEnabled) {
+            return {
+              ...attributes,
+            };
+          }
+
+          return {
+            ...attributes,
+            aliasFor: {
+              default: null,
+            },
+          };
+        },
+
+        addCommands() {
+          const commands = this.parent?.();
+          const editor = this.editor;
+
+          if (!commands) return {};
+
+          return {
+            ...commands,
+            updateButtonAttributes: (attrs: MailyButtonAttributes) => {
+              const { text, url, isTextVariable, isUrlVariable } = attrs;
+
+              if (isEnhancedDigestEnabled && (isTextVariable || isUrlVariable)) {
+                const aliasFor = resolveRepeatBlockAlias(
+                  isTextVariable ? (text ?? '') : (url ?? ''),
+                  editor,
+                  isEnhancedDigestEnabled
+                );
+                // @ts-expect-error - the core and core-digest collides
+                return commands.updateButtonAttributes?.({ ...attrs, aliasFor: aliasFor ?? null });
+              }
+
+              // @ts-expect-error - the core and core-digest collides
+              return commands.updateButtonAttributes?.(attrs);
+            },
+          };
+        },
+      }),
+      ImageExtension.extend({
+        addAttributes() {
+          const attributes = this.parent?.();
+
+          if (!isEnhancedDigestEnabled) {
+            return {
+              ...attributes,
+            };
+          }
+
+          return {
+            ...attributes,
+            aliasFor: {
+              default: null,
+            },
+          };
+        },
+
+        addCommands() {
+          const commands = this.parent?.();
+          const editor = this.editor;
+
+          if (!commands) return {};
+
+          return {
+            ...commands,
+            updateImageAttributes: (attrs) => {
+              const { src, isSrcVariable, externalLink, isExternalLinkVariable } = attrs;
+
+              if (isEnhancedDigestEnabled && (isSrcVariable || isExternalLinkVariable)) {
+                const aliasFor = resolveRepeatBlockAlias(
+                  isSrcVariable ? (src ?? '') : (externalLink ?? ''),
+                  editor,
+                  isEnhancedDigestEnabled
+                );
+                return commands.updateImageAttributes?.({ ...attrs, aliasFor: aliasFor ?? null });
+              }
+
+              return commands.updateImageAttributes?.(attrs);
+            },
+          };
+        },
+      }),
+      InlineImageExtension.extend({
+        addAttributes() {
+          const attributes = this.parent?.();
+
+          if (!isEnhancedDigestEnabled) {
+            return {
+              ...attributes,
+            };
+          }
+
+          return {
+            ...attributes,
+            aliasFor: {
+              default: null,
+            },
+          };
+        },
+
+        addCommands() {
+          const commands = this.parent?.();
+          const editor = this.editor;
+
+          if (!commands) return {};
+
+          return {
+            ...commands,
+            updateInlineImageAttributes: (attrs) => {
+              const { src, isSrcVariable, externalLink, isExternalLinkVariable } = attrs;
+
+              if (isEnhancedDigestEnabled && (isSrcVariable || isExternalLinkVariable)) {
+                const aliasFor = resolveRepeatBlockAlias(
+                  isSrcVariable ? (src ?? '') : (externalLink ?? ''),
+                  editor,
+                  isEnhancedDigestEnabled
+                );
+                return commands.updateInlineImageAttributes?.({ ...attrs, aliasFor: aliasFor ?? null });
+              }
+
+              return commands.updateInlineImageAttributes?.(attrs);
+            },
+          };
+        },
+      }),
+      // @ts-expect-error - the core and core-digest collides
+      LinkExtension.extend({
+        addAttributes() {
+          const attributes = this.parent?.();
+
+          return {
+            ...attributes,
+            aliasFor: {
+              default: null,
+            },
+          };
+        },
+
+        addCommands() {
+          const commands = this.parent?.();
+          const editor = this.editor;
+
+          if (!commands) return {};
+
+          return {
+            ...commands,
+            updateLinkAttributes: (attrs: MailyLinkAttributes) => {
+              const { href, isUrlVariable } = attrs;
+
+              if (isEnhancedDigestEnabled && isUrlVariable) {
+                const aliasFor = resolveRepeatBlockAlias(href ?? '', editor, isEnhancedDigestEnabled);
+                // @ts-expect-error - the core and core-digest collides
+                return commands.updateLinkAttributes?.({ ...attrs, aliasFor: aliasFor ?? null });
+              }
+
+              // @ts-expect-error - the core and core-digest collides
+              return commands.updateLinkAttributes?.(attrs);
+            },
+          };
+        },
+      })
+    );
+  }
+
+  return extensions;
 };
