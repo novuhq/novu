@@ -59,7 +59,7 @@ export type Session = {
   totalUnreadCount: number;
   removeNovuBranding: boolean;
   isDevelopmentMode: boolean;
-  isSnoozeEnabled: boolean;
+  maxSnoozeDurationHours: number;
 };
 
 export type Subscriber = {
