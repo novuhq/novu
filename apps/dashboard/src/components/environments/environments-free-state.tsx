@@ -84,7 +84,7 @@ export function FreeTierState() {
 
         <div className="flex flex-col items-center gap-1">
           <p className="text-text-soft text-label-xs mb-3 text-center">
-            Unlock more environments and enhance your productivity
+            To create additional custom environments, upgrade your plan.
           </p>
           <Button
             variant="primary"
@@ -104,7 +104,7 @@ export function FreeTierState() {
             }}
             leadingIcon={RiSparkling2Line}
           >
-            {IS_SELF_HOSTED ? 'Migrate to Cloud' : 'Upgrade to Team Tier'}
+            {IS_SELF_HOSTED ? 'Contact Sales' : 'Upgrade to Team Tier'}
           </Button>
           <Link to={'https://docs.novu.co/platform/concepts/environments'} target="_blank">
             <LinkButton size="sm" leadingIcon={RiBookMarkedLine}>

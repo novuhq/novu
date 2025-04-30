@@ -44,11 +44,6 @@ export function RedirectToSignIn({ children }: { children: any }) {
     }
   }, [navigate]);
 
-  // if (!(window as any).Clerk.loggedIn) {
-  //   console.log('RedirectToSignIn: return null');
-  //   return null;
-  // }
-
   return <>{children}</>;
 }
 

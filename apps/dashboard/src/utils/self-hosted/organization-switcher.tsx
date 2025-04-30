@@ -72,9 +72,9 @@ export function OrganizationSwitcher() {
                 </button>
               </TooltipTrigger>
               <TooltipContent side="right" className="ml-3 bg-neutral-950 text-white">
-                <span>Switch to Cloud or Enterprise Self-Hosted</span>
+                <span>Switch to Cloud plans to</span>
                 <br />
-                <span>to manage multiple organizations.</span>
+                <span>manage multiple organizations.</span>
               </TooltipContent>
             </Tooltip>
           </DropdownMenuItem>

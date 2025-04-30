@@ -1,26 +1,22 @@
 import React from 'react';
 import { createContextHook } from '../context';
 import { DecodedJwt } from '.';
+import { SelfHostedUser, createUserFromJwt } from './user.types';
 
-export const UserContext = React.createContext({});
+export const UserContext = React.createContext<{
+  user: SelfHostedUser;
+  isLoaded: boolean;
+}>({
+  user: createUserFromJwt(null),
+  isLoaded: false,
+});
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function UserContextProvider({ children }: any) {
   const jwt = localStorage.getItem('self-hosted-jwt');
   const decodedJwt: DecodedJwt | null = jwt ? JSON.parse(atob(jwt.split('.')[1])) : null;
   const value = {
-    user: {
-      update: async () => null,
-      externalId: decodedJwt?._id,
-      firstName: decodedJwt?.firstName,
-      lastName: decodedJwt?.lastName,
-      emailAddresses: [{ emailAddress: decodedJwt?.email }],
-      createdAt: new Date(),
-      publicMetadata: { newDashboardOptInStatus: 'opted_in' },
-      unsafeMetadata: { newDashboardOptInStatus: 'opted_in' },
-      organizationMemberships: [{}],
-      passwordEnabled: true,
-    },
+    user: createUserFromJwt(decodedJwt),
     isLoaded: true,
   };
 

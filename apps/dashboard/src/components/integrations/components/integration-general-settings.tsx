@@ -46,7 +46,7 @@ function EnableSnoozeSwitch({ id }: { id: string }) {
   const checked = disabled ? false : true; // Always checked for paid plans
 
   const popoverContent = IS_SELF_HOSTED
-    ? 'Enable "Remind me later" functionality by upgrading to Cloud or Enterprise Self-Hosted plans'
+    ? 'Enable "Remind me later" functionality by upgrading to Cloud plans'
     : 'Enable "Remind me later" functionality by upgrading to our paid plans';
 
   const handleLinkClick = () => {
@@ -107,7 +107,7 @@ function NovuBrandingSwitch({
   const checked = disabled ? false : value;
 
   const popoverContent = IS_SELF_HOSTED
-    ? 'Remove Novu badge from your inbox by upgrading to Cloud or Enterprise Self-Hosted plans'
+    ? 'Remove Novu badge from your inbox by upgrading to Cloud plans'
     : 'Remove Novu badge from your inbox by upgrading to our paid plans';
 
   const handleLinkClick = () => {

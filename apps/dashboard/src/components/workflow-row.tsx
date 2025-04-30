@@ -214,16 +214,16 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
             </TooltipTrigger>
             <TooltipPortal>
               <TooltipContent side="bottom" align="center" className="z-50">
-                <div className="flex flex-col gap-1">
-                  <span className="font-medium">This workflow is not supported in this version</span>
+                <div className="gap-1">
+                  <span className="font-medium">This workflow is not supported in this version of the dashboard</span>
                   <a
                     href={SELF_HOSTED_UPGRADE_REDIRECT_URL + '?utm_campaign=workflow_row_migration_guide'}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-primary text-sm hover:underline"
+                    className="text-primary ml-1 text-sm hover:underline"
                     onClick={stopPropagation}
                   >
-                    view migration guide
+                    view migration guide.
                   </a>
                 </div>
               </TooltipContent>

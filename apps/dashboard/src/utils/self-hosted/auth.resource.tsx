@@ -2,6 +2,7 @@ import React from 'react';
 import { createContextHook } from '../context';
 import { DecodedJwt } from '.';
 import { getJwtToken, isJwtValid } from './jwt-manager';
+import { createUserFromJwt } from './user.types';
 
 export const AuthContext = React.createContext({});
 
@@ -11,18 +12,7 @@ export function AuthContextProvider({ children }: any) {
   const decodedJwt: DecodedJwt | null = jwt && isJwtValid(jwt) ? JSON.parse(atob(jwt.split('.')[1])) : null;
 
   const value = {
-    currentUser: {
-      update: async () => null,
-      externalId: decodedJwt?._id,
-      firstName: decodedJwt?.firstName,
-      emailAddresses: [{ emailAddress: decodedJwt?.email }],
-      createdAt: new Date(),
-      publicMetadata: { newDashboardOptInStatus: 'opted_in' },
-      unsafeMetadata: { newDashboardOptInStatus: 'opted_in' },
-      lastName: decodedJwt?.lastName,
-      organizationMemberships: [{}],
-      passwordEnabled: true,
-    },
+    currentUser: createUserFromJwt(decodedJwt),
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
