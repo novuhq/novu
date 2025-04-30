@@ -45,6 +45,40 @@ export const isVariableNode = (
   );
 };
 
+export const isButtonNode = (
+  node: MailyJSONContent
+): node is MailyJSONContent & { attrs: { [MailyAttrsEnum.ID]: string } } => {
+  return !!(
+    node.type === MailyContentTypeEnum.BUTTON &&
+    node.attrs &&
+    ((node.attrs[MailyAttrsEnum.TEXT] !== undefined && typeof node.attrs[MailyAttrsEnum.TEXT] === 'string') ||
+      (node.attrs[MailyAttrsEnum.URL] !== undefined && typeof node.attrs[MailyAttrsEnum.URL] === 'string'))
+  );
+};
+
+export const isImageNode = (
+  node: MailyJSONContent
+): node is MailyJSONContent & { attrs: { [MailyAttrsEnum.ID]: string } } => {
+  return !!(
+    (node.type === MailyContentTypeEnum.IMAGE || node.type === MailyContentTypeEnum.INLINE_IMAGE) &&
+    node.attrs &&
+    ((node.attrs[MailyAttrsEnum.SRC] !== undefined && typeof node.attrs[MailyAttrsEnum.SRC] === 'string') ||
+      (node.attrs[MailyAttrsEnum.EXTERNAL_LINK] !== undefined &&
+        typeof node.attrs[MailyAttrsEnum.EXTERNAL_LINK] === 'string'))
+  );
+};
+
+export const isLinkNode = (
+  node: MailyJSONContent
+): node is MailyJSONContent & { attrs: { [MailyAttrsEnum.ID]: string } } => {
+  return !!(
+    node.type === MailyContentTypeEnum.LINK &&
+    node.attrs &&
+    node.attrs[MailyAttrsEnum.HREF] !== undefined &&
+    typeof node.attrs[MailyAttrsEnum.HREF] === 'string'
+  );
+};
+
 export const hasShow = (
   node: MailyJSONContent
 ): node is MailyJSONContent & { attrs: { [MailyAttrsEnum.SHOW_IF_KEY]: string } } => {
@@ -83,6 +117,17 @@ export const variableAttributeConfig = (type: MailyContentTypeEnum) => {
   }
 
   if (type === MailyContentTypeEnum.IMAGE) {
+    return [
+      { attr: MailyAttrsEnum.SRC, flag: MailyAttrsEnum.IS_SRC_VARIABLE },
+      {
+        attr: MailyAttrsEnum.EXTERNAL_LINK,
+        flag: MailyAttrsEnum.IS_EXTERNAL_LINK_VARIABLE,
+      },
+      ...commonConfig,
+    ];
+  }
+
+  if (type === MailyContentTypeEnum.INLINE_IMAGE) {
     return [
       { attr: MailyAttrsEnum.SRC, flag: MailyAttrsEnum.IS_SRC_VARIABLE },
       {

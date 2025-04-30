@@ -20,7 +20,7 @@ import { Novu } from '@novu/js';
 
 const novu = new Novu({
   applicationIdentifier: 'YOUR_NOVU_APPLICATION_IDENTIFIER',
-  subscriberId: 'YOUR_INTERNAL_SUBSCRIBER_ID',
+  subscriber: 'YOUR_INTERNAL_SUBSCRIBER_ID',
 });
 
 const { data: notifications, error } = await novu.notifications.list();

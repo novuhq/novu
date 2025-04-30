@@ -11,7 +11,7 @@ export function initNovuClassSdk(session: UserSession, shouldRetry: boolean = fa
   const options: SDKOptions = {
     security: { secretKey: session.apiKey },
     serverURL: session.serverUrl,
-    debugLogger: console,
+    // debugLogger: console,
   };
   if (!shouldRetry) {
     options.retryConfig = { strategy: 'none' };
@@ -26,7 +26,7 @@ export function initNovuClassSdkInternalAuth(session: UserSession, shouldRetry: 
     httpClient: new CustomHeaderHTTPClient({
       [HttpRequestHeaderKeysEnum.NOVU_ENVIRONMENT_ID]: session.environment._id,
     }),
-    debugLogger: console,
+    // debugLogger: console,
   };
   if (!shouldRetry) {
     options.retryConfig = { strategy: 'none' };

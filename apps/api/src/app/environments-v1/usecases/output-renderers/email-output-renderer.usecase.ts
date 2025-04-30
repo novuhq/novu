@@ -8,7 +8,17 @@ import { EnvironmentEntity } from '@novu/dal';
 import { FullPayloadForRender, RenderCommand } from './render-command';
 import { MailyAttrsEnum } from '../../../shared/helpers/maily.types';
 import { parseLiquid } from '../../../shared/helpers/liquid';
-import { hasShow, isRepeatNode, isVariableNode, wrapMailyInLiquid } from '../../../shared/helpers/maily-utils';
+import {
+  hasShow,
+  isButtonNode,
+  isImageNode,
+  isLinkNode,
+  isRepeatNode,
+  isVariableNode,
+  wrapMailyInLiquid,
+} from '../../../shared/helpers/maily-utils';
+
+type MailyJSONMarks = NonNullable<MailyJSONContent['marks']>[number];
 
 export class EmailOutputRendererCommand extends RenderCommand {
   environmentId: string;
@@ -249,7 +259,11 @@ export class EmailOutputRendererUsecase {
     }
   }
 
-  private processForEachNodes(nodes: MailyJSONContent[], iterablePath: string, index: number): MailyJSONContent[] {
+  private processForEachNodes(
+    nodes: MailyJSONContent[],
+    iterablePath: string,
+    index: number
+  ): Array<MailyJSONContent | MailyJSONMarks> {
     return nodes.map((node) => {
       const processedNode = { ...node };
 
@@ -262,8 +276,52 @@ export class EmailOutputRendererUsecase {
         return processedNode;
       }
 
+      if (isButtonNode(processedNode)) {
+        if (processedNode.attrs?.text) {
+          processedNode.attrs.text = this.addIndexToLiquidExpression(processedNode.attrs.text, iterablePath, index);
+        }
+
+        if (processedNode.attrs?.url) {
+          processedNode.attrs.url = this.addIndexToLiquidExpression(processedNode.attrs.url, iterablePath, index);
+        }
+
+        return processedNode;
+      }
+
+      if (isImageNode(processedNode)) {
+        if (processedNode.attrs?.src) {
+          processedNode.attrs.src = this.addIndexToLiquidExpression(processedNode.attrs.src, iterablePath, index);
+        }
+
+        if (processedNode.attrs?.externalLink) {
+          processedNode.attrs.externalLink = this.addIndexToLiquidExpression(
+            processedNode.attrs.externalLink,
+            iterablePath,
+            index
+          );
+        }
+
+        return processedNode;
+      }
+
+      if (isLinkNode(processedNode)) {
+        if (processedNode.attrs?.href) {
+          processedNode.attrs.href = this.addIndexToLiquidExpression(processedNode.attrs.href, iterablePath, index);
+        }
+
+        return processedNode;
+      }
+
       if (processedNode.content?.length) {
         processedNode.content = this.processForEachNodes(processedNode.content, iterablePath, index);
+      }
+
+      if (processedNode.marks?.length) {
+        processedNode.marks = this.processForEachNodes(
+          processedNode.marks,
+          iterablePath,
+          index
+        ) as Array<MailyJSONMarks>;
       }
 
       return processedNode;

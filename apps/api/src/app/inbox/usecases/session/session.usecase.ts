@@ -19,6 +19,7 @@ import {
   FeatureNameEnum,
   getFeatureForTierAsNumber,
   InAppProviderIdEnum,
+  CustomDataType,
 } from '@novu/shared';
 import { AuthService } from '../../../auth/services/auth.service';
 import { SubscriberSessionResponseDto } from '../../dtos/subscriber-session-response.dto';
@@ -27,6 +28,7 @@ import { validateHmacEncryption } from '../../utils/encryption';
 import { NotificationsCountCommand } from '../notifications-count/notifications-count.command';
 import { NotificationsCount } from '../notifications-count/notifications-count.usecase';
 import { SessionCommand } from './session.command';
+import { isHmacValid } from '../../../shared/helpers/is-valid-hmac';
 
 const ALLOWED_ORIGINS_REGEX = new RegExp(process.env.FRONT_BASE_URL || '');
 
@@ -68,7 +70,7 @@ export class Session {
     if (inAppIntegration.credentials.hmac) {
       validateHmacEncryption({
         apiKey: environment.apiKeys[0].key,
-        subscriberId: command.subscriberId,
+        subscriberId: command.subscriber.subscriberId,
         subscriberHash: command.subscriberHash,
       });
     }
@@ -77,7 +79,15 @@ export class Session {
       CreateOrUpdateSubscriberCommand.create({
         environmentId: environment._id,
         organizationId: environment._organizationId,
-        subscriberId: command.subscriberId,
+        subscriberId: command.subscriber.subscriberId,
+        firstName: command.subscriber.firstName,
+        lastName: command.subscriber.lastName,
+        phone: command.subscriber.phone,
+        email: command.subscriber.email,
+        avatar: command.subscriber.avatar,
+        data: command.subscriber.data as CustomDataType,
+        timezone: command.subscriber.timezone,
+        allowUpdate: isHmacValid(environment.apiKeys[0].key, command.subscriber.subscriberId, command.subscriberHash),
       })
     );
 
@@ -92,7 +102,7 @@ export class Session {
       NotificationsCountCommand.create({
         organizationId: environment._organizationId,
         environmentId: environment._id,
-        subscriberId: command.subscriberId,
+        subscriberId: command.subscriber.subscriberId,
         filters: [{ read: false, snoozed: false }],
       })
     );

@@ -696,6 +696,365 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
     process.env.IS_ENHANCED_DIGEST_ENABLED = 'false';
   });
 
+  it('should allow using the current and the payload variables in the repeat block with the list items and buttons', async () => {
+    // @ts-ignore
+    process.env.IS_ENHANCED_DIGEST_ENABLED = 'true';
+    const { workflowId, emailStepDatabaseId } = await createWorkflowWithEmailLookingAtDigestResult();
+
+    const controlValues = {
+      body: '{"type":"doc","content":[{"type":"repeat","attrs":{"each":"payload.items","isUpdatingKey":false,"showIfKey":null,"iterations":0},"content":[{"type":"bulletList","content":[{"type":"listItem","attrs":{"color":null},"content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"variable","attrs":{"id":"payload.items.foo","label":null,"fallback":null,"required":false,"aliasFor":null}},{"type":"text","text":" "}]}]}]},{"type":"button","attrs":{"text":"current.bar","isTextVariable":true,"url":"","isUrlVariable":false,"alignment":"left","variant":"filled","borderRadius":"smooth","buttonColor":"#000000","textColor":"#ffffff","showIfKey":null,"paddingTop":10,"paddingRight":32,"paddingBottom":10,"paddingLeft":32,"width":"auto","aliasFor":"payload.items.bar"}}]},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null}},{"type":"button","attrs":{"text":"payload.baz","isTextVariable":true,"url":"","isUrlVariable":false,"alignment":"left","variant":"filled","borderRadius":"smooth","buttonColor":"#000000","textColor":"#ffffff","showIfKey":null,"paddingTop":10,"paddingRight":32,"paddingBottom":10,"paddingLeft":32,"width":"auto","aliasFor":null}}]}',
+      subject: 'repeat block current variable and payload variable',
+    };
+    const previewResponse = await novuClient.workflows.steps.generatePreview({
+      generatePreviewRequestDto: { controlValues, previewPayload: {} },
+      stepId: emailStepDatabaseId,
+      workflowId,
+    });
+    const countOccurrences = (str: string, searchStr: string) => (str.match(new RegExp(searchStr, 'g')) || []).length;
+    expect(countOccurrences(previewResponse.result.result.preview.body, 'foo')).to.equal(DEFAULT_ARRAY_ELEMENTS);
+    expect(countOccurrences(previewResponse.result.result.preview.body, 'bar')).to.equal(DEFAULT_ARRAY_ELEMENTS);
+    expect(previewResponse.result.result.preview.body).to.contain('baz');
+    expect(previewResponse.result.previewPayloadExample).to.deep.equal({
+      payload: {
+        items: [
+          {
+            foo: 'foo',
+            bar: 'bar',
+          },
+          {
+            foo: 'foo',
+            bar: 'bar',
+          },
+          {
+            foo: 'foo',
+            bar: 'bar',
+          },
+          {
+            foo: 'foo',
+            bar: 'bar',
+          },
+          {
+            foo: 'foo',
+            bar: 'bar',
+          },
+        ],
+        baz: 'baz',
+      },
+    });
+
+    // @ts-ignore
+    process.env.IS_ENHANCED_DIGEST_ENABLED = 'false';
+  });
+
+  it('should allow using the static text and variables as a link on the email editor components', async () => {
+    const { workflowId, emailStepDatabaseId } = await createWorkflowWithEmailLookingAtDigestResult();
+
+    const controlValues = {
+      body: '{"type":"doc","content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","text":"Just the paragraph"}]},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","marks":[{"type":"link","attrs":{"href":"payload.paragraph_link","target":"_blank","rel":"noopener noreferrer nofollow","class":null,"isUrlVariable":true,"aliasFor":null}},{"type":"underline"}],"text":"Paragraph variable link"}]},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","marks":[{"type":"link","attrs":{"href":"https://paragraph.static.link","target":"_blank","rel":"noopener noreferrer nofollow","class":null,"isUrlVariable":false,"aliasFor":null}},{"type":"underline"}],"text":"Paragraph static link"}]},{"type":"heading","attrs":{"textAlign":null,"level":1,"showIfKey":null},"content":[{"type":"text","text":"Just the heading"}]},{"type":"heading","attrs":{"textAlign":null,"level":1,"showIfKey":null},"content":[{"type":"text","marks":[{"type":"link","attrs":{"href":"payload.heading_link","target":"_blank","rel":"noopener noreferrer nofollow","class":null,"isUrlVariable":true,"aliasFor":null}},{"type":"underline"}],"text":"Heading text link"}]},{"type":"heading","attrs":{"textAlign":null,"level":1,"showIfKey":null},"content":[{"type":"text","marks":[{"type":"link","attrs":{"href":"https://heading.static.link","target":"_blank","rel":"noopener noreferrer nofollow","class":null,"isUrlVariable":false,"aliasFor":null}},{"type":"underline"}],"text":"Heading static link"}]},{"type":"blockquote","content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","text":"Just the blockquote"}]}]},{"type":"blockquote","content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","marks":[{"type":"link","attrs":{"href":"payload.blockquote_link","target":"_blank","rel":"noopener noreferrer nofollow","class":null,"isUrlVariable":true,"aliasFor":null}},{"type":"underline"}],"text":"Blockquote text link"}]}]},{"type":"blockquote","content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","marks":[{"type":"link","attrs":{"href":"https://blockquote.static.link","target":"_blank","rel":"noopener noreferrer nofollow","class":null,"isUrlVariable":false,"aliasFor":null}},{"type":"underline"}],"text":"Blockquote static link"}]}]},{"type":"bulletList","content":[{"type":"listItem","attrs":{"color":null},"content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","text":"Just the bullet"}]}]},{"type":"listItem","attrs":{"color":null},"content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","marks":[{"type":"link","attrs":{"href":"payload.bullet_link","target":"_blank","rel":"noopener noreferrer nofollow","class":null,"isUrlVariable":true,"aliasFor":null}},{"type":"underline"}],"text":"Bullet text link"}]}]},{"type":"listItem","attrs":{"color":null},"content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","marks":[{"type":"link","attrs":{"href":"https://bullet.static.link","target":"_blank","rel":"noopener noreferrer nofollow","class":null,"isUrlVariable":false,"aliasFor":null}},{"type":"underline"}],"text":"Bullet static link"}]}]}]},{"type":"button","attrs":{"text":"Just the button","isTextVariable":false,"url":"","isUrlVariable":false,"alignment":"left","variant":"filled","borderRadius":"smooth","buttonColor":"#000000","textColor":"#ffffff","showIfKey":null,"paddingTop":10,"paddingRight":32,"paddingBottom":10,"paddingLeft":32,"width":"auto","aliasFor":null}},{"type":"button","attrs":{"text":"Button link","isTextVariable":false,"url":"payload.button_link","isUrlVariable":true,"alignment":"left","variant":"filled","borderRadius":"smooth","buttonColor":"#000000","textColor":"#ffffff","showIfKey":null,"paddingTop":10,"paddingRight":32,"paddingBottom":10,"paddingLeft":32,"width":"auto","aliasFor":null}},{"type":"button","attrs":{"text":"Button static link","isTextVariable":false,"url":"https://button.static.link","isUrlVariable":false,"alignment":"left","variant":"filled","borderRadius":"smooth","buttonColor":"#000000","textColor":"#ffffff","showIfKey":null,"paddingTop":10,"paddingRight":32,"paddingBottom":10,"paddingLeft":32,"width":"auto","aliasFor":null}},{"type":"image","attrs":{"src":"https://prod-novu-app-bucket.s3.us-east-1.amazonaws.com/assets/email-editor/header-hero-image.webp","alt":null,"title":null,"width":568,"height":153.79061371841155,"alignment":"center","externalLink":null,"isExternalLinkVariable":false,"borderRadius":0,"isSrcVariable":false,"aspectRatio":3.6933333333333334,"lockAspectRatio":true,"showIfKey":null,"aliasFor":null}},{"type":"image","attrs":{"src":"payload.image_variable","alt":null,"title":null,"width":"auto","height":"auto","alignment":"center","externalLink":null,"isExternalLinkVariable":false,"borderRadius":0,"isSrcVariable":true,"aspectRatio":null,"lockAspectRatio":true,"showIfKey":null,"aliasFor":null}},{"type":"image","attrs":{"src":"https://prod-novu-app-bucket.s3.us-east-1.amazonaws.com/assets/email-editor/header-hero-image.webp","alt":null,"title":null,"width":568,"height":153.79061371841155,"alignment":"center","externalLink":"payload.image_link","isExternalLinkVariable":true,"borderRadius":0,"isSrcVariable":false,"aspectRatio":3.6933333333333334,"lockAspectRatio":true,"showIfKey":null,"aliasFor":null}},{"type":"image","attrs":{"src":"https://prod-novu-app-bucket.s3.us-east-1.amazonaws.com/assets/email-editor/header-hero-image.webp","alt":null,"title":null,"width":568,"height":153.79061371841155,"alignment":"center","externalLink":"https://image.static.link","isExternalLinkVariable":false,"borderRadius":0,"isSrcVariable":false,"aspectRatio":3.6933333333333334,"lockAspectRatio":true,"showIfKey":null,"aliasFor":null}},{"type":"horizontalRule"},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"inlineImage","attrs":{"height":20,"width":20,"src":"https://maily.to/brand/logo.png","isSrcVariable":false,"alt":null,"title":null,"externalLink":null,"isExternalLinkVariable":false,"aliasFor":null}}]},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"inlineImage","attrs":{"height":20,"width":20,"src":"https://maily.to/brand/logo.png","isSrcVariable":false,"alt":null,"title":null,"externalLink":"payload.inline_image_link","isExternalLinkVariable":true,"aliasFor":null}}]},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"inlineImage","attrs":{"height":20,"width":20,"src":"https://maily.to/brand/logo.png","isSrcVariable":false,"alt":null,"title":null,"externalLink":"https://inline_image.static.link","isExternalLinkVariable":false,"aliasFor":null}}]},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"inlineImage","attrs":{"height":20,"width":20,"src":"payload.inline_image_url","isSrcVariable":true,"alt":null,"title":null,"externalLink":null,"isExternalLinkVariable":false,"aliasFor":null}}]},{"type":"orderedList","attrs":{"start":1},"content":[{"type":"listItem","attrs":{"color":null},"content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","text":"Just the numbered list"}]}]},{"type":"listItem","attrs":{"color":null},"content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","marks":[{"type":"link","attrs":{"href":"payload.numbered_link","target":"_blank","rel":"noopener noreferrer nofollow","class":null,"isUrlVariable":true,"aliasFor":null}},{"type":"underline"}],"text":"Numbered text link"}]}]},{"type":"listItem","attrs":{"color":null},"content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","marks":[{"type":"link","attrs":{"href":"https://numbered.static.link","target":"_blank","rel":"noopener noreferrer nofollow","class":null,"isUrlVariable":false,"aliasFor":null}},{"type":"underline"}],"text":"Numbered static link"}]}]}]}]}',
+      subject: 'all email editor components that support links',
+    };
+    const previewResponse = await novuClient.workflows.steps.generatePreview({
+      generatePreviewRequestDto: { controlValues, previewPayload: {} },
+      stepId: emailStepDatabaseId,
+      workflowId,
+    });
+
+    // paragraph
+    expect(previewResponse.result.result.preview.body).to.contain('Just the paragraph');
+    expect(previewResponse.result.result.preview.body).to.contain('Paragraph variable link');
+    expect(previewResponse.result.result.preview.body).to.contain('href="paragraph_link"');
+    expect(previewResponse.result.result.preview.body).to.contain('Paragraph static link');
+    expect(previewResponse.result.result.preview.body).to.contain('href="https://paragraph.static.link"');
+
+    // heading
+    expect(previewResponse.result.result.preview.body).to.contain('Just the heading');
+    expect(previewResponse.result.result.preview.body).to.contain('Heading text link');
+    expect(previewResponse.result.result.preview.body).to.contain('href="heading_link"');
+    expect(previewResponse.result.result.preview.body).to.contain('Heading static link');
+    expect(previewResponse.result.result.preview.body).to.contain('href="https://heading.static.link"');
+
+    // blockquote
+    expect(previewResponse.result.result.preview.body).to.contain('Just the blockquote');
+    expect(previewResponse.result.result.preview.body).to.contain('Blockquote text link');
+    expect(previewResponse.result.result.preview.body).to.contain('href="blockquote_link"');
+    expect(previewResponse.result.result.preview.body).to.contain('Blockquote static link');
+    expect(previewResponse.result.result.preview.body).to.contain('href="https://blockquote.static.link"');
+
+    // bullet
+    expect(previewResponse.result.result.preview.body).to.contain('Just the bullet');
+    expect(previewResponse.result.result.preview.body).to.contain('Bullet text link');
+    expect(previewResponse.result.result.preview.body).to.contain('href="bullet_link"');
+    expect(previewResponse.result.result.preview.body).to.contain('Bullet static link');
+    expect(previewResponse.result.result.preview.body).to.contain('href="https://bullet.static.link"');
+
+    // button
+    expect(previewResponse.result.result.preview.body).to.contain('Just the button');
+    expect(previewResponse.result.result.preview.body).to.contain('Button link');
+    expect(previewResponse.result.result.preview.body).to.contain('href="button_link"');
+    expect(previewResponse.result.result.preview.body).to.contain('Button static link');
+    expect(previewResponse.result.result.preview.body).to.contain('href="https://button.static.link"');
+
+    // image
+    expect(previewResponse.result.result.preview.body).to.contain(
+      '<img title="Image" alt="Image" src="https://prod-novu-app-bucket.s3.us-east-1.amazonaws.com/assets/email-editor/header-hero-image.webp"'
+    );
+    expect(previewResponse.result.result.preview.body).to.contain(
+      '<img title="Image" alt="Image" src="image_variable"'
+    );
+    expect(previewResponse.result.result.preview.body).to.contain(
+      '<a href="image_link" rel="noopener noreferrer" style="display:block;max-width:100%;text-decoration:none" target="_blank"><img title="Image" alt="Image" src="https://prod-novu-app-bucket.s3.us-east-1.amazonaws.com/assets/email-editor/header-hero-image.webp"'
+    );
+    expect(previewResponse.result.result.preview.body).to.contain(
+      '<a href="https://image.static.link" rel="noopener noreferrer" style="display:block;max-width:100%;text-decoration:none" target="_blank"><img title="Image" alt="Image" src="https://prod-novu-app-bucket.s3.us-east-1.amazonaws.com/assets/email-editor/header-hero-image.webp"'
+    );
+
+    // inline image
+    expect(previewResponse.result.result.preview.body).to.contain('<img src="https://maily.to/brand/logo.png"');
+    expect(previewResponse.result.result.preview.body).to.contain(
+      '<a href="inline_image_link" rel="noopener noreferrer" style="display:inline;text-decoration:none" target="_blank"><img src="https://maily.to/brand/logo.png"'
+    );
+    expect(previewResponse.result.result.preview.body).to.contain(
+      '<a href="https://inline_image.static.link" rel="noopener noreferrer" style="display:inline;text-decoration:none" target="_blank"><img src="https://maily.to/brand/logo.png"'
+    );
+    expect(previewResponse.result.result.preview.body).to.contain('<img src="inline_image_url"');
+
+    // numbered list
+    expect(previewResponse.result.result.preview.body).to.contain('Just the numbered list');
+    expect(previewResponse.result.result.preview.body).to.contain('Numbered text link');
+    expect(previewResponse.result.result.preview.body).to.contain('numbered_link');
+    expect(previewResponse.result.result.preview.body).to.contain('Numbered static link');
+    expect(previewResponse.result.result.preview.body).to.contain('https://numbered.static.link');
+
+    expect(previewResponse.result.previewPayloadExample).to.deep.equal({
+      payload: {
+        paragraph_link: 'paragraph_link',
+        heading_link: 'heading_link',
+        blockquote_link: 'blockquote_link',
+        bullet_link: 'bullet_link',
+        button_link: 'button_link',
+        image_variable: 'image_variable',
+        image_link: 'image_link',
+        inline_image_link: 'inline_image_link',
+        inline_image_url: 'inline_image_url',
+        numbered_link: 'numbered_link',
+      },
+    });
+
+    const previewResponse2 = await novuClient.workflows.steps.generatePreview({
+      generatePreviewRequestDto: {
+        controlValues,
+        previewPayload: {
+          payload: {
+            paragraph_link: 'https://paragraph_link.com',
+            heading_link: 'https://heading_link.com',
+            blockquote_link: 'https://blockquote_link.com',
+            bullet_link: 'https://bullet_link.com',
+            button_link: 'https://button_link.com',
+            image_variable: 'https://image_variable.com',
+            image_link: 'https://image_link.com',
+            inline_image_link: 'https://inline_image_link.com',
+            inline_image_url: 'https://inline_image_url.com',
+            numbered_link: 'https://numbered_link.com',
+          },
+        },
+      },
+      stepId: emailStepDatabaseId,
+      workflowId,
+    });
+
+    expect(previewResponse2.result.result.preview.body).to.contain('href="https://paragraph_link.com"');
+    expect(previewResponse2.result.result.preview.body).to.contain('href="https://heading_link.com"');
+    expect(previewResponse2.result.result.preview.body).to.contain('href="https://blockquote_link.com"');
+    expect(previewResponse2.result.result.preview.body).to.contain('href="https://bullet_link.com"');
+    expect(previewResponse2.result.result.preview.body).to.contain('href="https://button_link.com"');
+    expect(previewResponse2.result.result.preview.body).to.contain('src="https://image_variable.com"');
+    expect(previewResponse2.result.result.preview.body).to.contain('href="https://image_link.com"');
+    expect(previewResponse2.result.result.preview.body).to.contain('href="https://inline_image_link.com"');
+    expect(previewResponse2.result.result.preview.body).to.contain('src="https://inline_image_url.com"');
+    expect(previewResponse2.result.result.preview.body).to.contain('href="https://numbered_link.com"');
+  });
+
+  it('should allow using the static text, variables, current alias, as a link on the email editor components inside the repeat block', async () => {
+    const { workflowId, emailStepDatabaseId } = await createWorkflowWithEmailLookingAtDigestResult();
+
+    const controlValues = {
+      body: '{"type":"doc","content":[{"type":"repeat","attrs":{"each":"payload.items","isUpdatingKey":false,"showIfKey":null,"iterations":0},"content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","text":"Just the paragraph"}]},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","marks":[{"type":"link","attrs":{"href":"payload.items.paragraph_link","target":"_blank","rel":"noopener noreferrer nofollow","class":null,"isUrlVariable":true,"aliasFor":null}},{"type":"underline"}],"text":"Paragraph variable link"}]},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","marks":[{"type":"link","attrs":{"href":"current.paragraph_link","target":"_blank","rel":"noopener noreferrer nofollow","class":null,"isUrlVariable":true,"aliasFor":"payload.items.paragraph_link"}},{"type":"underline"}],"text":"Paragraph current variable link"}]},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","marks":[{"type":"link","attrs":{"href":"https://paragraph.static.link","target":"_blank","rel":"noopener noreferrer nofollow","class":null,"isUrlVariable":false,"aliasFor":null}},{"type":"underline"}],"text":"Paragraph static link"}]},{"type":"heading","attrs":{"textAlign":null,"level":1,"showIfKey":null},"content":[{"type":"text","text":"Just the heading"}]},{"type":"heading","attrs":{"textAlign":null,"level":1,"showIfKey":null},"content":[{"type":"text","marks":[{"type":"link","attrs":{"href":"payload.items.heading_link","target":"_blank","rel":"noopener noreferrer nofollow","class":null,"isUrlVariable":true,"aliasFor":null}},{"type":"underline"}],"text":"Heading variable link"}]},{"type":"heading","attrs":{"textAlign":null,"level":1,"showIfKey":null},"content":[{"type":"text","marks":[{"type":"link","attrs":{"href":"current.heading_link","target":"_blank","rel":"noopener noreferrer nofollow","class":null,"isUrlVariable":true,"aliasFor":"payload.items.heading_link"}},{"type":"underline"}],"text":"Heading current variable link"}]},{"type":"heading","attrs":{"textAlign":null,"level":1,"showIfKey":null},"content":[{"type":"text","marks":[{"type":"link","attrs":{"href":"https://heading.static.link","target":"_blank","rel":"noopener noreferrer nofollow","class":null,"isUrlVariable":false,"aliasFor":null}},{"type":"underline"}],"text":"Heading static link"}]},{"type":"blockquote","content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","text":"Just the blockquote"}]}]},{"type":"blockquote","content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","marks":[{"type":"link","attrs":{"href":"payload.items.blockquote_link","target":"_blank","rel":"noopener noreferrer nofollow","class":null,"isUrlVariable":true,"aliasFor":null}},{"type":"underline"}],"text":"Blockquote variable link"}]}]},{"type":"blockquote","content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","marks":[{"type":"link","attrs":{"href":"current.blockquote_link","target":"_blank","rel":"noopener noreferrer nofollow","class":null,"isUrlVariable":true,"aliasFor":"payload.items.blockquote_link"}},{"type":"underline"}],"text":"Blockquote current variable link"}]}]},{"type":"blockquote","content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","marks":[{"type":"link","attrs":{"href":"https://blockquote.static.link","target":"_blank","rel":"noopener noreferrer nofollow","class":null,"isUrlVariable":false,"aliasFor":null}},{"type":"underline"}],"text":"Blockquote static link"}]}]},{"type":"bulletList","content":[{"type":"listItem","attrs":{"color":""},"content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","text":"Just the bullet"}]}]},{"type":"listItem","attrs":{"color":""},"content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","marks":[{"type":"link","attrs":{"href":"payload.items.bullet_link","target":"_blank","rel":"noopener noreferrer nofollow","class":null,"isUrlVariable":true,"aliasFor":null}},{"type":"underline"}],"text":"Bullet variable link"}]}]},{"type":"listItem","attrs":{"color":""},"content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","marks":[{"type":"link","attrs":{"href":"current.bullet_link","target":"_blank","rel":"noopener noreferrer nofollow","class":null,"isUrlVariable":true,"aliasFor":"payload.items.bullet_link"}},{"type":"underline"}],"text":"Bullet current variable link"}]}]},{"type":"listItem","attrs":{"color":""},"content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","marks":[{"type":"link","attrs":{"href":"https://bullet.static.link","target":"_blank","rel":"noopener noreferrer nofollow","class":null,"isUrlVariable":false,"aliasFor":null}},{"type":"underline"}],"text":"Bullet static link"}]}]}]},{"type":"button","attrs":{"text":"Just the button","isTextVariable":false,"url":"","isUrlVariable":false,"alignment":"left","variant":"filled","borderRadius":"smooth","buttonColor":"#000000","textColor":"#ffffff","showIfKey":null,"paddingTop":10,"paddingRight":32,"paddingBottom":10,"paddingLeft":32,"width":"auto","aliasFor":null}},{"type":"button","attrs":{"text":"Button variable link","isTextVariable":false,"url":"payload.items.button_link","isUrlVariable":true,"alignment":"left","variant":"filled","borderRadius":"smooth","buttonColor":"#000000","textColor":"#ffffff","showIfKey":null,"paddingTop":10,"paddingRight":32,"paddingBottom":10,"paddingLeft":32,"width":"auto","aliasFor":null}},{"type":"button","attrs":{"text":"Button current variable link","isTextVariable":false,"url":"current.button_link","isUrlVariable":true,"alignment":"left","variant":"filled","borderRadius":"smooth","buttonColor":"#000000","textColor":"#ffffff","showIfKey":null,"paddingTop":10,"paddingRight":32,"paddingBottom":10,"paddingLeft":32,"width":"auto","aliasFor":"payload.items.button_link"}},{"type":"button","attrs":{"text":"Button static link","isTextVariable":false,"url":"https://button.static.link","isUrlVariable":false,"alignment":"left","variant":"filled","borderRadius":"smooth","buttonColor":"#000000","textColor":"#ffffff","showIfKey":null,"paddingTop":10,"paddingRight":32,"paddingBottom":10,"paddingLeft":32,"width":"auto","aliasFor":null}},{"type":"horizontalRule"},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","text":"Just the image"}]},{"type":"image","attrs":{"src":"https://prod-novu-app-bucket.s3.us-east-1.amazonaws.com/assets/email-editor/header-hero-image.webp","alt":null,"title":null,"width":566,"height":153.24909747292418,"alignment":"center","externalLink":null,"isExternalLinkVariable":false,"borderRadius":0,"isSrcVariable":false,"aspectRatio":3.6933333333333334,"lockAspectRatio":true,"showIfKey":null,"aliasFor":null}},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","text":"Image variable"}]},{"type":"image","attrs":{"src":"payload.items.image","alt":null,"title":null,"width":"auto","height":"auto","alignment":"center","externalLink":null,"isExternalLinkVariable":false,"borderRadius":0,"isSrcVariable":true,"aspectRatio":null,"lockAspectRatio":true,"showIfKey":null,"aliasFor":null}},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","text":"Image current variable"}]},{"type":"image","attrs":{"src":"current.image","alt":null,"title":null,"width":"auto","height":"auto","alignment":"center","externalLink":null,"isExternalLinkVariable":false,"borderRadius":0,"isSrcVariable":true,"aspectRatio":null,"lockAspectRatio":true,"showIfKey":null,"aliasFor":"payload.items.image"}},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","text":"Image link variable"}]},{"type":"image","attrs":{"src":"https://prod-novu-app-bucket.s3.us-east-1.amazonaws.com/assets/email-editor/header-hero-image.webp","alt":null,"title":null,"width":566,"height":153.24909747292418,"alignment":"center","externalLink":"payload.items.image_link","isExternalLinkVariable":true,"borderRadius":0,"isSrcVariable":false,"aspectRatio":3.6933333333333334,"lockAspectRatio":true,"showIfKey":null,"aliasFor":null}},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","text":"Image current link variable"}]},{"type":"image","attrs":{"src":"https://prod-novu-app-bucket.s3.us-east-1.amazonaws.com/assets/email-editor/header-hero-image.webp","alt":null,"title":null,"width":566,"height":153.24909747292418,"alignment":"center","externalLink":"current.image_link","isExternalLinkVariable":true,"borderRadius":0,"isSrcVariable":false,"aspectRatio":3.6933333333333334,"lockAspectRatio":true,"showIfKey":null,"aliasFor":"payload.items.image_link"}},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","text":"Image static link"}]},{"type":"image","attrs":{"src":"https://prod-novu-app-bucket.s3.us-east-1.amazonaws.com/assets/email-editor/header-hero-image.webp","alt":null,"title":null,"width":566,"height":153.24909747292418,"alignment":"center","externalLink":"https://image.static.link","isExternalLinkVariable":false,"borderRadius":0,"isSrcVariable":false,"aspectRatio":3.6933333333333334,"lockAspectRatio":true,"showIfKey":null,"aliasFor":null}},{"type":"horizontalRule"},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","text":"Inline image"}]},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"inlineImage","attrs":{"height":20,"width":20,"src":"https://maily.to/brand/logo.png","isSrcVariable":false,"alt":null,"title":null,"externalLink":null,"isExternalLinkVariable":false,"aliasFor":null}}]},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","text":"Inline image variable"}]},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"inlineImage","attrs":{"height":20,"width":20,"src":"payload.items.inline_image","isSrcVariable":true,"alt":null,"title":null,"externalLink":null,"isExternalLinkVariable":false,"aliasFor":null}}]},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","text":"Inline image current variable"}]},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"inlineImage","attrs":{"height":20,"width":20,"src":"current.inline_image","isSrcVariable":true,"alt":null,"title":null,"externalLink":null,"isExternalLinkVariable":false,"aliasFor":"payload.items.inline_image"}}]},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","text":"Inline image link variable"}]},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"inlineImage","attrs":{"height":20,"width":20,"src":"https://maily.to/brand/logo.png","isSrcVariable":false,"alt":null,"title":null,"externalLink":"payload.items.inline_image_link","isExternalLinkVariable":true,"aliasFor":null}}]},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","text":"Inline image current link variable"}]},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"inlineImage","attrs":{"height":20,"width":20,"src":"https://maily.to/brand/logo.png","isSrcVariable":false,"alt":null,"title":null,"externalLink":"current.inline_image_link","isExternalLinkVariable":true,"aliasFor":"payload.items.inline_image_link"}}]},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","text":"Inline image static link"}]},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"inlineImage","attrs":{"height":20,"width":20,"src":"https://maily.to/brand/logo.png","isSrcVariable":false,"alt":null,"title":null,"externalLink":"https://inline_image.static.link","isExternalLinkVariable":false,"aliasFor":null}}]},{"type":"horizontalRule"},{"type":"orderedList","attrs":{"start":1},"content":[{"type":"listItem","attrs":{"color":null},"content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","text":"Just the numbered list"}]}]},{"type":"listItem","attrs":{"color":null},"content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","marks":[{"type":"link","attrs":{"href":"payload.items.numbered_link","target":"_blank","rel":"noopener noreferrer nofollow","class":null,"isUrlVariable":true,"aliasFor":null}},{"type":"underline"}],"text":"Numbered variable link"}]}]},{"type":"listItem","attrs":{"color":null},"content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","marks":[{"type":"link","attrs":{"href":"current.numbered_link","target":"_blank","rel":"noopener noreferrer nofollow","class":null,"isUrlVariable":true,"aliasFor":"payload.items.numbered_link"}},{"type":"underline"}],"text":"Numbered current variable link"}]}]},{"type":"listItem","attrs":{"color":null},"content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","marks":[{"type":"link","attrs":{"href":"https://numbered.static.link","target":"_blank","rel":"noopener noreferrer nofollow","class":null,"isUrlVariable":false,"aliasFor":null}},{"type":"underline"}],"text":"Numbered static link"}]}]}]},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null}}]},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null}}]}',
+      subject: 'all email editor components that support links inside the repeat block',
+    };
+    const previewResponse = await novuClient.workflows.steps.generatePreview({
+      generatePreviewRequestDto: { controlValues, previewPayload: {} },
+      stepId: emailStepDatabaseId,
+      workflowId,
+    });
+
+    const countOccurrences = (str: string, searchStr: string) => (str.match(new RegExp(searchStr, 'g')) || []).length;
+
+    // paragraph
+    expect(previewResponse.result.result.preview.body).to.contain('Just the paragraph');
+    expect(previewResponse.result.result.preview.body).to.contain('Paragraph variable link');
+    expect(previewResponse.result.result.preview.body).to.contain('Paragraph current variable link');
+    expect(countOccurrences(previewResponse.result.result.preview.body, 'href="paragraph_link"')).to.equal(
+      DEFAULT_ARRAY_ELEMENTS * 2
+    );
+    expect(previewResponse.result.result.preview.body).to.contain('Paragraph static link');
+    expect(previewResponse.result.result.preview.body).to.contain('href="https://paragraph.static.link"');
+
+    // heading
+    expect(previewResponse.result.result.preview.body).to.contain('Just the heading');
+    expect(previewResponse.result.result.preview.body).to.contain('Heading variable link');
+    expect(previewResponse.result.result.preview.body).to.contain('Heading current variable link');
+    expect(countOccurrences(previewResponse.result.result.preview.body, 'href="heading_link"')).to.equal(
+      DEFAULT_ARRAY_ELEMENTS * 2
+    );
+    expect(previewResponse.result.result.preview.body).to.contain('Heading static link');
+    expect(previewResponse.result.result.preview.body).to.contain('href="https://heading.static.link"');
+
+    // blockquote
+    expect(previewResponse.result.result.preview.body).to.contain('Just the blockquote');
+    expect(previewResponse.result.result.preview.body).to.contain('Blockquote variable link');
+    expect(previewResponse.result.result.preview.body).to.contain('Blockquote current variable link');
+    expect(countOccurrences(previewResponse.result.result.preview.body, 'href="blockquote_link"')).to.equal(
+      DEFAULT_ARRAY_ELEMENTS * 2
+    );
+    expect(previewResponse.result.result.preview.body).to.contain('Blockquote static link');
+    expect(previewResponse.result.result.preview.body).to.contain('href="https://blockquote.static.link"');
+
+    // bullet
+    expect(previewResponse.result.result.preview.body).to.contain('Just the bullet');
+    expect(previewResponse.result.result.preview.body).to.contain('Bullet variable link');
+    expect(previewResponse.result.result.preview.body).to.contain('Bullet current variable link');
+    expect(countOccurrences(previewResponse.result.result.preview.body, 'href="bullet_link"')).to.equal(
+      DEFAULT_ARRAY_ELEMENTS * 2
+    );
+    expect(previewResponse.result.result.preview.body).to.contain('Bullet static link');
+    expect(previewResponse.result.result.preview.body).to.contain('href="https://bullet.static.link"');
+
+    // button
+    expect(previewResponse.result.result.preview.body).to.contain('Just the button');
+    expect(previewResponse.result.result.preview.body).to.contain('Button variable link');
+    expect(previewResponse.result.result.preview.body).to.contain('Button current variable link');
+    expect(countOccurrences(previewResponse.result.result.preview.body, 'href="button_link"')).to.equal(
+      DEFAULT_ARRAY_ELEMENTS * 2
+    );
+    expect(previewResponse.result.result.preview.body).to.contain('Button static link');
+    expect(previewResponse.result.result.preview.body).to.contain('href="https://button.static.link"');
+
+    // image
+    expect(previewResponse.result.result.preview.body).to.contain(
+      '<img title="Image" alt="Image" src="https://prod-novu-app-bucket.s3.us-east-1.amazonaws.com/assets/email-editor/header-hero-image.webp"'
+    );
+    // image current and payload variables should result in same components
+    expect(
+      countOccurrences(previewResponse.result.result.preview.body, '<img title="Image" alt="Image" src="image"')
+    ).to.equal(DEFAULT_ARRAY_ELEMENTS * 2);
+    expect(
+      countOccurrences(
+        previewResponse.result.result.preview.body,
+        '<a href="image_link" rel="noopener noreferrer" style="display:block;max-width:100%;text-decoration:none" target="_blank"><img title="Image" alt="Image" src="https://prod-novu-app-bucket.s3.us-east-1.amazonaws.com/assets/email-editor/header-hero-image.webp"'
+      )
+    ).to.equal(DEFAULT_ARRAY_ELEMENTS * 2);
+    expect(previewResponse.result.result.preview.body).to.contain(
+      '<a href="https://image.static.link" rel="noopener noreferrer" style="display:block;max-width:100%;text-decoration:none" target="_blank"><img title="Image" alt="Image" src="https://prod-novu-app-bucket.s3.us-east-1.amazonaws.com/assets/email-editor/header-hero-image.webp"'
+    );
+
+    // inline image
+    expect(previewResponse.result.result.preview.body).to.contain('<img src="https://maily.to/brand/logo.png"');
+    expect(countOccurrences(previewResponse.result.result.preview.body, '<img src="inline_image"')).to.equal(
+      DEFAULT_ARRAY_ELEMENTS * 2
+    );
+    expect(
+      countOccurrences(
+        previewResponse.result.result.preview.body,
+        '<a href="inline_image_link" rel="noopener noreferrer" style="display:inline;text-decoration:none" target="_blank"><img src="https://maily.to/brand/logo.png"'
+      )
+    ).to.equal(DEFAULT_ARRAY_ELEMENTS * 2);
+    expect(previewResponse.result.result.preview.body).to.contain(
+      '<a href="https://inline_image.static.link" rel="noopener noreferrer" style="display:inline;text-decoration:none" target="_blank"><img src="https://maily.to/brand/logo.png"'
+    );
+
+    // numbered list
+    expect(previewResponse.result.result.preview.body).to.contain('Just the numbered list');
+    expect(previewResponse.result.result.preview.body).to.contain('Numbered variable link');
+    expect(previewResponse.result.result.preview.body).to.contain('Numbered current variable link');
+    expect(countOccurrences(previewResponse.result.result.preview.body, 'href="numbered_link"')).to.equal(
+      DEFAULT_ARRAY_ELEMENTS * 2
+    );
+    expect(previewResponse.result.result.preview.body).to.contain('Numbered static link');
+    expect(previewResponse.result.result.preview.body).to.contain('href="https://numbered.static.link"');
+
+    expect(previewResponse.result.previewPayloadExample).to.deep.equal({
+      payload: {
+        items: Array(DEFAULT_ARRAY_ELEMENTS).fill({
+          paragraph_link: 'paragraph_link',
+          heading_link: 'heading_link',
+          blockquote_link: 'blockquote_link',
+          bullet_link: 'bullet_link',
+          button_link: 'button_link',
+          image: 'image',
+          image_link: 'image_link',
+          inline_image: 'inline_image',
+          inline_image_link: 'inline_image_link',
+          numbered_link: 'numbered_link',
+        }),
+      },
+    });
+
+    const previewResponse2 = await novuClient.workflows.steps.generatePreview({
+      generatePreviewRequestDto: {
+        controlValues,
+        previewPayload: {
+          payload: {
+            items: Array(DEFAULT_ARRAY_ELEMENTS).fill({
+              paragraph_link: 'https://paragraph_link.com',
+              heading_link: 'https://heading_link.com',
+              blockquote_link: 'https://blockquote_link.com',
+              bullet_link: 'https://bullet_link.com',
+              button_link: 'https://button_link.com',
+              image: 'https://image.com',
+              image_link: 'https://image_link.com',
+              inline_image: 'https://inline_image.com',
+              inline_image_link: 'https://inline_image_link.com',
+              numbered_link: 'https://numbered_link.com',
+            }),
+          },
+        },
+      },
+      stepId: emailStepDatabaseId,
+      workflowId,
+    });
+
+    expect(countOccurrences(previewResponse2.result.result.preview.body, 'href="https://paragraph_link.com"')).to.equal(
+      DEFAULT_ARRAY_ELEMENTS * 2
+    );
+    expect(countOccurrences(previewResponse2.result.result.preview.body, 'href="https://heading_link.com"')).to.equal(
+      DEFAULT_ARRAY_ELEMENTS * 2
+    );
+    expect(
+      countOccurrences(previewResponse2.result.result.preview.body, 'href="https://blockquote_link.com"')
+    ).to.equal(DEFAULT_ARRAY_ELEMENTS * 2);
+    expect(countOccurrences(previewResponse2.result.result.preview.body, 'href="https://bullet_link.com"')).to.equal(
+      DEFAULT_ARRAY_ELEMENTS * 2
+    );
+    expect(countOccurrences(previewResponse2.result.result.preview.body, 'href="https://button_link.com"')).to.equal(
+      DEFAULT_ARRAY_ELEMENTS * 2
+    );
+    expect(countOccurrences(previewResponse2.result.result.preview.body, 'src="https://image.com"')).to.equal(
+      DEFAULT_ARRAY_ELEMENTS * 2
+    );
+    expect(countOccurrences(previewResponse2.result.result.preview.body, 'href="https://image_link.com"')).to.equal(
+      DEFAULT_ARRAY_ELEMENTS * 2
+    );
+    expect(countOccurrences(previewResponse2.result.result.preview.body, 'src="https://inline_image.com"')).to.equal(
+      DEFAULT_ARRAY_ELEMENTS * 2
+    );
+    expect(
+      countOccurrences(previewResponse2.result.result.preview.body, 'href="https://inline_image_link.com"')
+    ).to.equal(DEFAULT_ARRAY_ELEMENTS * 2);
+    expect(countOccurrences(previewResponse2.result.result.preview.body, 'href="https://numbered_link.com"')).to.equal(
+      DEFAULT_ARRAY_ELEMENTS * 2
+    );
+  });
+
   describe('Hydration testing', () => {
     it.skip(` should hydrate previous step in iterator email --> digest`, async () => {
       const { workflowId, emailStepDatabaseId, digestStepId } = await createWorkflowWithEmailLookingAtDigestResult();

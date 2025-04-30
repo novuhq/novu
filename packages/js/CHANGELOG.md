@@ -1,3 +1,13 @@
+## v3.2.0 (2025-04-30)
+
+### 🚀 Features
+
+- **react:** upsert firstName, lastName, and email on session init ([#8142](https://github.com/novuhq/novu/pull/8142))
+
+### ❤️ Thank You
+
+- George Djabarov @djabarovgeorge
+
 ## v3.1.0 (2025-04-11)
 
 ### 🚀 Features

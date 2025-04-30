@@ -5,6 +5,7 @@ import type {
   NotificationFilter,
   PreferencesResponse,
   Session,
+  Subscriber,
 } from '../types';
 import { HttpClient, HttpClientOptions } from './http-client';
 
@@ -23,17 +24,17 @@ export class InboxService {
 
   async initializeSession({
     applicationIdentifier,
-    subscriberId,
     subscriberHash,
+    subscriber,
   }: {
     applicationIdentifier: string;
-    subscriberId: string;
     subscriberHash?: string;
+    subscriber: Subscriber;
   }): Promise<Session> {
     const response = (await this.#httpClient.post(`${INBOX_ROUTE}/session`, {
       applicationIdentifier,
-      subscriberId,
       subscriberHash,
+      subscriber,
     })) as Session;
     this.#httpClient.setAuthorizationToken(response.token);
     this.isSessionInitialized = true;
