@@ -19,7 +19,7 @@ type InboxContextType = {
   navigate: (url?: string, target?: Redirect['target']) => void;
   hideBranding: Accessor<boolean>;
   isDevelopmentMode: Accessor<boolean>;
-  isSnoozeEnabled: Accessor<boolean>;
+  maxSnoozeDurationHours: Accessor<number>;
 };
 
 const InboxContext = createContext<InboxContextType | undefined>(undefined);
@@ -51,7 +51,7 @@ export const InboxProvider = (props: InboxProviderProps) => {
   });
   const [hideBranding, setHideBranding] = createSignal(false);
   const [isDevelopmentMode, setIsDevelopmentMode] = createSignal(false);
-  const [isSnoozeEnabled, setIsSnoozeEnabled] = createSignal(false);
+  const [maxSnoozeDurationHours, setMaxSnoozeDurationHours] = createSignal(0);
   const [preferencesFilter, setPreferencesFilter] = createSignal<PreferencesFilter | undefined>(
     props.preferencesFilter
   );
@@ -113,7 +113,7 @@ export const InboxProvider = (props: InboxProviderProps) => {
 
       setHideBranding(data.removeNovuBranding);
       setIsDevelopmentMode(data.isDevelopmentMode);
-      setIsSnoozeEnabled(data.isSnoozeEnabled);
+      setMaxSnoozeDurationHours(data.maxSnoozeDurationHours);
     },
   });
 
@@ -134,7 +134,7 @@ export const InboxProvider = (props: InboxProviderProps) => {
         hideBranding,
         preferencesFilter,
         isDevelopmentMode,
-        isSnoozeEnabled,
+        maxSnoozeDurationHours,
       }}
     >
       {props.children}

@@ -44,7 +44,7 @@ describe('callWithSession(fn)', () => {
         totalUnreadCount: 10,
         removeNovuBranding: true,
         isDevelopmentMode: true,
-        isSnoozeEnabled: true,
+        maxSnoozeDurationHours: 24,
       },
     });
 
