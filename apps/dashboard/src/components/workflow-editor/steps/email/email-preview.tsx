@@ -1,7 +1,7 @@
 import { Avatar, AvatarImage } from '@/components/primitives/avatar';
 import { MAILY_EMAIL_WIDTH } from '@/components/workflow-editor/steps/email/maily-config';
 import { cn } from '@/utils/ui';
-import { HTMLAttributes, useEffect, useRef } from 'react';
+import { HTMLAttributes, useCallback, useEffect, useRef } from 'react';
 import { RiArrowDownSFill } from 'react-icons/ri';
 
 type EmailPreviewHeaderProps = HTMLAttributes<HTMLDivElement>;
@@ -48,22 +48,57 @@ type EmailPreviewBodyProps = HTMLAttributes<HTMLDivElement> & {
 
 export const EmailPreviewBody = (props: EmailPreviewBodyProps) => {
   const { body, className, ...rest } = props;
+  const refNode = useRef<HTMLDivElement | null>(null);
   const shadowRootRef = useRef<ShadowRoot | null>(null);
+
+  const processBody = useCallback((shadowRoot: ShadowRoot, bodyToProcess: string) => {
+    // use a template to parse the full HTML
+    const template = document.createElement('template');
+    template.innerHTML = bodyToProcess;
+
+    const doc = template.content;
+    const style = document.createElement('style');
+    style.textContent = `a {pointer-events: none;}`;
+
+    // find the last style tag and append the new style to it
+    const styleTags = doc.querySelectorAll('style');
+    const lastStyleTag = styleTags[styleTags.length - 1];
+
+    if (lastStyleTag) {
+      lastStyleTag.after(style);
+    }
+
+    // give a bit of time for the dom changes to be applied
+    setTimeout(() => {
+      shadowRoot.innerHTML = template.innerHTML;
+    }, 0);
+  }, []);
+
+  const attachShadow = useCallback(
+    (node: HTMLDivElement | null, bodyToProcess: string) => {
+      if (node && !node.shadowRoot) {
+        // use shadow DOM to isolate the styles
+        const shadowRoot = node.attachShadow({ mode: 'open' });
+        shadowRootRef.current = shadowRoot;
+
+        processBody(shadowRoot, bodyToProcess);
+      }
+    },
+    [processBody]
+  );
 
   useEffect(() => {
     if (!shadowRootRef.current) return;
-    shadowRootRef.current.innerHTML = body;
-  }, [body]);
+
+    processBody(shadowRootRef.current, body);
+  }, [processBody, body]);
 
   return (
     <div
       className={cn(`shadow-xs mx-auto min-h-80 w-full max-w-[${MAILY_EMAIL_WIDTH}px] overflow-auto p-2`, className)}
-      // use shadow DOM to isolate the styles
       ref={(node) => {
-        if (node && !node.shadowRoot) {
-          shadowRootRef.current = node.attachShadow({ mode: 'open' });
-          shadowRootRef.current.innerHTML = body;
-        }
+        refNode.current = node;
+        attachShadow(node, body);
       }}
       {...rest}
     />

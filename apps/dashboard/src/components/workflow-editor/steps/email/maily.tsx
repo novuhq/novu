@@ -126,7 +126,7 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
       {overrideTippyBoxStyles()}
       <div
         className={cn(
-          `shadow-xs mx-auto flex min-h-full max-w-[${MAILY_EMAIL_WIDTH}px] flex-col items-start rounded-lg bg-white`,
+          `shadow-xs mx-auto flex min-h-full max-w-[${MAILY_EMAIL_WIDTH}px] flex-col items-start rounded-lg bg-white [&_a]:pointer-events-none`,
           className
         )}
         {...rest}
