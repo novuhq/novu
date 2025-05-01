@@ -246,7 +246,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
                           appearanceKey="notificationSnooze__dropdownItem"
                           onClick={async (e) => {
                             e.stopPropagation();
-                            await props.notification.snooze(new Date(Date.now() + 2 * 60 * 1000).toUTCString());
+                            await props.notification.snooze(new Date(Date.now() + 2 * 60 * 1000).toISOString());
                           }}
                         >
                           <Clock
@@ -262,7 +262,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
                           onClick={async (e) => {
                             e.stopPropagation();
                             await props.notification.snooze(
-                              new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toUTCString()
+                              new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString()
                             );
                           }}
                         >
@@ -279,7 +279,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
                           onClick={async (e) => {
                             e.stopPropagation();
                             await props.notification.snooze(
-                              new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toUTCString()
+                              new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
                             );
                           }}
                         >
@@ -314,7 +314,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
                           >
                             <SnoozeDateTimePicker
                               onSelect={async (date) => {
-                                await props.notification.snooze(date.toUTCString());
+                                await props.notification.snooze(date.toISOString());
                               }}
                               onCancel={() => {
                                 setIsSnoozeDateTimePickerOpen(false);

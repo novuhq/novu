@@ -76,7 +76,7 @@ export const TimePicker: Component<TimePickerProps> = (props) => {
 
   return (
     <div
-      class={style(local.appearanceKey || 'timePicker', cn('nt-flex nt-items-center nt-gap-2', local.class))}
+      class={style(local.appearanceKey || 'timePicker', cn('nt-flex nt-items-center nt-gap-1', local.class))}
       {...rest}
     >
       <Input
@@ -87,7 +87,10 @@ export const TimePicker: Component<TimePickerProps> = (props) => {
         value={hour()}
         onKeyDown={handleKeyDown}
         onChange={(e) => handleTimeChange('hour', e.currentTarget.value)}
-        class={style('timePickerHour__input', 'nt-text-center nt-w-[calc(2ch+1rem)]')}
+        class={style(
+          'timePickerHour__input',
+          'nt-flex nt-font-mono nt-justify-center nt-items-center nt-text-center nt-h-7 nt-w-[calc(2ch+2rem)] nt-px-2'
+        )}
       />
 
       <span class={style('timePicker__separator', 'nt-text-xl')}>:</span>
@@ -100,11 +103,14 @@ export const TimePicker: Component<TimePickerProps> = (props) => {
         value={minute().toString().padStart(2, '0')}
         onChange={(e) => handleTimeChange('minute', e.currentTarget.value)}
         onKeyDown={handleKeyDown}
-        class={style('timePickerMinute__input', 'nt-text-center nt-w-[calc(2ch+1rem)]')}
+        class={style(
+          'timePickerHour__input',
+          'nt-flex nt-font-mono nt-justify-center nt-items-center nt-text-center nt-h-7 nt-w-[calc(2ch+2rem)] nt-px-2'
+        )}
       />
 
       <select
-        class={style('timePicker__periodSelect', inputVariants({ size: 'sm' }))}
+        class={style('timePicker__periodSelect', `${inputVariants({ size: 'sm' })} nt-h-7 nt-font-mono`)}
         value={isPM() ? 'PM' : 'AM'}
         onChange={(e) => handleTimeChange('period', e.target.value)}
       >

@@ -24,7 +24,7 @@ export const SnoozeDateTimePicker: Component<SnoozeDateTimePickerProps> = (props
   };
 
   return (
-    <div class={style('snoozeDatePicker', 'nt-bg-white nt-rounded-md nt-shadow-lg nt-w-[320px]')}>
+    <div class={style('snoozeDatePicker', 'nt-bg-white nt-rounded-md nt-shadow-lg nt-w-[260px]')}>
       <DatePicker onDateChange={(date) => setSelectedDate(date)}>
         <DatePickerHeader />
 
@@ -38,7 +38,10 @@ export const SnoozeDateTimePicker: Component<SnoozeDateTimePickerProps> = (props
         )}
       >
         <p
-          class={style('snoozeDatePicker__timePickerLabel', 'nt-text-base nt-font-medium nt-text-foreground-alpha-700')}
+          class={style(
+            'snoozeDatePicker__timePickerLabel',
+            'nt-text-sm nt-font-medium nt-text-foreground-alpha-700 nt-p-2'
+          )}
         >
           {t('snooze.datePicker.timePickerLabel')}
         </p>
@@ -46,11 +49,20 @@ export const SnoozeDateTimePicker: Component<SnoozeDateTimePickerProps> = (props
       </div>
 
       <div class={style('snoozeDatePicker__actions', 'nt-flex nt-flex-row nt-justify-end nt-gap-2 nt-p-2')}>
-        <Button appearanceKey="snoozeDatePickerCancel__button" variant="secondary" onClick={props.onCancel}>
+        <Button
+          appearanceKey="snoozeDatePickerCancel__button"
+          variant="secondary"
+          class="nt-h-7 nt-w-[60px] nt-px-2"
+          onClick={props.onCancel}
+        >
           {t('snooze.datePicker.cancel')}
         </Button>
 
-        <Button appearanceKey="snoozeDatePickerApply__button" onClick={onDateTimeSelect}>
+        <Button
+          appearanceKey="snoozeDatePickerApply__button"
+          class="nt-h-7 nt-w-[60px] nt-px-2"
+          onClick={onDateTimeSelect}
+        >
           {t('snooze.datePicker.apply')}
         </Button>
       </div>

@@ -87,18 +87,31 @@ export const DatePickerHeader = (props: DatePickerHeaderProps) => {
     <div
       class={style(
         local.appearanceKey || 'datePickerControl',
-        cn('nt-flex nt-items-center nt-bg-neutral-50 nt-p-2 nt-rounded-lg nt-justify-between', local.class)
+        cn(
+          'nt-flex nt-items-center nt-justify-between nt-gap-1.5 nt-h-7 nt-p-1 nt-mb-2 nt-rounded-lg nt-bg-neutral-50',
+          local.class
+        )
       )}
       {...rest}
     >
-      <Button appearanceKey="datePickerControlPrevTrigger" variant="ghost" onClick={handlePrevMonth}>
-        <ArrowLeft class={style('datePickerControlPrevTrigger__icon', 'nt-size-4')} />
+      <Button
+        appearanceKey="datePickerControlPrevTrigger"
+        variant="ghost"
+        onClick={handlePrevMonth}
+        class="nt-flex nt-justify-center nt-items-center nt-gap-0.5 nt-w-5 nt-h-5 nt-p-0 nt-rounded-md nt-bg-white nt-shadow-[0px_1px_2px_0px_rgba(10,13,20,0.03)]"
+      >
+        <ArrowLeft class={style('datePickerControlPrevTrigger__icon', 'nt-size-4 nt-text-foreground-alpha-700')} />
       </Button>
       <span class={style('datePickerHeaderMonth', 'nt-text-sm nt-font-medium nt-text-foreground-alpha-700')}>
         {viewMonth().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
       </span>
-      <Button appearanceKey="datePickerControlNextTrigger" variant="ghost" onClick={handleNextMonth}>
-        <ArrowRight class={style('datePickerControlNextTrigger__icon', 'nt-size-4')} />
+      <Button
+        appearanceKey="datePickerControlNextTrigger"
+        variant="ghost"
+        onClick={handleNextMonth}
+        class="nt-flex nt-justify-center nt-items-center nt-gap-0.5 nt-w-5 nt-h-5 nt-p-0 nt-rounded-md nt-bg-white nt-shadow-[0px_1px_2px_0px_rgba(10,13,20,0.03)]"
+      >
+        <ArrowRight class={style('datePickerControlNextTrigger__icon', 'nt-size-4 nt-text-foreground-alpha-700')} />
       </Button>
     </div>
   );
@@ -185,8 +198,11 @@ export const DatePickerGridCellTrigger = (props: DatePickerGridCellTriggerProps)
       disabled={!isCurrentMonth}
       onClick={() => setSelectedDate(local.date)}
       class={cn(
-        'nt-size-8 nt-w-full nt-rounded-full nt-flex nt-items-center nt-justify-center',
-        { 'nt-text-muted-foreground nt-opacity-50': !isCurrentMonth },
+        'nt-size-8 nt-w-full nt-rounded-md nt-flex nt-items-center nt-justify-center',
+        {
+          'nt-text-muted-foreground disabled:nt-opacity-20': !isCurrentMonth,
+          'nt-text-foreground-alpha-700': isCurrentMonth,
+        },
         {
           'nt-bg-primary-alpha-300 hover:nt-bg-primary-alpha-400':
             selectedDate()?.toDateString() === local.date.toDateString(),
