@@ -7,11 +7,18 @@ import { TimePicker, TimeValue } from '../primitives/TimePicker';
 import { Tooltip } from '../primitives/Tooltip';
 
 const fiveMinutesFromNow = () => {
-  const now = new Date();
-  const futureTime = new Date(now.getTime() + 5 * 60 * 1000); // current time + 5 minutes
+  const futureTime = new Date(Date.now() + 5 * 60 * 1000);
   const hours = futureTime.getHours();
   const isPM = hours >= 12;
-  const hour = isPM ? (hours === 12 ? 12 : hours - 12) : hours === 0 ? 12 : hours;
+
+  let hour;
+  if (hours === 0) {
+    hour = 12; // 12 AM
+  } else if (hours === 12) {
+    hour = 12; // 12 PM
+  } else {
+    hour = hours % 12; // 1-11 AM/PM
+  }
 
   return {
     hour,
@@ -86,15 +93,11 @@ export const SnoozeDateTimePicker: Component<SnoozeDateTimePickerProps> = (props
     const selectedDateTime = new Date(date);
     selectedDateTime.setHours(hours, timeValue().minute, 0, 0);
 
-    // Minimum time should be at least 2 minutes in the future
-    const minAllowedTime = new Date(now.getTime() + 2 * 60 * 1000);
+    const minAllowedDateTime = new Date(Date.now() + 2 * 60 * 1000); // 2 minutes from now
+    const maxAllowedDateTime = new Date(now.getTime() + props.maxDurationHours * 60 * 60 * 1000);
 
-    const leeway = 1000 * 60 * 2; // 2 minutes
-    const maxDateTime = new Date(now.getTime() + props.maxDurationHours * 60 * 60 * 1000 + leeway);
-
-    // Check if the selected date is in the past, less than 2 minutes in the future,
-    // or exceeds the maximum allowed duration
-    return selectedDateTime < minAllowedTime || selectedDateTime > maxDateTime;
+    // Check if the selected date is too early or too late
+    return selectedDateTime < minAllowedDateTime || selectedDateTime > maxAllowedDateTime;
   };
 
   return (
