@@ -1,9 +1,10 @@
-import { Component, createSignal } from 'solid-js';
+import { Component, createMemo, createSignal, Show } from 'solid-js';
 import { useLocalization } from '../../context/LocalizationContext';
 import { useStyle } from '../../helpers';
 import { Button } from '../primitives/Button';
 import { DatePicker, DatePickerCalendar, DatePickerHeader } from '../primitives/DatePicker';
 import { TimePicker, TimeValue } from '../primitives/TimePicker';
+import { Tooltip } from '../primitives/Tooltip';
 
 interface SnoozeDateTimePickerProps {
   onSelect?: (date: Date) => void;
@@ -26,9 +27,16 @@ export const SnoozeDateTimePicker: Component<SnoozeDateTimePickerProps> = (props
   const maxDays = () => {
     if (!props.maxDurationHours) return undefined;
 
-    // Convert hours to days, rounding up to ensure we have enough days
     return Math.ceil(props.maxDurationHours / 24);
   };
+
+  const applyButtonDisabled = createMemo(() => {
+    if (!selectedDate() || !timeValue() || !props.maxDurationHours) {
+      return true;
+    }
+
+    return selectedDate() && !isDateTimeExceedingLimit();
+  });
 
   const isDateTimeExceedingLimit = () => {
     if (!selectedDate() || !timeValue() || !props.maxDurationHours) {
@@ -81,14 +89,35 @@ export const SnoozeDateTimePicker: Component<SnoozeDateTimePickerProps> = (props
           {t('snooze.datePicker.cancel')}
         </Button>
 
-        <Button
-          appearanceKey="snoozeDatePickerApply__button"
-          class="nt-h-7 nt-w-[60px] nt-px-2"
-          onClick={onDateTimeSelect}
-          disabled={!selectedDate() || isDateTimeExceedingLimit()}
+        <Show
+          when={applyButtonDisabled()}
+          fallback={
+            <Button
+              appearanceKey="snoozeDatePickerApply__button"
+              class="nt-h-7 nt-w-[60px] nt-px-2"
+              onClick={onDateTimeSelect}
+            >
+              {t('snooze.datePicker.apply')}
+            </Button>
+          }
         >
-          {t('snooze.datePicker.apply')}
-        </Button>
+          <Tooltip.Root>
+            <Tooltip.Trigger
+              asChild={(props) => (
+                <Button
+                  appearanceKey="snoozeDatePickerApply__button"
+                  class="nt-h-7 nt-w-[60px] nt-px-2 !nt-pointer-events-auto"
+                  onClick={onDateTimeSelect}
+                  disabled={applyButtonDisabled()}
+                  {...props}
+                >
+                  {t('snooze.datePicker.apply')}
+                </Button>
+              )}
+            />
+            <Tooltip.Content>{t('snooze.datePicker.applyTooltip')}</Tooltip.Content>
+          </Tooltip.Root>
+        </Show>
       </div>
     </div>
   );
