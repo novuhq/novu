@@ -23,7 +23,7 @@ export const defaultLocalization = {
   'notification.actions.archive.tooltip': 'Archive',
   'notification.actions.unarchive.tooltip': 'Unarchive',
   'notification.actions.snooze.tooltip': 'Remind me later',
-  'notification.actions.unsnooze.tooltip': 'Cancel reminder',
+  'notification.actions.unsnooze.tooltip': 'Resolve reminder',
   'notification.remindingLater': 'Reminding later',
   'preferences.title': 'Preferences',
   'preferences.emptyNotice': 'No notification specific preferences yet.',
@@ -37,11 +37,9 @@ export const defaultLocalization = {
   'snooze.options.anHourFromNow': 'An hour from now',
   'snooze.datePicker.applyTooltip': 'Date and time out of range',
   'snooze.options.customTime': 'Custom time...',
-  'snooze.options.inOneHour': 'in 1 hour',
-  'snooze.options.inTwoHours': 'in 2 hours',
-  'snooze.options.inTwelveHours': 'in 12 hours',
-  'snooze.options.inOneDay': 'in 1 day',
-  'snooze.options.inOneWeek': 'in 1 week',
+  'snooze.options.inTwelveHours': 'In 12 hours',
+  'snooze.options.inOneDay': 'Tomorrow',
+  'snooze.options.inOneWeek': 'Next',
 } as const;
 
 export const [dynamicLocalization, setDynamicLocalization] = createSignal<Record<string, string>>({});

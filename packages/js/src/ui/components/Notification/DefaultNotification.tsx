@@ -28,14 +28,9 @@ import { SnoozeDateTimePicker } from './SnoozeDateTimePicker';
 
 const SNOOZE_PRESETS = [
   {
-    key: 'snooze.options.inOneHour',
+    key: 'snooze.options.anHourFromNow',
     hours: 1,
     getDate: () => new Date(Date.now() + 1 * 60 * 60 * 1000),
-  },
-  {
-    key: 'snooze.options.inTwoHours',
-    hours: 2,
-    getDate: () => new Date(Date.now() + 2 * 60 * 60 * 1000),
   },
   {
     key: 'snooze.options.inTwelveHours',
@@ -57,6 +52,37 @@ const SNOOZE_PRESETS = [
   hours: number;
   getDate: () => Date;
 }[];
+
+const formatSnoozeOption = (
+  preset: (typeof SNOOZE_PRESETS)[number],
+  t: (key: LocalizationKey) => string,
+  locale: string
+): string => {
+  const date = preset.getDate();
+
+  // For hour-based presets (1 hour, 12 hours), just show the translation without time
+  if (preset.hours <= 12) {
+    return t(preset.key);
+  }
+
+  // Format time (e.g., "9:00 AM")
+  const timeString = new Intl.DateTimeFormat(locale, { hour: 'numeric', minute: 'numeric' }).format(date);
+
+  // For one day (tomorrow)
+  if (preset.key === 'snooze.options.inOneDay') {
+    return `${t(preset.key)}, ${timeString}`;
+  }
+
+  // For weekly option, show "Next Monday" etc.
+  if (preset.key === 'snooze.options.inOneWeek') {
+    // Get the day name (e.g., "Monday")
+    const dayName = new Intl.DateTimeFormat(locale, { weekday: 'long' }).format(date);
+    return `Next ${dayName}, ${timeString}`;
+  }
+
+  // Fallback to original translation
+  return `${t(preset.key)}, ${timeString}`;
+};
 
 type DefaultNotificationProps = {
   notification: Notification;
@@ -296,7 +322,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
                                   'nt-size-3 nt-text-foreground-alpha-400'
                                 )}
                               />
-                              {t(preset.key)}
+                              {formatSnoozeOption(preset, t, locale())}
                             </Dropdown.Item>
                           )}
                         </For>
