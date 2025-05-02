@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { EnvironmentEntity, OrganizationEntity, UserEntity, UserRepository } from '@novu/dal';
+import { EnvironmentEntity, OrganizationEntity, UserEntity, CommunityUserRepository } from '@novu/dal';
 import {
   EmailProviderIdEnum,
   FeatureFlagsKeysEnum,
@@ -22,7 +22,7 @@ export class GetNovuProviderCredentials {
   constructor(
     private analyticsService: AnalyticsService,
     protected calculateLimitNovuIntegration: CalculateLimitNovuIntegration,
-    private userRepository: UserRepository,
+    private userRepository: CommunityUserRepository,
     private featureFlagService: FeatureFlagsService,
   ) {}
 

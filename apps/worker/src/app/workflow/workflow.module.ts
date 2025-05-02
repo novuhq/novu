@@ -91,7 +91,7 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
   return modules;
 };
 
-const REPOSITORIES = [JobRepository, CommunityOrganizationRepository, PreferencesRepository, UserRepository];
+const REPOSITORIES = [JobRepository, CommunityOrganizationRepository, PreferencesRepository, CommunityUserRepository];
 
 const USE_CASES = [
   AddDelayJob,
