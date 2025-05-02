@@ -26,54 +26,6 @@ export const TimePicker: Component<TimePickerProps> = (props) => {
   const [minute, setMinute] = createSignal(initialValue.minute);
   const [isPM, setIsPM] = createSignal(initialValue.isPM);
 
-  const handleTimeChange = (type: 'hour' | 'minute' | 'period', value: string | number) => {
-    const newValue: TimeValue = {
-      hour: hour(),
-      minute: minute(),
-      isPM: isPM(),
-    };
-
-    if (type === 'hour') {
-      const hourValue = Math.min(12, Math.max(1, Number(value) || 1));
-      setHour(hourValue);
-      newValue.hour = hourValue;
-    } else if (type === 'minute') {
-      const minuteValue = Math.min(59, Math.max(0, Number(value) || 0));
-      setMinute(minuteValue);
-      newValue.minute = minuteValue;
-    } else if (type === 'period') {
-      const isPmValue = value === 'PM';
-      setIsPM(isPmValue);
-      newValue.isPM = isPmValue;
-    }
-
-    local.onChange?.(newValue);
-  };
-
-  const handleKeyDown = (e: KeyboardEvent) => {
-    // Only allow numbers, backspace, delete, arrow keys, and tab
-    const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab'];
-    if (!allowedKeys.includes(e.key) && !/[0-9]/.test(e.key)) {
-      e.preventDefault();
-    }
-  };
-
-  const toDate = (value: TimeValue): Date => {
-    const date = new Date();
-    let hours = value.hour;
-
-    // Convert to 24-hour format
-    if (value.isPM && hours !== 12) {
-      hours += 12;
-    } else if (!value.isPM && hours === 12) {
-      hours = 0;
-    }
-
-    date.setHours(hours, value.minute, 0, 0);
-
-    return date;
-  };
-
   return (
     <div
       class={style(local.appearanceKey || 'timePicker', cn('nt-flex nt-items-center nt-gap-1', local.class))}
@@ -84,9 +36,11 @@ export const TimePicker: Component<TimePickerProps> = (props) => {
         type="number"
         min="1"
         max="12"
-        value={hour()}
-        onKeyDown={handleKeyDown}
-        onChange={(e) => handleTimeChange('hour', e.currentTarget.value)}
+        value={hour().toString()}
+        onInput={(e) => {
+          enforceMinMax(e.currentTarget);
+          setHour(Number(e.currentTarget.value));
+        }}
         class={style(
           'timePickerHour__input',
           'nt-flex nt-font-mono nt-justify-center nt-items-center nt-text-center nt-h-7 nt-w-[calc(2ch+2rem)] nt-px-2'
@@ -100,9 +54,11 @@ export const TimePicker: Component<TimePickerProps> = (props) => {
         type="number"
         min="0"
         max="59"
-        value={minute().toString().padStart(2, '0')}
-        onChange={(e) => handleTimeChange('minute', e.currentTarget.value)}
-        onKeyDown={handleKeyDown}
+        value={minute().toString()}
+        onInput={(e) => {
+          enforceMinMax(e.currentTarget);
+          setMinute(Number(e.currentTarget.value));
+        }}
         class={style(
           'timePickerHour__input',
           'nt-flex nt-font-mono nt-justify-center nt-items-center nt-text-center nt-h-7 nt-w-[calc(2ch+2rem)] nt-px-2'
@@ -112,7 +68,9 @@ export const TimePicker: Component<TimePickerProps> = (props) => {
       <select
         class={style('timePicker__periodSelect', `${inputVariants({ size: 'sm' })} nt-h-7 nt-font-mono`)}
         value={isPM() ? 'PM' : 'AM'}
-        onChange={(e) => handleTimeChange('period', e.target.value)}
+        onChange={(e) => {
+          setIsPM(e.target.value === 'PM');
+        }}
       >
         <option value="AM">AM</option>
         <option value="PM">PM</option>
@@ -121,33 +79,26 @@ export const TimePicker: Component<TimePickerProps> = (props) => {
   );
 };
 
-// Helper to convert TimeValue to 24-hour string format (HH:MM)
-export const timeValueToString = (value: TimeValue): string => {
-  let hours = value.hour;
+const enforceMinMax = (el: HTMLInputElement) => {
+  if (el.value !== '') {
+    const value = parseInt(el.value, 10);
+    const min = parseInt(el.min, 10);
+    const max = parseInt(el.max, 10);
 
-  // Convert to 24-hour format
-  if (value.isPM && hours !== 12) {
-    hours += 12;
-  } else if (!value.isPM && hours === 12) {
-    hours = 0;
+    if (value < min || value > max) {
+      // Reject the extra digit by reverting to the previous valid value
+      // eslint-disable-next-line no-param-reassign
+      el.value = el.value.slice(0, -1);
+
+      // If still invalid after removing the last digit, set to min/max
+      const newValue = parseInt(el.value, 10);
+      if (Number.isNaN(newValue) || newValue < min) {
+        // eslint-disable-next-line no-param-reassign
+        el.value = el.min;
+      } else if (newValue > max) {
+        // eslint-disable-next-line no-param-reassign
+        el.value = el.max;
+      }
+    }
   }
-
-  return `${hours.toString().padStart(2, '0')}:${value.minute.toString().padStart(2, '0')}`;
-};
-
-// Helper to convert Date object to TimeValue
-export const dateToTimeValue = (date: Date): TimeValue => {
-  const hours24 = date.getHours();
-  const isPM = hours24 >= 12;
-  let hour = hours24 % 12;
-
-  if (hour === 0) {
-    hour = 12;
-  }
-
-  return {
-    hour,
-    minute: date.getMinutes(),
-    isPM,
-  };
 };
