@@ -95,7 +95,7 @@ export class SendMessageEmail extends SendMessageBase {
     } catch (e) {
       let detailEnum = DetailEnum.LIMIT_PASSED_NOVU_INTEGRATION;
 
-      if (e.message.includes('does not belong to any member of the organization')) {
+      if (e.message.includes('does not match the current logged-in user')) {
         detailEnum = DetailEnum.SUBSCRIBER_NOT_MEMBER_OF_ORGANIZATION;
       }
 
