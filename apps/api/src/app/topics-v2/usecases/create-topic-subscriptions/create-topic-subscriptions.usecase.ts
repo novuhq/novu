@@ -9,7 +9,11 @@ import {
   TopicSubscribersEntity,
   TopicSubscribersRepository,
 } from '@novu/dal';
-import { ISubscriptionData, ISubscriptionError, ITopicSubscriptionResult } from '../../dtos/subscription-interfaces';
+import {
+  CreateTopicSubscriptionsResponseDto,
+  SubscriptionDto,
+  SubscriptionErrorDto,
+} from '../../dtos/create-topic-subscriptions-response.dto';
 import { UpsertTopicUseCase } from '../upsert-topic/upsert-topic.usecase';
 import { CreateTopicSubscriptionsCommand } from './create-topic-subscriptions.command';
 
@@ -23,7 +27,7 @@ export class CreateTopicSubscriptionsUsecase {
   ) {}
 
   @InstrumentUsecase()
-  async execute(command: CreateTopicSubscriptionsCommand): Promise<ITopicSubscriptionResult> {
+  async execute(command: CreateTopicSubscriptionsCommand): Promise<CreateTopicSubscriptionsResponseDto> {
     // Use upsert topic usecase to create the topic if it doesn't exist
     await this.upsertTopicUseCase.execute({
       environmentId: command.environmentId,
@@ -43,8 +47,8 @@ export class CreateTopicSubscriptionsUsecase {
       throw new Error(`Topic with key ${command.topicKey} not found after upsert`);
     }
 
-    const errors: ISubscriptionError[] = [];
-    const subscriptionData: ISubscriptionData[] = [];
+    const errors: SubscriptionErrorDto[] = [];
+    const subscriptionData: SubscriptionDto[] = [];
 
     const foundSubscribers = await this.subscriberRepository.searchByExternalSubscriberIds({
       _environmentId: command.environmentId,
@@ -118,8 +122,8 @@ export class CreateTopicSubscriptionsUsecase {
               updatedAt: subscriber.updatedAt,
             }
           : null,
-        createdAt: subscription.createdAt,
-        updatedAt: subscription.updatedAt,
+        createdAt: subscription.createdAt ?? '',
+        updatedAt: subscription.updatedAt ?? '',
       });
     }
 

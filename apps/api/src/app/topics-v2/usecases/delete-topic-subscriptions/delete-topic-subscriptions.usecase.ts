@@ -1,7 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InstrumentUsecase } from '@novu/application-generic';
 import { SubscriberRepository, TopicRepository, TopicSubscribersRepository } from '@novu/dal';
-import { ISubscriptionData, ISubscriptionError, ITopicSubscriptionResult } from '../../dtos/subscription-interfaces';
+import {
+  DeleteTopicSubscriptionsResponseDto,
+  SubscriptionDto,
+  SubscriptionsDeleteErrorDto,
+} from '../../dtos/delete-topic-subscriptions-response.dto';
 import { DeleteTopicSubscriptionsCommand } from './delete-topic-subscriptions.command';
 
 @Injectable()
@@ -13,7 +17,7 @@ export class DeleteTopicSubscriptionsUsecase {
   ) {}
 
   @InstrumentUsecase()
-  async execute(command: DeleteTopicSubscriptionsCommand): Promise<ITopicSubscriptionResult> {
+  async execute(command: DeleteTopicSubscriptionsCommand): Promise<DeleteTopicSubscriptionsResponseDto> {
     const topic = await this.topicRepository.findTopicByKey(
       command.topicKey,
       command.organizationId,
@@ -24,8 +28,8 @@ export class DeleteTopicSubscriptionsUsecase {
       throw new NotFoundException(`Topic with key ${command.topicKey} not found`);
     }
 
-    const errors: ISubscriptionError[] = [];
-    const subscriptionData: ISubscriptionData[] = [];
+    const errors: SubscriptionsDeleteErrorDto[] = [];
+    const subscriptionData: SubscriptionDto[] = [];
 
     if (command.subscriberIds.length === 0) {
       return {
