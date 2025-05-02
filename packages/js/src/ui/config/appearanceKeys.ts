@@ -121,7 +121,7 @@ export const appearanceKeys = [
   'notificationUnread__button',
   'notificationArchive__button',
   'notificationUnarchive__button',
-  'notiticationSnooze__button',
+  'notificationSnooze__button',
   'notificationUnsnooze__button',
   'notificationRead__icon',
   'notificationUnread__icon',
