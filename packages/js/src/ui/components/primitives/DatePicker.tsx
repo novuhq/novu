@@ -6,6 +6,8 @@ import { ArrowRight } from '../../icons/ArrowRight';
 import { AppearanceKey } from '../../types';
 import { Button } from './Button';
 
+const DEFAULT_MAX_DAYS = 90;
+
 type DatePickerContextType = {
   currentDate: Accessor<Date>;
   setCurrentDate: (date: Date) => void;
@@ -13,6 +15,7 @@ type DatePickerContextType = {
   setViewMonth: (date: Date) => void;
   selectedDate: Accessor<Date | null>;
   setSelectedDate: (date: Date | null) => void;
+  maxDays: Accessor<number>;
 };
 
 const DatePickerContext = createContext<DatePickerContextType>({
@@ -22,6 +25,7 @@ const DatePickerContext = createContext<DatePickerContextType>({
   setViewMonth: () => {},
   selectedDate: () => null,
   setSelectedDate: () => {},
+  maxDays: () => DEFAULT_MAX_DAYS,
 });
 
 export const useDatePicker = () => useContext(DatePickerContext);
@@ -30,14 +34,18 @@ type DatePickerProps = JSX.IntrinsicElements['div'] & {
   appearanceKey?: AppearanceKey;
   value?: Date | string;
   onDateChange?: (date: Date | null) => void;
+  maxDays?: number;
   children: JSX.Element;
 };
 export const DatePicker = (props: DatePickerProps) => {
-  const [local, rest] = splitProps(props, ['children', 'value', 'onDateChange', 'class']);
+  const [local, rest] = splitProps(props, ['children', 'value', 'onDateChange', 'class', 'maxDays']);
 
   const style = useStyle();
-  const [currentDate, setCurrentDate] = createSignal(new Date());
-  const [viewMonth, setViewMonth] = createSignal(new Date());
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const [currentDate, setCurrentDate] = createSignal(today);
+  const [viewMonth, setViewMonth] = createSignal(today);
   const [selectedDate, setSelectedDate] = createSignal(local.value ? new Date(local.value) : null);
 
   const handleDateSelect = (date: Date | null) => {
@@ -56,6 +64,7 @@ export const DatePicker = (props: DatePickerProps) => {
         setViewMonth,
         selectedDate,
         setSelectedDate: handleDateSelect,
+        maxDays: () => props.maxDays || DEFAULT_MAX_DAYS,
       }}
     >
       <div class={style('datePicker', cn('nt-p-2', local.class))} {...rest}>
@@ -69,18 +78,61 @@ type DatePickerHeaderProps = JSX.IntrinsicElements['div'] & { appearanceKey?: Ap
 export const DatePickerHeader = (props: DatePickerHeaderProps) => {
   const [local, rest] = splitProps(props, ['class', 'appearanceKey', 'children']);
   const style = useStyle();
-  const { viewMonth, setViewMonth } = useDatePicker();
+  const { viewMonth, setViewMonth, currentDate, maxDays } = useDatePicker();
 
   const handlePrevMonth = () => {
     const date = new Date(viewMonth());
     date.setMonth(date.getMonth() - 1);
+
+    // Don't allow navigating to months before the current month
+    const currentMonth = currentDate();
+    if (
+      date.getFullYear() < currentMonth.getFullYear() ||
+      (date.getFullYear() === currentMonth.getFullYear() && date.getMonth() < currentMonth.getMonth())
+    ) {
+      return;
+    }
+
     setViewMonth(date);
   };
 
   const handleNextMonth = () => {
     const date = new Date(viewMonth());
     date.setMonth(date.getMonth() + 1);
+
+    const maxDaysValue = maxDays();
+    if (maxDaysValue) {
+      const maxDate = new Date(currentDate());
+      maxDate.setDate(maxDate.getDate() + maxDaysValue);
+
+      if (
+        date.getFullYear() > maxDate.getFullYear() ||
+        (date.getFullYear() === maxDate.getFullYear() && date.getMonth() > maxDate.getMonth())
+      ) {
+        return;
+      }
+    }
+
     setViewMonth(date);
+  };
+
+  const isPrevDisabled = () => {
+    const current = currentDate();
+    const view = viewMonth();
+
+    return view.getFullYear() === current.getFullYear() && view.getMonth() === current.getMonth();
+  };
+
+  const isNextDisabled = () => {
+    const maxDaysValue = maxDays();
+    if (!maxDaysValue) return false;
+
+    const view = viewMonth();
+
+    const maxDate = new Date(currentDate());
+    maxDate.setDate(maxDate.getDate() + maxDaysValue);
+
+    return view.getFullYear() === maxDate.getFullYear() && view.getMonth() === maxDate.getMonth();
   };
 
   return (
@@ -98,6 +150,7 @@ export const DatePickerHeader = (props: DatePickerHeaderProps) => {
         appearanceKey="datePickerControlPrevTrigger"
         variant="ghost"
         onClick={handlePrevMonth}
+        disabled={isPrevDisabled()}
         class="nt-flex nt-justify-center nt-items-center nt-gap-0.5 nt-w-5 nt-h-5 nt-p-0 nt-rounded-md nt-bg-white nt-shadow-[0px_1px_2px_0px_rgba(10,13,20,0.03)]"
       >
         <ArrowLeft class={style('datePickerControlPrevTrigger__icon', 'nt-size-4 nt-text-foreground-alpha-700')} />
@@ -109,6 +162,7 @@ export const DatePickerHeader = (props: DatePickerHeaderProps) => {
         appearanceKey="datePickerControlNextTrigger"
         variant="ghost"
         onClick={handleNextMonth}
+        disabled={isNextDisabled()}
         class="nt-flex nt-justify-center nt-items-center nt-gap-0.5 nt-w-5 nt-h-5 nt-p-0 nt-rounded-md nt-bg-white nt-shadow-[0px_1px_2px_0px_rgba(10,13,20,0.03)]"
       >
         <ArrowRight class={style('datePickerControlNextTrigger__icon', 'nt-size-4 nt-text-foreground-alpha-700')} />
@@ -187,21 +241,39 @@ export const DatePickerGridCell = (props: DatePickerGridCellProps) => {
 type DatePickerGridCellTriggerProps = JSX.IntrinsicElements['button'] & { appearanceKey?: AppearanceKey; date: Date };
 export const DatePickerGridCellTrigger = (props: DatePickerGridCellTriggerProps) => {
   const [local, rest] = splitProps(props, ['class', 'appearanceKey', 'date']);
-  const { selectedDate, viewMonth, setSelectedDate } = useDatePicker();
+  const { selectedDate, viewMonth, setSelectedDate, currentDate, maxDays } = useDatePicker();
 
   const isCurrentMonth = props.date.getMonth() === viewMonth().getMonth();
+
+  const isPastDate = () => {
+    const today = currentDate();
+
+    return props.date < today;
+  };
+
+  const isFutureDate = () => {
+    const maxDaysValue = maxDays();
+    if (!maxDaysValue) return false;
+
+    const maxDate = new Date(currentDate());
+    maxDate.setDate(maxDate.getDate() + maxDaysValue);
+
+    return props.date > maxDate;
+  };
+
+  const isDisabled = !isCurrentMonth || isPastDate() || isFutureDate();
 
   return (
     <Button
       appearanceKey="datePickerCalendarDay__button"
       variant="ghost"
-      disabled={!isCurrentMonth}
+      disabled={isDisabled}
       onClick={() => setSelectedDate(local.date)}
       class={cn(
         'nt-size-8 nt-w-full nt-rounded-md nt-flex nt-items-center nt-justify-center',
         {
-          'nt-text-muted-foreground disabled:nt-opacity-20': !isCurrentMonth,
-          'nt-text-foreground-alpha-700': isCurrentMonth,
+          'nt-text-muted-foreground disabled:nt-opacity-20': !isCurrentMonth || isPastDate(),
+          'nt-text-foreground-alpha-700': isCurrentMonth && !isPastDate() && !isFutureDate(),
         },
         {
           'nt-bg-primary-alpha-300 hover:nt-bg-primary-alpha-400':
@@ -215,10 +287,15 @@ export const DatePickerGridCellTrigger = (props: DatePickerGridCellTriggerProps)
   );
 };
 
-// Full DatePicker with all components
-export const DatePickerWithContext = ({ onDateChange }: { onDateChange?: (date: Date | null) => void }) => {
+export const DatePickerWithContext = ({
+  onDateChange,
+  maxDays,
+}: {
+  onDateChange?: (date: Date | null) => void;
+  maxDays?: number;
+}) => {
   return (
-    <DatePicker onDateChange={onDateChange}>
+    <DatePicker onDateChange={onDateChange} maxDays={maxDays}>
       <DatePickerHeader />
       <DatePickerCalendar />
     </DatePicker>
@@ -233,34 +310,26 @@ export const DatePickerCalendar = (props: DatePickerCalendarProps) => {
   const style = useStyle();
   const { viewMonth } = useDatePicker();
 
-  // Generate days for the current month view
   const getDaysInMonth = () => {
     const year = viewMonth().getFullYear();
     const month = viewMonth().getMonth();
 
-    // Get first day of the month
     const firstDay = new Date(year, month, 1);
-    // Get days in month
     const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-    // Get the day of the week the first day falls on (0-6, Sunday-Saturday)
     const startingDay = firstDay.getDay();
 
-    // Generate array of date objects for the month
     const days: Date[] = [];
 
-    // Add previous month's days to fill the first row
     for (let i = 0; i < startingDay; i += 1) {
       const prevMonthDay = new Date(year, month, -i);
       days.unshift(prevMonthDay);
     }
 
-    // Add days of the current month
     for (let i = 1; i <= daysInMonth; i += 1) {
       days.push(new Date(year, month, i));
     }
 
-    // Add days to complete the last row if needed
     const remainingCells = 7 - (days.length % 7);
     if (remainingCells < 7) {
       for (let i = 1; i <= remainingCells; i += 1) {

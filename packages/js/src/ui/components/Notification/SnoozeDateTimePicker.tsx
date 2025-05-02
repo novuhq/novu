@@ -8,6 +8,7 @@ import { TimePicker, TimeValue } from '../primitives/TimePicker';
 interface SnoozeDateTimePickerProps {
   onSelect?: (date: Date) => void;
   onCancel?: () => void;
+  maxDurationHours?: number;
 }
 
 export const SnoozeDateTimePicker: Component<SnoozeDateTimePickerProps> = (props) => {
@@ -22,10 +23,32 @@ export const SnoozeDateTimePicker: Component<SnoozeDateTimePickerProps> = (props
       props.onSelect?.(new Date(date.setHours(timeValue().hour, timeValue().minute, 0, 0)));
     }
   };
+  const maxDays = () => {
+    if (!props.maxDurationHours) return undefined;
+
+    // Convert hours to days, rounding up to ensure we have enough days
+    return Math.ceil(props.maxDurationHours / 24);
+  };
+
+  const isDateTimeExceedingLimit = () => {
+    if (!selectedDate() || !timeValue() || !props.maxDurationHours) {
+      return false;
+    }
+
+    const now = new Date();
+    const date = new Date(selectedDate()!);
+    const selectedDateTime = new Date(
+      date.setHours(timeValue().isPM ? timeValue().hour + 12 : timeValue().hour, timeValue().minute, 0, 0)
+    );
+
+    const maxDateTime = new Date(now.getTime() + props.maxDurationHours * 60 * 60 * 1000);
+
+    return selectedDateTime > maxDateTime;
+  };
 
   return (
     <div class={style('snoozeDatePicker', 'nt-bg-white nt-rounded-md nt-shadow-lg nt-w-[260px]')}>
-      <DatePicker onDateChange={(date) => setSelectedDate(date)}>
+      <DatePicker onDateChange={(date) => setSelectedDate(date)} maxDays={maxDays()}>
         <DatePickerHeader />
 
         <DatePickerCalendar />
@@ -62,6 +85,7 @@ export const SnoozeDateTimePicker: Component<SnoozeDateTimePickerProps> = (props
           appearanceKey="snoozeDatePickerApply__button"
           class="nt-h-7 nt-w-[60px] nt-px-2"
           onClick={onDateTimeSelect}
+          disabled={!selectedDate() || isDateTimeExceedingLimit()}
         >
           {t('snooze.datePicker.apply')}
         </Button>

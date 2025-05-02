@@ -37,7 +37,7 @@ type DefaultNotificationProps = {
 export const DefaultNotification = (props: DefaultNotificationProps) => {
   const style = useStyle();
   const { t, locale } = useLocalization();
-  const { navigate, status } = useInboxContext();
+  const { navigate, status, maxSnoozeDurationHours } = useInboxContext();
   const [isSnoozeDateTimePickerOpen, setIsSnoozeDateTimePickerOpen] = createSignal(false);
   const [minutesPassed, setMinutesPassed] = createSignal(0);
   const createdAt = createMemo(() => {
@@ -313,6 +313,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
                             class={style('notificationSnoozeCustomTime_popoverContent', 'nt-size-fit')}
                           >
                             <SnoozeDateTimePicker
+                              maxDurationHours={maxSnoozeDurationHours()}
                               onSelect={async (date) => {
                                 await props.notification.snooze(date.toISOString());
                               }}
@@ -460,6 +461,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
           >
             {(snoozedUntil) => (
               <>
+                <Clock class={style('notificationRemindingLater__icon', 'nt-size-3')} />
                 {t('notification.remindingLater')} · {snoozedUntil()}
               </>
             )}

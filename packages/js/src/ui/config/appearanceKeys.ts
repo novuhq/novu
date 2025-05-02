@@ -218,7 +218,7 @@ export const appearanceKeys = [
   // Notification Delivered At
   'notificationDeliveredAt__badge',
   'notificationDeliveredAt__icon',
-
+  'notificationRemindingLater__icon',
   // Text formatting
   'strong',
 ] as const;
