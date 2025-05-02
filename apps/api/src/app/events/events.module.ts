@@ -18,6 +18,7 @@ import { LayoutsModule } from '../layouts/layouts.module';
 import { TenantModule } from '../tenant/tenant.module';
 import { BridgeModule } from '../bridge';
 import { SubscribersV1Module } from '../subscribers/subscribersV1.module';
+import { CommunityUserRepository } from '@novu/dal';
 
 const PROVIDERS = [GetNovuProviderCredentials, StorageHelperService, CommunityOrganizationRepository];
 
@@ -37,6 +38,6 @@ const PROVIDERS = [GetNovuProviderCredentials, StorageHelperService, CommunityOr
     BridgeModule,
   ],
   controllers: [EventsController],
-  providers: [...PROVIDERS, ...USE_CASES],
+  providers: [...PROVIDERS, ...USE_CASES, CommunityUserRepository],
 })
 export class EventsModule {}
