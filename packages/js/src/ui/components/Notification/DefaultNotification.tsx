@@ -12,6 +12,7 @@ import { MarkAsUnread } from '../../icons/MarkAsUnread';
 import { Snooze } from '../../icons/Snooze';
 import { Unsnooze } from '../../icons/Unsnooze';
 import {
+  LocalizationKey,
   NotificationStatus,
   type BodyRenderer,
   type NotificationActionClickHandler,
@@ -24,6 +25,38 @@ import { Button, Dropdown, dropdownItemVariants, Popover } from '../primitives';
 import { Badge } from '../primitives/Badge';
 import { Tooltip } from '../primitives/Tooltip';
 import { SnoozeDateTimePicker } from './SnoozeDateTimePicker';
+
+const SNOOZE_PRESETS = [
+  {
+    key: 'snooze.options.inOneHour',
+    hours: 1,
+    getDate: () => new Date(Date.now() + 1 * 60 * 60 * 1000),
+  },
+  {
+    key: 'snooze.options.inTwoHours',
+    hours: 2,
+    getDate: () => new Date(Date.now() + 2 * 60 * 60 * 1000),
+  },
+  {
+    key: 'snooze.options.inTwelveHours',
+    hours: 12,
+    getDate: () => new Date(Date.now() + 12 * 60 * 60 * 1000),
+  },
+  {
+    key: 'snooze.options.inOneDay',
+    hours: 24,
+    getDate: () => new Date(Date.now() + 1 * 24 * 60 * 60 * 1000),
+  },
+  {
+    key: 'snooze.options.inOneWeek',
+    hours: 168,
+    getDate: () => new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+  },
+] satisfies {
+  key: LocalizationKey;
+  hours: number;
+  getDate: () => Date;
+}[];
 
 type DefaultNotificationProps = {
   notification: Notification;
@@ -63,6 +96,12 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
     return props.notification.deliveredAt.map((date) =>
       formatToRelativeTime({ fromDate: new Date(date), locale: locale() })
     );
+  });
+
+  const availableSnoozePresets = createMemo(() => {
+    if (!maxSnoozeDurationHours()) return SNOOZE_PRESETS;
+
+    return SNOOZE_PRESETS.filter((preset) => preset.hours <= maxSnoozeDurationHours());
   });
 
   createEffect(() => {
@@ -242,55 +281,26 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
                         )}
                       />
                       <Dropdown.Content portal appearanceKey="notificationSnooze__dropdownContent">
-                        <Dropdown.Item
-                          appearanceKey="notificationSnooze__dropdownItem"
-                          onClick={async (e) => {
-                            e.stopPropagation();
-                            await props.notification.snooze(new Date(Date.now() + 2 * 60 * 1000).toISOString());
-                          }}
-                        >
-                          <Clock
-                            class={style(
-                              'notificationSnooze__dropdownItem__icon',
-                              'nt-size-3 nt-text-foreground-alpha-400'
-                            )}
-                          />
-                          {t('snooze.options.anHourFromNow')}
-                        </Dropdown.Item>
-                        <Dropdown.Item
-                          appearanceKey="notificationSnooze__dropdownItem"
-                          onClick={async (e) => {
-                            e.stopPropagation();
-                            await props.notification.snooze(
-                              new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString()
-                            );
-                          }}
-                        >
-                          <Clock
-                            class={style(
-                              'notificationSnooze__dropdownItem__icon',
-                              'nt-size-3 nt-text-foreground-alpha-400'
-                            )}
-                          />
-                          {new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toLocaleString()}
-                        </Dropdown.Item>
-                        <Dropdown.Item
-                          appearanceKey="notificationSnooze__dropdownItem"
-                          onClick={async (e) => {
-                            e.stopPropagation();
-                            await props.notification.snooze(
-                              new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
-                            );
-                          }}
-                        >
-                          <Clock
-                            class={style(
-                              'notificationSnooze__dropdownItem__icon',
-                              'nt-size-3 nt-text-foreground-alpha-400'
-                            )}
-                          />
-                          {new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleString()}
-                        </Dropdown.Item>
+                        <For each={availableSnoozePresets()}>
+                          {(preset) => (
+                            <Dropdown.Item
+                              appearanceKey="notificationSnooze__dropdownItem"
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                await props.notification.snooze(preset.getDate().toISOString());
+                              }}
+                            >
+                              <Clock
+                                class={style(
+                                  'notificationSnooze__dropdownItem__icon',
+                                  'nt-size-3 nt-text-foreground-alpha-400'
+                                )}
+                              />
+                              {t(preset.key)}
+                            </Dropdown.Item>
+                          )}
+                        </For>
+
                         <Popover.Root open={isSnoozeDateTimePickerOpen()} onOpenChange={setIsSnoozeDateTimePickerOpen}>
                           <Dropdown.Item
                             asChild={(props) => (
@@ -304,7 +314,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
                                     'nt-size-3 nt-text-foreground-alpha-400'
                                   )}
                                 />
-                                Custom time...
+                                {t('snooze.options.customTime')}
                               </Popover.Trigger>
                             )}
                           />

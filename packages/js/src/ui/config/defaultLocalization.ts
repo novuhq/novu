@@ -36,6 +36,12 @@ export const defaultLocalization = {
   'snooze.datePicker.cancel': 'Cancel',
   'snooze.options.anHourFromNow': 'An hour from now',
   'snooze.datePicker.applyTooltip': 'Date and time out of range',
+  'snooze.options.customTime': 'Custom time...',
+  'snooze.options.inOneHour': 'in 1 hour',
+  'snooze.options.inTwoHours': 'in 2 hours',
+  'snooze.options.inTwelveHours': 'in 12 hours',
+  'snooze.options.inOneDay': 'in 1 day',
+  'snooze.options.inOneWeek': 'in 1 week',
 } as const;
 
 export const [dynamicLocalization, setDynamicLocalization] = createSignal<Record<string, string>>({});

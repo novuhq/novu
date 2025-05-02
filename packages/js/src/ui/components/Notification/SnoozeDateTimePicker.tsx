@@ -6,6 +6,20 @@ import { DatePicker, DatePickerCalendar, DatePickerHeader } from '../primitives/
 import { TimePicker, TimeValue } from '../primitives/TimePicker';
 import { Tooltip } from '../primitives/Tooltip';
 
+const fiveMinutesFromNow = () => {
+  const now = new Date();
+  const futureTime = new Date(now.getTime() + 5 * 60 * 1000); // current time + 5 minutes
+  const hours = futureTime.getHours();
+  const isPM = hours >= 12;
+  const hour = isPM ? hours - 12 : hours;
+
+  return {
+    hour,
+    minute: futureTime.getMinutes(),
+    isPM,
+  };
+};
+
 interface SnoozeDateTimePickerProps {
   onSelect?: (date: Date) => void;
   onCancel?: () => void;
@@ -16,7 +30,7 @@ export const SnoozeDateTimePicker: Component<SnoozeDateTimePickerProps> = (props
   const style = useStyle();
   const { t } = useLocalization();
   const [selectedDate, setSelectedDate] = createSignal<Date | null>(null);
-  const [timeValue, setTimeValue] = createSignal<TimeValue>({ hour: 12, minute: 0, isPM: true });
+  const [timeValue, setTimeValue] = createSignal<TimeValue>(fiveMinutesFromNow());
 
   const onDateTimeSelect = () => {
     if (selectedDate() && timeValue()) {
@@ -30,8 +44,12 @@ export const SnoozeDateTimePicker: Component<SnoozeDateTimePickerProps> = (props
     return Math.ceil(props.maxDurationHours / 24);
   };
 
-  const applyButtonDisabled = createMemo(() => {
-    if (!selectedDate() || !timeValue() || !props.maxDurationHours) {
+  const applyButtonEnabled = createMemo(() => {
+    if (!selectedDate() || !timeValue()) {
+      return false;
+    }
+
+    if (!props.maxDurationHours) {
       return true;
     }
 
@@ -51,7 +69,8 @@ export const SnoozeDateTimePicker: Component<SnoozeDateTimePickerProps> = (props
 
     const maxDateTime = new Date(now.getTime() + props.maxDurationHours * 60 * 60 * 1000);
 
-    return selectedDateTime > maxDateTime;
+    // Check if the selected date is in the past or exceeds the maximum allowed duration
+    return selectedDateTime > maxDateTime || selectedDateTime < now;
   };
 
   return (
@@ -90,33 +109,33 @@ export const SnoozeDateTimePicker: Component<SnoozeDateTimePickerProps> = (props
         </Button>
 
         <Show
-          when={applyButtonDisabled()}
+          when={applyButtonEnabled()}
           fallback={
-            <Button
-              appearanceKey="snoozeDatePickerApply__button"
-              class="nt-h-7 nt-w-[60px] nt-px-2"
-              onClick={onDateTimeSelect}
-            >
-              {t('snooze.datePicker.apply')}
-            </Button>
+            <Tooltip.Root>
+              <Tooltip.Trigger
+                asChild={(props) => (
+                  <Button
+                    appearanceKey="snoozeDatePickerApply__button"
+                    class="nt-h-7 nt-w-[60px] nt-px-2 !nt-pointer-events-auto"
+                    onClick={onDateTimeSelect}
+                    disabled={true}
+                    {...props}
+                  >
+                    {t('snooze.datePicker.apply')}
+                  </Button>
+                )}
+              />
+              <Tooltip.Content>{t('snooze.datePicker.applyTooltip')}</Tooltip.Content>
+            </Tooltip.Root>
           }
         >
-          <Tooltip.Root>
-            <Tooltip.Trigger
-              asChild={(props) => (
-                <Button
-                  appearanceKey="snoozeDatePickerApply__button"
-                  class="nt-h-7 nt-w-[60px] nt-px-2 !nt-pointer-events-auto"
-                  onClick={onDateTimeSelect}
-                  disabled={applyButtonDisabled()}
-                  {...props}
-                >
-                  {t('snooze.datePicker.apply')}
-                </Button>
-              )}
-            />
-            <Tooltip.Content>{t('snooze.datePicker.applyTooltip')}</Tooltip.Content>
-          </Tooltip.Root>
+          <Button
+            appearanceKey="snoozeDatePickerApply__button"
+            class="nt-h-7 nt-w-[60px] nt-px-2"
+            onClick={onDateTimeSelect}
+          >
+            {t('snooze.datePicker.apply')}
+          </Button>
         </Show>
       </div>
     </div>
