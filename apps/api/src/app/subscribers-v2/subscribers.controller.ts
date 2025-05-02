@@ -252,7 +252,7 @@ export class SubscribersController {
   @UserAuthentication()
   @ExternalApiAccessible()
   @ApiOperation({
-    summary: 'List topic subscriptions for a subscriber',
+    summary: 'List topics a subscriber is subscribed to',
     description: 'List topic subscriptions for a subscriber with pagination and filtering',
   })
   @ApiParam({ name: 'subscriberId', description: 'The identifier of the subscriber', type: String })
