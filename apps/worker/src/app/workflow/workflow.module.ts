@@ -83,11 +83,6 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
         const activeWorkers = workersToProcess.length ? workersToProcess : Object.values(JobTopicNameEnum);
         modules.push(require('@novu/ee-billing')?.BillingModule.forRoot(activeWorkers));
       }
-
-      if (require('@novu/ee-auth')?.EEAuthModule) {
-        Logger.log('Importing enterprise auth module', 'EnterpriseImport');
-        modules.push(require('@novu/ee-auth')?.EEAuthModule);
-      }
     }
   } catch (e) {
     Logger.error(e, `Unexpected error while importing enterprise modules`, 'EnterpriseImport');
@@ -96,13 +91,7 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
   return modules;
 };
 
-const REPOSITORIES = [
-  JobRepository,
-  CommunityOrganizationRepository,
-  PreferencesRepository,
-  UserRepository,
-  MemberRepository,
-];
+const REPOSITORIES = [JobRepository, CommunityOrganizationRepository, PreferencesRepository, UserRepository];
 
 const USE_CASES = [
   AddDelayJob,
@@ -175,45 +164,10 @@ const memoryQueueService = {
   },
 };
 
-function getDynamicAuthProviders() {
-  if (process.env.NOVU_ENTERPRISE === 'true') {
-    const eeAuthPackage = require('@novu/ee-auth');
-    console.log('eeAuthPackage', eeAuthPackage);
-    const providers = eeAuthPackage.injectEEAuthProviders();
-    console.log('providers', providers);
-    return providers;
-  } else {
-    const userRepositoryProvider = {
-      provide: 'USER_REPOSITORY',
-      useClass: CommunityUserRepository,
-    };
-
-    const memberRepositoryProvider = {
-      provide: 'MEMBER_REPOSITORY',
-      useClass: CommunityMemberRepository,
-    };
-
-    const organizationRepositoryProvider = {
-      provide: 'ORGANIZATION_REPOSITORY',
-      useClass: CommunityOrganizationRepository,
-    };
-
-    return [userRepositoryProvider, memberRepositoryProvider, organizationRepositoryProvider];
-  }
-}
-
 @Module({
   imports: [SharedModule, JwtModule, ...enterpriseImports()],
   controllers: [],
-  providers: [
-    memoryQueueService,
-    ...ACTIVE_WORKERS,
-    ...PROVIDERS,
-    ...USE_CASES,
-    ...REPOSITORIES,
-    activeWorkersToken,
-    ...getDynamicAuthProviders(),
-  ],
+  providers: [memoryQueueService, ...ACTIVE_WORKERS, ...PROVIDERS, ...USE_CASES, ...REPOSITORIES, activeWorkersToken],
   exports: [...PROVIDERS, ...USE_CASES, ...REPOSITORIES, activeWorkersToken],
 })
 export class WorkflowModule implements OnApplicationShutdown {
