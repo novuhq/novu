@@ -4,15 +4,17 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { MemberRepository, UserRepository } from '@novu/dal';
+import { EnvironmentEntity, OrganizationEntity, UserEntity, UserRepository } from '@novu/dal';
 import {
   EmailProviderIdEnum,
+  FeatureFlagsKeysEnum,
   ICredentials,
   SmsProviderIdEnum,
 } from '@novu/shared';
 import { AnalyticsService } from '../../services/analytics.service';
 import { CalculateLimitNovuIntegration } from '../calculate-limit-novu-integration';
 
+import { FeatureFlagsService } from '../../services';
 import { GetNovuProviderCredentialsCommand } from './get-novu-provider-credentials.command';
 
 @Injectable()
@@ -21,7 +23,7 @@ export class GetNovuProviderCredentials {
     private analyticsService: AnalyticsService,
     protected calculateLimitNovuIntegration: CalculateLimitNovuIntegration,
     private userRepository: UserRepository,
-    private memberRepository: MemberRepository,
+    private featureFlagService: FeatureFlagsService,
   ) {}
 
   async execute(
@@ -31,7 +33,15 @@ export class GetNovuProviderCredentials {
       integration.providerId === EmailProviderIdEnum.Novu ||
       integration.providerId === SmsProviderIdEnum.Novu
     ) {
-      if (integration.providerId === EmailProviderIdEnum.Novu && integration.recipientEmail) {
+      const isTestProviderLimitsEnabled = await this.featureFlagService.getFlag({
+        user: { _id: integration.userId } as UserEntity,
+        environment: { _id: integration.environmentId } as EnvironmentEntity,
+        organization: { _id: integration.organizationId } as OrganizationEntity,
+        key: FeatureFlagsKeysEnum.IS_TEST_PROVIDER_LIMITS_ENABLED,
+        defaultValue: false,
+      });
+      
+      if (integration.providerId === EmailProviderIdEnum.Novu && integration.recipientEmail && isTestProviderLimitsEnabled) {
         const user = await this.userRepository.findById(integration.userId);
 
         if (user?.email !== integration.recipientEmail) {
