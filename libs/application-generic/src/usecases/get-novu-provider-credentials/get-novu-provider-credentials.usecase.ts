@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { MemberRepository, UserEntity, UserRepository } from '@novu/dal';
+import { MemberRepository, UserRepository } from '@novu/dal';
 import {
   EmailProviderIdEnum,
   ICredentials,
@@ -32,19 +32,9 @@ export class GetNovuProviderCredentials {
       integration.providerId === SmsProviderIdEnum.Novu
     ) {
       if (integration.providerId === EmailProviderIdEnum.Novu && integration.recipientEmail) {
-        const members = await this.memberRepository.getOrganizationMembers(integration.organizationId);
+        const user = await this.userRepository.findById(integration.userId);
 
-        const memberUserIds = members.map((member) => member._userId);
-        const memberUsers: UserEntity[] = [];
-
-        for (const member of memberUserIds) {
-          const user = await this.userRepository.findById(member);
-          memberUsers.push(user);
-        }
-
-        const memberEmails = memberUsers.map((user) => user.email).filter((email): email is string => !!email);
-
-        if (!memberEmails.includes(integration.recipientEmail)) {
+        if (user?.email !== integration.recipientEmail) {
           throw new ForbiddenException(
             `Recipient email (${integration.recipientEmail}) does not belong to any member of the organization. Novu test provider can only be used to send emails to organization members. Connect your own email provider to send emails to other addresses.`,
           );
