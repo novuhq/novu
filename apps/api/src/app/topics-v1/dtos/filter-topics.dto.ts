@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
 
 import { Transform } from 'class-transformer';
@@ -27,9 +27,8 @@ export class FilterTopicsRequestDto {
   @Transform(({ value }) => Number(value)) // Convert string to integer
   public pageSize?: number = 10;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     example: 'exampleKey',
-    required: false,
     type: 'string',
     description: 'A filter key to apply to the results',
   })
@@ -37,9 +36,8 @@ export class FilterTopicsRequestDto {
   @IsOptional()
   public key?: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     example: 'Example Topic',
-    required: false,
     type: 'string',
     description: 'A filter name to apply to the results',
   })

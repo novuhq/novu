@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsOptional, IsString } from 'class-validator';
 
 export class TopicDto {
   @ApiPropertyOptional()
@@ -13,15 +14,21 @@ export class TopicDto {
   @ApiProperty()
   key: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
   name?: string;
 
   @ApiProperty()
   subscribers: string[];
 
-  @ApiProperty()
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
   createdAt?: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
   updatedAt?: string;
 }
