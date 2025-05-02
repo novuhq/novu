@@ -68,16 +68,11 @@ const formatSnoozeOption = (
   // Format time (e.g., "9:00 AM")
   const timeString = new Intl.DateTimeFormat(locale, { hour: 'numeric', minute: 'numeric' }).format(date);
 
-  // For one day (tomorrow)
-  if (preset.key === 'snooze.options.inOneDay') {
-    return `${t(preset.key)}, ${timeString}`;
-  }
-
   // For weekly option, show "Next Monday" etc.
   if (preset.key === 'snooze.options.inOneWeek') {
     // Get the day name (e.g., "Monday")
     const dayName = new Intl.DateTimeFormat(locale, { weekday: 'long' }).format(date);
-    return `Next ${dayName}, ${timeString}`;
+    return `${t(preset.key)} ${dayName}, ${timeString}`;
   }
 
   // Fallback to original translation
