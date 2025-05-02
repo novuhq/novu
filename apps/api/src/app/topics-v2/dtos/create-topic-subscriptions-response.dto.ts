@@ -1,24 +1,28 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsOptional, IsString } from 'class-validator';
 import { ISubscriptionData, ISubscriptionError, ITopicSubscriptionResult } from './subscription-interfaces';
 
 export class TopicDto {
   @ApiProperty({
-    description: 'The unique identifier of the topic',
+    description: 'The internal unique identifier of the topic',
     example: '64f5e95d3d7946d80d0cb677',
   })
+  @IsString()
   _id: string;
 
   @ApiProperty({
-    description: 'The key identifier of the topic',
+    description: 'The key identifier of the topic used in your application. Should be unique on the environment level.',
     example: 'product-updates',
   })
+  @IsString()
   key: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'The name of the topic',
     example: 'Product Updates',
-    required: false,
   })
+  @IsString()
+  @IsOptional()
   name?: string;
 }
 
@@ -27,54 +31,62 @@ export class SubscriberDto {
     description: 'The unique identifier of the subscriber',
     example: '64f5e95d3d7946d80d0cb678',
   })
+  @IsString()
   _id: string;
 
   @ApiProperty({
     description: 'The external identifier of the subscriber',
     example: 'external-subscriber-id',
   })
+  @IsString()
   subscriberId: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'The avatar URL of the subscriber',
     example: 'https://example.com/avatar.png',
-    required: false,
   })
+  @IsString()
+  @IsOptional()
   avatar?: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'The first name of the subscriber',
     example: 'John',
-    required: false,
   })
+  @IsString()
+  @IsOptional()
   firstName?: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'The last name of the subscriber',
     example: 'Doe',
-    required: false,
   })
+  @IsString()
+  @IsOptional()
   lastName?: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'The email of the subscriber',
     example: 'john.doe@example.com',
-    required: false,
   })
+  @IsString()
+  @IsOptional()
   email?: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'The creation date of the subscriber',
     example: '2025-04-24T05:40:21Z',
-    required: false,
   })
+  @IsString()
+  @IsOptional()
   createdAt?: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'The last update date of the subscriber',
     example: '2025-04-24T05:40:21Z',
-    required: false,
   })
+  @IsString()
+  @IsOptional()
   updatedAt?: string;
 }
 
@@ -83,6 +95,7 @@ export class SubscriptionDto implements ISubscriptionData {
     description: 'The unique identifier of the subscription',
     example: '64f5e95d3d7946d80d0cb679',
   })
+  @IsString()
   _id: string;
 
   @ApiProperty({
@@ -164,10 +177,9 @@ export class CreateTopicSubscriptionsResponseDto implements ITopicSubscriptionRe
   })
   meta: MetaDto;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'The list of errors for failed subscription attempts',
     type: [SubscriptionErrorDto],
-    required: false,
   })
   errors?: SubscriptionErrorDto[];
 }
