@@ -108,6 +108,7 @@ export class CreateEnvironment {
         environmentId: environment._id,
         organizationId: environment._organizationId,
         userId: command.userId,
+        name: environment.name,
       })
     );
 

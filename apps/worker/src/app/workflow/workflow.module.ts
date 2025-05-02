@@ -1,5 +1,5 @@
 /* eslint-disable global-require */
-import { DynamicModule, Logger, Module, OnApplicationShutdown, Provider } from '@nestjs/common';
+import { DynamicModule, Logger, Module, OnApplicationShutdown, Provider, Type } from '@nestjs/common';
 import {
   BulkCreateExecutionDetails,
   CalculateLimitNovuIntegration,
@@ -25,9 +25,16 @@ import {
   TriggerMulticast,
   WorkflowInMemoryProviderService,
 } from '@novu/application-generic';
-import { CommunityOrganizationRepository, JobRepository, PreferencesRepository } from '@novu/dal';
+import {
+  CommunityMemberRepository,
+  CommunityOrganizationRepository,
+  CommunityUserRepository,
+  JobRepository,
+  MemberRepository,
+  PreferencesRepository,
+  UserRepository,
+} from '@novu/dal';
 
-import { Type } from '@nestjs/common/interfaces/type.interface';
 import { ForwardReference } from '@nestjs/common/interfaces/modules/forward-reference.interface';
 import { JobTopicNameEnum } from '@novu/shared';
 import {
@@ -36,6 +43,7 @@ import {
   GetDigestEventsBackoff,
   GetDigestEventsRegular,
   HandleLastFailedJob,
+  ProcessUnsnoozeJob,
   QueueNextJob,
   RunJob,
   SendMessage,
@@ -48,15 +56,15 @@ import {
   SetJobAsCompleted,
   SetJobAsFailed,
   UpdateJobStatus,
-  ProcessUnsnoozeJob,
   WebhookFilterBackoffStrategy,
 } from './usecases';
 
-import { SharedModule } from '../shared/shared.module';
+import { JwtModule } from '@nestjs/jwt';
 import { ACTIVE_WORKERS, workersToProcess } from '../../config/worker-init.config';
+import { SharedModule } from '../shared/shared.module';
+import { AddDelayJob, AddJob, MergeOrCreateDigest } from './usecases/add-job';
 import { InboundEmailParse } from './usecases/inbound-email-parse/inbound-email-parse.usecase';
 import { ExecuteStepCustom } from './usecases/send-message/execute-step-custom.usecase';
-import { AddDelayJob, AddJob, MergeOrCreateDigest } from './usecases/add-job';
 import { StoreSubscriberJobs } from './usecases/store-subscriber-jobs';
 import { SubscriberJobBound } from './usecases/subscriber-job-bound/subscriber-job-bound.usecase';
 
@@ -75,6 +83,11 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
         const activeWorkers = workersToProcess.length ? workersToProcess : Object.values(JobTopicNameEnum);
         modules.push(require('@novu/ee-billing')?.BillingModule.forRoot(activeWorkers));
       }
+
+      if (require('@novu/ee-auth')?.EEAuthModule) {
+        Logger.log('Importing enterprise auth module', 'EnterpriseImport');
+        modules.push(require('@novu/ee-auth')?.EEAuthModule);
+      }
     }
   } catch (e) {
     Logger.error(e, `Unexpected error while importing enterprise modules`, 'EnterpriseImport');
@@ -82,7 +95,14 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
 
   return modules;
 };
-const REPOSITORIES = [JobRepository, CommunityOrganizationRepository, PreferencesRepository];
+
+const REPOSITORIES = [
+  JobRepository,
+  CommunityOrganizationRepository,
+  PreferencesRepository,
+  UserRepository,
+  MemberRepository,
+];
 
 const USE_CASES = [
   AddDelayJob,
@@ -155,10 +175,45 @@ const memoryQueueService = {
   },
 };
 
+function getDynamicAuthProviders() {
+  if (process.env.NOVU_ENTERPRISE === 'true') {
+    const eeAuthPackage = require('@novu/ee-auth');
+    console.log('eeAuthPackage', eeAuthPackage);
+    const providers = eeAuthPackage.injectEEAuthProviders();
+    console.log('providers', providers);
+    return providers;
+  } else {
+    const userRepositoryProvider = {
+      provide: 'USER_REPOSITORY',
+      useClass: CommunityUserRepository,
+    };
+
+    const memberRepositoryProvider = {
+      provide: 'MEMBER_REPOSITORY',
+      useClass: CommunityMemberRepository,
+    };
+
+    const organizationRepositoryProvider = {
+      provide: 'ORGANIZATION_REPOSITORY',
+      useClass: CommunityOrganizationRepository,
+    };
+
+    return [userRepositoryProvider, memberRepositoryProvider, organizationRepositoryProvider];
+  }
+}
+
 @Module({
-  imports: [SharedModule, ...enterpriseImports()],
+  imports: [SharedModule, JwtModule, ...enterpriseImports()],
   controllers: [],
-  providers: [memoryQueueService, ...ACTIVE_WORKERS, ...PROVIDERS, ...USE_CASES, ...REPOSITORIES, activeWorkersToken],
+  providers: [
+    memoryQueueService,
+    ...ACTIVE_WORKERS,
+    ...PROVIDERS,
+    ...USE_CASES,
+    ...REPOSITORIES,
+    activeWorkersToken,
+    ...getDynamicAuthProviders(),
+  ],
   exports: [...PROVIDERS, ...USE_CASES, ...REPOSITORIES, activeWorkersToken],
 })
 export class WorkflowModule implements OnApplicationShutdown {

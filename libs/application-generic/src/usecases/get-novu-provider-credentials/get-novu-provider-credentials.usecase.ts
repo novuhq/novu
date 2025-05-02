@@ -1,8 +1,10 @@
 import {
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { MemberRepository, UserEntity, UserRepository } from '@novu/dal';
 import {
   EmailProviderIdEnum,
   ICredentials,
@@ -18,6 +20,8 @@ export class GetNovuProviderCredentials {
   constructor(
     private analyticsService: AnalyticsService,
     protected calculateLimitNovuIntegration: CalculateLimitNovuIntegration,
+    private userRepository: UserRepository,
+    private memberRepository: MemberRepository,
   ) {}
 
   async execute(
@@ -27,6 +31,26 @@ export class GetNovuProviderCredentials {
       integration.providerId === EmailProviderIdEnum.Novu ||
       integration.providerId === SmsProviderIdEnum.Novu
     ) {
+      if (integration.providerId === EmailProviderIdEnum.Novu && integration.recipientEmail) {
+        const members = await this.memberRepository.getOrganizationMembers(integration.organizationId);
+
+        const memberUserIds = members.map((member) => member._userId);
+        const memberUsers: UserEntity[] = [];
+
+        for (const member of memberUserIds) {
+          const user = await this.userRepository.findById(member);
+          memberUsers.push(user);
+        }
+
+        const memberEmails = memberUsers.map((user) => user.email).filter((email): email is string => !!email);
+
+        if (!memberEmails.includes(integration.recipientEmail)) {
+          throw new ForbiddenException(
+            `Recipient email (${integration.recipientEmail}) does not belong to any member of the organization. Novu test provider can only be used to send emails to organization members. Connect your own email provider to send emails to other addresses.`,
+          );
+        }
+      }
+
       const limit = await this.calculateLimitNovuIntegration.execute({
         channelType: integration.channelType,
         environmentId: integration.environmentId,
@@ -35,7 +59,7 @@ export class GetNovuProviderCredentials {
 
       if (!limit) {
         throw new ConflictException(
-          `Limit for Novu's ${integration.channelType.toLowerCase()} provider does not exists.`,
+          `Limit for Novu's ${integration.channelType.toLowerCase()} provider does not exist.`,
         );
       }
 

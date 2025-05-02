@@ -143,9 +143,15 @@ export function IntegrationConfiguration({
             <InlineToast
               variant={'warning'}
               title="Demo Integration"
-              description={`This is a demo integration intended for testing purposes only. It is limited to 300 ${
-                provider?.channel === 'email' ? 'emails' : 'sms'
-              } per month.`}
+              description={`This is a demo ${
+                provider?.channel === 'email' ? 'email' : 'SMS'
+              } integration intended for testing purposes only. It is limited to 300 ${
+                provider?.channel === 'email' ? 'messages' : 'SMS'
+              } per month.${
+                provider?.channel === 'email'
+                  ? ' You can only send emails from it to the email address you are logged in with.'
+                  : ''
+              }`}
             />
           </div>
         ) : (
