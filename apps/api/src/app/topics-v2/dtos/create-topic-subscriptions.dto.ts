@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ArrayMaxSize, IsArray, IsDefined } from 'class-validator';
+import { ArrayMaxSize, ArrayMinSize, IsArray, IsDefined } from 'class-validator';
 
 export class CreateTopicSubscriptionsRequestDto {
   @ApiProperty({
@@ -10,5 +10,6 @@ export class CreateTopicSubscriptionsRequestDto {
   @IsArray()
   @IsDefined()
   @ArrayMaxSize(100, { message: 'Cannot subscribe more than 100 subscribers at once' })
+  @ArrayMinSize(1, { message: 'At least one subscriber identifier is required' })
   subscriberIds: string[];
 }

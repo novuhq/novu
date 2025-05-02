@@ -1,4 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsOptional, IsString } from 'class-validator';
 
 export class TopicResponseDto {
   @ApiProperty({
@@ -6,6 +7,7 @@ export class TopicResponseDto {
     type: String,
     example: '64da692e9a94fb2e6449ad06',
   })
+  @IsString()
   _id: string;
 
   @ApiProperty({
@@ -13,27 +15,33 @@ export class TopicResponseDto {
     type: String,
     example: 'product-updates',
   })
+  @IsString()
   key: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'The name of the topic',
     type: String,
     example: 'Product Updates',
-    required: false,
   })
+  @IsString()
+  @IsOptional()
   name?: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'The date the topic was created',
     type: String,
     example: '2023-08-15T00:00:00.000Z',
   })
+  @IsString()
+  @IsOptional()
   createdAt?: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'The date the topic was last updated',
     type: String,
     example: '2023-08-15T00:00:00.000Z',
   })
+  @IsString()
+  @IsOptional()
   updatedAt?: string;
 }
