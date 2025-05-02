@@ -72,6 +72,7 @@ const formatSnoozeOption = (
   if (preset.key === 'snooze.options.inOneWeek') {
     // Get the day name (e.g., "Monday")
     const dayName = new Intl.DateTimeFormat(locale, { weekday: 'long' }).format(date);
+
     return `${t(preset.key)} ${dayName}, ${timeString}`;
   }
 
