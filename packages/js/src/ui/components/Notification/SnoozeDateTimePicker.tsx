@@ -11,13 +11,27 @@ const fiveMinutesFromNow = () => {
   const futureTime = new Date(now.getTime() + 5 * 60 * 1000); // current time + 5 minutes
   const hours = futureTime.getHours();
   const isPM = hours >= 12;
-  const hour = isPM ? hours - 12 : hours;
+  const hour = isPM ? (hours === 12 ? 12 : hours - 12) : hours === 0 ? 12 : hours;
 
   return {
     hour,
     minute: futureTime.getMinutes(),
     isPM,
   };
+};
+
+/**
+ * Converts a 12-hour format time to 24-hour hours value
+ * Correctly handles the special case of 12 AM/PM:
+ * - 12:00 AM = 00:00 (midnight)
+ * - 12:00 PM = 12:00 (noon)
+ */
+const convertTo24Hour = (time: TimeValue): number => {
+  if (time.isPM) {
+    return time.hour === 12 ? 12 : time.hour + 12;
+  } else {
+    return time.hour === 12 ? 0 : time.hour;
+  }
 };
 
 interface SnoozeDateTimePickerProps {
@@ -35,16 +49,9 @@ export const SnoozeDateTimePicker: Component<SnoozeDateTimePickerProps> = (props
   const onDateTimeSelect = () => {
     if (selectedDate() && timeValue()) {
       const date = new Date(selectedDate()!);
-
-      let hours = timeValue().hour;
-      if (timeValue().isPM && hours !== 12) {
-        hours += 12;
-      } else if (!timeValue().isPM && hours === 12) {
-        hours = 0;
-      }
+      const hours = convertTo24Hour(timeValue());
 
       date.setHours(hours, timeValue().minute, 0, 0);
-
       props.onSelect?.(date);
     }
   };
@@ -74,14 +81,20 @@ export const SnoozeDateTimePicker: Component<SnoozeDateTimePickerProps> = (props
 
     const now = new Date();
     const date = new Date(selectedDate()!);
-    const selectedDateTime = new Date(
-      date.setHours(timeValue().isPM ? timeValue().hour + 12 : timeValue().hour, timeValue().minute, 0, 0)
-    );
+    const hours = convertTo24Hour(timeValue());
 
-    const maxDateTime = new Date(now.getTime() + props.maxDurationHours * 60 * 60 * 1000);
+    const selectedDateTime = new Date(date);
+    selectedDateTime.setHours(hours, timeValue().minute, 0, 0);
 
-    // Check if the selected date is in the past or exceeds the maximum allowed duration
-    return selectedDateTime > maxDateTime || selectedDateTime < now;
+    // Minimum time should be at least 2 minutes in the future
+    const minAllowedTime = new Date(now.getTime() + 2 * 60 * 1000);
+
+    const leeway = 1000 * 60 * 2; // 2 minutes
+    const maxDateTime = new Date(now.getTime() + props.maxDurationHours * 60 * 60 * 1000 + leeway);
+
+    // Check if the selected date is in the past, less than 2 minutes in the future,
+    // or exceeds the maximum allowed duration
+    return selectedDateTime < minAllowedTime || selectedDateTime > maxDateTime;
   };
 
   return (

@@ -26,6 +26,31 @@ export const TimePicker: Component<TimePickerProps> = (props) => {
   const [minute, setMinute] = createSignal(initialValue.minute);
   const [isPM, setIsPM] = createSignal(initialValue.isPM);
 
+  const notifyChange = () => {
+    if (local.onChange) {
+      local.onChange({
+        hour: hour(),
+        minute: minute(),
+        isPM: isPM(),
+      });
+    }
+  };
+
+  const handleHourChange = (newHour: number) => {
+    setHour(newHour);
+    notifyChange();
+  };
+
+  const handleMinuteChange = (newMinute: number) => {
+    setMinute(newMinute);
+    notifyChange();
+  };
+
+  const handlePeriodChange = (newIsPM: boolean) => {
+    setIsPM(newIsPM);
+    notifyChange();
+  };
+
   return (
     <div
       class={style(local.appearanceKey || 'timePicker', cn('nt-flex nt-items-center nt-gap-1', local.class))}
@@ -39,7 +64,7 @@ export const TimePicker: Component<TimePickerProps> = (props) => {
         value={hour().toString()}
         onInput={(e) => {
           enforceMinMax(e.currentTarget);
-          setHour(Number(e.currentTarget.value));
+          handleHourChange(Number(e.currentTarget.value));
         }}
         class={style(
           'timePickerHour__input',
@@ -54,10 +79,10 @@ export const TimePicker: Component<TimePickerProps> = (props) => {
         type="number"
         min="0"
         max="59"
-        value={minute().toString()}
+        value={minute().toString().padStart(2, '0')}
         onInput={(e) => {
           enforceMinMax(e.currentTarget);
-          setMinute(Number(e.currentTarget.value));
+          handleMinuteChange(Number(e.currentTarget.value));
         }}
         class={style(
           'timePickerHour__input',
@@ -69,7 +94,7 @@ export const TimePicker: Component<TimePickerProps> = (props) => {
         class={style('timePicker__periodSelect', `${inputVariants({ size: 'sm' })} nt-h-7 nt-font-mono`)}
         value={isPM() ? 'PM' : 'AM'}
         onChange={(e) => {
-          setIsPM(e.target.value === 'PM');
+          handlePeriodChange(e.target.value === 'PM');
         }}
       >
         <option value="AM">AM</option>

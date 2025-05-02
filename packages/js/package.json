@@ -96,7 +96,7 @@
     "@types/jest": "29.2.3",
     "@types/node": "20.15.0",
     "autoprefixer": "10.4.0",
-    "bytes-iec": "3.1.1",
+    "bytes-iec": "^3.1.1",
     "chalk": "5.3.0",
     "compression-webpack-plugin": "10.0.0",
     "concurrently": "5.3.0",
