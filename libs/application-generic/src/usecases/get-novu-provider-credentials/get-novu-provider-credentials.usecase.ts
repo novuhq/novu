@@ -36,7 +36,7 @@ export class GetNovuProviderCredentials {
 
         if (user?.email !== integration.recipientEmail) {
           throw new ForbiddenException(
-            `Recipient email (${integration.recipientEmail}) does not belong to any member of the organization. Novu test provider can only be used to send emails to organization members. Connect your own email provider to send emails to other addresses.`,
+            `Recipient email (${integration.recipientEmail}) does not match the current logged-in user. Novu test provider can only be used to send emails to the current logged-in user. Connect your own email provider to send emails to other addresses.`,
           );
         }
       }
