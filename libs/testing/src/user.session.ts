@@ -9,6 +9,7 @@ import {
   IApiRateLimitMaximum,
   IEmailBlock,
   isClerkEnabled,
+  JobTopicNameEnum,
   StepTypeEnum,
 } from '@novu/shared';
 import {
@@ -315,20 +316,16 @@ export class UserSession {
   }
 
   async updateOrganizationDetails() {
-    try {
-      await this.testAgent
-        .put('/v1/organizations/branding')
-        .send({
-          color: '#2a9d8f',
-          logo: 'https://dashboard.novu.co/static/images/logo-light.png',
-          fontColor: '#214e49',
-          contentBackground: '#c2cbd2',
-          fontFamily: 'Montserrat',
-        })
-        .expect(200);
-    } catch (error) {
-      throw new Error(`failed to update organization Details ${error}`);
-    }
+    await this.testAgent
+      .put('/v1/organizations/branding')
+      .send({
+        color: '#2a9d8f',
+        logo: 'https://dashboard.novu.co/static/images/logo-light.png',
+        fontColor: '#214e49',
+        contentBackground: '#c2cbd2',
+        fontFamily: 'Montserrat',
+      })
+      .expect(200);
 
     const groupsResponse = await this.testAgent.get('/v1/notification-groups');
 
