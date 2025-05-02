@@ -302,7 +302,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
                           </Button>
                         )}
                       />
-                      <Dropdown.Content portal appearanceKey="notificationSnooze__dropdownContent">
+                      <Dropdown.Content appearanceKey="notificationSnooze__dropdownContent">
                         <For each={availableSnoozePresets()}>
                           {(preset) => (
                             <Dropdown.Item
