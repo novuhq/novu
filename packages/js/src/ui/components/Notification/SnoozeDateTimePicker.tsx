@@ -35,9 +35,20 @@ export const SnoozeDateTimePicker: Component<SnoozeDateTimePickerProps> = (props
   const onDateTimeSelect = () => {
     if (selectedDate() && timeValue()) {
       const date = new Date(selectedDate()!);
-      props.onSelect?.(new Date(date.setHours(timeValue().hour, timeValue().minute, 0, 0)));
+
+      let hours = timeValue().hour;
+      if (timeValue().isPM && hours !== 12) {
+        hours += 12;
+      } else if (!timeValue().isPM && hours === 12) {
+        hours = 0;
+      }
+
+      date.setHours(hours, timeValue().minute, 0, 0);
+
+      props.onSelect?.(date);
     }
   };
+
   const maxDays = () => {
     if (!props.maxDurationHours) return undefined;
 
