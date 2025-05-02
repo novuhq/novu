@@ -59,7 +59,6 @@ import {
   WebhookFilterBackoffStrategy,
 } from './usecases';
 
-import { JwtModule } from '@nestjs/jwt';
 import { ACTIVE_WORKERS, workersToProcess } from '../../config/worker-init.config';
 import { SharedModule } from '../shared/shared.module';
 import { AddDelayJob, AddJob, MergeOrCreateDigest } from './usecases/add-job';
@@ -165,7 +164,7 @@ const memoryQueueService = {
 };
 
 @Module({
-  imports: [SharedModule, JwtModule, ...enterpriseImports()],
+  imports: [SharedModule, ...enterpriseImports()],
   controllers: [],
   providers: [memoryQueueService, ...ACTIVE_WORKERS, ...PROVIDERS, ...USE_CASES, ...REPOSITORIES, activeWorkersToken],
   exports: [...PROVIDERS, ...USE_CASES, ...REPOSITORIES, activeWorkersToken],
