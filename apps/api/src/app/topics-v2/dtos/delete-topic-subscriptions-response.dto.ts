@@ -1,5 +1,4 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ITopicSubscriptionResult } from './subscription-interfaces';
 
 export class TopicDto {
   @ApiProperty({
@@ -151,7 +150,7 @@ export class MetaDto {
   failed: number;
 }
 
-export class DeleteTopicSubscriptionsResponseDto implements ITopicSubscriptionResult {
+export class DeleteTopicSubscriptionsResponseDto {
   @ApiProperty({
     description: 'The list of successfully deleted subscriptions',
     type: [SubscriptionDto],
