@@ -2,12 +2,7 @@ import sinon from 'sinon';
 import { expect } from 'chai';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { CommunityOrganizationRepository, EnvironmentRepository, IntegrationRepository } from '@novu/dal';
-import {
-  AnalyticsService,
-  CreateOrUpdateSubscriberUseCase,
-  FeatureFlagsService,
-  SelectIntegration,
-} from '@novu/application-generic';
+import { AnalyticsService, CreateOrUpdateSubscriberUseCase, SelectIntegration } from '@novu/application-generic';
 import { ApiServiceLevelEnum, ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
 import { AuthService } from '../../../auth/services/auth.service';
 import { Session } from './session.usecase';
@@ -45,7 +40,6 @@ describe('Session', () => {
   let notificationsCount: sinon.SinonStubbedInstance<NotificationsCount>;
   let integrationRepository: sinon.SinonStubbedInstance<IntegrationRepository>;
   let organizationRepository: sinon.SinonStubbedInstance<CommunityOrganizationRepository>;
-  let featureFlagsService: sinon.SinonStubbedInstance<FeatureFlagsService>;
 
   beforeEach(() => {
     environmentRepository = sinon.createStubInstance(EnvironmentRepository);
@@ -56,7 +50,6 @@ describe('Session', () => {
     notificationsCount = sinon.createStubInstance(NotificationsCount);
     integrationRepository = sinon.createStubInstance(IntegrationRepository);
     organizationRepository = sinon.createStubInstance(CommunityOrganizationRepository);
-    featureFlagsService = sinon.createStubInstance(FeatureFlagsService);
 
     session = new Session(
       environmentRepository as any,
@@ -66,8 +59,7 @@ describe('Session', () => {
       analyticsService as any,
       notificationsCount as any,
       integrationRepository as any,
-      organizationRepository as any,
-      featureFlagsService as any
+      organizationRepository as any
     );
   });
 
@@ -226,9 +218,7 @@ describe('Session', () => {
     ).to.be.true;
   });
 
-  it('should return the correct isSnoozeEnabled value for different service levels', async () => {
-    featureFlagsService.getFlag.resolves(true);
-
+  it('should return the correct maxSnoozeDurationHours value for different service levels', async () => {
     const command: SessionCommand = {
       applicationIdentifier: 'app-id',
       subscriber: { subscriberId: 'subscriber-id' },
@@ -247,24 +237,24 @@ describe('Session', () => {
     notificationsCount.execute.resolves(notificationCount);
     authService.getSubscriberWidgetToken.resolves(token);
 
-    // FREE plan should have snooze disabled
+    // FREE plan should have 24 hours max snooze duration
     organizationRepository.findOne.resolves({ apiServiceLevel: ApiServiceLevelEnum.FREE } as any);
     const freeResponse: SubscriberSessionResponseDto = await session.execute(command);
-    expect(freeResponse.isSnoozeEnabled).to.equal(false);
+    expect(freeResponse.maxSnoozeDurationHours).to.equal(24);
 
-    // PRO plan should have snooze enabled
+    // PRO plan should have 90 days max snooze duration
     organizationRepository.findOne.resolves({ apiServiceLevel: ApiServiceLevelEnum.PRO } as any);
     const proResponse: SubscriberSessionResponseDto = await session.execute(command);
-    expect(proResponse.isSnoozeEnabled).to.equal(true);
+    expect(proResponse.maxSnoozeDurationHours).to.equal(90 * 24);
 
-    // BUSINESS/TEAM plan should have snooze enabled
+    // BUSINESS/TEAM plan should have 90 days max snooze duration
     organizationRepository.findOne.resolves({ apiServiceLevel: ApiServiceLevelEnum.BUSINESS } as any);
     const businessResponse: SubscriberSessionResponseDto = await session.execute(command);
-    expect(businessResponse.isSnoozeEnabled).to.equal(true);
+    expect(businessResponse.maxSnoozeDurationHours).to.equal(90 * 24);
 
-    // ENTERPRISE plan should have snooze enabled
+    // ENTERPRISE plan should have 90 days max snooze duration
     organizationRepository.findOne.resolves({ apiServiceLevel: ApiServiceLevelEnum.ENTERPRISE } as any);
     const enterpriseResponse: SubscriberSessionResponseDto = await session.execute(command);
-    expect(enterpriseResponse.isSnoozeEnabled).to.equal(true);
+    expect(enterpriseResponse.maxSnoozeDurationHours).to.equal(90 * 24);
   });
 });

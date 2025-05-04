@@ -49,10 +49,12 @@ export class InboxService {
     offset,
     read,
     tags,
+    snoozed,
   }: {
     tags?: string[];
     read?: boolean;
     archived?: boolean;
+    snoozed?: boolean;
     limit?: number;
     after?: string;
     offset?: number;
@@ -72,6 +74,9 @@ export class InboxService {
     }
     if (archived !== undefined) {
       searchParams.append('archived', `${archived}`);
+    }
+    if (snoozed !== undefined) {
+      searchParams.append('snoozed', `${snoozed}`);
     }
 
     return this.#httpClient.get(INBOX_NOTIFICATIONS_ROUTE, searchParams, false);
@@ -106,6 +111,14 @@ export class InboxService {
 
   unarchive(notificationId: string): Promise<InboxNotification> {
     return this.#httpClient.patch(`${INBOX_NOTIFICATIONS_ROUTE}/${notificationId}/unarchive`);
+  }
+
+  snooze(notificationId: string, snoozeUntil: string): Promise<InboxNotification> {
+    return this.#httpClient.patch(`${INBOX_NOTIFICATIONS_ROUTE}/${notificationId}/snooze`, { snoozeUntil });
+  }
+
+  unsnooze(notificationId: string): Promise<InboxNotification> {
+    return this.#httpClient.patch(`${INBOX_NOTIFICATIONS_ROUTE}/${notificationId}/unsnooze`);
   }
 
   readAll({ tags }: { tags?: string[] }): Promise<void> {

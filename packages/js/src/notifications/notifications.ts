@@ -10,8 +10,10 @@ import {
   read,
   readAll,
   revertAction,
+  snooze,
   unarchive,
   unread,
+  unsnooze,
 } from './helpers';
 import { Notification } from './notification';
 import type {
@@ -31,6 +33,8 @@ import type {
   FiltersCountArgs,
   CountResponse,
   BaseArgs,
+  SnoozeArgs,
+  UnsnoozeArgs,
 } from './types';
 import { NovuError } from '../utils/errors';
 import { NotificationsCache } from '../cache';
@@ -166,6 +170,28 @@ export class Notifications extends BaseModule {
   async unarchive(args: UnarchivedArgs): Result<Notification> {
     return this.callWithSession(async () =>
       unarchive({
+        emitter: this._emitter,
+        apiService: this._inboxService,
+        args,
+      })
+    );
+  }
+
+  async snooze(args: SnoozeArgs): Result<Notification> {
+    return this.callWithSession(async () =>
+      snooze({
+        emitter: this._emitter,
+        apiService: this._inboxService,
+        args,
+      })
+    );
+  }
+
+  async unsnooze(args: BaseArgs): Result<Notification>;
+  async unsnooze(args: InstanceArgs): Result<Notification>;
+  async unsnooze(args: UnsnoozeArgs): Result<Notification> {
+    return this.callWithSession(async () =>
+      unsnooze({
         emitter: this._emitter,
         apiService: this._inboxService,
         args,
