@@ -156,7 +156,7 @@ const router = createBrowserRouter([
                     element: <CreateTopicPage />,
                   },
                   {
-                    path: ROUTES.EDIT_TOPIC,
+                    path: ROUTES.TOPICS_EDIT,
                     element: <EditTopicPage />,
                   },
                 ],

@@ -40,7 +40,7 @@ export const ROUTES = {
   PARTNER_INTEGRATIONS_VERCEL: '/partner-integrations/vercel',
   TOPICS: '/env/:environmentSlug/topics',
   TOPICS_CREATE: '/env/:environmentSlug/topics/create',
-  EDIT_TOPIC: '/env/:environmentSlug/topics/:topicKey/edit',
+  TOPICS_EDIT: '/env/:environmentSlug/topics/:topicKey/edit',
 } as const;
 
 export const buildRoute = (route: string, params: Record<string, string>) => {
