@@ -20,8 +20,7 @@ type TopicListProps = HTMLAttributes<HTMLDivElement>;
 
 // Wrapper similar to SubscriberListWrapper
 const TopicListWrapper = (props: TopicListFiltersProps) => {
-  const { className, children, filterValues, handleFiltersChange, resetFilters, isLoading, onLoadingChange, ...rest } =
-    props;
+  const { className, children, filterValues, handleFiltersChange, resetFilters, isLoading, ...rest } = props;
   const { navigateToCreateTopicPage } = useTopicsNavigate();
 
   return (
@@ -32,7 +31,6 @@ const TopicListWrapper = (props: TopicListFiltersProps) => {
           filterValues={filterValues}
           onReset={resetFilters}
           isLoading={isLoading}
-          onLoadingChange={onLoadingChange}
           className="py-2.5"
         />
 
@@ -85,7 +83,6 @@ const TopicListTable = (props: TopicListTableProps) => {
 type TopicListFiltersProps = HTMLAttributes<HTMLDivElement> &
   Pick<TopicsUrlState, 'filterValues' | 'handleFiltersChange' | 'resetFilters'> & {
     isLoading?: boolean;
-    onLoadingChange?: (isLoading: boolean) => void;
   };
 
 type TopicListTableProps = HTMLAttributes<HTMLTableElement> & {
@@ -96,7 +93,6 @@ type TopicListTableProps = HTMLAttributes<HTMLTableElement> & {
 
 export const TopicList = (props: TopicListProps) => {
   const { className, ...rest } = props;
-  const [isFilterLoading, setIsFilterLoading] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Read directly from URL params for data fetching
@@ -118,26 +114,17 @@ export const TopicList = (props: TopicListProps) => {
     limit: 10,
   };
 
-  // Get utility functions from the hook but pass empty objects since we're handling URL state directly
   const { filterValues, handleFiltersChange, toggleSort, resetFilters } = useTopicsUrlState({});
 
   const areFiltersApplied = keyParam || nameParam || beforeParam || afterParam;
   const limit = 10;
 
-  // Use URL params directly for fetching data
-  const { data, isPending } = useFetchTopics(currentFilters, {
+  const { data, isFetching } = useFetchTopics(currentFilters, {
     meta: { errorMessage: 'Issue fetching topics' },
   });
 
-  useEffect(() => {
-    if (!isPending && isFilterLoading) {
-      setIsFilterLoading(false);
-    }
-  }, [isPending, isFilterLoading]);
+  const isLoading = isFetching;
 
-  const isLoading = isPending || isFilterLoading;
-
-  // Define our own navigation functions using direct URL param manipulation
   const handleNext = useCallback(() => {
     setSearchParams((prev) => {
       prev.delete('before');
@@ -175,7 +162,6 @@ export const TopicList = (props: TopicListProps) => {
     handleFiltersChange,
     resetFilters,
     isLoading,
-    onLoadingChange: setIsFilterLoading,
     ...rest,
   };
 

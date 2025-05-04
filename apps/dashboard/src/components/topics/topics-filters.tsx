@@ -18,11 +18,10 @@ export type TopicsFiltersProps = HTMLAttributes<HTMLFormElement> & {
   filterValues: TopicsFilter;
   onReset?: () => void;
   isLoading?: boolean;
-  onLoadingChange?: (isLoading: boolean) => void;
 };
 
 export const TopicsFilters = (props: TopicsFiltersProps) => {
-  const { className, onFiltersChange, filterValues, onReset, isLoading, onLoadingChange, ...rest } = props;
+  const { className, onFiltersChange, filterValues, onReset, isLoading, ...rest } = props;
   const queryClient = useQueryClient();
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -46,13 +45,6 @@ export const TopicsFilters = (props: TopicsFiltersProps) => {
     form.reset(defaultValues);
   }, [form, defaultValues]);
 
-  const setLoading = useCallback(
-    (loading: boolean) => {
-      onLoadingChange?.(loading);
-    },
-    [onLoadingChange]
-  );
-
   const clearDebounceTimeout = useCallback(() => {
     if (debounceTimeoutRef.current) {
       clearTimeout(debounceTimeoutRef.current);
@@ -65,9 +57,6 @@ export const TopicsFilters = (props: TopicsFiltersProps) => {
       clearDebounceTimeout();
 
       debounceTimeoutRef.current = setTimeout(() => {
-        // Set loading state when the debounce completes and we're about to make the API call
-        setLoading(true);
-
         // Cancel any in-flight requests
         queryClient.cancelQueries({ queryKey: [QueryKeys.fetchTopics] });
 
@@ -82,7 +71,7 @@ export const TopicsFilters = (props: TopicsFiltersProps) => {
         debounceTimeoutRef.current = null;
       }, 400);
     },
-    [clearDebounceTimeout, onFiltersChange, queryClient, setLoading]
+    [clearDebounceTimeout, onFiltersChange, queryClient]
   );
 
   const handleFieldChange = useCallback(
@@ -96,9 +85,6 @@ export const TopicsFilters = (props: TopicsFiltersProps) => {
   const handleReset = useCallback(() => {
     clearDebounceTimeout();
 
-    // Set loading state for reset (this should be immediate since reset isn't debounced)
-    setLoading(true);
-
     // Reset form state
     form.reset({ key: '', name: '' });
 
@@ -109,7 +95,7 @@ export const TopicsFilters = (props: TopicsFiltersProps) => {
     if (onReset) {
       onReset();
     }
-  }, [clearDebounceTimeout, form, onReset, queryClient, setLoading]);
+  }, [clearDebounceTimeout, form, onReset, queryClient]);
 
   // Clean up timeout on unmount
   useEffect(() => {
