@@ -2,7 +2,7 @@ import { ControlInput } from '@/components/primitives/control-input';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/primitives/form/form';
 import { Input, InputRoot, InputWrapper } from '@/components/primitives/input';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
-import { parseStepVariablesToLiquidVariables } from '@/utils/parseStepVariablesToLiquidVariables';
+import { useParseVariables } from '@/hooks/use-parse-variables';
 import { capitalize } from '@/utils/string';
 import { type WidgetProps } from '@rjsf/utils';
 import { useMemo } from 'react';
@@ -12,8 +12,8 @@ import { getFieldName } from './template-utils';
 export function TextWidget(props: WidgetProps) {
   const { label, readonly, disabled, id, required } = props;
   const { control } = useFormContext();
-  const { step } = useWorkflow();
-  const variables = useMemo(() => (step ? parseStepVariablesToLiquidVariables(step.variables) : []), [step]);
+  const { step, digestStepBeforeCurrent } = useWorkflow();
+  const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.stepId);
 
   const extractedName = useMemo(() => getFieldName(id), [id]);
   const isNumberType = useMemo(() => props.schema.type === 'number', [props.schema.type]);
@@ -57,6 +57,7 @@ export function TextWidget(props: WidgetProps) {
                     value={field.value}
                     onChange={field.onChange}
                     variables={variables}
+                    isAllowedVariable={isAllowedVariable}
                     size="sm"
                   />
                 </InputWrapper>

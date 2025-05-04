@@ -63,4 +63,8 @@ export enum TelemetryEvent {
   STEP_CONDITIONS_ADDED = 'Step conditions added',
   STEP_CONDITIONS_UPDATED = 'Step conditions updated',
   EMAIL_BLOCK_ADDED = 'Email block added',
+  DIGEST_BLOCK_ADDED = 'Digest block added',
+  INBOX_DATA_OBJECT_PROPERTY_ADDED = 'Inbox data object property added',
+  CARD_BLOCK_ADDED = 'Card block added',
+  DIGEST_VARIABLE_SELECTED = 'Digest variable selected',
 }

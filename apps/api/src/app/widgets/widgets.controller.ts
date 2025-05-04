@@ -282,7 +282,7 @@ export class WidgetsController {
   async removeMessage(
     @SubscriberSession() subscriberSession: SubscriberEntity,
     @Param('messageId') messageId: string
-  ): Promise<MessageEntity> {
+  ): Promise<void> {
     if (!messageId) throw new BadRequestException('messageId is required');
 
     const command = RemoveMessageCommand.create({

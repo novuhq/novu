@@ -1,5 +1,8 @@
 import mongoose, { Connection, ConnectOptions } from 'mongoose';
+import { Logger } from '@nestjs/common';
 import { AuthMechanism } from './types';
+
+const MONGODB_CONTEXT = '[@novu/dal]';
 
 export class DalService {
   connection: Connection;
@@ -18,11 +21,17 @@ export class DalService {
       ...config,
     };
     const instance = await mongoose.connect(url, finalConfig);
-    console.log(`[original config] Connecting to Mongo: ${JSON.stringify(baseConfig)}`);
-    console.log(`[override config] Connecting to Mongo: ${JSON.stringify(config)}`);
-    console.log(`[final config] Connecting to Mongo: ${JSON.stringify(finalConfig)}`);
 
     this.connection = instance.connection;
+
+    mongoose.connection.on('connected', () => Logger.debug('[@novu/dal]: Mongo connected', MONGODB_CONTEXT));
+    mongoose.connection.on('disconnected', () => Logger.debug('[@novu/dal]: Mongo disconnected', MONGODB_CONTEXT));
+    mongoose.connection.on('error', (err) =>
+      Logger.error(`[@novu/dal]: Mongo error: ${err.message}`, MONGODB_CONTEXT, {
+        cause: err,
+        stack: err.stack,
+      })
+    );
 
     return this.connection;
   }

@@ -4,6 +4,7 @@ import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import {
   ApiServiceLevelEnum,
   FeatureFlags,
+  FeatureFlagsKeysEnum,
   FeatureNameEnum,
   getFeatureForTierAsBoolean,
   getFeatureForTierAsNumber,
@@ -69,12 +70,10 @@ export function Plan() {
       featureFlags
     ),
     highlights: buildHighlightsArray(featureFlags),
-    features: buildFeatureArray([
-      ApiServiceLevelEnum.FREE,
-      ApiServiceLevelEnum.PRO,
-      ApiServiceLevelEnum.BUSINESS,
-      ApiServiceLevelEnum.ENTERPRISE,
-    ]),
+    features: buildFeatureArray(
+      [ApiServiceLevelEnum.FREE, ApiServiceLevelEnum.PRO, ApiServiceLevelEnum.BUSINESS, ApiServiceLevelEnum.ENTERPRISE],
+      featureFlags
+    ),
   };
 
   useEffect(() => {
@@ -141,7 +140,10 @@ const serviceLevelHighlightFunctions: Record<string, PlanHighlightResolver[]> = 
   [ApiServiceLevelEnum.ENTERPRISE]: [getEventsLine, getTeammatesLine, getSamlText],
 };
 
-const buildFeatureArray: (columns: ApiServiceLevelEnum[]) => Feature[] = (columns: ApiServiceLevelEnum[]) => {
+const buildFeatureArray: (columns: ApiServiceLevelEnum[], featureFlags: FeatureFlags) => Feature[] = (
+  columns: ApiServiceLevelEnum[],
+  featureFlags: FeatureFlags
+) => {
   return [
     {
       label: 'Platform',
@@ -218,6 +220,16 @@ const buildFeatureArray: (columns: ApiServiceLevelEnum[]) => Feature[] = (column
         isBoolean: true,
       }),
     },
+    ...(featureFlags[FeatureFlagsKeysEnum.IS_SNOOZE_ENABLED]
+      ? [
+          {
+            label: '"Remind me later" functionality',
+            values: buildTableRowRecord({
+              featureName: FeatureNameEnum.PLATFORM_MAX_SNOOZE_DURATION,
+            }),
+          },
+        ]
+      : []),
     {
       label: 'Account administration and security',
       isTitle: true,

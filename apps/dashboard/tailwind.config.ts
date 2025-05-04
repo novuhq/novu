@@ -104,6 +104,14 @@ export const texts = {
       fontWeight: '500',
     },
   ],
+  'label-2xs': [
+    '.625rem',
+    {
+      lineHeight: '0.875rem',
+      letterSpacing: '0em',
+      fontWeight: '500',
+    },
+  ],
   'paragraph-xl': [
     '1.5rem',
     {
@@ -580,7 +588,7 @@ export default {
     },
     extend: {
       fontFamily: {
-        code: ['JetBrains Mono', 'monospace'],
+        code: ['var(--font-code)', 'var(--font-code-fallback)'],
       },
       opacity: {
         2.5: 0.025,

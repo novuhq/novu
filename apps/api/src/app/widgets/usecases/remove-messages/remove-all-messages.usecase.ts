@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import {
   MessageEntity,
   DalException,
@@ -6,6 +6,7 @@ import {
   SubscriberRepository,
   SubscriberEntity,
   FeedRepository,
+  EnforceEnvId,
 } from '@novu/dal';
 import { ChannelTypeEnum, WebSocketEventEnum } from '@novu/shared';
 import {
@@ -17,7 +18,6 @@ import {
 } from '@novu/application-generic';
 
 import { RemoveAllMessagesCommand } from './remove-all-messages.command';
-import { ApiException } from '../../../shared/exceptions/api.exception';
 import { MarkEnum } from '../mark-message-as/mark-message-as.command';
 
 @Injectable()
@@ -44,7 +44,7 @@ export class RemoveAllMessages {
         }
       }
 
-      const deleteMessageQuery: Partial<MessageEntity> = {
+      const deleteMessageQuery: Partial<MessageEntity> & EnforceEnvId = {
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
         _subscriberId: subscriber._id,
@@ -54,11 +54,26 @@ export class RemoveAllMessages {
       if (feed) {
         deleteMessageQuery._feedId = feed._id;
       }
+      const deletedMessages = await this.messageRepository.delete(deleteMessageQuery);
 
-      await this.messageRepository.deleteMany(deleteMessageQuery);
-
-      await this.updateServices(command, subscriber, MarkEnum.SEEN);
-      await this.updateServices(command, subscriber, MarkEnum.READ);
+      if (deletedMessages.deletedCount > 0) {
+        await Promise.all([
+          this.updateServices(command, subscriber, MarkEnum.SEEN),
+          this.updateServices(command, subscriber, MarkEnum.READ),
+          this.invalidateCache.invalidateQuery({
+            key: buildFeedKey().invalidate({
+              subscriberId: command.subscriberId,
+              _environmentId: command.environmentId,
+            }),
+          }),
+          this.invalidateCache.invalidateQuery({
+            key: buildMessageCountKey().invalidate({
+              subscriberId: command.subscriberId,
+              _environmentId: command.environmentId,
+            }),
+          }),
+        ]);
+      }
 
       this.analyticsService.track(`Removed All Feed Messages - [Notification Center]`, command.organizationId, {
         _subscriber: subscriber._id,
@@ -66,36 +81,22 @@ export class RemoveAllMessages {
         _environment: command.environmentId,
         _feedId: command.feedId,
       });
-
-      await this.invalidateCache.invalidateQuery({
-        key: buildFeedKey().invalidate({
-          subscriberId: command.subscriberId,
-          _environmentId: command.environmentId,
-        }),
-      });
-
-      await this.invalidateCache.invalidateQuery({
-        key: buildMessageCountKey().invalidate({
-          subscriberId: command.subscriberId,
-          _environmentId: command.environmentId,
-        }),
-      });
     } catch (e) {
       if (e instanceof DalException) {
-        throw new ApiException(e.message);
+        throw new BadRequestException(e.message);
       }
       throw e;
     }
   }
 
-  private async updateServices(command: RemoveAllMessagesCommand, subscriber, marked: string) {
-    this.updateSocketCount(subscriber, marked);
+  private async updateServices(command: RemoveAllMessagesCommand, subscriber, marked: string): Promise<void> {
+    await this.updateSocketCount(subscriber, marked);
   }
 
-  private updateSocketCount(subscriber: SubscriberEntity, mark: string) {
+  private async updateSocketCount(subscriber: SubscriberEntity, mark: string): Promise<void> {
     const eventMessage = mark === MarkEnum.READ ? WebSocketEventEnum.UNREAD : WebSocketEventEnum.UNSEEN;
 
-    this.webSocketsQueueService.add({
+    await this.webSocketsQueueService.add({
       name: 'sendMessage',
       data: {
         event: eventMessage,

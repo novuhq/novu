@@ -11,6 +11,7 @@ export enum HttpRequestHeaderKeysEnum {
   NOVU_API_VERSION = 'Novu-API-Version',
   NOVU_USER_AGENT = 'Novu-User-Agent',
   BYPASS_TUNNEL_REMINDER = 'Bypass-Tunnel-Reminder',
+  IDEMPOTENCY_KEY = 'Idempotency-Key',
 }
 testHttpHeaderEnumValidity(HttpRequestHeaderKeysEnum);
 

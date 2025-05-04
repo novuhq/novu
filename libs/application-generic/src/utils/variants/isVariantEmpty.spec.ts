@@ -1,13 +1,10 @@
 import { expect } from 'chai';
 
-import {
-  FieldLogicalOperatorEnum,
-  FieldOperatorEnum,
-  FilterPartTypeEnum,
-} from '@novu/shared';
+import { FieldLogicalOperatorEnum, FieldOperatorEnum, FilterPartTypeEnum } from '@novu/shared';
 
-import { MessageFilter, NotificationStepVariantCommand } from '../../usecases';
 import { isVariantEmpty } from './isVariantEmpty';
+import { NotificationStepVariantCommand } from '../../value-objects/notification-step-variant.command';
+import { MessageFilter } from '../../value-objects/message.filter';
 
 const testFilter: MessageFilter = {
   value: FieldLogicalOperatorEnum.AND,
@@ -38,10 +35,7 @@ describe('isVariantEmpty', () => {
 
   it('should return true for a variant with filters containing empty children', () => {
     const variantWithEmptyChildren: NotificationStepVariantCommand = {
-      filters: [
-        { children: [] },
-        { children: [] },
-      ] as unknown as MessageFilter[],
+      filters: [{ children: [] }, { children: [] }] as unknown as MessageFilter[],
     };
     const result = isVariantEmpty(variantWithEmptyChildren);
     expect(result).to.be.true;

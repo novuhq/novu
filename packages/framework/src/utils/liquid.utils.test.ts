@@ -24,6 +24,22 @@ describe('createLiquidEngine', () => {
     expect(result).toBe('John, Jane and 2 others');
   });
 
+  it('should register the toSentence filter', async () => {
+    const engine = createLiquidEngine();
+    const template = `{{ names | toSentence: '', 2, 'other' }}`;
+    const data = { names: ['John', 'Jane', 'Bob', 'Alice'] };
+    const result = await engine.parseAndRender(template, data);
+    expect(result).toBe('John, Jane, and 2 others');
+  });
+
+  it('should register the pluralize filter', async () => {
+    const engine = createLiquidEngine();
+    const template = `{{ count | pluralize: 'other' }}`;
+    const data = { count: 1 };
+    const result = await engine.parseAndRender(template, data);
+    expect(result).toBe('1 other');
+  });
+
   it('should correctly handle complex templates with multiple filters', async () => {
     const engine = createLiquidEngine();
 
@@ -293,7 +309,7 @@ describe('defaultOutputEscape', () => {
     expect(defaultOutputEscape(true)).toBe('true');
     expect(defaultOutputEscape(false)).toBe('false');
     expect(defaultOutputEscape(null)).toBe('null');
-    expect(defaultOutputEscape(undefined)).toBe('undefined');
+    expect(defaultOutputEscape(undefined)).toBe('');
   });
 });
 
@@ -342,15 +358,15 @@ describe('stringifyDataStructureWithSingleQuotes', () => {
     expect(converted).toStrictEqual('true');
   });
 
-  it('should convert null to a string without single quotes', () => {
+  it('should convert null to an empty string', () => {
     const myTestNull = null;
     const converted = stringifyDataStructureWithSingleQuotes(myTestNull);
-    expect(converted).toStrictEqual('null');
+    expect(converted).toStrictEqual('');
   });
 
   it('should convert undefined to an empty string', () => {
     const myTestUndefined = undefined;
     const converted = stringifyDataStructureWithSingleQuotes(myTestUndefined);
-    expect(converted).toStrictEqual('undefined');
+    expect(converted).toStrictEqual('');
   });
 });

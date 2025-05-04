@@ -1,5 +1,5 @@
 import './config/env.config';
-import 'newrelic';
+// import 'newrelic';
 import { init } from '@sentry/nestjs';
 import { version } from '../package.json';
 

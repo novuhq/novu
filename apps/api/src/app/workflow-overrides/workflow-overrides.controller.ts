@@ -36,7 +36,7 @@ import {
   GetWorkflowOverridesResponseDto,
   UpdateWorkflowOverrideRequestDto,
   UpdateWorkflowOverrideResponseDto,
-} from './dto';
+} from './dtos';
 import { GetWorkflowOverrideById } from './usecases/get-workflow-override-by-id/get-workflow-override-by-id.usecase';
 import { GetWorkflowOverrideByIdCommand } from './usecases/get-workflow-override-by-id/get-workflow-override-by-id.command';
 import { UpdateWorkflowOverrideByIdCommand } from './usecases/update-workflow-override-by-id/update-workflow-override-by-id.command';

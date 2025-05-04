@@ -9,16 +9,20 @@ import { HeaderNavigation } from '@/components/header-navigation/header-navigati
 export const DashboardLayout = ({
   children,
   headerStartItems,
+  showSideNavigation = true,
+  showBridgeUrl = true,
 }: {
   children: ReactNode;
   headerStartItems?: ReactNode;
+  showSideNavigation?: boolean;
+  showBridgeUrl?: boolean;
 }) => {
   return (
     <IntercomProvider appId={INTERCOM_APP_ID}>
       <div className="relative flex h-full w-full">
-        <SideNavigation />
+        {showSideNavigation && <SideNavigation />}
         <div className="flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
-          <HeaderNavigation startItems={headerStartItems} />
+          <HeaderNavigation startItems={headerStartItems} hideBridgeUrl={!showBridgeUrl} />
 
           <div className="flex flex-1 flex-col overflow-y-auto overflow-x-hidden">{children}</div>
         </div>

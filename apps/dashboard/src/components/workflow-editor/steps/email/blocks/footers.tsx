@@ -245,7 +245,7 @@ export const createFooterLogoTextAndSocials: (props: { track: ReturnType<typeof 
                   attrs: {
                     height: 20,
                     width: 20,
-                    src: '/images/email-editor/linkedin.png',
+                    src: 'https://prod-novu-app-bucket.s3.us-east-1.amazonaws.com/assets/email-editor/linkedin.png',
                     isSrcVariable: false,
                     alt: null,
                     title: null,
@@ -259,7 +259,7 @@ export const createFooterLogoTextAndSocials: (props: { track: ReturnType<typeof 
                   attrs: {
                     height: 20,
                     width: 20,
-                    src: '/images/email-editor/youtube.png',
+                    src: 'https://prod-novu-app-bucket.s3.us-east-1.amazonaws.com/assets/email-editor/youtube.png',
                     isSrcVariable: false,
                     alt: null,
                     title: null,
@@ -273,7 +273,7 @@ export const createFooterLogoTextAndSocials: (props: { track: ReturnType<typeof 
                   attrs: {
                     height: 20,
                     width: 20,
-                    src: '/images/email-editor/twitter.png',
+                    src: 'https://prod-novu-app-bucket.s3.us-east-1.amazonaws.com/assets/email-editor/twitter.png',
                     isSrcVariable: false,
                     alt: null,
                     title: null,
@@ -332,7 +332,7 @@ export const createFooterLogoWithSimpleText: (props: { track: ReturnType<typeof 
                           attrs: {
                             height: 48,
                             width: 48,
-                            src: '/images/email-editor/logo.png',
+                            src: 'https://prod-novu-app-bucket.s3.us-east-1.amazonaws.com/assets/email-editor/logo.png',
                             isSrcVariable: false,
                             alt: 'Company Logo',
                             title: null,
@@ -422,7 +422,7 @@ export const createFooterLogoWithSimpleText: (props: { track: ReturnType<typeof 
                           attrs: {
                             height: 20,
                             width: 20,
-                            src: '/images/email-editor/linkedin.png',
+                            src: 'https://prod-novu-app-bucket.s3.us-east-1.amazonaws.com/assets/email-editor/linkedin.png',
                             isSrcVariable: false,
                             alt: 'LinkedIn',
                             title: null,
@@ -436,7 +436,7 @@ export const createFooterLogoWithSimpleText: (props: { track: ReturnType<typeof 
                           attrs: {
                             height: 20,
                             width: 20,
-                            src: '/images/email-editor/twitter.png',
+                            src: 'https://prod-novu-app-bucket.s3.us-east-1.amazonaws.com/assets/email-editor/twitter.png',
                             isSrcVariable: false,
                             alt: 'Twitter',
                             title: null,
@@ -450,7 +450,7 @@ export const createFooterLogoWithSimpleText: (props: { track: ReturnType<typeof 
                           attrs: {
                             height: 20,
                             width: 20,
-                            src: '/images/email-editor/youtube.png',
+                            src: 'https://prod-novu-app-bucket.s3.us-east-1.amazonaws.com/assets/email-editor/youtube.png',
                             isSrcVariable: false,
                             alt: 'YouTube',
                             title: null,

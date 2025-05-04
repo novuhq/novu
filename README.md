@@ -24,7 +24,7 @@
 </p>
 
 <h1 align="center">
-  The <Inbox /> infrastructure for modern products
+ The &lt;Inbox /&gt; infrastructure for modern products
 </h1>
 
 <div align="center">

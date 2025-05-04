@@ -54,15 +54,21 @@ const actionSchema = {
 const inAppOutputSchema = {
   type: 'object',
   properties: {
-    subject: { type: 'string' },
-    body: { type: 'string' },
+    subject: {
+      type: 'string',
+      minLength: 1,
+    },
+    body: {
+      type: 'string',
+      minLength: 1,
+    },
     avatar: { type: 'string', format: 'uri' },
     primaryAction: actionSchema,
     secondaryAction: actionSchema,
     data: { type: 'object', additionalProperties: true },
     redirect: redirectSchema,
   },
-  required: ['body'],
+  anyOf: [{ required: ['subject'] }, { required: ['body'] }],
   additionalProperties: false,
 } as const satisfies JsonSchema;
 

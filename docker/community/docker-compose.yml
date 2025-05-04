@@ -32,10 +32,8 @@ services:
   api:
     image: 'ghcr.io/novuhq/novu/api:2.1.1'
     depends_on:
-      mongodb:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      - mongodb
+      - redis
     container_name: api
     restart: unless-stopped
     logging:
@@ -79,10 +77,8 @@ services:
   worker:
     image: 'ghcr.io/novuhq/novu/worker:2.1.1'
     depends_on:
-      mongodb:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      - mongodb
+      - redis
     container_name: worker
     restart: unless-stopped
     logging:
@@ -117,10 +113,8 @@ services:
   ws:
     image: 'ghcr.io/novuhq/novu/ws:2.1.1'
     depends_on:
-      mongodb:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      - mongodb
+      - redis
     container_name: ws
     restart: unless-stopped
     logging:

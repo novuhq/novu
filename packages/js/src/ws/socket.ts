@@ -32,6 +32,8 @@ const mapToNotification = ({
   content,
   read,
   archived,
+  snoozedUntil,
+  deliveredAt,
   createdAt,
   lastReadDate,
   archivedAt,
@@ -42,13 +44,19 @@ const mapToNotification = ({
   cta,
   tags,
   data,
+  workflow,
 }: TODO): InboxNotification => {
   const to: Subscriber = {
-    id: subscriber?._id ?? '',
+    id: subscriber?._id,
+    subscriberId: subscriber?.subscriberId,
     firstName: subscriber?.firstName,
     lastName: subscriber?.lastName,
     avatar: subscriber?.avatar,
-    subscriberId: subscriber?.subscriberId ?? '',
+    locale: subscriber?.locale,
+    data: subscriber?.data,
+    timezone: subscriber?.timezone,
+    email: subscriber?.email,
+    phone: subscriber?.phone,
   };
   const primaryCta = cta.action?.buttons?.find((button: any) => button.type === ActionTypeEnum.PRIMARY);
   const secondaryCta = cta.action?.buttons?.find((button: any) => button.type === ActionTypeEnum.SECONDARY);
@@ -62,6 +70,13 @@ const mapToNotification = ({
     to,
     isRead: read,
     isArchived: archived,
+    isSnoozed: !!snoozedUntil,
+    ...(deliveredAt && {
+      deliveredAt,
+    }),
+    ...(snoozedUntil && {
+      snoozedUntil,
+    }),
     createdAt,
     readAt: lastReadDate,
     archivedAt,
@@ -95,6 +110,7 @@ const mapToNotification = ({
         }
       : undefined,
     data,
+    workflow,
   };
 };
 

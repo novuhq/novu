@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import {
   MessageTemplateRepository,
   NotificationTemplateEntity,
@@ -21,10 +21,9 @@ import {
 
 import { GetSubscriberTemplatePreferenceCommand } from './get-subscriber-template-preference.command';
 
-import { ApiException } from '../../utils/exceptions';
-import { buildSubscriberKey, CachedEntity } from '../../services/cache';
 import { GetPreferences } from '../get-preferences';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
+import { buildSubscriberKey, CachedResponse } from '../../services';
 
 const PRIORITY_ORDER = [
   PreferenceOverrideSourceEnum.TEMPLATE,
@@ -193,7 +192,7 @@ export class GetSubscriberTemplatePreference {
     return channels as unknown as ChannelTypeEnum[];
   }
 
-  @CachedEntity({
+  @CachedResponse({
     builder: (command: GetSubscriberTemplatePreferenceCommand) =>
       buildSubscriberKey({
         _environmentId: command.environmentId,
@@ -208,7 +207,7 @@ export class GetSubscriberTemplatePreference {
     const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
 
     if (!subscriber) {
-      throw new ApiException(`Subscriber ${command.subscriberId} not found`);
+      throw new BadRequestException(`Subscriber ${command.subscriberId} not found`);
     }
 
     return subscriber;

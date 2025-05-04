@@ -1,8 +1,16 @@
 import { createHash } from 'crypto';
-import { Injectable, NotFoundException, UnauthorizedException, forwardRef, Inject } from '@nestjs/common';
+import {
+  forwardRef,
+  Inject,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+  BadRequestException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 
 import {
+  EnvironmentEntity,
   EnvironmentRepository,
   MemberEntity,
   MemberRepository,
@@ -11,26 +19,24 @@ import {
   SubscriberRepository,
   UserEntity,
   UserRepository,
-  EnvironmentEntity,
 } from '@novu/dal';
 import {
-  AuthProviderEnum,
+  ApiAuthSchemeEnum,
   AuthenticateContext,
-  UserSessionData,
+  AuthProviderEnum,
   ISubscriberJwt,
   MemberRoleEnum,
-  ApiAuthSchemeEnum,
   normalizeEmail,
+  UserSessionData,
 } from '@novu/shared';
 
 import {
   AnalyticsService,
-  ApiException,
-  Instrument,
   buildSubscriberKey,
   buildUserKey,
-  CachedEntity,
+  CachedResponse,
   IAuthService,
+  Instrument,
 } from '@novu/application-generic';
 import { SwitchOrganization } from '../usecases/switch-organization/switch-organization.usecase';
 import { SwitchOrganizationCommand } from '../usecases/switch-organization/switch-organization.command';
@@ -147,7 +153,7 @@ export class CommunityAuthService implements IAuthService {
       );
 
       const dbUser = await this.userRepository.findById(user._id);
-      if (!dbUser) throw new ApiException('User not found');
+      if (!dbUser) throw new BadRequestException('User not found');
       // eslint-disable-next-line no-param-reassign
       user = dbUser;
     }
@@ -295,7 +301,7 @@ export class CommunityAuthService implements IAuthService {
   }
 
   @Instrument()
-  @CachedEntity({
+  @CachedResponse({
     builder: (command: { _id: string }) =>
       buildUserKey({
         _id: command._id,
@@ -305,7 +311,7 @@ export class CommunityAuthService implements IAuthService {
     return await this.userRepository.findById(_id);
   }
 
-  @CachedEntity({
+  @CachedResponse({
     builder: (command: { subscriberId: string; _environmentId: string }) =>
       buildSubscriberKey({
         _environmentId: command._environmentId,

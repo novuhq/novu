@@ -24,7 +24,7 @@ import {
 /**
  * The channel type for the integration, which defines how the integration communicates (e.g., email, SMS).
  */
-export const IntegrationResponseDtoChannel = {
+export const Channel = {
   InApp: "in_app",
   Email: "email",
   Sms: "sms",
@@ -34,9 +34,7 @@ export const IntegrationResponseDtoChannel = {
 /**
  * The channel type for the integration, which defines how the integration communicates (e.g., email, SMS).
  */
-export type IntegrationResponseDtoChannel = ClosedEnum<
-  typeof IntegrationResponseDtoChannel
->;
+export type Channel = ClosedEnum<typeof Channel>;
 
 export type IntegrationResponseDto = {
   /**
@@ -66,7 +64,7 @@ export type IntegrationResponseDto = {
   /**
    * The channel type for the integration, which defines how the integration communicates (e.g., email, SMS).
    */
-  channel: IntegrationResponseDtoChannel;
+  channel: Channel;
   /**
    * The credentials required for the integration to function, including API keys and other sensitive information.
    */
@@ -98,24 +96,22 @@ export type IntegrationResponseDto = {
 };
 
 /** @internal */
-export const IntegrationResponseDtoChannel$inboundSchema: z.ZodNativeEnum<
-  typeof IntegrationResponseDtoChannel
-> = z.nativeEnum(IntegrationResponseDtoChannel);
+export const Channel$inboundSchema: z.ZodNativeEnum<typeof Channel> = z
+  .nativeEnum(Channel);
 
 /** @internal */
-export const IntegrationResponseDtoChannel$outboundSchema: z.ZodNativeEnum<
-  typeof IntegrationResponseDtoChannel
-> = IntegrationResponseDtoChannel$inboundSchema;
+export const Channel$outboundSchema: z.ZodNativeEnum<typeof Channel> =
+  Channel$inboundSchema;
 
 /**
  * @internal
  * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
  */
-export namespace IntegrationResponseDtoChannel$ {
-  /** @deprecated use `IntegrationResponseDtoChannel$inboundSchema` instead. */
-  export const inboundSchema = IntegrationResponseDtoChannel$inboundSchema;
-  /** @deprecated use `IntegrationResponseDtoChannel$outboundSchema` instead. */
-  export const outboundSchema = IntegrationResponseDtoChannel$outboundSchema;
+export namespace Channel$ {
+  /** @deprecated use `Channel$inboundSchema` instead. */
+  export const inboundSchema = Channel$inboundSchema;
+  /** @deprecated use `Channel$outboundSchema` instead. */
+  export const outboundSchema = Channel$outboundSchema;
 }
 
 /** @internal */
@@ -130,7 +126,7 @@ export const IntegrationResponseDto$inboundSchema: z.ZodType<
   name: z.string(),
   identifier: z.string(),
   providerId: z.string(),
-  channel: IntegrationResponseDtoChannel$inboundSchema,
+  channel: Channel$inboundSchema,
   credentials: CredentialsDto$inboundSchema,
   active: z.boolean(),
   deleted: z.boolean(),
@@ -176,7 +172,7 @@ export const IntegrationResponseDto$outboundSchema: z.ZodType<
   name: z.string(),
   identifier: z.string(),
   providerId: z.string(),
-  channel: IntegrationResponseDtoChannel$outboundSchema,
+  channel: Channel$outboundSchema,
   credentials: CredentialsDto$outboundSchema,
   active: z.boolean(),
   deleted: z.boolean(),

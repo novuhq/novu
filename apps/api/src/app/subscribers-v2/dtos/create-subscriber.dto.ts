@@ -1,5 +1,4 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { SUBSCRIBER_ID_REGEX } from '@novu/shared';
 import { Transform } from 'class-transformer';
 import {
   IsDefined,
@@ -10,7 +9,6 @@ import {
   IsOptional,
   IsString,
   IsTimeZone,
-  Matches,
   ValidateIf,
 } from 'class-validator';
 

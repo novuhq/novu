@@ -1,3 +1,5 @@
+// @ts-expect-error inline import esbuild syntax
+import css from 'directcss:../index.directcss';
 import { For, onCleanup, onMount } from 'solid-js';
 import { MountableElement, Portal } from 'solid-js/web';
 import { NovuUI } from '..';
@@ -57,7 +59,6 @@ export type NovuComponentControls = {
 
 type RendererProps = {
   novuUI: NovuUI;
-  cssHref: string;
   appearance?: Appearance;
   nodes: Map<MountableElement, NovuComponent>;
   localization?: Localization;
@@ -78,11 +79,10 @@ export const Renderer = (props: RendererProps) => {
       return;
     }
 
-    const link = document.createElement('link');
-    link.id = id;
-    link.rel = 'stylesheet';
-    link.href = props.cssHref;
-    document.head.insertBefore(link, document.head.firstChild);
+    const styleEl = document.createElement('style');
+    styleEl.id = id;
+    document.head.insertBefore(styleEl, document.head.firstChild);
+    styleEl.innerHTML = css;
 
     onCleanup(() => {
       const element = document.getElementById(id);
@@ -105,7 +105,8 @@ export const Renderer = (props: RendererProps) => {
 
                     onMount(() => {
                       /*
-                       ** return here if not `<Notifications /> or `<Preferences />` since we only want to override some styles for those to work properly
+                       ** return here if not `<Notifications /> or `<Preferences />`
+                       ** since we only want to override some styles for those to work properly
                        ** due to the extra divs being introduced by the renderer/mounter
                        */
                       if (!['Notifications', 'Preferences', 'InboxContent'].includes(novuComponent().name)) return;

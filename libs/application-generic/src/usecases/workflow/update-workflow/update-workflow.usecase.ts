@@ -24,8 +24,6 @@ import {
 
 import { AnalyticsService, ContentService, InvalidateCacheService } from '../../../services';
 import { UpdateWorkflowCommand } from './update-workflow.command';
-import { isVariantEmpty } from '../../../utils/variants';
-import { ApiException, PlatformException } from '../../../utils/exceptions';
 import {
   CreateChange,
   CreateChangeCommand,
@@ -34,15 +32,13 @@ import {
   DeletePreferencesCommand,
   DeletePreferencesUseCase,
   GetPreferences,
-  GetWorkflowByIdsCommand,
-  GetWorkflowByIdsUseCase,
-  NotificationStep,
-  NotificationStepVariantCommand,
   UpsertPreferences,
   UpsertUserWorkflowPreferencesCommand,
   UpsertWorkflowPreferencesCommand,
-  WorkflowInternalResponseDto,
 } from '../..';
+import { GetWorkflowWithPreferencesCommand } from '../get-workflow-with-preferences/get-workflow-with-preferences.command';
+import { GetWorkflowWithPreferencesUseCase } from '../get-workflow-with-preferences/get-workflow-with-preferences.usecase';
+import { WorkflowWithPreferencesResponseDto } from '../get-workflow-with-preferences/get-workflow-with-preferences.dto';
 import {
   DeleteMessageTemplate,
   DeleteMessageTemplateCommand,
@@ -51,6 +47,8 @@ import {
 } from '../../message-template';
 import { Instrument, InstrumentUsecase } from '../../../instrumentation';
 import { ResourceValidatorService } from '../../../services/resource-validator.service';
+import { NotificationStep, NotificationStepVariantCommand } from '../../../value-objects';
+import { isVariantEmpty, PlatformException } from '../../../utils';
 
 /**
  * @deprecated - use `UpsertWorkflow` instead
@@ -77,27 +75,26 @@ export class UpdateWorkflow {
     private upsertPreferences: UpsertPreferences,
     @Inject(forwardRef(() => DeletePreferencesUseCase))
     private deletePreferencesUsecase: DeletePreferencesUseCase,
-    @Inject(forwardRef(() => GetWorkflowByIdsUseCase))
-    private getWorkflowByIdsUseCase: GetWorkflowByIdsUseCase,
+    @Inject(forwardRef(() => GetWorkflowWithPreferencesUseCase))
+    private getWorkflowWithPreferencesUseCase: GetWorkflowWithPreferencesUseCase,
     private controlValuesRepository: ControlValuesRepository,
     private resourceValidatorService: ResourceValidatorService
   ) {}
 
   @InstrumentUsecase()
-  async execute(command: UpdateWorkflowCommand): Promise<WorkflowInternalResponseDto> {
+  async execute(command: UpdateWorkflowCommand): Promise<WorkflowWithPreferencesResponseDto> {
     await this.validatePayload(command);
 
-    const existingTemplate = await this.getWorkflowByIdsUseCase.execute(
-      GetWorkflowByIdsCommand.create({
+    const existingTemplate = await this.getWorkflowWithPreferencesUseCase.execute(
+      GetWorkflowWithPreferencesCommand.create({
         workflowIdOrInternalId: command.id,
         environmentId: command.environmentId,
         organizationId: command.organizationId,
-        userId: command.userId,
       })
     );
     if (!existingTemplate) throw new NotFoundException(`Notification template with id ${command.id} not found`);
 
-    let updatePayload: Partial<WorkflowInternalResponseDto> = {};
+    let updatePayload: Partial<WorkflowWithPreferencesResponseDto> = {};
     if (command.name) {
       updatePayload.name = command.name;
     }
@@ -143,7 +140,7 @@ export class UpdateWorkflow {
       existingTemplate._id
     );
 
-    let notificationTemplateWithStepTemplate: WorkflowInternalResponseDto;
+    let notificationTemplateWithStepTemplate: WorkflowWithPreferencesResponseDto;
     await this.notificationTemplateRepository.withTransaction(async () => {
       if (command.steps) {
         updatePayload = this.updateTriggers(updatePayload, command.steps);
@@ -274,9 +271,8 @@ export class UpdateWorkflow {
         }
       );
 
-      notificationTemplateWithStepTemplate = await this.getWorkflowByIdsUseCase.execute(
-        GetWorkflowByIdsCommand.create({
-          userId: command.userId,
+      notificationTemplateWithStepTemplate = await this.getWorkflowWithPreferencesUseCase.execute(
+        GetWorkflowWithPreferencesCommand.create({
           environmentId: command.environmentId,
           organizationId: command.organizationId,
           workflowIdOrInternalId: command.id,
@@ -344,7 +340,7 @@ export class UpdateWorkflow {
 
     for (const variant of variants) {
       if (isVariantEmpty(variant)) {
-        throw new ApiException(`Variant filters are required, variant name ${variant.name} id ${variant._id}`);
+        throw new BadRequestException(`Variant filters are required, variant name ${variant.name} id ${variant._id}`);
       }
     }
   }
@@ -362,7 +358,7 @@ export class UpdateWorkflow {
       let messageTemplateId = message._id;
 
       if (!message.template) {
-        throw new ApiException(`Something un-expected happened, template couldn't be found`);
+        throw new BadRequestException(`Something un-expected happened, template couldn't be found`);
       }
 
       const updatedVariants = await this.updateVariants(message.variants, command, parentChangeId!);
@@ -439,10 +435,10 @@ export class UpdateWorkflow {
 
   @Instrument()
   private updateTriggers(
-    updatePayload: Partial<WorkflowInternalResponseDto>,
+    updatePayload: Partial<WorkflowWithPreferencesResponseDto>,
     steps: NotificationStep[]
-  ): Partial<WorkflowInternalResponseDto> {
-    const updatePayloadResult: Partial<WorkflowInternalResponseDto> = {
+  ): Partial<WorkflowWithPreferencesResponseDto> {
+    const updatePayloadResult: Partial<WorkflowWithPreferencesResponseDto> = {
       ...updatePayload,
     };
 
@@ -559,9 +555,7 @@ export class UpdateWorkflow {
       ...(step.variants || []).flatMap((variant) => variant._templateId),
     ]);
 
-    const removedStepsIds = existingStepsIds.filter((id) => !newStepsIds.includes(id));
-
-    return removedStepsIds;
+    return existingStepsIds.filter((id) => !newStepsIds.includes(id));
   }
 
   private async updateVariants(
@@ -575,7 +569,7 @@ export class UpdateWorkflow {
     let parentVariantId: string | null = null;
 
     for (const variant of variants) {
-      if (!variant.template) throw new ApiException(`Unexpected error: variants message template is missing`);
+      if (!variant.template) throw new BadRequestException(`Unexpected error: variants message template is missing`);
 
       const messageTemplatePayload: CreateMessageTemplateCommand | UpdateMessageTemplateCommand = {
         organizationId: command.organizationId,
@@ -608,7 +602,8 @@ export class UpdateWorkflow {
           )
         : await this.createMessageTemplate.execute(CreateMessageTemplateCommand.create(messageTemplatePayload));
 
-      if (!updatedVariant._id) throw new ApiException(`Unexpected error: variants message template was not created`);
+      if (!updatedVariant._id)
+        throw new BadRequestException(`Unexpected error: variants message template was not created`);
 
       variantsList.push({
         _id: updatedVariant._id,

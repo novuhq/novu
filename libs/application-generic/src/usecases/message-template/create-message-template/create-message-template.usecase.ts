@@ -5,9 +5,9 @@ import { ChangeEntityTypeEnum, IMessageAction, isBridgeWorkflow, StepTypeEnum } 
 import { CreateMessageTemplateCommand } from './create-message-template.command';
 import { CreateChange, CreateChangeCommand } from '../../create-change';
 import { UpdateChange, UpdateChangeCommand } from '../../update-change';
-import { sanitizeMessageContent } from '../../../services';
+import { sanitizeMessageContentV0 } from '../../../services';
 import { normalizeVariantDefault } from '../../../utils/variants';
-import { ApiException } from '../../../utils/exceptions';
+import { BadRequestException } from '@nestjs/common';
 import { shouldSanitize } from '../shared';
 
 @Injectable()
@@ -21,7 +21,7 @@ export class CreateMessageTemplate {
 
   async execute(command: CreateMessageTemplateCommand): Promise<MessageTemplateEntity> {
     if ((command?.cta?.action as IMessageAction | undefined | '') === '') {
-      throw new ApiException('Please provide a valid CTA action');
+      throw new BadRequestException('Please provide a valid CTA action');
     }
 
     let layoutId: string | undefined | null;
@@ -37,7 +37,7 @@ export class CreateMessageTemplate {
       name: command.name,
       variables: command.variables ? normalizeVariantDefault(command.variables) : undefined,
       content: shouldSanitize(command.type, command.contentType)
-        ? sanitizeMessageContent(command.content)
+        ? sanitizeMessageContentV0(command.content)
         : command.content,
       contentType: command.contentType,
       subject: command.subject,

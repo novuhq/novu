@@ -1,5 +1,5 @@
-import { describe, expectTypeOf, it } from 'vitest';
-import type {
+import { describe, it } from 'vitest';
+import {
   ConditionalPartial,
   Either,
   Awaitable,
@@ -10,8 +10,6 @@ import type {
   Prettify,
   DeepPartial,
   DeepRequired,
-  Stringify,
-  UnionToTuple,
 } from './util.types';
 
 describe('Either', () => {
@@ -38,305 +36,188 @@ describe('Either', () => {
 });
 
 describe('Awaitable', () => {
-  it('should return a string or a promise of a string', () => {
+  it('should compile when the type is an awaitable', () => {
+    type TestAwaitable = Awaitable<Promise<string>>;
+    const testAwaitableValid: TestAwaitable = Promise.resolve('bar');
+  });
+
+  it('should compile when the type is not an awaitable', () => {
     type TestAwaitable = Awaitable<string>;
-    expectTypeOf<TestAwaitable>().toEqualTypeOf<string | Promise<string>>();
+    const testAwaitableValid: TestAwaitable = 'bar';
   });
 
   it('should not compile when a non-awaitable type has incorrect properties', () => {
     type TestAwaitable = Awaitable<{ foo: string }>;
     // @ts-expect-error - foo should be a string
-    expectTypeOf<TestAwaitable>().toEqualTypeOf<{ foo: 123 }>();
+    const testAwaitableInvalid: TestAwaitable = { foo: 123 };
   });
 
   it('should not compile when an awaitable type has incorrect properties', () => {
     type TestAwaitable = Awaitable<{ foo: string }>;
     // @ts-expect-error - foo should be a string
-    expectTypeOf<TestAwaitable>().toEqualTypeOf<Promise<{ foo: 123 }>>();
+    const testAwaitableInvalid: TestAwaitable = Promise.resolve({ foo: 123 });
   });
 });
 
 describe('ConditionalPartial', () => {
-  it('should return an empty object when the condition is true', () => {
+  it('should compile an empty object when the condition is true', () => {
     type TestConditionalPartialTrue = ConditionalPartial<{ foo: string }, true>;
-    expectTypeOf<TestConditionalPartialTrue>().toEqualTypeOf<{}>();
+    const testConditionalPartialTrueValid: TestConditionalPartialTrue = {};
   });
 
-  it('should return the object with the optional properties when the condition is true', () => {
+  it('should compile an object with the correct type of properties when the condition is true', () => {
     type TestConditionalPartialTrue = ConditionalPartial<{ foo: string }, true>;
-    expectTypeOf<TestConditionalPartialTrue>().toEqualTypeOf<{ foo?: string }>();
+    const testConditionalPartialTrueValid: TestConditionalPartialTrue = { foo: 'bar' };
   });
 
   it('should not compile an object with the wrong type of properties when the condition is true', () => {
     type TestConditionalPartialTrue = ConditionalPartial<{ foo: string }, true>;
-    // @ts-expect-error - foo should be optional
-    expectTypeOf<TestConditionalPartialTrue>().toEqualTypeOf<{ foo: 123 }>();
+    // @ts-expect-error - foo should be a string
+    const testConditionalPartialTrueInvalid: TestConditionalPartialTrue = { foo: 123 };
   });
 
-  it('should return the object with the required properties when the condition is false', () => {
+  it('should compile an object with the required properties when the condition is false', () => {
     type TestConditionalPartialFalse = ConditionalPartial<{ foo: string }, false>;
-    expectTypeOf<TestConditionalPartialFalse>().toEqualTypeOf<{ foo: string }>();
+    const testConditionalPartialFalseValid: TestConditionalPartialFalse = { foo: 'bar' };
   });
 
   it('should not compile an empty object when the condition is false', () => {
     type TestConditionalPartialFalse = ConditionalPartial<{ foo: string }, false>;
     // @ts-expect-error: 'foo' is required but missing
-    expectTypeOf<TestConditionalPartialFalse>().toEqualTypeOf<{}>();
+    const testConditionalPartialFalseInvalid: TestConditionalPartialFalse = {};
   });
 
   it('should not compile when the first argument is not an indexable type', () => {
     // @ts-expect-error - string is not an object
     type TestConditionalPartialFalse = ConditionalPartial<string, false>;
-    expectTypeOf<TestConditionalPartialFalse>().toEqualTypeOf<never>();
   });
 });
 
 describe('PickOptional', () => {
-  it('should return the optional property', () => {
-    type TestPickOptional = PickOptional<{ foo?: string; bar: string }>;
-    expectTypeOf<TestPickOptional>().toEqualTypeOf<{ foo?: string }>();
+  it('should compile when the optional property is present', () => {
+    type TestPickOptional = PickOptional<{ foo?: string }>;
+    const testPickOptionalValid: TestPickOptional = { foo: 'bar' };
   });
 
   it('should not compile when the optional property is the wrong type', () => {
-    type TestPickOptional = PickOptional<{ foo?: string; bar: string }>;
+    type TestPickOptional = PickOptional<{ foo?: string }>;
     // @ts-expect-error - foo should be a string
-    expectTypeOf<TestPickOptional>().toEqualTypeOf<{ foo: 123 }>();
+    const testPickOptionalInvalid: TestPickOptional = { foo: 123 };
+  });
+
+  it('should compile when the optional property is not present', () => {
+    type TestPickOptional = PickOptional<{ foo?: string }>;
+    const testPickOptionalValid: TestPickOptional = {};
   });
 
   it('should not compile when specifying a required property', () => {
     type TestPickOptional = PickOptional<{ foo?: string; bar: string }>;
     // @ts-expect-error - bar should not be present
-    expectTypeOf<TestPickOptional>().toEqualTypeOf<{ foo?: string; bar: string }>();
+    const testPickOptionalInvalid: TestPickOptional = { bar: 'bar' };
   });
 });
 
 describe('PickOptionalKeys', () => {
-  it('should return the optional property', () => {
+  it('should compile when the optional property is present', () => {
     type TestPickOptionalKeys = PickOptionalKeys<{ foo?: string }>;
-    expectTypeOf<TestPickOptionalKeys>().toEqualTypeOf<'foo'>();
+    const testPickOptionalKeysValid: TestPickOptionalKeys = 'foo';
   });
 
-  it('should return never when the object has no optional properties', () => {
+  it('should not compile when the object has no optional properties', () => {
     type TestPickOptionalKeys = PickOptionalKeys<{ foo: string }>;
-    expectTypeOf<TestPickOptionalKeys>().toEqualTypeOf<never>();
+    // @ts-expect-error - no optional property is present
+    const testPickOptionalKeysInvalid: TestPickOptionalKeys = 'invalid';
   });
 });
 
 describe('PickRequired', () => {
-  it('should return the required property', () => {
+  it('should compile when the required property is present', () => {
     type TestPickRequired = PickRequired<{ foo: string }>;
-    expectTypeOf<TestPickRequired>().toEqualTypeOf<{ foo: string }>();
+    const testPickRequiredValid: TestPickRequired = { foo: 'bar' };
   });
 
   it('should not compile when the required property is the wrong type', () => {
     type TestPickRequired = PickRequired<{ foo: string }>;
     // @ts-expect-error - foo should be a string
-    expectTypeOf<TestPickRequired>().toEqualTypeOf<{ foo: 123 }>();
+    const testPickRequiredInvalid: TestPickRequired = { foo: 123 };
   });
 
   it('should not compile when the required property is not present', () => {
     type TestPickRequired = PickRequired<{ foo: string }>;
     // @ts-expect-error - foo should be present
-    expectTypeOf<TestPickRequired>().toEqualTypeOf<{}>();
+    const testPickRequiredInvalid: TestPickRequired = {};
   });
 
   it('should not compile when specifying an optional property', () => {
     type TestPickRequired = PickRequired<{ foo?: string; bar: string }>;
     // @ts-expect-error - foo should not be present
-    expectTypeOf<TestPickRequired>().toEqualTypeOf<{ foo: string; bar: string }>();
+    const testPickRequiredInvalid: TestPickRequired = { foo: 'bar', bar: 'bar' };
   });
 });
 
 describe('PickRequiredKeys', () => {
-  it('should return the required property', () => {
+  it('should compile when the object is empty', () => {
     type TestPickRequiredKeys = PickRequiredKeys<{ foo: string }>;
-    expectTypeOf<TestPickRequiredKeys>().toEqualTypeOf<'foo'>();
+    const testPickRequiredKeysValid: TestPickRequiredKeys = 'foo';
   });
 
-  it('should return never when the object has no required properties', () => {
+  it('should not compile when the object has no required properties', () => {
     type TestPickRequiredKeys = PickRequiredKeys<{ foo?: string }>;
-    expectTypeOf<TestPickRequiredKeys>().toEqualTypeOf<never>();
+    // @ts-expect-error - no required property is present
+    const testPickRequiredKeysInvalid: TestPickRequiredKeys = 'invalid';
   });
 });
 
 describe('Prettify', () => {
-  it('should return the identity type', () => {
+  it('should compile the prettified type to the identity type', () => {
     type TestPrettify = Prettify<{ foo: string }>;
-    expectTypeOf<TestPrettify>().toEqualTypeOf<{ foo: string }>();
+    const testPrettifyValid: TestPrettify = { foo: 'bar' };
   });
 
   it('should not compile when the object has incorrect properties', () => {
     type TestPrettify = Prettify<{ foo: string }>;
     // @ts-expect-error - foo should be a string
-    expectTypeOf<TestPrettify>().toEqualTypeOf<{ foo: 123 }>();
+    const testPrettifyInvalid: TestPrettify = { foo: 123 };
   });
 });
 
 describe('DeepPartial', () => {
   it('should make a top-level property optional', () => {
     type TestDeepPartial = DeepPartial<{ foo: string }>;
-    expectTypeOf<TestDeepPartial>().toEqualTypeOf<{ foo?: string }>();
+    const testDeepPartialValid: TestDeepPartial = { foo: undefined };
   });
 
   it('should make a nested property optional', () => {
     type TestDeepPartial = DeepPartial<{ foo: { bar: string } }>;
-    expectTypeOf<TestDeepPartial>().toEqualTypeOf<{ foo?: { bar?: string } }>();
+    const testDeepPartialValid: TestDeepPartial = { foo: { bar: undefined } };
   });
 });
 
 describe('DeepRequired', () => {
   it('should make a top-level property required', () => {
     type TestDeepRequired = DeepRequired<{ foo?: string }>;
-    expectTypeOf<TestDeepRequired>().toEqualTypeOf<{ foo: string }>();
+    const testDeepRequiredValid: TestDeepRequired = { foo: 'bar' };
   });
 
   it('should make a nested object property required', () => {
     type TestDeepRequired = DeepRequired<{ foo: { bar?: string } }>;
-    expectTypeOf<TestDeepRequired>().toEqualTypeOf<{ foo: { bar: string } }>();
+    const testDeepRequiredValid: TestDeepRequired = { foo: { bar: 'bar' } };
   });
 
   it('should make a nested array property required', () => {
     type TestDeepRequired = DeepRequired<{ foo: { bar: (string | undefined)[] } }>;
-    expectTypeOf<TestDeepRequired>().toEqualTypeOf<{ foo: { bar: string[] } }>();
+    const testDeepRequiredValid: TestDeepRequired = { foo: { bar: ['bar'] } };
   });
 
   it('should not compile when the array has incorrect properties', () => {
     type TestDeepRequired = DeepRequired<{ foo: { bar: (string | undefined)[] } }>;
     // @ts-expect-error - bar should be an array of strings
-    expectTypeOf<TestDeepRequired>().toEqualTypeOf<{ foo: { bar: undefined[] } }>();
+    const testDeepRequiredInvalid: TestDeepRequired = { foo: { bar: [undefined] } };
   });
 
   it('should not compile when the object has incorrect properties', () => {
     type TestDeepRequired = DeepRequired<{ foo: string }>;
     // @ts-expect-error - foo should be a string
-    expectTypeOf<TestDeepRequired>().toEqualTypeOf<{ foo: 123 }>();
-  });
-});
-
-describe('UnionToTuple', () => {
-  it('should return a tuple of the union types', () => {
-    type TestUnionToTuple = UnionToTuple<1 | 2>;
-    // UnionToTuple can return items in any order, so we need to check that the array contains the expected items
-    type Parts = 1 | 2;
-    expectTypeOf<TestUnionToTuple>().toMatchTypeOf<[Parts, Parts]>();
-  });
-});
-
-describe('Stringify', () => {
-  it('should stringify a string type', () => {
-    type TestStringify = Stringify<string>;
-    expectTypeOf<TestStringify>().toEqualTypeOf<'string'>();
-  });
-
-  it('should stringify a boolean type', () => {
-    type TestStringify = Stringify<boolean>;
-    expectTypeOf<TestStringify>().toEqualTypeOf<'boolean'>();
-  });
-
-  it('should stringify a number type', () => {
-    type TestStringify = Stringify<number>;
-    expectTypeOf<TestStringify>().toEqualTypeOf<'number'>();
-  });
-
-  it('should stringify a bigint type', () => {
-    type TestStringify = Stringify<bigint>;
-    expectTypeOf<TestStringify>().toEqualTypeOf<'bigint'>();
-  });
-
-  it('should stringify an unknown type', () => {
-    type TestStringify = Stringify<unknown>;
-    expectTypeOf<TestStringify>().toEqualTypeOf<'unknown'>();
-  });
-
-  it('should stringify an undefined type', () => {
-    type TestStringify = Stringify<undefined>;
-    expectTypeOf<TestStringify>().toEqualTypeOf<'undefined'>();
-  });
-
-  it('should stringify a null type', () => {
-    type TestStringify = Stringify<null>;
-    expectTypeOf<TestStringify>().toEqualTypeOf<'null'>();
-  });
-
-  it('should stringify a symbol type', () => {
-    type TestStringify = Stringify<symbol>;
-    expectTypeOf<TestStringify>().toEqualTypeOf<'symbol'>();
-  });
-
-  it('should stringify an array type', () => {
-    type TestStringify = Stringify<Array<string>>;
-    expectTypeOf<TestStringify>().toEqualTypeOf<'string[]'>();
-  });
-
-  it('should stringify an empty object type', () => {
-    type TestStringify = Stringify<{}>;
-    expectTypeOf<TestStringify>().toEqualTypeOf<'{}'>();
-  });
-
-  it('should stringify an `object` type', () => {
-    type TestStringify = Stringify<object>;
-    expectTypeOf<TestStringify>().toEqualTypeOf<'{}'>();
-  });
-
-  it('should stringify a `Record<string, never>` type', () => {
-    type TestStringify = Stringify<Record<string, never>>;
-    expectTypeOf<TestStringify>().toEqualTypeOf<'{ [x: string]: never; }'>();
-  });
-
-  it('should stringify a `Record<string, string>` type', () => {
-    type TestStringify = Stringify<Record<string, string>>;
-    expectTypeOf<TestStringify>().toEqualTypeOf<'{ [x: string]: string; }'>();
-  });
-
-  it('should stringify a `{ [x: string]: string }` type', () => {
-    type TestStringify = Stringify<{ [x: string]: string }>;
-    expectTypeOf<TestStringify>().toEqualTypeOf<'{ [x: string]: string; }'>();
-  });
-
-  it('should stringify a `{ [x: string]: unknown }` type', () => {
-    type TestStringify = Stringify<{ [x: string]: unknown }>;
-    expectTypeOf<TestStringify>().toEqualTypeOf<'{ [x: string]: unknown; }'>();
-  });
-
-  it('should stringify a `Record<string, unknown>` type', () => {
-    type TestStringify = Stringify<Record<string, unknown>>;
-    expectTypeOf<TestStringify>().toEqualTypeOf<'{ [x: string]: unknown; }'>();
-  });
-
-  it('should stringify an array of empty object types', () => {
-    type TestStringify = Stringify<Array<{}>>;
-    expectTypeOf<TestStringify>().toEqualTypeOf<'{}[]'>();
-  });
-
-  it('should stringify an object type with a single required property', () => {
-    type TestStringify = Stringify<{ foo: string }>;
-    expectTypeOf<TestStringify>().toEqualTypeOf<'{ foo: string; }'>();
-  });
-
-  it('should stringify an object type with a single optional property', () => {
-    type TestStringify = Stringify<{ foo?: string }>;
-    expectTypeOf<TestStringify>().toEqualTypeOf<'{ foo?: string; }'>();
-  });
-
-  it('should stringify an object type with multiple properties', () => {
-    type TestStringify = Stringify<{ foo: string; bar?: number }>;
-    // The order of the properties is not guaranteed, so we need to check that the string matches the expected pattern
-    type Parts = `foo: string;` | `bar?: number;`;
-    expectTypeOf<TestStringify>().toMatchTypeOf<`{ ${Parts} ${Parts} }`>();
-  });
-
-  it('should stringify an object type with a nested object property', () => {
-    type TestStringify = Stringify<{ foo: { bar: string } }>;
-    expectTypeOf<TestStringify>().toEqualTypeOf<'{ foo: { bar: string; }; }'>();
-  });
-
-  it('should stringify an object type with an array property', () => {
-    type TestStringify = Stringify<{ foo: { bar: string }[] }>;
-    expectTypeOf<TestStringify>().toEqualTypeOf<'{ foo: { bar: string; }[]; }'>();
-  });
-
-  it('should stringify an array of unknown record types', () => {
-    type TestStringify = Stringify<{ [x: string]: unknown }[]>;
-    expectTypeOf<TestStringify>().toEqualTypeOf<'{ [x: string]: unknown; }[]'>();
+    const testDeepRequiredInvalid: TestDeepRequired = { foo: 123 };
   });
 });

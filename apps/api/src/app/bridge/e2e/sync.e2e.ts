@@ -1,5 +1,6 @@
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
+import getPort from 'get-port';
 import {
   EnvironmentRepository,
   NotificationTemplateRepository,
@@ -30,7 +31,8 @@ describe('Bridge Sync - /bridge/sync (POST) #novu-v2', async () => {
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
-    bridgeServer = new TestBridgeServer();
+    const port = await getPort();
+    bridgeServer = new TestBridgeServer(port);
   });
 
   afterEach(async () => {

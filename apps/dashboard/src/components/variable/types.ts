@@ -1,3 +1,5 @@
+import { LiquidVariable } from '@/utils/parseStepVariables';
+
 export type Filters = {
   label: string;
   value: string;
@@ -6,10 +8,13 @@ export type Filters = {
   example?: string;
   sampleValue?: string;
   params?: {
-    placeholder: string;
+    placeholder?: string;
+    tip?: string;
     description?: string;
-    type?: 'string' | 'number';
+    type?: 'string' | 'number' | 'variable';
     defaultValue?: string;
+    label: string;
+    required?: boolean;
   }[];
 };
 
@@ -19,7 +24,6 @@ export type FilterWithParam = {
 };
 
 export type VariablePopoverProps = {
-  variable?: string;
-  onUpdate: (newValue: string) => void;
+  variable?: LiquidVariable;
   onEscapeKeyDown?: (event: KeyboardEvent) => void;
 };

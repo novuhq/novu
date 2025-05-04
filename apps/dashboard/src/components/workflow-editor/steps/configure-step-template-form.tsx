@@ -1,7 +1,3 @@
-import { type StepResponseDto, StepTypeEnum, StepUpdateDto, type WorkflowResponseDto } from '@novu/shared';
-import { useCallback, useEffect, useMemo } from 'react';
-import { useForm } from 'react-hook-form';
-
 import { Form, FormRoot } from '@/components/primitives/form/form';
 import { getStepDefaultValues } from '@/components/workflow-editor/step-default-values';
 import { flattenIssues, updateStepInWorkflow } from '@/components/workflow-editor/step-utils';
@@ -15,6 +11,9 @@ import { SmsTabs } from '@/components/workflow-editor/steps/sms/sms-tabs';
 import { UpdateWorkflowFn } from '@/components/workflow-editor/workflow-provider';
 import { useDataRef } from '@/hooks/use-data-ref';
 import { useFormAutosave } from '@/hooks/use-form-autosave';
+import { type StepResponseDto, StepTypeEnum, StepUpdateDto, type WorkflowResponseDto } from '@novu/shared';
+import { useCallback, useEffect, useMemo } from 'react';
+import { useForm } from 'react-hook-form';
 
 const STEP_TYPE_TO_TEMPLATE_FORM: Record<StepTypeEnum, (args: StepEditorProps) => React.JSX.Element | null> = {
   [StepTypeEnum.EMAIL]: EmailTabs,
@@ -39,7 +38,6 @@ type ConfigureStepTemplateFormProps = StepEditorProps & {
 
 export const ConfigureStepTemplateForm = (props: ConfigureStepTemplateFormProps) => {
   const { workflow, step, update } = props;
-
   const defaultValues = useMemo(() => getStepDefaultValues(step), [step]);
 
   const form = useForm({
@@ -78,10 +76,12 @@ export const ConfigureStepTemplateForm = (props: ConfigureStepTemplateFormProps)
       }
     });
 
-    // Set new errors from stepIssues
-    Object.entries(stepIssues).forEach(([key, value]) => {
-      form.setError(key as string, { message: value });
-    });
+    // @ts-expect-error - isNew doesn't exist on StepResponseDto and it's too much work to override the @novu/shared types now. See useUpdateWorkflow.ts for more details
+    if (!step.isNew) {
+      Object.entries(stepIssues).forEach(([key, value]) => {
+        form.setError(key as string, { message: value });
+      });
+    }
   }, [form, step]);
 
   useEffect(() => {

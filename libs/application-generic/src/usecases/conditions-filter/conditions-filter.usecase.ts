@@ -3,14 +3,19 @@ import axios from 'axios';
 import {
   EnvironmentRepository,
   ExecutionDetailsRepository,
+  JobEntity,
+  JobRepository,
   MessageRepository,
   StepFilter,
   SubscriberEntity,
   SubscriberRepository,
-  JobRepository,
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
+  ExecutionDetailsSourceEnum,
+  ExecutionDetailsStatusEnum,
+  FieldLogicalOperatorEnum,
+  FieldOperatorEnum,
   FILTER_TO_LABEL,
   FilterParts,
   FilterPartTypeEnum,
@@ -21,23 +26,14 @@ import {
   IWebhookFilterPart,
   PreviousStepTypeEnum,
   TimeOperatorEnum,
-  FieldOperatorEnum,
-  FieldLogicalOperatorEnum,
-  ExecutionDetailsSourceEnum,
-  IJob,
-  ExecutionDetailsStatusEnum,
 } from '@novu/shared';
 import { differenceInDays, differenceInHours, differenceInMinutes, parseISO } from 'date-fns';
 import { EmailEventStatusEnum } from '@novu/stateless';
-import { Filter } from '../../utils/filter';
-import { FilterProcessingDetails, IFilterVariables } from '../../utils/filter-processing-details';
+import { createHash, Filter, FilterProcessingDetails, IFilterVariables, PlatformException } from '../../utils';
 import { ConditionsFilterCommand } from './conditions-filter.command';
-import { PlatformException } from '../../utils/exceptions';
-import { createHash } from '../../utils/hmac';
-import { CachedEntity } from '../../services/cache/interceptors/cached-entity.interceptor';
-import { buildSubscriberKey } from '../../services/cache/key-builders/entities';
+import { buildSubscriberKey, CachedResponse } from '../../services';
 import { CompileTemplate } from '../compile-template';
-import { DetailEnum, CreateExecutionDetails, CreateExecutionDetailsCommand } from '../create-execution-details';
+import { CreateExecutionDetails, CreateExecutionDetailsCommand, DetailEnum } from '../create-execution-details';
 import { decryptApiKey } from '../../encryption';
 
 export interface IConditionsFilterResponse {
@@ -141,8 +137,7 @@ export class ConditionsFilter extends Filter {
   ): Promise<boolean> {
     const job = await this.jobRepository.findOne({
       transactionId: command.job.transactionId,
-      // backward compatibility - ternary needed to be removed once the queue renewed
-      _subscriberId: command.job._subscriberId ? command.job._subscriberId : command.job.subscriberId,
+      _subscriberId: command.job._subscriberId,
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       'step.uuid': filter.step,
@@ -155,8 +150,7 @@ export class ConditionsFilter extends Filter {
     const message = await this.messageRepository.findOne({
       _jobId: job._id,
       _environmentId: command.environmentId,
-      // backward compatibility - ternary needed to be removed once the queue renewed
-      _subscriberId: command.job._subscriberId ? command.job._subscriberId : command.job.subscriberId,
+      _subscriberId: command.job._subscriberId,
       transactionId: command.job.transactionId,
     });
 
@@ -452,7 +446,7 @@ export class ConditionsFilter extends Filter {
     ));
   }
 
-  private async compileFilter(value: string, variables: IFilterVariables, job: IJob): Promise<string | undefined> {
+  private async compileFilter(value: string, variables: IFilterVariables, job: JobEntity): Promise<string | undefined> {
     try {
       return await this.compileTemplate.execute({
         template: value,
@@ -475,7 +469,7 @@ export class ConditionsFilter extends Filter {
     }
   }
 
-  @CachedEntity({
+  @CachedResponse({
     builder: (command: { subscriberId: string; _environmentId: string }) =>
       buildSubscriberKey({
         _environmentId: command._environmentId,

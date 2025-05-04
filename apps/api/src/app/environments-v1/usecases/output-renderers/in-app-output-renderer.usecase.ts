@@ -1,6 +1,6 @@
 import { InAppRenderOutput } from '@novu/shared';
 import { Injectable } from '@nestjs/common';
-import { InstrumentUsecase, sanitizeHTML, sanitizeHtmlInObject } from '@novu/application-generic';
+import { InstrumentUsecase, sanitizeHtmlInObject } from '@novu/application-generic';
 import { RenderCommand } from './render-command';
 
 @Injectable()

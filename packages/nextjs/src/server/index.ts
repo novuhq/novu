@@ -1,18 +1,6 @@
 /* eslint-disable no-restricted-imports */
 
-export type {
-  BaseProps,
-  DefaultInboxProps,
-  DefaultProps,
-  NoRendererProps,
-  NotificationRendererProps,
-  SubjectBodyRendererProps,
-  WithChildrenProps,
-  BellRenderer,
-  BodyRenderer,
-  NotificationsRenderer,
-  Notification,
-} from '@novu/react';
+export type * from '@novu/react';
 
 export {
   Inbox,

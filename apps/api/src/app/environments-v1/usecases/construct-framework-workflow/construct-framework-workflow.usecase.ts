@@ -1,18 +1,18 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { workflow } from '@novu/framework/express';
-import { ActionStep, ChannelStep, JsonSchema, Step, StepOptions, StepOutput, Workflow } from '@novu/framework/internal';
+import { ActionStep, ChannelStep, Schema, Step, StepOutput, Workflow } from '@novu/framework/internal';
 import { NotificationStepEntity, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
-import { JSONSchemaDefinition, StepTypeEnum, WorkflowOriginEnum } from '@novu/shared';
+import { StepTypeEnum } from '@novu/shared';
 import { Instrument, InstrumentUsecase, PinoLogger } from '@novu/application-generic';
 import { AdditionalOperation, RulesLogic } from 'json-logic-js';
 import _ from 'lodash';
 import { ConstructFrameworkWorkflowCommand } from './construct-framework-workflow.command';
 import {
   ChatOutputRendererUsecase,
+  EmailOutputRendererUsecase,
   FullPayloadForRender,
   InAppOutputRendererUsecase,
   PushOutputRendererUsecase,
-  EmailOutputRendererUsecase,
   SmsOutputRendererUsecase,
 } from '../output-renderers';
 import { DelayOutputRendererUsecase } from '../output-renderers/delay-output-renderer.usecase';
@@ -54,11 +54,12 @@ export class ConstructFrameworkWorkflow {
       dbWorkflow.triggers[0].identifier,
       async ({ step, payload, subscriber }) => {
         const fullPayloadForRender: FullPayloadForRender = { payload, subscriber, steps: {} };
-        for await (const staticStep of dbWorkflow.steps) {
+        for (const staticStep of dbWorkflow.steps) {
           fullPayloadForRender.steps[staticStep.stepId || staticStep._templateId] = await this.constructStep(
             step,
             staticStep,
-            fullPayloadForRender
+            fullPayloadForRender,
+            dbWorkflow._environmentId
           );
         }
       },
@@ -81,7 +82,8 @@ export class ConstructFrameworkWorkflow {
   private constructStep(
     step: Step,
     staticStep: NotificationStepEntity,
-    fullPayloadForRender: FullPayloadForRender
+    fullPayloadForRender: FullPayloadForRender,
+    environmentId: string
   ): StepOutput<Record<string, unknown>> {
     const stepTemplate = staticStep.template;
 
@@ -116,7 +118,11 @@ export class ConstructFrameworkWorkflow {
         return step.email(
           stepId,
           async (controlValues) => {
-            return this.emailOutputRendererUseCase.execute({ controlValues, fullPayloadForRender });
+            return this.emailOutputRendererUseCase.execute({
+              controlValues,
+              fullPayloadForRender,
+              environmentId,
+            });
           },
           this.constructChannelStepOptions(staticStep, fullPayloadForRender)
         );
@@ -170,8 +176,12 @@ export class ConstructFrameworkWorkflow {
     staticStep: NotificationStepEntity,
     fullPayloadForRender: FullPayloadForRender
   ): Required<Parameters<ChannelStep>[2]> {
+    const skipFunction = (controlValues: Record<string, unknown>) =>
+      this.processSkipOption(controlValues, fullPayloadForRender);
+
     return {
-      ...this.constructCommonStepOptions(staticStep, fullPayloadForRender),
+      skip: skipFunction,
+      controlSchema: staticStep.template!.controls!.schema as unknown as Schema,
       disableOutputSanitization: true,
       providers: {},
     };
@@ -182,10 +192,17 @@ export class ConstructFrameworkWorkflow {
     staticStep: NotificationStepEntity,
     fullPayloadForRender: FullPayloadForRender
   ): Required<Parameters<ActionStep>[2]> {
-    const stepOptions = this.constructCommonStepOptions(staticStep, fullPayloadForRender);
-
-    let controlSchema = stepOptions.controlSchema as JSONSchemaDefinition;
     const stepType = staticStep.template!.type;
+    const controlSchema = this.optionalAugmentControlSchemaDueToAjvBug(staticStep, stepType);
+
+    return {
+      controlSchema: controlSchema as unknown as Schema,
+      skip: (controlValues: Record<string, unknown>) => this.processSkipOption(controlValues, fullPayloadForRender),
+    };
+  }
+
+  private optionalAugmentControlSchemaDueToAjvBug(staticStep: NotificationStepEntity, stepType: StepTypeEnum) {
+    let controlSchema = staticStep.template!.controls!.schema;
 
     /*
      * because of the known AJV issue with anyOf, we need to find the first schema that matches the control values
@@ -198,22 +215,7 @@ export class ConstructFrameworkWorkflow {
       controlSchema = fistSchemaMatch ?? controlSchema.anyOf[0];
     }
 
-    return {
-      ...stepOptions,
-      controlSchema: controlSchema as JsonSchema,
-    };
-  }
-
-  @Instrument()
-  private constructCommonStepOptions(
-    staticStep: NotificationStepEntity,
-    fullPayloadForRender: FullPayloadForRender
-  ): Required<StepOptions> {
-    return {
-      // TODO: fix the `JSONSchemaDto` type to enforce a non-primitive schema type.
-      controlSchema: staticStep.template!.controls!.schema as JsonSchema,
-      skip: (controlValues: Record<string, unknown>) => this.processSkipOption(controlValues, fullPayloadForRender),
-    };
+    return controlSchema;
   }
 
   @Instrument()

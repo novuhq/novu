@@ -1,3 +1,5 @@
+import { DEFAULT_ARRAY_ELEMENTS } from './usecases/create-variables-object/create-variables-object.usecase';
+
 export function fullCodeSnippet() {
   return {
     type: 'doc',
@@ -113,7 +115,7 @@ export function fullCodeSnippet() {
               {
                 type: 'variable',
                 attrs: {
-                  id: 'subscriber.fullName',
+                  id: 'subscriber.firstName',
                   label: null,
                   fallback: 'should be the fallback value',
                 },
@@ -470,60 +472,33 @@ export function previewPayloadExample() {
     payload: {
       subject: {
         test: {
-          payload: '{{payload.subject.test.payload}}',
+          payload: 'payload',
         },
       },
       params: {
         isPayedUser: true,
       },
       hidden: {
-        section: '{{payload.hidden.section}}',
+        section: 'section',
       },
-      body: '{{payload.body}}',
-      origins: [
-        {
-          country: '{{payload.origins.country}}',
-          id: '{{payload.origins.id}}',
-          time: '{{payload.origins.time}}',
-        },
-        {
-          country: '{{payload.origins.country}}',
-          id: '{{payload.origins.id}}',
-          time: '{{payload.origins.time}}',
-        },
-        {
-          country: '{{payload.origins.country}}',
-          id: '{{payload.origins.id}}',
-          time: '{{payload.origins.time}}',
-        },
-      ],
-      students: [
-        {
-          id: '{{payload.students.id}}',
-          name: '{{payload.students.name}}',
-        },
-        {
-          id: '{{payload.students.id}}',
-          name: '{{payload.students.name}}',
-        },
-        {
-          id: '{{payload.students.id}}',
-          name: '{{payload.students.name}}',
-        },
-      ],
+      body: 'body',
+      origins: Array(DEFAULT_ARRAY_ELEMENTS).fill({
+        country: 'country',
+        id: 'id',
+        time: 'time',
+      }),
+      students: Array(DEFAULT_ARRAY_ELEMENTS).fill({
+        id: 'id',
+        name: 'name',
+      }),
       food: {
-        items: [
-          {
-            name: '{{payload.food.items.name}}',
-          },
-          {
-            name: '{{payload.food.items.name}}',
-          },
-          {
-            name: '{{payload.food.items.name}}',
-          },
-        ],
+        items: Array(DEFAULT_ARRAY_ELEMENTS).fill({
+          name: 'name',
+        }),
       },
+    },
+    subscriber: {
+      firstName: 'firstName',
     },
   };
 }

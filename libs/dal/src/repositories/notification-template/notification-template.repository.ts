@@ -268,16 +268,14 @@ export class NotificationTemplateRepository extends BaseRepository<
     const items = await this.MongooseModel.find(requestQuery)
       .populate('steps.template', { type: 1 })
       .populate('notificationGroup')
+      .limit(500) // protective limit
       .read('secondaryPreferred');
 
     return this.mapEntities(items);
   }
 
   async delete(query: NotificationTemplateQuery) {
-    const item = await this.findOne({ _id: query._id, _environmentId: query._environmentId });
-    if (!item) throw new DalException(`Could not find workflow with id ${query._id}`);
-
-    return await this.notificationTemplate.delete({ _id: item._id, _environmentId: item._environmentId });
+    return await this.notificationTemplate.delete({ _id: query._id, _environmentId: query._environmentId });
   }
 
   async findDeleted(query: NotificationTemplateQuery): Promise<NotificationTemplateEntity> {

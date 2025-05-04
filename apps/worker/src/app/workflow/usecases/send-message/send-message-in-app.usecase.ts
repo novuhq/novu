@@ -241,17 +241,21 @@ export class SendMessageInApp extends SendMessageBase {
     }
 
     if (oldMessage) {
-      await this.messageRepository.update(
+      message = await this.messageRepository.findOneAndUpdate(
         { _environmentId: command.environmentId, _id: oldMessage._id },
         {
           $set: {
             seen: false,
             createdAt: new Date(),
+            updatedAt: new Date(),
             ...channelData,
           },
+        },
+        {
+          timestamps: false,
+          strict: false,
         }
       );
-      message = await this.messageRepository.findOne({ _id: oldMessage._id, _environmentId: command.environmentId });
     }
 
     if (!message) throw new PlatformException('Message not found');

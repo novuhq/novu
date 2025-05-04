@@ -1,0 +1,30 @@
+name: Trigger Staging Deployment on Push
+
+on:
+  push:
+    branches:
+      - next
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  trigger-deploy-workflow:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Trigger Deploy Workflow via GitHub CLI
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run "deploy.yml" \
+            --ref next \
+            -f environment=staging \
+            -f deploy_api=true \
+            -f deploy_worker=true \
+            -f deploy_ws=true \
+            -f deploy_webhook=true

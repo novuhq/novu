@@ -11,6 +11,7 @@
     "addrs",
     "Tiering",
     "subscriberpayloaddto",
+    "pinno",
     "adresses",
     "APIJSON",
     "sdkerror",
@@ -521,7 +522,6 @@
     "readall",
     "rediscommander",
     "redismaster",
-    "redlock",
     "Redmine",
     "reindented",
     "relabelings",
@@ -719,7 +719,6 @@
     "truncatewords",
     "xmlschema",
     "jsonify",
-    "metadatas",
     "hsforms",
     "touchpoint",
     "Angularjs",
@@ -731,7 +730,15 @@
     "autoload",
     "novugo",
     "titleize",
-    "oklch"
+    "oklch",
+    "Duplicable",
+    "Radek",
+    "snooze",
+    "unsnooze",
+    "snoozed",
+    "unsnoozed",
+    "automators",
+    "calcom"
   ],
   "flagWords": [],
   "patterns": [
@@ -827,8 +834,6 @@
     "packages/framework/src/jsonSchemaFaker.js",
     "packages/js/src/ui/index.directcss",
     "packages/js/tsup.config.ts",
-    "packages/notification-center/rollup.config.mjs",
-    "packages/notification-center/src/i18n/languages/**",
     "packages/shared/src/types/timezones/timezones.types.ts",
     "pnpm-lock.yaml",
     "pnpm-workspace.yaml",
@@ -837,6 +842,7 @@
     "websockets",
     "apps/dashboard/src/hooks/use-plain-chat.ts",
     "apps/dashboard/src/components/variable/constants.ts",
-    "apps/dashboard/src/utils/locales.ts"
+    "apps/dashboard/src/utils/locales.ts",
+    "apps/dashboard/src/components/primitives/constants.ts"
   ]
 }

@@ -1,4 +1,4 @@
-import { Novu, NovuOptions } from '@novu/js';
+import { Novu, NovuOptions, Subscriber } from '@novu/js';
 import { ReactNode, createContext, useContext, useMemo } from 'react';
 
 // @ts-ignore
@@ -19,18 +19,21 @@ export const NovuProvider = ({
   subscriberId,
   subscriberHash,
   backendUrl,
+  apiUrl,
   socketUrl,
   useCache,
+  subscriber,
 }: NovuProviderProps) => {
   return (
     <InternalNovuProvider
       applicationIdentifier={applicationIdentifier}
-      subscriberId={subscriberId}
       subscriberHash={subscriberHash}
       backendUrl={backendUrl}
+      apiUrl={apiUrl}
       socketUrl={socketUrl}
       useCache={useCache}
       userAgentType="hooks"
+      subscriber={buildSubscriber(subscriberId, subscriber)}
     >
       {children}
     </InternalNovuProvider>
@@ -48,22 +51,35 @@ export const InternalNovuProvider = ({
   subscriberId,
   subscriberHash,
   backendUrl,
+  apiUrl,
   socketUrl,
   useCache,
+  subscriber,
   userAgentType,
 }: NovuProviderProps & { userAgentType: 'components' | 'hooks' }) => {
   const novu = useMemo(
     () =>
       new Novu({
         applicationIdentifier,
-        subscriberId,
         subscriberHash,
         backendUrl,
+        apiUrl,
         socketUrl,
         useCache,
         __userAgent: `${baseUserAgent} ${userAgentType}`,
+        ...(subscriber ? { subscriber } : { subscriberId: subscriberId as string }),
       }),
-    [applicationIdentifier, subscriberId, subscriberHash, backendUrl, socketUrl, useCache, userAgentType]
+    [
+      applicationIdentifier,
+      subscriberId,
+      subscriberHash,
+      backendUrl,
+      apiUrl,
+      socketUrl,
+      useCache,
+      subscriber,
+      userAgentType,
+    ]
   );
 
   return <NovuContext.Provider value={novu}>{children}</NovuContext.Provider>;
@@ -83,3 +99,15 @@ export const useUnsafeNovu = () => {
 
   return context;
 };
+
+function buildSubscriber(subscriberId: string | undefined, subscriber: Subscriber | string | undefined): Subscriber {
+  let subscriberObj: Subscriber;
+
+  if (subscriber) {
+    subscriberObj = typeof subscriber === 'string' ? { subscriberId: subscriber } : subscriber;
+  } else {
+    subscriberObj = { subscriberId: subscriberId as string };
+  }
+
+  return subscriberObj;
+}

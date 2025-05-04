@@ -1,5 +1,5 @@
 import * as z from 'zod';
-import { type JSONSchemaDefinition, ChannelTypeEnum } from '@novu/shared';
+import { type JSONSchemaDefinition, ChannelTypeEnum, VALID_ID_REGEX } from '@novu/shared';
 
 export const MAX_TAG_ELEMENTS = 16;
 export const MAX_TAG_LENGTH = 32;
@@ -50,6 +50,13 @@ export const buildDynamicFormSchema = ({
 
     if (value.type === 'string') {
       zodValue = z.string().min(1);
+
+      if (key === 'subscriberId') {
+        zodValue = zodValue.regex(
+          VALID_ID_REGEX,
+          'SubscriberId must be a string of alphanumeric characters, -, and _ or a valid email address.'
+        );
+      }
 
       if (value.format === 'email') {
         zodValue = zodValue.email();

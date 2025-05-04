@@ -7,7 +7,7 @@ import {
   buildFeedKey,
   buildMessageCountKey,
   buildSubscriberKey,
-  CachedEntity,
+  CachedResponse,
   InvalidateCacheService,
   WebSocketsQueueService,
 } from '@novu/application-generic';
@@ -100,7 +100,7 @@ export class MarkMessageAsByMark {
     });
   }
 
-  @CachedEntity({
+  @CachedResponse({
     builder: (command: { subscriberId: string; _environmentId: string }) =>
       buildSubscriberKey({
         _environmentId: command._environmentId,
@@ -137,6 +137,8 @@ export function mapMessageEntityToResponseDto(entity: MessageEntity): MessageRes
   responseDto.channel = entity.channel;
   responseDto.read = entity.read;
   responseDto.seen = entity.seen;
+  responseDto.snoozedUntil = entity.snoozedUntil;
+  responseDto.deliveredAt = entity.deliveredAt; // snoozed notifications can have multiple delivery dates
   responseDto.email = entity.email;
   responseDto.phone = entity.phone;
   responseDto.directWebhookUrl = entity.directWebhookUrl;

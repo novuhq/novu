@@ -35,17 +35,17 @@ import {
   CreateWorkflowRequestDto,
   UpdateWorkflowRequestDto,
   VariablesResponseDto,
-} from './dto';
+} from './dtos';
 import { GetNotificationTemplate } from './usecases/get-notification-template/get-notification-template.usecase';
 import { GetNotificationTemplateCommand } from './usecases/get-notification-template/get-notification-template.command';
 import { DeleteNotificationTemplate } from './usecases/delete-notification-template/delete-notification-template.usecase';
 import { ChangeTemplateActiveStatus } from './usecases/change-template-active-status/change-template-active-status.usecase';
 import { ChangeTemplateActiveStatusCommand } from './usecases/change-template-active-status/change-template-active-status.command';
 import { RootEnvironmentGuard } from '../auth/framework/root-environment-guard.service';
-import { WorkflowResponse } from './dto/workflow-response.dto';
-import { WorkflowsResponseDto } from './dto/workflows.response.dto';
+import { WorkflowResponse } from './dtos/workflow-response.dto';
+import { WorkflowsResponseDto } from './dtos/workflows.response.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
-import { WorkflowsRequestDto } from './dto/workflows-request.dto';
+import { WorkflowsRequestDto } from './dtos/workflows-request.dto';
 import { ApiOkResponse, ApiResponse } from '../shared/framework/response.decorator';
 import { DataBooleanDto } from '../shared/dtos/data-wrapper-dto';
 import { CreateWorkflowQuery } from './queries';

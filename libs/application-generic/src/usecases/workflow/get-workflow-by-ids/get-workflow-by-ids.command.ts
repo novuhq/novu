@@ -1,7 +1,7 @@
 import { IsDefined, IsString } from 'class-validator';
-import { EnvironmentWithUserCommand } from '../../../commands';
+import { EnvironmentCommand } from '../../../commands';
 
-export class GetWorkflowByIdsCommand extends EnvironmentWithUserCommand {
+export class GetWorkflowByIdsCommand extends EnvironmentCommand {
   @IsString()
   @IsDefined()
   workflowIdOrInternalId: string;

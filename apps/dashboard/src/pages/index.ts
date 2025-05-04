@@ -1,6 +1,7 @@
 export * from './activity-feed';
 export * from './api-keys';
 export * from './create-workflow';
+export * from './error-page';
 export * from './integrations-list-page';
 export * from './organization-list';
 export * from './questionnaire-page';

@@ -1,4 +1,4 @@
-import { ArgumentsHost, ExceptionFilter, HttpException, HttpStatus } from '@nestjs/common';
+import { ArgumentsHost, ExceptionFilter, HttpException, HttpStatus, PayloadTooLargeException } from '@nestjs/common';
 import { Response } from 'express';
 import { CommandValidationException, PinoLogger } from '@novu/application-generic';
 import { randomUUID } from 'node:crypto';
@@ -8,6 +8,11 @@ import { InternalServerErrorException } from '@nestjs/common/exceptions/internal
 import { ErrorDto, ValidationErrorDto } from './error-dto';
 
 const ERROR_MSG_500 = `Internal server error, contact support and provide them with the errorId`;
+
+class ValidationPipeError {
+  response: { message: string[] | string };
+}
+
 export class AllExceptionsFilter implements ExceptionFilter {
   constructor(private readonly logger: PinoLogger) {}
   catch(exception: unknown, host: ArgumentsHost) {
@@ -51,20 +56,45 @@ export class AllExceptionsFilter implements ExceptionFilter {
   }
 
   private buildErrorResponse(exception: unknown, request: Request): ErrorDto {
+    if (exception instanceof HttpException && exception.name === 'ThrottlerException') {
+      return this.handlerThrottlerException(request);
+    }
+
     if (exception instanceof ZodError) {
       return this.handleZod(exception, request);
     }
     if (exception instanceof CommandValidationException) {
       return this.handleCommandValidation(exception, request);
     }
+    if (this.isBadRequestWithMultipleExceptions(exception)) {
+      return this.handleValidationPipeValidation(exception, request);
+    }
 
     if (exception instanceof HttpException && !(exception instanceof InternalServerErrorException)) {
       return this.handleOtherHttpExceptions(exception, request);
     }
 
+    if (this.isPayloadTooLargeError(exception)) {
+      return this.handleOtherHttpExceptions(new PayloadTooLargeException(), request);
+    }
+
     return this.buildA5xxError(request, exception);
   }
 
+  private isPayloadTooLargeError(exception: unknown) {
+    return exception?.constructor?.name === 'PayloadTooLargeError';
+  }
+
+  private isBadRequestWithMultipleExceptions(exception: unknown): exception is ValidationPipeError {
+    // noinspection UnnecessaryLocalVariableJS
+    const isBadRequestExceptionFromValidationPipe =
+      exception instanceof Object &&
+      'response' in exception &&
+      'message' in (exception as any).response &&
+      Array.isArray((exception as any).response.message);
+
+    return isBadRequestExceptionFromValidationPipe;
+  }
   private buildA5xxError(request: Request, exception: unknown) {
     const errorDto500 = this.buildErrorDto(request, HttpStatus.INTERNAL_SERVER_ERROR, ERROR_MSG_500);
 
@@ -126,8 +156,17 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     return this.buildErrorDto(request, HttpStatus.BAD_REQUEST, 'Zod Validation Failed', ctx);
   }
-}
 
+  private handleValidationPipeValidation(exception: ValidationPipeError, request: Request) {
+    const errorDto = this.buildErrorDto(request, HttpStatus.UNPROCESSABLE_ENTITY, 'Validation Error', {});
+
+    return { ...errorDto, errors: { general: { messages: exception.response.message, value: 'No Value Recorded' } } };
+  }
+
+  private handlerThrottlerException(request: Request) {
+    return this.buildErrorDto(request, HttpStatus.TOO_MANY_REQUESTS, 'API rate limit exceeded', {});
+  }
+}
 function hasMessage(response: unknown): response is { message: string } {
   return typeof response === 'object' && response !== null && 'message' in response;
 }

@@ -25,9 +25,9 @@ describe('Rename a topic - /topics/:topicKey (PATCH) #novu-v2', async () => {
     const url = `${BASE_PATH}/${topicKey}`;
     const { body } = await session.testAgent.patch(url);
 
-    expect(body.statusCode).to.equal(400);
-    expect(body.error).to.eql('Bad Request');
-    expect(body.message).to.eql(['name should not be null or undefined', 'name must be a string']);
+    expect(body.statusCode).to.equal(422);
+    expect(body.message, JSON.stringify(body)).to.eql('Validation Error');
+    expect(body.errors.general.messages).to.eql(['name should not be null or undefined', 'name must be a string']);
   });
 
   it('should rename the topic and return it if exists in the database', async () => {

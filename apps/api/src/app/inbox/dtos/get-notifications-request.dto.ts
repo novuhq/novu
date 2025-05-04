@@ -27,4 +27,9 @@ export class GetNotificationsRequestDto
   @IsBoolean()
   @Transform(({ value }) => value === 'true')
   archived?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  @Transform(({ value }) => value === 'true')
+  snoozed?: boolean;
 }

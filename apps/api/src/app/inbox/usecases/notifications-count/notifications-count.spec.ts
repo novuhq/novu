@@ -1,12 +1,12 @@
 import sinon from 'sinon';
 import { expect } from 'chai';
-import { MessageRepository, SubscriberRepository } from '@novu/dal';
+import { MessageRepository, OrganizationRepository, SubscriberRepository } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/shared';
 import { buildMessageCountKey, CachedQuery } from '@novu/application-generic';
 
+import { BadRequestException } from '@nestjs/common';
 import { NotificationsCount } from './notifications-count.usecase';
 import { NotificationsCountCommand } from './notifications-count.command';
-import { ApiException } from '../../../shared/exceptions/api.exception';
 
 sinon.stub(CachedQuery);
 sinon.stub(buildMessageCountKey);
@@ -15,16 +15,16 @@ describe('NotificationsCount', () => {
   let notificationsCount: NotificationsCount;
   let messageRepository: sinon.SinonStubbedInstance<MessageRepository>;
   let subscriberRepository: sinon.SinonStubbedInstance<SubscriberRepository>;
+  let organizationRepository: sinon.SinonStubbedInstance<OrganizationRepository>;
 
   beforeEach(() => {
     messageRepository = sinon.createStubInstance(MessageRepository);
     subscriberRepository = sinon.createStubInstance(SubscriberRepository);
-
     notificationsCount = new NotificationsCount(messageRepository as any, subscriberRepository as any);
   });
 
   describe('execute', () => {
-    it('should throw ApiException if subscriber is not found', async () => {
+    it('should throw BadRequestException if subscriber is not found', async () => {
       subscriberRepository.findBySubscriberId.resolves(null);
 
       const command: NotificationsCountCommand = {
@@ -37,7 +37,7 @@ describe('NotificationsCount', () => {
       try {
         await notificationsCount.execute(command);
       } catch (error) {
-        expect(error).to.be.instanceOf(ApiException);
+        expect(error).to.be.instanceOf(BadRequestException);
         expect(error.message).to.equal(
           `Subscriber ${command.subscriberId} doesn't exist in environment ${command.environmentId}`
         );
@@ -58,7 +58,7 @@ describe('NotificationsCount', () => {
       try {
         await notificationsCount.execute(command);
       } catch (error) {
-        expect(error).to.be.instanceOf(ApiException);
+        expect(error).to.be.instanceOf(BadRequestException);
         expect(error.message).to.equal(`Filtering for unread and archived notifications is not supported.`);
       }
     });

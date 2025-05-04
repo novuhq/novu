@@ -9,6 +9,7 @@ import { subscribersList } from "../funcs/subscribersList.js";
 import { subscribersPatch } from "../funcs/subscribersPatch.js";
 import { subscribersRetrieve } from "../funcs/subscribersRetrieve.js";
 import { subscribersSearch } from "../funcs/subscribersSearch.js";
+import { subscribersUpsert } from "../funcs/subscribersUpsert.js";
 import { ClientSDK, RequestOptions } from "../lib/sdks.js";
 import * as components from "../models/components/index.js";
 import * as operations from "../models/operations/index.js";
@@ -165,6 +166,27 @@ export class Subscribers extends ClientSDK {
       this,
       page,
       limit,
+      idempotencyKey,
+      options,
+    ));
+  }
+
+  /**
+   * Upsert subscriber
+   *
+   * @remarks
+   * Used to upsert the subscriber entity with new information
+   */
+  async upsert(
+    updateSubscriberRequestDto: components.UpdateSubscriberRequestDto,
+    subscriberId: string,
+    idempotencyKey?: string | undefined,
+    options?: RequestOptions,
+  ): Promise<operations.SubscribersV1ControllerUpdateSubscriberResponse> {
+    return unwrapAsync(subscribersUpsert(
+      this,
+      updateSubscriberRequestDto,
+      subscriberId,
       idempotencyKey,
       options,
     ));

@@ -1,9 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { SubscriberEntity, SubscriberRepository, TenantEntity, TenantRepository } from '@novu/dal';
 import { FilterPartTypeEnum, IMessageFilter } from '@novu/shared';
-import { IFilterVariables } from '../../utils/filter-processing-details';
-import { CachedEntity } from '../../services/cache/interceptors/cached-entity.interceptor';
-import { buildSubscriberKey } from '../../services/cache/key-builders/entities';
+import { IFilterVariables } from '../../utils';
+import { buildSubscriberKey, CachedResponse } from '../../services';
 import { ConditionsFilterCommand } from '../conditions-filter';
 
 /**
@@ -92,7 +91,7 @@ export class NormalizeVariables {
     return undefined;
   }
 
-  @CachedEntity({
+  @CachedResponse({
     builder: (command: { subscriberId: string; _environmentId: string }) =>
       buildSubscriberKey({
         _environmentId: command._environmentId,

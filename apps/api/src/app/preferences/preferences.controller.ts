@@ -6,7 +6,6 @@ import {
   Get,
   Post,
   Query,
-  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import {
@@ -20,8 +19,8 @@ import {
 } from '@novu/application-generic';
 import { PreferencesTypeEnum, UserSessionData } from '@novu/shared';
 import { ApiExcludeController } from '@nestjs/swagger';
-import { UpsertPreferencesDto } from './dtos/upsert-preferences.dto';
 import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
+import { UpsertPreferencesDto } from './dtos/upsert-preferences.dto';
 
 /**
  * @deprecated - set workflow preferences using the `/workflows` endpoint instead

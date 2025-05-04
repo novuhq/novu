@@ -1,12 +1,9 @@
 import { Module } from '@nestjs/common';
 import { TerminusModule } from '@nestjs/terminus';
 
-import {
-  EventsDistributedLockService,
-  GetNovuProviderCredentials,
-  StorageHelperService,
-} from '@novu/application-generic';
+import { GetNovuProviderCredentials, StorageHelperService } from '@novu/application-generic';
 
+import { CommunityOrganizationRepository, CommunityUserRepository } from '@novu/dal';
 import { EventsController } from './events.controller';
 import { USE_CASES } from './usecases';
 
@@ -22,7 +19,7 @@ import { TenantModule } from '../tenant/tenant.module';
 import { BridgeModule } from '../bridge';
 import { SubscribersV1Module } from '../subscribers/subscribersV1.module';
 
-const PROVIDERS = [GetNovuProviderCredentials, StorageHelperService, EventsDistributedLockService];
+const PROVIDERS = [GetNovuProviderCredentials, StorageHelperService, CommunityOrganizationRepository];
 
 @Module({
   imports: [
@@ -40,6 +37,6 @@ const PROVIDERS = [GetNovuProviderCredentials, StorageHelperService, EventsDistr
     BridgeModule,
   ],
   controllers: [EventsController],
-  providers: [...PROVIDERS, ...USE_CASES],
+  providers: [...PROVIDERS, ...USE_CASES, CommunityUserRepository],
 })
 export class EventsModule {}

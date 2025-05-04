@@ -21,6 +21,7 @@ function sanitizeEmptyInput<T_Type>(input: T_Type, defaultValue: T_Type = undefi
 }
 
 export function sanitizeRedirect(redirect: InAppRedirectType | undefined) {
+  // TODO: There is a bug here, if the redirect doesn't contain both a url and a target it is removed from the new controlValues
   if (!redirect?.url || redirect.url.length === 0 || !redirect?.target) {
     return undefined;
   }
@@ -32,6 +33,7 @@ export function sanitizeRedirect(redirect: InAppRedirectType | undefined) {
 }
 
 function sanitizeAction(action: InAppActionType) {
+  // TODO: There is a bug here, if the action doesn't contain both a label and a redirect it is removed from the new controlValues
   if (!action?.label) {
     return undefined;
   }
@@ -44,7 +46,7 @@ function sanitizeAction(action: InAppActionType) {
 
 function sanitizeInApp(controlValues: InAppControlType) {
   const normalized: InAppControlType = {
-    subject: controlValues.subject,
+    subject: sanitizeEmptyInput<string>(controlValues.subject),
     body: sanitizeEmptyInput<string>(controlValues.body),
     avatar: sanitizeEmptyInput<string>(controlValues.avatar),
     primaryAction: undefined,
@@ -77,7 +79,7 @@ function sanitizeEmail(controlValues: EmailControlType) {
   });
 
   const emailControls: EmailControlType = {
-    subject: controlValues.subject,
+    subject: sanitizeEmptyInput(controlValues.subject, ' '),
     body: sanitizeEmptyInput(controlValues.body, EMPTY_TIP_TAP),
     skip: controlValues.skip,
     disableOutputSanitization: controlValues.disableOutputSanitization,

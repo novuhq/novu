@@ -2,25 +2,39 @@
 import { render as mailyRender, JSONContent as MailyJSONContent } from '@maily-to/render';
 import { Injectable } from '@nestjs/common';
 import { EmailRenderOutput, FeatureFlagsKeysEnum } from '@novu/shared';
-import { InstrumentUsecase, sanitizeHTML, FeatureFlagsService } from '@novu/application-generic';
+import { FeatureFlagsService, InstrumentUsecase, sanitizeHTML } from '@novu/application-generic';
+import { EnvironmentEntity } from '@novu/dal';
 
 import { FullPayloadForRender, RenderCommand } from './render-command';
-import { WrapMailyInLiquidUseCase } from './maily-to-liquid/wrap-maily-in-liquid.usecase';
-import { MAILY_ITERABLE_MARK, MailyAttrsEnum } from './maily-to-liquid/maily.types';
+import { MailyAttrsEnum } from '../../../shared/helpers/maily.types';
 import { parseLiquid } from '../../../shared/helpers/liquid';
-import { hasShow, isRepeatNode, isVariableNode } from './maily-to-liquid/maily-utils';
+import {
+  hasShow,
+  isButtonNode,
+  isImageNode,
+  isLinkNode,
+  isRepeatNode,
+  isVariableNode,
+  wrapMailyInLiquid,
+} from '../../../shared/helpers/maily-utils';
 
-export class EmailOutputRendererCommand extends RenderCommand {}
+type MailyJSONMarks = NonNullable<MailyJSONContent['marks']>[number];
+
+export class EmailOutputRendererCommand extends RenderCommand {
+  environmentId: string;
+}
 
 @Injectable()
 export class EmailOutputRendererUsecase {
-  constructor(
-    private wrapMailyInLiquidUsecase: WrapMailyInLiquidUseCase,
-    private featureFlagsService: FeatureFlagsService
-  ) {}
+  constructor(private readonly featureFlagService: FeatureFlagsService) {}
 
   @InstrumentUsecase()
   async execute(renderCommand: EmailOutputRendererCommand): Promise<EmailRenderOutput> {
+    const isEnhancedDigestEnabled = await this.featureFlagService.getFlag({
+      environment: { _id: renderCommand.environmentId } as EnvironmentEntity,
+      key: FeatureFlagsKeysEnum.IS_ENHANCED_DIGEST_ENABLED,
+      defaultValue: false,
+    });
     const { body, subject: controlSubject, disableOutputSanitization } = renderCommand.controlValues;
 
     if (!body || typeof body !== 'string') {
@@ -35,9 +49,17 @@ export class EmailOutputRendererUsecase {
       };
     }
 
-    const liquifiedMaily = this.wrapMailyInLiquidUsecase.execute({ emailEditor: body });
-    const transformedMaily = await this.transformMailyContent(liquifiedMaily, renderCommand.fullPayloadForRender);
-    const parsedMaily = await this.parseMailyContentByLiquid(transformedMaily, renderCommand.fullPayloadForRender);
+    const liquifiedMaily = wrapMailyInLiquid(body);
+    const transformedMaily = await this.transformMailyContent(
+      liquifiedMaily,
+      renderCommand.fullPayloadForRender,
+      isEnhancedDigestEnabled
+    );
+    const parsedMaily = await this.parseMailyContentByLiquid(
+      transformedMaily,
+      renderCommand.fullPayloadForRender,
+      isEnhancedDigestEnabled
+    );
     const strippedMaily = this.removeTrailingEmptyLines(parsedMaily);
     const renderedHtml = await mailyRender(strippedMaily);
 
@@ -47,19 +69,6 @@ export class EmailOutputRendererUsecase {
      * rather than handling invalid types here.
      */
     const subject = controlSubject as string;
-
-    const isEmailSanitizationFeatureEnabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_EMAIL_SANITIZATION_ENABLED,
-      defaultValue: false,
-      user: { _id: 'system' },
-    });
-
-    if (!isEmailSanitizationFeatureEnabled) {
-      return {
-        subject: sanitizeHTML(subject),
-        body: sanitizeHTML(renderedHtml),
-      };
-    }
 
     if (disableOutputSanitization) {
       return { subject, body: renderedHtml };
@@ -94,9 +103,10 @@ export class EmailOutputRendererUsecase {
 
   private async parseMailyContentByLiquid(
     mailyContent: MailyJSONContent,
-    variables: FullPayloadForRender
+    variables: FullPayloadForRender,
+    isEnhancedDigestEnabled: boolean
   ): Promise<MailyJSONContent> {
-    const parsedString = await parseLiquid(JSON.stringify(mailyContent), variables);
+    const parsedString = await parseLiquid(JSON.stringify(mailyContent), variables, isEnhancedDigestEnabled);
 
     return JSON.parse(parsedString);
   }
@@ -104,6 +114,7 @@ export class EmailOutputRendererUsecase {
   private async transformMailyContent(
     node: MailyJSONContent,
     variables: FullPayloadForRender,
+    isEnhancedDigestEnabled: boolean,
     parent?: MailyJSONContent
   ) {
     const queue: Array<{ node: MailyJSONContent; parent?: MailyJSONContent }> = [{ node, parent }];
@@ -112,11 +123,15 @@ export class EmailOutputRendererUsecase {
       const current = queue.shift()!;
 
       if (hasShow(current.node)) {
-        await this.handleShowNode(current.node, variables, current.parent);
+        const shouldShow = await this.handleShowNode(current.node, variables, isEnhancedDigestEnabled, current.parent);
+
+        if (!shouldShow) {
+          continue;
+        }
       }
 
       if (isRepeatNode(current.node)) {
-        await this.handleEachNode(current.node, variables, current.parent);
+        await this.handleEachNode(current.node, variables, isEnhancedDigestEnabled, current.parent);
       }
 
       if (isVariableNode(current.node)) {
@@ -136,25 +151,27 @@ export class EmailOutputRendererUsecase {
   private async handleShowNode(
     node: MailyJSONContent & { attrs: { [MailyAttrsEnum.SHOW_IF_KEY]: string } },
     variables: FullPayloadForRender,
+    isEnhancedDigestEnabled: boolean,
     parent?: MailyJSONContent
-  ): Promise<void> {
-    const shouldShow = await this.evaluateShowCondition(variables, node);
+  ): Promise<boolean> {
+    const shouldShow = await this.evaluateShowCondition(variables, node, isEnhancedDigestEnabled);
     if (!shouldShow && parent?.content) {
       parent.content = parent.content.filter((pNode) => pNode !== node);
-
-      return;
     }
 
     // @ts-ignore
     delete node.attrs[MailyAttrsEnum.SHOW_IF_KEY];
+
+    return shouldShow;
   }
 
   private async handleEachNode(
     node: MailyJSONContent & { attrs: { [MailyAttrsEnum.EACH_KEY]: string } },
     variables: FullPayloadForRender,
+    isEnhancedDigestEnabled: boolean,
     parent?: MailyJSONContent
   ): Promise<void> {
-    const newContent = await this.multiplyForEachNode(node, variables);
+    const newContent = await this.multiplyForEachNode(node, variables, isEnhancedDigestEnabled);
 
     if (parent?.content) {
       const nodeIndex = parent.content.indexOf(node);
@@ -166,10 +183,11 @@ export class EmailOutputRendererUsecase {
 
   private async evaluateShowCondition(
     variables: FullPayloadForRender,
-    node: MailyJSONContent & { attrs: { [MailyAttrsEnum.SHOW_IF_KEY]: string } }
+    node: MailyJSONContent & { attrs: { [MailyAttrsEnum.SHOW_IF_KEY]: string } },
+    isEnhancedDigestEnabled: boolean
   ): Promise<boolean> {
     const { [MailyAttrsEnum.SHOW_IF_KEY]: showIfKey } = node.attrs;
-    const parsedShowIfValue = await parseLiquid(showIfKey, variables);
+    const parsedShowIfValue = await parseLiquid(showIfKey, variables, isEnhancedDigestEnabled);
 
     return this.stringToBoolean(parsedShowIfValue);
   }
@@ -181,15 +199,19 @@ export class EmailOutputRendererUsecase {
 
   /**
    * For 'each' node, multiply the content by the number of items in the iterable array
-   * and add indexes to the placeholders.
+   * and add indexes to the placeholders. If iterations attribute is set, limits the number
+   * of iterations to that value, otherwise renders all items.
    *
    * @example
    * node:
    * {
    *   type: 'each',
-   *   attrs: { each: '{{ payload.comments }}' },
+   *   attrs: {
+   *     each: '{{ payload.comments }}',
+   *     iterations: 2 // Optional - limits to first 2 items only
+   *   },
    *   content: [
-   *     { type: 'variable', text: '{{ payload.comments[0].author }}' }
+   *     { type: 'variable', text: '{{ payload.comments.author }}' }
    *   ]
    * }
    *
@@ -205,18 +227,24 @@ export class EmailOutputRendererUsecase {
    */
   private async multiplyForEachNode(
     node: MailyJSONContent & { attrs: { [MailyAttrsEnum.EACH_KEY]: string } },
-    variables: FullPayloadForRender
+    variables: FullPayloadForRender,
+    isEnhancedDigestEnabled: boolean
   ): Promise<MailyJSONContent[]> {
     const iterablePath = node.attrs[MailyAttrsEnum.EACH_KEY];
+    const iterations = node.attrs[MailyAttrsEnum.ITERATIONS_KEY];
     const forEachNodes = node.content || [];
-    const iterableArray = await this.getIterableArray(iterablePath, variables);
+    const iterableArray = await this.getIterableArray(iterablePath, variables, isEnhancedDigestEnabled);
+    const limitedIterableArray = iterations ? iterableArray.slice(0, iterations) : iterableArray;
 
-    return iterableArray.flatMap((_, index) => this.processForEachNodes(forEachNodes, iterablePath, index));
+    return limitedIterableArray.flatMap((_, index) => this.processForEachNodes(forEachNodes, iterablePath, index));
   }
 
-  private async getIterableArray(iterablePath: string, variables: FullPayloadForRender): Promise<unknown[]> {
-    const normalizedPath = iterablePath.replace(`[${MAILY_ITERABLE_MARK}]`, '');
-    const iterableArrayString = await parseLiquid(normalizedPath, variables);
+  private async getIterableArray(
+    iterablePath: string,
+    variables: FullPayloadForRender,
+    isEnhancedDigestEnabled: boolean
+  ): Promise<unknown[]> {
+    const iterableArrayString = await parseLiquid(iterablePath, variables, isEnhancedDigestEnabled);
 
     try {
       const parsedArray = JSON.parse(iterableArrayString.replace(/'/g, '"'));
@@ -231,15 +259,54 @@ export class EmailOutputRendererUsecase {
     }
   }
 
-  private processForEachNodes(nodes: MailyJSONContent[], iterablePath: string, index: number): MailyJSONContent[] {
+  private processForEachNodes(
+    nodes: MailyJSONContent[],
+    iterablePath: string,
+    index: number
+  ): Array<MailyJSONContent | MailyJSONMarks> {
     return nodes.map((node) => {
       const processedNode = { ...node };
 
       if (isVariableNode(processedNode)) {
         this.processVariableNodeTypes(processedNode);
-
         if (processedNode.text) {
-          processedNode.text = processedNode.text.replace(MAILY_ITERABLE_MARK, index.toString());
+          processedNode.text = this.addIndexToLiquidExpression(processedNode.text, iterablePath, index);
+        }
+
+        return processedNode;
+      }
+
+      if (isButtonNode(processedNode)) {
+        if (processedNode.attrs?.text) {
+          processedNode.attrs.text = this.addIndexToLiquidExpression(processedNode.attrs.text, iterablePath, index);
+        }
+
+        if (processedNode.attrs?.url) {
+          processedNode.attrs.url = this.addIndexToLiquidExpression(processedNode.attrs.url, iterablePath, index);
+        }
+
+        return processedNode;
+      }
+
+      if (isImageNode(processedNode)) {
+        if (processedNode.attrs?.src) {
+          processedNode.attrs.src = this.addIndexToLiquidExpression(processedNode.attrs.src, iterablePath, index);
+        }
+
+        if (processedNode.attrs?.externalLink) {
+          processedNode.attrs.externalLink = this.addIndexToLiquidExpression(
+            processedNode.attrs.externalLink,
+            iterablePath,
+            index
+          );
+        }
+
+        return processedNode;
+      }
+
+      if (isLinkNode(processedNode)) {
+        if (processedNode.attrs?.href) {
+          processedNode.attrs.href = this.addIndexToLiquidExpression(processedNode.attrs.href, iterablePath, index);
         }
 
         return processedNode;
@@ -249,8 +316,39 @@ export class EmailOutputRendererUsecase {
         processedNode.content = this.processForEachNodes(processedNode.content, iterablePath, index);
       }
 
+      if (processedNode.marks?.length) {
+        processedNode.marks = this.processForEachNodes(
+          processedNode.marks,
+          iterablePath,
+          index
+        ) as Array<MailyJSONMarks>;
+      }
+
       return processedNode;
     });
+  }
+
+  /**
+   * Add the index to the liquid expression if it doesn't already have an array index
+   *
+   * @example
+   * text: '{{ payload.comments.author }}'
+   * iterablePath: '{{ payload.comments }}'
+   * index: 0
+   * result: '{{ payload.comments[0].author }}'
+   */
+  private addIndexToLiquidExpression(text: string, iterablePath: string, index: number): string {
+    const cleanPath = iterablePath.replace(/\{\{|\}\}/g, '').trim();
+    const liquidMatch = text.match(/\{\{\s*(.*?)\s*\}\}/);
+
+    if (!liquidMatch) return text;
+
+    const [path, ...filters] = liquidMatch[1].split('|').map((part) => part.trim());
+    if (path.includes('[')) return text;
+
+    const newPath = path.replace(cleanPath, `${cleanPath}[${index}]`);
+
+    return filters.length ? `{{ ${newPath} | ${filters.join(' | ')} }}` : `{{ ${newPath} }}`;
   }
 
   private stringToBoolean(value: string): boolean {

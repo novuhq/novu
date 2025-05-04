@@ -76,6 +76,7 @@ export class TopicsController {
         key: body.key,
         name: body.name,
         organizationId: user.organizationId,
+        userId: user._id,
       })
     );
 
@@ -103,6 +104,7 @@ export class TopicsController {
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         subscribers: body.subscribers,
+        userId: user._id,
         topicKey,
       })
     );

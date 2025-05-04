@@ -49,6 +49,7 @@ import { SaveFormContext } from '@/components/workflow-editor/steps/save-form-co
 import { SdkBanner } from '@/components/workflow-editor/steps/sdk-banner';
 import { SkipConditionsButton } from '@/components/workflow-editor/steps/skip-conditions-button';
 import { ConfigureSmsStepPreview } from '@/components/workflow-editor/steps/sms/configure-sms-step-preview';
+
 import { UpdateWorkflowFn } from '@/components/workflow-editor/workflow-provider';
 import { useFormAutosave } from '@/hooks/use-form-autosave';
 import { INLINE_CONFIGURABLE_STEP_TYPES, STEP_TYPE_LABELS, TEMPLATE_CONFIGURABLE_STEP_TYPES } from '@/utils/constants';
@@ -188,11 +189,14 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
       });
     });
 
-    // Set new errors from stepIssues
-    Object.entries(stepIssues).forEach(([key, value]) => {
-      // @ts-expect-error - dynamic key
-      form.setError(`controlValues.${key}`, { message: value });
-    });
+    // @ts-expect-error - isNew doesn't exist on StepResponseDto and it's too much work to override the @novu/shared types now. See useUpdateWorkflow.ts for more details
+    if (!step.isNew) {
+      // Set new errors from stepIssues
+      Object.entries(stepIssues).forEach(([key, value]) => {
+        // @ts-expect-error - dynamic key
+        form.setError(`controlValues.${key}`, { message: value });
+      });
+    }
   }, [form, step]);
 
   useEffect(() => {
@@ -311,6 +315,8 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
                     <RiArrowRightSLine className="ml-auto h-4 w-4 text-neutral-600" />
                   </Button>
                 </Link>
+
+                <SkipConditionsButton origin={workflow.origin} step={step} />
               </SidebarContent>
               <Separator />
 
@@ -339,7 +345,14 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
             </>
           )}
 
-          <SkipConditionsButton origin={workflow.origin} step={step} inSidebar />
+          {isInlineConfigurableStep && (
+            <>
+              <SidebarContent>
+                <SkipConditionsButton origin={workflow.origin} step={step} />
+              </SidebarContent>
+              <Separator />
+            </>
+          )}
 
           {!isSupportedStep && (
             <SidebarContent>
@@ -349,7 +362,6 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
 
           {!isReadOnly && (
             <SidebarFooter>
-              <Separator />
               <ConfirmationModal
                 open={isDeleteModalOpen}
                 onOpenChange={setIsDeleteModalOpen}

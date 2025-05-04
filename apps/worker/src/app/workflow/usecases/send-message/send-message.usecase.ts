@@ -12,23 +12,23 @@ import {
 } from '@novu/shared';
 import {
   AnalyticsService,
+  buildSubscriberKey,
+  CachedResponse,
   ConditionsFilter,
   ConditionsFilterCommand,
-  DetailEnum,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
+  DetailEnum,
   GetPreferences,
   GetSubscriberTemplatePreference,
   GetSubscriberTemplatePreferenceCommand,
   IConditionsFilterResponse,
   IFilterVariables,
+  Instrument,
   InstrumentUsecase,
   NormalizeVariables,
   NormalizeVariablesCommand,
   PlatformException,
-  CachedEntity,
-  buildSubscriberKey,
-  Instrument,
 } from '@novu/application-generic';
 import {
   JobEntity,
@@ -397,7 +397,7 @@ export class SendMessage {
     return await this.notificationTemplateRepository.findById(_id, environmentId);
   }
 
-  @CachedEntity({
+  @CachedResponse({
     builder: (command: { subscriberId: string; _environmentId: string }) =>
       buildSubscriberKey({
         _environmentId: command._environmentId,
