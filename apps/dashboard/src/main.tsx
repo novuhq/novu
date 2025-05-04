@@ -26,6 +26,7 @@ import {
 } from '@/pages';
 import { DuplicateWorkflowPage } from '@/pages/duplicate-workflow';
 import { SubscribersPage } from '@/pages/subscribers';
+import { WebhooksPage } from '@/pages/webhooks-page';
 import { CreateIntegrationSidebar } from './components/integrations/components/create-integration-sidebar';
 import { UpdateIntegrationSidebar } from './components/integrations/components/update-integration-sidebar';
 import { ChannelPreferences } from './components/workflow-editor/channel-preferences';
@@ -151,6 +152,10 @@ const router = createBrowserRouter([
               {
                 path: ROUTES.ENVIRONMENTS,
                 element: <EnvironmentsPage />,
+              },
+              {
+                path: ROUTES.WEBHOOKS,
+                element: <WebhooksPage />,
               },
               {
                 path: ROUTES.ACTIVITY_FEED,

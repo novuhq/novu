@@ -14,6 +14,7 @@ import {
   RiKey2Line,
   RiRouteFill,
   RiSettings4Line,
+  RiSignalTowerLine,
   RiStore3Line,
   RiUserAddLine,
 } from 'react-icons/ri';
@@ -25,6 +26,8 @@ import { GettingStartedMenuItem } from './getting-started-menu-item';
 import { NavigationLink } from './navigation-link';
 import { OrganizationDropdown } from './organization-dropdown';
 import { UsageCard } from './usage-card';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 const NavigationGroup = ({ children, label }: { children: ReactNode; label?: string }) => {
   return (
@@ -39,6 +42,7 @@ export const SideNavigation = () => {
   const { subscription, daysLeft, isLoading: isLoadingSubscription } = useFetchSubscription();
   const isTrialActive = subscription?.trial.isActive;
   const isFreeTier = subscription?.apiServiceLevel === ApiServiceLevelEnum.FREE;
+  const isWebhooksManagementEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_WEBHOOKS_MANAGEMENT_ENABLED);
 
   const { currentEnvironment, environments, switchEnvironment } = useEnvironment();
   const track = useTelemetry();
@@ -93,6 +97,12 @@ export const SideNavigation = () => {
                 <RiKey2Line className="size-4" />
                 <span>API Keys</span>
               </NavigationLink>
+              {isWebhooksManagementEnabled && (
+                <NavigationLink to={buildRoute(ROUTES.WEBHOOKS, { environmentSlug: currentEnvironment?.slug ?? '' })}>
+                  <RiSignalTowerLine className="size-4" />
+                  <span>Webhooks</span>
+                </NavigationLink>
+              )}
               <NavigationLink to={buildRoute(ROUTES.ENVIRONMENTS, { environmentSlug: currentEnvironment?.slug ?? '' })}>
                 <RiDatabase2Line className="size-4" />
                 <span>Environments</span>
