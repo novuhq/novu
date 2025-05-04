@@ -10,4 +10,8 @@ export class GetWebhookPortalTokenResponseDto {
   @IsString()
   @IsJWT()
   token: string;
+
+  @IsNotEmpty()
+  @IsString()
+  appId: string;
 }

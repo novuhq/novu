@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger, NotFoundException, Scope } from '@nestjs/common';
-import { EnvironmentRepository } from '@novu/dal';
+import { EnvironmentRepository, OrganizationRepository } from '@novu/dal';
 import { LogDecorator } from '@novu/application-generic';
 import { Svix } from 'svix'; // Import Svix SDK type
 
@@ -14,7 +14,8 @@ const LOG_CONTEXT = 'GetWebhookPortalTokenUsecase';
 export class GetWebhookPortalTokenUsecase {
   constructor(
     private environmentRepository: EnvironmentRepository,
-    @Inject('SVIX_CLIENT') private svix: Svix
+    @Inject('SVIX_CLIENT') private svix: Svix,
+    private organizationRepository: OrganizationRepository
   ) {}
 
   @LogDecorator()
@@ -30,34 +31,47 @@ export class GetWebhookPortalTokenUsecase {
       );
     }
 
-    // TODO: Refine how svixApplicationId is stored/retrieved if not in customData
-    const svixApplicationId = environment.customData?.svixApplicationId as string;
-    if (!svixApplicationId) {
-      throw new NotFoundException(`Svix Application ID not configured for environment ${command.environmentId}.`);
-    }
-
     try {
-      Logger.log(`Generating Svix portal token for app ID: ${svixApplicationId}`, LOG_CONTEXT);
-
       // Call Svix SDK to get portal access URL and token
       const svixResponse = await this.svix.authentication.appPortalAccess(
         `${command.organizationId}-${command.environmentId}`,
         {}
       );
 
-      Logger.log(`Successfully generated Svix portal token for app ID: ${svixApplicationId}`, LOG_CONTEXT);
-
       return {
         url: svixResponse.url,
         token: svixResponse.token,
+        appId: `${command.organizationId}-${command.environmentId}`,
       };
     } catch (error) {
-      Logger.error(
-        `Failed to generate Svix portal token for app ID ${svixApplicationId}: ${error?.message}`,
-        error?.stack,
-        LOG_CONTEXT
-      );
+      console.log('AAAAA', error.code);
+      if (error.code === 404) {
+        const organization = await this.organizationRepository.findById(command.organizationId);
+        if (!organization) {
+          throw new NotFoundException(`Organization not found for id ${command.organizationId}`);
+        }
 
+        const app = await this.svix.application.create({
+          name: organization.name,
+          uid: `${command.organizationId}-${command.environmentId}`,
+          metadata: {
+            environmentId: command.environmentId,
+          },
+        });
+
+        const svixResponse = await this.svix.authentication.appPortalAccess(
+          `${command.organizationId}-${command.environmentId}`,
+          {}
+        );
+
+        console.log('APPsSSSs', svixResponse);
+
+        return {
+          url: svixResponse.url,
+          token: svixResponse.token,
+          appId: `${command.organizationId}-${command.environmentId}`,
+        };
+      }
       // Re-throw or handle specific Svix errors as needed
       throw new Error(`Failed to generate Svix portal token: ${error?.message}`);
     }

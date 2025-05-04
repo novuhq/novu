@@ -7,7 +7,7 @@ import { GetWebhookPortalTokenCommand } from './usecases/get-webhook-portal-toke
 import { GetWebhookPortalTokenResponseDto } from './dtos/get-webhook-portal-token-response.dto';
 import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
 
-@Controller({ path: `/webhooks`, version: '1' })
+@Controller({ path: `/webhooks`, version: '2' })
 @UseInterceptors(ClassSerializerInterceptor)
 @UserAuthentication()
 export class WebhooksController {
