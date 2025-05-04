@@ -3,7 +3,7 @@ import { TerminusModule } from '@nestjs/terminus';
 
 import { GetNovuProviderCredentials, StorageHelperService } from '@novu/application-generic';
 
-import { CommunityOrganizationRepository } from '@novu/dal';
+import { CommunityOrganizationRepository, CommunityUserRepository } from '@novu/dal';
 import { EventsController } from './events.controller';
 import { USE_CASES } from './usecases';
 
@@ -18,7 +18,6 @@ import { LayoutsModule } from '../layouts/layouts.module';
 import { TenantModule } from '../tenant/tenant.module';
 import { BridgeModule } from '../bridge';
 import { SubscribersV1Module } from '../subscribers/subscribersV1.module';
-import { CommunityUserRepository } from '@novu/dal';
 
 const PROVIDERS = [GetNovuProviderCredentials, StorageHelperService, CommunityOrganizationRepository];
 
