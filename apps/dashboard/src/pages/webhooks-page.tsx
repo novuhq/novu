@@ -81,7 +81,11 @@ export function WebhooksPage() {
   return (
     <DashboardLayout headerStartItems={<h1 className="text-foreground-950">Webhooks</h1>}>
       <SvixProvider token={portalToken} appId={appId}>
-        <Tabs defaultValue="endpoints">
+        <div className="h-full w-full overflow-auto">
+          <AppPortal url={buildPortalUrl(portalUrl, '/endpoints')} fullSize />
+        </div>
+
+        {/*  <Tabs defaultValue="endpoints">
           <div className="border-neutral-alpha-200 flex items-center justify-between border-b">
             <TabsList variant="regular" className="border-b-0 border-t-2 border-transparent p-0 !px-2">
               <TabsTrigger value="endpoints" variant="regular">
@@ -97,21 +101,28 @@ export function WebhooksPage() {
                 Activity
               </TabsTrigger>
             </TabsList>
-            {/* Add action buttons here if needed later */}
           </div>
-          <TabsContent value="endpoints" variant="regular" className="!mt-0 p-2.5">
-            <AppPortal url={buildPortalUrl(portalUrl, '/endpoints')} style={{ backgroundColor: 'red' }} fullSize />
+          <TabsContent value="endpoints" variant="regular" className="!mt-0 overflow-hidden p-2.5">
+            <div className="mt-[-61px]">
+              <AppPortal url={buildPortalUrl(portalUrl, '/endpoints')} fullSize />
+            </div>
           </TabsContent>
-          <TabsContent value="event-catalog" variant="regular" className="!mt-0 p-2.5">
-            <AppPortal url={buildPortalUrl(portalUrl, '/event-types')} fullSize />
+          <TabsContent value="event-catalog" variant="regular" className="!mt-0 overflow-hidden p-2.5">
+            <div className="mt-[-61px]">
+              <AppPortal url={buildPortalUrl(portalUrl, '/event-types')} fullSize />
+            </div>
           </TabsContent>
-          <TabsContent value="logs" variant="regular" className="!mt-0 p-2.5">
-            <AppPortal url={buildPortalUrl(portalUrl, '/messages')} fullSize />
+          <TabsContent value="logs" variant="regular" className="!mt-0 overflow-hidden p-2.5">
+            <div className="mt-[-61px]">
+              <AppPortal url={buildPortalUrl(portalUrl, '/messages')} fullSize />
+            </div>
           </TabsContent>
-          <TabsContent value="activity" variant="regular" className="!mt-0 p-2.5">
-            <AppPortal url={buildPortalUrl(portalUrl, '/activity')} fullSize />
+          <TabsContent value="activity" variant="regular" className="!mt-0 overflow-hidden p-2.5">
+            <div className="mt-[-61px]">
+              <AppPortal url={buildPortalUrl(portalUrl, '/activity')} fullSize />
+            </div>
           </TabsContent>
-        </Tabs>
+        </Tabs> */}
       </SvixProvider>
     </DashboardLayout>
   );
