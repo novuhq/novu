@@ -35,7 +35,7 @@ export class APNSPushProvider extends BaseProvider implements IPushProvider {
     this.config = config;
     this.provider = new apn.Provider({
       token: {
-        key: this.validateAndFormatKey(config.key),
+        key: config.key,
         keyId: config.keyId,
         teamId: config.teamId,
       },
@@ -72,21 +72,5 @@ export class APNSPushProvider extends BaseProvider implements IPushProvider {
       ids: res.sent?.map((response) => response.device),
       date: new Date().toISOString(),
     };
-  }
-
-  private validateAndFormatKey(key: string): string {
-    // Check if key is already properly formatted
-    const properFormat = /^-----BEGIN PRIVATE KEY-----\n[A-Za-z0-9+/=\n]+\n-----END PRIVATE KEY-----$/;
-
-    if (properFormat.test(key)) {
-      return key; // Key is already in correct format
-    }
-
-    // If not properly formatted, clean and format the key
-    const cleanKey = key.replace(/-----BEGIN PRIVATE KEY-----|-----END PRIVATE KEY-----|[\s\n\r]/g, '');
-
-    const formattedKey = cleanKey.match(/.{1,64}/g)?.join('\n') || '';
-
-    return `-----BEGIN PRIVATE KEY-----\n${formattedKey}\n-----END PRIVATE KEY-----`;
   }
 }
