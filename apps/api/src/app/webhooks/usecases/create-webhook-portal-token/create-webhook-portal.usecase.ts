@@ -1,0 +1,51 @@
+import { Inject, Injectable, NotFoundException, Scope } from '@nestjs/common';
+import { EnvironmentRepository, OrganizationRepository } from '@novu/dal';
+import { LogDecorator } from '@novu/application-generic';
+import { Svix } from 'svix';
+
+import { CreateWebhookPortalCommand } from './create-webhook-portal.command';
+import { CreateWebhookPortalResponseDto } from '../../dtos/create-webhook-portal-token-response.dto';
+
+@Injectable()
+export class CreateWebhookPortalUsecase {
+  constructor(
+    private environmentRepository: EnvironmentRepository,
+    @Inject('SVIX_CLIENT') private svix: Svix,
+    private organizationRepository: OrganizationRepository
+  ) {}
+
+  @LogDecorator()
+  async execute(command: CreateWebhookPortalCommand): Promise<CreateWebhookPortalResponseDto> {
+    const environment = await this.environmentRepository.findOne({
+      _id: command.environmentId,
+      _organizationId: command.organizationId,
+    });
+
+    if (!environment) {
+      throw new NotFoundException(
+        `Environment not found for id ${command.environmentId} and organization ${command.organizationId}`
+      );
+    }
+
+    const organization = await this.organizationRepository.findById(command.organizationId);
+    if (!organization) {
+      throw new NotFoundException(`Organization not found for id ${command.organizationId}`);
+    }
+
+    try {
+      const app = await this.svix.application.create({
+        name: organization.name,
+        uid: command.environmentId,
+        metadata: {
+          environmentId: command.environmentId,
+        },
+      });
+
+      return {
+        appId: app.uid!,
+      };
+    } catch (error) {
+      throw new Error(`Failed to generate Svix portal token: ${error?.message}`);
+    }
+  }
+}

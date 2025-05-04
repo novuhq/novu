@@ -5,17 +5,17 @@ import { Svix } from 'svix'; // Import Svix SDK type
 
 import { GetWebhookPortalTokenCommand } from './get-webhook-portal-token.command';
 import { GetWebhookPortalTokenResponseDto } from '../../dtos/get-webhook-portal-token-response.dto';
+import { CreateWebhookPortalUsecase } from '../create-webhook-portal-token/create-webhook-portal.usecase';
+import { CreateWebhookPortalCommand } from '../create-webhook-portal-token/create-webhook-portal.command';
 
 const LOG_CONTEXT = 'GetWebhookPortalTokenUsecase';
 
-@Injectable({
-  scope: Scope.REQUEST,
-})
+@Injectable()
 export class GetWebhookPortalTokenUsecase {
   constructor(
     private environmentRepository: EnvironmentRepository,
     @Inject('SVIX_CLIENT') private svix: Svix,
-    private organizationRepository: OrganizationRepository
+    private createWebhookPortalUsecase: CreateWebhookPortalUsecase
   ) {}
 
   @LogDecorator()
@@ -44,32 +44,21 @@ export class GetWebhookPortalTokenUsecase {
         appId: `${command.organizationId}-${command.environmentId}`,
       };
     } catch (error) {
-      console.log('AAAAA', error.code);
       if (error.code === 404) {
-        const organization = await this.organizationRepository.findById(command.organizationId);
-        if (!organization) {
-          throw new NotFoundException(`Organization not found for id ${command.organizationId}`);
-        }
-
-        const app = await this.svix.application.create({
-          name: organization.name,
-          uid: `${command.organizationId}-${command.environmentId}`,
-          metadata: {
+        const app = await this.createWebhookPortalUsecase.execute(
+          CreateWebhookPortalCommand.create({
             environmentId: command.environmentId,
-          },
-        });
-
-        const svixResponse = await this.svix.authentication.appPortalAccess(
-          `${command.organizationId}-${command.environmentId}`,
-          {}
+            organizationId: command.organizationId,
+            userId: command.userId,
+          })
         );
 
-        console.log('APPsSSSs', svixResponse);
+        const svixResponse = await this.svix.authentication.appPortalAccess(app.appId, {});
 
         return {
           url: svixResponse.url,
           token: svixResponse.token,
-          appId: `${command.organizationId}-${command.environmentId}`,
+          appId: app.appId,
         };
       }
       // Re-throw or handle specific Svix errors as needed
