@@ -24,6 +24,7 @@ import { USECASES } from './usecases';
 import { BuildVariableSchemaUsecase } from '../workflows-v2/usecases';
 import { CreateVariablesObject } from '../workflows-v2/usecases/create-variables-object/create-variables-object.usecase';
 import { BuildStepIssuesUsecase } from '../workflows-v2/usecases/build-step-issues/build-step-issues.usecase';
+import { WebhooksModule } from '../webhooks/webhooks.module';
 
 const PROVIDERS = [
   CreateWorkflow,
@@ -51,7 +52,7 @@ const PROVIDERS = [
 ];
 
 @Module({
-  imports: [SharedModule],
+  imports: [SharedModule, WebhooksModule],
   providers: [...PROVIDERS, ...USECASES],
   controllers: [BridgeController],
   exports: [...USECASES],

@@ -14,6 +14,7 @@ import {
   UpdateWorkflowCommand,
   UpsertControlValuesCommand,
   UpsertControlValuesUseCase,
+  SendWebhookMessage,
 } from '@novu/application-generic';
 import {
   ControlSchemas,
@@ -26,6 +27,8 @@ import {
   ControlValuesLevelEnum,
   DEFAULT_WORKFLOW_PREFERENCES,
   slugify,
+  WebhookEventEnum,
+  WebhookObjectTypeEnum,
   WorkflowCreationSourceEnum,
   WorkflowOriginEnum,
   WorkflowTypeEnum,
@@ -37,8 +40,6 @@ import { BuildStepIssuesUsecase } from '../build-step-issues/build-step-issues.u
 import { GetWorkflowCommand, GetWorkflowUseCase } from '../get-workflow';
 import { UpsertStepDataCommand, UpsertWorkflowCommand } from './upsert-workflow.command';
 import { StepIssuesDto, WorkflowResponseDto } from '../../dtos';
-import { SendWebhookMessage } from '../../../webhooks/usecases/send-webhook-message/send-webhook-message.usecase';
-import { WebhookEventEnum, WebhookObjectTypeEnum } from '../../../webhooks/dtos/webhook-payload.dto';
 
 @Injectable()
 export class UpsertWorkflowUseCase {
@@ -94,13 +95,28 @@ export class UpsertWorkflowUseCase {
       })
     );
 
-    await this.sendWebhookMessage.execute({
-      eventType: WebhookEventEnum.WORKFLOW_UPDATED,
-      objectType: WebhookObjectTypeEnum.WORKFLOW,
-      payload: updatedWorkflow,
-      organizationId: command.user.organizationId,
-      environmentId: command.user.environmentId,
-    });
+    if (existingWorkflow) {
+      await this.sendWebhookMessage.execute({
+        eventType: WebhookEventEnum.WORKFLOW_UPDATED,
+        objectType: WebhookObjectTypeEnum.WORKFLOW,
+        payload: {
+          object: updatedWorkflow,
+          previousObject: existingWorkflow,
+        },
+        organizationId: command.user.organizationId,
+        environmentId: command.user.environmentId,
+      });
+    } else {
+      await this.sendWebhookMessage.execute({
+        eventType: WebhookEventEnum.WORKFLOW_CREATED,
+        objectType: WebhookObjectTypeEnum.WORKFLOW,
+        payload: {
+          object: updatedWorkflow,
+        },
+        organizationId: command.user.organizationId,
+        environmentId: command.user.environmentId,
+      });
+    }
 
     return updatedWorkflow;
   }

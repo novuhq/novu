@@ -8,9 +8,18 @@ import { NotificationTemplateController } from './notification-template.controll
 import { USE_CASES } from './usecases';
 import { WorkflowControllerV1 } from './workflow-v1.controller';
 import { PreferencesModule } from '../preferences';
+import { WebhooksModule } from '../webhooks/webhooks.module';
 
 @Module({
-  imports: [SharedModule, MessageTemplateModule, ChangeModule, AuthModule, IntegrationModule, PreferencesModule],
+  imports: [
+    SharedModule,
+    MessageTemplateModule,
+    ChangeModule,
+    AuthModule,
+    IntegrationModule,
+    PreferencesModule,
+    WebhooksModule,
+  ],
   controllers: [NotificationTemplateController, WorkflowControllerV1],
   providers: [...USE_CASES],
   exports: [...USE_CASES],

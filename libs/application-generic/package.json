@@ -81,6 +81,7 @@
     "ioredis": "^5.2.4",
     "jsonwebtoken": "9.0.0",
     "@launchdarkly/node-server-sdk": "^9.7.3",
+    "svix": "^1.64.1",
     "lodash": "^4.17.15",
     "mixpanel": "^0.17.0",
     "nanoid": "^3.1.20",

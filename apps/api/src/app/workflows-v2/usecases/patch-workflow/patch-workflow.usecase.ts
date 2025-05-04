@@ -1,12 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import { UserSessionData, WorkflowStatusEnum } from '@novu/shared';
+import { UserSessionData, WebhookObjectTypeEnum, WebhookEventEnum, WorkflowStatusEnum } from '@novu/shared';
 import { NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
-import { GetWorkflowWithPreferencesUseCase, WorkflowWithPreferencesResponseDto } from '@novu/application-generic';
-import { SendWebhookMessage } from '../../../webhooks/usecases/send-webhook-message/send-webhook-message.usecase';
+import {
+  GetWorkflowWithPreferencesUseCase,
+  SendWebhookMessage,
+  WorkflowWithPreferencesResponseDto,
+} from '@novu/application-generic';
 import { PatchWorkflowCommand } from './patch-workflow.command';
 import { GetWorkflowUseCase } from '../get-workflow';
 import { WorkflowResponseDto } from '../../dtos';
-import { WebhookEventEnum, WebhookObjectTypeEnum } from '../../../webhooks/dtos/webhook-payload.dto';
 
 @Injectable()
 export class PatchWorkflowUsecase {
@@ -30,7 +32,10 @@ export class PatchWorkflowUsecase {
     await this.sendWebhookMessage.execute({
       eventType: WebhookEventEnum.WORKFLOW_UPDATED,
       objectType: WebhookObjectTypeEnum.WORKFLOW,
-      payload: updatedWorkflow,
+      payload: {
+        object: updatedWorkflow,
+        previousObject: persistedWorkflow,
+      },
       organizationId: command.user.organizationId,
       environmentId: command.user.environmentId,
     });
