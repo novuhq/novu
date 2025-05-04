@@ -7,7 +7,6 @@ import { VisuallyHidden } from '@/components/primitives/visually-hidden';
 import TruncatedText from '@/components/truncated-text';
 import { useFormProtection } from '@/hooks/use-form-protection';
 import { itemVariants, listVariants } from '@/utils/animation';
-import { ISubscriber } from '@novu/shared';
 import { motion } from 'motion/react';
 import { forwardRef, useEffect, useState } from 'react';
 import { RiDiscussLine } from 'react-icons/ri';
@@ -127,11 +126,9 @@ const TopicSubscribers = (props: TopicSubscribersProps) => {
         subscriptions.map((subscription: TopicSubscription) => (
           <TopicSubscriberItem
             key={subscription._id}
-            subscriber={subscription.subscriber as ISubscriber}
             subscription={subscription}
             topicKey={topicKey}
             readOnly={readOnly}
-            subscriptionDate={subscription.createdAt}
           />
         ))
       )}
