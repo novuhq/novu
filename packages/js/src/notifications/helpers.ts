@@ -2,7 +2,16 @@ import { Action, ActionTypeEnum, NotificationFilter, Result } from '../types';
 import type { InboxService } from '../api';
 import type { NovuEventEmitter } from '../event-emitter';
 import { Notification } from './notification';
-import type { ArchivedArgs, CompleteArgs, ReadArgs, RevertArgs, UnarchivedArgs, UnreadArgs } from './types';
+import type {
+  ArchivedArgs,
+  CompleteArgs,
+  ReadArgs,
+  RevertArgs,
+  SnoozeArgs,
+  UnarchivedArgs,
+  UnreadArgs,
+  UnsnoozeArgs,
+} from './types';
 import { NovuError } from '../utils/errors';
 import type { NotificationsCache } from '../cache';
 
@@ -173,6 +182,86 @@ export const unarchive = async ({
   }
 };
 
+export const snooze = async ({
+  emitter,
+  apiService,
+  args,
+}: {
+  emitter: NovuEventEmitter;
+  apiService: InboxService;
+  args: SnoozeArgs;
+}): Result<Notification> => {
+  const { notificationId, optimisticValue } = getNotificationDetails(
+    args,
+    {
+      isSnoozed: true,
+      snoozedUntil: args.snoozeUntil,
+    },
+    {
+      emitter,
+      apiService,
+    }
+  );
+
+  try {
+    emitter.emit('notification.snooze.pending', {
+      args,
+      data: optimisticValue,
+    });
+
+    const response = await apiService.snooze(notificationId, args.snoozeUntil);
+
+    const updatedNotification = new Notification(response, emitter, apiService);
+    emitter.emit('notification.snooze.resolved', { args, data: updatedNotification });
+
+    return { data: updatedNotification };
+  } catch (error) {
+    emitter.emit('notification.snooze.resolved', { args, error });
+
+    return { error: new NovuError('Failed to snooze notification', error) };
+  }
+};
+
+export const unsnooze = async ({
+  emitter,
+  apiService,
+  args,
+}: {
+  emitter: NovuEventEmitter;
+  apiService: InboxService;
+  args: UnsnoozeArgs;
+}): Result<Notification> => {
+  const { notificationId, optimisticValue } = getNotificationDetails(
+    args,
+    {
+      isSnoozed: false,
+      snoozedUntil: null,
+    },
+    {
+      emitter,
+      apiService,
+    }
+  );
+
+  try {
+    emitter.emit('notification.unsnooze.pending', {
+      args,
+      data: optimisticValue,
+    });
+
+    const response = await apiService.unsnooze(notificationId);
+
+    const updatedNotification = new Notification(response, emitter, apiService);
+    emitter.emit('notification.unsnooze.resolved', { args, data: updatedNotification });
+
+    return { data: updatedNotification };
+  } catch (error) {
+    emitter.emit('notification.unsnooze.resolved', { args, error });
+
+    return { error: new NovuError('Failed to unsnooze notification', error) };
+  }
+};
+
 export const completeAction = async ({
   emitter,
   apiService,
@@ -273,7 +362,7 @@ export const revertAction = async ({
 };
 
 const getNotificationDetails = (
-  args: ReadArgs | UnreadArgs | ArchivedArgs | UnarchivedArgs,
+  args: ReadArgs | UnreadArgs | ArchivedArgs | UnarchivedArgs | SnoozeArgs | UnsnoozeArgs,
   update: Partial<Notification>,
   dependencies: {
     emitter: NovuEventEmitter;

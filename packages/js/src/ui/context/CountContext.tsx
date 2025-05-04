@@ -28,7 +28,12 @@ export const CountProvider = (props: ParentProps) => {
     if (tabs().length === 0) {
       return;
     }
-    const filters = tabs().map((tab) => ({ tags: getTagsFromTab(tab), read: false, archived: false }));
+    const filters = tabs().map((tab) => ({
+      tags: getTagsFromTab(tab),
+      read: false,
+      archived: false,
+      snoozed: false,
+    }));
     const { data } = await novu.notifications.count({ filters });
     if (!data) {
       return;

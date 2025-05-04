@@ -10,6 +10,9 @@ export const areTagsEqual = (tags1?: string[], tags2?: string[]) => {
 
 export const isSameFilter = (filter1: NotificationFilter, filter2: NotificationFilter) => {
   return (
-    areTagsEqual(filter1.tags, filter2.tags) && filter1.read === filter2.read && filter1.archived === filter2.archived
+    areTagsEqual(filter1.tags, filter2.tags) &&
+    filter1.read === filter2.read &&
+    filter1.archived === filter2.archived &&
+    filter1.snoozed === filter2.snoozed
   );
 };

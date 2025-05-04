@@ -5,8 +5,8 @@ import { areTagsEqual, isSameFilter } from '../utils/notification-utils';
 import { InMemoryCache } from './in-memory-cache';
 import type { Cache } from './types';
 
-const excludeEmpty = ({ tags, read, archived, limit, offset, after }: ListNotificationsArgs) =>
-  Object.entries({ tags, read, archived, limit, offset, after })
+const excludeEmpty = ({ tags, read, archived, snoozed, limit, offset, after }: ListNotificationsArgs) =>
+  Object.entries({ tags, read, archived, snoozed, limit, offset, after })
     .filter(([_, value]) => value !== null && value !== undefined && !(Array.isArray(value) && value.length === 0))
     .reduce((acc, [key, value]) => {
       // @ts-expect-error
@@ -15,12 +15,17 @@ const excludeEmpty = ({ tags, read, archived, limit, offset, after }: ListNotifi
       return acc;
     }, {});
 
-const getCacheKey = ({ tags, read, archived, limit, offset, after }: ListNotificationsArgs): string => {
-  return JSON.stringify(excludeEmpty({ tags, read, archived, limit, offset, after }));
+const getCacheKey = ({ tags, read, archived, snoozed, limit, offset, after }: ListNotificationsArgs): string => {
+  return JSON.stringify(excludeEmpty({ tags, read, archived, snoozed, limit, offset, after }));
 };
 
-const getFilterKey = ({ tags, read, archived }: Pick<ListNotificationsArgs, 'tags' | 'read' | 'archived'>): string => {
-  return JSON.stringify(excludeEmpty({ tags, read, archived }));
+const getFilterKey = ({
+  tags,
+  read,
+  archived,
+  snoozed,
+}: Pick<ListNotificationsArgs, 'tags' | 'read' | 'archived' | 'snoozed'>): string => {
+  return JSON.stringify(excludeEmpty({ tags, read, archived, snoozed }));
 };
 
 const getFilter = (key: string): NotificationFilter => {
@@ -45,6 +50,8 @@ const updateEvents: NotificationEvents[] = [
 const removeEvents: NotificationEvents[] = [
   'notification.archive.pending',
   'notification.unarchive.pending',
+  'notification.snooze.pending',
+  'notification.unsnooze.pending',
   'notifications.archive_all.pending',
   'notifications.archive_all_read.pending',
 ];
@@ -184,7 +191,7 @@ export class NotificationsCache {
 
   getAll(args: ListNotificationsArgs): ListNotificationsResponse | undefined {
     if (this.has(args)) {
-      return this.getAggregated({ tags: args.tags, read: args.read, archived: args.archived });
+      return this.getAggregated({ tags: args.tags, read: args.read, snoozed: args.snoozed, archived: args.archived });
     }
   }
 

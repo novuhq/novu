@@ -74,6 +74,7 @@ export enum NotificationStatus {
   UNREAD_READ = 'unreadRead',
   UNREAD = 'unread',
   ARCHIVED = 'archived',
+  SNOOZED = 'snoozed',
 }
 
 export type PreferencesFilter = Pick<NotificationFilter, 'tags'>;
