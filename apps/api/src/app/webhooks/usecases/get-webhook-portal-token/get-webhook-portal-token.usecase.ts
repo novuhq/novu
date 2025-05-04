@@ -40,7 +40,10 @@ export class GetWebhookPortalTokenUsecase {
       Logger.log(`Generating Svix portal token for app ID: ${svixApplicationId}`, LOG_CONTEXT);
 
       // Call Svix SDK to get portal access URL and token
-      const svixResponse = await this.svix.authentication.appPortalAccess(svixApplicationId);
+      const svixResponse = await this.svix.authentication.appPortalAccess(
+        `${command.organizationId}-${command.environmentId}`,
+        {}
+      );
 
       Logger.log(`Successfully generated Svix portal token for app ID: ${svixApplicationId}`, LOG_CONTEXT);
 
