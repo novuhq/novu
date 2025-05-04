@@ -29,7 +29,7 @@ export type SubscribersTopicsListQueryData =
   operations.SubscribersControllerListSubscriberTopicsResponse;
 
 /**
- * List topic subscriptions for a subscriber
+ * List topics a subscriber is subscribed to
  *
  * @remarks
  * List topic subscriptions for a subscriber with pagination and filtering
@@ -50,7 +50,7 @@ export function useSubscribersTopicsList(
 }
 
 /**
- * List topic subscriptions for a subscriber
+ * List topics a subscriber is subscribed to
  *
  * @remarks
  * List topic subscriptions for a subscriber with pagination and filtering

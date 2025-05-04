@@ -139,6 +139,7 @@ export const removeSubscribersFromTopic = async ({
 
 export type TopicSubscription = {
   _id: string;
+  createdAt: string;
   topic: {
     _id: string;
     key: string;

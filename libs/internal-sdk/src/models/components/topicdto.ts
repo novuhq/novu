@@ -10,11 +10,11 @@ import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 
 export type TopicDto = {
   /**
-   * The unique identifier of the topic
+   * The internal unique identifier of the topic
    */
   id: string;
   /**
-   * The key identifier of the topic
+   * The key identifier of the topic used in your application. Should be unique on the environment level.
    */
   key: string;
   /**

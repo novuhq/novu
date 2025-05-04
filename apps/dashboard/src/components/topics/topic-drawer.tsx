@@ -128,8 +128,10 @@ const TopicSubscribers = (props: TopicSubscribersProps) => {
           <TopicSubscriberItem
             key={subscription._id}
             subscriber={subscription.subscriber as ISubscriber}
+            subscription={subscription}
             topicKey={topicKey}
             readOnly={readOnly}
+            subscriptionDate={subscription.createdAt}
           />
         ))
       )}

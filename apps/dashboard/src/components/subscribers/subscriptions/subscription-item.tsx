@@ -3,6 +3,8 @@ import { TopicDrawerButton } from '@/components/topics/topic-drawer';
 import TruncatedText from '@/components/truncated-text';
 import { cn } from '@/utils/ui';
 import { motion } from 'motion/react';
+import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
+import { format } from 'date-fns';
 
 type SubscriptionItemProps = {
   subscription: TopicSubscription;
@@ -34,6 +36,11 @@ export function SubscriptionItem({ subscription }: SubscriptionItemProps) {
             </div>
           </div>
         </div>
+        {subscription.createdAt && (
+          <TimeDisplayHoverCard date={subscription.createdAt} className="text-label-xs text-foreground-600">
+            {format(new Date(subscription.createdAt), 'MMM d, yyyy')}
+          </TimeDisplayHoverCard>
+        )}
       </motion.div>
     </TopicDrawerButton>
   );

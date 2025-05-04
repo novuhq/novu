@@ -33,7 +33,6 @@ export class ListTopicSubscriptionsUseCase {
       throw new NotFoundException(`Topic with key ${command.topicKey} not found`);
     }
 
-    // Use the repository method for pagination
     const subscriptionsPagination = await this.topicSubscribersRepository.findTopicSubscriptionsWithPagination({
       environmentId: command.environmentId,
       organizationId: command.organizationId,

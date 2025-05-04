@@ -26,6 +26,10 @@ export type TopicSubscriptionResponseDto = {
    */
   id: string;
   /**
+   * The date and time the subscription was created
+   */
+  createdAt: string;
+  /**
    * Topic information
    */
   topic: TopicResponseDto;
@@ -42,6 +46,7 @@ export const TopicSubscriptionResponseDto$inboundSchema: z.ZodType<
   unknown
 > = z.object({
   _id: z.string(),
+  createdAt: z.string(),
   topic: TopicResponseDto$inboundSchema,
   subscriber: SubscriberDto$inboundSchema,
 }).transform((v) => {
@@ -53,6 +58,7 @@ export const TopicSubscriptionResponseDto$inboundSchema: z.ZodType<
 /** @internal */
 export type TopicSubscriptionResponseDto$Outbound = {
   _id: string;
+  createdAt: string;
   topic: TopicResponseDto$Outbound;
   subscriber: SubscriberDto$Outbound;
 };
@@ -64,6 +70,7 @@ export const TopicSubscriptionResponseDto$outboundSchema: z.ZodType<
   TopicSubscriptionResponseDto
 > = z.object({
   id: z.string(),
+  createdAt: z.string(),
   topic: TopicResponseDto$outboundSchema,
   subscriber: SubscriberDto$outboundSchema,
 }).transform((v) => {

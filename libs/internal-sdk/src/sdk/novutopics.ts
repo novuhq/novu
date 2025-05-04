@@ -9,7 +9,7 @@ import { unwrapAsync } from "../types/fp.js";
 
 export class NovuTopics extends ClientSDK {
   /**
-   * List topic subscriptions for a subscriber
+   * List topics a subscriber is subscribed to
    *
    * @remarks
    * List topic subscriptions for a subscriber with pagination and filtering

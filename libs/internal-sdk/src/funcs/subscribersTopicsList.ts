@@ -25,7 +25,7 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * List topic subscriptions for a subscriber
+ * List topics a subscriber is subscribed to
  *
  * @remarks
  * List topic subscriptions for a subscriber with pagination and filtering
