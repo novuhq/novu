@@ -51,6 +51,7 @@ import { EnvironmentsModuleV1 } from './app/environments-v1/environments-v1.modu
 import { EnvironmentsModule } from './app/environments-v2/environments.module';
 import { SubscribersModule } from './app/subscribers-v2/subscribers.module';
 import { SupportModule } from './app/support/support.module';
+import { WebhooksModule } from './app/webhooks/webhooks.module';
 
 const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> => {
   const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];
@@ -115,6 +116,7 @@ const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | Forward
   WorkflowModule,
   EnvironmentsModule,
   NovuModule,
+  WebhooksModule,
 ];
 
 const enterpriseModules = enterpriseImports();
