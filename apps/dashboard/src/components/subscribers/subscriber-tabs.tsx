@@ -1,3 +1,4 @@
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { Separator } from '@/components/primitives/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
 import { Preferences } from '@/components/subscribers/preferences/preferences';
@@ -13,6 +14,7 @@ import { useFormProtection } from '@/hooks/use-form-protection';
 import { useState } from 'react';
 import { RiGroup2Line } from 'react-icons/ri';
 import { motion } from 'motion/react';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 
 type SubscriberOverviewProps = {
   subscriberId: string;
@@ -68,6 +70,7 @@ export function SubscriberTabs(props: SubscriberTabsProps) {
   } = useFormProtection({
     onValueChange: setTab,
   });
+  const isTopicsPageActive = useFeatureFlag(FeatureFlagsKeysEnum.IS_TOPICS_PAGE_ACTIVE, false);
 
   return (
     <Tabs
@@ -92,10 +95,12 @@ export function SubscriberTabs(props: SubscriberTabsProps) {
           <span>Preferences</span>
           {tab === 'preferences' && <ActiveTabIndicator />}
         </TabsTrigger>
-        <TabsTrigger value="subscriptions" className={tabTriggerClasses}>
-          <span>Subscriptions</span>
-          {tab === 'subscriptions' && <ActiveTabIndicator />}
-        </TabsTrigger>
+        {isTopicsPageActive && (
+          <TabsTrigger value="subscriptions" className={tabTriggerClasses}>
+            <span>Subscriptions</span>
+            {tab === 'subscriptions' && <ActiveTabIndicator />}
+          </TabsTrigger>
+        )}
         <TabsTrigger value="activity-feed" className={tabTriggerClasses}>
           <span>Activity Feed</span>
           {tab === 'activity-feed' && <ActiveTabIndicator />}
@@ -107,9 +112,11 @@ export function SubscriberTabs(props: SubscriberTabsProps) {
       <TabsContent value="preferences" className="h-full w-full overflow-y-auto">
         <SubscriberPreferences subscriberId={subscriberId} readOnly={readOnly} />
       </TabsContent>
-      <TabsContent value="subscriptions" className="h-full w-full overflow-y-auto">
-        <SubscriberSubscriptions subscriberId={subscriberId} />
-      </TabsContent>
+      {isTopicsPageActive && (
+        <TabsContent value="subscriptions" className="h-full w-full overflow-y-auto">
+          <SubscriberSubscriptions subscriberId={subscriberId} />
+        </TabsContent>
+      )}
       <TabsContent value="activity-feed" className="h-full w-full overflow-y-auto">
         <SubscriberActivity subscriberId={subscriberId} />
       </TabsContent>
