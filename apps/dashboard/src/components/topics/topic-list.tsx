@@ -94,7 +94,6 @@ type TopicListTableProps = HTMLAttributes<HTMLTableElement> & {
 export const TopicList = (props: TopicListProps) => {
   const { className, ...rest } = props;
   const [searchParams, setSearchParams] = useSearchParams();
-  const { navigateToCreateTopicPage } = useTopicsNavigate();
 
   // Use the hook as the primary source for URL state - orderBy/orderDirection are likely within filterValues
   const { filterValues, handleFiltersChange, toggleSort, resetFilters } = useTopicsUrlState({});
@@ -120,7 +119,7 @@ export const TopicList = (props: TopicListProps) => {
   // Determine if filters are active based on hook values
   const areFiltersApplied = filterValues.key || filterValues.name || before || after;
 
-  const { data, isFetching, isLoading } = useFetchTopics(fetchParams, {
+  const { data, isLoading } = useFetchTopics(fetchParams, {
     meta: { errorMessage: 'Issue fetching topics' },
   });
 
