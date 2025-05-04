@@ -35,11 +35,14 @@ export class CreateWebhookPortalUsecase {
     try {
       const app = await this.svix.application.create({
         name: organization.name,
-        uid: command.environmentId,
+        uid: `${command.organizationId}-${command.environmentId}`,
         metadata: {
           environmentId: command.environmentId,
+          organizationId: command.organizationId,
         },
       });
+
+      await this.environmentRepository.updateOne({ _id: command.environmentId }, { $set: { webhookAppId: app.uid } });
 
       return {
         appId: app.uid!,

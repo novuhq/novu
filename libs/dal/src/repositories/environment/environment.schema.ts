@@ -53,6 +53,9 @@ const environmentSchema = new Schema<EnvironmentDBModel>(
     bridge: {
       url: Schema.Types.String,
     },
+    webhookAppId: {
+      type: Schema.Types.String,
+    },
     _parentId: {
       type: Schema.Types.ObjectId,
       ref: 'Environment',
