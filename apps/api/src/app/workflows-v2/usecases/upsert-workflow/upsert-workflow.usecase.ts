@@ -37,6 +37,8 @@ import { BuildStepIssuesUsecase } from '../build-step-issues/build-step-issues.u
 import { GetWorkflowCommand, GetWorkflowUseCase } from '../get-workflow';
 import { UpsertStepDataCommand, UpsertWorkflowCommand } from './upsert-workflow.command';
 import { StepIssuesDto, WorkflowResponseDto } from '../../dtos';
+import { SendWebhookMessage } from '../../../webhooks/usecases/send-webhook-message/send-webhook-message.usecase';
+import { WebhookEventEnum, WebhookObjectTypeEnum } from '../../../webhooks/dtos/webhook-payload.dto';
 
 @Injectable()
 export class UpsertWorkflowUseCase {
@@ -49,7 +51,8 @@ export class UpsertWorkflowUseCase {
     private buildStepIssuesUsecase: BuildStepIssuesUsecase,
     private controlValuesRepository: ControlValuesRepository,
     private upsertControlValuesUseCase: UpsertControlValuesUseCase,
-    private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService,
+    private sendWebhookMessage: SendWebhookMessage
   ) {}
 
   @InstrumentUsecase()
@@ -84,12 +87,22 @@ export class UpsertWorkflowUseCase {
 
     await this.upsertControlValues(upsertedWorkflow, command);
 
-    return await this.getWorkflowUseCase.execute(
+    const updatedWorkflow = await this.getWorkflowUseCase.execute(
       GetWorkflowCommand.create({
         workflowIdOrInternalId: upsertedWorkflow._id,
         user: command.user,
       })
     );
+
+    await this.sendWebhookMessage.execute({
+      eventType: WebhookEventEnum.WORKFLOW_UPDATED,
+      objectType: WebhookObjectTypeEnum.WORKFLOW,
+      payload: updatedWorkflow,
+      organizationId: command.user.organizationId,
+      environmentId: command.user.environmentId,
+    });
+
+    return updatedWorkflow;
   }
 
   private async buildCreateWorkflowCommand(command: UpsertWorkflowCommand): Promise<CreateWorkflowCommand> {

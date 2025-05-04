@@ -3,6 +3,7 @@ import { Svix } from 'svix'; // Import Svix SDK
 import { SharedModule } from '../shared/shared.module';
 import { WebhooksController } from './webhooks.controller';
 import { GetWebhookPortalTokenUsecase } from './usecases/get-webhook-portal-token/get-webhook-portal-token.usecase';
+import { SendWebhookMessage } from './usecases/send-webhook-message/send-webhook-message.usecase';
 
 // Define the custom provider for the Svix client
 const svixProvider: Provider = {
@@ -20,10 +21,7 @@ const svixProvider: Provider = {
 @Module({
   imports: [SharedModule],
   controllers: [WebhooksController],
-  providers: [
-    GetWebhookPortalTokenUsecase,
-    svixProvider, // Add the Svix client provider
-  ],
-  exports: [],
+  providers: [GetWebhookPortalTokenUsecase, svixProvider, SendWebhookMessage],
+  exports: [SendWebhookMessage],
 })
 export class WebhooksModule {}

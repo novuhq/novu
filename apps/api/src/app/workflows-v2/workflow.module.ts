@@ -35,11 +35,20 @@ import { CreateVariablesObject } from './usecases/create-variables-object/create
 import { BuildStepIssuesUsecase } from './usecases/build-step-issues/build-step-issues.usecase';
 import { WorkflowController } from './workflow.controller';
 import { DuplicateWorkflowUseCase } from './usecases/duplicate-workflow/duplicate-workflow.usecase';
+import { WebhooksModule } from '../webhooks/webhooks.module';
 
 const DAL_REPOSITORIES = [CommunityOrganizationRepository];
 
 @Module({
-  imports: [SharedModule, MessageTemplateModule, ChangeModule, AuthModule, BridgeModule, IntegrationModule],
+  imports: [
+    SharedModule,
+    MessageTemplateModule,
+    ChangeModule,
+    AuthModule,
+    BridgeModule,
+    IntegrationModule,
+    WebhooksModule,
+  ],
   controllers: [WorkflowController],
   providers: [
     ...DAL_REPOSITORIES,

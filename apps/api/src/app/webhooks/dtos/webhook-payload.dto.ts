@@ -1,13 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { WorkflowResponseDto } from '../../workflows-v2/dtos/workflow-response.dto';
 
-enum WebhookEventEnum {
+export enum WebhookEventEnum {
   WORKFLOW_CREATED = 'workflow.created',
   WORKFLOW_UPDATED = 'workflow.updated',
   WORKFLOW_DELETED = 'workflow.deleted',
 }
 
-enum WebhookObjectTypeEnum {
+export enum WebhookObjectTypeEnum {
   WORKFLOW = 'workflow',
 }
 

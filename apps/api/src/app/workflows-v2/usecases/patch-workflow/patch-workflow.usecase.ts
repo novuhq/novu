@@ -2,16 +2,19 @@ import { Injectable } from '@nestjs/common';
 import { UserSessionData, WorkflowStatusEnum } from '@novu/shared';
 import { NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
 import { GetWorkflowWithPreferencesUseCase, WorkflowWithPreferencesResponseDto } from '@novu/application-generic';
+import { SendWebhookMessage } from '../../../webhooks/usecases/send-webhook-message/send-webhook-message.usecase';
 import { PatchWorkflowCommand } from './patch-workflow.command';
 import { GetWorkflowUseCase } from '../get-workflow';
 import { WorkflowResponseDto } from '../../dtos';
+import { WebhookEventEnum, WebhookObjectTypeEnum } from '../../../webhooks/dtos/webhook-payload.dto';
 
 @Injectable()
 export class PatchWorkflowUsecase {
   constructor(
     private getWorkflowWithPreferencesUseCase: GetWorkflowWithPreferencesUseCase,
     private notificationTemplateRepository: NotificationTemplateRepository,
-    private getWorkflowUseCase: GetWorkflowUseCase
+    private getWorkflowUseCase: GetWorkflowUseCase,
+    private sendWebhookMessage: SendWebhookMessage
   ) {}
 
   async execute(command: PatchWorkflowCommand): Promise<WorkflowResponseDto> {
@@ -19,10 +22,20 @@ export class PatchWorkflowUsecase {
     const transientWorkflow = this.patchWorkflowFields(persistedWorkflow, command);
     await this.persistWorkflow(transientWorkflow, command.user);
 
-    return await this.getWorkflowUseCase.execute({
+    const updatedWorkflow = await this.getWorkflowUseCase.execute({
       workflowIdOrInternalId: command.workflowIdOrInternalId,
       user: command.user,
     });
+
+    await this.sendWebhookMessage.execute({
+      eventType: WebhookEventEnum.WORKFLOW_UPDATED,
+      objectType: WebhookObjectTypeEnum.WORKFLOW,
+      payload: updatedWorkflow,
+      organizationId: command.user.organizationId,
+      environmentId: command.user.environmentId,
+    });
+
+    return updatedWorkflow;
   }
 
   private patchWorkflowFields(
