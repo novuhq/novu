@@ -1,47 +1,47 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import inlineCss from 'inline-css';
 import { addBreadcrumb } from '@sentry/node';
+import inlineCss from 'inline-css';
 
 import {
-  MessageRepository,
-  SubscriberRepository,
+  CompileEmailTemplate,
+  CompileEmailTemplateCommand,
+  CreateExecutionDetails,
+  CreateExecutionDetailsCommand,
+  DetailEnum,
+  FeatureFlagsService,
+  GetNovuProviderCredentials,
+  InstrumentUsecase,
+  MailFactory,
+  SelectIntegration,
+  SelectVariant,
+} from '@novu/application-generic';
+import {
+  EnvironmentEntity,
   EnvironmentRepository,
   IntegrationEntity,
-  MessageEntity,
   LayoutRepository,
-  EnvironmentEntity,
+  MessageEntity,
+  MessageRepository,
   OrganizationEntity,
+  SubscriberRepository,
   UserEntity,
 } from '@novu/dal';
+import { EmailOutput } from '@novu/framework/internal';
 import {
   ChannelTypeEnum,
   EmailProviderIdEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
+  FeatureFlagsKeysEnum,
   IAttachmentOptions,
   IEmailOptions,
-  FeatureFlagsKeysEnum,
 } from '@novu/shared';
-import {
-  InstrumentUsecase,
-  DetailEnum,
-  SelectIntegration,
-  CompileEmailTemplate,
-  CompileEmailTemplateCommand,
-  MailFactory,
-  GetNovuProviderCredentials,
-  SelectVariant,
-  CreateExecutionDetails,
-  CreateExecutionDetailsCommand,
-  FeatureFlagsService,
-} from '@novu/application-generic';
-import { EmailOutput } from '@novu/framework/internal';
 
-import { SendMessageCommand } from './send-message.command';
-import { SendMessageBase } from './send-message.base';
 import { PlatformException } from '../../../shared/utils';
 import { SendMessageResult } from './send-message-type.usecase';
+import { SendMessageBase } from './send-message.base';
+import { SendMessageCommand } from './send-message.command';
 
 const LOG_CONTEXT = 'SendMessageEmail';
 
@@ -76,6 +76,8 @@ export class SendMessageEmail extends SendMessageBase {
   @InstrumentUsecase()
   public async execute(command: SendMessageCommand): Promise<SendMessageResult> {
     let integration: IntegrationEntity | undefined;
+    const { subscriber } = command.compileContext;
+    const email = command.overrides?.email?.toRecipient || subscriber.email;
 
     const overrideSelectedIntegration = command.overrides?.email?.integrationIdentifier;
     try {
@@ -84,16 +86,23 @@ export class SendMessageEmail extends SendMessageBase {
         environmentId: command.environmentId,
         channelType: ChannelTypeEnum.EMAIL,
         userId: command.userId,
+        recipientEmail: email,
         identifier: overrideSelectedIntegration as string,
         filterData: {
           tenant: command.job.tenant,
         },
       });
     } catch (e) {
+      let detailEnum = DetailEnum.LIMIT_PASSED_NOVU_INTEGRATION;
+
+      if (e.message.includes('does not match the current logged-in user')) {
+        detailEnum = DetailEnum.SUBSCRIBER_NOT_MEMBER_OF_ORGANIZATION;
+      }
+
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-          detail: DetailEnum.LIMIT_PASSED_NOVU_INTEGRATION,
+          detail: detailEnum,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
           raw: JSON.stringify({ message: e.message }),
@@ -112,9 +121,6 @@ export class SendMessageEmail extends SendMessageBase {
 
     if (!step) throw new PlatformException('Email channel step not found');
     if (!step.template) throw new PlatformException('Email channel template not found');
-
-    const { subscriber } = command.compileContext;
-    const email = command.overrides?.email?.toRecipient || subscriber.email;
 
     addBreadcrumb({
       message: 'Sending Email',
