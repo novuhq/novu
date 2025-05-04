@@ -9,8 +9,8 @@ export const useTopicsNavigate = () => {
   const [searchParams] = useSearchParams();
 
   const navigateToCreateTopicPage = useCallback(() => {
-    navigate(ROUTES.TOPICS_CREATE);
-  }, [navigate]);
+    navigate(buildRoute(ROUTES.TOPICS_CREATE, { environmentSlug: currentEnvironment?.slug! }));
+  }, [navigate, currentEnvironment]);
 
   const navigateToEditTopicPage = useCallback(
     (topicKey: string) => {
@@ -22,14 +22,14 @@ export const useTopicsNavigate = () => {
           currentSearchParams
       );
     },
-    [navigate, searchParams]
+    [navigate, searchParams, currentEnvironment]
   );
 
   const navigateToTopicsPage = useCallback(() => {
     const currentSearchParams = searchParams.toString();
 
     navigate(buildRoute(ROUTES.TOPICS, { environmentSlug: currentEnvironment?.slug! }) + '?' + currentSearchParams);
-  }, [navigate, searchParams]);
+  }, [navigate, searchParams, currentEnvironment]);
 
   return {
     navigateToCreateTopicPage,
