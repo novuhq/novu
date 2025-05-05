@@ -17,7 +17,7 @@ import TruncatedText from '@/components/truncated-text';
 import { WorkflowStatus } from '@/components/workflow-status';
 import { WorkflowSteps } from '@/components/workflow-steps';
 import { WorkflowTags } from '@/components/workflow-tags';
-import { IS_SELF_HOSTED, LEGACY_DASHBOARD_URL } from '@/config';
+import { IS_SELF_HOSTED, LEGACY_DASHBOARD_URL, SELF_HOSTED_UPGRADE_REDIRECT_URL } from '@/config';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment, useFetchEnvironments } from '@/context/environment/hooks';
 import { useDeleteWorkflow } from '@/hooks/use-delete-workflow';
@@ -214,16 +214,16 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
             </TooltipTrigger>
             <TooltipPortal>
               <TooltipContent side="bottom" align="center" className="z-50">
-                <div className="flex flex-col gap-1">
-                  <span className="font-medium">This workflow is not supported in this version</span>
+                <div className="gap-1">
+                  <span className="font-medium">This workflow is not supported in this version of the dashboard</span>
                   <a
-                    href="https://docs.novu.co/platform/overview"
+                    href={SELF_HOSTED_UPGRADE_REDIRECT_URL + '?utm_campaign=workflow_row_migration_guide'}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-primary text-sm hover:underline"
+                    className="text-primary ml-1 text-sm hover:underline"
                     onClick={stopPropagation}
                   >
-                    view migration guide
+                    view migration guide.
                   </a>
                 </div>
               </TooltipContent>

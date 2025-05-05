@@ -19,7 +19,8 @@ import { AuthService } from './services/auth.service';
 import { RolesGuard } from './framework/roles.guard';
 import { CommunityAuthService } from './services/community.auth.service';
 import { CommunityUserAuthGuard } from './framework/community.user.auth.guard';
-import { SystemOrganizationService } from './services/system-organization.service';
+import { CommunityEditionService } from './services/system-organization.service';
+import { SelfHostUsecase } from './usecases/self-host/self-host.usecase';
 
 const AUTH_STRATEGIES: Provider[] = [JwtStrategy, ApiKeyStrategy, JwtSubscriberStrategy];
 
@@ -40,7 +41,14 @@ export function getCommunityAuthModuleConfig(): ModuleMetadata {
     }),
   ];
 
-  const baseProviders = [...AUTH_STRATEGIES, AuthService, RolesGuard, RootEnvironmentGuard, SystemOrganizationService];
+  const baseProviders = [
+    ...AUTH_STRATEGIES,
+    AuthService,
+    RolesGuard,
+    RootEnvironmentGuard,
+    CommunityEditionService,
+    SelfHostUsecase,
+  ];
 
   // Wherever is the string token used, override it with the provider
   const injectableProviders = [
@@ -69,7 +77,7 @@ export function getCommunityAuthModuleConfig(): ModuleMetadata {
   return {
     imports: [...baseImports, EnvironmentsModuleV1, SharedModule, UserModule, OrganizationModule],
     controllers: [AuthController],
-    providers: [...baseProviders, ...injectableProviders, ...USE_CASES, SystemOrganizationService],
+    providers: [...baseProviders, ...injectableProviders, ...USE_CASES, CommunityEditionService],
     exports: [
       RolesGuard,
       RootEnvironmentGuard,
@@ -79,7 +87,7 @@ export function getCommunityAuthModuleConfig(): ModuleMetadata {
       'USER_REPOSITORY',
       'MEMBER_REPOSITORY',
       'ORGANIZATION_REPOSITORY',
-      SystemOrganizationService,
+      CommunityEditionService,
     ],
   };
 }

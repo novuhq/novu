@@ -51,6 +51,10 @@ export class MessageEntity {
 
   read: boolean;
 
+  snoozedUntil?: string;
+
+  deliveredAt?: string[];
+
   archived: boolean;
 
   /**

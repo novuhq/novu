@@ -47,6 +47,7 @@ export class GetNotifications {
         tags: command.tags,
         read: command.read,
         archived: command.archived,
+        snoozed: command.snoozed,
       },
       {
         limit: command.limit,
@@ -70,6 +71,7 @@ export class GetNotifications {
         tags: command.tags,
         read: command.read,
         archived: command.archived,
+        snoozed: command.snoozed,
       },
     };
   }

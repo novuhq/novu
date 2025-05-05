@@ -22,17 +22,18 @@ export class Session {
   }
 
   public get subscriberId() {
-    return this.#options.subscriberId;
+    return this.#options.subscriber.subscriberId;
   }
 
   public async initialize(): Promise<void> {
     try {
-      const { applicationIdentifier, subscriberId, subscriberHash } = this.#options;
+      const { applicationIdentifier, subscriberHash, subscriber } = this.#options;
       this.#emitter.emit('session.initialize.pending', { args: this.#options });
+
       const response = await this.#inboxService.initializeSession({
         applicationIdentifier,
-        subscriberId,
         subscriberHash,
+        subscriber,
       });
 
       this.#emitter.emit('session.initialize.resolved', { args: this.#options, data: response });
