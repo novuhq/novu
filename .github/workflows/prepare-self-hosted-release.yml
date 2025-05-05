@@ -97,6 +97,8 @@ jobs:
 
           if [ "${{ env.SERVICE_NAME }}" == "worker" ]; then
             cd src/ && echo -e "\nIS_SELF_HOSTED=true\nOS_TELEMETRY_URL=\"${{ secrets.OS_TELEMETRY_URL }}\"" >> .example.env && cd ..
+          elif [ "${{ env.SERVICE_NAME }}" == "dashboard" ]; then
+            echo -e "\nVITE_SELF_HOSTED=true" >> .env
           fi
 
           pnpm run docker:build
