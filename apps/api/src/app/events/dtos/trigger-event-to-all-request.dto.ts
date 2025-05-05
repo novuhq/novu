@@ -1,7 +1,7 @@
 import { IsDefined, IsObject, IsOptional, IsString, ValidateIf, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
-import { TriggerRecipientSubscriber, TriggerTenantContext } from '@novu/shared';
+import { TriggerOverrides, TriggerRecipientSubscriber, TriggerTenantContext } from '@novu/shared';
 
 import { SubscriberPayloadDto, TenantPayloadDto } from './trigger-event-request.dto';
 
@@ -43,7 +43,7 @@ export class TriggerEventToAllRequestDto {
   })
   @IsObject()
   @IsOptional()
-  overrides?: Record<string, Record<string, unknown>>;
+  overrides: TriggerOverrides;
 
   @ApiProperty({
     description: 'A unique identifier for this transaction, we will generated a UUID if not provided.',

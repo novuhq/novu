@@ -18,7 +18,7 @@ export class TriggerEventToAll {
         payload: command.payload || {},
         addressingType: AddressingTypeEnum.BROADCAST,
         transactionId: command.transactionId,
-        overrides: command.overrides || ({} as any),
+        overrides: command.overrides || {},
         actor: command.actor,
         tenant: command.tenant,
         requestCategory: TriggerRequestCategoryEnum.SINGLE,

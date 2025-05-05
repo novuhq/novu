@@ -20,7 +20,7 @@ export class ParseEventRequestBaseCommand extends EnvironmentWithUserCommand {
   payload: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
   @IsDefined()
-  overrides: TriggerOverrides | {};
+  overrides: TriggerOverrides;
 
   @IsString()
   @IsOptional()

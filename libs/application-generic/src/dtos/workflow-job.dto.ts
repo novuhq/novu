@@ -27,7 +27,7 @@ export type IWorkflowDataDto = {
   userId: string;
   identifier: string;
   payload: any; // eslint-disable-line @typescript-eslint/no-explicit-any
-  overrides: TriggerOverrides | {};
+  overrides: TriggerOverrides;
   transactionId: string;
   actor?: TriggerRecipientSubscriber | null;
   tenant?: TriggerTenantContext | null;
