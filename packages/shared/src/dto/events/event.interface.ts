@@ -17,5 +17,5 @@ export type TriggerOverrides = {
       providers: Record<ProvidersIdEnum, Record<string, unknown>>;
     }
   >;
-  [key: string]: Record<string, Record<string, unknown>>;
+  [key: string]: Record<string, Record<string, unknown>> | Record<string, unknown>;
 };
