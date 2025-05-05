@@ -153,10 +153,10 @@ services:
         max-file: '5'
     environment:
       VITE_API_HOSTNAME: ${VITE_API_HOSTNAME}
-      VITE_SELF_HOSTED: ${VITE_SELF_HOSTED}
+      VITE_SELF_HOSTED: true
       VITE_WEBSOCKET_HOSTNAME: ${VITE_WEBSOCKET_HOSTNAME}
     ports:
-      - 4201:4201
+      - 4000:4000
 
 volumes:
   mongodb: ~
