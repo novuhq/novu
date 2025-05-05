@@ -11,11 +11,22 @@ export type TriggerRecipientsPayload = TriggerRecipientSubscriber | TriggerRecip
 export type TriggerTenantContext = string | ITenantDefine;
 
 export type TriggerOverrides = {
-  steps: Record<
-    string,
-    {
-      providers: Record<ProvidersIdEnum, Record<string, unknown>>;
-    }
-  >;
-  [key: string]: Record<string, Record<string, unknown>> | Record<string, unknown>;
+  steps:
+    | Record<
+        string,
+        {
+          providers: Record<ProvidersIdEnum, Record<string, unknown>>;
+        }
+      >
+    | undefined;
+  [key: string]:
+    | Record<string, Record<string, unknown>>
+    | Record<string, unknown>
+    | Record<
+        string,
+        {
+          providers: Record<ProvidersIdEnum, Record<string, unknown>>;
+        }
+      >
+    | undefined;
 };
