@@ -24,6 +24,7 @@ export enum DetailEnum {
   TENANT_CONTEXT_SELECTED = 'Tenant context selected',
   TENANT_NOT_FOUND = 'Tenant identifier not found',
   LIMIT_PASSED_NOVU_INTEGRATION = "Novu's provider limit has been reached",
+  SUBSCRIBER_NOT_MEMBER_OF_ORGANIZATION = 'Test provider can only be used to send emails to current logged in user',
   SUBSCRIBER_NO_CHANNEL_DETAILS = 'Subscriber missing recipient details',
   SUBSCRIBER_NO_ACTIVE_CHANNEL = 'Subscriber does not have a configured channel',
   MESSAGE_SENT = 'Message sent',

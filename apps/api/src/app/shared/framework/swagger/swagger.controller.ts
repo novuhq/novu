@@ -1,5 +1,6 @@
 /* eslint-disable max-len */
 import { DocumentBuilder, OpenAPIObject, SwaggerModule } from '@nestjs/swagger';
+import packageJson from '../../../../../package.json';
 import { INestApplication } from '@nestjs/common';
 import { SecuritySchemeObject } from '@nestjs/swagger/dist/interfaces/open-api-spec.interface';
 import { injectDocumentComponents } from './injection';
@@ -28,7 +29,7 @@ function buildBaseOptions() {
   const options = new DocumentBuilder()
     .setTitle('Novu API')
     .setDescription('Novu REST API. Please see https://docs.novu.co/api-reference for more details.')
-    .setVersion('1.0')
+    .setVersion(packageJson.version)
     .setContact('Novu Support', 'https://discord.gg/novu', 'support@novu.co')
     .setExternalDoc('Novu Documentation', 'https://docs.novu.co')
     .setTermsOfService('https://novu.co/terms')

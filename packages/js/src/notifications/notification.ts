@@ -1,7 +1,7 @@
 import { InboxService } from '../api';
 import { EventHandler, EventNames, Events, NovuEventEmitter } from '../event-emitter';
 import { ActionTypeEnum, InboxNotification, Result } from '../types';
-import { archive, completeAction, read, revertAction, unarchive, unread } from './helpers';
+import { archive, completeAction, read, revertAction, unarchive, unread, snooze, unsnooze } from './helpers';
 
 export class Notification implements Pick<NovuEventEmitter, 'on'>, InboxNotification {
   #emitter: NovuEventEmitter;
@@ -13,6 +13,9 @@ export class Notification implements Pick<NovuEventEmitter, 'on'>, InboxNotifica
   readonly to: InboxNotification['to'];
   readonly isRead: InboxNotification['isRead'];
   readonly isArchived: InboxNotification['isArchived'];
+  readonly isSnoozed: InboxNotification['isSnoozed'];
+  readonly snoozedUntil?: InboxNotification['snoozedUntil'];
+  readonly deliveredAt?: InboxNotification['deliveredAt'];
   readonly createdAt: InboxNotification['createdAt'];
   readonly readAt?: InboxNotification['readAt'];
   readonly archivedAt?: InboxNotification['archivedAt'];
@@ -35,6 +38,9 @@ export class Notification implements Pick<NovuEventEmitter, 'on'>, InboxNotifica
     this.to = notification.to;
     this.isRead = notification.isRead;
     this.isArchived = notification.isArchived;
+    this.isSnoozed = notification.isSnoozed;
+    this.snoozedUntil = notification.snoozedUntil;
+    this.deliveredAt = notification.deliveredAt;
     this.createdAt = notification.createdAt;
     this.readAt = notification.readAt;
     this.archivedAt = notification.archivedAt;
@@ -85,6 +91,25 @@ export class Notification implements Pick<NovuEventEmitter, 'on'>, InboxNotifica
       args: {
         notification: this,
       },
+    });
+  }
+
+  snooze(snoozeUntil: string): Result<Notification> {
+    return snooze({
+      emitter: this.#emitter,
+      apiService: this.#inboxService,
+      args: {
+        notification: this,
+        snoozeUntil,
+      },
+    });
+  }
+
+  unsnooze(): Result<Notification> {
+    return unsnooze({
+      emitter: this.#emitter,
+      apiService: this.#inboxService,
+      args: { notification: this },
     });
   }
 
