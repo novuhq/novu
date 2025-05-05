@@ -79,7 +79,6 @@ export class TriggerOverrides {
     },
     type: 'object',
     additionalProperties: {
-      type: 'object',
       $ref: getSchemaPath(StepsOverrides),
     },
   })
