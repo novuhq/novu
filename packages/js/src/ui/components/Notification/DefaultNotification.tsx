@@ -4,16 +4,8 @@ import type { Notification } from '../../../notifications';
 import { ActionTypeEnum } from '../../../types';
 import { useInboxContext, useLocalization } from '../../context';
 import { cn, formatToRelativeTime, useStyle } from '../../helpers';
-import { MarkAsUnarchived } from '../../icons';
 import { Clock } from '../../icons/Clock';
-import { MarkAsArchived } from '../../icons/MarkAsArchived';
-import { MarkAsRead } from '../../icons/MarkAsRead';
-import { MarkAsUnread } from '../../icons/MarkAsUnread';
-import { Snooze } from '../../icons/Snooze';
-import { Unsnooze } from '../../icons/Unsnooze';
 import {
-  LocalizationKey,
-  NotificationStatus,
   type BodyRenderer,
   type NotificationActionClickHandler,
   type NotificationClickHandler,
@@ -21,64 +13,9 @@ import {
 } from '../../types';
 import Markdown from '../elements/Markdown';
 import { ExternalElementRenderer } from '../ExternalElementRenderer';
-import { Button, Dropdown, dropdownItemVariants, Popover } from '../primitives';
+import { Button } from '../primitives';
 import { Badge } from '../primitives/Badge';
-import { Tooltip } from '../primitives/Tooltip';
-import { SnoozeDateTimePicker } from './SnoozeDateTimePicker';
-
-const SNOOZE_PRESETS = [
-  {
-    key: 'snooze.options.anHourFromNow',
-    hours: 1,
-    getDate: () => new Date(Date.now() + 1 * 60 * 60 * 1000),
-  },
-  {
-    key: 'snooze.options.inTwelveHours',
-    hours: 12,
-    getDate: () => new Date(Date.now() + 12 * 60 * 60 * 1000),
-  },
-  {
-    key: 'snooze.options.inOneDay',
-    hours: 24,
-    getDate: () => new Date(Date.now() + 1 * 24 * 60 * 60 * 1000),
-  },
-  {
-    key: 'snooze.options.inOneWeek',
-    hours: 168,
-    getDate: () => new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-  },
-] satisfies {
-  key: LocalizationKey;
-  hours: number;
-  getDate: () => Date;
-}[];
-
-const formatSnoozeOption = (
-  preset: (typeof SNOOZE_PRESETS)[number],
-  t: (key: LocalizationKey) => string,
-  locale: string
-): string => {
-  const date = preset.getDate();
-
-  // For hour-based presets (1 hour, 12 hours), just show the translation without time
-  if (preset.hours <= 12) {
-    return t(preset.key);
-  }
-
-  // Format time (e.g., "9:00 AM")
-  const timeString = new Intl.DateTimeFormat(locale, { hour: 'numeric', minute: 'numeric' }).format(date);
-
-  // For weekly option, show "Next Monday" etc.
-  if (preset.key === 'snooze.options.inOneWeek') {
-    // Get the day name (e.g., "Monday")
-    const dayName = new Intl.DateTimeFormat(locale, { weekday: 'long' }).format(date);
-
-    return `${t(preset.key)} ${dayName}, ${timeString}`;
-  }
-
-  // Fallback to original translation
-  return `${t(preset.key)}, ${timeString}`;
-};
+import { renderNotificationActions } from './NotificationActions';
 
 type DefaultNotificationProps = {
   notification: Notification;
@@ -92,8 +29,7 @@ type DefaultNotificationProps = {
 export const DefaultNotification = (props: DefaultNotificationProps) => {
   const style = useStyle();
   const { t, locale } = useLocalization();
-  const { navigate, status, maxSnoozeDurationHours } = useInboxContext();
-  const [isSnoozeDateTimePickerOpen, setIsSnoozeDateTimePickerOpen] = createSignal(false);
+  const { navigate, status } = useInboxContext();
   const [minutesPassed, setMinutesPassed] = createSignal(0);
   const createdAt = createMemo(() => {
     minutesPassed(); // register as dep
@@ -118,12 +54,6 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
     return props.notification.deliveredAt.map((date) =>
       formatToRelativeTime({ fromDate: new Date(date), locale: locale() })
     );
-  });
-
-  const availableSnoozePresets = createMemo(() => {
-    if (!maxSnoozeDurationHours()) return SNOOZE_PRESETS;
-
-    return SNOOZE_PRESETS.filter((preset) => preset.hours <= maxSnoozeDurationHours());
   });
 
   createEffect(() => {
@@ -228,214 +158,10 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
         <div
           class={style(
             'notificationDefaultActions',
-            'nt-absolute nt-transition nt-duration-100 nt-ease-out nt-gap-0.5 nt-flex nt-shrink-0 nt-opacity-0 group-hover:nt-opacity-100 group-focus-within:nt-opacity-100 nt-justify-center nt-items-center nt-bg-background/90 nt-right-3 nt-top-3 nt-border nt-border-neutral-alpha-100 nt-rounded-lg nt-backdrop-blur-lg nt-p-0.5'
+            `nt-absolute nt-transition nt-duration-100 nt-ease-out nt-gap-0.5 nt-flex nt-shrink-0 nt-opacity-0 group-hover:nt-opacity-100 group-focus-within:nt-opacity-100 nt-justify-center nt-items-center nt-bg-background/90 nt-right-3 nt-top-3 nt-border nt-border-neutral-alpha-100 nt-rounded-lg nt-backdrop-blur-lg nt-p-0.5`
           )}
         >
-          <Show when={status() !== NotificationStatus.ARCHIVED}>
-            <Show
-              when={props.notification.isRead}
-              fallback={
-                <Tooltip.Root>
-                  <Tooltip.Trigger
-                    asChild={(childProps) => (
-                      <Button
-                        appearanceKey="notificationRead__button"
-                        size="iconSm"
-                        variant="ghost"
-                        {...childProps}
-                        onClick={async (e) => {
-                          e.stopPropagation();
-                          await props.notification.read();
-                        }}
-                      >
-                        <MarkAsRead class={style('notificationRead__icon', 'nt-size-3')} />
-                      </Button>
-                    )}
-                  />
-                  <Tooltip.Content data-localization="notification.actions.read.tooltip">
-                    {t('notification.actions.read.tooltip')}
-                  </Tooltip.Content>
-                </Tooltip.Root>
-              }
-            >
-              <Tooltip.Root>
-                <Tooltip.Trigger
-                  asChild={(childProps) => (
-                    <Button
-                      appearanceKey="notificationUnread__button"
-                      size="iconSm"
-                      variant="ghost"
-                      {...childProps}
-                      onClick={async (e) => {
-                        e.stopPropagation();
-                        await props.notification.unread();
-                      }}
-                    >
-                      <MarkAsUnread class={style('notificationUnread__icon', 'nt-size-3')} />
-                    </Button>
-                  )}
-                />
-                <Tooltip.Content data-localization="notification.actions.unread.tooltip">
-                  {t('notification.actions.unread.tooltip')}
-                </Tooltip.Content>
-              </Tooltip.Root>
-            </Show>
-          </Show>
-
-          <Show
-            when={props.notification.isSnoozed}
-            fallback={
-              <Tooltip.Root>
-                <Tooltip.Trigger
-                  asChild={(tooltipProps) => (
-                    <Dropdown.Root>
-                      <Dropdown.Trigger
-                        {...tooltipProps}
-                        asChild={(popoverProps) => (
-                          <Button
-                            appearanceKey="notificationSnooze__button"
-                            size="iconSm"
-                            variant="ghost"
-                            {...popoverProps}
-                          >
-                            <Snooze class={style('notificationSnooze__icon', 'nt-size-3')} />
-                          </Button>
-                        )}
-                      />
-                      <Dropdown.Content appearanceKey="notificationSnooze__dropdownContent">
-                        <For each={availableSnoozePresets()}>
-                          {(preset) => (
-                            <Dropdown.Item
-                              appearanceKey="notificationSnooze__dropdownItem"
-                              onClick={async (e) => {
-                                e.stopPropagation();
-                                await props.notification.snooze(preset.getDate().toISOString());
-                              }}
-                            >
-                              <Clock
-                                class={style(
-                                  'notificationSnooze__dropdownItem__icon',
-                                  'nt-size-3 nt-text-foreground-alpha-400'
-                                )}
-                              />
-                              {formatSnoozeOption(preset, t, locale())}
-                            </Dropdown.Item>
-                          )}
-                        </For>
-
-                        <Popover.Root open={isSnoozeDateTimePickerOpen()} onOpenChange={setIsSnoozeDateTimePickerOpen}>
-                          <Dropdown.Item
-                            asChild={(props) => (
-                              <Popover.Trigger
-                                class={style('notificationSnooze__dropdownItem', dropdownItemVariants())}
-                                {...props}
-                              >
-                                <Clock
-                                  class={style(
-                                    'notificationSnooze__dropdownItem__icon',
-                                    'nt-size-3 nt-text-foreground-alpha-400'
-                                  )}
-                                />
-                                {t('snooze.options.customTime')}
-                              </Popover.Trigger>
-                            )}
-                          />
-                          <Popover.Content
-                            portal
-                            class={style('notificationSnoozeCustomTime_popoverContent', 'nt-size-fit')}
-                          >
-                            <SnoozeDateTimePicker
-                              maxDurationHours={maxSnoozeDurationHours()}
-                              onSelect={async (date) => {
-                                await props.notification.snooze(date.toISOString());
-                              }}
-                              onCancel={() => {
-                                setIsSnoozeDateTimePickerOpen(false);
-                              }}
-                            />
-                          </Popover.Content>
-                        </Popover.Root>
-                      </Dropdown.Content>
-                    </Dropdown.Root>
-                  )}
-                />
-                <Tooltip.Content data-localization="notification.actions.read.tooltip">
-                  {t('notification.actions.snooze.tooltip')}
-                </Tooltip.Content>
-              </Tooltip.Root>
-            }
-          >
-            <Tooltip.Root>
-              <Tooltip.Trigger
-                asChild={(childProps) => (
-                  <Button
-                    appearanceKey="notificationUnsnooze__button"
-                    size="iconSm"
-                    variant="ghost"
-                    {...childProps}
-                    onClick={async (e) => {
-                      e.stopPropagation();
-                      await props.notification.unsnooze();
-                    }}
-                  >
-                    <Unsnooze class={style('notificationUnsnooze__icon', 'nt-size-3')} />
-                  </Button>
-                )}
-              />
-              <Tooltip.Content data-localization="notification.actions.unsnooze.tooltip">
-                {t('notification.actions.unsnooze.tooltip')}
-              </Tooltip.Content>
-            </Tooltip.Root>
-          </Show>
-
-          <Show
-            when={props.notification.isArchived}
-            fallback={
-              <Tooltip.Root>
-                <Tooltip.Trigger
-                  asChild={(childProps) => (
-                    <Button
-                      appearanceKey="notificationArchive__button"
-                      size="iconSm"
-                      variant="ghost"
-                      {...childProps}
-                      onClick={async (e) => {
-                        e.stopPropagation();
-                        await props.notification.archive();
-                      }}
-                    >
-                      <MarkAsArchived class={style('notificationArchive__icon', 'nt-size-3')} />
-                    </Button>
-                  )}
-                />
-                <Tooltip.Content data-localization="notification.actions.archive.tooltip">
-                  {t('notification.actions.archive.tooltip')}
-                </Tooltip.Content>
-              </Tooltip.Root>
-            }
-          >
-            <Tooltip.Root>
-              <Tooltip.Trigger
-                asChild={(childProps) => (
-                  <Button
-                    appearanceKey="notificationUnarchive__button"
-                    size="iconSm"
-                    variant="ghost"
-                    {...childProps}
-                    onClick={async (e) => {
-                      e.stopPropagation();
-                      await props.notification.unarchive();
-                    }}
-                  >
-                    <MarkAsUnarchived class={style('notificationArchive__icon', 'nt-size-3')} />
-                  </Button>
-                )}
-              />
-              <Tooltip.Content data-localization="notification.actions.unarchive.tooltip">
-                {t('notification.actions.unarchive.tooltip')}
-              </Tooltip.Content>
-            </Tooltip.Root>
-          </Show>
+          {renderNotificationActions(props.notification, status)}
         </div>
         <Show when={props.notification.primaryAction || props.notification.secondaryAction}>
           <div class={style('notificationCustomActions', 'nt-flex nt-flex-wrap nt-gap-2')}>
