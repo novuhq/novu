@@ -8,6 +8,7 @@ export enum TriggerEventStatusEnum {
   NO_WORKFLOW_STEPS = 'no_workflow_steps_defined',
   PROCESSED = 'processed',
   TENANT_MISSING = 'no_tenant_found',
+  INVALID_RECIPIENTS = 'invalid_recipients',
 }
 
 export interface IAttachmentOptions {

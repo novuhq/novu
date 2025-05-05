@@ -44,7 +44,7 @@ test('should trigger Discord provider correctly with _passthrough', async () => 
           content: 'passthrough content',
         },
       },
-    },
+    }
   );
 
   expect(mockPost).toHaveBeenCalledWith('https://www.google.com/?wait=true', {

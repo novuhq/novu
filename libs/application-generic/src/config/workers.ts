@@ -4,15 +4,12 @@ enum WorkerEnum {
   STANDARD = 'StandardWorker',
   WEB_SOCKET = 'WebSocketWorker',
   WORKFLOW = 'WorkflowWorker',
-  EXECUTION_LOG = 'ExecutionLogWorker',
 }
 
 interface IWorkerConfig {
   concurrency: number;
   lockDuration: number;
 }
-
-type WorkersConfig = Record<WorkerEnum, IWorkerConfig>;
 
 const getDefaultConcurrency = () =>
   process.env.WORKER_DEFAULT_CONCURRENCY
@@ -46,10 +43,6 @@ const getWorkerConfig = (worker: WorkerEnum): IWorkerConfig => {
       concurrency: getDefaultConcurrency() ?? 200,
       lockDuration: getDefaultLockDuration() ?? 90000,
     },
-    [WorkerEnum.EXECUTION_LOG]: {
-      concurrency: getDefaultConcurrency() ?? 200,
-      lockDuration: getDefaultLockDuration() ?? 90000,
-    },
   };
 
   return workersConfig[worker];
@@ -69,6 +62,3 @@ export const getWebSocketWorkerOptions = () =>
 
 export const getWorkflowWorkerOptions = () =>
   getWorkerConfig(WorkerEnum.WORKFLOW);
-
-export const getExecutionLogWorkerOptions = () =>
-  getWorkerConfig(WorkerEnum.EXECUTION_LOG);

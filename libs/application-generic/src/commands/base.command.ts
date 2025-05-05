@@ -1,12 +1,10 @@
 import { plainToInstance } from 'class-transformer';
 import { validateSync, ValidationError } from 'class-validator';
 import { BadRequestException } from '@nestjs/common';
+import { ApiProperty } from '@nestjs/swagger';
 
 export abstract class BaseCommand {
-  static create<T extends BaseCommand>(
-    this: new (...args: unknown[]) => T,
-    data: T,
-  ): T {
+  static create<T extends BaseCommand>(this: new (...args: unknown[]) => T, data: T): T {
     const convertedObject = plainToInstance<T, unknown>(this, {
       ...data,
     });
@@ -17,19 +15,44 @@ export abstract class BaseCommand {
       throw new CommandValidationException(this.name, flattenedErrors);
     }
 
-    return data;
+    return convertedObject;
   }
 }
 
 export class ConstraintValidation {
+  @ApiProperty({
+    type: 'array',
+    items: { type: 'string' },
+    description: 'List of validation error messages',
+    example: ['Field is required', 'Invalid format'],
+  })
   messages: string[];
-  value: any;
-}
 
-function flattenErrors(
-  errors: ValidationError[],
-  prefix: string = '',
-): Record<string, ConstraintValidation> {
+  @ApiProperty({
+    required: false,
+    description: 'Value that failed validation',
+    oneOf: [
+      { type: 'string', nullable: true },
+      { type: 'number' },
+      { type: 'boolean' },
+      { type: 'object' },
+      {
+        type: 'array',
+        items: {
+          anyOf: [
+            { type: 'string', nullable: true },
+            { type: 'number' },
+            { type: 'boolean' },
+            { type: 'object', additionalProperties: true },
+          ],
+        },
+      },
+    ],
+    example: 'xx xx xx ',
+  })
+  value?: string | number | boolean | object | object[] | null;
+}
+function flattenErrors(errors: ValidationError[], prefix: string = ''): Record<string, ConstraintValidation> {
   const result: Record<string, ConstraintValidation> = {};
 
   for (const error of errors) {
@@ -59,7 +82,7 @@ function flattenErrors(
 export class CommandValidationException extends BadRequestException {
   constructor(
     public className: string,
-    public constraintsViolated: Record<string, ConstraintValidation>,
+    public constraintsViolated: Record<string, ConstraintValidation>
   ) {
     super({ message: 'Validation failed', className, constraintsViolated });
   }

@@ -1,7 +1,15 @@
-import { ReactNode, useMemo } from 'react';
+import { SidebarContent } from '@/components/side-navigation/sidebar';
+import { useEnvironment } from '@/context/environment/hooks';
+import { useTelemetry } from '@/hooks/use-telemetry';
+import { buildRoute, ROUTES } from '@/utils/routes';
+import { TelemetryEvent } from '@/utils/telemetry';
+import { ApiServiceLevelEnum } from '@novu/shared';
+import * as Sentry from '@sentry/react';
+import { ReactNode } from 'react';
 import {
   RiBarChartBoxLine,
   RiChat1Line,
+  RiDatabase2Line,
   RiGroup2Line,
   RiKey2Line,
   RiRouteFill,
@@ -9,20 +17,14 @@ import {
   RiStore3Line,
   RiUserAddLine,
 } from 'react-icons/ri';
-import { useEnvironment } from '@/context/environment/hooks';
-import { buildRoute, ROUTES } from '@/utils/routes';
-import { TelemetryEvent } from '@/utils/telemetry';
-import { useTelemetry } from '@/hooks/use-telemetry';
-import { EnvironmentDropdown } from './environment-dropdown';
-import { OrganizationDropdown } from './organization-dropdown';
-import { FreeTrialCard } from './free-trial-card';
-import { SubscribersStayTunedModal } from './subscribers-stay-tuned-modal';
-import { SidebarContent } from '@/components/side-navigation/sidebar';
-import { NavigationLink } from './navigation-link';
-import { GettingStartedMenuItem } from './getting-started-menu-item';
-import { ChangelogStack } from './changelog-cards';
 import { useFetchSubscription } from '../../hooks/use-fetch-subscription';
-import * as Sentry from '@sentry/react';
+import { ChangelogStack } from './changelog-cards';
+import { EnvironmentDropdown } from './environment-dropdown';
+import { FreeTrialCard } from './free-trial-card';
+import { GettingStartedMenuItem } from './getting-started-menu-item';
+import { NavigationLink } from './navigation-link';
+import { OrganizationDropdown } from './organization-dropdown';
+import { UsageCard } from './usage-card';
 
 const NavigationGroup = ({ children, label }: { children: ReactNode; label?: string }) => {
   return (
@@ -35,11 +37,11 @@ const NavigationGroup = ({ children, label }: { children: ReactNode; label?: str
 
 export const SideNavigation = () => {
   const { subscription, daysLeft, isLoading: isLoadingSubscription } = useFetchSubscription();
-  const isFreeTrialActive = subscription?.trial.isActive || subscription?.hasPaymentMethod;
+  const isTrialActive = subscription?.trial.isActive;
+  const isFreeTier = subscription?.apiServiceLevel === ApiServiceLevelEnum.FREE;
 
   const { currentEnvironment, environments, switchEnvironment } = useEnvironment();
   const track = useTelemetry();
-  const environmentNames = useMemo(() => environments?.map((env) => env.name), [environments]);
 
   const onEnvironmentChange = (value: string) => {
     const environment = environments?.find((env) => env.name === value);
@@ -56,11 +58,16 @@ export const SideNavigation = () => {
       console.error('Error opening plain chat:', error);
     }
   };
+
   return (
     <aside className="bg-neutral-alpha-50 relative flex h-full w-[275px] flex-shrink-0 flex-col">
       <SidebarContent className="h-full">
         <OrganizationDropdown />
-        <EnvironmentDropdown value={currentEnvironment?.name} data={environmentNames} onChange={onEnvironmentChange} />
+        <EnvironmentDropdown
+          currentEnvironment={currentEnvironment}
+          data={environments}
+          onChange={onEnvironmentChange}
+        />
         <nav className="flex h-full flex-1 flex-col">
           <div className="flex flex-col gap-4">
             <NavigationGroup>
@@ -68,14 +75,10 @@ export const SideNavigation = () => {
                 <RiRouteFill className="size-4" />
                 <span>Workflows</span>
               </NavigationLink>
-              <SubscribersStayTunedModal>
-                <span onClick={() => track(TelemetryEvent.SUBSCRIBERS_LINK_CLICKED)}>
-                  <NavigationLink>
-                    <RiGroup2Line className="size-4" />
-                    <span>Subscribers</span>
-                  </NavigationLink>
-                </span>
-              </SubscribersStayTunedModal>
+              <NavigationLink to={buildRoute(ROUTES.SUBSCRIBERS, { environmentSlug: currentEnvironment?.slug ?? '' })}>
+                <RiGroup2Line className="size-4" />
+                <span>Subscribers</span>
+              </NavigationLink>
             </NavigationGroup>
             <NavigationGroup label="Monitor">
               <NavigationLink
@@ -86,13 +89,17 @@ export const SideNavigation = () => {
               </NavigationLink>
             </NavigationGroup>
             <NavigationGroup label="Developer">
-              <NavigationLink to={buildRoute(ROUTES.INTEGRATIONS, { environmentSlug: currentEnvironment?.slug ?? '' })}>
-                <RiStore3Line className="size-4" />
-                <span>Integration Store</span>
-              </NavigationLink>
               <NavigationLink to={buildRoute(ROUTES.API_KEYS, { environmentSlug: currentEnvironment?.slug ?? '' })}>
                 <RiKey2Line className="size-4" />
                 <span>API Keys</span>
+              </NavigationLink>
+              <NavigationLink to={buildRoute(ROUTES.ENVIRONMENTS, { environmentSlug: currentEnvironment?.slug ?? '' })}>
+                <RiDatabase2Line className="size-4" />
+                <span>Environments</span>
+              </NavigationLink>
+              <NavigationLink to={buildRoute(ROUTES.INTEGRATIONS, { environmentSlug: currentEnvironment?.slug ?? '' })}>
+                <RiStore3Line className="size-4" />
+                <span>Integration Store</span>
               </NavigationLink>
             </NavigationGroup>
             <NavigationGroup label="Application">
@@ -104,10 +111,12 @@ export const SideNavigation = () => {
           </div>
 
           <div className="relative mt-auto gap-8 pt-4">
-            {!isFreeTrialActive && !isLoadingSubscription && <ChangelogStack />}{' '}
-            {isFreeTrialActive && !isLoadingSubscription && (
+            {!isTrialActive && !isLoadingSubscription && <ChangelogStack />}
+            {isTrialActive && !isLoadingSubscription && (
               <FreeTrialCard subscription={subscription} daysLeft={daysLeft} />
             )}
+
+            {!isTrialActive && isFreeTier && !isLoadingSubscription && <UsageCard subscription={subscription} />}
             <NavigationGroup>
               <button onClick={showPlainLiveChat} className="w-full">
                 <NavigationLink>

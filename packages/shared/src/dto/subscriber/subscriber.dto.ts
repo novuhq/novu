@@ -24,7 +24,11 @@ export class SubscriberDto {
   subscriberId: string;
   channels?: IChannelSettings[];
   deleted: boolean;
+  createdAt: string;
+  updatedAt: string;
+  lastOnlineAt?: string;
 }
+
 export interface ISubscriberFeedResponseDto {
   _id?: string;
   firstName?: string;
@@ -51,4 +55,11 @@ export interface ISubscriberResponseDto {
   createdAt: string;
   updatedAt: string;
   __v?: number;
+  timezone?: string;
 }
+
+export type SubscribersListResponseDto = {
+  data: Array<ISubscriberResponseDto>;
+  next: string | null;
+  previous: string | null;
+};

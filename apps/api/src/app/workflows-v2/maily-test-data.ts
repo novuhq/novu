@@ -1,83 +1,6 @@
-export const forSnippet = {
-  type: 'doc',
-  content: [
-    {
-      type: 'for',
-      attrs: {
-        each: 'payload.food.items',
-        isUpdatingKey: false,
-      },
-      content: [
-        {
-          type: 'paragraph',
-          attrs: {
-            textAlign: 'left',
-          },
-          content: [
-            {
-              type: 'text',
-              text: 'this is a food item with name  ',
-            },
-            {
-              type: 'payloadValue',
-              attrs: {
-                id: 'name',
-                label: null,
-              },
-            },
-            {
-              type: 'text',
-              text: ' ',
-            },
-          ],
-        },
-        {
-          type: 'for',
-          attrs: {
-            each: 'payload.food.warnings',
-            isUpdatingKey: false,
-          },
-          content: [
-            {
-              type: 'bulletList',
-              content: [
-                {
-                  type: 'listItem',
-                  attrs: {
-                    color: null,
-                  },
-                  content: [
-                    {
-                      type: 'paragraph',
-                      attrs: {
-                        textAlign: 'left',
-                      },
-                      content: [
-                        {
-                          type: 'payloadValue',
-                          attrs: {
-                            id: 'header',
-                            label: null,
-                          },
-                        },
-                        {
-                          type: 'text',
-                          text: ' ',
-                        },
-                      ],
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    },
-  ],
-};
+import { DEFAULT_ARRAY_ELEMENTS } from './usecases/create-variables-object/create-variables-object.usecase';
 
-export function fullCodeSnippet(stepId?: string) {
+export function fullCodeSnippet() {
   return {
     type: 'doc',
     content: [
@@ -155,7 +78,7 @@ export function fullCodeSnippet(stepId?: string) {
       {
         type: 'section',
         attrs: {
-          show: 'payload.params.isPayedUser',
+          showIfKey: 'payload.params.isPayedUser',
           borderRadius: 0,
           backgroundColor: '#f7f7f7',
           align: 'left',
@@ -192,7 +115,7 @@ export function fullCodeSnippet(stepId?: string) {
               {
                 type: 'variable',
                 attrs: {
-                  id: 'subscriber.fullName',
+                  id: 'subscriber.firstName',
                   label: null,
                   fallback: 'should be the fallback value',
                 },
@@ -306,9 +229,9 @@ export function fullCodeSnippet(stepId?: string) {
             },
             content: [
               {
-                type: 'for',
+                type: 'repeat',
                 attrs: {
-                  each: stepId ? `steps.${stepId}.events` : 'payload.origins',
+                  each: 'payload.origins',
                   isUpdatingKey: false,
                 },
                 content: [
@@ -335,23 +258,23 @@ export function fullCodeSnippet(stepId?: string) {
                                 text: 'a list item: ',
                               },
                               {
-                                type: 'payloadValue',
+                                type: 'variable',
                                 attrs: {
-                                  id: stepId ? 'payload.country' : 'origin.country',
+                                  id: 'payload.origins.country',
                                   label: null,
                                 },
                               },
                               {
-                                type: 'payloadValue',
+                                type: 'variable',
                                 attrs: {
-                                  id: 'id',
+                                  id: 'payload.origins.id',
                                   label: null,
                                 },
                               },
                               {
-                                type: 'payloadValue',
+                                type: 'variable',
                                 attrs: {
-                                  id: 'time',
+                                  id: 'payload.origins.time',
                                   label: null,
                                 },
                               },
@@ -386,7 +309,7 @@ export function fullCodeSnippet(stepId?: string) {
             },
             content: [
               {
-                type: 'for',
+                type: 'repeat',
                 attrs: {
                   each: 'payload.students',
                   isUpdatingKey: false,
@@ -412,9 +335,9 @@ export function fullCodeSnippet(stepId?: string) {
                                 text: 'bulleted list item: ',
                               },
                               {
-                                type: 'payloadValue',
+                                type: 'variable',
                                 attrs: {
-                                  id: 'id',
+                                  id: 'payload.students.id',
                                   label: null,
                                 },
                               },
@@ -423,9 +346,9 @@ export function fullCodeSnippet(stepId?: string) {
                                 text: '  and name: ',
                               },
                               {
-                                type: 'payloadValue',
+                                type: 'variable',
                                 attrs: {
-                                  id: 'name',
+                                  id: 'payload.students.name',
                                   label: null,
                                 },
                               },
@@ -479,12 +402,12 @@ export function fullCodeSnippet(stepId?: string) {
         content: [
           {
             type: 'text',
-            text: 'This will be a nested for block',
+            text: 'This will be a nested repeat block',
           },
         ],
       },
       {
-        type: 'for',
+        type: 'repeat',
         attrs: {
           each: 'payload.food.items',
           isUpdatingKey: false,
@@ -501,56 +424,15 @@ export function fullCodeSnippet(stepId?: string) {
                 text: 'this is a food item with name  ',
               },
               {
-                type: 'payloadValue',
+                type: 'variable',
                 attrs: {
-                  id: 'name',
+                  id: 'payload.food.items.name',
                   label: null,
                 },
               },
               {
                 type: 'text',
                 text: ' ',
-              },
-            ],
-          },
-          {
-            type: 'for',
-            attrs: {
-              each: 'payload.food.warnings',
-              isUpdatingKey: false,
-            },
-            content: [
-              {
-                type: 'bulletList',
-                content: [
-                  {
-                    type: 'listItem',
-                    attrs: {
-                      color: null,
-                    },
-                    content: [
-                      {
-                        type: 'paragraph',
-                        attrs: {
-                          textAlign: 'left',
-                        },
-                        content: [
-                          {
-                            type: 'payloadValue',
-                            attrs: {
-                              id: 'header',
-                              label: null,
-                            },
-                          },
-                          {
-                            type: 'text',
-                            text: ' ',
-                          },
-                        ],
-                      },
-                    ],
-                  },
-                ],
               },
             ],
           },
@@ -582,5 +464,41 @@ export function fullCodeSnippet(stepId?: string) {
         ],
       },
     ],
+  };
+}
+
+export function previewPayloadExample() {
+  return {
+    payload: {
+      subject: {
+        test: {
+          payload: 'payload',
+        },
+      },
+      params: {
+        isPayedUser: true,
+      },
+      hidden: {
+        section: 'section',
+      },
+      body: 'body',
+      origins: Array(DEFAULT_ARRAY_ELEMENTS).fill({
+        country: 'country',
+        id: 'id',
+        time: 'time',
+      }),
+      students: Array(DEFAULT_ARRAY_ELEMENTS).fill({
+        id: 'id',
+        name: 'name',
+      }),
+      food: {
+        items: Array(DEFAULT_ARRAY_ELEMENTS).fill({
+          name: 'name',
+        }),
+      },
+    },
+    subscriber: {
+      firstName: 'firstName',
+    },
   };
 }

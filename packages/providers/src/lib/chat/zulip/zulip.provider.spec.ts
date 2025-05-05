@@ -2,8 +2,7 @@ import { expect, test, vi } from 'vitest';
 import { ZulipProvider } from './zulip.provider';
 
 const mockMessage = {
-  webhookUrl:
-    'https://test.zulipchat.com/api/v1/external/slack_incoming?api_key=apikey&stream=general',
+  webhookUrl: 'https://test.zulipchat.com/api/v1/external/slack_incoming?api_key=apikey&stream=general',
   content: 'Hello world',
 };
 

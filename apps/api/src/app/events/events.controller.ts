@@ -32,7 +32,6 @@ import {
   ApiOkResponse,
   ApiResponse,
 } from '../shared/framework/response.decorator';
-import { DataBooleanDto } from '../shared/dtos/data-wrapper-dto';
 import { ThrottlerCategory, ThrottlerCost } from '../rate-limiting/guards';
 import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
 import { SdkGroupName, SdkMethodName, SdkUsageExample } from '../shared/framework/swagger/sdk.decorators';
@@ -190,7 +189,7 @@ export class EventsController {
   @UserAuthentication()
   @Delete('/trigger/:transactionId')
   @ApiOkResponse({
-    type: DataBooleanDto,
+    type: Boolean,
   })
   @ApiOperation({
     summary: 'Cancel triggered event',

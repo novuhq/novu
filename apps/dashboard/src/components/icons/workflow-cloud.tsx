@@ -1,6 +1,7 @@
 import type { HTMLAttributes } from 'react';
 
 type WorkflowCloudProps = HTMLAttributes<HTMLOrSVGElement>;
+
 export const WorkflowCloud = (props: WorkflowCloudProps) => {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" width="153" height="120" fill="none" {...props}>

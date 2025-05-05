@@ -38,7 +38,6 @@ export class NotificationsController {
   @ApiOperation({
     summary: 'Get notifications',
   })
-  @ApiCommonResponses()
   @UserAuthentication()
   @ExternalApiAccessible()
   listNotifications(
@@ -46,7 +45,6 @@ export class NotificationsController {
     @Query() query: ActivitiesRequestDto
   ): Promise<ActivitiesResponseDto> {
     let channelsQuery: ChannelTypeEnum[] | null = null;
-
     if (query.channels) {
       channelsQuery = Array.isArray(query.channels) ? query.channels : [query.channels];
     }
@@ -68,7 +66,8 @@ export class NotificationsController {
 
     return this.getActivityFeedUsecase.execute(
       GetActivityFeedCommand.create({
-        page: query.page ? Number(query.page) : 0,
+        page: query.page,
+        limit: query.limit,
         organizationId: user.organizationId,
         environmentId: user.environmentId,
         userId: user._id,

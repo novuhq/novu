@@ -1,9 +1,9 @@
 import type { JSONSchemaDto } from './json-schema-dto';
 import { Slug, StepTypeEnum, WorkflowOriginEnum } from '../../types';
-import { StepContentIssueEnum, StepIssueEnum } from './step-content-issue.enum';
+import { StepContentIssueEnum, StepIntegrationIssueEnum, StepIssueEnum } from './step-content-issue.enum';
 
-export type StepDataDto = {
-  controls: ControlsMetadata;
+export type StepResponseDto = {
+  controls: Controls;
   variables: JSONSchemaDto;
   stepId: string;
   _id: string;
@@ -18,14 +18,11 @@ export type StepDataDto = {
 
 export type StepUpdateDto = StepCreateDto & {
   _id: string;
+  stepId: string;
 };
 
 export type StepCreateDto = StepDto & {
-  controlValues?: Record<string, unknown> | null;
-};
-
-export type PatchStepDataDto = {
-  name?: string;
+  // TODO: Rename to controls to align naming with the response DTO
   controlValues?: Record<string, unknown> | null;
 };
 
@@ -42,14 +39,17 @@ interface Issue<T> {
 }
 
 export class StepIssuesDto {
-  body?: Record<StepCreateAndUpdateKeys, StepIssue>;
-  controls?: Record<string, ContentIssue[]>;
+  controls?: Record<string, StepContentIssue[]>;
+  integration?: Record<string, StepIntegrationIssue[]>;
 }
 
 export type StepCreateAndUpdateKeys = keyof StepCreateDto | keyof StepUpdateDto;
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
-export interface ContentIssue extends Issue<StepContentIssueEnum> {}
+export interface StepContentIssue extends Issue<StepContentIssueEnum> {}
+
+// eslint-disable-next-line @typescript-eslint/naming-convention
+export interface StepIntegrationIssue extends Issue<StepIntegrationIssueEnum> {}
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface StepIssue extends Issue<StepIssueEnum> {}
@@ -73,6 +73,8 @@ export enum UiComponentEnum {
   IN_APP_AVATAR = 'IN_APP_AVATAR',
   IN_APP_SUBJECT = 'IN_APP_PRIMARY_SUBJECT',
   IN_APP_BUTTON_DROPDOWN = 'IN_APP_BUTTON_DROPDOWN',
+  IN_APP_DISABLE_SANITIZATION_SWITCH = 'IN_APP_DISABLE_SANITIZATION_SWITCH',
+  DISABLE_SANITIZATION_SWITCH = 'DISABLE_SANITIZATION_SWITCH',
   URL_TEXT_BOX = 'URL_TEXT_BOX',
   DIGEST_AMOUNT = 'DIGEST_AMOUNT',
   DIGEST_UNIT = 'DIGEST_UNIT',
@@ -86,6 +88,7 @@ export enum UiComponentEnum {
   PUSH_BODY = 'PUSH_BODY',
   PUSH_SUBJECT = 'PUSH_SUBJECT',
   QUERY_EDITOR = 'QUERY_EDITOR',
+  DATA = 'DATA',
 }
 
 export class UiSchemaProperty {
@@ -98,7 +101,7 @@ export class UiSchema {
   properties?: Record<string, UiSchemaProperty>;
 }
 
-export class ControlsMetadata {
+export class Controls {
   dataSchema?: JSONSchemaDto;
   uiSchema?: UiSchema;
   values: Record<string, unknown>;

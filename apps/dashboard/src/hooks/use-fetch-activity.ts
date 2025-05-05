@@ -5,7 +5,7 @@ import { useEnvironment } from '@/context/environment/hooks';
 import { getNotification } from '@/api/activity';
 
 export function useFetchActivity(
-  { activityId }: { activityId?: string },
+  { activityId }: { activityId?: string | null },
   {
     refetchInterval = false,
     refetchOnWindowFocus = false,
@@ -14,7 +14,7 @@ export function useFetchActivity(
 ) {
   const { currentEnvironment } = useEnvironment();
 
-  const { data, isPending, error } = useQuery<{ data: IActivity }>({
+  const { data, isPending, error } = useQuery<IActivity>({
     queryKey: [QueryKeys.fetchActivity, currentEnvironment?._id, activityId],
     queryFn: () => getNotification(activityId!, currentEnvironment!),
     enabled: !!currentEnvironment?._id && !!activityId,
@@ -24,7 +24,7 @@ export function useFetchActivity(
   });
 
   return {
-    activity: data?.data,
+    activity: data,
     isPending,
     error,
   };

@@ -10,6 +10,7 @@ export interface IUserRepository extends IUserRepositoryMongo {
     token: string,
     resetTokenCount: IUserResetTokenCount
   ): Promise<{ matched: number; modified: number }>;
+  findUserSessions(userId: string): Promise<[]>;
 }
 
 /**

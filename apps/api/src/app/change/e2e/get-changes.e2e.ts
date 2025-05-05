@@ -8,9 +8,9 @@ import {
   FieldOperatorEnum,
 } from '@novu/shared';
 import { UserSession } from '@novu/testing';
-import { CreateWorkflowRequestDto, UpdateWorkflowRequestDto } from '../../workflows-v1/dto';
+import { CreateWorkflowRequestDto, UpdateWorkflowRequestDto } from '../../workflows-v1/dtos';
 
-describe('Get changes', () => {
+describe('Get changes #novu-v0', () => {
   let session: UserSession;
   const changeRepository: ChangeRepository = new ChangeRepository();
 

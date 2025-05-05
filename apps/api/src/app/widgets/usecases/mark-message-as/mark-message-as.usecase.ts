@@ -1,21 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { MessageEntity, MessageRepository, SubscriberRepository, SubscriberEntity, MemberRepository } from '@novu/dal';
+import { MessageEntity, MessageRepository, SubscriberEntity, SubscriberRepository } from '@novu/dal';
+import { INVITE_TEAM_MEMBER_NUDGE_PAYLOAD_KEY, WebSocketEventEnum } from '@novu/shared';
 import {
-  ChannelTypeEnum,
-  FeatureFlagsKeysEnum,
-  INVITE_TEAM_MEMBER_NUDGE_PAYLOAD_KEY,
-  WebSocketEventEnum,
-} from '@novu/shared';
-import {
-  WebSocketsQueueService,
   AnalyticsService,
-  InvalidateCacheService,
-  CachedEntity,
   buildFeedKey,
   buildMessageCountKey,
   buildSubscriberKey,
-  GetFeatureFlag,
-  GetFeatureFlagCommand,
+  CachedResponse,
+  InvalidateCacheService,
+  WebSocketsQueueService,
 } from '@novu/application-generic';
 
 import { MarkEnum, MarkMessageAsCommand } from './mark-message-as.command';
@@ -27,9 +20,7 @@ export class MarkMessageAs {
     private messageRepository: MessageRepository,
     private webSocketsQueueService: WebSocketsQueueService,
     private analyticsService: AnalyticsService,
-    private subscriberRepository: SubscriberRepository,
-    private memberRepository: MemberRepository,
-    private getFeatureFlag: GetFeatureFlag
+    private subscriberRepository: SubscriberRepository
   ) {}
 
   async execute(command: MarkMessageAsCommand): Promise<MessageEntity[]> {
@@ -111,7 +102,7 @@ export class MarkMessageAs {
     }
   }
 
-  @CachedEntity({
+  @CachedResponse({
     builder: (command: { subscriberId: string; _environmentId: string }) =>
       buildSubscriberKey({
         _environmentId: command._environmentId,

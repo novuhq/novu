@@ -9,19 +9,21 @@ import {
   SystemAvatarIconEnum,
   TemplateVariableTypeEnum,
 } from '@novu/shared';
+import { Novu } from '@novu/api';
 import { mapToDto } from '../utils/notification-mapper';
+import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-describe('Get Notifications - /inbox/notifications (GET)', async () => {
+describe('Get Notifications - /inbox/notifications (GET) #novu-v2', async () => {
   let session: UserSession;
   let template: NotificationTemplateEntity;
   let subscriber: SubscriberEntity | null;
   const messageRepository = new MessageRepository();
   const subscriberRepository = new SubscriberRepository();
-
+  let novuClient: Novu;
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
-
+    novuClient = initNovuClassSdk(session);
     subscriber = await subscriberRepository.findBySubscriberId(session.environment._id, session.subscriberId);
     template = await session.createTemplate({
       noFeedId: true,
@@ -92,11 +94,16 @@ describe('Get Notifications - /inbox/notifications (GET)', async () => {
   const triggerEvent = async (templateToTrigger: NotificationTemplateEntity, times = 1) => {
     const promises: Array<Promise<unknown>> = [];
     for (let i = 0; i < times; i += 1) {
-      promises.push(session.triggerEvent(templateToTrigger.triggers[0].identifier, session.subscriberId));
+      promises.push(
+        novuClient.trigger({
+          workflowId: templateToTrigger.triggers[0].identifier,
+          to: { subscriberId: session.subscriberId },
+        })
+      );
     }
 
     await Promise.all(promises);
-    await session.awaitRunningJobs(templateToTrigger._id);
+    await session.waitForJobCompletion(templateToTrigger._id);
   };
 
   const removeUndefinedDeep = (obj) => {
@@ -115,15 +122,15 @@ describe('Get Notifications - /inbox/notifications (GET)', async () => {
   it('should validate that the offset is greater or equals to zero', async function () {
     const { body, status } = await getNotifications({ limit: 1, offset: -1 });
 
-    expect(status).to.equal(400);
-    expect(body.message[0]).to.equal('offset must not be less than 0');
+    expect(status).to.equal(422);
+    expect(body.errors.general.messages[0]).to.equal('offset must not be less than 0');
   });
 
   it('should validate the after to mongo id', async function () {
     const { body, status } = await getNotifications({ limit: 1, after: 'after' });
 
-    expect(status).to.equal(400);
-    expect(body.message[0]).to.equal('The after cursor must be a valid MongoDB ObjectId');
+    expect(status).to.equal(422);
+    expect(body.errors.general.messages[0]).to.equal('The after cursor must be a valid MongoDB ObjectId');
   });
 
   it('should throw exception when filtering for unread and archived notifications', async function () {

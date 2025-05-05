@@ -1,190 +1,147 @@
-import { FormControl, FormField, FormMessage } from '@/components/primitives/form/form';
-import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
-import { parseStepVariables } from '@/utils/parseStepVariablesToLiquidVariables';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
-import { cn } from '@/utils/ui';
+import { HTMLAttributes, useCallback, useMemo, useState } from 'react';
 import { Editor } from '@maily-to/core';
-import {
-  blockquote,
-  bulletList,
-  button,
-  columns,
-  divider,
-  forLoop,
-  hardBreak,
-  heading1,
-  heading2,
-  heading3,
-  image,
-  orderedList,
-  section,
-  spacer,
-  text,
-} from '@maily-to/core/blocks';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { Editor as EditorDigest } from '@maily-to/core-digest';
 import type { Editor as TiptapEditor } from '@tiptap/core';
-import { HTMLAttributes, useMemo, useState } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { Editor as TiptapEditorReact } from '@tiptap/react';
 
-type MailyProps = HTMLAttributes<HTMLDivElement>;
-export const Maily = (props: MailyProps) => {
-  const { className, ...rest } = props;
-  const { step } = useWorkflow();
-  const mailyVariables = useMemo(
-    () => (step ? parseStepVariables(step.variables) : { primitives: [], arrays: [], namespaces: [] }),
-    [step]
-  );
-  const primitives = useMemo(
-    () => mailyVariables.primitives.map((v) => ({ name: v.label, required: false })),
-    [mailyVariables.primitives]
-  );
-  const arrays = useMemo(
-    () => mailyVariables.arrays.map((v) => ({ name: v.label, required: false })),
-    [mailyVariables.arrays]
-  );
-  const namespaces = useMemo(
-    () => mailyVariables.namespaces.map((v) => ({ name: v.label, required: false })),
-    [mailyVariables.namespaces]
-  );
+import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
+import { useParseVariables } from '@/hooks/use-parse-variables';
+import { useTelemetry } from '@/hooks/use-telemetry';
+import { cn } from '@/utils/ui';
+import { createEditorBlocks, createExtensions, DEFAULT_EDITOR_CONFIG, MAILY_EMAIL_WIDTH } from './maily-config';
+import { calculateVariables, VariableFrom } from './variables/variables';
+import { RepeatMenuDescription } from './views/repeat-menu-description';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 
-  const [_, setEditor] = useState<TiptapEditor>();
-  const { control } = useFormContext();
-
-  const isForBlockEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_ND_EMAIL_FOR_BLOCK_ENABLED);
-  const isShowEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_ND_EMAIL_SHOW_ENABLED);
-
-  return (
-    <FormField
-      control={control}
-      name="body"
-      render={({ field }) => {
-        return (
-          <>
-            {!isShowEnabled && (
-              <style>{`
-                  button:has(.lucide-eye) {
-                    display: none;
-                  }
-                `}</style>
-            )}
-            <div className={cn('mx-auto flex h-full flex-col items-start', className)} {...rest}>
-              <FormControl>
-                <Editor
-                  key={isForBlockEnabled ? 'for-block-enabled' : 'for-block-disabled'}
-                  config={{
-                    hasMenuBar: false,
-                    wrapClassName: 'min-h-0 max-h-full flex flex-col w-full h-full overflow-y-auto',
-                    bodyClassName:
-                      '!bg-transparent flex flex-col basis-full !border-none !mt-0 [&>div]:basis-full [&_.tiptap]:h-full',
-                  }}
-                  blocks={[
-                    text,
-                    heading1,
-                    heading2,
-                    heading3,
-                    bulletList,
-                    orderedList,
-                    image,
-                    section,
-                    columns,
-                    ...(isForBlockEnabled ? [forLoop] : []),
-                    divider,
-                    spacer,
-                    button,
-                    hardBreak,
-                    blockquote,
-                  ]}
-                  variableTriggerCharacter="{{"
-                  variables={({ query, editor, from }) => {
-                    const queryWithoutSuffix = query.replace(/}+$/, '');
-                    const filteredVariables: { name: string; required: boolean }[] = [];
-
-                    function addInlineVariable() {
-                      if (!query.endsWith('}}')) {
-                        return;
-                      }
-                      if (filteredVariables.every((variable) => variable.name !== queryWithoutSuffix)) {
-                        return;
-                      }
-                      const from = editor?.state.selection.from - queryWithoutSuffix.length - 4; /* for prefix */
-                      const to = editor?.state.selection.from;
-
-                      editor?.commands.deleteRange({ from, to });
-                      editor?.commands.insertContent({
-                        type: 'variable',
-                        attrs: {
-                          id: queryWithoutSuffix,
-                          label: null,
-                          fallback: null,
-                          showIfKey: null,
-                          required: false,
-                        },
-                      });
-                    }
-
-                    if (from === 'for-variable') {
-                      filteredVariables.push(...arrays, ...namespaces);
-                      if (namespaces.some((namespace) => queryWithoutSuffix.includes(namespace.name))) {
-                        filteredVariables.push({ name: queryWithoutSuffix, required: false });
-                      }
-
-                      addInlineVariable();
-                      return dedupAndSortVariables(filteredVariables, queryWithoutSuffix);
-                    }
-
-                    const newNamespaces = [
-                      ...namespaces,
-                      ...(editor?.getAttributes('for')?.each ? [{ name: 'iterable', required: false }] : []),
-                    ];
-                    filteredVariables.push(...primitives, ...newNamespaces);
-                    if (newNamespaces.some((namespace) => queryWithoutSuffix.includes(namespace.name))) {
-                      filteredVariables.push({ name: queryWithoutSuffix, required: false });
-                    }
-
-                    if (from === 'content-variable') {
-                      addInlineVariable();
-                    }
-                    return dedupAndSortVariables(filteredVariables, queryWithoutSuffix);
-                  }}
-                  contentJson={field.value ? JSON.parse(field.value) : undefined}
-                  onCreate={setEditor}
-                  onUpdate={(editor) => {
-                    setEditor(editor);
-                    field.onChange(JSON.stringify(editor.getJSON()));
-                  }}
-                />
-              </FormControl>
-              <FormMessage />
-            </div>
-          </>
-        );
-      }}
-    />
-  );
+type MailyProps = HTMLAttributes<HTMLDivElement> & {
+  value: string;
+  onChange?: (value: string) => void;
+  className?: string;
 };
 
-const dedupAndSortVariables = (
-  variables: { name: string; required: boolean }[],
-  query: string
-): { name: string; required: boolean }[] => {
-  // Filter variables that match the query
-  const filteredVariables = variables.filter((variable) => variable.name.toLowerCase().includes(query.toLowerCase()));
+export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
+  const { step, digestStepBeforeCurrent } = useWorkflow();
+  const isEnhancedDigestEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_ENHANCED_DIGEST_ENABLED);
+  const parsedVariables = useParseVariables(step?.variables, digestStepBeforeCurrent?.stepId);
+  const primitives = useMemo(
+    () => parsedVariables.primitives.map((v) => ({ name: v.name, required: false })),
+    [parsedVariables.primitives]
+  );
+  const arrays = useMemo(
+    () => parsedVariables.arrays.map((v) => ({ name: v.name, required: false })),
+    [parsedVariables.arrays]
+  );
+  const namespaces = useMemo(
+    () => parsedVariables.namespaces.map((v) => ({ name: v.name, required: false })),
+    [parsedVariables.namespaces]
+  );
+  const [_, setEditor] = useState<any>();
+  const track = useTelemetry();
 
-  // Deduplicate based on name property
-  const uniqueVariables = Array.from(new Map(filteredVariables.map((item) => [item.name, item])).values());
+  const blocks = useMemo(() => {
+    return createEditorBlocks({ track, digestStepBeforeCurrent, isEnhancedDigestEnabled });
+  }, [digestStepBeforeCurrent, isEnhancedDigestEnabled, track]);
 
-  // Sort variables: exact matches first, then starts with query, then alphabetically
-  return uniqueVariables.sort((a, b) => {
-    const aExactMatch = a.name.toLowerCase() === query.toLowerCase();
-    const bExactMatch = b.name.toLowerCase() === query.toLowerCase();
-    const aStartsWithQuery = a.name.toLowerCase().startsWith(query.toLowerCase());
-    const bStartsWithQuery = b.name.toLowerCase().startsWith(query.toLowerCase());
+  const handleCalculateVariables = useCallback(
+    ({ query, editor, from }: { query: string; editor: TiptapEditor; from: VariableFrom }) => {
+      return calculateVariables({
+        query,
+        editor,
+        from,
+        primitives,
+        arrays,
+        namespaces,
+        isAllowedVariable: parsedVariables.isAllowedVariable,
+        isEnhancedDigestEnabled,
+        addDigestVariables: !!digestStepBeforeCurrent?.stepId,
+      });
+    },
+    [
+      primitives,
+      arrays,
+      namespaces,
+      parsedVariables.isAllowedVariable,
+      isEnhancedDigestEnabled,
+      digestStepBeforeCurrent?.stepId,
+    ]
+  );
 
-    if (aExactMatch && !bExactMatch) return -1;
-    if (!aExactMatch && bExactMatch) return 1;
-    if (aStartsWithQuery && !bStartsWithQuery) return -1;
-    if (!aStartsWithQuery && bStartsWithQuery) return 1;
+  const extensions = useMemo(
+    () =>
+      createExtensions({
+        handleCalculateVariables,
+        parsedVariables,
+        blocks,
+        isEnhancedDigestEnabled,
+      }),
+    [handleCalculateVariables, parsedVariables, blocks, isEnhancedDigestEnabled]
+  );
 
-    return a.name.localeCompare(b.name);
-  });
+  /*
+   * Override Maily tippy box styles as a temporary solution.
+   * Note: These styles affect both the bubble menu and block manipulation buttons (drag & drop, add).
+   * TODO: Request Maily to expose these components or provide specific CSS selectors for individual targeting.
+   */
+  const overrideTippyBoxStyles = () => (
+    <style>
+      {`
+          .tippy-box {
+            padding-right: 20px;
+            pointer-events: auto;
+
+            .mly-cursor-grab {
+              background-color: #fff;
+              border-radius: 4px;
+              box-shadow: 0px 0px 2px 0px rgba(0, 0, 0, 0.04), 0px 1px 2px 0px rgba(0, 0, 0, 0.02);
+              border-radius: 4px;
+              margin: 2px;
+            }
+          }
+        `}
+    </style>
+  );
+
+  const repeatMenuConfig = useMemo(() => {
+    return {
+      description: (editor: TiptapEditorReact) => <RepeatMenuDescription editor={editor} />,
+    };
+  }, []);
+
+  const onUpdate = useCallback(
+    (editor: TiptapEditorReact) => {
+      setEditor(editor);
+
+      if (onChange) {
+        onChange(JSON.stringify(editor.getJSON()));
+      }
+    },
+    [onChange]
+  );
+
+  const _Editor = isEnhancedDigestEnabled ? EditorDigest : Editor;
+
+  return (
+    <>
+      {overrideTippyBoxStyles()}
+      <div
+        className={cn(
+          `shadow-xs mx-auto flex min-h-full max-w-[${MAILY_EMAIL_WIDTH}px] flex-col items-start rounded-lg bg-white [&_a]:pointer-events-none`,
+          className
+        )}
+        {...rest}
+      >
+        <_Editor
+          key="repeat-block-enabled"
+          config={DEFAULT_EDITOR_CONFIG}
+          blocks={blocks}
+          extensions={extensions}
+          contentJson={value ? JSON.parse(value) : undefined}
+          onCreate={setEditor}
+          onUpdate={onUpdate}
+          repeatMenuConfig={repeatMenuConfig}
+        />
+      </div>
+    </>
+  );
 };

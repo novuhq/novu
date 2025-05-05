@@ -1,4 +1,4 @@
-import { GetSubscriberGlobalPreference, GetSubscriberTemplatePreference } from '@novu/application-generic';
+import { GetSubscriberTemplatePreference, StandardQueueService } from '@novu/application-generic';
 import { GetNotifications } from './get-notifications/get-notifications.usecase';
 import { GetInboxPreferences } from './get-inbox-preferences/get-inbox-preferences.usecase';
 import { MarkManyNotificationsAs } from './mark-many-notifications-as/mark-many-notifications-as.usecase';
@@ -8,6 +8,9 @@ import { Session } from './session/session.usecase';
 import { UpdateAllNotifications } from './update-all-notifications/update-all-notifications.usecase';
 import { UpdateNotificationAction } from './update-notification-action/update-notification-action.usecase';
 import { UpdatePreferences } from './update-preferences/update-preferences.usecase';
+import { GetSubscriberGlobalPreference } from '../../subscribers/usecases/get-subscriber-global-preference';
+import { SnoozeNotification } from './snooze-notification/snooze-notification.usecase';
+import { UnsnoozeNotification } from './unsnooze-notification/unsnooze-notification.usecase';
 
 export const USE_CASES = [
   Session,
@@ -21,4 +24,6 @@ export const USE_CASES = [
   GetSubscriberGlobalPreference,
   GetSubscriberTemplatePreference,
   UpdatePreferences,
+  SnoozeNotification,
+  UnsnoozeNotification,
 ];

@@ -1,3 +1,5 @@
+import animate from 'tailwindcss-animate';
+
 export const borderRadii = {
   4: '.25rem',
   6: '.375rem',
@@ -102,6 +104,14 @@ export const texts = {
       fontWeight: '500',
     },
   ],
+  'label-2xs': [
+    '.625rem',
+    {
+      lineHeight: '0.875rem',
+      letterSpacing: '0em',
+      fontWeight: '500',
+    },
+  ],
   'paragraph-xl': [
     '1.5rem',
     {
@@ -197,6 +207,9 @@ export const shadows = {
   sm: '0px 1px 2px 0px #1018280F,0px 1px 3px 0px #1018281A',
   md: '0px 16px 32px -12px rgba(14, 18, 27, 0.10)',
   DEFAULT: '0px 16px 32px -12px #0E121B1A',
+  'button-primary-focus': ['0 0 0 2px theme(colors.bg[white])', '0 0 0 4px hsl(var(--primary-alpha-10))'],
+  'button-important-focus': ['0 0 0 2px theme(colors.bg[white])', '0 0 0 4px hsl(var(--neutral-alpha-16))'],
+  'button-error-focus': ['0 0 0 2px theme(colors.bg[white])', '0 0 0 4px hsl(var(--red-alpha-10))'],
 };
 
 export default {
@@ -575,7 +588,7 @@ export default {
     },
     extend: {
       fontFamily: {
-        code: ['JetBrains Mono', 'monospace'],
+        code: ['var(--font-code)', 'var(--font-code-fallback)'],
       },
       opacity: {
         2.5: 0.025,
@@ -661,7 +674,18 @@ export default {
         'test-pattern':
           'repeating-linear-gradient(135deg, hsl(var(--neutral-100)) 0, hsl(var(--neutral-100)) 2px, hsl(var(--neutral-200)) 2px, hsl(var(--neutral-200)) 4px)',
       },
+      overflow: {
+        initial: 'initial',
+      },
     },
   },
-  plugins: [import('tailwindcss-animate')],
+  plugins: [
+    animate,
+    function ({ addUtilities }: { addUtilities: (utilities: Record<string, any>) => void }) {
+      addUtilities({
+        '.overflow-initial': { overflow: 'initial' },
+        '.overflow-inherit': { overflow: 'inherit' },
+      });
+    },
+  ],
 };

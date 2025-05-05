@@ -1,4 +1,4 @@
-import { json, bool, num, str, port, ValidatorSpec, cleanEnv, CleanedEnv } from 'envalid';
+import { bool, CleanedEnv, cleanEnv, json, num, port, str, ValidatorSpec } from 'envalid';
 import { StringifyEnv } from '@novu/shared';
 
 export function validateEnv() {
@@ -9,8 +9,6 @@ export type ValidatedEnv = StringifyEnv<CleanedEnv<typeof envValidators>>;
 
 export const envValidators = {
   JWT_SECRET: str(),
-  /** @deprecated - use `MONGO_AUTO_CREATE_INDEXES` instead */
-  AUTO_CREATE_INDEXES: bool({ default: false }),
   MONGO_AUTO_CREATE_INDEXES: bool({ default: false }),
   MONGO_MAX_IDLE_TIME_IN_MS: num({ default: 1000 * 30 }),
   MONGO_MAX_POOL_SIZE: num({ default: 50 }),

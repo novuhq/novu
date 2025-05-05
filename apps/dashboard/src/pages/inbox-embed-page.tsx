@@ -20,7 +20,7 @@ export function InboxEmbedPage() {
         <div className="w-full">
           <div className="flex flex-1 flex-col overflow-hidden">
             <UsecasePlaygroundHeader
-              title="Integrate in less than 4 minutes"
+              title="Integrate <Inbox /> in less than 4 minutes"
               description="You're just a couple steps away from your having a fully functional notification center in your app."
               skipPath={ROUTES.WELCOME}
               onSkip={() =>
@@ -30,10 +30,7 @@ export function InboxEmbedPage() {
               }
             />
           </div>
-
-          <div>
-            <InboxEmbed />
-          </div>
+          <InboxEmbed />
         </div>
       </AuthCard>
     </AnimatedPage>

@@ -2,7 +2,6 @@ import { Loader } from 'lucide-react';
 import { Card, CardContent } from '../primitives/card';
 import { useState, useEffect } from 'react';
 import { IEnvironment } from '@novu/shared';
-import { API_HOSTNAME, WEBSOCKET_HOSTNAME } from '../../config';
 import { motion } from 'motion/react';
 import { Framework, frameworks } from './framework-guides.instructions';
 import { FrameworkInstructions } from './framework-guides';
@@ -56,61 +55,23 @@ interface InboxFrameworkGuideProps {
   foregroundColor: string;
 }
 
-function getUrlProps(isDefaultApi: boolean, isDefaultWs: boolean): string {
-  const props = [
-    ...(isDefaultApi ? [] : [`backendUrl="${API_HOSTNAME}"`]),
-    ...(isDefaultWs ? [] : [`socketUrl="${WEBSOCKET_HOSTNAME}"`]),
-  ];
-
-  return props.length ? '\n      ' + props.join('\n      ') : '';
-}
-
-function generateInboxComponent(
-  environmentIdentifier: string,
-  subscriberId: string,
-  urlProps: string,
-  primaryColor: string,
-  foregroundColor: string
-): string {
-  return `<Inbox
-      applicationIdentifier="${environmentIdentifier}"
-      subscriberId="${subscriberId}"
-      routerPush={(path: string) => router.push(path)}${urlProps}
-      appearance={{
-        variables: {
-          colorPrimary: "${primaryColor}",
-          colorForeground: "${foregroundColor}"
-        }
-      }}
-    />`;
-}
-
-function generateNovuProvider(environmentIdentifier: string, subscriberId: string, urlProps: string): string {
-  return `<NovuProvider
-      applicationIdentifier="${environmentIdentifier}"
-      subscriberId="${subscriberId}"${urlProps}
-    >
-      <YourCustomInbox />
-    </NovuProvider>`;
-}
-
 function updateFrameworkCode(
   framework: Framework,
-  inboxComponent: string,
-  novuProvider: string,
   environmentIdentifier: string,
-  subscriberId: string
+  subscriberId: string,
+  primaryColor: string,
+  foregroundColor: string
 ): Framework {
   return {
     ...framework,
     installSteps: framework.installSteps.map((step) => ({
       ...step,
       code: step.code
-        ?.replace(/<Inbox[\s\S]*?\/>/, inboxComponent)
-        ?.replace(/<NovuProvider[\s\S]*?<\/NovuProvider>/, novuProvider)
         ?.replace(/YOUR_APP_ID/g, environmentIdentifier)
         ?.replace(/YOUR_APPLICATION_IDENTIFIER/g, environmentIdentifier)
-        ?.replace(/YOUR_SUBSCRIBER_ID/g, subscriberId),
+        ?.replace(/YOUR_SUBSCRIBER_ID/g, subscriberId)
+        ?.replace(/YOUR_PRIMARY_COLOR/g, primaryColor)
+        ?.replace(/YOUR_FOREGROUND_COLOR/g, foregroundColor),
     })),
   };
 }
@@ -127,21 +88,8 @@ export function InboxFrameworkGuide({
   useEffect(() => {
     if (!currentEnvironment?.identifier || !subscriberId) return;
 
-    const isDefaultApi = API_HOSTNAME === 'https://api.novu.co';
-    const isDefaultWs = WEBSOCKET_HOSTNAME === 'https://ws.novu.co';
-
-    const urlProps = getUrlProps(isDefaultApi, isDefaultWs);
-    const inboxComponent = generateInboxComponent(
-      currentEnvironment.identifier,
-      subscriberId,
-      urlProps,
-      primaryColor,
-      foregroundColor
-    );
-    const novuProvider = generateNovuProvider(currentEnvironment.identifier, subscriberId, urlProps);
-
     const updatedFrameworks = frameworks.map((framework) =>
-      updateFrameworkCode(framework, inboxComponent, novuProvider, currentEnvironment.identifier, subscriberId)
+      updateFrameworkCode(framework, currentEnvironment.identifier, subscriberId, primaryColor, foregroundColor)
     );
 
     setSelectedFramework(updatedFrameworks.find((f) => f.name === selectedFramework.name) || updatedFrameworks[0]);

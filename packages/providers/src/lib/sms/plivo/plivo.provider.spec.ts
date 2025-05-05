@@ -35,13 +35,7 @@ describe('PlivoSmsProvider', () => {
     });
 
     expect(createMock).toHaveBeenCalled();
-    expect(createMock).toHaveBeenCalledWith(
-      '+1145678',
-      '+187654',
-      'Test',
-      undefined,
-      undefined,
-    );
+    expect(createMock).toHaveBeenCalledWith('+1145678', '+187654', 'Test', undefined, undefined);
   });
 
   test('should trigger plivo correctly with _passthrough', async () => {
@@ -62,16 +56,10 @@ describe('PlivoSmsProvider', () => {
             dst: '+287654',
           },
         },
-      },
+      }
     );
 
     expect(createMock).toHaveBeenCalled();
-    expect(createMock).toHaveBeenCalledWith(
-      '+1145678',
-      '+287654',
-      'Test',
-      undefined,
-      undefined,
-    );
+    expect(createMock).toHaveBeenCalledWith('+1145678', '+287654', 'Test', undefined, undefined);
   });
 });

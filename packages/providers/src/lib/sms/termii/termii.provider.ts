@@ -21,14 +21,14 @@ export class TermiiSmsProvider extends BaseProvider implements ISmsProvider {
     private config: {
       apiKey?: string;
       from?: string;
-    },
+    }
   ) {
     super();
   }
 
   async sendMessage(
     options: ISmsOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const params = this.transform<SmsParams>(bridgeProviderData, {
       to: options.to,
@@ -72,10 +72,7 @@ export class TermiiSmsProvider extends BaseProvider implements ISmsProvider {
     return [body.message_id];
   }
 
-  parseEventBody(
-    body: any | any[],
-    identifier: string,
-  ): ISMSEventBody | undefined {
+  parseEventBody(body: any | any[], identifier: string): ISMSEventBody | undefined {
     if (Array.isArray(body)) {
       // eslint-disable-next-line no-param-reassign
       body = body.find((item) => item.message_id === identifier);

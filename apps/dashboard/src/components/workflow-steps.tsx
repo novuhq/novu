@@ -12,6 +12,7 @@ export const WorkflowSteps = (props: WorkflowStepsProps) => {
   const sliceFactor = 4;
   let firstSteps: StepTypeEnum[] = [];
   let restSteps: StepTypeEnum[] = [];
+
   if (steps.length > sliceFactor) {
     firstSteps = steps.slice(0, sliceFactor - 1);
     restSteps = steps.slice(sliceFactor - 1);

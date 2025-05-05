@@ -1,0 +1,75 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
+import { Slug, StepTypeEnum, WorkflowOriginEnum } from '@novu/shared';
+import { ControlsMetadataDto } from './controls-metadata.dto';
+import { JSONSchemaDto } from './json-schema.dto';
+import { StepIssuesDto } from './step-issues.dto';
+
+export class StepResponseDto {
+  @ApiProperty({
+    description: 'Controls metadata for the step',
+    type: () => ControlsMetadataDto,
+    required: true,
+  })
+  @ValidateNested()
+  @Type(() => ControlsMetadataDto)
+  controls: ControlsMetadataDto;
+
+  @ApiProperty({
+    description: 'JSON Schema for variables',
+    type: () => JSONSchemaDto, // Use arrow function for type
+  })
+  @ValidateNested() // Consider adding options if needed
+  @Type(() => JSONSchemaDto) // Import class-transformer decorator
+  variables: JSONSchemaDto;
+
+  @ApiProperty({ description: 'Unique identifier of the step' })
+  @IsString()
+  stepId: string;
+
+  @ApiProperty({ description: 'Database identifier of the step' })
+  @IsString()
+  _id: string;
+
+  @ApiProperty({ description: 'Name of the step' })
+  @IsString()
+  name: string;
+
+  @ApiProperty({ description: 'Slug of the step' })
+  @IsString()
+  slug: Slug;
+
+  @ApiProperty({
+    description: 'Type of the step',
+    enum: [...Object.values(StepTypeEnum)],
+    enumName: 'StepTypeEnum',
+  })
+  @IsEnum(StepTypeEnum)
+  type: StepTypeEnum;
+
+  @ApiProperty({
+    description: 'Origin of the step',
+    enum: [...Object.values(WorkflowOriginEnum)],
+    enumName: 'WorkflowOriginEnum',
+  })
+  @IsEnum(WorkflowOriginEnum)
+  origin: WorkflowOriginEnum;
+
+  @ApiProperty({ description: 'Workflow identifier' })
+  @IsString()
+  workflowId: string;
+
+  @ApiProperty({ description: 'Workflow database identifier' })
+  @IsString()
+  workflowDatabaseId: string;
+
+  @ApiPropertyOptional({
+    description: 'Issues associated with the step',
+    type: () => StepIssuesDto,
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => StepIssuesDto)
+  issues?: StepIssuesDto;
+}

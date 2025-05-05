@@ -1,8 +1,16 @@
-import { Control } from 'react-hook-form';
-import { Input, InputField } from '@/components/primitives/input';
+import { LinkButton } from '@/components/primitives/button-link';
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/primitives/form/form';
+import { Input } from '@/components/primitives/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives/popover';
 import { Separator } from '@/components/primitives/separator';
 import { Switch } from '@/components/primitives/switch';
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/primitives/form/form';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
+import { ROUTES } from '@/utils/routes';
+import { ApiServiceLevelEnum, FeatureFlagsKeysEnum } from '@novu/shared';
+import { Control } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
 
 type IntegrationFormData = {
   name: string;
@@ -12,6 +20,8 @@ type IntegrationFormData = {
   check: boolean;
   primary: boolean;
   environmentId: string;
+  removeNovuBranding?: boolean;
+  enableSnooze?: boolean;
 };
 
 type GeneralSettingsProps = {
@@ -19,9 +29,118 @@ type GeneralSettingsProps = {
   mode: 'create' | 'update';
   hidePrimarySelector?: boolean;
   disabledPrimary?: boolean;
+  isForInAppStep?: boolean;
 };
 
-export function GeneralSettings({ control, mode, hidePrimarySelector, disabledPrimary }: GeneralSettingsProps) {
+/**
+ * This switch doesn't actually set any value, it serves as an indicator
+ * informing if the feature is enabled or not.
+ */
+function EnableSnoozeSwitch({ id }: { id: string }) {
+  const { subscription, isLoading } = useFetchSubscription();
+  const navigate = useNavigate();
+  const isFreePlan = subscription?.apiServiceLevel === ApiServiceLevelEnum.FREE;
+  const disabled = isFreePlan || isLoading;
+  const checked = disabled ? false : true; // Always checked for paid plans
+
+  return (
+    <div className="flex items-center">
+      {isFreePlan ? (
+        <Popover modal>
+          <PopoverTrigger asChild>
+            <Switch id={id} checked={checked} />
+          </PopoverTrigger>
+          <PopoverContent className="w-72" align="end" sideOffset={4}>
+            <div className="flex flex-col gap-2 p-1">
+              <div className="flex flex-col gap-1">
+                <h4 className="text-xs font-semibold">Premium Feature</h4>
+                <p className="text-muted-foreground text-xs">
+                  Enable "Remind me later" functionality by upgrading to our paid plans.
+                </p>
+              </div>
+              <div className="flex justify-end">
+                <LinkButton
+                  size="sm"
+                  variant="primary"
+                  onClick={() => navigate(ROUTES.SETTINGS_BILLING + '?utm_source=enable_snooze_prompt')}
+                >
+                  Upgrade Plan
+                </LinkButton>
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
+      ) : (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Switch id={id} checked={true} disabled={true} />
+          </TooltipTrigger>
+          <TooltipContent>This feature is automatically enabled with your plan and stays active.</TooltipContent>
+        </Tooltip>
+      )}
+    </div>
+  );
+}
+
+function NovuBrandingSwitch({
+  id,
+  value,
+  onChange,
+}: {
+  id: string;
+  value: boolean | undefined;
+  onChange: (value: boolean) => void;
+}) {
+  const { subscription, isLoading } = useFetchSubscription();
+  const navigate = useNavigate();
+
+  const isFreePlan = subscription?.apiServiceLevel === ApiServiceLevelEnum.FREE;
+  const disabled = isFreePlan || isLoading;
+  const checked = disabled ? false : value;
+
+  return (
+    <div className="flex items-center">
+      {isFreePlan ? (
+        <Popover modal>
+          <PopoverTrigger asChild>
+            <Switch id={id} checked={checked} />
+          </PopoverTrigger>
+          <PopoverContent className="w-72" align="end" sideOffset={4}>
+            <div className="flex flex-col gap-2 p-1">
+              <div className="flex flex-col gap-1">
+                <h4 className="text-xs font-semibold">Premium Feature</h4>
+                <p className="text-muted-foreground text-xs">
+                  Remove Novu badge from your inbox by upgrading to our paid plans.
+                </p>
+              </div>
+              <div className="flex justify-end">
+                <LinkButton
+                  size="sm"
+                  variant="primary"
+                  onClick={() => navigate(ROUTES.SETTINGS_BILLING + '?utm_source=remove_branding_prompt')}
+                >
+                  Upgrade Plan
+                </LinkButton>
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
+      ) : (
+        <Switch id={id} onCheckedChange={onChange} checked={checked} />
+      )}
+    </div>
+  );
+}
+
+export function GeneralSettings({
+  control,
+  mode,
+  hidePrimarySelector,
+  disabledPrimary,
+  isForInAppStep,
+}: GeneralSettingsProps) {
+  const isSnoozeEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_SNOOZE_ENABLED);
+
   return (
     <div className="border-neutral-alpha-200 bg-background text-foreground-600 mx-0 mt-0 flex flex-col gap-2 rounded-lg border p-3">
       <FormField
@@ -42,6 +161,52 @@ export function GeneralSettings({ control, mode, hidePrimarySelector, disabledPr
           </FormItem>
         )}
       />
+      {isForInAppStep && (
+        <>
+          <FormField
+            control={control}
+            name="removeNovuBranding"
+            render={({ field }) => {
+              return (
+                <FormItem className="flex items-center justify-between gap-2">
+                  <FormLabel
+                    className="text-xs"
+                    htmlFor="removeNovuBranding"
+                    tooltip="If enabled, the Novu badge will be removed from your inbox."
+                  >
+                    Remove Novu badge: <span className="text-text-soft ml-1 text-xs">"Inbox by Novu"</span>
+                  </FormLabel>
+                  <FormControl>
+                    <NovuBrandingSwitch id="removeNovuBranding" value={field.value} onChange={field.onChange} />
+                  </FormControl>
+                </FormItem>
+              );
+            }}
+          />
+          {isSnoozeEnabled && (
+            <FormField
+              control={control}
+              name="enableSnooze"
+              render={() => {
+                return (
+                  <FormItem className="flex items-center justify-between gap-2">
+                    <FormLabel
+                      className="text-xs"
+                      htmlFor="enableSnooze"
+                      tooltip="Enables users to postpone notifications and get reminded at a later time"
+                    >
+                      Enable "Remind me later" functionality
+                    </FormLabel>
+                    <FormControl>
+                      <EnableSnoozeSwitch id="enableSnooze" />
+                    </FormControl>
+                  </FormItem>
+                );
+              }}
+            />
+          )}
+        </>
+      )}
 
       {!hidePrimarySelector && (
         <FormField
@@ -77,13 +242,11 @@ export function GeneralSettings({ control, mode, hidePrimarySelector, disabledPr
         rules={{ required: 'Name is required' }}
         render={({ field }) => (
           <FormItem>
-            <FormLabel className="text-xs" htmlFor="name">
+            <FormLabel className="text-xs" htmlFor="name" required>
               Name
             </FormLabel>
             <FormControl>
-              <InputField>
-                <Input id="name" {...field} />
-              </InputField>
+              <Input id="name" {...field} />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -100,15 +263,13 @@ export function GeneralSettings({ control, mode, hidePrimarySelector, disabledPr
             message: 'Identifier cannot contain spaces',
           },
         }}
-        render={({ field }) => (
+        render={({ field, fieldState }) => (
           <FormItem>
-            <FormLabel className="text-xs" htmlFor="identifier">
+            <FormLabel className="text-xs" htmlFor="identifier" required>
               Identifier
             </FormLabel>
             <FormControl>
-              <InputField>
-                <Input id="identifier" {...field} readOnly={mode === 'update'} />
-              </InputField>
+              <Input id="identifier" {...field} readOnly={mode === 'update'} hasError={!!fieldState.error} />
             </FormControl>
             <FormMessage />
           </FormItem>

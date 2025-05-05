@@ -1,7 +1,7 @@
 import { Slot, Slottable } from '@radix-ui/react-slot';
 import * as React from 'react';
 import { IconType } from 'react-icons';
-import { RiLoader4Line } from 'react-icons/ri';
+import { RiArrowRightSLine, RiLoader4Line } from 'react-icons/ri';
 
 import type { PolymorphicComponentProps } from '@/utils/polymorphic';
 import { recursiveCloneChildren } from '@/utils/recursive-clone-children';
@@ -24,7 +24,8 @@ export const buttonVariants = tv({
     ],
     icon: [
       // base
-      'flex size-5 shrink-0 items-center justify-center',
+      'flex size-5 shrink-0 items-center justify-center transition-transform duration-200',
+      '[&.arrow-right-hover-animation]:group-hover:translate-x-0.5',
     ],
   },
   variants: {
@@ -36,7 +37,7 @@ export const buttonVariants = tv({
     mode: {
       filled: {},
       outline: {
-        root: 'ring-1 ring-inset',
+        root: 'border',
       },
       lighter: {
         root: 'ring-1 ring-inset',
@@ -58,11 +59,11 @@ export const buttonVariants = tv({
         icon: '',
       },
       xs: {
-        root: 'h-8 gap-2.5 rounded-lg px-2 text-label-xs',
+        root: 'h-8 gap-2.5 rounded-lg px-1.5 text-label-xs',
         icon: 'size-4',
       },
       '2xs': {
-        root: 'h-7 gap-2.5 rounded-lg px-2 text-label-xs',
+        root: 'h-7 gap-2.5 rounded-lg px-1.5 text-label-xs',
         icon: 'size-4',
       },
     },
@@ -162,7 +163,7 @@ export const buttonVariants = tv({
       class: {
         root: [
           // base
-          'bg-bg-white text-text-sub shadow-regular-xs ring-stroke-soft',
+          'bg-bg-white text-text-sub shadow-xs ring-stroke-soft',
           // hover
           'hover:bg-bg-weak hover:text-text-strong hover:shadow-none ',
           // focus
@@ -178,7 +179,7 @@ export const buttonVariants = tv({
           // base
           'bg-bg-weak text-text-sub ring-transparent',
           // hover
-          'hover:bg-bg-white hover:text-text-strong hover:shadow-regular-xs hover:ring-stroke-soft',
+          'hover:bg-bg-white hover:text-text-strong hover:shadow-xs hover:ring-stroke-soft',
           // focus
           'focus-visible:bg-bg-white focus-visible:text-text-strong focus-visible:shadow-button-important-focus focus-visible:ring-stroke-strong',
         ],
@@ -351,19 +352,25 @@ ButtonRoot.displayName = BUTTON_ROOT_NAME;
 export type ButtonProps = React.ComponentPropsWithoutRef<typeof ButtonRoot> & {
   leadingIcon?: IconType;
   trailingIcon?: IconType;
+  asChild?: boolean;
 };
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ children, leadingIcon: LeadingIcon, trailingIcon: TrailingIcon, ...rest }, forwardedRef) => {
+  ({ leadingIcon: LeadingIcon, trailingIcon: TrailingIcon, children, asChild, ...rest }, ref) => {
+    const isArrowRight = TrailingIcon === RiArrowRightSLine;
+
     return (
-      <ButtonRoot ref={forwardedRef} {...rest}>
+      <ButtonRoot ref={ref} asChild={asChild} {...rest}>
         {LeadingIcon && <ButtonIcon as={LeadingIcon} />}
         <Slottable>{children}</Slottable>
-        {TrailingIcon && <ButtonIcon as={TrailingIcon} />}
+        {TrailingIcon && (
+          <ButtonIcon className={isArrowRight ? 'arrow-right-hover-animation' : undefined} as={TrailingIcon} />
+        )}
       </ButtonRoot>
     );
   }
 );
+
 Button.displayName = 'Button';
 
 function ButtonIcon<T extends React.ElementType>({
@@ -379,6 +386,7 @@ function ButtonIcon<T extends React.ElementType>({
 
   return <Component className={icon({ class: className })} {...rest} />;
 }
+
 ButtonIcon.displayName = BUTTON_ICON_NAME;
 
-export { Button, ButtonIcon as ButtonIcon, ButtonRoot as Root };
+export { Button, ButtonIcon, ButtonRoot };

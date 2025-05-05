@@ -3,7 +3,7 @@ import { expect } from 'chai';
 import { Novu } from '@novu/api';
 import { expectSdkExceptionGeneric, initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-describe('Topic creation - /topics (POST)', async () => {
+describe('Topic creation - /topics (POST) #novu-v2', async () => {
   let session: UserSession;
   let novuClient: Novu;
 
@@ -16,10 +16,10 @@ describe('Topic creation - /topics (POST)', async () => {
   it('should throw validation error for missing request payload information', async () => {
     const { body } = await session.testAgent.post('/v1/topics').send({});
 
-    expect(body.statusCode).to.equal(400);
-    expect(body.message.find((i) => i.includes('key'))).to.be.ok;
-    expect(body.message.find((i) => i.includes('name'))).to.be.ok;
-    expect(body.message).to.eql([
+    expect(body.statusCode).to.equal(422);
+    expect(body.errors.general.messages.find((i) => i.includes('key'))).to.be.ok;
+    expect(body.errors.general.messages.find((i) => i.includes('name'))).to.be.ok;
+    expect(body.errors.general.messages).to.eql([
       'key should not be null or undefined',
       'key must be a string',
       'name should not be null or undefined',
@@ -59,6 +59,7 @@ describe('Topic creation - /topics (POST)', async () => {
           key: topicKey,
           name: topicName,
         },
+        undefined,
         { retryCodes: ['404'] }
       )
     );

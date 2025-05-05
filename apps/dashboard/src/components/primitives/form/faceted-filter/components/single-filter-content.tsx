@@ -1,9 +1,9 @@
-import { RadioGroup, RadioGroupItem } from '../../../radio-group';
-import { Label } from '../../../label';
-import { FilterOption, SizeType } from '../types';
 import { cn } from '../../../../../utils/ui';
-import { BaseFilterContent } from './base-filter-content';
+import { Label } from '../../../label';
+import { RadioGroup, RadioGroupItem } from '../../../radio-group';
 import { useKeyboardNavigation } from '../hooks/use-keyboard-navigation';
+import { FilterOption, SizeType } from '../types';
+import { BaseFilterContent } from './base-filter-content';
 
 interface SingleFilterContentProps {
   inputRef: React.RefObject<HTMLInputElement>;
@@ -59,19 +59,30 @@ export function SingleFilterContent({
       <RadioGroup value={currentValue} onValueChange={onSelect} className={cn('flex flex-col gap-1 p-1')}>
         {options.map((option, index) => {
           const isFocused = index === focusedIndex;
+          const isDisabled = option.disabled;
 
           return (
             <div
               key={option.value}
               className={cn(
-                'flex items-center space-x-2 rounded-[4px] p-1.5',
-                isFocused && 'bg-neutral-50 ring-1 ring-neutral-200'
+                'flex items-center justify-between rounded-[4px] p-1.5',
+                isFocused && 'bg-neutral-50 ring-1 ring-neutral-200',
+                isDisabled && 'cursor-default'
               )}
               onMouseEnter={() => setFocusedIndex(index)}
-              onClick={() => onSelect(option.value)}
+              onClick={() => !isDisabled && onSelect(option.value)}
             >
-              <RadioGroupItem value={option.value} id={option.value} />
-              <Label htmlFor={option.value}>{option.label}</Label>
+              <div className="flex items-center gap-2">
+                <RadioGroupItem value={option.value} id={option.value} disabled={isDisabled} />
+                <Label
+                  className={cn('text-xs font-medium', isDisabled && 'cursor-default')}
+                  htmlFor={option.value}
+                  disabled={isDisabled}
+                >
+                  {option.label}
+                </Label>
+              </div>
+              {option.icon && <option.icon />}
             </div>
           );
         })}

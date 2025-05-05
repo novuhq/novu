@@ -1,8 +1,8 @@
-import { HTMLAttributes } from 'react';
-import { HTMLMotionProps, motion } from 'motion/react';
-import { ChannelTypeEnum, GeneratePreviewResponseDto, PushRenderOutput } from '@novu/shared';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { cn } from '@/utils/ui';
+import { ChannelTypeEnum, GeneratePreviewResponseDto, PushRenderOutput } from '@novu/shared';
+import { HTMLMotionProps, motion } from 'motion/react';
+import { HTMLAttributes } from 'react';
 
 export function PushPreview({
   isPreviewPending,
@@ -46,13 +46,14 @@ type PushSubjectPreviewProps = HTMLAttributes<HTMLDivElement> & {
   subject?: string;
   isPending: boolean;
 };
+
 export const PushSubjectPreview = ({ subject, isPending, className, ...rest }: PushSubjectPreviewProps) => {
   if (isPending) {
     return <Skeleton className="h-3 w-2/3" />;
   }
 
   return (
-    <div className={cn('flex items-center gap-1.5', className)} {...rest}>
+    <div className={cn('flex items-center gap-1.5 whitespace-pre-wrap', className)} {...rest}>
       <div className="flex-1">
         <span className="line-clamp-1 min-h-4 text-xs font-medium">{subject}</span>
       </div>
@@ -65,10 +66,11 @@ type PushBodyPreviewProps = HTMLAttributes<HTMLDivElement> & {
   body?: string;
   isPending: boolean;
 };
+
 export const PushBodyPreview = ({ body, isPending, className, ...rest }: PushBodyPreviewProps) => {
   if (isPending) {
     return (
-      <div className="flex flex-col gap-1" {...rest}>
+      <div className="flex flex-col gap-1 whitespace-pre-wrap" {...rest}>
         <Skeleton className="h-3 w-full" />
         <Skeleton className="h-3 w-2/3" />
       </div>

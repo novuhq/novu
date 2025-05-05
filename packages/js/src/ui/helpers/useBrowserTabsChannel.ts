@@ -9,9 +9,9 @@ export const useBrowserTabsChannel = <T = unknown>({
 }) => {
   const [tabsChannel] = createSignal(new BroadcastChannel(channelName));
 
-  const postMessage = (data: T) => {
+  const postMessage = (args: T) => {
     const channel = tabsChannel();
-    channel.postMessage(data);
+    channel.postMessage(args);
   };
 
   onMount(() => {

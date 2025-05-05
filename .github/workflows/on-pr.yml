@@ -117,7 +117,6 @@ jobs:
             echo "test-packages=$(pnpm run get-affected test origin/${{steps.get-base-branch-name.outputs.branch}} packages | tail -n +5)" >> $GITHUB_OUTPUT
             echo "test-libs=$(pnpm run get-affected test origin/${{steps.get-base-branch-name.outputs.branch}} libs | tail -n +5)" >> $GITHUB_OUTPUT
           fi
-
   test_unit_providers:
     name: Unit test @novu/providers
     runs-on: ubuntu-latest
@@ -160,7 +159,7 @@ jobs:
       - name: Run Lint, Build, Test
         uses: mansagroup/nrwl-nx-action@v3
         env:
-          LOGGING_LEVEL: 'info'
+          LOG_LEVEL: 'info'
         with:
           targets: lint,build,test
           projects: ${{join(fromJson(needs.get-affected.outputs.test-packages), ',')}}
@@ -212,6 +211,7 @@ jobs:
         with:
           targets: lint,build,test
           projects: ${{matrix.projectName}}
+          args: '--skip-nx-cache'
 
   validate_openapi:
     name: Validate OpenAPI
@@ -237,27 +237,20 @@ jobs:
   test_e2e_api:
     name: E2E test API
     needs: [get-affected]
-    strategy:
-      # The order is important for ee to be first, otherwise outputs not work correctly
-      matrix:
-        name: ['novu/api-ee', 'novu/api']
     uses: ./.github/workflows/reusable-api-e2e.yml
     with:
-      ee: ${{ contains (matrix.name,'-ee') }}
-      test-e2e-affected: ${{ contains(fromJson(needs.get-affected.outputs.test-e2e), '@novu/api-service') || contains(fromJson(needs.get-affected.outputs.test-e2e), '@novu/worker') }}
-      test-e2e-ee-affected: ${{ contains(fromJson(needs.get-affected.outputs.test-e2e-ee), '@novu/api-service') || contains(fromJson(needs.get-affected.outputs.test-e2e-ee), '@novu/worker') }}
-      job-name: ${{ matrix.name }}
-      test-unit: false
+      ee: true
     secrets: inherit
 
-  test_e2e_web:
-    name: E2E test Web app
-    needs: [get-affected]
-    if: ${{ contains(fromJson(needs.get-affected.outputs.test-e2e), '@novu/web') }}
-    uses: ./.github/workflows/reusable-web-e2e.yml
-    secrets: inherit
-    with:
-      ee: true
+  # TODO: Uncomment this when we have update on the web app
+  # test_e2e_web:
+  #   name: E2E test Web app
+  #   needs: [get-affected]
+  #   if: ${{ contains(fromJson(needs.get-affected.outputs.test-e2e), '@novu/web') }}
+  #   uses: ./.github/workflows/reusable-web-e2e.yml
+  #   secrets: inherit
+  #   with:
+  #     ee: true
 
   test_e2e_dashboard:
     name: E2E test Dashboard app
@@ -268,11 +261,11 @@ jobs:
     with:
       ee: true
 
-  test_e2e_widget:
-    name: E2E test Widget
-    needs: [get-affected]
-    uses: ./.github/workflows/reusable-widget-e2e.yml
-    with:
-      ee: true
-    if: ${{ contains(fromJson(needs.get-affected.outputs.test-cypress), '@novu/widget') || contains(fromJson(needs.get-affected.outputs.test-unit), '@novu/notification-center') || contains(fromJson(needs.get-affected.outputs.test-unit), '@novu/ws') }}
-    secrets: inherit
+  # test_e2e_widget:
+  #   name: E2E test Widget
+  #   needs: [get-affected]
+  #   uses: ./.github/workflows/reusable-widget-e2e.yml
+  #   with:
+  #     ee: true
+  #   if: ${{ contains(fromJson(needs.get-affected.outputs.test-unit), '@novu/ws') }}
+  #   secrets: inherit

@@ -1,6 +1,6 @@
 {
   "name": "@novu/ee-auth",
-  "version": "2.0.6",
+  "version": "2.0.14",
   "private": true,
   "main": "dist/index.js",
   "scripts": {
@@ -9,18 +9,18 @@
     "build:watch": "node_modules/.bin/tsc -w -p tsconfig.json",
     "lint": "eslint src --no-error-on-unmatched-pattern",
     "test": "echo 'skip test in the ci'",
-    "test-ee": "cross-env TS_NODE_COMPILER_OPTIONS='{\"strictNullChecks\": false}' NODE_ENV=test E2E_RUNNER=true mocha --timeout 10000 --require ts-node/register --exit --file tests/setup.ts src/**/**/*.spec.ts"
+    "test-ee": "cross-env TS_NODE_COMPILER_OPTIONS='{\"strictNullChecks\": false}' NODE_ENV=test mocha --timeout 10000 --require ts-node/register --exit --file tests/setup.ts src/**/**/*.spec.ts"
   },
   "dependencies": {
-    "@clerk/backend": "^1.6.2",
-    "@clerk/clerk-sdk-node": "^5.0.19",
+    "@clerk/backend": "^1.25.2",
+    "@clerk/express": "^1.3.53",
     "@novu/application-generic": "workspace:*",
     "@novu/dal": "workspace:*",
     "@novu/shared": "workspace:*",
     "class-transformer": "0.5.1",
     "class-validator": "0.14.1",
     "jwks-rsa": "^3.1.0",
-    "mongoose": "^7.5.0",
+    "mongoose": "^7.8.4",
     "svix": "^1.24.0"
   },
   "devDependencies": {

@@ -115,8 +115,6 @@ export class ActiveJobsMetricService {
           // eslint-disable-next-line no-promise-executor-return
           return resolve();
         } catch (error) {
-          Logger.error({ error }, 'Error occurred while processing metrics', LOG_CONTEXT);
-
           // eslint-disable-next-line no-promise-executor-return
           return reject(error);
         }

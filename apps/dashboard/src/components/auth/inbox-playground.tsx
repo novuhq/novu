@@ -65,10 +65,10 @@ const formSchema = z.object({
     .nullable(),
 });
 
-const defaultFormValues: InboxPlaygroundFormData = {
+const defaultFormValues = (): InboxPlaygroundFormData => ({
   subject: '**Welcome to Inbox!**',
   body: 'This is your first notification. Customize and explore more features.',
-  primaryColor: '#DD2450',
+  primaryColor: '#7D52F4',
   foregroundColor: '#0E121B',
   selectedStyle: 'popover',
   openAccordion: 'layout',
@@ -80,14 +80,14 @@ const defaultFormValues: InboxPlaygroundFormData = {
     },
   },
   secondaryAction: null,
-};
+});
 
 export function InboxPlayground() {
   const { currentEnvironment } = useEnvironment();
   const form = useForm<InboxPlaygroundFormData>({
     mode: 'onSubmit',
     resolver: zodResolver(formSchema),
-    defaultValues: defaultFormValues,
+    defaultValues: defaultFormValues(),
     shouldFocusError: true,
   });
 
@@ -107,6 +107,7 @@ export function InboxPlayground() {
      */
     const initializeDemoWorkflow = async () => {
       const workflow = data?.workflows.find((workflow) => workflow.workflowId?.includes(ONBOARDING_DEMO_WORKFLOW_ID));
+
       if (!workflow) {
         await createDemoWorkflow({ environment: currentEnvironment! });
       }
@@ -128,6 +129,7 @@ export function InboxPlayground() {
           body: formValues.body,
           primaryActionLabel: formValues.primaryAction?.label || '',
           secondaryActionLabel: formValues.secondaryAction?.label || '',
+          __source: 'inbox-onboarding',
         },
       });
 

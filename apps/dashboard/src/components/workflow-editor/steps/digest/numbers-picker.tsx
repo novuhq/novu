@@ -3,7 +3,6 @@ import { KeyboardEventHandler, useMemo, useRef, useState } from 'react';
 import { RiCornerDownLeftLine } from 'react-icons/ri';
 
 import { Button } from '@/components/primitives/button';
-import { InputFieldPure } from '@/components/primitives/input';
 import { Popover, PopoverContent, PopoverPortal, PopoverTrigger } from '@/components/primitives/popover';
 import TruncatedText from '@/components/truncated-text';
 import { cn } from '@/utils/ui';
@@ -63,9 +62,9 @@ export const NumbersPicker = <T extends string | number>({
     <Popover open={isPopoverOpened}>
       <PopoverTrigger asChild>
         <div className="w-full">
-          <InputFieldPure
+          <div
             ref={inputRef}
-            className="focus:ring-ring ring-offset-background h-7 w-full items-center gap-0.5 rounded-lg p-0 focus-within:border-transparent focus:outline-none focus:ring-2 focus-visible:border-transparent"
+            className="border-1 focus:ring-ring ring-offset-background flex h-7 w-full items-center gap-0.5 rounded-lg border border-neutral-100 p-0 focus-within:border-transparent focus:outline-none focus:ring-2 focus-visible:border-transparent"
             tabIndex={0}
             role="combobox"
             aria-expanded={isPopoverOpened}
@@ -80,7 +79,7 @@ export const NumbersPicker = <T extends string | number>({
             <span className="bg-neutral-alpha-50 ml-auto flex h-full items-center border-l border-l-neutral-100">
               <span className={cn(textClassName)}>{label}</span>
             </span>
-          </InputFieldPure>
+          </div>
         </div>
       </PopoverTrigger>
       <PopoverPortal>

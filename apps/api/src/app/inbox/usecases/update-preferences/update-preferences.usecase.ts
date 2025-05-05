@@ -1,8 +1,6 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import {
   AnalyticsService,
-  GetSubscriberGlobalPreference,
-  GetSubscriberGlobalPreferenceCommand,
   GetSubscriberTemplatePreference,
   GetSubscriberTemplatePreferenceCommand,
   UpsertPreferences,
@@ -23,10 +21,13 @@ import {
   WorkflowPreferences,
   WorkflowPreferencesPartial,
 } from '@novu/shared';
-import { ApiException } from '../../../shared/exceptions/api.exception';
 import { AnalyticsEventsEnum } from '../../utils';
 import { InboxPreference } from '../../utils/types';
 import { UpdatePreferencesCommand } from './update-preferences.command';
+import {
+  GetSubscriberGlobalPreference,
+  GetSubscriberGlobalPreferenceCommand,
+} from '../../../subscribers/usecases/get-subscriber-global-preference';
 
 @Injectable()
 export class UpdatePreferences {
@@ -53,7 +54,7 @@ export class UpdatePreferences {
         throw new NotFoundException(`Workflow with id: ${command.workflowId} is not found`);
       }
       if (workflow.critical) {
-        throw new ApiException(`Critical workflow with id: ${command.workflowId} can not be updated`);
+        throw new BadRequestException(`Critical workflow with id: ${command.workflowId} can not be updated`);
       }
     }
 
@@ -128,6 +129,7 @@ export class UpdatePreferences {
           name: workflow.name,
           critical: workflow.critical,
           tags: workflow.tags,
+          data: workflow.data,
         },
       };
     }

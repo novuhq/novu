@@ -1,8 +1,8 @@
-import { Input } from '../../../input';
 import { cn } from '../../../../../utils/ui';
-import { SizeType } from '../types';
-import { STYLES } from '../styles';
 import { EnterLineIcon } from '../../../../icons/enter-line';
+import { InputPure } from '../../../input';
+import { STYLES } from '../styles';
+import { SizeType } from '../types';
 
 interface FilterInputProps {
   inputRef: React.RefObject<HTMLInputElement>;
@@ -16,12 +16,17 @@ interface FilterInputProps {
 export function FilterInput({ inputRef, value, onChange, placeholder, size, showEnterIcon = false }: FilterInputProps) {
   return (
     <div className="flex items-center gap-2 px-2 py-1">
-      <Input
+      <InputPure
         ref={inputRef}
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        className={cn('w-full', STYLES.size[size].input, STYLES.input.base, STYLES.input.text)}
+        className={cn(
+          'w-full !border-none !shadow-none !ring-0',
+          STYLES.size[size].input,
+          STYLES.input.base,
+          STYLES.input.text
+        )}
       />
       {showEnterIcon && (
         <div className="pointer-events-none shrink-0 rounded-[6px] border border-neutral-200 p-1">

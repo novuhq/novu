@@ -1,6 +1,6 @@
 import { IsDefined, IsObject, IsOptional, IsString, ValidateIf, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
-import { ApiExtraModels, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
+import { ApiExtraModels, ApiHideProperty, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
 import {
   TriggerRecipientsPayload,
   TriggerRecipientsTypeEnum,
@@ -10,6 +10,7 @@ import {
 } from '@novu/shared';
 import { CreateSubscriberRequestDto } from '../../subscribers/dtos';
 import { UpdateTenantRequestDto } from '../../tenant/dtos';
+import { SdkApiProperty } from '../../shared/framework/swagger/sdk.decorators';
 
 export class WorkflowToStepControlValuesDto {
   /**
@@ -47,11 +48,14 @@ export class TopicPayloadDto {
 
 @ApiExtraModels(SubscriberPayloadDto, TenantPayloadDto, TopicPayloadDto)
 export class TriggerEventRequestDto {
-  @ApiProperty({
-    description:
-      'The trigger identifier of the workflow you wish to send. This identifier can be found on the workflow page.',
-    example: 'workflow_identifier',
-  })
+  @SdkApiProperty(
+    {
+      description:
+        'The trigger identifier of the workflow you wish to send. This identifier can be found on the workflow page.',
+      example: 'workflow_identifier',
+    },
+    { nameOverride: 'workflowId' }
+  )
   @IsString()
   @IsDefined()
   name: string;
@@ -74,10 +78,7 @@ export class TriggerEventRequestDto {
   @IsOptional()
   payload?: Record<string, unknown>;
 
-  @ApiPropertyOptional({
-    description: 'A URL to bridge for additional processing.',
-    example: 'https://example.com/bridge',
-  })
+  @ApiHideProperty()
   @IsString()
   @IsOptional()
   bridgeUrl?: string;
@@ -153,6 +154,7 @@ export class TriggerEventRequestDto {
       { type: 'string', description: 'Unique identifier of a subscriber in your systems' },
       { $ref: getSchemaPath(SubscriberPayloadDto) },
     ],
+    required: false,
   })
   @IsOptional()
   @ValidateIf((_, value) => typeof value !== 'string')
@@ -167,6 +169,7 @@ export class TriggerEventRequestDto {
       { type: 'string', description: 'Unique identifier of a tenant in your system' },
       { $ref: getSchemaPath(TenantPayloadDto) },
     ],
+    required: false,
   })
   @IsOptional()
   @ValidateIf((_, value) => typeof value !== 'string')
@@ -174,10 +177,7 @@ export class TriggerEventRequestDto {
   @Type(() => TenantPayloadDto)
   tenant?: TriggerTenantContext;
 
-  @ApiPropertyOptional({
-    description: 'Additional control configurations.',
-    type: WorkflowToStepControlValuesDto,
-  })
+  @ApiHideProperty()
   controls?: WorkflowToStepControlValuesDto;
 }
 

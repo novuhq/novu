@@ -1,5 +1,5 @@
-import * as React from 'react';
 import { Slot } from '@radix-ui/react-slot';
+import * as React from 'react';
 
 import { PolymorphicComponentProps } from '@/utils/polymorphic';
 import { recursiveCloneChildren } from '@/utils/recursive-clone-children';
@@ -139,6 +139,7 @@ function ButtonGroupIcon<T extends React.ElementType>({
 
   return <Component className={icon({ class: className })} {...rest} />;
 }
+
 ButtonGroupIcon.displayName = BUTTON_GROUP_ICON_NAME;
 
-export { ButtonGroupRoot as Root, ButtonGroupItem as Item, ButtonGroupIcon as Icon };
+export { ButtonGroupIcon, ButtonGroupItem, ButtonGroupRoot };

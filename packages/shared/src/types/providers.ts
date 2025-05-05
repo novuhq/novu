@@ -105,6 +105,7 @@ export enum SmsProviderIdEnum {
   BrevoSms = 'brevo-sms',
   EazySms = 'eazy-sms',
   Mobishastra = 'mobishastra',
+  AfroSms = 'afro-message',
 }
 
 export enum ChatProviderIdEnum {
@@ -140,3 +141,11 @@ export type ProvidersIdEnum =
   | PushProviderIdEnum
   | InAppProviderIdEnum
   | ChatProviderIdEnum;
+
+export const ProvidersIdEnumConst = {
+  EmailProviderIdEnum,
+  SmsProviderIdEnum,
+  PushProviderIdEnum,
+  InAppProviderIdEnum,
+  ChatProviderIdEnum,
+};

@@ -1,13 +1,13 @@
 import { Sms } from '@/components/icons';
-import { SmsPreview } from '@/components/workflow-editor/steps/sms/sms-preview';
 import { InlineToast } from '@/components/primitives/inline-toast';
+import { SmsPreview } from '@/components/workflow-editor/steps/sms/sms-preview';
 import { TabsSection } from '@/components/workflow-editor/steps/tabs-section';
-import { ConfigurePreviewAccordion } from '../shared/configure-preview-accordion';
 import { GeneratePreviewResponseDto } from '@novu/shared';
+import { ConfigurePreviewAccordion } from '../shared/configure-preview-accordion';
 
 type SmsEditorPreviewProps = {
   editorValue: string;
-  setEditorValue: (value: string) => void;
+  setEditorValue: (value: string) => Error | null;
   previewStep: () => void;
   previewData?: GeneratePreviewResponseDto;
   isPreviewPending: boolean;

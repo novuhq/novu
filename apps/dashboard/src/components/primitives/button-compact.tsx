@@ -1,10 +1,10 @@
-import * as React from 'react';
 import { Slot } from '@radix-ui/react-slot';
+import * as React from 'react';
+import { IconType } from 'react-icons';
 
 import { PolymorphicComponentProps } from '@/utils/polymorphic';
 import { recursiveCloneChildren } from '@/utils/recursive-clone-children';
 import { tv, type VariantProps } from '@/utils/tv';
-import { IconType } from 'react-icons';
 
 const COMPACT_BUTTON_ROOT_NAME = 'CompactButtonRoot';
 const COMPACT_BUTTON_ICON_NAME = 'CompactButtonIcon';
@@ -27,7 +27,7 @@ export const compactButtonVariants = tv({
       stroke: {
         root: [
           // base
-          'border border-stroke-soft bg-bg-white text-text-sub shadow-regular-xs',
+          'border border-stroke-soft bg-bg-white text-text-sub shadow-xs',
           // hover
           'hover:border-transparent hover:bg-bg-weak hover:text-text-strong hover:shadow-none',
           // focus
@@ -47,7 +47,7 @@ export const compactButtonVariants = tv({
       white: {
         root: [
           // base
-          'bg-bg-white text-text-sub shadow-regular-xs',
+          'bg-bg-white text-text-sub shadow-xs',
           // hover
           'hover:bg-bg-weak hover:text-text-strong',
           // focus
@@ -129,6 +129,7 @@ function CompactButtonIcon<T extends React.ElementType>({
 
   return <Component className={icon({ class: className })} {...rest} />;
 }
+
 CompactButtonIcon.displayName = COMPACT_BUTTON_ICON_NAME;
 
 const CompactButton = React.forwardRef<
@@ -145,4 +146,4 @@ const CompactButton = React.forwardRef<
 });
 CompactButton.displayName = 'CompactButton';
 
-export { CompactButtonRoot as Root, CompactButtonIcon as Icon, CompactButton };
+export { CompactButton, CompactButtonIcon as Icon, CompactButtonRoot as Root };

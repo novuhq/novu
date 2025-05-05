@@ -12,7 +12,12 @@ export const useWebSocketEvent = <E extends SocketEventNames>({
   eventHandler: (args: Events[E]) => void;
 }) => {
   const novu = useNovu();
-  const { postMessage } = useBrowserTabsChannel({ channelName: `nv.${webSocketEvent}`, onMessage });
+  const channelName = `nv_ws_connection:a=${novu.applicationIdentifier}:s=${novu.subscriberId}:e=${webSocketEvent}`;
+
+  const { postMessage } = useBrowserTabsChannel({
+    channelName,
+    onMessage,
+  });
 
   const updateReadCount: EventHandler<Events[E]> = (data) => {
     onMessage(data);
@@ -21,7 +26,7 @@ export const useWebSocketEvent = <E extends SocketEventNames>({
 
   useEffect(() => {
     let cleanup: () => void;
-    const resolveLock = requestLock(`nv.${webSocketEvent}`, () => {
+    const resolveLock = requestLock(channelName, () => {
       cleanup = novu.on(webSocketEvent, updateReadCount);
     });
 

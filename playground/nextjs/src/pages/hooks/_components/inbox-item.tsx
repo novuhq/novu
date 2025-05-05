@@ -76,7 +76,7 @@ export const InboxItem = ({
         </div>
 
         {/* Main content with conditional margin based on avatar */}
-        <div className="ml-auto mt-1 flex flex-grow flex-col gap-2">
+        <div className="ml-auto mt-1 flex grow flex-col gap-2">
           <div className="flex w-full justify-between">
             <span className="text-left text-sm text-gray-800">{notification.subject}</span>
             <span className="text-sm text-gray-400">{formatTime(notification.createdAt)}</span>

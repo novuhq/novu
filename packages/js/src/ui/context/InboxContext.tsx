@@ -18,14 +18,17 @@ type InboxContextType = {
   setIsOpened: Setter<boolean>;
   navigate: (url?: string, target?: Redirect['target']) => void;
   hideBranding: Accessor<boolean>;
+  isDevelopmentMode: Accessor<boolean>;
+  maxSnoozeDurationHours: Accessor<number>;
 };
 
 const InboxContext = createContext<InboxContextType | undefined>(undefined);
 
 const STATUS_TO_FILTER: Record<NotificationStatus, NotificationFilter> = {
-  [NotificationStatus.UNREAD_READ]: { archived: false },
-  [NotificationStatus.UNREAD]: { read: false },
+  [NotificationStatus.UNREAD_READ]: { archived: false, snoozed: false },
+  [NotificationStatus.UNREAD]: { read: false, snoozed: false },
   [NotificationStatus.ARCHIVED]: { archived: true },
+  [NotificationStatus.SNOOZED]: { snoozed: true },
 };
 
 export const DEFAULT_LIMIT = 10;
@@ -47,6 +50,8 @@ export const InboxProvider = (props: InboxProviderProps) => {
     tags: props.tabs.length > 0 ? getTagsFromTab(props.tabs[0]) : [],
   });
   const [hideBranding, setHideBranding] = createSignal(false);
+  const [isDevelopmentMode, setIsDevelopmentMode] = createSignal(false);
+  const [maxSnoozeDurationHours, setMaxSnoozeDurationHours] = createSignal(0);
   const [preferencesFilter, setPreferencesFilter] = createSignal<PreferencesFilter | undefined>(
     props.preferencesFilter
   );
@@ -107,6 +112,8 @@ export const InboxProvider = (props: InboxProviderProps) => {
       }
 
       setHideBranding(data.removeNovuBranding);
+      setIsDevelopmentMode(data.isDevelopmentMode);
+      setMaxSnoozeDurationHours(data.maxSnoozeDurationHours);
     },
   });
 
@@ -126,6 +133,8 @@ export const InboxProvider = (props: InboxProviderProps) => {
         navigate,
         hideBranding,
         preferencesFilter,
+        isDevelopmentMode,
+        maxSnoozeDurationHours,
       }}
     >
       {props.children}

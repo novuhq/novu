@@ -4,8 +4,8 @@ import { IsBoolean, IsDefined, IsEnum } from 'class-validator';
 
 export class ChannelPreference {
   @ApiProperty({
-    type: ChannelTypeEnum,
-    enum: ChannelTypeEnum,
+    enum: [...Object.values(ChannelTypeEnum)],
+    enumName: 'ChannelTypeEnum',
     description: 'The type of channel that is enabled or not',
   })
   @IsDefined()

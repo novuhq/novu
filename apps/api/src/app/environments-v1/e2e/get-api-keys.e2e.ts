@@ -1,8 +1,8 @@
+import { NOVU_ENCRYPTION_SUB_MASK } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import { NOVU_ENCRYPTION_SUB_MASK } from '@novu/shared';
 
-describe('Get Environment API Keys - /environments/api-keys (GET)', async () => {
+describe('Get Environment API Keys - /environments/api-keys (GET) #novu-v2', async () => {
   let session: UserSession;
   before(async () => {
     session = new UserSession();
@@ -10,11 +10,6 @@ describe('Get Environment API Keys - /environments/api-keys (GET)', async () => 
   });
 
   it('should get environment api keys correctly', async () => {
-    const demoEnvironment = {
-      name: 'Hello App',
-    };
-    await session.testAgent.post('/v1/environments').send(demoEnvironment).expect(201);
-
     const { body } = await session.testAgent.get('/v1/environments/api-keys').send();
 
     expect(body.data[0].key).to.not.contains(NOVU_ENCRYPTION_SUB_MASK);

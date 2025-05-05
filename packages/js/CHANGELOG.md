@@ -1,3 +1,194 @@
+## v3.2.0 (2025-04-30)
+
+### 🚀 Features
+
+- **react:** upsert firstName, lastName, and email on session init ([#8142](https://github.com/novuhq/novu/pull/8142))
+
+### ❤️ Thank You
+
+- George Djabarov @djabarovgeorge
+
+## v3.1.0 (2025-04-11)
+
+### 🚀 Features
+
+- **js:** Include CSS in bundle ([#8105](https://github.com/novuhq/novu/pull/8105))
+
+### 🩹 Fixes
+
+- **js,react,nextjs:** Named type exports ([#8084](https://github.com/novuhq/novu/pull/8084))
+- **js:** Fix event triggering ([#8102](https://github.com/novuhq/novu/pull/8102))
+- **js:** inbox align dropdown icons and labels ([4ceed203f3](https://github.com/novuhq/novu/commit/4ceed203f3))
+- **headless:** update Preferences.tsx ([#7928](https://github.com/novuhq/novu/pull/7928))
+
+### ❤️ Thank You
+
+- George Desipris @desiprisg
+
+## v3.0.3 (2025-03-31)
+
+### 🚀 Features
+
+- **root:** add no only github action ([#7692](https://github.com/novuhq/novu/pull/7692))
+
+### 🩹 Fixes
+
+- **api-service:** Remove lock from cached entity 2nd try ([#7979](https://github.com/novuhq/novu/pull/7979))
+- **root:** simplify service dependencies in docker-compose.yml ([#7993](https://github.com/novuhq/novu/pull/7993))
+- **root:** Stop updating lock-file when releasing new packages ([2107336ae2](https://github.com/novuhq/novu/commit/2107336ae2))
+- **api-service:** remove-lock-from-cached-entity ([#7923](https://github.com/novuhq/novu/pull/7923))
+- **root:** add NEW_RELIC_ENABLED to docker community ([#7943](https://github.com/novuhq/novu/pull/7943))
+- **root:** remove healthcheck option in docker-compose.yml ([#7929](https://github.com/novuhq/novu/pull/7929))
+- **js:** inbox align dropdown icons and labels ([4ceed203f3](https://github.com/novuhq/novu/commit/4ceed203f3))
+- **headless:** update Preferences.tsx ([#7928](https://github.com/novuhq/novu/pull/7928))
+- **api-service:** Remove redlock ([#7845](https://github.com/novuhq/novu/pull/7845))
+- **js:** Stop appending / to all fetch requests ([#7922](https://github.com/novuhq/novu/pull/7922))
+- **js:** inbox calculation for the cta unread count when multiple tabs ([#7907](https://github.com/novuhq/novu/pull/7907))
+- **js:** Fix count context filter ([#7905](https://github.com/novuhq/novu/pull/7905))
+- **js:** Fix body color of default notification ([#7904](https://github.com/novuhq/novu/pull/7904))
+- **js:** preferences collapsible state ([#7902](https://github.com/novuhq/novu/pull/7902))
+- **js:** Fix hidden global preferences ([#7901](https://github.com/novuhq/novu/pull/7901))
+- **js:** Generate line heights and adjust actions position ([#7895](https://github.com/novuhq/novu/pull/7895))
+- **js:** fix the bell unread dot ([#7887](https://github.com/novuhq/novu/pull/7887))
+- **js:** Removing tailwind base styles as they are already under .novu ([#7884](https://github.com/novuhq/novu/pull/7884))
+- **js:** Fix infinite scroll behaviour ([#7888](https://github.com/novuhq/novu/pull/7888))
+- **js:** Align pref header, hide preferences with 0 channels ([#7878](https://github.com/novuhq/novu/pull/7878))
+- **api-service:** fix idices not created in mongo-test ([#7857](https://github.com/novuhq/novu/pull/7857))
+- **js:** Fix deprecated JSDoc annotation ([#7873](https://github.com/novuhq/novu/pull/7873))
+- **root:** unhandled promise reject and undefined ff kind ([#7732](https://github.com/novuhq/novu/pull/7732))
+- **api-service:** remove only on e2e ([#7691](https://github.com/novuhq/novu/pull/7691))
+
+### ❤️ Thank You
+
+- Aaron Ritter @Aaron-Ritter
+- Biswajeet Das @BiswaViraj
+- GalTidhar @tatarco
+- George Desipris @desiprisg
+- George Djabarov @djabarovgeorge
+- Himanshu Garg @merrcury
+- Ikko Eltociear Ashimine
+- Pawan Jain
+- Paweł
+- Paweł Tymczuk @LetItRock
+- Sokratis Vidros @SokratisVidros
+
+## 3.0.1 (2025-03-24)
+
+### 🚀 Features
+
+- **js:** create channel per env subscriber ([#7939](https://github.com/novuhq/novu/pull/7939))
+- **js,api-service:** inbox dev mode footer ([#7937](https://github.com/novuhq/novu/pull/7937))
+
+### 🩹 Fixes
+
+- **js:** inbox align dropdown icons and labels ([4ceed203f](https://github.com/novuhq/novu/commit/4ceed203f))
+
+### ❤️ Thank You
+
+- Aaron Ritter @Aaron-Ritter
+- GalTidhar @tatarco
+- George Djabarov @djabarovgeorge
+- Pawan Jain
+- Paweł
+- Paweł Tymczuk @LetItRock
+- Sokratis Vidros @SokratisVidros
+
+# 3.0.0 (2025-03-17)
+
+### 🚀 Features
+
+- **js,react:** inbox subject, body render props ([#7886](https://github.com/novuhq/novu/pull/7886))
+- **js:** better control over socket connection ([#7865](https://github.com/novuhq/novu/pull/7865))
+- **js:** Inbox retheme improvements ([#7867](https://github.com/novuhq/novu/pull/7867))
+- **js:** Inbox retheme ([#7759](https://github.com/novuhq/novu/pull/7759))
+
+### 🩹 Fixes
+
+- **headless:** update Preferences.tsx ([#7928](https://github.com/novuhq/novu/pull/7928))
+- **js:** Stop appending / to all fetch requests ([#7922](https://github.com/novuhq/novu/pull/7922))
+- **js:** inbox calculation for the cta unread count when multiple tabs ([#7907](https://github.com/novuhq/novu/pull/7907))
+- **js:** Fix count context filter ([#7905](https://github.com/novuhq/novu/pull/7905))
+- **js:** Fix body color of default notification ([#7904](https://github.com/novuhq/novu/pull/7904))
+- **js:** preferences collapsible state ([#7902](https://github.com/novuhq/novu/pull/7902))
+- **js:** Fix hidden global preferences ([#7901](https://github.com/novuhq/novu/pull/7901))
+- **js:** Generate line heights and adjust actions position ([#7895](https://github.com/novuhq/novu/pull/7895))
+- **js:** fix the bell unread dot ([#7887](https://github.com/novuhq/novu/pull/7887))
+- **js:** Removing tailwind base styles as they are already under .novu ([#7884](https://github.com/novuhq/novu/pull/7884))
+- **js:** Fix infinite scroll behaviour ([#7888](https://github.com/novuhq/novu/pull/7888))
+- **js:** Align pref header, hide preferences with 0 channels ([#7878](https://github.com/novuhq/novu/pull/7878))
+- **js:** Fix deprecated JSDoc annotation ([#7873](https://github.com/novuhq/novu/pull/7873))
+
+### ❤️ Thank You
+
+- GalTidhar @tatarco
+- George Desipris @desiprisg
+- Ikko Eltociear Ashimine
+- Paweł Tymczuk @LetItRock
+- Sokratis Vidros @SokratisVidros
+
+## 2.6.6 (2025-02-25)
+
+### 🚀 Features
+
+- **api-service:** system limits & update pricing pages ([#7718](https://github.com/novuhq/novu/pull/7718))
+- **root:** add no only github action ([#7692](https://github.com/novuhq/novu/pull/7692))
+
+### 🩹 Fixes
+
+- **root:** unhandled promise reject and undefined ff kind ([#7732](https://github.com/novuhq/novu/pull/7732))
+- **api-service:** remove only on e2e ([#7691](https://github.com/novuhq/novu/pull/7691))
+
+### ❤️ Thank You
+
+- GalTidhar @tatarco
+- George Djabarov @djabarovgeorge
+
+## 2.6.5 (2025-02-07)
+
+### 🚀 Features
+
+- **js:** add powered by link ([#7680](https://github.com/novuhq/novu/pull/7680))
+- Update README.md ([bb63172dd](https://github.com/novuhq/novu/commit/bb63172dd))
+- **readme:** Update README.md ([955cbeab0](https://github.com/novuhq/novu/commit/955cbeab0))
+- quick start updates readme ([88b3b6628](https://github.com/novuhq/novu/commit/88b3b6628))
+- **readme:** update readme ([e5ea61812](https://github.com/novuhq/novu/commit/e5ea61812))
+- **api-service:** add internal sdk ([#7599](https://github.com/novuhq/novu/pull/7599))
+- **dashboard:** step conditions editor ui ([#7502](https://github.com/novuhq/novu/pull/7502))
+- **api:** add query parser ([#7267](https://github.com/novuhq/novu/pull/7267))
+- **api:** Nv 5033 additional removal cycle found unneeded elements ([#7283](https://github.com/novuhq/novu/pull/7283))
+- **api:** Nv 4966 e2e testing happy path - messages ([#7248](https://github.com/novuhq/novu/pull/7248))
+- **dashboard:** Implement email step editor & mini preview ([#7129](https://github.com/novuhq/novu/pull/7129))
+- **api:** converted bulk trigger to use SDK ([#7166](https://github.com/novuhq/novu/pull/7166))
+- **application-generic:** add SUBSCRIBER_WIDGET_JWT_EXPIRATION_TIME env variable ([#7105](https://github.com/novuhq/novu/pull/7105))
+
+### 🩹 Fixes
+
+- **dashboard,js:** Fix line breaks being ignored ([#7675](https://github.com/novuhq/novu/pull/7675))
+- **js:** Await read action in Inbox ([#7653](https://github.com/novuhq/novu/pull/7653))
+- **api:** duplicated subscribers created due to race condition ([#7646](https://github.com/novuhq/novu/pull/7646))
+- **api-service:** add missing environment variable ([#7553](https://github.com/novuhq/novu/pull/7553))
+- **api:** Fix failing API e2e tests ([78c385ec7](https://github.com/novuhq/novu/commit/78c385ec7))
+- **api-service:** E2E improvements ([#7461](https://github.com/novuhq/novu/pull/7461))
+- **novu:** automatically create indexes on startup ([#7431](https://github.com/novuhq/novu/pull/7431))
+- **js:** Inbox DX fixes ([#7396](https://github.com/novuhq/novu/pull/7396))
+- **api:** @novu/api -> @novu/api-service ([#7348](https://github.com/novuhq/novu/pull/7348))
+- **js:** add missing on click event for dropdown tabs ([#7342](https://github.com/novuhq/novu/pull/7342))
+- **js:** Remove @novu/shared dependency" ([#7206](https://github.com/novuhq/novu/pull/7206))
+- **js:** Remove @novu/shared dependency ([#6906](https://github.com/novuhq/novu/pull/6906))
+
+### ❤️ Thank You
+
+- Aminul Islam @AminulBD
+- Dima Grossman @scopsy
+- GalTidhar @tatarco
+- George Desipris @desiprisg
+- George Djabarov @djabarovgeorge
+- Lucky @L-U-C-K-Y
+- Pasha
+- Pawan Jain
+- Paweł Tymczuk @LetItRock
+- Sokratis Vidros @SokratisVidros
+
 ## 2.6.4 (2024-12-24)
 
 ### 🩹 Fixes
@@ -15,7 +206,6 @@
 - Pasha
 - Pawan Jain
 - Sokratis Vidros @SokratisVidros
-
 
 ## 2.6.3 (2024-11-26)
 
@@ -37,7 +227,7 @@
 
 - Updated @novu/client to 2.0.3
 
-### ❤️  Thank You
+### ❤️ Thank You
 
 - Biswajeet Das @BiswaViraj
 - George Desipris @desiprisg
@@ -155,7 +345,7 @@
 - **js:** Export NovuUI from ui directory only ([#5998](https://github.com/novuhq/novu/pull/5998))
 - **js:** Use key prefix instead of id for alpha shades ([#5890](https://github.com/novuhq/novu/pull/5890))
 
-### ❤️  Thank You
+### ❤️ Thank You
 
 - Adam Chmara
 - Biswajeet Das @BiswaViraj

@@ -50,6 +50,7 @@ const MenuItem = ({
           'text-foreground-300 cursor-not-allowed': disabled,
         }
       )}
+      data-testid={`add-step-menu-item-${stepType}`}
     >
       <Icon
         className={`bg-neutral-alpha-50 h-6 w-6 rounded-md p-1 opacity-40`}
@@ -59,7 +60,7 @@ const MenuItem = ({
       />
       <span className="text-xs">{children}</span>
       {disabled && (
-        <Badge kind="pill" variant="soft" className="ml-auto opacity-40">
+        <Badge color="gray" size="md" variant="lighter">
           coming soon
         </Badge>
       )}
@@ -89,7 +90,7 @@ export const AddStepMenu = ({
       }}
     >
       <PopoverTrigger asChild>
-        <span>
+        <span data-testid="add-step-menu-button">
           <Node
             variant="sm"
             className={cn('opacity-0 transition duration-300 ease-out hover:opacity-100', {

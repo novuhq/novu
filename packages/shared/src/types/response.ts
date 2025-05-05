@@ -16,13 +16,13 @@ export interface IPaginatedResponse<T = unknown> {
   page: number;
 }
 
-type KeysOfT<T> = keyof T;
+export type KeysOfT<T> = keyof T;
 
 export class LimitOffsetPaginationDto<T, K extends KeysOfT<T>> {
   limit: string;
   offset: string;
   orderDirection?: DirectionEnum;
-  orderByField?: K;
+  orderBy?: K;
 }
 
 export interface IPaginationParams {

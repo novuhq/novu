@@ -5,6 +5,7 @@ export type ListNotificationsArgs = {
   tags?: string[];
   read?: boolean;
   archived?: boolean;
+  snoozed?: boolean;
   limit?: number;
   after?: string;
   offset?: number;
@@ -17,10 +18,11 @@ export type FilterCountArgs = {
   tags?: string[];
   read?: boolean;
   archived?: boolean;
+  snoozed?: boolean;
 };
 
 export type FiltersCountArgs = {
-  filters: Array<{ tags?: string[]; read?: boolean; archived?: boolean }>;
+  filters: Array<{ tags?: string[]; read?: boolean; archived?: boolean; snoozed?: boolean }>;
 };
 
 export type CountArgs = undefined | FilterCountArgs | FiltersCountArgs;
@@ -53,5 +55,9 @@ export type ReadArgs = BaseArgs | InstanceArgs;
 export type UnreadArgs = BaseArgs | InstanceArgs;
 export type ArchivedArgs = BaseArgs | InstanceArgs;
 export type UnarchivedArgs = BaseArgs | InstanceArgs;
+export type SnoozeArgs = (BaseArgs | InstanceArgs) & {
+  snoozeUntil: string;
+};
+export type UnsnoozeArgs = BaseArgs | InstanceArgs;
 export type CompleteArgs = BaseArgs | InstanceArgs;
 export type RevertArgs = BaseArgs | InstanceArgs;

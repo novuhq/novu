@@ -51,8 +51,15 @@ export class MessageEntity {
 
   read: boolean;
 
+  snoozedUntil?: string;
+
+  deliveredAt?: string[];
+
   archived: boolean;
 
+  /**
+   * todo: remove deleted field after all the soft deletes are removed task nv-5688
+   */
   deleted: boolean;
 
   email?: string;

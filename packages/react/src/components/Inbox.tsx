@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { Subscriber } from '@novu/js';
 import { DefaultProps, DefaultInboxProps, WithChildrenProps } from '../utils/types';
 import { Mounter } from './Mounter';
 import { useNovuUI } from '../context/NovuUIContext';
@@ -13,6 +14,8 @@ const _DefaultInbox = (props: DefaultInboxProps) => {
   const {
     open,
     renderNotification,
+    renderSubject,
+    renderBody,
     renderBell,
     onNotificationClick,
     onPrimaryActionClick,
@@ -25,13 +28,33 @@ const _DefaultInbox = (props: DefaultInboxProps) => {
 
   const mount = React.useCallback(
     (element: HTMLElement) => {
+      if (renderNotification) {
+        return novuUI.mountComponent({
+          name: 'Inbox',
+          props: {
+            open,
+            renderNotification: renderNotification
+              ? (el, notification) => mountElement(el, renderNotification(notification))
+              : undefined,
+            renderBell: renderBell ? (el, unreadCount) => mountElement(el, renderBell(unreadCount)) : undefined,
+            onNotificationClick,
+            onPrimaryActionClick,
+            onSecondaryActionClick,
+            placementOffset,
+            placement,
+          },
+          element,
+        });
+      }
+
       return novuUI.mountComponent({
         name: 'Inbox',
         props: {
           open,
-          renderNotification: renderNotification
-            ? (el, notification) => mountElement(el, renderNotification(notification))
+          renderSubject: renderSubject
+            ? (el, notification) => mountElement(el, renderSubject(notification))
             : undefined,
+          renderBody: renderBody ? (el, notification) => mountElement(el, renderBody(notification)) : undefined,
           renderBell: renderBell ? (el, unreadCount) => mountElement(el, renderBell(unreadCount)) : undefined,
           onNotificationClick,
           onPrimaryActionClick,
@@ -42,7 +65,16 @@ const _DefaultInbox = (props: DefaultInboxProps) => {
         element,
       });
     },
-    [open, renderNotification, renderBell, onNotificationClick, onPrimaryActionClick, onSecondaryActionClick]
+    [
+      open,
+      renderNotification,
+      renderSubject,
+      renderBody,
+      renderBell,
+      onNotificationClick,
+      onPrimaryActionClick,
+      onSecondaryActionClick,
+    ]
   );
 
   return <Mounter mount={mount} />;
@@ -51,7 +83,7 @@ const _DefaultInbox = (props: DefaultInboxProps) => {
 const DefaultInbox = withRenderer(_DefaultInbox);
 
 export const Inbox = React.memo((props: InboxProps) => {
-  const { applicationIdentifier, subscriberId, subscriberHash, backendUrl, socketUrl } = props;
+  const { applicationIdentifier, subscriberHash, backendUrl, socketUrl } = props;
   const novu = useUnsafeNovu();
 
   if (novu) {
@@ -61,10 +93,10 @@ export const Inbox = React.memo((props: InboxProps) => {
   return (
     <InternalNovuProvider
       applicationIdentifier={applicationIdentifier}
-      subscriberId={subscriberId}
       subscriberHash={subscriberHash}
       backendUrl={backendUrl}
       socketUrl={socketUrl}
+      subscriber={buildSubscriber(props)}
       userAgentType="components"
     >
       <InboxChild {...props} />
@@ -94,7 +126,13 @@ const InboxChild = React.memo((props: InboxProps) => {
       tabs,
       preferencesFilter,
       routerPush,
-      options: { applicationIdentifier, subscriberId, subscriberHash, backendUrl, socketUrl },
+      options: {
+        applicationIdentifier,
+        subscriberHash,
+        backendUrl,
+        socketUrl,
+        subscriber: buildSubscriber(props),
+      },
     };
   }, [
     localization,
@@ -106,6 +144,7 @@ const InboxChild = React.memo((props: InboxProps) => {
     subscriberHash,
     backendUrl,
     socketUrl,
+    props.subscriber,
   ]);
 
   if (isWithChildrenProps(props)) {
@@ -119,6 +158,8 @@ const InboxChild = React.memo((props: InboxProps) => {
   const {
     open,
     renderNotification,
+    renderSubject,
+    renderBody,
     renderBell,
     onNotificationClick,
     onPrimaryActionClick,
@@ -132,6 +173,8 @@ const InboxChild = React.memo((props: InboxProps) => {
       <DefaultInbox
         open={open}
         renderNotification={renderNotification}
+        renderSubject={renderSubject}
+        renderBody={renderBody}
         renderBell={renderBell}
         onNotificationClick={onNotificationClick}
         onPrimaryActionClick={onPrimaryActionClick}
@@ -145,4 +188,16 @@ const InboxChild = React.memo((props: InboxProps) => {
 
 function isWithChildrenProps(props: InboxProps): props is WithChildrenProps {
   return 'children' in props;
+}
+
+function buildSubscriber(options: InboxProps): Subscriber {
+  let subscriberObj: Subscriber;
+
+  if (options.subscriber) {
+    subscriberObj = typeof options.subscriber === 'string' ? { subscriberId: options.subscriber } : options.subscriber;
+  } else {
+    subscriberObj = { subscriberId: options.subscriberId as string };
+  }
+
+  return subscriberObj;
 }

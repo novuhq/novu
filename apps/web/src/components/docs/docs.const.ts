@@ -1,7 +1,7 @@
 export const PATHS: Record<string, string> = {
   INTEGRATION_INTRODUCTION: 'integrations/providers/introduction',
   QUICK_START_NEXTJS: 'quickstart/nextjs',
-  WORKFLOW_INTRODUCTION: 'workflow/introduction',
+  WORKFLOW_INTRODUCTION: 'framework/overview',
   CONCEPT_CONTROLS: 'concepts/controls',
   CONCEPT_ENDPOINT: 'concepts/endpoint',
   CONCEPT_WORKFLOWS: 'concepts/workflows',

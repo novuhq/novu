@@ -64,7 +64,7 @@ export const EditorBreadcrumbs = () => {
             {workflow && (
               <BreadcrumbPage className="flex items-center gap-1">
                 {workflow.origin === WorkflowOriginEnum.EXTERNAL ? (
-                  <Badge variant="warning" kind="pill" size="2xs">
+                  <Badge color="yellow" size="sm" variant="lighter">
                     <FaCode className="size-3.5" />
                   </Badge>
                 ) : (

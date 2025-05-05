@@ -5,6 +5,7 @@ import type {
   NotificationFilter,
   PreferencesResponse,
   Session,
+  Subscriber,
 } from '../types';
 import { HttpClient, HttpClientOptions } from './http-client';
 
@@ -23,17 +24,17 @@ export class InboxService {
 
   async initializeSession({
     applicationIdentifier,
-    subscriberId,
     subscriberHash,
+    subscriber,
   }: {
     applicationIdentifier: string;
-    subscriberId: string;
     subscriberHash?: string;
+    subscriber: Subscriber;
   }): Promise<Session> {
     const response = (await this.#httpClient.post(`${INBOX_ROUTE}/session`, {
       applicationIdentifier,
-      subscriberId,
       subscriberHash,
+      subscriber,
     })) as Session;
     this.#httpClient.setAuthorizationToken(response.token);
     this.isSessionInitialized = true;
@@ -48,10 +49,12 @@ export class InboxService {
     offset,
     read,
     tags,
+    snoozed,
   }: {
     tags?: string[];
     read?: boolean;
     archived?: boolean;
+    snoozed?: boolean;
     limit?: number;
     after?: string;
     offset?: number;
@@ -71,6 +74,9 @@ export class InboxService {
     }
     if (archived !== undefined) {
       searchParams.append('archived', `${archived}`);
+    }
+    if (snoozed !== undefined) {
+      searchParams.append('snoozed', `${snoozed}`);
     }
 
     return this.#httpClient.get(INBOX_NOTIFICATIONS_ROUTE, searchParams, false);
@@ -105,6 +111,14 @@ export class InboxService {
 
   unarchive(notificationId: string): Promise<InboxNotification> {
     return this.#httpClient.patch(`${INBOX_NOTIFICATIONS_ROUTE}/${notificationId}/unarchive`);
+  }
+
+  snooze(notificationId: string, snoozeUntil: string): Promise<InboxNotification> {
+    return this.#httpClient.patch(`${INBOX_NOTIFICATIONS_ROUTE}/${notificationId}/snooze`, { snoozeUntil });
+  }
+
+  unsnooze(notificationId: string): Promise<InboxNotification> {
+    return this.#httpClient.patch(`${INBOX_NOTIFICATIONS_ROUTE}/${notificationId}/unsnooze`);
   }
 
   readAll({ tags }: { tags?: string[] }): Promise<void> {

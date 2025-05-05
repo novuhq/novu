@@ -10,6 +10,8 @@ import type {
   RevertArgs,
   UnarchivedArgs,
   UnreadArgs,
+  SnoozeArgs,
+  UnsnoozeArgs,
 } from '../notifications';
 import { Preference } from '../preferences/preference';
 import { ListPreferencesArgs, UpdatePreferencesArgs } from '../preferences/types';
@@ -43,6 +45,8 @@ type NotificationReadEvents = BaseEvents<'notification.read', ReadArgs, Notifica
 type NotificationUnreadEvents = BaseEvents<'notification.unread', UnreadArgs, Notification>;
 type NotificationArchiveEvents = BaseEvents<'notification.archive', ArchivedArgs, Notification>;
 type NotificationUnarchiveEvents = BaseEvents<'notification.unarchive', UnarchivedArgs, Notification>;
+type NotificationSnoozeEvents = BaseEvents<'notification.snooze', SnoozeArgs, Notification>;
+type NotificationUnsnoozeEvents = BaseEvents<'notification.unsnooze', UnsnoozeArgs, Notification>;
 type NotificationCompleteActionEvents = BaseEvents<'notification.complete_action', CompleteArgs, Notification>;
 type NotificationRevertActionEvents = BaseEvents<'notification.revert_action', RevertArgs, Notification>;
 type NotificationsReadAllEvents = BaseEvents<'notifications.read_all', { tags?: string[] }, Notification[]>;
@@ -91,6 +95,8 @@ export type Events = SessionInitializeEvents &
   NotificationUnreadEvents &
   NotificationArchiveEvents &
   NotificationUnarchiveEvents &
+  NotificationSnoozeEvents &
+  NotificationUnsnoozeEvents &
   NotificationCompleteActionEvents &
   NotificationRevertActionEvents &
   NotificationsReadAllEvents &
@@ -103,6 +109,8 @@ export type NotificationEvents = keyof (NotificationReadEvents &
   NotificationUnreadEvents &
   NotificationArchiveEvents &
   NotificationUnarchiveEvents &
+  NotificationSnoozeEvents &
+  NotificationUnsnoozeEvents &
   NotificationCompleteActionEvents &
   NotificationRevertActionEvents &
   NotificationsReadAllEvents &

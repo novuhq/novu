@@ -11,10 +11,7 @@ import { MailtrapClient, Address, Mail } from 'mailtrap';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
-export class MailtrapEmailProvider
-  extends BaseProvider
-  implements IEmailProvider
-{
+export class MailtrapEmailProvider extends BaseProvider implements IEmailProvider {
   id = EmailProviderIdEnum.Mailtrap;
   protected casing: CasingEnum = CasingEnum.SNAKE_CASE;
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
@@ -24,7 +21,7 @@ export class MailtrapEmailProvider
     private config: {
       apiKey: string;
       from: string;
-    },
+    }
   ) {
     super();
     this.mailtrapClient = new MailtrapClient({
@@ -32,9 +29,7 @@ export class MailtrapEmailProvider
     });
   }
 
-  async checkIntegration(
-    options: IEmailOptions,
-  ): Promise<ICheckIntegrationResponse> {
+  async checkIntegration(options: IEmailOptions): Promise<ICheckIntegrationResponse> {
     try {
       const result = await this.sendWithMailtrap(options);
 
@@ -54,7 +49,7 @@ export class MailtrapEmailProvider
 
   async sendMessage(
     options: IEmailOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const response = await this.sendWithMailtrap(options, bridgeProviderData);
 
@@ -64,10 +59,7 @@ export class MailtrapEmailProvider
     };
   }
 
-  private sendWithMailtrap(
-    options: IEmailOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
-  ) {
+  private sendWithMailtrap(options: IEmailOptions, bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}) {
     return this.mailtrapClient.send(
       this.transform<Mail>(bridgeProviderData, {
         to: options.to.map(this.mapAddress),
@@ -82,7 +74,7 @@ export class MailtrapEmailProvider
           content: attachment.file,
           type: attachment.mime,
         })),
-      }).body,
+      }).body
     );
   }
 

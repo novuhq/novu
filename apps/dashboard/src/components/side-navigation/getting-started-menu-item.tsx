@@ -6,7 +6,7 @@ import { useUser } from '@clerk/clerk-react';
 import { motion } from 'motion/react';
 import { RiCloseFill, RiQuestionLine, RiSparkling2Fill } from 'react-icons/ri';
 import { useOnboardingSteps } from '../../hooks/use-onboarding-steps';
-import { Badge } from '../primitives/badge';
+import { Badge, BadgeIcon } from '../primitives/badge';
 import { CompactButton } from '../primitives/button-compact';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip';
 import { NavigationLink } from './navigation-link';
@@ -48,11 +48,7 @@ export function GettingStartedMenuItem() {
         <RiQuestionLine className="size-4" />
         <span>Getting started</span>
 
-        <Badge
-          variant="soft"
-          kind="pill"
-          className="bg-primary/10 text-primary inline-flex items-center gap-0.5 px-1 py-0.5 leading-4"
-        >
+        <Badge color="red" size="md" variant="lighter">
           <motion.div
             variants={{
               initial: { scale: 1, rotate: 0, opacity: 1 },
@@ -68,7 +64,7 @@ export function GettingStartedMenuItem() {
               },
             }}
           >
-            <RiSparkling2Fill className="h-4 w-4" />
+            <BadgeIcon as={RiSparkling2Fill} />
           </motion.div>
           <span className="text-xs">
             {completedSteps}/{totalSteps}

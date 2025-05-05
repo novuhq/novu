@@ -1,35 +1,33 @@
 import { useState } from 'react';
 import { RiEyeLine, RiEyeOffLine } from 'react-icons/ri';
-import { AUTOCOMPLETE_PASSWORD_MANAGERS_OFF } from '../../utils/constants';
-import { CompactButton } from './button-compact';
-import { Input, InputField } from './input';
+import { CopyButton } from './copy-button';
+import { Input, InputProps } from './input';
 
-interface SecretInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
+interface SecretInputProps extends Omit<InputProps, 'onChange'> {
   value: string;
   onChange: (value: string) => void;
+  copyButton?: boolean;
 }
 
-export function SecretInput({ className, value, onChange, ...props }: SecretInputProps) {
+export function SecretInput({ className, value, onChange, copyButton = false, ...props }: SecretInputProps) {
   const [revealed, setRevealed] = useState(false);
 
   return (
-    <InputField className="flex overflow-hidden pr-0">
-      <Input
-        type={revealed ? 'text' : 'password'}
-        {...AUTOCOMPLETE_PASSWORD_MANAGERS_OFF}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        {...props}
-      />
-      <CompactButton
-        type="button"
-        variant="ghost"
-        icon={revealed ? RiEyeOffLine : RiEyeLine}
-        className="text-foreground-400 h-9 w-9 px-0 hover:bg-transparent"
-        onClick={() => setRevealed(!revealed)}
-      >
-        <span className="sr-only">{revealed ? 'Hide' : 'Show'} password</span>
-      </CompactButton>
-    </InputField>
+    <Input
+      type={revealed ? 'text' : 'password'}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      {...props}
+      inlineTrailingNode={
+        <button type="button" onClick={() => setRevealed(!revealed)}>
+          {revealed ? (
+            <RiEyeOffLine className="text-text-soft group-has-[disabled]:text-text-disabled size-5" />
+          ) : (
+            <RiEyeLine className="text-text-soft group-has-[disabled]:text-text-disabled size-5" />
+          )}
+        </button>
+      }
+      trailingNode={copyButton ? <CopyButton valueToCopy={value ?? ''} /> : null}
+    />
   );
 }

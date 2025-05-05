@@ -7,13 +7,11 @@ test('should trigger sms77 correctly', async () => {
     from: '+1145678',
   });
 
-  const spy = vi
-    .spyOn((provider as any).sms77Client, 'sms')
-    .mockImplementation(async () => {
-      return {
-        messages: [{ id: null }],
-      };
-    });
+  const spy = vi.spyOn((provider as any).sms77Client, 'sms').mockImplementation(async () => {
+    return {
+      messages: [{ id: null }],
+    };
+  });
 
   await provider.sendMessage({
     to: '+187654',
@@ -35,13 +33,11 @@ test('should trigger sms77 correctly with _passthrough', async () => {
     from: '+1145678',
   });
 
-  const spy = vi
-    .spyOn((provider as any).sms77Client, 'sms')
-    .mockImplementation(async () => {
-      return {
-        messages: [{ id: null }],
-      };
-    });
+  const spy = vi.spyOn((provider as any).sms77Client, 'sms').mockImplementation(async () => {
+    return {
+      messages: [{ id: null }],
+    };
+  });
 
   await provider.sendMessage(
     {
@@ -54,7 +50,7 @@ test('should trigger sms77 correctly with _passthrough', async () => {
           json: false,
         },
       },
-    },
+    }
   );
 
   expect(spy).toHaveBeenCalled();

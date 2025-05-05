@@ -39,7 +39,7 @@ export function IntegrationsListPage() {
               <TooltipTrigger>
                 <TabsTrigger value="data-warehouse" variant="regular" disabled>
                   Data{' '}
-                  <Badge kind="pill" size="2xs">
+                  <Badge color="gray" size="sm" variant="lighter">
                     SOON
                   </Badge>
                 </TabsTrigger>

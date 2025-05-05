@@ -17,7 +17,7 @@ describe('QueryParserService', () => {
       const rule: RulesLogic<AdditionalOperation> = {
         and: [
           { '=': [{ var: 'value' }, 42] },
-          { beginsWith: [{ var: 'text' }, 'hello'] },
+          { startsWith: [{ var: 'text' }, 'hello'] },
           { notBetween: [{ var: 'number' }, [1, 5]] },
         ],
       };
@@ -29,7 +29,7 @@ describe('QueryParserService', () => {
 
     describe('Error Handling', () => {
       it('should handle invalid data types gracefully', () => {
-        const rule: RulesLogic<AdditionalOperation> = { beginsWith: [{ var: 'text' }, 123] };
+        const rule: RulesLogic<AdditionalOperation> = { startsWith: [{ var: 'text' }, 123] };
         const data = { text: 'hello' };
         const { result, error } = evaluateRules(rule, data);
         expect(error).to.be.undefined;
@@ -95,9 +95,9 @@ describe('QueryParserService', () => {
       });
     });
 
-    describe('beginsWith operator', () => {
+    describe('startsWith operator', () => {
       it('should return true when string begins with given value', () => {
-        const rule: RulesLogic<AdditionalOperation> = { beginsWith: [{ var: 'text' }, 'hello'] };
+        const rule: RulesLogic<AdditionalOperation> = { startsWith: [{ var: 'text' }, 'hello'] };
         const data = { text: 'hello world' };
         const { result, error } = evaluateRules(rule, data);
         expect(error).to.be.undefined;
@@ -105,7 +105,7 @@ describe('QueryParserService', () => {
       });
 
       it('should return false when string does not begin with given value', () => {
-        const rule: RulesLogic<AdditionalOperation> = { beginsWith: [{ var: 'text' }, 'world'] };
+        const rule: RulesLogic<AdditionalOperation> = { startsWith: [{ var: 'text' }, 'world'] };
         const data = { text: 'hello world' };
         const { result, error } = evaluateRules(rule, data);
         expect(error).to.be.undefined;

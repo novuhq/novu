@@ -1,16 +1,17 @@
 import { Injectable } from '@nestjs/common';
-import {
-  AnalyticsService,
-  GetSubscriberPreference,
-  GetSubscriberPreferenceCommand,
-  GetSubscriberGlobalPreference,
-  GetSubscriberGlobalPreferenceCommand,
-  InstrumentUsecase,
-} from '@novu/application-generic';
+import { AnalyticsService, InstrumentUsecase } from '@novu/application-generic';
 import { PreferenceLevelEnum } from '@novu/shared';
 import { AnalyticsEventsEnum } from '../../utils';
 import { InboxPreference } from '../../utils/types';
 import { GetInboxPreferencesCommand } from './get-inbox-preferences.command';
+import {
+  GetSubscriberPreference,
+  GetSubscriberPreferenceCommand,
+} from '../../../subscribers/usecases/get-subscriber-preference';
+import {
+  GetSubscriberGlobalPreference,
+  GetSubscriberGlobalPreferenceCommand,
+} from '../../../subscribers/usecases/get-subscriber-global-preference';
 
 @Injectable()
 export class GetInboxPreferences {

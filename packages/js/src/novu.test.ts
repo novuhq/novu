@@ -46,9 +46,9 @@ describe('Novu', () => {
       };
 
       const novu = new Novu({ applicationIdentifier, subscriberId });
-      expect(fetch).toHaveBeenNthCalledWith(1, 'https://api.novu.co/v1/inbox/session/', {
+      expect(fetch).toHaveBeenNthCalledWith(1, 'https://api.novu.co/v1/inbox/session', {
         method: 'POST',
-        body: JSON.stringify({ applicationIdentifier, subscriberId }),
+        body: JSON.stringify({ applicationIdentifier, subscriber: { subscriberId } }),
         headers: {
           'Content-Type': 'application/json',
           'Novu-API-Version': '2024-06-26',
@@ -57,7 +57,7 @@ describe('Novu', () => {
       });
 
       const { data } = await novu.notifications.list(options);
-      expect(fetch).toHaveBeenNthCalledWith(2, 'https://api.novu.co/v1/inbox/notifications/?limit=10', {
+      expect(fetch).toHaveBeenNthCalledWith(2, 'https://api.novu.co/v1/inbox/notifications?limit=10', {
         method: 'GET',
         body: undefined,
         headers: {

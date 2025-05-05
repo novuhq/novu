@@ -1,12 +1,17 @@
-import { BadRequestException, ConflictException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { CommunityOrganizationRepository, IntegrationEntity, IntegrationRepository } from '@novu/dal';
+import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  CommunityOrganizationRepository,
+  IntegrationEntity,
+  IntegrationRepository,
+  OrganizationEntity,
+} from '@novu/dal';
 import {
   AnalyticsService,
   buildIntegrationKey,
   encryptCredentials,
-  GetFeatureFlag,
-  GetFeatureFlagCommand,
   InvalidateCacheService,
+  FeatureFlagsService,
+  PinoLogger,
 } from '@novu/application-generic';
 import { ApiServiceLevelEnum, CHANNELS_WITH_PRIMARY, FeatureFlagsKeysEnum } from '@novu/shared';
 
@@ -22,9 +27,12 @@ export class UpdateIntegration {
     private invalidateCache: InvalidateCacheService,
     private integrationRepository: IntegrationRepository,
     private analyticsService: AnalyticsService,
-    private getFeatureFlag: GetFeatureFlag,
-    private communityOrganizationRepository: CommunityOrganizationRepository
-  ) {}
+    private featureFlagService: FeatureFlagsService,
+    private communityOrganizationRepository: CommunityOrganizationRepository,
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   private async calculatePriorityAndPrimaryForActive({
     existingIntegration,
@@ -119,7 +127,7 @@ export class UpdateIntegration {
   }
 
   async execute(command: UpdateIntegrationCommand): Promise<IntegrationEntity> {
-    Logger.verbose('Executing Update Integration Command');
+    this.logger.trace('Executing Update Integration Command');
 
     const existingIntegration = await this.integrationRepository.findOne({
       _id: command.integrationId,
@@ -148,14 +156,11 @@ export class UpdateIntegration {
       active: command.active,
     });
 
-    const isInvalidationDisabled = await this.getFeatureFlag.execute(
-      GetFeatureFlagCommand.create({
-        userId: 'system',
-        environmentId: 'system',
-        organizationId: command.organizationId,
-        key: FeatureFlagsKeysEnum.IS_INTEGRATION_INVALIDATION_DISABLED,
-      })
-    );
+    const isInvalidationDisabled = await this.featureFlagService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_INTEGRATION_INVALIDATION_DISABLED,
+      defaultValue: false,
+      organization: { _id: command.organizationId } as OrganizationEntity,
+    });
 
     if (!isInvalidationDisabled) {
       await this.invalidateCache.invalidateQuery({

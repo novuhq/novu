@@ -77,7 +77,7 @@ test('should trigger infobip library correctly - E-mail with _passthrough', asyn
           html: '<div>_passthrough</div>',
         },
       },
-    },
+    }
   );
 
   expect(spy).toHaveBeenCalled();

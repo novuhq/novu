@@ -7,7 +7,7 @@ const SmsChatBubble = ({ children }: { children: React.ReactNode }) => (
     transition={{ duration: 0.3, ease: 'easeOut' }}
     className="relative my-1 inline-block max-w-[90%] rounded-2xl bg-[#e9ecef] px-4 py-2 text-sm text-[#2b2b33] before:absolute before:bottom-0 before:left-[-7px] before:h-5 before:w-5 before:rounded-br-[15px] before:bg-[#e9ecef] before:content-[''] after:absolute after:bottom-0 after:left-[-10px] after:h-5 after:w-[10px] after:rounded-br-[10px] after:bg-white after:content-['']"
   >
-    <div className="line-clamp-4 min-h-4 overflow-hidden break-words text-xs">{children}</div>
+    <div className="line-clamp-4 min-h-4 overflow-hidden whitespace-pre-wrap break-words text-xs">{children}</div>
   </motion.div>
 );
 
@@ -18,7 +18,7 @@ const ErrorChatBubble = ({ children }: { children: React.ReactNode }) => (
     transition={{ duration: 0.3, ease: 'easeOut' }}
     className="relative my-1 inline-block max-w-[90%] rounded-2xl bg-[#FEE4E2] px-4 py-2 text-sm text-[#D92D20] before:absolute before:bottom-0 before:left-[-7px] before:h-5 before:w-5 before:rounded-br-[15px] before:bg-[#FEE4E2] before:content-[''] after:absolute after:bottom-0 after:left-[-10px] after:h-5 after:w-[10px] after:rounded-br-[10px] after:bg-white after:content-['']"
   >
-    <div className="line-clamp-4 overflow-hidden break-words text-xs">{children}</div>
+    <div className="line-clamp-4 overflow-hidden whitespace-pre-wrap break-words text-xs">{children}</div>
   </motion.div>
 );
 

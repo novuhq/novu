@@ -23,7 +23,7 @@ export const UI_SCHEMA: UiSchema = {
 
 export const WIDGETS: RegistryWidgetsType = {
   TextWidget: TextWidget,
-  URLWidget: (props: ComponentProps<typeof TextWidget>) => <TextWidget {...props} singleLine />,
+  URLWidget: (props: ComponentProps<typeof TextWidget>) => <TextWidget {...props} multiline={false} />,
   EmailWidget: TextWidget,
   CheckboxWidget: SwitchWidget,
   SelectWidget: SelectWidget,

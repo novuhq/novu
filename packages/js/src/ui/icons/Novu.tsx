@@ -2,7 +2,7 @@ import { JSX } from 'solid-js';
 
 export const Novu = (props?: JSX.HTMLAttributes<SVGSVGElement>) => {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="12" fill="none" viewBox="0 0 13 12" {...props}>
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 13 12" {...props}>
       <path
         fill="currentColor"
         d="M9.787.98A5.972 5.972 0 006.5 0c-.668 0-1.31.11-1.911.31L9.187 4.94c.221.222.6.065.6-.248V.98z"

@@ -1,14 +1,16 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-  ArrayMaxSize,
   ArrayNotEmpty,
   IsArray,
   IsDefined,
   IsEmail,
   IsLocale,
+  IsNotEmpty,
   IsObject,
   IsOptional,
   IsString,
+  IsTimeZone,
+  Matches,
   ValidateNested,
 } from 'class-validator';
 import { ChatProviderIdEnum, IChannelCredentials, PushProviderIdEnum, SubscriberCustomData } from '@novu/shared';
@@ -62,6 +64,9 @@ export class CreateSubscriberRequestDto {
   })
   @IsString()
   @IsDefined()
+  @IsNotEmpty({
+    message: 'SubscriberId is required',
+  })
   subscriberId: string;
 
   @ApiPropertyOptional({
@@ -106,7 +111,7 @@ export class CreateSubscriberRequestDto {
   @IsOptional()
   locale?: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     type: 'object',
     description: 'An optional payload object that can contain any properties.',
     required: false,
@@ -132,15 +137,23 @@ export class CreateSubscriberRequestDto {
   @ValidateNested({ each: true })
   @Type(() => SubscriberChannelDto)
   channels?: SubscriberChannelDto[];
+
+  @ApiPropertyOptional({
+    type: 'string',
+    description: 'The timezone of the subscriber.',
+  })
+  @IsOptional()
+  @IsTimeZone()
+  timezone?: string;
 }
 
 export class BulkSubscriberCreateDto {
   @ApiProperty({
     description: 'An array of subscribers to be created in bulk.',
+    type: [CreateSubscriberRequestDto], // Specify the type of the array elements
   })
   @IsArray()
   @ArrayNotEmpty()
-  @ArrayMaxSize(500)
   @ValidateNested({ each: true })
   @Type(() => CreateSubscriberRequestDto)
   subscribers: CreateSubscriberRequestDto[];

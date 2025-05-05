@@ -20,9 +20,9 @@ import {
   TemplateVariableTypeEnum,
 } from '@novu/shared';
 import { UserSession } from '@novu/testing';
-import { CreateWorkflowRequestDto, UpdateWorkflowRequestDto } from '../../workflows-v1/dto';
+import { CreateWorkflowRequestDto, UpdateWorkflowRequestDto } from '../../workflows-v1/dtos';
 
-describe('Promote changes', () => {
+describe('Promote changes #novu-v0', () => {
   let session: UserSession;
   let prodEnv: EnvironmentEntity;
   const changeRepository: ChangeRepository = new ChangeRepository();

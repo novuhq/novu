@@ -1,5 +1,6 @@
 import type {
   CreateWorkflowDto,
+  DuplicateWorkflowDto,
   IEnvironment,
   ListWorkflowResponse,
   PatchWorkflowDto,
@@ -13,11 +14,18 @@ import { delV2, getV2, patchV2, post, postV2, putV2 } from './api.client';
 export const getWorkflow = async ({
   environment,
   workflowSlug,
+  targetEnvironmentId,
 }: {
   environment: IEnvironment;
   workflowSlug?: string;
+  targetEnvironmentId?: string;
 }): Promise<WorkflowResponseDto> => {
-  const { data } = await getV2<{ data: WorkflowResponseDto }>(`/workflows/${workflowSlug}`, { environment });
+  const { data } = await getV2<{ data: WorkflowResponseDto }>(
+    `/workflows/${workflowSlug}?${targetEnvironmentId ? `environmentId=${targetEnvironmentId}` : ''}`,
+    {
+      environment,
+    }
+  );
 
   return data;
 };
@@ -27,16 +35,32 @@ export const getWorkflows = async ({
   limit,
   query,
   offset,
+  orderBy,
+  orderDirection,
 }: {
   environment: IEnvironment;
   limit: number;
   offset: number;
   query: string;
+  orderBy?: string;
+  orderDirection?: string;
 }): Promise<ListWorkflowResponse> => {
-  const { data } = await getV2<{ data: ListWorkflowResponse }>(
-    `/workflows?limit=${limit}&offset=${offset}&query=${query}`,
-    { environment }
-  );
+  const params = new URLSearchParams({
+    limit: limit.toString(),
+    offset: offset.toString(),
+    query,
+  });
+
+  if (orderBy) {
+    params.append('orderBy', orderBy);
+  }
+
+  if (orderDirection) {
+    params.append('orderDirection', orderDirection.toUpperCase());
+  }
+
+  const { data } = await getV2<{ data: ListWorkflowResponse }>(`/workflows?${params.toString()}`, { environment });
+
   return data;
 };
 
@@ -70,7 +94,8 @@ export async function triggerWorkflow({
     body: {
       name,
       to,
-      payload: { ...(payload ?? {}), __source: 'dashboard' },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      payload: { ...(payload ?? {}), __source: (payload as any)?.__source ?? 'dashboard' },
     },
   });
 }
@@ -139,4 +164,19 @@ export const patchWorkflow = async ({
   });
 
   return res.data;
+};
+
+export const duplicateWorkflow = async ({
+  environment,
+  workflow,
+  workflowSlug,
+}: {
+  environment: IEnvironment;
+  workflow: DuplicateWorkflowDto;
+  workflowSlug: string;
+}) => {
+  return postV2<{ data: WorkflowResponseDto }>(`/workflows/${workflowSlug}/duplicate`, {
+    environment,
+    body: workflow,
+  });
 };

@@ -3,6 +3,7 @@ const PLUS_AND_DOT = /\.|\+.*$/g;
 const normalizableProviders = {
   'gmail.com': {
     cut: PLUS_AND_DOT,
+    aliasOf: '',
   },
   'googlemail.com': {
     cut: PLUS_AND_DOT,
@@ -10,14 +11,19 @@ const normalizableProviders = {
   },
   'hotmail.com': {
     cut: PLUS_ONLY,
+    aliasOf: '',
   },
   'live.com': {
     cut: PLUS_AND_DOT,
+    aliasOf: '',
   },
   'outlook.com': {
     cut: PLUS_ONLY,
+    aliasOf: '',
   },
-};
+} as const;
+
+type NormalizableProvider = keyof typeof normalizableProviders;
 
 export function normalizeEmail(email: string): string {
   if (typeof email !== 'string') {
@@ -31,16 +37,16 @@ export function normalizeEmail(email: string): string {
     return email;
   }
 
-  let username = emailParts[0];
-  let domain = emailParts[1];
+  let username = emailParts[0] || '';
+  let domain = emailParts[1] || '';
 
   if (normalizableProviders.hasOwnProperty(domain)) {
-    if (normalizableProviders[domain].hasOwnProperty('cut')) {
-      username = username.replace(normalizableProviders[domain].cut, '');
+    if (normalizableProviders[domain as NormalizableProvider].cut) {
+      username = username.replace(normalizableProviders[domain as NormalizableProvider].cut, '');
     }
 
-    if (normalizableProviders[domain].hasOwnProperty('aliasOf')) {
-      domain = normalizableProviders[domain].aliasOf;
+    if (normalizableProviders[domain as NormalizableProvider].aliasOf) {
+      domain = normalizableProviders[domain as NormalizableProvider].aliasOf;
     }
   }
 

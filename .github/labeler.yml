@@ -14,18 +14,8 @@
   - apps/webhook/**/*
 '@novu/dal':
   - libs/dal/**/*
-'@novu/design-system':
-  - libs/design-system/**/*
-'@novu/novui':
-  - libs/novui/**/*
 '@novu/shared':
   - packages/shared/**/*
-'@novu/notification-center':
-  - packages/notification-center/**/*
-'@novu/notification-center-vue':
-  - packages/notification-center-vue/**/*
-'@novu/notification-center-angular':
-  - packages/notification-center-angular/**/*
 'providers':
   - providers/**/*
 'CI/CD':

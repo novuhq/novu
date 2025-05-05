@@ -2,30 +2,32 @@ import {
   JobRepository,
   MessageRepository,
   NotificationEntity,
-  NotificationTemplateEntity,
   NotificationRepository,
+  NotificationTemplateEntity,
   SubscriberRepository,
 } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import { formatISO, subDays, subWeeks, subMonths } from 'date-fns';
+import { formatISO, subDays, subMonths } from 'date-fns';
 import { v4 as uuid } from 'uuid';
+import { Novu } from '@novu/api';
+import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-describe('Get activity stats - /notifications/stats (GET)', async () => {
+describe('Get activity stats - /notifications/stats (GET) #novu-v2', async () => {
   let session: UserSession;
   let template: NotificationTemplateEntity;
   const messageRepository = new MessageRepository();
   const jobRepository = new JobRepository();
   const notificationRepository = new NotificationRepository();
   let subscriberId: string;
-
+  let novuClient: Novu;
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
     template = await session.createTemplate();
     subscriberId = SubscriberRepository.createObjectId();
-
+    novuClient = initNovuClassSdk(session);
     await session.testAgent
       .post('/v1/widgets/session/initialize')
       .send({
@@ -48,15 +50,19 @@ describe('Get activity stats - /notifications/stats (GET)', async () => {
   });
 
   it('should retrieve last month and last week activity', async function () {
-    await session.triggerEvent(template.triggers[0].identifier, subscriberId, {
-      firstName: 'Test',
+    await novuClient.trigger({
+      workflowId: template.triggers[0].identifier,
+      to: subscriberId,
+      payload: { firstName: 'Test' },
     });
 
-    await session.triggerEvent(template.triggers[0].identifier, subscriberId, {
-      firstName: 'Test',
+    await novuClient.trigger({
+      workflowId: template.triggers[0].identifier,
+      to: subscriberId,
+      payload: { firstName: 'Test' },
     });
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
 
     const existing = await messageRepository.find(
       {

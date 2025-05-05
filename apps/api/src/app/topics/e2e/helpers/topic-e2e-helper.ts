@@ -6,8 +6,6 @@ import { GetTopicResponseDto } from '@novu/api/models/components';
 import { TopicId, TopicKey, TopicName } from '../../types';
 import { initNovuClassSdk } from '../../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-const BASE_PATH = '/v1/topics';
-
 export const addSubscribers = async (
   session: UserSession,
   topicKey: TopicKey,

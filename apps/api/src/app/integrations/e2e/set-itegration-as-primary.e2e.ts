@@ -9,7 +9,7 @@ import {
   PushProviderIdEnum,
 } from '@novu/shared';
 
-describe('Set Integration As Primary - /integrations/:integrationId/set-primary (POST)', function () {
+describe('Set Integration As Primary - /integrations/:integrationId/set-primary (POST) #novu-v2', function () {
   let session: UserSession;
   const integrationRepository = new IntegrationRepository();
 

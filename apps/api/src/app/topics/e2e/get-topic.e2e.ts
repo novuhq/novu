@@ -3,7 +3,7 @@ import { expect } from 'chai';
 import { Novu } from '@novu/api';
 import { expectSdkExceptionGeneric, initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-describe('Get a topic - /topics/:topicKey (GET)', async () => {
+describe('Get a topic - /topics/:topicKey (GET) #novu-v2', async () => {
   let session: UserSession;
   let novuClient: Novu;
 

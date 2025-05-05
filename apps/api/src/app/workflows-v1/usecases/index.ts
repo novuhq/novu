@@ -2,9 +2,12 @@ import {
   CreateWorkflow,
   DeleteWorkflowUseCase,
   GetWorkflowByIdsUseCase,
+  GetWorkflowWithPreferencesUseCase,
+  ResourceValidatorService,
   UpdateWorkflow,
 } from '@novu/application-generic';
 
+import { CommunityOrganizationRepository } from '@novu/dal';
 import { GetActiveIntegrationsStatus } from './get-active-integrations-status/get-active-integrations-status.usecase';
 import { ChangeTemplateActiveStatus } from './change-template-active-status/change-template-active-status.usecase';
 import { GetNotificationTemplates } from './get-notification-templates/get-notification-templates.usecase';
@@ -16,11 +19,14 @@ export const USE_CASES = [
   GetActiveIntegrationsStatus,
   ChangeTemplateActiveStatus,
   GetWorkflowByIdsUseCase,
+  GetWorkflowWithPreferencesUseCase,
   CreateWorkflow,
   UpdateWorkflow,
+  ResourceValidatorService,
   DeleteWorkflowUseCase,
   GetNotificationTemplates,
   GetNotificationTemplate,
   DeleteNotificationTemplate,
   GetWorkflowVariables,
+  CommunityOrganizationRepository,
 ];

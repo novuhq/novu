@@ -21,7 +21,7 @@ export const Period = ({
 }) => {
   return (
     <Select onValueChange={onPeriodChange} defaultValue={PeriodValues.MINUTE} disabled={isDisabled} value={value}>
-      <SelectTrigger size="sm" className={cn('w-full gap-1 text-xs')}>
+      <SelectTrigger size="2xs" className={cn('w-full gap-1 text-xs')}>
         <SelectValue />
       </SelectTrigger>
       <SelectContent

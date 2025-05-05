@@ -38,7 +38,7 @@ export const ConfirmationModal = ({
     <Dialog modal open={open} onOpenChange={onOpenChange}>
       <DialogPortal>
         <DialogOverlay />
-        <DialogContent className="sm:max-w-[440px]">
+        <DialogContent className="overflow-hidden sm:max-w-[440px]">
           <div className="flex items-start gap-4 self-stretch">
             <div className="bg-warning/10 flex items-center justify-center gap-2 rounded-[10px] p-2">
               <RiAlertFill className="text-warning size-6" />

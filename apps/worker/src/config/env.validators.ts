@@ -1,5 +1,5 @@
-import { json, port, str, num, ValidatorSpec, makeValidator, bool, CleanedEnv, cleanEnv, url } from 'envalid';
 import { DEFAULT_NOTIFICATION_RETENTION_DAYS, FeatureFlagsKeysEnum, StringifyEnv } from '@novu/shared';
+import { bool, CleanedEnv, cleanEnv, json, makeValidator, num, port, str, url, ValidatorSpec } from 'envalid';
 
 export function validateEnv() {
   return cleanEnv(process.env, envValidators);
@@ -31,7 +31,6 @@ export const envValidators = {
   MAX_NOVU_INTEGRATION_MAIL_REQUESTS: num({ default: 300 }),
   NOVU_EMAIL_INTEGRATION_API_KEY: str({ default: '' }),
   STORAGE_SERVICE: str({ default: undefined }),
-  METRICS_SERVICE: str({ default: '' }),
   REDIS_HOST: str(),
   REDIS_PORT: port(),
   REDIS_PASSWORD: str({ default: undefined }),
@@ -45,8 +44,6 @@ export const envValidators = {
   REDIS_CACHE_KEEP_ALIVE: str({ default: undefined }),
   REDIS_CACHE_FAMILY: str({ default: undefined }),
   REDIS_CACHE_KEY_PREFIX: str({ default: undefined }),
-  /** @deprecated - use `MONGO_AUTO_CREATE_INDEXES` instead */
-  AUTO_CREATE_INDEXES: bool({ default: false }),
   MONGO_AUTO_CREATE_INDEXES: bool({ default: false }),
   MONGO_MAX_IDLE_TIME_IN_MS: num({ default: 1000 * 30 }),
   MONGO_MAX_POOL_SIZE: num({ default: 50 }),

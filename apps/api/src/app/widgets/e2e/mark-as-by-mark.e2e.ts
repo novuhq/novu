@@ -1,7 +1,7 @@
-import { expect } from 'chai';
 import axios from 'axios';
+import { expect } from 'chai';
 
-import { UserSession } from '@novu/testing';
+import { Novu } from '@novu/api';
 import {
   MessageEntity,
   MessageRepository,
@@ -10,8 +10,10 @@ import {
   SubscriberRepository,
 } from '@novu/dal';
 import { ChannelTypeEnum, MessagesStatusEnum } from '@novu/shared';
+import { UserSession } from '@novu/testing';
+import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-describe('Mark as Seen - /widgets/messages/mark-as (POST)', async () => {
+describe('Mark as Seen - /widgets/messages/mark-as (POST) #novu-v0', async () => {
   const messageRepository = new MessageRepository();
   const subscriberRepository = new SubscriberRepository();
   let session: UserSession;
@@ -20,12 +22,13 @@ describe('Mark as Seen - /widgets/messages/mark-as (POST)', async () => {
   let subscriberToken: string;
   let subscriber: SubscriberEntity;
   let message: MessageEntity;
-
+  let novuClient: Novu;
   before(async () => {
     session = new UserSession();
     await session.initialize();
     subscriberId = SubscriberRepository.createObjectId();
     template = await session.createTemplate();
+    novuClient = initNovuClassSdk(session);
 
     const { body } = await session.testAgent
       .post('/v1/widgets/session/initialize')
@@ -42,8 +45,8 @@ describe('Mark as Seen - /widgets/messages/mark-as (POST)', async () => {
   });
 
   beforeEach(async () => {
-    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
-    await session.awaitRunningJobs(template._id);
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await session.waitForJobCompletion(template._id);
 
     message = await getMessage(session, messageRepository, subscriber);
 
@@ -197,5 +200,5 @@ async function getSubscriber(
 }
 
 async function pruneMessages(messageRepository) {
-  await messageRepository.deleteMany({});
+  await messageRepository.delete({});
 }

@@ -1,19 +1,15 @@
 import { FilterQuery } from 'mongoose';
 import { SoftDeleteModel } from 'mongoose-delete';
 
-import { BaseRepository } from '../base-repository';
-import { NotificationTemplate } from './notification-template.schema';
-import { NotificationTemplateDBModel, NotificationTemplateEntity } from './notification-template.entity';
+import { DirectionEnum } from '@novu/shared';
 import { DalException } from '../../shared';
 import type { EnforceEnvOrOrgIds } from '../../types/enforce';
+import { BaseRepository } from '../base-repository';
 import { EnvironmentRepository } from '../environment';
+import { NotificationTemplateDBModel, NotificationTemplateEntity } from './notification-template.entity';
+import { NotificationTemplate } from './notification-template.schema';
 
 type NotificationTemplateQuery = FilterQuery<NotificationTemplateDBModel> & EnforceEnvOrOrgIds;
-// eslint-disable-next-line @typescript-eslint/naming-convention
-export interface FindByIdQuery {
-  id: string;
-  environmentId: string;
-}
 
 export class NotificationTemplateRepository extends BaseRepository<
   NotificationTemplateDBModel,
@@ -38,6 +34,7 @@ export class NotificationTemplateRepository extends BaseRepository<
 
     return this.mapEntity(item);
   }
+
   async findAllByTriggerIdentifier(environmentId: string, identifier: string): Promise<NotificationTemplateEntity[]> {
     const requestQuery: NotificationTemplateQuery = {
       _environmentId: environmentId,
@@ -50,16 +47,27 @@ export class NotificationTemplateRepository extends BaseRepository<
   }
 
   async findById(id: string, environmentId: string) {
-    return this.findByIdQuery({ id, environmentId });
-  }
-
-  async findByIdQuery(query: FindByIdQuery) {
     const item = await this.MongooseModel.findOne({
-      _id: query.id,
-      _environmentId: query.environmentId,
+      _id: id,
+      _environmentId: environmentId,
     })
       .populate('steps.template')
       .populate('steps.variants.template');
+
+    return this.mapEntity(item);
+  }
+
+  async findByTriggerIdentifierAndUpdate(environmentId: string, triggerIdentifier: string, lastTriggeredAt: Date) {
+    const requestQuery: NotificationTemplateQuery = {
+      _environmentId: environmentId,
+      'triggers.identifier': triggerIdentifier,
+    };
+
+    const item = await this.MongooseModel.findOneAndUpdate(requestQuery, {
+      $set: {
+        lastTriggeredAt,
+      },
+    }).populate('steps.template');
 
     return this.mapEntity(item);
   }
@@ -194,7 +202,9 @@ export class NotificationTemplateRepository extends BaseRepository<
     skip: number = 0,
     limit: number = 10,
     query?: string,
-    excludeNewDashboardWorkflows: boolean = false
+    excludeNewDashboardWorkflows: boolean = false,
+    orderBy: string = 'createdAt',
+    orderDirection: DirectionEnum = DirectionEnum.DESC
   ): Promise<{ totalCount: number; data: NotificationTemplateEntity[] }> {
     const searchQuery: FilterQuery<NotificationTemplateDBModel> = {};
 
@@ -219,7 +229,7 @@ export class NotificationTemplateRepository extends BaseRepository<
       _organizationId: organizationId,
       ...searchQuery,
     })
-      .sort({ createdAt: -1 })
+      .sort({ [orderBy]: orderDirection === DirectionEnum.ASC ? 1 : -1 })
       .skip(skip)
       .limit(limit)
       .populate({ path: 'notificationGroup' })
@@ -258,16 +268,14 @@ export class NotificationTemplateRepository extends BaseRepository<
     const items = await this.MongooseModel.find(requestQuery)
       .populate('steps.template', { type: 1 })
       .populate('notificationGroup')
+      .limit(500) // protective limit
       .read('secondaryPreferred');
 
     return this.mapEntities(items);
   }
 
   async delete(query: NotificationTemplateQuery) {
-    const item = await this.findOne({ _id: query._id, _environmentId: query._environmentId });
-    if (!item) throw new DalException(`Could not find workflow with id ${query._id}`);
-
-    return await this.notificationTemplate.delete({ _id: item._id, _environmentId: item._environmentId });
+    return await this.notificationTemplate.delete({ _id: query._id, _environmentId: query._environmentId });
   }
 
   async findDeleted(query: NotificationTemplateQuery): Promise<NotificationTemplateEntity> {
