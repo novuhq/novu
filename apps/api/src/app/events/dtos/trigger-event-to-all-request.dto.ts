@@ -43,7 +43,7 @@ export class TriggerEventToAllRequestDto {
     type: TriggerOverrides,
     additionalProperties: {
       type: 'object',
-      additionalProperties: true, // Allows any additional properties
+      additionalProperties: true,
     },
     required: false,
   })

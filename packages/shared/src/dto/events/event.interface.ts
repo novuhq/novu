@@ -12,22 +12,16 @@ export type TriggerTenantContext = string | ITenantDefine;
 
 export type TriggerOverrides = {
   providers?: Record<ProvidersIdEnum, Record<string, unknown>>;
-  steps?:
-    | Record<
-        string,
-        {
-          providers: Record<ProvidersIdEnum, Record<string, unknown>>;
-        }
-      >
-    | undefined;
-  [key: string]:
-    | Record<string, Record<string, unknown>>
-    | Record<string, unknown>
-    | Record<
-        string,
-        {
-          providers: Record<ProvidersIdEnum, Record<string, unknown>>;
-        }
-      >
-    | undefined;
+  steps?: Record<
+    string,
+    {
+      providers: Record<ProvidersIdEnum, Record<string, unknown>>;
+    }
+  >;
+  email?: Record<string, unknown>;
+  sms?: Record<string, unknown>;
+  push?: Record<string, unknown>;
+  inApp?: Record<string, unknown>;
+  chat?: Record<string, unknown>;
+  layoutIdentifier?: string;
 };

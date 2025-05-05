@@ -27,9 +27,9 @@ export class WorkflowToStepControlValuesDto {
     type: 'object',
     additionalProperties: {
       type: 'object',
-      additionalProperties: true, // Allows any additional properties
+      additionalProperties: true,
     },
-    required: false, // Indicates that this property is optional
+    required: false,
   })
   steps?: Record<string, Record<string, unknown>>;
 }
@@ -150,9 +150,9 @@ export class TriggerEventRequestDto {
     type: TriggerOverrides,
     additionalProperties: {
       type: 'object',
-      additionalProperties: true, // Allows any additional properties
+      additionalProperties: true,
     },
-    required: false, // Indicates that this property is optional
+    required: false,
   })
   @IsObject()
   @IsOptional()
