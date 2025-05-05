@@ -1,9 +1,9 @@
 import { IsDefined, IsObject, IsOptional, IsString, ValidateIf, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
-import { TriggerOverrides, TriggerRecipientSubscriber, TriggerTenantContext } from '@novu/shared';
+import { TriggerRecipientSubscriber, TriggerTenantContext } from '@novu/shared';
 
-import { SubscriberPayloadDto, TenantPayloadDto } from './trigger-event-request.dto';
+import { SubscriberPayloadDto, TenantPayloadDto, TriggerOverrides } from './trigger-event-request.dto';
 
 export class TriggerEventToAllRequestDto {
   @ApiProperty({
@@ -40,6 +40,12 @@ export class TriggerEventToAllRequestDto {
         },
       },
     },
+    type: TriggerOverrides,
+    additionalProperties: {
+      type: 'object',
+      additionalProperties: true, // Allows any additional properties
+    },
+    required: false,
   })
   @IsObject()
   @IsOptional()

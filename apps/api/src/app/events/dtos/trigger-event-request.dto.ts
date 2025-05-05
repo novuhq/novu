@@ -2,11 +2,13 @@ import { IsDefined, IsObject, IsOptional, IsString, ValidateIf, ValidateNested }
 import { Type } from 'class-transformer';
 import { ApiExtraModels, ApiHideProperty, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
 import {
+  EmailProviderIdEnum,
+  ProvidersIdEnum,
+  ProvidersIdEnumConst,
   TriggerRecipientsPayload,
   TriggerRecipientsTypeEnum,
   TriggerRecipientSubscriber,
   TriggerTenantContext,
-  TriggerOverrides,
 } from '@novu/shared';
 import { CreateSubscriberRequestDto } from '../../subscribers/dtos';
 import { UpdateTenantRequestDto } from '../../tenant/dtos';
@@ -46,7 +48,45 @@ export class TopicPayloadDto {
   type: TriggerRecipientsTypeEnum;
 }
 
-@ApiExtraModels(SubscriberPayloadDto, TenantPayloadDto, TopicPayloadDto)
+export class StepsOverrides {
+  @ApiProperty({
+    description: 'Passing the provider id and the provider specific configurations',
+    example: {
+      sendgrid: {
+        templateId: '1234567890',
+      },
+    },
+    type: 'object',
+    additionalProperties: {
+      type: 'object',
+      additionalProperties: true,
+    },
+  })
+  providers: Record<ProvidersIdEnum, Record<string, unknown>>;
+}
+
+export class TriggerOverrides {
+  @ApiProperty({
+    description: 'This could be used to override provider specific configurations',
+    example: {
+      'email-step': {
+        providers: {
+          sendgrid: {
+            templateId: '1234567890',
+          },
+        },
+      },
+    },
+    type: 'object',
+    additionalProperties: {
+      type: 'object',
+      $ref: getSchemaPath(StepsOverrides),
+    },
+  })
+  steps?: Record<string, StepsOverrides>;
+}
+
+@ApiExtraModels(SubscriberPayloadDto, TenantPayloadDto, TopicPayloadDto, StepsOverrides)
 export class TriggerEventRequestDto {
   @SdkApiProperty(
     {
@@ -92,7 +132,7 @@ export class TriggerEventRequestDto {
         },
       },
     },
-    type: 'object',
+    type: TriggerOverrides,
     additionalProperties: {
       type: 'object',
       additionalProperties: true, // Allows any additional properties
