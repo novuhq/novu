@@ -84,6 +84,21 @@ export class TriggerOverrides {
     },
   })
   steps?: Record<string, StepsOverrides>;
+
+  @ApiProperty({
+    description: 'Overrides the provider configuration for the entire workflow and all steps',
+    example: {
+      sendgrid: {
+        templateId: '1234567890',
+      },
+    },
+    type: 'object',
+    additionalProperties: {
+      type: 'object',
+      additionalProperties: true,
+    },
+  })
+  providers?: Record<ProvidersIdEnum, Record<string, unknown>>;
 }
 
 @ApiExtraModels(SubscriberPayloadDto, TenantPayloadDto, TopicPayloadDto, StepsOverrides)

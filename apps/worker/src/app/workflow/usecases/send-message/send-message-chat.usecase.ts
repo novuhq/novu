@@ -450,13 +450,14 @@ export class SendMessageChat extends SendMessageBase {
         ...(command.overrides[integration?.channel] || {}),
         ...(command.overrides[integration?.providerId] || {}),
       };
-      const bridgeProviderData = command.bridgeData?.providers?.[integration.providerId] || {};
-      const triggerOverrides = command.step.stepId
-        ? command.overrides?.steps?.[command.step.stepId]?.providers[integration.providerId] || {}
-        : {};
 
       const result = await chatHandler.send({
-        bridgeProviderData: { ...bridgeProviderData, ...triggerOverrides },
+        bridgeProviderData: this.combineOverrides(
+          command.bridgeData,
+          command.overrides,
+          command.step.stepId,
+          integration.providerId
+        ),
         phoneNumber,
         customData: overrides,
         webhookUrl: chatWebhookUrl,

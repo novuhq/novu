@@ -11,6 +11,7 @@ export type TriggerRecipientsPayload = TriggerRecipientSubscriber | TriggerRecip
 export type TriggerTenantContext = string | ITenantDefine;
 
 export type TriggerOverrides = {
+  providers?: Record<ProvidersIdEnum, Record<string, unknown>>;
   steps?:
     | Record<
         string,
