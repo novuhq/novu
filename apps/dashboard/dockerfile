@@ -35,5 +35,10 @@ WORKDIR /app
 
 COPY --chown=1000:1000 --from=builder /usr/src/app/apps/dashboard/dist /app/dist
 COPY --chown=1000:1000 --from=builder /usr/src/app/apps/dashboard/package.json /app/package.json
+COPY --chown=1000:1000 --from=builder /usr/src/app/apps/dashboard/docker-entrypoint.sh /app/docker-entrypoint.sh  
 
+RUN chmod +x /app/docker-entrypoint.sh
+ENTRYPOINT [ "/app/docker-entrypoint.sh" ]
+# Expose the port the app runs on
+EXPOSE 4000
 CMD [ "http-server", "dist", "-p", "4000" ]
