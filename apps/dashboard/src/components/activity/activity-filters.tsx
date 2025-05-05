@@ -122,7 +122,7 @@ export function ActivityFilters({
           title="Transaction ID"
           value={filters.transactionId}
           onChange={(value) => onFiltersChange({ ...filters, transactionId: value })}
-          placeholder="Search by Transaction ID"
+          placeholder="Search by full Transaction ID"
         />
       )}
 
@@ -133,7 +133,7 @@ export function ActivityFilters({
           title="Subscriber ID"
           value={filters.subscriberId}
           onChange={(value) => onFiltersChange({ ...filters, subscriberId: value })}
-          placeholder="Search by Subscriber ID"
+          placeholder="Search by full Subscriber ID"
         />
       )}
 
@@ -144,7 +144,7 @@ export function ActivityFilters({
           title="Topic Key"
           value={filters.topicKey}
           onChange={(value) => onFiltersChange({ ...filters, topicKey: value })}
-          placeholder="Search by Topic Key"
+          placeholder="Search by full Topic Key"
         />
       )}
 

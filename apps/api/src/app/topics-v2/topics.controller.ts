@@ -239,7 +239,6 @@ export class TopicsController {
     @Param('topicKey') topicKey: string,
     @Body() body: CreateTopicSubscriptionsRequestDto
   ): Promise<CreateTopicSubscriptionsResponseDto> {
-    // Execute the use case to create topic subscriptions
     const result = await this.createTopicSubscriptionsUsecase.execute(
       CreateTopicSubscriptionsCommand.create({
         environmentId: user.environmentId,
