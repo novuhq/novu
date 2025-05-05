@@ -42,6 +42,7 @@ import { SwitchOrganizationCommand } from './usecases/switch-organization/switch
 import { SwitchOrganization } from './usecases/switch-organization/switch-organization.usecase';
 import { AuthService } from './services/auth.service';
 import { SelfHostUsecase } from './usecases/self-host/self-host.usecase';
+import { SelfHostSecretGuard } from './framework/self-host-secret.guard';
 
 @ApiCommonResponses()
 @Controller('/auth')
@@ -192,6 +193,7 @@ export class AuthController {
   }
 
   @Get('/self-hosted')
+  @UseGuards(SelfHostSecretGuard)
   async logMeIn() {
     return this.selfHostUsecase.execute();
   }

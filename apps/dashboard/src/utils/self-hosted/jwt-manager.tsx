@@ -1,10 +1,14 @@
 import { get } from '../../api/api.client';
+import { SELF_HOSTED_SECRET_KEY } from '../../config';
 
 const JWT_STORAGE_KEY = 'self-hosted-jwt';
 
 export async function refreshJwt(): Promise<string | null> {
   try {
-    const result = await get<{ data: { token: string } }>('/auth/self-hosted');
+    const headers: HeadersInit = SELF_HOSTED_SECRET_KEY
+      ? { 'novu-self-hosted-secret-key': SELF_HOSTED_SECRET_KEY }
+      : {};
+    const result = await get<{ data: { token: string } }>('/auth/self-hosted', { headers });
     const token = result?.data?.token;
 
     if (token) {
