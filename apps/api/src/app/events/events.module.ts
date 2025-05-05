@@ -3,7 +3,7 @@ import { TerminusModule } from '@nestjs/terminus';
 
 import { GetNovuProviderCredentials, StorageHelperService } from '@novu/application-generic';
 
-import { CommunityOrganizationRepository } from '@novu/dal';
+import { CommunityOrganizationRepository, CommunityUserRepository } from '@novu/dal';
 import { EventsController } from './events.controller';
 import { USE_CASES } from './usecases';
 
@@ -37,6 +37,6 @@ const PROVIDERS = [GetNovuProviderCredentials, StorageHelperService, CommunityOr
     BridgeModule,
   ],
   controllers: [EventsController],
-  providers: [...PROVIDERS, ...USE_CASES],
+  providers: [...PROVIDERS, ...USE_CASES, CommunityUserRepository],
 })
 export class EventsModule {}

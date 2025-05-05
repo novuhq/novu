@@ -60,6 +60,7 @@ export class SyncExternalOrganization {
         environmentId: devEnv._id,
         organizationId: devEnv._organizationId,
         userId: user._id,
+        name: devEnv.name,
       })
     );
 
@@ -78,6 +79,7 @@ export class SyncExternalOrganization {
         environmentId: prodEnv._id,
         organizationId: prodEnv._organizationId,
         userId: user._id,
+        name: prodEnv.name,
       })
     );
 
