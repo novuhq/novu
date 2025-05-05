@@ -1,5 +1,12 @@
-FROM ghcr.io/novuhq/novu/base:1.0.0 AS builder
+FROM node:20-alpine3.19 AS builder
+RUN apk add g++ make py3-pip
+ENV NX_DAEMON=false
+
 WORKDIR /usr/src/app
+
+RUN apk add --no-cache bash
+RUN npm install -g pnpm@9.11.0 --loglevel notice
+
 COPY .npmrc .
 COPY package.json .
 
@@ -14,13 +21,24 @@ COPY pnpm-workspace.yaml .
 COPY pnpm-lock.yaml .
 
 RUN --mount=type=cache,id=pnpm-store-dashboard,target=/root/.pnpm-store\
-  pnpm install --frozen-lockfile
-COPY [".prettierrc",".prettierignore", "./"]
-RUN pnpm build:dashboard
+  pnpm install --frozen-lockfile --unsafe-perm
 
-FROM alpine:latest
-RUN apk add --no-cache busybox
-WORKDIR /www
-COPY --from=builder /usr/src/app/apps/dashboard/build /www
-EXPOSE 80
-CMD ["busybox", "httpd", "-f", "-p", "80"]
+COPY [".prettierrc",".prettierignore", "./"]
+RUN CI='' pnpm build:dashboard --skip-nx-cache
+
+FROM node:20-alpine
+
+RUN npm install -g http-server --loglevel notice
+
+USER 1000
+WORKDIR /app
+
+COPY --chown=1000:1000 --from=builder /usr/src/app/apps/dashboard/dist /app/dist
+COPY --chown=1000:1000 --from=builder /usr/src/app/apps/dashboard/package.json /app/package.json
+COPY --chown=1000:1000 --from=builder /usr/src/app/apps/dashboard/docker-entrypoint.sh /app/docker-entrypoint.sh  
+
+RUN chmod +x /app/docker-entrypoint.sh
+ENTRYPOINT [ "/app/docker-entrypoint.sh" ]
+# Expose the port the app runs on
+EXPOSE 4000
+CMD [ "http-server", "dist", "-p", "4000" ]
