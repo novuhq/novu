@@ -23,7 +23,7 @@ export function UserButton() {
 
   if (!user) return null;
 
-  const userName = user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : userEmail;
+  const userName = `${user.firstName} ${user.lastName}`;
 
   return (
     <div className="flex-shrink-0">
