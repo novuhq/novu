@@ -23,7 +23,7 @@ export class ProcessBulkTrigger {
             organizationId: command.organizationId,
             identifier: event.name,
             payload: event.payload,
-            overrides: event.overrides || ({} as any),
+            overrides: event.overrides || {},
             to: event.to,
             actor: event.actor,
             tenant: event.tenant,
