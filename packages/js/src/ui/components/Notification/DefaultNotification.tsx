@@ -470,7 +470,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
               <>
                 <Show when={deliveredAt()} fallback={<>{createdAt()}</>}>
                   {(deliveredAt) => (
-                    <Show when={deliveredAt().length > 2}>
+                    <Show when={deliveredAt().length >= 2}>
                       {' '}
                       <For each={deliveredAt().slice(-2)}>
                         {(date, index) => (
