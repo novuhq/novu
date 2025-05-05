@@ -48,6 +48,7 @@ import {
   SetJobAsCompleted,
   SetJobAsFailed,
   UpdateJobStatus,
+  ProcessUnsnoozeJob,
   WebhookFilterBackoffStrategy,
 } from './usecases';
 
@@ -122,6 +123,7 @@ const USE_CASES = [
   SetJobAsFailed,
   TriggerEvent,
   UpdateJobStatus,
+  ProcessUnsnoozeJob,
   WebhookFilterBackoffStrategy,
   GetTopicSubscribersUseCase,
   SubscriberJobBound,

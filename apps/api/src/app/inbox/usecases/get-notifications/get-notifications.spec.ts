@@ -128,6 +128,7 @@ describe('GetNotifications', () => {
       tags: command.tags,
       read: command.read,
       archived: command.archived,
+      snoozed: command.snoozed,
     });
     expect(result.hasMore).to.be.false;
     expect(analyticsServiceMock.mixpanelTrack.calledOnce).to.be.true;

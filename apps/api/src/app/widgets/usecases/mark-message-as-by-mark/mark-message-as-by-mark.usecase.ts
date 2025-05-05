@@ -137,6 +137,8 @@ export function mapMessageEntityToResponseDto(entity: MessageEntity): MessageRes
   responseDto.channel = entity.channel;
   responseDto.read = entity.read;
   responseDto.seen = entity.seen;
+  responseDto.snoozedUntil = entity.snoozedUntil;
+  responseDto.deliveredAt = entity.deliveredAt; // snoozed notifications can have multiple delivery dates
   responseDto.email = entity.email;
   responseDto.phone = entity.phone;
   responseDto.directWebhookUrl = entity.directWebhookUrl;

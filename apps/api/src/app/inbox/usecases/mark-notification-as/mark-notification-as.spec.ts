@@ -120,6 +120,7 @@ describe('MarkNotificationAs', () => {
         ids: [command.notificationId],
         read: command.read,
         archived: command.archived,
+        snoozedUntil: command.snoozedUntil,
       }),
     ]);
     expect(mapToDto(updatedMessageMock)).to.deep.equal(updatedMessage);
@@ -149,6 +150,7 @@ describe('MarkNotificationAs', () => {
         _notification: command.notificationId,
         read: command.read,
         archived: command.archived,
+        snoozedUntil: command.snoozedUntil,
       },
     ]);
   });

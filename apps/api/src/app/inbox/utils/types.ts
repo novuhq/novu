@@ -21,6 +21,9 @@ export type InboxNotification = {
   to: Subscriber;
   isRead: boolean;
   isArchived: boolean;
+  isSnoozed: boolean;
+  snoozedUntil?: string | null;
+  deliveredAt?: string[];
   createdAt: string;
   readAt?: string | null;
   archivedAt?: string | null;
@@ -38,6 +41,7 @@ export type NotificationFilter = {
   tags?: string[];
   read?: boolean;
   archived?: boolean;
+  snoozed?: boolean;
 };
 
 export type Workflow = {

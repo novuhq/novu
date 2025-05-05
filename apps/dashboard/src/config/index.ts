@@ -35,3 +35,5 @@ export const IS_SELF_HOSTED = import.meta.env.VITE_SELF_HOSTED;
 if (!IS_SELF_HOSTED && !CLERK_PUBLISHABLE_KEY) {
   throw new Error('Missing Clerk Publishable Key');
 }
+
+export const SELF_HOSTED_UPGRADE_REDIRECT_URL = 'https://go.novu.co/hosted-upgrade';

@@ -734,7 +734,13 @@
     "Duplicable",
     "Radek",
     "automators", 
-    "VITE"
+    "VITE",
+    "snooze",
+    "unsnooze",
+    "snoozed",
+    "unsnoozed",
+    "automators",
+    "calcom"
   ],
   "flagWords": [],
   "patterns": [

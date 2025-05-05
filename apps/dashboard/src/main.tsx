@@ -3,6 +3,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import './index.css';
+import { Navigate } from 'react-router-dom';
 
 import { ConfigureWorkflow } from '@/components/workflow-editor/configure-workflow';
 import { EditStepConditions } from '@/components/workflow-editor/steps/conditions/edit-step-conditions';
@@ -45,6 +46,7 @@ import { ROUTES } from './utils/routes';
 import { initializeSentry } from './utils/sentry';
 import { overrideZodErrorMap } from './utils/validation';
 import { VercelIntegrationPage } from './pages/vercel-integration-page';
+import { IS_SELF_HOSTED } from './config';
 
 initializeSentry();
 overrideZodErrorMap();
@@ -221,23 +223,23 @@ const router = createBrowserRouter([
           },
           {
             path: ROUTES.SETTINGS,
-            element: <SettingsPage />,
+            element: IS_SELF_HOSTED ? <Navigate to={ROUTES.ROOT} /> : <SettingsPage />,
           },
           {
             path: ROUTES.SETTINGS_ACCOUNT,
-            element: <SettingsPage />,
+            element: IS_SELF_HOSTED ? <Navigate to={ROUTES.ROOT} /> : <SettingsPage />,
           },
           {
             path: ROUTES.SETTINGS_ORGANIZATION,
-            element: <SettingsPage />,
+            element: IS_SELF_HOSTED ? <Navigate to={ROUTES.ROOT} /> : <SettingsPage />,
           },
           {
             path: ROUTES.SETTINGS_TEAM,
-            element: <SettingsPage />,
+            element: IS_SELF_HOSTED ? <Navigate to={ROUTES.ROOT} /> : <SettingsPage />,
           },
           {
             path: ROUTES.SETTINGS_BILLING,
-            element: <SettingsPage />,
+            element: IS_SELF_HOSTED ? <Navigate to={ROUTES.ROOT} /> : <SettingsPage />,
           },
           {
             path: ROUTES.LOCAL_STUDIO_AUTH,

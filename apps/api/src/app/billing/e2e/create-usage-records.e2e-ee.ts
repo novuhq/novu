@@ -94,7 +94,7 @@ describe('CreateUsageRecords #novu-v2', () => {
   };
 
   it('should fetch the platform usage records with usage dates between the start and end date of the previous day', async () => {
-    const mockDate = new Date('2021-01-15T00:00:00Z');
+    const mockDate = new Date('2021-01-15T00:01:00Z');
     const useCase = createUseCase();
 
     await useCase.execute(
@@ -104,7 +104,7 @@ describe('CreateUsageRecords #novu-v2', () => {
     );
 
     const expectedStartDate = new Date('2021-01-14T00:00:00Z');
-    const expectedEndDate = new Date('2021-01-15T00:00:00Z');
+    const expectedEndDate = new Date('2021-01-14T23:59:59.999Z');
 
     expect(getPlatformNotificationUsageStub.lastCall.args).to.deep.equal([
       {
@@ -180,7 +180,7 @@ describe('CreateUsageRecords #novu-v2', () => {
     });
     const useCase = createUseCase();
 
-    const expectedTimestamp = new Date('2021-01-14T00:00:00Z').getTime() / 1000;
+    const expectedTimestamp = new Date('2021-01-15T00:00:00Z').getTime() / 1000;
 
     await useCase.execute(
       CreateUsageRecordsCommand.create({
@@ -265,7 +265,7 @@ describe('CreateUsageRecords #novu-v2', () => {
       })
     );
 
-    const expectedUsageTimestamp = new Date('2021-01-14T00:00:00Z').getTime() / 1000;
+    const expectedUsageTimestamp = new Date('2021-01-15T00:00:00Z').getTime() / 1000;
 
     expect(createUsageRecordStub.getCalls().map(({ args }) => args)).to.deep.equal([
       [
