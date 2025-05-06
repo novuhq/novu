@@ -2,8 +2,6 @@ import { Tokenizer, TokenKind } from 'liquidjs';
 import { useMemo, useCallback } from 'react';
 import { getFilters } from '../constants';
 import { FilterWithParam } from '../types';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 
 type ParsedVariable = {
   parsedName: string;
@@ -22,8 +20,6 @@ export function useVariableParser(
   originalVariable: string;
   parseRawInput: (value: string) => ParsedVariable;
 } {
-  const isEnhancedDigestEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_ENHANCED_DIGEST_ENABLED);
-
   const parseResult = useMemo(() => {
     if (!variable) {
       return {
@@ -37,11 +33,7 @@ export function useVariableParser(
 
     try {
       const cleanVariable = cleanLiquidSyntax(variable);
-      const {
-        parsedName,
-        parsedDefaultValue,
-        parsedFilters = [],
-      } = parseVariableContent(cleanVariable, isEnhancedDigestEnabled);
+      const { parsedName, parsedDefaultValue, parsedFilters = [] } = parseVariableContent(cleanVariable);
 
       if (aliasFor) {
         const variableRest = variable.split('.').slice(1).join('.');
@@ -76,12 +68,9 @@ export function useVariableParser(
         originalVariable: variable,
       };
     }
-  }, [variable, aliasFor, isEnhancedDigestEnabled]);
+  }, [variable, aliasFor]);
 
-  const parseRawInput = useCallback(
-    (value: string) => parseRawLiquid(value, isEnhancedDigestEnabled),
-    [isEnhancedDigestEnabled]
-  );
+  const parseRawInput = useCallback((value: string) => parseRawLiquid(value), []);
 
   return {
     ...parseResult,
@@ -89,7 +78,7 @@ export function useVariableParser(
   };
 }
 
-function parseVariableContent(content: string, isEnhancedDigestEnabled: boolean): ParsedVariable {
+function parseVariableContent(content: string): ParsedVariable {
   // Split by pipe and trim each part
   const [variableName, ...filterParts] = content.split('|').map((part) => part.trim());
   const parsedName = variableName;
@@ -113,7 +102,7 @@ function parseVariableContent(content: string, isEnhancedDigestEnabled: boolean)
       if (
         filter.kind === TokenKind.Filter &&
         filter.name !== 'default' &&
-        getFilters(isEnhancedDigestEnabled).some((t) => t.value === filter.name)
+        getFilters().some((t) => t.value === filter.name)
       ) {
         parsedFilters.push({
           value: filter.name,
@@ -140,8 +129,8 @@ function cleanLiquidSyntax(value: string): string {
   return value.replace(/^\{\{|\}\}$/g, '').trim();
 }
 
-function parseRawLiquid(value: string, isEnhancedDigestEnabled: boolean): ParsedVariable {
+function parseRawLiquid(value: string): ParsedVariable {
   const content = cleanLiquidSyntax(value);
-  const { parsedName, parsedDefaultValue, parsedFilters = [] } = parseVariableContent(content, isEnhancedDigestEnabled);
+  const { parsedName, parsedDefaultValue, parsedFilters = [] } = parseVariableContent(content);
   return { parsedName, parsedDefaultValue, parsedFilters };
 }

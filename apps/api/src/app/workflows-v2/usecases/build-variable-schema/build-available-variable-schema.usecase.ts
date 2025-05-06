@@ -1,15 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import {
-  EnvironmentEntity,
   JsonSchemaFormatEnum,
   JsonSchemaTypeEnum,
   NotificationStepEntity,
   NotificationTemplateEntity,
-  OrganizationEntity,
-  UserEntity,
 } from '@novu/dal';
 import { FeatureFlagsService, Instrument } from '@novu/application-generic';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { computeResultSchema } from '../../shared';
 import { BuildVariableSchemaCommand } from './build-available-variable-schema.command';
 import { parsePayloadSchema } from '../../shared/parse-payload-schema';
@@ -27,13 +23,6 @@ export class BuildVariableSchemaUsecase {
   ) {}
 
   async execute(command: BuildVariableSchemaCommand): Promise<JSONSchemaDto> {
-    const isEnhancedDigestEnabled = await this.featureFlagService.getFlag({
-      user: { _id: command.userId } as UserEntity,
-      environment: { _id: command.environmentId } as EnvironmentEntity,
-      organization: { _id: command.organizationId } as OrganizationEntity,
-      key: FeatureFlagsKeysEnum.IS_ENHANCED_DIGEST_ENABLED,
-      defaultValue: false,
-    });
     const { workflow, stepInternalId } = command;
     const previousSteps = workflow?.steps.slice(
       0,
@@ -82,7 +71,6 @@ export class BuildVariableSchemaUsecase {
         steps: buildPreviousStepsSchema({
           previousSteps,
           payloadSchema: workflow?.payloadSchema,
-          isEnhancedDigestEnabled,
         }),
         payload: await this.resolvePayloadSchema(workflow, payload),
       },
@@ -114,11 +102,9 @@ export class BuildVariableSchemaUsecase {
 function buildPreviousStepsProperties({
   previousSteps,
   payloadSchema,
-  isEnhancedDigestEnabled,
 }: {
   previousSteps: NotificationStepEntity[] | undefined;
   payloadSchema?: JSONSchemaDto;
-  isEnhancedDigestEnabled: boolean;
 }) {
   return (previousSteps || []).reduce(
     (acc, step) => {
@@ -126,7 +112,6 @@ function buildPreviousStepsProperties({
         acc[step.stepId] = computeResultSchema({
           stepType: step.template.type,
           payloadSchema,
-          isEnhancedDigestEnabled,
         });
       }
 
@@ -139,18 +124,15 @@ function buildPreviousStepsProperties({
 function buildPreviousStepsSchema({
   previousSteps,
   payloadSchema,
-  isEnhancedDigestEnabled,
 }: {
   previousSteps: NotificationStepEntity[] | undefined;
   payloadSchema?: JSONSchemaDto;
-  isEnhancedDigestEnabled: boolean;
 }): JSONSchemaDto {
   return {
     type: JsonSchemaTypeEnum.OBJECT,
     properties: buildPreviousStepsProperties({
       previousSteps,
       payloadSchema,
-      isEnhancedDigestEnabled,
     }),
     required: [],
     additionalProperties: false,

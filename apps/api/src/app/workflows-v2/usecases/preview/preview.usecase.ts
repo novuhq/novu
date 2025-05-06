@@ -59,13 +59,6 @@ export class PreviewUsecase {
   async execute(command: PreviewCommand): Promise<GeneratePreviewResponseDto> {
     try {
       const { user, generatePreviewRequestDto } = command;
-      const isEnhancedDigestEnabled = await this.featureFlagService.getFlag({
-        user: { _id: user._id } as UserEntity,
-        environment: { _id: user.environmentId } as EnvironmentEntity,
-        organization: { _id: user.organizationId } as OrganizationEntity,
-        key: FeatureFlagsKeysEnum.IS_ENHANCED_DIGEST_ENABLED,
-        defaultValue: false,
-      });
 
       const {
         stepData,
@@ -127,9 +120,7 @@ export class PreviewUsecase {
         userPayloadExample
       );
 
-      if (isEnhancedDigestEnabled) {
-        previewPayloadExample = enhanceEventCountValue(previewPayloadExample);
-      }
+      previewPayloadExample = enhanceEventCountValue(previewPayloadExample);
 
       const executeOutput = await this.executePreviewUsecase(
         command,
@@ -143,9 +134,7 @@ export class PreviewUsecase {
           preview: executeOutput.outputs as any,
           type: stepData.type as unknown as ChannelTypeEnum,
         },
-        previewPayloadExample: isEnhancedDigestEnabled
-          ? cleanPreviewExamplePayload(previewPayloadExample)
-          : previewPayloadExample,
+        previewPayloadExample: cleanPreviewExamplePayload(previewPayloadExample),
       };
     } catch (error) {
       this.logger.error(

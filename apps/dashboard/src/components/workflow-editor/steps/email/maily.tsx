@@ -1,9 +1,7 @@
 import { HTMLAttributes, useCallback, useMemo, useState } from 'react';
-import { Editor } from '@maily-to/core';
-import { Editor as EditorDigest } from '@maily-to/core-digest';
+import { Editor } from '@maily-to/core-digest';
 import type { Editor as TiptapEditor } from '@tiptap/core';
 import { Editor as TiptapEditorReact } from '@tiptap/react';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useParseVariables } from '@/hooks/use-parse-variables';
@@ -12,7 +10,6 @@ import { cn } from '@/utils/ui';
 import { createEditorBlocks, createExtensions, DEFAULT_EDITOR_CONFIG, MAILY_EMAIL_WIDTH } from './maily-config';
 import { calculateVariables, VariableFrom } from './variables/variables';
 import { RepeatMenuDescription } from './views/repeat-menu-description';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useRemoveGrammarly } from '@/hooks/use-remove-grammarly';
 
 type MailyProps = HTMLAttributes<HTMLDivElement> & {
@@ -23,7 +20,6 @@ type MailyProps = HTMLAttributes<HTMLDivElement> & {
 
 export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
   const { step, digestStepBeforeCurrent } = useWorkflow();
-  const isEnhancedDigestEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_ENHANCED_DIGEST_ENABLED);
   const parsedVariables = useParseVariables(step?.variables, digestStepBeforeCurrent?.stepId);
   const primitives = useMemo(
     () => parsedVariables.primitives.map((v) => ({ name: v.name, required: false })),
@@ -41,8 +37,8 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
   const track = useTelemetry();
 
   const blocks = useMemo(() => {
-    return createEditorBlocks({ track, digestStepBeforeCurrent, isEnhancedDigestEnabled });
-  }, [digestStepBeforeCurrent, isEnhancedDigestEnabled, track]);
+    return createEditorBlocks({ track, digestStepBeforeCurrent });
+  }, [digestStepBeforeCurrent, track]);
   const editorParentRef = useRemoveGrammarly<HTMLDivElement>();
 
   const handleCalculateVariables = useCallback(
@@ -55,18 +51,10 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
         arrays,
         namespaces,
         isAllowedVariable: parsedVariables.isAllowedVariable,
-        isEnhancedDigestEnabled,
         addDigestVariables: !!digestStepBeforeCurrent?.stepId,
       });
     },
-    [
-      primitives,
-      arrays,
-      namespaces,
-      parsedVariables.isAllowedVariable,
-      isEnhancedDigestEnabled,
-      digestStepBeforeCurrent?.stepId,
-    ]
+    [primitives, arrays, namespaces, parsedVariables.isAllowedVariable, digestStepBeforeCurrent?.stepId]
   );
 
   const extensions = useMemo(
@@ -75,9 +63,8 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
         handleCalculateVariables,
         parsedVariables,
         blocks,
-        isEnhancedDigestEnabled,
       }),
-    [handleCalculateVariables, parsedVariables, blocks, isEnhancedDigestEnabled]
+    [handleCalculateVariables, parsedVariables, blocks]
   );
 
   /*
@@ -121,8 +108,6 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
     [onChange]
   );
 
-  const _Editor = isEnhancedDigestEnabled ? EditorDigest : Editor;
-
   return (
     <>
       {overrideTippyBoxStyles()}
@@ -142,7 +127,7 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
         spellCheck={false}
         {...rest}
       >
-        <_Editor
+        <Editor
           key="repeat-block-enabled"
           config={DEFAULT_EDITOR_CONFIG}
           blocks={blocks}

@@ -6,11 +6,9 @@ import { StepTypeEnum } from '@novu/shared';
 export function computeResultSchema({
   stepType,
   payloadSchema,
-  isEnhancedDigestEnabled,
 }: {
   stepType: StepTypeEnum;
   payloadSchema?: JSONSchema;
-  isEnhancedDigestEnabled: boolean;
 }) {
   const mapStepTypeToResult: Record<ChannelStepEnum & ActionStepEnum, JSONSchema> = {
     [ChannelStepEnum.SMS]: channelStepSchemas[ChannelStepEnum.SMS].result,
@@ -19,23 +17,17 @@ export function computeResultSchema({
     [ChannelStepEnum.CHAT]: channelStepSchemas[ChannelStepEnum.CHAT].result,
     [ChannelStepEnum.IN_APP]: channelStepSchemas[ChannelStepEnum.IN_APP].result,
     [ActionStepEnum.DELAY]: actionStepSchemas[ActionStepEnum.DELAY].result,
-    [ActionStepEnum.DIGEST]: buildDigestResult({ payloadSchema, isEnhancedDigestEnabled }),
+    [ActionStepEnum.DIGEST]: buildDigestResult({ payloadSchema }),
   };
 
   return mapStepTypeToResult[stepType];
 }
 
-function buildDigestResult({
-  payloadSchema,
-  isEnhancedDigestEnabled,
-}: {
-  payloadSchema?: JSONSchema;
-  isEnhancedDigestEnabled: boolean;
-}): JSONSchema {
+function buildDigestResult({ payloadSchema }: { payloadSchema?: JSONSchema }): JSONSchema {
   return {
     type: JsonSchemaTypeEnum.OBJECT,
     properties: {
-      ...(isEnhancedDigestEnabled ? { eventCount: { type: JsonSchemaTypeEnum.NUMBER } } : {}),
+      eventCount: { type: JsonSchemaTypeEnum.NUMBER },
       events: {
         type: JsonSchemaTypeEnum.ARRAY,
         properties: {

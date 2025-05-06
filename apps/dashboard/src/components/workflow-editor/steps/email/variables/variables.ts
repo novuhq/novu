@@ -26,7 +26,6 @@ export type CalculateVariablesProps = {
   arrays: Array<LiquidVariable>;
   namespaces: Array<LiquidVariable>;
   isAllowedVariable: IsAllowedVariable;
-  isEnhancedDigestEnabled: boolean;
   addDigestVariables?: boolean;
 };
 
@@ -69,13 +68,11 @@ export const insertVariableToEditor = ({
   query,
   editor,
   isAllowedVariable,
-  isEnhancedDigestEnabled,
   range,
 }: {
   query: string;
   editor: TiptapEditor;
   isAllowedVariable: IsAllowedVariable;
-  isEnhancedDigestEnabled: boolean;
   range?: { from: number; to: number };
 }) => {
   // if we type then we need to close, if we accept suggestion then it has range
@@ -86,7 +83,7 @@ export const insertVariableToEditor = ({
   const queryWithPrefixAndSuffix = '{{' + queryWithoutSuffix + '}}';
   const parsedVariable = parseVariable(queryWithPrefixAndSuffix);
 
-  const aliasFor = resolveRepeatBlockAlias(queryWithoutSuffix, editor, isEnhancedDigestEnabled);
+  const aliasFor = resolveRepeatBlockAlias(queryWithoutSuffix, editor);
   const variable: LiquidVariable = { name: parsedVariable?.name ?? '', aliasFor };
 
   if (!isAllowedVariable(variable)) return;
@@ -115,7 +112,6 @@ export const insertVariableToEditor = ({
 const getVariablesByContext = ({
   editor,
   from,
-  isEnhancedDigestEnabled,
   primitives,
   arrays,
   namespaces,
@@ -123,7 +119,6 @@ const getVariablesByContext = ({
 }: {
   editor: TiptapEditor;
   from: VariableFrom;
-  isEnhancedDigestEnabled: boolean;
   primitives: Array<LiquidVariable>;
   arrays: Array<LiquidVariable>;
   namespaces: Array<LiquidVariable>;
@@ -135,7 +130,7 @@ const getVariablesByContext = ({
   const getVariables = () => {
     const baseVariables = [...primitives, ...namespaces, ...iterables];
 
-    if (!isInRepeatBlock && isEnhancedDigestEnabled && addDigestVariables) {
+    if (!isInRepeatBlock && addDigestVariables) {
       const mappedDigestVariables = DIGEST_VARIABLES.map((variable) => ({
         name: variable.name,
       }));
@@ -143,7 +138,7 @@ const getVariablesByContext = ({
     }
 
     // If we're not in a repeat block, return all variables
-    if (!isInRepeatBlock || !isEnhancedDigestEnabled) {
+    if (!isInRepeatBlock) {
       return baseVariables;
     }
 
@@ -173,7 +168,7 @@ const getVariablesByContext = ({
     // Case 1: Inside repeat block's "each" key input - only allow iterables
     case VariableFrom.RepeatEachKey:
       if (isInRepeatBlock) {
-        updateRepeatBlockChildAliases(editor, isEnhancedDigestEnabled);
+        updateRepeatBlockChildAliases(editor);
         return iterables;
       }
 
@@ -201,7 +196,6 @@ export const calculateVariables = ({
   arrays,
   namespaces,
   isAllowedVariable,
-  isEnhancedDigestEnabled,
   addDigestVariables = false,
 }: CalculateVariablesProps): Array<LiquidVariable> | undefined => {
   const queryWithoutSuffix = query.replace(/}+$/, '');
@@ -210,7 +204,6 @@ export const calculateVariables = ({
   const variables = getVariablesByContext({
     editor,
     from,
-    isEnhancedDigestEnabled,
     primitives,
     arrays,
     namespaces,
@@ -222,7 +215,7 @@ export const calculateVariables = ({
     queryWithoutSuffix.trim() &&
     isAllowedVariable({
       name: queryWithoutSuffix,
-      aliasFor: resolveRepeatBlockAlias(queryWithoutSuffix, editor, isEnhancedDigestEnabled),
+      aliasFor: resolveRepeatBlockAlias(queryWithoutSuffix, editor),
     })
   ) {
     variables.push({ name: queryWithoutSuffix });
@@ -235,7 +228,7 @@ export const calculateVariables = ({
    *    (which is external somewhere in TipTap or Maily)
    */
   if (from === VariableFrom.Content) {
-    insertVariableToEditor({ query, editor, isAllowedVariable, isEnhancedDigestEnabled });
+    insertVariableToEditor({ query, editor, isAllowedVariable });
   }
 
   return dedupAndSortVariables(variables, queryWithoutSuffix);
@@ -248,13 +241,7 @@ export function isAllowedAlias(variableName: string): boolean {
   return ALLOWED_ALIASES.includes(nameRoot);
 }
 
-export const resolveRepeatBlockAlias = (
-  variable: string,
-  editor: Editor,
-  isEnhancedDigestEnabled: boolean
-): string | null => {
-  if (!isEnhancedDigestEnabled) return null;
-
+export const resolveRepeatBlockAlias = (variable: string, editor: Editor): string | null => {
   // Extract the root of the variable name (before any dots)
   const parsedVariable = parseVariable(variable);
   if (!parsedVariable) return null;
@@ -292,8 +279,7 @@ const findRepeatBlock = (editor: Editor) => {
  * iterable: 'payload.comments' => 'payload.blogs'
  * variable aliasFor: 'payload.comments.author' => 'payload.blogs.author'
  */
-const updateRepeatBlockChildAliases = (editor: Editor, isEnhancedDigestEnabled: boolean) => {
-  if (!isEnhancedDigestEnabled) return;
+const updateRepeatBlockChildAliases = (editor: Editor) => {
   const repeat = findRepeatBlock(editor);
 
   if (!repeat) return;
@@ -306,7 +292,7 @@ const updateRepeatBlockChildAliases = (editor: Editor, isEnhancedDigestEnabled: 
 
       block.content.descendants((node, pos) => {
         if (node.type.name === 'variable' && node.attrs.aliasFor) {
-          const newAlias = resolveRepeatBlockAlias(node.attrs.id, editor, isEnhancedDigestEnabled);
+          const newAlias = resolveRepeatBlockAlias(node.attrs.id, editor);
           tr.setNodeMarkup(repeatPos + pos + 1, null, { ...node.attrs, aliasFor: newAlias });
         }
       });
