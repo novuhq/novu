@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { addBreadcrumb } from '@sentry/node';
 import { ModuleRef } from '@nestjs/core';
+import { merge } from 'lodash';
 
 import { MessageRepository, SubscriberRepository, MessageEntity, IntegrationEntity, JobEntity } from '@novu/dal';
 import {
@@ -10,6 +11,7 @@ import {
   ExecutionDetailsStatusEnum,
   IChannelSettings,
   ProvidersIdEnum,
+  TriggerOverrides,
 } from '@novu/shared';
 import {
   InstrumentUsecase,
@@ -35,9 +37,15 @@ import { SendMessageResult } from './send-message-type.usecase';
 
 const LOG_CONTEXT = 'SendMessagePush';
 
+interface IPushProviderOverride {
+  providerId: PushProviderIdEnum;
+  overrides: Record<string, unknown>;
+}
+
 @Injectable()
 export class SendMessagePush extends SendMessageBase {
   channelType = ChannelTypeEnum.PUSH;
+  private pushProviderIds: PushProviderIdEnum[] = Object.values(PushProviderIdEnum);
 
   constructor(
     protected subscriberRepository: SubscriberRepository,
@@ -116,6 +124,8 @@ export class SendMessagePush extends SendMessageBase {
         Object.values(PushProviderIdEnum).includes(chan.providerId as PushProviderIdEnum)
       ) || [];
 
+    const pushProviderOverrides = this.getPushProviderOverrides(command.overrides, command.step?.stepId || '');
+
     if (!pushChannels.length) {
       await this.createExecutionDetailsError(DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL, command.job);
 
@@ -161,7 +171,13 @@ export class SendMessagePush extends SendMessageBase {
         integrationsWithErrors += 1;
         continue;
       }
-      const overrides = command.overrides[integration.providerId] || {};
+
+      // Find provider-specific overrides
+      const providerOverride = pushProviderOverrides.find(
+        (override) => override.providerId === (integration.providerId as PushProviderIdEnum)
+      );
+
+      const overrides = providerOverride?.overrides || {};
       const target = (overrides as { deviceTokens?: string[] }).deviceTokens || deviceTokens;
 
       await this.sendSelectedIntegrationExecution(command.job, integration);
@@ -215,6 +231,56 @@ export class SendMessagePush extends SendMessageBase {
     return {
       status: 'success',
     };
+  }
+
+  /**
+   * Collects all push provider IDs and their overrides from the TriggerOverrides structure
+   */
+  private getPushProviderOverrides(overrides: TriggerOverrides, stepId: string): IPushProviderOverride[] {
+    if (!overrides) return [];
+
+    const result: IPushProviderOverride[] = [];
+
+    // Extract from providers
+    if (overrides.providers) {
+      for (const providerId of Object.keys(overrides.providers)) {
+        if (this.pushProviderIds.includes(providerId as PushProviderIdEnum)) {
+          result.push({
+            providerId: providerId as PushProviderIdEnum,
+            overrides: {
+              ...overrides.providers[providerId as ProvidersIdEnum],
+            },
+          });
+        }
+      }
+    }
+
+    if (overrides.steps?.[stepId]?.providers) {
+      for (const providerId of Object.keys(overrides.steps[stepId].providers)) {
+        if (this.pushProviderIds.includes(providerId as PushProviderIdEnum)) {
+          const existingIndex = result.findIndex((item) => item.providerId === providerId);
+
+          if (existingIndex >= 0) {
+            // Merge with existing overrides, with step overrides taking precedence
+            result[existingIndex].overrides = merge(
+              {},
+              result[existingIndex].overrides,
+              overrides.steps[stepId].providers[providerId as ProvidersIdEnum]
+            );
+          } else {
+            // Add new provider overrides
+            result.push({
+              providerId: providerId as PushProviderIdEnum,
+              overrides: {
+                ...overrides.steps[stepId].providers[providerId as ProvidersIdEnum],
+              },
+            });
+          }
+        }
+      }
+    }
+
+    return result;
   }
 
   private async isChannelMissingDeviceTokens(channel: IChannelSettings, command: SendMessageCommand): Promise<boolean> {
