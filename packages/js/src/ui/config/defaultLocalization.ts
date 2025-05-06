@@ -22,7 +22,7 @@ export const defaultLocalization = {
   'notification.actions.unread.tooltip': 'Mark as unread',
   'notification.actions.archive.tooltip': 'Archive',
   'notification.actions.unarchive.tooltip': 'Unarchive',
-  'notification.actions.snooze.tooltip': 'Snooze',
+  'notification.actions.snooze.tooltip': 'Snooze until...',
   'notification.actions.unsnooze.tooltip': 'Unsnooze',
   'notification.snoozedUntil': 'Snoozed until',
   'preferences.title': 'Preferences',

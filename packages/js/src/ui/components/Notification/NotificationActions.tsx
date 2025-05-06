@@ -265,7 +265,11 @@ export const SnoozeButton = (props: { notification: Notification }) => {
                 )}
               </For>
 
-              <Popover.Root open={isSnoozeDateTimePickerOpen()} onOpenChange={setIsSnoozeDateTimePickerOpen}>
+              <Popover.Root
+                open={isSnoozeDateTimePickerOpen()}
+                onOpenChange={setIsSnoozeDateTimePickerOpen}
+                placement="bottom-start"
+              >
                 <Dropdown.Item
                   asChild={(props) => (
                     <Popover.Trigger
@@ -286,7 +290,10 @@ export const SnoozeButton = (props: { notification: Notification }) => {
                     </Popover.Trigger>
                   )}
                 />
-                <Popover.Content portal class={style('notificationSnoozeCustomTime_popoverContent', 'nt-size-fit')}>
+                <Popover.Content
+                  portal
+                  class={style('notificationSnoozeCustomTime_popoverContent', 'nt-size-fit nt-w-[260px]')}
+                >
                   <SnoozeDateTimePicker
                     maxDurationHours={maxSnoozeDurationHours()}
                     onSelect={async (date) => {

@@ -149,7 +149,10 @@ export const DatePickerHeader = (props: DatePickerHeaderProps) => {
       <Button
         appearanceKey="datePickerControlPrevTrigger"
         variant="ghost"
-        onClick={handlePrevMonth}
+        onClick={(e) => {
+          e.stopPropagation();
+          handlePrevMonth();
+        }}
         disabled={isPrevDisabled()}
         class="nt-flex nt-justify-center nt-items-center nt-gap-0.5 nt-w-5 nt-h-5 nt-p-0 nt-rounded-md nt-bg-white nt-shadow-[0px_1px_2px_0px_rgba(10,13,20,0.03)]"
       >
@@ -161,7 +164,10 @@ export const DatePickerHeader = (props: DatePickerHeaderProps) => {
       <Button
         appearanceKey="datePickerControlNextTrigger"
         variant="ghost"
-        onClick={handleNextMonth}
+        onClick={(e) => {
+          e.stopPropagation();
+          handleNextMonth();
+        }}
         disabled={isNextDisabled()}
         class="nt-flex nt-justify-center nt-items-center nt-gap-0.5 nt-w-5 nt-h-5 nt-p-0 nt-rounded-md nt-bg-white nt-shadow-[0px_1px_2px_0px_rgba(10,13,20,0.03)]"
       >
@@ -273,7 +279,10 @@ export const DatePickerGridCellTrigger = (props: DatePickerGridCellTriggerProps)
       appearanceKey="datePickerCalendarDay__button"
       variant="ghost"
       disabled={isDisabled}
-      onClick={() => setSelectedDate(local.date)}
+      onClick={(e) => {
+        e.stopPropagation();
+        setSelectedDate(local.date);
+      }}
       class={cn(
         'nt-size-8 nt-w-full nt-rounded-md nt-flex nt-items-center nt-justify-center',
         {
@@ -359,6 +368,7 @@ export const DatePickerCalendar = (props: DatePickerCalendarProps) => {
   return (
     <div
       class={style(local.appearanceKey || 'datePickerCalendar', cn('nt-grid nt-grid-cols-7 nt-gap-1', local.class))}
+      onClick={(e) => e.stopPropagation()}
       {...rest}
     >
       {getDaysInMonth().map((date) => {

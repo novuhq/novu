@@ -80,6 +80,7 @@ export const TimePicker: Component<TimePickerProps> = (props) => {
   return (
     <div
       class={style(local.appearanceKey || 'timePicker', cn('nt-flex nt-items-center nt-gap-1', local.class))}
+      onClick={(e) => e.stopPropagation()}
       {...rest}
     >
       <Input
@@ -87,9 +88,13 @@ export const TimePicker: Component<TimePickerProps> = (props) => {
         type="number"
         min="1"
         max="12"
-        onKeyDown={handleKeyDown}
+        onKeyDown={(e) => {
+          e.stopPropagation();
+          handleKeyDown(e);
+        }}
         value={hour().toString()}
         onInput={(e) => {
+          e.stopPropagation();
           enforceMinMax(e.currentTarget);
           handleHourChange(Number(e.currentTarget.value));
         }}
@@ -106,9 +111,13 @@ export const TimePicker: Component<TimePickerProps> = (props) => {
         type="number"
         min="0"
         max="59"
-        onKeyDown={handleKeyDown}
+        onKeyDown={(e) => {
+          e.stopPropagation();
+          handleKeyDown(e);
+        }}
         value={minute().toString().padStart(2, '0')}
         onInput={(e) => {
+          e.stopPropagation();
           enforceMinMax(e.currentTarget);
           handleMinuteChange(Number(e.currentTarget.value));
         }}
@@ -121,7 +130,9 @@ export const TimePicker: Component<TimePickerProps> = (props) => {
       <select
         class={style('timePicker__periodSelect', `${inputVariants({ size: 'sm' })} nt-h-7 nt-font-mono`)}
         value={isPM() ? 'PM' : 'AM'}
+        onClick={(e) => e.stopPropagation()}
         onChange={(e) => {
+          e.stopPropagation();
           handlePeriodChange(e.target.value === 'PM');
         }}
       >
