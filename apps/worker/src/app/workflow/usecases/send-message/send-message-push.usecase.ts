@@ -170,13 +170,6 @@ export class SendMessagePush extends SendMessageBase {
         continue;
       }
 
-      const bridgeProviderData = this.combineOverrides(
-        command.bridgeData,
-        command.overrides,
-        command.step.stepId,
-        integration.providerId
-      );
-
       // We avoid to send a message if subscriber has not an integration or if the subscriber has no device tokens for said integration
       if ((!deviceTokens || !integration || isChannelMissingDeviceTokens) && !uniqueOverrideChannels?.length) {
         integrationsWithErrors += 1;
@@ -195,12 +188,24 @@ export class SendMessagePush extends SendMessageBase {
 
       const message = await this.createMessage(command, integration, title, content, target, overrides);
 
+      const bridgeProviderData = this.combineOverrides(
+        command.bridgeData,
+        command.overrides,
+        command.step.stepId,
+        integration.providerId
+      );
+
+      /**
+       * There are no targets available for the subscriber, but credentials provided in the overrides
+       */
       if (!target?.length && uniqueOverrideChannels?.length) {
         const result = await this.sendMessage(
           command,
           message,
           subscriber,
           integration,
+
+          // credentials provided in the overrides
           '',
           title,
           content,
