@@ -3,7 +3,7 @@ import { createEffect, createMemo, createSignal, For, JSX, Show } from 'solid-js
 import type { Notification } from '../../../notifications';
 import { ActionTypeEnum } from '../../../types';
 import { useInboxContext, useLocalization } from '../../context';
-import { cn, formatToRelativeTime, useStyle } from '../../helpers';
+import { cn, formatSnoozedUntil, formatToRelativeTime, useStyle } from '../../helpers';
 import { Clock } from '../../icons/Clock';
 import {
   type BodyRenderer,
@@ -42,7 +42,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
       return null;
     }
 
-    return formatToRelativeTime({ fromDate: new Date(props.notification.snoozedUntil), locale: locale() });
+    return formatSnoozedUntil({ untilDate: new Date(props.notification.snoozedUntil), locale: locale() });
   });
   const deliveredAt = createMemo(() => {
     minutesPassed(); // register as dep
@@ -219,8 +219,8 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
           >
             {(snoozedUntil) => (
               <>
-                <Clock class={style('notificationRemindingLater__icon', 'nt-size-3')} />
-                {t('notification.remindingLater')} · {snoozedUntil()}
+                <Clock class={style('notificationSnoozedUntil__icon', 'nt-size-3')} />
+                {t('notification.snoozedUntil')} · {snoozedUntil()}
               </>
             )}
           </Show>

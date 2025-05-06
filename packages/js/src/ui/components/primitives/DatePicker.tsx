@@ -308,7 +308,7 @@ export const DatePickerWithContext = ({
   maxDays,
 }: {
   onDateChange?: (date: Date | null) => void;
-  maxDays?: number;
+  maxDays: number;
 }) => {
   return (
     <DatePicker onDateChange={onDateChange} maxDays={maxDays}>
