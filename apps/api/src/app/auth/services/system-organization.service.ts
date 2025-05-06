@@ -1,13 +1,11 @@
 import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
-import { CommunityOrganizationRepository, MemberRepository, UserEntity, UserRepository } from '@novu/dal';
+import { CommunityOrganizationRepository, UserEntity, UserRepository } from '@novu/dal';
 import { PinoLogger } from '@novu/application-generic';
 import { ApiServiceLevelEnum } from '@novu/shared';
 import { CreateOrganization } from '../../organization/usecases/create-organization/create-organization.usecase';
 import { CreateOrganizationCommand } from '../../organization/usecases/create-organization/create-organization.command';
 import { UserRegister } from '../usecases/register/user-register.usecase';
 import { UserRegisterCommand } from '../usecases/register/user-register.command';
-import { SwitchOrganization } from '../usecases/switch-organization/switch-organization.usecase';
-import { SwitchOrganizationCommand } from '../usecases/switch-organization/switch-organization.command';
 
 @Injectable()
 export class CommunityEditionService implements OnModuleInit {
@@ -16,12 +14,10 @@ export class CommunityEditionService implements OnModuleInit {
   private readonly COMMUNITY_EDITION_USER_EMAIL = 'no-reply@example.com';
 
   constructor(
-    private memberRepository: MemberRepository,
     @Inject('ORGANIZATION_REPOSITORY')
     private organizationRepository: CommunityOrganizationRepository,
     private createOrganizationUsecase: CreateOrganization,
     private userRegisterUsecase: UserRegister,
-    private switchOrganizationUsecase: SwitchOrganization,
     private userRepository: UserRepository,
     private logger: PinoLogger
   ) {}
@@ -41,7 +37,7 @@ export class CommunityEditionService implements OnModuleInit {
 
       if (communityEditionOrg) {
         this.logger.info(
-          'Self Hosted is already initialized, skipping Community Edition creation.' +
+          'Self Hosted is already initialized, skipping Community Edition creation. ' +
             `Organization already exists with ID: ${communityEditionOrg._id}`
         );
 
