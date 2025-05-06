@@ -3553,9 +3553,6 @@ importers:
       prettier-plugin-tailwindcss:
         specifier: ^0.6.5
         version: 0.6.5(prettier@3.3.3)
-      solid:
-        specifier: link:@types/@ark-ui/solid
-        version: link:@types/@ark-ui/solid
       solid-devtools:
         specifier: ^0.29.2
         version: 0.29.2(solid-js@1.9.6)(vite@4.5.2(@types/node@20.16.5)(less@4.2.0)(lightningcss@1.29.2)(sass@1.77.8)(sugarss@4.0.1(postcss@8.4.47))(terser@5.31.6))
