@@ -1,5 +1,5 @@
 import { IsDefined, IsString, IsUUID, MinLength } from 'class-validator';
-import { BaseCommand } from '../../../shared/commands/base.command';
+import { BaseCommand } from '@novu/application-generic';
 
 export class PasswordResetCommand extends BaseCommand {
   @IsString()

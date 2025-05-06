@@ -53,6 +53,7 @@ export const InboxDropdownTab = (props: InboxDropdownTabProps) => {
   return (
     <Dropdown.Item
       class={style('moreTabs__dropdownItem', cn(dropdownItemVariants(), 'nt-flex nt-justify-between nt-gap-2'))}
+      onClick={props.onClick}
     >
       <span class={style('moreTabs__dropdownItemLabel', 'nt-mr-auto')}>{props.label}</span>
       {props.rightIcon}

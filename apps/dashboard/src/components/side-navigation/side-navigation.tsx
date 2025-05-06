@@ -1,8 +1,15 @@
-import React, { ReactNode, useMemo } from 'react';
-import { Link as RouterLink, useLocation } from 'react-router-dom';
-import { cva } from 'class-variance-authority';
+import { SidebarContent } from '@/components/side-navigation/sidebar';
+import { useEnvironment } from '@/context/environment/hooks';
+import { useTelemetry } from '@/hooks/use-telemetry';
+import { buildRoute, ROUTES } from '@/utils/routes';
+import { TelemetryEvent } from '@/utils/telemetry';
+import { ApiServiceLevelEnum } from '@novu/shared';
+import * as Sentry from '@sentry/react';
+import { ReactNode } from 'react';
 import {
   RiBarChartBoxLine,
+  RiChat1Line,
+  RiDatabase2Line,
   RiGroup2Line,
   RiKey2Line,
   RiRouteFill,
@@ -10,68 +17,14 @@ import {
   RiStore3Line,
   RiUserAddLine,
 } from 'react-icons/ri';
-import { cn } from '@/utils/ui';
+import { useFetchSubscription } from '../../hooks/use-fetch-subscription';
+import { ChangelogStack } from './changelog-cards';
 import { EnvironmentDropdown } from './environment-dropdown';
-import { useEnvironment } from '@/context/environment/hooks';
-import { OrganizationDropdown } from './organization-dropdown';
 import { FreeTrialCard } from './free-trial-card';
-import { buildRoute, LEGACY_ROUTES, ROUTES } from '@/utils/routes';
-import { SubscribersStayTunedModal } from './subscribers-stay-tuned-modal';
-import { TelemetryEvent } from '@/utils/telemetry';
-import { useTelemetry } from '@/hooks/use-telemetry';
-import { SidebarContent } from '@/components/side-navigation/sidebar';
-
-const linkVariants = cva(
-  `flex items-center gap-2 text-sm py-1.5 px-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer`,
-  {
-    variants: {
-      variant: {
-        default: 'text-foreground-600/95 transition ease-out duration-300 hover:bg-accent',
-        selected: 'text-foreground-950 bg-neutral-alpha-100 transition ease-out duration-300 hover:bg-accent',
-        disabled: 'text-foreground-300 cursor-help',
-      },
-    },
-    defaultVariants: {
-      variant: 'default',
-    },
-  }
-);
-
-type NavLinkProps = {
-  to?: string;
-  isExternal?: boolean;
-  className?: string;
-  children: React.ReactNode;
-};
-
-const NavigationLink = ({ to, isExternal, className, children }: NavLinkProps) => {
-  const { pathname } = useLocation();
-  const isSelected = pathname === to;
-  const variant = isSelected ? 'selected' : 'default';
-
-  const classNames = cn(linkVariants({ variant, className }));
-  if (!to) {
-    return <span className={classNames}>{children}</span>;
-  }
-
-  if (isExternal) {
-    return (
-      <a
-        href={to}
-        className={classNames}
-        target={to.startsWith('https') ? '_blank' : '_self'}
-        rel="noreferrer noopener"
-      >
-        {children}
-      </a>
-    );
-  }
-  return (
-    <RouterLink to={to ?? '/'} className={classNames}>
-      {children}
-    </RouterLink>
-  );
-};
+import { GettingStartedMenuItem } from './getting-started-menu-item';
+import { NavigationLink } from './navigation-link';
+import { OrganizationDropdown } from './organization-dropdown';
+import { UsageCard } from './usage-card';
 
 const NavigationGroup = ({ children, label }: { children: ReactNode; label?: string }) => {
   return (
@@ -83,63 +36,102 @@ const NavigationGroup = ({ children, label }: { children: ReactNode; label?: str
 };
 
 export const SideNavigation = () => {
+  const { subscription, daysLeft, isLoading: isLoadingSubscription } = useFetchSubscription();
+  const isTrialActive = subscription?.trial.isActive;
+  const isFreeTier = subscription?.apiServiceLevel === ApiServiceLevelEnum.FREE;
+
   const { currentEnvironment, environments, switchEnvironment } = useEnvironment();
   const track = useTelemetry();
-  const environmentNames = useMemo(() => environments?.map((env) => env.name), [environments]);
+
   const onEnvironmentChange = (value: string) => {
     const environment = environments?.find((env) => env.name === value);
     switchEnvironment(environment?.slug);
   };
 
+  const showPlainLiveChat = () => {
+    track(TelemetryEvent.SHARE_FEEDBACK_LINK_CLICKED);
+
+    try {
+      window?.Plain?.open();
+    } catch (error) {
+      Sentry.captureException(error);
+      console.error('Error opening plain chat:', error);
+    }
+  };
+
   return (
-    <aside className="bg-neutral-alpha-50 relative flex w-[275px] flex-shrink-0 flex-col">
-      <SidebarContent>
-        <FreeTrialCard />
+    <aside className="bg-neutral-alpha-50 relative flex h-full w-[275px] flex-shrink-0 flex-col">
+      <SidebarContent className="h-full">
         <OrganizationDropdown />
-        <EnvironmentDropdown value={currentEnvironment?.name} data={environmentNames} onChange={onEnvironmentChange} />
-        <nav className="flex flex-1 flex-col gap-4">
-          <NavigationGroup>
-            <NavigationLink to={buildRoute(ROUTES.WORKFLOWS, { environmentSlug: currentEnvironment?.slug ?? '' })}>
-              <RiRouteFill className="size-4" />
-              <span>Workflows</span>
-            </NavigationLink>
-            <SubscribersStayTunedModal>
-              <span onClick={() => track(TelemetryEvent.SUBSCRIBERS_LINK_CLICKED)}>
+        <EnvironmentDropdown
+          currentEnvironment={currentEnvironment}
+          data={environments}
+          onChange={onEnvironmentChange}
+        />
+        <nav className="flex h-full flex-1 flex-col">
+          <div className="flex flex-col gap-4">
+            <NavigationGroup>
+              <NavigationLink to={buildRoute(ROUTES.WORKFLOWS, { environmentSlug: currentEnvironment?.slug ?? '' })}>
+                <RiRouteFill className="size-4" />
+                <span>Workflows</span>
+              </NavigationLink>
+              <NavigationLink to={buildRoute(ROUTES.SUBSCRIBERS, { environmentSlug: currentEnvironment?.slug ?? '' })}>
+                <RiGroup2Line className="size-4" />
+                <span>Subscribers</span>
+              </NavigationLink>
+            </NavigationGroup>
+            <NavigationGroup label="Monitor">
+              <NavigationLink
+                to={buildRoute(ROUTES.ACTIVITY_FEED, { environmentSlug: currentEnvironment?.slug ?? '' })}
+              >
+                <RiBarChartBoxLine className="size-4" />
+                <span>Activity Feed</span>
+              </NavigationLink>
+            </NavigationGroup>
+            <NavigationGroup label="Developer">
+              <NavigationLink to={buildRoute(ROUTES.API_KEYS, { environmentSlug: currentEnvironment?.slug ?? '' })}>
+                <RiKey2Line className="size-4" />
+                <span>API Keys</span>
+              </NavigationLink>
+              <NavigationLink to={buildRoute(ROUTES.ENVIRONMENTS, { environmentSlug: currentEnvironment?.slug ?? '' })}>
+                <RiDatabase2Line className="size-4" />
+                <span>Environments</span>
+              </NavigationLink>
+              <NavigationLink to={buildRoute(ROUTES.INTEGRATIONS, { environmentSlug: currentEnvironment?.slug ?? '' })}>
+                <RiStore3Line className="size-4" />
+                <span>Integration Store</span>
+              </NavigationLink>
+            </NavigationGroup>
+            <NavigationGroup label="Application">
+              <NavigationLink to={ROUTES.SETTINGS}>
+                <RiSettings4Line className="size-4" />
+                <span>Settings</span>
+              </NavigationLink>
+            </NavigationGroup>
+          </div>
+
+          <div className="relative mt-auto gap-8 pt-4">
+            {!isTrialActive && !isLoadingSubscription && <ChangelogStack />}
+            {isTrialActive && !isLoadingSubscription && (
+              <FreeTrialCard subscription={subscription} daysLeft={daysLeft} />
+            )}
+
+            {!isTrialActive && isFreeTier && !isLoadingSubscription && <UsageCard subscription={subscription} />}
+            <NavigationGroup>
+              <button onClick={showPlainLiveChat} className="w-full">
                 <NavigationLink>
-                  <RiGroup2Line className="size-4" />
-                  <span>Subscribers</span>
+                  <RiChat1Line className="size-4" />
+                  <span>Share Feedback</span>
                 </NavigationLink>
-              </span>
-            </SubscribersStayTunedModal>
-          </NavigationGroup>
-          <NavigationGroup label="Monitor">
-            <NavigationLink to={LEGACY_ROUTES.ACTIVITY_FEED} isExternal>
-              <RiBarChartBoxLine className="size-4" />
-              <span>Activity Feed</span>
-            </NavigationLink>
-          </NavigationGroup>
-          <NavigationGroup label="Developer">
-            <NavigationLink to={LEGACY_ROUTES.INTEGRATIONS} isExternal>
-              <RiStore3Line className="size-4" />
-              <span>Integration Store</span>
-            </NavigationLink>
-            <NavigationLink to={LEGACY_ROUTES.API_KEYS} isExternal>
-              <RiKey2Line className="size-4" />
-              <span>API Keys</span>
-            </NavigationLink>
-          </NavigationGroup>
-          <NavigationGroup label="Application">
-            <NavigationLink to={LEGACY_ROUTES.SETTINGS} isExternal>
-              <RiSettings4Line className="size-4" />
-              <span>Settings</span>
-            </NavigationLink>
-          </NavigationGroup>
-          <NavigationGroup>
-            <NavigationLink to={LEGACY_ROUTES.INVITE_TEAM_MEMBERS} isExternal>
-              <RiUserAddLine className="size-4" />
-              <span>Invite teammates</span>
-            </NavigationLink>
-          </NavigationGroup>
+              </button>
+              <NavigationLink to={ROUTES.SETTINGS_TEAM}>
+                <RiUserAddLine className="size-4" />
+                <span>Invite teammates</span>
+              </NavigationLink>
+
+              <GettingStartedMenuItem />
+            </NavigationGroup>
+          </div>
         </nav>
       </SidebarContent>
     </aside>

@@ -1,3 +1,3 @@
-import { IWorkflowOverride } from '../../entities/workflow-override';
+import { IWorkflowOverrideResponseDto } from './workflow-override.dto';
 
-export type ICreateWorkflowOverrideResponseDto = IWorkflowOverride;
+export type ICreateWorkflowOverrideResponseDto = IWorkflowOverrideResponseDto;

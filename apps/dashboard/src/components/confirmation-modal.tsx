@@ -3,12 +3,12 @@ import { Button } from '@/components/primitives/button';
 import {
   Dialog,
   DialogClose,
-  DialogDescription,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogOverlay,
   DialogPortal,
   DialogTitle,
-  DialogFooter,
 } from '@/components/primitives/dialog';
 import { ReactNode } from 'react';
 import { RiAlertFill } from 'react-icons/ri';
@@ -21,6 +21,7 @@ type ConfirmationModalProps = {
   description: ReactNode;
   confirmButtonText: string;
   isLoading?: boolean;
+  isConfirmDisabled?: boolean;
 };
 
 export const ConfirmationModal = ({
@@ -31,12 +32,13 @@ export const ConfirmationModal = ({
   description,
   confirmButtonText,
   isLoading,
+  isConfirmDisabled,
 }: ConfirmationModalProps) => {
   return (
     <Dialog modal open={open} onOpenChange={onOpenChange}>
       <DialogPortal>
         <DialogOverlay />
-        <DialogContent className="sm:max-w-[440px]">
+        <DialogContent className="overflow-hidden sm:max-w-[440px]">
           <div className="flex items-start gap-4 self-stretch">
             <div className="bg-warning/10 flex items-center justify-center gap-2 rounded-[10px] p-2">
               <RiAlertFill className="text-warning size-6" />
@@ -48,12 +50,19 @@ export const ConfirmationModal = ({
           </div>
           <DialogFooter>
             <DialogClose asChild aria-label="Close">
-              <Button type="button" size="sm" variant="outline" onClick={() => onOpenChange(false)}>
+              <Button type="button" size="sm" mode="outline" variant="secondary" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
             </DialogClose>
 
-            <Button type="button" size="sm" variant="primary" onClick={onConfirm} disabled={isLoading}>
+            <Button
+              type="button"
+              size="sm"
+              variant="primary"
+              onClick={onConfirm}
+              isLoading={isLoading}
+              disabled={isConfirmDisabled}
+            >
               {confirmButtonText}
             </Button>
           </DialogFooter>

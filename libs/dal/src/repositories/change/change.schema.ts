@@ -43,5 +43,17 @@ changeSchema.virtual('user', {
   justOne: true,
 });
 
+changeSchema.index({
+  _environmentId: 1,
+});
+
+changeSchema.index({
+  _creatorId: 1,
+});
+
+changeSchema.index({
+  _entityId: 1,
+});
+
 export const Change =
   (mongoose.models.Change as mongoose.Model<ChangeDBModel>) || mongoose.model<ChangeDBModel>('Change', changeSchema);

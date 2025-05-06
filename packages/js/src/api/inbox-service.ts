@@ -1,4 +1,3 @@
-import { ApiOptions, HttpClient } from '@novu/client';
 import type {
   ActionTypeEnum,
   ChannelPreference,
@@ -6,11 +5,12 @@ import type {
   NotificationFilter,
   PreferencesResponse,
   Session,
+  Subscriber,
 } from '../types';
+import { HttpClient, HttpClientOptions } from './http-client';
 
-export type InboxServiceOptions = ApiOptions;
+export type InboxServiceOptions = HttpClientOptions;
 
-const NOVU_API_VERSION = '2024-06-26';
 const INBOX_ROUTE = '/inbox';
 const INBOX_NOTIFICATIONS_ROUTE = `${INBOX_ROUTE}/notifications`;
 
@@ -20,25 +20,21 @@ export class InboxService {
 
   constructor(options: InboxServiceOptions = {}) {
     this.#httpClient = new HttpClient(options);
-    this.#httpClient.updateHeaders({
-      'Novu-API-Version': NOVU_API_VERSION,
-      'Novu-User-Agent': options.userAgent || '@novu/js',
-    });
   }
 
   async initializeSession({
     applicationIdentifier,
-    subscriberId,
     subscriberHash,
+    subscriber,
   }: {
     applicationIdentifier: string;
-    subscriberId: string;
     subscriberHash?: string;
+    subscriber: Subscriber;
   }): Promise<Session> {
     const response = (await this.#httpClient.post(`${INBOX_ROUTE}/session`, {
       applicationIdentifier,
-      subscriberId,
       subscriberHash,
+      subscriber,
     })) as Session;
     this.#httpClient.setAuthorizationToken(response.token);
     this.isSessionInitialized = true;
@@ -53,32 +49,37 @@ export class InboxService {
     offset,
     read,
     tags,
+    snoozed,
   }: {
     tags?: string[];
     read?: boolean;
     archived?: boolean;
+    snoozed?: boolean;
     limit?: number;
     after?: string;
     offset?: number;
   }): Promise<{ data: InboxNotification[]; hasMore: boolean; filter: NotificationFilter }> {
-    const queryParams = new URLSearchParams(`limit=${limit}`);
+    const searchParams = new URLSearchParams(`limit=${limit}`);
     if (after) {
-      queryParams.append('after', after);
+      searchParams.append('after', after);
     }
     if (offset) {
-      queryParams.append('offset', `${offset}`);
+      searchParams.append('offset', `${offset}`);
     }
     if (tags) {
-      tags.forEach((tag) => queryParams.append('tags[]', tag));
+      tags.forEach((tag) => searchParams.append('tags[]', tag));
     }
     if (read !== undefined) {
-      queryParams.append('read', `${read}`);
+      searchParams.append('read', `${read}`);
     }
     if (archived !== undefined) {
-      queryParams.append('archived', `${archived}`);
+      searchParams.append('archived', `${archived}`);
+    }
+    if (snoozed !== undefined) {
+      searchParams.append('snoozed', `${snoozed}`);
     }
 
-    return this.#httpClient.getFullResponse(`${INBOX_NOTIFICATIONS_ROUTE}?${queryParams.toString()}`);
+    return this.#httpClient.get(INBOX_NOTIFICATIONS_ROUTE, searchParams, false);
   }
 
   count({ filters }: { filters: Array<{ tags?: string[]; read?: boolean; archived?: boolean }> }): Promise<{
@@ -87,7 +88,13 @@ export class InboxService {
       filter: NotificationFilter;
     }>;
   }> {
-    return this.#httpClient.getFullResponse(`${INBOX_NOTIFICATIONS_ROUTE}/count?filters=${JSON.stringify(filters)}`);
+    return this.#httpClient.get(
+      `${INBOX_NOTIFICATIONS_ROUTE}/count`,
+      new URLSearchParams({
+        filters: JSON.stringify(filters),
+      }),
+      false
+    );
   }
 
   read(notificationId: string): Promise<InboxNotification> {
@@ -104,6 +111,14 @@ export class InboxService {
 
   unarchive(notificationId: string): Promise<InboxNotification> {
     return this.#httpClient.patch(`${INBOX_NOTIFICATIONS_ROUTE}/${notificationId}/unarchive`);
+  }
+
+  snooze(notificationId: string, snoozeUntil: string): Promise<InboxNotification> {
+    return this.#httpClient.patch(`${INBOX_NOTIFICATIONS_ROUTE}/${notificationId}/snooze`, { snoozeUntil });
+  }
+
+  unsnooze(notificationId: string): Promise<InboxNotification> {
+    return this.#httpClient.patch(`${INBOX_NOTIFICATIONS_ROUTE}/${notificationId}/unsnooze`);
   }
 
   readAll({ tags }: { tags?: string[] }): Promise<void> {
@@ -153,17 +168,17 @@ export class InboxService {
     return this.#httpClient.get(`${INBOX_ROUTE}/preferences${query}`);
   }
 
-  updateGlobalPreferences(channelPreferences: ChannelPreference): Promise<PreferencesResponse> {
-    return this.#httpClient.patch(`${INBOX_ROUTE}/preferences`, channelPreferences);
+  updateGlobalPreferences(channels: ChannelPreference): Promise<PreferencesResponse> {
+    return this.#httpClient.patch(`${INBOX_ROUTE}/preferences`, channels);
   }
 
   updateWorkflowPreferences({
     workflowId,
-    channelPreferences,
+    channels,
   }: {
     workflowId: string;
-    channelPreferences: ChannelPreference;
+    channels: ChannelPreference;
   }): Promise<PreferencesResponse> {
-    return this.#httpClient.patch(`${INBOX_ROUTE}/preferences/${workflowId}`, channelPreferences);
+    return this.#httpClient.patch(`${INBOX_ROUTE}/preferences/${workflowId}`, channels);
   }
 }

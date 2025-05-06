@@ -1,6 +1,4 @@
-import { JobTitleEnum, ProductUseCasesEnum } from '../../types';
-
-export type ProductUseCases = Partial<Record<ProductUseCasesEnum, boolean>>;
+import { JobTitleEnum } from '../../types';
 
 export interface ICreateOrganizationDto {
   name: string;

@@ -1,11 +1,13 @@
-import { OrganizationTypeEnum, CompanySizeEnum, JobTitleEnum } from '@novu/shared';
-import { post } from './api.client';
+import { CompanySizeEnum, JobTitleEnum, OrganizationTypeEnum } from '@novu/shared';
 import * as Sentry from '@sentry/react';
+import { post } from './api.client';
 
-export const sendTelemetry = async (event: string, data?: Record<string, unknown>): Promise<void> => {
+export const measure = async (event: string, data?: Record<string, unknown>): Promise<void> => {
   await post('/telemetry/measure', {
-    event,
-    data,
+    body: {
+      event,
+      data,
+    },
   });
 };
 
@@ -15,12 +17,13 @@ interface IdentifyUserProps {
   pageName: string;
   jobTitle: JobTitleEnum;
   organizationType: OrganizationTypeEnum;
-  companySize?: CompanySizeEnum;
+  companySize?: CompanySizeEnum | string;
+  anonymousId?: string | null;
 }
 
 export const identifyUser = async (userData: IdentifyUserProps) => {
   try {
-    await post('/telemetry/identify', userData);
+    await post('/telemetry/identify', { body: userData });
   } catch (error) {
     console.error('Error identifying user:', error);
     Sentry.captureException(error);

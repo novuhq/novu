@@ -1,4 +1,4 @@
-import { ChannelTypeEnum, WorkflowPreferencesPartial } from '@novu/shared';
+import { ChannelTypeEnum, WorkflowPreferencesPartial } from '../../shared';
 import { WorkflowChannelEnum } from '../../constants';
 import { WorkflowPreferences } from '../../types';
 

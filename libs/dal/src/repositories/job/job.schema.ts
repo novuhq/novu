@@ -1,5 +1,4 @@
 import mongoose, { Schema } from 'mongoose';
-
 import { schemaOptions } from '../schema-default.options';
 import { JobDBModel, JobStatusEnum } from './job.entity';
 
@@ -77,6 +76,9 @@ const jobSchema = new Schema<JobDBModel>(
         type: Schema.Types.String,
       },
       digestKey: {
+        type: Schema.Types.String,
+      },
+      digestValue: {
         type: Schema.Types.String,
       },
       type: {
@@ -383,10 +385,6 @@ jobSchema.index({
   _notificationId: 1,
 });
 
-jobSchema.index({
-  _environmentId: 1,
-});
-
 jobSchema.index(
   {
     _mergedDigestId: 1,
@@ -400,5 +398,27 @@ jobSchema.index(
  * This index was created to push entries to Online Archive
  */
 jobSchema.index({ createdAt: 1 });
+jobSchema.index(
+  {
+    subscriberId: 1,
+    _environmentId: 1,
+    'digest.digestValue': 1,
+    'digest.digestKey': 1,
+    _templateId: 1,
+    status: 1,
+    type: 1,
+  },
+  {
+    name: 'Guard from having two master jobs for same digest key, digest value, workflow and subscriber',
+    unique: true,
+    partialFilterExpression: {
+      status: 'delayed',
+      type: 'digest',
+      createdAt: { $gte: new Date('2025-03-05T00:00:01.505+00:00') },
+      'digest.digestValue': { $exists: true },
+      'digest.digestKey': { $exists: true },
+    },
+  }
+);
 
 export const Job = (mongoose.models.Job as mongoose.Model<JobDBModel>) || mongoose.model<JobDBModel>('Job', jobSchema);

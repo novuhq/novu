@@ -4,5 +4,5 @@ import { EnvironmentWithUserCommand } from '../../../commands';
 export class DeleteWorkflowCommand extends EnvironmentWithUserCommand {
   @IsString()
   @IsDefined()
-  identifierOrInternalId: string;
+  workflowIdOrInternalId: string;
 }

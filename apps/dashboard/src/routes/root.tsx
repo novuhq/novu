@@ -1,11 +1,15 @@
-import { Outlet } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { HelmetProvider } from 'react-helmet-async';
-import { withProfiler, ErrorBoundary } from '@sentry/react';
-import { SegmentProvider } from '@/context/segment';
+import { ToastIcon } from '@/components/primitives/sonner';
+import { showToast } from '@/components/primitives/sonner-helpers';
+import { TooltipProvider } from '@/components/primitives/tooltip';
 import { AuthProvider } from '@/context/auth/auth-provider';
 import { ClerkProvider } from '@/context/clerk-provider';
-import { TooltipProvider } from '@/components/primitives/tooltip';
+import { EscapeKeyManagerProvider } from '@/context/escape-key-manager/escape-key-manager';
+import { IdentityProvider } from '@/context/identity-provider';
+import { SegmentProvider } from '@/context/segment';
+import { ErrorBoundary, withProfiler } from '@sentry/react';
+import { QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { HelmetProvider } from 'react-helmet-async';
+import { Outlet } from 'react-router-dom';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -13,6 +17,28 @@ const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
     },
   },
+  queryCache: new QueryCache({
+    onError: (error, query) => {
+      if (query.meta?.showError !== false) {
+        showToast({
+          children: () => (
+            <>
+              <ToastIcon variant="error" />
+              <span className="text-sm">
+                {(query.meta?.errorMessage as string | undefined) || error.message || 'Issue fetching.'}
+              </span>
+            </>
+          ),
+          options: {
+            position: 'bottom-right',
+            classNames: {
+              toast: 'mb-4 right-0',
+            },
+          },
+        });
+      }
+    },
+  }),
 });
 
 const RootRouteInternal = () => {
@@ -37,11 +63,15 @@ const RootRouteInternal = () => {
         <ClerkProvider>
           <SegmentProvider>
             <AuthProvider>
-              <HelmetProvider>
-                <TooltipProvider delayDuration={100}>
-                  <Outlet />
-                </TooltipProvider>
-              </HelmetProvider>
+              <IdentityProvider>
+                <HelmetProvider>
+                  <TooltipProvider delayDuration={100}>
+                    <EscapeKeyManagerProvider>
+                      <Outlet />
+                    </EscapeKeyManagerProvider>
+                  </TooltipProvider>
+                </HelmetProvider>
+              </IdentityProvider>
             </AuthProvider>
           </SegmentProvider>
         </ClerkProvider>

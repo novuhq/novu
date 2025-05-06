@@ -1,52 +1,59 @@
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 
-import {
-  ChannelTypeEnum,
-  ISendMessageSuccessResponse,
-  IPushOptions,
-  IPushProvider,
-} from '@novu/stateless';
+import { ChannelTypeEnum, ISendMessageSuccessResponse, IPushOptions, IPushProvider } from '@novu/stateless';
 import { PushProviderIdEnum } from '@novu/shared';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
-export class OneSignalPushProvider
-  extends BaseProvider
-  implements IPushProvider
-{
+export class OneSignalPushProvider extends BaseProvider implements IPushProvider {
   id = PushProviderIdEnum.OneSignal;
   channelType = ChannelTypeEnum.PUSH as ChannelTypeEnum.PUSH;
   private axiosInstance: AxiosInstance;
+  private apiVersion: string | null = null;
   protected casing: CasingEnum = CasingEnum.SNAKE_CASE;
-  public readonly BASE_URL = 'https://onesignal.com/api/v1';
+  public readonly BASE_URL_PLAYER_MODEL = 'https://onesignal.com/api/v1';
+  public readonly BASE_URL_USER_MODEL = 'https://api.onesignal.com';
 
   constructor(
     private config: {
       appId: string;
       apiKey: string;
-    },
+      apiVersion?: 'externalId' | 'playerModel' | null;
+    }
   ) {
     super();
+    this.apiVersion = config.apiVersion;
+
     this.axiosInstance = axios.create({
-      baseURL: this.BASE_URL,
+      baseURL: config.apiVersion === 'externalId' ? this.BASE_URL_USER_MODEL : this.BASE_URL_PLAYER_MODEL,
     });
   }
 
   async sendMessage(
     options: IPushOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const { sound, badge, ...overrides } = options.overrides ?? {};
 
+    const targetSegment =
+      this.apiVersion === 'externalId'
+        ? {
+            include_aliases: {
+              external_id: options.target,
+            },
+            target_channel: 'push',
+          }
+        : { include_player_ids: options.target };
+
     const notification = this.transform(bridgeProviderData, {
-      include_player_ids: options.target,
+      ...targetSegment,
       app_id: this.config.appId,
       headings: { en: options.title },
       contents: { en: options.content },
       subtitle: { en: overrides.subtitle },
       data: options.payload,
-      ios_badge_type: 'Increase',
-      ios_badge_count: 1,
+      ios_badgeType: 'Increase',
+      ios_badgeCount: 1,
       ios_sound: sound,
       android_sound: sound,
       mutable_content: overrides.mutableContent,
@@ -68,9 +75,7 @@ export class OneSignalPushProvider
       data: JSON.stringify(notification),
     };
 
-    const res = await this.axiosInstance.request<{ id: string }>(
-      notificationOptions,
-    );
+    const res = await this.axiosInstance.request<{ id: string }>(notificationOptions);
 
     return {
       id: res?.data.id,
@@ -78,7 +83,7 @@ export class OneSignalPushProvider
     };
   }
 
-  protected keyCaseObject: Record<string, string> = {
+  protected override keyCaseObject: Record<string, string> = {
     is_ios: 'isIos',
     is_android: 'isAndroid',
     is_huawei: 'isHuawei',

@@ -1,16 +1,17 @@
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
+import getPort from 'get-port';
 import {
   EnvironmentRepository,
   NotificationTemplateRepository,
   MessageTemplateRepository,
   ControlValuesRepository,
 } from '@novu/dal';
-import { WorkflowTypeEnum } from '@novu/shared';
+import { WorkflowOriginEnum, WorkflowTypeEnum } from '@novu/shared';
 import { workflow } from '@novu/framework';
-import { BridgeServer } from '../../../../e2e/bridge.server';
+import { TestBridgeServer } from '../../../../e2e/test-bridge-server';
 
-describe('Bridge Sync - /bridge/sync (POST)', async () => {
+describe('Bridge Sync - /bridge/sync (POST) #novu-v2', async () => {
   let session: UserSession;
   const environmentRepository = new EnvironmentRepository();
   const workflowsRepository = new NotificationTemplateRepository();
@@ -26,11 +27,12 @@ describe('Bridge Sync - /bridge/sync (POST)', async () => {
     },
   } as const;
 
-  let bridgeServer: BridgeServer;
+  let bridgeServer: TestBridgeServer;
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
-    bridgeServer = new BridgeServer();
+    const port = await getPort();
+    bridgeServer = new TestBridgeServer(port);
   });
 
   afterEach(async () => {
@@ -249,7 +251,7 @@ describe('Bridge Sync - /bridge/sync (POST)', async () => {
 
     await bridgeServer.stop();
 
-    bridgeServer = new BridgeServer();
+    bridgeServer = new TestBridgeServer();
     const workflowId2 = 'hello-world-2';
     const newWorkflow2 = workflow(
       workflowId2,
@@ -447,7 +449,7 @@ describe('Bridge Sync - /bridge/sync (POST)', async () => {
 
     await bridgeServer.stop();
 
-    bridgeServer = new BridgeServer();
+    bridgeServer = new TestBridgeServer();
     const newWorkflowWithName = workflow(
       workflowId,
       async ({ step }) => {
@@ -537,7 +539,7 @@ describe('Bridge Sync - /bridge/sync (POST)', async () => {
 
     await bridgeServer.stop();
 
-    bridgeServer = new BridgeServer();
+    bridgeServer = new TestBridgeServer();
     const newWorkflowWithName = workflow(workflowId, async ({ step }) => {
       await step.email('send-email', () => ({
         subject: 'Welcome!',
@@ -649,5 +651,83 @@ describe('Bridge Sync - /bridge/sync (POST)', async () => {
 
     const secondStepResponse = await session.testAgent.get(`/v1/bridge/controls/${workflowId}/send-email`);
     expect(secondStepResponse.body.data.controls.subject).to.equal('Hello World again');
+  });
+
+  it('should throw an error when trying to sync a workflow with an ID that exists in dashboard', async () => {
+    const workflowId = 'dashboard-created-workflow';
+
+    // First create a workflow directly (simulating dashboard creation)
+    const dashboardWorkflow = await workflowsRepository.create({
+      _environmentId: session.environment._id,
+      name: workflowId,
+      triggers: [{ identifier: workflowId, type: 'event', variables: [] }],
+      steps: [],
+      active: true,
+      draft: false,
+      workflowId,
+      origin: WorkflowOriginEnum.NOVU_CLOUD,
+    });
+
+    // Now try to sync a workflow with the same ID through bridge
+    const newWorkflow = workflow(workflowId, async ({ step }) => {
+      await step.email('send-email', () => ({
+        subject: 'Welcome!',
+        body: 'Hello there',
+      }));
+    });
+    await bridgeServer.start({ workflows: [newWorkflow] });
+
+    const result = await session.testAgent.post(`/v1/bridge/sync`).send({
+      bridgeUrl: bridgeServer.serverPath,
+    });
+
+    expect(result.status).to.equal(400);
+    expect(result.body.message).to.contain(`was already created in Dashboard. Please use another workflowId.`);
+
+    // Verify the original workflow wasn't modified
+    const workflows = await workflowsRepository.findOne({
+      _environmentId: session.environment._id,
+      _id: dashboardWorkflow._id,
+    });
+    expect(workflows).to.deep.equal(dashboardWorkflow);
+  });
+
+  it('should allow syncing a workflow with same ID if original was created externally', async () => {
+    const workflowId = 'external-created-workflow';
+
+    // First create a workflow as external
+    const externalWorkflow = await workflowsRepository.create({
+      _environmentId: session.environment._id,
+      name: workflowId,
+      triggers: [{ identifier: workflowId, type: 'event', variables: [] }],
+      steps: [],
+      active: true,
+      draft: false,
+      workflowId,
+      origin: WorkflowOriginEnum.EXTERNAL,
+    });
+
+    // Now try to sync a workflow with the same ID through bridge
+    const newWorkflow = workflow(workflowId, async ({ step }) => {
+      await step.email('send-email', () => ({
+        subject: 'Updated Welcome!',
+        body: 'Updated Hello there',
+      }));
+    });
+    await bridgeServer.start({ workflows: [newWorkflow] });
+
+    const result = await session.testAgent.post(`/v1/bridge/sync`).send({
+      bridgeUrl: bridgeServer.serverPath,
+    });
+
+    expect(result.status).to.equal(201);
+
+    // Verify the workflow was updated
+    const workflows = await workflowsRepository.findOne({
+      _environmentId: session.environment._id,
+      _id: externalWorkflow._id,
+    });
+    expect(workflows?.origin).to.equal(WorkflowOriginEnum.EXTERNAL);
+    expect(workflows?.steps[0]?.stepId).to.equal('send-email');
   });
 });

@@ -30,7 +30,7 @@ export function ActivityList({ data: userData, pagination = false, loading = fal
       />
       <div data-test-id="activities-table">
         {data.map((item) => {
-          return <ActivityItem onClick={onRowClick} key={`activity-item-${item.id}`} item={item} />;
+          return <ActivityItem onClick={onRowClick} key={`activity-item-${item._id}`} item={item} />;
         })}
       </div>
 

@@ -1,15 +1,6 @@
-import {
-  ChannelTypeEnum,
-  ISendMessageSuccessResponse,
-  IPushOptions,
-  IPushProvider,
-} from '@novu/stateless';
+import { ChannelTypeEnum, ISendMessageSuccessResponse, IPushOptions, IPushProvider } from '@novu/stateless';
 import { initializeApp, cert, deleteApp, getApp } from 'firebase-admin/app';
-import {
-  getMessaging,
-  Messaging,
-  MulticastMessage,
-} from 'firebase-admin/messaging';
+import { getMessaging, Messaging, MulticastMessage } from 'firebase-admin/messaging';
 import crypto from 'crypto';
 import { PushProviderIdEnum } from '@novu/shared';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
@@ -27,7 +18,7 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
       projectId: string;
       email: string;
       secretKey: string;
-    },
+    }
   ) {
     super();
     this.config = config;
@@ -40,14 +31,14 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
           privateKey: this.config.secretKey,
         }),
       },
-      this.appName,
+      this.appName
     );
     this.messaging = getMessaging(firebase);
   }
 
   async sendMessage(
     options: IPushOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const {
       deviceTokens: _,
@@ -81,7 +72,7 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
           apns,
           fcmOptions,
           webpush,
-        }).body,
+        }).body
       );
     } else {
       res = await this.messaging.sendEachForMulticast(
@@ -97,15 +88,13 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
           apns,
           fcmOptions,
           webpush,
-        }).body,
+        }).body
       );
     }
 
     if (res.successCount === 0) {
       throw new Error(
-        `Sending message failed due to "${
-          res.responses.find((i) => i.success === false).error.message
-        }"`,
+        `Sending message failed due to "${res.responses.find((i) => i.success === false).error.message}"`
       );
     }
 
@@ -114,9 +103,7 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
 
     return {
       ids: res?.responses?.map((response, index) =>
-        response.success
-          ? response.messageId
-          : `${response.error.message}. Invalid token:- ${options.target[index]}`,
+        response.success ? response.messageId : `${response.error.message}. Invalid token:- ${options.target[index]}`
       ),
       date: new Date().toISOString(),
     };

@@ -30,9 +30,6 @@ jobs:
         with:
           submodules: true
 
-      - name: build api
-        run: pnpm build:api --skip-nx-cache
-
       - name: Set Up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
@@ -70,13 +67,14 @@ jobs:
             --platform=linux/amd64
             --output=type=image,name=$REGISTRY/$REPOSITORY,push-by-digest=true,name-canonical=true
         run: |
+          cp scripts/dotenvcreate.mjs apps/api/src/dotenvcreate.mjs
           cd apps/api && pnpm --silent --workspace-root pnpm-context -- apps/api/Dockerfile | BULL_MQ_PRO_NPM_TOKEN=${BULL_MQ_PRO_NPM_TOKEN} docker buildx build --secret id=BULL_MQ_PRO_NPM_TOKEN --build-arg PACKAGE_PATH=apps/api - -t novu-api --load $DOCKER_BUILD_ARGUMENTS
           docker tag novu-api $REGISTRY/$REPOSITORY:latest
           docker tag novu-api $REGISTRY/$REPOSITORY:prod
           docker tag novu-api $REGISTRY/$REPOSITORY:$IMAGE_TAG
 
           docker run --network=host --name api -dit --env NODE_ENV=test $REGISTRY/$REPOSITORY:$IMAGE_TAG
-          docker run --network=host appropriate/curl --retry 10 --retry-delay 5 --retry-connrefused http://127.0.0.1:1337/v1/health-check | grep 'ok'
+          docker run --network=host appropriate/curl --retry 10 --retry-delay 5 --retry-connrefused http://127.0.0.1:1336/v1/health-check | grep 'ok'
 
           docker push $REGISTRY/$REPOSITORY:prod
           docker push $REGISTRY/$REPOSITORY:latest
@@ -123,17 +121,6 @@ jobs:
           # where notification entities (eg. workflows, topics) are defined.
           # Required.
           bridge-url: https://api.novu.co/v1/bridge/novu
-
-  deploy_docs:
-    needs: deploy_prod_api_us
-    runs-on: ubuntu-latest
-    environment: Production
-    steps:
-      - name: Deploy API Documentation
-        uses: fjogeleit/http-request-action@v1
-        with:
-          url: ${{ secrets.API_DOCS_BUILD_WEBHOOK }}
-          method: 'POST'
 
   newrelic:
     runs-on: ubuntu-latest

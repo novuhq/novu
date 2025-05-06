@@ -1,26 +1,25 @@
 import { BadRequestException, ConflictException, Inject, Injectable } from '@nestjs/common';
 import shortid from 'shortid';
-import { IntegrationEntity, IntegrationRepository, DalException, IntegrationQuery } from '@novu/dal';
+import { DalException, IntegrationEntity, IntegrationQuery, IntegrationRepository } from '@novu/dal';
 import {
+  CHANNELS_WITH_PRIMARY,
   ChannelTypeEnum,
   EmailProviderIdEnum,
-  providers,
-  SmsProviderIdEnum,
   InAppProviderIdEnum,
-  CHANNELS_WITH_PRIMARY,
+  providers,
   slugify,
+  SmsProviderIdEnum,
 } from '@novu/shared';
 import {
   AnalyticsService,
-  encryptCredentials,
-  buildIntegrationKey,
-  InvalidateCacheService,
-  areNovuSmsCredentialsSet,
   areNovuEmailCredentialsSet,
+  areNovuSmsCredentialsSet,
+  buildIntegrationKey,
+  encryptCredentials,
+  InvalidateCacheService,
 } from '@novu/application-generic';
 
 import { CreateIntegrationCommand } from './create-integration.command';
-import { ApiException } from '../../../shared/exceptions/api.exception';
 import { CheckIntegrationCommand } from '../check-integration/check-integration.command';
 import { CheckIntegration } from '../check-integration/check-integration.usecase';
 
@@ -107,6 +106,7 @@ export class CreateIntegration {
     if (command.identifier) {
       const existingIntegrationWithIdentifier = await this.integrationRepository.findOne({
         _organizationId: command.organizationId,
+        _environmentId: command.environmentId,
         identifier: command.identifier,
       });
 
@@ -176,7 +176,7 @@ export class CreateIntegration {
       return integrationEntity;
     } catch (e) {
       if (e instanceof DalException) {
-        throw new ApiException(e.message);
+        throw new BadRequestException(e.message);
       }
       throw e;
     }

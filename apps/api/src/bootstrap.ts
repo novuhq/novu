@@ -1,19 +1,17 @@
-import './config/env.config';
 import './instrument';
-import 'newrelic';
 
 import helmet from 'helmet';
-import { INestApplication, Logger, ValidationPipe, VersioningType } from '@nestjs/common';
-import { NestFactory, Reflector } from '@nestjs/core';
+
+import { INestApplication, ValidationPipe, VersioningType } from '@nestjs/common';
+import { NestFactory } from '@nestjs/core';
 import bodyParser from 'body-parser';
 
-import { BullMqService, getErrorInterceptor, Logger as PinoLogger } from '@novu/application-generic';
-import { ExpressAdapter } from '@nestjs/platform-express';
-import { CONTEXT_PATH, corsOptionsDelegate, validateEnv } from './config';
+// eslint-disable-next-line no-restricted-imports
+import { BullMqService, getErrorInterceptor, Logger, PinoLogger } from '@novu/application-generic';
 import { AppModule } from './app.module';
-import { setupSwagger } from './app/shared/framework/swagger/swagger.controller';
-import { SubscriberRouteGuard } from './app/auth/framework/subscriber-route.guard';
 import { ResponseInterceptor } from './app/shared/framework/response.interceptor';
+import { setupSwagger } from './app/shared/framework/swagger/swagger.controller';
+import { CONTEXT_PATH, corsOptionsDelegate, validateEnv } from './config';
 import { AllExceptionsFilter } from './exception-filter';
 
 const passport = require('passport');
@@ -26,12 +24,18 @@ const extendedBodySizeRoutes = [
   '/v1/layouts',
   '/v1/bridge/sync',
   '/v1/bridge/diff',
+  '/v1/environments/:environmentId/bridge',
 ];
 
 // Validate the ENV variables after launching SENTRY, so missing variables will report to sentry
 validateEnv();
+class BootstrapOptions {
+  internalSdkGeneration?: boolean;
+}
 
-export async function bootstrap(expressApp?): Promise<INestApplication> {
+export async function bootstrap(
+  bootstrapOptions?: BootstrapOptions
+): Promise<{ app: INestApplication; document: any }> {
   BullMqService.haveProInstalled();
 
   let rawBodyBuffer: undefined | ((...args) => void);
@@ -50,12 +54,7 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
     };
   }
 
-  let app: INestApplication;
-  if (expressApp) {
-    app = await NestFactory.create(AppModule, new ExpressAdapter(expressApp), nestOptions);
-  } else {
-    app = await NestFactory.create(AppModule, { bufferLogs: true, ...nestOptions });
-  }
+  const app = await NestFactory.create(AppModule, { bufferLogs: true, ...nestOptions });
 
   app.enableVersioning({
     type: VersioningType.URI,
@@ -63,15 +62,18 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
     defaultVersion: '1',
   });
 
-  app.useLogger(app.get(PinoLogger));
+  const logger = await app.resolve(PinoLogger);
+  logger.setContext('Bootstrap');
+
+  app.useLogger(app.get(Logger));
   app.flushLogs();
 
   const server = app.getHttpServer();
-  Logger.verbose(`Server timeout: ${server.timeout}`);
+  logger.trace(`Server timeout: ${server.timeout}`);
   server.keepAliveTimeout = 61 * 1000;
-  Logger.verbose(`Server keepAliveTimeout: ${server.keepAliveTimeout / 1000}s `);
+  logger.trace(`Server keepAliveTimeout: ${server.keepAliveTimeout / 1000}s `);
   server.headersTimeout = 65 * 1000;
-  Logger.verbose(`Server headersTimeout: ${server.headersTimeout / 1000}s `);
+  logger.trace(`Server headersTimeout: ${server.headersTimeout / 1000}s `);
 
   app.use(helmet());
   app.enableCors(corsOptionsDelegate);
@@ -88,29 +90,40 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
   app.useGlobalInterceptors(new ResponseInterceptor());
   app.useGlobalInterceptors(getErrorInterceptor());
 
-  app.useGlobalGuards(new SubscriberRouteGuard(app.get(Reflector), app.get(PinoLogger)));
-
-  app.use(extendedBodySizeRoutes, bodyParser.json({ limit: '20mb' }));
-  app.use(extendedBodySizeRoutes, bodyParser.urlencoded({ limit: '20mb', extended: true }));
+  app.use(extendedBodySizeRoutes, bodyParser.json({ limit: '26mb' }));
+  app.use(extendedBodySizeRoutes, bodyParser.urlencoded({ limit: '26mb', extended: true }));
 
   app.use(bodyParser.json({ verify: rawBodyBuffer }));
   app.use(bodyParser.urlencoded({ extended: true, verify: rawBodyBuffer }));
 
   app.use(compression());
 
-  await setupSwagger(app);
+  const document = await setupSwagger(app, bootstrapOptions?.internalSdkGeneration);
 
-  app.useGlobalFilters(new AllExceptionsFilter(app.get(PinoLogger)));
-  Logger.log('BOOTSTRAPPED SUCCESSFULLY');
-  if (expressApp) {
-    await app.init();
-  } else {
-    await app.listen(process.env.PORT);
-  }
+  app.useGlobalFilters(new AllExceptionsFilter(app.get(Logger)));
+
+  /*
+   * Handle unhandled promise rejections
+   * We explicitly crash the process on unhandled rejections as they indicate the application
+   * is in an undefined state. NestJS can't handle these as they occur outside the event lifecycle.
+   * According to Node.js docs, it's unsafe to resume normal operation after unhandled rejections.
+   * We log these rejections with fatal level to ensure they are properly monitored and tracked.
+   * See: https://nodejs.org/api/process.html#process_warning_using_uncaughtexception_correctly
+   */
+  process.on('unhandledRejection', (reason, promise) => {
+    logger.fatal({
+      err: reason,
+      message: 'Unhandled promise rejection',
+      promise,
+    });
+    process.exit(1);
+  });
+
+  await app.listen(process.env.PORT || 3000);
 
   app.enableShutdownHooks();
 
-  Logger.log(`Started application in NODE_ENV=${process.env.NODE_ENV} on port ${process.env.PORT}`);
+  logger.info(`Started application in NODE_ENV=${process.env.NODE_ENV} on port ${process.env.PORT}`);
 
-  return app;
+  return { app, document };
 }

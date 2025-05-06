@@ -26,6 +26,10 @@ export class UserRepository implements IUserRepository {
     return this.userRepository.updatePasswordResetToken(userId, token, resetTokenCount);
   }
 
+  async findUserSessions(userId: string): Promise<[]> {
+    return this.userRepository.findUserSessions(userId);
+  }
+
   create(data: any, options?: any): Promise<UserEntity> {
     return this.userRepository.create(data, options);
   }

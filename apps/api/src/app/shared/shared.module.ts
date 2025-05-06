@@ -2,6 +2,9 @@
 import { Module } from '@nestjs/common';
 import {
   ChangeRepository,
+  CommunityMemberRepository,
+  CommunityOrganizationRepository,
+  CommunityUserRepository,
   ControlValuesRepository,
   DalService,
   EnvironmentRepository,
@@ -10,7 +13,6 @@ import {
   IntegrationRepository,
   JobRepository,
   LayoutRepository,
-  LogRepository,
   MemberRepository,
   MessageRepository,
   MessageTemplateRepository,
@@ -19,7 +21,6 @@ import {
   NotificationTemplateRepository,
   OrganizationRepository,
   PreferencesRepository,
-  SubscriberPreferenceRepository,
   SubscriberRepository,
   TenantRepository,
   TopicRepository,
@@ -35,13 +36,9 @@ import {
   CreateExecutionDetails,
   createNestLoggingModuleOptions,
   DalServiceHealthIndicator,
-  distributedLockService,
   ExecuteBridgeRequest,
-  ExecutionLogRoute,
   featureFlagsService,
   GetDecryptedSecretKey,
-  getFeatureFlag,
-  injectCommunityAuthProviders,
   InvalidateCacheService,
   LoggerModule,
   QueuesModule,
@@ -58,7 +55,22 @@ function getDynamicAuthProviders() {
 
     return eeAuthPackage.injectEEAuthProviders();
   } else {
-    return injectCommunityAuthProviders();
+    const userRepositoryProvider = {
+      provide: 'USER_REPOSITORY',
+      useClass: CommunityUserRepository,
+    };
+
+    const memberRepositoryProvider = {
+      provide: 'MEMBER_REPOSITORY',
+      useClass: CommunityMemberRepository,
+    };
+
+    const organizationRepositoryProvider = {
+      provide: 'ORGANIZATION_REPOSITORY',
+      useClass: CommunityOrganizationRepository,
+    };
+
+    return [userRepositoryProvider, memberRepositoryProvider, organizationRepositoryProvider];
   }
 }
 
@@ -75,12 +87,10 @@ const DAL_MODELS = [
   NotificationGroupRepository,
   MemberRepository,
   LayoutRepository,
-  LogRepository,
   IntegrationRepository,
   ChangeRepository,
   JobRepository,
   FeedRepository,
-  SubscriberPreferenceRepository,
   TopicRepository,
   TopicSubscribersRepository,
   TenantRepository,
@@ -93,7 +103,7 @@ const dalService = {
   provide: DalService,
   useFactory: async () => {
     const service = new DalService();
-    await service.connect(process.env.MONGO_URL);
+    await service.connect(process.env.MONGO_URL || '.');
 
     return service;
   },
@@ -106,24 +116,21 @@ const PROVIDERS = [
   ComputeJobWaitDurationService,
   dalService,
   DalServiceHealthIndicator,
-  distributedLockService,
   featureFlagsService,
   InvalidateCacheService,
   storageService,
   ...DAL_MODELS,
-  ExecutionLogRoute,
   CreateExecutionDetails,
   ExecuteBridgeRequest,
-  getFeatureFlag,
   GetDecryptedSecretKey,
 ];
 
 const IMPORTS = [
   QueuesModule.forRoot([
-    JobTopicNameEnum.EXECUTION_LOG,
     JobTopicNameEnum.WEB_SOCKETS,
     JobTopicNameEnum.WORKFLOW,
     JobTopicNameEnum.INBOUND_PARSE_MAIL,
+    JobTopicNameEnum.STANDARD,
   ]),
   LoggerModule.forRoot(
     createNestLoggingModuleOptions({

@@ -10,8 +10,10 @@ import {
   CacheService,
   InvalidateCacheService,
 } from '@novu/application-generic';
+import { Novu } from '@novu/api';
+import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-describe('Unseen Count - GET /widget/notifications/unseen', function () {
+describe('Unseen Count - GET /widget/notifications/unseen #novu-v0', function () {
   const messageRepository = new MessageRepository();
   let session: UserSession;
   let template: NotificationTemplateEntity;
@@ -23,7 +25,7 @@ describe('Unseen Count - GET /widget/notifications/unseen', function () {
 
   let cacheInMemoryProviderService: CacheInMemoryProviderService;
   let invalidateCache: InvalidateCacheService;
-
+  let novuClient: Novu;
   before(async () => {
     cacheInMemoryProviderService = new CacheInMemoryProviderService();
     const cacheService = new CacheService(cacheInMemoryProviderService);
@@ -34,6 +36,7 @@ describe('Unseen Count - GET /widget/notifications/unseen', function () {
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
+    novuClient = initNovuClassSdk(session);
 
     subscriberId = SubscriberRepository.createObjectId();
 
@@ -59,11 +62,11 @@ describe('Unseen Count - GET /widget/notifications/unseen', function () {
   });
 
   it('should return unseen count with no query', async function () {
-    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
-    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
-    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
 
     const messages = await messageRepository.findBySubscriberChannel(
       session.environment._id,
@@ -88,11 +91,11 @@ describe('Unseen Count - GET /widget/notifications/unseen', function () {
   });
 
   it('should return unseen count with query seen false', async function () {
-    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
-    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
-    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
 
     const messages = await messageRepository.findBySubscriberChannel(
       session.environment._id,
@@ -117,11 +120,11 @@ describe('Unseen Count - GET /widget/notifications/unseen', function () {
   });
 
   it('should return unseen count with query seen true', async function () {
-    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
-    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
-    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
 
     const messages = await messageRepository.findBySubscriberChannel(
       session.environment._id,
@@ -146,11 +149,11 @@ describe('Unseen Count - GET /widget/notifications/unseen', function () {
   });
 
   it('should return unseen count after mark as request', async function () {
-    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
-    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
-    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
 
     const messages = await messageRepository.findBySubscriberChannel(
       session.environment._id,

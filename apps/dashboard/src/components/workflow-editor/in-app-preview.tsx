@@ -1,5 +1,5 @@
-import { HTMLAttributes, useMemo } from 'react';
 import { parseMarkdownIntoTokens } from '@novu/js/internal';
+import { HTMLAttributes, ReactNode, useMemo } from 'react';
 
 import { InboxArrowDown } from '@/components/icons/inbox-arrow-down';
 import { InboxBell } from '@/components/icons/inbox-bell';
@@ -8,8 +8,10 @@ import { InboxSettings } from '@/components/icons/inbox-settings';
 import { Button, ButtonProps } from '@/components/primitives/button';
 import { cn } from '@/utils/ui';
 import { Skeleton } from '../primitives/skeleton';
+import { inboxButtonVariants } from '@/utils/inbox';
 
 type InAppPreviewBellProps = HTMLAttributes<HTMLDivElement>;
+
 export const InAppPreviewBell = (props: InAppPreviewBellProps) => {
   const { className, ...rest } = props;
   return (
@@ -23,13 +25,14 @@ export const InAppPreviewBell = (props: InAppPreviewBellProps) => {
 };
 
 type InAppPreviewProps = HTMLAttributes<HTMLDivElement>;
+
 export const InAppPreview = (props: InAppPreviewProps) => {
   const { className, ...rest } = props;
 
   return (
     <div
       className={cn(
-        'border-foreground-200 to-background/90 pointer-events-none relative mx-auto flex h-full w-full flex-col gap-4 rounded-xl px-2 py-3 shadow-sm',
+        'border-foreground-200 to-background/90 pointer-events-none relative mx-auto flex h-full w-full flex-col rounded-xl shadow-sm',
         className
       )}
       {...rest}
@@ -38,21 +41,28 @@ export const InAppPreview = (props: InAppPreviewProps) => {
 };
 
 type InAppPreviewHeaderProps = HTMLAttributes<HTMLDivElement>;
+
 export const InAppPreviewHeader = (props: InAppPreviewHeaderProps) => {
   const { className, ...rest } = props;
 
   return (
-    <div className={cn('z-20 flex items-center justify-between px-2 text-neutral-300', className)} {...rest}>
-      <div className="flex items-center gap-2">
-        <span className="text-xl font-medium">Inbox</span>
+    <div
+      className={cn(
+        'border-b-neutral-alpha-100 z-20 flex items-center justify-between rounded-t-xl border-b bg-[oklch(from_#525252_l_c_h/0.025)] px-4 pb-2 pt-2.5 text-neutral-300',
+        className
+      )}
+      {...rest}
+    >
+      <div className="flex items-center gap-1">
+        <span className="text-sm font-medium">Inbox</span>
         <InboxArrowDown />
       </div>
       <div className="flex items-center gap-2">
         <span className="p-0.5">
           <InboxEllipsis />
         </span>
-        <span className="p-0.5">
-          <InboxSettings />
+        <span>
+          <InboxSettings className="size-5" />
         </span>
       </div>
     </div>
@@ -63,6 +73,7 @@ type InAppPreviewAvatarProps = HTMLAttributes<HTMLImageElement> & {
   src?: string;
   isPending?: boolean;
 };
+
 export const InAppPreviewAvatar = (props: InAppPreviewAvatarProps) => {
   const { className, isPending, src, ...rest } = props;
 
@@ -71,20 +82,22 @@ export const InAppPreviewAvatar = (props: InAppPreviewAvatarProps) => {
   }
 
   if (!src) {
-    return null;
+    return <div className={cn('bg-background size-7 rounded-full')} />;
   }
 
   return <img src={src} alt="avatar" className={cn('bg-background size-7 rounded-full')} {...rest} />;
 };
 
 type InAppPreviewNotificationProps = HTMLAttributes<HTMLDivElement>;
+
 export const InAppPreviewNotification = (props: InAppPreviewNotificationProps) => {
   const { className, ...rest } = props;
 
-  return <div className={cn('flex gap-2', className)} {...rest} />;
+  return <div className={cn('flex gap-2 p-4', className)} {...rest} />;
 };
 
 type InAppPreviewNotificationContentProps = HTMLAttributes<HTMLDivElement>;
+
 export const InAppPreviewNotificationContent = (props: InAppPreviewNotificationContentProps) => {
   const { className, ...rest } = props;
 
@@ -92,6 +105,7 @@ export const InAppPreviewNotificationContent = (props: InAppPreviewNotificationC
 };
 
 type InAppPreviewSubjectProps = MarkdownProps & { isPending?: boolean };
+
 export const InAppPreviewSubject = (props: InAppPreviewSubjectProps) => {
   const { className, isPending, ...rest } = props;
 
@@ -99,10 +113,17 @@ export const InAppPreviewSubject = (props: InAppPreviewSubjectProps) => {
     return <Skeleton className="h-5 w-1/2" />;
   }
 
-  return <Markdown className={cn('text-foreground-600 truncate text-xs font-medium', className)} {...rest} />;
+  return (
+    <Markdown
+      className={cn('text-foreground-600 truncate text-xs font-medium', className)}
+      {...rest}
+      data-testid="in-app-preview-subject"
+    />
+  );
 };
 
 type InAppPreviewBodyProps = MarkdownProps & { isPending?: boolean };
+
 export const InAppPreviewBody = (props: InAppPreviewBodyProps) => {
   const { className, isPending, ...rest } = props;
 
@@ -115,16 +136,25 @@ export const InAppPreviewBody = (props: InAppPreviewBodyProps) => {
     );
   }
 
-  return <Markdown className={cn('text-foreground-400 text-xs font-normal', className)} {...rest} />;
+  return (
+    <Markdown
+      className={cn('text-foreground-400 whitespace-pre-wrap text-xs font-normal', className)}
+      {...rest}
+      data-testid="in-app-preview-body"
+    />
+  );
 };
 
 type InAppPreviewActionsProps = HTMLAttributes<HTMLDivElement>;
+
 export const InAppPreviewActions = (props: InAppPreviewActionsProps) => {
   const { className, ...rest } = props;
-  return <div className={cn('mt-3 flex flex-wrap gap-1 overflow-hidden', className)} {...rest} />;
+
+  return <div className={cn('mt-3 flex flex-wrap gap-1 py-px', className)} {...rest} />;
 };
 
-type InAppPreviewPrimaryActionProps = ButtonProps & { isPending?: boolean };
+type InAppPreviewPrimaryActionProps = { isPending?: boolean; children?: ReactNode; className?: string };
+
 export const InAppPreviewPrimaryAction = (props: InAppPreviewPrimaryActionProps) => {
   const { className, isPending, children, ...rest } = props;
 
@@ -137,19 +167,20 @@ export const InAppPreviewPrimaryAction = (props: InAppPreviewPrimaryActionProps)
   }
 
   return (
-    <Button
-      className={cn('px-3 text-xs font-medium shadow-none', className)}
-      type="button"
-      variant="primary"
-      size="xs"
+    <button
+      className={inboxButtonVariants({
+        variant: 'default',
+        className,
+      })}
       {...rest}
     >
       {children}
-    </Button>
+    </button>
   );
 };
 
 type InAppPreviewSecondaryActionProps = ButtonProps & { isPending?: boolean };
+
 export const InAppPreviewSecondaryAction = (props: InAppPreviewSecondaryActionProps) => {
   const { className, isPending, children, ...rest } = props;
 
@@ -162,13 +193,21 @@ export const InAppPreviewSecondaryAction = (props: InAppPreviewSecondaryActionPr
   }
 
   return (
-    <Button variant="outline" className={cn('px-3 text-xs font-medium', className)} type="button" size="xs" {...rest}>
+    <Button
+      variant="secondary"
+      mode="outline"
+      className={cn('h-6 px-3 text-xs font-medium', className)}
+      type="button"
+      size="2xs"
+      {...rest}
+    >
       {children}
     </Button>
   );
 };
 
 type MarkdownProps = Omit<HTMLAttributes<HTMLParagraphElement>, 'children'> & { children?: string };
+
 const Markdown = (props: MarkdownProps) => {
   const { children, ...rest } = props;
 

@@ -6,7 +6,7 @@ import { expect } from 'chai';
 import { GetSubscriber } from './get-subscriber.usecase';
 import { GetSubscriberCommand } from './get-subscriber.command';
 
-import { SubscribersModule } from '../../subscribers.module';
+import { SubscribersV1Module } from '../../subscribersV1.module';
 import { SharedModule } from '../../../shared/shared.module';
 
 describe('Get Subscriber', function () {
@@ -15,7 +15,7 @@ describe('Get Subscriber', function () {
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
-      imports: [SharedModule, SubscribersModule],
+      imports: [SharedModule, SubscribersV1Module],
       providers: [],
     }).compile();
 

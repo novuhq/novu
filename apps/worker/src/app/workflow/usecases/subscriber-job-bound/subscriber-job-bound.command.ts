@@ -1,9 +1,9 @@
-import { IsDefined, IsString, IsOptional, ValidateNested, IsMongoId, IsEnum } from 'class-validator';
+import { IsDefined, IsEnum, IsMongoId, IsOptional, IsString, ValidateNested } from 'class-validator';
 
 import {
-  ControlsDto,
   ISubscribersDefine,
   ITenantDefine,
+  StatelessControls,
   SubscriberSourceEnum,
   TriggerRequestCategoryEnum,
 } from '@novu/shared';
@@ -50,7 +50,7 @@ export class SubscriberJobBoundCommand extends EnvironmentWithUserCommand {
 
   bridge?: { url: string; workflow: DiscoverWorkflowOutput };
 
-  controls?: ControlsDto;
+  controls?: StatelessControls;
 
   @IsDefined()
   @IsString()

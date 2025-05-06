@@ -22,3 +22,24 @@ export function deepMerge(target: Record<string, unknown>, source: Record<string
 
   return output;
 }
+
+export function getNestedValue(obj: Record<string, unknown>, path: string): string {
+  const value = path.split('.').reduce((current: unknown, key) => {
+    if (current && typeof current === 'object') {
+      return (current as Record<string, unknown>)[key];
+    }
+
+    return undefined;
+  }, obj);
+
+  if (value === null || value === undefined) return '';
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  if (typeof value === 'object') {
+    const stringified = JSON.stringify(value);
+
+    return stringified === '{}' ? '' : stringified;
+  }
+
+  return '';
+}

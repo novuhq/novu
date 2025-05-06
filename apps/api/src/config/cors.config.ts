@@ -1,5 +1,7 @@
-import { INestApplication, Logger } from '@nestjs/common';
+import { INestApplication } from '@nestjs/common';
 import { HttpRequestHeaderKeysEnum } from '@novu/application-generic';
+
+const ALLOWED_ORIGINS_REGEX = new RegExp(process.env.FRONT_BASE_URL || '');
 
 export const corsOptionsDelegate: Parameters<INestApplication['enableCors']>[0] = function (req: Request, callback) {
   const corsOptions: Parameters<typeof callback>[1] = {
@@ -10,46 +12,30 @@ export const corsOptionsDelegate: Parameters<INestApplication['enableCors']>[0] 
     methods: ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   };
 
-  const origin = extractOrigin(req);
-
   if (enableWildcard(req)) {
     corsOptions.origin = '*';
   } else {
     corsOptions.origin = [];
 
-    if (process.env.FRONT_BASE_URL) {
-      corsOptions.origin.push(process.env.FRONT_BASE_URL);
-    }
-    if (process.env.DASHBOARD_V2_BASE_URL) {
-      corsOptions.origin.push(process.env.DASHBOARD_V2_BASE_URL);
-    }
-    if (process.env.LEGACY_STAGING_DASHBOARD_URL) {
-      corsOptions.origin.push(process.env.LEGACY_STAGING_DASHBOARD_URL);
+    const requestOrigin = origin(req);
+
+    if (ALLOWED_ORIGINS_REGEX.test(requestOrigin)) {
+      corsOptions.origin.push(requestOrigin);
     }
     if (process.env.WIDGET_BASE_URL) {
       corsOptions.origin.push(process.env.WIDGET_BASE_URL);
     }
+    // Enable CORS for the docs
+    if (process.env.DOCS_BASE_URL) {
+      corsOptions.origin.push(process.env.DOCS_BASE_URL);
+    }
   }
-
-  const shouldDisableCorsForPreviewUrls = isPermittedDeployPreviewOrigin(origin);
-
-  Logger.verbose(`Should allow deploy preview? ${shouldDisableCorsForPreviewUrls ? 'Yes' : 'No'}.`, {
-    curEnv: process.env.NODE_ENV,
-    previewUrlRoot: process.env.PR_PREVIEW_ROOT_URL,
-    origin,
-  });
 
   callback(null as unknown as Error, corsOptions);
 };
 
 function enableWildcard(req: Request): boolean {
-  return (
-    isSandboxEnvironment() ||
-    isWidgetRoute(req.url) ||
-    isInboxRoute(req.url) ||
-    isBlueprintRoute(req.url) ||
-    isPermittedDeployPreviewOrigin(extractOrigin(req))
-  );
+  return isSandboxEnvironment() || isWidgetRoute(req.url) || isInboxRoute(req.url) || isBlueprintRoute(req.url);
 }
 
 function isWidgetRoute(url: string): boolean {
@@ -65,17 +51,9 @@ function isBlueprintRoute(url: string): boolean {
 }
 
 function isSandboxEnvironment(): boolean {
-  return ['test', 'local'].includes(process.env.NODE_ENV);
+  return ['test', 'local'].includes(process.env.NODE_ENV || '');
 }
 
-export function isPermittedDeployPreviewOrigin(origin: string | string[]): boolean {
-  if (!process.env.PR_PREVIEW_ROOT_URL || process.env.NODE_ENV !== 'dev') {
-    return false;
-  }
-
-  return origin.includes(process.env.PR_PREVIEW_ROOT_URL);
-}
-
-function extractOrigin(req: Request): string {
+function origin(req: Request): string {
   return (req.headers as any)?.origin || '';
 }

@@ -1,12 +1,11 @@
 import sinon from 'sinon';
 import { expect } from 'chai';
-import { NotFoundException } from '@nestjs/common';
-import { EnvironmentRepository } from '@novu/dal';
-import { AnalyticsService, CreateSubscriber, SelectIntegration, AuthService } from '@novu/application-generic';
-import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
-
+import { NotFoundException, BadRequestException } from '@nestjs/common';
+import { CommunityOrganizationRepository, EnvironmentRepository, IntegrationRepository } from '@novu/dal';
+import { AnalyticsService, CreateOrUpdateSubscriberUseCase, SelectIntegration } from '@novu/application-generic';
+import { ApiServiceLevelEnum, ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
+import { AuthService } from '../../../auth/services/auth.service';
 import { Session } from './session.usecase';
-import { ApiException } from '../../../shared/exceptions/api.exception';
 import { SessionCommand } from './session.command';
 import { SubscriberSessionResponseDto } from '../../dtos/subscriber-session-response.dto';
 import { AnalyticsEventsEnum } from '../../utils';
@@ -34,19 +33,23 @@ const mockIntegration = {
 describe('Session', () => {
   let session: Session;
   let environmentRepository: sinon.SinonStubbedInstance<EnvironmentRepository>;
-  let createSubscriber: sinon.SinonStubbedInstance<CreateSubscriber>;
+  let createSubscriber: sinon.SinonStubbedInstance<CreateOrUpdateSubscriberUseCase>;
   let authService: sinon.SinonStubbedInstance<AuthService>;
   let selectIntegration: sinon.SinonStubbedInstance<SelectIntegration>;
   let analyticsService: sinon.SinonStubbedInstance<AnalyticsService>;
   let notificationsCount: sinon.SinonStubbedInstance<NotificationsCount>;
+  let integrationRepository: sinon.SinonStubbedInstance<IntegrationRepository>;
+  let organizationRepository: sinon.SinonStubbedInstance<CommunityOrganizationRepository>;
 
   beforeEach(() => {
     environmentRepository = sinon.createStubInstance(EnvironmentRepository);
-    createSubscriber = sinon.createStubInstance(CreateSubscriber);
+    createSubscriber = sinon.createStubInstance(CreateOrUpdateSubscriberUseCase);
     authService = sinon.createStubInstance(AuthService);
     selectIntegration = sinon.createStubInstance(SelectIntegration);
     analyticsService = sinon.createStubInstance(AnalyticsService);
     notificationsCount = sinon.createStubInstance(NotificationsCount);
+    integrationRepository = sinon.createStubInstance(IntegrationRepository);
+    organizationRepository = sinon.createStubInstance(CommunityOrganizationRepository);
 
     session = new Session(
       environmentRepository as any,
@@ -54,14 +57,18 @@ describe('Session', () => {
       authService as any,
       selectIntegration as any,
       analyticsService as any,
-      notificationsCount as any
+      notificationsCount as any,
+      integrationRepository as any,
+      organizationRepository as any
     );
   });
 
   it('should throw an error if the environment is not found', async () => {
     const command: SessionCommand = {
       applicationIdentifier: 'invalid-app-id',
-      subscriberId: 'subscriber-id',
+      subscriber: {
+        subscriberId: 'subscriber-id',
+      },
     };
 
     environmentRepository.findEnvironmentByIdentifier.resolves(null);
@@ -69,7 +76,7 @@ describe('Session', () => {
     try {
       await session.execute(command);
     } catch (error) {
-      expect(error).to.be.instanceOf(ApiException);
+      expect(error).to.be.instanceOf(BadRequestException);
       expect(error.message).to.equal('Please provide a valid application identifier');
     }
   });
@@ -77,7 +84,9 @@ describe('Session', () => {
   it('should throw an error if the in-app integration is not found', async () => {
     const command: SessionCommand = {
       applicationIdentifier: 'app-id',
-      subscriberId: 'subscriber-id',
+      subscriber: {
+        subscriberId: 'subscriber-id',
+      },
     };
 
     environmentRepository.findEnvironmentByIdentifier.resolves({
@@ -98,7 +107,9 @@ describe('Session', () => {
   it('should validate HMAC encryption and return the session response', async () => {
     const command: SessionCommand = {
       applicationIdentifier: 'app-id',
-      subscriberId: 'subscriber-id',
+      subscriber: {
+        subscriberId: 'subscriber-id',
+      },
       subscriberHash: 'hash',
     };
     const subscriber = { _id: 'subscriber-id' };
@@ -109,6 +120,7 @@ describe('Session', () => {
       _id: 'env-id',
       _organizationId: 'org-id',
       apiKeys: [{ key: 'api-key', _userId: 'user-id' }],
+      name: 'Development',
     } as any);
     selectIntegration.execute.resolves(mockIntegration);
     createSubscriber.execute.resolves(subscriber as any);
@@ -126,7 +138,9 @@ describe('Session', () => {
   it('should return correct removeNovuBranding value when is set on the integration', async () => {
     const command: SessionCommand = {
       applicationIdentifier: 'app-id',
-      subscriberId: 'subscriber-id',
+      subscriber: {
+        subscriberId: 'subscriber-id',
+      },
       subscriberHash: 'hash',
     };
     const subscriber = { _id: 'subscriber-id' };
@@ -171,8 +185,11 @@ describe('Session', () => {
   it('should create a subscriber and return the session response', async () => {
     const command: SessionCommand = {
       applicationIdentifier: 'app-id',
-      subscriberId: 'subscriber-id',
+      subscriber: {
+        subscriberId: 'subscriber-id',
+      },
       subscriberHash: 'hash',
+      origin: 'origin',
     };
 
     const environment = { _id: 'env-id', _organizationId: 'org-id', name: 'env-name', apiKeys: [{ key: 'api-key' }] };
@@ -192,11 +209,52 @@ describe('Session', () => {
     expect(response.token).to.equal(token);
     expect(response.totalUnreadCount).to.equal(notificationCount.data[0].count);
     expect(
-      analyticsService.mixpanelTrack.calledOnceWith(AnalyticsEventsEnum.SESSION_INITIALIZED, '', {
+      analyticsService.mixpanelTrack.calledWith(AnalyticsEventsEnum.SESSION_INITIALIZED, '', {
         _organization: environment._organizationId,
         environmentName: environment.name,
         _subscriber: subscriber._id,
+        origin: command.origin,
       })
     ).to.be.true;
+  });
+
+  it('should return the correct maxSnoozeDurationHours value for different service levels', async () => {
+    const command: SessionCommand = {
+      applicationIdentifier: 'app-id',
+      subscriber: { subscriberId: 'subscriber-id' },
+      subscriberHash: 'hash',
+    };
+
+    const environment = { _id: 'env-id', _organizationId: 'org-id', name: 'env-name', apiKeys: [{ key: 'api-key' }] };
+    const integration = { ...mockIntegration, credentials: { hmac: false } };
+    const subscriber = { _id: 'subscriber-id' };
+    const notificationCount = { data: [{ count: 10, filter: {} }] };
+    const token = 'token';
+
+    environmentRepository.findEnvironmentByIdentifier.resolves(environment as any);
+    selectIntegration.execute.resolves(integration);
+    createSubscriber.execute.resolves(subscriber as any);
+    notificationsCount.execute.resolves(notificationCount);
+    authService.getSubscriberWidgetToken.resolves(token);
+
+    // FREE plan should have 24 hours max snooze duration
+    organizationRepository.findOne.resolves({ apiServiceLevel: ApiServiceLevelEnum.FREE } as any);
+    const freeResponse: SubscriberSessionResponseDto = await session.execute(command);
+    expect(freeResponse.maxSnoozeDurationHours).to.equal(24);
+
+    // PRO plan should have 90 days max snooze duration
+    organizationRepository.findOne.resolves({ apiServiceLevel: ApiServiceLevelEnum.PRO } as any);
+    const proResponse: SubscriberSessionResponseDto = await session.execute(command);
+    expect(proResponse.maxSnoozeDurationHours).to.equal(90 * 24);
+
+    // BUSINESS/TEAM plan should have 90 days max snooze duration
+    organizationRepository.findOne.resolves({ apiServiceLevel: ApiServiceLevelEnum.BUSINESS } as any);
+    const businessResponse: SubscriberSessionResponseDto = await session.execute(command);
+    expect(businessResponse.maxSnoozeDurationHours).to.equal(90 * 24);
+
+    // ENTERPRISE plan should have 90 days max snooze duration
+    organizationRepository.findOne.resolves({ apiServiceLevel: ApiServiceLevelEnum.ENTERPRISE } as any);
+    const enterpriseResponse: SubscriberSessionResponseDto = await session.execute(command);
+    expect(enterpriseResponse.maxSnoozeDurationHours).to.equal(90 * 24);
   });
 });

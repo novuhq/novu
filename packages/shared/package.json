@@ -1,21 +1,23 @@
 {
   "name": "@novu/shared",
-  "version": "2.1.4",
+  "version": "2.6.6",
   "description": "",
   "scripts": {
     "start": "npm run start:dev",
     "afterinstall": "pnpm build",
     "prebuild": "rimraf dist",
     "build": "npm run build:cjs && npm run build:esm",
-    "build:esm": "cross-env node_modules/.bin/tsc -p tsconfig.esm.json",
-    "build:cjs": "cross-env node_modules/.bin/tsc -p tsconfig.json",
+    "build:esm": "tsc -p tsconfig.esm.json",
+    "build:cjs": "tsc -p tsconfig.json",
     "build:watch": "cross-env node_modules/.bin/tsc -p tsconfig.json -w --preserveWatchOutput",
+    "postbuild": "npm run check:circulars",
     "start:dev": "pnpm build:watch",
     "precommit": "lint-staged",
     "lint": "eslint src",
     "lint:fix": "pnpm lint -- --fix",
     "test": "vitest",
-    "watch:test": "pnpm test --watch"
+    "watch:test": "pnpm test --watch",
+    "check:circulars": "madge --circular --extensions ts ./src"
   },
   "author": "",
   "license": "ISC",
@@ -23,7 +25,12 @@
   "module": "dist/esm/index.js",
   "types": "dist/cjs/index.d.ts",
   "files": [
-    "dist/"
+    "dist/",
+    "!**/*.spec.*",
+    "!**/*.json",
+    "CHANGELOG.md",
+    "LICENSE",
+    "README.md"
   ],
   "exports": {
     ".": {
@@ -38,6 +45,7 @@
     }
   },
   "devDependencies": {
+    "madge": "^8.0.0",
     "rimraf": "^3.0.2",
     "typescript": "5.6.2",
     "vitest": "^2.0.5"

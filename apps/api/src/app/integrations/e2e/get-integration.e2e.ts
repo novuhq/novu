@@ -3,7 +3,7 @@ import { expect } from 'chai';
 import { ChannelTypeEnum, EmailProviderIdEnum, SmsProviderIdEnum } from '@novu/shared';
 import { IntegrationEntity } from '@novu/dal';
 
-describe('Get Integrations - /integrations (GET)', function () {
+describe('Get Integrations - /integrations (GET) #novu-v2', function () {
   let session: UserSession;
 
   beforeEach(async () => {

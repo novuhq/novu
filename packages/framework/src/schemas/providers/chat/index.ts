@@ -1,4 +1,4 @@
-import { ChatProviderIdEnum } from '@novu/shared';
+import { ChatProviderIdEnum } from '../../../shared';
 import type { JsonSchema } from '../../../types/schema.types';
 import { genericProviderSchemas } from '../generic.schema';
 import { slackProviderSchemas } from './slack.schema';

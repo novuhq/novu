@@ -1,7 +1,7 @@
 import {
-  ControlsDto,
   ISubscribersDefine,
   ITenantDefine,
+  StatelessControls,
   SubscriberSourceEnum,
   TriggerRequestCategoryEnum,
 } from '@novu/shared';
@@ -29,7 +29,7 @@ export interface IProcessSubscriberDataDto {
   _subscriberSource: SubscriberSourceEnum;
   requestCategory?: TriggerRequestCategoryEnum;
   bridge?: { url: string; workflow: DiscoverWorkflowOutput };
-  controls?: ControlsDto;
+  controls?: StatelessControls;
 }
 
 export interface IProcessSubscriberJobDto extends IJobParams {

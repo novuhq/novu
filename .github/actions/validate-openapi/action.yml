@@ -11,7 +11,7 @@ runs:
         PORT: '1336'
       with:
         targets: lint:openapi
-        projects: '@novu/api'
+        projects: '@novu/api-service'
 
     - name: Kill port for api 1336 for unit tests
       shell: bash

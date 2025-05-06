@@ -5,11 +5,24 @@ export type { Notification } from './notifications';
 export type { Preference } from './preferences/preference';
 export type { NovuError } from './utils/errors';
 
+declare global {
+  /**
+   * If you want to provide custom types for the notification.data object,
+   * simply redeclare this rule in the global namespace.
+   * Every notification object will use the provided type.
+   */
+  interface NotificationData {
+    [k: string]: unknown;
+  }
+}
+
 export enum NotificationStatus {
   READ = 'read',
   SEEN = 'seen',
+  SNOOZED = 'snoozed',
   UNREAD = 'unread',
   UNSEEN = 'unseen',
+  UNSNOOZED = 'unsnoozed',
 }
 
 export enum NotificationButton {
@@ -20,10 +33,6 @@ export enum NotificationButton {
 export enum NotificationActionStatus {
   PENDING = 'pending',
   DONE = 'done',
-}
-
-export enum CtaType {
-  REDIRECT = 'redirect',
 }
 
 export enum PreferenceLevel {
@@ -39,50 +48,31 @@ export enum ChannelType {
   PUSH = 'push',
 }
 
-export enum PreferenceOverrideSource {
-  SUBSCRIBER = 'subscriber',
-  TEMPLATE = 'template',
-  WORKFLOW_OVERRIDE = 'workflowOverride',
-}
-
 export enum WebSocketEvent {
   RECEIVED = 'notification_received',
   UNREAD = 'unread_count_changed',
   UNSEEN = 'unseen_count_changed',
 }
 
-export enum ActionTypeEnum {
-  PRIMARY = 'primary',
-  SECONDARY = 'secondary',
-}
-
 export type Session = {
   token: string;
   totalUnreadCount: number;
   removeNovuBranding: boolean;
-};
-
-export type MessageButton = {
-  type: NotificationButton;
-  content: string;
-  resultContent?: string;
-};
-
-export type MessageAction = {
-  status?: NotificationActionStatus;
-  buttons?: MessageButton[];
-  result: {
-    payload?: Record<string, unknown>;
-    type?: NotificationButton;
-  };
+  isDevelopmentMode: boolean;
+  maxSnoozeDurationHours: number;
 };
 
 export type Subscriber = {
-  id: string;
+  id?: string;
+  subscriberId: string;
   firstName?: string;
   lastName?: string;
+  email?: string;
+  phone?: string;
   avatar?: string;
-  subscriberId: string;
+  locale?: string;
+  data?: Record<string, unknown>;
+  timezone?: string;
 };
 
 export type Redirect = {
@@ -90,10 +80,23 @@ export type Redirect = {
   target?: '_self' | '_blank' | '_parent' | '_top' | '_unfencedTop';
 };
 
+export enum ActionTypeEnum {
+  PRIMARY = 'primary',
+  SECONDARY = 'secondary',
+}
+
 export type Action = {
   label: string;
   isCompleted: boolean;
   redirect?: Redirect;
+};
+
+export type Workflow = {
+  id: string;
+  identifier: string;
+  name: string;
+  critical: boolean;
+  tags?: string[];
 };
 
 export type InboxNotification = {
@@ -103,6 +106,9 @@ export type InboxNotification = {
   to: Subscriber;
   isRead: boolean;
   isArchived: boolean;
+  isSnoozed: boolean;
+  snoozedUntil?: string | null;
+  deliveredAt?: string[];
   createdAt: string;
   readAt?: string | null;
   archivedAt?: string | null;
@@ -111,22 +117,16 @@ export type InboxNotification = {
   secondaryAction?: Action;
   channelType: ChannelType;
   tags?: string[];
-  data?: Record<string, unknown>;
+  data?: NotificationData;
   redirect?: Redirect;
+  workflow?: Workflow;
 };
 
 export type NotificationFilter = {
   tags?: string[];
   read?: boolean;
   archived?: boolean;
-};
-
-export type Workflow = {
-  id: string;
-  identifier: string;
-  name: string;
-  critical: boolean;
-  tags?: string[];
+  snoozed?: boolean;
 };
 
 export type ChannelPreference = {
@@ -173,14 +173,26 @@ export type Result<D = undefined, E = NovuError> = Promise<{
 }>;
 
 export type NovuOptions = {
-  applicationIdentifier: string;
-  subscriberId: string;
-  subscriberHash?: string;
+  /** @deprecated Use apiUrl instead  */
   backendUrl?: string;
+  /** @internal Should be used internally for testing purposes */
+  __userAgent?: string;
+  applicationIdentifier: string;
+  subscriberHash?: string;
+  apiUrl?: string;
   socketUrl?: string;
   useCache?: boolean;
-  /**
-   * @internal Should be used internally
-   */
-  __userAgent?: string;
-};
+} & (
+  | {
+      // TODO: Backward compatibility support - remove in future versions (see NV-5801)
+      /** @deprecated Use subscriber prop instead */
+      subscriberId: string;
+      subscriber?: never;
+    }
+  | {
+      subscriber: Subscriber | string;
+      subscriberId?: never;
+    }
+);
+
+export type Prettify<T> = { [K in keyof T]: T[K] } & {};

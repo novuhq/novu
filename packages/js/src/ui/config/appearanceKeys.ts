@@ -6,25 +6,65 @@
 export const appearanceKeys = [
   // Primitives
   'button',
-
+  'input',
+  'icon',
+  'badge',
   'popoverContent',
   'popoverTrigger',
+  'popoverClose',
 
   'dropdownContent',
   'dropdownTrigger',
   'dropdownItem',
   'dropdownItemLabel',
   'dropdownItemLabelContainer',
-  'dropdownItemLeftIcon',
-  'dropdownItemRightIcon',
+  'dropdownItemLeft__icon',
+  'dropdownItemRight__icon',
+  'dropdownItem__icon',
+
+  'collapsible',
 
   'tooltipContent',
   'tooltipTrigger',
+
+  'datePicker',
+  'datePickerGrid',
+  'datePickerGridRow',
+  'datePickerGridCell',
+  'datePickerGridCellTrigger',
+  'datePickerTrigger',
+  'datePickerGridHeader',
+  'datePickerControl',
+  'datePickerControlPrevTrigger',
+  'datePickerControlNextTrigger',
+  'datePickerControlPrevTrigger__icon',
+  'datePickerControlNextTrigger__icon',
+  'datePickerCalendar',
+  'datePickerHeaderMonth',
+  'datePickerCalendarDay__button',
+
+  'timePicker',
+  'timePicker__hourSelect',
+  'timePicker__minuteSelect',
+  'timePicker__periodSelect',
+  'timePicker__separator',
+  'timePickerHour__input',
+  'timePickerMinute__input',
+
+  'snoozeDatePicker',
+  'snoozeDatePicker__actions',
+  'snoozeDatePickerCancel__button',
+  'snoozeDatePickerApply__button',
+  'snoozeDatePicker__timePickerContainer',
+  'snoozeDatePicker__timePickerLabel',
 
   'back__button',
 
   'skeletonText',
   'skeletonAvatar',
+  'skeletonSwitch',
+  'skeletonSwitchThumb',
+
   'tabsRoot',
   'tabsList',
   'tabsContent',
@@ -50,11 +90,19 @@ export const appearanceKeys = [
   'notificationListContainer',
   'notificationList',
   'notificationListEmptyNoticeContainer',
-  'notificationListEmptyNotice',
+  'notificationListEmptyNoticeOverlay',
   'notificationListEmptyNoticeIcon',
+  'notificationListEmptyNotice',
+  'notificationList__skeleton',
+  'notificationList__skeletonContent',
+  'notificationList__skeletonItem',
+  'notificationList__skeletonAvatar',
+  'notificationList__skeletonText',
   'notificationListNewNotificationsNotice__button',
 
   'notification',
+  'notificationContent',
+  'notificationTextContainer',
   'notificationDot',
   'notificationSubject',
   'notificationSubject__strong',
@@ -62,7 +110,9 @@ export const appearanceKeys = [
   'notificationBody__strong',
   'notificationBodyContainer',
   'notificationImage',
+  'notificationImageLoadingFallback',
   'notificationDate',
+  'notificationDateActionsContainer',
   'notificationDefaultActions',
   'notificationCustomActions',
   'notificationPrimaryAction__button',
@@ -71,6 +121,14 @@ export const appearanceKeys = [
   'notificationUnread__button',
   'notificationArchive__button',
   'notificationUnarchive__button',
+  'notificationSnooze__button',
+  'notificationUnsnooze__button',
+  'notificationRead__icon',
+  'notificationUnread__icon',
+  'notificationArchive__icon',
+  'notificationUnarchive__icon',
+  'notificationSnooze__icon',
+  'notificationUnsnooze__icon',
 
   // Notifications tabs
   'notificationsTabs__tabsRoot',
@@ -89,7 +147,8 @@ export const appearanceKeys = [
   'inboxStatus__dropdownItemLabelContainer',
   'inboxStatus__dropdownItemLeft__icon',
   'inboxStatus__dropdownItemRight__icon',
-
+  'inboxStatus__dropdownItem__icon',
+  'inboxStatus__dropdownItemCheck__icon',
   // More actions
   'moreActionsContainer',
   'moreActions__dropdownTrigger',
@@ -101,7 +160,7 @@ export const appearanceKeys = [
 
   // More tabs
   'moreTabs__button',
-  'moreTabs__dots',
+  'moreTabs__icon',
   'moreTabs__dropdownTrigger',
   'moreTabs__dropdownContent',
   'moreTabs__dropdownItem',
@@ -117,14 +176,16 @@ export const appearanceKeys = [
   'workflowLabelDisabled__icon',
   'workflowContainerRight__icon',
   'workflowArrow__icon',
+  'workflowDescription',
 
   // channel
   'channelContainer',
+  'channelIconContainer',
+  'channel__icon',
   'channelsContainerCollapsible',
   'channelsContainer',
   'channelLabel',
   'channelLabelContainer',
-  'channelDescription',
   'channelName',
   'channelSwitchContainer',
   'channelSwitch',
@@ -133,11 +194,31 @@ export const appearanceKeys = [
   // Preferences Header
   'preferencesHeader',
   'preferencesHeader__back__button',
+  'preferencesHeader__back__button__icon',
   'preferencesHeader__title',
+  'preferencesHeader__icon',
 
   // Preferences Loading
-  'preferencesLoadingContainer',
+  'preferencesListEmptyNoticeContainer',
+  'preferencesListEmptyNotice',
+  'preferencesList__skeleton',
+  'preferencesList__skeletonContent',
+  'preferencesList__skeletonItem',
+  'preferencesList__skeletonIcon',
+  'preferencesList__skeletonSwitch',
+  'preferencesList__skeletonSwitchThumb',
+  'preferencesList__skeletonText',
 
+  // Notification Snooze
+  'notificationSnooze__dropdownContent',
+  'notificationSnooze__dropdownItem',
+  'notificationSnooze__dropdownItem__icon',
+  'notificationSnoozeCustomTime_popoverContent',
+
+  // Notification Delivered At
+  'notificationDeliveredAt__badge',
+  'notificationDeliveredAt__icon',
+  'notificationSnoozedUntil__icon',
   // Text formatting
   'strong',
 ] as const;

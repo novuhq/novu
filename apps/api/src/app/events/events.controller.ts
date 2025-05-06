@@ -26,8 +26,12 @@ import { SendTestEmail, SendTestEmailCommand } from './usecases/send-test-email'
 
 import { UserSession } from '../shared/framework/user.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
-import { ApiCommonResponses, ApiOkResponse, ApiResponse } from '../shared/framework/response.decorator';
-import { DataBooleanDto } from '../shared/dtos/data-wrapper-dto';
+import {
+  ApiCommonResponses,
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiResponse,
+} from '../shared/framework/response.decorator';
 import { ThrottlerCategory, ThrottlerCost } from '../rate-limiting/guards';
 import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
 import { SdkGroupName, SdkMethodName, SdkUsageExample } from '../shared/framework/swagger/sdk.decorators';
@@ -132,6 +136,10 @@ export class EventsController {
     description: `Trigger a broadcast event to all existing subscribers, could be used to send announcements, etc.
       In the future could be used to trigger events to a subset of subscribers based on defined filters.`,
   })
+  @ApiCreatedResponse({
+    description: 'Broadcast request has been registered successfully ',
+    type: TriggerEventResponseDto, // Specify the response type
+  })
   async broadcastEventToAll(
     @UserSession() user: UserSessionData,
     @Body() body: TriggerEventToAllRequestDto
@@ -181,7 +189,7 @@ export class EventsController {
   @UserAuthentication()
   @Delete('/trigger/:transactionId')
   @ApiOkResponse({
-    type: DataBooleanDto,
+    type: Boolean,
   })
   @ApiOperation({
     summary: 'Cancel triggered event',

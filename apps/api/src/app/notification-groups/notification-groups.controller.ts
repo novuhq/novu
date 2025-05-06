@@ -10,7 +10,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { UserSessionData } from '@novu/shared';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiExcludeController, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CreateNotificationGroup } from './usecases/create-notification-group/create-notification-group.usecase';
 import { UserSession } from '../shared/framework/user.decorator';
 import { CreateNotificationGroupCommand } from './usecases/create-notification-group/create-notification-group.command';
@@ -34,6 +34,7 @@ import { UserAuthentication } from '../shared/framework/swagger/api.key.security
 @UseInterceptors(ClassSerializerInterceptor)
 @UserAuthentication()
 @ApiTags('Workflow groups')
+@ApiExcludeController()
 export class NotificationGroupsController {
   constructor(
     private createNotificationGroupUsecase: CreateNotificationGroup,

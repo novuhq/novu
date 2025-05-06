@@ -1,43 +1,34 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
-import { JobEntity, JobRepository, IDelayOrDigestJobResult, NotificationRepository } from '@novu/dal';
+import { forwardRef, Inject, Injectable, BadRequestException } from '@nestjs/common';
+import { IDelayOrDigestJobResult, JobEntity, JobRepository, NotificationRepository } from '@novu/dal';
 import {
+  DigestCreationResultEnum,
+  DigestTypeEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
   IDigestBaseMetadata,
   IDigestRegularMetadata,
-  JobStatusEnum,
-  DigestCreationResultEnum,
   IDigestTimedMetadata,
+  JobStatusEnum,
 } from '@novu/shared';
 import {
-  ApiException,
+  CreateExecutionDetails,
+  CreateExecutionDetailsCommand,
   DetailEnum,
-  EventsDistributedLockService,
-  ExecutionLogRoute,
-  ExecutionLogRouteCommand,
-  getNestedValue,
   Instrument,
   InstrumentUsecase,
+  RetryOnError,
 } from '@novu/application-generic';
-
+import { isBefore } from 'date-fns';
 import { MergeOrCreateDigestCommand } from './merge-or-create-digest.command';
-
-interface IFindAndUpdateResponse {
-  matched: number;
-  modified: number;
-  execute: boolean;
-}
 
 type MergeOrCreateDigestResultType = DigestCreationResultEnum;
 
 @Injectable()
 export class MergeOrCreateDigest {
   constructor(
-    @Inject(forwardRef(() => EventsDistributedLockService))
-    private eventsDistributedLockService: EventsDistributedLockService,
     private jobRepository: JobRepository,
-    @Inject(forwardRef(() => ExecutionLogRoute))
-    private executionLogRoute: ExecutionLogRoute,
+    @Inject(forwardRef(() => CreateExecutionDetails))
+    private createExecutionDetails: CreateExecutionDetails,
     private notificationRepository: NotificationRepository
   ) {}
 
@@ -46,17 +37,14 @@ export class MergeOrCreateDigest {
     const { job } = command;
 
     const digestMeta = job.digest as IDigestBaseMetadata;
-    const digestKey = digestMeta?.digestKey;
-    const digestValue = getNestedValue(job.payload, digestKey);
-
     const digestAction = command.filtered
       ? { digestResult: DigestCreationResultEnum.SKIPPED }
-      : await this.shouldDelayDigestOrMergeWithLock(job, digestKey, digestValue, digestMeta);
+      : await this.computeDigestLogicBasedOnExistingDigestState(job, digestMeta);
 
     switch (digestAction.digestResult) {
       case DigestCreationResultEnum.MERGED: {
         if (!digestAction.activeDigestId || !digestAction.activeNotificationId) {
-          throw new ApiException(
+          throw new BadRequestException(
             `Active digest or notification id is missing, active digest id ${digestAction.activeDigestId},` +
               `active notification id ${digestAction.activeNotificationId}`
           );
@@ -69,7 +57,7 @@ export class MergeOrCreateDigest {
       case DigestCreationResultEnum.CREATED:
         return await this.processCreatedDigest(digestMeta as IDigestBaseMetadata, job);
       default:
-        throw new ApiException('Something went wrong with digest creation');
+        throw new BadRequestException('Something went wrong with digest creation');
     }
   }
 
@@ -84,9 +72,7 @@ export class MergeOrCreateDigest {
 
     const regularDigestMeta = digestMeta as IDigestRegularMetadata | undefined;
     if (!regularDigestMeta?.amount || !regularDigestMeta?.unit) {
-      const err = new Error();
-      const { stack } = err;
-      throw new ApiException(`Somehow ${job._id} had wrong digest settings and escaped validation`);
+      throw new BadRequestException(`Somehow ${job._id} had wrong digest settings and escaped validation`);
     }
 
     return DigestCreationResultEnum.CREATED;
@@ -149,42 +135,83 @@ export class MergeOrCreateDigest {
     return DigestCreationResultEnum.SKIPPED;
   }
 
-  private getLockKey(job: JobEntity, digestKey: string | undefined, digestValue: string | number | undefined): string {
-    let resource = `environment:${job._environmentId}:template:${job._templateId}:subscriber:${job._subscriberId}`;
-    if (digestKey && digestValue) {
-      resource = `${resource}:digestKey:${digestKey}:digestValue:${digestValue}`;
+  @RetryOnError('MongoServerError', {
+    maxRetries: 3,
+    delay: 500,
+  })
+  private async computeDigestLogicBasedOnExistingDigestState(
+    job: JobEntity,
+    digestMeta?: IDigestBaseMetadata
+  ): Promise<IDelayOrDigestJobResult> {
+    if (this.isBackOffDigestType(job, digestMeta)) {
+      return await this.backoffLogic(job, digestMeta);
     }
 
-    return resource;
+    return await this.isMasterDigestOrShouldMergeToExisting(job, digestMeta);
   }
 
-  private async shouldDelayDigestOrMergeWithLock(
-    job: JobEntity,
-    digestKey?: string,
-    digestValue?: string | number,
-    digestMeta?: any
-  ): Promise<IDelayOrDigestJobResult> {
-    const TTL = 1500;
-    const resourceKey = this.getLockKey(job, digestKey, digestValue);
+  private async isMasterDigestOrShouldMergeToExisting(job: JobEntity, digestMeta: IDigestBaseMetadata | undefined) {
+    const delayedDigestJob = await this.jobRepository.getExistingDelayedJobWithTheSameDigestValue(job, digestMeta);
+    if (!delayedDigestJob) {
+      await this.jobRepository.markJobAsDigestMaster(job);
 
-    const shouldDelayDigestJobOrMerge = async () =>
-      this.jobRepository.shouldDelayDigestJobOrMerge(job, digestKey, digestValue, digestMeta);
+      return {
+        activeDigestId: job._id,
+        digestResult: DigestCreationResultEnum.CREATED,
+      };
+    }
 
-    const result = await this.eventsDistributedLockService.applyLock<IDelayOrDigestJobResult>(
-      {
-        resource: resourceKey,
-        ttl: TTL,
-      },
-      shouldDelayDigestJobOrMerge
+    return {
+      activeDigestId: delayedDigestJob._id,
+      activeNotificationId: delayedDigestJob._notificationId?.toString(),
+      digestResult: DigestCreationResultEnum.MERGED,
+    };
+  }
+
+  private isBackOffDigestType(job: JobEntity, digestMeta?: IDigestBaseMetadata): digestMeta is IDigestRegularMetadata {
+    return !!(
+      job.digest?.type === DigestTypeEnum.BACKOFF ||
+      (job.digest as IDigestRegularMetadata)?.backoff ||
+      (digestMeta && 'backoff' in digestMeta && digestMeta?.backoff)
     );
+  }
 
-    return result;
+  private getEarliestJobUpdateDate(jobs: JobEntity[] | undefined): JobEntity | null {
+    if (!jobs || jobs.length === 0) {
+      return null;
+    }
+
+    return jobs.reduce((earliestJob, currentJob) => {
+      const earliestDate = new Date(earliestJob.createdAt);
+      const currentDate = new Date(currentJob.createdAt);
+
+      return currentDate < earliestDate ? currentJob : earliestJob;
+    });
+  }
+
+  private async backoffLogic(job: JobEntity, digestMeta?: IDigestRegularMetadata) {
+    const otherJobsWithSameDigest = await this.jobRepository.getAnotherJobTriggeredWithinBackoffTime(job, digestMeta);
+    const earliestOtherJobDate = this.getEarliestJobUpdateDate(otherJobsWithSameDigest);
+    if (!earliestOtherJobDate) {
+      return {
+        digestResult: DigestCreationResultEnum.SKIPPED,
+      };
+    }
+    const isMyJobBefore = isBefore(new Date(job.createdAt), new Date(earliestOtherJobDate.createdAt));
+
+    if (isMyJobBefore) {
+      return {
+        digestResult: DigestCreationResultEnum.SKIPPED,
+      };
+    }
+
+    return await this.isMasterDigestOrShouldMergeToExisting(job, digestMeta);
   }
 
   private async digestMergedExecutionDetails(job: JobEntity): Promise<void> {
-    await this.executionLogRoute.execute(
-      ExecutionLogRouteCommand.create({
-        ...ExecutionLogRouteCommand.getDetailsFromJob(job),
+    await this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
         detail: DetailEnum.DIGEST_MERGED,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.SUCCESS,
@@ -193,10 +220,11 @@ export class MergeOrCreateDigest {
       })
     );
   }
+
   private async digestSkippedExecutionDetails(job: JobEntity, filtered: boolean): Promise<void> {
-    await this.executionLogRoute.execute(
-      ExecutionLogRouteCommand.create({
-        ...ExecutionLogRouteCommand.getDetailsFromJob(job),
+    await this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
         detail: filtered ? DetailEnum.FILTER_STEPS : DetailEnum.DIGEST_SKIPPED,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.SUCCESS,

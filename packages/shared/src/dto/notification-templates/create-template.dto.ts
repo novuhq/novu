@@ -1,7 +1,25 @@
 import { NotificationStepDto } from '../workflows';
-import { IPreferenceChannels } from '../../entities/subscriber-preference';
-import { NotificationTemplateCustomData } from '../../types';
-import { INotificationGroup } from '../../entities/notification-group';
+import { CustomDataType } from '../../types';
+
+export interface IPreferenceChannelsDto {
+  email?: boolean;
+  sms?: boolean;
+  in_app?: boolean;
+  chat?: boolean;
+  push?: boolean;
+}
+
+export interface INotificationGroupDto {
+  _id?: string;
+
+  name: string;
+
+  _environmentId: string;
+
+  _organizationId: string;
+
+  _parentId?: string;
+}
 
 export interface ICreateNotificationTemplateDto {
   name: string;
@@ -14,7 +32,7 @@ export interface ICreateNotificationTemplateDto {
 
   notificationGroupId?: string;
 
-  notificationGroup?: INotificationGroup;
+  notificationGroup?: INotificationGroupDto;
 
   active?: boolean;
 
@@ -22,9 +40,9 @@ export interface ICreateNotificationTemplateDto {
 
   critical?: boolean;
 
-  preferenceSettings?: IPreferenceChannels;
+  preferenceSettings?: IPreferenceChannelsDto;
 
   blueprintId?: string;
 
-  data?: NotificationTemplateCustomData;
+  data?: CustomDataType;
 }

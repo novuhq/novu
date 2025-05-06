@@ -1,11 +1,3 @@
-export interface INotificationGroup {
-  _id?: string;
+import { INotificationGroupDto } from '../../dto';
 
-  name: string;
-
-  _environmentId: string;
-
-  _organizationId: string;
-
-  _parentId?: string;
-}
+export interface INotificationGroup extends INotificationGroupDto {}

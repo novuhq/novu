@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { TenantCustomData } from '@novu/shared';
+import { CustomDataType } from '@novu/shared';
 import { IsString } from 'class-validator';
 
 export class UpdateTenantResponseDto {
@@ -16,7 +16,7 @@ export class UpdateTenantResponseDto {
   name?: string;
 
   @ApiPropertyOptional()
-  data?: TenantCustomData;
+  data?: CustomDataType;
 
   @ApiProperty({ type: String })
   @IsString()

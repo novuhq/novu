@@ -102,7 +102,7 @@ test('should trigger pusher-beams library correctly with _passthrough', async ()
           users: ['tester1'],
         },
       },
-    },
+    }
   );
 
   // @ts-expect-error

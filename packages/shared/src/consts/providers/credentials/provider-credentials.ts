@@ -1,4 +1,4 @@
-import { CredentialsKeyEnum } from '../provider.enum';
+import { CredentialsKeyEnum } from '../../../types';
 import { IConfigCredentials } from '../provider.interface';
 
 const mailConfigBase: IConfigCredentials[] = [
@@ -606,6 +606,18 @@ export const oneSignalConfig: IConfigCredentials[] = [
     type: 'text',
     required: true,
   },
+  {
+    key: CredentialsKeyEnum.ApiVersion,
+    displayName: 'One Signal API',
+    description: 'Select the One Signal API to use',
+    type: 'dropdown',
+    required: false,
+    value: null,
+    dropdown: [
+      { name: 'Default (Player Model)', value: 'playerModel' },
+      { name: 'External ID', value: 'externalId' },
+    ],
+  },
   ...pushConfigBase,
 ];
 
@@ -629,8 +641,22 @@ export const apnsConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.SecretKey,
     displayName: 'Private Key',
-    type: 'text',
+    type: 'textarea',
     required: true,
+    validation: {
+      validate: (value: string) => {
+        try {
+          // Check if it's a valid PEM format
+          if (!value.includes('-----BEGIN PRIVATE KEY-----') || !value.includes('-----END PRIVATE KEY-----')) {
+            return 'Invalid private key format. Must be in PEM format.';
+          }
+
+          return true;
+        } catch (e) {
+          return 'Invalid private key format. Must be in PEM format.';
+        }
+      },
+    },
   },
   {
     key: CredentialsKeyEnum.ApiKey,
@@ -656,7 +682,6 @@ export const apnsConfig: IConfigCredentials[] = [
     type: 'switch',
     required: false,
   },
-
   ...pushConfigBase,
 ];
 
@@ -1157,6 +1182,22 @@ export const mobishastraConfig: IConfigCredentials[] = [
     displayName: 'Password',
     type: 'string',
     description: ' provided by Mobishastra',
+    required: true,
+  },
+  ...smsConfigBase,
+];
+
+export const afroSmsConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.SenderName,
+    displayName: 'Sender Name',
+    type: 'string',
     required: true,
   },
   ...smsConfigBase,

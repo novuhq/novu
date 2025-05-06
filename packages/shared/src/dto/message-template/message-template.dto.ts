@@ -1,7 +1,14 @@
-import { MessageTemplateContentType } from '../../entities/message-template';
-import { IMessageCTA } from '../../entities/messages';
-
-import { ActorTypeEnum, ChannelCTATypeEnum, IEmailBlock, ITemplateVariable, StepTypeEnum } from '../../types';
+import {
+  ActorTypeEnum,
+  ButtonTypeEnum,
+  ChannelCTATypeEnum,
+  IEmailBlock,
+  ITemplateVariable,
+  MessageActionStatusEnum,
+  MessageTemplateContentType,
+  StepTypeEnum,
+  UrlTarget,
+} from '../../types';
 
 export class ChannelCTADto {
   type: ChannelCTATypeEnum;
@@ -11,6 +18,37 @@ export class ChannelCTADto {
   };
 }
 
+export interface IMessageActionDto {
+  status?: MessageActionStatusEnum;
+  buttons?: IMessageButton[];
+  result: {
+    payload?: Record<string, unknown>;
+    type?: ButtonTypeEnum;
+  };
+}
+
+export interface IMessageButton {
+  type: ButtonTypeEnum;
+  content: string;
+  resultContent?: string;
+  url?: string;
+  target?: UrlTarget;
+}
+
+export interface IMessageCTADto {
+  type: ChannelCTATypeEnum;
+  data: {
+    url?: string;
+    target?: UrlTarget;
+  };
+  action?: IMessageActionDto;
+}
+
+export interface IActorDto {
+  type: ActorTypeEnum;
+  data: string | null;
+}
+
 export class MessageTemplateDto {
   type: StepTypeEnum;
 
@@ -18,7 +56,7 @@ export class MessageTemplateDto {
 
   contentType?: MessageTemplateContentType;
 
-  cta?: IMessageCTA;
+  cta?: IMessageCTADto;
 
   actor?: {
     type: ActorTypeEnum;

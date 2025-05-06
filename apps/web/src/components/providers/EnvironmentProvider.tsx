@@ -29,7 +29,7 @@ export function clearEnvironmentId() {
 
 type EnvironmentContextValue = {
   currentEnvironment?: IEnvironment | null;
-  // @deprecated use currentEnvironment instead;
+  /** @deprecated use currentEnvironment instead */
   environment?: IEnvironment | null;
   environments?: IEnvironment[];
   refetchEnvironments: () => Promise<void>;
@@ -88,7 +88,7 @@ export function EnvironmentProvider({ children }: { children: React.ReactNode })
     refetch: refetchEnvironments,
   } = useQuery<IEnvironment[]>([QueryKeys.myEnvironments, currentOrganization?._id], getEnvironments, {
     enabled: !!currentOrganization,
-    retry: false,
+    retry: 2, // Retry once on 401 if the stored environment is invalid
     staleTime: Infinity,
     onSuccess(envs) {
       /*
@@ -202,7 +202,7 @@ export function useEnvironment({ bridge }: { bridge?: boolean } = {}) {
   return {
     ...rest,
     readOnly: readOnly || (!IS_SELF_HOSTED && bridge) || false,
-    // @deprecated use readOnly instead
+    /** @deprecated Use readOnly instead */
     readonly: readOnly || (!IS_SELF_HOSTED && bridge) || false,
     bridge: (!IS_SELF_HOSTED && bridge) || false,
   };

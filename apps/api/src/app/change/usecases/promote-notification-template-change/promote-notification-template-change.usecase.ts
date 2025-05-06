@@ -1,13 +1,13 @@
-import { forwardRef, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import {
   ChangeRepository,
+  EnvironmentRepository,
+  MessageTemplateRepository,
+  NotificationGroupRepository,
+  NotificationStepData,
+  NotificationStepEntity,
   NotificationTemplateEntity,
   NotificationTemplateRepository,
-  MessageTemplateRepository,
-  NotificationStepEntity,
-  NotificationGroupRepository,
-  StepVariantEntity,
-  EnvironmentRepository,
 } from '@novu/dal';
 import {
   buildWorkflowPreferencesFromPreferenceChannels,
@@ -18,16 +18,14 @@ import {
 } from '@novu/shared';
 import {
   buildGroupedBlueprintsKey,
-  buildNotificationTemplateIdentifierKey,
-  buildNotificationTemplateKey,
-  InvalidateCacheService,
-  DeletePreferencesUseCase,
   DeletePreferencesCommand,
+  DeletePreferencesUseCase,
+  InvalidateCacheService,
+  PinoLogger,
   UpsertPreferences,
   UpsertUserWorkflowPreferencesCommand,
   UpsertWorkflowPreferencesCommand,
 } from '@novu/application-generic';
-
 import { ApplyChange, ApplyChangeCommand } from '../apply-change';
 import { PromoteTypeChangeCommand } from '../promote-type-change.command';
 
@@ -51,8 +49,11 @@ export class PromoteNotificationTemplateChange {
     @Inject(forwardRef(() => ApplyChange)) private applyChange: ApplyChange,
     private changeRepository: ChangeRepository,
     private upsertPreferences: UpsertPreferences,
-    private deletePreferences: DeletePreferencesUseCase
-  ) {}
+    private deletePreferences: DeletePreferencesUseCase,
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   async execute(command: PromoteTypeChangeCommand) {
     await this.invalidateBlueprints(command);
@@ -85,7 +86,7 @@ export class PromoteNotificationTemplateChange {
         // eslint-disable-next-line no-param-reassign
         step.variants = step.variants
           ?.map(mapNewVariantItem)
-          .filter((variant): variant is StepVariantEntity => variant !== undefined);
+          .filter((variant): variant is NotificationStepData => variant !== undefined);
       }
 
       if (!oldMessage) {
@@ -102,7 +103,7 @@ export class PromoteNotificationTemplateChange {
       return step;
     };
 
-    const mapNewVariantItem = (step: StepVariantEntity) => {
+    const mapNewVariantItem = (step: NotificationStepData) => {
       const oldMessage = messages.find((message) => {
         return message._parentId === step._templateId;
       });
@@ -126,7 +127,7 @@ export class PromoteNotificationTemplateChange {
       : [];
 
     if (missingMessages.length > 0 && steps.length > 0 && item) {
-      Logger.error(
+      this.logger.error(
         `Message templates with ids ${missingMessages.join(', ')} are missing for notification template ${item._id}`
       );
     }
@@ -235,9 +236,6 @@ export class PromoteNotificationTemplateChange {
     );
     await this.updateWorkflowPreferences(item._id, command, newItem.critical, newItem.preferenceSettings);
 
-    // Invalidate after mutations
-    await this.invalidateNotificationTemplate(item, command.organizationId);
-
     return updatedTemplate;
   }
 
@@ -315,27 +313,5 @@ export class PromoteNotificationTemplateChange {
         });
       }
     }
-  }
-
-  private async invalidateNotificationTemplate(item: NotificationTemplateEntity, organizationId: string) {
-    const productionEnvironmentId = await this.getProductionEnvironmentId(organizationId);
-
-    /**
-     * Only invalidate cache of Production environment cause the development environment cache invalidation is handled
-     * during the CRUD operations itself
-     */
-    await this.invalidateCache.invalidateByKey({
-      key: buildNotificationTemplateKey({
-        _id: item._id,
-        _environmentId: productionEnvironmentId,
-      }),
-    });
-
-    await this.invalidateCache.invalidateByKey({
-      key: buildNotificationTemplateIdentifierKey({
-        templateIdentifier: item.triggers[0].identifier,
-        _environmentId: productionEnvironmentId,
-      }),
-    });
   }
 }

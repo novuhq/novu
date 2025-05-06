@@ -1,3 +1,4 @@
+import './config/env.config';
 import { init } from '@sentry/nestjs';
 import { version } from '../package.json';
 

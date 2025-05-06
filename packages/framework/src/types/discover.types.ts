@@ -1,4 +1,4 @@
-import type { WorkflowPreferencesPartial } from '@novu/shared';
+import type { WorkflowPreferencesPartial } from '../shared';
 import { ActionStepEnum, ChannelStepEnum } from '../constants';
 import type { JsonSchema, Schema } from './schema.types';
 import type { StepOptions } from './step.types';

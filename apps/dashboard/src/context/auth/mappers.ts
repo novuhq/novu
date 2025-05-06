@@ -7,16 +7,11 @@ export const toUserEntity = (clerkUser: UserResource): IUserEntity => {
    *  - user exists and has signed in
    *  - user is signing up
    *
-   * In the case where the user is still signing up, we are using the clerk identifier for the id.
-   * This however quickly gets update to the externalId (which is actually the novu internal
-   * entity identifier) that gets used further in the app. There are a few consumers that
-   * want to use this identifier before it is set to the internal value. These consumers
-   * should make sure they only report with the correct value, a reference
-   * implementation can be found in 'apps/web/src/hooks/useMonitoring.ts'
+   * In cases where the externalId is not received yet from clerk, the "_id" field will be null.
    */
 
   return {
-    _id: clerkUser.externalId ?? clerkUser.id,
+    _id: clerkUser.externalId as string,
     firstName: clerkUser.firstName,
     lastName: clerkUser.lastName,
     email: clerkUser.emailAddresses[0].emailAddress,
@@ -36,17 +31,11 @@ export const toOrganizationEntity = (clerkOrganization: OrganizationResource): I
    *  - user exists and has signed in
    *  - user is signing up
    *
-   *
-   * In the case where the user is still signing up, we are using the clerk identifier for the id.
-   * This however quickly gets update to the externalId (which is actually the novu internal
-   * entity identifier) that gets used further in the app. There are a few consumers that
-   * want to use this identifier before it is set to the internal value. These consumers
-   * should make sure they only report with the correct value, a reference
-   * implementation can be found in 'apps/web/src/hooks/useMonitoring.ts'
+   * In cases where the externalOrgId is not received yet from clerk, the "_id" field will be null.
    */
 
   return {
-    _id: (clerkOrganization.publicMetadata.externalOrgId as string) ?? clerkOrganization.id,
+    _id: clerkOrganization.publicMetadata.externalOrgId as string,
     name: clerkOrganization.name,
     createdAt: clerkOrganization.createdAt.toISOString(),
     updatedAt: clerkOrganization.updatedAt.toISOString(),

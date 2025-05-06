@@ -77,7 +77,7 @@ export class CommunityOrganizationRepository
     );
   }
 
-  async findPartnerConfigurationDetails(organizationId: string, userId: string, configurationId: string) {
+  async findByPartnerConfigurationId({ userId, configurationId }: { userId: string; configurationId: string }) {
     const organizationIds = await this.getUsersMembersOrganizationIds(userId);
 
     return await this.find(
@@ -89,36 +89,80 @@ export class CommunityOrganizationRepository
     );
   }
 
-  async updatePartnerConfiguration(organizationId: string, userId: string, configuration: IPartnerConfiguration) {
+  async upsertPartnerConfiguration({
+    organizationId,
+    configuration,
+  }: {
+    organizationId: string;
+    configuration: IPartnerConfiguration;
+  }) {
+    // try to update existing configuration
+    const updateResult = await this.update(
+      {
+        _id: organizationId,
+        'partnerConfigurations.teamId': configuration.teamId,
+      },
+      {
+        $set: {
+          'partnerConfigurations.$': configuration,
+        },
+      }
+    );
+
+    // if no configurations were matched, then add new configuration
+    if (updateResult.modified === 0) {
+      return this.update(
+        {
+          _id: organizationId,
+        },
+        {
+          $push: {
+            partnerConfigurations: configuration,
+          },
+        }
+      );
+    }
+
+    return updateResult;
+  }
+
+  async bulkUpdatePartnerConfiguration({
+    userId,
+    data,
+    configuration,
+  }: {
+    userId: string;
+    data: Record<string, string[]>;
+    configuration: IPartnerConfiguration;
+  }) {
+    const { teamId } = configuration;
     const organizationIds = await this.getUsersMembersOrganizationIds(userId);
 
-    return this.update(
+    // remove all existing configurations for this team
+    await this.update(
       {
         _id: { $in: organizationIds },
       },
       {
-        $push: {
-          partnerConfigurations: configuration,
+        $pull: {
+          partnerConfigurations: {
+            teamId,
+          },
         },
       }
     );
-  }
 
-  async bulkUpdatePartnerConfiguration(userId: string, data: Record<string, string[]>, configurationId: string) {
-    const organizationIds = await this.getUsersMembersOrganizationIds(userId);
     const usedOrgIds = Object.keys(data);
-    const unusedOrgIds = organizationIds.filter((org) => !usedOrgIds.includes(org));
-    const bulkWriteOps = organizationIds.map((orgId) => {
-      return {
-        updateOne: {
-          filter: { _id: orgId, 'partnerConfigurations.configurationId': configurationId },
-          update: {
-            'partnerConfigurations.$.projectIds': unusedOrgIds.includes(orgId) ? [] : data[orgId],
-          },
+    const promises = usedOrgIds.map((orgId) =>
+      this.upsertPartnerConfiguration({
+        organizationId: orgId,
+        configuration: {
+          ...configuration,
+          projectIds: data[orgId],
         },
-      };
-    });
+      })
+    );
 
-    return await this.bulkWrite(bulkWriteOps);
+    await Promise.all(promises);
   }
 }

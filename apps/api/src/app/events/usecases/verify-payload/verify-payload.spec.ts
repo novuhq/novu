@@ -2,9 +2,9 @@ import { expect } from 'chai';
 import { NotificationTemplateEntity } from '@novu/dal';
 import { ITemplateVariable, TemplateVariableTypeEnum } from '@novu/shared';
 import { merge } from 'lodash';
+import { BadRequestException } from '@nestjs/common';
 import { VerifyPayloadCommand } from './verify-payload.command';
 import { VerifyPayload } from './verify-payload.usecase';
-import { ApiException } from '../../../shared/exceptions/api.exception';
 
 describe('Verify Payload Usecase', function () {
   const verifyPayload = new VerifyPayload();

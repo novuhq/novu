@@ -1,6 +1,6 @@
 import { DEFAULT_WORKFLOW_PREFERENCES } from '../consts';
 import { IPreferenceChannels } from '../entities/subscriber-preference';
-import { ChannelTypeEnum, WorkflowPreferencesPartial, WorkflowPreferences } from '../types';
+import { ChannelTypeEnum, WorkflowPreferences, WorkflowPreferencesPartial } from '../types';
 
 /**
  * Given any partial input of preferences, output a complete preferences object that:
@@ -9,7 +9,7 @@ import { ChannelTypeEnum, WorkflowPreferencesPartial, WorkflowPreferences } from
  * - Lastly, uses the defaults we've defined
  */
 export const buildWorkflowPreferences = (
-  inputPreferences: WorkflowPreferencesPartial | undefined,
+  inputPreferences: WorkflowPreferencesPartial | undefined | null,
   defaultPreferences: WorkflowPreferences = DEFAULT_WORKFLOW_PREFERENCES
 ): WorkflowPreferences => {
   if (!inputPreferences) {

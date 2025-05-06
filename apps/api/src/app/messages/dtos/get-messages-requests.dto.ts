@@ -1,42 +1,48 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { ChannelTypeEnum } from '@novu/shared';
-import { IsNumber } from 'class-validator';
+import { IsNumber, IsOptional } from 'class-validator';
 import { Transform } from 'class-transformer';
 
 export class GetMessagesRequestDto {
   @ApiPropertyOptional({
-    enum: ChannelTypeEnum,
+    enum: [...Object.values(ChannelTypeEnum)],
+    enumName: 'ChannelTypeEnum',
   })
   channel?: ChannelTypeEnum;
 
   @ApiPropertyOptional({
     type: String,
   })
+  @IsOptional()
   subscriberId?: string;
 
   @ApiPropertyOptional({
     type: String,
     isArray: true,
   })
-  transactionId?: string[] | string;
+  @IsOptional()
+  transactionId?: string[];
 
   @ApiPropertyOptional({
     type: Number,
     default: 0,
   })
+  @IsOptional()
   @IsNumber()
-  @Transform(({ value }) => {
-    return Number(value);
-  })
-  page?: number = 0;
+  @Transform(({ value }) => Number(value))
+  page?: number;
 
   @ApiPropertyOptional({
     type: Number,
     default: 10,
   })
+  @IsOptional()
   @IsNumber()
-  @Transform(({ value }) => {
-    return Number(value);
-  })
-  limit?: number = 10;
+  @Transform(({ value }) => Number(value))
+  limit?: number;
+
+  constructor() {
+    this.page = 0; // Default value
+    this.limit = 10; // Default value
+  }
 }

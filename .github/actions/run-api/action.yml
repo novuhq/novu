@@ -15,7 +15,8 @@ runs:
     - uses: mansagroup/nrwl-nx-action@v3
       with:
         targets: build
-        projects: '@novu/api'
+        projects: '@novu/api-service'
+        args: '--skip-nx-cache'
 
     - name: Start API
       shell: bash

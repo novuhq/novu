@@ -1,6 +1,4 @@
-import './config/env.config';
 import './instrument';
-import 'newrelic';
 import helmet from 'helmet';
 import { NestFactory } from '@nestjs/core';
 import { BullMqService, getErrorInterceptor, Logger } from '@novu/application-generic';

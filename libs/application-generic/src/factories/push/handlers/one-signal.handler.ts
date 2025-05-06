@@ -19,6 +19,7 @@ export class OneSignalHandler extends BasePushHandler {
     this.provider = new OneSignalPushProvider({
       appId: credentials.applicationId,
       apiKey: credentials.apiKey,
+      apiVersion: credentials.apiVersion as 'externalId' | 'playerModel' | null,
     });
   }
 }

@@ -1,6 +1,6 @@
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
-import { TenantCustomData } from '@novu/shared';
+import { CustomDataType } from '@novu/shared';
 import { TenantEntity } from '@novu/dal';
 
 import { EnvironmentWithUserCommand } from '../../commands';
@@ -19,7 +19,7 @@ export class UpdateTenantCommand extends EnvironmentWithUserCommand {
   name?: string;
 
   @IsOptional()
-  data?: TenantCustomData;
+  data?: CustomDataType;
 
   @IsOptional()
   tenant?: TenantEntity;

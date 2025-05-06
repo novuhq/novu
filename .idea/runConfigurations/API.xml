@@ -7,7 +7,8 @@
     </scripts>
     <node-interpreter value="project" />
     <envs>
-      <env name="SENTRY_DSN" value="https://a6b737085638b662e753e813028a845f@o1161119.ingest.us.sentry.io/4505630980243456" />
+      <env name="NOVU_SECRET_KEY" value="''" />
+      <env name="NOVU_ENTERPRISE" value="true" />
     </envs>
     <method v="2" />
   </configuration>

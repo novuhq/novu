@@ -1,63 +1,48 @@
 import { SubscribersService, UserSession } from '@novu/testing';
 import { SubscriberEntity, SubscriberRepository, TopicSubscribersRepository } from '@novu/dal';
 import { expect } from 'chai';
-import axios from 'axios';
-import { ExternalSubscriberId, TopicId, TopicKey, TopicName } from '@novu/shared';
+import { ExternalSubscriberId, TopicKey, TopicName } from '@novu/shared';
+import { Novu } from '@novu/api';
+import { CreateTopicResponseDto } from '@novu/api/models/components';
+import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-const axiosInstance = axios.create();
-const TOPIC_PATH = '/v1/topics';
-
-describe('Delete Subscriber - /subscribers/:subscriberId (DELETE)', function () {
+const subscriberId = '123';
+describe('Delete Subscriber - /subscribers/:subscriberId (DELETE) #novu-v2', function () {
   let session: UserSession;
   let subscriberService: SubscribersService;
   const subscriberRepository = new SubscriberRepository();
   const topicSubscribersRepository = new TopicSubscribersRepository();
-
+  let novuClient: Novu;
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
     subscriberService = new SubscribersService(session.organization._id, session.environment._id);
+    novuClient = initNovuClassSdk(session);
   });
 
   it('should delete an existing subscriber', async function () {
-    await axiosInstance.post(
-      `${session.serverUrl}/v1/subscribers`,
-      {
-        subscriberId: '123',
-        firstName: 'John',
-        lastName: 'Doe',
-        email: 'john@doe.com',
-        phone: '+972523333333',
-      },
-      {
-        headers: {
-          authorization: `ApiKey ${session.apiKey}`,
-        },
-      }
-    );
-
-    const createdSubscriber = await subscriberRepository.findBySubscriberId(session.environment._id, '123');
-    expect(createdSubscriber?.subscriberId).to.equal('123');
-
-    await axiosInstance.delete(`${session.serverUrl}/v1/subscribers/123`, {
-      headers: {
-        authorization: `ApiKey ${session.apiKey}`,
-      },
+    await novuClient.subscribers.create({
+      subscriberId,
+      firstName: 'John',
+      lastName: 'Doe',
+      email: 'john@doe.com',
+      phone: '+972523333333',
     });
 
-    const subscriber = await subscriberRepository.findBySubscriberId(session.environment._id, '123');
+    const createdSubscriber = await subscriberRepository.findBySubscriberId(session.environment._id, subscriberId);
+    expect(createdSubscriber?.subscriberId).to.equal(subscriberId);
+    await novuClient.subscribers.delete(subscriberId);
+    const subscriber = await subscriberRepository.findBySubscriberId(session.environment._id, subscriberId);
     expect(subscriber).to.be.null;
   });
 
   it('should dispose subscriber relations to topic once he was removed', async () => {
-    const subscriberId = '123';
-
     const subscriber = await subscriberService.createSubscriber({ subscriberId });
     for (let i = 0; i < 50; i += 1) {
       const firstTopicKey = `topic-key-${i}-trigger-event`;
       const firstTopicName = `topic-name-${i}-trigger-event`;
-      const newTopic = await createTopic(session, firstTopicKey, firstTopicName);
-      await addSubscribersToTopic(session, { _id: newTopic._id, key: newTopic.key }, [subscriber]);
+      const newTopic = await createTopic(firstTopicKey, firstTopicName);
+      await addSubscribersToTopic(newTopic, [subscriber]);
     }
 
     const createdRelations = await topicSubscribersRepository.find({
@@ -67,13 +52,7 @@ describe('Delete Subscriber - /subscribers/:subscriberId (DELETE)', function () 
     });
 
     expect(createdRelations.length).to.equal(50);
-
-    await axiosInstance.delete(`${session.serverUrl}/v1/subscribers/${subscriberId}`, {
-      headers: {
-        authorization: `ApiKey ${session.apiKey}`,
-      },
-    });
-
+    await novuClient.subscribers.delete(subscriberId);
     const deletedRelations = await topicSubscribersRepository.find({
       _environmentId: session.environment._id,
       _organizationId: session.organization._id,
@@ -82,57 +61,32 @@ describe('Delete Subscriber - /subscribers/:subscriberId (DELETE)', function () 
 
     expect(deletedRelations.length).to.equal(0);
   });
-});
-
-const createTopic = async (
-  session: UserSession,
-  key: TopicKey,
-  name: TopicName
-): Promise<{ _id: TopicId; key: TopicKey }> => {
-  const response = await axiosInstance.post(
-    `${session.serverUrl}${TOPIC_PATH}`,
-    {
+  const createTopic = async (key: TopicKey, name: TopicName): Promise<CreateTopicResponseDto> => {
+    const response = await novuClient.topics.create({
       key,
       name,
-    },
-    {
-      headers: {
-        authorization: `ApiKey ${session.apiKey}`,
+    });
+
+    const body = response.result;
+    expect(body.id).to.exist;
+    expect(body.key).to.eql(key);
+
+    return body;
+  };
+  const addSubscribersToTopic = async (createdTopicDto: CreateTopicResponseDto, subscribers: SubscriberEntity[]) => {
+    const subscriberIds: ExternalSubscriberId[] = subscribers.map(
+      (subscriber: SubscriberEntity) => subscriber.subscriberId
+    );
+
+    const response = await novuClient.topics.subscribers.assign(
+      {
+        subscribers: subscriberIds,
       },
-    }
-  );
+      createdTopicDto.key
+    );
 
-  expect(response.status).to.eql(201);
-  const body = response.data;
-  expect(body.data._id).to.exist;
-  expect(body.data.key).to.eql(key);
-
-  return body.data;
-};
-
-const addSubscribersToTopic = async (
-  session: UserSession,
-  createdTopicDto: { _id: TopicId; key: TopicKey },
-  subscribers: SubscriberEntity[]
-) => {
-  const subscriberIds: ExternalSubscriberId[] = subscribers.map(
-    (subscriber: SubscriberEntity) => subscriber.subscriberId
-  );
-
-  const response = await axiosInstance.post(
-    `${session.serverUrl}${TOPIC_PATH}/${createdTopicDto.key}/subscribers`,
-    {
-      subscribers: subscriberIds,
-    },
-    {
-      headers: {
-        authorization: `ApiKey ${session.apiKey}`,
-      },
-    }
-  );
-
-  expect(response.status).to.be.eq(200);
-  expect(response.data.data).to.be.eql({
-    succeeded: subscriberIds,
-  });
-};
+    expect(response.result).to.be.eql({
+      succeeded: subscriberIds,
+    });
+  };
+});

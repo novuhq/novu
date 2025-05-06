@@ -1,4 +1,4 @@
-import { checkIsResponseError } from '@novu/shared';
+import { checkIsResponseError } from '../shared';
 import { BridgeError, MissingSecretKeyError, PlatformError } from '../errors';
 
 export const initApiClient = (secretKey: string, apiUrl: string) => {

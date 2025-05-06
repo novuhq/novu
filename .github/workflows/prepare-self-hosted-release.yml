@@ -31,7 +31,7 @@ jobs:
         shell: bash
         run: |
           service=${{ matrix.name }}
-          LATEST_VERSION=$(jq -r '.version' lerna.json)
+          LATEST_VERSION=$(jq -r '.version'  apps/api/package.json)
           SERVICE_NAME=$(basename "${service//-/-}")
           SERVICE_COMMON_NAME=$(echo "$SERVICE_NAME" | sed 's/-ee$//')
           echo "LATEST_VERSION=$LATEST_VERSION" >> $GITHUB_ENV
@@ -92,6 +92,7 @@ jobs:
             --platform=linux/amd64,linux/arm64 --provenance=false
             --output=type=image,name=ghcr.io/${{ env.REGISTRY_OWNER }}/${{ env.SERVICE_NAME }},push-by-digest=true,name-canonical=true
         run: |
+          cp scripts/dotenvcreate.mjs apps/$SERVICE_COMMON_NAME/src/dotenvcreate.mjs
           cd apps/$SERVICE_COMMON_NAME
 
           if [ "${{ env.SERVICE_NAME }}" == "worker" ]; then
@@ -111,10 +112,10 @@ jobs:
             './node_modules/@taskforcesh/bullmq-pro'  # Add more patterns as needed
           )
           for pattern in "${patterns[@]}"; do
-            if docker run --rm novu-$SERVICE_COMMON_NAME sh -c "ls $pattern 2>/dev/null"; then
+            if docker run --rm entrypoint sh novu-$SERVICE_COMMON_NAME -c "ls $pattern 2>/dev/null"; then
               echo "::error::'$pattern' files were detected in ${{ matrix.name }}."
               exit 1
-            fi
+          fi
           done
           echo "No matching EE files found in the Docker image ${{ matrix.name }}"
 

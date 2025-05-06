@@ -1,9 +1,19 @@
 import { validateBridgeUrl } from '@/api/bridge';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, UseMutationOptions } from '@tanstack/react-query';
+import { useEnvironment } from '@/context/environment/hooks';
+import type { IValidateBridgeUrlResponse } from '@novu/shared';
+import type { OmitEnvironmentFromParameters } from '@/utils/types';
 
-export const useValidateBridgeUrl = () => {
+type ValidateBridgeUrlParameters = OmitEnvironmentFromParameters<typeof validateBridgeUrl>;
+
+export const useValidateBridgeUrl = (
+  options?: UseMutationOptions<IValidateBridgeUrlResponse, unknown, ValidateBridgeUrlParameters>
+) => {
+  const { currentEnvironment } = useEnvironment();
   const { mutateAsync, isPending, error, data } = useMutation({
-    mutationFn: async (url: string) => validateBridgeUrl({ bridgeUrl: url }),
+    mutationFn: ({ bridgeUrl }: { bridgeUrl: string }) =>
+      validateBridgeUrl({ bridgeUrl, environment: currentEnvironment! }),
+    ...options,
   });
 
   return {

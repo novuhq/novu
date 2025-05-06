@@ -1,10 +1,4 @@
-import {
-  camelCase,
-  constantCase,
-  kebabCase,
-  pascalCase,
-  snakeCase,
-} from './utils/change-case';
+import { camelCase, constantCase, kebabCase, pascalCase, snakeCase } from './utils/change-case';
 import { deepMerge } from './utils/deepmerge.utils';
 import { Passthrough, WithPassthrough } from './utils/types';
 
@@ -58,10 +52,7 @@ export abstract class BaseProvider {
     T_Output = Record<string, unknown>,
     T_Input = Record<string, unknown>,
     T_Data = Record<string, unknown>,
-  >(
-    bridgeProviderData: WithPassthrough<T_Input>,
-    triggerProviderData: T_Data,
-  ): MergedPassthrough<T_Output> {
+  >(bridgeProviderData: WithPassthrough<T_Input>, triggerProviderData: T_Data): MergedPassthrough<T_Output> {
     const { _passthrough = {}, ...bridgeData } = bridgeProviderData;
 
     // Construct the trigger data passthrough object
@@ -114,9 +105,7 @@ export abstract class BaseProvider {
    * @param data The data to transform.
    * @returns The transformed data, with the keys transformed to the desired casing.
    */
-  private casingTransform(
-    data: Record<string, unknown>,
-  ): Record<string, unknown> {
+  private casingTransform(data: Record<string, unknown>): Record<string, unknown> {
     let casing = camelCase;
 
     switch (this.casing) {

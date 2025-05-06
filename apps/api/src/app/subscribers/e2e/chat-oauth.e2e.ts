@@ -1,22 +1,22 @@
 import { expect } from 'chai';
-import axios from 'axios';
 
 import { UserSession } from '@novu/testing';
 import { ChannelTypeEnum, ChatProviderIdEnum } from '@novu/shared';
 import { IntegrationRepository, SubscriberRepository } from '@novu/dal';
 import { createHash } from '@novu/application-generic';
+import { Novu } from '@novu/api';
+import { expectSdkExceptionGeneric, initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-const axiosInstance = axios.create();
-
-describe('ChatOauth - /:subscriberId/credentials/:providerId/:environmentId (GET)', function () {
+describe('ChatOauth - /:subscriberId/credentials/:providerId/:environmentId (GET) #novu-v2', function () {
   let session: UserSession;
-  const ACTION = '<script>window.close();</script>';
-
+  let novuClient: Novu;
   const integrationRepository = new IntegrationRepository();
+  const userSubscriberId = '123';
 
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
+    novuClient = initNovuClassSdk(session);
   });
 
   it('should throw exception on missing credentials', async () => {
@@ -37,27 +37,31 @@ describe('ChatOauth - /:subscriberId/credentials/:providerId/:environmentId (GET
       }
     );
 
-    const userSubscriberId = '123';
-    await expectThrow({
-      subscriberId: userSubscriberId,
-      error: `Integration in environment ${session.environment._id} missing credentials, channel: chat, providerId: slack`,
-    });
+    const { error } = await expectSdkExceptionGeneric(() =>
+      novuClient.subscribers.authentication.chatAccessOauth({
+        environmentId: session.environment._id,
+        hmacHash: '',
+        providerId: ChatProviderIdEnum.Slack,
+        subscriberId: userSubscriberId || userSubscriberId,
+      })
+    );
+    expect(error?.message).to.equal(
+      `Integration in environment ${session.environment._id} missing credentials, channel: chat, providerId: slack`
+    );
   });
 
   it('should throw exception om missing client id', async () => {
-    const integrationId = await integrationRepository.findOne(
-      {
-        _environmentId: session.environment._id,
-        channel: ChannelTypeEnum.CHAT,
-      },
-      '_id'
+    const { error } = await expectSdkExceptionGeneric(() =>
+      novuClient.subscribers.authentication.chatAccessOauth({
+        environmentId: session.environment._id,
+        hmacHash: '',
+        providerId: ChatProviderIdEnum.Slack,
+        subscriberId: userSubscriberId || userSubscriberId,
+      })
     );
-
-    const userSubscriberId = '123';
-    await expectThrow({
-      subscriberId: userSubscriberId,
-      error: `Integration in environment ${session.environment._id} missing clientId, channel: chat, providerId: slack`,
-    });
+    expect(error?.message).to.equal(
+      `Integration in environment ${session.environment._id} missing clientId, channel: chat, providerId: slack`
+    );
   });
 
   it('should throw an exception when looking for integration with invalid environmentId', async () => {
@@ -66,11 +70,15 @@ describe('ChatOauth - /:subscriberId/credentials/:providerId/:environmentId (GET
     const errorMessage =
       `Integration in environment ${invalidEnvironment} was not found, channel: ${ChannelTypeEnum.CHAT}, ` +
       `providerId: ${ChatProviderIdEnum.Slack}`;
-    await expectThrow({
-      subscriberId: session.subscriberId,
-      error: errorMessage,
-      environmentId: invalidEnvironment,
-    });
+    const { error } = await expectSdkExceptionGeneric(() =>
+      novuClient.subscribers.authentication.chatAccessOauth({
+        environmentId: invalidEnvironment || session.environment._id,
+        hmacHash: '',
+        providerId: ChatProviderIdEnum.Slack,
+        subscriberId: session.subscriberId || userSubscriberId,
+      })
+    );
+    expect(error?.message).to.equal(errorMessage);
   });
 
   it('should throw an exception with missing hmacHash (enabled hmac)', async () => {
@@ -92,10 +100,17 @@ describe('ChatOauth - /:subscriberId/credentials/:providerId/:environmentId (GET
       }
     );
 
-    await expectThrow({
-      subscriberId: '123',
-      error: 'Hmac is enabled on the integration, please provide a HMAC hash on the request params',
-    });
+    const { error } = await expectSdkExceptionGeneric(() =>
+      novuClient.subscribers.authentication.chatAccessOauth({
+        environmentId: session.environment._id,
+        hmacHash: '',
+        providerId: ChatProviderIdEnum.Slack,
+        subscriberId: userSubscriberId,
+      })
+    );
+    await expect(error?.message).to.equal(
+      'Hmac is enabled on the integration, please provide a HMAC hash on the request params'
+    );
   });
 
   it('should throw exception on invalid hashHmac (hmac enabled)', async () => {
@@ -117,52 +132,20 @@ describe('ChatOauth - /:subscriberId/credentials/:providerId/:environmentId (GET
       }
     );
 
-    const userSubscriberId = '123';
-
     const hmacHash = createHash(session.apiKey, userSubscriberId);
 
     const invalidHmac = `${hmacHash}007`;
 
-    await expectThrow({
-      subscriberId: userSubscriberId,
-      error: 'Hmac is enabled on the integration, please provide a valid HMAC hash',
-      hashHmac: invalidHmac,
-    });
+    const { error } = await expectSdkExceptionGeneric(() =>
+      novuClient.subscribers.authentication.chatAccessOauth({
+        environmentId: session.environment._id,
+        hmacHash: invalidHmac,
+        providerId: ChatProviderIdEnum.Slack,
+        subscriberId: userSubscriberId || userSubscriberId,
+      })
+    );
+    await expect(error?.message, JSON.stringify(error)).to.equal(
+      'Hmac is enabled on the integration, please provide a valid HMAC hash'
+    );
   });
-
-  async function expectThrow({
-    subscriberId,
-    error,
-    environmentId = session.environment._id,
-    hashHmac = '',
-  }: {
-    subscriberId: string | undefined | null;
-    error: string;
-    environmentId?: string;
-    hashHmac?: string;
-  }) {
-    const expectedError = `Exception should have been thrown expect error: ${error}`;
-    try {
-      await chatOauth(session.serverUrl, subscriberId, environmentId, ChatProviderIdEnum.Slack, hashHmac);
-      throw new Error(expectedError);
-    } catch (e) {
-      const message = Array.isArray(e.response.data.message) ? e.response.data.message[0] : e.response.data.message;
-      expect(message || e.message).to.equal(error);
-    }
-  }
 });
-
-async function chatOauth(
-  serverUrl: string,
-  subscriberId?: string | null,
-  environmentId?: string | null | undefined,
-  providerId: ChatProviderIdEnum | null = ChatProviderIdEnum.Slack,
-  hmacHash = ''
-) {
-  const environmentIdQuery = `environmentId=${environmentId}`;
-  const hmacHashQuery = hmacHash ? `&hmacHash=${hmacHash}` : '';
-
-  return await axiosInstance.get(
-    `${serverUrl}/v1/subscribers/${subscriberId}/credentials/${providerId}/oauth?${environmentIdQuery}${hmacHashQuery}`
-  );
-}

@@ -3,10 +3,11 @@ import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
 import { subMonths, subWeeks } from 'date-fns';
 
 import { BaseRepository } from '../base-repository';
-import { NotificationEntity, NotificationDBModel } from './notification.entity';
+import { NotificationDBModel, NotificationEntity } from './notification.entity';
 import { Notification } from './notification.schema';
 import type { EnforceEnvOrOrgIds } from '../../types';
 import { EnvironmentId } from '../environment';
+import { NotificationFeedItemEntity } from './notification.feed.Item.entity';
 
 export class NotificationRepository extends BaseRepository<
   NotificationDBModel,
@@ -31,16 +32,30 @@ export class NotificationRepository extends BaseRepository<
       templates?: string[] | null;
       subscriberIds?: string[];
       transactionId?: string;
+      after?: string;
+      before?: string;
     } = {},
     skip = 0,
     limit = 10
-  ) {
+  ): Promise<NotificationFeedItemEntity[]> {
     const requestQuery: FilterQuery<NotificationDBModel> = {
       _environmentId: environmentId,
     };
 
     if (query.transactionId) {
       requestQuery.transactionId = query.transactionId;
+    }
+
+    if (query.after || query.before) {
+      requestQuery.createdAt = {};
+
+      if (query.after) {
+        requestQuery.createdAt.$gte = query.after;
+      }
+
+      if (query.before) {
+        requestQuery.createdAt.$lte = query.before;
+      }
     }
 
     if (query?.templates) {
@@ -67,19 +82,23 @@ export class NotificationRepository extends BaseRepository<
       .limit(limit)
       .sort('-createdAt');
 
-    return {
-      data: this.mapEntities(response),
-    };
+    return this.mapEntities(response) as unknown as NotificationFeedItemEntity[];
   }
 
-  public async getFeedItem(notificationId: string, _environmentId: string, _organizationId: string) {
+  public async getFeedItem(
+    notificationId: string,
+    _environmentId: string,
+    _organizationId: string
+  ): Promise<NotificationFeedItemEntity> {
     const requestQuery: FilterQuery<NotificationDBModel> = {
       _id: notificationId,
       _environmentId,
       _organizationId,
     };
 
-    return this.mapEntity(await this.populateFeed(this.MongooseModel.findOne(requestQuery), _environmentId));
+    return this.mapEntity(
+      await this.populateFeed(this.MongooseModel.findOne(requestQuery), _environmentId)
+    ) as unknown as NotificationFeedItemEntity;
   }
 
   private populateFeed(query: QueryWithHelpers<unknown, unknown, unknown>, environmentId: string) {
@@ -96,12 +115,12 @@ export class NotificationRepository extends BaseRepository<
           readPreference: 'secondaryPreferred',
         },
         path: 'template',
-        select: '_id name triggers',
+        select: '_id name triggers origin',
       })
       .populate({
         options: {
           readPreference: 'secondaryPreferred',
-          sort: { createdAt: 1 },
+          sort: { createdAt: 1, _parentId: 1 },
         },
         path: 'jobs',
         match: {
@@ -110,7 +129,7 @@ export class NotificationRepository extends BaseRepository<
             $nin: [StepTypeEnum.TRIGGER],
           },
         },
-        select: 'createdAt digest payload overrides to tenant actorId providerId step status type updatedAt',
+        select: 'createdAt digest payload overrides to tenant actorId providerId step status type updatedAt _parentId',
         populate: [
           {
             path: 'executionDetails',

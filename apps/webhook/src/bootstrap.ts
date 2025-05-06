@@ -1,4 +1,3 @@
-import './config/env.config';
 import './instrument';
 import { INestApplication } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';

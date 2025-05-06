@@ -1,8 +1,8 @@
 import axios from 'axios';
-import { CustomDataType, WorkflowPreferences } from '@novu/shared';
+import { CustomDataType, IPaginationWithQueryParams, WorkflowPreferences } from '@novu/shared';
 import { API_ROOT } from '../config';
 import { getToken } from '../components/providers/AuthProvider';
-import { getEnvironmentId } from '../components/providers/EnvironmentProvider';
+import { getEnvironmentId, clearEnvironmentId } from '../components/providers/EnvironmentProvider';
 
 interface IOptions {
   absoluteUrl: boolean;
@@ -15,7 +15,7 @@ axios.interceptors.request.use(async (config) => {
   return config;
 });
 
-// @deprecated Migrate all api methods to the new buildApiHttpClient that allows runtime configuration on the client object.
+/** @deprecated Migrate all api methods to the new buildApiHttpClient that allows runtime configuration on the client object. */
 export const api = {
   get(url: string, options: IOptions = { absoluteUrl: false }) {
     return axios
@@ -24,6 +24,14 @@ export const api = {
         return response.data?.data;
       })
       .catch((error) => {
+        if (error?.response?.status === 401) {
+          /*
+           * 401 can be caused due to invalid user, organization or environment data.
+           * Clerk handles the invalid user and organization data, but we need to clear the invalid environment data.
+           */
+          clearEnvironmentId();
+        }
+
         return Promise.reject(error?.response?.data || error?.response || error);
       });
   },
@@ -145,6 +153,12 @@ export function buildApiHttpClient({
   return {
     async getNotifications(params?: { page?: number; transactionId?: string }) {
       return get(`/v1/notifications`, params);
+    },
+
+    async getNotificationsList({ page = 0, limit = 10, query }: IPaginationWithQueryParams) {
+      const params = { page, limit, ...(query && { query }) };
+
+      return get(`/v1/notification-templates`, params);
     },
 
     async getNotification(notificationId: string) {

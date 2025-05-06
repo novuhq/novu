@@ -12,18 +12,14 @@ import {
 } from '@novu/shared';
 import {
   AnalyticsService,
-  buildNotificationTemplateKey,
   buildSubscriberKey,
-  CachedEntity,
+  CachedResponse,
   ConditionsFilter,
   ConditionsFilterCommand,
+  CreateExecutionDetails,
+  CreateExecutionDetailsCommand,
   DetailEnum,
-  ExecutionLogRoute,
-  ExecutionLogRouteCommand,
   GetPreferences,
-  GetPreferencesCommand,
-  GetSubscriberGlobalPreferenceCommandV1,
-  GetSubscriberGlobalPreferenceV1,
   GetSubscriberTemplatePreference,
   GetSubscriberTemplatePreferenceCommand,
   IConditionsFilterResponse,
@@ -32,6 +28,7 @@ import {
   InstrumentUsecase,
   NormalizeVariables,
   NormalizeVariablesCommand,
+  PlatformException,
 } from '@novu/application-generic';
 import {
   JobEntity,
@@ -52,9 +49,9 @@ import { SendMessageInApp } from './send-message-in-app.usecase';
 import { SendMessageChat } from './send-message-chat.usecase';
 import { SendMessagePush } from './send-message-push.usecase';
 import { Digest } from './digest';
-import { PlatformException } from '../../../shared/utils';
 import { ExecuteStepCustom } from './execute-step-custom.usecase';
 import { ExecuteBridgeJob } from '../execute-bridge-job';
+import { SendMessageResult } from './send-message-type.usecase';
 
 @Injectable()
 export class SendMessage {
@@ -65,9 +62,8 @@ export class SendMessage {
     private sendMessageChat: SendMessageChat,
     private sendMessagePush: SendMessagePush,
     private digest: Digest,
-    private executionLogRoute: ExecutionLogRoute,
+    private createExecutionDetails: CreateExecutionDetails,
     private getSubscriberTemplatePreferenceUsecase: GetSubscriberTemplatePreference,
-    private getSubscriberGlobalPreferenceV1Usecase: GetSubscriberGlobalPreferenceV1,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private jobRepository: JobRepository,
     private sendMessageDelay: SendMessageDelay,
@@ -77,12 +73,11 @@ export class SendMessage {
     private tenantRepository: TenantRepository,
     private analyticsService: AnalyticsService,
     private normalizeVariablesUsecase: NormalizeVariables,
-    private executeBridgeJob: ExecuteBridgeJob,
-    private getPreferencesUseCase: GetPreferences
+    private executeBridgeJob: ExecuteBridgeJob
   ) {}
 
   @InstrumentUsecase()
-  public async execute(command: SendMessageCommand): Promise<{ status: 'success' | 'canceled' }> {
+  public async execute(command: SendMessageCommand): Promise<SendMessageResult> {
     const payload = await this.buildCompileContext(command);
 
     const variables = await this.normalizeVariablesUsecase.execute(
@@ -100,7 +95,7 @@ export class SendMessage {
     const stepType = command.step?.template?.type;
 
     let bridgeResponse: ExecuteOutput | null = null;
-    if (![StepTypeEnum.DIGEST, StepTypeEnum.DELAY, StepTypeEnum.TRIGGER].includes(stepType as StepTypeEnum)) {
+    if (isChannelStep(stepType)) {
       bridgeResponse = await this.executeBridgeJob.execute({
         ...command,
         variables,
@@ -116,9 +111,9 @@ export class SendMessage {
     if (!stepCondition?.passed || !channelPreference || isBridgeSkipped) {
       await this.jobRepository.updateStatus(command.environmentId, command.jobId, JobStatusEnum.CANCELED);
 
-      await this.executionLogRoute.execute(
-        ExecutionLogRouteCommand.create({
-          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           detail: DetailEnum.FILTER_STEPS,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.SUCCESS,
@@ -143,9 +138,9 @@ export class SendMessage {
     }
 
     if (stepType !== StepTypeEnum.DELAY) {
-      await this.executionLogRoute.execute(
-        ExecutionLogRouteCommand.create({
-          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           detail: stepType === StepTypeEnum.DIGEST ? DetailEnum.START_DIGESTING : DetailEnum.START_SENDING,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.PENDING,
@@ -162,44 +157,37 @@ export class SendMessage {
     });
 
     switch (stepType) {
+      case StepTypeEnum.TRIGGER: {
+        return { status: 'success' };
+      }
       case StepTypeEnum.SMS: {
-        await this.sendMessageSms.execute(sendMessageCommand);
-        break;
+        return await this.sendMessageSms.execute(sendMessageCommand);
       }
       case StepTypeEnum.IN_APP: {
-        await this.sendMessageInApp.execute(sendMessageCommand);
-        break;
+        return await this.sendMessageInApp.execute(sendMessageCommand);
       }
       case StepTypeEnum.EMAIL: {
-        await this.sendMessageEmail.execute(sendMessageCommand);
-        break;
+        return await this.sendMessageEmail.execute(sendMessageCommand);
       }
       case StepTypeEnum.CHAT: {
-        await this.sendMessageChat.execute(sendMessageCommand);
-        break;
+        return await this.sendMessageChat.execute(sendMessageCommand);
       }
       case StepTypeEnum.PUSH: {
-        await this.sendMessagePush.execute(sendMessageCommand);
-        break;
+        return await this.sendMessagePush.execute(sendMessageCommand);
       }
       case StepTypeEnum.DIGEST: {
-        await this.digest.execute(command);
-        break;
+        return await this.digest.execute(command);
       }
       case StepTypeEnum.DELAY: {
-        await this.sendMessageDelay.execute(command);
-        break;
+        return await this.sendMessageDelay.execute(command);
       }
       case StepTypeEnum.CUSTOM: {
-        await this.executeStepCustom.execute(sendMessageCommand);
-        break;
+        return await this.executeStepCustom.execute(sendMessageCommand);
       }
       default: {
-        break;
+        throw new Error(`Unsupported step type: ${stepType}`);
       }
     }
-
-    return { status: 'success' };
   }
 
   private async evaluateFilters(
@@ -312,62 +300,6 @@ export class SendMessage {
     });
     if (!subscriber) throw new PlatformException(`Subscriber not found with id ${job._subscriberId}`);
 
-    /*
-     * START: V1 PREFERENCES
-     *
-     * The `critical` flag and Subscriber Preferences check is needed here for backward-compatibility
-     * of V1 Workflow Preferences only.
-     *
-     * V2 Preferences are stored on the Preference entity instead, and resolved in `GetPreferences`.
-     *
-     * TODO: remove the following code block after we remove v1 preferences
-     */
-    const workflowPreferencesV2 = await this.getPreferencesUseCase.safeExecute(
-      GetPreferencesCommand.create({
-        environmentId: job._environmentId,
-        organizationId: job._organizationId,
-        templateId: job._templateId,
-      })
-    );
-    const isWorkflowWithV2Preferences =
-      workflowPreferencesV2?.preferences !== undefined || command.statelessPreferences !== undefined;
-    if (!isWorkflowWithV2Preferences) {
-      if (workflow?.critical) {
-        return true;
-      }
-
-      /*
-       * TODO: Remove this check after we remove V1 preferences, global subscriber
-       * preferences are handled in `GetPreferences` for V2 preferences.
-       */
-      const { preference: globalPreference } = await this.getSubscriberGlobalPreferenceV1Usecase.execute(
-        GetSubscriberGlobalPreferenceCommandV1.create({
-          organizationId: job._organizationId,
-          environmentId: job._environmentId,
-          subscriberId: job.subscriberId,
-        })
-      );
-
-      const globalPreferenceResult = this.stepPreferred(globalPreference, job);
-
-      if (!globalPreferenceResult) {
-        await this.executionLogRoute.execute(
-          ExecutionLogRouteCommand.create({
-            ...ExecutionLogRouteCommand.getDetailsFromJob(job),
-            detail: DetailEnum.STEP_FILTERED_BY_SUBSCRIBER_GLOBAL_PREFERENCES,
-            source: ExecutionDetailsSourceEnum.INTERNAL,
-            status: ExecutionDetailsStatusEnum.SUCCESS,
-            isTest: false,
-            isRetry: false,
-            raw: JSON.stringify(globalPreference),
-          })
-        );
-
-        return false;
-      }
-    }
-    /** END: V1 PREFERENCES */
-
     let subscriberPreference: { enabled: boolean; channels: IPreferenceChannels };
     let subscriberPreferenceType: PreferencesTypeEnum;
     if (command.statelessPreferences) {
@@ -415,9 +347,9 @@ export class SendMessage {
     };
 
     if (!result) {
-      await this.executionLogRoute.execute(
-        ExecutionLogRouteCommand.create({
-          ...ExecutionLogRouteCommand.getDetailsFromJob(job),
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
           detail: preferenceDetailFromPreferenceType[subscriberPreferenceType],
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.SUCCESS,
@@ -461,18 +393,11 @@ export class SendMessage {
     };
   }
 
-  @CachedEntity({
-    builder: (command: { _id: string; environmentId: string }) =>
-      buildNotificationTemplateKey({
-        _environmentId: command.environmentId,
-        _id: command._id,
-      }),
-  })
   private async getWorkflow({ _id, environmentId }: { _id: string; environmentId: string }) {
     return await this.notificationTemplateRepository.findById(_id, environmentId);
   }
 
-  @CachedEntity({
+  @CachedResponse({
     builder: (command: { subscriberId: string; _environmentId: string }) =>
       buildSubscriberKey({
         _environmentId: command._environmentId,
@@ -510,9 +435,9 @@ export class SendMessage {
   }
 
   protected async sendSelectedTenantExecution(job: JobEntity, tenant: TenantEntity) {
-    await this.executionLogRoute.execute(
-      ExecutionLogRouteCommand.create({
-        ...ExecutionLogRouteCommand.getDetailsFromJob(job),
+    await this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
         detail: DetailEnum.TENANT_CONTEXT_SELECTED,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.PENDING,
@@ -541,9 +466,9 @@ export class SendMessage {
         identifier: tenantIdentifier,
       });
       if (!tenant) {
-        await this.executionLogRoute.execute(
-          ExecutionLogRouteCommand.create({
-            ...ExecutionLogRouteCommand.getDetailsFromJob(job),
+        await this.createExecutionDetails.execute(
+          CreateExecutionDetailsCommand.create({
+            ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
             detail: DetailEnum.TENANT_NOT_FOUND,
             source: ExecutionDetailsSourceEnum.INTERNAL,
             status: ExecutionDetailsStatusEnum.FAILED,
@@ -562,4 +487,8 @@ export class SendMessage {
 
     return tenant;
   }
+}
+
+function isChannelStep(stepType: StepTypeEnum | undefined) {
+  return ![StepTypeEnum.DIGEST, StepTypeEnum.DELAY, StepTypeEnum.TRIGGER].includes(stepType as StepTypeEnum);
 }

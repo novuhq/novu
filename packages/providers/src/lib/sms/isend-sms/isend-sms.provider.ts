@@ -1,10 +1,5 @@
 import { SmsProviderIdEnum } from '@novu/shared';
-import {
-  ChannelTypeEnum,
-  ISendMessageSuccessResponse,
-  ISmsOptions,
-  ISmsProvider,
-} from '@novu/stateless';
+import { ChannelTypeEnum, ISendMessageSuccessResponse, ISmsOptions, ISmsProvider } from '@novu/stateless';
 import axios, { AxiosInstance } from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
@@ -45,7 +40,7 @@ export class ISendSmsProvider extends BaseProvider implements ISmsProvider {
       apiToken: string;
       from?: string;
       contentType?: ISendSmsData['sms_type'];
-    },
+    }
   ) {
     super();
     this.Instance = axios.create({
@@ -60,7 +55,7 @@ export class ISendSmsProvider extends BaseProvider implements ISmsProvider {
 
   async sendMessage(
     options: ISmsOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const payload = this.transform(bridgeProviderData, {
       sender_id: options.from ?? this.config.from,
@@ -69,10 +64,7 @@ export class ISendSmsProvider extends BaseProvider implements ISmsProvider {
       message: options.content,
     }).body;
 
-    const response = await this.Instance.post<ISendSmsResponse>(
-      '/api/v3/sms/send',
-      JSON.stringify(payload),
-    );
+    const response = await this.Instance.post<ISendSmsResponse>('/api/v3/sms/send', JSON.stringify(payload));
 
     if (['success', 'error'].includes(response.data.status)) {
       if (response.data.status === 'success')
@@ -80,10 +72,7 @@ export class ISendSmsProvider extends BaseProvider implements ISmsProvider {
           id: response.data.data.uid,
           date: new Date().toISOString(),
         };
-      else
-        throw new Error(
-          response.data.message ?? 'Unexpected response while sending the SMS!',
-        );
+      else throw new Error(response.data.message ?? 'Unexpected response while sending the SMS!');
     } else throw new Error('Something went wrong while sending the SMS!');
   }
 }

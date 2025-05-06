@@ -1,5 +1,5 @@
 import { IsDefined, IsEmail, IsOptional, IsString } from 'class-validator';
-import { BaseCommand } from '../../../shared/commands/base.command';
+import { BaseCommand } from '@novu/application-generic';
 
 export class InitializeSessionCommand extends BaseCommand {
   @IsDefined()

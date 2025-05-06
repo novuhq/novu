@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Event, ExecuteOutput, HttpQueryKeysEnum, PostActionEnum } from '@novu/framework/internal';
-import { ExecuteBridgeRequest, ExecuteBridgeRequestCommand } from '@novu/application-generic';
+import { ExecuteBridgeRequest, ExecuteBridgeRequestCommand, InstrumentUsecase } from '@novu/application-generic';
 
 import { PreviewStepCommand } from './preview-step.command';
 
@@ -8,6 +8,7 @@ import { PreviewStepCommand } from './preview-step.command';
 export class PreviewStep {
   constructor(private executeBridgeRequest: ExecuteBridgeRequest) {}
 
+  @InstrumentUsecase()
   async execute(command: PreviewStepCommand): Promise<ExecuteOutput> {
     const event = this.buildBridgeEventPayload(command);
     const executeCommand = this.createExecuteCommand(command, event);

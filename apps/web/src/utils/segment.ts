@@ -56,7 +56,7 @@ export class SegmentService {
 
     this._segment?.identify(user?._id, {
       email: user.email,
-      name: user.firstName + ' ' + user.lastName,
+      name: `${user.firstName} ${user.lastName}`,
       firstName: user.firstName,
       lastName: user.lastName,
       avatar: user.profilePicture,

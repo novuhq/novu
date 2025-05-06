@@ -6,4 +6,12 @@ export const QueryKeys = Object.freeze({
   fetchWorkflowTestData: 'fetchWorkflowTestData',
   fetchWorkflows: 'fetchWorkflows',
   fetchTags: 'fetchTags',
+  getApiKeys: 'getApiKeys',
+  fetchIntegrations: 'fetchIntegrations',
+  fetchActivity: 'fetchActivity',
+  fetchActivities: 'fetchActivities',
+  fetchSubscribers: 'fetchSubscribers',
+  fetchSubscriber: 'fetchSubscriber',
+  fetchSubscriberPreferences: 'fetchSubscriberPreferences',
+  patchSubscriberPreferences: 'patchSubscriberPreferences',
 });

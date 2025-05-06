@@ -1,6 +1,10 @@
 import { useEffect } from 'react';
 import { useLDClient } from 'launchdarkly-react-client-sdk';
-import { setUser as sentrySetUser, configureScope as sentryConfigureScope } from '@sentry/react';
+import {
+  setUser as sentrySetUser,
+  configureScope as sentryConfigureScope,
+  setTags as setSentryTags,
+} from '@sentry/react';
 import { useSegment } from '../components/providers/SegmentProvider';
 import { useAuth } from './useAuth';
 
@@ -27,8 +31,16 @@ export function useMonitoring() {
         email: currentUser.email ?? '',
         username: `${currentUser.firstName} ${currentUser.lastName}`,
         id: currentUser._id,
-        organizationId: currentOrganization._id,
-        organizationName: currentOrganization.name,
+      });
+
+      setSentryTags({
+        // user tags
+        'user.createdAt': currentUser.createdAt,
+        // organization tags
+        'organization.id': currentOrganization._id,
+        'organization.name': currentOrganization.name,
+        'organization.tier': currentOrganization.apiServiceLevel,
+        'organization.createdAt': currentOrganization.createdAt,
       });
     } else {
       sentryConfigureScope((scope) => scope.setUser(null));
@@ -46,6 +58,7 @@ export function useMonitoring() {
         key: currentOrganization._id,
         name: currentOrganization.name,
         createdAt: currentOrganization.createdAt,
+        tier: currentOrganization.apiServiceLevel,
       });
     } else {
       ldClient.identify({

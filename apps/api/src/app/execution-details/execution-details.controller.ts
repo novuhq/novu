@@ -1,5 +1,5 @@
 import { ClassSerializerInterceptor, Controller, Get, Query, UseInterceptors } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiExcludeController, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UserSessionData } from '@novu/shared';
 import { ExecutionDetailsResponseDto } from '@novu/application-generic';
 import { UserSession } from '../shared/framework/user.decorator';
@@ -14,6 +14,7 @@ import { UserAuthentication } from '../shared/framework/swagger/api.key.security
 @UseInterceptors(ClassSerializerInterceptor)
 @UserAuthentication()
 @ApiTags('Execution Details')
+@ApiExcludeController()
 export class ExecutionDetailsController {
   constructor(private getExecutionDetails: GetExecutionDetails) {}
 

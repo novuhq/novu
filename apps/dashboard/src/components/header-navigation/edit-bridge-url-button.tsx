@@ -1,19 +1,27 @@
-import { useLayoutEffect, useState } from 'react';
-import { RiLinkM, RiPencilFill } from 'react-icons/ri';
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useLayoutEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { RiLinkM, RiPencilFill } from 'react-icons/ri';
 import * as z from 'zod';
 
-import { cn } from '@/utils/ui';
-import { Popover, PopoverContent, PopoverTrigger, PopoverPortal } from '../primitives/popover';
-import { Button } from '../primitives/button';
-import { Input, InputField } from '../primitives/input';
-import { ConnectionStatus } from '@/utils/types';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  FormRoot,
+} from '@/components/primitives/form/form';
 import { useEnvironment } from '@/context/environment/hooks';
-import { useBridgeHealthCheck } from '@/hooks/use-bridge-health-check';
-import { useValidateBridgeUrl } from '@/hooks/use-validate-bridge-url';
+import { useFetchBridgeHealthCheck } from '@/hooks/use-fetch-bridge-health-check';
 import { useUpdateBridgeUrl } from '@/hooks/use-update-bridge-url';
-import { FormField, FormItem, FormLabel, FormControl, FormMessage, Form } from '@/components/primitives/form/form';
+import { useValidateBridgeUrl } from '@/hooks/use-validate-bridge-url';
+import { ConnectionStatus } from '@/utils/types';
+import { cn } from '@/utils/ui';
+import { Button } from '../primitives/button';
+import { Input } from '../primitives/input';
+import { Popover, PopoverContent, PopoverPortal, PopoverTrigger } from '../primitives/popover';
 
 const formSchema = z.object({ bridgeUrl: z.string().url() });
 
@@ -28,7 +36,7 @@ export const EditBridgeUrlButton = () => {
     formState: { isDirty },
   } = form;
   const { currentEnvironment, setBridgeUrl } = useEnvironment();
-  const { status, bridgeURL: envBridgeUrl } = useBridgeHealthCheck();
+  const { status, bridgeURL: envBridgeUrl } = useFetchBridgeHealthCheck();
   const { validateBridgeUrl, isPending: isValidatingBridgeUrl } = useValidateBridgeUrl();
   const { updateBridgeUrl, isPending: isUpdatingBridgeUrl } = useUpdateBridgeUrl();
 
@@ -37,7 +45,8 @@ export const EditBridgeUrlButton = () => {
   }, [reset, envBridgeUrl]);
 
   const onSubmit = async ({ bridgeUrl }: z.infer<typeof formSchema>) => {
-    const { isValid } = await validateBridgeUrl(bridgeUrl);
+    const { isValid } = await validateBridgeUrl({ bridgeUrl });
+
     if (isValid) {
       await updateBridgeUrl({ url: bridgeUrl, environmentId: currentEnvironment?._id ?? '' });
       setBridgeUrl(bridgeUrl);
@@ -51,6 +60,7 @@ export const EditBridgeUrlButton = () => {
       open={isPopoverOpen}
       onOpenChange={(newIsOpen) => {
         setIsPopoverOpen(newIsOpen);
+
         if (!newIsOpen && isDirty) {
           reset({ bridgeUrl: envBridgeUrl });
         }
@@ -63,7 +73,7 @@ export const EditBridgeUrlButton = () => {
               className={cn(
                 'relative size-1.5 animate-[pulse-shadow_1s_ease-in-out_infinite] rounded-full',
                 status === ConnectionStatus.DISCONNECTED || status === ConnectionStatus.LOADING
-                  ? 'bg-destructive [--pulse-color:var(--destructive)]'
+                  ? 'bg-destructive'
                   : 'bg-success [--pulse-color:var(--success)]'
               )}
             />
@@ -77,19 +87,16 @@ export const EditBridgeUrlButton = () => {
       <PopoverPortal>
         <PopoverContent className="w-[362px] p-0" side="bottom" align="end">
           <Form {...form}>
-            <form onSubmit={handleSubmit(onSubmit)}>
+            <FormRoot onSubmit={handleSubmit(onSubmit)}>
               <div className="flex flex-col gap-1 p-5">
                 <FormField
                   control={control}
                   name="bridgeUrl"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Bridge Endpoint URL</FormLabel>
+                      <FormLabel required>Bridge Endpoint URL</FormLabel>
                       <FormControl>
-                        <InputField>
-                          <RiLinkM className="size-5 min-w-5" />
-                          <Input id="bridgeUrl" {...field} />
-                        </InputField>
+                        <Input leadingIcon={RiLinkM} id="bridgeUrl" {...field} />
                       </FormControl>
                       <FormMessage>URL (e.g., https://your.api.com/api/novu)</FormMessage>
                     </FormItem>
@@ -98,7 +105,7 @@ export const EditBridgeUrlButton = () => {
               </div>
               <div className="flex items-center justify-between border-t border-neutral-200 px-5 py-3">
                 <a
-                  href="https://docs.novu.co/concepts/endpoint#bridge-endpoint"
+                  href="https://docs.novu.co/platform/concepts/endpoint#bridge-endpoint"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-xs"
@@ -108,13 +115,15 @@ export const EditBridgeUrlButton = () => {
                 <Button
                   type="submit"
                   variant="primary"
+                  mode="filled"
                   size="xs"
+                  isLoading={isUpdatingBridgeUrl}
                   disabled={!isDirty || isValidatingBridgeUrl || isUpdatingBridgeUrl}
                 >
                   Update endpoint
                 </Button>
               </div>
-            </form>
+            </FormRoot>
           </Form>
         </PopoverContent>
       </PopoverPortal>

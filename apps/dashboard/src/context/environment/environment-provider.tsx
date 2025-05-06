@@ -2,7 +2,6 @@ import { useCallback, useLayoutEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { type IEnvironment } from '@novu/shared';
 
-import { getEnvironmentId, saveEnvironmentId } from '@/utils/environment';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { useAuth } from '@/context/auth/hooks';
 import { useFetchEnvironments } from '@/context/environment/hooks';
@@ -27,8 +26,6 @@ function selectEnvironment(environments: IEnvironment[], selectedEnvironmentSlug
   if (!environment) {
     throw new Error('Missing development environment');
   }
-
-  saveEnvironmentId(environment._id);
 
   return environment;
 }
@@ -67,7 +64,7 @@ export function EnvironmentProvider({ children }: { children: React.ReactNode })
       return;
     }
 
-    const environmentId = paramsEnvironmentSlug ?? getEnvironmentId();
+    const environmentId = paramsEnvironmentSlug;
     switchEnvironmentInternal(environments, environmentId);
   }, [paramsEnvironmentSlug, environments, switchEnvironmentInternal]);
 

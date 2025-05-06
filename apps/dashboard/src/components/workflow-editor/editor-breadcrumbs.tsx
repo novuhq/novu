@@ -1,6 +1,10 @@
+import { WorkflowOriginEnum } from '@novu/shared';
 import React from 'react';
+import { FaCode } from 'react-icons/fa6';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowRight, RouteFill } from '@/components/icons';
+
+import { RouteFill } from '@/components/icons';
+import { Badge } from '@/components/primitives/badge';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -9,10 +13,12 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/primitives/breadcrumb';
-import { Button } from '@/components/primitives/button';
+import TruncatedText from '@/components/truncated-text';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useFetchWorkflow } from '@/hooks/use-fetch-workflow';
 import { buildRoute, ROUTES } from '@/utils/routes';
-import { useFetchWorkflow } from '@/hooks';
+import { RiArrowLeftSLine } from 'react-icons/ri';
+import { CompactButton } from '../primitives/button-compact';
 
 export const EditorBreadcrumbs = () => {
   const { workflowSlug = '' } = useParams<{ workflowSlug: string }>();
@@ -36,25 +42,39 @@ export const EditorBreadcrumbs = () => {
   };
 
   return (
-    <div className="flex items-center gap-2">
-      <Button variant="link" onClick={handleBackNav}>
-        <ArrowRight className="text-neutral-950" />
-      </Button>
+    <div className="flex items-center overflow-hidden">
+      <CompactButton
+        size="lg"
+        className="mr-1"
+        variant="ghost"
+        icon={RiArrowLeftSLine}
+        onClick={handleBackNav}
+      ></CompactButton>
       <Breadcrumb>
         <BreadcrumbList>
           {breadcrumbs.map(({ label, href }) => (
             <React.Fragment key={`${href}_${label}`}>
-              <BreadcrumbItem>
+              <BreadcrumbItem className="flex items-center gap-1">
                 <BreadcrumbLink to={href}>{label}</BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator />
             </React.Fragment>
           ))}
           <BreadcrumbItem>
-            <BreadcrumbPage>
-              <RouteFill />
-              {workflow?.name}
-            </BreadcrumbPage>
+            {workflow && (
+              <BreadcrumbPage className="flex items-center gap-1">
+                {workflow.origin === WorkflowOriginEnum.EXTERNAL ? (
+                  <Badge color="yellow" size="sm" variant="lighter">
+                    <FaCode className="size-3.5" />
+                  </Badge>
+                ) : (
+                  <RouteFill className="size-4" />
+                )}
+                <div className="flex max-w-[32ch]">
+                  <TruncatedText>{workflow?.name}</TruncatedText>
+                </div>
+              </BreadcrumbPage>
+            )}
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>

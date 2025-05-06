@@ -18,6 +18,8 @@ if (!CLERK_PUBLISHABLE_KEY) {
 
 export const API_HOSTNAME = import.meta.env.VITE_API_HOSTNAME;
 
+export const IS_EU = API_HOSTNAME === 'https://eu.api.novu.co';
+
 export const WEBSOCKET_HOSTNAME = import.meta.env.VITE_WEBSOCKET_HOSTNAME;
 
 export const INTERCOM_APP_ID = import.meta.env.VITE_INTERCOM_APP_ID;
@@ -28,4 +30,6 @@ export const MIXPANEL_KEY = import.meta.env.VITE_MIXPANEL_KEY;
 
 export const LEGACY_DASHBOARD_URL = import.meta.env.VITE_LEGACY_DASHBOARD_URL;
 
-export const NEW_DASHBOARD_FEEDBACK_FORM_URL = import.meta.env.VITE_NEW_DASHBOARD_FEEDBACK_FORM_URL;
+export const PLAIN_SUPPORT_CHAT_APP_ID = import.meta.env.VITE_PLAIN_SUPPORT_CHAT_APP_ID;
+
+export const ONBOARDING_DEMO_WORKFLOW_ID = 'onboarding-demo-workflow';

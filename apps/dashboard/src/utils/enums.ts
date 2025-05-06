@@ -12,7 +12,8 @@ export enum StepTypeEnum {
 
 export enum WorkflowTypeEnum {
   REGULAR = 'REGULAR',
-  ECHO = 'ECHO', // @deprecated
+  /** @deprecated Use BRIDGE instead */
+  ECHO = 'ECHO',
   BRIDGE = 'BRIDGE',
 }
 

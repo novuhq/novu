@@ -1,24 +1,75 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 
-import { WorkflowResponseDto } from '@novu/shared';
-import { GetWorkflowByIdsCommand, GetWorkflowByIdsUseCase } from '@novu/application-generic';
+import { UserSessionData } from '@novu/shared';
+import {
+  GetWorkflowWithPreferencesCommand,
+  GetWorkflowWithPreferencesUseCase,
+  InstrumentUsecase,
+  PinoLogger,
+} from '@novu/application-generic';
+import { NotificationStepEntity, NotificationTemplateEntity } from '@novu/dal';
 
 import { GetWorkflowCommand } from './get-workflow.command';
 import { toResponseWorkflowDto } from '../../mappers/notification-template-mapper';
+import { BuildStepDataCommand, BuildStepDataUsecase } from '../build-step-data';
+import { StepResponseDto, WorkflowResponseDto } from '../../dtos';
 
 @Injectable()
 export class GetWorkflowUseCase {
-  constructor(private getWorkflowByIdsUseCase: GetWorkflowByIdsUseCase) {}
+  constructor(
+    private getWorkflowWithPreferencesUseCase: GetWorkflowWithPreferencesUseCase,
+    private buildStepDataUsecase: BuildStepDataUsecase,
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
+
+  @InstrumentUsecase()
   async execute(command: GetWorkflowCommand): Promise<WorkflowResponseDto> {
-    const workflowEntity = await this.getWorkflowByIdsUseCase.execute(
-      GetWorkflowByIdsCommand.create({
+    const workflowWithPreferences = await this.getWorkflowWithPreferencesUseCase.execute(
+      GetWorkflowWithPreferencesCommand.create({
         environmentId: command.user.environmentId,
         organizationId: command.user.organizationId,
-        userId: command.user._id,
-        identifierOrInternalId: command.identifierOrInternalId,
+        workflowIdOrInternalId: command.workflowIdOrInternalId,
       })
     );
 
-    return toResponseWorkflowDto(workflowEntity);
+    const fullSteps = await this.getFullWorkflowSteps(workflowWithPreferences, command.user);
+
+    return toResponseWorkflowDto(workflowWithPreferences, fullSteps);
+  }
+
+  private async getFullWorkflowSteps(
+    workflowWithPreferences: NotificationTemplateEntity,
+    user: UserSessionData
+  ): Promise<StepResponseDto[]> {
+    const stepPromises = workflowWithPreferences.steps.map((step: NotificationStepEntity & { _id: string }) =>
+      this.buildStepForWorkflow(workflowWithPreferences, step, user)
+    );
+
+    return Promise.all(stepPromises);
+  }
+
+  private async buildStepForWorkflow(
+    workflow: NotificationTemplateEntity,
+    step: NotificationStepEntity & { _id: string },
+    user: UserSessionData
+  ): Promise<StepResponseDto> {
+    try {
+      return await this.buildStepDataUsecase.execute(
+        BuildStepDataCommand.create({
+          workflowIdOrInternalId: workflow._id,
+          stepIdOrInternalId: step._id,
+          user,
+        })
+      );
+    } catch (error) {
+      throw new InternalServerErrorException({
+        message: 'Failed to build workflow step',
+        workflowId: workflow._id,
+        stepId: step._id,
+        error: error.message,
+      });
+    }
   }
 }

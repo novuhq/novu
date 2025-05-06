@@ -1,5 +1,8 @@
-import { IsDefined, IsOptional, IsString } from 'class-validator';
-import { BaseCommand } from '../../../shared/commands/base.command';
+import { IsDefined, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { BaseCommand } from '@novu/application-generic';
+import { Type } from 'class-transformer';
+
+import { SubscriberDto } from '../../dtos/subscriber-session-request.dto';
 
 export class SessionCommand extends BaseCommand {
   @IsDefined()
@@ -11,6 +14,11 @@ export class SessionCommand extends BaseCommand {
   readonly subscriberHash?: string;
 
   @IsDefined()
+  @ValidateNested()
+  @Type(() => SubscriberDto)
+  readonly subscriber: SubscriberDto;
+
+  @IsOptional()
   @IsString()
-  readonly subscriberId: string;
+  readonly origin?: string;
 }

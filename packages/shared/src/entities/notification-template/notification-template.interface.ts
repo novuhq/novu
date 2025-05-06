@@ -1,16 +1,18 @@
 import type {
   BuilderFieldType,
   BuilderGroupValues,
+  CustomDataType,
   FilterParts,
-  NotificationTemplateCustomData,
-  TemplateVariableTypeEnum,
+  WorkflowOriginEnum,
   WorkflowTypeEnum,
 } from '../../types';
+import { JSONSchemaDto } from '../../dto/workflows';
+import type { StepContentIssue, StepIntegrationIssue, StepIssue } from '../../dto/workflows/step.dto';
 import { ControlSchemas, IMessageTemplate } from '../message-template';
+import { INotificationGroup } from '../notification-group';
+import { INotificationBridgeTrigger, INotificationTrigger } from '../notification-trigger';
 import { IPreferenceChannels } from '../subscriber-preference';
 import { IWorkflowStepMetadata } from '../step';
-import { INotificationGroup } from '../notification-group';
-import type { ContentIssue, ControlsDto, JSONSchemaDto, StepIssue } from '../../index';
 
 export interface INotificationTemplate {
   _id?: string;
@@ -35,7 +37,8 @@ export interface INotificationTemplate {
   payloadSchema?: any;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   rawData?: any;
-  data?: NotificationTemplateCustomData;
+  data?: CustomDataType;
+  origin?: WorkflowOriginEnum;
 }
 
 export class IGroupedBlueprint {
@@ -47,43 +50,11 @@ export interface IBlueprint extends INotificationTemplate {
   notificationGroup: INotificationGroup;
 }
 
-export enum TriggerTypeEnum {
-  EVENT = 'event',
-}
-
-export interface INotificationBridgeTrigger {
-  type: TriggerTypeEnum;
-  identifier: string;
-}
-
-export interface INotificationTrigger {
-  type: TriggerTypeEnum;
-  identifier: string;
-  variables: INotificationTriggerVariable[];
-  subscriberVariables?: INotificationTriggerVariable[];
-  reservedVariables?: ITriggerReservedVariable[];
-}
-
-export enum TriggerContextTypeEnum {
-  TENANT = 'tenant',
-  ACTOR = 'actor',
-}
-
-export interface ITriggerReservedVariable {
-  type: TriggerContextTypeEnum;
-  variables: INotificationTriggerVariable[];
-}
-
-export interface INotificationTriggerVariable {
-  name: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  value?: any;
-  type?: TemplateVariableTypeEnum;
-}
 export class StepIssues {
-  body?: Record<string, StepIssue>;
-  controls?: Record<string, ContentIssue[]>;
+  controls?: Record<string, StepContentIssue[]>;
+  integration?: Record<string, StepIntegrationIssue[]>;
 }
+
 export interface IStepVariant {
   _id?: string;
   uuid?: string;
@@ -113,7 +84,7 @@ export interface IStepVariant {
    * controlVariables exists
    * only on none production environment in order to provide stateless control variables on fly
    */
-  controlVariables?: ControlsDto;
+  controlVariables?: Record<string, unknown>;
   bridgeUrl?: string;
 }
 

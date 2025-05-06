@@ -5,9 +5,6 @@ import { viteStaticCopy } from 'vite-plugin-static-copy';
 import tailwindcss from 'tailwindcss';
 import { sentryVitePlugin } from '@sentry/vite-plugin';
 import { ViteEjsPlugin } from 'vite-plugin-ejs';
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-import { legacyHandler } from './legacy-handler';
 
 export default defineConfig({
   plugins: [
@@ -24,14 +21,6 @@ export default defineConfig({
         },
       ],
     }),
-    {
-      name: 'legacy-redirect',
-      configureServer(server) {
-        server.middlewares.use((req, res, next) => {
-          legacyHandler(__dirname, req, res, next);
-        });
-      },
-    },
     // Put the Sentry vite plugin after all other plugins
     sentryVitePlugin({
       org: process.env.SENTRY_ORG,
@@ -55,6 +44,14 @@ export default defineConfig({
     port: 4201,
     headers: {
       'Document-Policy': 'js-profiling',
+    },
+  },
+  optimizeDeps: {
+    include: ['@novu/api'],
+  },
+  build: {
+    commonjsOptions: {
+      include: [/@novu\/api/, /node_modules/],
     },
   },
 });

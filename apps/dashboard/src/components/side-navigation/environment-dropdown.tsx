@@ -1,39 +1,31 @@
-import { cva } from 'class-variance-authority';
-import { RiExpandUpDownLine, RiGitBranchLine } from 'react-icons/ri';
+import { IEnvironment } from '@novu/shared';
+import { RiExpandUpDownLine } from 'react-icons/ri';
+import { cn } from '../../utils/ui';
+import { EnvironmentBranchIcon } from '../primitives/environment-branch-icon';
 import { Select, SelectContent, SelectIcon, SelectItem, SelectTrigger, SelectValue } from '../primitives/select';
 
-const logoVariants = cva(`size-6 rounded-[6px] border-[1px] border-solid p-1 `, {
-  variants: {
-    variant: {
-      default: 'bg-warning/10 border-warning text-warning',
-      production: 'bg-feature/10 border-feature text-feature',
-    },
-  },
-  defaultVariants: {
-    variant: 'default',
-  },
-});
-
 type EnvironmentDropdownProps = {
-  value?: string;
-  data?: string[];
+  currentEnvironment?: IEnvironment;
+  data?: IEnvironment[];
   onChange?: (value: string) => void;
+  className?: string;
+  disabled?: boolean;
 };
 
-export const EnvironmentDropdown = ({ value, data, onChange }: EnvironmentDropdownProps) => {
+export const EnvironmentDropdown = ({
+  currentEnvironment,
+  data,
+  onChange,
+  className,
+  disabled,
+}: EnvironmentDropdownProps) => {
   return (
-    <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className="group p-1.5 shadow-sm last:[&>svg]:hidden">
+    <Select value={currentEnvironment?.name} onValueChange={onChange} disabled={disabled}>
+      <SelectTrigger className={cn('group p-1.5 shadow-sm last:[&>svg]:hidden', className)}>
         <SelectValue asChild>
           <div className="flex items-center gap-2">
-            <div
-              className={logoVariants({
-                variant: value?.toLocaleLowerCase() === 'production' ? 'production' : 'default',
-              })}
-            >
-              <RiGitBranchLine className="size-4" />
-            </div>
-            <span className="text-foreground text-sm">{value}</span>
+            <EnvironmentBranchIcon environment={currentEnvironment} />
+            <span className="text-foreground text-sm">{currentEnvironment?.name}</span>
           </div>
         </SelectValue>
         <SelectIcon asChild>
@@ -41,9 +33,12 @@ export const EnvironmentDropdown = ({ value, data, onChange }: EnvironmentDropdo
         </SelectIcon>
       </SelectTrigger>
       <SelectContent>
-        {data?.map((item) => (
-          <SelectItem key={item} value={item}>
-            {item}
+        {data?.map((environment) => (
+          <SelectItem key={environment.name} value={environment.name}>
+            <div className="flex items-center gap-2">
+              <EnvironmentBranchIcon size="sm" environment={environment} />
+              <span>{environment.name}</span>
+            </div>
           </SelectItem>
         ))}
       </SelectContent>

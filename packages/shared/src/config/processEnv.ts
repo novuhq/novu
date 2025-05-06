@@ -15,9 +15,7 @@ const envFileFromNodeEnv = {
  * @returns The path to the .env file.
  */
 export function getEnvFileNameForNodeEnv(nodeEnv?: string): string {
-  const selectedEnvFile = envFileFromNodeEnv[nodeEnv || DEFAULT_ENV];
-
-  return selectedEnvFile;
+  return envFileFromNodeEnv[(nodeEnv || DEFAULT_ENV) as keyof typeof envFileFromNodeEnv];
 }
 
 /**

@@ -11,13 +11,13 @@ export const MoreActionsDropdown = () => {
   const { status } = useInboxContext();
 
   return (
-    <Show when={status() !== NotificationStatus.ARCHIVED}>
+    <Show when={status() !== NotificationStatus.ARCHIVED && status() !== NotificationStatus.SNOOZED}>
       <Dropdown.Root>
         <Dropdown.Trigger
           class={style('moreActions__dropdownTrigger')}
           asChild={(triggerProps) => (
-            <Button variant="icon" size="icon" {...triggerProps}>
-              <Dots class={style('moreActions__dots')} />
+            <Button variant="ghost" size="iconSm" {...triggerProps}>
+              <Dots class={style('moreActions__dots', 'nt-size-5')} />
             </Button>
           )}
         />

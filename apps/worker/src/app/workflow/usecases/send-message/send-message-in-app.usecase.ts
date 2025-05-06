@@ -23,15 +23,15 @@ import {
   CompileInAppTemplate,
   CompileInAppTemplateCommand,
   WebSocketsQueueService,
-  ExecutionLogRoute,
-  ExecutionLogRouteCommand,
+  CreateExecutionDetails,
+  CreateExecutionDetailsCommand,
 } from '@novu/application-generic';
 import { InAppOutput } from '@novu/framework/internal';
 
-import { CreateLog } from '../../../shared/logs';
 import { SendMessageCommand } from './send-message.command';
 import { SendMessageBase } from './send-message.base';
 import { PlatformException } from '../../../shared/utils';
+import { SendMessageResult } from './send-message-type.usecase';
 
 @Injectable()
 export class SendMessageInApp extends SendMessageBase {
@@ -41,8 +41,7 @@ export class SendMessageInApp extends SendMessageBase {
     private invalidateCache: InvalidateCacheService,
     protected messageRepository: MessageRepository,
     private webSocketsQueueService: WebSocketsQueueService,
-    protected createLogUsecase: CreateLog,
-    protected executionLogRoute: ExecutionLogRoute,
+    protected createExecutionDetails: CreateExecutionDetails,
     protected subscriberRepository: SubscriberRepository,
     protected selectIntegration: SelectIntegration,
     protected getNovuProviderCredentials: GetNovuProviderCredentials,
@@ -52,8 +51,7 @@ export class SendMessageInApp extends SendMessageBase {
   ) {
     super(
       messageRepository,
-      createLogUsecase,
-      executionLogRoute,
+      createExecutionDetails,
       subscriberRepository,
       selectIntegration,
       getNovuProviderCredentials,
@@ -63,7 +61,7 @@ export class SendMessageInApp extends SendMessageBase {
   }
 
   @InstrumentUsecase()
-  public async execute(command: SendMessageCommand) {
+  public async execute(command: SendMessageCommand): Promise<SendMessageResult> {
     if (!command.step.template) throw new PlatformException('Template not found');
 
     addBreadcrumb({
@@ -81,9 +79,9 @@ export class SendMessageInApp extends SendMessageBase {
     });
 
     if (!integration) {
-      await this.executionLogRoute.execute(
-        ExecutionLogRouteCommand.create({
-          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
@@ -92,7 +90,10 @@ export class SendMessageInApp extends SendMessageBase {
         })
       );
 
-      return;
+      return {
+        status: 'failed',
+        reason: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
+      };
     }
 
     const { step } = command;
@@ -141,7 +142,10 @@ export class SendMessageInApp extends SendMessageBase {
     } catch (e) {
       await this.sendErrorHandlebars(command.job, e.message);
 
-      return;
+      return {
+        status: 'failed',
+        reason: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
+      };
     }
 
     const messagePayload = { ...command.payload };
@@ -237,24 +241,28 @@ export class SendMessageInApp extends SendMessageBase {
     }
 
     if (oldMessage) {
-      await this.messageRepository.update(
+      message = await this.messageRepository.findOneAndUpdate(
         { _environmentId: command.environmentId, _id: oldMessage._id },
         {
           $set: {
             seen: false,
             createdAt: new Date(),
+            updatedAt: new Date(),
             ...channelData,
           },
+        },
+        {
+          timestamps: false,
+          strict: false,
         }
       );
-      message = await this.messageRepository.findOne({ _id: oldMessage._id, _environmentId: command.environmentId });
     }
 
     if (!message) throw new PlatformException('Message not found');
 
-    await this.executionLogRoute.execute(
-      ExecutionLogRouteCommand.create({
-        ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
+    await this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
         messageId: message._id,
         providerId: integration.providerId,
         detail: DetailEnum.MESSAGE_CREATED,
@@ -282,9 +290,9 @@ export class SendMessageInApp extends SendMessageBase {
       groupId: command.organizationId,
     });
 
-    await this.executionLogRoute.execute(
-      ExecutionLogRouteCommand.create({
-        ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
+    await this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
         messageId: message._id,
         providerId: integration.providerId,
         detail: DetailEnum.MESSAGE_SENT,
@@ -294,5 +302,9 @@ export class SendMessageInApp extends SendMessageBase {
         isRetry: false,
       })
     );
+
+    return {
+      status: 'success',
+    };
   }
 }

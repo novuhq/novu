@@ -1,5 +1,5 @@
-import { bool, CleanedEnv, cleanEnv, json, num, port, str, url, ValidatorSpec } from 'envalid';
 import { DEFAULT_NOTIFICATION_RETENTION_DAYS, FeatureFlagsKeysEnum, StringifyEnv } from '@novu/shared';
+import { bool, CleanedEnv, cleanEnv, json, num, port, str, url, ValidatorSpec } from 'envalid';
 
 export function validateEnv() {
   return cleanEnv(process.env, envValidators);
@@ -12,15 +12,13 @@ export const envValidators = {
   TZ: str({ default: 'UTC' }),
   NODE_ENV: str({ choices: ['dev', 'test', 'production', 'ci', 'local'], default: 'local' }),
   PORT: port(),
-  FRONT_BASE_URL: url(),
+  FRONT_BASE_URL: str(),
   DISABLE_USER_REGISTRATION: bool({ default: false }),
   REDIS_HOST: str(),
   REDIS_PORT: port(),
   REDIS_TLS: json({ default: undefined }),
   JWT_SECRET: str(),
   SENDGRID_API_KEY: str({ default: '' }),
-  /** @deprecated - use `MONGO_AUTO_CREATE_INDEXES` instead */
-  AUTO_CREATE_INDEXES: bool({ default: false }),
   MONGO_AUTO_CREATE_INDEXES: bool({ default: false }),
   MONGO_MAX_IDLE_TIME_IN_MS: num({ default: 1000 * 30 }),
   MONGO_MAX_POOL_SIZE: num({ default: 50 }),
@@ -38,9 +36,11 @@ export const envValidators = {
   WORKER_DEFAULT_LOCK_DURATION: num({ default: undefined }),
   ENABLE_OTEL: bool({ default: false }),
   NOTIFICATION_RETENTION_DAYS: num({ default: DEFAULT_NOTIFICATION_RETENTION_DAYS }),
-  LEGACY_STAGING_DASHBOARD_URL: url({ default: undefined }),
   API_ROOT_URL: url(),
   NOVU_INVITE_TEAM_MEMBER_NUDGE_TRIGGER_IDENTIFIER: str({ default: undefined }),
+  SUBSCRIBER_WIDGET_JWT_EXPIRATION_TIME: str({ default: '15 days' }),
+  NOVU_REGION: str({ default: 'local' }),
+  NOVU_SECRET_KEY: str({ default: '' }),
 
   // Novu Cloud third party services
   ...(processEnv.IS_SELF_HOSTED !== 'true' &&
@@ -51,8 +51,11 @@ export const envValidators = {
       NEW_RELIC_APP_NAME: str({ default: '' }),
       NEW_RELIC_LICENSE_KEY: str({ default: '' }),
       PLAIN_SUPPORT_KEY: str({ default: undefined }),
+      PLAIN_IDENTITY_VERIFICATION_SECRET_KEY: str({ default: undefined }),
+      PLAIN_CARDS_HMAC_SECRET_KEY: str({ default: undefined }),
       STRIPE_API_KEY: str({ default: undefined }),
       STRIPE_CONNECT_SECRET: str({ default: undefined }),
+      NOVU_INTERNAL_SECRET_KEY: str({ default: '' }),
     }),
 
   // Feature Flags

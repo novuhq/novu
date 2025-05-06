@@ -3,6 +3,23 @@
 @tailwind utilities;
 @layer base {
   :root {
+    --gray-0: 210 10% 100%;
+    --gray-50: 0 0% 98%;
+    --gray-100: 210 30% 96%;
+    --gray-200: 220 18% 90%;
+    --gray-300: 219 15% 82%;
+    --gray-400: 220 11% 64%;
+    --gray-500: 221 8% 48%;
+    --gray-600: 222 11% 36%;
+    --gray-700: 221 16% 20%;
+    --gray-800: 227 17% 16%;
+    --gray-900: 226 21% 12%;
+    --gray-950: 222 32% 8%;
+
+    --gray-alpha-24: 220 11% 64% / 24%;
+    --gray-alpha-16: 220 11% 64% / 16%;
+    --gray-alpha-10: 220 11% 64% / 10%;
+
     --background: 0 0% 100%;
 
     --foreground-0: 210 10% 100%;
@@ -18,7 +35,27 @@
     --foreground-900: 226 21% 12%;
     --foreground-950: 222 32% 8%;
 
-    --primary: 346 73% 50%;
+    --novu-800: 346 72% 42%;
+    --novu-700: 346 70% 50%;
+    --novu-500: 346 73% 50%;
+    --novu-400: 346 73% 50% / 0.8;
+    --novu-300: 346 73% 50% / 0.6;
+    --novu-200: 346 73% 50% / 0.4;
+    --novu-100: 346 73% 50% / 0.2;
+    --novu-50: 346 73% 50% / 0.1;
+
+    --novu-alpha-24: 346 73% 50% / 24%;
+    --novu-alpha-16: 346 73% 50% / 16%;
+    --novu-alpha-10: 346 73% 50% / 10%;
+
+    --primary: var(--novu-500);
+    --primary-dark: var(--novu-800);
+    --primary-darker: var(--novu-700);
+    --primary-base: var(--novu-500);
+    --primary-alpha-24: var(--novu-alpha-24);
+    --primary-alpha-16: var(--novu-alpha-16);
+    --primary-alpha-10: var(--novu-alpha-10);
+
     --primary-foreground: 0 0% 100%;
 
     --neutral-0: 210 10% 100%;
@@ -37,6 +74,10 @@
     --neutral-foreground: 0 0% 100%;
 
     /* Neutral scale in alpha that looks the same on white background */
+    --neutral-alpha-24: 220 11% 64% / 24%;
+    --neutral-alpha-16: 220 11% 64% / 16%;
+    --neutral-alpha-10: 220 11% 64% / 10%;
+
     --neutral-alpha-50: 0 0% 69% / 0.05;
     --neutral-alpha-100: 210 30% 61% / 0.1;
     --neutral-alpha-200: 220 18% 50% / 0.2;
@@ -49,33 +90,256 @@
     --neutral-alpha-900: 231 100% 3% / 0.9;
     --neutral-alpha-950: 219 88% 3% / 0.95;
 
+    --blue-950: 228 70% 24%;
+    --blue-500: 227.94 100% 60%;
+    --blue-400: 222.12 100% 70.39%;
+    --blue-300: 219.81 100% 79.61%;
+    --blue-200: 220 100% 87.65%;
+    --blue-100: 221.43 100% 91.76%;
+    --blue-50: 222 100% 96.08%;
+
+    --blue-alpha-24: 228 100% 64% / 24%;
+    --blue-alpha-16: 228 100% 64% / 16%;
+    --blue-alpha-10: 228 100% 64% / 10%;
+
+    --orange-950: 20 70% 24%;
+    --orange-900: 20 71% 32%;
+    --orange-800: 20 70% 40%;
+    --orange-700: 20 69% 48%;
+    --orange-600: 20 80% 56%;
+    --orange-500: 20 100% 64%;
+    --orange-300: 20 100% 64% / 60%;
+    --orange-200: 20 100% 64% / 40%;
+    --orange-100: 20 100% 64% / 20%;
+    --orange-50: 20 100% 64% / 10%;
+
+    --orange-alpha-24: 20 100% 64% / 24%;
+    --orange-alpha-16: 20 100% 64% / 16%;
+    --orange-alpha-10: 20 100% 64% / 10%;
+
+    --red-950: 355 70% 24%;
+    --red-900: 355 71% 32%;
+    --red-800: 355 70% 40%;
+    --red-700: 355 70% 48%;
+    --red-600: 355 80% 56%;
+    --red-500: 355 96% 60%;
+    --red-400: 355 96% 60% / 80%;
+    --red-300: 355 96% 60% / 60%;
+    --red-200: 355 96% 60% / 40%;
+    --red-100: 355 96% 60% / 20%;
+    --red-50: 355 96% 60% / 10%;
+
+    --red-alpha-24: 355 96% 60% / 24%;
+    --red-alpha-16: 355 96% 60% / 16%;
+    --red-alpha-10: 355 96% 60% / 10%;
+
+    --green-950: 148 73% 16%;
+    --green-900: 148 64% 24%;
+    --green-800: 148 64% 28%;
+    --green-700: 148 72% 32%;
+    --green-600: 148 72% 40%;
+    --green-500: 148 72% 44%;
+    --green-400: 148 72% 44% / 80%;
+    --green-300: 148 72% 44% / 60%;
+    --green-200: 148 72% 44% / 40%;
+    --green-100: 148 72% 44% / 20%;
+    --green-50: 148 72% 44% / 10%;
+
+    --green-alpha-24: 148 72% 44% / 24%;
+    --green-alpha-16: 148 72% 44% / 16%;
+    --green-alpha-10: 148 72% 44% / 10%;
+
+    --yellow-950: 42 61% 24%;
+    --yellow-900: 42 64% 32%;
+    --yellow-800: 42 64% 40%;
+    --yellow-700: 42 64% 48%;
+    --yellow-600: 42 80% 50%;
+    --yellow-500: 42 92% 54%;
+    --yellow-400: 42 92% 54% / 80%;
+    --yellow-300: 42 92% 54% / 60%;
+    --yellow-200: 42 92% 54% / 40%;
+    --yellow-100: 42 92% 54% / 20%;
+    --yellow-50: 42 92% 54% / 10%;
+
+    --yellow-alpha-24: 42 92% 64% / 24%;
+    --yellow-alpha-16: 42 92% 64% / 16%;
+    --yellow-alpha-10: 42 92% 64% / 10%;
+
+    --purple-950: 258 64% 28%;
+    --purple-900: 258 64% 32%;
+    --purple-800: 258 64% 40%;
+    --purple-700: 258 64% 48%;
+    --purple-600: 256 72% 56%;
+    --purple-500: 256 88% 64%;
+    --purple-400: 256 88% 64% / 80%;
+    --purple-300: 256 88% 64% / 60%;
+    --purple-200: 256 88% 64% / 40%;
+    --purple-100: 256 88% 64% / 20%;
+    --purple-50: 256 88% 64% / 10%;
+
+    --purple-alpha-24: 256 84% 62% / 24%;
+    --purple-alpha-16: 256 84% 62% / 16%;
+    --purple-alpha-10: 256 84% 62% / 10%;
+
+    --sky-950: 200 70% 24%;
+    --sky-900: 200 71% 32%;
+    --sky-800: 200 70% 40%;
+    --sky-700: 200 70% 48%;
+    --sky-600: 200 80% 56%;
+    --sky-500: 200 100% 64%;
+    --sky-400: 200 100% 64% / 80%;
+    --sky-300: 200 100% 64% / 60%;
+    --sky-200: 200 100% 64% / 40%;
+    --sky-100: 200 100% 64% / 20%;
+    --sky-50: 200 100% 64% / 10%;
+
+    --sky-alpha-24: 200 100% 64% / 24%;
+    --sky-alpha-16: 200 100% 64% / 16%;
+    --sky-alpha-10: 200 100% 64% / 10%;
+
+    --pink-950: 330 70% 24%;
+    --pink-900: 330 71% 32%;
+    --pink-800: 330 70% 40%;
+    --pink-700: 330 70% 48%;
+    --pink-600: 330 80% 56%;
+    --pink-500: 330 96% 64%;
+    --pink-400: 330 96% 64% / 80%;
+    --pink-300: 330 96% 64% / 60%;
+    --pink-200: 330 96% 64% / 40%;
+    --pink-100: 330 96% 64% / 20%;
+    --pink-50: 330 96% 64% / 10%;
+
+    --pink-alpha-24: 330 96% 64% / 24%;
+    --pink-alpha-16: 330 96% 64% / 16%;
+    --pink-alpha-10: 330 96% 64% / 10%;
+
+    --teal-950: 172 73% 16%;
+    --teal-900: 172 64% 24%;
+    --teal-800: 172 64% 28%;
+    --teal-700: 172 72% 32%;
+    --teal-600: 172 72% 40%;
+    --teal-500: 172 72% 48%;
+    --teal-400: 172 72% 48% / 80%;
+    --teal-300: 172 72% 48% / 60%;
+    --teal-200: 172 72% 48% / 40%;
+    --teal-100: 172 72% 48% / 20%;
+    --teal-50: 172 72% 48% / 10%;
+
+    --teal-alpha-24: 172 72% 48% / 24%;
+    --teal-alpha-16: 172 72% 48% / 16%;
+    --teal-alpha-10: 172 72% 48% / 10%;
+
+    --white-alpha-24: 0 0% 100% / 24%;
+    --white-alpha-16: 0 0% 100% / 16%;
+    --white-alpha-10: 0 0% 100% / 10%;
+
+    --black-alpha-24: 222 32% 8% / 24%;
+    --black-alpha-16: 222 32% 8% / 16%;
+    --black-alpha-10: 222 32% 8% / 10%;
+
+    /* Misc */
+
+    --static-black: var(--neutral-950);
+    --static-white: var(--neutral-0);
+
+    --bg-strong: var(--neutral-950);
+    --bg-surface: var(--neutral-800);
+    --bg-sub: var(--neutral-300);
+    --bg-soft: var(--neutral-200);
+    --bg-weak: var(--neutral-50);
+    --bg-white: var(--neutral-0);
+
+    --text-strong: var(--neutral-950);
+    --text-sub: var(--neutral-600);
+    --text-soft: var(--neutral-400);
+    --text-disabled: var(--neutral-300);
+    --text-white: var(--neutral-0);
+
+    --icon-strong: var(--neutral-950);
+    --icon-sub: var(--neutral-600);
+    --icon-soft: var(--neutral-400);
+    --icon-disabled: var(--neutral-300);
+    --icon-white: var(--neutral-0);
+
+    --stroke-strong: var(--neutral-950);
+    --stroke-sub: var(--neutral-300);
+    --stroke-soft: var(--neutral-200);
+    --stroke-white: var(--neutral-0);
+
+    --faded-dark: var(--neutral-800);
+    --faded-base: var(--neutral-500);
+    --faded-light: var(--neutral-200);
+    --faded-lighter: var(--neutral-100);
+
+    --information: var(--blue-500);
+    --information-dark: var(--blue-950);
+    --information-base: var(--blue-500);
+    --information-light: var(--blue-200);
+    --information-lighter: var(--blue-50);
+
+    --warning: var(--orange-500);
+    --warning-dark: var(--orange-950);
+    --warning-base: var(--orange-500);
+    --warning-light: var(--orange-200);
+    --warning-lighter: var(--orange-50);
+
+    --error-dark: var(--red-950);
+    --error-base: var(--red-500);
+    --error-light: var(--red-200);
+    --error-lighter: var(--red-50);
+
+    --success: var(--green-500);
+    --success-dark: var(--green-950);
+    --success-base: var(--green-500);
+    --success-light: var(--green-200);
+    --success-lighter: var(--green-50);
+
+    --away-dark: var(--yellow-950);
+    --away-base: var(--yellow-500);
+    --away-light: var(--yellow-200);
+    --away-lighter: var(--yellow-50);
+
+    --feature: var(--purple-500);
+    --feature-dark: var(--purple-950);
+    --feature-base: var(--purple-500);
+    --feature-light: var(--purple-200);
+    --feature-lighter: var(--purple-50);
+
+    --verified: var(--sky-500);
+    --verified-dark: var(--sky-950);
+    --verified-base: var(--sky-500);
+    --verified-light: var(--sky-200);
+    --verified-lighter: var(--sky-50);
+
+    --highlighted: var(--pink-500);
+    --highlighted-dark: var(--pink-950);
+    --highlighted-base: var(--pink-500);
+    --highlighted-light: var(--pink-200);
+    --highlighted-lighter: var(--pink-50);
+
+    --stable: var(--teal-500);
+    --stable-dark: var(--teal-950);
+    --stable-base: var(--teal-500);
+    --stable-light: var(--teal-200);
+    --stable-lighter: var(--teal-50);
+
     --accent: 0 0% 96.1%;
 
-    --destructive: 355 96% 60%;
+    --destructive: var(--red-500);
     --destructive-foreground: 0 0% 100%;
 
-    --success: 148 72% 44%;
+    --alert: var(--yellow-500);
 
-    --warning: 20 100% 64%;
-
-    --feature: 256 88% 64%;
-
-    --information: 228 100% 60%;
-
-    --highlighted: 330 96% 64%;
-
-    --stable: 172 72% 48%;
-
-    --alert: 42 92% 54%;
-
-    --verified: 200 100% 64%;
-
-    --input: 220 18% 90%;
-    --ring: 346 73% 50%;
+    --input: var(--neutral-200);
+    --ring: var(--novu-500);
 
     --radius: 0.5rem;
+
+    --font-code: 'JetBrains Mono';
+    --font-code-fallback: monospace;
   }
 }
+
 @layer base {
   * {
     @apply border-neutral-alpha-200 focus-visible:outline-primary;
@@ -92,4 +356,14 @@
     height: 100%;
     scroll-behavior: smooth;
   }
+}
+
+/* Chrome, Safari and Opera */
+.nv-no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.nv-no-scrollbar {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
 }

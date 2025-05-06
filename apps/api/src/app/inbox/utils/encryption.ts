@@ -1,4 +1,5 @@
-import { ApiException, createHash, decryptApiKey } from '@novu/application-generic';
+import { BadRequestException } from '@nestjs/common';
+import { isHmacValid } from '../../shared/helpers/is-valid-hmac';
 
 export function validateHmacEncryption({
   apiKey,
@@ -9,9 +10,7 @@ export function validateHmacEncryption({
   subscriberId: string;
   subscriberHash?: string;
 }) {
-  const key = decryptApiKey(apiKey);
-  const hmacHash = createHash(key, subscriberId);
-  if (hmacHash !== subscriberHash) {
-    throw new ApiException('Please provide a valid HMAC hash');
+  if (!isHmacValid(apiKey, subscriberId, subscriberHash)) {
+    throw new BadRequestException('Please provide a valid HMAC hash');
   }
 }

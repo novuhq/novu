@@ -1,12 +1,16 @@
-import { Accessor, batch, createComputed, createResource, createSignal, onCleanup, Setter } from 'solid-js';
-import { isServer } from 'solid-js/web';
+import { Accessor, batch, createEffect, createResource, createSignal, onCleanup, onMount, Setter } from 'solid-js';
 
-export function createInfiniteScroll<T>(fetcher: (page: number) => Promise<{ data: T[]; hasMore: boolean }>): [
+export function createInfiniteScroll<T>(
+  fetcher: (after: string | undefined) => Promise<{ data: T[]; hasMore: boolean }>,
+  options: {
+    paginationField: string;
+  }
+): [
   data: Accessor<T[]>,
   options: {
     initialLoading: Accessor<boolean>;
     setEl: (el: Element) => void;
-    offset: Accessor<number>;
+    after: Accessor<string | undefined>;
     end: Accessor<boolean>;
     reset: () => Promise<void>;
     mutate: Setter<
@@ -20,25 +24,46 @@ export function createInfiniteScroll<T>(fetcher: (page: number) => Promise<{ dat
 ] {
   const [data, setData] = createSignal<T[]>([]);
   const [initialLoading, setInitialLoading] = createSignal(true);
-  const [offset, setOffset] = createSignal(0);
+  const [after, setAfter] = createSignal<string | undefined>(undefined);
   const [end, setEnd] = createSignal(false);
-  const [contents, { mutate, refetch }] = createResource(offset, fetcher);
+  const [contents, { mutate, refetch }] = createResource(
+    () => ({ trigger: true, after: after() }),
+    (params) => fetcher(params.after)
+  );
 
-  let setEl: (el: Element) => void = () => {};
-  if (!isServer) {
-    const io = new IntersectionObserver((e) => {
-      if (e.length > 0 && e[0]!.isIntersecting && !end() && !contents.loading) {
-        setOffset(setOffset(data().length));
+  let observedElement: Element | null = null;
+  let io: IntersectionObserver | null = null;
+
+  onMount(() => {
+    io = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (entry && entry.isIntersecting && !end() && !contents.loading) {
+          const data = contents.latest?.data;
+          if (data) {
+            // @ts-ignore
+            setAfter(data[data.length - 1][options.paginationField]);
+          }
+        }
+      },
+      {
+        threshold: 0.1,
       }
-    });
-    onCleanup(() => io.disconnect());
-    setEl = (el: Element) => {
-      io.observe(el);
-      onCleanup(() => io.unobserve(el));
-    };
-  }
+    );
 
-  createComputed(() => {
+    if (observedElement && io) {
+      io.observe(observedElement);
+    }
+
+    onCleanup(() => {
+      io?.disconnect();
+      io = null;
+    });
+  });
+
+  createEffect(() => {
+    if (contents.loading) return;
+
     const content = contents.latest;
     if (!content) return;
 
@@ -46,16 +71,69 @@ export function createInfiniteScroll<T>(fetcher: (page: number) => Promise<{ dat
     batch(() => {
       if (!content.hasMore) setEnd(true);
       setData(content.data);
+
+      /*
+       ** Wait for DOM to update before checking visibility
+       ** Use requestAnimationFrame to ensure we're after the next paint
+       */
+      requestAnimationFrame(() => {
+        checkVisibilityAndLoadMore();
+      });
     });
   });
+
+  const checkVisibilityAndLoadMore = () => {
+    if (observedElement && !end() && !contents.loading) {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          const entry = entries[0];
+
+          if (entry.isIntersecting) {
+            const data = contents.latest?.data;
+            if (data) {
+              // @ts-ignore
+              setAfter(data[data.length - 1][options.paginationField]);
+            }
+          }
+
+          observer.disconnect();
+        },
+        {
+          threshold: [0.1],
+        }
+      );
+
+      observer.observe(observedElement);
+
+      onCleanup(() => {
+        observer.disconnect();
+      });
+    }
+  };
+
+  const setEl = (el: Element) => {
+    if (io && observedElement) {
+      io.unobserve(observedElement);
+    }
+
+    observedElement = el;
+
+    if (io && el) {
+      io.observe(el);
+    }
+
+    onCleanup(() => {
+      if (io && el) io.unobserve(el);
+    });
+  };
 
   const reset = async () => {
     setData([]);
     setInitialLoading(true);
     setEnd(false);
 
-    if (offset() !== 0) {
-      setOffset(0);
+    if (after() !== undefined) {
+      setAfter(undefined);
     } else {
       await refetch();
     }
@@ -66,7 +144,7 @@ export function createInfiniteScroll<T>(fetcher: (page: number) => Promise<{ dat
     {
       initialLoading,
       setEl,
-      offset,
+      after,
       end,
       mutate,
       reset,

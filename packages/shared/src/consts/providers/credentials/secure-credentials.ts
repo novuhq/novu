@@ -1,4 +1,4 @@
-import { CredentialsKeyEnum } from '../provider.enum';
+import { CredentialsKeyEnum } from '../../../types';
 
 export const secureCredentials: CredentialsKeyEnum[] = [
   CredentialsKeyEnum.ApiKey,

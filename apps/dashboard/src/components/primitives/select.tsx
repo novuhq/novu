@@ -1,6 +1,7 @@
-import * as React from 'react';
 import { CaretSortIcon, CheckIcon, ChevronDownIcon, ChevronUpIcon } from '@radix-ui/react-icons';
 import * as SelectPrimitive from '@radix-ui/react-select';
+import { cva, VariantProps } from 'class-variance-authority';
+import * as React from 'react';
 
 import { cn } from '@/utils/ui';
 
@@ -12,24 +13,33 @@ const SelectValue = SelectPrimitive.Value;
 
 const SelectIcon = SelectPrimitive.Icon;
 
-const SelectTrigger = React.forwardRef<
-  React.ElementRef<typeof SelectPrimitive.Trigger>,
-  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger>
->(({ className, children, ...props }, ref) => (
-  <SelectPrimitive.Trigger
-    ref={ref}
-    className={cn(
-      'border-input ring-offset-background text-foreground-600 placeholder:text-foreground-400 focus:ring-ring shadow-xs flex h-9 w-full items-center justify-between whitespace-nowrap rounded-md border bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1',
-      className
-    )}
-    {...props}
-  >
-    {children}
-    <SelectPrimitive.Icon asChild>
-      <CaretSortIcon className="h-4 w-4 opacity-50" />
-    </SelectPrimitive.Icon>
-  </SelectPrimitive.Trigger>
-));
+export const selectTriggerVariants = cva(
+  'border-input ring-offset-background text-foreground-600 placeholder:text-foreground-400 focus:ring-ring shadow-xs flex w-full items-center justify-between whitespace-nowrap rounded-lg border bg-transparent text-sm focus:outline-none focus:ring-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1',
+  {
+    variants: {
+      size: {
+        default: 'h-9 px-3 py-2',
+        '2xs': 'h-7 px-2 py-2',
+      },
+    },
+    defaultVariants: {
+      size: 'default',
+    },
+  }
+);
+
+type SelectTriggerProps = React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger> & {
+  rightIcon?: React.ReactNode;
+} & VariantProps<typeof selectTriggerVariants>;
+
+const SelectTrigger = React.forwardRef<React.ElementRef<typeof SelectPrimitive.Trigger>, SelectTriggerProps>(
+  ({ className, children, size, rightIcon: icon, ...props }, ref) => (
+    <SelectPrimitive.Trigger ref={ref} className={cn(selectTriggerVariants({ size }), className)} {...props}>
+      {children}
+      <SelectPrimitive.Icon asChild>{icon ?? <CaretSortIcon className="h-4 w-4 opacity-50" />}</SelectPrimitive.Icon>
+    </SelectPrimitive.Trigger>
+  )
+);
 SelectTrigger.displayName = SelectPrimitive.Trigger.displayName;
 
 const SelectScrollUpButton = React.forwardRef<
@@ -113,11 +123,11 @@ const SelectItem = React.forwardRef<
     {...props}
   >
     <span className="absolute right-2 flex h-3.5 w-3.5 items-center justify-center">
-      <SelectPrimitive.ItemIndicator>
-        <CheckIcon className="h-4 w-4" />
+      <SelectPrimitive.ItemIndicator className="shrink-0">
+        <CheckIcon className="size-4" />
       </SelectPrimitive.ItemIndicator>
     </span>
-    <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
+    <SelectPrimitive.ItemText className="text-sm">{children}</SelectPrimitive.ItemText>
   </SelectPrimitive.Item>
 ));
 SelectItem.displayName = SelectPrimitive.Item.displayName;
@@ -132,14 +142,14 @@ SelectSeparator.displayName = SelectPrimitive.Separator.displayName;
 
 export {
   Select,
-  SelectGroup,
-  SelectValue,
-  SelectIcon,
-  SelectTrigger,
   SelectContent,
-  SelectLabel,
+  SelectGroup,
+  SelectIcon,
   SelectItem,
-  SelectSeparator,
-  SelectScrollUpButton,
+  SelectLabel,
   SelectScrollDownButton,
+  SelectScrollUpButton,
+  SelectSeparator,
+  SelectTrigger,
+  SelectValue,
 };

@@ -34,23 +34,18 @@ test('should trigger whatsapp-business library correctly with simple text messag
   const res = await provider.sendMessage(options);
 
   expect(mockPost).toHaveBeenCalled();
-  expect(mockPost).toHaveBeenCalledWith(
-    baseUrl(mockProviderConfig.phoneNumberIdentification),
-    {
-      messaging_product: 'whatsapp',
-      recipient_type: 'individual',
-      text: {
-        body: options.content,
-        preview_url: false,
-      },
-      to: options.phoneNumber,
-      type: 'text',
+  expect(mockPost).toHaveBeenCalledWith(baseUrl(mockProviderConfig.phoneNumberIdentification), {
+    messaging_product: 'whatsapp',
+    recipient_type: 'individual',
+    text: {
+      body: options.content,
+      preview_url: false,
     },
-  );
+    to: options.phoneNumber,
+    type: 'text',
+  });
 
-  expect(axiosMockSpy).toHaveBeenCalledWith(
-    expectedHeaders(mockProviderConfig.accessToken),
-  );
+  expect(axiosMockSpy).toHaveBeenCalledWith(expectedHeaders(mockProviderConfig.accessToken));
 
   expect(res.id).toBe(messageId);
 });
@@ -78,20 +73,15 @@ test('should trigger whatsapp-business library correctly with template message',
   const res = await provider.sendMessage(options);
 
   expect(mockPost).toHaveBeenCalled();
-  expect(mockPost).toHaveBeenCalledWith(
-    baseUrl(mockProviderConfig.phoneNumberIdentification),
-    {
-      messaging_product: 'whatsapp',
-      recipient_type: 'individual',
-      template: options.customData.template,
-      to: options.phoneNumber,
-      type: 'template',
-    },
-  );
+  expect(mockPost).toHaveBeenCalledWith(baseUrl(mockProviderConfig.phoneNumberIdentification), {
+    messaging_product: 'whatsapp',
+    recipient_type: 'individual',
+    template: options.customData.template,
+    to: options.phoneNumber,
+    type: 'template',
+  });
 
-  expect(axiosMockSpy).toHaveBeenCalledWith(
-    expectedHeaders(mockProviderConfig.accessToken),
-  );
+  expect(axiosMockSpy).toHaveBeenCalledWith(expectedHeaders(mockProviderConfig.accessToken));
 
   expect(res.id).toBe(messageId);
 });
@@ -119,23 +109,18 @@ test('should trigger whatsapp-business library correctly with simple text messag
   });
 
   expect(mockPost).toHaveBeenCalled();
-  expect(mockPost).toHaveBeenCalledWith(
-    baseUrl(mockProviderConfig.phoneNumberIdentification),
-    {
-      messaging_product: 'whatsapp',
-      recipient_type: 'individual',
-      text: {
-        body: `${options.content} _passthrough`,
-        preview_url: false,
-      },
-      to: options.phoneNumber,
-      type: 'text',
+  expect(mockPost).toHaveBeenCalledWith(baseUrl(mockProviderConfig.phoneNumberIdentification), {
+    messaging_product: 'whatsapp',
+    recipient_type: 'individual',
+    text: {
+      body: `${options.content} _passthrough`,
+      preview_url: false,
     },
-  );
+    to: options.phoneNumber,
+    type: 'text',
+  });
 
-  expect(axiosMockSpy).toHaveBeenCalledWith(
-    expectedHeaders(mockProviderConfig.accessToken),
-  );
+  expect(axiosMockSpy).toHaveBeenCalledWith(expectedHeaders(mockProviderConfig.accessToken));
 
   expect(res.id).toBe(messageId);
 });
@@ -174,25 +159,20 @@ test('should trigger whatsapp-business library correctly with template message w
   });
 
   expect(mockPost).toHaveBeenCalled();
-  expect(mockPost).toHaveBeenCalledWith(
-    baseUrl(mockProviderConfig.phoneNumberIdentification),
-    {
-      messaging_product: 'whatsapp',
-      recipient_type: 'individual',
-      template: {
-        name: 'hello_world_passthrough',
-        language: {
-          code: 'en_US',
-        },
+  expect(mockPost).toHaveBeenCalledWith(baseUrl(mockProviderConfig.phoneNumberIdentification), {
+    messaging_product: 'whatsapp',
+    recipient_type: 'individual',
+    template: {
+      name: 'hello_world_passthrough',
+      language: {
+        code: 'en_US',
       },
-      to: options.phoneNumber,
-      type: 'template',
     },
-  );
+    to: options.phoneNumber,
+    type: 'template',
+  });
 
-  expect(axiosMockSpy).toHaveBeenCalledWith(
-    expectedHeaders(mockProviderConfig.accessToken),
-  );
+  expect(axiosMockSpy).toHaveBeenCalledWith(expectedHeaders(mockProviderConfig.accessToken));
 
   expect(res.id).toBe(messageId);
 });

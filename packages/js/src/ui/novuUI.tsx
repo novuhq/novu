@@ -1,4 +1,4 @@
-import { Accessor, Setter, ComponentProps, createSignal } from 'solid-js';
+import { Accessor, ComponentProps, createSignal, Setter } from 'solid-js';
 import { MountableElement, render } from 'solid-js/web';
 import type { NovuOptions } from '../types';
 import { NovuComponent, NovuComponentName, novuComponents, Renderer } from './components/Renderer';
@@ -12,15 +12,6 @@ import type {
   RouterPush,
   Tab,
 } from './types';
-
-// @ts-ignore
-const isDev = __DEV__;
-
-// @ts-ignore
-const version = PACKAGE_VERSION;
-const cssHref = isDev
-  ? 'http://localhost:4010/index.css'
-  : `https://cdn.jsdelivr.net/npm/@novu/js@${version}/dist/index.css`;
 
 export type NovuUIOptions = NovuProviderProps;
 export type BaseNovuUIOptions = BaseNovuProviderProps;
@@ -84,7 +75,6 @@ export class NovuUI {
     const dispose = render(
       () => (
         <Renderer
-          cssHref={cssHref}
           novuUI={this}
           nodes={this.#mountedElements()}
           options={this.#options()}

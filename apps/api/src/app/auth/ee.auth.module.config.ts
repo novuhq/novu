@@ -1,17 +1,12 @@
 /* eslint-disable global-require */
-import {
-  AuthService,
-  SwitchEnvironment,
-  SwitchOrganization,
-  PlatformException,
-  cacheService,
-  RolesGuard,
-} from '@novu/application-generic';
+import { PlatformException, cacheService } from '@novu/application-generic';
 import { MiddlewareConsumer, ModuleMetadata } from '@nestjs/common';
 import { RootEnvironmentGuard } from './framework/root-environment-guard.service';
 import { ApiKeyStrategy } from './services/passport/apikey.strategy';
 import { JwtSubscriberStrategy } from './services/passport/subscriber-jwt.strategy';
 import { OrganizationModule } from '../organization/organization.module';
+import { AuthService } from './services/auth.service';
+import { RolesGuard } from './framework/roles.guard';
 
 function getEEAuthProviders() {
   const eeAuthPackage = require('@novu/ee-auth');
@@ -38,8 +33,6 @@ export function getEEModuleConfig(): ModuleMetadata {
       JwtSubscriberStrategy,
       AuthService,
       cacheService,
-      SwitchEnvironment,
-      SwitchOrganization,
       RolesGuard,
       RootEnvironmentGuard,
     ],

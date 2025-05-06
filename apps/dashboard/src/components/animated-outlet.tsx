@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { useLocation, useOutlet } from 'react-router-dom';
-import { AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'motion/react';
 
 export const AnimatedOutlet = (): React.JSX.Element => {
   const { pathname, state } = useLocation();

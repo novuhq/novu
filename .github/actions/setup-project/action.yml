@@ -19,11 +19,6 @@ outputs:
 runs:
   using: composite
   steps:
-    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-    - name: ⚙️ Setup kernel for react native, increase watchers
-      shell: bash
-      run: echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
-
     - name: Install pnpm
       uses: pnpm/action-setup@v3
 
@@ -41,16 +36,11 @@ runs:
       if: ${{ inputs.slim == 'false' }}
       uses: supercharge/mongodb-github-action@1.11.0
       with:
-        mongodb-version: 5.0.29
+        mongodb-version: 8.0
 
     - name: 🛟 Install dependencies
       shell: bash
       run: pnpm install --frozen-lockfile
-
-    - name: Link submodules
-      shell: bash
-      if: ${{ inputs.submodules == 'true' }}
-      run: pnpm symlink:submodules
 
     - name: Install wait-on plugin
       shell: bash

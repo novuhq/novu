@@ -11,7 +11,7 @@ export class SparkPostError extends Error implements ISparkPostErrorResponse {
 
   constructor(
     response: ISparkPostErrorResponse,
-    readonly statusCode: number,
+    readonly statusCode: number
   ) {
     super();
     this.errors = response.errors;

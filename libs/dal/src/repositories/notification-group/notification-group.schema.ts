@@ -24,6 +24,14 @@ const NotificationGroupSchema = new Schema<NotificationGroupDBModel>(
   schemaOptions
 );
 
+NotificationGroupSchema.index({
+  _organizationId: 1,
+});
+
+NotificationGroupSchema.index({
+  _environmentId: 1,
+});
+
 export const NotificationGroup =
   (mongoose.models.NotificationGroup as mongoose.Model<NotificationGroupDBModel>) ||
   mongoose.model<NotificationGroupDBModel>('NotificationGroup', NotificationGroupSchema);

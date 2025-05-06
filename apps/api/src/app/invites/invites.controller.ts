@@ -32,8 +32,6 @@ import { ResendInviteCommand } from './usecases/resend-invite/resend-invite.comm
 import { ResendInvite } from './usecases/resend-invite/resend-invite.usecase';
 import { ThrottlerCost } from '../rate-limiting/guards';
 import { ApiCommonResponses } from '../shared/framework/response.decorator';
-import { InviteNudgeWebhookCommand } from './usecases/invite-nudge/invite-nudge.command';
-import { InviteNudgeWebhook } from './usecases/invite-nudge/invite-nudge.usecase';
 import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
 
 @UseInterceptors(ClassSerializerInterceptor)
@@ -47,8 +45,7 @@ export class InvitesController {
     private bulkInviteUsecase: BulkInvite,
     private acceptInviteUsecase: AcceptInvite,
     private getInvite: GetInvite,
-    private resendInviteUsecase: ResendInvite,
-    private inviteNudgeWebhookUsecase: InviteNudgeWebhook
+    private resendInviteUsecase: ResendInvite
   ) {}
 
   @Get('/:inviteToken')
@@ -127,19 +124,6 @@ export class InvitesController {
     });
 
     const response = await this.bulkInviteUsecase.execute(command);
-
-    return response;
-  }
-
-  @Post('/webhook')
-  async inviteCheckWebhook(@Headers('nv-hmac-256') hmacHeader: string, @Body() body: InviteWebhookDto) {
-    const command = InviteNudgeWebhookCommand.create({
-      hmacHeader,
-      subscriber: body.subscriber,
-      organizationId: body.payload.organizationId,
-    });
-
-    const response = await this.inviteNudgeWebhookUsecase.execute(command);
 
     return response;
   }

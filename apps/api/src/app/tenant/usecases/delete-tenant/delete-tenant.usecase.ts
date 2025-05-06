@@ -1,10 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 
 import { GetTenantCommand, GetTenant } from '@novu/application-generic';
 import { TenantRepository, DalException } from '@novu/dal';
 
 import { DeleteTenantCommand } from './delete-tenant.command';
-import { ApiException } from '../../../shared/exceptions/api.exception';
 
 @Injectable()
 export class DeleteTenant {
@@ -30,7 +29,7 @@ export class DeleteTenant {
       });
     } catch (e) {
       if (e instanceof DalException) {
-        throw new ApiException(e.message);
+        throw new BadRequestException(e.message);
       }
       throw e;
     }

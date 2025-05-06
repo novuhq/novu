@@ -3,8 +3,7 @@ import { axiosSpy } from '../../../utils/test/spy-axios';
 import { SparkPostEmailProvider } from './sparkpost.provider';
 
 const mockConfig = {
-  apiKey:
-    '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',
+  apiKey: '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',
   region: undefined,
   from: 'test@test.com',
   senderName: 'test',
@@ -15,12 +14,10 @@ const mockNovuMessage = {
   to: ['test@test.com'],
   html: '<div> Mail Content </div>',
   subject: 'Test subject',
-  attachments: [
-    { mime: 'text/plain', file: Buffer.from('dGVzdA=='), name: 'test.txt' },
-  ],
+  attachments: [{ mime: 'text/plain', file: Buffer.from('dGVzdA=='), name: 'test.txt' }],
 };
 
-test('should trigger sendinblue library correctly', async () => {
+test('should trigger sparkpost library correctly', async () => {
   const { mockPost: spy } = axiosSpy({
     data: {
       results: {
@@ -37,9 +34,7 @@ test('should trigger sendinblue library correctly', async () => {
     '/transmissions',
     {
       content: {
-        attachments: [
-          { data: 'ZEdWemRBPT0=', name: 'test.txt', type: 'text/plain' },
-        ],
+        attachments: [{ data: 'ZEdWemRBPT0=', name: 'test.txt', type: 'text/plain' }],
         from: 'test@test.com',
         html: '<div> Mail Content </div>',
         subject: 'Test subject',
@@ -50,15 +45,14 @@ test('should trigger sendinblue library correctly', async () => {
     {
       baseURL: 'https://api.sparkpost.com/api/v1',
       headers: {
-        Authorization:
-          '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',
+        Authorization: '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',
         'Content-Type': 'application/json',
       },
-    },
+    }
   );
 });
 
-test('should trigger sendinblue library correctly with _passthrough', async () => {
+test('should trigger sparkpost library correctly with _passthrough', async () => {
   const { mockPost: spy } = axiosSpy({
     data: {
       results: {
@@ -83,9 +77,7 @@ test('should trigger sendinblue library correctly with _passthrough', async () =
     '/transmissions',
     {
       content: {
-        attachments: [
-          { data: 'ZEdWemRBPT0=', name: 'test.txt', type: 'text/plain' },
-        ],
+        attachments: [{ data: 'ZEdWemRBPT0=', name: 'test.txt', type: 'text/plain' }],
         from: 'test@test.com',
         html: '<div> Mail Content </div>',
         subject: 'Test subject _passthrough',
@@ -96,10 +88,9 @@ test('should trigger sendinblue library correctly with _passthrough', async () =
     {
       baseURL: 'https://api.sparkpost.com/api/v1',
       headers: {
-        Authorization:
-          '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',
+        Authorization: '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',
         'Content-Type': 'application/json',
       },
-    },
+    }
   );
 });

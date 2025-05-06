@@ -11,7 +11,7 @@ import {
 } from '@novu/shared';
 import { expect } from 'chai';
 
-describe('Create Integration - /integration (POST)', function () {
+describe('Create Integration - /integration (POST) #novu-v2', function () {
   let session: UserSession;
   const integrationRepository = new IntegrationRepository();
   const envRepository = new EnvironmentRepository();

@@ -1,5 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { ApiException, buildUserKey, InvalidateCacheService } from '@novu/application-generic';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { buildUserKey, InvalidateCacheService } from '@novu/application-generic';
 import { UserEntity, UserRepository } from '@novu/dal';
 
 import { BaseUserProfileUsecase } from '../base-user-profile.usecase';
@@ -15,7 +15,7 @@ export class UpdateNameAndProfilePicture extends BaseUserProfileUsecase {
   }
 
   async execute(command: UpdateNameAndProfilePictureCommand) {
-    if (!command.firstName || !command.lastName) throw new ApiException('First name and last name are required');
+    if (!command.firstName || !command.lastName) throw new BadRequestException('First name and last name are required');
 
     let user = await this.userRepository.findById(command.userId);
     if (!user) throw new NotFoundException('User not found');

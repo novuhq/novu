@@ -1,25 +1,61 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-  ArrayMaxSize,
   ArrayNotEmpty,
   IsArray,
   IsDefined,
   IsEmail,
-  IsEnum,
   IsLocale,
+  IsNotEmpty,
+  IsObject,
   IsOptional,
   IsString,
+  IsTimeZone,
+  Matches,
   ValidateNested,
 } from 'class-validator';
-import {
-  ChatProviderIdEnum,
-  IChannelCredentials,
-  ISubscriberChannel,
-  PushProviderIdEnum,
-  SubscriberCustomData,
-} from '@novu/shared';
+import { ChatProviderIdEnum, IChannelCredentials, PushProviderIdEnum, SubscriberCustomData } from '@novu/shared';
 import { Type } from 'class-transformer';
-import { SubscriberPayloadDto, TopicPayloadDto } from '../../events/dtos';
+
+export class ChannelCredentialsDto implements IChannelCredentials {
+  @ApiPropertyOptional({
+    description: 'The URL for the webhook associated with the channel.',
+    type: String,
+  })
+  @IsOptional()
+  @IsString()
+  webhookUrl?: string;
+
+  @ApiPropertyOptional({
+    description: 'An array of device tokens for push notifications.',
+    type: [String],
+  })
+  @IsOptional()
+  @IsArray()
+  deviceTokens?: string[];
+}
+
+export class SubscriberChannelDto {
+  @ApiProperty({
+    description: 'The ID of the chat or push provider.',
+    enum: [...Object.values(ChatProviderIdEnum), ...Object.values(PushProviderIdEnum)],
+  })
+  providerId: ChatProviderIdEnum | PushProviderIdEnum;
+
+  @ApiPropertyOptional({
+    description: 'An optional identifier for the integration.',
+    type: String,
+  })
+  @IsOptional()
+  integrationIdentifier?: string;
+
+  @ApiProperty({
+    description: 'Credentials for the channel.',
+    type: ChannelCredentialsDto,
+  })
+  @ValidateNested()
+  @Type(() => ChannelCredentialsDto)
+  credentials: ChannelCredentialsDto;
+}
 
 export class CreateSubscriberRequestDto {
   @ApiProperty({
@@ -28,70 +64,97 @@ export class CreateSubscriberRequestDto {
   })
   @IsString()
   @IsDefined()
+  @IsNotEmpty({
+    message: 'SubscriberId is required',
+  })
   subscriberId: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    description: 'The email address of the subscriber.',
+  })
   @IsEmail()
   @IsOptional()
   email?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    description: 'The first name of the subscriber.',
+  })
   @IsString()
   @IsOptional()
   firstName?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    description: 'The last name of the subscriber.',
+  })
   @IsString()
   @IsOptional()
   lastName?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    description: 'The phone number of the subscriber.',
+  })
   @IsString()
   @IsOptional()
   phone?: string;
 
   @ApiPropertyOptional({
-    description: 'An http url to the profile image of your subscriber',
+    description: 'An HTTP URL to the profile image of your subscriber.',
   })
   @IsString()
   @IsOptional()
   avatar?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    description: 'The locale of the subscriber.',
+  })
   @IsLocale()
   @IsOptional()
   locale?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    type: 'object',
+    description: 'An optional payload object that can contain any properties.',
+    required: false,
+    additionalProperties: {
+      oneOf: [
+        { type: 'string' },
+        { type: 'array', items: { type: 'string' } },
+        { type: 'boolean' },
+        { type: 'number' },
+      ],
+    },
+  })
   @IsOptional()
+  @IsObject()
   data?: SubscriberCustomData;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    type: [SubscriberChannelDto],
+    description: 'An optional array of subscriber channels.',
+  })
   @IsOptional()
   @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => SubscriberChannelDto)
   channels?: SubscriberChannelDto[];
-}
 
-export class SubscriberChannelDto {
-  providerId: ChatProviderIdEnum | PushProviderIdEnum;
-
-  @ApiPropertyOptional()
-  integrationIdentifier?: string;
-
-  credentials: ChannelCredentialsDto;
-}
-
-export class ChannelCredentialsDto implements IChannelCredentials {
-  webhookUrl?: string;
-  deviceTokens?: string[];
+  @ApiPropertyOptional({
+    type: 'string',
+    description: 'The timezone of the subscriber.',
+  })
+  @IsOptional()
+  @IsTimeZone()
+  timezone?: string;
 }
 
 export class BulkSubscriberCreateDto {
-  @ApiProperty()
+  @ApiProperty({
+    description: 'An array of subscribers to be created in bulk.',
+    type: [CreateSubscriberRequestDto], // Specify the type of the array elements
+  })
   @IsArray()
   @ArrayNotEmpty()
-  @ArrayMaxSize(500)
-  @ValidateNested()
+  @ValidateNested({ each: true })
   @Type(() => CreateSubscriberRequestDto)
   subscribers: CreateSubscriberRequestDto[];
 }

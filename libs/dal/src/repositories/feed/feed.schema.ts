@@ -26,6 +26,18 @@ const feedSchema = new Schema<FeedDBModel>(
   schemaOptions
 );
 
+feedSchema.index({
+  _organizationId: 1,
+});
+
+feedSchema.index({
+  _environmentId: 1,
+});
+
+feedSchema.index({
+  identifier: 1,
+});
+
 feedSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, overrideMethods: 'all' });
 
 export const Feed =

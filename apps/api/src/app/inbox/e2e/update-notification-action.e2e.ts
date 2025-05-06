@@ -8,24 +8,25 @@ import {
   SubscriberRepository,
 } from '@novu/dal';
 import {
-  StepTypeEnum,
-  ChannelCTATypeEnum,
-  TemplateVariableTypeEnum,
   ActorTypeEnum,
-  SystemAvatarIconEnum,
   ButtonTypeEnum,
+  ChannelCTATypeEnum,
+  StepTypeEnum,
+  SystemAvatarIconEnum,
+  TemplateVariableTypeEnum,
 } from '@novu/shared';
-
+import { Novu } from '@novu/api';
 import { mapToDto } from '../utils/notification-mapper';
+import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-describe('Update Notification Action - /inbox/notifications/:id/{complete/revert} (PATCH)', async () => {
+describe('Update Notification Action - /inbox/notifications/:id/{complete/revert} (PATCH) #novu-v2', async () => {
   let session: UserSession;
   let template: NotificationTemplateEntity;
   let subscriber: SubscriberEntity | null;
   let message: MessageEntity;
   const messageRepository = new MessageRepository();
   const subscriberRepository = new SubscriberRepository();
-
+  let novuClient: Novu;
   const updateNotificationAction = async ({
     id,
     action,
@@ -44,11 +45,16 @@ describe('Update Notification Action - /inbox/notifications/:id/{complete/revert
   const triggerEvent = async (templateToTrigger: NotificationTemplateEntity, times = 1) => {
     const promises: Array<Promise<unknown>> = [];
     for (let i = 0; i < times; i += 1) {
-      promises.push(session.triggerEvent(templateToTrigger.triggers[0].identifier, session.subscriberId));
+      promises.push(
+        novuClient.trigger({
+          workflowId: templateToTrigger.triggers[0].identifier,
+          to: { subscriberId: session.subscriberId },
+        })
+      );
     }
 
     await Promise.all(promises);
-    await session.awaitRunningJobs(templateToTrigger._id);
+    await session.waitForJobCompletion(templateToTrigger._id);
   };
 
   const removeUndefinedDeep = (obj) => {
@@ -67,7 +73,7 @@ describe('Update Notification Action - /inbox/notifications/:id/{complete/revert
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
-
+    novuClient = initNovuClassSdk(session);
     subscriber = await subscriberRepository.findBySubscriberId(session.environment._id, session.subscriberId);
     template = await session.createTemplate({
       noFeedId: true,
@@ -118,8 +124,9 @@ describe('Update Notification Action - /inbox/notifications/:id/{complete/revert
       actionType: ButtonTypeEnum.PRIMARY,
     });
 
-    expect(status).to.equal(400);
-    expect(body.message[0]).to.equal(`notificationId must be a mongodb id`);
+    expect(status).to.equal(422);
+    expect(body.statusCode).to.equal(422);
+    expect(body.errors.notificationId.messages[0]).to.equal(`notificationId must be a mongodb id`);
   });
 
   it("should throw not found error when the message doesn't exist", async function () {

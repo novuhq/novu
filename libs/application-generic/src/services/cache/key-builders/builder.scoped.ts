@@ -1,8 +1,4 @@
-import {
-  buildParentScopedKeyById,
-  buildScopedKey,
-  buildUnscopedKey,
-} from './builder.base';
+import { buildParentScopedKeyById, buildScopedKey, buildUnscopedKey } from './builder.base';
 import {
   CacheKeyPrefixEnum,
   CacheKeyTypeEnum,
@@ -106,9 +102,7 @@ export const buildOrganizationScopedKey = ({
  * Use this to build a key for service configs that are unscoped (do not belong to a hierarchy).
  * An example of a service config is the maximum API rate limit.
  */
-export const buildServiceConfigKey = (
-  identifier: ServiceConfigIdentifierEnum,
-): string =>
+export const buildServiceConfigKey = (identifier: ServiceConfigIdentifierEnum): string =>
   buildUnscopedKey({
     type: CacheKeyTypeEnum.ENTITY,
     keyEntity: CacheKeyPrefixEnum.SERVICE_CONFIG,

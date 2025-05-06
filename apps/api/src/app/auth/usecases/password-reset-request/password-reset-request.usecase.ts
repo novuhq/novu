@@ -1,8 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import { differenceInHours, differenceInSeconds, parseISO } from 'date-fns';
-import { Novu } from '@novu/node';
-import { UserRepository, UserEntity, IUserResetTokenCount } from '@novu/dal';
+import { IUserResetTokenCount, UserEntity, UserRepository } from '@novu/dal';
 import { buildUserKey, InvalidateCacheService } from '@novu/application-generic';
 
 import { normalizeEmail, PasswordResetFlowEnum } from '@novu/shared';
@@ -39,18 +38,7 @@ export class PasswordResetRequest {
       await this.userRepository.updatePasswordResetToken(foundUser._id, token, resetTokenCount);
 
       if ((process.env.NODE_ENV === 'dev' || process.env.NODE_ENV === 'production') && process.env.NOVU_API_KEY) {
-        const novu = new Novu(process.env.NOVU_API_KEY);
         const resetPasswordLink = PasswordResetRequest.getResetRedirectLink(token, foundUser, command.src);
-
-        novu.trigger(process.env.NOVU_TEMPLATEID_PASSWORD_RESET || 'password-reset-llS-wzWMq', {
-          to: {
-            subscriberId: foundUser._id,
-            email: foundUser.email,
-          },
-          payload: {
-            resetPasswordLink,
-          },
-        });
       }
     }
 

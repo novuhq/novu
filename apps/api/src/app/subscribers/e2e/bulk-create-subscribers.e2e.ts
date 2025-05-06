@@ -1,53 +1,44 @@
 import { expect } from 'chai';
-import axios from 'axios';
-import { SubscriberRepository, SubscriberEntity } from '@novu/dal';
-import { UserSession, SubscribersService } from '@novu/testing';
+import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
+import { SubscribersService, UserSession } from '@novu/testing';
+import { Novu } from '@novu/api';
+import { expectSdkValidationExceptionGeneric, initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-const axiosInstance = axios.create();
-
-describe('Bulk create subscribers - /v1/subscribers/bulk (POST)', function () {
-  const BULK_API_ENDPOINT = '/v1/subscribers/bulk';
+describe('Bulk create subscribers - /v1/subscribers/bulk (POST) #novu-v2', function () {
   let session: UserSession;
   let subscriber: SubscriberEntity;
   let subscriberService: SubscribersService;
   const subscriberRepository = new SubscriberRepository();
+  let novuClient: Novu;
 
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
     subscriberService = new SubscribersService(session.organization._id, session.environment._id);
     subscriber = await subscriberService.createSubscriber();
+    novuClient = initNovuClassSdk(session);
   });
 
   it('should return the response array in correct format', async function () {
-    const { data: body } = await axiosInstance.post(
-      `${session.serverUrl}${BULK_API_ENDPOINT}`,
-      {
-        subscribers: [
-          {
-            subscriberId: 'test1',
-            firstName: 'sub1',
-            email: 'sub1@test.co',
-          },
-          {
-            subscriberId: 'test2',
-            firstName: 'sub2',
-            email: 'sub2@test.co',
-          },
-          { subscriberId: subscriber.subscriberId, firstName: 'update name' },
-          { subscriberId: 'test2', firstName: 'update name' },
-        ],
-      },
-      {
-        headers: {
-          authorization: `ApiKey ${session.apiKey}`,
+    const bulkResult = await novuClient.subscribers.createBulk({
+      subscribers: [
+        {
+          subscriberId: 'test1',
+          firstName: 'sub1',
+          email: 'sub1@test.co',
         },
-      }
-    );
+        {
+          subscriberId: 'test2',
+          firstName: 'sub2',
+          email: 'sub2@test.co',
+        },
+        { subscriberId: subscriber.subscriberId, firstName: 'update name' },
+        { subscriberId: 'test2', firstName: 'update name' },
+      ],
+    });
 
-    expect(body.data).to.be.ok;
-    const response = body.data;
-    const { updated, created, failed } = response;
+    expect(bulkResult.result).to.be.ok;
+    const { updated, created, failed } = bulkResult.result;
 
     expect(updated?.length).to.equal(2);
     expect(updated[0].subscriberId).to.equal(subscriber.subscriberId);
@@ -61,44 +52,36 @@ describe('Bulk create subscribers - /v1/subscribers/bulk (POST)', function () {
   });
 
   it('should create and update subscribers', async function () {
-    const { data: body } = await axiosInstance.post(
-      `${session.serverUrl}${BULK_API_ENDPOINT}`,
-      {
-        subscribers: [
-          {
-            subscriberId: 'sub1',
-            firstName: 'John',
-            lastName: 'Doe',
-            email: 'john@doe.com',
-            phone: '+972523333333',
-            locale: 'en',
-            data: { test1: 'test value1', test2: 'test value2' },
-          },
-          {
-            subscriberId: 'test2',
-            firstName: 'sub2',
-            email: 'sub2@test.co',
-          },
-          {
-            subscriberId: 'test3',
-            firstName: 'sub3',
-            email: 'sub3@test.co',
-          },
-          { subscriberId: subscriber.subscriberId, firstName: 'update' },
-          {
-            subscriberId: 'test4',
-            firstName: 'sub4',
-            email: 'sub4@test.co',
-          },
-        ],
-      },
-      {
-        headers: {
-          authorization: `ApiKey ${session.apiKey}`,
+    const res = await novuClient.subscribers.createBulk({
+      subscribers: [
+        {
+          subscriberId: 'sub1',
+          firstName: 'John',
+          lastName: 'Doe',
+          email: 'john@doe.com',
+          phone: '+972523333333',
+          locale: 'en',
+          data: { test1: 'test value1', test2: 'test value2' },
         },
-      }
-    );
-    expect(body.data).to.be.ok;
+        {
+          subscriberId: 'test2',
+          firstName: 'sub2',
+          email: 'sub2@test.co',
+        },
+        {
+          subscriberId: 'test3',
+          firstName: 'sub3',
+          email: 'sub3@test.co',
+        },
+        { subscriberId: subscriber.subscriberId, firstName: 'update' },
+        {
+          subscriberId: 'test4',
+          firstName: 'sub4',
+          email: 'sub4@test.co',
+        },
+      ],
+    });
+    expect(res.result).to.be.ok;
 
     const createdSubscriber = await subscriberRepository.findBySubscriberId(session.environment._id, 'sub1');
     const updatedSubscriber = await subscriberRepository.findBySubscriberId(
@@ -121,24 +104,16 @@ describe('Bulk create subscribers - /v1/subscribers/bulk (POST)', function () {
       email: 'sub2@test.co',
     };
 
-    try {
-      await axiosInstance.post(
-        `${session.serverUrl}${BULK_API_ENDPOINT}`,
-        {
-          subscribers: Array.from({ length: 501 }, () => payload),
-        },
-        {
-          headers: {
-            authorization: `ApiKey ${session.apiKey}`,
-          },
-        }
-      );
-      expect.fail();
-    } catch (error) {
-      expect(error).to.be.ok;
-      expect(error.response.status).to.equal(400);
-      expect(error.response.data.message[0]).to.equal('subscribers must contain no more than 500 elements');
-    }
+    const { error } = await expectSdkValidationExceptionGeneric(() =>
+      novuClient.subscribers.createBulk({
+        subscribers: Array.from({ length: 501 }, () => payload),
+      })
+    );
+
+    expect(error?.statusCode, JSON.stringify(error)).to.equal(422);
+    expect(error?.errors.subscribers.messages[0], JSON.stringify(error)).to.equal(
+      'subscribers must contain no more than 500 elements'
+    );
   });
 
   it('should recreate deleted subscribers', async function () {
@@ -153,51 +128,28 @@ describe('Bulk create subscribers - /v1/subscribers/bulk (POST)', function () {
       firstName: 'sub2',
       email: 'sub2@test.co',
     };
-    const { data: firstResponseData } = await axiosInstance.post(
-      `${session.serverUrl}${BULK_API_ENDPOINT}`,
-      {
-        subscribers: [existingSubscriber, newSubscriber1, newSubscriber2],
-      },
-      {
-        headers: {
-          authorization: `ApiKey ${session.apiKey}`,
-        },
-      }
-    );
-
-    expect(firstResponseData.data.created?.length).to.equal(2);
-    expect(firstResponseData.data.updated?.length).to.equal(1);
-    expect(firstResponseData.data.created[0].subscriberId).to.equal(newSubscriber1.subscriberId);
-    expect(firstResponseData.data.created[1].subscriberId).to.equal(newSubscriber2.subscriberId);
-    expect(firstResponseData.data.updated[0].subscriberId).to.equal(existingSubscriber.subscriberId);
-
-    await axiosInstance.delete(`${session.serverUrl}/v1/subscribers/${newSubscriber1.subscriberId}`, {
-      headers: {
-        authorization: `ApiKey ${session.apiKey}`,
-      },
-    });
-    await axiosInstance.delete(`${session.serverUrl}/v1/subscribers/${newSubscriber2.subscriberId}`, {
-      headers: {
-        authorization: `ApiKey ${session.apiKey}`,
-      },
+    let bulkResponse = await novuClient.subscribers.createBulk({
+      subscribers: [existingSubscriber, newSubscriber1, newSubscriber2],
     });
 
-    const { data: secondResponseData } = await axiosInstance.post(
-      `${session.serverUrl}${BULK_API_ENDPOINT}`,
-      {
-        subscribers: [existingSubscriber, newSubscriber1, newSubscriber2],
-      },
-      {
-        headers: {
-          authorization: `ApiKey ${session.apiKey}`,
-        },
-      }
-    );
+    const { result } = bulkResponse;
+    expect(result.created?.length).to.equal(2);
+    expect(result.updated?.length).to.equal(1);
+    expect(result.created[0].subscriberId).to.equal(newSubscriber1.subscriberId);
+    expect(result.created[1].subscriberId).to.equal(newSubscriber2.subscriberId);
+    expect(result.updated[0].subscriberId).to.equal(existingSubscriber.subscriberId);
 
-    expect(secondResponseData.data.created?.length).to.equal(2);
-    expect(secondResponseData.data.updated?.length).to.equal(1);
-    expect(secondResponseData.data.created[0].subscriberId).to.equal(newSubscriber1.subscriberId);
-    expect(secondResponseData.data.created[1].subscriberId).to.equal(newSubscriber2.subscriberId);
-    expect(secondResponseData.data.updated[0].subscriberId).to.equal(existingSubscriber.subscriberId);
+    await novuClient.subscribers.delete(newSubscriber1.subscriberId);
+    await novuClient.subscribers.delete(newSubscriber2.subscriberId);
+
+    bulkResponse = await novuClient.subscribers.createBulk({
+      subscribers: [existingSubscriber, newSubscriber1, newSubscriber2],
+    });
+    const secondResponseData = bulkResponse.result;
+    expect(secondResponseData.created?.length).to.equal(2);
+    expect(secondResponseData.updated?.length).to.equal(1);
+    expect(secondResponseData.created[0].subscriberId).to.equal(newSubscriber1.subscriberId);
+    expect(secondResponseData.created[1].subscriberId).to.equal(newSubscriber2.subscriberId);
+    expect(secondResponseData.updated[0].subscriberId).to.equal(existingSubscriber.subscriberId);
   });
 });

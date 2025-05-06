@@ -1,36 +1,42 @@
+import { autocompleteFooter, autocompleteHeader, digestIcon, functionIcon } from '@/components/primitives/constants';
+import { useDataRef } from '@/hooks/use-data-ref';
 import { tags as t } from '@lezer/highlight';
 import createTheme from '@uiw/codemirror-themes';
-import { EditorView, ReactCodeMirrorProps, useCodeMirror } from '@uiw/react-codemirror';
-import { cva, VariantProps } from 'class-variance-authority';
-import React, { useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef } from 'react';
-import { autocompleteFooter, autocompleteHeader, functionIcon } from './constants';
+import {
+  default as CodeMirror,
+  EditorView,
+  ReactCodeMirrorProps,
+  type ReactCodeMirrorRef,
+} from '@uiw/react-codemirror';
+import { cva } from 'class-variance-authority';
+import React, { useCallback, useMemo } from 'react';
+import { flushSync } from 'react-dom';
 
-const editorVariants = cva('h-full w-full flex-1 [&_.cm-focused]:outline-none', {
+const variants = cva('h-full w-full flex-1 [&_.cm-focused]:outline-none', {
   variants: {
     size: {
-      default: 'text-xs [&_.cm-editor]:py-1',
+      md: 'text-sm',
+      sm: 'text-xs',
+      '2xs': 'text-xs',
     },
   },
   defaultVariants: {
-    size: 'default',
+    size: 'sm',
   },
 });
 
-type baseThemeOptions = {
-  asInput?: boolean;
-};
-const baseTheme = (options: baseThemeOptions) =>
+const baseTheme = (options: { multiline?: boolean }) =>
   EditorView.baseTheme({
     '&light': {
       backgroundColor: 'transparent',
     },
-    ...(options.asInput
-      ? {
+    ...(options.multiline
+      ? {}
+      : {
           '.cm-scroller': {
             overflow: 'hidden',
           },
-        }
-      : {}),
+        }),
     '.cm-tooltip-autocomplete .cm-completionIcon-variable': {
       '&:before': {
         content: 'Suggestions',
@@ -44,9 +50,22 @@ const baseTheme = (options: baseThemeOptions) =>
         backgroundImage: `url('${functionIcon}')`,
       },
     },
+    '.cm-tooltip-autocomplete .cm-completionIcon-digest': {
+      '&:before': {
+        content: 'Suggestions',
+      },
+      '&:after': {
+        content: "''",
+        height: '16px',
+        width: '16px',
+        display: 'block',
+        backgroundRepeat: 'no-repeat',
+        backgroundImage: `url('${digestIcon}')`,
+      },
+    },
     '.cm-tooltip-autocomplete.cm-tooltip': {
       position: 'relative',
-      overflow: 'hidden',
+      overflow: 'visible',
       borderRadius: 'var(--radius)',
       border: '1px solid var(--neutral-100)',
       backgroundColor: 'hsl(var(--background))',
@@ -85,6 +104,7 @@ const baseTheme = (options: baseThemeOptions) =>
       alignItems: 'center',
       gap: '8px',
       padding: '4px',
+      fontFamily: 'JetBrains Mono, monospace',
       fontSize: '12px',
       fontWeight: '500',
       lineHeight: '16px',
@@ -103,109 +123,125 @@ const baseTheme = (options: baseThemeOptions) =>
     '.cm-line span.cm-matchingBracket': {
       backgroundColor: 'hsl(var(--highlighted) / 0.1)',
     },
+    // important to show the cursor at the beginning of the line
+    '.cm-line': {
+      marginLeft: '1px',
+      lineHeight: '20px',
+    },
     'div.cm-content': {
       padding: 0,
+      whiteSpace: 'preserve nowrap',
+      width: '1px', // Any width value would do to make the editor work exactly like an input when more text than its width is added
     },
     'div.cm-gutters': {
       backgroundColor: 'transparent',
       borderRight: 'none',
       color: 'hsl(var(--foreground-400))',
     },
+    '.cm-placeholder': {
+      fontWeight: 'normal',
+    },
+    '.cm-tooltip .cm-completionInfo': {
+      marginInline: '0.375rem',
+      borderRadius: '0.5rem',
+      boxShadow: '0px 1px 3px 0px rgba(16, 24, 40, 0.10), 0px 1px 2px 0px rgba(16, 24, 40, 0.06)',
+      borderColor: 'transparent',
+      padding: '0px !important',
+      backgroundColor: 'hsl(var(--bg-weak))',
+    },
+    '.cm-tooltip-autocomplete.cm-tooltip > ul > li:hover': {
+      backgroundColor: 'hsl(var(--neutral-100))',
+    },
   });
 
-type EditorProps = {
+export type EditorProps = {
   value: string;
-  asInput?: boolean;
+  multiline?: boolean;
   placeholder?: string;
   className?: string;
   height?: string;
-  onChange?: (val: string) => void;
+  onChange?: (value: string) => void;
   fontFamily?: 'inherit';
-} & ReactCodeMirrorProps &
-  VariantProps<typeof editorVariants>;
+  size?: 'sm' | 'md' | '2xs';
+} & ReactCodeMirrorProps;
 
-export const Editor = React.forwardRef<{ focus: () => void; blur: () => void }, EditorProps>(
+export const Editor = React.forwardRef<ReactCodeMirrorRef, EditorProps>(
   (
     {
       value,
       placeholder,
       className,
       height,
-      size,
-      asInput,
+      multiline = false,
       fontFamily,
       onChange,
-      extensions,
-      basicSetup,
+      size = 'sm',
+      extensions: extensionsProp,
+      basicSetup: basicSetupProp,
       ...restCodeMirrorProps
     },
     ref
   ) => {
-    const editor = useRef<HTMLDivElement>(null);
-    const [shouldFocus, setShouldFocus] = React.useState(false);
+    const onChangeRef = useDataRef(onChange);
+    const extensions = useMemo(
+      () => [...(extensionsProp ?? []), baseTheme({ multiline })],
+      [extensionsProp, multiline]
+    );
 
-    const theme = useMemo(() => {
-      return createTheme({
-        theme: 'light',
-        styles: [
-          { tag: t.keyword, color: 'hsl(var(--feature))' },
-          { tag: t.string, color: 'hsl(var(--highlighted))' },
-          { tag: t.operatorKeyword, color: 'hsl(var(--highlighted))' },
-          { tag: t.function(t.variableName), color: 'hsl(var(--information))' },
-          { tag: t.brace, color: 'hsl(var(--foreground-400))' },
-          { tag: t.variableName, color: 'hsl(var(--foreground-950))' },
-        ],
-        settings: {
-          background: 'transparent',
-          lineHighlight: 'transparent',
-          fontFamily: fontFamily === 'inherit' ? 'inherit' : undefined,
-        },
-      });
-    }, [fontFamily]);
-
-    const { setContainer, view } = useCodeMirror({
-      extensions: [...(extensions ?? []), baseTheme({ asInput })],
-      height,
-      placeholder,
-      basicSetup: {
+    const basicSetup = useMemo(
+      () => ({
         lineNumbers: false,
         foldGutter: false,
         highlightActiveLine: false,
-        highlightActiveLineGutter: false,
-        indentOnInput: false,
-        searchKeymap: false,
-        ...(typeof basicSetup === 'object' ? basicSetup : {}),
-      },
-      container: editor.current,
-      value,
-      onChange,
-      theme,
-      lang: 'liquid',
-      ...restCodeMirrorProps,
-    });
-
-    useImperativeHandle(
-      ref,
-      () => ({
-        focus: () => setShouldFocus(true),
-        blur: () => setShouldFocus(false),
+        defaultKeymap: multiline,
+        ...((typeof basicSetupProp === 'object' ? basicSetupProp : {}) ?? {}),
       }),
-      []
+      [basicSetupProp, multiline]
     );
 
-    useEffect(() => {
-      if (editor.current) {
-        setContainer(editor.current);
-      }
-    }, [setContainer]);
+    const theme = useMemo(
+      () =>
+        createTheme({
+          theme: 'light',
+          styles: [
+            { tag: t.keyword, color: 'hsl(var(--feature))' },
+            { tag: t.string, color: 'hsl(var(--highlighted))' },
+            { tag: t.function(t.variableName), color: 'hsl(var(--information))' },
+          ],
+          settings: {
+            background: 'transparent',
+            fontFamily: fontFamily === 'inherit' ? 'inherit' : undefined,
+          },
+        }),
+      [fontFamily]
+    );
 
-    useLayoutEffect(() => {
-      if (view && shouldFocus) {
-        view.focus();
-        setShouldFocus(false);
-      }
-    }, [shouldFocus, view]);
+    const onChangeCallback = useCallback(
+      (value: string) => {
+        // when typing fast the onChange event is called multiple times during one render phase
+        // by default react batches state updates and only triggers one render phase
+        // which results in value not being updated and "jumping" effect in the editor
+        // to prevent this we need to flush the state updates synchronously
+        flushSync(() => {
+          onChangeRef.current?.(value);
+        });
+      },
+      [onChangeRef]
+    );
 
-    return <div ref={editor} className={editorVariants({ size, className })} />;
+    return (
+      <CodeMirror
+        ref={ref}
+        className={variants({ size, className })}
+        extensions={extensions}
+        height="auto"
+        placeholder={placeholder}
+        basicSetup={basicSetup}
+        value={value}
+        onChange={onChangeCallback}
+        theme={theme}
+        {...restCodeMirrorProps}
+      />
+    );
   }
 );

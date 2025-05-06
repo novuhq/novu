@@ -1,6 +1,4 @@
-import './config/env.config';
 import './instrument';
-import 'newrelic';
 
 import helmet from 'helmet';
 import { INestApplication, Logger, ValidationPipe } from '@nestjs/common';
@@ -49,19 +47,38 @@ export async function bootstrap(): Promise<INestApplication> {
 
   app.enableShutdownHooks();
 
-  Logger.log('BOOTSTRAPPED SUCCESSFULLY');
+  /*
+   * Handle unhandled promise rejections
+   * We explicitly crash the process on unhandled rejections as they indicate the application
+   * is in an undefined state. NestJS can't handle these as they occur outside the event lifecycle.
+   * According to Node.js docs, it's unsafe to resume normal operation after unhandled rejections.
+   * We log these rejections with fatal level to ensure they are properly monitored and tracked.
+   * See: https://nodejs.org/api/process.html#process_warning_using_uncaughtexception_correctly
+   */
+  process.on('unhandledRejection', (reason, promise) => {
+    app.get(PinoLogger).fatal(
+      {
+        err: reason,
+        message: 'Unhandled promise rejection',
+        promise,
+      },
+      'Bootstrap'
+    );
+    process.exit(1);
+  });
 
   await app.init();
 
   try {
     await startAppInfra(app);
   } catch (e) {
+    Logger.error('[@novu/worker]: Failed to start app infra', e.message, e.start);
     process.exit(1);
   }
 
   await app.listen(process.env.PORT);
 
-  Logger.log(`Started application in NODE_ENV=${process.env.NODE_ENV} on port ${process.env.PORT}`);
+  Logger.log(`[@novu/worker]: Listening for NODE_ENV=${process.env.NODE_ENV} on port ${process.env.PORT}`);
 
   return app;
 }

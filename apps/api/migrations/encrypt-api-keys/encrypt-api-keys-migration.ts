@@ -2,7 +2,7 @@
 import '../../src/config';
 
 import { EnvironmentRepository, IApiKey } from '@novu/dal';
-import { encryptSecret } from '@novu/application-generic';
+import { encryptSecret, PinoLogger } from '@novu/application-generic';
 import { EncryptedSecret } from '@novu/shared';
 import { createHash } from 'crypto';
 import { NestFactory } from '@nestjs/core';
@@ -10,22 +10,23 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from '../../src/app.module';
 
 export async function encryptApiKeysMigration() {
-  // eslint-disable-next-line no-console
-  console.log('start migration - encrypt api keys');
-
   const app = await NestFactory.create(AppModule, {
     logger: false,
   });
+
+  const logger = await app.resolve(PinoLogger);
+  logger.setContext('EncryptApiKeysMigration');
+
+  logger.info('start migration - encrypt api keys');
+
   const environmentRepository = app.get(EnvironmentRepository);
   const environments = await environmentRepository.find({});
 
   for (const environment of environments) {
-    // eslint-disable-next-line no-console
-    console.log(`environment ${environment._id}`);
+    logger.info(`environment ${environment._id}`);
 
     if (!environment.apiKeys) {
-      // eslint-disable-next-line no-console
-      console.log(`environment ${environment._id} - is not contains api keys, skipping..`);
+      logger.info(`environment ${environment._id} - is not contains api keys, skipping..`);
       continue;
     }
 
@@ -34,8 +35,7 @@ export async function encryptApiKeysMigration() {
         isEncrypted(key.key);
       })
     ) {
-      // eslint-disable-next-line no-console
-      console.log(`environment ${environment._id} - api keys are already encrypted, skipping..`);
+      logger.info(`environment ${environment._id} - api keys are already encrypted, skipping..`);
       continue;
     }
 
@@ -47,11 +47,11 @@ export async function encryptApiKeysMigration() {
         $set: { apiKeys: updatePayload },
       }
     );
-    // eslint-disable-next-line no-console
-    console.log(`environment ${environment._id} - api keys updated`);
+
+    logger.info(`environment ${environment._id} - api keys updated`);
   }
-  // eslint-disable-next-line no-console
-  console.log('end migration');
+
+  logger.info('end migration');
 }
 
 export function encryptApiKeysWithGuard(apiKeys: IApiKey[]): IEncryptedApiKey[] {
@@ -77,5 +77,3 @@ export interface IEncryptedApiKey {
   _userId: string;
   hash: string;
 }
-
-encryptApiKeysMigration();

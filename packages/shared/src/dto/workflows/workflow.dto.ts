@@ -1,34 +1,101 @@
-import { IWorkflowStepMetadata } from '../../entities/step';
-import { BuilderFieldType, BuilderGroupValues, FilterParts } from '../../types';
-import { MessageTemplateDto } from '../message-template';
-import { UpdateWorkflowDto } from './update-workflow-dto';
-import { StepCreateDto, StepUpdateDto } from './workflow-commons-fields';
+import { StepTypeEnum, WorkflowCreationSourceEnum, WorkflowOriginEnum, WorkflowPreferences } from '../../types';
+import { Slug } from '../../types/utils';
+import type { JSONSchemaDto } from './json-schema-dto';
+import { StepCreateDto, StepResponseDto, StepUpdateDto } from './step.dto';
+import { WorkflowStatusEnum } from './workflow-status-enum';
 
-export class StepVariantDto {
-  id?: string;
-  _id?: string;
-  name?: string;
-  uuid?: string;
-  _templateId?: string;
-  template?: MessageTemplateDto;
-  filters?: {
-    isNegated?: boolean;
-    type?: BuilderFieldType;
-    value?: BuilderGroupValues;
-    children?: FilterParts[];
-  }[];
+export class ControlsSchema {
+  schema: JSONSchemaDto;
+}
+
+export type PatchWorkflowDto = {
   active?: boolean;
-  shouldStopOnFail?: boolean;
-  replyCallback?: {
-    active: boolean;
-    url?: string;
-  };
-  metadata?: IWorkflowStepMetadata;
+  name?: string;
+  description?: string;
+  tags?: string[];
+};
+
+export type ListWorkflowResponse = {
+  workflows: WorkflowListResponseDto[];
+  totalCount: number;
+};
+
+export type WorkflowListResponseDto = Pick<
+  WorkflowResponseDto,
+  'name' | 'tags' | 'updatedAt' | 'createdAt' | '_id' | 'workflowId' | 'slug' | 'status' | 'origin' | 'lastTriggeredAt'
+> & {
+  stepTypeOverviews: StepTypeEnum[];
+};
+
+export type WorkflowCommonsFields = {
+  name: string;
+  description?: string;
+  tags?: string[];
+  active?: boolean;
+};
+
+export type PreferencesResponseDto = {
+  user: WorkflowPreferences | null;
+  default: WorkflowPreferences;
+};
+
+export type PreferencesRequestDto = {
+  user: WorkflowPreferences | null;
+  workflow?: WorkflowPreferences | null;
+};
+
+export type WorkflowResponseDto = WorkflowCommonsFields & {
+  _id: string;
+  workflowId: string;
+  slug: Slug;
+  updatedAt: string;
+  createdAt: string;
+  steps: StepResponseDto[];
+  origin: WorkflowOriginEnum;
+  preferences: PreferencesResponseDto;
+  status: WorkflowStatusEnum;
+  issues?: Record<WorkflowCreateAndUpdateKeys, RuntimeIssueDto>;
+  lastTriggeredAt?: string;
+};
+
+export type WorkflowCreateAndUpdateKeys = keyof CreateWorkflowDto | keyof UpdateWorkflowDto;
+
+export class RuntimeIssueDto {
+  issueType: WorkflowIssueTypeEnum;
+  variableName?: string;
+  message: string;
 }
 
-export class NotificationStepDto extends StepVariantDto {
-  variants?: StepVariantDto[];
+export enum WorkflowIssueTypeEnum {
+  MISSING_VALUE = 'MISSING_VALUE',
+  MAX_LENGTH_ACCESSED = 'MAX_LENGTH_ACCESSED',
+  WORKFLOW_ID_ALREADY_EXISTS = 'WORKFLOW_ID_ALREADY_EXISTS',
+  DUPLICATED_VALUE = 'DUPLICATED_VALUE',
+  LIMIT_REACHED = 'LIMIT_REACHED',
 }
+
+export type CreateWorkflowDto = WorkflowCommonsFields & {
+  workflowId: string;
+
+  steps: StepCreateDto[];
+
+  __source: WorkflowCreationSourceEnum;
+
+  preferences?: PreferencesRequestDto;
+};
+
+export type UpdateWorkflowDto = WorkflowCommonsFields & {
+  /**
+   * We allow to update workflow id only for code first workflows
+   */
+  workflowId?: string;
+
+  steps: (StepCreateDto | StepUpdateDto)[];
+
+  preferences: PreferencesRequestDto;
+
+  origin: WorkflowOriginEnum;
+};
 
 export type UpsertWorkflowBody = Omit<UpdateWorkflowDto, 'steps'> & {
   steps: UpsertStepBody[];
@@ -37,6 +104,8 @@ export type UpsertWorkflowBody = Omit<UpdateWorkflowDto, 'steps'> & {
 export type UpsertStepBody = StepCreateBody | UpdateStepBody;
 export type StepCreateBody = StepCreateDto;
 export type UpdateStepBody = StepUpdateDto;
+
+export type DuplicateWorkflowDto = Pick<CreateWorkflowDto, 'name' | 'tags' | 'description'>;
 
 export function isStepCreateBody(step: UpsertStepBody): step is StepCreateDto {
   return step && typeof step === 'object' && !(step as UpdateStepBody)._id;

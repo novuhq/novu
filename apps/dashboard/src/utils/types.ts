@@ -20,6 +20,10 @@ export type RuntimeIssue = {
   message: string;
 };
 
-export type Step = Pick<StepResponseDto, 'name' | 'type' | '_id' | 'stepId' | 'issues'> & {
-  slug: string;
-};
+export type Step = Pick<StepResponseDto, 'name' | 'type' | '_id' | 'stepId' | 'issues' | 'slug' | 'controls'>;
+
+/**
+ * Omit the `environment` field from the parameters of a function.
+ * This is useful to in data-fetching hooks invoking the api client functions.
+ */
+export type OmitEnvironmentFromParameters<T extends (...args: any) => any> = Omit<Parameters<T>[0], 'environment'>;

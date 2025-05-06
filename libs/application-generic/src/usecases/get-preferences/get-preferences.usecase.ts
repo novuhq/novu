@@ -7,10 +7,26 @@ import {
   WorkflowPreferences,
   WorkflowPreferencesPartial,
 } from '@novu/shared';
-import { deepMerge } from '../../utils';
 import { GetPreferencesCommand } from './get-preferences.command';
 import { GetPreferencesResponseDto } from './get-preferences.dto';
 import { InstrumentUsecase } from '../../instrumentation';
+import { MergePreferences } from '../merge-preferences/merge-preferences.usecase';
+import { MergePreferencesCommand } from '../merge-preferences/merge-preferences.command';
+
+export type PreferenceSet = {
+  workflowResourcePreference?: PreferencesEntity & {
+    preferences: WorkflowPreferences;
+  };
+  workflowUserPreference?: PreferencesEntity & {
+    preferences: WorkflowPreferences;
+  };
+  subscriberGlobalPreference?: PreferencesEntity & {
+    preferences: WorkflowPreferencesPartial;
+  };
+  subscriberWorkflowPreference?: PreferencesEntity & {
+    preferences: WorkflowPreferencesPartial;
+  };
+};
 
 class PreferencesNotFoundException extends BadRequestException {
   constructor(featureFlagCommand: GetPreferencesCommand) {
@@ -28,11 +44,9 @@ export class GetPreferences {
   ): Promise<GetPreferencesResponseDto> {
     const items = await this.getPreferencesFromDb(command);
 
-    if (items.length === 0) {
-      throw new PreferencesNotFoundException(command);
-    }
-
-    const mergedPreferences = this.mergePreferences(items, command.templateId);
+    const mergedPreferences = MergePreferences.execute(
+      MergePreferencesCommand.create(items),
+    );
 
     if (!mergedPreferences.preferences) {
       throw new PreferencesNotFoundException(command);
@@ -99,221 +113,43 @@ export class GetPreferences {
     return mappedPreferences;
   }
 
-  private mergePreferences(
-    items: PreferencesEntity[],
-    workflowId?: string,
-  ): GetPreferencesResponseDto {
-    const workflowResourcePreferences =
-      this.getWorkflowResourcePreferences(items);
-    const workflowUserPreferences = this.getWorkflowUserPreferences(items);
-
-    const workflowPreferences = deepMerge(
-      [workflowResourcePreferences, workflowUserPreferences]
-        .filter((preference) => preference !== undefined)
-        .map((item) => item.preferences),
-    ) as WorkflowPreferences;
-
-    const subscriberGlobalPreferences =
-      this.getSubscriberGlobalPreferences(items);
-    const subscriberWorkflowPreferences = this.getSubscriberWorkflowPreferences(
-      items,
-      workflowId,
-    );
-
-    const subscriberPreferences = deepMerge(
-      [subscriberGlobalPreferences, subscriberWorkflowPreferences]
-        .filter((preference) => preference !== undefined)
-        .map((item) => item.preferences),
-    );
-
-    /**
-     * Order is important here because we like the workflowPreferences (that comes from the bridge)
-     * to be overridden by any other preferences and then we have preferences defined in dashboard and
-     * then subscribers global preferences and the once that should be used if it says other then anything before it
-     * we use subscribers workflow preferences
-     */
-    const preferencesEntities = [
-      workflowResourcePreferences,
-      workflowUserPreferences,
-      subscriberGlobalPreferences,
-      subscriberWorkflowPreferences,
-    ];
-    const source = Object.values(PreferencesTypeEnum).reduce(
-      (acc, type) => {
-        const preference = items.find((item) => item.type === type);
-        if (preference) {
-          acc[type] = preference.preferences as WorkflowPreferences;
-        } else {
-          acc[type] = null;
-        }
-
-        return acc;
-      },
-      {} as GetPreferencesResponseDto['source'],
-    );
-    const preferences = preferencesEntities
-      .filter((preference) => preference !== undefined)
-      .map((item) => item.preferences);
-
-    // ensure we don't merge on an empty list
-    if (preferences.length === 0) {
-      return { preferences: undefined, type: undefined, source };
-    }
-
-    const readOnlyFlag = workflowPreferences?.all?.readOnly;
-
-    // Determine the most specific preference applied
-    let mostSpecificPreference: PreferencesTypeEnum | undefined;
-    if (subscriberWorkflowPreferences && !readOnlyFlag) {
-      mostSpecificPreference = PreferencesTypeEnum.SUBSCRIBER_WORKFLOW;
-    } else if (subscriberGlobalPreferences && !readOnlyFlag) {
-      mostSpecificPreference = PreferencesTypeEnum.SUBSCRIBER_GLOBAL;
-    } else if (workflowUserPreferences) {
-      mostSpecificPreference = PreferencesTypeEnum.USER_WORKFLOW;
-    } else if (workflowResourcePreferences) {
-      mostSpecificPreference = PreferencesTypeEnum.WORKFLOW_RESOURCE;
-    }
-
-    // If workflowPreferences have readOnly flag set to true, disregard subscriber preferences
-    if (readOnlyFlag) {
-      return {
-        preferences: workflowPreferences,
-        type: mostSpecificPreference,
-        source,
-      };
-    }
-
-    /**
-     * Order is (almost exactly) reversed of that above because 'readOnly' should be prioritized
-     * by the Dashboard (userPreferences) the most.
-     */
-    const orderedPreferencesForReadOnly = [
-      subscriberWorkflowPreferences,
-      subscriberGlobalPreferences,
-      workflowResourcePreferences,
-      workflowUserPreferences,
-    ]
-      .filter((preference) => preference !== undefined)
-      .map((item) => item.preferences);
-
-    const readOnlyPreferences = orderedPreferencesForReadOnly.map(
-      ({ all }) => ({
-        all: { readOnly: all?.readOnly || false },
-      }),
-    ) as WorkflowPreferences[];
-
-    const readOnlyPreference = deepMerge([...readOnlyPreferences]);
-
-    if (Object.keys(subscriberPreferences).length === 0) {
-      return {
-        preferences: workflowPreferences,
-        type: mostSpecificPreference,
-        source,
-      };
-    }
-    // if the workflow should be readonly, we return the resource preferences default value for workflow.
-    if (readOnlyPreference?.all?.readOnly) {
-      subscriberPreferences.all.enabled = workflowPreferences?.all?.enabled;
-    }
-
-    // making sure we respond with correct readonly values.
-    const mergedPreferences = deepMerge([
-      workflowPreferences,
-      subscriberPreferences,
-      readOnlyPreference,
-    ]) as WorkflowPreferences;
-
-    return {
-      preferences: mergedPreferences,
-      type: mostSpecificPreference,
-      source,
-    };
-  }
-
-  private getSubscriberWorkflowPreferences(
-    items: PreferencesEntity[],
-    templateId: string,
-  ) {
-    return items.find(
-      (item) =>
-        item.type === PreferencesTypeEnum.SUBSCRIBER_WORKFLOW &&
-        item._templateId === templateId,
-    );
-  }
-
-  private getSubscriberGlobalPreferences(
-    items: PreferencesEntity[],
-  ): PreferencesEntity | undefined {
-    return items.find(
-      (item) => item.type === PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
-    );
-  }
-
-  private getWorkflowUserPreferences(
-    items: PreferencesEntity[],
-  ): PreferencesEntity | undefined {
-    return items.find(
-      (item) => item.type === PreferencesTypeEnum.USER_WORKFLOW,
-    );
-  }
-
-  private getWorkflowResourcePreferences(
-    items: PreferencesEntity[],
-  ): PreferencesEntity | undefined {
-    return items.find(
-      (item) => item.type === PreferencesTypeEnum.WORKFLOW_RESOURCE,
-    );
-  }
-
   private async getPreferencesFromDb(
     command: GetPreferencesCommand,
-  ): Promise<PreferencesEntity[]> {
-    const items: PreferencesEntity[] = [];
-
-    /*
-     * Fetch the Workflow Preferences. This includes:
-     * - Workflow Resource Preferences - the Code-defined Workflow Preferences
-     * - User Workflow Preferences - the Dashboard-defined Workflow Preferences
-     */
-    if (command.templateId) {
-      const workflowPreferences = await this.preferencesRepository.find({
+  ): Promise<PreferenceSet> {
+    const [
+      workflowResourcePreference,
+      workflowUserPreference,
+      subscriberWorkflowPreference,
+      subscriberGlobalPreference,
+    ] = await Promise.all([
+      this.preferencesRepository.findOne({
         _templateId: command.templateId,
         _environmentId: command.environmentId,
-        type: {
-          $in: [
-            PreferencesTypeEnum.WORKFLOW_RESOURCE,
-            PreferencesTypeEnum.USER_WORKFLOW,
-          ],
-        },
-      });
-
-      items.push(...workflowPreferences);
-    }
-
-    // Fetch the Subscriber Global Preference.
-    if (command.subscriberId) {
-      const subscriberGlobalPreference = await this.preferencesRepository.find({
+        type: PreferencesTypeEnum.WORKFLOW_RESOURCE,
+      }) as Promise<PreferenceSet['workflowResourcePreference'] | null>,
+      this.preferencesRepository.findOne({
+        _templateId: command.templateId,
+        _environmentId: command.environmentId,
+        type: PreferencesTypeEnum.USER_WORKFLOW,
+      }) as Promise<PreferenceSet['workflowUserPreference'] | null>,
+      this.preferencesRepository.findOne({
+        _subscriberId: command.subscriberId,
+        _environmentId: command.environmentId,
+        _templateId: command.templateId,
+        type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
+      }) as Promise<PreferenceSet['subscriberWorkflowPreference'] | null>,
+      this.preferencesRepository.findOne({
         _subscriberId: command.subscriberId,
         _environmentId: command.environmentId,
         type: PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
-      });
+      }) as Promise<PreferenceSet['subscriberGlobalPreference'] | null>,
+    ]);
 
-      items.push(...subscriberGlobalPreference);
-    }
-
-    // Fetch the Subscriber Workflow Preference.
-    if (command.subscriberId && command.templateId) {
-      const subscriberWorkflowPreference =
-        await this.preferencesRepository.find({
-          _subscriberId: command.subscriberId,
-          _templateId: command.templateId,
-          _environmentId: command.environmentId,
-          type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
-        });
-
-      items.push(...subscriberWorkflowPreference);
-    }
-
-    return items;
+    return {
+      ...(workflowResourcePreference ? { workflowResourcePreference } : {}),
+      ...(workflowUserPreference ? { workflowUserPreference } : {}),
+      ...(subscriberWorkflowPreference ? { subscriberWorkflowPreference } : {}),
+      ...(subscriberGlobalPreference ? { subscriberGlobalPreference } : {}),
+    };
   }
 }

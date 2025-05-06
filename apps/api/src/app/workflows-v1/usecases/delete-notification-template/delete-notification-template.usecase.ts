@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { ChangeRepository, DalException, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
 import {
@@ -7,12 +7,9 @@ import {
   CreateChangeCommand,
   DeleteWorkflowUseCase,
   DeleteWorkflowCommand,
-  GetWorkflowByIdsUseCase,
-  GetWorkflowByIdsCommand,
 } from '@novu/application-generic';
 
 import { DeleteNotificationTemplateCommand } from './delete-notification-template.command';
-import { ApiException } from '../../../shared/exceptions/api.exception';
 
 /**
  * @deprecated
@@ -26,15 +23,14 @@ export class DeleteNotificationTemplate {
     private changeRepository: ChangeRepository,
     private analyticsService: AnalyticsService,
     private deleteWorkflowUseCase: DeleteWorkflowUseCase,
-    private getWorkflowByIdsUseCase: GetWorkflowByIdsUseCase,
     private notificationTemplateRepository: NotificationTemplateRepository
   ) {}
 
   async execute(command: DeleteNotificationTemplateCommand) {
     try {
-      const workflowEntity = await this.getWorkflowByIdsUseCase.execute(
-        GetWorkflowByIdsCommand.create({
-          identifierOrInternalId: command.templateId,
+      await this.deleteWorkflowUseCase.execute(
+        DeleteWorkflowCommand.create({
+          workflowIdOrInternalId: command.templateId,
           environmentId: command.environmentId,
           organizationId: command.organizationId,
           userId: command.userId,
@@ -45,15 +41,6 @@ export class DeleteNotificationTemplate {
         command.environmentId,
         ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE,
         command.templateId
-      );
-
-      await this.deleteWorkflowUseCase.execute(
-        DeleteWorkflowCommand.create({
-          identifierOrInternalId: command.templateId,
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          userId: command.userId,
-        })
       );
 
       const item: NotificationTemplateEntity = (
@@ -85,7 +72,7 @@ export class DeleteNotificationTemplate {
       });
     } catch (e) {
       if (e instanceof DalException) {
-        throw new ApiException(e.message);
+        throw new BadRequestException(e.message);
       }
       throw e;
     }

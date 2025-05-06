@@ -1,33 +1,15 @@
 import Form, { FormProps } from '@rjsf/core';
-import { RegistryWidgetsType, UiSchema } from '@rjsf/utils';
 import validator from '@rjsf/validator-ajv8';
-import { TextWidget } from './text-widget';
-import { SwitchWidget } from './switch-widget';
-import { SelectWidget } from './select-widget';
-
-export const JSON_SCHEMA_FORM_ID_DELIMITER = '~~~';
-
-const UI_SCHEMA: UiSchema = {
-  'ui:globalOptions': { addable: true, copyable: false, label: true, orderable: true },
-  'ui:options': {
-    hideError: true,
-    submitButtonOptions: {
-      norender: true,
-    },
-  },
-};
-
-const WIDGETS: RegistryWidgetsType = {
-  TextWidget: TextWidget,
-  URLWidget: TextWidget,
-  EmailWidget: TextWidget,
-  CheckboxWidget: SwitchWidget,
-  SelectWidget: SelectWidget,
-};
+import { ArrayFieldItemTemplate } from './array-field-item-template';
+import { ArrayFieldTemplate } from './array-field-template';
+import { ArrayFieldTitleTemplate } from './array-field-title-template';
+import { AddButton, RemoveButton } from './button-templates';
+import { ObjectFieldTemplate } from './object-field-template';
+import { JSON_SCHEMA_FORM_ID_DELIMITER, UI_SCHEMA, WIDGETS } from './template-utils';
 
 type JsonFormProps<TFormData = unknown> = Pick<
   FormProps<TFormData>,
-  'onChange' | 'onSubmit' | 'onBlur' | 'schema' | 'formData' | 'tagName' | 'onError'
+  'onChange' | 'onSubmit' | 'onBlur' | 'schema' | 'formData' | 'tagName' | 'onError' | 'disabled'
 > & {
   variables?: string[];
 };
@@ -36,20 +18,23 @@ export function JsonForm(props: JsonFormProps) {
   return (
     <Form
       tagName={'fieldset'}
-      className="[&_.control-label]:hidden [&_.field-decription]:hidden [&_.panel.panel-danger.errors]:hidden"
+      className="*:flex *:flex-col *:gap-3 [&_.control-label]:hidden [&_.field-decription]:hidden [&_.panel.panel-danger.errors]:hidden"
       uiSchema={UI_SCHEMA}
       widgets={WIDGETS}
       validator={validator}
-      autoComplete={'false'}
-      /**
-       * TODO: Add support for variables
-       */
-      formContext={{ variables: [] }}
+      autoComplete="false"
       idSeparator={JSON_SCHEMA_FORM_ID_DELIMITER}
+      templates={{
+        ButtonTemplates: {
+          AddButton,
+          RemoveButton,
+        },
+        ArrayFieldTemplate,
+        ArrayFieldItemTemplate,
+        ArrayFieldTitleTemplate,
+        ObjectFieldTemplate,
+      }}
       {...props}
-      /**
-       * TODO: Add support for Arrays and Nested Objects
-       */
     />
   );
 }

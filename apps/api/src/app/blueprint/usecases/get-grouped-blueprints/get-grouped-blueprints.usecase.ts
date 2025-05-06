@@ -1,18 +1,23 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { NotificationTemplateRepository, NotificationTemplateEntity } from '@novu/dal';
-import { buildGroupedBlueprintsKey, CachedEntity } from '@novu/application-generic';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
+import { buildGroupedBlueprintsKey, CachedResponse, PinoLogger } from '@novu/application-generic';
 import { IGroupedBlueprint } from '@novu/shared';
 
-import { GroupedBlueprintResponse } from '../../dto/grouped-blueprint.response.dto';
+import { GroupedBlueprintResponse } from '../../dtos/grouped-blueprint.response.dto';
 import { GetGroupedBlueprintsCommand, POPULAR_GROUPED_NAME, POPULAR_TEMPLATES_ID_LIST } from './index';
 
 const WEEK_IN_SECONDS = 60 * 60 * 24 * 7;
 
 @Injectable()
 export class GetGroupedBlueprints {
-  constructor(private notificationTemplateRepository: NotificationTemplateRepository) {}
+  constructor(
+    private notificationTemplateRepository: NotificationTemplateRepository,
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
-  @CachedEntity({
+  @CachedResponse({
     builder: (command: GetGroupedBlueprintsCommand) => buildGroupedBlueprintsKey(command.environmentId),
     options: { ttl: WEEK_IN_SECONDS },
   })
@@ -23,7 +28,10 @@ export class GetGroupedBlueprints {
 
     const popularGroup = { name: POPULAR_GROUPED_NAME, blueprints: updatePopularBlueprints };
 
-    return { general: generalGroups as IGroupedBlueprint[], popular: popularGroup as IGroupedBlueprint };
+    return {
+      general: generalGroups as unknown as IGroupedBlueprint[],
+      popular: popularGroup as unknown as IGroupedBlueprint,
+    };
   }
 
   private async fetchGroupedBlueprints() {
@@ -54,7 +62,7 @@ export class GetGroupedBlueprints {
       const storedBlueprint = storedBlueprints.find((blueprint) => blueprint._id === localPopularId);
 
       if (!storedBlueprint) {
-        Logger.warn(
+        this.logger.warn(
           `Could not find stored popular blueprint id: ${localPopularId}, BLUEPRINT_CREATOR: 
           ${NotificationTemplateRepository.getBlueprintOrganizationId()}`
         );

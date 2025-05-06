@@ -106,10 +106,6 @@ executionDetailsSchema.index({
   _notificationId: 1,
 });
 
-executionDetailsSchema.index({
-  _environmentId: 1,
-});
-
 /*
  * This index was created to push entries to Online Archive
  */

@@ -1,5 +1,5 @@
-import mongoose, { Schema } from 'mongoose';
 import { ApiRateLimitCategoryEnum } from '@novu/shared';
+import mongoose, { Schema } from 'mongoose';
 
 import { schemaOptions } from '../schema-default.options';
 import { EnvironmentDBModel } from './environment.entity';
@@ -57,6 +57,7 @@ const environmentSchema = new Schema<EnvironmentDBModel>(
       type: Schema.Types.ObjectId,
       ref: 'Environment',
     },
+    color: Schema.Types.String,
   },
   schemaOptions
 );
@@ -80,6 +81,22 @@ environmentSchema.index({
 environmentSchema.index({
   'apiKeys.hash': 1,
 });
+
+environmentSchema.index(
+  {
+    identifier: 1,
+  },
+  { unique: true }
+);
+
+environmentSchema.index(
+  {
+    'apiKeys.key': 1,
+  },
+  {
+    unique: true,
+  }
+);
 
 export const Environment =
   (mongoose.models.Environment as mongoose.Model<EnvironmentDBModel>) ||

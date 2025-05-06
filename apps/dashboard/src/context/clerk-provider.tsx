@@ -1,36 +1,12 @@
-import { buttonVariants } from '@/components/primitives/button';
-import { cn } from '@/utils/ui';
-import { CLERK_PUBLISHABLE_KEY } from '@/config';
-import { ClerkProvider as _ClerkProvider } from '@clerk/clerk-react';
 import { PropsWithChildren } from 'react';
 import { useNavigate } from 'react-router-dom';
-
-const CLERK_LOCALIZATION = {
-  userProfile: {
-    navbar: {
-      title: 'Settings',
-      description: '',
-      account: 'User profile',
-      security: 'Access security',
-    },
-  },
-  organizationProfile: {
-    membersPage: {
-      requestsTab: { autoSuggestions: { headerTitle: '' } },
-      invitationsTab: { autoInvitations: { headerTitle: '' } },
-    },
-  },
-  userButton: {
-    action__signOut: 'Log out',
-    action__signOutAll: 'Log out from all accounts',
-    action__manageAccount: 'Settings',
-  },
-  formFieldLabel__organizationSlug: 'URL friendly identifier',
-};
-
-const ALLOWED_REDIRECT_ORIGINS = ['http://localhost:*', window.location.origin];
+import { ClerkProvider as _ClerkProvider } from '@clerk/clerk-react';
+import { CLERK_PUBLISHABLE_KEY } from '@/config';
+import { ROUTES } from '@/utils/routes';
+import { buttonVariants } from '@/components/primitives/button';
 
 type ClerkProviderProps = PropsWithChildren;
+
 export const ClerkProvider = (props: ClerkProviderProps) => {
   const navigate = useNavigate();
   const { children } = props;
@@ -40,6 +16,9 @@ export const ClerkProvider = (props: ClerkProviderProps) => {
       routerPush={(to) => navigate(to)}
       routerReplace={(to) => navigate(to, { replace: true })}
       publishableKey={CLERK_PUBLISHABLE_KEY}
+      signInUrl={ROUTES.SIGN_IN}
+      signUpUrl={ROUTES.SIGN_UP}
+      afterSignOutUrl={ROUTES.SIGN_IN}
       appearance={{
         userButton: {
           elements: {
@@ -59,15 +38,49 @@ export const ClerkProvider = (props: ClerkProviderProps) => {
             },
           },
         },
+        organizationList: {
+          elements: {
+            cardBox: {
+              borderRadius: '0',
+            },
+            card: {
+              borderRadius: '0',
+            },
+          },
+        },
         elements: {
-          formButtonPrimary: cn(buttonVariants({ variant: 'primary' })),
+          formButtonPrimary: buttonVariants({ variant: 'primary', mode: 'gradient' }).root({}),
         },
         variables: {
           fontSize: '14px !important',
         },
       }}
-      localization={CLERK_LOCALIZATION}
-      allowedRedirectOrigins={ALLOWED_REDIRECT_ORIGINS}
+      localization={{
+        userProfile: {
+          navbar: {
+            title: 'Settings',
+            description: '',
+            account: 'User profile',
+            security: 'Access security',
+          },
+        },
+        organizationProfile: {
+          membersPage: {
+            requestsTab: { autoSuggestions: { headerTitle: '' } },
+            invitationsTab: { autoInvitations: { headerTitle: '' } },
+          },
+        },
+        userButton: {
+          action__signOut: 'Log out',
+          action__signOutAll: 'Log out from all accounts',
+          action__manageAccount: 'Settings',
+        },
+        formFieldLabel__organizationSlug: 'URL friendly identifier',
+        unstable__errors: {
+          form_identifier_exists: 'Already taken, please choose another',
+        },
+      }}
+      allowedRedirectOrigins={['http://localhost:*', window.location.origin]}
     >
       {children}
     </_ClerkProvider>

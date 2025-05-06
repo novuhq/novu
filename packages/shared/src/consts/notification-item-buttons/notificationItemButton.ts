@@ -1,4 +1,4 @@
-import { ButtonTypeEnum } from '../../entities/messages';
+import { ButtonTypeEnum } from '../../types';
 
 export interface INotificationButtonConfig {
   key: ButtonTypeEnum;

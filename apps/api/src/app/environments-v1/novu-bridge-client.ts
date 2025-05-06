@@ -51,6 +51,7 @@ export class NovuBridgeClient {
 
       workflows.push(programmaticallyConstructedWorkflow);
     }
+
     this.novuRequestHandler = new NovuRequestHandler({
       frameworkName,
       workflows,

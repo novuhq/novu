@@ -1,7 +1,7 @@
 /* eslint-disable global-require */
-import { DynamicModule, Logger, Module, Provider } from '@nestjs/common';
+import { DynamicModule, Module, Provider } from '@nestjs/common';
 import { APP_INTERCEPTOR } from '@nestjs/core';
-import { ProfilingModule, TracingModule } from '@novu/application-generic';
+import { cacheService, TracingModule } from '@novu/application-generic';
 import { Client, NovuModule } from '@novu/framework/nest';
 
 import { Type } from '@nestjs/common/interfaces/type.interface';
@@ -27,7 +27,7 @@ import { InvitesModule } from './app/invites/invites.module';
 import { ContentTemplatesModule } from './app/content-templates/content-templates.module';
 import { IntegrationModule } from './app/integrations/integrations.module';
 import { ChangeModule } from './app/change/change.module';
-import { SubscribersModule } from './app/subscribers/subscribers.module';
+import { SubscribersV1Module } from './app/subscribers/subscribersV1.module';
 import { FeedsModule } from './app/feeds/feeds.module';
 import { LayoutsModule } from './app/layouts/layouts.module';
 import { MessagesModule } from './app/messages/messages.module';
@@ -49,6 +49,8 @@ import { WorkflowModule } from './app/workflows-v2/workflow.module';
 import { WorkflowModuleV1 } from './app/workflows-v1/workflow-v1.module';
 import { EnvironmentsModuleV1 } from './app/environments-v1/environments-v1.module';
 import { EnvironmentsModule } from './app/environments-v2/environments.module';
+import { SubscribersModule } from './app/subscribers-v2/subscribers.module';
+import { SupportModule } from './app/support/support.module';
 
 const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> => {
   const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];
@@ -59,9 +61,7 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
     if (require('@novu/ee-billing')?.BillingModule) {
       modules.push(require('@novu/ee-billing')?.BillingModule.forRoot());
     }
-    if (require('./app/support/support.module')?.SupportModule) {
-      modules.push(require('./app/support/support.module')?.SupportModule);
-    }
+    modules.push(SupportModule);
   }
 
   return modules;
@@ -96,6 +96,7 @@ const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | Forward
   UserModule,
   IntegrationModule,
   ChangeModule,
+  SubscribersV1Module,
   SubscribersModule,
   FeedsModule,
   LayoutsModule,
@@ -108,7 +109,6 @@ const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | Forward
   WorkflowOverridesModule,
   RateLimitingModule,
   WidgetsModule,
-  ProfilingModule.register(packageJson.name),
   TracingModule.register(packageJson.name, packageJson.version),
   BridgeModule,
   PreferencesModule,
@@ -140,6 +140,7 @@ const providers: Provider[] = [
     provide: APP_INTERCEPTOR,
     useClass: IdempotencyInterceptor,
   },
+  cacheService,
 ];
 
 if (process.env.SENTRY_DSN) {
@@ -160,7 +161,9 @@ modules.push(
     client: new Client({
       secretKey: process.env.NOVU_INTERNAL_SECRET_KEY,
       strictAuthentication:
-        process.env.NODE_ENV === 'production' || process.env.NOVU_STRICT_AUTHENTICATION_ENABLED === 'true',
+        process.env.NODE_ENV === 'production' ||
+        process.env.NODE_ENV === 'dev' ||
+        process.env.NOVU_STRICT_AUTHENTICATION_ENABLED === 'true',
     }),
     controllerDecorators: [ApiExcludeController()],
     workflows: [usageLimitsWorkflow],
@@ -172,8 +175,4 @@ modules.push(
   controllers: [],
   providers,
 })
-export class AppModule {
-  constructor() {
-    Logger.log(`BOOTSTRAPPED NEST APPLICATION`);
-  }
-}
+export class AppModule {}

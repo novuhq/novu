@@ -11,12 +11,13 @@
     <link rel="manifest" href="/manifest.json" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://prod-novu-app-bucket.s3.us-east-1.amazonaws.com" />
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
       rel="stylesheet"
     />
     <link
-      href="https://fonts.googleapis.com/css2?family=Ubuntu+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap"
       rel="stylesheet"
     />
     <% if (env.VITE_GTM) { %>
@@ -51,8 +52,16 @@
       async="async"
       type="text/javascript"
     ></script>
+    <% } %> <% if (env.VITE_PLAIN_SUPPORT_CHAT_APP_ID) { %>
+    <script>
+      (function (d, script) {
+        script = d.createElement('script');
+        script.async = false;
+        script.src = 'https://chat.cdn-plain.com/index.js';
+        d.getElementsByTagName('head')[0].appendChild(script);
+      })(document);
+    </script>
     <% } %>
-
     <div id="root" class="h-full"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

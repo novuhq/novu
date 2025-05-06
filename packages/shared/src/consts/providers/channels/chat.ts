@@ -7,8 +7,7 @@ import {
   whatsAppBusinessConfig,
 } from '../credentials';
 
-import { ChatProviderIdEnum } from '../provider.enum';
-import { ChannelTypeEnum } from '../../../types';
+import { ChannelTypeEnum, ChatProviderIdEnum } from '../../../types';
 import { UTM_CAMPAIGN_QUERY_PARAM } from '../../../ui';
 
 export const chatProviders: IProviderConfig[] = [

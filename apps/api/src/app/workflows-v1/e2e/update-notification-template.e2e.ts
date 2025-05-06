@@ -11,10 +11,10 @@ import {
   EmailBlockTypeEnum,
 } from '@novu/shared';
 import { ChangeRepository } from '@novu/dal';
-import { CreateWorkflowRequestDto, UpdateWorkflowRequestDto } from '../dto';
-import { WorkflowResponse } from '../dto/workflow-response.dto';
+import { CreateWorkflowRequestDto, UpdateWorkflowRequestDto } from '../dtos';
+import { WorkflowResponse } from '../dtos/workflow-response.dto';
 
-describe('Update workflow by id - /workflows/:workflowId (PUT)', async () => {
+describe('Update workflow by id - /workflows/:workflowId (PUT) #novu-v0', async () => {
   let session: UserSession;
   const changeRepository: ChangeRepository = new ChangeRepository();
 

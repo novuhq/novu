@@ -3,15 +3,14 @@ import {
   EnvironmentId,
   IEmailBlock,
   ITemplateVariable,
+  MessageTemplateContentType,
   OrganizationId,
   StepTypeEnum,
   TemplateVariableTypeEnum,
+  TriggerContextTypeEnum,
 } from '../../types';
-import { TriggerContextTypeEnum } from '../notification-template';
-import { IActor } from '../messages';
 import type { JSONSchemaDto, UiSchema } from '../../dto';
-
-export type MessageTemplateContentType = 'editor' | 'customHtml';
+import { IActor } from '../actor';
 
 export interface IMessageTemplate {
   id?: string;

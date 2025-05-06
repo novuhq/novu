@@ -5,6 +5,7 @@ export type DevCommandOptions = {
   origin: string;
   region: `${CloudRegionEnum}`;
   studioPort: string;
+  studioHost: string;
   dashboardUrl: string;
   route: string;
   tunnel: string;

@@ -1,19 +1,28 @@
 import { getV2, NovuApiError } from '@/api/api.client';
 import { syncWorkflow } from '@/api/workflows';
 import { ConfirmationModal } from '@/components/confirmation-modal';
+import { ToastIcon } from '@/components/primitives/sonner';
 import { showToast } from '@/components/primitives/sonner-helpers';
 import { SuccessButtonToast } from '@/components/success-button-toast';
-import { useEnvironment } from '@/context/environment/hooks';
+import TruncatedText from '@/components/truncated-text';
+import { useAuth } from '@/context/auth/hooks';
+import { useEnvironment, useFetchEnvironments } from '@/context/environment/hooks';
+import { buildRoute, ROUTES } from '@/utils/routes';
 import type { IEnvironment, WorkflowListResponseDto, WorkflowResponseDto } from '@novu/shared';
 import { WorkflowOriginEnum, WorkflowStatusEnum } from '@novu/shared';
 import { useMutation } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
-export function useSyncWorkflow(workflow: WorkflowListResponseDto) {
-  const { oppositeEnvironment, switchEnvironment } = useEnvironment();
+export function useSyncWorkflow(workflow: WorkflowResponseDto | WorkflowListResponseDto) {
+  const { currentEnvironment } = useEnvironment();
+  const { currentOrganization } = useAuth();
+  const { environments = [] } = useFetchEnvironments({ organizationId: currentOrganization?._id });
   const [isLoading, setIsLoading] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [targetEnvironmentId, setTargetEnvironmentId] = useState<string>();
+  const navigate = useNavigate();
 
   let loadingToast: string | number | undefined = undefined;
 
@@ -24,28 +33,30 @@ export function useSyncWorkflow(workflow: WorkflowListResponseDto) {
 
   const getTooltipContent = () => {
     if (workflow.origin === WorkflowOriginEnum.EXTERNAL) {
-      return `Code-first workflows cannot be synced to ${oppositeEnvironment?.name} using dashboard.`;
+      return 'Code-first workflows cannot be synced using dashboard.';
     }
 
     if (workflow.origin === WorkflowOriginEnum.NOVU_CLOUD_V1) {
-      return `V1 workflows cannot be synced to ${oppositeEnvironment?.name} using dashboard. Please visit the legacy portal.`;
+      return 'V1 workflows cannot be synced using dashboard. Please visit the legacy portal.';
     }
 
     if (workflow.status === WorkflowStatusEnum.ERROR) {
-      return `This workflow has errors and cannot be synced to ${oppositeEnvironment?.name}. Please fix the errors first.`;
+      return 'This workflow has errors and cannot be synced. Please fix the errors first.';
     }
   };
 
-  const safeSync = async () => {
+  const safeSync = async (envId: string) => {
     try {
-      if (await isWorkflowInTargetEnvironment()) {
+      setTargetEnvironmentId(envId);
+
+      if (await isWorkflowInTargetEnvironment(envId)) {
         setShowConfirmModal(true);
 
         return;
       }
     } catch (error) {
       if (error instanceof NovuApiError && error.status === 404) {
-        await syncWorkflowMutation();
+        await syncWorkflowMutation(envId);
 
         return;
       }
@@ -66,11 +77,18 @@ export function useSyncWorkflow(workflow: WorkflowListResponseDto) {
       children: ({ close }) => (
         <SuccessButtonToast
           title={`Workflow synced to ${environment?.name}`}
-          description={`Workflow '${workflow.name}' has been successfully synced to ${environment?.name}.`}
+          description={
+            <>
+              Workflow <span className="font-bold">{workflow.name}</span> has been successfully synced to{' '}
+              {environment?.name}.
+            </>
+          }
           actionLabel={`Switch to ${environment?.name}`}
           onAction={() => {
             close();
-            switchEnvironment(environment?.slug || '');
+            const targetSlug = environment?.slug || '';
+
+            navigate(buildRoute(ROUTES.WORKFLOWS, { environmentSlug: targetSlug }));
           }}
           onClose={close}
         />
@@ -91,22 +109,36 @@ export function useSyncWorkflow(workflow: WorkflowListResponseDto) {
   };
 
   const { mutateAsync: syncWorkflowMutation, isPending } = useMutation({
-    mutationFn: async () =>
-      syncWorkflow(workflow._id, {
-        targetEnvironmentId: oppositeEnvironment?._id || '',
-      }).then((res) => ({ workflow: res.data, environment: oppositeEnvironment || undefined })),
-    onMutate: () => {
+    mutationFn: async (targetEnvId: string) => {
+      const targetEnvironment = environments.find((env) => env._id === targetEnvId);
+
+      return syncWorkflow({
+        environment: currentEnvironment!,
+        workflowSlug: workflow.slug,
+        payload: { targetEnvironmentId: targetEnvId },
+      }).then((res) => ({ workflow: res.data, environment: targetEnvironment }));
+    },
+    onMutate: async (targetEnvId) => {
+      const targetEnvironment = environments.find((env) => env._id === targetEnvId);
       setIsLoading(true);
-      loadingToast = toast.loading('Syncing workflow...');
+      loadingToast = toast.loading(
+        <>
+          <ToastIcon variant="default" className="animate-spin" />
+          <span className="text-sm">
+            Syncing workflow <span className="font-bold">{workflow.name}</span> to {targetEnvironment?.name}...
+          </span>
+        </>
+      );
     },
     onSuccess: ({ workflow, environment }) => onSyncSuccess(workflow, environment),
     onError: onSyncError,
   });
 
   const { mutateAsync: isWorkflowInTargetEnvironment } = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (targetEnvId: string) => {
       const { data } = await getV2<{ data: WorkflowResponseDto }>(
-        `/workflows/${workflow.workflowId}?environmentId=${oppositeEnvironment?._id || ''}`
+        `/workflows/${workflow.workflowId}?environmentId=${targetEnvId}`,
+        { environment: currentEnvironment! }
       );
       return data;
     },
@@ -118,19 +150,32 @@ export function useSyncWorkflow(workflow: WorkflowListResponseDto) {
     isSyncable,
     isLoading,
     tooltipContent: getTooltipContent(),
-    PromoteConfirmModal: () => (
-      <ConfirmationModal
-        open={showConfirmModal}
-        onOpenChange={setShowConfirmModal}
-        onConfirm={() => {
-          syncWorkflowMutation();
-          setShowConfirmModal(false);
-        }}
-        title={`Sync workflow to ${oppositeEnvironment?.name}`}
-        description={`Workflow already exists in ${oppositeEnvironment?.name}. Proceeding will overwrite the existing workflow.`}
-        confirmButtonText="Proceed"
-        isLoading={isPending}
-      />
-    ),
+    PromoteConfirmModal: () => {
+      const targetEnvironment = environments.find((env) => env._id === targetEnvironmentId);
+
+      return (
+        <ConfirmationModal
+          open={showConfirmModal}
+          onOpenChange={setShowConfirmModal}
+          onConfirm={() => {
+            if (targetEnvironmentId) {
+              syncWorkflowMutation(targetEnvironmentId);
+              setShowConfirmModal(false);
+            }
+          }}
+          title={`Sync workflow to ${targetEnvironment?.name}`}
+          description={
+            <>
+              Workflow <TruncatedText className="max-w-[32ch] font-bold">{workflow.name}</TruncatedText> already exists
+              in {targetEnvironment?.name}.<br />
+              <br />
+              Proceeding will overwrite the existing workflow.
+            </>
+          }
+          confirmButtonText="Proceed"
+          isLoading={isPending}
+        />
+      );
+    },
   };
 }

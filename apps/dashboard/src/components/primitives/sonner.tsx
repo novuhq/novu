@@ -1,7 +1,6 @@
 import { cn } from '@/utils/ui';
-import { useTheme } from 'next-themes';
-import { Toaster as Sonner } from 'sonner';
 import { cva, VariantProps } from 'class-variance-authority';
+import { useTheme } from 'next-themes';
 import React from 'react';
 import { IconBaseProps } from 'react-icons/lib';
 import {
@@ -12,7 +11,8 @@ import {
   RiInformationFill,
   RiProgress1Line,
 } from 'react-icons/ri';
-import { Button } from './button';
+import { Toaster as Sonner } from 'sonner';
+import { CompactButton } from './button-compact';
 
 type ToasterProps = React.ComponentProps<typeof Sonner>;
 
@@ -75,9 +75,14 @@ const ToastIcon = ({ className, variant = 'default', ...props }: ToastIconProps)
 
 const ToastClose = ({ className, ...props }: React.HTMLAttributes<HTMLButtonElement>) => {
   return (
-    <Button variant="ghost" className={cn('h-min w-min rounded-sm p-0', className)} {...props}>
-      <RiCloseLine className="fill-foreground-400 size-5" />
-    </Button>
+    <CompactButton
+      icon={RiCloseLine}
+      variant="ghost"
+      className={cn('h-min w-min rounded-sm p-0', className)}
+      {...props}
+    >
+      <span className="sr-only">Close</span>
+    </CompactButton>
   );
 };
 
@@ -105,4 +110,4 @@ const Toaster = ({ ...props }: ToasterProps) => {
   );
 };
 
-export { Toaster, Toast, ToastIcon, ToastClose };
+export { Toast, ToastClose, Toaster, ToastIcon };

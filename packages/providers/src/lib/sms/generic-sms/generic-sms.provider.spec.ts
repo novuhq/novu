@@ -68,7 +68,7 @@ test('should trigger generic-sms library correctly with _passthrough', async () 
           to: '+2234567890',
         },
       },
-    },
+    }
   );
 
   expect(spy).toHaveBeenCalled();

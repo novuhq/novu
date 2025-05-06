@@ -1,12 +1,11 @@
 import { Test } from '@nestjs/testing';
 import { SubscribersService, UserSession } from '@novu/testing';
 import { SubscriberEntity } from '@novu/dal';
-import { NotFoundException } from '@nestjs/common';
 import { expect } from 'chai';
 
 import { SearchByExternalSubscriberIds, SearchByExternalSubscriberIdsCommand } from './index';
 
-import { SubscribersModule } from '../../subscribers.module';
+import { SubscribersV1Module } from '../../subscribersV1.module';
 import { SharedModule } from '../../../shared/shared.module';
 
 describe('SearchByExternalSubscriberIdsUseCase', () => {
@@ -18,7 +17,7 @@ describe('SearchByExternalSubscriberIdsUseCase', () => {
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
-      imports: [SharedModule, SubscribersModule],
+      imports: [SharedModule, SubscribersV1Module],
       providers: [],
     }).compile();
 

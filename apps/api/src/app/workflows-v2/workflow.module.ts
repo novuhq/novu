@@ -5,40 +5,36 @@ import {
   DeleteWorkflowUseCase,
   GetPreferences,
   GetWorkflowByIdsUseCase,
+  GetWorkflowWithPreferencesUseCase,
+  ResourceValidatorService,
+  TierRestrictionsValidateUsecase,
   UpdateWorkflow,
   UpsertControlValuesUseCase,
   UpsertPreferences,
-  TierRestrictionsValidateUsecase,
 } from '@novu/application-generic';
 
 import { CommunityOrganizationRepository } from '@novu/dal';
-import { SharedModule } from '../shared/shared.module';
-import { MessageTemplateModule } from '../message-template/message-template.module';
-import { ChangeModule } from '../change/change.module';
 import { AuthModule } from '../auth/auth.module';
+import { BridgeModule } from '../bridge';
+import { ChangeModule } from '../change/change.module';
 import { IntegrationModule } from '../integrations/integrations.module';
-import { WorkflowController } from './workflow.controller';
+import { MessageTemplateModule } from '../message-template/message-template.module';
+import { SharedModule } from '../shared/shared.module';
 import {
-  BuildAvailableVariableSchemaUsecase,
-  BuildDefaultPayloadUsecase,
   BuildStepDataUsecase,
+  BuildVariableSchemaUsecase,
   BuildWorkflowTestDataUseCase,
-  CollectPlaceholderWithDefaultsUsecase,
-  ExtractDefaultValuesFromSchemaUsecase,
-  GeneratePreviewUsecase,
+  PreviewUsecase,
   GetWorkflowUseCase,
   ListWorkflowsUseCase,
-  PostProcessWorkflowUpdate,
-  PrepareAndValidateContentUsecase,
   SyncToEnvironmentUseCase,
   UpsertWorkflowUseCase,
-  ValidatePlaceholderUsecase,
 } from './usecases';
-import { BridgeModule } from '../bridge';
-import { HydrateEmailSchemaUseCase } from '../environments-v1/usecases/output-renderers';
-import { OverloadContentDataOnWorkflowUseCase } from './usecases/overload-content-data';
 import { PatchWorkflowUsecase } from './usecases/patch-workflow';
-import { PatchStepUsecase } from './usecases/patch-step-data/patch-step.usecase';
+import { CreateVariablesObject } from './usecases/create-variables-object/create-variables-object.usecase';
+import { BuildStepIssuesUsecase } from './usecases/build-step-issues/build-step-issues.usecase';
+import { WorkflowController } from './workflow.controller';
+import { DuplicateWorkflowUseCase } from './usecases/duplicate-workflow/duplicate-workflow.usecase';
 
 const DAL_REPOSITORIES = [CommunityOrganizationRepository];
 
@@ -57,23 +53,18 @@ const DAL_REPOSITORIES = [CommunityOrganizationRepository];
     UpsertControlValuesUseCase,
     GetPreferences,
     GetWorkflowByIdsUseCase,
+    GetWorkflowWithPreferencesUseCase,
     SyncToEnvironmentUseCase,
     BuildStepDataUsecase,
-    GeneratePreviewUsecase,
+    PreviewUsecase,
     BuildWorkflowTestDataUseCase,
     GetWorkflowUseCase,
-    HydrateEmailSchemaUseCase,
-    PostProcessWorkflowUpdate,
-    BuildDefaultPayloadUsecase,
-    BuildAvailableVariableSchemaUsecase,
-    CollectPlaceholderWithDefaultsUsecase,
-    PrepareAndValidateContentUsecase,
-    ValidatePlaceholderUsecase,
-    ExtractDefaultValuesFromSchemaUsecase,
-    PatchStepUsecase,
-    PostProcessWorkflowUpdate,
-    OverloadContentDataOnWorkflowUseCase,
+    DuplicateWorkflowUseCase,
+    BuildVariableSchemaUsecase,
     PatchWorkflowUsecase,
+    CreateVariablesObject,
+    BuildStepIssuesUsecase,
+    ResourceValidatorService,
     TierRestrictionsValidateUsecase,
   ],
 })

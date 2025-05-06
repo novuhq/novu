@@ -1,4 +1,4 @@
-import { EmailProviderIdEnum } from '@novu/shared';
+import { EmailProviderIdEnum } from '../../../shared';
 import type { JsonSchema } from '../../../types/schema.types';
 import { genericProviderSchemas } from '../generic.schema';
 import { mailgunProviderSchemas } from './mailgun.schema';

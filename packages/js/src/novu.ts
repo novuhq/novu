@@ -1,27 +1,21 @@
-import { NovuEventEmitter } from './event-emitter';
-import type { EventHandler, EventNames, Events } from './event-emitter';
-import { Notifications } from './notifications';
-import { Session } from './session';
-import { Preferences } from './preferences';
-import { Socket } from './ws';
-import { PRODUCTION_BACKEND_URL } from './utils/config';
-import type { NovuOptions } from './types';
 import { InboxService } from './api';
-
-// @ts-ignore
-const version = PACKAGE_VERSION;
-// @ts-ignore
-const name = PACKAGE_NAME;
-const userAgent = `${name}@${version}`;
+import type { EventHandler, EventNames, Events } from './event-emitter';
+import { NovuEventEmitter } from './event-emitter';
+import { Notifications } from './notifications';
+import { Preferences } from './preferences';
+import { Session } from './session';
+import type { NovuOptions, Subscriber } from './types';
+import { Socket } from './ws';
 
 export class Novu implements Pick<NovuEventEmitter, 'on'> {
   #emitter: NovuEventEmitter;
   #session: Session;
-  #socket: Socket;
   #inboxService: InboxService;
 
   public readonly notifications: Notifications;
   public readonly preferences: Preferences;
+  public readonly socket: Socket;
+
   public on: <Key extends EventNames>(eventName: Key, listener: EventHandler<Events[Key]>) => () => void;
   /**
    * @deprecated
@@ -29,17 +23,25 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
    */
   public off: <Key extends EventNames>(eventName: Key, listener: EventHandler<Events[Key]>) => void;
 
+  public get applicationIdentifier() {
+    return this.#session.applicationIdentifier;
+  }
+
+  public get subscriberId() {
+    return this.#session.subscriberId;
+  }
+
   constructor(options: NovuOptions) {
     this.#inboxService = new InboxService({
-      backendUrl: options.backendUrl ?? PRODUCTION_BACKEND_URL,
-      userAgent: options.__userAgent ?? userAgent,
+      apiUrl: options.apiUrl || options.backendUrl,
+      userAgent: options.__userAgent,
     });
     this.#emitter = new NovuEventEmitter();
     this.#session = new Session(
       {
         applicationIdentifier: options.applicationIdentifier,
-        subscriberId: options.subscriberId,
         subscriberHash: options.subscriberHash,
+        subscriber: buildSubscriber(options),
       },
       this.#inboxService,
       this.#emitter
@@ -55,16 +57,17 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
       inboxServiceInstance: this.#inboxService,
       eventEmitterInstance: this.#emitter,
     });
-    this.#socket = new Socket({
+    this.socket = new Socket({
       socketUrl: options.socketUrl,
       eventEmitterInstance: this.#emitter,
       inboxServiceInstance: this.#inboxService,
     });
 
     this.on = (eventName, listener) => {
-      if (this.#socket.isSocketEvent(eventName)) {
-        this.#socket.initialize();
+      if (this.socket.isSocketEvent(eventName)) {
+        this.socket.connect();
       }
+
       const cleanup = this.#emitter.on(eventName, listener);
 
       return () => {
@@ -76,4 +79,16 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
       this.#emitter.off(eventName, listener);
     };
   }
+}
+
+function buildSubscriber(options: NovuOptions): Subscriber {
+  let subscriberObj: Subscriber;
+
+  if (options.subscriber) {
+    subscriberObj = typeof options.subscriber === 'string' ? { subscriberId: options.subscriber } : options.subscriber;
+  } else {
+    subscriberObj = { subscriberId: options.subscriberId as string };
+  }
+
+  return subscriberObj;
 }

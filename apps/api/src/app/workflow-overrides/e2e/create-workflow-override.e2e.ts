@@ -4,7 +4,7 @@ import { UserSession } from '@novu/testing';
 import { ICreateWorkflowOverrideRequestDto } from '@novu/shared';
 import { NotificationTemplateRepository, TenantRepository } from '@novu/dal';
 
-describe('Create Integration - /workflow-overrides (POST)', function () {
+describe('Create Integration - /workflow-overrides (POST) #novu-v0', function () {
   let session: UserSession;
   const tenantRepository = new TenantRepository();
   const notificationTemplateRepository = new NotificationTemplateRepository();
@@ -103,8 +103,7 @@ describe('Create Integration - /workflow-overrides (POST)', function () {
     };
 
     const res = await session.testAgent.post('/v1/workflow-overrides').send(payload);
-
-    expect(res.body.statusCode).to.equal(400);
-    expect(res.body.message[0]).to.equal('_tenantId must be a mongodb id');
+    expect(res.body.statusCode).to.equal(422);
+    expect(res.body.errors._tenantId.messages[0]).to.equal(`_tenantId must be a mongodb id`);
   });
 });

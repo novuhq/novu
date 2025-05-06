@@ -2,17 +2,9 @@ import { Injectable, Logger } from '@nestjs/common';
 import { addBreadcrumb } from '@sentry/node';
 import { ModuleRef } from '@nestjs/core';
 
-import {
-  MessageRepository,
-  NotificationStepEntity,
-  SubscriberRepository,
-  MessageEntity,
-  IntegrationEntity,
-  JobEntity,
-} from '@novu/dal';
+import { MessageRepository, SubscriberRepository, MessageEntity, IntegrationEntity, JobEntity } from '@novu/dal';
 import {
   ChannelTypeEnum,
-  LogCodeEnum,
   PushProviderIdEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
@@ -29,8 +21,8 @@ import {
   PushFactory,
   GetNovuProviderCredentials,
   SelectVariant,
-  ExecutionLogRoute,
-  ExecutionLogRouteCommand,
+  CreateExecutionDetails,
+  CreateExecutionDetailsCommand,
 } from '@novu/application-generic';
 import { IPushOptions } from '@novu/stateless';
 import { PushOutput } from '@novu/framework/internal';
@@ -38,8 +30,8 @@ import { PushOutput } from '@novu/framework/internal';
 import { SendMessageCommand } from './send-message.command';
 import { SendMessageBase } from './send-message.base';
 
-import { CreateLog } from '../../../shared/logs';
 import { PlatformException } from '../../../shared/utils';
+import { SendMessageResult } from './send-message-type.usecase';
 
 const LOG_CONTEXT = 'SendMessagePush';
 
@@ -50,8 +42,7 @@ export class SendMessagePush extends SendMessageBase {
   constructor(
     protected subscriberRepository: SubscriberRepository,
     protected messageRepository: MessageRepository,
-    protected createLogUsecase: CreateLog,
-    protected executionLogRoute: ExecutionLogRoute,
+    protected createExecutionDetails: CreateExecutionDetails,
     private compileTemplate: CompileTemplate,
     protected selectIntegration: SelectIntegration,
     protected getNovuProviderCredentials: GetNovuProviderCredentials,
@@ -60,8 +51,7 @@ export class SendMessagePush extends SendMessageBase {
   ) {
     super(
       messageRepository,
-      createLogUsecase,
-      executionLogRoute,
+      createExecutionDetails,
       subscriberRepository,
       selectIntegration,
       getNovuProviderCredentials,
@@ -71,7 +61,7 @@ export class SendMessagePush extends SendMessageBase {
   }
 
   @InstrumentUsecase()
-  public async execute(command: SendMessageCommand) {
+  public async execute(command: SendMessageCommand): Promise<SendMessageResult> {
     addBreadcrumb({
       message: 'Sending Push',
     });
@@ -115,7 +105,10 @@ export class SendMessagePush extends SendMessageBase {
     } catch (e) {
       await this.sendErrorHandlebars(command.job, e.message);
 
-      return;
+      return {
+        status: 'failed',
+        reason: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
+      };
     }
 
     const pushChannels =
@@ -124,10 +117,12 @@ export class SendMessagePush extends SendMessageBase {
       ) || [];
 
     if (!pushChannels.length) {
-      await this.sendNoActiveChannelError(command.job);
-      await this.sendNotificationError(command.job);
+      await this.createExecutionDetailsError(DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL, command.job);
 
-      return;
+      return {
+        status: 'failed',
+        reason: DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL,
+      };
     }
 
     const messagePayload = { ...command.payload };
@@ -137,10 +132,22 @@ export class SendMessagePush extends SendMessageBase {
     for (const channel of pushChannels) {
       const { deviceTokens } = channel.credentials || {};
 
-      const [isChannelMissingDeviceTokens, integration] = await Promise.all([
-        this.isChannelMissingDeviceTokens(channel, command),
-        this.getSubscriberIntegration(channel, command),
-      ]);
+      let isChannelMissingDeviceTokens;
+      let integration;
+      try {
+        [isChannelMissingDeviceTokens, integration] = await Promise.all([
+          this.isChannelMissingDeviceTokens(channel, command),
+          this.getSubscriberIntegration(channel, command),
+        ]);
+      } catch (error) {
+        integrationsWithErrors += 1;
+        Logger.error(
+          { jobId: command.jobId },
+          `Unexpected error while processing channel for jobId ${command.jobId} ${error.message || error.toString()}`,
+          LOG_CONTEXT
+        );
+        continue;
+      }
 
       // We avoid to send a message if subscriber has not an integration or if the subscriber has no device tokens for said integration
       if (!deviceTokens || !integration || isChannelMissingDeviceTokens) {
@@ -173,10 +180,7 @@ export class SendMessagePush extends SendMessageBase {
 
           Logger.error(
             { jobId: command.jobId },
-            [
-              `Error sending push notification for jobId ${command.jobId}`,
-              result.error.message || result.error.toString(),
-            ].join(' '),
+            `Error sending push notification for jobId ${command.jobId} ${result.error.message || result.error.toString()}`,
             LOG_CONTEXT
           );
         }
@@ -184,8 +188,26 @@ export class SendMessagePush extends SendMessageBase {
     }
 
     if (integrationsWithErrors > 0) {
-      await this.sendNotificationError(command.job);
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          detail: DetailEnum.NOTIFICATION_ERROR,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+        })
+      );
+
+      return {
+        status: 'failed',
+        reason: DetailEnum.NOTIFICATION_ERROR,
+      };
     }
+
+    return {
+      status: 'success',
+    };
   }
 
   private async isChannelMissingDeviceTokens(channel: IChannelSettings, command: SendMessageCommand): Promise<boolean> {
@@ -216,25 +238,12 @@ export class SendMessagePush extends SendMessageBase {
     });
 
     if (!integration) {
-      await this.sendNoActiveIntegrationError(command.job);
+      await this.createExecutionDetailsError(DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION, command.job);
 
       return undefined;
     }
 
     return integration;
-  }
-
-  private async sendNotificationError(job: JobEntity): Promise<void> {
-    await this.executionLogRoute.execute(
-      ExecutionLogRouteCommand.create({
-        ...ExecutionLogRouteCommand.getDetailsFromJob(job),
-        detail: DetailEnum.NOTIFICATION_ERROR,
-        source: ExecutionDetailsSourceEnum.INTERNAL,
-        status: ExecutionDetailsStatusEnum.FAILED,
-        isTest: false,
-        isRetry: false,
-      })
-    );
   }
 
   private async sendPushMissingDeviceTokensError(job: JobEntity, channel: IChannelSettings): Promise<void> {
@@ -243,18 +252,6 @@ export class SendMessagePush extends SendMessageBase {
       raw,
       providerId: channel.providerId,
     });
-  }
-
-  private async sendNoActiveIntegrationError(job: JobEntity): Promise<void> {
-    await this.createExecutionDetailsError(DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION, job);
-  }
-
-  private async sendNoActiveChannelError(job: JobEntity): Promise<void> {
-    await this.createExecutionDetailsError(DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL, job);
-  }
-
-  private async sendProviderError(job: JobEntity, messageId: string, raw: string): Promise<void> {
-    await this.createExecutionDetailsError(DetailEnum.PROVIDER_ERROR, job, { messageId, raw });
   }
 
   private async createExecutionDetailsError(
@@ -266,24 +263,19 @@ export class SendMessagePush extends SendMessageBase {
       raw?: string;
     }
   ): Promise<void> {
-    // We avoid to throw the errors to be able to execute all actions in the loop
-    try {
-      await this.executionLogRoute.execute(
-        ExecutionLogRouteCommand.create({
-          ...ExecutionLogRouteCommand.getDetailsFromJob(job),
-          detail,
-          source: ExecutionDetailsSourceEnum.INTERNAL,
-          status: ExecutionDetailsStatusEnum.FAILED,
-          isTest: false,
-          isRetry: false,
-          ...(contextData?.providerId && { providerId: contextData.providerId }),
-          ...(contextData?.messageId && { messageId: contextData.messageId }),
-          ...(contextData?.raw && { raw: contextData.raw }),
-        })
-      );
-    } catch (error) {
-      Logger.error(error, 'Error creating execution details error');
-    }
+    await this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+        detail,
+        source: ExecutionDetailsSourceEnum.INTERNAL,
+        status: ExecutionDetailsStatusEnum.FAILED,
+        isTest: false,
+        isRetry: false,
+        ...(contextData?.providerId && { providerId: contextData.providerId }),
+        ...(contextData?.messageId && { messageId: contextData.messageId }),
+        ...(contextData?.raw && { raw: contextData.raw }),
+      })
+    );
   }
 
   private async sendMessage(
@@ -313,9 +305,9 @@ export class SendMessagePush extends SendMessageBase {
         bridgeProviderData,
       });
 
-      await this.executionLogRoute.execute(
-        ExecutionLogRouteCommand.create({
-          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
           detail: `${DetailEnum.MESSAGE_SENT}: ${integration.providerId}`,
           source: ExecutionDetailsSourceEnum.INTERNAL,
@@ -334,12 +326,23 @@ export class SendMessagePush extends SendMessageBase {
         'unexpected_push_error',
         e.message || e.name || 'Un-expect Push provider error',
         command,
-        LogCodeEnum.PUSH_ERROR
+        e
       );
 
       const raw = JSON.stringify(e) !== JSON.stringify({}) ? JSON.stringify(e) : JSON.stringify(e.message);
 
-      await this.sendProviderError(command.job, message._id, raw);
+      try {
+        await this.createExecutionDetailsError(DetailEnum.PROVIDER_ERROR, command.job, {
+          messageId: message._id,
+          raw,
+        });
+      } catch (err) {
+        Logger.error(
+          { jobId: command.jobId },
+          `Error sending provider error for jobId ${command.jobId} ${err.message || err.toString()}`,
+          LOG_CONTEXT
+        );
+      }
 
       return { success: false, error: e };
     }
@@ -372,9 +375,9 @@ export class SendMessagePush extends SendMessageBase {
       tags: command.tags,
     });
 
-    await this.executionLogRoute.execute(
-      ExecutionLogRouteCommand.create({
-        ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
+    await this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
         detail: `${DetailEnum.MESSAGE_CREATED}: ${integration.providerId}`,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.PENDING,

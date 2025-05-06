@@ -1,7 +1,7 @@
 export function EuFlag(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
-      <g id="European Union" clip-path="url(#clip0_6850_193107)">
+      <g id="European Union" clipPath="url(#clip0_6850_193107)">
         <path
           id="Vector"
           d="M5 10C7.76142 10 10 7.76142 10 5C10 2.23858 7.76142 0 5 0C2.23858 0 0 2.23858 0 5C0 7.76142 2.23858 10 5 10Z"

@@ -1,6 +1,6 @@
 import dotenv from 'dotenv';
 import path from 'node:path';
-import { getContextPath, NovuComponentEnum, getEnvFileNameForNodeEnv } from '@novu/shared';
+import { getContextPath, getEnvFileNameForNodeEnv, NovuComponentEnum } from '@novu/shared';
 
 dotenv.config({ path: path.join(__dirname, '..', getEnvFileNameForNodeEnv(process.env.NODE_ENV)) });
 

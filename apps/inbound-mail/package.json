@@ -1,6 +1,6 @@
 {
   "name": "@novu/inbound-mail",
-  "version": "2.1.0",
+  "version": "2.1.9",
   "description": "",
   "author": "",
   "private": true,
@@ -16,7 +16,7 @@
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
-    "test": "cross-env TS_NODE_COMPILER_OPTIONS='{\"strictNullChecks\": false}' NODE_ENV=test E2E_RUNNER=true mocha --trace-warnings --timeout 10000 --require ts-node/register --exit --file e2e/setup.ts src/**/**/*.spec.ts"
+    "test": "cross-env TS_NODE_COMPILER_OPTIONS='{\"strictNullChecks\": false}' NODE_ENV=test mocha --trace-warnings --timeout 10000 --require ts-node/register --exit --file e2e/setup.ts src/**/**/*.spec.ts"
   },
   "dependencies": {
     "@novu/application-generic": "workspace:*",
@@ -35,7 +35,7 @@
     "languagedetect": "^1.1.1",
     "lodash": "^4.17.15",
     "mailparser": "^0.6.0",
-    "newrelic": "^9.15.0",
+    "newrelic": "^12.8.1",
     "rimraf": "^3.0.2",
     "shelljs": "^0.8.5",
     "smtp-server": "^1.4.0",

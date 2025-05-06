@@ -44,4 +44,5 @@ export interface ICredentials {
   externalLink?: string;
   phoneNumberIdentification?: string;
   channelId?: string;
+  apiVersion?: string;
 }

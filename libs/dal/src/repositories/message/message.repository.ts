@@ -1,5 +1,4 @@
-import { SoftDeleteModel } from 'mongoose-delete';
-import { FilterQuery, Types } from 'mongoose';
+import { FilterQuery, QueryWithHelpers, Types, UpdateQuery } from 'mongoose';
 import {
   ActorTypeEnum,
   ButtonTypeEnum,
@@ -27,11 +26,9 @@ const getFlatObject = (obj: object) => {
 };
 
 export class MessageRepository extends BaseRepository<MessageDBModel, MessageEntity, EnforceEnvId> {
-  private message: SoftDeleteModel;
   private feedRepository = new FeedRepository();
   constructor() {
     super(Message, MessageEntity);
-    this.message = Message;
   }
 
   private async getFilterQueryForMessage(
@@ -44,8 +41,12 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       seen?: boolean;
       read?: boolean;
       archived?: boolean;
+      snoozed?: boolean;
       payload?: object;
-    } = {}
+    } = {},
+    createdAt?: {
+      $gte: Date;
+    }
   ): Promise<MessageQuery & EnforceEnvId> {
     let requestQuery: MessageQuery & EnforceEnvId = {
       _environmentId: environmentId,
@@ -88,14 +89,22 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       requestQuery.tags = { $in: query.tags };
     }
 
-    if (typeof query.archived === 'boolean') {
-      if (!query.archived) {
-        requestQuery.$or = [{ archived: { $exists: false } }, { archived: false }];
-      } else {
-        requestQuery.archived = true;
-      }
+    if (query.archived != null) {
+      requestQuery.archived = query.archived;
     } else {
-      requestQuery.$or = [{ archived: { $exists: false } }, { archived: { $in: [true, false] } }];
+      requestQuery.archived = { $in: [true, false] };
+    }
+
+    if (query.snoozed != null) {
+      if (query.snoozed) {
+        requestQuery.snoozedUntil = { $ne: null };
+      } else {
+        requestQuery.$or = [{ snoozedUntil: { $exists: false } }, { snoozedUntil: null }];
+      }
+    }
+
+    if (createdAt != null) {
+      requestQuery.createdAt = createdAt;
     }
 
     if (query.payload) {
@@ -106,6 +115,14 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     }
 
     return requestQuery;
+  }
+
+  /**
+   * if aggregation is needed, make sure to filter with {deleted: { $ne: true }}.
+   * todo: aggregate method should be implemented after all the soft deletes are removed task nv-5688
+   */
+  async aggregate(query: any[], options: { readPreference?: 'secondaryPreferred' | 'primary' } = {}): Promise<any> {
+    throw new Error('Not implemented');
   }
 
   async findBySubscriberChannel(
@@ -138,6 +155,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       tags,
       read,
       archived,
+      snoozed,
     }: {
       environmentId: string;
       subscriberId: string;
@@ -145,6 +163,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       tags?: string[];
       read?: boolean;
       archived?: boolean;
+      snoozed?: boolean;
     },
     options: { limit: number; offset: number; after?: string }
   ) {
@@ -174,6 +193,10 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       query.$or = [{ archived: { $exists: false } }, { archived: { $in: [true, false] } }];
     }
 
+    if (typeof snoozed === 'boolean') {
+      query.snoozedUntil = snoozed ? { $exists: true, $ne: null } : { $eq: null };
+    }
+
     return await this.cursorPagination({
       query,
       limit: options.limit,
@@ -185,7 +208,14 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
         queryBuilder
           .read('secondaryPreferred')
           .populate('subscriber', '_id firstName lastName avatar subscriberId')
-          .populate('actorSubscriber', '_id firstName lastName avatar subscriberId'),
+          .populate('actorSubscriber', '_id firstName lastName avatar subscriberId')
+          .populate({
+            path: 'template',
+            select: '_id name tags data critical triggers',
+            options: {
+              withDeleted: true,
+            },
+          }),
     });
   }
 
@@ -199,18 +229,29 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       seen?: boolean;
       read?: boolean;
       archived?: boolean;
+      snoozed?: boolean;
       payload?: object;
     } = {},
-    options: { limit: number; skip?: number } = { limit: 100, skip: 0 }
+    options: { limit: number; skip?: number } = { limit: 100, skip: 0 },
+    createdAt?: {
+      $gte: Date;
+    }
   ) {
-    const requestQuery = await this.getFilterQueryForMessage(environmentId, subscriberId, channel, {
-      feedId: query.feedId,
-      seen: query.seen,
-      tags: query.tags,
-      read: query.read,
-      archived: query.archived,
-      payload: query.payload,
-    });
+    const requestQuery = await this.getFilterQueryForMessage(
+      environmentId,
+      subscriberId,
+      channel,
+      {
+        feedId: query.feedId,
+        seen: query.seen,
+        tags: query.tags,
+        read: query.read,
+        archived: query.archived,
+        payload: query.payload,
+        snoozed: query.snoozed,
+      },
+      createdAt
+    );
 
     return this.MongooseModel.countDocuments(requestQuery, options).read('secondaryPreferred');
   }
@@ -446,6 +487,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     seen,
     read,
     archived,
+    snoozedUntil,
   }: {
     environmentId: string;
     subscriberId: string;
@@ -453,6 +495,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     seen?: boolean;
     read?: boolean;
     archived?: boolean;
+    snoozedUntil?: Date | null;
   }) {
     const query: MessageQuery & EnforceEnvId = {
       _environmentId: environmentId,
@@ -469,6 +512,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       seen,
       read,
       archived,
+      snoozedUntil,
     });
   }
 
@@ -521,7 +565,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
 
   /**
    * Allows to update the status of queried messages at once.
-   * The status can be updated to seen, unseen, read, unread, archived or unarchived.
+   * The status can be updated to seen, unseen, read, unread, archived, unarchived, snoozed, unsnoozed.
    * Depending on the flag passed, the other flags will be updated accordingly.
    * For example:
    * seen -> { seen: true }
@@ -530,21 +574,26 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
    * unseen -> { seen: false, read: false, archived: false }
    * unread -> { seen: true, read: false, archived: false }
    * unarchived -> { seen: true, read: true, archived: false }
+   * snoozed -> { seen: true, archived: false, snoozedUntil: snoozedUntil }
+   * unsnoozed -> { seen: true, archived: false, snoozedUntil: null }
    */
   private async updateMessagesStatus({
     query,
     seen,
     read,
     archived,
+    snoozedUntil,
   }: {
     query: MessageQuery & EnforceEnvId;
     seen?: boolean;
     read?: boolean;
     archived?: boolean;
+    snoozedUntil?: Date | null;
   }) {
     const isUpdatingSeen = seen !== undefined;
     const isUpdatingRead = read !== undefined;
     const isUpdatingArchived = archived !== undefined;
+    const isUpdatingSnoozed = snoozedUntil !== undefined;
 
     let updatePayload: FilterQuery<MessageEntity> = {};
     if (isUpdatingArchived) {
@@ -573,6 +622,14 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
         lastReadDate: !seen ? null : undefined,
         archived: !seen ? false : undefined,
         archivedAt: !seen ? null : undefined,
+      };
+    } else if (isUpdatingSnoozed) {
+      updatePayload = {
+        snoozedUntil,
+        seen: true,
+        lastSeenDate: new Date(),
+        archived: false,
+        archivedAt: null,
       };
     }
 
@@ -637,37 +694,6 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     );
   }
 
-  async delete(query: MessageQuery) {
-    const message = await this.findOne({
-      _id: query._id,
-      _environmentId: query._environmentId,
-    });
-
-    if (!message) {
-      throw new DalException(`Could not find a message with id ${query._id}`);
-    }
-
-    return await this.message.delete({ _id: message._id, _environmentId: message._environmentId });
-  }
-
-  async deleteMany(query: MessageQuery) {
-    try {
-      return await this.message.delete({ ...query, deleted: false });
-    } catch (e: unknown) {
-      if (e instanceof Error) {
-        throw new DalException(e.message);
-      } else {
-        throw new DalException('An unknown error occurred');
-      }
-    }
-  }
-
-  async findDeleted(query: MessageQuery): Promise<MessageEntity> {
-    const res: MessageEntity = await this.message.findDeleted(query);
-
-    return this.mapEntity(res);
-  }
-
   async findMessageById(query: { _id: string; _environmentId: string }): Promise<MessageEntity | null> {
     const res = await this.MongooseModel.findOne({ _id: query._id, _environmentId: query._environmentId })
       .populate('subscriber')
@@ -724,7 +750,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     if (query.transactionId) {
       filterQuery.transactionId = { $in: query.transactionId };
     }
-    const data = await this.MongooseModel.find(query, select, {
+    const data = await this.MongooseModel.find(filterQuery, select, {
       sort: options?.sort,
       limit: options?.limit,
       skip: options?.skip,

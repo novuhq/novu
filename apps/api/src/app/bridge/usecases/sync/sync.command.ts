@@ -2,7 +2,7 @@ import { IsDefined, IsOptional, IsString, ValidateNested } from 'class-validator
 import { Type } from 'class-transformer';
 
 import { EnvironmentWithUserCommand, IStepControl } from '@novu/application-generic';
-import type { JSONSchemaDto, StepType } from '@novu/shared';
+import type { CustomDataType, IPreferenceChannels, JSONSchemaDto, StepType } from '@novu/shared';
 
 interface IStepOutput {
   schema: JSONSchemaDto;
@@ -17,10 +17,24 @@ interface IWorkflowDefineStep {
 
   outputs: IStepOutput;
 
-  code: string;
+  description: string;
+
+  preferenceSettings?: IPreferenceChannels;
+
+  data?: CustomDataType;
+}
+
+interface IStepDefineOptions {
+  version: `${number}.${number}.${number}`;
+  failOnErrorEnabled: boolean;
+  skip: boolean;
+  active?: boolean;
 }
 
 class WorkflowDefineStep implements IWorkflowDefineStep {
+  description: string;
+  preferenceSettings?: any;
+  data?: any;
   @IsString()
   stepId: string;
 

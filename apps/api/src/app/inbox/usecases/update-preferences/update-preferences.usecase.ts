@@ -1,8 +1,6 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import {
   AnalyticsService,
-  GetSubscriberGlobalPreference,
-  GetSubscriberGlobalPreferenceCommand,
   GetSubscriberTemplatePreference,
   GetSubscriberTemplatePreferenceCommand,
   UpsertPreferences,
@@ -14,21 +12,26 @@ import {
 import {
   NotificationTemplateEntity,
   NotificationTemplateRepository,
-  PreferenceLevelEnum,
   SubscriberEntity,
-  SubscriberPreferenceRepository,
   SubscriberRepository,
 } from '@novu/dal';
-import { IPreferenceChannels, WorkflowPreferences, WorkflowPreferencesPartial } from '@novu/shared';
-import { ApiException } from '../../../shared/exceptions/api.exception';
+import {
+  IPreferenceChannels,
+  PreferenceLevelEnum,
+  WorkflowPreferences,
+  WorkflowPreferencesPartial,
+} from '@novu/shared';
 import { AnalyticsEventsEnum } from '../../utils';
 import { InboxPreference } from '../../utils/types';
 import { UpdatePreferencesCommand } from './update-preferences.command';
+import {
+  GetSubscriberGlobalPreference,
+  GetSubscriberGlobalPreferenceCommand,
+} from '../../../subscribers/usecases/get-subscriber-global-preference';
 
 @Injectable()
 export class UpdatePreferences {
   constructor(
-    private subscriberPreferenceRepository: SubscriberPreferenceRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private subscriberRepository: SubscriberRepository,
     private analyticsService: AnalyticsService,
@@ -51,7 +54,7 @@ export class UpdatePreferences {
         throw new NotFoundException(`Workflow with id: ${command.workflowId} is not found`);
       }
       if (workflow.critical) {
-        throw new ApiException(`Critical workflow with id: ${command.workflowId} can not be updated`);
+        throw new BadRequestException(`Critical workflow with id: ${command.workflowId} can not be updated`);
       }
     }
 
@@ -67,7 +70,7 @@ export class UpdatePreferences {
   ): Promise<void> {
     const channelPreferences: IPreferenceChannels = this.buildPreferenceChannels(command);
 
-    await this.storePreferencesV2({
+    await this.storePreferences({
       channels: channelPreferences,
       organizationId: command.organizationId,
       environmentId: command.environmentId,
@@ -81,18 +84,6 @@ export class UpdatePreferences {
       _workflowId: command.workflowId,
       level: command.level,
       channels: channelPreferences,
-    });
-
-    const updateFields = {};
-    for (const [key, value] of Object.entries(channelPreferences)) {
-      if (value !== undefined) {
-        updateFields[`channels.${key}`] = value;
-      }
-    }
-
-    const query = this.commonQuery(command, subscriber);
-    await this.subscriberPreferenceRepository.update(query, {
-      $set: updateFields,
     });
   }
 
@@ -138,6 +129,7 @@ export class UpdatePreferences {
           name: workflow.name,
           critical: workflow.critical,
           tags: workflow.tags,
+          data: workflow.data,
         },
       };
     }
@@ -158,21 +150,8 @@ export class UpdatePreferences {
     };
   }
 
-  private commonQuery(command: UpdatePreferencesCommand, subscriber: SubscriberEntity) {
-    return {
-      _organizationId: command.organizationId,
-      _environmentId: command.environmentId,
-      _subscriberId: subscriber._id,
-      level: command.level,
-      ...(command.level === PreferenceLevelEnum.TEMPLATE && command.workflowId && { _templateId: command.workflowId }),
-    };
-  }
-
-  /**
-   * Strangler pattern to migrate to V2 preferences.
-   */
   @Instrument()
-  private async storePreferencesV2(item: {
+  private async storePreferences(item: {
     channels: IPreferenceChannels;
     organizationId: string;
     _subscriberId: string;

@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post, Query } from '@nestjs/common';
-import { ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { ApiRateLimitCategoryEnum, ExternalSubscriberId, TopicKey, UserSessionData } from '@novu/shared';
 
 import {
@@ -36,15 +36,14 @@ import { ExternalApiAccessible } from '../auth/framework/external-api.decorator'
 import { UserSession } from '../shared/framework/user.decorator';
 import {
   ApiCommonResponses,
-  ApiConflictResponse,
   ApiNoContentResponse,
-  ApiNotFoundResponse,
   ApiOkResponse,
   ApiResponse,
 } from '../shared/framework/response.decorator';
 import { ThrottlerCategory } from '../rate-limiting/guards';
 import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
+import { AssignSubscriberToTopicDto } from './dtos/assignSubscriberToTopicDto';
 
 @ThrottlerCategory(ApiRateLimitCategoryEnum.CONFIGURATION)
 @ApiCommonResponses()
@@ -77,6 +76,7 @@ export class TopicsController {
         key: body.key,
         name: body.name,
         organizationId: user.organizationId,
+        userId: user._id,
       })
     );
 
@@ -88,27 +88,23 @@ export class TopicsController {
 
   @Post('/:topicKey/subscribers')
   @ExternalApiAccessible()
-  @ApiNoContentResponse()
   @HttpCode(HttpStatus.OK)
+  @ApiOkResponse({ type: AssignSubscriberToTopicDto })
   @ApiOperation({ summary: 'Subscribers addition', description: 'Add subscribers to a topic by key' })
   @ApiParam({ name: 'topicKey', description: 'The topic key', type: String, required: true })
   @SdkGroupName('Topics.Subscribers')
   @SdkMethodName('assign')
-  async addSubscribers(
+  async assign(
     @UserSession() user: UserSessionData,
     @Param('topicKey') topicKey: TopicKey,
     @Body() body: AddSubscribersRequestDto
-  ): Promise<{
-    succeeded: ExternalSubscriberId[];
-    failed?: {
-      notFound?: ExternalSubscriberId[];
-    };
-  }> {
+  ): Promise<AssignSubscriberToTopicDto> {
     const { existingExternalSubscribers, nonExistingExternalSubscribers } = await this.addSubscribersUseCase.execute(
       AddSubscribersCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         subscribers: body.subscribers,
+        userId: user._id,
         topicKey,
       })
     );
@@ -130,6 +126,7 @@ export class TopicsController {
   @ApiParam({ name: 'topicKey', description: 'The topic key', type: String, required: true })
   @ApiParam({ name: 'externalSubscriberId', description: 'The external subscriber id', type: String, required: true })
   @SdkGroupName('Topics.Subscribers')
+  @ApiOkResponse({ type: TopicSubscriberDto })
   async getTopicSubscriber(
     @UserSession() user: UserSessionData,
     @Param('topicKey') topicKey: TopicKey,
@@ -152,6 +149,7 @@ export class TopicsController {
   @ApiOperation({ summary: 'Subscribers removal', description: 'Remove subscribers from a topic' })
   @ApiParam({ name: 'topicKey', description: 'The topic key', type: String, required: true })
   @SdkGroupName('Topics.Subscribers')
+  @SdkMethodName('remove')
   async removeSubscribers(
     @UserSession() user: UserSessionData,
     @Param('topicKey') topicKey: TopicKey,
@@ -169,29 +167,11 @@ export class TopicsController {
 
   @Get('')
   @ExternalApiAccessible()
-  @ApiQuery({
-    name: 'key',
-    type: String,
-    description: 'Topic key',
-    required: false,
-  })
-  @ApiQuery({
-    name: 'page',
-    type: Number,
-    description: 'Number of page for the pagination',
-    required: false,
-  })
-  @ApiQuery({
-    name: 'pageSize',
-    type: Number,
-    description: 'Size of page for the pagination',
-    required: false,
-  })
   @ApiOkResponse({
     type: FilterTopicsResponseDto,
   })
   @ApiOperation({
-    summary: 'Filter topics',
+    summary: 'Get topic list filtered ',
     description:
       'Returns a list of topics that can be paginated using the `page` query ' +
       'parameter and filtered by the topic key with the `key` query parameter',
@@ -216,18 +196,11 @@ export class TopicsController {
   @ApiNoContentResponse({
     description: 'The topic has been deleted correctly',
   })
-  @ApiNotFoundResponse({
-    description: 'The topic with the key provided does not exist in the database so it can not be deleted.',
-  })
-  @ApiConflictResponse({
-    description:
-      'The topic you are trying to delete has subscribers assigned to it. Delete the subscribers before deleting the topic.',
-  })
   @ApiParam({ name: 'topicKey', description: 'The topic key', type: String, required: true })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete topic', description: 'Delete a topic by its topic key if it has no subscribers' })
   async deleteTopic(@UserSession() user: UserSessionData, @Param('topicKey') topicKey: TopicKey): Promise<void> {
-    return await this.deleteTopicUseCase.execute(
+    await this.deleteTopicUseCase.execute(
       DeleteTopicCommand.create({
         environmentId: user.environmentId,
         topicKey,

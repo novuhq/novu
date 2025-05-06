@@ -55,9 +55,7 @@ describe('sendMessage method', () => {
 
     await provider.sendMessage(mockNovuMessage);
 
-    expect(fetchMock.mock.calls[0][0]).toEqual(
-      'https://api.brevo.com/v3/transactionalSMS/sms',
-    );
+    expect(fetchMock.mock.calls[0][0]).toEqual('https://api.brevo.com/v3/transactionalSMS/sms');
   });
 
   test('should call brevo API transactional sms endpoint using POST method', async () => {

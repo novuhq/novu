@@ -4,13 +4,12 @@ import { TopicSubscribersEntity, TopicSubscribersRepository } from '@novu/dal';
 import { GetTopicSubscriberCommand } from './get-topic-subscriber.command';
 
 import { TopicSubscriberDto } from '../../dtos';
-import { ExternalSubscriberId } from '../../types';
 
 @Injectable()
 export class GetTopicSubscriberUseCase {
   constructor(private topicSubscribersRepository: TopicSubscribersRepository) {}
 
-  async execute(command: GetTopicSubscriberCommand) {
+  async execute(command: GetTopicSubscriberCommand): Promise<TopicSubscriberDto> {
     const topicSubscriber = await this.topicSubscribersRepository.findOneByTopicKeyAndExternalSubscriberId(
       command.environmentId,
       command.organizationId,
@@ -29,7 +28,7 @@ export class GetTopicSubscriberUseCase {
 
   private mapFromEntity(topicSubscriber: TopicSubscribersEntity): TopicSubscriberDto {
     return {
-      ...topicSubscriber,
+      externalSubscriberId: topicSubscriber.externalSubscriberId,
       topicKey: topicSubscriber.topicKey,
       _topicId: topicSubscriber._topicId,
       _organizationId: topicSubscriber._organizationId,

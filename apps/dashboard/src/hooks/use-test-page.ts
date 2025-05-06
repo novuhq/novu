@@ -1,9 +1,10 @@
-import { useLocation } from 'react-router-dom';
+import { ROUTES } from '@/utils/routes';
+import { useMatch } from 'react-router-dom';
 
 export const useTestPage = () => {
-  const { pathname } = useLocation();
+  const match = useMatch(ROUTES.TEST_WORKFLOW);
 
   return {
-    isTestPage: pathname.includes('/test'),
+    isTestPage: match !== null,
   };
 };

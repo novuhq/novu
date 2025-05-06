@@ -1,0 +1,4 @@
+export enum ProductFeatureKeyEnum {
+  TRANSLATIONS = 'TRANSLATIONS',
+  MANAGE_ENVIRONMENTS = 'MANAGE_ENVIRONMENTS',
+}

@@ -20,6 +20,10 @@ export class UpdateEnvironmentCommand extends OrganizationCommand {
   _parentId?: string;
 
   @IsOptional()
+  @IsString()
+  color?: string;
+
+  @IsOptional()
   dns?: { inboundParseDomain?: string };
 
   @IsOptional()

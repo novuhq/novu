@@ -1,18 +1,15 @@
-'use client';
-
-import { Badge } from '@/components/primitives/badge';
 import { CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/primitives/command';
-import { inputVariants } from '@/components/primitives/input';
 import { Popover, PopoverAnchor, PopoverContent } from '@/components/primitives/popover';
 import { cn } from '@/utils/ui';
 import { Command } from 'cmdk';
 import { forwardRef, useEffect, useMemo, useState } from 'react';
-import { RiCloseFill } from 'react-icons/ri';
+import { Tag } from './tag';
 
-type TagInputProps = React.InputHTMLAttributes<HTMLInputElement> & {
+type TagInputProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange'> & {
   value: string[];
   suggestions: string[];
   onChange: (tags: string[]) => void;
+  size?: 'sm' | 'md' | 'xs';
 };
 
 const TagInput = forwardRef<HTMLInputElement, TagInputProps>((props, ref) => {
@@ -31,11 +28,13 @@ const TagInput = forwardRef<HTMLInputElement, TagInputProps>((props, ref) => {
 
   const addTag = (tag: string) => {
     const newTag = tag.trim();
+
     if (newTag === '') {
       return;
     }
 
     const newTags = [...tags, tag];
+
     if (new Set(newTags).size !== newTags.length) {
       return;
     }
@@ -48,9 +47,11 @@ const TagInput = forwardRef<HTMLInputElement, TagInputProps>((props, ref) => {
   const removeTag = (tag: string) => {
     const newTags = [...tags];
     const index = newTags.indexOf(tag);
+
     if (index !== -1) {
       newTags.splice(index, 1);
     }
+
     onChange(newTags);
     setInputValue('');
   };
@@ -64,26 +65,41 @@ const TagInput = forwardRef<HTMLInputElement, TagInputProps>((props, ref) => {
               ref={ref}
               autoComplete="off"
               value={inputValue}
-              className={cn(inputVariants(), 'flex-grow', className)}
+              className={cn('flex-grow', className)}
               placeholder="Type a tag and press Enter"
               onValueChange={(value) => {
                 setInputValue(value);
-                setIsOpen(true);
+
+                if (value) {
+                  setIsOpen(true);
+                }
               }}
-              onFocusCapture={() => setIsOpen(true)}
-              onBlurCapture={() => setIsOpen(false)}
+              onClick={() => setIsOpen(true)}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') {
+                  setIsOpen(false);
+                }
+              }}
               {...rest}
             />
           </PopoverAnchor>
           <div className="flex flex-wrap gap-2">
             {tags.map((tag, index) => (
-              <Badge key={index} variant="outline" size="tag" className="gap-1">
-                <span style={{ wordBreak: 'break-all' }}>{tag}</span>
-                <button type="button" onClick={() => removeTag(tag)}>
-                  <RiCloseFill className="-mr-0.5 size-3" />
-                  <span className="sr-only">Remove tag</span>
-                </button>
-              </Badge>
+              <Tag
+                key={index}
+                variant="stroke"
+                onDismiss={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+
+                  removeTag(tag);
+                }}
+                dismissTestId={`tags-badge-remove-${tag}`}
+              >
+                <span style={{ wordBreak: 'break-all' }} data-testid="tags-badge-value">
+                  {tag}
+                </span>
+              </Tag>
             ))}
           </div>
         </div>
@@ -95,8 +111,15 @@ const TagInput = forwardRef<HTMLInputElement, TagInputProps>((props, ref) => {
               onOpenAutoFocus={(e) => {
                 e.preventDefault();
               }}
-              onFocusOutside={(e) => e.preventDefault()}
-              onInteractOutside={(e) => e.preventDefault()}
+              align="start"
+              sideOffset={4}
+              onPointerDownOutside={(e) => {
+                const target = e.target as HTMLElement;
+
+                if (!target.closest('[cmdk-input-wrapper]')) {
+                  setIsOpen(false);
+                }
+              }}
             >
               <CommandGroup>
                 {inputValue !== '' && !validSuggestions.includes(inputValue) && (

@@ -18,7 +18,9 @@ import {
   Subscriber,
   TODO,
   WebSocketEvent,
+  Result,
 } from '../types';
+import { NovuError } from '../utils/errors';
 
 const PRODUCTION_SOCKET_URL = 'https://ws.novu.co';
 const NOTIFICATION_RECEIVED: NotificationReceivedEvent = 'notifications.notification_received';
@@ -30,6 +32,8 @@ const mapToNotification = ({
   content,
   read,
   archived,
+  snoozedUntil,
+  deliveredAt,
   createdAt,
   lastReadDate,
   archivedAt,
@@ -40,13 +44,19 @@ const mapToNotification = ({
   cta,
   tags,
   data,
+  workflow,
 }: TODO): InboxNotification => {
   const to: Subscriber = {
-    id: subscriber?._id ?? '',
+    id: subscriber?._id,
+    subscriberId: subscriber?.subscriberId,
     firstName: subscriber?.firstName,
     lastName: subscriber?.lastName,
     avatar: subscriber?.avatar,
-    subscriberId: subscriber?.subscriberId ?? '',
+    locale: subscriber?.locale,
+    data: subscriber?.data,
+    timezone: subscriber?.timezone,
+    email: subscriber?.email,
+    phone: subscriber?.phone,
   };
   const primaryCta = cta.action?.buttons?.find((button: any) => button.type === ActionTypeEnum.PRIMARY);
   const secondaryCta = cta.action?.buttons?.find((button: any) => button.type === ActionTypeEnum.SECONDARY);
@@ -60,6 +70,13 @@ const mapToNotification = ({
     to,
     isRead: read,
     isArchived: archived,
+    isSnoozed: !!snoozedUntil,
+    ...(deliveredAt && {
+      deliveredAt,
+    }),
+    ...(snoozedUntil && {
+      snoozedUntil,
+    }),
     createdAt,
     readAt: lastReadDate,
     archivedAt,
@@ -93,6 +110,7 @@ const mapToNotification = ({
         }
       : undefined,
     data,
+    workflow,
   };
 };
 
@@ -171,27 +189,46 @@ export class Socket extends BaseModule {
     this.#socketIo?.on(WebSocketEvent.UNREAD, this.#unreadCountChanged);
   }
 
+  async #handleConnectSocket(): Result<void> {
+    try {
+      await this.#initializeSocket();
+
+      return {};
+    } catch (error) {
+      return { error: new NovuError('Failed to initialize the socket', error) };
+    }
+  }
+
+  async #handleDisconnectSocket(): Result<void> {
+    try {
+      this.#socketIo?.disconnect();
+      this.#socketIo = undefined;
+
+      return {};
+    } catch (error) {
+      return { error: new NovuError('Failed to disconnect from the socket', error) };
+    }
+  }
+
   isSocketEvent(eventName: string): eventName is SocketEventNames {
     return (
       eventName === NOTIFICATION_RECEIVED || eventName === UNSEEN_COUNT_CHANGED || eventName === UNREAD_COUNT_CHANGED
     );
   }
 
-  initialize(): void {
+  async connect(): Result<void> {
     if (this.#token) {
-      this.#initializeSocket().catch((error) => {
-        console.error(error);
-      });
-
-      return;
+      return this.#handleConnectSocket();
     }
 
-    this.callWithSession(async () => {
-      this.#initializeSocket().catch((error) => {
-        console.error(error);
-      });
+    return this.callWithSession(this.#handleConnectSocket.bind(this));
+  }
 
-      return {};
-    });
+  async disconnect(): Result<void> {
+    if (this.#socketIo) {
+      return this.#handleDisconnectSocket();
+    }
+
+    return this.callWithSession(this.#handleDisconnectSocket.bind(this));
   }
 }

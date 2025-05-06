@@ -1,5 +1,5 @@
 import { Accessor, createContext, createMemo, createSignal, onMount, ParentProps, useContext } from 'solid-js';
-import { NotificationFilter, Notification } from '../../types';
+import { Notification, NotificationFilter } from '../../types';
 import { getTagsFromTab } from '../helpers';
 import { useNovuEvent } from '../helpers/useNovuEvent';
 import { useWebSocketEvent } from '../helpers/useWebSocketEvent';
@@ -28,7 +28,12 @@ export const CountProvider = (props: ParentProps) => {
     if (tabs().length === 0) {
       return;
     }
-    const filters = tabs().map((tab) => ({ tags: getTagsFromTab(tab), read: false, archived: false }));
+    const filters = tabs().map((tab) => ({
+      tags: getTagsFromTab(tab),
+      read: false,
+      archived: false,
+      snoozed: false,
+    }));
     const { data } = await novu.notifications.count({ filters });
     if (!data) {
       return;
@@ -45,6 +50,7 @@ export const CountProvider = (props: ParentProps) => {
   };
 
   onMount(() => {
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     updateTabCounts();
   });
 
@@ -52,6 +58,7 @@ export const CountProvider = (props: ParentProps) => {
     event: 'notifications.unread_count_changed',
     eventHandler: (data) => {
       setTotalUnreadCount(data.result);
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       updateTabCounts();
     },
   });
@@ -70,7 +77,7 @@ export const CountProvider = (props: ParentProps) => {
   const updateNewNotificationCountsOrCache = (notification: Notification, tags: string[]) => {
     const notificationsCache = novu.notifications.cache;
     const limitValue = limit();
-    const tabFilter = { ...filter(), tags, offset: 0, limit: limitValue };
+    const tabFilter = { ...filter(), tags, after: undefined, limit: limitValue };
     const hasEmptyCache = !notificationsCache.has(tabFilter);
     if (!isOpened() && hasEmptyCache) {
       return;
@@ -99,15 +106,21 @@ export const CountProvider = (props: ParentProps) => {
   useWebSocketEvent({
     event: 'notifications.notification_received',
     eventHandler: async ({ result: notification }) => {
-      if (filter().archived) {
+      if (filter().archived || filter().snoozed) {
         return;
       }
 
-      const allTabs = tabs();
-      if (allTabs.length > 0) {
-        for (let i = 0; i < allTabs.length; i += 1) {
-          const tab = allTabs[i];
-          const tags = getTagsFromTab(tab);
+      const tagsMap = tabs().reduce((acc, tab) => {
+        const tags = getTagsFromTab(tab);
+        const tagsKey = createKey(tags);
+        acc.set(tagsKey, tags);
+
+        return acc;
+      }, new Map<string, string[]>());
+      const uniqueTags = Array.from(tagsMap.values());
+      if (uniqueTags.length > 0) {
+        for (let i = 0; i < uniqueTags.length; i += 1) {
+          const tags = uniqueTags[i];
           const allNotifications = tags.length === 0;
           const includesAtLeastOneTag = tags.some((tag) => notification.tags?.includes(tag));
           if (!allNotifications && !includesAtLeastOneTag) {

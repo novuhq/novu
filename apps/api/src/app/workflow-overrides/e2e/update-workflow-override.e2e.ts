@@ -4,7 +4,7 @@ import { UserSession } from '@novu/testing';
 import { ICreateWorkflowOverrideRequestDto, IUpdateWorkflowOverrideRequestDto } from '@novu/shared';
 import { NotificationTemplateRepository, TenantRepository } from '@novu/dal';
 
-describe('Update Workflow Override - /workflow-overrides/workflows/:workflowId/tenants/:tenantIdentifier (PUT)', function () {
+describe('Update Workflow Override - /workflow-overrides/workflows/:workflowId/tenants/:tenantIdentifier (PUT) #novu-v0', function () {
   let session: UserSession;
   const tenantRepository = new TenantRepository();
   const notificationTemplateRepository = new NotificationTemplateRepository();
@@ -70,9 +70,8 @@ describe('Update Workflow Override - /workflow-overrides/workflows/:workflowId/t
         .put(`/v1/workflow-overrides/workflows/${workflow._id}/tenants/${invalidTenantIdentifier}`)
         .send(updatePayload)
     ).body;
-
-    expect(updatedOverrides.statusCode).to.equal(400);
-    expect(updatedOverrides.message[0]).to.equal('_tenantId must be a mongodb id');
+    expect(updatedOverrides.statusCode).to.equal(422);
+    expect(updatedOverrides.errors._tenantId.messages[0]).to.equal('_tenantId must be a mongodb id');
   });
 
   it('should fail update workflow override with invalid workflow id', async function () {
@@ -98,9 +97,8 @@ describe('Update Workflow Override - /workflow-overrides/workflows/:workflowId/t
         .put(`/v1/workflow-overrides/workflows/${invalidWorkflowId}/tenants/${tenant.identifier}`)
         .send(updatePayload)
     ).body;
-
-    expect(updatedOverrides.statusCode).to.equal(400);
-    expect(updatedOverrides.message[0]).to.equal(`_tenantId must be a mongodb id`);
+    expect(updatedOverrides.statusCode).to.equal(422);
+    expect(updatedOverrides.errors._tenantId.messages[0]).to.equal(`_tenantId must be a mongodb id`);
   });
 
   it('should fail update workflow override with now existing workflow override', async function () {
@@ -133,9 +131,8 @@ describe('Update Workflow Override - /workflow-overrides/workflows/:workflowId/t
         .put(`/v1/workflow-overrides/workflows/${workflow._id}/tenants/${tenant.identifier}`)
         .send(updatePayload)
     ).body;
-
-    expect(updatedOverrides.statusCode).to.equal(400);
-    expect(updatedOverrides.message[0]).to.equal(`_tenantId must be a mongodb id`);
+    expect(updatedOverrides.statusCode).to.equal(422);
+    expect(updatedOverrides.errors._tenantId.messages[0]).to.equal(`_tenantId must be a mongodb id`);
   });
 
   async function initializeOverrides() {

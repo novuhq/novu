@@ -9,19 +9,13 @@ import {
 } from '@novu/dal';
 import { UserSession, SubscribersService } from '@novu/testing';
 import { ChannelTypeEnum, ISubscribersDefine, IUpdateNotificationTemplateDto, StepTypeEnum } from '@novu/shared';
-import {
-  buildNotificationTemplateIdentifierKey,
-  buildNotificationTemplateKey,
-  CacheInMemoryProviderService,
-  CacheService,
-  InvalidateCacheService,
-} from '@novu/application-generic';
+import { CacheInMemoryProviderService, CacheService, InvalidateCacheService } from '@novu/application-generic';
 
 import { UpdateSubscriberPreferenceRequestDto } from '../../widgets/dtos/update-subscriber-preference-request.dto';
 
 const axiosInstance = axios.create();
 
-describe('Trigger event - process subscriber /v1/events/trigger (POST)', function () {
+describe('Trigger event - process subscriber /v1/events/trigger (POST) #novu-v2', function () {
   let session: UserSession;
   let template: NotificationTemplateEntity;
   let subscriber: SubscriberEntity;
@@ -87,7 +81,7 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
       }
     );
 
-    await session.awaitRunningJobs(newTemplate._id);
+    await session.waitForJobCompletion(newTemplate._id);
 
     const message = await messageRepository.find({
       _environmentId: session.environment._id,
@@ -110,7 +104,7 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
 
     await triggerEvent(session, template, payload);
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
 
     const createdSubscriber = await subscriberRepository.findBySubscriberId(
       session.environment._id,
@@ -133,7 +127,7 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
 
     await triggerEvent(session, template, payload);
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
 
     const widgetSubscriber = await subscriberRepository.findBySubscriberId(
       session.environment._id,
@@ -159,7 +153,7 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
 
     await triggerEvent(session, template, payload);
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
 
     message = await messageRepository.find({
       _environmentId: session.environment._id,
@@ -180,7 +174,7 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
 
     await triggerEvent(session, template, payload);
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
 
     const widgetSubscriber = await subscriberRepository.findBySubscriberId(
       session.environment._id,
@@ -195,14 +189,6 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
 
     expect(message.length).to.equal(2);
 
-    const notificationTemplateKey = buildNotificationTemplateKey({
-      _id: template._id,
-      _environmentId: session.environment._id,
-    });
-    await invalidateCache.invalidateByKey({
-      key: notificationTemplateKey,
-    });
-
     const updateData = {
       channel: {
         type: ChannelTypeEnum.IN_APP,
@@ -216,7 +202,7 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
 
     await triggerEvent(session, template, payload);
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
 
     message = await messageRepository.find({
       _environmentId: session.environment._id,

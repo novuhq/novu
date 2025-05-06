@@ -1,7 +1,5 @@
+import { BaseCommand } from '@novu/application-generic';
 import { IsNotEmpty } from 'class-validator';
-import { BaseCommand } from './base.command';
-
-export { BaseCommand };
 
 export abstract class EnvironmentCommand extends BaseCommand {
   @IsNotEmpty()

@@ -1,16 +1,11 @@
-import type {
-  ITriggerPayload,
-  TriggerEventStatusEnum,
-  TriggerRecipientsPayload,
-  TriggerRecipientSubscriber,
-} from '@novu/shared';
+import type { ISubscriberPayload, ITriggerPayload, TriggerEventStatusEnum, TriggerRecipientsPayload } from '../shared';
 import { ConditionalPartial, PickRequiredKeys } from './util.types';
 
-type EventPayload = ITriggerPayload & {};
+type EventPayload = ITriggerPayload;
 
-type Actor = TriggerRecipientSubscriber & {};
+type Actor = string | ISubscriberPayload;
 
-type Recipients = TriggerRecipientsPayload & {};
+type Recipients = TriggerRecipientsPayload;
 
 export type EventTriggerResult = {
   /**

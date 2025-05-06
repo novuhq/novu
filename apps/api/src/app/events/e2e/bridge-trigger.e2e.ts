@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { expect } from 'chai';
 import sinon from 'sinon';
+import getPort from 'get-port';
 
 import { SubscribersService, UserSession } from '@novu/testing';
 import {
@@ -23,7 +24,7 @@ import {
 import { workflow } from '@novu/framework';
 
 import { DetailEnum } from '@novu/application-generic';
-import { BridgeServer } from '../../../../e2e/bridge.server';
+import { TestBridgeServer } from '../../../../e2e/test-bridge-server';
 
 const eventTriggerPath = '/v1/events/trigger';
 
@@ -34,9 +35,9 @@ const contexts: Context[] = [
 ];
 
 contexts.forEach((context: Context) => {
-  describe('Self-Hosted Bridge Trigger', async () => {
+  describe('Self-Hosted Bridge Trigger #novu-v2', async () => {
     let session: UserSession;
-    let bridgeServer: BridgeServer;
+    let bridgeServer: TestBridgeServer;
     const messageRepository = new MessageRepository();
     const workflowsRepository = new NotificationTemplateRepository();
     const jobRepository = new JobRepository();
@@ -46,7 +47,8 @@ contexts.forEach((context: Context) => {
     let bridge;
 
     beforeEach(async () => {
-      bridgeServer = new BridgeServer();
+      const port = await getPort();
+      bridgeServer = new TestBridgeServer(port);
       bridge = context.isStateful ? undefined : { url: `${bridgeServer.serverPath}/novu` };
       session = new UserSession();
       await session.initialize();
@@ -58,7 +60,8 @@ contexts.forEach((context: Context) => {
       await bridgeServer.stop();
     });
 
-    it(`should trigger the bridge workflow with sync [${context.name}]`, async () => {
+    it(`should trigger the bridge workflow with sync [${context.name}]`, async function () {
+      this.timeout(10000);
       const workflowId = `hello-world-${`${context.name}`}`;
       const newWorkflow = workflow(
         workflowId,
@@ -140,8 +143,9 @@ contexts.forEach((context: Context) => {
         }
       }
 
+      await bridgeServer.start({ workflows: [newWorkflow] });
       await triggerEvent(session, workflowId, subscriber.subscriberId, { name: 'test_name' }, bridge);
-      await session.awaitRunningJobs();
+      await session.waitForJobCompletion();
 
       const messages = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -201,7 +205,7 @@ contexts.forEach((context: Context) => {
       }
 
       await triggerEvent(session, workflowIdSkipByStatic, subscriber.subscriberId, {}, bridge);
-      await session.awaitRunningJobs();
+      await session.waitForJobCompletion();
 
       const executedMessageByStatic = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -265,7 +269,7 @@ contexts.forEach((context: Context) => {
       }
 
       await triggerEvent(session, workflowIdSkipByVariable, subscriber.subscriberId, {}, bridge);
-      await session.awaitRunningJobs();
+      await session.waitForJobCompletion();
 
       const executedMessage = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -317,7 +321,7 @@ contexts.forEach((context: Context) => {
 
       await triggerEvent(session, workflowId, subscriber.subscriberId, {}, bridge);
 
-      await session.awaitRunningJobs(undefined);
+      await session.waitForJobCompletion();
 
       const messagesAfter = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -339,7 +343,7 @@ contexts.forEach((context: Context) => {
       await executionDetailsRepository.delete({ _environmentId: session.environment._id });
 
       await triggerEvent(session, workflowId, subscriber.subscriberId, { name: 4 }, bridge);
-      await session.awaitRunningJobs();
+      await session.waitForJobCompletion();
 
       const executionDetailsInvalidType = await executionDetailsRepository.find({
         _environmentId: session.environment._id,
@@ -398,7 +402,7 @@ contexts.forEach((context: Context) => {
 
       await triggerEvent(session, workflowId, subscriber.subscriberId, {}, bridge);
 
-      await session.awaitRunningJobs();
+      await session.waitForJobCompletion();
 
       const messagesAfterInApp = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -477,7 +481,7 @@ contexts.forEach((context: Context) => {
       await triggerEvent(session, workflowId, subscriber.subscriberId, { name: 'John' }, bridge);
       await triggerEvent(session, workflowId, subscriber.subscriberId, { name: 'Bela' }, bridge);
 
-      await session.awaitRunningJobs();
+      await session.waitForJobCompletion();
 
       const messages = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -558,7 +562,7 @@ contexts.forEach((context: Context) => {
 
       await triggerEvent(session, workflowId, subscriber.subscriberId, {}, bridge);
 
-      await session.awaitRunningJobs();
+      await session.waitForJobCompletion();
 
       const messagesAfter = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -568,6 +572,42 @@ contexts.forEach((context: Context) => {
 
       expect(messagesAfter.length).to.be.eq(1);
       expect(messagesAfter[0].content).to.match(/people waited for \d+ seconds/);
+
+      const exceedMaxTierDurationWorkflowId = `exceed-max-tier-duration-workflow-${`${context.name}`}`;
+      const exceedMaxTierDurationWorkflow = workflow(exceedMaxTierDurationWorkflowId, async ({ step }) => {
+        await step.delay('delay-id', async (controls) => {
+          return {
+            type: 'regular',
+            amount: 100,
+            unit: 'days',
+          };
+        });
+
+        await step.inApp('send-in-app', async () => {
+          return {
+            body: `people want to wait for 100 days`,
+          };
+        });
+      });
+
+      await bridgeServer.stop();
+      await bridgeServer.start({ workflows: [exceedMaxTierDurationWorkflow] });
+
+      if (context.isStateful) {
+        await discoverAndSyncBridge(session, workflowsRepository, exceedMaxTierDurationWorkflowId, bridgeServer);
+      }
+
+      const result = await triggerEvent(session, exceedMaxTierDurationWorkflowId, subscriber.subscriberId, {}, bridge);
+      await session.waitForJobCompletion();
+
+      const executionDetails = await executionDetailsRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: subscriber._id,
+        transactionId: result?.data?.data?.transactionId,
+      });
+
+      const delayExecutionDetails = executionDetails.filter((executionDetail) => executionDetail.channel === 'delay');
+      expect(delayExecutionDetails.some((detail) => detail.detail === 'Defer duration limit exceeded')).to.be.true;
     });
 
     it(`should trigger the bridge workflow with control default and payload data [${context.name}]`, async () => {
@@ -612,9 +652,10 @@ contexts.forEach((context: Context) => {
       }
 
       await triggerEvent(session, workflowId, subscriber.subscriberId, {}, bridge);
-      await session.awaitRunningJobs();
+
       await triggerEvent(session, workflowId, subscriber.subscriberId, { name: 'payload_name' }, bridge);
-      await session.awaitRunningJobs();
+
+      await session.waitForJobCompletion();
 
       const sentMessage = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -626,7 +667,7 @@ contexts.forEach((context: Context) => {
       const expectedSubjects = ['prefix Hello default_name', 'prefix Hello payload_name'];
 
       expectedSubjects.forEach((expectedSubject) => {
-        const found = sentMessage.some((message) => message.subject.includes(expectedSubject));
+        const found = sentMessage.some((message) => message.subject?.includes(expectedSubject));
         expect(found).to.be.true;
       });
     });
@@ -677,7 +718,7 @@ contexts.forEach((context: Context) => {
 
       const controls = { steps: { [stepId]: { name: 'stored_control_name' } } };
       await triggerEvent(session, workflowId, subscriber.subscriberId, {}, bridge, controls);
-      await session.awaitRunningJobs();
+      await session.waitForJobCompletion();
 
       const sentMessage = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -703,7 +744,7 @@ contexts.forEach((context: Context) => {
       }
 
       await triggerEvent(session, workflowId, subscriber.subscriberId, {}, bridge);
-      await session.awaitRunningJobs();
+      await session.waitForJobCompletion();
 
       const sentMessages = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -739,7 +780,7 @@ contexts.forEach((context: Context) => {
       }
 
       await triggerEvent(session, workflowId, subscriber.subscriberId, {}, bridge);
-      await session.awaitRunningJobs();
+      await session.waitForJobCompletion();
 
       const sentMessages = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -776,7 +817,7 @@ contexts.forEach((context: Context) => {
       }
 
       await triggerEvent(session, workflowId, subscriber.subscriberId, {}, bridge);
-      await session.awaitRunningJobs();
+      await session.waitForJobCompletion();
 
       const sentMessages = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -813,7 +854,7 @@ contexts.forEach((context: Context) => {
       }
 
       await triggerEvent(session, workflowId, subscriber.subscriberId, {}, bridge);
-      await session.awaitRunningJobs();
+      await session.waitForJobCompletion();
 
       const sentMessages = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -864,7 +905,7 @@ contexts.forEach((context: Context) => {
       }
 
       await triggerEvent(session, workflowId, subscriber.subscriberId, {}, bridge);
-      await session.awaitRunningJobs();
+      await session.waitForJobCompletion();
 
       const sentMessages = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -899,7 +940,7 @@ contexts.forEach((context: Context) => {
       }
 
       await triggerEvent(session, workflowId, subscriber.subscriberId, {}, bridge);
-      await session.awaitRunningJobs();
+      await session.waitForJobCompletion();
 
       const sentMessages = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -963,7 +1004,7 @@ contexts.forEach((context: Context) => {
       }
 
       await triggerEvent(session, workflowId, subscriber._id, {}, bridge);
-      await session.awaitRunningJobs();
+      await session.waitForJobCompletion();
 
       const sentMessages = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -1016,7 +1057,7 @@ contexts.forEach((context: Context) => {
       }
 
       await triggerEvent(session, workflowId, subscriber._id, {}, bridge);
-      await session.awaitRunningJobs();
+      await session.waitForJobCompletion();
 
       const sentMessages = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -1078,7 +1119,7 @@ contexts.forEach((context: Context) => {
       }
 
       await triggerEvent(session, workflowId, subscriber._id, {}, bridge);
-      await session.awaitRunningJobs();
+      await session.waitForJobCompletion();
 
       const sentMessages = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -1129,7 +1170,7 @@ contexts.forEach((context: Context) => {
       }
 
       await triggerEvent(session, workflowId, subscriber._id, {}, bridge);
-      await session.awaitRunningJobs();
+      await session.waitForJobCompletion();
 
       const sentMessages = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -1194,7 +1235,7 @@ contexts.forEach((context: Context) => {
           });
 
         await triggerEvent(session, workflowId, subscriber._id, {}, bridge);
-        await session.awaitRunningJobs();
+        await session.waitForJobCompletion();
 
         const sentMessages = await messageRepository.find({
           _environmentId: session.environment._id,
@@ -1249,7 +1290,7 @@ contexts.forEach((context: Context) => {
           });
 
         await triggerEvent(session, workflowId, subscriber._id, {}, bridge);
-        await session.awaitRunningJobs();
+        await session.waitForJobCompletion();
 
         const sentMessages = await messageRepository.find({
           _environmentId: session.environment._id,
@@ -1324,7 +1365,7 @@ contexts.forEach((context: Context) => {
             in_app: true,
           });
         await triggerEvent(session, workflowId, subscriber._id, {}, bridge);
-        await session.awaitRunningJobs();
+        await session.waitForJobCompletion();
 
         const sentMessages = await messageRepository.find({
           _environmentId: session.environment._id,
@@ -1389,7 +1430,7 @@ contexts.forEach((context: Context) => {
           });
 
         await triggerEvent(session, workflowId, subscriber._id, {}, bridge);
-        await session.awaitRunningJobs();
+        await session.waitForJobCompletion();
 
         const sentMessages = await messageRepository.find({
           _environmentId: session.environment._id,
@@ -1412,10 +1453,170 @@ contexts.forEach((context: Context) => {
         expect(executionDetailsSubscriberWorkflowFiltered.length).to.be.eq(1);
       }
     });
+
+    it(`should skip inApp step and execute email step when userName is John Doe [${context.name}]`, async () => {
+      const workflowId = `bug-5120-${context.name}`;
+      const newWorkflow = workflow(
+        workflowId,
+        async ({ step, payload }) => {
+          await step.inApp(
+            'inapp',
+            async () => {
+              return {
+                body: 'This is a log message',
+              };
+            },
+            {
+              skip: () => payload.userName === 'John Doe',
+            }
+          );
+
+          await step.email(
+            'send-email',
+            async (controls) => {
+              return {
+                subject: controls.subject,
+                body: `This is your first Novu Email ${payload.userName}`,
+              };
+            },
+            {
+              controlSchema: {
+                type: 'object',
+                properties: {
+                  subject: {
+                    type: 'string',
+                    default: `A Successful Test on Novu from default_name`,
+                  },
+                },
+              } as const,
+            }
+          );
+        },
+        {
+          payloadSchema: {
+            type: 'object',
+            properties: {
+              userName: {
+                type: 'string',
+                default: 'John Doe',
+              },
+            },
+            required: [],
+            additionalProperties: false,
+          } as const,
+        }
+      );
+
+      await bridgeServer.start({ workflows: [newWorkflow] });
+
+      if (context.isStateful) {
+        await discoverAndSyncBridge(session, workflowsRepository, workflowId, bridgeServer);
+      }
+
+      await triggerEvent(session, workflowId, subscriber.subscriberId, { userName: 'John Doe' }, bridge);
+      await session.waitForJobCompletion();
+
+      // Verify inApp message was skipped
+      const inAppMessages = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: subscriber._id,
+        channel: StepTypeEnum.IN_APP,
+      });
+      expect(inAppMessages.length).to.eq(0);
+
+      // Verify email was sent
+      const emailMessages = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: subscriber._id,
+        channel: StepTypeEnum.EMAIL,
+      });
+      expect(emailMessages.length).to.eq(1);
+      expect(emailMessages[0].subject).to.include('A Successful Test on Novu from default_name');
+    });
+
+    it(`should execute both inApp and email steps when userName is not John Doe [${context.name}]`, async () => {
+      const workflowId = `bug-5120-not-skipped-${context.name}`;
+      const newWorkflow = workflow(
+        workflowId,
+        async ({ step, payload }) => {
+          await step.inApp(
+            'inapp',
+            async () => {
+              return {
+                body: 'This is a log message',
+              };
+            },
+            {
+              skip: () => payload.userName === 'John Doe',
+            }
+          );
+
+          await step.email(
+            'send-email',
+            async () => {
+              return {
+                subject: `Welcome to Novu ${payload.userName}`,
+                body: `This is your first Novu Email ${payload.userName}`,
+              };
+            },
+            {
+              controlSchema: {
+                type: 'object',
+                properties: {
+                  subject: {
+                    type: 'string',
+                  },
+                },
+              } as const,
+            }
+          );
+        },
+        {
+          payloadSchema: {
+            type: 'object',
+            properties: {
+              userName: {
+                type: 'string',
+                default: 'John Doe',
+              },
+            },
+            required: [],
+            additionalProperties: false,
+          } as const,
+        }
+      );
+
+      await bridgeServer.start({ workflows: [newWorkflow] });
+
+      if (context.isStateful) {
+        await discoverAndSyncBridge(session, workflowsRepository, workflowId, bridgeServer);
+      }
+
+      await triggerEvent(session, workflowId, subscriber.subscriberId, { userName: 'Jane Doe' }, bridge);
+      await session.waitForJobCompletion();
+
+      // Verify inApp message was not skipped
+      const inAppMessages = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: subscriber._id,
+        channel: StepTypeEnum.IN_APP,
+      });
+      expect(inAppMessages.length).to.eq(1);
+      expect(inAppMessages[0].content).to.include('This is a log message');
+
+      // Verify email was sent
+      const emailMessages = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: subscriber._id,
+        channel: StepTypeEnum.EMAIL,
+      });
+      expect(emailMessages.length).to.eq(1);
+      expect(emailMessages[0].subject).to.include('Welcome to Novu Jane Doe');
+    });
   });
 });
 
-describe('Novu-Hosted Bridge Trigger', () => {
+describe('Novu-Hosted Bridge Trigger #novu-v2', () => {
   let session: UserSession;
   const messageRepository = new MessageRepository();
   let subscriber: SubscriberEntity;
@@ -1460,7 +1661,7 @@ describe('Novu-Hosted Bridge Trigger', () => {
     const responseData = response.body.data as WorkflowResponseDto;
 
     await triggerEvent(session, responseData.workflowId, subscriber._id, {});
-    await session.awaitRunningJobs();
+    await session.waitForJobCompletion();
 
     const sentMessages = await messageRepository.find({
       _environmentId: session.environment._id,
@@ -1477,7 +1678,7 @@ async function syncWorkflow(
   session: UserSession,
   workflowsRepository: NotificationTemplateRepository,
   workflowIdentifier: string,
-  bridgeServer: BridgeServer
+  bridgeServer: TestBridgeServer
 ) {
   await session.testAgent.post(`/v1/bridge/sync`).send({
     bridgeUrl: `${bridgeServer.serverPath}/novu`,
@@ -1501,7 +1702,7 @@ async function triggerEvent(
     name: 'test_name',
   };
 
-  await axios.post(
+  const response = await axios.post(
     `${session.serverUrl}${eventTriggerPath}`,
     {
       name: workflowId,
@@ -1519,13 +1720,15 @@ async function triggerEvent(
       },
     }
   );
+
+  return response;
 }
 
 async function discoverAndSyncBridge(
   session: UserSession,
   workflowsRepository?: NotificationTemplateRepository,
   workflowIdentifier?: string,
-  bridgeServer?: BridgeServer
+  bridgeServer?: TestBridgeServer
 ) {
   const discoverResponse = await session.testAgent.post(`/v1/bridge/sync`).send({
     bridgeUrl: `${bridgeServer?.serverPath}/novu`,

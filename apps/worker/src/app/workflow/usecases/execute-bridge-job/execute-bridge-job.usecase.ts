@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 
 import {
   ControlValuesRepository,
@@ -8,8 +8,12 @@ import {
   NotificationTemplateRepository,
   MessageRepository,
   JobEntity,
+  OrganizationEntity,
+  UserEntity,
+  EnvironmentEntity,
 } from '@novu/dal';
 import {
+  FeatureFlagsKeysEnum,
   ControlValuesLevelEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
@@ -18,14 +22,27 @@ import {
   WorkflowOriginEnum,
   WorkflowTypeEnum,
 } from '@novu/shared';
-import { Event, State, PostActionEnum, ExecuteOutput } from '@novu/framework/internal';
+import {
+  DigestResult,
+  Event,
+  State,
+  PostActionEnum,
+  ExecuteOutput,
+  DelayResult,
+  InAppResult,
+} from '@novu/framework/internal';
 
 import {
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
+  dashboardSanitizeControlValues,
   DetailEnum,
   ExecuteBridgeRequest,
   ExecuteBridgeRequestCommand,
+  FeatureFlagsService,
+  Instrument,
+  InstrumentUsecase,
+  PinoLogger,
 } from '@novu/application-generic';
 import { ExecuteBridgeJobCommand } from './execute-bridge-job.command';
 
@@ -40,10 +57,20 @@ export class ExecuteBridgeJob {
     private environmentRepository: EnvironmentRepository,
     private controlValuesRepository: ControlValuesRepository,
     private createExecutionDetails: CreateExecutionDetails,
-    private executeBridgeRequest: ExecuteBridgeRequest
+    private executeBridgeRequest: ExecuteBridgeRequest,
+    private logger: PinoLogger,
+    private readonly featureFlagService: FeatureFlagsService
   ) {}
 
+  @InstrumentUsecase()
   async execute(command: ExecuteBridgeJobCommand): Promise<ExecuteOutput | null> {
+    const isEnhancedDigestEnabled = await this.featureFlagService.getFlag({
+      user: { _id: command.userId } as UserEntity,
+      environment: { _id: command.environmentId } as EnvironmentEntity,
+      organization: { _id: command.organizationId } as OrganizationEntity,
+      key: FeatureFlagsKeysEnum.IS_ENHANCED_DIGEST_ENABLED,
+      defaultValue: false,
+    });
     const stepId = command.job.step.stepId || command.job.step.uuid;
 
     const isStateful = !command.job.step.bridgeUrl;
@@ -89,7 +116,7 @@ export class ExecuteBridgeJob {
     const { subscriber, payload: originalPayload } = command.variables || {};
     const payload = this.normalizePayload(originalPayload);
 
-    const state = await this.generateState(payload, command);
+    const state = await this.generateState(command, isEnhancedDigestEnabled);
 
     const variablesStores = isStateful
       ? await this.findControlValues(command, workflow as NotificationTemplateEntity)
@@ -122,7 +149,7 @@ export class ExecuteBridgeJob {
       },
     });
 
-    const createExecutionDetailsCommand: CreateExecutionDetailsCommand = {
+    const executionDetailsCommand: CreateExecutionDetailsCommand = {
       ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
       detail: DetailEnum.SUCCESSFUL_BRIDGE_RESPONSE_RECEIVED,
       source: ExecutionDetailsSourceEnum.INTERNAL,
@@ -132,7 +159,7 @@ export class ExecuteBridgeJob {
       raw: JSON.stringify(bridgeResponse.metadata),
     };
 
-    await this.createExecutionDetails.execute(createExecutionDetailsCommand);
+    await this.createExecutionDetails.execute(executionDetailsCommand);
 
     return bridgeResponse;
   }
@@ -145,6 +172,12 @@ export class ExecuteBridgeJob {
       level: ControlValuesLevelEnum.STEP_CONTROLS,
     });
 
+    if (workflow?.origin === WorkflowOriginEnum.NOVU_CLOUD) {
+      return controls?.controls
+        ? dashboardSanitizeControlValues(this.logger, controls.controls, command.job?.step?.template?.type)
+        : {};
+    }
+
     return controls?.controls;
   }
 
@@ -156,7 +189,7 @@ export class ExecuteBridgeJob {
     return payload;
   }
 
-  private async generateState(payload, command: ExecuteBridgeJobCommand): Promise<State[]> {
+  private async generateState(command: ExecuteBridgeJobCommand, isEnhancedDigestEnabled: boolean): Promise<State[]> {
     const previousJobs: State[] = [];
     let theJob = (await this.jobRepository.findOne({
       _id: command.job._parentId,
@@ -164,7 +197,7 @@ export class ExecuteBridgeJob {
     })) as JobEntity;
 
     if (theJob) {
-      const jobState = await this.mapState(theJob, payload);
+      const jobState = await this.mapState(theJob, isEnhancedDigestEnabled);
       previousJobs.push(jobState);
     }
 
@@ -175,7 +208,7 @@ export class ExecuteBridgeJob {
       })) as JobEntity;
 
       if (theJob) {
-        const jobState = await this.mapState(theJob, payload);
+        const jobState = await this.mapState(theJob, isEnhancedDigestEnabled);
         previousJobs.push(jobState);
       }
     }
@@ -183,6 +216,7 @@ export class ExecuteBridgeJob {
     return previousJobs;
   }
 
+  @Instrument()
   private async sendBridgeRequest({
     statelessBridgeUrl,
     event,
@@ -198,8 +232,10 @@ export class ExecuteBridgeJob {
       event,
       action: PostActionEnum.EXECUTE,
       searchParams,
+      workflowOrigin,
+      environmentId,
       processError: async (response) => {
-        const createExecutionDetailsCommand: CreateExecutionDetailsCommand = {
+        await this.createExecutionDetails.execute({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
           detail: DetailEnum.FAILED_BRIDGE_EXECUTION,
           source: ExecutionDetailsSourceEnum.INTERNAL,
@@ -212,25 +248,19 @@ export class ExecuteBridgeJob {
             message: response.message,
             code: response.code,
             data: response.data,
+            cause: response.cause,
           }),
-        };
-
-        await this.createExecutionDetails.execute(createExecutionDetailsCommand);
+        });
       },
-      workflowOrigin,
-      environmentId,
     }) as Promise<ExecuteOutput>;
   }
 
-  private async mapState(job: JobEntity, payload: Record<string, unknown>) {
-    let output = {};
-
+  private async mapOutput(job: JobEntity, isEnhancedDigestEnabled: boolean) {
     switch (job.type) {
       case 'delay': {
-        output = {
+        return {
           duration: Date.now() - new Date(job.createdAt).getTime(),
-        };
-        break;
+        } satisfies DelayResult;
       }
       case 'digest': {
         const digestJobs = await this.jobRepository.find(
@@ -247,20 +277,27 @@ export class ExecuteBridgeJob {
             transactionId: 1,
           }
         );
-        output = {
-          events: [...digestJobs, job]
-            .map((digestJob) => ({
-              id: digestJob._id,
-              time: digestJob.createdAt,
-              payload: digestJob.payload ?? {},
-            }))
-            .sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime()),
-        };
-        break;
+        const events = [...digestJobs, job]
+          .map((digestJob) => ({
+            id: digestJob._id,
+            time: digestJob.createdAt,
+            payload: digestJob.payload ?? {},
+          }))
+          .sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
+
+        if (isEnhancedDigestEnabled) {
+          return {
+            events,
+            eventCount: events.length,
+          } satisfies DigestResult;
+        }
+
+        return {
+          events,
+        } satisfies DigestResult;
       }
       case 'custom': {
-        output = job.stepOutput || {};
-        break;
+        return job.stepOutput || {};
       }
       case 'in_app': {
         const message = await this.messageRepository.findOne(
@@ -268,19 +305,34 @@ export class ExecuteBridgeJob {
           'seen read lastSeenDate lastReadDate'
         );
         if (message) {
-          output = {
+          return {
             seen: message.seen,
             read: message.read,
             lastSeenDate: message.lastSeenDate || null,
             lastReadDate: message.lastReadDate || null,
-          };
+          } satisfies InAppResult;
+        } else {
+          /*
+           * Provide fallback state for in-app messages to satisfy framework inAppResultSchema validation
+           * when message is not found (e.g., cancelled jobs, nv-5120)
+           */
+          return {
+            seen: false,
+            read: false,
+            lastSeenDate: null,
+            lastReadDate: null,
+          } satisfies InAppResult;
         }
-        break;
       }
       default: {
-        break;
+        return {};
       }
     }
+  }
+
+  @Instrument()
+  private async mapState(job: JobEntity, isEnhancedDigestEnabled: boolean) {
+    const output = await this.mapOutput(job, isEnhancedDigestEnabled);
 
     return {
       stepId: job?.step.stepId || job?.step.uuid || '',

@@ -34,5 +34,21 @@ const memberSchema = new Schema<MemberDBModel>(
   schemaOptions
 );
 
+memberSchema.index({
+  _userId: 1,
+});
+
+memberSchema.index({
+  'invite.token': 1,
+});
+
+memberSchema.index({
+  _organizationId: 1,
+});
+
+memberSchema.index({
+  'organizationId._userId._id': 1,
+});
+
 export const Member =
   (mongoose.models.Member as mongoose.Model<MemberDBModel>) || mongoose.model<MemberDBModel>('Member', memberSchema);

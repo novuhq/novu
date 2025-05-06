@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { HandlebarHelpersEnum } from './handlebarHelpers';
 
 import { TemplateVariableTypeEnum } from '../../types';
@@ -113,9 +114,8 @@ export function getTemplateVariables(bod): IMustacheVariable[] {
   return stringVariables.concat(arrayVariables).concat(boolVariables).concat(pairVariables);
 }
 
-const shouldAddVariable = (variableName): boolean => {
-  const validRegExp = /^[a-zA-Z_][a-zA-Z0-9_-]*?/;
-  const isValid = variableName.match(validRegExp);
+const VARIABLE_REGEX = /^[a-zA-Z_][a-zA-Z0-9_-]*?/;
 
-  return isValid;
+const shouldAddVariable = (variableName: string): boolean => {
+  return VARIABLE_REGEX.test(variableName);
 };

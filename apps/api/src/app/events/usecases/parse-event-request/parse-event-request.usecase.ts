@@ -1,98 +1,103 @@
-import { Injectable, UnprocessableEntityException, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, UnprocessableEntityException } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
+import {
+  ExecuteBridgeRequest,
+  ExecuteBridgeRequestCommand,
+  ExecuteBridgeRequestDto,
+  FeatureFlagsService,
+  Instrument,
+  InstrumentUsecase,
+  IWorkflowDataDto,
+  PinoLogger,
+  StorageHelperService,
+  WorkflowQueueService,
+} from '@novu/application-generic';
+import {
+  CommunityOrganizationRepository,
+  EnvironmentEntity,
+  EnvironmentRepository,
+  NotificationTemplateEntity,
+  NotificationTemplateRepository,
+  OrganizationEntity,
+  TenantEntity,
+  TenantRepository,
+  UserEntity,
+  WorkflowOverrideEntity,
+  WorkflowOverrideRepository,
+} from '@novu/dal';
+import { DiscoverWorkflowOutput, GetActionEnum } from '@novu/framework/internal';
+import {
+  FeatureFlagsKeysEnum,
+  ReservedVariablesMap,
+  TriggerContextTypeEnum,
+  TriggerEventStatusEnum,
+  TriggerRecipientsPayload,
+  WorkflowOriginEnum,
+} from '@novu/shared';
 import { addBreadcrumb } from '@sentry/node';
 import { randomBytes } from 'crypto';
 import { merge } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
-import { ModuleRef } from '@nestjs/core';
-
-import {
-  buildNotificationTemplateIdentifierKey,
-  buildHasNotificationKey,
-  CachedEntity,
-  Instrument,
-  InstrumentUsecase,
-  IWorkflowDataDto,
-  StorageHelperService,
-  WorkflowQueueService,
-  AnalyticsService,
-  GetFeatureFlag,
-  GetFeatureFlagCommand,
-  InvalidateCacheService,
-  ExecuteBridgeRequest,
-  ExecuteBridgeRequestCommand,
-  ExecuteBridgeRequestDto,
-} from '@novu/application-generic';
-import {
-  FeatureFlagsKeysEnum,
-  INVITE_TEAM_MEMBER_NUDGE_PAYLOAD_KEY,
-  ReservedVariablesMap,
-  TriggerContextTypeEnum,
-  TriggerEventStatusEnum,
-  WorkflowOriginEnum,
-} from '@novu/shared';
-import {
-  WorkflowOverrideRepository,
-  TenantEntity,
-  WorkflowOverrideEntity,
-  NotificationTemplateRepository,
-  NotificationTemplateEntity,
-  TenantRepository,
-  NotificationRepository,
-  UserRepository,
-  MemberRepository,
-  EnvironmentRepository,
-  EnvironmentEntity,
-} from '@novu/dal';
-import { Novu } from '@novu/node';
-import { DiscoverWorkflowOutput, GetActionEnum } from '@novu/framework/internal';
-
+import { RecipientSchema, RecipientsSchema } from '../../utils/trigger-recipient-validation';
+import { VerifyPayload, VerifyPayloadCommand } from '../verify-payload';
 import {
   ParseEventRequestBroadcastCommand,
   ParseEventRequestCommand,
   ParseEventRequestMulticastCommand,
 } from './parse-event-request.command';
-import { ApiException } from '../../../shared/exceptions/api.exception';
-import { VerifyPayload, VerifyPayloadCommand } from '../verify-payload';
-
-const LOG_CONTEXT = 'ParseEventRequest';
 
 @Injectable()
 export class ParseEventRequest {
   constructor(
     private notificationTemplateRepository: NotificationTemplateRepository,
-    private notificationRepository: NotificationRepository,
     private environmentRepository: EnvironmentRepository,
-    private userRepository: UserRepository,
-    private memberRepository: MemberRepository,
+    private communityOrganizationRepository: CommunityOrganizationRepository,
     private verifyPayload: VerifyPayload,
     private storageHelperService: StorageHelperService,
     private workflowQueueService: WorkflowQueueService,
     private tenantRepository: TenantRepository,
     private workflowOverrideRepository: WorkflowOverrideRepository,
-    private analyticsService: AnalyticsService,
-    private getFeatureFlag: GetFeatureFlag,
-    private invalidateCacheService: InvalidateCacheService,
     private executeBridgeRequest: ExecuteBridgeRequest,
+    private logger: PinoLogger,
+    private featureFlagService: FeatureFlagsService,
     protected moduleRef: ModuleRef
-  ) {}
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   @InstrumentUsecase()
   public async execute(command: ParseEventRequestCommand) {
     const transactionId = command.transactionId || uuidv4();
 
-    const { environment, statelessWorkflowAllowed } = await this.isStatelessWorkflowAllowed(
-      command.environmentId,
-      command.bridgeUrl
-    );
+    const [environment, organization] = await Promise.all([
+      this.environmentRepository.findOne({ _id: command.environmentId }),
+      this.communityOrganizationRepository.findOne({ _id: command.organizationId }),
+    ]);
 
-    if (environment && statelessWorkflowAllowed) {
+    if (!organization) {
+      throw new BadRequestException('Organization not found');
+    }
+
+    if (!environment) {
+      throw new BadRequestException('Environment not found');
+    }
+
+    const statelessWorkflowAllowed = this.isStatelessWorkflowAllowed(command.bridgeUrl);
+
+    if (statelessWorkflowAllowed) {
       const discoveredWorkflow = await this.queryDiscoverWorkflow(command);
 
       if (!discoveredWorkflow) {
         throw new UnprocessableEntityException('workflow_not_found');
       }
 
-      return await this.dispatchEvent(command, transactionId, discoveredWorkflow);
+      return await this.dispatchEventToWorkflowQueue({
+        command,
+        transactionId,
+        discoveredWorkflow,
+        environment,
+        organization,
+      });
     }
 
     const template = await this.getNotificationTemplateByTriggerIdentifier({
@@ -136,9 +141,6 @@ export class ParseEventRequest {
     const inactiveWorkflowOverride = workflowOverride && !workflowOverride.active;
 
     if (inactiveWorkflowOverride || inactiveWorkflow) {
-      const message = workflowOverride ? 'Workflow is not active by workflow override' : 'Workflow is not active';
-      Logger.log(message, LOG_CONTEXT);
-
       return {
         acknowledged: true,
         status: TriggerEventStatusEnum.NOT_ACTIVE,
@@ -183,9 +185,9 @@ export class ParseEventRequest {
     // eslint-disable-next-line no-param-reassign
     command.payload = merge({}, defaultPayload, command.payload);
 
-    await this.sendInAppNudgeForTeamMemberInvite(command);
+    const result = await this.dispatchEventToWorkflowQueue({ command, transactionId, environment, organization });
 
-    return await this.dispatchEvent(command, transactionId);
+    return result;
   }
 
   private async queryDiscoverWorkflow(command: ParseEventRequestCommand): Promise<DiscoverWorkflowOutput | null> {
@@ -205,19 +207,69 @@ export class ParseEventRequest {
     return discover?.workflows?.find((findWorkflow) => findWorkflow.workflowId === command.identifier) || null;
   }
 
-  private async dispatchEvent(
-    command: ParseEventRequestMulticastCommand | ParseEventRequestBroadcastCommand,
+  private async dispatchEventToWorkflowQueue({
+    command,
     transactionId,
-    discoveredWorkflow?: DiscoverWorkflowOutput | null
-  ) {
-    const jobData: IWorkflowDataDto = {
+    discoveredWorkflow,
+    environment,
+    organization,
+  }: {
+    command: ParseEventRequestMulticastCommand | ParseEventRequestBroadcastCommand;
+    transactionId: string;
+    discoveredWorkflow?: DiscoverWorkflowOutput | null;
+    environment?: EnvironmentEntity;
+    organization?: OrganizationEntity;
+  }) {
+    const commandArgs = {
       ...command,
+    };
+
+    const isDryRun = await this.featureFlagService.getFlag({
+      environment,
+      organization,
+      user: { _id: command.userId } as UserEntity,
+      key: FeatureFlagsKeysEnum.IS_SUBSCRIBER_ID_VALIDATION_DRY_RUN_ENABLED,
+      defaultValue: true,
+    });
+
+    if ('to' in commandArgs) {
+      const { validRecipients, invalidRecipients } = this.parseRecipients(commandArgs.to);
+
+      if (invalidRecipients.length > 0 && isDryRun) {
+        this.logger.warn(
+          `[Dry run] Invalid recipients: ${invalidRecipients.map((recipient) => JSON.stringify(recipient)).join(', ')}`
+        );
+      }
+
+      /**
+       * If all the recipients are invalid, we should return with status INVALID_RECIPIENTS,
+       * otherwise we should continue with the valid recipients.
+       */
+      if (!validRecipients && !isDryRun) {
+        return {
+          acknowledged: true,
+          status: TriggerEventStatusEnum.INVALID_RECIPIENTS,
+          transactionId,
+        };
+      }
+
+      if (!isDryRun && validRecipients) {
+        commandArgs.to = validRecipients as TriggerRecipientsPayload;
+      }
+    }
+
+    const jobData: IWorkflowDataDto = {
+      ...commandArgs,
       actor: command.actor,
       transactionId,
       bridgeWorkflow: discoveredWorkflow ?? undefined,
     };
 
     await this.workflowQueueService.add({ name: transactionId, data: jobData, groupId: command.organizationId });
+    this.logger.info(
+      { ...command, transactionId, discoveredWorkflowId: discoveredWorkflow?.workflowId },
+      'Event dispatched to [Workflow] Queue'
+    );
 
     return {
       acknowledged: true,
@@ -226,31 +278,15 @@ export class ParseEventRequest {
     };
   }
 
-  private async isStatelessWorkflowAllowed(
-    environmentId: string,
-    bridgeUrl: string | undefined
-  ): Promise<{ environment: EnvironmentEntity | null; statelessWorkflowAllowed: boolean }> {
+  private isStatelessWorkflowAllowed(bridgeUrl: string | undefined) {
     if (!bridgeUrl) {
-      return { environment: null, statelessWorkflowAllowed: false };
+      return false;
     }
 
-    const environment = await this.environmentRepository.findOne({ _id: environmentId });
-
-    if (!environment) {
-      throw new UnprocessableEntityException('Environment not found');
-    }
-
-    return { environment, statelessWorkflowAllowed: true };
+    return true;
   }
 
   @Instrument()
-  @CachedEntity({
-    builder: (command: { triggerIdentifier: string; environmentId: string }) =>
-      buildNotificationTemplateIdentifierKey({
-        _environmentId: command.environmentId,
-        templateIdentifier: command.triggerIdentifier,
-      }),
-  })
   private async getNotificationTemplateByTriggerIdentifier(command: {
     triggerIdentifier: string;
     environmentId: string;
@@ -285,7 +321,7 @@ export class ParseEventRequest {
     }
 
     if (invalidKeys.length) {
-      throw new ApiException(`Trigger is missing: ${invalidKeys.join(', ')}`);
+      throw new BadRequestException(`Trigger is missing: ${invalidKeys.join(', ')}`);
     }
   }
 
@@ -309,109 +345,57 @@ export class ParseEventRequest {
     return reservedVariables?.map((reservedVariable) => reservedVariable.type) || [];
   }
 
-  @Instrument()
-  @CachedEntity({
-    builder: (command: ParseEventRequestCommand) =>
-      buildHasNotificationKey({
-        _organizationId: command.organizationId,
-      }),
-  })
-  private async getNotificationCount(command: ParseEventRequestCommand): Promise<number> {
-    return await this.notificationRepository.count(
-      {
-        _organizationId: command.organizationId,
-      },
-      1
-    );
-  }
+  /**
+   * Validates a single Parent item.
+   * @param item - The item to validate
+   * @param invalidValues - Array to collect invalid values
+   * @returns The valid item or null if invalid
+   */
+  private validateItem(item: unknown, invalidValues: unknown[]) {
+    const result = RecipientSchema.safeParse(item);
+    if (result.success) {
+      return result.data;
+    } else {
+      invalidValues.push(item);
 
-  @Instrument()
-  private async sendInAppNudgeForTeamMemberInvite(command: ParseEventRequestCommand): Promise<void> {
-    try {
-      const isEnabled = await this.getFeatureFlag.execute(
-        GetFeatureFlagCommand.create({
-          key: FeatureFlagsKeysEnum.IS_TEAM_MEMBER_INVITE_NUDGE_ENABLED,
-          organizationId: command.organizationId,
-          userId: 'system',
-          environmentId: 'system',
-        })
-      );
-
-      if (!isEnabled) return;
-
-      // check if this is first trigger
-      const notificationCount = await this.getNotificationCount(command);
-
-      if (notificationCount > 0) return;
-
-      /*
-       * After the first trigger, we invalidate the cache to ensure the next event trigger
-       * will update the cache with a count of 1.
-       */
-      this.invalidateCacheService.invalidateByKey({
-        key: buildHasNotificationKey({
-          _organizationId: command.organizationId,
-        }),
-      });
-
-      // check if user is using personal email
-      const user = await this.userRepository.findById(command.userId);
-
-      if (!user) throw new ApiException('User not found');
-
-      if (this.isBlockedEmail(user.email)) return;
-
-      // check if organization has more than 1 member
-      const membersCount = await this.memberRepository.count(
-        {
-          _organizationId: command.organizationId,
-        },
-        2
-      );
-
-      if (membersCount > 1) return;
-
-      Logger.log('No notification found', LOG_CONTEXT);
-
-      if (process.env.NOVU_API_KEY) {
-        if (!command.payload[INVITE_TEAM_MEMBER_NUDGE_PAYLOAD_KEY]) {
-          const novu = new Novu(process.env.NOVU_API_KEY);
-
-          await novu.trigger(process.env.NOVU_INVITE_TEAM_MEMBER_NUDGE_TRIGGER_IDENTIFIER, {
-            to: {
-              subscriberId: command.userId,
-              email: user?.email as string,
-            },
-            payload: {
-              [INVITE_TEAM_MEMBER_NUDGE_PAYLOAD_KEY]: true,
-              webhookUrl: `${process.env.API_ROOT_URL}/v1/invites/webhook`,
-              organizationId: command.organizationId,
-            },
-          });
-
-          this.analyticsService.track('Invite Nudge Sent', command.userId, {
-            _organization: command.organizationId,
-          });
-        }
-      }
-    } catch (error) {
-      Logger.error(error, 'Invite nudge failed', LOG_CONTEXT);
+      return null;
     }
   }
 
-  private isBlockedEmail(email: string): boolean {
-    return BLOCKED_DOMAINS.some((domain) => email.includes(domain));
+  /**
+   * Parses and validates the recipients from the given input.
+   *
+   * The input can be a single recipient or an array of recipients. Each recipient can be:
+   * - A string that matches the `SUBSCRIBER_ID_REGEX`
+   * - An object with a `subscriberId` property that matches the `SUBSCRIBER_ID_REGEX`
+   * - An object with a `topicKey` property that matches the `SUBSCRIBER_ID_REGEX`
+   *
+   * If the input is valid, it returns the parsed data. If the input is an array, it returns an object
+   * containing arrays of valid and invalid values. If the input is a single item, it returns an object
+   * containing the valid item and an array of invalid values.
+   *
+   * @param input - The input to parse and validate. Can be a single recipient or an array of recipients.
+   * @returns The object containing valid and invalid values.
+   */
+  private parseRecipients(input: unknown) {
+    const invalidValues: unknown[] = [];
+
+    // Try to validate the whole input first
+    const parsed = RecipientsSchema.safeParse(input);
+    if (parsed.success) {
+      return { validRecipients: parsed.data, invalidRecipients: [] };
+    }
+
+    // If input is an array, validate each item
+    if (Array.isArray(input)) {
+      const validValues = input.map((item) => this.validateItem(item, invalidValues)).filter(Boolean);
+
+      return { validRecipients: validValues, invalidRecipients: invalidValues };
+    }
+
+    // If input is a single item
+    const validItem = this.validateItem(input, invalidValues);
+
+    return { validRecipients: validItem, invalidRecipients: invalidValues };
   }
 }
-
-const BLOCKED_DOMAINS = [
-  '@gmail',
-  '@outlook',
-  '@yahoo',
-  '@icloud',
-  '@mail',
-  '@hotmail',
-  '@protonmail',
-  '@gmx',
-  '@novu',
-];

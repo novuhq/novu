@@ -1,10 +1,21 @@
+// noinspection ExceptionCaughtLocallyJS
+
 import { expect } from 'chai';
-import axios, { AxiosResponse } from 'axios';
+import axios, { AxiosError, AxiosResponse } from 'axios';
 
 import { UserSession } from '@novu/testing';
 import { TenantRepository } from '@novu/dal';
 
-describe('Create Tenant - /tenants (POST)', function () {
+function assertValidationMessages(e: AxiosError<any, any>, field: string, msg1: string) {
+  if (!(e instanceof AxiosError)) {
+    throw new Error(e);
+  }
+  const messages = e.response?.data.errors[field].messages;
+
+  expect(messages).to.be.an('array').that.includes(msg1);
+}
+
+describe('Create Tenant - /tenants (POST) #novu-v0', function () {
   let session: UserSession;
   const tenantRepository = new TenantRepository();
 
@@ -64,10 +75,10 @@ describe('Create Tenant - /tenants (POST)', function () {
         session,
       });
 
-      throw new Error('');
+      throw new Error('Should Not Succeed In the call');
     } catch (e) {
-      expect(e.response.data.message).to.be.an('array').that.includes('identifier should not be empty');
-      expect(e.response.data.message).to.be.an('array').that.includes('identifier must be a string');
+      assertValidationMessages(e, 'identifier', 'identifier should not be empty');
+      assertValidationMessages(e, 'identifier', 'identifier must be a string');
     }
   });
 });

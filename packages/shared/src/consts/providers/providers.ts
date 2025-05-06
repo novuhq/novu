@@ -1,6 +1,6 @@
 import { IProviderConfig } from './provider.interface';
 import { chatProviders, emailProviders, smsProviders, pushProviders, inAppProviders } from './channels';
-import { InAppProviderIdEnum, EmailProviderIdEnum, ProvidersIdEnum, SmsProviderIdEnum } from './provider.enum';
+import { InAppProviderIdEnum, EmailProviderIdEnum, ProvidersIdEnum, SmsProviderIdEnum } from '../../types';
 
 export { chatProviders, emailProviders, smsProviders, pushProviders, inAppProviders } from './channels';
 

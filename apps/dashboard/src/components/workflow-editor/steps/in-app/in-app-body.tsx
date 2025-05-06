@@ -1,47 +1,47 @@
-import { EditorView } from '@uiw/react-codemirror';
-import { useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { Editor } from '@/components/primitives/editor';
+import { ControlInput } from '@/components/primitives/control-input';
 import { FormControl, FormField, FormItem, FormMessage } from '@/components/primitives/form/form';
-import { InputField } from '@/components/primitives/input';
-import { completions } from '@/utils/liquid-autocomplete';
-import { parseStepVariablesToLiquidVariables } from '@/utils/parseStepVariablesToLiquidVariables';
-import { capitalize } from '@/utils/string';
-import { autocompletion } from '@codemirror/autocomplete';
-import { useStepEditorContext } from '../hooks';
+import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
+import { useParseVariables } from '@/hooks/use-parse-variables';
+import { capitalize, containsHTMLEntities, containsVariables } from '@/utils/string';
+import { InputRoot } from '../../../primitives/input';
 
 const bodyKey = 'body';
 
 export const InAppBody = () => {
-  const { control } = useFormContext();
-  const { step } = useStepEditorContext();
-  const variables = useMemo(() => (step ? parseStepVariablesToLiquidVariables(step.variables) : []), [step]);
+  const { control, getValues } = useFormContext();
+  const { step, digestStepBeforeCurrent } = useWorkflow();
+  const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.stepId);
 
   return (
     <FormField
       control={control}
       name={bodyKey}
-      render={({ field }) => (
+      render={({ field, fieldState }) => (
         <FormItem className="w-full">
           <FormControl>
-            <InputField className="h-36 px-1">
-              <Editor
-                fontFamily="inherit"
+            <InputRoot hasError={!!fieldState.error}>
+              <ControlInput
+                className="min-h-[7rem]"
+                indentWithTab={false}
                 placeholder={capitalize(field.name)}
                 id={field.name}
-                extensions={[autocompletion({ override: [completions(variables)] }), EditorView.lineWrapping]}
-                basicSetup={{
-                  defaultKeymap: true,
-                }}
-                ref={field.ref}
                 value={field.value}
-                onChange={(val) => field.onChange(val)}
-                height="100%"
+                onChange={field.onChange}
+                variables={variables}
+                isAllowedVariable={isAllowedVariable}
+                multiline
               />
-            </InputField>
+            </InputRoot>
           </FormControl>
-          <FormMessage>{`Type {{ for variables, or wrap text in ** for bold.`}</FormMessage>
+          <FormMessage>
+            {containsHTMLEntities(field.value) && !getValues('disableOutputSanitization')
+              ? 'HTML entities detected. Consider disabling content sanitization for proper rendering'
+              : field.value.length > 2 && !containsVariables(field.value)
+                ? `Type {{ for variables, or wrap text in ** for bold.`
+                : ''}
+          </FormMessage>
         </FormItem>
       )}
     />

@@ -6,7 +6,7 @@ import { ModuleRef } from '@nestjs/core';
 import { IEmailBlock, CommunityOrganizationRepository } from '@novu/dal';
 
 import { CompileTemplate, CompileTemplateBase } from '../compile-template';
-import { ApiException } from '../../utils/exceptions';
+import { BadRequestException } from '@nestjs/common';
 import { CompileEmailTemplateCommand } from './compile-email-template.command';
 import { LayoutDto, GetLayoutCommand, GetLayoutUseCase } from '../get-layout';
 import { VerifyPayloadService } from '../../services';
@@ -19,7 +19,7 @@ export class CompileEmailTemplate extends CompileTemplateBase {
     protected communityOrganizationRepository: CommunityOrganizationRepository,
     private getLayoutUsecase: GetLayoutUseCase,
     private getNovuLayoutUsecase: GetNovuLayout,
-    protected moduleRef: ModuleRef,
+    protected moduleRef: ModuleRef
   ) {
     super(communityOrganizationRepository, moduleRef);
   }
@@ -27,7 +27,7 @@ export class CompileEmailTemplate extends CompileTemplateBase {
   public async execute(
     command: CompileEmailTemplateCommand,
     // we need i18nInstance outside the command on order to avoid command serialization on it.
-    i18nInstance?: any,
+    i18nInstance?: any
   ) {
     const verifyPayloadService = new VerifyPayloadService();
     const organization = await this.getOrganization(command.organizationId);
@@ -43,7 +43,7 @@ export class CompileEmailTemplate extends CompileTemplateBase {
           layoutId: command.layoutId,
           environmentId: command.environmentId,
           organizationId: command.organizationId,
-        }),
+        })
       );
 
       layoutContent = layout.content;
@@ -52,10 +52,7 @@ export class CompileEmailTemplate extends CompileTemplateBase {
     }
 
     const layoutVariables = layout?.variables || [];
-    const defaultPayload = verifyPayloadService.verifyPayload(
-      layoutVariables,
-      command.payload,
-    );
+    const defaultPayload = verifyPayloadService.verifyPayload(layoutVariables, command.payload);
 
     let helperBlocksContent: string | null = null;
     if (isEditorMode) {
@@ -81,45 +78,25 @@ export class CompileEmailTemplate extends CompileTemplateBase {
     };
 
     try {
-      subject = await this.renderContent(
-        command.subject,
-        payload,
-        i18nInstance,
-      );
+      subject = await this.renderContent(command.subject, payload, i18nInstance);
 
       if (preheader) {
         preheader = await this.renderContent(preheader, payload, i18nInstance);
       }
 
       if (command.senderName) {
-        senderName = await this.renderContent(
-          command.senderName,
-          payload,
-          i18nInstance,
-        );
+        senderName = await this.renderContent(command.senderName, payload, i18nInstance);
       }
     } catch (e: any) {
-      throw new ApiException(
-        e?.message || `Email subject message content could not be generated`,
-      );
+      throw new BadRequestException(e?.message || `Email subject message content could not be generated`);
     }
 
-    const customLayout = CompileEmailTemplate.addPreheader(
-      layoutContent as string,
-    );
+    const customLayout = CompileEmailTemplate.addPreheader(layoutContent as string);
 
     if (isEditorMode) {
       for (const block of content as IEmailBlock[]) {
-        block.content = await this.renderContent(
-          block.content,
-          payload,
-          i18nInstance,
-        );
-        block.url = await this.renderContent(
-          block.url || '',
-          payload,
-          i18nInstance,
-        );
+        block.content = await this.renderContent(block.content, payload, i18nInstance);
+        block.url = await this.renderContent(block.url || '', payload, i18nInstance);
       }
     }
 
@@ -133,12 +110,10 @@ export class CompileEmailTemplate extends CompileTemplateBase {
 
     const body = await this.compileTemplate.execute(
       {
-        template: !isEditorMode
-          ? (content as string)
-          : (helperBlocksContent as string),
+        template: !isEditorMode ? (content as string) : (helperBlocksContent as string),
         data: templateVariables,
       },
-      i18nInstance,
+      i18nInstance
     );
 
     templateVariables.body = body as string;
@@ -149,18 +124,14 @@ export class CompileEmailTemplate extends CompileTemplateBase {
             template: customLayout,
             data: templateVariables,
           },
-          i18nInstance,
+          i18nInstance
         )
       : body;
 
     return { html, content, subject, senderName };
   }
 
-  private async renderContent(
-    content: string,
-    payload: Record<string, unknown>,
-    i18nInstance: any,
-  ) {
+  private async renderContent(content: string, payload: Record<string, unknown>, i18nInstance: any) {
     const renderedContent = await this.compileTemplate.execute(
       {
         template: content,
@@ -168,7 +139,7 @@ export class CompileEmailTemplate extends CompileTemplateBase {
           ...payload,
         },
       },
-      i18nInstance,
+      i18nInstance
     );
 
     return renderedContent?.trim() || '';
@@ -184,7 +155,7 @@ export class CompileEmailTemplate extends CompileTemplateBase {
             {{preheader}}
             &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;
           </div>
-        {{/if}}`,
+        {{/if}}`
     );
   }
 

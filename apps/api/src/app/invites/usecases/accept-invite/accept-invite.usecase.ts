@@ -1,11 +1,10 @@
-import { Injectable, Logger, NotFoundException, Scope } from '@nestjs/common';
+import { Injectable, NotFoundException, Scope, BadRequestException } from '@nestjs/common';
 
-import { MemberEntity, OrganizationRepository, UserEntity, MemberRepository, UserRepository } from '@novu/dal';
+import { MemberEntity, MemberRepository, OrganizationRepository, UserEntity, UserRepository } from '@novu/dal';
 import { MemberStatusEnum } from '@novu/shared';
-import { Novu } from '@novu/node';
-import { AuthService } from '@novu/application-generic';
-
-import { ApiException } from '../../../shared/exceptions/api.exception';
+import { Novu } from '@novu/api';
+import { PinoLogger } from '@novu/application-generic';
+import { AuthService } from '../../../auth/services/auth.service';
 import { AcceptInviteCommand } from './accept-invite.command';
 import { capitalize } from '../../../shared/services/helper/helper.service';
 
@@ -19,13 +18,16 @@ export class AcceptInvite {
     private organizationRepository: OrganizationRepository,
     private memberRepository: MemberRepository,
     private userRepository: UserRepository,
-    private authService: AuthService
-  ) {}
+    private authService: AuthService,
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   async execute(command: AcceptInviteCommand): Promise<string> {
     const member = await this.memberRepository.findByInviteToken(command.token);
-    if (!member) throw new ApiException('No organization found');
-    if (!member.invite) throw new ApiException('No active invite found for user');
+    if (!member) throw new BadRequestException('No organization found');
+    if (!member.invite) throw new BadRequestException('No active invite found for user');
 
     const organization = await this.organizationRepository.findById(member._organizationId);
     if (!organization) throw new NotFoundException('No organization found');
@@ -35,7 +37,7 @@ export class AcceptInvite {
 
     this.organizationId = organization._id;
 
-    if (member.memberStatus !== MemberStatusEnum.INVITED) throw new ApiException('Token expired');
+    if (member.memberStatus !== MemberStatusEnum.INVITED) throw new BadRequestException('Token expired');
 
     const inviter = await this.userRepository.findById(member.invite._inviterId);
     if (!inviter) throw new NotFoundException('No inviter entity found');
@@ -46,7 +48,7 @@ export class AcceptInvite {
       answerDate: new Date(),
     });
 
-    this.sendInviterAcceptedEmail(inviter, member);
+    await this.sendInviterAcceptedEmail(inviter, member);
 
     return this.authService.generateUserToken(user);
   }
@@ -56,14 +58,17 @@ export class AcceptInvite {
 
     try {
       if ((process.env.NODE_ENV === 'dev' || process.env.NODE_ENV === 'production') && process.env.NOVU_API_KEY) {
-        const novu = new Novu(process.env.NOVU_API_KEY);
+        const novu = new Novu({ security: { secretKey: process.env.NOVU_API_KEY } });
 
-        await novu.trigger(process.env.NOVU_TEMPLATEID_INVITE_ACCEPTED || 'invite-accepted-dEQAsKD1E', {
-          to: {
-            subscriberId: inviter._id,
-            firstName: capitalize(inviter.firstName || ''),
-            email: inviter.email || '',
-          },
+        await novu.trigger({
+          workflowId: process.env.NOVU_TEMPLATEID_INVITE_ACCEPTED || 'invite-accepted-dEQAsKD1E',
+          to: [
+            {
+              subscriberId: inviter._id,
+              firstName: capitalize(inviter.firstName || ''),
+              email: inviter.email || '',
+            },
+          ],
           payload: {
             invitedUserEmail: member.invite.email,
             firstName: capitalize(inviter.firstName || ''),
@@ -72,7 +77,7 @@ export class AcceptInvite {
         });
       }
     } catch (e) {
-      Logger.error(e.message, e.stack, 'Accept inviter send email');
+      this.logger.error({ message: e.message, stack: e.stack }, 'Accept inviter send email');
     }
   }
 }

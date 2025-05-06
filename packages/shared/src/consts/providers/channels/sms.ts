@@ -1,41 +1,39 @@
-import { IProviderConfig } from '../provider.interface';
+import { ChannelTypeEnum, SmsProviderIdEnum } from '../../../types';
+import { UTM_CAMPAIGN_QUERY_PARAM } from '../../../ui';
 import {
-  gupshupConfig,
-  nexmoConfig,
-  plivoConfig,
-  sms77Config,
-  snsConfig,
-  telnyxConfig,
-  twilioConfig,
-  firetextConfig,
-  infobipSMSConfig,
+  africasTalkingConfig,
+  afroSmsConfig,
+  azureSmsConfig,
+  bandwidthConfig,
+  brevoSmsConfig,
+  bulkSmsConfig,
   burstSmsConfig,
   clickatellConfig,
+  clickSendConfig,
+  eazySmsConfig,
+  firetextConfig,
   fortySixElksConfig,
+  genericSmsConfig,
+  gupshupConfig,
+  infobipSMSConfig,
+  iSendSmsConfig,
   kannelConfig,
   maqsamConfig,
-  smsCentralConfig,
-  termiiConfig,
-  africasTalkingConfig,
-  sendchampConfig,
-  genericSmsConfig,
-  clickSendConfig,
-  simpleTextingConfig,
-  bandwidthConfig,
   messagebirdConfig,
-  azureSmsConfig,
-  bulkSmsConfig,
-  iSendSmsConfig,
-  ringCentralConfig,
-  brevoSmsConfig,
-  whatsAppBusinessConfig,
-  eazySmsConfig,
   mobishastraConfig,
+  nexmoConfig,
+  plivoConfig,
+  ringCentralConfig,
+  sendchampConfig,
+  simpleTextingConfig,
+  sms77Config,
+  smsCentralConfig,
+  snsConfig,
+  telnyxConfig,
+  termiiConfig,
+  twilioConfig,
 } from '../credentials';
-import { ChatProviderIdEnum, SmsProviderIdEnum } from '../provider.enum';
-
-import { ChannelTypeEnum } from '../../../types';
-import { UTM_CAMPAIGN_QUERY_PARAM } from '../../../ui';
+import { IProviderConfig } from '../provider.interface';
 
 export const smsProviders: IProviderConfig[] = [
   {
@@ -289,5 +287,13 @@ export const smsProviders: IProviderConfig[] = [
     credentials: mobishastraConfig,
     docReference: 'https://telkosh.com/mobishastra/',
     logoFileName: { light: 'mobishastra.png', dark: 'mobishastra.png' },
+  },
+  {
+    id: SmsProviderIdEnum.AfroSms,
+    displayName: 'Afro Message',
+    channel: ChannelTypeEnum.SMS,
+    credentials: afroSmsConfig,
+    docReference: 'https://afromessage.com/developers',
+    logoFileName: { light: 'afro-sms.png', dark: 'afro-sms.png' },
   },
 ];

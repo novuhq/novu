@@ -3,7 +3,7 @@ Hi, I'm Jarvis 🤖
 I'm a bot built to help you with your contribution to Novu.
 I will add instructions and guides on how to run the subset of the Novu platform associated to this issue and make your first contribution.
 
-This issue was tagged as related to `@novu/api` and the related code is located at the `apps/api` folder, here is how I can help you:
+This issue was tagged as related to `@novu/api-service` and the related code is located at the `apps/api` folder, here is how I can help you:
 
 <details>
   <summary>First time contributing to Novu?</summary>
@@ -17,7 +17,7 @@ If that's the first time you want to contribute to Novu here are a few simple st
 </details>
 
 <details>
-  <summary>Run and test `@novu/api` locally</summary>
+  <summary>Run and test `@novu/api-service` locally</summary>
 
 ### Run API in watch mode
 

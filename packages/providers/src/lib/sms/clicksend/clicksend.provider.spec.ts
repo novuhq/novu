@@ -33,10 +33,9 @@ test('should trigger ClicksendSmsProvider library correctly', async () => {
     { messages: [{ body: 'test message', to: '+0451111111' }] },
     {
       headers: {
-        Authorization:
-          'Basic PHlvdXItY2xpY2tzZW5kLXVzZXJuYW1lPjo8eW91ci1jbGlja3NlbmQtQVBJPg==',
+        Authorization: 'Basic PHlvdXItY2xpY2tzZW5kLXVzZXJuYW1lPjo8eW91ci1jbGlja3NlbmQtQVBJPg==',
       },
-    },
+    }
   );
 });
 
@@ -70,7 +69,7 @@ test('should trigger ClicksendSmsProvider library correctly with _passthrough', 
           to: '+1451111111',
         },
       },
-    },
+    }
   );
 
   expect(spy).toHaveBeenCalled();
@@ -80,9 +79,8 @@ test('should trigger ClicksendSmsProvider library correctly with _passthrough', 
     { messages: [{ body: 'test message', to: '+1451111111' }] },
     {
       headers: {
-        Authorization:
-          'Basic PHlvdXItY2xpY2tzZW5kLXVzZXJuYW1lPjo8eW91ci1jbGlja3NlbmQtQVBJPg==',
+        Authorization: 'Basic PHlvdXItY2xpY2tzZW5kLXVzZXJuYW1lPjo8eW91ci1jbGlja3NlbmQtQVBJPg==',
       },
-    },
+    }
   );
 });

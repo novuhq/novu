@@ -1,6 +1,5 @@
 import { ActionTypeEnum, ChannelTypeEnum } from '../../types';
 import { SubscriberDto } from '../subscriber';
-import { ContentIssue } from './workflow-commons-fields';
 
 export class RenderOutput {}
 
@@ -44,7 +43,7 @@ class DigestRegularOutput {
   amount: number;
   unit: TimeUnitEnum;
   digestKey?: string;
-  lookBackWindow: {
+  lookBackWindow?: {
     amount: number;
     unit: TimeUnitEnum;
   };
@@ -114,8 +113,7 @@ export class PreviewPayload {
 
 export class GeneratePreviewResponseDto {
   previewPayloadExample: PreviewPayload;
-  issues: Record<string, ContentIssue[]>;
-  result?:
+  result:
     | {
         type: ChannelTypeEnum.EMAIL;
         preview: EmailRenderOutput;

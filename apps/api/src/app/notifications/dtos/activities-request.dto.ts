@@ -1,46 +1,93 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import { IsOptional, IsInt, Max, Min } from 'class-validator';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import { ChannelTypeEnum } from '@novu/shared';
 
 export class ActivitiesRequestDto {
-  @ApiProperty({
-    enum: ChannelTypeEnum,
+  @ApiPropertyOptional({
+    enum: [...Object.values(ChannelTypeEnum)],
+    enumName: 'ChannelTypeEnum',
     isArray: true,
+    description: 'Array of channel types',
   })
-  channels: ChannelTypeEnum[] | ChannelTypeEnum;
+  @IsOptional()
+  channels?: ChannelTypeEnum[] | ChannelTypeEnum;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     type: String,
     isArray: true,
+    description: 'Array of template IDs or a single template ID',
   })
-  templates: string[] | string;
+  @IsOptional()
+  templates?: string[] | string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     type: String,
     isArray: true,
+    description: 'Array of email addresses or a single email address',
   })
-  emails: string | string[];
+  @IsOptional()
+  emails?: string | string[];
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     type: String,
     deprecated: true,
+    description: 'Search term (deprecated)',
   })
-  search: string;
+  @IsOptional()
+  search?: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     type: String,
     isArray: true,
+    description: 'Array of subscriber IDs or a single subscriber ID',
   })
-  subscriberIds: string | string[];
+  @IsOptional()
+  subscriberIds?: string | string[];
 
   @ApiPropertyOptional({
     type: Number,
-    required: false,
+    default: 0,
+    description: 'Page number for pagination',
   })
-  page?: number = 0;
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  page: number = 0;
+
+  @ApiPropertyOptional({
+    type: Number,
+    default: 10,
+    minimum: 1,
+    maximum: 50,
+    description: 'Limit for pagination',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(50)
+  limit: number = 10;
 
   @ApiPropertyOptional({
     type: String,
-    required: false,
+    description: 'Transaction ID for filtering',
   })
-  transactionId: string;
+  @IsOptional()
+  transactionId?: string;
+
+  @ApiPropertyOptional({
+    type: String,
+    description: 'Date filter for records after this timestamp. Defaults to earliest date allowed by subscription plan',
+  })
+  @IsOptional()
+  after?: string;
+
+  @ApiPropertyOptional({
+    type: String,
+    description: 'Date filter for records before this timestamp. Defaults to current time of request (now)',
+  })
+  @IsOptional()
+  before?: string;
 }

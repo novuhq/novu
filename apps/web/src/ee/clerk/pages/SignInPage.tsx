@@ -1,13 +1,11 @@
-import { SignIn } from '@clerk/clerk-react';
-import { PageMeta } from '@novu/design-system';
-import AuthLayout from '../../../components/layout/components/AuthLayout';
-import { ROUTES } from '../../../constants/routes';
+import { useEffect } from 'react';
+
+import { NEW_DASHBOARD_URL } from '../../../config';
 
 export default function SignInPage() {
-  return (
-    <AuthLayout>
-      <PageMeta title="Sign in" />
-      <SignIn path={ROUTES.AUTH_LOGIN} signUpUrl={ROUTES.AUTH_SIGNUP} />
-    </AuthLayout>
-  );
+  useEffect(() => {
+    window.location.href = `${NEW_DASHBOARD_URL}/auth/sign-in`;
+  }, []);
+
+  return null;
 }
