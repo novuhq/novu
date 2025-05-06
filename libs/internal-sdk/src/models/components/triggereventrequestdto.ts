@@ -4,9 +4,18 @@
 
 import * as z from "zod";
 import { remap as remap$ } from "../../lib/primitives.js";
-import { safeParse } from "../../lib/schemas.js";
+import {
+  collectExtraKeys as collectExtraKeys$,
+  safeParse,
+} from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
+import {
+  StepsOverrides,
+  StepsOverrides$inboundSchema,
+  StepsOverrides$Outbound,
+  StepsOverrides$outboundSchema,
+} from "./stepsoverrides.js";
 import {
   SubscriberPayloadDto,
   SubscriberPayloadDto$inboundSchema,
@@ -25,6 +34,21 @@ import {
   TopicPayloadDto$Outbound,
   TopicPayloadDto$outboundSchema,
 } from "./topicpayloaddto.js";
+
+/**
+ * This could be used to override provider specific configurations
+ */
+export type Overrides = {
+  /**
+   * This could be used to override provider specific configurations
+   */
+  steps?: { [k: string]: StepsOverrides } | undefined;
+  /**
+   * Overrides the provider configuration for the entire workflow and all steps
+   */
+  providers?: { [k: string]: { [k: string]: any } } | undefined;
+  additionalProperties?: { [k: string]: { [k: string]: any } };
+};
 
 export type One = TopicPayloadDto | SubscriberPayloadDto | string;
 
@@ -69,7 +93,7 @@ export type TriggerEventRequestDto = {
   /**
    * This could be used to override provider specific configurations
    */
-  overrides?: { [k: string]: { [k: string]: any } } | undefined;
+  overrides?: Overrides | undefined;
   /**
    * The recipients list of people who will receive the notification.
    */
@@ -97,6 +121,72 @@ export type TriggerEventRequestDto = {
    */
   tenant?: TenantPayloadDto | string | undefined;
 };
+
+/** @internal */
+export const Overrides$inboundSchema: z.ZodType<
+  Overrides,
+  z.ZodTypeDef,
+  unknown
+> = collectExtraKeys$(
+  z.object({
+    steps: z.record(StepsOverrides$inboundSchema).optional(),
+    providers: z.record(z.record(z.any())).optional(),
+  }).catchall(z.record(z.any())),
+  "additionalProperties",
+  true,
+);
+
+/** @internal */
+export type Overrides$Outbound = {
+  steps?: { [k: string]: StepsOverrides$Outbound } | undefined;
+  providers?: { [k: string]: { [k: string]: any } } | undefined;
+  [additionalProperties: string]: unknown;
+};
+
+/** @internal */
+export const Overrides$outboundSchema: z.ZodType<
+  Overrides$Outbound,
+  z.ZodTypeDef,
+  Overrides
+> = z.object({
+  steps: z.record(StepsOverrides$outboundSchema).optional(),
+  providers: z.record(z.record(z.any())).optional(),
+  additionalProperties: z.record(z.record(z.any())),
+}).transform((v) => {
+  return {
+    ...v.additionalProperties,
+    ...remap$(v, {
+      additionalProperties: null,
+    }),
+  };
+});
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace Overrides$ {
+  /** @deprecated use `Overrides$inboundSchema` instead. */
+  export const inboundSchema = Overrides$inboundSchema;
+  /** @deprecated use `Overrides$outboundSchema` instead. */
+  export const outboundSchema = Overrides$outboundSchema;
+  /** @deprecated use `Overrides$Outbound` instead. */
+  export type Outbound = Overrides$Outbound;
+}
+
+export function overridesToJSON(overrides: Overrides): string {
+  return JSON.stringify(Overrides$outboundSchema.parse(overrides));
+}
+
+export function overridesFromJSON(
+  jsonString: string,
+): SafeParseResult<Overrides, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => Overrides$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'Overrides' from JSON`,
+  );
+}
 
 /** @internal */
 export const One$inboundSchema: z.ZodType<One, z.ZodTypeDef, unknown> = z.union(
@@ -301,7 +391,7 @@ export const TriggerEventRequestDto$inboundSchema: z.ZodType<
 > = z.object({
   name: z.string(),
   payload: z.record(z.any()).optional(),
-  overrides: z.record(z.record(z.any())).optional(),
+  overrides: z.lazy(() => Overrides$inboundSchema).optional(),
   to: z.union([
     TopicPayloadDto$inboundSchema,
     SubscriberPayloadDto$inboundSchema,
@@ -327,7 +417,7 @@ export const TriggerEventRequestDto$inboundSchema: z.ZodType<
 export type TriggerEventRequestDto$Outbound = {
   name: string;
   payload?: { [k: string]: any } | undefined;
-  overrides?: { [k: string]: { [k: string]: any } } | undefined;
+  overrides?: Overrides$Outbound | undefined;
   to:
     | TopicPayloadDto$Outbound
     | SubscriberPayloadDto$Outbound
@@ -346,7 +436,7 @@ export const TriggerEventRequestDto$outboundSchema: z.ZodType<
 > = z.object({
   workflowId: z.string(),
   payload: z.record(z.any()).optional(),
-  overrides: z.record(z.record(z.any())).optional(),
+  overrides: z.lazy(() => Overrides$outboundSchema).optional(),
   to: z.union([
     TopicPayloadDto$outboundSchema,
     SubscriberPayloadDto$outboundSchema,

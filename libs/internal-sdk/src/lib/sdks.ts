@@ -46,12 +46,14 @@ export type RequestOptions = {
    */
   serverURL?: string | URL;
   /**
+   * @deprecated `fetchOptions` has been flattened into `RequestOptions`.
+   *
    * Sets various request options on the `fetch` call made by an SDK method.
    *
    * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/Request/Request#options|Request}
    */
   fetchOptions?: Omit<RequestInit, "method" | "body">;
-};
+} & Omit<RequestInit, "method" | "body">;
 
 type RequestConfig = {
   method: string;
@@ -168,7 +170,9 @@ export class ClientSDK {
     cookie = cookie.startsWith("; ") ? cookie.slice(2) : cookie;
     headers.set("cookie", cookie);
 
-    const userHeaders = new Headers(options?.fetchOptions?.headers);
+    const userHeaders = new Headers(
+      options?.headers ?? options?.fetchOptions?.headers,
+    );
     for (const [k, v] of userHeaders) {
       headers.set(k, v);
     }
@@ -179,20 +183,16 @@ export class ClientSDK {
       headers.set(conf.uaHeader ?? "user-agent", SDK_METADATA.userAgent);
     }
 
-    let fetchOptions = options?.fetchOptions;
+    const fetchOptions: Omit<RequestInit, "method" | "body"> = {
+      ...options?.fetchOptions,
+      ...options,
+    };
     if (!fetchOptions?.signal && conf.timeoutMs && conf.timeoutMs > 0) {
       const timeoutSignal = AbortSignal.timeout(conf.timeoutMs);
-      if (!fetchOptions) {
-        fetchOptions = { signal: timeoutSignal };
-      } else {
-        fetchOptions.signal = timeoutSignal;
-      }
+      fetchOptions.signal = timeoutSignal;
     }
 
     if (conf.body instanceof ReadableStream) {
-      if (!fetchOptions) {
-        fetchOptions = {};
-      }
       Object.assign(fetchOptions, { duplex: "half" });
     }
 
