@@ -440,7 +440,12 @@ export class SendMessagePush extends SendMessageBase {
         overrides,
         subscriber,
         step,
-        bridgeProviderData,
+        bridgeProviderData: this.combineOverrides(
+          command.bridgeData,
+          command.overrides,
+          command.step.stepId,
+          integration.providerId
+        ),
       });
 
       await this.createExecutionDetails.execute(

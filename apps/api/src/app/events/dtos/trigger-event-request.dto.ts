@@ -2,9 +2,7 @@ import { IsDefined, IsObject, IsOptional, IsString, ValidateIf, ValidateNested }
 import { Type } from 'class-transformer';
 import { ApiExtraModels, ApiHideProperty, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
 import {
-  EmailProviderIdEnum,
   ProvidersIdEnum,
-  ProvidersIdEnumConst,
   TriggerRecipientsPayload,
   TriggerRecipientsTypeEnum,
   TriggerRecipientSubscriber,
