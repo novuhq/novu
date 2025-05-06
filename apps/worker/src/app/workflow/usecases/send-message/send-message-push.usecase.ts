@@ -327,7 +327,9 @@ export class SendMessagePush extends SendMessageBase {
   }
 
   /**
-   * Checks if specific overrides keys exist based on the delivery provider
+   * Checks if specific overrides keys exist based on the delivery provider.
+   * This solution is not ideal, as we expose provider related concerns in the usecase layer.
+   * We will have to revisit this once we have a more flexible way to handle overrides and push providers.
    */
   private hasProviderSpecificOverrides(providerId: PushProviderIdEnum, overrides: Record<string, unknown>): boolean {
     if (!overrides) return false;
@@ -335,7 +337,6 @@ export class SendMessagePush extends SendMessageBase {
     switch (providerId) {
       case PushProviderIdEnum.FCM:
         return 'tokens' in overrides || 'topic' in overrides;
-      // Add cases for other providers as needed
       default:
         return false;
     }
