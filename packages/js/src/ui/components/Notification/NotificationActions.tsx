@@ -318,6 +318,8 @@ export const SnoozeButton = (props: { notification: Notification }) => {
 
 // Helper function to render the appropriate actions based on notification state
 export const renderNotificationActions = (notification: Notification, status: () => NotificationStatus) => {
+  const { isSnoozeEnabled } = useInboxContext();
+
   // Handle snoozed state - only show unsnooze
   if (notification.isSnoozed) {
     return <UnsnoozeButton notification={notification} />;
@@ -337,7 +339,7 @@ export const renderNotificationActions = (notification: Notification, status: ()
         ) : (
           <ReadButton notification={notification} />
         ))}
-      <SnoozeButton notification={notification} />
+      {isSnoozeEnabled() && <SnoozeButton notification={notification} />}
       <ArchiveButton notification={notification} />
     </>
   );

@@ -1,6 +1,6 @@
 import { For, Show } from 'solid-js';
 import { JSX } from 'solid-js/jsx-runtime';
-import { StringLocalizationKey, useLocalization } from '../../../context';
+import { StringLocalizationKey, useInboxContext, useLocalization } from '../../../context';
 import { cn, useStyle } from '../../../helpers';
 import { Check, MarkAsArchived, MarkAsUnread, UnreadRead } from '../../../icons';
 import { Snooze } from '../../../icons/Snooze';
@@ -31,8 +31,14 @@ export const StatusOptions = (props: {
   setStatus: (status: NotificationStatus) => void;
   status: NotificationStatus;
 }) => {
+  const { isSnoozeEnabled } = useInboxContext();
+
+  const filteredCases = () => {
+    return cases.filter((c) => c.status !== NotificationStatus.SNOOZED || isSnoozeEnabled());
+  };
+
   return (
-    <For each={cases}>
+    <For each={filteredCases()}>
       {(c) => (
         <StatusItem
           localizationKey={notificationStatusOptionsLocalizationKeys[c.status]}
