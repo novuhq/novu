@@ -176,12 +176,7 @@ export class SendMessagePush extends SendMessageBase {
         continue;
       }
 
-      // Find provider-specific overrides
-      const providerOverride = pushProviderOverrides.find(
-        (override) => override.providerId === (integration.providerId as PushProviderIdEnum)
-      );
-
-      const overrides = providerOverride?.overrides || {};
+      const overrides = command.overrides[integration.providerId] || {};
       const target = (overrides as { deviceTokens?: string[] }).deviceTokens || deviceTokens;
 
       await this.sendSelectedIntegrationExecution(command.job, integration);
@@ -284,7 +279,6 @@ export class SendMessagePush extends SendMessageBase {
 
     const result: IPushProviderOverride[] = [];
 
-    // Extract from providers
     if (overrides.providers) {
       for (const providerId of Object.keys(overrides.providers)) {
         if (this.pushProviderIds.includes(providerId as PushProviderIdEnum)) {
@@ -347,7 +341,7 @@ export class SendMessagePush extends SendMessageBase {
    * that contain provider-specific credential keys
    */
   private filterProvidersWithCredentialOverrides(providerOverrides: IPushProviderOverride[]): IPushProviderOverride[] {
-    if (!providerOverrides.length) return [];
+    if (!providerOverrides?.length) return [];
 
     return providerOverrides.filter((override) =>
       this.hasProviderSpecificOverrides(override.providerId, override.overrides)
@@ -558,7 +552,6 @@ export class SendMessagePush extends SendMessageBase {
 
       if (!credentials) continue;
 
-      // Fetch the integration based on providerId
       const integration = await this.selectIntegration.execute({
         organizationId: command.organizationId,
         environmentId: command.environmentId,
@@ -589,7 +582,7 @@ export class SendMessagePush extends SendMessageBase {
     deviceTokens?: string[];
     topic?: string;
   } | null {
-    if (!overrides) return {};
+    if (!overrides) return null;
 
     switch (providerId) {
       case PushProviderIdEnum.FCM:
