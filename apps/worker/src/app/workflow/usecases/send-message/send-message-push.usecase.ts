@@ -149,16 +149,22 @@ export class SendMessagePush extends SendMessageBase {
         continue;
       }
 
+      const bridgeProviderData = this.combineOverrides(
+        command.bridgeData,
+        command.overrides,
+        command.step.stepId,
+        integration.providerId
+      );
+
       // We avoid to send a message if subscriber has not an integration or if the subscriber has no device tokens for said integration
       if (!deviceTokens || !integration || isChannelMissingDeviceTokens) {
         integrationsWithErrors += 1;
         continue;
       }
-
-      await this.sendSelectedIntegrationExecution(command.job, integration);
-
       const overrides = command.overrides[integration.providerId] || {};
       const target = (overrides as { deviceTokens?: string[] }).deviceTokens || deviceTokens;
+
+      await this.sendSelectedIntegrationExecution(command.job, integration);
 
       const message = await this.createMessage(command, integration, title, content, target, overrides);
 
@@ -172,7 +178,8 @@ export class SendMessagePush extends SendMessageBase {
           title,
           content,
           overrides,
-          stepData
+          stepData,
+          bridgeProviderData
         );
 
         if (!result.success) {
@@ -287,7 +294,8 @@ export class SendMessagePush extends SendMessageBase {
     title: string,
     content: string,
     overrides: object,
-    step: IPushOptions['step']
+    step: IPushOptions['step'],
+    bridgeProviderData: IPushOptions['bridgeProviderData']
   ): Promise<{ success: false; error: Error } | { success: true; error: undefined }> {
     try {
       const pushHandler = this.getIntegrationHandler(integration);
@@ -301,12 +309,7 @@ export class SendMessagePush extends SendMessageBase {
         overrides,
         subscriber,
         step,
-        bridgeProviderData: this.combineOverrides(
-          command.bridgeData,
-          command.overrides,
-          command.step.stepId,
-          integration.providerId
-        ),
+        bridgeProviderData,
       });
 
       await this.createExecutionDetails.execute(

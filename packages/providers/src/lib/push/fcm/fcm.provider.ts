@@ -55,59 +55,59 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
     }) || {};
 
     const payload = this.cleanPayload(options.payload);
-
     const transformedBase = this.transform<MulticastMessage | TopicMessage>(bridgeProviderData, {});
+
+    const commonProps: Partial<MulticastMessage & TopicMessage> = {
+      android,
+      apns,
+      fcmOptions,
+      webpush,
+    };
 
     let res;
 
     if ((transformedBase?.body as TopicMessage).topic) {
-      res = await this.messaging.send(
-        this.transform<TopicMessage>(bridgeProviderData, {
-          topic: (transformedBase.body as TopicMessage).topic,
-          notification: {
-            title: options.title,
-            body: options.content,
-            ...overridesData,
-          },
-          data,
-          android,
-          apns,
-          fcmOptions,
-          webpush,
-        }).body
-      );
-    } else if (type === 'data') {
-      res = await this.messaging.sendEachForMulticast(
-        this.transform<MulticastMessage>(bridgeProviderData, {
-          tokens: options.target,
-          data: {
-            ...payload,
-            title: options.title,
-            body: options.content,
-            message: options.content,
-          },
-          android,
-          apns,
-          fcmOptions,
-          webpush,
-        }).body
-      );
+      const topicMessage = this.transform<TopicMessage>(bridgeProviderData, {
+        topic: (transformedBase.body as TopicMessage).topic,
+        notification: {
+          title: options.title,
+          body: options.content,
+          ...overridesData,
+        },
+        data,
+        ...commonProps,
+      }).body;
+
+      res = await this.messaging.send(topicMessage);
     } else {
-      res = await this.messaging.sendEachForMulticast(
-        this.transform<MulticastMessage>(bridgeProviderData, {
-          tokens: options.target,
-          notification: {
-            title: options.title,
-            body: options.content,
-            ...overridesData,
-          },
-          data,
-          android,
-          apns,
-          fcmOptions,
-          webpush,
-        }).body
-      );
+      const multicastConfig: Partial<MulticastMessage> = {
+        tokens: options.target,
+        ...commonProps,
+      };
+
+      // Add either data or notification based on type
+      if (type === 'data') {
+        multicastConfig.data = {
+          ...payload,
+          title: options.title,
+          body: options.content,
+          message: options.content,
+        };
+      } else {
+        multicastConfig.notification = {
+          title: options.title,
+          body: options.content,
+          ...overridesData,
+        };
+        multicastConfig.data = data;
+      }
+
+      const multicastMessage = this.transform<MulticastMessage>(
+        bridgeProviderData,
+        multicastConfig as Record<string, unknown>
+      ).body;
+
+      res = await this.messaging.sendEachForMulticast(multicastMessage);
     }
 
     if (res.successCount === 0) {
