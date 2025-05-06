@@ -106,7 +106,7 @@ export const CountProvider = (props: ParentProps) => {
   useWebSocketEvent({
     event: 'notifications.notification_received',
     eventHandler: async ({ result: notification }) => {
-      if (filter().archived) {
+      if (filter().archived || filter().snoozed) {
         return;
       }
 
