@@ -123,7 +123,7 @@ export class MessageCTA implements IMessageCTA {
   })
   type: ChannelCTATypeEnum;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Data associated with the call to action',
     type: MessageCTAData,
   })
