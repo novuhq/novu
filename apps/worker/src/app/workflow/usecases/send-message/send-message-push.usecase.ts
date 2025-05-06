@@ -127,7 +127,10 @@ export class SendMessagePush extends SendMessageBase {
     const pushProviderOverrides = this.getPushProviderOverrides(command.overrides, command.step?.stepId || '');
     const providersWithCredentialOverrides = this.filterProvidersWithCredentialOverrides(pushProviderOverrides);
 
-    if (!pushChannels.length && !providersWithCredentialOverrides.length) {
+    const channelsFromOverrides = this.constructChannelSettingsFromOverrides(providersWithCredentialOverrides);
+    const allPushChannels = [...pushChannels, ...channelsFromOverrides];
+
+    if (!allPushChannels.length) {
       await this.createExecutionDetailsError(DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL, command.job);
 
       return {
@@ -140,7 +143,7 @@ export class SendMessagePush extends SendMessageBase {
     delete messagePayload.attachments;
 
     let integrationsWithErrors = 0;
-    for (const channel of pushChannels) {
+    for (const channel of allPushChannels) {
       const { deviceTokens } = channel.credentials || {};
 
       let isChannelMissingDeviceTokens;
@@ -502,5 +505,41 @@ export class SendMessagePush extends SendMessageBase {
     }
 
     return pushHandler;
+  }
+
+  private constructChannelSettingsFromOverrides(
+    providersWithCredentialOverrides: IPushProviderOverride[]
+  ): IChannelSettings[] {
+    return providersWithCredentialOverrides
+      .map((providerOverride) => {
+        const deviceTokens = this.extractDeviceTokensFromOverride(
+          providerOverride.providerId,
+          providerOverride.overrides
+        );
+
+        return {
+          _integrationId: '', // This will be determined later when getting the integration
+          providerId: providerOverride.providerId,
+          credentials: {
+            deviceTokens,
+          },
+        };
+      })
+      .filter((channel) => channel.credentials.deviceTokens?.length > 0);
+  }
+
+  private extractDeviceTokensFromOverride(
+    providerId: PushProviderIdEnum,
+    overrides: Record<string, unknown>
+  ): string[] {
+    if (!overrides) return [];
+
+    switch (providerId) {
+      case PushProviderIdEnum.FCM:
+        return Array.isArray(overrides.tokens) ? overrides.tokens : [];
+      // Handle other provider types as needed
+      default:
+        return Array.isArray(overrides.deviceTokens) ? overrides.deviceTokens : [];
+    }
   }
 }
