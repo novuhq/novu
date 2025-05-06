@@ -49,7 +49,7 @@ export class TriggerEventToAllRequestDto {
   })
   @IsObject()
   @IsOptional()
-  overrides: TriggerOverrides;
+  overrides?: TriggerOverrides;
 
   @ApiProperty({
     description: 'A unique identifier for this transaction, we will generated a UUID if not provided.',
