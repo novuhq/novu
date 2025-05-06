@@ -76,7 +76,7 @@ export const SnoozeDateTimePicker: Component<SnoozeDateTimePickerProps> = (props
   };
 
   const maxDays = () => {
-    if (!props.maxDurationHours) return undefined;
+    if (!props.maxDurationHours) return 0;
 
     return Math.ceil(props.maxDurationHours / 24);
   };
@@ -134,7 +134,7 @@ export const SnoozeDateTimePicker: Component<SnoozeDateTimePickerProps> = (props
     }
 
     if (isTimeExceedingMaxDuration()) {
-      return t('snooze.datePicker.exceedingLimitTooltip', { hours: props.maxDurationHours || 0 });
+      return t('snooze.datePicker.exceedingLimitTooltip', { days: maxDays() });
     }
 
     return t('snooze.datePicker.noDateSelectedTooltip');

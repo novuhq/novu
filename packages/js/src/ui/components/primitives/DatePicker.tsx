@@ -5,8 +5,8 @@ import { ArrowLeft } from '../../icons';
 import { ArrowRight } from '../../icons/ArrowRight';
 import { AppearanceKey } from '../../types';
 import { Button } from './Button';
-
-const DEFAULT_MAX_DAYS = 90;
+import { Tooltip } from './Tooltip';
+import { useLocalization } from '../../context/LocalizationContext';
 
 type DatePickerContextType = {
   currentDate: Accessor<Date>;
@@ -25,7 +25,7 @@ const DatePickerContext = createContext<DatePickerContextType>({
   setViewMonth: () => {},
   selectedDate: () => null,
   setSelectedDate: () => {},
-  maxDays: () => DEFAULT_MAX_DAYS,
+  maxDays: () => 0,
 });
 
 export const useDatePicker = () => useContext(DatePickerContext);
@@ -34,7 +34,7 @@ type DatePickerProps = JSX.IntrinsicElements['div'] & {
   appearanceKey?: AppearanceKey;
   value?: Date | string;
   onDateChange?: (date: Date | null) => void;
-  maxDays?: number;
+  maxDays: number;
   children: JSX.Element;
 };
 export const DatePicker = (props: DatePickerProps) => {
@@ -64,7 +64,7 @@ export const DatePicker = (props: DatePickerProps) => {
         setViewMonth,
         selectedDate,
         setSelectedDate: handleDateSelect,
-        maxDays: () => props.maxDays || DEFAULT_MAX_DAYS,
+        maxDays: () => props.maxDays,
       }}
     >
       <div class={style('datePicker', cn('nt-p-2', local.class))} {...rest}>
@@ -101,7 +101,7 @@ export const DatePickerHeader = (props: DatePickerHeaderProps) => {
     date.setMonth(date.getMonth() + 1);
 
     const maxDaysValue = maxDays();
-    if (maxDaysValue) {
+    if (maxDaysValue > 0) {
       const maxDate = new Date(currentDate());
       maxDate.setDate(maxDate.getDate() + maxDaysValue);
 
@@ -125,7 +125,7 @@ export const DatePickerHeader = (props: DatePickerHeaderProps) => {
 
   const isNextDisabled = () => {
     const maxDaysValue = maxDays();
-    if (!maxDaysValue) return false;
+    if (maxDaysValue === 0) return false;
 
     const view = viewMonth();
 
@@ -242,6 +242,7 @@ type DatePickerGridCellTriggerProps = JSX.IntrinsicElements['button'] & { appear
 export const DatePickerGridCellTrigger = (props: DatePickerGridCellTriggerProps) => {
   const [local, rest] = splitProps(props, ['class', 'appearanceKey', 'date']);
   const { selectedDate, viewMonth, setSelectedDate, currentDate, maxDays } = useDatePicker();
+  const { t } = useLocalization();
 
   const isCurrentMonth = props.date.getMonth() === viewMonth().getMonth();
 
@@ -253,7 +254,7 @@ export const DatePickerGridCellTrigger = (props: DatePickerGridCellTriggerProps)
 
   const isFutureDate = () => {
     const maxDaysValue = maxDays();
-    if (!maxDaysValue) return false;
+    if (maxDaysValue === 0) return false;
 
     const maxDate = new Date(currentDate());
     maxDate.setDate(maxDate.getDate() + maxDaysValue);
@@ -263,7 +264,11 @@ export const DatePickerGridCellTrigger = (props: DatePickerGridCellTriggerProps)
 
   const isDisabled = !isCurrentMonth || isPastDate() || isFutureDate();
 
-  return (
+  const isExceedingLimit = () => {
+    return isCurrentMonth && isFutureDate();
+  };
+
+  const buttonElement = (
     <Button
       appearanceKey="datePickerCalendarDay__button"
       variant="ghost"
@@ -285,6 +290,17 @@ export const DatePickerGridCellTrigger = (props: DatePickerGridCellTriggerProps)
       {local.date.getDate()}
     </Button>
   );
+
+  if (isExceedingLimit()) {
+    return (
+      <Tooltip.Root>
+        <Tooltip.Trigger>{buttonElement}</Tooltip.Trigger>
+        <Tooltip.Content>{t('snooze.datePicker.exceedingLimitTooltip', { days: maxDays() })}</Tooltip.Content>
+      </Tooltip.Root>
+    );
+  }
+
+  return buttonElement;
 };
 
 export const DatePickerWithContext = ({
