@@ -38,7 +38,7 @@ export const defaultLocalization = {
   'snooze.datePicker.pastDateTooltip': 'Selected time must be at least 3 minutes in the future',
   'snooze.datePicker.noDateSelectedTooltip': 'Please select a date',
   'snooze.datePicker.exceedingLimitTooltip': ({ days }: { days: number }) =>
-    `Selected time cannot exceed ${days} days from now`,
+    `Selected time cannot exceed ${days === 1 ? '24 hours' : `${days} days`} from now`,
   'snooze.options.customTime': 'Custom time...',
   'snooze.options.inTwelveHours': '12 hours',
   'snooze.options.inOneDay': 'Tomorrow',
