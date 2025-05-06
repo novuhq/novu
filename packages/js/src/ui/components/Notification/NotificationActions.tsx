@@ -233,12 +233,21 @@ export const SnoozeButton = (props: { notification: Notification }) => {
             <Dropdown.Trigger
               {...tooltipProps}
               asChild={(popoverProps) => (
-                <Button appearanceKey="notificationSnooze__button" size="iconSm" variant="ghost" {...popoverProps}>
+                <Button
+                  appearanceKey="notificationSnooze__button"
+                  size="iconSm"
+                  variant="ghost"
+                  {...popoverProps}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    popoverProps.onClick?.(e);
+                  }}
+                >
                   <Snooze class={style('notificationSnooze__icon', 'nt-size-3')} />
                 </Button>
               )}
             />
-            <Dropdown.Content appearanceKey="notificationSnooze__dropdownContent">
+            <Dropdown.Content portal appearanceKey="notificationSnooze__dropdownContent">
               <For each={availableSnoozePresets()}>
                 {(preset) => (
                   <Dropdown.Item
@@ -262,6 +271,10 @@ export const SnoozeButton = (props: { notification: Notification }) => {
                     <Popover.Trigger
                       class={style('notificationSnooze__dropdownItem', dropdownItemVariants())}
                       {...props}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        props.onClick?.(e);
+                      }}
                     >
                       <Clock
                         class={style(
