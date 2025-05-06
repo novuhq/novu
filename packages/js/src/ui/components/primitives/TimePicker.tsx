@@ -51,6 +51,32 @@ export const TimePicker: Component<TimePickerProps> = (props) => {
     notifyChange();
   };
 
+  const handleKeyDown = (e: KeyboardEvent) => {
+    // Allow only: digits, arrows, backspace, delete, tab
+    const allowedKeys = [
+      '0',
+      '1',
+      '2',
+      '3',
+      '4',
+      '5',
+      '6',
+      '7',
+      '8',
+      '9',
+      'ArrowLeft',
+      'ArrowRight',
+      'ArrowUp',
+      'ArrowDown',
+      'Backspace',
+      'Delete',
+      'Tab',
+    ];
+    if (!allowedKeys.includes(e.key)) {
+      e.preventDefault();
+    }
+  };
+
   return (
     <div
       class={style(local.appearanceKey || 'timePicker', cn('nt-flex nt-items-center nt-gap-1', local.class))}
@@ -61,6 +87,7 @@ export const TimePicker: Component<TimePickerProps> = (props) => {
         type="number"
         min="1"
         max="12"
+        onKeyDown={handleKeyDown}
         value={hour().toString()}
         onInput={(e) => {
           enforceMinMax(e.currentTarget);
@@ -79,6 +106,7 @@ export const TimePicker: Component<TimePickerProps> = (props) => {
         type="number"
         min="0"
         max="59"
+        onKeyDown={handleKeyDown}
         value={minute().toString().padStart(2, '0')}
         onInput={(e) => {
           enforceMinMax(e.currentTarget);
