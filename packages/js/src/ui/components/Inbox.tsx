@@ -4,11 +4,11 @@ import { useInboxContext } from '../context';
 import { useStyle } from '../helpers';
 import type {
   BellRenderer,
+  BodyRenderer,
   NotificationActionClickHandler,
   NotificationClickHandler,
   NotificationRenderer,
   SubjectRenderer,
-  BodyRenderer,
 } from '../types';
 import { Bell, Footer, Header, Preferences } from './elements';
 import { PreferencesHeader } from './elements/Preferences/PreferencesHeader';

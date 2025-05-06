@@ -1,5 +1,5 @@
 import { ComponentProps, splitProps } from 'solid-js';
-import { useStyle } from '../../../helpers';
+import { cn, useStyle } from '../../../helpers';
 import type { AppearanceKey } from '../../../types';
 import { Popover } from '../Popover';
 
@@ -9,11 +9,11 @@ export const dropdownTriggerButtonVariants = () =>
 
 export const DropdownTrigger = (props: ComponentProps<typeof Popover.Trigger> & { appearanceKey?: AppearanceKey }) => {
   const style = useStyle();
-  const [local, rest] = splitProps(props, ['appearanceKey']);
+  const [local, rest] = splitProps(props, ['appearanceKey', 'class']);
 
   return (
     <Popover.Trigger
-      class={style(local.appearanceKey || 'dropdownTrigger', dropdownTriggerButtonVariants())}
+      class={style(local.appearanceKey || 'dropdownTrigger', cn(dropdownTriggerButtonVariants(), local.class))}
       {...rest}
     />
   );
