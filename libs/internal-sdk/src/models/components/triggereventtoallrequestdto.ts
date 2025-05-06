@@ -30,34 +30,6 @@ import {
 } from "./tenantpayloaddto.js";
 
 /**
- * Override the email provider specific configurations for the entire workflow
- *
- * @deprecated class: This will be removed in a future release, please migrate away from it as soon as possible.
- */
-export type TriggerEventToAllRequestDtoEmail = {};
-
-/**
- * Override the push provider specific configurations for the entire workflow
- *
- * @deprecated class: This will be removed in a future release, please migrate away from it as soon as possible.
- */
-export type TriggerEventToAllRequestDtoPush = {};
-
-/**
- * Override the sms provider specific configurations for the entire workflow
- *
- * @deprecated class: This will be removed in a future release, please migrate away from it as soon as possible.
- */
-export type TriggerEventToAllRequestDtoSms = {};
-
-/**
- * Override the chat provider specific configurations for the entire workflow
- *
- * @deprecated class: This will be removed in a future release, please migrate away from it as soon as possible.
- */
-export type TriggerEventToAllRequestDtoChat = {};
-
-/**
  * This could be used to override provider specific configurations
  */
 export type TriggerEventToAllRequestDtoOverrides = {
@@ -74,25 +46,25 @@ export type TriggerEventToAllRequestDtoOverrides = {
    *
    * @deprecated field: This will be removed in a future release, please migrate away from it as soon as possible.
    */
-  email?: TriggerEventToAllRequestDtoEmail | undefined;
+  email?: { [k: string]: { [k: string]: any } } | undefined;
   /**
    * Override the push provider specific configurations for the entire workflow
    *
    * @deprecated field: This will be removed in a future release, please migrate away from it as soon as possible.
    */
-  push?: TriggerEventToAllRequestDtoPush | undefined;
+  push?: { [k: string]: { [k: string]: any } } | undefined;
   /**
    * Override the sms provider specific configurations for the entire workflow
    *
    * @deprecated field: This will be removed in a future release, please migrate away from it as soon as possible.
    */
-  sms?: TriggerEventToAllRequestDtoSms | undefined;
+  sms?: { [k: string]: { [k: string]: any } } | undefined;
   /**
    * Override the chat provider specific configurations for the entire workflow
    *
    * @deprecated field: This will be removed in a future release, please migrate away from it as soon as possible.
    */
-  chat?: TriggerEventToAllRequestDtoChat | undefined;
+  chat?: { [k: string]: { [k: string]: any } } | undefined;
   /**
    * Override the layout identifier for the entire workflow
    *
@@ -156,206 +128,6 @@ export type TriggerEventToAllRequestDto = {
 };
 
 /** @internal */
-export const TriggerEventToAllRequestDtoEmail$inboundSchema: z.ZodType<
-  TriggerEventToAllRequestDtoEmail,
-  z.ZodTypeDef,
-  unknown
-> = z.object({});
-
-/** @internal */
-export type TriggerEventToAllRequestDtoEmail$Outbound = {};
-
-/** @internal */
-export const TriggerEventToAllRequestDtoEmail$outboundSchema: z.ZodType<
-  TriggerEventToAllRequestDtoEmail$Outbound,
-  z.ZodTypeDef,
-  TriggerEventToAllRequestDtoEmail
-> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace TriggerEventToAllRequestDtoEmail$ {
-  /** @deprecated use `TriggerEventToAllRequestDtoEmail$inboundSchema` instead. */
-  export const inboundSchema = TriggerEventToAllRequestDtoEmail$inboundSchema;
-  /** @deprecated use `TriggerEventToAllRequestDtoEmail$outboundSchema` instead. */
-  export const outboundSchema = TriggerEventToAllRequestDtoEmail$outboundSchema;
-  /** @deprecated use `TriggerEventToAllRequestDtoEmail$Outbound` instead. */
-  export type Outbound = TriggerEventToAllRequestDtoEmail$Outbound;
-}
-
-export function triggerEventToAllRequestDtoEmailToJSON(
-  triggerEventToAllRequestDtoEmail: TriggerEventToAllRequestDtoEmail,
-): string {
-  return JSON.stringify(
-    TriggerEventToAllRequestDtoEmail$outboundSchema.parse(
-      triggerEventToAllRequestDtoEmail,
-    ),
-  );
-}
-
-export function triggerEventToAllRequestDtoEmailFromJSON(
-  jsonString: string,
-): SafeParseResult<TriggerEventToAllRequestDtoEmail, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => TriggerEventToAllRequestDtoEmail$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'TriggerEventToAllRequestDtoEmail' from JSON`,
-  );
-}
-
-/** @internal */
-export const TriggerEventToAllRequestDtoPush$inboundSchema: z.ZodType<
-  TriggerEventToAllRequestDtoPush,
-  z.ZodTypeDef,
-  unknown
-> = z.object({});
-
-/** @internal */
-export type TriggerEventToAllRequestDtoPush$Outbound = {};
-
-/** @internal */
-export const TriggerEventToAllRequestDtoPush$outboundSchema: z.ZodType<
-  TriggerEventToAllRequestDtoPush$Outbound,
-  z.ZodTypeDef,
-  TriggerEventToAllRequestDtoPush
-> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace TriggerEventToAllRequestDtoPush$ {
-  /** @deprecated use `TriggerEventToAllRequestDtoPush$inboundSchema` instead. */
-  export const inboundSchema = TriggerEventToAllRequestDtoPush$inboundSchema;
-  /** @deprecated use `TriggerEventToAllRequestDtoPush$outboundSchema` instead. */
-  export const outboundSchema = TriggerEventToAllRequestDtoPush$outboundSchema;
-  /** @deprecated use `TriggerEventToAllRequestDtoPush$Outbound` instead. */
-  export type Outbound = TriggerEventToAllRequestDtoPush$Outbound;
-}
-
-export function triggerEventToAllRequestDtoPushToJSON(
-  triggerEventToAllRequestDtoPush: TriggerEventToAllRequestDtoPush,
-): string {
-  return JSON.stringify(
-    TriggerEventToAllRequestDtoPush$outboundSchema.parse(
-      triggerEventToAllRequestDtoPush,
-    ),
-  );
-}
-
-export function triggerEventToAllRequestDtoPushFromJSON(
-  jsonString: string,
-): SafeParseResult<TriggerEventToAllRequestDtoPush, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => TriggerEventToAllRequestDtoPush$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'TriggerEventToAllRequestDtoPush' from JSON`,
-  );
-}
-
-/** @internal */
-export const TriggerEventToAllRequestDtoSms$inboundSchema: z.ZodType<
-  TriggerEventToAllRequestDtoSms,
-  z.ZodTypeDef,
-  unknown
-> = z.object({});
-
-/** @internal */
-export type TriggerEventToAllRequestDtoSms$Outbound = {};
-
-/** @internal */
-export const TriggerEventToAllRequestDtoSms$outboundSchema: z.ZodType<
-  TriggerEventToAllRequestDtoSms$Outbound,
-  z.ZodTypeDef,
-  TriggerEventToAllRequestDtoSms
-> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace TriggerEventToAllRequestDtoSms$ {
-  /** @deprecated use `TriggerEventToAllRequestDtoSms$inboundSchema` instead. */
-  export const inboundSchema = TriggerEventToAllRequestDtoSms$inboundSchema;
-  /** @deprecated use `TriggerEventToAllRequestDtoSms$outboundSchema` instead. */
-  export const outboundSchema = TriggerEventToAllRequestDtoSms$outboundSchema;
-  /** @deprecated use `TriggerEventToAllRequestDtoSms$Outbound` instead. */
-  export type Outbound = TriggerEventToAllRequestDtoSms$Outbound;
-}
-
-export function triggerEventToAllRequestDtoSmsToJSON(
-  triggerEventToAllRequestDtoSms: TriggerEventToAllRequestDtoSms,
-): string {
-  return JSON.stringify(
-    TriggerEventToAllRequestDtoSms$outboundSchema.parse(
-      triggerEventToAllRequestDtoSms,
-    ),
-  );
-}
-
-export function triggerEventToAllRequestDtoSmsFromJSON(
-  jsonString: string,
-): SafeParseResult<TriggerEventToAllRequestDtoSms, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => TriggerEventToAllRequestDtoSms$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'TriggerEventToAllRequestDtoSms' from JSON`,
-  );
-}
-
-/** @internal */
-export const TriggerEventToAllRequestDtoChat$inboundSchema: z.ZodType<
-  TriggerEventToAllRequestDtoChat,
-  z.ZodTypeDef,
-  unknown
-> = z.object({});
-
-/** @internal */
-export type TriggerEventToAllRequestDtoChat$Outbound = {};
-
-/** @internal */
-export const TriggerEventToAllRequestDtoChat$outboundSchema: z.ZodType<
-  TriggerEventToAllRequestDtoChat$Outbound,
-  z.ZodTypeDef,
-  TriggerEventToAllRequestDtoChat
-> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace TriggerEventToAllRequestDtoChat$ {
-  /** @deprecated use `TriggerEventToAllRequestDtoChat$inboundSchema` instead. */
-  export const inboundSchema = TriggerEventToAllRequestDtoChat$inboundSchema;
-  /** @deprecated use `TriggerEventToAllRequestDtoChat$outboundSchema` instead. */
-  export const outboundSchema = TriggerEventToAllRequestDtoChat$outboundSchema;
-  /** @deprecated use `TriggerEventToAllRequestDtoChat$Outbound` instead. */
-  export type Outbound = TriggerEventToAllRequestDtoChat$Outbound;
-}
-
-export function triggerEventToAllRequestDtoChatToJSON(
-  triggerEventToAllRequestDtoChat: TriggerEventToAllRequestDtoChat,
-): string {
-  return JSON.stringify(
-    TriggerEventToAllRequestDtoChat$outboundSchema.parse(
-      triggerEventToAllRequestDtoChat,
-    ),
-  );
-}
-
-export function triggerEventToAllRequestDtoChatFromJSON(
-  jsonString: string,
-): SafeParseResult<TriggerEventToAllRequestDtoChat, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => TriggerEventToAllRequestDtoChat$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'TriggerEventToAllRequestDtoChat' from JSON`,
-  );
-}
-
-/** @internal */
 export const TriggerEventToAllRequestDtoOverrides$inboundSchema: z.ZodType<
   TriggerEventToAllRequestDtoOverrides,
   z.ZodTypeDef,
@@ -364,13 +136,10 @@ export const TriggerEventToAllRequestDtoOverrides$inboundSchema: z.ZodType<
   z.object({
     steps: z.record(StepsOverrides$inboundSchema).optional(),
     providers: z.record(z.record(z.any())).optional(),
-    email: z.lazy(() => TriggerEventToAllRequestDtoEmail$inboundSchema)
-      .optional(),
-    push: z.lazy(() => TriggerEventToAllRequestDtoPush$inboundSchema)
-      .optional(),
-    sms: z.lazy(() => TriggerEventToAllRequestDtoSms$inboundSchema).optional(),
-    chat: z.lazy(() => TriggerEventToAllRequestDtoChat$inboundSchema)
-      .optional(),
+    email: z.record(z.record(z.any())).optional(),
+    push: z.record(z.record(z.any())).optional(),
+    sms: z.record(z.record(z.any())).optional(),
+    chat: z.record(z.record(z.any())).optional(),
     layoutIdentifier: z.string().optional(),
   }).catchall(z.record(z.any())),
   "additionalProperties",
@@ -381,10 +150,10 @@ export const TriggerEventToAllRequestDtoOverrides$inboundSchema: z.ZodType<
 export type TriggerEventToAllRequestDtoOverrides$Outbound = {
   steps?: { [k: string]: StepsOverrides$Outbound } | undefined;
   providers?: { [k: string]: { [k: string]: any } } | undefined;
-  email?: TriggerEventToAllRequestDtoEmail$Outbound | undefined;
-  push?: TriggerEventToAllRequestDtoPush$Outbound | undefined;
-  sms?: TriggerEventToAllRequestDtoSms$Outbound | undefined;
-  chat?: TriggerEventToAllRequestDtoChat$Outbound | undefined;
+  email?: { [k: string]: { [k: string]: any } } | undefined;
+  push?: { [k: string]: { [k: string]: any } } | undefined;
+  sms?: { [k: string]: { [k: string]: any } } | undefined;
+  chat?: { [k: string]: { [k: string]: any } } | undefined;
   layoutIdentifier?: string | undefined;
   [additionalProperties: string]: unknown;
 };
@@ -397,11 +166,10 @@ export const TriggerEventToAllRequestDtoOverrides$outboundSchema: z.ZodType<
 > = z.object({
   steps: z.record(StepsOverrides$outboundSchema).optional(),
   providers: z.record(z.record(z.any())).optional(),
-  email: z.lazy(() => TriggerEventToAllRequestDtoEmail$outboundSchema)
-    .optional(),
-  push: z.lazy(() => TriggerEventToAllRequestDtoPush$outboundSchema).optional(),
-  sms: z.lazy(() => TriggerEventToAllRequestDtoSms$outboundSchema).optional(),
-  chat: z.lazy(() => TriggerEventToAllRequestDtoChat$outboundSchema).optional(),
+  email: z.record(z.record(z.any())).optional(),
+  push: z.record(z.record(z.any())).optional(),
+  sms: z.record(z.record(z.any())).optional(),
+  chat: z.record(z.record(z.any())).optional(),
   layoutIdentifier: z.string().optional(),
   additionalProperties: z.record(z.record(z.any())),
 }).transform((v) => {

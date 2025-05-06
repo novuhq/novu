@@ -33,34 +33,6 @@ import {
 } from "./topicpayloaddto.js";
 
 /**
- * Override the email provider specific configurations for the entire workflow
- *
- * @deprecated class: This will be removed in a future release, please migrate away from it as soon as possible.
- */
-export type Email = {};
-
-/**
- * Override the push provider specific configurations for the entire workflow
- *
- * @deprecated class: This will be removed in a future release, please migrate away from it as soon as possible.
- */
-export type Push = {};
-
-/**
- * Override the sms provider specific configurations for the entire workflow
- *
- * @deprecated class: This will be removed in a future release, please migrate away from it as soon as possible.
- */
-export type Sms = {};
-
-/**
- * Override the chat provider specific configurations for the entire workflow
- *
- * @deprecated class: This will be removed in a future release, please migrate away from it as soon as possible.
- */
-export type Chat = {};
-
-/**
  * This could be used to override provider specific configurations
  */
 export type Overrides = {
@@ -77,25 +49,25 @@ export type Overrides = {
    *
    * @deprecated field: This will be removed in a future release, please migrate away from it as soon as possible.
    */
-  email?: Email | undefined;
+  email?: { [k: string]: { [k: string]: any } } | undefined;
   /**
    * Override the push provider specific configurations for the entire workflow
    *
    * @deprecated field: This will be removed in a future release, please migrate away from it as soon as possible.
    */
-  push?: Push | undefined;
+  push?: { [k: string]: { [k: string]: any } } | undefined;
   /**
    * Override the sms provider specific configurations for the entire workflow
    *
    * @deprecated field: This will be removed in a future release, please migrate away from it as soon as possible.
    */
-  sms?: Sms | undefined;
+  sms?: { [k: string]: { [k: string]: any } } | undefined;
   /**
    * Override the chat provider specific configurations for the entire workflow
    *
    * @deprecated field: This will be removed in a future release, please migrate away from it as soon as possible.
    */
-  chat?: Chat | undefined;
+  chat?: { [k: string]: { [k: string]: any } } | undefined;
   /**
    * Override the layout identifier for the entire workflow
    *
@@ -177,161 +149,6 @@ export type TriggerEventRequestDto = {
 };
 
 /** @internal */
-export const Email$inboundSchema: z.ZodType<Email, z.ZodTypeDef, unknown> = z
-  .object({});
-
-/** @internal */
-export type Email$Outbound = {};
-
-/** @internal */
-export const Email$outboundSchema: z.ZodType<
-  Email$Outbound,
-  z.ZodTypeDef,
-  Email
-> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace Email$ {
-  /** @deprecated use `Email$inboundSchema` instead. */
-  export const inboundSchema = Email$inboundSchema;
-  /** @deprecated use `Email$outboundSchema` instead. */
-  export const outboundSchema = Email$outboundSchema;
-  /** @deprecated use `Email$Outbound` instead. */
-  export type Outbound = Email$Outbound;
-}
-
-export function emailToJSON(email: Email): string {
-  return JSON.stringify(Email$outboundSchema.parse(email));
-}
-
-export function emailFromJSON(
-  jsonString: string,
-): SafeParseResult<Email, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => Email$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'Email' from JSON`,
-  );
-}
-
-/** @internal */
-export const Push$inboundSchema: z.ZodType<Push, z.ZodTypeDef, unknown> = z
-  .object({});
-
-/** @internal */
-export type Push$Outbound = {};
-
-/** @internal */
-export const Push$outboundSchema: z.ZodType<Push$Outbound, z.ZodTypeDef, Push> =
-  z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace Push$ {
-  /** @deprecated use `Push$inboundSchema` instead. */
-  export const inboundSchema = Push$inboundSchema;
-  /** @deprecated use `Push$outboundSchema` instead. */
-  export const outboundSchema = Push$outboundSchema;
-  /** @deprecated use `Push$Outbound` instead. */
-  export type Outbound = Push$Outbound;
-}
-
-export function pushToJSON(push: Push): string {
-  return JSON.stringify(Push$outboundSchema.parse(push));
-}
-
-export function pushFromJSON(
-  jsonString: string,
-): SafeParseResult<Push, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => Push$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'Push' from JSON`,
-  );
-}
-
-/** @internal */
-export const Sms$inboundSchema: z.ZodType<Sms, z.ZodTypeDef, unknown> = z
-  .object({});
-
-/** @internal */
-export type Sms$Outbound = {};
-
-/** @internal */
-export const Sms$outboundSchema: z.ZodType<Sms$Outbound, z.ZodTypeDef, Sms> = z
-  .object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace Sms$ {
-  /** @deprecated use `Sms$inboundSchema` instead. */
-  export const inboundSchema = Sms$inboundSchema;
-  /** @deprecated use `Sms$outboundSchema` instead. */
-  export const outboundSchema = Sms$outboundSchema;
-  /** @deprecated use `Sms$Outbound` instead. */
-  export type Outbound = Sms$Outbound;
-}
-
-export function smsToJSON(sms: Sms): string {
-  return JSON.stringify(Sms$outboundSchema.parse(sms));
-}
-
-export function smsFromJSON(
-  jsonString: string,
-): SafeParseResult<Sms, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => Sms$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'Sms' from JSON`,
-  );
-}
-
-/** @internal */
-export const Chat$inboundSchema: z.ZodType<Chat, z.ZodTypeDef, unknown> = z
-  .object({});
-
-/** @internal */
-export type Chat$Outbound = {};
-
-/** @internal */
-export const Chat$outboundSchema: z.ZodType<Chat$Outbound, z.ZodTypeDef, Chat> =
-  z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace Chat$ {
-  /** @deprecated use `Chat$inboundSchema` instead. */
-  export const inboundSchema = Chat$inboundSchema;
-  /** @deprecated use `Chat$outboundSchema` instead. */
-  export const outboundSchema = Chat$outboundSchema;
-  /** @deprecated use `Chat$Outbound` instead. */
-  export type Outbound = Chat$Outbound;
-}
-
-export function chatToJSON(chat: Chat): string {
-  return JSON.stringify(Chat$outboundSchema.parse(chat));
-}
-
-export function chatFromJSON(
-  jsonString: string,
-): SafeParseResult<Chat, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => Chat$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'Chat' from JSON`,
-  );
-}
-
-/** @internal */
 export const Overrides$inboundSchema: z.ZodType<
   Overrides,
   z.ZodTypeDef,
@@ -339,10 +156,10 @@ export const Overrides$inboundSchema: z.ZodType<
 > = z.object({
   steps: z.record(StepsOverrides$inboundSchema).optional(),
   providers: z.record(z.record(z.any())).optional(),
-  email: z.lazy(() => Email$inboundSchema).optional(),
-  push: z.lazy(() => Push$inboundSchema).optional(),
-  sms: z.lazy(() => Sms$inboundSchema).optional(),
-  chat: z.lazy(() => Chat$inboundSchema).optional(),
+  email: z.record(z.record(z.any())).optional(),
+  push: z.record(z.record(z.any())).optional(),
+  sms: z.record(z.record(z.any())).optional(),
+  chat: z.record(z.record(z.any())).optional(),
   layoutIdentifier: z.string().optional(),
 });
 
@@ -350,10 +167,10 @@ export const Overrides$inboundSchema: z.ZodType<
 export type Overrides$Outbound = {
   steps?: { [k: string]: StepsOverrides$Outbound } | undefined;
   providers?: { [k: string]: { [k: string]: any } } | undefined;
-  email?: Email$Outbound | undefined;
-  push?: Push$Outbound | undefined;
-  sms?: Sms$Outbound | undefined;
-  chat?: Chat$Outbound | undefined;
+  email?: { [k: string]: { [k: string]: any } } | undefined;
+  push?: { [k: string]: { [k: string]: any } } | undefined;
+  sms?: { [k: string]: { [k: string]: any } } | undefined;
+  chat?: { [k: string]: { [k: string]: any } } | undefined;
   layoutIdentifier?: string | undefined;
 };
 
@@ -365,10 +182,10 @@ export const Overrides$outboundSchema: z.ZodType<
 > = z.object({
   steps: z.record(StepsOverrides$outboundSchema).optional(),
   providers: z.record(z.record(z.any())).optional(),
-  email: z.lazy(() => Email$outboundSchema).optional(),
-  push: z.lazy(() => Push$outboundSchema).optional(),
-  sms: z.lazy(() => Sms$outboundSchema).optional(),
-  chat: z.lazy(() => Chat$outboundSchema).optional(),
+  email: z.record(z.record(z.any())).optional(),
+  push: z.record(z.record(z.any())).optional(),
+  sms: z.record(z.record(z.any())).optional(),
+  chat: z.record(z.record(z.any())).optional(),
   layoutIdentifier: z.string().optional(),
 });
 

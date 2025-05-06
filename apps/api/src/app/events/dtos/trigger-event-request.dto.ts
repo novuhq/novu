@@ -103,13 +103,21 @@ export class TriggerOverrides {
     description: 'Override the email provider specific configurations for the entire workflow',
     deprecated: true,
     type: 'object',
+    additionalProperties: {
+      type: 'object',
+      additionalProperties: true,
+    },
   })
-  email?: Record<string, unknown>;
+  email?: Record<string, any>;
 
   @ApiPropertyOptional({
     description: 'Override the push provider specific configurations for the entire workflow',
     deprecated: true,
     type: 'object',
+    additionalProperties: {
+      type: 'object',
+      additionalProperties: true,
+    },
   })
   push?: Record<string, any>;
 
@@ -117,6 +125,10 @@ export class TriggerOverrides {
     description: 'Override the sms provider specific configurations for the entire workflow',
     deprecated: true,
     type: 'object',
+    additionalProperties: {
+      type: 'object',
+      additionalProperties: true,
+    },
   })
   sms?: Record<string, any>;
 
@@ -124,6 +136,10 @@ export class TriggerOverrides {
     description: 'Override the chat provider specific configurations for the entire workflow',
     deprecated: true,
     type: 'object',
+    additionalProperties: {
+      type: 'object',
+      additionalProperties: true,
+    },
   })
   chat?: Record<string, any>;
 
