@@ -96,9 +96,11 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     }
 
     if (query.snoozed != null) {
-      requestQuery.snoozedUntil = { $exists: true, $ne: null };
-    } else {
-      requestQuery.snoozedUntil = { $exists: false };
+      if (query.snoozed) {
+        requestQuery.snoozedUntil = { $ne: null };
+      } else {
+        requestQuery.$or = [{ snoozedUntil: { $exists: false } }, { snoozedUntil: null }];
+      }
     }
 
     if (createdAt != null) {
