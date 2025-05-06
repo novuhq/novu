@@ -72,7 +72,6 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
         notification: {
           title: options.title,
           body: options.content,
-          ...overridesData,
         },
         data,
         ...commonProps,

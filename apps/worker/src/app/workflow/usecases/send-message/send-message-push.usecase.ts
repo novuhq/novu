@@ -127,7 +127,10 @@ export class SendMessagePush extends SendMessageBase {
     const pushProviderOverrides = this.getPushProviderOverrides(command.overrides, command.step?.stepId || '');
     const providersWithCredentialOverrides = this.filterProvidersWithCredentialOverrides(pushProviderOverrides);
 
-    const channelsFromOverrides = this.constructChannelSettingsFromOverrides(providersWithCredentialOverrides);
+    const channelsFromOverrides = await this.constructChannelSettingsFromOverrides(
+      providersWithCredentialOverrides,
+      command
+    );
     const existingProviderIds = pushChannels.map((channel) => channel.providerId);
     const uniqueOverrideChannels = channelsFromOverrides.filter(
       (channel) => !existingProviderIds.includes(channel.providerId)
@@ -175,7 +178,7 @@ export class SendMessagePush extends SendMessageBase {
       );
 
       // We avoid to send a message if subscriber has not an integration or if the subscriber has no device tokens for said integration
-      if (!deviceTokens || !integration || isChannelMissingDeviceTokens) {
+      if ((!deviceTokens || !integration || isChannelMissingDeviceTokens) && !uniqueOverrideChannels?.length) {
         integrationsWithErrors += 1;
         continue;
       }
@@ -191,6 +194,33 @@ export class SendMessagePush extends SendMessageBase {
       await this.sendSelectedIntegrationExecution(command.job, integration);
 
       const message = await this.createMessage(command, integration, title, content, target, overrides);
+
+      if (!target?.length && uniqueOverrideChannels?.length) {
+        const result = await this.sendMessage(
+          command,
+          message,
+          subscriber,
+          integration,
+          '',
+          title,
+          content,
+          overrides,
+          stepData,
+          bridgeProviderData
+        );
+
+        if (!result.success) {
+          integrationsWithErrors += 1;
+
+          Logger.error(
+            { jobId: command.jobId },
+            `Error sending push notification for jobId ${command.jobId} ${result.error.message || result.error.toString()}`,
+            LOG_CONTEXT
+          );
+        }
+
+        continue;
+      }
 
       for (const deviceToken of target) {
         const result = await this.sendMessage(
@@ -511,25 +541,39 @@ export class SendMessagePush extends SendMessageBase {
     return pushHandler;
   }
 
-  private constructChannelSettingsFromOverrides(
-    providersWithCredentialOverrides: IPushProviderOverride[]
-  ): IChannelSettings[] {
-    return providersWithCredentialOverrides
-      .map((providerOverride) => {
-        const credentials = this.extractCredentialsFromOverride(
-          providerOverride.providerId,
-          providerOverride.overrides
-        );
+  private async constructChannelSettingsFromOverrides(
+    providersWithCredentialOverrides: IPushProviderOverride[],
+    command: SendMessageCommand
+  ): Promise<IChannelSettings[]> {
+    const channelSettings: IChannelSettings[] = [];
 
-        if (!credentials) return null;
+    for (const providerOverride of providersWithCredentialOverrides) {
+      const credentials = this.extractCredentialsFromOverride(providerOverride.providerId, providerOverride.overrides);
 
-        return {
-          _integrationId: '', // This will be determined later when getting the integration
-          providerId: providerOverride.providerId,
-          credentials,
-        };
-      })
-      .filter(Boolean) as IChannelSettings[];
+      if (!credentials) continue;
+
+      // Fetch the integration based on providerId
+      const integration = await this.selectIntegration.execute({
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        channelType: ChannelTypeEnum.PUSH,
+        providerId: providerOverride.providerId,
+        userId: command.userId,
+        filterData: {
+          tenant: command.job.tenant,
+        },
+      });
+
+      if (!integration) continue;
+
+      channelSettings.push({
+        _integrationId: integration._id,
+        providerId: providerOverride.providerId,
+        credentials,
+      });
+    }
+
+    return channelSettings;
   }
 
   private extractCredentialsFromOverride(
