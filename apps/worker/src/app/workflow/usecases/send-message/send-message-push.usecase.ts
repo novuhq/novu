@@ -128,7 +128,11 @@ export class SendMessagePush extends SendMessageBase {
     const providersWithCredentialOverrides = this.filterProvidersWithCredentialOverrides(pushProviderOverrides);
 
     const channelsFromOverrides = this.constructChannelSettingsFromOverrides(providersWithCredentialOverrides);
-    const allPushChannels = [...pushChannels, ...channelsFromOverrides];
+    const existingProviderIds = pushChannels.map((channel) => channel.providerId);
+    const uniqueOverrideChannels = channelsFromOverrides.filter(
+      (channel) => !existingProviderIds.includes(channel.providerId)
+    );
+    const allPushChannels = [...pushChannels, ...uniqueOverrideChannels];
 
     if (!allPushChannels.length) {
       await this.createExecutionDetailsError(DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL, command.job);
@@ -512,34 +516,48 @@ export class SendMessagePush extends SendMessageBase {
   ): IChannelSettings[] {
     return providersWithCredentialOverrides
       .map((providerOverride) => {
-        const deviceTokens = this.extractDeviceTokensFromOverride(
+        const credentials = this.extractCredentialsFromOverride(
           providerOverride.providerId,
           providerOverride.overrides
         );
 
+        if (!credentials) return null;
+
         return {
           _integrationId: '', // This will be determined later when getting the integration
           providerId: providerOverride.providerId,
-          credentials: {
-            deviceTokens,
-          },
+          credentials,
         };
       })
-      .filter((channel) => channel.credentials.deviceTokens?.length > 0);
+      .filter(Boolean) as IChannelSettings[];
   }
 
-  private extractDeviceTokensFromOverride(
+  private extractCredentialsFromOverride(
     providerId: PushProviderIdEnum,
     overrides: Record<string, unknown>
-  ): string[] {
-    if (!overrides) return [];
+  ): {
+    deviceTokens?: string[];
+    topic?: string;
+  } | null {
+    if (!overrides) return {};
 
     switch (providerId) {
       case PushProviderIdEnum.FCM:
-        return Array.isArray(overrides.tokens) ? overrides.tokens : [];
-      // Handle other provider types as needed
+        if (Array.isArray(overrides.tokens)) {
+          return {
+            deviceTokens: overrides.tokens,
+          };
+        }
+
+        if (overrides.topic) {
+          return {
+            topic: overrides.topic as string,
+          };
+        }
+
+        return null;
       default:
-        return Array.isArray(overrides.deviceTokens) ? overrides.deviceTokens : [];
+        return null;
     }
   }
 }
