@@ -1,4 +1,4 @@
-import { Component, createMemo, createSignal, Show } from 'solid-js';
+import { Component, createEffect, createMemo, createSignal, onCleanup, Show } from 'solid-js';
 import { useLocalization } from '../../context/LocalizationContext';
 import { useStyle } from '../../helpers';
 import { Button } from '../primitives/Button';
@@ -41,6 +41,8 @@ const convertTo24Hour = (time: TimeValue): number => {
   }
 };
 
+const REFRESH_INTERVAL = 5_000;
+
 interface SnoozeDateTimePickerProps {
   onSelect?: (date: Date) => void;
   onCancel?: () => void;
@@ -52,6 +54,16 @@ export const SnoozeDateTimePicker: Component<SnoozeDateTimePickerProps> = (props
   const { t } = useLocalization();
   const [selectedDate, setSelectedDate] = createSignal<Date | null>(null);
   const [timeValue, setTimeValue] = createSignal<TimeValue>(fiveMinutesFromNow());
+  const [currentTime, setCurrentTime] = createSignal(new Date());
+
+  // Update current time every N seconds to ensure validation remains accurate
+  createEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, REFRESH_INTERVAL);
+
+    onCleanup(() => clearInterval(interval));
+  });
 
   const onDateTimeSelect = () => {
     if (selectedDate() && timeValue()) {
@@ -69,36 +81,64 @@ export const SnoozeDateTimePicker: Component<SnoozeDateTimePickerProps> = (props
     return Math.ceil(props.maxDurationHours / 24);
   };
 
+  const getSelectedDateTime = (): Date | null => {
+    if (!selectedDate() || !timeValue()) return null;
+
+    const date = new Date(selectedDate()!);
+    const hours = convertTo24Hour(timeValue());
+    date.setHours(hours, timeValue().minute, 0, 0);
+
+    return date;
+  };
+
+  const isTimeInPast = createMemo(() => {
+    const dateTime = getSelectedDateTime();
+    if (!dateTime) return false;
+
+    // The time must be at least 3 minutes in the future
+    const minAllowedDateTime = new Date(currentTime().getTime() + 3 * 60 * 1000);
+
+    return dateTime < minAllowedDateTime;
+  });
+
+  const isTimeExceedingMaxDuration = createMemo(() => {
+    const dateTime = getSelectedDateTime();
+    if (!dateTime || !props.maxDurationHours) return false;
+
+    const maxAllowedDateTime = new Date(currentTime().getTime() + props.maxDurationHours * 60 * 60 * 1000);
+
+    return dateTime > maxAllowedDateTime;
+  });
+
   const applyButtonEnabled = createMemo(() => {
     if (!selectedDate() || !timeValue()) {
       return false;
     }
 
-    if (!props.maxDurationHours) {
-      return true;
-    }
-
-    return selectedDate() && !isDateTimeExceedingLimit();
-  });
-
-  const isDateTimeExceedingLimit = () => {
-    if (!selectedDate() || !timeValue() || !props.maxDurationHours) {
+    // Check if the date is in the future (at least 3 minutes)
+    if (isTimeInPast()) {
       return false;
     }
 
-    const now = new Date();
-    const date = new Date(selectedDate()!);
-    const hours = convertTo24Hour(timeValue());
+    // Check if date exceeds max duration (if set)
+    if (props.maxDurationHours && isTimeExceedingMaxDuration()) {
+      return false;
+    }
 
-    const selectedDateTime = new Date(date);
-    selectedDateTime.setHours(hours, timeValue().minute, 0, 0);
+    return true;
+  });
 
-    const minAllowedDateTime = new Date(Date.now() + 2 * 60 * 1000); // 2 minutes from now
-    const maxAllowedDateTime = new Date(now.getTime() + props.maxDurationHours * 60 * 60 * 1000);
+  const getTooltipMessage = createMemo(() => {
+    if (isTimeInPast()) {
+      return t('snooze.datePicker.pastDateTooltip');
+    }
 
-    // Check if the selected date is too early or too late
-    return selectedDateTime < minAllowedDateTime || selectedDateTime > maxAllowedDateTime;
-  };
+    if (isTimeExceedingMaxDuration()) {
+      return t('snooze.datePicker.exceedingLimitTooltip', { hours: props.maxDurationHours || 0 });
+    }
+
+    return t('snooze.datePicker.noDateSelectedTooltip');
+  });
 
   return (
     <div class={style('snoozeDatePicker', 'nt-bg-white nt-rounded-md nt-shadow-lg nt-w-[260px]')}>
@@ -152,7 +192,7 @@ export const SnoozeDateTimePicker: Component<SnoozeDateTimePickerProps> = (props
                   </Button>
                 )}
               />
-              <Tooltip.Content>{t('snooze.datePicker.applyTooltip')}</Tooltip.Content>
+              <Tooltip.Content>{getTooltipMessage()}</Tooltip.Content>
             </Tooltip.Root>
           }
         >

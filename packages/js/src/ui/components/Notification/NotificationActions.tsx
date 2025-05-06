@@ -36,7 +36,7 @@ export const SNOOZE_PRESETS = [
     getDate: () => new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
   },
 ] satisfies {
-  key: LocalizationKey;
+  key: Extract<LocalizationKey, `snooze.options.${string}`>;
   hours: number;
   getDate: () => Date;
 }[];

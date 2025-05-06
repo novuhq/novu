@@ -35,7 +35,10 @@ export const defaultLocalization = {
   'snooze.datePicker.apply': 'Apply',
   'snooze.datePicker.cancel': 'Cancel',
   'snooze.options.anHourFromNow': 'An hour from now',
-  'snooze.datePicker.applyTooltip': 'Date and time out of range',
+  'snooze.datePicker.pastDateTooltip': 'Selected time must be at least 3 minutes in the future',
+  'snooze.datePicker.noDateSelectedTooltip': 'Please select a date',
+  'snooze.datePicker.exceedingLimitTooltip': ({ hours }: { hours: number }) =>
+    `Selected time cannot exceed ${hours} hours from now`,
   'snooze.options.customTime': 'Custom time...',
   'snooze.options.inTwelveHours': 'In 12 hours',
   'snooze.options.inOneDay': 'Tomorrow',
