@@ -46,25 +46,25 @@ export type TriggerEventToAllRequestDtoOverrides = {
    *
    * @deprecated field: This will be removed in a future release, please migrate away from it as soon as possible.
    */
-  email?: { [k: string]: { [k: string]: any } } | undefined;
+  email?: { [k: string]: any } | undefined;
   /**
    * Override the push provider specific configurations for the entire workflow
    *
    * @deprecated field: This will be removed in a future release, please migrate away from it as soon as possible.
    */
-  push?: { [k: string]: { [k: string]: any } } | undefined;
+  push?: { [k: string]: any } | undefined;
   /**
    * Override the sms provider specific configurations for the entire workflow
    *
    * @deprecated field: This will be removed in a future release, please migrate away from it as soon as possible.
    */
-  sms?: { [k: string]: { [k: string]: any } } | undefined;
+  sms?: { [k: string]: any } | undefined;
   /**
    * Override the chat provider specific configurations for the entire workflow
    *
    * @deprecated field: This will be removed in a future release, please migrate away from it as soon as possible.
    */
-  chat?: { [k: string]: { [k: string]: any } } | undefined;
+  chat?: { [k: string]: any } | undefined;
   /**
    * Override the layout identifier for the entire workflow
    *
@@ -136,10 +136,10 @@ export const TriggerEventToAllRequestDtoOverrides$inboundSchema: z.ZodType<
   z.object({
     steps: z.record(StepsOverrides$inboundSchema).optional(),
     providers: z.record(z.record(z.any())).optional(),
-    email: z.record(z.record(z.any())).optional(),
-    push: z.record(z.record(z.any())).optional(),
-    sms: z.record(z.record(z.any())).optional(),
-    chat: z.record(z.record(z.any())).optional(),
+    email: z.record(z.any()).optional(),
+    push: z.record(z.any()).optional(),
+    sms: z.record(z.any()).optional(),
+    chat: z.record(z.any()).optional(),
     layoutIdentifier: z.string().optional(),
   }).catchall(z.record(z.any())),
   "additionalProperties",
@@ -150,10 +150,10 @@ export const TriggerEventToAllRequestDtoOverrides$inboundSchema: z.ZodType<
 export type TriggerEventToAllRequestDtoOverrides$Outbound = {
   steps?: { [k: string]: StepsOverrides$Outbound } | undefined;
   providers?: { [k: string]: { [k: string]: any } } | undefined;
-  email?: { [k: string]: { [k: string]: any } } | undefined;
-  push?: { [k: string]: { [k: string]: any } } | undefined;
-  sms?: { [k: string]: { [k: string]: any } } | undefined;
-  chat?: { [k: string]: { [k: string]: any } } | undefined;
+  email?: { [k: string]: any } | undefined;
+  push?: { [k: string]: any } | undefined;
+  sms?: { [k: string]: any } | undefined;
+  chat?: { [k: string]: any } | undefined;
   layoutIdentifier?: string | undefined;
   [additionalProperties: string]: unknown;
 };
@@ -166,10 +166,10 @@ export const TriggerEventToAllRequestDtoOverrides$outboundSchema: z.ZodType<
 > = z.object({
   steps: z.record(StepsOverrides$outboundSchema).optional(),
   providers: z.record(z.record(z.any())).optional(),
-  email: z.record(z.record(z.any())).optional(),
-  push: z.record(z.record(z.any())).optional(),
-  sms: z.record(z.record(z.any())).optional(),
-  chat: z.record(z.record(z.any())).optional(),
+  email: z.record(z.any()).optional(),
+  push: z.record(z.any()).optional(),
+  sms: z.record(z.any()).optional(),
+  chat: z.record(z.any()).optional(),
   layoutIdentifier: z.string().optional(),
   additionalProperties: z.record(z.record(z.any())),
 }).transform((v) => {
