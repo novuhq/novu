@@ -223,7 +223,7 @@ const buildFeatureArray: (columns: ApiServiceLevelEnum[], featureFlags: FeatureF
     ...(featureFlags[FeatureFlagsKeysEnum.IS_SNOOZE_ENABLED]
       ? [
           {
-            label: '"Remind me later" functionality',
+            label: 'Snooze functionality',
             values: buildTableRowRecord({
               featureName: FeatureNameEnum.PLATFORM_MAX_SNOOZE_DURATION,
             }),
