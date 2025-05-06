@@ -111,7 +111,8 @@ export class Session {
     const token = await this.authService.getSubscriberWidgetToken(subscriber);
 
     const removeNovuBranding = inAppIntegration.removeNovuBranding || false;
-    const maxSnoozeDurationHours = await this.getMaxSnoozeDurationHours(environment);
+    const maxSnoozeDurationHours =
+      process.env.NOVU_ENTERPRISE === 'true' ? await this.getMaxSnoozeDurationHours(environment) : 0;
 
     /**
      * We want to prevent the playground inbox demo from marking the integration as connected
