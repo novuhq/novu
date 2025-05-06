@@ -98,6 +98,36 @@ export class TriggerOverrides {
     },
   })
   providers?: Record<ProvidersIdEnum, Record<string, unknown>>;
+
+  @ApiProperty({
+    description: 'Override the email provider specific configurations for the entire workflow',
+    deprecated: true,
+  })
+  email?: Record<string, unknown>;
+
+  @ApiProperty({
+    description: 'Override the push provider specific configurations for the entire workflow',
+    deprecated: true,
+  })
+  push?: Record<string, any>;
+
+  @ApiProperty({
+    description: 'Override the sms provider specific configurations for the entire workflow',
+    deprecated: true,
+  })
+  sms?: Record<string, any>;
+
+  @ApiProperty({
+    description: 'Override the chat provider specific configurations for the entire workflow',
+    deprecated: true,
+  })
+  chat?: Record<string, any>;
+
+  @ApiProperty({
+    description: 'Override the layout identifier for the entire workflow',
+    deprecated: true,
+  })
+  layoutIdentifier?: string;
 }
 
 @ApiExtraModels(SubscriberPayloadDto, TenantPayloadDto, TopicPayloadDto, StepsOverrides)
@@ -147,10 +177,6 @@ export class TriggerEventRequestDto {
       },
     },
     type: TriggerOverrides,
-    additionalProperties: {
-      type: 'object',
-      additionalProperties: true,
-    },
     required: false,
   })
   @IsObject()
