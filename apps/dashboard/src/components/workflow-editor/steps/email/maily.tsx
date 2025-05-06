@@ -3,6 +3,7 @@ import { Editor } from '@maily-to/core';
 import { Editor as EditorDigest } from '@maily-to/core-digest';
 import type { Editor as TiptapEditor } from '@tiptap/core';
 import { Editor as TiptapEditorReact } from '@tiptap/react';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useParseVariables } from '@/hooks/use-parse-variables';
@@ -11,8 +12,8 @@ import { cn } from '@/utils/ui';
 import { createEditorBlocks, createExtensions, DEFAULT_EDITOR_CONFIG, MAILY_EMAIL_WIDTH } from './maily-config';
 import { calculateVariables, VariableFrom } from './variables/variables';
 import { RepeatMenuDescription } from './views/repeat-menu-description';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { useRemoveGrammarly } from '@/hooks/use-remove-grammarly';
 
 type MailyProps = HTMLAttributes<HTMLDivElement> & {
   value: string;
@@ -42,6 +43,7 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
   const blocks = useMemo(() => {
     return createEditorBlocks({ track, digestStepBeforeCurrent, isEnhancedDigestEnabled });
   }, [digestStepBeforeCurrent, isEnhancedDigestEnabled, track]);
+  const editorParentRef = useRemoveGrammarly<HTMLDivElement>();
 
   const handleCalculateVariables = useCallback(
     ({ query, editor, from }: { query: string; editor: TiptapEditor; from: VariableFrom }) => {
@@ -125,10 +127,19 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
     <>
       {overrideTippyBoxStyles()}
       <div
+        ref={editorParentRef}
         className={cn(
           `shadow-xs mx-auto flex min-h-full max-w-[${MAILY_EMAIL_WIDTH}px] flex-col items-start rounded-lg bg-white [&_a]:pointer-events-none`,
           className
         )}
+        data-gramm={false}
+        data-gramm_editor={false}
+        data-enable-grammarly="false"
+        aria-autocomplete="none"
+        aria-multiline={false}
+        autoCapitalize="off"
+        autoCorrect="off"
+        spellCheck={false}
         {...rest}
       >
         <_Editor
