@@ -125,8 +125,9 @@ export class SendMessagePush extends SendMessageBase {
       ) || [];
 
     const pushProviderOverrides = this.getPushProviderOverrides(command.overrides, command.step?.stepId || '');
+    const providersWithCredentialOverrides = this.filterProvidersWithCredentialOverrides(pushProviderOverrides);
 
-    if (!pushChannels.length) {
+    if (!pushChannels.length && !providersWithCredentialOverrides.length) {
       await this.createExecutionDetailsError(DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL, command.job);
 
       return {
@@ -281,6 +282,33 @@ export class SendMessagePush extends SendMessageBase {
     }
 
     return result;
+  }
+
+  /**
+   * Checks if specific overrides keys exist based on the delivery provider
+   */
+  private hasProviderSpecificOverrides(providerId: PushProviderIdEnum, overrides: Record<string, unknown>): boolean {
+    if (!overrides) return false;
+
+    switch (providerId) {
+      case PushProviderIdEnum.FCM:
+        return 'tokens' in overrides || 'topic' in overrides;
+      // Add cases for other providers as needed
+      default:
+        return false;
+    }
+  }
+
+  /**
+   * Filters the provided array of push provider overrides and returns only those
+   * that contain provider-specific credential keys
+   */
+  private filterProvidersWithCredentialOverrides(providerOverrides: IPushProviderOverride[]): IPushProviderOverride[] {
+    if (!providerOverrides.length) return [];
+
+    return providerOverrides.filter((override) =>
+      this.hasProviderSpecificOverrides(override.providerId, override.overrides)
+    );
   }
 
   private async isChannelMissingDeviceTokens(channel: IChannelSettings, command: SendMessageCommand): Promise<boolean> {
