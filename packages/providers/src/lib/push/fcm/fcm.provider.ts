@@ -1,6 +1,6 @@
 import { ChannelTypeEnum, ISendMessageSuccessResponse, IPushOptions, IPushProvider } from '@novu/stateless';
 import { initializeApp, cert, deleteApp, getApp } from 'firebase-admin/app';
-import { getMessaging, Messaging, MulticastMessage } from 'firebase-admin/messaging';
+import { getMessaging, Messaging, MulticastMessage, TopicMessage } from 'firebase-admin/messaging';
 import crypto from 'crypto';
 import { PushProviderIdEnum } from '@novu/shared';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
@@ -56,9 +56,27 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
 
     const payload = this.cleanPayload(options.payload);
 
+    const transformedBase = this.transform<MulticastMessage | TopicMessage>(bridgeProviderData, {});
+
     let res;
 
-    if (type === 'data') {
+    if ((transformedBase?.body as TopicMessage).topic) {
+      res = await this.messaging.send(
+        this.transform<TopicMessage>(bridgeProviderData, {
+          topic: (transformedBase.body as TopicMessage).topic,
+          notification: {
+            title: options.title,
+            body: options.content,
+            ...overridesData,
+          },
+          data,
+          android,
+          apns,
+          fcmOptions,
+          webpush,
+        }).body
+      );
+    } else if (type === 'data') {
       res = await this.messaging.sendEachForMulticast(
         this.transform<MulticastMessage>(bridgeProviderData, {
           tokens: options.target,
