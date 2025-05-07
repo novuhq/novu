@@ -88,7 +88,11 @@ export const InboxButton = () => {
   const { currentEnvironment } = useEnvironment();
   const { isTestPage } = useTestPage();
 
-  if (!user || !currentEnvironment || IS_SELF_HOSTED) {
+  if (!user || !currentEnvironment) {
+    return null;
+  }
+
+  if (!isTestPage && IS_SELF_HOSTED) {
     return null;
   }
 
@@ -98,7 +102,6 @@ export const InboxButton = () => {
    * This displays a test inbox, where the user can see their test notifications appear
    * in real-time.
    */
-  // todo change the self hosted appId to the environment identifier?
   const appId = isTestPage ? currentEnvironment?.identifier : APP_ID;
 
   const localizationTestSuffix = isTestPage ? ' (Test)' : '';
