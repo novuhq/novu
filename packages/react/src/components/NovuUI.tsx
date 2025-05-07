@@ -28,6 +28,7 @@ export const NovuUI = ({ options, novu, children }: RendererProps) => {
       return;
     }
 
+    novuUI.updateContainerElement(options.containerElement);
     novuUI.updateAppearance(options.appearance);
     novuUI.updateLocalization(options.localization);
     novuUI.updateTabs(options.tabs);

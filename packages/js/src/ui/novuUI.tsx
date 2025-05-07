@@ -17,6 +17,8 @@ export type NovuUIOptions = NovuProviderProps;
 export type BaseNovuUIOptions = BaseNovuProviderProps;
 export class NovuUI {
   #dispose: { (): void } | null = null;
+  #containerElement: Accessor<Node | null | undefined>;
+  #setContainerElement: Setter<Node | null | undefined>;
   #rootElement: HTMLElement;
   #mountedElements;
   #setMountedElements;
@@ -44,6 +46,7 @@ export class NovuUI {
     const [tabs, setTabs] = createSignal(props.tabs ?? []);
     const [preferencesFilter, setPreferencesFilter] = createSignal(props.preferencesFilter);
     const [routerPush, setRouterPush] = createSignal(props.routerPush);
+    const [containerElement, setContainerElement] = createSignal(this.#getContainerElement(props.containerElement));
     this.#mountedElements = mountedElements;
     this.#setMountedElements = setMountedElements;
     this.#appearance = appearance;
@@ -59,8 +62,22 @@ export class NovuUI {
     this.#predefinedNovu = props.novu;
     this.#preferencesFilter = preferencesFilter;
     this.#setPreferencesFilter = setPreferencesFilter;
+    this.#containerElement = containerElement;
+    this.#setContainerElement = setContainerElement;
 
     this.#mountComponentRenderer();
+  }
+
+  #getContainerElement(containerElement?: Node | string | null): Node | null | undefined {
+    if (containerElement === null || containerElement === undefined) {
+      return containerElement;
+    }
+
+    if (typeof containerElement === 'string') {
+      return document.querySelector(containerElement) ?? document.getElementById(containerElement);
+    }
+
+    return containerElement;
   }
 
   #mountComponentRenderer(): void {
@@ -70,7 +87,15 @@ export class NovuUI {
 
     this.#rootElement = document.createElement('div');
     this.#rootElement.setAttribute('id', `novu-ui-${this.id}`);
-    document.body.appendChild(this.#rootElement);
+
+    const containerElement = this.#containerElement();
+    if (containerElement === null) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        'Cannot resolve containerElement prop, using document.body as container element and document.head as styles container'
+      );
+    }
+    (containerElement ?? document.body).appendChild(this.#rootElement);
 
     const dispose = render(
       () => (
@@ -84,6 +109,7 @@ export class NovuUI {
           preferencesFilter={this.#preferencesFilter()}
           routerPush={this.#routerPush()}
           novu={this.#predefinedNovu}
+          containerElement={this.#containerElement()}
         />
       ),
       this.#rootElement
@@ -156,6 +182,10 @@ export class NovuUI {
 
   updateRouterPush(routerPush?: RouterPush) {
     this.#setRouterPush(() => routerPush);
+  }
+
+  updateContainerElement(containerElement?: Node | string | null) {
+    this.#setContainerElement(this.#getContainerElement(containerElement));
   }
 
   unmount(): void {

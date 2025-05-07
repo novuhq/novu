@@ -106,6 +106,7 @@ export const Inbox = React.memo((props: InboxProps) => {
 
 const InboxChild = React.memo((props: InboxProps) => {
   const {
+    containerElement,
     localization,
     appearance,
     tabs,
@@ -121,6 +122,7 @@ const InboxChild = React.memo((props: InboxProps) => {
 
   const options = useMemo(() => {
     return {
+      containerElement,
       localization,
       appearance,
       tabs,
@@ -135,6 +137,7 @@ const InboxChild = React.memo((props: InboxProps) => {
       },
     };
   }, [
+    containerElement,
     localization,
     appearance,
     tabs,
