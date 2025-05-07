@@ -6,6 +6,7 @@ import {
   TriggerRecipientSubscriber,
   TriggerRequestCategoryEnum,
   TriggerTenantContext,
+  TriggerOverrides,
 } from '@novu/shared';
 
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
@@ -19,7 +20,7 @@ export class ParseEventRequestBaseCommand extends EnvironmentWithUserCommand {
   payload: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
   @IsDefined()
-  overrides: Record<string, Record<string, unknown>>;
+  overrides: TriggerOverrides;
 
   @IsString()
   @IsOptional()

@@ -73,12 +73,22 @@ export class MailgunEmailProvider extends BaseProvider implements IEmailProvider
       html: emailOptions.html,
       cc: emailOptions.cc?.join(','),
       bcc: emailOptions.bcc?.join(','),
-      attachment: emailOptions.attachments?.map((attachment) => {
-        return {
-          data: attachment.file,
-          filename: attachment.name,
-        };
-      }),
+      attachment: emailOptions.attachments
+        ?.filter((attachment) => !attachment.cid)
+        ?.map((attachment) => {
+          return {
+            data: attachment.file,
+            filename: attachment.name,
+          };
+        }),
+      inline: emailOptions.attachments
+        ?.filter((attachment) => Boolean(attachment.cid))
+        ?.map((attachment) => {
+          return {
+            data: attachment.file,
+            filename: attachment.name,
+          };
+        }),
     };
 
     if (emailOptions.replyTo) {

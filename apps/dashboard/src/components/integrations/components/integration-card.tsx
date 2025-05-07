@@ -158,7 +158,7 @@ function InAppPremiumFeaturesIcon() {
       <TooltipContent>
         <div className="flex flex-col gap-2">
           <div>
-            Upgrade to remove the 'Inbox by Novu' badge and enable notification reminders in your{' '}
+            Upgrade to remove the 'Inbox by Novu' badge and extend notification snooze beyond 24 hours in your{' '}
             <span className="font-mono">{`<Inbox />`}</span> component.
           </div>
           <button onClick={handleUpgradeClick} className="flex items-center gap-1 text-xs font-medium hover:underline">

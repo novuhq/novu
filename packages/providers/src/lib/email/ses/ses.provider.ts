@@ -74,6 +74,9 @@ export class SESEmailProvider extends BaseProvider implements IEmailProvider {
           filename: attachment?.name,
           content: attachment.file,
           contentType: attachment.mime,
+          cid: attachment.cid,
+          contentDisposition:
+            attachment.disposition ?? (attachment.cid ? 'inline' : undefined),
         })),
         cc,
         bcc,

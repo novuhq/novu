@@ -32,7 +32,7 @@ export function PopoverRoot(props: PopoverRootProps) {
   const [floating, setFloating] = createSignal<HTMLElement | null>(null);
 
   const position = useFloating(reference, floating, {
-    strategy: 'fixed',
+    strategy: 'absolute',
     placement: props.placement,
     whileElementsMounted: autoUpdate,
     middleware: [offset(10), flip({ fallbackPlacements: props.fallbackPlacements }), shift()],

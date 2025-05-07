@@ -138,7 +138,7 @@ export class EventsController {
   })
   @ApiCreatedResponse({
     description: 'Broadcast request has been registered successfully ',
-    type: TriggerEventResponseDto, // Specify the response type
+    type: TriggerEventResponseDto,
   })
   async broadcastEventToAll(
     @UserSession() user: UserSessionData,

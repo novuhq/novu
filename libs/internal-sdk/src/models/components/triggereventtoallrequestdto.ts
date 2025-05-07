@@ -3,9 +3,19 @@
  */
 
 import * as z from "zod";
-import { safeParse } from "../../lib/schemas.js";
+import { remap as remap$ } from "../../lib/primitives.js";
+import {
+  collectExtraKeys as collectExtraKeys$,
+  safeParse,
+} from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
+import {
+  StepsOverrides,
+  StepsOverrides$inboundSchema,
+  StepsOverrides$Outbound,
+  StepsOverrides$outboundSchema,
+} from "./stepsoverrides.js";
 import {
   SubscriberPayloadDto,
   SubscriberPayloadDto$inboundSchema,
@@ -22,7 +32,47 @@ import {
 /**
  * This could be used to override provider specific configurations
  */
-export type Overrides = {};
+export type TriggerEventToAllRequestDtoOverrides = {
+  /**
+   * This could be used to override provider specific configurations
+   */
+  steps?: { [k: string]: StepsOverrides } | undefined;
+  /**
+   * Overrides the provider configuration for the entire workflow and all steps
+   */
+  providers?: { [k: string]: { [k: string]: any } } | undefined;
+  /**
+   * Override the email provider specific configurations for the entire workflow
+   *
+   * @deprecated field: This will be removed in a future release, please migrate away from it as soon as possible.
+   */
+  email?: { [k: string]: any } | undefined;
+  /**
+   * Override the push provider specific configurations for the entire workflow
+   *
+   * @deprecated field: This will be removed in a future release, please migrate away from it as soon as possible.
+   */
+  push?: { [k: string]: any } | undefined;
+  /**
+   * Override the sms provider specific configurations for the entire workflow
+   *
+   * @deprecated field: This will be removed in a future release, please migrate away from it as soon as possible.
+   */
+  sms?: { [k: string]: any } | undefined;
+  /**
+   * Override the chat provider specific configurations for the entire workflow
+   *
+   * @deprecated field: This will be removed in a future release, please migrate away from it as soon as possible.
+   */
+  chat?: { [k: string]: any } | undefined;
+  /**
+   * Override the layout identifier for the entire workflow
+   *
+   * @deprecated field: This will be removed in a future release, please migrate away from it as soon as possible.
+   */
+  layoutIdentifier?: string | undefined;
+  additionalProperties?: { [k: string]: { [k: string]: any } };
+};
 
 /**
  * It is used to display the Avatar of the provided actor's subscriber id or actor object.
@@ -56,7 +106,7 @@ export type TriggerEventToAllRequestDto = {
   /**
    * This could be used to override provider specific configurations
    */
-  overrides?: Overrides | undefined;
+  overrides?: TriggerEventToAllRequestDtoOverrides | undefined;
   /**
    * A unique identifier for this transaction, we will generated a UUID if not provided.
    */
@@ -78,46 +128,92 @@ export type TriggerEventToAllRequestDto = {
 };
 
 /** @internal */
-export const Overrides$inboundSchema: z.ZodType<
-  Overrides,
+export const TriggerEventToAllRequestDtoOverrides$inboundSchema: z.ZodType<
+  TriggerEventToAllRequestDtoOverrides,
   z.ZodTypeDef,
   unknown
-> = z.object({});
+> = collectExtraKeys$(
+  z.object({
+    steps: z.record(StepsOverrides$inboundSchema).optional(),
+    providers: z.record(z.record(z.any())).optional(),
+    email: z.record(z.any()).optional(),
+    push: z.record(z.any()).optional(),
+    sms: z.record(z.any()).optional(),
+    chat: z.record(z.any()).optional(),
+    layoutIdentifier: z.string().optional(),
+  }).catchall(z.record(z.any())),
+  "additionalProperties",
+  true,
+);
 
 /** @internal */
-export type Overrides$Outbound = {};
+export type TriggerEventToAllRequestDtoOverrides$Outbound = {
+  steps?: { [k: string]: StepsOverrides$Outbound } | undefined;
+  providers?: { [k: string]: { [k: string]: any } } | undefined;
+  email?: { [k: string]: any } | undefined;
+  push?: { [k: string]: any } | undefined;
+  sms?: { [k: string]: any } | undefined;
+  chat?: { [k: string]: any } | undefined;
+  layoutIdentifier?: string | undefined;
+  [additionalProperties: string]: unknown;
+};
 
 /** @internal */
-export const Overrides$outboundSchema: z.ZodType<
-  Overrides$Outbound,
+export const TriggerEventToAllRequestDtoOverrides$outboundSchema: z.ZodType<
+  TriggerEventToAllRequestDtoOverrides$Outbound,
   z.ZodTypeDef,
-  Overrides
-> = z.object({});
+  TriggerEventToAllRequestDtoOverrides
+> = z.object({
+  steps: z.record(StepsOverrides$outboundSchema).optional(),
+  providers: z.record(z.record(z.any())).optional(),
+  email: z.record(z.any()).optional(),
+  push: z.record(z.any()).optional(),
+  sms: z.record(z.any()).optional(),
+  chat: z.record(z.any()).optional(),
+  layoutIdentifier: z.string().optional(),
+  additionalProperties: z.record(z.record(z.any())),
+}).transform((v) => {
+  return {
+    ...v.additionalProperties,
+    ...remap$(v, {
+      additionalProperties: null,
+    }),
+  };
+});
 
 /**
  * @internal
  * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
  */
-export namespace Overrides$ {
-  /** @deprecated use `Overrides$inboundSchema` instead. */
-  export const inboundSchema = Overrides$inboundSchema;
-  /** @deprecated use `Overrides$outboundSchema` instead. */
-  export const outboundSchema = Overrides$outboundSchema;
-  /** @deprecated use `Overrides$Outbound` instead. */
-  export type Outbound = Overrides$Outbound;
+export namespace TriggerEventToAllRequestDtoOverrides$ {
+  /** @deprecated use `TriggerEventToAllRequestDtoOverrides$inboundSchema` instead. */
+  export const inboundSchema =
+    TriggerEventToAllRequestDtoOverrides$inboundSchema;
+  /** @deprecated use `TriggerEventToAllRequestDtoOverrides$outboundSchema` instead. */
+  export const outboundSchema =
+    TriggerEventToAllRequestDtoOverrides$outboundSchema;
+  /** @deprecated use `TriggerEventToAllRequestDtoOverrides$Outbound` instead. */
+  export type Outbound = TriggerEventToAllRequestDtoOverrides$Outbound;
 }
 
-export function overridesToJSON(overrides: Overrides): string {
-  return JSON.stringify(Overrides$outboundSchema.parse(overrides));
+export function triggerEventToAllRequestDtoOverridesToJSON(
+  triggerEventToAllRequestDtoOverrides: TriggerEventToAllRequestDtoOverrides,
+): string {
+  return JSON.stringify(
+    TriggerEventToAllRequestDtoOverrides$outboundSchema.parse(
+      triggerEventToAllRequestDtoOverrides,
+    ),
+  );
 }
 
-export function overridesFromJSON(
+export function triggerEventToAllRequestDtoOverridesFromJSON(
   jsonString: string,
-): SafeParseResult<Overrides, SDKValidationError> {
+): SafeParseResult<TriggerEventToAllRequestDtoOverrides, SDKValidationError> {
   return safeParse(
     jsonString,
-    (x) => Overrides$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'Overrides' from JSON`,
+    (x) =>
+      TriggerEventToAllRequestDtoOverrides$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'TriggerEventToAllRequestDtoOverrides' from JSON`,
   );
 }
 
@@ -234,7 +330,8 @@ export const TriggerEventToAllRequestDto$inboundSchema: z.ZodType<
 > = z.object({
   name: z.string(),
   payload: z.record(z.any()),
-  overrides: z.lazy(() => Overrides$inboundSchema).optional(),
+  overrides: z.lazy(() => TriggerEventToAllRequestDtoOverrides$inboundSchema)
+    .optional(),
   transactionId: z.string().optional(),
   actor: z.union([SubscriberPayloadDto$inboundSchema, z.string()]).optional(),
   tenant: z.union([TenantPayloadDto$inboundSchema, z.string()]).optional(),
@@ -244,7 +341,7 @@ export const TriggerEventToAllRequestDto$inboundSchema: z.ZodType<
 export type TriggerEventToAllRequestDto$Outbound = {
   name: string;
   payload: { [k: string]: any };
-  overrides?: Overrides$Outbound | undefined;
+  overrides?: TriggerEventToAllRequestDtoOverrides$Outbound | undefined;
   transactionId?: string | undefined;
   actor?: SubscriberPayloadDto$Outbound | string | undefined;
   tenant?: TenantPayloadDto$Outbound | string | undefined;
@@ -258,7 +355,8 @@ export const TriggerEventToAllRequestDto$outboundSchema: z.ZodType<
 > = z.object({
   name: z.string(),
   payload: z.record(z.any()),
-  overrides: z.lazy(() => Overrides$outboundSchema).optional(),
+  overrides: z.lazy(() => TriggerEventToAllRequestDtoOverrides$outboundSchema)
+    .optional(),
   transactionId: z.string().optional(),
   actor: z.union([SubscriberPayloadDto$outboundSchema, z.string()]).optional(),
   tenant: z.union([TenantPayloadDto$outboundSchema, z.string()]).optional(),

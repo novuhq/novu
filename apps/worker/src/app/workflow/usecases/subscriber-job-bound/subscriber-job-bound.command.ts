@@ -5,6 +5,7 @@ import {
   ITenantDefine,
   StatelessControls,
   SubscriberSourceEnum,
+  TriggerOverrides,
   TriggerRequestCategoryEnum,
 } from '@novu/shared';
 import { SubscriberEntity } from '@novu/dal';
@@ -24,7 +25,7 @@ export class SubscriberJobBoundCommand extends EnvironmentWithUserCommand {
   identifier: string;
 
   @IsDefined()
-  overrides: Record<string, Record<string, unknown>>;
+  overrides: TriggerOverrides;
 
   @IsOptional()
   @ValidateNested()

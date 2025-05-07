@@ -11,7 +11,7 @@ export const MoreActionsDropdown = () => {
   const { status } = useInboxContext();
 
   return (
-    <Show when={status() !== NotificationStatus.ARCHIVED}>
+    <Show when={status() !== NotificationStatus.ARCHIVED && status() !== NotificationStatus.SNOOZED}>
       <Dropdown.Root>
         <Dropdown.Trigger
           class={style('moreActions__dropdownTrigger')}

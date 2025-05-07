@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { addBreadcrumb } from '@sentry/node';
 import { ModuleRef } from '@nestjs/core';
+import { merge } from 'lodash';
 
 import { MessageRepository, SubscriberRepository, MessageEntity, IntegrationEntity, JobEntity } from '@novu/dal';
 import {
@@ -10,6 +11,7 @@ import {
   ExecutionDetailsStatusEnum,
   IChannelSettings,
   ProvidersIdEnum,
+  TriggerOverrides,
 } from '@novu/shared';
 import {
   InstrumentUsecase,
@@ -35,9 +37,15 @@ import { SendMessageResult } from './send-message-type.usecase';
 
 const LOG_CONTEXT = 'SendMessagePush';
 
+interface IPushProviderOverride {
+  providerId: PushProviderIdEnum;
+  overrides: Record<string, unknown>;
+}
+
 @Injectable()
 export class SendMessagePush extends SendMessageBase {
   channelType = ChannelTypeEnum.PUSH;
+  private pushProviderIds: PushProviderIdEnum[] = Object.values(PushProviderIdEnum);
 
   constructor(
     protected subscriberRepository: SubscriberRepository,
@@ -116,7 +124,20 @@ export class SendMessagePush extends SendMessageBase {
         Object.values(PushProviderIdEnum).includes(chan.providerId as PushProviderIdEnum)
       ) || [];
 
-    if (!pushChannels.length) {
+    const pushProviderOverrides = this.getPushProviderOverrides(command.overrides, command.step?.stepId || '');
+    const providersWithCredentialOverrides = this.filterProvidersWithCredentialOverrides(pushProviderOverrides);
+
+    const channelsFromOverrides = await this.constructChannelSettingsFromOverrides(
+      providersWithCredentialOverrides,
+      command
+    );
+    const existingProviderIds = pushChannels.map((channel) => channel.providerId);
+    const uniqueOverrideChannels = channelsFromOverrides.filter(
+      (channel) => !existingProviderIds.includes(channel.providerId)
+    );
+    const allPushChannels = [...pushChannels, ...uniqueOverrideChannels];
+
+    if (!allPushChannels.length) {
       await this.createExecutionDetailsError(DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL, command.job);
 
       return {
@@ -129,7 +150,7 @@ export class SendMessagePush extends SendMessageBase {
     delete messagePayload.attachments;
 
     let integrationsWithErrors = 0;
-    for (const channel of pushChannels) {
+    for (const channel of allPushChannels) {
       const { deviceTokens } = channel.credentials || {};
 
       let isChannelMissingDeviceTokens;
@@ -150,17 +171,56 @@ export class SendMessagePush extends SendMessageBase {
       }
 
       // We avoid to send a message if subscriber has not an integration or if the subscriber has no device tokens for said integration
-      if (!deviceTokens || !integration || isChannelMissingDeviceTokens) {
+      if ((!deviceTokens || !integration || isChannelMissingDeviceTokens) && !uniqueOverrideChannels?.length) {
         integrationsWithErrors += 1;
         continue;
       }
 
-      await this.sendSelectedIntegrationExecution(command.job, integration);
-
       const overrides = command.overrides[integration.providerId] || {};
       const target = (overrides as { deviceTokens?: string[] }).deviceTokens || deviceTokens;
 
+      await this.sendSelectedIntegrationExecution(command.job, integration);
+
       const message = await this.createMessage(command, integration, title, content, target, overrides);
+
+      const bridgeProviderData = this.combineOverrides(
+        command.bridgeData,
+        command.overrides,
+        command.step.stepId,
+        integration.providerId
+      );
+
+      /**
+       * There are no targets available for the subscriber, but credentials provided in the overrides
+       */
+      if (!target?.length && uniqueOverrideChannels?.length) {
+        const result = await this.sendMessage(
+          command,
+          message,
+          subscriber,
+          integration,
+
+          // credentials provided in the overrides
+          '',
+          title,
+          content,
+          overrides,
+          stepData,
+          bridgeProviderData
+        );
+
+        if (!result.success) {
+          integrationsWithErrors += 1;
+
+          Logger.error(
+            { jobId: command.jobId },
+            `Error sending push notification for jobId ${command.jobId} ${result.error.message || result.error.toString()}`,
+            LOG_CONTEXT
+          );
+        }
+
+        continue;
+      }
 
       for (const deviceToken of target) {
         const result = await this.sendMessage(
@@ -172,7 +232,8 @@ export class SendMessagePush extends SendMessageBase {
           title,
           content,
           overrides,
-          stepData
+          stepData,
+          bridgeProviderData
         );
 
         if (!result.success) {
@@ -208,6 +269,83 @@ export class SendMessagePush extends SendMessageBase {
     return {
       status: 'success',
     };
+  }
+
+  /**
+   * Collects all push provider IDs and their overrides from the TriggerOverrides structure
+   */
+  private getPushProviderOverrides(overrides: TriggerOverrides, stepId: string): IPushProviderOverride[] {
+    if (!overrides) return [];
+
+    const result: IPushProviderOverride[] = [];
+
+    if (overrides.providers) {
+      for (const providerId of Object.keys(overrides.providers)) {
+        if (this.pushProviderIds.includes(providerId as PushProviderIdEnum)) {
+          result.push({
+            providerId: providerId as PushProviderIdEnum,
+            overrides: {
+              ...overrides.providers[providerId as ProvidersIdEnum],
+            },
+          });
+        }
+      }
+    }
+
+    if (overrides.steps?.[stepId]?.providers) {
+      for (const providerId of Object.keys(overrides.steps[stepId].providers)) {
+        if (this.pushProviderIds.includes(providerId as PushProviderIdEnum)) {
+          const existingIndex = result.findIndex((item) => item.providerId === providerId);
+
+          if (existingIndex >= 0) {
+            // Merge with existing overrides, with step overrides taking precedence
+            result[existingIndex].overrides = merge(
+              {},
+              result[existingIndex].overrides,
+              overrides.steps[stepId].providers[providerId as ProvidersIdEnum]
+            );
+          } else {
+            // Add new provider overrides
+            result.push({
+              providerId: providerId as PushProviderIdEnum,
+              overrides: {
+                ...overrides.steps[stepId].providers[providerId as ProvidersIdEnum],
+              },
+            });
+          }
+        }
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * Checks if specific overrides keys exist based on the delivery provider.
+   * This solution is not ideal, as we expose provider related concerns in the usecase layer.
+   * We will have to revisit this once we have a more flexible way to handle overrides and push providers.
+   */
+  private hasProviderSpecificOverrides(providerId: PushProviderIdEnum, overrides: Record<string, unknown>): boolean {
+    if (!overrides) return false;
+
+    switch (providerId) {
+      case PushProviderIdEnum.FCM:
+        return 'tokens' in overrides || 'topic' in overrides;
+      default:
+        return false;
+    }
+  }
+
+  /**
+   * Filters the provided array of push provider overrides and returns only those
+   * that contain provider-specific credential keys
+   */
+  private filterProvidersWithCredentialOverrides(providerOverrides: IPushProviderOverride[]): IPushProviderOverride[] {
+    if (!providerOverrides?.length) return [];
+
+    return providerOverrides.filter((override) =>
+      this.hasProviderSpecificOverrides(override.providerId, override.overrides)
+    );
   }
 
   private async isChannelMissingDeviceTokens(channel: IChannelSettings, command: SendMessageCommand): Promise<boolean> {
@@ -287,12 +425,12 @@ export class SendMessagePush extends SendMessageBase {
     title: string,
     content: string,
     overrides: object,
-    step: IPushOptions['step']
+    step: IPushOptions['step'],
+    bridgeProviderData: IPushOptions['bridgeProviderData']
   ): Promise<{ success: false; error: Error } | { success: true; error: undefined }> {
     try {
       const pushHandler = this.getIntegrationHandler(integration);
       const bridgeOutputs = command.bridgeData?.outputs;
-      const bridgeProviderData = command.bridgeData?.providers?.[integration.providerId] || {};
 
       const result = await pushHandler.send({
         target: [deviceToken],
@@ -302,7 +440,12 @@ export class SendMessagePush extends SendMessageBase {
         overrides,
         subscriber,
         step,
-        bridgeProviderData,
+        bridgeProviderData: this.combineOverrides(
+          command.bridgeData,
+          command.overrides,
+          command.step.stepId,
+          integration.providerId
+        ),
       });
 
       await this.createExecutionDetails.execute(
@@ -401,5 +544,68 @@ export class SendMessagePush extends SendMessageBase {
     }
 
     return pushHandler;
+  }
+
+  private async constructChannelSettingsFromOverrides(
+    providersWithCredentialOverrides: IPushProviderOverride[],
+    command: SendMessageCommand
+  ): Promise<IChannelSettings[]> {
+    const channelSettings: IChannelSettings[] = [];
+
+    for (const providerOverride of providersWithCredentialOverrides) {
+      const credentials = this.extractCredentialsFromOverride(providerOverride.providerId, providerOverride.overrides);
+
+      if (!credentials) continue;
+
+      const integration = await this.selectIntegration.execute({
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        channelType: ChannelTypeEnum.PUSH,
+        providerId: providerOverride.providerId,
+        userId: command.userId,
+        filterData: {
+          tenant: command.job.tenant,
+        },
+      });
+
+      if (!integration) continue;
+
+      channelSettings.push({
+        _integrationId: integration._id,
+        providerId: providerOverride.providerId,
+        credentials,
+      });
+    }
+
+    return channelSettings;
+  }
+
+  private extractCredentialsFromOverride(
+    providerId: PushProviderIdEnum,
+    overrides: Record<string, unknown>
+  ): {
+    deviceTokens?: string[];
+    topic?: string;
+  } | null {
+    if (!overrides) return null;
+
+    switch (providerId) {
+      case PushProviderIdEnum.FCM:
+        if (Array.isArray(overrides.tokens)) {
+          return {
+            deviceTokens: overrides.tokens,
+          };
+        }
+
+        if (overrides.topic) {
+          return {
+            topic: overrides.topic as string,
+          };
+        }
+
+        return null;
+      default:
+        return null;
+    }
   }
 }
