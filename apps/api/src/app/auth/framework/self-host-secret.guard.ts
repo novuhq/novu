@@ -11,11 +11,13 @@ export class SelfHostSecretGuard implements CanActivate {
     const headerKey = request.headers[HttpRequestHeaderKeysEnum.NOVU_SELF_HOSTED_TOKEN.toLowerCase()];
 
     if (!headerKey) {
-      throw new UnauthorizedException('Missing self-host token');
+      throw new UnauthorizedException('Missing self-hosted token');
     }
 
     if (headerKey !== secretKey) {
-      throw new UnauthorizedException('Invalid self-host token');
+      throw new UnauthorizedException(
+        'Invalid self-hosted token, please validate that the API and Dashboard have the same token'
+      );
     }
 
     return true;
