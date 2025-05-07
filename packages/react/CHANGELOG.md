@@ -1,3 +1,13 @@
+# v3.3.1 (2025-05-07)
+
+### 🧱 Updated Dependencies
+
+- Updated @novu/js to 3.3.1
+
+### ❤️ Thank You
+
+- Adam Chmara @ChmaraX
+
 ## v3.3.0 (2025-05-07)
 
 ### 🚀 Features
