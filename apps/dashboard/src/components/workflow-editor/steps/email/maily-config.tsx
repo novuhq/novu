@@ -285,11 +285,9 @@ export const createExtensions = (props: {
 
             if (isTextVariable || isUrlVariable) {
               const aliasFor = resolveRepeatBlockAlias(isTextVariable ? (text ?? '') : (url ?? ''), editor);
-              // @ts-expect-error - the core and core-digest collides
               return commands.updateButtonAttributes?.({ ...attrs, aliasFor: aliasFor ?? null });
             }
 
-            // @ts-expect-error - the core and core-digest collides
             return commands.updateButtonAttributes?.(attrs);
           },
         };
@@ -387,7 +385,6 @@ export const createExtensions = (props: {
 
             if (isUrlVariable) {
               const aliasFor = resolveRepeatBlockAlias(href ?? '', editor);
-              // @ts-expect-error - the core and core-digest collides
               return commands.updateLinkAttributes?.({ ...attrs, aliasFor: aliasFor ?? null });
             }
 
