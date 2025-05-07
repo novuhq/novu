@@ -53,20 +53,17 @@ export const formatSnoozeOption = (
 ): { label: string; time: string } => {
   const date = preset.getDate();
 
-  // Format day (e.g., "Mon")
+  // Format weekday (e.g., "Wed")
   const dayName = new Intl.DateTimeFormat(locale, { weekday: 'short' }).format(date);
 
-  // Format time (e.g., "9:00 AM")
+  // Format date and month (e.g., "26 Mar")
+  const dateMonth = new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short' }).format(date);
+
+  // Format time (e.g., "9:00 PM")
   const timeString = new Intl.DateTimeFormat(locale, { hour: 'numeric', minute: 'numeric' }).format(date);
 
-  // For weekly option, show "Next Monday" etc.
-  if (preset.key === 'snooze.options.inOneWeek') {
-    const fullDayName = new Intl.DateTimeFormat(locale, { weekday: 'long' }).format(date);
-
-    return { label: `${t(preset.key)} ${fullDayName}`, time: `${dayName}, ${timeString}` };
-  }
-
-  return { label: t(preset.key), time: `${dayName}, ${timeString}` };
+  // Combine to e.g. "Wed, 26 Mar, 9:00 PM"
+  return { label: t(preset.key), time: `${dayName}, ${dateMonth}, ${timeString}` };
 };
 
 const SnoozeDropdownItem = (props: {
@@ -85,7 +82,9 @@ const SnoozeDropdownItem = (props: {
         />
         <span class={style('dropdownItemLabel')}>{props.label}</span>
       </div>
-      <span class={style('dropdownItemRight__icon', 'nt-text-foreground-alpha-300 nt-ml-2')}>{props.time}</span>
+      <span class={style('dropdownItemRight__icon', 'nt-text-foreground-alpha-300 nt-ml-2 nt-text-xs')}>
+        {props.time}
+      </span>
     </>
   );
 

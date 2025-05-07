@@ -41,7 +41,7 @@ export const defaultLocalization = {
     `Selected time cannot exceed ${days === 1 ? '24 hours' : `${days} days`} from now`,
   'snooze.options.customTime': 'Custom time...',
   'snooze.options.inOneDay': 'Tomorrow',
-  'snooze.options.inOneWeek': 'Next',
+  'snooze.options.inOneWeek': 'Next week',
 } as const;
 
 export const [dynamicLocalization, setDynamicLocalization] = createSignal<Record<string, string>>({});
