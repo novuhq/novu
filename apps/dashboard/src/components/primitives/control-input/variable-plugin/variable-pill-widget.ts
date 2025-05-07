@@ -12,7 +12,6 @@ export class VariablePillWidget extends WidgetType {
     private start: number,
     private end: number,
     private filters: string[],
-    private isEnhancedDigestEnabled: boolean,
     private onSelect?: (value: string, from: number, to: number) => void,
     private isDigestEventsVariable?: (variableName: string) => boolean
   ) {
@@ -143,58 +142,49 @@ export class VariablePillWidget extends WidgetType {
 
     span.addEventListener('mousedown', this.clickHandler);
 
-    if (this.isEnhancedDigestEnabled) {
-      content.textContent = this.getDisplayVariableName();
+    content.textContent = this.getDisplayVariableName();
 
-      const hasIssues = !!this.getVariableIssues();
+    const hasIssues = !!this.getVariableIssues();
+
+    if (hasIssues) {
+      before.style.color = 'hsl(var(--error-base))';
+      before.style.backgroundImage = `url("/images/error-warning-line.svg")`;
+    }
+
+    this.renderFilters(span);
+
+    span.addEventListener('mouseenter', () => {
+      if (!this.tooltipElement) {
+        const issues = this.getVariableIssues();
+        if (!issues) return;
+
+        this.tooltipElement = this.renderTooltip({
+          parent: span,
+          content: `${issues.name}: ${issues.message}`,
+          type: 'error',
+        });
+        this.tooltipElement.setAttribute('data-state', 'open');
+      }
 
       if (hasIssues) {
-        before.style.color = 'hsl(var(--error-base))';
-        before.style.backgroundImage = `url("/images/error-warning-line.svg")`;
+        span.style.backgroundColor = 'hsl(var(--error-base) / 0.025)';
+      }
+    });
+
+    span.addEventListener('mouseleave', () => {
+      if (this.tooltipElement) {
+        this.tooltipElement.setAttribute('data-state', 'closed');
+
+        setTimeout(() => {
+          if (this.tooltipElement) {
+            document.body.removeChild(this.tooltipElement);
+            this.tooltipElement = null;
+          }
+        }, 150);
       }
 
-      this.renderFilters(span);
-
-      span.addEventListener('mouseenter', () => {
-        if (!this.tooltipElement) {
-          const issues = this.getVariableIssues();
-          if (!issues) return;
-
-          this.tooltipElement = this.renderTooltip({
-            parent: span,
-            content: `${issues.name}: ${issues.message}`,
-            type: 'error',
-          });
-          this.tooltipElement.setAttribute('data-state', 'open');
-        }
-
-        if (hasIssues) {
-          span.style.backgroundColor = 'hsl(var(--error-base) / 0.025)';
-        }
-      });
-
-      span.addEventListener('mouseleave', () => {
-        if (this.tooltipElement) {
-          this.tooltipElement.setAttribute('data-state', 'closed');
-
-          setTimeout(() => {
-            if (this.tooltipElement) {
-              document.body.removeChild(this.tooltipElement);
-              this.tooltipElement = null;
-            }
-          }, 150);
-        }
-
-        span.style.backgroundColor = 'hsl(var(--bg-white))';
-      });
-    } else {
-      if (this.filters?.length) {
-        const after = document.createElement('span');
-        const afterStyles = this.createAfterStyles();
-        Object.assign(after.style, afterStyles);
-        span.appendChild(after);
-      }
-    }
+      span.style.backgroundColor = 'hsl(var(--bg-white))';
+    });
 
     return span;
   }
@@ -206,7 +196,6 @@ export class VariablePillWidget extends WidgetType {
 
     if (this.filters?.length > 0) {
       const filterSpan = document.createElement('span');
-      Object.assign(filterSpan.style, this.createFilterParentStyles());
       const filterNameSpan = document.createElement('span');
       filterNameSpan.textContent = `| ${firstFilterName}`;
       Object.assign(filterNameSpan.style, this.createFilterStyles());
@@ -314,7 +303,7 @@ export class VariablePillWidget extends WidgetType {
 
   getVariableIssues() {
     if (this.isDigestEventsVariable && this.isDigestEventsVariable(this.variableName)) {
-      const issues = validateEnhancedDigestFilters(this.filters, this.isEnhancedDigestEnabled);
+      const issues = validateEnhancedDigestFilters(this.filters);
 
       return issues;
     }

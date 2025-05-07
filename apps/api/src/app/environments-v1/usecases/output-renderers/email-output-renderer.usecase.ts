@@ -1,9 +1,8 @@
 /* eslint-disable no-param-reassign */
 import { render as mailyRender, JSONContent as MailyJSONContent } from '@maily-to/render';
 import { Injectable } from '@nestjs/common';
-import { EmailRenderOutput, FeatureFlagsKeysEnum } from '@novu/shared';
+import { EmailRenderOutput } from '@novu/shared';
 import { FeatureFlagsService, InstrumentUsecase, sanitizeHTML } from '@novu/application-generic';
-import { EnvironmentEntity } from '@novu/dal';
 
 import { FullPayloadForRender, RenderCommand } from './render-command';
 import { MailyAttrsEnum } from '../../../shared/helpers/maily.types';
@@ -30,11 +29,6 @@ export class EmailOutputRendererUsecase {
 
   @InstrumentUsecase()
   async execute(renderCommand: EmailOutputRendererCommand): Promise<EmailRenderOutput> {
-    const isEnhancedDigestEnabled = await this.featureFlagService.getFlag({
-      environment: { _id: renderCommand.environmentId } as EnvironmentEntity,
-      key: FeatureFlagsKeysEnum.IS_ENHANCED_DIGEST_ENABLED,
-      defaultValue: false,
-    });
     const { body, subject: controlSubject, disableOutputSanitization } = renderCommand.controlValues;
 
     if (!body || typeof body !== 'string') {
@@ -50,16 +44,8 @@ export class EmailOutputRendererUsecase {
     }
 
     const liquifiedMaily = wrapMailyInLiquid(body);
-    const transformedMaily = await this.transformMailyContent(
-      liquifiedMaily,
-      renderCommand.fullPayloadForRender,
-      isEnhancedDigestEnabled
-    );
-    const parsedMaily = await this.parseMailyContentByLiquid(
-      transformedMaily,
-      renderCommand.fullPayloadForRender,
-      isEnhancedDigestEnabled
-    );
+    const transformedMaily = await this.transformMailyContent(liquifiedMaily, renderCommand.fullPayloadForRender);
+    const parsedMaily = await this.parseMailyContentByLiquid(transformedMaily, renderCommand.fullPayloadForRender);
     const strippedMaily = this.removeTrailingEmptyLines(parsedMaily);
     const renderedHtml = await mailyRender(strippedMaily);
 
@@ -103,10 +89,9 @@ export class EmailOutputRendererUsecase {
 
   private async parseMailyContentByLiquid(
     mailyContent: MailyJSONContent,
-    variables: FullPayloadForRender,
-    isEnhancedDigestEnabled: boolean
+    variables: FullPayloadForRender
   ): Promise<MailyJSONContent> {
-    const parsedString = await parseLiquid(JSON.stringify(mailyContent), variables, isEnhancedDigestEnabled);
+    const parsedString = await parseLiquid(JSON.stringify(mailyContent), variables);
 
     return JSON.parse(parsedString);
   }
@@ -114,7 +99,6 @@ export class EmailOutputRendererUsecase {
   private async transformMailyContent(
     node: MailyJSONContent,
     variables: FullPayloadForRender,
-    isEnhancedDigestEnabled: boolean,
     parent?: MailyJSONContent
   ) {
     const queue: Array<{ node: MailyJSONContent; parent?: MailyJSONContent }> = [{ node, parent }];
@@ -123,7 +107,7 @@ export class EmailOutputRendererUsecase {
       const current = queue.shift()!;
 
       if (hasShow(current.node)) {
-        const shouldShow = await this.handleShowNode(current.node, variables, isEnhancedDigestEnabled, current.parent);
+        const shouldShow = await this.handleShowNode(current.node, variables, current.parent);
 
         if (!shouldShow) {
           continue;
@@ -131,7 +115,7 @@ export class EmailOutputRendererUsecase {
       }
 
       if (isRepeatNode(current.node)) {
-        await this.handleEachNode(current.node, variables, isEnhancedDigestEnabled, current.parent);
+        await this.handleEachNode(current.node, variables, current.parent);
       }
 
       if (isVariableNode(current.node)) {
@@ -151,10 +135,9 @@ export class EmailOutputRendererUsecase {
   private async handleShowNode(
     node: MailyJSONContent & { attrs: { [MailyAttrsEnum.SHOW_IF_KEY]: string } },
     variables: FullPayloadForRender,
-    isEnhancedDigestEnabled: boolean,
     parent?: MailyJSONContent
   ): Promise<boolean> {
-    const shouldShow = await this.evaluateShowCondition(variables, node, isEnhancedDigestEnabled);
+    const shouldShow = await this.evaluateShowCondition(variables, node);
     if (!shouldShow && parent?.content) {
       parent.content = parent.content.filter((pNode) => pNode !== node);
     }
@@ -168,10 +151,9 @@ export class EmailOutputRendererUsecase {
   private async handleEachNode(
     node: MailyJSONContent & { attrs: { [MailyAttrsEnum.EACH_KEY]: string } },
     variables: FullPayloadForRender,
-    isEnhancedDigestEnabled: boolean,
     parent?: MailyJSONContent
   ): Promise<void> {
-    const newContent = await this.multiplyForEachNode(node, variables, isEnhancedDigestEnabled);
+    const newContent = await this.multiplyForEachNode(node, variables);
 
     if (parent?.content) {
       const nodeIndex = parent.content.indexOf(node);
@@ -183,11 +165,10 @@ export class EmailOutputRendererUsecase {
 
   private async evaluateShowCondition(
     variables: FullPayloadForRender,
-    node: MailyJSONContent & { attrs: { [MailyAttrsEnum.SHOW_IF_KEY]: string } },
-    isEnhancedDigestEnabled: boolean
+    node: MailyJSONContent & { attrs: { [MailyAttrsEnum.SHOW_IF_KEY]: string } }
   ): Promise<boolean> {
     const { [MailyAttrsEnum.SHOW_IF_KEY]: showIfKey } = node.attrs;
-    const parsedShowIfValue = await parseLiquid(showIfKey, variables, isEnhancedDigestEnabled);
+    const parsedShowIfValue = await parseLiquid(showIfKey, variables);
 
     return this.stringToBoolean(parsedShowIfValue);
   }
@@ -227,24 +208,19 @@ export class EmailOutputRendererUsecase {
    */
   private async multiplyForEachNode(
     node: MailyJSONContent & { attrs: { [MailyAttrsEnum.EACH_KEY]: string } },
-    variables: FullPayloadForRender,
-    isEnhancedDigestEnabled: boolean
+    variables: FullPayloadForRender
   ): Promise<MailyJSONContent[]> {
     const iterablePath = node.attrs[MailyAttrsEnum.EACH_KEY];
     const iterations = node.attrs[MailyAttrsEnum.ITERATIONS_KEY];
     const forEachNodes = node.content || [];
-    const iterableArray = await this.getIterableArray(iterablePath, variables, isEnhancedDigestEnabled);
+    const iterableArray = await this.getIterableArray(iterablePath, variables);
     const limitedIterableArray = iterations ? iterableArray.slice(0, iterations) : iterableArray;
 
     return limitedIterableArray.flatMap((_, index) => this.processForEachNodes(forEachNodes, iterablePath, index));
   }
 
-  private async getIterableArray(
-    iterablePath: string,
-    variables: FullPayloadForRender,
-    isEnhancedDigestEnabled: boolean
-  ): Promise<unknown[]> {
-    const iterableArrayString = await parseLiquid(iterablePath, variables, isEnhancedDigestEnabled);
+  private async getIterableArray(iterablePath: string, variables: FullPayloadForRender): Promise<unknown[]> {
+    const iterableArrayString = await parseLiquid(iterablePath, variables);
 
     try {
       const parsedArray = JSON.parse(iterableArrayString.replace(/'/g, '"'));

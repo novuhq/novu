@@ -1,9 +1,7 @@
 import { useMemo } from 'react';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 import { getFilters } from '../constants';
 import { Filters, FilterWithParam } from '../types';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 
 type SuggestionGroup = {
   label: string;
@@ -11,8 +9,7 @@ type SuggestionGroup = {
 };
 
 export function useSuggestedFilters(variableName: string, currentFilters: FilterWithParam[]): SuggestionGroup[] {
-  const isEnhancedDigestEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_ENHANCED_DIGEST_ENABLED);
-  const liquidFilters = useMemo(() => getFilters(isEnhancedDigestEnabled), [isEnhancedDigestEnabled]);
+  const liquidFilters = useMemo(() => getFilters(), []);
 
   return useMemo(() => {
     const currentFilterValues = new Set(currentFilters.map((f) => f.value));
