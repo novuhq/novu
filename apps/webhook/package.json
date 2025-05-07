@@ -38,7 +38,7 @@
     "@sentry/node": "^8.33.1",
     "@sentry/profiling-node": "^8.33.1",
     "@sentry/tracing": "^7.40.0",
-    "axios": "^1.6.8",
+    "axios": "^1.9.0",
     "class-transformer": "0.5.1",
     "class-validator": "0.14.1",
     "dotenv": "^16.4.5",
