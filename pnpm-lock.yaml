@@ -469,8 +469,8 @@ importers:
         specifier: ^5.0.0
         version: 5.0.1(encoding@0.1.13)
       body-parser:
-        specifier: ^1.20.0
-        version: 1.20.2
+        specifier: ^2.2.0
+        version: 2.2.0
       bull:
         specifier: ^4.2.1
         version: 4.10.4
@@ -1870,8 +1870,8 @@ importers:
         specifier: ^1.9.0
         version: 1.9.0
       body-parser:
-        specifier: ^1.20.0
-        version: 1.20.2
+        specifier: ^2.2.0
+        version: 2.2.0
       class-transformer:
         specifier: 0.5.1
         version: 0.5.1
@@ -19189,8 +19189,8 @@ packages:
     resolution: {integrity: sha512-7rAxByjUMqQ3/bHJy7D6OGXvx/MMc4IqBn/X0fcM1QUcAItpZrBEYhWGem+tzXH90c+G01ypMcYJBO9Y30203g==}
     engines: {node: '>= 0.8', npm: 1.2.8000 || >= 1.4.16}
 
-  body-parser@2.1.0:
-    resolution: {integrity: sha512-/hPxh61E+ll0Ujp24Ilm64cykicul1ypfwjVttduAiEdtnJFvLePSrIPk+HMImtNv5270wOGCb1Tns2rybMkoQ==}
+  body-parser@2.2.0:
+    resolution: {integrity: sha512-02qvAaxv8tp7fBa/mw1ga98OGm+eCbqzJOKoRt70sLmfEEi+jyBYVTDGfCL/k06/4EMk/z01gCe7HoCH/f2LTg==}
     engines: {node: '>=18'}
 
   bole@5.0.3:
@@ -23771,10 +23771,6 @@ packages:
 
   iconv-lite@0.4.24:
     resolution: {integrity: sha512-v3MXnZAcvnywkTUEZomIActle7RXXeedOR31wwl7VlyoXO4Qi9arvSenNQWne1TcRwhCL1HwLI21bEqdpj8/rA==}
-    engines: {node: '>=0.10.0'}
-
-  iconv-lite@0.5.2:
-    resolution: {integrity: sha512-kERHXvpSaB4aU3eANwidg79K8FlrN77m8G9V+0vOR3HYaRifrlwMEpT7ZBJqLSEIHnEgJTHcWK82wwLwwKwtag==}
     engines: {node: '>=0.10.0'}
 
   iconv-lite@0.6.3:
@@ -57550,7 +57546,7 @@ snapshots:
     dependencies:
       '@hapi/joi': 16.1.8
       axios: 1.9.0
-      body-parser: 1.20.2
+      body-parser: 1.20.3
       lodash: 4.17.21
       phone: 3.1.37
       querystring: 0.2.1
@@ -58939,13 +58935,13 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  body-parser@2.1.0:
+  body-parser@2.2.0:
     dependencies:
       bytes: 3.1.2
       content-type: 1.0.5
       debug: 4.4.0(supports-color@8.1.1)
       http-errors: 2.0.0
-      iconv-lite: 0.5.2
+      iconv-lite: 0.6.3
       on-finished: 2.4.1
       qs: 6.14.0
       raw-body: 3.0.0
@@ -63153,7 +63149,7 @@ snapshots:
   express@5.0.1:
     dependencies:
       accepts: 2.0.0
-      body-parser: 2.1.0
+      body-parser: 2.2.0
       content-disposition: 1.0.0
       content-type: 1.0.5
       cookie: 0.7.1
@@ -65137,10 +65133,6 @@ snapshots:
       '@babel/runtime': 7.23.2
 
   iconv-lite@0.4.24:
-    dependencies:
-      safer-buffer: 2.1.2
-
-  iconv-lite@0.5.2:
     dependencies:
       safer-buffer: 2.1.2
 
@@ -72799,7 +72791,7 @@ snapshots:
 
   qs@6.11.0:
     dependencies:
-      side-channel: 1.0.4
+      side-channel: 1.1.0
 
   qs@6.11.1:
     dependencies:
