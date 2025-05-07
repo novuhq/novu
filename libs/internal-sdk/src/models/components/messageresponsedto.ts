@@ -45,7 +45,7 @@ import {
 /**
  * Content of the message, can be an email block or a string
  */
-export type Content = EmailBlock | string;
+export type Content = Array<EmailBlock> | string;
 
 /**
  * The payload that was used to send the notification trigger
@@ -117,7 +117,7 @@ export type MessageResponseDto = {
   /**
    * Content of the message, can be an email block or a string
    */
-  content: EmailBlock | string;
+  content: Array<EmailBlock> | string;
   /**
    * Transaction ID associated with the message
    */
@@ -198,17 +198,17 @@ export type MessageResponseDto = {
 
 /** @internal */
 export const Content$inboundSchema: z.ZodType<Content, z.ZodTypeDef, unknown> =
-  z.union([EmailBlock$inboundSchema, z.string()]);
+  z.union([z.array(EmailBlock$inboundSchema), z.string()]);
 
 /** @internal */
-export type Content$Outbound = EmailBlock$Outbound | string;
+export type Content$Outbound = Array<EmailBlock$Outbound> | string;
 
 /** @internal */
 export const Content$outboundSchema: z.ZodType<
   Content$Outbound,
   z.ZodTypeDef,
   Content
-> = z.union([EmailBlock$outboundSchema, z.string()]);
+> = z.union([z.array(EmailBlock$outboundSchema), z.string()]);
 
 /**
  * @internal
@@ -355,7 +355,7 @@ export const MessageResponseDto$inboundSchema: z.ZodType<
   deliveredAt: z.array(z.string()).optional(),
   lastSeenDate: z.string().optional(),
   lastReadDate: z.string().optional(),
-  content: z.union([EmailBlock$inboundSchema, z.string()]),
+  content: z.union([z.array(EmailBlock$inboundSchema), z.string()]),
   transactionId: z.string(),
   subject: z.string().optional(),
   channel: ChannelTypeEnum$inboundSchema,
@@ -404,7 +404,7 @@ export type MessageResponseDto$Outbound = {
   deliveredAt?: Array<string> | undefined;
   lastSeenDate?: string | undefined;
   lastReadDate?: string | undefined;
-  content: EmailBlock$Outbound | string;
+  content: Array<EmailBlock$Outbound> | string;
   transactionId: string;
   subject?: string | undefined;
   channel: string;
@@ -446,7 +446,7 @@ export const MessageResponseDto$outboundSchema: z.ZodType<
   deliveredAt: z.array(z.string()).optional(),
   lastSeenDate: z.string().optional(),
   lastReadDate: z.string().optional(),
-  content: z.union([EmailBlock$outboundSchema, z.string()]),
+  content: z.union([z.array(EmailBlock$outboundSchema), z.string()]),
   transactionId: z.string(),
   subject: z.string().optional(),
   channel: ChannelTypeEnum$outboundSchema,
