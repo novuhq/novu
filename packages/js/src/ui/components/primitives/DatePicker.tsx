@@ -140,7 +140,7 @@ export const DatePickerHeader = (props: DatePickerHeaderProps) => {
       class={style(
         local.appearanceKey || 'datePickerControl',
         cn(
-          'nt-flex nt-items-center nt-justify-between nt-gap-1.5 nt-h-7 nt-p-1 nt-mb-2 nt-rounded-lg nt-bg-neutral-50',
+          'nt-flex nt-items-center nt-justify-between nt-gap-1.5 nt-h-7 nt-p-1 nt-mb-2 nt-rounded-lg nt-bg-background',
           local.class
         )
       )}
@@ -154,7 +154,7 @@ export const DatePickerHeader = (props: DatePickerHeaderProps) => {
           handlePrevMonth();
         }}
         disabled={isPrevDisabled()}
-        class="nt-flex nt-justify-center nt-items-center nt-gap-0.5 nt-w-5 nt-h-5 nt-p-0 nt-rounded-md nt-bg-white nt-shadow-[0px_1px_2px_0px_rgba(10,13,20,0.03)]"
+        class="nt-flex nt-justify-center nt-items-center nt-gap-0.5 nt-w-5 nt-h-5 nt-p-0 nt-rounded-md nt-bg-background nt-shadow-[0px_1px_2px_0px_rgba(10,13,20,0.03)]"
       >
         <ArrowLeft class={style('datePickerControlPrevTrigger__icon', 'nt-size-4 nt-text-foreground-alpha-700')} />
       </Button>
@@ -169,7 +169,7 @@ export const DatePickerHeader = (props: DatePickerHeaderProps) => {
           handleNextMonth();
         }}
         disabled={isNextDisabled()}
-        class="nt-flex nt-justify-center nt-items-center nt-gap-0.5 nt-w-5 nt-h-5 nt-p-0 nt-rounded-md nt-bg-white nt-shadow-[0px_1px_2px_0px_rgba(10,13,20,0.03)]"
+        class="nt-flex nt-justify-center nt-items-center nt-gap-0.5 nt-w-5 nt-h-5 nt-p-0 nt-rounded-md nt-bg-background nt-shadow-[0px_1px_2px_0px_rgba(10,13,20,0.03)]"
       >
         <ArrowRight class={style('datePickerControlNextTrigger__icon', 'nt-size-4 nt-text-foreground-alpha-700')} />
       </Button>
