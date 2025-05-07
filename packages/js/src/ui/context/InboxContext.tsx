@@ -1,4 +1,13 @@
-import { Accessor, createContext, createEffect, createSignal, ParentProps, Setter, useContext } from 'solid-js';
+import {
+  Accessor,
+  createContext,
+  createEffect,
+  createMemo,
+  createSignal,
+  ParentProps,
+  Setter,
+  useContext,
+} from 'solid-js';
 import { NotificationFilter, Redirect } from '../../types';
 import { DEFAULT_REFERRER, DEFAULT_TARGET, getTagsFromTab } from '../helpers';
 import { useNovuEvent } from '../helpers/useNovuEvent';
@@ -20,6 +29,7 @@ type InboxContextType = {
   hideBranding: Accessor<boolean>;
   isDevelopmentMode: Accessor<boolean>;
   maxSnoozeDurationHours: Accessor<number>;
+  isSnoozeEnabled: Accessor<boolean>;
 };
 
 const InboxContext = createContext<InboxContextType | undefined>(undefined);
@@ -52,6 +62,7 @@ export const InboxProvider = (props: InboxProviderProps) => {
   const [hideBranding, setHideBranding] = createSignal(false);
   const [isDevelopmentMode, setIsDevelopmentMode] = createSignal(false);
   const [maxSnoozeDurationHours, setMaxSnoozeDurationHours] = createSignal(0);
+  const isSnoozeEnabled = createMemo(() => maxSnoozeDurationHours() > 0);
   const [preferencesFilter, setPreferencesFilter] = createSignal<PreferencesFilter | undefined>(
     props.preferencesFilter
   );
@@ -135,6 +146,7 @@ export const InboxProvider = (props: InboxProviderProps) => {
         preferencesFilter,
         isDevelopmentMode,
         maxSnoozeDurationHours,
+        isSnoozeEnabled,
       }}
     >
       {props.children}

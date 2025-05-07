@@ -6,10 +6,12 @@
 export const appearanceKeys = [
   // Primitives
   'button',
+  'input',
   'icon',
-
+  'badge',
   'popoverContent',
   'popoverTrigger',
+  'popoverClose',
 
   'dropdownContent',
   'dropdownTrigger',
@@ -24,6 +26,37 @@ export const appearanceKeys = [
 
   'tooltipContent',
   'tooltipTrigger',
+
+  'datePicker',
+  'datePickerGrid',
+  'datePickerGridRow',
+  'datePickerGridCell',
+  'datePickerGridCellTrigger',
+  'datePickerTrigger',
+  'datePickerGridHeader',
+  'datePickerControl',
+  'datePickerControlPrevTrigger',
+  'datePickerControlNextTrigger',
+  'datePickerControlPrevTrigger__icon',
+  'datePickerControlNextTrigger__icon',
+  'datePickerCalendar',
+  'datePickerHeaderMonth',
+  'datePickerCalendarDay__button',
+
+  'timePicker',
+  'timePicker__hourSelect',
+  'timePicker__minuteSelect',
+  'timePicker__periodSelect',
+  'timePicker__separator',
+  'timePickerHour__input',
+  'timePickerMinute__input',
+
+  'snoozeDatePicker',
+  'snoozeDatePicker__actions',
+  'snoozeDatePickerCancel__button',
+  'snoozeDatePickerApply__button',
+  'snoozeDatePicker__timePickerContainer',
+  'snoozeDatePicker__timePickerLabel',
 
   'back__button',
 
@@ -88,10 +121,14 @@ export const appearanceKeys = [
   'notificationUnread__button',
   'notificationArchive__button',
   'notificationUnarchive__button',
+  'notificationSnooze__button',
+  'notificationUnsnooze__button',
   'notificationRead__icon',
   'notificationUnread__icon',
   'notificationArchive__icon',
   'notificationUnarchive__icon',
+  'notificationSnooze__icon',
+  'notificationUnsnooze__icon',
 
   // Notifications tabs
   'notificationsTabs__tabsRoot',
@@ -172,6 +209,16 @@ export const appearanceKeys = [
   'preferencesList__skeletonSwitchThumb',
   'preferencesList__skeletonText',
 
+  // Notification Snooze
+  'notificationSnooze__dropdownContent',
+  'notificationSnooze__dropdownItem',
+  'notificationSnooze__dropdownItem__icon',
+  'notificationSnoozeCustomTime_popoverContent',
+
+  // Notification Delivered At
+  'notificationDeliveredAt__badge',
+  'notificationDeliveredAt__icon',
+  'notificationSnoozedUntil__icon',
   // Text formatting
   'strong',
 ] as const;

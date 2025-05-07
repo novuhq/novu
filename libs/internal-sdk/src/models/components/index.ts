@@ -125,6 +125,7 @@ export * from "./stepintegrationissue.js";
 export * from "./stepintegrationissueenum.js";
 export * from "./stepissuesdto.js";
 export * from "./stepresponsedto.js";
+export * from "./stepsoverrides.js";
 export * from "./steptypeenum.js";
 export * from "./stepupsertdto.js";
 export * from "./subscriberchanneldto.js";

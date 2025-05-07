@@ -1,15 +1,14 @@
 import { JSX, onCleanup, onMount, Show, splitProps } from 'solid-js';
-import { Portal } from 'solid-js/web';
 import { useFocusManager } from '../../../context';
 import { cn, useStyle } from '../../../helpers';
 import type { AppearanceKey } from '../../../types';
-import { Root } from '../../elements/Root';
+import { Portal } from '../Portal';
 import { usePopover } from './PopoverRoot';
 
 export const popoverContentVariants = () =>
   cn(
     'nt-w-[400px] nt-h-[600px] nt-rounded-xl nt-bg-background',
-    'nt-shadow-popover nt-animate-in nt-slide-in-from-top-2 nt-fade-in nt-z-10 nt-cursor-default nt-flex nt-flex-col nt-overflow-hidden nt-border nt-border-border'
+    'nt-shadow-popover nt-animate-in nt-slide-in-from-top-2 nt-fade-in nt-cursor-default nt-flex nt-flex-col nt-overflow-hidden nt-border nt-border-border nt-z-10'
   );
 
 const PopoverContentBody = (props: PopoverContentProps) => {
@@ -30,7 +29,7 @@ const PopoverContentBody = (props: PopoverContentProps) => {
   return (
     <div
       ref={setFloating}
-      class={local.class ? local.class : style(local.appearanceKey || 'popoverContent', popoverContentVariants())}
+      class={style(local.appearanceKey || 'popoverContent', cn(popoverContentVariants(), local.class))}
       style={floatingStyles()}
       data-open={open()}
       {...rest}
@@ -40,7 +39,6 @@ const PopoverContentBody = (props: PopoverContentProps) => {
 
 type PopoverContentProps = JSX.IntrinsicElements['div'] & { appearanceKey?: AppearanceKey; portal?: boolean };
 export const PopoverContent = (props: PopoverContentProps) => {
-  const [local, rest] = splitProps(props, ['portal']);
   const { open, onClose, reference, floating } = usePopover();
   const { active } = useFocusManager();
 
@@ -79,13 +77,9 @@ export const PopoverContent = (props: PopoverContentProps) => {
 
   return (
     <Show when={open()}>
-      <Show when={local.portal} fallback={<PopoverContentBody {...rest} />}>
-        <Portal>
-          <Root>
-            <PopoverContentBody {...rest} />
-          </Root>
-        </Portal>
-      </Show>
+      <Portal>
+        <PopoverContentBody {...props} />
+      </Portal>
     </Show>
   );
 };

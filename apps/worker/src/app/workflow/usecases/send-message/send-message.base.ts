@@ -19,6 +19,7 @@ import {
 } from '@novu/shared';
 import { format } from 'date-fns';
 import i18next from 'i18next';
+import { merge } from 'lodash';
 
 import {
   CreateExecutionDetails,
@@ -46,6 +47,19 @@ export abstract class SendMessageBase extends SendMessageType {
     protected moduleRef: ModuleRef
   ) {
     super(messageRepository, createExecutionDetails);
+  }
+
+  protected combineOverrides(
+    bridgeData: Record<string, any> | null | undefined,
+    overrides: Record<string, any> | undefined,
+    stepId: string | undefined,
+    integrationId: string
+  ): Record<string, unknown> {
+    const bridgeProviderData = bridgeData?.providers?.[integrationId] || {};
+    const workflowGlobalProviderOverrides = overrides?.providers?.[integrationId] || {};
+    const triggerOverrides = stepId ? overrides?.steps?.[stepId]?.providers[integrationId] || {} : {};
+
+    return merge({}, bridgeProviderData, workflowGlobalProviderOverrides, triggerOverrides);
   }
 
   protected async getIntegration(params: {

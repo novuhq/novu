@@ -41,7 +41,8 @@ export const TooltipContent = (props: TooltipContentProps) => {
 
   return (
     <Show when={open()}>
-      {/* we can safely use portal here as this element won't be focused and close other portals (outside solid world) as a result */}
+      {/* we can safely use portal to document.body here as this element 
+      won't be focused and close other portals (outside solid world) as a result */}
       <Portal>
         <Root>
           <TooltipContentBody {...props} />
