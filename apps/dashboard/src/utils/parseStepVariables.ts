@@ -37,7 +37,7 @@ export interface ParsedVariables {
 
 export function parseStepVariables(
   schema: JSONSchemaDefinition,
-  { isEnhancedDigestEnabled, digestStepId }: { isEnhancedDigestEnabled: boolean; digestStepId?: string }
+  { digestStepId }: { digestStepId?: string }
 ): ParsedVariables {
   const result: ParsedVariables = {
     primitives: [],
@@ -180,26 +180,25 @@ export function parseStepVariables(
   return {
     ...result,
 
-    variables:
-      isEnhancedDigestEnabled && digestStepId
-        ? [
-            ...DIGEST_VARIABLES.map((variable) => {
-              const { label: displayLabel, value } = getDynamicDigestVariable({
-                digestStepName: digestStepId,
-                type: variable.name as DIGEST_VARIABLES_ENUM,
-              });
+    variables: digestStepId
+      ? [
+          ...DIGEST_VARIABLES.map((variable) => {
+            const { label: displayLabel, value } = getDynamicDigestVariable({
+              digestStepName: digestStepId,
+              type: variable.name as DIGEST_VARIABLES_ENUM,
+            });
 
-              return {
-                ...variable,
-                name: value,
-                displayLabel,
-              };
-            }),
-            ...result.primitives,
-            ...result.arrays,
-            ...result.namespaces,
-          ]
-        : [...result.primitives, ...result.arrays, ...result.namespaces],
+            return {
+              ...variable,
+              name: value,
+              displayLabel,
+            };
+          }),
+          ...result.primitives,
+          ...result.arrays,
+          ...result.namespaces,
+        ]
+      : [...result.primitives, ...result.arrays, ...result.namespaces],
 
     isAllowedVariable,
   };

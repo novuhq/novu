@@ -1,3 +1,15 @@
+## v3.3.0 (2025-05-07)
+
+### 🧱 Updated Dependencies
+
+- Updated @novu/react to 3.3.0
+
+### ❤️ Thank You
+
+- Adam Chmara @ChmaraX
+- George Desipris @desiprisg
+- Paweł Tymczuk @LetItRock
+
 ## v3.2.0 (2025-04-30)
 
 ### 🧱 Updated Dependencies

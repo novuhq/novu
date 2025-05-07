@@ -22,7 +22,7 @@ export const defaultLocalization = {
   'notification.actions.unread.tooltip': 'Mark as unread',
   'notification.actions.archive.tooltip': 'Archive',
   'notification.actions.unarchive.tooltip': 'Unarchive',
-  'notification.actions.snooze.tooltip': 'Snooze until...',
+  'notification.actions.snooze.tooltip': 'Snooze',
   'notification.actions.unsnooze.tooltip': 'Unsnooze',
   'notification.snoozedUntil': 'Snoozed until',
   'preferences.title': 'Preferences',
@@ -34,15 +34,14 @@ export const defaultLocalization = {
   'snooze.datePicker.timePickerLabel': 'Time',
   'snooze.datePicker.apply': 'Apply',
   'snooze.datePicker.cancel': 'Cancel',
-  'snooze.options.anHourFromNow': 'Hour from now',
+  'snooze.options.anHourFromNow': 'An hour from now',
   'snooze.datePicker.pastDateTooltip': 'Selected time must be at least 3 minutes in the future',
   'snooze.datePicker.noDateSelectedTooltip': 'Please select a date',
   'snooze.datePicker.exceedingLimitTooltip': ({ days }: { days: number }) =>
     `Selected time cannot exceed ${days === 1 ? '24 hours' : `${days} days`} from now`,
   'snooze.options.customTime': 'Custom time...',
-  'snooze.options.inTwelveHours': '12 hours',
   'snooze.options.inOneDay': 'Tomorrow',
-  'snooze.options.inOneWeek': 'Next',
+  'snooze.options.inOneWeek': 'Next week',
 } as const;
 
 export const [dynamicLocalization, setDynamicLocalization] = createSignal<Record<string, string>>({});

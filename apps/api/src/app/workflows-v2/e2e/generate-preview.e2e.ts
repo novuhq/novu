@@ -550,8 +550,6 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
   });
 
   it('should generate preview for the email step with digest variables', async () => {
-    // @ts-ignore
-    process.env.IS_ENHANCED_DIGEST_ENABLED = 'true';
     const { workflowId, emailStepDatabaseId } = await createWorkflowWithEmailLookingAtDigestResult();
 
     const eventEmptyPayload = {
@@ -691,14 +689,9 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
         },
       },
     });
-
-    // @ts-ignore
-    process.env.IS_ENHANCED_DIGEST_ENABLED = 'false';
   });
 
   it('should allow using the current and the payload variables in the repeat block with the list items and buttons', async () => {
-    // @ts-ignore
-    process.env.IS_ENHANCED_DIGEST_ENABLED = 'true';
     const { workflowId, emailStepDatabaseId } = await createWorkflowWithEmailLookingAtDigestResult();
 
     const controlValues = {
@@ -741,9 +734,6 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
         baz: 'baz',
       },
     });
-
-    // @ts-ignore
-    process.env.IS_ENHANCED_DIGEST_ENABLED = 'false';
   });
 
   it('should allow using the static text and variables as a link on the email editor components', async () => {
@@ -1287,8 +1277,6 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
     });
 
     it('should merge the user provided payload with the BE generated payload', async () => {
-      // @ts-ignore
-      process.env.IS_ENHANCED_DIGEST_ENABLED = 'true';
       const { workflowId, emailStepDatabaseId } = await createWorkflowWithEmailLookingAtDigestResult();
 
       const eventEmptyPayload = {

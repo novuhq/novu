@@ -324,53 +324,49 @@ const FILTERS: Filters[] = [
   },
 ];
 
-export const getFilters = (isEnhancedDigestEnabled: boolean): Filters[] => {
-  if (isEnhancedDigestEnabled) {
-    return [
-      ...FILTERS,
-      {
-        label: 'To Sentence',
-        value: 'toSentence',
-        hasParam: true,
-        description: 'Converts the array to a comma-separated sentence.',
-        example: 'names | toSentence: "", 2, "other" → John, Jane, and 3 others',
-        params: [
-          {
-            label: 'Object key path',
-            placeholder: 'Insert key to be summarized on...',
-            tip: 'Path to the property to extract from objects (e.g., "name" or "profile.name")',
-            type: 'variable',
-            required: true,
-          },
-          {
-            label: 'Limit',
-            tip: 'Maximum number of words to show before the "overflow suffix" applies',
-            type: 'number',
-            defaultValue: '2',
-          },
-          {
-            label: 'Overflow suffix',
-            tip: 'The word to use for the items above the limit, e.g. "other"',
-            type: 'string',
-            defaultValue: 'other',
-          },
-        ],
-        sampleValue: "['John', 'Jane', ...]",
-      },
-      {
-        label: 'Pluralize',
-        value: 'pluralize',
-        hasParam: true,
-        description: 'Converts word to singular or plural based on count',
-        example: 'eventsCount | pluralize: "apple", "apples" → 1 apple, 2 apples',
-        params: [
-          { label: 'Singular', type: 'string' },
-          { label: 'Plural (optional)', type: 'string' },
-        ],
-        sampleValue: '10',
-      },
-    ];
-  }
-
-  return FILTERS;
+export const getFilters = (): Filters[] => {
+  return [
+    ...FILTERS,
+    {
+      label: 'To Sentence',
+      value: 'toSentence',
+      hasParam: true,
+      description: 'Converts the array to a comma-separated sentence.',
+      example: 'names | toSentence: "", 2, "other" → John, Jane, and 3 others',
+      params: [
+        {
+          label: 'Object key path',
+          placeholder: 'Insert key to be summarized on...',
+          tip: 'Path to the property to extract from objects (e.g., "name" or "profile.name")',
+          type: 'variable',
+          required: true,
+        },
+        {
+          label: 'Limit',
+          tip: 'Maximum number of words to show before the "overflow suffix" applies',
+          type: 'number',
+          defaultValue: '2',
+        },
+        {
+          label: 'Overflow suffix',
+          tip: 'The word to use for the items above the limit, e.g. "other"',
+          type: 'string',
+          defaultValue: 'other',
+        },
+      ],
+      sampleValue: "['John', 'Jane', ...]",
+    },
+    {
+      label: 'Pluralize',
+      value: 'pluralize',
+      hasParam: true,
+      description: 'Converts word to singular or plural based on count',
+      example: 'eventsCount | pluralize: "apple", "apples" → 1 apple, 2 apples',
+      params: [
+        { label: 'Singular', type: 'string' },
+        { label: 'Plural (optional)', type: 'string' },
+      ],
+      sampleValue: '10',
+    },
+  ];
 };

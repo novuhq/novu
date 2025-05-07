@@ -1,3 +1,20 @@
+## v3.3.0 (2025-05-07)
+
+### 🚀 Features
+
+- **js,react:** add snooze functionality ([#8230](https://github.com/novuhq/novu/pull/8230))
+- **repo:** Polish changelogs for packages ([a932bd38e4](https://github.com/novuhq/novu/commit/a932bd38e4))
+
+### 🧱 Updated Dependencies
+
+- Updated @novu/js to 3.3.0
+
+### ❤️ Thank You
+
+- Adam Chmara @ChmaraX
+- George Desipris @desiprisg
+- Paweł Tymczuk @LetItRock
+
 ## v3.2.0 (2025-04-30)
 
 ### 🚀 Features

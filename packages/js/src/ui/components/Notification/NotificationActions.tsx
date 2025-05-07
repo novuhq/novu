@@ -21,19 +21,24 @@ export const SNOOZE_PRESETS = [
     getDate: () => new Date(Date.now() + 1 * 60 * 60 * 1000),
   },
   {
-    key: 'snooze.options.inTwelveHours',
-    hours: 12,
-    getDate: () => new Date(Date.now() + 12 * 60 * 60 * 1000),
-  },
-  {
     key: 'snooze.options.inOneDay',
     hours: 24,
-    getDate: () => new Date(Date.now() + 1 * 24 * 60 * 60 * 1000),
+    getDate: () => {
+      const date = new Date(Date.now() + 1 * 24 * 60 * 60 * 1000);
+      date.setHours(9, 0, 0, 0);
+
+      return date;
+    },
   },
   {
     key: 'snooze.options.inOneWeek',
     hours: 168,
-    getDate: () => new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    getDate: () => {
+      const date = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+      date.setHours(9, 0, 0, 0);
+
+      return date;
+    },
   },
 ] satisfies {
   key: Extract<LocalizationKey, `snooze.options.${string}`>;
@@ -45,27 +50,61 @@ export const formatSnoozeOption = (
   preset: (typeof SNOOZE_PRESETS)[number],
   t: (key: LocalizationKey) => string,
   locale: string
-): string => {
+): { label: string; time: string } => {
   const date = preset.getDate();
 
-  // For hour-based presets (1 hour, 12 hours), just show the translation without time
-  if (preset.hours <= 12) {
-    return t(preset.key);
-  }
+  // Format weekday (e.g., "Wed")
+  const dayName = new Intl.DateTimeFormat(locale, { weekday: 'short' }).format(date);
 
-  // Format time (e.g., "9:00 AM")
+  // Format date and month (e.g., "26 Mar")
+  const dateMonth = new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short' }).format(date);
+
+  // Format time (e.g., "9:00 PM")
   const timeString = new Intl.DateTimeFormat(locale, { hour: 'numeric', minute: 'numeric' }).format(date);
 
-  // For weekly option, show "Next Monday" etc.
-  if (preset.key === 'snooze.options.inOneWeek') {
-    // Get the day name (e.g., "Monday")
-    const dayName = new Intl.DateTimeFormat(locale, { weekday: 'long' }).format(date);
+  // Combine to e.g. "Wed, 26 Mar, 9:00 PM"
+  return { label: t(preset.key), time: `${dayName}, ${dateMonth}, ${timeString}` };
+};
 
-    return `${t(preset.key)} ${dayName}, ${timeString}`;
+const SnoozeDropdownItem = (props: {
+  label: string;
+  time: string;
+  onClick?: (e: MouseEvent) => void;
+  asChild?: (props: any) => JSX.Element;
+}) => {
+  const style = useStyle();
+
+  const content = (
+    <>
+      <div class={style('dropdownItem', 'nt-flex nt-items-center nt-flex-1')}>
+        <Clock
+          class={style('notificationSnooze__dropdownItem__icon', 'nt-size-3 nt-text-foreground-alpha-400 nt-mr-2')}
+        />
+        <span class={style('dropdownItemLabel')}>{props.label}</span>
+      </div>
+      <span class={style('dropdownItemRight__icon', 'nt-text-foreground-alpha-300 nt-ml-2 nt-text-xs')}>
+        {props.time}
+      </span>
+    </>
+  );
+
+  if (props.asChild) {
+    return props.asChild({
+      class: style('notificationSnooze__dropdownItem', dropdownItemVariants()),
+      onClick: props.onClick,
+      children: content,
+    });
   }
 
-  // Fallback to original translation
-  return `${t(preset.key)}, ${timeString}`;
+  return (
+    <Dropdown.Item
+      appearanceKey="notificationSnooze__dropdownItem"
+      onClick={props.onClick}
+      class={style('dropdownItem', 'nt-justify-between')}
+    >
+      {content}
+    </Dropdown.Item>
+  );
 };
 
 export const ReadButton = (props: { notification: Notification }) => {
@@ -249,20 +288,20 @@ export const SnoozeButton = (props: { notification: Notification }) => {
             />
             <Dropdown.Content portal appearanceKey="notificationSnooze__dropdownContent">
               <For each={availableSnoozePresets()}>
-                {(preset) => (
-                  <Dropdown.Item
-                    appearanceKey="notificationSnooze__dropdownItem"
-                    onClick={async (e) => {
-                      e.stopPropagation();
-                      await props.notification.snooze(preset.getDate().toISOString());
-                    }}
-                  >
-                    <Clock
-                      class={style('notificationSnooze__dropdownItem__icon', 'nt-size-3 nt-text-foreground-alpha-400')}
+                {(preset) => {
+                  const option = formatSnoozeOption(preset, t, locale());
+
+                  return (
+                    <SnoozeDropdownItem
+                      label={option.label}
+                      time={option.time}
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        await props.notification.snooze(preset.getDate().toISOString());
+                      }}
                     />
-                    {formatSnoozeOption(preset, t, locale())}
-                  </Dropdown.Item>
-                )}
+                  );
+                }}
               </For>
 
               <Popover.Root
@@ -270,24 +309,17 @@ export const SnoozeButton = (props: { notification: Notification }) => {
                 onOpenChange={setIsSnoozeDateTimePickerOpen}
                 placement="bottom-start"
               >
-                <Dropdown.Item
-                  asChild={(props) => (
+                <SnoozeDropdownItem
+                  label={t('snooze.options.customTime')}
+                  time=""
+                  asChild={(childProps) => (
                     <Popover.Trigger
-                      class={style('notificationSnooze__dropdownItem', dropdownItemVariants())}
-                      {...props}
+                      {...childProps}
                       onClick={(e) => {
                         e.stopPropagation();
-                        props.onClick?.(e);
+                        childProps.onClick?.(e);
                       }}
-                    >
-                      <Clock
-                        class={style(
-                          'notificationSnooze__dropdownItem__icon',
-                          'nt-size-3 nt-text-foreground-alpha-400'
-                        )}
-                      />
-                      {t('snooze.options.customTime')}
-                    </Popover.Trigger>
+                    />
                   )}
                 />
                 <Popover.Content

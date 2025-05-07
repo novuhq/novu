@@ -756,8 +756,14 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       skip: options?.skip,
     })
       .read('secondaryPreferred')
-      .populate('subscriber', '_id firstName lastName avatar subscriberId')
-      .populate('actorSubscriber', '_id firstName lastName avatar subscriberId');
+      .populate(
+        'subscriber',
+        '_id firstName lastName avatar subscriberId updatedAt createdAt deleted _environmentId _organizationId'
+      )
+      .populate(
+        'actorSubscriber',
+        '_id firstName lastName avatar subscriberId updatedAt createdAt deleted _environmentId _organizationId'
+      );
 
     return this.mapEntities(data);
   }

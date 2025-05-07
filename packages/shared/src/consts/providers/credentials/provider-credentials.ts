@@ -641,8 +641,22 @@ export const apnsConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.SecretKey,
     displayName: 'Private Key',
-    type: 'text',
+    type: 'textarea',
     required: true,
+    validation: {
+      validate: (value: string) => {
+        try {
+          // Check if it's a valid PEM format
+          if (!value.includes('-----BEGIN PRIVATE KEY-----') || !value.includes('-----END PRIVATE KEY-----')) {
+            return 'Invalid private key format. Must be in PEM format.';
+          }
+
+          return true;
+        } catch (e) {
+          return 'Invalid private key format. Must be in PEM format.';
+        }
+      },
+    },
   },
   {
     key: CredentialsKeyEnum.ApiKey,
@@ -668,7 +682,6 @@ export const apnsConfig: IConfigCredentials[] = [
     type: 'switch',
     required: false,
   },
-
   ...pushConfigBase,
 ];
 

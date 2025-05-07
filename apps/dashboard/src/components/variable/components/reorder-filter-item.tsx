@@ -2,14 +2,12 @@ import { ComponentProps, useMemo, useRef } from 'react';
 import { Code2, GripVertical } from 'lucide-react';
 import { Reorder, useDragControls, useMotionValue } from 'motion/react';
 import { RiCloseLine, RiQuestionLine } from 'react-icons/ri';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 import { buttonVariants } from '@/components/primitives/button';
 import { FilterWithParam } from '../types';
 import { Input } from '@/components/primitives/input';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { getFilters } from '../constants';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { cn } from '@/utils/ui';
 import { VariableSelect } from '@/components/conditions-editor/variable-select';
 import { LiquidVariable } from '@/utils/parseStepVariables';
@@ -33,8 +31,7 @@ export const ReorderFilterItem = (props: ReorderFilterItemProps) => {
   const controls = useDragControls();
   const x = useMotionValue(0);
   const { index, isLast, onRemove, onParamChange, value, variableName, variables, ...rest } = props;
-  const isEnhancedDigestEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_ENHANCED_DIGEST_ENABLED);
-  const liquidFilters = useMemo(() => getFilters(isEnhancedDigestEnabled), [isEnhancedDigestEnabled]);
+  const liquidFilters = useMemo(() => getFilters(), []);
   const itemRef = useRef<HTMLDivElement>(null);
 
   const filterDef = liquidFilters.find((t) => t.value === value.value);
@@ -63,13 +60,13 @@ export const ReorderFilterItem = (props: ReorderFilterItemProps) => {
     if (isDigestStepEventsVariable && hasToSentence && value.params && value.params?.length > 0) {
       const variableWithParams = `${value.value}: ${value.params.join(', ')}`;
 
-      const issues = validateEnhancedDigestFilters([variableWithParams], isEnhancedDigestEnabled);
+      const issues = validateEnhancedDigestFilters([variableWithParams]);
 
       return issues;
     }
 
     return null;
-  }, [filterDef?.value, isDigestStepEventsVariable, isEnhancedDigestEnabled, value.params, value.value]);
+  }, [filterDef?.value, isDigestStepEventsVariable, value.params, value.value]);
 
   return (
     <Reorder.Item

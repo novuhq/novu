@@ -30,13 +30,6 @@ export class CreateVariablesObject {
   @InstrumentUsecase()
   async execute(command: CreateVariablesObjectCommand): Promise<Record<string, unknown>> {
     const { userId, environmentId, organizationId } = command;
-    const isEnhancedDigestEnabled = await this.featureFlagService.getFlag({
-      user: { _id: userId } as UserEntity,
-      environment: { _id: environmentId } as EnvironmentEntity,
-      organization: { _id: organizationId } as OrganizationEntity,
-      key: FeatureFlagsKeysEnum.IS_ENHANCED_DIGEST_ENABLED,
-      defaultValue: false,
-    });
     const controlValues = await this.getControlValues(command);
 
     const variables = this.extractAllVariables(controlValues);
@@ -45,11 +38,7 @@ export class CreateVariablesObject {
 
     const variablesObject = keysToObject(variables, arrayVariables, showIfVariables);
 
-    if (isEnhancedDigestEnabled) {
-      return this.ensureEventsVariableIsAnArray(variablesObject);
-    }
-
-    return variablesObject;
+    return this.ensureEventsVariableIsAnArray(variablesObject);
   }
 
   private ensureEventsVariableIsAnArray(variablesObject: Record<string, unknown>) {

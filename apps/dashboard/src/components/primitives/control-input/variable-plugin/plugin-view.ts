@@ -18,7 +18,6 @@ export class VariablePluginView {
     private viewRef: MutableRefObject<EditorView | null>,
     private lastCompletionRef: MutableRefObject<{ from: number; to: number } | null>,
     private isAllowedVariable: IsAllowedVariable,
-    private isEnhancedDigestEnabled: boolean,
     private onSelect?: (value: string, from: number, to: number) => void,
     private isDigestEventsVariable?: (variableName: string) => boolean
   ) {
@@ -79,7 +78,6 @@ export class VariablePluginView {
               start,
               end,
               filtersArray,
-              this.isEnhancedDigestEnabled,
               this.onSelect,
               this.isDigestEventsVariable
             ),

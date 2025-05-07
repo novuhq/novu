@@ -7,6 +7,7 @@ import {
   ITenantDefine,
   ProvidersIdEnum,
   StatelessControls,
+  TriggerOverrides,
   WorkflowPreferences,
 } from '@novu/shared';
 
@@ -18,7 +19,7 @@ export class CreateNotificationJobsCommand extends EnvironmentWithUserCommand {
   identifier: string;
 
   @IsDefined()
-  overrides: Record<string, Record<string, unknown>>;
+  overrides: TriggerOverrides;
 
   @IsDefined()
   payload: any; // eslint-disable-line @typescript-eslint/no-explicit-any

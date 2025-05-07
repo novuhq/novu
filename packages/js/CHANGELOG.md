@@ -1,3 +1,22 @@
+## v3.3.0 (2025-05-07)
+
+### 🚀 Features
+
+- **js,dashboard:** inbox snooze improvements ([#8251](https://github.com/novuhq/novu/pull/8251))
+- **js,api,dashboard:** snooze inbox functionality ([#8228](https://github.com/novuhq/novu/pull/8228))
+- **js,react:** add snooze functionality ([#8230](https://github.com/novuhq/novu/pull/8230))
+- **repo:** Polish changelogs for packages ([a932bd38e4](https://github.com/novuhq/novu/commit/a932bd38e4))
+
+### 🩹 Fixes
+
+- **js:** Fix appearance elements access bug ([#8213](https://github.com/novuhq/novu/pull/8213))
+
+### ❤️ Thank You
+
+- Adam Chmara @ChmaraX
+- George Desipris @desiprisg
+- Paweł Tymczuk @LetItRock
+
 ## v3.2.0 (2025-04-30)
 
 ### 🚀 Features
