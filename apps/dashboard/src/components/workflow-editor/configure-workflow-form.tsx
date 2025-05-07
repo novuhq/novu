@@ -347,7 +347,7 @@ export const ConfigureWorkflowForm = (props: ConfigureWorkflowFormProps) => {
                 defaultValue=""
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel required>Identifier</FormLabel>
+                    <FormLabel>Identifier</FormLabel>
                     <FormControl>
                       <Input
                         size="xs"
