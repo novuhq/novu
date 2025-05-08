@@ -7,3 +7,7 @@ export const urlTargetTypes = [
   RedirectTargetEnum.TOP,
   RedirectTargetEnum.UNFENCED_TOP,
 ];
+
+export function openInNewTab(url: string) {
+  return window.open(url, '_blank', 'noreferrer noopener');
+}

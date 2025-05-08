@@ -12,12 +12,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common/decorators';
 import { ApiBody, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
-import {
-  DeleteWorkflowCommand,
-  DeleteWorkflowUseCase,
-  ExternalApiAccessible,
-  UserSession,
-} from '@novu/application-generic';
+import { DeleteWorkflowCommand, DeleteWorkflowUseCase, UserSession } from '@novu/application-generic';
 import { DirectionEnum, UserSessionData, WorkflowOriginEnum } from '@novu/shared';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
 import { UserAuthentication } from '../shared/framework/swagger/api.key.security';

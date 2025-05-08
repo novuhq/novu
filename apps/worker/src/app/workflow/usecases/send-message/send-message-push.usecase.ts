@@ -349,7 +349,7 @@ export class SendMessagePush extends SendMessageBase {
   }
 
   private async isChannelMissingDeviceTokens(channel: IChannelSettings, command: SendMessageCommand): Promise<boolean> {
-    const { deviceTokens } = channel.credentials;
+    const { deviceTokens } = channel.credentials || {};
     if (!deviceTokens || (Array.isArray(deviceTokens) && deviceTokens.length === 0)) {
       await this.sendPushMissingDeviceTokensError(command.job, channel);
 

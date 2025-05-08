@@ -14,6 +14,8 @@ import { useFetchWorkflows } from '../../hooks/use-fetch-workflows';
 import { Button } from '../primitives/button';
 import { FacetedFormFilter } from '../primitives/form/faceted-filter/facated-form-filter';
 import { CHANNEL_OPTIONS } from './constants';
+import { IS_SELF_HOSTED } from '../../config';
+
 type Fields = 'dateRange' | 'workflows' | 'channels' | 'transactionId' | 'subscriberId' | 'topicKey';
 
 export type ActivityFilters = {
@@ -58,13 +60,15 @@ export function ActivityFilters({
   const { subscription } = useFetchSubscription();
 
   const maxActivityFeedRetentionOptions = useMemo(() => {
-    if (!organization || !subscription) {
+    const missingSubscription = !subscription && !IS_SELF_HOSTED;
+
+    if (!organization || missingSubscription) {
       return [];
     }
 
     return buildActivityDateFilters({
       organization,
-      subscription,
+      apiServiceLevel: subscription?.apiServiceLevel,
     }).map((option) => ({
       ...option,
       icon: option.disabled ? UpgradeCtaIcon : undefined,

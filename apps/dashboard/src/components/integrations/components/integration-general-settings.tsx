@@ -9,6 +9,8 @@ import { ROUTES } from '@/utils/routes';
 import { ApiServiceLevelEnum } from '@novu/shared';
 import { Control } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
+import { IS_SELF_HOSTED, SELF_HOSTED_UPGRADE_REDIRECT_URL } from '../../../config';
+import { openInNewTab } from '../../../utils/url';
 
 type IntegrationFormData = {
   name: string;
@@ -42,12 +44,24 @@ function NovuBrandingSwitch({
   const navigate = useNavigate();
 
   const isFreePlan = subscription?.apiServiceLevel === ApiServiceLevelEnum.FREE;
-  const disabled = isFreePlan || isLoading;
+  const disabled = isFreePlan || IS_SELF_HOSTED || isLoading;
   const checked = disabled ? false : value;
+
+  const popoverContent = IS_SELF_HOSTED
+    ? 'Remove Novu badge from your inbox by upgrading to Cloud plans'
+    : 'Remove Novu badge from your inbox by upgrading to our paid plans';
+
+  const handleLinkClick = () => {
+    if (IS_SELF_HOSTED) {
+      openInNewTab(SELF_HOSTED_UPGRADE_REDIRECT_URL + '?utm_campaign=remove_branding_prompt');
+    } else {
+      navigate(ROUTES.SETTINGS_BILLING + '?utm_source=remove_branding_prompt');
+    }
+  };
 
   return (
     <div className="flex items-center">
-      {isFreePlan ? (
+      {isFreePlan || IS_SELF_HOSTED ? (
         <Popover modal>
           <PopoverTrigger asChild>
             <Switch id={id} checked={checked} />
@@ -56,16 +70,10 @@ function NovuBrandingSwitch({
             <div className="flex flex-col gap-2 p-1">
               <div className="flex flex-col gap-1">
                 <h4 className="text-xs font-semibold">Premium Feature</h4>
-                <p className="text-muted-foreground text-xs">
-                  Remove Novu badge from your inbox by upgrading to our paid plans.
-                </p>
+                <p className="text-muted-foreground text-xs">{popoverContent}</p>
               </div>
               <div className="flex justify-end">
-                <LinkButton
-                  size="sm"
-                  variant="primary"
-                  onClick={() => navigate(ROUTES.SETTINGS_BILLING + '?utm_source=remove_branding_prompt')}
-                >
+                <LinkButton size="sm" variant="primary" onClick={handleLinkClick}>
                   Upgrade Plan
                 </LinkButton>
               </div>
