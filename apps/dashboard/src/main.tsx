@@ -49,7 +49,6 @@ import { OnboardingParentRoute } from './routes/onboarding';
 import { ROUTES } from './utils/routes';
 import { initializeSentry } from './utils/sentry';
 import { overrideZodErrorMap } from './utils/validation';
-import { VercelIntegrationPage } from './pages/vercel-integration-page';
 import { IS_SELF_HOSTED } from './config';
 
 initializeSentry();
