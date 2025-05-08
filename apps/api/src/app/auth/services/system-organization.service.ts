@@ -6,11 +6,11 @@ import { CreateOrganization } from '../../organization/usecases/create-organizat
 import { CreateOrganizationCommand } from '../../organization/usecases/create-organization/create-organization.command';
 import { UserRegister } from '../usecases/register/user-register.usecase';
 import { UserRegisterCommand } from '../usecases/register/user-register.command';
+import { COMMUNITY_EDITION_NAME, getSelfHostedFindQuery } from '../../shared/helpers/self-hosted';
 
 @Injectable()
 export class CommunityEditionService implements OnModuleInit {
   private readonly E11000_DUPLICATE_KEY_ERROR_CODE = 'E11000';
-  private readonly COMMUNITY_EDITION_NAME = 'Community Edition';
   private readonly COMMUNITY_EDITION_USER_EMAIL = 'no-reply@example.com';
 
   constructor(
@@ -33,7 +33,7 @@ export class CommunityEditionService implements OnModuleInit {
 
   private async initializeCommunityEditionOrganization(): Promise<void> {
     await this.organizationRepository.withTransaction(async () => {
-      let communityEditionOrg = await this.organizationRepository.findOne({ name: this.COMMUNITY_EDITION_NAME });
+      let communityEditionOrg = await this.organizationRepository.findOne(getSelfHostedFindQuery());
 
       if (communityEditionOrg) {
         this.logger.info(
@@ -57,7 +57,7 @@ export class CommunityEditionService implements OnModuleInit {
         const organization = await this.createOrganizationUsecase.execute(
           CreateOrganizationCommand.create({
             userId: user._id,
-            name: this.COMMUNITY_EDITION_NAME,
+            name: COMMUNITY_EDITION_NAME,
             apiServiceLevel: ApiServiceLevelEnum.UNLIMITED,
           })
         );
@@ -67,14 +67,14 @@ export class CommunityEditionService implements OnModuleInit {
         const isDuplicateKeyError =
           error instanceof Error &&
           error.message.includes(this.E11000_DUPLICATE_KEY_ERROR_CODE) &&
-          error.message.includes(this.COMMUNITY_EDITION_NAME);
+          error.message.includes(COMMUNITY_EDITION_NAME);
 
         if (!isDuplicateKeyError) {
           throw error;
         }
 
         this.logger.warn('Duplicate key error, another instance may have created the Community Edition');
-        communityEditionOrg = await this.organizationRepository.findOne({ name: this.COMMUNITY_EDITION_NAME });
+        communityEditionOrg = await this.organizationRepository.findOne(getSelfHostedFindQuery());
         if (!communityEditionOrg) {
           this.logger.error('Failed to retrieve Community Edition after duplicate key error');
           throw error;

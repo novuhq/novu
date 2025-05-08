@@ -2,10 +2,9 @@ import { Inject, NotFoundException } from '@nestjs/common';
 import { CommunityOrganizationRepository, MemberRepository } from '@novu/dal';
 import { SwitchOrganization } from '../switch-organization/switch-organization.usecase';
 import { SwitchOrganizationCommand } from '../switch-organization';
+import { getSelfHostedFindQuery } from '../../../shared/helpers/self-hosted';
 
 export class SelfHostUsecase {
-  private readonly COMMUNITY_EDITION_NAME = 'Community Edition';
-
   constructor(
     @Inject('ORGANIZATION_REPOSITORY')
     private organizationRepository: CommunityOrganizationRepository,
@@ -14,7 +13,7 @@ export class SelfHostUsecase {
   ) {}
 
   async execute() {
-    const communityEditionOrg = await this.organizationRepository.findOne({ name: this.COMMUNITY_EDITION_NAME });
+    const communityEditionOrg = await this.organizationRepository.findOne(getSelfHostedFindQuery());
 
     if (!communityEditionOrg) {
       throw new NotFoundException('Community Edition not found');
