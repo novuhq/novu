@@ -4,13 +4,13 @@ import { Input } from '@/components/primitives/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives/popover';
 import { Separator } from '@/components/primitives/separator';
 import { Switch } from '@/components/primitives/switch';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import { ROUTES } from '@/utils/routes';
-import { ApiServiceLevelEnum, FeatureFlagsKeysEnum } from '@novu/shared';
+import { ApiServiceLevelEnum } from '@novu/shared';
 import { Control } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
+import { IS_SELF_HOSTED, SELF_HOSTED_UPGRADE_REDIRECT_URL } from '../../../config';
+import { openInNewTab } from '../../../utils/url';
 
 type IntegrationFormData = {
   name: string;
@@ -21,7 +21,6 @@ type IntegrationFormData = {
   primary: boolean;
   environmentId: string;
   removeNovuBranding?: boolean;
-  enableSnooze?: boolean;
 };
 
 type GeneralSettingsProps = {
@@ -31,56 +30,6 @@ type GeneralSettingsProps = {
   disabledPrimary?: boolean;
   isForInAppStep?: boolean;
 };
-
-/**
- * This switch doesn't actually set any value, it serves as an indicator
- * informing if the feature is enabled or not.
- */
-function EnableSnoozeSwitch({ id }: { id: string }) {
-  const { subscription, isLoading } = useFetchSubscription();
-  const navigate = useNavigate();
-  const isFreePlan = subscription?.apiServiceLevel === ApiServiceLevelEnum.FREE;
-  const disabled = isFreePlan || isLoading;
-  const checked = disabled ? false : true; // Always checked for paid plans
-
-  return (
-    <div className="flex items-center">
-      {isFreePlan ? (
-        <Popover modal>
-          <PopoverTrigger asChild>
-            <Switch id={id} checked={checked} />
-          </PopoverTrigger>
-          <PopoverContent className="w-72" align="end" sideOffset={4}>
-            <div className="flex flex-col gap-2 p-1">
-              <div className="flex flex-col gap-1">
-                <h4 className="text-xs font-semibold">Premium Feature</h4>
-                <p className="text-muted-foreground text-xs">
-                  Enable "Remind me later" functionality by upgrading to our paid plans.
-                </p>
-              </div>
-              <div className="flex justify-end">
-                <LinkButton
-                  size="sm"
-                  variant="primary"
-                  onClick={() => navigate(ROUTES.SETTINGS_BILLING + '?utm_source=enable_snooze_prompt')}
-                >
-                  Upgrade Plan
-                </LinkButton>
-              </div>
-            </div>
-          </PopoverContent>
-        </Popover>
-      ) : (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Switch id={id} checked={true} disabled={true} />
-          </TooltipTrigger>
-          <TooltipContent>This feature is automatically enabled with your plan and stays active.</TooltipContent>
-        </Tooltip>
-      )}
-    </div>
-  );
-}
 
 function NovuBrandingSwitch({
   id,
@@ -95,12 +44,24 @@ function NovuBrandingSwitch({
   const navigate = useNavigate();
 
   const isFreePlan = subscription?.apiServiceLevel === ApiServiceLevelEnum.FREE;
-  const disabled = isFreePlan || isLoading;
+  const disabled = isFreePlan || IS_SELF_HOSTED || isLoading;
   const checked = disabled ? false : value;
+
+  const popoverContent = IS_SELF_HOSTED
+    ? 'Remove Novu badge from your inbox by upgrading to Cloud plans'
+    : 'Remove Novu badge from your inbox by upgrading to our paid plans';
+
+  const handleLinkClick = () => {
+    if (IS_SELF_HOSTED) {
+      openInNewTab(SELF_HOSTED_UPGRADE_REDIRECT_URL + '?utm_campaign=remove_branding_prompt');
+    } else {
+      navigate(ROUTES.SETTINGS_BILLING + '?utm_source=remove_branding_prompt');
+    }
+  };
 
   return (
     <div className="flex items-center">
-      {isFreePlan ? (
+      {isFreePlan || IS_SELF_HOSTED ? (
         <Popover modal>
           <PopoverTrigger asChild>
             <Switch id={id} checked={checked} />
@@ -109,16 +70,10 @@ function NovuBrandingSwitch({
             <div className="flex flex-col gap-2 p-1">
               <div className="flex flex-col gap-1">
                 <h4 className="text-xs font-semibold">Premium Feature</h4>
-                <p className="text-muted-foreground text-xs">
-                  Remove Novu badge from your inbox by upgrading to our paid plans.
-                </p>
+                <p className="text-muted-foreground text-xs">{popoverContent}</p>
               </div>
               <div className="flex justify-end">
-                <LinkButton
-                  size="sm"
-                  variant="primary"
-                  onClick={() => navigate(ROUTES.SETTINGS_BILLING + '?utm_source=remove_branding_prompt')}
-                >
+                <LinkButton size="sm" variant="primary" onClick={handleLinkClick}>
                   Upgrade Plan
                 </LinkButton>
               </div>
@@ -139,8 +94,6 @@ export function GeneralSettings({
   disabledPrimary,
   isForInAppStep,
 }: GeneralSettingsProps) {
-  const isSnoozeEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_SNOOZE_ENABLED);
-
   return (
     <div className="border-neutral-alpha-200 bg-background text-foreground-600 mx-0 mt-0 flex flex-col gap-2 rounded-lg border p-3">
       <FormField
@@ -183,28 +136,6 @@ export function GeneralSettings({
               );
             }}
           />
-          {isSnoozeEnabled && (
-            <FormField
-              control={control}
-              name="enableSnooze"
-              render={() => {
-                return (
-                  <FormItem className="flex items-center justify-between gap-2">
-                    <FormLabel
-                      className="text-xs"
-                      htmlFor="enableSnooze"
-                      tooltip="Enables users to postpone notifications and get reminded at a later time"
-                    >
-                      Enable "Remind me later" functionality
-                    </FormLabel>
-                    <FormControl>
-                      <EnableSnoozeSwitch id="enableSnooze" />
-                    </FormControl>
-                  </FormItem>
-                );
-              }}
-            />
-          )}
         </>
       )}
 

@@ -26,7 +26,7 @@ export type MessagesControllerGetMessagesRequest = {
 
 export type MessagesControllerGetMessagesResponse = {
   headers: { [k: string]: Array<string> };
-  result: components.ActivitiesResponseDto;
+  result: components.MessagesResponseDto;
 };
 
 /** @internal */
@@ -118,7 +118,7 @@ export const MessagesControllerGetMessagesResponse$inboundSchema: z.ZodType<
   unknown
 > = z.object({
   Headers: z.record(z.array(z.string())),
-  Result: components.ActivitiesResponseDto$inboundSchema,
+  Result: components.MessagesResponseDto$inboundSchema,
 }).transform((v) => {
   return remap$(v, {
     "Headers": "headers",
@@ -129,7 +129,7 @@ export const MessagesControllerGetMessagesResponse$inboundSchema: z.ZodType<
 /** @internal */
 export type MessagesControllerGetMessagesResponse$Outbound = {
   Headers: { [k: string]: Array<string> };
-  Result: components.ActivitiesResponseDto$Outbound;
+  Result: components.MessagesResponseDto$Outbound;
 };
 
 /** @internal */
@@ -139,7 +139,7 @@ export const MessagesControllerGetMessagesResponse$outboundSchema: z.ZodType<
   MessagesControllerGetMessagesResponse
 > = z.object({
   headers: z.record(z.array(z.string())),
-  result: components.ActivitiesResponseDto$outboundSchema,
+  result: components.MessagesResponseDto$outboundSchema,
 }).transform((v) => {
   return remap$(v, {
     headers: "Headers",

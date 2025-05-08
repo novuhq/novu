@@ -47,7 +47,7 @@ COPY --chown=1000:1000 --from=assets /usr/src/app .
 # Install production dependencies
 RUN --mount=type=cache,id=pnpm-store-webhook,target=/root/.pnpm-store \
     pnpm install --reporter=silent --filter "{${PACKAGE_PATH}}..." \
-    --frozen-lockfile --unsafe-perm --prod --reporter=silent
+    --frozen-lockfile --unsafe-perm --reporter=silent
 
 # Set the working directory to the webhook app and start the application using pm2-runtime
 WORKDIR /usr/src/app/apps/webhook

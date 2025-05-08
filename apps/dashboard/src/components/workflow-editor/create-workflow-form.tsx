@@ -74,7 +74,7 @@ export function CreateWorkflowForm({ onSubmit, template }: CreateWorkflowFormPro
             <FormItem>
               <FormLabel required>Identifier</FormLabel>
               <FormControl>
-                <FormInput {...field} disabled />
+                <FormInput {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

@@ -457,10 +457,17 @@ export class SendMessageEmail extends SendMessageBase {
   ): Promise<SendMessageResult> {
     const mailFactory = new MailFactory();
     const mailHandler = mailFactory.getHandler(this.buildFactoryIntegration(integration), mailData.from);
-    const bridgeProviderData = command.bridgeData?.providers?.[integration.providerId] || {};
 
     try {
-      const result = await mailHandler.send({ ...mailData, bridgeProviderData });
+      const result = await mailHandler.send({
+        ...mailData,
+        bridgeProviderData: this.combineOverrides(
+          command.bridgeData,
+          command.overrides,
+          command.step.stepId,
+          integration.providerId
+        ),
+      });
 
       Logger.verbose({ command }, 'Email message has been sent', LOG_CONTEXT);
 

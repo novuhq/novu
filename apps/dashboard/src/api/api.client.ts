@@ -81,10 +81,10 @@ const request = async <T>(
   }
 };
 
-type RequestOptions = { body?: unknown; environment?: IEnvironment; signal?: AbortSignal };
+type RequestOptions = { body?: unknown; environment?: IEnvironment; signal?: AbortSignal; headers?: HeadersInit };
 
-export const get = <T>(endpoint: string, { environment, signal }: RequestOptions = {}) =>
-  request<T>(endpoint, { method: 'GET', environment, signal });
+export const get = <T>(endpoint: string, { environment, signal, headers }: RequestOptions = {}) =>
+  request<T>(endpoint, { method: 'GET', environment, signal, headers });
 export const post = <T>(endpoint: string, options: RequestOptions) =>
   request<T>(endpoint, { method: 'POST', ...options });
 export const put = <T>(endpoint: string, options: RequestOptions) =>

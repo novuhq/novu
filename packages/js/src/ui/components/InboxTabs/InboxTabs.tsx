@@ -6,12 +6,12 @@ import { useTabsDropdown } from '../../helpers/useTabsDropdown';
 import { Check } from '../../icons';
 import { ArrowDown } from '../../icons/ArrowDown';
 import {
+  BodyRenderer,
   NotificationActionClickHandler,
   NotificationClickHandler,
   NotificationRenderer,
   NotificationStatus,
   SubjectRenderer,
-  BodyRenderer,
   Tab,
 } from '../../types';
 import { NotificationList } from '../Notification';

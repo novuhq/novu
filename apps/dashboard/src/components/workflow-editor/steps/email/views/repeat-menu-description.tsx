@@ -4,12 +4,9 @@ import { AnimatePresence, motion } from 'motion/react';
 import { Lightbulb } from 'lucide-react';
 import { Separator } from '@/components/primitives/separator';
 import { REPEAT_BLOCK_ITERABLE_ALIAS } from '../variables/variables';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 export function RepeatMenuDescription({ editor }: { editor: Editor }) {
   const [currentProperty, setCurrentProperty] = useState('\u00A0}}');
-  const isEnhancedDigestEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_ENHANCED_DIGEST_ENABLED);
 
   function isOnEmptyLine(editor: Editor, cursorPos: number) {
     const currentLineContent = editor.state.doc
@@ -36,9 +33,7 @@ export function RepeatMenuDescription({ editor }: { editor: Editor }) {
 
   const shouldShow = isOnEmptyLine(editor, editor.state.selection.from);
 
-  const iterableKey = isEnhancedDigestEnabled
-    ? REPEAT_BLOCK_ITERABLE_ALIAS + '.payload'
-    : editor.getAttributes('repeat')?.each;
+  const iterableKey = REPEAT_BLOCK_ITERABLE_ALIAS + '.payload';
 
   return (
     <AnimatePresence mode="wait">

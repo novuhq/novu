@@ -1,14 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import _ from 'lodash';
 
-import {
-  IntegrationRepository,
-  JobEntity,
-  JobRepository,
-  NotificationTemplateRepository,
-  SubscriberEntity,
-  SubscriberRepository,
-} from '@novu/dal';
+import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
 import { SubscriberSourceEnum } from '@novu/shared';
 
 import { InstrumentUsecase } from '../../instrumentation';
@@ -16,16 +9,12 @@ import { SubscriberProcessQueueService } from '../../services/queues/subscriber-
 import { TriggerBroadcastCommand } from './trigger-broadcast.command';
 import { IProcessSubscriberBulkJobDto } from '../../dtos';
 
-const LOG_CONTEXT = 'TriggerBroadcastUseCase';
 const QUEUE_CHUNK_SIZE = Number(process.env.BROADCAST_QUEUE_CHUNK_SIZE) || 100;
 
 @Injectable()
 export class TriggerBroadcast {
   constructor(
-    private integrationRepository: IntegrationRepository,
     private subscriberRepository: SubscriberRepository,
-    private jobRepository: JobRepository,
-    private notificationTemplateRepository: NotificationTemplateRepository,
     private subscriberProcessQueueService: SubscriberProcessQueueService
   ) {}
 

@@ -6,6 +6,7 @@ import { ONBOARDING_DEMO_WORKFLOW_ID } from '../../config';
 import { ROUTES } from '../../utils/routes';
 import { Button } from '../primitives/button';
 import { showErrorToast, showSuccessToast } from '../primitives/sonner-helpers';
+import { useInitDemoWorkflow } from '../../hooks/use-init-demo-workflow';
 
 type InboxConnectedGuideProps = {
   subscriberId: string;
@@ -15,6 +16,7 @@ type InboxConnectedGuideProps = {
 export function InboxConnectedGuide({ subscriberId, environment }: InboxConnectedGuideProps) {
   const navigate = useNavigate();
   const { triggerWorkflow, isPending } = useTriggerWorkflow(environment);
+  useInitDemoWorkflow(environment);
 
   async function handleSendNotification() {
     try {

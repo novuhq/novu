@@ -11,8 +11,6 @@ import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
 import { useVariables } from './hooks/use-variables';
 import { createVariableExtension } from './variable-plugin';
 import { variablePillTheme } from './variable-plugin/variable-theme';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { DIGEST_VARIABLES_ENUM, getDynamicDigestVariable } from '@/components/variable/utils/digest-variables';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useTelemetry } from '@/hooks/use-telemetry';
@@ -66,7 +64,6 @@ export function ControlInput({
 }: ControlInputProps) {
   const viewRef = useRef<EditorView | null>(null);
   const lastCompletionRef = useRef<CompletionRange | null>(null);
-  const isEnhancedDigestEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_ENHANCED_DIGEST_ENABLED);
   const { selectedVariable, setSelectedVariable, handleVariableSelect, handleVariableUpdate } = useVariables(
     viewRef,
     onChange
@@ -98,8 +95,8 @@ export function ControlInput({
   );
 
   const completionSource = useMemo(
-    () => createAutocompleteSource(variables, isEnhancedDigestEnabled, onVariableSelect),
-    [variables, isEnhancedDigestEnabled, onVariableSelect]
+    () => createAutocompleteSource(variables, onVariableSelect),
+    [variables, onVariableSelect]
   );
 
   const autocompletionExtension = useMemo(
@@ -134,10 +131,9 @@ export function ControlInput({
       lastCompletionRef,
       onSelect: handleVariableSelect,
       isAllowedVariable,
-      isEnhancedDigestEnabled,
       isDigestEventsVariable,
     });
-  }, [handleVariableSelect, isAllowedVariable, isDigestEventsVariable, isEnhancedDigestEnabled]);
+  }, [handleVariableSelect, isAllowedVariable, isDigestEventsVariable]);
 
   const extensions = useMemo(() => {
     const baseExtensions = [...(multiline ? [EditorView.lineWrapping] : []), variablePillTheme];

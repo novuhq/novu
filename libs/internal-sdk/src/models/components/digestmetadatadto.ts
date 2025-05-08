@@ -27,7 +27,7 @@ import {
 /**
  * Unit of the digest
  */
-export const Unit = {
+export const DigestMetadataDtoUnit = {
   Seconds: "seconds",
   Minutes: "minutes",
   Hours: "hours",
@@ -38,7 +38,7 @@ export const Unit = {
 /**
  * Unit of the digest
  */
-export type Unit = ClosedEnum<typeof Unit>;
+export type DigestMetadataDtoUnit = ClosedEnum<typeof DigestMetadataDtoUnit>;
 
 export type DigestMetadataDto = {
   /**
@@ -52,7 +52,7 @@ export type DigestMetadataDto = {
   /**
    * Unit of the digest
    */
-  unit?: Unit | undefined;
+  unit?: DigestMetadataDtoUnit | undefined;
   /**
    * The Digest Type
    */
@@ -84,23 +84,24 @@ export type DigestMetadataDto = {
 };
 
 /** @internal */
-export const Unit$inboundSchema: z.ZodNativeEnum<typeof Unit> = z.nativeEnum(
-  Unit,
-);
+export const DigestMetadataDtoUnit$inboundSchema: z.ZodNativeEnum<
+  typeof DigestMetadataDtoUnit
+> = z.nativeEnum(DigestMetadataDtoUnit);
 
 /** @internal */
-export const Unit$outboundSchema: z.ZodNativeEnum<typeof Unit> =
-  Unit$inboundSchema;
+export const DigestMetadataDtoUnit$outboundSchema: z.ZodNativeEnum<
+  typeof DigestMetadataDtoUnit
+> = DigestMetadataDtoUnit$inboundSchema;
 
 /**
  * @internal
  * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
  */
-export namespace Unit$ {
-  /** @deprecated use `Unit$inboundSchema` instead. */
-  export const inboundSchema = Unit$inboundSchema;
-  /** @deprecated use `Unit$outboundSchema` instead. */
-  export const outboundSchema = Unit$outboundSchema;
+export namespace DigestMetadataDtoUnit$ {
+  /** @deprecated use `DigestMetadataDtoUnit$inboundSchema` instead. */
+  export const inboundSchema = DigestMetadataDtoUnit$inboundSchema;
+  /** @deprecated use `DigestMetadataDtoUnit$outboundSchema` instead. */
+  export const outboundSchema = DigestMetadataDtoUnit$outboundSchema;
 }
 
 /** @internal */
@@ -111,7 +112,7 @@ export const DigestMetadataDto$inboundSchema: z.ZodType<
 > = z.object({
   digestKey: z.string().optional(),
   amount: z.number().optional(),
-  unit: Unit$inboundSchema.optional(),
+  unit: DigestMetadataDtoUnit$inboundSchema.optional(),
   type: DigestTypeEnum$inboundSchema,
   events: z.array(z.record(z.any())).optional(),
   backoff: z.boolean().optional(),
@@ -143,7 +144,7 @@ export const DigestMetadataDto$outboundSchema: z.ZodType<
 > = z.object({
   digestKey: z.string().optional(),
   amount: z.number().optional(),
-  unit: Unit$outboundSchema.optional(),
+  unit: DigestMetadataDtoUnit$outboundSchema.optional(),
   type: DigestTypeEnum$outboundSchema,
   events: z.array(z.record(z.any())).optional(),
   backoff: z.boolean().optional(),

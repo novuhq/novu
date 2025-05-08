@@ -47,9 +47,10 @@ export const useStyle = () => {
       .join(' ');
 
     let appearanceClassnames: string[] = [];
-    for (let i = 0; i < finalAppearanceKeys.reverse().length; i += 1) {
-      if (typeof appearance.elements()?.[finalAppearanceKeys[i]] === 'string') {
-        appearanceClassnames.push(appearance.elements()?.[finalAppearanceKeys[i]] as string);
+    const reversedFinalAppearanceKeys = finalAppearanceKeys.reverse();
+    for (let i = 0; i < reversedFinalAppearanceKeys.length; i += 1) {
+      if (typeof appearance.elements()[reversedFinalAppearanceKeys[i]] === 'string') {
+        appearanceClassnames.push(appearance.elements()[reversedFinalAppearanceKeys[i]] as string);
       }
     }
 

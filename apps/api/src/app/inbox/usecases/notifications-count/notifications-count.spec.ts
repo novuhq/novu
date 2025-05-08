@@ -15,7 +15,6 @@ describe('NotificationsCount', () => {
   let notificationsCount: NotificationsCount;
   let messageRepository: sinon.SinonStubbedInstance<MessageRepository>;
   let subscriberRepository: sinon.SinonStubbedInstance<SubscriberRepository>;
-  let organizationRepository: sinon.SinonStubbedInstance<OrganizationRepository>;
 
   beforeEach(() => {
     messageRepository = sinon.createStubInstance(MessageRepository);
@@ -173,6 +172,40 @@ describe('NotificationsCount', () => {
           subscriber._id,
           ChannelTypeEnum.IN_APP,
           { archived: false },
+          { limit: 99 }
+        )
+      ).to.be.true;
+
+      await notificationsCount.execute({
+        organizationId: 'organizationId',
+        environmentId,
+        subscriberId: 'subscriber-id',
+        filters: [{ snoozed: true }],
+      });
+
+      expect(
+        messageRepository.getCount.calledWith(
+          environmentId,
+          subscriber._id,
+          ChannelTypeEnum.IN_APP,
+          { snoozed: true },
+          { limit: 99 }
+        )
+      ).to.be.true;
+
+      await notificationsCount.execute({
+        organizationId: 'organizationId',
+        environmentId,
+        subscriberId: 'subscriber-id',
+        filters: [{ snoozed: false }],
+      });
+
+      expect(
+        messageRepository.getCount.calledWith(
+          environmentId,
+          subscriber._id,
+          ChannelTypeEnum.IN_APP,
+          { snoozed: false },
           { limit: 99 }
         )
       ).to.be.true;

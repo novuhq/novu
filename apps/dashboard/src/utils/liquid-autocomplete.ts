@@ -73,7 +73,7 @@ const VALID_DYNAMIC_PATHS = ['subscriber.data.', 'payload.', /^steps\.[^.]+\.eve
  *    - steps.{valid-step}.events[n].payload.* (any new field)
  */
 export const completions =
-  (variables: LiquidVariable[], isEnhancedDigestEnabled: boolean) =>
+  (variables: LiquidVariable[]) =>
   (context: CompletionContext): CompletionResult | null => {
     const { state, pos } = context;
     const beforeCursor = state.sliceDoc(0, pos);
@@ -95,7 +95,7 @@ export const completions =
       return {
         from: pos - afterPipe.length,
         to: pos,
-        options: getFilterCompletions(afterPipe, isEnhancedDigestEnabled),
+        options: getFilterCompletions(afterPipe),
       };
     }
 
@@ -143,8 +143,8 @@ function createCompletionOption(
   return { label, type, ...(boost && { boost }), ...(info && { info }), ...(displayLabel && { displayLabel }) };
 }
 
-function getFilterCompletions(afterPipe: string, isEnhancedDigestEnabled: boolean): CompletionOption[] {
-  return getFilters(isEnhancedDigestEnabled)
+function getFilterCompletions(afterPipe: string): CompletionOption[] {
+  return getFilters()
     .filter((f) => f.label.toLowerCase().startsWith(afterPipe.toLowerCase()))
     .map((f) => createCompletionOption(f.value, 'function'));
 }
@@ -220,7 +220,6 @@ function getMatchingVariables(searchText: string, variables: LiquidVariable[]): 
 
 export function createAutocompleteSource(
   variables: LiquidVariable[],
-  isEnhancedDigestEnabled: boolean,
   onVariableSelect?: (completion: Completion) => void
 ) {
   return (context: CompletionContext) => {
@@ -228,7 +227,7 @@ export function createAutocompleteSource(
     const word = context.matchBefore(/\{\{([^}]*)/);
     if (!word) return null;
 
-    const options = completions(variables, isEnhancedDigestEnabled)(context);
+    const options = completions(variables)(context);
     if (!options) return null;
 
     const { from, to } = options;

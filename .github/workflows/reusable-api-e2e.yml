@@ -24,7 +24,6 @@ jobs:
       id-token: write
       packages: write
     steps:
-      # Checkout with EE-submodule if token provided
       - uses: actions/checkout@v4
         name: Checkout with submodules
         if: ${{ inputs.ee }}

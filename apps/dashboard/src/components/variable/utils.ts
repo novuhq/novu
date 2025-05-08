@@ -13,12 +13,7 @@ export function formatParamValue(param: string, type?: string) {
   return `'${escapeString(param)}'`;
 }
 
-export function formatLiquidVariable(
-  name: string,
-  defaultValue: string,
-  filters: FilterWithParam[],
-  isEnhancedDigestEnabled: boolean
-) {
+export function formatLiquidVariable(name: string, defaultValue: string, filters: FilterWithParam[]) {
   const parts = [name.trim()];
 
   if (defaultValue) {
@@ -31,7 +26,7 @@ export function formatLiquidVariable(
     if (!t.params?.length) {
       parts.push(t.value);
     } else {
-      const filterDef = getFilters(isEnhancedDigestEnabled).find((def) => def.value === t.value);
+      const filterDef = getFilters().find((def) => def.value === t.value);
       const formattedParams = t.params.map((param, index) => formatParamValue(param, filterDef?.params?.[index]?.type));
 
       parts.push(`${t.value}: ${formattedParams.join(', ')}`);
@@ -41,16 +36,11 @@ export function formatLiquidVariable(
   return `{{${parts.join(' | ')}}}`;
 }
 
-export function validateEnhancedDigestFilters(
-  filters: string[],
-  isEnhancedDigestEnabled: boolean
-): {
+export function validateEnhancedDigestFilters(filters: string[]): {
   message: string;
   name: string;
   filterParam: string;
 } | null {
-  if (!isEnhancedDigestEnabled) return null;
-
   const toSentenceFilter = filters.find((f) => f.startsWith('toSentence'));
 
   if (toSentenceFilter) {

@@ -14,6 +14,7 @@ import { FacetedFormFilter } from '../primitives/form/faceted-filter/facated-for
 import { CHANNEL_OPTIONS } from './constants';
 import { buildActivityDateFilters } from '@/utils/activityFilters';
 import { useMemo } from 'react';
+import { IS_SELF_HOSTED } from '../../config';
 type Fields = 'dateRange' | 'workflows' | 'channels' | 'transactionId' | 'subscriberId';
 
 export type ActivityFilters = {
@@ -58,13 +59,15 @@ export function ActivityFilters({
   const { subscription } = useFetchSubscription();
 
   const maxActivityFeedRetentionOptions = useMemo(() => {
-    if (!organization || !subscription) {
+    const missingSubscription = !subscription && !IS_SELF_HOSTED;
+
+    if (!organization || missingSubscription) {
       return [];
     }
 
     return buildActivityDateFilters({
       organization,
-      subscription,
+      apiServiceLevel: subscription?.apiServiceLevel,
     }).map((option) => ({
       ...option,
       icon: option.disabled ? UpgradeCtaIcon : undefined,
