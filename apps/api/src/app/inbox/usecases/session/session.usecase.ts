@@ -112,9 +112,7 @@ export class Session {
 
     const removeNovuBranding = inAppIntegration.removeNovuBranding || false;
     const maxSnoozeDurationHours =
-      process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true'
-        ? await this.getMaxSnoozeDurationHours(environment)
-        : 0;
+      process.env.NOVU_ENTERPRISE === 'true' ? await this.getMaxSnoozeDurationHours(environment) : 0;
 
     /**
      * We want to prevent the playground inbox demo from marking the integration as connected
