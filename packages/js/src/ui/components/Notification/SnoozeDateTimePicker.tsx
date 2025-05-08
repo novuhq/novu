@@ -142,7 +142,7 @@ export const SnoozeDateTimePicker: Component<SnoozeDateTimePickerProps> = (props
 
   return (
     <div
-      class={style('snoozeDatePicker', 'nt-bg-white nt-rounded-md nt-shadow-lg nt-w-[260px]')}
+      class={style('snoozeDatePicker', 'nt-bg-background nt-rounded-md nt-shadow-lg nt-w-[260px]')}
       onClick={(e) => e.stopPropagation()}
     >
       <DatePicker onDateChange={(date) => setSelectedDate(date)} maxDays={maxDays()}>
