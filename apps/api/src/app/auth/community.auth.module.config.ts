@@ -77,7 +77,7 @@ export function getCommunityAuthModuleConfig(): ModuleMetadata {
   return {
     imports: [...baseImports, EnvironmentsModuleV1, SharedModule, UserModule, OrganizationModule],
     controllers: [AuthController],
-    providers: [...baseProviders, ...injectableProviders, ...USE_CASES, CommunityEditionService],
+    providers: [...baseProviders, ...injectableProviders, ...USE_CASES],
     exports: [
       RolesGuard,
       RootEnvironmentGuard,
