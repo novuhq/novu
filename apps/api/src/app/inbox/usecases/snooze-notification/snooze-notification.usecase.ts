@@ -88,6 +88,7 @@ export class SnoozeNotification {
 
       return snoozedNotification;
     } catch (error) {
+      this.logger.error({ error }, 'Failed to snooze notification');
       throw new InternalServerErrorException(`Failed to snooze notification: ${error.message}`);
     }
   }
