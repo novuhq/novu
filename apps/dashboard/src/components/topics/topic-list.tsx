@@ -28,6 +28,7 @@ const TopicListWrapper = (props: TopicListFiltersProps & { hasData?: boolean; ar
     resetFilters,
     isLoading,
     hasData,
+    areFiltersApplied,
     ...rest
   } = props;
   const { navigateToCreateTopicPage } = useTopicsNavigate();
