@@ -12,8 +12,13 @@ import {
   UseInterceptors,
 } from '@nestjs/common/decorators';
 import { ApiBody, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
-import { DeleteWorkflowCommand, DeleteWorkflowUseCase, UserSession } from '@novu/application-generic';
-import { DirectionEnum, UserSessionData, WorkflowOriginEnum } from '@novu/shared';
+import {
+  DeleteWorkflowCommand,
+  DeleteWorkflowUseCase,
+  ExternalApiAccessible,
+  UserSession,
+} from '@novu/application-generic';
+import { ApiRateLimitCategoryEnum, DirectionEnum, UserSessionData, WorkflowOriginEnum } from '@novu/shared';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
 import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
 import { ParseSlugEnvironmentIdPipe } from './pipes/parse-slug-env-id.pipe';
@@ -52,7 +57,9 @@ import {
   WorkflowResponseDto,
   WorkflowTestDataResponseDto,
 } from './dtos';
+import { ThrottlerCategory } from '../rate-limiting/guards/throttler.decorator';
 
+@ThrottlerCategory(ApiRateLimitCategoryEnum.CONFIGURATION)
 @ApiCommonResponses()
 @Controller({ path: `/workflows`, version: '2' })
 @UseInterceptors(ClassSerializerInterceptor)
@@ -77,6 +84,7 @@ export class WorkflowController {
     summary: 'Create a new workflow',
     description: 'Creates a new workflow in the Novu Cloud environment',
   })
+  @ExternalApiAccessible()
   @ApiBody({ type: CreateWorkflowDto, description: 'Workflow creation details' })
   @ApiResponse(WorkflowResponseDto, 201)
   async create(
@@ -92,6 +100,7 @@ export class WorkflowController {
   }
 
   @Put(':workflowId/sync')
+  @ExternalApiAccessible()
   @ApiOperation({
     summary: 'Sync workflow to another environment',
     description: 'Synchronizes a workflow to a target environment',
@@ -114,6 +123,7 @@ export class WorkflowController {
   }
 
   @Put(':workflowId')
+  @ExternalApiAccessible()
   @ApiOperation({
     summary: 'Update an existing workflow',
     description: 'Updates the details of an existing workflow',
@@ -135,6 +145,7 @@ export class WorkflowController {
   }
 
   @Get(':workflowId')
+  @ExternalApiAccessible()
   @ApiOperation({
     summary: 'Retrieve a workflow',
     description: 'Fetches details of a specific workflow',
@@ -163,6 +174,7 @@ export class WorkflowController {
   }
 
   @Delete(':workflowId')
+  @ExternalApiAccessible()
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
     summary: 'Delete a workflow',
@@ -184,6 +196,7 @@ export class WorkflowController {
   }
 
   @Get('')
+  @ExternalApiAccessible()
   @ApiOperation({
     summary: 'Search workflows',
     description: 'Retrieves a list of workflows with optional filtering and pagination',
@@ -256,6 +269,7 @@ export class WorkflowController {
     description: 'Retrieves data for a specific step in a workflow',
   })
   @ApiResponse(StepResponseDto)
+  @ExternalApiAccessible()
   @SdkGroupName('Workflows.Steps')
   @SdkMethodName('retrieve')
   async getWorkflowStepData(
@@ -269,6 +283,7 @@ export class WorkflowController {
   }
 
   @Patch('/:workflowId')
+  @ExternalApiAccessible()
   @ApiOperation({
     summary: 'Patch workflow',
     description: 'Partially updates a workflow',
