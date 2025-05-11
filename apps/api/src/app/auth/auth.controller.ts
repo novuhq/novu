@@ -41,8 +41,6 @@ import { UserAuthentication } from '../shared/framework/swagger/api.key.security
 import { SwitchOrganizationCommand } from './usecases/switch-organization/switch-organization.command';
 import { SwitchOrganization } from './usecases/switch-organization/switch-organization.usecase';
 import { AuthService } from './services/auth.service';
-import { SelfHostUsecase } from './usecases/self-host/self-host.usecase';
-import { SelfHostSecretGuard } from './framework/self-host-secret.guard';
 
 @ApiCommonResponses()
 @Controller('/auth')
@@ -60,8 +58,7 @@ export class AuthController {
     private passwordResetRequestUsecase: PasswordResetRequest,
     private passwordResetUsecase: PasswordReset,
     private updatePasswordUsecase: UpdatePassword,
-    private logger: PinoLogger,
-    private selfHostUsecase: SelfHostUsecase
+    private logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
   }
