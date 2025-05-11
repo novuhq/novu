@@ -28,12 +28,30 @@ type TopicOverviewProps = {
   readOnly?: boolean;
 };
 
+const TopicNotFound = () => {
+  return (
+    <div className="mt-[100px] flex h-full w-full flex-col items-center justify-center gap-6">
+      <EmptyTopicsIllustration />
+      <div className="flex flex-col items-center gap-2 text-center">
+        <h3 className="text-lg font-semibold">Topic Not Found</h3>
+        <p className="text-text-soft text-paragraph-sm max-w-[60ch]">
+          The topic you are looking for does not exist or has been deleted.
+        </p>
+      </div>
+    </div>
+  );
+};
+
 const TopicOverview = (props: TopicOverviewProps) => {
   const { topicKey, readOnly = false } = props;
-  const { data, isPending } = useTopic(topicKey);
+  const { data, isPending, error } = useTopic(topicKey);
 
   if (isPending) {
     return <TopicOverviewSkeleton />;
+  }
+
+  if (error) {
+    return <TopicNotFound />;
   }
 
   return <TopicOverviewForm topic={data!} readOnly={readOnly} />;
@@ -48,7 +66,7 @@ const TopicSubscribers = (props: TopicSubscribersProps) => {
   const { topicKey, readOnly = false } = props;
   const [subscriberId, setSubscriberId] = useState<string | undefined>(undefined);
   const [isFilterLoading, setIsFilterLoading] = useState(false);
-  const { data, isPending } = useTopicSubscriptions(topicKey, { subscriberId });
+  const { data, isPending, error } = useTopicSubscriptions(topicKey, { subscriberId });
 
   const isLoading = isPending || isFilterLoading;
 
@@ -62,6 +80,10 @@ const TopicSubscribers = (props: TopicSubscribersProps) => {
   const handleSubscriberIdChange = (newSubscriberId?: string) => {
     setSubscriberId(newSubscriberId);
   };
+
+  if (error) {
+    return <TopicNotFound />;
+  }
 
   if (isLoading) {
     return (
