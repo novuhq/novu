@@ -80,6 +80,8 @@ export const useTopicsUrlState = ({ after, before }: { after?: string; before?: 
           } else {
             prev.delete('after');
           }
+        } else if (Object.prototype.hasOwnProperty.call(filter, 'after') && !filter.after) {
+          prev.delete('after');
         }
 
         if (filter.before !== undefined) {
@@ -88,17 +90,27 @@ export const useTopicsUrlState = ({ after, before }: { after?: string; before?: 
           } else {
             prev.delete('before');
           }
+        } else if (Object.prototype.hasOwnProperty.call(filter, 'before') && !filter.before) {
+          prev.delete('before');
         }
 
-        if (filter.key) {
-          prev.set('key', filter.key);
-        } else {
+        if (filter.key !== undefined) {
+          if (filter.key) {
+            prev.set('key', filter.key);
+          } else {
+            prev.delete('key');
+          }
+        } else if (Object.prototype.hasOwnProperty.call(filter, 'key') && !filter.key) {
           prev.delete('key');
         }
 
-        if (filter.name) {
-          prev.set('name', filter.name);
-        } else {
+        if (filter.name !== undefined) {
+          if (filter.name) {
+            prev.set('name', filter.name);
+          } else {
+            prev.delete('name');
+          }
+        } else if (Object.prototype.hasOwnProperty.call(filter, 'name') && !filter.name) {
           prev.delete('name');
         }
 
