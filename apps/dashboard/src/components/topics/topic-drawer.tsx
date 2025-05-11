@@ -70,7 +70,6 @@ const TopicSubscribers = (props: TopicSubscribersProps) => {
 
   const isLoading = isPending || isFilterLoading;
 
-  // When data is loaded, clear the loading state
   useEffect(() => {
     if (!isPending && isFilterLoading) {
       setIsFilterLoading(false);
@@ -92,7 +91,7 @@ const TopicSubscribers = (props: TopicSubscribersProps) => {
         initial="hidden"
         animate="visible"
         variants={listVariants}
-        className="flex flex-1 flex-col overflow-y-auto border-t border-t-neutral-200"
+        className="flex flex-1 flex-col border-t border-t-neutral-200"
       >
         {Array.from({ length: 5 }).map((_, index) => (
           <motion.div key={index} variants={itemVariants} className="border-b-stroke-soft flex w-full border-b">
@@ -184,7 +183,7 @@ function TopicTabs(props: TopicTabsProps) {
       <header className="border-bg-soft flex h-12 w-full flex-row items-center gap-3 border-b px-3 py-4">
         <div className="flex flex-1 items-center gap-1 overflow-hidden text-sm font-medium">
           <RiDiscussLine className="size-5 p-0.5" />
-          <TruncatedText className="flex-1">Topic - {topicKey}</TruncatedText>
+          <TruncatedText className="flex-1 pr-10">Topic - {topicKey}</TruncatedText>
         </div>
       </header>
 

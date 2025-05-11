@@ -19,6 +19,7 @@ import { useRemoveTopicSubscriber } from './hooks/use-topic-subscribers';
 import { TimeDisplayHoverCard } from '../time-display-hover-card';
 import { format } from 'date-fns';
 import { TopicSubscription } from '@/api/topics';
+import { ConfirmationModal } from '../confirmation-modal';
 
 interface TopicSubscriberItemProps {
   topicKey: string;
@@ -119,26 +120,21 @@ export function TopicSubscriberItem({ topicKey, subscription, readOnly = false }
         </motion.div>
       </SubscriberDrawerButton>
 
-      <Dialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Remove Subscriber</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to remove{' '}
-              <span className="font-medium">{displayName || subscription.subscriber.subscriberId}</span> from this
-              topic? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="secondary" mode="outline" onClick={() => setConfirmDialogOpen(false)} disabled={isPending}>
-              Cancel
-            </Button>
-            <Button variant="error" onClick={confirmRemove} isLoading={isPending}>
-              {isPending ? 'Removing...' : 'Remove'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ConfirmationModal
+        open={confirmDialogOpen}
+        onOpenChange={setConfirmDialogOpen}
+        title="Remove Subscriber"
+        description={
+          <>
+            Are you sure you want to remove{' '}
+            <span className="font-medium">{displayName || subscription.subscriber.subscriberId}</span> from this topic?
+            This action cannot be undone.
+          </>
+        }
+        onConfirm={confirmRemove}
+        confirmButtonText={'Remove'}
+        isLoading={isPending}
+      />
     </>
   );
 }
