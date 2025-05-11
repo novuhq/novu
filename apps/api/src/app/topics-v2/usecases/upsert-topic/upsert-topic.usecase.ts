@@ -1,6 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InstrumentUsecase } from '@novu/application-generic';
 import { TopicRepository } from '@novu/dal';
+import { VALID_ID_REGEX } from '@novu/shared';
 import { TopicResponseDto } from '../../dtos/topic-response.dto';
 import { mapTopicEntityToDto } from '../list-topics/map-topic-entity-to.dto';
 import { UpsertTopicCommand } from './upsert-topic.command';
@@ -14,6 +15,8 @@ export class UpsertTopicUseCase {
     let topic = await this.topicRepository.findTopicByKey(command.key, command.organizationId, command.environmentId);
 
     if (!topic) {
+      this.isValidTopicKey(command.key);
+
       topic = await this.topicRepository.createTopic({
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
@@ -43,5 +46,15 @@ export class UpsertTopicUseCase {
       topic: mapTopicEntityToDto(topic!),
       created: !topic,
     };
+  }
+
+  private isValidTopicKey(key: string): void {
+    if (VALID_ID_REGEX.test(key)) {
+      return;
+    }
+
+    throw new BadRequestException(
+      `Invalid topic key: "${key}". Topic keys must contain only alphanumeric characters (a-z, A-Z, 0-9), hyphens (-), underscores (_), colons (:), or be a valid email address.`
+    );
   }
 }

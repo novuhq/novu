@@ -116,7 +116,7 @@ export class CreateTopicUseCase {
       this.logger.warn(`[Dry run] Invalid topic key: ${key}`);
     } else {
       throw new BadRequestException(
-        `Invalid topic key: ${key}, only alphanumeric characters, - and _ or valid email addresses are allowed`
+        `Invalid topic key: "${key}". Topic keys must contain only alphanumeric characters (a-z, A-Z, 0-9), hyphens (-), underscores (_), colons (:), or be a valid email address.`
       );
     }
   }
