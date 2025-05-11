@@ -20,6 +20,7 @@ import { TimeDisplayHoverCard } from '../time-display-hover-card';
 import { format } from 'date-fns';
 import { TopicSubscription } from '@/api/topics';
 import { ConfirmationModal } from '../confirmation-modal';
+import TruncatedText from '../truncated-text';
 
 interface TopicSubscriberItemProps {
   topicKey: string;
@@ -72,33 +73,32 @@ export function TopicSubscriberItem({ topicKey, subscription, readOnly = false }
                 <AvatarImage src={subscription.subscriber.avatar || undefined} />
                 <AvatarFallback>{subscriberTitle[0]}</AvatarFallback>
               </Avatar>
-              <div className="flex flex-col overflow-hidden">
+              <div className="flex flex-col items-start overflow-hidden">
                 <span className="text-label-xs text-foreground-950 truncate font-medium">
                   {displayName || subscription.subscriber.subscriberId}
                 </span>
                 {subscription.subscriber.email && (
-                  <div className="flex items-center">
-                    <RiMailLine className="mr-1.5 size-3 min-w-3 text-neutral-400" />
-                    <span className="text-label-xs truncate text-neutral-500">{subscription.subscriber.email}</span>
+                  <div className="flex">
+                    <span className="text-label-2xs truncate text-neutral-500">{subscription.subscriber.email}</span>
                   </div>
                 )}
               </div>
             </div>
 
-            <div className="overflow-hidden px-4 text-left">
-              <span className="text-label-xs truncate text-neutral-500">{subscription.subscriber.subscriberId}</span>
-            </div>
+            <TruncatedText className="text-text-soft font-code flex-1 px-4 text-left text-[10px]">
+              {subscription.subscriber.subscriberId}
+            </TruncatedText>
 
             <div className="text-label-xs text-foreground-600 justify-self-end px-2">
               {subscription.createdAt && (
-                <TimeDisplayHoverCard date={subscription.createdAt}>
+                <TimeDisplayHoverCard date={subscription.createdAt} className="text-[10px]">
                   {format(new Date(subscription.createdAt), 'MMM d, yyyy')}
                 </TimeDisplayHoverCard>
               )}
             </div>
 
             {!readOnly && (
-              <div className="justify-self-end transition-opacity duration-200 group-hover:opacity-100">
+              <div className="justify-self-end opacity-0 transition-opacity duration-200 group-hover:opacity-100">
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
