@@ -1,5 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, Length } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsNotEmpty, IsOptional, IsString, Length } from 'class-validator';
 
 export class CreateUpdateTopicRequestDto {
   @ApiProperty({
@@ -13,12 +13,12 @@ export class CreateUpdateTopicRequestDto {
   @Length(1, 100)
   key: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'The display name for the topic',
     example: 'Task Title',
   })
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   @Length(0, 100)
   name: string;
 }
