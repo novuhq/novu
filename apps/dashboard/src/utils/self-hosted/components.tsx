@@ -95,6 +95,20 @@ export function SignIn() {
         <Button type="submit" disabled={isLoading} variant="primary" mode="filled" className="w-full">
           {isLoading ? 'Signing In...' : 'Sign In'}
         </Button>
+        <p className="mt-4 text-center text-sm text-gray-600">
+          Don&apos;t have an account?{' '}
+          <span
+            role="button"
+            tabIndex={0}
+            className="text-primary-base focus:ring-primary-base/50 cursor-pointer font-medium hover:underline focus:outline-none focus:ring-2"
+            onClick={() => navigate('/auth/sign-up')}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') navigate('/auth/sign-up');
+            }}
+          >
+            Sign Up
+          </span>
+        </p>
       </form>
     </div>
   );
@@ -238,6 +252,20 @@ export function SignUp() {
         <Button type="submit" disabled={isLoading} variant="primary" mode="filled" className="!mt-6 w-full">
           {isLoading ? 'Creating Account...' : 'Create Account'}
         </Button>
+        <p className="mt-4 text-center text-sm text-gray-600">
+          Already have an account?{' '}
+          <span
+            role="button"
+            tabIndex={0}
+            className="text-primary-base focus:ring-primary-base/50 cursor-pointer font-medium hover:underline focus:outline-none focus:ring-2"
+            onClick={() => navigate('/auth/sign-in')}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') navigate('/auth/sign-in');
+            }}
+          >
+            Sign In
+          </span>
+        </p>
       </form>
     </div>
   );
