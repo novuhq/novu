@@ -81,11 +81,7 @@ export function WebhooksPage() {
   return (
     <DashboardLayout headerStartItems={<h1 className="text-foreground-950">Webhooks</h1>}>
       <SvixProvider token={portalToken} appId={appId}>
-        <div className="h-full w-full overflow-auto">
-          <AppPortal url={buildPortalUrl(portalUrl, '/endpoints')} fullSize />
-        </div>
-
-        {/*  <Tabs defaultValue="endpoints">
+        <Tabs defaultValue="endpoints">
           <div className="border-neutral-alpha-200 flex items-center justify-between border-b">
             <TabsList variant="regular" className="border-b-0 border-t-2 border-transparent p-0 !px-2">
               <TabsTrigger value="endpoints" variant="regular">
@@ -122,7 +118,7 @@ export function WebhooksPage() {
               <AppPortal url={buildPortalUrl(portalUrl, '/activity')} fullSize />
             </div>
           </TabsContent>
-        </Tabs> */}
+        </Tabs>
       </SvixProvider>
     </DashboardLayout>
   );

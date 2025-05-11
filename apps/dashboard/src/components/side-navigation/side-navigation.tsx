@@ -1,6 +1,5 @@
 import { SidebarContent } from '@/components/side-navigation/sidebar';
 import { useEnvironment } from '@/context/environment/hooks';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
@@ -29,7 +28,6 @@ import { NavigationLink } from './navigation-link';
 import { OrganizationDropdown } from './organization-dropdown';
 import { UsageCard } from './usage-card';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { IS_SELF_HOSTED } from '../../config';
 
 const NavigationGroup = ({ children, label }: { children: ReactNode; label?: string }) => {
