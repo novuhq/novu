@@ -191,10 +191,4 @@ export class AuthController {
 
     return await this.authService.getSignedToken(user, organizationId, member as MemberEntity);
   }
-
-  @Get('/self-hosted')
-  @UseGuards(SelfHostSecretGuard)
-  async logMeIn() {
-    return this.selfHostUsecase.execute();
-  }
 }

@@ -1,6 +1,10 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { refreshJwt } from './jwt-manager';
+import { Input } from '../../components/primitives/input';
+import { Button } from '../../components/primitives/button';
+import { API_HOSTNAME } from '../../config';
+
+const JWT_STORAGE_KEY = 'self-hosted-jwt';
 
 export function OrganizationList() {
   return <></>;
@@ -16,21 +20,227 @@ export function UserProfile() {
 
 export function SignIn() {
   const navigate = useNavigate();
-  useEffect(() => {
-    refreshJwt();
-    navigate('/');
-  });
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  return <>{'Loading...'}</>;
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setError(null);
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(`${API_HOSTNAME}/v1/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Login failed');
+      }
+
+      if (data.data.token) {
+        localStorage.setItem(JWT_STORAGE_KEY, data.data.token);
+        (window as any).Clerk = { ...((window as any).Clerk || {}), loggedIn: true };
+        navigate('/');
+      } else {
+        throw new Error('No token received');
+      }
+    } catch (e: any) {
+      setError(e.message || 'An unexpected error occurred.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="mx-auto w-full max-w-md pt-12">
+      <h2 className="mb-6 text-center text-xl font-semibold">Sign In</h2>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div>
+          <label htmlFor="email" className="mb-1 block text-sm font-medium text-gray-700">
+            Email
+          </label>
+          <Input
+            type="email"
+            id="email"
+            value={email}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
+            placeholder="user@example.com"
+            required
+            className="w-full"
+          />
+        </div>
+        <div>
+          <label htmlFor="password" className="mb-1 block text-sm font-medium text-gray-700">
+            Password
+          </label>
+          <Input
+            type="password"
+            id="password"
+            value={password}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
+            placeholder="Password"
+            required
+            className="w-full"
+          />
+        </div>
+        {error && <p className="text-sm text-red-600">{error}</p>}
+        <Button type="submit" disabled={isLoading} variant="primary" mode="filled" className="w-full">
+          {isLoading ? 'Signing In...' : 'Sign In'}
+        </Button>
+      </form>
+    </div>
+  );
 }
 
 export function SignUp() {
   const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [organizationName, setOrganizationName] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    navigate('/');
-  });
-  return <></>;
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setError(null);
+    setIsLoading(true);
+
+    // Basic password validation (length only for this example)
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters long.');
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_HOSTNAME}/v1/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          firstName,
+          lastName: lastName || undefined, // Send undefined if empty, as it's optional
+          organizationName: organizationName || undefined, // Send undefined if empty
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Sign up failed');
+      }
+
+      if (data.data.token) {
+        localStorage.setItem(JWT_STORAGE_KEY, data.data.token);
+        (window as any).Clerk = { ...((window as any).Clerk || {}), loggedIn: true };
+        navigate('/'); // Redirect to homepage or dashboard
+      } else {
+        // This case should ideally not happen if response.ok and API guarantees token on success
+        throw new Error('No token received after sign up');
+      }
+    } catch (e: any) {
+      setError(e.message || 'An unexpected error occurred.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="mx-auto max-w-md pt-12">
+      <h2 className="mb-6 text-center text-xl font-semibold">Create Account</h2>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label htmlFor="firstName" className="mb-1 block text-sm font-medium text-gray-700">
+            First Name <span className="text-red-600">*</span>
+          </label>
+          <Input
+            type="text"
+            id="firstName"
+            value={firstName}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFirstName(e.target.value)}
+            placeholder="John"
+            required
+            className="w-full"
+          />
+        </div>
+        <div>
+          <label htmlFor="lastName" className="mb-1 block text-sm font-medium text-gray-700">
+            Last Name
+          </label>
+          <Input
+            type="text"
+            id="lastName"
+            value={lastName}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLastName(e.target.value)}
+            placeholder="Doe"
+            className="w-full"
+          />
+        </div>
+        <div>
+          <label htmlFor="email" className="mb-1 block text-sm font-medium text-gray-700">
+            Email <span className="text-red-600">*</span>
+          </label>
+          <Input
+            type="email"
+            id="email"
+            value={email}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
+            placeholder="user@example.com"
+            required
+            className="w-full"
+          />
+        </div>
+        <div>
+          <label htmlFor="password" className="mb-1 block text-sm font-medium text-gray-700">
+            Password <span className="text-red-600">*</span>
+          </label>
+          <Input
+            type="password"
+            id="password"
+            value={password}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
+            placeholder="••••••••"
+            required
+            className="w-full"
+            aria-describedby="password-constraints"
+          />
+          <p className="mt-1 text-xs text-gray-500" id="password-constraints">
+            Min. 8 characters, include uppercase, lowercase, number, and special character.
+          </p>
+        </div>
+        <div>
+          <label htmlFor="organizationName" className="mb-1 block text-sm font-medium text-gray-700">
+            Organization Name
+          </label>
+          <Input
+            type="text"
+            id="organizationName"
+            value={organizationName}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setOrganizationName(e.target.value)}
+            placeholder="Your Company"
+            className="w-full"
+          />
+        </div>
+        {error && <p className="text-sm text-red-600">{error}</p>}
+        <Button type="submit" disabled={isLoading} variant="primary" mode="filled" className="!mt-6 w-full">
+          {isLoading ? 'Creating Account...' : 'Create Account'}
+        </Button>
+      </form>
+    </div>
+  );
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -39,8 +249,7 @@ export function RedirectToSignIn({ children }: { children: any }) {
 
   useEffect(() => {
     if (!(window as any).Clerk.loggedIn) {
-      refreshJwt();
-      navigate('/sign-in');
+      navigate('/auth/sign-in');
     }
   }, [navigate]);
 
