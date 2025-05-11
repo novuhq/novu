@@ -98,7 +98,7 @@ export function TopicSubscriberItem({ topicKey, subscription, readOnly = false }
             </div>
 
             {!readOnly && (
-              <div className="justify-self-end opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+              <div className="justify-self-end transition-opacity duration-200 group-hover:opacity-100">
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button

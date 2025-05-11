@@ -115,6 +115,12 @@ export function SubscriberAutocomplete({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     onChange(newValue);
+
+    // If the input has enough characters to trigger the dropdown,
+    // and the dropdown is not already set to be open by our internal state, then open it.
+    if (newValue.length >= 2 && !open) {
+      setOpen(true);
+    }
   };
 
   // Select subscriber from dropdown

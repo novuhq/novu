@@ -145,7 +145,13 @@ const TopicSubscribers = (props: TopicSubscribersProps) => {
       ) : subscriptions.length === 0 ? (
         <TopicListBlank />
       ) : (
-        <motion.div key="subscribers-list-items" className="flex flex-1 flex-col overflow-y-auto">
+        <motion.div
+          key="subscribers-list-items"
+          className="flex flex-1 flex-col overflow-y-auto"
+          initial="hidden"
+          animate="visible"
+          variants={listVariants}
+        >
           {subscriptions.map((subscription: TopicSubscription) => (
             <TopicSubscriberItem
               key={subscription._id}
