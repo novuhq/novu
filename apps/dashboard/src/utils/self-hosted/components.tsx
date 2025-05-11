@@ -129,9 +129,14 @@ export function SignUp() {
     setError(null);
     setIsLoading(true);
 
-    // Basic password validation (length only for this example)
     if (password.length < 8) {
       setError('Password must be at least 8 characters long.');
+      setIsLoading(false);
+      return;
+    }
+
+    if (!organizationName.trim()) {
+      setError('Organization name is required.');
       setIsLoading(false);
       return;
     }
@@ -146,8 +151,8 @@ export function SignUp() {
           email,
           password,
           firstName,
-          lastName: lastName || undefined, // Send undefined if empty, as it's optional
-          organizationName: organizationName || undefined, // Send undefined if empty
+          lastName: lastName || undefined,
+          organizationName,
         }),
       });
 
@@ -160,9 +165,8 @@ export function SignUp() {
       if (data.data.token) {
         localStorage.setItem(JWT_STORAGE_KEY, data.data.token);
         (window as any).Clerk = { ...((window as any).Clerk || {}), loggedIn: true };
-        navigate('/'); // Redirect to homepage or dashboard
+        navigate('/');
       } else {
-        // This case should ideally not happen if response.ok and API guarantees token on success
         throw new Error('No token received after sign up');
       }
     } catch (e: any) {
@@ -237,7 +241,7 @@ export function SignUp() {
         </div>
         <div>
           <label htmlFor="organizationName" className="mb-1 block text-sm font-medium text-gray-700">
-            Organization Name
+            Organization Name <span className="text-red-600">*</span>
           </label>
           <Input
             type="text"
@@ -245,6 +249,7 @@ export function SignUp() {
             value={organizationName}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setOrganizationName(e.target.value)}
             placeholder="Your Company"
+            required
             className="w-full"
           />
         </div>
