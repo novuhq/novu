@@ -84,31 +84,11 @@ const TopicSubscribers = (props: TopicSubscribersProps) => {
     return <TopicNotFound />;
   }
 
-  if (isLoading) {
-    return (
-      <motion.div
-        key="loading-state"
-        initial="hidden"
-        animate="visible"
-        variants={listVariants}
-        className="flex flex-1 flex-col border-t border-t-neutral-200"
-      >
-        {Array.from({ length: 5 }).map((_, index) => (
-          <motion.div key={index} variants={itemVariants} className="border-b-stroke-soft flex w-full border-b">
-            <div className="flex w-full items-center px-3 py-2">
-              <Skeleton className="h-4 w-40" />
-            </div>
-          </motion.div>
-        ))}
-      </motion.div>
-    );
-  }
-
   const subscriptions = data?.data || [];
 
   return (
     <motion.div
-      key="subscribers-list"
+      key="subscribers-list-container"
       initial="hidden"
       animate="visible"
       variants={{
@@ -141,17 +121,40 @@ const TopicSubscribers = (props: TopicSubscribersProps) => {
         />
       </div>
 
-      {subscriptions.length === 0 ? (
+      {isLoading ? (
+        <motion.div
+          key="loading-state"
+          initial="hidden"
+          animate="visible"
+          variants={listVariants}
+          className="flex flex-1 flex-col"
+        >
+          {Array.from({ length: 5 }).map((_, index) => (
+            <motion.div key={index} variants={itemVariants} className="border-b-stroke-soft flex w-full border-b">
+              <div className="flex w-full items-center px-3 py-2">
+                <Skeleton className="mr-3 size-8 rounded-full" />
+                <div className="flex flex-col gap-1">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-3 w-24" />
+                </div>
+                <Skeleton className="ml-auto h-4 w-20" />
+              </div>
+            </motion.div>
+          ))}
+        </motion.div>
+      ) : subscriptions.length === 0 ? (
         <TopicListBlank />
       ) : (
-        subscriptions.map((subscription: TopicSubscription) => (
-          <TopicSubscriberItem
-            key={subscription._id}
-            subscription={subscription}
-            topicKey={topicKey}
-            readOnly={readOnly}
-          />
-        ))
+        <motion.div key="subscribers-list-items" className="flex flex-1 flex-col overflow-y-auto">
+          {subscriptions.map((subscription: TopicSubscription) => (
+            <TopicSubscriberItem
+              key={subscription._id}
+              subscription={subscription}
+              topicKey={topicKey}
+              readOnly={readOnly}
+            />
+          ))}
+        </motion.div>
       )}
     </motion.div>
   );
