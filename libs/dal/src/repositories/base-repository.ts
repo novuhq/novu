@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { ClassConstructor, plainToInstance } from 'class-transformer';
 import { DirectionEnum } from '@novu/shared';
+import { ClassConstructor, plainToInstance } from 'class-transformer';
 import {
   ClientSession,
   FilterQuery,
@@ -314,7 +314,9 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
   }
 
   async upsertMany(data: (FilterQuery<T_DBModel> & T_Enforcement)[]) {
-    const promises = data.map((entry) => this.MongooseModel.findOneAndUpdate(entry, entry, { upsert: true }));
+    const promises = data.map((entry) =>
+      this.MongooseModel.findOneAndUpdate(entry, entry, { upsert: true, new: true })
+    );
 
     return await Promise.all(promises);
   }

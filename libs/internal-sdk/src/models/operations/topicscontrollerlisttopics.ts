@@ -5,23 +5,60 @@
 import * as z from "zod";
 import { remap as remap$ } from "../../lib/primitives.js";
 import { safeParse } from "../../lib/schemas.js";
+import { ClosedEnum } from "../../types/enums.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import * as components from "../components/index.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 
+/**
+ * Direction of sorting
+ */
+export const TopicsControllerListTopicsQueryParamOrderDirection = {
+  Asc: "ASC",
+  Desc: "DESC",
+} as const;
+/**
+ * Direction of sorting
+ */
+export type TopicsControllerListTopicsQueryParamOrderDirection = ClosedEnum<
+  typeof TopicsControllerListTopicsQueryParamOrderDirection
+>;
+
 export type TopicsControllerListTopicsRequest = {
   /**
-   * The page number to retrieve (starts from 0)
+   * Cursor for pagination indicating the starting point after which to fetch results.
    */
-  page?: number | undefined;
+  after?: string | undefined;
   /**
-   * The number of items to return per page (default: 10)
+   * Cursor for pagination indicating the ending point before which to fetch results.
    */
-  pageSize?: number | undefined;
+  before?: string | undefined;
   /**
-   * A filter key to apply to the results
+   * Limit the number of items to return (max 100)
+   */
+  limit?: number | undefined;
+  /**
+   * Direction of sorting
+   */
+  orderDirection?:
+    | TopicsControllerListTopicsQueryParamOrderDirection
+    | undefined;
+  /**
+   * Field to order by
+   */
+  orderBy?: string | undefined;
+  /**
+   * Include cursor item in response
+   */
+  includeCursor?: boolean | undefined;
+  /**
+   * Key of the topic to filter results.
    */
   key?: string | undefined;
+  /**
+   * Name of the topic to filter results.
+   */
+  name?: string | undefined;
   /**
    * A header for idempotency purposes
    */
@@ -30,8 +67,31 @@ export type TopicsControllerListTopicsRequest = {
 
 export type TopicsControllerListTopicsResponse = {
   headers: { [k: string]: Array<string> };
-  result: components.FilterTopicsResponseDto;
+  result: components.ListTopicsResponseDto;
 };
+
+/** @internal */
+export const TopicsControllerListTopicsQueryParamOrderDirection$inboundSchema:
+  z.ZodNativeEnum<typeof TopicsControllerListTopicsQueryParamOrderDirection> = z
+    .nativeEnum(TopicsControllerListTopicsQueryParamOrderDirection);
+
+/** @internal */
+export const TopicsControllerListTopicsQueryParamOrderDirection$outboundSchema:
+  z.ZodNativeEnum<typeof TopicsControllerListTopicsQueryParamOrderDirection> =
+    TopicsControllerListTopicsQueryParamOrderDirection$inboundSchema;
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace TopicsControllerListTopicsQueryParamOrderDirection$ {
+  /** @deprecated use `TopicsControllerListTopicsQueryParamOrderDirection$inboundSchema` instead. */
+  export const inboundSchema =
+    TopicsControllerListTopicsQueryParamOrderDirection$inboundSchema;
+  /** @deprecated use `TopicsControllerListTopicsQueryParamOrderDirection$outboundSchema` instead. */
+  export const outboundSchema =
+    TopicsControllerListTopicsQueryParamOrderDirection$outboundSchema;
+}
 
 /** @internal */
 export const TopicsControllerListTopicsRequest$inboundSchema: z.ZodType<
@@ -39,9 +99,15 @@ export const TopicsControllerListTopicsRequest$inboundSchema: z.ZodType<
   z.ZodTypeDef,
   unknown
 > = z.object({
-  page: z.number().int().default(0),
-  pageSize: z.number().int().default(10),
+  after: z.string().optional(),
+  before: z.string().optional(),
+  limit: z.number().optional(),
+  orderDirection:
+    TopicsControllerListTopicsQueryParamOrderDirection$inboundSchema.optional(),
+  orderBy: z.string().optional(),
+  includeCursor: z.boolean().optional(),
   key: z.string().optional(),
+  name: z.string().optional(),
   "idempotency-key": z.string().optional(),
 }).transform((v) => {
   return remap$(v, {
@@ -51,9 +117,14 @@ export const TopicsControllerListTopicsRequest$inboundSchema: z.ZodType<
 
 /** @internal */
 export type TopicsControllerListTopicsRequest$Outbound = {
-  page: number;
-  pageSize: number;
+  after?: string | undefined;
+  before?: string | undefined;
+  limit?: number | undefined;
+  orderDirection?: string | undefined;
+  orderBy?: string | undefined;
+  includeCursor?: boolean | undefined;
   key?: string | undefined;
+  name?: string | undefined;
   "idempotency-key"?: string | undefined;
 };
 
@@ -63,9 +134,16 @@ export const TopicsControllerListTopicsRequest$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   TopicsControllerListTopicsRequest
 > = z.object({
-  page: z.number().int().default(0),
-  pageSize: z.number().int().default(10),
+  after: z.string().optional(),
+  before: z.string().optional(),
+  limit: z.number().optional(),
+  orderDirection:
+    TopicsControllerListTopicsQueryParamOrderDirection$outboundSchema
+      .optional(),
+  orderBy: z.string().optional(),
+  includeCursor: z.boolean().optional(),
   key: z.string().optional(),
+  name: z.string().optional(),
   idempotencyKey: z.string().optional(),
 }).transform((v) => {
   return remap$(v, {
@@ -114,7 +192,7 @@ export const TopicsControllerListTopicsResponse$inboundSchema: z.ZodType<
   unknown
 > = z.object({
   Headers: z.record(z.array(z.string())),
-  Result: components.FilterTopicsResponseDto$inboundSchema,
+  Result: components.ListTopicsResponseDto$inboundSchema,
 }).transform((v) => {
   return remap$(v, {
     "Headers": "headers",
@@ -125,7 +203,7 @@ export const TopicsControllerListTopicsResponse$inboundSchema: z.ZodType<
 /** @internal */
 export type TopicsControllerListTopicsResponse$Outbound = {
   Headers: { [k: string]: Array<string> };
-  Result: components.FilterTopicsResponseDto$Outbound;
+  Result: components.ListTopicsResponseDto$Outbound;
 };
 
 /** @internal */
@@ -135,7 +213,7 @@ export const TopicsControllerListTopicsResponse$outboundSchema: z.ZodType<
   TopicsControllerListTopicsResponse
 > = z.object({
   headers: z.record(z.array(z.string())),
-  result: components.FilterTopicsResponseDto$outboundSchema,
+  result: components.ListTopicsResponseDto$outboundSchema,
 }).transform((v) => {
   return remap$(v, {
     headers: "Headers",

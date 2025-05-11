@@ -1,4 +1,4 @@
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 
 import {
   AnalyticsService,
@@ -57,6 +57,7 @@ export class SubscriberJobBound {
       _subscriberSource,
       requestCategory,
       environmentName,
+      topics,
     } = command;
 
     const template = command.bridge?.workflow
@@ -139,6 +140,7 @@ export class SubscriberJobBound {
       transactionId: command.transactionId,
       userId,
       tenant,
+      topics,
       bridgeUrl: command.bridge?.url,
       /*
        * Only populate preferences if the command contains a `bridge` property,

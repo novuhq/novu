@@ -14,6 +14,7 @@ import {
   Query,
   Res,
 } from '@nestjs/common';
+import { ApiExcludeEndpoint, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import {
   CreateOrUpdateSubscriberCommand,
   CreateOrUpdateSubscriberUseCase,
@@ -23,7 +24,7 @@ import {
   UpdateSubscriberChannelCommand,
   UpdateSubscriberCommand,
 } from '@novu/application-generic';
-import { ApiExcludeEndpoint, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { MessageEntity } from '@novu/dal';
 import {
   ApiRateLimitCategoryEnum,
   ApiRateLimitCostEnum,
@@ -34,10 +35,45 @@ import {
   TriggerTypeEnum,
   UserSessionData,
 } from '@novu/shared';
-import { MessageEntity } from '@novu/dal';
-import { RemoveSubscriber, RemoveSubscriberCommand } from './usecases/remove-subscriber';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
+import { UpdatePreferencesCommand } from '../inbox/usecases/update-preferences/update-preferences.command';
+import { UpdatePreferences } from '../inbox/usecases/update-preferences/update-preferences.usecase';
+import { ThrottlerCategory, ThrottlerCost } from '../rate-limiting/guards';
+import { PaginatedResponseDto } from '../shared/dtos/pagination-response';
+import { ApiOkPaginatedResponse } from '../shared/framework/paginated-ok-response.decorator';
+import {
+  ApiCommonResponses,
+  ApiCreatedResponse,
+  ApiFoundResponse,
+  ApiNoContentResponse,
+  ApiResponse,
+} from '../shared/framework/response.decorator';
+import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
+import { SdkGroupName, SdkMethodName, SdkUsePagination } from '../shared/framework/swagger/sdk.decorators';
 import { UserSession } from '../shared/framework/user.decorator';
+import { FeedResponseDto } from '../widgets/dtos/feeds-response.dto';
+import { MessageMarkAsRequestDto } from '../widgets/dtos/mark-as-request.dto';
+import { MarkMessageActionAsSeenDto } from '../widgets/dtos/mark-message-action-as-seen.dto';
+import { MarkMessageAsRequestDto } from '../widgets/dtos/mark-message-as-request.dto';
+import { MessageResponseDto } from '../widgets/dtos/message-response.dto';
+import { UnseenCountResponse } from '../widgets/dtos/unseen-count-response.dto';
+import { UpdateSubscriberPreferenceRequestDto } from '../widgets/dtos/update-subscriber-preference-request.dto';
+import {
+  UpdateSubscriberPreferenceGlobalResponseDto,
+  UpdateSubscriberPreferenceResponseDto,
+} from '../widgets/dtos/update-subscriber-preference-response.dto';
+import { GetFeedCountCommand } from '../widgets/usecases/get-feed-count/get-feed-count.command';
+import { GetFeedCount } from '../widgets/usecases/get-feed-count/get-feed-count.usecase';
+import { GetNotificationsFeedCommand } from '../widgets/usecases/get-notifications-feed/get-notifications-feed.command';
+import { GetNotificationsFeed } from '../widgets/usecases/get-notifications-feed/get-notifications-feed.usecase';
+import { UpdateMessageActionsCommand } from '../widgets/usecases/mark-action-as-done/update-message-actions.command';
+import { UpdateMessageActions } from '../widgets/usecases/mark-action-as-done/update-message-actions.usecase';
+import { MarkAllMessagesAsCommand } from '../widgets/usecases/mark-all-messages-as/mark-all-messages-as.command';
+import { MarkAllMessagesAs } from '../widgets/usecases/mark-all-messages-as/mark-all-messages-as.usecase';
+import { MarkMessageAsByMarkCommand } from '../widgets/usecases/mark-message-as-by-mark/mark-message-as-by-mark.command';
+import { MarkMessageAsByMark } from '../widgets/usecases/mark-message-as-by-mark/mark-message-as-by-mark.usecase';
+import { MarkMessageAsCommand } from '../widgets/usecases/mark-message-as/mark-message-as.command';
+import { MarkMessageAs } from '../widgets/usecases/mark-message-as/mark-message-as.usecase';
 import {
   BulkSubscriberCreateDto,
   CreateSubscriberRequestDto,
@@ -48,70 +84,34 @@ import {
   UpdateSubscriberGlobalPreferencesRequestDto,
   UpdateSubscriberRequestDto,
 } from './dtos';
-import { GetSubscribers, GetSubscribersCommand } from './usecases/get-subscribers';
-import { GetSubscriber, GetSubscriberCommand } from './usecases/get-subscriber';
-import { GetPreferencesByLevelCommand } from './usecases/get-preferences-by-level/get-preferences-by-level.command';
-import { GetPreferencesByLevel } from './usecases/get-preferences-by-level/get-preferences-by-level.usecase';
-import {
-  UpdateSubscriberPreferenceGlobalResponseDto,
-  UpdateSubscriberPreferenceResponseDto,
-} from '../widgets/dtos/update-subscriber-preference-response.dto';
-import { UpdateSubscriberPreferenceRequestDto } from '../widgets/dtos/update-subscriber-preference-request.dto';
-import { MessageResponseDto } from '../widgets/dtos/message-response.dto';
-import { UnseenCountResponse } from '../widgets/dtos/unseen-count-response.dto';
-import { MarkMessageAsCommand } from '../widgets/usecases/mark-message-as/mark-message-as.command';
-import { UpdateMessageActionsCommand } from '../widgets/usecases/mark-action-as-done/update-message-actions.command';
-import { GetNotificationsFeedCommand } from '../widgets/usecases/get-notifications-feed/get-notifications-feed.command';
-import { GetNotificationsFeed } from '../widgets/usecases/get-notifications-feed/get-notifications-feed.usecase';
-import { MarkMessageAs } from '../widgets/usecases/mark-message-as/mark-message-as.usecase';
-import { UpdateMessageActions } from '../widgets/usecases/mark-action-as-done/update-message-actions.usecase';
-import { GetFeedCount } from '../widgets/usecases/get-feed-count/get-feed-count.usecase';
-import { GetFeedCountCommand } from '../widgets/usecases/get-feed-count/get-feed-count.command';
-import { UpdateSubscriberOnlineFlagRequestDto } from './dtos/update-subscriber-online-flag-request.dto';
-import {
-  UpdateSubscriberOnlineFlag,
-  UpdateSubscriberOnlineFlagCommand,
-} from './usecases/update-subscriber-online-flag';
-import { MarkMessageAsRequestDto } from '../widgets/dtos/mark-message-as-request.dto';
-import { MarkMessageActionAsSeenDto } from '../widgets/dtos/mark-message-action-as-seen.dto';
-import { ApiOkPaginatedResponse } from '../shared/framework/paginated-ok-response.decorator';
-import { PaginatedResponseDto } from '../shared/dtos/pagination-response';
-import { GetSubscribersDto } from './dtos/get-subscribers.dto';
-import { GetInAppNotificationsFeedForSubscriberDto } from './dtos/get-in-app-notification-feed-for-subscriber.dto';
-import {
-  ApiCommonResponses,
-  ApiCreatedResponse,
-  ApiFoundResponse,
-  ApiNoContentResponse,
-  ApiResponse,
-} from '../shared/framework/response.decorator';
+import { BulkCreateSubscriberResponseDto } from './dtos/bulk-create-subscriber-response.dto';
 import { ChatOauthCallbackRequestDto, ChatOauthRequestDto } from './dtos/chat-oauth-request.dto';
-import { ChatOauthCallback } from './usecases/chat-oauth-callback/chat-oauth-callback.usecase';
+import { GetInAppNotificationsFeedForSubscriberDto } from './dtos/get-in-app-notification-feed-for-subscriber.dto';
+import { GetSubscribersDto } from './dtos/get-subscribers.dto';
+import { MarkAllMessageAsRequestDto } from './dtos/mark-all-messages-as-request.dto';
+import { UpdateSubscriberOnlineFlagRequestDto } from './dtos/update-subscriber-online-flag-request.dto';
+import { GetSubscriberPreferencesByLevelParams } from './params';
+import { UnseenCountQueryDto } from './query-objects/unseen-count.query';
+import { BulkCreateSubscribersCommand } from './usecases/bulk-create-subscribers';
+import { BulkCreateSubscribers } from './usecases/bulk-create-subscribers/bulk-create-subscribers.usecase';
 import { ChatOauthCallbackCommand } from './usecases/chat-oauth-callback/chat-oauth-callback.command';
-import { ChatOauth } from './usecases/chat-oauth/chat-oauth.usecase';
+import { ResponseTypeEnum } from './usecases/chat-oauth-callback/chat-oauth-callback.result';
+import { ChatOauthCallback } from './usecases/chat-oauth-callback/chat-oauth-callback.usecase';
 import { ChatOauthCommand } from './usecases/chat-oauth/chat-oauth.command';
+import { ChatOauth } from './usecases/chat-oauth/chat-oauth.usecase';
 import {
   DeleteSubscriberCredentials,
   DeleteSubscriberCredentialsCommand,
 } from './usecases/delete-subscriber-credentials';
-import { MarkAllMessagesAsCommand } from '../widgets/usecases/mark-all-messages-as/mark-all-messages-as.command';
-import { MarkAllMessagesAs } from '../widgets/usecases/mark-all-messages-as/mark-all-messages-as.usecase';
-import { MarkAllMessageAsRequestDto } from './dtos/mark-all-messages-as-request.dto';
-import { BulkCreateSubscribers } from './usecases/bulk-create-subscribers/bulk-create-subscribers.usecase';
-import { BulkCreateSubscribersCommand } from './usecases/bulk-create-subscribers';
-import { GetSubscriberPreferencesByLevelParams } from './params';
-import { ThrottlerCategory, ThrottlerCost } from '../rate-limiting/guards';
-import { MessageMarkAsRequestDto } from '../widgets/dtos/mark-as-request.dto';
-import { MarkMessageAsByMarkCommand } from '../widgets/usecases/mark-message-as-by-mark/mark-message-as-by-mark.command';
-import { MarkMessageAsByMark } from '../widgets/usecases/mark-message-as-by-mark/mark-message-as-by-mark.usecase';
-import { FeedResponseDto } from '../widgets/dtos/feeds-response.dto';
-import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
-import { SdkGroupName, SdkMethodName, SdkUsePagination } from '../shared/framework/swagger/sdk.decorators';
-import { UpdatePreferences } from '../inbox/usecases/update-preferences/update-preferences.usecase';
-import { UpdatePreferencesCommand } from '../inbox/usecases/update-preferences/update-preferences.command';
-import { UnseenCountQueryDto } from './query-objects/unseen-count.query';
-import { ResponseTypeEnum } from './usecases/chat-oauth-callback/chat-oauth-callback.result';
-import { BulkCreateSubscriberResponseDto } from './dtos/bulk-create-subscriber-response.dto';
+import { GetPreferencesByLevelCommand } from './usecases/get-preferences-by-level/get-preferences-by-level.command';
+import { GetPreferencesByLevel } from './usecases/get-preferences-by-level/get-preferences-by-level.usecase';
+import { GetSubscriber, GetSubscriberCommand } from './usecases/get-subscriber';
+import { GetSubscribers, GetSubscribersCommand } from './usecases/get-subscribers';
+import { RemoveSubscriber, RemoveSubscriberCommand } from './usecases/remove-subscriber';
+import {
+  UpdateSubscriberOnlineFlag,
+  UpdateSubscriberOnlineFlagCommand,
+} from './usecases/update-subscriber-online-flag';
 
 @ThrottlerCategory(ApiRateLimitCategoryEnum.CONFIGURATION)
 @ApiCommonResponses()
@@ -676,9 +676,7 @@ export class SubscribersV1Controller {
   @UserAuthentication()
   @Post('/:subscriberId/messages/mark-all')
   @ApiOperation({
-    summary:
-      'Marks all the subscriber messages as read, unread, seen or unseen. ' +
-      'Optionally you can pass feed id (or array) to mark messages of a particular feed.',
+    summary: 'Marks all the subscriber messages as read, unread, seen or unseen.',
   })
   @ApiCreatedResponse({
     type: Number,
@@ -739,6 +737,7 @@ export class SubscribersV1Controller {
   @ApiResponse(String, 200, false, false, {
     status: 200,
     description: 'Returns plain text response.',
+    schema: undefined,
     content: {
       'text/html': {
         schema: {

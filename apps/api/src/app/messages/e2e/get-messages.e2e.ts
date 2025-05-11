@@ -1,8 +1,8 @@
-import { SubscribersService, UserSession } from '@novu/testing';
-import { NotificationTemplateEntity, SubscriberEntity } from '@novu/dal';
-import { expect } from 'chai';
 import { Novu } from '@novu/api';
 import { ChannelTypeEnum } from '@novu/api/models/components';
+import { NotificationTemplateEntity, SubscriberEntity } from '@novu/dal';
+import { SubscribersService, UserSession } from '@novu/testing';
+import { expect } from 'chai';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 describe('Get Message - /messages (GET) #novu-v2', function () {
@@ -11,9 +11,11 @@ describe('Get Message - /messages (GET) #novu-v2', function () {
   let subscriber: SubscriberEntity;
   let subscriberService: SubscribersService;
   let novuClient: Novu;
+
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
+
     template = await session.createTemplate();
     subscriberService = new SubscribersService(session.organization._id, session.environment._id);
     subscriber = await subscriberService.createSubscriber();
@@ -22,6 +24,7 @@ describe('Get Message - /messages (GET) #novu-v2', function () {
 
   it('should fetch existing messages', async function () {
     const subscriber2 = await subscriberService.createSubscriber();
+
     await novuClient.trigger({
       workflowId: template.triggers[0].identifier,
       to: [
@@ -63,6 +66,7 @@ describe('Get Message - /messages (GET) #novu-v2', function () {
 
     let response = await novuClient.messages.retrieve({ subscriberId: subscriber3.subscriberId });
     expect(response.result.data.length).to.be.equal(4);
+
     response = await novuClient.messages.retrieve({ transactionId: [transactionId1] });
     expect(response.result.data.length).to.be.equal(2);
 

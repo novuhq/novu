@@ -15,6 +15,7 @@ export interface IActivity {
   _organizationId: string;
   _subscriberId: string;
   _digestedNotificationId?: string;
+  topics?: { _topicId: string; topicKey: string }[];
   transactionId: string;
   channels: ChannelTypeEnum[];
   to: {

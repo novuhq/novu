@@ -296,6 +296,15 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
         </WorkflowLinkTableCell>
 
         <WorkflowLinkTableCell className="text-foreground-600 text-sm font-medium">
+          {workflow.lastTriggeredAt ? (
+            <TimeDisplayHoverCard date={new Date(workflow.lastTriggeredAt)}>
+              {formatDateSimple(workflow.lastTriggeredAt)}
+            </TimeDisplayHoverCard>
+          ) : (
+            <span className="text-foreground-400 text-sm font-normal">-</span>
+          )}
+        </WorkflowLinkTableCell>
+        <WorkflowLinkTableCell className="text-foreground-600 text-sm font-medium">
           <TimeDisplayHoverCard date={new Date(workflow.updatedAt)}>
             {formatDateSimple(workflow.updatedAt)}
           </TimeDisplayHoverCard>

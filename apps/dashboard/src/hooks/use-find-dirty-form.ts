@@ -1,9 +1,10 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 export function useFindDirtyForm() {
   const [isDirty, setIsDirty] = useState(false);
+  const [element, setElement] = useState<HTMLElement | null>(null);
 
-  const setRef = useCallback((element: HTMLElement | null) => {
+  useEffect(() => {
     if (!element) return;
 
     const checkDirty = () => {
@@ -28,7 +29,11 @@ export function useFindDirtyForm() {
     });
 
     return () => observer.disconnect();
+  }, [element]);
+
+  const ref = useCallback((node: HTMLElement | null) => {
+    setElement(node);
   }, []);
 
-  return { isDirty, ref: setRef };
+  return { isDirty, ref };
 }

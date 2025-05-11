@@ -39,6 +39,9 @@ export const ROUTES = {
   CREATE_SUBSCRIBER: '/env/:environmentSlug/subscribers/create',
   PARTNER_INTEGRATIONS_VERCEL: '/partner-integrations/vercel',
   WEBHOOKS: '/env/:environmentSlug/webhooks',
+  TOPICS: '/env/:environmentSlug/topics',
+  TOPICS_CREATE: '/env/:environmentSlug/topics/create',
+  TOPICS_EDIT: '/env/:environmentSlug/topics/:topicKey/edit',
 } as const;
 
 export const buildRoute = (route: string, params: Record<string, string>) => {

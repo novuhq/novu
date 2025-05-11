@@ -1,15 +1,17 @@
 import { SidebarContent } from '@/components/side-navigation/sidebar';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
-import { ApiServiceLevelEnum, GetSubscriptionDto } from '@novu/shared';
+import { ApiServiceLevelEnum, FeatureFlagsKeysEnum, GetSubscriptionDto } from '@novu/shared';
 import * as Sentry from '@sentry/react';
 import { ReactNode } from 'react';
 import {
   RiBarChartBoxLine,
   RiChat1Line,
   RiDatabase2Line,
+  RiDiscussLine,
   RiGroup2Line,
   RiKey2Line,
   RiRouteFill,
@@ -106,6 +108,7 @@ export const SideNavigation = () => {
   const isTrialActive = subscription?.trial.isActive;
   const isFreeTier = subscription?.apiServiceLevel === ApiServiceLevelEnum.FREE;
   const isWebhooksManagementEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_WEBHOOKS_MANAGEMENT_ENABLED);
+  const isTopicsPageActive = useFeatureFlag(FeatureFlagsKeysEnum.IS_TOPICS_PAGE_ACTIVE, false);
 
   const { currentEnvironment, environments, switchEnvironment } = useEnvironment();
 
@@ -134,6 +137,12 @@ export const SideNavigation = () => {
                 <RiGroup2Line className="size-4" />
                 <span>Subscribers</span>
               </NavigationLink>
+              {isTopicsPageActive && (
+                <NavigationLink to={buildRoute(ROUTES.TOPICS, { environmentSlug: currentEnvironment?.slug ?? '' })}>
+                  <RiDiscussLine className="size-4" />
+                  <span>Topics</span>
+                </NavigationLink>
+              )}
             </NavigationGroup>
             <NavigationGroup label="Monitor">
               <NavigationLink

@@ -19,7 +19,7 @@ import { AuthService } from './services/auth.service';
 import { RolesGuard } from './framework/roles.guard';
 import { CommunityAuthService } from './services/community.auth.service';
 import { CommunityUserAuthGuard } from './framework/community.user.auth.guard';
-import { CommunityEditionService } from './services/system-organization.service';
+import { CommunityEditionService } from './services/community-edition.service';
 import { SelfHostUsecase } from './usecases/self-host/self-host.usecase';
 
 const AUTH_STRATEGIES: Provider[] = [JwtStrategy, ApiKeyStrategy, JwtSubscriberStrategy];

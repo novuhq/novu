@@ -33,7 +33,9 @@ import { UpdateIntegrationSidebar } from './components/integrations/components/u
 import { ChannelPreferences } from './components/workflow-editor/channel-preferences';
 import { FeatureFlagsProvider } from './context/feature-flags-provider';
 import { CreateSubscriberPage } from './pages/create-subscriber';
+import { CreateTopicPage } from './pages/create-topic';
 import { EditSubscriberPage } from './pages/edit-subscriber-page';
+import { EditTopicPage } from './pages/edit-topic';
 import { EditWorkflowPage } from './pages/edit-workflow';
 import { EnvironmentsPage } from './pages/environments';
 import { InboxEmbedPage } from './pages/inbox-embed-page';
@@ -41,12 +43,13 @@ import { InboxEmbedSuccessPage } from './pages/inbox-embed-success-page';
 import { InboxUsecasePage } from './pages/inbox-usecase-page';
 import { RedirectToLegacyStudioAuth } from './pages/redirect-to-legacy-studio-auth';
 import { TestWorkflowPage } from './pages/test-workflow';
+import { TopicsPage } from './pages/topics';
+import { VercelIntegrationPage } from './pages/vercel-integration-page';
 import { AuthRoute, CatchAllRoute, DashboardRoute, RootRoute } from './routes';
 import { OnboardingParentRoute } from './routes/onboarding';
 import { ROUTES } from './utils/routes';
 import { initializeSentry } from './utils/sentry';
 import { overrideZodErrorMap } from './utils/validation';
-import { VercelIntegrationPage } from './pages/vercel-integration-page';
 import { IS_SELF_HOSTED } from './config';
 
 initializeSentry();
@@ -144,6 +147,20 @@ const router = createBrowserRouter([
                   {
                     path: ROUTES.CREATE_SUBSCRIBER,
                     element: <CreateSubscriberPage />,
+                  },
+                ],
+              },
+              {
+                path: ROUTES.TOPICS,
+                element: <TopicsPage />,
+                children: [
+                  {
+                    path: ROUTES.TOPICS_CREATE,
+                    element: <CreateTopicPage />,
+                  },
+                  {
+                    path: ROUTES.TOPICS_EDIT,
+                    element: <EditTopicPage />,
                   },
                 ],
               },

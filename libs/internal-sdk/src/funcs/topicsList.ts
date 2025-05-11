@@ -25,10 +25,7 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Get topic list filtered
- *
- * @remarks
- * Returns a list of topics that can be paginated using the `page` query parameter and filtered by the topic key with the `key` query parameter
+ * Get topics list
  */
 export function topicsList(
   client: NovuCore,
@@ -92,12 +89,17 @@ async function $do(
   const payload = parsed.value;
   const body = null;
 
-  const path = pathToFunc("/v1/topics")();
+  const path = pathToFunc("/v2/topics")();
 
   const query = encodeFormQuery({
+    "after": payload.after,
+    "before": payload.before,
+    "includeCursor": payload.includeCursor,
     "key": payload.key,
-    "page": payload.page,
-    "pageSize": payload.pageSize,
+    "limit": payload.limit,
+    "name": payload.name,
+    "orderBy": payload.orderBy,
+    "orderDirection": payload.orderDirection,
   });
 
   const headers = new Headers(compactMap({

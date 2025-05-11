@@ -32,7 +32,7 @@ const SubscriberListWrapper = (props: SubscriberListFiltersProps) => {
           onFiltersChange={handleFiltersChange}
           filterValues={filterValues}
           onReset={resetFilters}
-          className="py-2"
+          className="py-2.5"
         />
 
         <Button

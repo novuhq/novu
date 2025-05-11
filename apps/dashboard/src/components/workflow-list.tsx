@@ -127,18 +127,18 @@ export function WorkflowList({
             <TableHead>Tags</TableHead>
             <TableHead
               sortable
+              sortDirection={orderBy === 'lastTriggeredAt' ? orderDirection : false}
+              onSort={() => toggleSort('lastTriggeredAt')}
+            >
+              Last triggered
+            </TableHead>
+            <TableHead
+              sortable
               sortDirection={orderBy === 'updatedAt' ? orderDirection : false}
               onSort={() => toggleSort('updatedAt')}
             >
               Last updated
             </TableHead>
-            {/*  <TableHead
-              sortable
-              sortDirection={orderBy === 'lastTriggeredAt' ? orderDirection : false}
-              onSort={() => toggleSort('lastTriggeredAt')}
-            >
-              Last triggered
-            </TableHead> */}
 
             <TableHead />
           </TableRow>

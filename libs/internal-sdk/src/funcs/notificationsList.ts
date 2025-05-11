@@ -102,6 +102,7 @@ async function $do(
     "search": payload.search,
     "subscriberIds": payload.subscriberIds,
     "templates": payload.templates,
+    "topicKey": payload.topicKey,
     "transactionId": payload.transactionId,
   });
 

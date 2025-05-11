@@ -90,6 +90,7 @@ export function setNotificationsListData(
       page?: number | undefined;
       limit?: number | undefined;
       transactionId?: string | undefined;
+      topicKey?: string | undefined;
       after?: string | undefined;
       before?: string | undefined;
       idempotencyKey?: string | undefined;
@@ -114,6 +115,7 @@ export function invalidateNotificationsList(
       page?: number | undefined;
       limit?: number | undefined;
       transactionId?: string | undefined;
+      topicKey?: string | undefined;
       after?: string | undefined;
       before?: string | undefined;
       idempotencyKey?: string | undefined;
@@ -157,6 +159,7 @@ export function buildNotificationsListQuery(
       page: request.page,
       limit: request.limit,
       transactionId: request.transactionId,
+      topicKey: request.topicKey,
       after: request.after,
       before: request.before,
       idempotencyKey: request.idempotencyKey,
@@ -189,6 +192,7 @@ export function queryKeyNotificationsList(
     page?: number | undefined;
     limit?: number | undefined;
     transactionId?: string | undefined;
+    topicKey?: string | undefined;
     after?: string | undefined;
     before?: string | undefined;
     idempotencyKey?: string | undefined;
