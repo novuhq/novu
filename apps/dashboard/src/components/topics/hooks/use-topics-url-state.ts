@@ -74,44 +74,36 @@ export const useTopicsUrlState = ({ after, before }: { after?: string; before?: 
   const handleFiltersChange = useCallback(
     (filter: Partial<TopicsFilter>) => {
       setSearchParams((prev) => {
-        if (filter.after !== undefined) {
+        if ('after' in filter) {
           if (filter.after) {
             prev.set('after', filter.after);
           } else {
             prev.delete('after');
           }
-        } else if (Object.prototype.hasOwnProperty.call(filter, 'after') && !filter.after) {
-          prev.delete('after');
         }
 
-        if (filter.before !== undefined) {
+        if ('before' in filter) {
           if (filter.before) {
             prev.set('before', filter.before);
           } else {
             prev.delete('before');
           }
-        } else if (Object.prototype.hasOwnProperty.call(filter, 'before') && !filter.before) {
-          prev.delete('before');
         }
 
-        if (filter.key !== undefined) {
+        if ('key' in filter) {
           if (filter.key) {
             prev.set('key', filter.key);
           } else {
             prev.delete('key');
           }
-        } else if (Object.prototype.hasOwnProperty.call(filter, 'key') && !filter.key) {
-          prev.delete('key');
         }
 
-        if (filter.name !== undefined) {
+        if ('name' in filter) {
           if (filter.name) {
             prev.set('name', filter.name);
           } else {
             prev.delete('name');
           }
-        } else if (Object.prototype.hasOwnProperty.call(filter, 'name') && !filter.name) {
-          prev.delete('name');
         }
 
         return prev;
