@@ -193,29 +193,28 @@ export const CreateTopicForm = (props: CreateTopicFormProps) => {
             />
           </div>
           <Separator />
-          <div className="p-5">
-            <InlineToast
-              description={
-                <div className="flex flex-col gap-3">
-                  <span className="text-xs text-neutral-600">
-                    <strong>Tip:</strong> You can also create topics via API, or add subscribers to topics
-                    programmatically.
-                  </span>
-                  <Link
-                    to="https://docs.novu.co/platform/concepts/topics"
-                    className="text-xs font-medium text-neutral-600 underline"
-                    target="_blank"
-                  >
-                    Learn more
-                  </Link>
-                </div>
-              }
-              variant="success"
-              className="border-neutral-100 bg-neutral-50"
-            />
-          </div>
         </FormRoot>
       </Form>
+      <div className="p-5">
+        <InlineToast
+          description={
+            <div className="flex flex-col gap-3">
+              <span className="text-xs text-neutral-600">
+                <strong>Tip:</strong> You can also create topics via API, or add subscribers to topics programmatically.
+              </span>
+              <Link
+                to="https://docs.novu.co/platform/concepts/topics"
+                className="text-xs font-medium text-neutral-600 underline"
+                target="_blank"
+              >
+                Learn more
+              </Link>
+            </div>
+          }
+          variant="success"
+          className="border-neutral-100 bg-neutral-50"
+        />
+      </div>
     </div>
   );
 };
