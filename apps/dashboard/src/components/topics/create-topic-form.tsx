@@ -76,7 +76,8 @@ export const CreateTopicForm = (props: CreateTopicFormProps) => {
     },
     resolver: zodResolver(TopicFormSchema),
     shouldFocusError: false,
-    mode: 'onBlur',
+    mode: 'onSubmit',
+    reValidateMode: 'onChange',
   });
 
   // Watch the name field and update the key field accordingly
@@ -126,7 +127,7 @@ export const CreateTopicForm = (props: CreateTopicFormProps) => {
               name="name"
               render={({ field, fieldState }) => (
                 <FormItem>
-                  <FormLabel>
+                  <FormLabel htmlFor={field.name}>
                     Name <span className="text-primary">*</span>
                   </FormLabel>
                   <FormControl>
@@ -160,7 +161,7 @@ export const CreateTopicForm = (props: CreateTopicFormProps) => {
               render={({ field, fieldState }) => (
                 <FormItem className="w-full">
                   <div className="flex">
-                    <FormLabel className="gap-1">
+                    <FormLabel htmlFor={field.name} className="gap-1">
                       Topic Key <span className="text-primary">*</span>
                     </FormLabel>
                   </div>
