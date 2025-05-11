@@ -35,6 +35,7 @@ import {
 import { ThrottlerCategory, ThrottlerCost } from '../rate-limiting/guards';
 import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
 import { SdkGroupName, SdkMethodName, SdkUsageExample } from '../shared/framework/swagger/sdk.decorators';
+import { KeylessAccessible } from '../shared/framework/swagger/keyless.security';
 
 @ThrottlerCategory(ApiRateLimitCategoryEnum.TRIGGER)
 @ResourceCategory(ResourceEnum.EVENTS)
@@ -53,6 +54,7 @@ export class EventsController {
     private processBulkTriggerUsecase: ProcessBulkTrigger
   ) {}
 
+  @KeylessAccessible()
   @ExternalApiAccessible()
   @UserAuthentication()
   @Post('/trigger')

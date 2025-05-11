@@ -11,6 +11,7 @@ const processEnv = process.env as Record<string, string>; // Hold the initial pr
 export const envValidators = {
   TZ: str({ default: 'UTC' }),
   NODE_ENV: str({ choices: ['dev', 'test', 'production', 'ci', 'local'], default: 'local' }),
+  LOG_LEVEL: str({ choices: ['trace', 'debug', 'info', 'warn', 'error', 'fatal', 'none'] }),
   PORT: port(),
   FRONT_BASE_URL: str(),
   DISABLE_USER_REGISTRATION: bool({ default: false }),
@@ -56,6 +57,8 @@ export const envValidators = {
       STRIPE_API_KEY: str({ default: undefined }),
       STRIPE_CONNECT_SECRET: str({ default: undefined }),
       NOVU_INTERNAL_SECRET_KEY: str({ default: '' }),
+      KEYLESS_ORGANIZATION_ID: str({ desc: 'Required organizationId for Keyless authentication' }),
+      KEYLESS_USER_EMAIL: str({ desc: 'Required email for Keyless authentication' }),
     }),
 
   // Feature Flags

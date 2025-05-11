@@ -35,9 +35,12 @@ export class EvaluateApiRateLimit {
     const refillRate = this.getRefillRate(maxLimitPerSecond, windowDuration);
     const burstLimit = this.getBurstLimit(maxTokensPerWindow, burstAllowance);
 
+    // For keyless authentication, we'll use both environment and IP-based rate limiting
     const identifier = buildEvaluateApiRateLimitKey({
       _environmentId: command.environmentId,
-      apiRateLimitCategory: command.apiRateLimitCategory,
+      apiRateLimitCategory: command.ip
+        ? `${command.apiRateLimitCategory}:ip=${command.ip}`
+        : command.apiRateLimitCategory,
     });
 
     const { success, remaining, reset } = await this.evaluateTokenBucketRateLimit.execute(

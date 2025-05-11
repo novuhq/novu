@@ -7,7 +7,12 @@ import { useRouter } from 'next/compat/router';
 function AppRouterInbox(props: InboxProps) {
   const router = useAppRouter();
 
-  return <RInbox routerPush={router.push} {...props} />;
+  const inboxProps = {
+    ...props,
+    routerPush: router.push,
+  };
+
+  return <RInbox {...inboxProps} />;
 }
 
 export function Inbox(props: InboxProps) {
@@ -17,7 +22,7 @@ export function Inbox(props: InboxProps) {
     return <AppRouterInbox {...props} />;
   }
 
-  return <RInbox routerPush={router.push} {...props} />;
+  return <RInbox {...props} />;
 }
 
 export { Bell, Preferences, Notifications, InboxContent, NovuProvider } from '@novu/react';

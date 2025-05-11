@@ -6,5 +6,10 @@ import { useRouter } from 'next/navigation';
 export function Inbox(props: InboxProps) {
   const router = useRouter();
 
-  return <RInbox routerPush={router.push} {...props} />;
+  const inboxProps = {
+    ...props,
+    routerPush: router.push,
+  };
+
+  return <RInbox {...inboxProps} />;
 }

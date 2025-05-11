@@ -39,8 +39,8 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
     this.#emitter = new NovuEventEmitter();
     this.#session = new Session(
       {
-        applicationIdentifier: options.applicationIdentifier,
-        subscriberHash: options.subscriberHash,
+        applicationIdentifier: 'applicationIdentifier' in options ? options.applicationIdentifier : undefined,
+        subscriberHash: 'subscriberHash' in options ? options.subscriberHash : undefined,
         subscriber: buildSubscriber(options),
       },
       this.#inboxService,
@@ -48,12 +48,12 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
     );
     this.#session.initialize();
     this.notifications = new Notifications({
-      useCache: options.useCache ?? true,
+      useCache: 'useCache' in options && options.useCache !== undefined ? options.useCache : true,
       inboxServiceInstance: this.#inboxService,
       eventEmitterInstance: this.#emitter,
     });
     this.preferences = new Preferences({
-      useCache: options.useCache ?? true,
+      useCache: 'useCache' in options && options.useCache !== undefined ? options.useCache : true,
       inboxServiceInstance: this.#inboxService,
       eventEmitterInstance: this.#emitter,
     });
@@ -84,7 +84,9 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
 function buildSubscriber(options: NovuOptions): Subscriber {
   let subscriberObj: Subscriber;
 
-  if (options.subscriber) {
+  if (!('subscriber' in options)) {
+    subscriberObj = { subscriberId: '' };
+  } else if (options.subscriber) {
     subscriberObj = typeof options.subscriber === 'string' ? { subscriberId: options.subscriber } : options.subscriber;
   } else {
     subscriberObj = { subscriberId: options.subscriberId as string };

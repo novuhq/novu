@@ -11,7 +11,7 @@ const devModeGradient = `${commonAfter} after:nt-bg-[linear-gradient(180deg,tran
 const prodModeGradient = `${commonAfter} after:nt-bg-[linear-gradient(180deg,transparent,oklch(from_var(--nv-color-background)_l_c_h_/_0.9)_55%,transparent)]`;
 
 export const Footer = () => {
-  const { hideBranding, isDevelopmentMode } = useInboxContext();
+  const { hideBranding, isDevelopmentMode, isKeyless } = useInboxContext();
 
   return (
     <Show when={!hideBranding() || isDevelopmentMode()}>
@@ -30,7 +30,7 @@ export const Footer = () => {
         }}
       >
         <Show when={isDevelopmentMode()}>
-          <span class="nt-z-10 nt-text-xs nt-text-stripes">Development mode</span>
+          <span class="nt-z-10 nt-text-xs nt-text-stripes">{isKeyless() ? 'Keyless mode' : 'Development mode'}</span>
         </Show>
         <Show when={isDevelopmentMode() && !hideBranding()}>
           <span class="nt-z-10 nt-text-xs">•</span>

@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Subscriber } from '@novu/js';
+import { Subscriber, StandardNovuOptions } from '@novu/js';
 import { DefaultProps, DefaultInboxProps, WithChildrenProps } from '../utils/types';
 import { Mounter } from './Mounter';
 import { useNovuUI } from '../context/NovuUIContext';
@@ -83,40 +83,53 @@ const _DefaultInbox = (props: DefaultInboxProps) => {
 const DefaultInbox = withRenderer(_DefaultInbox);
 
 export const Inbox = React.memo((props: InboxProps) => {
-  const { applicationIdentifier, subscriberHash, backendUrl, socketUrl } = props;
+  const socketUrl = 'socketUrl' in props ? props.socketUrl : undefined;
+  const applicationIdentifier = 'applicationIdentifier' in props ? props.applicationIdentifier : undefined;
+  const subscriberHash = 'subscriberHash' in props ? props.subscriberHash : undefined;
+  const backendUrl = 'backendUrl' in props ? props.backendUrl : undefined;
+  const subscriber = buildSubscriber(props);
+
   const novu = useUnsafeNovu();
 
   if (novu) {
     return <InboxChild {...props} />;
   }
 
+  const providerProps =
+    applicationIdentifier && subscriber
+      ? ({
+          applicationIdentifier,
+          subscriberHash,
+          backendUrl,
+          socketUrl,
+          subscriber,
+        } satisfies StandardNovuOptions)
+      : {
+          // todo: remove props, it should be an empty object, its here for local debugging
+          backendUrl,
+          socketUrl,
+        };
+
   return (
-    <InternalNovuProvider
-      applicationIdentifier={applicationIdentifier}
-      subscriberHash={subscriberHash}
-      backendUrl={backendUrl}
-      socketUrl={socketUrl}
-      subscriber={buildSubscriber(props)}
-      userAgentType="components"
-    >
+    <InternalNovuProvider {...providerProps} userAgentType="components">
       <InboxChild {...props} />
     </InternalNovuProvider>
   );
 });
 
 const InboxChild = React.memo((props: InboxProps) => {
-  const {
-    localization,
-    appearance,
-    tabs,
-    preferencesFilter,
-    routerPush,
-    applicationIdentifier,
-    subscriberId,
-    subscriberHash,
-    backendUrl,
-    socketUrl,
-  } = props;
+  const localization = 'localization' in props ? props.localization : undefined;
+  const appearance = 'appearance' in props ? props.appearance : undefined;
+  const tabs = 'tabs' in props ? props.tabs : undefined;
+  const preferencesFilter = 'preferencesFilter' in props ? props.preferencesFilter : undefined;
+  const routerPush = 'routerPush' in props ? props.routerPush : undefined;
+  const applicationIdentifier = 'applicationIdentifier' in props ? props.applicationIdentifier : undefined;
+  const subscriberId = 'subscriberId' in props ? props.subscriberId : undefined;
+  const subscriberHash = 'subscriberHash' in props ? props.subscriberHash : undefined;
+  const backendUrl = 'backendUrl' in props ? props.backendUrl : undefined;
+  const socketUrl = 'socketUrl' in props ? props.socketUrl : undefined;
+  const subscriber = 'subscriber' in props ? props.subscriber : undefined;
+
   const novu = useNovu();
 
   const options = useMemo(() => {
@@ -144,7 +157,7 @@ const InboxChild = React.memo((props: InboxProps) => {
     subscriberHash,
     backendUrl,
     socketUrl,
-    props.subscriber,
+    subscriber,
   ]);
 
   if (isWithChildrenProps(props)) {
@@ -193,7 +206,9 @@ function isWithChildrenProps(props: InboxProps): props is WithChildrenProps {
 function buildSubscriber(options: InboxProps): Subscriber {
   let subscriberObj: Subscriber;
 
-  if (options.subscriber) {
+  if (!('subscriber' in options)) {
+    subscriberObj = { subscriberId: '' };
+  } else if (options.subscriber) {
     subscriberObj = typeof options.subscriber === 'string' ? { subscriberId: options.subscriber } : options.subscriber;
   } else {
     subscriberObj = { subscriberId: options.subscriberId as string };

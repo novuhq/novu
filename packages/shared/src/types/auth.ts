@@ -28,6 +28,7 @@ export enum PassportStrategyEnum {
   JWT = 'jwt',
   JWT_CLERK = 'jwt-clerk',
   HEADER_API_KEY = 'headerapikey',
+  KEYLESS = 'keyless',
 }
 
 export type SentryUser = {

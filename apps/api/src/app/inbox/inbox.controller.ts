@@ -10,7 +10,6 @@ import {
   Query,
   UseGuards,
   Headers,
-  BadRequestException,
 } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
@@ -52,6 +51,7 @@ import { SnoozeNotificationCommand } from './usecases/snooze-notification/snooze
 import { SnoozeNotification } from './usecases/snooze-notification/snooze-notification.usecase';
 import { UnsnoozeNotificationCommand } from './usecases/unsnooze-notification/unsnooze-notification.command';
 import { UnsnoozeNotification } from './usecases/unsnooze-notification/unsnooze-notification.usecase';
+import { KeylessAccessible } from '../shared/framework/swagger/keyless.security';
 
 @ApiCommonResponses()
 @Controller('/inbox')
@@ -70,27 +70,35 @@ export class InboxController {
     private unsnoozeNotificationUsecase: UnsnoozeNotification
   ) {}
 
+  @KeylessAccessible()
   @Post('/session')
   async sessionInitialize(
     @Body() body: SubscriberSessionRequestDto,
     @Headers('origin') origin: string
   ): Promise<SubscriberSessionResponseDto> {
-    // TODO: Backward compatibility support - remove in future versions (see NV-5801)
-    const subscriber: SubscriberDto | {} =
-      typeof body.subscriber === 'string' ? { subscriberId: body.subscriber } : body.subscriber || {};
-    const subscriberId: string | undefined = body.subscriberId || (subscriber as SubscriberDto).subscriberId;
+    const subscriber = this.buildSubscriber(body);
 
     return await this.initializeSessionUsecase.execute(
       SessionCommand.create({
-        subscriber: {
-          ...subscriber,
-          subscriberId,
-        } satisfies SubscriberDto,
+        subscriber,
         applicationIdentifier: body.applicationIdentifier,
         subscriberHash: body.subscriberHash,
         origin,
       })
     );
+  }
+
+  private buildSubscriber(body: SubscriberSessionRequestDto): SubscriberDto {
+    if (!body.applicationIdentifier || body.applicationIdentifier.startsWith('pk_keyless_')) {
+      return { subscriberId: 'keyless-subscriber-id' };
+    }
+
+    // TODO: Backward compatibility support - remove in future versions (see NV-5801)
+    const subscriber: SubscriberDto | {} =
+      typeof body.subscriber === 'string' ? { subscriberId: body.subscriber } : body.subscriber || {};
+    const subscriberId: string | undefined = body.subscriberId || (subscriber as SubscriberDto).subscriberId;
+
+    return { ...subscriber, subscriberId };
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))

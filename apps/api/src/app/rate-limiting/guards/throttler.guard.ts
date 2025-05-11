@@ -68,7 +68,9 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
 
   protected async shouldSkip(context: ExecutionContext): Promise<boolean> {
     const isAllowedAuthScheme = this.isAllowedAuthScheme(context);
-    if (!isAllowedAuthScheme) {
+    const isAllowedEnvironment = this.isAllowedEnvironment(context);
+
+    if (!isAllowedAuthScheme && !isAllowedEnvironment) {
       return true;
     }
 
@@ -108,10 +110,13 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
     const classRef = context.getClass();
     const apiRateLimitCategory =
       this.reflector.getAllAndOverride(ThrottlerCategory, [handler, classRef]) || defaultApiRateLimitCategory;
-    const apiRateLimitCost =
-      this.reflector.getAllAndOverride(ThrottlerCost, [handler, classRef]) || defaultApiRateLimitCost;
 
     const { organizationId, environmentId, _id } = this.getReqUser(context);
+    const isKeyless = req.headers['x-application-identifier']?.startsWith('pk_keyless_');
+
+    const apiRateLimitCost = isKeyless
+      ? ApiRateLimitCostEnum.BULK
+      : this.reflector.getAllAndOverride(ThrottlerCost, [handler, classRef]) || defaultApiRateLimitCost;
 
     const { success, limit, remaining, reset, windowDuration, burstLimit, algorithm, apiServiceLevel } =
       await this.evaluateApiRateLimit.execute(
@@ -120,6 +125,7 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
           environmentId,
           apiRateLimitCategory,
           apiRateLimitCost,
+          ip: isKeyless ? req.ip : undefined,
         })
       );
 
@@ -201,6 +207,17 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
     }, `${limit}`);
 
     return policy;
+  }
+
+  private isAllowedEnvironment(context: ExecutionContext): boolean {
+    const req = context.switchToHttp().getRequest();
+    const applicationIdentifier = req.headers['x-application-identifier'];
+
+    if (!applicationIdentifier) {
+      return false;
+    }
+
+    return applicationIdentifier.startsWith('pk_keyless_');
   }
 
   private isAllowedAuthScheme(context: ExecutionContext): boolean {

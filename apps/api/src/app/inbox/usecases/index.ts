@@ -1,4 +1,14 @@
-import { GetSubscriberTemplatePreference, StandardQueueService } from '@novu/application-generic';
+import {
+  GetSubscriberTemplatePreference,
+  StandardQueueService,
+  UpsertControlValuesUseCase,
+} from '@novu/application-generic';
+import {
+  CommunityUserRepository,
+  ControlValuesRepository,
+  MessageTemplateRepository,
+  PreferencesRepository,
+} from '@novu/dal';
 import { GetNotifications } from './get-notifications/get-notifications.usecase';
 import { GetInboxPreferences } from './get-inbox-preferences/get-inbox-preferences.usecase';
 import { MarkManyNotificationsAs } from './mark-many-notifications-as/mark-many-notifications-as.usecase';
@@ -11,6 +21,7 @@ import { UpdatePreferences } from './update-preferences/update-preferences.useca
 import { GetSubscriberGlobalPreference } from '../../subscribers/usecases/get-subscriber-global-preference';
 import { SnoozeNotification } from './snooze-notification/snooze-notification.usecase';
 import { UnsnoozeNotification } from './unsnooze-notification/unsnooze-notification.usecase';
+import { GenerateUniqueApiKey } from '../../environments-v1/usecases/generate-unique-api-key/generate-unique-api-key.usecase';
 
 export const USE_CASES = [
   Session,
@@ -26,4 +37,7 @@ export const USE_CASES = [
   UpdatePreferences,
   SnoozeNotification,
   UnsnoozeNotification,
+  GenerateUniqueApiKey,
+  CommunityUserRepository,
+  UpsertControlValuesUseCase,
 ];

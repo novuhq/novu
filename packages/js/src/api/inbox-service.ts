@@ -27,9 +27,9 @@ export class InboxService {
     subscriberHash,
     subscriber,
   }: {
-    applicationIdentifier: string;
+    applicationIdentifier?: string;
     subscriberHash?: string;
-    subscriber: Subscriber;
+    subscriber?: Subscriber;
   }): Promise<Session> {
     const response = (await this.#httpClient.post(`${INBOX_ROUTE}/session`, {
       applicationIdentifier,
