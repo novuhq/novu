@@ -5,6 +5,7 @@ import { Dots as DefaultDots } from '../../../icons';
 import { NotificationStatus } from '../../../types';
 import { Button, Dropdown } from '../../primitives';
 import { MoreActionsOptions } from './MoreActionsOptions';
+import { IconRendererWrapper } from '../../shared/IconRendererWrapper';
 
 export const MoreActionsDropdown = () => {
   const style = useStyle();
@@ -22,7 +23,9 @@ export const MoreActionsDropdown = () => {
                 when={appearance.icons()?.dots}
                 fallback={<DefaultDots class={style('moreActions__dots', 'nt-size-5')} />}
               >
-                {(renderDots) => renderDots()({ class: style('moreActions__dots', 'nt-size-5') })}
+                {(renderDots) => (
+                  <IconRendererWrapper renderer={renderDots()} class={style('moreActions__dots', 'nt-size-5')} />
+                )}
               </Show>
             </Button>
           )}

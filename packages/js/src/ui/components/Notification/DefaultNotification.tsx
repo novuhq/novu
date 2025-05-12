@@ -16,11 +16,7 @@ import { ExternalElementRenderer } from '../ExternalElementRenderer';
 import { Button } from '../primitives';
 import { Badge } from '../primitives/Badge';
 import { renderNotificationActions } from './NotificationActions';
-import { ActionButton } from './shared/ActionButton';
-import { Dot } from './shared/Dot';
-import { Subject } from './shared/Subject';
-import { NotificationAction } from './NotificationAction';
-import { Body } from './shared/Body';
+import { IconRendererWrapper } from '../shared/IconRendererWrapper';
 
 type DefaultNotificationProps = {
   notification: Notification;
@@ -215,9 +211,12 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
                                     <DefaultClock class={style('notificationDeliveredAt__icon', 'nt-size-3')} />
                                   }
                                 >
-                                  {(renderClock) =>
-                                    renderClock()({ class: style('notificationDeliveredAt__icon', 'nt-size-3') })
-                                  }
+                                  {(renderClock) => (
+                                    <IconRendererWrapper
+                                      renderer={renderClock()}
+                                      class={style('notificationDeliveredAt__icon', 'nt-size-3')}
+                                    />
+                                  )}
                                 </Show>
                                 {date}
                               </Badge>
@@ -246,7 +245,12 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
                   when={appearance.icons()?.clock}
                   fallback={<DefaultClock class={style('notificationSnoozedUntil__icon', 'nt-size-3')} />}
                 >
-                  {(renderClock) => renderClock()({ class: style('notificationSnoozedUntil__icon', 'nt-size-3') })}
+                  {(renderClock) => (
+                    <IconRendererWrapper
+                      renderer={renderClock()}
+                      class={style('notificationSnoozedUntil__icon', 'nt-size-3')}
+                    />
+                  )}
                 </Show>
                 {t('notification.snoozedUntil')} · {snoozedUntilVal()}
               </>
