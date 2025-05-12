@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogTitle, DialogClose, DialogHeader } from '@
 import { CopyToClipboard } from '../primitives/copy-to-clipboard';
 import { Button } from '@/components/primitives/button';
 import { toast } from 'sonner';
-import { showErrorToast } from '@/components/primitives/sonner-helpers';
+import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { triggerWorkflow } from '../../api/workflows';
 import { QueryKeys } from '@/utils/query-keys';
 import { getActivityList } from '@/api/activity';
@@ -90,9 +90,13 @@ export function ActivityLogs({
       closePopover();
       setIsFullscreenOpen(false);
 
-      toast.success('Notification resent successfully', {
-        description: `A new notification has been triggered with transaction ID: ${newTransactionId}`,
-      });
+      showSuccessToast(
+        'Notification resent successfully',
+        undefined,
+        {
+          description: `A new notification has been triggered with transaction ID: ${newTransactionId}`,
+        }
+      );
 
       const checkAndUpdateTransaction = async () => {
         if (currentEnvironment) {
