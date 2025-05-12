@@ -84,6 +84,8 @@ export class TopicsController {
     return await this.listTopicsUsecase.execute(
       ListTopicsCommand.create({
         user,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
         limit: Number(query.limit || '10'),
         after: query.after,
         before: query.before,

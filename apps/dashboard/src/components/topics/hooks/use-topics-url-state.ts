@@ -74,7 +74,7 @@ export const useTopicsUrlState = ({ after, before }: { after?: string; before?: 
   const handleFiltersChange = useCallback(
     (filter: Partial<TopicsFilter>) => {
       setSearchParams((prev) => {
-        if (filter.after !== undefined) {
+        if ('after' in filter) {
           if (filter.after) {
             prev.set('after', filter.after);
           } else {
@@ -82,7 +82,7 @@ export const useTopicsUrlState = ({ after, before }: { after?: string; before?: 
           }
         }
 
-        if (filter.before !== undefined) {
+        if ('before' in filter) {
           if (filter.before) {
             prev.set('before', filter.before);
           } else {
@@ -90,16 +90,20 @@ export const useTopicsUrlState = ({ after, before }: { after?: string; before?: 
           }
         }
 
-        if (filter.key) {
-          prev.set('key', filter.key);
-        } else {
-          prev.delete('key');
+        if ('key' in filter) {
+          if (filter.key) {
+            prev.set('key', filter.key);
+          } else {
+            prev.delete('key');
+          }
         }
 
-        if (filter.name) {
-          prev.set('name', filter.name);
-        } else {
-          prev.delete('name');
+        if ('name' in filter) {
+          if (filter.name) {
+            prev.set('name', filter.name);
+          } else {
+            prev.delete('name');
+          }
         }
 
         return prev;

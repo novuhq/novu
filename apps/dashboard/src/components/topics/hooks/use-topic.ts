@@ -9,5 +9,6 @@ export function useTopic(topicKey: string) {
     queryKey: ['topic', currentEnvironment?._id, topicKey],
     queryFn: () => getTopic({ environment: currentEnvironment!, topicKey }),
     enabled: !!currentEnvironment && !!topicKey,
+    retry: 0,
   });
 }

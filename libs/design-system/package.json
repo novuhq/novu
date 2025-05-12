@@ -27,8 +27,7 @@
     "build:esm:watch": "cross-env node_modules/.bin/tsc -p tsconfig.esm.json -w --preserveWatchOutput",
     "build:types": "tsc --declaration --emitDeclarationOnly --declarationMap --declarationDir dist/types -p tsconfig.json",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build",
-    "test": "vitest"
+    "build-storybook": "storybook build"
   },
   "dependencies": {
     "@emotion/css": "^11.10.5",

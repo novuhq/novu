@@ -19,8 +19,6 @@ import { AuthService } from './services/auth.service';
 import { RolesGuard } from './framework/roles.guard';
 import { CommunityAuthService } from './services/community.auth.service';
 import { CommunityUserAuthGuard } from './framework/community.user.auth.guard';
-import { CommunityEditionService } from './services/community-edition.service';
-import { SelfHostUsecase } from './usecases/self-host/self-host.usecase';
 
 const AUTH_STRATEGIES: Provider[] = [JwtStrategy, ApiKeyStrategy, JwtSubscriberStrategy];
 
@@ -41,14 +39,7 @@ export function getCommunityAuthModuleConfig(): ModuleMetadata {
     }),
   ];
 
-  const baseProviders = [
-    ...AUTH_STRATEGIES,
-    AuthService,
-    RolesGuard,
-    RootEnvironmentGuard,
-    CommunityEditionService,
-    SelfHostUsecase,
-  ];
+  const baseProviders = [...AUTH_STRATEGIES, AuthService, RolesGuard, RootEnvironmentGuard];
 
   // Wherever is the string token used, override it with the provider
   const injectableProviders = [
@@ -87,7 +78,6 @@ export function getCommunityAuthModuleConfig(): ModuleMetadata {
       'USER_REPOSITORY',
       'MEMBER_REPOSITORY',
       'ORGANIZATION_REPOSITORY',
-      CommunityEditionService,
     ],
   };
 }

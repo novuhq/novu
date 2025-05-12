@@ -19,20 +19,34 @@ import { TopicsFilters } from './topics-filters';
 type TopicListProps = HTMLAttributes<HTMLDivElement>;
 
 // Wrapper similar to SubscriberListWrapper
-const TopicListWrapper = (props: TopicListFiltersProps) => {
-  const { className, children, filterValues, handleFiltersChange, resetFilters, isLoading, ...rest } = props;
+const TopicListWrapper = (props: TopicListFiltersProps & { hasData?: boolean; areFiltersApplied?: boolean }) => {
+  const {
+    className,
+    children,
+    filterValues,
+    handleFiltersChange,
+    resetFilters,
+    isLoading,
+    hasData,
+    areFiltersApplied,
+    ...rest
+  } = props;
   const { navigateToCreateTopicPage } = useTopicsNavigate();
 
   return (
     <div className={cn('flex flex-col p-2', className)} {...rest}>
       <div className="flex items-center justify-between">
-        <TopicsFilters
-          onFiltersChange={handleFiltersChange}
-          filterValues={filterValues}
-          onReset={resetFilters}
-          isLoading={isLoading}
-          className="py-2.5"
-        />
+        {isLoading || hasData || areFiltersApplied ? (
+          <TopicsFilters
+            onFiltersChange={handleFiltersChange}
+            filterValues={filterValues}
+            onReset={resetFilters}
+            isLoading={isLoading}
+            className="py-2.5"
+          />
+        ) : (
+          <div /> // Empty div placeholder to maintain layout
+        )}
 
         <Button
           variant="primary"
@@ -117,7 +131,7 @@ export const TopicList = (props: TopicListProps) => {
   };
 
   // Determine if filters are active based on hook values
-  const areFiltersApplied = filterValues.key || filterValues.name || before || after;
+  const areFiltersApplied = !!(filterValues.key || filterValues.name || before || after);
 
   const { data, isLoading } = useFetchTopics(fetchParams, {
     meta: { errorMessage: 'Issue fetching topics' },
@@ -158,6 +172,8 @@ export const TopicList = (props: TopicListProps) => {
     handleFiltersChange,
     resetFilters,
     isLoading: isLoading, // Pass loading state
+    hasData: !!data?.data.length,
+    areFiltersApplied,
     ...rest,
   };
 
