@@ -28,21 +28,15 @@ export const StatusDropdown = () => {
             >
               {t(inboxFilterLocalizationKeys[status()])}
             </span>
-            <Show
-              when={appearance.icons()?.arrowDropDown}
+            <IconRendererWrapper
+              iconKey="arrowDropDown"
+              class={style('inboxStatus__dropdownItemRight__icon', 'nt-text-foreground-alpha-600 nt-size-4')}
               fallback={
                 <DefaultArrowDropDown
                   class={style('inboxStatus__dropdownItemRight__icon', 'nt-text-foreground-alpha-600 nt-size-4')}
                 />
               }
-            >
-              {(renderIcon) => (
-                <IconRendererWrapper
-                  renderer={renderIcon()}
-                  class={style('inboxStatus__dropdownItemRight__icon', 'nt-text-foreground-alpha-600 nt-size-4')}
-                />
-              )}
-            </Show>
+            />
           </Button>
         )}
       />

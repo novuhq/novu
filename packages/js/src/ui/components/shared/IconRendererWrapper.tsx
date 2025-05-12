@@ -1,19 +1,24 @@
-import { onCleanup, onMount } from 'solid-js';
-import type { IconRenderer } from '../../types';
+import { onCleanup, onMount, Show, type JSX } from 'solid-js';
+import { useAppearance } from '../../context';
+import type { IconKey, IconRenderer } from '../../types';
+import { useStyle } from '../../helpers';
 
 type IconRendererWrapperProps = {
-  renderer: IconRenderer;
+  iconKey: IconKey;
+  fallback: JSX.Element;
   class?: string;
 };
 
 export const IconRendererWrapper = (props: IconRendererWrapperProps) => {
   let el: HTMLDivElement | undefined;
   let cleanup: (() => void) | undefined;
+  const appearance = useAppearance();
+  const customRenderer = () => appearance.icons()?.[props.iconKey];
 
   onMount(() => {
-    if (el) {
+    if (el && customRenderer()) {
       // Pass the element and props (including class) to the user's render function
-      cleanup = props.renderer(el, { class: props.class });
+      cleanup = (customRenderer() as IconRenderer)(el, { class: props.class });
     }
   });
 
@@ -21,9 +26,10 @@ export const IconRendererWrapper = (props: IconRendererWrapperProps) => {
     cleanup?.();
   });
 
-  /*
-   * Render the placeholder div. The user's renderer will populate it.
-   * Pass class to the placeholder div as well for potential wrapper styling.
-   */
-  return <div ref={el} />;
+  return (
+    <Show when={customRenderer()} fallback={props.fallback}>
+      {/* Render the placeholder div. The user's renderer will populate it. */}
+      <div ref={el} />
+    </Show>
+  );
 };

@@ -20,11 +20,11 @@ export const ActionsContainer = (props: ActionsContainerProps) => {
       <Show when={props.showPreferences}>
         {(showPreferences) => (
           <Button appearanceKey="preferences__button" variant="ghost" size="iconSm" onClick={showPreferences()}>
-            <Show when={appearance.icons()?.settings} fallback={<DefaultSettings class={style('icon', 'nt-size-5')} />}>
-              {(renderSettings) => (
-                <IconRendererWrapper renderer={renderSettings()} class={style('icon', 'nt-size-5')} />
-              )}
-            </Show>
+            <IconRendererWrapper
+              iconKey="settings"
+              class={style('icon', 'nt-size-5')}
+              fallback={<DefaultSettings class={style('icon', 'nt-size-5')} />}
+            />
           </Button>
         )}
       </Show>

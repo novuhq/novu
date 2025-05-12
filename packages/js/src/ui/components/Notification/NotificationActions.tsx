@@ -79,21 +79,15 @@ const SnoozeDropdownItem = (props: {
   const content = (
     <>
       <div class={style('dropdownItem', 'nt-flex nt-items-center nt-flex-1')}>
-        <Show
-          when={appearance.icons()?.clock}
+        <IconRendererWrapper
+          iconKey="clock"
+          class={style('notificationSnooze__dropdownItem__icon', 'nt-size-3 nt-text-foreground-alpha-400 nt-mr-2')}
           fallback={
             <DefaultClock
               class={style('notificationSnooze__dropdownItem__icon', 'nt-size-3 nt-text-foreground-alpha-400 nt-mr-2')}
             />
           }
-        >
-          {(renderClock) => (
-            <IconRendererWrapper
-              renderer={renderClock()}
-              class={style('notificationSnooze__dropdownItem__icon', 'nt-size-3 nt-text-foreground-alpha-400 nt-mr-2')}
-            />
-          )}
-        </Show>
+        />
         <span class={style('dropdownItemLabel')}>{props.label}</span>
       </div>
       <span class={style('dropdownItemRight__icon', 'nt-text-foreground-alpha-300 nt-ml-2 nt-text-xs')}>
@@ -140,14 +134,11 @@ export const ReadButton = (props: { notification: Notification }) => {
               await props.notification.read();
             }}
           >
-            <Show
-              when={appearance.icons()?.markAsRead}
+            <IconRendererWrapper
+              iconKey="markAsRead"
+              class={style('notificationRead__icon', 'nt-size-3')}
               fallback={<DefaultMarkAsRead class={style('notificationRead__icon', 'nt-size-3')} />}
-            >
-              {(renderIcon) => (
-                <IconRendererWrapper renderer={renderIcon()} class={style('notificationRead__icon', 'nt-size-3')} />
-              )}
-            </Show>
+            />
           </Button>
         )}
       />
@@ -177,14 +168,11 @@ export const UnreadButton = (props: { notification: Notification }) => {
               await props.notification.unread();
             }}
           >
-            <Show
-              when={appearance.icons()?.markAsUnread}
+            <IconRendererWrapper
+              iconKey="markAsUnread"
+              class={style('notificationUnread__icon', 'nt-size-3')}
               fallback={<DefaultMarkAsUnread class={style('notificationUnread__icon', 'nt-size-3')} />}
-            >
-              {(renderIcon) => (
-                <IconRendererWrapper renderer={renderIcon()} class={style('notificationUnread__icon', 'nt-size-3')} />
-              )}
-            </Show>
+            />
           </Button>
         )}
       />
@@ -214,14 +202,11 @@ export const ArchiveButton = (props: { notification: Notification }) => {
               await props.notification.archive();
             }}
           >
-            <Show
-              when={appearance.icons()?.markAsArchived}
+            <IconRendererWrapper
+              iconKey="markAsArchived"
+              class={style('notificationArchive__icon', 'nt-size-3')}
               fallback={<DefaultMarkAsArchived class={style('notificationArchive__icon', 'nt-size-3')} />}
-            >
-              {(renderIcon) => (
-                <IconRendererWrapper renderer={renderIcon()} class={style('notificationArchive__icon', 'nt-size-3')} />
-              )}
-            </Show>
+            />
           </Button>
         )}
       />
@@ -251,14 +236,11 @@ export const UnarchiveButton = (props: { notification: Notification }) => {
               await props.notification.unarchive();
             }}
           >
-            <Show
-              when={appearance.icons()?.markAsUnarchived}
+            <IconRendererWrapper
+              iconKey="markAsUnarchived"
+              class={style('notificationArchive__icon', 'nt-size-3')}
               fallback={<DefaultMarkAsUnarchived class={style('notificationArchive__icon', 'nt-size-3')} />}
-            >
-              {(renderIcon) => (
-                <IconRendererWrapper renderer={renderIcon()} class={style('notificationArchive__icon', 'nt-size-3')} />
-              )}
-            </Show>
+            />
           </Button>
         )}
       />
@@ -288,14 +270,11 @@ export const UnsnoozeButton = (props: { notification: Notification }) => {
               await props.notification.unsnooze();
             }}
           >
-            <Show
-              when={appearance.icons()?.unsnooze}
+            <IconRendererWrapper
+              iconKey="unsnooze"
+              class={style('notificationUnsnooze__icon', 'nt-size-3')}
               fallback={<DefaultUnsnooze class={style('notificationUnsnooze__icon', 'nt-size-3')} />}
-            >
-              {(renderIcon) => (
-                <IconRendererWrapper renderer={renderIcon()} class={style('notificationUnsnooze__icon', 'nt-size-3')} />
-              )}
-            </Show>
+            />
           </Button>
         )}
       />
@@ -337,17 +316,11 @@ export const SnoozeButton = (props: { notification: Notification }) => {
                     popoverProps.onClick?.(e);
                   }}
                 >
-                  <Show
-                    when={appearance.icons()?.snooze}
+                  <IconRendererWrapper
+                    iconKey="snooze"
+                    class={style('notificationSnooze__icon', 'nt-size-3')}
                     fallback={<DefaultSnooze class={style('notificationSnooze__icon', 'nt-size-3')} />}
-                  >
-                    {(renderIcon) => (
-                      <IconRendererWrapper
-                        renderer={renderIcon()}
-                        class={style('notificationSnooze__icon', 'nt-size-3')}
-                      />
-                    )}
-                  </Show>
+                  />
                 </Button>
               )}
             />

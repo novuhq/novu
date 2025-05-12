@@ -182,19 +182,13 @@ const PreferencesRow = (props: {
             )}
             data-open={isOpenChannels()}
           >
-            <Show
-              when={appearance.icons()?.arrowDropDown}
+            <IconRendererWrapper
+              iconKey="arrowDropDown"
+              class={style('workflowArrow__icon', 'nt-text-foreground-alpha-600 nt-size-4')}
               fallback={
                 <DefaultArrowDropDown class={style('workflowArrow__icon', 'nt-text-foreground-alpha-600 nt-size-4')} />
               }
-            >
-              {(renderIcon) => (
-                <IconRendererWrapper
-                  renderer={renderIcon()}
-                  class={style('workflowArrow__icon', 'nt-text-foreground-alpha-600 nt-size-4')}
-                />
-              )}
-            </Show>
+            />
           </span>
         </div>
         <Collapsible open={isOpenChannels()}>

@@ -205,19 +205,13 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
                             <Show when={index() === 0}>{date} ·</Show>
                             <Show when={index() === 1}>
                               <Badge appearanceKey="notificationDeliveredAt__badge">
-                                <Show
-                                  when={appearance.icons()?.clock}
+                                <IconRendererWrapper
+                                  iconKey="clock"
+                                  class={style('notificationDeliveredAt__icon', 'nt-size-3')}
                                   fallback={
                                     <DefaultClock class={style('notificationDeliveredAt__icon', 'nt-size-3')} />
                                   }
-                                >
-                                  {(renderClock) => (
-                                    <IconRendererWrapper
-                                      renderer={renderClock()}
-                                      class={style('notificationDeliveredAt__icon', 'nt-size-3')}
-                                    />
-                                  )}
-                                </Show>
+                                />
                                 {date}
                               </Badge>
                             </Show>
@@ -232,17 +226,11 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
           >
             {(snoozedUntil) => (
               <>
-                <Show
-                  when={appearance.icons()?.clock}
+                <IconRendererWrapper
+                  iconKey="clock"
+                  class={style('notificationSnoozedUntil__icon', 'nt-size-3')}
                   fallback={<DefaultClock class={style('notificationSnoozedUntil__icon', 'nt-size-3')} />}
-                >
-                  {(renderClock) => (
-                    <IconRendererWrapper
-                      renderer={renderClock()}
-                      class={style('notificationSnoozedUntil__icon', 'nt-size-3')}
-                    />
-                  )}
-                </Show>
+                />
                 {t('notification.snoozedUntil')} · {snoozedUntil()}
               </>
             )}

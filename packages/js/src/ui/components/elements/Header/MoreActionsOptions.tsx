@@ -59,20 +59,14 @@ export const ActionsItem = (props: {
       onClick={props.onClick}
     >
       <span class={style('moreActions__dropdownItemLeft__icon', 'nt-size-3')}>
-        <Show
-          when={appearance.icons()?.[props.iconKey]}
+        <IconRendererWrapper
+          iconKey={props.iconKey}
+          class={style('moreActions__dropdownItemLeft__icon', 'nt-size-3')}
           fallback={
             DefaultIconComponent &&
             DefaultIconComponent({ class: style('moreActions__dropdownItemLeft__icon', 'nt-size-3') })
           }
-        >
-          {(renderIcon) => (
-            <IconRendererWrapper
-              renderer={renderIcon()}
-              class={style('moreActions__dropdownItemLeft__icon', 'nt-size-3')}
-            />
-          )}
-        </Show>
+        />
       </span>
       <span
         data-localization={props.localizationKey}

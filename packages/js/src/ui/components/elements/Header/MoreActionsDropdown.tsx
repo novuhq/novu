@@ -19,14 +19,11 @@ export const MoreActionsDropdown = () => {
           class={style('moreActions__dropdownTrigger')}
           asChild={(triggerProps) => (
             <Button variant="ghost" size="iconSm" {...triggerProps}>
-              <Show
-                when={appearance.icons()?.dots}
+              <IconRendererWrapper
+                iconKey="dots"
+                class={style('moreActions__dots', 'nt-size-5')}
                 fallback={<DefaultDots class={style('moreActions__dots', 'nt-size-5')} />}
-              >
-                {(renderDots) => (
-                  <IconRendererWrapper renderer={renderDots()} class={style('moreActions__dots', 'nt-size-5')} />
-                )}
-              </Show>
+              />
             </Button>
           )}
         />

@@ -19,9 +19,11 @@ export const BellContainer = (props: DefaultBellContainerProps) => {
         `nt-size-4 nt-flex nt-justify-center nt-items-center nt-relative nt-text-foreground nt-cursor-pointer`
       )}
     >
-      <Show when={appearance.icons()?.bell} fallback={<DefaultBell class={style('bellIcon', 'nt-size-4')} />}>
-        {(renderBell) => <IconRendererWrapper renderer={renderBell()} class={style('bellIcon', 'nt-size-4')} />}
-      </Show>
+      <IconRendererWrapper
+        iconKey="bell"
+        class={style('bellIcon', 'nt-size-4')}
+        fallback={<DefaultBell class={style('bellIcon', 'nt-size-4')} />}
+      />
       <Show when={props.unreadCount > 0}>
         <span
           class={style(
