@@ -50,7 +50,6 @@ export const ActionsItem = (props: {
 }) => {
   const style = useStyle();
   const { t } = useLocalization();
-  const appearance = useAppearance();
   const DefaultIconComponent = iconKeyToComponentMap[props.iconKey];
 
   return (
