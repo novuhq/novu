@@ -3,6 +3,7 @@ import {
   GetSubscriberTemplatePreference,
   UpdateSubscriber,
   UpdateSubscriberChannel,
+  GetWorkflowByIdsUseCase,
 } from '@novu/application-generic';
 
 import { GetSubscribers } from './get-subscribers';
@@ -47,5 +48,6 @@ export const USE_CASES = [
   CreateIntegration,
   CheckIntegration,
   CheckIntegrationEMail,
+  GetWorkflowByIdsUseCase,
   UpdatePreferences,
 ];
