@@ -6,7 +6,7 @@ import { UpdatePreferencesRequestDto } from './update-preferences-request.dto';
 export class BulkUpdatePreferenceItemDto extends UpdatePreferencesRequestDto {
   @IsDefined()
   @IsString()
-  readonly workflowIdOrInternalId: string;
+  readonly workflowId: string;
 }
 
 export class BulkUpdatePreferencesRequestDto {

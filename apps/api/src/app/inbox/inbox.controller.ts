@@ -315,6 +315,10 @@ export class InboxController {
     );
   }
 
+  /**
+   * IMPORTANT: Make sure this endpoint route is defined before the single workflow preference update endpoint
+   * "PATCH /preferences/:workflowIdOrIdentifier", otherwise, the single workflow preference update endpoint will be triggered instead
+   */
   @UseGuards(AuthGuard('subscriberJwt'))
   @Patch('/preferences/bulk')
   async bulkUpdateWorkflowPreferences(

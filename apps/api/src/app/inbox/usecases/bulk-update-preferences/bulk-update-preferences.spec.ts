@@ -106,7 +106,7 @@ describe('BulkUpdatePreferences', () => {
       subscriberId: 'not-found',
       preferences: [
         {
-          workflowIdOrInternalId: mockedWorkflow1._id,
+          workflowId: mockedWorkflow1._id,
           in_app: true,
         },
       ],
@@ -173,11 +173,11 @@ describe('BulkUpdatePreferences', () => {
       subscriberId: 'test-mockSubscriber',
       preferences: [
         {
-          workflowIdOrInternalId: mockedWorkflow1._id,
+          workflowId: mockedWorkflow1._id,
           in_app: true,
         },
         {
-          workflowIdOrInternalId: 'test-trigger-2',
+          workflowId: 'test-trigger-2',
           in_app: false,
         },
       ],
@@ -206,11 +206,11 @@ describe('BulkUpdatePreferences', () => {
       subscriberId: 'test-mockSubscriber',
       preferences: [
         {
-          workflowIdOrInternalId: mockedWorkflow1._id, // ObjectId
+          workflowId: mockedWorkflow1._id, // ObjectId
           in_app: true,
         },
         {
-          workflowIdOrInternalId: nonObjectIdString, // Non-ObjectId string
+          workflowId: nonObjectIdString, // Non-ObjectId string
           email: true,
         },
       ],
@@ -244,12 +244,12 @@ describe('BulkUpdatePreferences', () => {
       subscriberId: 'test-mockSubscriber',
       preferences: [
         {
-          workflowIdOrInternalId: internalId,
+          workflowId: internalId,
           in_app: true,
           email: false,
         },
         {
-          workflowIdOrInternalId: triggerIdentifier,
+          workflowId: triggerIdentifier,
           in_app: false,
           email: true,
         },
@@ -281,7 +281,7 @@ describe('BulkUpdatePreferences', () => {
       subscriberId: 'test-mockSubscriber',
       preferences: [
         {
-          workflowIdOrInternalId: 'non-existent-id',
+          workflowId: 'non-existent-id',
           in_app: true,
         },
       ],
@@ -308,7 +308,7 @@ describe('BulkUpdatePreferences', () => {
       subscriberId: 'test-mockSubscriber',
       preferences: [
         {
-          workflowIdOrInternalId: criticalWorkflow._id,
+          workflowId: criticalWorkflow._id,
           in_app: true,
         },
       ],
@@ -333,12 +333,12 @@ describe('BulkUpdatePreferences', () => {
       subscriberId: 'test-mockSubscriber',
       preferences: [
         {
-          workflowIdOrInternalId: mockedWorkflow1._id,
+          workflowId: mockedWorkflow1._id,
           in_app: true,
           email: false,
         },
         {
-          workflowIdOrInternalId: mockedWorkflow2._id,
+          workflowId: mockedWorkflow2._id,
           sms: true,
           chat: true,
         },
@@ -389,7 +389,7 @@ describe('BulkUpdatePreferences', () => {
       subscriberId: 'test-mockSubscriber',
       preferences: [
         {
-          workflowIdOrInternalId: 'test-trigger-1', // Using identifier instead of ID
+          workflowId: 'test-trigger-1', // Using identifier instead of ID
           in_app: true,
         },
       ],

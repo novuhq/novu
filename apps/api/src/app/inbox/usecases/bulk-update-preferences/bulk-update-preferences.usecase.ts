@@ -39,7 +39,7 @@ export class BulkUpdatePreferences {
       throw new UnprocessableEntityException(`Exceeded maximum limit of ${MAX_BULK_LIMIT} preferences for bulk update`);
     }
 
-    const allWorkflowIds = command.preferences.map((preference) => preference.workflowIdOrInternalId);
+    const allWorkflowIds = command.preferences.map((preference) => preference.workflowId);
     const workflowInternalIds = allWorkflowIds.filter((id) => BaseRepository.isInternalId(id));
     const workflowIdentifiers = allWorkflowIds.filter((id) => !BaseRepository.isInternalId(id));
 
@@ -73,7 +73,7 @@ export class BulkUpdatePreferences {
     // deduplicate preferences by workflow document ID, it ensures we only process one update per actual workflow document
     const workflowPreferencesMap = new Map<string, BulkUpdatePreferenceItemDto>();
     for (const preference of command.preferences) {
-      const workflow = allValidWorkflowsMap.get(preference.workflowIdOrInternalId);
+      const workflow = allValidWorkflowsMap.get(preference.workflowId);
       if (workflow) {
         workflowPreferencesMap.set(workflow._id, preference);
       }
