@@ -1,10 +1,10 @@
 import { createEffect, createMemo, createSignal, For, JSX, Show } from 'solid-js';
 
 import type { Notification } from '../../../notifications';
-import { ActionTypeEnum } from '../../../types';
-import { useInboxContext, useLocalization } from '../../context';
+import { ActionTypeEnum, NotificationActionStatus } from '../../../types';
+import { useInboxContext, useLocalization, useAppearance } from '../../context';
 import { cn, formatSnoozedUntil, formatToRelativeTime, useStyle } from '../../helpers';
-import { Clock } from '../../icons/Clock';
+import { Clock as DefaultClock } from '../../icons/Clock';
 import {
   type BodyRenderer,
   type NotificationActionClickHandler,
@@ -16,6 +16,11 @@ import { ExternalElementRenderer } from '../ExternalElementRenderer';
 import { Button } from '../primitives';
 import { Badge } from '../primitives/Badge';
 import { renderNotificationActions } from './NotificationActions';
+import { ActionButton } from './shared/ActionButton';
+import { Dot } from './shared/Dot';
+import { Subject } from './shared/Subject';
+import { NotificationAction } from './NotificationAction';
+import { Body } from './shared/Body';
 
 type DefaultNotificationProps = {
   notification: Notification;
@@ -30,6 +35,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
   const style = useStyle();
   const { t, locale } = useLocalization();
   const { navigate, status } = useInboxContext();
+  const appearance = useAppearance();
   const [minutesPassed, setMinutesPassed] = createSignal(0);
   const createdAt = createMemo(() => {
     minutesPassed(); // register as dep
@@ -195,16 +201,24 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
             fallback={
               <>
                 <Show when={deliveredAt()} fallback={<>{createdAt()}</>}>
-                  {(deliveredAt) => (
-                    <Show when={deliveredAt().length >= 2}>
-                      {' '}
-                      <For each={deliveredAt().slice(-2)}>
+                  {(deliveredAtArr) => (
+                    <Show when={deliveredAtArr().length >= 2}>
+                      <For each={deliveredAtArr().slice(-2)}>
                         {(date, index) => (
                           <>
                             <Show when={index() === 0}>{date} ·</Show>
                             <Show when={index() === 1}>
                               <Badge appearanceKey="notificationDeliveredAt__badge">
-                                <Clock class={style('notificationDeliveredAt__icon', 'nt-size-3')} />
+                                <Show
+                                  when={appearance.icons()?.clock}
+                                  fallback={
+                                    <DefaultClock class={style('notificationDeliveredAt__icon', 'nt-size-3')} />
+                                  }
+                                >
+                                  {(renderClock) =>
+                                    renderClock()({ class: style('notificationDeliveredAt__icon', 'nt-size-3') })
+                                  }
+                                </Show>
                                 {date}
                               </Badge>
                             </Show>
@@ -214,13 +228,27 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
                     </Show>
                   )}
                 </Show>
+                <Show
+                  when={
+                    !props.notification.isRead &&
+                    props.notification.status !== NotificationActionStatus.ARCHIVED &&
+                    props.notification.status !== NotificationActionStatus.SNOOZED
+                  }
+                >
+                  <span class={style('notificationDot', 'nt-size-1.5 nt-bg-primary nt-rounded-full nt-shrink-0')} />
+                </Show>
               </>
             }
           >
-            {(snoozedUntil) => (
+            {(snoozedUntilVal) => (
               <>
-                <Clock class={style('notificationSnoozedUntil__icon', 'nt-size-3')} />
-                {t('notification.snoozedUntil')} · {snoozedUntil()}
+                <Show
+                  when={appearance.icons()?.clock}
+                  fallback={<DefaultClock class={style('notificationSnoozedUntil__icon', 'nt-size-3')} />}
+                >
+                  {(renderClock) => renderClock()({ class: style('notificationSnoozedUntil__icon', 'nt-size-3') })}
+                </Show>
+                {t('notification.snoozedUntil')} · {snoozedUntilVal()}
               </>
             )}
           </Show>

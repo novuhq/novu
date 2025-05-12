@@ -1,7 +1,7 @@
 import { Show } from 'solid-js';
-import { useInboxContext } from 'src/ui/context';
+import { useInboxContext, useAppearance } from 'src/ui/context';
 import { useStyle } from '../../../helpers';
-import { Dots } from '../../../icons';
+import { Dots as DefaultDots } from '../../../icons';
 import { NotificationStatus } from '../../../types';
 import { Button, Dropdown } from '../../primitives';
 import { MoreActionsOptions } from './MoreActionsOptions';
@@ -9,6 +9,7 @@ import { MoreActionsOptions } from './MoreActionsOptions';
 export const MoreActionsDropdown = () => {
   const style = useStyle();
   const { status } = useInboxContext();
+  const appearance = useAppearance();
 
   return (
     <Show when={status() !== NotificationStatus.ARCHIVED && status() !== NotificationStatus.SNOOZED}>
@@ -17,7 +18,12 @@ export const MoreActionsDropdown = () => {
           class={style('moreActions__dropdownTrigger')}
           asChild={(triggerProps) => (
             <Button variant="ghost" size="iconSm" {...triggerProps}>
-              <Dots class={style('moreActions__dots', 'nt-size-5')} />
+              <Show
+                when={appearance.icons()?.dots}
+                fallback={<DefaultDots class={style('moreActions__dots', 'nt-size-5')} />}
+              >
+                {(renderDots) => renderDots()({ class: style('moreActions__dots', 'nt-size-5') })}
+              </Show>
             </Button>
           )}
         />

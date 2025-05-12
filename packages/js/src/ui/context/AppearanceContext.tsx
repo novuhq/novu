@@ -12,12 +12,13 @@ import {
 import { createStore } from 'solid-js/store';
 import { defaultVariables } from '../config';
 import { parseElements, parseVariables } from '../helpers';
-import type { Appearance, Elements, Variables } from '../types';
+import type { Appearance, Elements, Variables, IconOverrides } from '../types';
 
 type AppearanceContextType = {
   variables: Accessor<Variables>;
   elements: Accessor<Elements>;
   animations: Accessor<boolean>;
+  icons: Accessor<IconOverrides>;
   appearanceKeyToCssInJsClass: Record<string, string>;
   id: Accessor<string>;
 };
@@ -40,6 +41,7 @@ export const AppearanceProvider = (props: AppearanceProviderProps) => {
   const id = () => props.id;
   const variables = () => props.appearance?.variables || {};
   const animations = () => props.appearance?.animations ?? true;
+  const icons = () => props.appearance?.icons || {};
   const allElements = createMemo(() => {
     const baseElements = themes().reduce<Elements>((acc, obj) => ({ ...acc, ...(obj.elements || {}) }), {});
 
@@ -121,8 +123,9 @@ export const AppearanceProvider = (props: AppearanceProviderProps) => {
       value={{
         elements: allElements,
         variables,
-        appearanceKeyToCssInJsClass: store.appearanceKeyToCssInJsClass, // stores are reactive
         animations,
+        icons,
+        appearanceKeyToCssInJsClass: store.appearanceKeyToCssInJsClass, // stores are reactive
         id,
       }}
     >

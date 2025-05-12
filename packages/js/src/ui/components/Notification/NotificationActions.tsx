@@ -1,14 +1,14 @@
-import { createMemo, createSignal, For, JSX } from 'solid-js';
+import { createMemo, createSignal, For, JSX, Show } from 'solid-js';
 import type { Notification } from '../../../notifications';
-import { useInboxContext, useLocalization } from '../../context';
+import { useInboxContext, useLocalization, useAppearance } from '../../context';
 import { useStyle } from '../../helpers';
-import { Clock } from '../../icons/Clock';
-import { MarkAsArchived } from '../../icons/MarkAsArchived';
-import { MarkAsRead } from '../../icons/MarkAsRead';
-import { MarkAsUnarchived } from '../../icons';
-import { MarkAsUnread } from '../../icons/MarkAsUnread';
-import { Snooze } from '../../icons/Snooze';
-import { Unsnooze } from '../../icons/Unsnooze';
+import { Clock as DefaultClock } from '../../icons/Clock';
+import { MarkAsArchived as DefaultMarkAsArchived } from '../../icons/MarkAsArchived';
+import { MarkAsRead as DefaultMarkAsRead } from '../../icons/MarkAsRead';
+import { MarkAsUnarchived as DefaultMarkAsUnarchived } from '../../icons';
+import { MarkAsUnread as DefaultMarkAsUnread } from '../../icons/MarkAsUnread';
+import { Snooze as DefaultSnooze } from '../../icons/Snooze';
+import { Unsnooze as DefaultUnsnooze } from '../../icons/Unsnooze';
 import { LocalizationKey, NotificationStatus } from '../../types';
 import { Button, Dropdown, dropdownItemVariants, Popover } from '../primitives';
 import { Tooltip } from '../primitives/Tooltip';
@@ -73,13 +73,25 @@ const SnoozeDropdownItem = (props: {
   asChild?: (props: any) => JSX.Element;
 }) => {
   const style = useStyle();
+  const appearance = useAppearance();
 
   const content = (
     <>
       <div class={style('dropdownItem', 'nt-flex nt-items-center nt-flex-1')}>
-        <Clock
-          class={style('notificationSnooze__dropdownItem__icon', 'nt-size-3 nt-text-foreground-alpha-400 nt-mr-2')}
-        />
+        <Show
+          when={appearance.icons()?.clock}
+          fallback={
+            <DefaultClock
+              class={style('notificationSnooze__dropdownItem__icon', 'nt-size-3 nt-text-foreground-alpha-400 nt-mr-2')}
+            />
+          }
+        >
+          {(renderClock) =>
+            renderClock()({
+              class: style('notificationSnooze__dropdownItem__icon', 'nt-size-3 nt-text-foreground-alpha-400 nt-mr-2'),
+            })
+          }
+        </Show>
         <span class={style('dropdownItemLabel')}>{props.label}</span>
       </div>
       <span class={style('dropdownItemRight__icon', 'nt-text-foreground-alpha-300 nt-ml-2 nt-text-xs')}>
@@ -110,6 +122,7 @@ const SnoozeDropdownItem = (props: {
 export const ReadButton = (props: { notification: Notification }) => {
   const style = useStyle();
   const { t } = useLocalization();
+  const appearance = useAppearance();
 
   return (
     <Tooltip.Root>
@@ -125,7 +138,12 @@ export const ReadButton = (props: { notification: Notification }) => {
               await props.notification.read();
             }}
           >
-            <MarkAsRead class={style('notificationRead__icon', 'nt-size-3')} />
+            <Show
+              when={appearance.icons()?.markAsRead}
+              fallback={<DefaultMarkAsRead class={style('notificationRead__icon', 'nt-size-3')} />}
+            >
+              {(renderIcon) => renderIcon()({ class: style('notificationRead__icon', 'nt-size-3') })}
+            </Show>
           </Button>
         )}
       />
@@ -139,6 +157,7 @@ export const ReadButton = (props: { notification: Notification }) => {
 export const UnreadButton = (props: { notification: Notification }) => {
   const style = useStyle();
   const { t } = useLocalization();
+  const appearance = useAppearance();
 
   return (
     <Tooltip.Root>
@@ -154,7 +173,12 @@ export const UnreadButton = (props: { notification: Notification }) => {
               await props.notification.unread();
             }}
           >
-            <MarkAsUnread class={style('notificationUnread__icon', 'nt-size-3')} />
+            <Show
+              when={appearance.icons()?.markAsUnread}
+              fallback={<DefaultMarkAsUnread class={style('notificationUnread__icon', 'nt-size-3')} />}
+            >
+              {(renderIcon) => renderIcon()({ class: style('notificationUnread__icon', 'nt-size-3') })}
+            </Show>
           </Button>
         )}
       />
@@ -168,6 +192,7 @@ export const UnreadButton = (props: { notification: Notification }) => {
 export const ArchiveButton = (props: { notification: Notification }) => {
   const style = useStyle();
   const { t } = useLocalization();
+  const appearance = useAppearance();
 
   return (
     <Tooltip.Root>
@@ -183,7 +208,12 @@ export const ArchiveButton = (props: { notification: Notification }) => {
               await props.notification.archive();
             }}
           >
-            <MarkAsArchived class={style('notificationArchive__icon', 'nt-size-3')} />
+            <Show
+              when={appearance.icons()?.markAsArchived}
+              fallback={<DefaultMarkAsArchived class={style('notificationArchive__icon', 'nt-size-3')} />}
+            >
+              {(renderIcon) => renderIcon()({ class: style('notificationArchive__icon', 'nt-size-3') })}
+            </Show>
           </Button>
         )}
       />
@@ -197,6 +227,7 @@ export const ArchiveButton = (props: { notification: Notification }) => {
 export const UnarchiveButton = (props: { notification: Notification }) => {
   const style = useStyle();
   const { t } = useLocalization();
+  const appearance = useAppearance();
 
   return (
     <Tooltip.Root>
@@ -212,7 +243,12 @@ export const UnarchiveButton = (props: { notification: Notification }) => {
               await props.notification.unarchive();
             }}
           >
-            <MarkAsUnarchived class={style('notificationArchive__icon', 'nt-size-3')} />
+            <Show
+              when={appearance.icons()?.markAsUnarchived}
+              fallback={<DefaultMarkAsUnarchived class={style('notificationArchive__icon', 'nt-size-3')} />}
+            >
+              {(renderIcon) => renderIcon()({ class: style('notificationArchive__icon', 'nt-size-3') })}
+            </Show>
           </Button>
         )}
       />
@@ -226,6 +262,7 @@ export const UnarchiveButton = (props: { notification: Notification }) => {
 export const UnsnoozeButton = (props: { notification: Notification }) => {
   const style = useStyle();
   const { t } = useLocalization();
+  const appearance = useAppearance();
 
   return (
     <Tooltip.Root>
@@ -241,7 +278,12 @@ export const UnsnoozeButton = (props: { notification: Notification }) => {
               await props.notification.unsnooze();
             }}
           >
-            <Unsnooze class={style('notificationUnsnooze__icon', 'nt-size-3')} />
+            <Show
+              when={appearance.icons()?.unsnooze}
+              fallback={<DefaultUnsnooze class={style('notificationUnsnooze__icon', 'nt-size-3')} />}
+            >
+              {(renderIcon) => renderIcon()({ class: style('notificationUnsnooze__icon', 'nt-size-3') })}
+            </Show>
           </Button>
         )}
       />
@@ -257,6 +299,7 @@ export const SnoozeButton = (props: { notification: Notification }) => {
   const { t, locale } = useLocalization();
   const { maxSnoozeDurationHours } = useInboxContext();
   const [isSnoozeDateTimePickerOpen, setIsSnoozeDateTimePickerOpen] = createSignal(false);
+  const appearance = useAppearance();
 
   const availableSnoozePresets = createMemo(() => {
     if (!maxSnoozeDurationHours()) return SNOOZE_PRESETS;
@@ -282,7 +325,12 @@ export const SnoozeButton = (props: { notification: Notification }) => {
                     popoverProps.onClick?.(e);
                   }}
                 >
-                  <Snooze class={style('notificationSnooze__icon', 'nt-size-3')} />
+                  <Show
+                    when={appearance.icons()?.snooze}
+                    fallback={<DefaultSnooze class={style('notificationSnooze__icon', 'nt-size-3')} />}
+                  >
+                    {(renderIcon) => renderIcon()({ class: style('notificationSnooze__icon', 'nt-size-3') })}
+                  </Show>
                 </Button>
               )}
             />

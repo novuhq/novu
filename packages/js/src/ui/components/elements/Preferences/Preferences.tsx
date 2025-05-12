@@ -4,9 +4,9 @@ import { Preference } from '../../../../preferences/preference';
 import { ChannelPreference, ChannelType, PreferenceLevel } from '../../../../types';
 import { usePreferences } from '../../../api';
 import { setDynamicLocalization } from '../../../config';
-import { StringLocalizationKey, useInboxContext, useLocalization } from '../../../context';
+import { StringLocalizationKey, useInboxContext, useLocalization, useAppearance } from '../../../context';
 import { cn, useStyle } from '../../../helpers';
-import { ArrowDropDown } from '../../../icons';
+import { ArrowDropDown as DefaultArrowDropDown } from '../../../icons';
 import { AppearanceKey } from '../../../types';
 import { Collapsible } from '../../primitives/Collapsible';
 import { ChannelRow, getLabel } from './ChannelRow';
@@ -138,6 +138,7 @@ const PreferencesRow = (props: {
   const [isOpenDescription, setIsOpenDescription] = createSignal(true);
   const [isOpenChannels, setIsOpenChannels] = createSignal(false);
   const { t } = useLocalization();
+  const appearance = useAppearance();
 
   const channels = createMemo(() => Object.keys(props.channels));
 
@@ -180,7 +181,16 @@ const PreferencesRow = (props: {
             )}
             data-open={isOpenChannels()}
           >
-            <ArrowDropDown class={style('workflowArrow__icon', 'nt-text-foreground-alpha-600 nt-size-4')} />
+            <Show
+              when={appearance.icons()?.arrowDropDown}
+              fallback={
+                <DefaultArrowDropDown class={style('workflowArrow__icon', 'nt-text-foreground-alpha-600 nt-size-4')} />
+              }
+            >
+              {(renderIcon) =>
+                renderIcon()({ class: style('workflowArrow__icon', 'nt-text-foreground-alpha-600 nt-size-4') })
+              }
+            </Show>
           </span>
         </div>
         <Collapsible open={isOpenChannels()}>
