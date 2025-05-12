@@ -1,10 +1,10 @@
 /* eslint-disable local-rules/no-class-without-style */
 import { createMemo, For, Show } from 'solid-js';
-import { useInboxContext, useUnreadCounts } from '../../context';
+import { useInboxContext, useUnreadCounts, useAppearance } from '../../context';
 import { cn, getTagsFromTab, useStyle } from '../../helpers';
 import { useTabsDropdown } from '../../helpers/useTabsDropdown';
-import { Check } from '../../icons';
-import { ArrowDown } from '../../icons/ArrowDown';
+import { Check as DefaultCheck } from '../../icons';
+import { ArrowDown as DefaultArrowDown } from '../../icons/ArrowDown';
 import {
   BodyRenderer,
   NotificationActionClickHandler,
@@ -17,6 +17,7 @@ import {
 import { NotificationList } from '../Notification';
 import { Button, Dropdown, Tabs } from '../primitives';
 import { InboxDropdownTab, InboxTab as InboxTabComponent, InboxTabUnreadNotificationsCount } from './InboxTab';
+import { IconRendererWrapper } from '../shared/IconRendererWrapper';
 
 const tabsDropdownTriggerVariants = () =>
   `nt-relative after:nt-absolute after:nt-content-[''] after:nt-bottom-0 after:nt-left-0 ` +
@@ -37,13 +38,18 @@ export const InboxTabs = (props: InboxTabsProps) => {
   const dropdownTabsUnreadCounts = useUnreadCounts({
     filters: dropdownTabs().map((tab) => ({ tags: getTagsFromTab(tab) })),
   });
+  const appearance = useAppearance();
 
   const options = createMemo(() =>
     dropdownTabs().map((tab) => ({
       ...tab,
       rightIcon:
         tab.label === activeTab() ? (
-          <Check class={style('moreTabs__dropdownItemRight__icon', 'nt-size-3')} />
+          <IconRendererWrapper
+            iconKey="check"
+            class={style('moreTabs__dropdownItemRight__icon', 'nt-size-3')}
+            fallback={<DefaultCheck class={style('moreTabs__dropdownItemRight__icon', 'nt-size-3')} />}
+          />
         ) : undefined,
     }))
   );
@@ -98,7 +104,11 @@ export const InboxTabs = (props: InboxTabsProps) => {
                         : 'after:nt-border-b-transparent nt-text-foreground-alpha-700'
                     )}
                   >
-                    <ArrowDown class={style('moreTabs__icon', 'nt-size-5')} />
+                    <IconRendererWrapper
+                      iconKey="arrowDown"
+                      class={style('moreTabs__icon', 'nt-size-5')}
+                      fallback={<DefaultArrowDown class={style('moreTabs__icon', 'nt-size-5')} />}
+                    />
                     <Show when={status() !== NotificationStatus.ARCHIVED && dropdownTabsUnreadSum()}>
                       <InboxTabUnreadNotificationsCount count={dropdownTabsUnreadSum()} />
                     </Show>

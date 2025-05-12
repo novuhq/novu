@@ -1,7 +1,6 @@
 import { onCleanup, onMount, Show, type JSX } from 'solid-js';
 import { useAppearance } from '../../context';
 import type { IconKey, IconRenderer } from '../../types';
-import { useStyle } from '../../helpers';
 
 type IconRendererWrapperProps = {
   iconKey: IconKey;

@@ -1,12 +1,13 @@
 import { For, Show } from 'solid-js';
 import { JSX } from 'solid-js/jsx-runtime';
-import { StringLocalizationKey, useInboxContext, useLocalization } from '../../../context';
+import { StringLocalizationKey, useInboxContext, useLocalization, useAppearance } from '../../../context';
 import { cn, useStyle } from '../../../helpers';
-import { Check, MarkAsArchived, MarkAsUnread, UnreadRead } from '../../../icons';
+import { Check as DefaultCheck, MarkAsArchived, MarkAsUnread, UnreadRead } from '../../../icons';
 import { Snooze } from '../../../icons/Snooze';
 import { NotificationStatus } from '../../../types';
 import { Dropdown, dropdownItemVariants } from '../../primitives/Dropdown';
 import { notificationStatusOptionsLocalizationKeys } from './constants';
+import { IconRendererWrapper } from '../../shared/IconRendererWrapper';
 
 const cases = [
   {
@@ -61,6 +62,7 @@ export const StatusItem = (props: {
 }) => {
   const style = useStyle();
   const { t } = useLocalization();
+  const appearance = useAppearance();
 
   return (
     <Dropdown.Item
@@ -77,7 +79,11 @@ export const StatusItem = (props: {
         </span>
       </span>
       <Show when={props.isSelected}>
-        <Check class={style('inboxStatus__dropdownItemCheck__icon', 'nt-size-3')} />
+        <IconRendererWrapper
+          iconKey="check"
+          class={style('inboxStatus__dropdownItemCheck__icon', 'nt-size-3')}
+          fallback={<DefaultCheck class={style('inboxStatus__dropdownItemCheck__icon', 'nt-size-3')} />}
+        />
       </Show>
     </Dropdown.Item>
   );

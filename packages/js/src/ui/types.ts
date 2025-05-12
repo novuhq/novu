@@ -62,7 +62,16 @@ export type IconKey =
   | 'markAsUnread'
   | 'markAsUnarchived'
   | 'unsnooze'
-  | 'snooze';
+  | 'snooze'
+  | 'arrowRight'
+  | 'arrowLeft'
+  | 'sms'
+  | 'inApp'
+  | 'email'
+  | 'push'
+  | 'chat'
+  | 'check'
+  | 'arrowDown';
 
 export type IconRenderer = (el: HTMLDivElement, props: { class?: string }) => () => void;
 
