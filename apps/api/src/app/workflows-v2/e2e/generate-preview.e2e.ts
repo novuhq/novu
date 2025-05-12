@@ -11,14 +11,13 @@ import {
   GeneratePreviewRequestDto,
   GeneratePreviewResponseDto,
   PreviewPayloadDto,
-  RedirectTargetEnum,
   StepTypeEnum,
   UpdateWorkflowDto,
   WorkflowCreationSourceEnum,
   WorkflowOriginEnum,
   WorkflowResponseDto,
 } from '@novu/api/models/components';
-import { CronExpressionEnum, slugify } from '@novu/shared';
+import { CronExpressionEnum, RedirectTargetEnum, slugify } from '@novu/shared';
 import { EmailControlType } from '@novu/application-generic';
 import { initNovuClassSdkInternalAuth } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 import { buildWorkflow } from '../workflow.controller.e2e';
@@ -100,14 +99,14 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
       primaryAction: {
         label: '{{payload.primaryUrlLabel}}',
         redirect: {
-          target: RedirectTargetEnum.Blank,
+          target: RedirectTargetEnum.BLANK,
           url: '/home/primary-action',
         },
       },
       secondaryAction: {
         label: 'Secondary Action',
         redirect: {
-          target: RedirectTargetEnum.Blank,
+          target: RedirectTargetEnum.BLANK,
           url: '/home/secondary-action',
         },
       },
@@ -115,7 +114,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
         key: 'value',
       },
       redirect: {
-        target: RedirectTargetEnum.Blank,
+        target: RedirectTargetEnum.BLANK,
         url: 'https://www.example.com/redirect',
       },
     };
@@ -187,14 +186,14 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
       primaryAction: {
         label: '{{payload.primaryUrlLabel}}',
         redirect: {
-          target: RedirectTargetEnum.Blank,
+          target: RedirectTargetEnum.BLANK,
           url: '/home/primary-action',
         },
       },
       secondaryAction: {
         label: 'Secondary Action',
         redirect: {
-          target: RedirectTargetEnum.Blank,
+          target: RedirectTargetEnum.BLANK,
           url: '/home/secondary-action',
         },
       },
@@ -202,7 +201,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
         key: 'value',
       },
       redirect: {
-        target: RedirectTargetEnum.Blank,
+        target: RedirectTargetEnum.BLANK,
         url: 'https://www.example.com/redirect',
       },
     };
@@ -305,14 +304,14 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
       primaryAction: {
         label: '{{payload.primaryUrlLabel}}',
         redirect: {
-          target: RedirectTargetEnum.Blank,
+          target: RedirectTargetEnum.BLANK,
           url: '/home/primary-action',
         },
       },
       secondaryAction: {
         label: 'Secondary Action',
         redirect: {
-          target: RedirectTargetEnum.Blank,
+          target: RedirectTargetEnum.BLANK,
           url: '/home/secondary-action',
         },
       },
@@ -320,7 +319,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
         key: 'value',
       },
       redirect: {
-        target: RedirectTargetEnum.Blank,
+        target: RedirectTargetEnum.BLANK,
         url: 'https://www.example.com/redirect',
       },
     };
@@ -1207,12 +1206,12 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
         primaryAction: {
           label: '{{payload.secondaryUrl}}',
           redirect: {
-            target: RedirectTargetEnum.Blank,
+            target: RedirectTargetEnum.BLANK,
           },
         },
         secondaryAction: null,
         redirect: {
-          target: RedirectTargetEnum.Blank,
+          target: RedirectTargetEnum.BLANK,
           url: '   ',
         },
       };
@@ -1239,12 +1238,12 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
             primaryAction: {
               label: '{{payload.secondaryUrl}}',
               redirect: {
-                target: RedirectTargetEnum.Blank,
+                target: RedirectTargetEnum.BLANK,
               },
             },
             secondaryAction: null,
             redirect: {
-              target: RedirectTargetEnum.Blank,
+              target: RedirectTargetEnum.BLANK,
               url: '   ',
             },
           }.body
@@ -1692,13 +1691,13 @@ function buildInAppControlValues() {
     primaryAction: {
       label: '{{payload.primaryUrlLabel}}',
       redirect: {
-        target: RedirectTargetEnum.Blank,
+        target: RedirectTargetEnum.BLANK,
       },
     },
     secondaryAction: {
       label: 'Secondary Action',
       redirect: {
-        target: RedirectTargetEnum.Blank,
+        target: RedirectTargetEnum.BLANK,
         url: '/home/secondary-action',
       },
     },
@@ -1706,7 +1705,7 @@ function buildInAppControlValues() {
       key: 'value',
     },
     redirect: {
-      target: RedirectTargetEnum.Blank,
+      target: RedirectTargetEnum.BLANK,
       url: 'https://www.example.com/redirect',
     },
   };
@@ -1721,18 +1720,18 @@ function buildInAppControlValueWithAPlaceholderInTheUrl() {
       label: '{{payload.secondaryUrlLabel}}',
       redirect: {
         url: '{{payload.secondaryUrl}}',
-        target: RedirectTargetEnum.Blank,
+        target: RedirectTargetEnum.BLANK,
       },
     },
     secondaryAction: {
       label: 'Secondary Action',
       redirect: {
-        target: RedirectTargetEnum.Blank,
+        target: RedirectTargetEnum.BLANK,
         url: '',
       },
     },
     redirect: {
-      target: RedirectTargetEnum.Blank,
+      target: RedirectTargetEnum.BLANK,
       url: '   ',
     },
   };
