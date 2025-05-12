@@ -49,39 +49,12 @@ export type Variables = {
 export type AppearanceKey = (typeof appearanceKeys)[number];
 export type Elements = Partial<Record<AppearanceKey, ElementStyles>>;
 
-// Define props expected by icon components
-export type IconProps = {
-  class?: string;
-};
+export type IconKey = 'bell' | 'clock' | 'arrowDropDown' | 'dots' | 'markAsRead' | 'settings' | 'trash';
 
-// Define the type for an icon render function
-export type IconRenderer = (props: IconProps) => JSXElement;
+export type IconRenderer = (el: HTMLDivElement, props: { class?: string }) => () => void;
 
 export type IconOverrides = {
-  markAsUnread?: IconRenderer;
-  snooze?: IconRenderer;
-  unreadRead?: IconRenderer;
-  unsnooze?: IconRenderer;
-  markAsArchivedRead?: IconRenderer;
-  markAsRead?: IconRenderer;
-  markAsArchived?: IconRenderer;
-  arrowRight?: IconRenderer;
-  clock?: IconRenderer;
-  sms?: IconRenderer;
-  settings?: IconRenderer;
-  push?: IconRenderer;
-  novu?: IconRenderer;
-  markAsUnarchived?: IconRenderer;
-  lock?: IconRenderer;
-  inApp?: IconRenderer;
-  email?: IconRenderer;
-  dots?: IconRenderer;
-  check?: IconRenderer;
-  chat?: IconRenderer;
-  bell?: IconRenderer;
-  arrowLeft?: IconRenderer;
-  arrowDown?: IconRenderer;
-  arrowDropDown?: IconRenderer;
+  [key in IconKey]?: IconRenderer;
 };
 
 export type Theme = {

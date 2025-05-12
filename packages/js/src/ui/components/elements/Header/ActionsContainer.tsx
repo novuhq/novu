@@ -4,6 +4,7 @@ import { Settings as DefaultSettings } from '../../../icons';
 import { useAppearance } from '../../../context';
 import { Button } from '../../primitives';
 import { MoreActionsDropdown } from './MoreActionsDropdown';
+import { IconRendererWrapper } from '../../shared/IconRendererWrapper';
 
 type ActionsContainerProps = {
   showPreferences?: () => void;
@@ -19,11 +20,10 @@ export const ActionsContainer = (props: ActionsContainerProps) => {
       <Show when={props.showPreferences}>
         {(showPreferences) => (
           <Button appearanceKey="preferences__button" variant="ghost" size="iconSm" onClick={showPreferences()}>
-            <Show
-              when={appearance.icons()?.settings}
-              fallback={<DefaultSettings class={style('preferences__icon', 'nt-size-5')} />}
-            >
-              {(renderSettings) => renderSettings()({ class: style('preferences__icon', 'nt-size-5') })}
+            <Show when={appearance.icons()?.settings} fallback={<DefaultSettings class={style('icon', 'nt-size-5')} />}>
+              {(renderSettings) => (
+                <IconRendererWrapper renderer={renderSettings()} class={style('icon', 'nt-size-5')} />
+              )}
             </Show>
           </Button>
         )}

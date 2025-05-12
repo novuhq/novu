@@ -3,18 +3,37 @@ import type {
   NotificationClickHandler,
   NotificationActionClickHandler,
   Tab,
-  Appearance,
+  Appearance as JsAppearance,
+  Theme as JsTheme,
+  IconKey,
   Localization,
   RouterPush,
   PreferencesFilter,
   InboxProps,
+  InboxPage,
 } from '@novu/js/ui';
 import type { Subscriber } from '@novu/js';
+import type { ReactNode } from 'react';
 
 export type NotificationsRenderer = (notification: Notification) => React.ReactNode;
 export type SubjectRenderer = (notification: Notification) => React.ReactNode;
 export type BodyRenderer = (notification: Notification) => React.ReactNode;
 export type BellRenderer = (unreadCount: number) => React.ReactNode;
+
+export type ReactIconRendererProps = { class?: string };
+export type ReactIconRenderer = (props: ReactIconRendererProps) => ReactNode;
+
+export type ReactIconOverrides = {
+  [key in IconKey]?: ReactIconRenderer;
+};
+
+export type ReactTheme = Omit<JsTheme, 'icons'> & {
+  icons?: ReactIconOverrides;
+};
+
+export type ReactAppearance = ReactTheme & {
+  baseTheme?: JsTheme | JsTheme[];
+};
 
 export type DefaultInboxProps = {
   open?: boolean;
@@ -34,7 +53,7 @@ export type BaseProps = {
   subscriberHash?: string;
   backendUrl?: string;
   socketUrl?: string;
-  appearance?: Appearance;
+  appearance?: ReactAppearance;
   localization?: Localization;
   tabs?: Array<Tab>;
   preferencesFilter?: PreferencesFilter;

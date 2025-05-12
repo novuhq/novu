@@ -11,6 +11,7 @@ import { AppearanceKey } from '../../../types';
 import { Collapsible } from '../../primitives/Collapsible';
 import { ChannelRow, getLabel } from './ChannelRow';
 import { PreferencesListSkeleton } from './PreferencesListSkeleton';
+import { IconRendererWrapper } from '../../shared/IconRendererWrapper';
 
 /* This is also going to be exported as a separate component. Keep it pure. */
 export const Preferences = () => {
@@ -187,9 +188,12 @@ const PreferencesRow = (props: {
                 <DefaultArrowDropDown class={style('workflowArrow__icon', 'nt-text-foreground-alpha-600 nt-size-4')} />
               }
             >
-              {(renderIcon) =>
-                renderIcon()({ class: style('workflowArrow__icon', 'nt-text-foreground-alpha-600 nt-size-4') })
-              }
+              {(renderIcon) => (
+                <IconRendererWrapper
+                  renderer={renderIcon()}
+                  class={style('workflowArrow__icon', 'nt-text-foreground-alpha-600 nt-size-4')}
+                />
+              )}
             </Show>
           </span>
         </div>
