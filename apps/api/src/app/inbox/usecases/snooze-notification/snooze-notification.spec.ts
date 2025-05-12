@@ -24,7 +24,7 @@ import { MarkNotificationAs } from '../mark-notification-as/mark-notification-as
 import { MarkNotificationAsCommand } from '../mark-notification-as/mark-notification-as.command';
 import { InboxNotification } from '../../utils/types';
 
-describe.only('SnoozeNotification', () => {
+describe('SnoozeNotification', () => {
   const validNotificationId = '507f1f77bcf86cd799439011';
   const validEnvId = '507f1f77bcf86cd799439012';
   const validOrgId = '507f1f77bcf86cd799439013';

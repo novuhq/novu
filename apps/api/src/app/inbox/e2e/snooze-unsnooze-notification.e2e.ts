@@ -31,6 +31,48 @@ describe('Snooze and Unsnooze Notifications - /inbox/notifications/:id/{snooze,u
       .send();
   };
 
+  const getNotification = async (id: string) => {
+    const response = await session.testAgent
+      .get(`/v1/inbox/notifications`)
+      .set('Authorization', `Bearer ${session.subscriberToken}`);
+
+    if (response.status !== 200) {
+      return response;
+    }
+
+    // Find the specific notification in the results
+    const notification = response.body.data.find((notif) => notif.id === id);
+    if (notification) {
+      // Return a response object that mimics a single notification endpoint response
+      return {
+        status: 200,
+        body: notification,
+      };
+    }
+
+    // Return 404 if notification not found
+    return {
+      status: 404,
+      body: { message: 'Notification not found' },
+    };
+  };
+
+  // Helper to get notifications with specific filters
+  const getNotificationsWithFilter = async (filter: { snoozed?: boolean } = {}) => {
+    let url = `/v1/inbox/notifications`;
+    const queryParams: string[] = [];
+
+    if (filter.snoozed !== undefined) {
+      queryParams.push(`snoozed=${filter.snoozed}`);
+    }
+
+    if (queryParams.length > 0) {
+      url += `?${queryParams.join('&')}`;
+    }
+
+    return await session.testAgent.get(url).set('Authorization', `Bearer ${session.subscriberToken}`);
+  };
+
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
@@ -80,27 +122,22 @@ describe('Snooze and Unsnooze Notifications - /inbox/notifications/:id/{snooze,u
     const snoozeUntil = new Date();
     snoozeUntil.setHours(snoozeUntil.getHours() + 1); // Snooze for 1 hour
 
-    const response = await snoozeNotification(notificationId, snoozeUntil);
+    // Call the snooze API
+    const snoozeResponse = await snoozeNotification(notificationId, snoozeUntil);
+    expect(snoozeResponse.status).to.equal(200);
 
-    expect(response.status).to.equal(200);
+    // Verify through snoozed filter API that the notification is snoozed
+    const snoozedList = await getNotificationsWithFilter({ snoozed: true });
+    expect(snoozedList.status).to.equal(200);
 
-    // Verify the notification has been marked as snoozed in the database
-    const snoozedNotification = await messageRepository.findOne({
-      _environmentId: session.environment._id,
-      _id: notificationId,
-    });
+    const snoozedNotification = snoozedList.body.data.find((notification) => notification.id === notificationId);
+    expect(snoozedNotification).to.not.be.undefined;
+    expect(snoozedNotification).to.have.property('snoozedUntil').that.is.not.null;
 
-    expect(snoozedNotification).to.not.be.null;
-    expect(snoozedNotification?.snoozedUntil).to.not.be.null;
-    expect(Boolean(snoozedNotification?.snoozedUntil)).to.equal(true); // Check that it's snoozed
-
-    // Convert dates to timestamps for comparison since exact milliseconds might differ
-    const snoozedUntil = snoozedNotification?.snoozedUntil;
-    const actualSnoozeTime = snoozedUntil ? new Date(snoozedUntil).getTime() : 0;
+    // Verify the snooze time is approximately correct
+    const responseSnoozedTime = new Date(snoozedNotification.snoozedUntil).getTime();
     const expectedSnoozeTime = snoozeUntil.getTime();
-
-    // Allow for a small difference due to processing time
-    expect(Math.abs(actualSnoozeTime - expectedSnoozeTime)).to.be.lessThan(5000);
+    expect(Math.abs(responseSnoozedTime - expectedSnoozeTime)).to.be.lessThan(5000);
   });
 
   it('should successfully unsnooze a notification', async () => {
@@ -110,27 +147,18 @@ describe('Snooze and Unsnooze Notifications - /inbox/notifications/:id/{snooze,u
 
     await snoozeNotification(notificationId, snoozeUntil);
 
-    // Verify it's snoozed
-    const snoozedNotification = await messageRepository.findOne({
-      _environmentId: session.environment._id,
-      _id: notificationId,
-    });
-
-    expect(snoozedNotification?.snoozedUntil).to.not.be.null;
+    // Verify it's snoozed via API using the snoozed filter
+    const snoozedList = await getNotificationsWithFilter({ snoozed: true });
+    expect(snoozedList.status).to.equal(200);
+    expect(snoozedList.body.data.some((notification) => notification.id === notificationId)).to.be.true;
 
     // Now unsnooze it
-    const response = await unsnoozeNotification(notificationId);
+    const unsnoozeResponse = await unsnoozeNotification(notificationId);
+    expect(unsnoozeResponse.status).to.equal(200);
 
-    expect(response.status).to.equal(200);
-
-    // Verify the notification has been unsnoozed
-    const unsnoozedNotification = await messageRepository.findOne({
-      _environmentId: session.environment._id,
-      _id: notificationId,
-    });
-
-    expect(unsnoozedNotification?.snoozedUntil).to.be.null;
-    expect(Boolean(unsnoozedNotification?.snoozedUntil)).to.equal(false); // Check that it's not snoozed
+    // Verify the notification has been unsnoozed via API
+    const unsnoozedResponse = await getNotification(notificationId);
+    expect(unsnoozedResponse.body).to.have.property('isSnoozed').that.equals(false);
   });
 
   it('should handle attempting to unsnooze a notification that is not snoozed', async () => {
