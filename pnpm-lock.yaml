@@ -570,9 +570,6 @@ importers:
       swagger-ui-express:
         specifier: ^4.4.0
         version: 4.6.2(express@5.0.1)
-      twilio:
-        specifier: ^4.14.1
-        version: 4.15.0
       uuid:
         specifier: ^8.3.2
         version: 8.3.2
@@ -3757,8 +3754,8 @@ importers:
         specifier: ^0.3.2
         version: 0.3.2
       '@mailchimp/mailchimp_transactional':
-        specifier: ^1.0.50
-        version: 1.0.50
+        specifier: ^1.0.59
+        version: 1.0.59
       '@novu/shared':
         specifier: workspace:*
         version: link:../shared
@@ -3835,8 +3832,8 @@ importers:
         specifier: ^6.6.5
         version: 6.9.1
       plivo:
-        specifier: ^4.60.1
-        version: 4.60.1
+        specifier: ^4.70.0
+        version: 4.70.0
       postmark:
         specifier: ^4.0.2
         version: 4.0.2
@@ -9238,8 +9235,8 @@ packages:
     resolution: {integrity: sha512-qC72D4+CDdjGqJvkFMMEAtancHUQ7/d/tAiHf64z8MopFDmcrtbcJuerDtFceuAfQJ2pDSfCKCtbqoGBNnwg0w==}
     engines: {node: '>=8'}
 
-  '@mailchimp/mailchimp_transactional@1.0.50':
-    resolution: {integrity: sha512-SaNFseFPSDQlOYM9JTyYY6wauMu6qJ8eExo+jssFyb20ZaVvxKX1eTb3Gm5aW/4aWuxn6nofU+02sCk51//wdw==}
+  '@mailchimp/mailchimp_transactional@1.0.59':
+    resolution: {integrity: sha512-jjTMZ78rxpYCKqO4888lSA+XMWzQ3Xcn+V+06aZJi8JDIeiY+VWNR7f2Ntyt389uN63W2TMDUu0I4Si1li7Z6g==}
     engines: {node: '>=10.0.0'}
 
   '@maily-to/core@https://codeload.github.com/novuhq/maily.to/tar.gz/3e7b85d776ccb028d9377a7264ac7d30d33e40a4#path:/packages/core':
@@ -18874,12 +18871,6 @@ packages:
     resolution: {integrity: sha512-Mr2ZakwQ7XUAjp7pAwQWRhhK8mQQ6JAaNWSjmjxil0R8BPioMtQsTLOolGYkji1rcL++3dCqZA3zWqpT+9Ew6g==}
     engines: {node: '>=4'}
 
-  axios@0.21.4:
-    resolution: {integrity: sha512-ut5vewkiu8jjGBdqpM44XxjuCjq9LAKeHVmoVfHVzy8eHgxxq8SbAVQNovDA8mVi05kP0Ea/n/UzcSHcTJQfNg==}
-
-  axios@0.26.1:
-    resolution: {integrity: sha512-fPwcX4EvnSHuInCMItEhAGnaSEXRBjtzh9fOtsE6E1G6p7vl7edEeZe11QHf18+6+9gR5PbKV/sGKNaD8YaMeA==}
-
   axios@1.6.2:
     resolution: {integrity: sha512-7i24Ri4pmDRfJTR7LDBhsOTtcm+9kjX5WiY1X3wIisx6G9So3pfMkEiU7emUBe46oceVImccTEM3k6C5dbVW8A==}
 
@@ -28070,8 +28061,8 @@ packages:
   please-upgrade-node@3.2.0:
     resolution: {integrity: sha512-gQR3WpIgNIKwBMVLkpMUeR3e1/E1y42bqDQZfql+kDeXd8COYfM8PQA4X6y7a8u9Ua9FHmsrrmirW2vHs45hWg==}
 
-  plivo@4.60.1:
-    resolution: {integrity: sha512-GkrgJ0lwJ7jjPcexGLEGey2vLf0dCZBPY7Es9kGVSQqqG5kiXSY4hrqwblqXyEanDip/j5vk+jMWvNd/uL0BUw==}
+  plivo@4.70.0:
+    resolution: {integrity: sha512-AXziL8Ixr2WUUE1Ppm95oJTwpRiT9ftCsLtlo9W8m4h5R+tjgXeE4oICkQ7eAcw/BBvdDLwkPjKYLKZprfkDng==}
 
   pluralize@8.0.0:
     resolution: {integrity: sha512-Nc3IT5yHzflTfbjgqWcCPpo7DaKy4FnpB0l/zCAW0Tc7jxAiuqSxHasntB3D7887LSrA93kDJ9IXovxJYxyLCA==}
@@ -29365,10 +29356,6 @@ packages:
 
   qs@6.11.0:
     resolution: {integrity: sha512-MvjoMCJwEarSbUYk5O+nmoSzSutSsTwF85zcHPQ9OrlFoZOYIjaqBAJIqIXjptyD5vThxGq52Xu/MaJzRkIk4Q==}
-    engines: {node: '>=0.6'}
-
-  qs@6.11.1:
-    resolution: {integrity: sha512-0wsrzgTz/kAVIeuxSjnpGC56rzYtr6JT/2BwEvMaPhFIoYa1aGO8LbzuU1R0uUYQkLpWBTOj0l/CLAJB64J6nQ==}
     engines: {node: '>=0.6'}
 
   qs@6.11.2:
@@ -32784,10 +32771,6 @@ packages:
   tweetnacl@1.0.3:
     resolution: {integrity: sha512-6rt+RN7aOi1nGMyC4Xa5DdYiukl2UWCbcJft7YhxReBGQD7OAM8Pbxw6YMo4r2diNEA8FEmu32YOn9rhaiE5yw==}
 
-  twilio@4.15.0:
-    resolution: {integrity: sha512-wkHfIpAr2oOMfJ6A/Z6WD0jzLZZwMdbzys3XbslxNkmu4gGgRCre7o3IgaXRR5HIELEilbRhZjsmYHpG3fL8HA==}
-    engines: {node: '>=14.0'}
-
   twilio@4.20.0:
     resolution: {integrity: sha512-Dl49awVTgv9LOLrmXi7elKa2mb69rtkwJHlKNbIR9HjXN7q66gEEaiZsE6gdr+Wfk/zInOvPDVBCdQM+SYXqkA==}
     engines: {node: '>=14.0'}
@@ -35083,8 +35066,8 @@ snapshots:
       '@aws-crypto/sha1-browser': 3.0.0
       '@aws-crypto/sha256-browser': 3.0.0
       '@aws-crypto/sha256-js': 3.0.0
-      '@aws-sdk/client-sso-oidc': 3.575.0(@aws-sdk/client-sts@3.575.0)
-      '@aws-sdk/client-sts': 3.575.0
+      '@aws-sdk/client-sso-oidc': 3.575.0
+      '@aws-sdk/client-sts': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)
       '@aws-sdk/core': 3.575.0
       '@aws-sdk/credential-provider-node': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)(@aws-sdk/client-sts@3.575.0)
       '@aws-sdk/middleware-bucket-endpoint': 3.575.0
@@ -35358,11 +35341,11 @@ snapshots:
       - aws-crt
     optional: true
 
-  '@aws-sdk/client-sso-oidc@3.575.0(@aws-sdk/client-sts@3.575.0)':
+  '@aws-sdk/client-sso-oidc@3.575.0':
     dependencies:
       '@aws-crypto/sha256-browser': 3.0.0
       '@aws-crypto/sha256-js': 3.0.0
-      '@aws-sdk/client-sts': 3.575.0
+      '@aws-sdk/client-sts': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)
       '@aws-sdk/core': 3.575.0
       '@aws-sdk/credential-provider-node': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)(@aws-sdk/client-sts@3.575.0)
       '@aws-sdk/middleware-host-header': 3.575.0
@@ -35401,7 +35384,6 @@ snapshots:
       '@smithy/util-utf8': 3.0.0
       tslib: 2.8.1
     transitivePeerDependencies:
-      - '@aws-sdk/client-sts'
       - aws-crt
 
   '@aws-sdk/client-sso-oidc@3.637.0(@aws-sdk/client-sts@3.637.0)':
@@ -35920,11 +35902,11 @@ snapshots:
       - aws-crt
     optional: true
 
-  '@aws-sdk/client-sts@3.575.0':
+  '@aws-sdk/client-sts@3.575.0(@aws-sdk/client-sso-oidc@3.575.0)':
     dependencies:
       '@aws-crypto/sha256-browser': 3.0.0
       '@aws-crypto/sha256-js': 3.0.0
-      '@aws-sdk/client-sso-oidc': 3.575.0(@aws-sdk/client-sts@3.575.0)
+      '@aws-sdk/client-sso-oidc': 3.575.0
       '@aws-sdk/core': 3.575.0
       '@aws-sdk/credential-provider-node': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)(@aws-sdk/client-sts@3.575.0)
       '@aws-sdk/middleware-host-header': 3.575.0
@@ -35963,6 +35945,7 @@ snapshots:
       '@smithy/util-utf8': 3.0.0
       tslib: 2.8.1
     transitivePeerDependencies:
+      - '@aws-sdk/client-sso-oidc'
       - aws-crt
 
   '@aws-sdk/client-sts@3.637.0':
@@ -36272,7 +36255,7 @@ snapshots:
 
   '@aws-sdk/credential-provider-ini@3.575.0(@aws-sdk/client-sso-oidc@3.575.0)(@aws-sdk/client-sts@3.575.0)':
     dependencies:
-      '@aws-sdk/client-sts': 3.575.0
+      '@aws-sdk/client-sts': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)
       '@aws-sdk/credential-provider-env': 3.575.0
       '@aws-sdk/credential-provider-process': 3.575.0
       '@aws-sdk/credential-provider-sso': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)
@@ -36805,7 +36788,7 @@ snapshots:
 
   '@aws-sdk/credential-provider-web-identity@3.575.0(@aws-sdk/client-sts@3.575.0)':
     dependencies:
-      '@aws-sdk/client-sts': 3.575.0
+      '@aws-sdk/client-sts': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)
       '@aws-sdk/types': 3.575.0
       '@smithy/property-provider': 3.1.3
       '@smithy/types': 3.3.0
@@ -37407,7 +37390,7 @@ snapshots:
 
   '@aws-sdk/token-providers@3.575.0(@aws-sdk/client-sso-oidc@3.575.0)':
     dependencies:
-      '@aws-sdk/client-sso-oidc': 3.575.0(@aws-sdk/client-sts@3.575.0)
+      '@aws-sdk/client-sso-oidc': 3.575.0
       '@aws-sdk/types': 3.575.0
       '@smithy/property-provider': 3.1.3
       '@smithy/shared-ini-file-loader': 3.1.4
@@ -37416,7 +37399,7 @@ snapshots:
 
   '@aws-sdk/token-providers@3.614.0(@aws-sdk/client-sso-oidc@3.575.0)':
     dependencies:
-      '@aws-sdk/client-sso-oidc': 3.575.0(@aws-sdk/client-sts@3.575.0)
+      '@aws-sdk/client-sso-oidc': 3.575.0
       '@aws-sdk/types': 3.609.0
       '@smithy/property-provider': 3.1.3
       '@smithy/shared-ini-file-loader': 3.1.4
@@ -43693,9 +43676,9 @@ snapshots:
     dependencies:
       '@lukeed/csprng': 1.1.0
 
-  '@mailchimp/mailchimp_transactional@1.0.50':
+  '@mailchimp/mailchimp_transactional@1.0.59':
     dependencies:
-      axios: 0.21.4
+      axios: 1.9.0
     transitivePeerDependencies:
       - debug
 
@@ -58414,18 +58397,6 @@ snapshots:
 
   axe-core@4.10.0: {}
 
-  axios@0.21.4:
-    dependencies:
-      follow-redirects: 1.15.6(debug@4.3.6)
-    transitivePeerDependencies:
-      - debug
-
-  axios@0.26.1:
-    dependencies:
-      follow-redirects: 1.15.6(debug@4.3.6)
-    transitivePeerDependencies:
-      - debug
-
   axios@1.6.2:
     dependencies:
       follow-redirects: 1.15.6(debug@4.3.6)
@@ -71306,10 +71277,10 @@ snapshots:
     dependencies:
       semver-compare: 1.0.0
 
-  plivo@4.60.1:
+  plivo@4.70.0:
     dependencies:
       '@types/node': 14.18.42
-      axios: 0.21.4
+      axios: 1.9.0
       base-64: 0.1.0
       build-url: 1.3.3
       form-data: 4.0.0
@@ -72868,10 +72839,6 @@ snapshots:
   qs@6.11.0:
     dependencies:
       side-channel: 1.1.0
-
-  qs@6.11.1:
-    dependencies:
-      side-channel: 1.0.4
 
   qs@6.11.2:
     dependencies:
@@ -77606,20 +77573,6 @@ snapshots:
 
   tweetnacl@1.0.3: {}
 
-  twilio@4.15.0:
-    dependencies:
-      axios: 0.26.1
-      dayjs: 1.11.9
-      https-proxy-agent: 5.0.1
-      jsonwebtoken: 9.0.0
-      qs: 6.11.1
-      scmp: 2.1.0
-      url-parse: 1.5.10
-      xmlbuilder: 13.0.2
-    transitivePeerDependencies:
-      - debug
-      - supports-color
-
   twilio@4.20.0:
     dependencies:
       axios: 1.9.0
@@ -79870,7 +79823,7 @@ snapshots:
 
   xml2js@0.5.0:
     dependencies:
-      sax: 1.2.4
+      sax: 1.4.1
       xmlbuilder: 11.0.1
 
   xmlbuilder@11.0.1: {}
