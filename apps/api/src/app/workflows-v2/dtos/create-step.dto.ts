@@ -1,6 +1,16 @@
 import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { StepTypeEnum } from '@novu/shared';
+import { JSONSchemaDto, StepTypeEnum } from '@novu/shared';
+import {
+  inAppControlSchema,
+  emailControlSchema,
+  smsControlSchema,
+  pushControlSchema,
+  chatControlSchema,
+  delayControlSchema,
+  digestControlSchema,
+} from '@novu/application-generic';
+import { PERMISSIVE_EMPTY_SCHEMA } from '../shared/step-type-to-control.mapper';
 
 export class StepUpsertDto {
   @ApiProperty({
@@ -25,11 +35,20 @@ export class StepUpsertDto {
   })
   @IsEnum(StepTypeEnum)
   type: StepTypeEnum;
+
   @ApiPropertyOptional({
-    description: 'Control values for the step',
-    type: 'object',
+    description: 'Control values for the step, structure depends on the step type.',
     nullable: true,
-    additionalProperties: true,
+    oneOf: [
+      { ...inAppControlSchema, title: `Controls for ${StepTypeEnum.IN_APP}` },
+      { ...emailControlSchema, title: `Controls for ${StepTypeEnum.EMAIL}` },
+      { ...smsControlSchema, title: `Controls for ${StepTypeEnum.SMS}` },
+      { ...pushControlSchema, title: `Controls for ${StepTypeEnum.PUSH}` },
+      { ...chatControlSchema, title: `Controls for ${StepTypeEnum.CHAT}` },
+      { ...delayControlSchema, title: `Controls for ${StepTypeEnum.DELAY}` },
+      { ...digestControlSchema, title: `Controls for ${StepTypeEnum.DIGEST}` },
+      { ...PERMISSIVE_EMPTY_SCHEMA, title: `Controls for ${StepTypeEnum.CUSTOM}` } as any,
+    ],
   })
   @IsOptional()
   controlValues?: Record<string, unknown> | null;
