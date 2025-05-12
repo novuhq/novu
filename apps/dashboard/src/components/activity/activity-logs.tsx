@@ -91,11 +91,8 @@ export function ActivityLogs({
       setIsFullscreenOpen(false);
 
       showSuccessToast(
-        'Notification resent successfully',
-        undefined,
-        {
-          description: `A new notification has been triggered with transaction ID: ${newTransactionId}`,
-        }
+        `A new notification has been triggered with transaction ID: ${newTransactionId}`,
+        'Notification resent successfully'
       );
 
       const checkAndUpdateTransaction = async () => {
