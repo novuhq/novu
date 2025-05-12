@@ -34,13 +34,15 @@ topicSchema.index({
   key: 1,
 });
 
-topicSchema.index({
-  _environmentId: 1,
-  key: 1,
-}, {
-  unique: true,
-});
-
+topicSchema.index(
+  {
+    _environmentId: 1,
+    key: 1,
+  },
+  {
+    unique: true,
+  }
+);
 
 export const Topic =
   (mongoose.models.Topic as mongoose.Model<TopicDBModel>) || mongoose.model<TopicDBModel>('Topic', topicSchema);
