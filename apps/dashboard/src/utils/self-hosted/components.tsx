@@ -123,14 +123,50 @@ export function SignUp() {
   const [organizationName, setOrganizationName] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+
+  const validatePassword = (password: string) => {
+    const hasUpperCase = /[A-Z]/.test(password);
+    const hasLowerCase = /[a-z]/.test(password);
+    const hasNumber = /[0-9]/.test(password);
+    const hasSpecialChar = /[#?!@$%^&*()-]/.test(password);
+    const isLengthValid = password.length >= 8 && password.length <= 64;
+
+    if (!isLengthValid) {
+      return 'Password must be between 8 and 64 characters';
+    }
+
+    if (!hasUpperCase) {
+      return 'Password must contain at least one uppercase letter';
+    }
+
+    if (!hasLowerCase) {
+      return 'Password must contain at least one lowercase letter';
+    }
+
+    if (!hasNumber) {
+      return 'Password must contain at least one number';
+    }
+
+    if (!hasSpecialChar) {
+      return 'Password must contain at least one special character (#?!@$%^&*()-)';
+    }
+
+    return null;
+  };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError(null);
+    setPasswordError(null);
     setIsLoading(true);
+    setIsSubmitted(true);
 
-    if (password.length < 8) {
-      setError('Password must be at least 8 characters long.');
+    const passwordValidationError = validatePassword(password);
+
+    if (passwordValidationError) {
+      setPasswordError(passwordValidationError);
       setIsLoading(false);
       return;
     }
@@ -159,7 +195,13 @@ export function SignUp() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Sign up failed');
+        if (data.errors?.general?.messages) {
+          setError(data.errors.general.messages[0]);
+        } else {
+          throw new Error(data.message || 'Sign up failed');
+        }
+
+        return;
       }
 
       if (data.data.token) {
@@ -229,9 +271,13 @@ export function SignUp() {
             type="password"
             id="password"
             value={password}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+              setIsSubmitted(false);
+              setPassword(e.target.value);
+            }}
             placeholder="••••••••"
             required
+            hasError={Boolean(isSubmitted && passwordError)}
             className="w-full"
             aria-describedby="password-constraints"
           />
@@ -253,7 +299,11 @@ export function SignUp() {
             className="w-full"
           />
         </div>
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && (
+          <div className="rounded-md bg-red-50 p-4" role="alert">
+            <p className="text-sm text-red-600">{error}</p>
+          </div>
+        )}
         <Button type="submit" disabled={isLoading} variant="primary" mode="filled" className="!mt-6 w-full">
           {isLoading ? 'Creating Account...' : 'Create Account'}
         </Button>

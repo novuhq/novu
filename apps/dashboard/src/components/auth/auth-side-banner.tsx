@@ -78,7 +78,7 @@ export function AuthSideBanner() {
         </div>
       )}
       {IS_SELF_HOSTED && (
-        <div className="hidden flex-col items-start justify-start gap-3 self-stretch rounded-lg border border-blue-600/30 bg-gradient-to-br from-blue-50/80 to-transparent p-6 shadow-sm md:flex">
+        <div className="border-stroke-soft rounded-8 hidden flex-col items-start justify-start gap-3 self-stretch border from-blue-50/80 to-transparent p-6 shadow-md md:flex">
           <h3 className="text-lg font-semibold text-neutral-900">Looking for a Managed Solution?</h3>
           <p className="text-sm text-neutral-600">
             Explore Novu Cloud for a fully managed experience with dedicated support, advanced features, and seamless
