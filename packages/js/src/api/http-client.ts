@@ -2,6 +2,7 @@ export type HttpClientOptions = {
   apiVersion?: string;
   apiUrl?: string;
   userAgent?: string;
+  headers?: Record<string, string>;
 };
 
 const DEFAULT_API_VERSION = 'v1';
@@ -18,6 +19,7 @@ export class HttpClient {
       apiVersion = DEFAULT_API_VERSION,
       apiUrl = DEFAULT_BACKEND_URL,
       userAgent = DEFAULT_USER_AGENT,
+      headers = {},
     } = options || {};
     this.apiVersion = apiVersion;
     this.apiUrl = `${apiUrl}/${this.apiVersion}`;
@@ -25,6 +27,7 @@ export class HttpClient {
       'Novu-API-Version': NOVU_API_VERSION,
       'Content-Type': 'application/json',
       'User-Agent': userAgent,
+      ...headers,
     };
   }
 

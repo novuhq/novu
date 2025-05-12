@@ -14,7 +14,7 @@ export interface IJwtClaims {
   roles: string[];
   exp: number;
   iss?: string;
-  scheme: ApiAuthSchemeEnum.BEARER | ApiAuthSchemeEnum.API_KEY;
+  scheme: ApiAuthSchemeEnum.BEARER | ApiAuthSchemeEnum.API_KEY | ApiAuthSchemeEnum.KEYLESS;
 }
 
 export type UserSessionData = IJwtClaims & { environmentId: string };
@@ -22,6 +22,7 @@ export type UserSessionData = IJwtClaims & { environmentId: string };
 export enum ApiAuthSchemeEnum {
   BEARER = 'Bearer',
   API_KEY = 'ApiKey',
+  KEYLESS = 'Keyless',
 }
 
 export enum PassportStrategyEnum {
