@@ -49,7 +49,7 @@ if (process.env.SELF_HOSTED === 'true') {
     { email: 1 },
     {
       unique: true,
-      partialFilterExpression: { email: 'system@novu.co' },
+      partialFilterExpression: { email: 'hello@example.com' },
     }
   );
 }
