@@ -227,19 +227,10 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
                     </Show>
                   )}
                 </Show>
-                <Show
-                  when={
-                    !props.notification.isRead &&
-                    props.notification.status !== NotificationActionStatus.ARCHIVED &&
-                    props.notification.status !== NotificationActionStatus.SNOOZED
-                  }
-                >
-                  <span class={style('notificationDot', 'nt-size-1.5 nt-bg-primary nt-rounded-full nt-shrink-0')} />
-                </Show>
               </>
             }
           >
-            {(snoozedUntilVal) => (
+            {(snoozedUntil) => (
               <>
                 <Show
                   when={appearance.icons()?.clock}
@@ -252,7 +243,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
                     />
                   )}
                 </Show>
-                {t('notification.snoozedUntil')} · {snoozedUntilVal()}
+                {t('notification.snoozedUntil')} · {snoozedUntil()}
               </>
             )}
           </Show>
