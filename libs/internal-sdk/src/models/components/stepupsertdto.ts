@@ -9,59 +9,61 @@ import { ClosedEnum } from "../../types/enums.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 import {
+  ActionDto,
+  ActionDto$inboundSchema,
+  ActionDto$Outbound,
+  ActionDto$outboundSchema,
+} from "./actiondto.js";
+import {
+  LookBackWindowDto,
+  LookBackWindowDto$inboundSchema,
+  LookBackWindowDto$Outbound,
+  LookBackWindowDto$outboundSchema,
+} from "./lookbackwindowdto.js";
+import {
+  RedirectDto,
+  RedirectDto$inboundSchema,
+  RedirectDto$Outbound,
+  RedirectDto$outboundSchema,
+} from "./redirectdto.js";
+import {
   StepTypeEnum,
   StepTypeEnum$inboundSchema,
   StepTypeEnum$outboundSchema,
 } from "./steptypeenum.js";
 
-export type ControlsForDigest2 = {
-  skip?: { [k: string]: any } | undefined;
-  cron: string;
-  digestKey?: string | undefined;
+/**
+ * Custom control values for the step.
+ */
+export type Custom = {};
+
+export type CustomControlDto = {
+  /**
+   * Custom control values for the step.
+   */
+  custom?: Custom | undefined;
 };
 
-export const ControlsForDigestUnit = {
-  Seconds: "seconds",
-  Minutes: "minutes",
-  Hours: "hours",
-  Days: "days",
-  Weeks: "weeks",
-  Months: "months",
-} as const;
-export type ControlsForDigestUnit = ClosedEnum<typeof ControlsForDigestUnit>;
+/**
+ * Filter conditions for skipping the step.
+ */
+export type DigestControlDtoControlValuesSkip = {};
 
-export const StepUpsertDtoControlsForDigestUnit = {
-  Seconds: "seconds",
-  Minutes: "minutes",
-  Hours: "hours",
-  Days: "days",
-  Weeks: "weeks",
-  Months: "months",
-} as const;
-export type StepUpsertDtoControlsForDigestUnit = ClosedEnum<
-  typeof StepUpsertDtoControlsForDigestUnit
->;
-
-export type ControlsForDigestLookBackWindow = {
-  amount: number;
-  unit: StepUpsertDtoControlsForDigestUnit;
-};
-
-export type ControlsForDigest1 = {
-  skip?: { [k: string]: any } | undefined;
-  amount: number;
-  unit: ControlsForDigestUnit;
-  digestKey?: string | undefined;
-  lookBackWindow?: ControlsForDigestLookBackWindow | undefined;
-};
-
-export type ControlsForDigest = ControlsForDigest2 | ControlsForDigest1;
-
+/**
+ * The type of digest strategy. Determines which fields are applicable.
+ */
 export const ControlValuesType = {
   Regular: "regular",
+  Timed: "timed",
 } as const;
+/**
+ * The type of digest strategy. Determines which fields are applicable.
+ */
 export type ControlValuesType = ClosedEnum<typeof ControlValuesType>;
 
+/**
+ * The unit of time for the digest interval (for REGULAR type).
+ */
 export const ControlValuesUnit = {
   Seconds: "seconds",
   Minutes: "minutes",
@@ -70,190 +72,234 @@ export const ControlValuesUnit = {
   Weeks: "weeks",
   Months: "months",
 } as const;
+/**
+ * The unit of time for the digest interval (for REGULAR type).
+ */
 export type ControlValuesUnit = ClosedEnum<typeof ControlValuesUnit>;
 
-export type ControlsForDelay = {
-  skip?: { [k: string]: any } | undefined;
-  type: ControlValuesType;
+export type DigestControlDto = {
+  /**
+   * Filter conditions for skipping the step.
+   */
+  skip?: DigestControlDtoControlValuesSkip | undefined;
+  /**
+   * The type of digest strategy. Determines which fields are applicable.
+   */
+  type?: ControlValuesType | undefined;
+  /**
+   * The amount of time for the digest interval (for REGULAR type). Min 1.
+   */
+  amount?: number | undefined;
+  /**
+   * The unit of time for the digest interval (for REGULAR type).
+   */
+  unit?: ControlValuesUnit | undefined;
+  /**
+   * Configuration for look-back window (for REGULAR type).
+   */
+  lookBackWindow?: LookBackWindowDto | undefined;
+  /**
+   * Cron expression for TIMED digest. Min length 1.
+   */
+  cron?: string | undefined;
+  /**
+   * Specify a custom key for digesting events instead of the default event key.
+   */
+  digestKey?: string | undefined;
+};
+
+/**
+ * Filter conditions for skipping the step.
+ */
+export type DelayControlDtoControlValuesSkip = {};
+
+/**
+ * Type of the delay. Currently only 'regular' is supported by the schema.
+ */
+export const DelayControlDtoControlValuesType = {
+  Regular: "regular",
+} as const;
+/**
+ * Type of the delay. Currently only 'regular' is supported by the schema.
+ */
+export type DelayControlDtoControlValuesType = ClosedEnum<
+  typeof DelayControlDtoControlValuesType
+>;
+
+/**
+ * Unit of time for the delay amount.
+ */
+export const DelayControlDtoControlValuesUnit = {
+  Seconds: "seconds",
+  Minutes: "minutes",
+  Hours: "hours",
+  Days: "days",
+  Weeks: "weeks",
+  Months: "months",
+} as const;
+/**
+ * Unit of time for the delay amount.
+ */
+export type DelayControlDtoControlValuesUnit = ClosedEnum<
+  typeof DelayControlDtoControlValuesUnit
+>;
+
+export type DelayControlDto = {
+  /**
+   * Filter conditions for skipping the step.
+   */
+  skip?: DelayControlDtoControlValuesSkip | undefined;
+  /**
+   * Type of the delay. Currently only 'regular' is supported by the schema.
+   */
+  type?: DelayControlDtoControlValuesType | undefined;
+  /**
+   * Amount of time to delay.
+   */
   amount: number;
-  unit: ControlValuesUnit;
+  /**
+   * Unit of time for the delay amount.
+   */
+  unit: DelayControlDtoControlValuesUnit;
 };
 
-export type ControlsForChat = {
-  skip?: { [k: string]: any } | undefined;
+/**
+ * Filter conditions for skipping the step.
+ */
+export type ChatControlDtoControlValuesSkip = {};
+
+export type ChatControlDto = {
+  /**
+   * Filter conditions for skipping the step.
+   */
+  skip?: ChatControlDtoControlValuesSkip | undefined;
+  /**
+   * Content of the chat message.
+   */
   body: string;
 };
 
-export type ControlsForPush = {
-  skip?: { [k: string]: any } | undefined;
+/**
+ * Filter conditions for skipping the step.
+ */
+export type PushControlDtoControlValuesSkip = {};
+
+export type PushControlDto = {
+  /**
+   * Filter conditions for skipping the step.
+   */
+  skip?: PushControlDtoControlValuesSkip | undefined;
+  /**
+   * Subject/title of the push notification.
+   */
   subject: string;
+  /**
+   * Body content of the push notification.
+   */
   body: string;
 };
 
-export type ControlsForSms = {
-  skip?: { [k: string]: any } | undefined;
+/**
+ * Filter conditions for skipping the step.
+ */
+export type SmsControlDtoControlValuesSkip = {};
+
+export type SmsControlDto = {
+  /**
+   * Filter conditions for skipping the step.
+   */
+  skip?: SmsControlDtoControlValuesSkip | undefined;
+  /**
+   * Content of the SMS message.
+   */
   body: string;
 };
 
-export type ControlsForEmail = {
-  skip?: { [k: string]: any } | undefined;
+/**
+ * Filter conditions for skipping the step.
+ */
+export type ControlValuesSkip = {};
+
+export type EmailControlDto = {
+  /**
+   * Filter conditions for skipping the step.
+   */
+  skip?: ControlValuesSkip | undefined;
+  /**
+   * Subject of the email.
+   */
+  subject: string;
+  /**
+   * Body content of the email.
+   */
   body?: string | undefined;
-  subject: string;
+  /**
+   * Disable sanitization of the output.
+   */
   disableOutputSanitization?: boolean | undefined;
 };
 
-export const StepUpsertDtoControlsForInAppControlValuesTarget = {
-  Self: "_self",
-  Blank: "_blank",
-  Parent: "_parent",
-  Top: "_top",
-  UnfencedTop: "_unfencedTop",
-} as const;
-export type StepUpsertDtoControlsForInAppControlValuesTarget = ClosedEnum<
-  typeof StepUpsertDtoControlsForInAppControlValuesTarget
->;
+/**
+ * Filter conditions for skipping the step.
+ */
+export type Skip = {};
 
-export type StepUpsertDtoControlsForInAppControlValuesRedirect = {
-  url: string;
-  target: StepUpsertDtoControlsForInAppControlValuesTarget;
-};
+/**
+ * Additional data payload for the step.
+ */
+export type ControlValuesData = {};
 
-export type ControlsForInAppPrimaryAction = {
-  label: string;
-  redirect?: StepUpsertDtoControlsForInAppControlValuesRedirect | undefined;
-};
-
-export const StepUpsertDtoControlsForInAppControlValues1Target = {
-  Self: "_self",
-  Blank: "_blank",
-  Parent: "_parent",
-  Top: "_top",
-  UnfencedTop: "_unfencedTop",
-} as const;
-export type StepUpsertDtoControlsForInAppControlValues1Target = ClosedEnum<
-  typeof StepUpsertDtoControlsForInAppControlValues1Target
->;
-
-export type StepUpsertDtoControlsForInAppControlValues1Redirect = {
-  url: string;
-  target: StepUpsertDtoControlsForInAppControlValues1Target;
-};
-
-export type ControlsForInAppSecondaryAction = {
-  label: string;
-  redirect?: StepUpsertDtoControlsForInAppControlValues1Redirect | undefined;
-};
-
-export const ControlsForInAppTarget = {
-  Self: "_self",
-  Blank: "_blank",
-  Parent: "_parent",
-  Top: "_top",
-  UnfencedTop: "_unfencedTop",
-} as const;
-export type ControlsForInAppTarget = ClosedEnum<typeof ControlsForInAppTarget>;
-
-export type ControlsForInAppRedirect = {
-  url: string;
-  target: ControlsForInAppTarget;
-};
-
-export type ControlsForInApp2 = {
+export type InAppControlDto = {
+  /**
+   * Filter conditions for skipping the step.
+   */
+  skip?: Skip | undefined;
+  /**
+   * Content/body of the in-app message. Required if subject is empty.
+   */
+  body?: string | undefined;
+  /**
+   * Subject/title of the in-app message. Required if body is empty.
+   */
   subject?: string | undefined;
-  body: string;
-  skip?: { [k: string]: any } | undefined;
-  disableOutputSanitization?: boolean | undefined;
+  /**
+   * URL for an avatar image. Must be a valid URL or start with / or {{"{{"}} variable }}.
+   */
   avatar?: string | undefined;
-  primaryAction?: ControlsForInAppPrimaryAction | undefined;
-  secondaryAction?: ControlsForInAppSecondaryAction | undefined;
-  data?: { [k: string]: any } | undefined;
-  redirect?: ControlsForInAppRedirect | undefined;
-};
-
-export const StepUpsertDtoControlsForInAppTarget = {
-  Self: "_self",
-  Blank: "_blank",
-  Parent: "_parent",
-  Top: "_top",
-  UnfencedTop: "_unfencedTop",
-} as const;
-export type StepUpsertDtoControlsForInAppTarget = ClosedEnum<
-  typeof StepUpsertDtoControlsForInAppTarget
->;
-
-export type StepUpsertDtoControlsForInAppRedirect = {
-  url: string;
-  target: StepUpsertDtoControlsForInAppTarget;
-};
-
-export type PrimaryAction = {
-  label: string;
-  redirect?: StepUpsertDtoControlsForInAppRedirect | undefined;
-};
-
-export const StepUpsertDtoControlsForInAppControlValues11Target = {
-  Self: "_self",
-  Blank: "_blank",
-  Parent: "_parent",
-  Top: "_top",
-  UnfencedTop: "_unfencedTop",
-} as const;
-export type StepUpsertDtoControlsForInAppControlValues11Target = ClosedEnum<
-  typeof StepUpsertDtoControlsForInAppControlValues11Target
->;
-
-export type StepUpsertDtoControlsForInAppControlValues11Redirect = {
-  url: string;
-  target: StepUpsertDtoControlsForInAppControlValues11Target;
-};
-
-export type SecondaryAction = {
-  label: string;
-  redirect?: StepUpsertDtoControlsForInAppControlValues11Redirect | undefined;
-};
-
-export const Target = {
-  Self: "_self",
-  Blank: "_blank",
-  Parent: "_parent",
-  Top: "_top",
-  UnfencedTop: "_unfencedTop",
-} as const;
-export type Target = ClosedEnum<typeof Target>;
-
-export type Redirect = {
-  url: string;
-  target: Target;
-};
-
-export type ControlsForInApp1 = {
-  subject: string;
-  body?: string | undefined;
-  skip?: { [k: string]: any } | undefined;
+  /**
+   * Primary action button details.
+   */
+  primaryAction?: ActionDto | undefined;
+  /**
+   * Secondary action button details.
+   */
+  secondaryAction?: ActionDto | undefined;
+  /**
+   * Redirection URL configuration for the main content click (if no actions defined/clicked)..
+   */
+  redirect?: RedirectDto | undefined;
+  /**
+   * Disable sanitization of the output.
+   */
   disableOutputSanitization?: boolean | undefined;
-  avatar?: string | undefined;
-  primaryAction?: PrimaryAction | undefined;
-  secondaryAction?: SecondaryAction | undefined;
-  data?: { [k: string]: any } | undefined;
-  redirect?: Redirect | undefined;
+  /**
+   * Additional data payload for the step.
+   */
+  data?: ControlValuesData | undefined;
 };
-
-export type ControlsForInApp = ControlsForInApp1 | ControlsForInApp2;
 
 /**
  * Control values for the step, structure depends on the step type.
  */
 export type ControlValues =
-  | ControlsForSms
-  | ControlsForChat
-  | ControlsForPush
-  | ControlsForEmail
-  | ControlsForDelay
-  | ControlsForInApp1
-  | ControlsForInApp2
-  | ControlsForDigest2
-  | ControlsForDigest1
-  | { [k: string]: any };
+  | CustomControlDto
+  | SmsControlDto
+  | ChatControlDto
+  | PushControlDto
+  | EmailControlDto
+  | DelayControlDto
+  | DigestControlDto
+  | InAppControlDto;
 
 export type StepUpsertDto = {
   /**
@@ -272,303 +318,161 @@ export type StepUpsertDto = {
    * Control values for the step, structure depends on the step type.
    */
   controlValues?:
-    | ControlsForSms
-    | ControlsForChat
-    | ControlsForPush
-    | ControlsForEmail
-    | ControlsForDelay
-    | ControlsForInApp1
-    | ControlsForInApp2
-    | ControlsForDigest2
-    | ControlsForDigest1
-    | { [k: string]: any }
+    | CustomControlDto
+    | SmsControlDto
+    | ChatControlDto
+    | PushControlDto
+    | EmailControlDto
+    | DelayControlDto
+    | DigestControlDto
+    | InAppControlDto
     | null
     | undefined;
 };
 
 /** @internal */
-export const ControlsForDigest2$inboundSchema: z.ZodType<
-  ControlsForDigest2,
-  z.ZodTypeDef,
-  unknown
-> = z.object({
-  skip: z.record(z.any()).optional(),
-  cron: z.string(),
-  digestKey: z.string().optional(),
-});
+export const Custom$inboundSchema: z.ZodType<Custom, z.ZodTypeDef, unknown> = z
+  .object({});
 
 /** @internal */
-export type ControlsForDigest2$Outbound = {
-  skip?: { [k: string]: any } | undefined;
-  cron: string;
-  digestKey?: string | undefined;
-};
+export type Custom$Outbound = {};
 
 /** @internal */
-export const ControlsForDigest2$outboundSchema: z.ZodType<
-  ControlsForDigest2$Outbound,
+export const Custom$outboundSchema: z.ZodType<
+  Custom$Outbound,
   z.ZodTypeDef,
-  ControlsForDigest2
-> = z.object({
-  skip: z.record(z.any()).optional(),
-  cron: z.string(),
-  digestKey: z.string().optional(),
-});
+  Custom
+> = z.object({});
 
 /**
  * @internal
  * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
  */
-export namespace ControlsForDigest2$ {
-  /** @deprecated use `ControlsForDigest2$inboundSchema` instead. */
-  export const inboundSchema = ControlsForDigest2$inboundSchema;
-  /** @deprecated use `ControlsForDigest2$outboundSchema` instead. */
-  export const outboundSchema = ControlsForDigest2$outboundSchema;
-  /** @deprecated use `ControlsForDigest2$Outbound` instead. */
-  export type Outbound = ControlsForDigest2$Outbound;
+export namespace Custom$ {
+  /** @deprecated use `Custom$inboundSchema` instead. */
+  export const inboundSchema = Custom$inboundSchema;
+  /** @deprecated use `Custom$outboundSchema` instead. */
+  export const outboundSchema = Custom$outboundSchema;
+  /** @deprecated use `Custom$Outbound` instead. */
+  export type Outbound = Custom$Outbound;
 }
 
-export function controlsForDigest2ToJSON(
-  controlsForDigest2: ControlsForDigest2,
-): string {
-  return JSON.stringify(
-    ControlsForDigest2$outboundSchema.parse(controlsForDigest2),
-  );
+export function customToJSON(custom: Custom): string {
+  return JSON.stringify(Custom$outboundSchema.parse(custom));
 }
 
-export function controlsForDigest2FromJSON(
+export function customFromJSON(
   jsonString: string,
-): SafeParseResult<ControlsForDigest2, SDKValidationError> {
+): SafeParseResult<Custom, SDKValidationError> {
   return safeParse(
     jsonString,
-    (x) => ControlsForDigest2$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'ControlsForDigest2' from JSON`,
+    (x) => Custom$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'Custom' from JSON`,
   );
 }
 
 /** @internal */
-export const ControlsForDigestUnit$inboundSchema: z.ZodNativeEnum<
-  typeof ControlsForDigestUnit
-> = z.nativeEnum(ControlsForDigestUnit);
-
-/** @internal */
-export const ControlsForDigestUnit$outboundSchema: z.ZodNativeEnum<
-  typeof ControlsForDigestUnit
-> = ControlsForDigestUnit$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ControlsForDigestUnit$ {
-  /** @deprecated use `ControlsForDigestUnit$inboundSchema` instead. */
-  export const inboundSchema = ControlsForDigestUnit$inboundSchema;
-  /** @deprecated use `ControlsForDigestUnit$outboundSchema` instead. */
-  export const outboundSchema = ControlsForDigestUnit$outboundSchema;
-}
-
-/** @internal */
-export const StepUpsertDtoControlsForDigestUnit$inboundSchema: z.ZodNativeEnum<
-  typeof StepUpsertDtoControlsForDigestUnit
-> = z.nativeEnum(StepUpsertDtoControlsForDigestUnit);
-
-/** @internal */
-export const StepUpsertDtoControlsForDigestUnit$outboundSchema: z.ZodNativeEnum<
-  typeof StepUpsertDtoControlsForDigestUnit
-> = StepUpsertDtoControlsForDigestUnit$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace StepUpsertDtoControlsForDigestUnit$ {
-  /** @deprecated use `StepUpsertDtoControlsForDigestUnit$inboundSchema` instead. */
-  export const inboundSchema = StepUpsertDtoControlsForDigestUnit$inboundSchema;
-  /** @deprecated use `StepUpsertDtoControlsForDigestUnit$outboundSchema` instead. */
-  export const outboundSchema =
-    StepUpsertDtoControlsForDigestUnit$outboundSchema;
-}
-
-/** @internal */
-export const ControlsForDigestLookBackWindow$inboundSchema: z.ZodType<
-  ControlsForDigestLookBackWindow,
+export const CustomControlDto$inboundSchema: z.ZodType<
+  CustomControlDto,
   z.ZodTypeDef,
   unknown
 > = z.object({
-  amount: z.number(),
-  unit: StepUpsertDtoControlsForDigestUnit$inboundSchema,
+  custom: z.lazy(() => Custom$inboundSchema).optional(),
 });
 
 /** @internal */
-export type ControlsForDigestLookBackWindow$Outbound = {
-  amount: number;
-  unit: string;
+export type CustomControlDto$Outbound = {
+  custom?: Custom$Outbound | undefined;
 };
 
 /** @internal */
-export const ControlsForDigestLookBackWindow$outboundSchema: z.ZodType<
-  ControlsForDigestLookBackWindow$Outbound,
+export const CustomControlDto$outboundSchema: z.ZodType<
+  CustomControlDto$Outbound,
   z.ZodTypeDef,
-  ControlsForDigestLookBackWindow
+  CustomControlDto
 > = z.object({
-  amount: z.number(),
-  unit: StepUpsertDtoControlsForDigestUnit$outboundSchema,
+  custom: z.lazy(() => Custom$outboundSchema).optional(),
 });
 
 /**
  * @internal
  * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
  */
-export namespace ControlsForDigestLookBackWindow$ {
-  /** @deprecated use `ControlsForDigestLookBackWindow$inboundSchema` instead. */
-  export const inboundSchema = ControlsForDigestLookBackWindow$inboundSchema;
-  /** @deprecated use `ControlsForDigestLookBackWindow$outboundSchema` instead. */
-  export const outboundSchema = ControlsForDigestLookBackWindow$outboundSchema;
-  /** @deprecated use `ControlsForDigestLookBackWindow$Outbound` instead. */
-  export type Outbound = ControlsForDigestLookBackWindow$Outbound;
+export namespace CustomControlDto$ {
+  /** @deprecated use `CustomControlDto$inboundSchema` instead. */
+  export const inboundSchema = CustomControlDto$inboundSchema;
+  /** @deprecated use `CustomControlDto$outboundSchema` instead. */
+  export const outboundSchema = CustomControlDto$outboundSchema;
+  /** @deprecated use `CustomControlDto$Outbound` instead. */
+  export type Outbound = CustomControlDto$Outbound;
 }
 
-export function controlsForDigestLookBackWindowToJSON(
-  controlsForDigestLookBackWindow: ControlsForDigestLookBackWindow,
+export function customControlDtoToJSON(
+  customControlDto: CustomControlDto,
 ): string {
   return JSON.stringify(
-    ControlsForDigestLookBackWindow$outboundSchema.parse(
-      controlsForDigestLookBackWindow,
+    CustomControlDto$outboundSchema.parse(customControlDto),
+  );
+}
+
+export function customControlDtoFromJSON(
+  jsonString: string,
+): SafeParseResult<CustomControlDto, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => CustomControlDto$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'CustomControlDto' from JSON`,
+  );
+}
+
+/** @internal */
+export const DigestControlDtoControlValuesSkip$inboundSchema: z.ZodType<
+  DigestControlDtoControlValuesSkip,
+  z.ZodTypeDef,
+  unknown
+> = z.object({});
+
+/** @internal */
+export type DigestControlDtoControlValuesSkip$Outbound = {};
+
+/** @internal */
+export const DigestControlDtoControlValuesSkip$outboundSchema: z.ZodType<
+  DigestControlDtoControlValuesSkip$Outbound,
+  z.ZodTypeDef,
+  DigestControlDtoControlValuesSkip
+> = z.object({});
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace DigestControlDtoControlValuesSkip$ {
+  /** @deprecated use `DigestControlDtoControlValuesSkip$inboundSchema` instead. */
+  export const inboundSchema = DigestControlDtoControlValuesSkip$inboundSchema;
+  /** @deprecated use `DigestControlDtoControlValuesSkip$outboundSchema` instead. */
+  export const outboundSchema =
+    DigestControlDtoControlValuesSkip$outboundSchema;
+  /** @deprecated use `DigestControlDtoControlValuesSkip$Outbound` instead. */
+  export type Outbound = DigestControlDtoControlValuesSkip$Outbound;
+}
+
+export function digestControlDtoControlValuesSkipToJSON(
+  digestControlDtoControlValuesSkip: DigestControlDtoControlValuesSkip,
+): string {
+  return JSON.stringify(
+    DigestControlDtoControlValuesSkip$outboundSchema.parse(
+      digestControlDtoControlValuesSkip,
     ),
   );
 }
 
-export function controlsForDigestLookBackWindowFromJSON(
+export function digestControlDtoControlValuesSkipFromJSON(
   jsonString: string,
-): SafeParseResult<ControlsForDigestLookBackWindow, SDKValidationError> {
+): SafeParseResult<DigestControlDtoControlValuesSkip, SDKValidationError> {
   return safeParse(
     jsonString,
-    (x) => ControlsForDigestLookBackWindow$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'ControlsForDigestLookBackWindow' from JSON`,
-  );
-}
-
-/** @internal */
-export const ControlsForDigest1$inboundSchema: z.ZodType<
-  ControlsForDigest1,
-  z.ZodTypeDef,
-  unknown
-> = z.object({
-  skip: z.record(z.any()).optional(),
-  amount: z.number(),
-  unit: ControlsForDigestUnit$inboundSchema,
-  digestKey: z.string().optional(),
-  lookBackWindow: z.lazy(() => ControlsForDigestLookBackWindow$inboundSchema)
-    .optional(),
-});
-
-/** @internal */
-export type ControlsForDigest1$Outbound = {
-  skip?: { [k: string]: any } | undefined;
-  amount: number;
-  unit: string;
-  digestKey?: string | undefined;
-  lookBackWindow?: ControlsForDigestLookBackWindow$Outbound | undefined;
-};
-
-/** @internal */
-export const ControlsForDigest1$outboundSchema: z.ZodType<
-  ControlsForDigest1$Outbound,
-  z.ZodTypeDef,
-  ControlsForDigest1
-> = z.object({
-  skip: z.record(z.any()).optional(),
-  amount: z.number(),
-  unit: ControlsForDigestUnit$outboundSchema,
-  digestKey: z.string().optional(),
-  lookBackWindow: z.lazy(() => ControlsForDigestLookBackWindow$outboundSchema)
-    .optional(),
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ControlsForDigest1$ {
-  /** @deprecated use `ControlsForDigest1$inboundSchema` instead. */
-  export const inboundSchema = ControlsForDigest1$inboundSchema;
-  /** @deprecated use `ControlsForDigest1$outboundSchema` instead. */
-  export const outboundSchema = ControlsForDigest1$outboundSchema;
-  /** @deprecated use `ControlsForDigest1$Outbound` instead. */
-  export type Outbound = ControlsForDigest1$Outbound;
-}
-
-export function controlsForDigest1ToJSON(
-  controlsForDigest1: ControlsForDigest1,
-): string {
-  return JSON.stringify(
-    ControlsForDigest1$outboundSchema.parse(controlsForDigest1),
-  );
-}
-
-export function controlsForDigest1FromJSON(
-  jsonString: string,
-): SafeParseResult<ControlsForDigest1, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => ControlsForDigest1$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'ControlsForDigest1' from JSON`,
-  );
-}
-
-/** @internal */
-export const ControlsForDigest$inboundSchema: z.ZodType<
-  ControlsForDigest,
-  z.ZodTypeDef,
-  unknown
-> = z.union([
-  z.lazy(() => ControlsForDigest2$inboundSchema),
-  z.lazy(() => ControlsForDigest1$inboundSchema),
-]);
-
-/** @internal */
-export type ControlsForDigest$Outbound =
-  | ControlsForDigest2$Outbound
-  | ControlsForDigest1$Outbound;
-
-/** @internal */
-export const ControlsForDigest$outboundSchema: z.ZodType<
-  ControlsForDigest$Outbound,
-  z.ZodTypeDef,
-  ControlsForDigest
-> = z.union([
-  z.lazy(() => ControlsForDigest2$outboundSchema),
-  z.lazy(() => ControlsForDigest1$outboundSchema),
-]);
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ControlsForDigest$ {
-  /** @deprecated use `ControlsForDigest$inboundSchema` instead. */
-  export const inboundSchema = ControlsForDigest$inboundSchema;
-  /** @deprecated use `ControlsForDigest$outboundSchema` instead. */
-  export const outboundSchema = ControlsForDigest$outboundSchema;
-  /** @deprecated use `ControlsForDigest$Outbound` instead. */
-  export type Outbound = ControlsForDigest$Outbound;
-}
-
-export function controlsForDigestToJSON(
-  controlsForDigest: ControlsForDigest,
-): string {
-  return JSON.stringify(
-    ControlsForDigest$outboundSchema.parse(controlsForDigest),
-  );
-}
-
-export function controlsForDigestFromJSON(
-  jsonString: string,
-): SafeParseResult<ControlsForDigest, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => ControlsForDigest$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'ControlsForDigest' from JSON`,
+    (x) => DigestControlDtoControlValuesSkip$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'DigestControlDtoControlValuesSkip' from JSON`,
   );
 }
 
@@ -615,91 +519,306 @@ export namespace ControlValuesUnit$ {
 }
 
 /** @internal */
-export const ControlsForDelay$inboundSchema: z.ZodType<
-  ControlsForDelay,
+export const DigestControlDto$inboundSchema: z.ZodType<
+  DigestControlDto,
   z.ZodTypeDef,
   unknown
 > = z.object({
-  skip: z.record(z.any()).optional(),
-  type: ControlValuesType$inboundSchema,
-  amount: z.number(),
-  unit: ControlValuesUnit$inboundSchema,
+  skip: z.lazy(() => DigestControlDtoControlValuesSkip$inboundSchema)
+    .optional(),
+  type: ControlValuesType$inboundSchema.optional(),
+  amount: z.number().optional(),
+  unit: ControlValuesUnit$inboundSchema.optional(),
+  lookBackWindow: LookBackWindowDto$inboundSchema.optional(),
+  cron: z.string().optional(),
+  digestKey: z.string().optional(),
 });
 
 /** @internal */
-export type ControlsForDelay$Outbound = {
-  skip?: { [k: string]: any } | undefined;
+export type DigestControlDto$Outbound = {
+  skip?: DigestControlDtoControlValuesSkip$Outbound | undefined;
+  type?: string | undefined;
+  amount?: number | undefined;
+  unit?: string | undefined;
+  lookBackWindow?: LookBackWindowDto$Outbound | undefined;
+  cron?: string | undefined;
+  digestKey?: string | undefined;
+};
+
+/** @internal */
+export const DigestControlDto$outboundSchema: z.ZodType<
+  DigestControlDto$Outbound,
+  z.ZodTypeDef,
+  DigestControlDto
+> = z.object({
+  skip: z.lazy(() => DigestControlDtoControlValuesSkip$outboundSchema)
+    .optional(),
+  type: ControlValuesType$outboundSchema.optional(),
+  amount: z.number().optional(),
+  unit: ControlValuesUnit$outboundSchema.optional(),
+  lookBackWindow: LookBackWindowDto$outboundSchema.optional(),
+  cron: z.string().optional(),
+  digestKey: z.string().optional(),
+});
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace DigestControlDto$ {
+  /** @deprecated use `DigestControlDto$inboundSchema` instead. */
+  export const inboundSchema = DigestControlDto$inboundSchema;
+  /** @deprecated use `DigestControlDto$outboundSchema` instead. */
+  export const outboundSchema = DigestControlDto$outboundSchema;
+  /** @deprecated use `DigestControlDto$Outbound` instead. */
+  export type Outbound = DigestControlDto$Outbound;
+}
+
+export function digestControlDtoToJSON(
+  digestControlDto: DigestControlDto,
+): string {
+  return JSON.stringify(
+    DigestControlDto$outboundSchema.parse(digestControlDto),
+  );
+}
+
+export function digestControlDtoFromJSON(
+  jsonString: string,
+): SafeParseResult<DigestControlDto, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => DigestControlDto$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'DigestControlDto' from JSON`,
+  );
+}
+
+/** @internal */
+export const DelayControlDtoControlValuesSkip$inboundSchema: z.ZodType<
+  DelayControlDtoControlValuesSkip,
+  z.ZodTypeDef,
+  unknown
+> = z.object({});
+
+/** @internal */
+export type DelayControlDtoControlValuesSkip$Outbound = {};
+
+/** @internal */
+export const DelayControlDtoControlValuesSkip$outboundSchema: z.ZodType<
+  DelayControlDtoControlValuesSkip$Outbound,
+  z.ZodTypeDef,
+  DelayControlDtoControlValuesSkip
+> = z.object({});
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace DelayControlDtoControlValuesSkip$ {
+  /** @deprecated use `DelayControlDtoControlValuesSkip$inboundSchema` instead. */
+  export const inboundSchema = DelayControlDtoControlValuesSkip$inboundSchema;
+  /** @deprecated use `DelayControlDtoControlValuesSkip$outboundSchema` instead. */
+  export const outboundSchema = DelayControlDtoControlValuesSkip$outboundSchema;
+  /** @deprecated use `DelayControlDtoControlValuesSkip$Outbound` instead. */
+  export type Outbound = DelayControlDtoControlValuesSkip$Outbound;
+}
+
+export function delayControlDtoControlValuesSkipToJSON(
+  delayControlDtoControlValuesSkip: DelayControlDtoControlValuesSkip,
+): string {
+  return JSON.stringify(
+    DelayControlDtoControlValuesSkip$outboundSchema.parse(
+      delayControlDtoControlValuesSkip,
+    ),
+  );
+}
+
+export function delayControlDtoControlValuesSkipFromJSON(
+  jsonString: string,
+): SafeParseResult<DelayControlDtoControlValuesSkip, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => DelayControlDtoControlValuesSkip$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'DelayControlDtoControlValuesSkip' from JSON`,
+  );
+}
+
+/** @internal */
+export const DelayControlDtoControlValuesType$inboundSchema: z.ZodNativeEnum<
+  typeof DelayControlDtoControlValuesType
+> = z.nativeEnum(DelayControlDtoControlValuesType);
+
+/** @internal */
+export const DelayControlDtoControlValuesType$outboundSchema: z.ZodNativeEnum<
+  typeof DelayControlDtoControlValuesType
+> = DelayControlDtoControlValuesType$inboundSchema;
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace DelayControlDtoControlValuesType$ {
+  /** @deprecated use `DelayControlDtoControlValuesType$inboundSchema` instead. */
+  export const inboundSchema = DelayControlDtoControlValuesType$inboundSchema;
+  /** @deprecated use `DelayControlDtoControlValuesType$outboundSchema` instead. */
+  export const outboundSchema = DelayControlDtoControlValuesType$outboundSchema;
+}
+
+/** @internal */
+export const DelayControlDtoControlValuesUnit$inboundSchema: z.ZodNativeEnum<
+  typeof DelayControlDtoControlValuesUnit
+> = z.nativeEnum(DelayControlDtoControlValuesUnit);
+
+/** @internal */
+export const DelayControlDtoControlValuesUnit$outboundSchema: z.ZodNativeEnum<
+  typeof DelayControlDtoControlValuesUnit
+> = DelayControlDtoControlValuesUnit$inboundSchema;
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace DelayControlDtoControlValuesUnit$ {
+  /** @deprecated use `DelayControlDtoControlValuesUnit$inboundSchema` instead. */
+  export const inboundSchema = DelayControlDtoControlValuesUnit$inboundSchema;
+  /** @deprecated use `DelayControlDtoControlValuesUnit$outboundSchema` instead. */
+  export const outboundSchema = DelayControlDtoControlValuesUnit$outboundSchema;
+}
+
+/** @internal */
+export const DelayControlDto$inboundSchema: z.ZodType<
+  DelayControlDto,
+  z.ZodTypeDef,
+  unknown
+> = z.object({
+  skip: z.lazy(() => DelayControlDtoControlValuesSkip$inboundSchema).optional(),
+  type: DelayControlDtoControlValuesType$inboundSchema.default("regular"),
+  amount: z.number(),
+  unit: DelayControlDtoControlValuesUnit$inboundSchema,
+});
+
+/** @internal */
+export type DelayControlDto$Outbound = {
+  skip?: DelayControlDtoControlValuesSkip$Outbound | undefined;
   type: string;
   amount: number;
   unit: string;
 };
 
 /** @internal */
-export const ControlsForDelay$outboundSchema: z.ZodType<
-  ControlsForDelay$Outbound,
+export const DelayControlDto$outboundSchema: z.ZodType<
+  DelayControlDto$Outbound,
   z.ZodTypeDef,
-  ControlsForDelay
+  DelayControlDto
 > = z.object({
-  skip: z.record(z.any()).optional(),
-  type: ControlValuesType$outboundSchema,
+  skip: z.lazy(() => DelayControlDtoControlValuesSkip$outboundSchema)
+    .optional(),
+  type: DelayControlDtoControlValuesType$outboundSchema.default("regular"),
   amount: z.number(),
-  unit: ControlValuesUnit$outboundSchema,
+  unit: DelayControlDtoControlValuesUnit$outboundSchema,
 });
 
 /**
  * @internal
  * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
  */
-export namespace ControlsForDelay$ {
-  /** @deprecated use `ControlsForDelay$inboundSchema` instead. */
-  export const inboundSchema = ControlsForDelay$inboundSchema;
-  /** @deprecated use `ControlsForDelay$outboundSchema` instead. */
-  export const outboundSchema = ControlsForDelay$outboundSchema;
-  /** @deprecated use `ControlsForDelay$Outbound` instead. */
-  export type Outbound = ControlsForDelay$Outbound;
+export namespace DelayControlDto$ {
+  /** @deprecated use `DelayControlDto$inboundSchema` instead. */
+  export const inboundSchema = DelayControlDto$inboundSchema;
+  /** @deprecated use `DelayControlDto$outboundSchema` instead. */
+  export const outboundSchema = DelayControlDto$outboundSchema;
+  /** @deprecated use `DelayControlDto$Outbound` instead. */
+  export type Outbound = DelayControlDto$Outbound;
 }
 
-export function controlsForDelayToJSON(
-  controlsForDelay: ControlsForDelay,
+export function delayControlDtoToJSON(
+  delayControlDto: DelayControlDto,
 ): string {
-  return JSON.stringify(
-    ControlsForDelay$outboundSchema.parse(controlsForDelay),
-  );
+  return JSON.stringify(DelayControlDto$outboundSchema.parse(delayControlDto));
 }
 
-export function controlsForDelayFromJSON(
+export function delayControlDtoFromJSON(
   jsonString: string,
-): SafeParseResult<ControlsForDelay, SDKValidationError> {
+): SafeParseResult<DelayControlDto, SDKValidationError> {
   return safeParse(
     jsonString,
-    (x) => ControlsForDelay$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'ControlsForDelay' from JSON`,
+    (x) => DelayControlDto$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'DelayControlDto' from JSON`,
   );
 }
 
 /** @internal */
-export const ControlsForChat$inboundSchema: z.ZodType<
-  ControlsForChat,
+export const ChatControlDtoControlValuesSkip$inboundSchema: z.ZodType<
+  ChatControlDtoControlValuesSkip,
+  z.ZodTypeDef,
+  unknown
+> = z.object({});
+
+/** @internal */
+export type ChatControlDtoControlValuesSkip$Outbound = {};
+
+/** @internal */
+export const ChatControlDtoControlValuesSkip$outboundSchema: z.ZodType<
+  ChatControlDtoControlValuesSkip$Outbound,
+  z.ZodTypeDef,
+  ChatControlDtoControlValuesSkip
+> = z.object({});
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace ChatControlDtoControlValuesSkip$ {
+  /** @deprecated use `ChatControlDtoControlValuesSkip$inboundSchema` instead. */
+  export const inboundSchema = ChatControlDtoControlValuesSkip$inboundSchema;
+  /** @deprecated use `ChatControlDtoControlValuesSkip$outboundSchema` instead. */
+  export const outboundSchema = ChatControlDtoControlValuesSkip$outboundSchema;
+  /** @deprecated use `ChatControlDtoControlValuesSkip$Outbound` instead. */
+  export type Outbound = ChatControlDtoControlValuesSkip$Outbound;
+}
+
+export function chatControlDtoControlValuesSkipToJSON(
+  chatControlDtoControlValuesSkip: ChatControlDtoControlValuesSkip,
+): string {
+  return JSON.stringify(
+    ChatControlDtoControlValuesSkip$outboundSchema.parse(
+      chatControlDtoControlValuesSkip,
+    ),
+  );
+}
+
+export function chatControlDtoControlValuesSkipFromJSON(
+  jsonString: string,
+): SafeParseResult<ChatControlDtoControlValuesSkip, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => ChatControlDtoControlValuesSkip$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'ChatControlDtoControlValuesSkip' from JSON`,
+  );
+}
+
+/** @internal */
+export const ChatControlDto$inboundSchema: z.ZodType<
+  ChatControlDto,
   z.ZodTypeDef,
   unknown
 > = z.object({
-  skip: z.record(z.any()).optional(),
+  skip: z.lazy(() => ChatControlDtoControlValuesSkip$inboundSchema).optional(),
   body: z.string(),
 });
 
 /** @internal */
-export type ControlsForChat$Outbound = {
-  skip?: { [k: string]: any } | undefined;
+export type ChatControlDto$Outbound = {
+  skip?: ChatControlDtoControlValuesSkip$Outbound | undefined;
   body: string;
 };
 
 /** @internal */
-export const ControlsForChat$outboundSchema: z.ZodType<
-  ControlsForChat$Outbound,
+export const ChatControlDto$outboundSchema: z.ZodType<
+  ChatControlDto$Outbound,
   z.ZodTypeDef,
-  ControlsForChat
+  ChatControlDto
 > = z.object({
-  skip: z.record(z.any()).optional(),
+  skip: z.lazy(() => ChatControlDtoControlValuesSkip$outboundSchema).optional(),
   body: z.string(),
 });
 
@@ -707,56 +826,104 @@ export const ControlsForChat$outboundSchema: z.ZodType<
  * @internal
  * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
  */
-export namespace ControlsForChat$ {
-  /** @deprecated use `ControlsForChat$inboundSchema` instead. */
-  export const inboundSchema = ControlsForChat$inboundSchema;
-  /** @deprecated use `ControlsForChat$outboundSchema` instead. */
-  export const outboundSchema = ControlsForChat$outboundSchema;
-  /** @deprecated use `ControlsForChat$Outbound` instead. */
-  export type Outbound = ControlsForChat$Outbound;
+export namespace ChatControlDto$ {
+  /** @deprecated use `ChatControlDto$inboundSchema` instead. */
+  export const inboundSchema = ChatControlDto$inboundSchema;
+  /** @deprecated use `ChatControlDto$outboundSchema` instead. */
+  export const outboundSchema = ChatControlDto$outboundSchema;
+  /** @deprecated use `ChatControlDto$Outbound` instead. */
+  export type Outbound = ChatControlDto$Outbound;
 }
 
-export function controlsForChatToJSON(
-  controlsForChat: ControlsForChat,
-): string {
-  return JSON.stringify(ControlsForChat$outboundSchema.parse(controlsForChat));
+export function chatControlDtoToJSON(chatControlDto: ChatControlDto): string {
+  return JSON.stringify(ChatControlDto$outboundSchema.parse(chatControlDto));
 }
 
-export function controlsForChatFromJSON(
+export function chatControlDtoFromJSON(
   jsonString: string,
-): SafeParseResult<ControlsForChat, SDKValidationError> {
+): SafeParseResult<ChatControlDto, SDKValidationError> {
   return safeParse(
     jsonString,
-    (x) => ControlsForChat$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'ControlsForChat' from JSON`,
+    (x) => ChatControlDto$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'ChatControlDto' from JSON`,
   );
 }
 
 /** @internal */
-export const ControlsForPush$inboundSchema: z.ZodType<
-  ControlsForPush,
+export const PushControlDtoControlValuesSkip$inboundSchema: z.ZodType<
+  PushControlDtoControlValuesSkip,
+  z.ZodTypeDef,
+  unknown
+> = z.object({});
+
+/** @internal */
+export type PushControlDtoControlValuesSkip$Outbound = {};
+
+/** @internal */
+export const PushControlDtoControlValuesSkip$outboundSchema: z.ZodType<
+  PushControlDtoControlValuesSkip$Outbound,
+  z.ZodTypeDef,
+  PushControlDtoControlValuesSkip
+> = z.object({});
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace PushControlDtoControlValuesSkip$ {
+  /** @deprecated use `PushControlDtoControlValuesSkip$inboundSchema` instead. */
+  export const inboundSchema = PushControlDtoControlValuesSkip$inboundSchema;
+  /** @deprecated use `PushControlDtoControlValuesSkip$outboundSchema` instead. */
+  export const outboundSchema = PushControlDtoControlValuesSkip$outboundSchema;
+  /** @deprecated use `PushControlDtoControlValuesSkip$Outbound` instead. */
+  export type Outbound = PushControlDtoControlValuesSkip$Outbound;
+}
+
+export function pushControlDtoControlValuesSkipToJSON(
+  pushControlDtoControlValuesSkip: PushControlDtoControlValuesSkip,
+): string {
+  return JSON.stringify(
+    PushControlDtoControlValuesSkip$outboundSchema.parse(
+      pushControlDtoControlValuesSkip,
+    ),
+  );
+}
+
+export function pushControlDtoControlValuesSkipFromJSON(
+  jsonString: string,
+): SafeParseResult<PushControlDtoControlValuesSkip, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => PushControlDtoControlValuesSkip$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'PushControlDtoControlValuesSkip' from JSON`,
+  );
+}
+
+/** @internal */
+export const PushControlDto$inboundSchema: z.ZodType<
+  PushControlDto,
   z.ZodTypeDef,
   unknown
 > = z.object({
-  skip: z.record(z.any()).optional(),
+  skip: z.lazy(() => PushControlDtoControlValuesSkip$inboundSchema).optional(),
   subject: z.string(),
   body: z.string(),
 });
 
 /** @internal */
-export type ControlsForPush$Outbound = {
-  skip?: { [k: string]: any } | undefined;
+export type PushControlDto$Outbound = {
+  skip?: PushControlDtoControlValuesSkip$Outbound | undefined;
   subject: string;
   body: string;
 };
 
 /** @internal */
-export const ControlsForPush$outboundSchema: z.ZodType<
-  ControlsForPush$Outbound,
+export const PushControlDto$outboundSchema: z.ZodType<
+  PushControlDto$Outbound,
   z.ZodTypeDef,
-  ControlsForPush
+  PushControlDto
 > = z.object({
-  skip: z.record(z.any()).optional(),
+  skip: z.lazy(() => PushControlDtoControlValuesSkip$outboundSchema).optional(),
   subject: z.string(),
   body: z.string(),
 });
@@ -765,54 +932,102 @@ export const ControlsForPush$outboundSchema: z.ZodType<
  * @internal
  * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
  */
-export namespace ControlsForPush$ {
-  /** @deprecated use `ControlsForPush$inboundSchema` instead. */
-  export const inboundSchema = ControlsForPush$inboundSchema;
-  /** @deprecated use `ControlsForPush$outboundSchema` instead. */
-  export const outboundSchema = ControlsForPush$outboundSchema;
-  /** @deprecated use `ControlsForPush$Outbound` instead. */
-  export type Outbound = ControlsForPush$Outbound;
+export namespace PushControlDto$ {
+  /** @deprecated use `PushControlDto$inboundSchema` instead. */
+  export const inboundSchema = PushControlDto$inboundSchema;
+  /** @deprecated use `PushControlDto$outboundSchema` instead. */
+  export const outboundSchema = PushControlDto$outboundSchema;
+  /** @deprecated use `PushControlDto$Outbound` instead. */
+  export type Outbound = PushControlDto$Outbound;
 }
 
-export function controlsForPushToJSON(
-  controlsForPush: ControlsForPush,
-): string {
-  return JSON.stringify(ControlsForPush$outboundSchema.parse(controlsForPush));
+export function pushControlDtoToJSON(pushControlDto: PushControlDto): string {
+  return JSON.stringify(PushControlDto$outboundSchema.parse(pushControlDto));
 }
 
-export function controlsForPushFromJSON(
+export function pushControlDtoFromJSON(
   jsonString: string,
-): SafeParseResult<ControlsForPush, SDKValidationError> {
+): SafeParseResult<PushControlDto, SDKValidationError> {
   return safeParse(
     jsonString,
-    (x) => ControlsForPush$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'ControlsForPush' from JSON`,
+    (x) => PushControlDto$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'PushControlDto' from JSON`,
   );
 }
 
 /** @internal */
-export const ControlsForSms$inboundSchema: z.ZodType<
-  ControlsForSms,
+export const SmsControlDtoControlValuesSkip$inboundSchema: z.ZodType<
+  SmsControlDtoControlValuesSkip,
+  z.ZodTypeDef,
+  unknown
+> = z.object({});
+
+/** @internal */
+export type SmsControlDtoControlValuesSkip$Outbound = {};
+
+/** @internal */
+export const SmsControlDtoControlValuesSkip$outboundSchema: z.ZodType<
+  SmsControlDtoControlValuesSkip$Outbound,
+  z.ZodTypeDef,
+  SmsControlDtoControlValuesSkip
+> = z.object({});
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace SmsControlDtoControlValuesSkip$ {
+  /** @deprecated use `SmsControlDtoControlValuesSkip$inboundSchema` instead. */
+  export const inboundSchema = SmsControlDtoControlValuesSkip$inboundSchema;
+  /** @deprecated use `SmsControlDtoControlValuesSkip$outboundSchema` instead. */
+  export const outboundSchema = SmsControlDtoControlValuesSkip$outboundSchema;
+  /** @deprecated use `SmsControlDtoControlValuesSkip$Outbound` instead. */
+  export type Outbound = SmsControlDtoControlValuesSkip$Outbound;
+}
+
+export function smsControlDtoControlValuesSkipToJSON(
+  smsControlDtoControlValuesSkip: SmsControlDtoControlValuesSkip,
+): string {
+  return JSON.stringify(
+    SmsControlDtoControlValuesSkip$outboundSchema.parse(
+      smsControlDtoControlValuesSkip,
+    ),
+  );
+}
+
+export function smsControlDtoControlValuesSkipFromJSON(
+  jsonString: string,
+): SafeParseResult<SmsControlDtoControlValuesSkip, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => SmsControlDtoControlValuesSkip$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'SmsControlDtoControlValuesSkip' from JSON`,
+  );
+}
+
+/** @internal */
+export const SmsControlDto$inboundSchema: z.ZodType<
+  SmsControlDto,
   z.ZodTypeDef,
   unknown
 > = z.object({
-  skip: z.record(z.any()).optional(),
+  skip: z.lazy(() => SmsControlDtoControlValuesSkip$inboundSchema).optional(),
   body: z.string(),
 });
 
 /** @internal */
-export type ControlsForSms$Outbound = {
-  skip?: { [k: string]: any } | undefined;
+export type SmsControlDto$Outbound = {
+  skip?: SmsControlDtoControlValuesSkip$Outbound | undefined;
   body: string;
 };
 
 /** @internal */
-export const ControlsForSms$outboundSchema: z.ZodType<
-  ControlsForSms$Outbound,
+export const SmsControlDto$outboundSchema: z.ZodType<
+  SmsControlDto$Outbound,
   z.ZodTypeDef,
-  ControlsForSms
+  SmsControlDto
 > = z.object({
-  skip: z.record(z.any()).optional(),
+  skip: z.lazy(() => SmsControlDtoControlValuesSkip$outboundSchema).optional(),
   body: z.string(),
 });
 
@@ -820,1068 +1035,297 @@ export const ControlsForSms$outboundSchema: z.ZodType<
  * @internal
  * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
  */
-export namespace ControlsForSms$ {
-  /** @deprecated use `ControlsForSms$inboundSchema` instead. */
-  export const inboundSchema = ControlsForSms$inboundSchema;
-  /** @deprecated use `ControlsForSms$outboundSchema` instead. */
-  export const outboundSchema = ControlsForSms$outboundSchema;
-  /** @deprecated use `ControlsForSms$Outbound` instead. */
-  export type Outbound = ControlsForSms$Outbound;
+export namespace SmsControlDto$ {
+  /** @deprecated use `SmsControlDto$inboundSchema` instead. */
+  export const inboundSchema = SmsControlDto$inboundSchema;
+  /** @deprecated use `SmsControlDto$outboundSchema` instead. */
+  export const outboundSchema = SmsControlDto$outboundSchema;
+  /** @deprecated use `SmsControlDto$Outbound` instead. */
+  export type Outbound = SmsControlDto$Outbound;
 }
 
-export function controlsForSmsToJSON(controlsForSms: ControlsForSms): string {
-  return JSON.stringify(ControlsForSms$outboundSchema.parse(controlsForSms));
+export function smsControlDtoToJSON(smsControlDto: SmsControlDto): string {
+  return JSON.stringify(SmsControlDto$outboundSchema.parse(smsControlDto));
 }
 
-export function controlsForSmsFromJSON(
+export function smsControlDtoFromJSON(
   jsonString: string,
-): SafeParseResult<ControlsForSms, SDKValidationError> {
+): SafeParseResult<SmsControlDto, SDKValidationError> {
   return safeParse(
     jsonString,
-    (x) => ControlsForSms$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'ControlsForSms' from JSON`,
+    (x) => SmsControlDto$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'SmsControlDto' from JSON`,
   );
 }
 
 /** @internal */
-export const ControlsForEmail$inboundSchema: z.ZodType<
-  ControlsForEmail,
+export const ControlValuesSkip$inboundSchema: z.ZodType<
+  ControlValuesSkip,
+  z.ZodTypeDef,
+  unknown
+> = z.object({});
+
+/** @internal */
+export type ControlValuesSkip$Outbound = {};
+
+/** @internal */
+export const ControlValuesSkip$outboundSchema: z.ZodType<
+  ControlValuesSkip$Outbound,
+  z.ZodTypeDef,
+  ControlValuesSkip
+> = z.object({});
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace ControlValuesSkip$ {
+  /** @deprecated use `ControlValuesSkip$inboundSchema` instead. */
+  export const inboundSchema = ControlValuesSkip$inboundSchema;
+  /** @deprecated use `ControlValuesSkip$outboundSchema` instead. */
+  export const outboundSchema = ControlValuesSkip$outboundSchema;
+  /** @deprecated use `ControlValuesSkip$Outbound` instead. */
+  export type Outbound = ControlValuesSkip$Outbound;
+}
+
+export function controlValuesSkipToJSON(
+  controlValuesSkip: ControlValuesSkip,
+): string {
+  return JSON.stringify(
+    ControlValuesSkip$outboundSchema.parse(controlValuesSkip),
+  );
+}
+
+export function controlValuesSkipFromJSON(
+  jsonString: string,
+): SafeParseResult<ControlValuesSkip, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => ControlValuesSkip$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'ControlValuesSkip' from JSON`,
+  );
+}
+
+/** @internal */
+export const EmailControlDto$inboundSchema: z.ZodType<
+  EmailControlDto,
   z.ZodTypeDef,
   unknown
 > = z.object({
-  skip: z.record(z.any()).optional(),
-  body: z.string().default(""),
+  skip: z.lazy(() => ControlValuesSkip$inboundSchema).optional(),
   subject: z.string(),
-  disableOutputSanitization: z.boolean().optional(),
+  body: z.string().default(""),
+  disableOutputSanitization: z.boolean().default(false),
 });
 
 /** @internal */
-export type ControlsForEmail$Outbound = {
-  skip?: { [k: string]: any } | undefined;
-  body: string;
+export type EmailControlDto$Outbound = {
+  skip?: ControlValuesSkip$Outbound | undefined;
   subject: string;
-  disableOutputSanitization?: boolean | undefined;
-};
-
-/** @internal */
-export const ControlsForEmail$outboundSchema: z.ZodType<
-  ControlsForEmail$Outbound,
-  z.ZodTypeDef,
-  ControlsForEmail
-> = z.object({
-  skip: z.record(z.any()).optional(),
-  body: z.string().default(""),
-  subject: z.string(),
-  disableOutputSanitization: z.boolean().optional(),
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ControlsForEmail$ {
-  /** @deprecated use `ControlsForEmail$inboundSchema` instead. */
-  export const inboundSchema = ControlsForEmail$inboundSchema;
-  /** @deprecated use `ControlsForEmail$outboundSchema` instead. */
-  export const outboundSchema = ControlsForEmail$outboundSchema;
-  /** @deprecated use `ControlsForEmail$Outbound` instead. */
-  export type Outbound = ControlsForEmail$Outbound;
-}
-
-export function controlsForEmailToJSON(
-  controlsForEmail: ControlsForEmail,
-): string {
-  return JSON.stringify(
-    ControlsForEmail$outboundSchema.parse(controlsForEmail),
-  );
-}
-
-export function controlsForEmailFromJSON(
-  jsonString: string,
-): SafeParseResult<ControlsForEmail, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => ControlsForEmail$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'ControlsForEmail' from JSON`,
-  );
-}
-
-/** @internal */
-export const StepUpsertDtoControlsForInAppControlValuesTarget$inboundSchema:
-  z.ZodNativeEnum<typeof StepUpsertDtoControlsForInAppControlValuesTarget> = z
-    .nativeEnum(StepUpsertDtoControlsForInAppControlValuesTarget);
-
-/** @internal */
-export const StepUpsertDtoControlsForInAppControlValuesTarget$outboundSchema:
-  z.ZodNativeEnum<typeof StepUpsertDtoControlsForInAppControlValuesTarget> =
-    StepUpsertDtoControlsForInAppControlValuesTarget$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace StepUpsertDtoControlsForInAppControlValuesTarget$ {
-  /** @deprecated use `StepUpsertDtoControlsForInAppControlValuesTarget$inboundSchema` instead. */
-  export const inboundSchema =
-    StepUpsertDtoControlsForInAppControlValuesTarget$inboundSchema;
-  /** @deprecated use `StepUpsertDtoControlsForInAppControlValuesTarget$outboundSchema` instead. */
-  export const outboundSchema =
-    StepUpsertDtoControlsForInAppControlValuesTarget$outboundSchema;
-}
-
-/** @internal */
-export const StepUpsertDtoControlsForInAppControlValuesRedirect$inboundSchema:
-  z.ZodType<
-    StepUpsertDtoControlsForInAppControlValuesRedirect,
-    z.ZodTypeDef,
-    unknown
-  > = z.object({
-    url: z.string(),
-    target: StepUpsertDtoControlsForInAppControlValuesTarget$inboundSchema,
-  });
-
-/** @internal */
-export type StepUpsertDtoControlsForInAppControlValuesRedirect$Outbound = {
-  url: string;
-  target: string;
-};
-
-/** @internal */
-export const StepUpsertDtoControlsForInAppControlValuesRedirect$outboundSchema:
-  z.ZodType<
-    StepUpsertDtoControlsForInAppControlValuesRedirect$Outbound,
-    z.ZodTypeDef,
-    StepUpsertDtoControlsForInAppControlValuesRedirect
-  > = z.object({
-    url: z.string(),
-    target: StepUpsertDtoControlsForInAppControlValuesTarget$outboundSchema,
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace StepUpsertDtoControlsForInAppControlValuesRedirect$ {
-  /** @deprecated use `StepUpsertDtoControlsForInAppControlValuesRedirect$inboundSchema` instead. */
-  export const inboundSchema =
-    StepUpsertDtoControlsForInAppControlValuesRedirect$inboundSchema;
-  /** @deprecated use `StepUpsertDtoControlsForInAppControlValuesRedirect$outboundSchema` instead. */
-  export const outboundSchema =
-    StepUpsertDtoControlsForInAppControlValuesRedirect$outboundSchema;
-  /** @deprecated use `StepUpsertDtoControlsForInAppControlValuesRedirect$Outbound` instead. */
-  export type Outbound =
-    StepUpsertDtoControlsForInAppControlValuesRedirect$Outbound;
-}
-
-export function stepUpsertDtoControlsForInAppControlValuesRedirectToJSON(
-  stepUpsertDtoControlsForInAppControlValuesRedirect:
-    StepUpsertDtoControlsForInAppControlValuesRedirect,
-): string {
-  return JSON.stringify(
-    StepUpsertDtoControlsForInAppControlValuesRedirect$outboundSchema.parse(
-      stepUpsertDtoControlsForInAppControlValuesRedirect,
-    ),
-  );
-}
-
-export function stepUpsertDtoControlsForInAppControlValuesRedirectFromJSON(
-  jsonString: string,
-): SafeParseResult<
-  StepUpsertDtoControlsForInAppControlValuesRedirect,
-  SDKValidationError
-> {
-  return safeParse(
-    jsonString,
-    (x) =>
-      StepUpsertDtoControlsForInAppControlValuesRedirect$inboundSchema.parse(
-        JSON.parse(x),
-      ),
-    `Failed to parse 'StepUpsertDtoControlsForInAppControlValuesRedirect' from JSON`,
-  );
-}
-
-/** @internal */
-export const ControlsForInAppPrimaryAction$inboundSchema: z.ZodType<
-  ControlsForInAppPrimaryAction,
-  z.ZodTypeDef,
-  unknown
-> = z.object({
-  label: z.string(),
-  redirect: z.lazy(() =>
-    StepUpsertDtoControlsForInAppControlValuesRedirect$inboundSchema
-  ).optional(),
-});
-
-/** @internal */
-export type ControlsForInAppPrimaryAction$Outbound = {
-  label: string;
-  redirect?:
-    | StepUpsertDtoControlsForInAppControlValuesRedirect$Outbound
-    | undefined;
-};
-
-/** @internal */
-export const ControlsForInAppPrimaryAction$outboundSchema: z.ZodType<
-  ControlsForInAppPrimaryAction$Outbound,
-  z.ZodTypeDef,
-  ControlsForInAppPrimaryAction
-> = z.object({
-  label: z.string(),
-  redirect: z.lazy(() =>
-    StepUpsertDtoControlsForInAppControlValuesRedirect$outboundSchema
-  ).optional(),
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ControlsForInAppPrimaryAction$ {
-  /** @deprecated use `ControlsForInAppPrimaryAction$inboundSchema` instead. */
-  export const inboundSchema = ControlsForInAppPrimaryAction$inboundSchema;
-  /** @deprecated use `ControlsForInAppPrimaryAction$outboundSchema` instead. */
-  export const outboundSchema = ControlsForInAppPrimaryAction$outboundSchema;
-  /** @deprecated use `ControlsForInAppPrimaryAction$Outbound` instead. */
-  export type Outbound = ControlsForInAppPrimaryAction$Outbound;
-}
-
-export function controlsForInAppPrimaryActionToJSON(
-  controlsForInAppPrimaryAction: ControlsForInAppPrimaryAction,
-): string {
-  return JSON.stringify(
-    ControlsForInAppPrimaryAction$outboundSchema.parse(
-      controlsForInAppPrimaryAction,
-    ),
-  );
-}
-
-export function controlsForInAppPrimaryActionFromJSON(
-  jsonString: string,
-): SafeParseResult<ControlsForInAppPrimaryAction, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => ControlsForInAppPrimaryAction$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'ControlsForInAppPrimaryAction' from JSON`,
-  );
-}
-
-/** @internal */
-export const StepUpsertDtoControlsForInAppControlValues1Target$inboundSchema:
-  z.ZodNativeEnum<typeof StepUpsertDtoControlsForInAppControlValues1Target> = z
-    .nativeEnum(StepUpsertDtoControlsForInAppControlValues1Target);
-
-/** @internal */
-export const StepUpsertDtoControlsForInAppControlValues1Target$outboundSchema:
-  z.ZodNativeEnum<typeof StepUpsertDtoControlsForInAppControlValues1Target> =
-    StepUpsertDtoControlsForInAppControlValues1Target$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace StepUpsertDtoControlsForInAppControlValues1Target$ {
-  /** @deprecated use `StepUpsertDtoControlsForInAppControlValues1Target$inboundSchema` instead. */
-  export const inboundSchema =
-    StepUpsertDtoControlsForInAppControlValues1Target$inboundSchema;
-  /** @deprecated use `StepUpsertDtoControlsForInAppControlValues1Target$outboundSchema` instead. */
-  export const outboundSchema =
-    StepUpsertDtoControlsForInAppControlValues1Target$outboundSchema;
-}
-
-/** @internal */
-export const StepUpsertDtoControlsForInAppControlValues1Redirect$inboundSchema:
-  z.ZodType<
-    StepUpsertDtoControlsForInAppControlValues1Redirect,
-    z.ZodTypeDef,
-    unknown
-  > = z.object({
-    url: z.string(),
-    target: StepUpsertDtoControlsForInAppControlValues1Target$inboundSchema,
-  });
-
-/** @internal */
-export type StepUpsertDtoControlsForInAppControlValues1Redirect$Outbound = {
-  url: string;
-  target: string;
-};
-
-/** @internal */
-export const StepUpsertDtoControlsForInAppControlValues1Redirect$outboundSchema:
-  z.ZodType<
-    StepUpsertDtoControlsForInAppControlValues1Redirect$Outbound,
-    z.ZodTypeDef,
-    StepUpsertDtoControlsForInAppControlValues1Redirect
-  > = z.object({
-    url: z.string(),
-    target: StepUpsertDtoControlsForInAppControlValues1Target$outboundSchema,
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace StepUpsertDtoControlsForInAppControlValues1Redirect$ {
-  /** @deprecated use `StepUpsertDtoControlsForInAppControlValues1Redirect$inboundSchema` instead. */
-  export const inboundSchema =
-    StepUpsertDtoControlsForInAppControlValues1Redirect$inboundSchema;
-  /** @deprecated use `StepUpsertDtoControlsForInAppControlValues1Redirect$outboundSchema` instead. */
-  export const outboundSchema =
-    StepUpsertDtoControlsForInAppControlValues1Redirect$outboundSchema;
-  /** @deprecated use `StepUpsertDtoControlsForInAppControlValues1Redirect$Outbound` instead. */
-  export type Outbound =
-    StepUpsertDtoControlsForInAppControlValues1Redirect$Outbound;
-}
-
-export function stepUpsertDtoControlsForInAppControlValues1RedirectToJSON(
-  stepUpsertDtoControlsForInAppControlValues1Redirect:
-    StepUpsertDtoControlsForInAppControlValues1Redirect,
-): string {
-  return JSON.stringify(
-    StepUpsertDtoControlsForInAppControlValues1Redirect$outboundSchema.parse(
-      stepUpsertDtoControlsForInAppControlValues1Redirect,
-    ),
-  );
-}
-
-export function stepUpsertDtoControlsForInAppControlValues1RedirectFromJSON(
-  jsonString: string,
-): SafeParseResult<
-  StepUpsertDtoControlsForInAppControlValues1Redirect,
-  SDKValidationError
-> {
-  return safeParse(
-    jsonString,
-    (x) =>
-      StepUpsertDtoControlsForInAppControlValues1Redirect$inboundSchema.parse(
-        JSON.parse(x),
-      ),
-    `Failed to parse 'StepUpsertDtoControlsForInAppControlValues1Redirect' from JSON`,
-  );
-}
-
-/** @internal */
-export const ControlsForInAppSecondaryAction$inboundSchema: z.ZodType<
-  ControlsForInAppSecondaryAction,
-  z.ZodTypeDef,
-  unknown
-> = z.object({
-  label: z.string(),
-  redirect: z.lazy(() =>
-    StepUpsertDtoControlsForInAppControlValues1Redirect$inboundSchema
-  ).optional(),
-});
-
-/** @internal */
-export type ControlsForInAppSecondaryAction$Outbound = {
-  label: string;
-  redirect?:
-    | StepUpsertDtoControlsForInAppControlValues1Redirect$Outbound
-    | undefined;
-};
-
-/** @internal */
-export const ControlsForInAppSecondaryAction$outboundSchema: z.ZodType<
-  ControlsForInAppSecondaryAction$Outbound,
-  z.ZodTypeDef,
-  ControlsForInAppSecondaryAction
-> = z.object({
-  label: z.string(),
-  redirect: z.lazy(() =>
-    StepUpsertDtoControlsForInAppControlValues1Redirect$outboundSchema
-  ).optional(),
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ControlsForInAppSecondaryAction$ {
-  /** @deprecated use `ControlsForInAppSecondaryAction$inboundSchema` instead. */
-  export const inboundSchema = ControlsForInAppSecondaryAction$inboundSchema;
-  /** @deprecated use `ControlsForInAppSecondaryAction$outboundSchema` instead. */
-  export const outboundSchema = ControlsForInAppSecondaryAction$outboundSchema;
-  /** @deprecated use `ControlsForInAppSecondaryAction$Outbound` instead. */
-  export type Outbound = ControlsForInAppSecondaryAction$Outbound;
-}
-
-export function controlsForInAppSecondaryActionToJSON(
-  controlsForInAppSecondaryAction: ControlsForInAppSecondaryAction,
-): string {
-  return JSON.stringify(
-    ControlsForInAppSecondaryAction$outboundSchema.parse(
-      controlsForInAppSecondaryAction,
-    ),
-  );
-}
-
-export function controlsForInAppSecondaryActionFromJSON(
-  jsonString: string,
-): SafeParseResult<ControlsForInAppSecondaryAction, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => ControlsForInAppSecondaryAction$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'ControlsForInAppSecondaryAction' from JSON`,
-  );
-}
-
-/** @internal */
-export const ControlsForInAppTarget$inboundSchema: z.ZodNativeEnum<
-  typeof ControlsForInAppTarget
-> = z.nativeEnum(ControlsForInAppTarget);
-
-/** @internal */
-export const ControlsForInAppTarget$outboundSchema: z.ZodNativeEnum<
-  typeof ControlsForInAppTarget
-> = ControlsForInAppTarget$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ControlsForInAppTarget$ {
-  /** @deprecated use `ControlsForInAppTarget$inboundSchema` instead. */
-  export const inboundSchema = ControlsForInAppTarget$inboundSchema;
-  /** @deprecated use `ControlsForInAppTarget$outboundSchema` instead. */
-  export const outboundSchema = ControlsForInAppTarget$outboundSchema;
-}
-
-/** @internal */
-export const ControlsForInAppRedirect$inboundSchema: z.ZodType<
-  ControlsForInAppRedirect,
-  z.ZodTypeDef,
-  unknown
-> = z.object({
-  url: z.string(),
-  target: ControlsForInAppTarget$inboundSchema,
-});
-
-/** @internal */
-export type ControlsForInAppRedirect$Outbound = {
-  url: string;
-  target: string;
-};
-
-/** @internal */
-export const ControlsForInAppRedirect$outboundSchema: z.ZodType<
-  ControlsForInAppRedirect$Outbound,
-  z.ZodTypeDef,
-  ControlsForInAppRedirect
-> = z.object({
-  url: z.string(),
-  target: ControlsForInAppTarget$outboundSchema,
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ControlsForInAppRedirect$ {
-  /** @deprecated use `ControlsForInAppRedirect$inboundSchema` instead. */
-  export const inboundSchema = ControlsForInAppRedirect$inboundSchema;
-  /** @deprecated use `ControlsForInAppRedirect$outboundSchema` instead. */
-  export const outboundSchema = ControlsForInAppRedirect$outboundSchema;
-  /** @deprecated use `ControlsForInAppRedirect$Outbound` instead. */
-  export type Outbound = ControlsForInAppRedirect$Outbound;
-}
-
-export function controlsForInAppRedirectToJSON(
-  controlsForInAppRedirect: ControlsForInAppRedirect,
-): string {
-  return JSON.stringify(
-    ControlsForInAppRedirect$outboundSchema.parse(controlsForInAppRedirect),
-  );
-}
-
-export function controlsForInAppRedirectFromJSON(
-  jsonString: string,
-): SafeParseResult<ControlsForInAppRedirect, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => ControlsForInAppRedirect$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'ControlsForInAppRedirect' from JSON`,
-  );
-}
-
-/** @internal */
-export const ControlsForInApp2$inboundSchema: z.ZodType<
-  ControlsForInApp2,
-  z.ZodTypeDef,
-  unknown
-> = z.object({
-  subject: z.string().optional(),
-  body: z.string(),
-  skip: z.record(z.any()).optional(),
-  disableOutputSanitization: z.boolean().optional(),
-  avatar: z.string().optional(),
-  primaryAction: z.lazy(() => ControlsForInAppPrimaryAction$inboundSchema)
-    .optional(),
-  secondaryAction: z.lazy(() => ControlsForInAppSecondaryAction$inboundSchema)
-    .optional(),
-  data: z.record(z.any()).optional(),
-  redirect: z.lazy(() => ControlsForInAppRedirect$inboundSchema).optional(),
-});
-
-/** @internal */
-export type ControlsForInApp2$Outbound = {
-  subject?: string | undefined;
   body: string;
-  skip?: { [k: string]: any } | undefined;
-  disableOutputSanitization?: boolean | undefined;
-  avatar?: string | undefined;
-  primaryAction?: ControlsForInAppPrimaryAction$Outbound | undefined;
-  secondaryAction?: ControlsForInAppSecondaryAction$Outbound | undefined;
-  data?: { [k: string]: any } | undefined;
-  redirect?: ControlsForInAppRedirect$Outbound | undefined;
+  disableOutputSanitization: boolean;
 };
 
 /** @internal */
-export const ControlsForInApp2$outboundSchema: z.ZodType<
-  ControlsForInApp2$Outbound,
+export const EmailControlDto$outboundSchema: z.ZodType<
+  EmailControlDto$Outbound,
   z.ZodTypeDef,
-  ControlsForInApp2
+  EmailControlDto
 > = z.object({
-  subject: z.string().optional(),
-  body: z.string(),
-  skip: z.record(z.any()).optional(),
-  disableOutputSanitization: z.boolean().optional(),
-  avatar: z.string().optional(),
-  primaryAction: z.lazy(() => ControlsForInAppPrimaryAction$outboundSchema)
-    .optional(),
-  secondaryAction: z.lazy(() => ControlsForInAppSecondaryAction$outboundSchema)
-    .optional(),
-  data: z.record(z.any()).optional(),
-  redirect: z.lazy(() => ControlsForInAppRedirect$outboundSchema).optional(),
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ControlsForInApp2$ {
-  /** @deprecated use `ControlsForInApp2$inboundSchema` instead. */
-  export const inboundSchema = ControlsForInApp2$inboundSchema;
-  /** @deprecated use `ControlsForInApp2$outboundSchema` instead. */
-  export const outboundSchema = ControlsForInApp2$outboundSchema;
-  /** @deprecated use `ControlsForInApp2$Outbound` instead. */
-  export type Outbound = ControlsForInApp2$Outbound;
-}
-
-export function controlsForInApp2ToJSON(
-  controlsForInApp2: ControlsForInApp2,
-): string {
-  return JSON.stringify(
-    ControlsForInApp2$outboundSchema.parse(controlsForInApp2),
-  );
-}
-
-export function controlsForInApp2FromJSON(
-  jsonString: string,
-): SafeParseResult<ControlsForInApp2, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => ControlsForInApp2$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'ControlsForInApp2' from JSON`,
-  );
-}
-
-/** @internal */
-export const StepUpsertDtoControlsForInAppTarget$inboundSchema: z.ZodNativeEnum<
-  typeof StepUpsertDtoControlsForInAppTarget
-> = z.nativeEnum(StepUpsertDtoControlsForInAppTarget);
-
-/** @internal */
-export const StepUpsertDtoControlsForInAppTarget$outboundSchema:
-  z.ZodNativeEnum<typeof StepUpsertDtoControlsForInAppTarget> =
-    StepUpsertDtoControlsForInAppTarget$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace StepUpsertDtoControlsForInAppTarget$ {
-  /** @deprecated use `StepUpsertDtoControlsForInAppTarget$inboundSchema` instead. */
-  export const inboundSchema =
-    StepUpsertDtoControlsForInAppTarget$inboundSchema;
-  /** @deprecated use `StepUpsertDtoControlsForInAppTarget$outboundSchema` instead. */
-  export const outboundSchema =
-    StepUpsertDtoControlsForInAppTarget$outboundSchema;
-}
-
-/** @internal */
-export const StepUpsertDtoControlsForInAppRedirect$inboundSchema: z.ZodType<
-  StepUpsertDtoControlsForInAppRedirect,
-  z.ZodTypeDef,
-  unknown
-> = z.object({
-  url: z.string(),
-  target: StepUpsertDtoControlsForInAppTarget$inboundSchema,
-});
-
-/** @internal */
-export type StepUpsertDtoControlsForInAppRedirect$Outbound = {
-  url: string;
-  target: string;
-};
-
-/** @internal */
-export const StepUpsertDtoControlsForInAppRedirect$outboundSchema: z.ZodType<
-  StepUpsertDtoControlsForInAppRedirect$Outbound,
-  z.ZodTypeDef,
-  StepUpsertDtoControlsForInAppRedirect
-> = z.object({
-  url: z.string(),
-  target: StepUpsertDtoControlsForInAppTarget$outboundSchema,
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace StepUpsertDtoControlsForInAppRedirect$ {
-  /** @deprecated use `StepUpsertDtoControlsForInAppRedirect$inboundSchema` instead. */
-  export const inboundSchema =
-    StepUpsertDtoControlsForInAppRedirect$inboundSchema;
-  /** @deprecated use `StepUpsertDtoControlsForInAppRedirect$outboundSchema` instead. */
-  export const outboundSchema =
-    StepUpsertDtoControlsForInAppRedirect$outboundSchema;
-  /** @deprecated use `StepUpsertDtoControlsForInAppRedirect$Outbound` instead. */
-  export type Outbound = StepUpsertDtoControlsForInAppRedirect$Outbound;
-}
-
-export function stepUpsertDtoControlsForInAppRedirectToJSON(
-  stepUpsertDtoControlsForInAppRedirect: StepUpsertDtoControlsForInAppRedirect,
-): string {
-  return JSON.stringify(
-    StepUpsertDtoControlsForInAppRedirect$outboundSchema.parse(
-      stepUpsertDtoControlsForInAppRedirect,
-    ),
-  );
-}
-
-export function stepUpsertDtoControlsForInAppRedirectFromJSON(
-  jsonString: string,
-): SafeParseResult<StepUpsertDtoControlsForInAppRedirect, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) =>
-      StepUpsertDtoControlsForInAppRedirect$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'StepUpsertDtoControlsForInAppRedirect' from JSON`,
-  );
-}
-
-/** @internal */
-export const PrimaryAction$inboundSchema: z.ZodType<
-  PrimaryAction,
-  z.ZodTypeDef,
-  unknown
-> = z.object({
-  label: z.string(),
-  redirect: z.lazy(() => StepUpsertDtoControlsForInAppRedirect$inboundSchema)
-    .optional(),
-});
-
-/** @internal */
-export type PrimaryAction$Outbound = {
-  label: string;
-  redirect?: StepUpsertDtoControlsForInAppRedirect$Outbound | undefined;
-};
-
-/** @internal */
-export const PrimaryAction$outboundSchema: z.ZodType<
-  PrimaryAction$Outbound,
-  z.ZodTypeDef,
-  PrimaryAction
-> = z.object({
-  label: z.string(),
-  redirect: z.lazy(() => StepUpsertDtoControlsForInAppRedirect$outboundSchema)
-    .optional(),
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace PrimaryAction$ {
-  /** @deprecated use `PrimaryAction$inboundSchema` instead. */
-  export const inboundSchema = PrimaryAction$inboundSchema;
-  /** @deprecated use `PrimaryAction$outboundSchema` instead. */
-  export const outboundSchema = PrimaryAction$outboundSchema;
-  /** @deprecated use `PrimaryAction$Outbound` instead. */
-  export type Outbound = PrimaryAction$Outbound;
-}
-
-export function primaryActionToJSON(primaryAction: PrimaryAction): string {
-  return JSON.stringify(PrimaryAction$outboundSchema.parse(primaryAction));
-}
-
-export function primaryActionFromJSON(
-  jsonString: string,
-): SafeParseResult<PrimaryAction, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => PrimaryAction$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'PrimaryAction' from JSON`,
-  );
-}
-
-/** @internal */
-export const StepUpsertDtoControlsForInAppControlValues11Target$inboundSchema:
-  z.ZodNativeEnum<typeof StepUpsertDtoControlsForInAppControlValues11Target> = z
-    .nativeEnum(StepUpsertDtoControlsForInAppControlValues11Target);
-
-/** @internal */
-export const StepUpsertDtoControlsForInAppControlValues11Target$outboundSchema:
-  z.ZodNativeEnum<typeof StepUpsertDtoControlsForInAppControlValues11Target> =
-    StepUpsertDtoControlsForInAppControlValues11Target$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace StepUpsertDtoControlsForInAppControlValues11Target$ {
-  /** @deprecated use `StepUpsertDtoControlsForInAppControlValues11Target$inboundSchema` instead. */
-  export const inboundSchema =
-    StepUpsertDtoControlsForInAppControlValues11Target$inboundSchema;
-  /** @deprecated use `StepUpsertDtoControlsForInAppControlValues11Target$outboundSchema` instead. */
-  export const outboundSchema =
-    StepUpsertDtoControlsForInAppControlValues11Target$outboundSchema;
-}
-
-/** @internal */
-export const StepUpsertDtoControlsForInAppControlValues11Redirect$inboundSchema:
-  z.ZodType<
-    StepUpsertDtoControlsForInAppControlValues11Redirect,
-    z.ZodTypeDef,
-    unknown
-  > = z.object({
-    url: z.string(),
-    target: StepUpsertDtoControlsForInAppControlValues11Target$inboundSchema,
-  });
-
-/** @internal */
-export type StepUpsertDtoControlsForInAppControlValues11Redirect$Outbound = {
-  url: string;
-  target: string;
-};
-
-/** @internal */
-export const StepUpsertDtoControlsForInAppControlValues11Redirect$outboundSchema:
-  z.ZodType<
-    StepUpsertDtoControlsForInAppControlValues11Redirect$Outbound,
-    z.ZodTypeDef,
-    StepUpsertDtoControlsForInAppControlValues11Redirect
-  > = z.object({
-    url: z.string(),
-    target: StepUpsertDtoControlsForInAppControlValues11Target$outboundSchema,
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace StepUpsertDtoControlsForInAppControlValues11Redirect$ {
-  /** @deprecated use `StepUpsertDtoControlsForInAppControlValues11Redirect$inboundSchema` instead. */
-  export const inboundSchema =
-    StepUpsertDtoControlsForInAppControlValues11Redirect$inboundSchema;
-  /** @deprecated use `StepUpsertDtoControlsForInAppControlValues11Redirect$outboundSchema` instead. */
-  export const outboundSchema =
-    StepUpsertDtoControlsForInAppControlValues11Redirect$outboundSchema;
-  /** @deprecated use `StepUpsertDtoControlsForInAppControlValues11Redirect$Outbound` instead. */
-  export type Outbound =
-    StepUpsertDtoControlsForInAppControlValues11Redirect$Outbound;
-}
-
-export function stepUpsertDtoControlsForInAppControlValues11RedirectToJSON(
-  stepUpsertDtoControlsForInAppControlValues11Redirect:
-    StepUpsertDtoControlsForInAppControlValues11Redirect,
-): string {
-  return JSON.stringify(
-    StepUpsertDtoControlsForInAppControlValues11Redirect$outboundSchema.parse(
-      stepUpsertDtoControlsForInAppControlValues11Redirect,
-    ),
-  );
-}
-
-export function stepUpsertDtoControlsForInAppControlValues11RedirectFromJSON(
-  jsonString: string,
-): SafeParseResult<
-  StepUpsertDtoControlsForInAppControlValues11Redirect,
-  SDKValidationError
-> {
-  return safeParse(
-    jsonString,
-    (x) =>
-      StepUpsertDtoControlsForInAppControlValues11Redirect$inboundSchema.parse(
-        JSON.parse(x),
-      ),
-    `Failed to parse 'StepUpsertDtoControlsForInAppControlValues11Redirect' from JSON`,
-  );
-}
-
-/** @internal */
-export const SecondaryAction$inboundSchema: z.ZodType<
-  SecondaryAction,
-  z.ZodTypeDef,
-  unknown
-> = z.object({
-  label: z.string(),
-  redirect: z.lazy(() =>
-    StepUpsertDtoControlsForInAppControlValues11Redirect$inboundSchema
-  ).optional(),
-});
-
-/** @internal */
-export type SecondaryAction$Outbound = {
-  label: string;
-  redirect?:
-    | StepUpsertDtoControlsForInAppControlValues11Redirect$Outbound
-    | undefined;
-};
-
-/** @internal */
-export const SecondaryAction$outboundSchema: z.ZodType<
-  SecondaryAction$Outbound,
-  z.ZodTypeDef,
-  SecondaryAction
-> = z.object({
-  label: z.string(),
-  redirect: z.lazy(() =>
-    StepUpsertDtoControlsForInAppControlValues11Redirect$outboundSchema
-  ).optional(),
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace SecondaryAction$ {
-  /** @deprecated use `SecondaryAction$inboundSchema` instead. */
-  export const inboundSchema = SecondaryAction$inboundSchema;
-  /** @deprecated use `SecondaryAction$outboundSchema` instead. */
-  export const outboundSchema = SecondaryAction$outboundSchema;
-  /** @deprecated use `SecondaryAction$Outbound` instead. */
-  export type Outbound = SecondaryAction$Outbound;
-}
-
-export function secondaryActionToJSON(
-  secondaryAction: SecondaryAction,
-): string {
-  return JSON.stringify(SecondaryAction$outboundSchema.parse(secondaryAction));
-}
-
-export function secondaryActionFromJSON(
-  jsonString: string,
-): SafeParseResult<SecondaryAction, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => SecondaryAction$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'SecondaryAction' from JSON`,
-  );
-}
-
-/** @internal */
-export const Target$inboundSchema: z.ZodNativeEnum<typeof Target> = z
-  .nativeEnum(Target);
-
-/** @internal */
-export const Target$outboundSchema: z.ZodNativeEnum<typeof Target> =
-  Target$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace Target$ {
-  /** @deprecated use `Target$inboundSchema` instead. */
-  export const inboundSchema = Target$inboundSchema;
-  /** @deprecated use `Target$outboundSchema` instead. */
-  export const outboundSchema = Target$outboundSchema;
-}
-
-/** @internal */
-export const Redirect$inboundSchema: z.ZodType<
-  Redirect,
-  z.ZodTypeDef,
-  unknown
-> = z.object({
-  url: z.string(),
-  target: Target$inboundSchema,
-});
-
-/** @internal */
-export type Redirect$Outbound = {
-  url: string;
-  target: string;
-};
-
-/** @internal */
-export const Redirect$outboundSchema: z.ZodType<
-  Redirect$Outbound,
-  z.ZodTypeDef,
-  Redirect
-> = z.object({
-  url: z.string(),
-  target: Target$outboundSchema,
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace Redirect$ {
-  /** @deprecated use `Redirect$inboundSchema` instead. */
-  export const inboundSchema = Redirect$inboundSchema;
-  /** @deprecated use `Redirect$outboundSchema` instead. */
-  export const outboundSchema = Redirect$outboundSchema;
-  /** @deprecated use `Redirect$Outbound` instead. */
-  export type Outbound = Redirect$Outbound;
-}
-
-export function redirectToJSON(redirect: Redirect): string {
-  return JSON.stringify(Redirect$outboundSchema.parse(redirect));
-}
-
-export function redirectFromJSON(
-  jsonString: string,
-): SafeParseResult<Redirect, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => Redirect$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'Redirect' from JSON`,
-  );
-}
-
-/** @internal */
-export const ControlsForInApp1$inboundSchema: z.ZodType<
-  ControlsForInApp1,
-  z.ZodTypeDef,
-  unknown
-> = z.object({
+  skip: z.lazy(() => ControlValuesSkip$outboundSchema).optional(),
   subject: z.string(),
+  body: z.string().default(""),
+  disableOutputSanitization: z.boolean().default(false),
+});
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace EmailControlDto$ {
+  /** @deprecated use `EmailControlDto$inboundSchema` instead. */
+  export const inboundSchema = EmailControlDto$inboundSchema;
+  /** @deprecated use `EmailControlDto$outboundSchema` instead. */
+  export const outboundSchema = EmailControlDto$outboundSchema;
+  /** @deprecated use `EmailControlDto$Outbound` instead. */
+  export type Outbound = EmailControlDto$Outbound;
+}
+
+export function emailControlDtoToJSON(
+  emailControlDto: EmailControlDto,
+): string {
+  return JSON.stringify(EmailControlDto$outboundSchema.parse(emailControlDto));
+}
+
+export function emailControlDtoFromJSON(
+  jsonString: string,
+): SafeParseResult<EmailControlDto, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => EmailControlDto$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'EmailControlDto' from JSON`,
+  );
+}
+
+/** @internal */
+export const Skip$inboundSchema: z.ZodType<Skip, z.ZodTypeDef, unknown> = z
+  .object({});
+
+/** @internal */
+export type Skip$Outbound = {};
+
+/** @internal */
+export const Skip$outboundSchema: z.ZodType<Skip$Outbound, z.ZodTypeDef, Skip> =
+  z.object({});
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace Skip$ {
+  /** @deprecated use `Skip$inboundSchema` instead. */
+  export const inboundSchema = Skip$inboundSchema;
+  /** @deprecated use `Skip$outboundSchema` instead. */
+  export const outboundSchema = Skip$outboundSchema;
+  /** @deprecated use `Skip$Outbound` instead. */
+  export type Outbound = Skip$Outbound;
+}
+
+export function skipToJSON(skip: Skip): string {
+  return JSON.stringify(Skip$outboundSchema.parse(skip));
+}
+
+export function skipFromJSON(
+  jsonString: string,
+): SafeParseResult<Skip, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => Skip$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'Skip' from JSON`,
+  );
+}
+
+/** @internal */
+export const ControlValuesData$inboundSchema: z.ZodType<
+  ControlValuesData,
+  z.ZodTypeDef,
+  unknown
+> = z.object({});
+
+/** @internal */
+export type ControlValuesData$Outbound = {};
+
+/** @internal */
+export const ControlValuesData$outboundSchema: z.ZodType<
+  ControlValuesData$Outbound,
+  z.ZodTypeDef,
+  ControlValuesData
+> = z.object({});
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace ControlValuesData$ {
+  /** @deprecated use `ControlValuesData$inboundSchema` instead. */
+  export const inboundSchema = ControlValuesData$inboundSchema;
+  /** @deprecated use `ControlValuesData$outboundSchema` instead. */
+  export const outboundSchema = ControlValuesData$outboundSchema;
+  /** @deprecated use `ControlValuesData$Outbound` instead. */
+  export type Outbound = ControlValuesData$Outbound;
+}
+
+export function controlValuesDataToJSON(
+  controlValuesData: ControlValuesData,
+): string {
+  return JSON.stringify(
+    ControlValuesData$outboundSchema.parse(controlValuesData),
+  );
+}
+
+export function controlValuesDataFromJSON(
+  jsonString: string,
+): SafeParseResult<ControlValuesData, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => ControlValuesData$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'ControlValuesData' from JSON`,
+  );
+}
+
+/** @internal */
+export const InAppControlDto$inboundSchema: z.ZodType<
+  InAppControlDto,
+  z.ZodTypeDef,
+  unknown
+> = z.object({
+  skip: z.lazy(() => Skip$inboundSchema).optional(),
   body: z.string().optional(),
-  skip: z.record(z.any()).optional(),
-  disableOutputSanitization: z.boolean().optional(),
+  subject: z.string().optional(),
   avatar: z.string().optional(),
-  primaryAction: z.lazy(() => PrimaryAction$inboundSchema).optional(),
-  secondaryAction: z.lazy(() => SecondaryAction$inboundSchema).optional(),
-  data: z.record(z.any()).optional(),
-  redirect: z.lazy(() => Redirect$inboundSchema).optional(),
+  primaryAction: ActionDto$inboundSchema.optional(),
+  secondaryAction: ActionDto$inboundSchema.optional(),
+  redirect: RedirectDto$inboundSchema.optional(),
+  disableOutputSanitization: z.boolean().default(false),
+  data: z.lazy(() => ControlValuesData$inboundSchema).optional(),
 });
 
 /** @internal */
-export type ControlsForInApp1$Outbound = {
-  subject: string;
+export type InAppControlDto$Outbound = {
+  skip?: Skip$Outbound | undefined;
   body?: string | undefined;
-  skip?: { [k: string]: any } | undefined;
-  disableOutputSanitization?: boolean | undefined;
+  subject?: string | undefined;
   avatar?: string | undefined;
-  primaryAction?: PrimaryAction$Outbound | undefined;
-  secondaryAction?: SecondaryAction$Outbound | undefined;
-  data?: { [k: string]: any } | undefined;
-  redirect?: Redirect$Outbound | undefined;
+  primaryAction?: ActionDto$Outbound | undefined;
+  secondaryAction?: ActionDto$Outbound | undefined;
+  redirect?: RedirectDto$Outbound | undefined;
+  disableOutputSanitization: boolean;
+  data?: ControlValuesData$Outbound | undefined;
 };
 
 /** @internal */
-export const ControlsForInApp1$outboundSchema: z.ZodType<
-  ControlsForInApp1$Outbound,
+export const InAppControlDto$outboundSchema: z.ZodType<
+  InAppControlDto$Outbound,
   z.ZodTypeDef,
-  ControlsForInApp1
+  InAppControlDto
 > = z.object({
-  subject: z.string(),
+  skip: z.lazy(() => Skip$outboundSchema).optional(),
   body: z.string().optional(),
-  skip: z.record(z.any()).optional(),
-  disableOutputSanitization: z.boolean().optional(),
+  subject: z.string().optional(),
   avatar: z.string().optional(),
-  primaryAction: z.lazy(() => PrimaryAction$outboundSchema).optional(),
-  secondaryAction: z.lazy(() => SecondaryAction$outboundSchema).optional(),
-  data: z.record(z.any()).optional(),
-  redirect: z.lazy(() => Redirect$outboundSchema).optional(),
+  primaryAction: ActionDto$outboundSchema.optional(),
+  secondaryAction: ActionDto$outboundSchema.optional(),
+  redirect: RedirectDto$outboundSchema.optional(),
+  disableOutputSanitization: z.boolean().default(false),
+  data: z.lazy(() => ControlValuesData$outboundSchema).optional(),
 });
 
 /**
  * @internal
  * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
  */
-export namespace ControlsForInApp1$ {
-  /** @deprecated use `ControlsForInApp1$inboundSchema` instead. */
-  export const inboundSchema = ControlsForInApp1$inboundSchema;
-  /** @deprecated use `ControlsForInApp1$outboundSchema` instead. */
-  export const outboundSchema = ControlsForInApp1$outboundSchema;
-  /** @deprecated use `ControlsForInApp1$Outbound` instead. */
-  export type Outbound = ControlsForInApp1$Outbound;
+export namespace InAppControlDto$ {
+  /** @deprecated use `InAppControlDto$inboundSchema` instead. */
+  export const inboundSchema = InAppControlDto$inboundSchema;
+  /** @deprecated use `InAppControlDto$outboundSchema` instead. */
+  export const outboundSchema = InAppControlDto$outboundSchema;
+  /** @deprecated use `InAppControlDto$Outbound` instead. */
+  export type Outbound = InAppControlDto$Outbound;
 }
 
-export function controlsForInApp1ToJSON(
-  controlsForInApp1: ControlsForInApp1,
+export function inAppControlDtoToJSON(
+  inAppControlDto: InAppControlDto,
 ): string {
-  return JSON.stringify(
-    ControlsForInApp1$outboundSchema.parse(controlsForInApp1),
-  );
+  return JSON.stringify(InAppControlDto$outboundSchema.parse(inAppControlDto));
 }
 
-export function controlsForInApp1FromJSON(
+export function inAppControlDtoFromJSON(
   jsonString: string,
-): SafeParseResult<ControlsForInApp1, SDKValidationError> {
+): SafeParseResult<InAppControlDto, SDKValidationError> {
   return safeParse(
     jsonString,
-    (x) => ControlsForInApp1$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'ControlsForInApp1' from JSON`,
-  );
-}
-
-/** @internal */
-export const ControlsForInApp$inboundSchema: z.ZodType<
-  ControlsForInApp,
-  z.ZodTypeDef,
-  unknown
-> = z.union([
-  z.lazy(() => ControlsForInApp1$inboundSchema),
-  z.lazy(() => ControlsForInApp2$inboundSchema),
-]);
-
-/** @internal */
-export type ControlsForInApp$Outbound =
-  | ControlsForInApp1$Outbound
-  | ControlsForInApp2$Outbound;
-
-/** @internal */
-export const ControlsForInApp$outboundSchema: z.ZodType<
-  ControlsForInApp$Outbound,
-  z.ZodTypeDef,
-  ControlsForInApp
-> = z.union([
-  z.lazy(() => ControlsForInApp1$outboundSchema),
-  z.lazy(() => ControlsForInApp2$outboundSchema),
-]);
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ControlsForInApp$ {
-  /** @deprecated use `ControlsForInApp$inboundSchema` instead. */
-  export const inboundSchema = ControlsForInApp$inboundSchema;
-  /** @deprecated use `ControlsForInApp$outboundSchema` instead. */
-  export const outboundSchema = ControlsForInApp$outboundSchema;
-  /** @deprecated use `ControlsForInApp$Outbound` instead. */
-  export type Outbound = ControlsForInApp$Outbound;
-}
-
-export function controlsForInAppToJSON(
-  controlsForInApp: ControlsForInApp,
-): string {
-  return JSON.stringify(
-    ControlsForInApp$outboundSchema.parse(controlsForInApp),
-  );
-}
-
-export function controlsForInAppFromJSON(
-  jsonString: string,
-): SafeParseResult<ControlsForInApp, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => ControlsForInApp$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'ControlsForInApp' from JSON`,
+    (x) => InAppControlDto$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'InAppControlDto' from JSON`,
   );
 }
 
@@ -1891,34 +1335,26 @@ export const ControlValues$inboundSchema: z.ZodType<
   z.ZodTypeDef,
   unknown
 > = z.union([
-  z.lazy(() => ControlsForSms$inboundSchema),
-  z.lazy(() => ControlsForChat$inboundSchema),
-  z.lazy(() => ControlsForPush$inboundSchema),
-  z.lazy(() => ControlsForEmail$inboundSchema),
-  z.lazy(() => ControlsForDelay$inboundSchema),
-  z.union([
-    z.lazy(() => ControlsForInApp1$inboundSchema),
-    z.lazy(() => ControlsForInApp2$inboundSchema),
-  ]),
-  z.union([
-    z.lazy(() => ControlsForDigest2$inboundSchema),
-    z.lazy(() => ControlsForDigest1$inboundSchema),
-  ]),
-  z.record(z.any()),
+  z.lazy(() => CustomControlDto$inboundSchema),
+  z.lazy(() => SmsControlDto$inboundSchema),
+  z.lazy(() => ChatControlDto$inboundSchema),
+  z.lazy(() => PushControlDto$inboundSchema),
+  z.lazy(() => EmailControlDto$inboundSchema),
+  z.lazy(() => DelayControlDto$inboundSchema),
+  z.lazy(() => DigestControlDto$inboundSchema),
+  z.lazy(() => InAppControlDto$inboundSchema),
 ]);
 
 /** @internal */
 export type ControlValues$Outbound =
-  | ControlsForSms$Outbound
-  | ControlsForChat$Outbound
-  | ControlsForPush$Outbound
-  | ControlsForEmail$Outbound
-  | ControlsForDelay$Outbound
-  | ControlsForInApp1$Outbound
-  | ControlsForInApp2$Outbound
-  | ControlsForDigest2$Outbound
-  | ControlsForDigest1$Outbound
-  | { [k: string]: any };
+  | CustomControlDto$Outbound
+  | SmsControlDto$Outbound
+  | ChatControlDto$Outbound
+  | PushControlDto$Outbound
+  | EmailControlDto$Outbound
+  | DelayControlDto$Outbound
+  | DigestControlDto$Outbound
+  | InAppControlDto$Outbound;
 
 /** @internal */
 export const ControlValues$outboundSchema: z.ZodType<
@@ -1926,20 +1362,14 @@ export const ControlValues$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   ControlValues
 > = z.union([
-  z.lazy(() => ControlsForSms$outboundSchema),
-  z.lazy(() => ControlsForChat$outboundSchema),
-  z.lazy(() => ControlsForPush$outboundSchema),
-  z.lazy(() => ControlsForEmail$outboundSchema),
-  z.lazy(() => ControlsForDelay$outboundSchema),
-  z.union([
-    z.lazy(() => ControlsForInApp1$outboundSchema),
-    z.lazy(() => ControlsForInApp2$outboundSchema),
-  ]),
-  z.union([
-    z.lazy(() => ControlsForDigest2$outboundSchema),
-    z.lazy(() => ControlsForDigest1$outboundSchema),
-  ]),
-  z.record(z.any()),
+  z.lazy(() => CustomControlDto$outboundSchema),
+  z.lazy(() => SmsControlDto$outboundSchema),
+  z.lazy(() => ChatControlDto$outboundSchema),
+  z.lazy(() => PushControlDto$outboundSchema),
+  z.lazy(() => EmailControlDto$outboundSchema),
+  z.lazy(() => DelayControlDto$outboundSchema),
+  z.lazy(() => DigestControlDto$outboundSchema),
+  z.lazy(() => InAppControlDto$outboundSchema),
 ]);
 
 /**
@@ -1980,20 +1410,14 @@ export const StepUpsertDto$inboundSchema: z.ZodType<
   type: StepTypeEnum$inboundSchema,
   controlValues: z.nullable(
     z.union([
-      z.lazy(() => ControlsForSms$inboundSchema),
-      z.lazy(() => ControlsForChat$inboundSchema),
-      z.lazy(() => ControlsForPush$inboundSchema),
-      z.lazy(() => ControlsForEmail$inboundSchema),
-      z.lazy(() => ControlsForDelay$inboundSchema),
-      z.union([
-        z.lazy(() => ControlsForInApp1$inboundSchema),
-        z.lazy(() => ControlsForInApp2$inboundSchema),
-      ]),
-      z.union([
-        z.lazy(() => ControlsForDigest2$inboundSchema),
-        z.lazy(() => ControlsForDigest1$inboundSchema),
-      ]),
-      z.record(z.any()),
+      z.lazy(() => CustomControlDto$inboundSchema),
+      z.lazy(() => SmsControlDto$inboundSchema),
+      z.lazy(() => ChatControlDto$inboundSchema),
+      z.lazy(() => PushControlDto$inboundSchema),
+      z.lazy(() => EmailControlDto$inboundSchema),
+      z.lazy(() => DelayControlDto$inboundSchema),
+      z.lazy(() => DigestControlDto$inboundSchema),
+      z.lazy(() => InAppControlDto$inboundSchema),
     ]),
   ).optional(),
 }).transform((v) => {
@@ -2008,16 +1432,14 @@ export type StepUpsertDto$Outbound = {
   _id?: string | undefined;
   type: string;
   controlValues?:
-    | ControlsForSms$Outbound
-    | ControlsForChat$Outbound
-    | ControlsForPush$Outbound
-    | ControlsForEmail$Outbound
-    | ControlsForDelay$Outbound
-    | ControlsForInApp1$Outbound
-    | ControlsForInApp2$Outbound
-    | ControlsForDigest2$Outbound
-    | ControlsForDigest1$Outbound
-    | { [k: string]: any }
+    | CustomControlDto$Outbound
+    | SmsControlDto$Outbound
+    | ChatControlDto$Outbound
+    | PushControlDto$Outbound
+    | EmailControlDto$Outbound
+    | DelayControlDto$Outbound
+    | DigestControlDto$Outbound
+    | InAppControlDto$Outbound
     | null
     | undefined;
 };
@@ -2033,20 +1455,14 @@ export const StepUpsertDto$outboundSchema: z.ZodType<
   type: StepTypeEnum$outboundSchema,
   controlValues: z.nullable(
     z.union([
-      z.lazy(() => ControlsForSms$outboundSchema),
-      z.lazy(() => ControlsForChat$outboundSchema),
-      z.lazy(() => ControlsForPush$outboundSchema),
-      z.lazy(() => ControlsForEmail$outboundSchema),
-      z.lazy(() => ControlsForDelay$outboundSchema),
-      z.union([
-        z.lazy(() => ControlsForInApp1$outboundSchema),
-        z.lazy(() => ControlsForInApp2$outboundSchema),
-      ]),
-      z.union([
-        z.lazy(() => ControlsForDigest2$outboundSchema),
-        z.lazy(() => ControlsForDigest1$outboundSchema),
-      ]),
-      z.record(z.any()),
+      z.lazy(() => CustomControlDto$outboundSchema),
+      z.lazy(() => SmsControlDto$outboundSchema),
+      z.lazy(() => ChatControlDto$outboundSchema),
+      z.lazy(() => PushControlDto$outboundSchema),
+      z.lazy(() => EmailControlDto$outboundSchema),
+      z.lazy(() => DelayControlDto$outboundSchema),
+      z.lazy(() => DigestControlDto$outboundSchema),
+      z.lazy(() => InAppControlDto$outboundSchema),
     ]),
   ).optional(),
 }).transform((v) => {
