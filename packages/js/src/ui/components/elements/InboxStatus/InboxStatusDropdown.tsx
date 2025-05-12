@@ -3,6 +3,7 @@ import { useInboxContext, useLocalization, useAppearance } from '../../../contex
 import { cn, useStyle } from '../../../helpers';
 import { ArrowDropDown as DefaultArrowDropDown } from '../../../icons';
 import { Button, buttonVariants, Dropdown } from '../../primitives';
+import { IconRendererWrapper } from '../../shared/IconRendererWrapper';
 import { inboxFilterLocalizationKeys } from './constants';
 import { StatusOptions } from './InboxStatusOptions';
 
@@ -35,11 +36,12 @@ export const StatusDropdown = () => {
                 />
               }
             >
-              {(renderIcon) =>
-                renderIcon()({
-                  class: style('inboxStatus__dropdownItemRight__icon', 'nt-text-foreground-alpha-600 nt-size-4'),
-                })
-              }
+              {(renderIcon) => (
+                <IconRendererWrapper
+                  renderer={renderIcon()}
+                  class={style('inboxStatus__dropdownItemRight__icon', 'nt-text-foreground-alpha-600 nt-size-4')}
+                />
+              )}
             </Show>
           </Button>
         )}

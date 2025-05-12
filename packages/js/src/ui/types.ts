@@ -49,7 +49,20 @@ export type Variables = {
 export type AppearanceKey = (typeof appearanceKeys)[number];
 export type Elements = Partial<Record<AppearanceKey, ElementStyles>>;
 
-export type IconKey = 'bell' | 'clock' | 'arrowDropDown' | 'dots' | 'markAsRead' | 'settings' | 'trash';
+export type IconKey =
+  | 'bell'
+  | 'clock'
+  | 'arrowDropDown'
+  | 'dots'
+  | 'markAsRead'
+  | 'settings'
+  | 'trash'
+  | 'markAsArchived'
+  | 'markAsArchivedRead'
+  | 'markAsUnread'
+  | 'markAsUnarchived'
+  | 'unsnooze'
+  | 'snooze';
 
 export type IconRenderer = (el: HTMLDivElement, props: { class?: string }) => () => void;
 

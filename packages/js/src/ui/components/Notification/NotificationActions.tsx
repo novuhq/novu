@@ -11,6 +11,7 @@ import { Snooze as DefaultSnooze } from '../../icons/Snooze';
 import { Unsnooze as DefaultUnsnooze } from '../../icons/Unsnooze';
 import { LocalizationKey, NotificationStatus } from '../../types';
 import { Button, Dropdown, dropdownItemVariants, Popover } from '../primitives';
+import { IconRendererWrapper } from '../shared/IconRendererWrapper';
 import { Tooltip } from '../primitives/Tooltip';
 import { SnoozeDateTimePicker } from './SnoozeDateTimePicker';
 
@@ -86,11 +87,12 @@ const SnoozeDropdownItem = (props: {
             />
           }
         >
-          {(renderClock) =>
-            renderClock()({
-              class: style('notificationSnooze__dropdownItem__icon', 'nt-size-3 nt-text-foreground-alpha-400 nt-mr-2'),
-            })
-          }
+          {(renderClock) => (
+            <IconRendererWrapper
+              renderer={renderClock()}
+              class={style('notificationSnooze__dropdownItem__icon', 'nt-size-3 nt-text-foreground-alpha-400 nt-mr-2')}
+            />
+          )}
         </Show>
         <span class={style('dropdownItemLabel')}>{props.label}</span>
       </div>
@@ -142,7 +144,9 @@ export const ReadButton = (props: { notification: Notification }) => {
               when={appearance.icons()?.markAsRead}
               fallback={<DefaultMarkAsRead class={style('notificationRead__icon', 'nt-size-3')} />}
             >
-              {(renderIcon) => renderIcon()({ class: style('notificationRead__icon', 'nt-size-3') })}
+              {(renderIcon) => (
+                <IconRendererWrapper renderer={renderIcon()} class={style('notificationRead__icon', 'nt-size-3')} />
+              )}
             </Show>
           </Button>
         )}
@@ -177,7 +181,9 @@ export const UnreadButton = (props: { notification: Notification }) => {
               when={appearance.icons()?.markAsUnread}
               fallback={<DefaultMarkAsUnread class={style('notificationUnread__icon', 'nt-size-3')} />}
             >
-              {(renderIcon) => renderIcon()({ class: style('notificationUnread__icon', 'nt-size-3') })}
+              {(renderIcon) => (
+                <IconRendererWrapper renderer={renderIcon()} class={style('notificationUnread__icon', 'nt-size-3')} />
+              )}
             </Show>
           </Button>
         )}
@@ -212,7 +218,9 @@ export const ArchiveButton = (props: { notification: Notification }) => {
               when={appearance.icons()?.markAsArchived}
               fallback={<DefaultMarkAsArchived class={style('notificationArchive__icon', 'nt-size-3')} />}
             >
-              {(renderIcon) => renderIcon()({ class: style('notificationArchive__icon', 'nt-size-3') })}
+              {(renderIcon) => (
+                <IconRendererWrapper renderer={renderIcon()} class={style('notificationArchive__icon', 'nt-size-3')} />
+              )}
             </Show>
           </Button>
         )}
@@ -247,7 +255,9 @@ export const UnarchiveButton = (props: { notification: Notification }) => {
               when={appearance.icons()?.markAsUnarchived}
               fallback={<DefaultMarkAsUnarchived class={style('notificationArchive__icon', 'nt-size-3')} />}
             >
-              {(renderIcon) => renderIcon()({ class: style('notificationArchive__icon', 'nt-size-3') })}
+              {(renderIcon) => (
+                <IconRendererWrapper renderer={renderIcon()} class={style('notificationArchive__icon', 'nt-size-3')} />
+              )}
             </Show>
           </Button>
         )}
@@ -282,7 +292,9 @@ export const UnsnoozeButton = (props: { notification: Notification }) => {
               when={appearance.icons()?.unsnooze}
               fallback={<DefaultUnsnooze class={style('notificationUnsnooze__icon', 'nt-size-3')} />}
             >
-              {(renderIcon) => renderIcon()({ class: style('notificationUnsnooze__icon', 'nt-size-3') })}
+              {(renderIcon) => (
+                <IconRendererWrapper renderer={renderIcon()} class={style('notificationUnsnooze__icon', 'nt-size-3')} />
+              )}
             </Show>
           </Button>
         )}
@@ -329,7 +341,12 @@ export const SnoozeButton = (props: { notification: Notification }) => {
                     when={appearance.icons()?.snooze}
                     fallback={<DefaultSnooze class={style('notificationSnooze__icon', 'nt-size-3')} />}
                   >
-                    {(renderIcon) => renderIcon()({ class: style('notificationSnooze__icon', 'nt-size-3') })}
+                    {(renderIcon) => (
+                      <IconRendererWrapper
+                        renderer={renderIcon()}
+                        class={style('notificationSnooze__icon', 'nt-size-3')}
+                      />
+                    )}
                   </Show>
                 </Button>
               )}

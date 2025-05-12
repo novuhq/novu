@@ -4,8 +4,9 @@ import { useArchiveAll, useArchiveAllRead, useReadAll } from '../../../api';
 import { StringLocalizationKey, useInboxContext, useLocalization, useAppearance } from '../../../context';
 import { cn, useStyle } from '../../../helpers';
 import { MarkAsArchived, MarkAsArchivedRead, MarkAsRead } from '../../../icons';
-import { IconOverrides } from '../../../types';
+import { IconOverrides, IconKey } from '../../../types';
 import { Dropdown, dropdownItemVariants } from '../../primitives';
+import { IconRendererWrapper } from '../../shared/IconRendererWrapper';
 
 type IconComponentType = (props?: SolidJSX.HTMLAttributes<SVGSVGElement>) => JSXElement;
 
@@ -45,7 +46,7 @@ export const MoreActionsOptions = () => {
 export const ActionsItem = (props: {
   localizationKey: StringLocalizationKey;
   onClick: () => void;
-  iconKey: keyof IconOverrides;
+  iconKey: IconKey;
 }) => {
   const style = useStyle();
   const { t } = useLocalization();
@@ -65,7 +66,12 @@ export const ActionsItem = (props: {
             DefaultIconComponent({ class: style('moreActions__dropdownItemLeft__icon', 'nt-size-3') })
           }
         >
-          {(renderIcon) => renderIcon()({ class: style('moreActions__dropdownItemLeft__icon', 'nt-size-3') })}
+          {(renderIcon) => (
+            <IconRendererWrapper
+              renderer={renderIcon()}
+              class={style('moreActions__dropdownItemLeft__icon', 'nt-size-3')}
+            />
+          )}
         </Show>
       </span>
       <span
