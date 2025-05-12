@@ -5,6 +5,7 @@ import { getV2 } from './api.client';
 interface GetWebhookPortalTokenResponse {
   url: string;
   token: string;
+  appId: string;
 }
 
 export const getWebhookPortalToken = async (environment: IEnvironment): Promise<GetWebhookPortalTokenResponse> => {
