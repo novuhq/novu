@@ -1,17 +1,9 @@
-import {
-  Injectable,
-  NotFoundException,
-  InternalServerErrorException,
-  HttpException,
-  NotImplementedException,
-  HttpStatus,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, InternalServerErrorException, HttpException, HttpStatus } from '@nestjs/common';
 import {
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   DetailEnum,
   StandardQueueService,
-  FeatureFlagsService,
   PinoLogger,
 } from '@novu/application-generic';
 import {
@@ -20,8 +12,6 @@ import {
   MessageRepository,
   MessageEntity,
   OrganizationEntity,
-  EnvironmentEntity,
-  UserEntity,
   CommunityOrganizationRepository,
 } from '@novu/dal';
 import {
@@ -29,7 +19,6 @@ import {
   ChannelTypeEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
-  FeatureFlagsKeysEnum,
   FeatureNameEnum,
   getFeatureForTierAsNumber,
   JobStatusEnum,
@@ -51,8 +40,7 @@ export class SnoozeNotification {
     private standardQueueService: StandardQueueService,
     private organizationRepository: CommunityOrganizationRepository,
     private createExecutionDetails: CreateExecutionDetails,
-    private markNotificationAs: MarkNotificationAs,
-    private featureFlagsService: FeatureFlagsService
+    private markNotificationAs: MarkNotificationAs
   ) {}
 
   public async execute(command: SnoozeNotificationCommand): Promise<InboxNotification> {
@@ -112,18 +100,6 @@ export class SnoozeNotification {
   }
 
   private async validateSnoozeDuration(command: SnoozeNotificationCommand, snoozeDurationMs: number) {
-    const isSnoozeEnabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_SNOOZE_ENABLED,
-      defaultValue: false,
-      organization: { _id: command.organizationId } as OrganizationEntity,
-      environment: { _id: command.environmentId } as EnvironmentEntity,
-      user: { _id: command.subscriberId } as UserEntity,
-    });
-
-    if (!isSnoozeEnabled) {
-      throw new NotImplementedException();
-    }
-
     const organization = await this.getOrganization(command.organizationId);
 
     const tierLimitMs = getFeatureForTierAsNumber(

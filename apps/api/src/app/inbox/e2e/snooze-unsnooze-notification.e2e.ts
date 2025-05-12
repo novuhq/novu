@@ -5,9 +5,6 @@ import { ActorTypeEnum, ChannelTypeEnum, StepTypeEnum, SystemAvatarIconEnum } fr
 import { Novu } from '@novu/api';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-// @ts-ignore - Bypassing readonly for testing purposes
-process.env.IS_SNOOZE_ENABLED = 'true';
-
 describe('Snooze and Unsnooze Notifications - /inbox/notifications/:id/{snooze,unsnooze} (PATCH) #novu-v2', () => {
   let session: UserSession;
   let template: NotificationTemplateEntity;

@@ -20,9 +20,6 @@ import { Novu } from '@novu/api';
 import { mapToDto } from '../utils/notification-mapper';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-// @ts-ignore - Bypassing readonly for testing purposes
-process.env.IS_SNOOZE_ENABLED = 'true';
-
 describe('Mark Notification As - /inbox/notifications/:id/{read,unread,archive,unarchive,snooze,unsnooze} (PATCH) #novu-v2', async () => {
   let session: UserSession;
   let template: NotificationTemplateEntity;

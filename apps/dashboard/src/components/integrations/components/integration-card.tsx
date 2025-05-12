@@ -4,7 +4,6 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives
 import {
   ApiServiceLevelEnum,
   ChannelTypeEnum,
-  FeatureFlagsKeysEnum,
   type IEnvironment,
   type IIntegration,
   type IProviderConfig,
@@ -26,7 +25,6 @@ import { ProviderIcon } from './provider-icon';
 import { isDemoIntegration } from './utils/helpers';
 import { useFetchSubscription } from '../../../hooks/use-fetch-subscription';
 import { ExternalLink } from 'lucide-react';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 
 type IntegrationCardProps = {
   integration: IIntegration;
@@ -38,7 +36,6 @@ type IntegrationCardProps = {
 export function IntegrationCard({ integration, provider, environment, onClick }: IntegrationCardProps) {
   const navigate = useNavigate();
   const { subscription } = useFetchSubscription();
-  const isSnoozeEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_SNOOZE_ENABLED);
 
   const handleConfigureClick = (e: React.MouseEvent<HTMLElement>) => {
     if (integration.channel === ChannelTypeEnum.IN_APP && !integration.connected) {
@@ -90,9 +87,7 @@ export function IntegrationCard({ integration, provider, environment, onClick }:
               <TooltipContent>This is your primary integration for the {provider.channel} channel.</TooltipContent>
             </Tooltip>
           )}
-          {integration.channel === ChannelTypeEnum.IN_APP && isFreePlan && isSnoozeEnabled && (
-            <InAppPremiumFeaturesIcon />
-          )}
+          {integration.channel === ChannelTypeEnum.IN_APP && isFreePlan && <InAppPremiumFeaturesIcon />}
         </div>
       </div>
       <div className="flex items-center gap-2">

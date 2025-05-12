@@ -5,7 +5,6 @@ import {
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   StandardQueueService,
-  FeatureFlagsService,
   PinoLogger,
 } from '@novu/application-generic';
 import {
@@ -48,7 +47,6 @@ describe('SnoozeNotification', () => {
   let organizationRepositoryMock: sinon.SinonStubbedInstance<CommunityOrganizationRepository>;
   let createExecutionDetailsMock: sinon.SinonStubbedInstance<CreateExecutionDetails>;
   let markNotificationAsMock: sinon.SinonStubbedInstance<MarkNotificationAs>;
-  let featureFlagsServiceMock: sinon.SinonStubbedInstance<FeatureFlagsService>;
 
   const mockMessage: MessageEntity = {
     _id: validNotificationId,
@@ -93,7 +91,6 @@ describe('SnoozeNotification', () => {
     organizationRepositoryMock = sinon.createStubInstance(CommunityOrganizationRepository);
     createExecutionDetailsMock = sinon.createStubInstance(CreateExecutionDetails);
     markNotificationAsMock = sinon.createStubInstance(MarkNotificationAs);
-    featureFlagsServiceMock = sinon.createStubInstance(FeatureFlagsService);
 
     // Mock the MarkNotificationAsCommand.create method
     sinon.stub(MarkNotificationAsCommand, 'create').returns({
@@ -117,8 +114,7 @@ describe('SnoozeNotification', () => {
       standardQueueServiceMock as any,
       organizationRepositoryMock as any,
       createExecutionDetailsMock as any,
-      markNotificationAsMock as any,
-      featureFlagsServiceMock as any
+      markNotificationAsMock as any
     );
 
     sinon.stub(JobRepository, 'createObjectId').returns('new-job-id');
@@ -126,7 +122,6 @@ describe('SnoozeNotification', () => {
     jobRepositoryMock.create.resolves(mockJob);
     jobRepositoryMock.findOne.resolves(mockJob);
     markNotificationAsMock.execute.resolves(mockNotification);
-    featureFlagsServiceMock.getFlag.resolves(true);
     createExecutionDetailsMock.execute.resolves();
 
     const orgEntity = {

@@ -1,12 +1,7 @@
 import sinon from 'sinon';
 import { expect } from 'chai';
 import { NotFoundException } from '@nestjs/common';
-import {
-  CreateExecutionDetails,
-  CreateExecutionDetailsCommand,
-  FeatureFlagsService,
-  PinoLogger,
-} from '@novu/application-generic';
+import { CreateExecutionDetails, CreateExecutionDetailsCommand, PinoLogger } from '@novu/application-generic';
 import { JobEntity, JobRepository, MessageRepository, MessageEntity } from '@novu/dal';
 import { ChannelTypeEnum, JobStatusEnum } from '@novu/shared';
 
@@ -30,7 +25,6 @@ describe('UnsnoozeNotification', () => {
   let jobRepositoryMock: sinon.SinonStubbedInstance<JobRepository>;
   let createExecutionDetailsMock: sinon.SinonStubbedInstance<CreateExecutionDetails>;
   let markNotificationAsMock: sinon.SinonStubbedInstance<MarkNotificationAs>;
-  let featureFlagsServiceMock: sinon.SinonStubbedInstance<FeatureFlagsService>;
 
   const snoozedUntil = new Date();
   snoozedUntil.setHours(snoozedUntil.getHours() + 1);
@@ -81,7 +75,6 @@ describe('UnsnoozeNotification', () => {
     jobRepositoryMock = sinon.createStubInstance(JobRepository);
     createExecutionDetailsMock = sinon.createStubInstance(CreateExecutionDetails);
     markNotificationAsMock = sinon.createStubInstance(MarkNotificationAs);
-    featureFlagsServiceMock = sinon.createStubInstance(FeatureFlagsService);
 
     sinon.stub(MarkNotificationAsCommand, 'create').returns({
       environmentId: validEnvId,
@@ -102,13 +95,11 @@ describe('UnsnoozeNotification', () => {
       messageRepositoryMock as any,
       jobRepositoryMock as any,
       markNotificationAsMock as any,
-      createExecutionDetailsMock as any,
-      featureFlagsServiceMock as any
+      createExecutionDetailsMock as any
     );
 
     jobRepositoryMock.findOneAndDelete.resolves(mockJob);
     markNotificationAsMock.execute.resolves(mockNotification);
-    featureFlagsServiceMock.getFlag.resolves(true);
     createExecutionDetailsMock.execute.resolves();
     messageRepositoryMock.findOne.resolves(mockMessage);
   });
