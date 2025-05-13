@@ -190,8 +190,8 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
           user: null,
         },
         steps: [
-          buildInAppStep({ controlValues: { test: inAppControlValue } }),
-          buildEmailStep({ controlValues: { test: emailControlValue } }),
+          buildInAppStep({ controlValues: { subject: inAppControlValue } }),
+          buildEmailStep({ controlValues: { subject: emailControlValue } }),
         ],
         workflowId: workflowCreated.workflowId,
       };
@@ -200,8 +200,8 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
         updateRequest as UpdateWorkflowDto
       );
       // TODO: Control values must be typed and accept only valid control values
-      expect(updatedWorkflow.steps[0].controls.values.test).to.be.equal(inAppControlValue);
-      expect(updatedWorkflow.steps[1].controls.values.test).to.be.equal(emailControlValue);
+      expect(updatedWorkflow.steps[0].controls.values.subject).to.be.equal(inAppControlValue);
+      expect(updatedWorkflow.steps[1].controls.values.subject).to.be.equal(emailControlValue);
     });
 
     it('should keep the step id on updated ', async () => {
@@ -950,7 +950,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
         });
 
         it('should always show digest control value issues when illegal value provided', async () => {
-          const steps = [{ ...buildDigestStep({ controlValues: { amount: '555', unit: 'days' } }) }];
+          const steps = [{ ...buildDigestStep({ controlValues: { amount: 555, unit: 'days' } }) }];
           const workflowCreated = await createWorkflow(apiClient, buildWorkflow({ steps }));
           const step = workflowCreated.steps[0];
 
