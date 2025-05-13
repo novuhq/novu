@@ -168,6 +168,16 @@ export class InboxService {
     return this.#httpClient.get(`${INBOX_ROUTE}/preferences${query}`);
   }
 
+  bulkUpdatePreferences(
+    preferences: Array<
+      {
+        workflowId: string;
+      } & ChannelPreference
+    >
+  ): Promise<PreferencesResponse[]> {
+    return this.#httpClient.patch(`${INBOX_ROUTE}/preferences/bulk`, { preferences });
+  }
+
   updateGlobalPreferences(channels: ChannelPreference): Promise<PreferencesResponse> {
     return this.#httpClient.patch(`${INBOX_ROUTE}/preferences`, channels);
   }
