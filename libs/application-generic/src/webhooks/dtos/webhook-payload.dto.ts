@@ -33,12 +33,6 @@ export class WrapperDto<T> {
   environmentId: string;
 
   @ApiProperty({
-    description: 'The name of the environment connected to the webhook',
-    type: 'string',
-  })
-  environmentName: string;
-
-  @ApiProperty({
     description: 'The object of the webhook',
     enum: WebhookObjectTypeEnum,
   })

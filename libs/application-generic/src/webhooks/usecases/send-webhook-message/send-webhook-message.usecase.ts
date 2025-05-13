@@ -29,7 +29,7 @@ export class SendWebhookMessage {
       {
         _id: command.environmentId,
       },
-      'webhookAppId name'
+      'webhookAppId identifier'
     );
 
     if (!environment) {
@@ -50,8 +50,7 @@ export class SendWebhookMessage {
       object: command.objectType,
       data: command.payload,
       timestamp: new Date().toISOString(),
-      environmentId: command.environmentId,
-      environmentName: environment.name,
+      environmentId: environment.identifier,
     };
 
     try {
