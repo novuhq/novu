@@ -4,6 +4,7 @@ import { useInboxContext } from 'src/ui/context';
 import { isBrowser } from 'src/utils/is-browser';
 import { Novu } from '../../icons';
 import { cn } from '../../helpers';
+import { ArrowUpRight } from '../../icons/ArrowUpRight';
 
 const stripes = `before:nt-content-[""] before:nt-absolute before:nt-inset-0 before:-nt-right-[calc(0+var(--stripes-size))] before:[mask-image:linear-gradient(transparent_0%,black)] before:nt-bg-dev-stripes-gradient before:nt-bg-[length:var(--stripes-size)_var(--stripes-size)] before:nt-animate-stripes before:hover:[animation-play-state:running]`;
 const commonAfter = 'after:nt-content-[""] after:nt-absolute after:nt-inset-0 after:-nt-top-12';
@@ -17,7 +18,7 @@ export const Footer = () => {
     <Show when={!hideBranding() || isDevelopmentMode()}>
       <div
         class={cn(
-          `nt-relative nt-flex nt-shrink-0 nt-justify-center nt-items-center nt-gap-1 nt-mt-auto nt-py-3 nt-text-foreground-alpha-400`,
+          `nt-relative nt-flex nt-shrink-0 nt-flex-col nt-justify-center nt-items-center nt-gap-1 nt-mt-auto nt-py-3 nt-text-foreground-alpha-400`,
           {
             [stripes]: isDevelopmentMode(),
             [devModeGradient]: isDevelopmentMode(),
@@ -29,22 +30,40 @@ export const Footer = () => {
           '--stripes-size': '15px',
         }}
       >
-        <Show when={isDevelopmentMode()}>
-          <span class="nt-z-10 nt-text-xs nt-text-stripes">{isKeyless() ? 'Keyless mode' : 'Development mode'}</span>
-        </Show>
-        <Show when={isDevelopmentMode() && !hideBranding()}>
-          <span class="nt-z-10 nt-text-xs">•</span>
-        </Show>
-        <Show when={!hideBranding()}>
-          <a
-            href={`https://go.novu.co/powered?ref=${getCurrentDomain()}`}
-            target="_blank"
-            class="nt-z-10 nt-flex nt-items-center nt-gap-1 nt-justify-center"
-          >
-            <span class="nt-text-xs">Inbox by</span>
-            <Novu class="nt-size-2.5" />
-            <span class="nt-text-xs">Novu</span>
-          </a>
+        <div class="nt-flex nt-items-center nt-gap-1">
+          <Show when={isDevelopmentMode()}>
+            <span class="nt-z-10 nt-text-xs nt-text-stripes">{isKeyless() ? 'Keyless mode' : 'Development mode'}</span>
+          </Show>
+          <Show when={isDevelopmentMode() && !hideBranding()}>
+            <span class="nt-z-10 nt-text-xs">•</span>
+          </Show>
+          <Show when={!hideBranding()}>
+            <a
+              href={`https://go.novu.co/powered?ref=${getCurrentDomain()}`}
+              target="_blank"
+              class="nt-z-10 nt-flex nt-items-center nt-gap-1 nt-justify-center"
+            >
+              <span class="nt-text-xs">Inbox by</span>
+              <Novu class="nt-size-2.5" />
+              <span class="nt-text-xs">Novu</span>
+            </a>
+          </Show>
+        </div>
+        <Show when={isKeyless()}>
+          <div class="nt-z-10 nt-flex nt-items-center nt-gap-1 nt-text-xs">
+            <a href="#" class="nt-underline nt-flex nt-items-center nt-gap-0.5">
+              Get API key
+              <ArrowUpRight class="nt-ml-1" />
+            </a>
+            <span>•</span>
+            <a href="#" class="nt-underline">
+              Copy cURL
+            </a>
+            <span>•</span>
+            <a href="#" class="nt-underline">
+              Send notification
+            </a>
+          </div>
         </Show>
       </div>
     </Show>
