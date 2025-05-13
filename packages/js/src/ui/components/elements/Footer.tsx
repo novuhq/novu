@@ -5,6 +5,8 @@ import { isBrowser } from 'src/utils/is-browser';
 import { Novu } from '../../icons';
 import { cn } from '../../helpers';
 import { ArrowUpRight } from '../../icons/ArrowUpRight';
+import { triggerHelloWorld } from '../../../api/event-service';
+import { CopyToClipboard } from '../primitives/CopyToClipboard';
 
 const stripes = `before:nt-content-[""] before:nt-absolute before:nt-inset-0 before:-nt-right-[calc(0+var(--stripes-size))] before:[mask-image:linear-gradient(transparent_0%,black)] before:nt-bg-dev-stripes-gradient before:nt-bg-[length:var(--stripes-size)_var(--stripes-size)] before:nt-animate-stripes before:hover:[animation-play-state:running]`;
 const commonAfter = 'after:nt-content-[""] after:nt-absolute after:nt-inset-0 after:-nt-top-12';
@@ -56,13 +58,20 @@ export const Footer = () => {
               <ArrowUpRight class="nt-ml-1" />
             </a>
             <span>•</span>
-            <a href="#" class="nt-underline">
-              Copy cURL
-            </a>
+            <CopyToClipboard textToCopy={getCurlCommand()}>
+              <span class="nt-underline">Copy cURL</span>
+            </CopyToClipboard>
             <span>•</span>
-            <a href="#" class="nt-underline">
+            <button
+              type="button"
+              class="nt-underline"
+              onClick={(e) => {
+                e.preventDefault();
+                triggerHelloWorld();
+              }}
+            >
               Send notification
-            </a>
+            </button>
           </div>
         </Show>
       </div>
@@ -76,4 +85,29 @@ function getCurrentDomain() {
   }
 
   return '';
+}
+
+function getCurlCommand() {
+  const identifier = window.localStorage.getItem('novu_keyless_application_identifier');
+  if (!identifier) {
+    // eslint-disable-next-line no-console
+    console.error('Novu application identifier not found for cURL command.');
+
+    return '';
+  }
+
+  return `curl -X POST \
+  http://localhost:3000/v1/inbox/events \
+  -H 'Authorization: Keyless ${identifier}' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "name": "hello-world",
+    "to": {
+      "subscriberId": "keyless-subscriber-id"
+    },
+    "payload": {
+      "body": "New From Keyless Environment",
+      "subject": "Hello World!"
+    }
+  }'`;
 }
