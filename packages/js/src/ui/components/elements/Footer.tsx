@@ -7,6 +7,7 @@ import { cn } from '../../helpers';
 import { ArrowUpRight } from '../../icons/ArrowUpRight';
 import { triggerHelloWorld } from '../../../api/event-service';
 import { CopyToClipboard } from '../primitives/CopyToClipboard';
+import { Tooltip } from '../primitives/Tooltip';
 
 const stripes = `before:nt-content-[""] before:nt-absolute before:nt-inset-0 before:-nt-right-[calc(0+var(--stripes-size))] before:[mask-image:linear-gradient(transparent_0%,black)] before:nt-bg-dev-stripes-gradient before:nt-bg-[length:var(--stripes-size)_var(--stripes-size)] before:nt-animate-stripes before:hover:[animation-play-state:running]`;
 const commonAfter = 'after:nt-content-[""] after:nt-absolute after:nt-inset-0 after:-nt-top-12';
@@ -34,7 +35,28 @@ export const Footer = () => {
       >
         <div class="nt-flex nt-items-center nt-gap-1">
           <Show when={isDevelopmentMode()}>
-            <span class="nt-z-10 nt-text-xs nt-text-stripes">{isKeyless() ? 'Keyless mode' : 'Development mode'}</span>
+            <span class="nt-z-10 nt-text-xs nt-text-stripes">
+              {isKeyless() ? (
+                <Tooltip.Root>
+                  <Tooltip.Trigger class="">
+                    <a
+                      href="https://go.novu.co/keyless?utm_campaign=keyless-mode"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Keyless mode
+                    </a>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content>
+                    Temporary &lt;Inbox /&gt;. All data will expire in 24 hours.
+                    <br />
+                    Connect API key to persist.
+                  </Tooltip.Content>
+                </Tooltip.Root>
+              ) : (
+                'Development mode'
+              )}
+            </span>
           </Show>
           <Show when={isDevelopmentMode() && !hideBranding()}>
             <span class="nt-z-10 nt-text-xs">•</span>
@@ -53,7 +75,12 @@ export const Footer = () => {
         </div>
         <Show when={isKeyless()}>
           <div class="nt-z-10 nt-flex nt-items-center nt-gap-1 nt-text-xs">
-            <a href="#" class="nt-underline nt-flex nt-items-center nt-gap-0.5">
+            <a
+              href="https://go.novu.co/keyless?utm_campaign=footer-get_api_key"
+              class="nt-underline nt-flex nt-items-center nt-gap-0.5"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               Get API key
               <ArrowUpRight class="nt-ml-1" />
             </a>
