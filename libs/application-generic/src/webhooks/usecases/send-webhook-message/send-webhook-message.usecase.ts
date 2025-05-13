@@ -41,6 +41,7 @@ export class SendWebhookMessage {
     }
 
     const webhookPayload: WrapperDto<any> = {
+      id: eventId,
       type: command.eventType,
       object: command.objectType,
       data: command.payload,

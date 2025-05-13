@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger, NotFoundException, Scope } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, Logger, NotFoundException, Scope } from '@nestjs/common';
 import { EnvironmentRepository, OrganizationRepository } from '@novu/dal';
 import { LogDecorator } from '@novu/application-generic';
 import { Svix } from 'svix'; // Import Svix SDK type
@@ -32,7 +32,6 @@ export class GetWebhookPortalTokenUsecase {
     }
 
     try {
-      // Call Svix SDK to get portal access URL and token
       const svixResponse = await this.svix.authentication.appPortalAccess(
         `${command.organizationId}-${command.environmentId}`,
         {}
@@ -45,24 +44,10 @@ export class GetWebhookPortalTokenUsecase {
       };
     } catch (error) {
       if (error.code === 404) {
-        const app = await this.createWebhookPortalUsecase.execute(
-          CreateWebhookPortalCommand.create({
-            environmentId: command.environmentId,
-            organizationId: command.organizationId,
-            userId: command.userId,
-          })
-        );
-
-        const svixResponse = await this.svix.authentication.appPortalAccess(app.appId, {});
-
-        return {
-          url: svixResponse.url,
-          token: svixResponse.token,
-          appId: app.appId,
-        };
+        throw new NotFoundException(`Portal not found for environment ${command.environmentId}`);
       }
-      // Re-throw or handle specific Svix errors as needed
-      throw new Error(`Failed to generate Svix portal token: ${error?.message}`);
+
+      throw new BadRequestException(`Failed to generate Svix portal token: ${error?.message}`);
     }
   }
 }
