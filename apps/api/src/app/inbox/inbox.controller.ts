@@ -11,17 +11,24 @@ import {
   UseGuards,
   Headers,
 } from '@nestjs/common';
-import { ApiExcludeController } from '@nestjs/swagger';
+import { ApiExcludeController, ApiResponse, ApiOperation } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { SubscriberEntity } from '@novu/dal';
-import { MessageActionStatusEnum, PreferenceLevelEnum } from '@novu/shared';
+import {
+  AddressingTypeEnum,
+  MessageActionStatusEnum,
+  PreferenceLevelEnum,
+  TriggerRequestCategoryEnum,
+  UserSessionData,
+} from '@novu/shared';
 
+import { ExternalApiAccessible } from '@novu/application-generic';
 import { SubscriberDto, SubscriberSessionRequestDto } from './dtos/subscriber-session-request.dto';
 import { SubscriberSessionResponseDto } from './dtos/subscriber-session-response.dto';
 import { SessionCommand } from './usecases/session/session.command';
 import { Session } from './usecases/session/session.usecase';
 import { ApiCommonResponses } from '../shared/framework/response.decorator';
-import { SubscriberSession } from '../shared/framework/user.decorator';
+import { SubscriberSession, UserSession } from '../shared/framework/user.decorator';
 import { GetNotificationsRequestDto } from './dtos/get-notifications-request.dto';
 import { GetNotifications } from './usecases/get-notifications/get-notifications.usecase';
 import { GetNotificationsCommand } from './usecases/get-notifications/get-notifications.command';
@@ -52,6 +59,12 @@ import { SnoozeNotification } from './usecases/snooze-notification/snooze-notifi
 import { UnsnoozeNotificationCommand } from './usecases/unsnooze-notification/unsnooze-notification.command';
 import { UnsnoozeNotification } from './usecases/unsnooze-notification/unsnooze-notification.usecase';
 import { KeylessAccessible } from '../shared/framework/swagger/keyless.security';
+import { TriggerEventResponseDto } from '../events/dtos/trigger-event-response.dto';
+import { TriggerEventRequestDto } from '../events/dtos';
+import { ParseEventRequest } from '../events/usecases/parse-event-request/parse-event-request.usecase';
+import { ParseEventRequestMulticastCommand } from '../events/usecases/parse-event-request';
+import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
+import { SdkMethodName, SdkUsageExample, SdkGroupName } from '../shared/framework/swagger/sdk.decorators';
 
 @ApiCommonResponses()
 @Controller('/inbox')
@@ -67,7 +80,8 @@ export class InboxController {
     private getInboxPreferencesUsecase: GetInboxPreferences,
     private updatePreferencesUsecase: UpdatePreferences,
     private snoozeNotificationUsecase: SnoozeNotification,
-    private unsnoozeNotificationUsecase: UnsnoozeNotification
+    private unsnoozeNotificationUsecase: UnsnoozeNotification,
+    private parseEventRequest: ParseEventRequest
   ) {}
 
   @KeylessAccessible()
@@ -409,5 +423,35 @@ export class InboxController {
         },
       })
     );
+  }
+
+  @KeylessAccessible()
+  @ExternalApiAccessible()
+  @UserAuthentication()
+  @Post('/events')
+  async keylessEvents(
+    @UserSession() user: UserSessionData,
+    @Body() body: TriggerEventRequestDto
+  ): Promise<TriggerEventResponseDto> {
+    const result = await this.parseEventRequest.execute(
+      ParseEventRequestMulticastCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        identifier: body.name,
+        payload: body.payload || {},
+        overrides: body.overrides || {},
+        to: body.to,
+        actor: body.actor,
+        tenant: body.tenant,
+        transactionId: body.transactionId,
+        addressingType: AddressingTypeEnum.MULTICAST,
+        requestCategory: TriggerRequestCategoryEnum.SINGLE,
+        bridgeUrl: body.bridgeUrl,
+        controls: body.controls,
+      })
+    );
+
+    return result as unknown as TriggerEventResponseDto;
   }
 }

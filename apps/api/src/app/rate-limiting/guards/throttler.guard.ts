@@ -26,6 +26,7 @@ import {
 import { UserEntity, OrganizationEntity, EnvironmentEntity } from '@novu/dal';
 import { ThrottlerCategory, ThrottlerCost } from './throttler.decorator';
 import { EvaluateApiRateLimit, EvaluateApiRateLimitCommand } from '../usecases/evaluate-api-rate-limit';
+import { isKeylessHeader } from '../../shared/utils/auth.utils';
 
 export const THROTTLED_EXCEPTION_MESSAGE = 'API rate limit exceeded';
 export const ALLOWED_AUTH_SCHEMES = [ApiAuthSchemeEnum.API_KEY];
@@ -68,13 +69,20 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
 
   protected async shouldSkip(context: ExecutionContext): Promise<boolean> {
     const isAllowedAuthScheme = this.isAllowedAuthScheme(context);
-    const isAllowedEnvironment = this.isAllowedEnvironment(context);
+    // const isAllowedEnvironment = this.isAllowedEnvironment(context);
 
-    if (!isAllowedAuthScheme && !isAllowedEnvironment) {
+    // if (!isAllowedAuthScheme && !isAllowedEnvironment) {
+    if (!isAllowedAuthScheme) {
       return true;
     }
 
     const user = this.getReqUser(context);
+
+    // // Indicates whether the request originates from a keyless Inbox session initialization
+    // if (!user) {
+    //   return false;
+    // }
+
     const { organizationId, environmentId, _id } = user;
 
     const isEnabled = await this.featureFlagService.getFlag({
@@ -112,7 +120,8 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
       this.reflector.getAllAndOverride(ThrottlerCategory, [handler, classRef]) || defaultApiRateLimitCategory;
 
     const { organizationId, environmentId, _id } = this.getReqUser(context);
-    const isKeyless = req.headers['x-application-identifier']?.startsWith('pk_keyless_');
+    const isKeyless =
+      isKeylessHeader(req.headers.authorization) || isKeylessHeader(req.headers['novu-application-identifier']);
 
     const apiRateLimitCost = isKeyless
       ? ApiRateLimitCostEnum.BULK
@@ -135,13 +144,15 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
      * The purpose of the dry run is to allow us to observe how
      * the rate limiting would behave without actually enforcing it.
      */
-    const isDryRun = await this.featureFlagService.getFlag({
-      environment: { _id: environmentId } as EnvironmentEntity,
-      organization: { _id: organizationId } as OrganizationEntity,
-      user: { _id } as UserEntity,
-      key: FeatureFlagsKeysEnum.IS_API_RATE_LIMITING_DRY_RUN_ENABLED,
-      defaultValue: false,
-    });
+    const isDryRun = isKeyless
+      ? false
+      : await this.featureFlagService.getFlag({
+          environment: { _id: environmentId } as EnvironmentEntity,
+          organization: { _id: organizationId } as OrganizationEntity,
+          user: { _id } as UserEntity,
+          key: FeatureFlagsKeysEnum.IS_API_RATE_LIMITING_DRY_RUN_ENABLED,
+          defaultValue: false,
+        });
 
     res.header(HttpResponseHeaderKeysEnum.RATELIMIT_REMAINING, remaining);
     res.header(HttpResponseHeaderKeysEnum.RATELIMIT_LIMIT, limit);
@@ -211,7 +222,7 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
 
   private isAllowedEnvironment(context: ExecutionContext): boolean {
     const req = context.switchToHttp().getRequest();
-    const applicationIdentifier = req.headers['x-application-identifier'];
+    const applicationIdentifier = req.headers['novu-application-identifier'];
 
     if (!applicationIdentifier) {
       return false;

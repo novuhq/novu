@@ -1,14 +1,9 @@
 import {
   GetSubscriberTemplatePreference,
-  StandardQueueService,
+  StorageHelperService,
   UpsertControlValuesUseCase,
 } from '@novu/application-generic';
-import {
-  CommunityUserRepository,
-  ControlValuesRepository,
-  MessageTemplateRepository,
-  PreferencesRepository,
-} from '@novu/dal';
+import { CommunityUserRepository } from '@novu/dal';
 import { GetNotifications } from './get-notifications/get-notifications.usecase';
 import { GetInboxPreferences } from './get-inbox-preferences/get-inbox-preferences.usecase';
 import { MarkManyNotificationsAs } from './mark-many-notifications-as/mark-many-notifications-as.usecase';
@@ -22,6 +17,8 @@ import { GetSubscriberGlobalPreference } from '../../subscribers/usecases/get-su
 import { SnoozeNotification } from './snooze-notification/snooze-notification.usecase';
 import { UnsnoozeNotification } from './unsnooze-notification/unsnooze-notification.usecase';
 import { GenerateUniqueApiKey } from '../../environments-v1/usecases/generate-unique-api-key/generate-unique-api-key.usecase';
+import { ParseEventRequest } from '../../events/usecases/parse-event-request';
+import { VerifyPayload } from '../../events/usecases/verify-payload';
 
 export const USE_CASES = [
   Session,
@@ -40,4 +37,7 @@ export const USE_CASES = [
   GenerateUniqueApiKey,
   CommunityUserRepository,
   UpsertControlValuesUseCase,
+  ParseEventRequest,
+  VerifyPayload,
+  StorageHelperService,
 ];

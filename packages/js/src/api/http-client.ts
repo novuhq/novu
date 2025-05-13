@@ -35,6 +35,15 @@ export class HttpClient {
     this.headers.Authorization = `Bearer ${token}`;
   }
 
+  setKeylessHeader() {
+    const identifier = window.localStorage.getItem('novu_keyless_application_identifier');
+    if (!identifier) {
+      return;
+    }
+
+    this.headers['Novu-Application-Identifier'] = identifier;
+  }
+
   setHeaders(headers: Record<string, string>) {
     this.headers = {
       ...this.headers,
@@ -53,12 +62,13 @@ export class HttpClient {
     });
   }
 
-  async post<T>(path: string, body?: any) {
+  async post<T>(path: string, body?: any, options?: RequestInit) {
     return this.doFetch<T>({
       path,
       options: {
         method: 'POST',
         body,
+        headers: options?.headers,
       },
     });
   }

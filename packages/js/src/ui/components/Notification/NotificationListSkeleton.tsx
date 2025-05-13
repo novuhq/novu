@@ -20,15 +20,13 @@ async function triggerHelloWorld() {
       throw new Error('No application identifier found');
     }
 
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
-
     const client = new HttpClient({
-      apiUrl: API_URL,
+      apiUrl: 'http://localhost:3000',
       headers: {
-        'x-application-identifier': identifier,
+        Authorization: `Keyless ${identifier}`,
       },
     });
-    const response = await client.post('/events/trigger', {
+    const response = await client.post('/inbox/events', {
       name: 'hello-world',
       to: {
         subscriberId: 'keyless-subscriber-id',
