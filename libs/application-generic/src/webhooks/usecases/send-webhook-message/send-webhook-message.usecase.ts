@@ -20,12 +20,16 @@ export class SendWebhookMessage {
   }
 
   async execute(command: SendWebhookMessageCommand): Promise<{ eventId: string } | undefined> {
+    if (!this.svix) {
+      return;
+    }
+
     const eventId = `evt_${shortid.generate()}`;
     const environment = await this.environmentRepository.findOne(
       {
         _id: command.environmentId,
       },
-      'webhookAppId'
+      'webhookAppId name'
     );
 
     if (!environment) {
@@ -47,6 +51,7 @@ export class SendWebhookMessage {
       data: command.payload,
       timestamp: new Date().toISOString(),
       environmentId: command.environmentId,
+      environmentName: environment.name,
     };
 
     try {

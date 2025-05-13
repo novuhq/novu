@@ -1,4 +1,4 @@
-import { Inject, Injectable, NotFoundException, Scope } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, NotFoundException, Scope } from '@nestjs/common';
 import { EnvironmentRepository, OrganizationRepository } from '@novu/dal';
 import { LogDecorator } from '@novu/application-generic';
 import { Svix } from 'svix';
@@ -16,6 +16,10 @@ export class CreateWebhookPortalUsecase {
 
   @LogDecorator()
   async execute(command: CreateWebhookPortalCommand): Promise<CreateWebhookPortalResponseDto> {
+    if (!this.svix) {
+      throw new BadRequestException('Webhook system is not enabled');
+    }
+
     const environment = await this.environmentRepository.findOne({
       _id: command.environmentId,
       _organizationId: command.organizationId,

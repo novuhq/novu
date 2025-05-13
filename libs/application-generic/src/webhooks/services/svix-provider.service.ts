@@ -7,7 +7,7 @@ export const SvixProviderService: Provider = {
     const apiKey = process.env.SVIX_API_KEY;
 
     if (!apiKey) {
-      throw new Error('SVIX_API_KEY environment variable is not set.');
+      return null;
     }
 
     return new Svix(apiKey);

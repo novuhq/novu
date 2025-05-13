@@ -1,12 +1,10 @@
-import { BadRequestException, Inject, Injectable, Logger, NotFoundException, Scope } from '@nestjs/common';
-import { EnvironmentRepository, OrganizationRepository } from '@novu/dal';
+import { BadRequestException, Inject, Injectable, NotFoundException, Scope } from '@nestjs/common';
+import { EnvironmentRepository } from '@novu/dal';
 import { LogDecorator } from '@novu/application-generic';
 import { Svix } from 'svix'; // Import Svix SDK type
 
 import { GetWebhookPortalTokenCommand } from './get-webhook-portal-token.command';
 import { GetWebhookPortalTokenResponseDto } from '../../dtos/get-webhook-portal-token-response.dto';
-import { CreateWebhookPortalUsecase } from '../create-webhook-portal-token/create-webhook-portal.usecase';
-import { CreateWebhookPortalCommand } from '../create-webhook-portal-token/create-webhook-portal.command';
 
 const LOG_CONTEXT = 'GetWebhookPortalTokenUsecase';
 
@@ -14,12 +12,15 @@ const LOG_CONTEXT = 'GetWebhookPortalTokenUsecase';
 export class GetWebhookPortalTokenUsecase {
   constructor(
     private environmentRepository: EnvironmentRepository,
-    @Inject('SVIX_CLIENT') private svix: Svix,
-    private createWebhookPortalUsecase: CreateWebhookPortalUsecase
+    @Inject('SVIX_CLIENT') private svix: Svix
   ) {}
 
   @LogDecorator()
   async execute(command: GetWebhookPortalTokenCommand): Promise<GetWebhookPortalTokenResponseDto> {
+    if (!this.svix) {
+      throw new BadRequestException('Webhook system is not enabled');
+    }
+
     const environment = await this.environmentRepository.findOne({
       _id: command.environmentId,
       _organizationId: command.organizationId,
