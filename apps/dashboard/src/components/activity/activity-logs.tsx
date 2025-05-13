@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogTitle, DialogClose, DialogHeader } from '@
 import { CopyToClipboard } from '../primitives/copy-to-clipboard';
 import { Button } from '@/components/primitives/button';
 import { toast } from 'sonner';
+import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { triggerWorkflow } from '../../api/workflows';
 import { QueryKeys } from '@/utils/query-keys';
 import { getActivityList } from '@/api/activity';
@@ -89,9 +90,10 @@ export function ActivityLogs({
       closePopover();
       setIsFullscreenOpen(false);
 
-      toast.success('Notification resent successfully', {
-        description: `A new notification has been triggered with transaction ID: ${newTransactionId}`,
-      });
+      showSuccessToast(
+        `A new notification has been triggered with transaction ID: ${newTransactionId}`,
+        'Notification resent successfully'
+      );
 
       const checkAndUpdateTransaction = async () => {
         if (currentEnvironment) {
@@ -116,9 +118,7 @@ export function ActivityLogs({
       setTimeout(checkAndUpdateTransaction, 1000);
     },
     onError: (error: Error) => {
-      toast.error('Failed to trigger resend workflow', {
-        description: error.message || 'There was an error triggering the resend workflow.',
-      });
+      showErrorToast(error.message || 'There was an error triggering the resend workflow.', 'Failed to trigger resend workflow');
     },
   });
 

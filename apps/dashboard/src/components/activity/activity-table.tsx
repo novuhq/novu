@@ -10,6 +10,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { useEffect } from 'react';
 import { createSearchParams, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
+import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { useFetchActivities } from '../../hooks/use-fetch-activities';
 import { ActivityEmptyState } from './activity-empty-state';
 import { ArrowPagination } from './components/arrow-pagination';
@@ -48,9 +49,7 @@ export function ActivityTable({
 
   useEffect(() => {
     if (error) {
-      toast.error('Failed to fetch activities', {
-        description: error instanceof Error ? error.message : 'There was an error loading the activities.',
-      });
+      showErrorToast(error instanceof Error ? error.message : 'There was an error loading the activities.', 'Failed to fetch activities');
     }
   }, [error]);
 

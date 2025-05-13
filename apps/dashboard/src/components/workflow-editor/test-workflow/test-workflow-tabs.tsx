@@ -2,7 +2,7 @@ import { Button } from '@/components/primitives/button';
 import { Form, FormRoot } from '@/components/primitives/form/form';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/primitives/resizable';
 import { ToastClose, ToastIcon } from '@/components/primitives/sonner';
-import { showToast } from '@/components/primitives/sonner-helpers';
+import { showErrorToast, showToast } from '@/components/primitives/sonner-helpers';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
 import { buildDynamicFormSchema, TestWorkflowFormType } from '@/components/workflow-editor/schema';
 import { TestWorkflowForm } from '@/components/workflow-editor/test-workflow/test-workflow-form';
@@ -66,9 +66,7 @@ export const TestWorkflowTabs = ({ testData }: { testData?: WorkflowTestDataResp
 
       setTransactionId(newTransactionId);
     } catch (e) {
-      toast.error('Failed to trigger workflow', {
-        description: e instanceof Error ? e.message : 'There was an error triggering the workflow.',
-      });
+      showErrorToast(e instanceof Error ? e.message : 'There was an error triggering the workflow.', 'Failed to trigger workflow');
     }
   };
 
