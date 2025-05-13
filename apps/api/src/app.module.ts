@@ -64,6 +64,7 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
       modules.push(require('@novu/ee-billing')?.BillingModule.forRoot());
     }
     modules.push(SupportModule);
+    modules.push(WebhooksModule);
   }
 
   return modules;
@@ -118,7 +119,6 @@ const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | Forward
   WorkflowModule,
   EnvironmentsModule,
   NovuModule,
-  WebhooksModule,
 ];
 
 const enterpriseModules = enterpriseImports();

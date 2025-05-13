@@ -39,16 +39,14 @@ import { WebhooksModule } from '../webhooks/webhooks.module';
 
 const DAL_REPOSITORIES = [CommunityOrganizationRepository];
 
+const MODULES = [SharedModule, MessageTemplateModule, ChangeModule, AuthModule, BridgeModule, IntegrationModule];
+
+if (process.env.NOVU_ENTERPRISE === 'true') {
+  MODULES.push(WebhooksModule);
+}
+
 @Module({
-  imports: [
-    SharedModule,
-    MessageTemplateModule,
-    ChangeModule,
-    AuthModule,
-    BridgeModule,
-    IntegrationModule,
-    WebhooksModule,
-  ],
+  imports: MODULES,
   controllers: [WorkflowController],
   providers: [
     ...DAL_REPOSITORIES,

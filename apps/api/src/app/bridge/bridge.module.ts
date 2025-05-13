@@ -51,8 +51,14 @@ const PROVIDERS = [
   TierRestrictionsValidateUsecase,
 ];
 
+const MODULES = [SharedModule];
+
+if (process.env.NOVU_ENTERPRISE === 'true') {
+  MODULES.push(WebhooksModule);
+}
+
 @Module({
-  imports: [SharedModule, WebhooksModule],
+  imports: MODULES,
   providers: [...PROVIDERS, ...USECASES],
   controllers: [BridgeController],
   exports: [...USECASES],
