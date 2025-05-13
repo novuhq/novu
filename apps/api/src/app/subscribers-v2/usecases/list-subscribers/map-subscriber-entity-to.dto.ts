@@ -8,6 +8,7 @@ export function mapSubscriberEntityToDto(subscriber: SubscriberEntity): Subscrib
     lastName: subscriber.lastName,
     email: subscriber.email,
     phone: subscriber.phone,
+    avatar: subscriber.avatar,
     subscriberId: subscriber.subscriberId,
     createdAt: subscriber.createdAt,
     updatedAt: subscriber.updatedAt,

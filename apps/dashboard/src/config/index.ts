@@ -32,8 +32,6 @@ export const ONBOARDING_DEMO_WORKFLOW_ID = 'onboarding-demo-workflow';
 
 export const IS_SELF_HOSTED = import.meta.env.VITE_SELF_HOSTED;
 
-export const SELF_HOSTED_TOKEN = import.meta.env.VITE_SELF_HOSTED_TOKEN;
-
 if (!IS_SELF_HOSTED && !CLERK_PUBLISHABLE_KEY) {
   throw new Error('Missing Clerk Publishable Key');
 }

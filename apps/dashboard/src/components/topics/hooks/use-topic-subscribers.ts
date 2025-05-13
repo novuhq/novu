@@ -36,6 +36,7 @@ export function useTopicSubscriptions(
         subscriberId,
       });
     },
+    retry: false,
     enabled: !!currentEnvironment && !!topicKey,
     placeholderData: keepPreviousData,
   });

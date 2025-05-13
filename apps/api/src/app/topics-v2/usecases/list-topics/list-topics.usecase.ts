@@ -20,8 +20,8 @@ export class ListTopicsUseCase {
       sortBy: command.orderBy,
       key: command.key,
       name: command.name,
-      environmentId: command.user.environmentId,
-      organizationId: command.user.organizationId,
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
       includeCursor: command.includeCursor,
     });
 

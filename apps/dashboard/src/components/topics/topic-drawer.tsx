@@ -28,12 +28,30 @@ type TopicOverviewProps = {
   readOnly?: boolean;
 };
 
+const TopicNotFound = () => {
+  return (
+    <div className="mt-[100px] flex h-full w-full flex-col items-center justify-center gap-6">
+      <EmptyTopicsIllustration />
+      <div className="flex flex-col items-center gap-2 text-center">
+        <h3 className="text-lg font-semibold">Topic Not Found</h3>
+        <p className="text-text-soft text-paragraph-sm max-w-[60ch]">
+          The topic you are looking for does not exist or has been deleted.
+        </p>
+      </div>
+    </div>
+  );
+};
+
 const TopicOverview = (props: TopicOverviewProps) => {
   const { topicKey, readOnly = false } = props;
-  const { data, isPending } = useTopic(topicKey);
+  const { data, isPending, error } = useTopic(topicKey);
 
   if (isPending) {
     return <TopicOverviewSkeleton />;
+  }
+
+  if (error) {
+    return <TopicNotFound />;
   }
 
   return <TopicOverviewForm topic={data!} readOnly={readOnly} />;
@@ -48,11 +66,10 @@ const TopicSubscribers = (props: TopicSubscribersProps) => {
   const { topicKey, readOnly = false } = props;
   const [subscriberId, setSubscriberId] = useState<string | undefined>(undefined);
   const [isFilterLoading, setIsFilterLoading] = useState(false);
-  const { data, isPending } = useTopicSubscriptions(topicKey, { subscriberId });
+  const { data, isPending, error } = useTopicSubscriptions(topicKey, { subscriberId });
 
   const isLoading = isPending || isFilterLoading;
 
-  // When data is loaded, clear the loading state
   useEffect(() => {
     if (!isPending && isFilterLoading) {
       setIsFilterLoading(false);
@@ -63,31 +80,15 @@ const TopicSubscribers = (props: TopicSubscribersProps) => {
     setSubscriberId(newSubscriberId);
   };
 
-  if (isLoading) {
-    return (
-      <motion.div
-        key="loading-state"
-        initial="hidden"
-        animate="visible"
-        variants={listVariants}
-        className="flex flex-1 flex-col overflow-y-auto border-t border-t-neutral-200"
-      >
-        {Array.from({ length: 5 }).map((_, index) => (
-          <motion.div key={index} variants={itemVariants} className="border-b-stroke-soft flex w-full border-b">
-            <div className="flex w-full items-center px-3 py-2">
-              <Skeleton className="h-4 w-40" />
-            </div>
-          </motion.div>
-        ))}
-      </motion.div>
-    );
+  if (error) {
+    return <TopicNotFound />;
   }
 
   const subscriptions = data?.data || [];
 
   return (
     <motion.div
-      key="subscribers-list"
+      key="subscribers-list-container"
       initial="hidden"
       animate="visible"
       variants={{
@@ -120,17 +121,46 @@ const TopicSubscribers = (props: TopicSubscribersProps) => {
         />
       </div>
 
-      {subscriptions.length === 0 ? (
+      {isLoading ? (
+        <motion.div
+          key="loading-state"
+          initial="hidden"
+          animate="visible"
+          variants={listVariants}
+          className="flex flex-1 flex-col"
+        >
+          {Array.from({ length: 5 }).map((_, index) => (
+            <motion.div key={index} variants={itemVariants} className="border-b-stroke-soft flex w-full border-b">
+              <div className="flex w-full items-center px-3 py-2">
+                <Skeleton className="mr-3 size-8 rounded-full" />
+                <div className="flex flex-col gap-1">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-3 w-24" />
+                </div>
+                <Skeleton className="ml-auto h-4 w-20" />
+              </div>
+            </motion.div>
+          ))}
+        </motion.div>
+      ) : subscriptions.length === 0 ? (
         <TopicListBlank />
       ) : (
-        subscriptions.map((subscription: TopicSubscription) => (
-          <TopicSubscriberItem
-            key={subscription._id}
-            subscription={subscription}
-            topicKey={topicKey}
-            readOnly={readOnly}
-          />
-        ))
+        <motion.div
+          key="subscribers-list-items"
+          className="flex flex-1 flex-col overflow-y-auto"
+          initial="hidden"
+          animate="visible"
+          variants={listVariants}
+        >
+          {subscriptions.map((subscription: TopicSubscription) => (
+            <TopicSubscriberItem
+              key={subscription._id}
+              subscription={subscription}
+              topicKey={topicKey}
+              readOnly={readOnly}
+            />
+          ))}
+        </motion.div>
       )}
     </motion.div>
   );
@@ -162,7 +192,7 @@ function TopicTabs(props: TopicTabsProps) {
       <header className="border-bg-soft flex h-12 w-full flex-row items-center gap-3 border-b px-3 py-4">
         <div className="flex flex-1 items-center gap-1 overflow-hidden text-sm font-medium">
           <RiDiscussLine className="size-5 p-0.5" />
-          <TruncatedText className="flex-1">Topic - {topicKey}</TruncatedText>
+          <TruncatedText className="flex-1 pr-10">Topic - {topicKey}</TruncatedText>
         </div>
       </header>
 
