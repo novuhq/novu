@@ -1,21 +1,12 @@
-import { createRoot } from 'react-dom/client';
 import type { Appearance as JsAppearance, IconRenderer, IconOverrides as JsIconOverrides, IconKey } from '@novu/js/ui';
 
 import type { ReactAppearance, ReactIconRenderer } from './types';
+import { MountedElement } from '../context/RendererContext';
 
-function adaptIconRenderer(reactRenderer: ReactIconRenderer): IconRenderer {
-  return (el: HTMLDivElement, props: { class?: string }) => {
-    const root = createRoot(el);
-
-    root.render(reactRenderer(props ?? {}));
-
-    return () => {
-      setTimeout(() => root.unmount(), 0);
-    };
-  };
-}
-
-export function adaptAppearanceForJs(appearance?: ReactAppearance): JsAppearance | undefined {
+export function adaptAppearanceForJs(
+  appearance: ReactAppearance,
+  mountElement: (el: HTMLElement, mountedElement: MountedElement) => () => void
+): JsAppearance | undefined {
   if (!appearance) {
     return undefined;
   }
@@ -29,8 +20,11 @@ export function adaptAppearanceForJs(appearance?: ReactAppearance): JsAppearance
 
     for (const iconKey of iconKeys) {
       const reactRenderer = reactIcons[iconKey];
+
       if (reactRenderer) {
-        jsIcons[iconKey] = adaptIconRenderer(reactRenderer);
+        jsIcons[iconKey] = (el: HTMLDivElement, props: { class?: string }) => {
+          return mountElement(el, reactRenderer(props));
+        };
       }
     }
 

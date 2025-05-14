@@ -6,6 +6,7 @@ import { NovuUIProvider } from '../context/NovuUIContext';
 import { useDataRef } from '../hooks/internal/useDataRef';
 import type { ReactAppearance } from '../utils/types';
 import { adaptAppearanceForJs } from '../utils/appearance';
+import { useRenderer } from '../context/RendererContext';
 
 type NovuUIProps = Omit<JsNovuUIOptions, 'appearance'> & {
   appearance?: ReactAppearance;
@@ -17,7 +18,12 @@ type RendererProps = React.PropsWithChildren<{
 }>;
 
 export const NovuUI = ({ options, novu, children }: RendererProps) => {
-  const adaptedAppearanceForUpdate = useMemo(() => adaptAppearanceForJs(options.appearance), [options.appearance]);
+  const { mountElement } = useRenderer();
+
+  const adaptedAppearanceForUpdate = useMemo(
+    () => adaptAppearanceForJs(options.appearance || {}, mountElement),
+    [options.appearance, mountElement]
+  );
 
   const adaptedOptions = useMemo(() => {
     return {
