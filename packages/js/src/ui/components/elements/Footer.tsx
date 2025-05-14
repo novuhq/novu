@@ -1,11 +1,10 @@
 /* eslint-disable local-rules/no-class-without-style */
 import { Show } from 'solid-js';
-import { useInboxContext } from 'src/ui/context';
+import { useInboxContext, useNovu } from 'src/ui/context';
 import { isBrowser } from 'src/utils/is-browser';
 import { Novu } from '../../icons';
 import { cn } from '../../helpers';
 import { ArrowUpRight } from '../../icons/ArrowUpRight';
-import { triggerHelloWorld } from '../../../api/event-service';
 import { CopyToClipboard } from '../primitives/CopyToClipboard';
 import { Tooltip } from '../primitives/Tooltip';
 
@@ -16,6 +15,17 @@ const prodModeGradient = `${commonAfter} after:nt-bg-[linear-gradient(180deg,tra
 
 export const Footer = () => {
   const { hideBranding, isDevelopmentMode, isKeyless } = useInboxContext();
+  const novu = useNovu();
+
+  async function handleTriggerHelloWorld() {
+    try {
+      await novu.notifications.triggerHelloWorldEvent();
+      // TODO: maybe add some user feedback on success?
+    } catch (error) {
+      // Error is already logged by the service, but you could add UI feedback here
+      console.error('Failed to send Hello World from UI via novu.notifications:', error);
+    }
+  }
 
   return (
     <Show when={!hideBranding() || isDevelopmentMode()}>
@@ -94,7 +104,7 @@ export const Footer = () => {
               class="nt-underline"
               onClick={(e) => {
                 e.preventDefault();
-                triggerHelloWorld();
+                handleTriggerHelloWorld();
               }}
             >
               Send notification

@@ -3,11 +3,10 @@ import { useLocalization } from '../../context/LocalizationContext';
 import { useStyle } from '../../helpers/useStyle';
 import { Motion } from '../primitives/Motion';
 import { SkeletonAvatar, SkeletonText } from '../primitives/Skeleton';
-import { useInboxContext } from '../../context';
+import { useInboxContext, useNovu } from '../../context';
 import { Button } from '../primitives/Button';
 import { Bell } from '../../icons';
 import { Key } from '../../icons/Key';
-import { triggerHelloWorld } from '../../../api/event-service';
 
 type NotificationListSkeletonProps = {
   loading?: boolean;
@@ -88,6 +87,7 @@ export const NotificationListSkeleton = (props: NotificationListSkeletonProps) =
 
 function KeylessEmptyState() {
   const style = useStyle();
+  const novu = useNovu();
 
   return (
     <>
@@ -126,7 +126,7 @@ function KeylessEmptyState() {
                 // eslint-disable-next-line max-len
                 'nt-h-8 nt-px-4 nt-flex nt-items-center nt-justify-center nt-gap-2 nt-bg-neutral-900 nt-text-white nt-shadow-sm nt-text-[12px] nt-font-medium'
               )}
-              onClick={triggerHelloWorld}
+              onClick={() => novu.notifications.triggerHelloWorldEvent()}
             >
               <Bell class={style('bellIcon', 'nt-size-4 nt-mr-2')} />
               Send 'Hello World!'

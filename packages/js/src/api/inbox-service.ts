@@ -190,4 +190,19 @@ export class InboxService {
   }): Promise<PreferencesResponse> {
     return this.#httpClient.patch(`${INBOX_ROUTE}/preferences/${workflowId}`, channels);
   }
+
+  triggerHelloWorldEvent(): Promise<any> {
+    const payload = {
+      name: 'hello-world',
+      to: {
+        subscriberId: 'keyless-subscriber-id',
+      },
+      payload: {
+        body: 'New From Keyless Environment',
+        subject: 'Hello World!',
+      },
+    };
+
+    return this.#httpClient.post('/inbox/events', payload);
+  }
 }
