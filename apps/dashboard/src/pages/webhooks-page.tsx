@@ -9,7 +9,7 @@ import { useQuery, useMutation, useQueryClient, UseQueryResult, UseMutationResul
 import { useEnvironment } from '@/context/environment/hooks';
 import { getWebhookPortalToken, createWebhookPortalToken } from '@/api/webhooks';
 import { AppPortal, SvixProvider } from 'svix-react';
-import { RiWebhookLine } from 'react-icons/ri';
+import { RiLoaderLine, RiWebhookLine } from 'react-icons/ri';
 
 interface WebhookPortalTokenResponse {
   url: string;
@@ -83,13 +83,8 @@ export function WebhooksPage() {
     return <Navigate to={ROUTES.WORKFLOWS} replace />;
   }
 
-  if (isLoadingToken && !portalData && !tokenErrorRaw && !mutationError) {
-    return (
-      <DashboardLayout headerStartItems={<h1 className="text-foreground-950">Webhooks</h1>}>
-        <div className="flex h-full items-center justify-center p-4">Loading webhooks configuration...</div>
-      </DashboardLayout>
-    );
-  }
+  const isInitialLoading = isLoadingToken && !portalData && !tokenErrorRaw && !mutationError && !isActualPortalNotFound;
+  const canDisplayPortal = portalToken && appId && !isActualPortalNotFound && !queryError && !mutationError;
 
   if (isActualPortalNotFound && !isEnablingWebhooks) {
     return (
@@ -134,10 +129,8 @@ export function WebhooksPage() {
 
   return (
     <DashboardLayout headerStartItems={<h1 className="text-foreground-950">Webhooks</h1>}>
-      {!(portalToken && appId) ? (
-        <div className="flex h-full items-center justify-center p-4">Preparing webhook portal...</div>
-      ) : (
-        <SvixProvider token={portalToken} appId={appId}>
+      {canDisplayPortal ? (
+        <SvixProvider token={portalToken!} appId={appId!}>
           <Tabs defaultValue="endpoints">
             <div className="border-neutral-alpha-200 flex items-center justify-between border-b">
               <TabsList variant="regular" className="border-b-0 border-t-2 border-transparent p-0 !px-2">
@@ -177,6 +170,76 @@ export function WebhooksPage() {
             </TabsContent>
           </Tabs>
         </SvixProvider>
+      ) : (
+        <Tabs defaultValue="endpoints">
+          <div className="border-neutral-alpha-200 flex items-center justify-between border-b">
+            <TabsList variant="regular" className="border-b-0 border-t-2 border-transparent p-0 !px-2">
+              <TabsTrigger value="endpoints" variant="regular">
+                Endpoints
+              </TabsTrigger>
+              <TabsTrigger value="event-catalog" variant="regular">
+                Event Catalog
+              </TabsTrigger>
+              <TabsTrigger value="logs" variant="regular">
+                Logs
+              </TabsTrigger>
+              <TabsTrigger value="activity" variant="regular">
+                Activity
+              </TabsTrigger>
+            </TabsList>
+          </div>
+          <TabsContent value="endpoints" variant="regular" className="!mt-0 overflow-hidden p-2.5">
+            <div className="flex h-full min-h-[calc(100vh-250px)] items-center justify-center p-4 text-center">
+              {isInitialLoading ? (
+                <div className="flex flex-col items-center gap-2">
+                  <RiLoaderLine className="text-foreground-low h-6 w-6 animate-spin" />
+                  <span className="text-muted-foreground">Loading webhooks configuration...</span>
+                </div>
+              ) : (
+                <div>
+                  {queryError ? (
+                    <>
+                      <h3 className="text-foreground text-lg font-semibold">Error Loading Webhooks</h3>
+                      <p className="text-muted-foreground text-sm">{queryError.message}</p>
+                    </>
+                  ) : mutationError ? (
+                    <>
+                      <h3 className="text-foreground text-lg font-semibold">Error Configuring Webhooks</h3>
+                      <p className="text-muted-foreground text-sm">{mutationError.message}</p>
+                    </>
+                  ) : (
+                    <>
+                      <h3 className="text-foreground text-lg font-semibold">Webhooks Not Ready</h3>
+                      <p className="text-muted-foreground text-sm">
+                        The webhooks portal is being prepared or there's a configuration issue.
+                      </p>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          </TabsContent>
+          {[
+            { value: 'event-catalog', label: 'Event catalog' },
+            { value: 'logs', label: 'Logs' },
+            { value: 'activity', label: 'Activity' },
+          ].map((tab) => (
+            <TabsContent key={tab.value} value={tab.value} variant="regular" className="!mt-0 overflow-hidden p-2.5">
+              <div className="flex h-full min-h-[calc(100vh-250px)] items-center justify-center p-4 text-center">
+                {isInitialLoading ? (
+                  <div className="flex flex-col items-center gap-2">
+                    <RiLoaderLine className="text-foreground-low h-6 w-6 animate-spin" />
+                    <span className="text-muted-foreground">Loading...</span>
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground text-sm">
+                    {tab.label} will be available once webhooks are fully configured and endpoints are loaded.
+                  </p>
+                )}
+              </div>
+            </TabsContent>
+          ))}
+        </Tabs>
       )}
     </DashboardLayout>
   );
