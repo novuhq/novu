@@ -5,7 +5,6 @@ import { RootEnvironmentGuard } from './framework/root-environment-guard.service
 import { ApiKeyStrategy } from './services/passport/apikey.strategy';
 import { JwtSubscriberStrategy } from './services/passport/subscriber-jwt.strategy';
 import { AuthService } from './services/auth.service';
-import { RolesGuard } from './framework/roles.guard';
 
 export function getEEModuleConfig(): ModuleMetadata {
   const eeAuthPackage = require('@novu/ee-auth');
@@ -25,10 +24,9 @@ export function getEEModuleConfig(): ModuleMetadata {
       JwtSubscriberStrategy,
       AuthService,
       cacheService,
-      RolesGuard,
       RootEnvironmentGuard,
     ],
-    exports: [...eeAuthModule.exports, RolesGuard, RootEnvironmentGuard, AuthService],
+    exports: [...eeAuthModule.exports, RootEnvironmentGuard, AuthService],
   };
 }
 

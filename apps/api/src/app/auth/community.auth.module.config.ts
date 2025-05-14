@@ -15,7 +15,6 @@ import { JwtSubscriberStrategy } from './services/passport/subscriber-jwt.strate
 import { RootEnvironmentGuard } from './framework/root-environment-guard.service';
 import { ApiKeyStrategy } from './services/passport/apikey.strategy';
 import { AuthService } from './services/auth.service';
-import { RolesGuard } from './framework/roles.guard';
 import { CommunityAuthService } from './services/community.auth.service';
 import { CommunityUserAuthGuard } from './framework/community.user.auth.guard';
 
@@ -38,7 +37,7 @@ export function getCommunityAuthModuleConfig(): ModuleMetadata {
     }),
   ];
 
-  const baseProviders = [...AUTH_STRATEGIES, AuthService, RolesGuard, RootEnvironmentGuard];
+  const baseProviders = [...AUTH_STRATEGIES, AuthService, RootEnvironmentGuard];
 
   // Wherever is the string token used, override it with the provider
   const injectableProviders = [
@@ -69,7 +68,6 @@ export function getCommunityAuthModuleConfig(): ModuleMetadata {
     controllers: [AuthController],
     providers: [...baseProviders, ...injectableProviders, ...USE_CASES],
     exports: [
-      RolesGuard,
       RootEnvironmentGuard,
       AuthService,
       'AUTH_SERVICE',
