@@ -21,6 +21,7 @@ export class WebhooksController {
   ) {}
 
   @Get('/portal/token')
+  @ProductFeature(ProductFeatureKeyEnum.WEBHOOKS)
   @ApiOperation({
     summary: 'Get Webhook Portal Access Token',
     description:

@@ -9,9 +9,9 @@ const featureAccessAtoFeatureNameMapping: Record<ProductFeatureKeyEnum, FeatureN
 
 function createProductFeatureMap(): Record<ProductFeatureKeyEnum, ApiServiceLevelEnum[]> {
   const productFeatures: Record<ProductFeatureKeyEnum, ApiServiceLevelEnum[]> = {
-    [ProductFeatureKeyEnum.TRANSLATIONS]: [ApiServiceLevelEnum.BUSINESS, ApiServiceLevelEnum.ENTERPRISE],
-    [ProductFeatureKeyEnum.MANAGE_ENVIRONMENTS]: [ApiServiceLevelEnum.BUSINESS, ApiServiceLevelEnum.ENTERPRISE],
-    [ProductFeatureKeyEnum.WEBHOOKS]: [ApiServiceLevelEnum.BUSINESS, ApiServiceLevelEnum.ENTERPRISE],
+    [ProductFeatureKeyEnum.TRANSLATIONS]: [],
+    [ProductFeatureKeyEnum.MANAGE_ENVIRONMENTS]: [],
+    [ProductFeatureKeyEnum.WEBHOOKS]: [],
   };
 
   for (const apiServiceLevel of Object.values(ApiServiceLevelEnum)) {
