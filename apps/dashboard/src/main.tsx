@@ -44,7 +44,7 @@ import { RedirectToLegacyStudioAuth } from './pages/redirect-to-legacy-studio-au
 import { TestWorkflowPage } from './pages/test-workflow';
 import { TopicsPage } from './pages/topics';
 import { VercelIntegrationPage } from './pages/vercel-integration-page';
-import { AuthRoute, CatchAllRoute, DashboardRoute, RedirectToEnvironment, RootRoute } from './routes';
+import { AuthRoute, CatchAllRoute, DashboardRoute, RootRoute } from './routes';
 import { OnboardingParentRoute } from './routes/onboarding';
 import { ROUTES } from './utils/routes';
 import { initializeSentry } from './utils/sentry';
@@ -106,7 +106,8 @@ const router = createBrowserRouter([
         path: ROUTES.ROOT,
         element: <DashboardRoute />,
         children: [
-          /* Direct routes will be handled by the CatchAllRoute component */
+          /* Direct routes matching environment-specific paths (e.g., /topics -> /env/:envId/topics) 
+             will be automatically redirected by the CatchAllRoute component */
           {
             path: ROUTES.ENV,
             children: [
