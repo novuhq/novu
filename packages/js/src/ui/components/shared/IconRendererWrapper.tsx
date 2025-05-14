@@ -27,7 +27,7 @@ export const IconRendererWrapper = (props: IconRendererWrapperProps) => {
 
   return (
     <Show when={customRenderer()} fallback={props.fallback}>
-      {/* Render the placeholder div. The user's renderer will populate it. */}
+      {/* Render the placeholder span. The user's renderer will populate it. */}
       <span ref={el} />
     </Show>
   );

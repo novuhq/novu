@@ -63,14 +63,34 @@ type ChannelIconProps = JSX.IntrinsicElements['svg'] & {
 };
 const ChannelIcon = (props: ChannelIconProps) => {
   const style = useStyle();
-  const appearance = useAppearance();
 
   const iconMap: Record<ChannelType, { key: IconKey; component: JSX.Element }> = {
-    [ChannelType.IN_APP]: { key: 'inApp', component: <DefaultInApp class={style(props.appearanceKey, props.class)} /> },
-    [ChannelType.EMAIL]: { key: 'email', component: <DefaultEmail class={style(props.appearanceKey, props.class)} /> },
-    [ChannelType.PUSH]: { key: 'push', component: <DefaultPush class={style(props.appearanceKey, props.class)} /> },
-    [ChannelType.SMS]: { key: 'sms', component: <DefaultSms class={style(props.appearanceKey, props.class)} /> },
-    [ChannelType.CHAT]: { key: 'chat', component: <DefaultChat class={style(props.appearanceKey, props.class)} /> },
+    [ChannelType.IN_APP]: {
+      key: 'inApp',
+      component: (
+        <DefaultInApp
+          class={style(props.appearanceKey, props.class, {
+            iconKey: 'inApp',
+          })}
+        />
+      ),
+    },
+    [ChannelType.EMAIL]: {
+      key: 'email',
+      component: <DefaultEmail class={style(props.appearanceKey, props.class, { iconKey: 'email' })} />,
+    },
+    [ChannelType.PUSH]: {
+      key: 'push',
+      component: <DefaultPush class={style(props.appearanceKey, props.class, { iconKey: 'push' })} />,
+    },
+    [ChannelType.SMS]: {
+      key: 'sms',
+      component: <DefaultSms class={style(props.appearanceKey, props.class, { iconKey: 'sms' })} />,
+    },
+    [ChannelType.CHAT]: {
+      key: 'chat',
+      component: <DefaultChat class={style(props.appearanceKey, props.class, { iconKey: 'chat' })} />,
+    },
   };
 
   const iconData = iconMap[props.channel];

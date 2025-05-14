@@ -32,10 +32,7 @@ export const BellContainer = (props: DefaultBellContainerProps) => {
         <span
           class={style(
             'bellDot',
-            'nt-absolute nt-top-0 nt-right-0 nt-block nt-size-2 nt-transform nt-bg-counter nt-rounded-full nt-border nt-border-background',
-            {
-              iconKey: 'bell',
-            }
+            'nt-absolute nt-top-0 nt-right-0 nt-block nt-size-2 nt-transform nt-bg-counter nt-rounded-full nt-border nt-border-background'
           )}
         />
       </Show>

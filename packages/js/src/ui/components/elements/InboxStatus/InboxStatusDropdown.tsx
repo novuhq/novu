@@ -1,5 +1,4 @@
-import { Show } from 'solid-js';
-import { useInboxContext, useLocalization, useAppearance } from '../../../context';
+import { useInboxContext, useLocalization } from '../../../context';
 import { cn, useStyle } from '../../../helpers';
 import { ArrowDropDown as DefaultArrowDropDown } from '../../../icons';
 import { Button, buttonVariants, Dropdown } from '../../primitives';
@@ -11,7 +10,6 @@ export const StatusDropdown = () => {
   const style = useStyle();
   const { status, setStatus } = useInboxContext();
   const { t } = useLocalization();
-  const appearance = useAppearance();
 
   return (
     <Dropdown.Root>

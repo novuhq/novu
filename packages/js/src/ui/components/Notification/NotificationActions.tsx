@@ -120,7 +120,6 @@ const SnoozeDropdownItem = (props: {
 export const ReadButton = (props: { notification: Notification }) => {
   const style = useStyle();
   const { t } = useLocalization();
-  const appearance = useAppearance();
 
   return (
     <Tooltip.Root>
@@ -203,7 +202,6 @@ export const UnreadButton = (props: { notification: Notification }) => {
 export const ArchiveButton = (props: { notification: Notification }) => {
   const style = useStyle();
   const { t } = useLocalization();
-  const appearance = useAppearance();
 
   return (
     <Tooltip.Root>

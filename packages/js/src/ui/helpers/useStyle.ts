@@ -88,7 +88,7 @@ export const useStyle = () => {
         return cn(
           ...finalAppearanceKeys.map((key) => `nv-${key}`),
           '🔔',
-          iconKey ? `nv-icon-${iconKey} 🖼️` : '',
+          iconKey ? `nv-${iconKey} 🖼️` : '',
 
           finalClassName, // default styles
           appearanceClassnames, // overrides via appearance prop classes

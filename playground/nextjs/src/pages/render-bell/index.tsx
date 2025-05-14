@@ -31,15 +31,7 @@ export default function Home() {
   return (
     <>
       <Title title="Render Bell props" />
-      <Inbox
-        {...novuConfig}
-        appearance={{
-          icons: {
-            markAsArchived: () => '🔧',
-          },
-        }}
-        renderBell={(unreadCount) => <CustomBell unreadCount={unreadCount} />}
-      />
+      <Inbox {...novuConfig} renderBell={(unreadCount) => <CustomBell unreadCount={unreadCount} />} />
     </>
   );
 }
