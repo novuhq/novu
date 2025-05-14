@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import {
   ControlValuesRepository,
   MessageTemplateRepository,
@@ -22,6 +22,7 @@ export class DeleteWorkflowUseCase {
     private getWorkflowByIdsUseCase: GetWorkflowByIdsUseCase,
     private controlValuesRepository: ControlValuesRepository,
     private deletePreferencesUsecase: DeletePreferencesUseCase,
+    @Optional()
     private sendWebhookMessage: SendWebhookMessage
   ) {}
 
@@ -36,15 +37,17 @@ export class DeleteWorkflowUseCase {
 
     await this.deleteRelatedEntities(command, workflowEntity);
 
-    await this.sendWebhookMessage.execute({
-      eventType: WebhookEventEnum.WORKFLOW_DELETED,
-      objectType: WebhookObjectTypeEnum.WORKFLOW,
-      payload: {
-        object: workflowEntity,
-      },
-      organizationId: command.organizationId,
-      environmentId: command.environmentId,
-    });
+    if (this.sendWebhookMessage) {
+      await this.sendWebhookMessage.execute({
+        eventType: WebhookEventEnum.WORKFLOW_DELETED,
+        objectType: WebhookObjectTypeEnum.WORKFLOW,
+        payload: {
+          object: workflowEntity,
+        },
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+      });
+    }
   }
 
   @Instrument()

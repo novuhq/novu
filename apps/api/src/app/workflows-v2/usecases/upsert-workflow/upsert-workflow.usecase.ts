@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Optional } from '@nestjs/common';
 
 import {
   AnalyticsService,
@@ -53,6 +53,7 @@ export class UpsertWorkflowUseCase {
     private controlValuesRepository: ControlValuesRepository,
     private upsertControlValuesUseCase: UpsertControlValuesUseCase,
     private analyticsService: AnalyticsService,
+    @Optional()
     private sendWebhookMessage: SendWebhookMessage
   ) {}
 
@@ -95,27 +96,29 @@ export class UpsertWorkflowUseCase {
       })
     );
 
-    if (existingWorkflow) {
-      await this.sendWebhookMessage.execute({
-        eventType: WebhookEventEnum.WORKFLOW_UPDATED,
-        objectType: WebhookObjectTypeEnum.WORKFLOW,
-        payload: {
-          object: updatedWorkflow,
-          previousObject: existingWorkflow,
-        },
-        organizationId: command.user.organizationId,
-        environmentId: command.user.environmentId,
-      });
-    } else {
-      await this.sendWebhookMessage.execute({
-        eventType: WebhookEventEnum.WORKFLOW_CREATED,
-        objectType: WebhookObjectTypeEnum.WORKFLOW,
-        payload: {
-          object: updatedWorkflow,
-        },
-        organizationId: command.user.organizationId,
-        environmentId: command.user.environmentId,
-      });
+    if (this.sendWebhookMessage) {
+      if (existingWorkflow) {
+        await this.sendWebhookMessage.execute({
+          eventType: WebhookEventEnum.WORKFLOW_UPDATED,
+          objectType: WebhookObjectTypeEnum.WORKFLOW,
+          payload: {
+            object: updatedWorkflow,
+            previousObject: existingWorkflow,
+          },
+          organizationId: command.user.organizationId,
+          environmentId: command.user.environmentId,
+        });
+      } else {
+        await this.sendWebhookMessage.execute({
+          eventType: WebhookEventEnum.WORKFLOW_CREATED,
+          objectType: WebhookObjectTypeEnum.WORKFLOW,
+          payload: {
+            object: updatedWorkflow,
+          },
+          organizationId: command.user.organizationId,
+          environmentId: command.user.environmentId,
+        });
+      }
     }
 
     return updatedWorkflow;
