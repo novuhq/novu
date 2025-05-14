@@ -9,13 +9,10 @@ interface CompletionOption {
   boost?: number;
 }
 
-const ROOT_PREFIXES = {
-  subscriber: 'subscriber.',
-  payload: 'payload.',
-  steps: 'steps.',
-} as const;
-
-const VALID_DYNAMIC_PATHS = ['subscriber.data.', 'payload.', /^steps\.[^.]+\.events\[\d+\]\.payload\./] as const;
+// Novu JIT namespaces
+const PAYLOAD_NAMESPACE = 'payload';
+const SUBSCRIBER_DATA_NAMESPACE = 'subscriber.data';
+const STEP_PAYLOAD_REGEX = /^steps\.[a-zA-Z0-9_-]+\.events/;
 
 /**
  * Liquid variable autocomplete for the following patterns:
@@ -149,59 +146,10 @@ function getFilterCompletions(afterPipe: string): CompletionOption[] {
     .map((f) => createCompletionOption(f.value, 'function'));
 }
 
-function isValidDynamicPath(searchText: string): boolean {
-  return VALID_DYNAMIC_PATHS.some((path) =>
-    typeof path === 'string' ? searchText.startsWith(path) : path.test(searchText)
-  );
-}
-
-function validateSubscriberField(searchText: string, matches: LiquidVariable[]): LiquidVariable[] {
-  const parts = searchText.split('.');
-
-  if (parts.length === 2 && parts[0] === 'subscriber') {
-    if (!matches.some((v) => v.name === searchText)) {
-      return [];
-    }
-  }
-
-  return matches;
-}
-
-function validateStepId(searchText: string, variables: LiquidVariable[]): boolean {
-  if (!searchText.startsWith('steps.')) return true;
-
-  const stepMatch = searchText.match(/^steps\.([^.]+)/);
-  if (!stepMatch) return true;
-
-  const stepId = stepMatch[1];
-  return variables.some((v) => v.name.startsWith(`steps.${stepId}.`));
-}
-
 function getMatchingVariables(searchText: string, variables: LiquidVariable[]): LiquidVariable[] {
   if (!searchText) return variables;
 
-  const searchLower = searchText.toLowerCase();
-
-  // Handle root prefixes and their partials
-  for (const [root, prefix] of Object.entries(ROOT_PREFIXES)) {
-    if (searchLower.startsWith(root) || root.startsWith(searchLower)) {
-      let matches = variables.filter((v) => v.name.startsWith(prefix));
-
-      // Special handling for subscriber fields
-      if (prefix === 'subscriber.') {
-        matches = validateSubscriberField(searchText, matches);
-      }
-
-      // Allow new paths for dynamic paths
-      if (isValidDynamicPath(searchText)) {
-        if (!matches.some((v) => v.name === searchText)) {
-          matches.push({ name: searchText } as LiquidVariable);
-        }
-      }
-
-      return matches;
-    }
-  }
+  const searchTextTrimmed = searchText.trim();
 
   // Handle dot endings
   if (searchText.endsWith('.')) {
@@ -209,13 +157,52 @@ function getMatchingVariables(searchText: string, variables: LiquidVariable[]): 
     return variables.filter((v) => v.name.startsWith(prefix));
   }
 
-  // Validate step ID exists
-  if (!validateStepId(searchText, variables)) {
-    return [];
-  }
+  // Filter jit step namespaces out of the returned variables from the server
+  const stepPayloadNamespaces = variables.reduce<string[]>((acc, variableItem) => {
+    const match = variableItem.name.match(STEP_PAYLOAD_REGEX);
 
-  // Default case: show any variables containing the search text
-  return variables.filter((v) => v.name.toLowerCase().includes(searchLower));
+    const withPayload = match ? `${match[0]}.payload` : null;
+
+    if (withPayload && !acc.includes(withPayload)) {
+      acc.push(withPayload);
+    }
+
+    return acc;
+  }, []);
+
+  // Create JIT variables based on the search text e.g. payload.foo, subscriber.data.foo, steps.digest-step.events[0].payload.foo
+  const jitVariables = [PAYLOAD_NAMESPACE, SUBSCRIBER_DATA_NAMESPACE, ...stepPayloadNamespaces].reduce<
+    LiquidVariable[]
+  >((acc, namespace) => {
+    // If the user is typing steps.*, don't suggest any variables like payload.steps.digest-step.events
+    if (searchText.startsWith('steps.')) {
+      return acc;
+    }
+
+    if (searchText.startsWith(namespace) && searchText !== namespace) {
+      // Ensure that if the user types payload.foo the first suggestion is payload.foo
+      acc.push({ name: searchText, type: 'variable' });
+    } else if (!searchText.startsWith(namespace)) {
+      // For all other values, suggest payload.whatever, subscriber.data.whatever
+      acc.push({
+        name: `${namespace}.${searchText.trim()}`,
+        type: 'variable',
+      });
+    }
+
+    return acc;
+  }, []);
+
+  // Guardrail to ensure
+  const uniqueVariables = Array.from(
+    new Map([...jitVariables, ...variables].map((item) => [item.name, item])).values()
+  );
+
+  // Show any variables containing the search text in the variable name (not the filters)
+  return uniqueVariables.filter((v) => {
+    const namePartWithoutFilters = v.name.split('|')[0].trim();
+    return namePartWithoutFilters.includes(searchTextTrimmed);
+  });
 }
 
 export function createAutocompleteSource(
