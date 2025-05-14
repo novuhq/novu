@@ -78,7 +78,7 @@ export class NotificationFeedItemDto implements INotificationDto {
     example: 'feed_445566',
     type: String,
   })
-  _feedId: string;
+  _feedId?: string | null;
 
   @ApiProperty({
     description: 'Identifier for the job that triggered the notification.',
