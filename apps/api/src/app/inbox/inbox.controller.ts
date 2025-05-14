@@ -10,7 +10,6 @@ import {
   Query,
   UseGuards,
   Headers,
-  BadRequestException,
 } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
@@ -52,6 +51,9 @@ import { SnoozeNotificationCommand } from './usecases/snooze-notification/snooze
 import { SnoozeNotification } from './usecases/snooze-notification/snooze-notification.usecase';
 import { UnsnoozeNotificationCommand } from './usecases/unsnooze-notification/unsnooze-notification.command';
 import { UnsnoozeNotification } from './usecases/unsnooze-notification/unsnooze-notification.usecase';
+import { BulkUpdatePreferencesRequestDto } from './dtos/bulk-update-preferences-request.dto';
+import { BulkUpdatePreferences } from './usecases/bulk-update-preferences/bulk-update-preferences.usecase';
+import { BulkUpdatePreferencesCommand } from './usecases/bulk-update-preferences/bulk-update-preferences.command';
 
 @ApiCommonResponses()
 @Controller('/inbox')
@@ -66,6 +68,7 @@ export class InboxController {
     private updateAllNotifications: UpdateAllNotifications,
     private getInboxPreferencesUsecase: GetInboxPreferences,
     private updatePreferencesUsecase: UpdatePreferences,
+    private bulkUpdatePreferencesUsecase: BulkUpdatePreferences,
     private snoozeNotificationUsecase: SnoozeNotification,
     private unsnoozeNotificationUsecase: UnsnoozeNotification
   ) {}
@@ -312,11 +315,31 @@ export class InboxController {
     );
   }
 
+  /**
+   * IMPORTANT: Make sure this endpoint route is defined before the single workflow preference update endpoint
+   * "PATCH /preferences/:workflowIdOrIdentifier", otherwise, the single workflow preference update endpoint will be triggered instead
+   */
   @UseGuards(AuthGuard('subscriberJwt'))
-  @Patch('/preferences/:workflowId')
+  @Patch('/preferences/bulk')
+  async bulkUpdateWorkflowPreferences(
+    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @Body() body: BulkUpdatePreferencesRequestDto
+  ): Promise<GetPreferencesResponseDto[]> {
+    return await this.bulkUpdatePreferencesUsecase.execute(
+      BulkUpdatePreferencesCommand.create({
+        organizationId: subscriberSession._organizationId,
+        subscriberId: subscriberSession.subscriberId,
+        environmentId: subscriberSession._environmentId,
+        preferences: body.preferences,
+      })
+    );
+  }
+
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Patch('/preferences/:workflowIdOrIdentifier')
   async updateWorkflowPreference(
     @SubscriberSession() subscriberSession: SubscriberEntity,
-    @Param('workflowId') workflowId: string,
+    @Param('workflowIdOrIdentifier') workflowIdOrIdentifier: string,
     @Body() body: UpdatePreferencesRequestDto
   ): Promise<InboxPreference> {
     return await this.updatePreferencesUsecase.execute(
@@ -330,7 +353,7 @@ export class InboxController {
         in_app: body.in_app,
         push: body.push,
         sms: body.sms,
-        workflowId,
+        workflowIdOrIdentifier,
         includeInactiveChannels: false,
       })
     );

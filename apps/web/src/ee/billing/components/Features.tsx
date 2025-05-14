@@ -1,9 +1,8 @@
 import { css } from '@novu/novui/css';
 import { Text } from '@novu/novui';
 import styled from '@emotion/styled';
-import { ApiServiceLevelEnum, FeatureFlagsKeysEnum } from '@novu/shared';
+import { ApiServiceLevelEnum } from '@novu/shared';
 import { IconCheck as _IconCheck } from '@novu/novui/icons';
-import { useFeatureFlag } from '../../../hooks/useFeatureFlag';
 
 const TitleCell = styled.div`
   display: flex;
@@ -394,19 +393,9 @@ const featuresDefinition: Feature<SupportedPlansEnum>[] = [
 ];
 
 export const Features = () => {
-  const isSnoozeEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_SNOOZE_ENABLED);
-
-  const filteredFeatures = featuresDefinition.filter((feature) => {
-    if (!isSnoozeEnabled && feature.label === 'Snooze functionality') {
-      return false;
-    }
-
-    return true;
-  });
-
   return (
     <div className={styles.featureList}>
-      {filteredFeatures.map((feature, index) => (
+      {featuresDefinition.map((feature, index) => (
         <FeatureRow key={index} feature={feature} index={index} />
       ))}
     </div>

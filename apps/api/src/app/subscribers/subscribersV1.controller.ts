@@ -475,7 +475,7 @@ export class SubscribersV1Controller {
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         subscriberId,
-        workflowId,
+        workflowIdOrIdentifier: workflowId,
         level: PreferenceLevelEnum.TEMPLATE,
         includeInactiveChannels: true,
         ...(body.channel && { [body.channel.type]: body.channel.enabled }),
