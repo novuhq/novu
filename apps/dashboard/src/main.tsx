@@ -106,30 +106,23 @@ const router = createBrowserRouter([
         path: ROUTES.ROOT,
         element: <DashboardRoute />,
         children: [
-          {
-            path: 'topics',
-            element: <RedirectToEnvironment targetRoute={ROUTES.TOPICS} />,
-          },
-          {
-            path: 'workflows',
-            element: <RedirectToEnvironment targetRoute={ROUTES.WORKFLOWS} />,
-          },
-          {
-            path: 'subscribers',
-            element: <RedirectToEnvironment targetRoute={ROUTES.SUBSCRIBERS} />,
-          },
-          {
-            path: 'api-keys',
-            element: <RedirectToEnvironment targetRoute={ROUTES.API_KEYS} />,
-          },
-          {
-            path: 'environments',
-            element: <RedirectToEnvironment targetRoute={ROUTES.ENVIRONMENTS} />,
-          },
-          {
-            path: 'activity-feed',
-            element: <RedirectToEnvironment targetRoute={ROUTES.ACTIVITY_FEED} />,
-          },
+          /* Generate redirect routes programmatically for top-level environment-specific routes */
+          ...(
+            Object.entries(ROUTES)
+              .filter(([_, path]) => 
+                typeof path === 'string' && 
+                path.includes(':environmentSlug') && 
+                path.startsWith('/env/:environmentSlug/') && 
+                !path.includes('/', '/env/:environmentSlug/'.length)
+              )
+              .map(([key, path]) => {
+                const routeName = path.replace('/env/:environmentSlug/', '');
+                return {
+                  path: routeName,
+                  element: <RedirectToEnvironment targetRoute={ROUTES[key as keyof typeof ROUTES]} />,
+                };
+              })
+          ),
           {
             path: ROUTES.ENV,
             children: [
