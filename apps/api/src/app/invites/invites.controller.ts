@@ -81,7 +81,7 @@ export class InvitesController {
       userId: user._id,
       organizationId: user.organizationId,
       email: body.email,
-      role: MemberRoleEnum.ADMIN,
+      role: MemberRoleEnum.OSS_ADMIN,
     });
 
     await this.inviteMemberUsecase.execute(command);

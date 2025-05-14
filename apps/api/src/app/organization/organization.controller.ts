@@ -143,14 +143,14 @@ export class OrganizationController {
     @Param('memberId') memberId: string,
     @Body() body: UpdateMemberRolesDto
   ) {
-    if (body.role !== MemberRoleEnum.ADMIN) {
+    if (body.role !== MemberRoleEnum.OSS_ADMIN) {
       throw new Error('Only admin role can be assigned to a member');
     }
 
     return await this.changeMemberRoleUsecase.execute(
       ChangeMemberRoleCommand.create({
         memberId,
-        role: MemberRoleEnum.ADMIN,
+        role: MemberRoleEnum.OSS_ADMIN,
         userId: user._id,
         organizationId: user.organizationId,
       })

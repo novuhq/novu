@@ -12,11 +12,11 @@ export class ChangeMemberRole {
   ) {}
 
   async execute(command: ChangeMemberRoleCommand) {
-    if (![MemberRoleEnum.MEMBER, MemberRoleEnum.ADMIN].includes(command.role)) {
+    if (![MemberRoleEnum.OSS_MEMBER, MemberRoleEnum.OSS_ADMIN].includes(command.role)) {
       throw new BadRequestException('Not supported role type');
     }
 
-    if (command.role !== MemberRoleEnum.ADMIN) {
+    if (command.role !== MemberRoleEnum.OSS_ADMIN) {
       throw new BadRequestException(`The change of role to an ${command.role} type is not supported`);
     }
 

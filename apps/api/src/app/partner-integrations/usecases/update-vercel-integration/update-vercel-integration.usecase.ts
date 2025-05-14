@@ -144,12 +144,12 @@ export class UpdateVercelIntegration {
         return;
       }
 
-      const orgAdmin = await this.memberRepository.getOrganizationAdminAccount(organizationId);
-      if (!orgAdmin) {
-        throw new BadRequestException('Organization admin not found');
+      const orgOwner = await this.memberRepository.getOrganizationOwnerAccount(organizationId);
+      if (!orgOwner) {
+        throw new BadRequestException('Organization owner not found');
       }
 
-      const internalUser = await this.communityUserRepository.findOne({ externalId: orgAdmin?._userId });
+      const internalUser = await this.communityUserRepository.findOne({ externalId: orgOwner?._userId });
       if (!internalUser) {
         throw new BadRequestException('User not found');
       }
