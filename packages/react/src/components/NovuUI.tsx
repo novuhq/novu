@@ -17,7 +17,7 @@ type RendererProps = React.PropsWithChildren<{
   novu?: Novu;
 }>;
 
-const NovuUIComponent = ({ options, novu, children }: RendererProps) => {
+export const NovuUI = ({ options, novu, children }: RendererProps) => {
   const { mountElement } = useRenderer();
 
   const adaptedAppearanceForUpdate = useMemo(
@@ -63,5 +63,3 @@ const NovuUIComponent = ({ options, novu, children }: RendererProps) => {
 
   return <NovuUIProvider value={{ novuUI }}>{children}</NovuUIProvider>;
 };
-
-export const NovuUI = NovuUIComponent;

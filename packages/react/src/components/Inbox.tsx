@@ -10,7 +10,7 @@ import { withRenderer } from './Renderer';
 
 export type InboxProps = DefaultProps | WithChildrenProps;
 
-const _DefaultInbox = (props: DefaultInboxProps) => {
+const DefaultInbox = (props: DefaultInboxProps) => {
   const {
     open,
     renderNotification,
@@ -79,8 +79,6 @@ const _DefaultInbox = (props: DefaultInboxProps) => {
 
   return <Mounter mount={mount} />;
 };
-
-const DefaultInbox = _DefaultInbox;
 
 export const Inbox = React.memo((props: InboxProps) => {
   const { applicationIdentifier, subscriberHash, backendUrl, socketUrl } = props;
