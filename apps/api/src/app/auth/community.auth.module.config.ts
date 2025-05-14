@@ -1,5 +1,5 @@
 import { MiddlewareConsumer, ModuleMetadata, Provider, RequestMethod } from '@nestjs/common';
-import { JwtModule, JwtService } from '@nestjs/jwt';
+import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import passport from 'passport';
 import { AuthProviderEnum, PassportStrategyEnum } from '@novu/shared';
@@ -10,7 +10,6 @@ import { UserModule } from '../user/user.module';
 import { USE_CASES } from './usecases';
 import { SharedModule } from '../shared/shared.module';
 import { GitHubStrategy } from './services/passport/github.strategy';
-import { OrganizationModule } from '../organization/organization.module';
 import { EnvironmentsModuleV1 } from '../environments-v1/environments-v1.module';
 import { JwtSubscriberStrategy } from './services/passport/subscriber-jwt.strategy';
 import { RootEnvironmentGuard } from './framework/root-environment-guard.service';
@@ -66,7 +65,7 @@ export function getCommunityAuthModuleConfig(): ModuleMetadata {
   ];
 
   return {
-    imports: [...baseImports, EnvironmentsModuleV1, SharedModule, UserModule, OrganizationModule],
+    imports: [...baseImports, EnvironmentsModuleV1, SharedModule, UserModule],
     controllers: [AuthController],
     providers: [...baseProviders, ...injectableProviders, ...USE_CASES],
     exports: [
