@@ -1,11 +1,44 @@
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
+import { RiLoader4Line } from 'react-icons/ri';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { useEnvironment } from '../context/environment/hooks';
 
 export const CatchAllRoute = () => {
-  const { currentEnvironment } = useEnvironment();
+  const { currentEnvironment, areEnvironmentsInitialLoading } = useEnvironment();
+  const location = useLocation();
+  const path = location.pathname.substring(1); // Remove leading slash
 
-  // TODO: check if this is the correct ROUTES
+  if (areEnvironmentsInitialLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="flex flex-col items-center gap-3">
+          <RiLoader4Line className="size-8 animate-spin text-primary-base" />
+          <div className="text-text-sub text-label-sm">Loading environment...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!currentEnvironment?.slug) {
+    return <Navigate to={ROUTES.ROOT} />;
+  }
+
+  const routeEntries = Object.entries(ROUTES);
+  for (const [key, routePath] of routeEntries) {
+    if (
+      typeof routePath === 'string' && 
+      routePath.includes(':environmentSlug') && 
+      routePath.startsWith('/env/:environmentSlug/') && 
+      !routePath.includes('/', '/env/:environmentSlug/'.length)
+    ) {
+      const routeName = routePath.replace('/env/:environmentSlug/', '');
+      if (path === routeName) {
+        const targetPath = buildRoute(routePath, { environmentSlug: currentEnvironment.slug });
+        return <Navigate to={`${targetPath}${location.search}${location.hash}`} />;
+      }
+    }
+  }
+
   return (
     <Navigate
       to={

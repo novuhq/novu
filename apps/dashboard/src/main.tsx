@@ -106,23 +106,7 @@ const router = createBrowserRouter([
         path: ROUTES.ROOT,
         element: <DashboardRoute />,
         children: [
-          /* Generate redirect routes programmatically for top-level environment-specific routes */
-          ...(
-            Object.entries(ROUTES)
-              .filter(([_, path]) => 
-                typeof path === 'string' && 
-                path.includes(':environmentSlug') && 
-                path.startsWith('/env/:environmentSlug/') && 
-                !path.includes('/', '/env/:environmentSlug/'.length)
-              )
-              .map(([key, path]) => {
-                const routeName = path.replace('/env/:environmentSlug/', '');
-                return {
-                  path: routeName,
-                  element: <RedirectToEnvironment targetRoute={ROUTES[key as keyof typeof ROUTES]} />,
-                };
-              })
-          ),
+          /* Direct routes will be handled by the CatchAllRoute component */
           {
             path: ROUTES.ENV,
             children: [
