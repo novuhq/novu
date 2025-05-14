@@ -1,8 +1,8 @@
 import { createEffect, createMemo, createSignal, For, JSX, Show } from 'solid-js';
 
 import type { Notification } from '../../../notifications';
-import { ActionTypeEnum, NotificationActionStatus } from '../../../types';
-import { useInboxContext, useLocalization, useAppearance } from '../../context';
+import { ActionTypeEnum } from '../../../types';
+import { useInboxContext, useLocalization } from '../../context';
 import { cn, formatSnoozedUntil, formatToRelativeTime, useStyle } from '../../helpers';
 import { Clock as DefaultClock } from '../../icons/Clock';
 import {
@@ -31,7 +31,6 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
   const style = useStyle();
   const { t, locale } = useLocalization();
   const { navigate, status } = useInboxContext();
-  const appearance = useAppearance();
   const [minutesPassed, setMinutesPassed] = createSignal(0);
 
   const deliveredAtIconClass = style('notificationDeliveredAt__icon', 'nt-size-3', {

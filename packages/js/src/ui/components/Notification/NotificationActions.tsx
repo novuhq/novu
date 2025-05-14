@@ -1,6 +1,6 @@
 import { createMemo, createSignal, For, JSX } from 'solid-js';
 import type { Notification } from '../../../notifications';
-import { useInboxContext, useLocalization, useAppearance } from '../../context';
+import { useInboxContext, useLocalization } from '../../context';
 import { useStyle } from '../../helpers';
 import { Clock, Clock as DefaultClock } from '../../icons/Clock';
 import { MarkAsArchived as DefaultMarkAsArchived } from '../../icons/MarkAsArchived';
@@ -227,7 +227,6 @@ export const ArchiveButton = (props: { notification: Notification }) => {
 export const UnarchiveButton = (props: { notification: Notification }) => {
   const style = useStyle();
   const { t } = useLocalization();
-  const appearance = useAppearance();
   const unarchiveIconClass = style('notificationArchive__icon', 'nt-size-3', {
     iconKey: 'markAsUnarchived',
   });
@@ -264,7 +263,6 @@ export const UnarchiveButton = (props: { notification: Notification }) => {
 export const UnsnoozeButton = (props: { notification: Notification }) => {
   const style = useStyle();
   const { t } = useLocalization();
-  const appearance = useAppearance();
   const unsnoozeIconClass = style('notificationUnsnooze__icon', 'nt-size-3', {
     iconKey: 'unsnooze',
   });
@@ -303,7 +301,6 @@ export const SnoozeButton = (props: { notification: Notification }) => {
   const { t, locale } = useLocalization();
   const { maxSnoozeDurationHours } = useInboxContext();
   const [isSnoozeDateTimePickerOpen, setIsSnoozeDateTimePickerOpen] = createSignal(false);
-  const appearance = useAppearance();
   const snoozeButtonIconClass = style('notificationSnooze__icon', 'nt-size-3', {
     iconKey: 'clock',
   });
