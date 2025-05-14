@@ -17,13 +17,15 @@ type RendererProps = React.PropsWithChildren<{
 }>;
 
 export const NovuUI = ({ options, novu, children }: RendererProps) => {
+  const adaptedAppearanceForUpdate = useMemo(() => adaptAppearanceForJs(options.appearance), [options.appearance]);
+
   const adaptedOptions = useMemo(() => {
     return {
       ...options,
-      appearance: adaptAppearanceForJs(options.appearance),
+      appearance: adaptedAppearanceForUpdate,
       novu,
     };
-  }, [options, novu]);
+  }, [options, novu, adaptedAppearanceForUpdate]);
 
   const optionsRef = useDataRef(adaptedOptions);
   const [novuUI, setNovuUI] = useState<NovuUIClass | undefined>();
@@ -36,8 +38,6 @@ export const NovuUI = ({ options, novu, children }: RendererProps) => {
       instance.unmount();
     };
   }, []);
-
-  const adaptedAppearanceForUpdate = useMemo(() => adaptAppearanceForJs(options.appearance), [options.appearance]);
 
   useEffect(() => {
     if (!novuUI) {
