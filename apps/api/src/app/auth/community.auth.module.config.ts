@@ -16,7 +16,6 @@ import { RootEnvironmentGuard } from './framework/root-environment-guard.service
 import { ApiKeyStrategy } from './services/passport/apikey.strategy';
 import { AuthService } from './services/auth.service';
 import { CommunityAuthService } from './services/community.auth.service';
-import { CommunityUserAuthGuard } from './framework/community.user.auth.guard';
 
 const AUTH_STRATEGIES: Provider[] = [JwtStrategy, ApiKeyStrategy, JwtSubscriberStrategy];
 
@@ -57,10 +56,6 @@ export function getCommunityAuthModuleConfig(): ModuleMetadata {
       provide: 'AUTH_SERVICE',
       useClass: CommunityAuthService,
     },
-    {
-      provide: 'USER_AUTH_GUARD',
-      useClass: CommunityUserAuthGuard,
-    },
   ];
 
   return {
@@ -71,7 +66,6 @@ export function getCommunityAuthModuleConfig(): ModuleMetadata {
       RootEnvironmentGuard,
       AuthService,
       'AUTH_SERVICE',
-      'USER_AUTH_GUARD',
       'USER_REPOSITORY',
       'MEMBER_REPOSITORY',
       'ORGANIZATION_REPOSITORY',
