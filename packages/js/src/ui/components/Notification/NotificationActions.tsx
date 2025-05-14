@@ -73,22 +73,21 @@ const SnoozeDropdownItem = (props: {
   asChild?: (props: any) => JSX.Element;
 }) => {
   const style = useStyle();
+  const snoozeItemIconClass = style(
+    'notificationSnooze__dropdownItem__icon',
+    'nt-size-3 nt-text-foreground-alpha-400 nt-mr-2',
+    {
+      iconKey: 'clock',
+    }
+  );
 
   const content = (
     <>
       <div class={style('dropdownItem', 'nt-flex nt-items-center nt-flex-1')}>
         <IconRendererWrapper
           iconKey="clock"
-          class={style('notificationSnooze__dropdownItem__icon', 'nt-size-3 nt-text-foreground-alpha-400 nt-mr-2', {
-            iconKey: 'clock',
-          })}
-          fallback={
-            <DefaultClock
-              class={style('notificationSnooze__dropdownItem__icon', 'nt-size-3 nt-text-foreground-alpha-400 nt-mr-2', {
-                iconKey: 'clock',
-              })}
-            />
-          }
+          class={snoozeItemIconClass}
+          fallback={<DefaultClock class={snoozeItemIconClass} />}
         />
         <span class={style('dropdownItemLabel')}>{props.label}</span>
       </div>
@@ -120,6 +119,9 @@ const SnoozeDropdownItem = (props: {
 export const ReadButton = (props: { notification: Notification }) => {
   const style = useStyle();
   const { t } = useLocalization();
+  const readIconClass = style('notificationRead__icon', 'nt-size-3', {
+    iconKey: 'markAsRead',
+  });
 
   return (
     <Tooltip.Root>
@@ -137,16 +139,8 @@ export const ReadButton = (props: { notification: Notification }) => {
           >
             <IconRendererWrapper
               iconKey="markAsRead"
-              class={style('notificationRead__icon', 'nt-size-3', {
-                iconKey: 'markAsRead',
-              })}
-              fallback={
-                <DefaultMarkAsRead
-                  class={style('notificationRead__icon', 'nt-size-3', {
-                    iconKey: 'markAsRead',
-                  })}
-                />
-              }
+              class={readIconClass}
+              fallback={<DefaultMarkAsRead class={readIconClass} />}
             />
           </Button>
         )}
@@ -161,6 +155,9 @@ export const ReadButton = (props: { notification: Notification }) => {
 export const UnreadButton = (props: { notification: Notification }) => {
   const style = useStyle();
   const { t } = useLocalization();
+  const unreadIconClass = style('notificationUnread__icon', 'nt-size-3', {
+    iconKey: 'markAsUnread',
+  });
 
   return (
     <Tooltip.Root>
@@ -178,16 +175,8 @@ export const UnreadButton = (props: { notification: Notification }) => {
           >
             <IconRendererWrapper
               iconKey="markAsUnread"
-              class={style('notificationUnread__icon', 'nt-size-3', {
-                iconKey: 'markAsUnread',
-              })}
-              fallback={
-                <DefaultMarkAsUnread
-                  class={style('notificationUnread__icon', 'nt-size-3', {
-                    iconKey: 'markAsUnread',
-                  })}
-                />
-              }
+              class={unreadIconClass}
+              fallback={<DefaultMarkAsUnread class={unreadIconClass} />}
             />
           </Button>
         )}
@@ -202,6 +191,9 @@ export const UnreadButton = (props: { notification: Notification }) => {
 export const ArchiveButton = (props: { notification: Notification }) => {
   const style = useStyle();
   const { t } = useLocalization();
+  const archiveIconClass = style('notificationArchive__icon', 'nt-size-3', {
+    iconKey: 'markAsArchived',
+  });
 
   return (
     <Tooltip.Root>
@@ -219,16 +211,8 @@ export const ArchiveButton = (props: { notification: Notification }) => {
           >
             <IconRendererWrapper
               iconKey="markAsArchived"
-              class={style('notificationArchive__icon', 'nt-size-3', {
-                iconKey: 'markAsArchived',
-              })}
-              fallback={
-                <DefaultMarkAsArchived
-                  class={style('notificationArchive__icon', 'nt-size-3', {
-                    iconKey: 'markAsArchived',
-                  })}
-                />
-              }
+              class={archiveIconClass}
+              fallback={<DefaultMarkAsArchived class={archiveIconClass} />}
             />
           </Button>
         )}
@@ -244,6 +228,9 @@ export const UnarchiveButton = (props: { notification: Notification }) => {
   const style = useStyle();
   const { t } = useLocalization();
   const appearance = useAppearance();
+  const unarchiveIconClass = style('notificationArchive__icon', 'nt-size-3', {
+    iconKey: 'markAsUnarchived',
+  });
 
   return (
     <Tooltip.Root>
@@ -261,16 +248,8 @@ export const UnarchiveButton = (props: { notification: Notification }) => {
           >
             <IconRendererWrapper
               iconKey="markAsUnarchived"
-              class={style('notificationArchive__icon', 'nt-size-3', {
-                iconKey: 'markAsUnarchived',
-              })}
-              fallback={
-                <DefaultMarkAsUnarchived
-                  class={style('notificationArchive__icon', 'nt-size-3', {
-                    iconKey: 'markAsUnarchived',
-                  })}
-                />
-              }
+              class={unarchiveIconClass}
+              fallback={<DefaultMarkAsUnarchived class={unarchiveIconClass} />}
             />
           </Button>
         )}
@@ -286,6 +265,9 @@ export const UnsnoozeButton = (props: { notification: Notification }) => {
   const style = useStyle();
   const { t } = useLocalization();
   const appearance = useAppearance();
+  const unsnoozeIconClass = style('notificationUnsnooze__icon', 'nt-size-3', {
+    iconKey: 'unsnooze',
+  });
 
   return (
     <Tooltip.Root>
@@ -303,16 +285,8 @@ export const UnsnoozeButton = (props: { notification: Notification }) => {
           >
             <IconRendererWrapper
               iconKey="unsnooze"
-              class={style('notificationUnsnooze__icon', 'nt-size-3', {
-                iconKey: 'unsnooze',
-              })}
-              fallback={
-                <DefaultUnsnooze
-                  class={style('notificationUnsnooze__icon', 'nt-size-3', {
-                    iconKey: 'unsnooze',
-                  })}
-                />
-              }
+              class={unsnoozeIconClass}
+              fallback={<DefaultUnsnooze class={unsnoozeIconClass} />}
             />
           </Button>
         )}
@@ -330,6 +304,9 @@ export const SnoozeButton = (props: { notification: Notification }) => {
   const { maxSnoozeDurationHours } = useInboxContext();
   const [isSnoozeDateTimePickerOpen, setIsSnoozeDateTimePickerOpen] = createSignal(false);
   const appearance = useAppearance();
+  const snoozeButtonIconClass = style('notificationSnooze__icon', 'nt-size-3', {
+    iconKey: 'clock',
+  });
 
   const availableSnoozePresets = createMemo(() => {
     if (!maxSnoozeDurationHours()) return SNOOZE_PRESETS;
@@ -357,16 +334,8 @@ export const SnoozeButton = (props: { notification: Notification }) => {
                 >
                   <IconRendererWrapper
                     iconKey="clock"
-                    class={style('notificationSnooze__icon', 'nt-size-3', {
-                      iconKey: 'clock',
-                    })}
-                    fallback={
-                      <Clock
-                        class={style('notificationSnooze__icon', 'nt-size-3', {
-                          iconKey: 'clock',
-                        })}
-                      />
-                    }
+                    class={snoozeButtonIconClass}
+                    fallback={<Clock class={snoozeButtonIconClass} />}
                   />
                 </Button>
               )}

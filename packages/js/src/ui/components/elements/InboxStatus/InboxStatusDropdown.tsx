@@ -10,6 +10,13 @@ export const StatusDropdown = () => {
   const style = useStyle();
   const { status, setStatus } = useInboxContext();
   const { t } = useLocalization();
+  const arrowDropDownIconClass = style(
+    'inboxStatus__dropdownItemRight__icon',
+    'nt-text-foreground-alpha-600 nt-size-4',
+    {
+      iconKey: 'arrowDropDown',
+    }
+  );
 
   return (
     <Dropdown.Root>
@@ -28,16 +35,8 @@ export const StatusDropdown = () => {
             </span>
             <IconRendererWrapper
               iconKey="arrowDropDown"
-              class={style('inboxStatus__dropdownItemRight__icon', 'nt-text-foreground-alpha-600 nt-size-4', {
-                iconKey: 'arrowDropDown',
-              })}
-              fallback={
-                <DefaultArrowDropDown
-                  class={style('inboxStatus__dropdownItemRight__icon', 'nt-text-foreground-alpha-600 nt-size-4', {
-                    iconKey: 'arrowDropDown',
-                  })}
-                />
-              }
+              class={arrowDropDownIconClass}
+              fallback={<DefaultArrowDropDown class={arrowDropDownIconClass} />}
             />
           </Button>
         )}

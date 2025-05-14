@@ -12,6 +12,9 @@ type PreferencesHeaderProps = {
 export const PreferencesHeader = (props: PreferencesHeaderProps) => {
   const style = useStyle();
   const { t } = useLocalization();
+  const arrowLeftIconClass = style('preferencesHeader__back__button__icon', 'nt-size-4', {
+    iconKey: 'arrowLeft',
+  });
 
   return (
     <div
@@ -31,16 +34,8 @@ export const PreferencesHeader = (props: PreferencesHeaderProps) => {
           >
             <IconRendererWrapper
               iconKey="arrowLeft"
-              class={style('preferencesHeader__back__button__icon', 'nt-size-4', {
-                iconKey: 'arrowLeft',
-              })}
-              fallback={
-                <DefaultArrowLeft
-                  class={style('preferencesHeader__back__button__icon', 'nt-size-4', {
-                    iconKey: 'arrowLeft',
-                  })}
-                />
-              }
+              class={arrowLeftIconClass}
+              fallback={<DefaultArrowLeft class={arrowLeftIconClass} />}
             />
           </Button>
         )}

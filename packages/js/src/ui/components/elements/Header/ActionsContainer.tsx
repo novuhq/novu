@@ -12,6 +12,9 @@ type ActionsContainerProps = {
 
 export const ActionsContainer = (props: ActionsContainerProps) => {
   const style = useStyle();
+  const cogsIconClass = style('icon', 'nt-size-5', {
+    iconKey: 'cogs',
+  });
 
   return (
     <div class={style('moreActionsContainer', 'nt-flex nt-gap-3')}>
@@ -21,16 +24,8 @@ export const ActionsContainer = (props: ActionsContainerProps) => {
           <Button appearanceKey="preferences__button" variant="ghost" size="iconSm" onClick={showPreferences()}>
             <IconRendererWrapper
               iconKey="cogs"
-              class={style('icon', 'nt-size-5', {
-                iconKey: 'cogs',
-              })}
-              fallback={
-                <DefaultCogs
-                  class={style('icon', 'nt-size-5', {
-                    iconKey: 'cogs',
-                  })}
-                />
-              }
+              class={cogsIconClass}
+              fallback={<DefaultCogs class={cogsIconClass} />}
             />
           </Button>
         )}

@@ -83,6 +83,14 @@ export const DatePickerHeader = (props: DatePickerHeaderProps) => {
   const { viewMonth, setViewMonth, currentDate, maxDays } = useDatePicker();
   const appearance = useAppearance();
 
+  const prevIconClass = style('datePickerControlPrevTrigger__icon', 'nt-size-4 nt-text-foreground-alpha-700', {
+    iconKey: 'arrowLeft',
+  });
+
+  const nextIconClass = style('datePickerControlNextTrigger__icon', 'nt-size-4 nt-text-foreground-alpha-700', {
+    iconKey: 'arrowRight',
+  });
+
   const handlePrevMonth = () => {
     const date = new Date(viewMonth());
     date.setMonth(date.getMonth() - 1);
@@ -161,16 +169,8 @@ export const DatePickerHeader = (props: DatePickerHeaderProps) => {
       >
         <IconRendererWrapper
           iconKey="arrowLeft"
-          class={style('datePickerControlPrevTrigger__icon', 'nt-size-4 nt-text-foreground-alpha-700', {
-            iconKey: 'arrowLeft',
-          })}
-          fallback={
-            <DefaultArrowLeft
-              class={style('datePickerControlPrevTrigger__icon', 'nt-size-4 nt-text-foreground-alpha-700', {
-                iconKey: 'arrowLeft',
-              })}
-            />
-          }
+          class={prevIconClass}
+          fallback={<DefaultArrowLeft class={prevIconClass} />}
         />
       </Button>
       <span class={style('datePickerHeaderMonth', 'nt-text-sm nt-font-medium nt-text-foreground-alpha-700')}>
@@ -188,16 +188,8 @@ export const DatePickerHeader = (props: DatePickerHeaderProps) => {
       >
         <IconRendererWrapper
           iconKey="arrowRight"
-          class={style('datePickerControlNextTrigger__icon', 'nt-size-4 nt-text-foreground-alpha-700', {
-            iconKey: 'arrowRight',
-          })}
-          fallback={
-            <DefaultArrowRight
-              class={style('datePickerControlNextTrigger__icon', 'nt-size-4 nt-text-foreground-alpha-700', {
-                iconKey: 'arrowRight',
-              })}
-            />
-          }
+          class={nextIconClass}
+          fallback={<DefaultArrowRight class={nextIconClass} />}
         />
       </Button>
     </div>

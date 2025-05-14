@@ -142,6 +142,10 @@ const PreferencesRow = (props: {
 
   const channels = createMemo(() => Object.keys(props.channels));
 
+  const arrowDropDownIconClass = style('workflowArrow__icon', 'nt-text-foreground-alpha-600 nt-size-4', {
+    iconKey: 'arrowDropDown',
+  });
+
   return (
     <Show when={channels().length > 0}>
       <div
@@ -183,16 +187,8 @@ const PreferencesRow = (props: {
           >
             <IconRendererWrapper
               iconKey="arrowDropDown"
-              class={style('workflowArrow__icon', 'nt-text-foreground-alpha-600 nt-size-4', {
-                iconKey: 'arrowDropDown',
-              })}
-              fallback={
-                <DefaultArrowDropDown
-                  class={style('workflowArrow__icon', 'nt-text-foreground-alpha-600 nt-size-4', {
-                    iconKey: 'arrowDropDown',
-                  })}
-                />
-              }
+              class={arrowDropDownIconClass}
+              fallback={<DefaultArrowDropDown class={arrowDropDownIconClass} />}
             />
           </span>
         </div>

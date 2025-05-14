@@ -67,6 +67,12 @@ export const StatusItem = (props: {
 }) => {
   const style = useStyle();
   const { t } = useLocalization();
+  const itemIconClass = style('inboxStatus__dropdownItemLeft__icon', 'nt-size-3', {
+    iconKey: props.iconKey,
+  });
+  const checkIconClass = style('inboxStatus__dropdownItemCheck__icon', 'nt-size-3', {
+    iconKey: 'check',
+  });
 
   return (
     <Dropdown.Item
@@ -76,18 +82,8 @@ export const StatusItem = (props: {
       <span class={style('inboxStatus__dropdownItemLabelContainer', 'nt-flex nt-gap-2 nt-items-center')}>
         <IconRendererWrapper
           iconKey={props.iconKey}
-          class={style('inboxStatus__dropdownItemLeft__icon', 'nt-size-3', {
-            iconKey: props.iconKey,
-          })}
-          fallback={
-            <span
-              class={style('inboxStatus__dropdownItemLeft__icon', 'nt-size-3', {
-                iconKey: props.iconKey,
-              })}
-            >
-              {props.icon()}
-            </span>
-          }
+          class={itemIconClass}
+          fallback={<span class={itemIconClass}>{props.icon()}</span>}
         />
 
         <span
@@ -100,16 +96,8 @@ export const StatusItem = (props: {
       <Show when={props.isSelected}>
         <IconRendererWrapper
           iconKey="check"
-          class={style('inboxStatus__dropdownItemCheck__icon', 'nt-size-3', {
-            iconKey: 'check',
-          })}
-          fallback={
-            <DefaultCheck
-              class={style('inboxStatus__dropdownItemCheck__icon', 'nt-size-3', {
-                iconKey: 'check',
-              })}
-            />
-          }
+          class={checkIconClass}
+          fallback={<DefaultCheck class={checkIconClass} />}
         />
       </Show>
     </Dropdown.Item>

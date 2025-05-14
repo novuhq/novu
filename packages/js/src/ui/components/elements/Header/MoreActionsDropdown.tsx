@@ -10,6 +10,9 @@ import { IconRendererWrapper } from '../../shared/IconRendererWrapper';
 export const MoreActionsDropdown = () => {
   const style = useStyle();
   const { status } = useInboxContext();
+  const dotsIconClass = style('moreActions__dots', 'nt-size-5', {
+    iconKey: 'dots',
+  });
 
   return (
     <Show when={status() !== NotificationStatus.ARCHIVED && status() !== NotificationStatus.SNOOZED}>
@@ -20,16 +23,8 @@ export const MoreActionsDropdown = () => {
             <Button variant="ghost" size="iconSm" {...triggerProps}>
               <IconRendererWrapper
                 iconKey="dots"
-                class={style('moreActions__dots', 'nt-size-5', {
-                  iconKey: 'dots',
-                })}
-                fallback={
-                  <DefaultDots
-                    class={style('moreActions__dots', 'nt-size-5', {
-                      iconKey: 'dots',
-                    })}
-                  />
-                }
+                class={dotsIconClass}
+                fallback={<DefaultDots class={dotsIconClass} />}
               />
             </Button>
           )}

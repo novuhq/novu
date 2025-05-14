@@ -39,6 +39,9 @@ export const InboxTabs = (props: InboxTabsProps) => {
     filters: dropdownTabs().map((tab) => ({ tags: getTagsFromTab(tab) })),
   });
 
+  const checkIconClass = style('moreTabs__dropdownItemRight__icon', 'nt-size-3', {
+    iconKey: 'check',
+  });
   const options = createMemo(() =>
     dropdownTabs().map((tab) => ({
       ...tab,
@@ -46,16 +49,8 @@ export const InboxTabs = (props: InboxTabsProps) => {
         tab.label === activeTab() ? (
           <IconRendererWrapper
             iconKey="check"
-            class={style('moreTabs__dropdownItemRight__icon', 'nt-size-3', {
-              iconKey: 'check',
-            })}
-            fallback={
-              <DefaultCheck
-                class={style('moreTabs__dropdownItemRight__icon', 'nt-size-3', {
-                  iconKey: 'check',
-                })}
-              />
-            }
+            class={checkIconClass}
+            fallback={<DefaultCheck class={checkIconClass} />}
           />
         ) : undefined,
     }))
@@ -69,6 +64,10 @@ export const InboxTabs = (props: InboxTabsProps) => {
       .map((tab) => tab.label)
       .includes(activeTab())
   );
+
+  const moreTabsIconClass = style('moreTabs__icon', 'nt-size-5', {
+    iconKey: 'arrowDown',
+  });
 
   return (
     <Tabs.Root
@@ -113,16 +112,8 @@ export const InboxTabs = (props: InboxTabsProps) => {
                   >
                     <IconRendererWrapper
                       iconKey="arrowDown"
-                      class={style('moreTabs__icon', 'nt-size-5', {
-                        iconKey: 'arrowDown',
-                      })}
-                      fallback={
-                        <DefaultArrowDown
-                          class={style('moreTabs__icon', 'nt-size-5', {
-                            iconKey: 'arrowDown',
-                          })}
-                        />
-                      }
+                      class={moreTabsIconClass}
+                      fallback={<DefaultArrowDown class={moreTabsIconClass} />}
                     />
                     <Show when={status() !== NotificationStatus.ARCHIVED && dropdownTabsUnreadSum()}>
                       <InboxTabUnreadNotificationsCount count={dropdownTabsUnreadSum()} />

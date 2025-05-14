@@ -33,6 +33,15 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
   const { navigate, status } = useInboxContext();
   const appearance = useAppearance();
   const [minutesPassed, setMinutesPassed] = createSignal(0);
+
+  const deliveredAtIconClass = style('notificationDeliveredAt__icon', 'nt-size-3', {
+    iconKey: 'clock',
+  });
+
+  const snoozedUntilIconClass = style('notificationSnoozedUntil__icon', 'nt-size-3', {
+    iconKey: 'clock',
+  });
+
   const createdAt = createMemo(() => {
     minutesPassed(); // register as dep
 
@@ -208,16 +217,8 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
                               <Badge appearanceKey="notificationDeliveredAt__badge">
                                 <IconRendererWrapper
                                   iconKey="clock"
-                                  class={style('notificationDeliveredAt__icon', 'nt-size-3', {
-                                    iconKey: 'clock',
-                                  })}
-                                  fallback={
-                                    <DefaultClock
-                                      class={style('notificationDeliveredAt__icon', 'nt-size-3', {
-                                        iconKey: 'clock',
-                                      })}
-                                    />
-                                  }
+                                  class={deliveredAtIconClass}
+                                  fallback={<DefaultClock class={deliveredAtIconClass} />}
                                 />
                                 {date}
                               </Badge>
@@ -235,16 +236,8 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
               <>
                 <IconRendererWrapper
                   iconKey="clock"
-                  class={style('notificationSnoozedUntil__icon', 'nt-size-3', {
-                    iconKey: 'clock',
-                  })}
-                  fallback={
-                    <DefaultClock
-                      class={style('notificationSnoozedUntil__icon', 'nt-size-3', {
-                        iconKey: 'clock',
-                      })}
-                    />
-                  }
+                  class={snoozedUntilIconClass}
+                  fallback={<DefaultClock class={snoozedUntilIconClass} />}
                 />
                 {t('notification.snoozedUntil')} · {snoozedUntil()}
               </>

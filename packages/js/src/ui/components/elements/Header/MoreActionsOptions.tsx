@@ -51,6 +51,9 @@ export const ActionsItem = (props: {
   const style = useStyle();
   const { t } = useLocalization();
   const DefaultIconComponent = iconKeyToComponentMap[props.iconKey];
+  const moreActionsIconClass = style('moreActions__dropdownItemLeft__icon', 'nt-size-3', {
+    iconKey: props.iconKey,
+  });
 
   return (
     <Dropdown.Item
@@ -59,15 +62,11 @@ export const ActionsItem = (props: {
     >
       <IconRendererWrapper
         iconKey={props.iconKey}
-        class={style('moreActions__dropdownItemLeft__icon', 'nt-size-3', {
-          iconKey: props.iconKey,
-        })}
+        class={moreActionsIconClass}
         fallback={
           DefaultIconComponent &&
           DefaultIconComponent({
-            class: style('moreActions__dropdownItemLeft__icon', 'nt-size-3', {
-              iconKey: props.iconKey,
-            }),
+            class: moreActionsIconClass,
           })
         }
       />
