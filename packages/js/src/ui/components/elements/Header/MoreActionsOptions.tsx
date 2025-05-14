@@ -57,22 +57,20 @@ export const ActionsItem = (props: {
       class={style('moreActions__dropdownItem', cn(dropdownItemVariants(), 'nt-flex nt-gap-2'))}
       onClick={props.onClick}
     >
-      <span class={style('moreActions__dropdownItemLeft__icon', 'nt-size-3')}>
-        <IconRendererWrapper
-          iconKey={props.iconKey}
-          class={style('moreActions__dropdownItemLeft__icon', 'nt-size-3', {
-            iconKey: props.iconKey,
-          })}
-          fallback={
-            DefaultIconComponent &&
-            DefaultIconComponent({
-              class: style('moreActions__dropdownItemLeft__icon', 'nt-size-3', {
-                iconKey: props.iconKey,
-              }),
-            })
-          }
-        />
-      </span>
+      <IconRendererWrapper
+        iconKey={props.iconKey}
+        class={style('moreActions__dropdownItemLeft__icon', 'nt-size-3', {
+          iconKey: props.iconKey,
+        })}
+        fallback={
+          DefaultIconComponent &&
+          DefaultIconComponent({
+            class: style('moreActions__dropdownItemLeft__icon', 'nt-size-3', {
+              iconKey: props.iconKey,
+            }),
+          })
+        }
+      />
       <span
         data-localization={props.localizationKey}
         class={style('moreActions__dropdownItemLabel', 'nt-leading-none')}

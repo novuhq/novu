@@ -74,13 +74,22 @@ export const StatusItem = (props: {
       onClick={props.onClick}
     >
       <span class={style('inboxStatus__dropdownItemLabelContainer', 'nt-flex nt-gap-2 nt-items-center')}>
-        <span
+        <IconRendererWrapper
+          iconKey={props.iconKey}
           class={style('inboxStatus__dropdownItemLeft__icon', 'nt-size-3', {
             iconKey: props.iconKey,
           })}
-        >
-          {props.icon()}
-        </span>
+          fallback={
+            <span
+              class={style('inboxStatus__dropdownItemLeft__icon', 'nt-size-3', {
+                iconKey: props.iconKey,
+              })}
+            >
+              {props.icon()}
+            </span>
+          }
+        />
+
         <span
           data-localization={props.localizationKey}
           class={style('inboxStatus__dropdownItemLabel', 'nt-leading-none')}
