@@ -18,8 +18,6 @@ import {
 import { GetApiRateLimitMaximumCommand } from './get-api-rate-limit-maximum.command';
 import { CUSTOM_API_SERVICE_LEVEL, GetApiRateLimitMaximumDto } from './get-api-rate-limit-maximum.dto';
 
-const LOG_CONTEXT = 'GetApiRateLimit';
-
 @Injectable()
 export class GetApiRateLimitMaximum implements OnModuleInit {
   private apiRateLimitRecord: IApiRateLimitServiceMaximum;

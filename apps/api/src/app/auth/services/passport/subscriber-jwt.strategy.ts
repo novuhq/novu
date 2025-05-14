@@ -1,7 +1,7 @@
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PassportStrategy } from '@nestjs/passport';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { ISubscriberJwt } from '@novu/shared';
+import { ApiAuthSchemeEnum, ISubscriberJwt, MemberRoleEnum } from '@novu/shared';
 import { AuthService } from '../auth.service';
 
 @Injectable()
@@ -17,13 +17,20 @@ export class JwtSubscriberStrategy extends PassportStrategy(Strategy, 'subscribe
     const subscriber = await this.authService.validateSubscriber(payload);
 
     if (!subscriber) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException('Subscriber validation failed.');
     }
 
     if (payload.aud !== 'widget_user') {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException('Invalid token audience: Expected "widget_user".');
     }
 
-    return subscriber;
+    // TODO: Create a unified session interface for both users and subscribers to eliminate property naming inconsistencies (e.g., _environmentId vs environmentId)
+    // for user we have UserSessionData, we need to create SubscriberSessionData
+    return {
+      ...subscriber,
+      organizationId: subscriber._organizationId,
+      environmentId: subscriber._environmentId,
+      scheme: ApiAuthSchemeEnum.BEARER,
+    };
   }
 }

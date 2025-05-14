@@ -46,6 +46,7 @@ export enum ApiRateLimitConfigEnum {
 export enum ApiRateLimitCostEnum {
   SINGLE = 'single',
   BULK = 'bulk',
+  KEYLESS = 'keyless',
 }
 
 /**

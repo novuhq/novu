@@ -29,7 +29,7 @@ import { EvaluateApiRateLimit, EvaluateApiRateLimitCommand } from '../usecases/e
 import { isKeylessHeader } from '../../shared/utils/auth.utils';
 
 export const THROTTLED_EXCEPTION_MESSAGE = 'API rate limit exceeded';
-export const ALLOWED_AUTH_SCHEMES = [ApiAuthSchemeEnum.API_KEY];
+export const ALLOWED_AUTH_SCHEMES = [ApiAuthSchemeEnum.API_KEY, ApiAuthSchemeEnum.KEYLESS];
 
 const defaultApiRateLimitCategory = ApiRateLimitCategoryEnum.GLOBAL;
 const defaultApiRateLimitCost = ApiRateLimitCostEnum.SINGLE;
@@ -69,19 +69,18 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
 
   protected async shouldSkip(context: ExecutionContext): Promise<boolean> {
     const isAllowedAuthScheme = this.isAllowedAuthScheme(context);
-    // const isAllowedEnvironment = this.isAllowedEnvironment(context);
+    const isAllowedEnvironment = this.isAllowedEnvironment(context);
 
-    // if (!isAllowedAuthScheme && !isAllowedEnvironment) {
-    if (!isAllowedAuthScheme) {
+    if (!isAllowedAuthScheme && !isAllowedEnvironment) {
       return true;
     }
 
     const user = this.getReqUser(context);
 
-    // // Indicates whether the request originates from a keyless Inbox session initialization
-    // if (!user) {
-    //   return false;
-    // }
+    // Indicates whether the request originates from a Inbox session initialization
+    if (!user) {
+      return false;
+    }
 
     const { organizationId, environmentId, _id } = user;
 
@@ -116,15 +115,19 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
 
     const handler = context.getHandler();
     const classRef = context.getClass();
+
+    const isKeyless =
+      isKeylessHeader(req.headers.authorization) || isKeylessHeader(req.headers['novu-application-identifier']);
     const apiRateLimitCategory =
       this.reflector.getAllAndOverride(ThrottlerCategory, [handler, classRef]) || defaultApiRateLimitCategory;
 
-    const { organizationId, environmentId, _id } = this.getReqUser(context);
-    const isKeyless =
-      isKeylessHeader(req.headers.authorization) || isKeylessHeader(req.headers['novu-application-identifier']);
+    const user = this.getReqUser(context);
+    const organizationId = user?.organizationId;
+    const _id = user?._id;
+    const environmentId = user?.environmentId || req.headers['novu-application-identifier'];
 
     const apiRateLimitCost = isKeyless
-      ? ApiRateLimitCostEnum.BULK
+      ? ApiRateLimitCostEnum.KEYLESS
       : this.reflector.getAllAndOverride(ThrottlerCost, [handler, classRef]) || defaultApiRateLimitCost;
 
     const { success, limit, remaining, reset, windowDuration, burstLimit, algorithm, apiServiceLevel } =
@@ -233,12 +236,19 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
 
   private isAllowedAuthScheme(context: ExecutionContext): boolean {
     const req = context.switchToHttp().getRequest();
-    const { authScheme } = req;
+    const { user } = req;
 
-    return ALLOWED_AUTH_SCHEMES.some((scheme) => authScheme === scheme);
+    // user do not exist in Inbox session initialization request
+    if (!user) {
+      return false;
+    }
+
+    const { scheme: authScheme } = user;
+
+    return ALLOWED_AUTH_SCHEMES.some((scheme) => scheme === authScheme);
   }
 
-  private getReqUser(context: ExecutionContext): UserSessionData {
+  private getReqUser(context: ExecutionContext): UserSessionData | undefined {
     const req = context.switchToHttp().getRequest();
 
     return req.user;
