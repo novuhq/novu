@@ -2,9 +2,8 @@ import { For, Show } from 'solid-js';
 import { JSX } from 'solid-js/jsx-runtime';
 import { StringLocalizationKey, useInboxContext, useLocalization, useAppearance } from '../../../context';
 import { cn, useStyle } from '../../../helpers';
-import { Check as DefaultCheck, MarkAsArchived, MarkAsUnread, UnreadRead } from '../../../icons';
-import { Snooze } from '../../../icons/Snooze';
-import { NotificationStatus } from '../../../types';
+import { Clock, Check as DefaultCheck, MarkAsArchived, MarkAsUnread, Unread } from '../../../icons';
+import { IconKey, NotificationStatus } from '../../../types';
 import { Dropdown, dropdownItemVariants } from '../../primitives/Dropdown';
 import { notificationStatusOptionsLocalizationKeys } from './constants';
 import { IconRendererWrapper } from '../../shared/IconRendererWrapper';
@@ -12,21 +11,25 @@ import { IconRendererWrapper } from '../../shared/IconRendererWrapper';
 const cases = [
   {
     status: NotificationStatus.UNREAD_READ,
-    icon: UnreadRead,
+    iconKey: 'unread',
+    icon: Unread,
   },
   {
     status: NotificationStatus.UNREAD,
+    iconKey: 'unread',
     icon: MarkAsUnread,
   },
   {
     status: NotificationStatus.SNOOZED,
-    icon: Snooze,
+    iconKey: 'clock',
+    icon: Clock,
   },
   {
     status: NotificationStatus.ARCHIVED,
+    iconKey: 'markAsArchived',
     icon: MarkAsArchived,
   },
-] satisfies { status: NotificationStatus; icon: () => JSX.Element }[];
+] satisfies { status: NotificationStatus; iconKey: IconKey; icon: () => JSX.Element }[];
 
 export const StatusOptions = (props: {
   setStatus: (status: NotificationStatus) => void;
@@ -48,6 +51,7 @@ export const StatusOptions = (props: {
           }}
           isSelected={props.status === c.status}
           icon={c.icon}
+          iconKey={c.iconKey}
         />
       )}
     </For>
@@ -59,10 +63,10 @@ export const StatusItem = (props: {
   onClick: () => void;
   isSelected?: boolean;
   icon: () => JSX.Element;
+  iconKey: IconKey;
 }) => {
   const style = useStyle();
   const { t } = useLocalization();
-  const appearance = useAppearance();
 
   return (
     <Dropdown.Item
@@ -70,7 +74,13 @@ export const StatusItem = (props: {
       onClick={props.onClick}
     >
       <span class={style('inboxStatus__dropdownItemLabelContainer', 'nt-flex nt-gap-2 nt-items-center')}>
-        <span class={style('inboxStatus__dropdownItemLeft__icon', 'nt-size-3')}>{props.icon()}</span>
+        <span
+          class={style('inboxStatus__dropdownItemLeft__icon', 'nt-size-3', {
+            iconKey: props.iconKey,
+          })}
+        >
+          {props.icon()}
+        </span>
         <span
           data-localization={props.localizationKey}
           class={style('inboxStatus__dropdownItemLabel', 'nt-leading-none')}
@@ -81,8 +91,16 @@ export const StatusItem = (props: {
       <Show when={props.isSelected}>
         <IconRendererWrapper
           iconKey="check"
-          class={style('inboxStatus__dropdownItemCheck__icon', 'nt-size-3')}
-          fallback={<DefaultCheck class={style('inboxStatus__dropdownItemCheck__icon', 'nt-size-3')} />}
+          class={style('inboxStatus__dropdownItemCheck__icon', 'nt-size-3', {
+            iconKey: 'check',
+          })}
+          fallback={
+            <DefaultCheck
+              class={style('inboxStatus__dropdownItemCheck__icon', 'nt-size-3', {
+                iconKey: 'check',
+              })}
+            />
+          }
         />
       </Show>
     </Dropdown.Item>

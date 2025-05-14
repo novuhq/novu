@@ -161,10 +161,14 @@ export const DatePickerHeader = (props: DatePickerHeaderProps) => {
       >
         <IconRendererWrapper
           iconKey="arrowLeft"
-          class={style('datePickerControlPrevTrigger__icon', 'nt-size-4 nt-text-foreground-alpha-700')}
+          class={style('datePickerControlPrevTrigger__icon', 'nt-size-4 nt-text-foreground-alpha-700', {
+            iconKey: 'arrowLeft',
+          })}
           fallback={
             <DefaultArrowLeft
-              class={style('datePickerControlPrevTrigger__icon', 'nt-size-4 nt-text-foreground-alpha-700')}
+              class={style('datePickerControlPrevTrigger__icon', 'nt-size-4 nt-text-foreground-alpha-700', {
+                iconKey: 'arrowLeft',
+              })}
             />
           }
         />
@@ -184,10 +188,14 @@ export const DatePickerHeader = (props: DatePickerHeaderProps) => {
       >
         <IconRendererWrapper
           iconKey="arrowRight"
-          class={style('datePickerControlNextTrigger__icon', 'nt-size-4 nt-text-foreground-alpha-700')}
+          class={style('datePickerControlNextTrigger__icon', 'nt-size-4 nt-text-foreground-alpha-700', {
+            iconKey: 'arrowRight',
+          })}
           fallback={
             <DefaultArrowRight
-              class={style('datePickerControlNextTrigger__icon', 'nt-size-4 nt-text-foreground-alpha-700')}
+              class={style('datePickerControlNextTrigger__icon', 'nt-size-4 nt-text-foreground-alpha-700', {
+                iconKey: 'arrowRight',
+              })}
             />
           }
         />

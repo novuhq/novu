@@ -1,7 +1,6 @@
 import { Show } from 'solid-js';
 import { useStyle } from '../../../helpers';
 import { Bell as DefaultBell } from '../../../icons';
-import { useAppearance } from '../../../context';
 import { IconRendererWrapper } from '../../shared/IconRendererWrapper';
 
 type DefaultBellContainerProps = {
@@ -10,7 +9,6 @@ type DefaultBellContainerProps = {
 
 export const BellContainer = (props: DefaultBellContainerProps) => {
   const style = useStyle();
-  const appearance = useAppearance();
 
   return (
     <span
@@ -22,13 +20,22 @@ export const BellContainer = (props: DefaultBellContainerProps) => {
       <IconRendererWrapper
         iconKey="bell"
         class={style('bellIcon', 'nt-size-4')}
-        fallback={<DefaultBell class={style('bellIcon', 'nt-size-4')} />}
+        fallback={
+          <DefaultBell
+            class={style('bellIcon', 'nt-size-4', {
+              iconKey: 'bell',
+            })}
+          />
+        }
       />
       <Show when={props.unreadCount > 0}>
         <span
           class={style(
             'bellDot',
-            'nt-absolute nt-top-0 nt-right-0 nt-block nt-size-2 nt-transform nt-bg-counter nt-rounded-full nt-border nt-border-background'
+            'nt-absolute nt-top-0 nt-right-0 nt-block nt-size-2 nt-transform nt-bg-counter nt-rounded-full nt-border nt-border-background',
+            {
+              iconKey: 'bell',
+            }
           )}
         />
       </Show>

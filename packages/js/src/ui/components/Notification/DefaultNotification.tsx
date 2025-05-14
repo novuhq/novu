@@ -208,9 +208,15 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
                               <Badge appearanceKey="notificationDeliveredAt__badge">
                                 <IconRendererWrapper
                                   iconKey="clock"
-                                  class={style('notificationDeliveredAt__icon', 'nt-size-3')}
+                                  class={style('notificationDeliveredAt__icon', 'nt-size-3', {
+                                    iconKey: 'clock',
+                                  })}
                                   fallback={
-                                    <DefaultClock class={style('notificationDeliveredAt__icon', 'nt-size-3')} />
+                                    <DefaultClock
+                                      class={style('notificationDeliveredAt__icon', 'nt-size-3', {
+                                        iconKey: 'clock',
+                                      })}
+                                    />
                                   }
                                 />
                                 {date}
@@ -229,8 +235,16 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
               <>
                 <IconRendererWrapper
                   iconKey="clock"
-                  class={style('notificationSnoozedUntil__icon', 'nt-size-3')}
-                  fallback={<DefaultClock class={style('notificationSnoozedUntil__icon', 'nt-size-3')} />}
+                  class={style('notificationSnoozedUntil__icon', 'nt-size-3', {
+                    iconKey: 'clock',
+                  })}
+                  fallback={
+                    <DefaultClock
+                      class={style('notificationSnoozedUntil__icon', 'nt-size-3', {
+                        iconKey: 'clock',
+                      })}
+                    />
+                  }
                 />
                 {t('notification.snoozedUntil')} · {snoozedUntil()}
               </>

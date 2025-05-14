@@ -1,6 +1,6 @@
+import { Inbox } from '@novu/nextjs';
 import Title from '@/components/Title';
 import { novuConfig } from '@/utils/config';
-import { Inbox } from '@novu/nextjs';
 
 const CustomBell = ({ unreadCount }: { unreadCount: number }) => {
   return (
@@ -31,7 +31,15 @@ export default function Home() {
   return (
     <>
       <Title title="Render Bell props" />
-      <Inbox {...novuConfig} renderBell={(unreadCount) => <CustomBell unreadCount={unreadCount} />} />
+      <Inbox
+        {...novuConfig}
+        appearance={{
+          icons: {
+            markAsArchived: () => '🔧',
+          },
+        }}
+        renderBell={(unreadCount) => <CustomBell unreadCount={unreadCount} />}
+      />
     </>
   );
 }

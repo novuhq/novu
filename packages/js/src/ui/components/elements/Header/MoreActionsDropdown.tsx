@@ -1,5 +1,5 @@
 import { Show } from 'solid-js';
-import { useInboxContext, useAppearance } from 'src/ui/context';
+import { useInboxContext } from 'src/ui/context';
 import { useStyle } from '../../../helpers';
 import { Dots as DefaultDots } from '../../../icons';
 import { NotificationStatus } from '../../../types';
@@ -10,7 +10,6 @@ import { IconRendererWrapper } from '../../shared/IconRendererWrapper';
 export const MoreActionsDropdown = () => {
   const style = useStyle();
   const { status } = useInboxContext();
-  const appearance = useAppearance();
 
   return (
     <Show when={status() !== NotificationStatus.ARCHIVED && status() !== NotificationStatus.SNOOZED}>
@@ -21,8 +20,16 @@ export const MoreActionsDropdown = () => {
             <Button variant="ghost" size="iconSm" {...triggerProps}>
               <IconRendererWrapper
                 iconKey="dots"
-                class={style('moreActions__dots', 'nt-size-5')}
-                fallback={<DefaultDots class={style('moreActions__dots', 'nt-size-5')} />}
+                class={style('moreActions__dots', 'nt-size-5', {
+                  iconKey: 'dots',
+                })}
+                fallback={
+                  <DefaultDots
+                    class={style('moreActions__dots', 'nt-size-5', {
+                      iconKey: 'dots',
+                    })}
+                  />
+                }
               />
             </Button>
           )}

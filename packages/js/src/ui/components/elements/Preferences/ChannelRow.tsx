@@ -83,7 +83,9 @@ const ChannelIcon = (props: ChannelIconProps) => {
     <IconRendererWrapper
       iconKey={iconData.key}
       fallback={iconData.component}
-      class={style(props.appearanceKey, props.class)}
+      class={style(props.appearanceKey, props.class, {
+        iconKey: iconData.key,
+      })}
     />
   );
 };

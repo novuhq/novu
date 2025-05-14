@@ -1,5 +1,5 @@
 import { Show } from 'solid-js';
-import { useLocalization, useAppearance } from '../../../context';
+import { useLocalization } from '../../../context';
 import { useStyle } from '../../../helpers';
 import { ArrowLeft as DefaultArrowLeft } from '../../../icons';
 import { Button } from '../../primitives';
@@ -12,7 +12,6 @@ type PreferencesHeaderProps = {
 export const PreferencesHeader = (props: PreferencesHeaderProps) => {
   const style = useStyle();
   const { t } = useLocalization();
-  const appearance = useAppearance();
 
   return (
     <div
@@ -32,8 +31,16 @@ export const PreferencesHeader = (props: PreferencesHeaderProps) => {
           >
             <IconRendererWrapper
               iconKey="arrowLeft"
-              class={style('preferencesHeader__back__button__icon', 'nt-size-4')}
-              fallback={<DefaultArrowLeft class={style('preferencesHeader__back__button__icon', 'nt-size-4')} />}
+              class={style('preferencesHeader__back__button__icon', 'nt-size-4', {
+                iconKey: 'arrowLeft',
+              })}
+              fallback={
+                <DefaultArrowLeft
+                  class={style('preferencesHeader__back__button__icon', 'nt-size-4', {
+                    iconKey: 'arrowLeft',
+                  })}
+                />
+              }
             />
           </Button>
         )}

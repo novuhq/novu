@@ -60,10 +60,16 @@ export const ActionsItem = (props: {
       <span class={style('moreActions__dropdownItemLeft__icon', 'nt-size-3')}>
         <IconRendererWrapper
           iconKey={props.iconKey}
-          class={style('moreActions__dropdownItemLeft__icon', 'nt-size-3')}
+          class={style('moreActions__dropdownItemLeft__icon', 'nt-size-3', {
+            iconKey: props.iconKey,
+          })}
           fallback={
             DefaultIconComponent &&
-            DefaultIconComponent({ class: style('moreActions__dropdownItemLeft__icon', 'nt-size-3') })
+            DefaultIconComponent({
+              class: style('moreActions__dropdownItemLeft__icon', 'nt-size-3', {
+                iconKey: props.iconKey,
+              }),
+            })
           }
         />
       </span>

@@ -139,7 +139,6 @@ const PreferencesRow = (props: {
   const [isOpenDescription, setIsOpenDescription] = createSignal(true);
   const [isOpenChannels, setIsOpenChannels] = createSignal(false);
   const { t } = useLocalization();
-  const appearance = useAppearance();
 
   const channels = createMemo(() => Object.keys(props.channels));
 
@@ -184,9 +183,15 @@ const PreferencesRow = (props: {
           >
             <IconRendererWrapper
               iconKey="arrowDropDown"
-              class={style('workflowArrow__icon', 'nt-text-foreground-alpha-600 nt-size-4')}
+              class={style('workflowArrow__icon', 'nt-text-foreground-alpha-600 nt-size-4', {
+                iconKey: 'arrowDropDown',
+              })}
               fallback={
-                <DefaultArrowDropDown class={style('workflowArrow__icon', 'nt-text-foreground-alpha-600 nt-size-4')} />
+                <DefaultArrowDropDown
+                  class={style('workflowArrow__icon', 'nt-text-foreground-alpha-600 nt-size-4', {
+                    iconKey: 'arrowDropDown',
+                  })}
+                />
               }
             />
           </span>
