@@ -80,7 +80,7 @@ const _DefaultInbox = (props: DefaultInboxProps) => {
   return <Mounter mount={mount} />;
 };
 
-const DefaultInbox = withRenderer(_DefaultInbox);
+const DefaultInbox = _DefaultInbox;
 
 export const Inbox = React.memo((props: InboxProps) => {
   const { applicationIdentifier, subscriberHash, backendUrl, socketUrl } = props;
@@ -104,87 +104,89 @@ export const Inbox = React.memo((props: InboxProps) => {
   );
 });
 
-const InboxChild = React.memo((props: InboxProps) => {
-  const {
-    localization,
-    appearance,
-    tabs,
-    preferencesFilter,
-    routerPush,
-    applicationIdentifier,
-    subscriberId,
-    subscriberHash,
-    backendUrl,
-    socketUrl,
-  } = props;
-  const novu = useNovu();
-
-  const options = useMemo(() => {
-    return {
+const InboxChild = withRenderer(
+  React.memo((props: InboxProps) => {
+    const {
       localization,
       appearance,
       tabs,
       preferencesFilter,
       routerPush,
-      options: {
-        applicationIdentifier,
-        subscriberHash,
-        backendUrl,
-        socketUrl,
-        subscriber: buildSubscriber(props),
-      },
-    };
-  }, [
-    localization,
-    appearance,
-    tabs,
-    preferencesFilter,
-    applicationIdentifier,
-    subscriberId,
-    subscriberHash,
-    backendUrl,
-    socketUrl,
-    props.subscriber,
-  ]);
+      applicationIdentifier,
+      subscriberId,
+      subscriberHash,
+      backendUrl,
+      socketUrl,
+    } = props;
+    const novu = useNovu();
 
-  if (isWithChildrenProps(props)) {
+    const options = useMemo(() => {
+      return {
+        localization,
+        appearance,
+        tabs,
+        preferencesFilter,
+        routerPush,
+        options: {
+          applicationIdentifier,
+          subscriberHash,
+          backendUrl,
+          socketUrl,
+          subscriber: buildSubscriber(props),
+        },
+      };
+    }, [
+      localization,
+      appearance,
+      tabs,
+      preferencesFilter,
+      applicationIdentifier,
+      subscriberId,
+      subscriberHash,
+      backendUrl,
+      socketUrl,
+      props.subscriber,
+    ]);
+
+    if (isWithChildrenProps(props)) {
+      return (
+        <NovuUI options={options} novu={novu}>
+          {props.children}
+        </NovuUI>
+      );
+    }
+
+    const {
+      open,
+      renderNotification,
+      renderSubject,
+      renderBody,
+      renderBell,
+      onNotificationClick,
+      onPrimaryActionClick,
+      onSecondaryActionClick,
+      placementOffset,
+      placement,
+    } = props;
+
     return (
       <NovuUI options={options} novu={novu}>
-        {props.children}
+        <DefaultInbox
+          open={open}
+          renderNotification={renderNotification}
+          renderSubject={renderSubject}
+          renderBody={renderBody}
+          renderBell={renderBell}
+          onNotificationClick={onNotificationClick}
+          onPrimaryActionClick={onPrimaryActionClick}
+          onSecondaryActionClick={onSecondaryActionClick}
+          placement={placement}
+          placementOffset={placementOffset}
+        />
       </NovuUI>
     );
-  }
-
-  const {
-    open,
-    renderNotification,
-    renderSubject,
-    renderBody,
-    renderBell,
-    onNotificationClick,
-    onPrimaryActionClick,
-    onSecondaryActionClick,
-    placementOffset,
-    placement,
-  } = props;
-
-  return (
-    <NovuUI options={options} novu={novu}>
-      <DefaultInbox
-        open={open}
-        renderNotification={renderNotification}
-        renderSubject={renderSubject}
-        renderBody={renderBody}
-        renderBell={renderBell}
-        onNotificationClick={onNotificationClick}
-        onPrimaryActionClick={onPrimaryActionClick}
-        onSecondaryActionClick={onSecondaryActionClick}
-        placement={placement}
-        placementOffset={placementOffset}
-      />
-    </NovuUI>
-  );
-});
+  })
+);
 
 function isWithChildrenProps(props: InboxProps): props is WithChildrenProps {
   return 'children' in props;
