@@ -5,99 +5,85 @@ import { Button } from '@/components/primitives/button';
 import { DashboardLayout } from '../components/dashboard-layout';
 import { Navigate } from 'react-router-dom';
 import { ROUTES } from '@/utils/routes';
-import { useEffect, useState } from 'react';
+import { useQuery, useMutation, useQueryClient, UseQueryResult, UseMutationResult } from '@tanstack/react-query';
 import { useEnvironment } from '@/context/environment/hooks';
 import { getWebhookPortalToken, createWebhookPortalToken } from '@/api/webhooks';
 import { AppPortal, SvixProvider } from 'svix-react';
 import { RiWebhookLine } from 'react-icons/ri';
 
+interface WebhookPortalTokenResponse {
+  url: string;
+  token: string;
+  appId: string;
+}
+
+interface CustomError extends Error {
+  isPortalNotFound?: boolean;
+}
+
 export function WebhooksPage() {
   const isWebhooksManagementEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_WEBHOOKS_MANAGEMENT_ENABLED);
   const { currentEnvironment } = useEnvironment();
-  const [portalUrl, setPortalUrl] = useState<string | null>(null);
-  const [appId, setAppId] = useState<string | null>(null);
-  const [portalToken, setPortalToken] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  const [isPortalNotFound, setIsPortalNotFound] = useState<boolean>(false);
-  const [isEnabling, setIsEnabling] = useState<boolean>(false);
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    if (!isWebhooksManagementEnabled || !currentEnvironment) {
-      setIsLoading(false);
-
-      return;
-    }
-
-    const fetchToken = async () => {
-      setIsLoading(true);
-      setError(null);
-      setIsPortalNotFound(false);
-
+  const {
+    data: portalData,
+    isLoading: isLoadingToken,
+    error: tokenErrorRaw,
+  }: UseQueryResult<WebhookPortalTokenResponse, CustomError> = useQuery({
+    queryKey: ['webhookPortalToken', currentEnvironment?._id],
+    queryFn: async () => {
       try {
-        const response = await getWebhookPortalToken(currentEnvironment);
-        setPortalUrl(response.url);
-        setPortalToken(response.token);
-        setAppId(response.appId);
-        // console.log('Webhook Portal URL:', response.url);
-        // console.log('Webhook Portal Token:', response.token);
+        return await getWebhookPortalToken(currentEnvironment!);
       } catch (e: any) {
         if (e.message && e.message.includes('Portal not found for environment')) {
-          setIsPortalNotFound(true);
-          setError(null);
-          setPortalUrl(null);
-          setPortalToken(null);
-          setAppId(null);
-        } else {
-          setIsPortalNotFound(false);
-          setError(e.message || 'Failed to load portal token.');
+          const notFoundError = new Error('Portal not found for environment') as CustomError;
+          notFoundError.isPortalNotFound = true;
+
+          throw notFoundError;
         }
 
-        console.error('Failed to fetch webhook portal token:', e);
-      } finally {
-        setIsLoading(false);
+        throw e;
       }
-    };
+    },
+    enabled: !!isWebhooksManagementEnabled && !!currentEnvironment,
+    retry: false,
+  });
 
-    fetchToken();
-  }, [isWebhooksManagementEnabled, currentEnvironment]);
+  const {
+    mutate: enableWebhooksMutation,
+    isPending: isEnablingWebhooks,
+    error: enableErrorRaw,
+  }: UseMutationResult<void, CustomError, void> = useMutation<void, CustomError, void>({
+    mutationFn: async () => {
+      if (!currentEnvironment) {
+        throw new Error('Current environment is not available for enabling webhooks.') as CustomError;
+      }
 
-  const handleEnableWebhooks = async () => {
-    if (!currentEnvironment) return;
-
-    setIsEnabling(true);
-    setError(null); // Clear previous errors before attempting to enable
-
-    try {
-      // First, attempt to create/enable the portal.
       await createWebhookPortalToken(currentEnvironment);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['webhookPortalToken', currentEnvironment?._id] });
+    },
+  });
 
-      // Then, fetch the newly created (or existing) portal token to confirm and get its details.
-      const response = await getWebhookPortalToken(currentEnvironment);
-      setPortalUrl(response.url);
-      setPortalToken(response.token);
-      setAppId(response.appId);
-      setIsPortalNotFound(false); // Successfully created/fetched
-    } catch (e: any) {
-      console.error('Failed to enable webhooks/fetch portal token:', e);
+  const portalUrl = portalData?.url;
+  const portalToken = portalData?.token;
+  const appId = portalData?.appId;
 
-      if (e.message && e.message.includes('Portal not found for environment')) {
-        setIsPortalNotFound(true); // Still not found
-        setError(null);
-      } else {
-        setError(e.message || 'Failed to enable webhooks.');
-        setIsPortalNotFound(false);
-      }
-    } finally {
-      setIsEnabling(false);
-    }
+  const isActualPortalNotFound = !!(tokenErrorRaw && tokenErrorRaw.isPortalNotFound);
+  const queryError = tokenErrorRaw && !tokenErrorRaw.isPortalNotFound ? tokenErrorRaw : null;
+  const mutationError = enableErrorRaw;
+
+  const handleEnableWebhooks = () => {
+    enableWebhooksMutation();
   };
 
   if (!isWebhooksManagementEnabled) {
     return <Navigate to={ROUTES.WORKFLOWS} replace />;
   }
 
-  if (isLoading) {
+  if (isLoadingToken && !portalData && !tokenErrorRaw && !mutationError) {
     return (
       <DashboardLayout headerStartItems={<h1 className="text-foreground-950">Webhooks</h1>}>
         <div className="flex h-full items-center justify-center p-4">Loading webhooks configuration...</div>
@@ -105,7 +91,7 @@ export function WebhooksPage() {
     );
   }
 
-  if (isPortalNotFound) {
+  if (isActualPortalNotFound && !isEnablingWebhooks) {
     return (
       <DashboardLayout headerStartItems={<h1 className="text-foreground-950">Webhooks</h1>}>
         <div className="flex h-full flex-col items-center justify-center gap-4 p-4 text-center">
@@ -117,33 +103,19 @@ export function WebhooksPage() {
             Once enabled, you'll be able to configure webhook endpoints, monitor events, and view delivery logs for this
             environment.
           </p>
-          <Button onClick={handleEnableWebhooks} disabled={isEnabling} className="mt-2">
-            {isEnabling ? 'Enabling Webhooks...' : 'Enable Webhooks'}
+          <Button onClick={handleEnableWebhooks} isLoading={isEnablingWebhooks} className="mt-2">
+            {'Enable Webhooks'}
           </Button>
+          {mutationError && (
+            <p className="mt-2 text-sm text-red-500">
+              Error enabling webhooks: {mutationError.message || 'An unknown error occurred.'}
+            </p>
+          )}
         </div>
       </DashboardLayout>
     );
   }
 
-  if (error) {
-    return (
-      <DashboardLayout headerStartItems={<h1 className="text-foreground-950">Webhooks</h1>}>
-        <div className="flex h-full items-center justify-center p-4 text-red-500">Error: {error}</div>
-      </DashboardLayout>
-    );
-  }
-
-  if (!portalToken || !appId) {
-    return (
-      <DashboardLayout headerStartItems={<h1 className="text-foreground-950">Webhooks</h1>}>
-        <div className="flex h-full items-center justify-center p-4">
-          Webhook portal configuration is not available. Please try again or contact support if the issue persists.
-        </div>
-      </DashboardLayout>
-    );
-  }
-
-  // Function to safely construct the portal URL with the next parameter
   const buildPortalUrl = (baseUrl: string | null, nextPath: string): string => {
     if (!baseUrl) return '';
     const urlParts = baseUrl.split('#');
@@ -155,53 +127,57 @@ export function WebhooksPage() {
 
     const base = urlParts[0];
     const keyFragment = urlParts[1];
-    // Add only the next parameter
     const separator = base.includes('?') ? '&' : '?';
+
     return `${base}${separator}next=${encodeURIComponent(nextPath)}#${keyFragment}`;
   };
 
   return (
     <DashboardLayout headerStartItems={<h1 className="text-foreground-950">Webhooks</h1>}>
-      <SvixProvider token={portalToken} appId={appId}>
-        <Tabs defaultValue="endpoints">
-          <div className="border-neutral-alpha-200 flex items-center justify-between border-b">
-            <TabsList variant="regular" className="border-b-0 border-t-2 border-transparent p-0 !px-2">
-              <TabsTrigger value="endpoints" variant="regular">
-                Endpoints
-              </TabsTrigger>
-              <TabsTrigger value="event-catalog" variant="regular">
-                Event Catalog
-              </TabsTrigger>
-              <TabsTrigger value="logs" variant="regular">
-                Logs
-              </TabsTrigger>
-              <TabsTrigger value="activity" variant="regular">
-                Activity
-              </TabsTrigger>
-            </TabsList>
-          </div>
-          <TabsContent value="endpoints" variant="regular" className="!mt-0 overflow-hidden p-2.5">
-            <div className="mt-[-61px]">
-              <AppPortal url={buildPortalUrl(portalUrl, '/endpoints')} fullSize />
+      {!(portalToken && appId) ? (
+        <div className="flex h-full items-center justify-center p-4">Preparing webhook portal...</div>
+      ) : (
+        <SvixProvider token={portalToken} appId={appId}>
+          <Tabs defaultValue="endpoints">
+            <div className="border-neutral-alpha-200 flex items-center justify-between border-b">
+              <TabsList variant="regular" className="border-b-0 border-t-2 border-transparent p-0 !px-2">
+                <TabsTrigger value="endpoints" variant="regular">
+                  Endpoints
+                </TabsTrigger>
+                <TabsTrigger value="event-catalog" variant="regular">
+                  Event Catalog
+                </TabsTrigger>
+                <TabsTrigger value="logs" variant="regular">
+                  Logs
+                </TabsTrigger>
+                <TabsTrigger value="activity" variant="regular">
+                  Activity
+                </TabsTrigger>
+              </TabsList>
             </div>
-          </TabsContent>
-          <TabsContent value="event-catalog" variant="regular" className="!mt-0 overflow-hidden p-2.5">
-            <div className="mt-[-61px]">
-              <AppPortal url={buildPortalUrl(portalUrl, '/event-types')} fullSize />
-            </div>
-          </TabsContent>
-          <TabsContent value="logs" variant="regular" className="!mt-0 overflow-hidden p-2.5">
-            <div className="mt-[-61px]">
-              <AppPortal url={buildPortalUrl(portalUrl, '/messages')} fullSize />
-            </div>
-          </TabsContent>
-          <TabsContent value="activity" variant="regular" className="!mt-0 overflow-hidden p-2.5">
-            <div className="mt-[-61px]">
-              <AppPortal url={buildPortalUrl(portalUrl, '/activity')} fullSize />
-            </div>
-          </TabsContent>
-        </Tabs>
-      </SvixProvider>
+            <TabsContent value="endpoints" variant="regular" className="!mt-0 overflow-hidden p-2.5">
+              <div className="mt-[-61px]">
+                <AppPortal url={buildPortalUrl(portalUrl || null, '/endpoints')} fullSize />
+              </div>
+            </TabsContent>
+            <TabsContent value="event-catalog" variant="regular" className="!mt-0 overflow-hidden p-2.5">
+              <div className="mt-[-61px]">
+                <AppPortal url={buildPortalUrl(portalUrl || null, '/event-types')} fullSize />
+              </div>
+            </TabsContent>
+            <TabsContent value="logs" variant="regular" className="!mt-0 overflow-hidden p-2.5">
+              <div className="mt-[-61px]">
+                <AppPortal url={buildPortalUrl(portalUrl || null, '/messages')} fullSize />
+              </div>
+            </TabsContent>
+            <TabsContent value="activity" variant="regular" className="!mt-0 overflow-hidden p-2.5">
+              <div className="mt-[-61px]">
+                <AppPortal url={buildPortalUrl(portalUrl || null, '/activity')} fullSize />
+              </div>
+            </TabsContent>
+          </Tabs>
+        </SvixProvider>
+      )}
     </DashboardLayout>
   );
 }

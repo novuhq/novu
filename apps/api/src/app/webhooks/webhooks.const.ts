@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { WebhookEventEnum, WebhookObjectTypeEnum } from './dtos/webhook-payload.dto';
+import { WebhookObjectTypeEnum, WebhookEventEnum } from '@novu/shared';
 import { WorkflowResponseDto } from '../workflows-v2/dtos/workflow-response.dto';
 
 export class WebhookUpdatedWorkflowDto {

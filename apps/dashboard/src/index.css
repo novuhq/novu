@@ -367,7 +367,3 @@
   -ms-overflow-style: none; /* IE and Edge */
   scrollbar-width: none; /* Firefox */
 }
-
-iframe #navigation-bar {
-  display: none;
-}
