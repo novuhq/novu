@@ -74,7 +74,7 @@ export const Footer = () => {
           </Show>
         </div>
         <Show when={isKeyless()}>
-          <div class="nt-z-10 nt-flex nt-items-center nt-gap-1 nt-text-xs">
+          <div class="nt-z-10 nt-flex nt-items-center nt-gap-1 nt-text-xs nt-text-secondary-foreground">
             <a
               href="https://go.novu.co/keyless?utm_campaign=footer-get_api_key"
               class="nt-underline nt-flex nt-items-center nt-gap-0.5"
