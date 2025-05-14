@@ -61,6 +61,7 @@ describe('Get Notifications - /inbox/notifications (GET) #novu-v2', async () => 
     tags,
     read,
     archived,
+    snoozed,
   }: {
     limit?: number;
     after?: string;
@@ -68,6 +69,7 @@ describe('Get Notifications - /inbox/notifications (GET) #novu-v2', async () => 
     tags?: string[];
     read?: boolean;
     archived?: boolean;
+    snoozed?: boolean;
   } = {}) => {
     let query = `limit=${limit}`;
     if (after) {
@@ -84,6 +86,9 @@ describe('Get Notifications - /inbox/notifications (GET) #novu-v2', async () => 
     }
     if (typeof archived !== 'undefined') {
       query += `&archived=${archived}`;
+    }
+    if (typeof snoozed !== 'undefined') {
+      query += `&snoozed=${snoozed}`;
     }
 
     return await session.testAgent
@@ -333,5 +338,29 @@ describe('Get Notifications - /inbox/notifications (GET) #novu-v2', async () => 
     );
     expect(secondPageBody.hasMore).to.be.false;
     expect(secondPageBody.data.every((message) => message.isArchived)).to.be.true;
+  });
+
+  it('should filter by snoozed', async function () {
+    await triggerEvent(template, 4);
+    await messageRepository.update(
+      {
+        _environmentId: session.environment._id,
+        _subscriberId: subscriber?._id ?? '',
+        channel: ChannelTypeEnum.IN_APP,
+      },
+      { $set: { snoozedUntil: new Date() } }
+    );
+
+    const limit = 4;
+    const { body, status } = await getNotifications({ limit, snoozed: true });
+
+    expect(status).to.equal(200);
+    expect(body.data).to.be.ok;
+    expect(body.data.length).to.eq(limit);
+    expect(new Date(body.data[0].createdAt).getTime()).to.be.greaterThanOrEqual(
+      new Date(body.data[1].createdAt).getTime()
+    );
+    expect(body.hasMore).to.be.false;
+    expect(body.data.every((message) => message.isSnoozed)).to.be.true;
   });
 });

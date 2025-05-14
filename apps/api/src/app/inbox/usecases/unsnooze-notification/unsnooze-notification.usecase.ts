@@ -1,22 +1,12 @@
-import {
-  MessageRepository,
-  JobRepository,
-  JobStatusEnum,
-  ChannelTypeEnum,
-  JobEntity,
-  UserEntity,
-  OrganizationEntity,
-  EnvironmentEntity,
-} from '@novu/dal';
-import { Injectable, NotFoundException, InternalServerErrorException, NotImplementedException } from '@nestjs/common';
+import { MessageRepository, JobRepository, JobStatusEnum, ChannelTypeEnum, JobEntity } from '@novu/dal';
+import { Injectable, NotFoundException, InternalServerErrorException } from '@nestjs/common';
 import {
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   DetailEnum,
-  FeatureFlagsService,
   PinoLogger,
 } from '@novu/application-generic';
-import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, FeatureFlagsKeysEnum } from '@novu/shared';
+import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 import { UnsnoozeNotificationCommand } from './unsnooze-notification.command';
 import { MarkNotificationAsCommand } from '../mark-notification-as/mark-notification-as.command';
 import { MarkNotificationAs } from '../mark-notification-as/mark-notification-as.usecase';
@@ -29,13 +19,10 @@ export class UnsnoozeNotification {
     private messageRepository: MessageRepository,
     private jobRepository: JobRepository,
     private markNotificationAs: MarkNotificationAs,
-    private createExecutionDetails: CreateExecutionDetails,
-    private featureFlagsService: FeatureFlagsService
+    private createExecutionDetails: CreateExecutionDetails
   ) {}
 
   async execute(command: UnsnoozeNotificationCommand): Promise<InboxNotification> {
-    await this.isSnoozeEnabled(command);
-
     const snoozedNotification = await this.messageRepository.findOne({
       _id: command.notificationId,
       _environmentId: command.environmentId,
@@ -109,19 +96,5 @@ export class UnsnoozeNotification {
     }
 
     return unsnoozedNotification;
-  }
-
-  private async isSnoozeEnabled(command: UnsnoozeNotificationCommand) {
-    const isSnoozeEnabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_SNOOZE_ENABLED,
-      defaultValue: false,
-      organization: { _id: command.organizationId } as OrganizationEntity,
-      environment: { _id: command.environmentId } as EnvironmentEntity,
-      user: { _id: command.subscriberId } as UserEntity,
-    });
-
-    if (!isSnoozeEnabled) {
-      throw new NotImplementedException();
-    }
   }
 }

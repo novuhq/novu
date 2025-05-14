@@ -2,9 +2,10 @@ import { InboxService } from '../api';
 import { NovuEventEmitter } from '../event-emitter';
 import { BaseModule } from '../base-module';
 import { Preference } from './preference';
-import type { ListPreferencesArgs } from './types';
+import type { BasePreferenceArgs, InstancePreferenceArgs, ListPreferencesArgs, UpdatePreferenceArgs } from './types';
 import { Result } from '../types';
 import { PreferencesCache } from '../cache/preferences-cache';
+import { bulkUpdatePreference, updatePreference } from './helpers';
 
 export class Preferences extends BaseModule {
   #useCache: boolean;
@@ -62,5 +63,33 @@ export class Preferences extends BaseModule {
         throw error;
       }
     });
+  }
+
+  async update(args: BasePreferenceArgs): Result<Preference>;
+  async update(args: InstancePreferenceArgs): Result<Preference>;
+  async update(args: UpdatePreferenceArgs): Result<Preference> {
+    return this.callWithSession(() =>
+      updatePreference({
+        emitter: this._emitter,
+        apiService: this._inboxService,
+        cache: this.cache,
+        useCache: this.#useCache,
+        args,
+      })
+    );
+  }
+
+  async bulkUpdate(args: Array<BasePreferenceArgs>): Result<Preference[]>;
+  async bulkUpdate(args: Array<InstancePreferenceArgs>): Result<Preference[]>;
+  async bulkUpdate(args: Array<UpdatePreferenceArgs>): Result<Preference[]> {
+    return this.callWithSession(() =>
+      bulkUpdatePreference({
+        emitter: this._emitter,
+        apiService: this._inboxService,
+        cache: this.cache,
+        useCache: this.#useCache,
+        args,
+      })
+    );
   }
 }
