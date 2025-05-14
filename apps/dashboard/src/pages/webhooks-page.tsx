@@ -1,5 +1,5 @@
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { FeatureFlagsKeysEnum, ApiServiceLevelEnum, FeatureNameEnum, getFeatureForTierAsBoolean } from '@novu/shared';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
 import { Button } from '@/components/primitives/button';
 import { DashboardLayout } from '../components/dashboard-layout';
@@ -10,6 +10,9 @@ import { useEnvironment } from '@/context/environment/hooks';
 import { getWebhookPortalToken, createWebhookPortalToken } from '@/api/webhooks';
 import { AppPortal, SvixProvider } from 'svix-react';
 import { RiLoaderLine, RiWebhookLine } from 'react-icons/ri';
+import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
+import { WebhooksPaywallState } from '@/components/webhooks/webhooks-paywall-state';
+import { IS_SELF_HOSTED } from '@/config';
 
 interface WebhookPortalTokenResponse {
   url: string;
@@ -25,6 +28,14 @@ export function WebhooksPage() {
   const isWebhooksManagementEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_WEBHOOKS_MANAGEMENT_ENABLED);
   const { currentEnvironment } = useEnvironment();
   const queryClient = useQueryClient();
+  const { subscription, isLoading: isSubscriptionLoading } = useFetchSubscription();
+
+  const isTierEligibleForWebhooks = getFeatureForTierAsBoolean(
+    FeatureNameEnum.WEBHOOKS,
+    subscription?.apiServiceLevel || ApiServiceLevelEnum.FREE
+  );
+
+  const isLoadingEligibility = isSubscriptionLoading;
 
   const {
     data: portalData,
@@ -60,6 +71,10 @@ export function WebhooksPage() {
         throw new Error('Current environment is not available for enabling webhooks.') as CustomError;
       }
 
+      if (!isTierEligibleForWebhooks && !IS_SELF_HOSTED) {
+        throw new Error('Current tier is not eligible for webhooks.') as CustomError;
+      }
+
       await createWebhookPortalToken(currentEnvironment);
     },
     onSuccess: () => {
@@ -81,6 +96,27 @@ export function WebhooksPage() {
 
   if (!isWebhooksManagementEnabled) {
     return <Navigate to={ROUTES.WORKFLOWS} replace />;
+  }
+
+  if (isLoadingEligibility) {
+    return (
+      <DashboardLayout headerStartItems={<h1 className="text-foreground-950">Webhooks</h1>}>
+        <div className="flex h-full min-h-[calc(100vh-250px)] items-center justify-center p-4 text-center">
+          <div className="flex flex-col items-center gap-2">
+            <RiLoaderLine className="text-foreground-low h-6 w-6 animate-spin" />
+            <span className="text-muted-foreground">Loading eligibility...</span>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (!IS_SELF_HOSTED && !isTierEligibleForWebhooks) {
+    return (
+      <DashboardLayout headerStartItems={<h1 className="text-foreground-950">Webhooks</h1>}>
+        <WebhooksPaywallState />
+      </DashboardLayout>
+    );
   }
 
   const isInitialLoading = isLoadingToken && !portalData && !tokenErrorRaw && !mutationError && !isActualPortalNotFound;
