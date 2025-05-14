@@ -7,17 +7,14 @@ import {
   Param,
   Post,
   Put,
-  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiExcludeEndpoint, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
-import { Roles } from '@novu/application-generic';
 import { ApiAuthSchemeEnum, MemberRoleEnum, ProductFeatureKeyEnum, UserSessionData } from '@novu/shared';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ProductFeature } from '../shared/decorators/product-feature.decorator';
 import { ApiKey } from '../shared/dtos/api-key';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
-import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 import { UserSession } from '../shared/framework/user.decorator';
 import { CreateEnvironmentRequestDto } from './dtos/create-environment-request.dto';
@@ -35,8 +32,8 @@ import { GetMyEnvironments } from './usecases/get-my-environments/get-my-environ
 import { RegenerateApiKeys } from './usecases/regenerate-api-keys/regenerate-api-keys.usecase';
 import { UpdateEnvironmentCommand } from './usecases/update-environment/update-environment.command';
 import { UpdateEnvironment } from './usecases/update-environment/update-environment.usecase';
-import { RolesGuard } from '../auth/framework/roles.guard';
 import { ErrorDto } from '../../error-dto';
+import { RequireAuthentication } from '../auth/framework/auth.decorator';
 
 /**
  * @deprecated use EnvironmentsControllerV2
@@ -44,7 +41,7 @@ import { ErrorDto } from '../../error-dto';
 @ApiCommonResponses()
 @Controller('/environments')
 @UseInterceptors(ClassSerializerInterceptor)
-@UserAuthentication()
+@RequireAuthentication()
 @ApiTags('Environments')
 export class EnvironmentsControllerV1 {
   constructor(
@@ -81,8 +78,6 @@ export class EnvironmentsControllerV1 {
   @ApiResponse(EnvironmentResponseDto, 201)
   @ApiResponse(ErrorDto, 402, false, false)
   @ProductFeature(ProductFeatureKeyEnum.MANAGE_ENVIRONMENTS)
-  @UseGuards(RolesGuard)
-  @Roles(MemberRoleEnum.ADMIN)
   @SdkGroupName('Environments')
   @SdkMethodName('create')
   async createEnvironment(
@@ -163,8 +158,6 @@ export class EnvironmentsControllerV1 {
 
   @Post('/api-keys/regenerate')
   @ApiResponse(ApiKey, 201, true)
-  @UseGuards(RolesGuard)
-  @Roles(MemberRoleEnum.ADMIN)
   @ApiExcludeEndpoint()
   async regenerateOrganizationApiKeys(@UserSession() user: UserSessionData): Promise<ApiKey[]> {
     const command = GetApiKeysCommand.create({
@@ -182,8 +175,6 @@ export class EnvironmentsControllerV1 {
   })
   @ApiParam({ name: 'environmentId', type: String, required: true })
   @ProductFeature(ProductFeatureKeyEnum.MANAGE_ENVIRONMENTS)
-  @UseGuards(RolesGuard)
-  @Roles(MemberRoleEnum.ADMIN)
   @ApiExcludeEndpoint()
   async deleteEnvironment(@UserSession() user: UserSessionData, @Param('environmentId') environmentId: string) {
     return await this.deleteEnvironmentUsecase.execute(

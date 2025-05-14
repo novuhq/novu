@@ -51,7 +51,7 @@ import {
   UpdateTenantResponseDto,
 } from './dtos';
 import { ThrottlerCategory } from '../rate-limiting/guards';
-import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
+import { RequireAuthentication } from '../auth/framework/auth.decorator';
 
 import { SdkUsePagination } from '../shared/framework/swagger/sdk.decorators';
 
@@ -62,7 +62,7 @@ const v2TenantsApiDescription = ' Tenants is not supported in code first version
 @Controller('/tenants')
 @ApiTags('Tenants')
 @UseInterceptors(ClassSerializerInterceptor)
-@UserAuthentication()
+@RequireAuthentication()
 @ApiExcludeController()
 export class TenantController {
   constructor(
@@ -76,7 +76,6 @@ export class TenantController {
 
   @Get('')
   @ExternalApiAccessible()
-  @UserAuthentication()
   @ApiOkPaginatedResponse(GetTenantResponseDto)
   @ApiOperation({
     summary: 'Get tenants',
@@ -186,7 +185,6 @@ export class TenantController {
 
   @Delete('/:identifier')
   @ExternalApiAccessible()
-  @UserAuthentication()
   @ApiOperation({
     summary: 'Delete tenant',
     description: `Deletes a tenant entity from the Novu platform.${v2TenantsApiDescription}`,

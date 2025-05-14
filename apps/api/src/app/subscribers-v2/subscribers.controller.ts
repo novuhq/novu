@@ -20,7 +20,7 @@ import {
 import { ApiRateLimitCategoryEnum, DirectionEnum, SubscriberCustomData, UserSessionData } from '@novu/shared';
 import { ThrottlerCategory } from '../rate-limiting/guards/throttler.decorator';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
-import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
+import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 import { SubscriberResponseDto } from '../subscribers/dtos';
 import { ListSubscriberSubscriptionsQueryDto } from '../topics-v2/dtos/list-subscriber-subscriptions-query.dto';
@@ -51,6 +51,7 @@ import { UpdateSubscriberPreferences } from './usecases/update-subscriber-prefer
 @ThrottlerCategory(ApiRateLimitCategoryEnum.CONFIGURATION)
 @Controller({ path: '/subscribers', version: '2' })
 @UseInterceptors(ClassSerializerInterceptor)
+@RequireAuthentication()
 @ApiTags('Subscribers')
 @SdkGroupName('Subscribers')
 @ApiCommonResponses()
@@ -67,7 +68,6 @@ export class SubscribersController {
   ) {}
 
   @Get('')
-  @UserAuthentication()
   @ExternalApiAccessible()
   @SdkMethodName('search')
   @ApiOperation({ summary: 'Search for subscribers' })
@@ -94,7 +94,6 @@ export class SubscribersController {
   }
 
   @Get('/:subscriberId')
-  @UserAuthentication()
   @ExternalApiAccessible()
   @ApiOperation({
     summary: 'Get subscriber',
@@ -116,7 +115,6 @@ export class SubscribersController {
   }
 
   @Post('')
-  @UserAuthentication()
   @ExternalApiAccessible()
   @ApiOperation({
     summary: 'Create subscriber',
@@ -153,7 +151,6 @@ export class SubscribersController {
   }
 
   @Patch('/:subscriberId')
-  @UserAuthentication()
   @ExternalApiAccessible()
   @ApiOperation({
     summary: 'Patch subscriber',
@@ -179,7 +176,6 @@ export class SubscribersController {
 
   @Delete('/:subscriberId')
   @ApiResponse(RemoveSubscriberResponseDto, 200)
-  @UserAuthentication()
   @ExternalApiAccessible()
   @ApiOperation({
     summary: 'Delete subscriber',
@@ -200,7 +196,6 @@ export class SubscribersController {
   }
 
   @Get('/:subscriberId/preferences')
-  @UserAuthentication()
   @ExternalApiAccessible()
   @ApiOperation({
     summary: 'Get subscriber preferences',
@@ -223,7 +218,6 @@ export class SubscribersController {
   }
 
   @Patch('/:subscriberId/preferences')
-  @UserAuthentication()
   @ExternalApiAccessible()
   @ApiOperation({
     summary: 'Update subscriber global or workflow specific preferences',
@@ -249,7 +243,6 @@ export class SubscribersController {
   }
 
   @Get('/:subscriberId/subscriptions')
-  @UserAuthentication()
   @ExternalApiAccessible()
   @ApiOperation({
     summary: 'List topics a subscriber is subscribed to',

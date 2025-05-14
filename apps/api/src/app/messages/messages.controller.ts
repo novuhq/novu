@@ -18,10 +18,11 @@ import { GetMessagesRequestDto } from './dtos/get-messages-requests.dto';
 import { RemoveMessagesByTransactionId } from './usecases/remove-messages-by-transactionId/remove-messages-by-transactionId.usecase';
 import { RemoveMessagesByTransactionIdCommand } from './usecases/remove-messages-by-transactionId/remove-messages-by-transactionId.command';
 import { DeleteMessageByTransactionIdRequestDto } from './dtos/remove-messages-by-transactionId-request.dto';
-import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
+import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 
 @ApiCommonResponses()
+@RequireAuthentication()
 @Controller('/messages')
 @ApiTags('Messages')
 export class MessagesController {
@@ -33,7 +34,6 @@ export class MessagesController {
 
   @Get('')
   @ExternalApiAccessible()
-  @UserAuthentication()
   @ApiOkResponse({
     type: MessagesResponseDto,
   })
@@ -65,7 +65,6 @@ export class MessagesController {
 
   @Delete('/:messageId')
   @ExternalApiAccessible()
-  @UserAuthentication()
   @ApiResponse(DeleteMessageResponseDto)
   @ApiOperation({
     summary: 'Delete message',
@@ -88,7 +87,6 @@ export class MessagesController {
   @Delete('/transaction/:transactionId')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ExternalApiAccessible()
-  @UserAuthentication()
   @ApiNoContentResponse()
   @ApiOperation({
     summary: 'Delete messages by transactionId',

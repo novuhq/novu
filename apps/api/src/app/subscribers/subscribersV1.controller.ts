@@ -48,7 +48,7 @@ import {
   ApiNoContentResponse,
   ApiResponse,
 } from '../shared/framework/response.decorator';
-import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
+import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { SdkGroupName, SdkMethodName, SdkUsePagination } from '../shared/framework/swagger/sdk.decorators';
 import { UserSession } from '../shared/framework/user.decorator';
 import { FeedResponseDto } from '../widgets/dtos/feeds-response.dto';
@@ -142,7 +142,7 @@ export class SubscribersV1Controller {
 
   @Get('')
   @ExternalApiAccessible()
-  @UserAuthentication()
+  @RequireAuthentication()
   @ApiOkPaginatedResponse(SubscriberResponseDto)
   @ApiOperation({
     summary: 'Get subscribers',
@@ -165,7 +165,7 @@ export class SubscribersV1Controller {
 
   @Get('/:subscriberId')
   @ExternalApiAccessible()
-  @UserAuthentication()
+  @RequireAuthentication()
   @ApiExcludeEndpoint()
   @ApiResponse(SubscriberResponseDto)
   @ApiOperation({
@@ -196,7 +196,7 @@ export class SubscribersV1Controller {
   @Post('/')
   @ExternalApiAccessible()
   @ApiExcludeEndpoint()
-  @UserAuthentication()
+  @RequireAuthentication()
   async createSubscriber(
     @UserSession() user: UserSessionData,
     @Body() body: CreateSubscriberRequestDto
@@ -221,7 +221,7 @@ export class SubscribersV1Controller {
   @ThrottlerCost(ApiRateLimitCostEnum.BULK)
   @Post('/bulk')
   @ExternalApiAccessible()
-  @UserAuthentication()
+  @RequireAuthentication()
   @ApiOperation({
     summary: 'Bulk create subscribers',
     description: `
@@ -246,7 +246,7 @@ export class SubscribersV1Controller {
 
   @Put('/:subscriberId')
   @ExternalApiAccessible()
-  @UserAuthentication()
+  @RequireAuthentication()
   @ApiResponse(SubscriberResponseDto)
   @ApiOperation({
     summary: 'Upsert subscriber',
@@ -277,7 +277,7 @@ export class SubscribersV1Controller {
 
   @Put('/:subscriberId/credentials')
   @ExternalApiAccessible()
-  @UserAuthentication()
+  @RequireAuthentication()
   @ApiResponse(SubscriberResponseDto)
   @ApiOperation({
     summary: 'Update subscriber credentials',
@@ -305,7 +305,7 @@ export class SubscribersV1Controller {
 
   @Patch('/:subscriberId/credentials')
   @ExternalApiAccessible()
-  @UserAuthentication()
+  @RequireAuthentication()
   @ApiResponse(SubscriberResponseDto)
   @ApiOperation({
     summary: 'Modify subscriber credentials',
@@ -335,7 +335,7 @@ export class SubscribersV1Controller {
 
   @Delete('/:subscriberId/credentials/:providerId')
   @ExternalApiAccessible()
-  @UserAuthentication()
+  @RequireAuthentication()
   @ApiNoContentResponse()
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
@@ -360,7 +360,7 @@ export class SubscribersV1Controller {
 
   @Patch('/:subscriberId/online-status')
   @ExternalApiAccessible()
-  @UserAuthentication()
+  @RequireAuthentication()
   @ApiResponse(SubscriberResponseDto)
   @ApiOperation({
     summary: 'Update subscriber online status',
@@ -385,7 +385,7 @@ export class SubscribersV1Controller {
 
   @Delete('/:subscriberId')
   @ExternalApiAccessible()
-  @UserAuthentication()
+  @RequireAuthentication()
   @ApiResponse(DeleteSubscriberResponseDto)
   @ApiOperation({
     summary: 'Delete subscriber',
@@ -408,7 +408,7 @@ export class SubscribersV1Controller {
 
   @Get('/:subscriberId/preferences')
   @ExternalApiAccessible()
-  @UserAuthentication()
+  @RequireAuthentication()
   @ApiResponse(UpdateSubscriberPreferenceResponseDto, 200, true)
   @ApiOperation({
     summary: 'Get subscriber preferences',
@@ -441,7 +441,7 @@ export class SubscribersV1Controller {
 
   @Get('/:subscriberId/preferences/:parameter')
   @ExternalApiAccessible()
-  @UserAuthentication()
+  @RequireAuthentication()
   @ApiExcludeEndpoint()
   async getSubscriberPreferenceByLevel(
     @UserSession() user: UserSessionData,
@@ -462,7 +462,7 @@ export class SubscribersV1Controller {
   // @ts-ignore
   @Patch('/:subscriberId/preferences/:parameter')
   @ExternalApiAccessible()
-  @UserAuthentication()
+  @RequireAuthentication()
   @ApiExcludeEndpoint()
   async updateSubscriberPreference(
     @UserSession() user: UserSessionData,
@@ -508,7 +508,7 @@ export class SubscribersV1Controller {
 
   @Patch('/:subscriberId/preferences')
   @ExternalApiAccessible()
-  @UserAuthentication()
+  @RequireAuthentication()
   @ApiExcludeEndpoint()
   async updateSubscriberGlobalPreferences(
     @UserSession() user: UserSessionData,
@@ -541,7 +541,7 @@ export class SubscribersV1Controller {
   }
 
   @ExternalApiAccessible()
-  @UserAuthentication()
+  @RequireAuthentication()
   @Get('/:subscriberId/notifications/feed')
   @ApiOperation({
     summary: 'Get in-app notification feed for a particular subscriber',
@@ -574,7 +574,7 @@ export class SubscribersV1Controller {
   }
 
   @ExternalApiAccessible()
-  @UserAuthentication()
+  @RequireAuthentication()
   @Get('/:subscriberId/notifications/unseen')
   @ApiResponse(UnseenCountResponse)
   @ApiOperation({
@@ -611,7 +611,7 @@ export class SubscribersV1Controller {
   }
   @ApiExcludeEndpoint()
   @ExternalApiAccessible()
-  @UserAuthentication()
+  @RequireAuthentication()
   @Post('/:subscriberId/messages/markAs')
   @ApiOperation({
     summary: 'Mark a subscriber feed messages as seen or as read',
@@ -647,7 +647,7 @@ export class SubscribersV1Controller {
     summary: 'Mark a subscriber messages as seen, read, unseen or unread',
   })
   @ExternalApiAccessible()
-  @UserAuthentication()
+  @RequireAuthentication()
   @Post('/:subscriberId/messages/mark-as')
   @SdkGroupName('Subscribers.Messages')
   @SdkMethodName('markAllAs')
@@ -673,7 +673,7 @@ export class SubscribersV1Controller {
   }
 
   @ExternalApiAccessible()
-  @UserAuthentication()
+  @RequireAuthentication()
   @Post('/:subscriberId/messages/mark-all')
   @ApiOperation({
     summary: 'Marks all the subscriber messages as read, unread, seen or unseen.',
@@ -701,7 +701,7 @@ export class SubscribersV1Controller {
   }
 
   @ExternalApiAccessible()
-  @UserAuthentication()
+  @RequireAuthentication()
   @Post('/:subscriberId/messages/:messageId/actions/:type')
   @ApiOperation({
     summary: 'Mark message action as seen',

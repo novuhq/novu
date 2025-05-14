@@ -31,11 +31,11 @@ import { GetBridgeStatus } from './usecases/get-bridge-status/get-bridge-status.
 import { GetBridgeStatusCommand } from './usecases/get-bridge-status/get-bridge-status.command';
 import { CreateBridgeRequestDto } from './dtos/create-bridge-request.dto';
 import { CreateBridgeResponseDto } from './dtos/create-bridge-response.dto';
-import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
+import { RequireAuthentication } from '../auth/framework/auth.decorator';
 
 @Controller('/bridge')
 @UseInterceptors(ClassSerializerInterceptor)
-@UserAuthentication()
+@RequireAuthentication()
 @ApiExcludeController()
 export class BridgeController {
   constructor(

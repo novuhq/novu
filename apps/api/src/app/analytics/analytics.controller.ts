@@ -3,14 +3,15 @@ import { ApiExcludeController } from '@nestjs/swagger';
 import { SkipThrottle } from '@nestjs/throttler';
 import { AnalyticsService, ExternalApiAccessible, UserSession } from '@novu/application-generic';
 import { UserSessionData } from '@novu/shared';
-import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
 import { HubspotIdentifyFormCommand } from './usecases/hubspot-identify-form/hubspot-identify-form.command';
 import { HubspotIdentifyFormUsecase } from './usecases/hubspot-identify-form/hubspot-identify-form.usecase';
+import { RequireAuthentication } from '../auth/framework/auth.decorator';
 
 @Controller({
   path: 'telemetry',
 })
 @SkipThrottle()
+@RequireAuthentication()
 @ApiExcludeController()
 export class AnalyticsController {
   constructor(
@@ -20,7 +21,6 @@ export class AnalyticsController {
 
   @Post('/measure')
   @ExternalApiAccessible()
-  @UserAuthentication()
   async trackEvent(@Body('event') event, @Body('data') data = {}, @UserSession() user: UserSessionData): Promise<any> {
     this.analyticsService.track(event, user._id, {
       ...(data || {}),
@@ -34,7 +34,6 @@ export class AnalyticsController {
 
   @Post('/identify')
   @ExternalApiAccessible()
-  @UserAuthentication()
   @HttpCode(HttpStatus.NO_CONTENT)
   async identifyUser(@Body() body: any, @UserSession() user: UserSessionData) {
     if (body.anonymousId) {

@@ -33,11 +33,12 @@ import {
   ApiResponse,
 } from '../shared/framework/response.decorator';
 import { ThrottlerCategory, ThrottlerCost } from '../rate-limiting/guards';
-import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
+import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { SdkGroupName, SdkMethodName, SdkUsageExample } from '../shared/framework/swagger/sdk.decorators';
 
 @ThrottlerCategory(ApiRateLimitCategoryEnum.TRIGGER)
 @ResourceCategory(ResourceEnum.EVENTS)
+@RequireAuthentication()
 @ApiCommonResponses()
 @Controller({
   path: 'events',
@@ -54,7 +55,6 @@ export class EventsController {
   ) {}
 
   @ExternalApiAccessible()
-  @UserAuthentication()
   @Post('/trigger')
   @ApiResponse(TriggerEventResponseDto, 201)
   @ApiOperation({
@@ -95,7 +95,6 @@ export class EventsController {
   }
 
   @ExternalApiAccessible()
-  @UserAuthentication()
   @ThrottlerCost(ApiRateLimitCostEnum.BULK)
   @Post('/trigger/bulk')
   @SdkMethodName('triggerBulk')
@@ -124,7 +123,6 @@ export class EventsController {
   }
 
   @ExternalApiAccessible()
-  @UserAuthentication()
   @ThrottlerCost(ApiRateLimitCostEnum.BULK)
   @Post('/trigger/broadcast')
   @ApiResponse(TriggerEventResponseDto)
@@ -161,7 +159,6 @@ export class EventsController {
     );
   }
 
-  @UserAuthentication()
   @Post('/test/email')
   @ApiExcludeEndpoint()
   async testEmailMessage(@UserSession() user: UserSessionData, @Body() body: TestSendEmailRequestDto): Promise<void> {
@@ -186,7 +183,6 @@ export class EventsController {
   }
 
   @ExternalApiAccessible()
-  @UserAuthentication()
   @Delete('/trigger/:transactionId')
   @ApiOkResponse({
     type: Boolean,
