@@ -2,6 +2,7 @@ import { Controller, Get, Param, Query } from '@nestjs/common';
 import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { ChannelTypeEnum, PermissionsEnum, UserSessionData } from '@novu/shared';
 
+import { RequirePermissions } from '@novu/application-generic';
 import { ActivitiesRequestDto } from './dtos/activities-request.dto';
 import { ActivitiesResponseDto, ActivityNotificationResponseDto } from './dtos/activities-response.dto';
 import { ActivityGraphStatesResponse } from './dtos/activity-graph-states-response.dto';
@@ -19,7 +20,6 @@ import { ApiCommonResponses, ApiOkResponse, ApiResponse } from '../shared/framew
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 import { UserSession } from '../shared/framework/user.decorator';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
-import { RequirePermissions } from '@novu/application-generic';
 
 @ApiCommonResponses()
 @RequireAuthentication()

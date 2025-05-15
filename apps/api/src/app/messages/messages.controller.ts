@@ -1,6 +1,7 @@
 import { Controller, Delete, Get, HttpCode, HttpStatus, Param, Query } from '@nestjs/common';
-import { UserSessionData } from '@novu/shared';
+import { UserSessionData, PermissionsEnum } from '@novu/shared';
 import { ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import { RequirePermissions } from '@novu/application-generic';
 import { RemoveMessage, RemoveMessageCommand } from './usecases/remove-message';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
@@ -20,8 +21,6 @@ import { RemoveMessagesByTransactionIdCommand } from './usecases/remove-messages
 import { DeleteMessageByTransactionIdRequestDto } from './dtos/remove-messages-by-transactionId-request.dto';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
-import { PermissionsEnum } from '@novu/shared';
-import { RequirePermissions } from '@novu/application-generic';
 
 @ApiCommonResponses()
 @RequireAuthentication()

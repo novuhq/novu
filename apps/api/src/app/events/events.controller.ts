@@ -8,8 +8,9 @@ import {
   ResourceEnum,
   TriggerRequestCategoryEnum,
   UserSessionData,
+  PermissionsEnum,
 } from '@novu/shared';
-import { ResourceCategory } from '@novu/application-generic';
+import { ResourceCategory, RequirePermissions } from '@novu/application-generic';
 
 import {
   BulkTriggerEventDto,
@@ -35,8 +36,6 @@ import {
 import { ThrottlerCategory, ThrottlerCost } from '../rate-limiting/guards';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { SdkGroupName, SdkMethodName, SdkUsageExample } from '../shared/framework/swagger/sdk.decorators';
-import { PermissionsEnum } from '@novu/shared';
-import { RequirePermissions } from '@novu/application-generic';
 
 @ThrottlerCategory(ApiRateLimitCategoryEnum.TRIGGER)
 @ResourceCategory(ResourceEnum.EVENTS)

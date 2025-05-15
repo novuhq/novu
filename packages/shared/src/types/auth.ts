@@ -92,3 +92,5 @@ export enum PermissionsEnum {
   // Notifications
   NOTIFICATION_READ = 'org:notification:read',
 }
+
+export const ALL_PERMISSIONS = Object.values(PermissionsEnum);

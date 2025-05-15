@@ -11,8 +11,9 @@ import {
   UseInterceptors,
   Headers,
 } from '@nestjs/common';
-import { UserSessionData } from '@novu/shared';
+import { UserSessionData, PermissionsEnum } from '@novu/shared';
 
+import { RequirePermissions } from '@novu/application-generic';
 import { UserSession } from '../shared/framework/user.decorator';
 import { UpdateVercelIntegrationRequestDto } from './dtos/update-vercel-integration-request.dto';
 import { CreateVercelIntegrationRequestDto } from './dtos/create-vercel-integration-request.dto';
@@ -28,8 +29,6 @@ import { UpdateVercelIntegration } from './usecases/update-vercel-integration/up
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ProcessVercelWebhook } from './usecases/process-vercel-webhook/process-vercel-webhook.usecase';
 import { ProcessVercelWebhookCommand } from './usecases/process-vercel-webhook/process-vercel-webhook.command';
-import { PermissionsEnum } from '@novu/shared';
-import { RequirePermissions } from '@novu/application-generic';
 
 @Controller('/partner-integrations')
 @UseInterceptors(ClassSerializerInterceptor)

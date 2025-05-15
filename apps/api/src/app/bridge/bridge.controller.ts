@@ -22,7 +22,13 @@ import {
   WorkflowTypeEnum,
   PermissionsEnum,
 } from '@novu/shared';
-import { AnalyticsService, ExternalApiAccessible, UserSession } from '@novu/application-generic';
+import {
+  AnalyticsService,
+  ExternalApiAccessible,
+  UserSession,
+  RequirePermissions,
+  SkipPermissionsCheck,
+} from '@novu/application-generic';
 import { ControlValuesRepository, EnvironmentRepository, NotificationTemplateRepository } from '@novu/dal';
 
 import { ApiExcludeController } from '@nestjs/swagger';
@@ -38,7 +44,6 @@ import { GetBridgeStatusCommand } from './usecases/get-bridge-status/get-bridge-
 import { CreateBridgeRequestDto } from './dtos/create-bridge-request.dto';
 import { CreateBridgeResponseDto } from './dtos/create-bridge-response.dto';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
-import { RequirePermissions, SkipPermissionsCheck } from '@novu/application-generic';
 
 @Controller('/bridge')
 @UseInterceptors(ClassSerializerInterceptor)

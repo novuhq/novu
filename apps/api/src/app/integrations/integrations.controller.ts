@@ -10,11 +10,12 @@ import {
   Put,
   UseInterceptors,
 } from '@nestjs/common';
-import { ChannelTypeEnum, UserSessionData } from '@novu/shared';
+import { ChannelTypeEnum, UserSessionData, PermissionsEnum } from '@novu/shared';
 import {
   CalculateLimitNovuIntegration,
   CalculateLimitNovuIntegrationCommand,
   OtelSpan,
+  RequirePermissions,
 } from '@novu/application-generic';
 import { ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UserSession } from '../shared/framework/user.decorator';
@@ -47,8 +48,6 @@ import { SetIntegrationAsPrimary } from './usecases/set-integration-as-primary/s
 import { SetIntegrationAsPrimaryCommand } from './usecases/set-integration-as-primary/set-integration-as-primary.command';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
-import { PermissionsEnum } from '@novu/shared';
-import { RequirePermissions } from '@novu/application-generic';
 
 @ApiCommonResponses()
 @Controller('/integrations')

@@ -2,13 +2,13 @@ import { ClassSerializerInterceptor, Controller, Get, Param, UseInterceptors } f
 import { UserSessionData } from '@novu/shared';
 import { ApiTags } from '@nestjs/swagger';
 import { ApiExcludeController } from '@nestjs/swagger/dist/decorators/api-exclude-controller.decorator';
+import { SkipPermissionsCheck } from '@novu/application-generic';
 import { UserSession } from '../shared/framework/user.decorator';
 import { GetEnvironmentTags, GetEnvironmentTagsCommand } from './usecases/get-environment-tags';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { GetEnvironmentTagsDto } from './dtos/get-environment-tags.dto';
-import { SkipPermissionsCheck } from '@novu/application-generic';
 
 @ApiCommonResponses()
 @Controller({ path: `/environments`, version: '2' })

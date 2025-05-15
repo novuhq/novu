@@ -6,6 +6,7 @@ import { CommunityUserAuthGuard } from './community.user.auth.guard';
 
 export function RequireAuthentication() {
   if (isClerkEnabled()) {
+    // eslint-disable-next-line global-require
     const { EEUserAuthGuard, EEPermissionsGuard } = require('@novu/ee-auth');
 
     return applyDecorators(UseGuards(EEUserAuthGuard, EEPermissionsGuard), ApiBearerAuth(BEARER_SWAGGER_SECURITY_NAME));

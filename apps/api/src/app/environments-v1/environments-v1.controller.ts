@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { ApiExcludeEndpoint, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { PermissionsEnum, ProductFeatureKeyEnum, UserSessionData } from '@novu/shared';
+import { RequirePermissions, SkipPermissionsCheck } from '@novu/application-generic';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ProductFeature } from '../shared/decorators/product-feature.decorator';
 import { ApiKey } from '../shared/dtos/api-key';
@@ -34,7 +35,6 @@ import { UpdateEnvironmentCommand } from './usecases/update-environment/update-e
 import { UpdateEnvironment } from './usecases/update-environment/update-environment.usecase';
 import { ErrorDto } from '../../error-dto';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
-import { RequirePermissions, SkipPermissionsCheck } from '@novu/application-generic';
 
 /**
  * @deprecated use EnvironmentsControllerV2
