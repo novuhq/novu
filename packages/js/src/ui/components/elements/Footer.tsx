@@ -7,7 +7,7 @@ import { cn } from '../../helpers';
 import { ArrowUpRight } from '../../icons/ArrowUpRight';
 import { CopyToClipboard } from '../primitives/CopyToClipboard';
 import { Tooltip } from '../primitives/Tooltip';
-import { DEFAULT_API_URL } from '../../../api/http-client';
+import { DEFAULT_API_VERSION } from '../../../api/http-client';
 
 const stripes = `before:nt-content-[""] before:nt-absolute before:nt-inset-0 before:-nt-right-[calc(0+var(--stripes-size))] before:[mask-image:linear-gradient(transparent_0%,black)] before:nt-bg-dev-stripes-gradient before:nt-bg-[length:var(--stripes-size)_var(--stripes-size)] before:nt-animate-stripes before:hover:[animation-play-state:running]`;
 const commonAfter = 'after:nt-content-[""] after:nt-absolute after:nt-inset-0 after:-nt-top-12';
@@ -133,9 +133,11 @@ function getCurlCommand() {
 
     return '';
   }
+  const DEFAULT_BACKEND_URL =
+    (typeof window !== 'undefined' && (window as any).NOVU_LOCAL_BACKEND_URL) || 'https://api.novu.co';
 
   return `curl -X POST \
-  ${DEFAULT_API_URL}/inbox/events \
+  ${DEFAULT_BACKEND_URL}/${DEFAULT_API_VERSION}/inbox/events \
   -H 'Authorization: Keyless ${identifier}' \
   -H 'Content-Type: application/json' \
   -d '{

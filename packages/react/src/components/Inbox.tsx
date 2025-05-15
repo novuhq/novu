@@ -95,20 +95,13 @@ export const Inbox = React.memo((props: InboxProps) => {
     return <InboxChild {...props} />;
   }
 
-  const providerProps =
-    applicationIdentifier && subscriber
-      ? ({
-          applicationIdentifier,
-          subscriberHash,
-          backendUrl,
-          socketUrl,
-          subscriber,
-        } satisfies StandardNovuOptions)
-      : {
-          // todo: remove props, it should be an empty object, its here for local debugging
-          backendUrl,
-          socketUrl,
-        };
+  const providerProps = {
+    applicationIdentifier: applicationIdentifier || '', // for keyless we provide an empty string, the api will generate a identifier
+    subscriberHash,
+    backendUrl,
+    socketUrl,
+    subscriber,
+  } satisfies StandardNovuOptions;
 
   return (
     <InternalNovuProvider {...providerProps} userAgentType="components">
@@ -204,15 +197,16 @@ function isWithChildrenProps(props: InboxProps): props is WithChildrenProps {
 }
 
 function buildSubscriber(options: InboxProps): Subscriber {
-  let subscriberObj: Subscriber;
-
-  if (!('subscriber' in options)) {
-    subscriberObj = { subscriberId: '' };
-  } else if (options.subscriber) {
-    subscriberObj = typeof options.subscriber === 'string' ? { subscriberId: options.subscriber } : options.subscriber;
-  } else {
-    subscriberObj = { subscriberId: options.subscriberId as string };
+  // subscriber object
+  if ('subscriber' in options && options.subscriber) {
+    return typeof options.subscriber === 'string' ? { subscriberId: options.subscriber } : options.subscriber;
   }
 
-  return subscriberObj;
+  // subscriberId
+  if ('subscriberId' in options) {
+    return { subscriberId: options.subscriberId as string };
+  }
+
+  // keyless subscriber - the api will generate a subscriberId
+  return { subscriberId: '' };
 }

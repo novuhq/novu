@@ -33,8 +33,8 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
 
   constructor(options: NovuOptions) {
     this.#inboxService = new InboxService({
-      apiUrl: options.apiUrl || options.backendUrl,
-      userAgent: options.__userAgent,
+      apiUrl: ('apiUrl' in options && options.apiUrl) || ('backendUrl' in options && options.backendUrl) || undefined,
+      userAgent: '__userAgent' in options ? options.__userAgent : undefined,
     });
     this.#emitter = new NovuEventEmitter();
     this.#session = new Session(
@@ -58,7 +58,7 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
       eventEmitterInstance: this.#emitter,
     });
     this.socket = new Socket({
-      socketUrl: options.socketUrl,
+      socketUrl: 'socketUrl' in options ? options.socketUrl : undefined,
       eventEmitterInstance: this.#emitter,
       inboxServiceInstance: this.#inboxService,
     });

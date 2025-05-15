@@ -29,18 +29,11 @@ export type DefaultInboxProps = {
   placementOffset?: InboxProps['placementOffset'];
 };
 
-type KeylessBaseProps = {
-  /*
-   * temporary props for keyless for local debugging
-   * todo remove
-   */
-  backendUrl?: string;
-  socketUrl?: string;
-};
+type KeylessBaseProps = Record<never, never>;
 
 type StandardBaseProps =
   | ({
-      applicationIdentifier?: string;
+      applicationIdentifier: string;
       subscriberHash?: string;
       backendUrl?: string;
       socketUrl?: string;

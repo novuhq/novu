@@ -173,12 +173,7 @@ export type Result<D = undefined, E = NovuError> = Promise<{
   error?: E;
 }>;
 
-type KeylessNovuOptions = {
-  backendUrl?: string;
-  socketUrl?: string;
-  apiUrl?: string;
-  __userAgent?: string;
-};
+type KeylessNovuOptions = {};
 
 export type StandardNovuOptions = {
   /** @deprecated Use apiUrl instead  */

@@ -5,12 +5,14 @@ export type HttpClientOptions = {
   headers?: Record<string, string>;
 };
 
-const DEFAULT_API_VERSION = 'v1';
-const DEFAULT_BACKEND_URL = 'https://api.novu.co';
-export const DEFAULT_API_URL = `${DEFAULT_BACKEND_URL}/${DEFAULT_API_VERSION}`;
+export const DEFAULT_API_VERSION = 'v1';
 const DEFAULT_USER_AGENT = `${PACKAGE_NAME}@${PACKAGE_VERSION}`;
 
 export class HttpClient {
+  // Environment variable for local development that overrides the default API endpoint without affecting the Inbox DX
+  private DEFAULT_BACKEND_URL =
+    (typeof window !== 'undefined' && (window as any).NOVU_LOCAL_BACKEND_URL) || 'https://api.novu.co';
+
   private apiUrl: string;
   private apiVersion: string;
   private headers: Record<string, string>;
@@ -18,14 +20,14 @@ export class HttpClient {
   constructor(options: HttpClientOptions = {}) {
     const {
       apiVersion = DEFAULT_API_VERSION,
-      apiUrl = DEFAULT_BACKEND_URL,
+      apiUrl = this.DEFAULT_BACKEND_URL,
       userAgent = DEFAULT_USER_AGENT,
       headers = {},
     } = options || {};
     this.apiVersion = apiVersion;
-    this.apiUrl = `${apiUrl}/${this.apiVersion}`;
+    this.apiUrl = `${apiUrl}/${apiVersion}`;
     this.headers = {
-      'Novu-API-Version': NOVU_API_VERSION,
+      'Novu-API-Version': this.apiVersion,
       'Content-Type': 'application/json',
       'User-Agent': userAgent,
       ...headers,
