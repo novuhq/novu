@@ -16,8 +16,15 @@ import {
   CreateOrUpdateSubscriberUseCase,
   ExternalApiAccessible,
   UserSession,
+  RequirePermissions,
 } from '@novu/application-generic';
-import { ApiRateLimitCategoryEnum, DirectionEnum, SubscriberCustomData, UserSessionData } from '@novu/shared';
+import {
+  ApiRateLimitCategoryEnum,
+  DirectionEnum,
+  SubscriberCustomData,
+  UserSessionData,
+  PermissionsEnum,
+} from '@novu/shared';
 import { ThrottlerCategory } from '../rate-limiting/guards/throttler.decorator';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
@@ -47,8 +54,6 @@ import { RemoveSubscriberCommand } from './usecases/remove-subscriber/remove-sub
 import { RemoveSubscriber } from './usecases/remove-subscriber/remove-subscriber.usecase';
 import { UpdateSubscriberPreferencesCommand } from './usecases/update-subscriber-preferences/update-subscriber-preferences.command';
 import { UpdateSubscriberPreferences } from './usecases/update-subscriber-preferences/update-subscriber-preferences.usecase';
-import { PermissionsEnum } from '@novu/shared';
-import { RequirePermissions } from '@novu/application-generic';
 
 @ThrottlerCategory(ApiRateLimitCategoryEnum.CONFIGURATION)
 @Controller({ path: '/subscribers', version: '2' })
