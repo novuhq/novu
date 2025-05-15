@@ -28,7 +28,7 @@ export class GetMyEnvironments {
       throw new NotFoundException(`No environments were found for organization ${command.organizationId}`);
 
     return environments.map((environment) => {
-      if (command.includeAllApiKeys || environment._id === command.environmentId) {
+      if (command.returnApiKeys && environment._id === command.environmentId) {
         return this.decryptApiKeys(environment);
       }
       // TODO: For api_v2: Remove the key from the response. This was not done yet as it's a breaking change.

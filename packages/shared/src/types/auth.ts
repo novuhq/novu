@@ -44,10 +44,12 @@ export enum PermissionsEnum {
   WORKFLOW_DELETE = 'org:workflow:delete',
 
   // Environments
-  ENVIRONMENT_READ = 'org:environment:read',
   ENVIRONMENT_CREATE = 'org:environment:create',
-  ENVIRONMENT_UPDATE = 'org:environment:update',
   ENVIRONMENT_DELETE = 'org:environment:delete',
+
+  // API keys
+  API_KEY_READ = 'org:apikey:read',
+  API_KEY_CREATE = 'org:apikey:create',
 
   // Events
   EVENT_CREATE = 'org:event:create',
@@ -64,9 +66,9 @@ export enum PermissionsEnum {
   MESSAGE_DELETE = 'org:message:delete',
 
   // Partner Integrations
-  PARTNER_INTEGRATION_READ = 'org:partner-integration:read',
-  PARTNER_INTEGRATION_CREATE = 'org:partner-integration:create',
-  PARTNER_INTEGRATION_UPDATE = 'org:partner-integration:update',
+  PARTNER_INTEGRATION_READ = 'org:partnerintegration:read',
+  PARTNER_INTEGRATION_CREATE = 'org:partnerintegration:create',
+  PARTNER_INTEGRATION_UPDATE = 'org:partnerintegration:update',
 
   // Subscribers
   SUBSCRIBER_READ = 'org:subscriber:read',
@@ -81,9 +83,8 @@ export enum PermissionsEnum {
   TOPIC_DELETE = 'org:topic:delete',
 
   // Billing
-  BILLING_PORTAL_ACCESS = 'org:billing:portal:access',
-  BILLING_SUBSCRIPTION_READ = 'org:billing:subscription:read',
-  BILLING_SUBSCRIPTION_CREATE = 'org:billing:subscription:create',
+  BILLING_PORTAL_ACCESS = 'org:billing:portal',
+  BILLING_SUBSCRIPTION_CREATE = 'org:billing:create',
 
   // Org Metadata
   ORG_METADATA_UPDATE = 'org:metadata:update',

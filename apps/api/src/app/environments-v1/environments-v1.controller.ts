@@ -10,7 +10,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiExcludeEndpoint, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
-import { ApiAuthSchemeEnum, MemberRoleEnum, ProductFeatureKeyEnum, UserSessionData } from '@novu/shared';
+import { PermissionsEnum, ProductFeatureKeyEnum, UserSessionData } from '@novu/shared';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ProductFeature } from '../shared/decorators/product-feature.decorator';
 import { ApiKey } from '../shared/dtos/api-key';
@@ -91,6 +91,7 @@ export class EnvironmentsControllerV1 {
         organizationId: user.organizationId,
         color: body.color,
         system: false,
+        returnApiKeys: user.permissions.includes(PermissionsEnum.API_KEY_READ),
       })
     );
   }
@@ -107,7 +108,7 @@ export class EnvironmentsControllerV1 {
       GetMyEnvironmentsCommand.create({
         organizationId: user.organizationId,
         environmentId: user.environmentId,
-        includeAllApiKeys: user.scheme === ApiAuthSchemeEnum.BEARER,
+        returnApiKeys: user.permissions.includes(PermissionsEnum.API_KEY_READ),
       })
     );
   }
