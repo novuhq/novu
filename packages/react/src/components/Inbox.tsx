@@ -84,19 +84,21 @@ const DefaultInbox = withRenderer(_DefaultInbox);
 
 export const Inbox = React.memo((props: InboxProps) => {
   const socketUrl = 'socketUrl' in props ? props.socketUrl : undefined;
-  const applicationIdentifier = 'applicationIdentifier' in props ? props.applicationIdentifier : undefined;
+  const applicationIdentifier =
+    'applicationIdentifier' in props && props.applicationIdentifier ? props.applicationIdentifier : ''; // for keyless we provide an empty string, the api will generate a identifier
   const subscriberHash = 'subscriberHash' in props ? props.subscriberHash : undefined;
   const backendUrl = 'backendUrl' in props ? props.backendUrl : undefined;
   const subscriber = buildSubscriber(props);
+  const { subscriberId, ...restProps } = props;
 
   const novu = useUnsafeNovu();
 
   if (novu) {
-    return <InboxChild {...props} />;
+    return <InboxChild {...restProps} applicationIdentifier={applicationIdentifier} subscriber={subscriber} />;
   }
 
   const providerProps = {
-    applicationIdentifier: applicationIdentifier || '', // for keyless we provide an empty string, the api will generate a identifier
+    applicationIdentifier,
     subscriberHash,
     backendUrl,
     socketUrl,
@@ -105,7 +107,7 @@ export const Inbox = React.memo((props: InboxProps) => {
 
   return (
     <InternalNovuProvider {...providerProps} userAgentType="components">
-      <InboxChild {...props} />
+      <InboxChild {...restProps} applicationIdentifier={applicationIdentifier} subscriber={subscriber} />
     </InternalNovuProvider>
   );
 });

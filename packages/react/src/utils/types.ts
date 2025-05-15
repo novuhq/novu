@@ -29,29 +29,30 @@ export type DefaultInboxProps = {
   placementOffset?: InboxProps['placementOffset'];
 };
 
-type KeylessBaseProps = Record<never, never>;
+type KeylessBaseProps = {} & { [K in string]?: never }; // empty object,disallows all unknown keys
 
-type StandardBaseProps =
-  | ({
-      applicationIdentifier: string;
-      subscriberHash?: string;
-      backendUrl?: string;
-      socketUrl?: string;
-      appearance?: Appearance;
-      localization?: Localization;
-      tabs?: Array<Tab>;
-      preferencesFilter?: PreferencesFilter;
-      routerPush?: RouterPush;
-    } & {
+type StandardBaseProps = {
+  applicationIdentifier: string;
+  subscriberHash?: string;
+  backendUrl?: string;
+  socketUrl?: string;
+  appearance?: Appearance;
+  localization?: Localization;
+  tabs?: Array<Tab>;
+  preferencesFilter?: PreferencesFilter;
+  routerPush?: RouterPush;
+} & (
+  | {
       // TODO: Backward compatibility support - remove in future versions (see NV-5801)
       /** @deprecated Use subscriber prop instead */
       subscriberId: string;
       subscriber?: never;
-    })
+    }
   | {
       subscriber: Subscriber | string;
       subscriberId?: never;
-    };
+    }
+);
 
 export type BaseProps = KeylessBaseProps | StandardBaseProps;
 
