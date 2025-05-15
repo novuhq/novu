@@ -1,18 +1,18 @@
 import { Inject, Injectable, Scope } from '@nestjs/common';
-import { Svix } from 'svix';
 import shortid from 'shortid';
 
 import { PinoLogger } from 'nestjs-pino';
 import { EnvironmentRepository } from '@novu/dal';
 import { SendWebhookMessageCommand } from './send-webhook-message.command';
 import { WrapperDto } from '../../dtos/webhook-payload.dto';
+import { SvixClient } from '../../services';
 
 const LOG_CONTEXT = 'SendWebhookMessageUseCase';
 
 @Injectable()
 export class SendWebhookMessage {
   constructor(
-    @Inject('SVIX_CLIENT') private svix: Svix,
+    @Inject('SVIX_CLIENT') private svix: SvixClient,
     private logger: PinoLogger,
     private environmentRepository: EnvironmentRepository
   ) {

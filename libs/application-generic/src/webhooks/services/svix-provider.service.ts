@@ -1,9 +1,12 @@
 import { Provider } from '@nestjs/common';
+// eslint-disable-next-line no-restricted-imports
 import { Svix } from 'svix';
 
-export const SvixProviderService: Provider = {
+export type SvixClient = Svix | null;
+
+export const SvixProviderService: Provider<SvixClient> = {
   provide: 'SVIX_CLIENT',
-  useFactory: () => {
+  useFactory: (): SvixClient => {
     const apiKey = process.env.SVIX_API_KEY;
 
     if (!apiKey) {
