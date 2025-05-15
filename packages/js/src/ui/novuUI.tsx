@@ -89,12 +89,6 @@ export class NovuUI {
     this.#rootElement.setAttribute('id', `novu-ui-${this.id}`);
 
     const containerElement = this.#containerElement();
-    if (containerElement === null) {
-      // eslint-disable-next-line no-console
-      console.warn(
-        'Cannot resolve containerElement prop, using document.body as container element and document.head as styles container'
-      );
-    }
     (containerElement ?? document.body).appendChild(this.#rootElement);
 
     const dispose = render(
