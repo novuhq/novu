@@ -85,6 +85,7 @@ export type {
   NotificationClickHandler,
   NotificationRenderer,
   PreferencesFilter,
+  PreferenceGroups,
   RouterPush,
   Tab,
   Variables,

@@ -9,6 +9,7 @@ import type {
   Localization,
   RouterPush,
   PreferencesFilter,
+  PreferenceGroups,
   InboxProps,
   InboxPage,
 } from '@novu/js/ui';
@@ -57,6 +58,7 @@ export type BaseProps = {
   localization?: Localization;
   tabs?: Array<Tab>;
   preferencesFilter?: PreferencesFilter;
+  preferenceGroups?: PreferenceGroups;
   routerPush?: RouterPush;
 } & (
   | {

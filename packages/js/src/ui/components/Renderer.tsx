@@ -13,7 +13,7 @@ import {
   LocalizationProvider,
   NovuProvider,
 } from '../context';
-import type { Appearance, Localization, PreferencesFilter, RouterPush, Tab } from '../types';
+import type { Appearance, Localization, PreferenceGroups, PreferencesFilter, RouterPush, Tab } from '../types';
 import { Bell, Root } from './elements';
 import { Inbox, InboxContent, InboxContentProps, InboxPage } from './Inbox';
 
@@ -65,6 +65,7 @@ type RendererProps = {
   options: NovuOptions;
   tabs: Array<Tab>;
   preferencesFilter?: PreferencesFilter;
+  preferenceGroups?: PreferenceGroups;
   routerPush?: RouterPush;
   novu?: Novu;
 };
@@ -95,7 +96,12 @@ export const Renderer = (props: RendererProps) => {
       <LocalizationProvider localization={props.localization}>
         <AppearanceProvider id={props.novuUI.id} appearance={props.appearance}>
           <FocusManagerProvider>
-            <InboxProvider tabs={props.tabs} preferencesFilter={props.preferencesFilter} routerPush={props.routerPush}>
+            <InboxProvider
+              tabs={props.tabs}
+              preferencesFilter={props.preferencesFilter}
+              preferenceGroups={props.preferenceGroups}
+              routerPush={props.routerPush}
+            >
               <CountProvider>
                 <For each={nodes()}>
                   {(node) => {

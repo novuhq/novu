@@ -1,7 +1,7 @@
 import { type OffsetOptions, type Placement } from '@floating-ui/dom';
 import { createMemo, createSignal, Match, Show, Switch } from 'solid-js';
 import { useInboxContext } from '../context';
-import { useStyle } from '../helpers';
+import { cn, useStyle } from '../helpers';
 import type {
   BellRenderer,
   BodyRenderer,
@@ -58,6 +58,7 @@ export type InboxContentProps = {
 } & (NotificationRendererProps | SubjectBodyRendererProps | NoRendererProps);
 
 export const InboxContent = (props: InboxContentProps) => {
+  const { isDevelopmentMode } = useInboxContext();
   const [currentPage, setCurrentPage] = createSignal<InboxPage>(props.initialPage || InboxPage.Notifications);
   const { tabs, filter } = useInboxContext();
   const style = useStyle();
@@ -73,7 +74,15 @@ export const InboxContent = (props: InboxContentProps) => {
   });
 
   return (
-    <div class={style('inboxContent', 'nt-h-full nt-flex nt-flex-col')}>
+    <div
+      class={style(
+        'inboxContent',
+        cn('nt-h-full nt-flex nt-flex-col [&_.nv-preferencesContainer]:nt-pb-8 [&_.nv-notificationList]:nt-pb-8', {
+          '[&_.nv-preferencesContainer]:nt-pb-8 [&_.nv-notificationList]:nt-pb-8': isDevelopmentMode(),
+          '[&_.nv-preferencesContainer]:nt-pb-4 [&_.nv-notificationList]:nt-pb-4': !isDevelopmentMode(),
+        })
+      )}
+    >
       <Switch>
         <Match when={currentPage() === InboxPage.Notifications}>
           <Header navigateToPreferences={navigateToPage()(InboxPage.Preferences)} />
