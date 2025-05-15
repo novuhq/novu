@@ -1,4 +1,4 @@
-import { Injectable, Scope, BadRequestException } from '@nestjs/common';
+import { Inject, BadRequestException, Injectable } from '@nestjs/common';
 import { AnalyticsService } from '@novu/application-generic';
 import { OrganizationEntity, OrganizationRepository, UserRepository } from '@novu/dal';
 import { ApiServiceLevelEnum, EnvironmentEnum, JobTitleEnum, MemberRoleEnum } from '@novu/shared';
@@ -11,9 +11,7 @@ import { AddMemberCommand } from '../membership/add-member/add-member.command';
 import { AddMember } from '../membership/add-member/add-member.usecase';
 import { CreateOrganizationCommand } from './create-organization.command';
 
-@Injectable({
-  scope: Scope.REQUEST,
-})
+@Injectable()
 export class CreateOrganization {
   constructor(
     private readonly organizationRepository: OrganizationRepository,
@@ -31,7 +29,7 @@ export class CreateOrganization {
     const createdOrganization = await this.organizationRepository.create({
       logo: command.logo,
       name: command.name,
-      apiServiceLevel: ApiServiceLevelEnum.FREE,
+      apiServiceLevel: command.apiServiceLevel || ApiServiceLevelEnum.FREE,
       domain: command.domain,
       language: command.language,
     });

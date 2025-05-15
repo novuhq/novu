@@ -9,6 +9,9 @@ export {
   BodyRenderer,
   Elements,
   ElementStyles,
+  IconKey,
+  IconOverrides,
+  IconRenderer,
   Localization,
   LocalizationKey,
   NotificationActionClickHandler,
@@ -20,5 +23,6 @@ export {
   RouterPush,
   SubjectRenderer,
   Tab,
+  Theme,
   Variables,
 } from './types';

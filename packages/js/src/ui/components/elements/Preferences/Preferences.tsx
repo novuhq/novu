@@ -4,13 +4,14 @@ import { Preference } from '../../../../preferences/preference';
 import { ChannelPreference, ChannelType, PreferenceLevel } from '../../../../types';
 import { usePreferences } from '../../../api';
 import { setDynamicLocalization } from '../../../config';
-import { StringLocalizationKey, useInboxContext, useLocalization } from '../../../context';
+import { StringLocalizationKey, useInboxContext, useLocalization, useAppearance } from '../../../context';
 import { cn, useStyle } from '../../../helpers';
-import { ArrowDropDown } from '../../../icons';
+import { ArrowDropDown as DefaultArrowDropDown } from '../../../icons';
 import { AppearanceKey } from '../../../types';
 import { Collapsible } from '../../primitives/Collapsible';
 import { ChannelRow, getLabel } from './ChannelRow';
 import { PreferencesListSkeleton } from './PreferencesListSkeleton';
+import { IconRendererWrapper } from '../../shared/IconRendererWrapper';
 
 /* This is also going to be exported as a separate component. Keep it pure. */
 export const Preferences = () => {
@@ -141,6 +142,10 @@ const PreferencesRow = (props: {
 
   const channels = createMemo(() => Object.keys(props.channels));
 
+  const arrowDropDownIconClass = style('workflowArrow__icon', 'nt-text-foreground-alpha-600 nt-size-4', {
+    iconKey: 'arrowDropDown',
+  });
+
   return (
     <Show when={channels().length > 0}>
       <div
@@ -180,7 +185,11 @@ const PreferencesRow = (props: {
             )}
             data-open={isOpenChannels()}
           >
-            <ArrowDropDown class={style('workflowArrow__icon', 'nt-text-foreground-alpha-600 nt-size-4')} />
+            <IconRendererWrapper
+              iconKey="arrowDropDown"
+              class={arrowDropDownIconClass}
+              fallback={<DefaultArrowDropDown class={arrowDropDownIconClass} />}
+            />
           </span>
         </div>
         <Collapsible open={isOpenChannels()}>

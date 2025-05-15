@@ -8,6 +8,7 @@ import { useEffect } from 'react';
 import { useSegment } from '../context/segment';
 import { TelemetryEvent } from '../utils/telemetry';
 import { getReferrer, getUtmParams } from '../utils/tracking';
+import { IS_SELF_HOSTED } from '../config';
 
 export const SignUpPage = () => {
   const segment = useSegment();
@@ -38,7 +39,7 @@ export const SignUpPage = () => {
             appearance={clerkSignupAppearance}
             forceRedirectUrl={ROUTES.SIGNUP_ORGANIZATION_LIST}
           />
-          <RegionPicker />
+          {!IS_SELF_HOSTED && <RegionPicker />}
         </div>
       </div>
     </div>

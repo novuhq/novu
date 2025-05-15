@@ -1,13 +1,12 @@
-import { IsBoolean, IsDefined, IsEnum, IsMongoId, IsOptional, ValidateIf } from 'class-validator';
-import { ButtonTypeEnum, MessageActionStatusEnum, PreferenceLevelEnum } from '@novu/shared';
+import { IsBoolean, IsDefined, IsEnum, IsOptional, ValidateIf } from 'class-validator';
+import { PreferenceLevelEnum } from '@novu/shared';
 
 import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';
 
 export class UpdatePreferencesCommand extends EnvironmentWithSubscriber {
   @IsOptional()
   @ValidateIf((object) => object.level === PreferenceLevelEnum.TEMPLATE)
-  @IsMongoId()
-  readonly workflowId?: string;
+  readonly workflowIdOrIdentifier?: string;
 
   @IsOptional()
   @IsBoolean()

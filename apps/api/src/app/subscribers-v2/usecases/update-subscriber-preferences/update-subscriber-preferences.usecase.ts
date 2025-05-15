@@ -37,7 +37,7 @@ export class UpdateSubscriberPreferences {
         environmentId: command.environmentId,
         subscriberId: command.subscriberId,
         level: command.workflowIdOrInternalId ? PreferenceLevelEnum.TEMPLATE : PreferenceLevelEnum.GLOBAL,
-        workflowId,
+        workflowIdOrIdentifier: workflowId,
         includeInactiveChannels: false,
         ...command.channels,
       })

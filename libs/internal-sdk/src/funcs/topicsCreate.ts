@@ -26,19 +26,19 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Topic creation
+ * Create or update a topic
  *
  * @remarks
- * Create a topic
+ * Creates a new topic if it does not exist, or updates an existing topic if it already exists
  */
 export function topicsCreate(
   client: NovuCore,
-  createTopicRequestDto: components.CreateTopicRequestDto,
+  createUpdateTopicRequestDto: components.CreateUpdateTopicRequestDto,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): APIPromise<
   Result<
-    operations.TopicsControllerCreateTopicResponse,
+    operations.TopicsControllerUpsertTopicResponse,
     | errors.ErrorDto
     | errors.ErrorDto
     | errors.ValidationErrorDto
@@ -54,7 +54,7 @@ export function topicsCreate(
 > {
   return new APIPromise($do(
     client,
-    createTopicRequestDto,
+    createUpdateTopicRequestDto,
     idempotencyKey,
     options,
   ));
@@ -62,13 +62,13 @@ export function topicsCreate(
 
 async function $do(
   client: NovuCore,
-  createTopicRequestDto: components.CreateTopicRequestDto,
+  createUpdateTopicRequestDto: components.CreateUpdateTopicRequestDto,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): Promise<
   [
     Result<
-      operations.TopicsControllerCreateTopicResponse,
+      operations.TopicsControllerUpsertTopicResponse,
       | errors.ErrorDto
       | errors.ErrorDto
       | errors.ValidationErrorDto
@@ -84,26 +84,26 @@ async function $do(
     APICall,
   ]
 > {
-  const input: operations.TopicsControllerCreateTopicRequest = {
-    createTopicRequestDto: createTopicRequestDto,
+  const input: operations.TopicsControllerUpsertTopicRequest = {
+    createUpdateTopicRequestDto: createUpdateTopicRequestDto,
     idempotencyKey: idempotencyKey,
   };
 
   const parsed = safeParse(
     input,
     (value) =>
-      operations.TopicsControllerCreateTopicRequest$outboundSchema.parse(value),
+      operations.TopicsControllerUpsertTopicRequest$outboundSchema.parse(value),
     "Input validation failed",
   );
   if (!parsed.ok) {
     return [parsed, { status: "invalid" }];
   }
   const payload = parsed.value;
-  const body = encodeJSON("body", payload.CreateTopicRequestDto, {
+  const body = encodeJSON("body", payload.CreateUpdateTopicRequestDto, {
     explode: true,
   });
 
-  const path = pathToFunc("/v1/topics")();
+  const path = pathToFunc("/v2/topics")();
 
   const headers = new Headers(compactMap({
     "Content-Type": "application/json",
@@ -120,7 +120,7 @@ async function $do(
 
   const context = {
     baseURL: options?.serverURL ?? client._baseURL ?? "",
-    operationID: "TopicsController_createTopic",
+    operationID: "TopicsController_upsertTopic",
     oAuth2Scopes: [],
 
     resolvedSecurity: requestSecurity,
@@ -188,7 +188,7 @@ async function $do(
   };
 
   const [result] = await M.match<
-    operations.TopicsControllerCreateTopicResponse,
+    operations.TopicsControllerUpsertTopicResponse,
     | errors.ErrorDto
     | errors.ErrorDto
     | errors.ValidationErrorDto
@@ -201,10 +201,11 @@ async function $do(
     | RequestTimeoutError
     | ConnectionError
   >(
-    M.json(201, operations.TopicsControllerCreateTopicResponse$inboundSchema, {
-      hdrs: true,
-      key: "Result",
-    }),
+    M.json(
+      [200, 201],
+      operations.TopicsControllerUpsertTopicResponse$inboundSchema,
+      { hdrs: true, key: "Result" },
+    ),
     M.jsonErr(414, errors.ErrorDto$inboundSchema),
     M.jsonErr(
       [400, 401, 403, 404, 405, 409, 413, 415],

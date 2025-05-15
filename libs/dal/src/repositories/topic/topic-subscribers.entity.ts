@@ -18,6 +18,9 @@ export class TopicSubscribersEntity {
   topicKey: TopicKey;
   // TODO: Rename to subscriberId, to align with workflowId and stepId that are also externally provided identifiers by Novu users
   externalSubscriberId: ExternalSubscriberId;
+
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export type TopicSubscribersDBModel = ChangePropsValueType<

@@ -1,6 +1,6 @@
 {
   "name": "@novu/js",
-  "version": "3.3.0",
+  "version": "3.3.1",
   "repository": "https://github.com/novuhq/novu",
   "description": "Novu JavaScript SDK for <Inbox />",
   "author": "",

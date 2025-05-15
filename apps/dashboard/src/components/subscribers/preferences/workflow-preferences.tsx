@@ -2,14 +2,14 @@ import { STEP_TYPE_TO_ICON } from '@/components/icons/utils';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/primitives/card';
 import { Step } from '@/components/primitives/step';
 import { PreferencesItem } from '@/components/subscribers/preferences/preferences-item';
+import { formatDateSimple } from '@/utils/format-date';
+import { cn } from '@/utils/ui';
 import { PatchPreferenceChannelsDto, SubscriberWorkflowPreferenceDto } from '@novu/api/models/components';
 import { ChannelTypeEnum } from '@novu/shared';
 import { motion } from 'motion/react';
 import { useState } from 'react';
 import { RiContractUpDownLine, RiExpandUpDownLine } from 'react-icons/ri';
 import { STEP_TYPE_TO_COLOR } from '../../../utils/color';
-import { formatDateSimple } from '@/utils/format-date';
-import { cn } from '@/utils/ui';
 
 type WorkflowPreferencesProps = {
   workflowPreferences: SubscriberWorkflowPreferenceDto;
@@ -58,6 +58,7 @@ export function WorkflowPreferences(props: WorkflowPreferencesProps) {
         <CardContent className="space-y-2 rounded-lg bg-white p-2">
           {Object.entries(channels).map(([channel, enabled]) => (
             <PreferencesItem
+              key={channel}
               channel={channel as ChannelTypeEnum}
               enabled={enabled}
               onChange={(checked: boolean) => onToggle({ [channel]: checked }, workflow.slug)}

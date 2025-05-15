@@ -1,4 +1,3 @@
-import { FilterQuery, QueryWithHelpers, Types, UpdateQuery } from 'mongoose';
 import {
   ActorTypeEnum,
   ButtonTypeEnum,
@@ -6,13 +5,14 @@ import {
   MessageActionStatusEnum,
   MessagesStatusEnum,
 } from '@novu/shared';
+import { FilterQuery, Types } from 'mongoose';
 
-import { BaseRepository } from '../base-repository';
-import { MessageDBModel, MessageEntity } from './message.entity';
-import { Message } from './message.schema';
-import { FeedRepository } from '../feed';
 import { DalException } from '../../shared';
 import { EnforceEnvId } from '../../types/enforce';
+import { BaseRepository } from '../base-repository';
+import { FeedRepository } from '../feed';
+import { MessageDBModel, MessageEntity } from './message.entity';
+import { Message } from './message.schema';
 
 type MessageQuery = FilterQuery<MessageDBModel>;
 
@@ -758,11 +758,11 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       .read('secondaryPreferred')
       .populate(
         'subscriber',
-        '_id firstName lastName avatar subscriberId updatedAt createdAt deleted _environmentId _organizationId'
+        '_id firstName lastName avatar subscriberId createdAt updatedAt _organizationId _environmentId deleted'
       )
       .populate(
         'actorSubscriber',
-        '_id firstName lastName avatar subscriberId updatedAt createdAt deleted _environmentId _organizationId'
+        '_id firstName lastName avatar subscriberId createdAt updatedAt _organizationId _environmentId deleted'
       );
 
     return this.mapEntities(data);

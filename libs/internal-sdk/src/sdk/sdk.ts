@@ -24,6 +24,11 @@ export class Novu extends ClientSDK {
     return (this._subscribers ??= new Subscribers(this._options));
   }
 
+  private _topics?: Topics;
+  get topics(): Topics {
+    return (this._topics ??= new Topics(this._options));
+  }
+
   private _workflows?: Workflows;
   get workflows(): Workflows {
     return (this._workflows ??= new Workflows(this._options));
@@ -47,11 +52,6 @@ export class Novu extends ClientSDK {
   private _notifications?: Notifications;
   get notifications(): Notifications {
     return (this._notifications ??= new Notifications(this._options));
-  }
-
-  private _topics?: Topics;
-  get topics(): Topics {
-    return (this._topics ??= new Topics(this._options));
   }
 
   /**

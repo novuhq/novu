@@ -18,19 +18,19 @@ import { useNovuContext } from "./_context.js";
 import { MutationHookOptions } from "./_types.js";
 
 export type TopicsCreateMutationVariables = {
-  createTopicRequestDto: components.CreateTopicRequestDto;
+  createUpdateTopicRequestDto: components.CreateUpdateTopicRequestDto;
   idempotencyKey?: string | undefined;
   options?: RequestOptions;
 };
 
 export type TopicsCreateMutationData =
-  operations.TopicsControllerCreateTopicResponse;
+  operations.TopicsControllerUpsertTopicResponse;
 
 /**
- * Topic creation
+ * Create or update a topic
  *
  * @remarks
- * Create a topic
+ * Creates a new topic if it does not exist, or updates an existing topic if it already exists
  */
 export function useTopicsCreateMutation(
   options?: MutationHookOptions<
@@ -66,7 +66,7 @@ export function buildTopicsCreateMutation(
   return {
     mutationKey: mutationKeyTopicsCreate(),
     mutationFn: function topicsCreateMutationFn({
-      createTopicRequestDto,
+      createUpdateTopicRequestDto,
       idempotencyKey,
       options,
     }): Promise<TopicsCreateMutationData> {
@@ -84,7 +84,7 @@ export function buildTopicsCreateMutation(
       };
       return unwrapAsync(topicsCreate(
         client$,
-        createTopicRequestDto,
+        createUpdateTopicRequestDto,
         idempotencyKey,
         mergedOptions,
       ));

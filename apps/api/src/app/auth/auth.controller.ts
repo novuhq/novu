@@ -38,8 +38,6 @@ import { UpdatePasswordBodyDto } from './dtos/update-password.dto';
 import { UpdatePassword } from './usecases/update-password/update-password.usecase';
 import { UpdatePasswordCommand } from './usecases/update-password/update-password.command';
 import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
-import { SwitchEnvironmentCommand } from './usecases/switch-environment/switch-environment.command';
-import { SwitchEnvironment } from './usecases/switch-environment/switch-environment.usecase';
 import { SwitchOrganizationCommand } from './usecases/switch-organization/switch-organization.command';
 import { SwitchOrganization } from './usecases/switch-organization/switch-organization.usecase';
 import { AuthService } from './services/auth.service';

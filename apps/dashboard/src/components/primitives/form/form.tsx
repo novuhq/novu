@@ -82,7 +82,7 @@ const FormLabel = React.forwardRef<
               e.stopPropagation();
             }}
           >
-            <RiQuestionLine className="text-foreground-400 ml-1 inline size-3" />
+            <RiQuestionLine className="text-foreground-400 inline size-3" />
           </TooltipTrigger>
           <TooltipContent className="max-w-56 whitespace-pre-wrap">{tooltip}</TooltipContent>
         </Tooltip>

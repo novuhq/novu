@@ -1,3 +1,13 @@
+# v3.3.1 (2025-05-07)
+
+### 🩹 Fixes
+
+- **js:** inbox datepicker dark theme enhancements ([#8260](https://github.com/novuhq/novu/pull/8260))
+
+### ❤️ Thank You
+
+- Adam Chmara @ChmaraX
+
 ## v3.3.0 (2025-05-07)
 
 ### 🚀 Features

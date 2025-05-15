@@ -1,4 +1,5 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { Instrument } from '@novu/application-generic';
 import {
   CommunityOrganizationRepository,
   NotificationFeedItemEntity,
@@ -6,7 +7,6 @@ import {
   OrganizationEntity,
   SubscriberRepository,
 } from '@novu/dal';
-import { Instrument } from '@novu/application-generic';
 import { ApiServiceLevelEnum, FeatureNameEnum, getFeatureForTierAsNumber } from '@novu/shared';
 import { ActivitiesResponseDto, ActivityNotificationResponseDto } from '../../dtos/activities-response.dto';
 import { GetActivityFeedCommand } from './get-activity-feed.command';
@@ -153,6 +153,7 @@ export class GetActivityFeed {
         templates: command.templates,
         subscriberIds: subscriberIds || [],
         transactionId: command.transactionId,
+        topicKey: command.topicKey,
         after: command.after,
         before: command.before,
       },

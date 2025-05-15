@@ -30,7 +30,7 @@ services:
       - 27017:27017
 
   api:
-    image: 'ghcr.io/novuhq/novu/api:2.1.1'
+    image: 'ghcr.io/novuhq/novu/api:2.2.0-rc.1'
     depends_on:
       - mongodb
       - redis
@@ -44,7 +44,6 @@ services:
     environment:
       NODE_ENV: ${NODE_ENV}
       API_ROOT_URL: ${API_ROOT_URL}
-      DISABLE_USER_REGISTRATION: ${DISABLE_USER_REGISTRATION}
       PORT: ${API_PORT}
       FRONT_BASE_URL: ${FRONT_BASE_URL}
       MONGO_URL: ${MONGO_URL}
@@ -71,11 +70,15 @@ services:
       NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
       API_CONTEXT_PATH: ${API_CONTEXT_PATH}
       MONGO_AUTO_CREATE_INDEXES: ${MONGO_AUTO_CREATE_INDEXES}
+      IS_API_IDEMPOTENCY_ENABLED: ${IS_API_IDEMPOTENCY_ENABLED}
+      IS_API_RATE_LIMITING_ENABLED: ${IS_API_RATE_LIMITING_ENABLED}
+      IS_NEW_MESSAGES_API_RESPONSE_ENABLED: ${IS_NEW_MESSAGES_API_RESPONSE_ENABLED}
+      IS_V2_ENABLED: ${IS_V2_ENABLED}
     ports:
       - ${API_PORT}:${API_PORT}
 
   worker:
-    image: 'ghcr.io/novuhq/novu/worker:2.1.1'
+    image: 'ghcr.io/novuhq/novu/worker:2.2.0-rc.1'
     depends_on:
       - mongodb
       - redis
@@ -109,9 +112,12 @@ services:
       NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
       BROADCAST_QUEUE_CHUNK_SIZE: ${BROADCAST_QUEUE_CHUNK_SIZE}
       MULTICAST_QUEUE_CHUNK_SIZE: ${MULTICAST_QUEUE_CHUNK_SIZE}
+      API_ROOT_URL: http://api:${API_PORT}
+      IS_EMAIL_INLINE_CSS_DISABLED: ${IS_EMAIL_INLINE_CSS_DISABLED}
+      IS_USE_MERGED_DIGEST_ID_ENABLED: ${IS_USE_MERGED_DIGEST_ID_ENABLED}
 
   ws:
-    image: 'ghcr.io/novuhq/novu/ws:2.1.1'
+    image: 'ghcr.io/novuhq/novu/ws:2.2.0-rc.1'
     depends_on:
       - mongodb
       - redis
@@ -138,12 +144,12 @@ services:
     ports:
       - ${WS_PORT}:${WS_PORT}
 
-  web:
-    image: 'ghcr.io/novuhq/novu/web:2.1.1'
+  dashboard:
+    image: 'ghcr.io/novuhq/novu/dashboard:2.2.0-rc.1'
     depends_on:
       - api
       - worker
-    container_name: web
+    container_name: dashboard
     restart: unless-stopped
     logging:
       driver: 'json-file'
@@ -151,14 +157,14 @@ services:
         max-size: '50m'
         max-file: '5'
     environment:
-      REACT_APP_API_URL: ${API_ROOT_URL}
-      REACT_APP_ENVIRONMENT: ${NODE_ENV}
-      REACT_APP_WIDGET_EMBED_PATH: ${WIDGET_EMBED_PATH}
-      REACT_APP_IS_SELF_HOSTED: 'true'
-      REACT_APP_WS_URL: ${REACT_APP_WS_URL}
+      VITE_API_HOSTNAME: ${VITE_API_HOSTNAME}
+      VITE_SELF_HOSTED: true
+      VITE_WEBSOCKET_HOSTNAME: ${VITE_WEBSOCKET_HOSTNAME}
+      IS_CONTROLS_AUTOCOMPLETE_ENABLED: ${IS_CONTROLS_AUTOCOMPLETE_ENABLED}
+      IS_WORKFLOW_NODE_PREVIEW_ENABLED: ${IS_WORKFLOW_NODE_PREVIEW_ENABLED}
+      IS_ENHANCED_DIGEST_ENABLED: ${IS_ENHANCED_DIGEST_ENABLED}
     ports:
-      - 4200:4200
-    command: ['/bin/sh', '-c', 'pnpm run envsetup:docker && pnpm run start:static:build']
+      - 4000:4000
 
 volumes:
   mongodb: ~

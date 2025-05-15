@@ -1,5 +1,4 @@
-import { Injectable } from '@nestjs/common';
-import _ from 'lodash';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { TopicEntity, TopicRepository, TopicSubscribersRepository } from '@novu/dal';
 import {
   ISubscribersDefine,
@@ -9,13 +8,13 @@ import {
   TriggerRecipientsTypeEnum,
   TriggerRecipientSubscriber,
 } from '@novu/shared';
+import _ from 'lodash';
 
 import { PinoLogger } from 'nestjs-pino';
+import { IProcessSubscriberBulkJobDto } from '../../dtos';
 import { InstrumentUsecase } from '../../instrumentation';
-import { BadRequestException } from '@nestjs/common';
 import { SubscriberProcessQueueService } from '../../services/queues/subscriber-process-queue.service';
 import { TriggerMulticastCommand } from './trigger-multicast.command';
-import { IProcessSubscriberBulkJobDto } from '../../dtos';
 
 const LOG_CONTEXT = 'TriggerMulticastUseCase';
 const QUEUE_CHUNK_SIZE = Number(process.env.MULTICAST_QUEUE_CHUNK_SIZE) || 100;
@@ -54,7 +53,7 @@ export class TriggerMulticast {
 
     const topicIds = topics.map((topic) => topic._id);
     const singleSubscriberIds = Array.from(singleSubscribers.keys());
-    let subscribersList: ISubscribersDefine[] = [];
+    let subscribersList: { subscriberId: string; topics: Pick<TopicEntity, '_id' | 'key'>[] }[] = [];
     const getTopicDistinctSubscribersGenerator = this.topicSubscribersRepository.getTopicDistinctSubscribers({
       query: {
         _organizationId: organizationId,
@@ -72,7 +71,10 @@ export class TriggerMulticast {
         continue;
       }
 
-      subscribersList.push({ subscriberId: externalSubscriberId });
+      subscribersList.push({
+        subscriberId: externalSubscriberId,
+        topics: topics?.map((topic) => ({ _id: topic._id, key: topic.key })),
+      });
 
       if (subscribersList.length === SUBSCRIBER_TOPIC_DISTINCT_BATCH_SIZE) {
         await this.sendToProcessSubscriberService(command, subscribersList, SubscriberSourceEnum.TOPIC);
@@ -124,7 +126,7 @@ export class TriggerMulticast {
 
   public async sendToProcessSubscriberService(
     command: TriggerMulticastCommand,
-    subscribers: ISubscribersDefine[],
+    subscribers: { subscriberId: string; topics: Pick<TopicEntity, '_id' | 'key'>[] }[] | ISubscribersDefine[],
     _subscriberSource: SubscriberSourceEnum
   ) {
     if (subscribers.length === 0) {
@@ -198,7 +200,7 @@ export const validateSubscriberDefine = (recipient: ISubscribersDefine) => {
 
 export const mapSubscribersToJobs = (
   _subscriberSource: SubscriberSourceEnum,
-  subscribers: ISubscribersDefine[],
+  subscribers: { subscriberId: string; topics: Pick<TopicEntity, '_id' | 'key'>[] }[] | ISubscribersDefine[],
   command: TriggerMulticastCommand
 ): IProcessSubscriberBulkJobDto[] => {
   return subscribers.map((subscriber) => {
@@ -213,6 +215,7 @@ export const mapSubscribersToJobs = (
         payload: command.payload,
         overrides: command.overrides,
         subscriber,
+        topics: subscriber.topics,
         templateId: command.template._id,
         _subscriberSource,
         requestCategory: command.requestCategory,

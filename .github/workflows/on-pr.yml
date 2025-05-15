@@ -201,11 +201,18 @@ jobs:
     steps:
       - run: echo ${{ matrix.projectName }}
       - uses: actions/checkout@v4
+        name: Checkout with submodules
+        with:
+          submodules: true
+          token: ${{ secrets.SUBMODULES_TOKEN }}
+
       - uses: ./.github/actions/setup-project
         with:
           # Don't run redis and etc... for other unit tests
           slim: ${{ !contains(matrix.projectName, '@novu/api-service') && !contains(matrix.projectName, '@novu/worker') && !contains(matrix.projectName, '@novu/ws') && !contains(matrix.projectName, '@novu/inbound-mail')}}
+
       - uses: ./.github/actions/setup-redis-cluster
+
       - uses: mansagroup/nrwl-nx-action@v3
         name: Lint and build and test
         with:
