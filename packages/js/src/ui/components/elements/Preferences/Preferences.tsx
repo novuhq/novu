@@ -97,7 +97,10 @@ export const Preferences = () => {
 
   return (
     <div
-      class={style('preferencesContainer', 'nt-px-3 nt-py-4 nt-flex nt-flex-col nt-gap-1 nt-overflow-y-auto nt-h-full')}
+      class={style(
+        'preferencesContainer',
+        'nt-px-3 nt-py-4 nt-flex nt-flex-col nt-gap-1 nt-overflow-y-auto nt-h-full nt-pr-0 [scrollbar-gutter:stable]'
+      )}
     >
       <PreferencesRow
         iconKey="cogs"
