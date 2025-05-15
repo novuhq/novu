@@ -29,15 +29,13 @@ export class EvaluateApiRateLimit {
       maxLimitPerSecond = 3000;
       apiServiceLevel = ApiServiceLevelEnum.FREE;
     } else {
-      const result = await this.getApiRateLimitMaximum.execute(
+      [maxLimitPerSecond, apiServiceLevel] = await this.getApiRateLimitMaximum.execute(
         GetApiRateLimitMaximumCommand.create({
           apiRateLimitCategory: command.apiRateLimitCategory,
           environmentId: command.environmentId,
           organizationId: command.organizationId,
         })
       );
-      maxLimitPerSecond = result[0];
-      apiServiceLevel = result[1];
     }
 
     const windowDuration = this.getApiRateLimitAlgorithmConfig.default[ApiRateLimitAlgorithmEnum.WINDOW_DURATION];

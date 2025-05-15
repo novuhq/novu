@@ -172,10 +172,8 @@ export class Session {
       );
     }
 
-    const isKeylessInitialize = !command.applicationIdentifier;
-
     return {
-      ...(isKeylessInitialize ? { applicationIdentifier: environment.identifier } : {}),
+      applicationIdentifier: environment.identifier,
       token,
       totalUnreadCount,
       removeNovuBranding,
@@ -302,7 +300,7 @@ export class Session {
     const inAppTemplate = await this.messageTemplateRepository.create({
       type: StepTypeEnum.IN_APP,
       content: '',
-      avatar: 'https://dashboard-v2.novu.co/images/info.svg',
+      avatar: 'https://dashboard.novu.co/images/info.svg',
       _environmentId: environmentId,
       _organizationId: organizationId,
       _creatorId: userId,
@@ -412,7 +410,7 @@ export class Session {
             },
             avatar: {
               component: 'IN_APP_AVATAR',
-              placeholder: 'https://dashboard-v2.novu.co/images/info.svg',
+              placeholder: 'https://dashboard.novu.co/images/info.svg',
             },
             subject: {
               component: 'IN_APP_PRIMARY_SUBJECT',
@@ -568,7 +566,7 @@ export class Session {
         workflowId: workflow._id,
         newControlValues: {
           body: '{{payload.body}}',
-          avatar: 'https://dashboard-v2.novu.co/images/info.svg',
+          avatar: 'https://dashboard.novu.co/images/info.svg',
           subject: '{{payload.subject}}',
           primaryAction: null,
           secondaryAction: null,

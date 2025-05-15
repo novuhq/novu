@@ -426,7 +426,6 @@ export class InboxController {
   }
 
   @KeylessAccessible()
-  @ExternalApiAccessible()
   @UserAuthentication()
   @Post('/events')
   async keylessEvents(

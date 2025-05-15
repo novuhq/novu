@@ -85,7 +85,7 @@ export const inAppUiSchema: UiSchema = {
     },
     avatar: {
       component: UiComponentEnum.IN_APP_AVATAR,
-      placeholder: 'https://dashboard-v2.novu.co/images/info.svg',
+      placeholder: 'https://dashboard.novu.co/images/info.svg',
     },
     subject: {
       component: UiComponentEnum.IN_APP_SUBJECT,
