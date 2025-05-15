@@ -7,6 +7,7 @@ export type HttpClientOptions = {
 
 const DEFAULT_API_VERSION = 'v1';
 const DEFAULT_BACKEND_URL = 'https://api.novu.co';
+export const DEFAULT_API_URL = `${DEFAULT_BACKEND_URL}/${DEFAULT_API_VERSION}`;
 const DEFAULT_USER_AGENT = `${PACKAGE_NAME}@${PACKAGE_VERSION}`;
 
 export class HttpClient {

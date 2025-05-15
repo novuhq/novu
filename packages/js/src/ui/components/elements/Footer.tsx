@@ -7,6 +7,7 @@ import { cn } from '../../helpers';
 import { ArrowUpRight } from '../../icons/ArrowUpRight';
 import { CopyToClipboard } from '../primitives/CopyToClipboard';
 import { Tooltip } from '../primitives/Tooltip';
+import { DEFAULT_API_URL } from '../../../api/http-client';
 
 const stripes = `before:nt-content-[""] before:nt-absolute before:nt-inset-0 before:-nt-right-[calc(0+var(--stripes-size))] before:[mask-image:linear-gradient(transparent_0%,black)] before:nt-bg-dev-stripes-gradient before:nt-bg-[length:var(--stripes-size)_var(--stripes-size)] before:nt-animate-stripes before:hover:[animation-play-state:running]`;
 const commonAfter = 'after:nt-content-[""] after:nt-absolute after:nt-inset-0 after:-nt-top-12';
@@ -134,7 +135,7 @@ function getCurlCommand() {
   }
 
   return `curl -X POST \
-  http://localhost:3000/v1/inbox/events \
+  ${DEFAULT_API_URL}/inbox/events \
   -H 'Authorization: Keyless ${identifier}' \
   -H 'Content-Type: application/json' \
   -d '{
