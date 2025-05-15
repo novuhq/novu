@@ -8,6 +8,7 @@ import { ExternalApiAccessible } from '../auth/framework/external-api.decorator'
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { GetEnvironmentTagsDto } from './dtos/get-environment-tags.dto';
+import { SkipPermissionsCheck } from '@novu/application-generic';
 
 @ApiCommonResponses()
 @Controller({ path: `/environments`, version: '2' })
@@ -21,6 +22,7 @@ export class EnvironmentsController {
   @Get('/:environmentId/tags')
   @ApiResponse(GetEnvironmentTagsDto)
   @ExternalApiAccessible()
+  @SkipPermissionsCheck()
   async getEnvironmentTags(
     @UserSession() user: UserSessionData,
     @Param('environmentId') environmentId: string

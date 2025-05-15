@@ -18,8 +18,8 @@ import { ExternalApiAccessible } from '../auth/framework/external-api.decorator'
 import { ApiCommonResponses, ApiOkResponse, ApiResponse } from '../shared/framework/response.decorator';
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 import { UserSession } from '../shared/framework/user.decorator';
-import { RequiresPermissions } from '@novu/application-generic';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
+import { RequirePermissions } from '@novu/application-generic';
 
 @ApiCommonResponses()
 @RequireAuthentication()
@@ -40,8 +40,8 @@ export class NotificationsController {
   @ApiOperation({
     summary: 'Get notifications',
   })
-  @RequiresPermissions(PermissionsEnum.TOPIC_READ)
   @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.NOTIFICATION_READ)
   listNotifications(
     @UserSession() user: UserSessionData,
     @Query() query: ActivitiesRequestDto
@@ -93,6 +93,7 @@ export class NotificationsController {
   @Get('/stats')
   @ExternalApiAccessible()
   @SdkGroupName('Notifications.Stats')
+  @RequirePermissions(PermissionsEnum.NOTIFICATION_READ)
   getActivityStats(@UserSession() user: UserSessionData): Promise<ActivityStatsResponseDto> {
     return this.getActivityStatsUsecase.execute(
       GetActivityStatsCommand.create({
@@ -115,6 +116,7 @@ export class NotificationsController {
   })
   @SdkGroupName('Notifications.Stats')
   @SdkMethodName('graph')
+  @RequirePermissions(PermissionsEnum.NOTIFICATION_READ)
   getActivityGraphStats(
     @UserSession() user: UserSessionData,
     @Query('days') days = 32
@@ -135,6 +137,7 @@ export class NotificationsController {
     summary: 'Get notification',
   })
   @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.NOTIFICATION_READ)
   getNotification(
     @UserSession() user: UserSessionData,
     @Param('notificationId') notificationId: string

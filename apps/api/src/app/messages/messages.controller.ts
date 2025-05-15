@@ -20,6 +20,8 @@ import { RemoveMessagesByTransactionIdCommand } from './usecases/remove-messages
 import { DeleteMessageByTransactionIdRequestDto } from './dtos/remove-messages-by-transactionId-request.dto';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
+import { PermissionsEnum } from '@novu/shared';
+import { RequirePermissions } from '@novu/application-generic';
 
 @ApiCommonResponses()
 @RequireAuthentication()
@@ -41,6 +43,7 @@ export class MessagesController {
     summary: 'Get messages',
     description: 'Returns a list of messages, could paginate using the `page` query parameter',
   })
+  @RequirePermissions(PermissionsEnum.MESSAGE_READ)
   async getMessages(
     @UserSession() user: UserSessionData,
     @Query() query: GetMessagesRequestDto
@@ -71,6 +74,7 @@ export class MessagesController {
     description: 'Deletes a message entity from the Novu platform',
   })
   @ApiParam({ name: 'messageId', type: String, required: true })
+  @RequirePermissions(PermissionsEnum.MESSAGE_DELETE)
   async deleteMessage(
     @UserSession() user: UserSessionData,
     @Param() { messageId }: DeleteMessageParams
@@ -94,6 +98,7 @@ export class MessagesController {
   })
   @ApiParam({ name: 'transactionId', type: String, required: true })
   @SdkMethodName('deleteByTransactionId')
+  @RequirePermissions(PermissionsEnum.MESSAGE_DELETE)
   async deleteMessagesByTransactionId(
     @UserSession() user: UserSessionData,
     @Param() { transactionId }: { transactionId: string },

@@ -5,6 +5,7 @@ import {
   DalServiceHealthIndicator,
   ExternalApiAccessible,
   WorkflowQueueServiceHealthIndicator,
+  SkipPermissionsCheck,
 } from '@novu/application-generic';
 
 import { Body, Post } from '@nestjs/common/decorators';
@@ -57,6 +58,7 @@ export class HealthController {
   @DocumentationIgnore()
   @SdkMethodName('testIdempotency')
   @Post('/test-idempotency')
+  @SkipPermissionsCheck()
   async testIdempotency(@Body() body: IdempotencyTestingDto): Promise<IdempotenceTestingResponse> {
     if (process.env.NODE_ENV !== 'test') throw new NotFoundException();
 
@@ -83,6 +85,7 @@ export class HealthController {
   @ApiCreatedResponse({ type: IdempotenceTestingResponse })
   @SdkMethodName('generateRandomNumber')
   @Get('/test-idempotency')
+  @SkipPermissionsCheck()
   async generateRandomNumber(): Promise<IdempotenceTestingResponse> {
     if (process.env.NODE_ENV !== 'test') throw new NotFoundException();
 

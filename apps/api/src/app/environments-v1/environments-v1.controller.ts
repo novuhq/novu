@@ -34,6 +34,7 @@ import { UpdateEnvironmentCommand } from './usecases/update-environment/update-e
 import { UpdateEnvironment } from './usecases/update-environment/update-environment.usecase';
 import { ErrorDto } from '../../error-dto';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
+import { RequirePermissions, SkipPermissionsCheck } from '@novu/application-generic';
 
 /**
  * @deprecated use EnvironmentsControllerV2
@@ -61,6 +62,7 @@ export class EnvironmentsControllerV1 {
   @ApiResponse(EnvironmentResponseDto)
   @ExternalApiAccessible()
   @ApiExcludeEndpoint()
+  @SkipPermissionsCheck()
   async getCurrentEnvironment(@UserSession() user: UserSessionData): Promise<EnvironmentResponseDto> {
     return await this.getEnvironmentUsecase.execute(
       GetEnvironmentCommand.create({
@@ -80,6 +82,7 @@ export class EnvironmentsControllerV1 {
   @ProductFeature(ProductFeatureKeyEnum.MANAGE_ENVIRONMENTS)
   @SdkGroupName('Environments')
   @SdkMethodName('create')
+  @RequirePermissions(PermissionsEnum.ENVIRONMENT_CREATE)
   async createEnvironment(
     @UserSession() user: UserSessionData,
     @Body() body: CreateEnvironmentRequestDto
@@ -103,6 +106,7 @@ export class EnvironmentsControllerV1 {
   @ApiResponse(EnvironmentResponseDto, 200, true)
   @ExternalApiAccessible()
   @ApiExcludeEndpoint()
+  @SkipPermissionsCheck()
   async listMyEnvironments(@UserSession() user: UserSessionData): Promise<EnvironmentResponseDto[]> {
     return await this.getMyEnvironmentsUsecase.execute(
       GetMyEnvironmentsCommand.create({
@@ -119,6 +123,7 @@ export class EnvironmentsControllerV1 {
   })
   @ApiExcludeEndpoint()
   @ApiResponse(EnvironmentResponseDto)
+  @RequirePermissions(PermissionsEnum.ENVIRONMENT_CREATE)
   async updateMyEnvironment(
     @UserSession() user: UserSessionData,
     @Param('environmentId') environmentId: string,
@@ -147,6 +152,7 @@ export class EnvironmentsControllerV1 {
   @ExternalApiAccessible()
   @SdkGroupName('Environments.ApiKeys')
   @ApiExcludeEndpoint()
+  @RequirePermissions(PermissionsEnum.API_KEY_READ)
   async listOrganizationApiKeys(@UserSession() user: UserSessionData): Promise<ApiKey[]> {
     const command = GetApiKeysCommand.create({
       userId: user._id,
@@ -160,6 +166,7 @@ export class EnvironmentsControllerV1 {
   @Post('/api-keys/regenerate')
   @ApiResponse(ApiKey, 201, true)
   @ApiExcludeEndpoint()
+  @RequirePermissions(PermissionsEnum.API_KEY_CREATE)
   async regenerateOrganizationApiKeys(@UserSession() user: UserSessionData): Promise<ApiKey[]> {
     const command = GetApiKeysCommand.create({
       userId: user._id,
@@ -177,6 +184,7 @@ export class EnvironmentsControllerV1 {
   @ApiParam({ name: 'environmentId', type: String, required: true })
   @ProductFeature(ProductFeatureKeyEnum.MANAGE_ENVIRONMENTS)
   @ApiExcludeEndpoint()
+  @RequirePermissions(PermissionsEnum.ENVIRONMENT_DELETE)
   async deleteEnvironment(@UserSession() user: UserSessionData, @Param('environmentId') environmentId: string) {
     return await this.deleteEnvironmentUsecase.execute(
       DeleteEnvironmentCommand.create({

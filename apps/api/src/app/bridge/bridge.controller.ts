@@ -15,7 +15,13 @@ import {
 } from '@nestjs/common';
 
 import { HttpHeaderKeysEnum } from '@novu/framework/internal';
-import { ControlValuesLevelEnum, UserSessionData, WorkflowOriginEnum, WorkflowTypeEnum } from '@novu/shared';
+import {
+  ControlValuesLevelEnum,
+  UserSessionData,
+  WorkflowOriginEnum,
+  WorkflowTypeEnum,
+  PermissionsEnum,
+} from '@novu/shared';
 import { AnalyticsService, ExternalApiAccessible, UserSession } from '@novu/application-generic';
 import { ControlValuesRepository, EnvironmentRepository, NotificationTemplateRepository } from '@novu/dal';
 
@@ -32,6 +38,7 @@ import { GetBridgeStatusCommand } from './usecases/get-bridge-status/get-bridge-
 import { CreateBridgeRequestDto } from './dtos/create-bridge-request.dto';
 import { CreateBridgeResponseDto } from './dtos/create-bridge-response.dto';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
+import { RequirePermissions, SkipPermissionsCheck } from '@novu/application-generic';
 
 @Controller('/bridge')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -50,6 +57,7 @@ export class BridgeController {
   ) {}
 
   @Get('/status')
+  @SkipPermissionsCheck()
   async health(@UserSession() user: UserSessionData) {
     return this.getBridgeStatus.execute(
       GetBridgeStatusCommand.create({
@@ -59,6 +67,7 @@ export class BridgeController {
   }
 
   @Post('/preview/:workflowId/:stepId')
+  @RequirePermissions(PermissionsEnum.WORKFLOW_READ)
   async preview(
     @Param('workflowId') workflowId: string,
     @Param('stepId') stepId: string,
@@ -81,6 +90,7 @@ export class BridgeController {
 
   @Post('/sync')
   @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.WORKFLOW_CREATE)
   async createBridgesByDiscovery(
     @Headers(HttpHeaderKeysEnum.NOVU_ANONYMOUS) anonymousId: string,
     @UserSession() user: UserSessionData,
@@ -105,6 +115,7 @@ export class BridgeController {
 
   @Post('/diff')
   @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.WORKFLOW_READ)
   async createDiscoverySoft(
     @Headers(HttpHeaderKeysEnum.NOVU_ANONYMOUS) anonymousId: string,
     @UserSession() user: UserSessionData,
@@ -146,6 +157,7 @@ export class BridgeController {
 
   @Get('/controls/:workflowId/:stepId')
   @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.WORKFLOW_READ)
   async getControls(
     @UserSession() user: UserSessionData,
     @Param('workflowId') workflowId: string,
@@ -177,6 +189,7 @@ export class BridgeController {
 
   @Put('/controls/:workflowId/:stepId')
   @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.WORKFLOW_CREATE)
   async createControls(
     @Param('workflowId') workflowId: string,
     @Param('stepId') stepId: string,
@@ -197,6 +210,7 @@ export class BridgeController {
 
   @Post('/validate')
   @ExternalApiAccessible()
+  @SkipPermissionsCheck()
   async validateBridgeUrl(
     @UserSession() user: UserSessionData,
     @Body() body: ValidateBridgeUrlRequestDto

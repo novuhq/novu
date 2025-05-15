@@ -47,6 +47,8 @@ import { RemoveSubscriberCommand } from './usecases/remove-subscriber/remove-sub
 import { RemoveSubscriber } from './usecases/remove-subscriber/remove-subscriber.usecase';
 import { UpdateSubscriberPreferencesCommand } from './usecases/update-subscriber-preferences/update-subscriber-preferences.command';
 import { UpdateSubscriberPreferences } from './usecases/update-subscriber-preferences/update-subscriber-preferences.usecase';
+import { PermissionsEnum } from '@novu/shared';
+import { RequirePermissions } from '@novu/application-generic';
 
 @ThrottlerCategory(ApiRateLimitCategoryEnum.CONFIGURATION)
 @Controller({ path: '/subscribers', version: '2' })
@@ -72,6 +74,7 @@ export class SubscribersController {
   @SdkMethodName('search')
   @ApiOperation({ summary: 'Search for subscribers' })
   @ApiResponse(ListSubscribersResponseDto)
+  @RequirePermissions(PermissionsEnum.SUBSCRIBER_READ)
   async searchSubscribers(
     @UserSession() user: UserSessionData,
     @Query() query: ListSubscribersQueryDto
@@ -101,6 +104,7 @@ export class SubscribersController {
   })
   @ApiResponse(SubscriberResponseDto)
   @SdkMethodName('retrieve')
+  @RequirePermissions(PermissionsEnum.SUBSCRIBER_READ)
   async getSubscriber(
     @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string
@@ -122,6 +126,7 @@ export class SubscribersController {
   })
   @ApiResponse(SubscriberResponseDto, 201)
   @SdkMethodName('create')
+  @RequirePermissions(PermissionsEnum.SUBSCRIBER_CREATE)
   async createSubscriber(
     @UserSession() user: UserSessionData,
     @Body() body: CreateSubscriberRequestDto
@@ -158,6 +163,7 @@ export class SubscribersController {
   })
   @ApiResponse(SubscriberResponseDto)
   @SdkMethodName('patch')
+  @RequirePermissions(PermissionsEnum.SUBSCRIBER_UPDATE)
   async patchSubscriber(
     @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string,
@@ -182,6 +188,7 @@ export class SubscribersController {
     description: 'Deletes a subscriber entity from the Novu platform',
   })
   @SdkMethodName('delete')
+  @RequirePermissions(PermissionsEnum.SUBSCRIBER_DELETE)
   async removeSubscriber(
     @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string
@@ -204,6 +211,7 @@ export class SubscribersController {
   @ApiResponse(GetSubscriberPreferencesDto)
   @SdkGroupName('Subscribers.Preferences')
   @SdkMethodName('list')
+  @RequirePermissions(PermissionsEnum.SUBSCRIBER_READ)
   async getSubscriberPreferences(
     @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string
@@ -226,6 +234,7 @@ export class SubscribersController {
   @ApiResponse(GetSubscriberPreferencesDto)
   @SdkGroupName('Subscribers.Preferences')
   @SdkMethodName('update')
+  @RequirePermissions(PermissionsEnum.SUBSCRIBER_UPDATE)
   async updateSubscriberPreferences(
     @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string,
@@ -252,6 +261,7 @@ export class SubscribersController {
   @ApiResponse(ListTopicSubscriptionsResponseDto)
   @SdkGroupName('Subscribers.Topics')
   @SdkMethodName('list')
+  @RequirePermissions(PermissionsEnum.SUBSCRIBER_READ)
   async listSubscriberTopics(
     @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string,

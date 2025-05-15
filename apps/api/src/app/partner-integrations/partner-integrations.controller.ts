@@ -28,6 +28,8 @@ import { UpdateVercelIntegration } from './usecases/update-vercel-integration/up
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ProcessVercelWebhook } from './usecases/process-vercel-webhook/process-vercel-webhook.usecase';
 import { ProcessVercelWebhookCommand } from './usecases/process-vercel-webhook/process-vercel-webhook.command';
+import { PermissionsEnum } from '@novu/shared';
+import { RequirePermissions } from '@novu/application-generic';
 
 @Controller('/partner-integrations')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -44,6 +46,7 @@ export class PartnerIntegrationsController {
 
   @Post('/vercel')
   @RequireAuthentication()
+  @RequirePermissions(PermissionsEnum.INTEGRATION_CREATE)
   async createVercelIntegration(
     @UserSession() user: UserSessionData,
     @Body() body: CreateVercelIntegrationRequestDto
@@ -61,6 +64,7 @@ export class PartnerIntegrationsController {
 
   @Put('/vercel')
   @RequireAuthentication()
+  @RequirePermissions(PermissionsEnum.INTEGRATION_UPDATE)
   async updateVercelIntegration(@UserSession() user: UserSessionData, @Body() body: UpdateVercelIntegrationRequestDto) {
     return await this.updateVercelIntegrationUsecase.execute(
       UpdateVercelIntegrationCommand.create({
@@ -75,6 +79,7 @@ export class PartnerIntegrationsController {
 
   @Get('/vercel/:configurationId')
   @RequireAuthentication()
+  @RequirePermissions(PermissionsEnum.INTEGRATION_READ)
   async getVercelIntegration(@UserSession() user: UserSessionData, @Param('configurationId') configurationId: string) {
     return await this.getVercelIntegrationUsecase.execute(
       GetVercelIntegrationCommand.create({
@@ -88,6 +93,7 @@ export class PartnerIntegrationsController {
 
   @Get('/vercel/:configurationId/projects')
   @RequireAuthentication()
+  @RequirePermissions(PermissionsEnum.INTEGRATION_READ)
   async getVercelProjects(
     @UserSession() user: UserSessionData,
     @Param('configurationId') configurationId: string,
