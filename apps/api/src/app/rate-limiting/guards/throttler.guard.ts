@@ -147,15 +147,22 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
      * The purpose of the dry run is to allow us to observe how
      * the rate limiting would behave without actually enforcing it.
      */
-    const isDryRun = isKeyless
-      ? false
-      : await this.featureFlagService.getFlag({
-          environment: { _id: environmentId } as EnvironmentEntity,
-          organization: { _id: organizationId } as OrganizationEntity,
-          user: { _id } as UserEntity,
-          key: FeatureFlagsKeysEnum.IS_API_RATE_LIMITING_DRY_RUN_ENABLED,
-          defaultValue: false,
-        });
+    const isDryRun = await this.featureFlagService.getFlag({
+      environment: { _id: environmentId } as EnvironmentEntity,
+      organization: { _id: organizationId } as OrganizationEntity,
+      user: { _id } as UserEntity,
+      key: FeatureFlagsKeysEnum.IS_API_RATE_LIMITING_DRY_RUN_ENABLED,
+      defaultValue: false,
+    });
+
+    const isKeylessDryRunFlag = await this.featureFlagService.getFlag({
+      environment: { _id: environmentId } as EnvironmentEntity,
+      organization: { _id: organizationId } as OrganizationEntity,
+      user: { _id, email: user?.email } as UserEntity,
+      key: FeatureFlagsKeysEnum.IS_API_RATE_LIMITING_KEYLESS_DRY_RUN_ENABLED,
+      defaultValue: false,
+    });
+    const isKeylessDryRun = isKeyless && isKeylessDryRunFlag;
 
     res.header(HttpResponseHeaderKeysEnum.RATELIMIT_REMAINING, remaining);
     res.header(HttpResponseHeaderKeysEnum.RATELIMIT_LIMIT, limit);
@@ -183,9 +190,9 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
       apiServiceLevel,
     };
 
-    if (isDryRun) {
+    if (isDryRun || isKeylessDryRun) {
       if (!success) {
-        this.logger.warn(`[Dry run] ${THROTTLED_EXCEPTION_MESSAGE}`);
+        this.logger.warn(`${isKeyless ? '[Dry run] [Keyless]' : '[Dry run]'} ${THROTTLED_EXCEPTION_MESSAGE}`);
       }
 
       return true;

@@ -50,6 +50,7 @@ import { GenerateUniqueApiKey } from '../../../environments-v1/usecases/generate
 import { CreateNovuIntegrationsCommand } from '../../../integrations/usecases/create-novu-integrations/create-novu-integrations.command';
 
 const ALLOWED_ORIGINS_REGEX = new RegExp(process.env.FRONT_BASE_URL || '');
+const KEYLESS_RETENTION_TIME_IN_HOURS = parseInt(process.env.KEYLESS_RETENTION_TIME_IN_HOURS || '', 10) || 24;
 
 @Injectable()
 export class Session {
@@ -232,7 +233,7 @@ export class Session {
       const now = new Date();
       const diffTimeInHours = differenceInHours(now, createdDateTimestamp);
 
-      if (diffTimeInHours > 24) {
+      if (diffTimeInHours > KEYLESS_RETENTION_TIME_IN_HOURS) {
         return true;
       }
     } catch (error) {
