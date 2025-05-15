@@ -2,9 +2,7 @@ import { createMemo, Index, Show } from 'solid-js';
 
 import { ChannelPreference, Preference } from '../../../../types';
 import { PreferencesListSkeleton } from './PreferencesListSkeleton';
-import { RouteFill as DefaultRouteFill } from '../../../icons/RouteFill';
 import { PreferencesRow } from './PreferencesRow';
-import { IconRendererWrapper } from '../../shared/IconRendererWrapper';
 
 export const DefaultPreferences = (props: {
   workflowPreferences?: Preference[];
