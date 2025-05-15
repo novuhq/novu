@@ -13,8 +13,6 @@ import { DEFAULT_REFERRER, DEFAULT_TARGET, getTagsFromTab } from '../helpers';
 import { useNovuEvent } from '../helpers/useNovuEvent';
 import { NotificationStatus, PreferencesFilter, RouterPush, Tab } from '../types';
 
-const NOVU_APP_ID_KEY = 'novu_keyless_application_identifier';
-
 type InboxContextType = {
   setStatus: (status: NotificationStatus) => void;
   status: Accessor<NotificationStatus>;
@@ -127,12 +125,12 @@ export const InboxProvider = (props: InboxProviderProps) => {
       if (!data) {
         return;
       }
-      const identifier = window.localStorage.getItem(NOVU_APP_ID_KEY);
+      const identifier = window.localStorage.getItem('novu_keyless_application_identifier');
 
       setHideBranding(data.removeNovuBranding);
       setIsDevelopmentMode(data.isDevelopmentMode);
       setMaxSnoozeDurationHours(data.maxSnoozeDurationHours);
-      setIsKeyless(!!data.applicationIdentifier || !!identifier?.startsWith('pk_keyless_'));
+      setIsKeyless(!data.applicationIdentifier || !!identifier?.startsWith('pk_keyless_'));
       setApplicationIdentifier(data.applicationIdentifier ?? null);
     },
   });

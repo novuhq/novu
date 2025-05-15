@@ -2,8 +2,6 @@ import { NovuEventEmitter } from '../event-emitter';
 import { InitializeSessionArgs } from './types';
 import type { InboxService } from '../api';
 
-const NOVU_APP_ID_KEY = 'novu_keyless_application_identifier';
-
 export class Session {
   #emitter: NovuEventEmitter;
   #inboxService: InboxService;
@@ -37,7 +35,7 @@ export class Session {
 
   private getStoredApplicationIdentifier(): string | null {
     if (typeof window !== 'undefined' && window.localStorage) {
-      return window.localStorage.getItem(NOVU_APP_ID_KEY);
+      return window.localStorage.getItem('novu_keyless_application_identifier');
     }
 
     return null;
@@ -45,7 +43,7 @@ export class Session {
 
   private storeApplicationIdentifier(identifier: string): void {
     if (typeof window !== 'undefined' && window.localStorage) {
-      window.localStorage.setItem(NOVU_APP_ID_KEY, identifier);
+      window.localStorage.setItem('novu_keyless_application_identifier', identifier);
     }
   }
 
@@ -73,9 +71,12 @@ export class Session {
         subscriber,
       });
 
-      // Check if the response's applicationIdentifier starts with pk_keyless_
       if (response?.applicationIdentifier?.startsWith('pk_keyless_')) {
         this.storeApplicationIdentifier(response.applicationIdentifier);
+      }
+
+      if (!response?.applicationIdentifier?.startsWith('pk_keyless_')) {
+        this.storeApplicationIdentifier('');
       }
 
       this.#emitter.emit('session.initialize.resolved', { args: this.#options, data: response });
