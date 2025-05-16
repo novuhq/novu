@@ -57,7 +57,7 @@ export type BaseProps = {
   localization?: Localization;
   tabs?: Array<Tab>;
   preferencesFilter?: PreferencesFilter;
-  containerElement?: Node | null;
+  container?: Node | null;
   routerPush?: RouterPush;
 } & (
   | {

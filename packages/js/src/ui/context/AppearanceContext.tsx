@@ -21,12 +21,12 @@ type AppearanceContextType = {
   icons: Accessor<IconOverrides>;
   appearanceKeyToCssInJsClass: Record<string, string>;
   id: Accessor<string>;
-  containerElement: Accessor<Node | null | undefined>;
+  container: Accessor<Node | null | undefined>;
 };
 
 const AppearanceContext = createContext<AppearanceContextType | undefined>(undefined);
 
-type AppearanceProviderProps = ParentProps & { appearance?: Appearance; containerElement?: Node | null | undefined } & {
+type AppearanceProviderProps = ParentProps & { appearance?: Appearance; container?: Node | null | undefined } & {
   id: string;
 };
 
@@ -51,10 +51,10 @@ export const AppearanceProvider = (props: AppearanceProviderProps) => {
     return { ...baseElements, ...(props.appearance?.elements || {}) };
   });
 
-  const containerElement = () => props.containerElement;
+  const container = () => props.container;
 
   onMount(() => {
-    const root = props.containerElement instanceof ShadowRoot ? props.containerElement : document;
+    const root = props.container instanceof ShadowRoot ? props.container : document;
     const el = root.getElementById(props.id);
     if (el) {
       setStyleElement(el as HTMLStyleElement);
@@ -62,7 +62,7 @@ export const AppearanceProvider = (props: AppearanceProviderProps) => {
       return;
     }
 
-    const stylesContainer = props.containerElement ?? document.head;
+    const stylesContainer = props.container ?? document.head;
     const styleEl = document.createElement('style');
     styleEl.id = props.id;
 
@@ -137,7 +137,7 @@ export const AppearanceProvider = (props: AppearanceProviderProps) => {
         icons,
         appearanceKeyToCssInJsClass: store.appearanceKeyToCssInJsClass, // stores are reactive
         id,
-        containerElement,
+        container,
       }}
     >
       {props.children}

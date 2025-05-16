@@ -38,8 +38,8 @@ const TooltipContentBody = (props: TooltipContentProps) => {
 type TooltipContentProps = JSX.IntrinsicElements['div'] & { appearanceKey?: AppearanceKey };
 export const TooltipContent = (props: TooltipContentProps) => {
   const { open } = useTooltip();
-  const { containerElement } = useAppearance();
-  const portalContainer = () => containerElement() ?? document.body;
+  const { container } = useAppearance();
+  const portalContainer = () => container() ?? document.body;
 
   return (
     <Show when={open()}>

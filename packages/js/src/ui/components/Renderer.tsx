@@ -68,7 +68,7 @@ type RendererProps = {
   preferencesFilter?: PreferencesFilter;
   routerPush?: RouterPush;
   novu?: Novu;
-  containerElement?: Node | null | undefined;
+  container?: Node | null | undefined;
 };
 
 export const Renderer = (props: RendererProps) => {
@@ -76,7 +76,7 @@ export const Renderer = (props: RendererProps) => {
 
   onMount(() => {
     const id = NOVU_DEFAULT_CSS_ID;
-    const root = props.containerElement instanceof ShadowRoot ? props.containerElement : document;
+    const root = props.container instanceof ShadowRoot ? props.container : document;
     const el = root.getElementById(id);
     if (el) {
       return;
@@ -86,7 +86,7 @@ export const Renderer = (props: RendererProps) => {
     styleEl.id = id;
     styleEl.innerHTML = css;
 
-    const stylesContainer = props.containerElement ?? document.head;
+    const stylesContainer = props.container ?? document.head;
     stylesContainer.insertBefore(styleEl, stylesContainer.firstChild);
 
     onCleanup(() => {
@@ -97,11 +97,7 @@ export const Renderer = (props: RendererProps) => {
   return (
     <NovuProvider options={props.options} novu={props.novu}>
       <LocalizationProvider localization={props.localization}>
-        <AppearanceProvider
-          id={props.novuUI.id}
-          appearance={props.appearance}
-          containerElement={props.containerElement}
-        >
+        <AppearanceProvider id={props.novuUI.id} appearance={props.appearance} container={props.container}>
           <FocusManagerProvider>
             <InboxProvider tabs={props.tabs} preferencesFilter={props.preferencesFilter} routerPush={props.routerPush}>
               <CountProvider>

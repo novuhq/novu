@@ -7,7 +7,7 @@ interface FocusTrapOptions {
 }
 
 function createFocusTrap({ element, enabled }: FocusTrapOptions) {
-  const { containerElement } = useAppearance();
+  const { container } = useAppearance();
 
   createEffect(() => {
     const trapElement = element();
@@ -30,8 +30,8 @@ function createFocusTrap({ element, enabled }: FocusTrapOptions) {
       const firstFocusableElement = focusableElements[0];
       const lastFocusableElement = focusableElements[focusableElements.length - 1];
 
-      const container = containerElement();
-      const root = container instanceof ShadowRoot ? container : document;
+      const containerElement = container();
+      const root = containerElement instanceof ShadowRoot ? containerElement : document;
       if (event.shiftKey) {
         // If Shift + Tab is pressed, move focus to the previous focusable element
         if (root.activeElement === firstFocusableElement) {

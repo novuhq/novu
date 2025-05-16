@@ -41,7 +41,7 @@ type PopoverContentProps = JSX.IntrinsicElements['div'] & { appearanceKey?: Appe
 export const PopoverContent = (props: PopoverContentProps) => {
   const { open, onClose, reference, floating } = usePopover();
   const { active } = useFocusManager();
-  const { containerElement } = useAppearance();
+  const { container } = useAppearance();
 
   const handleClickOutside: EventListener = (e) => {
     // Don't count the trigger as outside click
@@ -49,12 +49,12 @@ export const PopoverContent = (props: PopoverContentProps) => {
       return;
     }
 
-    const container = containerElement();
+    const containerElement = container();
 
     if (
       active() !== floating() ||
       floating()?.contains(e.target as Node) ||
-      (container && (e.target as Element).shadowRoot === container)
+      (containerElement && (e.target as Element).shadowRoot === containerElement)
     ) {
       return;
     }
@@ -74,13 +74,13 @@ export const PopoverContent = (props: PopoverContentProps) => {
 
   onMount(() => {
     document.body.addEventListener('click', handleClickOutside);
-    containerElement()?.addEventListener('click', handleClickOutside);
+    container()?.addEventListener('click', handleClickOutside);
     document.body.addEventListener('keydown', handleEscapeKey);
   });
 
   onCleanup(() => {
     document.body.removeEventListener('click', handleClickOutside);
-    containerElement()?.removeEventListener('click', handleClickOutside);
+    container()?.removeEventListener('click', handleClickOutside);
     document.body.removeEventListener('keydown', handleEscapeKey);
   });
 

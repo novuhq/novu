@@ -10,13 +10,13 @@ export const useKeyboardNavigation = ({
   setActiveTab: Setter<string>;
   tabsContainer: Accessor<HTMLDivElement | undefined>;
 }) => {
-  const { containerElement } = useAppearance();
+  const { container } = useAppearance();
   const [keyboardNavigation, setKeyboardNavigation] = createSignal(false);
 
   const getRoot = () => {
-    const container = containerElement();
+    const containerElement = container();
 
-    return container instanceof ShadowRoot ? container : document;
+    return containerElement instanceof ShadowRoot ? containerElement : document;
   };
 
   createEffect(() => {

@@ -67,7 +67,7 @@ export const NovuUI = ({ options, novu, children }: RendererProps) => {
     const parentShadowRoot = findParentShadowRoot(shadowRootDetector.current);
     const instance = new NovuUIClass({
       ...optionsRef.current,
-      containerElement: optionsRef.current.containerElement ?? parentShadowRoot,
+      container: optionsRef.current.container ?? parentShadowRoot,
     });
     setNovuUI(instance);
 
@@ -82,7 +82,7 @@ export const NovuUI = ({ options, novu, children }: RendererProps) => {
     }
 
     const parentShadowRoot = findParentShadowRoot(shadowRootDetector.current);
-    novuUI.updateContainerElement(options.containerElement ?? parentShadowRoot);
+    novuUI.updateContainer(options.container ?? parentShadowRoot);
     novuUI.updateAppearance(adaptedAppearanceForUpdate);
     novuUI.updateLocalization(options.localization);
     novuUI.updateTabs(options.tabs);

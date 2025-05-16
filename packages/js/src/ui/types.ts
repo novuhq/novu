@@ -88,7 +88,7 @@ export type Theme = {
 export type Appearance = Theme & { baseTheme?: Theme | Theme[] };
 
 export type BaseNovuProviderProps = {
-  containerElement?: Node | string | null;
+  container?: Node | string | null;
   appearance?: Appearance;
   localization?: Localization;
   options: NovuOptions;

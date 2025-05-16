@@ -17,8 +17,8 @@ export type NovuUIOptions = NovuProviderProps;
 export type BaseNovuUIOptions = BaseNovuProviderProps;
 export class NovuUI {
   #dispose: { (): void } | null = null;
-  #containerElement: Accessor<Node | null | undefined>;
-  #setContainerElement: Setter<Node | null | undefined>;
+  #container: Accessor<Node | null | undefined>;
+  #setContainer: Setter<Node | null | undefined>;
   #rootElement: HTMLElement;
   #mountedElements;
   #setMountedElements;
@@ -46,7 +46,7 @@ export class NovuUI {
     const [tabs, setTabs] = createSignal(props.tabs ?? []);
     const [preferencesFilter, setPreferencesFilter] = createSignal(props.preferencesFilter);
     const [routerPush, setRouterPush] = createSignal(props.routerPush);
-    const [containerElement, setContainerElement] = createSignal(this.#getContainerElement(props.containerElement));
+    const [container, setContainer] = createSignal(this.#getContainerElement(props.container));
     this.#mountedElements = mountedElements;
     this.#setMountedElements = setMountedElements;
     this.#appearance = appearance;
@@ -62,22 +62,22 @@ export class NovuUI {
     this.#predefinedNovu = props.novu;
     this.#preferencesFilter = preferencesFilter;
     this.#setPreferencesFilter = setPreferencesFilter;
-    this.#containerElement = containerElement;
-    this.#setContainerElement = setContainerElement;
+    this.#container = container;
+    this.#setContainer = setContainer;
 
     this.#mountComponentRenderer();
   }
 
-  #getContainerElement(containerElement?: Node | string | null): Node | null | undefined {
-    if (containerElement === null || containerElement === undefined) {
-      return containerElement;
+  #getContainerElement(container?: Node | string | null): Node | null | undefined {
+    if (container === null || container === undefined) {
+      return container;
     }
 
-    if (typeof containerElement === 'string') {
-      return document.querySelector(containerElement) ?? document.getElementById(containerElement);
+    if (typeof container === 'string') {
+      return document.querySelector(container) ?? document.getElementById(container);
     }
 
-    return containerElement;
+    return container;
   }
 
   #mountComponentRenderer(): void {
@@ -88,8 +88,8 @@ export class NovuUI {
     this.#rootElement = document.createElement('div');
     this.#rootElement.setAttribute('id', `novu-ui-${this.id}`);
 
-    const containerElement = this.#containerElement();
-    (containerElement ?? document.body).appendChild(this.#rootElement);
+    const container = this.#container();
+    (container ?? document.body).appendChild(this.#rootElement);
 
     const dispose = render(
       () => (
@@ -103,7 +103,7 @@ export class NovuUI {
           preferencesFilter={this.#preferencesFilter()}
           routerPush={this.#routerPush()}
           novu={this.#predefinedNovu}
-          containerElement={this.#containerElement()}
+          container={this.#container()}
         />
       ),
       this.#rootElement
@@ -178,8 +178,8 @@ export class NovuUI {
     this.#setRouterPush(() => routerPush);
   }
 
-  updateContainerElement(containerElement?: Node | string | null) {
-    this.#setContainerElement(this.#getContainerElement(containerElement));
+  updateContainer(container?: Node | string | null) {
+    this.#setContainer(this.#getContainerElement(container));
   }
 
   unmount(): void {
