@@ -59,6 +59,7 @@ export type BaseProps = {
   tabs?: Array<Tab>;
   preferencesFilter?: PreferencesFilter;
   preferenceGroups?: PreferenceGroups;
+  container?: Node | null;
   routerPush?: RouterPush;
 } & (
   | {

@@ -1,6 +1,6 @@
 import { JSX, onCleanup, onMount, Show, splitProps } from 'solid-js';
 import { Portal } from 'solid-js/web';
-import { useFocusManager } from '../../../context';
+import { useAppearance, useFocusManager } from '../../../context';
 import { useStyle } from '../../../helpers';
 import type { AppearanceKey } from '../../../types';
 import { Root } from '../../elements';
@@ -38,12 +38,14 @@ const TooltipContentBody = (props: TooltipContentProps) => {
 type TooltipContentProps = JSX.IntrinsicElements['div'] & { appearanceKey?: AppearanceKey };
 export const TooltipContent = (props: TooltipContentProps) => {
   const { open } = useTooltip();
+  const { container } = useAppearance();
+  const portalContainer = () => container() ?? document.body;
 
   return (
     <Show when={open()}>
       {/* we can safely use portal to document.body here as this element 
       won't be focused and close other portals (outside solid world) as a result */}
-      <Portal>
+      <Portal mount={portalContainer()}>
         <Root>
           <TooltipContentBody {...props} />
         </Root>

@@ -139,7 +139,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
                 {(subject) => (
                   <Markdown
                     appearanceKey="notificationSubject"
-                    class="nt-text-start nt-font-medium"
+                    class="nt-text-start nt-font-medium nt-whitespace-pre-wrap [word-break:break-word]"
                     strongAppearanceKey="notificationSubject__strong"
                   >
                     {subject()}
@@ -156,7 +156,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
               <Markdown
                 appearanceKey="notificationBody"
                 strongAppearanceKey="notificationBody__strong"
-                class="nt-text-start nt-whitespace-pre-wrap nt-text-foreground-alpha-600"
+                class="nt-text-start nt-whitespace-pre-wrap nt-text-foreground-alpha-600 [word-break:break-word]"
               >
                 {props.notification.body}
               </Markdown>

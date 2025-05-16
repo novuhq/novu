@@ -49,7 +49,10 @@ export function ActivityTable({
 
   useEffect(() => {
     if (error) {
-      showErrorToast(error instanceof Error ? error.message : 'There was an error loading the activities.', 'Failed to fetch activities');
+      showErrorToast(
+        error instanceof Error ? error.message : 'There was an error loading the activities.',
+        'Failed to fetch activities'
+      );
     }
   }, [error]);
 

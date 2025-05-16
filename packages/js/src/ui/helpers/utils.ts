@@ -248,3 +248,5 @@ export const parseElements = (elements: Elements) => {
 export const getTagsFromTab = (tab?: Tab) => {
   return tab?.filter?.tags || tab?.value || [];
 };
+
+export const NOVU_DEFAULT_CSS_ID = 'novu-default-css';
