@@ -1,6 +1,6 @@
 import { BadRequestException, Inject, Injectable, NotFoundException, Scope } from '@nestjs/common';
 import { EnvironmentRepository, OrganizationRepository } from '@novu/dal';
-import { LogDecorator, SvixClient } from '@novu/application-generic';
+import { LogDecorator, generateWebhookAppId, SvixClient } from '@novu/application-generic';
 
 import { CreateWebhookPortalCommand } from './create-webhook-portal.command';
 import { CreateWebhookPortalResponseDto } from '../../dtos/create-webhook-portal-token-response.dto';
@@ -38,7 +38,7 @@ export class CreateWebhookPortalUsecase {
     try {
       const app = await this.svix.application.create({
         name: organization.name,
-        uid: `${command.organizationId}-${command.environmentId}`,
+        uid: generateWebhookAppId(command.organizationId, command.environmentId),
         metadata: {
           environmentId: command.environmentId,
           organizationId: command.organizationId,

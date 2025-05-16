@@ -23,7 +23,7 @@ export class DeleteWorkflowUseCase {
     private controlValuesRepository: ControlValuesRepository,
     private deletePreferencesUsecase: DeletePreferencesUseCase,
     @Optional()
-    private sendWebhookMessage: SendWebhookMessage
+    private sendWebhookMessage?: SendWebhookMessage
   ) {}
 
   @InstrumentUsecase()
@@ -42,7 +42,7 @@ export class DeleteWorkflowUseCase {
         eventType: WebhookEventEnum.WORKFLOW_DELETED,
         objectType: WebhookObjectTypeEnum.WORKFLOW,
         payload: {
-          object: workflowEntity,
+          object: workflowEntity as unknown as Record<string, unknown>,
         },
         organizationId: command.organizationId,
         environmentId: command.environmentId,

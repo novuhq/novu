@@ -54,7 +54,7 @@ export class UpsertWorkflowUseCase {
     private upsertControlValuesUseCase: UpsertControlValuesUseCase,
     private analyticsService: AnalyticsService,
     @Optional()
-    private sendWebhookMessage: SendWebhookMessage
+    private sendWebhookMessage?: SendWebhookMessage
   ) {}
 
   @InstrumentUsecase()
@@ -102,8 +102,8 @@ export class UpsertWorkflowUseCase {
           eventType: WebhookEventEnum.WORKFLOW_UPDATED,
           objectType: WebhookObjectTypeEnum.WORKFLOW,
           payload: {
-            object: updatedWorkflow,
-            previousObject: existingWorkflow,
+            object: updatedWorkflow as unknown as Record<string, unknown>,
+            previousObject: existingWorkflow as unknown as Record<string, unknown>,
           },
           organizationId: command.user.organizationId,
           environmentId: command.user.environmentId,
@@ -113,7 +113,7 @@ export class UpsertWorkflowUseCase {
           eventType: WebhookEventEnum.WORKFLOW_CREATED,
           objectType: WebhookObjectTypeEnum.WORKFLOW,
           payload: {
-            object: updatedWorkflow,
+            object: updatedWorkflow as unknown as Record<string, unknown>,
           },
           organizationId: command.user.organizationId,
           environmentId: command.user.environmentId,

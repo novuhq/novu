@@ -1,13 +1,11 @@
 import { Inject, Injectable, Scope } from '@nestjs/common';
-import shortid from 'shortid';
-
 import { PinoLogger } from 'nestjs-pino';
-import { EnvironmentRepository } from '@novu/dal';
+import { EnvironmentEntity, EnvironmentRepository } from '@novu/dal';
+import { shortId } from '../../../utils/generate-id';
 import { SendWebhookMessageCommand } from './send-webhook-message.command';
 import { WrapperDto } from '../../dtos/webhook-payload.dto';
 import { SvixClient } from '../../services';
-
-const LOG_CONTEXT = 'SendWebhookMessageUseCase';
+import { generateWebhookAppId } from '../../utils/app-id';
 
 @Injectable()
 export class SendWebhookMessage {
@@ -16,7 +14,7 @@ export class SendWebhookMessage {
     private logger: PinoLogger,
     private environmentRepository: EnvironmentRepository
   ) {
-    this.logger.setContext(LOG_CONTEXT);
+    this.logger.setContext(this.constructor.name);
   }
 
   async execute(command: SendWebhookMessageCommand): Promise<{ eventId: string } | undefined> {
@@ -24,7 +22,7 @@ export class SendWebhookMessage {
       return;
     }
 
-    const eventId = `evt_${shortid.generate()}`;
+    const eventId = `evt_${shortId()}`;
     const environment = await this.environmentRepository.findOne(
       {
         _id: command.environmentId,
@@ -55,7 +53,7 @@ export class SendWebhookMessage {
 
     try {
       this.logger.debug(
-        `Attempting to send webhook ${command.eventType} for application ${command.organizationId}-${command.environmentId}, Event ID: ${eventId}`
+        `Attempting to send webhook ${command.eventType} for application ${generateWebhookAppId(command.organizationId, command.environmentId)}, Event ID: ${eventId}`
       );
 
       const message = await this.svix.message.create(appId, {
@@ -71,9 +69,10 @@ export class SendWebhookMessage {
       return { eventId };
     } catch (error: any) {
       this.logger.error(
-        `Failed to send webhook ${command.eventType} for application ${
-          command.organizationId
-        }-${command.environmentId}. Error: ${error.message}, Event ID: ${eventId}`,
+        `Failed to send webhook ${command.eventType} for application ${generateWebhookAppId(
+          command.organizationId,
+          command.environmentId
+        )}. Error: ${error.message}, Event ID: ${eventId}`,
         error.stack
       );
 

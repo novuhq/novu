@@ -155,7 +155,7 @@ export const SideNavigation = () => {
                 <RiKey2Line className="size-4" />
                 <span>API Keys</span>
               </NavigationLink>
-              {isWebhooksManagementEnabled && !IS_SELF_HOSTED && (
+              {isWebhooksManagementEnabled && (
                 <NavigationLink to={buildRoute(ROUTES.WEBHOOKS, { environmentSlug: currentEnvironment?.slug ?? '' })}>
                   <RiSignalTowerLine className="size-4" />
                   <span>Webhooks</span>

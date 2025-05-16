@@ -1,11 +1,9 @@
 import { BadRequestException, Inject, Injectable, NotFoundException, Scope } from '@nestjs/common';
 import { EnvironmentRepository } from '@novu/dal';
-import { LogDecorator, SvixClient } from '@novu/application-generic';
+import { LogDecorator, generateWebhookAppId, SvixClient } from '@novu/application-generic';
 
 import { GetWebhookPortalTokenCommand } from './get-webhook-portal-token.command';
 import { GetWebhookPortalTokenResponseDto } from '../../dtos/get-webhook-portal-token-response.dto';
-
-const LOG_CONTEXT = 'GetWebhookPortalTokenUsecase';
 
 @Injectable()
 export class GetWebhookPortalTokenUsecase {
@@ -33,14 +31,14 @@ export class GetWebhookPortalTokenUsecase {
 
     try {
       const svixResponse = await this.svix.authentication.appPortalAccess(
-        `${command.organizationId}-${command.environmentId}`,
+        generateWebhookAppId(command.organizationId, command.environmentId),
         {}
       );
 
       return {
         url: svixResponse.url,
         token: svixResponse.token,
-        appId: `${command.organizationId}-${command.environmentId}`,
+        appId: generateWebhookAppId(command.organizationId, command.environmentId),
       };
     } catch (error) {
       if (error.code === 404) {

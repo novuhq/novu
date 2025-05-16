@@ -17,7 +17,7 @@ export class PatchWorkflowUsecase {
     private notificationTemplateRepository: NotificationTemplateRepository,
     private getWorkflowUseCase: GetWorkflowUseCase,
     @Optional()
-    private sendWebhookMessage: SendWebhookMessage
+    private sendWebhookMessage?: SendWebhookMessage
   ) {}
 
   async execute(command: PatchWorkflowCommand): Promise<WorkflowResponseDto> {
@@ -35,8 +35,8 @@ export class PatchWorkflowUsecase {
         eventType: WebhookEventEnum.WORKFLOW_UPDATED,
         objectType: WebhookObjectTypeEnum.WORKFLOW,
         payload: {
-          object: updatedWorkflow,
-          previousObject: persistedWorkflow,
+          object: updatedWorkflow as unknown as Record<string, unknown>,
+          previousObject: persistedWorkflow as unknown as Record<string, unknown>,
         },
         organizationId: command.user.organizationId,
         environmentId: command.user.environmentId,
