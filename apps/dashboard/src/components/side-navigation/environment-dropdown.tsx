@@ -26,9 +26,7 @@ export const EnvironmentDropdown = ({
         <SelectValue asChild>
           <div className="flex items-center gap-2">
             <EnvironmentBranchIcon environment={currentEnvironment} />
-            <TruncatedText className="text-foreground text-sm max-w-[190px]">
-              {currentEnvironment?.name}
-            </TruncatedText>
+            <TruncatedText className="text-foreground max-w-[190px] text-sm">{currentEnvironment?.name}</TruncatedText>
           </div>
         </SelectValue>
         <SelectIcon asChild>

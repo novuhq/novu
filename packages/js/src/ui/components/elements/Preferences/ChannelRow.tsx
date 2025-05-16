@@ -1,5 +1,5 @@
 import { JSX } from 'solid-js';
-import { ChannelType } from '../../../../types';
+import { ChannelPreference, ChannelType } from '../../../../types';
 import { useStyle } from '../../../helpers';
 import {
   Chat as DefaultChat,
@@ -9,28 +9,29 @@ import {
   Sms as DefaultSms,
 } from '../../../icons';
 import { AppearanceKey, IconKey } from '../../../types';
-import { Switch } from '../../primitives/Switch';
+import { Switch, SwitchState } from '../../primitives/Switch';
 import { IconRendererWrapper } from '../../shared/IconRendererWrapper';
-import { useAppearance } from '../../../context';
 
 type ChannelRowProps = {
-  channel: ChannelType;
-  enabled: boolean;
+  channel: { channel: ChannelType; state: SwitchState };
   channelIcon?: () => JSX.Element;
   workflowId?: string;
-  onChange: ({ channel, enabled, workflowId }: { workflowId?: string; channel: ChannelType; enabled: boolean }) => void;
+  onChange: (channels: ChannelPreference) => void;
 };
 
 export const ChannelRow = (props: ChannelRowProps) => {
   const style = useStyle();
 
   const updatePreference = async (enabled: boolean) => {
-    props.onChange({ channel: props.channel, enabled, workflowId: props.workflowId });
+    props.onChange({ [props.channel.channel]: enabled });
   };
 
   const onChange = async (checked: boolean) => {
     await updatePreference(checked);
   };
+
+  const state = () => props.channel.state;
+  const channel = () => props.channel.channel;
 
   return (
     <div
@@ -46,12 +47,12 @@ export const ChannelRow = (props: ChannelRowProps) => {
             'nt-p-1 nt-rounded-md nt-bg-neutral-alpha-25 nt-text-foreground-alpha-300'
           )}
         >
-          <ChannelIcon appearanceKey="channel__icon" channel={props.channel} class="nt-size-3" />
+          <ChannelIcon appearanceKey="channel__icon" channel={channel()} class="nt-size-3" />
         </div>
-        <span class={style('channelLabel', 'nt-text-sm nt-font-semibold')}>{getLabel(props.channel)}</span>
+        <span class={style('channelLabel', 'nt-text-sm nt-font-semibold')}>{getLabel(channel())}</span>
       </div>
       <div class={style('channelSwitchContainer', 'nt-flex nt-items-center')}>
-        <Switch checked={props.enabled} onChange={(checked) => onChange(checked)} />
+        <Switch state={state()} onChange={(newState) => onChange(newState === 'enabled')} />
       </div>
     </div>
   );

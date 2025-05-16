@@ -1,7 +1,7 @@
 import type { JSXElement } from 'solid-js';
 import type { Notification } from '../notifications';
 import { Novu } from '../novu';
-import type { NotificationFilter, NovuOptions } from '../types';
+import type { NotificationFilter, NovuOptions, Preference } from '../types';
 import { appearanceKeys } from './config';
 import { Localization } from './context/LocalizationContext';
 
@@ -71,7 +71,10 @@ export type IconKey =
   | 'push'
   | 'chat'
   | 'check'
-  | 'arrowDown';
+  | 'arrowDown'
+  | 'routeFill'
+  | 'info'
+  | 'nodeTree';
 
 export type IconRenderer = (el: HTMLDivElement, props: { class?: string }) => () => void;
 
@@ -88,11 +91,13 @@ export type Theme = {
 export type Appearance = Theme & { baseTheme?: Theme | Theme[] };
 
 export type BaseNovuProviderProps = {
+  container?: Node | string | null;
   appearance?: Appearance;
   localization?: Localization;
   options: NovuOptions;
   tabs?: Array<Tab>;
   preferencesFilter?: PreferencesFilter;
+  preferenceGroups?: PreferenceGroups;
   routerPush?: RouterPush;
   novu?: Novu;
 };
@@ -110,5 +115,14 @@ export enum NotificationStatus {
 }
 
 export type PreferencesFilter = Pick<NotificationFilter, 'tags'>;
+
+type PreferenceFilterFunction = (args: { preferences: Preference[] }) => Preference[];
+
+type PreferenceGroupFilter = (PreferencesFilter & { workflowIds?: string[] }) | PreferenceFilterFunction;
+
+export type PreferenceGroups = Array<{
+  name: string;
+  filter: PreferenceGroupFilter;
+}>;
 
 export { Localization, LocalizationKey } from './context/LocalizationContext';

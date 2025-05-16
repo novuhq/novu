@@ -118,7 +118,10 @@ export function ActivityLogs({
       setTimeout(checkAndUpdateTransaction, 1000);
     },
     onError: (error: Error) => {
-      showErrorToast(error.message || 'There was an error triggering the resend workflow.', 'Failed to trigger resend workflow');
+      showErrorToast(
+        error.message || 'There was an error triggering the resend workflow.',
+        'Failed to trigger resend workflow'
+      );
     },
   });
 
