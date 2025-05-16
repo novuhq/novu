@@ -38,13 +38,13 @@ export class HttpClient {
     this.headers.Authorization = `Bearer ${token}`;
   }
 
-  setKeylessHeader() {
-    const identifier = window.localStorage.getItem('novu_keyless_application_identifier');
-    if (!identifier || !identifier.startsWith('pk_keyless_')) {
+  setKeylessHeader(identifier?: string) {
+    const keylessAppIdentifier = identifier || window.localStorage.getItem('novu_keyless_application_identifier');
+    if (!keylessAppIdentifier || !keylessAppIdentifier.startsWith('pk_keyless_')) {
       return;
     }
 
-    this.headers['Novu-Application-Identifier'] = identifier;
+    this.headers['Novu-Application-Identifier'] = keylessAppIdentifier;
   }
 
   setHeaders(headers: Record<string, string>) {

@@ -33,32 +33,34 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
 
   constructor(options: NovuOptions) {
     this.#inboxService = new InboxService({
-      apiUrl: ('apiUrl' in options && options.apiUrl) || ('backendUrl' in options && options.backendUrl) || undefined,
-      userAgent: '__userAgent' in options ? options.__userAgent : undefined,
+      apiUrl: options.apiUrl || options.backendUrl,
+      userAgent: options.__userAgent,
     });
     this.#emitter = new NovuEventEmitter();
     this.#session = new Session(
-      {
-        applicationIdentifier: 'applicationIdentifier' in options ? options.applicationIdentifier : undefined,
-        subscriberHash: 'subscriberHash' in options ? options.subscriberHash : undefined,
-        subscriber: buildSubscriber(options),
-      },
+      options.applicationIdentifier
+        ? {
+            applicationIdentifier: options.applicationIdentifier,
+            subscriberHash: options.subscriberHash,
+            subscriber: buildSubscriber(options),
+          }
+        : {},
       this.#inboxService,
       this.#emitter
     );
     this.#session.initialize();
     this.notifications = new Notifications({
-      useCache: 'useCache' in options && options.useCache !== undefined ? options.useCache : true,
+      useCache: options.useCache ?? true,
       inboxServiceInstance: this.#inboxService,
       eventEmitterInstance: this.#emitter,
     });
     this.preferences = new Preferences({
-      useCache: 'useCache' in options && options.useCache !== undefined ? options.useCache : true,
+      useCache: options.useCache ?? true,
       inboxServiceInstance: this.#inboxService,
       eventEmitterInstance: this.#emitter,
     });
     this.socket = new Socket({
-      socketUrl: 'socketUrl' in options ? options.socketUrl : undefined,
+      socketUrl: options.socketUrl,
       eventEmitterInstance: this.#emitter,
       inboxServiceInstance: this.#inboxService,
     });
@@ -82,15 +84,16 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
 }
 
 function buildSubscriber(options: NovuOptions): Subscriber {
-  let subscriberObj: Subscriber;
-
-  if (!('subscriber' in options)) {
-    subscriberObj = { subscriberId: '' };
-  } else if (options.subscriber) {
-    subscriberObj = typeof options.subscriber === 'string' ? { subscriberId: options.subscriber } : options.subscriber;
-  } else {
-    subscriberObj = { subscriberId: options.subscriberId as string };
+  // subscriber object
+  if (options.subscriber) {
+    return typeof options.subscriber === 'string' ? { subscriberId: options.subscriber } : options.subscriber;
   }
 
-  return subscriberObj;
+  // subscriberId
+  if (options.subscriberId) {
+    return { subscriberId: options.subscriberId as string };
+  }
+
+  // missing - keyless subscriber, the api will generate a subscriberId
+  return { subscriberId: '' };
 }

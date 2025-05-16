@@ -83,47 +83,46 @@ const _DefaultInbox = (props: DefaultInboxProps) => {
 const DefaultInbox = withRenderer(_DefaultInbox);
 
 export const Inbox = React.memo((props: InboxProps) => {
-  const socketUrl = 'socketUrl' in props ? props.socketUrl : undefined;
-  const applicationIdentifier =
-    'applicationIdentifier' in props && props.applicationIdentifier ? props.applicationIdentifier : ''; // for keyless we provide an empty string, the api will generate a identifier
-  const subscriberHash = 'subscriberHash' in props ? props.subscriberHash : undefined;
-  const backendUrl = 'backendUrl' in props ? props.backendUrl : undefined;
-  const subscriber = buildSubscriber(props);
-  const { subscriberId, ...restProps } = props;
-
+  const { subscriberId, ...propsWithoutSubscriberId } = props;
+  const subscriber = buildSubscriber(props.subscriber, props.subscriberId);
+  const applicationIdentifier = props.applicationIdentifier ? props.applicationIdentifier : ''; // for keyless we provide an empty string, the api will generate a identifier
   const novu = useUnsafeNovu();
 
   if (novu) {
-    return <InboxChild {...restProps} applicationIdentifier={applicationIdentifier} subscriber={subscriber} />;
+    return (
+      <InboxChild {...propsWithoutSubscriberId} applicationIdentifier={applicationIdentifier} subscriber={subscriber} />
+    );
   }
 
   const providerProps = {
     applicationIdentifier,
-    subscriberHash,
-    backendUrl,
-    socketUrl,
+    subscriberHash: props.subscriberHash,
+    backendUrl: props.backendUrl,
+    socketUrl: props.socketUrl,
     subscriber,
   } satisfies StandardNovuOptions;
 
   return (
     <InternalNovuProvider {...providerProps} userAgentType="components">
-      <InboxChild {...restProps} applicationIdentifier={applicationIdentifier} subscriber={subscriber} />
+      <InboxChild {...propsWithoutSubscriberId} applicationIdentifier={applicationIdentifier} subscriber={subscriber} />
     </InternalNovuProvider>
   );
 });
 
 const InboxChild = React.memo((props: InboxProps) => {
-  const localization = 'localization' in props ? props.localization : undefined;
-  const appearance = 'appearance' in props ? props.appearance : undefined;
-  const tabs = 'tabs' in props ? props.tabs : undefined;
-  const preferencesFilter = 'preferencesFilter' in props ? props.preferencesFilter : undefined;
-  const routerPush = 'routerPush' in props ? props.routerPush : undefined;
-  const applicationIdentifier = 'applicationIdentifier' in props ? props.applicationIdentifier : undefined;
-  const subscriberId = 'subscriberId' in props ? props.subscriberId : undefined;
-  const subscriberHash = 'subscriberHash' in props ? props.subscriberHash : undefined;
-  const backendUrl = 'backendUrl' in props ? props.backendUrl : undefined;
-  const socketUrl = 'socketUrl' in props ? props.socketUrl : undefined;
-  const subscriber = 'subscriber' in props ? props.subscriber : undefined;
+  const {
+    localization,
+    appearance,
+    tabs,
+    preferencesFilter,
+    routerPush,
+    applicationIdentifier = '', // for keyless we provide an empty string, the api will generate a identifier
+    subscriberId,
+    subscriberHash,
+    backendUrl,
+    socketUrl,
+    subscriber,
+  } = props;
 
   const novu = useNovu();
 
@@ -139,7 +138,7 @@ const InboxChild = React.memo((props: InboxProps) => {
         subscriberHash,
         backendUrl,
         socketUrl,
-        subscriber: buildSubscriber(props),
+        subscriber: buildSubscriber(subscriber, subscriberId),
       },
     };
   }, [
@@ -198,17 +197,17 @@ function isWithChildrenProps(props: InboxProps): props is WithChildrenProps {
   return 'children' in props;
 }
 
-function buildSubscriber(options: InboxProps): Subscriber {
+function buildSubscriber(subscriber?: string | Subscriber | undefined, subscriberId?: string): Subscriber {
   // subscriber object
-  if ('subscriber' in options && options.subscriber) {
-    return typeof options.subscriber === 'string' ? { subscriberId: options.subscriber } : options.subscriber;
+  if (subscriber) {
+    return typeof subscriber === 'string' ? { subscriberId: subscriber } : subscriber;
   }
 
   // subscriberId
-  if ('subscriberId' in options) {
-    return { subscriberId: options.subscriberId as string };
+  if (subscriberId) {
+    return { subscriberId };
   }
 
-  // keyless subscriber - the api will generate a subscriberId
+  // missing - keyless subscriber, the api will generate a subscriberId
   return { subscriberId: '' };
 }

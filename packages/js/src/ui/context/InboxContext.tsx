@@ -121,7 +121,7 @@ export const InboxProvider = (props: InboxProviderProps) => {
 
   useNovuEvent({
     event: 'session.initialize.resolved',
-    eventHandler: async ({ data }) => {
+    eventHandler: ({ data }) => {
       if (!data) {
         return;
       }

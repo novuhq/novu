@@ -14,31 +14,20 @@ export type NovuProviderProps = NovuOptions & {
 const NovuContext = createContext<Novu | undefined>(undefined);
 
 export const NovuProvider = (props: NovuProviderProps) => {
-  const applicationIdentifier = 'applicationIdentifier' in props ? props.applicationIdentifier : undefined;
-  const subscriberHash = 'subscriberHash' in props ? props.subscriberHash : undefined;
-  const backendUrl = 'backendUrl' in props ? props.backendUrl : undefined;
-  const apiUrl = 'apiUrl' in props ? props.apiUrl : undefined;
-  const socketUrl = 'socketUrl' in props ? props.socketUrl : undefined;
-  const useCache = 'useCache' in props ? props.useCache : undefined;
-  const subscriber = 'subscriber' in props ? props.subscriber : undefined;
-  const subscriberId = 'subscriberId' in props ? props.subscriberId : undefined;
-  const subscriberObj = buildSubscriber(subscriberId, subscriber);
+  const { subscriberId, ...propsWithoutSubscriberId } = props;
+  const subscriberObj = buildSubscriber(subscriberId, props.subscriber);
+  const applicationIdentifier = propsWithoutSubscriberId.applicationIdentifier
+    ? propsWithoutSubscriberId.applicationIdentifier
+    : '';
 
-  const providerProps =
-    applicationIdentifier && subscriber
-      ? ({
-          applicationIdentifier,
-          subscriberHash,
-          backendUrl,
-          apiUrl,
-          socketUrl,
-          useCache,
-          subscriber: subscriberObj,
-        } satisfies StandardNovuOptions)
-      : {};
+  const providerProps: NovuProviderProps = {
+    ...propsWithoutSubscriberId,
+    applicationIdentifier,
+    subscriber: subscriberObj,
+  };
 
   return (
-    <InternalNovuProvider {...providerProps} userAgentType="hooks">
+    <InternalNovuProvider {...providerProps} applicationIdentifier={applicationIdentifier} userAgentType="hooks">
       {props.children}
     </InternalNovuProvider>
   );
@@ -50,14 +39,10 @@ export const NovuProvider = (props: NovuProviderProps) => {
  * Better to use this internally to avoid confusion.
  */
 export const InternalNovuProvider = (props: NovuProviderProps & { userAgentType: 'components' | 'hooks' }) => {
-  const applicationIdentifier = 'applicationIdentifier' in props ? props.applicationIdentifier : '';
-  const subscriberHash = 'subscriberHash' in props ? props.subscriberHash : '';
-  const backendUrl = 'backendUrl' in props ? props.backendUrl : '';
-  const apiUrl = 'apiUrl' in props ? props.apiUrl : '';
-  const socketUrl = 'socketUrl' in props ? props.socketUrl : '';
-  const useCache = 'useCache' in props ? props.useCache : undefined;
-  const subscriber = 'subscriber' in props ? props.subscriber : undefined;
-  const subscriberId = 'subscriberId' in props ? props.subscriberId : undefined;
+  const applicationIdentifier = props.applicationIdentifier || '';
+  const subscriberObj = buildSubscriber(props.subscriberId, props.subscriber);
+
+  const { children, subscriberId, subscriberHash, backendUrl, apiUrl, socketUrl, useCache, userAgentType } = props;
 
   const novu = useMemo(
     () =>
@@ -68,8 +53,8 @@ export const InternalNovuProvider = (props: NovuProviderProps & { userAgentType:
         apiUrl,
         socketUrl,
         useCache,
-        __userAgent: `${baseUserAgent} ${props.userAgentType}`,
-        ...(subscriber ? { subscriber } : { subscriberId: subscriberId as string }),
+        __userAgent: `${baseUserAgent} ${userAgentType}`,
+        subscriber: subscriberObj,
       }),
     [
       applicationIdentifier,
@@ -79,12 +64,12 @@ export const InternalNovuProvider = (props: NovuProviderProps & { userAgentType:
       apiUrl,
       socketUrl,
       useCache,
-      subscriber,
-      props.userAgentType,
+      subscriberObj,
+      userAgentType,
     ]
   );
 
-  return <NovuContext.Provider value={novu}>{props.children}</NovuContext.Provider>;
+  return <NovuContext.Provider value={novu}>{children}</NovuContext.Provider>;
 };
 
 export const useNovu = () => {
@@ -103,13 +88,16 @@ export const useUnsafeNovu = () => {
 };
 
 function buildSubscriber(subscriberId: string | undefined, subscriber: Subscriber | string | undefined): Subscriber {
-  let subscriberObj: Subscriber;
-
+  // subscriber object
   if (subscriber) {
-    subscriberObj = typeof subscriber === 'string' ? { subscriberId: subscriber } : subscriber;
-  } else {
-    subscriberObj = { subscriberId: subscriberId as string };
+    return typeof subscriber === 'string' ? { subscriberId: subscriber } : subscriber;
   }
 
-  return subscriberObj;
+  // subscriberId
+  if (subscriberId) {
+    return { subscriberId: subscriberId as string };
+  }
+
+  // missing - keyless subscriber, the api will generate a subscriberId
+  return { subscriberId: '' };
 }

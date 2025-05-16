@@ -45,7 +45,7 @@ export class InboxService {
       }
     )) as Session;
     this.#httpClient.setAuthorizationToken(response.token);
-    this.#httpClient.setKeylessHeader();
+    this.#httpClient.setKeylessHeader(response.applicationIdentifier);
     this.isSessionInitialized = true;
 
     return response;

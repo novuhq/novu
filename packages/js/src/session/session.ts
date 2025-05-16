@@ -18,50 +18,54 @@ export class Session {
   }
 
   public get applicationIdentifier() {
-    if ('applicationIdentifier' in this.#options) {
-      return this.#options.applicationIdentifier;
-    }
-
-    return undefined;
+    return this.#options.applicationIdentifier;
   }
 
   public get subscriberId() {
-    if ('subscriber' in this.#options && this.#options.subscriber) {
-      return this.#options.subscriber.subscriberId;
-    }
-
-    return undefined;
+    return this.#options.subscriber?.subscriberId;
   }
 
-  private getStoredApplicationIdentifier(): string | null {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      return window.localStorage.getItem('novu_keyless_application_identifier');
+  private handleApplicationIdentifier(method: 'get' | 'store' | 'delete', identifier?: string): string | null {
+    if (typeof window === 'undefined' || !window.localStorage) {
+      return null;
     }
 
-    return null;
-  }
+    const key = 'novu_keyless_application_identifier';
 
-  private storeApplicationIdentifier(identifier: string): void {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      window.localStorage.setItem('novu_keyless_application_identifier', identifier);
+    switch (method) {
+      case 'get': {
+        return window.localStorage.getItem(key);
+      }
+
+      case 'store': {
+        if (identifier) {
+          window.localStorage.setItem(key, identifier);
+        }
+
+        return null;
+      }
+      case 'delete': {
+        window.localStorage.removeItem(key);
+
+        return null;
+      }
+      default:
+        return null;
     }
   }
 
   public async initialize(): Promise<void> {
     try {
-      const subscriber = 'subscriber' in this.#options ? this.#options.subscriber : undefined;
-      const subscriberHash = 'subscriberHash' in this.#options ? this.#options.subscriberHash : undefined;
-      const applicationIdentifier =
-        'applicationIdentifier' in this.#options ? this.#options.applicationIdentifier : undefined;
+      const { subscriber, subscriberHash, applicationIdentifier } = this.#options;
 
       let finalApplicationIdentifier = applicationIdentifier;
       if (!finalApplicationIdentifier) {
-        const storedAppId = this.getStoredApplicationIdentifier();
+        const storedAppId = this.handleApplicationIdentifier('get');
         if (storedAppId) {
           finalApplicationIdentifier = storedAppId;
         }
       } else {
-        this.storeApplicationIdentifier('');
+        this.handleApplicationIdentifier('delete');
       }
       this.#emitter.emit('session.initialize.pending', { args: this.#options });
 
@@ -72,11 +76,11 @@ export class Session {
       });
 
       if (response?.applicationIdentifier?.startsWith('pk_keyless_')) {
-        this.storeApplicationIdentifier(response.applicationIdentifier);
+        this.handleApplicationIdentifier('store', response.applicationIdentifier);
       }
 
       if (!response?.applicationIdentifier?.startsWith('pk_keyless_')) {
-        this.storeApplicationIdentifier('');
+        this.handleApplicationIdentifier('delete');
       }
 
       this.#emitter.emit('session.initialize.resolved', { args: this.#options, data: response });

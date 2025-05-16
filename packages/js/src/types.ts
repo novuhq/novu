@@ -173,7 +173,7 @@ export type Result<D = undefined, E = NovuError> = Promise<{
   error?: E;
 }>;
 
-type KeylessNovuOptions = {};
+type KeylessNovuOptions = {} & { [K in string]?: never }; // empty object,disallows all unknown keys
 
 export type StandardNovuOptions = {
   /** @deprecated Use apiUrl instead  */
