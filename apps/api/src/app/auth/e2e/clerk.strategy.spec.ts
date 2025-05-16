@@ -3,7 +3,7 @@ import { Test } from '@nestjs/testing';
 import { expect } from 'chai';
 import { EnvironmentRepository } from '@novu/dal';
 import sinon from 'sinon';
-import { ApiAuthSchemeEnum, UserSessionData } from '@novu/shared';
+import { ApiAuthSchemeEnum, MemberRoleEnum, UserSessionData } from '@novu/shared';
 import { HttpRequestHeaderKeysEnum } from '@novu/application-generic';
 import { UnauthorizedException } from '@nestjs/common';
 
@@ -73,7 +73,8 @@ describe('ClerkStrategy', () => {
         lastName: 'Doe',
         email: 'john@example.com',
         organizationId: 'internal-org-123',
-        roles: ['admin'],
+        roles: [MemberRoleEnum.ADMIN],
+        permissions: [],
         environmentId: 'env-123',
         scheme: ApiAuthSchemeEnum.BEARER,
       });
