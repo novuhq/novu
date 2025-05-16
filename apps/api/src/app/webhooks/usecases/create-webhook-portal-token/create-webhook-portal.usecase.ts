@@ -11,7 +11,7 @@ import { CreateWebhookPortalResponseDto } from '../../dtos/create-webhook-portal
 export class CreateWebhookPortalUsecase {
   constructor(
     private environmentRepository: EnvironmentRepository,
-    @Inject('SVIX_CLIENT') private svix: SvixClient,
+    @Inject('SVIX_CLIENT') private svix: Svix | null,
     private organizationRepository: OrganizationRepository
   ) {}
 
