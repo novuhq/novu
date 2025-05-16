@@ -8,7 +8,7 @@ import {
   IconManageAccounts,
   IconRoomPreferences,
 } from '@novu/novui/icons';
-import { ApiServiceLevelEnum, FeatureFlagsKeysEnum, FeatureNameEnum, getFeatureForTierAsBoolean } from '@novu/shared';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { useNavigate, useParams } from 'react-router-dom';
 import { MANAGE_ACCOUNT_ROUTE_SEGMENTS, ROUTES } from '../../../constants/routes';
 import { useFeatureFlag } from '../../../hooks/useFeatureFlag';
@@ -24,28 +24,11 @@ import {
   tabsStyles,
   titleTab,
 } from './ManageAccountPage.styles';
-import { useSubscriptionContext, UseSubscriptionType } from '../../billing/components/SubscriptionProvider';
 
 export default function ManageAccountPage() {
   const navigate = useNavigate();
   const { tabValue } = useParams();
-  const subscription = useSubscriptionContext();
   const isV2Enabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_ENABLED);
-  const isRbacEnabledFlag = useFeatureFlag(FeatureFlagsKeysEnum.IS_RBAC_ENABLED, false);
-  const isRbacEnabled = checkRbacEnabled(subscription, isRbacEnabledFlag);
-
-  const _clerkComponentAppearance = clerkComponentAppearance(isRbacEnabled);
-
-  function checkRbacEnabled(subscription: UseSubscriptionType | undefined, featureFlag: boolean) {
-    const isTrialActive = subscription?.trial.isActive || false;
-    const apiServiceLevel = subscription?.apiServiceLevel || ApiServiceLevelEnum.FREE;
-    const rbacFeatureEnabled = getFeatureForTierAsBoolean(
-      FeatureNameEnum.ACCOUNT_ROLE_BASED_ACCESS_CONTROL_BOOLEAN,
-      apiServiceLevel
-    );
-
-    return rbacFeatureEnabled && !isTrialActive && featureFlag;
-  }
 
   return (
     <Modal
@@ -113,25 +96,25 @@ export default function ManageAccountPage() {
         </Tabs.List>
 
         <Tabs.Panel value={MANAGE_ACCOUNT_ROUTE_SEGMENTS.USER_PROFILE}>
-          <UserProfile appearance={_clerkComponentAppearance}>
+          <UserProfile appearance={clerkComponentAppearance}>
             <UserProfile.Page label="account" />
             <UserProfile.Page label="security" />
           </UserProfile>
         </Tabs.Panel>
         <Tabs.Panel value={MANAGE_ACCOUNT_ROUTE_SEGMENTS.ACCESS_SECURITY}>
-          <UserProfile appearance={_clerkComponentAppearance}>
+          <UserProfile appearance={clerkComponentAppearance}>
             <UserProfile.Page label="security" />
             <UserProfile.Page label="account" />
           </UserProfile>
         </Tabs.Panel>
         <Tabs.Panel value={MANAGE_ACCOUNT_ROUTE_SEGMENTS.ORGANIZATION}>
-          <OrganizationProfile appearance={_clerkComponentAppearance}>
+          <OrganizationProfile appearance={clerkComponentAppearance}>
             <OrganizationProfile.Page label="general" />
             <OrganizationProfile.Page label="members" />
           </OrganizationProfile>
         </Tabs.Panel>
         <Tabs.Panel value={MANAGE_ACCOUNT_ROUTE_SEGMENTS.TEAM_MEMBERS}>
-          <OrganizationProfile appearance={_clerkComponentAppearance}>
+          <OrganizationProfile appearance={clerkComponentAppearance}>
             <OrganizationProfile.Page label="members" />
             <OrganizationProfile.Page label="general" />
           </OrganizationProfile>

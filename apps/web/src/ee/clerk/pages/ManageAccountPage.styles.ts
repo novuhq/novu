@@ -1,6 +1,6 @@
 import { css } from '@novu/novui/css';
 
-export const clerkComponentAppearance = (isRbacEnabled: boolean) => ({
+export const clerkComponentAppearance = {
   elements: {
     navbar: { display: 'none' },
     navbarMobileMenuRow: { display: 'none !important' },
@@ -11,13 +11,13 @@ export const clerkComponentAppearance = (isRbacEnabled: boolean) => ({
       boxShadow: 'none',
     },
     selectButton__role: {
-      visibility: isRbacEnabled ? 'visible' : 'hidden',
+      visibility: 'hidden',
     },
     formFieldRow__role: {
-      visibility: isRbacEnabled ? 'visible' : 'hidden',
+      visibility: 'hidden',
     },
   },
-});
+};
 
 export const modalStyles = {
   modal: css({
