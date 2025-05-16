@@ -35,8 +35,8 @@ export class PatchWorkflowUsecase {
         eventType: WebhookEventEnum.WORKFLOW_UPDATED,
         objectType: WebhookObjectTypeEnum.WORKFLOW,
         payload: {
-          object: updatedWorkflow,
-          previousObject: persistedWorkflow,
+          object: updatedWorkflow as unknown as Record<string, unknown>,
+          previousObject: persistedWorkflow as unknown as Record<string, unknown>,
         },
         organizationId: command.user.organizationId,
         environmentId: command.user.environmentId,

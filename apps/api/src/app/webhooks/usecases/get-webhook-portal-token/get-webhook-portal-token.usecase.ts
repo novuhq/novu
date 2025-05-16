@@ -2,7 +2,7 @@ import { BadRequestException, Inject, Injectable, NotFoundException, Scope } fro
 import { EnvironmentRepository } from '@novu/dal';
 import { LogDecorator } from '@novu/application-generic';
 import { Svix } from 'svix';
-import { generateAppId } from '../../../../../../../libs/application-generic/src/webhooks/utils/app-id';
+import { generateWebhookAppId } from '../../../../../../../libs/application-generic/src/webhooks/utils/app-id';
 
 import { GetWebhookPortalTokenCommand } from './get-webhook-portal-token.command';
 import { GetWebhookPortalTokenResponseDto } from '../../dtos/get-webhook-portal-token-response.dto';
@@ -33,14 +33,14 @@ export class GetWebhookPortalTokenUsecase {
 
     try {
       const svixResponse = await this.svix.authentication.appPortalAccess(
-        generateAppId(command.organizationId, command.environmentId),
+        generateWebhookAppId(command.organizationId, command.environmentId),
         {}
       );
 
       return {
         url: svixResponse.url,
         token: svixResponse.token,
-        appId: generateAppId(command.organizationId, command.environmentId),
+        appId: generateWebhookAppId(command.organizationId, command.environmentId),
       };
     } catch (error) {
       if (error.code === 404) {

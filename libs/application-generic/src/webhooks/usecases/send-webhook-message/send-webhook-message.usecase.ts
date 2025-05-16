@@ -5,6 +5,7 @@ import { shortId } from '../../../utils/generate-id';
 import { SendWebhookMessageCommand } from './send-webhook-message.command';
 import { WrapperDto } from '../../dtos/webhook-payload.dto';
 import { SvixClient } from '../../services';
+import { generateWebhookAppId } from '../../utils/app-id';
 
 @Injectable()
 export class SendWebhookMessage {
@@ -33,7 +34,7 @@ export class SendWebhookMessage {
       throw new Error(`Environment not found for id ${command.environmentId}`);
     }
 
-    const appId = (environment as any).webhookAppId;
+    const appId = environment.webhookAppId;
 
     if (!appId) {
       this.logger.debug(`Webhook app ID not found for environment ${command.environmentId}, Event ID: ${eventId}`);
@@ -52,7 +53,7 @@ export class SendWebhookMessage {
 
     try {
       this.logger.debug(
-        `Attempting to send webhook ${command.eventType} for application o=${command.organizationId}:e=${command.environmentId}, Event ID: ${eventId}`
+        `Attempting to send webhook ${command.eventType} for application ${generateWebhookAppId(command.organizationId, command.environmentId)}, Event ID: ${eventId}`
       );
 
       const message = await this.svix.message.create(appId, {
@@ -68,9 +69,10 @@ export class SendWebhookMessage {
       return { eventId };
     } catch (error: any) {
       this.logger.error(
-        `Failed to send webhook ${command.eventType} for application o=${
-          command.organizationId
-        }:e=${command.environmentId}. Error: ${error.message}, Event ID: ${eventId}`,
+        `Failed to send webhook ${command.eventType} for application ${generateWebhookAppId(
+          command.organizationId,
+          command.environmentId
+        )}. Error: ${error.message}, Event ID: ${eventId}`,
         error.stack
       );
 
