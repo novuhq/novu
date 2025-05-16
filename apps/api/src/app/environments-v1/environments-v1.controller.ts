@@ -10,8 +10,8 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiExcludeEndpoint, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
-import { PermissionsEnum, ProductFeatureKeyEnum, UserSessionData } from '@novu/shared';
-import { RequirePermissions, SkipPermissionsCheck } from '@novu/application-generic';
+import { FeatureFlagsKeysEnum, PermissionsEnum, ProductFeatureKeyEnum, UserSessionData } from '@novu/shared';
+import { FeatureFlagsService, RequirePermissions, SkipPermissionsCheck } from '@novu/application-generic';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ProductFeature } from '../shared/decorators/product-feature.decorator';
 import { ApiKey } from '../shared/dtos/api-key';
@@ -52,7 +52,8 @@ export class EnvironmentsControllerV1 {
     private regenerateApiKeysUsecase: RegenerateApiKeys,
     private getEnvironmentUsecase: GetEnvironment,
     private getMyEnvironmentsUsecase: GetMyEnvironments,
-    private deleteEnvironmentUsecase: DeleteEnvironment
+    private deleteEnvironmentUsecase: DeleteEnvironment,
+    private featureFlagService: FeatureFlagsService
   ) {}
 
   @Get('/me')
@@ -87,6 +88,13 @@ export class EnvironmentsControllerV1 {
     @UserSession() user: UserSessionData,
     @Body() body: CreateEnvironmentRequestDto
   ): Promise<EnvironmentResponseDto> {
+    const isRbacEnabled = await this.featureFlagService.getFlag({
+      organization: { _id: user.organizationId },
+      user: { _id: user._id },
+      key: FeatureFlagsKeysEnum.IS_RBAC_ENABLED,
+      defaultValue: false,
+    });
+
     return await this.createEnvironmentUsecase.execute(
       CreateEnvironmentCommand.create({
         name: body.name,
@@ -94,7 +102,7 @@ export class EnvironmentsControllerV1 {
         organizationId: user.organizationId,
         color: body.color,
         system: false,
-        returnApiKeys: user.permissions.includes(PermissionsEnum.API_KEY_READ),
+        returnApiKeys: isRbacEnabled ? user.permissions.includes(PermissionsEnum.API_KEY_READ) : true,
       })
     );
   }
@@ -108,11 +116,18 @@ export class EnvironmentsControllerV1 {
   @ApiExcludeEndpoint()
   @SkipPermissionsCheck()
   async listMyEnvironments(@UserSession() user: UserSessionData): Promise<EnvironmentResponseDto[]> {
+    const isRbacEnabled = await this.featureFlagService.getFlag({
+      organization: { _id: user.organizationId },
+      user: { _id: user._id },
+      key: FeatureFlagsKeysEnum.IS_RBAC_ENABLED,
+      defaultValue: false,
+    });
+
     return await this.getMyEnvironmentsUsecase.execute(
       GetMyEnvironmentsCommand.create({
         organizationId: user.organizationId,
         environmentId: user.environmentId,
-        returnApiKeys: user.permissions.includes(PermissionsEnum.API_KEY_READ),
+        returnApiKeys: isRbacEnabled ? user.permissions.includes(PermissionsEnum.API_KEY_READ) : true,
       })
     );
   }
