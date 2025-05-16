@@ -1,7 +1,8 @@
 import { useInboxContext, useLocalization } from '../../../context';
 import { cn, useStyle } from '../../../helpers';
-import { ArrowDropDown } from '../../../icons';
+import { ArrowDropDown as DefaultArrowDropDown } from '../../../icons';
 import { Button, buttonVariants, Dropdown } from '../../primitives';
+import { IconRendererWrapper } from '../../shared/IconRendererWrapper';
 import { inboxFilterLocalizationKeys } from './constants';
 import { StatusOptions } from './InboxStatusOptions';
 
@@ -9,6 +10,13 @@ export const StatusDropdown = () => {
   const style = useStyle();
   const { status, setStatus } = useInboxContext();
   const { t } = useLocalization();
+  const arrowDropDownIconClass = style(
+    'inboxStatus__dropdownItemRight__icon',
+    'nt-text-foreground-alpha-600 nt-size-4',
+    {
+      iconKey: 'arrowDropDown',
+    }
+  );
 
   return (
     <Dropdown.Root>
@@ -25,8 +33,10 @@ export const StatusDropdown = () => {
             >
               {t(inboxFilterLocalizationKeys[status()])}
             </span>
-            <ArrowDropDown
-              class={style('inboxStatus__dropdownItemRight__icon', 'nt-text-foreground-alpha-600 nt-size-4')}
+            <IconRendererWrapper
+              iconKey="arrowDropDown"
+              class={arrowDropDownIconClass}
+              fallback={<DefaultArrowDropDown class={arrowDropDownIconClass} />}
             />
           </Button>
         )}

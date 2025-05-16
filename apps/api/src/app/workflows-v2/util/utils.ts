@@ -249,8 +249,6 @@ export function mergeCommonObjectKeys(target: Record<string, unknown>, source: R
   }
 
   if (Array.isArray(target) && !Array.isArray(source)) {
-    console.log({ target, source });
-
     return target.map((item) => {
       if (isObject(item)) {
         return mergeCommonObjectKeys(item as Record<string, unknown>, source);

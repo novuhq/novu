@@ -1,12 +1,14 @@
-import { Accessor, createContext, createSignal, JSX, splitProps, useContext } from 'solid-js';
+import { Accessor, createContext, createSignal, JSX, Show, splitProps, useContext } from 'solid-js';
 import { useStyle } from '../../helpers';
 import { cn } from '../../helpers/utils';
-import { ArrowLeft } from '../../icons';
-import { ArrowRight } from '../../icons/ArrowRight';
+import { ArrowLeft as DefaultArrowLeft } from '../../icons';
+import { ArrowRight as DefaultArrowRight } from '../../icons/ArrowRight';
 import { AppearanceKey } from '../../types';
 import { Button } from './Button';
 import { Tooltip } from './Tooltip';
 import { useLocalization } from '../../context/LocalizationContext';
+import { IconRendererWrapper } from '../shared/IconRendererWrapper';
+import { useAppearance } from '../../context';
 
 type DatePickerContextType = {
   currentDate: Accessor<Date>;
@@ -79,6 +81,15 @@ export const DatePickerHeader = (props: DatePickerHeaderProps) => {
   const [local, rest] = splitProps(props, ['class', 'appearanceKey', 'children']);
   const style = useStyle();
   const { viewMonth, setViewMonth, currentDate, maxDays } = useDatePicker();
+  const appearance = useAppearance();
+
+  const prevIconClass = style('datePickerControlPrevTrigger__icon', 'nt-size-4 nt-text-foreground-alpha-700', {
+    iconKey: 'arrowLeft',
+  });
+
+  const nextIconClass = style('datePickerControlNextTrigger__icon', 'nt-size-4 nt-text-foreground-alpha-700', {
+    iconKey: 'arrowRight',
+  });
 
   const handlePrevMonth = () => {
     const date = new Date(viewMonth());
@@ -156,7 +167,11 @@ export const DatePickerHeader = (props: DatePickerHeaderProps) => {
         disabled={isPrevDisabled()}
         class="nt-flex nt-justify-center nt-items-center nt-gap-0.5 nt-w-5 nt-h-5 nt-p-0 nt-rounded-md nt-bg-background nt-shadow-[0px_1px_2px_0px_rgba(10,13,20,0.03)]"
       >
-        <ArrowLeft class={style('datePickerControlPrevTrigger__icon', 'nt-size-4 nt-text-foreground-alpha-700')} />
+        <IconRendererWrapper
+          iconKey="arrowLeft"
+          class={prevIconClass}
+          fallback={<DefaultArrowLeft class={prevIconClass} />}
+        />
       </Button>
       <span class={style('datePickerHeaderMonth', 'nt-text-sm nt-font-medium nt-text-foreground-alpha-700')}>
         {viewMonth().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
@@ -171,7 +186,11 @@ export const DatePickerHeader = (props: DatePickerHeaderProps) => {
         disabled={isNextDisabled()}
         class="nt-flex nt-justify-center nt-items-center nt-gap-0.5 nt-w-5 nt-h-5 nt-p-0 nt-rounded-md nt-bg-background nt-shadow-[0px_1px_2px_0px_rgba(10,13,20,0.03)]"
       >
-        <ArrowRight class={style('datePickerControlNextTrigger__icon', 'nt-size-4 nt-text-foreground-alpha-700')} />
+        <IconRendererWrapper
+          iconKey="arrowRight"
+          class={nextIconClass}
+          fallback={<DefaultArrowRight class={nextIconClass} />}
+        />
       </Button>
     </div>
   );

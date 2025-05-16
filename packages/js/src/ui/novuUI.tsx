@@ -17,6 +17,8 @@ export type NovuUIOptions = NovuProviderProps;
 export type BaseNovuUIOptions = BaseNovuProviderProps;
 export class NovuUI {
   #dispose: { (): void } | null = null;
+  #container: Accessor<Node | null | undefined>;
+  #setContainer: Setter<Node | null | undefined>;
   #rootElement: HTMLElement;
   #mountedElements;
   #setMountedElements;
@@ -44,6 +46,7 @@ export class NovuUI {
     const [tabs, setTabs] = createSignal(props.tabs ?? []);
     const [preferencesFilter, setPreferencesFilter] = createSignal(props.preferencesFilter);
     const [routerPush, setRouterPush] = createSignal(props.routerPush);
+    const [container, setContainer] = createSignal(this.#getContainerElement(props.container));
     this.#mountedElements = mountedElements;
     this.#setMountedElements = setMountedElements;
     this.#appearance = appearance;
@@ -59,8 +62,22 @@ export class NovuUI {
     this.#predefinedNovu = props.novu;
     this.#preferencesFilter = preferencesFilter;
     this.#setPreferencesFilter = setPreferencesFilter;
+    this.#container = container;
+    this.#setContainer = setContainer;
 
     this.#mountComponentRenderer();
+  }
+
+  #getContainerElement(container?: Node | string | null): Node | null | undefined {
+    if (container === null || container === undefined) {
+      return container;
+    }
+
+    if (typeof container === 'string') {
+      return document.querySelector(container) ?? document.getElementById(container);
+    }
+
+    return container;
   }
 
   #mountComponentRenderer(): void {
@@ -70,7 +87,9 @@ export class NovuUI {
 
     this.#rootElement = document.createElement('div');
     this.#rootElement.setAttribute('id', `novu-ui-${this.id}`);
-    document.body.appendChild(this.#rootElement);
+
+    const container = this.#container();
+    (container ?? document.body).appendChild(this.#rootElement);
 
     const dispose = render(
       () => (
@@ -84,6 +103,7 @@ export class NovuUI {
           preferencesFilter={this.#preferencesFilter()}
           routerPush={this.#routerPush()}
           novu={this.#predefinedNovu}
+          container={this.#container()}
         />
       ),
       this.#rootElement
@@ -156,6 +176,10 @@ export class NovuUI {
 
   updateRouterPush(routerPush?: RouterPush) {
     this.#setRouterPush(() => routerPush);
+  }
+
+  updateContainer(container?: Node | string | null) {
+    this.#setContainer(this.#getContainerElement(container));
   }
 
   unmount(): void {

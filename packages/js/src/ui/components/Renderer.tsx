@@ -16,6 +16,7 @@ import {
 import type { Appearance, Localization, PreferencesFilter, RouterPush, Tab } from '../types';
 import { Bell, Root } from './elements';
 import { Inbox, InboxContent, InboxContentProps, InboxPage } from './Inbox';
+import { NOVU_DEFAULT_CSS_ID } from '../helpers/utils';
 
 export const novuComponents = {
   Inbox,
@@ -67,33 +68,36 @@ type RendererProps = {
   preferencesFilter?: PreferencesFilter;
   routerPush?: RouterPush;
   novu?: Novu;
+  container?: Node | null | undefined;
 };
 
 export const Renderer = (props: RendererProps) => {
   const nodes = () => [...props.nodes.keys()];
 
   onMount(() => {
-    const id = 'novu-default-css';
-    const el = document.getElementById(id);
+    const id = NOVU_DEFAULT_CSS_ID;
+    const root = props.container instanceof ShadowRoot ? props.container : document;
+    const el = root.getElementById(id);
     if (el) {
       return;
     }
 
     const styleEl = document.createElement('style');
     styleEl.id = id;
-    document.head.insertBefore(styleEl, document.head.firstChild);
     styleEl.innerHTML = css;
 
+    const stylesContainer = props.container ?? document.head;
+    stylesContainer.insertBefore(styleEl, stylesContainer.firstChild);
+
     onCleanup(() => {
-      const element = document.getElementById(id);
-      element?.remove();
+      styleEl.remove();
     });
   });
 
   return (
     <NovuProvider options={props.options} novu={props.novu}>
       <LocalizationProvider localization={props.localization}>
-        <AppearanceProvider id={props.novuUI.id} appearance={props.appearance}>
+        <AppearanceProvider id={props.novuUI.id} appearance={props.appearance} container={props.container}>
           <FocusManagerProvider>
             <InboxProvider tabs={props.tabs} preferencesFilter={props.preferencesFilter} routerPush={props.routerPush}>
               <CountProvider>

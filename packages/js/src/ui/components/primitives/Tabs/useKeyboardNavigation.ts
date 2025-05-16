@@ -1,4 +1,5 @@
 import { Accessor, createEffect, createSignal, onCleanup, Setter } from 'solid-js';
+import { useAppearance } from '../../../context';
 
 export const useKeyboardNavigation = ({
   activeTab,
@@ -9,30 +10,45 @@ export const useKeyboardNavigation = ({
   setActiveTab: Setter<string>;
   tabsContainer: Accessor<HTMLDivElement | undefined>;
 }) => {
+  const { container } = useAppearance();
   const [keyboardNavigation, setKeyboardNavigation] = createSignal(false);
 
+  const getRoot = () => {
+    const containerElement = container();
+
+    return containerElement instanceof ShadowRoot ? containerElement : document;
+  };
+
   createEffect(() => {
-    const handleTabKey = (event: KeyboardEvent) => {
-      if (event.key !== 'Tab') {
+    const root = getRoot();
+
+    const handleTabKey: EventListener = (event) => {
+      if (!(event instanceof KeyboardEvent) || event.key !== 'Tab') {
         return;
       }
 
       const tabs = tabsContainer()?.querySelectorAll('[role="tab"]');
-      if (!tabs || !document.activeElement) {
+      if (!tabs || !root.activeElement) {
         return;
       }
 
-      setKeyboardNavigation(Array.from(tabs).includes(document.activeElement));
+      setKeyboardNavigation(Array.from(tabs).includes(root.activeElement));
     };
 
-    document.addEventListener('keyup', handleTabKey);
+    root.addEventListener('keyup', handleTabKey);
 
-    return onCleanup(() => document.removeEventListener('keyup', handleTabKey));
+    return onCleanup(() => root.removeEventListener('keyup', handleTabKey));
   });
 
   createEffect(() => {
-    const handleArrowKeys = (event: KeyboardEvent) => {
-      if (!keyboardNavigation() || (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight')) {
+    const root = getRoot();
+
+    const handleArrowKeys: EventListener = (event) => {
+      if (
+        !keyboardNavigation() ||
+        !(event instanceof KeyboardEvent) ||
+        (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight')
+      ) {
         return;
       }
 
@@ -54,8 +70,8 @@ export const useKeyboardNavigation = ({
       setActiveTab(newTab);
     };
 
-    document.addEventListener('keydown', handleArrowKeys);
+    root.addEventListener('keydown', handleArrowKeys);
 
-    return onCleanup(() => document.removeEventListener('keydown', handleArrowKeys));
+    return onCleanup(() => root.removeEventListener('keydown', handleArrowKeys));
   });
 };

@@ -1,6 +1,6 @@
 import { JSX } from 'solid-js';
 
-export const UnreadRead = (props?: JSX.HTMLAttributes<SVGSVGElement>) => {
+export const Unread = (props?: JSX.HTMLAttributes<SVGSVGElement>) => {
   return (
     <svg viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
       <path
