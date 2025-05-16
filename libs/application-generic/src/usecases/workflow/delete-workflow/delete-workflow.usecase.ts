@@ -23,7 +23,7 @@ export class DeleteWorkflowUseCase {
     private controlValuesRepository: ControlValuesRepository,
     private deletePreferencesUsecase: DeletePreferencesUseCase,
     @Optional()
-    private sendWebhookMessage: SendWebhookMessage
+    private sendWebhookMessage?: SendWebhookMessage
   ) {}
 
   @InstrumentUsecase()

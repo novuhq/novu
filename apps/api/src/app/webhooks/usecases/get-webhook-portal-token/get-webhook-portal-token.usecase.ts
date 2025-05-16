@@ -1,17 +1,17 @@
 import { BadRequestException, Inject, Injectable, NotFoundException, Scope } from '@nestjs/common';
 import { EnvironmentRepository } from '@novu/dal';
-import { LogDecorator, SvixClient } from '@novu/application-generic';
+import { LogDecorator } from '@novu/application-generic';
+import { Svix } from 'svix';
+import { generateAppId } from '../../../../../../../libs/application-generic/src/webhooks/utils/app-id';
 
 import { GetWebhookPortalTokenCommand } from './get-webhook-portal-token.command';
 import { GetWebhookPortalTokenResponseDto } from '../../dtos/get-webhook-portal-token-response.dto';
-
-const LOG_CONTEXT = 'GetWebhookPortalTokenUsecase';
 
 @Injectable()
 export class GetWebhookPortalTokenUsecase {
   constructor(
     private environmentRepository: EnvironmentRepository,
-    @Inject('SVIX_CLIENT') private svix: SvixClient
+    @Inject('SVIX_CLIENT') private svix: Svix | null
   ) {}
 
   @LogDecorator()
@@ -33,14 +33,14 @@ export class GetWebhookPortalTokenUsecase {
 
     try {
       const svixResponse = await this.svix.authentication.appPortalAccess(
-        `${command.organizationId}-${command.environmentId}`,
+        generateAppId(command.organizationId, command.environmentId),
         {}
       );
 
       return {
         url: svixResponse.url,
         token: svixResponse.token,
-        appId: `${command.organizationId}-${command.environmentId}`,
+        appId: generateAppId(command.organizationId, command.environmentId),
       };
     } catch (error) {
       if (error.code === 404) {

@@ -17,7 +17,7 @@ export class PatchWorkflowUsecase {
     private notificationTemplateRepository: NotificationTemplateRepository,
     private getWorkflowUseCase: GetWorkflowUseCase,
     @Optional()
-    private sendWebhookMessage: SendWebhookMessage
+    private sendWebhookMessage?: SendWebhookMessage
   ) {}
 
   async execute(command: PatchWorkflowCommand): Promise<WorkflowResponseDto> {

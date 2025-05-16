@@ -54,7 +54,7 @@ export class UpsertWorkflowUseCase {
     private upsertControlValuesUseCase: UpsertControlValuesUseCase,
     private analyticsService: AnalyticsService,
     @Optional()
-    private sendWebhookMessage: SendWebhookMessage
+    private sendWebhookMessage?: SendWebhookMessage
   ) {}
 
   @InstrumentUsecase()

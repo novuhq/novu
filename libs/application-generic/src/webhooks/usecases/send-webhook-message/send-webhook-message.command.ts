@@ -12,7 +12,8 @@ export class SendWebhookMessageCommand extends EnvironmentCommand {
 
   @IsDefined()
   payload: {
-    object: any;
-    [key: string]: any;
+    object: Record<string, unknown>;
+    previousObject?: Record<string, unknown>;
+    [key: string]: Record<string, unknown> | undefined;
   };
 }
