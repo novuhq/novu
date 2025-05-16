@@ -7,7 +7,7 @@ import { Collapsible } from '../../primitives/Collapsible';
 import { ChannelRow } from './ChannelRow';
 import { PreferencesRow } from './PreferencesRow';
 import { Switch, SwitchState } from '../../primitives/Switch';
-import { ArrowDropDown } from '../../../icons/ArrowDropDown';
+import { ArrowDropDown as DefaultArrowDropDown } from '../../../icons/ArrowDropDown';
 import { NodeTree as DefaultNodeTree } from '../../../icons/NodeTree';
 import { Info as DefaultInfo } from '../../../icons/Info';
 import { IconRendererWrapper } from '../../shared/IconRendererWrapper';
@@ -89,6 +89,7 @@ export const GroupedPreferencesRow = (props: {
 
   const nodeTreeIconClass = style('preferencesGroupLabelIcon', 'nt-text-foreground-alpha-600 nt-size-3.5');
   const infoIconClass = style('preferencesGroupInfoIcon', 'nt-size-4');
+  const dropdownIconClass = style('moreTabs__icon', 'nt-size-4');
 
   return (
     <Show when={Object.keys(uniqueChannels()).length > 0}>
@@ -130,7 +131,11 @@ export const GroupedPreferencesRow = (props: {
               )}
               data-open={isOpened()}
             >
-              <ArrowDropDown class={style('moreTabs__icon', 'nt-size-4')} />
+              <IconRendererWrapper
+                iconKey="arrowDropDown"
+                class={dropdownIconClass}
+                fallback={<DefaultArrowDropDown class={dropdownIconClass} />}
+              />
             </span>
           </div>
         </div>
