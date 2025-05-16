@@ -8,7 +8,7 @@ import {
   IconManageAccounts,
   IconRoomPreferences,
 } from '@novu/novui/icons';
-import { ApiServiceLevelEnum, FeatureFlagsKeysEnum } from '@novu/shared';
+import { ApiServiceLevelEnum, FeatureFlagsKeysEnum, FeatureNameEnum, getFeatureForTierAsBoolean } from '@novu/shared';
 import { useNavigate, useParams } from 'react-router-dom';
 import { MANAGE_ACCOUNT_ROUTE_SEGMENTS, ROUTES } from '../../../constants/routes';
 import { useFeatureFlag } from '../../../hooks/useFeatureFlag';
@@ -37,11 +37,14 @@ export default function ManageAccountPage() {
   const _clerkComponentAppearance = clerkComponentAppearance(isRbacEnabled);
 
   function checkRbacEnabled(subscription: UseSubscriptionType | undefined, featureFlag: boolean) {
-    const rbacDisabledTiers = [ApiServiceLevelEnum.FREE, ApiServiceLevelEnum.PRO];
     const isTrialActive = subscription?.trial.isActive || false;
     const apiServiceLevel = subscription?.apiServiceLevel || ApiServiceLevelEnum.FREE;
+    const rbacFeatureEnabled = getFeatureForTierAsBoolean(
+      FeatureNameEnum.ACCOUNT_ROLE_BASED_ACCESS_CONTROL_BOOLEAN,
+      apiServiceLevel
+    );
 
-    return !rbacDisabledTiers.includes(apiServiceLevel) && !isTrialActive && featureFlag;
+    return rbacFeatureEnabled && !isTrialActive && featureFlag;
   }
 
   return (

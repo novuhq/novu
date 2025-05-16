@@ -8,7 +8,13 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { Plan } from '../components/billing/plan';
 import { DashboardLayout } from '../components/dashboard-layout';
 import { useFetchSubscription } from '../hooks/use-fetch-subscription';
-import { ApiServiceLevelEnum, FeatureFlagsKeysEnum, GetSubscriptionDto } from '@novu/shared';
+import {
+  ApiServiceLevelEnum,
+  FeatureFlagsKeysEnum,
+  FeatureNameEnum,
+  getFeatureForTierAsBoolean,
+  GetSubscriptionDto,
+} from '@novu/shared';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 
 const FADE_ANIMATION = {
@@ -70,11 +76,14 @@ export function SettingsPage() {
   const clerkAppearance = getClerkComponentAppearance(isRbacEnabled);
 
   function checkRbacEnabled(subscription: GetSubscriptionDto | undefined, featureFlag: boolean) {
-    const rbacDisabledTiers = [ApiServiceLevelEnum.FREE, ApiServiceLevelEnum.PRO];
     const isTrialActive = subscription?.trial.isActive || false;
     const apiServiceLevel = subscription?.apiServiceLevel || ApiServiceLevelEnum.FREE;
+    const rbacFeatureEnabled = getFeatureForTierAsBoolean(
+      FeatureNameEnum.ACCOUNT_ROLE_BASED_ACCESS_CONTROL_BOOLEAN,
+      apiServiceLevel
+    );
 
-    return !rbacDisabledTiers.includes(apiServiceLevel) && !isTrialActive && featureFlag;
+    return rbacFeatureEnabled && !isTrialActive && featureFlag;
   }
 
   const currentTab =
