@@ -19,6 +19,8 @@ import { useRemoveTopicSubscriber } from './hooks/use-topic-subscribers';
 import { TimeDisplayHoverCard } from '../time-display-hover-card';
 import { format } from 'date-fns';
 import { TopicSubscription } from '@/api/topics';
+import { ConfirmationModal } from '../confirmation-modal';
+import TruncatedText from '../truncated-text';
 
 interface TopicSubscriberItemProps {
   topicKey: string;
@@ -71,26 +73,25 @@ export function TopicSubscriberItem({ topicKey, subscription, readOnly = false }
                 <AvatarImage src={subscription.subscriber.avatar || undefined} />
                 <AvatarFallback>{subscriberTitle[0]}</AvatarFallback>
               </Avatar>
-              <div className="flex flex-col overflow-hidden">
+              <div className="flex flex-col items-start overflow-hidden">
                 <span className="text-label-xs text-foreground-950 truncate font-medium">
                   {displayName || subscription.subscriber.subscriberId}
                 </span>
                 {subscription.subscriber.email && (
-                  <div className="flex items-center">
-                    <RiMailLine className="mr-1.5 size-3 min-w-3 text-neutral-400" />
-                    <span className="text-label-xs truncate text-neutral-500">{subscription.subscriber.email}</span>
+                  <div className="flex">
+                    <span className="text-label-2xs truncate text-neutral-500">{subscription.subscriber.email}</span>
                   </div>
                 )}
               </div>
             </div>
 
-            <div className="overflow-hidden px-4 text-left">
-              <span className="text-label-xs truncate text-neutral-500">{subscription.subscriber.subscriberId}</span>
-            </div>
+            <TruncatedText className="text-text-soft font-code flex-1 px-4 text-left text-[10px]">
+              {subscription.subscriber.subscriberId}
+            </TruncatedText>
 
             <div className="text-label-xs text-foreground-600 justify-self-end px-2">
               {subscription.createdAt && (
-                <TimeDisplayHoverCard date={subscription.createdAt}>
+                <TimeDisplayHoverCard date={subscription.createdAt} className="text-[10px]">
                   {format(new Date(subscription.createdAt), 'MMM d, yyyy')}
                 </TimeDisplayHoverCard>
               )}
@@ -119,26 +120,21 @@ export function TopicSubscriberItem({ topicKey, subscription, readOnly = false }
         </motion.div>
       </SubscriberDrawerButton>
 
-      <Dialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Remove Subscriber</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to remove{' '}
-              <span className="font-medium">{displayName || subscription.subscriber.subscriberId}</span> from this
-              topic? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="secondary" mode="outline" onClick={() => setConfirmDialogOpen(false)} disabled={isPending}>
-              Cancel
-            </Button>
-            <Button variant="error" onClick={confirmRemove} isLoading={isPending}>
-              {isPending ? 'Removing...' : 'Remove'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ConfirmationModal
+        open={confirmDialogOpen}
+        onOpenChange={setConfirmDialogOpen}
+        title="Remove Subscriber"
+        description={
+          <>
+            Are you sure you want to remove{' '}
+            <span className="font-medium">{displayName || subscription.subscriber.subscriberId}</span> from this topic?
+            This action cannot be undone.
+          </>
+        }
+        onConfirm={confirmRemove}
+        confirmButtonText={'Remove'}
+        isLoading={isPending}
+      />
     </>
   );
 }

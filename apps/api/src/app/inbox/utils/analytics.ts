@@ -7,4 +7,5 @@ export enum AnalyticsEventsEnum {
   UPDATE_ALL_NOTIFICATIONS = 'Update All Notifications - [Inbox]',
   FETCH_PREFERENCES = 'Fetch Preferences - [Inbox]',
   UPDATE_PREFERENCES = 'Update Preferences - [Inbox]',
+  UPDATE_PREFERENCES_BULK = 'Update Preferences Bulk - [Inbox]',
 }

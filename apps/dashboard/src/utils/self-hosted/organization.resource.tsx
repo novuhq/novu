@@ -5,6 +5,7 @@ import { get } from '../../api/api.client';
 import { IOrganizationEntity } from '@novu/shared';
 import { QueryKeys } from '../../utils/query-keys';
 import { withJwtValidation } from './api-interceptor';
+import { getJwtToken } from './jwt-manager';
 
 export const OrganizationContext = React.createContext({});
 
@@ -19,6 +20,7 @@ export function OrganizationContextProvider({ children }: any) {
   const { data: organization, isLoading } = useQuery({
     queryKey: [QueryKeys.myOrganization],
     queryFn: getCurrentOrganization,
+    enabled: !!getJwtToken(),
   });
 
   const value = {

@@ -11,7 +11,7 @@ import {
   UseGuards,
   Headers,
 } from '@nestjs/common';
-import { ApiExcludeController, ApiResponse, ApiOperation } from '@nestjs/swagger';
+import { ApiExcludeController } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { SubscriberEntity } from '@novu/dal';
 import {
@@ -22,7 +22,6 @@ import {
   UserSessionData,
 } from '@novu/shared';
 
-import { ExternalApiAccessible } from '@novu/application-generic';
 import { SubscriberDto, SubscriberSessionRequestDto } from './dtos/subscriber-session-request.dto';
 import { SubscriberSessionResponseDto } from './dtos/subscriber-session-response.dto';
 import { SessionCommand } from './usecases/session/session.command';
@@ -58,13 +57,15 @@ import { SnoozeNotificationCommand } from './usecases/snooze-notification/snooze
 import { SnoozeNotification } from './usecases/snooze-notification/snooze-notification.usecase';
 import { UnsnoozeNotificationCommand } from './usecases/unsnooze-notification/unsnooze-notification.command';
 import { UnsnoozeNotification } from './usecases/unsnooze-notification/unsnooze-notification.usecase';
+import { BulkUpdatePreferencesRequestDto } from './dtos/bulk-update-preferences-request.dto';
+import { BulkUpdatePreferences } from './usecases/bulk-update-preferences/bulk-update-preferences.usecase';
+import { BulkUpdatePreferencesCommand } from './usecases/bulk-update-preferences/bulk-update-preferences.command';
 import { KeylessAccessible } from '../shared/framework/swagger/keyless.security';
 import { TriggerEventResponseDto } from '../events/dtos/trigger-event-response.dto';
 import { TriggerEventRequestDto } from '../events/dtos';
 import { ParseEventRequest } from '../events/usecases/parse-event-request/parse-event-request.usecase';
 import { ParseEventRequestMulticastCommand } from '../events/usecases/parse-event-request';
 import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
-import { SdkMethodName, SdkUsageExample, SdkGroupName } from '../shared/framework/swagger/sdk.decorators';
 
 @ApiCommonResponses()
 @Controller('/inbox')
@@ -79,6 +80,7 @@ export class InboxController {
     private updateAllNotifications: UpdateAllNotifications,
     private getInboxPreferencesUsecase: GetInboxPreferences,
     private updatePreferencesUsecase: UpdatePreferences,
+    private bulkUpdatePreferencesUsecase: BulkUpdatePreferences,
     private snoozeNotificationUsecase: SnoozeNotification,
     private unsnoozeNotificationUsecase: UnsnoozeNotification,
     private parseEventRequest: ParseEventRequest
@@ -334,11 +336,31 @@ export class InboxController {
     );
   }
 
+  /**
+   * IMPORTANT: Make sure this endpoint route is defined before the single workflow preference update endpoint
+   * "PATCH /preferences/:workflowIdOrIdentifier", otherwise, the single workflow preference update endpoint will be triggered instead
+   */
   @UseGuards(AuthGuard('subscriberJwt'))
-  @Patch('/preferences/:workflowId')
+  @Patch('/preferences/bulk')
+  async bulkUpdateWorkflowPreferences(
+    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @Body() body: BulkUpdatePreferencesRequestDto
+  ): Promise<GetPreferencesResponseDto[]> {
+    return await this.bulkUpdatePreferencesUsecase.execute(
+      BulkUpdatePreferencesCommand.create({
+        organizationId: subscriberSession._organizationId,
+        subscriberId: subscriberSession.subscriberId,
+        environmentId: subscriberSession._environmentId,
+        preferences: body.preferences,
+      })
+    );
+  }
+
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Patch('/preferences/:workflowIdOrIdentifier')
   async updateWorkflowPreference(
     @SubscriberSession() subscriberSession: SubscriberEntity,
-    @Param('workflowId') workflowId: string,
+    @Param('workflowIdOrIdentifier') workflowIdOrIdentifier: string,
     @Body() body: UpdatePreferencesRequestDto
   ): Promise<InboxPreference> {
     return await this.updatePreferencesUsecase.execute(
@@ -352,7 +374,7 @@ export class InboxController {
         in_app: body.in_app,
         push: body.push,
         sms: body.sms,
-        workflowId,
+        workflowIdOrIdentifier,
         includeInactiveChannels: false,
       })
     );

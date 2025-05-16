@@ -4,7 +4,7 @@ import type { Notification } from '../../../notifications';
 import { ActionTypeEnum } from '../../../types';
 import { useInboxContext, useLocalization } from '../../context';
 import { cn, formatSnoozedUntil, formatToRelativeTime, useStyle } from '../../helpers';
-import { Clock } from '../../icons/Clock';
+import { Clock as DefaultClock } from '../../icons/Clock';
 import {
   type BodyRenderer,
   type NotificationActionClickHandler,
@@ -16,6 +16,7 @@ import { ExternalElementRenderer } from '../ExternalElementRenderer';
 import { Button } from '../primitives';
 import { Badge } from '../primitives/Badge';
 import { renderNotificationActions } from './NotificationActions';
+import { IconRendererWrapper } from '../shared/IconRendererWrapper';
 
 type DefaultNotificationProps = {
   notification: Notification;
@@ -31,6 +32,15 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
   const { t, locale } = useLocalization();
   const { navigate, status } = useInboxContext();
   const [minutesPassed, setMinutesPassed] = createSignal(0);
+
+  const deliveredAtIconClass = style('notificationDeliveredAt__icon', 'nt-size-3', {
+    iconKey: 'clock',
+  });
+
+  const snoozedUntilIconClass = style('notificationSnoozedUntil__icon', 'nt-size-3', {
+    iconKey: 'clock',
+  });
+
   const createdAt = createMemo(() => {
     minutesPassed(); // register as dep
 
@@ -204,7 +214,11 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
                             <Show when={index() === 0}>{date} ·</Show>
                             <Show when={index() === 1}>
                               <Badge appearanceKey="notificationDeliveredAt__badge">
-                                <Clock class={style('notificationDeliveredAt__icon', 'nt-size-3')} />
+                                <IconRendererWrapper
+                                  iconKey="clock"
+                                  class={deliveredAtIconClass}
+                                  fallback={<DefaultClock class={deliveredAtIconClass} />}
+                                />
                                 {date}
                               </Badge>
                             </Show>
@@ -219,7 +233,11 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
           >
             {(snoozedUntil) => (
               <>
-                <Clock class={style('notificationSnoozedUntil__icon', 'nt-size-3')} />
+                <IconRendererWrapper
+                  iconKey="clock"
+                  class={snoozedUntilIconClass}
+                  fallback={<DefaultClock class={snoozedUntilIconClass} />}
+                />
                 {t('notification.snoozedUntil')} · {snoozedUntil()}
               </>
             )}

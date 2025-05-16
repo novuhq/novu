@@ -48,7 +48,7 @@
     "madge": "^8.0.0",
     "rimraf": "^3.0.2",
     "typescript": "5.6.2",
-    "vitest": "^2.0.5"
+    "vitest": "^2.1.9"
   },
   "nx": {
     "tags": [

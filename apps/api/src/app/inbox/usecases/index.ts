@@ -2,6 +2,7 @@ import {
   GetSubscriberTemplatePreference,
   StorageHelperService,
   UpsertControlValuesUseCase,
+  GetWorkflowByIdsUseCase,
 } from '@novu/application-generic';
 import { CommunityUserRepository } from '@novu/dal';
 import { GetNotifications } from './get-notifications/get-notifications.usecase';
@@ -19,6 +20,7 @@ import { UnsnoozeNotification } from './unsnooze-notification/unsnooze-notificat
 import { GenerateUniqueApiKey } from '../../environments-v1/usecases/generate-unique-api-key/generate-unique-api-key.usecase';
 import { ParseEventRequest } from '../../events/usecases/parse-event-request';
 import { VerifyPayload } from '../../events/usecases/verify-payload';
+import { BulkUpdatePreferences } from './bulk-update-preferences/bulk-update-preferences.usecase';
 
 export const USE_CASES = [
   Session,
@@ -31,7 +33,9 @@ export const USE_CASES = [
   GetInboxPreferences,
   GetSubscriberGlobalPreference,
   GetSubscriberTemplatePreference,
+  GetWorkflowByIdsUseCase,
   UpdatePreferences,
+  BulkUpdatePreferences,
   SnoozeNotification,
   UnsnoozeNotification,
   GenerateUniqueApiKey,

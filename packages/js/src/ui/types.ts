@@ -1,3 +1,4 @@
+import type { JSXElement } from 'solid-js';
 import type { Notification } from '../notifications';
 import { Novu } from '../novu';
 import type { NotificationFilter, NovuOptions } from '../types';
@@ -48,10 +49,41 @@ export type Variables = {
 export type AppearanceKey = (typeof appearanceKeys)[number];
 export type Elements = Partial<Record<AppearanceKey, ElementStyles>>;
 
+export type IconKey =
+  | 'bell'
+  | 'clock'
+  | 'arrowDropDown'
+  | 'dots'
+  | 'markAsRead'
+  | 'cogs'
+  | 'trash'
+  | 'markAsArchived'
+  | 'markAsArchivedRead'
+  | 'markAsUnread'
+  | 'markAsUnarchived'
+  | 'unsnooze'
+  | 'arrowRight'
+  | 'arrowLeft'
+  | 'unread'
+  | 'sms'
+  | 'inApp'
+  | 'email'
+  | 'push'
+  | 'chat'
+  | 'check'
+  | 'arrowDown';
+
+export type IconRenderer = (el: HTMLDivElement, props: { class?: string }) => () => void;
+
+export type IconOverrides = {
+  [key in IconKey]?: IconRenderer;
+};
+
 export type Theme = {
   variables?: Variables;
   elements?: Elements;
   animations?: boolean;
+  icons?: IconOverrides;
 };
 export type Appearance = Theme & { baseTheme?: Theme | Theme[] };
 

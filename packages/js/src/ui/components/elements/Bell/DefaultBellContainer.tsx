@@ -1,6 +1,7 @@
 import { Show } from 'solid-js';
 import { useStyle } from '../../../helpers';
-import { Bell } from '../../../icons';
+import { Bell as DefaultBell } from '../../../icons';
+import { IconRendererWrapper } from '../../shared/IconRendererWrapper';
 
 type DefaultBellContainerProps = {
   unreadCount: number;
@@ -8,6 +9,7 @@ type DefaultBellContainerProps = {
 
 export const BellContainer = (props: DefaultBellContainerProps) => {
   const style = useStyle();
+  const bellIconStyle = style('bellIcon', 'nt-size-4');
 
   return (
     <span
@@ -16,7 +18,7 @@ export const BellContainer = (props: DefaultBellContainerProps) => {
         `nt-size-4 nt-flex nt-justify-center nt-items-center nt-relative nt-text-foreground nt-cursor-pointer`
       )}
     >
-      <Bell class={style('bellIcon', 'nt-size-4')} />
+      <IconRendererWrapper iconKey="bell" class={bellIconStyle} fallback={<DefaultBell class={bellIconStyle} />} />
       <Show when={props.unreadCount > 0}>
         <span
           class={style(

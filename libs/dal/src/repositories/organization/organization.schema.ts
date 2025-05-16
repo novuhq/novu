@@ -66,13 +66,12 @@ const organizationSchema = new Schema<OrganizationDBModel>(
   schemaOptions
 );
 
-// Add conditional index for System Organization when self-hosted
-if (process.env.SELF_HOSTED === 'true') {
+if (process.env.NOVU_ENTERPRISE !== 'true') {
   organizationSchema.index(
     { name: 1 },
     {
       unique: true,
-      partialFilterExpression: { name: 'System Organization' },
+      partialFilterExpression: { name: 'Community Edition' },
     }
   );
 }

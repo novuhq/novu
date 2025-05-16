@@ -106,6 +106,8 @@ const router = createBrowserRouter([
         path: ROUTES.ROOT,
         element: <DashboardRoute />,
         children: [
+          /* Direct routes matching environment-specific paths (e.g., /topics -> /env/:envId/topics) 
+             will be automatically redirected by the CatchAllRoute component */
           {
             path: ROUTES.ENV,
             children: [

@@ -1,9 +1,17 @@
 import { JSX } from 'solid-js';
 import { ChannelType } from '../../../../types';
 import { useStyle } from '../../../helpers';
-import { Chat, Email, InApp, Push, Sms } from '../../../icons';
-import { AppearanceKey } from '../../../types';
+import {
+  Chat as DefaultChat,
+  Email as DefaultEmail,
+  InApp as DefaultInApp,
+  Push as DefaultPush,
+  Sms as DefaultSms,
+} from '../../../icons';
+import { AppearanceKey, IconKey } from '../../../types';
 import { Switch } from '../../primitives/Switch';
+import { IconRendererWrapper } from '../../shared/IconRendererWrapper';
+import { useAppearance } from '../../../context';
 
 type ChannelRowProps = {
   channel: ChannelType;
@@ -56,20 +64,50 @@ type ChannelIconProps = JSX.IntrinsicElements['svg'] & {
 const ChannelIcon = (props: ChannelIconProps) => {
   const style = useStyle();
 
-  switch (props.channel) {
-    case ChannelType.IN_APP:
-      return <InApp class={style(props.appearanceKey, props.class)} />;
-    case ChannelType.EMAIL:
-      return <Email class={style(props.appearanceKey, props.class)} />;
-    case ChannelType.PUSH:
-      return <Push class={style(props.appearanceKey, props.class)} />;
-    case ChannelType.SMS:
-      return <Sms class={style(props.appearanceKey, props.class)} />;
-    case ChannelType.CHAT:
-      return <Chat class={style(props.appearanceKey, props.class)} />;
-    default:
-      return null;
+  const iconMap: Record<ChannelType, { key: IconKey; component: JSX.Element }> = {
+    [ChannelType.IN_APP]: {
+      key: 'inApp',
+      component: (
+        <DefaultInApp
+          class={style(props.appearanceKey, props.class, {
+            iconKey: 'inApp',
+          })}
+        />
+      ),
+    },
+    [ChannelType.EMAIL]: {
+      key: 'email',
+      component: <DefaultEmail class={style(props.appearanceKey, props.class, { iconKey: 'email' })} />,
+    },
+    [ChannelType.PUSH]: {
+      key: 'push',
+      component: <DefaultPush class={style(props.appearanceKey, props.class, { iconKey: 'push' })} />,
+    },
+    [ChannelType.SMS]: {
+      key: 'sms',
+      component: <DefaultSms class={style(props.appearanceKey, props.class, { iconKey: 'sms' })} />,
+    },
+    [ChannelType.CHAT]: {
+      key: 'chat',
+      component: <DefaultChat class={style(props.appearanceKey, props.class, { iconKey: 'chat' })} />,
+    },
+  };
+
+  const iconData = iconMap[props.channel];
+
+  if (!iconData) {
+    return null;
   }
+
+  return (
+    <IconRendererWrapper
+      iconKey={iconData.key}
+      fallback={iconData.component}
+      class={style(props.appearanceKey, props.class, {
+        iconKey: iconData.key,
+      })}
+    />
+  );
 };
 
 export const getLabel = (channel: ChannelType) => {

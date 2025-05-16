@@ -17,6 +17,7 @@ const LINKS: LinkType[] = [
   { href: '/custom-popover', label: 'Custom Popover' },
   { href: '/hooks', label: 'Hooks' },
   { href: '/custom-subject-body', label: 'Custom Subject Body' },
+  { href: '/custom-icons', label: 'Custom Icons' },
 ];
 
 const NavLink = ({ href, label }: LinkType) => {

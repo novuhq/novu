@@ -76,7 +76,8 @@ export const CreateTopicForm = (props: CreateTopicFormProps) => {
     },
     resolver: zodResolver(TopicFormSchema),
     shouldFocusError: false,
-    mode: 'onBlur',
+    mode: 'onSubmit',
+    reValidateMode: 'onChange',
   });
 
   // Watch the name field and update the key field accordingly
@@ -126,7 +127,7 @@ export const CreateTopicForm = (props: CreateTopicFormProps) => {
               name="name"
               render={({ field, fieldState }) => (
                 <FormItem>
-                  <FormLabel>
+                  <FormLabel htmlFor={field.name}>
                     Name <span className="text-primary">*</span>
                   </FormLabel>
                   <FormControl>
@@ -160,7 +161,7 @@ export const CreateTopicForm = (props: CreateTopicFormProps) => {
               render={({ field, fieldState }) => (
                 <FormItem className="w-full">
                   <div className="flex">
-                    <FormLabel className="gap-1">
+                    <FormLabel htmlFor={field.name} className="gap-1">
                       Topic Key <span className="text-primary">*</span>
                     </FormLabel>
                   </div>
@@ -193,29 +194,28 @@ export const CreateTopicForm = (props: CreateTopicFormProps) => {
             />
           </div>
           <Separator />
-          <div className="p-5">
-            <InlineToast
-              description={
-                <div className="flex flex-col gap-3">
-                  <span className="text-xs text-neutral-600">
-                    <strong>Tip:</strong> You can also create topics via API, or add subscribers to topics
-                    programmatically.
-                  </span>
-                  <Link
-                    to="https://docs.novu.co/platform/concepts/topics"
-                    className="text-xs font-medium text-neutral-600 underline"
-                    target="_blank"
-                  >
-                    Learn more
-                  </Link>
-                </div>
-              }
-              variant="success"
-              className="border-neutral-100 bg-neutral-50"
-            />
-          </div>
         </FormRoot>
       </Form>
+      <div className="p-5">
+        <InlineToast
+          description={
+            <div className="flex flex-col gap-3">
+              <span className="text-xs text-neutral-600">
+                <strong>Tip:</strong> You can also create topics via API, or add subscribers to topics programmatically.
+              </span>
+              <Link
+                to="https://docs.novu.co/platform/concepts/topics"
+                className="text-xs font-medium text-neutral-600 underline"
+                target="_blank"
+              >
+                Learn more
+              </Link>
+            </div>
+          }
+          variant="success"
+          className="border-neutral-100 bg-neutral-50"
+        />
+      </div>
     </div>
   );
 };
