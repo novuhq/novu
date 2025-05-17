@@ -1,12 +1,11 @@
-import { FILTER_VALIDATORS, LiquidFilterIssue } from '@novu/framework/internal';
+import { createLiquidEngine, FILTER_VALIDATORS, LiquidFilterIssue } from '@novu/framework/internal';
 
-import { Filter, Liquid, LiquidError, Output, RenderError, Template, TokenKind } from 'liquidjs';
+import { Filter, LiquidError, Output, RenderError, Template, TokenKind } from 'liquidjs';
 import {
   DIGEST_EVENTS_VARIABLE_PATTERN,
   extractLiquidExpressions,
   isValidDynamicPath,
   isValidTemplate,
-  VALID_DYNAMIC_PATHS,
 } from './parser-utils';
 import { JSONSchemaDto } from '../../dtos';
 
@@ -18,13 +17,7 @@ const LIQUID_CONFIG = {
 } as const;
 
 export const buildLiquidParser = () => {
-  const parserEngine = new Liquid(LIQUID_CONFIG);
-  // Register digest filter for validation of digest transformers
-  parserEngine.registerFilter('digest', () => '');
-  parserEngine.registerFilter('toSentence', () => '');
-  parserEngine.registerFilter('pluralize', () => '');
-
-  return parserEngine;
+  return createLiquidEngine(LIQUID_CONFIG);
 };
 
 const parserEngine = buildLiquidParser();
