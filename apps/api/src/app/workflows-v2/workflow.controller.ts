@@ -102,9 +102,7 @@ export class WorkflowController {
     @Body() createWorkflowDto: CreateWorkflowDto
   ): Promise<WorkflowResponseDto> {
     const upsertSteps: UpsertStepDataCommand[] = createWorkflowDto.steps.map((step: StepUpsertDto) => ({
-      name: step.name,
-      type: step.type,
-      _id: step._id,
+      ...step,
       controlValues: (step.controlValues as Record<string, unknown> | null | undefined) ?? null,
     }));
 
@@ -159,9 +157,7 @@ export class WorkflowController {
     @Body() updateWorkflowDto: UpdateWorkflowDto
   ): Promise<WorkflowResponseDto> {
     const upsertSteps: UpsertStepDataCommand[] = updateWorkflowDto.steps.map((step: StepUpsertDto) => ({
-      name: step.name,
-      type: step.type,
-      _id: step._id,
+      ...step,
       controlValues: (step.controlValues as Record<string, unknown> | null | undefined) ?? null,
     }));
 

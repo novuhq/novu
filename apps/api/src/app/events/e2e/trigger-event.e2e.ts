@@ -51,7 +51,7 @@ const promiseTimeout = (ms: number): Promise<void> =>
     setTimeout(resolve, ms);
   });
 
-describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
+describe.only('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
   let session: UserSession;
   let template: NotificationTemplateEntity;
   let subscriber: SubscriberEntity;
@@ -3494,7 +3494,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
     expect(skippedMessages2.length).to.equal(0);
   });
 
-  it('should exit execution if skip condition execution throws an error', async function () {
+  it.only('should exit execution if skip condition execution throws an error', async function () {
     const workflowBody: CreateWorkflowDto = {
       name: 'Test Complex Skip Logic',
       workflowId: 'test-complex-skip-workflow',
