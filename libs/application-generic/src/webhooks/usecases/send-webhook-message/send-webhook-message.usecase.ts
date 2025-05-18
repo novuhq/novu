@@ -55,7 +55,7 @@ export class SendWebhookMessage {
 
     try {
       this.logger.debug(
-        `Attempting to send webhook ${command.eventType} for application ${generateWebhookAppId(command.organizationId, command.environmentId)}, Event ID: ${eventId}`
+        `Attempting to send webhook ${command.eventType} for application ${appId}, Event ID: ${eventId}`
       );
 
       const message = await this.svix.message.create(appId, {
@@ -71,10 +71,7 @@ export class SendWebhookMessage {
       return { eventId };
     } catch (error: any) {
       this.logger.error(
-        `Failed to send webhook ${command.eventType} for application ${generateWebhookAppId(
-          command.organizationId,
-          command.environmentId
-        )}. Error: ${error.message}, Event ID: ${eventId}`,
+        `Failed to send webhook ${command.eventType} for application ${appId}. Error: ${error.message}, Event ID: ${eventId}`,
         error.stack
       );
 

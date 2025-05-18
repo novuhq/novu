@@ -29,20 +29,19 @@ export class GetWebhookPortalTokenUsecase {
       );
     }
 
+    if (!environment.webhookAppId) {
+      throw new NotFoundException(`Portal not found for environment ${command.environmentId}`);
+    }
+
     try {
-      console.log(generateWebhookAppId(command.organizationId, command.environmentId), 'DIMA APP ID');
-      const svixResponse = await this.svix.authentication.appPortalAccess(
-        generateWebhookAppId(command.organizationId, command.environmentId),
-        {}
-      );
+      const svixResponse = await this.svix.authentication.appPortalAccess(environment.webhookAppId, {});
 
       return {
         url: svixResponse.url,
         token: svixResponse.token,
-        appId: generateWebhookAppId(command.organizationId, command.environmentId),
+        appId: environment.webhookAppId,
       };
     } catch (error) {
-      console.log({ error, error2: error.body.detail }, 'DIMA ERROR');
       if (error.code === 404) {
         throw new NotFoundException(`Portal not found for environment ${command.environmentId}`);
       }

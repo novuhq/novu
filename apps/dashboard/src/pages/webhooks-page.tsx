@@ -96,6 +96,8 @@ export function WebhooksPage() {
   const queryError = tokenErrorRaw && !tokenErrorRaw.isPortalNotFound ? tokenErrorRaw : null;
   const mutationError = enableErrorRaw;
 
+  console.log({ currentEnvironment });
+
   const handleEnableWebhooks = () => {
     enableWebhooksMutation(currentEnvironment!);
   };
@@ -115,7 +117,7 @@ export function WebhooksPage() {
   const isInitialLoading = isLoadingToken && !portalData && !tokenErrorRaw && !mutationError && !isActualPortalNotFound;
   const canDisplayPortal = portalToken && appId && !isActualPortalNotFound && !queryError && !mutationError;
 
-  if (isActualPortalNotFound && !isEnablingWebhooks && !isLoadingEligibility) {
+  if (currentEnvironment && !currentEnvironment?.webhookAppId) {
     return (
       <DashboardLayout headerStartItems={<h1 className="text-foreground-950">Webhooks</h1>}>
         <div className="flex h-full flex-col items-center justify-center gap-4 p-4 text-center">
@@ -211,9 +213,9 @@ export function WebhooksPage() {
                         </>
                       ) : tab.value === 'endpoints' ? (
                         <>
-                          <h3 className="text-foreground text-lg font-semibold">Webhooks Not Ready</h3>
+                          <h3 className="text-foreground text-lg font-semibold">Error Loading Webhooks</h3>
                           <p className="text-muted-foreground text-sm">
-                            The webhooks portal is being prepared or there's a configuration issue.
+                            There is a configuration issue. please try again later or contact support.
                           </p>
                         </>
                       ) : (
