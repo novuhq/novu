@@ -139,6 +139,10 @@ function generateWebhookDefinitions(document: OpenAPIObject) {
       document.components.schemas[wrapperSchemaName] = {
         type: 'object',
         properties: {
+          id: {
+            type: 'string',
+            description: 'Unique identifier of the webhook event (evt_✱).',
+          },
           type: { type: 'string', enum: [webhook.event], description: 'The type of the webhook event.' },
           data: {
             description: 'The actual event data payload.',

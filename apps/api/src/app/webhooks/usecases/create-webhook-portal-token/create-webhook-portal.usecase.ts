@@ -3,7 +3,7 @@ import { EnvironmentRepository, OrganizationRepository } from '@novu/dal';
 import { LogDecorator, generateWebhookAppId, SvixClient } from '@novu/application-generic';
 
 import { CreateWebhookPortalCommand } from './create-webhook-portal.command';
-import { CreateWebhookPortalResponseDto } from '../../dtos/create-webhook-portal-token-response.dto';
+import { CreateWebhookPortalResponseDto } from '../../dtos/create-webhook-portal-response.dto';
 
 @Injectable()
 export class CreateWebhookPortalUsecase {
@@ -51,7 +51,7 @@ export class CreateWebhookPortalUsecase {
         appId: app.uid!,
       };
     } catch (error) {
-      throw new Error(`Failed to generate Svix portal token: ${error?.message}`);
+      throw new BadRequestException(`Failed to generate Svix portal token: ${error?.message}`);
     }
   }
 }

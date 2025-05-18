@@ -7,7 +7,7 @@ import { GetWebhookPortalTokenCommand } from './usecases/get-webhook-portal-toke
 import { GetWebhookPortalTokenResponseDto } from './dtos/get-webhook-portal-token-response.dto';
 import { CreateWebhookPortalUsecase } from './usecases/create-webhook-portal-token/create-webhook-portal.usecase';
 import { CreateWebhookPortalCommand } from './usecases/create-webhook-portal-token/create-webhook-portal.command';
-import { CreateWebhookPortalResponseDto } from './dtos/create-webhook-portal-token-response.dto';
+import { CreateWebhookPortalResponseDto } from './dtos/create-webhook-portal-response.dto';
 import { ProductFeature } from '../shared/decorators/product-feature.decorator';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 
@@ -22,6 +22,7 @@ export class WebhooksController {
 
   @Get('/portal/token')
   @ProductFeature(ProductFeatureKeyEnum.WEBHOOKS)
+  @RequirePermissions(PermissionsEnum.WEBHOOK_READ)
   @RequirePermissions(PermissionsEnum.WEBHOOK_CREATE)
   @ApiOperation({
     summary: 'Get Webhook Portal Access Token',

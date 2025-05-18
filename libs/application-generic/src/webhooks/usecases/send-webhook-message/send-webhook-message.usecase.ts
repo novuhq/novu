@@ -1,6 +1,6 @@
-import { Inject, Injectable, Scope } from '@nestjs/common';
+import { Inject, Injectable, Optional } from '@nestjs/common';
 import { PinoLogger } from 'nestjs-pino';
-import { EnvironmentEntity, EnvironmentRepository } from '@novu/dal';
+import { EnvironmentRepository } from '@novu/dal';
 import { shortId } from '../../../utils/generate-id';
 import { SendWebhookMessageCommand } from './send-webhook-message.command';
 import { WrapperDto } from '../../dtos/webhook-payload.dto';
@@ -10,7 +10,7 @@ import { generateWebhookAppId } from '../../utils/app-id';
 @Injectable()
 export class SendWebhookMessage {
   constructor(
-    @Inject('SVIX_CLIENT') private svix: SvixClient,
+    @Optional() @Inject('SVIX_CLIENT') private readonly svix: SvixClient | undefined,
     private logger: PinoLogger,
     private environmentRepository: EnvironmentRepository
   ) {
@@ -19,6 +19,8 @@ export class SendWebhookMessage {
 
   async execute(command: SendWebhookMessageCommand): Promise<{ eventId: string } | undefined> {
     if (!this.svix) {
+      this.logger.debug('Svix client not available – webhooks are disabled for this instance.');
+
       return;
     }
 

@@ -1,5 +1,11 @@
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
-import { FeatureFlagsKeysEnum, ApiServiceLevelEnum, FeatureNameEnum, getFeatureForTierAsBoolean } from '@novu/shared';
+import {
+  FeatureFlagsKeysEnum,
+  ApiServiceLevelEnum,
+  FeatureNameEnum,
+  getFeatureForTierAsBoolean,
+  IEnvironment,
+} from '@novu/shared';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
 import { Button } from '@/components/primitives/button';
 import { DashboardLayout } from '../components/dashboard-layout';
@@ -65,20 +71,20 @@ export function WebhooksPage() {
     mutate: enableWebhooksMutation,
     isPending: isEnablingWebhooks,
     error: enableErrorRaw,
-  }: UseMutationResult<void, CustomError, void> = useMutation<void, CustomError, void>({
-    mutationFn: async () => {
-      if (!currentEnvironment) {
-        throw new Error('Current environment is not available for enabling webhooks.') as CustomError;
+  }: UseMutationResult<void, CustomError, IEnvironment> = useMutation<void, CustomError, IEnvironment>({
+    mutationFn: async (environment: IEnvironment) => {
+      if (!environment) {
+        throw new Error('Environment is not available for enabling webhooks.') as CustomError;
       }
 
       if (!isTierEligibleForWebhooks && !IS_SELF_HOSTED) {
         throw new Error('Current tier is not eligible for webhooks.') as CustomError;
       }
 
-      await createWebhookPortalToken(currentEnvironment);
+      await createWebhookPortalToken(environment);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['webhookPortalToken', currentEnvironment?._id] });
+    onSuccess: (_, environment) => {
+      queryClient.invalidateQueries({ queryKey: ['webhookPortalToken', environment._id] });
     },
   });
 
@@ -91,7 +97,11 @@ export function WebhooksPage() {
   const mutationError = enableErrorRaw;
 
   const handleEnableWebhooks = () => {
-    enableWebhooksMutation();
+    if (currentEnvironment) {
+      enableWebhooksMutation(currentEnvironment);
+    } else {
+      console.error('Current environment is not available.');
+    }
   };
 
   if (!isWebhooksManagementEnabled) {
@@ -149,134 +159,93 @@ export function WebhooksPage() {
 
   const buildPortalUrl = (baseUrl: string | null, nextPath: string): string => {
     if (!baseUrl) return '';
-    const urlParts = baseUrl.split('#');
 
-    if (urlParts.length !== 2) {
-      console.error('Unexpected Svix portal URL format:', baseUrl);
+    try {
+      const url = new URL(baseUrl);
+      url.searchParams.append('next', nextPath);
+
+      return url.toString();
+    } catch (error) {
+      console.error('Invalid Svix portal URL format:', baseUrl, error);
+
       return baseUrl;
     }
-
-    const base = urlParts[0];
-    const keyFragment = urlParts[1];
-    const separator = base.includes('?') ? '&' : '?';
-
-    return `${base}${separator}next=${encodeURIComponent(nextPath)}#${keyFragment}`;
   };
+
+  const tabDefinitions = [
+    { value: 'endpoints', label: 'Endpoints', portalPath: '/endpoints' },
+    { value: 'event-catalog', label: 'Event Catalog', portalPath: '/event-types' },
+    { value: 'logs', label: 'Logs', portalPath: '/messages' },
+    { value: 'activity', label: 'Activity', portalPath: '/activity' },
+  ];
 
   return (
     <DashboardLayout headerStartItems={<h1 className="text-foreground-950">Webhooks</h1>}>
-      {canDisplayPortal ? (
-        <SvixProvider token={portalToken!} appId={appId!}>
-          <Tabs defaultValue="endpoints">
-            <div className="border-neutral-alpha-200 flex items-center justify-between border-b">
-              <TabsList variant="regular" className="border-b-0 border-t-2 border-transparent p-0 !px-2">
-                <TabsTrigger value="endpoints" variant="regular">
-                  Endpoints
-                </TabsTrigger>
-                <TabsTrigger value="event-catalog" variant="regular">
-                  Event Catalog
-                </TabsTrigger>
-                <TabsTrigger value="logs" variant="regular">
-                  Logs
-                </TabsTrigger>
-                <TabsTrigger value="activity" variant="regular">
-                  Activity
-                </TabsTrigger>
-              </TabsList>
-            </div>
-            <TabsContent value="endpoints" variant="regular" className="!mt-0 overflow-hidden p-2.5">
-              <div className="mt-[-61px]">
-                <AppPortal url={buildPortalUrl(portalUrl || null, '/endpoints')} fullSize />
-              </div>
-            </TabsContent>
-            <TabsContent value="event-catalog" variant="regular" className="!mt-0 overflow-hidden p-2.5">
-              <div className="mt-[-61px]">
-                <AppPortal url={buildPortalUrl(portalUrl || null, '/event-types')} fullSize />
-              </div>
-            </TabsContent>
-            <TabsContent value="logs" variant="regular" className="!mt-0 overflow-hidden p-2.5">
-              <div className="mt-[-61px]">
-                <AppPortal url={buildPortalUrl(portalUrl || null, '/messages')} fullSize />
-              </div>
-            </TabsContent>
-            <TabsContent value="activity" variant="regular" className="!mt-0 overflow-hidden p-2.5">
-              <div className="mt-[-61px]">
-                <AppPortal url={buildPortalUrl(portalUrl || null, '/activity')} fullSize />
-              </div>
-            </TabsContent>
-          </Tabs>
-        </SvixProvider>
-      ) : (
-        <Tabs defaultValue="endpoints">
-          <div className="border-neutral-alpha-200 flex items-center justify-between border-b">
-            <TabsList variant="regular" className="border-b-0 border-t-2 border-transparent p-0 !px-2">
-              <TabsTrigger value="endpoints" variant="regular">
-                Endpoints
+      <Tabs defaultValue="endpoints">
+        <div className="border-neutral-alpha-200 flex items-center justify-between border-b">
+          <TabsList variant="regular" className="border-b-0 border-t-2 border-transparent p-0 !px-2">
+            {tabDefinitions.map((tab) => (
+              <TabsTrigger key={tab.value} value={tab.value} variant="regular">
+                {tab.label}
               </TabsTrigger>
-              <TabsTrigger value="event-catalog" variant="regular">
-                Event Catalog
-              </TabsTrigger>
-              <TabsTrigger value="logs" variant="regular">
-                Logs
-              </TabsTrigger>
-              <TabsTrigger value="activity" variant="regular">
-                Activity
-              </TabsTrigger>
-            </TabsList>
-          </div>
-          <TabsContent value="endpoints" variant="regular" className="!mt-0 overflow-hidden p-2.5">
-            <div className="flex h-full min-h-[calc(100vh-250px)] items-center justify-center p-4 text-center">
-              {isInitialLoading ? (
-                <div className="flex flex-col items-center gap-2">
-                  <RiLoaderLine className="text-foreground-low h-6 w-6 animate-spin" />
-                  <span className="text-muted-foreground">Loading webhooks configuration...</span>
+            ))}
+          </TabsList>
+        </div>
+
+        {canDisplayPortal && portalToken && appId ? (
+          <SvixProvider token={portalToken} appId={appId}>
+            {tabDefinitions.map((tab) => (
+              <TabsContent key={tab.value} value={tab.value} variant="regular" className="!mt-0 overflow-hidden p-2.5">
+                <div className="mt-[-61px]">
+                  <AppPortal url={buildPortalUrl(portalUrl || null, tab.portalPath)} fullSize />
                 </div>
-              ) : (
-                <div>
-                  {queryError ? (
-                    <>
-                      <h3 className="text-foreground text-lg font-semibold">Error Loading Webhooks</h3>
-                      <p className="text-muted-foreground text-sm">{queryError.message}</p>
-                    </>
-                  ) : mutationError ? (
-                    <>
-                      <h3 className="text-foreground text-lg font-semibold">Error Configuring Webhooks</h3>
-                      <p className="text-muted-foreground text-sm">{mutationError.message}</p>
-                    </>
+              </TabsContent>
+            ))}
+          </SvixProvider>
+        ) : (
+          <>
+            {tabDefinitions.map((tab) => (
+              <TabsContent key={tab.value} value={tab.value} variant="regular" className="!mt-0 overflow-hidden p-2.5">
+                <div className="flex h-full min-h-[calc(100vh-250px)] items-center justify-center p-4 text-center">
+                  {isInitialLoading ? (
+                    <div className="flex flex-col items-center gap-2">
+                      <RiLoaderLine className="text-foreground-low h-6 w-6 animate-spin" />
+                      <span className="text-muted-foreground">
+                        {tab.value === 'endpoints' ? 'Loading webhooks configuration...' : 'Loading...'}
+                      </span>
+                    </div>
                   ) : (
-                    <>
-                      <h3 className="text-foreground text-lg font-semibold">Webhooks Not Ready</h3>
-                      <p className="text-muted-foreground text-sm">
-                        The webhooks portal is being prepared or there's a configuration issue.
-                      </p>
-                    </>
+                    <div>
+                      {queryError && tab.value === 'endpoints' ? (
+                        <>
+                          <h3 className="text-foreground text-lg font-semibold">Error Loading Webhooks</h3>
+                          <p className="text-muted-foreground text-sm">{queryError.message}</p>
+                        </>
+                      ) : mutationError && tab.value === 'endpoints' ? (
+                        <>
+                          <h3 className="text-foreground text-lg font-semibold">Error Configuring Webhooks</h3>
+                          <p className="text-muted-foreground text-sm">{mutationError.message}</p>
+                        </>
+                      ) : tab.value === 'endpoints' ? (
+                        <>
+                          <h3 className="text-foreground text-lg font-semibold">Webhooks Not Ready</h3>
+                          <p className="text-muted-foreground text-sm">
+                            The webhooks portal is being prepared or there's a configuration issue.
+                          </p>
+                        </>
+                      ) : (
+                        <p className="text-muted-foreground text-sm">
+                          {tab.label} will be available once webhooks are fully configured and endpoints are loaded.
+                        </p>
+                      )}
+                    </div>
                   )}
                 </div>
-              )}
-            </div>
-          </TabsContent>
-          {[
-            { value: 'event-catalog', label: 'Event catalog' },
-            { value: 'logs', label: 'Logs' },
-            { value: 'activity', label: 'Activity' },
-          ].map((tab) => (
-            <TabsContent key={tab.value} value={tab.value} variant="regular" className="!mt-0 overflow-hidden p-2.5">
-              <div className="flex h-full min-h-[calc(100vh-250px)] items-center justify-center p-4 text-center">
-                {isInitialLoading ? (
-                  <div className="flex flex-col items-center gap-2">
-                    <RiLoaderLine className="text-foreground-low h-6 w-6 animate-spin" />
-                    <span className="text-muted-foreground">Loading...</span>
-                  </div>
-                ) : (
-                  <p className="text-muted-foreground text-sm">
-                    {tab.label} will be available once webhooks are fully configured and endpoints are loaded.
-                  </p>
-                )}
-              </div>
-            </TabsContent>
-          ))}
-        </Tabs>
-      )}
+              </TabsContent>
+            ))}
+          </>
+        )}
+      </Tabs>
     </DashboardLayout>
   );
 }
