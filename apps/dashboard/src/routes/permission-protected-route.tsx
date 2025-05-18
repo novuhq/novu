@@ -1,4 +1,3 @@
-import { useAuth } from '@clerk/clerk-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ReactNode, useEffect, useMemo } from 'react';
 import {
@@ -13,6 +12,7 @@ import { DashboardLayout } from '@/components/dashboard-layout';
 import { PageMeta } from '@/components/page-meta';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { useHasPermission } from '@/hooks/use-has-permission';
 
 interface PermissionProtectedRouteProps {
   children: ReactNode;
@@ -27,7 +27,7 @@ export function PermissionProtectedRoute({
   condition,
   isDrawerRoute,
 }: PermissionProtectedRouteProps) {
-  const { isLoaded, has } = useAuth();
+  const has = useHasPermission();
   const { subscription } = useFetchSubscription();
   const location = useLocation();
   const navigate = useNavigate();
@@ -44,26 +44,24 @@ export function PermissionProtectedRoute({
   const parentUrl = isDrawerRoute ? location.pathname.substring(0, location.pathname.lastIndexOf('/')) : '';
 
   const hasAccess = useMemo(() => {
-    if (!isLoaded) return true;
-
-    const hasPermission = permission ? has?.({ permission }) : true;
+    const hasPermission = permission ? has({ permission }) : true;
     const meetsCondition = condition ? condition(has) : true;
 
     return hasPermission && meetsCondition;
-  }, [isLoaded, has, permission, condition]);
+  }, [has, permission, condition]);
 
   useEffect(() => {
-    if (isLoaded && !hasAccess && isDrawerRoute) {
+    if (!hasAccess && isDrawerRoute) {
       showErrorToast("You don't have permission to access this resource", 'Unauthorized');
       navigate(parentUrl);
     }
-  }, [isLoaded, hasAccess, isDrawerRoute, navigate, parentUrl]);
+  }, [hasAccess, isDrawerRoute, navigate, parentUrl]);
 
   if (!isRbacFeatureEnabled) {
     return children;
   }
 
-  if (isLoaded && !hasAccess && !isDrawerRoute) {
+  if (!hasAccess && !isDrawerRoute) {
     return (
       <>
         <PageMeta title="Unauthorized" />

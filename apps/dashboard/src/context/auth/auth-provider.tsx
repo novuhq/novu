@@ -1,35 +1,14 @@
 import { ROUTES } from '@/utils/routes';
-import { useOrganization, useUser, useAuth } from '@clerk/clerk-react';
+import { useOrganization, useUser } from '@clerk/clerk-react';
 import type { UserResource } from '@clerk/types';
 import { ReactNode, useCallback, useEffect, useMemo } from 'react';
 import { AuthContext } from './auth-context';
 import { toOrganizationEntity, toUserEntity } from './mappers';
 import type { AuthContextValue } from './types';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
-import { ApiServiceLevelEnum, getFeatureForTierAsBoolean, FeatureNameEnum, FeatureFlagsKeysEnum } from '@novu/shared';
-import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { user: clerkUser, isLoaded: isUserLoaded } = useUser();
   const { organization: clerkOrganization, isLoaded: isOrganizationLoaded } = useOrganization();
-  const { has } = useAuth();
-  const { subscription } = useFetchSubscription();
-  const isRbacFlagEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_RBAC_ENABLED, false);
-  const isRbacFeatureEnabled =
-    !subscription?.trial.isActive &&
-    getFeatureForTierAsBoolean(
-      FeatureNameEnum.ACCOUNT_ROLE_BASED_ACCESS_CONTROL_BOOLEAN,
-      subscription?.apiServiceLevel ?? ApiServiceLevelEnum.FREE
-    ) &&
-    isRbacFlagEnabled;
-
-  const hasPermission = useMemo(() => {
-    if (!isRbacFeatureEnabled) {
-      return () => true;
-    }
-
-    return has;
-  }, [has, isRbacFeatureEnabled]);
 
   const redirectTo = useCallback(
     ({
@@ -90,9 +69,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         isOrganizationLoaded,
         currentUser,
         currentOrganization,
-        has: hasPermission,
       }) as AuthContextValue,
-    [isUserLoaded, isOrganizationLoaded, currentUser, currentOrganization, hasPermission]
+    [isUserLoaded, isOrganizationLoaded, currentUser, currentOrganization]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

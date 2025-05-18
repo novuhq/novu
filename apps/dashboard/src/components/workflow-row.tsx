@@ -53,6 +53,7 @@ import { ToastIcon } from './primitives/sonner';
 import { showToast } from './primitives/sonner-helpers';
 import { TimeDisplayHoverCard } from './time-display-hover-card';
 import { Protect } from '@/utils/protect';
+import { useHasPermission } from '@/hooks/use-has-permission';
 
 type WorkflowRowProps = {
   workflow: WorkflowListResponseDto;
@@ -82,7 +83,8 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isPauseModalOpen, setIsPauseModalOpen] = useState(false);
   const { currentEnvironment } = useEnvironment();
-  const { isUserLoaded, has } = useAuth();
+  const { isUserLoaded } = useAuth();
+  const has = useHasPermission();
   const navigate = useNavigate();
   const { safeSync, isSyncable, tooltipContent, PromoteConfirmModal } = useSyncWorkflow(workflow);
   const isV0Workflow = workflow.origin === WorkflowOriginEnum.NOVU_CLOUD_V1;

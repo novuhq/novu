@@ -18,7 +18,6 @@ import { WorkflowCard } from '@/components/template-store/workflow-card';
 import { WorkflowTemplateModal } from '@/components/template-store/workflow-template-modal';
 import { SortableColumn, WorkflowList } from '@/components/workflow-list';
 import { useEnvironment } from '@/context/environment/hooks';
-import { useAuth } from '@/context/auth/hooks';
 import { useDebounce } from '@/hooks/use-debounce';
 import { useFetchWorkflows } from '@/hooks/use-fetch-workflows';
 import { useTelemetry } from '@/hooks/use-telemetry';
@@ -36,6 +35,7 @@ import {
   RiSearchLine,
 } from 'react-icons/ri';
 import { Outlet, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useHasPermission } from '@/hooks/use-has-permission';
 
 interface WorkflowFilters {
   query: string;
@@ -223,7 +223,7 @@ const CreateWorkflowButton = () => {
   const navigate = useNavigate();
   const { environmentSlug } = useParams();
   const track = useTelemetry();
-  const { has } = useAuth();
+  const has = useHasPermission();
 
   const handleCreateWorkflow = () => {
     track(TelemetryEvent.CREATE_WORKFLOW_CLICK);
@@ -238,7 +238,7 @@ const CreateWorkflowButton = () => {
     );
   };
 
-  const canCreateWorkflow = has?.({ permission: PermissionsEnum.WORKFLOW_CREATE });
+  const canCreateWorkflow = has({ permission: PermissionsEnum.WORKFLOW_CREATE });
 
   if (!canCreateWorkflow) {
     return (

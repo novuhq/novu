@@ -4,7 +4,7 @@ import { useBillingPortal } from '../../hooks/use-billing-portal';
 import { useCheckoutSession } from '../../hooks/use-checkout-session';
 import { useFetchSubscription } from '../../hooks/use-fetch-subscription';
 import { cn } from '../../utils/ui';
-import { useAuth } from '@/context/auth/hooks';
+import { useHasPermission } from '@/hooks/use-has-permission';
 
 interface PlanActionButtonProps {
   billingInterval: 'month' | 'year';
@@ -24,13 +24,13 @@ export function PlanActionButton({
   className,
   size = 'md',
 }: PlanActionButtonProps) {
-  const { has } = useAuth();
+  const has = useHasPermission();
   const { subscription: data, isLoading: isLoadingSubscription } = useFetchSubscription();
   const { navigateToCheckout, isLoading: isCheckingOut } = useCheckoutSession();
   const { navigateToPortal, isLoading: isLoadingPortal } = useBillingPortal(billingInterval);
 
-  const hasPortalAccess = has?.({ permission: PermissionsEnum.BILLING_PORTAL_ACCESS });
-  const hasSubscriptionAccess = has?.({ permission: PermissionsEnum.BILLING_SUBSCRIPTION_CREATE });
+  const hasPortalAccess = has({ permission: PermissionsEnum.BILLING_PORTAL_ACCESS });
+  const hasSubscriptionAccess = has({ permission: PermissionsEnum.BILLING_SUBSCRIPTION_CREATE });
 
   const isPaidSubscriptionActive = () => {
     return (

@@ -3,18 +3,17 @@ import { SubscriberDrawer } from '@/components/subscribers/subscriber-drawer';
 import { useOnElementUnmount } from '@/hooks/use-on-element-unmount';
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { useAuth } from '@/context/auth/hooks';
 import { PermissionsEnum } from '@novu/shared';
+import { useHasPermission } from '@/hooks/use-has-permission';
 
 export function EditSubscriberPage() {
   const { subscriberId } = useParams<{ subscriberId: string }>();
   const [open, setOpen] = useState(true);
   const { navigateToSubscribersCurrentPage } = useSubscribersNavigate();
-  const { has } = useAuth();
+  const has = useHasPermission();
 
   const isReadOnly =
-    !has?.({ permission: PermissionsEnum.SUBSCRIBER_UPDATE }) &&
-    !has?.({ permission: PermissionsEnum.SUBSCRIBER_CREATE });
+    !has({ permission: PermissionsEnum.SUBSCRIBER_UPDATE }) && !has({ permission: PermissionsEnum.SUBSCRIBER_CREATE });
 
   const { ref: unmountRef } = useOnElementUnmount({
     callback: () => {

@@ -1,8 +1,8 @@
 import { Button, ButtonProps } from '@/components/primitives/button';
-import { useAuth } from '@/context/auth/hooks';
 import { PermissionsEnum } from '@novu/shared';
 import { ReactNode } from 'react';
 import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip';
+import { useHasPermission } from '@/hooks/use-has-permission';
 
 export interface PermissionButtonProps extends ButtonProps {
   /** The permission required to access this button functionality */
@@ -25,9 +25,9 @@ export const PermissionButton = ({
   asChild,
   ...buttonProps
 }: PermissionButtonProps) => {
-  const { has } = useAuth();
+  const has = useHasPermission();
 
-  const defaultPermissionCheck = () => has?.({ permission }) ?? false;
+  const defaultPermissionCheck = () => has({ permission });
   const canPerformAction = permissionCheck ? permissionCheck() : defaultPermissionCheck();
 
   const defaultTooltipContent = (

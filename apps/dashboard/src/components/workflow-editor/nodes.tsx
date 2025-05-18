@@ -17,7 +17,7 @@ import { cn } from '@/utils/ui';
 import { STEP_TYPE_TO_ICON } from '../icons/utils';
 import { AddStepMenu } from './add-step-menu';
 import { Node, NodeBody, NodeError, NodeHeader, NodeIcon, NodeName } from './base-node';
-import { useAuth } from '@/context/auth/hooks';
+import { useHasPermission } from '@/hooks/use-has-permission';
 
 export type NodeData = {
   addStepIndex?: number;
@@ -337,14 +337,14 @@ export const CustomNode = (props: NodeProps<NodeType>) => {
 export const AddNode = (_props: NodeProps<NodeType>) => {
   const { workflow, update } = useWorkflow();
   const navigate = useNavigate();
-  const { has } = useAuth();
+  const has = useHasPermission();
 
   if (!workflow) {
     return null;
   }
 
   const isReadOnly =
-    workflow.origin === WorkflowOriginEnum.EXTERNAL || !has?.({ permission: PermissionsEnum.WORKFLOW_CREATE });
+    workflow.origin === WorkflowOriginEnum.EXTERNAL || !has({ permission: PermissionsEnum.WORKFLOW_CREATE });
 
   if (isReadOnly) {
     return null;

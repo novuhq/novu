@@ -37,8 +37,8 @@ import {
   TriggerNode,
 } from './nodes';
 import { WorkflowChecklist } from './workflow-checklist';
-import { useAuth } from '@/context/auth/hooks';
 import { InlineToast } from '@/components/primitives/inline-toast';
+import { useHasPermission } from '@/hooks/use-has-permission';
 
 const nodeTypes = {
   trigger: TriggerNode,
@@ -277,8 +277,8 @@ const WorkflowCanvasChild = ({ steps, readOnly }: { steps: Step[]; readOnly?: bo
 };
 
 export const WorkflowCanvas = ({ steps, readOnly }: { steps: Step[]; readOnly?: boolean }) => {
-  const { has } = useAuth();
-  const isReadOnly = readOnly || !has?.({ permission: PermissionsEnum.WORKFLOW_CREATE });
+  const has = useHasPermission();
+  const isReadOnly = readOnly || !has({ permission: PermissionsEnum.WORKFLOW_CREATE });
 
   return (
     <ReactFlowProvider>
@@ -288,15 +288,17 @@ export const WorkflowCanvas = ({ steps, readOnly }: { steps: Step[]; readOnly?: 
         {isReadOnly && (
           <>
             <div
-              className="border-warning/20 pointer-events-none absolute inset-0 border-[0.5px]"
+              className="border-warning/20 pointer-events-none absolute inset-x-0 top-0 border-t-[0.5px]"
               style={{
-                boxShadow: 'inset 0 0 12px 4px hsl(var(--warning) / 0.1)',
-                transition: 'border 0.3s ease-in-out, box-shadow 0.3s ease-in-out',
+                position: 'absolute',
+                height: '100%',
+                background: 'linear-gradient(to bottom, hsl(var(--warning) / 0.08), transparent 4%)',
+                transition: 'border 0.3s ease-in-out, background 0.3s ease-in-out',
               }}
             />
             <div className="absolute left-4 top-4 z-50">
               <InlineToast
-                className="border border-gray-200 bg-white shadow-md"
+                className="bg-warning/10 border shadow-md"
                 variant={'warning'}
                 description="Nice! You can see this, but changes are locked down."
                 title="View-only mode: "

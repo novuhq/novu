@@ -68,6 +68,7 @@ import {
 } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
 import { Protect } from '@/utils/protect';
+import { useHasPermission } from '@/hooks/use-has-permission';
 
 type ConfigureWorkflowFormProps = {
   workflow: WorkflowResponseDto;
@@ -84,7 +85,7 @@ const toastOptions: ExternalToast = {
 export const ConfigureWorkflowForm = (props: ConfigureWorkflowFormProps) => {
   const { workflow, update } = props;
   const navigate = useNavigate();
-  const { has } = useAuth();
+  const has = useHasPermission();
   const [isPauseModalOpen, setIsPauseModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const { tags } = useTags();
@@ -103,7 +104,7 @@ export const ConfigureWorkflowForm = (props: ConfigureWorkflowFormProps) => {
   });
 
   const isReadOnly =
-    workflow.origin === WorkflowOriginEnum.EXTERNAL || !has?.({ permission: PermissionsEnum.WORKFLOW_CREATE });
+    workflow.origin === WorkflowOriginEnum.EXTERNAL || !has({ permission: PermissionsEnum.WORKFLOW_CREATE });
 
   const { deleteWorkflow, isPending: isDeleteWorkflowPending } = useDeleteWorkflow({
     onSuccess: () => {

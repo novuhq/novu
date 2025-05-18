@@ -6,7 +6,7 @@ import { PermissionsEnum, WorkflowOriginEnum } from '@novu/shared';
 import { BaseEdge, Edge, EdgeLabelRenderer, EdgeProps, getBezierPath } from '@xyflow/react';
 import { useNavigate } from 'react-router-dom';
 import { AddStepMenu } from './add-step-menu';
-import { useAuth } from '@/context/auth/hooks';
+import { useHasPermission } from '@/hooks/use-has-permission';
 
 export type AddNodeEdgeType = Edge<{ isLast: boolean; addStepIndex: number }>;
 
@@ -23,9 +23,10 @@ export function AddNodeEdge({
 }: EdgeProps<AddNodeEdgeType>) {
   const { workflow, update } = useWorkflow();
   const navigate = useNavigate();
-  const { has } = useAuth();
+  const has = useHasPermission();
+
   const isReadOnly =
-    workflow?.origin === WorkflowOriginEnum.EXTERNAL || !has?.({ permission: PermissionsEnum.WORKFLOW_CREATE });
+    workflow?.origin === WorkflowOriginEnum.EXTERNAL || !has({ permission: PermissionsEnum.WORKFLOW_CREATE });
 
   const [edgePath, labelX, labelY] = getBezierPath({
     sourceX,

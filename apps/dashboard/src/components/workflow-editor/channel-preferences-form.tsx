@@ -26,7 +26,7 @@ import { StepTypeEnum, WorkflowOriginEnum } from '@/utils/enums';
 import { capitalize } from '@/utils/string';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
-import { useAuth } from '@clerk/clerk-react';
+import { useHasPermission } from '@/hooks/use-has-permission';
 
 type ConfigureWorkflowFormProps = {
   workflow: WorkflowResponseDto;
@@ -52,7 +52,7 @@ const checkHasEveryChannelSameValue = (
 export const ChannelPreferencesForm = (props: ConfigureWorkflowFormProps) => {
   const { workflow, update } = props;
   const track = useTelemetry();
-  const { has } = useAuth();
+  const has = useHasPermission();
 
   const isDefaultPreferences = useMemo(() => workflow.preferences.user === null, [workflow.preferences.user]);
   const isDashboardWorkflow = useMemo(() => workflow.origin === WorkflowOriginEnum.NOVU_CLOUD, [workflow.origin]);
@@ -72,7 +72,7 @@ export const ChannelPreferencesForm = (props: ConfigureWorkflowFormProps) => {
     };
   }, [isDefaultPreferences, workflow.preferences.default, workflow.preferences.user, workflow.steps]);
 
-  const isReadOnly = !has?.({ permission: PermissionsEnum.WORKFLOW_CREATE });
+  const isReadOnly = !has({ permission: PermissionsEnum.WORKFLOW_CREATE });
 
   const form = useForm<z.infer<typeof UserPreferencesFormSchema>>({
     defaultValues: {

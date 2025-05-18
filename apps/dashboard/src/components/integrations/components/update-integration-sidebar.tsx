@@ -16,14 +16,14 @@ import { DeleteIntegrationModal } from './modals/delete-integration-modal';
 import { SelectPrimaryIntegrationModal } from './modals/select-primary-integration-modal';
 import { handleIntegrationError } from './utils/handle-integration-error';
 import { isDemoIntegration } from './utils/helpers';
-import { useAuth } from '@/context/auth/hooks';
+import { useHasPermission } from '@/hooks/use-has-permission';
 
 type UpdateIntegrationSidebarProps = {
   isOpened: boolean;
 };
 
 export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarProps) {
-  const { has } = useAuth();
+  const has = useHasPermission();
   const navigate = useNavigate();
   const { integrationId } = useParams();
   const { integrations } = useFetchIntegrations();
@@ -55,8 +55,8 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
   });
 
   const isReadOnly =
-    !has?.({ permission: PermissionsEnum.INTEGRATION_UPDATE }) &&
-    !has?.({ permission: PermissionsEnum.INTEGRATION_CREATE });
+    !has({ permission: PermissionsEnum.INTEGRATION_UPDATE }) &&
+    !has({ permission: PermissionsEnum.INTEGRATION_CREATE });
 
   async function onSubmit(data: IntegrationFormData, skipPrimaryCheck?: boolean) {
     if (!integration) return;

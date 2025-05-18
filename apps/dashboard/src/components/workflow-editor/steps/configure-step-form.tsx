@@ -55,7 +55,7 @@ import { UpdateWorkflowFn } from '@/components/workflow-editor/workflow-provider
 import { useFormAutosave } from '@/hooks/use-form-autosave';
 import { INLINE_CONFIGURABLE_STEP_TYPES, STEP_TYPE_LABELS, TEMPLATE_CONFIGURABLE_STEP_TYPES } from '@/utils/constants';
 import { buildRoute, ROUTES } from '@/utils/routes';
-import { useAuth } from '@/context/auth/hooks';
+import { useHasPermission } from '@/hooks/use-has-permission';
 
 const STEP_TYPE_TO_INLINE_CONTROL_VALUES: Record<StepTypeEnum, () => React.JSX.Element | null> = {
   [StepTypeEnum.DELAY]: DelayControlValues,
@@ -91,7 +91,7 @@ type ConfigureStepFormProps = {
 export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
   const { step, workflow, update, environment } = props;
   const navigate = useNavigate();
-  const { has } = useAuth();
+  const has = useHasPermission();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const supportedStepTypes = [
     StepTypeEnum.IN_APP,
@@ -107,7 +107,7 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
   const isReadOnly =
     !isSupportedStep ||
     workflow.origin === WorkflowOriginEnum.EXTERNAL ||
-    !has?.({ permission: PermissionsEnum.WORKFLOW_CREATE });
+    !has({ permission: PermissionsEnum.WORKFLOW_CREATE });
 
   const isTemplateConfigurableStep = isSupportedStep && TEMPLATE_CONFIGURABLE_STEP_TYPES.includes(step.type);
   const isInlineConfigurableStep = isSupportedStep && INLINE_CONFIGURABLE_STEP_TYPES.includes(step.type);

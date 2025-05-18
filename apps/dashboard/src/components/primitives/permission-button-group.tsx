@@ -1,7 +1,7 @@
 import { ReactNode } from 'react';
 import { PermissionsEnum } from '@novu/shared';
-import { useAuth } from '@/context/auth/hooks';
 import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip';
+import { useHasPermission } from '@/hooks/use-has-permission';
 
 interface PermissionButtonGroupProps {
   /** The permission required to access this functionality */
@@ -23,9 +23,9 @@ export const PermissionButtonGroup = ({
   tooltipContent,
   permissionCheck,
 }: PermissionButtonGroupProps) => {
-  const { has } = useAuth();
+  const has = useHasPermission();
 
-  const defaultPermissionCheck = () => has?.({ permission }) ?? false;
+  const defaultPermissionCheck = () => has({ permission }) ?? false;
   const canPerformAction = permissionCheck ? permissionCheck() : defaultPermissionCheck();
 
   const defaultTooltipContent = (

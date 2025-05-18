@@ -1,6 +1,6 @@
 import { useTopicsNavigate } from '@/components/topics/hooks/use-topics-navigate';
 import { TopicDrawer } from '@/components/topics/topic-drawer';
-import { useAuth } from '@/context/auth/hooks';
+import { useHasPermission } from '@/hooks/use-has-permission';
 import { useOnElementUnmount } from '@/hooks/use-on-element-unmount';
 import { PermissionsEnum } from '@novu/shared';
 import { useState } from 'react';
@@ -10,10 +10,10 @@ export const EditTopicPage = () => {
   const { topicKey } = useParams<{ topicKey: string }>();
   const [open, setOpen] = useState(true);
   const { navigateToTopicsPage } = useTopicsNavigate();
-  const { has } = useAuth();
+  const has = useHasPermission();
 
   const isReadOnly =
-    !has?.({ permission: PermissionsEnum.TOPIC_UPDATE }) && !has?.({ permission: PermissionsEnum.TOPIC_CREATE });
+    !has({ permission: PermissionsEnum.TOPIC_UPDATE }) && !has({ permission: PermissionsEnum.TOPIC_CREATE });
 
   const { ref: unmountRef } = useOnElementUnmount({
     callback: () => {
