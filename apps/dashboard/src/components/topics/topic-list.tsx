@@ -1,6 +1,5 @@
 // Use pagination primitives from the dashboard project
 import { CursorPagination } from '@/components/cursor-pagination';
-import { Button } from '@/components/primitives/button';
 import { Table, TableBody, TableHead, TableHeader, TableRow } from '@/components/primitives/table';
 import { useFetchTopics } from '@/hooks/use-fetch-topics';
 import { cn } from '@/utils/ui';
@@ -14,9 +13,7 @@ import { TopicListBlank } from './topic-list-blank';
 import { TopicListNoResults } from './topic-list-no-results';
 import { TopicRow, TopicRowSkeleton } from './topic-row';
 import { TopicsFilters } from './topics-filters';
-import { useAuth } from '@/context/auth/hooks';
-import { Tooltip, TooltipTrigger } from '../primitives/tooltip';
-import { TooltipContent } from '../primitives/tooltip';
+import { PermissionButton } from '@/components/primitives/permission-button';
 
 // Use type alias instead of interface for component props
 type TopicListProps = HTMLAttributes<HTMLDivElement>;
@@ -56,31 +53,11 @@ const TopicListWrapper = (props: TopicListFiltersProps & { hasData?: boolean; ar
 };
 
 export const CreateTopicButton = () => {
-  const { has } = useAuth();
   const { navigateToCreateTopicPage } = useTopicsNavigate();
 
-  const canCreateTopic = has?.({ permission: PermissionsEnum.TOPIC_CREATE });
-
-  if (!canCreateTopic) {
-    return (
-      <Tooltip>
-        <TooltipTrigger>
-          <Button disabled variant="primary" size="xs" leadingIcon={RiAddCircleLine}>
-            Create Topic
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>
-          Almost there! Your role just doesn't have permission for this one.{' '}
-          <a href="https://docs.novu.co/" target="_blank" className="underline">
-            Learn More ↗
-          </a>
-        </TooltipContent>
-      </Tooltip>
-    );
-  }
-
   return (
-    <Button
+    <PermissionButton
+      permission={PermissionsEnum.TOPIC_CREATE}
       variant="primary"
       mode="gradient"
       size="xs"
@@ -88,7 +65,7 @@ export const CreateTopicButton = () => {
       onClick={navigateToCreateTopicPage}
     >
       Create Topic
-    </Button>
+    </PermissionButton>
   );
 };
 

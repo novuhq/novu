@@ -12,18 +12,18 @@ import {
 import { Form, FormField, FormItem, FormRoot } from '@/components/primitives/form/form';
 import { Input } from '@/components/primitives/input';
 import { ScrollArea, ScrollBar } from '@/components/primitives/scroll-area';
-import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/primitives/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { getTemplates, WorkflowTemplate } from '@/components/template-store/templates';
 import { WorkflowCard } from '@/components/template-store/workflow-card';
 import { WorkflowTemplateModal } from '@/components/template-store/workflow-template-modal';
 import { SortableColumn, WorkflowList } from '@/components/workflow-list';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useAuth } from '@/context/auth/hooks';
 import { useDebounce } from '@/hooks/use-debounce';
 import { useFetchWorkflows } from '@/hooks/use-fetch-workflows';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
-import { useAuth } from '@clerk/clerk-react';
 import { DirectionEnum, PermissionsEnum, StepTypeEnum } from '@novu/shared';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
@@ -220,12 +220,25 @@ export const WorkflowsPage = () => {
 };
 
 const CreateWorkflowButton = () => {
-  const { isLoaded, has } = useAuth();
   const navigate = useNavigate();
   const { environmentSlug } = useParams();
   const track = useTelemetry();
+  const { has } = useAuth();
 
-  const canCreateWorkflow = isLoaded ? has?.({ permission: PermissionsEnum.WORKFLOW_CREATE }) : false;
+  const handleCreateWorkflow = () => {
+    track(TelemetryEvent.CREATE_WORKFLOW_CLICK);
+    navigate(buildRoute(ROUTES.WORKFLOWS_CREATE, { environmentSlug: environmentSlug || '' }));
+  };
+
+  const navigateToTemplateStore = () => {
+    navigate(
+      buildRoute(ROUTES.TEMPLATE_STORE, {
+        environmentSlug: environmentSlug || '',
+      }) + '?source=create-workflow-dropdown'
+    );
+  };
+
+  const canCreateWorkflow = has?.({ permission: PermissionsEnum.WORKFLOW_CREATE });
 
   if (!canCreateWorkflow) {
     return (
@@ -260,7 +273,7 @@ const CreateWorkflowButton = () => {
           variant="primary"
           size="xs"
           leadingIcon={RiRouteFill}
-          onClick={() => navigate(buildRoute(ROUTES.WORKFLOWS_CREATE, { environmentSlug: environmentSlug || '' }))}
+          onClick={handleCreateWorkflow}
         >
           Create workflow
         </Button>
@@ -278,27 +291,12 @@ const CreateWorkflowButton = () => {
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56">
             <DropdownMenuItem className="cursor-pointer" asChild>
-              <div
-                className="w-full"
-                onClick={() => {
-                  track(TelemetryEvent.CREATE_WORKFLOW_CLICK);
-                  navigate(buildRoute(ROUTES.WORKFLOWS_CREATE, { environmentSlug: environmentSlug || '' }));
-                }}
-              >
+              <div className="w-full" onClick={handleCreateWorkflow}>
                 <RiFileAddLine />
                 From Blank
               </div>
             </DropdownMenuItem>
-            <DropdownMenuItem
-              className="cursor-pointer"
-              onSelect={() => {
-                navigate(
-                  buildRoute(ROUTES.TEMPLATE_STORE, {
-                    environmentSlug: environmentSlug || '',
-                  }) + '?source=create-workflow-dropdown'
-                );
-              }}
-            >
+            <DropdownMenuItem className="cursor-pointer" onSelect={navigateToTemplateStore}>
               <RiFileMarkedLine />
               From Template
             </DropdownMenuItem>

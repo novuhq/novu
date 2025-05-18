@@ -16,16 +16,14 @@ import { cn } from '@/utils/ui';
 import { DirectionEnum, PermissionsEnum } from '@novu/shared';
 import { HTMLAttributes, useEffect, useState } from 'react';
 import { RiUserSharedLine } from 'react-icons/ri';
-import { Button } from '../primitives/button';
-import { useAuth } from '@/context/auth/hooks';
-import { Tooltip, TooltipTrigger } from '../primitives/tooltip';
-import { TooltipContent } from '../primitives/tooltip';
+import { PermissionButton } from '@/components/primitives/permission-button';
 
 type SubscriberListFiltersProps = HTMLAttributes<HTMLDivElement> &
   Pick<SubscribersUrlState, 'filterValues' | 'handleFiltersChange' | 'resetFilters'>;
 
 const SubscriberListWrapper = (props: SubscriberListFiltersProps) => {
   const { className, children, filterValues, handleFiltersChange, resetFilters, ...rest } = props;
+  const { navigateToCreateSubscriberPage } = useSubscribersNavigate();
 
   return (
     <div className={cn('flex flex-col p-2', className)} {...rest}>
@@ -36,54 +34,20 @@ const SubscriberListWrapper = (props: SubscriberListFiltersProps) => {
           onReset={resetFilters}
           className="py-2.5"
         />
-        <CreateSubscriberButton />
+        <PermissionButton
+          permission={PermissionsEnum.SUBSCRIBER_CREATE}
+          mode="gradient"
+          className="rounded-l-lg border-none px-1.5 py-2 text-white"
+          variant="primary"
+          size="xs"
+          leadingIcon={RiUserSharedLine}
+          onClick={navigateToCreateSubscriberPage}
+        >
+          Add subscriber
+        </PermissionButton>
       </div>
       {children}
     </div>
-  );
-};
-
-const CreateSubscriberButton = () => {
-  const { has } = useAuth();
-  const { navigateToCreateSubscriberPage } = useSubscribersNavigate();
-
-  const canCreateSubscriber = has?.({ permission: PermissionsEnum.SUBSCRIBER_CREATE });
-
-  if (!canCreateSubscriber) {
-    return (
-      <Tooltip>
-        <TooltipTrigger>
-          <Button
-            disabled
-            className="rounded-l-lg border-none px-1.5 py-2 text-white"
-            variant="primary"
-            size="xs"
-            leadingIcon={RiUserSharedLine}
-          >
-            Add subscriber
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>
-          Almost there! Your role just doesn't have permission for this one.{' '}
-          <a href="https://docs.novu.co/" target="_blank" className="underline">
-            Learn More ↗
-          </a>
-        </TooltipContent>
-      </Tooltip>
-    );
-  }
-
-  return (
-    <Button
-      mode="gradient"
-      className="rounded-l-lg border-none px-1.5 py-2 text-white"
-      variant="primary"
-      size="xs"
-      leadingIcon={RiUserSharedLine}
-      onClick={navigateToCreateSubscriberPage}
-    >
-      Add subscriber
-    </Button>
   );
 };
 

@@ -33,7 +33,7 @@ import { useTelemetry } from '../../hooks/use-telemetry';
 import { TelemetryEvent } from '../../utils/telemetry';
 import { ColorPicker } from '../primitives/color-picker';
 import { showErrorToast, showSuccessToast } from '../primitives/sonner-helpers';
-import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip';
+import { PermissionButton } from '@/components/primitives/permission-button';
 
 const ENVIRONMENT_COLORS = [
   '#FF6B6B', // Vibrant Coral
@@ -103,44 +103,24 @@ export const CreateEnvironmentButton = (props: CreateEnvironmentButtonProps) => 
     }
   };
 
-  const CreateEnvironmentButton = () => {
-    const { has } = useAuth();
-    const canCreateEnvironment = has?.({ permission: PermissionsEnum.ENVIRONMENT_CREATE });
-
-    const handleClick = () => {
-      track(TelemetryEvent.CREATE_ENVIRONMENT_CLICK);
-
-      setIsOpen(true);
-    };
-
-    if (!canCreateEnvironment) {
-      return (
-        <Tooltip>
-          <TooltipTrigger>
-            <Button disabled variant="primary" size="xs" leadingIcon={RiAddLine} {...props}>
-              Create environment
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            Almost there! Your role just doesn't have permission for this one.{' '}
-            <a href="https://docs.novu.co/" target="_blank" className="underline">
-              Learn More ↗
-            </a>
-          </TooltipContent>
-        </Tooltip>
-      );
-    }
-
-    return (
-      <Button mode="gradient" variant="primary" size="xs" leadingIcon={RiAddLine} onClick={handleClick} {...props}>
-        Create environment
-      </Button>
-    );
+  const handleClick = () => {
+    track(TelemetryEvent.CREATE_ENVIRONMENT_CLICK);
+    setIsOpen(true);
   };
 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
-      <CreateEnvironmentButton />
+      <PermissionButton
+        permission={PermissionsEnum.ENVIRONMENT_CREATE}
+        mode="gradient"
+        variant="primary"
+        size="xs"
+        leadingIcon={RiAddLine}
+        onClick={handleClick}
+        {...props}
+      >
+        Create environment
+      </PermissionButton>
 
       <SheetContent onOpenAutoFocus={(e) => e.preventDefault()}>
         <SheetHeader>
