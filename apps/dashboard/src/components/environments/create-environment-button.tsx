@@ -24,7 +24,7 @@ import { useAuth } from '@/context/auth/hooks';
 import { useFetchEnvironments } from '@/context/environment/hooks';
 import { useCreateEnvironment } from '@/hooks/use-environments';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { IEnvironment } from '@novu/shared';
+import { IEnvironment, PermissionsEnum } from '@novu/shared';
 import { ComponentProps, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { RiAddLine, RiArrowRightSLine } from 'react-icons/ri';
@@ -33,6 +33,7 @@ import { useTelemetry } from '../../hooks/use-telemetry';
 import { TelemetryEvent } from '../../utils/telemetry';
 import { ColorPicker } from '../primitives/color-picker';
 import { showErrorToast, showSuccessToast } from '../primitives/sonner-helpers';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip';
 
 const ENVIRONMENT_COLORS = [
   '#FF6B6B', // Vibrant Coral
@@ -102,17 +103,44 @@ export const CreateEnvironmentButton = (props: CreateEnvironmentButtonProps) => 
     }
   };
 
-  const handleClick = () => {
-    track(TelemetryEvent.CREATE_ENVIRONMENT_CLICK);
+  const CreateEnvironmentButton = () => {
+    const { has } = useAuth();
+    const canCreateEnvironment = has?.({ permission: PermissionsEnum.ENVIRONMENT_CREATE });
 
-    setIsOpen(true);
+    const handleClick = () => {
+      track(TelemetryEvent.CREATE_ENVIRONMENT_CLICK);
+
+      setIsOpen(true);
+    };
+
+    if (!canCreateEnvironment) {
+      return (
+        <Tooltip>
+          <TooltipTrigger>
+            <Button disabled variant="primary" size="xs" leadingIcon={RiAddLine} {...props}>
+              Create environment
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            Almost there! Your role just doesn't have permission for this one.{' '}
+            <a href="https://docs.novu.co/" target="_blank" className="underline">
+              Learn More ↗
+            </a>
+          </TooltipContent>
+        </Tooltip>
+      );
+    }
+
+    return (
+      <Button mode="gradient" variant="primary" size="xs" leadingIcon={RiAddLine} onClick={handleClick} {...props}>
+        Create environment
+      </Button>
+    );
   };
 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
-      <Button mode="gradient" variant="primary" size="xs" leadingIcon={RiAddLine} onClick={handleClick} {...props}>
-        Create environment
-      </Button>
+      <CreateEnvironmentButton />
 
       <SheetContent onOpenAutoFocus={(e) => e.preventDefault()}>
         <SheetHeader>
