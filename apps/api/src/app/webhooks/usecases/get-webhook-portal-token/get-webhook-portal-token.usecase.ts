@@ -30,6 +30,7 @@ export class GetWebhookPortalTokenUsecase {
     }
 
     try {
+      console.log(generateWebhookAppId(command.organizationId, command.environmentId), 'DIMA APP ID');
       const svixResponse = await this.svix.authentication.appPortalAccess(
         generateWebhookAppId(command.organizationId, command.environmentId),
         {}
@@ -41,6 +42,7 @@ export class GetWebhookPortalTokenUsecase {
         appId: generateWebhookAppId(command.organizationId, command.environmentId),
       };
     } catch (error) {
+      console.log({ error, error2: error.body.detail }, 'DIMA ERROR');
       if (error.code === 404) {
         throw new NotFoundException(`Portal not found for environment ${command.environmentId}`);
       }

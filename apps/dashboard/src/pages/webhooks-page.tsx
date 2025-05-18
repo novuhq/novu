@@ -97,31 +97,14 @@ export function WebhooksPage() {
   const mutationError = enableErrorRaw;
 
   const handleEnableWebhooks = () => {
-    if (currentEnvironment) {
-      enableWebhooksMutation(currentEnvironment);
-    } else {
-      console.error('Current environment is not available.');
-    }
+    enableWebhooksMutation(currentEnvironment!);
   };
 
   if (!isWebhooksManagementEnabled) {
     return <Navigate to={ROUTES.WORKFLOWS} replace />;
   }
 
-  if (isLoadingEligibility) {
-    return (
-      <DashboardLayout headerStartItems={<h1 className="text-foreground-950">Webhooks</h1>}>
-        <div className="flex h-full min-h-[calc(100vh-250px)] items-center justify-center p-4 text-center">
-          <div className="flex flex-col items-center gap-2">
-            <RiLoaderLine className="text-foreground-low h-6 w-6 animate-spin" />
-            <span className="text-muted-foreground">Loading eligibility...</span>
-          </div>
-        </div>
-      </DashboardLayout>
-    );
-  }
-
-  if (!IS_SELF_HOSTED && !isTierEligibleForWebhooks) {
+  if (!IS_SELF_HOSTED && !isTierEligibleForWebhooks && !isLoadingEligibility) {
     return (
       <DashboardLayout headerStartItems={<h1 className="text-foreground-950">Webhooks</h1>}>
         <WebhooksPaywallState />
@@ -132,7 +115,7 @@ export function WebhooksPage() {
   const isInitialLoading = isLoadingToken && !portalData && !tokenErrorRaw && !mutationError && !isActualPortalNotFound;
   const canDisplayPortal = portalToken && appId && !isActualPortalNotFound && !queryError && !mutationError;
 
-  if (isActualPortalNotFound && !isEnablingWebhooks) {
+  if (isActualPortalNotFound && !isEnablingWebhooks && !isLoadingEligibility) {
     return (
       <DashboardLayout headerStartItems={<h1 className="text-foreground-950">Webhooks</h1>}>
         <div className="flex h-full flex-col items-center justify-center gap-4 p-4 text-center">
