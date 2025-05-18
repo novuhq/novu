@@ -4,7 +4,7 @@ import { Button } from '@/components/primitives/button';
 import { Table, TableBody, TableHead, TableHeader, TableRow } from '@/components/primitives/table';
 import { useFetchTopics } from '@/hooks/use-fetch-topics';
 import { cn } from '@/utils/ui';
-import { DirectionEnum } from '@novu/shared';
+import { DirectionEnum, PermissionsEnum } from '@novu/shared';
 import { HTMLAttributes, useCallback } from 'react';
 import { RiAddCircleLine } from 'react-icons/ri';
 import { useSearchParams } from 'react-router-dom';
@@ -14,6 +14,9 @@ import { TopicListBlank } from './topic-list-blank';
 import { TopicListNoResults } from './topic-list-no-results';
 import { TopicRow, TopicRowSkeleton } from './topic-row';
 import { TopicsFilters } from './topics-filters';
+import { useAuth } from '@/context/auth/hooks';
+import { Tooltip, TooltipTrigger } from '../primitives/tooltip';
+import { TooltipContent } from '../primitives/tooltip';
 
 // Use type alias instead of interface for component props
 type TopicListProps = HTMLAttributes<HTMLDivElement>;
@@ -31,8 +34,6 @@ const TopicListWrapper = (props: TopicListFiltersProps & { hasData?: boolean; ar
     areFiltersApplied,
     ...rest
   } = props;
-  const { navigateToCreateTopicPage } = useTopicsNavigate();
-
   return (
     <div className={cn('flex flex-col p-2', className)} {...rest}>
       <div className="flex items-center justify-between">
@@ -47,19 +48,47 @@ const TopicListWrapper = (props: TopicListFiltersProps & { hasData?: boolean; ar
         ) : (
           <div /> // Empty div placeholder to maintain layout
         )}
-
-        <Button
-          variant="primary"
-          mode="gradient"
-          size="xs"
-          leadingIcon={RiAddCircleLine}
-          onClick={navigateToCreateTopicPage}
-        >
-          Create Topic
-        </Button>
+        <CreateTopicButton />
       </div>
       {children}
     </div>
+  );
+};
+
+export const CreateTopicButton = () => {
+  const { has } = useAuth();
+  const { navigateToCreateTopicPage } = useTopicsNavigate();
+
+  const canCreateTopic = has?.({ permission: PermissionsEnum.TOPIC_CREATE });
+
+  if (!canCreateTopic) {
+    return (
+      <Tooltip>
+        <TooltipTrigger>
+          <Button disabled variant="primary" size="xs" leadingIcon={RiAddCircleLine}>
+            Create Topic
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          Almost there! Your role just doesn't have permission for this one.{' '}
+          <a href="https://docs.novu.co/" target="_blank" className="underline">
+            Learn More ↗
+          </a>
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  return (
+    <Button
+      variant="primary"
+      mode="gradient"
+      size="xs"
+      leadingIcon={RiAddCircleLine}
+      onClick={navigateToCreateTopicPage}
+    >
+      Create Topic
+    </Button>
   );
 };
 

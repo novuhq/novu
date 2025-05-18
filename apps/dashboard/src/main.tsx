@@ -211,7 +211,14 @@ const router = createBrowserRouter([
                   {
                     path: ROUTES.TOPICS_EDIT,
                     element: (
-                      <ProtectedRoute permission={PermissionsEnum.TOPIC_UPDATE} isDrawerRoute>
+                      <ProtectedRoute
+                        condition={(has) =>
+                          has({ permission: PermissionsEnum.TOPIC_UPDATE }) ||
+                          has({ permission: PermissionsEnum.TOPIC_READ }) ||
+                          has({ permission: PermissionsEnum.TOPIC_CREATE })
+                        }
+                        isDrawerRoute
+                      >
                         <EditTopicPage />
                       </ProtectedRoute>
                     ),

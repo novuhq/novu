@@ -24,6 +24,8 @@ import { showErrorToast } from '../primitives/sonner-helpers';
 import { useDeleteTopic } from './hooks/use-delete-topic';
 import { useTopicsNavigate } from './hooks/use-topics-navigate';
 import { Topic } from './types';
+import { Protect } from '@/utils/protect';
+import { PermissionsEnum } from '@novu/shared';
 
 type TopicRowProps = {
   topic: Topic;
@@ -119,29 +121,33 @@ export const TopicRow = ({ topic }: TopicRowProps) => {
                   <RiFileCopyLine />
                   Copy identifier
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild className="cursor-pointer">
-                  <Link
-                    to={
-                      buildRoute(ROUTES.ACTIVITY_FEED, {
-                        environmentSlug: currentEnvironment?.slug ?? '',
-                      }) +
-                      '?' +
-                      new URLSearchParams({ topicKey: topic.key }).toString()
-                    }
+                <Protect permission={PermissionsEnum.NOTIFICATION_READ}>
+                  <DropdownMenuItem asChild className="cursor-pointer">
+                    <Link
+                      to={
+                        buildRoute(ROUTES.ACTIVITY_FEED, {
+                          environmentSlug: currentEnvironment?.slug ?? '',
+                        }) +
+                        '?' +
+                        new URLSearchParams({ topicKey: topic.key }).toString()
+                      }
+                    >
+                      <RiPulseFill />
+                      View activity
+                    </Link>
+                  </DropdownMenuItem>
+                </Protect>
+                <Protect permission={PermissionsEnum.TOPIC_DELETE}>
+                  <DropdownMenuItem
+                    className="text-destructive cursor-pointer"
+                    onClick={() => {
+                      setTimeout(() => setIsDeleteModalOpen(true), 0);
+                    }}
                   >
-                    <RiPulseFill />
-                    View activity
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="text-destructive cursor-pointer"
-                  onClick={() => {
-                    setTimeout(() => setIsDeleteModalOpen(true), 0);
-                  }}
-                >
-                  <RiDeleteBin2Line />
-                  Delete topic
-                </DropdownMenuItem>
+                    <RiDeleteBin2Line />
+                    Delete topic
+                  </DropdownMenuItem>
+                </Protect>
               </DropdownMenuGroup>
             </DropdownMenuContent>
           </DropdownMenu>
