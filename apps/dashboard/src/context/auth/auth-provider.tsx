@@ -1,5 +1,5 @@
 import { ROUTES } from '@/utils/routes';
-import { useOrganization, useUser } from '@clerk/clerk-react';
+import { useOrganization, useUser, useAuth } from '@clerk/clerk-react';
 import type { UserResource } from '@clerk/types';
 import { ReactNode, useCallback, useEffect, useMemo } from 'react';
 import { AuthContext } from './auth-context';
@@ -9,6 +9,7 @@ import type { AuthContextValue } from './types';
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { user: clerkUser, isLoaded: isUserLoaded } = useUser();
   const { organization: clerkOrganization, isLoaded: isOrganizationLoaded } = useOrganization();
+  const { has } = useAuth();
 
   const redirectTo = useCallback(
     ({
@@ -69,8 +70,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         isOrganizationLoaded,
         currentUser,
         currentOrganization,
+        has,
       }) as AuthContextValue,
-    [isUserLoaded, isOrganizationLoaded, currentUser, currentOrganization]
+    [isUserLoaded, isOrganizationLoaded, currentUser, currentOrganization, has]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
