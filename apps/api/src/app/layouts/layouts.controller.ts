@@ -49,13 +49,13 @@ import {
 import { LayoutId } from './types';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
-import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
+import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 
 @ApiCommonResponses()
 @Controller('/layouts')
 @ApiTags('Layouts')
-@UserAuthentication()
+@RequireAuthentication()
 @ApiExcludeController()
 export class LayoutsController {
   constructor(

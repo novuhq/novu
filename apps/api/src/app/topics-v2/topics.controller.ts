@@ -15,13 +15,13 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
-import { ExternalApiAccessible } from '@novu/application-generic';
-import { ApiRateLimitCategoryEnum, UserSessionData } from '@novu/shared';
+import { ExternalApiAccessible, RequirePermissions } from '@novu/application-generic';
+import { ApiRateLimitCategoryEnum, UserSessionData, PermissionsEnum } from '@novu/shared';
 import { Response } from 'express';
 import { ThrottlerCategory } from '../rate-limiting/guards/throttler.decorator';
 import { DirectionEnum } from '../shared/dtos/base-responses';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
-import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
+import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 import { UserSession } from '../shared/framework/user.decorator';
 import { CreateTopicSubscriptionsResponseDto } from './dtos/create-topic-subscriptions-response.dto';
@@ -56,6 +56,7 @@ import { UpsertTopicUseCase } from './usecases/upsert-topic/upsert-topic.usecase
 @ThrottlerCategory(ApiRateLimitCategoryEnum.CONFIGURATION)
 @Controller({ path: '/topics', version: '2' })
 @UseInterceptors(ClassSerializerInterceptor)
+@RequireAuthentication()
 @ApiTags('Topics')
 @SdkGroupName('Topics')
 @ApiCommonResponses()
@@ -72,7 +73,6 @@ export class TopicsController {
   ) {}
 
   @Get('')
-  @UserAuthentication()
   @ExternalApiAccessible()
   @SdkMethodName('list')
   @ApiOperation({
@@ -82,6 +82,7 @@ export class TopicsController {
     Checkout all available filters in the query section.`,
   })
   @ApiResponse(ListTopicsResponseDto)
+  @RequirePermissions(PermissionsEnum.TOPIC_READ)
   async listTopics(
     @UserSession() user: UserSessionData,
     @Query() query: ListTopicsQueryDto
@@ -104,7 +105,6 @@ export class TopicsController {
   }
 
   @Post('')
-  @UserAuthentication()
   @ExternalApiAccessible()
   @ApiOperation({
     summary: 'Create a topic',
@@ -113,6 +113,7 @@ export class TopicsController {
   @ApiResponse(TopicResponseDto, 201)
   @ApiResponse(TopicResponseDto, 200)
   @SdkMethodName('create')
+  @RequirePermissions(PermissionsEnum.TOPIC_CREATE)
   async upsertTopic(
     @UserSession() user: UserSessionData,
     @Body() body: CreateUpdateTopicRequestDto,
@@ -136,7 +137,6 @@ export class TopicsController {
   }
 
   @Get('/:topicKey')
-  @UserAuthentication()
   @ExternalApiAccessible()
   @SdkMethodName('get')
   @ApiOperation({
@@ -145,6 +145,7 @@ export class TopicsController {
   })
   @ApiParam({ name: 'topicKey', description: 'The key identifier of the topic', type: String })
   @ApiResponse(TopicResponseDto, 200)
+  @RequirePermissions(PermissionsEnum.TOPIC_READ)
   async getTopic(@UserSession() user: UserSessionData, @Param('topicKey') topicKey: string): Promise<TopicResponseDto> {
     return await this.getTopicUsecase.execute(
       GetTopicCommand.create({
@@ -156,7 +157,6 @@ export class TopicsController {
   }
 
   @Patch('/:topicKey')
-  @UserAuthentication()
   @ExternalApiAccessible()
   @SdkMethodName('update')
   @ApiOperation({
@@ -165,6 +165,7 @@ export class TopicsController {
   })
   @ApiParam({ name: 'topicKey', description: 'The key identifier of the topic', type: String })
   @ApiResponse(TopicResponseDto, 200)
+  @RequirePermissions(PermissionsEnum.TOPIC_UPDATE)
   async updateTopic(
     @UserSession() user: UserSessionData,
     @Param('topicKey') topicKey: string,
@@ -182,7 +183,6 @@ export class TopicsController {
   }
 
   @Delete('/:topicKey')
-  @UserAuthentication()
   @ExternalApiAccessible()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -194,6 +194,7 @@ export class TopicsController {
   @ApiResponse(DeleteTopicResponseDto, 200, false, true, {
     description: 'Topic deleted successfully',
   })
+  @RequirePermissions(PermissionsEnum.TOPIC_DELETE)
   async deleteTopic(
     @UserSession() user: UserSessionData,
     @Param('topicKey') topicKey: string
@@ -214,7 +215,6 @@ export class TopicsController {
   }
 
   @Get('/:topicKey/subscriptions')
-  @UserAuthentication()
   @ExternalApiAccessible()
   @SdkGroupName('Topics.Subscriptions')
   @ApiOperation({
@@ -224,6 +224,7 @@ export class TopicsController {
   })
   @ApiParam({ name: 'topicKey', description: 'The key identifier of the topic', type: String })
   @ApiResponse(ListTopicSubscriptionsResponseDto, 200)
+  @RequirePermissions(PermissionsEnum.TOPIC_READ)
   async listTopicSubscriptions(
     @UserSession() user: UserSessionData,
     @Param('topicKey') topicKey: string,
@@ -246,7 +247,6 @@ export class TopicsController {
   }
 
   @Post('/:topicKey/subscriptions')
-  @UserAuthentication()
   @ExternalApiAccessible()
   @SdkGroupName('Topics.Subscriptions')
   @SdkMethodName('create')
@@ -259,6 +259,7 @@ export class TopicsController {
   @ApiResponse(CreateTopicSubscriptionsResponseDto, 201, false, true, {
     description: 'Subscriptions created successfully',
   })
+  @RequirePermissions(PermissionsEnum.TOPIC_CREATE)
   async createTopicSubscriptions(
     @UserSession() user: UserSessionData,
     @Param('topicKey') topicKey: string,
@@ -293,7 +294,6 @@ export class TopicsController {
   }
 
   @Delete('/:topicKey/subscriptions')
-  @UserAuthentication()
   @ExternalApiAccessible()
   @SdkGroupName('Topics.Subscriptions')
   @SdkMethodName('delete')
@@ -305,6 +305,7 @@ export class TopicsController {
   @ApiResponse(DeleteTopicSubscriptionsResponseDto, 200, false, false, {
     description: 'Subscriptions deleted successfully',
   })
+  @RequirePermissions(PermissionsEnum.TOPIC_DELETE)
   async deleteTopicSubscriptions(
     @UserSession() user: UserSessionData,
     @Param('topicKey') topicKey: string,

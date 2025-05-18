@@ -65,4 +65,3 @@ export const showErrorToast = (toastId: string | number, error?: any) => {
     },
   });
 };
-

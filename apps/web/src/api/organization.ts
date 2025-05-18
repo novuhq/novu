@@ -36,7 +36,7 @@ export function getOrganizationMembers() {
 export function inviteMember(email: string) {
   return api.post(`/v1/invites`, {
     email,
-    role: MemberRoleEnum.ADMIN,
+    role: MemberRoleEnum.OSS_ADMIN,
   });
 }
 

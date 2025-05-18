@@ -41,12 +41,12 @@ import { GetWorkflowOverrideById } from './usecases/get-workflow-override-by-id/
 import { GetWorkflowOverrideByIdCommand } from './usecases/get-workflow-override-by-id/get-workflow-override-by-id.command';
 import { UpdateWorkflowOverrideByIdCommand } from './usecases/update-workflow-override-by-id/update-workflow-override-by-id.command';
 import { UpdateWorkflowOverrideById } from './usecases/update-workflow-override-by-id/update-workflow-override-by-id.usecase';
-import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
+import { RequireAuthentication } from '../auth/framework/auth.decorator';
 
 @ApiCommonResponses()
 @Controller('/workflow-overrides')
 @UseInterceptors(ClassSerializerInterceptor)
-@UserAuthentication()
+@RequireAuthentication()
 @ApiTags('Workflows-Overrides')
 @ApiExcludeController()
 export class WorkflowOverridesController {

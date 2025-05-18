@@ -13,6 +13,7 @@ import { DeleteLayoutUseCase, DeleteLayoutCommand } from '../delete-layout';
 import { SharedModule } from '../../../shared/shared.module';
 import { ChangeModule } from '../../../change/change.module';
 import { MessageTemplateModule } from '../../../message-template/message-template.module';
+import { LayoutsModule } from '../../layouts.module';
 
 describe('Find Deleted Layout Usecase', function () {
   let createLayoutUseCase: CreateLayoutUseCase;
@@ -22,7 +23,7 @@ describe('Find Deleted Layout Usecase', function () {
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
-      imports: [SharedModule, ChangeModule, MessageTemplateModule],
+      imports: [SharedModule, ChangeModule, MessageTemplateModule, LayoutsModule],
       providers: [],
     }).compile();
 

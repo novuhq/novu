@@ -16,11 +16,18 @@ import {
   CreateOrUpdateSubscriberUseCase,
   ExternalApiAccessible,
   UserSession,
+  RequirePermissions,
 } from '@novu/application-generic';
-import { ApiRateLimitCategoryEnum, DirectionEnum, SubscriberCustomData, UserSessionData } from '@novu/shared';
+import {
+  ApiRateLimitCategoryEnum,
+  DirectionEnum,
+  SubscriberCustomData,
+  UserSessionData,
+  PermissionsEnum,
+} from '@novu/shared';
 import { ThrottlerCategory } from '../rate-limiting/guards/throttler.decorator';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
-import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
+import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 import { SubscriberResponseDto } from '../subscribers/dtos';
 import { ListSubscriberSubscriptionsQueryDto } from '../topics-v2/dtos/list-subscriber-subscriptions-query.dto';
@@ -51,6 +58,7 @@ import { UpdateSubscriberPreferences } from './usecases/update-subscriber-prefer
 @ThrottlerCategory(ApiRateLimitCategoryEnum.CONFIGURATION)
 @Controller({ path: '/subscribers', version: '2' })
 @UseInterceptors(ClassSerializerInterceptor)
+@RequireAuthentication()
 @ApiTags('Subscribers')
 @SdkGroupName('Subscribers')
 @ApiCommonResponses()
@@ -67,7 +75,6 @@ export class SubscribersController {
   ) {}
 
   @Get('')
-  @UserAuthentication()
   @ExternalApiAccessible()
   @SdkMethodName('search')
   @ApiOperation({
@@ -76,6 +83,7 @@ export class SubscribersController {
     The search is case sensitive and supports pagination.Checkout all available filters in the query section.`,
   })
   @ApiResponse(ListSubscribersResponseDto)
+  @RequirePermissions(PermissionsEnum.SUBSCRIBER_READ)
   async searchSubscribers(
     @UserSession() user: UserSessionData,
     @Query() query: ListSubscribersQueryDto
@@ -98,7 +106,6 @@ export class SubscribersController {
   }
 
   @Get('/:subscriberId')
-  @UserAuthentication()
   @ExternalApiAccessible()
   @ApiOperation({
     summary: 'Retrieve a subscriber',
@@ -107,6 +114,7 @@ export class SubscribersController {
   })
   @ApiResponse(SubscriberResponseDto)
   @SdkMethodName('retrieve')
+  @RequirePermissions(PermissionsEnum.SUBSCRIBER_READ)
   async getSubscriber(
     @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string
@@ -121,7 +129,6 @@ export class SubscribersController {
   }
 
   @Post('')
-  @UserAuthentication()
   @ExternalApiAccessible()
   @ApiOperation({
     summary: 'Create a subscriber',
@@ -130,6 +137,7 @@ export class SubscribersController {
   })
   @ApiResponse(SubscriberResponseDto, 201)
   @SdkMethodName('create')
+  @RequirePermissions(PermissionsEnum.SUBSCRIBER_CREATE)
   async createSubscriber(
     @UserSession() user: UserSessionData,
     @Body() body: CreateSubscriberRequestDto
@@ -159,7 +167,6 @@ export class SubscribersController {
   }
 
   @Patch('/:subscriberId')
-  @UserAuthentication()
   @ExternalApiAccessible()
   @ApiOperation({
     summary: 'Update a subscriber',
@@ -168,6 +175,7 @@ export class SubscribersController {
   })
   @ApiResponse(SubscriberResponseDto)
   @SdkMethodName('patch')
+  @RequirePermissions(PermissionsEnum.SUBSCRIBER_UPDATE)
   async patchSubscriber(
     @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string,
@@ -186,7 +194,6 @@ export class SubscribersController {
 
   @Delete('/:subscriberId')
   @ApiResponse(RemoveSubscriberResponseDto, 200)
-  @UserAuthentication()
   @ExternalApiAccessible()
   @ApiOperation({
     summary: 'Delete a subscriber',
@@ -194,6 +201,7 @@ export class SubscribersController {
     This action is irreversible.`,
   })
   @SdkMethodName('delete')
+  @RequirePermissions(PermissionsEnum.SUBSCRIBER_DELETE)
   async removeSubscriber(
     @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string
@@ -208,7 +216,6 @@ export class SubscribersController {
   }
 
   @Get('/:subscriberId/preferences')
-  @UserAuthentication()
   @ExternalApiAccessible()
   @ApiOperation({
     summary: 'Retrieve subscriber preferences',
@@ -218,6 +225,7 @@ export class SubscribersController {
   @ApiResponse(GetSubscriberPreferencesDto)
   @SdkGroupName('Subscribers.Preferences')
   @SdkMethodName('list')
+  @RequirePermissions(PermissionsEnum.SUBSCRIBER_READ)
   async getSubscriberPreferences(
     @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string
@@ -232,7 +240,6 @@ export class SubscribersController {
   }
 
   @Patch('/:subscriberId/preferences')
-  @UserAuthentication()
   @ExternalApiAccessible()
   @ApiOperation({
     summary: 'Update subscriber preferences',
@@ -243,6 +250,7 @@ export class SubscribersController {
   @ApiResponse(GetSubscriberPreferencesDto)
   @SdkGroupName('Subscribers.Preferences')
   @SdkMethodName('update')
+  @RequirePermissions(PermissionsEnum.SUBSCRIBER_UPDATE)
   async updateSubscriberPreferences(
     @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string,
@@ -260,7 +268,6 @@ export class SubscribersController {
   }
 
   @Get('/:subscriberId/subscriptions')
-  @UserAuthentication()
   @ExternalApiAccessible()
   @ApiOperation({
     summary: 'Retrieve subscriber subscriptions',
@@ -271,6 +278,7 @@ export class SubscribersController {
   @ApiResponse(ListTopicSubscriptionsResponseDto)
   @SdkGroupName('Subscribers.Topics')
   @SdkMethodName('list')
+  @RequirePermissions(PermissionsEnum.SUBSCRIBER_READ)
   async listSubscriberTopics(
     @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string,

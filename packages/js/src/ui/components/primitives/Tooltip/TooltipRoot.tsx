@@ -28,7 +28,7 @@ export function TooltipRoot(props: TooltipRootProps) {
 
   const position = useFloating(reference, floating, {
     placement: props.placement || 'top',
-    strategy: 'absolute',
+    strategy: 'fixed',
     whileElementsMounted: autoUpdate,
     middleware: [
       offset(10),

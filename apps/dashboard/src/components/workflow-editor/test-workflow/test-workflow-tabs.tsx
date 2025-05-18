@@ -66,7 +66,10 @@ export const TestWorkflowTabs = ({ testData }: { testData?: WorkflowTestDataResp
 
       setTransactionId(newTransactionId);
     } catch (e) {
-      showErrorToast(e instanceof Error ? e.message : 'There was an error triggering the workflow.', 'Failed to trigger workflow');
+      showErrorToast(
+        e instanceof Error ? e.message : 'There was an error triggering the workflow.',
+        'Failed to trigger workflow'
+      );
     }
   };
 

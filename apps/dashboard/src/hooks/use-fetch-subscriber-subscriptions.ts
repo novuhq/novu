@@ -17,7 +17,7 @@ export function useFetchSubscriberSubscriptions({
     queryKey: ['subscriberSubscriptions', subscriberId, limit, page],
     queryFn: async () => {
       if (!currentEnvironment) return null;
-      
+
       return await getSubscriberSubscriptions({
         environment: currentEnvironment,
         subscriberId,

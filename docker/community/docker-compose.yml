@@ -9,6 +9,11 @@ services:
       options:
         max-size: '50m'
         max-file: '5'
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   mongodb:
     image: mongo:8.0.3
@@ -28,6 +33,11 @@ services:
       - mongodb:/data/db
     ports:
       - 27017:27017
+    healthcheck:
+      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   api:
     image: 'ghcr.io/novuhq/novu/api:2.2.0-rc.1'
@@ -76,7 +86,6 @@ services:
       IS_V2_ENABLED: ${IS_V2_ENABLED}
     ports:
       - ${API_PORT}:${API_PORT}
-
   worker:
     image: 'ghcr.io/novuhq/novu/worker:2.2.0-rc.1'
     depends_on:
@@ -115,7 +124,6 @@ services:
       API_ROOT_URL: http://api:${API_PORT}
       IS_EMAIL_INLINE_CSS_DISABLED: ${IS_EMAIL_INLINE_CSS_DISABLED}
       IS_USE_MERGED_DIGEST_ID_ENABLED: ${IS_USE_MERGED_DIGEST_ID_ENABLED}
-
   ws:
     image: 'ghcr.io/novuhq/novu/ws:2.2.0-rc.1'
     depends_on:
@@ -160,9 +168,6 @@ services:
       VITE_API_HOSTNAME: ${VITE_API_HOSTNAME}
       VITE_SELF_HOSTED: true
       VITE_WEBSOCKET_HOSTNAME: ${VITE_WEBSOCKET_HOSTNAME}
-      IS_CONTROLS_AUTOCOMPLETE_ENABLED: ${IS_CONTROLS_AUTOCOMPLETE_ENABLED}
-      IS_WORKFLOW_NODE_PREVIEW_ENABLED: ${IS_WORKFLOW_NODE_PREVIEW_ENABLED}
-      IS_ENHANCED_DIGEST_ENABLED: ${IS_ENHANCED_DIGEST_ENABLED}
     ports:
       - 4000:4000
 
