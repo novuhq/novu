@@ -70,7 +70,11 @@ export class SubscribersController {
   @UserAuthentication()
   @ExternalApiAccessible()
   @SdkMethodName('search')
-  @ApiOperation({ summary: 'Search for subscribers' })
+  @ApiOperation({
+    summary: 'Search subscribers',
+    description: `Search subscribers by their **email**, **phone**, **subscriberId** and **name**. 
+    The search is case sensitive and supports pagination.Checkout all available filters in the query section.`,
+  })
   @ApiResponse(ListSubscribersResponseDto)
   async searchSubscribers(
     @UserSession() user: UserSessionData,
@@ -97,8 +101,9 @@ export class SubscribersController {
   @UserAuthentication()
   @ExternalApiAccessible()
   @ApiOperation({
-    summary: 'Get subscriber',
-    description: 'Get subscriber by your internal id used to identify the subscriber',
+    summary: 'Retrieve a subscriber',
+    description: `Retrive a subscriber by its unique key identifier **subscriberId**. 
+    **subscriberId** field is required.`,
   })
   @ApiResponse(SubscriberResponseDto)
   @SdkMethodName('retrieve')
@@ -119,8 +124,9 @@ export class SubscribersController {
   @UserAuthentication()
   @ExternalApiAccessible()
   @ApiOperation({
-    summary: 'Create subscriber',
-    description: 'Create subscriber with the given data, if the subscriber already exists, it will be updated',
+    summary: 'Create a subscriber',
+    description: `Create a subscriber with the subscriber attributes. 
+      **subscriberId** is a required field, rest other fields are optional, if the subscriber already exists, it will be updated`,
   })
   @ApiResponse(SubscriberResponseDto, 201)
   @SdkMethodName('create')
@@ -156,8 +162,9 @@ export class SubscribersController {
   @UserAuthentication()
   @ExternalApiAccessible()
   @ApiOperation({
-    summary: 'Patch subscriber',
-    description: 'Patch subscriber by your internal id used to identify the subscriber',
+    summary: 'Update a subscriber',
+    description: `Update a subscriber by its unique key identifier **subscriberId**. 
+    **subscriberId** is a required field, rest other fields are optional`,
   })
   @ApiResponse(SubscriberResponseDto)
   @SdkMethodName('patch')
@@ -182,8 +189,9 @@ export class SubscribersController {
   @UserAuthentication()
   @ExternalApiAccessible()
   @ApiOperation({
-    summary: 'Delete subscriber',
-    description: 'Deletes a subscriber entity from the Novu platform',
+    summary: 'Delete a subscriber',
+    description: `Delete a subscriber by its unique key identifier **subscriberId**. 
+    This action is irreversible.`,
   })
   @SdkMethodName('delete')
   async removeSubscriber(
@@ -203,8 +211,9 @@ export class SubscribersController {
   @UserAuthentication()
   @ExternalApiAccessible()
   @ApiOperation({
-    summary: 'Get subscriber preferences',
-    description: 'Get subscriber global and workflow specific preferences',
+    summary: 'Retrieve subscriber preferences',
+    description: `Retrieve subscriber channel preferences by its unique key identifier **subscriberId**. 
+    This API returns all five channels preferences for all workflows and global preferences.`,
   })
   @ApiResponse(GetSubscriberPreferencesDto)
   @SdkGroupName('Subscribers.Preferences')
@@ -226,8 +235,10 @@ export class SubscribersController {
   @UserAuthentication()
   @ExternalApiAccessible()
   @ApiOperation({
-    summary: 'Update subscriber global or workflow specific preferences',
-    description: 'Update subscriber global or workflow specific preferences',
+    summary: 'Update subscriber preferences',
+    description: `Update subscriber preferences by its unique key identifier **subscriberId**. 
+    **workflowId** is optional field, if provided, this API will update that workflow preference, 
+    otherwise it will update global preferences`,
   })
   @ApiResponse(GetSubscriberPreferencesDto)
   @SdkGroupName('Subscribers.Preferences')
@@ -252,8 +263,9 @@ export class SubscribersController {
   @UserAuthentication()
   @ExternalApiAccessible()
   @ApiOperation({
-    summary: 'List topics a subscriber is subscribed to',
-    description: 'List topic subscriptions for a subscriber with pagination and filtering',
+    summary: 'Retrieve subscriber subscriptions',
+    description: `Retrieve subscriber's topic subscriptions by its unique key identifier **subscriberId**. 
+    Checkout all available filters in the query section.`,
   })
   @ApiParam({ name: 'subscriberId', description: 'The identifier of the subscriber', type: String })
   @ApiResponse(ListTopicSubscriptionsResponseDto)
