@@ -175,10 +175,6 @@ const router = createBrowserRouter([
                 element: <EnvironmentsPage />,
               },
               {
-                path: ROUTES.WEBHOOKS,
-                element: <WebhooksPage />,
-              },
-              {
                 path: ROUTES.ACTIVITY_FEED,
                 element: <ActivityFeed />,
               },
@@ -212,7 +208,26 @@ const router = createBrowserRouter([
                 path: ROUTES.TEST_WORKFLOW,
                 element: <TestWorkflowPage />,
               },
-
+              {
+                path: ROUTES.WEBHOOKS_ENDPOINTS,
+                element: <WebhooksPage />,
+              },
+              {
+                path: ROUTES.WEBHOOKS_EVENT_CATALOG,
+                element: <WebhooksPage />,
+              },
+              {
+                path: ROUTES.WEBHOOKS_LOGS,
+                element: <WebhooksPage />,
+              },
+              {
+                path: ROUTES.WEBHOOKS_ACTIVITY,
+                element: <WebhooksPage />,
+              },
+              {
+                path: ROUTES.WEBHOOKS,
+                element: <Navigate to={ROUTES.WEBHOOKS_ENDPOINTS} replace />,
+              },
               {
                 path: '*',
                 element: <CatchAllRoute />,
