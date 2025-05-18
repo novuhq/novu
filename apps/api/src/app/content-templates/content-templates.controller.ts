@@ -15,10 +15,10 @@ import {
 } from '@novu/application-generic';
 import { IEmailBlock, IMessageCTA, MessageTemplateContentType, UserSessionData } from '@novu/shared';
 import { UserSession } from '../shared/framework/user.decorator';
-import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
+import { RequireAuthentication } from '../auth/framework/auth.decorator';
 
 @Controller('/content-templates')
-@UserAuthentication()
+@RequireAuthentication()
 @ApiExcludeController()
 export class ContentTemplatesController {
   constructor(

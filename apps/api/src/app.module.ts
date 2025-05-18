@@ -43,6 +43,7 @@ import { StorageModule } from './app/storage/storage.module';
 import { SubscribersModule } from './app/subscribers-v2/subscribers.module';
 import { SubscribersV1Module } from './app/subscribers/subscribersV1.module';
 import { SupportModule } from './app/support/support.module';
+import { WebhooksModule } from './app/webhooks/webhooks.module';
 import { TenantModule } from './app/tenant/tenant.module';
 import { TestingModule } from './app/testing/testing.module';
 import { TopicsV1Module } from './app/topics-v1/topics-v1.module';
@@ -63,6 +64,7 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
       modules.push(require('@novu/ee-billing')?.BillingModule.forRoot());
     }
     modules.push(SupportModule);
+    modules.push(WebhooksModule);
   }
 
   return modules;

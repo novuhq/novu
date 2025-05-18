@@ -28,7 +28,7 @@ describe('Get organizations - /organizations (GET) #novu-v0-os', async () => {
         invitees: [
           {
             email: 'dddd@asdas.com',
-            role: MemberRoleEnum.MEMBER,
+            role: MemberRoleEnum.OSS_MEMBER,
           },
         ],
       })

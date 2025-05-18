@@ -40,7 +40,7 @@ export class CreateOrganization {
 
     await this.addMemberUsecase.execute(
       AddMemberCommand.create({
-        roles: [MemberRoleEnum.ADMIN],
+        roles: [MemberRoleEnum.OSS_ADMIN],
         organizationId: createdOrganization._id,
         userId: command.userId,
       })

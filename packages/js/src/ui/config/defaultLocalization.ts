@@ -31,6 +31,7 @@ export const defaultLocalization = {
   'preferences.workflow.disabled.notice':
     'Contact admin to enable subscription management for this critical notification.',
   'preferences.workflow.disabled.tooltip': 'Contact admin to edit',
+  'preferences.group.info': 'Applies to all notifications under this group.',
   'snooze.datePicker.timePickerLabel': 'Time',
   'snooze.datePicker.apply': 'Apply',
   'snooze.datePicker.cancel': 'Cancel',

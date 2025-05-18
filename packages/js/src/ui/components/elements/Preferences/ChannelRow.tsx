@@ -1,28 +1,37 @@
 import { JSX } from 'solid-js';
-import { ChannelType } from '../../../../types';
+import { ChannelPreference, ChannelType } from '../../../../types';
 import { useStyle } from '../../../helpers';
-import { Chat, Email, InApp, Push, Sms } from '../../../icons';
-import { AppearanceKey } from '../../../types';
-import { Switch } from '../../primitives/Switch';
+import {
+  Chat as DefaultChat,
+  Email as DefaultEmail,
+  InApp as DefaultInApp,
+  Push as DefaultPush,
+  Sms as DefaultSms,
+} from '../../../icons';
+import { AppearanceKey, IconKey } from '../../../types';
+import { Switch, SwitchState } from '../../primitives/Switch';
+import { IconRendererWrapper } from '../../shared/IconRendererWrapper';
 
 type ChannelRowProps = {
-  channel: ChannelType;
-  enabled: boolean;
+  channel: { channel: ChannelType; state: SwitchState };
   channelIcon?: () => JSX.Element;
   workflowId?: string;
-  onChange: ({ channel, enabled, workflowId }: { workflowId?: string; channel: ChannelType; enabled: boolean }) => void;
+  onChange: (channels: ChannelPreference) => void;
 };
 
 export const ChannelRow = (props: ChannelRowProps) => {
   const style = useStyle();
 
   const updatePreference = async (enabled: boolean) => {
-    props.onChange({ channel: props.channel, enabled, workflowId: props.workflowId });
+    props.onChange({ [props.channel.channel]: enabled });
   };
 
   const onChange = async (checked: boolean) => {
     await updatePreference(checked);
   };
+
+  const state = () => props.channel.state;
+  const channel = () => props.channel.channel;
 
   return (
     <div
@@ -38,12 +47,12 @@ export const ChannelRow = (props: ChannelRowProps) => {
             'nt-p-1 nt-rounded-md nt-bg-neutral-alpha-25 nt-text-foreground-alpha-300'
           )}
         >
-          <ChannelIcon appearanceKey="channel__icon" channel={props.channel} class="nt-size-3" />
+          <ChannelIcon appearanceKey="channel__icon" channel={channel()} class="nt-size-3" />
         </div>
-        <span class={style('channelLabel', 'nt-text-sm nt-font-semibold')}>{getLabel(props.channel)}</span>
+        <span class={style('channelLabel', 'nt-text-sm nt-font-semibold')}>{getLabel(channel())}</span>
       </div>
       <div class={style('channelSwitchContainer', 'nt-flex nt-items-center')}>
-        <Switch checked={props.enabled} onChange={(checked) => onChange(checked)} />
+        <Switch state={state()} onChange={(newState) => onChange(newState === 'enabled')} />
       </div>
     </div>
   );
@@ -56,20 +65,50 @@ type ChannelIconProps = JSX.IntrinsicElements['svg'] & {
 const ChannelIcon = (props: ChannelIconProps) => {
   const style = useStyle();
 
-  switch (props.channel) {
-    case ChannelType.IN_APP:
-      return <InApp class={style(props.appearanceKey, props.class)} />;
-    case ChannelType.EMAIL:
-      return <Email class={style(props.appearanceKey, props.class)} />;
-    case ChannelType.PUSH:
-      return <Push class={style(props.appearanceKey, props.class)} />;
-    case ChannelType.SMS:
-      return <Sms class={style(props.appearanceKey, props.class)} />;
-    case ChannelType.CHAT:
-      return <Chat class={style(props.appearanceKey, props.class)} />;
-    default:
-      return null;
+  const iconMap: Record<ChannelType, { key: IconKey; component: JSX.Element }> = {
+    [ChannelType.IN_APP]: {
+      key: 'inApp',
+      component: (
+        <DefaultInApp
+          class={style(props.appearanceKey, props.class, {
+            iconKey: 'inApp',
+          })}
+        />
+      ),
+    },
+    [ChannelType.EMAIL]: {
+      key: 'email',
+      component: <DefaultEmail class={style(props.appearanceKey, props.class, { iconKey: 'email' })} />,
+    },
+    [ChannelType.PUSH]: {
+      key: 'push',
+      component: <DefaultPush class={style(props.appearanceKey, props.class, { iconKey: 'push' })} />,
+    },
+    [ChannelType.SMS]: {
+      key: 'sms',
+      component: <DefaultSms class={style(props.appearanceKey, props.class, { iconKey: 'sms' })} />,
+    },
+    [ChannelType.CHAT]: {
+      key: 'chat',
+      component: <DefaultChat class={style(props.appearanceKey, props.class, { iconKey: 'chat' })} />,
+    },
+  };
+
+  const iconData = iconMap[props.channel];
+
+  if (!iconData) {
+    return null;
   }
+
+  return (
+    <IconRendererWrapper
+      iconKey={iconData.key}
+      fallback={iconData.component}
+      class={style(props.appearanceKey, props.class, {
+        iconKey: iconData.key,
+      })}
+    />
+  );
 };
 
 export const getLabel = (channel: ChannelType) => {

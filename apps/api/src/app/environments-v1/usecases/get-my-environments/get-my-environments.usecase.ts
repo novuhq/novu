@@ -28,35 +28,27 @@ export class GetMyEnvironments {
       throw new NotFoundException(`No environments were found for organization ${command.organizationId}`);
 
     return environments.map((environment) => {
-      if (command.includeAllApiKeys || environment._id === command.environmentId) {
-        return this.decryptApiKeys(environment);
-      }
-      // TODO: For api_v2: Remove the key from the response. This was not done yet as it's a breaking change.
-      // eslint-disable-next-line no-param-reassign
-      environment.apiKeys = [];
+      const processedEnvironment = { ...environment };
 
-      return environment;
-    });
-  }
+      processedEnvironment.apiKeys = command.returnApiKeys ? this.decryptApiKeys(environment.apiKeys) : [];
 
-  private decryptApiKeys(environment: EnvironmentEntity): EnvironmentResponseDto {
-    const decryptedApiKeysEnvironment = { ...environment };
+      const shortEnvName = shortenEnvironmentName(processedEnvironment.name);
 
-    decryptedApiKeysEnvironment.apiKeys = environment.apiKeys.map((apiKey) => {
       return {
-        ...apiKey,
-        key: decryptApiKey(apiKey.key),
+        ...processedEnvironment,
+        slug: buildSlug(shortEnvName, ShortIsPrefixEnum.ENVIRONMENT, processedEnvironment._id),
       };
     });
+  }
 
-    const shortEnvName = shortenEnvironmentName(decryptedApiKeysEnvironment.name);
-
-    return {
-      ...decryptedApiKeysEnvironment,
-      slug: buildSlug(shortEnvName, ShortIsPrefixEnum.ENVIRONMENT, decryptedApiKeysEnvironment._id),
-    };
+  private decryptApiKeys(apiKeys: EnvironmentEntity['apiKeys']) {
+    return apiKeys.map((apiKey) => ({
+      ...apiKey,
+      key: decryptApiKey(apiKey.key),
+    }));
   }
 }
+
 function shortenEnvironmentName(name: string): string {
   const mapToShotEnvName: Record<EnvironmentEnum, string> = {
     [EnvironmentEnum.PRODUCTION]: 'prod',

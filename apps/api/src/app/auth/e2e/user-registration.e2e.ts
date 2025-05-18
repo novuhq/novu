@@ -89,7 +89,7 @@ describe('User registration - /auth/register (POST) #novu-v0-os', async () => {
       expect(env.apiKeys[0].key).to.be.ok;
     });
 
-    expect(jwtContent.roles[0]).to.equal(MemberRoleEnum.ADMIN);
+    expect(jwtContent.roles[0]).to.equal(MemberRoleEnum.OSS_ADMIN);
   });
 
   it("should throw error when the password doesn't meets the requirements", async () => {

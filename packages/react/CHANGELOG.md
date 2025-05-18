@@ -1,3 +1,18 @@
+## v3.4.0 (2025-05-16)
+
+### 🚀 Features
+
+- **js,react:** inbox preference grouping ([#8310](https://github.com/novuhq/novu/pull/8310))
+- **js,react:** inbox and styles under the shadow root ([#8262](https://github.com/novuhq/novu/pull/8262))
+
+### 🩹 Fixes
+
+- **react:** inbox hydration issue for shadow root detector ([#8321](https://github.com/novuhq/novu/pull/8321))
+
+### ❤️ Thank You
+
+- Paweł Tymczuk @LetItRock
+
 # v3.3.1 (2025-05-07)
 
 ### 🧱 Updated Dependencies

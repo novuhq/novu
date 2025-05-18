@@ -8,12 +8,12 @@ import { GetMxRecord } from './usecases/get-mx-record/get-mx-record.usecase';
 import { GetMxRecordCommand } from './usecases/get-mx-record/get-mx-record.command';
 import { GetMxRecordResponseDto } from './dtos/get-mx-record.dto';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
-import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
+import { RequireAuthentication } from '../auth/framework/auth.decorator';
 
 @ApiCommonResponses()
 @Controller('/inbound-parse')
 @UseInterceptors(ClassSerializerInterceptor)
-@UserAuthentication()
+@RequireAuthentication()
 @ApiTags('Inbound Parse')
 @ApiExcludeController()
 export class InboundParseController {

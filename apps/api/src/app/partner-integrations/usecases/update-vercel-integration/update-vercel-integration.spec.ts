@@ -111,7 +111,7 @@ describe('UpdateVercelIntegration', function () {
     };
 
     memberRepositoryMock = {
-      getOrganizationAdminAccount: stub().resolves({ _userId: 'admin-id' }),
+      getOrganizationOwnerAccount: stub().resolves({ _userId: 'admin-id' }),
     };
 
     communityUserRepositoryMock = {
