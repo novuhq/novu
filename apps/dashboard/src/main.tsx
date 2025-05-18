@@ -356,18 +356,7 @@ const router = createBrowserRouter([
           },
           {
             path: ROUTES.SETTINGS_BILLING,
-            element: IS_SELF_HOSTED ? (
-              <Navigate to={ROUTES.ROOT} />
-            ) : (
-              <ProtectedRoute
-                condition={(has) =>
-                  has({ permission: PermissionsEnum.BILLING_PORTAL_ACCESS }) ||
-                  has({ permission: PermissionsEnum.BILLING_SUBSCRIPTION_CREATE })
-                }
-              >
-                <SettingsPage />
-              </ProtectedRoute>
-            ),
+            element: IS_SELF_HOSTED ? <Navigate to={ROUTES.ROOT} /> : <SettingsPage />,
           },
           {
             path: ROUTES.LOCAL_STUDIO_AUTH,
