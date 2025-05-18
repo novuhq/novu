@@ -19,6 +19,8 @@ import { RiLoaderLine, RiWebhookLine } from 'react-icons/ri';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import { WebhooksPaywallState } from '@/components/webhooks/webhooks-paywall-state';
 import { IS_SELF_HOSTED } from '@/config';
+import { QueryKeys } from '../utils/query-keys';
+import { Badge } from '../components/primitives/badge';
 
 interface WebhookPortalTokenResponse {
   url: string;
@@ -63,7 +65,7 @@ export function WebhooksPage() {
         throw e;
       }
     },
-    enabled: !!isWebhooksManagementEnabled && !!currentEnvironment,
+    enabled: !!isWebhooksManagementEnabled && !!currentEnvironment && !!currentEnvironment?.webhookAppId,
     retry: false,
   });
 
@@ -85,6 +87,7 @@ export function WebhooksPage() {
     },
     onSuccess: (_, environment) => {
       queryClient.invalidateQueries({ queryKey: ['webhookPortalToken', environment._id] });
+      queryClient.invalidateQueries({ queryKey: [QueryKeys.myEnvironments] });
     },
   });
 
@@ -95,8 +98,6 @@ export function WebhooksPage() {
   const isActualPortalNotFound = !!(tokenErrorRaw && tokenErrorRaw.isPortalNotFound);
   const queryError = tokenErrorRaw && !tokenErrorRaw.isPortalNotFound ? tokenErrorRaw : null;
   const mutationError = enableErrorRaw;
-
-  console.log({ currentEnvironment });
 
   const handleEnableWebhooks = () => {
     enableWebhooksMutation(currentEnvironment!);
@@ -165,7 +166,16 @@ export function WebhooksPage() {
   ];
 
   return (
-    <DashboardLayout headerStartItems={<h1 className="text-foreground-950">Webhooks</h1>}>
+    <DashboardLayout
+      headerStartItems={
+        <h1 className="text-foreground-950">
+          Webhooks{' '}
+          <Badge color="gray" size="sm">
+            BETA
+          </Badge>
+        </h1>
+      }
+    >
       <Tabs defaultValue="endpoints">
         <div className="border-neutral-alpha-200 flex items-center justify-between border-b">
           <TabsList variant="regular" className="border-b-0 border-t-2 border-transparent p-0 !px-2">

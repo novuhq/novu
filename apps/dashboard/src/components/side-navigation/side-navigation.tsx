@@ -29,6 +29,7 @@ import { OrganizationDropdown } from './organization-dropdown';
 import { UsageCard } from './usage-card';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { IS_SELF_HOSTED } from '../../config';
+import { Badge } from '../primitives/badge';
 
 const NavigationGroup = ({ children, label }: { children: ReactNode; label?: string }) => {
   return (
@@ -158,7 +159,7 @@ export const SideNavigation = () => {
               {isWebhooksManagementEnabled && (
                 <NavigationLink to={buildRoute(ROUTES.WEBHOOKS, { environmentSlug: currentEnvironment?.slug ?? '' })}>
                   <RiSignalTowerLine className="size-4" />
-                  <span>Webhooks</span>
+                  <span className="flex items-center gap-2">Webhooks</span>
                 </NavigationLink>
               )}
               <NavigationLink to={buildRoute(ROUTES.ENVIRONMENTS, { environmentSlug: currentEnvironment?.slug ?? '' })}>
