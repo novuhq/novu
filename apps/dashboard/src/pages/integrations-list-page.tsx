@@ -9,6 +9,8 @@ import { DashboardLayout } from '../components/dashboard-layout';
 import { IntegrationsList } from '../components/integrations/components/integrations-list';
 import { TableIntegration } from '../components/integrations/types';
 import { Badge } from '../components/primitives/badge';
+import { PermissionsEnum } from '@novu/shared';
+import { useAuth } from '@/context/auth/hooks';
 
 export function IntegrationsListPage() {
   const navigate = useNavigate();
@@ -16,10 +18,6 @@ export function IntegrationsListPage() {
   const onItemClick = function (item: TableIntegration) {
     navigate(buildRoute(ROUTES.INTEGRATIONS_UPDATE, { integrationId: item.integrationId }));
   };
-
-  const onAddIntegrationClickCallback = useCallback(() => {
-    navigate(ROUTES.INTEGRATIONS_CONNECT);
-  }, [navigate]);
 
   return (
     <DashboardLayout
@@ -51,15 +49,7 @@ export function IntegrationsListPage() {
               </TooltipContent>
             </Tooltip>
           </TabsList>
-          <Button
-            size="xs"
-            variant="primary"
-            mode="gradient"
-            onClick={onAddIntegrationClickCallback}
-            className="my-1.5 mr-2.5"
-          >
-            Connect Provider
-          </Button>
+          <ConnectProviderButton />
         </div>
         <TabsContent value="providers" variant="regular" className="!mt-0 p-2.5">
           <IntegrationsList onItemClick={onItemClick} />
@@ -70,5 +60,51 @@ export function IntegrationsListPage() {
       </Tabs>
       <Outlet />
     </DashboardLayout>
+  );
+}
+
+export function ConnectProviderButton() {
+  const { has } = useAuth();
+  const navigate = useNavigate();
+  const canCreateIntegration = has?.({ permission: PermissionsEnum.INTEGRATION_CREATE });
+
+  const onAddIntegrationClickCallback = useCallback(() => {
+    navigate(ROUTES.INTEGRATIONS_CONNECT);
+  }, [navigate]);
+
+  if (!canCreateIntegration) {
+    return (
+      <Tooltip>
+        <TooltipTrigger>
+          <Button
+            disabled
+            size="xs"
+            variant="primary"
+            onClick={onAddIntegrationClickCallback}
+            className="my-1.5 mr-2.5"
+          >
+            Connect Provider
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          Almost there! Your role just doesn't have permission for this one.{' '}
+          <a href="https://docs.novu.co/" target="_blank" className="underline">
+            Learn More ↗
+          </a>
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  return (
+    <Button
+      size="xs"
+      variant="primary"
+      mode="gradient"
+      onClick={onAddIntegrationClickCallback}
+      className="my-1.5 mr-2.5"
+    >
+      Connect Provider
+    </Button>
   );
 }

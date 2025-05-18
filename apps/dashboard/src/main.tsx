@@ -316,7 +316,14 @@ const router = createBrowserRouter([
               {
                 path: ROUTES.INTEGRATIONS_UPDATE,
                 element: (
-                  <ProtectedRoute permission={PermissionsEnum.INTEGRATION_UPDATE} isDrawerRoute>
+                  <ProtectedRoute
+                    condition={(has) =>
+                      has({ permission: PermissionsEnum.INTEGRATION_UPDATE }) ||
+                      has({ permission: PermissionsEnum.INTEGRATION_READ }) ||
+                      has({ permission: PermissionsEnum.INTEGRATION_CREATE })
+                    }
+                    isDrawerRoute
+                  >
                     <UpdateIntegrationSidebar isOpened />
                   </ProtectedRoute>
                 ),

@@ -34,6 +34,7 @@ type IntegrationConfigurationProps = {
   mode: 'create' | 'update';
   isChannelSupportPrimary?: boolean;
   hasOtherProviders?: boolean;
+  isReadOnly?: boolean;
 };
 
 function generateSlug(name: string): string {
@@ -52,6 +53,7 @@ export function IntegrationConfiguration({
   mode,
   isChannelSupportPrimary,
   hasOtherProviders,
+  isReadOnly,
 }: IntegrationConfigurationProps) {
   const navigate = useNavigate();
   const { currentEnvironment, environments } = useEnvironment();
@@ -101,7 +103,7 @@ export function IntegrationConfiguration({
           <div className={cn('w-full', mode === 'update' ? 'max-w-[160px]' : 'max-w-[260px]')}>
             <EnvironmentDropdown
               className="w-full shadow-none"
-              disabled={mode === 'update'}
+              disabled={mode === 'update' || isReadOnly}
               currentEnvironment={environments?.find((env) => env._id === environmentId)}
               data={environments}
               onChange={(value) => {
@@ -127,6 +129,7 @@ export function IntegrationConfiguration({
               <GeneralSettings
                 control={control}
                 mode={mode}
+                isReadOnly={isReadOnly}
                 hidePrimarySelector={!isChannelSupportPrimary}
                 disabledPrimary={!hasOtherProviders && integration?.primary}
                 // TODO: This is an ugly hack. The GeneralSettigns section should be redefined for in-app step.
@@ -165,7 +168,7 @@ export function IntegrationConfiguration({
                   </div>
                 </AccordionTrigger>
                 <AccordionContent>
-                  <CredentialsSection provider={provider} control={control} />
+                  <CredentialsSection provider={provider} control={control} isReadOnly={isReadOnly} />
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
