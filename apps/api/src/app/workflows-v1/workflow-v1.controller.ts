@@ -52,8 +52,8 @@ import { CreateWorkflowQuery } from './queries';
 import { DeleteNotificationTemplateCommand } from './usecases/delete-notification-template/delete-notification-template.command';
 import { GetWorkflowVariables } from './usecases/get-workflow-variables/get-workflow-variables.usecase';
 import { GetWorkflowVariablesCommand } from './usecases/get-workflow-variables/get-workflow-variables.command';
-import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
 import { SdkGroupName } from '../shared/framework/swagger/sdk.decorators';
+import { RequireAuthentication } from '../auth/framework/auth.decorator';
 
 /**
  * @deprecated use controllers in /workflows directory
@@ -61,7 +61,7 @@ import { SdkGroupName } from '../shared/framework/swagger/sdk.decorators';
 @ApiExcludeController()
 @Controller('/workflows')
 @UseInterceptors(ClassSerializerInterceptor)
-@UserAuthentication()
+@RequireAuthentication()
 @ApiTags('Workflows')
 export class WorkflowControllerV1 {
   constructor(

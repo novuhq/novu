@@ -51,13 +51,6 @@ export function parseStepVariables(
     if (typeof obj === 'boolean') return;
 
     if (obj.type === 'object') {
-      // Handle object with additionalProperties
-      if (obj.additionalProperties === true) {
-        result.namespaces.push({
-          name: path,
-        });
-      }
-
       if (!obj.properties) return;
 
       for (const [key, value] of Object.entries(obj.properties)) {

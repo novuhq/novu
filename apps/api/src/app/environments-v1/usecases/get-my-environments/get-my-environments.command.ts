@@ -9,5 +9,5 @@ export class GetMyEnvironmentsCommand extends BaseCommand {
   readonly environmentId: string;
 
   @IsOptional()
-  readonly includeAllApiKeys: boolean;
+  readonly returnApiKeys: boolean;
 }

@@ -32,7 +32,7 @@ import { ResendInviteCommand } from './usecases/resend-invite/resend-invite.comm
 import { ResendInvite } from './usecases/resend-invite/resend-invite.usecase';
 import { ThrottlerCost } from '../rate-limiting/guards';
 import { ApiCommonResponses } from '../shared/framework/response.decorator';
-import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
+import { RequireAuthentication } from '../auth/framework/auth.decorator';
 
 @UseInterceptors(ClassSerializerInterceptor)
 @ApiCommonResponses()
@@ -58,7 +58,7 @@ export class InvitesController {
   }
 
   @Post('/:inviteToken/accept')
-  @UserAuthentication()
+  @RequireAuthentication()
   async acceptInviteToken(
     @UserSession() user: UserSessionData,
     @Param('inviteToken') inviteToken: string
@@ -72,7 +72,7 @@ export class InvitesController {
   }
 
   @Post('/')
-  @UserAuthentication()
+  @RequireAuthentication()
   async inviteMember(
     @UserSession() user: UserSessionData,
     @Body() body: InviteMemberDto
@@ -81,7 +81,7 @@ export class InvitesController {
       userId: user._id,
       organizationId: user.organizationId,
       email: body.email,
-      role: MemberRoleEnum.ADMIN,
+      role: MemberRoleEnum.OSS_ADMIN,
     });
 
     await this.inviteMemberUsecase.execute(command);
@@ -92,7 +92,7 @@ export class InvitesController {
   }
 
   @Post('/resend')
-  @UserAuthentication()
+  @RequireAuthentication()
   async resendInviteMember(
     @UserSession() user: UserSessionData,
     @Body() body: ResendInviteDto
@@ -112,7 +112,7 @@ export class InvitesController {
 
   @ThrottlerCost(ApiRateLimitCostEnum.BULK)
   @Post('/bulk')
-  @UserAuthentication()
+  @RequireAuthentication()
   async bulkInviteMembers(
     @UserSession() user: UserSessionData,
     @Body() body: BulkInviteMembersDto

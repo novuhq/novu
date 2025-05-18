@@ -3,7 +3,7 @@ import { ApiExcludeController } from '@nestjs/swagger';
 import { Novu } from '@novu/api';
 import { UserSession } from '@novu/application-generic';
 import { UserSessionData } from '@novu/shared';
-import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
+import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { CreateSupportThreadDto } from './dtos/create-thread.dto';
 import { PlainCardRequestDto } from './dtos/plain-card.dto';
 import { PlainCardsGuard } from './guards/plain-cards.guard';
@@ -25,7 +25,7 @@ export class SupportController {
     return this.plainCardsUsecase.fetchCustomerDetails(PlainCardsCommand.create({ ...body }));
   }
 
-  @UserAuthentication()
+  @RequireAuthentication()
   @Post('create-thread')
   async createThread(@Body() body: CreateSupportThreadDto, @UserSession() user: UserSessionData) {
     return this.createSupportThreadUsecase.execute(
@@ -39,7 +39,7 @@ export class SupportController {
     );
   }
 
-  @UserAuthentication()
+  @RequireAuthentication()
   @Post('mobile-setup')
   async mobileSetup(@UserSession() user: UserSessionData) {
     const novu = new Novu({

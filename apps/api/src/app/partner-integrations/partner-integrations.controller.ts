@@ -11,8 +11,9 @@ import {
   UseInterceptors,
   Headers,
 } from '@nestjs/common';
-import { UserSessionData } from '@novu/shared';
+import { UserSessionData, PermissionsEnum } from '@novu/shared';
 
+import { RequirePermissions } from '@novu/application-generic';
 import { UserSession } from '../shared/framework/user.decorator';
 import { UpdateVercelIntegrationRequestDto } from './dtos/update-vercel-integration-request.dto';
 import { CreateVercelIntegrationRequestDto } from './dtos/create-vercel-integration-request.dto';
@@ -25,7 +26,7 @@ import { CreateVercelIntegrationCommand } from './usecases/create-vercel-integra
 import { CreateVercelIntegration } from './usecases/create-vercel-integration/create-vercel-integration.usecase';
 import { UpdateVercelIntegrationCommand } from './usecases/update-vercel-integration/update-vercel-integration.command';
 import { UpdateVercelIntegration } from './usecases/update-vercel-integration/update-vercel-integration.usecase';
-import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
+import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ProcessVercelWebhook } from './usecases/process-vercel-webhook/process-vercel-webhook.usecase';
 import { ProcessVercelWebhookCommand } from './usecases/process-vercel-webhook/process-vercel-webhook.command';
 
@@ -43,7 +44,8 @@ export class PartnerIntegrationsController {
   ) {}
 
   @Post('/vercel')
-  @UserAuthentication()
+  @RequireAuthentication()
+  @RequirePermissions(PermissionsEnum.INTEGRATION_CREATE)
   async createVercelIntegration(
     @UserSession() user: UserSessionData,
     @Body() body: CreateVercelIntegrationRequestDto
@@ -60,7 +62,8 @@ export class PartnerIntegrationsController {
   }
 
   @Put('/vercel')
-  @UserAuthentication()
+  @RequireAuthentication()
+  @RequirePermissions(PermissionsEnum.INTEGRATION_UPDATE)
   async updateVercelIntegration(@UserSession() user: UserSessionData, @Body() body: UpdateVercelIntegrationRequestDto) {
     return await this.updateVercelIntegrationUsecase.execute(
       UpdateVercelIntegrationCommand.create({
@@ -74,7 +77,8 @@ export class PartnerIntegrationsController {
   }
 
   @Get('/vercel/:configurationId')
-  @UserAuthentication()
+  @RequireAuthentication()
+  @RequirePermissions(PermissionsEnum.INTEGRATION_READ)
   async getVercelIntegration(@UserSession() user: UserSessionData, @Param('configurationId') configurationId: string) {
     return await this.getVercelIntegrationUsecase.execute(
       GetVercelIntegrationCommand.create({
@@ -87,7 +91,8 @@ export class PartnerIntegrationsController {
   }
 
   @Get('/vercel/:configurationId/projects')
-  @UserAuthentication()
+  @RequireAuthentication()
+  @RequirePermissions(PermissionsEnum.INTEGRATION_READ)
   async getVercelProjects(
     @UserSession() user: UserSessionData,
     @Param('configurationId') configurationId: string,

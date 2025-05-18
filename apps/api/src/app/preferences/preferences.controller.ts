@@ -19,7 +19,7 @@ import {
 } from '@novu/application-generic';
 import { PreferencesTypeEnum, UserSessionData } from '@novu/shared';
 import { ApiExcludeController } from '@nestjs/swagger';
-import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
+import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { UpsertPreferencesDto } from './dtos/upsert-preferences.dto';
 
 /**
@@ -27,7 +27,7 @@ import { UpsertPreferencesDto } from './dtos/upsert-preferences.dto';
  */
 @Controller('/preferences')
 @UseInterceptors(ClassSerializerInterceptor)
-@UserAuthentication()
+@RequireAuthentication()
 @ApiExcludeController()
 export class PreferencesController {
   constructor(

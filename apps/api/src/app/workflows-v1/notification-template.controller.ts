@@ -44,7 +44,7 @@ import { ApiCommonResponses, ApiOkResponse, ApiResponse } from '../shared/framew
 import { DataBooleanDto } from '../shared/dtos/data-wrapper-dto';
 import { CreateWorkflowQuery } from './queries';
 import { DeleteNotificationTemplateCommand } from './usecases/delete-notification-template/delete-notification-template.command';
-import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
+import { RequireAuthentication } from '../auth/framework/auth.decorator';
 
 /**
  * @deprecated use controller in /workflows directory
@@ -54,7 +54,7 @@ import { UserAuthentication } from '../shared/framework/swagger/api.key.security
 @ApiExcludeController()
 @Controller('/notification-templates')
 @UseInterceptors(ClassSerializerInterceptor)
-@UserAuthentication()
+@RequireAuthentication()
 @ApiTags('Notification Templates')
 export class NotificationTemplateController {
   constructor(

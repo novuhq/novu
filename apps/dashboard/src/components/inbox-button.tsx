@@ -113,8 +113,10 @@ export const InboxButton = () => {
       /**
        * We want to ensure our staging environment is using the production API and WebSocket endpoints.
        */
-      backendUrl={API_HOSTNAME === 'https://api.novu-staging.co' ? 'https://api.novu.co' : API_HOSTNAME}
-      socketUrl={WEBSOCKET_HOSTNAME === 'https://ws.novu-staging.co' ? 'https://ws.novu.co' : WEBSOCKET_HOSTNAME}
+      backendUrl={API_HOSTNAME === 'https://api.novu-staging.co' && !isTestPage ? 'https://api.novu.co' : API_HOSTNAME}
+      socketUrl={
+        WEBSOCKET_HOSTNAME === 'https://ws.novu-staging.co' && !isTestPage ? 'https://ws.novu.co' : WEBSOCKET_HOSTNAME
+      }
       localization={{
         'inbox.filters.labels.default': `Inbox${localizationTestSuffix}`,
         'inbox.filters.labels.unread': `Unread${localizationTestSuffix}`,

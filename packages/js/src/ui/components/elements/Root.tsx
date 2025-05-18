@@ -15,7 +15,7 @@ export const Root = (props: RootProps) => {
       <Show when={!hideBranding()}>{new Comment(' Powered by Novu - https://novu.co ')}</Show>
       <div
         id={`novu-root-${id()}`}
-        class={(style('root'), cn('novu', id(), 'nt-text-foreground nt-h-full'))}
+        class={(style('root'), cn('novu', id(), 'nt-text-foreground nt-h-full [interpolate-size:allow-keywords]'))}
         {...rest}
       />
     </>

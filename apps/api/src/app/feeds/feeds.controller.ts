@@ -22,12 +22,12 @@ import { DeleteFeedCommand } from './usecases/delete-feed/delete-feed.command';
 import { FeedResponseDto } from './dtos/feed-response.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
-import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
+import { RequireAuthentication } from '../auth/framework/auth.decorator';
 
 @ApiCommonResponses()
 @Controller('/feeds')
 @UseInterceptors(ClassSerializerInterceptor)
-@UserAuthentication()
+@RequireAuthentication()
 @ApiTags('Feeds')
 @ApiExcludeController()
 export class FeedsController {

@@ -220,16 +220,12 @@ const buildFeatureArray: (columns: ApiServiceLevelEnum[], featureFlags: FeatureF
         isBoolean: true,
       }),
     },
-    ...(featureFlags[FeatureFlagsKeysEnum.IS_SNOOZE_ENABLED]
-      ? [
-          {
-            label: 'Snooze functionality',
-            values: buildTableRowRecord({
-              featureName: FeatureNameEnum.PLATFORM_MAX_SNOOZE_DURATION,
-            }),
-          },
-        ]
-      : []),
+    {
+      label: 'Snooze functionality',
+      values: buildTableRowRecord({
+        featureName: FeatureNameEnum.PLATFORM_MAX_SNOOZE_DURATION,
+      }),
+    },
     {
       label: 'Account administration and security',
       isTitle: true,

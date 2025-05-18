@@ -11,7 +11,7 @@ import {
 import { NotificationFilter, Redirect } from '../../types';
 import { DEFAULT_REFERRER, DEFAULT_TARGET, getTagsFromTab } from '../helpers';
 import { useNovuEvent } from '../helpers/useNovuEvent';
-import { NotificationStatus, PreferencesFilter, RouterPush, Tab } from '../types';
+import { NotificationStatus, PreferenceGroups, PreferencesFilter, RouterPush, Tab } from '../types';
 
 type InboxContextType = {
   setStatus: (status: NotificationStatus) => void;
@@ -21,6 +21,7 @@ type InboxContextType = {
   setLimit: (tab: number) => void;
   tabs: Accessor<Array<Tab>>;
   preferencesFilter: Accessor<PreferencesFilter | undefined>;
+  preferenceGroups: Accessor<PreferenceGroups | undefined>;
   activeTab: Accessor<string>;
   setActiveTab: (tab: string) => void;
   isOpened: Accessor<boolean>;
@@ -46,6 +47,7 @@ export const DEFAULT_LIMIT = 10;
 type InboxProviderProps = ParentProps<{
   tabs: Array<Tab>;
   preferencesFilter?: PreferencesFilter;
+  preferenceGroups?: PreferenceGroups;
   routerPush?: RouterPush;
 }>;
 
@@ -66,6 +68,7 @@ export const InboxProvider = (props: InboxProviderProps) => {
   const [preferencesFilter, setPreferencesFilter] = createSignal<PreferencesFilter | undefined>(
     props.preferencesFilter
   );
+  const [preferenceGroups, setPreferenceGroups] = createSignal<PreferenceGroups | undefined>(props.preferenceGroups);
 
   const setNewStatus = (newStatus: NotificationStatus) => {
     setStatus(newStatus);
@@ -113,6 +116,7 @@ export const InboxProvider = (props: InboxProviderProps) => {
     setActiveTab(firstTab?.label ?? '');
     setFilter((old) => ({ ...old, tags }));
     setPreferencesFilter(props.preferencesFilter);
+    setPreferenceGroups(props.preferenceGroups);
   });
 
   useNovuEvent({
@@ -144,6 +148,7 @@ export const InboxProvider = (props: InboxProviderProps) => {
         navigate,
         hideBranding,
         preferencesFilter,
+        preferenceGroups,
         isDevelopmentMode,
         maxSnoozeDurationHours,
         isSnoozeEnabled,

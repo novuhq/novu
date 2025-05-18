@@ -20,7 +20,7 @@ export interface IMemberRepository extends IMemberRepositoryMongo {
     modified: number;
   }>;
   getOrganizationMembers(organizationId: string): Promise<MemberEntity[]>;
-  getOrganizationAdminAccount(organizationId: string): Promise<MemberEntity | null>;
+  getOrganizationOwnerAccount(organizationId: string): Promise<MemberEntity | null>;
   getOrganizationAdmins(organizationId: string): Promise<
     {
       _userId: any;

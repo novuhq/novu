@@ -114,9 +114,7 @@ export function useOnboardingSteps(): OnboardingStepsResult {
     ];
 
     if (IS_SELF_HOSTED) {
-      return allSteps.filter(
-        (step) => step.id !== StepIdEnum.ACCOUNT_CREATION && step.id !== StepIdEnum.INVITE_TEAM_MEMBER
-      );
+      return allSteps.filter((step) => step.id !== StepIdEnum.INVITE_TEAM_MEMBER);
     }
 
     return allSteps;

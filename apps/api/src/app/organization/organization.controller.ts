@@ -41,12 +41,12 @@ import { ExternalApiAccessible } from '../auth/framework/external-api.decorator'
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
 import { OrganizationBrandingResponseDto, OrganizationResponseDto } from './dtos/organization-response.dto';
 import { MemberResponseDto } from './dtos/member-response.dto';
-import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
+import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 
 @Controller('/organizations')
 @UseInterceptors(ClassSerializerInterceptor)
-@UserAuthentication()
+@RequireAuthentication()
 @ApiTags('Organizations')
 @ApiCommonResponses()
 @ApiExcludeController()
@@ -143,14 +143,14 @@ export class OrganizationController {
     @Param('memberId') memberId: string,
     @Body() body: UpdateMemberRolesDto
   ) {
-    if (body.role !== MemberRoleEnum.ADMIN) {
+    if (body.role !== MemberRoleEnum.OSS_ADMIN) {
       throw new Error('Only admin role can be assigned to a member');
     }
 
     return await this.changeMemberRoleUsecase.execute(
       ChangeMemberRoleCommand.create({
         memberId,
-        role: MemberRoleEnum.ADMIN,
+        role: MemberRoleEnum.OSS_ADMIN,
         userId: user._id,
         organizationId: user.organizationId,
       })

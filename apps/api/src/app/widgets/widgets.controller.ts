@@ -455,7 +455,7 @@ export class WidgetsController {
         environmentId: subscriberSession._environmentId,
         organizationId: subscriberSession._organizationId,
         subscriberId: subscriberSession.subscriberId,
-        workflowId: templateId,
+        workflowIdOrIdentifier: templateId,
         level: PreferenceLevelEnum.TEMPLATE,
         includeInactiveChannels: false,
         ...(body.channel && { [body.channel.type]: body.channel.enabled }),

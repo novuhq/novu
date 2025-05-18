@@ -24,7 +24,7 @@ export class OrganizationService {
   async addMember(organizationId: string, userId: string) {
     await this.memberRepository.addMember(organizationId, {
       _userId: userId,
-      roles: [MemberRoleEnum.ADMIN],
+      roles: [MemberRoleEnum.OSS_ADMIN],
       memberStatus: MemberStatusEnum.ACTIVE,
     });
   }

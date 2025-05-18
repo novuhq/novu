@@ -12,7 +12,11 @@ import { useState, useRef } from 'react';
 import { UserAvatar } from './icons';
 import { openInNewTab } from '../url';
 import { SELF_HOSTED_UPGRADE_REDIRECT_URL } from '../../config';
-import { RiCalendarEventLine, RiExternalLinkLine, RiSignpostFill } from 'react-icons/ri';
+import { RiCalendarEventLine, RiExternalLinkLine, RiSignpostFill, RiLogoutBoxRLine } from 'react-icons/ri';
+import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
+
+const JWT_STORAGE_KEY = 'self-hosted-jwt'; // As defined in components.tsx
 
 export function UserButton() {
   const { user } = useUser() as {
@@ -20,10 +24,23 @@ export function UserButton() {
   };
   const [isOpen, setIsOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   if (!user) return null;
 
   const userName = `${user.firstName} ${user.lastName}`;
+
+  const handleLogout = () => {
+    localStorage.removeItem(JWT_STORAGE_KEY);
+
+    if (typeof window !== 'undefined') {
+      (window as any).Clerk = { ...((window as any).Clerk || {}), loggedIn: false };
+    }
+
+    queryClient.clear();
+    navigate('/auth/sign-in');
+  };
 
   return (
     <div className="flex-shrink-0">
@@ -64,6 +81,16 @@ export function UserButton() {
               <RiCalendarEventLine className="h-3.5 w-3.5 flex-shrink-0 text-gray-500" />
               <span>Contact Sales</span>
               <RiExternalLinkLine className="m-1 ml-auto h-3 w-3 flex-shrink-0 text-gray-500" />
+            </div>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            className="flex cursor-pointer items-center gap-2 text-gray-700 hover:bg-gray-50"
+            onClick={handleLogout}
+          >
+            <div className="flex min-w-0 flex-1 items-center gap-2">
+              <RiLogoutBoxRLine className="h-3.5 w-3.5 flex-shrink-0 text-gray-500" />
+              <span>Logout</span>
             </div>
           </DropdownMenuItem>
         </DropdownMenuContent>

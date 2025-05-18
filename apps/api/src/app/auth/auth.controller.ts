@@ -37,12 +37,10 @@ import { ApiCommonResponses } from '../shared/framework/response.decorator';
 import { UpdatePasswordBodyDto } from './dtos/update-password.dto';
 import { UpdatePassword } from './usecases/update-password/update-password.usecase';
 import { UpdatePasswordCommand } from './usecases/update-password/update-password.command';
-import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
 import { SwitchOrganizationCommand } from './usecases/switch-organization/switch-organization.command';
 import { SwitchOrganization } from './usecases/switch-organization/switch-organization.usecase';
 import { AuthService } from './services/auth.service';
-import { SelfHostUsecase } from './usecases/self-host/self-host.usecase';
-import { SelfHostSecretGuard } from './framework/self-host-secret.guard';
+import { RequireAuthentication } from './framework/auth.decorator';
 
 @ApiCommonResponses()
 @Controller('/auth')
@@ -60,8 +58,7 @@ export class AuthController {
     private passwordResetRequestUsecase: PasswordResetRequest,
     private passwordResetUsecase: PasswordReset,
     private updatePasswordUsecase: UpdatePassword,
-    private logger: PinoLogger,
-    private selfHostUsecase: SelfHostUsecase
+    private logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -92,7 +89,7 @@ export class AuthController {
   }
 
   @Get('/refresh')
-  @UserAuthentication()
+  @RequireAuthentication()
   @Header('Cache-Control', 'no-store')
   refreshToken(@UserSession() user: UserSessionData) {
     if (!user || !user._id) throw new BadRequestException();
@@ -151,7 +148,7 @@ export class AuthController {
   }
 
   @Post('/organizations/:organizationId/switch')
-  @UserAuthentication()
+  @RequireAuthentication()
   @HttpCode(200)
   @Header('Cache-Control', 'no-store')
   async organizationSwitch(@UserSession() user: UserSessionData, @Param('organizationId') organizationId: string) {
@@ -165,7 +162,7 @@ export class AuthController {
 
   @Post('/update-password')
   @Header('Cache-Control', 'no-store')
-  @UserAuthentication()
+  @RequireAuthentication()
   @HttpCode(HttpStatus.NO_CONTENT)
   async updatePassword(@UserSession() user: UserSessionData, @Body() body: UpdatePasswordBodyDto) {
     return await this.updatePasswordUsecase.execute(
@@ -190,11 +187,5 @@ export class AuthController {
     const member = organizationId ? await this.memberRepository.findMemberByUserId(organizationId, user._id) : null;
 
     return await this.authService.getSignedToken(user, organizationId, member as MemberEntity);
-  }
-
-  @Get('/self-hosted')
-  @UseGuards(SelfHostSecretGuard)
-  async logMeIn() {
-    return this.selfHostUsecase.execute();
   }
 }
