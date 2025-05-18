@@ -105,11 +105,11 @@ export const Inbox = React.memo((props: InboxProps) => {
 const InboxChild = withRenderer(
   React.memo((props: InboxProps) => {
     const {
-      container,
       localization,
       appearance,
       tabs,
       preferencesFilter,
+      preferenceGroups,
       routerPush,
       applicationIdentifier,
       subscriberId,
@@ -121,11 +121,11 @@ const InboxChild = withRenderer(
 
     const options = useMemo(() => {
       return {
-        container,
         localization,
         appearance,
         tabs,
         preferencesFilter,
+        preferenceGroups,
         routerPush,
         options: {
           applicationIdentifier,
@@ -136,11 +136,11 @@ const InboxChild = withRenderer(
         },
       };
     }, [
-      container,
       localization,
       appearance,
       tabs,
       preferencesFilter,
+      preferenceGroups,
       applicationIdentifier,
       subscriberId,
       subscriberHash,

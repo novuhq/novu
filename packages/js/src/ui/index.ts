@@ -20,6 +20,7 @@ export {
   NotificationStatus,
   NovuProviderProps,
   PreferencesFilter,
+  PreferenceGroups,
   RouterPush,
   SubjectRenderer,
   Tab,

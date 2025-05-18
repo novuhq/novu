@@ -1,3 +1,17 @@
+## v3.4.0 (2025-05-16)
+
+### 🚀 Features
+
+- **js,react:** inbox preference grouping ([#8310](https://github.com/novuhq/novu/pull/8310))
+- **js,react:** inbox and styles under the shadow root ([#8262](https://github.com/novuhq/novu/pull/8262))
+- **js:** override icon set for inbox component ([#8293](https://github.com/novuhq/novu/pull/8293))
+- **js:** headless bulk update preferences ([#8296](https://github.com/novuhq/novu/pull/8296))
+
+### ❤️ Thank You
+
+- Dima Grossman @scopsy
+- Paweł Tymczuk @LetItRock
+
 # v3.3.1 (2025-05-07)
 
 ### 🩹 Fixes

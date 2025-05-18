@@ -109,7 +109,7 @@ export const CLERK_ORGANIZATION_2 = {
 
 export const CLERK_ORGANIZATION_1_MEMBERSHIP_1 = {
   id: 'clerk_membership_1',
-  role: 'admin',
+  role: 'org:admin',
   publicMetadata: {},
   privateMetadata: {},
   createdAt: 1_000_000,

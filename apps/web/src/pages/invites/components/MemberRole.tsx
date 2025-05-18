@@ -10,8 +10,8 @@ export function MemberRole({ member, onChangeMemberRole, isEnableMemberActions, 
 
   const availableRoles = () => {
     const roles = {
-      Admin: MemberRoleEnum.ADMIN,
-      Member: MemberRoleEnum.MEMBER,
+      Admin: MemberRoleEnum.OSS_ADMIN,
+      Member: MemberRoleEnum.OSS_MEMBER,
     };
 
     return Object.entries(roles).filter((role) => !member.roles.includes(role[1]));

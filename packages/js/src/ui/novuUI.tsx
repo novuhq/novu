@@ -8,6 +8,7 @@ import type {
   BaseNovuProviderProps,
   Localization,
   NovuProviderProps,
+  PreferenceGroups,
   PreferencesFilter,
   RouterPush,
   Tab,
@@ -34,6 +35,8 @@ export class NovuUI {
   #setRouterPush: Setter<RouterPush | undefined>;
   #preferencesFilter: Accessor<PreferencesFilter | undefined>;
   #setPreferencesFilter: Setter<PreferencesFilter | undefined>;
+  #preferenceGroups: Accessor<PreferenceGroups | undefined>;
+  #setPreferenceGroups: Setter<PreferenceGroups | undefined>;
   #predefinedNovu;
   id: string;
 
@@ -45,6 +48,7 @@ export class NovuUI {
     const [mountedElements, setMountedElements] = createSignal(new Map<MountableElement, NovuComponent>());
     const [tabs, setTabs] = createSignal(props.tabs ?? []);
     const [preferencesFilter, setPreferencesFilter] = createSignal(props.preferencesFilter);
+    const [preferenceGroups, setPreferenceGroups] = createSignal(props.preferenceGroups);
     const [routerPush, setRouterPush] = createSignal(props.routerPush);
     const [container, setContainer] = createSignal(this.#getContainerElement(props.container));
     this.#mountedElements = mountedElements;
@@ -62,6 +66,8 @@ export class NovuUI {
     this.#predefinedNovu = props.novu;
     this.#preferencesFilter = preferencesFilter;
     this.#setPreferencesFilter = setPreferencesFilter;
+    this.#preferenceGroups = preferenceGroups;
+    this.#setPreferenceGroups = setPreferenceGroups;
     this.#container = container;
     this.#setContainer = setContainer;
 
@@ -101,6 +107,7 @@ export class NovuUI {
           localization={this.#localization()}
           tabs={this.#tabs()}
           preferencesFilter={this.#preferencesFilter()}
+          preferenceGroups={this.#preferenceGroups()}
           routerPush={this.#routerPush()}
           novu={this.#predefinedNovu}
           container={this.#container()}
@@ -172,6 +179,10 @@ export class NovuUI {
 
   updatePreferencesFilter(preferencesFilter?: PreferencesFilter) {
     this.#setPreferencesFilter(preferencesFilter);
+  }
+
+  updatePreferenceGroups(preferenceGroups?: PreferenceGroups) {
+    this.#setPreferenceGroups(preferenceGroups);
   }
 
   updateRouterPush(routerPush?: RouterPush) {

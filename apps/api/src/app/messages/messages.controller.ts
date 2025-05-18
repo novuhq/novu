@@ -1,6 +1,7 @@
 import { Controller, Delete, Get, HttpCode, HttpStatus, Param, Query } from '@nestjs/common';
-import { UserSessionData } from '@novu/shared';
+import { UserSessionData, PermissionsEnum } from '@novu/shared';
 import { ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import { RequirePermissions } from '@novu/application-generic';
 import { RemoveMessage, RemoveMessageCommand } from './usecases/remove-message';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
@@ -18,10 +19,11 @@ import { GetMessagesRequestDto } from './dtos/get-messages-requests.dto';
 import { RemoveMessagesByTransactionId } from './usecases/remove-messages-by-transactionId/remove-messages-by-transactionId.usecase';
 import { RemoveMessagesByTransactionIdCommand } from './usecases/remove-messages-by-transactionId/remove-messages-by-transactionId.command';
 import { DeleteMessageByTransactionIdRequestDto } from './dtos/remove-messages-by-transactionId-request.dto';
-import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
+import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 
 @ApiCommonResponses()
+@RequireAuthentication()
 @Controller('/messages')
 @ApiTags('Messages')
 export class MessagesController {
@@ -33,7 +35,6 @@ export class MessagesController {
 
   @Get('')
   @ExternalApiAccessible()
-  @UserAuthentication()
   @ApiOkResponse({
     type: MessagesResponseDto,
   })
@@ -41,6 +42,7 @@ export class MessagesController {
     summary: 'Get messages',
     description: 'Returns a list of messages, could paginate using the `page` query parameter',
   })
+  @RequirePermissions(PermissionsEnum.MESSAGE_READ)
   async getMessages(
     @UserSession() user: UserSessionData,
     @Query() query: GetMessagesRequestDto
@@ -65,13 +67,13 @@ export class MessagesController {
 
   @Delete('/:messageId')
   @ExternalApiAccessible()
-  @UserAuthentication()
   @ApiResponse(DeleteMessageResponseDto)
   @ApiOperation({
     summary: 'Delete message',
     description: 'Deletes a message entity from the Novu platform',
   })
   @ApiParam({ name: 'messageId', type: String, required: true })
+  @RequirePermissions(PermissionsEnum.MESSAGE_DELETE)
   async deleteMessage(
     @UserSession() user: UserSessionData,
     @Param() { messageId }: DeleteMessageParams
@@ -88,7 +90,6 @@ export class MessagesController {
   @Delete('/transaction/:transactionId')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ExternalApiAccessible()
-  @UserAuthentication()
   @ApiNoContentResponse()
   @ApiOperation({
     summary: 'Delete messages by transactionId',
@@ -96,6 +97,7 @@ export class MessagesController {
   })
   @ApiParam({ name: 'transactionId', type: String, required: true })
   @SdkMethodName('deleteByTransactionId')
+  @RequirePermissions(PermissionsEnum.MESSAGE_DELETE)
   async deleteMessagesByTransactionId(
     @UserSession() user: UserSessionData,
     @Param() { transactionId }: { transactionId: string },

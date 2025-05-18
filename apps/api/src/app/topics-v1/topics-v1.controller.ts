@@ -10,7 +10,7 @@ import {
   ApiOkResponse,
   ApiResponse,
 } from '../shared/framework/response.decorator';
-import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
+import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 import { UserSession } from '../shared/framework/user.decorator';
 import {
@@ -48,7 +48,7 @@ import {
 @ThrottlerCategory(ApiRateLimitCategoryEnum.CONFIGURATION)
 @ApiCommonResponses()
 @Controller('/topics')
-@UserAuthentication()
+@RequireAuthentication()
 @ApiTags('Topics')
 export class TopicsV1Controller {
   constructor(

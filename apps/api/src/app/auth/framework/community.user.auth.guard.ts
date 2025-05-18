@@ -1,7 +1,7 @@
 import { ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { AuthGuard, IAuthModuleOptions } from '@nestjs/passport';
 import { Reflector } from '@nestjs/core';
-import { ApiAuthSchemeEnum, IJwtClaims, PassportStrategyEnum, HandledUser, NONE_AUTH_SCHEME } from '@novu/shared';
+import { ApiAuthSchemeEnum, PassportStrategyEnum, NONE_AUTH_SCHEME } from '@novu/shared';
 import { PinoLogger } from '@novu/application-generic';
 
 @Injectable()
@@ -43,33 +43,5 @@ export class CommunityUserAuthGuard extends AuthGuard([PassportStrategyEnum.JWT,
       default:
         throw new UnauthorizedException(`Invalid authentication scheme: "${authScheme}"`);
     }
-  }
-
-  handleRequest<TUser = IJwtClaims>(
-    err: any,
-    user: IJwtClaims | false,
-    info: any,
-    context: ExecutionContext,
-    status?: any
-  ): TUser {
-    let handledUser: HandledUser;
-
-    if (typeof user === 'object') {
-      /**
-       * This helps with sentry and other tools that need to know who the user is based on `id` property.
-       */
-      handledUser = {
-        ...user,
-        id: user._id,
-        username: (user.firstName || '').trim(),
-        domain: user.email?.split('@')[1] || '',
-      };
-    } else {
-      handledUser = user;
-    }
-
-    this.logger.assign({ user: handledUser });
-
-    return super.handleRequest(err, handledUser, info, context, status);
   }
 }

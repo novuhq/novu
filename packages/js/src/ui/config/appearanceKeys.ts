@@ -171,12 +171,28 @@ export const appearanceKeys = [
   'workflowContainer',
   'workflowLabel',
   'workflowLabelHeader',
+  'workflowLabelHeaderContainer',
+  'workflowLabelIcon',
   'workflowLabelContainer',
   'workflowContainerDisabledNotice',
   'workflowLabelDisabled__icon',
   'workflowContainerRight__icon',
   'workflowArrow__icon',
   'workflowDescription',
+
+  // preference groups
+  'preferencesGroupContainer',
+  'preferencesGroupHeader',
+  'preferencesGroupLabelContainer',
+  'preferencesGroupLabelIcon',
+  'preferencesGroupLabel',
+  'preferencesGroupActionsContainer',
+  'preferencesGroupActionsContainerRight__icon',
+  'preferencesGroupBody',
+  'preferencesGroupChannels',
+  'preferencesGroupInfo',
+  'preferencesGroupInfoIcon',
+  'preferencesGroupWorkflows',
 
   // channel
   'channelContainer',

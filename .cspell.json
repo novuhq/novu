@@ -741,7 +741,10 @@
     "unsnoozed",
     "automators",
     "calcom",
-    "Svix"
+    "Svix",
+    "totp",
+    "calcom",
+    "partnerintegration"
   ],
   "flagWords": [],
   "patterns": [
