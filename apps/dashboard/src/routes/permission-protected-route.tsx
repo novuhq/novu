@@ -6,6 +6,7 @@ import {
   ApiServiceLevelEnum,
   PermissionsEnum,
   FeatureFlagsKeysEnum,
+  MemberRoleEnum,
 } from '@novu/shared';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { DashboardLayout } from '@/components/dashboard-layout';
@@ -13,11 +14,12 @@ import { PageMeta } from '@/components/page-meta';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useHasPermission } from '@/hooks/use-has-permission';
+import { AccessDeniedPage } from '@/pages';
 
 interface PermissionProtectedRouteProps {
   children: ReactNode;
   permission?: PermissionsEnum;
-  condition?: (has: (params: { permission: string } | { role: string }) => boolean) => boolean;
+  condition?: (has: (params: { permission: PermissionsEnum } | { role: MemberRoleEnum }) => boolean) => boolean;
   isDrawerRoute?: boolean;
 }
 
@@ -66,9 +68,7 @@ export function PermissionProtectedRoute({
       <>
         <PageMeta title="Unauthorized" />
         <DashboardLayout headerStartItems={<h1 className="text-foreground-950">Unauthorized</h1>}>
-          <div className="flex flex-col items-center justify-center p-6">
-            <p className="text-foreground-950 text-lg">You don't have permission to access this resource</p>
-          </div>
+          <AccessDeniedPage />
         </DashboardLayout>
       </>
     );
