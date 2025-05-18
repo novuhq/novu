@@ -63,10 +63,10 @@ export function IntegrationsListPage() {
             Connect Provider
           </PermissionButton>
         </div>
-        <TabsContent value="providers" variant="regular" className="!mt-0 p-2.5">
+        <TabsContent value="providers" className="!mt-0 p-2.5">
           <IntegrationsList onItemClick={onItemClick} />
         </TabsContent>
-        <TabsContent value="data-warehouse" variant="regular">
+        <TabsContent value="data-warehouse">
           <div className="text-muted-foreground flex h-64 items-center justify-center">Coming soon</div>
         </TabsContent>
       </Tabs>

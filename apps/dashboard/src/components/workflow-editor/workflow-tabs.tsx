@@ -39,7 +39,7 @@ export const WorkflowTabs = () => {
             </TabsTrigger>
           </Protect>
         </TabsList>
-        <TabsContent value="workflow" className="mt-0 h-full w-full" variant="regular">
+        <TabsContent value="workflow" className="mt-0 h-full w-full">
           <WorkflowCanvas steps={workflow?.steps || []} />
         </TabsContent>
       </Tabs>
