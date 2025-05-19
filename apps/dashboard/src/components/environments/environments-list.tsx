@@ -8,6 +8,7 @@ import { DeleteEnvironmentDialog } from './delete-environment-dialog';
 import { EditEnvironmentSheet } from './edit-environment-sheet';
 import { Badge } from '../primitives/badge';
 import { CompactButton } from '../primitives/button-compact';
+import { CopyButton } from '../primitives/copy-button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,6 +31,9 @@ const EnvironmentRowSkeleton = () => (
         <Skeleton className="size-5 rounded-full" />
         <Skeleton className="h-5 w-32" />
       </div>
+    </TableCell>
+    <TableCell>
+      <Skeleton className="h-4 w-24" />
     </TableCell>
     <TableCell>
       <Skeleton className="h-4 w-24" />
@@ -73,6 +77,7 @@ export function EnvironmentsList({ environments, isLoading }: { environments: IE
         <TableHeader>
           <TableRow>
             <TableHead>Name</TableHead>
+            <TableHead>Identifier</TableHead>
             <TableHead>Last Updated</TableHead>
             <TableHead className="w-1"></TableHead>
           </TableRow>
@@ -93,6 +98,18 @@ export function EnvironmentsList({ environments, isLoading }: { environments: IE
                           </Badge>
                         )}
                       </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-1 transition-opacity duration-200">
+                      <TruncatedText className="text-foreground-400 font-code block text-xs">
+                        {environment.identifier}
+                      </TruncatedText>
+                      <CopyButton
+                        className="z-10 flex size-2 p-0 px-1 opacity-0 group-hover:opacity-100"
+                        valueToCopy={environment.identifier}
+                        size="2xs"
+                      />
                     </div>
                   </TableCell>
                   <TableCell className={cn('text-foreground-600 min-w-[180px] text-sm font-medium')}>
