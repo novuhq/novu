@@ -27,7 +27,6 @@ export abstract class SendMessageType {
     const errorString = this.stringifyError(error) || errorMessageFallback;
 
     if (error) {
-      captureException(errorString);
     }
 
     await this.messageRepository.updateMessageStatus(
