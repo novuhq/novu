@@ -103,14 +103,15 @@ export const completions =
       return {
         from: lastOpenBrace + 2,
         to: pos,
-        options:
-          matchingVariables.length > 0
-            ? matchingVariables.map((v) =>
-                createCompletionOption(v.name, v.type ?? 'variable', v.boost, v.info, v.displayLabel)
-              )
-            : variables.map((v) =>
-                createCompletionOption(v.name, v.type ?? 'variable', v.boost, v.info, v.displayLabel)
-              ),
+        options: matchingVariables.map((v) =>
+          createCompletionOption(
+            v.name,
+            v.isNewSuggestion ? 'new-variable' : (v.type ?? 'variable'),
+            v.boost,
+            v.info,
+            v.displayLabel
+          )
+        ),
       };
     }
 
@@ -181,28 +182,28 @@ function getMatchingVariables(searchText: string, variables: LiquidVariable[]): 
 
     if (searchText.startsWith(namespace) && searchText !== namespace) {
       // Ensure that if the user types payload.foo the first suggestion is payload.foo
-      acc.push({ name: searchText, type: 'variable' });
+      acc.push({ name: searchText, type: 'variable', isNewSuggestion: true });
     } else if (!searchText.startsWith(namespace)) {
       // For all other values, suggest payload.whatever, subscriber.data.whatever
       acc.push({
         name: `${namespace}.${searchText.trim()}`,
         type: 'variable',
+        isNewSuggestion: false,
       });
     }
 
     return acc;
   }, []);
 
-  // Guardrail to ensure
-  const uniqueVariables = Array.from(
-    new Map([...jitVariables, ...variables].map((item) => [item.name, item])).values()
-  );
+  const baseVariables = Array.from(new Map([...jitVariables, ...variables].map((item) => [item.name, item])).values());
 
-  // Show any variables containing the search text in the variable name (not the filters)
-  return uniqueVariables.filter((v) => {
+  const existingMatchingVariables = baseVariables.filter((v) => {
     const namePartWithoutFilters = v.name.split('|')[0].trim();
+
     return namePartWithoutFilters.includes(searchTextTrimmed);
   });
+
+  return existingMatchingVariables;
 }
 
 export function createAutocompleteSource(

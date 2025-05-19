@@ -16,6 +16,7 @@ export interface LiquidVariable {
   info?: Completion['info'];
   displayLabel?: string;
   aliasFor?: string | null;
+  isNewSuggestion?: boolean;
 }
 
 export type IsAllowedVariable = (variable: LiquidVariable) => boolean;

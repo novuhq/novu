@@ -106,6 +106,7 @@ export function ControlInput({
         closeOnBlur: true,
         defaultKeymap: true,
         activateOnTyping: true,
+        optionClass: (completion) => (completion.type === 'new-variable' ? 'cm-new-variable-option' : ''),
       }),
     [completionSource]
   );
