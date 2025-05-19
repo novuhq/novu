@@ -27,6 +27,8 @@ export interface IEnvironment {
     url?: string;
   };
 
+  webhookAppId?: string;
+
   createdAt: Date;
   updatedAt: Date;
 }

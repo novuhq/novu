@@ -102,6 +102,7 @@
     "rxjs": "7.8.1",
     "sanitize-html": "^2.4.0",
     "shortid": "^2.2.16",
+    "svix": "^1.24.0",
     "swagger-ui-express": "^4.4.0",
     "uuid": "^8.3.2",
     "zod": "^3.23.8",

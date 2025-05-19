@@ -57,6 +57,9 @@ export enum FeatureNameEnum {
   COMPLIANCE_DATA_PROCESSING_AGREEMENTS = 'complianceDataProcessingAgreements',
 
   TIERS_ORDER_INDEX = 'tiersOrderIndex',
+
+  // Webhooks Features
+  WEBHOOKS = 'webhooks',
 }
 
 export type FeatureValue = string | number | null | boolean | DetailedPriceListItem;
@@ -245,6 +248,13 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
     [ApiServiceLevelEnum.UNLIMITED]: 1,
   },
   [FeatureNameEnum.CUSTOM_ENVIRONMENTS_BOOLEAN]: {
+    [ApiServiceLevelEnum.FREE]: false,
+    [ApiServiceLevelEnum.PRO]: false,
+    [ApiServiceLevelEnum.BUSINESS]: true,
+    [ApiServiceLevelEnum.ENTERPRISE]: true,
+    [ApiServiceLevelEnum.UNLIMITED]: true,
+  },
+  [FeatureNameEnum.WEBHOOKS]: {
     [ApiServiceLevelEnum.FREE]: false,
     [ApiServiceLevelEnum.PRO]: false,
     [ApiServiceLevelEnum.BUSINESS]: true,

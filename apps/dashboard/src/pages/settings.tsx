@@ -7,6 +7,15 @@ import { motion } from 'motion/react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Plan } from '../components/billing/plan';
 import { DashboardLayout } from '../components/dashboard-layout';
+import { useFetchSubscription } from '../hooks/use-fetch-subscription';
+import {
+  ApiServiceLevelEnum,
+  FeatureFlagsKeysEnum,
+  FeatureNameEnum,
+  getFeatureForTierAsBoolean,
+  GetSubscriptionDto,
+} from '@novu/shared';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 
 const FADE_ANIMATION = {
   initial: { opacity: 0 },
@@ -15,7 +24,7 @@ const FADE_ANIMATION = {
   transition: { duration: 0.15 },
 } as const;
 
-const clerkComponentAppearance: Appearance = {
+const getClerkComponentAppearance = (isRbacEnabled: boolean): Appearance => ({
   variables: {
     colorPrimary: 'rgba(82, 88, 102, 0.95)',
     colorText: 'rgba(82, 88, 102, 0.95)',
@@ -47,13 +56,35 @@ const clerkComponentAppearance: Appearance = {
     page: {
       padding: '0 5px',
     },
+    selectButton__role: {
+      visibility: isRbacEnabled ? 'visible' : 'hidden',
+    },
+    formFieldRow__role: {
+      visibility: isRbacEnabled ? 'visible' : 'hidden',
+    },
   },
-};
+});
 
 export function SettingsPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { organization } = useOrganization();
+  const { subscription } = useFetchSubscription();
+  const isRbacEnabledFlag = useFeatureFlag(FeatureFlagsKeysEnum.IS_RBAC_ENABLED, false);
+  const isRbacEnabled = checkRbacEnabled(subscription, isRbacEnabledFlag);
+
+  const clerkAppearance = getClerkComponentAppearance(isRbacEnabled);
+
+  function checkRbacEnabled(subscription: GetSubscriptionDto | undefined, featureFlag: boolean) {
+    const isTrialActive = subscription?.trial.isActive || false;
+    const apiServiceLevel = subscription?.apiServiceLevel || ApiServiceLevelEnum.FREE;
+    const rbacFeatureEnabled = getFeatureForTierAsBoolean(
+      FeatureNameEnum.ACCOUNT_ROLE_BASED_ACCESS_CONTROL_BOOLEAN,
+      apiServiceLevel
+    );
+
+    return rbacFeatureEnabled && !isTrialActive && featureFlag;
+  }
 
   const currentTab =
     location.pathname === ROUTES.SETTINGS ? 'account' : location.pathname.split('/settings/')[1] || 'account';
@@ -98,13 +129,13 @@ export function SettingsPage() {
           <TabsContent value="account" className="rounded-lg">
             <motion.div {...FADE_ANIMATION}>
               <Card className="mx-auto border-none shadow-none">
-                <UserProfile appearance={clerkComponentAppearance}>
+                <UserProfile appearance={clerkAppearance}>
                   <UserProfile.Page label="account" />
                   <UserProfile.Page label="security" />
                 </UserProfile>
 
                 <h1 className="text-foreground mb-6 mt-10 text-xl font-semibold">Security</h1>
-                <UserProfile appearance={clerkComponentAppearance}>
+                <UserProfile appearance={clerkAppearance}>
                   <UserProfile.Page label="security" />
                   <UserProfile.Page label="account" />
                 </UserProfile>
@@ -115,7 +146,7 @@ export function SettingsPage() {
           <TabsContent value="organization" className="rounded-lg">
             <motion.div {...FADE_ANIMATION}>
               <Card className="border-none shadow-none">
-                <OrganizationProfile appearance={clerkComponentAppearance}>
+                <OrganizationProfile appearance={clerkAppearance}>
                   <OrganizationProfile.Page label="general" />
                   <OrganizationProfile.Page label="members" />
                 </OrganizationProfile>
@@ -127,7 +158,7 @@ export function SettingsPage() {
             <motion.div {...FADE_ANIMATION}>
               <Card className="border-none shadow-none">
                 <OrganizationProfile
-                  appearance={clerkComponentAppearance}
+                  appearance={clerkAppearance}
                   // @ts-expect-error usage of __unstable Clerk feature
                   __unstable_manageBillingUrl={ROUTES.SETTINGS_BILLING + '?utm_source=invite_limit_exceeded_prompt'}
                   __unstable_manageBillingMembersLimit={organization?.maxAllowedMemberships}

@@ -24,6 +24,7 @@ import { USECASES } from './usecases';
 import { BuildVariableSchemaUsecase } from '../workflows-v2/usecases';
 import { CreateVariablesObject } from '../workflows-v2/usecases/create-variables-object/create-variables-object.usecase';
 import { BuildStepIssuesUsecase } from '../workflows-v2/usecases/build-step-issues/build-step-issues.usecase';
+import { WebhooksModule } from '../webhooks/webhooks.module';
 
 const PROVIDERS = [
   CreateWorkflow,
@@ -50,8 +51,14 @@ const PROVIDERS = [
   TierRestrictionsValidateUsecase,
 ];
 
+const MODULES = [SharedModule];
+
+if (process.env.NOVU_ENTERPRISE === 'true') {
+  MODULES.push(WebhooksModule);
+}
+
 @Module({
-  imports: [SharedModule],
+  imports: MODULES,
   providers: [...PROVIDERS, ...USECASES],
   controllers: [BridgeController],
   exports: [...USECASES],
