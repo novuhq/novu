@@ -329,7 +329,7 @@ export const ChannelPreferencesForm = (props: ConfigureWorkflowFormProps) => {
                             <TooltipTrigger asChild>
                               <div>
                                 <FormControl>
-                                  <Switch checked={field.value} />
+                                  <Switch checked={field.value} disabled />
                                 </FormControl>
                               </div>
                             </TooltipTrigger>
