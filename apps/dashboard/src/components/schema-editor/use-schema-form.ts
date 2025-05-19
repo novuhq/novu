@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 import type { JSONSchema7, JSONSchema7TypeName } from './json-schema';
 import { newProperty } from './utils/json-helpers';
 import { editorSchema, type SchemaEditorFormValues, type PropertyListItem } from './utils/validation-schema';
+import type { IWorkflow } from '@novu/shared';
 
 interface UseSchemaFormProps {
   initialSchema?: JSONSchema7;
@@ -34,7 +35,7 @@ interface UseSchemaFormReturn {
   methods: UseFormReturn<SchemaEditorFormValues>;
 }
 
-function convertSchemaToPropertyList(
+export function convertSchemaToPropertyList(
   schemaProperties?: JSONSchema7['properties'],
   requiredArray?: string[]
 ): PropertyListItem[] {

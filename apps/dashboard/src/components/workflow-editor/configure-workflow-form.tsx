@@ -212,7 +212,7 @@ export const ConfigureWorkflowForm = (props: ConfigureWorkflowFormProps) => {
       />
       <PayloadSchemaDrawer
         workflow={workflow}
-        open={isPayloadSchemaDrawerOpen}
+        isOpen={isPayloadSchemaDrawerOpen}
         onOpenChange={setIsPayloadSchemaDrawerOpen}
         onSave={handleSavePayloadSchema}
       />
@@ -447,7 +447,7 @@ export const ConfigureWorkflowForm = (props: ConfigureWorkflowFormProps) => {
               <span className="ml-auto" />
             </Button>
           </Link>
-          {(isPayloadSchemaEnabled || true) && (
+          {isPayloadSchemaEnabled && (
             <Button
               variant="secondary"
               mode="outline"
