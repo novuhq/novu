@@ -51,6 +51,14 @@ export default tseslint.config(
           ],
         },
       ],
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "VariableDeclarator[id.type='ObjectPattern'] > ObjectPattern > Property[key.name='has']",
+          message:
+            "Do not destructure 'has' from useAuth(). Please use the useHasPermission hook from @/hooks/use-has-permission instead.",
+        },
+      ],
     },
   }
 );
