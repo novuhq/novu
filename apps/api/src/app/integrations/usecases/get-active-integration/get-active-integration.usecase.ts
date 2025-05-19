@@ -17,6 +17,7 @@ export class GetActiveIntegrations {
         environmentId: command.environmentId,
         userId: command.userId,
         active: true,
+        returnCredentials: command.returnCredentials,
       })
     );
 

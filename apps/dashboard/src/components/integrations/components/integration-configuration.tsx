@@ -4,7 +4,7 @@ import { Label } from '@/components/primitives/label';
 import { Separator } from '@/components/primitives/separator';
 import { useEnvironment } from '@/context/environment/hooks';
 import { ROUTES } from '@/utils/routes';
-import { ChannelTypeEnum, IIntegration, IProviderConfig } from '@novu/shared';
+import { ChannelTypeEnum, IIntegration, IProviderConfig, PermissionsEnum } from '@novu/shared';
 import { useEffect } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { RiInputField } from 'react-icons/ri';
@@ -15,6 +15,7 @@ import { EnvironmentDropdown } from '../../side-navigation/environment-dropdown'
 import { CredentialsSection } from './integration-credentials';
 import { GeneralSettings } from './integration-general-settings';
 import { isDemoIntegration } from './utils/helpers';
+import { Protect } from '@/utils/protect';
 
 type IntegrationFormData = {
   name: string;
@@ -159,19 +160,21 @@ export function IntegrationConfiguration({
           </div>
         ) : (
           <div className="p-3">
-            <Accordion type="single" collapsible defaultValue="credentials">
-              <AccordionItem value="credentials">
-                <AccordionTrigger>
-                  <div className="flex items-center gap-1 text-xs">
-                    <RiInputField className="text-feature size-5" />
-                    Integration Credentials
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent>
-                  <CredentialsSection provider={provider} control={control} isReadOnly={isReadOnly} />
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
+            <Protect permission={PermissionsEnum.INTEGRATION_CREATE}>
+              <Accordion type="single" collapsible defaultValue="credentials">
+                <AccordionItem value="credentials">
+                  <AccordionTrigger>
+                    <div className="flex items-center gap-1 text-xs">
+                      <RiInputField className="text-feature size-5" />
+                      Integration Credentials
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <CredentialsSection provider={provider} control={control} isReadOnly={isReadOnly} />
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </Protect>
 
             {/* TODO: This is a temporary solution to show the guide only for in-app channel, 
               we need to replace it with dedicated view per integration channel */}

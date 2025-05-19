@@ -88,12 +88,7 @@ export class EnvironmentsControllerV1 {
     @UserSession() user: UserSessionData,
     @Body() body: CreateEnvironmentRequestDto
   ): Promise<EnvironmentResponseDto> {
-    const isRbacEnabled = await this.featureFlagService.getFlag({
-      organization: { _id: user.organizationId },
-      user: { _id: user._id },
-      key: FeatureFlagsKeysEnum.IS_RBAC_ENABLED,
-      defaultValue: false,
-    });
+    const canAccessApiKeys = await this.canUserAccessApiKeys(user);
 
     return await this.createEnvironmentUsecase.execute(
       CreateEnvironmentCommand.create({
@@ -102,7 +97,7 @@ export class EnvironmentsControllerV1 {
         organizationId: user.organizationId,
         color: body.color,
         system: false,
-        returnApiKeys: isRbacEnabled ? user.permissions.includes(PermissionsEnum.API_KEY_READ) : true,
+        returnApiKeys: canAccessApiKeys,
       })
     );
   }
@@ -116,18 +111,13 @@ export class EnvironmentsControllerV1 {
   @ApiExcludeEndpoint()
   @SkipPermissionsCheck()
   async listMyEnvironments(@UserSession() user: UserSessionData): Promise<EnvironmentResponseDto[]> {
-    const isRbacEnabled = await this.featureFlagService.getFlag({
-      organization: { _id: user.organizationId },
-      user: { _id: user._id },
-      key: FeatureFlagsKeysEnum.IS_RBAC_ENABLED,
-      defaultValue: false,
-    });
+    const canAccessApiKeys = await this.canUserAccessApiKeys(user);
 
     return await this.getMyEnvironmentsUsecase.execute(
       GetMyEnvironmentsCommand.create({
         organizationId: user.organizationId,
         environmentId: user.environmentId,
-        returnApiKeys: isRbacEnabled ? user.permissions.includes(PermissionsEnum.API_KEY_READ) : true,
+        returnApiKeys: canAccessApiKeys,
       })
     );
   }
@@ -208,5 +198,16 @@ export class EnvironmentsControllerV1 {
         environmentId,
       })
     );
+  }
+
+  private async canUserAccessApiKeys(user: UserSessionData): Promise<boolean> {
+    const isRbacEnabled = await this.featureFlagService.getFlag({
+      organization: { _id: user.organizationId },
+      user: { _id: user._id },
+      key: FeatureFlagsKeysEnum.IS_RBAC_ENABLED,
+      defaultValue: false,
+    });
+
+    return isRbacEnabled ? user.permissions.includes(PermissionsEnum.API_KEY_READ) : true;
   }
 }
