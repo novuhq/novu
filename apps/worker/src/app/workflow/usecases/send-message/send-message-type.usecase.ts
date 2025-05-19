@@ -26,9 +26,6 @@ export abstract class SendMessageType {
   ): Promise<void> {
     const errorString = this.stringifyError(error) || errorMessageFallback;
 
-    if (error) {
-    }
-
     await this.messageRepository.updateMessageStatus(
       command.environmentId,
       message._id,
