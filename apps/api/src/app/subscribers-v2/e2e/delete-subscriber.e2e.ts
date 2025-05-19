@@ -11,8 +11,8 @@ import {
   MessageEntity,
   SubscriberEntity,
 } from '@novu/dal';
-import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 import { ChannelTypeEnum } from '@novu/shared';
+import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 describe('Delete Subscriber - /subscribers/:subscriberId (DELETE) #novu-v2', () => {
   let session: UserSession;
@@ -36,7 +36,7 @@ describe('Delete Subscriber - /subscribers/:subscriberId (DELETE) #novu-v2', () 
     topicRepository = new TopicRepository();
     topicSubscribersRepository = new TopicSubscribersRepository();
     preferencesRepository = new PreferencesRepository();
-    
+
     subscriberId = `test-subscriber-${randomBytes(4).toString('hex')}`;
     environmentId = session.environment._id;
     organizationId = session.organization._id;
@@ -63,7 +63,7 @@ describe('Delete Subscriber - /subscribers/:subscriberId (DELETE) #novu-v2', () 
       key: topicKey,
       name: 'Test Topic',
     });
-    
+
     await novuClient.topics.subscriptions.create(
       {
         subscriberIds: [subscriberId],
@@ -79,7 +79,7 @@ describe('Delete Subscriber - /subscribers/:subscriberId (DELETE) #novu-v2', () 
     expect(topicSubscriptions.length).to.be.greaterThan(0);
 
     const testMessages: MessageEntity[] = [];
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 3; i += 1) {
       const message = await messageRepository.create({
         _environmentId: environmentId,
         _organizationId: organizationId,
