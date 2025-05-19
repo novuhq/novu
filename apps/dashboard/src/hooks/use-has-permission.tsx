@@ -1,3 +1,4 @@
+/* eslint-disable no-restricted-syntax */
 import { useMemo } from 'react';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import {
@@ -12,19 +13,12 @@ import { CheckAuthorizationWithCustomPermissions } from '@clerk/types';
 import { useAuth } from '@clerk/clerk-react';
 
 function isRbacEnabled(isRbacFlagEnabled: boolean, subscription: GetSubscriptionDto | undefined): boolean {
-  const isEligibleTier =
-    subscription &&
-    !subscription.trial.isActive &&
-    subscription.apiServiceLevel !== ApiServiceLevelEnum.FREE &&
-    subscription.apiServiceLevel !== ApiServiceLevelEnum.PRO;
-
-  return Boolean(
+  return (
     isRbacFlagEnabled &&
-      isEligibleTier &&
-      getFeatureForTierAsBoolean(
-        FeatureNameEnum.ACCOUNT_ROLE_BASED_ACCESS_CONTROL_BOOLEAN,
-        subscription?.apiServiceLevel
-      )
+    getFeatureForTierAsBoolean(
+      FeatureNameEnum.ACCOUNT_ROLE_BASED_ACCESS_CONTROL_BOOLEAN,
+      subscription?.apiServiceLevel || ApiServiceLevelEnum.FREE
+    )
   );
 }
 

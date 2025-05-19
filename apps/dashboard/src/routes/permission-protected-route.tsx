@@ -36,12 +36,10 @@ export function PermissionProtectedRoute({
   const isRbacFlagEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_RBAC_ENABLED);
 
   const isRbacFeatureEnabled =
-    !subscription?.trial.isActive &&
     getFeatureForTierAsBoolean(
       FeatureNameEnum.ACCOUNT_ROLE_BASED_ACCESS_CONTROL_BOOLEAN,
       subscription?.apiServiceLevel ?? ApiServiceLevelEnum.FREE
-    ) &&
-    isRbacFlagEnabled;
+    ) && isRbacFlagEnabled;
 
   const parentUrl = isDrawerRoute ? location.pathname.substring(0, location.pathname.lastIndexOf('/')) : '';
 
