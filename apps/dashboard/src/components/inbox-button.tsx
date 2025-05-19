@@ -7,6 +7,7 @@ import { Bell, InboxContent, Inbox, useNovu } from '@novu/react';
 import { useEffect, useState } from 'react';
 import { HeaderButton } from './header-navigation/header-button';
 import { InboxBellFilled } from './icons/inbox-bell-filled';
+import { useAuth } from '@/context/auth/hooks';
 
 declare global {
   interface Window {
@@ -87,8 +88,9 @@ export const InboxButton = () => {
   const { user } = useUser();
   const { currentEnvironment } = useEnvironment();
   const { isTestPage } = useTestPage();
+  const { currentOrganization } = useAuth();
 
-  if (!user || !currentEnvironment) {
+  if (!user || !currentEnvironment || !currentOrganization) {
     return null;
   }
 
@@ -108,7 +110,7 @@ export const InboxButton = () => {
 
   return (
     <Inbox
-      subscriberId={user.externalId ?? ''}
+      subscriberId={`org_${currentOrganization._id}:user_${user.externalId}`}
       applicationIdentifier={appId}
       /**
        * We want to ensure our staging environment is using the production API and WebSocket endpoints.

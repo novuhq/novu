@@ -1,12 +1,13 @@
 import { Novu } from '@novu/js';
 import type { NovuUIOptions as JsNovuUIOptions } from '@novu/js/ui';
 import { NovuUI as NovuUIClass } from '@novu/js/ui';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { NovuUIProvider } from '../context/NovuUIContext';
 import { useDataRef } from '../hooks/internal/useDataRef';
 import type { ReactAppearance } from '../utils/types';
 import { adaptAppearanceForJs } from '../utils/appearance';
 import { useRenderer } from '../context/RendererContext';
+import { ShadowRootDetector } from './ShadowRootDetector';
 
 type NovuUIProps = Omit<JsNovuUIOptions, 'appearance'> & {
   appearance?: ReactAppearance;
@@ -17,7 +18,34 @@ type RendererProps = React.PropsWithChildren<{
   novu?: Novu;
 }>;
 
+const findParentShadowRoot = (child?: HTMLDivElement | null): Node | null => {
+  if (!child) {
+    return null;
+  }
+
+  let node: Node | null = child;
+
+  while (node) {
+    if (node instanceof Element && node.shadowRoot) {
+      return node.shadowRoot;
+    }
+
+    if (node instanceof ShadowRoot) {
+      return node;
+    }
+
+    node = node.parentNode;
+
+    if (!node || node === document) {
+      break;
+    }
+  }
+
+  return null;
+};
+
 export const NovuUI = ({ options, novu, children }: RendererProps) => {
+  const shadowRootDetector = useRef<HTMLDivElement>(null);
   const { mountElement } = useRenderer();
 
   const adaptedAppearanceForUpdate = useMemo(
@@ -37,7 +65,11 @@ export const NovuUI = ({ options, novu, children }: RendererProps) => {
   const [novuUI, setNovuUI] = useState<NovuUIClass | undefined>();
 
   useEffect(() => {
-    const instance = new NovuUIClass(optionsRef.current as JsNovuUIOptions);
+    const parentShadowRoot = findParentShadowRoot(shadowRootDetector.current);
+    const instance = new NovuUIClass({
+      ...optionsRef.current,
+      container: optionsRef.current.container ?? parentShadowRoot,
+    });
     setNovuUI(instance);
 
     return () => {
@@ -50,16 +82,27 @@ export const NovuUI = ({ options, novu, children }: RendererProps) => {
       return;
     }
 
+    const parentShadowRoot = findParentShadowRoot(shadowRootDetector.current);
+    novuUI.updateContainer(options.container ?? parentShadowRoot);
     novuUI.updateAppearance(adaptedAppearanceForUpdate);
     novuUI.updateLocalization(options.localization);
     novuUI.updateTabs(options.tabs);
     novuUI.updateOptions(options.options);
     novuUI.updateRouterPush(options.routerPush);
-  }, [novuUI, adaptedAppearanceForUpdate, options.localization, options.tabs, options.options, options.routerPush]);
+  }, [
+    shadowRootDetector,
+    novuUI,
+    adaptedAppearanceForUpdate,
+    options.localization,
+    options.tabs,
+    options.options,
+    options.routerPush,
+  ]);
 
-  if (!novuUI) {
-    return null;
-  }
-
-  return <NovuUIProvider value={{ novuUI }}>{children}</NovuUIProvider>;
+  return (
+    <>
+      <ShadowRootDetector ref={shadowRootDetector} />
+      {novuUI && <NovuUIProvider value={{ novuUI }}>{children}</NovuUIProvider>}
+    </>
+  );
 };

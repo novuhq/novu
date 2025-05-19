@@ -189,10 +189,10 @@ export class CommunityAuthService implements IAuthService {
       lastName: user.lastName || undefined,
       email: user.email,
       profilePicture: user.profilePicture || undefined,
-      roles: [MemberRoleEnum.ADMIN],
+      roles: [MemberRoleEnum.OSS_ADMIN],
+      permissions: [],
       organizationId: environment?._organizationId || '',
       environmentId: environment?._id || '',
-      exp: 0,
       scheme: ApiAuthSchemeEnum.API_KEY,
     };
   }

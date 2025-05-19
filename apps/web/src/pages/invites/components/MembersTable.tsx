@@ -27,7 +27,7 @@ export function MembersTable({
     const currentUserRoles = members?.find((memberEntity) => memberEntity._userId === currentUser?._id)?.roles || [];
 
     const isNotMyself = currentUser?._id !== currentMember._userId;
-    const isAllowedToRemove = currentUserRoles.includes(MemberRoleEnum.ADMIN);
+    const isAllowedToRemove = currentUserRoles.includes(MemberRoleEnum.OSS_ADMIN);
 
     return isNotMyself && isAllowedToRemove;
   }

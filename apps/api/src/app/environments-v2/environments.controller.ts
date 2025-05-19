@@ -2,17 +2,18 @@ import { ClassSerializerInterceptor, Controller, Get, Param, UseInterceptors } f
 import { UserSessionData } from '@novu/shared';
 import { ApiTags } from '@nestjs/swagger';
 import { ApiExcludeController } from '@nestjs/swagger/dist/decorators/api-exclude-controller.decorator';
+import { SkipPermissionsCheck } from '@novu/application-generic';
 import { UserSession } from '../shared/framework/user.decorator';
 import { GetEnvironmentTags, GetEnvironmentTagsCommand } from './usecases/get-environment-tags';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
-import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
+import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { GetEnvironmentTagsDto } from './dtos/get-environment-tags.dto';
 
 @ApiCommonResponses()
 @Controller({ path: `/environments`, version: '2' })
 @UseInterceptors(ClassSerializerInterceptor)
-@UserAuthentication()
+@RequireAuthentication()
 @ApiTags('Environments')
 @ApiExcludeController()
 export class EnvironmentsController {
@@ -21,6 +22,7 @@ export class EnvironmentsController {
   @Get('/:environmentId/tags')
   @ApiResponse(GetEnvironmentTagsDto)
   @ExternalApiAccessible()
+  @SkipPermissionsCheck()
   async getEnvironmentTags(
     @UserSession() user: UserSessionData,
     @Param('environmentId') environmentId: string

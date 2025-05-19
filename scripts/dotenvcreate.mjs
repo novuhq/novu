@@ -36,7 +36,7 @@ const { argv } = yargs(hideBin(process.argv))
 const { secretName, region, enterprise, env } = argv;
 
 if (!enterprise || enterprise.toLowerCase() === 'false') {
-  console.log('Enterprise value is false or not provided. Exiting script.');
+  console.log('Booting up community version');
   process.exit(0);
 }
 

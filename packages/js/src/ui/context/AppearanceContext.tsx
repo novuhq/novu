@@ -11,7 +11,7 @@ import {
 } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import { defaultVariables } from '../config';
-import { parseElements, parseVariables } from '../helpers';
+import { NOVU_DEFAULT_CSS_ID, parseElements, parseVariables } from '../helpers';
 import type { Appearance, Elements, Variables, IconOverrides } from '../types';
 
 type AppearanceContextType = {
@@ -21,11 +21,14 @@ type AppearanceContextType = {
   icons: Accessor<IconOverrides>;
   appearanceKeyToCssInJsClass: Record<string, string>;
   id: Accessor<string>;
+  container: Accessor<Node | null | undefined>;
 };
 
 const AppearanceContext = createContext<AppearanceContextType | undefined>(undefined);
 
-type AppearanceProviderProps = ParentProps & { appearance?: Appearance } & { id: string };
+type AppearanceProviderProps = ParentProps & { appearance?: Appearance; container?: Node | null | undefined } & {
+  id: string;
+};
 
 export const AppearanceProvider = (props: AppearanceProviderProps) => {
   const [store, setStore] = createStore<{
@@ -48,25 +51,32 @@ export const AppearanceProvider = (props: AppearanceProviderProps) => {
     return { ...baseElements, ...(props.appearance?.elements || {}) };
   });
 
+  const container = () => props.container;
+
   onMount(() => {
-    const el = document.getElementById(props.id);
+    const root = props.container instanceof ShadowRoot ? props.container : document;
+    const el = root.getElementById(props.id);
     if (el) {
       setStyleElement(el as HTMLStyleElement);
 
       return;
     }
 
+    const stylesContainer = props.container ?? document.head;
     const styleEl = document.createElement('style');
     styleEl.id = props.id;
-    document.head.appendChild(styleEl);
+
+    const defaultCssStyles = root.getElementById(NOVU_DEFAULT_CSS_ID);
+    if (defaultCssStyles) {
+      stylesContainer.insertBefore(styleEl, defaultCssStyles.nextSibling);
+    } else {
+      stylesContainer.appendChild(styleEl);
+    }
 
     setStyleElement(styleEl);
 
     onCleanup(() => {
-      const element = document.getElementById(props.id);
-      if (element) {
-        element.remove();
-      }
+      styleEl.remove();
     });
   });
 
@@ -127,6 +137,7 @@ export const AppearanceProvider = (props: AppearanceProviderProps) => {
         icons,
         appearanceKeyToCssInJsClass: store.appearanceKeyToCssInJsClass, // stores are reactive
         id,
+        container,
       }}
     >
       {props.children}

@@ -5,13 +5,13 @@ import { ApiExcludeController } from '@nestjs/swagger';
 import { ResourceCategory } from '@novu/application-generic';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ProductFeature } from '../shared/decorators/product-feature.decorator';
-import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
+import { RequireAuthentication } from '../auth/framework/auth.decorator';
 
 @Controller('/testing')
+@RequireAuthentication()
 @ApiExcludeController()
 export class TestingController {
   @ExternalApiAccessible()
-  @UserAuthentication()
   @Get('/product-feature')
   @ProductFeature(ProductFeatureKeyEnum.TRANSLATIONS)
   async productFeatureGet(): Promise<{ number: number }> {
@@ -21,7 +21,6 @@ export class TestingController {
   }
 
   @ExternalApiAccessible()
-  @UserAuthentication()
   @Get('/resource-limiting-default')
   async resourceLimitingDefaultGet(): Promise<{ number: number }> {
     if (process.env.NODE_ENV !== 'test') throw new NotFoundException();
@@ -30,7 +29,6 @@ export class TestingController {
   }
 
   @ExternalApiAccessible()
-  @UserAuthentication()
   @Get('/resource-limiting-events')
   @ResourceCategory(ResourceEnum.EVENTS)
   async resourceLimitingEventsGet(): Promise<{ number: number }> {

@@ -1,4 +1,5 @@
 import { createEffect, onCleanup } from 'solid-js';
+import { useAppearance } from '../context';
 
 interface FocusTrapOptions {
   element: () => HTMLElement | null;
@@ -6,6 +7,8 @@ interface FocusTrapOptions {
 }
 
 function createFocusTrap({ element, enabled }: FocusTrapOptions) {
+  const { container } = useAppearance();
+
   createEffect(() => {
     const trapElement = element();
 
@@ -27,16 +30,18 @@ function createFocusTrap({ element, enabled }: FocusTrapOptions) {
       const firstFocusableElement = focusableElements[0];
       const lastFocusableElement = focusableElements[focusableElements.length - 1];
 
+      const containerElement = container();
+      const root = containerElement instanceof ShadowRoot ? containerElement : document;
       if (event.shiftKey) {
         // If Shift + Tab is pressed, move focus to the previous focusable element
-        if (document.activeElement === firstFocusableElement) {
+        if (root.activeElement === firstFocusableElement) {
           lastFocusableElement.focus();
           event.preventDefault();
         }
       } else {
         // If Tab is pressed, move focus to the next focusable element
         // eslint-disable-next-line no-lonely-if
-        if (document.activeElement === lastFocusableElement) {
+        if (root.activeElement === lastFocusableElement) {
           firstFocusableElement.focus();
           event.preventDefault();
         }
