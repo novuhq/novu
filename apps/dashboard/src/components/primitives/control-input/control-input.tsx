@@ -16,6 +16,10 @@ import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { DIGEST_VARIABLES_FILTER_MAP } from '@/components/variable/utils/digest-variables';
+import type { IEnvironment, WorkflowResponseDto } from '@novu/shared';
+import { useEnvironment } from '../../../context/environment/hooks';
+import { useWorkflowSchemaManager } from '@/components/workflow-editor/use-workflow-schema-manager';
+import type { JSONSchema7TypeName } from '@/components/schema-editor/json-schema';
 
 const variants = cva('relative w-full', {
   variants: {
@@ -75,8 +79,38 @@ export function ControlInput({
       }
     : undefined;
 
-  const { digestStepBeforeCurrent } = useWorkflow();
+  const { digestStepBeforeCurrent, workflow } = useWorkflow();
+  const { currentEnvironment } = useEnvironment();
   const track = useTelemetry();
+
+  const { addProperty: addSchemaProperty, handleSaveChanges: handleSaveSchemaChanges } = useWorkflowSchemaManager({
+    workflow: workflow as WorkflowResponseDto,
+    environment: currentEnvironment as IEnvironment,
+    initialSchema: workflow?.payloadSchema,
+  });
+
+  const handleCreateNewVariable = useCallback(
+    async (variableName: string) => {
+      if (!workflow || !currentEnvironment) {
+        // TODO: Handle error state - perhaps a toast notification
+        console.error('Workflow or environment not available for creating new variable');
+
+        return;
+      }
+
+      // Assuming new variables are of type string by default.
+      addSchemaProperty({ keyName: variableName }, 'string' as JSONSchema7TypeName);
+
+      try {
+        await handleSaveSchemaChanges();
+        // Optionally: add telemetry or success notification
+      } catch (error) {
+        // TODO: Handle error state - perhaps a toast notification
+        console.error('Failed to save new variable to schema:', error);
+      }
+    },
+    [workflow, currentEnvironment, addSchemaProperty, handleSaveSchemaChanges]
+  );
 
   const onVariableSelect = useCallback(
     (completion: Completion) => {
@@ -94,15 +128,18 @@ export function ControlInput({
     [track]
   );
 
-  const completionSource = useMemo(
-    () => createAutocompleteSource(variables, onVariableSelect),
-    [variables, onVariableSelect]
-  );
+  const completionSource = useMemo(() => {
+    if (workflow && currentEnvironment) {
+      return createAutocompleteSource(variables, onVariableSelect, handleCreateNewVariable);
+    }
+
+    return undefined;
+  }, [variables, workflow, currentEnvironment, onVariableSelect, handleCreateNewVariable]);
 
   const autocompletionExtension = useMemo(
     () =>
       autocompletion({
-        override: [completionSource],
+        override: completionSource ? [completionSource] : [],
         closeOnBlur: true,
         defaultKeymap: true,
         activateOnTyping: true,

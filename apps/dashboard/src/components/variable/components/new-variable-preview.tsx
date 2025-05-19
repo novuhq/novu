@@ -1,7 +1,11 @@
 import { LinkButton } from '@/components/primitives/button-link';
 import { VariablePreview } from './variable-preview';
 
-export function NewVariablePreview() {
+interface INewVariablePreviewProps {
+  onCreateClick?: () => void;
+}
+
+export function NewVariablePreview({ onCreateClick }: INewVariablePreviewProps) {
   return (
     <VariablePreview>
       <VariablePreview.Description>
@@ -9,7 +13,15 @@ export function NewVariablePreview() {
           Adds a new string variable to the Payload Schema. You can later configure the new variable in the Schema
           Manager.
         </p>
-        <LinkButton variant="modifiable" size="sm">
+        <LinkButton
+          variant="modifiable"
+          size="sm"
+          onClick={(e) => {
+            e.preventDefault();
+
+            onCreateClick?.();
+          }}
+        >
           Create & change defaults
         </LinkButton>
       </VariablePreview.Description>

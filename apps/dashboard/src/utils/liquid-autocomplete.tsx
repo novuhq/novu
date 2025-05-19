@@ -5,6 +5,7 @@ import { Completion, CompletionContext, CompletionResult } from '@codemirror/aut
 import { EditorView } from '@uiw/react-codemirror';
 import { createRoot } from 'react-dom/client';
 import React from 'react';
+import type { WorkflowResponseDto, IEnvironment } from '@novu/shared';
 
 interface CompletionOption {
   label: string;
@@ -82,7 +83,7 @@ const createInfoPanel = ({ component }: { component: React.ReactNode }) => {
  *    - steps.{valid-step}.events[n].payload.* (any new field)
  */
 export const completions =
-  (variables: LiquidVariable[]) =>
+  (variables: LiquidVariable[], onCreateNewVariable?: (variableName: string) => Promise<void>) =>
   (context: CompletionContext): CompletionResult | null => {
     const { state, pos } = context;
     const beforeCursor = state.sliceDoc(0, pos);
@@ -108,7 +109,7 @@ export const completions =
       };
     }
 
-    const matchingVariables = getMatchingVariables(searchText, variables);
+    const matchingVariables = getMatchingVariables(searchText, variables, onCreateNewVariable);
 
     // If we have matches or we're in a valid context, show them
     if (matchingVariables.length > 0 || isInsideLiquidBlock(beforeCursor)) {
@@ -159,7 +160,11 @@ function getFilterCompletions(afterPipe: string): CompletionOption[] {
     .map((f) => createCompletionOption(f.value, 'function'));
 }
 
-function getMatchingVariables(searchText: string, variables: LiquidVariable[]): LiquidVariable[] {
+function getMatchingVariables(
+  searchText: string,
+  variables: LiquidVariable[],
+  onCreateNewVariable?: (variableName: string) => Promise<void>
+): LiquidVariable[] {
   if (!searchText) return variables;
 
   const searchTextTrimmed = searchText.trim();
@@ -199,7 +204,13 @@ function getMatchingVariables(searchText: string, variables: LiquidVariable[]): 
         type: 'variable',
         isNewSuggestion: true,
         info: () => {
-          const dom = createInfoPanel({ component: <NewVariablePreview /> });
+          const dom = createInfoPanel({
+            component: (
+              <NewVariablePreview
+                onCreateClick={() => onCreateNewVariable?.(searchText.replace(namespace + '.', ''))}
+              />
+            ),
+          });
           return {
             dom,
             destroy: () => {
@@ -233,14 +244,15 @@ function getMatchingVariables(searchText: string, variables: LiquidVariable[]): 
 
 export function createAutocompleteSource(
   variables: LiquidVariable[],
-  onVariableSelect?: (completion: Completion) => void
+  onVariableSelect?: (completion: Completion) => void,
+  onCreateNewVariable?: (variableName: string) => Promise<void>
 ) {
   return (context: CompletionContext) => {
     // Match text that starts with {{ and capture everything after it until the cursor position
     const word = context.matchBefore(/\{\{([^}]*)/);
     if (!word) return null;
 
-    const options = completions(variables)(context);
+    const options = completions(variables, onCreateNewVariable)(context);
     if (!options) return null;
 
     const { from, to } = options;

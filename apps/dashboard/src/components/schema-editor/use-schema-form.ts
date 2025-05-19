@@ -6,7 +6,6 @@ import { v4 as uuidv4 } from 'uuid';
 import type { JSONSchema7, JSONSchema7TypeName } from './json-schema';
 import { newProperty } from './utils/json-helpers';
 import { editorSchema, type SchemaEditorFormValues, type PropertyListItem } from './utils/validation-schema';
-import type { IWorkflow } from '@novu/shared';
 
 interface UseSchemaFormProps {
   initialSchema?: JSONSchema7;
@@ -156,6 +155,7 @@ export function useSchemaForm({ initialSchema, onChange, onValidityChange }: Use
             properties,
             ...(required && required.length > 0 ? { required } : {}),
           };
+
           onChange(outputSchema);
         }
       }, 300);
@@ -177,7 +177,7 @@ export function useSchemaForm({ initialSchema, onChange, onValidityChange }: Use
         ...propertyData,
       } as PropertyListItem);
     },
-    [append]
+    [append, formState.isValid, formState.errors]
   );
 
   const removeProperty = useCallback(

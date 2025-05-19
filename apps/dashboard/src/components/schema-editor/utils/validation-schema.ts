@@ -91,5 +91,4 @@ export const SchemaEditorFormValuesSchema = z.object({
 
 export type SchemaEditorFormValues = z.infer<typeof SchemaEditorFormValuesSchema>;
 
-// Alias for SchemaEditor.tsx
 export const editorSchema = SchemaEditorFormValuesSchema;
