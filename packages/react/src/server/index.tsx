@@ -7,6 +7,7 @@ import type {
 import type { UseCountsProps, UseCountsResult } from '../hooks/useCounts';
 import type { InboxProps } from '../components/Inbox';
 import type { NovuProviderProps } from '../hooks/NovuProvider';
+import { ShadowRootDetector } from '../components/ShadowRootDetector';
 
 /**
  * Exporting all components from the components folder
@@ -14,7 +15,9 @@ import type { NovuProviderProps } from '../hooks/NovuProvider';
  * This will be replaced with actual components
  * when we implement the SSR components in @novu/js/ui
  */
-export function Inbox(props: InboxProps) {}
+export function Inbox(props: InboxProps) {
+  return <ShadowRootDetector />;
+}
 
 export function InboxContent() {}
 

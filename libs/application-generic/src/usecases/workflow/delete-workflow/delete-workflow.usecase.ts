@@ -1,17 +1,18 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import {
   ControlValuesRepository,
   MessageTemplateRepository,
   NotificationTemplateEntity,
   NotificationTemplateRepository,
 } from '@novu/dal';
-import { PreferencesTypeEnum } from '@novu/shared';
+import { PreferencesTypeEnum, WebhookEventEnum, WebhookObjectTypeEnum } from '@novu/shared';
 
 import { DeleteWorkflowCommand } from './delete-workflow.command';
 import { GetWorkflowByIdsUseCase } from '../get-workflow-by-ids/get-workflow-by-ids.usecase';
 import { GetWorkflowWithPreferencesCommand } from '../get-workflow-with-preferences/get-workflow-with-preferences.command';
 import { DeletePreferencesUseCase, DeletePreferencesCommand } from '../../delete-preferences';
 import { Instrument, InstrumentUsecase } from '../../../instrumentation';
+import { SendWebhookMessage } from '../../../webhooks/usecases/send-webhook-message/send-webhook-message.usecase';
 
 @Injectable()
 export class DeleteWorkflowUseCase {
@@ -20,7 +21,9 @@ export class DeleteWorkflowUseCase {
     private messageTemplateRepository: MessageTemplateRepository,
     private getWorkflowByIdsUseCase: GetWorkflowByIdsUseCase,
     private controlValuesRepository: ControlValuesRepository,
-    private deletePreferencesUsecase: DeletePreferencesUseCase
+    private deletePreferencesUsecase: DeletePreferencesUseCase,
+    @Optional()
+    private sendWebhookMessage?: SendWebhookMessage
   ) {}
 
   @InstrumentUsecase()
@@ -33,6 +36,18 @@ export class DeleteWorkflowUseCase {
     );
 
     await this.deleteRelatedEntities(command, workflowEntity);
+
+    if (this.sendWebhookMessage) {
+      await this.sendWebhookMessage.execute({
+        eventType: WebhookEventEnum.WORKFLOW_DELETED,
+        objectType: WebhookObjectTypeEnum.WORKFLOW,
+        payload: {
+          object: workflowEntity as unknown as Record<string, unknown>,
+        },
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+      });
+    }
   }
 
   @Instrument()

@@ -28,6 +28,7 @@ import {
 } from '@/pages';
 import { DuplicateWorkflowPage } from '@/pages/duplicate-workflow';
 import { SubscribersPage } from '@/pages/subscribers';
+import { WebhooksPage } from '@/pages/webhooks-page';
 import { CreateIntegrationSidebar } from './components/integrations/components/create-integration-sidebar';
 import { UpdateIntegrationSidebar } from './components/integrations/components/update-integration-sidebar';
 import { ChannelPreferences } from './components/workflow-editor/channel-preferences';
@@ -280,6 +281,46 @@ const router = createBrowserRouter([
                 element: (
                   <ProtectedRoute permission={PermissionsEnum.EVENT_CREATE}>
                     <TestWorkflowPage />
+                  </ProtectedRoute>
+                ),
+              },
+              {
+                path: ROUTES.WEBHOOKS_ENDPOINTS,
+                element: (
+                  <ProtectedRoute permission={PermissionsEnum.WEBHOOK_READ}>
+                    <WebhooksPage />
+                  </ProtectedRoute>
+                ),
+              },
+              {
+                path: ROUTES.WEBHOOKS_EVENT_CATALOG,
+                element: (
+                  <ProtectedRoute permission={PermissionsEnum.WEBHOOK_READ}>
+                    <WebhooksPage />
+                  </ProtectedRoute>
+                ),
+              },
+              {
+                path: ROUTES.WEBHOOKS_LOGS,
+                element: (
+                  <ProtectedRoute permission={PermissionsEnum.WEBHOOK_READ}>
+                    <WebhooksPage />
+                  </ProtectedRoute>
+                ),
+              },
+              {
+                path: ROUTES.WEBHOOKS_ACTIVITY,
+                element: (
+                  <ProtectedRoute permission={PermissionsEnum.WEBHOOK_READ}>
+                    <WebhooksPage />
+                  </ProtectedRoute>
+                ),
+              },
+              {
+                path: ROUTES.WEBHOOKS,
+                element: (
+                  <ProtectedRoute permission={PermissionsEnum.WEBHOOK_READ}>
+                    <Navigate to={ROUTES.WEBHOOKS_ENDPOINTS} replace />
                   </ProtectedRoute>
                 ),
               },

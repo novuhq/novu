@@ -53,6 +53,8 @@ export class EnvironmentEntity {
     url: string;
   };
 
+  webhookAppId?: string;
+
   createdAt?: string;
 
   updatedAt?: string;

@@ -43,6 +43,10 @@ export enum PermissionsEnum {
   WORKFLOW_CREATE = 'org:workflow:create',
   WORKFLOW_DELETE = 'org:workflow:delete',
 
+  // Webhooks
+  WEBHOOK_READ = 'org:webhook:read',
+  WEBHOOK_CREATE = 'org:webhook:create',
+
   // Environments
   ENVIRONMENT_CREATE = 'org:environment:create',
   ENVIRONMENT_DELETE = 'org:environment:delete',

@@ -7,6 +7,7 @@ import { useDataRef } from '../hooks/internal/useDataRef';
 import type { ReactAppearance } from '../utils/types';
 import { adaptAppearanceForJs } from '../utils/appearance';
 import { useRenderer } from '../context/RendererContext';
+import { ShadowRootDetector } from './ShadowRootDetector';
 
 type NovuUIProps = Omit<JsNovuUIOptions, 'appearance'> & {
   appearance?: ReactAppearance;
@@ -88,25 +89,19 @@ export const NovuUI = ({ options, novu, children }: RendererProps) => {
     novuUI.updateTabs(options.tabs);
     novuUI.updateOptions(options.options);
     novuUI.updateRouterPush(options.routerPush);
-  }, [novuUI, adaptedAppearanceForUpdate, options.localization, options.tabs, options.options, options.routerPush]);
+  }, [
+    shadowRootDetector,
+    novuUI,
+    adaptedAppearanceForUpdate,
+    options.localization,
+    options.tabs,
+    options.options,
+    options.routerPush,
+  ]);
 
   return (
     <>
-      <div
-        ref={shadowRootDetector}
-        style={{
-          position: 'absolute',
-          width: 1,
-          height: 1,
-          padding: 0,
-          margin: -1,
-          overflow: 'hidden',
-          clip: 'rect(0, 0, 0, 0)',
-          whiteSpace: 'nowrap',
-          borderWidth: 0,
-        }}
-        data-shadow-root-detector
-      />
+      <ShadowRootDetector ref={shadowRootDetector} />
       {novuUI && <NovuUIProvider value={{ novuUI }}>{children}</NovuUIProvider>}
     </>
   );

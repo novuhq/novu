@@ -35,11 +35,18 @@ import { CreateVariablesObject } from './usecases/create-variables-object/create
 import { BuildStepIssuesUsecase } from './usecases/build-step-issues/build-step-issues.usecase';
 import { WorkflowController } from './workflow.controller';
 import { DuplicateWorkflowUseCase } from './usecases/duplicate-workflow/duplicate-workflow.usecase';
+import { WebhooksModule } from '../webhooks/webhooks.module';
 
 const DAL_REPOSITORIES = [CommunityOrganizationRepository];
 
+const MODULES = [SharedModule, MessageTemplateModule, ChangeModule, AuthModule, BridgeModule, IntegrationModule];
+
+if (process.env.NOVU_ENTERPRISE === 'true') {
+  MODULES.push(WebhooksModule);
+}
+
 @Module({
-  imports: [SharedModule, MessageTemplateModule, ChangeModule, AuthModule, BridgeModule, IntegrationModule],
+  imports: MODULES,
   controllers: [WorkflowController],
   providers: [
     ...DAL_REPOSITORIES,
