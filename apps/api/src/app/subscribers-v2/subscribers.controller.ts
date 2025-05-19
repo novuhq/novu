@@ -191,7 +191,7 @@ export class SubscribersController {
   @ApiOperation({
     summary: 'Delete subscriber',
     description:
-     'Deletes a subscriber entity from the Novu platform along with associated messages, preferences, and topic subscriptions',
+      'Deletes a subscriber entity from the Novu platform along with associated messages, preferences, and topic subscriptions',
   })
   @SdkMethodName('delete')
   @RequirePermissions(PermissionsEnum.SUBSCRIBER_DELETE)
