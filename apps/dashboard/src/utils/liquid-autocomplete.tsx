@@ -1,7 +1,10 @@
 import { getFilters } from '@/components/variable/constants';
+import { NewVariablePreview } from '@/components/variable/components/new-variable-preview';
 import { LiquidVariable } from '@/utils/parseStepVariables';
 import { Completion, CompletionContext, CompletionResult } from '@codemirror/autocomplete';
 import { EditorView } from '@uiw/react-codemirror';
+import { createRoot } from 'react-dom/client';
+import React from 'react';
 
 interface CompletionOption {
   label: string;
@@ -13,6 +16,15 @@ interface CompletionOption {
 const PAYLOAD_NAMESPACE = 'payload';
 const SUBSCRIBER_DATA_NAMESPACE = 'subscriber.data';
 const STEP_PAYLOAD_REGEX = /^steps\.[a-zA-Z0-9_-]+\.events/;
+
+/**
+ * Create a DOM element to render the info panel in Codemirror.
+ */
+const createInfoPanel = ({ component }: { component: React.ReactNode }) => {
+  const dom = document.createElement('div');
+  createRoot(dom).render(component);
+  return dom;
+};
 
 /**
  * Liquid variable autocomplete for the following patterns:
@@ -182,7 +194,20 @@ function getMatchingVariables(searchText: string, variables: LiquidVariable[]): 
 
     if (searchText.startsWith(namespace) && searchText !== namespace) {
       // Ensure that if the user types payload.foo the first suggestion is payload.foo
-      acc.push({ name: searchText, type: 'variable', isNewSuggestion: true });
+      acc.push({
+        name: searchText,
+        type: 'variable',
+        isNewSuggestion: true,
+        info: () => {
+          const dom = createInfoPanel({ component: <NewVariablePreview /> });
+          return {
+            dom,
+            destroy: () => {
+              dom.remove();
+            },
+          };
+        },
+      });
     } else if (!searchText.startsWith(namespace)) {
       // For all other values, suggest payload.whatever, subscriber.data.whatever
       acc.push({

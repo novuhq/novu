@@ -172,6 +172,20 @@ const baseTheme = (options: { multiline?: boolean }) =>
         backgroundImage: `url('${functionIcon}')`,
       },
     },
+    // Adding tooltip content for new variable options
+    '.cm-new-variable-option.cm-completion': {
+      '&[data-has-info=true] ~ .cm-tooltip .cm-completionInfo': {
+        padding: '12px !important',
+        minHeight: '40px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontFamily: 'JetBrains Mono, monospace',
+        fontSize: '14px',
+        fontWeight: '500',
+        color: 'hsl(var(--foreground-950))',
+      },
+    },
   });
 
 export type EditorProps = {
