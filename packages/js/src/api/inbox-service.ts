@@ -31,19 +31,11 @@ export class InboxService {
     subscriberHash?: string;
     subscriber?: Subscriber;
   }): Promise<Session> {
-    const response = (await this.#httpClient.post(
-      `${INBOX_ROUTE}/session`,
-      {
-        applicationIdentifier,
-        subscriberHash,
-        subscriber,
-      },
-      {
-        headers: {
-          'Novu-Application-Identifier': applicationIdentifier || 'pk_keyless_',
-        },
-      }
-    )) as Session;
+    const response = (await this.#httpClient.post(`${INBOX_ROUTE}/session`, {
+      applicationIdentifier,
+      subscriberHash,
+      subscriber,
+    })) as Session;
     this.#httpClient.setAuthorizationToken(response.token);
     this.#httpClient.setKeylessHeader(response.applicationIdentifier);
     this.isSessionInitialized = true;
