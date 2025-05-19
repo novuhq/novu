@@ -95,7 +95,6 @@ export const createDigestBlock = (props: {
                     textAlign: null,
                     showIfKey: null,
                   },
-                  content: [{ type: 'text', text: ' ' }],
                 },
               ],
             },
