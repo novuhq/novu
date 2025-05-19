@@ -2,7 +2,7 @@ import { cn } from '@/utils/ui';
 import { autocompletion, Completion, CompletionSource } from '@codemirror/autocomplete';
 import { EditorView } from '@uiw/react-codemirror';
 import { cva } from 'class-variance-authority';
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { Editor } from '@/components/primitives/editor';
 import { EditVariablePopover } from '@/components/variable/edit-variable-popover';
@@ -20,6 +20,7 @@ import type { IEnvironment, WorkflowResponseDto } from '@novu/shared';
 import { useEnvironment } from '../../../context/environment/hooks';
 import { useWorkflowSchemaManager } from '@/components/workflow-editor/use-workflow-schema-manager';
 import type { JSONSchema7TypeName } from '@/components/schema-editor/json-schema';
+import { PayloadSchemaDrawer } from '@/components/workflow-editor/payload-schema-drawer';
 
 const variants = cva('relative w-full', {
   variants: {
@@ -83,6 +84,9 @@ export function ControlInput({
   const { currentEnvironment } = useEnvironment();
   const track = useTelemetry();
 
+  const [isPayloadSchemaDrawerOpen, setIsPayloadSchemaDrawerOpen] = useState(false);
+  const [highlightedVariableKey, setHighlightedVariableKey] = useState<string | null>(null);
+
   const { addProperty: addSchemaProperty, handleSaveChanges: handleSaveSchemaChanges } = useWorkflowSchemaManager({
     workflow: workflow as WorkflowResponseDto,
     environment: currentEnvironment as IEnvironment,
@@ -103,7 +107,8 @@ export function ControlInput({
 
       try {
         await handleSaveSchemaChanges();
-        // Optionally: add telemetry or success notification
+        setHighlightedVariableKey(variableName);
+        setIsPayloadSchemaDrawerOpen(true);
       } catch (error) {
         // TODO: Handle error state - perhaps a toast notification
         console.error('Failed to save new variable to schema:', error);
@@ -229,6 +234,21 @@ export function ControlInput({
           <div />
         </EditVariablePopover>
       )}
+      <PayloadSchemaDrawer
+        isOpen={isPayloadSchemaDrawerOpen}
+        onOpenChange={(isOpen) => {
+          setIsPayloadSchemaDrawerOpen(isOpen);
+
+          if (!isOpen) {
+            setHighlightedVariableKey(null);
+          }
+        }}
+        workflow={workflow}
+        highlightedPropertyKey={highlightedVariableKey}
+        onSave={() => {
+          // Optionally refetch or update data after schema save from drawer
+        }}
+      />
     </div>
   );
 }

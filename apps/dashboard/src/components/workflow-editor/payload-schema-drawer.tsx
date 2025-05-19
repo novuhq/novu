@@ -29,6 +29,7 @@ interface PayloadSchemaDrawerProps {
   workflow?: WorkflowResponseDto;
   isLoadingWorkflow?: boolean;
   onSave?: (schema: JSONSchema7) => void;
+  highlightedPropertyKey?: string | null;
 }
 
 export function PayloadSchemaDrawer({
@@ -37,6 +38,7 @@ export function PayloadSchemaDrawer({
   workflow,
   isLoadingWorkflow,
   onSave,
+  highlightedPropertyKey,
 }: PayloadSchemaDrawerProps) {
   const [drawerSchema, setDrawerSchema] = useState<JSONSchema7 | undefined>(workflow?.payloadSchema);
   const { currentEnvironment: environment } = useEnvironment();
@@ -122,6 +124,7 @@ export function PayloadSchemaDrawer({
             <SchemaEditor
               key={workflow.slug}
               initialSchema={drawerSchema}
+              highlightedPropertyKey={highlightedPropertyKey}
               onChange={(newFullSchema) => {
                 if (newFullSchema) {
                   const propertyList = convertSchemaToPropertyList(newFullSchema.properties, newFullSchema.required);

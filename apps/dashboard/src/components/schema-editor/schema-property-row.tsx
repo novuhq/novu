@@ -28,10 +28,11 @@ export interface SchemaPropertyRowProps {
   pathPrefix: string;
   onDeleteProperty: () => void;
   indentationLevel?: number;
+  highlightedPropertyKey?: string | null;
 }
 
 export function SchemaPropertyRow(props: SchemaPropertyRowProps) {
-  const { control, index, pathPrefix, onDeleteProperty, indentationLevel = 0 } = props;
+  const { control, index, pathPrefix, onDeleteProperty, indentationLevel = 0, highlightedPropertyKey } = props;
 
   const { setValue, getValues, watch: watchForm } = useFormContext();
 
@@ -127,7 +128,14 @@ export function SchemaPropertyRow(props: SchemaPropertyRowProps) {
   const currentKeyName = propertyListItem.keyName;
 
   return (
-    <div className={cn('flex flex-col py-1')}>
+    <div
+      className={cn(
+        'flex flex-col py-1',
+        currentKeyName && currentKeyName === highlightedPropertyKey
+          ? 'overflow-hidden rounded-[8px] bg-[rgba(193,221,251,0.50)] px-[2px]'
+          : 'px-[2px]'
+      )}
+    >
       <div className={cn('flex items-center space-x-2', getMarginClassPx(indentationLevel))}>
         <PropertyNameInput fieldPath={keyNamePath} control={control} />
         <PropertyTypeSelector

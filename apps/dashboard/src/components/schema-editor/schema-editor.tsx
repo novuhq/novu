@@ -10,9 +10,10 @@ interface SchemaEditorProps {
   initialSchema?: JSONSchema7;
   onChange?: (schema: JSONSchema7) => void;
   onValidityChange?: (isValid: boolean) => void;
+  highlightedPropertyKey?: string | null;
 }
 
-export function SchemaEditor({ initialSchema, onChange, onValidityChange }: SchemaEditorProps) {
+export function SchemaEditor({ initialSchema, onChange, onValidityChange, highlightedPropertyKey }: SchemaEditorProps) {
   const { control, fields, formState, addProperty, removeProperty, methods } = useSchemaForm({
     initialSchema,
     onChange,
@@ -21,7 +22,7 @@ export function SchemaEditor({ initialSchema, onChange, onValidityChange }: Sche
 
   return (
     <FormProvider {...methods}>
-      <div className="rounded-4 bg-bg-white border border-neutral-100 p-2">
+      <div className="rounded-4 bg-bg-white border border-neutral-100 p-2 px-[2px]">
         {fields.map((field, index) => (
           <SchemaPropertyRow
             key={field.fieldId}
@@ -30,6 +31,7 @@ export function SchemaEditor({ initialSchema, onChange, onValidityChange }: Sche
             pathPrefix={`propertyList.${index}`}
             onDeleteProperty={() => removeProperty(index)}
             indentationLevel={0}
+            highlightedPropertyKey={highlightedPropertyKey}
           />
         ))}
         <Button
