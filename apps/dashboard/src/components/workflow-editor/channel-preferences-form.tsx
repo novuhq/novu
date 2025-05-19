@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ChannelTypeEnum, PermissionsEnum, WorkflowPreferences, WorkflowResponseDto } from '@novu/shared';
+import { ChannelTypeEnum, WorkflowPreferences, WorkflowResponseDto } from '@novu/shared';
 import { motion } from 'motion/react';
 import { useMemo } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
@@ -26,7 +26,6 @@ import { StepTypeEnum, WorkflowOriginEnum } from '@/utils/enums';
 import { capitalize } from '@/utils/string';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
-import { useHasPermission } from '@/hooks/use-has-permission';
 
 type ConfigureWorkflowFormProps = {
   workflow: WorkflowResponseDto;
@@ -52,7 +51,6 @@ const checkHasEveryChannelSameValue = (
 export const ChannelPreferencesForm = (props: ConfigureWorkflowFormProps) => {
   const { workflow, update } = props;
   const track = useTelemetry();
-  const has = useHasPermission();
 
   const isDefaultPreferences = useMemo(() => workflow.preferences.user === null, [workflow.preferences.user]);
   const isDashboardWorkflow = useMemo(() => workflow.origin === WorkflowOriginEnum.NOVU_CLOUD, [workflow.origin]);
@@ -71,8 +69,6 @@ export const ChannelPreferencesForm = (props: ConfigureWorkflowFormProps) => {
       channelsNotInUse,
     };
   }, [isDefaultPreferences, workflow.preferences.default, workflow.preferences.user, workflow.steps]);
-
-  const isReadOnly = !has({ permission: PermissionsEnum.WORKFLOW_CREATE });
 
   const form = useForm<z.infer<typeof UserPreferencesFormSchema>>({
     defaultValues: {
@@ -215,7 +211,6 @@ export const ChannelPreferencesForm = (props: ConfigureWorkflowFormProps) => {
                       <FormControl>
                         <Switch
                           checked={field.value}
-                          disabled={isReadOnly}
                           onCheckedChange={(checked) => {
                             field.onChange(checked);
 
@@ -249,11 +244,7 @@ export const ChannelPreferencesForm = (props: ConfigureWorkflowFormProps) => {
                       Mark as critical
                     </FormLabel>
                     <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={handleCriticalToggle}
-                        disabled={!override || isReadOnly}
-                      />
+                      <Switch checked={field.value} onCheckedChange={handleCriticalToggle} disabled={!override} />
                     </FormControl>
                   </FormItem>
                 )}
@@ -269,7 +260,7 @@ export const ChannelPreferencesForm = (props: ConfigureWorkflowFormProps) => {
                     <Checkbox
                       checked={field.value}
                       onCheckedChange={handleAllToggle}
-                      disabled={!override || formDataToRender?.channelsInUse.length === 0 || isReadOnly}
+                      disabled={!override || formDataToRender?.channelsInUse.length === 0}
                     />
                   </FormControl>
                 )}
@@ -302,7 +293,7 @@ export const ChannelPreferencesForm = (props: ConfigureWorkflowFormProps) => {
                             <Switch
                               checked={field.value}
                               onCheckedChange={(checked) => handleChannelToggle(channel as ChannelTypeEnum, checked)}
-                              disabled={!override || isReadOnly}
+                              disabled={!override}
                             />
                           </FormControl>
                         </FormItem>
@@ -338,7 +329,7 @@ export const ChannelPreferencesForm = (props: ConfigureWorkflowFormProps) => {
                             <TooltipTrigger asChild>
                               <div>
                                 <FormControl>
-                                  <Switch checked={field.value} disabled={isReadOnly} />
+                                  <Switch checked={field.value} />
                                 </FormControl>
                               </div>
                             </TooltipTrigger>
