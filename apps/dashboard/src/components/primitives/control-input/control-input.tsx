@@ -1,12 +1,12 @@
 import { cn } from '@/utils/ui';
-import { autocompletion, Completion } from '@codemirror/autocomplete';
+import { autocompletion, Completion, CompletionSource } from '@codemirror/autocomplete';
 import { EditorView } from '@uiw/react-codemirror';
 import { cva } from 'class-variance-authority';
 import { useCallback, useMemo, useRef } from 'react';
 
 import { Editor } from '@/components/primitives/editor';
 import { EditVariablePopover } from '@/components/variable/edit-variable-popover';
-import { createAutocompleteSource } from '@/utils/liquid-autocomplete';
+import { CompletionOption, createAutocompleteSource } from '@/utils/liquid-autocomplete';
 import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
 import { useVariables } from './hooks/use-variables';
 import { createVariableExtension } from './variable-plugin';
@@ -113,7 +113,11 @@ export function ControlInput({
   );
 
   const onVariableSelect = useCallback(
-    (completion: Completion) => {
+    (completion: CompletionOption) => {
+      if (completion.isNewVariable && completion.label.startsWith('payload.')) {
+        handleCreateNewVariable(completion.label.replace('payload.', ''));
+      }
+
       if (completion.type === 'digest') {
         const parts = completion.displayLabel?.split('.');
         const lastElement = parts?.[parts.length - 1];
@@ -139,7 +143,7 @@ export function ControlInput({
   const autocompletionExtension = useMemo(
     () =>
       autocompletion({
-        override: completionSource ? [completionSource] : [],
+        override: completionSource ? [completionSource] : ([] as any[]),
         closeOnBlur: true,
         defaultKeymap: true,
         activateOnTyping: true,

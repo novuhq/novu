@@ -5,12 +5,13 @@ import { Completion, CompletionContext, CompletionResult } from '@codemirror/aut
 import { EditorView } from '@uiw/react-codemirror';
 import { createRoot } from 'react-dom/client';
 import React from 'react';
-import type { WorkflowResponseDto, IEnvironment } from '@novu/shared';
 
-interface CompletionOption {
+export interface CompletionOption {
   label: string;
   type: string;
   boost?: number;
+  isNewVariable?: boolean;
+  displayLabel?: string;
 }
 
 // Novu JIT namespaces
@@ -151,7 +152,14 @@ function createCompletionOption(
   info?: Completion['info'],
   displayLabel?: Completion['displayLabel']
 ): CompletionOption {
-  return { label, type, ...(boost && { boost }), ...(info && { info }), ...(displayLabel && { displayLabel }) };
+  return {
+    label,
+    type,
+    isNewVariable: type === 'new-variable',
+    ...(boost && { boost }),
+    ...(info && { info }),
+    ...(displayLabel && { displayLabel }),
+  };
 }
 
 function getFilterCompletions(afterPipe: string): CompletionOption[] {
@@ -207,7 +215,9 @@ function getMatchingVariables(
           const dom = createInfoPanel({
             component: (
               <NewVariablePreview
-                onCreateClick={() => onCreateNewVariable?.(searchText.replace(namespace + '.', ''))}
+                onCreateClick={() => {
+                  onCreateNewVariable?.(searchText.replace(namespace + '.', ''));
+                }}
               />
             ),
           });
@@ -244,7 +254,7 @@ function getMatchingVariables(
 
 export function createAutocompleteSource(
   variables: LiquidVariable[],
-  onVariableSelect?: (completion: Completion) => void,
+  onVariableSelect?: (completion: CompletionOption) => void,
   onCreateNewVariable?: (variableName: string) => Promise<void>
 ) {
   return (context: CompletionContext) => {
@@ -262,7 +272,7 @@ export function createAutocompleteSource(
       to,
       options: options.options.map((option) => ({
         ...option,
-        apply: (view: EditorView, completion: Completion, from: number, to: number) => {
+        apply: (view: EditorView, completion: CompletionOption, from: number, to: number) => {
           const selectedValue = completion.label;
 
           const content = view.state.doc.toString();
