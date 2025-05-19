@@ -114,6 +114,7 @@ export class InboxController {
         read: query.read,
         archived: query.archived,
         snoozed: query.snoozed,
+        data: query.data,
       })
     );
   }

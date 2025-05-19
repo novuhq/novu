@@ -16,13 +16,46 @@ import { Message } from './message.schema';
 
 type MessageQuery = FilterQuery<MessageDBModel>;
 
-const getEntries = (obj: object, prefix = '') =>
-  Object.entries(obj).flatMap(([key, value]) =>
-    Object(value) === value ? getEntries(value, `${prefix}${key}.`) : [[`${prefix}${key}`, value]]
-  );
+const sanitizeValue = (value: unknown): unknown => {
+  if (typeof value === 'string') {
+    return value
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+  return value;
+};
+
+const getEntries = (obj: object, prefix = '', depth = 0, maxDepth = 2) =>
+  Object.entries(obj).flatMap(([key, value]) => {
+    if (depth >= maxDepth || !(Object(value) === value)) {
+      return [[`${prefix}${key}`, sanitizeValue(value)]];
+    }
+    return getEntries(value, `${prefix}${key}.`, depth + 1, maxDepth);
+  });
 
 const getFlatObject = (obj: object) => {
-  return Object.fromEntries(getEntries(obj));
+  const entries = getEntries(obj);
+  const protectedKeys = [
+    '_environmentId', 
+    '_subscriberId', 
+    'environmentId', 
+    'subscriberId',
+    '_id',
+    'id',
+    'channel',
+    '_organizationId',
+    'organizationId',
+    '_templateId',
+    'templateId',
+  ];
+  
+  return Object.fromEntries(
+    entries.filter(([key]) => !protectedKeys.some(pk => 
+      key === pk || key.startsWith(`${pk}.`)))
+  );
 };
 
 export class MessageRepository extends BaseRepository<MessageDBModel, MessageEntity, EnforceEnvId> {
@@ -156,6 +189,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       read,
       archived,
       snoozed,
+      data,
     }: {
       environmentId: string;
       subscriberId: string;
@@ -164,10 +198,11 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       read?: boolean;
       archived?: boolean;
       snoozed?: boolean;
+      data?: Record<string, unknown>;
     },
     options: { limit: number; offset: number; after?: string }
   ) {
-    const query: MessageQuery & EnforceEnvId = {
+    let query: MessageQuery & EnforceEnvId = {
       _environmentId: environmentId,
       _subscriberId: subscriberId,
       channel,
@@ -195,6 +230,14 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
 
     if (typeof snoozed === 'boolean') {
       query.snoozedUntil = snoozed ? { $exists: true, $ne: null } : { $eq: null };
+    }
+
+    if (data) {
+      const flatData = getFlatObject({ payload: data });
+      query = {
+        ...query,
+        ...flatData,
+      };
     }
 
     return await this.cursorPagination({
