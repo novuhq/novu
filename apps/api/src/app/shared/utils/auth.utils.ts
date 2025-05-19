@@ -3,7 +3,7 @@
  * @param authorizationHeader - The authorization header value
  * @returns boolean indicating if the header contains a keyless token
  */
-export function isKeylessHeader(authorizationHeader: string | undefined): boolean {
+export function checkIsKeylessHeader(authorizationHeader: string | undefined): boolean {
   if (!authorizationHeader) {
     return false;
   }
