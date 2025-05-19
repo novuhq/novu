@@ -87,8 +87,15 @@ export const createDigestBlock = (props: {
                         aliasFor: 'steps.digest-step.events.payload.comment',
                       },
                     },
-                    { type: 'text', text: '' },
                   ],
+                },
+                {
+                  type: 'paragraph',
+                  attrs: {
+                    textAlign: null,
+                    showIfKey: null,
+                  },
+                  content: [],
                 },
               ],
             },
