@@ -40,7 +40,7 @@ export class GetNotifications {
       throw new BadRequestException('Filtering for unread and archived notifications is not supported.');
     }
 
-    let parsedData = undefined;
+    let parsedData;
     if (command.data) {
       try {
         parsedData = JSON.parse(command.data);
