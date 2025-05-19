@@ -90,7 +90,7 @@ export const InboxButton = () => {
   const { isTestPage } = useTestPage();
   const { currentOrganization } = useAuth();
 
-  if (!user || !currentEnvironment) {
+  if (!user || !currentEnvironment || !currentOrganization) {
     return null;
   }
 
