@@ -76,6 +76,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       archived?: boolean;
       snoozed?: boolean;
       payload?: object;
+      data?: Record<string, unknown>;
     } = {},
     createdAt?: {
       $gte: Date;
@@ -144,6 +145,13 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       requestQuery = {
         ...requestQuery,
         ...getFlatObject({ payload: query.payload }),
+      };
+    }
+    
+    if (query.data) {
+      requestQuery = {
+        ...requestQuery,
+        ...getFlatObject({ payload: query.data }),
       };
     }
 
@@ -274,6 +282,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       archived?: boolean;
       snoozed?: boolean;
       payload?: object;
+      data?: Record<string, unknown>;
     } = {},
     options: { limit: number; skip?: number } = { limit: 100, skip: 0 },
     createdAt?: {
@@ -292,6 +301,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
         archived: query.archived,
         payload: query.payload,
         snoozed: query.snoozed,
+        data: query.data,
       },
       createdAt
     );
