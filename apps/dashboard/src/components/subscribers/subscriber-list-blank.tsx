@@ -5,7 +5,7 @@ import { LinkButton } from '../primitives/button-link';
 
 export const SubscriberListBlank = () => {
   return (
-    <div className="flex h-full w-full flex-col items-center justify-center gap-6">
+    <div className="mt-[100px] flex h-full w-full flex-col items-center justify-center gap-6">
       <AddSubscriberIllustration />
       <div className="flex flex-col items-center gap-2 text-center">
         <span className="text-text-sub text-label-md block font-medium">No subscribers yet</span>

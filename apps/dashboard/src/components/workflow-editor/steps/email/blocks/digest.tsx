@@ -65,7 +65,36 @@ export const createDigestBlock = (props: {
                     textAlign: null,
                     showIfKey: null,
                   },
-                  content: [],
+                  content: [
+                    {
+                      type: 'variable',
+                      attrs: {
+                        id: 'current.payload.userName',
+                        label: null,
+                        fallback: null,
+                        required: false,
+                        aliasFor: 'steps.digest-step.events.payload.userName',
+                      },
+                    },
+                    { type: 'text', text: ' commented: ' },
+                    {
+                      type: 'variable',
+                      attrs: {
+                        id: 'current.payload.comment',
+                        label: null,
+                        fallback: null,
+                        required: false,
+                        aliasFor: 'steps.digest-step.events.payload.comment',
+                      },
+                    },
+                  ],
+                },
+                {
+                  type: 'paragraph',
+                  attrs: {
+                    textAlign: null,
+                    showIfKey: null,
+                  },
                 },
               ],
             },

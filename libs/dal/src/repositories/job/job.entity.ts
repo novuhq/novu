@@ -1,4 +1,11 @@
-import { ITenantDefine, IWorkflowStepMetadata, JobStatusEnum, StepTypeEnum, WorkflowPreferences } from '@novu/shared';
+import {
+  ITenantDefine,
+  IWorkflowStepMetadata,
+  JobStatusEnum,
+  StepTypeEnum,
+  TriggerOverrides,
+  WorkflowPreferences,
+} from '@novu/shared';
 import { Types } from 'mongoose';
 
 import { NotificationStepEntity } from '../notification-template';
@@ -13,7 +20,7 @@ export class JobEntity {
   identifier: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   payload: any;
-  overrides: Record<string, Record<string, unknown>>;
+  overrides: TriggerOverrides;
   step: NotificationStepEntity;
   tenant?: ITenantDefine;
   transactionId: string;

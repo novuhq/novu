@@ -25,10 +25,7 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Delete topic
- *
- * @remarks
- * Delete a topic by its topic key if it has no subscribers
+ * Delete topic by key
  */
 export function topicsDelete(
   client: NovuCore,
@@ -37,7 +34,7 @@ export function topicsDelete(
   options?: RequestOptions,
 ): APIPromise<
   Result<
-    operations.TopicsControllerDeleteTopicResponse | undefined,
+    operations.TopicsControllerDeleteTopicResponse,
     | errors.ErrorDto
     | errors.ErrorDto
     | errors.ValidationErrorDto
@@ -67,7 +64,7 @@ async function $do(
 ): Promise<
   [
     Result<
-      operations.TopicsControllerDeleteTopicResponse | undefined,
+      operations.TopicsControllerDeleteTopicResponse,
       | errors.ErrorDto
       | errors.ErrorDto
       | errors.ValidationErrorDto
@@ -107,7 +104,7 @@ async function $do(
     }),
   };
 
-  const path = pathToFunc("/v1/topics/{topicKey}")(pathParams);
+  const path = pathToFunc("/v2/topics/{topicKey}")(pathParams);
 
   const headers = new Headers(compactMap({
     Accept: "application/json",
@@ -191,7 +188,7 @@ async function $do(
   };
 
   const [result] = await M.match<
-    operations.TopicsControllerDeleteTopicResponse | undefined,
+    operations.TopicsControllerDeleteTopicResponse,
     | errors.ErrorDto
     | errors.ErrorDto
     | errors.ValidationErrorDto
@@ -204,11 +201,10 @@ async function $do(
     | RequestTimeoutError
     | ConnectionError
   >(
-    M.nil(
-      204,
-      operations.TopicsControllerDeleteTopicResponse$inboundSchema.optional(),
-      { hdrs: true },
-    ),
+    M.json(200, operations.TopicsControllerDeleteTopicResponse$inboundSchema, {
+      hdrs: true,
+      key: "Result",
+    }),
     M.jsonErr(414, errors.ErrorDto$inboundSchema),
     M.jsonErr(
       [400, 401, 403, 404, 405, 409, 413, 415],

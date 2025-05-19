@@ -29,8 +29,8 @@ export class MemberRepository implements IMemberRepository {
     return this.memberRepository.getOrganizationMembers(organizationId);
   }
 
-  getOrganizationAdminAccount(organizationId: string): Promise<MemberEntity | null> {
-    return this.memberRepository.getOrganizationAdminAccount(organizationId);
+  getOrganizationOwnerAccount(organizationId: string): Promise<MemberEntity | null> {
+    return this.memberRepository.getOrganizationOwnerAccount(organizationId);
   }
 
   getOrganizationAdmins(organizationId: string): Promise<

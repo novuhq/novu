@@ -9,12 +9,18 @@ import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 
 export type TopicDto = {
-  id?: string | undefined;
-  organizationId: string;
-  environmentId: string;
+  /**
+   * The internal unique identifier of the topic
+   */
+  id: string;
+  /**
+   * The key identifier of the topic used in your application. Should be unique on the environment level.
+   */
   key: string;
-  name: string;
-  subscribers: Array<string>;
+  /**
+   * The name of the topic
+   */
+  name?: string | undefined;
 };
 
 /** @internal */
@@ -23,28 +29,20 @@ export const TopicDto$inboundSchema: z.ZodType<
   z.ZodTypeDef,
   unknown
 > = z.object({
-  _id: z.string().optional(),
-  _organizationId: z.string(),
-  _environmentId: z.string(),
+  _id: z.string(),
   key: z.string(),
-  name: z.string(),
-  subscribers: z.array(z.string()),
+  name: z.string().optional(),
 }).transform((v) => {
   return remap$(v, {
     "_id": "id",
-    "_organizationId": "organizationId",
-    "_environmentId": "environmentId",
   });
 });
 
 /** @internal */
 export type TopicDto$Outbound = {
-  _id?: string | undefined;
-  _organizationId: string;
-  _environmentId: string;
+  _id: string;
   key: string;
-  name: string;
-  subscribers: Array<string>;
+  name?: string | undefined;
 };
 
 /** @internal */
@@ -53,17 +51,12 @@ export const TopicDto$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   TopicDto
 > = z.object({
-  id: z.string().optional(),
-  organizationId: z.string(),
-  environmentId: z.string(),
+  id: z.string(),
   key: z.string(),
-  name: z.string(),
-  subscribers: z.array(z.string()),
+  name: z.string().optional(),
 }).transform((v) => {
   return remap$(v, {
     id: "_id",
-    organizationId: "_organizationId",
-    environmentId: "_environmentId",
   });
 });
 

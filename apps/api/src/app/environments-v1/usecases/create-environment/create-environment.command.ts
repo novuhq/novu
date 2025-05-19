@@ -17,4 +17,8 @@ export class CreateEnvironmentCommand extends OrganizationCommand {
   @IsBoolean()
   @IsDefined()
   system: boolean;
+
+  @IsBoolean()
+  @IsOptional()
+  returnApiKeys?: boolean;
 }

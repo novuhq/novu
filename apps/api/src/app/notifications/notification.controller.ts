@@ -1,26 +1,28 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
 import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
-import { ChannelTypeEnum, UserSessionData } from '@novu/shared';
+import { ChannelTypeEnum, PermissionsEnum, UserSessionData } from '@novu/shared';
 
-import { GetActivityFeed } from './usecases/get-activity-feed/get-activity-feed.usecase';
-import { GetActivityFeedCommand } from './usecases/get-activity-feed/get-activity-feed.command';
-import { GetActivityStats, GetActivityStatsCommand } from './usecases/get-activity-stats';
-import { GetActivityGraphStats } from './usecases/get-activity-graph-states/get-activity-graph-states.usecase';
-import { GetActivityGraphStatsCommand } from './usecases/get-activity-graph-states/get-activity-graph-states.command';
-import { ActivityStatsResponseDto } from './dtos/activity-stats-response.dto';
+import { RequirePermissions } from '@novu/application-generic';
+import { ActivitiesRequestDto } from './dtos/activities-request.dto';
 import { ActivitiesResponseDto, ActivityNotificationResponseDto } from './dtos/activities-response.dto';
 import { ActivityGraphStatesResponse } from './dtos/activity-graph-states-response.dto';
-import { ActivitiesRequestDto } from './dtos/activities-request.dto';
-import { GetActivity } from './usecases/get-activity/get-activity.usecase';
+import { ActivityStatsResponseDto } from './dtos/activity-stats-response.dto';
+import { GetActivityFeedCommand } from './usecases/get-activity-feed/get-activity-feed.command';
+import { GetActivityFeed } from './usecases/get-activity-feed/get-activity-feed.usecase';
+import { GetActivityGraphStatsCommand } from './usecases/get-activity-graph-states/get-activity-graph-states.command';
+import { GetActivityGraphStats } from './usecases/get-activity-graph-states/get-activity-graph-states.usecase';
+import { GetActivityStats, GetActivityStatsCommand } from './usecases/get-activity-stats';
 import { GetActivityCommand } from './usecases/get-activity/get-activity.command';
+import { GetActivity } from './usecases/get-activity/get-activity.usecase';
 
-import { UserSession } from '../shared/framework/user.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ApiCommonResponses, ApiOkResponse, ApiResponse } from '../shared/framework/response.decorator';
-import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
+import { UserSession } from '../shared/framework/user.decorator';
+import { RequireAuthentication } from '../auth/framework/auth.decorator';
 
 @ApiCommonResponses()
+@RequireAuthentication()
 @Controller('/notifications')
 @ApiTags('Notifications')
 export class NotificationsController {
@@ -38,8 +40,8 @@ export class NotificationsController {
   @ApiOperation({
     summary: 'Get notifications',
   })
-  @UserAuthentication()
   @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.NOTIFICATION_READ)
   listNotifications(
     @UserSession() user: UserSessionData,
     @Query() query: ActivitiesRequestDto
@@ -77,6 +79,7 @@ export class NotificationsController {
         search: query.search,
         subscriberIds: subscribersQuery,
         transactionId: query.transactionId,
+        topicKey: query.topicKey,
         after: query.after,
         before: query.before,
       })
@@ -88,9 +91,9 @@ export class NotificationsController {
     summary: 'Get notification statistics',
   })
   @Get('/stats')
-  @UserAuthentication()
   @ExternalApiAccessible()
   @SdkGroupName('Notifications.Stats')
+  @RequirePermissions(PermissionsEnum.NOTIFICATION_READ)
   getActivityStats(@UserSession() user: UserSessionData): Promise<ActivityStatsResponseDto> {
     return this.getActivityStatsUsecase.execute(
       GetActivityStatsCommand.create({
@@ -101,7 +104,6 @@ export class NotificationsController {
   }
 
   @Get('/graph/stats')
-  @UserAuthentication()
   @ExternalApiAccessible()
   @ApiResponse(ActivityGraphStatesResponse, 200, true)
   @ApiOperation({
@@ -114,6 +116,7 @@ export class NotificationsController {
   })
   @SdkGroupName('Notifications.Stats')
   @SdkMethodName('graph')
+  @RequirePermissions(PermissionsEnum.NOTIFICATION_READ)
   getActivityGraphStats(
     @UserSession() user: UserSessionData,
     @Query('days') days = 32
@@ -133,8 +136,8 @@ export class NotificationsController {
   @ApiOperation({
     summary: 'Get notification',
   })
-  @UserAuthentication()
   @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.NOTIFICATION_READ)
   getNotification(
     @UserSession() user: UserSessionData,
     @Param('notificationId') notificationId: string

@@ -8,6 +8,7 @@ export type ActivityFilters = {
   subscriberId?: string;
   transactionId?: string;
   dateRange?: string;
+  topicKey?: string;
 };
 
 export interface ActivityResponse {
@@ -55,6 +56,10 @@ export function getActivityList({
 
   if (filters?.transactionId) {
     searchParams.append('transactionId', filters.transactionId);
+  }
+
+  if (filters?.topicKey) {
+    searchParams.append('topicKey', filters.topicKey);
   }
 
   if (filters?.dateRange) {

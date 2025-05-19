@@ -7,11 +7,13 @@ import { GetBlueprint, GetBlueprintCommand } from './usecases/get-blueprint';
 import { GetGroupedBlueprints, GetGroupedBlueprintsCommand } from './usecases/get-grouped-blueprints';
 import { GetBlueprintResponse } from './dtos/get-blueprint.response.dto';
 import { ApiCommonResponses } from '../shared/framework/response.decorator';
+import { RequireAuthentication } from '../auth/framework/auth.decorator';
 
 @ApiCommonResponses()
 @Controller('/blueprints')
 @UseInterceptors(ClassSerializerInterceptor)
 @ApiExcludeController()
+@RequireAuthentication()
 export class BlueprintController {
   constructor(
     private environmentRepository: EnvironmentRepository,

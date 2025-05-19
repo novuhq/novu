@@ -1,15 +1,12 @@
 import { EditVariablePopover } from '@/components/variable/edit-variable-popover';
 import { validateEnhancedDigestFilters } from '@/components/variable/utils';
 import { VariablePill } from '@/components/variable/variable-pill';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { parseVariable } from '@/utils/liquid';
 import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { NodeViewProps } from '@tiptap/core';
 import { NodeViewWrapper } from '@tiptap/react';
 import { useCallback, useMemo, useState } from 'react';
 import { resolveRepeatBlockAlias } from '../variables/variables';
-import { VariablePillOld } from '@/components/variable/variable-pill-old';
 import { DIGEST_VARIABLES_ENUM, getDynamicDigestVariable } from '@/components/variable/utils/digest-variables';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 
@@ -23,11 +20,10 @@ function InternalVariableView(props: InternalVariableViewProps) {
   const { id, aliasFor } = node.attrs;
   const [variableValue, setVariableValue] = useState(`{{${id}}}`);
   const [isOpen, setIsOpen] = useState(false);
-  const isEnhancedDigestEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_ENHANCED_DIGEST_ENABLED);
   const { digestStepBeforeCurrent } = useWorkflow();
 
   const parseVariableCallback = useCallback(
-    (variable: string, isEnhancedDigestEnabled: boolean) => {
+    (variable: string) => {
       const parsedVariable = parseVariable(variable);
 
       if (!parsedVariable?.filtersArray) {
@@ -49,7 +45,7 @@ function InternalVariableView(props: InternalVariableViewProps) {
       });
 
       if (value && value.split('|')[0].trim() === parsedVariable.name) {
-        issue = validateEnhancedDigestFilters(parsedVariable.filtersArray, isEnhancedDigestEnabled);
+        issue = validateEnhancedDigestFilters(parsedVariable.filtersArray);
       }
 
       return {
@@ -61,8 +57,8 @@ function InternalVariableView(props: InternalVariableViewProps) {
   );
 
   const { name, filtersArray, fullLiquidExpression, issues } = useMemo(
-    () => parseVariableCallback(variableValue, isEnhancedDigestEnabled),
-    [variableValue, parseVariableCallback, isEnhancedDigestEnabled]
+    () => parseVariableCallback(variableValue),
+    [variableValue, parseVariableCallback]
   );
 
   const variable: LiquidVariable = useMemo(() => {
@@ -81,8 +77,8 @@ function InternalVariableView(props: InternalVariableViewProps) {
         variables={variables}
         isAllowedVariable={isAllowedVariable}
         onUpdate={(newValue) => {
-          const { fullLiquidExpression } = parseVariableCallback(newValue, isEnhancedDigestEnabled);
-          const aliasFor = resolveRepeatBlockAlias(fullLiquidExpression, editor, isEnhancedDigestEnabled);
+          const { fullLiquidExpression } = parseVariableCallback(newValue);
+          const aliasFor = resolveRepeatBlockAlias(fullLiquidExpression, editor);
 
           if (fullLiquidExpression) {
             updateAttributes({
@@ -103,22 +99,13 @@ function InternalVariableView(props: InternalVariableViewProps) {
           }, 0);
         }}
       >
-        {isEnhancedDigestEnabled ? (
-          <VariablePill
-            issues={issues}
-            variableName={name}
-            filters={filtersArray}
-            onClick={() => setIsOpen(true)}
-            className="-mt-[2px]"
-          />
-        ) : (
-          <VariablePillOld
-            variableName={name}
-            hasFilters={filtersArray.length > 0}
-            onClick={() => setIsOpen(true)}
-            className="-mt-[2px]"
-          />
-        )}
+        <VariablePill
+          issues={issues}
+          variableName={name}
+          filters={filtersArray}
+          onClick={() => setIsOpen(true)}
+          className="-mt-[2px]"
+        />
       </EditVariablePopover>
     </NodeViewWrapper>
   );

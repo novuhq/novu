@@ -9,7 +9,8 @@ import {
   IApiRateLimitMaximum,
   IEmailBlock,
   isClerkEnabled,
-  JobTopicNameEnum,
+  MemberRoleEnum,
+  ALL_PERMISSIONS,
   StepTypeEnum,
 } from '@novu/shared';
 import {
@@ -244,29 +245,38 @@ export class UserSession {
     await this.updateEETokenClaims({
       externalId: this.user ? this.user._id : '',
       externalOrgId: this.organization ? this.organization._id : '',
-      org_role: 'org:admin',
+      org_role: MemberRoleEnum.OWNER,
+      org_permissions: ALL_PERMISSIONS,
       _id: this.user ? this.user.externalId : 'does_not_matter',
       org_id: this.organization ? this.organization.externalId : 'does_not_matter',
     });
   }
 
   async updateEETokenClaims(claims: Partial<ClerkJwtPayload>) {
-    const decoded = await jwt.decode(process.env.CLERK_LONG_LIVED_TOKEN as string);
+    try {
+      const currentPayload = this.token ? jwt.decode(this.token.replace('Bearer ', '')) : null;
 
-    const newToken = {
-      ...decoded,
-      ...claims,
-    };
+      const baseToken = process.env.CLERK_LONG_LIVED_TOKEN as string;
+      const payload = {
+        ...jwt.decode(baseToken),
+        ...(currentPayload || {}),
+        ...claims,
+      };
 
-    const encoded = jwt.sign(newToken, process.env.CLERK_MOCK_JWT_PRIVATE_KEY, {
-      algorithm: 'RS256',
-    });
+      const encodedToken = jwt.sign(payload, process.env.CLERK_MOCK_JWT_PRIVATE_KEY, {
+        algorithm: 'RS256',
+      });
 
-    this.token = `Bearer ${encoded}`;
+      this.token = `Bearer ${encodedToken}`;
 
-    this.testAgent = superAgentDefaults(request(this.requestEndpoint))
-      .set('Authorization', this.token)
-      .set('Novu-Environment-Id', this.environment ? this.environment._id : '');
+      // Update test agent with new token and current environment
+      this.testAgent = superAgentDefaults(request(this.requestEndpoint))
+        .set('Authorization', this.token)
+        .set('Novu-Environment-Id', this.environment?._id || '');
+    } catch (error) {
+      console.error('Error in updateEETokenClaims:', error);
+      throw error;
+    }
   }
 
   async createEnvironmentsAndFeeds(): Promise<void> {

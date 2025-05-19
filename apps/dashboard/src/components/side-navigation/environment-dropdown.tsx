@@ -3,6 +3,7 @@ import { RiExpandUpDownLine } from 'react-icons/ri';
 import { cn } from '../../utils/ui';
 import { EnvironmentBranchIcon } from '../primitives/environment-branch-icon';
 import { Select, SelectContent, SelectIcon, SelectItem, SelectTrigger, SelectValue } from '../primitives/select';
+import TruncatedText from '../../components/truncated-text';
 
 type EnvironmentDropdownProps = {
   currentEnvironment?: IEnvironment;
@@ -25,7 +26,7 @@ export const EnvironmentDropdown = ({
         <SelectValue asChild>
           <div className="flex items-center gap-2">
             <EnvironmentBranchIcon environment={currentEnvironment} />
-            <span className="text-foreground text-sm">{currentEnvironment?.name}</span>
+            <TruncatedText className="text-foreground max-w-[190px] text-sm">{currentEnvironment?.name}</TruncatedText>
           </div>
         </SelectValue>
         <SelectIcon asChild>
@@ -37,7 +38,7 @@ export const EnvironmentDropdown = ({
           <SelectItem key={environment.name} value={environment.name}>
             <div className="flex items-center gap-2">
               <EnvironmentBranchIcon size="sm" environment={environment} />
-              <span>{environment.name}</span>
+              <TruncatedText className="max-w-[190px]">{environment.name}</TruncatedText>
             </div>
           </SelectItem>
         ))}

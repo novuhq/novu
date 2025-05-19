@@ -10,6 +10,7 @@ import { useFetchEnvironments } from '../context/environment/hooks';
 import { useFetchSubscription } from '../hooks/use-fetch-subscription';
 import { useTelemetry } from '../hooks/use-telemetry';
 import { TelemetryEvent } from '../utils/telemetry';
+import { IS_SELF_HOSTED } from '../config';
 
 export function EnvironmentsPage() {
   const { currentOrganization } = useAuth();
@@ -24,8 +25,9 @@ export function EnvironmentsPage() {
     subscription?.apiServiceLevel || ApiServiceLevelEnum.FREE
   );
   const isTrialActive = subscription?.trial?.isActive;
-  const canAccessEnvironments =
+  const allowedToAccessEnvironments =
     areEnvironmentsInitialLoading || !subscription || (isTierEligibleForCustomEnvironments && !isTrialActive);
+  const canAccessEnvironments = allowedToAccessEnvironments && !IS_SELF_HOSTED;
 
   useEffect(() => {
     track(TelemetryEvent.ENVIRONMENTS_PAGE_VIEWED);

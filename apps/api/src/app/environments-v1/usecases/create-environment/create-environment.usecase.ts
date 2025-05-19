@@ -24,6 +24,11 @@ export class CreateEnvironment {
   ) {}
 
   async execute(command: CreateEnvironmentCommand): Promise<EnvironmentResponseDto> {
+    if (command.returnApiKeys === undefined) {
+      // eslint-disable-next-line no-param-reassign
+      command.returnApiKeys = command.system === true;
+    }
+
     const environmentCount = await this.environmentRepository.count({
       _organizationId: command.organizationId,
     });
@@ -112,10 +117,10 @@ export class CreateEnvironment {
       })
     );
 
-    return this.convertEnvironmentEntityToDto(environment);
+    return this.convertEnvironmentEntityToDto(environment, command.returnApiKeys);
   }
 
-  private convertEnvironmentEntityToDto(environment: EnvironmentEntity) {
+  private convertEnvironmentEntityToDto(environment: EnvironmentEntity, returnApiKeys: boolean) {
     const dto = new EnvironmentResponseDto();
 
     dto._id = environment._id;
@@ -124,7 +129,7 @@ export class CreateEnvironment {
     dto.identifier = environment.identifier;
     dto._parentId = environment._parentId;
 
-    if (environment.apiKeys && environment.apiKeys.length > 0) {
+    if (environment.apiKeys && environment.apiKeys.length > 0 && returnApiKeys) {
       dto.apiKeys = environment.apiKeys.map((apiKey) => ({
         key: apiKey.key,
         hash: apiKey.hash,

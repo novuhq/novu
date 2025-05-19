@@ -37,7 +37,7 @@ describe('ProcessVercelWebhook', function () {
     };
 
     memberRepositoryMock = {
-      getOrganizationAdminAccount: stub().resolves({
+      getOrganizationOwnerAccount: stub().resolves({
         _userId: 'test-user-id',
       }),
     };
@@ -147,7 +147,7 @@ describe('ProcessVercelWebhook', function () {
       name: 'Production',
     });
 
-    assert.calledWith(memberRepositoryMock.getOrganizationAdminAccount, 'test-org-id');
+    assert.calledWith(memberRepositoryMock.getOrganizationOwnerAccount, 'test-org-id');
 
     assert.calledWith(communityUserRepositoryMock.findOne, {
       externalId: 'test-user-id',

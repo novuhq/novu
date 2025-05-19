@@ -32,7 +32,7 @@ export type MessageCTA = {
   /**
    * Data associated with the call to action
    */
-  data: MessageCTAData;
+  data?: MessageCTAData | undefined;
   /**
    * Action associated with the call to action
    */
@@ -46,14 +46,14 @@ export const MessageCTA$inboundSchema: z.ZodType<
   unknown
 > = z.object({
   type: ChannelCTATypeEnum$inboundSchema.optional(),
-  data: MessageCTAData$inboundSchema,
+  data: MessageCTAData$inboundSchema.optional(),
   action: MessageAction$inboundSchema.optional(),
 });
 
 /** @internal */
 export type MessageCTA$Outbound = {
   type?: string | undefined;
-  data: MessageCTAData$Outbound;
+  data?: MessageCTAData$Outbound | undefined;
   action?: MessageAction$Outbound | undefined;
 };
 
@@ -64,7 +64,7 @@ export const MessageCTA$outboundSchema: z.ZodType<
   MessageCTA
 > = z.object({
   type: ChannelCTATypeEnum$outboundSchema.optional(),
-  data: MessageCTAData$outboundSchema,
+  data: MessageCTAData$outboundSchema.optional(),
   action: MessageAction$outboundSchema.optional(),
 });
 

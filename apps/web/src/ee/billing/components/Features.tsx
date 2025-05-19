@@ -3,8 +3,6 @@ import { Text } from '@novu/novui';
 import styled from '@emotion/styled';
 import { ApiServiceLevelEnum } from '@novu/shared';
 import { IconCheck as _IconCheck } from '@novu/novui/icons';
-import { useFeatureFlag } from '../../../hooks/useFeatureFlag';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 const TitleCell = styled.div`
   display: flex;
@@ -274,7 +272,7 @@ const featuresDefinition: Feature<SupportedPlansEnum>[] = [
     },
   },
   {
-    label: '"Remind me later" functionality',
+    label: 'Snooze functionality',
     values: {
       [SupportedPlansEnum.FREE]: { value: '-' },
       [SupportedPlansEnum.PRO]: { value: 'Up to 90 days' },
@@ -395,18 +393,9 @@ const featuresDefinition: Feature<SupportedPlansEnum>[] = [
 ];
 
 export const Features = () => {
-  const isSnoozeEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_SNOOZE_ENABLED);
-
-  const filteredFeatures = featuresDefinition.filter((feature) => {
-    if (!isSnoozeEnabled && feature.label === '"Remind me later" functionality') {
-      return false;
-    }
-    return true;
-  });
-
   return (
     <div className={styles.featureList}>
-      {filteredFeatures.map((feature, index) => (
+      {featuresDefinition.map((feature, index) => (
         <FeatureRow key={index} feature={feature} index={index} />
       ))}
     </div>

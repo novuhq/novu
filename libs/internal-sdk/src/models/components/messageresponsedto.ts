@@ -45,7 +45,7 @@ import {
 /**
  * Content of the message, can be an email block or a string
  */
-export type Content = EmailBlock | string;
+export type Content = Array<EmailBlock> | string;
 
 /**
  * The payload that was used to send the notification trigger
@@ -103,6 +103,10 @@ export type MessageResponseDto = {
    */
   createdAt: string;
   /**
+   * Array of delivery dates for the message, if the message has multiple delivery dates, for example after being snoozed
+   */
+  deliveredAt?: Array<string> | undefined;
+  /**
    * Last seen date of the message, if available
    */
   lastSeenDate?: string | undefined;
@@ -113,7 +117,7 @@ export type MessageResponseDto = {
   /**
    * Content of the message, can be an email block or a string
    */
-  content: EmailBlock | string;
+  content: Array<EmailBlock> | string;
   /**
    * Transaction ID associated with the message
    */
@@ -134,6 +138,10 @@ export type MessageResponseDto = {
    * Indicates if the message has been seen
    */
   seen: boolean;
+  /**
+   * Date when the message will be unsnoozed
+   */
+  snoozedUntil?: string | undefined;
   /**
    * Email address associated with the message, if applicable
    */
@@ -190,17 +198,17 @@ export type MessageResponseDto = {
 
 /** @internal */
 export const Content$inboundSchema: z.ZodType<Content, z.ZodTypeDef, unknown> =
-  z.union([EmailBlock$inboundSchema, z.string()]);
+  z.union([z.array(EmailBlock$inboundSchema), z.string()]);
 
 /** @internal */
-export type Content$Outbound = EmailBlock$Outbound | string;
+export type Content$Outbound = Array<EmailBlock$Outbound> | string;
 
 /** @internal */
 export const Content$outboundSchema: z.ZodType<
   Content$Outbound,
   z.ZodTypeDef,
   Content
-> = z.union([EmailBlock$outboundSchema, z.string()]);
+> = z.union([z.array(EmailBlock$outboundSchema), z.string()]);
 
 /**
  * @internal
@@ -344,14 +352,16 @@ export const MessageResponseDto$inboundSchema: z.ZodType<
   template: WorkflowResponse$inboundSchema.optional(),
   templateIdentifier: z.string().optional(),
   createdAt: z.string(),
+  deliveredAt: z.array(z.string()).optional(),
   lastSeenDate: z.string().optional(),
   lastReadDate: z.string().optional(),
-  content: z.union([EmailBlock$inboundSchema, z.string()]),
+  content: z.union([z.array(EmailBlock$inboundSchema), z.string()]),
   transactionId: z.string(),
   subject: z.string().optional(),
   channel: ChannelTypeEnum$inboundSchema,
   read: z.boolean(),
   seen: z.boolean(),
+  snoozedUntil: z.string().optional(),
   email: z.string().optional(),
   phone: z.string().optional(),
   directWebhookUrl: z.string().optional(),
@@ -391,14 +401,16 @@ export type MessageResponseDto$Outbound = {
   template?: WorkflowResponse$Outbound | undefined;
   templateIdentifier?: string | undefined;
   createdAt: string;
+  deliveredAt?: Array<string> | undefined;
   lastSeenDate?: string | undefined;
   lastReadDate?: string | undefined;
-  content: EmailBlock$Outbound | string;
+  content: Array<EmailBlock$Outbound> | string;
   transactionId: string;
   subject?: string | undefined;
   channel: string;
   read: boolean;
   seen: boolean;
+  snoozedUntil?: string | undefined;
   email?: string | undefined;
   phone?: string | undefined;
   directWebhookUrl?: string | undefined;
@@ -431,14 +443,16 @@ export const MessageResponseDto$outboundSchema: z.ZodType<
   template: WorkflowResponse$outboundSchema.optional(),
   templateIdentifier: z.string().optional(),
   createdAt: z.string(),
+  deliveredAt: z.array(z.string()).optional(),
   lastSeenDate: z.string().optional(),
   lastReadDate: z.string().optional(),
-  content: z.union([EmailBlock$outboundSchema, z.string()]),
+  content: z.union([z.array(EmailBlock$outboundSchema), z.string()]),
   transactionId: z.string(),
   subject: z.string().optional(),
   channel: ChannelTypeEnum$outboundSchema,
   read: z.boolean(),
   seen: z.boolean(),
+  snoozedUntil: z.string().optional(),
   email: z.string().optional(),
   phone: z.string().optional(),
   directWebhookUrl: z.string().optional(),

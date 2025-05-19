@@ -139,6 +139,9 @@ export class NodemailerProvider extends BaseProvider implements IEmailProvider {
         filename: attachment?.name,
         content: attachment.file,
         contentType: attachment.mime,
+        cid: attachment.cid,
+        contentDisposition:
+          (attachment.disposition as 'inline' | 'attachment') ?? (attachment.cid ? 'inline' : undefined),
       })),
       bcc: options.bcc,
     };

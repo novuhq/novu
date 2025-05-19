@@ -14,11 +14,16 @@ type UsageStatus = {
 };
 
 export type UsageCardProps = {
-  subscription: GetSubscriptionDto;
+  subscription: GetSubscriptionDto | undefined;
 };
 
 export function UsageCard({ subscription }: UsageCardProps) {
   const track = useTelemetry();
+
+  if (!subscription) {
+    return null;
+  }
+
   const currentEvents = subscription.events?.current ?? 0;
   const maxEvents = subscription.events?.included ?? 10000;
   const resetDate = subscription.currentPeriodEnd ?? null;

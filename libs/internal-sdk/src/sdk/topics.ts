@@ -4,45 +4,29 @@
 
 import { topicsCreate } from "../funcs/topicsCreate.js";
 import { topicsDelete } from "../funcs/topicsDelete.js";
+import { topicsGet } from "../funcs/topicsGet.js";
 import { topicsList } from "../funcs/topicsList.js";
-import { topicsRename } from "../funcs/topicsRename.js";
-import { topicsRetrieve } from "../funcs/topicsRetrieve.js";
+import { topicsUpdate } from "../funcs/topicsUpdate.js";
 import { ClientSDK, RequestOptions } from "../lib/sdks.js";
 import * as components from "../models/components/index.js";
 import * as operations from "../models/operations/index.js";
 import { unwrapAsync } from "../types/fp.js";
 import { NovuSubscribers } from "./novusubscribers.js";
+import { Subscriptions } from "./subscriptions.js";
 
 export class Topics extends ClientSDK {
+  private _subscriptions?: Subscriptions;
+  get subscriptions(): Subscriptions {
+    return (this._subscriptions ??= new Subscriptions(this._options));
+  }
+
   private _subscribers?: NovuSubscribers;
   get subscribers(): NovuSubscribers {
     return (this._subscribers ??= new NovuSubscribers(this._options));
   }
 
   /**
-   * Topic creation
-   *
-   * @remarks
-   * Create a topic
-   */
-  async create(
-    createTopicRequestDto: components.CreateTopicRequestDto,
-    idempotencyKey?: string | undefined,
-    options?: RequestOptions,
-  ): Promise<operations.TopicsControllerCreateTopicResponse> {
-    return unwrapAsync(topicsCreate(
-      this,
-      createTopicRequestDto,
-      idempotencyKey,
-      options,
-    ));
-  }
-
-  /**
-   * Get topic list filtered
-   *
-   * @remarks
-   * Returns a list of topics that can be paginated using the `page` query parameter and filtered by the topic key with the `key` query parameter
+   * Get topics list
    */
   async list(
     request: operations.TopicsControllerListTopicsRequest,
@@ -56,58 +40,68 @@ export class Topics extends ClientSDK {
   }
 
   /**
-   * Delete topic
+   * Create or update a topic
    *
    * @remarks
-   * Delete a topic by its topic key if it has no subscribers
+   * Creates a new topic if it does not exist, or updates an existing topic if it already exists
+   */
+  async create(
+    createUpdateTopicRequestDto: components.CreateUpdateTopicRequestDto,
+    idempotencyKey?: string | undefined,
+    options?: RequestOptions,
+  ): Promise<operations.TopicsControllerUpsertTopicResponse> {
+    return unwrapAsync(topicsCreate(
+      this,
+      createUpdateTopicRequestDto,
+      idempotencyKey,
+      options,
+    ));
+  }
+
+  /**
+   * Get topic by key
+   */
+  async get(
+    topicKey: string,
+    idempotencyKey?: string | undefined,
+    options?: RequestOptions,
+  ): Promise<operations.TopicsControllerGetTopicResponse> {
+    return unwrapAsync(topicsGet(
+      this,
+      topicKey,
+      idempotencyKey,
+      options,
+    ));
+  }
+
+  /**
+   * Update topic by key
+   */
+  async update(
+    updateTopicRequestDto: components.UpdateTopicRequestDto,
+    topicKey: string,
+    idempotencyKey?: string | undefined,
+    options?: RequestOptions,
+  ): Promise<operations.TopicsControllerUpdateTopicResponse> {
+    return unwrapAsync(topicsUpdate(
+      this,
+      updateTopicRequestDto,
+      topicKey,
+      idempotencyKey,
+      options,
+    ));
+  }
+
+  /**
+   * Delete topic by key
    */
   async delete(
     topicKey: string,
     idempotencyKey?: string | undefined,
     options?: RequestOptions,
-  ): Promise<operations.TopicsControllerDeleteTopicResponse | undefined> {
+  ): Promise<operations.TopicsControllerDeleteTopicResponse> {
     return unwrapAsync(topicsDelete(
       this,
-      topicKey,
-      idempotencyKey,
-      options,
-    ));
-  }
-
-  /**
-   * Get topic
-   *
-   * @remarks
-   * Get a topic by its topic key
-   */
-  async retrieve(
-    topicKey: string,
-    idempotencyKey?: string | undefined,
-    options?: RequestOptions,
-  ): Promise<operations.TopicsControllerGetTopicResponse> {
-    return unwrapAsync(topicsRetrieve(
-      this,
-      topicKey,
-      idempotencyKey,
-      options,
-    ));
-  }
-
-  /**
-   * Rename a topic
-   *
-   * @remarks
-   * Rename a topic by providing a new name
-   */
-  async rename(
-    renameTopicRequestDto: components.RenameTopicRequestDto,
-    topicKey: string,
-    idempotencyKey?: string | undefined,
-    options?: RequestOptions,
-  ): Promise<operations.TopicsControllerRenameTopicResponse> {
-    return unwrapAsync(topicsRename(
-      this,
-      renameTopicRequestDto,
       topicKey,
       idempotencyKey,
       options,

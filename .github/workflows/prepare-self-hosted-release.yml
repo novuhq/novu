@@ -22,7 +22,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        name: ['novu/api', 'novu/worker', 'novu/web', 'novu/webhook', 'novu/ws']
+        name: ['novu/api', 'novu/worker', 'novu/dashboard', 'novu/webhook', 'novu/ws']
     steps:
       - name: Git Checkout
         uses: actions/checkout@v4
@@ -97,8 +97,8 @@ jobs:
 
           if [ "${{ env.SERVICE_NAME }}" == "worker" ]; then
             cd src/ && echo -e "\nIS_SELF_HOSTED=true\nOS_TELEMETRY_URL=\"${{ secrets.OS_TELEMETRY_URL }}\"" >> .example.env && cd ..
-          elif [ "${{ env.SERVICE_NAME }}" == "web" ]; then
-            echo -e "\nIS_V2_ENABLED=true" >> .env.sample
+          elif [ "${{ env.SERVICE_NAME }}" == "dashboard" ]; then
+            echo -e "\nVITE_SELF_HOSTED=true" >> .env
           fi
 
           pnpm run docker:build

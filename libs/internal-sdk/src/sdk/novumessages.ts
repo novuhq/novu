@@ -26,7 +26,7 @@ export class NovuMessages extends ClientSDK {
   }
 
   /**
-   * Marks all the subscriber messages as read, unread, seen or unseen. Optionally you can pass feed id (or array) to mark messages of a particular feed.
+   * Marks all the subscriber messages as read, unread, seen or unseen.
    */
   async markAll(
     markAllMessageAsRequestDto: components.MarkAllMessageAsRequestDto,

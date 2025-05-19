@@ -77,6 +77,7 @@ function getDynamicAuthProviders() {
 const DAL_MODELS = [
   UserRepository,
   OrganizationRepository,
+  CommunityOrganizationRepository,
   EnvironmentRepository,
   ExecutionDetailsRepository,
   NotificationTemplateRepository,

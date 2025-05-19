@@ -36,7 +36,15 @@ export class MailersendEmailProvider extends BaseProvider implements IEmailProvi
   }
 
   private getAttachments(attachments: IEmailOptions['attachments']): Attachment[] | null {
-    return attachments?.map((attachment) => new Attachment(attachment.file.toString('base64'), attachment.name));
+    return attachments?.map(
+      (attachment) =>
+        new Attachment(
+          attachment.file.toString('base64'),
+          attachment.name,
+          attachment.disposition ?? (attachment.cid ? 'inline' : 'attachment'),
+          attachment.cid
+        )
+    );
   }
 
   private createMailData(options: IEmailOptions): EmailParams {

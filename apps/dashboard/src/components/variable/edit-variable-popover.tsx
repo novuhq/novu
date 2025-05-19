@@ -1,6 +1,5 @@
 import { ReactNode, useState, useCallback, useMemo, useEffect, useId, useRef } from 'react';
 import { RiDeleteBin2Line, RiQuestionLine, RiSearchLine } from 'react-icons/ri';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives/popover';
 import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
@@ -25,7 +24,6 @@ import { useSuggestedFilters } from './hooks/use-suggested-filters';
 import { useVariableParser } from './hooks/use-variable-parser';
 import type { Filters, FilterWithParam } from './types';
 import { formatLiquidVariable } from './utils';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useDebounce } from '@/hooks/use-debounce';
 import { EscapeKeyManagerPriority } from '@/context/escape-key-manager/priority';
 import { useEscapeKeyManager } from '@/context/escape-key-manager/hooks';
@@ -65,7 +63,6 @@ export const EditVariablePopover = ({
   isAllowedVariable,
   onDeleteClick,
 }: EditVariablePopoverProps) => {
-  const isEnhancedDigestEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_ENHANCED_DIGEST_ENABLED);
   const { parsedName, parsedAliasForRoot, parsedDefaultValue, parsedFilters } = useVariableParser(
     variable?.name || '',
     variable?.aliasFor || ''
@@ -146,7 +143,7 @@ export const EditVariablePopover = ({
         return;
       }
 
-      const newValue = formatLiquidVariable(name, defaultVal, filters, isEnhancedDigestEnabled);
+      const newValue = formatLiquidVariable(name, defaultVal, filters);
 
       if (!open) {
         track(TelemetryEvent.VARIABLE_POPOVER_APPLIED, {
@@ -161,17 +158,7 @@ export const EditVariablePopover = ({
 
       onOpenChange(open, newValue);
     },
-    [
-      validateVariable,
-      onOpenChange,
-      name,
-      defaultVal,
-      filters,
-      track,
-      onUpdate,
-      isEnhancedDigestEnabled,
-      parsedAliasForRoot,
-    ]
+    [validateVariable, onOpenChange, name, defaultVal, filters, track, onUpdate, parsedAliasForRoot]
   );
 
   const handleClosePopover = useCallback(() => {

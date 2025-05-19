@@ -1,5 +1,5 @@
 import { Popover, PopoverContent, PopoverPortal, PopoverTrigger } from '@/components/primitives/popover';
-import { API_HOSTNAME, APP_ID, WEBSOCKET_HOSTNAME } from '@/config';
+import { API_HOSTNAME, APP_ID, IS_SELF_HOSTED, WEBSOCKET_HOSTNAME } from '@/config';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useTestPage } from '@/hooks/use-test-page';
 import { useUser } from '@clerk/clerk-react';
@@ -92,6 +92,10 @@ export const InboxButton = () => {
     return null;
   }
 
+  if (!isTestPage && IS_SELF_HOSTED) {
+    return null;
+  }
+
   /**
    * If the page is a test page, we use the environment identifier as the appId.
    *
@@ -106,8 +110,13 @@ export const InboxButton = () => {
     <Inbox
       subscriberId={user.externalId ?? ''}
       applicationIdentifier={appId}
-      backendUrl={API_HOSTNAME}
-      socketUrl={WEBSOCKET_HOSTNAME}
+      /**
+       * We want to ensure our staging environment is using the production API and WebSocket endpoints.
+       */
+      backendUrl={API_HOSTNAME === 'https://api.novu-staging.co' && !isTestPage ? 'https://api.novu.co' : API_HOSTNAME}
+      socketUrl={
+        WEBSOCKET_HOSTNAME === 'https://ws.novu-staging.co' && !isTestPage ? 'https://ws.novu.co' : WEBSOCKET_HOSTNAME
+      }
       localization={{
         'inbox.filters.labels.default': `Inbox${localizationTestSuffix}`,
         'inbox.filters.labels.unread': `Unread${localizationTestSuffix}`,

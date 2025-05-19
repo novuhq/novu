@@ -33,7 +33,7 @@ export type ControlVariables = {};
 /**
  * Metadata for the workflow step
  */
-export type Metadata = {};
+export type ActivityNotificationStepResponseDtoMetadata = {};
 
 /**
  * Step issues
@@ -60,7 +60,7 @@ export type ActivityNotificationStepResponseDto = {
   /**
    * Metadata for the workflow step
    */
-  metadata?: Metadata | undefined;
+  metadata?: ActivityNotificationStepResponseDtoMetadata | undefined;
   /**
    * Step issues
    */
@@ -202,46 +202,63 @@ export function controlVariablesFromJSON(
 }
 
 /** @internal */
-export const Metadata$inboundSchema: z.ZodType<
-  Metadata,
-  z.ZodTypeDef,
-  unknown
-> = z.object({});
+export const ActivityNotificationStepResponseDtoMetadata$inboundSchema:
+  z.ZodType<
+    ActivityNotificationStepResponseDtoMetadata,
+    z.ZodTypeDef,
+    unknown
+  > = z.object({});
 
 /** @internal */
-export type Metadata$Outbound = {};
+export type ActivityNotificationStepResponseDtoMetadata$Outbound = {};
 
 /** @internal */
-export const Metadata$outboundSchema: z.ZodType<
-  Metadata$Outbound,
-  z.ZodTypeDef,
-  Metadata
-> = z.object({});
+export const ActivityNotificationStepResponseDtoMetadata$outboundSchema:
+  z.ZodType<
+    ActivityNotificationStepResponseDtoMetadata$Outbound,
+    z.ZodTypeDef,
+    ActivityNotificationStepResponseDtoMetadata
+  > = z.object({});
 
 /**
  * @internal
  * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
  */
-export namespace Metadata$ {
-  /** @deprecated use `Metadata$inboundSchema` instead. */
-  export const inboundSchema = Metadata$inboundSchema;
-  /** @deprecated use `Metadata$outboundSchema` instead. */
-  export const outboundSchema = Metadata$outboundSchema;
-  /** @deprecated use `Metadata$Outbound` instead. */
-  export type Outbound = Metadata$Outbound;
+export namespace ActivityNotificationStepResponseDtoMetadata$ {
+  /** @deprecated use `ActivityNotificationStepResponseDtoMetadata$inboundSchema` instead. */
+  export const inboundSchema =
+    ActivityNotificationStepResponseDtoMetadata$inboundSchema;
+  /** @deprecated use `ActivityNotificationStepResponseDtoMetadata$outboundSchema` instead. */
+  export const outboundSchema =
+    ActivityNotificationStepResponseDtoMetadata$outboundSchema;
+  /** @deprecated use `ActivityNotificationStepResponseDtoMetadata$Outbound` instead. */
+  export type Outbound = ActivityNotificationStepResponseDtoMetadata$Outbound;
 }
 
-export function metadataToJSON(metadata: Metadata): string {
-  return JSON.stringify(Metadata$outboundSchema.parse(metadata));
+export function activityNotificationStepResponseDtoMetadataToJSON(
+  activityNotificationStepResponseDtoMetadata:
+    ActivityNotificationStepResponseDtoMetadata,
+): string {
+  return JSON.stringify(
+    ActivityNotificationStepResponseDtoMetadata$outboundSchema.parse(
+      activityNotificationStepResponseDtoMetadata,
+    ),
+  );
 }
 
-export function metadataFromJSON(
+export function activityNotificationStepResponseDtoMetadataFromJSON(
   jsonString: string,
-): SafeParseResult<Metadata, SDKValidationError> {
+): SafeParseResult<
+  ActivityNotificationStepResponseDtoMetadata,
+  SDKValidationError
+> {
   return safeParse(
     jsonString,
-    (x) => Metadata$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'Metadata' from JSON`,
+    (x) =>
+      ActivityNotificationStepResponseDtoMetadata$inboundSchema.parse(
+        JSON.parse(x),
+      ),
+    `Failed to parse 'ActivityNotificationStepResponseDtoMetadata' from JSON`,
   );
 }
 
@@ -298,7 +315,9 @@ export const ActivityNotificationStepResponseDto$inboundSchema: z.ZodType<
     ActivityNotificationStepResponseDtoReplyCallback$inboundSchema
   ).optional(),
   controlVariables: z.lazy(() => ControlVariables$inboundSchema).optional(),
-  metadata: z.lazy(() => Metadata$inboundSchema).optional(),
+  metadata: z.lazy(() =>
+    ActivityNotificationStepResponseDtoMetadata$inboundSchema
+  ).optional(),
   issues: z.lazy(() => Issues$inboundSchema).optional(),
   filters: z.array(StepFilterDto$inboundSchema),
   template: MessageTemplateDto$inboundSchema.optional(),
@@ -324,7 +343,7 @@ export type ActivityNotificationStepResponseDto$Outbound = {
     | ActivityNotificationStepResponseDtoReplyCallback$Outbound
     | undefined;
   controlVariables?: ControlVariables$Outbound | undefined;
-  metadata?: Metadata$Outbound | undefined;
+  metadata?: ActivityNotificationStepResponseDtoMetadata$Outbound | undefined;
   issues?: Issues$Outbound | undefined;
   filters: Array<StepFilterDto$Outbound>;
   template?: MessageTemplateDto$Outbound | undefined;
@@ -346,7 +365,9 @@ export const ActivityNotificationStepResponseDto$outboundSchema: z.ZodType<
     ActivityNotificationStepResponseDtoReplyCallback$outboundSchema
   ).optional(),
   controlVariables: z.lazy(() => ControlVariables$outboundSchema).optional(),
-  metadata: z.lazy(() => Metadata$outboundSchema).optional(),
+  metadata: z.lazy(() =>
+    ActivityNotificationStepResponseDtoMetadata$outboundSchema
+  ).optional(),
   issues: z.lazy(() => Issues$outboundSchema).optional(),
   filters: z.array(StepFilterDto$outboundSchema),
   template: MessageTemplateDto$outboundSchema.optional(),

@@ -123,7 +123,7 @@ export class MessageCTA implements IMessageCTA {
   })
   type: ChannelCTATypeEnum;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Data associated with the call to action',
     type: MessageCTAData,
   })
@@ -226,7 +226,10 @@ export class MessageResponseDto implements IMessage {
   @ApiProperty({
     oneOf: [
       {
-        $ref: getSchemaPath(EmailBlock),
+        type: 'array',
+        items: {
+          $ref: getSchemaPath(EmailBlock),
+        },
       },
       {
         type: 'string',

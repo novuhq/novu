@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Optional } from '@nestjs/common';
 
 import {
   AnalyticsService,
@@ -14,6 +14,7 @@ import {
   UpdateWorkflowCommand,
   UpsertControlValuesCommand,
   UpsertControlValuesUseCase,
+  SendWebhookMessage,
 } from '@novu/application-generic';
 import {
   ControlSchemas,
@@ -26,6 +27,8 @@ import {
   ControlValuesLevelEnum,
   DEFAULT_WORKFLOW_PREFERENCES,
   slugify,
+  WebhookEventEnum,
+  WebhookObjectTypeEnum,
   WorkflowCreationSourceEnum,
   WorkflowOriginEnum,
   WorkflowTypeEnum,
@@ -49,7 +52,9 @@ export class UpsertWorkflowUseCase {
     private buildStepIssuesUsecase: BuildStepIssuesUsecase,
     private controlValuesRepository: ControlValuesRepository,
     private upsertControlValuesUseCase: UpsertControlValuesUseCase,
-    private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService,
+    @Optional()
+    private sendWebhookMessage?: SendWebhookMessage
   ) {}
 
   @InstrumentUsecase()
@@ -84,12 +89,39 @@ export class UpsertWorkflowUseCase {
 
     await this.upsertControlValues(upsertedWorkflow, command);
 
-    return await this.getWorkflowUseCase.execute(
+    const updatedWorkflow = await this.getWorkflowUseCase.execute(
       GetWorkflowCommand.create({
         workflowIdOrInternalId: upsertedWorkflow._id,
         user: command.user,
       })
     );
+
+    if (this.sendWebhookMessage) {
+      if (existingWorkflow) {
+        await this.sendWebhookMessage.execute({
+          eventType: WebhookEventEnum.WORKFLOW_UPDATED,
+          objectType: WebhookObjectTypeEnum.WORKFLOW,
+          payload: {
+            object: updatedWorkflow as unknown as Record<string, unknown>,
+            previousObject: existingWorkflow as unknown as Record<string, unknown>,
+          },
+          organizationId: command.user.organizationId,
+          environmentId: command.user.environmentId,
+        });
+      } else {
+        await this.sendWebhookMessage.execute({
+          eventType: WebhookEventEnum.WORKFLOW_CREATED,
+          objectType: WebhookObjectTypeEnum.WORKFLOW,
+          payload: {
+            object: updatedWorkflow as unknown as Record<string, unknown>,
+          },
+          organizationId: command.user.organizationId,
+          environmentId: command.user.environmentId,
+        });
+      }
+    }
+
+    return updatedWorkflow;
   }
 
   private async buildCreateWorkflowCommand(command: UpsertWorkflowCommand): Promise<CreateWorkflowCommand> {

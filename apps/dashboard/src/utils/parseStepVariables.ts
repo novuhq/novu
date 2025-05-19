@@ -37,7 +37,7 @@ export interface ParsedVariables {
 
 export function parseStepVariables(
   schema: JSONSchemaDefinition,
-  { isEnhancedDigestEnabled, digestStepId }: { isEnhancedDigestEnabled: boolean; digestStepId?: string }
+  { digestStepId }: { digestStepId?: string }
 ): ParsedVariables {
   const result: ParsedVariables = {
     primitives: [],
@@ -51,13 +51,6 @@ export function parseStepVariables(
     if (typeof obj === 'boolean') return;
 
     if (obj.type === 'object') {
-      // Handle object with additionalProperties
-      if (obj.additionalProperties === true) {
-        result.namespaces.push({
-          name: path,
-        });
-      }
-
       if (!obj.properties) return;
 
       for (const [key, value] of Object.entries(obj.properties)) {
@@ -180,26 +173,25 @@ export function parseStepVariables(
   return {
     ...result,
 
-    variables:
-      isEnhancedDigestEnabled && digestStepId
-        ? [
-            ...DIGEST_VARIABLES.map((variable) => {
-              const { label: displayLabel, value } = getDynamicDigestVariable({
-                digestStepName: digestStepId,
-                type: variable.name as DIGEST_VARIABLES_ENUM,
-              });
+    variables: digestStepId
+      ? [
+          ...DIGEST_VARIABLES.map((variable) => {
+            const { label: displayLabel, value } = getDynamicDigestVariable({
+              digestStepName: digestStepId,
+              type: variable.name as DIGEST_VARIABLES_ENUM,
+            });
 
-              return {
-                ...variable,
-                name: value,
-                displayLabel,
-              };
-            }),
-            ...result.primitives,
-            ...result.arrays,
-            ...result.namespaces,
-          ]
-        : [...result.primitives, ...result.arrays, ...result.namespaces],
+            return {
+              ...variable,
+              name: value,
+              displayLabel,
+            };
+          }),
+          ...result.primitives,
+          ...result.arrays,
+          ...result.namespaces,
+        ]
+      : [...result.primitives, ...result.arrays, ...result.namespaces],
 
     isAllowedVariable,
   };
