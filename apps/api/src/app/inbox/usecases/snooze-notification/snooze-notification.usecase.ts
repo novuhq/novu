@@ -30,7 +30,6 @@ import { MarkNotificationAs } from '../mark-notification-as/mark-notification-as
 import { MarkNotificationAsCommand } from '../mark-notification-as/mark-notification-as.command';
 import { InboxNotification } from '../../utils/types';
 import { AnalyticsEventsEnum } from '../../utils';
-import { GetSubscriber } from '../../../subscribers/usecases/get-subscriber';
 
 @Injectable()
 export class SnoozeNotification {
@@ -44,8 +43,7 @@ export class SnoozeNotification {
     private organizationRepository: CommunityOrganizationRepository,
     private createExecutionDetails: CreateExecutionDetails,
     private markNotificationAs: MarkNotificationAs,
-    private analyticsService: AnalyticsService,
-    private getSubscriber: GetSubscriber
+    private analyticsService: AnalyticsService
   ) {}
 
   public async execute(command: SnoozeNotificationCommand): Promise<InboxNotification> {
@@ -79,16 +77,10 @@ export class SnoozeNotification {
           this.logger.error({ err: error }, 'Failed to create execution details');
         });
 
-      const subscriber = await this.getSubscriber.execute({
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-        subscriberId: command.subscriberId,
-      });
-
       this.analyticsService.mixpanelTrack(AnalyticsEventsEnum.SNOOZE_NOTIFICATION, '', {
         _organization: command.organizationId,
         _notification: command.notificationId,
-        _subscriber: subscriber._id,
+        _subscriber: notification._subscriberId,
         snoozeUntil: command.snoozeUntil,
       });
 
