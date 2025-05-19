@@ -75,8 +75,8 @@ export class RemoveSubscriber {
       });
 
       await this.messageRepository.delete({
-        _environmentId,
         _subscriberId: { $in: subscriberInternalIds },
+        _environmentId,
       });
     });
 
