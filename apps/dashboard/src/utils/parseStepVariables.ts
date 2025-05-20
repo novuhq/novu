@@ -72,6 +72,10 @@ export function parseStepVariables(
               extractProperties(items, `${fullPath}[0]`);
             }
           } else if (value.type === 'object') {
+            if (fullPath !== 'payload') {
+              result.namespaces.push({ name: fullPath });
+            }
+
             extractProperties(value, fullPath);
           } else if (value.type && ['string', 'number', 'boolean', 'integer'].includes(value.type as string)) {
             result.primitives.push({
