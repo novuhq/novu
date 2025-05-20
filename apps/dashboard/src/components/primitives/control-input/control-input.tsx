@@ -16,11 +16,13 @@ import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { DIGEST_VARIABLES_FILTER_MAP } from '@/components/variable/utils/digest-variables';
-import type { IEnvironment, WorkflowResponseDto } from '@novu/shared';
+import { FeatureFlagsKeysEnum, type IEnvironment, type WorkflowResponseDto } from '@novu/shared';
 import { useEnvironment } from '../../../context/environment/hooks';
 import { useWorkflowSchemaManager } from '@/components/workflow-editor/use-workflow-schema-manager';
 import type { JSONSchema7TypeName } from '@/components/schema-editor/json-schema';
 import { PayloadSchemaDrawer } from '@/components/workflow-editor/payload-schema-drawer';
+import { useFeatureFlag } from '../../../hooks/use-feature-flag';
+import { showErrorToast } from '../sonner-helpers';
 
 const variants = cva('relative w-full', {
   variants: {
@@ -87,6 +89,7 @@ export function ControlInput({
   const [isPayloadSchemaDrawerOpen, setIsPayloadSchemaDrawerOpen] = useState(false);
   const [highlightedVariableKey, setHighlightedVariableKey] = useState<string | null>(null);
 
+  const isPayloadSchemaEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_PAYLOAD_SCHEMA_ENABLED);
   const {
     addProperty: addSchemaProperty,
     handleSaveChanges: handleSaveSchemaChanges,
@@ -99,10 +102,7 @@ export function ControlInput({
 
   const handleCreateNewVariable = useCallback(
     async (variableName: string) => {
-      if (!workflow || !currentEnvironment) {
-        // TODO: Handle error state - perhaps a toast notification
-        console.error('Workflow or environment not available for creating new variable');
-
+      if (!workflow || !currentEnvironment || !isPayloadSchemaEnabled) {
         return;
       }
 
@@ -114,8 +114,7 @@ export function ControlInput({
         setHighlightedVariableKey(variableName);
         setIsPayloadSchemaDrawerOpen(true);
       } catch (error) {
-        // TODO: Handle error state - perhaps a toast notification
-        console.error('Failed to save new variable to schema:', error);
+        showErrorToast('Failed to save new variable to schema: ' + error);
       }
     },
     [workflow, currentEnvironment, addSchemaProperty, handleSaveSchemaChanges]
