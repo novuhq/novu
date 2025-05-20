@@ -16,13 +16,21 @@ import { Message } from './message.schema';
 
 type MessageQuery = FilterQuery<MessageDBModel>;
 
-const getEntries = (obj: object, prefix = '') =>
-  Object.entries(obj).flatMap(([key, value]) =>
-    Object(value) === value ? getEntries(value, `${prefix}${key}.`) : [[`${prefix}${key}`, value]]
-  );
+const MAX_PAYLOAD_QUERY_DEPTH = 3;
+
+const getEntries = (obj: object, prefix = '', currentDepth = 0, maxDepth: number): [string, any][] =>
+  Object.entries(obj).flatMap(([key, value]) => {
+    const newKeySegment = prefix ? `${prefix}.${key}` : key;
+
+    if (currentDepth < maxDepth && typeof value === 'object' && value !== null && !Array.isArray(value)) {
+      return getEntries(value, newKeySegment, currentDepth + 1, maxDepth);
+    } else {
+      return [[newKeySegment, value]];
+    }
+  });
 
 const getFlatObject = (obj: object) => {
-  return Object.fromEntries(getEntries(obj));
+  return Object.fromEntries(getEntries(obj, '', 0, MAX_PAYLOAD_QUERY_DEPTH));
 };
 
 export class MessageRepository extends BaseRepository<MessageDBModel, MessageEntity, EnforceEnvId> {
@@ -110,15 +118,15 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
 
     if (query.payload) {
       requestQuery = {
-        ...requestQuery,
         ...getFlatObject({ payload: query.payload }),
+        ...requestQuery,
       };
     }
 
     if (query.data) {
       requestQuery = {
-        ...requestQuery,
         ...getFlatObject({ payload: query.data }),
+        ...requestQuery,
       };
     }
 
@@ -209,9 +217,10 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
 
     if (data) {
       const flatData = getFlatObject({ payload: data });
+
       query = {
-        ...query,
         ...flatData,
+        ...query,
       };
     }
 
