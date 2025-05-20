@@ -65,7 +65,6 @@ import { TriggerEventResponseDto } from '../events/dtos/trigger-event-response.d
 import { TriggerEventRequestDto } from '../events/dtos';
 import { ParseEventRequest } from '../events/usecases/parse-event-request/parse-event-request.usecase';
 import { ParseEventRequestMulticastCommand } from '../events/usecases/parse-event-request';
-import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
 
 @ApiCommonResponses()
 @Controller('/inbox')
@@ -448,7 +447,6 @@ export class InboxController {
   }
 
   @KeylessAccessible()
-  @UserAuthentication()
   @Post('/events')
   async keylessEvents(
     @UserSession() user: UserSessionData,
