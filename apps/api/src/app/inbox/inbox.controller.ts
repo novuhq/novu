@@ -447,6 +447,7 @@ export class InboxController {
   }
 
   @KeylessAccessible()
+  @UseGuards(AuthGuard('subscriberJwt'))
   @Post('/events')
   async keylessEvents(
     @UserSession() user: UserSessionData,
