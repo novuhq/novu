@@ -1,4 +1,5 @@
 import { VariablePreview } from './variable-preview';
+import { Badge } from '../../primitives/badge';
 
 interface INewVariablePreviewProps {
   onCreateClick?: () => void;
@@ -7,12 +8,16 @@ interface INewVariablePreviewProps {
 export function NewVariablePreview({ onCreateClick }: INewVariablePreviewProps) {
   return (
     <VariablePreview>
-      <VariablePreview.Description>
-        <p className="text-text-sub text-2xs mb-2">
-          Adds a new string variable to the Payload Schema. You can later configure the new variable in the Schema
-          Manager.
-        </p>
-      </VariablePreview.Description>
+      <VariablePreview.Content>
+        <div className="text-text-sub text-[10px] font-medium leading-normal">
+          <Badge variant="lighter" color="orange" size="sm" className="mb-2">
+            💡 TIP
+          </Badge>
+          <p>
+            Adds a new string variable — use "Manage schema" to mark it required, change its type, or add validations.
+          </p>
+        </div>
+      </VariablePreview.Content>
     </VariablePreview>
   );
 }
