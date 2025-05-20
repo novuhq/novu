@@ -216,7 +216,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     }
 
     if (data) {
-      const flatData = getFlatObject({ payload: data });
+      const flatData = getFlatObject({ data });
 
       query = {
         ...flatData,
