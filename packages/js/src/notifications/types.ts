@@ -4,6 +4,7 @@ import { Notification } from './notification';
 export type ListNotificationsArgs = {
   tags?: string[];
   read?: boolean;
+  data?: Record<string, unknown>;
   archived?: boolean;
   snoozed?: boolean;
   limit?: number;
