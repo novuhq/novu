@@ -205,7 +205,7 @@ function getMatchingVariables(
       return acc;
     }
 
-    if (searchText.startsWith(namespace) && searchText !== namespace) {
+    if (searchText.startsWith(namespace + '.') && searchText !== namespace) {
       // Ensure that if the user types payload.foo the first suggestion is payload.foo
       acc.push({
         name: searchText,
