@@ -12,6 +12,7 @@ import {
 import { Form, FormField, FormItem, FormRoot } from '@/components/primitives/form/form';
 import { Input } from '@/components/primitives/input';
 import { ScrollArea, ScrollBar } from '@/components/primitives/scroll-area';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { getTemplates, WorkflowTemplate } from '@/components/template-store/templates';
 import { WorkflowCard } from '@/components/template-store/workflow-card';
 import { WorkflowTemplateModal } from '@/components/template-store/workflow-template-modal';
@@ -22,7 +23,7 @@ import { useFetchWorkflows } from '@/hooks/use-fetch-workflows';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
-import { DirectionEnum, StepTypeEnum } from '@novu/shared';
+import { DirectionEnum, PermissionsEnum, StepTypeEnum } from '@novu/shared';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import {
@@ -34,6 +35,7 @@ import {
   RiSearchLine,
 } from 'react-icons/ri';
 import { Outlet, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useHasPermission } from '@/hooks/use-has-permission';
 
 interface WorkflowFilters {
   query: string;
@@ -152,62 +154,7 @@ export const WorkflowsPage = () => {
                 />
               </FormRoot>
             </Form>
-            <ButtonGroupRoot size="xs">
-              <ButtonGroupItem asChild className="gap-1">
-                <Button
-                  mode="gradient"
-                  className="text-label-xs rounded-l-lg rounded-r-none border-none p-2 text-white"
-                  variant="primary"
-                  size="xs"
-                  leadingIcon={RiRouteFill}
-                  onClick={() =>
-                    navigate(buildRoute(ROUTES.WORKFLOWS_CREATE, { environmentSlug: environmentSlug || '' }))
-                  }
-                >
-                  Create workflow
-                </Button>
-              </ButtonGroupItem>
-              <ButtonGroupItem asChild>
-                <DropdownMenu modal={false}>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      mode="gradient"
-                      className="rounded-l-none rounded-r-lg border-none text-white"
-                      variant="primary"
-                      size="xs"
-                      leadingIcon={RiArrowDownSLine}
-                    ></Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-56">
-                    <DropdownMenuItem className="cursor-pointer" asChild>
-                      <div
-                        className="w-full"
-                        onClick={() => {
-                          track(TelemetryEvent.CREATE_WORKFLOW_CLICK);
-                          navigate(buildRoute(ROUTES.WORKFLOWS_CREATE, { environmentSlug: environmentSlug || '' }));
-                        }}
-                      >
-                        <RiFileAddLine />
-                        From Blank
-                      </div>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      className="cursor-pointer"
-                      onSelect={() => {
-                        navigate(
-                          buildRoute(ROUTES.TEMPLATE_STORE, {
-                            environmentSlug: environmentSlug || '',
-                          }) + '?source=create-workflow-dropdown'
-                        );
-                      }}
-                    >
-                      <RiFileMarkedLine />
-                      From Template
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </ButtonGroupItem>
-            </ButtonGroupRoot>
+            <CreateWorkflowButton />
           </div>
           {shouldShowStartWithTemplatesSection && (
             <div className="mb-2">
@@ -269,6 +216,94 @@ export const WorkflowsPage = () => {
         <Outlet />
       </DashboardLayout>
     </>
+  );
+};
+
+const CreateWorkflowButton = () => {
+  const navigate = useNavigate();
+  const { environmentSlug } = useParams();
+  const track = useTelemetry();
+  const has = useHasPermission();
+
+  const handleCreateWorkflow = () => {
+    track(TelemetryEvent.CREATE_WORKFLOW_CLICK);
+    navigate(buildRoute(ROUTES.WORKFLOWS_CREATE, { environmentSlug: environmentSlug || '' }));
+  };
+
+  const navigateToTemplateStore = () => {
+    navigate(
+      buildRoute(ROUTES.TEMPLATE_STORE, {
+        environmentSlug: environmentSlug || '',
+      }) + '?source=create-workflow-dropdown'
+    );
+  };
+
+  const canCreateWorkflow = has({ permission: PermissionsEnum.WORKFLOW_CREATE });
+
+  if (!canCreateWorkflow) {
+    return (
+      <Tooltip>
+        <TooltipTrigger>
+          <Button
+            className="text-label-xs gap-1 rounded-lg p-2"
+            variant="primary"
+            disabled
+            size="xs"
+            leadingIcon={RiRouteFill}
+          >
+            Create workflow
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          Almost there! Your role just doesn't have permission for this one.{' '}
+          <a href="https://docs.novu.co/" target="_blank" className="underline">
+            Learn More ↗
+          </a>
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  return (
+    <ButtonGroupRoot size="xs">
+      <ButtonGroupItem asChild className="gap-1">
+        <Button
+          mode="gradient"
+          className="text-label-xs rounded-l-lg rounded-r-none border-none p-2 text-white"
+          variant="primary"
+          size="xs"
+          leadingIcon={RiRouteFill}
+          onClick={handleCreateWorkflow}
+        >
+          Create workflow
+        </Button>
+      </ButtonGroupItem>
+      <ButtonGroupItem asChild>
+        <DropdownMenu modal={false}>
+          <DropdownMenuTrigger asChild>
+            <Button
+              mode="gradient"
+              className="rounded-l-none rounded-r-lg border-none text-white"
+              variant="primary"
+              size="xs"
+              leadingIcon={RiArrowDownSLine}
+            ></Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-56">
+            <DropdownMenuItem className="cursor-pointer" asChild>
+              <div className="w-full" onClick={handleCreateWorkflow}>
+                <RiFileAddLine />
+                From Blank
+              </div>
+            </DropdownMenuItem>
+            <DropdownMenuItem className="cursor-pointer" onSelect={navigateToTemplateStore}>
+              <RiFileMarkedLine />
+              From Template
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </ButtonGroupItem>
+    </ButtonGroupRoot>
   );
 };
 

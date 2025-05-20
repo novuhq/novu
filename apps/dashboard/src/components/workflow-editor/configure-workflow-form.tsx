@@ -56,7 +56,7 @@ import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { WorkflowOriginEnum, WorkflowResponseDto } from '@novu/shared';
+import { PermissionsEnum, WorkflowOriginEnum, WorkflowResponseDto } from '@novu/shared';
 import { FilesIcon } from 'lucide-react';
 import {
   RiArrowRightSLine,
@@ -67,6 +67,7 @@ import {
   RiSettingsLine,
 } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
+import { Protect } from '@/utils/protect';
 
 type ConfigureWorkflowFormProps = {
   workflow: WorkflowResponseDto;
@@ -83,7 +84,6 @@ const toastOptions: ExternalToast = {
 export const ConfigureWorkflowForm = (props: ConfigureWorkflowFormProps) => {
   const { workflow, update } = props;
   const navigate = useNavigate();
-  const isReadOnly = workflow.origin === WorkflowOriginEnum.EXTERNAL;
   const [isPauseModalOpen, setIsPauseModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const { tags } = useTags();
@@ -100,6 +100,8 @@ export const ConfigureWorkflowForm = (props: ConfigureWorkflowFormProps) => {
       telemetryEvent: TelemetryEvent.EXPORT_TO_CODE_BANNER_REACTION,
     },
   });
+
+  const isReadOnly = workflow.origin === WorkflowOriginEnum.EXTERNAL;
 
   const { deleteWorkflow, isPending: isDeleteWorkflowPending } = useDeleteWorkflow({
     onSuccess: () => {
@@ -206,85 +208,96 @@ export const ConfigureWorkflowForm = (props: ConfigureWorkflowFormProps) => {
           {/**
            * Needs modal={false} to prevent the click freeze after the modal is closed
            */}
-          <DropdownMenu modal={false}>
-            <DropdownMenuTrigger asChild>
-              <CompactButton size="md" icon={RiMore2Fill} variant="ghost" className="ml-auto">
-                <span className="sr-only">More</span>
-              </CompactButton>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56">
-              <DropdownMenuGroup>
-                {isSyncable && (
-                  <DropdownMenuItem onClick={handleExportToCode}>
-                    <RiCodeSSlashLine />
-                    Export to Code
-                  </DropdownMenuItem>
-                )}
-                {isSyncable ? (
-                  otherEnvironments.length === 1 ? (
-                    <DropdownMenuItem onClick={() => safeSync(otherEnvironments[0]._id)}>
-                      <RiGitPullRequestFill />
-                      {`Sync to ${otherEnvironments[0].name}`}
-                    </DropdownMenuItem>
-                  ) : (
-                    <DropdownMenuSub>
-                      <DropdownMenuSubTrigger className="gap-2">
-                        <RiGitPullRequestFill />
-                        Sync workflow
-                      </DropdownMenuSubTrigger>
-                      <DropdownMenuPortal>
-                        <DropdownMenuSubContent>
-                          {otherEnvironments.map((env) => (
-                            <DropdownMenuItem key={env._id} onClick={() => safeSync(env._id)}>
-                              {env.name}
-                            </DropdownMenuItem>
-                          ))}
-                        </DropdownMenuSubContent>
-                      </DropdownMenuPortal>
-                    </DropdownMenuSub>
-                  )
-                ) : (
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <DropdownMenuItem disabled>
-                        <RiGitPullRequestFill />
-                        Sync workflow
+          <Protect
+            condition={(has) =>
+              has({ permission: PermissionsEnum.WORKFLOW_CREATE }) ||
+              has({ permission: PermissionsEnum.WORKFLOW_DELETE })
+            }
+          >
+            <DropdownMenu modal={false}>
+              <DropdownMenuTrigger asChild>
+                <CompactButton size="md" icon={RiMore2Fill} variant="ghost" className="ml-auto">
+                  <span className="sr-only">More</span>
+                </CompactButton>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56">
+                <Protect permission={PermissionsEnum.WORKFLOW_CREATE}>
+                  <DropdownMenuGroup>
+                    {isSyncable && (
+                      <DropdownMenuItem onClick={handleExportToCode}>
+                        <RiCodeSSlashLine />
+                        Export to Code
                       </DropdownMenuItem>
-                    </TooltipTrigger>
-                    <TooltipPortal>
-                      <TooltipContent>{tooltipContent}</TooltipContent>
-                    </TooltipPortal>
-                  </Tooltip>
-                )}
-                {isDuplicable && (
-                  <Link
-                    to={buildRoute(ROUTES.WORKFLOWS_DUPLICATE, {
-                      environmentSlug: currentEnvironment?.slug ?? '',
-                      workflowId: workflow.workflowId,
-                    })}
-                  >
-                    <DropdownMenuItem className="cursor-pointer">
-                      <FilesIcon />
-                      Duplicate workflow
+                    )}
+                    {isSyncable ? (
+                      otherEnvironments.length === 1 ? (
+                        <DropdownMenuItem onClick={() => safeSync(otherEnvironments[0]._id)}>
+                          <RiGitPullRequestFill />
+                          {`Sync to ${otherEnvironments[0].name}`}
+                        </DropdownMenuItem>
+                      ) : (
+                        <DropdownMenuSub>
+                          <DropdownMenuSubTrigger className="gap-2">
+                            <RiGitPullRequestFill />
+                            Sync workflow
+                          </DropdownMenuSubTrigger>
+                          <DropdownMenuPortal>
+                            <DropdownMenuSubContent>
+                              {otherEnvironments.map((env) => (
+                                <DropdownMenuItem key={env._id} onClick={() => safeSync(env._id)}>
+                                  {env.name}
+                                </DropdownMenuItem>
+                              ))}
+                            </DropdownMenuSubContent>
+                          </DropdownMenuPortal>
+                        </DropdownMenuSub>
+                      )
+                    ) : (
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <DropdownMenuItem disabled>
+                            <RiGitPullRequestFill />
+                            Sync workflow
+                          </DropdownMenuItem>
+                        </TooltipTrigger>
+                        <TooltipPortal>
+                          <TooltipContent>{tooltipContent}</TooltipContent>
+                        </TooltipPortal>
+                      </Tooltip>
+                    )}
+                    {isDuplicable && (
+                      <Link
+                        to={buildRoute(ROUTES.WORKFLOWS_DUPLICATE, {
+                          environmentSlug: currentEnvironment?.slug ?? '',
+                          workflowId: workflow.workflowId,
+                        })}
+                      >
+                        <DropdownMenuItem className="cursor-pointer">
+                          <FilesIcon />
+                          Duplicate workflow
+                        </DropdownMenuItem>
+                      </Link>
+                    )}
+                  </DropdownMenuGroup>
+                </Protect>
+                <Protect permission={PermissionsEnum.WORKFLOW_DELETE}>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuGroup className="*:cursor-pointer">
+                    <DropdownMenuItem
+                      className="text-destructive"
+                      disabled={workflow.origin === WorkflowOriginEnum.EXTERNAL}
+                      onClick={() => {
+                        setIsDeleteModalOpen(true);
+                      }}
+                    >
+                      <RiDeleteBin2Line />
+                      Delete workflow
                     </DropdownMenuItem>
-                  </Link>
-                )}
-              </DropdownMenuGroup>
-              <DropdownMenuSeparator />
-              <DropdownMenuGroup className="*:cursor-pointer">
-                <DropdownMenuItem
-                  className="text-destructive"
-                  disabled={workflow.origin === WorkflowOriginEnum.EXTERNAL}
-                  onClick={() => {
-                    setIsDeleteModalOpen(true);
-                  }}
-                >
-                  <RiDeleteBin2Line />
-                  Delete workflow
-                </DropdownMenuItem>
-              </DropdownMenuGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                  </DropdownMenuGroup>
+                </Protect>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </Protect>
           <PromoteConfirmModal />
         </SidebarHeader>
         <Form {...form}>

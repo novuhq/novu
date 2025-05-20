@@ -1,7 +1,9 @@
 import { AddSubscriberIllustration } from '@/components/icons/add-subscriber-illustration';
-import { RiBookMarkedLine } from 'react-icons/ri';
+import { RiBookMarkedLine, RiRouteFill } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
 import { LinkButton } from '../primitives/button-link';
+import { PermissionButton } from '../primitives/permission-button';
+import { PermissionsEnum } from '@novu/shared';
 
 export const SubscriberListBlank = () => {
   return (
@@ -25,9 +27,14 @@ export const SubscriberListBlank = () => {
           </LinkButton>
         </Link>
 
-        {/* <Button variant="primary" leadingIcon={RiRouteFill} className="gap-2">
-        Create subscriber
-      </Button> */}
+        <PermissionButton
+          permission={PermissionsEnum.SUBSCRIBER_CREATE}
+          variant="primary"
+          leadingIcon={RiRouteFill}
+          className="gap-2"
+        >
+          Create subscriber
+        </PermissionButton>
       </div>
     </div>
   );

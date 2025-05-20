@@ -22,8 +22,7 @@ export class WebhooksController {
 
   @Get('/portal/token')
   @ProductFeature(ProductFeatureKeyEnum.WEBHOOKS)
-  @RequirePermissions(PermissionsEnum.WEBHOOK_READ)
-  @RequirePermissions(PermissionsEnum.WEBHOOK_CREATE)
+  @RequirePermissions(PermissionsEnum.WEBHOOK_CREATE, PermissionsEnum.WEBHOOK_READ)
   @ApiOperation({
     summary: 'Get Webhook Portal Access Token',
     description:

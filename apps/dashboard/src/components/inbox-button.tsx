@@ -90,7 +90,7 @@ export const InboxButton = () => {
   const { isTestPage } = useTestPage();
   const { currentOrganization } = useAuth();
 
-  if (!user || !currentEnvironment || !currentOrganization) {
+  if (!user?.externalId || !currentEnvironment || !currentOrganization) {
     return null;
   }
 
@@ -110,7 +110,7 @@ export const InboxButton = () => {
 
   return (
     <Inbox
-      subscriberId={`org_${currentOrganization._id}:user_${user.externalId}`}
+      subscriberId={isTestPage ? user.externalId : `org_${currentOrganization._id}:user_${user.externalId}`}
       applicationIdentifier={appId}
       /**
        * We want to ensure our staging environment is using the production API and WebSocket endpoints.

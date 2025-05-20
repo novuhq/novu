@@ -1,4 +1,4 @@
-import { EnvironmentEnum, WorkflowOriginEnum } from '@novu/shared';
+import { EnvironmentEnum, WorkflowOriginEnum, PermissionsEnum } from '@novu/shared';
 import {
   Background,
   BackgroundVariant,
@@ -37,6 +37,8 @@ import {
   TriggerNode,
 } from './nodes';
 import { WorkflowChecklist } from './workflow-checklist';
+import { InlineToast } from '@/components/primitives/inline-toast';
+import { useHasPermission } from '@/hooks/use-has-permission';
 
 const nodeTypes = {
   trigger: TriggerNode,
@@ -214,7 +216,7 @@ const WorkflowCanvasChild = ({ steps, readOnly }: { steps: Step[]; readOnly?: bo
       const clientWidth = reactFlowWrapper.current?.clientWidth;
       const middle = clientWidth ? clientWidth / 2 - NODE_WIDTH / 2 : 0;
 
-      reactFlowInstance.setViewport({ x: middle, y: 50, zoom: 1 }, options);
+      reactFlowInstance.setViewport({ x: middle, y: 50, zoom: 0.99 }, options);
     },
     [reactFlowInstance]
   );
@@ -242,7 +244,7 @@ const WorkflowCanvasChild = ({ steps, readOnly }: { steps: Step[]; readOnly?: bo
         edgeTypes={edgeTypes}
         deleteKeyCode={null}
         maxZoom={1}
-        minZoom={1}
+        minZoom={0.9}
         panOnScroll
         selectionOnDrag
         panOnDrag={panOnDrag}
@@ -275,9 +277,36 @@ const WorkflowCanvasChild = ({ steps, readOnly }: { steps: Step[]; readOnly?: bo
 };
 
 export const WorkflowCanvas = ({ steps, readOnly }: { steps: Step[]; readOnly?: boolean }) => {
+  const has = useHasPermission();
+  const isReadOnly = !has({ permission: PermissionsEnum.WORKFLOW_CREATE });
+
   return (
     <ReactFlowProvider>
-      <WorkflowCanvasChild steps={steps || []} readOnly={readOnly} />
+      <div className="relative h-full w-full">
+        <WorkflowCanvasChild steps={steps || []} readOnly={readOnly} />
+
+        {isReadOnly && (
+          <>
+            <div
+              className="border-warning/20 pointer-events-none absolute inset-x-0 top-0 border-t-[0.5px]"
+              style={{
+                position: 'absolute',
+                height: '100%',
+                background: 'linear-gradient(to bottom, hsl(var(--warning) / 0.08), transparent 4%)',
+                transition: 'border 0.3s ease-in-out, background 0.3s ease-in-out',
+              }}
+            />
+            <div className="absolute left-4 top-4 z-50">
+              <InlineToast
+                className="bg-warning/10 border shadow-md"
+                variant={'warning'}
+                description="Content visible but locked for editing. Contact an admin for edit access."
+                title="View-only mode: "
+              />
+            </div>
+          </>
+        )}
+      </div>
     </ReactFlowProvider>
   );
 };

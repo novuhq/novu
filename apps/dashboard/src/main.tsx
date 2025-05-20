@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import './index.css';
 import { Navigate } from 'react-router-dom';
+import { PermissionsEnum } from '@novu/shared';
 
 import { ConfigureWorkflow } from '@/components/workflow-editor/configure-workflow';
 import { EditStepConditions } from '@/components/workflow-editor/steps/conditions/edit-step-conditions';
@@ -51,6 +52,7 @@ import { ROUTES } from './utils/routes';
 import { initializeSentry } from './utils/sentry';
 import { overrideZodErrorMap } from './utils/validation';
 import { IS_SELF_HOSTED } from './config';
+import { ProtectedRoute } from './routes/protected-route';
 
 initializeSentry();
 overrideZodErrorMap();
@@ -79,7 +81,11 @@ const router = createBrowserRouter([
       },
       {
         path: '/onboarding',
-        element: <OnboardingParentRoute />,
+        element: (
+          <ProtectedRoute permission={PermissionsEnum.ORG_METADATA_UPDATE}>
+            <OnboardingParentRoute />
+          </ProtectedRoute>
+        ),
         children: [
           {
             path: ROUTES.SIGNUP_QUESTIONNAIRE,
@@ -118,7 +124,11 @@ const router = createBrowserRouter([
               },
               {
                 path: ROUTES.WORKFLOWS,
-                element: <WorkflowsPage />,
+                element: (
+                  <ProtectedRoute permission={PermissionsEnum.WORKFLOW_READ}>
+                    <WorkflowsPage />
+                  </ProtectedRoute>
+                ),
                 children: [
                   {
                     path: ROUTES.TEMPLATE_STORE,
@@ -126,49 +136,103 @@ const router = createBrowserRouter([
                   },
                   {
                     path: ROUTES.TEMPLATE_STORE_CREATE_WORKFLOW,
-                    element: <TemplateModal />,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.WORKFLOW_CREATE} isDrawerRoute>
+                        <TemplateModal />
+                      </ProtectedRoute>
+                    ),
                   },
                   {
                     path: ROUTES.WORKFLOWS_CREATE,
-                    element: <CreateWorkflowPage />,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.WORKFLOW_CREATE} isDrawerRoute>
+                        <CreateWorkflowPage />
+                      </ProtectedRoute>
+                    ),
                   },
                   {
                     path: ROUTES.WORKFLOWS_DUPLICATE,
-                    element: <DuplicateWorkflowPage />,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.WORKFLOW_CREATE} isDrawerRoute>
+                        <DuplicateWorkflowPage />
+                      </ProtectedRoute>
+                    ),
                   },
                 ],
               },
               {
                 path: ROUTES.SUBSCRIBERS,
-                element: <SubscribersPage />,
+                element: (
+                  <ProtectedRoute permission={PermissionsEnum.SUBSCRIBER_READ}>
+                    <SubscribersPage />
+                  </ProtectedRoute>
+                ),
                 children: [
                   {
                     path: ROUTES.EDIT_SUBSCRIBER,
-                    element: <EditSubscriberPage />,
+                    element: (
+                      <ProtectedRoute
+                        condition={(has) =>
+                          has({ permission: PermissionsEnum.SUBSCRIBER_UPDATE }) ||
+                          has({ permission: PermissionsEnum.SUBSCRIBER_READ }) ||
+                          has({ permission: PermissionsEnum.SUBSCRIBER_CREATE })
+                        }
+                        isDrawerRoute
+                      >
+                        <EditSubscriberPage />
+                      </ProtectedRoute>
+                    ),
                   },
                   {
                     path: ROUTES.CREATE_SUBSCRIBER,
-                    element: <CreateSubscriberPage />,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.SUBSCRIBER_CREATE} isDrawerRoute>
+                        <CreateSubscriberPage />
+                      </ProtectedRoute>
+                    ),
                   },
                 ],
               },
               {
                 path: ROUTES.TOPICS,
-                element: <TopicsPage />,
+                element: (
+                  <ProtectedRoute permission={PermissionsEnum.TOPIC_READ}>
+                    <TopicsPage />
+                  </ProtectedRoute>
+                ),
                 children: [
                   {
                     path: ROUTES.TOPICS_CREATE,
-                    element: <CreateTopicPage />,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.TOPIC_CREATE} isDrawerRoute>
+                        <CreateTopicPage />
+                      </ProtectedRoute>
+                    ),
                   },
                   {
                     path: ROUTES.TOPICS_EDIT,
-                    element: <EditTopicPage />,
+                    element: (
+                      <ProtectedRoute
+                        condition={(has) =>
+                          has({ permission: PermissionsEnum.TOPIC_UPDATE }) ||
+                          has({ permission: PermissionsEnum.TOPIC_READ }) ||
+                          has({ permission: PermissionsEnum.TOPIC_CREATE })
+                        }
+                        isDrawerRoute
+                      >
+                        <EditTopicPage />
+                      </ProtectedRoute>
+                    ),
                   },
                 ],
               },
               {
                 path: ROUTES.API_KEYS,
-                element: <ApiKeysPage />,
+                element: (
+                  <ProtectedRoute permission={PermissionsEnum.API_KEY_READ}>
+                    <ApiKeysPage />
+                  </ProtectedRoute>
+                ),
               },
               {
                 path: ROUTES.ENVIRONMENTS,
@@ -176,11 +240,19 @@ const router = createBrowserRouter([
               },
               {
                 path: ROUTES.ACTIVITY_FEED,
-                element: <ActivityFeed />,
+                element: (
+                  <ProtectedRoute permission={PermissionsEnum.NOTIFICATION_READ}>
+                    <ActivityFeed />
+                  </ProtectedRoute>
+                ),
               },
               {
                 path: ROUTES.EDIT_WORKFLOW,
-                element: <EditWorkflowPage />,
+                element: (
+                  <ProtectedRoute permission={PermissionsEnum.WORKFLOW_READ}>
+                    <EditWorkflowPage />
+                  </ProtectedRoute>
+                ),
                 children: [
                   {
                     element: <ConfigureWorkflow />,
@@ -206,27 +278,76 @@ const router = createBrowserRouter([
               },
               {
                 path: ROUTES.TEST_WORKFLOW,
-                element: <TestWorkflowPage />,
+                element: (
+                  <ProtectedRoute permission={PermissionsEnum.EVENT_CREATE}>
+                    <TestWorkflowPage />
+                  </ProtectedRoute>
+                ),
               },
               {
                 path: ROUTES.WEBHOOKS_ENDPOINTS,
-                element: <WebhooksPage />,
+                element: (
+                  <ProtectedRoute
+                    condition={(has) =>
+                      has({ permission: PermissionsEnum.WEBHOOK_READ }) ||
+                      has({ permission: PermissionsEnum.WEBHOOK_CREATE })
+                    }
+                  >
+                    <WebhooksPage />
+                  </ProtectedRoute>
+                ),
               },
               {
                 path: ROUTES.WEBHOOKS_EVENT_CATALOG,
-                element: <WebhooksPage />,
+                element: (
+                  <ProtectedRoute
+                    condition={(has) =>
+                      has({ permission: PermissionsEnum.WEBHOOK_READ }) ||
+                      has({ permission: PermissionsEnum.WEBHOOK_CREATE })
+                    }
+                  >
+                    <WebhooksPage />
+                  </ProtectedRoute>
+                ),
               },
               {
                 path: ROUTES.WEBHOOKS_LOGS,
-                element: <WebhooksPage />,
+                element: (
+                  <ProtectedRoute
+                    condition={(has) =>
+                      has({ permission: PermissionsEnum.WEBHOOK_READ }) ||
+                      has({ permission: PermissionsEnum.WEBHOOK_CREATE })
+                    }
+                  >
+                    <WebhooksPage />
+                  </ProtectedRoute>
+                ),
               },
               {
                 path: ROUTES.WEBHOOKS_ACTIVITY,
-                element: <WebhooksPage />,
+                element: (
+                  <ProtectedRoute
+                    condition={(has) =>
+                      has({ permission: PermissionsEnum.WEBHOOK_READ }) ||
+                      has({ permission: PermissionsEnum.WEBHOOK_CREATE })
+                    }
+                  >
+                    <WebhooksPage />
+                  </ProtectedRoute>
+                ),
               },
               {
                 path: ROUTES.WEBHOOKS,
-                element: <Navigate to={ROUTES.WEBHOOKS_ENDPOINTS} replace />,
+                element: (
+                  <ProtectedRoute
+                    condition={(has) =>
+                      has({ permission: PermissionsEnum.WEBHOOK_READ }) ||
+                      has({ permission: PermissionsEnum.WEBHOOK_CREATE })
+                    }
+                  >
+                    <Navigate to={ROUTES.WEBHOOKS_ENDPOINTS} replace />
+                  </ProtectedRoute>
+                ),
               },
               {
                 path: '*',
@@ -236,29 +357,52 @@ const router = createBrowserRouter([
           },
           {
             path: ROUTES.INTEGRATIONS,
-            element: <IntegrationsListPage />,
+            element: (
+              <ProtectedRoute permission={PermissionsEnum.INTEGRATION_READ}>
+                <IntegrationsListPage />
+              </ProtectedRoute>
+            ),
             children: [
               {
                 path: ROUTES.INTEGRATIONS_CONNECT,
-                element: <CreateIntegrationSidebar isOpened />,
+                element: (
+                  <ProtectedRoute permission={PermissionsEnum.INTEGRATION_CREATE} isDrawerRoute>
+                    <CreateIntegrationSidebar isOpened />
+                  </ProtectedRoute>
+                ),
               },
               {
                 path: ROUTES.INTEGRATIONS_CONNECT_PROVIDER,
-                element: <CreateIntegrationSidebar isOpened />,
+                element: (
+                  <ProtectedRoute permission={PermissionsEnum.INTEGRATION_CREATE} isDrawerRoute>
+                    <CreateIntegrationSidebar isOpened />
+                  </ProtectedRoute>
+                ),
               },
               {
                 path: ROUTES.INTEGRATIONS_UPDATE,
-                element: <UpdateIntegrationSidebar isOpened />,
+                element: (
+                  <ProtectedRoute
+                    condition={(has) =>
+                      has({ permission: PermissionsEnum.INTEGRATION_UPDATE }) ||
+                      has({ permission: PermissionsEnum.INTEGRATION_READ }) ||
+                      has({ permission: PermissionsEnum.INTEGRATION_CREATE })
+                    }
+                    isDrawerRoute
+                  >
+                    <UpdateIntegrationSidebar isOpened />
+                  </ProtectedRoute>
+                ),
               },
             ],
           },
           {
-            path: ROUTES.INTEGRATIONS,
-            element: <IntegrationsListPage />,
-          },
-          {
             path: ROUTES.PARTNER_INTEGRATIONS_VERCEL,
-            element: <VercelIntegrationPage />,
+            element: (
+              <ProtectedRoute permission={PermissionsEnum.PARTNER_INTEGRATION_READ}>
+                <VercelIntegrationPage />
+              </ProtectedRoute>
+            ),
           },
           {
             path: ROUTES.SETTINGS,

@@ -26,6 +26,7 @@ type IntegrationFormData = {
 type GeneralSettingsProps = {
   control: Control<IntegrationFormData>;
   mode: 'create' | 'update';
+  isReadOnly?: boolean;
   hidePrimarySelector?: boolean;
   disabledPrimary?: boolean;
   isForInAppStep?: boolean;
@@ -35,10 +36,12 @@ function NovuBrandingSwitch({
   id,
   value,
   onChange,
+  isReadOnly,
 }: {
   id: string;
   value: boolean | undefined;
   onChange: (value: boolean) => void;
+  isReadOnly?: boolean;
 }) {
   const { subscription, isLoading } = useFetchSubscription();
   const navigate = useNavigate();
@@ -64,7 +67,7 @@ function NovuBrandingSwitch({
       {isFreePlan || IS_SELF_HOSTED ? (
         <Popover modal>
           <PopoverTrigger asChild>
-            <Switch id={id} checked={checked} />
+            <Switch id={id} checked={checked} disabled={isReadOnly} />
           </PopoverTrigger>
           <PopoverContent className="w-72" align="end" sideOffset={4}>
             <div className="flex flex-col gap-2 p-1">
@@ -81,7 +84,7 @@ function NovuBrandingSwitch({
           </PopoverContent>
         </Popover>
       ) : (
-        <Switch id={id} onCheckedChange={onChange} checked={checked} />
+        <Switch id={id} onCheckedChange={onChange} checked={checked} disabled={isReadOnly} />
       )}
     </div>
   );
@@ -90,6 +93,7 @@ function NovuBrandingSwitch({
 export function GeneralSettings({
   control,
   mode,
+  isReadOnly,
   hidePrimarySelector,
   disabledPrimary,
   isForInAppStep,
@@ -109,7 +113,7 @@ export function GeneralSettings({
               Active Integration
             </FormLabel>
             <FormControl>
-              <Switch id="active" checked={field.value} onCheckedChange={field.onChange} />
+              <Switch id="active" checked={field.value} onCheckedChange={field.onChange} disabled={isReadOnly} />
             </FormControl>
           </FormItem>
         )}
@@ -130,7 +134,12 @@ export function GeneralSettings({
                     Remove Novu badge: <span className="text-text-soft ml-1 text-xs">"Inbox by Novu"</span>
                   </FormLabel>
                   <FormControl>
-                    <NovuBrandingSwitch id="removeNovuBranding" value={field.value} onChange={field.onChange} />
+                    <NovuBrandingSwitch
+                      id="removeNovuBranding"
+                      value={field.value}
+                      onChange={field.onChange}
+                      isReadOnly={isReadOnly}
+                    />
                   </FormControl>
                 </FormItem>
               );
@@ -157,7 +166,7 @@ export function GeneralSettings({
                   id="primary"
                   checked={field.value}
                   onCheckedChange={field.onChange}
-                  disabled={disabledPrimary}
+                  disabled={disabledPrimary || isReadOnly}
                 />
               </FormControl>
             </FormItem>
@@ -177,7 +186,7 @@ export function GeneralSettings({
               Name
             </FormLabel>
             <FormControl>
-              <Input id="name" {...field} />
+              <Input id="name" {...field} disabled={isReadOnly} />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -200,7 +209,12 @@ export function GeneralSettings({
               Identifier
             </FormLabel>
             <FormControl>
-              <Input id="identifier" {...field} readOnly={mode === 'update'} hasError={!!fieldState.error} />
+              <Input
+                id="identifier"
+                {...field}
+                readOnly={mode === 'update' || isReadOnly}
+                hasError={!!fieldState.error}
+              />
             </FormControl>
             <FormMessage />
           </FormItem>

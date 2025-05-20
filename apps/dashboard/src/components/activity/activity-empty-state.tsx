@@ -9,6 +9,8 @@ import { useMemo } from 'react';
 import { RiCloseCircleLine, RiPlayCircleLine } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
 import { ExternalLink } from '../shared/external-link';
+import { PermissionsEnum } from '@novu/shared';
+import { Protect } from '@/utils/protect';
 
 interface ActivityEmptyStateProps {
   className?: string;
@@ -123,14 +125,16 @@ export function ActivityEmptyState({
               <ExternalLink underline={false} variant="documentation" href="https://docs.novu.co" target="_blank">
                 View Docs
               </ExternalLink>
-              <Button
-                leadingIcon={RiPlayCircleLine}
-                variant="primary"
-                className="gap-2"
-                onClick={handleNavigateToWorkflows}
-              >
-                Trigger Workflow
-              </Button>
+              <Protect permission={PermissionsEnum.EVENT_CREATE}>
+                <Button
+                  leadingIcon={RiPlayCircleLine}
+                  variant="primary"
+                  className="gap-2"
+                  onClick={handleNavigateToWorkflows}
+                >
+                  Trigger Workflow
+                </Button>
+              </Protect>
             </motion.div>
           )}
         </motion.div>

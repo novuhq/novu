@@ -1,9 +1,10 @@
 import { Button } from '@/components/primitives/button';
-import { ApiServiceLevelEnum, FeatureNameEnum, getFeatureForTierAsNumber } from '@novu/shared';
+import { ApiServiceLevelEnum, FeatureNameEnum, getFeatureForTierAsNumber, PermissionsEnum } from '@novu/shared';
 import { useBillingPortal } from '../../hooks/use-billing-portal';
 import { useCheckoutSession } from '../../hooks/use-checkout-session';
 import { useFetchSubscription } from '../../hooks/use-fetch-subscription';
 import { cn } from '../../utils/ui';
+import { useHasPermission } from '@/hooks/use-has-permission';
 
 interface PlanActionButtonProps {
   billingInterval: 'month' | 'year';
@@ -23,9 +24,13 @@ export function PlanActionButton({
   className,
   size = 'md',
 }: PlanActionButtonProps) {
+  const has = useHasPermission();
   const { subscription: data, isLoading: isLoadingSubscription } = useFetchSubscription();
   const { navigateToCheckout, isLoading: isCheckingOut } = useCheckoutSession();
   const { navigateToPortal, isLoading: isLoadingPortal } = useBillingPortal(billingInterval);
+
+  const hasPortalAccess = has({ permission: PermissionsEnum.BILLING_PORTAL_ACCESS });
+  const hasSubscriptionAccess = has({ permission: PermissionsEnum.BILLING_SUBSCRIPTION_CREATE });
 
   const isPaidSubscriptionActive = () => {
     return (
@@ -36,49 +41,53 @@ export function PlanActionButton({
     );
   };
 
-  const handleAction = () => {
-    if (isPaidSubscriptionActive()) {
-      navigateToPortal();
-    } else {
-      navigateToCheckout({ billingInterval, requestedServiceLevel });
-    }
-  };
-
   if (requestedServiceLevel === ApiServiceLevelEnum.FREE) {
     return null;
   }
 
-  function buildLabel() {
-    if (isPaidSubscriptionActive()) {
-      return <> {'Manage Account'}</>;
+  if (isPaidSubscriptionActive()) {
+    if (!hasPortalAccess) {
+      return null;
     }
 
-    const indexRequested = getFeatureForTierAsNumber(
-      FeatureNameEnum.TIERS_ORDER_INDEX,
-      requestedServiceLevel || ApiServiceLevelEnum.FREE
+    return (
+      <Button
+        mode="outline"
+        size={size}
+        className={cn('gap-2', className)}
+        onClick={() => navigateToPortal()}
+        disabled={isLoadingPortal}
+        isLoading={isLoadingSubscription}
+      >
+        Manage Account
+      </Button>
     );
-    const indexActive = getFeatureForTierAsNumber(
-      FeatureNameEnum.TIERS_ORDER_INDEX,
-      activeServiceLevel || ApiServiceLevelEnum.FREE
-    );
-
-    if (indexRequested >= indexActive) {
-      return <> {'Upgrade plan'}</>;
-    }
-
-    return <> {'Downgrade plan'}</>;
   }
+
+  if (!hasSubscriptionAccess) {
+    return null;
+  }
+
+  const indexRequested = getFeatureForTierAsNumber(
+    FeatureNameEnum.TIERS_ORDER_INDEX,
+    requestedServiceLevel || ApiServiceLevelEnum.FREE
+  );
+  const indexActive = getFeatureForTierAsNumber(
+    FeatureNameEnum.TIERS_ORDER_INDEX,
+    activeServiceLevel || ApiServiceLevelEnum.FREE
+  );
+
+  const buttonLabel = indexRequested >= indexActive ? 'Upgrade plan' : 'Downgrade plan';
 
   return (
     <Button
-      mode={isPaidSubscriptionActive() ? 'outline' : mode}
+      mode={mode}
       size={size}
       className={cn('gap-2', className)}
-      onClick={handleAction}
-      disabled={isLoadingPortal}
+      onClick={() => navigateToCheckout({ billingInterval, requestedServiceLevel })}
       isLoading={isCheckingOut || isLoadingSubscription}
     >
-      {buildLabel()}
+      {buttonLabel}
     </Button>
   );
 }

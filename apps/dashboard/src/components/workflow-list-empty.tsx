@@ -1,7 +1,9 @@
 import { VersionControlDev } from '@/components/icons/version-control-dev';
 import { VersionControlProd } from '@/components/icons/version-control-prod';
 import { Button } from '@/components/primitives/button';
+import { PermissionButton } from '@/components/primitives/permission-button';
 import { useEnvironment } from '@/context/environment/hooks';
+import { PermissionsEnum } from '@novu/shared';
 import { RiBookMarkedLine, RiRouteFill, RiSearchLine } from 'react-icons/ri';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { buildRoute, ROUTES } from '../utils/routes';
@@ -92,7 +94,8 @@ const WorkflowListEmptyDev = () => {
           </LinkButton>
         </Link>
 
-        <Button
+        <PermissionButton
+          permission={PermissionsEnum.WORKFLOW_CREATE}
           variant="primary"
           leadingIcon={RiRouteFill}
           className="gap-2"
@@ -101,7 +104,7 @@ const WorkflowListEmptyDev = () => {
           }}
         >
           Create workflow
-        </Button>
+        </PermissionButton>
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 import { useEnvironment } from '@/context/environment/hooks';
 import { useDeleteEnvironment } from '@/hooks/use-environments';
 import { cn } from '@/utils/ui';
-import { EnvironmentEnum, IEnvironment, PROTECTED_ENVIRONMENTS } from '@novu/shared';
+import { EnvironmentEnum, IEnvironment, PermissionsEnum, PROTECTED_ENVIRONMENTS } from '@novu/shared';
 import { useState } from 'react';
 import { RiDeleteBin2Line, RiMore2Fill } from 'react-icons/ri';
 import { DeleteEnvironmentDialog } from './delete-environment-dialog';
@@ -23,6 +23,7 @@ import { showErrorToast, showSuccessToast } from '../primitives/sonner-helpers';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../primitives/table';
 import { TimeDisplayHoverCard } from '../time-display-hover-card';
 import TruncatedText from '../truncated-text';
+import { Protect } from '@/utils/protect';
 
 const EnvironmentRowSkeleton = () => (
   <TableRow>
@@ -122,38 +123,47 @@ export function EnvironmentsList({ environments, isLoading }: { environments: IE
                     </TimeDisplayHoverCard>
                   </TableCell>
                   <TableCell className="h-[49px] w-1">
-                    {!PROTECTED_ENVIRONMENTS.includes(environment.name as EnvironmentEnum) && (
-                      <DropdownMenu modal={false}>
-                        <DropdownMenuTrigger asChild>
-                          <CompactButton
-                            icon={RiMore2Fill}
-                            variant="ghost"
-                            className="z-10 h-8 w-8 p-0"
-                          ></CompactButton>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent alignOffset={5} align="end">
-                          <DropdownMenuGroup>
-                            <DropdownMenuItem onSelect={() => setEditEnvironment(environment)}>
-                              Edit environment
-                            </DropdownMenuItem>
-                            <>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                className="text-destructive"
-                                onSelect={() => handleDeleteClick(environment)}
-                                disabled={
-                                  environment._id === currentEnvironment?._id ||
-                                  PROTECTED_ENVIRONMENTS.includes(environment.name as EnvironmentEnum)
-                                }
-                              >
-                                <RiDeleteBin2Line />
-                                Delete environment
-                              </DropdownMenuItem>
-                            </>
-                          </DropdownMenuGroup>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    )}
+                    <Protect
+                      condition={(has) =>
+                        has({ permission: PermissionsEnum.ENVIRONMENT_CREATE }) ||
+                        has({ permission: PermissionsEnum.ENVIRONMENT_DELETE })
+                      }
+                    >
+                      {!PROTECTED_ENVIRONMENTS.includes(environment.name as EnvironmentEnum) && (
+                        <DropdownMenu modal={false}>
+                          <DropdownMenuTrigger asChild>
+                            <CompactButton
+                              icon={RiMore2Fill}
+                              variant="ghost"
+                              className="z-10 h-8 w-8 p-0"
+                            ></CompactButton>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent alignOffset={5} align="end">
+                            <DropdownMenuGroup>
+                              <Protect permission={PermissionsEnum.ENVIRONMENT_CREATE}>
+                                <DropdownMenuItem onSelect={() => setEditEnvironment(environment)}>
+                                  Edit environment
+                                </DropdownMenuItem>
+                              </Protect>
+                              <Protect permission={PermissionsEnum.ENVIRONMENT_DELETE}>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  className="text-destructive"
+                                  onSelect={() => handleDeleteClick(environment)}
+                                  disabled={
+                                    environment._id === currentEnvironment?._id ||
+                                    PROTECTED_ENVIRONMENTS.includes(environment.name as EnvironmentEnum)
+                                  }
+                                >
+                                  <RiDeleteBin2Line />
+                                  Delete environment
+                                </DropdownMenuItem>
+                              </Protect>
+                            </DropdownMenuGroup>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
+                    </Protect>
                   </TableCell>
                 </TableRow>
               ))}

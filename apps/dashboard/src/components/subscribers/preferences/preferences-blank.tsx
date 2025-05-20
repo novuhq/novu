@@ -1,7 +1,8 @@
 import { RouteFill } from '@/components/icons';
 import { PreferencesBlankIllustration } from '@/components/icons/preferences-blank-illustration';
-import { Button } from '@/components/primitives/button';
+import { PermissionButton } from '@/components/primitives/permission-button';
 import { buildRoute, ROUTES } from '@/utils/routes';
+import { PermissionsEnum } from '@novu/shared';
 import { RiBookMarkedLine } from 'react-icons/ri';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
@@ -21,14 +22,15 @@ export function PreferencesBlank() {
         </p>
       </div>
       <div className="flex flex-col items-center justify-center gap-3">
-        <Button
+        <PermissionButton
+          permission={PermissionsEnum.WORKFLOW_CREATE}
           mode="gradient"
           variant="primary"
           leadingIcon={RouteFill}
           onClick={() => navigate(buildRoute(ROUTES.WORKFLOWS_CREATE, { environmentSlug: environmentSlug || '' }))}
         >
           Create workflow
-        </Button>
+        </PermissionButton>
 
         <span className="flex items-center gap-1 p-1.5">
           <RiBookMarkedLine className="size-4 text-neutral-600" />

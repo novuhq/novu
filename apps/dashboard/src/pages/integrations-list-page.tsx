@@ -1,7 +1,6 @@
 import { useCallback } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 
-import { Button } from '@/components/primitives/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { buildRoute, ROUTES } from '@/utils/routes';
@@ -9,6 +8,8 @@ import { DashboardLayout } from '../components/dashboard-layout';
 import { IntegrationsList } from '../components/integrations/components/integrations-list';
 import { TableIntegration } from '../components/integrations/types';
 import { Badge } from '../components/primitives/badge';
+import { PermissionsEnum } from '@novu/shared';
+import { PermissionButton } from '@/components/primitives/permission-button';
 
 export function IntegrationsListPage() {
   const navigate = useNavigate();
@@ -51,7 +52,8 @@ export function IntegrationsListPage() {
               </TooltipContent>
             </Tooltip>
           </TabsList>
-          <Button
+          <PermissionButton
+            permission={PermissionsEnum.INTEGRATION_CREATE}
             size="xs"
             variant="primary"
             mode="gradient"
@@ -59,12 +61,12 @@ export function IntegrationsListPage() {
             className="my-1.5 mr-2.5"
           >
             Connect Provider
-          </Button>
+          </PermissionButton>
         </div>
-        <TabsContent value="providers" variant="regular" className="!mt-0 p-2.5">
+        <TabsContent value="providers" className="!mt-0 p-2.5">
           <IntegrationsList onItemClick={onItemClick} />
         </TabsContent>
-        <TabsContent value="data-warehouse" variant="regular">
+        <TabsContent value="data-warehouse">
           <div className="text-muted-foreground flex h-64 items-center justify-center">Coming soon</div>
         </TabsContent>
       </Tabs>

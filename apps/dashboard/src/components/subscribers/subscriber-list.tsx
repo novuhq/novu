@@ -13,10 +13,10 @@ import { SubscriberRow, SubscriberRowSkeleton } from '@/components/subscribers/s
 import { SubscribersFilters } from '@/components/subscribers/subscribers-filters';
 import { useFetchSubscribers } from '@/hooks/use-fetch-subscribers';
 import { cn } from '@/utils/ui';
-import { DirectionEnum } from '@novu/shared';
+import { DirectionEnum, PermissionsEnum } from '@novu/shared';
 import { HTMLAttributes, useEffect, useState } from 'react';
 import { RiUserSharedLine } from 'react-icons/ri';
-import { Button } from '../primitives/button';
+import { PermissionButton } from '@/components/primitives/permission-button';
 
 type SubscriberListFiltersProps = HTMLAttributes<HTMLDivElement> &
   Pick<SubscribersUrlState, 'filterValues' | 'handleFiltersChange' | 'resetFilters'>;
@@ -34,8 +34,8 @@ const SubscriberListWrapper = (props: SubscriberListFiltersProps) => {
           onReset={resetFilters}
           className="py-2.5"
         />
-
-        <Button
+        <PermissionButton
+          permission={PermissionsEnum.SUBSCRIBER_CREATE}
           mode="gradient"
           className="rounded-l-lg border-none px-1.5 py-2 text-white"
           variant="primary"
@@ -44,7 +44,7 @@ const SubscriberListWrapper = (props: SubscriberListFiltersProps) => {
           onClick={navigateToCreateSubscriberPage}
         >
           Add subscriber
-        </Button>
+        </PermissionButton>
       </div>
       {children}
     </div>
