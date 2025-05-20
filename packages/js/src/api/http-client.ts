@@ -39,7 +39,10 @@ export class HttpClient {
   }
 
   setKeylessHeader(identifier?: string) {
-    const keylessAppIdentifier = identifier || window.localStorage.getItem('novu_keyless_application_identifier');
+    const keylessAppIdentifier =
+      identifier ||
+      (typeof window !== 'undefined' && window.localStorage?.getItem('novu_keyless_application_identifier'));
+
     if (!keylessAppIdentifier || !keylessAppIdentifier.startsWith('pk_keyless_')) {
       return;
     }
