@@ -36,16 +36,14 @@ export function PropertyActions({
             aria-label="Property settings"
           />
         </PopoverTrigger>
-        {isSettingsOpen && (
-          <SchemaPropertySettingsPopover
-            open={isSettingsOpen}
-            onOpenChange={setIsSettingsOpen}
-            definitionPath={definitionPath}
-            propertyKeyForDisplay={propertyKeyForDisplay}
-            isRequiredPath={isRequiredPath}
-            onDeleteProperty={onDeleteProperty}
-          />
-        )}
+        <SchemaPropertySettingsPopover
+          open={isSettingsOpen}
+          onOpenChange={setIsSettingsOpen}
+          definitionPath={definitionPath}
+          propertyKeyForDisplay={propertyKeyForDisplay}
+          isRequiredPath={isRequiredPath}
+          onDeleteProperty={onDeleteProperty}
+        />
       </Popover>
       <Button
         variant="error"

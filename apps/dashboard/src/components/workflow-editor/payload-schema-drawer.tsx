@@ -89,7 +89,7 @@ export function PayloadSchemaDrawer({
   if (!workflow || !environment || !isOpen) return null;
 
   return (
-    <Sheet open={isOpen} onOpenChange={onOpenChange}>
+    <Sheet open={isOpen} modal={false} onOpenChange={onOpenChange}>
       <SheetContent className="bg-bg-weak flex w-[600px] flex-col p-0 sm:max-w-3xl">
         <SheetHeader className="space-y-1 px-3 py-4">
           <SheetTitle className="text-label-lg">Manage Payload Schema</SheetTitle>

@@ -97,7 +97,6 @@ export const SchemaPropertySettingsPopover = forwardRef<HTMLDivElement, SchemaPr
     const isArrayType = effectiveType === 'array';
     const isNumericType = effectiveType === 'integer' || effectiveType === 'number';
 
-    const descriptionPath = `${definitionPath}.description`;
     const defaultValuePath = `${definitionPath}.default`;
     const formatPath = `${definitionPath}.format`;
     const patternPath = `${definitionPath}.pattern`;
