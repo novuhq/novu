@@ -168,16 +168,108 @@ export function useSchemaForm({ initialSchema, onChange, onValidityChange }: Use
   }, [watch, onChange]);
 
   const addProperty = useCallback(
-    (propertyData?: Partial<PropertyListItem>, type?: JSONSchema7TypeName) => {
-      append({
-        id: uuidv4(),
-        keyName: '',
-        definition: newProperty(type || 'string'),
-        isRequired: false,
-        ...propertyData,
-      } as PropertyListItem);
+    (propertyDataFromArg?: Partial<PropertyListItem>, typeFromArg?: JSONSchema7TypeName) => {
+      const fullPath = propertyDataFromArg?.keyName;
+      const defaultType = typeFromArg || 'string';
+
+      if (!fullPath || fullPath.trim() === '') {
+        console.error('Property keyName path cannot be empty.');
+
+        return;
+      }
+
+      const pathSegments = fullPath.split('.');
+      const newKeyName = pathSegments[pathSegments.length - 1];
+      const parentPathArray = pathSegments.slice(0, -1);
+
+      if (newKeyName.trim() === '') {
+        console.error('The final key name in the path cannot be empty.');
+
+        return;
+      }
+
+      const propertyDefinition = propertyDataFromArg?.definition || newProperty(defaultType);
+      const propertyIsRequired =
+        typeof propertyDataFromArg?.isRequired === 'boolean' ? propertyDataFromArg.isRequired : false;
+      const propertyId = propertyDataFromArg?.id || uuidv4();
+
+      if (parentPathArray.length === 0) {
+        append({
+          id: propertyId,
+          keyName: newKeyName,
+          definition: propertyDefinition,
+          isRequired: propertyIsRequired,
+        });
+      } else {
+        const currentRootPropertyList: PropertyListItem[] = JSON.parse(JSON.stringify(getValues().propertyList || []));
+        let targetParentPropertyDefinitionList: PropertyListItem[] = currentRootPropertyList;
+
+        for (const segment of parentPathArray) {
+          if (segment.trim() === '') {
+            console.error(`Invalid empty segment in path: "${fullPath}"`);
+
+            return;
+          }
+
+          let parentPropertyItem = targetParentPropertyDefinitionList.find((p) => p.keyName === segment);
+
+          if (!parentPropertyItem) {
+            const newParentSchemaDefinition: JSONSchema7 = {
+              type: 'object',
+              properties: {},
+            };
+            parentPropertyItem = {
+              id: uuidv4(),
+              keyName: segment,
+              definition: { ...newParentSchemaDefinition, propertyList: [] as PropertyListItem[] } as JSONSchema7,
+              isRequired: false,
+            };
+            targetParentPropertyDefinitionList.push(parentPropertyItem);
+          } else if (parentPropertyItem.definition.type !== 'object') {
+            const oldDef = parentPropertyItem.definition;
+            const newParentSchemaDefinition: JSONSchema7 = {
+              type: 'object',
+              properties: {},
+              ...(oldDef.title && { title: oldDef.title }),
+              ...(oldDef.description && { description: oldDef.description }),
+              ...(oldDef.$comment && { $comment: oldDef.$comment }),
+            };
+            parentPropertyItem.definition = {
+              ...newParentSchemaDefinition,
+              propertyList: [] as PropertyListItem[],
+            } as JSONSchema7;
+          }
+
+          const currentParentDefinition = parentPropertyItem.definition as JSONSchema7 & {
+            propertyList: PropertyListItem[];
+          };
+
+          currentParentDefinition.propertyList = currentParentDefinition.propertyList || [];
+          targetParentPropertyDefinitionList = currentParentDefinition.propertyList;
+        }
+
+        if (targetParentPropertyDefinitionList.some((p) => p.keyName === newKeyName)) {
+          console.warn(`Property "${newKeyName}" already exists in "${parentPathArray.join('.')}".`);
+
+          return;
+        }
+
+        const newItemToAdd: PropertyListItem = {
+          id: propertyId,
+          keyName: newKeyName,
+          definition: propertyDefinition,
+          isRequired: propertyIsRequired,
+        };
+
+        targetParentPropertyDefinitionList.push(newItemToAdd);
+        setValue('propertyList', currentRootPropertyList, {
+          shouldValidate: true,
+          shouldDirty: true,
+          shouldTouch: true,
+        });
+      }
     },
-    [append, formState.isValid, formState.errors]
+    [append, getValues, setValue]
   );
 
   const removeProperty = useCallback(
