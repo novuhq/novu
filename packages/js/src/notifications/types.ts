@@ -17,13 +17,20 @@ export type ListNotificationsResponse = { notifications: Notification[]; hasMore
 
 export type FilterCountArgs = {
   tags?: string[];
+  data?: Record<string, unknown>;
   read?: boolean;
   archived?: boolean;
   snoozed?: boolean;
 };
 
 export type FiltersCountArgs = {
-  filters: Array<{ tags?: string[]; read?: boolean; archived?: boolean; snoozed?: boolean }>;
+  filters: Array<{
+    tags?: string[];
+    read?: boolean;
+    archived?: boolean;
+    snoozed?: boolean;
+    data?: Record<string, unknown>;
+  }>;
 };
 
 export type CountArgs = undefined | FilterCountArgs | FiltersCountArgs;

@@ -13,8 +13,8 @@ const updateEvents: PreferenceEvents[] = [
   'preferences.bulk_update.resolved',
 ];
 
-const excludeEmpty = ({ tags }: ListPreferencesArgs) =>
-  Object.entries({ tags }).reduce((acc, [key, value]) => {
+const excludeEmpty = ({ tags, data }: ListPreferencesArgs) =>
+  Object.entries({ tags, data }).reduce((acc, [key, value]) => {
     if (value === null || value === undefined || (Array.isArray(value) && value.length === 0)) {
       return acc;
     }
@@ -24,8 +24,8 @@ const excludeEmpty = ({ tags }: ListPreferencesArgs) =>
     return acc;
   }, {});
 
-const getCacheKey = ({ tags }: ListPreferencesArgs): string => {
-  return JSON.stringify(excludeEmpty({ tags }));
+const getCacheKey = ({ tags, data }: ListPreferencesArgs): string => {
+  return JSON.stringify(excludeEmpty({ tags, data }));
 };
 
 export class PreferencesCache {

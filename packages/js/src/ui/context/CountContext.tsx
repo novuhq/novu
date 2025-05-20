@@ -96,9 +96,9 @@ export const CountProvider = (props: ParentProps) => {
     }
 
     setNewNotificationCounts((oldMap) => {
-      const tagsKey = createKey(tags, tabFilter.data);
+      const key = createKey(tags, tabFilter.data);
       const newMap = new Map(oldMap);
-      newMap.set(tagsKey, (oldMap.get(tagsKey) || 0) + 1);
+      newMap.set(key, (oldMap.get(key) || 0) + 1);
 
       return newMap;
     });

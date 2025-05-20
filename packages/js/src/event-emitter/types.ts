@@ -49,11 +49,19 @@ type NotificationSnoozeEvents = BaseEvents<'notification.snooze', SnoozeArgs, No
 type NotificationUnsnoozeEvents = BaseEvents<'notification.unsnooze', UnsnoozeArgs, Notification>;
 type NotificationCompleteActionEvents = BaseEvents<'notification.complete_action', CompleteArgs, Notification>;
 type NotificationRevertActionEvents = BaseEvents<'notification.revert_action', RevertArgs, Notification>;
-type NotificationsReadAllEvents = BaseEvents<'notifications.read_all', { tags?: string[] }, Notification[]>;
-type NotificationsArchivedAllEvents = BaseEvents<'notifications.archive_all', { tags?: string[] }, Notification[]>;
+type NotificationsReadAllEvents = BaseEvents<
+  'notifications.read_all',
+  { tags?: string[]; data?: Record<string, unknown> },
+  Notification[]
+>;
+type NotificationsArchivedAllEvents = BaseEvents<
+  'notifications.archive_all',
+  { tags?: string[]; data?: Record<string, unknown> },
+  Notification[]
+>;
 type NotificationsReadArchivedAllEvents = BaseEvents<
   'notifications.archive_all_read',
-  { tags?: string[] },
+  { tags?: string[]; data?: Record<string, unknown> },
   Notification[]
 >;
 type PreferencesFetchEvents = BaseEvents<'preferences.list', ListPreferencesArgs, Preference[]>;

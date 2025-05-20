@@ -84,7 +84,7 @@ export const InboxProvider = (props: InboxProviderProps) => {
     }
 
     setActiveTab(newActiveTab);
-    setFilter((old) => ({ ...old, tags }));
+    setFilter((old) => ({ ...old, tags, data: tab?.filter?.data }));
   };
 
   const navigate = (url?: string, target?: Redirect['target']) => {

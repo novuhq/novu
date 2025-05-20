@@ -26,17 +26,17 @@ export const MoreActionsOptions = () => {
     <>
       <ActionsItem
         localizationKey="notifications.actions.readAll"
-        onClick={() => readAll({ tags: filter().tags })}
+        onClick={() => readAll({ tags: filter().tags, data: filter().data })}
         iconKey="markAsRead"
       />
       <ActionsItem
         localizationKey="notifications.actions.archiveAll"
-        onClick={() => archiveAll({ tags: filter().tags })}
+        onClick={() => archiveAll({ tags: filter().tags, data: filter().data })}
         iconKey="markAsArchived"
       />
       <ActionsItem
         localizationKey="notifications.actions.archiveRead"
-        onClick={() => archiveAllRead({ tags: filter().tags })}
+        onClick={() => archiveAllRead({ tags: filter().tags, data: filter().data })}
         iconKey="markAsArchivedRead"
       />
     </>
