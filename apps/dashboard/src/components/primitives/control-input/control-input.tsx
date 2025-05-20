@@ -87,7 +87,11 @@ export function ControlInput({
   const [isPayloadSchemaDrawerOpen, setIsPayloadSchemaDrawerOpen] = useState(false);
   const [highlightedVariableKey, setHighlightedVariableKey] = useState<string | null>(null);
 
-  const { addProperty: addSchemaProperty, handleSaveChanges: handleSaveSchemaChanges } = useWorkflowSchemaManager({
+  const {
+    addProperty: addSchemaProperty,
+    handleSaveChanges: handleSaveSchemaChanges,
+    getSchemaPropertyByKey,
+  } = useWorkflowSchemaManager({
     workflow: workflow as WorkflowResponseDto,
     environment: currentEnvironment as IEnvironment,
     initialSchema: workflow?.payloadSchema,
@@ -230,6 +234,7 @@ export function ControlInput({
             // Focus back to the editor after updating the variable
             setTimeout(() => viewRef.current?.focus(), 0);
           }}
+          getSchemaPropertyByKey={getSchemaPropertyByKey}
         >
           <div />
         </EditVariablePopover>

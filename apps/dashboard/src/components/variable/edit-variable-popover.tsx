@@ -28,6 +28,10 @@ import { useDebounce } from '@/hooks/use-debounce';
 import { EscapeKeyManagerPriority } from '@/context/escape-key-manager/priority';
 import { useEscapeKeyManager } from '@/context/escape-key-manager/hooks';
 import { Button } from '../primitives/button';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { useFeatureFlag } from '../../hooks/use-feature-flag';
+import type { JSONSchemaDefinition } from '@novu/shared';
+import type { JSONSchema7 } from '@/components/schema-editor/json-schema';
 
 const calculateAliasFor = (name: string, parsedAliasRoot: string): string => {
   const variableRest = name.split('.').slice(1).join('.');
@@ -51,6 +55,7 @@ type EditVariablePopoverProps = {
   onUpdate: (newValue: string) => void;
   isAllowedVariable: IsAllowedVariable;
   onDeleteClick: () => void;
+  getSchemaPropertyByKey: (keyPath: string) => JSONSchema7 | undefined;
 };
 
 export const EditVariablePopover = ({
@@ -62,7 +67,10 @@ export const EditVariablePopover = ({
   onUpdate,
   isAllowedVariable,
   onDeleteClick,
+  getSchemaPropertyByKey,
 }: EditVariablePopoverProps) => {
+  const isPayloadSchemaEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_PAYLOAD_SCHEMA_ENABLED);
+
   const { parsedName, parsedAliasForRoot, parsedDefaultValue, parsedFilters } = useVariableParser(
     variable?.name || '',
     variable?.aliasFor || ''
@@ -211,16 +219,33 @@ export const EditVariablePopover = ({
                 </FormControl>
               </FormItem>
 
-              <FormItem>
-                <FormControl>
-                  <Input
-                    value={defaultVal}
-                    onChange={(e) => handleDefaultValueChange(e.target.value)}
-                    placeholder="Default fallback value"
-                    size="xs"
-                  />
-                </FormControl>
-              </FormItem>
+              {!isPayloadSchemaEnabled && (
+                <FormItem>
+                  <FormControl>
+                    <Input
+                      value={defaultVal}
+                      onChange={(e) => handleDefaultValueChange(e.target.value)}
+                      placeholder="Default fallback value"
+                      size="xs"
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+
+              {isPayloadSchemaEnabled && name?.startsWith('payload.') && (
+                <FormItem>
+                  <FormControl>
+                    <Input
+                      value={(
+                        getSchemaPropertyByKey(name?.replace('payload.', '') || '')?.type || 'unknown'
+                      ).toString()}
+                      disabled
+                      placeholder="Variable type"
+                      size="xs"
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
             </div>
 
             <div className="flex flex-col gap-1">

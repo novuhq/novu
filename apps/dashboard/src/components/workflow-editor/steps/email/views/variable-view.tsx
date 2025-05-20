@@ -71,6 +71,7 @@ function InternalVariableView(props: InternalVariableViewProps) {
   return (
     <NodeViewWrapper className="react-component mly-inline-block mly-leading-none" draggable="false">
       <EditVariablePopover
+        getSchemaPropertyByKey={getSchemaPropertyByKey}
         open={isOpen}
         onOpenChange={setIsOpen}
         variable={variable}
