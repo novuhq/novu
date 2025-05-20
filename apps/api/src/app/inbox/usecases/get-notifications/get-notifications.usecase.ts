@@ -87,6 +87,7 @@ export class GetNotifications {
         read: command.read,
         archived: command.archived,
         snoozed: command.snoozed,
+        data: parsedData,
       },
     };
   }

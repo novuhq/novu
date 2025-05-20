@@ -73,7 +73,7 @@ export const InboxProvider = (props: InboxProviderProps) => {
 
   const setNewStatus = (newStatus: NotificationStatus) => {
     setStatus(newStatus);
-    setFilter((old) => ({ ...STATUS_TO_FILTER[newStatus], tags: old.tags }));
+    setFilter((old) => ({ ...STATUS_TO_FILTER[newStatus], tags: old.tags, data: old.data }));
   };
 
   const setNewActiveTab = (newActiveTab: string) => {
