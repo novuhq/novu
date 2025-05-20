@@ -114,7 +114,8 @@ export const InboxProvider = (props: InboxProviderProps) => {
     const firstTab = props.tabs[0];
     const tags = getTagsFromTab(firstTab);
     setActiveTab(firstTab?.label ?? '');
-    setFilter((old) => ({ ...old, tags }));
+    setFilter((old) => ({ ...old, tags, data: firstTab?.filter?.data }));
+
     setPreferencesFilter(props.preferencesFilter);
     setPreferenceGroups(props.preferenceGroups);
   });

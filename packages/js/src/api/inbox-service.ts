@@ -50,6 +50,7 @@ export class InboxService {
     read,
     tags,
     snoozed,
+    data,
   }: {
     tags?: string[];
     read?: boolean;
@@ -58,6 +59,7 @@ export class InboxService {
     limit?: number;
     after?: string;
     offset?: number;
+    data?: Record<string, unknown>;
   }): Promise<{ data: InboxNotification[]; hasMore: boolean; filter: NotificationFilter }> {
     const searchParams = new URLSearchParams(`limit=${limit}`);
     if (after) {
@@ -77,6 +79,9 @@ export class InboxService {
     }
     if (snoozed !== undefined) {
       searchParams.append('snoozed', `${snoozed}`);
+    }
+    if (data !== undefined) {
+      searchParams.append('data', JSON.stringify(data));
     }
 
     return this.#httpClient.get(INBOX_NOTIFICATIONS_ROUTE, searchParams, false);

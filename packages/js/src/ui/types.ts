@@ -20,7 +20,7 @@ export type Tab = {
    * @deprecated Use `filter` instead
    */
   value?: Array<string>;
-  filter?: Pick<NotificationFilter, 'tags'>;
+  filter?: Pick<NotificationFilter, 'tags' | 'data'>;
 };
 
 export type CSSProperties = {
