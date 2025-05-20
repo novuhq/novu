@@ -167,7 +167,8 @@ export const SideNavigation = () => {
               condition={(has) =>
                 has({ permission: PermissionsEnum.API_KEY_READ }) ||
                 has({ permission: PermissionsEnum.INTEGRATION_READ }) ||
-                has({ permission: PermissionsEnum.WEBHOOK_READ })
+                has({ permission: PermissionsEnum.WEBHOOK_READ }) ||
+                has({ permission: PermissionsEnum.WEBHOOK_CREATE })
               }
             >
               <NavigationGroup label="Developer">
@@ -178,7 +179,12 @@ export const SideNavigation = () => {
                   </NavigationLink>
                 </Protect>
                 {isWebhooksManagementEnabled && (
-                  <Protect permission={PermissionsEnum.WEBHOOK_READ}>
+                  <Protect
+                    condition={(has) =>
+                      has({ permission: PermissionsEnum.WEBHOOK_READ }) ||
+                      has({ permission: PermissionsEnum.WEBHOOK_CREATE })
+                    }
+                  >
                     <NavigationLink
                       to={buildRoute(ROUTES.WEBHOOKS, { environmentSlug: currentEnvironment?.slug ?? '' })}
                     >

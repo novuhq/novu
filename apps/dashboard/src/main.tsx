@@ -287,7 +287,12 @@ const router = createBrowserRouter([
               {
                 path: ROUTES.WEBHOOKS_ENDPOINTS,
                 element: (
-                  <ProtectedRoute permission={PermissionsEnum.WEBHOOK_READ}>
+                  <ProtectedRoute
+                    condition={(has) =>
+                      has({ permission: PermissionsEnum.WEBHOOK_READ }) ||
+                      has({ permission: PermissionsEnum.WEBHOOK_CREATE })
+                    }
+                  >
                     <WebhooksPage />
                   </ProtectedRoute>
                 ),
@@ -295,7 +300,12 @@ const router = createBrowserRouter([
               {
                 path: ROUTES.WEBHOOKS_EVENT_CATALOG,
                 element: (
-                  <ProtectedRoute permission={PermissionsEnum.WEBHOOK_READ}>
+                  <ProtectedRoute
+                    condition={(has) =>
+                      has({ permission: PermissionsEnum.WEBHOOK_READ }) ||
+                      has({ permission: PermissionsEnum.WEBHOOK_CREATE })
+                    }
+                  >
                     <WebhooksPage />
                   </ProtectedRoute>
                 ),
@@ -303,7 +313,12 @@ const router = createBrowserRouter([
               {
                 path: ROUTES.WEBHOOKS_LOGS,
                 element: (
-                  <ProtectedRoute permission={PermissionsEnum.WEBHOOK_READ}>
+                  <ProtectedRoute
+                    condition={(has) =>
+                      has({ permission: PermissionsEnum.WEBHOOK_READ }) ||
+                      has({ permission: PermissionsEnum.WEBHOOK_CREATE })
+                    }
+                  >
                     <WebhooksPage />
                   </ProtectedRoute>
                 ),
@@ -311,7 +326,12 @@ const router = createBrowserRouter([
               {
                 path: ROUTES.WEBHOOKS_ACTIVITY,
                 element: (
-                  <ProtectedRoute permission={PermissionsEnum.WEBHOOK_READ}>
+                  <ProtectedRoute
+                    condition={(has) =>
+                      has({ permission: PermissionsEnum.WEBHOOK_READ }) ||
+                      has({ permission: PermissionsEnum.WEBHOOK_CREATE })
+                    }
+                  >
                     <WebhooksPage />
                   </ProtectedRoute>
                 ),
@@ -319,7 +339,12 @@ const router = createBrowserRouter([
               {
                 path: ROUTES.WEBHOOKS,
                 element: (
-                  <ProtectedRoute permission={PermissionsEnum.WEBHOOK_READ}>
+                  <ProtectedRoute
+                    condition={(has) =>
+                      has({ permission: PermissionsEnum.WEBHOOK_READ }) ||
+                      has({ permission: PermissionsEnum.WEBHOOK_CREATE })
+                    }
+                  >
                     <Navigate to={ROUTES.WEBHOOKS_ENDPOINTS} replace />
                   </ProtectedRoute>
                 ),
