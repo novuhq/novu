@@ -131,15 +131,24 @@ export class InboxService {
   }
 
   readAll({ tags, data }: { tags?: string[]; data?: Record<string, unknown> }): Promise<void> {
-    return this.#httpClient.post(`${INBOX_NOTIFICATIONS_ROUTE}/read`, { tags, data });
+    return this.#httpClient.post(`${INBOX_NOTIFICATIONS_ROUTE}/read`, {
+      tags,
+      data: data ? JSON.stringify(data) : undefined,
+    });
   }
 
   archiveAll({ tags, data }: { tags?: string[]; data?: Record<string, unknown> }): Promise<void> {
-    return this.#httpClient.post(`${INBOX_NOTIFICATIONS_ROUTE}/archive`, { tags, data });
+    return this.#httpClient.post(`${INBOX_NOTIFICATIONS_ROUTE}/archive`, {
+      tags,
+      data: data ? JSON.stringify(data) : undefined,
+    });
   }
 
   archiveAllRead({ tags, data }: { tags?: string[]; data?: Record<string, unknown> }): Promise<void> {
-    return this.#httpClient.post(`${INBOX_NOTIFICATIONS_ROUTE}/read-archive`, { tags, data });
+    return this.#httpClient.post(`${INBOX_NOTIFICATIONS_ROUTE}/read-archive`, {
+      tags,
+      data: data ? JSON.stringify(data) : undefined,
+    });
   }
 
   completeAction({

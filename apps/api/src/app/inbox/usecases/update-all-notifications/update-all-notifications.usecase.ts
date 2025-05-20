@@ -44,6 +44,7 @@ export class UpdateAllNotifications {
         if (error instanceof BadRequestException) {
           throw error;
         }
+
         throw new BadRequestException('Invalid JSON format for data parameter');
       }
     }

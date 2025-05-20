@@ -1,7 +1,7 @@
 import { NotificationEvents, NovuEventEmitter } from '../event-emitter';
 import type { ListNotificationsArgs, ListNotificationsResponse, Notification } from '../notifications';
 import type { NotificationFilter } from '../types';
-import { areTagsEqual, isSameFilter } from '../utils/notification-utils';
+import { areDataEqual, areTagsEqual, isSameFilter } from '../utils/notification-utils';
 import { InMemoryCache } from './in-memory-cache';
 import type { Cache } from './types';
 
@@ -216,6 +216,7 @@ export class NotificationsCache {
 
     keys.forEach((key) => {
       const filter = getFilter(key);
+
       if (areTagsEqual(tags, filter.tags) && areDataEqual(data, filter.data)) {
         const value = this.#cache.get(key);
         if (!value) {
