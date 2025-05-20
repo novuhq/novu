@@ -95,7 +95,7 @@ export class BridgeController {
 
   @Post('/sync')
   @ExternalApiAccessible()
-  @RequirePermissions(PermissionsEnum.WORKFLOW_CREATE)
+  @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
   async createBridgesByDiscovery(
     @Headers(HttpHeaderKeysEnum.NOVU_ANONYMOUS) anonymousId: string,
     @UserSession() user: UserSessionData,
@@ -194,7 +194,7 @@ export class BridgeController {
 
   @Put('/controls/:workflowId/:stepId')
   @ExternalApiAccessible()
-  @RequirePermissions(PermissionsEnum.WORKFLOW_CREATE)
+  @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
   async createControls(
     @Param('workflowId') workflowId: string,
     @Param('stepId') stepId: string,
@@ -215,7 +215,7 @@ export class BridgeController {
 
   @Post('/validate')
   @ExternalApiAccessible()
-  @SkipPermissionsCheck()
+  @RequirePermissions(PermissionsEnum.BRIDGE_WRITE)
   async validateBridgeUrl(
     @UserSession() user: UserSessionData,
     @Body() body: ValidateBridgeUrlRequestDto

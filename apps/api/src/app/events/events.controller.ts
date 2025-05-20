@@ -71,7 +71,7 @@ export class EventsController {
   @SdkMethodName('trigger')
   @SdkUsageExample('Trigger Notification Event')
   @SdkGroupName('')
-  @RequirePermissions(PermissionsEnum.EVENT_CREATE)
+  @RequirePermissions(PermissionsEnum.EVENT_WRITE)
   async trigger(
     @UserSession() user: UserSessionData,
     @Body() body: TriggerEventRequestDto
@@ -112,7 +112,7 @@ export class EventsController {
       The bulk API is limited to 100 events per request.
     `,
   })
-  @RequirePermissions(PermissionsEnum.EVENT_CREATE)
+  @RequirePermissions(PermissionsEnum.EVENT_WRITE)
   async triggerBulk(
     @UserSession() user: UserSessionData,
     @Body() body: BulkTriggerEventDto
@@ -143,7 +143,7 @@ export class EventsController {
     description: 'Broadcast request has been registered successfully ',
     type: TriggerEventResponseDto,
   })
-  @RequirePermissions(PermissionsEnum.EVENT_CREATE)
+  @RequirePermissions(PermissionsEnum.EVENT_WRITE)
   async broadcastEventToAll(
     @UserSession() user: UserSessionData,
     @Body() body: TriggerEventToAllRequestDto
@@ -167,7 +167,7 @@ export class EventsController {
 
   @Post('/test/email')
   @ApiExcludeEndpoint()
-  @RequirePermissions(PermissionsEnum.EVENT_CREATE)
+  @RequirePermissions(PermissionsEnum.EVENT_WRITE)
   async testEmailMessage(@UserSession() user: UserSessionData, @Body() body: TestSendEmailRequestDto): Promise<void> {
     return await this.sendTestEmail.execute(
       SendTestEmailCommand.create({
@@ -204,7 +204,7 @@ export class EventsController {
   @SdkMethodName('cancel')
   @SdkUsageExample('Cancel Triggered Event')
   @SdkGroupName('')
-  @RequirePermissions(PermissionsEnum.EVENT_CREATE)
+  @RequirePermissions(PermissionsEnum.EVENT_WRITE)
   async cancel(@UserSession() user: UserSessionData, @Param('transactionId') transactionId: string): Promise<boolean> {
     return await this.cancelDelayedUsecase.execute(
       CancelDelayedCommand.create({

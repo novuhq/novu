@@ -38,6 +38,27 @@ export default tseslint.config(
         { blankLine: 'always', prev: '*', next: 'block-like' },
         { blankLine: 'always', prev: 'block-like', next: '*' },
       ],
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: '@clerk/clerk-react',
+              importNames: ['Protect'],
+              message:
+                'Please use the local Protect component from @/utils/protect instead of importing directly from @clerk/clerk-react',
+            },
+          ],
+        },
+      ],
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "VariableDeclarator[id.type='ObjectPattern'] > ObjectPattern > Property[key.name='has']",
+          message:
+            "Do not destructure 'has' from useAuth(). Please use the useHasPermission hook from @/hooks/use-has-permission instead.",
+        },
+      ],
     },
   }
 );
