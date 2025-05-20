@@ -235,6 +235,10 @@ export function ControlInput({
             setTimeout(() => viewRef.current?.focus(), 0);
           }}
           getSchemaPropertyByKey={getSchemaPropertyByKey}
+          onManageSchemaClick={(variableName) => {
+            setHighlightedVariableKey(variableName);
+            setIsPayloadSchemaDrawerOpen(true);
+          }}
         >
           <div />
         </EditVariablePopover>

@@ -1,5 +1,12 @@
 import { ReactNode, useState, useCallback, useMemo, useEffect, useId, useRef } from 'react';
-import { RiDeleteBin2Line, RiQuestionLine, RiSearchLine } from 'react-icons/ri';
+import {
+  RiDeleteBin2Line,
+  RiQuestionLine,
+  RiSearchLine,
+  RiSparkling2Line,
+  RiArrowRightUpLine,
+  RiListView,
+} from 'react-icons/ri';
 
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives/popover';
 import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
@@ -13,7 +20,7 @@ import {
   CommandSeparator,
 } from '@/components/primitives/command';
 import { FormControl, FormItem, FormMessagePure } from '@/components/primitives/form/form';
-import { Input } from '@/components/primitives/input';
+import { Input, InputRoot, InputPure, InputWrapper } from '@/components/primitives/input';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
@@ -32,6 +39,10 @@ import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { useFeatureFlag } from '../../hooks/use-feature-flag';
 import type { JSONSchemaDefinition } from '@novu/shared';
 import type { JSONSchema7 } from '@/components/schema-editor/json-schema';
+import { ExternalLink } from '@/components/shared/external-link';
+import { ROUTES } from '@/utils/routes';
+import { LinkButton } from '@/components/primitives/button-link';
+import { Code2 } from '../icons/code-2';
 
 const calculateAliasFor = (name: string, parsedAliasRoot: string): string => {
   const variableRest = name.split('.').slice(1).join('.');
@@ -56,6 +67,7 @@ type EditVariablePopoverProps = {
   isAllowedVariable: IsAllowedVariable;
   onDeleteClick: () => void;
   getSchemaPropertyByKey: (keyPath: string) => JSONSchema7 | undefined;
+  onManageSchemaClick?: (variableName: string) => void;
 };
 
 export const EditVariablePopover = ({
@@ -68,6 +80,7 @@ export const EditVariablePopover = ({
   isAllowedVariable,
   onDeleteClick,
   getSchemaPropertyByKey,
+  onManageSchemaClick,
 }: EditVariablePopoverProps) => {
   const isPayloadSchemaEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_PAYLOAD_SCHEMA_ENABLED);
 
@@ -204,16 +217,37 @@ export const EditVariablePopover = ({
             <div className="flex flex-col gap-1">
               <FormItem>
                 <FormControl>
-                  <div className="grid gap-1">
-                    <label className="text-text-sub text-label-xs">Variable</label>
-                    <Input
-                      ref={nameInputRef}
-                      value={name}
-                      onChange={(e) => handleNameChange(e.target.value)}
-                      autoFocus
-                      size="xs"
-                      placeholder="Variable name (e.g. payload.name)"
-                    />
+                  <div className="grid">
+                    <div className="flex w-full flex-row items-center justify-between gap-1">
+                      <label className="text-text-sub text-label-xs">Variable</label>
+                      <Button
+                        variant="secondary"
+                        mode="ghost"
+                        size="2xs"
+                        leadingIcon={RiListView}
+                        onClick={() => {
+                          if (onManageSchemaClick && name) {
+                            onManageSchemaClick(name.replace('payload.', ''));
+                          }
+                        }}
+                      >
+                        Manage schema
+                      </Button>
+                    </div>
+
+                    <InputRoot size="2xs" hasError={!!variableError}>
+                      <InputWrapper>
+                        <Code2 className="h-4 w-4 shrink-0 text-gray-500" />
+                        <InputPure
+                          ref={nameInputRef}
+                          value={name}
+                          onChange={(e) => handleNameChange(e.target.value)}
+                          autoFocus
+                          className="text-xs"
+                          placeholder="Variable name (e.g. payload.name)"
+                        />
+                      </InputWrapper>
+                    </InputRoot>
                     <FormMessagePure hasError={!!variableError}>{variableError}</FormMessagePure>
                   </div>
                 </FormControl>
@@ -226,7 +260,7 @@ export const EditVariablePopover = ({
                       value={defaultVal}
                       onChange={(e) => handleDefaultValueChange(e.target.value)}
                       placeholder="Default fallback value"
-                      size="xs"
+                      size="2xs"
                     />
                   </FormControl>
                 </FormItem>
@@ -241,10 +275,29 @@ export const EditVariablePopover = ({
                       ).toString()}
                       disabled
                       placeholder="Variable type"
-                      size="xs"
+                      size="2xs"
                     />
                   </FormControl>
                 </FormItem>
+              )}
+              {isPayloadSchemaEnabled && name?.startsWith('payload.') && (
+                <div className="text-label-2xs text-text-soft items-center gap-1.5 px-1 py-0.5 font-medium">
+                  💡 <b className="text-text-sub font-medium">Tip:</b> Edit variable type, mark as required field, and
+                  add validation via{' '}
+                  <LinkButton
+                    variant="gray"
+                    size="sm"
+                    className="text-text-sub text-label-2xs font-medium"
+                    onClick={() => {
+                      if (onManageSchemaClick && name) {
+                        onManageSchemaClick(name.replace('payload.', ''));
+                      }
+                    }}
+                    trailingIcon={RiArrowRightUpLine}
+                  >
+                    Manage schema
+                  </LinkButton>
+                </div>
               )}
             </div>
 
