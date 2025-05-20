@@ -43,6 +43,7 @@ import { ExternalLink } from '@/components/shared/external-link';
 import { ROUTES } from '@/utils/routes';
 import { LinkButton } from '@/components/primitives/button-link';
 import { Code2 } from '../icons/code-2';
+import { Separator } from '../primitives/separator';
 
 const calculateAliasFor = (name: string, parsedAliasRoot: string): string => {
   const variableRest = name.split('.').slice(1).join('.');
@@ -185,6 +186,7 @@ export const EditVariablePopover = ({
   const handleClosePopover = useCallback(() => {
     handleOpenChange(false);
   }, [handleOpenChange]);
+  const isPayloadSchemaVariable = name?.startsWith('payload.');
 
   useEscapeKeyManager(id, handleClosePopover, EscapeKeyManagerPriority.POPOVER, open);
 
@@ -220,19 +222,21 @@ export const EditVariablePopover = ({
                   <div className="grid">
                     <div className="flex w-full flex-row items-center justify-between gap-1">
                       <label className="text-text-sub text-label-xs">Variable</label>
-                      <Button
-                        variant="secondary"
-                        mode="ghost"
-                        size="2xs"
-                        leadingIcon={RiListView}
-                        onClick={() => {
-                          if (onManageSchemaClick && name) {
-                            onManageSchemaClick(name.replace('payload.', ''));
-                          }
-                        }}
-                      >
-                        Manage schema
-                      </Button>
+                      {isPayloadSchemaEnabled && isPayloadSchemaVariable && (
+                        <Button
+                          variant="secondary"
+                          mode="ghost"
+                          size="2xs"
+                          leadingIcon={RiListView}
+                          onClick={() => {
+                            if (onManageSchemaClick && name) {
+                              onManageSchemaClick(name.replace('payload.', ''));
+                            }
+                          }}
+                        >
+                          Manage schema
+                        </Button>
+                      )}
                     </div>
 
                     <InputRoot size="2xs" hasError={!!variableError}>
@@ -266,7 +270,7 @@ export const EditVariablePopover = ({
                 </FormItem>
               )}
 
-              {isPayloadSchemaEnabled && name?.startsWith('payload.') && (
+              {isPayloadSchemaEnabled && isPayloadSchemaVariable && (
                 <FormItem>
                   <FormControl>
                     <Input
@@ -280,7 +284,8 @@ export const EditVariablePopover = ({
                   </FormControl>
                 </FormItem>
               )}
-              {isPayloadSchemaEnabled && name?.startsWith('payload.') && (
+
+              {isPayloadSchemaEnabled && isPayloadSchemaVariable && (
                 <div className="text-label-2xs text-text-soft items-center gap-1.5 px-1 py-0.5 font-medium">
                   💡 <b className="text-text-sub font-medium">Tip:</b> Edit variable type, mark as required field, and
                   add validation via{' '}
@@ -300,6 +305,8 @@ export const EditVariablePopover = ({
                 </div>
               )}
             </div>
+
+            <Separator className="ml-[-10px] mr-[-10px] w-[calc(100%+20px)]" />
 
             <div className="flex flex-col gap-1">
               <FormItem>

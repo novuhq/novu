@@ -194,6 +194,13 @@ export function useSchemaForm({ initialSchema, onChange, onValidityChange }: Use
       const propertyId = propertyDataFromArg?.id || uuidv4();
 
       if (parentPathArray.length === 0) {
+        const currentRootPropertyList: PropertyListItem[] = getValues().propertyList || [];
+
+        if (currentRootPropertyList.some((p) => p.keyName === newKeyName)) {
+          console.warn(`Property "${newKeyName}" already exists at the root level.`);
+          return;
+        }
+
         append({
           id: propertyId,
           keyName: newKeyName,
