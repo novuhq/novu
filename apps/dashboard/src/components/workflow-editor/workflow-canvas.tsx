@@ -278,7 +278,7 @@ const WorkflowCanvasChild = ({ steps, readOnly }: { steps: Step[]; readOnly?: bo
 
 export const WorkflowCanvas = ({ steps, readOnly }: { steps: Step[]; readOnly?: boolean }) => {
   const has = useHasPermission();
-  const isReadOnly = !has({ permission: PermissionsEnum.WORKFLOW_CREATE });
+  const isReadOnly = !has({ permission: PermissionsEnum.WORKFLOW_WRITE });
 
   return (
     <ReactFlowProvider>

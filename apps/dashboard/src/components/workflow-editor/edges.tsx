@@ -26,7 +26,7 @@ export function AddNodeEdge({
   const has = useHasPermission();
 
   const isReadOnly =
-    workflow?.origin === WorkflowOriginEnum.EXTERNAL || !has({ permission: PermissionsEnum.WORKFLOW_CREATE });
+    workflow?.origin === WorkflowOriginEnum.EXTERNAL || !has({ permission: PermissionsEnum.WORKFLOW_WRITE });
 
   const [edgePath, labelX, labelY] = getBezierPath({
     sourceX,

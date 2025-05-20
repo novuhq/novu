@@ -54,9 +54,7 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
     setPrimaryIntegration: setPrimaryIntegration,
   });
 
-  const isReadOnly =
-    !has({ permission: PermissionsEnum.INTEGRATION_UPDATE }) &&
-    !has({ permission: PermissionsEnum.INTEGRATION_CREATE });
+  const isReadOnly = !has({ permission: PermissionsEnum.INTEGRATION_WRITE });
 
   async function onSubmit(data: IntegrationFormData, skipPrimaryCheck?: boolean) {
     if (!integration) return;

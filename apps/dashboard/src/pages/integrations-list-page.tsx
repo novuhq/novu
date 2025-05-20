@@ -53,7 +53,7 @@ export function IntegrationsListPage() {
             </Tooltip>
           </TabsList>
           <PermissionButton
-            permission={PermissionsEnum.INTEGRATION_CREATE}
+            permission={PermissionsEnum.INTEGRATION_WRITE}
             size="xs"
             variant="primary"
             mode="gradient"

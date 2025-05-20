@@ -200,7 +200,7 @@ export const SubscriberRow = ({ subscriber, subscribersCount, firstTwoSubscriber
                     </Link>
                   </DropdownMenuItem>
                 </Protect>
-                <Protect permission={PermissionsEnum.SUBSCRIBER_DELETE}>
+                <Protect permission={PermissionsEnum.SUBSCRIBER_WRITE}>
                   <DropdownMenuItem
                     className="text-destructive cursor-pointer"
                     onClick={() => {

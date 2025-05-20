@@ -344,7 +344,7 @@ export const AddNode = (_props: NodeProps<NodeType>) => {
   }
 
   const isReadOnly =
-    workflow.origin === WorkflowOriginEnum.EXTERNAL || !has({ permission: PermissionsEnum.WORKFLOW_CREATE });
+    workflow.origin === WorkflowOriginEnum.EXTERNAL || !has({ permission: PermissionsEnum.WORKFLOW_WRITE });
 
   if (isReadOnly) {
     return null;

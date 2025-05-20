@@ -111,7 +111,7 @@ export const CreateEnvironmentButton = (props: CreateEnvironmentButtonProps) => 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <PermissionButton
-        permission={PermissionsEnum.ENVIRONMENT_CREATE}
+        permission={PermissionsEnum.ENVIRONMENT_WRITE}
         mode="gradient"
         variant="primary"
         size="xs"

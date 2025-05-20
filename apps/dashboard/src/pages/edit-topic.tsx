@@ -12,8 +12,7 @@ export const EditTopicPage = () => {
   const { navigateToTopicsPage } = useTopicsNavigate();
   const has = useHasPermission();
 
-  const isReadOnly =
-    !has({ permission: PermissionsEnum.TOPIC_UPDATE }) && !has({ permission: PermissionsEnum.TOPIC_CREATE });
+  const isReadOnly = !has({ permission: PermissionsEnum.TOPIC_WRITE });
 
   const { ref: unmountRef } = useOnElementUnmount({
     callback: () => {

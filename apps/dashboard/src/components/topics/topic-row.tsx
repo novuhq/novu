@@ -137,7 +137,7 @@ export const TopicRow = ({ topic }: TopicRowProps) => {
                     </Link>
                   </DropdownMenuItem>
                 </Protect>
-                <Protect permission={PermissionsEnum.TOPIC_DELETE}>
+                <Protect permission={PermissionsEnum.TOPIC_WRITE}>
                   <DropdownMenuItem
                     className="text-destructive cursor-pointer"
                     onClick={() => {

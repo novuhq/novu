@@ -123,12 +123,7 @@ export function EnvironmentsList({ environments, isLoading }: { environments: IE
                     </TimeDisplayHoverCard>
                   </TableCell>
                   <TableCell className="h-[49px] w-1">
-                    <Protect
-                      condition={(has) =>
-                        has({ permission: PermissionsEnum.ENVIRONMENT_CREATE }) ||
-                        has({ permission: PermissionsEnum.ENVIRONMENT_DELETE })
-                      }
-                    >
+                    <Protect permission={PermissionsEnum.ENVIRONMENT_WRITE}>
                       {!PROTECTED_ENVIRONMENTS.includes(environment.name as EnvironmentEnum) && (
                         <DropdownMenu modal={false}>
                           <DropdownMenuTrigger asChild>
@@ -140,12 +135,12 @@ export function EnvironmentsList({ environments, isLoading }: { environments: IE
                           </DropdownMenuTrigger>
                           <DropdownMenuContent alignOffset={5} align="end">
                             <DropdownMenuGroup>
-                              <Protect permission={PermissionsEnum.ENVIRONMENT_CREATE}>
+                              <Protect permission={PermissionsEnum.ENVIRONMENT_WRITE}>
                                 <DropdownMenuItem onSelect={() => setEditEnvironment(environment)}>
                                   Edit environment
                                 </DropdownMenuItem>
                               </Protect>
-                              <Protect permission={PermissionsEnum.ENVIRONMENT_DELETE}>
+                              <Protect permission={PermissionsEnum.ENVIRONMENT_WRITE}>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem
                                   className="text-destructive"

@@ -95,7 +95,7 @@ const WorkflowListEmptyDev = () => {
         </Link>
 
         <PermissionButton
-          permission={PermissionsEnum.WORKFLOW_CREATE}
+          permission={PermissionsEnum.WORKFLOW_WRITE}
           variant="primary"
           leadingIcon={RiRouteFill}
           className="gap-2"

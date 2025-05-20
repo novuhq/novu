@@ -23,7 +23,7 @@ export function PreferencesBlank() {
       </div>
       <div className="flex flex-col items-center justify-center gap-3">
         <PermissionButton
-          permission={PermissionsEnum.WORKFLOW_CREATE}
+          permission={PermissionsEnum.WORKFLOW_WRITE}
           mode="gradient"
           variant="primary"
           leadingIcon={RouteFill}

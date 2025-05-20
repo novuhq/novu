@@ -26,7 +26,7 @@ export const WorkflowTabs = () => {
               Workflow
             </Link>
           </TabsTrigger>
-          <Protect permission={PermissionsEnum.EVENT_CREATE}>
+          <Protect permission={PermissionsEnum.EVENT_WRITE}>
             <TabsTrigger value="trigger" asChild variant="regular">
               <Link
                 to={buildRoute(ROUTES.TEST_WORKFLOW, {

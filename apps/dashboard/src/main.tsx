@@ -82,7 +82,7 @@ const router = createBrowserRouter([
       {
         path: '/onboarding',
         element: (
-          <ProtectedRoute permission={PermissionsEnum.ORG_METADATA_UPDATE}>
+          <ProtectedRoute permission={PermissionsEnum.ORG_METADATA_WRITE}>
             <OnboardingParentRoute />
           </ProtectedRoute>
         ),
@@ -137,7 +137,7 @@ const router = createBrowserRouter([
                   {
                     path: ROUTES.TEMPLATE_STORE_CREATE_WORKFLOW,
                     element: (
-                      <ProtectedRoute permission={PermissionsEnum.WORKFLOW_CREATE} isDrawerRoute>
+                      <ProtectedRoute permission={PermissionsEnum.WORKFLOW_WRITE} isDrawerRoute>
                         <TemplateModal />
                       </ProtectedRoute>
                     ),
@@ -145,7 +145,7 @@ const router = createBrowserRouter([
                   {
                     path: ROUTES.WORKFLOWS_CREATE,
                     element: (
-                      <ProtectedRoute permission={PermissionsEnum.WORKFLOW_CREATE} isDrawerRoute>
+                      <ProtectedRoute permission={PermissionsEnum.WORKFLOW_WRITE} isDrawerRoute>
                         <CreateWorkflowPage />
                       </ProtectedRoute>
                     ),
@@ -153,7 +153,7 @@ const router = createBrowserRouter([
                   {
                     path: ROUTES.WORKFLOWS_DUPLICATE,
                     element: (
-                      <ProtectedRoute permission={PermissionsEnum.WORKFLOW_CREATE} isDrawerRoute>
+                      <ProtectedRoute permission={PermissionsEnum.WORKFLOW_WRITE} isDrawerRoute>
                         <DuplicateWorkflowPage />
                       </ProtectedRoute>
                     ),
@@ -173,9 +173,8 @@ const router = createBrowserRouter([
                     element: (
                       <ProtectedRoute
                         condition={(has) =>
-                          has({ permission: PermissionsEnum.SUBSCRIBER_UPDATE }) ||
-                          has({ permission: PermissionsEnum.SUBSCRIBER_READ }) ||
-                          has({ permission: PermissionsEnum.SUBSCRIBER_CREATE })
+                          has({ permission: PermissionsEnum.SUBSCRIBER_WRITE }) ||
+                          has({ permission: PermissionsEnum.SUBSCRIBER_READ })
                         }
                         isDrawerRoute
                       >
@@ -186,7 +185,7 @@ const router = createBrowserRouter([
                   {
                     path: ROUTES.CREATE_SUBSCRIBER,
                     element: (
-                      <ProtectedRoute permission={PermissionsEnum.SUBSCRIBER_CREATE} isDrawerRoute>
+                      <ProtectedRoute permission={PermissionsEnum.SUBSCRIBER_WRITE} isDrawerRoute>
                         <CreateSubscriberPage />
                       </ProtectedRoute>
                     ),
@@ -204,7 +203,7 @@ const router = createBrowserRouter([
                   {
                     path: ROUTES.TOPICS_CREATE,
                     element: (
-                      <ProtectedRoute permission={PermissionsEnum.TOPIC_CREATE} isDrawerRoute>
+                      <ProtectedRoute permission={PermissionsEnum.TOPIC_WRITE} isDrawerRoute>
                         <CreateTopicPage />
                       </ProtectedRoute>
                     ),
@@ -214,9 +213,8 @@ const router = createBrowserRouter([
                     element: (
                       <ProtectedRoute
                         condition={(has) =>
-                          has({ permission: PermissionsEnum.TOPIC_UPDATE }) ||
-                          has({ permission: PermissionsEnum.TOPIC_READ }) ||
-                          has({ permission: PermissionsEnum.TOPIC_CREATE })
+                          has({ permission: PermissionsEnum.TOPIC_WRITE }) ||
+                          has({ permission: PermissionsEnum.TOPIC_READ })
                         }
                         isDrawerRoute
                       >
@@ -279,7 +277,7 @@ const router = createBrowserRouter([
               {
                 path: ROUTES.TEST_WORKFLOW,
                 element: (
-                  <ProtectedRoute permission={PermissionsEnum.EVENT_CREATE}>
+                  <ProtectedRoute permission={PermissionsEnum.EVENT_WRITE}>
                     <TestWorkflowPage />
                   </ProtectedRoute>
                 ),
@@ -290,7 +288,7 @@ const router = createBrowserRouter([
                   <ProtectedRoute
                     condition={(has) =>
                       has({ permission: PermissionsEnum.WEBHOOK_READ }) ||
-                      has({ permission: PermissionsEnum.WEBHOOK_CREATE })
+                      has({ permission: PermissionsEnum.WEBHOOK_WRITE })
                     }
                   >
                     <WebhooksPage />
@@ -303,7 +301,7 @@ const router = createBrowserRouter([
                   <ProtectedRoute
                     condition={(has) =>
                       has({ permission: PermissionsEnum.WEBHOOK_READ }) ||
-                      has({ permission: PermissionsEnum.WEBHOOK_CREATE })
+                      has({ permission: PermissionsEnum.WEBHOOK_WRITE })
                     }
                   >
                     <WebhooksPage />
@@ -316,7 +314,7 @@ const router = createBrowserRouter([
                   <ProtectedRoute
                     condition={(has) =>
                       has({ permission: PermissionsEnum.WEBHOOK_READ }) ||
-                      has({ permission: PermissionsEnum.WEBHOOK_CREATE })
+                      has({ permission: PermissionsEnum.WEBHOOK_WRITE })
                     }
                   >
                     <WebhooksPage />
@@ -329,7 +327,7 @@ const router = createBrowserRouter([
                   <ProtectedRoute
                     condition={(has) =>
                       has({ permission: PermissionsEnum.WEBHOOK_READ }) ||
-                      has({ permission: PermissionsEnum.WEBHOOK_CREATE })
+                      has({ permission: PermissionsEnum.WEBHOOK_WRITE })
                     }
                   >
                     <WebhooksPage />
@@ -342,7 +340,7 @@ const router = createBrowserRouter([
                   <ProtectedRoute
                     condition={(has) =>
                       has({ permission: PermissionsEnum.WEBHOOK_READ }) ||
-                      has({ permission: PermissionsEnum.WEBHOOK_CREATE })
+                      has({ permission: PermissionsEnum.WEBHOOK_WRITE })
                     }
                   >
                     <Navigate to={ROUTES.WEBHOOKS_ENDPOINTS} replace />
@@ -366,7 +364,7 @@ const router = createBrowserRouter([
               {
                 path: ROUTES.INTEGRATIONS_CONNECT,
                 element: (
-                  <ProtectedRoute permission={PermissionsEnum.INTEGRATION_CREATE} isDrawerRoute>
+                  <ProtectedRoute permission={PermissionsEnum.INTEGRATION_WRITE} isDrawerRoute>
                     <CreateIntegrationSidebar isOpened />
                   </ProtectedRoute>
                 ),
@@ -374,7 +372,7 @@ const router = createBrowserRouter([
               {
                 path: ROUTES.INTEGRATIONS_CONNECT_PROVIDER,
                 element: (
-                  <ProtectedRoute permission={PermissionsEnum.INTEGRATION_CREATE} isDrawerRoute>
+                  <ProtectedRoute permission={PermissionsEnum.INTEGRATION_WRITE} isDrawerRoute>
                     <CreateIntegrationSidebar isOpened />
                   </ProtectedRoute>
                 ),
@@ -384,9 +382,8 @@ const router = createBrowserRouter([
                 element: (
                   <ProtectedRoute
                     condition={(has) =>
-                      has({ permission: PermissionsEnum.INTEGRATION_UPDATE }) ||
-                      has({ permission: PermissionsEnum.INTEGRATION_READ }) ||
-                      has({ permission: PermissionsEnum.INTEGRATION_CREATE })
+                      has({ permission: PermissionsEnum.INTEGRATION_WRITE }) ||
+                      has({ permission: PermissionsEnum.INTEGRATION_READ })
                     }
                     isDrawerRoute
                   >

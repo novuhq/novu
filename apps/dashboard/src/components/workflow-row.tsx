@@ -324,9 +324,8 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
               <CompactButton
                 icon={RiMore2Fill}
                 disabled={
-                  !has({ permission: PermissionsEnum.EVENT_CREATE }) &&
-                  !has({ permission: PermissionsEnum.WORKFLOW_CREATE }) &&
-                  !has({ permission: PermissionsEnum.WORKFLOW_DELETE }) &&
+                  !has({ permission: PermissionsEnum.EVENT_WRITE }) &&
+                  !has({ permission: PermissionsEnum.WORKFLOW_WRITE }) &&
                   !has({ permission: PermissionsEnum.NOTIFICATION_READ })
                 }
                 variant="ghost"
@@ -337,13 +336,13 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
             <DropdownMenuContent className="w-56" onClick={stopPropagation}>
               <Protect
                 condition={(has) =>
-                  has({ permission: PermissionsEnum.EVENT_CREATE }) ||
-                  has({ permission: PermissionsEnum.WORKFLOW_CREATE }) ||
+                  has({ permission: PermissionsEnum.EVENT_WRITE }) ||
+                  has({ permission: PermissionsEnum.WORKFLOW_WRITE }) ||
                   has({ permission: PermissionsEnum.NOTIFICATION_READ })
                 }
               >
                 <DropdownMenuGroup>
-                  <Protect permission={PermissionsEnum.EVENT_CREATE}>
+                  <Protect permission={PermissionsEnum.EVENT_WRITE}>
                     <Link to={triggerWorkflowLink} reloadDocument={isV0Workflow}>
                       <DropdownMenuItem className="cursor-pointer">
                         <RiPlayCircleLine />
@@ -351,7 +350,7 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
                       </DropdownMenuItem>
                     </Link>
                   </Protect>
-                  <Protect permission={PermissionsEnum.WORKFLOW_CREATE}>
+                  <Protect permission={PermissionsEnum.WORKFLOW_WRITE}>
                     <SyncWorkflowMenuItem
                       currentEnvironment={currentEnvironment}
                       isSyncable={isSyncable}
@@ -375,7 +374,7 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
                       </DropdownMenuItem>
                     </Link>
                   </Protect>
-                  <Protect permission={PermissionsEnum.WORKFLOW_CREATE}>
+                  <Protect permission={PermissionsEnum.WORKFLOW_WRITE}>
                     {isDuplicable ? (
                       <Link
                         to={buildRoute(ROUTES.WORKFLOWS_DUPLICATE, {
@@ -408,46 +407,37 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
                   </Protect>
                 </DropdownMenuGroup>
               </Protect>
-              <Protect
-                condition={(has) =>
-                  has({ permission: PermissionsEnum.WORKFLOW_CREATE }) ||
-                  has({ permission: PermissionsEnum.WORKFLOW_DELETE })
-                }
-              >
+              <Protect permission={PermissionsEnum.WORKFLOW_WRITE}>
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup className="*:cursor-pointer">
-                  <Protect permission={PermissionsEnum.WORKFLOW_CREATE}>
-                    <DropdownMenuItem
-                      onClick={handlePauseWorkflow}
-                      disabled={workflow.status === WorkflowStatusEnum.ERROR}
-                      data-testid={workflow.status === WorkflowStatusEnum.ACTIVE ? 'pause-workflow' : 'enable-workflow'}
-                    >
-                      {workflow.status === WorkflowStatusEnum.ACTIVE ? (
-                        <>
-                          <RiPauseCircleLine />
-                          Pause workflow
-                        </>
-                      ) : (
-                        <>
-                          <RiFlashlightLine />
-                          Enable workflow
-                        </>
-                      )}
-                    </DropdownMenuItem>
-                  </Protect>
-                  <Protect permission={PermissionsEnum.WORKFLOW_DELETE}>
-                    <DropdownMenuItem
-                      className="text-destructive"
-                      disabled={workflow.origin === WorkflowOriginEnum.EXTERNAL}
-                      onClick={() => {
-                        setTimeout(() => setIsDeleteModalOpen(true), 0);
-                      }}
-                      data-testid="delete-workflow"
-                    >
-                      <RiDeleteBin2Line />
-                      Delete workflow
-                    </DropdownMenuItem>
-                  </Protect>
+                  <DropdownMenuItem
+                    onClick={handlePauseWorkflow}
+                    disabled={workflow.status === WorkflowStatusEnum.ERROR}
+                    data-testid={workflow.status === WorkflowStatusEnum.ACTIVE ? 'pause-workflow' : 'enable-workflow'}
+                  >
+                    {workflow.status === WorkflowStatusEnum.ACTIVE ? (
+                      <>
+                        <RiPauseCircleLine />
+                        Pause workflow
+                      </>
+                    ) : (
+                      <>
+                        <RiFlashlightLine />
+                        Enable workflow
+                      </>
+                    )}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="text-destructive"
+                    disabled={workflow.origin === WorkflowOriginEnum.EXTERNAL}
+                    onClick={() => {
+                      setTimeout(() => setIsDeleteModalOpen(true), 0);
+                    }}
+                    data-testid="delete-workflow"
+                  >
+                    <RiDeleteBin2Line />
+                    Delete workflow
+                  </DropdownMenuItem>
                 </DropdownMenuGroup>
               </Protect>
             </DropdownMenuContent>

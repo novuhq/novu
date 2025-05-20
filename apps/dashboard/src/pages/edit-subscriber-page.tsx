@@ -12,8 +12,7 @@ export function EditSubscriberPage() {
   const { navigateToSubscribersCurrentPage } = useSubscribersNavigate();
   const has = useHasPermission();
 
-  const isReadOnly =
-    !has({ permission: PermissionsEnum.SUBSCRIBER_UPDATE }) && !has({ permission: PermissionsEnum.SUBSCRIBER_CREATE });
+  const isReadOnly = !has({ permission: PermissionsEnum.SUBSCRIBER_WRITE });
 
   const { ref: unmountRef } = useOnElementUnmount({
     callback: () => {
