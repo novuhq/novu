@@ -27,7 +27,7 @@ export class HttpClient {
     this.apiVersion = apiVersion;
     this.apiUrl = `${apiUrl}/${apiVersion}`;
     this.headers = {
-      'Novu-API-Version': this.apiVersion,
+      'Novu-API-Version': NOVU_API_VERSION,
       'Content-Type': 'application/json',
       'User-Agent': userAgent,
       ...headers,
