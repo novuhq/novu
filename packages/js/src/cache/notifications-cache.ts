@@ -143,6 +143,7 @@ export class NotificationsCache {
 
       uniqueFilterKeys.forEach((key) => {
         const notificationsResponse = this.getAggregated(getFilter(key));
+
         this.#emitter.emit('notifications.list.updated', {
           data: notificationsResponse,
         });
