@@ -53,7 +53,6 @@ export function PropertyActions({
         size="2xs"
         leadingIcon={RiDeleteBin6Line}
         onClick={onDeleteProperty}
-        disabled={isDisabled}
         aria-label="Delete property"
         className="p-1"
       />

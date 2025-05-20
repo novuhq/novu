@@ -322,26 +322,6 @@ export const SchemaPropertySettingsPopover = forwardRef<HTMLDivElement, SchemaPr
                 </div>
               </>
             )}
-
-            <FormItem>
-              <FormLabel className="text-xs">Description</FormLabel>
-              <Controller
-                name={descriptionPath as Path<SchemaEditorFormValues>}
-                control={control}
-                render={({ field }) => (
-                  <FormControl>
-                    <Textarea
-                      {...field}
-                      value={field.value === undefined || field.value === null ? '' : String(field.value)}
-                      onChange={(e) => field.onChange(e.target.value === '' ? undefined : e.target.value)}
-                      placeholder="Property description (supports Markdown)"
-                      rows={3}
-                    />
-                  </FormControl>
-                )}
-              />
-              <FormMessage />
-            </FormItem>
           </div>
           <Separator />
           <div className="flex justify-end px-3 py-2">
