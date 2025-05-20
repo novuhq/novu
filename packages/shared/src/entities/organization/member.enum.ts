@@ -3,7 +3,6 @@ export enum MemberRoleEnum {
   OWNER = 'org:owner',
   AUTHOR = 'org:author',
   VIEWER = 'org:viewer',
-  BILLING = 'org:billing',
   /**
    * @deprecated member is used only in OSS
    */

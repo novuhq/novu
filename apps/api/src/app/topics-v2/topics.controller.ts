@@ -108,7 +108,7 @@ export class TopicsController {
   @ApiResponse(TopicResponseDto, 201)
   @ApiResponse(TopicResponseDto, 200)
   @SdkMethodName('create')
-  @RequirePermissions(PermissionsEnum.TOPIC_CREATE)
+  @RequirePermissions(PermissionsEnum.TOPIC_WRITE)
   async upsertTopic(
     @UserSession() user: UserSessionData,
     @Body() body: CreateUpdateTopicRequestDto,
@@ -154,7 +154,7 @@ export class TopicsController {
   @ApiOperation({ summary: 'Update topic by key' })
   @ApiParam({ name: 'topicKey', description: 'The key identifier of the topic', type: String })
   @ApiResponse(TopicResponseDto, 200)
-  @RequirePermissions(PermissionsEnum.TOPIC_UPDATE)
+  @RequirePermissions(PermissionsEnum.TOPIC_WRITE)
   async updateTopic(
     @UserSession() user: UserSessionData,
     @Param('topicKey') topicKey: string,
@@ -179,7 +179,7 @@ export class TopicsController {
   @ApiResponse(DeleteTopicResponseDto, 200, false, true, {
     description: 'Topic deleted successfully',
   })
-  @RequirePermissions(PermissionsEnum.TOPIC_DELETE)
+  @RequirePermissions(PermissionsEnum.TOPIC_WRITE)
   async deleteTopic(
     @UserSession() user: UserSessionData,
     @Param('topicKey') topicKey: string
@@ -236,7 +236,7 @@ export class TopicsController {
   @ApiResponse(CreateTopicSubscriptionsResponseDto, 201, false, true, {
     description: 'Subscriptions created successfully',
   })
-  @RequirePermissions(PermissionsEnum.TOPIC_CREATE)
+  @RequirePermissions(PermissionsEnum.TOPIC_WRITE)
   async createTopicSubscriptions(
     @UserSession() user: UserSessionData,
     @Param('topicKey') topicKey: string,
@@ -279,7 +279,7 @@ export class TopicsController {
   @ApiResponse(DeleteTopicSubscriptionsResponseDto, 200, false, false, {
     description: 'Subscriptions deleted successfully',
   })
-  @RequirePermissions(PermissionsEnum.TOPIC_DELETE)
+  @RequirePermissions(PermissionsEnum.TOPIC_WRITE)
   async deleteTopicSubscriptions(
     @UserSession() user: UserSessionData,
     @Param('topicKey') topicKey: string,

@@ -83,7 +83,7 @@ export class EnvironmentsControllerV1 {
   @ProductFeature(ProductFeatureKeyEnum.MANAGE_ENVIRONMENTS)
   @SdkGroupName('Environments')
   @SdkMethodName('create')
-  @RequirePermissions(PermissionsEnum.ENVIRONMENT_CREATE)
+  @RequirePermissions(PermissionsEnum.ENVIRONMENT_WRITE)
   async createEnvironment(
     @UserSession() user: UserSessionData,
     @Body() body: CreateEnvironmentRequestDto
@@ -128,7 +128,7 @@ export class EnvironmentsControllerV1 {
   })
   @ApiExcludeEndpoint()
   @ApiResponse(EnvironmentResponseDto)
-  @RequirePermissions(PermissionsEnum.ENVIRONMENT_CREATE)
+  @RequirePermissions(PermissionsEnum.ENVIRONMENT_WRITE)
   async updateMyEnvironment(
     @UserSession() user: UserSessionData,
     @Param('environmentId') environmentId: string,
@@ -171,7 +171,7 @@ export class EnvironmentsControllerV1 {
   @Post('/api-keys/regenerate')
   @ApiResponse(ApiKey, 201, true)
   @ApiExcludeEndpoint()
-  @RequirePermissions(PermissionsEnum.API_KEY_CREATE)
+  @RequirePermissions(PermissionsEnum.API_KEY_WRITE)
   async regenerateOrganizationApiKeys(@UserSession() user: UserSessionData): Promise<ApiKey[]> {
     const command = GetApiKeysCommand.create({
       userId: user._id,
@@ -189,7 +189,7 @@ export class EnvironmentsControllerV1 {
   @ApiParam({ name: 'environmentId', type: String, required: true })
   @ProductFeature(ProductFeatureKeyEnum.MANAGE_ENVIRONMENTS)
   @ApiExcludeEndpoint()
-  @RequirePermissions(PermissionsEnum.ENVIRONMENT_DELETE)
+  @RequirePermissions(PermissionsEnum.ENVIRONMENT_WRITE)
   async deleteEnvironment(@UserSession() user: UserSessionData, @Param('environmentId') environmentId: string) {
     return await this.deleteEnvironmentUsecase.execute(
       DeleteEnvironmentCommand.create({
