@@ -10,10 +10,11 @@ import {
   Put,
   UseInterceptors,
 } from '@nestjs/common';
-import { ChannelTypeEnum, UserSessionData, PermissionsEnum } from '@novu/shared';
+import { ChannelTypeEnum, UserSessionData, PermissionsEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import {
   CalculateLimitNovuIntegration,
   CalculateLimitNovuIntegrationCommand,
+  FeatureFlagsService,
   OtelSpan,
   RequirePermissions,
 } from '@novu/application-generic';
@@ -64,7 +65,8 @@ export class IntegrationsController {
     private updateIntegrationUsecase: UpdateIntegration,
     private setIntegrationAsPrimaryUsecase: SetIntegrationAsPrimary,
     private removeIntegrationUsecase: RemoveIntegration,
-    private calculateLimitNovuIntegration: CalculateLimitNovuIntegration
+    private calculateLimitNovuIntegration: CalculateLimitNovuIntegration,
+    private featureFlagService: FeatureFlagsService
   ) {}
 
   @Get('/')
@@ -80,11 +82,14 @@ export class IntegrationsController {
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.INTEGRATION_READ)
   async listIntegrations(@UserSession() user: UserSessionData): Promise<IntegrationResponseDto[]> {
+    const canAccessCredentials = await this.canUserAccessCredentials(user);
+
     return await this.getIntegrationsUsecase.execute(
       GetIntegrationsCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
+        returnCredentials: canAccessCredentials,
       })
     );
   }
@@ -103,11 +108,14 @@ export class IntegrationsController {
   @SdkMethodName('listActive')
   @RequirePermissions(PermissionsEnum.INTEGRATION_READ)
   async getActiveIntegrations(@UserSession() user: UserSessionData): Promise<IntegrationResponseDto[]> {
+    const canAccessCredentials = await this.canUserAccessCredentials(user);
+
     return await this.getActiveIntegrationsUsecase.execute(
       GetActiveIntegrationsCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
+        returnCredentials: canAccessCredentials,
       })
     );
   }
@@ -146,7 +154,7 @@ export class IntegrationsController {
     description: 'Create an integration for the current environment the user is based on the API key provided',
   })
   @ExternalApiAccessible()
-  @RequirePermissions(PermissionsEnum.INTEGRATION_CREATE)
+  @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
   async createIntegration(
     @UserSession() user: UserSessionData,
     @Body() body: CreateIntegrationRequestDto
@@ -185,7 +193,7 @@ export class IntegrationsController {
     summary: 'Update integration',
   })
   @ExternalApiAccessible()
-  @RequirePermissions(PermissionsEnum.INTEGRATION_UPDATE)
+  @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
   async updateIntegrationById(
     @UserSession() user: UserSessionData,
     @Param('integrationId') integrationId: string,
@@ -226,7 +234,7 @@ export class IntegrationsController {
     summary: 'Set integration as primary',
   })
   @ExternalApiAccessible()
-  @RequirePermissions(PermissionsEnum.INTEGRATION_UPDATE)
+  @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
   @SdkMethodName('setAsPrimary')
   setIntegrationAsPrimary(
     @UserSession() user: UserSessionData,
@@ -248,7 +256,7 @@ export class IntegrationsController {
     summary: 'Delete integration',
   })
   @ExternalApiAccessible()
-  @RequirePermissions(PermissionsEnum.INTEGRATION_DELETE)
+  @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
   async removeIntegration(
     @UserSession() user: UserSessionData,
     @Param('integrationId') integrationId: string
@@ -296,5 +304,16 @@ export class IntegrationsController {
         environmentId: user.environmentId,
       })
     );
+  }
+
+  private async canUserAccessCredentials(user: UserSessionData): Promise<boolean> {
+    const isRbacEnabled = await this.featureFlagService.getFlag({
+      organization: { _id: user.organizationId },
+      user: { _id: user._id },
+      key: FeatureFlagsKeysEnum.IS_RBAC_ENABLED,
+      defaultValue: false,
+    });
+
+    return isRbacEnabled ? user.permissions.includes(PermissionsEnum.INTEGRATION_WRITE) : true;
   }
 }

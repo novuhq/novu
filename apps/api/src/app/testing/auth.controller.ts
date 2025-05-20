@@ -20,7 +20,7 @@ export class TestApiAuthController {
     return true;
   }
 
-  @RequirePermissions(PermissionsEnum.INTEGRATION_CREATE, PermissionsEnum.WORKFLOW_CREATE)
+  @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE, PermissionsEnum.WORKFLOW_WRITE)
   @ExternalApiAccessible()
   @Get('/permission-route')
   permissionRoute() {

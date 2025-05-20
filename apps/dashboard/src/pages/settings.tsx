@@ -76,14 +76,13 @@ export function SettingsPage() {
   const clerkAppearance = getClerkComponentAppearance(isRbacEnabled);
 
   function checkRbacEnabled(subscription: GetSubscriptionDto | undefined, featureFlag: boolean) {
-    const isTrialActive = subscription?.trial.isActive || false;
     const apiServiceLevel = subscription?.apiServiceLevel || ApiServiceLevelEnum.FREE;
     const rbacFeatureEnabled = getFeatureForTierAsBoolean(
       FeatureNameEnum.ACCOUNT_ROLE_BASED_ACCESS_CONTROL_BOOLEAN,
       apiServiceLevel
     );
 
-    return rbacFeatureEnabled && !isTrialActive && featureFlag;
+    return rbacFeatureEnabled && featureFlag;
   }
 
   const currentTab =
