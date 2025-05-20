@@ -60,6 +60,7 @@ export const InboxProvider = (props: InboxProviderProps) => {
   const [filter, setFilter] = createSignal<NotificationFilter>({
     ...STATUS_TO_FILTER[NotificationStatus.UNREAD_READ],
     tags: props.tabs.length > 0 ? getTagsFromTab(props.tabs[0]) : [],
+    data: props.tabs.length > 0 ? props.tabs[0].filter?.data : {},
   });
   const [hideBranding, setHideBranding] = createSignal(false);
   const [isDevelopmentMode, setIsDevelopmentMode] = createSignal(false);

@@ -125,7 +125,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
 
     if (query.data) {
       requestQuery = {
-        ...getFlatObject({ payload: query.data }),
+        ...getFlatObject({ data: query.data }),
         ...requestQuery,
       };
     }
