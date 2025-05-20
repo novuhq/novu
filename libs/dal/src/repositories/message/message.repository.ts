@@ -555,6 +555,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     subscriberId: string;
     from: {
       tags?: string[];
+      data?: Record<string, unknown>;
       seen?: boolean;
       read?: boolean;
       archived?: boolean;
@@ -568,7 +569,10 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     const isFromSeen = from.seen !== undefined;
     const isFromRead = from.read !== undefined;
     const isFromArchived = from.archived !== undefined;
+    const flatData = getFlatObject({ data: from.data });
+
     const query: MessageQuery & EnforceEnvId = {
+      ...flatData,
       _environmentId: environmentId,
       _subscriberId: subscriberId,
       ...(from.tags && from.tags?.length > 0 && { tags: { $in: from.tags } }),
