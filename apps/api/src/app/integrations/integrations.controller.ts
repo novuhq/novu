@@ -154,7 +154,7 @@ export class IntegrationsController {
     description: 'Create an integration for the current environment the user is based on the API key provided',
   })
   @ExternalApiAccessible()
-  @RequirePermissions(PermissionsEnum.INTEGRATION_CREATE)
+  @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
   async createIntegration(
     @UserSession() user: UserSessionData,
     @Body() body: CreateIntegrationRequestDto
@@ -193,7 +193,7 @@ export class IntegrationsController {
     summary: 'Update integration',
   })
   @ExternalApiAccessible()
-  @RequirePermissions(PermissionsEnum.INTEGRATION_UPDATE)
+  @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
   async updateIntegrationById(
     @UserSession() user: UserSessionData,
     @Param('integrationId') integrationId: string,
@@ -234,7 +234,7 @@ export class IntegrationsController {
     summary: 'Set integration as primary',
   })
   @ExternalApiAccessible()
-  @RequirePermissions(PermissionsEnum.INTEGRATION_UPDATE)
+  @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
   @SdkMethodName('setAsPrimary')
   setIntegrationAsPrimary(
     @UserSession() user: UserSessionData,
@@ -256,7 +256,7 @@ export class IntegrationsController {
     summary: 'Delete integration',
   })
   @ExternalApiAccessible()
-  @RequirePermissions(PermissionsEnum.INTEGRATION_DELETE)
+  @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
   async removeIntegration(
     @UserSession() user: UserSessionData,
     @Param('integrationId') integrationId: string
@@ -314,6 +314,6 @@ export class IntegrationsController {
       defaultValue: false,
     });
 
-    return isRbacEnabled ? user.permissions.includes(PermissionsEnum.INTEGRATION_CREATE) : true;
+    return isRbacEnabled ? user.permissions.includes(PermissionsEnum.INTEGRATION_WRITE) : true;
   }
 }

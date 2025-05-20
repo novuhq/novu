@@ -29,8 +29,7 @@ export function PlanActionButton({
   const { navigateToCheckout, isLoading: isCheckingOut } = useCheckoutSession();
   const { navigateToPortal, isLoading: isLoadingPortal } = useBillingPortal(billingInterval);
 
-  const hasPortalAccess = has({ permission: PermissionsEnum.BILLING_PORTAL_ACCESS });
-  const hasSubscriptionAccess = has({ permission: PermissionsEnum.BILLING_SUBSCRIPTION_CREATE });
+  const hasBillingWriteAccess = has({ permission: PermissionsEnum.BILLING_WRITE });
 
   const isPaidSubscriptionActive = () => {
     return (
@@ -41,15 +40,11 @@ export function PlanActionButton({
     );
   };
 
-  if (requestedServiceLevel === ApiServiceLevelEnum.FREE) {
+  if (requestedServiceLevel === ApiServiceLevelEnum.FREE || !hasBillingWriteAccess) {
     return null;
   }
 
   if (isPaidSubscriptionActive()) {
-    if (!hasPortalAccess) {
-      return null;
-    }
-
     return (
       <Button
         mode="outline"
@@ -62,10 +57,6 @@ export function PlanActionButton({
         Manage Account
       </Button>
     );
-  }
-
-  if (!hasSubscriptionAccess) {
-    return null;
   }
 
   const indexRequested = getFeatureForTierAsNumber(

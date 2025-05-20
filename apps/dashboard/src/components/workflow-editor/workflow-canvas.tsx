@@ -102,14 +102,14 @@ const mapStepToNode = ({
   addStepIndex,
   previousPosition,
   step,
-  readOnly,
   workflowOrigin = WorkflowOriginEnum.NOVU_CLOUD,
+  isTemplateStorePreview,
 }: {
   addStepIndex: number;
   previousPosition: { x: number; y: number };
   step: Step;
-  readOnly?: boolean;
   workflowOrigin?: WorkflowOriginEnum;
+  isTemplateStorePreview?: boolean;
 }): Node<NodeData, keyof typeof nodeTypes> => {
   const content = mapStepToNodeContent(step, workflowOrigin);
 
@@ -127,13 +127,19 @@ const mapStepToNode = ({
       stepSlug: step.slug,
       error: error?.message,
       controlValues: step.controls.values,
-      readOnly,
+      isTemplateStorePreview,
     },
     type: step.type,
   };
 };
 
-const WorkflowCanvasChild = ({ steps, readOnly }: { steps: Step[]; readOnly?: boolean }) => {
+const WorkflowCanvasChild = ({
+  steps,
+  isTemplateStorePreview,
+}: {
+  steps: Step[];
+  isTemplateStorePreview?: boolean;
+}) => {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const reactFlowInstance = useReactFlow();
   const { currentEnvironment } = useEnvironment();
@@ -148,7 +154,7 @@ const WorkflowCanvasChild = ({ steps, readOnly }: { steps: Step[]; readOnly?: bo
       data: {
         workflowSlug: currentWorkflow?.slug ?? '',
         environment: currentEnvironment?.slug ?? '',
-        readOnly,
+        isTemplateStorePreview,
       },
       type: 'trigger',
     };
@@ -159,8 +165,8 @@ const WorkflowCanvasChild = ({ steps, readOnly }: { steps: Step[]; readOnly?: bo
         step,
         previousPosition,
         addStepIndex: index,
-        readOnly,
         workflowOrigin: currentWorkflow?.origin,
+        isTemplateStorePreview,
       });
       previousPosition = node.position;
       return node;
@@ -168,15 +174,13 @@ const WorkflowCanvasChild = ({ steps, readOnly }: { steps: Step[]; readOnly?: bo
 
     let allNodes: Node<NodeData, keyof typeof nodeTypes>[] = [triggerNode, ...createdNodes];
 
-    if (!readOnly) {
-      const addNode: Node<NodeData, 'add'> = {
-        id: crypto.randomUUID(),
-        position: { ...previousPosition, y: previousPosition.y + Y_DISTANCE },
-        data: {},
-        type: 'add',
-      };
-      allNodes = [...allNodes, addNode];
-    }
+    const addNode: Node<NodeData, 'add'> = {
+      id: crypto.randomUUID(),
+      position: { ...previousPosition, y: previousPosition.y + Y_DISTANCE },
+      data: {},
+      type: 'add',
+    };
+    allNodes = [...allNodes, addNode];
 
     const edges = allNodes.reduce<AddNodeEdgeType[]>((acc, node, index) => {
       if (index === 0) {
@@ -191,13 +195,13 @@ const WorkflowCanvasChild = ({ steps, readOnly }: { steps: Step[]; readOnly?: bo
         sourceHandle: 'b',
         targetHandle: 'a',
         target: node.id,
-        type: readOnly ? 'default' : 'addNode',
+        type: isTemplateStorePreview ? 'default' : 'addNode',
         style: {
           stroke: 'hsl(var(--neutral-alpha-200))',
           strokeWidth: 2,
           strokeDasharray: 5,
         },
-        data: readOnly
+        data: isTemplateStorePreview
           ? undefined
           : {
               isLast: index === allNodes.length - 1,
@@ -209,7 +213,7 @@ const WorkflowCanvasChild = ({ steps, readOnly }: { steps: Step[]; readOnly?: bo
     }, []);
 
     return [allNodes, edges];
-  }, [steps, readOnly, currentWorkflow?.slug, currentEnvironment?.slug]);
+  }, [steps, currentWorkflow?.slug, currentEnvironment?.slug, isTemplateStorePreview]);
 
   const positionCanvas = useCallback(
     (options?: ViewportHelperFunctionOptions) => {
@@ -249,7 +253,7 @@ const WorkflowCanvasChild = ({ steps, readOnly }: { steps: Step[]; readOnly?: bo
         selectionOnDrag
         panOnDrag={panOnDrag}
         onPaneClick={() => {
-          if (readOnly) {
+          if (isTemplateStorePreview) {
             return;
           }
 
@@ -276,16 +280,22 @@ const WorkflowCanvasChild = ({ steps, readOnly }: { steps: Step[]; readOnly?: bo
   );
 };
 
-export const WorkflowCanvas = ({ steps, readOnly }: { steps: Step[]; readOnly?: boolean }) => {
+export const WorkflowCanvas = ({
+  steps,
+  isTemplateStorePreview,
+}: {
+  steps: Step[];
+  isTemplateStorePreview?: boolean;
+}) => {
   const has = useHasPermission();
-  const isReadOnly = !has({ permission: PermissionsEnum.WORKFLOW_CREATE });
+  const showReadOnlyOverlay = !has({ permission: PermissionsEnum.WORKFLOW_WRITE });
 
   return (
     <ReactFlowProvider>
       <div className="relative h-full w-full">
-        <WorkflowCanvasChild steps={steps || []} readOnly={readOnly} />
+        <WorkflowCanvasChild steps={steps || []} isTemplateStorePreview={isTemplateStorePreview} />
 
-        {isReadOnly && (
+        {showReadOnlyOverlay && (
           <>
             <div
               className="border-warning/20 pointer-events-none absolute inset-x-0 top-0 border-t-[0.5px]"

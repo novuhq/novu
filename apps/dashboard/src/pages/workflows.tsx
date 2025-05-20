@@ -238,7 +238,7 @@ const CreateWorkflowButton = () => {
     );
   };
 
-  const canCreateWorkflow = has({ permission: PermissionsEnum.WORKFLOW_CREATE });
+  const canCreateWorkflow = has({ permission: PermissionsEnum.WORKFLOW_WRITE });
 
   if (!canCreateWorkflow) {
     return (

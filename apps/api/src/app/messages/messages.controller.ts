@@ -73,7 +73,7 @@ export class MessagesController {
     description: 'Deletes a message entity from the Novu platform',
   })
   @ApiParam({ name: 'messageId', type: String, required: true })
-  @RequirePermissions(PermissionsEnum.MESSAGE_DELETE)
+  @RequirePermissions(PermissionsEnum.MESSAGE_WRITE)
   async deleteMessage(
     @UserSession() user: UserSessionData,
     @Param() { messageId }: DeleteMessageParams
@@ -97,7 +97,7 @@ export class MessagesController {
   })
   @ApiParam({ name: 'transactionId', type: String, required: true })
   @SdkMethodName('deleteByTransactionId')
-  @RequirePermissions(PermissionsEnum.MESSAGE_DELETE)
+  @RequirePermissions(PermissionsEnum.MESSAGE_WRITE)
   async deleteMessagesByTransactionId(
     @UserSession() user: UserSessionData,
     @Param() { transactionId }: { transactionId: string },

@@ -28,7 +28,7 @@ export const SubscriberListBlank = () => {
         </Link>
 
         <PermissionButton
-          permission={PermissionsEnum.SUBSCRIBER_CREATE}
+          permission={PermissionsEnum.SUBSCRIBER_WRITE}
           variant="primary"
           leadingIcon={RiRouteFill}
           className="gap-2"

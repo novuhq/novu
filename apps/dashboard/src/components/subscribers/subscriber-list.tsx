@@ -35,7 +35,7 @@ const SubscriberListWrapper = (props: SubscriberListFiltersProps) => {
           className="py-2.5"
         />
         <PermissionButton
-          permission={PermissionsEnum.SUBSCRIBER_CREATE}
+          permission={PermissionsEnum.SUBSCRIBER_WRITE}
           mode="gradient"
           className="rounded-l-lg border-none px-1.5 py-2 text-white"
           variant="primary"

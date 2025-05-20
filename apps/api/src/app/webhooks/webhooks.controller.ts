@@ -22,7 +22,7 @@ export class WebhooksController {
 
   @Get('/portal/token')
   @ProductFeature(ProductFeatureKeyEnum.WEBHOOKS)
-  @RequirePermissions(PermissionsEnum.WEBHOOK_CREATE, PermissionsEnum.WEBHOOK_READ)
+  @RequirePermissions(PermissionsEnum.WEBHOOK_WRITE, PermissionsEnum.WEBHOOK_READ)
   @ApiOperation({
     summary: 'Get Webhook Portal Access Token',
     description:
@@ -40,7 +40,7 @@ export class WebhooksController {
 
   @Post('/portal/token')
   @ProductFeature(ProductFeatureKeyEnum.WEBHOOKS)
-  @RequirePermissions(PermissionsEnum.WEBHOOK_CREATE)
+  @RequirePermissions(PermissionsEnum.WEBHOOK_WRITE)
   @ApiOperation({
     summary: 'Create Webhook Portal Access Token',
     description: 'Creates a token for accessing the webhook portal for the current environment.',

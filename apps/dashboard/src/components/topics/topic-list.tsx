@@ -57,7 +57,7 @@ export const CreateTopicButton = () => {
 
   return (
     <PermissionButton
-      permission={PermissionsEnum.TOPIC_CREATE}
+      permission={PermissionsEnum.TOPIC_WRITE}
       variant="primary"
       mode="gradient"
       size="xs"

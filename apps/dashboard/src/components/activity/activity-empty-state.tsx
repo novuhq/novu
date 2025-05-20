@@ -125,7 +125,7 @@ export function ActivityEmptyState({
               <ExternalLink underline={false} variant="documentation" href="https://docs.novu.co" target="_blank">
                 View Docs
               </ExternalLink>
-              <Protect permission={PermissionsEnum.EVENT_CREATE}>
+              <Protect permission={PermissionsEnum.EVENT_WRITE}>
                 <Button
                   leadingIcon={RiPlayCircleLine}
                   variant="primary"

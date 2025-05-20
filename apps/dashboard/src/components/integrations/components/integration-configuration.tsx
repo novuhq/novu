@@ -160,7 +160,7 @@ export function IntegrationConfiguration({
           </div>
         ) : (
           <div className="p-3">
-            <Protect permission={PermissionsEnum.INTEGRATION_CREATE}>
+            <Protect permission={PermissionsEnum.INTEGRATION_WRITE}>
               <Accordion type="single" collapsible defaultValue="credentials">
                 <AccordionItem value="credentials">
                   <AccordionTrigger>
