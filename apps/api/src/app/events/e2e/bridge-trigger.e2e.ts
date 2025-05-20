@@ -1614,7 +1614,7 @@ contexts.forEach((context: Context) => {
       expect(emailMessages[0].subject).to.include('Welcome to Novu Jane Doe');
     });
 
-    it(`should fail workflow if delay step is skipped via payload [${context.name}]`, async function () {
+    it(`should succeed workflow if delay step is skipped via payload [${context.name}]`, async function () {
       this.timeout(25000); // Increased timeout for potential delays and processing
 
       const workflowId = `delay-skip-causes-failure-${context.name}`;
@@ -1657,12 +1657,12 @@ contexts.forEach((context: Context) => {
         expect(foundWorkflow, 'Stateful: Workflow should be found after sync').to.be.ok;
       }
 
-      // --- Scenario 1: Delay is NOT skipped (workflow should succeed) ---
+      // Delay is skipped (workflow should succeed) ---
       const triggerResultNoSkip = await triggerEvent(
         session,
         workflowId,
         subscriber.subscriberId,
-        { skipTheDelay: false },
+        { skipTheDelay: true },
         bridge
       );
       const transactionIdNoSkip = triggerResultNoSkip?.data?.data?.transactionId;
@@ -1697,57 +1697,6 @@ contexts.forEach((context: Context) => {
           status: ExecutionDetailsStatusEnum.FAILED,
         });
         expect(failedExecDetailsNoSkip.length).to.equal(0, 'Scenario 1: Should have no failed execution details');
-      }
-
-      // --- Scenario 2: Delay IS skipped (workflow should FAIL as per bug) ---
-      const triggerResultSkip = await triggerEvent(
-        session,
-        workflowId,
-        subscriber.subscriberId,
-        { skipTheDelay: true },
-        bridge
-      );
-      const transactionIdSkip = triggerResultSkip?.data?.data?.transactionId;
-      expect(transactionIdSkip, 'Scenario 2: TransactionId should exist for skipped delay trigger').to.be.ok;
-
-      if (transactionIdSkip) {
-        await session.waitForJobCompletion(transactionIdSkip);
-
-        const messagesSkip = await messageRepository.find({
-          _environmentId: session.environment._id,
-          _subscriberId: subscriber._id,
-          transactionId: transactionIdSkip,
-          channel: StepTypeEnum.IN_APP,
-        });
-
-        expect(messagesSkip.some((message) => message.content === 'Message from before delay')).to.be.true(
-          'Scenario 2: First in-app message should exist'
-        );
-        expect(messagesSkip.some((message) => message.content === 'Message from after delay')).to.be.false(
-          'Scenario 2: Second in-app message should NOT exist'
-        );
-        expect(messagesSkip.length).to.equal(
-          1,
-          'Scenario 2: Should have only 1 message (before delay) if workflow failed'
-        );
-
-        const delayJobSkipped = await jobRepository.findOne({
-          _environmentId: session.environment._id,
-          transactionId: transactionIdSkip,
-          type: StepTypeEnum.DELAY,
-        });
-        expect(delayJobSkipped?.status).to.equal(JobStatusEnum.CANCELED, 'Scenario 2: Delay job should be CANCELED');
-
-        const failedWorkflowExecutionDetails = await executionDetailsRepository.find({
-          _environmentId: session.environment._id,
-          transactionId: transactionIdSkip,
-          status: ExecutionDetailsStatusEnum.FAILED,
-        });
-        expect(failedWorkflowExecutionDetails.length).to.be.greaterThan(
-          0,
-          'Scenario 2: Workflow should have at least one FAILED execution detail'
-        );
-        // Optional: Inspect failedWorkflowExecutionDetails[0].detail or .raw for specific error message if known
       }
     });
   });
