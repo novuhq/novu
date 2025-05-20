@@ -51,7 +51,7 @@ export const useOrganizationList = () => {
 
 export const ClerkContext = React.createContext({});
 
-export const Protect = ({ children }: { children: React.ReactNode }) => {
+export const Protect = ({ children, ...rest }: any) => {
   return children;
 };
 
