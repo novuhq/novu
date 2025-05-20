@@ -137,7 +137,7 @@ function getCurlCommand() {
     (typeof window !== 'undefined' && (window as any).NOVU_LOCAL_BACKEND_URL) || 'https://api.novu.co';
 
   return `curl -X POST \
-  ${DEFAULT_BACKEND_URL}/${DEFAULT_API_VERSION}/inbox/events \
+  ${DEFAULT_BACKEND_URL}/${DEFAULT_API_VERSION}/events/trigger \
   -H 'Authorization: Keyless ${identifier}' \
   -H 'Content-Type: application/json' \
   -d '{
