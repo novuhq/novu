@@ -278,7 +278,7 @@ const WorkflowCanvasChild = ({ steps, readOnly }: { steps: Step[]; readOnly?: bo
 
 export const WorkflowCanvas = ({ steps, readOnly }: { steps: Step[]; readOnly?: boolean }) => {
   const has = useHasPermission();
-  const isReadOnly = readOnly || !has({ permission: PermissionsEnum.WORKFLOW_CREATE });
+  const isReadOnly = !has({ permission: PermissionsEnum.WORKFLOW_CREATE });
 
   return (
     <ReactFlowProvider>
@@ -300,7 +300,7 @@ export const WorkflowCanvas = ({ steps, readOnly }: { steps: Step[]; readOnly?: 
               <InlineToast
                 className="bg-warning/10 border shadow-md"
                 variant={'warning'}
-                description="Nice! You can see this, but changes are locked down."
+                description="Content visible but locked for editing. Contact an admin for edit access."
                 title="View-only mode: "
               />
             </div>

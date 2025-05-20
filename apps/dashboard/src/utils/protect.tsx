@@ -8,12 +8,10 @@ export const Protect = (props: ProtectProps) => {
   const { subscription } = useFetchSubscription();
   const isRbacFlagEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_RBAC_ENABLED);
   const isRbacFeatureEnabled =
-    !subscription?.trial.isActive &&
     getFeatureForTierAsBoolean(
       FeatureNameEnum.ACCOUNT_ROLE_BASED_ACCESS_CONTROL_BOOLEAN,
       subscription?.apiServiceLevel ?? ApiServiceLevelEnum.FREE
-    ) &&
-    isRbacFlagEnabled;
+    ) && isRbacFlagEnabled;
 
   if (!isRbacFeatureEnabled) {
     return props.children;

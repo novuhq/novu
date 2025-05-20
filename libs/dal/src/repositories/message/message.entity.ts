@@ -82,7 +82,7 @@ export class MessageEntity {
 
   cta: IMessageCTA;
 
-  _feedId: string;
+  _feedId?: string;
 
   status: 'sent' | 'error' | 'warning';
 
