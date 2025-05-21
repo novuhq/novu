@@ -19,12 +19,13 @@
     "type": "commonjs",
     "strictMode": false,
     "noInterop": false,
-    "lazy": false
+    "lazy": true
   },
   "sourceMaps": "inline",
   "minify": false,
   "exclude": [
     "node_modules",
-    ".source"
+    ".source",
+    "../../.source"
   ]
 }
