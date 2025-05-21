@@ -1,31 +1,16 @@
 {
   "$schema": "https://swc.rs/schema.json",
   "jsc": {
-    "target": "es2020",
+    "target": "es5",
     "parser": {
       "syntax": "typescript",
       "tsx": true,
       "decorators": true,
       "dynamicImport": true
-    },
-    "transform": {
-      "legacyDecorator": true,
-      "decoratorMetadata": true
-    },
-    "keepClassNames": true,
-    "externalHelpers": false
+    }
   },
   "module": {
-    "type": "es6",
-    "strictMode": false,
-    "noInterop": false,
-    "lazy": true
+    "type": "commonjs"
   },
-  "sourceMaps": "inline",
-  "minify": false,
-  "exclude": [
-    "node_modules",
-    ".source",
-    "../../.source"
-  ]
+  "sourceMaps": "inline"
 }
