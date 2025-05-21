@@ -6,6 +6,7 @@ import {
   CreateExecutionDetailsCommand,
   StandardQueueService,
   PinoLogger,
+  AnalyticsService,
 } from '@novu/application-generic';
 import {
   JobEntity,
@@ -47,6 +48,7 @@ describe('SnoozeNotification', () => {
   let organizationRepositoryMock: sinon.SinonStubbedInstance<CommunityOrganizationRepository>;
   let createExecutionDetailsMock: sinon.SinonStubbedInstance<CreateExecutionDetails>;
   let markNotificationAsMock: sinon.SinonStubbedInstance<MarkNotificationAs>;
+  let analyticsServiceMock: sinon.SinonStubbedInstance<AnalyticsService>;
 
   const mockMessage: MessageEntity = {
     _id: validNotificationId,
@@ -91,6 +93,7 @@ describe('SnoozeNotification', () => {
     organizationRepositoryMock = sinon.createStubInstance(CommunityOrganizationRepository);
     createExecutionDetailsMock = sinon.createStubInstance(CreateExecutionDetails);
     markNotificationAsMock = sinon.createStubInstance(MarkNotificationAs);
+    analyticsServiceMock = sinon.createStubInstance(AnalyticsService);
 
     // Mock the MarkNotificationAsCommand.create method
     sinon.stub(MarkNotificationAsCommand, 'create').returns({
@@ -114,7 +117,8 @@ describe('SnoozeNotification', () => {
       standardQueueServiceMock as any,
       organizationRepositoryMock as any,
       createExecutionDetailsMock as any,
-      markNotificationAsMock as any
+      markNotificationAsMock as any,
+      analyticsServiceMock as any
     );
 
     sinon.stub(JobRepository, 'createObjectId').returns('new-job-id');

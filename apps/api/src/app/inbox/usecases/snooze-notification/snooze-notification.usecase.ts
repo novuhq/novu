@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, InternalServerErrorException, HttpException, HttpStatus } from '@nestjs/common';
 import {
+  AnalyticsService,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   DetailEnum,
@@ -28,6 +29,7 @@ import { SnoozeNotificationCommand } from './snooze-notification.command';
 import { MarkNotificationAs } from '../mark-notification-as/mark-notification-as.usecase';
 import { MarkNotificationAsCommand } from '../mark-notification-as/mark-notification-as.command';
 import { InboxNotification } from '../../utils/types';
+import { AnalyticsEventsEnum } from '../../utils';
 
 @Injectable()
 export class SnoozeNotification {
@@ -40,7 +42,8 @@ export class SnoozeNotification {
     private standardQueueService: StandardQueueService,
     private organizationRepository: CommunityOrganizationRepository,
     private createExecutionDetails: CreateExecutionDetails,
-    private markNotificationAs: MarkNotificationAs
+    private markNotificationAs: MarkNotificationAs,
+    private analyticsService: AnalyticsService
   ) {}
 
   public async execute(command: SnoozeNotificationCommand): Promise<InboxNotification> {
@@ -73,6 +76,13 @@ export class SnoozeNotification {
         .catch((error) => {
           this.logger.error({ err: error }, 'Failed to create execution details');
         });
+
+      this.analyticsService.mixpanelTrack(AnalyticsEventsEnum.SNOOZE_NOTIFICATION, '', {
+        _organization: command.organizationId,
+        _notification: command.notificationId,
+        _subscriber: notification._subscriberId,
+        snoozeUntil: command.snoozeUntil,
+      });
 
       return snoozedNotification;
     } catch (error) {

@@ -68,7 +68,7 @@ describe('PermissionsGuard #novu-v2', () => {
       await partialPermissionsSession.updateOrganizationServiceLevel(ApiServiceLevelEnum.BUSINESS);
 
       await partialPermissionsSession.updateEETokenClaims({
-        org_permissions: [PermissionsEnum.INTEGRATION_CREATE],
+        org_permissions: [PermissionsEnum.INTEGRATION_READ],
       });
 
       const response = await partialPermissionsSession.testAgent

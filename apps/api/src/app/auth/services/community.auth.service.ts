@@ -21,6 +21,7 @@ import {
   UserRepository,
 } from '@novu/dal';
 import {
+  ALL_PERMISSIONS,
   ApiAuthSchemeEnum,
   AuthenticateContext,
   AuthProviderEnum,
@@ -190,7 +191,7 @@ export class CommunityAuthService implements IAuthService {
       email: user.email,
       profilePicture: user.profilePicture || undefined,
       roles: [MemberRoleEnum.OSS_ADMIN],
-      permissions: [],
+      permissions: ALL_PERMISSIONS,
       organizationId: environment?._organizationId || '',
       environmentId: environment?._id || '',
       scheme: ApiAuthSchemeEnum.API_KEY,

@@ -1,4 +1,4 @@
-import { WorkflowOriginEnum } from '@novu/shared';
+import { PermissionsEnum, WorkflowOriginEnum } from '@novu/shared';
 import { Node as FlowNode, Handle, NodeProps, Position } from '@xyflow/react';
 import { ComponentProps } from 'react';
 import { RiFilter3Fill, RiPlayCircleLine } from 'react-icons/ri';
@@ -17,6 +17,7 @@ import { cn } from '@/utils/ui';
 import { STEP_TYPE_TO_ICON } from '../icons/utils';
 import { AddStepMenu } from './add-step-menu';
 import { Node, NodeBody, NodeError, NodeHeader, NodeIcon, NodeName } from './base-node';
+import { useHasPermission } from '@/hooks/use-has-permission';
 
 export type NodeData = {
   addStepIndex?: number;
@@ -27,7 +28,7 @@ export type NodeData = {
   controlValues?: Record<string, any>;
   workflowSlug?: string;
   environment?: string;
-  readOnly?: boolean;
+  isTemplateStorePreview?: boolean;
 };
 
 export type NodeType = FlowNode<NodeData>;
@@ -40,7 +41,7 @@ const handleClassName = `${topHandleClasses} ${bottomHandleClasses}`;
 
 export const TriggerNode = ({
   data,
-}: NodeProps<FlowNode<{ environmentSlug: string; workflowSlug: string; readOnly?: boolean }>>) => {
+}: NodeProps<FlowNode<{ environmentSlug: string; workflowSlug: string; isTemplateStorePreview?: boolean }>>) => {
   const content = (
     <Node
       className="relative rounded-tl-none [&>span]:rounded-tl-none"
@@ -54,14 +55,14 @@ export const TriggerNode = ({
       <NodeHeader type={StepTypeEnum.TRIGGER}>
         <NodeName>Workflow trigger</NodeName>
       </NodeHeader>
-      <NodeBody type={StepTypeEnum.TRIGGER} controlValues={{}} showPreview={data.readOnly}>
+      <NodeBody type={StepTypeEnum.TRIGGER} controlValues={{}} showPreview={data.isTemplateStorePreview}>
         This step triggers this workflow
       </NodeBody>
       <Handle isConnectable={false} className={handleClassName} type="source" position={Position.Bottom} id="b" />
     </Node>
   );
 
-  if (data.readOnly) {
+  if (data.isTemplateStorePreview) {
     return content;
   }
 
@@ -121,7 +122,7 @@ const StepNode = (props: StepNodeProps) => {
 };
 
 const NodeWrapper = ({ children, data, type }: { children: React.ReactNode; data: NodeData; type: StepTypeEnum }) => {
-  if (data.readOnly) {
+  if (data.isTemplateStorePreview) {
     return children;
   }
 
@@ -154,7 +155,11 @@ export const EmailNode = ({ data }: NodeProps<NodeType>) => {
           <NodeName>{data.name || 'Email Step'}</NodeName>
         </NodeHeader>
 
-        <NodeBody type={StepTypeEnum.EMAIL} showPreview={data.readOnly} controlValues={data.controlValues ?? {}}>
+        <NodeBody
+          type={StepTypeEnum.EMAIL}
+          showPreview={data.isTemplateStorePreview}
+          controlValues={data.controlValues ?? {}}
+        >
           {data.content}
         </NodeBody>
         {data.error && <NodeError>{data.error}</NodeError>}
@@ -178,7 +183,11 @@ export const SmsNode = (props: NodeProps<NodeType>) => {
           </NodeIcon>
           <NodeName>{data.name || 'SMS Step'}</NodeName>
         </NodeHeader>
-        <NodeBody showPreview={data.readOnly} type={StepTypeEnum.SMS} controlValues={data.controlValues ?? {}}>
+        <NodeBody
+          showPreview={data.isTemplateStorePreview}
+          type={StepTypeEnum.SMS}
+          controlValues={data.controlValues ?? {}}
+        >
           {data.content}
         </NodeBody>
         {data.error && <NodeError>{data.error}</NodeError>}
@@ -202,7 +211,11 @@ export const InAppNode = (props: NodeProps<NodeType>) => {
           </NodeIcon>
           <NodeName>{data.name || 'In-App Step'}</NodeName>
         </NodeHeader>
-        <NodeBody showPreview={data.readOnly} type={StepTypeEnum.IN_APP} controlValues={data.controlValues ?? {}}>
+        <NodeBody
+          showPreview={data.isTemplateStorePreview}
+          type={StepTypeEnum.IN_APP}
+          controlValues={data.controlValues ?? {}}
+        >
           {data.content}
         </NodeBody>
         {data.error && <NodeError>{data.error}</NodeError>}
@@ -226,7 +239,11 @@ export const PushNode = (props: NodeProps<NodeType>) => {
           </NodeIcon>
           <NodeName>{data.name || 'Push Step'}</NodeName>
         </NodeHeader>
-        <NodeBody showPreview={data.readOnly} type={StepTypeEnum.PUSH} controlValues={data.controlValues ?? {}}>
+        <NodeBody
+          showPreview={data.isTemplateStorePreview}
+          type={StepTypeEnum.PUSH}
+          controlValues={data.controlValues ?? {}}
+        >
           {data.content}
         </NodeBody>
         {data.error && <NodeError>{data.error}</NodeError>}
@@ -250,7 +267,11 @@ export const ChatNode = (props: NodeProps<NodeType>) => {
           </NodeIcon>
           <NodeName>{data.name || 'Chat Step'}</NodeName>
         </NodeHeader>
-        <NodeBody showPreview={data.readOnly} type={StepTypeEnum.CHAT} controlValues={data.controlValues ?? {}}>
+        <NodeBody
+          showPreview={data.isTemplateStorePreview}
+          type={StepTypeEnum.CHAT}
+          controlValues={data.controlValues ?? {}}
+        >
           {data.content}
         </NodeBody>
         {data.error && <NodeError>{data.error}</NodeError>}
@@ -336,12 +357,14 @@ export const CustomNode = (props: NodeProps<NodeType>) => {
 export const AddNode = (_props: NodeProps<NodeType>) => {
   const { workflow, update } = useWorkflow();
   const navigate = useNavigate();
+  const has = useHasPermission();
 
   if (!workflow) {
     return null;
   }
 
-  const isReadOnly = workflow.origin === WorkflowOriginEnum.EXTERNAL;
+  const isReadOnly =
+    workflow.origin === WorkflowOriginEnum.EXTERNAL || !has({ permission: PermissionsEnum.WORKFLOW_WRITE });
 
   if (isReadOnly) {
     return null;

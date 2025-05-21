@@ -137,7 +137,7 @@ export class SubscribersController {
   })
   @ApiResponse(SubscriberResponseDto, 201)
   @SdkMethodName('create')
-  @RequirePermissions(PermissionsEnum.SUBSCRIBER_CREATE)
+  @RequirePermissions(PermissionsEnum.SUBSCRIBER_WRITE)
   async createSubscriber(
     @UserSession() user: UserSessionData,
     @Body() body: CreateSubscriberRequestDto
@@ -175,7 +175,7 @@ export class SubscribersController {
   })
   @ApiResponse(SubscriberResponseDto)
   @SdkMethodName('patch')
-  @RequirePermissions(PermissionsEnum.SUBSCRIBER_UPDATE)
+  @RequirePermissions(PermissionsEnum.SUBSCRIBER_WRITE)
   async patchSubscriber(
     @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string,
@@ -196,12 +196,12 @@ export class SubscribersController {
   @ApiResponse(RemoveSubscriberResponseDto, 200)
   @ExternalApiAccessible()
   @ApiOperation({
-    summary: 'Delete a subscriber',
-    description: `Delete a subscriber by its unique key identifier **subscriberId**. 
-    This action is irreversible.`,
+    summary: 'Delete subscriber',
+    description:
+      'Deletes a subscriber entity from the Novu platform along with associated messages, preferences, and topic subscriptions',
   })
   @SdkMethodName('delete')
-  @RequirePermissions(PermissionsEnum.SUBSCRIBER_DELETE)
+  @RequirePermissions(PermissionsEnum.SUBSCRIBER_WRITE)
   async removeSubscriber(
     @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string
@@ -250,7 +250,7 @@ export class SubscribersController {
   @ApiResponse(GetSubscriberPreferencesDto)
   @SdkGroupName('Subscribers.Preferences')
   @SdkMethodName('update')
-  @RequirePermissions(PermissionsEnum.SUBSCRIBER_UPDATE)
+  @RequirePermissions(PermissionsEnum.SUBSCRIBER_WRITE)
   async updateSubscriberPreferences(
     @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string,

@@ -101,7 +101,7 @@ export class MessagesController {
   })
   @ApiParam({ name: 'transactionId', type: String, required: true, example: '507f1f77bcf86cd799439011' })
   @SdkMethodName('deleteByTransactionId')
-  @RequirePermissions(PermissionsEnum.MESSAGE_DELETE)
+  @RequirePermissions(PermissionsEnum.MESSAGE_WRITE)
   async deleteMessagesByTransactionId(
     @UserSession() user: UserSessionData,
     @Param() { transactionId }: { transactionId: string },

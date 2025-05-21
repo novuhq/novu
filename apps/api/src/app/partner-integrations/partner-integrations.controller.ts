@@ -45,7 +45,7 @@ export class PartnerIntegrationsController {
 
   @Post('/vercel')
   @RequireAuthentication()
-  @RequirePermissions(PermissionsEnum.INTEGRATION_CREATE)
+  @RequirePermissions(PermissionsEnum.PARTNER_INTEGRATION_WRITE)
   async createVercelIntegration(
     @UserSession() user: UserSessionData,
     @Body() body: CreateVercelIntegrationRequestDto
@@ -63,7 +63,7 @@ export class PartnerIntegrationsController {
 
   @Put('/vercel')
   @RequireAuthentication()
-  @RequirePermissions(PermissionsEnum.INTEGRATION_UPDATE)
+  @RequirePermissions(PermissionsEnum.PARTNER_INTEGRATION_WRITE)
   async updateVercelIntegration(@UserSession() user: UserSessionData, @Body() body: UpdateVercelIntegrationRequestDto) {
     return await this.updateVercelIntegrationUsecase.execute(
       UpdateVercelIntegrationCommand.create({
@@ -78,7 +78,7 @@ export class PartnerIntegrationsController {
 
   @Get('/vercel/:configurationId')
   @RequireAuthentication()
-  @RequirePermissions(PermissionsEnum.INTEGRATION_READ)
+  @RequirePermissions(PermissionsEnum.PARTNER_INTEGRATION_READ)
   async getVercelIntegration(@UserSession() user: UserSessionData, @Param('configurationId') configurationId: string) {
     return await this.getVercelIntegrationUsecase.execute(
       GetVercelIntegrationCommand.create({
@@ -92,7 +92,7 @@ export class PartnerIntegrationsController {
 
   @Get('/vercel/:configurationId/projects')
   @RequireAuthentication()
-  @RequirePermissions(PermissionsEnum.INTEGRATION_READ)
+  @RequirePermissions(PermissionsEnum.PARTNER_INTEGRATION_READ)
   async getVercelProjects(
     @UserSession() user: UserSessionData,
     @Param('configurationId') configurationId: string,
