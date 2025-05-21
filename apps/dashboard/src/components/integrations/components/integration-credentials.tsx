@@ -21,6 +21,7 @@ type IntegrationFormData = {
 type CredentialsSectionProps = {
   provider?: IProviderConfig;
   control: Control<IntegrationFormData>;
+  isReadOnly?: boolean;
 };
 
 const SECURE_CREDENTIALS = [
@@ -32,7 +33,7 @@ const SECURE_CREDENTIALS = [
   CredentialsKeyEnum.ServiceAccount,
 ];
 
-export function CredentialsSection({ provider, control }: CredentialsSectionProps) {
+export function CredentialsSection({ provider, control, isReadOnly }: CredentialsSectionProps) {
   console.log(provider);
   return (
     <div className="border-neutral-alpha-200 bg-background text-foreground-600 mx-0 mt-0 flex flex-col gap-2 rounded-lg border p-3">
@@ -59,12 +60,17 @@ export function CredentialsSection({ provider, control }: CredentialsSectionProp
               {credential.type === 'switch' ? (
                 <div className="flex items-center justify-between gap-2">
                   <FormControl>
-                    <Switch id={credential.key} checked={Boolean(field.value)} onCheckedChange={field.onChange} />
+                    <Switch
+                      id={credential.key}
+                      checked={Boolean(field.value)}
+                      onCheckedChange={field.onChange}
+                      disabled={isReadOnly}
+                    />
                   </FormControl>
                 </div>
               ) : credential.type === 'dropdown' && credential.dropdown ? (
                 <FormControl>
-                  <Select value={field.value || ''} onValueChange={field.onChange}>
+                  <Select value={field.value || ''} onValueChange={field.onChange} disabled={isReadOnly}>
                     <SelectTrigger>
                       <SelectValue placeholder={`Select ${credential.displayName.toLowerCase()}`} />
                     </SelectTrigger>
@@ -85,6 +91,7 @@ export function CredentialsSection({ provider, control }: CredentialsSectionProp
                     value={field.value || ''}
                     onChange={field.onChange}
                     rows={7}
+                    disabled={isReadOnly}
                   />
                 </FormControl>
               ) : credential.type === 'secret' || SECURE_CREDENTIALS.includes(credential.key as CredentialsKeyEnum) ? (
@@ -94,6 +101,7 @@ export function CredentialsSection({ provider, control }: CredentialsSectionProp
                     placeholder={`Enter ${credential.displayName.toLowerCase()}`}
                     value={field.value || ''}
                     onChange={field.onChange}
+                    disabled={isReadOnly}
                   />
                 </FormControl>
               ) : (
@@ -105,6 +113,7 @@ export function CredentialsSection({ provider, control }: CredentialsSectionProp
                     placeholder={`Enter ${credential.displayName.toLowerCase()}`}
                     {...field}
                     hasError={!!fieldState.error}
+                    disabled={isReadOnly}
                   />
                 </FormControl>
               )}

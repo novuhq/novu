@@ -15,7 +15,7 @@ import { useFormProtection } from '@/hooks/use-form-protection';
 import { useOnElementUnmount } from '@/hooks/use-on-element-unmount';
 import { cn } from '@/utils/ui';
 import { forwardRef, useState } from 'react';
-import { RiAddLine, RiArrowRightSLine, RiDiscussLine } from 'react-icons/ri';
+import { RiArrowRightSLine, RiDiscussLine } from 'react-icons/ri';
 import { CreateTopicForm } from './create-topic-form';
 
 type CreateTopicDrawerProps = {
@@ -108,17 +108,3 @@ export const CreateTopicDrawer = forwardRef<HTMLDivElement, CreateTopicDrawerPro
     </>
   );
 });
-
-export function CreateTopicButton(props: { onSuccess?: () => void; className?: string }) {
-  const { onSuccess, className } = props;
-  const [isOpen, setIsOpen] = useState(false);
-
-  return (
-    <>
-      <Button variant="primary" className={className} leadingIcon={RiAddLine} onClick={() => setIsOpen(true)}>
-        Create Topic
-      </Button>
-      <CreateTopicDrawer isOpen={isOpen} onOpenChange={setIsOpen} onSuccess={onSuccess} />
-    </>
-  );
-}

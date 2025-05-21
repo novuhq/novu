@@ -114,6 +114,7 @@ export class InboxController {
         read: query.read,
         archived: query.archived,
         snoozed: query.snoozed,
+        data: query.data,
       })
     );
   }
@@ -373,6 +374,7 @@ export class InboxController {
         subscriberId: subscriberSession.subscriberId,
         from: {
           tags: body.tags,
+          data: body.data,
         },
         to: {
           read: true,
@@ -395,6 +397,7 @@ export class InboxController {
         environmentId: subscriberSession._environmentId,
         from: {
           tags: body.tags,
+          data: body.data,
         },
         to: {
           archived: true,
@@ -418,6 +421,7 @@ export class InboxController {
         from: {
           tags: body.tags,
           read: true,
+          data: body.data,
         },
         to: {
           archived: true,

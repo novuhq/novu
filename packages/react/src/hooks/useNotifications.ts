@@ -4,6 +4,7 @@ import { useNovu } from './NovuProvider';
 
 export type UseNotificationsProps = {
   tags?: string[];
+  data?: Record<string, unknown>;
   read?: boolean;
   archived?: boolean;
   snoozed?: boolean;
@@ -35,7 +36,7 @@ export type UseNotificationsResult = {
 };
 
 export const useNotifications = (props?: UseNotificationsProps): UseNotificationsResult => {
-  const { tags, read, archived = false, snoozed = false, limit, onSuccess, onError } = props || {};
+  const { tags, data: dataFilter, read, archived = false, snoozed = false, limit, onSuccess, onError } = props || {};
   const filterRef = useRef<NotificationFilter | undefined>(undefined);
   const { notifications, on } = useNovu();
   const [data, setData] = useState<Array<Notification>>();
@@ -63,7 +64,7 @@ export const useNotifications = (props?: UseNotificationsProps): UseNotification
   }, []);
 
   useEffect(() => {
-    const newFilter = { tags, read, archived, snoozed };
+    const newFilter = { tags, data: dataFilter, read, archived, snoozed };
     if (filterRef.current && isSameFilter(filterRef.current, newFilter)) {
       return;
     }
@@ -71,7 +72,7 @@ export const useNotifications = (props?: UseNotificationsProps): UseNotification
     filterRef.current = newFilter;
 
     fetchNotifications({ refetch: true });
-  }, [tags, read, archived, snoozed]);
+  }, [tags, dataFilter, read, archived, snoozed]);
 
   const fetchNotifications = async (options?: { refetch: boolean }) => {
     if (options?.refetch) {
@@ -82,6 +83,7 @@ export const useNotifications = (props?: UseNotificationsProps): UseNotification
     setIsFetching(true);
     const response = await notifications.list({
       tags,
+      data: dataFilter,
       read,
       archived,
       snoozed,
@@ -101,7 +103,7 @@ export const useNotifications = (props?: UseNotificationsProps): UseNotification
   };
 
   const refetch = () => {
-    notifications.clearCache({ filter: { tags, read, archived, snoozed } });
+    notifications.clearCache({ filter: { tags, read, archived, snoozed, data: dataFilter } });
 
     return fetchNotifications({ refetch: true });
   };
@@ -113,15 +115,15 @@ export const useNotifications = (props?: UseNotificationsProps): UseNotification
   };
 
   const readAll = async () => {
-    return await notifications.readAll({ tags });
+    return await notifications.readAll({ tags, data: dataFilter });
   };
 
   const archiveAll = async () => {
-    return await notifications.archiveAll({ tags });
+    return await notifications.archiveAll({ tags, data: dataFilter });
   };
 
   const archiveAllRead = async () => {
-    return await notifications.archiveAllRead({ tags });
+    return await notifications.archiveAllRead({ tags, data: dataFilter });
   };
 
   return {

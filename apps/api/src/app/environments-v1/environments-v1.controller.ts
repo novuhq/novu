@@ -83,17 +83,12 @@ export class EnvironmentsControllerV1 {
   @ProductFeature(ProductFeatureKeyEnum.MANAGE_ENVIRONMENTS)
   @SdkGroupName('Environments')
   @SdkMethodName('create')
-  @RequirePermissions(PermissionsEnum.ENVIRONMENT_CREATE)
+  @RequirePermissions(PermissionsEnum.ENVIRONMENT_WRITE)
   async createEnvironment(
     @UserSession() user: UserSessionData,
     @Body() body: CreateEnvironmentRequestDto
   ): Promise<EnvironmentResponseDto> {
-    const isRbacEnabled = await this.featureFlagService.getFlag({
-      organization: { _id: user.organizationId },
-      user: { _id: user._id },
-      key: FeatureFlagsKeysEnum.IS_RBAC_ENABLED,
-      defaultValue: false,
-    });
+    const canAccessApiKeys = await this.canUserAccessApiKeys(user);
 
     return await this.createEnvironmentUsecase.execute(
       CreateEnvironmentCommand.create({
@@ -102,7 +97,7 @@ export class EnvironmentsControllerV1 {
         organizationId: user.organizationId,
         color: body.color,
         system: false,
-        returnApiKeys: isRbacEnabled ? user.permissions.includes(PermissionsEnum.API_KEY_READ) : true,
+        returnApiKeys: canAccessApiKeys,
       })
     );
   }
@@ -116,18 +111,13 @@ export class EnvironmentsControllerV1 {
   @ApiExcludeEndpoint()
   @SkipPermissionsCheck()
   async listMyEnvironments(@UserSession() user: UserSessionData): Promise<EnvironmentResponseDto[]> {
-    const isRbacEnabled = await this.featureFlagService.getFlag({
-      organization: { _id: user.organizationId },
-      user: { _id: user._id },
-      key: FeatureFlagsKeysEnum.IS_RBAC_ENABLED,
-      defaultValue: false,
-    });
+    const canAccessApiKeys = await this.canUserAccessApiKeys(user);
 
     return await this.getMyEnvironmentsUsecase.execute(
       GetMyEnvironmentsCommand.create({
         organizationId: user.organizationId,
         environmentId: user.environmentId,
-        returnApiKeys: isRbacEnabled ? user.permissions.includes(PermissionsEnum.API_KEY_READ) : true,
+        returnApiKeys: canAccessApiKeys,
       })
     );
   }
@@ -138,7 +128,7 @@ export class EnvironmentsControllerV1 {
   })
   @ApiExcludeEndpoint()
   @ApiResponse(EnvironmentResponseDto)
-  @RequirePermissions(PermissionsEnum.ENVIRONMENT_CREATE)
+  @RequirePermissions(PermissionsEnum.ENVIRONMENT_WRITE)
   async updateMyEnvironment(
     @UserSession() user: UserSessionData,
     @Param('environmentId') environmentId: string,
@@ -181,7 +171,7 @@ export class EnvironmentsControllerV1 {
   @Post('/api-keys/regenerate')
   @ApiResponse(ApiKey, 201, true)
   @ApiExcludeEndpoint()
-  @RequirePermissions(PermissionsEnum.API_KEY_CREATE)
+  @RequirePermissions(PermissionsEnum.API_KEY_WRITE)
   async regenerateOrganizationApiKeys(@UserSession() user: UserSessionData): Promise<ApiKey[]> {
     const command = GetApiKeysCommand.create({
       userId: user._id,
@@ -199,7 +189,7 @@ export class EnvironmentsControllerV1 {
   @ApiParam({ name: 'environmentId', type: String, required: true })
   @ProductFeature(ProductFeatureKeyEnum.MANAGE_ENVIRONMENTS)
   @ApiExcludeEndpoint()
-  @RequirePermissions(PermissionsEnum.ENVIRONMENT_DELETE)
+  @RequirePermissions(PermissionsEnum.ENVIRONMENT_WRITE)
   async deleteEnvironment(@UserSession() user: UserSessionData, @Param('environmentId') environmentId: string) {
     return await this.deleteEnvironmentUsecase.execute(
       DeleteEnvironmentCommand.create({
@@ -208,5 +198,16 @@ export class EnvironmentsControllerV1 {
         environmentId,
       })
     );
+  }
+
+  private async canUserAccessApiKeys(user: UserSessionData): Promise<boolean> {
+    const isRbacEnabled = await this.featureFlagService.getFlag({
+      organization: { _id: user.organizationId },
+      user: { _id: user._id },
+      key: FeatureFlagsKeysEnum.IS_RBAC_ENABLED,
+      defaultValue: false,
+    });
+
+    return isRbacEnabled ? user.permissions.includes(PermissionsEnum.API_KEY_READ) : true;
   }
 }

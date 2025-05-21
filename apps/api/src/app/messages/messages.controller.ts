@@ -39,8 +39,10 @@ export class MessagesController {
     type: MessagesResponseDto,
   })
   @ApiOperation({
-    summary: 'Get messages',
-    description: 'Returns a list of messages, could paginate using the `page` query parameter',
+    summary: 'List all messages',
+    description: `List all messages for the current environment. 
+    This API supports filtering by **channel**, **subscriberId**, and **transactionId**. 
+    This API returns a paginated list of messages.`,
   })
   @RequirePermissions(PermissionsEnum.MESSAGE_READ)
   async getMessages(
@@ -69,11 +71,12 @@ export class MessagesController {
   @ExternalApiAccessible()
   @ApiResponse(DeleteMessageResponseDto)
   @ApiOperation({
-    summary: 'Delete message',
-    description: 'Deletes a message entity from the Novu platform',
+    summary: 'Delete a message',
+    description: `Delete a message entity from the Novu platform by **messageId**. 
+    This action is irreversible. **messageId** is required and of mongodbId type.`,
   })
-  @ApiParam({ name: 'messageId', type: String, required: true })
-  @RequirePermissions(PermissionsEnum.MESSAGE_DELETE)
+  @ApiParam({ name: 'messageId', type: String, required: true, example: '507f1f77bcf86cd799439011' })
+  @RequirePermissions(PermissionsEnum.MESSAGE_WRITE)
   async deleteMessage(
     @UserSession() user: UserSessionData,
     @Param() { messageId }: DeleteMessageParams
@@ -93,11 +96,12 @@ export class MessagesController {
   @ApiNoContentResponse()
   @ApiOperation({
     summary: 'Delete messages by transactionId',
-    description: 'Deletes messages entity from the Novu platform using TransactionId of message',
+    description: `Delete multiple messages from the Novu platform using **transactionId** of triggered event. 
+    This API supports filtering by **channel** and delete all messages associated with the **transactionId**.`,
   })
-  @ApiParam({ name: 'transactionId', type: String, required: true })
+  @ApiParam({ name: 'transactionId', type: String, required: true, example: '507f1f77bcf86cd799439011' })
   @SdkMethodName('deleteByTransactionId')
-  @RequirePermissions(PermissionsEnum.MESSAGE_DELETE)
+  @RequirePermissions(PermissionsEnum.MESSAGE_WRITE)
   async deleteMessagesByTransactionId(
     @UserSession() user: UserSessionData,
     @Param() { transactionId }: { transactionId: string },

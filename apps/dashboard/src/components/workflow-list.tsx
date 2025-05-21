@@ -15,7 +15,7 @@ import { WorkflowRow } from '@/components/workflow-row';
 import { DirectionEnum, ListWorkflowResponse } from '@novu/shared';
 import { RiMore2Fill } from 'react-icons/ri';
 import { createSearchParams, useLocation, useSearchParams } from 'react-router-dom';
-import { ServerErrorPage } from './shared/server-error-page';
+import { ServerErrorPage } from '@/pages/server-error-page';
 
 export type SortableColumn = 'name' | 'updatedAt' | 'lastTriggeredAt';
 

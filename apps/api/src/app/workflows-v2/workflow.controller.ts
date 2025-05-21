@@ -96,7 +96,7 @@ export class WorkflowController {
   @ExternalApiAccessible()
   @ApiBody({ type: CreateWorkflowDto, description: 'Workflow creation details' })
   @ApiResponse(WorkflowResponseDto, 201)
-  @RequirePermissions(PermissionsEnum.WORKFLOW_CREATE)
+  @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
   async create(
     @UserSession(ParseSlugEnvironmentIdPipe) user: UserSessionData,
     @Body() createWorkflowDto: CreateWorkflowDto
@@ -127,7 +127,7 @@ export class WorkflowController {
   @ApiBody({ type: SyncWorkflowDto, description: 'Sync workflow details' })
   @ApiResponse(WorkflowResponseDto)
   @SdkMethodName('sync')
-  @RequirePermissions(PermissionsEnum.WORKFLOW_CREATE)
+  @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
   async sync(
     @UserSession() user: UserSessionData,
     @Param('workflowId', ParseSlugIdPipe) workflowIdOrInternalId: string,
@@ -150,7 +150,7 @@ export class WorkflowController {
   })
   @ApiBody({ type: UpdateWorkflowDto, description: 'Workflow update details' })
   @ApiResponse(WorkflowResponseDto)
-  @RequirePermissions(PermissionsEnum.WORKFLOW_CREATE)
+  @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
   async update(
     @UserSession(ParseSlugEnvironmentIdPipe) user: UserSessionData,
     @Param('workflowId', ParseSlugIdPipe) workflowIdOrInternalId: string,
@@ -211,7 +211,7 @@ export class WorkflowController {
     description: 'Removes a specific workflow',
   })
   @SdkMethodName('delete')
-  @RequirePermissions(PermissionsEnum.WORKFLOW_DELETE)
+  @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
   async removeWorkflow(
     @UserSession(ParseSlugEnvironmentIdPipe) user: UserSessionData,
     @Param('workflowId', ParseSlugIdPipe) workflowIdOrInternalId: string
@@ -256,7 +256,7 @@ export class WorkflowController {
   @ApiBody({ type: DuplicateWorkflowDto }) // Documenting the request body
   @ApiResponse(WorkflowResponseDto, 201)
   @SdkMethodName('duplicate')
-  @RequirePermissions(PermissionsEnum.WORKFLOW_CREATE)
+  @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
   async duplicateWorkflow(
     @UserSession(ParseSlugEnvironmentIdPipe) user: UserSessionData,
     @Param('workflowId', ParseSlugIdPipe) workflowIdOrInternalId: string,
@@ -326,7 +326,7 @@ export class WorkflowController {
   @ApiBody({ type: PatchWorkflowDto, description: 'Workflow patch details' })
   @ApiResponse(WorkflowResponseDto)
   @SdkMethodName('patch')
-  @RequirePermissions(PermissionsEnum.WORKFLOW_CREATE)
+  @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
   async patchWorkflow(
     @UserSession(ParseSlugEnvironmentIdPipe) user: UserSessionData,
     @Param('workflowId', ParseSlugIdPipe) workflowIdOrInternalId: string,

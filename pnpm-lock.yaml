@@ -517,8 +517,8 @@ importers:
         specifier: 9.0.0
         version: 9.0.0
       liquidjs:
-        specifier: ^10.14.0
-        version: 10.19.0
+        specifier: ^10.20.0
+        version: 10.20.1
       lodash:
         specifier: ^4.17.15
         version: 4.17.21
@@ -3390,8 +3390,8 @@ importers:
         specifier: ^3.0.0
         version: 3.1.0
       liquidjs:
-        specifier: ^10.13.1
-        version: 10.13.1
+        specifier: ^10.20.0
+        version: 10.20.1
       pluralize:
         specifier: ^8.0.0
         version: 8.0.0
@@ -25552,16 +25552,6 @@ packages:
     resolution: {integrity: sha512-EechC3DdFic/TdOPgj/RB3FicqE6932LTHCUm0Y2fsD9KGlLB+RwJl2q1IYBIvEsKzDOgn0D4gll+YxG5RsrKg==}
     hasBin: true
 
-  liquidjs@10.13.1:
-    resolution: {integrity: sha512-QCQ69sbyMdA1970NEsG7KdQoKi6N+lGg55izisvKvrrRO1nrpS/YBAnzDndR13exYB4xE9A87qdOMuaXPn9v9A==}
-    engines: {node: '>=14'}
-    hasBin: true
-
-  liquidjs@10.19.0:
-    resolution: {integrity: sha512-dNINmbNJ/bp3B8n25BtZQV/GbrmFf0o2InGdMdfQXa+LxfzTFXOkUnBsOLZUb82sLzxaiWv5Jc381Kn4zHjTsQ==}
-    engines: {node: '>=14'}
-    hasBin: true
-
   liquidjs@10.20.1:
     resolution: {integrity: sha512-eZ33jfxjj0It8tkY+I4gbKWfXvMmOvQvvraxVFSLcTjZWCjdWMLBnevk48qw9AQIwIHFp58vZc59vH9Qwdq7mw==}
     engines: {node: '>=14'}
@@ -33521,7 +33511,6 @@ packages:
   verdaccio@5.32.1:
     resolution: {integrity: sha512-GU8a+van7cQzzv6/pXWW8jMlQ7OoWNYPqRpvCW7F2QmxzpKp9hWb3yX9iLY3CJNrODuQYnUDjJ/hmBa8rUq+Aw==}
     engines: {node: '>=14'}
-    deprecated: this version is deprecated, please migrate to 6.x versions
     hasBin: true
 
   verror@1.10.0:
@@ -67803,14 +67792,6 @@ snapshots:
       stringify-object: 3.3.0
     transitivePeerDependencies:
       - supports-color
-
-  liquidjs@10.13.1:
-    dependencies:
-      commander: 10.0.1
-
-  liquidjs@10.19.0:
-    dependencies:
-      commander: 10.0.1
 
   liquidjs@10.20.1:
     dependencies:

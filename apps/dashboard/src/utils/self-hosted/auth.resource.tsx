@@ -13,6 +13,7 @@ export function AuthContextProvider({ children }: any) {
 
   const value = {
     currentUser: createUserFromJwt(decodedJwt),
+    has: () => true,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

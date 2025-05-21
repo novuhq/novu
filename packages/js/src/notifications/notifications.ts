@@ -251,35 +251,47 @@ export class Notifications extends BaseModule {
     );
   }
 
-  async readAll({ tags }: { tags?: NotificationFilter['tags'] } = {}): Result<void> {
+  async readAll({
+    tags,
+    data,
+  }: { tags?: NotificationFilter['tags']; data?: Record<string, unknown> } = {}): Result<void> {
     return this.callWithSession(async () =>
       readAll({
         emitter: this._emitter,
         inboxService: this._inboxService,
         notificationsCache: this.cache,
         tags,
+        data,
       })
     );
   }
 
-  async archiveAll({ tags }: { tags?: NotificationFilter['tags'] } = {}): Result<void> {
+  async archiveAll({
+    tags,
+    data,
+  }: { tags?: NotificationFilter['tags']; data?: Record<string, unknown> } = {}): Result<void> {
     return this.callWithSession(async () =>
       archiveAll({
         emitter: this._emitter,
         inboxService: this._inboxService,
         notificationsCache: this.cache,
         tags,
+        data,
       })
     );
   }
 
-  async archiveAllRead({ tags }: { tags?: NotificationFilter['tags'] } = {}): Result<void> {
+  async archiveAllRead({
+    tags,
+    data,
+  }: { tags?: NotificationFilter['tags']; data?: Record<string, unknown> } = {}): Result<void> {
     return this.callWithSession(async () =>
       archiveAllRead({
         emitter: this._emitter,
         inboxService: this._inboxService,
         notificationsCache: this.cache,
         tags,
+        data,
       })
     );
   }

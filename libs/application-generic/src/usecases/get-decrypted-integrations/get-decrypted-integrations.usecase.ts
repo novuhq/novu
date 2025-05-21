@@ -8,9 +8,7 @@ import { GetDecryptedIntegrationsCommand } from './get-decrypted-integrations.co
 export class GetDecryptedIntegrations {
   constructor(private integrationRepository: IntegrationRepository) {}
 
-  async execute(
-    command: GetDecryptedIntegrationsCommand,
-  ): Promise<IntegrationEntity[]> {
+  async execute(command: GetDecryptedIntegrationsCommand): Promise<IntegrationEntity[]> {
     const query: Partial<IntegrationEntity> & { _organizationId: string } = {
       _organizationId: command.organizationId,
     };
@@ -33,9 +31,16 @@ export class GetDecryptedIntegrations {
 
     return foundIntegrations
       .filter((integration) => integration)
-      .map((integration: IntegrationEntity) =>
-        GetDecryptedIntegrations.getDecryptedCredentials(integration),
-      );
+      .map((integration: IntegrationEntity) => {
+        if (command.returnCredentials === false) {
+          // Don't include credentials
+          const { credentials, ...integrationWithoutCredentials } = integration;
+
+          return integrationWithoutCredentials as IntegrationEntity;
+        }
+
+        return GetDecryptedIntegrations.getDecryptedCredentials(integration);
+      });
   }
 
   public static getDecryptedCredentials(integration: IntegrationEntity) {

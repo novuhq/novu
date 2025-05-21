@@ -1,7 +1,11 @@
 import { ToastIcon } from '@/components/primitives/sonner';
 import { showToast } from '@/components/primitives/sonner-helpers';
 
-const DETAILED_ERROR_MESSAGES = ['Workflow steps limit exceeded', 'Workflow limit exceeded'] as const;
+const DETAILED_ERROR_MESSAGES = [
+  'Workflow steps limit exceeded',
+  'Workflow limit exceeded',
+  'Insufficient permissions',
+] as const;
 
 function getErrorMessage(error?: any): string {
   if (!error?.message) return 'Failed to save';

@@ -33,6 +33,7 @@ export const CountProvider = (props: ParentProps) => {
       read: false,
       archived: false,
       snoozed: false,
+      data: tab.filter?.data,
     }));
     const { data } = await novu.notifications.count({ filters });
     if (!data) {
@@ -42,7 +43,7 @@ export const CountProvider = (props: ParentProps) => {
     const newMap = new Map();
     const { counts } = data;
     for (let i = 0; i < counts.length; i += 1) {
-      const tagsKey = createKey(counts[i].filter.tags);
+      const tagsKey = createKey(counts[i].filter.tags, counts[i].filter.data);
       newMap.set(tagsKey, data?.counts[i].count);
     }
 
@@ -95,9 +96,9 @@ export const CountProvider = (props: ParentProps) => {
     }
 
     setNewNotificationCounts((oldMap) => {
-      const tagsKey = createKey(tags);
+      const key = createKey(tags, tabFilter.data);
       const newMap = new Map(oldMap);
-      newMap.set(tagsKey, (oldMap.get(tagsKey) || 0) + 1);
+      newMap.set(key, (oldMap.get(key) || 0) + 1);
 
       return newMap;
     });
@@ -112,7 +113,7 @@ export const CountProvider = (props: ParentProps) => {
 
       const tagsMap = tabs().reduce((acc, tab) => {
         const tags = getTagsFromTab(tab);
-        const tagsKey = createKey(tags);
+        const tagsKey = createKey(tags, tab.filter?.data);
         acc.set(tagsKey, tags);
 
         return acc;
@@ -158,8 +159,8 @@ export const CountProvider = (props: ParentProps) => {
   );
 };
 
-const createKey = (tags?: NotificationFilter['tags']) => {
-  return JSON.stringify({ tags: tags ?? [] });
+const createKey = (tags?: NotificationFilter['tags'], data?: NotificationFilter['data']) => {
+  return JSON.stringify({ tags: tags ?? [], data: data ?? {} });
 };
 
 export const useTotalUnreadCount = () => {
@@ -172,15 +173,16 @@ export const useTotalUnreadCount = () => {
 };
 
 type UseNewMessagesCountProps = {
-  filter: Pick<NotificationFilter, 'tags'>;
+  filter: Pick<NotificationFilter, 'tags' | 'data'>;
 };
+
 export const useNewMessagesCount = (props: UseNewMessagesCountProps) => {
   const context = useContext(CountContext);
   if (!context) {
     throw new Error('useNewMessagesCount must be used within a CountProvider');
   }
 
-  const key = createMemo(() => createKey(props.filter.tags));
+  const key = createMemo(() => createKey(props.filter.tags, props.filter.data));
   const count = createMemo(() => context.newNotificationCounts().get(key()) || 0);
   const reset = () => context.resetNewNotificationCounts(key());
 
@@ -188,7 +190,7 @@ export const useNewMessagesCount = (props: UseNewMessagesCountProps) => {
 };
 
 type UseUnreadCountProps = {
-  filter: Pick<NotificationFilter, 'tags'>;
+  filter: Pick<NotificationFilter, 'tags' | 'data'>;
 };
 export const useUnreadCount = (props: UseUnreadCountProps) => {
   const context = useContext(CountContext);
@@ -196,13 +198,13 @@ export const useUnreadCount = (props: UseUnreadCountProps) => {
     throw new Error('useUnreadCount must be used within a CountProvider');
   }
 
-  const count = createMemo(() => context.unreadCounts().get(createKey(props.filter.tags)) || 0);
+  const count = createMemo(() => context.unreadCounts().get(createKey(props.filter.tags, props.filter.data)) || 0);
 
   return count;
 };
 
 type UseUnreadCountsProps = {
-  filters: Pick<NotificationFilter, 'tags'>[];
+  filters: Pick<NotificationFilter, 'tags' | 'data'>[];
 };
 export const useUnreadCounts = (props: UseUnreadCountsProps) => {
   const context = useContext(CountContext);
@@ -212,7 +214,7 @@ export const useUnreadCounts = (props: UseUnreadCountsProps) => {
 
   const counts = createMemo(() =>
     props.filters.map((filter) => {
-      return context.unreadCounts().get(createKey(filter.tags)) || 0;
+      return context.unreadCounts().get(createKey(filter.tags, filter.data)) || 0;
     })
   );
 

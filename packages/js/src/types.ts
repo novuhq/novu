@@ -127,6 +127,7 @@ export type NotificationFilter = {
   read?: boolean;
   archived?: boolean;
   snoozed?: boolean;
+  data?: Record<string, unknown>;
 };
 
 export type ChannelPreference = {

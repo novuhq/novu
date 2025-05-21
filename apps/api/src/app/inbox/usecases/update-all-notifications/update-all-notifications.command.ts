@@ -17,6 +17,10 @@ class Filter implements NotificationFilter {
   @IsOptional()
   @IsBoolean()
   archived?: boolean;
+
+  @IsOptional()
+  @IsString()
+  data?: string;
 }
 
 export class UpdateAllNotificationsCommand extends EnvironmentWithSubscriber {
