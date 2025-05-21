@@ -3,14 +3,15 @@
  */
 
 import * as z from "zod";
-import { remap as remap$ } from "../../lib/primitives.js";
-import {
-  collectExtraKeys as collectExtraKeys$,
-  safeParse,
-} from "../../lib/schemas.js";
-import { ClosedEnum } from "../../types/enums.js";
+import { safeParse } from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
+import {
+  DelayControlDto,
+  DelayControlDto$inboundSchema,
+  DelayControlDto$Outbound,
+  DelayControlDto$outboundSchema,
+} from "./delaycontroldto.js";
 import {
   UiSchema,
   UiSchema$inboundSchema,
@@ -22,65 +23,6 @@ import {
  * JSON Schema for data
  */
 export type DelayControlsMetadataResponseDtoDataSchema = {};
-
-/**
- * Filter conditions for skipping the step.
- */
-export type DelayControlsMetadataResponseDtoSkip = {};
-
-/**
- * Type of the delay. Currently only 'regular' is supported by the schema.
- */
-export const DelayControlsMetadataResponseDtoType = {
-  Regular: "regular",
-} as const;
-/**
- * Type of the delay. Currently only 'regular' is supported by the schema.
- */
-export type DelayControlsMetadataResponseDtoType = ClosedEnum<
-  typeof DelayControlsMetadataResponseDtoType
->;
-
-/**
- * Unit of time for the delay amount.
- */
-export const DelayControlsMetadataResponseDtoUnit = {
-  Seconds: "seconds",
-  Minutes: "minutes",
-  Hours: "hours",
-  Days: "days",
-  Weeks: "weeks",
-  Months: "months",
-} as const;
-/**
- * Unit of time for the delay amount.
- */
-export type DelayControlsMetadataResponseDtoUnit = ClosedEnum<
-  typeof DelayControlsMetadataResponseDtoUnit
->;
-
-/**
- * Control values specific to Delay
- */
-export type DelayControlsMetadataResponseDtoValues = {
-  /**
-   * Filter conditions for skipping the step.
-   */
-  skip?: DelayControlsMetadataResponseDtoSkip | undefined;
-  /**
-   * Type of the delay. Currently only 'regular' is supported by the schema.
-   */
-  type?: DelayControlsMetadataResponseDtoType | undefined;
-  /**
-   * Amount of time to delay.
-   */
-  amount: number;
-  /**
-   * Unit of time for the delay amount.
-   */
-  unit: DelayControlsMetadataResponseDtoUnit;
-  additionalProperties?: { [k: string]: any };
-};
 
 export type DelayControlsMetadataResponseDto = {
   /**
@@ -94,7 +36,7 @@ export type DelayControlsMetadataResponseDto = {
   /**
    * Control values specific to Delay
    */
-  values: DelayControlsMetadataResponseDtoValues;
+  values: DelayControlDto;
 };
 
 /** @internal */
@@ -156,191 +98,6 @@ export function delayControlsMetadataResponseDtoDataSchemaFromJSON(
 }
 
 /** @internal */
-export const DelayControlsMetadataResponseDtoSkip$inboundSchema: z.ZodType<
-  DelayControlsMetadataResponseDtoSkip,
-  z.ZodTypeDef,
-  unknown
-> = z.object({});
-
-/** @internal */
-export type DelayControlsMetadataResponseDtoSkip$Outbound = {};
-
-/** @internal */
-export const DelayControlsMetadataResponseDtoSkip$outboundSchema: z.ZodType<
-  DelayControlsMetadataResponseDtoSkip$Outbound,
-  z.ZodTypeDef,
-  DelayControlsMetadataResponseDtoSkip
-> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace DelayControlsMetadataResponseDtoSkip$ {
-  /** @deprecated use `DelayControlsMetadataResponseDtoSkip$inboundSchema` instead. */
-  export const inboundSchema =
-    DelayControlsMetadataResponseDtoSkip$inboundSchema;
-  /** @deprecated use `DelayControlsMetadataResponseDtoSkip$outboundSchema` instead. */
-  export const outboundSchema =
-    DelayControlsMetadataResponseDtoSkip$outboundSchema;
-  /** @deprecated use `DelayControlsMetadataResponseDtoSkip$Outbound` instead. */
-  export type Outbound = DelayControlsMetadataResponseDtoSkip$Outbound;
-}
-
-export function delayControlsMetadataResponseDtoSkipToJSON(
-  delayControlsMetadataResponseDtoSkip: DelayControlsMetadataResponseDtoSkip,
-): string {
-  return JSON.stringify(
-    DelayControlsMetadataResponseDtoSkip$outboundSchema.parse(
-      delayControlsMetadataResponseDtoSkip,
-    ),
-  );
-}
-
-export function delayControlsMetadataResponseDtoSkipFromJSON(
-  jsonString: string,
-): SafeParseResult<DelayControlsMetadataResponseDtoSkip, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) =>
-      DelayControlsMetadataResponseDtoSkip$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'DelayControlsMetadataResponseDtoSkip' from JSON`,
-  );
-}
-
-/** @internal */
-export const DelayControlsMetadataResponseDtoType$inboundSchema:
-  z.ZodNativeEnum<typeof DelayControlsMetadataResponseDtoType> = z.nativeEnum(
-    DelayControlsMetadataResponseDtoType,
-  );
-
-/** @internal */
-export const DelayControlsMetadataResponseDtoType$outboundSchema:
-  z.ZodNativeEnum<typeof DelayControlsMetadataResponseDtoType> =
-    DelayControlsMetadataResponseDtoType$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace DelayControlsMetadataResponseDtoType$ {
-  /** @deprecated use `DelayControlsMetadataResponseDtoType$inboundSchema` instead. */
-  export const inboundSchema =
-    DelayControlsMetadataResponseDtoType$inboundSchema;
-  /** @deprecated use `DelayControlsMetadataResponseDtoType$outboundSchema` instead. */
-  export const outboundSchema =
-    DelayControlsMetadataResponseDtoType$outboundSchema;
-}
-
-/** @internal */
-export const DelayControlsMetadataResponseDtoUnit$inboundSchema:
-  z.ZodNativeEnum<typeof DelayControlsMetadataResponseDtoUnit> = z.nativeEnum(
-    DelayControlsMetadataResponseDtoUnit,
-  );
-
-/** @internal */
-export const DelayControlsMetadataResponseDtoUnit$outboundSchema:
-  z.ZodNativeEnum<typeof DelayControlsMetadataResponseDtoUnit> =
-    DelayControlsMetadataResponseDtoUnit$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace DelayControlsMetadataResponseDtoUnit$ {
-  /** @deprecated use `DelayControlsMetadataResponseDtoUnit$inboundSchema` instead. */
-  export const inboundSchema =
-    DelayControlsMetadataResponseDtoUnit$inboundSchema;
-  /** @deprecated use `DelayControlsMetadataResponseDtoUnit$outboundSchema` instead. */
-  export const outboundSchema =
-    DelayControlsMetadataResponseDtoUnit$outboundSchema;
-}
-
-/** @internal */
-export const DelayControlsMetadataResponseDtoValues$inboundSchema: z.ZodType<
-  DelayControlsMetadataResponseDtoValues,
-  z.ZodTypeDef,
-  unknown
-> = collectExtraKeys$(
-  z.object({
-    skip: z.lazy(() => DelayControlsMetadataResponseDtoSkip$inboundSchema)
-      .optional(),
-    type: DelayControlsMetadataResponseDtoType$inboundSchema.default("regular"),
-    amount: z.number(),
-    unit: DelayControlsMetadataResponseDtoUnit$inboundSchema,
-  }).catchall(z.any()),
-  "additionalProperties",
-  true,
-);
-
-/** @internal */
-export type DelayControlsMetadataResponseDtoValues$Outbound = {
-  skip?: DelayControlsMetadataResponseDtoSkip$Outbound | undefined;
-  type: string;
-  amount: number;
-  unit: string;
-  [additionalProperties: string]: unknown;
-};
-
-/** @internal */
-export const DelayControlsMetadataResponseDtoValues$outboundSchema: z.ZodType<
-  DelayControlsMetadataResponseDtoValues$Outbound,
-  z.ZodTypeDef,
-  DelayControlsMetadataResponseDtoValues
-> = z.object({
-  skip: z.lazy(() => DelayControlsMetadataResponseDtoSkip$outboundSchema)
-    .optional(),
-  type: DelayControlsMetadataResponseDtoType$outboundSchema.default("regular"),
-  amount: z.number(),
-  unit: DelayControlsMetadataResponseDtoUnit$outboundSchema,
-  additionalProperties: z.record(z.any()),
-}).transform((v) => {
-  return {
-    ...v.additionalProperties,
-    ...remap$(v, {
-      additionalProperties: null,
-    }),
-  };
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace DelayControlsMetadataResponseDtoValues$ {
-  /** @deprecated use `DelayControlsMetadataResponseDtoValues$inboundSchema` instead. */
-  export const inboundSchema =
-    DelayControlsMetadataResponseDtoValues$inboundSchema;
-  /** @deprecated use `DelayControlsMetadataResponseDtoValues$outboundSchema` instead. */
-  export const outboundSchema =
-    DelayControlsMetadataResponseDtoValues$outboundSchema;
-  /** @deprecated use `DelayControlsMetadataResponseDtoValues$Outbound` instead. */
-  export type Outbound = DelayControlsMetadataResponseDtoValues$Outbound;
-}
-
-export function delayControlsMetadataResponseDtoValuesToJSON(
-  delayControlsMetadataResponseDtoValues:
-    DelayControlsMetadataResponseDtoValues,
-): string {
-  return JSON.stringify(
-    DelayControlsMetadataResponseDtoValues$outboundSchema.parse(
-      delayControlsMetadataResponseDtoValues,
-    ),
-  );
-}
-
-export function delayControlsMetadataResponseDtoValuesFromJSON(
-  jsonString: string,
-): SafeParseResult<DelayControlsMetadataResponseDtoValues, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) =>
-      DelayControlsMetadataResponseDtoValues$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'DelayControlsMetadataResponseDtoValues' from JSON`,
-  );
-}
-
-/** @internal */
 export const DelayControlsMetadataResponseDto$inboundSchema: z.ZodType<
   DelayControlsMetadataResponseDto,
   z.ZodTypeDef,
@@ -350,14 +107,14 @@ export const DelayControlsMetadataResponseDto$inboundSchema: z.ZodType<
     DelayControlsMetadataResponseDtoDataSchema$inboundSchema
   ).optional(),
   uiSchema: UiSchema$inboundSchema.optional(),
-  values: z.lazy(() => DelayControlsMetadataResponseDtoValues$inboundSchema),
+  values: DelayControlDto$inboundSchema,
 });
 
 /** @internal */
 export type DelayControlsMetadataResponseDto$Outbound = {
   dataSchema?: DelayControlsMetadataResponseDtoDataSchema$Outbound | undefined;
   uiSchema?: UiSchema$Outbound | undefined;
-  values: DelayControlsMetadataResponseDtoValues$Outbound;
+  values: DelayControlDto$Outbound;
 };
 
 /** @internal */
@@ -370,7 +127,7 @@ export const DelayControlsMetadataResponseDto$outboundSchema: z.ZodType<
     DelayControlsMetadataResponseDtoDataSchema$outboundSchema
   ).optional(),
   uiSchema: UiSchema$outboundSchema.optional(),
-  values: z.lazy(() => DelayControlsMetadataResponseDtoValues$outboundSchema),
+  values: DelayControlDto$outboundSchema,
 });
 
 /**

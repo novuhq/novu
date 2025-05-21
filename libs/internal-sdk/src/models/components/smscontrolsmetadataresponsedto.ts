@@ -3,13 +3,15 @@
  */
 
 import * as z from "zod";
-import { remap as remap$ } from "../../lib/primitives.js";
-import {
-  collectExtraKeys as collectExtraKeys$,
-  safeParse,
-} from "../../lib/schemas.js";
+import { safeParse } from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
+import {
+  SmsControlDto,
+  SmsControlDto$inboundSchema,
+  SmsControlDto$Outbound,
+  SmsControlDto$outboundSchema,
+} from "./smscontroldto.js";
 import {
   UiSchema,
   UiSchema$inboundSchema,
@@ -21,26 +23,6 @@ import {
  * JSON Schema for data
  */
 export type SmsControlsMetadataResponseDtoDataSchema = {};
-
-/**
- * Filter conditions for skipping the step.
- */
-export type SmsControlsMetadataResponseDtoSkip = {};
-
-/**
- * Control values specific to SMS
- */
-export type SmsControlsMetadataResponseDtoValues = {
-  /**
-   * Filter conditions for skipping the step.
-   */
-  skip?: SmsControlsMetadataResponseDtoSkip | undefined;
-  /**
-   * Content of the SMS message.
-   */
-  body: string;
-  additionalProperties?: { [k: string]: any };
-};
 
 export type SmsControlsMetadataResponseDto = {
   /**
@@ -54,7 +36,7 @@ export type SmsControlsMetadataResponseDto = {
   /**
    * Control values specific to SMS
    */
-  values: SmsControlsMetadataResponseDtoValues;
+  values: SmsControlDto;
 };
 
 /** @internal */
@@ -117,135 +99,6 @@ export function smsControlsMetadataResponseDtoDataSchemaFromJSON(
 }
 
 /** @internal */
-export const SmsControlsMetadataResponseDtoSkip$inboundSchema: z.ZodType<
-  SmsControlsMetadataResponseDtoSkip,
-  z.ZodTypeDef,
-  unknown
-> = z.object({});
-
-/** @internal */
-export type SmsControlsMetadataResponseDtoSkip$Outbound = {};
-
-/** @internal */
-export const SmsControlsMetadataResponseDtoSkip$outboundSchema: z.ZodType<
-  SmsControlsMetadataResponseDtoSkip$Outbound,
-  z.ZodTypeDef,
-  SmsControlsMetadataResponseDtoSkip
-> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace SmsControlsMetadataResponseDtoSkip$ {
-  /** @deprecated use `SmsControlsMetadataResponseDtoSkip$inboundSchema` instead. */
-  export const inboundSchema = SmsControlsMetadataResponseDtoSkip$inboundSchema;
-  /** @deprecated use `SmsControlsMetadataResponseDtoSkip$outboundSchema` instead. */
-  export const outboundSchema =
-    SmsControlsMetadataResponseDtoSkip$outboundSchema;
-  /** @deprecated use `SmsControlsMetadataResponseDtoSkip$Outbound` instead. */
-  export type Outbound = SmsControlsMetadataResponseDtoSkip$Outbound;
-}
-
-export function smsControlsMetadataResponseDtoSkipToJSON(
-  smsControlsMetadataResponseDtoSkip: SmsControlsMetadataResponseDtoSkip,
-): string {
-  return JSON.stringify(
-    SmsControlsMetadataResponseDtoSkip$outboundSchema.parse(
-      smsControlsMetadataResponseDtoSkip,
-    ),
-  );
-}
-
-export function smsControlsMetadataResponseDtoSkipFromJSON(
-  jsonString: string,
-): SafeParseResult<SmsControlsMetadataResponseDtoSkip, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) =>
-      SmsControlsMetadataResponseDtoSkip$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'SmsControlsMetadataResponseDtoSkip' from JSON`,
-  );
-}
-
-/** @internal */
-export const SmsControlsMetadataResponseDtoValues$inboundSchema: z.ZodType<
-  SmsControlsMetadataResponseDtoValues,
-  z.ZodTypeDef,
-  unknown
-> = collectExtraKeys$(
-  z.object({
-    skip: z.lazy(() => SmsControlsMetadataResponseDtoSkip$inboundSchema)
-      .optional(),
-    body: z.string(),
-  }).catchall(z.any()),
-  "additionalProperties",
-  true,
-);
-
-/** @internal */
-export type SmsControlsMetadataResponseDtoValues$Outbound = {
-  skip?: SmsControlsMetadataResponseDtoSkip$Outbound | undefined;
-  body: string;
-  [additionalProperties: string]: unknown;
-};
-
-/** @internal */
-export const SmsControlsMetadataResponseDtoValues$outboundSchema: z.ZodType<
-  SmsControlsMetadataResponseDtoValues$Outbound,
-  z.ZodTypeDef,
-  SmsControlsMetadataResponseDtoValues
-> = z.object({
-  skip: z.lazy(() => SmsControlsMetadataResponseDtoSkip$outboundSchema)
-    .optional(),
-  body: z.string(),
-  additionalProperties: z.record(z.any()),
-}).transform((v) => {
-  return {
-    ...v.additionalProperties,
-    ...remap$(v, {
-      additionalProperties: null,
-    }),
-  };
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace SmsControlsMetadataResponseDtoValues$ {
-  /** @deprecated use `SmsControlsMetadataResponseDtoValues$inboundSchema` instead. */
-  export const inboundSchema =
-    SmsControlsMetadataResponseDtoValues$inboundSchema;
-  /** @deprecated use `SmsControlsMetadataResponseDtoValues$outboundSchema` instead. */
-  export const outboundSchema =
-    SmsControlsMetadataResponseDtoValues$outboundSchema;
-  /** @deprecated use `SmsControlsMetadataResponseDtoValues$Outbound` instead. */
-  export type Outbound = SmsControlsMetadataResponseDtoValues$Outbound;
-}
-
-export function smsControlsMetadataResponseDtoValuesToJSON(
-  smsControlsMetadataResponseDtoValues: SmsControlsMetadataResponseDtoValues,
-): string {
-  return JSON.stringify(
-    SmsControlsMetadataResponseDtoValues$outboundSchema.parse(
-      smsControlsMetadataResponseDtoValues,
-    ),
-  );
-}
-
-export function smsControlsMetadataResponseDtoValuesFromJSON(
-  jsonString: string,
-): SafeParseResult<SmsControlsMetadataResponseDtoValues, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) =>
-      SmsControlsMetadataResponseDtoValues$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'SmsControlsMetadataResponseDtoValues' from JSON`,
-  );
-}
-
-/** @internal */
 export const SmsControlsMetadataResponseDto$inboundSchema: z.ZodType<
   SmsControlsMetadataResponseDto,
   z.ZodTypeDef,
@@ -255,14 +108,14 @@ export const SmsControlsMetadataResponseDto$inboundSchema: z.ZodType<
     SmsControlsMetadataResponseDtoDataSchema$inboundSchema
   ).optional(),
   uiSchema: UiSchema$inboundSchema.optional(),
-  values: z.lazy(() => SmsControlsMetadataResponseDtoValues$inboundSchema),
+  values: SmsControlDto$inboundSchema,
 });
 
 /** @internal */
 export type SmsControlsMetadataResponseDto$Outbound = {
   dataSchema?: SmsControlsMetadataResponseDtoDataSchema$Outbound | undefined;
   uiSchema?: UiSchema$Outbound | undefined;
-  values: SmsControlsMetadataResponseDtoValues$Outbound;
+  values: SmsControlDto$Outbound;
 };
 
 /** @internal */
@@ -275,7 +128,7 @@ export const SmsControlsMetadataResponseDto$outboundSchema: z.ZodType<
     SmsControlsMetadataResponseDtoDataSchema$outboundSchema
   ).optional(),
   uiSchema: UiSchema$outboundSchema.optional(),
-  values: z.lazy(() => SmsControlsMetadataResponseDtoValues$outboundSchema),
+  values: SmsControlDto$outboundSchema,
 });
 
 /**

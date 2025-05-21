@@ -3,20 +3,15 @@
  */
 
 import * as z from "zod";
-import { remap as remap$ } from "../../lib/primitives.js";
-import {
-  collectExtraKeys as collectExtraKeys$,
-  safeParse,
-} from "../../lib/schemas.js";
-import { ClosedEnum } from "../../types/enums.js";
+import { safeParse } from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 import {
-  LookBackWindowDto,
-  LookBackWindowDto$inboundSchema,
-  LookBackWindowDto$Outbound,
-  LookBackWindowDto$outboundSchema,
-} from "./lookbackwindowdto.js";
+  DigestControlDto,
+  DigestControlDto$inboundSchema,
+  DigestControlDto$Outbound,
+  DigestControlDto$outboundSchema,
+} from "./digestcontroldto.js";
 import {
   UiSchema,
   UiSchema$inboundSchema,
@@ -28,78 +23,6 @@ import {
  * JSON Schema for data
  */
 export type DigestControlsMetadataResponseDtoDataSchema = {};
-
-/**
- * Filter conditions for skipping the step.
- */
-export type DigestControlsMetadataResponseDtoSkip = {};
-
-/**
- * The type of digest strategy. Determines which fields are applicable.
- */
-export const DigestControlsMetadataResponseDtoType = {
-  Regular: "regular",
-  Timed: "timed",
-} as const;
-/**
- * The type of digest strategy. Determines which fields are applicable.
- */
-export type DigestControlsMetadataResponseDtoType = ClosedEnum<
-  typeof DigestControlsMetadataResponseDtoType
->;
-
-/**
- * The unit of time for the digest interval (for REGULAR type).
- */
-export const DigestControlsMetadataResponseDtoUnit = {
-  Seconds: "seconds",
-  Minutes: "minutes",
-  Hours: "hours",
-  Days: "days",
-  Weeks: "weeks",
-  Months: "months",
-} as const;
-/**
- * The unit of time for the digest interval (for REGULAR type).
- */
-export type DigestControlsMetadataResponseDtoUnit = ClosedEnum<
-  typeof DigestControlsMetadataResponseDtoUnit
->;
-
-/**
- * Control values specific to Digest
- */
-export type DigestControlsMetadataResponseDtoValues = {
-  /**
-   * Filter conditions for skipping the step.
-   */
-  skip?: DigestControlsMetadataResponseDtoSkip | undefined;
-  /**
-   * The type of digest strategy. Determines which fields are applicable.
-   */
-  type?: DigestControlsMetadataResponseDtoType | undefined;
-  /**
-   * The amount of time for the digest interval (for REGULAR type). Min 1.
-   */
-  amount?: number | undefined;
-  /**
-   * The unit of time for the digest interval (for REGULAR type).
-   */
-  unit?: DigestControlsMetadataResponseDtoUnit | undefined;
-  /**
-   * Configuration for look-back window (for REGULAR type).
-   */
-  lookBackWindow?: LookBackWindowDto | undefined;
-  /**
-   * Cron expression for TIMED digest. Min length 1.
-   */
-  cron?: string | undefined;
-  /**
-   * Specify a custom key for digesting events instead of the default event key.
-   */
-  digestKey?: string | undefined;
-  additionalProperties?: { [k: string]: any };
-};
 
 export type DigestControlsMetadataResponseDto = {
   /**
@@ -113,7 +36,7 @@ export type DigestControlsMetadataResponseDto = {
   /**
    * Control values specific to Digest
    */
-  values: DigestControlsMetadataResponseDtoValues;
+  values: DigestControlDto;
 };
 
 /** @internal */
@@ -178,205 +101,6 @@ export function digestControlsMetadataResponseDtoDataSchemaFromJSON(
 }
 
 /** @internal */
-export const DigestControlsMetadataResponseDtoSkip$inboundSchema: z.ZodType<
-  DigestControlsMetadataResponseDtoSkip,
-  z.ZodTypeDef,
-  unknown
-> = z.object({});
-
-/** @internal */
-export type DigestControlsMetadataResponseDtoSkip$Outbound = {};
-
-/** @internal */
-export const DigestControlsMetadataResponseDtoSkip$outboundSchema: z.ZodType<
-  DigestControlsMetadataResponseDtoSkip$Outbound,
-  z.ZodTypeDef,
-  DigestControlsMetadataResponseDtoSkip
-> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace DigestControlsMetadataResponseDtoSkip$ {
-  /** @deprecated use `DigestControlsMetadataResponseDtoSkip$inboundSchema` instead. */
-  export const inboundSchema =
-    DigestControlsMetadataResponseDtoSkip$inboundSchema;
-  /** @deprecated use `DigestControlsMetadataResponseDtoSkip$outboundSchema` instead. */
-  export const outboundSchema =
-    DigestControlsMetadataResponseDtoSkip$outboundSchema;
-  /** @deprecated use `DigestControlsMetadataResponseDtoSkip$Outbound` instead. */
-  export type Outbound = DigestControlsMetadataResponseDtoSkip$Outbound;
-}
-
-export function digestControlsMetadataResponseDtoSkipToJSON(
-  digestControlsMetadataResponseDtoSkip: DigestControlsMetadataResponseDtoSkip,
-): string {
-  return JSON.stringify(
-    DigestControlsMetadataResponseDtoSkip$outboundSchema.parse(
-      digestControlsMetadataResponseDtoSkip,
-    ),
-  );
-}
-
-export function digestControlsMetadataResponseDtoSkipFromJSON(
-  jsonString: string,
-): SafeParseResult<DigestControlsMetadataResponseDtoSkip, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) =>
-      DigestControlsMetadataResponseDtoSkip$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'DigestControlsMetadataResponseDtoSkip' from JSON`,
-  );
-}
-
-/** @internal */
-export const DigestControlsMetadataResponseDtoType$inboundSchema:
-  z.ZodNativeEnum<typeof DigestControlsMetadataResponseDtoType> = z.nativeEnum(
-    DigestControlsMetadataResponseDtoType,
-  );
-
-/** @internal */
-export const DigestControlsMetadataResponseDtoType$outboundSchema:
-  z.ZodNativeEnum<typeof DigestControlsMetadataResponseDtoType> =
-    DigestControlsMetadataResponseDtoType$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace DigestControlsMetadataResponseDtoType$ {
-  /** @deprecated use `DigestControlsMetadataResponseDtoType$inboundSchema` instead. */
-  export const inboundSchema =
-    DigestControlsMetadataResponseDtoType$inboundSchema;
-  /** @deprecated use `DigestControlsMetadataResponseDtoType$outboundSchema` instead. */
-  export const outboundSchema =
-    DigestControlsMetadataResponseDtoType$outboundSchema;
-}
-
-/** @internal */
-export const DigestControlsMetadataResponseDtoUnit$inboundSchema:
-  z.ZodNativeEnum<typeof DigestControlsMetadataResponseDtoUnit> = z.nativeEnum(
-    DigestControlsMetadataResponseDtoUnit,
-  );
-
-/** @internal */
-export const DigestControlsMetadataResponseDtoUnit$outboundSchema:
-  z.ZodNativeEnum<typeof DigestControlsMetadataResponseDtoUnit> =
-    DigestControlsMetadataResponseDtoUnit$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace DigestControlsMetadataResponseDtoUnit$ {
-  /** @deprecated use `DigestControlsMetadataResponseDtoUnit$inboundSchema` instead. */
-  export const inboundSchema =
-    DigestControlsMetadataResponseDtoUnit$inboundSchema;
-  /** @deprecated use `DigestControlsMetadataResponseDtoUnit$outboundSchema` instead. */
-  export const outboundSchema =
-    DigestControlsMetadataResponseDtoUnit$outboundSchema;
-}
-
-/** @internal */
-export const DigestControlsMetadataResponseDtoValues$inboundSchema: z.ZodType<
-  DigestControlsMetadataResponseDtoValues,
-  z.ZodTypeDef,
-  unknown
-> = collectExtraKeys$(
-  z.object({
-    skip: z.lazy(() => DigestControlsMetadataResponseDtoSkip$inboundSchema)
-      .optional(),
-    type: DigestControlsMetadataResponseDtoType$inboundSchema.optional(),
-    amount: z.number().optional(),
-    unit: DigestControlsMetadataResponseDtoUnit$inboundSchema.optional(),
-    lookBackWindow: LookBackWindowDto$inboundSchema.optional(),
-    cron: z.string().optional(),
-    digestKey: z.string().optional(),
-  }).catchall(z.any()),
-  "additionalProperties",
-  true,
-);
-
-/** @internal */
-export type DigestControlsMetadataResponseDtoValues$Outbound = {
-  skip?: DigestControlsMetadataResponseDtoSkip$Outbound | undefined;
-  type?: string | undefined;
-  amount?: number | undefined;
-  unit?: string | undefined;
-  lookBackWindow?: LookBackWindowDto$Outbound | undefined;
-  cron?: string | undefined;
-  digestKey?: string | undefined;
-  [additionalProperties: string]: unknown;
-};
-
-/** @internal */
-export const DigestControlsMetadataResponseDtoValues$outboundSchema: z.ZodType<
-  DigestControlsMetadataResponseDtoValues$Outbound,
-  z.ZodTypeDef,
-  DigestControlsMetadataResponseDtoValues
-> = z.object({
-  skip: z.lazy(() => DigestControlsMetadataResponseDtoSkip$outboundSchema)
-    .optional(),
-  type: DigestControlsMetadataResponseDtoType$outboundSchema.optional(),
-  amount: z.number().optional(),
-  unit: DigestControlsMetadataResponseDtoUnit$outboundSchema.optional(),
-  lookBackWindow: LookBackWindowDto$outboundSchema.optional(),
-  cron: z.string().optional(),
-  digestKey: z.string().optional(),
-  additionalProperties: z.record(z.any()),
-}).transform((v) => {
-  return {
-    ...v.additionalProperties,
-    ...remap$(v, {
-      additionalProperties: null,
-    }),
-  };
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace DigestControlsMetadataResponseDtoValues$ {
-  /** @deprecated use `DigestControlsMetadataResponseDtoValues$inboundSchema` instead. */
-  export const inboundSchema =
-    DigestControlsMetadataResponseDtoValues$inboundSchema;
-  /** @deprecated use `DigestControlsMetadataResponseDtoValues$outboundSchema` instead. */
-  export const outboundSchema =
-    DigestControlsMetadataResponseDtoValues$outboundSchema;
-  /** @deprecated use `DigestControlsMetadataResponseDtoValues$Outbound` instead. */
-  export type Outbound = DigestControlsMetadataResponseDtoValues$Outbound;
-}
-
-export function digestControlsMetadataResponseDtoValuesToJSON(
-  digestControlsMetadataResponseDtoValues:
-    DigestControlsMetadataResponseDtoValues,
-): string {
-  return JSON.stringify(
-    DigestControlsMetadataResponseDtoValues$outboundSchema.parse(
-      digestControlsMetadataResponseDtoValues,
-    ),
-  );
-}
-
-export function digestControlsMetadataResponseDtoValuesFromJSON(
-  jsonString: string,
-): SafeParseResult<
-  DigestControlsMetadataResponseDtoValues,
-  SDKValidationError
-> {
-  return safeParse(
-    jsonString,
-    (x) =>
-      DigestControlsMetadataResponseDtoValues$inboundSchema.parse(
-        JSON.parse(x),
-      ),
-    `Failed to parse 'DigestControlsMetadataResponseDtoValues' from JSON`,
-  );
-}
-
-/** @internal */
 export const DigestControlsMetadataResponseDto$inboundSchema: z.ZodType<
   DigestControlsMetadataResponseDto,
   z.ZodTypeDef,
@@ -386,14 +110,14 @@ export const DigestControlsMetadataResponseDto$inboundSchema: z.ZodType<
     DigestControlsMetadataResponseDtoDataSchema$inboundSchema
   ).optional(),
   uiSchema: UiSchema$inboundSchema.optional(),
-  values: z.lazy(() => DigestControlsMetadataResponseDtoValues$inboundSchema),
+  values: DigestControlDto$inboundSchema,
 });
 
 /** @internal */
 export type DigestControlsMetadataResponseDto$Outbound = {
   dataSchema?: DigestControlsMetadataResponseDtoDataSchema$Outbound | undefined;
   uiSchema?: UiSchema$Outbound | undefined;
-  values: DigestControlsMetadataResponseDtoValues$Outbound;
+  values: DigestControlDto$Outbound;
 };
 
 /** @internal */
@@ -406,7 +130,7 @@ export const DigestControlsMetadataResponseDto$outboundSchema: z.ZodType<
     DigestControlsMetadataResponseDtoDataSchema$outboundSchema
   ).optional(),
   uiSchema: UiSchema$outboundSchema.optional(),
-  values: z.lazy(() => DigestControlsMetadataResponseDtoValues$outboundSchema),
+  values: DigestControlDto$outboundSchema,
 });
 
 /**

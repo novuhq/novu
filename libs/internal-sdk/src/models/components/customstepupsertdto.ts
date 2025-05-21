@@ -16,7 +16,7 @@ import {
 /**
  * Custom control values for the step.
  */
-export type Custom = {};
+export type CustomStepUpsertDtoCustom = {};
 
 /**
  * Control values for the Custom step
@@ -25,7 +25,7 @@ export type CustomStepUpsertDtoControlValues = {
   /**
    * Custom control values for the step.
    */
-  custom?: Custom | undefined;
+  custom?: CustomStepUpsertDtoCustom | undefined;
 };
 
 export type CustomStepUpsertDto = {
@@ -48,43 +48,50 @@ export type CustomStepUpsertDto = {
 };
 
 /** @internal */
-export const Custom$inboundSchema: z.ZodType<Custom, z.ZodTypeDef, unknown> = z
-  .object({});
-
-/** @internal */
-export type Custom$Outbound = {};
-
-/** @internal */
-export const Custom$outboundSchema: z.ZodType<
-  Custom$Outbound,
+export const CustomStepUpsertDtoCustom$inboundSchema: z.ZodType<
+  CustomStepUpsertDtoCustom,
   z.ZodTypeDef,
-  Custom
+  unknown
+> = z.object({});
+
+/** @internal */
+export type CustomStepUpsertDtoCustom$Outbound = {};
+
+/** @internal */
+export const CustomStepUpsertDtoCustom$outboundSchema: z.ZodType<
+  CustomStepUpsertDtoCustom$Outbound,
+  z.ZodTypeDef,
+  CustomStepUpsertDtoCustom
 > = z.object({});
 
 /**
  * @internal
  * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
  */
-export namespace Custom$ {
-  /** @deprecated use `Custom$inboundSchema` instead. */
-  export const inboundSchema = Custom$inboundSchema;
-  /** @deprecated use `Custom$outboundSchema` instead. */
-  export const outboundSchema = Custom$outboundSchema;
-  /** @deprecated use `Custom$Outbound` instead. */
-  export type Outbound = Custom$Outbound;
+export namespace CustomStepUpsertDtoCustom$ {
+  /** @deprecated use `CustomStepUpsertDtoCustom$inboundSchema` instead. */
+  export const inboundSchema = CustomStepUpsertDtoCustom$inboundSchema;
+  /** @deprecated use `CustomStepUpsertDtoCustom$outboundSchema` instead. */
+  export const outboundSchema = CustomStepUpsertDtoCustom$outboundSchema;
+  /** @deprecated use `CustomStepUpsertDtoCustom$Outbound` instead. */
+  export type Outbound = CustomStepUpsertDtoCustom$Outbound;
 }
 
-export function customToJSON(custom: Custom): string {
-  return JSON.stringify(Custom$outboundSchema.parse(custom));
+export function customStepUpsertDtoCustomToJSON(
+  customStepUpsertDtoCustom: CustomStepUpsertDtoCustom,
+): string {
+  return JSON.stringify(
+    CustomStepUpsertDtoCustom$outboundSchema.parse(customStepUpsertDtoCustom),
+  );
 }
 
-export function customFromJSON(
+export function customStepUpsertDtoCustomFromJSON(
   jsonString: string,
-): SafeParseResult<Custom, SDKValidationError> {
+): SafeParseResult<CustomStepUpsertDtoCustom, SDKValidationError> {
   return safeParse(
     jsonString,
-    (x) => Custom$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'Custom' from JSON`,
+    (x) => CustomStepUpsertDtoCustom$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'CustomStepUpsertDtoCustom' from JSON`,
   );
 }
 
@@ -94,12 +101,12 @@ export const CustomStepUpsertDtoControlValues$inboundSchema: z.ZodType<
   z.ZodTypeDef,
   unknown
 > = z.object({
-  custom: z.lazy(() => Custom$inboundSchema).optional(),
+  custom: z.lazy(() => CustomStepUpsertDtoCustom$inboundSchema).optional(),
 });
 
 /** @internal */
 export type CustomStepUpsertDtoControlValues$Outbound = {
-  custom?: Custom$Outbound | undefined;
+  custom?: CustomStepUpsertDtoCustom$Outbound | undefined;
 };
 
 /** @internal */
@@ -108,7 +115,7 @@ export const CustomStepUpsertDtoControlValues$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   CustomStepUpsertDtoControlValues
 > = z.object({
-  custom: z.lazy(() => Custom$outboundSchema).optional(),
+  custom: z.lazy(() => CustomStepUpsertDtoCustom$outboundSchema).optional(),
 });
 
 /**

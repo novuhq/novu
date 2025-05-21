@@ -28,7 +28,7 @@ import {
 /**
  * Filter conditions for skipping the step.
  */
-export type Skip = {};
+export type InAppStepUpsertDtoSkip = {};
 
 /**
  * Additional data payload for the step.
@@ -42,7 +42,7 @@ export type ControlValues = {
   /**
    * Filter conditions for skipping the step.
    */
-  skip?: Skip | undefined;
+  skip?: InAppStepUpsertDtoSkip | undefined;
   /**
    * Content/body of the in-app message. Required if subject is empty.
    */
@@ -97,40 +97,50 @@ export type InAppStepUpsertDto = {
 };
 
 /** @internal */
-export const Skip$inboundSchema: z.ZodType<Skip, z.ZodTypeDef, unknown> = z
-  .object({});
+export const InAppStepUpsertDtoSkip$inboundSchema: z.ZodType<
+  InAppStepUpsertDtoSkip,
+  z.ZodTypeDef,
+  unknown
+> = z.object({});
 
 /** @internal */
-export type Skip$Outbound = {};
+export type InAppStepUpsertDtoSkip$Outbound = {};
 
 /** @internal */
-export const Skip$outboundSchema: z.ZodType<Skip$Outbound, z.ZodTypeDef, Skip> =
-  z.object({});
+export const InAppStepUpsertDtoSkip$outboundSchema: z.ZodType<
+  InAppStepUpsertDtoSkip$Outbound,
+  z.ZodTypeDef,
+  InAppStepUpsertDtoSkip
+> = z.object({});
 
 /**
  * @internal
  * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
  */
-export namespace Skip$ {
-  /** @deprecated use `Skip$inboundSchema` instead. */
-  export const inboundSchema = Skip$inboundSchema;
-  /** @deprecated use `Skip$outboundSchema` instead. */
-  export const outboundSchema = Skip$outboundSchema;
-  /** @deprecated use `Skip$Outbound` instead. */
-  export type Outbound = Skip$Outbound;
+export namespace InAppStepUpsertDtoSkip$ {
+  /** @deprecated use `InAppStepUpsertDtoSkip$inboundSchema` instead. */
+  export const inboundSchema = InAppStepUpsertDtoSkip$inboundSchema;
+  /** @deprecated use `InAppStepUpsertDtoSkip$outboundSchema` instead. */
+  export const outboundSchema = InAppStepUpsertDtoSkip$outboundSchema;
+  /** @deprecated use `InAppStepUpsertDtoSkip$Outbound` instead. */
+  export type Outbound = InAppStepUpsertDtoSkip$Outbound;
 }
 
-export function skipToJSON(skip: Skip): string {
-  return JSON.stringify(Skip$outboundSchema.parse(skip));
+export function inAppStepUpsertDtoSkipToJSON(
+  inAppStepUpsertDtoSkip: InAppStepUpsertDtoSkip,
+): string {
+  return JSON.stringify(
+    InAppStepUpsertDtoSkip$outboundSchema.parse(inAppStepUpsertDtoSkip),
+  );
 }
 
-export function skipFromJSON(
+export function inAppStepUpsertDtoSkipFromJSON(
   jsonString: string,
-): SafeParseResult<Skip, SDKValidationError> {
+): SafeParseResult<InAppStepUpsertDtoSkip, SDKValidationError> {
   return safeParse(
     jsonString,
-    (x) => Skip$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'Skip' from JSON`,
+    (x) => InAppStepUpsertDtoSkip$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'InAppStepUpsertDtoSkip' from JSON`,
   );
 }
 
@@ -188,7 +198,7 @@ export const ControlValues$inboundSchema: z.ZodType<
   z.ZodTypeDef,
   unknown
 > = z.object({
-  skip: z.lazy(() => Skip$inboundSchema).optional(),
+  skip: z.lazy(() => InAppStepUpsertDtoSkip$inboundSchema).optional(),
   body: z.string().optional(),
   subject: z.string().optional(),
   avatar: z.string().optional(),
@@ -201,7 +211,7 @@ export const ControlValues$inboundSchema: z.ZodType<
 
 /** @internal */
 export type ControlValues$Outbound = {
-  skip?: Skip$Outbound | undefined;
+  skip?: InAppStepUpsertDtoSkip$Outbound | undefined;
   body?: string | undefined;
   subject?: string | undefined;
   avatar?: string | undefined;
@@ -218,7 +228,7 @@ export const ControlValues$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   ControlValues
 > = z.object({
-  skip: z.lazy(() => Skip$outboundSchema).optional(),
+  skip: z.lazy(() => InAppStepUpsertDtoSkip$outboundSchema).optional(),
   body: z.string().optional(),
   subject: z.string().optional(),
   avatar: z.string().optional(),

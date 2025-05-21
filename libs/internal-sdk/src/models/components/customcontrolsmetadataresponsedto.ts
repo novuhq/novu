@@ -3,13 +3,15 @@
  */
 
 import * as z from "zod";
-import { remap as remap$ } from "../../lib/primitives.js";
-import {
-  collectExtraKeys as collectExtraKeys$,
-  safeParse,
-} from "../../lib/schemas.js";
+import { safeParse } from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
+import {
+  CustomControlDto,
+  CustomControlDto$inboundSchema,
+  CustomControlDto$Outbound,
+  CustomControlDto$outboundSchema,
+} from "./customcontroldto.js";
 import {
   UiSchema,
   UiSchema$inboundSchema,
@@ -21,22 +23,6 @@ import {
  * JSON Schema for data
  */
 export type CustomControlsMetadataResponseDtoDataSchema = {};
-
-/**
- * Custom control values for the step.
- */
-export type CustomControlsMetadataResponseDtoCustom = {};
-
-/**
- * Control values specific to Custom step
- */
-export type CustomControlsMetadataResponseDtoValues = {
-  /**
-   * Custom control values for the step.
-   */
-  custom?: CustomControlsMetadataResponseDtoCustom | undefined;
-  additionalProperties?: { [k: string]: any };
-};
 
 export type CustomControlsMetadataResponseDto = {
   /**
@@ -50,7 +36,7 @@ export type CustomControlsMetadataResponseDto = {
   /**
    * Control values specific to Custom step
    */
-  values: CustomControlsMetadataResponseDtoValues;
+  values: CustomControlDto;
 };
 
 /** @internal */
@@ -115,145 +101,6 @@ export function customControlsMetadataResponseDtoDataSchemaFromJSON(
 }
 
 /** @internal */
-export const CustomControlsMetadataResponseDtoCustom$inboundSchema: z.ZodType<
-  CustomControlsMetadataResponseDtoCustom,
-  z.ZodTypeDef,
-  unknown
-> = z.object({});
-
-/** @internal */
-export type CustomControlsMetadataResponseDtoCustom$Outbound = {};
-
-/** @internal */
-export const CustomControlsMetadataResponseDtoCustom$outboundSchema: z.ZodType<
-  CustomControlsMetadataResponseDtoCustom$Outbound,
-  z.ZodTypeDef,
-  CustomControlsMetadataResponseDtoCustom
-> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace CustomControlsMetadataResponseDtoCustom$ {
-  /** @deprecated use `CustomControlsMetadataResponseDtoCustom$inboundSchema` instead. */
-  export const inboundSchema =
-    CustomControlsMetadataResponseDtoCustom$inboundSchema;
-  /** @deprecated use `CustomControlsMetadataResponseDtoCustom$outboundSchema` instead. */
-  export const outboundSchema =
-    CustomControlsMetadataResponseDtoCustom$outboundSchema;
-  /** @deprecated use `CustomControlsMetadataResponseDtoCustom$Outbound` instead. */
-  export type Outbound = CustomControlsMetadataResponseDtoCustom$Outbound;
-}
-
-export function customControlsMetadataResponseDtoCustomToJSON(
-  customControlsMetadataResponseDtoCustom:
-    CustomControlsMetadataResponseDtoCustom,
-): string {
-  return JSON.stringify(
-    CustomControlsMetadataResponseDtoCustom$outboundSchema.parse(
-      customControlsMetadataResponseDtoCustom,
-    ),
-  );
-}
-
-export function customControlsMetadataResponseDtoCustomFromJSON(
-  jsonString: string,
-): SafeParseResult<
-  CustomControlsMetadataResponseDtoCustom,
-  SDKValidationError
-> {
-  return safeParse(
-    jsonString,
-    (x) =>
-      CustomControlsMetadataResponseDtoCustom$inboundSchema.parse(
-        JSON.parse(x),
-      ),
-    `Failed to parse 'CustomControlsMetadataResponseDtoCustom' from JSON`,
-  );
-}
-
-/** @internal */
-export const CustomControlsMetadataResponseDtoValues$inboundSchema: z.ZodType<
-  CustomControlsMetadataResponseDtoValues,
-  z.ZodTypeDef,
-  unknown
-> = collectExtraKeys$(
-  z.object({
-    custom: z.lazy(() => CustomControlsMetadataResponseDtoCustom$inboundSchema)
-      .optional(),
-  }).catchall(z.any()),
-  "additionalProperties",
-  true,
-);
-
-/** @internal */
-export type CustomControlsMetadataResponseDtoValues$Outbound = {
-  custom?: CustomControlsMetadataResponseDtoCustom$Outbound | undefined;
-  [additionalProperties: string]: unknown;
-};
-
-/** @internal */
-export const CustomControlsMetadataResponseDtoValues$outboundSchema: z.ZodType<
-  CustomControlsMetadataResponseDtoValues$Outbound,
-  z.ZodTypeDef,
-  CustomControlsMetadataResponseDtoValues
-> = z.object({
-  custom: z.lazy(() => CustomControlsMetadataResponseDtoCustom$outboundSchema)
-    .optional(),
-  additionalProperties: z.record(z.any()),
-}).transform((v) => {
-  return {
-    ...v.additionalProperties,
-    ...remap$(v, {
-      additionalProperties: null,
-    }),
-  };
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace CustomControlsMetadataResponseDtoValues$ {
-  /** @deprecated use `CustomControlsMetadataResponseDtoValues$inboundSchema` instead. */
-  export const inboundSchema =
-    CustomControlsMetadataResponseDtoValues$inboundSchema;
-  /** @deprecated use `CustomControlsMetadataResponseDtoValues$outboundSchema` instead. */
-  export const outboundSchema =
-    CustomControlsMetadataResponseDtoValues$outboundSchema;
-  /** @deprecated use `CustomControlsMetadataResponseDtoValues$Outbound` instead. */
-  export type Outbound = CustomControlsMetadataResponseDtoValues$Outbound;
-}
-
-export function customControlsMetadataResponseDtoValuesToJSON(
-  customControlsMetadataResponseDtoValues:
-    CustomControlsMetadataResponseDtoValues,
-): string {
-  return JSON.stringify(
-    CustomControlsMetadataResponseDtoValues$outboundSchema.parse(
-      customControlsMetadataResponseDtoValues,
-    ),
-  );
-}
-
-export function customControlsMetadataResponseDtoValuesFromJSON(
-  jsonString: string,
-): SafeParseResult<
-  CustomControlsMetadataResponseDtoValues,
-  SDKValidationError
-> {
-  return safeParse(
-    jsonString,
-    (x) =>
-      CustomControlsMetadataResponseDtoValues$inboundSchema.parse(
-        JSON.parse(x),
-      ),
-    `Failed to parse 'CustomControlsMetadataResponseDtoValues' from JSON`,
-  );
-}
-
-/** @internal */
 export const CustomControlsMetadataResponseDto$inboundSchema: z.ZodType<
   CustomControlsMetadataResponseDto,
   z.ZodTypeDef,
@@ -263,14 +110,14 @@ export const CustomControlsMetadataResponseDto$inboundSchema: z.ZodType<
     CustomControlsMetadataResponseDtoDataSchema$inboundSchema
   ).optional(),
   uiSchema: UiSchema$inboundSchema.optional(),
-  values: z.lazy(() => CustomControlsMetadataResponseDtoValues$inboundSchema),
+  values: CustomControlDto$inboundSchema,
 });
 
 /** @internal */
 export type CustomControlsMetadataResponseDto$Outbound = {
   dataSchema?: CustomControlsMetadataResponseDtoDataSchema$Outbound | undefined;
   uiSchema?: UiSchema$Outbound | undefined;
-  values: CustomControlsMetadataResponseDtoValues$Outbound;
+  values: CustomControlDto$Outbound;
 };
 
 /** @internal */
@@ -283,7 +130,7 @@ export const CustomControlsMetadataResponseDto$outboundSchema: z.ZodType<
     CustomControlsMetadataResponseDtoDataSchema$outboundSchema
   ).optional(),
   uiSchema: UiSchema$outboundSchema.optional(),
-  values: z.lazy(() => CustomControlsMetadataResponseDtoValues$outboundSchema),
+  values: CustomControlDto$outboundSchema,
 });
 
 /**

@@ -3,13 +3,15 @@
  */
 
 import * as z from "zod";
-import { remap as remap$ } from "../../lib/primitives.js";
-import {
-  collectExtraKeys as collectExtraKeys$,
-  safeParse,
-} from "../../lib/schemas.js";
+import { safeParse } from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
+import {
+  ChatControlDto,
+  ChatControlDto$inboundSchema,
+  ChatControlDto$Outbound,
+  ChatControlDto$outboundSchema,
+} from "./chatcontroldto.js";
 import {
   UiSchema,
   UiSchema$inboundSchema,
@@ -21,26 +23,6 @@ import {
  * JSON Schema for data
  */
 export type ChatControlsMetadataResponseDtoDataSchema = {};
-
-/**
- * Filter conditions for skipping the step.
- */
-export type ChatControlsMetadataResponseDtoSkip = {};
-
-/**
- * Control values specific to Chat
- */
-export type ChatControlsMetadataResponseDtoValues = {
-  /**
-   * Filter conditions for skipping the step.
-   */
-  skip?: ChatControlsMetadataResponseDtoSkip | undefined;
-  /**
-   * Content of the chat message.
-   */
-  body: string;
-  additionalProperties?: { [k: string]: any };
-};
 
 export type ChatControlsMetadataResponseDto = {
   /**
@@ -54,7 +36,7 @@ export type ChatControlsMetadataResponseDto = {
   /**
    * Control values specific to Chat
    */
-  values: ChatControlsMetadataResponseDtoValues;
+  values: ChatControlDto;
 };
 
 /** @internal */
@@ -118,136 +100,6 @@ export function chatControlsMetadataResponseDtoDataSchemaFromJSON(
 }
 
 /** @internal */
-export const ChatControlsMetadataResponseDtoSkip$inboundSchema: z.ZodType<
-  ChatControlsMetadataResponseDtoSkip,
-  z.ZodTypeDef,
-  unknown
-> = z.object({});
-
-/** @internal */
-export type ChatControlsMetadataResponseDtoSkip$Outbound = {};
-
-/** @internal */
-export const ChatControlsMetadataResponseDtoSkip$outboundSchema: z.ZodType<
-  ChatControlsMetadataResponseDtoSkip$Outbound,
-  z.ZodTypeDef,
-  ChatControlsMetadataResponseDtoSkip
-> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ChatControlsMetadataResponseDtoSkip$ {
-  /** @deprecated use `ChatControlsMetadataResponseDtoSkip$inboundSchema` instead. */
-  export const inboundSchema =
-    ChatControlsMetadataResponseDtoSkip$inboundSchema;
-  /** @deprecated use `ChatControlsMetadataResponseDtoSkip$outboundSchema` instead. */
-  export const outboundSchema =
-    ChatControlsMetadataResponseDtoSkip$outboundSchema;
-  /** @deprecated use `ChatControlsMetadataResponseDtoSkip$Outbound` instead. */
-  export type Outbound = ChatControlsMetadataResponseDtoSkip$Outbound;
-}
-
-export function chatControlsMetadataResponseDtoSkipToJSON(
-  chatControlsMetadataResponseDtoSkip: ChatControlsMetadataResponseDtoSkip,
-): string {
-  return JSON.stringify(
-    ChatControlsMetadataResponseDtoSkip$outboundSchema.parse(
-      chatControlsMetadataResponseDtoSkip,
-    ),
-  );
-}
-
-export function chatControlsMetadataResponseDtoSkipFromJSON(
-  jsonString: string,
-): SafeParseResult<ChatControlsMetadataResponseDtoSkip, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) =>
-      ChatControlsMetadataResponseDtoSkip$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'ChatControlsMetadataResponseDtoSkip' from JSON`,
-  );
-}
-
-/** @internal */
-export const ChatControlsMetadataResponseDtoValues$inboundSchema: z.ZodType<
-  ChatControlsMetadataResponseDtoValues,
-  z.ZodTypeDef,
-  unknown
-> = collectExtraKeys$(
-  z.object({
-    skip: z.lazy(() => ChatControlsMetadataResponseDtoSkip$inboundSchema)
-      .optional(),
-    body: z.string(),
-  }).catchall(z.any()),
-  "additionalProperties",
-  true,
-);
-
-/** @internal */
-export type ChatControlsMetadataResponseDtoValues$Outbound = {
-  skip?: ChatControlsMetadataResponseDtoSkip$Outbound | undefined;
-  body: string;
-  [additionalProperties: string]: unknown;
-};
-
-/** @internal */
-export const ChatControlsMetadataResponseDtoValues$outboundSchema: z.ZodType<
-  ChatControlsMetadataResponseDtoValues$Outbound,
-  z.ZodTypeDef,
-  ChatControlsMetadataResponseDtoValues
-> = z.object({
-  skip: z.lazy(() => ChatControlsMetadataResponseDtoSkip$outboundSchema)
-    .optional(),
-  body: z.string(),
-  additionalProperties: z.record(z.any()),
-}).transform((v) => {
-  return {
-    ...v.additionalProperties,
-    ...remap$(v, {
-      additionalProperties: null,
-    }),
-  };
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ChatControlsMetadataResponseDtoValues$ {
-  /** @deprecated use `ChatControlsMetadataResponseDtoValues$inboundSchema` instead. */
-  export const inboundSchema =
-    ChatControlsMetadataResponseDtoValues$inboundSchema;
-  /** @deprecated use `ChatControlsMetadataResponseDtoValues$outboundSchema` instead. */
-  export const outboundSchema =
-    ChatControlsMetadataResponseDtoValues$outboundSchema;
-  /** @deprecated use `ChatControlsMetadataResponseDtoValues$Outbound` instead. */
-  export type Outbound = ChatControlsMetadataResponseDtoValues$Outbound;
-}
-
-export function chatControlsMetadataResponseDtoValuesToJSON(
-  chatControlsMetadataResponseDtoValues: ChatControlsMetadataResponseDtoValues,
-): string {
-  return JSON.stringify(
-    ChatControlsMetadataResponseDtoValues$outboundSchema.parse(
-      chatControlsMetadataResponseDtoValues,
-    ),
-  );
-}
-
-export function chatControlsMetadataResponseDtoValuesFromJSON(
-  jsonString: string,
-): SafeParseResult<ChatControlsMetadataResponseDtoValues, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) =>
-      ChatControlsMetadataResponseDtoValues$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'ChatControlsMetadataResponseDtoValues' from JSON`,
-  );
-}
-
-/** @internal */
 export const ChatControlsMetadataResponseDto$inboundSchema: z.ZodType<
   ChatControlsMetadataResponseDto,
   z.ZodTypeDef,
@@ -257,14 +109,14 @@ export const ChatControlsMetadataResponseDto$inboundSchema: z.ZodType<
     ChatControlsMetadataResponseDtoDataSchema$inboundSchema
   ).optional(),
   uiSchema: UiSchema$inboundSchema.optional(),
-  values: z.lazy(() => ChatControlsMetadataResponseDtoValues$inboundSchema),
+  values: ChatControlDto$inboundSchema,
 });
 
 /** @internal */
 export type ChatControlsMetadataResponseDto$Outbound = {
   dataSchema?: ChatControlsMetadataResponseDtoDataSchema$Outbound | undefined;
   uiSchema?: UiSchema$Outbound | undefined;
-  values: ChatControlsMetadataResponseDtoValues$Outbound;
+  values: ChatControlDto$Outbound;
 };
 
 /** @internal */
@@ -277,7 +129,7 @@ export const ChatControlsMetadataResponseDto$outboundSchema: z.ZodType<
     ChatControlsMetadataResponseDtoDataSchema$outboundSchema
   ).optional(),
   uiSchema: UiSchema$outboundSchema.optional(),
-  values: z.lazy(() => ChatControlsMetadataResponseDtoValues$outboundSchema),
+  values: ChatControlDto$outboundSchema,
 });
 
 /**

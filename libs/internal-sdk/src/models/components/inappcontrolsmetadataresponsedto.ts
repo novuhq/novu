@@ -3,25 +3,15 @@
  */
 
 import * as z from "zod";
-import { remap as remap$ } from "../../lib/primitives.js";
-import {
-  collectExtraKeys as collectExtraKeys$,
-  safeParse,
-} from "../../lib/schemas.js";
+import { safeParse } from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 import {
-  ActionDto,
-  ActionDto$inboundSchema,
-  ActionDto$Outbound,
-  ActionDto$outboundSchema,
-} from "./actiondto.js";
-import {
-  RedirectDto,
-  RedirectDto$inboundSchema,
-  RedirectDto$Outbound,
-  RedirectDto$outboundSchema,
-} from "./redirectdto.js";
+  InAppControlDto,
+  InAppControlDto$inboundSchema,
+  InAppControlDto$Outbound,
+  InAppControlDto$outboundSchema,
+} from "./inappcontroldto.js";
 import {
   UiSchema,
   UiSchema$inboundSchema,
@@ -33,59 +23,6 @@ import {
  * JSON Schema for data
  */
 export type DataSchema = {};
-
-/**
- * Filter conditions for skipping the step.
- */
-export type InAppControlsMetadataResponseDtoSkip = {};
-
-/**
- * Additional data payload for the step.
- */
-export type InAppControlsMetadataResponseDtoData = {};
-
-/**
- * Control values specific to In-App
- */
-export type Values = {
-  /**
-   * Filter conditions for skipping the step.
-   */
-  skip?: InAppControlsMetadataResponseDtoSkip | undefined;
-  /**
-   * Content/body of the in-app message. Required if subject is empty.
-   */
-  body?: string | undefined;
-  /**
-   * Subject/title of the in-app message. Required if body is empty.
-   */
-  subject?: string | undefined;
-  /**
-   * URL for an avatar image. Must be a valid URL or start with / or {{"{{"}} variable }}.
-   */
-  avatar?: string | undefined;
-  /**
-   * Primary action button details.
-   */
-  primaryAction?: ActionDto | undefined;
-  /**
-   * Secondary action button details.
-   */
-  secondaryAction?: ActionDto | undefined;
-  /**
-   * Redirection URL configuration for the main content click (if no actions defined/clicked)..
-   */
-  redirect?: RedirectDto | undefined;
-  /**
-   * Disable sanitization of the output.
-   */
-  disableOutputSanitization?: boolean | undefined;
-  /**
-   * Additional data payload for the step.
-   */
-  data?: InAppControlsMetadataResponseDtoData | undefined;
-  additionalProperties?: { [k: string]: any };
-};
 
 export type InAppControlsMetadataResponseDto = {
   /**
@@ -99,7 +36,7 @@ export type InAppControlsMetadataResponseDto = {
   /**
    * Control values specific to In-App
    */
-  values: Values;
+  values: InAppControlDto;
 };
 
 /** @internal */
@@ -147,200 +84,6 @@ export function dataSchemaFromJSON(
 }
 
 /** @internal */
-export const InAppControlsMetadataResponseDtoSkip$inboundSchema: z.ZodType<
-  InAppControlsMetadataResponseDtoSkip,
-  z.ZodTypeDef,
-  unknown
-> = z.object({});
-
-/** @internal */
-export type InAppControlsMetadataResponseDtoSkip$Outbound = {};
-
-/** @internal */
-export const InAppControlsMetadataResponseDtoSkip$outboundSchema: z.ZodType<
-  InAppControlsMetadataResponseDtoSkip$Outbound,
-  z.ZodTypeDef,
-  InAppControlsMetadataResponseDtoSkip
-> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace InAppControlsMetadataResponseDtoSkip$ {
-  /** @deprecated use `InAppControlsMetadataResponseDtoSkip$inboundSchema` instead. */
-  export const inboundSchema =
-    InAppControlsMetadataResponseDtoSkip$inboundSchema;
-  /** @deprecated use `InAppControlsMetadataResponseDtoSkip$outboundSchema` instead. */
-  export const outboundSchema =
-    InAppControlsMetadataResponseDtoSkip$outboundSchema;
-  /** @deprecated use `InAppControlsMetadataResponseDtoSkip$Outbound` instead. */
-  export type Outbound = InAppControlsMetadataResponseDtoSkip$Outbound;
-}
-
-export function inAppControlsMetadataResponseDtoSkipToJSON(
-  inAppControlsMetadataResponseDtoSkip: InAppControlsMetadataResponseDtoSkip,
-): string {
-  return JSON.stringify(
-    InAppControlsMetadataResponseDtoSkip$outboundSchema.parse(
-      inAppControlsMetadataResponseDtoSkip,
-    ),
-  );
-}
-
-export function inAppControlsMetadataResponseDtoSkipFromJSON(
-  jsonString: string,
-): SafeParseResult<InAppControlsMetadataResponseDtoSkip, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) =>
-      InAppControlsMetadataResponseDtoSkip$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'InAppControlsMetadataResponseDtoSkip' from JSON`,
-  );
-}
-
-/** @internal */
-export const InAppControlsMetadataResponseDtoData$inboundSchema: z.ZodType<
-  InAppControlsMetadataResponseDtoData,
-  z.ZodTypeDef,
-  unknown
-> = z.object({});
-
-/** @internal */
-export type InAppControlsMetadataResponseDtoData$Outbound = {};
-
-/** @internal */
-export const InAppControlsMetadataResponseDtoData$outboundSchema: z.ZodType<
-  InAppControlsMetadataResponseDtoData$Outbound,
-  z.ZodTypeDef,
-  InAppControlsMetadataResponseDtoData
-> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace InAppControlsMetadataResponseDtoData$ {
-  /** @deprecated use `InAppControlsMetadataResponseDtoData$inboundSchema` instead. */
-  export const inboundSchema =
-    InAppControlsMetadataResponseDtoData$inboundSchema;
-  /** @deprecated use `InAppControlsMetadataResponseDtoData$outboundSchema` instead. */
-  export const outboundSchema =
-    InAppControlsMetadataResponseDtoData$outboundSchema;
-  /** @deprecated use `InAppControlsMetadataResponseDtoData$Outbound` instead. */
-  export type Outbound = InAppControlsMetadataResponseDtoData$Outbound;
-}
-
-export function inAppControlsMetadataResponseDtoDataToJSON(
-  inAppControlsMetadataResponseDtoData: InAppControlsMetadataResponseDtoData,
-): string {
-  return JSON.stringify(
-    InAppControlsMetadataResponseDtoData$outboundSchema.parse(
-      inAppControlsMetadataResponseDtoData,
-    ),
-  );
-}
-
-export function inAppControlsMetadataResponseDtoDataFromJSON(
-  jsonString: string,
-): SafeParseResult<InAppControlsMetadataResponseDtoData, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) =>
-      InAppControlsMetadataResponseDtoData$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'InAppControlsMetadataResponseDtoData' from JSON`,
-  );
-}
-
-/** @internal */
-export const Values$inboundSchema: z.ZodType<Values, z.ZodTypeDef, unknown> =
-  collectExtraKeys$(
-    z.object({
-      skip: z.lazy(() => InAppControlsMetadataResponseDtoSkip$inboundSchema)
-        .optional(),
-      body: z.string().optional(),
-      subject: z.string().optional(),
-      avatar: z.string().optional(),
-      primaryAction: ActionDto$inboundSchema.optional(),
-      secondaryAction: ActionDto$inboundSchema.optional(),
-      redirect: RedirectDto$inboundSchema.optional(),
-      disableOutputSanitization: z.boolean().default(false),
-      data: z.lazy(() => InAppControlsMetadataResponseDtoData$inboundSchema)
-        .optional(),
-    }).catchall(z.any()),
-    "additionalProperties",
-    true,
-  );
-
-/** @internal */
-export type Values$Outbound = {
-  skip?: InAppControlsMetadataResponseDtoSkip$Outbound | undefined;
-  body?: string | undefined;
-  subject?: string | undefined;
-  avatar?: string | undefined;
-  primaryAction?: ActionDto$Outbound | undefined;
-  secondaryAction?: ActionDto$Outbound | undefined;
-  redirect?: RedirectDto$Outbound | undefined;
-  disableOutputSanitization: boolean;
-  data?: InAppControlsMetadataResponseDtoData$Outbound | undefined;
-  [additionalProperties: string]: unknown;
-};
-
-/** @internal */
-export const Values$outboundSchema: z.ZodType<
-  Values$Outbound,
-  z.ZodTypeDef,
-  Values
-> = z.object({
-  skip: z.lazy(() => InAppControlsMetadataResponseDtoSkip$outboundSchema)
-    .optional(),
-  body: z.string().optional(),
-  subject: z.string().optional(),
-  avatar: z.string().optional(),
-  primaryAction: ActionDto$outboundSchema.optional(),
-  secondaryAction: ActionDto$outboundSchema.optional(),
-  redirect: RedirectDto$outboundSchema.optional(),
-  disableOutputSanitization: z.boolean().default(false),
-  data: z.lazy(() => InAppControlsMetadataResponseDtoData$outboundSchema)
-    .optional(),
-  additionalProperties: z.record(z.any()),
-}).transform((v) => {
-  return {
-    ...v.additionalProperties,
-    ...remap$(v, {
-      additionalProperties: null,
-    }),
-  };
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace Values$ {
-  /** @deprecated use `Values$inboundSchema` instead. */
-  export const inboundSchema = Values$inboundSchema;
-  /** @deprecated use `Values$outboundSchema` instead. */
-  export const outboundSchema = Values$outboundSchema;
-  /** @deprecated use `Values$Outbound` instead. */
-  export type Outbound = Values$Outbound;
-}
-
-export function valuesToJSON(values: Values): string {
-  return JSON.stringify(Values$outboundSchema.parse(values));
-}
-
-export function valuesFromJSON(
-  jsonString: string,
-): SafeParseResult<Values, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => Values$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'Values' from JSON`,
-  );
-}
-
-/** @internal */
 export const InAppControlsMetadataResponseDto$inboundSchema: z.ZodType<
   InAppControlsMetadataResponseDto,
   z.ZodTypeDef,
@@ -348,14 +91,14 @@ export const InAppControlsMetadataResponseDto$inboundSchema: z.ZodType<
 > = z.object({
   dataSchema: z.lazy(() => DataSchema$inboundSchema).optional(),
   uiSchema: UiSchema$inboundSchema.optional(),
-  values: z.lazy(() => Values$inboundSchema),
+  values: InAppControlDto$inboundSchema,
 });
 
 /** @internal */
 export type InAppControlsMetadataResponseDto$Outbound = {
   dataSchema?: DataSchema$Outbound | undefined;
   uiSchema?: UiSchema$Outbound | undefined;
-  values: Values$Outbound;
+  values: InAppControlDto$Outbound;
 };
 
 /** @internal */
@@ -366,7 +109,7 @@ export const InAppControlsMetadataResponseDto$outboundSchema: z.ZodType<
 > = z.object({
   dataSchema: z.lazy(() => DataSchema$outboundSchema).optional(),
   uiSchema: UiSchema$outboundSchema.optional(),
-  values: z.lazy(() => Values$outboundSchema),
+  values: InAppControlDto$outboundSchema,
 });
 
 /**

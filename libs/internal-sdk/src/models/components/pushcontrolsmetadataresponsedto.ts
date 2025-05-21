@@ -3,13 +3,15 @@
  */
 
 import * as z from "zod";
-import { remap as remap$ } from "../../lib/primitives.js";
-import {
-  collectExtraKeys as collectExtraKeys$,
-  safeParse,
-} from "../../lib/schemas.js";
+import { safeParse } from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
+import {
+  PushControlDto,
+  PushControlDto$inboundSchema,
+  PushControlDto$Outbound,
+  PushControlDto$outboundSchema,
+} from "./pushcontroldto.js";
 import {
   UiSchema,
   UiSchema$inboundSchema,
@@ -21,30 +23,6 @@ import {
  * JSON Schema for data
  */
 export type PushControlsMetadataResponseDtoDataSchema = {};
-
-/**
- * Filter conditions for skipping the step.
- */
-export type PushControlsMetadataResponseDtoSkip = {};
-
-/**
- * Control values specific to Push
- */
-export type PushControlsMetadataResponseDtoValues = {
-  /**
-   * Filter conditions for skipping the step.
-   */
-  skip?: PushControlsMetadataResponseDtoSkip | undefined;
-  /**
-   * Subject/title of the push notification.
-   */
-  subject: string;
-  /**
-   * Body content of the push notification.
-   */
-  body: string;
-  additionalProperties?: { [k: string]: any };
-};
 
 export type PushControlsMetadataResponseDto = {
   /**
@@ -58,7 +36,7 @@ export type PushControlsMetadataResponseDto = {
   /**
    * Control values specific to Push
    */
-  values: PushControlsMetadataResponseDtoValues;
+  values: PushControlDto;
 };
 
 /** @internal */
@@ -122,139 +100,6 @@ export function pushControlsMetadataResponseDtoDataSchemaFromJSON(
 }
 
 /** @internal */
-export const PushControlsMetadataResponseDtoSkip$inboundSchema: z.ZodType<
-  PushControlsMetadataResponseDtoSkip,
-  z.ZodTypeDef,
-  unknown
-> = z.object({});
-
-/** @internal */
-export type PushControlsMetadataResponseDtoSkip$Outbound = {};
-
-/** @internal */
-export const PushControlsMetadataResponseDtoSkip$outboundSchema: z.ZodType<
-  PushControlsMetadataResponseDtoSkip$Outbound,
-  z.ZodTypeDef,
-  PushControlsMetadataResponseDtoSkip
-> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace PushControlsMetadataResponseDtoSkip$ {
-  /** @deprecated use `PushControlsMetadataResponseDtoSkip$inboundSchema` instead. */
-  export const inboundSchema =
-    PushControlsMetadataResponseDtoSkip$inboundSchema;
-  /** @deprecated use `PushControlsMetadataResponseDtoSkip$outboundSchema` instead. */
-  export const outboundSchema =
-    PushControlsMetadataResponseDtoSkip$outboundSchema;
-  /** @deprecated use `PushControlsMetadataResponseDtoSkip$Outbound` instead. */
-  export type Outbound = PushControlsMetadataResponseDtoSkip$Outbound;
-}
-
-export function pushControlsMetadataResponseDtoSkipToJSON(
-  pushControlsMetadataResponseDtoSkip: PushControlsMetadataResponseDtoSkip,
-): string {
-  return JSON.stringify(
-    PushControlsMetadataResponseDtoSkip$outboundSchema.parse(
-      pushControlsMetadataResponseDtoSkip,
-    ),
-  );
-}
-
-export function pushControlsMetadataResponseDtoSkipFromJSON(
-  jsonString: string,
-): SafeParseResult<PushControlsMetadataResponseDtoSkip, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) =>
-      PushControlsMetadataResponseDtoSkip$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'PushControlsMetadataResponseDtoSkip' from JSON`,
-  );
-}
-
-/** @internal */
-export const PushControlsMetadataResponseDtoValues$inboundSchema: z.ZodType<
-  PushControlsMetadataResponseDtoValues,
-  z.ZodTypeDef,
-  unknown
-> = collectExtraKeys$(
-  z.object({
-    skip: z.lazy(() => PushControlsMetadataResponseDtoSkip$inboundSchema)
-      .optional(),
-    subject: z.string(),
-    body: z.string(),
-  }).catchall(z.any()),
-  "additionalProperties",
-  true,
-);
-
-/** @internal */
-export type PushControlsMetadataResponseDtoValues$Outbound = {
-  skip?: PushControlsMetadataResponseDtoSkip$Outbound | undefined;
-  subject: string;
-  body: string;
-  [additionalProperties: string]: unknown;
-};
-
-/** @internal */
-export const PushControlsMetadataResponseDtoValues$outboundSchema: z.ZodType<
-  PushControlsMetadataResponseDtoValues$Outbound,
-  z.ZodTypeDef,
-  PushControlsMetadataResponseDtoValues
-> = z.object({
-  skip: z.lazy(() => PushControlsMetadataResponseDtoSkip$outboundSchema)
-    .optional(),
-  subject: z.string(),
-  body: z.string(),
-  additionalProperties: z.record(z.any()),
-}).transform((v) => {
-  return {
-    ...v.additionalProperties,
-    ...remap$(v, {
-      additionalProperties: null,
-    }),
-  };
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace PushControlsMetadataResponseDtoValues$ {
-  /** @deprecated use `PushControlsMetadataResponseDtoValues$inboundSchema` instead. */
-  export const inboundSchema =
-    PushControlsMetadataResponseDtoValues$inboundSchema;
-  /** @deprecated use `PushControlsMetadataResponseDtoValues$outboundSchema` instead. */
-  export const outboundSchema =
-    PushControlsMetadataResponseDtoValues$outboundSchema;
-  /** @deprecated use `PushControlsMetadataResponseDtoValues$Outbound` instead. */
-  export type Outbound = PushControlsMetadataResponseDtoValues$Outbound;
-}
-
-export function pushControlsMetadataResponseDtoValuesToJSON(
-  pushControlsMetadataResponseDtoValues: PushControlsMetadataResponseDtoValues,
-): string {
-  return JSON.stringify(
-    PushControlsMetadataResponseDtoValues$outboundSchema.parse(
-      pushControlsMetadataResponseDtoValues,
-    ),
-  );
-}
-
-export function pushControlsMetadataResponseDtoValuesFromJSON(
-  jsonString: string,
-): SafeParseResult<PushControlsMetadataResponseDtoValues, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) =>
-      PushControlsMetadataResponseDtoValues$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'PushControlsMetadataResponseDtoValues' from JSON`,
-  );
-}
-
-/** @internal */
 export const PushControlsMetadataResponseDto$inboundSchema: z.ZodType<
   PushControlsMetadataResponseDto,
   z.ZodTypeDef,
@@ -264,14 +109,14 @@ export const PushControlsMetadataResponseDto$inboundSchema: z.ZodType<
     PushControlsMetadataResponseDtoDataSchema$inboundSchema
   ).optional(),
   uiSchema: UiSchema$inboundSchema.optional(),
-  values: z.lazy(() => PushControlsMetadataResponseDtoValues$inboundSchema),
+  values: PushControlDto$inboundSchema,
 });
 
 /** @internal */
 export type PushControlsMetadataResponseDto$Outbound = {
   dataSchema?: PushControlsMetadataResponseDtoDataSchema$Outbound | undefined;
   uiSchema?: UiSchema$Outbound | undefined;
-  values: PushControlsMetadataResponseDtoValues$Outbound;
+  values: PushControlDto$Outbound;
 };
 
 /** @internal */
@@ -284,7 +129,7 @@ export const PushControlsMetadataResponseDto$outboundSchema: z.ZodType<
     PushControlsMetadataResponseDtoDataSchema$outboundSchema
   ).optional(),
   uiSchema: UiSchema$outboundSchema.optional(),
-  values: z.lazy(() => PushControlsMetadataResponseDtoValues$outboundSchema),
+  values: PushControlDto$outboundSchema,
 });
 
 /**

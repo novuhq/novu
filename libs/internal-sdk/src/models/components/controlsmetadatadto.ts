@@ -27,10 +27,6 @@ export type ControlsMetadataDto = {
    * UI Schema for rendering
    */
   uiSchema?: UiSchema | undefined;
-  /**
-   * Control values
-   */
-  values: { [k: string]: any };
 };
 
 /** @internal */
@@ -92,14 +88,12 @@ export const ControlsMetadataDto$inboundSchema: z.ZodType<
   dataSchema: z.lazy(() => ControlsMetadataDtoDataSchema$inboundSchema)
     .optional(),
   uiSchema: UiSchema$inboundSchema.optional(),
-  values: z.record(z.any()),
 });
 
 /** @internal */
 export type ControlsMetadataDto$Outbound = {
   dataSchema?: ControlsMetadataDtoDataSchema$Outbound | undefined;
   uiSchema?: UiSchema$Outbound | undefined;
-  values: { [k: string]: any };
 };
 
 /** @internal */
@@ -111,7 +105,6 @@ export const ControlsMetadataDto$outboundSchema: z.ZodType<
   dataSchema: z.lazy(() => ControlsMetadataDtoDataSchema$outboundSchema)
     .optional(),
   uiSchema: UiSchema$outboundSchema.optional(),
-  values: z.record(z.any()),
 });
 
 /**
