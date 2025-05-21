@@ -85,11 +85,8 @@ export class GetNotifications {
       read: command.read,
       archived: command.archived,
       snoozed: command.snoozed,
+      data: parsedData,
     };
-
-    if (parsedData) {
-      filters.data = parsedData;
-    }
 
     return {
       data: mapToDto(feed),
