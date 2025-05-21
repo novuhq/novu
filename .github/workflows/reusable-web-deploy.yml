@@ -108,7 +108,7 @@ jobs:
         run: npm run envsetup
 
       - name: Build
-        run: CI='' pnpm build:web --skip-nx-cache
+        run: CI='' pnpm build:web
 
       - name: Deploy WEB
         uses: nwtgck/actions-netlify@v1.2
