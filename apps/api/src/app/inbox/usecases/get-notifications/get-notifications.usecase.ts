@@ -8,6 +8,7 @@ import { AnalyticsEventsEnum } from '../../utils';
 import { mapToDto } from '../../utils/notification-mapper';
 import { validateDataStructure } from '../../utils/validate-data';
 import type { GetNotificationsCommand } from './get-notifications.command';
+import { NotificationFilter } from '../../utils/types';
 
 @Injectable()
 export class GetNotifications {
@@ -79,16 +80,21 @@ export class GetNotifications {
       });
     }
 
+    const filters: NotificationFilter = {
+      tags: command.tags,
+      read: command.read,
+      archived: command.archived,
+      snoozed: command.snoozed,
+    };
+
+    if (parsedData) {
+      filters.data = parsedData;
+    }
+
     return {
       data: mapToDto(feed),
       hasMore,
-      filter: {
-        tags: command.tags,
-        read: command.read,
-        archived: command.archived,
-        snoozed: command.snoozed,
-        data: parsedData,
-      },
+      filter: filters,
     };
   }
 }
