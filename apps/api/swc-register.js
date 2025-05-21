@@ -1,0 +1,50 @@
+const { transformFileSync } = require('@swc/core');
+const { addHook } = require('pirates');
+
+addHook(
+  (code, filename) => {
+    if (filename.includes('node_modules') || filename.includes('.source')) {
+      return code;
+    }
+
+    try {
+      const result = transformFileSync(filename, {
+        jsc: {
+          target: 'es2020',
+          parser: {
+            syntax: 'typescript',
+            tsx: true,
+            decorators: true,
+            dynamicImport: true
+          },
+          transform: {
+            legacyDecorator: true,
+            decoratorMetadata: true
+          },
+          keepClassNames: true
+        },
+        module: {
+          type: 'commonjs',
+          strictMode: false,
+          noInterop: false,
+          lazy: true
+        },
+        sourceMaps: 'inline',
+        minify: false
+      });
+      return result.code;
+    } catch (error) {
+      console.error(`Error transforming file ${filename}:`, error);
+      return code;
+    }
+  },
+  {
+    exts: ['.ts', '.tsx'],
+    matcher: (filename) => {
+      if (filename.includes('.source')) {
+        return false;
+      }
+      return filename.endsWith('.ts') || filename.endsWith('.tsx');
+    }
+  }
+);

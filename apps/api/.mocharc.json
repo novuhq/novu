@@ -1,6 +1,6 @@
 {
   "timeout": 20000,
-  "require": "@swc/register",
+  "require": "./swc-register.js",
   "file": ["e2e/setup.ts"],
   "exit": true,
   "files": ["e2e/**/*.e2e.ts", "src/**/*.e2e.ts", "src/**/**/*.spec.ts"]
