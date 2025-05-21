@@ -35,7 +35,7 @@ export class BaseStepConfigDto {
 export class InAppStepUpsertDto extends BaseStepConfigDto {
   @ApiProperty({ enum: [StepTypeEnum.IN_APP], description: 'Type of the step' })
   @IsEnum(StepTypeEnum)
-  readonly type: StepTypeEnum.IN_APP = StepTypeEnum.IN_APP;
+  readonly type: StepTypeEnum = 'in_app' as StepTypeEnum;
 
   @ApiPropertyOptional({ type: InAppControlDto, description: 'Control values for the In-App step' })
   @IsOptional()
@@ -47,7 +47,7 @@ export class InAppStepUpsertDto extends BaseStepConfigDto {
 export class EmailStepUpsertDto extends BaseStepConfigDto {
   @ApiProperty({ enum: [StepTypeEnum.EMAIL], description: 'Type of the step' })
   @IsEnum(StepTypeEnum)
-  readonly type: StepTypeEnum.EMAIL = StepTypeEnum.EMAIL;
+  readonly type: StepTypeEnum = 'email' as StepTypeEnum;
 
   @ApiPropertyOptional({ type: EmailControlDto, description: 'Control values for the Email step' })
   @IsOptional()
@@ -59,7 +59,7 @@ export class EmailStepUpsertDto extends BaseStepConfigDto {
 export class SmsStepUpsertDto extends BaseStepConfigDto {
   @ApiProperty({ enum: [StepTypeEnum.SMS], description: 'Type of the step' })
   @IsEnum(StepTypeEnum)
-  readonly type: StepTypeEnum.SMS = StepTypeEnum.SMS;
+  readonly type: StepTypeEnum = 'sms' as StepTypeEnum;
 
   @ApiPropertyOptional({ type: SmsControlDto, description: 'Control values for the SMS step' })
   @IsOptional()
@@ -71,7 +71,7 @@ export class SmsStepUpsertDto extends BaseStepConfigDto {
 export class PushStepUpsertDto extends BaseStepConfigDto {
   @ApiProperty({ enum: [StepTypeEnum.PUSH], description: 'Type of the step' })
   @IsEnum(StepTypeEnum)
-  readonly type: StepTypeEnum.PUSH = StepTypeEnum.PUSH;
+  readonly type: StepTypeEnum = 'push' as StepTypeEnum;
 
   @ApiPropertyOptional({ type: PushControlDto, description: 'Control values for the Push step' })
   @IsOptional()
@@ -83,7 +83,7 @@ export class PushStepUpsertDto extends BaseStepConfigDto {
 export class ChatStepUpsertDto extends BaseStepConfigDto {
   @ApiProperty({ enum: [StepTypeEnum.CHAT], description: 'Type of the step' })
   @IsEnum(StepTypeEnum)
-  readonly type: StepTypeEnum.CHAT = StepTypeEnum.CHAT;
+  readonly type: StepTypeEnum = 'chat' as StepTypeEnum;
 
   @ApiPropertyOptional({ type: ChatControlDto, description: 'Control values for the Chat step' })
   @IsOptional()
@@ -95,7 +95,7 @@ export class ChatStepUpsertDto extends BaseStepConfigDto {
 export class DelayStepUpsertDto extends BaseStepConfigDto {
   @ApiProperty({ enum: [StepTypeEnum.DELAY], description: 'Type of the step' })
   @IsEnum(StepTypeEnum)
-  readonly type: StepTypeEnum.DELAY = StepTypeEnum.DELAY;
+  readonly type: StepTypeEnum = 'delay' as StepTypeEnum;
 
   @ApiPropertyOptional({ type: DelayControlDto, description: 'Control values for the Delay step' })
   @IsOptional()
@@ -107,7 +107,7 @@ export class DelayStepUpsertDto extends BaseStepConfigDto {
 export class DigestStepUpsertDto extends BaseStepConfigDto {
   @ApiProperty({ enum: [StepTypeEnum.DIGEST], description: 'Type of the step' })
   @IsEnum(StepTypeEnum)
-  readonly type: StepTypeEnum.DIGEST = StepTypeEnum.DIGEST;
+  readonly type: StepTypeEnum = 'digest' as StepTypeEnum;
 
   @ApiPropertyOptional({ type: DigestControlDto, description: 'Control values for the Digest step' })
   @IsOptional()
@@ -119,7 +119,7 @@ export class DigestStepUpsertDto extends BaseStepConfigDto {
 export class CustomStepUpsertDto extends BaseStepConfigDto {
   @ApiProperty({ enum: [StepTypeEnum.CUSTOM], description: 'Type of the step' })
   @IsEnum(StepTypeEnum)
-  readonly type: StepTypeEnum.CUSTOM = StepTypeEnum.CUSTOM;
+  readonly type: StepTypeEnum = 'custom' as StepTypeEnum;
 
   @ApiPropertyOptional({ type: CustomControlDto, description: 'Control values for the Custom step' })
   @IsOptional()
@@ -127,11 +127,6 @@ export class CustomStepUpsertDto extends BaseStepConfigDto {
   @Type(() => CustomControlDto)
   controlValues?: CustomControlDto | null;
 }
-
-/*
- * Removed the StepUpsertDto class that previously handled discrimination.
- * The StepUpsertDto type below is the union of all specific step DTOs.
- */
 
 /*
  * This export allows using StepUpsertDto as a type for the discriminated union.
