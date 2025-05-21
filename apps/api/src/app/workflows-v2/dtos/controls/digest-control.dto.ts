@@ -1,5 +1,4 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-// eslint-disable-next-line @nx/enforce-module-boundaries
 import { DigestTypeEnum, TimeUnitEnum } from '@novu/shared';
 import { IsEnum, IsNumber, IsOptional, IsString, Min, MinLength, ValidateNested, ValidateIf } from 'class-validator';
 import { Type } from 'class-transformer';

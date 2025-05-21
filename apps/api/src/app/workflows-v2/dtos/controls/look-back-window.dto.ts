@@ -1,6 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsNumber, Min } from 'class-validator';
-// eslint-disable-next-line @nx/enforce-module-boundaries
 import { TimeUnitEnum } from '@novu/shared';
 
 export class LookBackWindowDto {

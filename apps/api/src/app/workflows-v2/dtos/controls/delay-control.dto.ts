@@ -1,6 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsNumber, Min, ValidateIf } from 'class-validator';
-// eslint-disable-next-line @nx/enforce-module-boundaries
 import { DelayTypeEnum, TimeUnitEnum } from '@novu/shared';
 import { SkipControlDto } from './skip.dto';
 
