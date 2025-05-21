@@ -16,16 +16,33 @@
       "inputs": ["default", "{workspaceRoot}/tools/eslint-rules/**/*"]
     },
     "@novu/api:build": {
-      "cache": false,
-      "outputs": []
-    },
-    "@novu/api:test": {
-      "cache": false,
-      "outputs": []
-    },
-    "@novu/api:lint": {
-      "cache": false,
-      "outputs": []
+      "cache": true,
+      "outputs": [
+        "{projectRoot}/dist",
+        "{projectRoot}/funcs",
+        "{projectRoot}/hooks",
+        "{projectRoot}/libs",
+        "{projectRoot}/models",
+        "{projectRoot}/react-query",
+        "{projectRoot}/sdk",
+        "{projectRoot}/types",
+        "{projectRoot}/docs",
+        "{projectRoot}/index.js",
+        "{projectRoot}/core.js"
+      ],
+      "inputs": [
+        "default",
+        "{projectRoot}/funcs/**/*",
+        "{projectRoot}/hooks/**/*",
+        "{projectRoot}/libs/**/*",
+        "{projectRoot}/models/**/*",
+        "{projectRoot}/react-query/**/*",
+        "{projectRoot}/sdk/**/*",
+        "{projectRoot}/types/**/*",
+        "{projectRoot}/docs/**/*",
+        "{projectRoot}/index.js",
+        "{projectRoot}/core.js"
+      ]
     }
   },
   "namedInputs": {
