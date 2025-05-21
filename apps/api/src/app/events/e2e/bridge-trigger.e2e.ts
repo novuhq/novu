@@ -36,8 +36,6 @@ const contexts: Context[] = [
 
 contexts.forEach((context: Context) => {
   describe('Self-Hosted Bridge Trigger #novu-v2', async function () {
-    this.timeout(15000);
-
     let session: UserSession;
     let bridgeServer: TestBridgeServer;
     const messageRepository = new MessageRepository();
@@ -63,7 +61,6 @@ contexts.forEach((context: Context) => {
     });
 
     it(`should trigger the bridge workflow with sync [${context.name}]`, async function () {
-      this.timeout(10000);
       const workflowId = `hello-world-${`${context.name}`}`;
       const newWorkflow = workflow(
         workflowId,
@@ -1617,8 +1614,6 @@ contexts.forEach((context: Context) => {
     });
 
     it(`should succeed workflow if delay step is skipped via payload [${context.name}]`, async function () {
-      this.timeout(25000); // Increased timeout for potential delays and processing
-
       const workflowId = `delay-skip-causes-failure-${context.name}`;
       const delayStepId = 'delay-step-under-test'; // Used for clarity, not directly in queries
       const inAppStep1Name = 'in-app-before-delay';
