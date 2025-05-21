@@ -1,10 +1,7 @@
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import axios from 'axios';
 import { Novu } from '@novu/api';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
-
-const axiosInstance = axios.create();
 
 describe('Get Subscribers - /subscribers (GET) #novu-v2', function () {
   let session: UserSession;
@@ -23,7 +20,9 @@ describe('Get Subscribers - /subscribers (GET) #novu-v2', function () {
       email: 'john@doe.com',
       phone: '+972523333333',
     });
-    const response = await novuClient.subscribers.list();
+    const response = await novuClient.subscribers.search({
+      subscriberId: '123',
+    });
 
     const filteredData = response.result.data.filter((user) => user.lastName !== 'Test');
     expect(filteredData.length).to.equal(1);

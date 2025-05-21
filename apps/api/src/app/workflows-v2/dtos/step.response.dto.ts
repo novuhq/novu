@@ -18,6 +18,7 @@ export class StepResponseDto {
 
   @ApiProperty({
     description: 'JSON Schema for variables, follows the JSON Schema standard',
+    additionalProperties: true,
     type: () => Object, // Use arrow function for type
   })
   @ValidateNested() // Consider adding options if needed
