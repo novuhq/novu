@@ -14,6 +14,15 @@
     "@nx/eslint:lint": {
       "cache": true,
       "inputs": ["default", "{workspaceRoot}/tools/eslint-rules/**/*"]
+    },
+    "@novu/api:build": {
+      "cache": false
+    },
+    "@novu/api:test": {
+      "cache": false
+    },
+    "@novu/api:lint": {
+      "cache": false
     }
   },
   "namedInputs": {
