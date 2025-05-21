@@ -16,7 +16,7 @@
     "externalHelpers": false
   },
   "module": {
-    "type": "commonjs",
+    "type": "es6",
     "strictMode": false,
     "noInterop": false,
     "lazy": true
