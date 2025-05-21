@@ -156,7 +156,7 @@ export function SettingsPage() {
           <TabsContent value="team" className="rounded-lg">
             <motion.div {...FADE_ANIMATION}>
               <Card className="border-none shadow-none">
-                {!isRbacEnabled && (
+                {isRbacEnabledFlag && !isRbacEnabled && (
                   <InlineToast
                     title="Tip:"
                     description="Get role-based access control and add unlimited members by upgrading."
