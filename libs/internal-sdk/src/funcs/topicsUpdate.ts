@@ -26,7 +26,10 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Update topic by key
+ * Update a topic
+ *
+ * @remarks
+ * Update a topic name by its unique key identifier **topicKey**
  */
 export function topicsUpdate(
   client: NovuCore,

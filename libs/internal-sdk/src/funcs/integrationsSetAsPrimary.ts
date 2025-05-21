@@ -25,7 +25,12 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Set integration as primary
+ * Update integration as primary
+ *
+ * @remarks
+ * Update an integration as **primary** by its unique key identifier **integrationId**.
+ *     This API will set the integration as primary for that channel in the current environment.
+ *     Primary integration is used to deliver notification for sms and email channels in the workflow.
  */
 export function integrationsSetAsPrimary(
   client: NovuCore,

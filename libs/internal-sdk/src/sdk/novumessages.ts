@@ -12,7 +12,11 @@ import { unwrapAsync } from "../types/fp.js";
 
 export class NovuMessages extends ClientSDK {
   /**
-   * Mark message action as seen
+   * Update notification action status
+   *
+   * @remarks
+   * Update in-app (inbox) notification's action status by its unique key identifier **messageId** and type field **type**.
+   *       **type** field can be **primary** or **secondary**
    */
   async updateAsSeen(
     request: operations.SubscribersV1ControllerMarkActionAsSeenRequest,
@@ -26,7 +30,10 @@ export class NovuMessages extends ClientSDK {
   }
 
   /**
-   * Marks all the subscriber messages as read, unread, seen or unseen.
+   * Update all notifications state
+   *
+   * @remarks
+   * Update all subscriber in-app (inbox) notifications state such as read, unread, seen or unseen by **subscriberId**.
    */
   async markAll(
     markAllMessageAsRequestDto: components.MarkAllMessageAsRequestDto,
@@ -44,7 +51,11 @@ export class NovuMessages extends ClientSDK {
   }
 
   /**
-   * Mark a subscriber messages as seen, read, unseen or unread
+   * Update notifications state
+   *
+   * @remarks
+   * Update subscriber's multiple in-app (inbox) notifications state such as seen, read, unseen or unread by **subscriberId**.
+   *       **messageId** is of type mongodbId of notifications
    */
   async markAllAs(
     messageMarkAsRequestDto: components.MessageMarkAsRequestDto,

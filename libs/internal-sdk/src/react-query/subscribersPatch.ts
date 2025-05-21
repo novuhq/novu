@@ -28,10 +28,11 @@ export type SubscribersPatchMutationData =
   operations.SubscribersControllerPatchSubscriberResponse;
 
 /**
- * Patch subscriber
+ * Update a subscriber
  *
  * @remarks
- * Patch subscriber by your internal id used to identify the subscriber
+ * Update a subscriber by its unique key identifier **subscriberId**.
+ *     **subscriberId** is a required field, rest other fields are optional
  */
 export function useSubscribersPatchMutation(
   options?: MutationHookOptions<

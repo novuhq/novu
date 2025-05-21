@@ -14,12 +14,6 @@ import {
   ControlsMetadataDto$outboundSchema,
 } from "./controlsmetadatadto.js";
 import {
-  JSONSchemaDto,
-  JSONSchemaDto$inboundSchema,
-  JSONSchemaDto$Outbound,
-  JSONSchemaDto$outboundSchema,
-} from "./jsonschemadto.js";
-import {
   StepIssuesDto,
   StepIssuesDto$inboundSchema,
   StepIssuesDto$Outbound,
@@ -36,15 +30,20 @@ import {
   WorkflowOriginEnum$outboundSchema,
 } from "./workfloworiginenum.js";
 
+/**
+ * JSON Schema for variables, follows the JSON Schema standard
+ */
+export type Variables = {};
+
 export type StepResponseDto = {
   /**
    * Controls metadata for the step
    */
   controls: ControlsMetadataDto;
   /**
-   * JSON Schema for variables
+   * JSON Schema for variables, follows the JSON Schema standard
    */
-  variables: JSONSchemaDto;
+  variables: Variables;
   /**
    * Unique identifier of the step
    */
@@ -84,13 +83,57 @@ export type StepResponseDto = {
 };
 
 /** @internal */
+export const Variables$inboundSchema: z.ZodType<
+  Variables,
+  z.ZodTypeDef,
+  unknown
+> = z.object({});
+
+/** @internal */
+export type Variables$Outbound = {};
+
+/** @internal */
+export const Variables$outboundSchema: z.ZodType<
+  Variables$Outbound,
+  z.ZodTypeDef,
+  Variables
+> = z.object({});
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace Variables$ {
+  /** @deprecated use `Variables$inboundSchema` instead. */
+  export const inboundSchema = Variables$inboundSchema;
+  /** @deprecated use `Variables$outboundSchema` instead. */
+  export const outboundSchema = Variables$outboundSchema;
+  /** @deprecated use `Variables$Outbound` instead. */
+  export type Outbound = Variables$Outbound;
+}
+
+export function variablesToJSON(variables: Variables): string {
+  return JSON.stringify(Variables$outboundSchema.parse(variables));
+}
+
+export function variablesFromJSON(
+  jsonString: string,
+): SafeParseResult<Variables, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => Variables$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'Variables' from JSON`,
+  );
+}
+
+/** @internal */
 export const StepResponseDto$inboundSchema: z.ZodType<
   StepResponseDto,
   z.ZodTypeDef,
   unknown
 > = z.object({
   controls: ControlsMetadataDto$inboundSchema,
-  variables: JSONSchemaDto$inboundSchema,
+  variables: z.lazy(() => Variables$inboundSchema),
   stepId: z.string(),
   _id: z.string(),
   name: z.string(),
@@ -109,7 +152,7 @@ export const StepResponseDto$inboundSchema: z.ZodType<
 /** @internal */
 export type StepResponseDto$Outbound = {
   controls: ControlsMetadataDto$Outbound;
-  variables: JSONSchemaDto$Outbound;
+  variables: Variables$Outbound;
   stepId: string;
   _id: string;
   name: string;
@@ -128,7 +171,7 @@ export const StepResponseDto$outboundSchema: z.ZodType<
   StepResponseDto
 > = z.object({
   controls: ControlsMetadataDto$outboundSchema,
-  variables: JSONSchemaDto$outboundSchema,
+  variables: z.lazy(() => Variables$outboundSchema),
   stepId: z.string(),
   id: z.string(),
   name: z.string(),

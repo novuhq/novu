@@ -29,7 +29,10 @@ export type SubscribersNotificationsUnseenCountQueryData =
   operations.SubscribersV1ControllerGetUnseenCountResponse;
 
 /**
- * Get the unseen in-app notifications count for subscribers feed
+ * Retrieve unseen notifications count
+ *
+ * @remarks
+ * Retrieve unseen in-app (inbox) notifications count for a subscriber by its unique key identifier **subscriberId**.
  */
 export function useSubscribersNotificationsUnseenCount(
   request: operations.SubscribersV1ControllerGetUnseenCountRequest,
@@ -47,7 +50,10 @@ export function useSubscribersNotificationsUnseenCount(
 }
 
 /**
- * Get the unseen in-app notifications count for subscribers feed
+ * Retrieve unseen notifications count
+ *
+ * @remarks
+ * Retrieve unseen in-app (inbox) notifications count for a subscriber by its unique key identifier **subscriberId**.
  */
 export function useSubscribersNotificationsUnseenCountSuspense(
   request: operations.SubscribersV1ControllerGetUnseenCountRequest,

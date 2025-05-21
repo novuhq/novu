@@ -26,7 +26,11 @@ export type IntegrationsDeleteMutationData =
   operations.IntegrationsControllerRemoveIntegrationResponse;
 
 /**
- * Delete integration
+ * Delete an integration
+ *
+ * @remarks
+ * Delete an integration by its unique key identifier **integrationId**.
+ *     This action is irreversible.
  */
 export function useIntegrationsDeleteMutation(
   options?: MutationHookOptions<

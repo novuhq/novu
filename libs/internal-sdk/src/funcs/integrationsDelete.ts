@@ -25,7 +25,11 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Delete integration
+ * Delete an integration
+ *
+ * @remarks
+ * Delete an integration by its unique key identifier **integrationId**.
+ *     This action is irreversible.
  */
 export function integrationsDelete(
   client: NovuCore,

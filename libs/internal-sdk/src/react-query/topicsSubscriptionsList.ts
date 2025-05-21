@@ -30,6 +30,10 @@ export type TopicsSubscriptionsListQueryData =
 
 /**
  * List topic subscriptions
+ *
+ * @remarks
+ * List all topics that a subscriber is subscribed to.
+ *     Checkout all available filters in the query section.
  */
 export function useTopicsSubscriptionsList(
   request: operations.TopicsControllerListTopicSubscriptionsRequest,
@@ -48,6 +52,10 @@ export function useTopicsSubscriptionsList(
 
 /**
  * List topic subscriptions
+ *
+ * @remarks
+ * List all topics that a subscriber is subscribed to.
+ *     Checkout all available filters in the query section.
  */
 export function useTopicsSubscriptionsListSuspense(
   request: operations.TopicsControllerListTopicSubscriptionsRequest,

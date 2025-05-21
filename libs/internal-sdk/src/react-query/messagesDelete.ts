@@ -26,10 +26,11 @@ export type MessagesDeleteMutationData =
   operations.MessagesControllerDeleteMessageResponse;
 
 /**
- * Delete message
+ * Delete a message
  *
  * @remarks
- * Deletes a message entity from the Novu platform
+ * Delete a message entity from the Novu platform by **messageId**.
+ *     This action is irreversible. **messageId** is required and of mongodbId type.
  */
 export function useMessagesDeleteMutation(
   options?: MutationHookOptions<
