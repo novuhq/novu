@@ -1,4 +1,5 @@
 {
+  "$schema": "./node_modules/nx/schemas/nx-schema.json",
   "targetDefaults": {
     "build": {
       "dependsOn": ["^build"],
@@ -13,9 +14,31 @@
     "@nx/eslint:lint": {
       "cache": true,
       "inputs": ["default", "{workspaceRoot}/tools/eslint-rules/**/*"]
+    },
+    "@novu/api:build": {
+      "cache": false
+    },
+    "@novu/api:test": {
+      "cache": false
+    },
+    "@novu/api:lint": {
+      "cache": false
     }
   },
-  "extends": "@nx/workspace/presets/npm.json",
+  "namedInputs": {
+    "default": ["{projectRoot}/**/*", "sharedGlobals"],
+    "production": [
+      "default",
+      "!{projectRoot}/.eslintrc.json",
+      "!{projectRoot}/eslint.config.js",
+      "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",
+      "!{projectRoot}/tsconfig.spec.json",
+      "!{projectRoot}/jest.config.[jt]s",
+      "!{projectRoot}/src/test-setup.[jt]s",
+      "!{projectRoot}/test-setup.[jt]s"
+    ],
+    "sharedGlobals": []
+  },
   "release": {
     "changelog": {
       "workspaceChangelog": false,
@@ -72,8 +95,7 @@
     }
   },
   "useInferencePlugins": false,
-  "defaultBase": "main",
-  "useLegacyCache": true,
+  "defaultBase": "next",
   "generatorOptions": {
     "preserveLocalDependencyProtocols": true
   }

@@ -1,4 +1,4 @@
-import { Liquid } from 'liquidjs';
+import { Liquid, LiquidOptions } from 'liquidjs';
 import { digest } from '../filters/digest';
 import { toSentence } from '../filters/to-sentence';
 import { pluralize } from '../filters/pluralize';
@@ -17,7 +17,7 @@ export function defaultOutputEscape(output: unknown): string {
   else if (typeof output === 'string' && output.includes('\n')) {
     return output.replace(/\n/g, '\\n');
   } else {
-    return output === undefined ? '' : String(output as unknown);
+    return output === undefined || output === null ? '' : String(output as unknown);
   }
 }
 
@@ -35,20 +35,23 @@ export const stringifyDataStructureWithSingleQuotes = (value: unknown, spaces: n
 
     return valueEscapedNewLines;
   } else {
-    return value == null ? '' : String(value as unknown);
+    return value === undefined || value === null ? '' : String(value as unknown);
   }
 };
 
 /**
  * Creates a configured Liquid instance with Novu's default settings.
  */
-export function createLiquidEngine(): Liquid {
+export function createLiquidEngine(options?: LiquidOptions): Liquid {
   const liquidEngine = new Liquid({
     outputEscape: defaultOutputEscape,
+    ...options,
   });
 
   // Register default filters
-  liquidEngine.registerFilter('json', (value, spaces) => stringifyDataStructureWithSingleQuotes(value, spaces));
+  liquidEngine.registerFilter('json', (value: unknown, spaces: number) =>
+    stringifyDataStructureWithSingleQuotes(value, spaces)
+  );
   liquidEngine.registerFilter('digest', digest);
   liquidEngine.registerFilter('toSentence', toSentence);
   liquidEngine.registerFilter('pluralize', pluralize);

@@ -16,6 +16,7 @@ import {
   GetSubscriptionDto,
 } from '@novu/shared';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { InlineToast } from '@/components/primitives/inline-toast';
 
 const FADE_ANIMATION = {
   initial: { opacity: 0 },
@@ -68,7 +69,6 @@ const getClerkComponentAppearance = (isRbacEnabled: boolean): Appearance => ({
 export function SettingsPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { organization } = useOrganization();
   const { subscription } = useFetchSubscription();
   const isRbacEnabledFlag = useFeatureFlag(FeatureFlagsKeysEnum.IS_RBAC_ENABLED, false);
   const isRbacEnabled = checkRbacEnabled(subscription, isRbacEnabledFlag);
@@ -156,12 +156,17 @@ export function SettingsPage() {
           <TabsContent value="team" className="rounded-lg">
             <motion.div {...FADE_ANIMATION}>
               <Card className="border-none shadow-none">
-                <OrganizationProfile
-                  appearance={clerkAppearance}
-                  // @ts-expect-error usage of __unstable Clerk feature
-                  __unstable_manageBillingUrl={ROUTES.SETTINGS_BILLING + '?utm_source=invite_limit_exceeded_prompt'}
-                  __unstable_manageBillingMembersLimit={organization?.maxAllowedMemberships}
-                >
+                {isRbacEnabledFlag && !isRbacEnabled && (
+                  <InlineToast
+                    title="Tip:"
+                    description="Get role-based access control and add unlimited members by upgrading."
+                    ctaLabel="Upgrade to Team"
+                    onCtaClick={() => navigate(ROUTES.SETTINGS_BILLING + '?utm_source=team_members_upgrade_prompt')}
+                    className="mb-4 mt-4"
+                    variant="tip"
+                  />
+                )}
+                <OrganizationProfile appearance={clerkAppearance}>
                   <OrganizationProfile.Page label="members" />
                   <OrganizationProfile.Page label="general" />
                 </OrganizationProfile>

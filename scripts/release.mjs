@@ -92,7 +92,7 @@ const groups = ['packages'];
   await execa({
     stdout: process.stdout,
     stderr: process.stderr,
-  })`pnpm run build:packages --skip-nx-cache`;
+  })`pnpm run build:packages`;
 
   const answers = await inquirer.prompt([
     {

@@ -127,6 +127,7 @@ describe('GetNotifications', () => {
     expect(result.filter).to.deep.equal({
       tags: command.tags,
       read: command.read,
+      data: command.data,
       archived: command.archived,
       snoozed: command.snoozed,
     });

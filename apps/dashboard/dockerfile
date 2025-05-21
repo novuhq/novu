@@ -24,7 +24,7 @@ RUN --mount=type=cache,id=pnpm-store-dashboard,target=/root/.pnpm-store\
   pnpm install --frozen-lockfile --unsafe-perm
 
 COPY [".prettierrc",".prettierignore", "./"]
-RUN CI='' pnpm build:dashboard --skip-nx-cache
+RUN CI='' pnpm build:dashboard
 
 FROM node:20-alpine
 
