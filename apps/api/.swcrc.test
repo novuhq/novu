@@ -13,16 +13,18 @@
       "decoratorMetadata": true
     },
     "keepClassNames": true,
-    "externalHelpers": false,
-    "loose": true
+    "externalHelpers": false
   },
   "module": {
     "type": "commonjs",
     "strictMode": false,
     "noInterop": false,
-    "lazy": false,
-    "ignoreDynamic": true
+    "lazy": false
   },
   "sourceMaps": "inline",
-  "minify": false
+  "minify": false,
+  "exclude": [
+    "node_modules",
+    ".source"
+  ]
 }
