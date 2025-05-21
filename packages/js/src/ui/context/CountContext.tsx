@@ -75,19 +75,30 @@ export const CountProvider = (props: ParentProps) => {
     },
   });
 
-  const updateNewNotificationCountsOrCache = (notification: Notification, tags: string[]) => {
+  const updateNewNotificationCountsOrCache = (
+    notification: Notification,
+    tags: string[],
+    data?: NotificationFilter['data']
+  ) => {
     const notificationsCache = novu.notifications.cache;
     const limitValue = limit();
-    const tabFilter = { ...filter(), tags, after: undefined, limit: limitValue };
-    const hasEmptyCache = !notificationsCache.has(tabFilter);
+    // Use the global filter() as a base and override with specific tab's tags and data for cache operations
+    const tabSpecificFilterForCache = { ...filter(), tags, data, after: undefined, limit: limitValue };
+
+    const hasEmptyCache = !notificationsCache.has(tabSpecificFilterForCache);
     if (!isOpened() && hasEmptyCache) {
       return;
     }
 
-    const cachedData = notificationsCache.getAll(tabFilter) || { hasMore: false, filter: tabFilter, notifications: [] };
+    const cachedData = notificationsCache.getAll(tabSpecificFilterForCache) || {
+      hasMore: false,
+      filter: tabSpecificFilterForCache,
+      notifications: [],
+    };
     const hasLessThenMinAmount = (cachedData?.notifications.length || 0) < MIN_AMOUNT_OF_NOTIFICATIONS;
+
     if (hasLessThenMinAmount) {
-      notificationsCache.update(tabFilter, {
+      notificationsCache.update(tabSpecificFilterForCache, {
         ...cachedData,
         notifications: [notification, ...cachedData.notifications],
       });
@@ -96,7 +107,7 @@ export const CountProvider = (props: ParentProps) => {
     }
 
     setNewNotificationCounts((oldMap) => {
-      const key = createKey(tags, tabFilter.data);
+      const key = createKey(tags, data); // Use specific tab's tags and data for the key
       const newMap = new Map(oldMap);
       newMap.set(key, (oldMap.get(key) || 0) + 1);
 
@@ -111,27 +122,73 @@ export const CountProvider = (props: ParentProps) => {
         return;
       }
 
-      const tagsMap = tabs().reduce((acc, tab) => {
-        const tags = getTagsFromTab(tab);
-        const tagsKey = createKey(tags, tab.filter?.data);
-        acc.set(tagsKey, tags);
+      const currentTabs = tabs();
 
-        return acc;
-      }, new Map<string, string[]>());
-      const uniqueTags = Array.from(tagsMap.values());
-      if (uniqueTags.length > 0) {
-        for (let i = 0; i < uniqueTags.length; i += 1) {
-          const tags = uniqueTags[i];
-          const allNotifications = tags.length === 0;
-          const includesAtLeastOneTag = tags.some((tag) => notification.tags?.includes(tag));
-          if (!allNotifications && !includesAtLeastOneTag) {
-            continue;
+      // Helper function to check if notification data matches tab's data filter criteria
+      function checkNotificationDataAgainstTabData(
+        notificationData: Notification['data'],
+        tabFilterData: NotificationFilter['data']
+      ): boolean {
+        if (!tabFilterData || Object.keys(tabFilterData).length === 0) {
+          // No data filter defined on the tab, so it's a match on the data aspect.
+          return true;
+        }
+        if (!notificationData) {
+          // Tab has a data filter, but the notification has no data.
+          return false;
+        }
+
+        return Object.entries(tabFilterData).every(([key, filterValue]) => {
+          const notifValue = notificationData[key];
+
+          if (notifValue === undefined && filterValue !== undefined) {
+            // Key is specified in tab's data filter, but this key is not present in the notification's data.
+            return false;
           }
 
-          updateNewNotificationCountsOrCache(notification, tags);
+          if (Array.isArray(filterValue)) {
+            if (Array.isArray(notifValue)) {
+              // Both filter value and notification value are arrays.
+              // Check for set equality (same elements, regardless of order).
+              if (filterValue.length !== notifValue.length) return false;
+              // Ensure elements are of primitive types for direct sort and comparison.
+              // If elements can be objects, a more sophisticated comparison is needed.
+              const sortedFilterValue = [...(filterValue as (string | number | boolean)[])].sort();
+              const sortedNotifValue = [...(notifValue as (string | number | boolean)[])].sort();
+
+              return sortedFilterValue.every((val, index) => val === sortedNotifValue[index]);
+            } else {
+              // Filter value is an array, notification value is scalar.
+              // Check if the scalar notification value is present in the filter array.
+              return (filterValue as unknown[]).includes(notifValue);
+            }
+          } else {
+            // Filter value is scalar. Notification value must be equal.
+            return notifValue === filterValue;
+          }
+        });
+      }
+
+      if (currentTabs.length > 0) {
+        for (const tab of currentTabs) {
+          const tabTags = getTagsFromTab(tab);
+          const tabDataFilterCriteria = tab.filter?.data;
+
+          const matchesTagFilter =
+            tabTags.length === 0 || (notification.tags && tabTags.some((tag) => notification.tags!.includes(tag)));
+
+          const matchesDataFilterCriteria = checkNotificationDataAgainstTabData(
+            notification.data,
+            tabDataFilterCriteria
+          );
+
+          if (matchesTagFilter && matchesDataFilterCriteria) {
+            updateNewNotificationCountsOrCache(notification, tabTags, tabDataFilterCriteria);
+          }
         }
       } else {
-        updateNewNotificationCountsOrCache(notification, []);
+        // No tabs are defined. Apply to default (no tags, no data) filter.
+        updateNewNotificationCountsOrCache(notification, [], undefined);
       }
     },
   });
