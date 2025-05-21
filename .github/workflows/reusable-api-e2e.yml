@@ -59,6 +59,9 @@ jobs:
         shell: bash
         run: wait-on --timeout=180000 http://127.0.0.1:1342/v1/health-check
 
+      - name: Build API
+        run: cd apps/api && pnpm build:metadata
+
       - name: Run Novu V1 E2E tests
         if: ${{ !inputs.ee }}
         run: |

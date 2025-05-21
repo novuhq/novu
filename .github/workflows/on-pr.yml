@@ -220,6 +220,12 @@ jobs:
           slim: ${{ !contains(matrix.projectName, '@novu/api-service') && !contains(matrix.projectName, '@novu/worker') && !contains(matrix.projectName, '@novu/ws') && !contains(matrix.projectName, '@novu/inbound-mail')}}
 
       - uses: ./.github/actions/setup-redis-cluster
+      - uses: mansagroup/nrwl-nx-action@v3
+        name: Lint and build and test
+        with:
+          targets: build
+          projects: '@novu/api'
+          args: '--skip-nx-cache'
 
       - uses: mansagroup/nrwl-nx-action@v3
         name: Lint and build and test

@@ -43,6 +43,10 @@
         "{projectRoot}/index.js",
         "{projectRoot}/core.js"
       ]
+    },
+    "@novu/api-service:build": {
+      "cache": true,
+      "outputs": ["default", "{projectRoot}/src/metadata.ts"]
     }
   },
   "namedInputs": {
