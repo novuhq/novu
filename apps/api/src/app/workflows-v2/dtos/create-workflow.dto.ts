@@ -68,9 +68,12 @@ export class CreateWorkflowDto extends WorkflowCommonsFields {
     description: 'Source of workflow creation',
     enum: WorkflowCreationSourceEnum,
     enumName: 'WorkflowCreationSourceEnum',
+    required: false,
+    default: WorkflowCreationSourceEnum.EDITOR,
   })
+  @IsOptional()
   @IsEnum(WorkflowCreationSourceEnum)
-  __source: WorkflowCreationSourceEnum;
+  __source?: WorkflowCreationSourceEnum;
 
   @ApiPropertyOptional({
     description: 'Workflow preferences',

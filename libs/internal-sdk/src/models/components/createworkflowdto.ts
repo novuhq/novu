@@ -114,7 +114,7 @@ export type CreateWorkflowDto = {
   /**
    * Source of workflow creation
    */
-  source: WorkflowCreationSourceEnum;
+  source?: WorkflowCreationSourceEnum | undefined;
   /**
    * Workflow preferences
    */
@@ -295,7 +295,7 @@ export const CreateWorkflowDto$inboundSchema: z.ZodType<
       ),
     ]),
   ),
-  __source: WorkflowCreationSourceEnum$inboundSchema,
+  __source: WorkflowCreationSourceEnum$inboundSchema.default("editor"),
   preferences: PreferencesRequestDto$inboundSchema.optional(),
 }).transform((v) => {
   return remap$(v, {
@@ -379,7 +379,7 @@ export const CreateWorkflowDto$outboundSchema: z.ZodType<
       ),
     ]),
   ),
-  source: WorkflowCreationSourceEnum$outboundSchema,
+  source: WorkflowCreationSourceEnum$outboundSchema.default("editor"),
   preferences: PreferencesRequestDto$outboundSchema.optional(),
 }).transform((v) => {
   return remap$(v, {
