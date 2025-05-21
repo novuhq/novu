@@ -29,7 +29,7 @@ RUN pnpm add @babel/core -w
 
 COPY [".prettierrc",".prettierignore", "./"]
 
-RUN CI='' pnpm build:web --skip-nx-cache
+RUN CI='' pnpm build:web
 # end build stage
 
 # start production stage
