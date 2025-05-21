@@ -75,7 +75,12 @@ export class TopicsController {
   @Get('')
   @ExternalApiAccessible()
   @SdkMethodName('list')
-  @ApiOperation({ summary: 'Get topics list' })
+  @ApiOperation({
+    summary: 'List all topics',
+    description: `This api returns a paginated list of topics.
+    Topics can be filtered by **key**, **name**, or **includeCursor** to paginate through the list. 
+    Checkout all available filters in the query section.`,
+  })
   @ApiResponse(ListTopicsResponseDto)
   @RequirePermissions(PermissionsEnum.TOPIC_READ)
   async listTopics(
@@ -102,8 +107,8 @@ export class TopicsController {
   @Post('')
   @ExternalApiAccessible()
   @ApiOperation({
-    summary: 'Create or update a topic',
-    description: 'Creates a new topic if it does not exist, or updates an existing topic if it already exists',
+    summary: 'Create a topic',
+    description: `Creates a new topic if it does not exist, or updates an existing topic if it already exists`,
   })
   @ApiResponse(TopicResponseDto, 201)
   @ApiResponse(TopicResponseDto, 200)
@@ -134,7 +139,10 @@ export class TopicsController {
   @Get('/:topicKey')
   @ExternalApiAccessible()
   @SdkMethodName('get')
-  @ApiOperation({ summary: 'Get topic by key' })
+  @ApiOperation({
+    summary: 'Retrieve a topic',
+    description: `Retrieve a topic by its unique key identifier **topicKey**`,
+  })
   @ApiParam({ name: 'topicKey', description: 'The key identifier of the topic', type: String })
   @ApiResponse(TopicResponseDto, 200)
   @RequirePermissions(PermissionsEnum.TOPIC_READ)
@@ -151,7 +159,10 @@ export class TopicsController {
   @Patch('/:topicKey')
   @ExternalApiAccessible()
   @SdkMethodName('update')
-  @ApiOperation({ summary: 'Update topic by key' })
+  @ApiOperation({
+    summary: 'Update a topic',
+    description: `Update a topic name by its unique key identifier **topicKey**`,
+  })
   @ApiParam({ name: 'topicKey', description: 'The key identifier of the topic', type: String })
   @ApiResponse(TopicResponseDto, 200)
   @RequirePermissions(PermissionsEnum.TOPIC_WRITE)
@@ -174,7 +185,11 @@ export class TopicsController {
   @Delete('/:topicKey')
   @ExternalApiAccessible()
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Delete topic by key' })
+  @ApiOperation({
+    summary: 'Delete a topic',
+    description: `Delete a topic by its unique key identifier **topicKey**. 
+    This action is irreversible and will remove all subscriptions to the topic.`,
+  })
   @ApiParam({ name: 'topicKey', description: 'The key identifier of the topic', type: String })
   @ApiResponse(DeleteTopicResponseDto, 200, false, true, {
     description: 'Topic deleted successfully',
@@ -202,7 +217,11 @@ export class TopicsController {
   @Get('/:topicKey/subscriptions')
   @ExternalApiAccessible()
   @SdkGroupName('Topics.Subscriptions')
-  @ApiOperation({ summary: 'List topic subscriptions' })
+  @ApiOperation({
+    summary: `List topic subscriptions`,
+    description: `List all topics that a subscriber is subscribed to.
+    Checkout all available filters in the query section.`,
+  })
   @ApiParam({ name: 'topicKey', description: 'The key identifier of the topic', type: String })
   @ApiResponse(ListTopicSubscriptionsResponseDto, 200)
   @RequirePermissions(PermissionsEnum.TOPIC_READ)
@@ -231,7 +250,11 @@ export class TopicsController {
   @ExternalApiAccessible()
   @SdkGroupName('Topics.Subscriptions')
   @SdkMethodName('create')
-  @ApiOperation({ summary: 'Create topic subscriptions, if the topic does not exist, it will be created.' })
+  @ApiOperation({
+    summary: 'Create topic subscriptions',
+    description: `This api will create subscription for subscriberIds for a topic. 
+      Its like subscribing to a common interest group. if topic does not exist, it will be created.`,
+  })
   @ApiParam({ name: 'topicKey', description: 'The key identifier of the topic', type: String })
   @ApiResponse(CreateTopicSubscriptionsResponseDto, 201, false, true, {
     description: 'Subscriptions created successfully',
@@ -274,7 +297,10 @@ export class TopicsController {
   @ExternalApiAccessible()
   @SdkGroupName('Topics.Subscriptions')
   @SdkMethodName('delete')
-  @ApiOperation({ summary: 'Delete topic subscriptions' })
+  @ApiOperation({
+    summary: 'Delete topic subscriptions',
+    description: 'Delete subscriptions for subscriberIds for a topic.',
+  })
   @ApiParam({ name: 'topicKey', description: 'The key identifier of the topic', type: String })
   @ApiResponse(DeleteTopicSubscriptionsResponseDto, 200, false, false, {
     description: 'Subscriptions deleted successfully',
