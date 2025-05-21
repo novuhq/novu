@@ -16,13 +16,16 @@
       "inputs": ["default", "{workspaceRoot}/tools/eslint-rules/**/*"]
     },
     "@novu/api:build": {
-      "cache": false
+      "cache": false,
+      "outputs": []
     },
     "@novu/api:test": {
-      "cache": false
+      "cache": false,
+      "outputs": []
     },
     "@novu/api:lint": {
-      "cache": false
+      "cache": false,
+      "outputs": []
     }
   },
   "namedInputs": {
