@@ -13,6 +13,7 @@ import {
   PreviewPayloadDto,
   StepTypeEnum,
   UpdateWorkflowDto,
+  UpdateWorkflowDtoSteps,
   WorkflowCreationSourceEnum,
   WorkflowOriginEnum,
   WorkflowResponseDto,
@@ -1223,7 +1224,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
           {
             ...novuRestResult.result.steps[0],
             controlValues,
-          },
+          } as UpdateWorkflowDtoSteps,
         ],
       });
       const generatePreviewResponseDto = await generatePreview(novuClient, workflowSlug, stepSlug, {
@@ -1771,7 +1772,7 @@ export const getTestControlValues = (stepId?: string) => ({
 
 export async function createWorkflowAndReturnId(workflowsClient: Novu, type: StepTypeEnum) {
   const createWorkflowDto = buildWorkflow();
-  createWorkflowDto.steps[0].type = type;
+  createWorkflowDto.steps[0].type = type as any;
   const workflowResult = await workflowsClient.workflows.create(createWorkflowDto);
 
   return {

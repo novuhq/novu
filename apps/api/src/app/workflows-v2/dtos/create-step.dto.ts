@@ -36,7 +36,6 @@ export class InAppStepUpsertDto extends BaseStepConfigDto {
   @ApiProperty({
     enum: StepTypeEnum,
     enumName: 'StepTypeEnum',
-    default: StepTypeEnum.IN_APP,
     description: 'Type of the step',
   })
   @IsEnum(StepTypeEnum)

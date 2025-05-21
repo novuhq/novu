@@ -147,7 +147,7 @@ describe('Workflow Test Data', function () {
         name: `Test Step ${index + 1}`,
         type,
       })),
-    };
+    } as CreateWorkflowDto;
 
     const { result } = await novuClient.workflows.create(createWorkflowDto);
 

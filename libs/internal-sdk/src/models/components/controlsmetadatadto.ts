@@ -16,13 +16,13 @@ import {
 /**
  * JSON Schema for data
  */
-export type DataSchema = {};
+export type ControlsMetadataDtoDataSchema = {};
 
 export type ControlsMetadataDto = {
   /**
    * JSON Schema for data
    */
-  dataSchema?: DataSchema | undefined;
+  dataSchema?: ControlsMetadataDtoDataSchema | undefined;
   /**
    * UI Schema for rendering
    */
@@ -34,46 +34,52 @@ export type ControlsMetadataDto = {
 };
 
 /** @internal */
-export const DataSchema$inboundSchema: z.ZodType<
-  DataSchema,
+export const ControlsMetadataDtoDataSchema$inboundSchema: z.ZodType<
+  ControlsMetadataDtoDataSchema,
   z.ZodTypeDef,
   unknown
 > = z.object({});
 
 /** @internal */
-export type DataSchema$Outbound = {};
+export type ControlsMetadataDtoDataSchema$Outbound = {};
 
 /** @internal */
-export const DataSchema$outboundSchema: z.ZodType<
-  DataSchema$Outbound,
+export const ControlsMetadataDtoDataSchema$outboundSchema: z.ZodType<
+  ControlsMetadataDtoDataSchema$Outbound,
   z.ZodTypeDef,
-  DataSchema
+  ControlsMetadataDtoDataSchema
 > = z.object({});
 
 /**
  * @internal
  * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
  */
-export namespace DataSchema$ {
-  /** @deprecated use `DataSchema$inboundSchema` instead. */
-  export const inboundSchema = DataSchema$inboundSchema;
-  /** @deprecated use `DataSchema$outboundSchema` instead. */
-  export const outboundSchema = DataSchema$outboundSchema;
-  /** @deprecated use `DataSchema$Outbound` instead. */
-  export type Outbound = DataSchema$Outbound;
+export namespace ControlsMetadataDtoDataSchema$ {
+  /** @deprecated use `ControlsMetadataDtoDataSchema$inboundSchema` instead. */
+  export const inboundSchema = ControlsMetadataDtoDataSchema$inboundSchema;
+  /** @deprecated use `ControlsMetadataDtoDataSchema$outboundSchema` instead. */
+  export const outboundSchema = ControlsMetadataDtoDataSchema$outboundSchema;
+  /** @deprecated use `ControlsMetadataDtoDataSchema$Outbound` instead. */
+  export type Outbound = ControlsMetadataDtoDataSchema$Outbound;
 }
 
-export function dataSchemaToJSON(dataSchema: DataSchema): string {
-  return JSON.stringify(DataSchema$outboundSchema.parse(dataSchema));
+export function controlsMetadataDtoDataSchemaToJSON(
+  controlsMetadataDtoDataSchema: ControlsMetadataDtoDataSchema,
+): string {
+  return JSON.stringify(
+    ControlsMetadataDtoDataSchema$outboundSchema.parse(
+      controlsMetadataDtoDataSchema,
+    ),
+  );
 }
 
-export function dataSchemaFromJSON(
+export function controlsMetadataDtoDataSchemaFromJSON(
   jsonString: string,
-): SafeParseResult<DataSchema, SDKValidationError> {
+): SafeParseResult<ControlsMetadataDtoDataSchema, SDKValidationError> {
   return safeParse(
     jsonString,
-    (x) => DataSchema$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'DataSchema' from JSON`,
+    (x) => ControlsMetadataDtoDataSchema$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'ControlsMetadataDtoDataSchema' from JSON`,
   );
 }
 
@@ -83,14 +89,15 @@ export const ControlsMetadataDto$inboundSchema: z.ZodType<
   z.ZodTypeDef,
   unknown
 > = z.object({
-  dataSchema: z.lazy(() => DataSchema$inboundSchema).optional(),
+  dataSchema: z.lazy(() => ControlsMetadataDtoDataSchema$inboundSchema)
+    .optional(),
   uiSchema: UiSchema$inboundSchema.optional(),
   values: z.record(z.any()),
 });
 
 /** @internal */
 export type ControlsMetadataDto$Outbound = {
-  dataSchema?: DataSchema$Outbound | undefined;
+  dataSchema?: ControlsMetadataDtoDataSchema$Outbound | undefined;
   uiSchema?: UiSchema$Outbound | undefined;
   values: { [k: string]: any };
 };
@@ -101,7 +108,8 @@ export const ControlsMetadataDto$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   ControlsMetadataDto
 > = z.object({
-  dataSchema: z.lazy(() => DataSchema$outboundSchema).optional(),
+  dataSchema: z.lazy(() => ControlsMetadataDtoDataSchema$outboundSchema)
+    .optional(),
   uiSchema: UiSchema$outboundSchema.optional(),
   values: z.record(z.any()),
 });

@@ -10,4 +10,6 @@ export class SkipControlDto {
   @IsObject()
   @IsOptional()
   skip?: Record<string, unknown>;
+
+  [key: string]: any;
 }
