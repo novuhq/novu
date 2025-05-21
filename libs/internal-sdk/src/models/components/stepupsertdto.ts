@@ -220,30 +220,6 @@ export type SmsControlDto = {
  */
 export type ControlValuesSkip = {};
 
-export type EmailControlDto = {
-  /**
-   * Filter conditions for skipping the step.
-   */
-  skip?: ControlValuesSkip | undefined;
-  /**
-   * Subject of the email.
-   */
-  subject: string;
-  /**
-   * Body content of the email.
-   */
-  body?: string | undefined;
-  /**
-   * Disable sanitization of the output.
-   */
-  disableOutputSanitization?: boolean | undefined;
-};
-
-/**
- * Filter conditions for skipping the step.
- */
-export type Skip = {};
-
 /**
  * Additional data payload for the step.
  */
@@ -253,7 +229,7 @@ export type InAppControlDto = {
   /**
    * Filter conditions for skipping the step.
    */
-  skip?: Skip | undefined;
+  skip?: ControlValuesSkip | undefined;
   /**
    * Content/body of the in-app message. Required if subject is empty.
    */
@@ -286,6 +262,30 @@ export type InAppControlDto = {
    * Additional data payload for the step.
    */
   data?: ControlValuesData | undefined;
+};
+
+/**
+ * Filter conditions for skipping the step.
+ */
+export type Skip = {};
+
+export type EmailControlDto = {
+  /**
+   * Filter conditions for skipping the step.
+   */
+  skip?: Skip | undefined;
+  /**
+   * Subject of the email.
+   */
+  subject: string;
+  /**
+   * Body content of the email.
+   */
+  body?: string | undefined;
+  /**
+   * Disable sanitization of the output.
+   */
+  disableOutputSanitization?: boolean | undefined;
 };
 
 /**
@@ -1107,105 +1107,6 @@ export function controlValuesSkipFromJSON(
 }
 
 /** @internal */
-export const EmailControlDto$inboundSchema: z.ZodType<
-  EmailControlDto,
-  z.ZodTypeDef,
-  unknown
-> = z.object({
-  skip: z.lazy(() => ControlValuesSkip$inboundSchema).optional(),
-  subject: z.string(),
-  body: z.string().default(""),
-  disableOutputSanitization: z.boolean().default(false),
-});
-
-/** @internal */
-export type EmailControlDto$Outbound = {
-  skip?: ControlValuesSkip$Outbound | undefined;
-  subject: string;
-  body: string;
-  disableOutputSanitization: boolean;
-};
-
-/** @internal */
-export const EmailControlDto$outboundSchema: z.ZodType<
-  EmailControlDto$Outbound,
-  z.ZodTypeDef,
-  EmailControlDto
-> = z.object({
-  skip: z.lazy(() => ControlValuesSkip$outboundSchema).optional(),
-  subject: z.string(),
-  body: z.string().default(""),
-  disableOutputSanitization: z.boolean().default(false),
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace EmailControlDto$ {
-  /** @deprecated use `EmailControlDto$inboundSchema` instead. */
-  export const inboundSchema = EmailControlDto$inboundSchema;
-  /** @deprecated use `EmailControlDto$outboundSchema` instead. */
-  export const outboundSchema = EmailControlDto$outboundSchema;
-  /** @deprecated use `EmailControlDto$Outbound` instead. */
-  export type Outbound = EmailControlDto$Outbound;
-}
-
-export function emailControlDtoToJSON(
-  emailControlDto: EmailControlDto,
-): string {
-  return JSON.stringify(EmailControlDto$outboundSchema.parse(emailControlDto));
-}
-
-export function emailControlDtoFromJSON(
-  jsonString: string,
-): SafeParseResult<EmailControlDto, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => EmailControlDto$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'EmailControlDto' from JSON`,
-  );
-}
-
-/** @internal */
-export const Skip$inboundSchema: z.ZodType<Skip, z.ZodTypeDef, unknown> = z
-  .object({});
-
-/** @internal */
-export type Skip$Outbound = {};
-
-/** @internal */
-export const Skip$outboundSchema: z.ZodType<Skip$Outbound, z.ZodTypeDef, Skip> =
-  z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace Skip$ {
-  /** @deprecated use `Skip$inboundSchema` instead. */
-  export const inboundSchema = Skip$inboundSchema;
-  /** @deprecated use `Skip$outboundSchema` instead. */
-  export const outboundSchema = Skip$outboundSchema;
-  /** @deprecated use `Skip$Outbound` instead. */
-  export type Outbound = Skip$Outbound;
-}
-
-export function skipToJSON(skip: Skip): string {
-  return JSON.stringify(Skip$outboundSchema.parse(skip));
-}
-
-export function skipFromJSON(
-  jsonString: string,
-): SafeParseResult<Skip, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => Skip$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'Skip' from JSON`,
-  );
-}
-
-/** @internal */
 export const ControlValuesData$inboundSchema: z.ZodType<
   ControlValuesData,
   z.ZodTypeDef,
@@ -1259,7 +1160,7 @@ export const InAppControlDto$inboundSchema: z.ZodType<
   z.ZodTypeDef,
   unknown
 > = z.object({
-  skip: z.lazy(() => Skip$inboundSchema).optional(),
+  skip: z.lazy(() => ControlValuesSkip$inboundSchema).optional(),
   body: z.string().optional(),
   subject: z.string().optional(),
   avatar: z.string().optional(),
@@ -1272,7 +1173,7 @@ export const InAppControlDto$inboundSchema: z.ZodType<
 
 /** @internal */
 export type InAppControlDto$Outbound = {
-  skip?: Skip$Outbound | undefined;
+  skip?: ControlValuesSkip$Outbound | undefined;
   body?: string | undefined;
   subject?: string | undefined;
   avatar?: string | undefined;
@@ -1289,7 +1190,7 @@ export const InAppControlDto$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   InAppControlDto
 > = z.object({
-  skip: z.lazy(() => Skip$outboundSchema).optional(),
+  skip: z.lazy(() => ControlValuesSkip$outboundSchema).optional(),
   body: z.string().optional(),
   subject: z.string().optional(),
   avatar: z.string().optional(),
@@ -1326,6 +1227,105 @@ export function inAppControlDtoFromJSON(
     jsonString,
     (x) => InAppControlDto$inboundSchema.parse(JSON.parse(x)),
     `Failed to parse 'InAppControlDto' from JSON`,
+  );
+}
+
+/** @internal */
+export const Skip$inboundSchema: z.ZodType<Skip, z.ZodTypeDef, unknown> = z
+  .object({});
+
+/** @internal */
+export type Skip$Outbound = {};
+
+/** @internal */
+export const Skip$outboundSchema: z.ZodType<Skip$Outbound, z.ZodTypeDef, Skip> =
+  z.object({});
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace Skip$ {
+  /** @deprecated use `Skip$inboundSchema` instead. */
+  export const inboundSchema = Skip$inboundSchema;
+  /** @deprecated use `Skip$outboundSchema` instead. */
+  export const outboundSchema = Skip$outboundSchema;
+  /** @deprecated use `Skip$Outbound` instead. */
+  export type Outbound = Skip$Outbound;
+}
+
+export function skipToJSON(skip: Skip): string {
+  return JSON.stringify(Skip$outboundSchema.parse(skip));
+}
+
+export function skipFromJSON(
+  jsonString: string,
+): SafeParseResult<Skip, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => Skip$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'Skip' from JSON`,
+  );
+}
+
+/** @internal */
+export const EmailControlDto$inboundSchema: z.ZodType<
+  EmailControlDto,
+  z.ZodTypeDef,
+  unknown
+> = z.object({
+  skip: z.lazy(() => Skip$inboundSchema).optional(),
+  subject: z.string(),
+  body: z.string().default(""),
+  disableOutputSanitization: z.boolean().default(false),
+});
+
+/** @internal */
+export type EmailControlDto$Outbound = {
+  skip?: Skip$Outbound | undefined;
+  subject: string;
+  body: string;
+  disableOutputSanitization: boolean;
+};
+
+/** @internal */
+export const EmailControlDto$outboundSchema: z.ZodType<
+  EmailControlDto$Outbound,
+  z.ZodTypeDef,
+  EmailControlDto
+> = z.object({
+  skip: z.lazy(() => Skip$outboundSchema).optional(),
+  subject: z.string(),
+  body: z.string().default(""),
+  disableOutputSanitization: z.boolean().default(false),
+});
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace EmailControlDto$ {
+  /** @deprecated use `EmailControlDto$inboundSchema` instead. */
+  export const inboundSchema = EmailControlDto$inboundSchema;
+  /** @deprecated use `EmailControlDto$outboundSchema` instead. */
+  export const outboundSchema = EmailControlDto$outboundSchema;
+  /** @deprecated use `EmailControlDto$Outbound` instead. */
+  export type Outbound = EmailControlDto$Outbound;
+}
+
+export function emailControlDtoToJSON(
+  emailControlDto: EmailControlDto,
+): string {
+  return JSON.stringify(EmailControlDto$outboundSchema.parse(emailControlDto));
+}
+
+export function emailControlDtoFromJSON(
+  jsonString: string,
+): SafeParseResult<EmailControlDto, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => EmailControlDto$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'EmailControlDto' from JSON`,
   );
 }
 
