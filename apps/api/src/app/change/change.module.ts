@@ -31,8 +31,8 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
     ...USE_CASES,
     {
       provide: 'INotificationTemplateChangeService',
-      useExisting: PromoteNotificationTemplateChange
-    }
+      useExisting: PromoteNotificationTemplateChange,
+    },
   ],
   exports: [...USE_CASES],
   controllers: [ChangesController],

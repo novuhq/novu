@@ -1,7 +1,7 @@
-/* eslint-disable global-require */
 import sinon from 'sinon';
 import { expect } from 'chai';
 import { ApiServiceLevelEnum, StripeBillingIntervalEnum } from '@novu/shared';
+
 const { StripeSubscriptionStatusEnum, StripeUsageTypeEnum } = require('@novu/ee-billing/src/stripe/types');
 
 describe('CreateSubscription #novu-v2', () => {
