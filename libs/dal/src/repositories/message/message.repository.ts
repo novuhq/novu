@@ -18,8 +18,30 @@ type MessageQuery = FilterQuery<MessageDBModel>;
 
 const MAX_PAYLOAD_QUERY_DEPTH = 3;
 
+const DANGEROUS_KEYS = ['__proto__', 'constructor', 'prototype'];
+
+const isValidKey = (key: string): boolean => {
+  // Reject keys starting with '$' or '.' to prevent MongoDB operator injection.
+  if (key.startsWith('$') || key.startsWith('.')) {
+    return false;
+  }
+
+  // Reject known prototype pollution vectors.
+  if (DANGEROUS_KEYS.includes(key)) {
+    return false;
+  }
+
+  return true;
+};
+
 const getEntries = (obj: object, prefix = '', currentDepth = 0, maxDepth: number): [string, any][] =>
   Object.entries(obj).flatMap(([key, value]) => {
+    // Sanitize the key before using it.
+    if (!isValidKey(key)) {
+      // Skip this entry if the key is invalid to prevent pollution or injection.
+      return [];
+    }
+
     const newKeySegment = prefix ? `${prefix}.${key}` : key;
 
     if (currentDepth < maxDepth && typeof value === 'object' && value !== null && !Array.isArray(value)) {
@@ -569,7 +591,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     const isFromSeen = from.seen !== undefined;
     const isFromRead = from.read !== undefined;
     const isFromArchived = from.archived !== undefined;
-    const flatData = getFlatObject({ data: from.data });
+    const flatData = from.data ? getFlatObject({ data: from.data }) : {};
 
     const query: MessageQuery & EnforceEnvId = {
       ...flatData,

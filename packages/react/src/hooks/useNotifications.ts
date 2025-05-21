@@ -103,7 +103,7 @@ export const useNotifications = (props?: UseNotificationsProps): UseNotification
   };
 
   const refetch = () => {
-    notifications.clearCache({ filter: { tags, read, archived, snoozed } });
+    notifications.clearCache({ filter: { tags, read, archived, snoozed, data: dataFilter } });
 
     return fetchNotifications({ refetch: true });
   };
@@ -115,15 +115,15 @@ export const useNotifications = (props?: UseNotificationsProps): UseNotification
   };
 
   const readAll = async () => {
-    return await notifications.readAll({ tags });
+    return await notifications.readAll({ tags, data: dataFilter });
   };
 
   const archiveAll = async () => {
-    return await notifications.archiveAll({ tags });
+    return await notifications.archiveAll({ tags, data: dataFilter });
   };
 
   const archiveAllRead = async () => {
-    return await notifications.archiveAllRead({ tags });
+    return await notifications.archiveAllRead({ tags, data: dataFilter });
   };
 
   return {
