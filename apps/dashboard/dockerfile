@@ -41,4 +41,4 @@ RUN chmod +x /app/docker-entrypoint.sh
 ENTRYPOINT [ "/app/docker-entrypoint.sh" ]
 # Expose the port the app runs on
 EXPOSE 4000
-CMD [ "http-server", "dist", "-p", "4000" ]
+CMD [ "http-server", "dist", "-p", "4000", "--proxy", "http://localhost:4000?" ]

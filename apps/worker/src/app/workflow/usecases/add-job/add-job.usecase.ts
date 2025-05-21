@@ -338,6 +338,11 @@ export class AddJob {
     }
 
     if (isRegularDigestOutput(outputs)) {
+      if (!outputs.amount && !outputs.unit) {
+        outputs.amount = 0;
+        outputs.unit = 'seconds';
+      }
+
       metadata = {
         type: digestType,
         amount: outputs?.amount,

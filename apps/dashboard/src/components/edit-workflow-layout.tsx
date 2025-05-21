@@ -18,7 +18,7 @@ export const EditWorkflowLayout = ({
         <div className="flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
           <HeaderNavigation startItems={headerStartItems} hideBridgeUrl />
 
-          <div className="flex flex-1 flex-col overflow-y-auto overflow-x-hidden">{children}</div>
+          <div className="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden">{children}</div>
         </div>
       </div>
     </IntercomProvider>

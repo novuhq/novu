@@ -17,6 +17,7 @@ import {
   CommunityOrganizationRepository,
   EnvironmentRepository,
   IntegrationRepository,
+  MessageRepository,
   MessageTemplateRepository,
   NotificationTemplateRepository,
   PreferencesRepository,
@@ -71,6 +72,7 @@ const DAL_MODELS = [
   MessageTemplateRepository,
   WorkflowOverrideRepository,
   TenantRepository,
+  MessageRepository,
 ];
 
 @Module({

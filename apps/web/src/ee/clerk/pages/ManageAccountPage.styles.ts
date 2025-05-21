@@ -10,6 +10,12 @@ export const clerkComponentAppearance = {
       height: 'full',
       boxShadow: 'none',
     },
+    selectButton__role: {
+      visibility: 'hidden',
+    },
+    formFieldRow__role: {
+      visibility: 'hidden',
+    },
   },
 };
 
