@@ -5,20 +5,13 @@
 import * as z from "zod";
 import { remap as remap$ } from "../../lib/primitives.js";
 import { safeParse } from "../../lib/schemas.js";
-import { ClosedEnum } from "../../types/enums.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
-
-/**
- * Type of the step
- */
-export const EmailStepUpsertDtoType = {
-  Email: "email",
-} as const;
-/**
- * Type of the step
- */
-export type EmailStepUpsertDtoType = ClosedEnum<typeof EmailStepUpsertDtoType>;
+import {
+  StepTypeEnum,
+  StepTypeEnum$inboundSchema,
+  StepTypeEnum$outboundSchema,
+} from "./steptypeenum.js";
 
 /**
  * Filter conditions for skipping the step.
@@ -59,33 +52,12 @@ export type EmailStepUpsertDto = {
   /**
    * Type of the step
    */
-  type?: EmailStepUpsertDtoType | undefined;
+  type: StepTypeEnum;
   /**
    * Control values for the Email step
    */
   controlValues?: EmailStepUpsertDtoControlValues | null | undefined;
 };
-
-/** @internal */
-export const EmailStepUpsertDtoType$inboundSchema: z.ZodNativeEnum<
-  typeof EmailStepUpsertDtoType
-> = z.nativeEnum(EmailStepUpsertDtoType);
-
-/** @internal */
-export const EmailStepUpsertDtoType$outboundSchema: z.ZodNativeEnum<
-  typeof EmailStepUpsertDtoType
-> = EmailStepUpsertDtoType$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace EmailStepUpsertDtoType$ {
-  /** @deprecated use `EmailStepUpsertDtoType$inboundSchema` instead. */
-  export const inboundSchema = EmailStepUpsertDtoType$inboundSchema;
-  /** @deprecated use `EmailStepUpsertDtoType$outboundSchema` instead. */
-  export const outboundSchema = EmailStepUpsertDtoType$outboundSchema;
-}
 
 /** @internal */
 export const EmailStepUpsertDtoSkip$inboundSchema: z.ZodType<
@@ -208,7 +180,7 @@ export const EmailStepUpsertDto$inboundSchema: z.ZodType<
 > = z.object({
   _id: z.string().optional(),
   name: z.string(),
-  type: EmailStepUpsertDtoType$inboundSchema.default("email"),
+  type: StepTypeEnum$inboundSchema,
   controlValues: z.nullable(
     z.lazy(() => EmailStepUpsertDtoControlValues$inboundSchema),
   ).optional(),
@@ -234,7 +206,7 @@ export const EmailStepUpsertDto$outboundSchema: z.ZodType<
 > = z.object({
   id: z.string().optional(),
   name: z.string(),
-  type: EmailStepUpsertDtoType$outboundSchema.default("email"),
+  type: StepTypeEnum$outboundSchema,
   controlValues: z.nullable(
     z.lazy(() => EmailStepUpsertDtoControlValues$outboundSchema),
   ).optional(),

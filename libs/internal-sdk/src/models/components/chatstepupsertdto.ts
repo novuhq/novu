@@ -5,20 +5,13 @@
 import * as z from "zod";
 import { remap as remap$ } from "../../lib/primitives.js";
 import { safeParse } from "../../lib/schemas.js";
-import { ClosedEnum } from "../../types/enums.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
-
-/**
- * Type of the step
- */
-export const ChatStepUpsertDtoType = {
-  Chat: "chat",
-} as const;
-/**
- * Type of the step
- */
-export type ChatStepUpsertDtoType = ClosedEnum<typeof ChatStepUpsertDtoType>;
+import {
+  StepTypeEnum,
+  StepTypeEnum$inboundSchema,
+  StepTypeEnum$outboundSchema,
+} from "./steptypeenum.js";
 
 /**
  * Filter conditions for skipping the step.
@@ -51,33 +44,12 @@ export type ChatStepUpsertDto = {
   /**
    * Type of the step
    */
-  type?: ChatStepUpsertDtoType | undefined;
+  type: StepTypeEnum;
   /**
    * Control values for the Chat step
    */
   controlValues?: ChatStepUpsertDtoControlValues | null | undefined;
 };
-
-/** @internal */
-export const ChatStepUpsertDtoType$inboundSchema: z.ZodNativeEnum<
-  typeof ChatStepUpsertDtoType
-> = z.nativeEnum(ChatStepUpsertDtoType);
-
-/** @internal */
-export const ChatStepUpsertDtoType$outboundSchema: z.ZodNativeEnum<
-  typeof ChatStepUpsertDtoType
-> = ChatStepUpsertDtoType$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ChatStepUpsertDtoType$ {
-  /** @deprecated use `ChatStepUpsertDtoType$inboundSchema` instead. */
-  export const inboundSchema = ChatStepUpsertDtoType$inboundSchema;
-  /** @deprecated use `ChatStepUpsertDtoType$outboundSchema` instead. */
-  export const outboundSchema = ChatStepUpsertDtoType$outboundSchema;
-}
 
 /** @internal */
 export const ChatStepUpsertDtoSkip$inboundSchema: z.ZodType<
@@ -194,7 +166,7 @@ export const ChatStepUpsertDto$inboundSchema: z.ZodType<
 > = z.object({
   _id: z.string().optional(),
   name: z.string(),
-  type: ChatStepUpsertDtoType$inboundSchema.default("chat"),
+  type: StepTypeEnum$inboundSchema,
   controlValues: z.nullable(
     z.lazy(() => ChatStepUpsertDtoControlValues$inboundSchema),
   ).optional(),
@@ -220,7 +192,7 @@ export const ChatStepUpsertDto$outboundSchema: z.ZodType<
 > = z.object({
   id: z.string().optional(),
   name: z.string(),
-  type: ChatStepUpsertDtoType$outboundSchema.default("chat"),
+  type: StepTypeEnum$outboundSchema,
   controlValues: z.nullable(
     z.lazy(() => ChatStepUpsertDtoControlValues$outboundSchema),
   ).optional(),

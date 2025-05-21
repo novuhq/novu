@@ -5,20 +5,13 @@
 import * as z from "zod";
 import { remap as remap$ } from "../../lib/primitives.js";
 import { safeParse } from "../../lib/schemas.js";
-import { ClosedEnum } from "../../types/enums.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
-
-/**
- * Type of the step
- */
-export const PushStepUpsertDtoType = {
-  Push: "push",
-} as const;
-/**
- * Type of the step
- */
-export type PushStepUpsertDtoType = ClosedEnum<typeof PushStepUpsertDtoType>;
+import {
+  StepTypeEnum,
+  StepTypeEnum$inboundSchema,
+  StepTypeEnum$outboundSchema,
+} from "./steptypeenum.js";
 
 /**
  * Filter conditions for skipping the step.
@@ -55,33 +48,12 @@ export type PushStepUpsertDto = {
   /**
    * Type of the step
    */
-  type?: PushStepUpsertDtoType | undefined;
+  type: StepTypeEnum;
   /**
    * Control values for the Push step
    */
   controlValues?: PushStepUpsertDtoControlValues | null | undefined;
 };
-
-/** @internal */
-export const PushStepUpsertDtoType$inboundSchema: z.ZodNativeEnum<
-  typeof PushStepUpsertDtoType
-> = z.nativeEnum(PushStepUpsertDtoType);
-
-/** @internal */
-export const PushStepUpsertDtoType$outboundSchema: z.ZodNativeEnum<
-  typeof PushStepUpsertDtoType
-> = PushStepUpsertDtoType$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace PushStepUpsertDtoType$ {
-  /** @deprecated use `PushStepUpsertDtoType$inboundSchema` instead. */
-  export const inboundSchema = PushStepUpsertDtoType$inboundSchema;
-  /** @deprecated use `PushStepUpsertDtoType$outboundSchema` instead. */
-  export const outboundSchema = PushStepUpsertDtoType$outboundSchema;
-}
 
 /** @internal */
 export const PushStepUpsertDtoSkip$inboundSchema: z.ZodType<
@@ -201,7 +173,7 @@ export const PushStepUpsertDto$inboundSchema: z.ZodType<
 > = z.object({
   _id: z.string().optional(),
   name: z.string(),
-  type: PushStepUpsertDtoType$inboundSchema.default("push"),
+  type: StepTypeEnum$inboundSchema,
   controlValues: z.nullable(
     z.lazy(() => PushStepUpsertDtoControlValues$inboundSchema),
   ).optional(),
@@ -227,7 +199,7 @@ export const PushStepUpsertDto$outboundSchema: z.ZodType<
 > = z.object({
   id: z.string().optional(),
   name: z.string(),
-  type: PushStepUpsertDtoType$outboundSchema.default("push"),
+  type: StepTypeEnum$outboundSchema,
   controlValues: z.nullable(
     z.lazy(() => PushStepUpsertDtoControlValues$outboundSchema),
   ).optional(),

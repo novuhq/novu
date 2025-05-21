@@ -14,19 +14,11 @@ import {
   LookBackWindowDto$Outbound,
   LookBackWindowDto$outboundSchema,
 } from "./lookbackwindowdto.js";
-
-/**
- * Type of the step
- */
-export const DigestStepUpsertDtoType = {
-  Digest: "digest",
-} as const;
-/**
- * Type of the step
- */
-export type DigestStepUpsertDtoType = ClosedEnum<
-  typeof DigestStepUpsertDtoType
->;
+import {
+  StepTypeEnum,
+  StepTypeEnum$inboundSchema,
+  StepTypeEnum$outboundSchema,
+} from "./steptypeenum.js";
 
 /**
  * Filter conditions for skipping the step.
@@ -36,15 +28,15 @@ export type DigestStepUpsertDtoSkip = {};
 /**
  * The type of digest strategy. Determines which fields are applicable.
  */
-export const DigestStepUpsertDtoControlValuesType = {
+export const DigestStepUpsertDtoType = {
   Regular: "regular",
   Timed: "timed",
 } as const;
 /**
  * The type of digest strategy. Determines which fields are applicable.
  */
-export type DigestStepUpsertDtoControlValuesType = ClosedEnum<
-  typeof DigestStepUpsertDtoControlValuesType
+export type DigestStepUpsertDtoType = ClosedEnum<
+  typeof DigestStepUpsertDtoType
 >;
 
 /**
@@ -76,7 +68,7 @@ export type DigestStepUpsertDtoControlValues = {
   /**
    * The type of digest strategy. Determines which fields are applicable.
    */
-  type?: DigestStepUpsertDtoControlValuesType | undefined;
+  type?: DigestStepUpsertDtoType | undefined;
   /**
    * The amount of time for the digest interval (for REGULAR type). Min 1.
    */
@@ -111,33 +103,12 @@ export type DigestStepUpsertDto = {
   /**
    * Type of the step
    */
-  type?: DigestStepUpsertDtoType | undefined;
+  type: StepTypeEnum;
   /**
    * Control values for the Digest step
    */
   controlValues?: DigestStepUpsertDtoControlValues | null | undefined;
 };
-
-/** @internal */
-export const DigestStepUpsertDtoType$inboundSchema: z.ZodNativeEnum<
-  typeof DigestStepUpsertDtoType
-> = z.nativeEnum(DigestStepUpsertDtoType);
-
-/** @internal */
-export const DigestStepUpsertDtoType$outboundSchema: z.ZodNativeEnum<
-  typeof DigestStepUpsertDtoType
-> = DigestStepUpsertDtoType$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace DigestStepUpsertDtoType$ {
-  /** @deprecated use `DigestStepUpsertDtoType$inboundSchema` instead. */
-  export const inboundSchema = DigestStepUpsertDtoType$inboundSchema;
-  /** @deprecated use `DigestStepUpsertDtoType$outboundSchema` instead. */
-  export const outboundSchema = DigestStepUpsertDtoType$outboundSchema;
-}
 
 /** @internal */
 export const DigestStepUpsertDtoSkip$inboundSchema: z.ZodType<
@@ -188,27 +159,24 @@ export function digestStepUpsertDtoSkipFromJSON(
 }
 
 /** @internal */
-export const DigestStepUpsertDtoControlValuesType$inboundSchema:
-  z.ZodNativeEnum<typeof DigestStepUpsertDtoControlValuesType> = z.nativeEnum(
-    DigestStepUpsertDtoControlValuesType,
-  );
+export const DigestStepUpsertDtoType$inboundSchema: z.ZodNativeEnum<
+  typeof DigestStepUpsertDtoType
+> = z.nativeEnum(DigestStepUpsertDtoType);
 
 /** @internal */
-export const DigestStepUpsertDtoControlValuesType$outboundSchema:
-  z.ZodNativeEnum<typeof DigestStepUpsertDtoControlValuesType> =
-    DigestStepUpsertDtoControlValuesType$inboundSchema;
+export const DigestStepUpsertDtoType$outboundSchema: z.ZodNativeEnum<
+  typeof DigestStepUpsertDtoType
+> = DigestStepUpsertDtoType$inboundSchema;
 
 /**
  * @internal
  * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
  */
-export namespace DigestStepUpsertDtoControlValuesType$ {
-  /** @deprecated use `DigestStepUpsertDtoControlValuesType$inboundSchema` instead. */
-  export const inboundSchema =
-    DigestStepUpsertDtoControlValuesType$inboundSchema;
-  /** @deprecated use `DigestStepUpsertDtoControlValuesType$outboundSchema` instead. */
-  export const outboundSchema =
-    DigestStepUpsertDtoControlValuesType$outboundSchema;
+export namespace DigestStepUpsertDtoType$ {
+  /** @deprecated use `DigestStepUpsertDtoType$inboundSchema` instead. */
+  export const inboundSchema = DigestStepUpsertDtoType$inboundSchema;
+  /** @deprecated use `DigestStepUpsertDtoType$outboundSchema` instead. */
+  export const outboundSchema = DigestStepUpsertDtoType$outboundSchema;
 }
 
 /** @internal */
@@ -239,7 +207,7 @@ export const DigestStepUpsertDtoControlValues$inboundSchema: z.ZodType<
   unknown
 > = z.object({
   skip: z.lazy(() => DigestStepUpsertDtoSkip$inboundSchema).optional(),
-  type: DigestStepUpsertDtoControlValuesType$inboundSchema.optional(),
+  type: DigestStepUpsertDtoType$inboundSchema.optional(),
   amount: z.number().optional(),
   unit: DigestStepUpsertDtoUnit$inboundSchema.optional(),
   lookBackWindow: LookBackWindowDto$inboundSchema.optional(),
@@ -265,7 +233,7 @@ export const DigestStepUpsertDtoControlValues$outboundSchema: z.ZodType<
   DigestStepUpsertDtoControlValues
 > = z.object({
   skip: z.lazy(() => DigestStepUpsertDtoSkip$outboundSchema).optional(),
-  type: DigestStepUpsertDtoControlValuesType$outboundSchema.optional(),
+  type: DigestStepUpsertDtoType$outboundSchema.optional(),
   amount: z.number().optional(),
   unit: DigestStepUpsertDtoUnit$outboundSchema.optional(),
   lookBackWindow: LookBackWindowDto$outboundSchema.optional(),
@@ -314,7 +282,7 @@ export const DigestStepUpsertDto$inboundSchema: z.ZodType<
 > = z.object({
   _id: z.string().optional(),
   name: z.string(),
-  type: DigestStepUpsertDtoType$inboundSchema.default("digest"),
+  type: StepTypeEnum$inboundSchema,
   controlValues: z.nullable(
     z.lazy(() => DigestStepUpsertDtoControlValues$inboundSchema),
   ).optional(),
@@ -340,7 +308,7 @@ export const DigestStepUpsertDto$outboundSchema: z.ZodType<
 > = z.object({
   id: z.string().optional(),
   name: z.string(),
-  type: DigestStepUpsertDtoType$outboundSchema.default("digest"),
+  type: StepTypeEnum$outboundSchema,
   controlValues: z.nullable(
     z.lazy(() => DigestStepUpsertDtoControlValues$outboundSchema),
   ).optional(),

@@ -65,22 +65,6 @@ export class UpdateWorkflowDto extends WorkflowCommonsFields {
   })
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => Object, {
-    keepDiscriminatorProperty: true,
-    discriminator: {
-      property: 'type',
-      subTypes: [
-        { value: InAppStepUpsertDto, name: StepTypeEnum.IN_APP },
-        { value: EmailStepUpsertDto, name: StepTypeEnum.EMAIL },
-        { value: SmsStepUpsertDto, name: StepTypeEnum.SMS },
-        { value: PushStepUpsertDto, name: StepTypeEnum.PUSH },
-        { value: ChatStepUpsertDto, name: StepTypeEnum.CHAT },
-        { value: DelayStepUpsertDto, name: StepTypeEnum.DELAY },
-        { value: DigestStepUpsertDto, name: StepTypeEnum.DIGEST },
-        { value: CustomStepUpsertDto, name: StepTypeEnum.CUSTOM },
-      ],
-    },
-  })
   steps: StepUpsertDto[];
 
   @ApiProperty({

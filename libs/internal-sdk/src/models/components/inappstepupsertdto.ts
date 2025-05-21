@@ -5,7 +5,6 @@
 import * as z from "zod";
 import { remap as remap$ } from "../../lib/primitives.js";
 import { safeParse } from "../../lib/schemas.js";
-import { ClosedEnum } from "../../types/enums.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 import {
@@ -20,17 +19,11 @@ import {
   RedirectDto$Outbound,
   RedirectDto$outboundSchema,
 } from "./redirectdto.js";
-
-/**
- * Type of the step
- */
-export const Type = {
-  InApp: "in_app",
-} as const;
-/**
- * Type of the step
- */
-export type Type = ClosedEnum<typeof Type>;
+import {
+  StepTypeEnum,
+  StepTypeEnum$inboundSchema,
+  StepTypeEnum$outboundSchema,
+} from "./steptypeenum.js";
 
 /**
  * Filter conditions for skipping the step.
@@ -96,32 +89,12 @@ export type InAppStepUpsertDto = {
   /**
    * Type of the step
    */
-  type?: Type | undefined;
+  type: StepTypeEnum;
   /**
    * Control values for the In-App step
    */
   controlValues?: ControlValues | null | undefined;
 };
-
-/** @internal */
-export const Type$inboundSchema: z.ZodNativeEnum<typeof Type> = z.nativeEnum(
-  Type,
-);
-
-/** @internal */
-export const Type$outboundSchema: z.ZodNativeEnum<typeof Type> =
-  Type$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace Type$ {
-  /** @deprecated use `Type$inboundSchema` instead. */
-  export const inboundSchema = Type$inboundSchema;
-  /** @deprecated use `Type$outboundSchema` instead. */
-  export const outboundSchema = Type$outboundSchema;
-}
 
 /** @internal */
 export const Skip$inboundSchema: z.ZodType<Skip, z.ZodTypeDef, unknown> = z
@@ -291,7 +264,7 @@ export const InAppStepUpsertDto$inboundSchema: z.ZodType<
 > = z.object({
   _id: z.string().optional(),
   name: z.string(),
-  type: Type$inboundSchema.default("in_app"),
+  type: StepTypeEnum$inboundSchema,
   controlValues: z.nullable(z.lazy(() => ControlValues$inboundSchema))
     .optional(),
 }).transform((v) => {
@@ -316,7 +289,7 @@ export const InAppStepUpsertDto$outboundSchema: z.ZodType<
 > = z.object({
   id: z.string().optional(),
   name: z.string(),
-  type: Type$outboundSchema.default("in_app"),
+  type: StepTypeEnum$outboundSchema,
   controlValues: z.nullable(z.lazy(() => ControlValues$outboundSchema))
     .optional(),
 }).transform((v) => {

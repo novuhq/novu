@@ -33,7 +33,12 @@ export class BaseStepConfigDto {
 
 // Specific DTOs for each step type
 export class InAppStepUpsertDto extends BaseStepConfigDto {
-  @ApiProperty({ enum: [StepTypeEnum.IN_APP], description: 'Type of the step' })
+  @ApiProperty({
+    enum: StepTypeEnum,
+    enumName: 'StepTypeEnum',
+    default: StepTypeEnum.IN_APP,
+    description: 'Type of the step',
+  })
   @IsEnum(StepTypeEnum)
   readonly type: StepTypeEnum = 'in_app' as StepTypeEnum;
 
@@ -45,7 +50,12 @@ export class InAppStepUpsertDto extends BaseStepConfigDto {
 }
 
 export class EmailStepUpsertDto extends BaseStepConfigDto {
-  @ApiProperty({ enum: [StepTypeEnum.EMAIL], description: 'Type of the step' })
+  @ApiProperty({
+    enum: StepTypeEnum,
+    enumName: 'StepTypeEnum',
+    default: StepTypeEnum.EMAIL,
+    description: 'Type of the step',
+  })
   @IsEnum(StepTypeEnum)
   readonly type: StepTypeEnum = 'email' as StepTypeEnum;
 
@@ -57,7 +67,12 @@ export class EmailStepUpsertDto extends BaseStepConfigDto {
 }
 
 export class SmsStepUpsertDto extends BaseStepConfigDto {
-  @ApiProperty({ enum: [StepTypeEnum.SMS], description: 'Type of the step' })
+  @ApiProperty({
+    enum: StepTypeEnum,
+    enumName: 'StepTypeEnum',
+    default: StepTypeEnum.SMS,
+    description: 'Type of the step',
+  })
   @IsEnum(StepTypeEnum)
   readonly type: StepTypeEnum = 'sms' as StepTypeEnum;
 
@@ -69,7 +84,12 @@ export class SmsStepUpsertDto extends BaseStepConfigDto {
 }
 
 export class PushStepUpsertDto extends BaseStepConfigDto {
-  @ApiProperty({ enum: [StepTypeEnum.PUSH], description: 'Type of the step' })
+  @ApiProperty({
+    enum: StepTypeEnum,
+    enumName: 'StepTypeEnum',
+    default: StepTypeEnum.PUSH,
+    description: 'Type of the step',
+  })
   @IsEnum(StepTypeEnum)
   readonly type: StepTypeEnum = 'push' as StepTypeEnum;
 
@@ -81,7 +101,12 @@ export class PushStepUpsertDto extends BaseStepConfigDto {
 }
 
 export class ChatStepUpsertDto extends BaseStepConfigDto {
-  @ApiProperty({ enum: [StepTypeEnum.CHAT], description: 'Type of the step' })
+  @ApiProperty({
+    enum: StepTypeEnum,
+    enumName: 'StepTypeEnum',
+    default: StepTypeEnum.CHAT,
+    description: 'Type of the step',
+  })
   @IsEnum(StepTypeEnum)
   readonly type: StepTypeEnum = 'chat' as StepTypeEnum;
 
@@ -93,7 +118,12 @@ export class ChatStepUpsertDto extends BaseStepConfigDto {
 }
 
 export class DelayStepUpsertDto extends BaseStepConfigDto {
-  @ApiProperty({ enum: [StepTypeEnum.DELAY], description: 'Type of the step' })
+  @ApiProperty({
+    enum: StepTypeEnum,
+    enumName: 'StepTypeEnum',
+    default: StepTypeEnum.DELAY,
+    description: 'Type of the step',
+  })
   @IsEnum(StepTypeEnum)
   readonly type: StepTypeEnum = 'delay' as StepTypeEnum;
 
@@ -105,7 +135,12 @@ export class DelayStepUpsertDto extends BaseStepConfigDto {
 }
 
 export class DigestStepUpsertDto extends BaseStepConfigDto {
-  @ApiProperty({ enum: [StepTypeEnum.DIGEST], description: 'Type of the step' })
+  @ApiProperty({
+    enum: StepTypeEnum,
+    enumName: 'StepTypeEnum',
+    default: StepTypeEnum.DIGEST,
+    description: 'Type of the step',
+  })
   @IsEnum(StepTypeEnum)
   readonly type: StepTypeEnum = 'digest' as StepTypeEnum;
 
@@ -117,7 +152,12 @@ export class DigestStepUpsertDto extends BaseStepConfigDto {
 }
 
 export class CustomStepUpsertDto extends BaseStepConfigDto {
-  @ApiProperty({ enum: [StepTypeEnum.CUSTOM], description: 'Type of the step' })
+  @ApiProperty({
+    enum: StepTypeEnum,
+    enumName: 'StepTypeEnum',
+    default: StepTypeEnum.CUSTOM,
+    description: 'Type of the step',
+  })
   @IsEnum(StepTypeEnum)
   readonly type: StepTypeEnum = 'custom' as StepTypeEnum;
 

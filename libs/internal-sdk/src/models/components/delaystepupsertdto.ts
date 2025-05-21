@@ -8,17 +8,11 @@ import { safeParse } from "../../lib/schemas.js";
 import { ClosedEnum } from "../../types/enums.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
-
-/**
- * Type of the step
- */
-export const DelayStepUpsertDtoType = {
-  Delay: "delay",
-} as const;
-/**
- * Type of the step
- */
-export type DelayStepUpsertDtoType = ClosedEnum<typeof DelayStepUpsertDtoType>;
+import {
+  StepTypeEnum,
+  StepTypeEnum$inboundSchema,
+  StepTypeEnum$outboundSchema,
+} from "./steptypeenum.js";
 
 /**
  * Filter conditions for skipping the step.
@@ -28,15 +22,13 @@ export type DelayStepUpsertDtoSkip = {};
 /**
  * Type of the delay. Currently only 'regular' is supported by the schema.
  */
-export const DelayStepUpsertDtoControlValuesType = {
+export const DelayStepUpsertDtoType = {
   Regular: "regular",
 } as const;
 /**
  * Type of the delay. Currently only 'regular' is supported by the schema.
  */
-export type DelayStepUpsertDtoControlValuesType = ClosedEnum<
-  typeof DelayStepUpsertDtoControlValuesType
->;
+export type DelayStepUpsertDtoType = ClosedEnum<typeof DelayStepUpsertDtoType>;
 
 /**
  * Unit of time for the delay amount.
@@ -65,7 +57,7 @@ export type DelayStepUpsertDtoControlValues = {
   /**
    * Type of the delay. Currently only 'regular' is supported by the schema.
    */
-  type?: DelayStepUpsertDtoControlValuesType | undefined;
+  type?: DelayStepUpsertDtoType | undefined;
   /**
    * Amount of time to delay.
    */
@@ -88,33 +80,12 @@ export type DelayStepUpsertDto = {
   /**
    * Type of the step
    */
-  type?: DelayStepUpsertDtoType | undefined;
+  type: StepTypeEnum;
   /**
    * Control values for the Delay step
    */
   controlValues?: DelayStepUpsertDtoControlValues | null | undefined;
 };
-
-/** @internal */
-export const DelayStepUpsertDtoType$inboundSchema: z.ZodNativeEnum<
-  typeof DelayStepUpsertDtoType
-> = z.nativeEnum(DelayStepUpsertDtoType);
-
-/** @internal */
-export const DelayStepUpsertDtoType$outboundSchema: z.ZodNativeEnum<
-  typeof DelayStepUpsertDtoType
-> = DelayStepUpsertDtoType$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace DelayStepUpsertDtoType$ {
-  /** @deprecated use `DelayStepUpsertDtoType$inboundSchema` instead. */
-  export const inboundSchema = DelayStepUpsertDtoType$inboundSchema;
-  /** @deprecated use `DelayStepUpsertDtoType$outboundSchema` instead. */
-  export const outboundSchema = DelayStepUpsertDtoType$outboundSchema;
-}
 
 /** @internal */
 export const DelayStepUpsertDtoSkip$inboundSchema: z.ZodType<
@@ -165,26 +136,24 @@ export function delayStepUpsertDtoSkipFromJSON(
 }
 
 /** @internal */
-export const DelayStepUpsertDtoControlValuesType$inboundSchema: z.ZodNativeEnum<
-  typeof DelayStepUpsertDtoControlValuesType
-> = z.nativeEnum(DelayStepUpsertDtoControlValuesType);
+export const DelayStepUpsertDtoType$inboundSchema: z.ZodNativeEnum<
+  typeof DelayStepUpsertDtoType
+> = z.nativeEnum(DelayStepUpsertDtoType);
 
 /** @internal */
-export const DelayStepUpsertDtoControlValuesType$outboundSchema:
-  z.ZodNativeEnum<typeof DelayStepUpsertDtoControlValuesType> =
-    DelayStepUpsertDtoControlValuesType$inboundSchema;
+export const DelayStepUpsertDtoType$outboundSchema: z.ZodNativeEnum<
+  typeof DelayStepUpsertDtoType
+> = DelayStepUpsertDtoType$inboundSchema;
 
 /**
  * @internal
  * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
  */
-export namespace DelayStepUpsertDtoControlValuesType$ {
-  /** @deprecated use `DelayStepUpsertDtoControlValuesType$inboundSchema` instead. */
-  export const inboundSchema =
-    DelayStepUpsertDtoControlValuesType$inboundSchema;
-  /** @deprecated use `DelayStepUpsertDtoControlValuesType$outboundSchema` instead. */
-  export const outboundSchema =
-    DelayStepUpsertDtoControlValuesType$outboundSchema;
+export namespace DelayStepUpsertDtoType$ {
+  /** @deprecated use `DelayStepUpsertDtoType$inboundSchema` instead. */
+  export const inboundSchema = DelayStepUpsertDtoType$inboundSchema;
+  /** @deprecated use `DelayStepUpsertDtoType$outboundSchema` instead. */
+  export const outboundSchema = DelayStepUpsertDtoType$outboundSchema;
 }
 
 /** @internal */
@@ -215,7 +184,7 @@ export const DelayStepUpsertDtoControlValues$inboundSchema: z.ZodType<
   unknown
 > = z.object({
   skip: z.lazy(() => DelayStepUpsertDtoSkip$inboundSchema).optional(),
-  type: DelayStepUpsertDtoControlValuesType$inboundSchema.default("regular"),
+  type: DelayStepUpsertDtoType$inboundSchema.default("regular"),
   amount: z.number(),
   unit: DelayStepUpsertDtoUnit$inboundSchema,
 });
@@ -235,7 +204,7 @@ export const DelayStepUpsertDtoControlValues$outboundSchema: z.ZodType<
   DelayStepUpsertDtoControlValues
 > = z.object({
   skip: z.lazy(() => DelayStepUpsertDtoSkip$outboundSchema).optional(),
-  type: DelayStepUpsertDtoControlValuesType$outboundSchema.default("regular"),
+  type: DelayStepUpsertDtoType$outboundSchema.default("regular"),
   amount: z.number(),
   unit: DelayStepUpsertDtoUnit$outboundSchema,
 });
@@ -281,7 +250,7 @@ export const DelayStepUpsertDto$inboundSchema: z.ZodType<
 > = z.object({
   _id: z.string().optional(),
   name: z.string(),
-  type: DelayStepUpsertDtoType$inboundSchema.default("delay"),
+  type: StepTypeEnum$inboundSchema,
   controlValues: z.nullable(
     z.lazy(() => DelayStepUpsertDtoControlValues$inboundSchema),
   ).optional(),
@@ -307,7 +276,7 @@ export const DelayStepUpsertDto$outboundSchema: z.ZodType<
 > = z.object({
   id: z.string().optional(),
   name: z.string(),
-  type: DelayStepUpsertDtoType$outboundSchema.default("delay"),
+  type: StepTypeEnum$outboundSchema,
   controlValues: z.nullable(
     z.lazy(() => DelayStepUpsertDtoControlValues$outboundSchema),
   ).optional(),

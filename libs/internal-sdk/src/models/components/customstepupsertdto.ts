@@ -5,22 +5,13 @@
 import * as z from "zod";
 import { remap as remap$ } from "../../lib/primitives.js";
 import { safeParse } from "../../lib/schemas.js";
-import { ClosedEnum } from "../../types/enums.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
-
-/**
- * Type of the step
- */
-export const CustomStepUpsertDtoType = {
-  Custom: "custom",
-} as const;
-/**
- * Type of the step
- */
-export type CustomStepUpsertDtoType = ClosedEnum<
-  typeof CustomStepUpsertDtoType
->;
+import {
+  StepTypeEnum,
+  StepTypeEnum$inboundSchema,
+  StepTypeEnum$outboundSchema,
+} from "./steptypeenum.js";
 
 /**
  * Custom control values for the step.
@@ -49,33 +40,12 @@ export type CustomStepUpsertDto = {
   /**
    * Type of the step
    */
-  type?: CustomStepUpsertDtoType | undefined;
+  type: StepTypeEnum;
   /**
    * Control values for the Custom step
    */
   controlValues?: CustomStepUpsertDtoControlValues | null | undefined;
 };
-
-/** @internal */
-export const CustomStepUpsertDtoType$inboundSchema: z.ZodNativeEnum<
-  typeof CustomStepUpsertDtoType
-> = z.nativeEnum(CustomStepUpsertDtoType);
-
-/** @internal */
-export const CustomStepUpsertDtoType$outboundSchema: z.ZodNativeEnum<
-  typeof CustomStepUpsertDtoType
-> = CustomStepUpsertDtoType$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace CustomStepUpsertDtoType$ {
-  /** @deprecated use `CustomStepUpsertDtoType$inboundSchema` instead. */
-  export const inboundSchema = CustomStepUpsertDtoType$inboundSchema;
-  /** @deprecated use `CustomStepUpsertDtoType$outboundSchema` instead. */
-  export const outboundSchema = CustomStepUpsertDtoType$outboundSchema;
-}
 
 /** @internal */
 export const Custom$inboundSchema: z.ZodType<Custom, z.ZodTypeDef, unknown> = z
@@ -182,7 +152,7 @@ export const CustomStepUpsertDto$inboundSchema: z.ZodType<
 > = z.object({
   _id: z.string().optional(),
   name: z.string(),
-  type: CustomStepUpsertDtoType$inboundSchema.default("custom"),
+  type: StepTypeEnum$inboundSchema,
   controlValues: z.nullable(
     z.lazy(() => CustomStepUpsertDtoControlValues$inboundSchema),
   ).optional(),
@@ -208,7 +178,7 @@ export const CustomStepUpsertDto$outboundSchema: z.ZodType<
 > = z.object({
   id: z.string().optional(),
   name: z.string(),
-  type: CustomStepUpsertDtoType$outboundSchema.default("custom"),
+  type: StepTypeEnum$outboundSchema,
   controlValues: z.nullable(
     z.lazy(() => CustomStepUpsertDtoControlValues$outboundSchema),
   ).optional(),

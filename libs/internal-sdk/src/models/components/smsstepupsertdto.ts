@@ -5,20 +5,13 @@
 import * as z from "zod";
 import { remap as remap$ } from "../../lib/primitives.js";
 import { safeParse } from "../../lib/schemas.js";
-import { ClosedEnum } from "../../types/enums.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
-
-/**
- * Type of the step
- */
-export const SmsStepUpsertDtoType = {
-  Sms: "sms",
-} as const;
-/**
- * Type of the step
- */
-export type SmsStepUpsertDtoType = ClosedEnum<typeof SmsStepUpsertDtoType>;
+import {
+  StepTypeEnum,
+  StepTypeEnum$inboundSchema,
+  StepTypeEnum$outboundSchema,
+} from "./steptypeenum.js";
 
 /**
  * Filter conditions for skipping the step.
@@ -51,33 +44,12 @@ export type SmsStepUpsertDto = {
   /**
    * Type of the step
    */
-  type?: SmsStepUpsertDtoType | undefined;
+  type: StepTypeEnum;
   /**
    * Control values for the SMS step
    */
   controlValues?: SmsStepUpsertDtoControlValues | null | undefined;
 };
-
-/** @internal */
-export const SmsStepUpsertDtoType$inboundSchema: z.ZodNativeEnum<
-  typeof SmsStepUpsertDtoType
-> = z.nativeEnum(SmsStepUpsertDtoType);
-
-/** @internal */
-export const SmsStepUpsertDtoType$outboundSchema: z.ZodNativeEnum<
-  typeof SmsStepUpsertDtoType
-> = SmsStepUpsertDtoType$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace SmsStepUpsertDtoType$ {
-  /** @deprecated use `SmsStepUpsertDtoType$inboundSchema` instead. */
-  export const inboundSchema = SmsStepUpsertDtoType$inboundSchema;
-  /** @deprecated use `SmsStepUpsertDtoType$outboundSchema` instead. */
-  export const outboundSchema = SmsStepUpsertDtoType$outboundSchema;
-}
 
 /** @internal */
 export const SmsStepUpsertDtoSkip$inboundSchema: z.ZodType<
@@ -194,7 +166,7 @@ export const SmsStepUpsertDto$inboundSchema: z.ZodType<
 > = z.object({
   _id: z.string().optional(),
   name: z.string(),
-  type: SmsStepUpsertDtoType$inboundSchema.default("sms"),
+  type: StepTypeEnum$inboundSchema,
   controlValues: z.nullable(
     z.lazy(() => SmsStepUpsertDtoControlValues$inboundSchema),
   ).optional(),
@@ -220,7 +192,7 @@ export const SmsStepUpsertDto$outboundSchema: z.ZodType<
 > = z.object({
   id: z.string().optional(),
   name: z.string(),
-  type: SmsStepUpsertDtoType$outboundSchema.default("sms"),
+  type: StepTypeEnum$outboundSchema,
   controlValues: z.nullable(
     z.lazy(() => SmsStepUpsertDtoControlValues$outboundSchema),
   ).optional(),
