@@ -1,5 +1,15 @@
 const { transformFileSync } = require('@swc/core');
 const { addHook } = require('pirates');
+const path = require('path');
+
+require('ts-node').register({
+  transpileOnly: true,
+  compilerOptions: {
+    module: 'commonjs',
+    target: 'es2020',
+    esModuleInterop: true
+  }
+});
 
 addHook(
   (code, filename) => {
