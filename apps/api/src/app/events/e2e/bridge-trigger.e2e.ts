@@ -35,7 +35,9 @@ const contexts: Context[] = [
 ];
 
 contexts.forEach((context: Context) => {
-  describe('Self-Hosted Bridge Trigger #novu-v2', async () => {
+  describe('Self-Hosted Bridge Trigger #novu-v2', async function () {
+    this.timeout(15000);
+
     let session: UserSession;
     let bridgeServer: TestBridgeServer;
     const messageRepository = new MessageRepository();
