@@ -200,8 +200,12 @@ export class InboxService {
         subscriberId: 'keyless-subscriber-id',
       },
       payload: {
-        body: 'New From Keyless Environment',
-        subject: 'Hello World!',
+        subject: 'Novu Keyless Environment',
+        body: "You're using a keyless demo environment. For full access to Novu features and cloud integration, obtain your API key.",
+        primaryActionText: 'Obtain API Key',
+        primaryActionUrl: 'https://go.novu.co/keyless?utm_campaign=keyless-api-key',
+        secondaryActionText: 'Explore Documentation',
+        secondaryActionUrl: 'https://go.novu.co/keyless?utm_campaign=docs',
       },
     };
 

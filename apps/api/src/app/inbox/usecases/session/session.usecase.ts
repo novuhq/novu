@@ -566,14 +566,23 @@ export class Session {
         workflowId: workflow._id,
         newControlValues: {
           body: '{{payload.body}}',
-          avatar: 'https://dashboard.novu.co/images/info.svg',
+          avatar: 'https://dashboard.novu.co/images/avatar.svg',
           subject: '{{payload.subject}}',
-          primaryAction: null,
-          secondaryAction: null,
-          redirect: {
-            url: '',
-            target: '_self',
+          primaryAction: {
+            label: '{{payload.primaryActionText}}',
+            redirect: {
+              url: '{{payload.primaryActionUrl}}',
+              target: '_blank',
+            },
           },
+          secondaryAction: {
+            label: '{{payload.secondaryActionText}}',
+            redirect: {
+              url: '{{payload.secondaryActionUrl}}',
+              target: '_blank',
+            },
+          },
+          redirect: null,
           disableOutputSanitization: false,
           data: null,
         },
