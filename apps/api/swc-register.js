@@ -7,8 +7,8 @@ require('ts-node').register({
   compilerOptions: {
     module: 'commonjs',
     target: 'es2020',
-    esModuleInterop: true
-  }
+    esModuleInterop: true,
+  },
 });
 
 addHook(
@@ -25,26 +25,28 @@ addHook(
             syntax: 'typescript',
             tsx: true,
             decorators: true,
-            dynamicImport: true
+            dynamicImport: true,
           },
           transform: {
             legacyDecorator: true,
-            decoratorMetadata: true
+            decoratorMetadata: true,
           },
-          keepClassNames: true
+          keepClassNames: true,
         },
         module: {
           type: 'commonjs',
           strictMode: false,
           noInterop: false,
-          lazy: true
+          lazy: true,
         },
         sourceMaps: 'inline',
-        minify: false
+        minify: false,
       });
+
       return result.code;
     } catch (error) {
       console.error(`Error transforming file ${filename}:`, error);
+
       return code;
     }
   },
@@ -54,7 +56,8 @@ addHook(
       if (filename.includes('.source')) {
         return false;
       }
+
       return filename.endsWith('.ts') || filename.endsWith('.tsx');
-    }
+    },
   }
 );
