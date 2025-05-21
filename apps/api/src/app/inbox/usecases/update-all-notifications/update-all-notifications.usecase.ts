@@ -49,13 +49,18 @@ export class UpdateAllNotifications {
       }
     }
 
+    const fromField: Record<string, unknown> = {
+      ...command.from,
+    };
+
+    if (parsedData) {
+      fromField.data = parsedData;
+    }
+
     await this.messageRepository.updateMessagesFromToStatus({
       environmentId: command.environmentId,
       subscriberId: subscriber._id,
-      from: {
-        ...command.from,
-        data: parsedData,
-      },
+      from: fromField,
       to: command.to,
     });
 
