@@ -8,7 +8,5 @@ export class CustomControlDto {
   })
   @IsObject()
   @IsOptional()
-  custom?: Record<string, unknown>; // Using a nested 'custom' field for clarity
-
-  [key: string]: any; // Add index signature
+  custom?: Record<string, unknown>;
 }

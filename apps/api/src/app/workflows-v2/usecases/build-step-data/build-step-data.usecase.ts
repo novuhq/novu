@@ -47,7 +47,7 @@ export class BuildStepDataUsecase {
       workflowId: workflow.triggers[0].identifier,
       workflowDatabaseId: workflow._id,
       issues: currentStep.issues,
-    };
+    } as StepResponseDto;
   }
 
   private async buildAvailableVariableSchema(

@@ -101,10 +101,16 @@ export class WorkflowController {
     @UserSession(ParseSlugEnvironmentIdPipe) user: UserSessionData,
     @Body() createWorkflowDto: CreateWorkflowDto
   ): Promise<WorkflowResponseDto> {
+    const upsertSteps: UpsertStepDataCommand[] = createWorkflowDto.steps.map((step: StepUpsertDto) => ({
+      ...step,
+      controlValues: (step.controlValues as Record<string, unknown> | null | undefined) ?? null,
+    }));
+
     return this.upsertWorkflowUseCase.execute(
       UpsertWorkflowCommand.create({
         workflowDto: {
           ...createWorkflowDto,
+          steps: upsertSteps,
           origin: WorkflowOriginEnum.NOVU_CLOUD,
         },
         user,
@@ -150,9 +156,17 @@ export class WorkflowController {
     @Param('workflowId', ParseSlugIdPipe) workflowIdOrInternalId: string,
     @Body() updateWorkflowDto: UpdateWorkflowDto
   ): Promise<WorkflowResponseDto> {
+    const upsertSteps: UpsertStepDataCommand[] = updateWorkflowDto.steps.map((step: StepUpsertDto) => ({
+      ...step,
+      controlValues: (step.controlValues as Record<string, unknown> | null | undefined) ?? null,
+    }));
+
     return await this.upsertWorkflowUseCase.execute(
       UpsertWorkflowCommand.create({
-        workflowDto: updateWorkflowDto,
+        workflowDto: {
+          ...updateWorkflowDto,
+          steps: upsertSteps,
+        },
         user,
         workflowIdOrInternalId,
       })

@@ -11,13 +11,7 @@ import {
   UpsertStepDataCommand,
 } from '../upsert-workflow';
 import { DuplicateWorkflowCommand } from './duplicate-workflow.command';
-import {
-  DuplicateWorkflowDto,
-  StepResponseDto,
-  StepUpsertDto,
-  WorkflowPreferencesDto,
-  WorkflowResponseDto,
-} from '../../dtos';
+import { DuplicateWorkflowDto, StepResponseDto, WorkflowPreferencesDto, WorkflowResponseDto } from '../../dtos';
 import { WorkflowNotDuplicableException } from '../../exceptions/workflow-not-duplicable-exception';
 
 export const DUPLICABLE_WORKFLOW_ORIGINS = [WorkflowOriginEnum.NOVU_CLOUD];
@@ -79,7 +73,7 @@ export class DuplicateWorkflowUseCase {
     return steps.map((step) => ({
       name: step.name ?? '',
       type: step.type,
-      controlValues: (step.controls.values as Record<string, unknown> | null | undefined) ?? null,
+      controlValues: step.controls.values ?? null,
     }));
   }
 
