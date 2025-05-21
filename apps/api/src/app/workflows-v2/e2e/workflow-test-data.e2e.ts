@@ -8,11 +8,7 @@ import {
   WorkflowTestDataResponseDto,
 } from '@novu/api/models/components';
 import { initNovuClassSdkInternalAuth } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
-
-interface ITestStepConfig {
-  type: StepTypeEnum;
-  controlValues: Record<string, string>;
-}
+import { Steps } from '@novu/api/src/models/components/createworkflowdto';
 
 describe('Workflow Test Data', function () {
   let session: UserSession;
@@ -27,8 +23,9 @@ describe('Workflow Test Data', function () {
   describe('GET /v2/workflows/:workflowId/test-data #novu-v2', () => {
     describe('single step workflows', () => {
       it('should generate correct schema for email notification', async () => {
-        const emailStep: ITestStepConfig = {
+        const emailStep: Steps = {
           type: StepTypeEnum.Email,
+          name: 'Email Notification',
           controlValues: {
             subject: 'Welcome {{payload.user.name}}',
             body: 'Hello {{payload.user.name}}, your order {{payload.order.details.orderId}} is ready',
@@ -50,10 +47,11 @@ describe('Workflow Test Data', function () {
       });
 
       it('should generate correct schema for SMS notification', async () => {
-        const smsStep: ITestStepConfig = {
+        const smsStep: Steps = {
           type: StepTypeEnum.Sms,
+          name: 'SMS Notification',
           controlValues: {
-            content: 'Your verification code is {{payload.code}}',
+            body: 'Your verification code is {{payload.code}}',
           },
         };
 
@@ -68,10 +66,11 @@ describe('Workflow Test Data', function () {
       });
 
       it('should generate correct schema for in-app notification', async () => {
-        const inAppStep: ITestStepConfig = {
+        const inAppStep: Steps = {
           type: StepTypeEnum.InApp,
+          name: 'In-App Notification',
           controlValues: {
-            content: 'New message from {{payload.sender}}',
+            body: 'New message from {{payload.sender}}',
           },
         };
 
@@ -90,9 +89,10 @@ describe('Workflow Test Data', function () {
 
     describe('multi-step workflows', () => {
       it('should combine variables from multiple notification steps', async () => {
-        const steps: ITestStepConfig[] = [
+        const steps: Steps[] = [
           {
             type: StepTypeEnum.Email,
+            name: 'Email Notification',
             controlValues: {
               subject: 'Order {{payload.orderId}}',
               body: 'Status: {{payload.status}}',
@@ -100,8 +100,9 @@ describe('Workflow Test Data', function () {
           },
           {
             type: StepTypeEnum.Sms,
+            name: 'SMS Notification',
             controlValues: {
-              content: 'Order {{payload.orderId}} update: {{payload.smsUpdate}}',
+              body: 'Order {{payload.orderId}} update: {{payload.smsUpdate}}',
             },
           },
         ];
@@ -127,7 +128,7 @@ describe('Workflow Test Data', function () {
   });
 
   async function createAndFetchTestData(
-    stepsConfig: ITestStepConfig | ITestStepConfig[]
+    stepsConfig: Steps | Steps[]
   ): Promise<{ workflow: any; testData: WorkflowTestDataResponseDto }> {
     const steps = Array.isArray(stepsConfig) ? stepsConfig : [stepsConfig];
     const workflow = await createWorkflow(steps);
@@ -136,7 +137,7 @@ describe('Workflow Test Data', function () {
     return { workflow, testData };
   }
 
-  async function createWorkflow(steps: ITestStepConfig[]) {
+  async function createWorkflow(steps: Steps[]) {
     const createWorkflowDto: CreateWorkflowDto = {
       name: 'Test Workflow',
       workflowId: `test-workflow-${Date.now()}`,
@@ -148,6 +149,8 @@ describe('Workflow Test Data', function () {
         type,
       })),
     } as CreateWorkflowDto;
+
+    console.log('createWorkflowDto', createWorkflowDto);
 
     const { result } = await novuClient.workflows.create(createWorkflowDto);
 
