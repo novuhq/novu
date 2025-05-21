@@ -83,7 +83,7 @@ export interface IChannelCredentials {
 }
 
 export interface ITopic {
-  type: 'topic';
+  type: 'Topic';
   topicKey: string;
 }
 
