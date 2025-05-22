@@ -4,46 +4,61 @@ import chai from 'chai';
 import { Connection } from 'mongoose';
 import { DalService } from '@novu/dal';
 import { bootstrap } from '../src/bootstrap';
-import { S3Client } from '@aws-sdk/client-s3';
+import AWS from 'aws-sdk';
 
 let connection: Connection;
 const dalService = new DalService();
 
-mockS3Client();
+setupS3Mock();
 
-function mockS3Client() {
-  const mockSend = sinon.stub().callsFake((command) => {
-    const commandName = command.constructor.name;
+function setupS3Mock() {
+  try {
+    const s3 = new AWS.S3({
+      endpoint: process.env.S3_LOCAL_STACK,
+      accessKeyId: 'test',
+      secretAccessKey: 'test',
+      s3ForcePathStyle: true,
+    });
     
-    if (commandName === 'GetObjectCommand') {
-      return Promise.resolve({
-        Body: {
-          transformToByteArray: () => Promise.resolve(new Uint8Array(Buffer.from('mock-data'))),
-          transformToString: () => Promise.resolve('mock-data'),
-        },
-      });
-    }
+    s3.config.credentials = { accessKeyId: 'test', secretAccessKey: 'test' };
     
-    if (commandName === 'PutObjectCommand') {
-      return Promise.resolve({});
-    }
-    
-    if (commandName === 'DeleteObjectCommand') {
-      return Promise.resolve({});
-    }
-    
-    if (commandName === 'ListBucketsCommand') {
-      return Promise.resolve({
+  } catch (error) {
+    console.log('LocalStack S3 not available at startup, using mock implementation');
+    mockS3Service();
+  }
+}
+
+function mockS3Service() {
+  const mockS3 = {
+    putObject: sinon.stub().returns({
+      promise: sinon.stub().resolves({}),
+    }),
+    getObject: sinon.stub().returns({
+      promise: sinon.stub().resolves({
+        Body: Buffer.from('mock-data'),
+      }),
+    }),
+    listObjects: sinon.stub().returns({
+      promise: sinon.stub().resolves({
+        Contents: [],
+      }),
+    }),
+    listBuckets: sinon.stub().returns({
+      promise: sinon.stub().resolves({
         Buckets: [],
-      });
-    }
-    
-    return Promise.resolve({});
-  });
-
-  sinon.stub(S3Client.prototype, 'send').callsFake(mockSend);
-
-  console.log('S3Client mocked for all tests');
+      }),
+    }),
+    createBucket: sinon.stub().returns({
+      promise: sinon.stub().resolves({}),
+    }),
+  };
+  
+  const originalS3 = AWS.S3;
+  AWS.S3 = function() {
+    return mockS3;
+  } as any;
+  
+  AWS.S3.prototype = originalS3.prototype;
 }
 
 async function getConnection() {
@@ -70,10 +85,20 @@ before(async () => {
    */
   chai.config.truncateThreshold = 0;
   
-  (process.env as any).STORAGE_SERVICE = 'AWS';
-  (process.env as any).S3_REGION = 'us-east-1';
-  (process.env as any).S3_BUCKET_NAME = 'novu-test';
-  (process.env as any).S3_LOCAL_STACK = '';
+  try {
+    const s3 = new AWS.S3({
+      endpoint: process.env.S3_LOCAL_STACK,
+      accessKeyId: 'test',
+      secretAccessKey: 'test',
+      s3ForcePathStyle: true,
+    });
+    
+    await s3.listBuckets().promise();
+    console.log('LocalStack S3 is available');
+  } catch (error) {
+    console.log('LocalStack S3 not available in before hook, using mock implementation');
+    mockS3Service();
+  }
   
   await dropDatabase();
   await testServer.create((await bootstrap()).app);

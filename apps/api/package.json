@@ -109,7 +109,6 @@
     "zod-to-json-schema": "^3.23.3"
   },
   "devDependencies": {
-    "@aws-sdk/client-s3": "^3.815.0",
     "@faker-js/faker": "^6.0.0",
     "@nestjs/cli": "10.4.5",
     "@nestjs/schematics": "10.1.4",
