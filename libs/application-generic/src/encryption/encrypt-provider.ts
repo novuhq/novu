@@ -21,11 +21,8 @@ export function decryptSecret(text: string | EncryptedSecret): string {
 export function encryptCredentials(credentials: ICredentialsDto): ICredentialsDto {
   const encryptedCredentials: ICredentialsDto = {};
 
+  // eslint-disable-next-line guard-for-in
   for (const key in credentials) {
-    if (!credentials[key]) {
-      continue;
-    }
-
     encryptedCredentials[key] = isCredentialEncryptionRequired(key)
       ? encryptSecret(credentials[key])
       : credentials[key];
