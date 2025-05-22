@@ -110,6 +110,13 @@ const dalService = {
   },
 };
 
+import { StorageService } from '@novu/application-generic';
+import { MockStorageService } from './mock-storage.service';
+
+const storageServiceProvider = process.env.NODE_ENV === 'test'
+  ? { provide: StorageService, useClass: MockStorageService }
+  : storageService;
+
 const PROVIDERS = [
   analyticsService,
   cacheService,
@@ -119,7 +126,7 @@ const PROVIDERS = [
   DalServiceHealthIndicator,
   featureFlagsService,
   InvalidateCacheService,
-  storageService,
+  storageServiceProvider,
   ...DAL_MODELS,
   CreateExecutionDetails,
   ExecuteBridgeRequest,
