@@ -24,6 +24,7 @@ addHook(
           },
           transform: {
             decoratorMetadata: true,
+            useDefineForClassFields: false,
           },
           keepClassNames: true,
         },
