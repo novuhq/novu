@@ -54,7 +54,7 @@ export class TestBridgeServer {
 
     // Logging middleware
     this.server.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
-      this.log('info', `${req.method} ${req.path}`);
+      this.debug('info', `${req.method} ${req.path}`);
 
       return next();
     });
@@ -75,20 +75,20 @@ export class TestBridgeServer {
     return new Promise<void>((resolve, reject) => {
       this.app = this.server.listen(this.port, () => {
         this.isServerRunning = true;
-        this.log('info', `Server started on port ${this.port}`);
+        this.debug('info', `Server started on port ${this.port}`);
         resolve();
       });
 
       // Handle initial connection errors
       this.app.on('error', (error: Error) => {
         this.isServerRunning = false;
-        this.log('error', 'Server failed to start:', error);
+        this.debug('error', 'Server failed to start:', error);
         reject(error);
       });
 
       this.app.on('close', () => {
         this.isServerRunning = false;
-        this.log('warn', 'Server closed');
+        this.debug('warn', 'Server closed');
       });
     });
   }
