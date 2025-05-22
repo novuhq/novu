@@ -54,7 +54,7 @@ jobs:
           submodules: true
 
       - name: Build
-        run: CI='' pnpm build:dashboard
+        run: CI='' pnpm build:dashboard --skip-nx-cache
 
       - name: Deploy Dashboard to Netlify
         uses: nwtgck/actions-netlify@v1.2

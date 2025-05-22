@@ -96,7 +96,7 @@ jobs:
         with:
           targets: build
           projects: '@novu/dashboard,@novu/api-service,@novu/worker'
-          args: ''
+          args: --skip-nx-cache
 
       - uses: ./.github/actions/start-localstack
       - uses: ./.github/actions/setup-redis-cluster
