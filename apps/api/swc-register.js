@@ -6,7 +6,7 @@ require('ts-node').register({
   transpileOnly: true,
   compilerOptions: {
     module: 'commonjs',
-    target: 'es6',
+    target: 'es5',
     esModuleInterop: false,
   },
 });
@@ -20,7 +20,7 @@ addHook(
     try {
       const result = transformFileSync(filename, {
         jsc: {
-          target: 'es6',
+          target: 'es5',
           parser: {
             syntax: 'typescript',
             tsx: true,
