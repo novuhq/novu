@@ -14,8 +14,7 @@ export class TestBridgeServer {
   }
 
   private log(level: 'info' | 'error' | 'warn', message: string, ...args: any[]) {
-    // eslint-disable-next-line no-console
-    console[level](`[BridgeServer] ${message}`, ...args);
+    // console[level](`[BridgeServer] ${message}`, ...args);
   }
 
   get serverPath() {
@@ -54,7 +53,7 @@ export class TestBridgeServer {
 
     // Logging middleware
     this.server.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
-      this.debug('info', `${req.method} ${req.path}`);
+      this.log('info', `${req.method} ${req.path}`);
 
       return next();
     });
@@ -75,20 +74,20 @@ export class TestBridgeServer {
     return new Promise<void>((resolve, reject) => {
       this.app = this.server.listen(this.port, () => {
         this.isServerRunning = true;
-        this.debug('info', `Server started on port ${this.port}`);
+        this.log('info', `Server started on port ${this.port}`);
         resolve();
       });
 
       // Handle initial connection errors
       this.app.on('error', (error: Error) => {
         this.isServerRunning = false;
-        this.debug('error', 'Server failed to start:', error);
+        this.log('error', 'Server failed to start:', error);
         reject(error);
       });
 
       this.app.on('close', () => {
         this.isServerRunning = false;
-        this.debug('warn', 'Server closed');
+        this.log('warn', 'Server closed');
       });
     });
   }

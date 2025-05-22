@@ -28,7 +28,6 @@ addHook(
             dynamicImport: true,
           },
           transform: {
-            legacyDecorator: true,
             decoratorMetadata: true,
           },
           keepClassNames: true,
