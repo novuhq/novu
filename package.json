@@ -211,7 +211,6 @@
     "pnpm": "^9.11.0"
   },
   "dependencies": {
-    "aws-sdk": "^2.665.0",
     "tslib": "^2.4.0"
   },
   "pnpm": {
