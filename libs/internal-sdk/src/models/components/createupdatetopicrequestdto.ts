@@ -9,13 +9,13 @@ import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 
 export type CreateUpdateTopicRequestDto = {
   /**
-   * The unique key identifier for the topic
+   * The unique key identifier for the topic. The key must contain only alphanumeric characters (a-z, A-Z, 0-9), hyphens (-), underscores (_), colons (:), or be a valid email address.
    */
   key: string;
   /**
    * The display name for the topic
    */
-  name: string;
+  name?: string | undefined;
 };
 
 /** @internal */
@@ -25,13 +25,13 @@ export const CreateUpdateTopicRequestDto$inboundSchema: z.ZodType<
   unknown
 > = z.object({
   key: z.string(),
-  name: z.string(),
+  name: z.string().optional(),
 });
 
 /** @internal */
 export type CreateUpdateTopicRequestDto$Outbound = {
   key: string;
-  name: string;
+  name?: string | undefined;
 };
 
 /** @internal */
@@ -41,7 +41,7 @@ export const CreateUpdateTopicRequestDto$outboundSchema: z.ZodType<
   CreateUpdateTopicRequestDto
 > = z.object({
   key: z.string(),
-  name: z.string(),
+  name: z.string().optional(),
 });
 
 /**

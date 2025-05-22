@@ -66,7 +66,9 @@
     "build": "tsup && pnpm run build:declarations && pnpm run check-exports",
     "build:declarations": "tsc -p tsconfig.declarations.json",
     "lint": "eslint src",
-    "check-exports": "attw --pack . --ignore-rules unexpected-module-syntax"
+    "check-exports": "attw --pack . --ignore-rules unexpected-module-syntax",
+    "publish": "pnpm publish",
+    "publish:rc": "pnpm publish --tag rc"
   },
   "browserslist": {
     "production": [

@@ -75,9 +75,8 @@ export class IntegrationsController {
     description: 'The list of integrations belonging to the organization that are successfully returned.',
   })
   @ApiOperation({
-    summary: 'Get integrations',
-    description:
-      'Return all the integrations the user has created for that organization. Review v.0.17.0 changelog for a breaking change',
+    summary: 'List all integrations',
+    description: 'List all the channels integrations created in the organization',
   })
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.INTEGRATION_READ)
@@ -100,9 +99,8 @@ export class IntegrationsController {
     description: 'The list of active integrations belonging to the organization that are successfully returned.',
   })
   @ApiOperation({
-    summary: 'Get active integrations',
-    description:
-      'Return all the active integrations the user has created for that organization. Review v.0.17.0 changelog for a breaking change',
+    summary: 'List active integrations',
+    description: 'List all the active integrations created in the organization',
   })
   @ExternalApiAccessible()
   @SdkMethodName('listActive')
@@ -125,10 +123,11 @@ export class IntegrationsController {
     type: Boolean,
     description: 'The status of the webhook for the provider requested',
   })
+  @ApiExcludeEndpoint()
   @ApiOperation({
-    summary: 'Get webhook support status for provider',
-    description:
-      'Return the status of the webhook for this provider, if it is supported or if it is not based on a boolean value',
+    summary: 'Retrieve webhook status',
+    description: `Retrieve the status of the webhook for integration specified in query param **providerOrIntegrationId**. 
+    This API returns a boolean value.`,
   })
   @SdkGroupName('Integrations.Webhooks')
   @ExternalApiAccessible()
@@ -150,8 +149,9 @@ export class IntegrationsController {
   @Post('/')
   @ApiResponse(IntegrationResponseDto, 201)
   @ApiOperation({
-    summary: 'Create integration',
-    description: 'Create an integration for the current environment the user is based on the API key provided',
+    summary: 'Create an integration',
+    description: `Create an integration for the current environment the user is based on the API key provided. 
+    Each provider supports different credentials, check the provider documentation for more details.`,
   })
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
@@ -190,7 +190,9 @@ export class IntegrationsController {
     description: 'The integration with the integrationId provided does not exist in the database.',
   })
   @ApiOperation({
-    summary: 'Update integration',
+    summary: 'Update an integration',
+    description: `Update an integration by its unique key identifier **integrationId**. 
+    Each provider supports different credentials, check the provider documentation for more details.`,
   })
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
@@ -231,7 +233,10 @@ export class IntegrationsController {
     description: 'The integration with the integrationId provided does not exist in the database.',
   })
   @ApiOperation({
-    summary: 'Set integration as primary',
+    summary: 'Update integration as primary',
+    description: `Update an integration as **primary** by its unique key identifier **integrationId**. 
+    This API will set the integration as primary for that channel in the current environment. 
+    Primary integration is used to deliver notification for sms and email channels in the workflow.`,
   })
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
@@ -253,7 +258,9 @@ export class IntegrationsController {
   @Delete('/:integrationId')
   @ApiResponse(IntegrationResponseDto, 200, true)
   @ApiOperation({
-    summary: 'Delete integration',
+    summary: 'Delete an integration',
+    description: `Delete an integration by its unique key identifier **integrationId**. 
+    This action is irreversible.`,
   })
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)

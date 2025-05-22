@@ -36,7 +36,7 @@ export const InboxTabs = (props: InboxTabsProps) => {
   const { activeTab, status, setActiveTab, filter } = useInboxContext();
   const { dropdownTabs, setTabsList, visibleTabs } = useTabsDropdown({ tabs: props.tabs });
   const dropdownTabsUnreadCounts = useUnreadCounts({
-    filters: dropdownTabs().map((tab) => ({ tags: getTagsFromTab(tab) })),
+    filters: dropdownTabs().map((tab) => ({ tags: getTagsFromTab(tab), data: tab.filter?.data })),
   });
 
   const checkIconClass = style('moreTabs__dropdownItemRight__icon', 'nt-size-3', {
@@ -149,7 +149,7 @@ export const InboxTabs = (props: InboxTabsProps) => {
             onNotificationClick={props.onNotificationClick}
             onPrimaryActionClick={props.onPrimaryActionClick}
             onSecondaryActionClick={props.onSecondaryActionClick}
-            filter={{ ...filter(), tags: getTagsFromTab(tab) }}
+            filter={{ ...filter(), tags: getTagsFromTab(tab), data: tab.filter?.data }}
           />
         </Tabs.Content>
       ))}

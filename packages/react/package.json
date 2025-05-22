@@ -1,6 +1,6 @@
 {
   "name": "@novu/react",
-  "version": "3.4.0",
+  "version": "3.5.0-rc.2",
   "repository": {
     "type": "git",
     "url": "https://github.com/novuhq/novu",
@@ -83,7 +83,9 @@
     "build:watch": "tsup --watch",
     "build": "tsup && pnpm run check-exports",
     "lint": "eslint src",
-    "check-exports": "attw --pack ."
+    "check-exports": "attw --pack .",
+    "publish": "pnpm publish",
+    "publish:rc": "pnpm publish --tag rc"
   },
   "browserslist": {
     "production": [

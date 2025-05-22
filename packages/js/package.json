@@ -1,6 +1,6 @@
 {
   "name": "@novu/js",
-  "version": "3.4.0",
+  "version": "3.5.0-rc.2",
   "repository": "https://github.com/novuhq/novu",
   "description": "Novu JavaScript SDK for <Inbox />",
   "author": "",
@@ -77,7 +77,9 @@
     "check-exports": "attw --pack .",
     "lint": "eslint src",
     "lint:fix": "pnpm lint -- --fix",
-    "test": "jest"
+    "test": "jest",
+    "publish": "pnpm publish",
+    "publish:rc": "pnpm publish --tag rc"
   },
   "browserslist": {
     "production": [

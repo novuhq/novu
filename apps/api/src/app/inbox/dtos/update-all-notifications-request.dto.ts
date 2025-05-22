@@ -5,4 +5,8 @@ export class UpdateAllNotificationsRequestDto {
   @IsArray()
   @IsString({ each: true })
   tags?: string[];
+
+  @IsOptional()
+  @IsString()
+  data?: string;
 }

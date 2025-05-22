@@ -6,7 +6,7 @@ import { CreateTopicButton } from './topic-list';
 
 export const TopicListBlank = () => {
   return (
-    <div className="mt-[100px] flex h-full w-full flex-col items-center justify-center gap-6">
+    <div className="flex h-full w-full flex-col items-center justify-center gap-6">
       <EmptyTopicsIllustration />
       <div className="flex flex-col items-center gap-2 text-center">
         <span className="text-text-sub text-label-md block font-medium">No topics created yet</span>

@@ -50,6 +50,7 @@ export class InboxService {
     read,
     tags,
     snoozed,
+    data,
   }: {
     tags?: string[];
     read?: boolean;
@@ -58,6 +59,7 @@ export class InboxService {
     limit?: number;
     after?: string;
     offset?: number;
+    data?: Record<string, unknown>;
   }): Promise<{ data: InboxNotification[]; hasMore: boolean; filter: NotificationFilter }> {
     const searchParams = new URLSearchParams(`limit=${limit}`);
     if (after) {
@@ -78,11 +80,18 @@ export class InboxService {
     if (snoozed !== undefined) {
       searchParams.append('snoozed', `${snoozed}`);
     }
+    if (data !== undefined) {
+      searchParams.append('data', JSON.stringify(data));
+    }
 
     return this.#httpClient.get(INBOX_NOTIFICATIONS_ROUTE, searchParams, false);
   }
 
-  count({ filters }: { filters: Array<{ tags?: string[]; read?: boolean; archived?: boolean }> }): Promise<{
+  count({
+    filters,
+  }: {
+    filters: Array<{ tags?: string[]; read?: boolean; archived?: boolean; data?: Record<string, unknown> }>;
+  }): Promise<{
     data: Array<{
       count: number;
       filter: NotificationFilter;
@@ -121,16 +130,25 @@ export class InboxService {
     return this.#httpClient.patch(`${INBOX_NOTIFICATIONS_ROUTE}/${notificationId}/unsnooze`);
   }
 
-  readAll({ tags }: { tags?: string[] }): Promise<void> {
-    return this.#httpClient.post(`${INBOX_NOTIFICATIONS_ROUTE}/read`, { tags });
+  readAll({ tags, data }: { tags?: string[]; data?: Record<string, unknown> }): Promise<void> {
+    return this.#httpClient.post(`${INBOX_NOTIFICATIONS_ROUTE}/read`, {
+      tags,
+      data: data ? JSON.stringify(data) : undefined,
+    });
   }
 
-  archiveAll({ tags }: { tags?: string[] }): Promise<void> {
-    return this.#httpClient.post(`${INBOX_NOTIFICATIONS_ROUTE}/archive`, { tags });
+  archiveAll({ tags, data }: { tags?: string[]; data?: Record<string, unknown> }): Promise<void> {
+    return this.#httpClient.post(`${INBOX_NOTIFICATIONS_ROUTE}/archive`, {
+      tags,
+      data: data ? JSON.stringify(data) : undefined,
+    });
   }
 
-  archiveAllRead({ tags }: { tags?: string[] }): Promise<void> {
-    return this.#httpClient.post(`${INBOX_NOTIFICATIONS_ROUTE}/read-archive`, { tags });
+  archiveAllRead({ tags, data }: { tags?: string[]; data?: Record<string, unknown> }): Promise<void> {
+    return this.#httpClient.post(`${INBOX_NOTIFICATIONS_ROUTE}/read-archive`, {
+      tags,
+      data: data ? JSON.stringify(data) : undefined,
+    });
   }
 
   completeAction({
