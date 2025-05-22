@@ -36,8 +36,7 @@ addHook(
         module: {
           type: 'commonjs',
           strictMode: false,
-          noInterop: false,
-          lazy: true
+          noInterop: false
         },
         sourceMaps: 'inline',
         minify: false
