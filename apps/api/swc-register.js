@@ -1,0 +1,54 @@
+const { transformFileSync } = require('@swc/core');
+const { addHook } = require('pirates');
+const path = require('path');
+
+require('ts-node').register({
+  transpileOnly: true,
+  compilerOptions: {
+    module: 'commonjs',
+    target: 'es6',
+    esModuleInterop: false,
+  },
+});
+
+addHook(
+  (code, filename) => {
+    if (filename.includes('node_modules') || filename.includes('.source')) {
+      return code;
+    }
+
+    try {
+      const result = transformFileSync(filename, {
+        jsc: {
+          target: 'es5',
+          parser: {
+            syntax: 'typescript',
+            tsx: true,
+            decorators: true,
+            dynamicImport: true,
+          },
+        },
+        module: {
+          type: 'commonjs',
+        },
+        sourceMaps: 'inline',
+      });
+
+      return result.code;
+    } catch (error) {
+      console.error(`Error transforming file ${filename}:`, error);
+
+      return code;
+    }
+  },
+  {
+    exts: ['.ts', '.tsx'],
+    matcher: (filename) => {
+      if (filename.includes('.source')) {
+        return false;
+      }
+
+      return filename.endsWith('.ts') || filename.endsWith('.tsx');
+    },
+  }
+);
