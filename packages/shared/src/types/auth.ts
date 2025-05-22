@@ -15,19 +15,21 @@ export type UserSessionData = {
   organizationId: string;
   roles: MemberRoleEnum[];
   permissions: PermissionsEnum[];
-  scheme: ApiAuthSchemeEnum.BEARER | ApiAuthSchemeEnum.API_KEY;
+  scheme: ApiAuthSchemeEnum.BEARER | ApiAuthSchemeEnum.API_KEY | ApiAuthSchemeEnum.KEYLESS;
   environmentId: string;
 };
 
 export enum ApiAuthSchemeEnum {
   BEARER = 'Bearer',
   API_KEY = 'ApiKey',
+  KEYLESS = 'Keyless',
 }
 
 export enum PassportStrategyEnum {
   JWT = 'jwt',
   JWT_CLERK = 'jwt-clerk',
   HEADER_API_KEY = 'headerapikey',
+  KEYLESS = 'keyless',
 }
 
 export const NONE_AUTH_SCHEME = 'None';

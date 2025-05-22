@@ -303,4 +303,8 @@ export class Notifications extends BaseModule {
 
     return this.cache.clearAll();
   }
+
+  async triggerHelloWorldEvent(): Promise<any> {
+    return this._inboxService.triggerHelloWorldEvent();
+  }
 }

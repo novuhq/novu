@@ -1,8 +1,4 @@
-import {
-  InternalServerErrorException,
-  Logger,
-  createParamDecorator,
-} from '@nestjs/common';
+import { InternalServerErrorException, Logger, createParamDecorator } from '@nestjs/common';
 
 export const UserSession = createParamDecorator((data, ctx) => {
   let req;
@@ -18,7 +14,7 @@ export const UserSession = createParamDecorator((data, ctx) => {
 
   Logger.error(
     'Attempted to access user session without a user in the request. You probably forgot to add the AuthGuard',
-    'UserSession',
+    'UserSession'
   );
   throw new InternalServerErrorException();
 });

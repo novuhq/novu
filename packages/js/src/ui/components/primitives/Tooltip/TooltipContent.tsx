@@ -5,44 +5,52 @@ import { useStyle } from '../../../helpers';
 import type { AppearanceKey } from '../../../types';
 import { Root } from '../../elements';
 import { useTooltip } from './TooltipRoot';
+import { Motion } from '../Motion';
 
 export const tooltipContentVariants = () =>
   'nt-bg-foreground nt-p-2 nt-shadow-tooltip nt-rounded-lg nt-text-background nt-text-xs';
 
+type TooltipContentProps = JSX.IntrinsicElements['div'] & {
+  appearanceKey?: AppearanceKey;
+};
+
 const TooltipContentBody = (props: TooltipContentProps) => {
-  const { open, setFloating, floating, floatingStyles } = useTooltip();
+  const { open, setFloating, floating, floatingStyles, effectiveAnimationDuration } = useTooltip();
   const { setActive, removeActive } = useFocusManager();
   const [local, rest] = splitProps(props, ['class', 'appearanceKey', 'style']);
   const style = useStyle();
 
   onMount(() => {
     const floatingEl = floating();
-    setActive(floatingEl!);
+    if (floatingEl) setActive(floatingEl);
 
     onCleanup(() => {
-      removeActive(floatingEl!);
+      if (floatingEl) removeActive(floatingEl);
     });
   });
 
   return (
-    <div
+    <Motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={open() ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.95 }}
+      transition={{ duration: effectiveAnimationDuration(), easing: 'ease-in-out' }}
       ref={setFloating}
       class={local.class ? local.class : style(local.appearanceKey || 'tooltipContent', tooltipContentVariants())}
       style={{ ...floatingStyles(), 'z-index': 99999 }}
-      data-open={open()}
       {...rest}
-    />
+    >
+      {props.children}
+    </Motion.div>
   );
 };
 
-type TooltipContentProps = JSX.IntrinsicElements['div'] & { appearanceKey?: AppearanceKey };
 export const TooltipContent = (props: TooltipContentProps) => {
-  const { open } = useTooltip();
+  const { shouldRender } = useTooltip();
   const { container } = useAppearance();
   const portalContainer = () => container() ?? document.body;
 
   return (
-    <Show when={open()}>
+    <Show when={shouldRender()}>
       {/* we can safely use portal to document.body here as this element 
       won't be focused and close other portals (outside solid world) as a result */}
       <Portal mount={portalContainer()}>

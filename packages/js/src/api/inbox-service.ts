@@ -27,9 +27,9 @@ export class InboxService {
     subscriberHash,
     subscriber,
   }: {
-    applicationIdentifier: string;
+    applicationIdentifier?: string;
     subscriberHash?: string;
-    subscriber: Subscriber;
+    subscriber?: Subscriber;
   }): Promise<Session> {
     const response = (await this.#httpClient.post(`${INBOX_ROUTE}/session`, {
       applicationIdentifier,
@@ -37,6 +37,7 @@ export class InboxService {
       subscriber,
     })) as Session;
     this.#httpClient.setAuthorizationToken(response.token);
+    this.#httpClient.setKeylessHeader(response.applicationIdentifier);
     this.isSessionInitialized = true;
 
     return response;
@@ -208,5 +209,24 @@ export class InboxService {
     channels: ChannelPreference;
   }): Promise<PreferencesResponse> {
     return this.#httpClient.patch(`${INBOX_ROUTE}/preferences/${workflowId}`, channels);
+  }
+
+  triggerHelloWorldEvent(): Promise<any> {
+    const payload = {
+      name: 'hello-world',
+      to: {
+        subscriberId: 'keyless-subscriber-id',
+      },
+      payload: {
+        subject: 'Novu Keyless Environment',
+        body: "You're using a keyless demo environment. For full access to Novu features and cloud integration, obtain your API key.",
+        primaryActionText: 'Obtain API Key',
+        primaryActionUrl: 'https://go.novu.co/keyless?utm_campaign=keyless-api-key',
+        secondaryActionText: 'Explore Documentation',
+        secondaryActionUrl: 'https://go.novu.co/keyless?utm_campaign=docs',
+      },
+    };
+
+    return this.#httpClient.post('/inbox/events', payload);
   }
 }

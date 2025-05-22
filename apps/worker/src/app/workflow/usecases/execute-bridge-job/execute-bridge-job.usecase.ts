@@ -8,12 +8,8 @@ import {
   NotificationTemplateRepository,
   MessageRepository,
   JobEntity,
-  OrganizationEntity,
-  UserEntity,
-  EnvironmentEntity,
 } from '@novu/dal';
 import {
-  FeatureFlagsKeysEnum,
   ControlValuesLevelEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
@@ -39,14 +35,11 @@ import {
   DetailEnum,
   ExecuteBridgeRequest,
   ExecuteBridgeRequestCommand,
-  FeatureFlagsService,
   Instrument,
   InstrumentUsecase,
   PinoLogger,
 } from '@novu/application-generic';
 import { ExecuteBridgeJobCommand } from './execute-bridge-job.command';
-
-const LOG_CONTEXT = 'ExecuteBridgeJob';
 
 @Injectable()
 export class ExecuteBridgeJob {
@@ -58,9 +51,10 @@ export class ExecuteBridgeJob {
     private controlValuesRepository: ControlValuesRepository,
     private createExecutionDetails: CreateExecutionDetails,
     private executeBridgeRequest: ExecuteBridgeRequest,
-    private logger: PinoLogger,
-    private readonly featureFlagService: FeatureFlagsService
-  ) {}
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   @InstrumentUsecase()
   async execute(command: ExecuteBridgeJobCommand): Promise<ExecuteOutput | null> {

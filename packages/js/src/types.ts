@@ -60,6 +60,7 @@ export type Session = {
   removeNovuBranding: boolean;
   isDevelopmentMode: boolean;
   maxSnoozeDurationHours: number;
+  applicationIdentifier?: string;
 };
 
 export type Subscriber = {
@@ -173,7 +174,9 @@ export type Result<D = undefined, E = NovuError> = Promise<{
   error?: E;
 }>;
 
-export type NovuOptions = {
+type KeylessNovuOptions = {} & { [K in string]?: never }; // empty object,disallows all unknown keys
+
+export type StandardNovuOptions = {
   /** @deprecated Use apiUrl instead  */
   backendUrl?: string;
   /** @internal Should be used internally for testing purposes */
@@ -195,5 +198,7 @@ export type NovuOptions = {
       subscriberId?: never;
     }
 );
+
+export type NovuOptions = KeylessNovuOptions | StandardNovuOptions;
 
 export type Prettify<T> = { [K in keyof T]: T[K] } & {};

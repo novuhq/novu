@@ -31,6 +31,8 @@ type InboxContextType = {
   isDevelopmentMode: Accessor<boolean>;
   maxSnoozeDurationHours: Accessor<number>;
   isSnoozeEnabled: Accessor<boolean>;
+  isKeyless: Accessor<boolean>;
+  applicationIdentifier: Accessor<string | null>;
 };
 
 const InboxContext = createContext<InboxContextType | undefined>(undefined);
@@ -69,6 +71,8 @@ export const InboxProvider = (props: InboxProviderProps) => {
   const [preferencesFilter, setPreferencesFilter] = createSignal<PreferencesFilter | undefined>(
     props.preferencesFilter
   );
+  const [isKeyless, setIsKeyless] = createSignal(false);
+  const [applicationIdentifier, setApplicationIdentifier] = createSignal<string | null>(null);
   const [preferenceGroups, setPreferenceGroups] = createSignal<PreferenceGroups | undefined>(props.preferenceGroups);
 
   const setNewStatus = (newStatus: NotificationStatus) => {
@@ -127,10 +131,13 @@ export const InboxProvider = (props: InboxProviderProps) => {
       if (!data) {
         return;
       }
+      const identifier = window.localStorage.getItem('novu_keyless_application_identifier');
 
       setHideBranding(data.removeNovuBranding);
       setIsDevelopmentMode(data.isDevelopmentMode);
       setMaxSnoozeDurationHours(data.maxSnoozeDurationHours);
+      setIsKeyless(!data.applicationIdentifier || !!identifier?.startsWith('pk_keyless_'));
+      setApplicationIdentifier(data.applicationIdentifier ?? null);
     },
   });
 
@@ -154,6 +161,8 @@ export const InboxProvider = (props: InboxProviderProps) => {
         isDevelopmentMode,
         maxSnoozeDurationHours,
         isSnoozeEnabled,
+        isKeyless,
+        applicationIdentifier,
       }}
     >
       {props.children}
