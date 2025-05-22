@@ -3090,8 +3090,8 @@ importers:
         specifier: ^8.22.0
         version: 8.22.0(eslint@9.19.0(jiti@2.4.2))(typescript@5.6.2)
       zod:
-        specifier: ^3.23.4
-        version: 3.23.8
+        specifier: ^3.25.17
+        version: 3.25.20
 
   libs/notifications:
     dependencies:
@@ -34572,6 +34572,9 @@ packages:
   zod@3.23.8:
     resolution: {integrity: sha512-XBx9AXhXktjUqnepgTiE5flcKIYWi/rme0Eaj+5Y0lftuGBq+jyRu/md4WnuxqgP1ubdpNCsYEYPxrzVHD8d6g==}
 
+  zod@3.25.20:
+    resolution: {integrity: sha512-z03fqpTMDF1G02VLKUMt6vyACE7rNWkh3gpXVHgPTw28NPtDFRGvcpTtPwn2kMKtQ0idtYJUTxchytmnqYswcw==}
+
   zustand@3.7.2:
     resolution: {integrity: sha512-PIJDIZKtokhof+9+60cpockVOq05sJzHCriyvaLBmEJixseQ1a5Kdov6fWZfWOu5SK9c+FhH1jU0tntLxRJYMA==}
     engines: {node: '>=12.7.0'}
@@ -58314,7 +58317,7 @@ snapshots:
       vitefu: 0.2.5(vite@5.4.2(@types/node@20.16.5)(less@4.1.3)(lightningcss@1.29.2)(sass@1.77.8)(sugarss@4.0.1(postcss@8.4.47))(terser@5.31.6))
       which-pm: 2.2.0
       yargs-parser: 21.1.1
-      zod: 3.23.8
+      zod: 3.25.20
     optionalDependencies:
       sharp: 0.32.6
     transitivePeerDependencies:
@@ -58395,7 +58398,7 @@ snapshots:
       vitefu: 0.2.5(vite@5.4.2(@types/node@20.16.5)(less@4.2.0)(lightningcss@1.29.2)(sass@1.77.8)(sugarss@4.0.1(postcss@8.4.38))(terser@5.31.6))
       which-pm: 2.2.0
       yargs-parser: 21.1.1
-      zod: 3.23.8
+      zod: 3.25.20
     optionalDependencies:
       sharp: 0.32.6
     transitivePeerDependencies:
@@ -73051,7 +73054,7 @@ snapshots:
       quick-lru: 7.0.0
       url-join: 5.0.0
       validate-npm-package-name: 5.0.1
-      zod: 3.23.8
+      zod: 3.25.20
       zod-package-json: 1.0.3
 
   query-string@9.1.0:
@@ -80178,7 +80181,7 @@ snapshots:
 
   zod-package-json@1.0.3:
     dependencies:
-      zod: 3.23.8
+      zod: 3.25.20
 
   zod-to-json-schema@3.23.1(zod@3.23.8):
     dependencies:
@@ -80197,6 +80200,8 @@ snapshots:
   zod@3.22.4: {}
 
   zod@3.23.8: {}
+
+  zod@3.25.20: {}
 
   zustand@3.7.2(react@18.3.1):
     optionalDependencies:
