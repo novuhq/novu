@@ -101,7 +101,7 @@
     "react-timezone-select": "^3.2.8",
     "react-use-intercom": "^2.0.0",
     "sonner": "^1.7.0",
-    "svix-react": "^1.13.3",
+    "svix-react": "^1.13.4",
     "tailwind-merge": "^2.4.0",
     "tailwind-variants": "^0.3.0",
     "tailwindcss-animate": "^1.0.7",
