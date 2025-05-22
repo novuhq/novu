@@ -490,8 +490,8 @@ importers:
         specifier: ^2.29.2
         version: 2.29.3
       dotenv:
-        specifier: ^16.4.5
-        version: 16.4.5
+        specifier: ^16.5.0
+        version: 16.5.0
       envalid:
         specifier: ^8.0.0
         version: 8.0.0
@@ -933,8 +933,8 @@ importers:
         specifier: ^1.7.0
         version: 1.7.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       svix-react:
-        specifier: ^1.13.3
-        version: 1.13.3(@babel/core@7.25.2)(prop-types@15.8.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(svix@1.64.1(encoding@0.1.13))
+        specifier: ^1.13.4
+        version: 1.13.4(@babel/core@7.25.2)(prop-types@15.8.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(svix@1.64.1(encoding@0.1.13))
       tailwind-merge:
         specifier: ^2.4.0
         version: 2.4.0
@@ -21263,6 +21263,10 @@ packages:
     resolution: {integrity: sha512-47qPchRCykZC03FhkYAhrvwU4xDBFIj1QPqaarj6mdM/hgUzfPHcpkHJOn3mJAufFeeAxAzeGsr5X0M4k6fLZQ==}
     engines: {node: '>=12'}
 
+  dotenv@16.5.0:
+    resolution: {integrity: sha512-m/C+AwOAr9/W1UOIZUo232ejMNnJAJtYQjUbHoNTBNTJSvqzzDh7vnrei3o3r3m9blf6ZoDkvcw0VmozNRFJxg==}
+    engines: {node: '>=12'}
+
   dotenv@8.6.0:
     resolution: {integrity: sha512-IrPdXQsk2BbzvCBGBOTmmSH5SodmqZNt4ERAZDmW4CT+tL8VtvinqywuANaFu4bOMWki16nqf0e4oC0QIaDr/g==}
     engines: {node: '>=10'}
@@ -32053,8 +32057,8 @@ packages:
   svix-fetch@3.0.0:
     resolution: {integrity: sha512-rcADxEFhSqHbraZIsjyZNh4TF6V+koloX1OzZ+AQuObX9mZ2LIMhm1buZeuc5BIZPftZpJCMBsSiBaeszo9tRw==}
 
-  svix-react@1.13.3:
-    resolution: {integrity: sha512-XJ3v9gopjbGrOMNItSu3DPSNDKnQ+Yd1QvBrx/jM8ftPTjgRnig+hyu7zZIcRIaZlr/cUkeKS+sjDQCoHv22YA==}
+  svix-react@1.13.4:
+    resolution: {integrity: sha512-sK34IAyqmbCgiIWbZwwh++bA8n4k2PxcdBl/jxMsmgp+pc5VDuFC5hSuhRHBLdVDmyEmhJoY5oeTBmxoM/2A9Q==}
     peerDependencies:
       react: '>=16'
       react-dom: '>=16'
@@ -49674,7 +49678,7 @@ snapshots:
       '@babel/core': 7.25.2
       '@sentry/babel-plugin-component-annotate': 2.22.6
       '@sentry/cli': 2.38.0(encoding@0.1.13)
-      dotenv: 16.4.5
+      dotenv: 16.5.0
       find-up: 5.0.0
       glob: 9.3.5
       magic-string: 0.30.8
@@ -61466,7 +61470,7 @@ snapshots:
 
   dotenv-expand@11.0.6:
     dependencies:
-      dotenv: 16.4.5
+      dotenv: 16.5.0
 
   dotenv-expand@5.1.0: {}
 
@@ -61475,6 +61479,8 @@ snapshots:
   dotenv@16.4.5: {}
 
   dotenv@16.4.7: {}
+
+  dotenv@16.5.0: {}
 
   dotenv@8.6.0: {}
 
@@ -67726,7 +67732,7 @@ snapshots:
   lazy-universal-dotenv@4.0.0:
     dependencies:
       app-root-dir: 1.0.2
-      dotenv: 16.4.5
+      dotenv: 16.5.0
       dotenv-expand: 10.0.0
 
   lazy@1.0.11: {}
@@ -70510,7 +70516,7 @@ snapshots:
       cli-cursor: 3.1.0
       cli-spinners: 2.6.1
       cliui: 8.0.1
-      dotenv: 16.4.5
+      dotenv: 16.4.7
       dotenv-expand: 11.0.6
       enquirer: 2.3.6
       figures: 3.2.0
@@ -70560,7 +70566,7 @@ snapshots:
       cli-cursor: 3.1.0
       cli-spinners: 2.6.1
       cliui: 8.0.1
-      dotenv: 16.4.5
+      dotenv: 16.4.7
       dotenv-expand: 11.0.6
       enquirer: 2.3.6
       figures: 3.2.0
@@ -76476,7 +76482,7 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  svix-react@1.13.3(@babel/core@7.25.2)(prop-types@15.8.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(svix@1.64.1(encoding@0.1.13)):
+  svix-react@1.13.4(@babel/core@7.25.2)(prop-types@15.8.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(svix@1.64.1(encoding@0.1.13)):
     dependencies:
       iframe-resizer-react: 1.1.1(@babel/core@7.25.2)(prop-types@15.8.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react: 18.3.1

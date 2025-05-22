@@ -3276,6 +3276,109 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       });
     });
 
+    it('should execute email step with custom string', async function test() {
+      const workflowBody: CreateWorkflowDto = {
+        name: 'Test Email Workflow',
+        workflowId: 'test-email-workflow',
+        __source: WorkflowCreationSourceEnum.DASHBOARD,
+        steps: [
+          {
+            type: StepTypeEnum.EMAIL,
+            name: 'Message Name',
+            controlValues: {
+              subject: 'Hello {{subscriber.lastName}}, Welcome!',
+              body: 'body {{subscriber.lastName}}!',
+            },
+          },
+        ],
+      };
+
+      const response = await session.testAgent.post('/v2/workflows').send(workflowBody);
+      expect(response.status).to.equal(201);
+      const workflow: WorkflowResponseDto = response.body.data;
+
+      await novuClient.trigger({
+        workflowId: workflow.workflowId,
+        to: [subscriber.subscriberId],
+        payload: {
+          shouldExecute: false,
+        },
+      });
+      await session.waitForJobCompletion(workflow._id);
+
+      await session.waitForJobCompletion(workflow._id);
+      const message = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: subscriber._id,
+      });
+
+      expect(message.length).to.equal(1);
+      expect(message[0].subject).to.equal(`Hello ${subscriber.lastName}, Welcome!`);
+      expect(message[0].content).to.equal(`body ${subscriber.lastName}!`);
+    });
+
+    it('should execute email step with custom html', async function test() {
+      const liquidJsHtml = `
+                <html>
+                  <head>
+                    <meta charset="utf-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Welcome Email</title>
+                  </head>
+                  <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+                    <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+                      <h1 style="color: #2d3748;">Welcome {{subscriber.firstName}}!</h1>
+                      <p style="font-size: 16px;">Hello {{subscriber.lastName}},</p>
+                      <p style="font-size: 16px;">Thank you for joining us. We're excited to have you on board!</p>
+                      <div style="margin: 30px 0;">
+                        <a href="https://example.com/get-started" style="background-color: #4299e1; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px;">Get Started</a>
+                      </div>
+                      <p style="font-size: 14px; color: #718096;">Best regards,<br>The Team</p>
+                    </div>
+                  </body>
+                </html>
+              `;
+      const workflowBody: CreateWorkflowDto = {
+        name: 'Test Email Workflow',
+        workflowId: 'test-email-workflow',
+        __source: WorkflowCreationSourceEnum.DASHBOARD,
+        steps: [
+          {
+            type: StepTypeEnum.EMAIL,
+            name: 'Message Name',
+            controlValues: {
+              subject: 'Hello {{subscriber.lastName}}, Welcome!',
+              body: liquidJsHtml,
+            },
+          },
+        ],
+      };
+
+      const response = await session.testAgent.post('/v2/workflows').send(workflowBody);
+      expect(response.status).to.equal(201);
+      const workflow: WorkflowResponseDto = response.body.data;
+
+      await novuClient.trigger({
+        workflowId: workflow.workflowId,
+        to: [subscriber.subscriberId],
+        payload: {
+          shouldExecute: false,
+        },
+      });
+      await session.waitForJobCompletion(workflow._id);
+
+      await session.waitForJobCompletion(workflow._id);
+      const message = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: subscriber._id,
+      });
+
+      expect(message.length).to.equal(1);
+      expect(message[0].subject).to.equal(`Hello ${subscriber.lastName}, Welcome!`);
+      expect(message[0].content).to.include(`Welcome ${subscriber.firstName}!`);
+      expect(message[0].content).to.include(`Hello ${subscriber.lastName},`);
+    });
+
     it('should execute step based on conditions', async function () {
       const workflowBody: CreateWorkflowDto = {
         name: 'Test Step Conditions Workflow',
@@ -3390,154 +3493,154 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       expect(smsMessage?.content).to.equal('Hello John, this is a test SMS');
       expect(inAppMessage?.content).to.equal('Welcome John! This is an in-app notification');
     });
-  });
 
-  it('should handle complex conditions logic with subscriber data', async function () {
-    const workflowBody: CreateWorkflowDto = {
-      name: 'Test Complex Conditions Logic',
-      workflowId: 'test-complex-conditions-workflow',
-      __source: WorkflowCreationSourceEnum.DASHBOARD,
-      steps: [
-        {
-          type: StepTypeEnum.IN_APP,
-          name: 'Message Name',
-          controlValues: {
-            body: 'Hello {{subscriber.lastName}}, Welcome!',
-            skip: {
-              and: [
-                {
-                  or: [
-                    { '==': [{ var: 'subscriber.firstName' }, 'John'] },
-                    { '==': [{ var: 'subscriber.data.role' }, 'admin'] },
-                  ],
-                },
-                {
-                  and: [
-                    { '>=': [{ var: 'payload.userScore' }, 100] },
-                    { '==': [{ var: 'subscriber.lastName' }, 'Doe'] },
-                  ],
-                },
-              ],
+    it('should handle complex conditions logic with subscriber data', async function () {
+      const workflowBody: CreateWorkflowDto = {
+        name: 'Test Complex Conditions Logic',
+        workflowId: 'test-complex-conditions-workflow',
+        __source: WorkflowCreationSourceEnum.DASHBOARD,
+        steps: [
+          {
+            type: StepTypeEnum.IN_APP,
+            name: 'Message Name',
+            controlValues: {
+              body: 'Hello {{subscriber.lastName}}, Welcome!',
+              skip: {
+                and: [
+                  {
+                    or: [
+                      { '==': [{ var: 'subscriber.firstName' }, 'John'] },
+                      { '==': [{ var: 'subscriber.data.role' }, 'admin'] },
+                    ],
+                  },
+                  {
+                    and: [
+                      { '>=': [{ var: 'payload.userScore' }, 100] },
+                      { '==': [{ var: 'subscriber.lastName' }, 'Doe'] },
+                    ],
+                  },
+                ],
+              },
             },
           },
+        ],
+      };
+
+      const response = await session.testAgent.post('/v2/workflows').send(workflowBody);
+      expect(response.status).to.equal(201);
+      const workflow: WorkflowResponseDto = response.body.data;
+
+      // Should execute step - matches all conditions
+      subscriber = await subscriberService.createSubscriber({
+        firstName: 'John',
+        lastName: 'Doe',
+        data: { role: 'admin' },
+      });
+
+      await novuClient.trigger({
+        workflowId: workflow.workflowId,
+        to: [subscriber.subscriberId],
+        payload: {
+          userScore: 150,
         },
-      ],
-    };
+      });
+      await session.waitForJobCompletion(workflow._id);
+      const messages = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: subscriber._id,
+      });
+      expect(messages.length).to.equal(1);
 
-    const response = await session.testAgent.post('/v2/workflows').send(workflowBody);
-    expect(response.status).to.equal(201);
-    const workflow: WorkflowResponseDto = response.body.data;
+      // Should not execute step - doesn't match lastName condition
+      subscriber = await subscriberService.createSubscriber({
+        firstName: 'John',
+        lastName: 'Smith',
+        data: { role: 'admin' },
+      });
 
-    // Should execute step - matches all conditions
-    subscriber = await subscriberService.createSubscriber({
-      firstName: 'John',
-      lastName: 'Doe',
-      data: { role: 'admin' },
+      await novuClient.trigger({
+        workflowId: workflow.workflowId,
+        to: [subscriber.subscriberId],
+        payload: {
+          userScore: 150,
+        },
+      });
+
+      await session.waitForJobCompletion(workflow._id);
+      const skippedMessages1 = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: subscriber._id,
+      });
+      expect(skippedMessages1.length).to.equal(0);
+
+      // Should not execute step - doesn't match score condition
+      subscriber = await subscriberService.createSubscriber({
+        firstName: 'John',
+        lastName: 'Doe',
+        data: { role: 'admin' },
+      });
+
+      await novuClient.trigger({
+        workflowId: workflow.workflowId,
+        to: [subscriber.subscriberId],
+        payload: {
+          userScore: 50,
+        },
+      });
+
+      await session.waitForJobCompletion(workflow._id);
+      const skippedMessages2 = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: subscriber._id,
+      });
+      expect(skippedMessages2.length).to.equal(0);
     });
 
-    await novuClient.trigger({
-      workflowId: workflow.workflowId,
-      to: [subscriber.subscriberId],
-      payload: {
-        userScore: 150,
-      },
-    });
-    await session.waitForJobCompletion(workflow._id);
-    const messages = await messageRepository.find({
-      _environmentId: session.environment._id,
-      _subscriberId: subscriber._id,
-    });
-    expect(messages.length).to.equal(1);
-
-    // Should not execute step - doesn't match lastName condition
-    subscriber = await subscriberService.createSubscriber({
-      firstName: 'John',
-      lastName: 'Smith',
-      data: { role: 'admin' },
-    });
-
-    await novuClient.trigger({
-      workflowId: workflow.workflowId,
-      to: [subscriber.subscriberId],
-      payload: {
-        userScore: 150,
-      },
-    });
-
-    await session.waitForJobCompletion(workflow._id);
-    const skippedMessages1 = await messageRepository.find({
-      _environmentId: session.environment._id,
-      _subscriberId: subscriber._id,
-    });
-    expect(skippedMessages1.length).to.equal(0);
-
-    // Should not execute step - doesn't match score condition
-    subscriber = await subscriberService.createSubscriber({
-      firstName: 'John',
-      lastName: 'Doe',
-      data: { role: 'admin' },
-    });
-
-    await novuClient.trigger({
-      workflowId: workflow.workflowId,
-      to: [subscriber.subscriberId],
-      payload: {
-        userScore: 50,
-      },
-    });
-
-    await session.waitForJobCompletion(workflow._id);
-    const skippedMessages2 = await messageRepository.find({
-      _environmentId: session.environment._id,
-      _subscriberId: subscriber._id,
-    });
-    expect(skippedMessages2.length).to.equal(0);
-  });
-
-  it('should exit execution if skip condition execution throws an error', async function () {
-    const workflowBody: CreateWorkflowDto = {
-      name: 'Test Complex Skip Logic',
-      workflowId: 'test-complex-skip-workflow',
-      __source: WorkflowCreationSourceEnum.DASHBOARD,
-      steps: [
-        {
-          type: StepTypeEnum.IN_APP,
-          name: 'Message Name',
-          controlValues: {
-            body: 'Hello {{subscriber.lastName}}, Welcome!',
-            skip: { invalidOp: [1, 2] }, // INVALID OPERATOR
+    it('should exit execution if skip condition execution throws an error', async function () {
+      const workflowBody: CreateWorkflowDto = {
+        name: 'Test Complex Skip Logic',
+        workflowId: 'test-complex-skip-workflow',
+        __source: WorkflowCreationSourceEnum.DASHBOARD,
+        steps: [
+          {
+            type: StepTypeEnum.IN_APP,
+            name: 'Message Name',
+            controlValues: {
+              body: 'Hello {{subscriber.lastName}}, Welcome!',
+              skip: { invalidOp: [1, 2] }, // INVALID OPERATOR
+            },
           },
+        ],
+      };
+
+      const response = await session.testAgent.post('/v2/workflows').send(workflowBody);
+      expect(response.status).to.equal(201);
+      const workflow: WorkflowResponseDto = response.body.data;
+
+      subscriber = await subscriberService.createSubscriber({
+        firstName: 'John',
+        lastName: 'Doe',
+        data: { role: 'admin' },
+      });
+
+      await novuClient.trigger({
+        workflowId: workflow.workflowId,
+        to: [subscriber.subscriberId],
+        payload: {
+          userScore: 150,
         },
-      ],
-    };
+      });
+      await session.waitForJobCompletion(workflow._id);
+      const executionDetails = await executionDetailsRepository.findOne({
+        _environmentId: session.environment._id,
+        _subscriberId: subscriber._id,
+        channel: ChannelTypeEnum.IN_APP,
+        status: ExecutionDetailsStatusEnum.FAILED,
+      });
 
-    const response = await session.testAgent.post('/v2/workflows').send(workflowBody);
-    expect(response.status).to.equal(201);
-    const workflow: WorkflowResponseDto = response.body.data;
-
-    subscriber = await subscriberService.createSubscriber({
-      firstName: 'John',
-      lastName: 'Doe',
-      data: { role: 'admin' },
+      expect(executionDetails?.raw).to.contain('Failed to evaluate rule');
+      expect(executionDetails?.raw).to.contain('Unrecognized operation invalidOp');
     });
-
-    await novuClient.trigger({
-      workflowId: workflow.workflowId,
-      to: [subscriber.subscriberId],
-      payload: {
-        userScore: 150,
-      },
-    });
-    await session.waitForJobCompletion(workflow._id);
-    const executionDetails = await executionDetailsRepository.findOne({
-      _environmentId: session.environment._id,
-      _subscriberId: subscriber._id,
-      channel: ChannelTypeEnum.IN_APP,
-      status: ExecutionDetailsStatusEnum.FAILED,
-    });
-
-    expect(executionDetails?.raw).to.contain('Failed to evaluate rule');
-    expect(executionDetails?.raw).to.contain('Unrecognized operation invalidOp');
   });
 });
 

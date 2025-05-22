@@ -24,6 +24,16 @@ export class EmailOutputRendererCommand extends RenderCommand {
   environmentId: string;
 }
 
+function isJsonString(str: string): boolean {
+  try {
+    JSON.parse(str);
+  } catch (e) {
+    return false;
+  }
+
+  return true;
+}
+
 @Injectable()
 export class EmailOutputRendererUsecase {
   private readonly liquidEngine: Liquid;
@@ -47,11 +57,17 @@ export class EmailOutputRendererUsecase {
       };
     }
 
-    const liquifiedMaily = wrapMailyInLiquid(body);
-    const transformedMaily = await this.transformMailyContent(liquifiedMaily, renderCommand.fullPayloadForRender);
-    const parsedMaily = await this.parseMailyContentByLiquid(transformedMaily, renderCommand.fullPayloadForRender);
-    const strippedMaily = this.removeTrailingEmptyLines(parsedMaily);
-    const renderedHtml = await mailyRender(strippedMaily);
+    let renderedHtml: string;
+
+    if (typeof body === 'object' || (typeof body === 'string' && isJsonString(body))) {
+      const liquifiedMaily = wrapMailyInLiquid(body);
+      const transformedMaily = await this.transformMailyContent(liquifiedMaily, renderCommand.fullPayloadForRender);
+      const parsedMaily = await this.parseMailyContentByLiquid(transformedMaily, renderCommand.fullPayloadForRender);
+      const strippedMaily = this.removeTrailingEmptyLines(parsedMaily);
+      renderedHtml = await mailyRender(strippedMaily);
+    } else {
+      renderedHtml = body;
+    }
 
     /**
      * Force type mapping in case undefined control.
