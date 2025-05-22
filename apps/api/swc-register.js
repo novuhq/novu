@@ -20,18 +20,26 @@ addHook(
     try {
       const result = transformFileSync(filename, {
         jsc: {
-          target: 'es5',
+          target: 'es6',
           parser: {
             syntax: 'typescript',
             tsx: true,
             decorators: true,
             dynamicImport: true,
           },
+          transform: {
+            legacyDecorator: true,
+            decoratorMetadata: true,
+          },
+          keepClassNames: true,
         },
         module: {
           type: 'commonjs',
+          strictMode: false,
+          noInterop: false,
         },
         sourceMaps: 'inline',
+        minify: false,
       });
 
       return result.code;
