@@ -1,8 +1,7 @@
 import { z } from 'zod';
-import type { JSONSchema7 } from '../json-schema'; // Import our JSONSchema7 type
 
 // Defines the structure of the value/definition of a property
-const baseJsonSchema: z.ZodType<JSONSchema7> = z
+const baseJsonSchema: z.ZodType<any> = z
   .object({
     type: z
       .union([
