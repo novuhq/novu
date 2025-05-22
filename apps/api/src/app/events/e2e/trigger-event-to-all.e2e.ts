@@ -1,19 +1,8 @@
-import { expect } from 'chai';
-import sinon from 'sinon';
 import { Test } from '@nestjs/testing';
 import axios from 'axios';
+import { expect } from 'chai';
+import sinon from 'sinon';
 
-import { SubscribersService, UserSession } from '@novu/testing';
-import {
-  ExternalSubscriberId,
-  ISubscribersDefine,
-  ITopic,
-  SubscriberSourceEnum,
-  TopicId,
-  TopicKey,
-  TriggerRecipients,
-  TriggerRecipientsTypeEnum,
-} from '@novu/shared';
 import {
   IProcessSubscriberBulkJobDto,
   mapSubscribersToJobs,
@@ -22,16 +11,42 @@ import {
   TriggerMulticastCommand,
 } from '@novu/application-generic';
 import { NotificationTemplateEntity, SubscriberEntity } from '@novu/dal';
+import {
+  ExternalSubscriberId,
+  ISubscribersDefine,
+  ITopic,
+  SubscriberSourceEnum,
+  TopicId,
+  TopicKey,
+  TopicName,
+  TriggerRecipients,
+  TriggerRecipientsTypeEnum,
+} from '@novu/shared';
+import { SubscribersService, UserSession } from '@novu/testing';
 
+import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 import { SharedModule } from '../../shared/shared.module';
 import { EventsModule } from '../events.module';
-import { createTopic } from '../../topics/e2e/helpers/topic-e2e-helper';
 
 const axiosInstance = axios.create();
 
 const TOPIC_PATH = '/v1/topics';
 const TOPIC_KEY_PREFIX = 'topic-key-trigger-event_';
 const TOPIC_NAME_PREFIX = 'topic-name-trigger-event_';
+
+// Helper function to create a topic
+const createTopic = async (
+  session: UserSession,
+  key: TopicKey,
+  name: TopicName
+): Promise<{ _id: TopicId; key: TopicKey }> => {
+  const response = await initNovuClassSdk(session).topics.create({ key, name });
+
+  expect(response.result.id).to.exist;
+  expect(response.result.key).to.eql(key);
+
+  return { _id: response.result.id, key: response.result.key };
+};
 
 export class MockSubscriberProcessQueueService {
   addBulk(data: IProcessSubscriberBulkJobDto[]) {}
@@ -54,10 +69,9 @@ function expectBulkTopicStub(secondCallStubArgs: IProcessSubscriberBulkJobDto[],
     expect(job.groupId).to.be.equal(stubJob.groupId);
     expect(job.options).to.be.equal(stubJob.options);
 
-    const { subscriber, ...jobDataWithoutSubscriber } = job.data;
-    const { subscriber: stubSubscriber, ...stubJobDataWithoutSubscriber } = stubJob.data;
+    const { subscriber, topics, ...jobDataWithoutSubscriber } = job.data;
+    const { subscriber: stubSubscriber, topics: stubTopics, ...stubJobDataWithoutSubscriber } = stubJob.data;
 
-    expect(subscriber.subscriberId).to.be.equal(stubSubscriber.subscriberId);
     expect(jobDataWithoutSubscriber).to.deep.equal(stubJobDataWithoutSubscriber);
   }
 }

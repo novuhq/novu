@@ -1,4 +1,4 @@
-import { type Component, JSX, createEffect, createSignal } from 'solid-js';
+import { type Component, JSX, createEffect, createSignal, onCleanup } from 'solid-js';
 import { useStyle } from '../../helpers';
 
 type CollapsibleProps = JSX.IntrinsicElements['div'] & {
@@ -6,27 +6,59 @@ type CollapsibleProps = JSX.IntrinsicElements['div'] & {
   open: boolean;
 };
 
+const isInterpolateSizeSupported = () => {
+  return CSS.supports('interpolate-size', 'allow-keywords');
+};
+
 export const Collapsible: Component<CollapsibleProps> = (props) => {
+  const supportsInterpolateSize = isInterpolateSizeSupported();
   const style = useStyle();
   let contentRef: HTMLDivElement | undefined;
   const [enableTransition, setEnableTransition] = createSignal(false);
+  const [scrollHeight, setScrollHeight] = createSignal(0);
+
+  const updateScrollHeight = () => {
+    setScrollHeight(contentRef?.scrollHeight || 0);
+  };
 
   createEffect(() => {
     // Delay applying transitions until after the initial render
     requestAnimationFrame(() => setEnableTransition(true));
+
+    const resizeObserver = new ResizeObserver(() => {
+      updateScrollHeight();
+    });
+    if (contentRef && !supportsInterpolateSize) {
+      resizeObserver.observe(contentRef);
+    }
+
+    updateScrollHeight();
+
+    onCleanup(() => {
+      resizeObserver.disconnect();
+    });
   });
+
+  const height = () => {
+    if (supportsInterpolateSize) {
+      return props.open ? 'max-content' : '0px';
+    }
+
+    return props.open ? `${scrollHeight()}px` : '0px';
+  };
 
   return (
     <div
-      ref={contentRef}
       class={style('collapsible', props.class)}
       style={{
         overflow: 'hidden',
         opacity: props.open ? 1 : 0,
         transition: enableTransition() ? 'height 250ms ease-in-out, opacity 250ms ease-in-out' : 'none',
-        height: props.open ? `${contentRef?.scrollHeight}px` : '0px',
+        height: height(),
       }}
       {...props}
-    />
+    >
+      <div ref={contentRef}>{props.children}</div>
+    </div>
   );
 };

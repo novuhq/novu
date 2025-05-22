@@ -1,15 +1,11 @@
-import { createEffect, createMemo, createSignal, JSX, Show } from 'solid-js';
+import { createEffect, createMemo, createSignal, For, JSX, Show } from 'solid-js';
 
 import type { Notification } from '../../../notifications';
 import { ActionTypeEnum } from '../../../types';
 import { useInboxContext, useLocalization } from '../../context';
-import { cn, formatToRelativeTime, useStyle } from '../../helpers';
-import { MarkAsUnarchived } from '../../icons';
-import { MarkAsArchived } from '../../icons/MarkAsArchived';
-import { MarkAsRead } from '../../icons/MarkAsRead';
-import { MarkAsUnread } from '../../icons/MarkAsUnread';
+import { cn, formatSnoozedUntil, formatToRelativeTime, useStyle } from '../../helpers';
+import { Clock as DefaultClock } from '../../icons/Clock';
 import {
-  NotificationStatus,
   type BodyRenderer,
   type NotificationActionClickHandler,
   type NotificationClickHandler,
@@ -18,7 +14,9 @@ import {
 import Markdown from '../elements/Markdown';
 import { ExternalElementRenderer } from '../ExternalElementRenderer';
 import { Button } from '../primitives';
-import { Tooltip } from '../primitives/Tooltip';
+import { Badge } from '../primitives/Badge';
+import { renderNotificationActions } from './NotificationActions';
+import { IconRendererWrapper } from '../shared/IconRendererWrapper';
 
 type DefaultNotificationProps = {
   notification: Notification;
@@ -34,10 +32,38 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
   const { t, locale } = useLocalization();
   const { navigate, status } = useInboxContext();
   const [minutesPassed, setMinutesPassed] = createSignal(0);
-  const date = createMemo(() => {
+
+  const deliveredAtIconClass = style('notificationDeliveredAt__icon', 'nt-size-3', {
+    iconKey: 'clock',
+  });
+
+  const snoozedUntilIconClass = style('notificationSnoozedUntil__icon', 'nt-size-3', {
+    iconKey: 'clock',
+  });
+
+  const createdAt = createMemo(() => {
     minutesPassed(); // register as dep
 
     return formatToRelativeTime({ fromDate: new Date(props.notification.createdAt), locale: locale() });
+  });
+  const snoozedUntil = createMemo(() => {
+    minutesPassed(); // register as dep
+    if (!props.notification.snoozedUntil) {
+      return null;
+    }
+
+    return formatSnoozedUntil({ untilDate: new Date(props.notification.snoozedUntil), locale: locale() });
+  });
+  const deliveredAt = createMemo(() => {
+    minutesPassed(); // register as dep
+
+    if (!props.notification.deliveredAt || !Array.isArray(props.notification.deliveredAt)) {
+      return null;
+    }
+
+    return props.notification.deliveredAt.map((date) =>
+      formatToRelativeTime({ fromDate: new Date(date), locale: locale() })
+    );
   });
 
   createEffect(() => {
@@ -113,7 +139,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
                 {(subject) => (
                   <Markdown
                     appearanceKey="notificationSubject"
-                    class="nt-text-start nt-font-medium"
+                    class="nt-text-start nt-font-medium nt-whitespace-pre-wrap [word-break:break-word]"
                     strongAppearanceKey="notificationSubject__strong"
                   >
                     {subject()}
@@ -130,7 +156,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
               <Markdown
                 appearanceKey="notificationBody"
                 strongAppearanceKey="notificationBody__strong"
-                class="nt-text-start nt-whitespace-pre-wrap nt-text-foreground-alpha-600"
+                class="nt-text-start nt-whitespace-pre-wrap nt-text-foreground-alpha-600 [word-break:break-word]"
               >
                 {props.notification.body}
               </Markdown>
@@ -142,107 +168,10 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
         <div
           class={style(
             'notificationDefaultActions',
-            'nt-absolute nt-transition nt-duration-100 nt-ease-out nt-gap-0.5 nt-flex nt-shrink-0 nt-opacity-0 group-hover:nt-opacity-100 group-focus-within:nt-opacity-100 nt-justify-center nt-items-center nt-bg-background/90 nt-right-3 nt-top-3 nt-border nt-border-neutral-alpha-100 nt-rounded-lg nt-backdrop-blur-lg nt-p-0.5'
+            `nt-absolute nt-transition nt-duration-100 nt-ease-out nt-gap-0.5 nt-flex nt-shrink-0 nt-opacity-0 group-hover:nt-opacity-100 group-focus-within:nt-opacity-100 nt-justify-center nt-items-center nt-bg-background/90 nt-right-3 nt-top-3 nt-border nt-border-neutral-alpha-100 nt-rounded-lg nt-backdrop-blur-lg nt-p-0.5`
           )}
         >
-          <Show when={status() !== NotificationStatus.ARCHIVED}>
-            <Show
-              when={props.notification.isRead}
-              fallback={
-                <Tooltip.Root>
-                  <Tooltip.Trigger
-                    asChild={(childProps) => (
-                      <Button
-                        appearanceKey="notificationRead__button"
-                        size="iconSm"
-                        variant="ghost"
-                        {...childProps}
-                        onClick={async (e) => {
-                          e.stopPropagation();
-                          await props.notification.read();
-                        }}
-                      >
-                        <MarkAsRead class={style('notificationRead__icon', 'nt-size-3')} />
-                      </Button>
-                    )}
-                  />
-                  <Tooltip.Content data-localization="notification.actions.read.tooltip">
-                    {t('notification.actions.read.tooltip')}
-                  </Tooltip.Content>
-                </Tooltip.Root>
-              }
-            >
-              <Tooltip.Root>
-                <Tooltip.Trigger
-                  asChild={(childProps) => (
-                    <Button
-                      appearanceKey="notificationUnread__button"
-                      size="iconSm"
-                      variant="ghost"
-                      {...childProps}
-                      onClick={async (e) => {
-                        e.stopPropagation();
-                        await props.notification.unread();
-                      }}
-                    >
-                      <MarkAsUnread class={style('notificationUnread__icon', 'nt-size-3')} />
-                    </Button>
-                  )}
-                />
-                <Tooltip.Content data-localization="notification.actions.unread.tooltip">
-                  {t('notification.actions.unread.tooltip')}
-                </Tooltip.Content>
-              </Tooltip.Root>
-            </Show>
-          </Show>
-          <Show
-            when={props.notification.isArchived}
-            fallback={
-              <Tooltip.Root>
-                <Tooltip.Trigger
-                  asChild={(childProps) => (
-                    <Button
-                      appearanceKey="notificationArchive__button"
-                      size="iconSm"
-                      variant="ghost"
-                      {...childProps}
-                      onClick={async (e) => {
-                        e.stopPropagation();
-                        await props.notification.archive();
-                      }}
-                    >
-                      <MarkAsArchived class={style('notificationArchive__icon', 'nt-size-3')} />
-                    </Button>
-                  )}
-                />
-                <Tooltip.Content data-localization="notification.actions.archive.tooltip">
-                  {t('notification.actions.archive.tooltip')}
-                </Tooltip.Content>
-              </Tooltip.Root>
-            }
-          >
-            <Tooltip.Root>
-              <Tooltip.Trigger
-                asChild={(childProps) => (
-                  <Button
-                    appearanceKey="notificationUnarchive__button"
-                    size="iconSm"
-                    variant="ghost"
-                    {...childProps}
-                    onClick={async (e) => {
-                      e.stopPropagation();
-                      await props.notification.unarchive();
-                    }}
-                  >
-                    <MarkAsUnarchived class={style('notificationArchive__icon', 'nt-size-3')} />
-                  </Button>
-                )}
-              />
-              <Tooltip.Content data-localization="notification.actions.unarchive.tooltip">
-                {t('notification.actions.unarchive.tooltip')}
-              </Tooltip.Content>
-            </Tooltip.Root>
-          </Show>
+          {renderNotificationActions(props.notification, status)}
         </div>
         <Show when={props.notification.primaryAction || props.notification.secondaryAction}>
           <div class={style('notificationCustomActions', 'nt-flex nt-flex-wrap nt-gap-2')}>
@@ -270,7 +199,50 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
             </Show>
           </div>
         </Show>
-        <p class={style('notificationDate', 'nt-text-foreground-alpha-400')}>{date()}</p>
+        <div class={style('notificationDate', 'nt-text-foreground-alpha-400 nt-flex nt-items-center nt-gap-1')}>
+          <Show
+            when={snoozedUntil()}
+            fallback={
+              <>
+                <Show when={deliveredAt()} fallback={<>{createdAt()}</>}>
+                  {(deliveredAt) => (
+                    <Show when={deliveredAt().length >= 2}>
+                      {' '}
+                      <For each={deliveredAt().slice(-2)}>
+                        {(date, index) => (
+                          <>
+                            <Show when={index() === 0}>{date} ·</Show>
+                            <Show when={index() === 1}>
+                              <Badge appearanceKey="notificationDeliveredAt__badge">
+                                <IconRendererWrapper
+                                  iconKey="clock"
+                                  class={deliveredAtIconClass}
+                                  fallback={<DefaultClock class={deliveredAtIconClass} />}
+                                />
+                                {date}
+                              </Badge>
+                            </Show>
+                          </>
+                        )}
+                      </For>
+                    </Show>
+                  )}
+                </Show>
+              </>
+            }
+          >
+            {(snoozedUntil) => (
+              <>
+                <IconRendererWrapper
+                  iconKey="clock"
+                  class={snoozedUntilIconClass}
+                  fallback={<DefaultClock class={snoozedUntilIconClass} />}
+                />
+                {t('notification.snoozedUntil')} · {snoozedUntil()}
+              </>
+            )}
+          </Show>
+        </div>
       </div>
 
       <Show when={!props.notification.isRead}>

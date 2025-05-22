@@ -97,6 +97,7 @@ describe('MarkManyNotificationsAs', () => {
         ids: command.ids,
         read: command.read,
         archived: command.archived,
+        snoozedUntil: command.snoozedUntil,
       },
     ]);
   });

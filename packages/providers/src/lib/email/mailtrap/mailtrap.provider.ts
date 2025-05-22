@@ -7,7 +7,7 @@ import {
   ICheckIntegrationResponse,
   CheckIntegrationResponseEnum,
 } from '@novu/stateless';
-import { MailtrapClient, Address, Mail } from 'mailtrap';
+import { MailtrapClient, Address, Mail, Attachment } from 'mailtrap';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
@@ -73,6 +73,7 @@ export class MailtrapEmailProvider extends BaseProvider implements IEmailProvide
           filename: attachment.name,
           content: attachment.file,
           type: attachment.mime,
+          content_id: attachment.cid,
         })),
       }).body
     );

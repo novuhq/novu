@@ -43,7 +43,7 @@ See the docs for [Running on Local Machine - API Tests](https://docs.novu.co/com
 
 - Use the `@Get`, `@Post`, `@Put`, `@Delete` decorators to define the HTTP method.
 - Use the `@Param`, `@Query`, `@Body` decorators to define the parameters.
-- Use the `@UserAuthentication()` decorator to define the guards as well as make it accessible to novu web app.
+- Use the `@RequireAuthentication()` decorator to define the guards as well as make it accessible to novu web app.
 - Use the @ExternalApiAccessible decorator to define the endpoint as accessible by external API (Users with Api-Key) & The official Novu SDK.
 
 #### Naming conventions

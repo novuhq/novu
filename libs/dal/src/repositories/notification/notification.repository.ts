@@ -1,13 +1,13 @@
-import { FilterQuery, QueryWithHelpers, Types } from 'mongoose';
 import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
 import { subMonths, subWeeks } from 'date-fns';
+import { FilterQuery, QueryWithHelpers, Types } from 'mongoose';
 
-import { BaseRepository } from '../base-repository';
-import { NotificationDBModel, NotificationEntity } from './notification.entity';
-import { Notification } from './notification.schema';
 import type { EnforceEnvOrOrgIds } from '../../types';
+import { BaseRepository } from '../base-repository';
 import { EnvironmentId } from '../environment';
+import { NotificationDBModel, NotificationEntity } from './notification.entity';
 import { NotificationFeedItemEntity } from './notification.feed.Item.entity';
+import { Notification } from './notification.schema';
 
 export class NotificationRepository extends BaseRepository<
   NotificationDBModel,
@@ -32,6 +32,7 @@ export class NotificationRepository extends BaseRepository<
       templates?: string[] | null;
       subscriberIds?: string[];
       transactionId?: string;
+      topicKey?: string;
       after?: string;
       before?: string;
     } = {},
@@ -44,6 +45,10 @@ export class NotificationRepository extends BaseRepository<
 
     if (query.transactionId) {
       requestQuery.transactionId = query.transactionId;
+    }
+
+    if (query.topicKey) {
+      requestQuery['topics.topicKey'] = query.topicKey;
     }
 
     if (query.after || query.before) {

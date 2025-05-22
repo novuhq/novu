@@ -4,7 +4,7 @@ import { NovuEventEmitter } from './event-emitter';
 import { Notifications } from './notifications';
 import { Preferences } from './preferences';
 import { Session } from './session';
-import type { NovuOptions } from './types';
+import type { NovuOptions, Subscriber } from './types';
 import { Socket } from './ws';
 
 export class Novu implements Pick<NovuEventEmitter, 'on'> {
@@ -40,8 +40,8 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
     this.#session = new Session(
       {
         applicationIdentifier: options.applicationIdentifier,
-        subscriberId: options.subscriberId,
         subscriberHash: options.subscriberHash,
+        subscriber: buildSubscriber(options),
       },
       this.#inboxService,
       this.#emitter
@@ -79,4 +79,16 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
       this.#emitter.off(eventName, listener);
     };
   }
+}
+
+function buildSubscriber(options: NovuOptions): Subscriber {
+  let subscriberObj: Subscriber;
+
+  if (options.subscriber) {
+    subscriberObj = typeof options.subscriber === 'string' ? { subscriberId: options.subscriber } : options.subscriber;
+  } else {
+    subscriberObj = { subscriberId: options.subscriberId as string };
+  }
+
+  return subscriberObj;
 }

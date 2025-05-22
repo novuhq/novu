@@ -6,7 +6,12 @@ import { Preference } from '../preferences/preference';
 import { ListPreferencesArgs } from '../preferences/types';
 
 // these events should update the preferences in the cache
-const updateEvents: PreferenceEvents[] = ['preference.update.pending', 'preference.update.resolved'];
+const updateEvents: PreferenceEvents[] = [
+  'preference.update.pending',
+  'preference.update.resolved',
+  'preferences.bulk_update.pending',
+  'preferences.bulk_update.resolved',
+];
 
 const excludeEmpty = ({ tags }: ListPreferencesArgs) =>
   Object.entries({ tags }).reduce((acc, [key, value]) => {
@@ -57,21 +62,30 @@ export class PreferencesCache {
     return true;
   };
 
-  private handlePreferenceEvent = ({ data }: { data?: Preference }): void => {
+  private handlePreferenceEvent = ({ data }: { data?: Preference | Preference[] }): void => {
     if (!data) {
       return;
     }
 
+    const preferences = Array.isArray(data) ? data : [data];
+
+    const uniqueFilterKeys = new Set<string>();
     this.#cache.keys().forEach((key) => {
-      const hasUpdatedPreference = this.updatePreference(key, data);
+      preferences.forEach((preference) => {
+        const hasUpdatedPreference = this.updatePreference(key, preference);
 
-      const updatedPreference = this.#cache.get(key);
-      if (!hasUpdatedPreference || !updatedPreference) {
-        return;
-      }
+        const updatedPreference = this.#cache.get(key);
+        if (!hasUpdatedPreference || !updatedPreference) {
+          return;
+        }
 
+        uniqueFilterKeys.add(key);
+      });
+    });
+
+    uniqueFilterKeys.forEach((key) => {
       this.#emitter.emit('preferences.list.updated', {
-        data: updatedPreference,
+        data: this.#cache.get(key) ?? [],
       });
     });
   };

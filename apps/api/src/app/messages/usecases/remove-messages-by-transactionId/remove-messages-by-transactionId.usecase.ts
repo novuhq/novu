@@ -1,6 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+
 import { buildFeedKey, buildMessageCountKey, InvalidateCacheService } from '@novu/application-generic';
-import { MessageEntity, MessageRepository } from '@novu/dal';
+import { EnforceEnvId, MessageEntity, MessageRepository } from '@novu/dal';
+
 import { RemoveMessagesByTransactionIdCommand } from './remove-messages-by-transactionId.command';
 
 @Injectable()
@@ -41,7 +43,7 @@ export class RemoveMessagesByTransactionId {
       }
     }
 
-    const deleteQuery: Partial<MessageEntity> = {
+    const deleteQuery: Partial<MessageEntity> & EnforceEnvId = {
       transactionId: command.transactionId,
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
@@ -51,6 +53,6 @@ export class RemoveMessagesByTransactionId {
       deleteQuery.channel = command.channel;
     }
 
-    await this.messageRepository.deleteMany(deleteQuery);
+    await this.messageRepository.delete(deleteQuery);
   }
 }

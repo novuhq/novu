@@ -22,7 +22,7 @@ runs:
     - name: Install pnpm
       uses: pnpm/action-setup@v3
 
-    - uses: actions/setup-node@v4
+    - uses: useblacksmith/setup-node@v5
       name: ⚙️ Setup Node Version
       with:
         node-version: '20.8.1'

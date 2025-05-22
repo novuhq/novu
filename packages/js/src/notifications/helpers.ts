@@ -2,7 +2,16 @@ import { Action, ActionTypeEnum, NotificationFilter, Result } from '../types';
 import type { InboxService } from '../api';
 import type { NovuEventEmitter } from '../event-emitter';
 import { Notification } from './notification';
-import type { ArchivedArgs, CompleteArgs, ReadArgs, RevertArgs, UnarchivedArgs, UnreadArgs } from './types';
+import type {
+  ArchivedArgs,
+  CompleteArgs,
+  ReadArgs,
+  RevertArgs,
+  SnoozeArgs,
+  UnarchivedArgs,
+  UnreadArgs,
+  UnsnoozeArgs,
+} from './types';
 import { NovuError } from '../utils/errors';
 import type { NotificationsCache } from '../cache';
 
@@ -173,6 +182,86 @@ export const unarchive = async ({
   }
 };
 
+export const snooze = async ({
+  emitter,
+  apiService,
+  args,
+}: {
+  emitter: NovuEventEmitter;
+  apiService: InboxService;
+  args: SnoozeArgs;
+}): Result<Notification> => {
+  const { notificationId, optimisticValue } = getNotificationDetails(
+    args,
+    {
+      isSnoozed: true,
+      snoozedUntil: args.snoozeUntil,
+    },
+    {
+      emitter,
+      apiService,
+    }
+  );
+
+  try {
+    emitter.emit('notification.snooze.pending', {
+      args,
+      data: optimisticValue,
+    });
+
+    const response = await apiService.snooze(notificationId, args.snoozeUntil);
+
+    const updatedNotification = new Notification(response, emitter, apiService);
+    emitter.emit('notification.snooze.resolved', { args, data: updatedNotification });
+
+    return { data: updatedNotification };
+  } catch (error) {
+    emitter.emit('notification.snooze.resolved', { args, error });
+
+    return { error: new NovuError('Failed to snooze notification', error) };
+  }
+};
+
+export const unsnooze = async ({
+  emitter,
+  apiService,
+  args,
+}: {
+  emitter: NovuEventEmitter;
+  apiService: InboxService;
+  args: UnsnoozeArgs;
+}): Result<Notification> => {
+  const { notificationId, optimisticValue } = getNotificationDetails(
+    args,
+    {
+      isSnoozed: false,
+      snoozedUntil: null,
+    },
+    {
+      emitter,
+      apiService,
+    }
+  );
+
+  try {
+    emitter.emit('notification.unsnooze.pending', {
+      args,
+      data: optimisticValue,
+    });
+
+    const response = await apiService.unsnooze(notificationId);
+
+    const updatedNotification = new Notification(response, emitter, apiService);
+    emitter.emit('notification.unsnooze.resolved', { args, data: updatedNotification });
+
+    return { data: updatedNotification };
+  } catch (error) {
+    emitter.emit('notification.unsnooze.resolved', { args, error });
+
+    return { error: new NovuError('Failed to unsnooze notification', error) };
+  }
+};
+
 export const completeAction = async ({
   emitter,
   apiService,
@@ -273,7 +362,7 @@ export const revertAction = async ({
 };
 
 const getNotificationDetails = (
-  args: ReadArgs | UnreadArgs | ArchivedArgs | UnarchivedArgs,
+  args: ReadArgs | UnreadArgs | ArchivedArgs | UnarchivedArgs | SnoozeArgs | UnsnoozeArgs,
   update: Partial<Notification>,
   dependencies: {
     emitter: NovuEventEmitter;
@@ -301,14 +390,16 @@ export const readAll = async ({
   inboxService,
   notificationsCache,
   tags,
+  data,
 }: {
   emitter: NovuEventEmitter;
   inboxService: InboxService;
   notificationsCache: NotificationsCache;
   tags?: NotificationFilter['tags'];
+  data?: Record<string, unknown>;
 }): Result<void> => {
   try {
-    const notifications = notificationsCache.getUniqueNotifications({ tags });
+    const notifications = notificationsCache.getUniqueNotifications({ tags, data });
     const optimisticNotifications = notifications.map(
       (notification) =>
         new Notification(
@@ -323,15 +414,15 @@ export const readAll = async ({
           inboxService
         )
     );
-    emitter.emit('notifications.read_all.pending', { args: { tags }, data: optimisticNotifications });
+    emitter.emit('notifications.read_all.pending', { args: { tags, data }, data: optimisticNotifications });
 
-    await inboxService.readAll({ tags });
+    await inboxService.readAll({ tags, data });
 
-    emitter.emit('notifications.read_all.resolved', { args: { tags }, data: optimisticNotifications });
+    emitter.emit('notifications.read_all.resolved', { args: { tags, data }, data: optimisticNotifications });
 
     return {};
   } catch (error) {
-    emitter.emit('notifications.read_all.resolved', { args: { tags }, error });
+    emitter.emit('notifications.read_all.resolved', { args: { tags, data }, error });
 
     return { error: new NovuError('Failed to read all notifications', error) };
   }
@@ -342,14 +433,16 @@ export const archiveAll = async ({
   inboxService,
   notificationsCache,
   tags,
+  data,
 }: {
   emitter: NovuEventEmitter;
   inboxService: InboxService;
   notificationsCache: NotificationsCache;
   tags?: NotificationFilter['tags'];
+  data?: Record<string, unknown>;
 }): Result<void> => {
   try {
-    const notifications = notificationsCache.getUniqueNotifications({ tags });
+    const notifications = notificationsCache.getUniqueNotifications({ tags, data });
     const optimisticNotifications = notifications.map(
       (notification) =>
         new Notification(
@@ -364,15 +457,15 @@ export const archiveAll = async ({
           inboxService
         )
     );
-    emitter.emit('notifications.archive_all.pending', { args: { tags }, data: optimisticNotifications });
+    emitter.emit('notifications.archive_all.pending', { args: { tags, data }, data: optimisticNotifications });
 
-    await inboxService.archiveAll({ tags });
+    await inboxService.archiveAll({ tags, data });
 
-    emitter.emit('notifications.archive_all.resolved', { args: { tags }, data: optimisticNotifications });
+    emitter.emit('notifications.archive_all.resolved', { args: { tags, data }, data: optimisticNotifications });
 
     return {};
   } catch (error) {
-    emitter.emit('notifications.archive_all.resolved', { args: { tags }, error });
+    emitter.emit('notifications.archive_all.resolved', { args: { tags, data }, error });
 
     return { error: new NovuError('Failed to archive all notifications', error) };
   }
@@ -383,14 +476,16 @@ export const archiveAllRead = async ({
   inboxService,
   notificationsCache,
   tags,
+  data,
 }: {
   emitter: NovuEventEmitter;
   inboxService: InboxService;
   notificationsCache: NotificationsCache;
   tags?: NotificationFilter['tags'];
+  data?: Record<string, unknown>;
 }): Result<void> => {
   try {
-    const notifications = notificationsCache.getUniqueNotifications({ tags, read: true });
+    const notifications = notificationsCache.getUniqueNotifications({ tags, data, read: true });
     const optimisticNotifications = notifications.map(
       (notification) =>
         new Notification(
@@ -399,15 +494,15 @@ export const archiveAllRead = async ({
           inboxService
         )
     );
-    emitter.emit('notifications.archive_all_read.pending', { args: { tags }, data: optimisticNotifications });
+    emitter.emit('notifications.archive_all_read.pending', { args: { tags, data }, data: optimisticNotifications });
 
-    await inboxService.archiveAllRead({ tags });
+    await inboxService.archiveAllRead({ tags, data });
 
-    emitter.emit('notifications.archive_all_read.resolved', { args: { tags }, data: optimisticNotifications });
+    emitter.emit('notifications.archive_all_read.resolved', { args: { tags, data }, data: optimisticNotifications });
 
     return {};
   } catch (error) {
-    emitter.emit('notifications.archive_all_read.resolved', { args: { tags }, error });
+    emitter.emit('notifications.archive_all_read.resolved', { args: { tags, data }, error });
 
     return { error: new NovuError('Failed to archive all read notifications', error) };
   }

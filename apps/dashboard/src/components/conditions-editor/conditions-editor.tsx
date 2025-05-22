@@ -57,14 +57,16 @@ function InternalConditionsEditor({
   isAllowedVariable,
   query,
   onQueryChange,
+  saveForm,
 }: {
   fields: Field[];
   variables: LiquidVariable[];
   isAllowedVariable: IsAllowedVariable;
   query: RuleGroupType;
   onQueryChange: (query: RuleGroupType) => void;
+  saveForm: () => void;
 }) {
-  const context = useMemo(() => ({ variables, isAllowedVariable }), [variables, isAllowedVariable]);
+  const context = useMemo(() => ({ variables, isAllowedVariable, saveForm }), [variables, isAllowedVariable, saveForm]);
 
   return (
     <QueryBuilder
@@ -81,16 +83,24 @@ function InternalConditionsEditor({
   );
 }
 
+export type ConditionsEditorContext = {
+  variables: LiquidVariable[];
+  isAllowedVariable: IsAllowedVariable;
+  saveForm: () => void;
+};
+
 export function ConditionsEditor({
   query,
   onQueryChange,
   fields,
+  saveForm,
   variables,
   isAllowedVariable,
 }: {
   query: RuleGroupType;
   onQueryChange: (query: RuleGroupType) => void;
   fields: Field[];
+  saveForm: () => void;
   variables: LiquidVariable[];
   isAllowedVariable: IsAllowedVariable;
 }) {
@@ -102,6 +112,7 @@ export function ConditionsEditor({
         isAllowedVariable={isAllowedVariable}
         query={query}
         onQueryChange={onQueryChange}
+        saveForm={saveForm}
       />
     </ConditionsEditorProvider>
   );

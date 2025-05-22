@@ -8,7 +8,12 @@ export function ForView(props: NodeViewProps) {
   const { editor, getPos } = props;
 
   return (
-    <NodeViewWrapper draggable="true" data-drag-handle="" data-type="repeat" className="mly-relative">
+    <NodeViewWrapper
+      draggable="true"
+      data-drag-handle=""
+      data-type="repeat"
+      className="mly-relative border-soft-100 mx-[-0.5rem] rounded-md border px-3 py-3"
+    >
       <NodeViewContent className="is-editable" />
       <div
         role="button"
@@ -17,20 +22,11 @@ export function ForView(props: NodeViewProps) {
         onClick={() => {
           editor.commands.setNodeSelection(getPos());
         }}
-        className="mly-inline-flex mly-items-center mly-gap-1 mly-px-1.5 mly-py-0.5 mly-rounded-sm mly-bg-rose-50 mly-text-xs mly-absolute mly-top-0 mly-right-0 mly-translate-y-[-50%] mly-cursor-grab"
+        className="border-soft-100 absolute right-[-2px] top-[-3px] flex cursor-grab items-center justify-center gap-[2px] rounded border bg-white px-1 py-[2px]"
       >
-        <Repeat2 className="mly-size-3 mly-stroke-[2.5]" />
-        <span className="mly-font-medium">Repeat</span>
+        <Repeat2 className="size-3 flex-shrink-0" />
+        <span className="text-2xs font-medium leading-[1]">repeat</span>
       </div>
-      <div className="mly-bg-rose-50 absolute right-0 top-0 h-full w-[2px]" />
-      <div
-        className="mly-bg-rose-50 absolute right-0 top-0 h-[2px] w-[25%]"
-        style={{ background: 'linear-gradient(to left, rgb(255 241 242) 60%, transparent)' }}
-      />
-      <div
-        className="mly-bg-rose-50 absolute bottom-0 right-0 h-[2px] w-[25%]"
-        style={{ background: 'linear-gradient(to left, rgb(255 241 242) 60%, transparent)' }}
-      />
     </NodeViewWrapper>
   );
 }

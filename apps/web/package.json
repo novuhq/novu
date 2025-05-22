@@ -1,6 +1,6 @@
 {
   "name": "@novu/web",
-  "version": "2.1.10",
+  "version": "2.1.11",
   "private": true,
   "scripts": {
     "start": "pnpm panda --watch & cross-env NODE_OPTIONS=--max_old_space_size=8192 DISABLE_ESLINT_PLUGIN=true PORT=4200 react-app-rewired start",
@@ -85,7 +85,7 @@
     "allotment": "^1.20.2",
     "antd": "^4.10.0",
     "autoprefixer": "^9.8.6",
-    "axios": "^1.6.8",
+    "axios": "^1.9.0",
     "babel-plugin-import": "^1.13.3",
     "chart.js": "^3.7.1",
     "crypto-js": "^4.2.0",

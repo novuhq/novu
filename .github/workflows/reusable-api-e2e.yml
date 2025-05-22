@@ -16,7 +16,7 @@ on:
 jobs:
   e2e_api:
     name: Test E2E
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-8vcpu-ubuntu-2404
     timeout-minutes: 30
     permissions:
       contents: read
@@ -24,7 +24,6 @@ jobs:
       id-token: write
       packages: write
     steps:
-      # Checkout with EE-submodule if token provided
       - uses: actions/checkout@v4
         name: Checkout with submodules
         if: ${{ inputs.ee }}

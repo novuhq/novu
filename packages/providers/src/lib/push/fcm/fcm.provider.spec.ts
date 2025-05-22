@@ -20,34 +20,32 @@ const mockApp = {
   delete: vi.fn() as any,
 };
 
-vi.mock(import('firebase-admin/messaging'), async (importOriginal) => {
-  const actual = await importOriginal();
+vi.mock('firebase-admin/messaging', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('firebase-admin/messaging')>();
 
   return {
     ...actual,
-    getMessaging: vi.fn(() => {
-      return {
-        send: vi.fn(),
-        sendEach: vi.fn(),
-        sendAll: vi.fn(),
-        sendEachForMulticast,
-        sendToDevice: vi.fn(),
-        sendToDeviceGroup: vi.fn(),
-        sendToTopic: vi.fn(),
-        sendToCondition: vi.fn(),
-        subscribeToTopic: vi.fn(),
-        unsubscribeFromTopic: vi.fn(),
-      };
-    }),
+    getMessaging: vi.fn(() => ({
+      send: vi.fn(),
+      sendEach: vi.fn(),
+      sendAll: vi.fn(),
+      sendEachForMulticast,
+      sendToDevice: vi.fn(),
+      sendToDeviceGroup: vi.fn(),
+      sendToTopic: vi.fn(),
+      sendToCondition: vi.fn(),
+      subscribeToTopic: vi.fn(),
+      unsubscribeFromTopic: vi.fn(),
+      app: mockApp,
+    })),
   };
 });
 
-vi.mock(import('firebase-admin/app'), async (importOriginal) => {
-  const actual = await importOriginal();
+vi.mock('firebase-admin/app', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('firebase-admin/app')>();
 
   return {
     ...actual,
-    default: vi.fn(),
     getApp: vi.fn(() => mockApp),
     deleteApp: vi.fn(),
     cert: vi.fn(),
@@ -55,12 +53,12 @@ vi.mock(import('firebase-admin/app'), async (importOriginal) => {
   };
 });
 
-vi.mock(import('firebase-admin'), async (importOriginal) => {
-  const actual = await importOriginal();
+vi.mock('firebase-admin', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('firebase-admin')>();
 
   return {
     ...actual,
-    initializeApp: vi.fn(),
+    initializeApp: vi.fn(() => mockApp),
   };
 });
 

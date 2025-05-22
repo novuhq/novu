@@ -17,13 +17,14 @@ import {
   CacheInMemoryProviderService,
   CacheService,
   InvalidateCacheService,
+  PinoLogger,
 } from '@novu/application-generic';
 
-import { GroupedBlueprintResponse } from '../dto/grouped-blueprint.response.dto';
+import { GroupedBlueprintResponse } from '../dtos/grouped-blueprint.response.dto';
 import { GetGroupedBlueprints, POPULAR_TEMPLATES_ID_LIST } from '../usecases/get-grouped-blueprints';
 // eslint-disable-next-line import/no-namespace
 import * as blueprintStaticModule from '../usecases/get-grouped-blueprints/consts';
-import { CreateWorkflowRequestDto } from '../../workflows-v1/dto';
+import { CreateWorkflowRequestDto } from '../../workflows-v1/dtos';
 
 describe('Get grouped notification template blueprints - /blueprints/group-by-category (GET) #novu-v0', async () => {
   let session: UserSession;
@@ -43,7 +44,7 @@ describe('Get grouped notification template blueprints - /blueprints/group-by-ca
     session = new UserSession();
     await session.initialize();
 
-    getGroupedBlueprints = new GetGroupedBlueprints(new NotificationTemplateRepository());
+    getGroupedBlueprints = new GetGroupedBlueprints(new NotificationTemplateRepository(), new PinoLogger({}));
     indexModuleStub = sinon.stub(blueprintStaticModule, 'POPULAR_TEMPLATES_ID_LIST');
   });
 

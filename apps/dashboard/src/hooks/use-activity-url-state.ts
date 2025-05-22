@@ -32,6 +32,12 @@ function parseFilters(searchParams: URLSearchParams): ActivityFilters {
     result.subscriberId = subscriberId;
   }
 
+  const topicKey = searchParams.get('topicKey');
+
+  if (topicKey) {
+    result.topicKey = topicKey;
+  }
+
   const dateRange = searchParams.get('dateRange');
   result.dateRange = dateRange || DEFAULT_DATE_RANGE;
 
@@ -45,6 +51,7 @@ function parseFilterValues(searchParams: URLSearchParams): ActivityFiltersData {
     workflows: searchParams.get('workflows')?.split(',').filter(Boolean) || [],
     transactionId: searchParams.get('transactionId') || '',
     subscriberId: searchParams.get('subscriberId') || '',
+    topicKey: searchParams.get('topicKey') || '',
   };
 }
 
@@ -94,6 +101,10 @@ export function useActivityUrlState(): ActivityUrlState & {
 
       if (data.subscriberId) {
         newParams.set('subscriberId', data.subscriberId);
+      }
+
+      if (data.topicKey) {
+        newParams.set('topicKey', data.topicKey);
       }
 
       if (data.dateRange && data.dateRange !== DEFAULT_DATE_RANGE) {

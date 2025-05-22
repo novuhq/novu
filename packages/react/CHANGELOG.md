@@ -1,3 +1,55 @@
+## v3.4.0 (2025-05-16)
+
+### 🚀 Features
+
+- **js,react:** inbox preference grouping ([#8310](https://github.com/novuhq/novu/pull/8310))
+- **js,react:** inbox and styles under the shadow root ([#8262](https://github.com/novuhq/novu/pull/8262))
+
+### 🩹 Fixes
+
+- **react:** inbox hydration issue for shadow root detector ([#8321](https://github.com/novuhq/novu/pull/8321))
+
+### ❤️ Thank You
+
+- Paweł Tymczuk @LetItRock
+
+# v3.3.1 (2025-05-07)
+
+### 🧱 Updated Dependencies
+
+- Updated @novu/js to 3.3.1
+
+### ❤️ Thank You
+
+- Adam Chmara @ChmaraX
+
+## v3.3.0 (2025-05-07)
+
+### 🚀 Features
+
+- **js,react:** add snooze functionality ([#8230](https://github.com/novuhq/novu/pull/8230))
+- **repo:** Polish changelogs for packages ([a932bd38e4](https://github.com/novuhq/novu/commit/a932bd38e4))
+
+### 🧱 Updated Dependencies
+
+- Updated @novu/js to 3.3.0
+
+### ❤️ Thank You
+
+- Adam Chmara @ChmaraX
+- George Desipris @desiprisg
+- Paweł Tymczuk @LetItRock
+
+## v3.2.0 (2025-04-30)
+
+### 🚀 Features
+
+- **react:** upsert firstName, lastName, and email on session init ([#8142](https://github.com/novuhq/novu/pull/8142))
+
+### ❤️ Thank You
+
+- George Djabarov @djabarovgeorge
+
 ## v3.1.0 (2025-04-11)
 
 ### 🩹 Fixes

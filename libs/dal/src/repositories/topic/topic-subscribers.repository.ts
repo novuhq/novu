@@ -1,14 +1,16 @@
-import { ExternalSubscriberId } from '@novu/shared';
+import { DirectionEnum, ExternalSubscriberId } from '@novu/shared';
 
+import { FilterQuery } from 'mongoose';
+import { TopicEntity } from '../..';
+import type { EnforceEnvOrOrgIds } from '../../types/enforce';
+import { BaseRepository } from '../base-repository';
 import {
   CreateTopicSubscribersEntity,
-  TopicSubscribersEntity,
   TopicSubscribersDBModel,
+  TopicSubscribersEntity,
 } from './topic-subscribers.entity';
 import { TopicSubscribers } from './topic-subscribers.schema';
 import { EnvironmentId, OrganizationId, TopicId, TopicKey } from './types';
-import { BaseRepository } from '../base-repository';
-import type { EnforceEnvOrOrgIds } from '../../types/enforce';
 
 export class TopicSubscribersRepository extends BaseRepository<
   TopicSubscribersDBModel,
@@ -19,8 +21,45 @@ export class TopicSubscribersRepository extends BaseRepository<
     super(TopicSubscribers, TopicSubscribersEntity);
   }
 
-  async addSubscribers(subscribers: CreateTopicSubscribersEntity[]): Promise<void> {
-    await this.upsertMany(subscribers);
+  async findTopicsByTopicKeys(
+    environmentId: EnvironmentId,
+    topicKeys: TopicKey[]
+  ): Promise<{ _id: string; topic: TopicEntity }[]> {
+    if (!topicKeys.length) {
+      return [];
+    }
+
+    const aggregationPipeline = [
+      {
+        $match: {
+          _environmentId: this.convertStringToObjectId(environmentId),
+          topicKey: { $in: topicKeys },
+        },
+      },
+      {
+        $lookup: {
+          from: 'topics',
+          localField: '_topicId',
+          foreignField: '_id',
+          as: 'topic',
+        },
+      },
+      { $unwind: '$topic' },
+      {
+        $group: {
+          _id: '$topicKey',
+          topic: { $first: '$topic' },
+        },
+      },
+    ];
+
+    return await this.aggregate(aggregationPipeline);
+  }
+
+  async addSubscribers(subscribers: CreateTopicSubscribersEntity[]): Promise<any[]> {
+    const results = await this.upsertMany(subscribers);
+
+    return results;
   }
 
   async *getTopicDistinctSubscribers({
@@ -34,7 +73,7 @@ export class TopicSubscribersRepository extends BaseRepository<
       excludeSubscribers: string[];
     };
     batchSize?: number;
-  }) {
+  }): AsyncGenerator<{ _id: string; topics: string[] }, void, unknown> {
     const { _organizationId, _environmentId, topicIds, excludeSubscribers } = query;
     const mappedTopicIds = topicIds.map((id) => this.convertStringToObjectId(id));
 
@@ -50,12 +89,13 @@ export class TopicSubscribersRepository extends BaseRepository<
       {
         $group: {
           _id: '$externalSubscriberId',
+          topics: { $push: '$_topicId' },
         },
       },
     ];
 
     for await (const doc of this._model.aggregate(aggregatePipeline, { batchSize }).cursor()) {
-      yield this.mapEntity(doc);
+      yield doc;
     }
   }
 
@@ -99,5 +139,90 @@ export class TopicSubscribersRepository extends BaseRepository<
         $in: externalSubscriberIds,
       },
     });
+  }
+
+  async findTopicSubscriptionsWithPagination({
+    environmentId,
+    organizationId,
+    topicKey,
+    subscriberId,
+    limit = 10,
+    before,
+    after,
+    orderDirection = DirectionEnum.DESC,
+    includeCursor,
+  }: {
+    environmentId: EnvironmentId;
+    organizationId: OrganizationId;
+    topicKey?: TopicKey;
+    subscriberId?: ExternalSubscriberId;
+    limit?: number;
+    before?: string;
+    after?: string;
+    orderDirection?: DirectionEnum;
+    includeCursor?: boolean;
+  }) {
+    // Build query for topic subscriptions
+    const query: FilterQuery<TopicSubscribersDBModel> & EnforceEnvOrOrgIds = {
+      _environmentId: environmentId,
+      _organizationId: organizationId,
+    };
+
+    if (topicKey) {
+      query.topicKey = topicKey;
+    }
+
+    if (subscriberId) {
+      query.externalSubscriberId = subscriberId;
+    }
+
+    // Handle cursor-based pagination
+    let subscription: TopicSubscribersEntity | null = null;
+    const id = before || after;
+
+    if (id) {
+      subscription = await this.findOne({
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+        _id: id,
+      });
+
+      if (!subscription) {
+        return {
+          data: [],
+          next: null,
+          previous: null,
+        };
+      }
+    }
+
+    const afterCursor =
+      after && subscription
+        ? {
+            sortBy: subscription._id,
+            paginateField: subscription._id,
+          }
+        : undefined;
+    const beforeCursor =
+      before && subscription
+        ? {
+            sortBy: subscription._id,
+            paginateField: subscription._id,
+          }
+        : undefined;
+
+    // Use cursor-based pagination
+    const subscriptionsPagination = await this.findWithCursorBasedPagination({
+      query,
+      paginateField: '_id',
+      sortBy: '_id',
+      sortDirection: orderDirection,
+      limit,
+      after: afterCursor,
+      before: beforeCursor,
+      includeCursor,
+    });
+
+    return subscriptionsPagination;
   }
 }

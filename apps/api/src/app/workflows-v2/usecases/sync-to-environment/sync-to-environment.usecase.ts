@@ -1,20 +1,16 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import {
-  PreferencesTypeEnum,
-  StepCreateDto,
-  StepResponseDto,
-  StepUpdateDto,
-  WorkflowCreationSourceEnum,
-  WorkflowOriginEnum,
-  WorkflowPreferences,
-  WorkflowResponseDto,
-  WorkflowStatusEnum,
-} from '@novu/shared';
+import { PreferencesTypeEnum, WorkflowCreationSourceEnum, WorkflowOriginEnum, WorkflowStatusEnum } from '@novu/shared';
 import { PreferencesEntity, PreferencesRepository } from '@novu/dal';
 import { Instrument, InstrumentUsecase } from '@novu/application-generic';
 import { SyncToEnvironmentCommand } from './sync-to-environment.command';
 import { GetWorkflowCommand, GetWorkflowUseCase } from '../get-workflow';
-import { UpsertWorkflowCommand, UpsertWorkflowDataCommand, UpsertWorkflowUseCase } from '../upsert-workflow';
+import {
+  UpsertStepDataCommand,
+  UpsertWorkflowCommand,
+  UpsertWorkflowDataCommand,
+  UpsertWorkflowUseCase,
+} from '../upsert-workflow';
+import { StepResponseDto, WorkflowPreferencesDto, WorkflowResponseDto } from '../../dtos';
 import { WorkflowNotSyncableException } from '../../exceptions/workflow-not-syncable-exception';
 
 export const SYNCABLE_WORKFLOW_ORIGINS = [WorkflowOriginEnum.NOVU_CLOUD];
@@ -42,16 +38,21 @@ export class SyncToEnvironmentUseCase {
       throw new BadRequestException('Cannot sync workflow to the same environment');
     }
 
-    const originWorkflow = await this.getWorkflowToClone(command);
+    const sourceWorkflow = await this.getWorkflowUseCase.execute(
+      GetWorkflowCommand.create({
+        user: command.user,
+        workflowIdOrInternalId: command.workflowIdOrInternalId,
+      })
+    );
 
-    if (!this.isSyncable(originWorkflow)) {
-      throw new WorkflowNotSyncableException(originWorkflow);
+    if (!this.isSyncable(sourceWorkflow)) {
+      throw new WorkflowNotSyncableException(sourceWorkflow);
     }
 
-    const preferencesToClone = await this.getWorkflowPreferences(originWorkflow._id, command.user.environmentId);
-    const externalId = originWorkflow.workflowId;
+    const preferencesToClone = await this.getWorkflowPreferences(sourceWorkflow._id, command.user.environmentId);
+    const externalId = sourceWorkflow.workflowId;
     const targetWorkflow = await this.findWorkflowInTargetEnvironment(command, externalId);
-    const workflowDto = await this.buildRequestDto(originWorkflow, preferencesToClone, targetWorkflow);
+    const workflowDto = await this.buildRequestDto(sourceWorkflow, preferencesToClone, targetWorkflow);
 
     return await this.upsertWorkflowUseCase.execute(
       UpsertWorkflowCommand.create({
@@ -68,25 +69,15 @@ export class SyncToEnvironmentUseCase {
   }
 
   private async buildRequestDto(
-    originWorkflow: WorkflowResponseDto,
+    sourceWorkflow: WorkflowResponseDto,
     preferencesToClone: PreferencesEntity[],
     targetWorkflow?: WorkflowResponseDto
   ): Promise<UpsertWorkflowDataCommand> {
     if (targetWorkflow) {
-      return await this.mapWorkflowToUpdateWorkflowDto(originWorkflow, targetWorkflow, preferencesToClone);
+      return await this.mapWorkflowToUpdateWorkflowDto(sourceWorkflow, targetWorkflow, preferencesToClone);
     }
 
-    return await this.mapWorkflowToCreateWorkflowDto(originWorkflow, preferencesToClone);
-  }
-
-  @Instrument()
-  private async getWorkflowToClone(command: SyncToEnvironmentCommand): Promise<WorkflowResponseDto> {
-    return this.getWorkflowUseCase.execute(
-      GetWorkflowCommand.create({
-        user: command.user,
-        workflowIdOrInternalId: command.workflowIdOrInternalId,
-      })
-    );
+    return await this.mapWorkflowToCreateWorkflowDto(sourceWorkflow, preferencesToClone);
   }
 
   @Instrument()
@@ -107,75 +98,74 @@ export class SyncToEnvironmentUseCase {
   }
 
   private async mapWorkflowToCreateWorkflowDto(
-    originWorkflow: WorkflowResponseDto,
+    sourceWorkflow: WorkflowResponseDto,
     preferences: PreferencesEntity[]
   ): Promise<UpsertWorkflowDataCommand> {
     return {
-      workflowId: originWorkflow.workflowId,
+      workflowId: sourceWorkflow.workflowId,
       origin: WorkflowOriginEnum.NOVU_CLOUD,
-      name: originWorkflow.name,
-      active: originWorkflow.active,
-      tags: originWorkflow.tags,
-      description: originWorkflow.description,
+      name: sourceWorkflow.name,
+      active: sourceWorkflow.active,
+      tags: sourceWorkflow.tags,
+      description: sourceWorkflow.description,
       __source: WorkflowCreationSourceEnum.DASHBOARD,
-      steps: await this.mapStepsToCreateOrUpdateDto(originWorkflow.steps),
+      steps: await this.mapStepsToCreateOrUpdateDto(sourceWorkflow.steps),
       preferences: this.mapPreferences(preferences),
     };
   }
 
   private async mapWorkflowToUpdateWorkflowDto(
-    originWorkflow: WorkflowResponseDto,
+    sourceWorkflow: WorkflowResponseDto,
     existingTargetEnvWorkflow: WorkflowResponseDto | undefined,
     preferencesToClone: PreferencesEntity[]
   ): Promise<UpsertWorkflowDataCommand> {
     return {
       origin: WorkflowOriginEnum.NOVU_CLOUD,
-      workflowId: originWorkflow.workflowId,
-      name: originWorkflow.name,
-      active: originWorkflow.active,
-      tags: originWorkflow.tags,
-      description: originWorkflow.description,
-      steps: await this.mapStepsToCreateOrUpdateDto(originWorkflow.steps, existingTargetEnvWorkflow?.steps),
+      workflowId: sourceWorkflow.workflowId,
+      name: sourceWorkflow.name,
+      active: sourceWorkflow.active,
+      tags: sourceWorkflow.tags,
+      description: sourceWorkflow.description,
+      steps: await this.mapStepsToCreateOrUpdateDto(sourceWorkflow.steps, existingTargetEnvWorkflow?.steps),
       preferences: this.mapPreferences(preferencesToClone),
     };
   }
 
   private async mapStepsToCreateOrUpdateDto(
-    originSteps: StepResponseDto[],
+    sourceSteps: StepResponseDto[],
     targetEnvSteps?: StepResponseDto[]
-  ): Promise<(StepUpdateDto | StepCreateDto)[]> {
-    return originSteps.map((sourceStep) => {
+  ): Promise<UpsertStepDataCommand[]> {
+    return sourceSteps.map((sourceStep) => {
       // if we find matching step in target environment, we are updating
-      const targetEnvStepInternalId = targetEnvSteps?.find(
-        (targetStep) => targetStep.stepId === sourceStep.stepId
-      )?._id;
+      const targetStepInternalId = targetEnvSteps?.find((targetStep) => targetStep.stepId === sourceStep.stepId)?._id;
 
-      return this.buildStepCreateOrUpdateDto(sourceStep, targetEnvStepInternalId);
+      return this.buildStepCreateOrUpdateDto(sourceStep, targetStepInternalId);
     });
   }
 
   private buildStepCreateOrUpdateDto(
-    step: StepResponseDto,
-    existingInternalId?: string
-  ): StepUpdateDto | StepCreateDto {
+    sourceStep: StepResponseDto,
+    targetStepInternalId?: string
+  ): UpsertStepDataCommand {
     return {
-      ...(existingInternalId && { _id: existingInternalId }),
-      name: step.name ?? '',
-      type: step.type,
-      controlValues: step.controls.values ?? {},
+      ...(targetStepInternalId && { _id: targetStepInternalId }),
+      stepId: sourceStep.stepId,
+      name: sourceStep.name ?? '',
+      type: sourceStep.type,
+      controlValues: sourceStep.controls.values ?? {},
     };
   }
 
   private mapPreferences(preferences: PreferencesEntity[]): {
-    user: WorkflowPreferences | null;
-    workflow: WorkflowPreferences | null;
+    user: WorkflowPreferencesDto | null;
+    workflow: WorkflowPreferencesDto | null;
   } {
     // we can typecast the preferences to WorkflowPreferences because user and workflow preferences are always full set
     return {
       user: preferences.find((pref) => pref.type === PreferencesTypeEnum.USER_WORKFLOW)
-        ?.preferences as WorkflowPreferences | null,
+        ?.preferences as WorkflowPreferencesDto | null,
       workflow: preferences.find((pref) => pref.type === PreferencesTypeEnum.WORKFLOW_RESOURCE)
-        ?.preferences as WorkflowPreferences | null,
+        ?.preferences as WorkflowPreferencesDto | null,
     };
   }
 

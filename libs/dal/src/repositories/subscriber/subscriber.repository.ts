@@ -1,12 +1,11 @@
-import { FilterQuery } from 'mongoose';
 import { DirectionEnum, EnvironmentId, ISubscribersDefine, OrganizationId } from '@novu/shared';
+import { DalException } from '../../shared';
+import type { EnforceEnvOrOrgIds } from '../../types';
+import { BaseRepository } from '../base-repository';
+import { BulkCreateSubscriberEntity } from './bulk.create.subscriber.entity';
 import { SubscriberDBModel, SubscriberEntity } from './subscriber.entity';
 import { Subscriber } from './subscriber.schema';
 import { IExternalSubscribersEntity } from './types';
-import { BaseRepository } from '../base-repository';
-import { DalException } from '../../shared';
-import type { EnforceEnvOrOrgIds } from '../../types';
-import { BulkCreateSubscriberEntity } from './bulk.create.subscriber.entity';
 
 export class SubscriberRepository extends BaseRepository<SubscriberDBModel, SubscriberEntity, EnforceEnvOrOrgIds> {
   constructor() {

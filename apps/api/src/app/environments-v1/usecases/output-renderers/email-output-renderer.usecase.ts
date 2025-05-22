@@ -1,34 +1,48 @@
 /* eslint-disable no-param-reassign */
 import { render as mailyRender, JSONContent as MailyJSONContent } from '@maily-to/render';
 import { Injectable } from '@nestjs/common';
-import { EmailRenderOutput, FeatureFlagsKeysEnum } from '@novu/shared';
-import { FeatureFlagsService, InstrumentUsecase, sanitizeHTML } from '@novu/application-generic';
-import { EnvironmentEntity } from '@novu/dal';
+import { EmailRenderOutput } from '@novu/shared';
+import { InstrumentUsecase, sanitizeHTML } from '@novu/application-generic';
+import { createLiquidEngine } from '@novu/framework/internal';
 
+import { Liquid } from 'liquidjs';
 import { FullPayloadForRender, RenderCommand } from './render-command';
-import { WrapMailyInLiquidUseCase } from './maily-to-liquid/wrap-maily-in-liquid.usecase';
-import { MailyAttrsEnum } from './maily-to-liquid/maily.types';
-import { parseLiquid } from '../../../shared/helpers/liquid';
-import { hasShow, isRepeatNode, isVariableNode } from './maily-to-liquid/maily-utils';
+import { MailyAttrsEnum } from '../../../shared/helpers/maily.types';
+import {
+  hasShow,
+  isButtonNode,
+  isImageNode,
+  isLinkNode,
+  isRepeatNode,
+  isVariableNode,
+  wrapMailyInLiquid,
+} from '../../../shared/helpers/maily-utils';
+
+type MailyJSONMarks = NonNullable<MailyJSONContent['marks']>[number];
 
 export class EmailOutputRendererCommand extends RenderCommand {
   environmentId: string;
 }
 
+function isJsonString(str: string): boolean {
+  try {
+    JSON.parse(str);
+  } catch (e) {
+    return false;
+  }
+
+  return true;
+}
+
 @Injectable()
 export class EmailOutputRendererUsecase {
-  constructor(
-    private wrapMailyInLiquidUsecase: WrapMailyInLiquidUseCase,
-    private readonly featureFlagService: FeatureFlagsService
-  ) {}
+  private readonly liquidEngine: Liquid;
 
+  constructor() {
+    this.liquidEngine = createLiquidEngine();
+  }
   @InstrumentUsecase()
   async execute(renderCommand: EmailOutputRendererCommand): Promise<EmailRenderOutput> {
-    const isEnhancedDigestEnabled = await this.featureFlagService.getFlag({
-      environment: { _id: renderCommand.environmentId } as EnvironmentEntity,
-      key: FeatureFlagsKeysEnum.IS_ENHANCED_DIGEST_ENABLED,
-      defaultValue: false,
-    });
     const { body, subject: controlSubject, disableOutputSanitization } = renderCommand.controlValues;
 
     if (!body || typeof body !== 'string') {
@@ -43,19 +57,17 @@ export class EmailOutputRendererUsecase {
       };
     }
 
-    const liquifiedMaily = this.wrapMailyInLiquidUsecase.execute({ emailEditor: body });
-    const transformedMaily = await this.transformMailyContent(
-      liquifiedMaily,
-      renderCommand.fullPayloadForRender,
-      isEnhancedDigestEnabled
-    );
-    const parsedMaily = await this.parseMailyContentByLiquid(
-      transformedMaily,
-      renderCommand.fullPayloadForRender,
-      isEnhancedDigestEnabled
-    );
-    const strippedMaily = this.removeTrailingEmptyLines(parsedMaily);
-    const renderedHtml = await mailyRender(strippedMaily);
+    let renderedHtml: string;
+
+    if (typeof body === 'object' || (typeof body === 'string' && isJsonString(body))) {
+      const liquifiedMaily = wrapMailyInLiquid(body);
+      const transformedMaily = await this.transformMailyContent(liquifiedMaily, renderCommand.fullPayloadForRender);
+      const parsedMaily = await this.parseMailyContentByLiquid(transformedMaily, renderCommand.fullPayloadForRender);
+      const strippedMaily = this.removeTrailingEmptyLines(parsedMaily);
+      renderedHtml = await mailyRender(strippedMaily);
+    } else {
+      renderedHtml = body;
+    }
 
     /**
      * Force type mapping in case undefined control.
@@ -97,10 +109,9 @@ export class EmailOutputRendererUsecase {
 
   private async parseMailyContentByLiquid(
     mailyContent: MailyJSONContent,
-    variables: FullPayloadForRender,
-    isEnhancedDigestEnabled: boolean
+    variables: FullPayloadForRender
   ): Promise<MailyJSONContent> {
-    const parsedString = await parseLiquid(JSON.stringify(mailyContent), variables, isEnhancedDigestEnabled);
+    const parsedString = await this.liquidEngine.parseAndRender(JSON.stringify(mailyContent), variables);
 
     return JSON.parse(parsedString);
   }
@@ -108,7 +119,6 @@ export class EmailOutputRendererUsecase {
   private async transformMailyContent(
     node: MailyJSONContent,
     variables: FullPayloadForRender,
-    isEnhancedDigestEnabled: boolean,
     parent?: MailyJSONContent
   ) {
     const queue: Array<{ node: MailyJSONContent; parent?: MailyJSONContent }> = [{ node, parent }];
@@ -117,7 +127,7 @@ export class EmailOutputRendererUsecase {
       const current = queue.shift()!;
 
       if (hasShow(current.node)) {
-        const shouldShow = await this.handleShowNode(current.node, variables, isEnhancedDigestEnabled, current.parent);
+        const shouldShow = await this.handleShowNode(current.node, variables, current.parent);
 
         if (!shouldShow) {
           continue;
@@ -125,7 +135,7 @@ export class EmailOutputRendererUsecase {
       }
 
       if (isRepeatNode(current.node)) {
-        await this.handleEachNode(current.node, variables, isEnhancedDigestEnabled, current.parent);
+        await this.handleEachNode(current.node, variables, current.parent);
       }
 
       if (isVariableNode(current.node)) {
@@ -145,10 +155,9 @@ export class EmailOutputRendererUsecase {
   private async handleShowNode(
     node: MailyJSONContent & { attrs: { [MailyAttrsEnum.SHOW_IF_KEY]: string } },
     variables: FullPayloadForRender,
-    isEnhancedDigestEnabled: boolean,
     parent?: MailyJSONContent
   ): Promise<boolean> {
-    const shouldShow = await this.evaluateShowCondition(variables, node, isEnhancedDigestEnabled);
+    const shouldShow = await this.evaluateShowCondition(variables, node);
     if (!shouldShow && parent?.content) {
       parent.content = parent.content.filter((pNode) => pNode !== node);
     }
@@ -162,10 +171,9 @@ export class EmailOutputRendererUsecase {
   private async handleEachNode(
     node: MailyJSONContent & { attrs: { [MailyAttrsEnum.EACH_KEY]: string } },
     variables: FullPayloadForRender,
-    isEnhancedDigestEnabled: boolean,
     parent?: MailyJSONContent
   ): Promise<void> {
-    const newContent = await this.multiplyForEachNode(node, variables, isEnhancedDigestEnabled);
+    const newContent = await this.multiplyForEachNode(node, variables);
 
     if (parent?.content) {
       const nodeIndex = parent.content.indexOf(node);
@@ -177,11 +185,10 @@ export class EmailOutputRendererUsecase {
 
   private async evaluateShowCondition(
     variables: FullPayloadForRender,
-    node: MailyJSONContent & { attrs: { [MailyAttrsEnum.SHOW_IF_KEY]: string } },
-    isEnhancedDigestEnabled: boolean
+    node: MailyJSONContent & { attrs: { [MailyAttrsEnum.SHOW_IF_KEY]: string } }
   ): Promise<boolean> {
     const { [MailyAttrsEnum.SHOW_IF_KEY]: showIfKey } = node.attrs;
-    const parsedShowIfValue = await parseLiquid(showIfKey, variables, isEnhancedDigestEnabled);
+    const parsedShowIfValue = await this.liquidEngine.parseAndRender(showIfKey, variables);
 
     return this.stringToBoolean(parsedShowIfValue);
   }
@@ -193,13 +200,17 @@ export class EmailOutputRendererUsecase {
 
   /**
    * For 'each' node, multiply the content by the number of items in the iterable array
-   * and add indexes to the placeholders.
+   * and add indexes to the placeholders. If iterations attribute is set, limits the number
+   * of iterations to that value, otherwise renders all items.
    *
    * @example
    * node:
    * {
    *   type: 'each',
-   *   attrs: { each: '{{ payload.comments }}' },
+   *   attrs: {
+   *     each: '{{ payload.comments }}',
+   *     iterations: 2 // Optional - limits to first 2 items only
+   *   },
    *   content: [
    *     { type: 'variable', text: '{{ payload.comments.author }}' }
    *   ]
@@ -217,22 +228,19 @@ export class EmailOutputRendererUsecase {
    */
   private async multiplyForEachNode(
     node: MailyJSONContent & { attrs: { [MailyAttrsEnum.EACH_KEY]: string } },
-    variables: FullPayloadForRender,
-    isEnhancedDigestEnabled: boolean
+    variables: FullPayloadForRender
   ): Promise<MailyJSONContent[]> {
     const iterablePath = node.attrs[MailyAttrsEnum.EACH_KEY];
+    const iterations = node.attrs[MailyAttrsEnum.ITERATIONS_KEY];
     const forEachNodes = node.content || [];
-    const iterableArray = await this.getIterableArray(iterablePath, variables, isEnhancedDigestEnabled);
+    const iterableArray = await this.getIterableArray(iterablePath, variables);
+    const limitedIterableArray = iterations ? iterableArray.slice(0, iterations) : iterableArray;
 
-    return iterableArray.flatMap((_, index) => this.processForEachNodes(forEachNodes, iterablePath, index));
+    return limitedIterableArray.flatMap((_, index) => this.processForEachNodes(forEachNodes, iterablePath, index));
   }
 
-  private async getIterableArray(
-    iterablePath: string,
-    variables: FullPayloadForRender,
-    isEnhancedDigestEnabled: boolean
-  ): Promise<unknown[]> {
-    const iterableArrayString = await parseLiquid(iterablePath, variables, isEnhancedDigestEnabled);
+  private async getIterableArray(iterablePath: string, variables: FullPayloadForRender): Promise<unknown[]> {
+    const iterableArrayString = await this.liquidEngine.parseAndRender(iterablePath, variables);
 
     try {
       const parsedArray = JSON.parse(iterableArrayString.replace(/'/g, '"'));
@@ -247,7 +255,11 @@ export class EmailOutputRendererUsecase {
     }
   }
 
-  private processForEachNodes(nodes: MailyJSONContent[], iterablePath: string, index: number): MailyJSONContent[] {
+  private processForEachNodes(
+    nodes: MailyJSONContent[],
+    iterablePath: string,
+    index: number
+  ): Array<MailyJSONContent | MailyJSONMarks> {
     return nodes.map((node) => {
       const processedNode = { ...node };
 
@@ -260,8 +272,52 @@ export class EmailOutputRendererUsecase {
         return processedNode;
       }
 
+      if (isButtonNode(processedNode)) {
+        if (processedNode.attrs?.text) {
+          processedNode.attrs.text = this.addIndexToLiquidExpression(processedNode.attrs.text, iterablePath, index);
+        }
+
+        if (processedNode.attrs?.url) {
+          processedNode.attrs.url = this.addIndexToLiquidExpression(processedNode.attrs.url, iterablePath, index);
+        }
+
+        return processedNode;
+      }
+
+      if (isImageNode(processedNode)) {
+        if (processedNode.attrs?.src) {
+          processedNode.attrs.src = this.addIndexToLiquidExpression(processedNode.attrs.src, iterablePath, index);
+        }
+
+        if (processedNode.attrs?.externalLink) {
+          processedNode.attrs.externalLink = this.addIndexToLiquidExpression(
+            processedNode.attrs.externalLink,
+            iterablePath,
+            index
+          );
+        }
+
+        return processedNode;
+      }
+
+      if (isLinkNode(processedNode)) {
+        if (processedNode.attrs?.href) {
+          processedNode.attrs.href = this.addIndexToLiquidExpression(processedNode.attrs.href, iterablePath, index);
+        }
+
+        return processedNode;
+      }
+
       if (processedNode.content?.length) {
         processedNode.content = this.processForEachNodes(processedNode.content, iterablePath, index);
+      }
+
+      if (processedNode.marks?.length) {
+        processedNode.marks = this.processForEachNodes(
+          processedNode.marks,
+          iterablePath,
+          index
+        ) as Array<MailyJSONMarks>;
       }
 
       return processedNode;

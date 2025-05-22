@@ -1,8 +1,9 @@
 import { Show } from 'solid-js';
 import { useLocalization } from '../../../context';
 import { useStyle } from '../../../helpers';
-import { ArrowLeft } from '../../../icons';
+import { ArrowLeft as DefaultArrowLeft } from '../../../icons';
 import { Button } from '../../primitives';
+import { IconRendererWrapper } from '../../shared/IconRendererWrapper';
 
 type PreferencesHeaderProps = {
   navigateToNotifications?: () => void;
@@ -11,6 +12,9 @@ type PreferencesHeaderProps = {
 export const PreferencesHeader = (props: PreferencesHeaderProps) => {
   const style = useStyle();
   const { t } = useLocalization();
+  const arrowLeftIconClass = style('preferencesHeader__back__button__icon', 'nt-size-4', {
+    iconKey: 'arrowLeft',
+  });
 
   return (
     <div
@@ -28,7 +32,11 @@ export const PreferencesHeader = (props: PreferencesHeaderProps) => {
             size="none"
             onClick={navigateToNotifications()}
           >
-            <ArrowLeft class={style('preferencesHeader__back__button__icon', 'nt-size-4')} />
+            <IconRendererWrapper
+              iconKey="arrowLeft"
+              class={arrowLeftIconClass}
+              fallback={<DefaultArrowLeft class={arrowLeftIconClass} />}
+            />
           </Button>
         )}
       </Show>

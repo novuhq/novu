@@ -23,14 +23,10 @@ export type TopicsDeleteMutationVariables = {
 };
 
 export type TopicsDeleteMutationData =
-  | operations.TopicsControllerDeleteTopicResponse
-  | undefined;
+  operations.TopicsControllerDeleteTopicResponse;
 
 /**
- * Delete topic
- *
- * @remarks
- * Delete a topic by its topic key if it has no subscribers
+ * Delete topic by key
  */
 export function useTopicsDeleteMutation(
   options?: MutationHookOptions<

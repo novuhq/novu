@@ -1,15 +1,14 @@
+import { JSONSchema } from '@novu/application-generic';
+import { JsonSchemaTypeEnum } from '@novu/dal';
 import { ActionStepEnum, actionStepSchemas, ChannelStepEnum, channelStepSchemas } from '@novu/framework/internal';
 import { StepTypeEnum } from '@novu/shared';
-import { JSONSchema } from 'json-schema-to-ts';
 
 export function computeResultSchema({
   stepType,
   payloadSchema,
-  isEnhancedDigestEnabled,
 }: {
   stepType: StepTypeEnum;
   payloadSchema?: JSONSchema;
-  isEnhancedDigestEnabled: boolean;
 }) {
   const mapStepTypeToResult: Record<ChannelStepEnum & ActionStepEnum, JSONSchema> = {
     [ChannelStepEnum.SMS]: channelStepSchemas[ChannelStepEnum.SMS].result,
@@ -18,45 +17,39 @@ export function computeResultSchema({
     [ChannelStepEnum.CHAT]: channelStepSchemas[ChannelStepEnum.CHAT].result,
     [ChannelStepEnum.IN_APP]: channelStepSchemas[ChannelStepEnum.IN_APP].result,
     [ActionStepEnum.DELAY]: actionStepSchemas[ActionStepEnum.DELAY].result,
-    [ActionStepEnum.DIGEST]: buildDigestResult({ payloadSchema, isEnhancedDigestEnabled }),
+    [ActionStepEnum.DIGEST]: buildDigestResult({ payloadSchema }),
   };
 
   return mapStepTypeToResult[stepType];
 }
 
-function buildDigestResult({
-  payloadSchema,
-  isEnhancedDigestEnabled,
-}: {
-  payloadSchema?: JSONSchema;
-  isEnhancedDigestEnabled: boolean;
-}): JSONSchema {
+function buildDigestResult({ payloadSchema }: { payloadSchema?: JSONSchema }): JSONSchema {
   return {
-    type: 'object',
+    type: JsonSchemaTypeEnum.OBJECT,
     properties: {
-      ...(isEnhancedDigestEnabled ? { eventCount: { type: 'number' } } : {}),
+      eventCount: { type: JsonSchemaTypeEnum.NUMBER },
       events: {
-        type: 'array',
+        type: JsonSchemaTypeEnum.ARRAY,
         properties: {
           // the length property is JS native property on arrays
           length: {
-            type: 'number',
+            type: JsonSchemaTypeEnum.NUMBER,
           },
         },
         items: {
-          type: 'object',
+          type: JsonSchemaTypeEnum.OBJECT,
           properties: {
             id: {
-              type: 'string',
+              type: JsonSchemaTypeEnum.STRING,
             },
             time: {
-              type: 'string',
+              type: JsonSchemaTypeEnum.STRING,
             },
             payload:
               payloadSchema && typeof payloadSchema === 'object'
                 ? { ...payloadSchema, additionalProperties: true }
                 : {
-                    type: 'object',
+                    type: JsonSchemaTypeEnum.OBJECT,
                     additionalProperties: true,
                   },
           },

@@ -19,8 +19,10 @@ declare global {
 export enum NotificationStatus {
   READ = 'read',
   SEEN = 'seen',
+  SNOOZED = 'snoozed',
   UNREAD = 'unread',
   UNSEEN = 'unseen',
+  UNSNOOZED = 'unsnoozed',
 }
 
 export enum NotificationButton {
@@ -57,14 +59,20 @@ export type Session = {
   totalUnreadCount: number;
   removeNovuBranding: boolean;
   isDevelopmentMode: boolean;
+  maxSnoozeDurationHours: number;
 };
 
 export type Subscriber = {
-  id: string;
+  id?: string;
+  subscriberId: string;
   firstName?: string;
   lastName?: string;
+  email?: string;
+  phone?: string;
   avatar?: string;
-  subscriberId: string;
+  locale?: string;
+  data?: Record<string, unknown>;
+  timezone?: string;
 };
 
 export type Redirect = {
@@ -98,6 +106,9 @@ export type InboxNotification = {
   to: Subscriber;
   isRead: boolean;
   isArchived: boolean;
+  isSnoozed: boolean;
+  snoozedUntil?: string | null;
+  deliveredAt?: string[];
   createdAt: string;
   readAt?: string | null;
   archivedAt?: string | null;
@@ -115,6 +126,8 @@ export type NotificationFilter = {
   tags?: string[];
   read?: boolean;
   archived?: boolean;
+  snoozed?: boolean;
+  data?: Record<string, unknown>;
 };
 
 export type ChannelPreference = {
@@ -161,16 +174,26 @@ export type Result<D = undefined, E = NovuError> = Promise<{
 }>;
 
 export type NovuOptions = {
-  applicationIdentifier: string;
-  subscriberId: string;
-  subscriberHash?: string;
   /** @deprecated Use apiUrl instead  */
   backendUrl?: string;
+  /** @internal Should be used internally for testing purposes */
+  __userAgent?: string;
+  applicationIdentifier: string;
+  subscriberHash?: string;
   apiUrl?: string;
   socketUrl?: string;
   useCache?: boolean;
-  /** @internal Should be used internally for testing purposes */
-  __userAgent?: string;
-};
+} & (
+  | {
+      // TODO: Backward compatibility support - remove in future versions (see NV-5801)
+      /** @deprecated Use subscriber prop instead */
+      subscriberId: string;
+      subscriber?: never;
+    }
+  | {
+      subscriber: Subscriber | string;
+      subscriberId?: never;
+    }
+);
 
 export type Prettify<T> = { [K in keyof T]: T[K] } & {};

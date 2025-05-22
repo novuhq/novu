@@ -1,15 +1,9 @@
-import {
-  IsDefined,
-  IsEnum,
-  IsOptional,
-  IsString,
-  ValidateIf,
-  ValidateNested,
-} from 'class-validator';
+import { IsDefined, IsEnum, IsOptional, IsString, ValidateIf, ValidateNested } from 'class-validator';
 
 import {
   AddressingTypeEnum,
   StatelessControls,
+  TriggerOverrides,
   TriggerRecipientsPayload,
   TriggerRecipientSubscriber,
   TriggerRequestCategoryEnum,
@@ -28,7 +22,7 @@ export class TriggerEventBaseCommand extends EnvironmentWithUserCommand {
   payload: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
   @IsDefined()
-  overrides: Record<string, Record<string, unknown>>;
+  overrides: TriggerOverrides;
 
   @IsString()
   @IsDefined()
@@ -71,6 +65,4 @@ export class TriggerEventBroadcastCommand extends TriggerEventBaseCommand {
   addressingType: AddressingTypeEnum.BROADCAST;
 }
 
-export type TriggerEventCommand =
-  | TriggerEventMulticastCommand
-  | TriggerEventBroadcastCommand;
+export type TriggerEventCommand = TriggerEventMulticastCommand | TriggerEventBroadcastCommand;

@@ -11,7 +11,7 @@ export const createHtmlCodeBlock = (props: { track: ReturnType<typeof useTelemet
     description: 'Add a block of HTML',
     searchTerms: ['html', 'code', 'custom'],
     icon: <CodeXmlIcon className="mly-h-4 mly-w-4" />,
-    preview: '/images/email-editor/html-block-preview.png',
+    preview: '/images/email-editor/html-block-preview.webp',
     command: ({ editor, range }) => {
       track(TelemetryEvent.EMAIL_BLOCK_ADDED, {
         type: 'custom_html',

@@ -66,6 +66,16 @@ const organizationSchema = new Schema<OrganizationDBModel>(
   schemaOptions
 );
 
+if (process.env.NOVU_ENTERPRISE !== 'true') {
+  organizationSchema.index(
+    { name: 1 },
+    {
+      unique: true,
+      partialFilterExpression: { name: 'Community Edition' },
+    }
+  );
+}
+
 export const Organization =
   (mongoose.models.Organization as mongoose.Model<OrganizationDBModel>) ||
   mongoose.model<OrganizationDBModel>('Organization', organizationSchema);

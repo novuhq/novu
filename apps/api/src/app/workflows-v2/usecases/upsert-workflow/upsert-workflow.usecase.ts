@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Optional } from '@nestjs/common';
 
 import {
   AnalyticsService,
@@ -14,24 +14,23 @@ import {
   UpdateWorkflowCommand,
   UpsertControlValuesCommand,
   UpsertControlValuesUseCase,
+  SendWebhookMessage,
 } from '@novu/application-generic';
 import {
+  ControlSchemas,
   ControlValuesRepository,
   NotificationGroupRepository,
   NotificationStepEntity,
   NotificationTemplateEntity,
 } from '@novu/dal';
 import {
-  ControlSchemas,
   ControlValuesLevelEnum,
   DEFAULT_WORKFLOW_PREFERENCES,
   slugify,
-  StepCreateDto,
-  StepIssuesDto,
-  StepUpdateDto,
+  WebhookEventEnum,
+  WebhookObjectTypeEnum,
   WorkflowCreationSourceEnum,
   WorkflowOriginEnum,
-  WorkflowResponseDto,
   WorkflowTypeEnum,
 } from '@novu/shared';
 
@@ -39,7 +38,8 @@ import { stepTypeToControlSchema } from '../../shared';
 import { computeWorkflowStatus } from '../../shared/compute-workflow-status';
 import { BuildStepIssuesUsecase } from '../build-step-issues/build-step-issues.usecase';
 import { GetWorkflowCommand, GetWorkflowUseCase } from '../get-workflow';
-import { UpsertWorkflowCommand, UpsertWorkflowDataCommand } from './upsert-workflow.command';
+import { UpsertStepDataCommand, UpsertWorkflowCommand } from './upsert-workflow.command';
+import { StepIssuesDto, WorkflowResponseDto } from '../../dtos';
 
 @Injectable()
 export class UpsertWorkflowUseCase {
@@ -52,7 +52,9 @@ export class UpsertWorkflowUseCase {
     private buildStepIssuesUsecase: BuildStepIssuesUsecase,
     private controlValuesRepository: ControlValuesRepository,
     private upsertControlValuesUseCase: UpsertControlValuesUseCase,
-    private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService,
+    @Optional()
+    private sendWebhookMessage?: SendWebhookMessage
   ) {}
 
   @InstrumentUsecase()
@@ -69,30 +71,57 @@ export class UpsertWorkflowUseCase {
         )
       : null;
 
-    let updatedWorkflow: NotificationTemplateEntity;
+    let upsertedWorkflow: NotificationTemplateEntity;
 
     if (existingWorkflow) {
       this.mixpanelTrack(command, 'Workflow Update - [API]');
 
-      updatedWorkflow = await this.updateWorkflowV0Usecase.execute(
+      upsertedWorkflow = await this.updateWorkflowV0Usecase.execute(
         UpdateWorkflowCommand.create(await this.buildUpdateWorkflowCommand(command, existingWorkflow))
       );
     } else {
       this.mixpanelTrack(command, 'Workflow Created - [API]');
 
-      updatedWorkflow = await this.createWorkflowV0Usecase.execute(
+      upsertedWorkflow = await this.createWorkflowV0Usecase.execute(
         CreateWorkflowCommand.create(await this.buildCreateWorkflowCommand(command))
       );
     }
 
-    await this.upsertControlValues(updatedWorkflow, command);
+    await this.upsertControlValues(upsertedWorkflow, command);
 
-    return await this.getWorkflowUseCase.execute(
+    const updatedWorkflow = await this.getWorkflowUseCase.execute(
       GetWorkflowCommand.create({
-        workflowIdOrInternalId: updatedWorkflow._id,
+        workflowIdOrInternalId: upsertedWorkflow._id,
         user: command.user,
       })
     );
+
+    if (this.sendWebhookMessage) {
+      if (existingWorkflow) {
+        await this.sendWebhookMessage.execute({
+          eventType: WebhookEventEnum.WORKFLOW_UPDATED,
+          objectType: WebhookObjectTypeEnum.WORKFLOW,
+          payload: {
+            object: updatedWorkflow as unknown as Record<string, unknown>,
+            previousObject: existingWorkflow as unknown as Record<string, unknown>,
+          },
+          organizationId: command.user.organizationId,
+          environmentId: command.user.environmentId,
+        });
+      } else {
+        await this.sendWebhookMessage.execute({
+          eventType: WebhookEventEnum.WORKFLOW_CREATED,
+          objectType: WebhookObjectTypeEnum.WORKFLOW,
+          payload: {
+            object: updatedWorkflow as unknown as Record<string, unknown>,
+          },
+          organizationId: command.user.organizationId,
+          environmentId: command.user.environmentId,
+        });
+      }
+    }
+
+    return updatedWorkflow;
   }
 
   private async buildCreateWorkflowCommand(command: UpsertWorkflowCommand): Promise<CreateWorkflowCommand> {
@@ -158,7 +187,7 @@ export class UpsertWorkflowUseCase {
     const steps: NotificationStep[] = [];
 
     for (const step of command.workflowDto.steps) {
-      const existingStep =
+      const existingStep: NotificationStepEntity | null | undefined =
         // eslint-disable-next-line id-length
         '_id' in step ? existingWorkflow?.steps.find((s) => !!step._id && s._templateId === step._id) : null;
 
@@ -178,6 +207,8 @@ export class UpsertWorkflowUseCase {
         controlsDto: step.controlValues,
       });
 
+      const updateStepId = existingStep?.stepId;
+      const syncToEnvironmentCreateStepId = step.stepId;
       const finalStep = {
         template: {
           type: step.type,
@@ -186,7 +217,8 @@ export class UpsertWorkflowUseCase {
           content: '',
         },
         stepId:
-          existingStep?.stepId ||
+          updateStepId ||
+          syncToEnvironmentCreateStepId ||
           this.generateUniqueStepId(step, existingWorkflow ? existingWorkflow.steps : command.workflowDto.steps),
         name: step.name,
         issues,
@@ -206,7 +238,7 @@ export class UpsertWorkflowUseCase {
     return steps;
   }
 
-  private generateUniqueStepId(step: StepCreateDto | StepUpdateDto, previousSteps: NotificationStep[]): string {
+  private generateUniqueStepId(step: UpsertStepDataCommand, previousSteps: NotificationStep[]): string {
     const slug = slugify(step.name);
 
     let finalStepId = slug;
@@ -256,19 +288,19 @@ export class UpsertWorkflowUseCase {
 
   @Instrument()
   private async upsertControlValues(
-    workflow: NotificationTemplateEntity,
+    updatedWorkflow: NotificationTemplateEntity,
     command: UpsertWorkflowCommand
   ): Promise<void> {
-    const controlValuesUpdates = this.getControlValuesUpdates(workflow.steps, command);
+    const controlValuesUpdates = this.getControlValuesUpdates(updatedWorkflow.steps, command);
     if (controlValuesUpdates.length === 0) return;
 
     await Promise.all(
-      controlValuesUpdates.map((update) => this.executeControlValuesUpdate(update, workflow._id, command))
+      controlValuesUpdates.map((update) => this.executeControlValuesUpdate(update, updatedWorkflow._id, command))
     );
   }
 
-  private getControlValuesUpdates(steps: NotificationStepEntity[], command: UpsertWorkflowCommand) {
-    return steps
+  private getControlValuesUpdates(updatedSteps: NotificationStepEntity[], command: UpsertWorkflowCommand) {
+    return updatedSteps
       .map((step) => {
         const controlValues = this.findControlValueInRequest(step, command.workflowDto.steps);
         if (controlValues === undefined) return null;
@@ -309,20 +341,26 @@ export class UpsertWorkflowUseCase {
   }
 
   private findControlValueInRequest(
-    step: NotificationStepEntity,
-    steps: (StepCreateDto | StepUpdateDto)[] | StepCreateDto[]
+    updatedStep: NotificationStepEntity,
+    commandSteps: UpsertStepDataCommand[]
   ): Record<string, unknown> | undefined | null {
-    const stepDto = steps.find((stepRequest) => {
-      if ('_id' in stepRequest) {
-        return stepRequest._id === step._templateId;
+    const commandStep = commandSteps.find((commandStepX) => {
+      const isStepUpdateDashboardDto = '_id' in commandStepX;
+      if (isStepUpdateDashboardDto) {
+        return commandStepX._id === updatedStep._templateId;
       }
 
-      return stepRequest.name === step.name;
+      const isCreateBySyncToEnvironment = 'stepId' in commandStepX;
+      if (isCreateBySyncToEnvironment) {
+        return commandStepX.stepId === updatedStep.stepId;
+      }
+
+      return commandStepX.name === updatedStep.name;
     });
 
-    if (!stepDto) return null;
+    if (!commandStep) return null;
 
-    return stepDto.controlValues;
+    return commandStep.controlValues;
   }
 
   private mixpanelTrack(command: UpsertWorkflowCommand, eventName: string) {

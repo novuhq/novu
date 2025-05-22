@@ -3,18 +3,12 @@ import { MemberRepository } from '@novu/dal';
 import { MemberStatusEnum } from '@novu/shared';
 import { AddMemberCommand } from './add-member.command';
 
-@Injectable({
-  scope: Scope.REQUEST,
-})
+@Injectable()
 export class AddMember {
-  private organizationId: string;
-
   constructor(private readonly memberRepository: MemberRepository) {}
 
   async execute(command: AddMemberCommand): Promise<void> {
-    this.organizationId = command.organizationId;
-
-    const isAlreadyMember = await this.isMember(command.userId);
+    const isAlreadyMember = await this.isMember(command.organizationId, command.userId);
     if (isAlreadyMember) throw new BadRequestException('Member already exists');
 
     await this.memberRepository.addMember(command.organizationId, {
@@ -24,7 +18,7 @@ export class AddMember {
     });
   }
 
-  private async isMember(userId: string): Promise<boolean> {
-    return !!(await this.memberRepository.findMemberByUserId(this.organizationId, userId));
+  private async isMember(organizationId: string, userId: string): Promise<boolean> {
+    return !!(await this.memberRepository.findMemberByUserId(organizationId, userId));
   }
 }

@@ -173,7 +173,7 @@ export function WorkflowTemplateModal(props: WorkflowTemplateModalProps) {
               <div className="flex h-full w-full gap-4">
                 <div className="flex-1">
                   <WorkflowCanvas
-                    readOnly
+                    isTemplateStorePreview
                     steps={
                       selectedTemplate.workflowDefinition.steps.map((step) => ({
                         _id: null,

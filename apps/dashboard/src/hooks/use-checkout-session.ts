@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { post } from '../api/api.client';
 import { TelemetryEvent } from '../utils/telemetry';
 import { useTelemetry } from './use-telemetry';
+import { showErrorToast } from '@/components/primitives/sonner-helpers';
 
 interface CheckoutResponse {
   data: {
@@ -38,7 +39,7 @@ export function useCheckoutSession() {
         billingInterval: params.billingInterval,
         requestedServiceLevel: params.requestedServiceLevel,
       });
-      toast.error(error.message || 'Unexpected error');
+      showErrorToast(error.message || 'Unexpected error');
     },
   });
 

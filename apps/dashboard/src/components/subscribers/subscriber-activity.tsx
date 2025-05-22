@@ -1,17 +1,17 @@
-import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { AnimatePresence } from 'motion/react';
-import { useOrganization } from '@clerk/clerk-react';
 import { ActivityFilters } from '@/components/activity/activity-filters';
 import { defaultActivityFilters } from '@/components/activity/constants';
-import { ActivityFiltersData } from '@/types/activity';
+import { ActivityDetailsDrawer } from '@/components/subscribers/subscriber-activity-drawer';
+import { SubscriberActivityList } from '@/components/subscribers/subscriber-activity-list';
+import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchActivities } from '@/hooks/use-fetch-activities';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
-import { SubscriberActivityList } from '@/components/subscribers/subscriber-activity-list';
-import { buildRoute, ROUTES } from '@/utils/routes';
-import { useEnvironment } from '@/context/environment/hooks';
-import { ActivityDetailsDrawer } from '@/components/subscribers/subscriber-activity-drawer';
+import { ActivityFiltersData } from '@/types/activity';
 import { getMaxAvailableActivityFeedDateRange } from '@/utils/activityFilters';
+import { buildRoute, ROUTES } from '@/utils/routes';
+import { useOrganization } from '@clerk/clerk-react';
+import { AnimatePresence } from 'motion/react';
+import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 
 const getInitialFilters = (subscriberId: string, dateRange: string): ActivityFiltersData => ({
   channels: [],
@@ -19,6 +19,7 @@ const getInitialFilters = (subscriberId: string, dateRange: string): ActivityFil
   subscriberId,
   transactionId: '',
   workflows: [],
+  topicKey: '',
 });
 
 export const SubscriberActivity = ({ subscriberId }: { subscriberId: string }) => {
@@ -59,7 +60,8 @@ export const SubscriberActivity = ({ subscriberId }: { subscriberId: string }) =
     return (
       filters.channels.length > 0 ||
       filters.workflows.length > 0 ||
-      filters.transactionId !== defaultActivityFilters.transactionId
+      filters.transactionId !== defaultActivityFilters.transactionId ||
+      filters.topicKey !== defaultActivityFilters.topicKey
     );
   }, [filters]);
 
@@ -78,6 +80,10 @@ export const SubscriberActivity = ({ subscriberId }: { subscriberId: string }) =
 
     if (filters.transactionId) {
       params.set('transactionId', filters.transactionId);
+    }
+
+    if (filters.topicKey) {
+      params.set('topicKey', filters.topicKey);
     }
 
     return params;

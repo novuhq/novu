@@ -30,7 +30,7 @@ export type SubscribersCreateMutationData =
  * Create subscriber
  *
  * @remarks
- * Create subscriber with the given data
+ * Create subscriber with the given data, if the subscriber already exists, it will be updated
  */
 export function useSubscribersCreateMutation(
   options?: MutationHookOptions<

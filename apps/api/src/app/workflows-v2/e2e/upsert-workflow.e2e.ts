@@ -7,7 +7,9 @@ import {
   UpdateWorkflowDto,
   WorkflowCreationSourceEnum,
   WorkflowResponseDto,
-} from '@novu/shared';
+} from '@novu/api/models/components';
+import { Novu } from '@novu/api';
+import { initNovuClassSdkInternalAuth } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 interface ITestStepConfig {
   type: StepTypeEnum;
@@ -16,10 +18,12 @@ interface ITestStepConfig {
 
 describe('Upsert Workflow #novu-v2', function () {
   let session: UserSession;
+  let novuClient: Novu;
 
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
+    novuClient = initNovuClassSdkInternalAuth(session);
   });
 
   describe('PUT /v2/workflows/:workflowId', () => {
@@ -28,26 +32,26 @@ describe('Upsert Workflow #novu-v2', function () {
         const workflow = await createWorkflow({
           name: 'Test Workflow',
           workflowId: `test-workflow-${Date.now()}`,
-          __source: WorkflowCreationSourceEnum.EDITOR,
+          source: WorkflowCreationSourceEnum.Editor,
           active: true,
           steps: [
             {
               name: `IN_APP 1`,
-              type: StepTypeEnum.IN_APP,
+              type: StepTypeEnum.InApp,
               controlValues: {
                 body: '{{payload.first_variable}}',
               },
             },
             {
               name: `IN_APP 2`,
-              type: StepTypeEnum.IN_APP,
+              type: StepTypeEnum.InApp,
               controlValues: {
                 body: '{{payload.second_variable}}',
               },
             },
             {
               name: `CHAT 1`,
-              type: StepTypeEnum.CHAT,
+              type: StepTypeEnum.Chat,
               controlValues: {
                 body: 'chat body',
               },
@@ -78,26 +82,26 @@ describe('Upsert Workflow #novu-v2', function () {
         const workflow = await createWorkflow({
           name: 'Test Workflow',
           workflowId: `test-workflow-${Date.now()}`,
-          __source: WorkflowCreationSourceEnum.EDITOR,
+          source: WorkflowCreationSourceEnum.Editor,
           active: true,
           steps: [
             {
               name: `IN_APP 1`,
-              type: StepTypeEnum.IN_APP,
+              type: StepTypeEnum.InApp,
               controlValues: {
                 body: '{{payload.first_variable}}',
               },
             },
             {
               name: `IN_APP 2`,
-              type: StepTypeEnum.IN_APP,
+              type: StepTypeEnum.InApp,
               controlValues: {
                 body: '{{payload.second_variable}}',
               },
             },
             {
               name: `CHAT 1`,
-              type: StepTypeEnum.CHAT,
+              type: StepTypeEnum.Chat,
               controlValues: {
                 body: '{{payload.first_variable}}',
               },
@@ -128,26 +132,26 @@ describe('Upsert Workflow #novu-v2', function () {
         const workflow = await createWorkflow({
           name: 'Test Workflow',
           workflowId: `test-workflow-${Date.now()}`,
-          __source: WorkflowCreationSourceEnum.EDITOR,
+          source: WorkflowCreationSourceEnum.Editor,
           active: true,
           steps: [
             {
               name: `IN_APP 1`,
-              type: StepTypeEnum.IN_APP,
+              type: StepTypeEnum.InApp,
               controlValues: {
                 body: '{{payload.first_variable}}',
               },
             },
             {
               name: `IN_APP 2`,
-              type: StepTypeEnum.IN_APP,
+              type: StepTypeEnum.InApp,
               controlValues: {
                 body: '{{payload.second_variable}}',
               },
             },
             {
               name: `CHAT 1`,
-              type: StepTypeEnum.CHAT,
+              type: StepTypeEnum.Chat,
               controlValues: {
                 body: 'test',
               },
@@ -177,14 +181,14 @@ describe('Upsert Workflow #novu-v2', function () {
   });
 
   async function createWorkflow(workflow: CreateWorkflowDto): Promise<WorkflowResponseDto> {
-    const { body: createWorkflowBody } = await session.testAgent.post('/v2/workflows').send(workflow);
+    const { result: createWorkflowBody } = await novuClient.workflows.create(workflow);
 
-    return createWorkflowBody.data;
+    return createWorkflowBody;
   }
 
   async function updateWorkflow(workflowSlug: string, workflow: UpdateWorkflowDto): Promise<WorkflowResponseDto> {
-    const { body: updateWorkflowBody } = await session.testAgent.put(`/v2/workflows/${workflowSlug}`).send(workflow);
+    const { result: updateWorkflowBody } = await novuClient.workflows.update(workflow, workflowSlug);
 
-    return updateWorkflowBody.data;
+    return updateWorkflowBody;
   }
 });

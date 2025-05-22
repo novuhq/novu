@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import { UserSession, NotificationTemplateService } from '@novu/testing';
 import { StepTypeEnum } from '@novu/shared';
 import { FeedRepository, MessageTemplateRepository, NotificationTemplateRepository } from '@novu/dal';
-import { CreateWorkflowRequestDto } from '../../workflows-v1/dto';
+import { CreateWorkflowRequestDto } from '../../workflows-v1/dtos';
 
 describe('Delete A Feed - /feeds (POST) #novu-v0', async () => {
   let session: UserSession;

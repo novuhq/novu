@@ -48,7 +48,7 @@ describe('Create Organization - /organizations (POST) #novu-v0-os', async () => 
 
       expect(members.length).to.eq(1);
       expect(members[0]._userId).to.eq(session.user._id);
-      expect(members[0].roles[0]).to.eq(MemberRoleEnum.ADMIN);
+      expect(members[0].roles[0]).to.eq(MemberRoleEnum.OSS_ADMIN);
     });
 
     it('should create organization with correct name', async () => {

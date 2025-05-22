@@ -11,12 +11,14 @@ import { NovuCore } from "../core.js";
 import { workflowsUpdate } from "../funcs/workflowsUpdate.js";
 import { combineSignals } from "../lib/primitives.js";
 import { RequestOptions } from "../lib/sdks.js";
+import * as components from "../models/components/index.js";
 import * as operations from "../models/operations/index.js";
 import { unwrapAsync } from "../types/fp.js";
 import { useNovuContext } from "./_context.js";
 import { MutationHookOptions } from "./_types.js";
 
 export type WorkflowsUpdateMutationVariables = {
+  updateWorkflowDto: components.UpdateWorkflowDto;
   workflowId: string;
   idempotencyKey?: string | undefined;
   options?: RequestOptions;
@@ -25,6 +27,12 @@ export type WorkflowsUpdateMutationVariables = {
 export type WorkflowsUpdateMutationData =
   operations.WorkflowControllerUpdateResponse;
 
+/**
+ * Update an existing workflow
+ *
+ * @remarks
+ * Updates the details of an existing workflow
+ */
 export function useWorkflowsUpdateMutation(
   options?: MutationHookOptions<
     WorkflowsUpdateMutationData,
@@ -59,6 +67,7 @@ export function buildWorkflowsUpdateMutation(
   return {
     mutationKey: mutationKeyWorkflowsUpdate(),
     mutationFn: function workflowsUpdateMutationFn({
+      updateWorkflowDto,
       workflowId,
       idempotencyKey,
       options,
@@ -77,6 +86,7 @@ export function buildWorkflowsUpdateMutation(
       };
       return unwrapAsync(workflowsUpdate(
         client$,
+        updateWorkflowDto,
         workflowId,
         idempotencyKey,
         mergedOptions,

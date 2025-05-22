@@ -19,9 +19,11 @@ import { useUpdateBridgeUrl } from '@/hooks/use-update-bridge-url';
 import { useValidateBridgeUrl } from '@/hooks/use-validate-bridge-url';
 import { ConnectionStatus } from '@/utils/types';
 import { cn } from '@/utils/ui';
-import { Button } from '../primitives/button';
 import { Input } from '../primitives/input';
 import { Popover, PopoverContent, PopoverPortal, PopoverTrigger } from '../primitives/popover';
+import { PermissionsEnum } from '@novu/shared';
+import { useHasPermission } from '@/hooks/use-has-permission';
+import { PermissionButton } from '../primitives/permission-button';
 
 const formSchema = z.object({ bridgeUrl: z.string().url() });
 
@@ -39,6 +41,11 @@ export const EditBridgeUrlButton = () => {
   const { status, bridgeURL: envBridgeUrl } = useFetchBridgeHealthCheck();
   const { validateBridgeUrl, isPending: isValidatingBridgeUrl } = useValidateBridgeUrl();
   const { updateBridgeUrl, isPending: isUpdatingBridgeUrl } = useUpdateBridgeUrl();
+  const has = useHasPermission();
+
+  const isReadOnly = !has({ permission: PermissionsEnum.BRIDGE_WRITE });
+
+  console.log('isReadOnly', isReadOnly);
 
   useLayoutEffect(() => {
     reset({ bridgeUrl: envBridgeUrl });
@@ -96,7 +103,7 @@ export const EditBridgeUrlButton = () => {
                     <FormItem>
                       <FormLabel required>Bridge Endpoint URL</FormLabel>
                       <FormControl>
-                        <Input leadingIcon={RiLinkM} id="bridgeUrl" {...field} />
+                        <Input leadingIcon={RiLinkM} id="bridgeUrl" {...field} readOnly={isReadOnly} />
                       </FormControl>
                       <FormMessage>URL (e.g., https://your.api.com/api/novu)</FormMessage>
                     </FormItem>
@@ -112,16 +119,18 @@ export const EditBridgeUrlButton = () => {
                 >
                   Learn more
                 </a>
-                <Button
+
+                <PermissionButton
+                  permission={PermissionsEnum.BRIDGE_WRITE}
                   type="submit"
                   variant="primary"
                   mode="filled"
                   size="xs"
                   isLoading={isUpdatingBridgeUrl}
-                  disabled={!isDirty || isValidatingBridgeUrl || isUpdatingBridgeUrl}
+                  disabled={!isDirty || isValidatingBridgeUrl || isUpdatingBridgeUrl || isReadOnly}
                 >
                   Update endpoint
-                </Button>
+                </PermissionButton>
               </div>
             </FormRoot>
           </Form>

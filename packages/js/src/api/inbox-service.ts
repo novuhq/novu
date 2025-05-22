@@ -5,6 +5,7 @@ import type {
   NotificationFilter,
   PreferencesResponse,
   Session,
+  Subscriber,
 } from '../types';
 import { HttpClient, HttpClientOptions } from './http-client';
 
@@ -23,17 +24,17 @@ export class InboxService {
 
   async initializeSession({
     applicationIdentifier,
-    subscriberId,
     subscriberHash,
+    subscriber,
   }: {
     applicationIdentifier: string;
-    subscriberId: string;
     subscriberHash?: string;
+    subscriber: Subscriber;
   }): Promise<Session> {
     const response = (await this.#httpClient.post(`${INBOX_ROUTE}/session`, {
       applicationIdentifier,
-      subscriberId,
       subscriberHash,
+      subscriber,
     })) as Session;
     this.#httpClient.setAuthorizationToken(response.token);
     this.isSessionInitialized = true;
@@ -48,13 +49,17 @@ export class InboxService {
     offset,
     read,
     tags,
+    snoozed,
+    data,
   }: {
     tags?: string[];
     read?: boolean;
     archived?: boolean;
+    snoozed?: boolean;
     limit?: number;
     after?: string;
     offset?: number;
+    data?: Record<string, unknown>;
   }): Promise<{ data: InboxNotification[]; hasMore: boolean; filter: NotificationFilter }> {
     const searchParams = new URLSearchParams(`limit=${limit}`);
     if (after) {
@@ -72,11 +77,21 @@ export class InboxService {
     if (archived !== undefined) {
       searchParams.append('archived', `${archived}`);
     }
+    if (snoozed !== undefined) {
+      searchParams.append('snoozed', `${snoozed}`);
+    }
+    if (data !== undefined) {
+      searchParams.append('data', JSON.stringify(data));
+    }
 
     return this.#httpClient.get(INBOX_NOTIFICATIONS_ROUTE, searchParams, false);
   }
 
-  count({ filters }: { filters: Array<{ tags?: string[]; read?: boolean; archived?: boolean }> }): Promise<{
+  count({
+    filters,
+  }: {
+    filters: Array<{ tags?: string[]; read?: boolean; archived?: boolean; data?: Record<string, unknown> }>;
+  }): Promise<{
     data: Array<{
       count: number;
       filter: NotificationFilter;
@@ -107,16 +122,33 @@ export class InboxService {
     return this.#httpClient.patch(`${INBOX_NOTIFICATIONS_ROUTE}/${notificationId}/unarchive`);
   }
 
-  readAll({ tags }: { tags?: string[] }): Promise<void> {
-    return this.#httpClient.post(`${INBOX_NOTIFICATIONS_ROUTE}/read`, { tags });
+  snooze(notificationId: string, snoozeUntil: string): Promise<InboxNotification> {
+    return this.#httpClient.patch(`${INBOX_NOTIFICATIONS_ROUTE}/${notificationId}/snooze`, { snoozeUntil });
   }
 
-  archiveAll({ tags }: { tags?: string[] }): Promise<void> {
-    return this.#httpClient.post(`${INBOX_NOTIFICATIONS_ROUTE}/archive`, { tags });
+  unsnooze(notificationId: string): Promise<InboxNotification> {
+    return this.#httpClient.patch(`${INBOX_NOTIFICATIONS_ROUTE}/${notificationId}/unsnooze`);
   }
 
-  archiveAllRead({ tags }: { tags?: string[] }): Promise<void> {
-    return this.#httpClient.post(`${INBOX_NOTIFICATIONS_ROUTE}/read-archive`, { tags });
+  readAll({ tags, data }: { tags?: string[]; data?: Record<string, unknown> }): Promise<void> {
+    return this.#httpClient.post(`${INBOX_NOTIFICATIONS_ROUTE}/read`, {
+      tags,
+      data: data ? JSON.stringify(data) : undefined,
+    });
+  }
+
+  archiveAll({ tags, data }: { tags?: string[]; data?: Record<string, unknown> }): Promise<void> {
+    return this.#httpClient.post(`${INBOX_NOTIFICATIONS_ROUTE}/archive`, {
+      tags,
+      data: data ? JSON.stringify(data) : undefined,
+    });
+  }
+
+  archiveAllRead({ tags, data }: { tags?: string[]; data?: Record<string, unknown> }): Promise<void> {
+    return this.#httpClient.post(`${INBOX_NOTIFICATIONS_ROUTE}/read-archive`, {
+      tags,
+      data: data ? JSON.stringify(data) : undefined,
+    });
   }
 
   completeAction({
@@ -152,6 +184,16 @@ export class InboxService {
     const query = queryParams.size ? `?${queryParams.toString()}` : '';
 
     return this.#httpClient.get(`${INBOX_ROUTE}/preferences${query}`);
+  }
+
+  bulkUpdatePreferences(
+    preferences: Array<
+      {
+        workflowId: string;
+      } & ChannelPreference
+    >
+  ): Promise<PreferencesResponse[]> {
+    return this.#httpClient.patch(`${INBOX_ROUTE}/preferences/bulk`, { preferences });
   }
 
   updateGlobalPreferences(channels: ChannelPreference): Promise<PreferencesResponse> {

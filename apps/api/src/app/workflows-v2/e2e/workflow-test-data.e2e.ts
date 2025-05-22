@@ -1,6 +1,13 @@
 import { expect } from 'chai';
 import { UserSession } from '@novu/testing';
-import { CreateWorkflowDto, StepTypeEnum, WorkflowCreationSourceEnum, WorkflowTestDataResponseDto } from '@novu/shared';
+import { Novu } from '@novu/api';
+import {
+  CreateWorkflowDto,
+  StepTypeEnum,
+  WorkflowCreationSourceEnum,
+  WorkflowTestDataResponseDto,
+} from '@novu/api/models/components';
+import { initNovuClassSdkInternalAuth } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 interface ITestStepConfig {
   type: StepTypeEnum;
@@ -9,17 +16,19 @@ interface ITestStepConfig {
 
 describe('Workflow Test Data', function () {
   let session: UserSession;
+  let novuClient: Novu;
 
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
+    novuClient = initNovuClassSdkInternalAuth(session);
   });
 
   describe('GET /v2/workflows/:workflowId/test-data #novu-v2', () => {
     describe('single step workflows', () => {
       it('should generate correct schema for email notification', async () => {
         const emailStep: ITestStepConfig = {
-          type: StepTypeEnum.EMAIL,
+          type: StepTypeEnum.Email,
           controlValues: {
             subject: 'Welcome {{payload.user.name}}',
             body: 'Hello {{payload.user.name}}, your order {{payload.order.details.orderId}} is ready',
@@ -42,7 +51,7 @@ describe('Workflow Test Data', function () {
 
       it('should generate correct schema for SMS notification', async () => {
         const smsStep: ITestStepConfig = {
-          type: StepTypeEnum.SMS,
+          type: StepTypeEnum.Sms,
           controlValues: {
             content: 'Your verification code is {{payload.code}}',
           },
@@ -60,7 +69,7 @@ describe('Workflow Test Data', function () {
 
       it('should generate correct schema for in-app notification', async () => {
         const inAppStep: ITestStepConfig = {
-          type: StepTypeEnum.IN_APP,
+          type: StepTypeEnum.InApp,
           controlValues: {
             content: 'New message from {{payload.sender}}',
           },
@@ -83,14 +92,14 @@ describe('Workflow Test Data', function () {
       it('should combine variables from multiple notification steps', async () => {
         const steps: ITestStepConfig[] = [
           {
-            type: StepTypeEnum.EMAIL,
+            type: StepTypeEnum.Email,
             controlValues: {
               subject: 'Order {{payload.orderId}}',
               body: 'Status: {{payload.status}}',
             },
           },
           {
-            type: StepTypeEnum.SMS,
+            type: StepTypeEnum.Sms,
             controlValues: {
               content: 'Order {{payload.orderId}} update: {{payload.smsUpdate}}',
             },
@@ -122,7 +131,7 @@ describe('Workflow Test Data', function () {
   ): Promise<{ workflow: any; testData: WorkflowTestDataResponseDto }> {
     const steps = Array.isArray(stepsConfig) ? stepsConfig : [stepsConfig];
     const workflow = await createWorkflow(steps);
-    const testData = await getWorkflowTestData(workflow._id);
+    const testData = await getWorkflowTestData(workflow.id);
 
     return { workflow, testData };
   }
@@ -131,7 +140,7 @@ describe('Workflow Test Data', function () {
     const createWorkflowDto: CreateWorkflowDto = {
       name: 'Test Workflow',
       workflowId: `test-workflow-${Date.now()}`,
-      __source: WorkflowCreationSourceEnum.EDITOR,
+      source: WorkflowCreationSourceEnum.Editor,
       active: true,
       steps: steps.map(({ type, ...rest }, index) => ({
         ...rest,
@@ -140,14 +149,14 @@ describe('Workflow Test Data', function () {
       })),
     };
 
-    const { body } = await session.testAgent.post('/v2/workflows').send(createWorkflowDto);
+    const { result } = await novuClient.workflows.create(createWorkflowDto);
 
-    return body.data;
+    return result;
   }
 
   async function getWorkflowTestData(workflowId: string): Promise<WorkflowTestDataResponseDto> {
-    const { body } = await session.testAgent.get(`/v2/workflows/${workflowId}/test-data`);
+    const { result } = await novuClient.workflows.getTestData(workflowId);
 
-    return body.data;
+    return result;
   }
 });

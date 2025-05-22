@@ -80,6 +80,7 @@ export class CreateNotificationJobs {
       _organizationId: command.organizationId,
       _subscriberId: command.subscriber._id,
       _templateId: command.template._id,
+      topics: command.topics?.map((topic) => ({ _topicId: topic._id, topicKey: topic.key })) || [],
       transactionId: command.transactionId,
       to: command.to,
       payload: command.payload,

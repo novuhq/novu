@@ -1,6 +1,6 @@
 import sinon from 'sinon';
 import { expect } from 'chai';
-import { MessageRepository, SubscriberRepository } from '@novu/dal';
+import { MessageRepository, OrganizationRepository, SubscriberRepository } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/shared';
 import { buildMessageCountKey, CachedQuery } from '@novu/application-generic';
 
@@ -19,7 +19,6 @@ describe('NotificationsCount', () => {
   beforeEach(() => {
     messageRepository = sinon.createStubInstance(MessageRepository);
     subscriberRepository = sinon.createStubInstance(SubscriberRepository);
-
     notificationsCount = new NotificationsCount(messageRepository as any, subscriberRepository as any);
   });
 
@@ -173,6 +172,40 @@ describe('NotificationsCount', () => {
           subscriber._id,
           ChannelTypeEnum.IN_APP,
           { archived: false },
+          { limit: 99 }
+        )
+      ).to.be.true;
+
+      await notificationsCount.execute({
+        organizationId: 'organizationId',
+        environmentId,
+        subscriberId: 'subscriber-id',
+        filters: [{ snoozed: true }],
+      });
+
+      expect(
+        messageRepository.getCount.calledWith(
+          environmentId,
+          subscriber._id,
+          ChannelTypeEnum.IN_APP,
+          { snoozed: true },
+          { limit: 99 }
+        )
+      ).to.be.true;
+
+      await notificationsCount.execute({
+        organizationId: 'organizationId',
+        environmentId,
+        subscriberId: 'subscriber-id',
+        filters: [{ snoozed: false }],
+      });
+
+      expect(
+        messageRepository.getCount.calledWith(
+          environmentId,
+          subscriber._id,
+          ChannelTypeEnum.IN_APP,
+          { snoozed: false },
           { limit: 99 }
         )
       ).to.be.true;

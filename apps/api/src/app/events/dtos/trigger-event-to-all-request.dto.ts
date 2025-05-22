@@ -3,7 +3,7 @@ import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
 import { TriggerRecipientSubscriber, TriggerTenantContext } from '@novu/shared';
 
-import { SubscriberPayloadDto, TenantPayloadDto } from './trigger-event-request.dto';
+import { SubscriberPayloadDto, TenantPayloadDto, TriggerOverrides } from './trigger-event-request.dto';
 
 export class TriggerEventToAllRequestDto {
   @ApiProperty({
@@ -40,10 +40,16 @@ export class TriggerEventToAllRequestDto {
         },
       },
     },
+    type: TriggerOverrides,
+    additionalProperties: {
+      type: 'object',
+      additionalProperties: true,
+    },
+    required: false,
   })
   @IsObject()
   @IsOptional()
-  overrides?: Record<string, Record<string, unknown>>;
+  overrides?: TriggerOverrides;
 
   @ApiProperty({
     description: 'A unique identifier for this transaction, we will generated a UUID if not provided.',

@@ -1,7 +1,7 @@
-import { Injectable, Logger, NotFoundException, Scope } from '@nestjs/common';
+import { Injectable, NotFoundException, Scope } from '@nestjs/common';
 
 import { EnvironmentEntity, EnvironmentRepository } from '@novu/dal';
-import { decryptApiKey } from '@novu/application-generic';
+import { decryptApiKey, PinoLogger } from '@novu/application-generic';
 import { ShortIsPrefixEnum, EnvironmentEnum } from '@novu/shared';
 
 import { GetMyEnvironmentsCommand } from './get-my-environments.command';
@@ -12,10 +12,15 @@ import { buildSlug } from '../../../shared/helpers/build-slug';
   scope: Scope.REQUEST,
 })
 export class GetMyEnvironments {
-  constructor(private environmentRepository: EnvironmentRepository) {}
+  constructor(
+    private environmentRepository: EnvironmentRepository,
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   async execute(command: GetMyEnvironmentsCommand): Promise<EnvironmentResponseDto[]> {
-    Logger.verbose('Getting Environments');
+    this.logger.trace('Getting Environments');
 
     const environments = await this.environmentRepository.findOrganizationEnvironments(command.organizationId);
 
@@ -23,35 +28,27 @@ export class GetMyEnvironments {
       throw new NotFoundException(`No environments were found for organization ${command.organizationId}`);
 
     return environments.map((environment) => {
-      if (command.includeAllApiKeys || environment._id === command.environmentId) {
-        return this.decryptApiKeys(environment);
-      }
-      // TODO: For api_v2: Remove the key from the response. This was not done yet as it's a breaking change.
-      // eslint-disable-next-line no-param-reassign
-      environment.apiKeys = [];
+      const processedEnvironment = { ...environment };
 
-      return environment;
-    });
-  }
+      processedEnvironment.apiKeys = command.returnApiKeys ? this.decryptApiKeys(environment.apiKeys) : [];
 
-  private decryptApiKeys(environment: EnvironmentEntity): EnvironmentResponseDto {
-    const decryptedApiKeysEnvironment = { ...environment };
+      const shortEnvName = shortenEnvironmentName(processedEnvironment.name);
 
-    decryptedApiKeysEnvironment.apiKeys = environment.apiKeys.map((apiKey) => {
       return {
-        ...apiKey,
-        key: decryptApiKey(apiKey.key),
+        ...processedEnvironment,
+        slug: buildSlug(shortEnvName, ShortIsPrefixEnum.ENVIRONMENT, processedEnvironment._id),
       };
     });
+  }
 
-    const shortEnvName = shortenEnvironmentName(decryptedApiKeysEnvironment.name);
-
-    return {
-      ...decryptedApiKeysEnvironment,
-      slug: buildSlug(shortEnvName, ShortIsPrefixEnum.ENVIRONMENT, decryptedApiKeysEnvironment._id),
-    };
+  private decryptApiKeys(apiKeys: EnvironmentEntity['apiKeys']) {
+    return apiKeys.map((apiKey) => ({
+      ...apiKey,
+      key: decryptApiKey(apiKey.key),
+    }));
   }
 }
+
 function shortenEnvironmentName(name: string): string {
   const mapToShotEnvName: Record<EnvironmentEnum, string> = {
     [EnvironmentEnum.PRODUCTION]: 'prod',

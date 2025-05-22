@@ -9,24 +9,21 @@ import { EnvironmentEntity, NotificationTemplateEntity, OrganizationEntity, User
 import {
   ChannelTypeEnum,
   createMockObjectFromSchema,
-  GeneratePreviewResponseDto,
-  JobStatusEnum,
-  PreviewPayload,
-  StepResponseDto,
-  WorkflowOriginEnum,
-  StepTypeEnum,
   FeatureFlagsKeysEnum,
+  JobStatusEnum,
+  StepTypeEnum,
+  WorkflowOriginEnum,
 } from '@novu/shared';
 import {
+  dashboardSanitizeControlValues,
   FeatureFlagsService,
   GetWorkflowByIdsCommand,
   GetWorkflowByIdsUseCase,
   Instrument,
   InstrumentUsecase,
   PinoLogger,
-  dashboardSanitizeControlValues,
 } from '@novu/application-generic';
-import { channelStepSchemas, actionStepSchemas } from '@novu/framework/internal';
+import { actionStepSchemas, channelStepSchemas } from '@novu/framework/internal';
 import { JSONContent as MailyJSONContent } from '@maily-to/render';
 import { PreviewStep, PreviewStepCommand } from '../../../bridge/usecases/preview-step';
 import { FrameworkPreviousStepsOutputState } from '../../../bridge/usecases/preview-step/preview-step.command';
@@ -36,9 +33,14 @@ import { CreateVariablesObjectCommand } from '../create-variables-object/create-
 import { CreateVariablesObject } from '../create-variables-object/create-variables-object.usecase';
 import { buildLiquidParser, Variable } from '../../util/template-parser/liquid-parser';
 import { buildVariables } from '../../util/build-variables';
-import { mergeCommonObjectKeys, multiplyArrayItems } from '../../util/utils';
+import { mergeCommonObjectKeys } from '../../util/utils';
 import { buildVariablesSchema } from '../../util/create-schema';
-import { isObjectMailyJSONContent } from '../../../environments-v1/usecases/output-renderers/maily-to-liquid/wrap-maily-in-liquid.command';
+import { GeneratePreviewResponseDto, JSONSchemaDto, PreviewPayloadDto, StepResponseDto } from '../../dtos';
+import {
+  replaceMailyVariables,
+  isStringifiedMailyJSONContent,
+  isObjectMailyJSONContent,
+} from '../../../shared/helpers/maily-utils';
 
 const LOG_CONTEXT = 'GeneratePreviewUsecase';
 
@@ -57,13 +59,6 @@ export class PreviewUsecase {
   async execute(command: PreviewCommand): Promise<GeneratePreviewResponseDto> {
     try {
       const { user, generatePreviewRequestDto } = command;
-      const isEnhancedDigestEnabled = await this.featureFlagService.getFlag({
-        user: { _id: user._id } as UserEntity,
-        environment: { _id: user.environmentId } as EnvironmentEntity,
-        organization: { _id: user.organizationId } as OrganizationEntity,
-        key: FeatureFlagsKeysEnum.IS_ENHANCED_DIGEST_ENABLED,
-        defaultValue: false,
-      });
 
       const {
         stepData,
@@ -109,7 +104,7 @@ export class PreviewUsecase {
         );
 
         previewTemplateData = {
-          payloadExample: _.merge(previewTemplateData.payloadExample, multiplyArrayItems(variablesObject, 3)),
+          payloadExample: _.merge(previewTemplateData.payloadExample, variablesObject),
           controlValues: {
             ...previewTemplateData.controlValues,
             [controlKey]: isObjectMailyJSONContent(processedControlValues)
@@ -119,13 +114,13 @@ export class PreviewUsecase {
         };
       }
 
-      const previewPayloadExample = this.mergePayloadExample(
+      let previewPayloadExample = this.mergePayloadExample(
         workflow,
-        isEnhancedDigestEnabled
-          ? enhanceEventCountValue(previewTemplateData.payloadExample)
-          : previewTemplateData.payloadExample,
+        previewTemplateData.payloadExample,
         userPayloadExample
       );
+
+      previewPayloadExample = enhanceEventCountValue(previewPayloadExample);
 
       const executeOutput = await this.executePreviewUsecase(
         command,
@@ -139,9 +134,7 @@ export class PreviewUsecase {
           preview: executeOutput.outputs as any,
           type: stepData.type as unknown as ChannelTypeEnum,
         },
-        previewPayloadExample: isEnhancedDigestEnabled
-          ? cleanPreviewExamplePayload(previewPayloadExample)
-          : previewPayloadExample,
+        previewPayloadExample: cleanPreviewExamplePayload(previewPayloadExample),
       };
     } catch (error) {
       this.logger.error(
@@ -181,7 +174,7 @@ export class PreviewUsecase {
   private mergePayloadExample(
     workflow: NotificationTemplateEntity,
     payloadExample: Record<string, unknown>,
-    userPayloadExample: PreviewPayload | undefined
+    userPayloadExample: PreviewPayloadDto | undefined
   ) {
     if (workflow.origin === WorkflowOriginEnum.EXTERNAL) {
       // if external workflow, we need to override with stored payload schema
@@ -195,8 +188,8 @@ export class PreviewUsecase {
 
     if (userPayloadExample && Object.keys(userPayloadExample).length > 0) {
       return mergeCommonObjectKeys(
-        payloadExample as Record<string, unknown>,
-        userPayloadExample as Record<string, unknown>
+        userPayloadExample as Record<string, unknown>, // treat the FE payload as target
+        payloadExample as Record<string, unknown> // treat the BE payload as source
       );
     }
 
@@ -227,7 +220,7 @@ export class PreviewUsecase {
   }
 
   @Instrument()
-  private async buildVariablesSchema(variablesObject: Record<string, unknown>, variables: Record<string, unknown>) {
+  private async buildVariablesSchema(variablesObject: Record<string, unknown>, variables: JSONSchemaDto) {
     const { payload } = variablesObject;
     const payloadSchema = buildVariablesSchema(payload);
 
@@ -266,7 +259,7 @@ export class PreviewUsecase {
   private async executePreviewUsecase(
     command: PreviewCommand,
     stepData: StepResponseDto,
-    previewPayloadExample: PreviewPayload,
+    previewPayloadExample: PreviewPayloadDto,
     controlValues: Record<string, unknown>
   ) {
     const state = buildState(previewPayloadExample.steps);
@@ -298,22 +291,33 @@ export class PreviewUsecase {
   /**
    * Fix the control values that have invalid variables used and replace them with empty strings
    */
-  private fixControlValueInvalidVariables(controlValues: unknown, invalidVariables: Variable[]): unknown {
+  private fixControlValueInvalidVariables(controlValue: unknown, invalidVariables: Variable[]): unknown {
     try {
-      let controlValuesString = JSON.stringify(controlValues);
+      const EMPTY_STRING = '';
+      const isMailyJSONContent = isStringifiedMailyJSONContent(controlValue);
+      let controlValuesString = isMailyJSONContent ? controlValue : JSON.stringify(controlValue);
 
       for (const invalidVariable of invalidVariables) {
-        if (!controlValuesString.includes(invalidVariable.output)) {
+        let variableOutput = invalidVariable.output;
+
+        if (isMailyJSONContent) {
+          variableOutput = variableOutput.replace(/\{\{|\}\}/g, '').trim();
+          controlValuesString = JSON.stringify(
+            replaceMailyVariables(controlValuesString, variableOutput, EMPTY_STRING)
+          );
           continue;
         }
 
-        const EMPTY_STRING = '';
-        controlValuesString = replaceAll(controlValuesString, invalidVariable.output, EMPTY_STRING);
+        if (!controlValuesString.includes(variableOutput)) {
+          continue;
+        }
+
+        controlValuesString = replaceAll(controlValuesString, variableOutput, EMPTY_STRING);
       }
 
       return JSON.parse(controlValuesString);
     } catch (error) {
-      return controlValues;
+      return controlValue;
     }
   }
 
@@ -364,7 +368,7 @@ function cleanPreviewExamplePayload(payloadExample: Record<string, unknown>): Re
 /**
  * Prepares the payload for the bridge request by ensuring eventCount is calculated from events length
  */
-function enhanceEventCountValue(payloadExample: PreviewPayload): Record<string, Record<string, unknown>> {
+function enhanceEventCountValue(payloadExample: PreviewPayloadDto): Record<string, Record<string, unknown>> {
   const preparedPayload = _.cloneDeep(payloadExample);
 
   if (preparedPayload.steps && typeof preparedPayload.steps === 'object') {

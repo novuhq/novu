@@ -1,11 +1,11 @@
 import { parseStepVariables } from '@/utils/parseStepVariables';
-import type { JSONSchemaDefinition } from '@novu/shared';
+import { type JSONSchemaDefinition } from '@novu/shared';
 import { useMemo } from 'react';
 
-export function useParseVariables(schema?: JSONSchemaDefinition) {
+export function useParseVariables(schema?: JSONSchemaDefinition, digestStepId?: string) {
   const parsedVariables = useMemo(() => {
     return schema
-      ? parseStepVariables(schema)
+      ? parseStepVariables(schema, { digestStepId })
       : {
           variables: [],
           namespaces: [],
@@ -13,7 +13,7 @@ export function useParseVariables(schema?: JSONSchemaDefinition) {
           arrays: [],
           isAllowedVariable: () => false,
         };
-  }, [schema]);
+  }, [schema, digestStepId]);
 
   return parsedVariables;
 }
