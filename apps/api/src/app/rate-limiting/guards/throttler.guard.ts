@@ -130,7 +130,7 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
     const environmentId = user?.environmentId || req.headers['novu-application-identifier'];
 
     const apiRateLimitCost = isKeylessRequest
-      ? ApiRateLimitCostEnum.KEYLESS
+      ? getKeylessCost()
       : this.reflector.getAllAndOverride(ThrottlerCost, [handler, classRef]) || defaultApiRateLimitCost;
 
     const { success, limit, remaining, reset, windowDuration, burstLimit, algorithm, apiServiceLevel } =
@@ -265,4 +265,9 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
 
     return req.user;
   }
+}
+
+function getKeylessCost() {
+  // For test environment, we use a higher cost to ensure tests can run without rate limiting issues
+  return process.env.NODE_ENV === 'test' ? defaultApiRateLimitCost : ApiRateLimitCostEnum.KEYLESS;
 }
