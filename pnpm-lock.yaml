@@ -924,8 +924,8 @@ importers:
         specifier: ^1.7.0
         version: 1.7.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       svix-react:
-        specifier: ^1.13.3
-        version: 1.13.3(@babel/core@7.25.2)(prop-types@15.8.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(svix@1.64.1(encoding@0.1.13))
+        specifier: ^1.13.4
+        version: 1.13.4(@babel/core@7.25.2)(prop-types@15.8.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(svix@1.64.1(encoding@0.1.13))
       tailwind-merge:
         specifier: ^2.4.0
         version: 2.4.0
@@ -32041,8 +32041,8 @@ packages:
   svix-fetch@3.0.0:
     resolution: {integrity: sha512-rcADxEFhSqHbraZIsjyZNh4TF6V+koloX1OzZ+AQuObX9mZ2LIMhm1buZeuc5BIZPftZpJCMBsSiBaeszo9tRw==}
 
-  svix-react@1.13.3:
-    resolution: {integrity: sha512-XJ3v9gopjbGrOMNItSu3DPSNDKnQ+Yd1QvBrx/jM8ftPTjgRnig+hyu7zZIcRIaZlr/cUkeKS+sjDQCoHv22YA==}
+  svix-react@1.13.4:
+    resolution: {integrity: sha512-sK34IAyqmbCgiIWbZwwh++bA8n4k2PxcdBl/jxMsmgp+pc5VDuFC5hSuhRHBLdVDmyEmhJoY5oeTBmxoM/2A9Q==}
     peerDependencies:
       react: '>=16'
       react-dom: '>=16'
@@ -76420,7 +76420,7 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  svix-react@1.13.3(@babel/core@7.25.2)(prop-types@15.8.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(svix@1.64.1(encoding@0.1.13)):
+  svix-react@1.13.4(@babel/core@7.25.2)(prop-types@15.8.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(svix@1.64.1(encoding@0.1.13)):
     dependencies:
       iframe-resizer-react: 1.1.1(@babel/core@7.25.2)(prop-types@15.8.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react: 18.3.1
