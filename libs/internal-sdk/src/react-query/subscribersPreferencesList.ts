@@ -29,10 +29,11 @@ export type SubscribersPreferencesListQueryData =
   operations.SubscribersControllerGetSubscriberPreferencesResponse;
 
 /**
- * Get subscriber preferences
+ * Retrieve subscriber preferences
  *
  * @remarks
- * Get subscriber global and workflow specific preferences
+ * Retrieve subscriber channel preferences by its unique key identifier **subscriberId**.
+ *     This API returns all five channels preferences for all workflows and global preferences.
  */
 export function useSubscribersPreferencesList(
   subscriberId: string,
@@ -52,10 +53,11 @@ export function useSubscribersPreferencesList(
 }
 
 /**
- * Get subscriber preferences
+ * Retrieve subscriber preferences
  *
  * @remarks
- * Get subscriber global and workflow specific preferences
+ * Retrieve subscriber channel preferences by its unique key identifier **subscriberId**.
+ *     This API returns all five channels preferences for all workflows and global preferences.
  */
 export function useSubscribersPreferencesListSuspense(
   subscriberId: string,

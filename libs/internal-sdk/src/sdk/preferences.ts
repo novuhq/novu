@@ -11,10 +11,11 @@ import { unwrapAsync } from "../types/fp.js";
 
 export class Preferences extends ClientSDK {
   /**
-   * Get subscriber preferences
+   * Retrieve subscriber preferences
    *
    * @remarks
-   * Get subscriber global and workflow specific preferences
+   * Retrieve subscriber channel preferences by its unique key identifier **subscriberId**.
+   *     This API returns all five channels preferences for all workflows and global preferences.
    */
   async list(
     subscriberId: string,
@@ -30,10 +31,12 @@ export class Preferences extends ClientSDK {
   }
 
   /**
-   * Update subscriber global or workflow specific preferences
+   * Update subscriber preferences
    *
    * @remarks
-   * Update subscriber global or workflow specific preferences
+   * Update subscriber preferences by its unique key identifier **subscriberId**.
+   *     **workflowId** is optional field, if provided, this API will update that workflow preference,
+   *     otherwise it will update global preferences
    */
   async update(
     patchSubscriberPreferencesDto: components.PatchSubscriberPreferencesDto,

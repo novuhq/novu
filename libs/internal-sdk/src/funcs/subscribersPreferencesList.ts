@@ -25,10 +25,11 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Get subscriber preferences
+ * Retrieve subscriber preferences
  *
  * @remarks
- * Get subscriber global and workflow specific preferences
+ * Retrieve subscriber channel preferences by its unique key identifier **subscriberId**.
+ *     This API returns all five channels preferences for all workflows and global preferences.
  */
 export function subscribersPreferencesList(
   client: NovuCore,

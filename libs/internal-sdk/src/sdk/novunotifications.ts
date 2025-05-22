@@ -10,7 +10,10 @@ import { unwrapAsync } from "../types/fp.js";
 
 export class NovuNotifications extends ClientSDK {
   /**
-   * Get in-app notification feed for a particular subscriber
+   * Retrieve subscriber notifications
+   *
+   * @remarks
+   * Retrieve subscriber in-app (inbox) notifications by its unique key identifier **subscriberId**.
    */
   async feed(
     request: operations.SubscribersV1ControllerGetNotificationsFeedRequest,
@@ -24,7 +27,10 @@ export class NovuNotifications extends ClientSDK {
   }
 
   /**
-   * Get the unseen in-app notifications count for subscribers feed
+   * Retrieve unseen notifications count
+   *
+   * @remarks
+   * Retrieve unseen in-app (inbox) notifications count for a subscriber by its unique key identifier **subscriberId**.
    */
   async unseenCount(
     request: operations.SubscribersV1ControllerGetUnseenCountRequest,

@@ -29,10 +29,10 @@ export type IntegrationsListQueryData =
   operations.IntegrationsControllerListIntegrationsResponse;
 
 /**
- * Get integrations
+ * List all integrations
  *
  * @remarks
- * Return all the integrations the user has created for that organization. Review v.0.17.0 changelog for a breaking change
+ * List all the channels integrations created in the organization
  */
 export function useIntegrationsList(
   idempotencyKey?: string | undefined,
@@ -50,10 +50,10 @@ export function useIntegrationsList(
 }
 
 /**
- * Get integrations
+ * List all integrations
  *
  * @remarks
- * Return all the integrations the user has created for that organization. Review v.0.17.0 changelog for a breaking change
+ * List all the channels integrations created in the organization
  */
 export function useIntegrationsListSuspense(
   idempotencyKey?: string | undefined,

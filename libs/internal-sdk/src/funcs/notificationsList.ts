@@ -25,7 +25,13 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Get notifications
+ * List all events
+ *
+ * @remarks
+ * List all notification events (triggered events) for the current environment.
+ *     This API supports filtering by **channels**, **templates**, **emails**, **subscriberIds**, **transactionId**, **topicKey**.
+ *     Checkout all available filters in the query section.
+ *     This API returns event triggers, to list each channel notifications, check messages APIs.
  */
 export function notificationsList(
   client: NovuCore,

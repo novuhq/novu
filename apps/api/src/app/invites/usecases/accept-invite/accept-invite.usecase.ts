@@ -2,7 +2,7 @@ import { Injectable, NotFoundException, Scope, BadRequestException } from '@nest
 
 import { MemberEntity, MemberRepository, OrganizationRepository, UserEntity, UserRepository } from '@novu/dal';
 import { MemberStatusEnum } from '@novu/shared';
-import { Novu } from '@novu/api';
+
 import { PinoLogger } from '@novu/application-generic';
 import { AuthService } from '../../../auth/services/auth.service';
 import { AcceptInviteCommand } from './accept-invite.command';
@@ -54,30 +54,6 @@ export class AcceptInvite {
   }
 
   async sendInviterAcceptedEmail(inviter: UserEntity, member: MemberEntity) {
-    if (!member.invite) return;
-
-    try {
-      if ((process.env.NODE_ENV === 'dev' || process.env.NODE_ENV === 'production') && process.env.NOVU_API_KEY) {
-        const novu = new Novu({ security: { secretKey: process.env.NOVU_API_KEY } });
-
-        await novu.trigger({
-          workflowId: process.env.NOVU_TEMPLATEID_INVITE_ACCEPTED || 'invite-accepted-dEQAsKD1E',
-          to: [
-            {
-              subscriberId: inviter._id,
-              firstName: capitalize(inviter.firstName || ''),
-              email: inviter.email || '',
-            },
-          ],
-          payload: {
-            invitedUserEmail: member.invite.email,
-            firstName: capitalize(inviter.firstName || ''),
-            ctaUrl: '/team',
-          },
-        });
-      }
-    } catch (e) {
-      this.logger.error({ message: e.message, stack: e.stack }, 'Accept inviter send email');
-    }
+    console.log('sendInviterAcceptedEmail', { inviter, member });
   }
 }

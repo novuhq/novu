@@ -25,7 +25,11 @@ export type SubscribersMessagesUpdateAsSeenMutationData =
   operations.SubscribersV1ControllerMarkActionAsSeenResponse;
 
 /**
- * Mark message action as seen
+ * Update notification action status
+ *
+ * @remarks
+ * Update in-app (inbox) notification's action status by its unique key identifier **messageId** and type field **type**.
+ *       **type** field can be **primary** or **secondary**
  */
 export function useSubscribersMessagesUpdateAsSeenMutation(
   options?: MutationHookOptions<

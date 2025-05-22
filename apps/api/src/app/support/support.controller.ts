@@ -1,6 +1,5 @@
 import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
-import { Novu } from '@novu/api';
 import { UserSession } from '@novu/application-generic';
 import { UserSessionData } from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
@@ -41,22 +40,5 @@ export class SupportController {
 
   @RequireAuthentication()
   @Post('mobile-setup')
-  async mobileSetup(@UserSession() user: UserSessionData) {
-    const novu = new Novu({
-      security: {
-        secretKey: process.env.NOVU_INTERNAL_SECRET_KEY,
-      },
-    });
-
-    await novu.trigger({
-      workflowId: 'mobile-setup-email',
-      to: {
-        subscriberId: user._id as string,
-        firstName: user.firstName as string,
-        lastName: user.lastName as string,
-        email: user.email as string,
-      },
-      payload: {},
-    });
-  }
+  async mobileSetup(@UserSession() user: UserSessionData) {}
 }

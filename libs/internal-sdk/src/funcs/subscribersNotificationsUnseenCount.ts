@@ -25,7 +25,10 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Get the unseen in-app notifications count for subscribers feed
+ * Retrieve unseen notifications count
+ *
+ * @remarks
+ * Retrieve unseen in-app (inbox) notifications count for a subscriber by its unique key identifier **subscriberId**.
  */
 export function subscribersNotificationsUnseenCount(
   client: NovuCore,

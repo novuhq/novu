@@ -26,6 +26,10 @@ import { Result } from "../types/fp.js";
 
 /**
  * List topic subscriptions
+ *
+ * @remarks
+ * List all topics that a subscriber is subscribed to.
+ *     Checkout all available filters in the query section.
  */
 export function topicsSubscriptionsList(
   client: NovuCore,

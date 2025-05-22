@@ -27,7 +27,7 @@ export type TopicsCreateMutationData =
   operations.TopicsControllerUpsertTopicResponse;
 
 /**
- * Create or update a topic
+ * Create a topic
  *
  * @remarks
  * Creates a new topic if it does not exist, or updates an existing topic if it already exists

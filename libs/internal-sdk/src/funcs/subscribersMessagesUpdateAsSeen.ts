@@ -25,7 +25,11 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Mark message action as seen
+ * Update notification action status
+ *
+ * @remarks
+ * Update in-app (inbox) notification's action status by its unique key identifier **messageId** and type field **type**.
+ *       **type** field can be **primary** or **secondary**
  */
 export function subscribersMessagesUpdateAsSeen(
   client: NovuCore,

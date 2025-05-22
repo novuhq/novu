@@ -25,7 +25,12 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Get topics list
+ * List all topics
+ *
+ * @remarks
+ * This api returns a paginated list of topics.
+ *     Topics can be filtered by **key**, **name**, or **includeCursor** to paginate through the list.
+ *     Checkout all available filters in the query section.
  */
 export function topicsList(
   client: NovuCore,

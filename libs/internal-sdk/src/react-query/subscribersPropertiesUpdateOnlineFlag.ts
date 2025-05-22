@@ -32,7 +32,7 @@ export type SubscribersPropertiesUpdateOnlineFlagMutationData =
  * Update subscriber online status
  *
  * @remarks
- * Used to update the subscriber isOnline flag.
+ * Update the subscriber online status by its unique key identifier **subscriberId**
  */
 export function useSubscribersPropertiesUpdateOnlineFlagMutation(
   options?: MutationHookOptions<

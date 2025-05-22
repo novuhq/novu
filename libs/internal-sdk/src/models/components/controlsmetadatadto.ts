@@ -7,12 +7,6 @@ import { safeParse } from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 import {
-  JSONSchemaDto,
-  JSONSchemaDto$inboundSchema,
-  JSONSchemaDto$Outbound,
-  JSONSchemaDto$outboundSchema,
-} from "./jsonschemadto.js";
-import {
   UiSchema,
   UiSchema$inboundSchema,
   UiSchema$Outbound,
@@ -22,13 +16,13 @@ import {
 /**
  * JSON Schema for data
  */
-export type DataSchema = JSONSchemaDto;
+export type DataSchema = {};
 
 export type ControlsMetadataDto = {
   /**
    * JSON Schema for data
    */
-  dataSchema?: JSONSchemaDto | undefined;
+  dataSchema?: DataSchema | undefined;
   /**
    * UI Schema for rendering
    */
@@ -44,17 +38,17 @@ export const DataSchema$inboundSchema: z.ZodType<
   DataSchema,
   z.ZodTypeDef,
   unknown
-> = JSONSchemaDto$inboundSchema;
+> = z.object({});
 
 /** @internal */
-export type DataSchema$Outbound = JSONSchemaDto$Outbound;
+export type DataSchema$Outbound = {};
 
 /** @internal */
 export const DataSchema$outboundSchema: z.ZodType<
   DataSchema$Outbound,
   z.ZodTypeDef,
   DataSchema
-> = JSONSchemaDto$outboundSchema;
+> = z.object({});
 
 /**
  * @internal
@@ -89,14 +83,14 @@ export const ControlsMetadataDto$inboundSchema: z.ZodType<
   z.ZodTypeDef,
   unknown
 > = z.object({
-  dataSchema: JSONSchemaDto$inboundSchema.optional(),
+  dataSchema: z.lazy(() => DataSchema$inboundSchema).optional(),
   uiSchema: UiSchema$inboundSchema.optional(),
   values: z.record(z.any()),
 });
 
 /** @internal */
 export type ControlsMetadataDto$Outbound = {
-  dataSchema?: JSONSchemaDto$Outbound | undefined;
+  dataSchema?: DataSchema$Outbound | undefined;
   uiSchema?: UiSchema$Outbound | undefined;
   values: { [k: string]: any };
 };
@@ -107,7 +101,7 @@ export const ControlsMetadataDto$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   ControlsMetadataDto
 > = z.object({
-  dataSchema: JSONSchemaDto$outboundSchema.optional(),
+  dataSchema: z.lazy(() => DataSchema$outboundSchema).optional(),
   uiSchema: UiSchema$outboundSchema.optional(),
   values: z.record(z.any()),
 });

@@ -25,7 +25,11 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Search for subscribers
+ * Search subscribers
+ *
+ * @remarks
+ * Search subscribers by their **email**, **phone**, **subscriberId** and **name**.
+ *     The search is case sensitive and supports pagination.Checkout all available filters in the query section.
  */
 export function subscribersSearch(
   client: NovuCore,

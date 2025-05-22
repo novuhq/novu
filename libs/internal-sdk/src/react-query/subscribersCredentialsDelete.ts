@@ -28,10 +28,11 @@ export type SubscribersCredentialsDeleteMutationData =
   | undefined;
 
 /**
- * Delete subscriber credentials by providerId
+ * Delete provider credentials
  *
  * @remarks
- * Delete subscriber credentials such as slack and expo tokens.
+ * Delete subscriber credentials for a provider such as **slack** and **FCM** by **providerId**.
+ *     This action is irreversible and will remove the credentials for the provider for particular **subscriberId**.
  */
 export function useSubscribersCredentialsDeleteMutation(
   options?: MutationHookOptions<
