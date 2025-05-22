@@ -1,6 +1,5 @@
 const { transformFileSync } = require('@swc/core');
 const { addHook } = require('pirates');
-const path = require('path');
 
 require('ts-node').register({
   transpileOnly: true,
@@ -13,10 +12,6 @@ require('ts-node').register({
 
 addHook(
   (code, filename) => {
-    if (filename.includes('node_modules') || filename.includes('.source')) {
-      return code;
-    }
-
     try {
       const result = transformFileSync(filename, {
         jsc: {
