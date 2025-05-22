@@ -7,7 +7,7 @@ require('ts-node').register({
   compilerOptions: {
     module: 'commonjs',
     target: 'es2020',
-    esModuleInterop: true,
+    esModuleInterop: false,
   },
 });
 
@@ -37,7 +37,6 @@ addHook(
           type: 'commonjs',
           strictMode: false,
           noInterop: false,
-          lazy: true,
         },
         sourceMaps: 'inline',
         minify: false,
