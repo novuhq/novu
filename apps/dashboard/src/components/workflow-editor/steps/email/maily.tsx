@@ -17,6 +17,7 @@ import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { FeatureFlagsKeysEnum, type IEnvironment, type WorkflowResponseDto } from '@novu/shared';
 import type { JSONSchema7TypeName } from '@/components/schema-editor/json-schema';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
+import { PayloadSchemaDrawer } from '@/components/workflow-editor/payload-schema-drawer';
 
 type MailyProps = HTMLAttributes<HTMLDivElement> & {
   value: string;
@@ -28,6 +29,9 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
   const { step, digestStepBeforeCurrent, workflow } = useWorkflow();
   const { currentEnvironment } = useEnvironment();
   const isPayloadSchemaEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_PAYLOAD_SCHEMA_ENABLED);
+
+  const [isPayloadSchemaDrawerOpen, setIsPayloadSchemaDrawerOpen] = useState(false);
+  const [highlightedVariableKey, setHighlightedVariableKey] = useState<string | null>(null);
 
   const { addProperty: addSchemaProperty, handleSaveChanges: handleSaveSchemaChanges } = useWorkflowSchemaManager({
     workflow: workflow as WorkflowResponseDto,
@@ -45,6 +49,8 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
         // Assuming new variables are of type string by default.
         addSchemaProperty({ keyName: variableName }, 'string' as JSONSchema7TypeName);
         await handleSaveSchemaChanges();
+        setHighlightedVariableKey(variableName);
+        setIsPayloadSchemaDrawerOpen(true);
       } catch (error) {
         showErrorToast('Failed to save new variable to schema: ' + error);
       }
@@ -171,6 +177,21 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
           repeatMenuConfig={repeatMenuConfig}
         />
       </div>
+      <PayloadSchemaDrawer
+        isOpen={isPayloadSchemaDrawerOpen}
+        onOpenChange={(isOpen) => {
+          setIsPayloadSchemaDrawerOpen(isOpen);
+
+          if (!isOpen) {
+            setHighlightedVariableKey(null);
+          }
+        }}
+        workflow={workflow}
+        highlightedPropertyKey={highlightedVariableKey}
+        onSave={() => {
+          // Optionally refetch or update data after schema save from drawer
+        }}
+      />
     </>
   );
 };
