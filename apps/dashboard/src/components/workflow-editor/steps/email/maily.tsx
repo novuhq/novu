@@ -11,6 +11,12 @@ import { createEditorBlocks, createExtensions, DEFAULT_EDITOR_CONFIG, MAILY_EMAI
 import { calculateVariables, VariableFrom } from './variables/variables';
 import { RepeatMenuDescription } from './views/repeat-menu-description';
 import { useRemoveGrammarly } from '@/hooks/use-remove-grammarly';
+import { useWorkflowSchemaManager } from '@/components/workflow-editor/use-workflow-schema-manager';
+import { useEnvironment } from '@/context/environment/hooks';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { FeatureFlagsKeysEnum, type IEnvironment, type WorkflowResponseDto } from '@novu/shared';
+import type { JSONSchema7TypeName } from '@/components/schema-editor/json-schema';
+import { showErrorToast } from '@/components/primitives/sonner-helpers';
 
 type MailyProps = HTMLAttributes<HTMLDivElement> & {
   value: string;
@@ -19,7 +25,33 @@ type MailyProps = HTMLAttributes<HTMLDivElement> & {
 };
 
 export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
-  const { step, digestStepBeforeCurrent } = useWorkflow();
+  const { step, digestStepBeforeCurrent, workflow } = useWorkflow();
+  const { currentEnvironment } = useEnvironment();
+  const isPayloadSchemaEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_PAYLOAD_SCHEMA_ENABLED);
+
+  const { addProperty: addSchemaProperty, handleSaveChanges: handleSaveSchemaChanges } = useWorkflowSchemaManager({
+    workflow: workflow as WorkflowResponseDto,
+    environment: currentEnvironment as IEnvironment,
+    initialSchema: workflow?.payloadSchema,
+  });
+
+  const handleCreateNewVariable = useCallback(
+    async (variableName: string) => {
+      if (!workflow || !currentEnvironment || !isPayloadSchemaEnabled) {
+        return;
+      }
+
+      try {
+        // Assuming new variables are of type string by default.
+        addSchemaProperty({ keyName: variableName }, 'string' as JSONSchema7TypeName);
+        await handleSaveSchemaChanges();
+      } catch (error) {
+        showErrorToast('Failed to save new variable to schema: ' + error);
+      }
+    },
+    [workflow, currentEnvironment, isPayloadSchemaEnabled, addSchemaProperty, handleSaveSchemaChanges]
+  );
+
   const parsedVariables = useParseVariables(step?.variables, digestStepBeforeCurrent?.stepId);
   const primitives = useMemo(
     () => parsedVariables.primitives.map((v) => ({ name: v.name, required: false })),
@@ -63,8 +95,9 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
         handleCalculateVariables,
         parsedVariables,
         blocks,
+        onCreateNewVariable: isPayloadSchemaEnabled ? handleCreateNewVariable : undefined,
       }),
-    [handleCalculateVariables, parsedVariables, blocks]
+    [handleCalculateVariables, parsedVariables, blocks, isPayloadSchemaEnabled, handleCreateNewVariable]
   );
 
   /*

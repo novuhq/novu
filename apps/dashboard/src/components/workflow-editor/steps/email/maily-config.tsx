@@ -55,6 +55,7 @@ import {
   isInsideRepeatBlock,
   resolveRepeatBlockAlias,
   VariableFrom,
+  calculateVariablesWithNewSupport,
 } from './variables/variables';
 import { ForView } from './views/for-view';
 import { HTMLCodeBlockView } from './views/html-view';
@@ -62,6 +63,8 @@ import { ParsedVariables } from '@/utils/parseStepVariables';
 import { MailyVariablesListView } from './views/maily-variables-list-view';
 import { createVariableView } from './views/variable-view';
 import { createCards } from './blocks/cards';
+import React from 'react';
+
 export const VARIABLE_TRIGGER_CHARACTER = '{{';
 
 declare module '@tiptap/core' {
@@ -184,8 +187,9 @@ export const createExtensions = (props: {
   handleCalculateVariables: (props: CalculateVariablesProps) => Variables | undefined;
   parsedVariables: ParsedVariables;
   blocks: BlockGroupItem[];
+  onCreateNewVariable?: (variableName: string) => Promise<void>;
 }) => {
-  const { handleCalculateVariables, parsedVariables, blocks } = props;
+  const { handleCalculateVariables, parsedVariables, blocks, onCreateNewVariable } = props;
 
   const extensions = [
     RepeatExtension.extend({
@@ -233,6 +237,13 @@ export const createExtensions = (props: {
         command: ({ editor, range, props }) => {
           const query = props.id + '}}';
 
+          // Handle new variable creation
+          if (props.type === 'new-variable') {
+            const variableName = props.id.replace('payload.', '');
+            onCreateNewVariable?.(variableName);
+            return;
+          }
+
           insertVariableToEditor({
             query,
             editor,
@@ -247,8 +258,30 @@ export const createExtensions = (props: {
           <VariablePill variableName={opts.variable.name} className="h-5 text-xs" from={opts.from as VariableFrom} />
         );
       },
-      variables: handleCalculateVariables as Variables,
-      variableSuggestionsPopover: MailyVariablesListView,
+      variables: (onCreateNewVariable
+        ? (opts: any) => {
+            // Create a wrapper that transforms the opts to match our CalculateVariablesProps
+            const calculateVariablesProps = {
+              query: opts.query || '',
+              editor: opts.editor,
+              from: opts.from || VariableFrom.Content,
+              primitives: parsedVariables.primitives,
+              arrays: parsedVariables.arrays,
+              namespaces: parsedVariables.namespaces,
+              isAllowedVariable: parsedVariables.isAllowedVariable,
+              addDigestVariables: true,
+            };
+            return calculateVariablesWithNewSupport({
+              ...calculateVariablesProps,
+              onCreateNewVariable,
+            });
+          }
+        : handleCalculateVariables) as Variables,
+      variableSuggestionsPopover: onCreateNewVariable
+        ? React.forwardRef<any, any>((props, ref) => (
+            <MailyVariablesListView {...props} ref={ref} onCreateNewVariable={onCreateNewVariable} />
+          ))
+        : MailyVariablesListView,
     }),
     HTMLCodeBlockExtension.extend({
       addNodeView() {

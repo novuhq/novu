@@ -10,10 +10,12 @@ import {
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
+import { NewVariablePreview } from '@/components/variable/components/new-variable-preview';
 
 type VariableSuggestionsPopoverProps = {
   items: Variable[];
   onSelectItem: (item: Variable) => void;
+  onCreateNewVariable?: (variableName: string) => Promise<void>;
 };
 
 type VariableSuggestionsPopoverRef = {
@@ -23,13 +25,17 @@ type VariableSuggestionsPopoverRef = {
 };
 
 export const MailyVariablesListView = React.forwardRef(
-  ({ items, onSelectItem }: VariableSuggestionsPopoverProps, ref: React.Ref<VariableSuggestionsPopoverRef>) => {
+  (
+    { items, onSelectItem, onCreateNewVariable }: VariableSuggestionsPopoverProps,
+    ref: React.Ref<VariableSuggestionsPopoverRef>
+  ) => {
     const { digestStepBeforeCurrent } = useWorkflow();
     const track = useTelemetry();
     const options = useMemo(
       () =>
         items.map((item) => {
           const isDigestVariable = item.name in DIGEST_VARIABLES_FILTER_MAP;
+          const isNewVariable = (item as any).type === 'new-variable';
 
           if (isDigestVariable) {
             const { label } = getDynamicDigestVariable({
@@ -46,12 +52,28 @@ export const MailyVariablesListView = React.forwardRef(
             };
           }
 
+          if (isNewVariable) {
+            const displayLabel = (item as any).displayLabel || item.name;
+            return {
+              label: displayLabel,
+              value: item.name,
+              preview: (
+                <NewVariablePreview
+                  onCreateClick={() => {
+                    const variableName = item.name.replace('payload.', '');
+                    onCreateNewVariable?.(variableName);
+                  }}
+                />
+              ),
+            };
+          }
+
           return {
             label: item.name,
             value: item.name,
           };
         }),
-      [digestStepBeforeCurrent?.stepId, items]
+      [digestStepBeforeCurrent?.stepId, items, onCreateNewVariable]
     );
     const variablesListRef = useRef<VariableListRef>(null);
 
@@ -63,6 +85,13 @@ export const MailyVariablesListView = React.forwardRef(
       }
 
       let selectedItem = item;
+
+      // Handle new variable creation
+      if ((item as any).type === 'new-variable') {
+        const variableName = item.name.replace('payload.', '');
+        onCreateNewVariable?.(variableName);
+        return;
+      }
 
       /**
        *  If the variable is a digest variable,

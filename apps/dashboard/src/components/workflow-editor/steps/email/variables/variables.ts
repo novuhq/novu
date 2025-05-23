@@ -234,6 +234,84 @@ export const calculateVariables = ({
   return dedupAndSortVariables(variables, queryWithoutSuffix);
 };
 
+export const calculateVariablesWithNewSupport = ({
+  query,
+  editor,
+  from,
+  primitives,
+  arrays,
+  namespaces,
+  isAllowedVariable,
+  addDigestVariables = false,
+  onCreateNewVariable,
+}: CalculateVariablesProps & {
+  onCreateNewVariable?: (variableName: string) => Promise<void>;
+}): Array<LiquidVariable> | undefined => {
+  const queryWithoutSuffix = query.replace(/}+$/, '');
+
+  // Get available variables by context (where we are in the editor)
+  const variables = getVariablesByContext({
+    editor,
+    from,
+    primitives,
+    arrays,
+    namespaces,
+    addDigestVariables,
+  });
+
+  // Add new variable creation support for payload variables
+  const PAYLOAD_NAMESPACE = 'payload';
+
+  if (
+    queryWithoutSuffix.trim() &&
+    queryWithoutSuffix.startsWith(PAYLOAD_NAMESPACE + '.') &&
+    queryWithoutSuffix !== PAYLOAD_NAMESPACE &&
+    onCreateNewVariable
+  ) {
+    const variableKey = queryWithoutSuffix.replace(PAYLOAD_NAMESPACE + '.', '');
+
+    // Check if this variable doesn't already exist
+    const existingVariable = variables.find((v) => v.name === queryWithoutSuffix);
+
+    if (!existingVariable && variableKey.trim()) {
+      variables.unshift({
+        name: queryWithoutSuffix,
+        type: 'new-variable',
+        isNewSuggestion: true,
+        displayLabel: `Create ${queryWithoutSuffix}`,
+        boost: 100, // Boost to show at top
+      });
+    }
+  }
+
+  // Add currently typed variable if allowed (existing behavior)
+  if (
+    queryWithoutSuffix.trim() &&
+    isAllowedVariable({
+      name: queryWithoutSuffix,
+      aliasFor: resolveRepeatBlockAlias(queryWithoutSuffix, editor),
+    })
+  ) {
+    const existingVariable = variables.find((v) => v.name === queryWithoutSuffix);
+
+    if (!existingVariable) {
+      variables.push({ name: queryWithoutSuffix });
+    }
+  }
+
+  /* Skip variable insertion by closing "}}" for bubble menus since they require special handling:
+   * 1. They use different positioning logic compared to content variables
+   * 2. Each menu type (repeat, button, etc.) handles variables differently
+   * 3. For now bubble variables can be only added via Enter key which triggers a separate insertion flow
+   *    (which is external somewhere in TipTap or Maily)
+   */
+  if (from === VariableFrom.Content) {
+    insertVariableToEditor({ query, editor, isAllowedVariable });
+  }
+
+  return dedupAndSortVariables(variables, queryWithoutSuffix);
+};
+
 export function isAllowedAlias(variableName: string): boolean {
   const [variablePart] = variableName.split('|');
   const nameRoot = variablePart.split('.')[0];

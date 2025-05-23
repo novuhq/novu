@@ -10,7 +10,7 @@ import {
 } from '../components/variable/utils/digest-variables';
 
 export interface LiquidVariable {
-  type?: 'variable' | 'digest';
+  type?: 'variable' | 'digest' | 'new-variable';
   name: string;
   boost?: number;
   info?: Completion['info'];
