@@ -61,6 +61,7 @@
     },
     "@novu/ee-billing:build": {
       "cache": true,
+      "dependsOn": ["^build"],
       "inputs": [
         "default",
         "{projectRoot}/**/*",
@@ -72,6 +73,7 @@
     },
     "@novu/ee-dal:build": {
       "cache": true,
+      "dependsOn": ["^build"],
       "inputs": [
         "default",
         "{projectRoot}/**/*",
