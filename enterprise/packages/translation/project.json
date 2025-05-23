@@ -1,0 +1,10 @@
+{
+  "name": "@novu/ee-translation",
+  "sourceRoot": "enterprise/packages/translation/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "cache": false
+    }
+  }
+}

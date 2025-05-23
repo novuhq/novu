@@ -1,0 +1,10 @@
+{
+  "name": "@novu/ee-auth",
+  "sourceRoot": "enterprise/packages/auth/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "cache": false
+    }
+  }
+}

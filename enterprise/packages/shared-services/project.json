@@ -1,0 +1,10 @@
+{
+  "name": "@novu/ee-shared-services",
+  "sourceRoot": "enterprise/packages/shared-services/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "cache": false
+    }
+  }
+}

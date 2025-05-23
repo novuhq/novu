@@ -1,0 +1,10 @@
+{
+  "name": "@novu/ee-dal",
+  "sourceRoot": "enterprise/packages/dal/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "cache": false
+    }
+  }
+}
