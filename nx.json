@@ -22,14 +22,23 @@
         "{projectRoot}/dist",
         "{projectRoot}/funcs",
         "{projectRoot}/hooks",
-        "{projectRoot}/libs",
+        "{projectRoot}/lib",
         "{projectRoot}/models",
         "{projectRoot}/react-query",
         "{projectRoot}/sdk",
         "{projectRoot}/types",
+        "{projectRoot}/utils",
         "{projectRoot}/docs",
+        "{projectRoot}/speakeasyusagegen",
         "{projectRoot}/index.js",
-        "{projectRoot}/core.js"
+        "{projectRoot}/index.js.map",
+        "{projectRoot}/index.d.ts",
+        "{projectRoot}/index.d.ts.map",
+        "{projectRoot}/core.js",
+        "{projectRoot}/core.js.map",
+        "{projectRoot}/core.d.ts",
+        "{projectRoot}/core.d.ts.map",
+        "{projectRoot}/.tsbuildinfo"
       ]
     },
     "@novu/api-service:build": {
