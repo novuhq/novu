@@ -147,6 +147,37 @@ describe('Session', () => {
     }
   });
 
+  it('should validate HMAC encryption and return the session response', async () => {
+    const command: SessionCommand = {
+      applicationIdentifier: 'app-id',
+      subscriber: {
+        subscriberId: 'subscriber-id',
+      },
+      subscriberHash: 'hash',
+    };
+    const subscriber = { _id: 'subscriber-id' };
+    const notificationCount = { data: [{ count: 10, filter: {} }] };
+    const token = 'token';
+
+    environmentRepository.findEnvironmentByIdentifier.resolves({
+      _id: 'env-id',
+      _organizationId: 'org-id',
+      apiKeys: [{ key: 'api-key', _userId: 'user-id' }],
+      name: 'Development',
+    } as any);
+    selectIntegration.execute.resolves(mockIntegration);
+    createSubscriber.execute.resolves(subscriber as any);
+    notificationsCount.execute.resolves(notificationCount);
+    authService.getSubscriberWidgetToken.resolves(token);
+
+    const validateHmacEncryptionStub = sinon.stub(encryption, 'validateHmacEncryption');
+
+    await session.execute(command);
+
+    expect(validateHmacEncryptionStub.calledOnce).to.be.true;
+    validateHmacEncryptionStub.restore();
+  });
+
   it('should return correct removeNovuBranding value when is set on the integration', async () => {
     const command: SessionCommand = {
       applicationIdentifier: 'app-id',
