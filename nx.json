@@ -1,9 +1,8 @@
 {
-  "$schema": "./node_modules/nx/schemas/nx-schema.json",
+  "parallel": 4,
   "targetDefaults": {
     "build": {
-      "dependsOn": ["^build"],
-      "cache": true
+      "dependsOn": ["^build"]
     },
     "test": {
       "cache": true
