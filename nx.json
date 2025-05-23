@@ -44,6 +44,8 @@
     },
     "@novu/api-service:build": {
       "cache": true,
+      "dependsOn": ["^build"],
+      "inputs": ["default"],
       "outputs": ["default", "{projectRoot}/src/metadata.ts"]
     },
     "@novu/ee-auth:build": {
