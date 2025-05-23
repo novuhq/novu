@@ -49,6 +49,8 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
         // Assuming new variables are of type string by default.
         addSchemaProperty({ keyName: variableName }, 'string' as JSONSchema7TypeName);
         await handleSaveSchemaChanges();
+
+        // After saving to schema, open the drawer to manage the new variable
         setHighlightedVariableKey(variableName);
         setIsPayloadSchemaDrawerOpen(true);
       } catch (error) {
@@ -101,7 +103,7 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
         handleCalculateVariables,
         parsedVariables,
         blocks,
-        onCreateNewVariable: isPayloadSchemaEnabled ? handleCreateNewVariable : undefined,
+        onCreateNewVariable: handleCreateNewVariable,
       }),
     [handleCalculateVariables, parsedVariables, blocks, isPayloadSchemaEnabled, handleCreateNewVariable]
   );

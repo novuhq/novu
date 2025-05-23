@@ -241,14 +241,13 @@ export const createExtensions = (props: {
           if (props.type === 'new-variable') {
             const variableName = props.id.replace('payload.', '');
             onCreateNewVariable?.(variableName);
-            return;
           }
 
           insertVariableToEditor({
             query,
             editor,
             range,
-            isAllowedVariable: parsedVariables.isAllowedVariable,
+            isAllowedVariable: props.type === 'new-variable' ? () => true : parsedVariables.isAllowedVariable,
           });
         },
       },

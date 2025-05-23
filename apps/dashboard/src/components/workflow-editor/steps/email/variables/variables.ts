@@ -77,6 +77,7 @@ export const insertVariableToEditor = ({
 }) => {
   // if we type then we need to close, if we accept suggestion then it has range
   const isClosedVariable = query.endsWith('}}') || range;
+  console.log('isClosedVariable', isClosedVariable, { range });
   if (!isClosedVariable) return;
 
   const queryWithoutSuffix = query.replace(/}+$/, '');
@@ -86,7 +87,7 @@ export const insertVariableToEditor = ({
   const aliasFor = resolveRepeatBlockAlias(queryWithoutSuffix, editor);
   const variable: LiquidVariable = { name: parsedVariable?.name ?? '', aliasFor };
 
-  if (!isAllowedVariable(variable)) return;
+  console.log('variable', isAllowedVariable(variable), variable.type, { variable, query, editor });
 
   // Calculate range for manual typing if not provided by suggestion
   const calculatedRange = range || {

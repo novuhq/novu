@@ -85,13 +85,7 @@ export const MailyVariablesListView = React.forwardRef(
       }
 
       let selectedItem = item;
-
-      // Handle new variable creation
-      if ((item as any).type === 'new-variable') {
-        const variableName = item.name.replace('payload.', '');
-        onCreateNewVariable?.(variableName);
-        return;
-      }
+      const isNewVariable = (item as any).type === 'new-variable';
 
       /**
        *  If the variable is a digest variable,
@@ -109,7 +103,17 @@ export const MailyVariablesListView = React.forwardRef(
         });
       }
 
+      // First, insert the variable into the editor (this will create the pill and close the autocomplete)
       onSelectItem(selectedItem);
+
+      // Then, if it was a new variable, handle schema saving and drawer opening
+      if (isNewVariable) {
+        const variableName = item.name.replace('payload.', '');
+        // Use setTimeout to ensure the variable insertion completes first
+        setTimeout(() => {
+          onCreateNewVariable?.(variableName);
+        }, 0);
+      }
     };
 
     useImperativeHandle(ref, () => ({
