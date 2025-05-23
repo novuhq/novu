@@ -61,7 +61,7 @@
     "@sentry/nestjs": "^8.33.1",
     "@sentry/node": "^8.33.1",
     "@sentry/profiling-node": "^8.33.1",
-    "@sentry/tracing": "^7.40.0",
+    "@sentry/tracing": "^7.120.3",
     "@team-plain/typescript-sdk": "5.8.0",
     "@types/newrelic": "^9.14.6",
     "@upstash/ratelimit": "^0.4.4",

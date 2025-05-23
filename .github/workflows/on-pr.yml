@@ -225,14 +225,14 @@ jobs:
         with:
           targets: build
           projects: '@novu/api'
-          args: '--skip-nx-cache'
+          args: ''
 
       - uses: mansagroup/nrwl-nx-action@v3
         name: Lint and build and test
         with:
           targets: lint,build,test
           projects: ${{matrix.projectName}}
-          args: '--skip-nx-cache'
+          args: ''
 
   validate_openapi:
     name: Validate OpenAPI

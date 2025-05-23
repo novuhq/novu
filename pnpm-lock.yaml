@@ -445,8 +445,8 @@ importers:
         specifier: ^8.33.1
         version: 8.33.1
       '@sentry/tracing':
-        specifier: ^7.40.0
-        version: 7.47.0
+        specifier: ^7.120.3
+        version: 7.120.3
       '@team-plain/typescript-sdk':
         specifier: 5.8.0
         version: 5.8.0
@@ -13405,6 +13405,10 @@ packages:
     resolution: {integrity: sha512-3wkW03vXYMyWtTLxl9yrtkV+qxbnKFgfASdoGWhXzfLjycgT6o4/04eb3Gn71q9aXqRwH17ISVQbVswnRqMcmA==}
     engines: {node: '>=14.18'}
 
+  '@sentry-internal/tracing@7.120.3':
+    resolution: {integrity: sha512-Ausx+Jw1pAMbIBHStoQ6ZqDZR60PsCByvHdw/jdH9AqPrNE9xlBSf9EwcycvmrzwyKspSLaB52grlje2cRIUMg==}
+    engines: {node: '>=8'}
+
   '@sentry-internal/tracing@7.47.0':
     resolution: {integrity: sha512-udpHnCzF8DQsWf0gQwd0XFGp6Y8MOiwnl8vGt2ohqZGS3m1+IxoRLXsSkD8qmvN6KKDnwbaAvYnK0z0L+AW95g==}
     engines: {node: '>=8'}
@@ -13479,6 +13483,10 @@ packages:
     resolution: {integrity: sha512-YnanVlmulkjgZiVZ9BfY9k6I082n+C+LbZo52MTvx3FY6RE5iyiPMpaOh67oXEZRWcYQEGm+bKruRxLVP6RlbA==}
     engines: {node: '>=8'}
 
+  '@sentry/core@7.120.3':
+    resolution: {integrity: sha512-vyy11fCGpkGK3qI5DSXOjgIboBZTriw0YDx/0KyX5CjIjDDNgp5AGgpgFkfZyiYiaU2Ww3iFuKo4wHmBusz1uA==}
+    engines: {node: '>=8'}
+
   '@sentry/core@7.47.0':
     resolution: {integrity: sha512-EFhZhKdMu7wKmWYZwbgTi8FNZ7Fq+HdlXiZWNz51Bqe3pHmfAkdHtAEs0Buo0v623MKA0CA4EjXIazGUM34XTg==}
     engines: {node: '>=8'}
@@ -13537,12 +13545,20 @@ packages:
     resolution: {integrity: sha512-BFpVZVmwlezZ83y0L43TCTJY142Fxh+z+qZSwTag5HlhmIpBKw/WKg06ajOhrYJbCBkhHmeOvyKkxX0jnc39ZA==}
     engines: {node: '>=12'}
 
+  '@sentry/tracing@7.120.3':
+    resolution: {integrity: sha512-B7bqyYFgHuab1Pn7w5KXsZP/nfFo4VDBDdSXDSWYk5+TYJ3IDruO3eJFhOrircfsz4YwazWm9kbeZhkpsHDyHg==}
+    engines: {node: '>=8'}
+
   '@sentry/tracing@7.47.0':
     resolution: {integrity: sha512-hJCpKdekwaFNbCVXxfCz5IxfSEJIKnkPmRSVHITOm5VhKwq2e5kmy4Rn6bzSETwJFSDE8LGbR/3eSfGTqw37XA==}
     engines: {node: '>=8'}
 
   '@sentry/types@7.114.0':
     resolution: {integrity: sha512-tsqkkyL3eJtptmPtT0m9W/bPLkU7ILY7nvwpi1hahA5jrM7ppoU0IMaQWAgTD+U3rzFH40IdXNBFb8Gnqcva4w==}
+    engines: {node: '>=8'}
+
+  '@sentry/types@7.120.3':
+    resolution: {integrity: sha512-C4z+3kGWNFJ303FC+FxAd4KkHvxpNFYAFN8iMIgBwJdpIl25KZ8Q/VdGn0MLLUEHNLvjob0+wvwlcRBBNLXOow==}
     engines: {node: '>=8'}
 
   '@sentry/types@7.47.0':
@@ -13559,6 +13575,10 @@ packages:
 
   '@sentry/utils@7.114.0':
     resolution: {integrity: sha512-319N90McVpupQ6vws4+tfCy/03AdtsU0MurIE4+W5cubHME08HtiEWlfacvAxX+yuKFhvdsO4K4BB/dj54ideg==}
+    engines: {node: '>=8'}
+
+  '@sentry/utils@7.120.3':
+    resolution: {integrity: sha512-UDAOQJtJDxZHQ5Nm1olycBIsz2wdGX8SdzyGVHmD8EOQYAeDZQyIlQYohDe9nazdIOQLZCIc3fU0G9gqVLkaGQ==}
     engines: {node: '>=8'}
 
   '@sentry/utils@7.47.0':
@@ -35136,8 +35156,8 @@ snapshots:
       '@aws-crypto/sha1-browser': 3.0.0
       '@aws-crypto/sha256-browser': 3.0.0
       '@aws-crypto/sha256-js': 3.0.0
-      '@aws-sdk/client-sso-oidc': 3.575.0(@aws-sdk/client-sts@3.575.0)
-      '@aws-sdk/client-sts': 3.575.0
+      '@aws-sdk/client-sso-oidc': 3.575.0
+      '@aws-sdk/client-sts': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)
       '@aws-sdk/core': 3.575.0
       '@aws-sdk/credential-provider-node': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)(@aws-sdk/client-sts@3.575.0)
       '@aws-sdk/middleware-bucket-endpoint': 3.575.0
@@ -35411,11 +35431,11 @@ snapshots:
       - aws-crt
     optional: true
 
-  '@aws-sdk/client-sso-oidc@3.575.0(@aws-sdk/client-sts@3.575.0)':
+  '@aws-sdk/client-sso-oidc@3.575.0':
     dependencies:
       '@aws-crypto/sha256-browser': 3.0.0
       '@aws-crypto/sha256-js': 3.0.0
-      '@aws-sdk/client-sts': 3.575.0
+      '@aws-sdk/client-sts': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)
       '@aws-sdk/core': 3.575.0
       '@aws-sdk/credential-provider-node': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)(@aws-sdk/client-sts@3.575.0)
       '@aws-sdk/middleware-host-header': 3.575.0
@@ -35454,7 +35474,6 @@ snapshots:
       '@smithy/util-utf8': 3.0.0
       tslib: 2.8.1
     transitivePeerDependencies:
-      - '@aws-sdk/client-sts'
       - aws-crt
 
   '@aws-sdk/client-sso-oidc@3.637.0(@aws-sdk/client-sts@3.637.0)':
@@ -35973,11 +35992,11 @@ snapshots:
       - aws-crt
     optional: true
 
-  '@aws-sdk/client-sts@3.575.0':
+  '@aws-sdk/client-sts@3.575.0(@aws-sdk/client-sso-oidc@3.575.0)':
     dependencies:
       '@aws-crypto/sha256-browser': 3.0.0
       '@aws-crypto/sha256-js': 3.0.0
-      '@aws-sdk/client-sso-oidc': 3.575.0(@aws-sdk/client-sts@3.575.0)
+      '@aws-sdk/client-sso-oidc': 3.575.0
       '@aws-sdk/core': 3.575.0
       '@aws-sdk/credential-provider-node': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)(@aws-sdk/client-sts@3.575.0)
       '@aws-sdk/middleware-host-header': 3.575.0
@@ -36016,6 +36035,7 @@ snapshots:
       '@smithy/util-utf8': 3.0.0
       tslib: 2.8.1
     transitivePeerDependencies:
+      - '@aws-sdk/client-sso-oidc'
       - aws-crt
 
   '@aws-sdk/client-sts@3.637.0':
@@ -36325,7 +36345,7 @@ snapshots:
 
   '@aws-sdk/credential-provider-ini@3.575.0(@aws-sdk/client-sso-oidc@3.575.0)(@aws-sdk/client-sts@3.575.0)':
     dependencies:
-      '@aws-sdk/client-sts': 3.575.0
+      '@aws-sdk/client-sts': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)
       '@aws-sdk/credential-provider-env': 3.575.0
       '@aws-sdk/credential-provider-process': 3.575.0
       '@aws-sdk/credential-provider-sso': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)
@@ -36858,7 +36878,7 @@ snapshots:
 
   '@aws-sdk/credential-provider-web-identity@3.575.0(@aws-sdk/client-sts@3.575.0)':
     dependencies:
-      '@aws-sdk/client-sts': 3.575.0
+      '@aws-sdk/client-sts': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)
       '@aws-sdk/types': 3.575.0
       '@smithy/property-provider': 3.1.3
       '@smithy/types': 3.3.0
@@ -37460,7 +37480,7 @@ snapshots:
 
   '@aws-sdk/token-providers@3.575.0(@aws-sdk/client-sso-oidc@3.575.0)':
     dependencies:
-      '@aws-sdk/client-sso-oidc': 3.575.0(@aws-sdk/client-sts@3.575.0)
+      '@aws-sdk/client-sso-oidc': 3.575.0
       '@aws-sdk/types': 3.575.0
       '@smithy/property-provider': 3.1.3
       '@smithy/shared-ini-file-loader': 3.1.4
@@ -37469,7 +37489,7 @@ snapshots:
 
   '@aws-sdk/token-providers@3.614.0(@aws-sdk/client-sso-oidc@3.575.0)':
     dependencies:
-      '@aws-sdk/client-sso-oidc': 3.575.0(@aws-sdk/client-sts@3.575.0)
+      '@aws-sdk/client-sso-oidc': 3.575.0
       '@aws-sdk/types': 3.609.0
       '@smithy/property-provider': 3.1.3
       '@smithy/shared-ini-file-loader': 3.1.4
@@ -49638,6 +49658,12 @@ snapshots:
       '@sentry/types': 8.35.0
       '@sentry/utils': 8.35.0
 
+  '@sentry-internal/tracing@7.120.3':
+    dependencies:
+      '@sentry/core': 7.120.3
+      '@sentry/types': 7.120.3
+      '@sentry/utils': 7.120.3
+
   '@sentry-internal/tracing@7.47.0':
     dependencies:
       '@sentry/core': 7.47.0
@@ -49734,6 +49760,11 @@ snapshots:
     dependencies:
       '@sentry/types': 7.114.0
       '@sentry/utils': 7.114.0
+
+  '@sentry/core@7.120.3':
+    dependencies:
+      '@sentry/types': 7.120.3
+      '@sentry/utils': 7.120.3
 
   '@sentry/core@7.47.0':
     dependencies:
@@ -49854,11 +49885,17 @@ snapshots:
       '@sentry/types': 7.47.0
       '@sentry/utils': 7.47.0
 
+  '@sentry/tracing@7.120.3':
+    dependencies:
+      '@sentry-internal/tracing': 7.120.3
+
   '@sentry/tracing@7.47.0':
     dependencies:
       '@sentry-internal/tracing': 7.47.0
 
   '@sentry/types@7.114.0': {}
+
+  '@sentry/types@7.120.3': {}
 
   '@sentry/types@7.47.0': {}
 
@@ -49869,6 +49906,10 @@ snapshots:
   '@sentry/utils@7.114.0':
     dependencies:
       '@sentry/types': 7.114.0
+
+  '@sentry/utils@7.120.3':
+    dependencies:
+      '@sentry/types': 7.120.3
 
   '@sentry/utils@7.47.0':
     dependencies:
