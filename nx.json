@@ -48,6 +48,7 @@
     },
     "@novu/ee-auth:build": {
       "cache": true,
+      "inputs": ["default"],
       "outputs": ["default", "{projectRoot}/dist"]
     },
     "@novu/ee-billing:build": {
