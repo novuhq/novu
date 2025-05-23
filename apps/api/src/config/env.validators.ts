@@ -57,8 +57,8 @@ export const envValidators = {
       STRIPE_API_KEY: str({ default: undefined }),
       STRIPE_CONNECT_SECRET: str({ default: undefined }),
       NOVU_INTERNAL_SECRET_KEY: str({ default: '' }),
-      KEYLESS_ORGANIZATION_ID: str({ desc: 'Required organizationId for Keyless authentication' }),
-      KEYLESS_USER_EMAIL: str({ desc: 'Required email for Keyless authentication' }),
+      KEYLESS_ORGANIZATION_ID: str({ desc: 'Required organizationId for Keyless authentication', default: undefined }),
+      KEYLESS_USER_EMAIL: str({ desc: 'Required email for Keyless authentication', default: undefined }),
     }),
 
   // Feature Flags

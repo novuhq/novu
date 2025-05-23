@@ -55,12 +55,17 @@ const baseJsonSchema: z.ZodType<any> = z
 // Defines an item in our editable property list
 const PropertyListItemSchema = z.object({
   id: z.string().uuid(),
-  keyName: z
-    .string()
-    .min(1, { message: 'Property name cannot be empty.' })
-    .regex(/^[a-zA-Z_][a-zA-Z0-9_]*$/, {
+  keyName: z.string().refine(
+    (val) => {
+      // Allow empty string (for new properties being created)
+      if (val.trim() === '') return true;
+      // For non-empty strings, enforce proper naming rules
+      return /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(val);
+    },
+    {
       message: 'Name must start with a letter or underscore, and contain only letters, numbers, or underscores.',
-    }),
+    }
+  ),
   definition: baseJsonSchema, // The schema definition for this property's value
   isRequired: z.boolean().optional(),
 });

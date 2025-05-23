@@ -169,10 +169,28 @@ export function useSchemaForm({ initialSchema, onChange, onValidityChange }: Use
 
   const addProperty = useCallback(
     (propertyDataFromArg?: Partial<PropertyListItem>, typeFromArg?: JSONSchema7TypeName) => {
-      const fullPath = propertyDataFromArg?.keyName;
       const defaultType = typeFromArg || 'string';
 
-      if (!fullPath || fullPath.trim() === '') {
+      // Handle root level property addition when called without arguments
+      if (!propertyDataFromArg?.keyName) {
+        const propertyDefinition = propertyDataFromArg?.definition || newProperty(defaultType);
+        const propertyIsRequired =
+          typeof propertyDataFromArg?.isRequired === 'boolean' ? propertyDataFromArg.isRequired : false;
+        const propertyId = propertyDataFromArg?.id || uuidv4();
+
+        append({
+          id: propertyId,
+          keyName: '', // Empty keyName for user to fill in
+          definition: propertyDefinition,
+          isRequired: propertyIsRequired,
+        });
+
+        return;
+      }
+
+      const fullPath = propertyDataFromArg.keyName;
+
+      if (fullPath.trim() === '') {
         console.error('Property keyName path cannot be empty.');
 
         return;
