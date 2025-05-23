@@ -74,7 +74,7 @@ interface UseWorkflowSchemaManagerProps {
   onSchemaChange?: (schema: JSONSchema7) => void;
 }
 
-interface UseWorkflowSchemaManagerReturn {
+export interface UseWorkflowSchemaManagerReturn {
   currentSchema?: JSONSchema7;
   isSchemaValid: boolean;
   handleSaveChanges: () => Promise<void>;
@@ -121,7 +121,7 @@ export function useWorkflowSchemaManager({
   );
 
   const handleSaveChanges = useCallback(async () => {
-    if (!workflow.slug) {
+    if (!workflow?.slug) {
       console.error('Workflow slug is missing. Cannot save.');
       setSaveError(new Error('Workflow slug is missing.'));
       return;
@@ -166,7 +166,7 @@ export function useWorkflowSchemaManager({
     } finally {
       setIsSaving(false);
     }
-  }, [workflow.slug, environment, schemaForm, onSaveSuccess, isSchemaValid, queryClient]);
+  }, [workflow?.slug, environment, schemaForm, onSaveSuccess, isSchemaValid, queryClient]);
 
   return {
     currentSchema: internalSchema,

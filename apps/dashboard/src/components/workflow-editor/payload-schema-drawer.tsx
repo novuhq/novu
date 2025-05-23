@@ -11,10 +11,9 @@ import {
 } from '@/components/primitives/sheet';
 import { Button } from '@/components/primitives/button';
 import { SchemaEditor } from '@/components/schema-editor/schema-editor';
-import { useWorkflowSchemaManager } from './use-workflow-schema-manager';
+import { useWorkflowSchema } from './workflow-schema-provider';
 import { convertSchemaToPropertyList } from '@/components/schema-editor/use-schema-form';
 import type { WorkflowResponseDto } from '@novu/shared';
-import { useEnvironment } from '@/context/environment/hooks';
 import { ExternalLink } from '../shared/external-link';
 import { TooltipContent, TooltipTrigger } from '../primitives/tooltip';
 import { TooltipProvider } from '../primitives/tooltip';
@@ -41,22 +40,8 @@ export function PayloadSchemaDrawer({
   highlightedPropertyKey,
 }: PayloadSchemaDrawerProps) {
   const [drawerSchema, setDrawerSchema] = useState<JSONSchema7 | undefined>(workflow?.payloadSchema);
-  const { currentEnvironment: environment } = useEnvironment();
 
-  const { currentSchema, isSchemaValid, handleSaveChanges, isSaving, saveError, formMethods } =
-    useWorkflowSchemaManager({
-      workflow: workflow!,
-      initialSchema: workflow?.payloadSchema,
-      environment: environment!,
-      onSaveSuccess: (savedSchema) => {
-        console.log('Payload schema saved successfully!');
-        onSave?.(savedSchema);
-        onOpenChange(false);
-      },
-      onSchemaChange: (newSchema) => {
-        setDrawerSchema(newSchema);
-      },
-    });
+  const { currentSchema, isSchemaValid, handleSaveChanges, isSaving, saveError, formMethods } = useWorkflowSchema();
 
   useEffect(() => {
     if (workflow?.payloadSchema && workflow.payloadSchema !== drawerSchema) {
@@ -71,7 +56,17 @@ export function PayloadSchemaDrawer({
     }
   }, [saveError]);
 
-  if ((!workflow || !environment) && isOpen) {
+  const handleSaveWithCallback = async () => {
+    await handleSaveChanges();
+
+    if (currentSchema) {
+      onSave?.(currentSchema);
+    }
+
+    onOpenChange(false);
+  };
+
+  if (!workflow && isOpen) {
     return (
       <Sheet open={isOpen} onOpenChange={onOpenChange}>
         <SheetContent className="w-[600px] sm:max-w-3xl">
@@ -86,7 +81,7 @@ export function PayloadSchemaDrawer({
     );
   }
 
-  if (!workflow || !environment || !isOpen) return null;
+  if (!workflow || !isOpen) return null;
 
   return (
     <Sheet open={isOpen} modal={false} onOpenChange={onOpenChange}>
@@ -150,7 +145,7 @@ export function PayloadSchemaDrawer({
               size="xs"
               mode="gradient"
               variant="secondary"
-              onClick={handleSaveChanges}
+              onClick={handleSaveWithCallback}
               isLoading={isSaving}
               data-test-id="save-payload-schema-btn"
               disabled={!isSchemaValid || isSaving || isLoadingWorkflow}

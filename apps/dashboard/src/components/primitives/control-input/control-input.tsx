@@ -16,12 +16,9 @@ import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { DIGEST_VARIABLES_FILTER_MAP } from '@/components/variable/utils/digest-variables';
-import { FeatureFlagsKeysEnum, type IEnvironment, type WorkflowResponseDto } from '@novu/shared';
-import { useEnvironment } from '../../../context/environment/hooks';
-import { useWorkflowSchemaManager } from '@/components/workflow-editor/use-workflow-schema-manager';
+import { useWorkflowSchema } from '@/components/workflow-editor/workflow-schema-provider';
 import type { JSONSchema7TypeName } from '@/components/schema-editor/json-schema';
 import { PayloadSchemaDrawer } from '@/components/workflow-editor/payload-schema-drawer';
-import { useFeatureFlag } from '../../../hooks/use-feature-flag';
 import { showErrorToast } from '../sonner-helpers';
 
 const variants = cva('relative w-full', {
@@ -83,26 +80,21 @@ export function ControlInput({
     : undefined;
 
   const { digestStepBeforeCurrent, workflow } = useWorkflow();
-  const { currentEnvironment } = useEnvironment();
   const track = useTelemetry();
 
   const [isPayloadSchemaDrawerOpen, setIsPayloadSchemaDrawerOpen] = useState(false);
   const [highlightedVariableKey, setHighlightedVariableKey] = useState<string | null>(null);
 
-  const isPayloadSchemaEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_PAYLOAD_SCHEMA_ENABLED);
   const {
     addProperty: addSchemaProperty,
     handleSaveChanges: handleSaveSchemaChanges,
     getSchemaPropertyByKey,
-  } = useWorkflowSchemaManager({
-    workflow: workflow as WorkflowResponseDto,
-    environment: currentEnvironment as IEnvironment,
-    initialSchema: workflow?.payloadSchema,
-  });
+    isPayloadSchemaEnabled,
+  } = useWorkflowSchema();
 
   const handleCreateNewVariable = useCallback(
     async (variableName: string) => {
-      if (!workflow || !currentEnvironment || !isPayloadSchemaEnabled) {
+      if (!workflow || !isPayloadSchemaEnabled) {
         return;
       }
 
@@ -117,7 +109,7 @@ export function ControlInput({
         showErrorToast('Failed to save new variable to schema: ' + error);
       }
     },
-    [workflow, currentEnvironment, addSchemaProperty, handleSaveSchemaChanges]
+    [workflow, isPayloadSchemaEnabled, addSchemaProperty, handleSaveSchemaChanges]
   );
 
   const onVariableSelect = useCallback(
@@ -137,16 +129,16 @@ export function ControlInput({
         }
       }
     },
-    [track]
+    [track, handleCreateNewVariable]
   );
 
   const completionSource = useMemo(() => {
-    if (workflow && currentEnvironment) {
+    if (workflow && isPayloadSchemaEnabled) {
       return createAutocompleteSource(variables, onVariableSelect, handleCreateNewVariable);
     }
 
     return undefined;
-  }, [variables, workflow, currentEnvironment, onVariableSelect, handleCreateNewVariable]);
+  }, [variables, workflow, isPayloadSchemaEnabled, onVariableSelect, handleCreateNewVariable]);
 
   const autocompletionExtension = useMemo(
     () =>

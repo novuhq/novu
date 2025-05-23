@@ -8,6 +8,7 @@ import {
   DIGEST_VARIABLES_ENUM,
   getDynamicDigestVariable,
 } from '../components/variable/utils/digest-variables';
+import { JSONSchema7 } from 'json-schema';
 
 export interface LiquidVariable {
   type?: 'variable' | 'digest' | 'new-variable';
@@ -37,7 +38,7 @@ export interface ParsedVariables {
  */
 
 export function parseStepVariables(
-  schema: JSONSchemaDefinition,
+  schema: JSONSchemaDefinition | JSONSchema7,
   { digestStepId }: { digestStepId?: string }
 ): ParsedVariables {
   const result: ParsedVariables = {
@@ -48,7 +49,7 @@ export function parseStepVariables(
     isAllowedVariable: () => false,
   };
 
-  function extractProperties(obj: JSONSchemaDefinition, path = ''): void {
+  function extractProperties(obj: JSONSchemaDefinition | JSONSchema7, path = ''): void {
     if (typeof obj === 'boolean') return;
 
     if (obj.type === 'object') {
@@ -122,6 +123,8 @@ export function parseStepVariables(
   }
 
   function isAllowedVariable(variable: LiquidVariable): boolean {
+    console.log({ schema, variable }, 'IS ALLOWED VARIABLE!!');
+
     if (typeof schema === 'boolean') return false;
 
     // if it has aliasFor, then the name must start with the alias
@@ -139,7 +142,7 @@ export function parseStepVariables(
     const parts = parseVariablePath(path);
     if (!parts) return false;
 
-    let currentObj: JSONSchemaDefinition = schema;
+    let currentObj: JSONSchemaDefinition | JSONSchema7 = schema;
 
     for (let i = 0; i < parts.length; i++) {
       const part = parts[i];
@@ -149,7 +152,9 @@ export function parseStepVariables(
       if (currentObj.type === 'array') {
         if (!currentObj.items) return false;
 
-        const items: JSONSchemaDefinition = Array.isArray(currentObj.items) ? currentObj.items[0] : currentObj.items;
+        const items: JSONSchemaDefinition | JSONSchema7 = Array.isArray(currentObj.items)
+          ? currentObj.items[0]
+          : currentObj.items;
         if (typeof items === 'boolean') return false;
 
         currentObj = items;
