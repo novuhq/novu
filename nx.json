@@ -48,24 +48,58 @@
     },
     "@novu/ee-auth:build": {
       "cache": true,
-      "inputs": ["default"],
-      "outputs": ["default", "{projectRoot}/dist"]
+      "inputs": [
+        "default",
+        "{projectRoot}/**/*",
+        "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",
+        "!{projectRoot}/tsconfig.spec.json",
+        "!{projectRoot}/jest.config.[jt]s"
+      ],
+      "outputs": ["default", "{projectRoot}/dist", "{projectRoot}/build", "{projectRoot}/lib"]
     },
     "@novu/ee-billing:build": {
       "cache": true,
-      "outputs": ["default", "{projectRoot}/dist"]
+      "inputs": [
+        "default",
+        "{projectRoot}/**/*",
+        "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",
+        "!{projectRoot}/tsconfig.spec.json",
+        "!{projectRoot}/jest.config.[jt]s"
+      ],
+      "outputs": ["default", "{projectRoot}/dist", "{projectRoot}/build", "{projectRoot}/lib"]
     },
     "@novu/ee-dal:build": {
       "cache": true,
-      "outputs": ["default", "{projectRoot}/dist"]
+      "inputs": [
+        "default",
+        "{projectRoot}/**/*",
+        "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",
+        "!{projectRoot}/tsconfig.spec.json",
+        "!{projectRoot}/jest.config.[jt]s"
+      ],
+      "outputs": ["default", "{projectRoot}/dist", "{projectRoot}/build", "{projectRoot}/lib"]
     },
     "@novu/ee-shared-services:build": {
       "cache": true,
-      "outputs": ["default", "{projectRoot}/build"]
+      "inputs": [
+        "default",
+        "{projectRoot}/**/*",
+        "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",
+        "!{projectRoot}/tsconfig.spec.json",
+        "!{projectRoot}/jest.config.[jt]s"
+      ],
+      "outputs": ["default", "{projectRoot}/build", "{projectRoot}/dist", "{projectRoot}/lib"]
     },
     "@novu/ee-translation:build": {
       "cache": true,
-      "outputs": ["default", "{projectRoot}/dist"]
+      "inputs": [
+        "default",
+        "{projectRoot}/**/*",
+        "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",
+        "!{projectRoot}/tsconfig.spec.json",
+        "!{projectRoot}/jest.config.[jt]s"
+      ],
+      "outputs": ["default", "{projectRoot}/dist", "{projectRoot}/build", "{projectRoot}/lib"]
     }
   },
   "namedInputs": {
