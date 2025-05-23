@@ -35,6 +35,26 @@
     "@novu/api-service:build": {
       "cache": true,
       "outputs": ["default", "{projectRoot}/src/metadata.ts"]
+    },
+    "@novu/ee-auth:build": {
+      "cache": true,
+      "outputs": ["default", "{projectRoot}/dist"]
+    },
+    "@novu/ee-billing:build": {
+      "cache": true,
+      "outputs": ["default", "{projectRoot}/dist"]
+    },
+    "@novu/ee-dal:build": {
+      "cache": true,
+      "outputs": ["default", "{projectRoot}/dist"]
+    },
+    "@novu/ee-shared-services:build": {
+      "cache": true,
+      "outputs": ["default", "{projectRoot}/build"]
+    },
+    "@novu/ee-translation:build": {
+      "cache": true,
+      "outputs": ["default", "{projectRoot}/dist"]
     }
   },
   "namedInputs": {
