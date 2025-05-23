@@ -31,7 +31,11 @@ export function WorkflowSchemaProvider({ children }: WorkflowSchemaProviderProps
     isPayloadSchemaEnabled,
   };
 
-  return <WorkflowSchemaContext.Provider value={contextValue}>{children}</WorkflowSchemaContext.Provider>;
+  return (
+    <WorkflowSchemaContext.Provider key={workflow?.slug} value={contextValue}>
+      {children}
+    </WorkflowSchemaContext.Provider>
+  );
 }
 
 export function useWorkflowSchema(): WorkflowSchemaContextType {

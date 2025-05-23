@@ -1,25 +1,33 @@
 import { RiAddLine } from 'react-icons/ri';
-import { FormProvider } from 'react-hook-form';
+import { FormProvider, type Control, type FieldArrayWithId, type UseFormReturn } from 'react-hook-form';
 
 import { Button } from '@/components/primitives/button';
 import type { JSONSchema7 } from './json-schema';
 import { SchemaPropertyRow } from './schema-property-row';
-import { useSchemaForm } from './use-schema-form';
+import type { SchemaEditorFormValues, PropertyListItem } from './utils/validation-schema';
 
 interface SchemaEditorProps {
-  initialSchema?: JSONSchema7;
-  onChange?: (schema: JSONSchema7) => void;
-  onValidityChange?: (isValid: boolean) => void;
+  control: Control<SchemaEditorFormValues>;
+  fields: FieldArrayWithId<SchemaEditorFormValues, 'propertyList', 'fieldId'>[];
+  formState: {
+    isValid: boolean;
+    errors: Record<string, any>;
+  };
+  addProperty: (propertyData?: Partial<PropertyListItem>, type?: any) => void;
+  removeProperty: (index: number) => void;
+  methods: UseFormReturn<SchemaEditorFormValues>;
   highlightedPropertyKey?: string | null;
 }
 
-export function SchemaEditor({ initialSchema, onChange, onValidityChange, highlightedPropertyKey }: SchemaEditorProps) {
-  const { control, fields, formState, addProperty, removeProperty, methods } = useSchemaForm({
-    initialSchema,
-    onChange,
-    onValidityChange,
-  });
-
+export function SchemaEditor({
+  control,
+  fields,
+  formState,
+  addProperty,
+  removeProperty,
+  methods,
+  highlightedPropertyKey,
+}: SchemaEditorProps) {
   return (
     <FormProvider {...methods}>
       <div className="rounded-4 bg-bg-white border border-neutral-100 p-2 px-[2px]">

@@ -12,7 +12,6 @@ import {
 import { Button } from '@/components/primitives/button';
 import { SchemaEditor } from '@/components/schema-editor/schema-editor';
 import { useWorkflowSchema } from './workflow-schema-provider';
-import { convertSchemaToPropertyList } from '@/components/schema-editor/use-schema-form';
 import type { WorkflowResponseDto } from '@novu/shared';
 import { ExternalLink } from '../shared/external-link';
 import { TooltipContent, TooltipTrigger } from '../primitives/tooltip';
@@ -41,7 +40,19 @@ export function PayloadSchemaDrawer({
 }: PayloadSchemaDrawerProps) {
   const [drawerSchema, setDrawerSchema] = useState<JSONSchema7 | undefined>(workflow?.payloadSchema);
 
-  const { currentSchema, isSchemaValid, handleSaveChanges, isSaving, saveError, formMethods } = useWorkflowSchema();
+  const {
+    currentSchema,
+    isSchemaValid,
+    handleSaveChanges,
+    isSaving,
+    saveError,
+    formMethods,
+    control,
+    fields,
+    formState,
+    addProperty,
+    removeProperty,
+  } = useWorkflowSchema();
 
   useEffect(() => {
     if (workflow?.payloadSchema && workflow.payloadSchema !== drawerSchema) {
@@ -118,19 +129,13 @@ export function PayloadSchemaDrawer({
           ) : (
             <SchemaEditor
               key={workflow.slug}
-              initialSchema={drawerSchema}
+              control={control}
+              fields={fields}
+              formState={formState}
+              addProperty={addProperty}
+              removeProperty={removeProperty}
+              methods={formMethods}
               highlightedPropertyKey={highlightedPropertyKey}
-              onChange={(newFullSchema) => {
-                if (newFullSchema) {
-                  const propertyList = convertSchemaToPropertyList(newFullSchema.properties, newFullSchema.required);
-                  formMethods.setValue('propertyList', propertyList, { shouldValidate: true });
-                } else {
-                  formMethods.setValue('propertyList', [], { shouldValidate: true });
-                }
-              }}
-              onValidityChange={(isValid) => {
-                // Validity is now managed by useWorkflowSchemaManager through useSchemaForm
-              }}
             />
           )}
         </SheetMain>

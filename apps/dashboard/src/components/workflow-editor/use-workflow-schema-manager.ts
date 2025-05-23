@@ -1,7 +1,7 @@
-import { useState, useCallback } from 'react';
-import type { UseFormReturn } from 'react-hook-form';
+import { useState, useCallback, useEffect } from 'react';
+import type { UseFormReturn, Control, FieldArrayWithId } from 'react-hook-form';
 import { useQueryClient } from '@tanstack/react-query';
-import { useSchemaForm } from '@/components/schema-editor/use-schema-form';
+import { useSchemaForm, convertSchemaToPropertyList } from '@/components/schema-editor/use-schema-form';
 import type { JSONSchema7, JSONSchema7TypeName } from '@/components/schema-editor/json-schema';
 import type { SchemaEditorFormValues, PropertyListItem } from '@/components/schema-editor/utils/validation-schema';
 import { patchWorkflow } from '../../api/workflows';
@@ -85,6 +85,12 @@ export interface UseWorkflowSchemaManagerReturn {
   getCurrentSchema: () => JSONSchema7;
   getSchemaPropertyByKey: (keyPath: string) => JSONSchema7 | undefined;
   formMethods: UseFormReturn<SchemaEditorFormValues>;
+  control: Control<SchemaEditorFormValues>;
+  fields: FieldArrayWithId<SchemaEditorFormValues, 'propertyList', 'fieldId'>[];
+  formState: {
+    isValid: boolean;
+    errors: Record<string, any>;
+  };
 }
 
 export function useWorkflowSchemaManager({
@@ -110,6 +116,21 @@ export function useWorkflowSchemaManager({
       setIsSchemaValid(isValid);
     },
   });
+
+  // Reset form when initialSchema changes (e.g., when workflow loads)
+  useEffect(() => {
+    if (initialSchema !== internalSchema) {
+      const propertyList = initialSchema?.properties
+        ? convertSchemaToPropertyList(initialSchema.properties, initialSchema.required)
+        : [];
+
+      schemaForm.methods.reset({
+        propertyList,
+      });
+
+      setInternalSchema(initialSchema);
+    }
+  }, [initialSchema, internalSchema, schemaForm.methods]);
 
   const getSchemaPropertyByKey = useCallback(
     (keyPath: string): JSONSchema7 | undefined => {
@@ -142,7 +163,7 @@ export function useWorkflowSchemaManager({
     const schemaToSave = schemaForm.getCurrentSchema();
 
     const workflowUpdatePayload: PatchWorkflowDto = {
-      payloadSchema: schemaToSave as any,
+      payloadSchema: schemaToSave,
     };
 
     setIsSaving(true);
@@ -179,5 +200,8 @@ export function useWorkflowSchemaManager({
     getCurrentSchema: schemaForm.getCurrentSchema,
     formMethods: schemaForm.methods,
     getSchemaPropertyByKey,
+    control: schemaForm.control,
+    fields: schemaForm.fields,
+    formState: schemaForm.formState,
   };
 }
