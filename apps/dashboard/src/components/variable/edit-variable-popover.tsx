@@ -93,7 +93,11 @@ export const EditVariablePopover = ({
   const nameInputRef = useRef<HTMLInputElement>(null);
   const [name, setName] = useState(parsedName);
   const [variableError, setVariableError] = useState<string>(() => {
-    if (!variable || !isAllowedVariable({ ...variable, name: parsedName })) {
+    if (
+      !variable ||
+      (!isAllowedVariable({ ...variable, name: parsedName }) &&
+        getSchemaPropertyByKey(parsedName?.replace('payload.', '') || ''))
+    ) {
       return 'Not a valid variable';
     }
 
@@ -113,7 +117,10 @@ export const EditVariablePopover = ({
 
   const validateVariable = useCallback(
     (variable: LiquidVariable) => {
-      if (!variable || !isAllowedVariable({ ...variable })) {
+      if (
+        !variable ||
+        (!isAllowedVariable({ ...variable }) && !getSchemaPropertyByKey(parsedName?.replace('payload.', '') || ''))
+      ) {
         setVariableError('Not a valid variable');
         nameInputRef.current?.focus();
         return false;
@@ -122,7 +129,7 @@ export const EditVariablePopover = ({
       setVariableError('');
       return true;
     },
-    [isAllowedVariable]
+    [isAllowedVariable, parsedName, getSchemaPropertyByKey]
   );
 
   const validateVariableDebounced = useDebounce(validateVariable, 2000);
