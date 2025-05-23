@@ -4,10 +4,15 @@
   "projectType": "library",
   "targets": {
     "build": {
-      "cache": false,
-      "inputs": ["default"],
+      "cache": true,
+      "inputs": [
+        "default",
+        "{projectRoot}/src/**/*",
+        "{projectRoot}/tsconfig.json",
+        "{projectRoot}/package.json",
+        "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)"
+      ],
       "outputs": [
-        "{projectRoot}/dist",
         "{projectRoot}/funcs",
         "{projectRoot}/hooks",
         "{projectRoot}/lib",
