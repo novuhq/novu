@@ -9,6 +9,8 @@ import { useCallback, useMemo, useState } from 'react';
 import { resolveRepeatBlockAlias } from '../variables/variables';
 import { DIGEST_VARIABLES_ENUM, getDynamicDigestVariable } from '@/components/variable/utils/digest-variables';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
+import { useWorkflowSchemaManager } from '@/components/workflow-editor/use-workflow-schema-manager';
+import { useEnvironment } from '@/context/environment/hooks';
 
 type InternalVariableViewProps = NodeViewProps & {
   variables: LiquidVariable[];
@@ -20,7 +22,14 @@ function InternalVariableView(props: InternalVariableViewProps) {
   const { id, aliasFor } = node.attrs;
   const [variableValue, setVariableValue] = useState(`{{${id}}}`);
   const [isOpen, setIsOpen] = useState(false);
-  const { digestStepBeforeCurrent } = useWorkflow();
+  const { digestStepBeforeCurrent, workflow } = useWorkflow();
+  const { currentEnvironment } = useEnvironment();
+
+  const { getSchemaPropertyByKey } = useWorkflowSchemaManager({
+    workflow: workflow!,
+    environment: currentEnvironment!,
+    initialSchema: workflow?.payloadSchema,
+  });
 
   const parseVariableCallback = useCallback(
     (variable: string) => {
