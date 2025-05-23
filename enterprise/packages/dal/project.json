@@ -4,7 +4,16 @@
   "projectType": "library",
   "targets": {
     "build": {
-      "cache": false
+      "cache": false,
+      "dependsOn": ["^build"],
+      "inputs": [
+        "default",
+        "{projectRoot}/**/*",
+        "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",
+        "!{projectRoot}/tsconfig.spec.json",
+        "!{projectRoot}/jest.config.[jt]s"
+      ],
+      "outputs": ["{projectRoot}/dist", "{projectRoot}/build", "{projectRoot}/lib"]
     }
   }
 }

@@ -2,7 +2,8 @@
   "parallel": 4,
   "targetDefaults": {
     "build": {
-      "dependsOn": ["^build"]
+      "dependsOn": ["^build"],
+      "cache": true
     },
     "test": {
       "cache": true
@@ -13,96 +14,6 @@
     "@nx/eslint:lint": {
       "cache": true,
       "inputs": ["default", "{workspaceRoot}/tools/eslint-rules/**/*"]
-    },
-    "@novu/api:build": {
-      "cache": false,
-      "inputs": ["default"],
-      "outputs": [
-        "default",
-        "{projectRoot}/dist",
-        "{projectRoot}/funcs",
-        "{projectRoot}/hooks",
-        "{projectRoot}/lib",
-        "{projectRoot}/models",
-        "{projectRoot}/react-query",
-        "{projectRoot}/sdk",
-        "{projectRoot}/types",
-        "{projectRoot}/utils",
-        "{projectRoot}/docs",
-        "{projectRoot}/speakeasyusagegen",
-        "{projectRoot}/index.js",
-        "{projectRoot}/index.js.map",
-        "{projectRoot}/index.d.ts",
-        "{projectRoot}/index.d.ts.map",
-        "{projectRoot}/core.js",
-        "{projectRoot}/core.js.map",
-        "{projectRoot}/core.d.ts",
-        "{projectRoot}/core.d.ts.map",
-        "{projectRoot}/.tsbuildinfo"
-      ]
-    },
-    "@novu/api-service:build": {
-      "cache": false,
-      "dependsOn": ["^build"],
-      "inputs": ["default"],
-      "outputs": ["default", "{projectRoot}/src/metadata.ts"]
-    },
-    "@novu/ee-auth:build": {
-      "cache": false,
-      "inputs": [
-        "default",
-        "{projectRoot}/**/*",
-        "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",
-        "!{projectRoot}/tsconfig.spec.json",
-        "!{projectRoot}/jest.config.[jt]s"
-      ],
-      "outputs": ["default", "{projectRoot}/dist", "{projectRoot}/build", "{projectRoot}/lib"]
-    },
-    "@novu/ee-billing:build": {
-      "cache": false,
-      "dependsOn": ["^build"],
-      "inputs": [
-        "default",
-        "{projectRoot}/**/*",
-        "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",
-        "!{projectRoot}/tsconfig.spec.json",
-        "!{projectRoot}/jest.config.[jt]s"
-      ],
-      "outputs": ["default", "{projectRoot}/dist", "{projectRoot}/build", "{projectRoot}/lib"]
-    },
-    "@novu/ee-dal:build": {
-      "cache": false,
-      "dependsOn": ["^build"],
-      "inputs": [
-        "default",
-        "{projectRoot}/**/*",
-        "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",
-        "!{projectRoot}/tsconfig.spec.json",
-        "!{projectRoot}/jest.config.[jt]s"
-      ],
-      "outputs": ["default", "{projectRoot}/dist", "{projectRoot}/build", "{projectRoot}/lib"]
-    },
-    "@novu/ee-shared-services:build": {
-      "cache": false,
-      "inputs": [
-        "default",
-        "{projectRoot}/**/*",
-        "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",
-        "!{projectRoot}/tsconfig.spec.json",
-        "!{projectRoot}/jest.config.[jt]s"
-      ],
-      "outputs": ["default", "{projectRoot}/build", "{projectRoot}/dist", "{projectRoot}/lib"]
-    },
-    "@novu/ee-translation:build": {
-      "cache": false,
-      "inputs": [
-        "default",
-        "{projectRoot}/**/*",
-        "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",
-        "!{projectRoot}/tsconfig.spec.json",
-        "!{projectRoot}/jest.config.[jt]s"
-      ],
-      "outputs": ["default", "{projectRoot}/dist", "{projectRoot}/build", "{projectRoot}/lib"]
     }
   },
   "namedInputs": {
