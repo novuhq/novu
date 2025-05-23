@@ -42,6 +42,7 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
       try {
         // Assuming new variables are of type string by default.
         addSchemaProperty({ keyName: variableName }, 'string' as JSONSchema7TypeName);
+
         await handleSaveSchemaChanges();
 
         // After saving to schema, open the drawer to manage the new variable
@@ -54,7 +55,6 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
     [workflow, isPayloadSchemaEnabled, addSchemaProperty, handleSaveSchemaChanges]
   );
 
-  console.log({ step }, 'STEPPP');
   const parsedVariables = useParseVariables(step?.variables, digestStepBeforeCurrent?.stepId);
   const primitives = useMemo(
     () => parsedVariables.primitives.map((v) => ({ name: v.name, required: false })),

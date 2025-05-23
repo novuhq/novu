@@ -199,9 +199,14 @@ export const createExtensions = (props: {
         });
       },
       addAttributes() {
+        // Find the first array property from the parsed variables that starts with 'payload.'
+        // Since the actual user payload is nested under payload.payload, we need to filter for payload arrays
+        const payloadArrays = parsedVariables.arrays.filter((array) => array.name.startsWith('payload.'));
+        const firstArrayVariable = payloadArrays.length > 0 ? payloadArrays[0].name : 'payload.items';
+
         return {
           each: {
-            default: 'payload.items',
+            default: firstArrayVariable,
           },
         };
       },

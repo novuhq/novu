@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import type { UseFormReturn, Control, FieldArrayWithId } from 'react-hook-form';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSchemaForm, convertSchemaToPropertyList } from '@/components/schema-editor/use-schema-form';
@@ -105,6 +105,7 @@ export function useWorkflowSchemaManager({
   const [internalSchema, setInternalSchema] = useState<JSONSchema7 | undefined>(initialSchema);
   const [isSchemaValid, setIsSchemaValid] = useState(true);
   const queryClient = useQueryClient();
+  const lastInitialSchemaRef = useRef<JSONSchema7 | undefined>(initialSchema);
 
   const schemaForm = useSchemaForm({
     initialSchema,
@@ -119,7 +120,8 @@ export function useWorkflowSchemaManager({
 
   // Reset form when initialSchema changes (e.g., when workflow loads)
   useEffect(() => {
-    if (initialSchema !== internalSchema) {
+    if (initialSchema !== lastInitialSchemaRef.current) {
+      lastInitialSchemaRef.current = initialSchema;
       const propertyList = initialSchema?.properties
         ? convertSchemaToPropertyList(initialSchema.properties, initialSchema.required)
         : [];
@@ -130,7 +132,7 @@ export function useWorkflowSchemaManager({
 
       setInternalSchema(initialSchema);
     }
-  }, [initialSchema, internalSchema, schemaForm.methods]);
+  }, [initialSchema, schemaForm.methods]);
 
   const getSchemaPropertyByKey = useCallback(
     (keyPath: string): JSONSchema7 | undefined => {

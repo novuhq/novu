@@ -123,8 +123,6 @@ export function parseStepVariables(
   }
 
   function isAllowedVariable(variable: LiquidVariable): boolean {
-    console.log({ schema, variable }, 'IS ALLOWED VARIABLE!!');
-
     if (typeof schema === 'boolean') return false;
 
     // if it has aliasFor, then the name must start with the alias
