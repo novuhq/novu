@@ -1,10 +1,5 @@
 import { SubscriberEntity, UserEntity, MemberEntity } from '@novu/dal';
-import {
-  AuthProviderEnum,
-  AuthenticateContext,
-  ISubscriberJwt,
-  UserSessionData,
-} from '@novu/shared';
+import { AuthProviderEnum, AuthenticateContext, ISubscriberJwt, UserSessionData } from '@novu/shared';
 
 export interface IAuthService {
   authenticate(
@@ -19,13 +14,10 @@ export interface IAuthService {
       id: string;
     },
     distinctId: string,
-    additionalContext?: AuthenticateContext,
+    additionalContext?: AuthenticateContext
   ): Promise<{ newUser: boolean; token: string }>;
   refreshToken(userId: string): Promise<string>;
-  isAuthenticatedForOrganization(
-    userId: string,
-    organizationId: string,
-  ): Promise<boolean>;
+  isAuthenticatedForOrganization(userId: string, organizationId: string): Promise<boolean>;
   getUserByApiKey(apiKey: string): Promise<UserSessionData>;
   getSubscriberWidgetToken(subscriber: SubscriberEntity): Promise<string>;
   generateUserToken(user: UserEntity): Promise<string>;
@@ -33,7 +25,7 @@ export interface IAuthService {
     user: UserEntity,
     organizationId?: string,
     member?: MemberEntity,
-    environmentId?: string,
+    environmentId?: string
   ): Promise<string>;
 
   validateUser(payload: UserSessionData): Promise<UserEntity>;

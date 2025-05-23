@@ -13,7 +13,7 @@ on:
 jobs:
   dependency-review:
     name: Dependency review
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     environment: Linting
     steps:
       - name: 'Checkout Repository'
@@ -23,7 +23,7 @@ jobs:
 
   spellcheck:
     name: Spell check
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     environment: Linting
     steps:
       - uses: actions/checkout@v4
@@ -35,7 +35,7 @@ jobs:
           incremental_files_only: true
 
   find-flags:
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     name: Find LaunchDarkly feature flags in diff
     environment: Linting
     steps:
@@ -53,7 +53,7 @@ jobs:
 
   get-affected:
     name: Get Affected Packages
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-8vcpu-ubuntu-2404
     outputs:
       test-unit: ${{ steps.get-projects-arrays.outputs.test-unit }}
       test-e2e: ${{ steps.get-projects-arrays.outputs.test-e2e }}
@@ -119,7 +119,7 @@ jobs:
           fi
   test_unit_providers:
     name: Unit test @novu/providers
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     needs: [get-affected]
     if: ${{ fromJson(needs.get-affected.outputs.test-providers)[0] }}
     timeout-minutes: 80
@@ -137,7 +137,7 @@ jobs:
 
   test_unit_packages:
     name: Unit test @novu public NPM packages (except providers)
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     needs: [get-affected]
     if: ${{ fromJson(needs.get-affected.outputs.test-packages)[0] }}
     timeout-minutes: 80
@@ -166,7 +166,7 @@ jobs:
 
   test_unit_libs:
     name: Unit test @novu internal packages
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     needs: [get-affected]
     if: ${{ fromJson(needs.get-affected.outputs.test-libs)[0] }}
     timeout-minutes: 80
@@ -185,7 +185,7 @@ jobs:
 
   test_unit_services:
     name: Unit test backend services
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     needs: [get-affected]
     if: ${{ fromJson(needs.get-affected.outputs.test-unit)[0] }}
     timeout-minutes: 80
@@ -222,7 +222,7 @@ jobs:
 
   validate_openapi:
     name: Validate OpenAPI
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     needs: [get-affected]
     if: ${{ fromJson(needs.get-affected.outputs.test-unit)[0] }}
     timeout-minutes: 10

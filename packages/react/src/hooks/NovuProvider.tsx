@@ -1,4 +1,4 @@
-import { Novu, NovuOptions, Subscriber } from '@novu/js';
+import { Novu, NovuOptions, StandardNovuOptions, Subscriber } from '@novu/js';
 import { ReactNode, createContext, useContext, useMemo } from 'react';
 
 // @ts-ignore
@@ -13,29 +13,22 @@ export type NovuProviderProps = NovuOptions & {
 
 const NovuContext = createContext<Novu | undefined>(undefined);
 
-export const NovuProvider = ({
-  children,
-  applicationIdentifier,
-  subscriberId,
-  subscriberHash,
-  backendUrl,
-  apiUrl,
-  socketUrl,
-  useCache,
-  subscriber,
-}: NovuProviderProps) => {
+export const NovuProvider = (props: NovuProviderProps) => {
+  const { subscriberId, ...propsWithoutSubscriberId } = props;
+  const subscriberObj = buildSubscriber(subscriberId, props.subscriber);
+  const applicationIdentifier = propsWithoutSubscriberId.applicationIdentifier
+    ? propsWithoutSubscriberId.applicationIdentifier
+    : '';
+
+  const providerProps: NovuProviderProps = {
+    ...propsWithoutSubscriberId,
+    applicationIdentifier,
+    subscriber: subscriberObj,
+  };
+
   return (
-    <InternalNovuProvider
-      applicationIdentifier={applicationIdentifier}
-      subscriberHash={subscriberHash}
-      backendUrl={backendUrl}
-      apiUrl={apiUrl}
-      socketUrl={socketUrl}
-      useCache={useCache}
-      userAgentType="hooks"
-      subscriber={buildSubscriber(subscriberId, subscriber)}
-    >
-      {children}
+    <InternalNovuProvider {...providerProps} applicationIdentifier={applicationIdentifier} userAgentType="hooks">
+      {props.children}
     </InternalNovuProvider>
   );
 };
@@ -45,18 +38,12 @@ export const NovuProvider = ({
  * This is needed to differentiate between the hooks and components user agents
  * Better to use this internally to avoid confusion.
  */
-export const InternalNovuProvider = ({
-  children,
-  applicationIdentifier,
-  subscriberId,
-  subscriberHash,
-  backendUrl,
-  apiUrl,
-  socketUrl,
-  useCache,
-  subscriber,
-  userAgentType,
-}: NovuProviderProps & { userAgentType: 'components' | 'hooks' }) => {
+export const InternalNovuProvider = (props: NovuProviderProps & { userAgentType: 'components' | 'hooks' }) => {
+  const applicationIdentifier = props.applicationIdentifier || '';
+  const subscriberObj = buildSubscriber(props.subscriberId, props.subscriber);
+
+  const { children, subscriberId, subscriberHash, backendUrl, apiUrl, socketUrl, useCache, userAgentType } = props;
+
   const novu = useMemo(
     () =>
       new Novu({
@@ -67,7 +54,7 @@ export const InternalNovuProvider = ({
         socketUrl,
         useCache,
         __userAgent: `${baseUserAgent} ${userAgentType}`,
-        ...(subscriber ? { subscriber } : { subscriberId: subscriberId as string }),
+        subscriber: subscriberObj,
       }),
     [
       applicationIdentifier,
@@ -77,7 +64,7 @@ export const InternalNovuProvider = ({
       apiUrl,
       socketUrl,
       useCache,
-      subscriber,
+      subscriberObj,
       userAgentType,
     ]
   );
@@ -101,13 +88,16 @@ export const useUnsafeNovu = () => {
 };
 
 function buildSubscriber(subscriberId: string | undefined, subscriber: Subscriber | string | undefined): Subscriber {
-  let subscriberObj: Subscriber;
-
+  // subscriber object
   if (subscriber) {
-    subscriberObj = typeof subscriber === 'string' ? { subscriberId: subscriber } : subscriber;
-  } else {
-    subscriberObj = { subscriberId: subscriberId as string };
+    return typeof subscriber === 'string' ? { subscriberId: subscriber } : subscriber;
   }
 
-  return subscriberObj;
+  // subscriberId
+  if (subscriberId) {
+    return { subscriberId: subscriberId as string };
+  }
+
+  // missing - keyless subscriber, the api will generate a subscriberId
+  return { subscriberId: '' };
 }

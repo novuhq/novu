@@ -31,6 +31,8 @@ type InboxContextType = {
   isDevelopmentMode: Accessor<boolean>;
   maxSnoozeDurationHours: Accessor<number>;
   isSnoozeEnabled: Accessor<boolean>;
+  isKeyless: Accessor<boolean>;
+  applicationIdentifier: Accessor<string | null>;
 };
 
 const InboxContext = createContext<InboxContextType | undefined>(undefined);
@@ -60,6 +62,7 @@ export const InboxProvider = (props: InboxProviderProps) => {
   const [filter, setFilter] = createSignal<NotificationFilter>({
     ...STATUS_TO_FILTER[NotificationStatus.UNREAD_READ],
     tags: props.tabs.length > 0 ? getTagsFromTab(props.tabs[0]) : [],
+    data: props.tabs.length > 0 ? props.tabs[0].filter?.data : {},
   });
   const [hideBranding, setHideBranding] = createSignal(false);
   const [isDevelopmentMode, setIsDevelopmentMode] = createSignal(false);
@@ -68,11 +71,13 @@ export const InboxProvider = (props: InboxProviderProps) => {
   const [preferencesFilter, setPreferencesFilter] = createSignal<PreferencesFilter | undefined>(
     props.preferencesFilter
   );
+  const [isKeyless, setIsKeyless] = createSignal(false);
+  const [applicationIdentifier, setApplicationIdentifier] = createSignal<string | null>(null);
   const [preferenceGroups, setPreferenceGroups] = createSignal<PreferenceGroups | undefined>(props.preferenceGroups);
 
   const setNewStatus = (newStatus: NotificationStatus) => {
     setStatus(newStatus);
-    setFilter((old) => ({ ...STATUS_TO_FILTER[newStatus], tags: old.tags }));
+    setFilter((old) => ({ ...STATUS_TO_FILTER[newStatus], tags: old.tags, data: old.data }));
   };
 
   const setNewActiveTab = (newActiveTab: string) => {
@@ -83,7 +88,7 @@ export const InboxProvider = (props: InboxProviderProps) => {
     }
 
     setActiveTab(newActiveTab);
-    setFilter((old) => ({ ...old, tags }));
+    setFilter((old) => ({ ...old, tags, data: tab?.filter?.data }));
   };
 
   const navigate = (url?: string, target?: Redirect['target']) => {
@@ -114,7 +119,8 @@ export const InboxProvider = (props: InboxProviderProps) => {
     const firstTab = props.tabs[0];
     const tags = getTagsFromTab(firstTab);
     setActiveTab(firstTab?.label ?? '');
-    setFilter((old) => ({ ...old, tags }));
+    setFilter((old) => ({ ...old, tags, data: firstTab?.filter?.data }));
+
     setPreferencesFilter(props.preferencesFilter);
     setPreferenceGroups(props.preferenceGroups);
   });
@@ -125,10 +131,13 @@ export const InboxProvider = (props: InboxProviderProps) => {
       if (!data) {
         return;
       }
+      const identifier = window.localStorage.getItem('novu_keyless_application_identifier');
 
       setHideBranding(data.removeNovuBranding);
       setIsDevelopmentMode(data.isDevelopmentMode);
       setMaxSnoozeDurationHours(data.maxSnoozeDurationHours);
+      setIsKeyless(!data.applicationIdentifier || !!identifier?.startsWith('pk_keyless_'));
+      setApplicationIdentifier(data.applicationIdentifier ?? null);
     },
   });
 
@@ -152,6 +161,8 @@ export const InboxProvider = (props: InboxProviderProps) => {
         isDevelopmentMode,
         maxSnoozeDurationHours,
         isSnoozeEnabled,
+        isKeyless,
+        applicationIdentifier,
       }}
     >
       {props.children}

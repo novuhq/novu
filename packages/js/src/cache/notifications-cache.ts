@@ -1,12 +1,12 @@
 import { NotificationEvents, NovuEventEmitter } from '../event-emitter';
 import type { ListNotificationsArgs, ListNotificationsResponse, Notification } from '../notifications';
 import type { NotificationFilter } from '../types';
-import { areTagsEqual, isSameFilter } from '../utils/notification-utils';
+import { areDataEqual, areTagsEqual, isSameFilter } from '../utils/notification-utils';
 import { InMemoryCache } from './in-memory-cache';
 import type { Cache } from './types';
 
-const excludeEmpty = ({ tags, read, archived, snoozed, limit, offset, after }: ListNotificationsArgs) =>
-  Object.entries({ tags, read, archived, snoozed, limit, offset, after })
+const excludeEmpty = ({ tags, data, read, archived, snoozed, limit, offset, after }: ListNotificationsArgs) =>
+  Object.entries({ tags, data, read, archived, snoozed, limit, offset, after })
     .filter(([_, value]) => value !== null && value !== undefined && !(Array.isArray(value) && value.length === 0))
     .reduce((acc, [key, value]) => {
       // @ts-expect-error
@@ -15,17 +15,18 @@ const excludeEmpty = ({ tags, read, archived, snoozed, limit, offset, after }: L
       return acc;
     }, {});
 
-const getCacheKey = ({ tags, read, archived, snoozed, limit, offset, after }: ListNotificationsArgs): string => {
-  return JSON.stringify(excludeEmpty({ tags, read, archived, snoozed, limit, offset, after }));
+const getCacheKey = ({ tags, data, read, archived, snoozed, limit, offset, after }: ListNotificationsArgs): string => {
+  return JSON.stringify(excludeEmpty({ tags, data, read, archived, snoozed, limit, offset, after }));
 };
 
 const getFilterKey = ({
   tags,
+  data,
   read,
   archived,
   snoozed,
-}: Pick<ListNotificationsArgs, 'tags' | 'read' | 'archived' | 'snoozed'>): string => {
-  return JSON.stringify(excludeEmpty({ tags, read, archived, snoozed }));
+}: Pick<ListNotificationsArgs, 'tags' | 'data' | 'read' | 'archived' | 'snoozed'>): string => {
+  return JSON.stringify(excludeEmpty({ tags, data, read, archived, snoozed }));
 };
 
 const getFilter = (key: string): NotificationFilter => {
@@ -142,6 +143,7 @@ export class NotificationsCache {
 
       uniqueFilterKeys.forEach((key) => {
         const notificationsResponse = this.getAggregated(getFilter(key));
+
         this.#emitter.emit('notifications.list.updated', {
           data: notificationsResponse,
         });
@@ -191,21 +193,32 @@ export class NotificationsCache {
 
   getAll(args: ListNotificationsArgs): ListNotificationsResponse | undefined {
     if (this.has(args)) {
-      return this.getAggregated({ tags: args.tags, read: args.read, snoozed: args.snoozed, archived: args.archived });
+      return this.getAggregated({
+        tags: args.tags,
+        data: args.data,
+        read: args.read,
+        snoozed: args.snoozed,
+        archived: args.archived,
+      });
     }
   }
 
   /**
    * Get unique notifications based on specified filter fields.
-   * The same tags can be applied to multiple filters which means that the same notification can be duplicated.
+   * The same tags and data can be applied to multiple filters which means that the same notification can be duplicated.
    */
-  getUniqueNotifications({ tags, read }: Pick<ListNotificationsArgs, 'tags' | 'read'>): Array<Notification> {
+  getUniqueNotifications({
+    tags,
+    read,
+    data,
+  }: Pick<ListNotificationsArgs, 'tags' | 'read' | 'data'>): Array<Notification> {
     const keys = this.#cache.keys();
     const uniqueNotifications = new Map<string, Notification>();
 
     keys.forEach((key) => {
       const filter = getFilter(key);
-      if (areTagsEqual(tags, filter.tags)) {
+
+      if (areTagsEqual(tags, filter.tags) && areDataEqual(data, filter.data)) {
         const value = this.#cache.get(key);
         if (!value) {
           return;

@@ -1,8 +1,22 @@
 import sinon from 'sinon';
 import { expect } from 'chai';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
-import { CommunityOrganizationRepository, EnvironmentRepository, IntegrationRepository } from '@novu/dal';
-import { AnalyticsService, CreateOrUpdateSubscriberUseCase, SelectIntegration } from '@novu/application-generic';
+import {
+  CommunityOrganizationRepository,
+  EnvironmentRepository,
+  IntegrationRepository,
+  NotificationTemplateRepository,
+  MessageTemplateRepository,
+  PreferencesRepository,
+  CommunityUserRepository,
+} from '@novu/dal';
+import {
+  AnalyticsService,
+  CreateOrUpdateSubscriberUseCase,
+  PinoLogger,
+  SelectIntegration,
+  UpsertControlValuesUseCase,
+} from '@novu/application-generic';
 import { ApiServiceLevelEnum, ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
 import { AuthService } from '../../../auth/services/auth.service';
 import { Session } from './session.usecase';
@@ -12,6 +26,8 @@ import { AnalyticsEventsEnum } from '../../utils';
 // eslint-disable-next-line import/no-namespace
 import * as encryption from '../../utils/encryption';
 import { NotificationsCount } from '../notifications-count/notifications-count.usecase';
+import { GenerateUniqueApiKey } from '../../../environments-v1/usecases/generate-unique-api-key/generate-unique-api-key.usecase';
+import { CreateNovuIntegrations } from '../../../integrations/usecases/create-novu-integrations/create-novu-integrations.usecase';
 
 const mockIntegration = {
   _id: '_id',
@@ -40,6 +56,15 @@ describe('Session', () => {
   let notificationsCount: sinon.SinonStubbedInstance<NotificationsCount>;
   let integrationRepository: sinon.SinonStubbedInstance<IntegrationRepository>;
   let organizationRepository: sinon.SinonStubbedInstance<CommunityOrganizationRepository>;
+  let communityOrganizationRepository: sinon.SinonStubbedInstance<CommunityOrganizationRepository>;
+  let generateUniqueApiKey: sinon.SinonStubbedInstance<GenerateUniqueApiKey>;
+  let createNovuIntegrationsUsecase: sinon.SinonStubbedInstance<CreateNovuIntegrations>;
+  let communityUserRepository: sinon.SinonStubbedInstance<CommunityUserRepository>;
+  let notificationTemplateRepository: sinon.SinonStubbedInstance<NotificationTemplateRepository>;
+  let messageTemplateRepository: sinon.SinonStubbedInstance<MessageTemplateRepository>;
+  let preferencesRepository: sinon.SinonStubbedInstance<PreferencesRepository>;
+  let upsertControlValuesUseCase: sinon.SinonStubbedInstance<UpsertControlValuesUseCase>;
+  let logger: sinon.SinonStubbedInstance<PinoLogger>;
 
   beforeEach(() => {
     environmentRepository = sinon.createStubInstance(EnvironmentRepository);
@@ -50,6 +75,15 @@ describe('Session', () => {
     notificationsCount = sinon.createStubInstance(NotificationsCount);
     integrationRepository = sinon.createStubInstance(IntegrationRepository);
     organizationRepository = sinon.createStubInstance(CommunityOrganizationRepository);
+    communityOrganizationRepository = sinon.createStubInstance(CommunityOrganizationRepository);
+    generateUniqueApiKey = sinon.createStubInstance(GenerateUniqueApiKey);
+    createNovuIntegrationsUsecase = sinon.createStubInstance(CreateNovuIntegrations);
+    communityUserRepository = sinon.createStubInstance(CommunityUserRepository);
+    notificationTemplateRepository = sinon.createStubInstance(NotificationTemplateRepository);
+    messageTemplateRepository = sinon.createStubInstance(MessageTemplateRepository);
+    preferencesRepository = sinon.createStubInstance(PreferencesRepository);
+    upsertControlValuesUseCase = sinon.createStubInstance(UpsertControlValuesUseCase);
+    logger = sinon.createStubInstance(PinoLogger);
 
     session = new Session(
       environmentRepository as any,
@@ -59,7 +93,16 @@ describe('Session', () => {
       analyticsService as any,
       notificationsCount as any,
       integrationRepository as any,
-      organizationRepository as any
+      organizationRepository as any,
+      communityOrganizationRepository as any,
+      generateUniqueApiKey as any,
+      createNovuIntegrationsUsecase as any,
+      communityUserRepository as any,
+      notificationTemplateRepository as any,
+      messageTemplateRepository as any,
+      preferencesRepository as any,
+      upsertControlValuesUseCase as any,
+      logger as any
     );
   });
 

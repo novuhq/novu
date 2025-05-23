@@ -74,6 +74,7 @@ export const appearanceKeys = [
   // General
   'root',
   'bellIcon',
+  'lockIcon',
   'bellContainer',
   'bellDot',
   'preferences__button',

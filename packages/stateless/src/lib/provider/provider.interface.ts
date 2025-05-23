@@ -168,7 +168,9 @@ export interface IEmailProvider extends IProvider {
     identifier: string,
   ) => IEmailEventBody | undefined;
 
-  checkIntegration(options: IEmailOptions): Promise<ICheckIntegrationResponse>;
+  checkIntegration?: (
+    options: IEmailOptions,
+  ) => Promise<ICheckIntegrationResponse>;
 }
 
 export interface ISmsProvider extends IProvider {

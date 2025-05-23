@@ -19,7 +19,7 @@ import { PermissionButton } from '@/components/primitives/permission-button';
 type TopicListProps = HTMLAttributes<HTMLDivElement>;
 
 // Wrapper similar to SubscriberListWrapper
-const TopicListWrapper = (props: TopicListFiltersProps & { hasData?: boolean; areFiltersApplied?: boolean }) => {
+const TopicListWrapper = (props: TopicListFiltersProps & { hasData?: boolean; areFiltersApplied?: boolean; showEmptyState?: boolean }) => {
   const {
     className,
     children,
@@ -29,10 +29,11 @@ const TopicListWrapper = (props: TopicListFiltersProps & { hasData?: boolean; ar
     isLoading,
     hasData,
     areFiltersApplied,
+    showEmptyState,
     ...rest
   } = props;
   return (
-    <div className={cn('flex flex-col p-2', className)} {...rest}>
+    <div className={cn('flex flex-col p-2', showEmptyState && 'h-[calc(100vh-100px)]', className)} {...rest}>
       <div className="flex items-center justify-between">
         {isLoading || hasData || areFiltersApplied ? (
           <TopicsFilters
@@ -45,7 +46,7 @@ const TopicListWrapper = (props: TopicListFiltersProps & { hasData?: boolean; ar
         ) : (
           <div /> // Empty div placeholder to maintain layout
         )}
-        <CreateTopicButton />
+        {!showEmptyState && <CreateTopicButton />}
       </div>
       {children}
     </div>
@@ -204,7 +205,7 @@ export const TopicList = (props: TopicListProps) => {
 
   if (!areFiltersApplied && !data?.data.length) {
     return (
-      <TopicListWrapper {...wrapperProps}>
+      <TopicListWrapper {...wrapperProps} showEmptyState={true}>
         <TopicListBlank />
       </TopicListWrapper>
     );

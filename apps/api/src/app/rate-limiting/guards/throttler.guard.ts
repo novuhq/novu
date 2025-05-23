@@ -26,9 +26,10 @@ import {
 import { UserEntity, OrganizationEntity, EnvironmentEntity } from '@novu/dal';
 import { ThrottlerCategory, ThrottlerCost } from './throttler.decorator';
 import { EvaluateApiRateLimit, EvaluateApiRateLimitCommand } from '../usecases/evaluate-api-rate-limit';
+import { checkIsKeylessHeader } from '../../shared/utils/auth.utils';
 
 export const THROTTLED_EXCEPTION_MESSAGE = 'API rate limit exceeded';
-export const ALLOWED_AUTH_SCHEMES = [ApiAuthSchemeEnum.API_KEY];
+export const ALLOWED_AUTH_SCHEMES = [ApiAuthSchemeEnum.API_KEY, ApiAuthSchemeEnum.KEYLESS];
 
 const defaultApiRateLimitCategory = ApiRateLimitCategoryEnum.GLOBAL;
 const defaultApiRateLimitCost = ApiRateLimitCostEnum.SINGLE;
@@ -68,11 +69,20 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
 
   protected async shouldSkip(context: ExecutionContext): Promise<boolean> {
     const isAllowedAuthScheme = this.isAllowedAuthScheme(context);
-    if (!isAllowedAuthScheme) {
+    const isAllowedEnvironment = this.isAllowedEnvironment(context);
+    const isAllowedRoute = this.isAllowedRoute(context);
+
+    if (!isAllowedAuthScheme && !isAllowedEnvironment && !isAllowedRoute) {
       return true;
     }
 
     const user = this.getReqUser(context);
+
+    // Indicates whether the request originates from a Inbox session initialization
+    if (!user) {
+      return false;
+    }
+
     const { organizationId, environmentId, _id } = user;
 
     const isEnabled = await this.featureFlagService.getFlag({
@@ -106,12 +116,22 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
 
     const handler = context.getHandler();
     const classRef = context.getClass();
+
+    const isKeylessHeader =
+      checkIsKeylessHeader(req.headers.authorization) ||
+      checkIsKeylessHeader(req.headers['novu-application-identifier']);
+    const isKeylessRequest = isKeylessHeader || this.isKeylessRoute(context);
     const apiRateLimitCategory =
       this.reflector.getAllAndOverride(ThrottlerCategory, [handler, classRef]) || defaultApiRateLimitCategory;
-    const apiRateLimitCost =
-      this.reflector.getAllAndOverride(ThrottlerCost, [handler, classRef]) || defaultApiRateLimitCost;
 
-    const { organizationId, environmentId, _id } = this.getReqUser(context);
+    const user = this.getReqUser(context);
+    const organizationId = user?.organizationId;
+    const _id = user?._id;
+    const environmentId = user?.environmentId || req.headers['novu-application-identifier'];
+
+    const apiRateLimitCost = isKeylessRequest
+      ? getKeylessCost()
+      : this.reflector.getAllAndOverride(ThrottlerCost, [handler, classRef]) || defaultApiRateLimitCost;
 
     const { success, limit, remaining, reset, windowDuration, burstLimit, algorithm, apiServiceLevel } =
       await this.evaluateApiRateLimit.execute(
@@ -120,6 +140,7 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
           environmentId,
           apiRateLimitCategory,
           apiRateLimitCost,
+          ip: isKeylessRequest ? req.ip : undefined,
         })
       );
 
@@ -136,6 +157,15 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
       key: FeatureFlagsKeysEnum.IS_API_RATE_LIMITING_DRY_RUN_ENABLED,
       defaultValue: false,
     });
+
+    const isKeylessDryRunFlag = await this.featureFlagService.getFlag({
+      environment: { _id: environmentId } as EnvironmentEntity,
+      organization: { _id: organizationId } as OrganizationEntity,
+      user: { _id, email: user?.email } as UserEntity,
+      key: FeatureFlagsKeysEnum.IS_API_RATE_LIMITING_KEYLESS_DRY_RUN_ENABLED,
+      defaultValue: false,
+    });
+    const isKeylessDryRun = isKeylessRequest && isKeylessDryRunFlag;
 
     res.header(HttpResponseHeaderKeysEnum.RATELIMIT_REMAINING, remaining);
     res.header(HttpResponseHeaderKeysEnum.RATELIMIT_LIMIT, limit);
@@ -163,9 +193,9 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
       apiServiceLevel,
     };
 
-    if (isDryRun) {
+    if (isDryRun || isKeylessDryRun) {
       if (!success) {
-        this.logger.warn(`[Dry run] ${THROTTLED_EXCEPTION_MESSAGE}`);
+        this.logger.warn(`${isKeylessRequest ? '[Dry run] [Keyless]' : '[Dry run]'} ${THROTTLED_EXCEPTION_MESSAGE}`);
       }
 
       return true;
@@ -204,15 +234,40 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
   }
 
   private isAllowedAuthScheme(context: ExecutionContext): boolean {
-    const req = context.switchToHttp().getRequest();
-    const { authScheme } = req;
+    const { authScheme } = context.switchToHttp().getRequest();
 
     return ALLOWED_AUTH_SCHEMES.some((scheme) => authScheme === scheme);
   }
 
-  private getReqUser(context: ExecutionContext): UserSessionData {
+  private isAllowedEnvironment(context: ExecutionContext): boolean {
+    const req = context.switchToHttp().getRequest();
+    const applicationIdentifier = req.headers['novu-application-identifier'];
+
+    if (!applicationIdentifier) {
+      return false;
+    }
+
+    return applicationIdentifier.startsWith('pk_keyless_');
+  }
+
+  private isAllowedRoute(context: ExecutionContext): boolean {
+    return this.isKeylessRoute(context);
+  }
+
+  private isKeylessRoute(context: ExecutionContext): boolean {
+    const req = context.switchToHttp().getRequest();
+
+    return req.path === '/v1/inbox/session' && req.method === 'POST';
+  }
+
+  private getReqUser(context: ExecutionContext): UserSessionData | undefined {
     const req = context.switchToHttp().getRequest();
 
     return req.user;
   }
+}
+
+function getKeylessCost() {
+  // For test environment, we use a higher cost to ensure tests can run without rate limiting issues
+  return process.env.NODE_ENV === 'test' ? defaultApiRateLimitCost : ApiRateLimitCostEnum.KEYLESS;
 }
