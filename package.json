@@ -238,8 +238,7 @@
       "@nestjs/core",
       "@sveltejs/kit",
       "nestjs-pino",
-      "nx",
-      "bcrypt"
+      "nx"
     ]
   }
 }
