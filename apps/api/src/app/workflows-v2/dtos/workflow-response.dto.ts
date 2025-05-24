@@ -85,7 +85,22 @@ export class WorkflowResponseDto extends WorkflowCommonsFields {
     },
   })
   @ValidateNested({ each: true })
-  @Type(() => StepResponseDto)
+  @Type(() => StepResponseDto, {
+    discriminator: {
+      property: 'type',
+      subTypes: [
+        { name: StepTypeEnum.IN_APP, value: InAppStepResponseDto },
+        { name: StepTypeEnum.EMAIL, value: EmailStepResponseDto },
+        { name: StepTypeEnum.SMS, value: SmsStepResponseDto },
+        { name: StepTypeEnum.PUSH, value: PushStepResponseDto },
+        { name: StepTypeEnum.CHAT, value: ChatStepResponseDto },
+        { name: StepTypeEnum.DELAY, value: DelayStepResponseDto },
+        { name: StepTypeEnum.DIGEST, value: DigestStepResponseDto },
+        { name: StepTypeEnum.CUSTOM, value: CustomStepResponseDto },
+      ],
+    },
+    keepDiscriminatorProperty: true,
+  })
   steps: StepResponseDto[];
 
   @ApiProperty({
