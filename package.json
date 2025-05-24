@@ -233,6 +233,12 @@
       "rollup@>=4.0.0 <4.22.4": "^4.22.4",
       "@nestjs/common@>=10.0.0 <11.0.0": "10.4.1",
       "prosemirror-model": "1.22.3"
-    }
+    },
+    "onlyBuiltDependencies": [
+      "@nestjs/core",
+      "@sveltejs/kit",
+      "nestjs-pino",
+      "nx"
+    ]
   }
 }
