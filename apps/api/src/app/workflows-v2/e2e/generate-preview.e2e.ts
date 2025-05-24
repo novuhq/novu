@@ -1219,10 +1219,12 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
       const workflowSlug = novuRestResult.result?.slug;
       const stepSlug = novuRestResult.result?.steps[0].slug;
       const stepDataDto = await updateWorkflow(workflowSlug, {
-        ...novuRestResult.result,
+        ...mapResponseToUpdateDto(novuRestResult.result),
         steps: [
           {
-            ...novuRestResult.result.steps[0],
+            type: novuRestResult.result.steps[0].type,
+            name: novuRestResult.result.steps[0].name,
+            id: novuRestResult.result.steps[0].id,
             controlValues,
           } as UpdateWorkflowDtoSteps,
         ],
@@ -1552,6 +1554,21 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
     const res = await novuClient.workflows.update(workflow, id);
 
     return res.result;
+  }
+
+  function mapResponseToUpdateDto(workflowResponse: WorkflowResponseDto): UpdateWorkflowDto {
+    return {
+      ...workflowResponse,
+      steps: workflowResponse.steps.map(
+        (step) =>
+          ({
+            id: step.id,
+            type: step.type,
+            name: step.name,
+            controlValues: step.controls.values,
+          }) as UpdateWorkflowDtoSteps
+      ),
+    };
   }
 
   async function createWorkflowWithEmailLookingAtDigestResult() {
