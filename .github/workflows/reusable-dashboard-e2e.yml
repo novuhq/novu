@@ -96,7 +96,6 @@ jobs:
         with:
           targets: build
           projects: '@novu/dashboard,@novu/api-service,@novu/worker'
-          args: --skip-nx-cache
 
       - uses: ./.github/actions/start-localstack
       - uses: ./.github/actions/setup-redis-cluster
@@ -129,9 +128,29 @@ jobs:
       - name: Wait on Services
         run: wait-on --timeout=180000 http://127.0.0.1:1340/v1/health-check
 
+      - name: Get Playwright version
+        working-directory: apps/dashboard
+        id: playwright-version
+        run: echo "version=$(pnpm list @playwright/test --depth=0 --json | jq -r '.[] | .dependencies["@playwright/test"].version')" >> $GITHUB_OUTPUT
+
+      - name: Cache Playwright browsers
+        uses: useblacksmith/cache@v5
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-browsers-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
+          restore-keys: |
+            playwright-browsers-${{ runner.os }}-
+
       - name: Install Playwright
         working-directory: apps/dashboard
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: pnpm test:e2e:install
+
+      - name: Install Playwright (cache hit - verify browsers)
+        working-directory: apps/dashboard
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: pnpm test:e2e:install --dry-run || pnpm test:e2e:install
 
       - name: Run E2E tests
         working-directory: apps/dashboard

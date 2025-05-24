@@ -17,7 +17,7 @@ jobs:
   e2e_api:
     name: Test E2E
     runs-on: blacksmith-8vcpu-ubuntu-2404
-    timeout-minutes: 45
+    timeout-minutes: 15
     permissions:
       contents: read
       deployments: write
@@ -45,7 +45,7 @@ jobs:
         name: Start localstack
 
       - name: Build API & Worker
-        run: CI='' pnpm nx run-many --skip-nx-cache --target=build --all --projects=@novu/api-service,@novu/worker
+        run: CI='' pnpm nx run-many --target=build --all --projects=@novu/api-service,@novu/worker
 
       - name: Start Worker
         shell: bash
@@ -65,9 +65,11 @@ jobs:
       - name: Run Novu V1 E2E tests
         if: ${{ !inputs.ee }}
         run: |
+          set -e
           pnpm --filter @novu/api-service test:e2e:novu-v0
 
       - name: Run Novu V2 E2E tests
         if: ${{ inputs.ee }}
         run: |
+          set -e
           pnpm --filter @novu/api-service test:e2e:novu-v2

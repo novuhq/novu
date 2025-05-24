@@ -8,7 +8,6 @@
 </div>
 
 <br/>
-
 <p align="center">
   <a href="https://www.producthunt.com/products/novu">
     <img src="https://img.shields.io/badge/Product%20Hunt-Golden%20Kitty%20Award%202023-yellow" alt="Product Hunt">

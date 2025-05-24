@@ -1,5 +1,5 @@
 {
-  "$schema": "./node_modules/nx/schemas/nx-schema.json",
+  "parallel": 4,
   "targetDefaults": {
     "build": {
       "dependsOn": ["^build"],
@@ -14,27 +14,6 @@
     "@nx/eslint:lint": {
       "cache": true,
       "inputs": ["default", "{workspaceRoot}/tools/eslint-rules/**/*"]
-    },
-    "@novu/api:build": {
-      "cache": true,
-      "outputs": [
-        "default",
-        "{projectRoot}/dist",
-        "{projectRoot}/funcs",
-        "{projectRoot}/hooks",
-        "{projectRoot}/libs",
-        "{projectRoot}/models",
-        "{projectRoot}/react-query",
-        "{projectRoot}/sdk",
-        "{projectRoot}/types",
-        "{projectRoot}/docs",
-        "{projectRoot}/index.js",
-        "{projectRoot}/core.js"
-      ]
-    },
-    "@novu/api-service:build": {
-      "cache": true,
-      "outputs": ["default", "{projectRoot}/src/metadata.ts"]
     }
   },
   "namedInputs": {
