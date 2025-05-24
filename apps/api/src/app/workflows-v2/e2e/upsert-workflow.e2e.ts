@@ -201,7 +201,7 @@ describe('Upsert Workflow #novu-v2', function () {
             id: step.id,
             type: step.type,
             name: step.name,
-            controlValues: step.controls.values,
+            controlValues: step.controls?.values || {},
           }) as any
       ),
     };

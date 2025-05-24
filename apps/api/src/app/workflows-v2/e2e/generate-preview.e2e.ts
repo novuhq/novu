@@ -1565,7 +1565,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
             id: step.id,
             type: step.type,
             name: step.name,
-            controlValues: step.controls.values,
+            controlValues: step.controls?.values || {},
           }) as UpdateWorkflowDtoSteps
       ),
     };
@@ -1583,10 +1583,18 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
         {
           name: 'DigestStep',
           type: StepTypeEnum.Digest,
+          controlValues: {
+            amount: 1,
+            unit: 'hours',
+          },
         },
         {
           name: 'Email Test Step',
           type: StepTypeEnum.Email,
+          controlValues: {
+            subject: 'Test Email Subject',
+            body: 'Test Email Body',
+          },
         },
       ],
     };
@@ -1611,10 +1619,17 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
         {
           name: 'InAppStep',
           type: StepTypeEnum.InApp,
+          controlValues: {
+            subject: 'Test Subject',
+            body: 'Test Body',
+          },
         },
         {
           name: 'SmsStep',
           type: StepTypeEnum.Sms,
+          controlValues: {
+            body: 'Test SMS Body',
+          },
         },
       ],
     };
@@ -1638,10 +1653,18 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
         {
           name: 'In-App Test Step',
           type: StepTypeEnum.InApp,
+          controlValues: {
+            subject: 'Test Subject',
+            body: 'Test Body',
+          },
         },
         {
           name: 'Email Test Step',
           type: StepTypeEnum.Email,
+          controlValues: {
+            subject: 'Test Email Subject',
+            body: 'Test Email Body',
+          },
         },
       ],
     };
