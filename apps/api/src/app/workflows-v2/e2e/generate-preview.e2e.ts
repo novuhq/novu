@@ -1594,6 +1594,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
           controlValues: {
             subject: 'Test Email Subject',
             body: 'Test Email Body',
+            disableOutputSanitization: false,
           },
         },
       ],
@@ -1721,6 +1722,7 @@ function buildEmailControlValuesPayload(): EmailControlType {
   return {
     subject: `Hello, World! ${SUBJECT_TEST_PAYLOAD}`,
     body: JSON.stringify(fullCodeSnippet()),
+    disableOutputSanitization: false,
   };
 }
 

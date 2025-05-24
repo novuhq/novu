@@ -73,6 +73,7 @@ function buildEmailStep(overrides: Partial<EmailStepUpsertDto> = {}): EmailStepU
     controlValues: {
       subject: 'Test Email Subject',
       body: 'Test Email Body',
+      disableOutputSanitization: false,
     },
     ...overrides,
   } as EmailStepUpsertDto;
@@ -410,7 +411,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
         name: 'Promote Workflow',
         steps: [
           buildEmailStep({
-            controlValues: { body: 'Example body', subject: 'Example subject' },
+            controlValues: { body: 'Example body', subject: 'Example subject', disableOutputSanitization: false },
           }),
           buildInAppStep({
             controlValues: { body: 'Example body' },
@@ -468,10 +469,10 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
         name: 'Promote Workflow',
         steps: [
           buildEmailStep({
-            controlValues: { body: 'Example body', subject: 'Example subject' },
+            controlValues: { body: 'Example body', subject: 'Example subject', disableOutputSanitization: false },
           }),
           buildInAppStep({
-            controlValues: { body: 'Example body' },
+            controlValues: { body: 'Example body', disableOutputSanitization: false },
           }),
         ],
       } as CreateWorkflowDto);
@@ -494,11 +495,16 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
         // modify existing Email Step, add new InApp Steps, previously existing InApp Step is removed
         steps: [
           {
-            ...buildEmailStep({ controlValues: { body: 'Example body', subject: 'Example subject' } }),
+            ...buildEmailStep({
+              controlValues: { body: 'Example body', subject: 'Example subject', disableOutputSanitization: false },
+            }),
             id: devWorkflow.steps[0].id,
             name: 'Updated Email Step',
           },
-          { ...buildInAppStep({ controlValues: { body: 'Example body' } }), name: 'New InApp Step' },
+          {
+            ...buildInAppStep({ controlValues: { body: 'Example body', disableOutputSanitization: false } }),
+            name: 'New InApp Step',
+          },
         ],
       } as UpdateWorkflowDto;
       await updateWorkflowAndValidate(devWorkflow.id, devWorkflow.updatedAt, updateDto);
@@ -533,6 +539,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
       expect(prodWorkflowUpdated.steps[0].controls.values).to.deep.equal({
         body: 'Example body',
         subject: 'Example subject',
+        disableOutputSanitization: false,
       });
 
       // Verify new created step
@@ -541,6 +548,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
       expect(prodWorkflowUpdated.steps[1].stepId).to.equal('new-in-app-step');
       expect(prodWorkflowUpdated.steps[1].controls.values).to.deep.equal({
         body: 'Example body',
+        disableOutputSanitization: false,
       });
     });
 
@@ -866,7 +874,10 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
         const createWorkflowDto = buildWorkflow();
 
         const res = await createWorkflow(apiClient, createWorkflowDto);
-        const updateWorkflowDto: UpdateWorkflowDto = mapResponseToUpdateDto(res);
+        const updateWorkflowDto: UpdateWorkflowDto = {
+          ...mapResponseToUpdateDto(res),
+          description: Array.from({ length: 260 }).join('X'),
+        };
 
         const errorResult = await expectSdkValidationExceptionGeneric(() =>
           apiClient.workflows.update(updateWorkflowDto, res.id)
@@ -1081,20 +1092,6 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
     }
 
     expect(new Date(updatedWorkflow.updatedAt)).to.be.greaterThan(new Date(expectedPastUpdatedAt));
-  }
-
-  async function assertValuesInSteps(workflowCreated: WorkflowResponseDto) {
-    for (const step of workflowCreated.steps) {
-      expect(step).to.be.ok;
-      expect(step.controls).to.be.ok;
-      if (step.controls) {
-        expect(step.controls.values).to.be.ok;
-        expect(step.controls.dataSchema).to.be.ok;
-        // @ts-expect-error containsSubset is not typed
-        expect(stepTypeToControlSchema[step.type].schema).to.containSubset(step.controls.dataSchema);
-        expect(step.controls.uiSchema).to.deep.equal(stepTypeToControlSchema[step.type].uiSchema);
-      }
-    }
   }
 
   async function create10Workflows(prefix: string = 'Test Workflow') {
