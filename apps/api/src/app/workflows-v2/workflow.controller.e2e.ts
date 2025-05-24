@@ -46,6 +46,10 @@ function buildInAppStep(overrides: Partial<InAppStepUpsertDto> = {}): InAppStepU
   return {
     name: 'In-App Test Step',
     type: 'in_app',
+    controlValues: {
+      subject: 'Test Subject',
+      body: 'Test Body',
+    },
     ...overrides,
   } as InAppStepUpsertDto;
 }
@@ -54,6 +58,10 @@ function buildDigestStep(overrides: Partial<DigestStepUpsertDto> = {}): DigestSt
   return {
     name: 'Digest Test Step',
     type: 'digest',
+    controlValues: {
+      amount: 1,
+      unit: 'hours',
+    },
     ...overrides,
   } as DigestStepUpsertDto;
 }
@@ -62,6 +70,10 @@ function buildEmailStep(overrides: Partial<EmailStepUpsertDto> = {}): EmailStepU
   return {
     name: 'Email Test Step',
     type: 'email',
+    controlValues: {
+      subject: 'Test Email Subject',
+      body: 'Test Email Body',
+    },
     ...overrides,
   } as EmailStepUpsertDto;
 }
@@ -1144,7 +1156,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
             id: step.id,
             type: step.type,
             name: step.name,
-            controlValues: step.controls.values,
+            controlValues: step.controls?.values || {},
           }) as UpdateWorkflowDtoSteps
       ),
     };

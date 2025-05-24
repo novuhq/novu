@@ -1225,8 +1225,8 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
             type: novuRestResult.result.steps[0].type,
             name: novuRestResult.result.steps[0].name,
             id: novuRestResult.result.steps[0].id,
-            controlValues,
-          } as UpdateWorkflowDtoSteps,
+            ...buildInAppControlValueWithAPlaceholderInTheUrl(),
+          },
         ],
       });
       const generatePreviewResponseDto = await generatePreview(novuClient, workflowSlug, stepSlug, {

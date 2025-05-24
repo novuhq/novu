@@ -67,11 +67,11 @@ describe('Upsert Workflow #novu-v2', function () {
 
         // delete the first step
         const updatedWorkflow = await updateWorkflow(workflow.slug, {
-          ...workflow,
-          steps: [workflow.steps[1], workflow.steps[2]],
+          ...mapResponseToUpdateDto(workflow),
+          steps: mapResponseToUpdateDto(workflow).steps.slice(1),
         });
 
-        const updatedChatStep = updatedWorkflow.steps[1];
+        const updatedChatStep = updatedWorkflow.steps[0];
         const updatedChatPayloadVariables = updatedChatStep.variables.properties?.payload;
         expect(updatedChatPayloadVariables).to.exist;
         expect((updatedChatPayloadVariables as JSONSchemaDto)?.properties).not.to.have.property('first_variable');
@@ -117,11 +117,11 @@ describe('Upsert Workflow #novu-v2', function () {
 
         // delete the first step
         const updatedWorkflow = await updateWorkflow(workflow.slug, {
-          ...workflow,
-          steps: [workflow.steps[1], workflow.steps[2]],
+          ...mapResponseToUpdateDto(workflow),
+          steps: mapResponseToUpdateDto(workflow).steps.slice(1),
         });
 
-        const updatedChatStep = updatedWorkflow.steps[1];
+        const updatedChatStep = updatedWorkflow.steps[0];
         const updatedChatPayloadVariables = updatedChatStep.variables.properties?.payload;
         expect(updatedChatPayloadVariables).to.exist;
         expect((updatedChatPayloadVariables as JSONSchemaDto)?.properties).to.have.property('first_variable');
@@ -167,8 +167,8 @@ describe('Upsert Workflow #novu-v2', function () {
 
         // delete all previous steps
         const updatedWorkflow = await updateWorkflow(workflow.slug, {
-          ...workflow,
-          steps: [workflow.steps[2]],
+          ...mapResponseToUpdateDto(workflow),
+          steps: [mapResponseToUpdateDto(workflow).steps[2]],
         });
 
         const updatedChatStep = updatedWorkflow.steps[0];
@@ -190,5 +190,20 @@ describe('Upsert Workflow #novu-v2', function () {
     const { result: updateWorkflowBody } = await novuClient.workflows.update(workflow, workflowSlug);
 
     return updateWorkflowBody;
+  }
+
+  function mapResponseToUpdateDto(workflowResponse: WorkflowResponseDto): UpdateWorkflowDto {
+    return {
+      ...workflowResponse,
+      steps: workflowResponse.steps.map(
+        (step) =>
+          ({
+            id: step.id,
+            type: step.type,
+            name: step.name,
+            controlValues: step.controls.values,
+          }) as any
+      ),
+    };
   }
 });
