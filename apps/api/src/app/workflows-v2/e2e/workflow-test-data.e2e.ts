@@ -3,12 +3,12 @@ import { UserSession } from '@novu/testing';
 import { Novu } from '@novu/api';
 import {
   CreateWorkflowDto,
+  Steps,
   StepTypeEnum,
   WorkflowCreationSourceEnum,
   WorkflowTestDataResponseDto,
 } from '@novu/api/models/components';
 import { initNovuClassSdkInternalAuth } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
-import { Steps } from '@novu/api/src/models/components/createworkflowdto';
 
 describe('Workflow Test Data', function () {
   let session: UserSession;
