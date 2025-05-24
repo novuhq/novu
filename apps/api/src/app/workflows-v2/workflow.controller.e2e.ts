@@ -211,7 +211,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
     it('should keep the step id on updated ', async () => {
       const nameSuffix = `Test Workflow${new Date().toISOString()}`;
       const workflowCreated: WorkflowResponseDto = await createWorkflowAndValidate(nameSuffix);
-      const updatedWorkflow = await updateWorkflow(workflowCreated.id, workflowCreated);
+      const updatedWorkflow = await updateWorkflow(workflowCreated.id, mapResponseToUpdateDto(workflowCreated));
       const updatedStep = updatedWorkflow.steps[0];
       const originalStep = workflowCreated.steps[0];
       expect(updatedStep.id).to.be.ok;
@@ -230,7 +230,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
 
       // Add a step of an existing channel at the beginning of the steps array
       workflowCreated.steps = [buildInAppStep(), ...workflowCreated.steps] as any;
-      const updatedWorkflow = await updateWorkflow(workflowCreated.id, workflowCreated);
+      const updatedWorkflow = await updateWorkflow(workflowCreated.id, mapResponseToUpdateDto(workflowCreated));
       expect(updatedWorkflow.steps.length).to.be.equal(3);
 
       // Verify that all step ids are unique
@@ -243,7 +243,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
       const nameSuffix = `Test Workflow${new Date().toISOString()}`;
       const workflowCreated: WorkflowResponseDto = await createWorkflowAndValidate(nameSuffix);
       const updatedWorkflow = await updateWorkflow(workflowCreated.id, {
-        ...workflowCreated,
+        ...mapResponseToUpdateDto(workflowCreated),
         preferences: {
           user: { ...DEFAULT_WORKFLOW_PREFERENCES, all: { ...DEFAULT_WORKFLOW_PREFERENCES.all, enabled: false } },
         },
@@ -252,7 +252,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
       expect(updatedWorkflow.preferences?.user?.all.enabled, JSON.stringify(updatedWorkflow, null, 2)).to.be.false;
 
       const updatedWorkflow2 = await updateWorkflow(workflowCreated.id, {
-        ...workflowCreated,
+        ...mapResponseToUpdateDto(workflowCreated),
         preferences: {
           user: null,
         },
@@ -265,9 +265,18 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
       const workflowCreated = await createWorkflowAndValidate();
       const { id, workflowId, slug, updatedAt } = workflowCreated;
 
-      await updateWorkflowAndValidate(id, updatedAt, { ...workflowCreated, name: 'Test Workflow 1' });
-      await updateWorkflowAndValidate(workflowId, updatedAt, { ...workflowCreated, name: 'Test Workflow 2' });
-      await updateWorkflowAndValidate(slug, updatedAt, { ...workflowCreated, name: 'Test Workflow 3' });
+      await updateWorkflowAndValidate(id, updatedAt, {
+        ...mapResponseToUpdateDto(workflowCreated),
+        name: 'Test Workflow 1',
+      });
+      await updateWorkflowAndValidate(workflowId, updatedAt, {
+        ...mapResponseToUpdateDto(workflowCreated),
+        name: 'Test Workflow 2',
+      });
+      await updateWorkflowAndValidate(slug, updatedAt, {
+        ...mapResponseToUpdateDto(workflowCreated),
+        name: 'Test Workflow 3',
+      });
     });
   });
 
@@ -400,7 +409,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
 
       // Update the workflow name to make sure the workflow identifier is the same after promotion
       devWorkflow = await updateWorkflow(devWorkflow.id, {
-        ...devWorkflow,
+        ...mapResponseToUpdateDto(devWorkflow),
         name: `${devWorkflow.name}-updated`,
       });
       devWorkflow = await getWorkflow(devWorkflow.id);
@@ -467,7 +476,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
 
       // Update the workflow in the development environment
       const updateDto: UpdateWorkflowDto = {
-        ...devWorkflow,
+        ...mapResponseToUpdateDto(devWorkflow),
         name: 'Updated Name',
         description: 'Updated Description',
         // modify existing Email Step, add new InApp Steps, previously existing InApp Step is removed
@@ -845,18 +854,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
         const createWorkflowDto = buildWorkflow();
 
         const res = await createWorkflow(apiClient, createWorkflowDto);
-        const updateWorkflowDto: UpdateWorkflowDto = {
-          ...res,
-          steps: res.steps.map(
-            (step) =>
-              ({
-                id: step.id,
-                type: step.type,
-                name: step.name,
-                controlValues: step.controls.values,
-              }) as UpdateWorkflowDtoSteps
-          ),
-        };
+        const updateWorkflowDto: UpdateWorkflowDto = mapResponseToUpdateDto(res);
 
         const errorResult = await expectSdkValidationExceptionGeneric(() =>
           apiClient.workflows.update(updateWorkflowDto, res.id)
@@ -1135,6 +1133,21 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
 
   function stringify(obj: unknown) {
     return JSON.stringify(obj, null, 2);
+  }
+
+  function mapResponseToUpdateDto(workflowResponse: WorkflowResponseDto): UpdateWorkflowDto {
+    return {
+      ...workflowResponse,
+      steps: workflowResponse.steps.map(
+        (step) =>
+          ({
+            id: step.id,
+            type: step.type,
+            name: step.name,
+            controlValues: step.controls.values,
+          }) as UpdateWorkflowDtoSteps
+      ),
+    };
   }
 
   function assertWorkflowResponseBodyData(workflowResponseDto: WorkflowResponseDto) {
