@@ -15,6 +15,7 @@
     "adresses",
     "APIJSON",
     "sdkerror",
+    "funcs",
     "idempotancy",
     "errordto",
     "filtertopicsresponsedto",

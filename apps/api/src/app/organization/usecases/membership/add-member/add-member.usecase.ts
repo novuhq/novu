@@ -1,4 +1,4 @@
-import { Injectable, Scope, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { MemberRepository } from '@novu/dal';
 import { MemberStatusEnum } from '@novu/shared';
 import { AddMemberCommand } from './add-member.command';

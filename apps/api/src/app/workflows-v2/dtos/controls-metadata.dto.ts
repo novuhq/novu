@@ -6,6 +6,7 @@ import { UiSchema } from './ui-schema.dto';
 export class ControlsMetadataDto {
   @ApiPropertyOptional({
     description: 'JSON Schema for data',
+    additionalProperties: true,
     type: () => Object,
   })
   @IsOptional()

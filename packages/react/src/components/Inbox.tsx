@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Subscriber } from '@novu/js';
+import { Subscriber, StandardNovuOptions } from '@novu/js';
 import { DefaultProps, DefaultInboxProps, WithChildrenProps } from '../utils/types';
 import { Mounter } from './Mounter';
 import { useNovuUI } from '../context/NovuUIContext';
@@ -81,23 +81,28 @@ const DefaultInbox = (props: DefaultInboxProps) => {
 };
 
 export const Inbox = React.memo((props: InboxProps) => {
-  const { applicationIdentifier, subscriberHash, backendUrl, socketUrl } = props;
+  const { subscriberId, ...propsWithoutSubscriberId } = props;
+  const subscriber = buildSubscriber(props.subscriber, props.subscriberId);
+  const applicationIdentifier = props.applicationIdentifier ? props.applicationIdentifier : ''; // for keyless we provide an empty string, the api will generate a identifier
   const novu = useUnsafeNovu();
 
   if (novu) {
-    return <InboxChild {...props} />;
+    return (
+      <InboxChild {...propsWithoutSubscriberId} applicationIdentifier={applicationIdentifier} subscriber={subscriber} />
+    );
   }
 
+  const providerProps = {
+    applicationIdentifier,
+    subscriberHash: props.subscriberHash,
+    backendUrl: props.backendUrl,
+    socketUrl: props.socketUrl,
+    subscriber,
+  } satisfies StandardNovuOptions;
+
   return (
-    <InternalNovuProvider
-      applicationIdentifier={applicationIdentifier}
-      subscriberHash={subscriberHash}
-      backendUrl={backendUrl}
-      socketUrl={socketUrl}
-      subscriber={buildSubscriber(props)}
-      userAgentType="components"
-    >
-      <InboxChild {...props} />
+    <InternalNovuProvider {...providerProps} userAgentType="components">
+      <InboxChild {...propsWithoutSubscriberId} applicationIdentifier={applicationIdentifier} subscriber={subscriber} />
     </InternalNovuProvider>
   );
 });
@@ -111,11 +116,12 @@ const InboxChild = withRenderer(
       preferencesFilter,
       preferenceGroups,
       routerPush,
-      applicationIdentifier,
+      applicationIdentifier = '', // for keyless we provide an empty string, the api will generate a identifier
       subscriberId,
       subscriberHash,
       backendUrl,
       socketUrl,
+      subscriber,
     } = props;
     const novu = useNovu();
 
@@ -132,7 +138,7 @@ const InboxChild = withRenderer(
           subscriberHash,
           backendUrl,
           socketUrl,
-          subscriber: buildSubscriber(props),
+          subscriber: buildSubscriber(subscriber, subscriberId),
         },
       };
     }, [
@@ -193,14 +199,17 @@ function isWithChildrenProps(props: InboxProps): props is WithChildrenProps {
   return 'children' in props;
 }
 
-function buildSubscriber(options: InboxProps): Subscriber {
-  let subscriberObj: Subscriber;
-
-  if (options.subscriber) {
-    subscriberObj = typeof options.subscriber === 'string' ? { subscriberId: options.subscriber } : options.subscriber;
-  } else {
-    subscriberObj = { subscriberId: options.subscriberId as string };
+function buildSubscriber(subscriber?: string | Subscriber | undefined, subscriberId?: string): Subscriber {
+  // subscriber object
+  if (subscriber) {
+    return typeof subscriber === 'string' ? { subscriberId: subscriber } : subscriber;
   }
 
-  return subscriberObj;
+  // subscriberId
+  if (subscriberId) {
+    return { subscriberId };
+  }
+
+  // missing - keyless subscriber, the api will generate a subscriberId
+  return { subscriberId: '' };
 }
