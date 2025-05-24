@@ -4,7 +4,7 @@
   "projectType": "library",
   "targets": {
     "build": {
-      "cache": false,
+      "cache": true,
       "inputs": [
         "default",
         "{projectRoot}/**/*",
