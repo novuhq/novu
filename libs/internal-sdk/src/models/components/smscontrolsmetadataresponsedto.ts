@@ -19,16 +19,11 @@ import {
   UiSchema$outboundSchema,
 } from "./uischema.js";
 
-/**
- * JSON Schema for data
- */
-export type SmsControlsMetadataResponseDtoDataSchema = {};
-
 export type SmsControlsMetadataResponseDto = {
   /**
    * JSON Schema for data
    */
-  dataSchema?: SmsControlsMetadataResponseDtoDataSchema | undefined;
+  dataSchema?: { [k: string]: any } | undefined;
   /**
    * UI Schema for rendering
    */
@@ -40,80 +35,19 @@ export type SmsControlsMetadataResponseDto = {
 };
 
 /** @internal */
-export const SmsControlsMetadataResponseDtoDataSchema$inboundSchema: z.ZodType<
-  SmsControlsMetadataResponseDtoDataSchema,
-  z.ZodTypeDef,
-  unknown
-> = z.object({});
-
-/** @internal */
-export type SmsControlsMetadataResponseDtoDataSchema$Outbound = {};
-
-/** @internal */
-export const SmsControlsMetadataResponseDtoDataSchema$outboundSchema: z.ZodType<
-  SmsControlsMetadataResponseDtoDataSchema$Outbound,
-  z.ZodTypeDef,
-  SmsControlsMetadataResponseDtoDataSchema
-> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace SmsControlsMetadataResponseDtoDataSchema$ {
-  /** @deprecated use `SmsControlsMetadataResponseDtoDataSchema$inboundSchema` instead. */
-  export const inboundSchema =
-    SmsControlsMetadataResponseDtoDataSchema$inboundSchema;
-  /** @deprecated use `SmsControlsMetadataResponseDtoDataSchema$outboundSchema` instead. */
-  export const outboundSchema =
-    SmsControlsMetadataResponseDtoDataSchema$outboundSchema;
-  /** @deprecated use `SmsControlsMetadataResponseDtoDataSchema$Outbound` instead. */
-  export type Outbound = SmsControlsMetadataResponseDtoDataSchema$Outbound;
-}
-
-export function smsControlsMetadataResponseDtoDataSchemaToJSON(
-  smsControlsMetadataResponseDtoDataSchema:
-    SmsControlsMetadataResponseDtoDataSchema,
-): string {
-  return JSON.stringify(
-    SmsControlsMetadataResponseDtoDataSchema$outboundSchema.parse(
-      smsControlsMetadataResponseDtoDataSchema,
-    ),
-  );
-}
-
-export function smsControlsMetadataResponseDtoDataSchemaFromJSON(
-  jsonString: string,
-): SafeParseResult<
-  SmsControlsMetadataResponseDtoDataSchema,
-  SDKValidationError
-> {
-  return safeParse(
-    jsonString,
-    (x) =>
-      SmsControlsMetadataResponseDtoDataSchema$inboundSchema.parse(
-        JSON.parse(x),
-      ),
-    `Failed to parse 'SmsControlsMetadataResponseDtoDataSchema' from JSON`,
-  );
-}
-
-/** @internal */
 export const SmsControlsMetadataResponseDto$inboundSchema: z.ZodType<
   SmsControlsMetadataResponseDto,
   z.ZodTypeDef,
   unknown
 > = z.object({
-  dataSchema: z.lazy(() =>
-    SmsControlsMetadataResponseDtoDataSchema$inboundSchema
-  ).optional(),
+  dataSchema: z.record(z.any()).optional(),
   uiSchema: UiSchema$inboundSchema.optional(),
   values: SmsControlDto$inboundSchema,
 });
 
 /** @internal */
 export type SmsControlsMetadataResponseDto$Outbound = {
-  dataSchema?: SmsControlsMetadataResponseDtoDataSchema$Outbound | undefined;
+  dataSchema?: { [k: string]: any } | undefined;
   uiSchema?: UiSchema$Outbound | undefined;
   values: SmsControlDto$Outbound;
 };
@@ -124,9 +58,7 @@ export const SmsControlsMetadataResponseDto$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   SmsControlsMetadataResponseDto
 > = z.object({
-  dataSchema: z.lazy(() =>
-    SmsControlsMetadataResponseDtoDataSchema$outboundSchema
-  ).optional(),
+  dataSchema: z.record(z.any()).optional(),
   uiSchema: UiSchema$outboundSchema.optional(),
   values: SmsControlDto$outboundSchema,
 });

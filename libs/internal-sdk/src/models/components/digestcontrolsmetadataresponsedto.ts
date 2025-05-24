@@ -19,16 +19,11 @@ import {
   UiSchema$outboundSchema,
 } from "./uischema.js";
 
-/**
- * JSON Schema for data
- */
-export type DigestControlsMetadataResponseDtoDataSchema = {};
-
 export type DigestControlsMetadataResponseDto = {
   /**
    * JSON Schema for data
    */
-  dataSchema?: DigestControlsMetadataResponseDtoDataSchema | undefined;
+  dataSchema?: { [k: string]: any } | undefined;
   /**
    * UI Schema for rendering
    */
@@ -40,82 +35,19 @@ export type DigestControlsMetadataResponseDto = {
 };
 
 /** @internal */
-export const DigestControlsMetadataResponseDtoDataSchema$inboundSchema:
-  z.ZodType<
-    DigestControlsMetadataResponseDtoDataSchema,
-    z.ZodTypeDef,
-    unknown
-  > = z.object({});
-
-/** @internal */
-export type DigestControlsMetadataResponseDtoDataSchema$Outbound = {};
-
-/** @internal */
-export const DigestControlsMetadataResponseDtoDataSchema$outboundSchema:
-  z.ZodType<
-    DigestControlsMetadataResponseDtoDataSchema$Outbound,
-    z.ZodTypeDef,
-    DigestControlsMetadataResponseDtoDataSchema
-  > = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace DigestControlsMetadataResponseDtoDataSchema$ {
-  /** @deprecated use `DigestControlsMetadataResponseDtoDataSchema$inboundSchema` instead. */
-  export const inboundSchema =
-    DigestControlsMetadataResponseDtoDataSchema$inboundSchema;
-  /** @deprecated use `DigestControlsMetadataResponseDtoDataSchema$outboundSchema` instead. */
-  export const outboundSchema =
-    DigestControlsMetadataResponseDtoDataSchema$outboundSchema;
-  /** @deprecated use `DigestControlsMetadataResponseDtoDataSchema$Outbound` instead. */
-  export type Outbound = DigestControlsMetadataResponseDtoDataSchema$Outbound;
-}
-
-export function digestControlsMetadataResponseDtoDataSchemaToJSON(
-  digestControlsMetadataResponseDtoDataSchema:
-    DigestControlsMetadataResponseDtoDataSchema,
-): string {
-  return JSON.stringify(
-    DigestControlsMetadataResponseDtoDataSchema$outboundSchema.parse(
-      digestControlsMetadataResponseDtoDataSchema,
-    ),
-  );
-}
-
-export function digestControlsMetadataResponseDtoDataSchemaFromJSON(
-  jsonString: string,
-): SafeParseResult<
-  DigestControlsMetadataResponseDtoDataSchema,
-  SDKValidationError
-> {
-  return safeParse(
-    jsonString,
-    (x) =>
-      DigestControlsMetadataResponseDtoDataSchema$inboundSchema.parse(
-        JSON.parse(x),
-      ),
-    `Failed to parse 'DigestControlsMetadataResponseDtoDataSchema' from JSON`,
-  );
-}
-
-/** @internal */
 export const DigestControlsMetadataResponseDto$inboundSchema: z.ZodType<
   DigestControlsMetadataResponseDto,
   z.ZodTypeDef,
   unknown
 > = z.object({
-  dataSchema: z.lazy(() =>
-    DigestControlsMetadataResponseDtoDataSchema$inboundSchema
-  ).optional(),
+  dataSchema: z.record(z.any()).optional(),
   uiSchema: UiSchema$inboundSchema.optional(),
   values: DigestControlDto$inboundSchema,
 });
 
 /** @internal */
 export type DigestControlsMetadataResponseDto$Outbound = {
-  dataSchema?: DigestControlsMetadataResponseDtoDataSchema$Outbound | undefined;
+  dataSchema?: { [k: string]: any } | undefined;
   uiSchema?: UiSchema$Outbound | undefined;
   values: DigestControlDto$Outbound;
 };
@@ -126,9 +58,7 @@ export const DigestControlsMetadataResponseDto$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   DigestControlsMetadataResponseDto
 > = z.object({
-  dataSchema: z.lazy(() =>
-    DigestControlsMetadataResponseDtoDataSchema$outboundSchema
-  ).optional(),
+  dataSchema: z.record(z.any()).optional(),
   uiSchema: UiSchema$outboundSchema.optional(),
   values: DigestControlDto$outboundSchema,
 });

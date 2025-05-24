@@ -19,16 +19,11 @@ import {
   UiSchema$outboundSchema,
 } from "./uischema.js";
 
-/**
- * JSON Schema for data
- */
-export type DataSchema = {};
-
 export type InAppControlsMetadataResponseDto = {
   /**
    * JSON Schema for data
    */
-  dataSchema?: DataSchema | undefined;
+  dataSchema?: { [k: string]: any } | undefined;
   /**
    * UI Schema for rendering
    */
@@ -40,63 +35,19 @@ export type InAppControlsMetadataResponseDto = {
 };
 
 /** @internal */
-export const DataSchema$inboundSchema: z.ZodType<
-  DataSchema,
-  z.ZodTypeDef,
-  unknown
-> = z.object({});
-
-/** @internal */
-export type DataSchema$Outbound = {};
-
-/** @internal */
-export const DataSchema$outboundSchema: z.ZodType<
-  DataSchema$Outbound,
-  z.ZodTypeDef,
-  DataSchema
-> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace DataSchema$ {
-  /** @deprecated use `DataSchema$inboundSchema` instead. */
-  export const inboundSchema = DataSchema$inboundSchema;
-  /** @deprecated use `DataSchema$outboundSchema` instead. */
-  export const outboundSchema = DataSchema$outboundSchema;
-  /** @deprecated use `DataSchema$Outbound` instead. */
-  export type Outbound = DataSchema$Outbound;
-}
-
-export function dataSchemaToJSON(dataSchema: DataSchema): string {
-  return JSON.stringify(DataSchema$outboundSchema.parse(dataSchema));
-}
-
-export function dataSchemaFromJSON(
-  jsonString: string,
-): SafeParseResult<DataSchema, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => DataSchema$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'DataSchema' from JSON`,
-  );
-}
-
-/** @internal */
 export const InAppControlsMetadataResponseDto$inboundSchema: z.ZodType<
   InAppControlsMetadataResponseDto,
   z.ZodTypeDef,
   unknown
 > = z.object({
-  dataSchema: z.lazy(() => DataSchema$inboundSchema).optional(),
+  dataSchema: z.record(z.any()).optional(),
   uiSchema: UiSchema$inboundSchema.optional(),
   values: InAppControlDto$inboundSchema,
 });
 
 /** @internal */
 export type InAppControlsMetadataResponseDto$Outbound = {
-  dataSchema?: DataSchema$Outbound | undefined;
+  dataSchema?: { [k: string]: any } | undefined;
   uiSchema?: UiSchema$Outbound | undefined;
   values: InAppControlDto$Outbound;
 };
@@ -107,7 +58,7 @@ export const InAppControlsMetadataResponseDto$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   InAppControlsMetadataResponseDto
 > = z.object({
-  dataSchema: z.lazy(() => DataSchema$outboundSchema).optional(),
+  dataSchema: z.record(z.any()).optional(),
   uiSchema: UiSchema$outboundSchema.optional(),
   values: InAppControlDto$outboundSchema,
 });

@@ -19,16 +19,11 @@ import {
   UiSchema$outboundSchema,
 } from "./uischema.js";
 
-/**
- * JSON Schema for data
- */
-export type EmailControlsMetadataResponseDtoDataSchema = {};
-
 export type EmailControlsMetadataResponseDto = {
   /**
    * JSON Schema for data
    */
-  dataSchema?: EmailControlsMetadataResponseDtoDataSchema | undefined;
+  dataSchema?: { [k: string]: any } | undefined;
   /**
    * UI Schema for rendering
    */
@@ -40,79 +35,19 @@ export type EmailControlsMetadataResponseDto = {
 };
 
 /** @internal */
-export const EmailControlsMetadataResponseDtoDataSchema$inboundSchema:
-  z.ZodType<EmailControlsMetadataResponseDtoDataSchema, z.ZodTypeDef, unknown> =
-    z.object({});
-
-/** @internal */
-export type EmailControlsMetadataResponseDtoDataSchema$Outbound = {};
-
-/** @internal */
-export const EmailControlsMetadataResponseDtoDataSchema$outboundSchema:
-  z.ZodType<
-    EmailControlsMetadataResponseDtoDataSchema$Outbound,
-    z.ZodTypeDef,
-    EmailControlsMetadataResponseDtoDataSchema
-  > = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace EmailControlsMetadataResponseDtoDataSchema$ {
-  /** @deprecated use `EmailControlsMetadataResponseDtoDataSchema$inboundSchema` instead. */
-  export const inboundSchema =
-    EmailControlsMetadataResponseDtoDataSchema$inboundSchema;
-  /** @deprecated use `EmailControlsMetadataResponseDtoDataSchema$outboundSchema` instead. */
-  export const outboundSchema =
-    EmailControlsMetadataResponseDtoDataSchema$outboundSchema;
-  /** @deprecated use `EmailControlsMetadataResponseDtoDataSchema$Outbound` instead. */
-  export type Outbound = EmailControlsMetadataResponseDtoDataSchema$Outbound;
-}
-
-export function emailControlsMetadataResponseDtoDataSchemaToJSON(
-  emailControlsMetadataResponseDtoDataSchema:
-    EmailControlsMetadataResponseDtoDataSchema,
-): string {
-  return JSON.stringify(
-    EmailControlsMetadataResponseDtoDataSchema$outboundSchema.parse(
-      emailControlsMetadataResponseDtoDataSchema,
-    ),
-  );
-}
-
-export function emailControlsMetadataResponseDtoDataSchemaFromJSON(
-  jsonString: string,
-): SafeParseResult<
-  EmailControlsMetadataResponseDtoDataSchema,
-  SDKValidationError
-> {
-  return safeParse(
-    jsonString,
-    (x) =>
-      EmailControlsMetadataResponseDtoDataSchema$inboundSchema.parse(
-        JSON.parse(x),
-      ),
-    `Failed to parse 'EmailControlsMetadataResponseDtoDataSchema' from JSON`,
-  );
-}
-
-/** @internal */
 export const EmailControlsMetadataResponseDto$inboundSchema: z.ZodType<
   EmailControlsMetadataResponseDto,
   z.ZodTypeDef,
   unknown
 > = z.object({
-  dataSchema: z.lazy(() =>
-    EmailControlsMetadataResponseDtoDataSchema$inboundSchema
-  ).optional(),
+  dataSchema: z.record(z.any()).optional(),
   uiSchema: UiSchema$inboundSchema.optional(),
   values: EmailControlDto$inboundSchema,
 });
 
 /** @internal */
 export type EmailControlsMetadataResponseDto$Outbound = {
-  dataSchema?: EmailControlsMetadataResponseDtoDataSchema$Outbound | undefined;
+  dataSchema?: { [k: string]: any } | undefined;
   uiSchema?: UiSchema$Outbound | undefined;
   values: EmailControlDto$Outbound;
 };
@@ -123,9 +58,7 @@ export const EmailControlsMetadataResponseDto$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   EmailControlsMetadataResponseDto
 > = z.object({
-  dataSchema: z.lazy(() =>
-    EmailControlsMetadataResponseDtoDataSchema$outboundSchema
-  ).optional(),
+  dataSchema: z.record(z.any()).optional(),
   uiSchema: UiSchema$outboundSchema.optional(),
   values: EmailControlDto$outboundSchema,
 });

@@ -19,16 +19,11 @@ import {
   UiSchema$outboundSchema,
 } from "./uischema.js";
 
-/**
- * JSON Schema for data
- */
-export type DelayControlsMetadataResponseDtoDataSchema = {};
-
 export type DelayControlsMetadataResponseDto = {
   /**
    * JSON Schema for data
    */
-  dataSchema?: DelayControlsMetadataResponseDtoDataSchema | undefined;
+  dataSchema?: { [k: string]: any } | undefined;
   /**
    * UI Schema for rendering
    */
@@ -40,79 +35,19 @@ export type DelayControlsMetadataResponseDto = {
 };
 
 /** @internal */
-export const DelayControlsMetadataResponseDtoDataSchema$inboundSchema:
-  z.ZodType<DelayControlsMetadataResponseDtoDataSchema, z.ZodTypeDef, unknown> =
-    z.object({});
-
-/** @internal */
-export type DelayControlsMetadataResponseDtoDataSchema$Outbound = {};
-
-/** @internal */
-export const DelayControlsMetadataResponseDtoDataSchema$outboundSchema:
-  z.ZodType<
-    DelayControlsMetadataResponseDtoDataSchema$Outbound,
-    z.ZodTypeDef,
-    DelayControlsMetadataResponseDtoDataSchema
-  > = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace DelayControlsMetadataResponseDtoDataSchema$ {
-  /** @deprecated use `DelayControlsMetadataResponseDtoDataSchema$inboundSchema` instead. */
-  export const inboundSchema =
-    DelayControlsMetadataResponseDtoDataSchema$inboundSchema;
-  /** @deprecated use `DelayControlsMetadataResponseDtoDataSchema$outboundSchema` instead. */
-  export const outboundSchema =
-    DelayControlsMetadataResponseDtoDataSchema$outboundSchema;
-  /** @deprecated use `DelayControlsMetadataResponseDtoDataSchema$Outbound` instead. */
-  export type Outbound = DelayControlsMetadataResponseDtoDataSchema$Outbound;
-}
-
-export function delayControlsMetadataResponseDtoDataSchemaToJSON(
-  delayControlsMetadataResponseDtoDataSchema:
-    DelayControlsMetadataResponseDtoDataSchema,
-): string {
-  return JSON.stringify(
-    DelayControlsMetadataResponseDtoDataSchema$outboundSchema.parse(
-      delayControlsMetadataResponseDtoDataSchema,
-    ),
-  );
-}
-
-export function delayControlsMetadataResponseDtoDataSchemaFromJSON(
-  jsonString: string,
-): SafeParseResult<
-  DelayControlsMetadataResponseDtoDataSchema,
-  SDKValidationError
-> {
-  return safeParse(
-    jsonString,
-    (x) =>
-      DelayControlsMetadataResponseDtoDataSchema$inboundSchema.parse(
-        JSON.parse(x),
-      ),
-    `Failed to parse 'DelayControlsMetadataResponseDtoDataSchema' from JSON`,
-  );
-}
-
-/** @internal */
 export const DelayControlsMetadataResponseDto$inboundSchema: z.ZodType<
   DelayControlsMetadataResponseDto,
   z.ZodTypeDef,
   unknown
 > = z.object({
-  dataSchema: z.lazy(() =>
-    DelayControlsMetadataResponseDtoDataSchema$inboundSchema
-  ).optional(),
+  dataSchema: z.record(z.any()).optional(),
   uiSchema: UiSchema$inboundSchema.optional(),
   values: DelayControlDto$inboundSchema,
 });
 
 /** @internal */
 export type DelayControlsMetadataResponseDto$Outbound = {
-  dataSchema?: DelayControlsMetadataResponseDtoDataSchema$Outbound | undefined;
+  dataSchema?: { [k: string]: any } | undefined;
   uiSchema?: UiSchema$Outbound | undefined;
   values: DelayControlDto$Outbound;
 };
@@ -123,9 +58,7 @@ export const DelayControlsMetadataResponseDto$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   DelayControlsMetadataResponseDto
 > = z.object({
-  dataSchema: z.lazy(() =>
-    DelayControlsMetadataResponseDtoDataSchema$outboundSchema
-  ).optional(),
+  dataSchema: z.record(z.any()).optional(),
   uiSchema: UiSchema$outboundSchema.optional(),
   values: DelayControlDto$outboundSchema,
 });

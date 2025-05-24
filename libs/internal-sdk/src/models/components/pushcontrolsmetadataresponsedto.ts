@@ -19,16 +19,11 @@ import {
   UiSchema$outboundSchema,
 } from "./uischema.js";
 
-/**
- * JSON Schema for data
- */
-export type PushControlsMetadataResponseDtoDataSchema = {};
-
 export type PushControlsMetadataResponseDto = {
   /**
    * JSON Schema for data
    */
-  dataSchema?: PushControlsMetadataResponseDtoDataSchema | undefined;
+  dataSchema?: { [k: string]: any } | undefined;
   /**
    * UI Schema for rendering
    */
@@ -40,81 +35,19 @@ export type PushControlsMetadataResponseDto = {
 };
 
 /** @internal */
-export const PushControlsMetadataResponseDtoDataSchema$inboundSchema: z.ZodType<
-  PushControlsMetadataResponseDtoDataSchema,
-  z.ZodTypeDef,
-  unknown
-> = z.object({});
-
-/** @internal */
-export type PushControlsMetadataResponseDtoDataSchema$Outbound = {};
-
-/** @internal */
-export const PushControlsMetadataResponseDtoDataSchema$outboundSchema:
-  z.ZodType<
-    PushControlsMetadataResponseDtoDataSchema$Outbound,
-    z.ZodTypeDef,
-    PushControlsMetadataResponseDtoDataSchema
-  > = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace PushControlsMetadataResponseDtoDataSchema$ {
-  /** @deprecated use `PushControlsMetadataResponseDtoDataSchema$inboundSchema` instead. */
-  export const inboundSchema =
-    PushControlsMetadataResponseDtoDataSchema$inboundSchema;
-  /** @deprecated use `PushControlsMetadataResponseDtoDataSchema$outboundSchema` instead. */
-  export const outboundSchema =
-    PushControlsMetadataResponseDtoDataSchema$outboundSchema;
-  /** @deprecated use `PushControlsMetadataResponseDtoDataSchema$Outbound` instead. */
-  export type Outbound = PushControlsMetadataResponseDtoDataSchema$Outbound;
-}
-
-export function pushControlsMetadataResponseDtoDataSchemaToJSON(
-  pushControlsMetadataResponseDtoDataSchema:
-    PushControlsMetadataResponseDtoDataSchema,
-): string {
-  return JSON.stringify(
-    PushControlsMetadataResponseDtoDataSchema$outboundSchema.parse(
-      pushControlsMetadataResponseDtoDataSchema,
-    ),
-  );
-}
-
-export function pushControlsMetadataResponseDtoDataSchemaFromJSON(
-  jsonString: string,
-): SafeParseResult<
-  PushControlsMetadataResponseDtoDataSchema,
-  SDKValidationError
-> {
-  return safeParse(
-    jsonString,
-    (x) =>
-      PushControlsMetadataResponseDtoDataSchema$inboundSchema.parse(
-        JSON.parse(x),
-      ),
-    `Failed to parse 'PushControlsMetadataResponseDtoDataSchema' from JSON`,
-  );
-}
-
-/** @internal */
 export const PushControlsMetadataResponseDto$inboundSchema: z.ZodType<
   PushControlsMetadataResponseDto,
   z.ZodTypeDef,
   unknown
 > = z.object({
-  dataSchema: z.lazy(() =>
-    PushControlsMetadataResponseDtoDataSchema$inboundSchema
-  ).optional(),
+  dataSchema: z.record(z.any()).optional(),
   uiSchema: UiSchema$inboundSchema.optional(),
   values: PushControlDto$inboundSchema,
 });
 
 /** @internal */
 export type PushControlsMetadataResponseDto$Outbound = {
-  dataSchema?: PushControlsMetadataResponseDtoDataSchema$Outbound | undefined;
+  dataSchema?: { [k: string]: any } | undefined;
   uiSchema?: UiSchema$Outbound | undefined;
   values: PushControlDto$Outbound;
 };
@@ -125,9 +58,7 @@ export const PushControlsMetadataResponseDto$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   PushControlsMetadataResponseDto
 > = z.object({
-  dataSchema: z.lazy(() =>
-    PushControlsMetadataResponseDtoDataSchema$outboundSchema
-  ).optional(),
+  dataSchema: z.record(z.any()).optional(),
   uiSchema: UiSchema$outboundSchema.optional(),
   values: PushControlDto$outboundSchema,
 });

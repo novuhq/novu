@@ -13,16 +13,11 @@ import {
   UiSchema$outboundSchema,
 } from "./uischema.js";
 
-/**
- * JSON Schema for data
- */
-export type ControlsMetadataDtoDataSchema = {};
-
 export type ControlsMetadataDto = {
   /**
    * JSON Schema for data
    */
-  dataSchema?: ControlsMetadataDtoDataSchema | undefined;
+  dataSchema?: { [k: string]: any } | undefined;
   /**
    * UI Schema for rendering
    */
@@ -30,69 +25,18 @@ export type ControlsMetadataDto = {
 };
 
 /** @internal */
-export const ControlsMetadataDtoDataSchema$inboundSchema: z.ZodType<
-  ControlsMetadataDtoDataSchema,
-  z.ZodTypeDef,
-  unknown
-> = z.object({});
-
-/** @internal */
-export type ControlsMetadataDtoDataSchema$Outbound = {};
-
-/** @internal */
-export const ControlsMetadataDtoDataSchema$outboundSchema: z.ZodType<
-  ControlsMetadataDtoDataSchema$Outbound,
-  z.ZodTypeDef,
-  ControlsMetadataDtoDataSchema
-> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ControlsMetadataDtoDataSchema$ {
-  /** @deprecated use `ControlsMetadataDtoDataSchema$inboundSchema` instead. */
-  export const inboundSchema = ControlsMetadataDtoDataSchema$inboundSchema;
-  /** @deprecated use `ControlsMetadataDtoDataSchema$outboundSchema` instead. */
-  export const outboundSchema = ControlsMetadataDtoDataSchema$outboundSchema;
-  /** @deprecated use `ControlsMetadataDtoDataSchema$Outbound` instead. */
-  export type Outbound = ControlsMetadataDtoDataSchema$Outbound;
-}
-
-export function controlsMetadataDtoDataSchemaToJSON(
-  controlsMetadataDtoDataSchema: ControlsMetadataDtoDataSchema,
-): string {
-  return JSON.stringify(
-    ControlsMetadataDtoDataSchema$outboundSchema.parse(
-      controlsMetadataDtoDataSchema,
-    ),
-  );
-}
-
-export function controlsMetadataDtoDataSchemaFromJSON(
-  jsonString: string,
-): SafeParseResult<ControlsMetadataDtoDataSchema, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => ControlsMetadataDtoDataSchema$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'ControlsMetadataDtoDataSchema' from JSON`,
-  );
-}
-
-/** @internal */
 export const ControlsMetadataDto$inboundSchema: z.ZodType<
   ControlsMetadataDto,
   z.ZodTypeDef,
   unknown
 > = z.object({
-  dataSchema: z.lazy(() => ControlsMetadataDtoDataSchema$inboundSchema)
-    .optional(),
+  dataSchema: z.record(z.any()).optional(),
   uiSchema: UiSchema$inboundSchema.optional(),
 });
 
 /** @internal */
 export type ControlsMetadataDto$Outbound = {
-  dataSchema?: ControlsMetadataDtoDataSchema$Outbound | undefined;
+  dataSchema?: { [k: string]: any } | undefined;
   uiSchema?: UiSchema$Outbound | undefined;
 };
 
@@ -102,8 +46,7 @@ export const ControlsMetadataDto$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   ControlsMetadataDto
 > = z.object({
-  dataSchema: z.lazy(() => ControlsMetadataDtoDataSchema$outboundSchema)
-    .optional(),
+  dataSchema: z.record(z.any()).optional(),
   uiSchema: UiSchema$outboundSchema.optional(),
 });
 

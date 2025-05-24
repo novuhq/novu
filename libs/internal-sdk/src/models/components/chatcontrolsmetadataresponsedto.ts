@@ -19,16 +19,11 @@ import {
   UiSchema$outboundSchema,
 } from "./uischema.js";
 
-/**
- * JSON Schema for data
- */
-export type ChatControlsMetadataResponseDtoDataSchema = {};
-
 export type ChatControlsMetadataResponseDto = {
   /**
    * JSON Schema for data
    */
-  dataSchema?: ChatControlsMetadataResponseDtoDataSchema | undefined;
+  dataSchema?: { [k: string]: any } | undefined;
   /**
    * UI Schema for rendering
    */
@@ -40,81 +35,19 @@ export type ChatControlsMetadataResponseDto = {
 };
 
 /** @internal */
-export const ChatControlsMetadataResponseDtoDataSchema$inboundSchema: z.ZodType<
-  ChatControlsMetadataResponseDtoDataSchema,
-  z.ZodTypeDef,
-  unknown
-> = z.object({});
-
-/** @internal */
-export type ChatControlsMetadataResponseDtoDataSchema$Outbound = {};
-
-/** @internal */
-export const ChatControlsMetadataResponseDtoDataSchema$outboundSchema:
-  z.ZodType<
-    ChatControlsMetadataResponseDtoDataSchema$Outbound,
-    z.ZodTypeDef,
-    ChatControlsMetadataResponseDtoDataSchema
-  > = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ChatControlsMetadataResponseDtoDataSchema$ {
-  /** @deprecated use `ChatControlsMetadataResponseDtoDataSchema$inboundSchema` instead. */
-  export const inboundSchema =
-    ChatControlsMetadataResponseDtoDataSchema$inboundSchema;
-  /** @deprecated use `ChatControlsMetadataResponseDtoDataSchema$outboundSchema` instead. */
-  export const outboundSchema =
-    ChatControlsMetadataResponseDtoDataSchema$outboundSchema;
-  /** @deprecated use `ChatControlsMetadataResponseDtoDataSchema$Outbound` instead. */
-  export type Outbound = ChatControlsMetadataResponseDtoDataSchema$Outbound;
-}
-
-export function chatControlsMetadataResponseDtoDataSchemaToJSON(
-  chatControlsMetadataResponseDtoDataSchema:
-    ChatControlsMetadataResponseDtoDataSchema,
-): string {
-  return JSON.stringify(
-    ChatControlsMetadataResponseDtoDataSchema$outboundSchema.parse(
-      chatControlsMetadataResponseDtoDataSchema,
-    ),
-  );
-}
-
-export function chatControlsMetadataResponseDtoDataSchemaFromJSON(
-  jsonString: string,
-): SafeParseResult<
-  ChatControlsMetadataResponseDtoDataSchema,
-  SDKValidationError
-> {
-  return safeParse(
-    jsonString,
-    (x) =>
-      ChatControlsMetadataResponseDtoDataSchema$inboundSchema.parse(
-        JSON.parse(x),
-      ),
-    `Failed to parse 'ChatControlsMetadataResponseDtoDataSchema' from JSON`,
-  );
-}
-
-/** @internal */
 export const ChatControlsMetadataResponseDto$inboundSchema: z.ZodType<
   ChatControlsMetadataResponseDto,
   z.ZodTypeDef,
   unknown
 > = z.object({
-  dataSchema: z.lazy(() =>
-    ChatControlsMetadataResponseDtoDataSchema$inboundSchema
-  ).optional(),
+  dataSchema: z.record(z.any()).optional(),
   uiSchema: UiSchema$inboundSchema.optional(),
   values: ChatControlDto$inboundSchema,
 });
 
 /** @internal */
 export type ChatControlsMetadataResponseDto$Outbound = {
-  dataSchema?: ChatControlsMetadataResponseDtoDataSchema$Outbound | undefined;
+  dataSchema?: { [k: string]: any } | undefined;
   uiSchema?: UiSchema$Outbound | undefined;
   values: ChatControlDto$Outbound;
 };
@@ -125,9 +58,7 @@ export const ChatControlsMetadataResponseDto$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   ChatControlsMetadataResponseDto
 > = z.object({
-  dataSchema: z.lazy(() =>
-    ChatControlsMetadataResponseDtoDataSchema$outboundSchema
-  ).optional(),
+  dataSchema: z.record(z.any()).optional(),
   uiSchema: UiSchema$outboundSchema.optional(),
   values: ChatControlDto$outboundSchema,
 });
