@@ -242,13 +242,13 @@ export const EditVariablePopover = ({
               <FormItem>
                 <FormControl>
                   <div className="grid">
-                    <div className="flex w-full flex-row items-center justify-between gap-1">
-                      <label className="text-text-sub text-label-xs">Variable</label>
-                      {isPayloadSchemaEnabled && isPayloadSchemaVariable && (
-                        <Button
-                          variant="secondary"
-                          mode="ghost"
-                          size="2xs"
+                    <div className="mb-1 flex w-full flex-row items-center justify-between gap-1">
+                      <label className="text-text-sub text-label-xs items-start">Variable</label>
+                      {isPayloadSchemaEnabled && isPayloadSchemaVariable && !isVariableNotInSchema && (
+                        <LinkButton
+                          variant="gray"
+                          size="sm"
+                          className="text-label-2xs text-xs"
                           leadingIcon={RiListView}
                           onClick={() => {
                             if (onManageSchemaClick && name) {
@@ -256,8 +256,25 @@ export const EditVariablePopover = ({
                             }
                           }}
                         >
-                          Manage schema
-                        </Button>
+                          Manage schema ↗
+                        </LinkButton>
+                      )}
+
+                      {isVariableNotInSchema && (
+                        <LinkButton
+                          variant="gray"
+                          size="sm"
+                          className="text-label-2xs text-xs"
+                          leadingIcon={RiListView}
+                          onClick={() => {
+                            if (onAddToSchemaClick && name) {
+                              onAddToSchemaClick(name.replace('payload.', ''));
+                              handleOpenChange(false);
+                            }
+                          }}
+                        >
+                          <span className="underline"> Add to schema ↗</span>
+                        </LinkButton>
                       )}
                     </div>
 
@@ -276,24 +293,6 @@ export const EditVariablePopover = ({
                     </InputRoot>
                     {variableError && !isVariableNotInSchema && (
                       <FormMessagePure hasError={!!variableError}>{variableError}</FormMessagePure>
-                    )}
-                    {isVariableNotInSchema && (
-                      <div className="flex items-center gap-1 text-xs">
-                        <span className="text-error-base">Variable schema doesn't exist</span>
-                        <LinkButton
-                          variant="primary"
-                          size="sm"
-                          className="text-xs"
-                          onClick={() => {
-                            if (onAddToSchemaClick && name) {
-                              onAddToSchemaClick(name.replace('payload.', ''));
-                              handleOpenChange(false);
-                            }
-                          }}
-                        >
-                          Add to schema
-                        </LinkButton>
-                      </div>
                     )}
                   </div>
                 </FormControl>
