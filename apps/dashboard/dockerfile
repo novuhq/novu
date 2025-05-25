@@ -5,7 +5,7 @@ ENV NX_DAEMON=false
 WORKDIR /usr/src/app
 
 RUN apk add --no-cache bash
-RUN npm install -g pnpm@10.11.0 --loglevel notice
+RUN npm install -g pnpm@9.11.0 --loglevel notice
 
 COPY .npmrc .
 COPY package.json .

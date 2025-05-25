@@ -21,8 +21,6 @@ runs:
   steps:
     - name: Install pnpm
       uses: pnpm/action-setup@v3
-      with:
-        version: 10.11.0
 
     - uses: useblacksmith/setup-node@v5
       name: ⚙️ Setup Node Version
