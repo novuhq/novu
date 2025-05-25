@@ -4,6 +4,7 @@ import { Type } from 'class-transformer';
 import { StepTypeEnum, WorkflowCreationSourceEnum } from '@novu/shared';
 import {
   StepUpsertDto,
+  BaseStepConfigDto,
   InAppStepUpsertDto,
   EmailStepUpsertDto,
   SmsStepUpsertDto,
@@ -62,7 +63,32 @@ export class CreateWorkflowDto extends WorkflowCommonsFields {
   })
   @IsArray()
   @ValidateNested({ each: true })
-  steps: StepUpsertDto[];
+  @Type(() => BaseStepConfigDto, {
+    discriminator: {
+      property: 'type',
+      subTypes: [
+        { name: StepTypeEnum.IN_APP, value: InAppStepUpsertDto },
+        { name: StepTypeEnum.EMAIL, value: EmailStepUpsertDto },
+        { name: StepTypeEnum.SMS, value: SmsStepUpsertDto },
+        { name: StepTypeEnum.PUSH, value: PushStepUpsertDto },
+        { name: StepTypeEnum.CHAT, value: ChatStepUpsertDto },
+        { name: StepTypeEnum.DELAY, value: DelayStepUpsertDto },
+        { name: StepTypeEnum.DIGEST, value: DigestStepUpsertDto },
+        { name: StepTypeEnum.CUSTOM, value: CustomStepUpsertDto },
+      ],
+    },
+    keepDiscriminatorProperty: true,
+  })
+  steps: (
+    | InAppStepUpsertDto
+    | EmailStepUpsertDto
+    | SmsStepUpsertDto
+    | PushStepUpsertDto
+    | ChatStepUpsertDto
+    | DelayStepUpsertDto
+    | DigestStepUpsertDto
+    | CustomStepUpsertDto
+  )[];
 
   @ApiProperty({
     description: 'Source of workflow creation',

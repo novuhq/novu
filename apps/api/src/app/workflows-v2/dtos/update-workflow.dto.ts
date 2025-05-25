@@ -6,6 +6,7 @@ import { WorkflowCommonsFields } from './workflow-commons.dto';
 import { PreferencesRequestDto } from './preferences.request.dto';
 import {
   StepUpsertDto,
+  BaseStepConfigDto,
   InAppStepUpsertDto,
   EmailStepUpsertDto,
   SmsStepUpsertDto,
@@ -65,7 +66,32 @@ export class UpdateWorkflowDto extends WorkflowCommonsFields {
   })
   @IsArray()
   @ValidateNested({ each: true })
-  steps: StepUpsertDto[];
+  @Type(() => BaseStepConfigDto, {
+    discriminator: {
+      property: 'type',
+      subTypes: [
+        { name: StepTypeEnum.IN_APP, value: InAppStepUpsertDto },
+        { name: StepTypeEnum.EMAIL, value: EmailStepUpsertDto },
+        { name: StepTypeEnum.SMS, value: SmsStepUpsertDto },
+        { name: StepTypeEnum.PUSH, value: PushStepUpsertDto },
+        { name: StepTypeEnum.CHAT, value: ChatStepUpsertDto },
+        { name: StepTypeEnum.DELAY, value: DelayStepUpsertDto },
+        { name: StepTypeEnum.DIGEST, value: DigestStepUpsertDto },
+        { name: StepTypeEnum.CUSTOM, value: CustomStepUpsertDto },
+      ],
+    },
+    keepDiscriminatorProperty: true,
+  })
+  steps: (
+    | InAppStepUpsertDto
+    | EmailStepUpsertDto
+    | SmsStepUpsertDto
+    | PushStepUpsertDto
+    | ChatStepUpsertDto
+    | DelayStepUpsertDto
+    | DigestStepUpsertDto
+    | CustomStepUpsertDto
+  )[];
 
   @ApiProperty({
     description: 'Workflow preferences',
