@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Type, Expose } from 'class-transformer';
 import { Slug, StepTypeEnum, WorkflowOriginEnum } from '@novu/shared';
 import { ControlsMetadataDto } from './controls-metadata.dto';
 import { JSONSchemaDto } from './json-schema.dto';
@@ -15,6 +15,13 @@ export class StepResponseDto {
   @ValidateNested()
   @Type(() => ControlsMetadataDto)
   controls: ControlsMetadataDto;
+
+  @ApiPropertyOptional({
+    description: 'Control values for the step',
+    type: 'object',
+    additionalProperties: true,
+  })
+  controlValues: Record<string, unknown>;
 
   @ApiProperty({
     description: 'JSON Schema for variables, follows the JSON Schema standard',

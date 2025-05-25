@@ -37,6 +37,7 @@ export class BuildStepDataUsecase {
         uiSchema: currentStep.template?.controls?.uiSchema,
         values: controlValues,
       },
+      controlValues,
       variables,
       name: stepName,
       slug,
