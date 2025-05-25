@@ -163,6 +163,7 @@ export function EditableJsonViewer({ value, onChange, className, schema }: Edita
   const containerRef = useRef<HTMLDivElement>(null);
   const [currentEditPath, setCurrentEditPath] = useState<string[] | null>(null);
   const [externalTriggers, setExternalTriggers] = useState<any>({});
+  const clickListenerRef = useRef<((event: MouseEvent) => void) | null>(null);
 
   // Handle real-time changes as user types
   const handleChange = useMemo(
@@ -186,6 +187,7 @@ export function EditableJsonViewer({ value, onChange, className, schema }: Edita
   // Track when editing starts/stops
   const handleEditEvent = useMemo(
     () => (path: string[] | null, isKey: boolean) => {
+      console.log('Edit event:', path, isKey);
       setCurrentEditPath(path);
     },
     []
@@ -257,35 +259,87 @@ export function EditableJsonViewer({ value, onChange, className, schema }: Edita
 
   // Handle clicks outside the editor to auto-save
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node) && currentEditPath) {
-        // Trigger save by accepting the current edit
-        setExternalTriggers({
-          edit: {
-            action: 'accept',
-          },
-        });
-      }
-    };
+    // Clean up any existing listener
+    if (clickListenerRef.current) {
+      document.removeEventListener('mousedown', clickListenerRef.current);
+      clickListenerRef.current = null;
+    }
 
     if (currentEditPath) {
+      const handleClickOutside = (event: MouseEvent) => {
+        const target = event.target as Node;
+
+        // Check if the click is outside the container
+        if (containerRef.current && !containerRef.current.contains(target)) {
+          console.log('Click outside detected, triggering save for path:', currentEditPath);
+          setExternalTriggers({
+            edit: {
+              action: 'accept',
+            },
+          });
+          return;
+        }
+
+        // Check if the click is on a different editable element within the container
+        // This handles clicks on other fields in nested objects
+        const clickedElement = target as HTMLElement;
+        const isClickOnInput = clickedElement.matches('input, textarea, .jer-key-text, .jer-value');
+        const isClickOnEditableValue = clickedElement.closest('.jer-value-node, .jer-function-value-node');
+        const isClickOnButton = clickedElement.closest('button, .jer-plus-menu, .jer-minus-menu');
+
+        if (isClickOnInput || isClickOnEditableValue || isClickOnButton) {
+          // Check if this is a different field than the one currently being edited
+          const currentlyEditingElement = containerRef.current?.querySelector('input:focus, textarea:focus');
+
+          if (
+            currentlyEditingElement &&
+            !currentlyEditingElement.contains(target) &&
+            currentlyEditingElement !== target
+          ) {
+            console.log('Click on different field detected, triggering save for path:', currentEditPath);
+            setExternalTriggers({
+              edit: {
+                action: 'accept',
+              },
+            });
+          }
+        }
+      };
+
+      console.log('Adding click listener for editing path:', currentEditPath);
+      clickListenerRef.current = handleClickOutside;
       document.addEventListener('mousedown', handleClickOutside);
     }
 
+    // Cleanup function
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      if (clickListenerRef.current) {
+        document.removeEventListener('mousedown', clickListenerRef.current);
+        clickListenerRef.current = null;
+      }
     };
   }, [currentEditPath]);
 
   // Reset external triggers after they've been processed
   useEffect(() => {
     if (externalTriggers.edit) {
+      console.log('External trigger set:', externalTriggers);
       const timer = setTimeout(() => {
+        console.log('Resetting external triggers');
         setExternalTriggers({});
       }, 100);
       return () => clearTimeout(timer);
     }
   }, [externalTriggers]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (clickListenerRef.current) {
+        document.removeEventListener('mousedown', clickListenerRef.current);
+      }
+    };
+  }, []);
 
   // Hide the root node name
   useEffect(() => {
