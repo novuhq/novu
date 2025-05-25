@@ -178,8 +178,7 @@ export function EditableJsonViewer({ value, onChange, className, schema }: Edita
   // Handle when editing is complete (blur, enter, etc.)
   const handleUpdate = useMemo(
     () => (updatedData) => {
-      console.log('updatedData', updatedData);
-      onChange(updatedData.currentData);
+      onChange(updatedData.newData);
     },
     [onChange]
   );
@@ -288,6 +287,22 @@ export function EditableJsonViewer({ value, onChange, className, schema }: Edita
     }
   }, [externalTriggers]);
 
+  // Hide the root node name
+  useEffect(() => {
+    const hideRootNodeName = () => {
+      const keyTextElements = containerRef.current?.querySelectorAll('.jer-key-text');
+      keyTextElements?.forEach((element) => {
+        if (element.textContent?.includes('nv-root-node')) {
+          (element as HTMLElement).style.display = 'none';
+        }
+      });
+    };
+
+    // Run after component mounts and updates
+    const timer = setTimeout(hideRootNodeName, 100);
+    return () => clearTimeout(timer);
+  });
+
   return (
     <div
       ref={containerRef}
@@ -320,7 +335,6 @@ export function EditableJsonViewer({ value, onChange, className, schema }: Edita
           cancel: <RiCloseLine className="size-3" />,
           chevron: <RiArrowDownSLine className="size-3" />,
         }}
-        collapse={3}
         showErrorMessages={true}
         showStringQuotes={true}
         showArrayIndices={false}
@@ -330,6 +344,7 @@ export function EditableJsonViewer({ value, onChange, className, schema }: Edita
         restrictEdit={false}
         restrictDelete
         restrictAdd
+        rootName={'nv-root-node'}
         searchFilter={false}
         showCollectionCount={false}
         defaultValue={undefined}
