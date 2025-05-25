@@ -148,21 +148,24 @@ $response = $sdk->events->trigger($request);`;
 
 export const createPythonSnippet = ({ identifier, to, payload, secretKey }: CodeSnippet) => {
   const renderedSecretKey = secretKey ? `'${secretKey}'` : `os.environ['${SECRET_KEY_ENV_KEY}']`;
-  const euServerUrl = IS_EU ? `,\n  server_url: 'https://eu.api.novu.co'` : '';
+  const euServerUrl = IS_EU ? `,\n    server_url='https://eu.api.novu.co'` : '';
+  const selfHostedUrl = IS_SELF_HOSTED ? `,\n    server_url='${API_HOSTNAME}'` : '';
+  const serverUrlConfig = IS_EU ? euServerUrl : (IS_SELF_HOSTED ? selfHostedUrl : '');
 
   return `import novu_py
 from novu_py import Novu
 import os
 
 with Novu(
-  api_key=${renderedSecretKey}${euServerUrl}
+    secret_key=${renderedSecretKey}${serverUrlConfig}
 ) as novu:
+
     res = novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
         workflow_id="${identifier}",
-        to={
-            "subscriber_id": "${(to as { subscriberId: string }).subscriberId}",
-        },
-        payload=${JSON.stringify(safeParsePayload(payload), null, 8)}
+        to="${(to as { subscriberId: string }).subscriberId}",
+        payload={
+            ${JSON.stringify(safeParsePayload(payload), null, 12).slice(1, -1).trim()}
+        }
     ))`;
 };
 
