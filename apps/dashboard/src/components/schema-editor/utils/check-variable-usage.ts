@@ -19,12 +19,106 @@ function extractVariablesFromContent(content: string): string[] {
 }
 
 /**
+ * Extracts variables from Maily JSON nodes
+ * Maily stores variables as nodes with type "variable" and an "id" attribute
+ */
+function extractVariablesFromMailyNode(node: any): string[] {
+  if (!node || typeof node !== 'object') return [];
+
+  const variables: string[] = [];
+
+  // Check if this is a variable node
+  if (node.type === 'variable' && node.attrs?.id) {
+    variables.push(node.attrs.id);
+  }
+
+  // Check for variables in button nodes
+  if (node.type === 'button' && node.attrs) {
+    if (node.attrs.isTextVariable && node.attrs.text) {
+      variables.push(node.attrs.text);
+    }
+
+    if (node.attrs.isUrlVariable && node.attrs.url) {
+      variables.push(node.attrs.url);
+    }
+  }
+
+  // Check for variables in image nodes
+  if ((node.type === 'image' || node.type === 'inlineImage') && node.attrs) {
+    if (node.attrs.isSrcVariable && node.attrs.src) {
+      variables.push(node.attrs.src);
+    }
+
+    if (node.attrs.isExternalLinkVariable && node.attrs.externalLink) {
+      variables.push(node.attrs.externalLink);
+    }
+  }
+
+  // Check for variables in link nodes
+  if (node.type === 'link' && node.attrs) {
+    if (node.attrs.isUrlVariable && node.attrs.href) {
+      variables.push(node.attrs.href);
+    }
+  }
+
+  // Check for variables in repeat nodes (the 'each' attribute)
+  if (node.type === 'repeat' && node.attrs?.each) {
+    variables.push(node.attrs.each);
+  }
+
+  // Recursively check content array
+  if (Array.isArray(node.content)) {
+    node.content.forEach((childNode: any) => {
+      variables.push(...extractVariablesFromMailyNode(childNode));
+    });
+  }
+
+  // Check other node properties that might contain nested nodes
+  if (node.attrs && typeof node.attrs === 'object') {
+    // Skip the attributes we've already checked
+    const skipAttrs = [
+      'id',
+      'text',
+      'url',
+      'src',
+      'externalLink',
+      'href',
+      'each',
+      'isTextVariable',
+      'isUrlVariable',
+      'isSrcVariable',
+      'isExternalLinkVariable',
+      'isUrlVariable',
+    ];
+
+    Object.entries(node.attrs).forEach(([key, attrValue]) => {
+      if (!skipAttrs.includes(key) && typeof attrValue === 'object') {
+        variables.push(...extractVariablesFromMailyNode(attrValue));
+      }
+    });
+  }
+
+  return variables;
+}
+
+/**
  * Recursively extracts variables from any value (string, object, array)
  */
 function extractVariablesFromValue(value: unknown): string[] {
   if (!value) return [];
 
   if (typeof value === 'string') {
+    // First try to parse as JSON (for Maily content)
+    try {
+      const parsed = JSON.parse(value);
+
+      if (parsed && typeof parsed === 'object') {
+        return extractVariablesFromMailyNode(parsed);
+      }
+    } catch {
+      // Not JSON, treat as regular string
+    }
+
     return extractVariablesFromContent(value);
   }
 
@@ -33,6 +127,14 @@ function extractVariablesFromValue(value: unknown): string[] {
   }
 
   if (typeof value === 'object') {
+    // Check if this might be a Maily node structure
+    const mailyVariables = extractVariablesFromMailyNode(value);
+
+    if (mailyVariables.length > 0) {
+      return mailyVariables;
+    }
+
+    // Otherwise, recursively check all values
     return Object.values(value).flatMap((val) => extractVariablesFromValue(val));
   }
 
