@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { RiAddLine } from 'react-icons/ri';
 import { FormProvider, type Control, type FieldArrayWithId, type UseFormReturn } from 'react-hook-form';
 
@@ -32,7 +32,19 @@ export function SchemaEditor({
 }: SchemaEditorProps) {
   const { workflow } = useWorkflow();
 
-  // Create a map of variable usage info for each field
+  // Function to check variable usage with parent path support
+  const checkVariableUsage = useCallback(
+    (keyName: string, parentPath: string = ''): VariableUsageInfo => {
+      if (!workflow?.steps || !keyName) {
+        return { isUsed: false, usedInSteps: [] };
+      }
+
+      return checkVariableUsageInWorkflow(keyName, workflow.steps, parentPath);
+    },
+    [workflow?.steps]
+  );
+
+  // Create a map of variable usage info for top-level fields
   const variableUsageMap = useMemo(() => {
     const map = new Map<string, VariableUsageInfo>();
 
@@ -42,13 +54,13 @@ export function SchemaEditor({
       const keyName = field.keyName;
 
       if (keyName) {
-        const usageInfo = checkVariableUsageInWorkflow(keyName, workflow.steps);
+        const usageInfo = checkVariableUsage(keyName);
         map.set(keyName, usageInfo);
       }
     });
 
     return map;
-  }, [fields, workflow?.steps]);
+  }, [fields, workflow?.steps, checkVariableUsage]);
 
   return (
     <FormProvider {...methods}>
@@ -66,6 +78,7 @@ export function SchemaEditor({
               indentationLevel={0}
               highlightedPropertyKey={highlightedPropertyKey}
               variableUsageInfo={variableUsageInfo}
+              onCheckVariableUsage={checkVariableUsage}
             />
           );
         })}

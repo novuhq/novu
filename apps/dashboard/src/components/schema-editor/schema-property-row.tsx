@@ -31,6 +31,8 @@ export interface SchemaPropertyRowProps {
   indentationLevel?: number;
   highlightedPropertyKey?: string | null;
   variableUsageInfo?: VariableUsageInfo;
+  parentPath?: string;
+  onCheckVariableUsage?: (keyName: string, parentPath: string) => VariableUsageInfo;
 }
 
 export function SchemaPropertyRow(props: SchemaPropertyRowProps) {
@@ -42,6 +44,8 @@ export function SchemaPropertyRow(props: SchemaPropertyRowProps) {
     indentationLevel = 0,
     highlightedPropertyKey,
     variableUsageInfo,
+    parentPath = '',
+    onCheckVariableUsage,
   } = props;
 
   const { setValue, getValues, watch: watchForm } = useFormContext();
@@ -136,6 +140,9 @@ export function SchemaPropertyRow(props: SchemaPropertyRowProps) {
   }
 
   const currentKeyName = propertyListItem.keyName;
+
+  // Build the current property's full path
+  const currentFullPath = parentPath ? `${parentPath}.${currentKeyName}` : currentKeyName;
 
   return (
     <div
@@ -239,16 +246,26 @@ export function SchemaPropertyRow(props: SchemaPropertyRowProps) {
 
       {currentType === 'object' && (
         <div className={cn('pt-1', getMarginClassPx(indentationLevel + 1))}>
-          {nestedFields.map((nestedField, nestedIndex) => (
-            <SchemaPropertyRow
-              key={nestedField.nestedFieldId}
-              control={control}
-              index={nestedIndex}
-              pathPrefix={`${nestedPropertyListPath}.${nestedIndex}`}
-              onDeleteProperty={() => removeNested(nestedIndex)}
-              indentationLevel={0}
-            />
-          ))}
+          {nestedFields.map((nestedField, nestedIndex) => {
+            const nestedItem = watchForm(`${nestedPropertyListPath}.${nestedIndex}`) as PropertyListItem;
+            const nestedKeyName = nestedItem?.keyName;
+            const nestedVariableUsageInfo =
+              onCheckVariableUsage && nestedKeyName ? onCheckVariableUsage(nestedKeyName, currentFullPath) : undefined;
+
+            return (
+              <SchemaPropertyRow
+                key={nestedField.nestedFieldId}
+                control={control}
+                index={nestedIndex}
+                pathPrefix={`${nestedPropertyListPath}.${nestedIndex}`}
+                onDeleteProperty={() => removeNested(nestedIndex)}
+                indentationLevel={0}
+                parentPath={currentFullPath}
+                variableUsageInfo={nestedVariableUsageInfo}
+                onCheckVariableUsage={onCheckVariableUsage}
+              />
+            );
+          })}
           <Button
             size="2xs"
             variant="secondary"
@@ -281,16 +298,28 @@ export function SchemaPropertyRow(props: SchemaPropertyRowProps) {
 
           {itemIsObject && (
             <div className={cn('mt-1', getMarginClassPx(1))}>
-              {itemNestedFields.map((itemNestedField, itemNestedIndex) => (
-                <SchemaPropertyRow
-                  key={itemNestedField.itemNestedFieldId}
-                  control={control}
-                  index={itemNestedIndex}
-                  pathPrefix={`${itemPropertiesListPath}.${itemNestedIndex}`}
-                  onDeleteProperty={() => removeItemNested(itemNestedIndex)}
-                  indentationLevel={0}
-                />
-              ))}
+              {itemNestedFields.map((itemNestedField, itemNestedIndex) => {
+                const itemNestedItem = watchForm(`${itemPropertiesListPath}.${itemNestedIndex}`) as PropertyListItem;
+                const itemKeyName = itemNestedItem?.keyName;
+                // For array items, we use [n] notation
+                const arrayItemPath = `${currentFullPath}[n]`;
+                const itemVariableUsageInfo =
+                  onCheckVariableUsage && itemKeyName ? onCheckVariableUsage(itemKeyName, arrayItemPath) : undefined;
+
+                return (
+                  <SchemaPropertyRow
+                    key={itemNestedField.itemNestedFieldId}
+                    control={control}
+                    index={itemNestedIndex}
+                    pathPrefix={`${itemPropertiesListPath}.${itemNestedIndex}`}
+                    onDeleteProperty={() => removeItemNested(itemNestedIndex)}
+                    indentationLevel={0}
+                    parentPath={arrayItemPath}
+                    variableUsageInfo={itemVariableUsageInfo}
+                    onCheckVariableUsage={onCheckVariableUsage}
+                  />
+                );
+              })}
               <Button
                 size="2xs"
                 variant="secondary"
