@@ -1,10 +1,11 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { StepResponseDto } from '../step.response.dto';
 import { PushControlsMetadataResponseDto } from './push-controls-metadata.response.dto';
+import { PushControlDto } from '../controls/push-control.dto';
 
-export class PushStepResponseDto extends StepResponseDto {
+export class PushStepResponseDto extends StepResponseDto<PushControlDto> {
   @ApiProperty({
     description: 'Controls metadata for the push step',
     type: () => PushControlsMetadataResponseDto,
@@ -12,4 +13,12 @@ export class PushStepResponseDto extends StepResponseDto {
   @ValidateNested()
   @Type(() => PushControlsMetadataResponseDto)
   declare controls: PushControlsMetadataResponseDto;
+
+  @ApiPropertyOptional({
+    description: 'Control values for the push step',
+    type: () => PushControlDto,
+  })
+  @ValidateNested()
+  @Type(() => PushControlDto)
+  declare controlValues?: PushControlDto;
 }

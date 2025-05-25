@@ -1,12 +1,12 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
-import { Type, Expose } from 'class-transformer';
+import { Type } from 'class-transformer';
 import { Slug, StepTypeEnum, WorkflowOriginEnum } from '@novu/shared';
 import { ControlsMetadataDto } from './controls-metadata.dto';
 import { JSONSchemaDto } from './json-schema.dto';
 import { StepIssuesDto } from './step-issues.dto';
 
-export class StepResponseDto {
+export class StepResponseDto<T = Record<string, unknown>> {
   @ApiProperty({
     description: 'Controls metadata for the step',
     type: () => ControlsMetadataDto,
@@ -17,11 +17,11 @@ export class StepResponseDto {
   controls: ControlsMetadataDto;
 
   @ApiPropertyOptional({
-    description: 'Control values for the step',
+    description: 'Control values for the step (alias for controls.values)',
     type: 'object',
     additionalProperties: true,
   })
-  controlValues: Record<string, unknown>;
+  controlValues?: T;
 
   @ApiProperty({
     description: 'JSON Schema for variables, follows the JSON Schema standard',
