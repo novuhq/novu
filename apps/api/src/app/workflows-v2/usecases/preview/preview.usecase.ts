@@ -41,6 +41,7 @@ import {
   isStringifiedMailyJSONContent,
   isObjectMailyJSONContent,
 } from '../../../shared/helpers/maily-utils';
+import { JsonSchemaMock } from '../../util/json-schema-mock';
 
 const LOG_CONTEXT = 'GeneratePreviewUsecase';
 
@@ -114,7 +115,7 @@ export class PreviewUsecase {
         };
       }
 
-      let previewPayloadExample = this.mergePayloadExample(
+      let previewPayloadExample = await this.mergePayloadExample(
         workflow,
         previewTemplateData.payloadExample,
         userPayloadExample
@@ -171,17 +172,58 @@ export class PreviewUsecase {
    * Merge the payload example with the user payload example.
    * Preserve only values of common keys between payloadExample and userPayloadExample.
    */
-  private mergePayloadExample(
+  private async mergePayloadExample(
     workflow: NotificationTemplateEntity,
     payloadExample: Record<string, unknown>,
     userPayloadExample: PreviewPayloadDto | undefined
   ) {
-    if (workflow.origin === WorkflowOriginEnum.EXTERNAL) {
-      // if external workflow, we need to override with stored payload schema
-      const schemaBasedPayloadExample = createMockObjectFromSchema({
-        type: 'object',
-        properties: { payload: workflow.payloadSchema },
-      });
+    const isPayloadSchemaEnabled = await this.featureFlagService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_PAYLOAD_SCHEMA_ENABLED,
+      defaultValue: false,
+      organization: { _id: workflow._organizationId },
+      environment: { _id: workflow._environmentId },
+    });
+
+    const shouldUsePayloadSchema =
+      workflow.origin === WorkflowOriginEnum.EXTERNAL ||
+      (isPayloadSchemaEnabled && workflow.origin === WorkflowOriginEnum.NOVU_CLOUD);
+
+    if (shouldUsePayloadSchema && workflow.payloadSchema) {
+      let schemaBasedPayloadExample: Record<string, unknown>;
+
+      if (isPayloadSchemaEnabled) {
+        // Use JSON schema faker for more realistic mock data
+        try {
+          const schema = {
+            type: 'object' as const,
+            properties: { payload: workflow.payloadSchema },
+            additionalProperties: false,
+          };
+          const mockData = JsonSchemaMock.generate(schema) as Record<string, unknown>;
+          schemaBasedPayloadExample = mockData;
+        } catch (error) {
+          this.logger.warn(
+            {
+              err: error,
+              workflowId: workflow._id,
+              payloadSchema: workflow.payloadSchema,
+            },
+            'Failed to generate mock data using JSON schema faker, falling back to createMockObjectFromSchema',
+            LOG_CONTEXT
+          );
+          // Fallback to the original method
+          schemaBasedPayloadExample = createMockObjectFromSchema({
+            type: 'object',
+            properties: { payload: workflow.payloadSchema },
+          });
+        }
+      } else {
+        // Use the original method for external workflows when feature flag is disabled
+        schemaBasedPayloadExample = createMockObjectFromSchema({
+          type: 'object',
+          properties: { payload: workflow.payloadSchema },
+        });
+      }
 
       return _.merge(payloadExample, schemaBasedPayloadExample, userPayloadExample);
     }

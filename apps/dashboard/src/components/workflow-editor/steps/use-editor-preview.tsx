@@ -31,6 +31,7 @@ export const useEditorPreview = ({
       Sentry.captureException(error);
     },
   });
+
   const dataRef = useDataRef({
     workflowSlug,
     stepSlug,
