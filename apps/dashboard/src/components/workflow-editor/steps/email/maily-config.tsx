@@ -273,19 +273,15 @@ export const createExtensions = (props: {
               arrays: parsedVariables.arrays,
               namespaces: parsedVariables.namespaces,
               isAllowedVariable: parsedVariables.isAllowedVariable,
-              addDigestVariables: true,
             };
+
             return calculateVariablesWithNewSupport({
               ...calculateVariablesProps,
               onCreateNewVariable,
             });
           }
         : handleCalculateVariables) as Variables,
-      variableSuggestionsPopover: onCreateNewVariable
-        ? React.forwardRef<any, any>((props, ref) => (
-            <MailyVariablesListView {...props} ref={ref} onCreateNewVariable={onCreateNewVariable} />
-          ))
-        : MailyVariablesListView,
+      variableSuggestionsPopover: MailyVariablesListView,
     }),
     HTMLCodeBlockExtension.extend({
       addNodeView() {

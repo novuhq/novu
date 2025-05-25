@@ -147,13 +147,6 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
     [onChange]
   );
 
-  // Create a stable key based on schema properties to force editor re-render when schema changes
-  const editorKey = useMemo(() => {
-    if (!currentSchema?.properties) return 'repeat-block-enabled';
-    const schemaKeys = Object.keys(currentSchema.properties).sort().join('-');
-    return `repeat-block-enabled-${schemaKeys}`;
-  }, [currentSchema]);
-
   return (
     <>
       {overrideTippyBoxStyles()}
@@ -195,9 +188,6 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
         }}
         workflow={workflow}
         highlightedPropertyKey={highlightedVariableKey}
-        onSave={() => {
-          // Optionally refetch or update data after schema save from drawer
-        }}
       />
     </>
   );
