@@ -70,13 +70,7 @@ export function PropertyActions({
 
   return (
     <>
-      <Popover
-        open={isSettingsOpen}
-        onOpenChange={(open) => {
-          console.log('open', open);
-          setIsSettingsOpen(open);
-        }}
-      >
+      <Popover open={isSettingsOpen} onOpenChange={setIsSettingsOpen} modal={false}>
         <PopoverTrigger asChild>
           <Button
             variant="secondary"

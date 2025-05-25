@@ -159,7 +159,7 @@ export const SchemaPropertySettingsPopover = forwardRef<HTMLDivElement, SchemaPr
     );
 
     return (
-      <PopoverContent ref={ref} className="w-[320px] p-0" sideOffset={5}>
+      <PopoverContent ref={ref} className="w-[320px] p-0" sideOffset={5} portal={false}>
         <div className="bg-bg-weak border-b border-b-neutral-100">
           <div className="flex flex-row items-center justify-between space-y-0 px-1.5 py-1">
             <div className="flex w-full items-center justify-between gap-1">
@@ -167,13 +167,14 @@ export const SchemaPropertySettingsPopover = forwardRef<HTMLDivElement, SchemaPr
                 {propertyKeyForDisplay ? `${propertyKeyForDisplay} - ` : ''} Settings
               </span>
               {isVariableInUse ? (
-                <Popover open={showUsagePopover} onOpenChange={setShowUsagePopover}>
+                <Popover open={showUsagePopover} onOpenChange={setShowUsagePopover} modal={false}>
                   <PopoverTrigger asChild>{deleteButton}</PopoverTrigger>
                   <PopoverContent
                     side="bottom"
                     className="max-w-xs"
                     onMouseEnter={() => setShowUsagePopover(true)}
                     onMouseLeave={() => setShowUsagePopover(false)}
+                    portal={false}
                   >
                     <div className="space-y-2">
                       <p className="font-medium">Variable in use</p>
