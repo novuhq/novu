@@ -26,7 +26,7 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Create or update a topic
+ * Create a topic
  *
  * @remarks
  * Creates a new topic if it does not exist, or updates an existing topic if it already exists

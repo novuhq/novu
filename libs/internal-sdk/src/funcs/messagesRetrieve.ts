@@ -25,10 +25,12 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Get messages
+ * List all messages
  *
  * @remarks
- * Returns a list of messages, could paginate using the `page` query parameter
+ * List all messages for the current environment.
+ *     This API supports filtering by **channel**, **subscriberId**, and **transactionId**.
+ *     This API returns a paginated list of messages.
  */
 export function messagesRetrieve(
   client: NovuCore,

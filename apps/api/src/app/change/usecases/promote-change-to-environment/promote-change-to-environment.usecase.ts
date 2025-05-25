@@ -7,7 +7,7 @@ import { PinoLogger } from '@novu/application-generic';
 import { PromoteChangeToEnvironmentCommand } from './promote-change-to-environment.command';
 import { PromoteTypeChangeCommand } from '../promote-type-change.command';
 import { PromoteLayoutChange } from '../promote-layout-change';
-import { PromoteNotificationTemplateChange } from '../promote-notification-template-change';
+import { INotificationTemplateChangeService } from '../shared';
 import { PromoteMessageTemplateChange } from '../promote-message-template-change/promote-message-template-change';
 import { PromoteNotificationGroupChange } from '../promote-notification-group-change/promote-notification-group-change';
 import { PromoteFeedChange } from '../promote-feed-change/promote-feed-change';
@@ -20,8 +20,8 @@ export class PromoteChangeToEnvironment {
     private changeRepository: ChangeRepository,
     private environmentRepository: EnvironmentRepository,
     private promoteLayoutChange: PromoteLayoutChange,
-    @Inject(forwardRef(() => PromoteNotificationTemplateChange))
-    private promoteNotificationTemplateChange: PromoteNotificationTemplateChange,
+    @Inject('INotificationTemplateChangeService')
+    private promoteNotificationTemplateChange: INotificationTemplateChangeService,
     private promoteMessageTemplateChange: PromoteMessageTemplateChange,
     private promoteNotificationGroupChange: PromoteNotificationGroupChange,
     private promoteFeedChange: PromoteFeedChange,

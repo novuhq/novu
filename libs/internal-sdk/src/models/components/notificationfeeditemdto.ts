@@ -79,7 +79,7 @@ export type NotificationFeedItemDto = {
   /**
    * Identifier for the feed associated with the notification.
    */
-  feedId: string;
+  feedId?: string | null | undefined;
   /**
    * Identifier for the job that triggered the notification.
    */
@@ -188,7 +188,7 @@ export const NotificationFeedItemDto$inboundSchema: z.ZodType<
   _organizationId: z.string(),
   _notificationId: z.string(),
   _subscriberId: z.string(),
-  _feedId: z.string(),
+  _feedId: z.nullable(z.string()).optional(),
   _jobId: z.string(),
   createdAt: z.nullable(
     z.string().datetime({ offset: true }).transform(v => new Date(v)),
@@ -234,7 +234,7 @@ export type NotificationFeedItemDto$Outbound = {
   _organizationId: string;
   _notificationId: string;
   _subscriberId: string;
-  _feedId: string;
+  _feedId?: string | null | undefined;
   _jobId: string;
   createdAt?: string | null | undefined;
   updatedAt?: string | null | undefined;
@@ -268,7 +268,7 @@ export const NotificationFeedItemDto$outboundSchema: z.ZodType<
   organizationId: z.string(),
   notificationId: z.string(),
   subscriberId: z.string(),
-  feedId: z.string(),
+  feedId: z.nullable(z.string()).optional(),
   jobId: z.string(),
   createdAt: z.nullable(z.date().transform(v => v.toISOString())).optional(),
   updatedAt: z.nullable(z.date().transform(v => v.toISOString())).optional(),

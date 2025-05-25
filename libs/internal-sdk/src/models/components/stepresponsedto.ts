@@ -14,12 +14,6 @@ import {
   ControlsMetadataDto$outboundSchema,
 } from "./controlsmetadatadto.js";
 import {
-  JSONSchemaDto,
-  JSONSchemaDto$inboundSchema,
-  JSONSchemaDto$Outbound,
-  JSONSchemaDto$outboundSchema,
-} from "./jsonschemadto.js";
-import {
   StepIssuesDto,
   StepIssuesDto$inboundSchema,
   StepIssuesDto$Outbound,
@@ -42,9 +36,9 @@ export type StepResponseDto = {
    */
   controls: ControlsMetadataDto;
   /**
-   * JSON Schema for variables
+   * JSON Schema for variables, follows the JSON Schema standard
    */
-  variables: JSONSchemaDto;
+  variables: { [k: string]: any };
   /**
    * Unique identifier of the step
    */
@@ -90,7 +84,7 @@ export const StepResponseDto$inboundSchema: z.ZodType<
   unknown
 > = z.object({
   controls: ControlsMetadataDto$inboundSchema,
-  variables: JSONSchemaDto$inboundSchema,
+  variables: z.record(z.any()),
   stepId: z.string(),
   _id: z.string(),
   name: z.string(),
@@ -109,7 +103,7 @@ export const StepResponseDto$inboundSchema: z.ZodType<
 /** @internal */
 export type StepResponseDto$Outbound = {
   controls: ControlsMetadataDto$Outbound;
-  variables: JSONSchemaDto$Outbound;
+  variables: { [k: string]: any };
   stepId: string;
   _id: string;
   name: string;
@@ -128,7 +122,7 @@ export const StepResponseDto$outboundSchema: z.ZodType<
   StepResponseDto
 > = z.object({
   controls: ControlsMetadataDto$outboundSchema,
-  variables: JSONSchemaDto$outboundSchema,
+  variables: z.record(z.any()),
   stepId: z.string(),
   id: z.string(),
   name: z.string(),

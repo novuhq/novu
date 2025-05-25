@@ -25,10 +25,10 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Get active integrations
+ * List active integrations
  *
  * @remarks
- * Return all the active integrations the user has created for that organization. Review v.0.17.0 changelog for a breaking change
+ * List all the active integrations created in the organization
  */
 export function integrationsListActive(
   client: NovuCore,

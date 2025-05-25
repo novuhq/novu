@@ -13,6 +13,10 @@ import { unwrapAsync } from "../types/fp.js";
 export class Subscriptions extends ClientSDK {
   /**
    * List topic subscriptions
+   *
+   * @remarks
+   * List all topics that a subscriber is subscribed to.
+   *     Checkout all available filters in the query section.
    */
   async list(
     request: operations.TopicsControllerListTopicSubscriptionsRequest,
@@ -26,7 +30,11 @@ export class Subscriptions extends ClientSDK {
   }
 
   /**
-   * Create topic subscriptions, if the topic does not exist, it will be created.
+   * Create topic subscriptions
+   *
+   * @remarks
+   * This api will create subscription for subscriberIds for a topic.
+   *       Its like subscribing to a common interest group. if topic does not exist, it will be created.
    */
   async create(
     createTopicSubscriptionsRequestDto:
@@ -46,6 +54,9 @@ export class Subscriptions extends ClientSDK {
 
   /**
    * Delete topic subscriptions
+   *
+   * @remarks
+   * Delete subscriptions for subscriberIds for a topic.
    */
   async delete(
     deleteTopicSubscriptionsRequestDto:

@@ -26,10 +26,11 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Patch subscriber
+ * Update a subscriber
  *
  * @remarks
- * Patch subscriber by your internal id used to identify the subscriber
+ * Update a subscriber by its unique key identifier **subscriberId**.
+ *     **subscriberId** is a required field, rest other fields are optional
  */
 export function subscribersPatch(
   client: NovuCore,

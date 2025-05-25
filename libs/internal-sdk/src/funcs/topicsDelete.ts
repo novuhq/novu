@@ -25,7 +25,11 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Delete topic by key
+ * Delete a topic
+ *
+ * @remarks
+ * Delete a topic by its unique key identifier **topicKey**.
+ *     This action is irreversible and will remove all subscriptions to the topic.
  */
 export function topicsDelete(
   client: NovuCore,

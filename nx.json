@@ -1,5 +1,5 @@
 {
-  "$schema": "./node_modules/nx/schemas/nx-schema.json",
+  "parallel": 4,
   "targetDefaults": {
     "build": {
       "dependsOn": ["^build"],
@@ -28,7 +28,7 @@
       "!{projectRoot}/src/test-setup.[jt]s",
       "!{projectRoot}/test-setup.[jt]s"
     ],
-    "sharedGlobals": []
+    "sharedGlobals": [{ "runtime": "node --version" }]
   },
   "release": {
     "changelog": {

@@ -7,28 +7,17 @@ import { safeParse } from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 import {
-  JSONSchemaDto,
-  JSONSchemaDto$inboundSchema,
-  JSONSchemaDto$Outbound,
-  JSONSchemaDto$outboundSchema,
-} from "./jsonschemadto.js";
-import {
   UiSchema,
   UiSchema$inboundSchema,
   UiSchema$Outbound,
   UiSchema$outboundSchema,
 } from "./uischema.js";
 
-/**
- * JSON Schema for data
- */
-export type DataSchema = JSONSchemaDto;
-
 export type ControlsMetadataDto = {
   /**
    * JSON Schema for data
    */
-  dataSchema?: JSONSchemaDto | undefined;
+  dataSchema?: { [k: string]: any } | undefined;
   /**
    * UI Schema for rendering
    */
@@ -40,63 +29,19 @@ export type ControlsMetadataDto = {
 };
 
 /** @internal */
-export const DataSchema$inboundSchema: z.ZodType<
-  DataSchema,
-  z.ZodTypeDef,
-  unknown
-> = JSONSchemaDto$inboundSchema;
-
-/** @internal */
-export type DataSchema$Outbound = JSONSchemaDto$Outbound;
-
-/** @internal */
-export const DataSchema$outboundSchema: z.ZodType<
-  DataSchema$Outbound,
-  z.ZodTypeDef,
-  DataSchema
-> = JSONSchemaDto$outboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace DataSchema$ {
-  /** @deprecated use `DataSchema$inboundSchema` instead. */
-  export const inboundSchema = DataSchema$inboundSchema;
-  /** @deprecated use `DataSchema$outboundSchema` instead. */
-  export const outboundSchema = DataSchema$outboundSchema;
-  /** @deprecated use `DataSchema$Outbound` instead. */
-  export type Outbound = DataSchema$Outbound;
-}
-
-export function dataSchemaToJSON(dataSchema: DataSchema): string {
-  return JSON.stringify(DataSchema$outboundSchema.parse(dataSchema));
-}
-
-export function dataSchemaFromJSON(
-  jsonString: string,
-): SafeParseResult<DataSchema, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => DataSchema$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'DataSchema' from JSON`,
-  );
-}
-
-/** @internal */
 export const ControlsMetadataDto$inboundSchema: z.ZodType<
   ControlsMetadataDto,
   z.ZodTypeDef,
   unknown
 > = z.object({
-  dataSchema: JSONSchemaDto$inboundSchema.optional(),
+  dataSchema: z.record(z.any()).optional(),
   uiSchema: UiSchema$inboundSchema.optional(),
   values: z.record(z.any()),
 });
 
 /** @internal */
 export type ControlsMetadataDto$Outbound = {
-  dataSchema?: JSONSchemaDto$Outbound | undefined;
+  dataSchema?: { [k: string]: any } | undefined;
   uiSchema?: UiSchema$Outbound | undefined;
   values: { [k: string]: any };
 };
@@ -107,7 +52,7 @@ export const ControlsMetadataDto$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   ControlsMetadataDto
 > = z.object({
-  dataSchema: JSONSchemaDto$outboundSchema.optional(),
+  dataSchema: z.record(z.any()).optional(),
   uiSchema: UiSchema$outboundSchema.optional(),
   values: z.record(z.any()),
 });

@@ -25,10 +25,11 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * List topics a subscriber is subscribed to
+ * Retrieve subscriber subscriptions
  *
  * @remarks
- * List topic subscriptions for a subscriber with pagination and filtering
+ * Retrieve subscriber's topic subscriptions by its unique key identifier **subscriberId**.
+ *     Checkout all available filters in the query section.
  */
 export function subscribersTopicsList(
   client: NovuCore,

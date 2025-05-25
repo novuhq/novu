@@ -28,7 +28,7 @@ import { Result } from "../types/fp.js";
  * Delete subscriber
  *
  * @remarks
- * Deletes a subscriber entity from the Novu platform
+ * Deletes a subscriber entity from the Novu platform along with associated messages, preferences, and topic subscriptions
  */
 export function subscribersDelete(
   client: NovuCore,

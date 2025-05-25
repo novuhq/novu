@@ -101,6 +101,7 @@ export const Renderer = (props: RendererProps) => {
         <AppearanceProvider id={props.novuUI.id} appearance={props.appearance} container={props.container}>
           <FocusManagerProvider>
             <InboxProvider
+              applicationIdentifier={props.options?.applicationIdentifier}
               tabs={props.tabs}
               preferencesFilter={props.preferencesFilter}
               preferenceGroups={props.preferenceGroups}

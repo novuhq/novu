@@ -26,10 +26,12 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Update subscriber global or workflow specific preferences
+ * Update subscriber preferences
  *
  * @remarks
- * Update subscriber global or workflow specific preferences
+ * Update subscriber preferences by its unique key identifier **subscriberId**.
+ *     **workflowId** is optional field, if provided, this API will update that workflow preference,
+ *     otherwise it will update global preferences
  */
 export function subscribersPreferencesUpdate(
   client: NovuCore,

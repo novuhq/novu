@@ -11,10 +11,12 @@ import { unwrapAsync } from "../types/fp.js";
 
 export class Messages extends ClientSDK {
   /**
-   * Get messages
+   * List all messages
    *
    * @remarks
-   * Returns a list of messages, could paginate using the `page` query parameter
+   * List all messages for the current environment.
+   *     This API supports filtering by **channel**, **subscriberId**, and **transactionId**.
+   *     This API returns a paginated list of messages.
    */
   async retrieve(
     request: operations.MessagesControllerGetMessagesRequest,
@@ -28,10 +30,11 @@ export class Messages extends ClientSDK {
   }
 
   /**
-   * Delete message
+   * Delete a message
    *
    * @remarks
-   * Deletes a message entity from the Novu platform
+   * Delete a message entity from the Novu platform by **messageId**.
+   *     This action is irreversible. **messageId** is required and of mongodbId type.
    */
   async delete(
     messageId: string,
@@ -50,7 +53,8 @@ export class Messages extends ClientSDK {
    * Delete messages by transactionId
    *
    * @remarks
-   * Deletes messages entity from the Novu platform using TransactionId of message
+   * Delete multiple messages from the Novu platform using **transactionId** of triggered event.
+   *     This API supports filtering by **channel** and delete all messages associated with the **transactionId**.
    */
   async deleteByTransactionId(
     transactionId: string,

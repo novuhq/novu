@@ -5,17 +5,13 @@
 import { subscribersCreate } from "../funcs/subscribersCreate.js";
 import { subscribersCreateBulk } from "../funcs/subscribersCreateBulk.js";
 import { subscribersDelete } from "../funcs/subscribersDelete.js";
-import { subscribersList } from "../funcs/subscribersList.js";
 import { subscribersPatch } from "../funcs/subscribersPatch.js";
 import { subscribersRetrieve } from "../funcs/subscribersRetrieve.js";
 import { subscribersSearch } from "../funcs/subscribersSearch.js";
-import { subscribersUpsert } from "../funcs/subscribersUpsert.js";
 import { ClientSDK, RequestOptions } from "../lib/sdks.js";
 import * as components from "../models/components/index.js";
 import * as operations from "../models/operations/index.js";
 import { unwrapAsync } from "../types/fp.js";
-import { PageIterator, unwrapResultIterator } from "../types/operations.js";
-import { Authentication } from "./authentication.js";
 import { Credentials } from "./credentials.js";
 import { NovuMessages } from "./novumessages.js";
 import { NovuNotifications } from "./novunotifications.js";
@@ -39,11 +35,6 @@ export class Subscribers extends ClientSDK {
     return (this._credentials ??= new Credentials(this._options));
   }
 
-  private _authentication?: Authentication;
-  get authentication(): Authentication {
-    return (this._authentication ??= new Authentication(this._options));
-  }
-
   private _messages?: NovuMessages;
   get messages(): NovuMessages {
     return (this._messages ??= new NovuMessages(this._options));
@@ -60,7 +51,11 @@ export class Subscribers extends ClientSDK {
   }
 
   /**
-   * Search for subscribers
+   * Search subscribers
+   *
+   * @remarks
+   * Search subscribers by their **email**, **phone**, **subscriberId** and **name**.
+   *     The search is case sensitive and supports pagination.Checkout all available filters in the query section.
    */
   async search(
     request: operations.SubscribersControllerSearchSubscribersRequest,
@@ -74,10 +69,11 @@ export class Subscribers extends ClientSDK {
   }
 
   /**
-   * Create subscriber
+   * Create a subscriber
    *
    * @remarks
-   * Create subscriber with the given data, if the subscriber already exists, it will be updated
+   * Create a subscriber with the subscriber attributes.
+   *       **subscriberId** is a required field, rest other fields are optional, if the subscriber already exists, it will be updated
    */
   async create(
     createSubscriberRequestDto: components.CreateSubscriberRequestDto,
@@ -93,10 +89,11 @@ export class Subscribers extends ClientSDK {
   }
 
   /**
-   * Get subscriber
+   * Retrieve a subscriber
    *
    * @remarks
-   * Get subscriber by your internal id used to identify the subscriber
+   * Retrive a subscriber by its unique key identifier **subscriberId**.
+   *     **subscriberId** field is required.
    */
   async retrieve(
     subscriberId: string,
@@ -112,10 +109,11 @@ export class Subscribers extends ClientSDK {
   }
 
   /**
-   * Patch subscriber
+   * Update a subscriber
    *
    * @remarks
-   * Patch subscriber by your internal id used to identify the subscriber
+   * Update a subscriber by its unique key identifier **subscriberId**.
+   *     **subscriberId** is a required field, rest other fields are optional
    */
   async patch(
     patchSubscriberRequestDto: components.PatchSubscriberRequestDto,
@@ -136,7 +134,7 @@ export class Subscribers extends ClientSDK {
    * Delete subscriber
    *
    * @remarks
-   * Deletes a subscriber entity from the Novu platform
+   * Deletes a subscriber entity from the Novu platform along with associated messages, preferences, and topic subscriptions
    */
   async delete(
     subscriberId: string,
@@ -152,59 +150,11 @@ export class Subscribers extends ClientSDK {
   }
 
   /**
-   * Get subscribers
-   *
-   * @remarks
-   * Returns a list of subscribers, could paginated using the `page` and `limit` query parameter
-   */
-  async list(
-    page?: number | undefined,
-    limit?: number | undefined,
-    idempotencyKey?: string | undefined,
-    options?: RequestOptions,
-  ): Promise<
-    PageIterator<
-      operations.SubscribersV1ControllerListSubscribersResponse,
-      { page: number }
-    >
-  > {
-    return unwrapResultIterator(subscribersList(
-      this,
-      page,
-      limit,
-      idempotencyKey,
-      options,
-    ));
-  }
-
-  /**
-   * Upsert subscriber
-   *
-   * @remarks
-   * Used to upsert the subscriber entity with new information
-   */
-  async upsert(
-    updateSubscriberRequestDto: components.UpdateSubscriberRequestDto,
-    subscriberId: string,
-    idempotencyKey?: string | undefined,
-    options?: RequestOptions,
-  ): Promise<operations.SubscribersV1ControllerUpdateSubscriberResponse> {
-    return unwrapAsync(subscribersUpsert(
-      this,
-      updateSubscriberRequestDto,
-      subscriberId,
-      idempotencyKey,
-      options,
-    ));
-  }
-
-  /**
    * Bulk create subscribers
    *
    * @remarks
    *
-   *       Using this endpoint you can create multiple subscribers at once, to avoid multiple calls to the API.
-   *       The bulk API is limited to 500 subscribers per request.
+   *       Using this endpoint multiple subscribers can be created at once. The bulk API is limited to 500 subscribers per request.
    */
   async createBulk(
     bulkSubscriberCreateDto: components.BulkSubscriberCreateDto,

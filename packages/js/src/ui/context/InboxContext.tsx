@@ -51,6 +51,7 @@ type InboxProviderProps = ParentProps<{
   preferencesFilter?: PreferencesFilter;
   preferenceGroups?: PreferenceGroups;
   routerPush?: RouterPush;
+  applicationIdentifier?: string;
 }>;
 
 export const InboxProvider = (props: InboxProviderProps) => {
@@ -136,8 +137,13 @@ export const InboxProvider = (props: InboxProviderProps) => {
       setHideBranding(data.removeNovuBranding);
       setIsDevelopmentMode(data.isDevelopmentMode);
       setMaxSnoozeDurationHours(data.maxSnoozeDurationHours);
-      setIsKeyless(!data.applicationIdentifier || !!identifier?.startsWith('pk_keyless_'));
-      setApplicationIdentifier(data.applicationIdentifier ?? null);
+
+      if (data.isDevelopmentMode && !props.applicationIdentifier) {
+        setIsKeyless(!data.applicationIdentifier || !!identifier?.startsWith('pk_keyless_'));
+        setApplicationIdentifier(data.applicationIdentifier ?? null);
+      } else {
+        setApplicationIdentifier(props.applicationIdentifier ?? null);
+      }
     },
   });
 
