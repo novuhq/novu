@@ -164,7 +164,7 @@ with Novu(
         workflow_id="${identifier}",
         to="${(to as { subscriberId: string }).subscriberId}",
         payload={
-            ${JSON.stringify(safeParsePayload(payload), null, 12).slice(1, -1)}
+            ${JSON.stringify(safeParsePayload(payload), null, 12).slice(1, -1).trim()}
         }
     ))`;
 };
