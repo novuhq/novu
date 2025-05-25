@@ -123,7 +123,7 @@ export const TestWorkflowForm = ({ workflow }: { workflow?: WorkflowResponseDto 
               <Code2 className="text-feature size-3" />
               <span className="text-neutral-950">Payload</span>
             </PanelHeader>
-            <PanelContent className="flex flex-col overflow-hidden">
+            <PanelContent className={'flex flex-col overflow-hidden' + (isPayloadSchemaEnabled ? ' p-0' : '')}>
               <FormField
                 control={control}
                 name="payload"
@@ -136,6 +136,7 @@ export const TestWorkflowForm = ({ workflow }: { workflow?: WorkflowResponseDto 
                             value={payloadJsonData}
                             onChange={handleJsonChange}
                             schema={workflow?.payloadSchema}
+                            className="border-none p-0"
                           />
                         ) : (
                           <Editor

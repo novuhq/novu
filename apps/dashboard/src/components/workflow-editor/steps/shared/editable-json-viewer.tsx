@@ -1,6 +1,18 @@
 import { useMemo } from 'react';
 import { JsonEditor } from 'json-edit-react';
 import { cn } from '@/utils/ui';
+import { Editor } from '@/components/primitives/editor';
+import { loadLanguage } from '@uiw/codemirror-extensions-langs';
+import JSON5 from 'json5';
+import {
+  RiAddLine,
+  RiEdit2Line,
+  RiDeleteBin2Line,
+  RiFileCopyLine,
+  RiCheckLine,
+  RiCloseLine,
+  RiArrowDownSLine,
+} from 'react-icons/ri';
 
 type EditableJsonViewerProps = {
   value: any;
@@ -8,6 +20,10 @@ type EditableJsonViewerProps = {
   className?: string;
   schema?: any; // Optional JSON schema to detect enum fields
 };
+
+// Extensions for JSON editing
+const jsonExtensions = [loadLanguage('json')?.extension ?? []];
+const basicSetup = { lineNumbers: true, defaultKeymap: true };
 
 // Custom theme for JsonEditor to match our design system
 const customTheme = {
@@ -120,6 +136,34 @@ export function EditableJsonViewer({ value, onChange, className, schema }: Edita
     [onChange]
   );
 
+  // Custom JSON editor component using our existing Editor
+  const CustomTextEditor = useMemo(
+    () =>
+      ({
+        value,
+        onChange,
+        onKeyDown,
+      }: {
+        value: string;
+        onChange: (value: string) => void;
+        onKeyDown: (e: React.KeyboardEvent) => void;
+      }) => {
+        return (
+          <Editor
+            value={value}
+            onChange={onChange}
+            onKeyDown={onKeyDown}
+            lang="json"
+            extensions={jsonExtensions}
+            basicSetup={basicSetup}
+            multiline
+            className="min-h-[200px] overflow-auto rounded border border-neutral-300"
+          />
+        );
+      },
+    []
+  );
+
   // Prepare the schema for json-edit-react if provided
   const editorSchema = useMemo(() => {
     if (!schema) return undefined;
@@ -132,7 +176,7 @@ export function EditableJsonViewer({ value, onChange, className, schema }: Edita
     <div
       className={cn(
         'border-neutral-alpha-200 bg-background text-foreground-600',
-        'mx-0 mt-0 rounded-lg border border-dashed p-3',
+        'mx-0 mt-0 rounded-lg border border-dashed',
         'max-h-[400px] min-h-[100px] overflow-auto',
         'font-mono text-xs',
         className
@@ -140,9 +184,21 @@ export function EditableJsonViewer({ value, onChange, className, schema }: Edita
     >
       <JsonEditor
         data={value}
-        onChange={handleChange}
+        onUpdate={handleChange}
         schema={editorSchema}
         theme={customTheme}
+        TextEditor={CustomTextEditor}
+        jsonParse={JSON5.parse}
+        jsonStringify={(data) => JSON5.stringify(data, null, 2)}
+        icons={{
+          add: <RiAddLine className="size-3" />,
+          edit: <RiEdit2Line className="size-3" />,
+          delete: <RiDeleteBin2Line className="size-3" />,
+          copy: <RiFileCopyLine className="size-3" />,
+          ok: <RiCheckLine className="size-3" />,
+          cancel: <RiCloseLine className="size-3" />,
+          chevron: <RiArrowDownSLine className="size-3" />,
+        }}
         collapse={3}
         showErrorMessages={true}
         showStringQuotes={true}
@@ -152,7 +208,7 @@ export function EditableJsonViewer({ value, onChange, className, schema }: Edita
         editable={true}
         restrictEdit={false}
         restrictDelete
-        restrictAdd={false}
+        restrictAdd
         searchFilter={false}
         showCollectionCount={false}
         defaultValue={undefined}

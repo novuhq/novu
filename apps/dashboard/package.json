@@ -81,6 +81,7 @@
     "js-cookie": "^3.0.5",
     "json-edit-react": "^1.26.2",
     "json-schema": "^0.4.0",
+    "json5": "^2.2.3",
     "launchdarkly-react-client-sdk": "^3.3.2",
     "liquidjs": "^10.20.0",
     "lodash.debounce": "^4.0.8",
