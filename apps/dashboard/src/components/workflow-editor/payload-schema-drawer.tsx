@@ -20,6 +20,7 @@ import { Tooltip } from '../primitives/tooltip';
 import { RiFileMarkedLine, RiInformation2Line } from 'react-icons/ri';
 import { Separator } from '../primitives/separator';
 import { Link } from 'react-router-dom';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../primitives/select';
 
 interface PayloadSchemaDrawerProps {
   isOpen: boolean;
@@ -77,25 +78,8 @@ export function PayloadSchemaDrawer({
     onOpenChange(false);
   };
 
-  if (!workflow && isOpen) {
-    return (
-      <Sheet open={isOpen} onOpenChange={onOpenChange}>
-        <SheetContent className="w-[600px] sm:max-w-3xl">
-          <SheetHeader>
-            <SheetTitle>Payload Schema</SheetTitle>
-          </SheetHeader>
-          <SheetMain>
-            <div className="flex h-full items-center justify-center">Loading...</div>
-          </SheetMain>
-        </SheetContent>
-      </Sheet>
-    );
-  }
-
-  if (!workflow || !isOpen) return null;
-
   return (
-    <Sheet open={isOpen} modal={false} onOpenChange={onOpenChange}>
+    <Sheet open={isOpen} onOpenChange={onOpenChange}>
       <SheetContent className="bg-bg-weak flex w-[600px] flex-col p-0 sm:max-w-3xl">
         <SheetHeader className="space-y-1 px-3 py-4">
           <SheetTitle className="text-label-lg">Manage Payload Schema</SheetTitle>

@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useMemo, useState } from 'react';
+import { forwardRef, useState } from 'react';
 import { useFormContext, Controller, type Path } from 'react-hook-form';
 
 import { Button } from '@/components/primitives/button';
@@ -7,14 +7,12 @@ import { Input } from '@/components/primitives/input';
 import { PopoverContent, Popover, PopoverTrigger } from '@/components/primitives/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
 import { Switch } from '@/components/primitives/switch';
-import { Textarea } from '@/components/primitives/textarea';
 import { RiDeleteBin2Line } from 'react-icons/ri';
 import { Separator } from '../primitives/separator';
 import type { JSONSchema7, JSONSchema7TypeName } from './json-schema';
 import type { SchemaEditorFormValues } from './utils/validation-schema';
 import { useSchemaPropertyType } from './hooks/use-schema-property-type';
 import type { VariableUsageInfo } from './utils/check-variable-usage';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/primitives/tooltip';
 import { cn } from '@/utils/ui';
 
 interface SchemaPropertySettingsPopoverProps {
