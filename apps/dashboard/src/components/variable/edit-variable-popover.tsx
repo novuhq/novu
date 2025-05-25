@@ -45,6 +45,7 @@ import { LinkButton } from '@/components/primitives/button-link';
 import { Code2 } from '../icons/code-2';
 import { Separator } from '../primitives/separator';
 
+// Helper functions
 const calculateAliasFor = (name: string, parsedAliasRoot: string): string => {
   const variableRest = name.split('.').slice(1).join('.');
   const normalizedVariableRest = variableRest.startsWith('.') ? variableRest.substring(1) : variableRest;
@@ -56,6 +57,39 @@ const calculateAliasFor = (name: string, parsedAliasRoot: string): string => {
   }
 
   return aliasFor;
+};
+
+const extractVariableKey = (variableName: string): string => {
+  return variableName?.replace('payload.', '') || '';
+};
+
+// Custom hook for variable validation
+const useVariableValidation = (
+  variableName: string,
+  parsedAliasRoot: string,
+  isAllowedVariable: IsAllowedVariable,
+  getSchemaPropertyByKey: (keyPath: string) => JSONSchema7 | undefined
+) => {
+  const aliasFor = useMemo(() => calculateAliasFor(variableName, parsedAliasRoot), [variableName, parsedAliasRoot]);
+
+  const validationState = useMemo(() => {
+    const isPayloadVariable = variableName?.startsWith('payload.');
+    const schemaKey = extractVariableKey(variableName);
+    const schemaProperty = getSchemaPropertyByKey(schemaKey);
+    const isInSchema = !!schemaProperty;
+    const isAllowed = isAllowedVariable({ name: variableName, aliasFor });
+
+    return {
+      isPayloadVariable,
+      isInSchema,
+      isAllowed,
+      schemaProperty,
+      hasError: !isAllowed && !isInSchema,
+      errorMessage: !isAllowed && !isInSchema ? "Variable schema doesn't exist" : '',
+    };
+  }, [variableName, aliasFor, isAllowedVariable, getSchemaPropertyByKey]);
+
+  return validationState;
 };
 
 type EditVariablePopoverProps = {
@@ -91,71 +125,40 @@ export const EditVariablePopover = ({
     variable?.name || '',
     variable?.aliasFor || ''
   );
+
   const id = useId();
   const nameInputRef = useRef<HTMLInputElement>(null);
+  const track = useTelemetry();
+
+  // State management
   const [name, setName] = useState(parsedName);
-  const [variableError, setVariableError] = useState<string>(() => {
-    const isNotAllowed = variable ? !isAllowedVariable({ ...variable, name: parsedName }) : true;
-    const isNotInSchema = !getSchemaPropertyByKey(parsedName?.replace('payload.', '') || '');
-
-    if (!variable || (isNotAllowed && isNotInSchema)) {
-      return "Variable schema doesn't exist";
-    }
-
-    return '';
-  });
   const [defaultVal, setDefaultVal] = useState(parsedDefaultValue);
   const [searchQuery, setSearchQuery] = useState('');
   const [isCommandOpen, setIsCommandOpen] = useState(false);
   const [filters, setFilters] = useState<FilterWithParam[]>(parsedFilters || []);
-  const track = useTelemetry();
 
+  // Use the validation hook for reactive validation
+  const validation = useVariableValidation(name, parsedAliasForRoot, isAllowedVariable, getSchemaPropertyByKey);
+
+  // Sync state when props change
   useEffect(() => {
     setName(parsedName);
     setDefaultVal(parsedDefaultValue);
     setFilters(parsedFilters || []);
   }, [parsedName, parsedDefaultValue, parsedFilters]);
 
-  const validateVariable = useCallback(
-    (variable: LiquidVariable) => {
-      const isNotAllowed = !isAllowedVariable({ ...variable });
-      const isNotInSchema = !getSchemaPropertyByKey(parsedName?.replace('payload.', '') || '');
-
-      if (!variable || (isNotAllowed && isNotInSchema)) {
-        setVariableError("Variable schema doesn't exist");
-        nameInputRef.current?.focus();
-        return false;
-      }
-
-      setVariableError('');
-      return true;
-    },
-    [isAllowedVariable, parsedName, getSchemaPropertyByKey]
-  );
-
-  const validateVariableDebounced = useDebounce(validateVariable, 2000);
-
-  // Set initial test value when popover opens
+  // Event handlers
   const handlePopoverOpen = useCallback(() => {
     track(TelemetryEvent.VARIABLE_POPOVER_OPENED);
   }, [track]);
 
-  const handleNameChange = useCallback(
-    (newName: string) => {
-      const aliasFor = calculateAliasFor(newName, parsedAliasForRoot);
+  const handleNameChange = useCallback((newName: string) => {
+    setName(newName);
+  }, []);
 
-      setName(newName);
-      validateVariableDebounced({ name: newName, aliasFor });
-    },
-    [setName, validateVariableDebounced, parsedAliasForRoot]
-  );
-
-  const handleDefaultValueChange = useCallback(
-    (newDefaultVal: string) => {
-      setDefaultVal(newDefaultVal);
-    },
-    [setDefaultVal]
-  );
+  const handleDefaultValueChange = useCallback((newDefaultVal: string) => {
+    setDefaultVal(newDefaultVal);
+  }, []);
 
   const { handleReorder, handleFilterToggle, handleParamChange, getFilteredFilters } = useFilterManager({
     initialFilters: filters,
@@ -167,12 +170,8 @@ export const EditVariablePopover = ({
 
   const handleOpenChange = useCallback(
     (open: boolean) => {
-      const aliasFor = calculateAliasFor(name, parsedAliasForRoot);
-      const isNotAllowed = !isAllowedVariable({ name, aliasFor });
-      const isNotInSchema = !getSchemaPropertyByKey(name?.replace('payload.', '') || '');
-
-      if (!open && isNotAllowed && isNotInSchema) {
-        // Don't close if variable is not valid and not in schema
+      // Don't close if variable has validation errors
+      if (!open && validation.hasError) {
         return;
       }
 
@@ -185,32 +184,38 @@ export const EditVariablePopover = ({
           filtersCount: filters.length,
           filters: filters.map((filter) => filter.value),
         });
-        setVariableError('');
         onUpdate(newValue);
       }
 
       onOpenChange(open, newValue);
     },
-    [
-      isAllowedVariable,
-      getSchemaPropertyByKey,
-      onOpenChange,
-      name,
-      defaultVal,
-      filters,
-      track,
-      onUpdate,
-      parsedAliasForRoot,
-    ]
+    [validation.hasError, onOpenChange, name, defaultVal, filters, track, onUpdate]
   );
 
   const handleClosePopover = useCallback(() => {
     handleOpenChange(false);
   }, [handleOpenChange]);
-  const isPayloadSchemaVariable = name?.startsWith('payload.');
-  const isVariableNotInSchema = variableError === "Variable schema doesn't exist" && isPayloadSchemaVariable;
+
+  const handleManageSchema = useCallback(() => {
+    if (onManageSchemaClick && name) {
+      onManageSchemaClick(extractVariableKey(name));
+    }
+  }, [onManageSchemaClick, name]);
+
+  const handleAddToSchema = useCallback(() => {
+    if (onAddToSchemaClick && name) {
+      onAddToSchemaClick(extractVariableKey(name));
+      handleOpenChange(false);
+    }
+  }, [onAddToSchemaClick, name, handleOpenChange]);
 
   useEscapeKeyManager(id, handleClosePopover, EscapeKeyManagerPriority.POPOVER, open);
+
+  // Computed values for UI
+  const showManageSchemaButton = isPayloadSchemaEnabled && validation.isPayloadVariable && validation.isInSchema;
+  const showAddToSchemaButton = isPayloadSchemaEnabled && validation.isPayloadVariable && !validation.isInSchema;
+  const showVariableTypeInput = isPayloadSchemaEnabled && validation.isPayloadVariable;
+  const variableType = validation.schemaProperty?.type || 'unknown';
 
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
@@ -244,41 +249,32 @@ export const EditVariablePopover = ({
                   <div className="grid">
                     <div className="mb-1 flex w-full flex-row items-center justify-between gap-1">
                       <label className="text-text-sub text-label-xs items-start">Variable</label>
-                      {isPayloadSchemaEnabled && isPayloadSchemaVariable && !isVariableNotInSchema && (
+                      {showManageSchemaButton && (
                         <LinkButton
                           variant="gray"
                           size="sm"
                           className="text-label-2xs text-xs"
                           leadingIcon={RiListView}
-                          onClick={() => {
-                            if (onManageSchemaClick && name) {
-                              onManageSchemaClick(name.replace('payload.', ''));
-                            }
-                          }}
+                          onClick={handleManageSchema}
                         >
                           Manage schema ↗
                         </LinkButton>
                       )}
 
-                      {isVariableNotInSchema && (
+                      {showAddToSchemaButton && (
                         <LinkButton
                           variant="gray"
                           size="sm"
                           className="text-label-2xs text-xs"
                           leadingIcon={RiListView}
-                          onClick={() => {
-                            if (onAddToSchemaClick && name) {
-                              onAddToSchemaClick(name.replace('payload.', ''));
-                              handleOpenChange(false);
-                            }
-                          }}
+                          onClick={handleAddToSchema}
                         >
                           <span className="underline"> Add to schema ↗</span>
                         </LinkButton>
                       )}
                     </div>
 
-                    <InputRoot size="2xs" hasError={!!variableError}>
+                    <InputRoot size="2xs" hasError={validation.hasError}>
                       <InputWrapper>
                         <Code2 className="h-4 w-4 shrink-0 text-gray-500" />
                         <InputPure
@@ -291,8 +287,8 @@ export const EditVariablePopover = ({
                         />
                       </InputWrapper>
                     </InputRoot>
-                    {variableError && !isVariableNotInSchema && (
-                      <FormMessagePure hasError={!!variableError}>{variableError}</FormMessagePure>
+                    {validation.hasError && !showAddToSchemaButton && (
+                      <FormMessagePure hasError={true}>{validation.errorMessage}</FormMessagePure>
                     )}
                   </div>
                 </FormControl>
@@ -311,22 +307,15 @@ export const EditVariablePopover = ({
                 </FormItem>
               )}
 
-              {isPayloadSchemaEnabled && isPayloadSchemaVariable && (
+              {showVariableTypeInput && (
                 <FormItem>
                   <FormControl>
-                    <Input
-                      value={(
-                        getSchemaPropertyByKey(name?.replace('payload.', '') || '')?.type || 'unknown'
-                      ).toString()}
-                      disabled
-                      placeholder="Variable type"
-                      size="2xs"
-                    />
+                    <Input value={variableType.toString()} disabled placeholder="Variable type" size="2xs" />
                   </FormControl>
                 </FormItem>
               )}
 
-              {isPayloadSchemaEnabled && isPayloadSchemaVariable && (
+              {showVariableTypeInput && (
                 <div className="text-label-2xs text-text-soft items-center gap-1.5 px-1 py-0.5 font-medium">
                   💡 <b className="text-text-sub font-medium">Tip:</b> Edit variable type, mark as required field, and
                   add validation via{' '}
@@ -334,11 +323,7 @@ export const EditVariablePopover = ({
                     variant="gray"
                     size="sm"
                     className="text-text-sub text-label-2xs font-medium"
-                    onClick={() => {
-                      if (onManageSchemaClick && name) {
-                        onManageSchemaClick(name.replace('payload.', ''));
-                      }
-                    }}
+                    onClick={handleManageSchema}
                     trailingIcon={RiArrowRightUpLine}
                   >
                     Manage schema
