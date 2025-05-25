@@ -1,5 +1,5 @@
 import { useMemo, useEffect, useRef, useState } from 'react';
-import { JsonEditor } from 'json-edit-react';
+import { CustomNodeDefinition, JsonEditor } from 'json-edit-react';
 import { cn } from '@/utils/ui';
 import { Editor } from '@/components/primitives/editor';
 import { loadLanguage } from '@uiw/codemirror-extensions-langs';
@@ -127,11 +127,21 @@ const customTheme = {
 };
 
 // Custom component for single-click editing
-const SingleClickEditableValue = ({ value, setValue, setIsEditing, customNodeProps }) => {
+const SingleClickEditableValue = ({
+  value,
+  setValue,
+  setIsEditing,
+  customNodeProps,
+}: {
+  value: any;
+  setValue?: (value: any) => void;
+  setIsEditing?: (editing: boolean) => void;
+  customNodeProps?: { type?: string };
+}) => {
   const { type } = customNodeProps || {};
 
   const handleClick = () => {
-    setIsEditing(true);
+    setIsEditing?.(true);
   };
 
   // Render the value with single-click behavior
@@ -165,20 +175,9 @@ export function EditableJsonViewer({ value, onChange, className, schema }: Edita
   const [externalTriggers, setExternalTriggers] = useState<any>({});
   const clickListenerRef = useRef<((event: MouseEvent) => void) | null>(null);
 
-  // Handle real-time changes as user types
-  const handleChange = useMemo(
-    () =>
-      ({ newValue, currentValue, name, path }) => {
-        // This fires on every keystroke - we can use this for real-time validation
-        // but we'll let the onUpdate handle the actual saving
-        return newValue;
-      },
-    []
-  );
-
   // Handle when editing is complete (blur, enter, etc.)
   const handleUpdate = useMemo(
-    () => (updatedData) => {
+    () => (updatedData: { newData: any }) => {
       onChange(updatedData.newData);
     },
     [onChange]
@@ -186,9 +185,9 @@ export function EditableJsonViewer({ value, onChange, className, schema }: Edita
 
   // Track when editing starts/stops
   const handleEditEvent = useMemo(
-    () => (path: string[] | null, isKey: boolean) => {
-      console.log('Edit event:', path, isKey);
-      setCurrentEditPath(path);
+    () => (path: string | (string | number)[] | null) => {
+      const normalizedPath = Array.isArray(path) ? path.map(String) : path ? [String(path)] : null;
+      setCurrentEditPath(normalizedPath);
     },
     []
   );
@@ -221,17 +220,8 @@ export function EditableJsonViewer({ value, onChange, className, schema }: Edita
     []
   );
 
-  // Prepare the schema for json-edit-react if provided
-  const editorSchema = useMemo(() => {
-    if (!schema) return undefined;
-
-    // json-edit-react expects the schema to match the data structure
-    return schema;
-  }, [schema]);
-
-  // Custom node definitions for single-click editing
-  const customNodeDefinitions = useMemo(
-    () => [
+  const customNodeDefinitions = useMemo(() => {
+    const components: CustomNodeDefinition<Record<string, any>, Record<string, any>>[] = [
       {
         condition: ({ value }) => typeof value === 'string',
         element: SingleClickEditableValue,
@@ -253,9 +243,10 @@ export function EditableJsonViewer({ value, onChange, className, schema }: Edita
         showOnEdit: false,
         customNodeProps: { type: 'boolean' },
       },
-    ],
-    []
-  );
+    ];
+
+    return components;
+  }, []);
 
   // Handle clicks outside the editor to auto-save
   useEffect(() => {
@@ -350,7 +341,7 @@ export function EditableJsonViewer({ value, onChange, className, schema }: Edita
     };
 
     // Run after component mounts and updates
-    const timer = setTimeout(hideRootNodeName, 100);
+    const timer = setTimeout(hideRootNodeName, 0);
     return () => clearTimeout(timer);
   });
 
@@ -368,10 +359,8 @@ export function EditableJsonViewer({ value, onChange, className, schema }: Edita
       <JsonEditor
         data={value}
         onUpdate={handleUpdate}
-        onChange={handleChange}
         onEditEvent={handleEditEvent}
         externalTriggers={externalTriggers}
-        schema={editorSchema}
         theme={customTheme}
         TextEditor={CustomTextEditor}
         customNodeDefinitions={customNodeDefinitions}
@@ -389,14 +378,11 @@ export function EditableJsonViewer({ value, onChange, className, schema }: Edita
         showErrorMessages={true}
         showStringQuotes={true}
         showArrayIndices={false}
-        showObjectSize={false}
         enableClipboard={true}
-        editable={true}
         restrictEdit={false}
         restrictDelete
         restrictAdd
         rootName={'nv-root-node'}
-        searchFilter={false}
         showCollectionCount={false}
         defaultValue={undefined}
         restrictTypeSelection
