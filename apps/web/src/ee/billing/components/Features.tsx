@@ -272,6 +272,15 @@ const featuresDefinition: Feature<SupportedPlansEnum>[] = [
     },
   },
   {
+    label: 'Snooze functionality',
+    values: {
+      [SupportedPlansEnum.FREE]: { value: '-' },
+      [SupportedPlansEnum.PRO]: { value: 'Up to 90 days' },
+      [SupportedPlansEnum.TEAM]: { value: 'Up to 90 days' },
+      [SupportedPlansEnum.ENTERPRISE]: { value: 'Custom' },
+    },
+  },
+  {
     label: 'Account administration and security',
     isTitle: true,
     values: {

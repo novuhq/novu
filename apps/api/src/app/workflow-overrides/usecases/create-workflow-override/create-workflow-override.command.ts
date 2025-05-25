@@ -1,7 +1,7 @@
 import { Type } from 'class-transformer';
 import { IsBoolean, IsDefined, IsMongoId, IsOptional, ValidateNested } from 'class-validator';
 
-import { PreferenceChannels } from '../../../shared/dtos/preference-channels';
+import { SubscriberPreferenceChannels } from '../../../shared/dtos/preference-channels';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
 export class CreateWorkflowOverrideCommand extends EnvironmentWithUserCommand {
@@ -19,6 +19,6 @@ export class CreateWorkflowOverrideCommand extends EnvironmentWithUserCommand {
 
   @IsOptional()
   @ValidateNested()
-  @Type(() => PreferenceChannels)
-  preferenceSettings?: PreferenceChannels;
+  @Type(() => SubscriberPreferenceChannels)
+  preferenceSettings?: SubscriberPreferenceChannels;
 }

@@ -1,6 +1,7 @@
-import { Body, ClassSerializerInterceptor, Controller, Get, Logger, Put, UseInterceptors } from '@nestjs/common';
+import { Body, ClassSerializerInterceptor, Controller, Get, Put, UseInterceptors } from '@nestjs/common';
 import { UserSessionData } from '@novu/shared';
 import { ApiExcludeController, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { PinoLogger } from '@novu/application-generic';
 import { UserSession } from '../shared/framework/user.decorator';
 import { GetMyProfileUsecase } from './usecases/get-my-profile/get-my-profile.usecase';
 import { GetMyProfileCommand } from './usecases/get-my-profile/get-my-profile.dto';
@@ -19,13 +20,13 @@ import { UpdateOnBoardingTourCommand } from './usecases/update-on-boarding-tour/
 import { UpdateNameAndProfilePicture } from './usecases/update-name-and-profile-picture/update-name-and-profile-picture.usecase';
 import { UpdateNameAndProfilePictureCommand } from './usecases/update-name-and-profile-picture/update-name-and-profile-picture.command';
 import { UpdateProfileRequestDto } from './dtos/update-profile-request.dto';
-import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
+import { RequireAuthentication } from '../auth/framework/auth.decorator';
 
 @ApiCommonResponses()
 @Controller('/users')
 @ApiTags('Users')
 @UseInterceptors(ClassSerializerInterceptor)
-@UserAuthentication()
+@RequireAuthentication()
 @ApiExcludeController()
 export class UsersController {
   constructor(
@@ -33,8 +34,11 @@ export class UsersController {
     private updateOnBoardingUsecase: UpdateOnBoardingUsecase,
     private updateOnBoardingTourUsecase: UpdateOnBoardingTourUsecase,
     private updateProfileEmailUsecase: UpdateProfileEmail,
-    private updateNameAndProfilePictureUsecase: UpdateNameAndProfilePicture
-  ) {}
+    private updateNameAndProfilePictureUsecase: UpdateNameAndProfilePicture,
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   @Get('/me')
   @ApiResponse(UserResponseDto)
@@ -43,9 +47,9 @@ export class UsersController {
   })
   @ExternalApiAccessible()
   async getMyProfile(@UserSession() user: UserSessionData): Promise<UserResponseDto> {
-    Logger.verbose('Getting User');
-    Logger.debug(`User id: ${user._id}`);
-    Logger.verbose('Creating GetMyProfileCommand');
+    this.logger.trace('Getting User');
+    this.logger.debug(`User id: ${user._id}`);
+    this.logger.trace('Creating GetMyProfileCommand');
 
     const command = GetMyProfileCommand.create({
       userId: user._id,

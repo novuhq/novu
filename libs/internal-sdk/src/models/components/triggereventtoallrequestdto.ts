@@ -3,9 +3,19 @@
  */
 
 import * as z from "zod";
-import { safeParse } from "../../lib/schemas.js";
+import { remap as remap$ } from "../../lib/primitives.js";
+import {
+  collectExtraKeys as collectExtraKeys$,
+  safeParse,
+} from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
+import {
+  StepsOverrides,
+  StepsOverrides$inboundSchema,
+  StepsOverrides$Outbound,
+  StepsOverrides$outboundSchema,
+} from "./stepsoverrides.js";
 import {
   SubscriberPayloadDto,
   SubscriberPayloadDto$inboundSchema,
@@ -22,7 +32,47 @@ import {
 /**
  * This could be used to override provider specific configurations
  */
-export type TriggerEventToAllRequestDtoOverrides = {};
+export type TriggerEventToAllRequestDtoOverrides = {
+  /**
+   * This could be used to override provider specific configurations
+   */
+  steps?: { [k: string]: StepsOverrides } | undefined;
+  /**
+   * Overrides the provider configuration for the entire workflow and all steps
+   */
+  providers?: { [k: string]: { [k: string]: any } } | undefined;
+  /**
+   * Override the email provider specific configurations for the entire workflow
+   *
+   * @deprecated field: This will be removed in a future release, please migrate away from it as soon as possible.
+   */
+  email?: { [k: string]: any } | undefined;
+  /**
+   * Override the push provider specific configurations for the entire workflow
+   *
+   * @deprecated field: This will be removed in a future release, please migrate away from it as soon as possible.
+   */
+  push?: { [k: string]: any } | undefined;
+  /**
+   * Override the sms provider specific configurations for the entire workflow
+   *
+   * @deprecated field: This will be removed in a future release, please migrate away from it as soon as possible.
+   */
+  sms?: { [k: string]: any } | undefined;
+  /**
+   * Override the chat provider specific configurations for the entire workflow
+   *
+   * @deprecated field: This will be removed in a future release, please migrate away from it as soon as possible.
+   */
+  chat?: { [k: string]: any } | undefined;
+  /**
+   * Override the layout identifier for the entire workflow
+   *
+   * @deprecated field: This will be removed in a future release, please migrate away from it as soon as possible.
+   */
+  layoutIdentifier?: string | undefined;
+  additionalProperties?: { [k: string]: { [k: string]: any } };
+};
 
 /**
  * It is used to display the Avatar of the provided actor's subscriber id or actor object.
@@ -82,17 +132,54 @@ export const TriggerEventToAllRequestDtoOverrides$inboundSchema: z.ZodType<
   TriggerEventToAllRequestDtoOverrides,
   z.ZodTypeDef,
   unknown
-> = z.object({});
+> = collectExtraKeys$(
+  z.object({
+    steps: z.record(StepsOverrides$inboundSchema).optional(),
+    providers: z.record(z.record(z.any())).optional(),
+    email: z.record(z.any()).optional(),
+    push: z.record(z.any()).optional(),
+    sms: z.record(z.any()).optional(),
+    chat: z.record(z.any()).optional(),
+    layoutIdentifier: z.string().optional(),
+  }).catchall(z.record(z.any())),
+  "additionalProperties",
+  true,
+);
 
 /** @internal */
-export type TriggerEventToAllRequestDtoOverrides$Outbound = {};
+export type TriggerEventToAllRequestDtoOverrides$Outbound = {
+  steps?: { [k: string]: StepsOverrides$Outbound } | undefined;
+  providers?: { [k: string]: { [k: string]: any } } | undefined;
+  email?: { [k: string]: any } | undefined;
+  push?: { [k: string]: any } | undefined;
+  sms?: { [k: string]: any } | undefined;
+  chat?: { [k: string]: any } | undefined;
+  layoutIdentifier?: string | undefined;
+  [additionalProperties: string]: unknown;
+};
 
 /** @internal */
 export const TriggerEventToAllRequestDtoOverrides$outboundSchema: z.ZodType<
   TriggerEventToAllRequestDtoOverrides$Outbound,
   z.ZodTypeDef,
   TriggerEventToAllRequestDtoOverrides
-> = z.object({});
+> = z.object({
+  steps: z.record(StepsOverrides$outboundSchema).optional(),
+  providers: z.record(z.record(z.any())).optional(),
+  email: z.record(z.any()).optional(),
+  push: z.record(z.any()).optional(),
+  sms: z.record(z.any()).optional(),
+  chat: z.record(z.any()).optional(),
+  layoutIdentifier: z.string().optional(),
+  additionalProperties: z.record(z.record(z.any())),
+}).transform((v) => {
+  return {
+    ...v.additionalProperties,
+    ...remap$(v, {
+      additionalProperties: null,
+    }),
+  };
+});
 
 /**
  * @internal

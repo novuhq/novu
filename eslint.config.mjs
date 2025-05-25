@@ -287,12 +287,26 @@ export default tsEslint.config(
   {
     files: ['apps/api/**'],
     rules: {
-      'func-names': 'off',
       'no-restricted-imports': [
         'error',
         {
           patterns: [
             noRestrictedImportsMultiLevelNovuPattern,
+            {
+              group: ['@nestjs/common'],
+              importNames: ['Logger'],
+              message: 'Please use the PinoLogger from @novu/application-generic instead',
+            },
+            {
+              group: ['@novu/application-generic'],
+              importNames: ['Logger'],
+              message: 'Please use the PinoLogger from @novu/application-generic instead',
+            },
+            {
+              group: ['svix'],
+              importNames: ['Svix'],
+              message: 'Please use the SvixClient from @novu/application-generic instead',
+            },
             {
               /**
                * This rule ensures that the overridden Swagger decorators are used,
@@ -328,6 +342,23 @@ export default tsEslint.config(
                 'ApiDefaultResponse',
               ],
               message: "Use 'Api<Error>Response' from '/shared/framework/response.decorator' instead.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ['libs/application-generic/**'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['svix'],
+              importNames: ['Svix'],
+              message: 'Please use the SvixClient from @novu/application-generic instead',
             },
           ],
         },

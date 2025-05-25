@@ -2,13 +2,26 @@ import { Decoration, EditorView, ViewPlugin } from '@uiw/react-codemirror';
 import { VariablePluginView } from './plugin-view';
 import type { PluginState } from './types';
 
-export function createVariableExtension({ viewRef, lastCompletionRef, onSelect, isAllowedVariable }: PluginState) {
+export function createVariableExtension({
+  viewRef,
+  lastCompletionRef,
+  onSelect,
+  isAllowedVariable,
+  isDigestEventsVariable,
+}: PluginState) {
   return ViewPlugin.fromClass(
     class {
       private view: VariablePluginView;
 
       constructor(view: EditorView) {
-        this.view = new VariablePluginView(view, viewRef, lastCompletionRef, isAllowedVariable, onSelect);
+        this.view = new VariablePluginView(
+          view,
+          viewRef,
+          lastCompletionRef,
+          isAllowedVariable,
+          onSelect,
+          isDigestEventsVariable
+        );
       }
 
       update(update: any) {
@@ -29,7 +42,6 @@ export function createVariableExtension({ viewRef, lastCompletionRef, onSelect, 
   );
 }
 
-export const VARIABLE_REGEX_STRING = '{{([^{}]+)}}';
 export const VARIABLE_PILL_CLASS = 'cm-variable-pill';
 export const FILTERS_CLASS = 'has-filters';
 

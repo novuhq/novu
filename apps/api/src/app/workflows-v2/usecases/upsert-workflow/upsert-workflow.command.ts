@@ -53,10 +53,13 @@ export class PreferencesRequestUpsertDataCommand {
 export class UpsertStepDataCommand {
   @IsString()
   @IsNotEmpty()
+  @IsDefined()
   @Length(1, MAX_NAME_LENGTH)
   name: string;
 
   @IsEnum(StepTypeEnum)
+  @IsDefined()
+  @IsNotEmpty()
   type: StepTypeEnum;
 
   @IsOptional()
@@ -64,8 +67,11 @@ export class UpsertStepDataCommand {
 
   @IsOptional()
   @IsString()
-  @IsNotEmpty()
   _id?: string;
+
+  @IsOptional()
+  @IsString()
+  stepId?: string;
 }
 
 export class UpsertWorkflowDataCommand {

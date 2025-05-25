@@ -1,8 +1,10 @@
 import { Show } from 'solid-js';
 import { useStyle } from '../../../helpers';
-import { Settings } from '../../../icons';
+import { Cogs as DefaultCogs } from '../../../icons';
+import { useAppearance } from '../../../context';
 import { Button } from '../../primitives';
 import { MoreActionsDropdown } from './MoreActionsDropdown';
+import { IconRendererWrapper } from '../../shared/IconRendererWrapper';
 
 type ActionsContainerProps = {
   showPreferences?: () => void;
@@ -10,6 +12,9 @@ type ActionsContainerProps = {
 
 export const ActionsContainer = (props: ActionsContainerProps) => {
   const style = useStyle();
+  const cogsIconClass = style('icon', 'nt-size-5', {
+    iconKey: 'cogs',
+  });
 
   return (
     <div class={style('moreActionsContainer', 'nt-flex nt-gap-3')}>
@@ -17,7 +22,11 @@ export const ActionsContainer = (props: ActionsContainerProps) => {
       <Show when={props.showPreferences}>
         {(showPreferences) => (
           <Button appearanceKey="preferences__button" variant="ghost" size="iconSm" onClick={showPreferences()}>
-            <Settings class={style('preferences__icon', 'nt-size-5')} />
+            <IconRendererWrapper
+              iconKey="cogs"
+              class={cogsIconClass}
+              fallback={<DefaultCogs class={cogsIconClass} />}
+            />
           </Button>
         )}
       </Show>

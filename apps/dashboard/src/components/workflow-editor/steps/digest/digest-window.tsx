@@ -92,7 +92,7 @@ export const DigestWindow = () => {
                 <TooltipContent className="max-w-56" side="top" sideOffset={10}>
                   <span>
                     Set the amount of time to digest events for. Once the defined time has elapsed, the digested events
-                    are sent, and another digest begins immediately.
+                    are sent.
                   </span>
                 </TooltipContent>
               </Tooltip>

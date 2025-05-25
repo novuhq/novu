@@ -29,10 +29,11 @@ export type SubscribersRetrieveQueryData =
   operations.SubscribersControllerGetSubscriberResponse;
 
 /**
- * Get subscriber
+ * Retrieve a subscriber
  *
  * @remarks
- * Get subscriber by your internal id used to identify the subscriber
+ * Retrive a subscriber by its unique key identifier **subscriberId**.
+ *     **subscriberId** field is required.
  */
 export function useSubscribersRetrieve(
   subscriberId: string,
@@ -52,10 +53,11 @@ export function useSubscribersRetrieve(
 }
 
 /**
- * Get subscriber
+ * Retrieve a subscriber
  *
  * @remarks
- * Get subscriber by your internal id used to identify the subscriber
+ * Retrive a subscriber by its unique key identifier **subscriberId**.
+ *     **subscriberId** field is required.
  */
 export function useSubscribersRetrieveSuspense(
   subscriberId: string,

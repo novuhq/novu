@@ -97,6 +97,8 @@ export class SendgridEmailProvider extends BaseProvider implements IEmailProvide
 
       if (attachment?.disposition) {
         attachmentJson.disposition = attachment?.disposition;
+      } else if (attachment?.cid) {
+        attachmentJson.disposition = 'inline';
       }
 
       return attachmentJson;

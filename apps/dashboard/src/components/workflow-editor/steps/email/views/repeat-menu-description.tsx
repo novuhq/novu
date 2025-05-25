@@ -4,12 +4,9 @@ import { AnimatePresence, motion } from 'motion/react';
 import { Lightbulb } from 'lucide-react';
 import { Separator } from '@/components/primitives/separator';
 import { REPEAT_BLOCK_ITERABLE_ALIAS } from '../variables/variables';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 export function RepeatMenuDescription({ editor }: { editor: Editor }) {
   const [currentProperty, setCurrentProperty] = useState('\u00A0}}');
-  const isEnhancedDigestEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_ENHANCED_DIGEST_ENABLED);
 
   function isOnEmptyLine(editor: Editor, cursorPos: number) {
     const currentLineContent = editor.state.doc
@@ -36,7 +33,7 @@ export function RepeatMenuDescription({ editor }: { editor: Editor }) {
 
   const shouldShow = isOnEmptyLine(editor, editor.state.selection.from);
 
-  const iterableKey = isEnhancedDigestEnabled ? REPEAT_BLOCK_ITERABLE_ALIAS : editor.getAttributes('repeat')?.each;
+  const iterableKey = REPEAT_BLOCK_ITERABLE_ALIAS + '.payload';
 
   return (
     <AnimatePresence mode="wait">
@@ -53,7 +50,8 @@ export function RepeatMenuDescription({ editor }: { editor: Editor }) {
           <div className="flex items-start gap-1 px-1 py-1.5">
             <Lightbulb className="mt-0.5 size-3.5 stroke-[2] text-gray-400" />
             <div>
-              <div>Access each 'repeat' key via</div>
+              <div>Use iterable variables to access the current item</div>
+              <span>in the loop, e.g. </span>
               <span>
                 <code className="mly-py-0.5 mly-bg-gray-50 mly-rounded mly-font-mono mly-text-gray-400">
                   {`{{ ${iterableKey}`}

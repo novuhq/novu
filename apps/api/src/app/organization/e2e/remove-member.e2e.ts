@@ -29,14 +29,14 @@ describe('Remove organization member - /organizations/members/:memberId (DELETE)
     await memberRepository.addMember(session.organization._id, {
       _userId: user2.user._id,
       invite: null,
-      roles: [MemberRoleEnum.ADMIN],
+      roles: [MemberRoleEnum.OSS_ADMIN],
       memberStatus: MemberStatusEnum.ACTIVE,
     });
 
     await memberRepository.addMember(session.organization._id, {
       _userId: user3.user._id,
       invite: null,
-      roles: [MemberRoleEnum.ADMIN],
+      roles: [MemberRoleEnum.OSS_ADMIN],
       memberStatus: MemberStatusEnum.ACTIVE,
     });
 

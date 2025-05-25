@@ -29,7 +29,7 @@ export type SubscribersDeleteMutationData =
  * Delete subscriber
  *
  * @remarks
- * Deletes a subscriber entity from the Novu platform
+ * Deletes a subscriber entity from the Novu platform along with associated messages, preferences, and topic subscriptions
  */
 export function useSubscribersDeleteMutation(
   options?: MutationHookOptions<

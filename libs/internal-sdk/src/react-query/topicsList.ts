@@ -28,10 +28,12 @@ import {
 export type TopicsListQueryData = operations.TopicsControllerListTopicsResponse;
 
 /**
- * Get topic list filtered
+ * List all topics
  *
  * @remarks
- * Returns a list of topics that can be paginated using the `page` query parameter and filtered by the topic key with the `key` query parameter
+ * This api returns a paginated list of topics.
+ *     Topics can be filtered by **key**, **name**, or **includeCursor** to paginate through the list.
+ *     Checkout all available filters in the query section.
  */
 export function useTopicsList(
   request: operations.TopicsControllerListTopicsRequest,
@@ -49,10 +51,12 @@ export function useTopicsList(
 }
 
 /**
- * Get topic list filtered
+ * List all topics
  *
  * @remarks
- * Returns a list of topics that can be paginated using the `page` query parameter and filtered by the topic key with the `key` query parameter
+ * This api returns a paginated list of topics.
+ *     Topics can be filtered by **key**, **name**, or **includeCursor** to paginate through the list.
+ *     Checkout all available filters in the query section.
  */
 export function useTopicsListSuspense(
   request: operations.TopicsControllerListTopicsRequest,
@@ -86,9 +90,16 @@ export function setTopicsListData(
   client: QueryClient,
   queryKeyBase: [
     parameters: {
-      page?: number | undefined;
-      pageSize?: number | undefined;
+      after?: string | undefined;
+      before?: string | undefined;
+      limit?: number | undefined;
+      orderDirection?:
+        | operations.TopicsControllerListTopicsQueryParamOrderDirection
+        | undefined;
+      orderBy?: string | undefined;
+      includeCursor?: boolean | undefined;
       key?: string | undefined;
+      name?: string | undefined;
       idempotencyKey?: string | undefined;
     },
   ],
@@ -103,9 +114,16 @@ export function invalidateTopicsList(
   client: QueryClient,
   queryKeyBase: TupleToPrefixes<
     [parameters: {
-      page?: number | undefined;
-      pageSize?: number | undefined;
+      after?: string | undefined;
+      before?: string | undefined;
+      limit?: number | undefined;
+      orderDirection?:
+        | operations.TopicsControllerListTopicsQueryParamOrderDirection
+        | undefined;
+      orderBy?: string | undefined;
+      includeCursor?: boolean | undefined;
       key?: string | undefined;
+      name?: string | undefined;
       idempotencyKey?: string | undefined;
     }]
   >,
@@ -137,9 +155,14 @@ export function buildTopicsListQuery(
 } {
   return {
     queryKey: queryKeyTopicsList({
-      page: request.page,
-      pageSize: request.pageSize,
+      after: request.after,
+      before: request.before,
+      limit: request.limit,
+      orderDirection: request.orderDirection,
+      orderBy: request.orderBy,
+      includeCursor: request.includeCursor,
       key: request.key,
+      name: request.name,
       idempotencyKey: request.idempotencyKey,
     }),
     queryFn: async function topicsListQueryFn(
@@ -162,9 +185,16 @@ export function buildTopicsListQuery(
 
 export function queryKeyTopicsList(
   parameters: {
-    page?: number | undefined;
-    pageSize?: number | undefined;
+    after?: string | undefined;
+    before?: string | undefined;
+    limit?: number | undefined;
+    orderDirection?:
+      | operations.TopicsControllerListTopicsQueryParamOrderDirection
+      | undefined;
+    orderBy?: string | undefined;
+    includeCursor?: boolean | undefined;
     key?: string | undefined;
+    name?: string | undefined;
     idempotencyKey?: string | undefined;
   },
 ): QueryKey {

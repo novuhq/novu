@@ -17,13 +17,13 @@ import { ApiCommonResponses, ApiOkResponse, ApiResponse } from '../shared/framew
 import { DataNumberDto } from '../shared/dtos/data-wrapper-dto';
 import { BulkApplyChangeDto } from './dtos/bulk-apply-change.dto';
 import { ThrottlerCost } from '../rate-limiting/guards';
-import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
 import { SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
+import { RequireAuthentication } from '../auth/framework/auth.decorator';
 
 @ApiCommonResponses()
 @Controller('/changes')
 @UseInterceptors(ClassSerializerInterceptor)
-@UserAuthentication()
+@RequireAuthentication()
 @ApiTags('Changes')
 @ApiExcludeController()
 export class ChangesController {

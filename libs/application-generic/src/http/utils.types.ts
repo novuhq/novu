@@ -2,18 +2,6 @@
 import * as nestSwagger from '@nestjs/swagger';
 import { ApiHeaderOptions } from '@nestjs/swagger';
 
-export enum HttpRequestHeaderKeysEnum {
-  AUTHORIZATION = 'Authorization',
-  USER_AGENT = 'User-Agent',
-  CONTENT_TYPE = 'Content-Type',
-  SENTRY_TRACE = 'Sentry-Trace',
-  NOVU_ENVIRONMENT_ID = 'Novu-Environment-Id',
-  NOVU_API_VERSION = 'Novu-API-Version',
-  NOVU_USER_AGENT = 'Novu-User-Agent',
-  BYPASS_TUNNEL_REMINDER = 'Bypass-Tunnel-Reminder',
-}
-testHttpHeaderEnumValidity(HttpRequestHeaderKeysEnum);
-
 export enum HttpResponseHeaderKeysEnum {
   CONTENT_TYPE = 'Content-Type',
   RATELIMIT_REMAINING = 'RateLimit-Remaining',
@@ -54,22 +42,20 @@ export type DeepRequired<T> = T extends object
 /**
  * Transform S to CONSTANT_CASE.
  */
-export type ConvertToConstantCase<S extends string> =
-  S extends `${infer T}-${infer U}`
-    ? `${Uppercase<T>}_${ConvertToConstantCase<U>}`
-    : Uppercase<S>;
+export type ConvertToConstantCase<S extends string> = S extends `${infer T}-${infer U}`
+  ? `${Uppercase<T>}_${ConvertToConstantCase<U>}`
+  : Uppercase<S>;
 
 /**
  * Validate that S is in Http-Header-Case, and return S if valid, otherwise never.
  */
-export type ValidateHttpHeaderCase<S extends string> =
-  S extends `${infer U}-${infer V}`
-    ? U extends Capitalize<U>
-      ? `${U}-${ValidateHttpHeaderCase<V>}`
-      : never
-    : S extends Capitalize<S>
-      ? `${S}` // necessary to cast to string literal type for non-hyphenated enum validation
-      : never;
+export type ValidateHttpHeaderCase<S extends string> = S extends `${infer U}-${infer V}`
+  ? U extends Capitalize<U>
+    ? `${U}-${ValidateHttpHeaderCase<V>}`
+    : never
+  : S extends Capitalize<S>
+    ? `${S}` // necessary to cast to string literal type for non-hyphenated enum validation
+    : never;
 
 /**
  * Helper function to test that Header enum keys and values match correct format.
@@ -102,14 +88,11 @@ export type ValidateHttpHeaderCase<S extends string> =
 export function testHttpHeaderEnumValidity<
   TEnum extends IConstants,
   TValue extends TEnum[keyof TEnum] & string,
-  IConstants = Record<
-    ConvertToConstantCase<TValue>,
-    ValidateHttpHeaderCase<TValue>
-  >,
+  IConstants = Record<ConvertToConstantCase<TValue>, ValidateHttpHeaderCase<TValue>>,
 >(
   testEnum: TEnum &
     Record<
       Exclude<keyof TEnum, keyof IConstants>,
       ['Key must be the CONSTANT_CASED version of the Capital-Cased value']
-    >,
+    >
 ) {}

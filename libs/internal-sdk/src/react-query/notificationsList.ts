@@ -30,7 +30,13 @@ export type NotificationsListQueryData =
   operations.NotificationsControllerListNotificationsResponse;
 
 /**
- * Get notifications
+ * List all events
+ *
+ * @remarks
+ * List all notification events (triggered events) for the current environment.
+ *     This API supports filtering by **channels**, **templates**, **emails**, **subscriberIds**, **transactionId**, **topicKey**.
+ *     Checkout all available filters in the query section.
+ *     This API returns event triggers, to list each channel notifications, check messages APIs.
  */
 export function useNotificationsList(
   request: operations.NotificationsControllerListNotificationsRequest,
@@ -48,7 +54,13 @@ export function useNotificationsList(
 }
 
 /**
- * Get notifications
+ * List all events
+ *
+ * @remarks
+ * List all notification events (triggered events) for the current environment.
+ *     This API supports filtering by **channels**, **templates**, **emails**, **subscriberIds**, **transactionId**, **topicKey**.
+ *     Checkout all available filters in the query section.
+ *     This API returns event triggers, to list each channel notifications, check messages APIs.
  */
 export function useNotificationsListSuspense(
   request: operations.NotificationsControllerListNotificationsRequest,
@@ -90,6 +102,7 @@ export function setNotificationsListData(
       page?: number | undefined;
       limit?: number | undefined;
       transactionId?: string | undefined;
+      topicKey?: string | undefined;
       after?: string | undefined;
       before?: string | undefined;
       idempotencyKey?: string | undefined;
@@ -114,6 +127,7 @@ export function invalidateNotificationsList(
       page?: number | undefined;
       limit?: number | undefined;
       transactionId?: string | undefined;
+      topicKey?: string | undefined;
       after?: string | undefined;
       before?: string | undefined;
       idempotencyKey?: string | undefined;
@@ -157,6 +171,7 @@ export function buildNotificationsListQuery(
       page: request.page,
       limit: request.limit,
       transactionId: request.transactionId,
+      topicKey: request.topicKey,
       after: request.after,
       before: request.before,
       idempotencyKey: request.idempotencyKey,
@@ -189,6 +204,7 @@ export function queryKeyNotificationsList(
     page?: number | undefined;
     limit?: number | undefined;
     transactionId?: string | undefined;
+    topicKey?: string | undefined;
     after?: string | undefined;
     before?: string | undefined;
     idempotencyKey?: string | undefined;

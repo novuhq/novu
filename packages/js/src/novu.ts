@@ -4,7 +4,7 @@ import { NovuEventEmitter } from './event-emitter';
 import { Notifications } from './notifications';
 import { Preferences } from './preferences';
 import { Session } from './session';
-import type { NovuOptions } from './types';
+import type { NovuOptions, Subscriber } from './types';
 import { Socket } from './ws';
 
 export class Novu implements Pick<NovuEventEmitter, 'on'> {
@@ -38,11 +38,13 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
     });
     this.#emitter = new NovuEventEmitter();
     this.#session = new Session(
-      {
-        applicationIdentifier: options.applicationIdentifier,
-        subscriberId: options.subscriberId,
-        subscriberHash: options.subscriberHash,
-      },
+      options.applicationIdentifier
+        ? {
+            applicationIdentifier: options.applicationIdentifier,
+            subscriberHash: options.subscriberHash,
+            subscriber: buildSubscriber(options),
+          }
+        : {},
       this.#inboxService,
       this.#emitter
     );
@@ -79,4 +81,19 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
       this.#emitter.off(eventName, listener);
     };
   }
+}
+
+function buildSubscriber(options: NovuOptions): Subscriber {
+  // subscriber object
+  if (options.subscriber) {
+    return typeof options.subscriber === 'string' ? { subscriberId: options.subscriber } : options.subscriber;
+  }
+
+  // subscriberId
+  if (options.subscriberId) {
+    return { subscriberId: options.subscriberId as string };
+  }
+
+  // missing - keyless subscriber, the api will generate a subscriberId
+  return { subscriberId: '' };
 }

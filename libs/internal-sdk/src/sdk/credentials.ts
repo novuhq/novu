@@ -12,10 +12,11 @@ import { unwrapAsync } from "../types/fp.js";
 
 export class Credentials extends ClientSDK {
   /**
-   * Update subscriber credentials
+   * Update provider credentials
    *
    * @remarks
-   * Subscriber credentials associated to the delivery methods such as slack and push tokens.
+   * Update credentials for a provider such as slack and push tokens.
+   *       **providerId** is required field. This API appends the **deviceTokens** to the existing ones.
    */
   async update(
     updateSubscriberChannelRequestDto:
@@ -36,11 +37,11 @@ export class Credentials extends ClientSDK {
   }
 
   /**
-   * Modify subscriber credentials
+   * Upsert provider credentials
    *
    * @remarks
-   * Subscriber credentials associated to the delivery methods such as slack and push tokens.
-   *     This endpoint appends provided credentials and deviceTokens to the existing ones.
+   * Update credentials for a provider such as **slack** and **FCM**.
+   *       **providerId** is required field. This API replaces the existing deviceTokens with the provided ones.
    */
   async append(
     updateSubscriberChannelRequestDto:
@@ -61,10 +62,11 @@ export class Credentials extends ClientSDK {
   }
 
   /**
-   * Delete subscriber credentials by providerId
+   * Delete provider credentials
    *
    * @remarks
-   * Delete subscriber credentials such as slack and expo tokens.
+   * Delete subscriber credentials for a provider such as **slack** and **FCM** by **providerId**.
+   *     This action is irreversible and will remove the credentials for the provider for particular **subscriberId**.
    */
   async delete(
     subscriberId: string,

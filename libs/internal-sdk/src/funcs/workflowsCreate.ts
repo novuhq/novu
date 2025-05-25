@@ -3,13 +3,14 @@
  */
 
 import { NovuCore } from "../core.js";
-import { encodeSimple } from "../lib/encodings.js";
+import { encodeJSON, encodeSimple } from "../lib/encodings.js";
 import * as M from "../lib/matchers.js";
 import { compactMap } from "../lib/primitives.js";
 import { safeParse } from "../lib/schemas.js";
 import { RequestOptions } from "../lib/sdks.js";
 import { extractSecurity, resolveGlobalSecurity } from "../lib/security.js";
 import { pathToFunc } from "../lib/url.js";
+import * as components from "../models/components/index.js";
 import {
   ConnectionError,
   InvalidRequestError,
@@ -24,8 +25,15 @@ import * as operations from "../models/operations/index.js";
 import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
+/**
+ * Create a new workflow
+ *
+ * @remarks
+ * Creates a new workflow in the Novu Cloud environment
+ */
 export function workflowsCreate(
   client: NovuCore,
+  createWorkflowDto: components.CreateWorkflowDto,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): APIPromise<
@@ -46,6 +54,7 @@ export function workflowsCreate(
 > {
   return new APIPromise($do(
     client,
+    createWorkflowDto,
     idempotencyKey,
     options,
   ));
@@ -53,6 +62,7 @@ export function workflowsCreate(
 
 async function $do(
   client: NovuCore,
+  createWorkflowDto: components.CreateWorkflowDto,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): Promise<
@@ -75,6 +85,7 @@ async function $do(
   ]
 > {
   const input: operations.WorkflowControllerCreateRequest = {
+    createWorkflowDto: createWorkflowDto,
     idempotencyKey: idempotencyKey,
   };
 
@@ -88,11 +99,12 @@ async function $do(
     return [parsed, { status: "invalid" }];
   }
   const payload = parsed.value;
-  const body = null;
+  const body = encodeJSON("body", payload.CreateWorkflowDto, { explode: true });
 
   const path = pathToFunc("/v2/workflows")();
 
   const headers = new Headers(compactMap({
+    "Content-Type": "application/json",
     Accept: "application/json",
     "idempotency-key": encodeSimple(
       "idempotency-key",
@@ -188,6 +200,7 @@ async function $do(
     | ConnectionError
   >(
     M.json(201, operations.WorkflowControllerCreateResponse$inboundSchema, {
+      hdrs: true,
       key: "Result",
     }),
     M.jsonErr(414, errors.ErrorDto$inboundSchema),

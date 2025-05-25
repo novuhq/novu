@@ -1,12 +1,11 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
 
-import { buildSubscriberKey, InvalidateCacheService } from '../../services';
+import { buildSubscriberKey, CachedResponse, InvalidateCacheService } from '../../services';
 import { subscriberNeedUpdate } from '../../utils';
 
 import { UpdateSubscriberCommand } from './update-subscriber.command';
 import { OAuthHandlerEnum, UpdateSubscriberChannel, UpdateSubscriberChannelCommand } from '../subscribers';
-import { CachedResponse } from '../../services/cache/interceptors/cached-return.interceptor';
 
 @Injectable()
 export class UpdateSubscriber {

@@ -4,7 +4,6 @@ name: Deploy PROD Inbound Mail
 # events but only for the master branch
 on:
   workflow_dispatch:
-
 env:
   NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
 

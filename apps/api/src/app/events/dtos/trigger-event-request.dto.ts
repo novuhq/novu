@@ -2,6 +2,7 @@ import { IsDefined, IsObject, IsOptional, IsString, ValidateIf, ValidateNested }
 import { Type } from 'class-transformer';
 import { ApiExtraModels, ApiHideProperty, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
 import {
+  ProvidersIdEnum,
   TriggerRecipientsPayload,
   TriggerRecipientsTypeEnum,
   TriggerRecipientSubscriber,
@@ -24,9 +25,9 @@ export class WorkflowToStepControlValuesDto {
     type: 'object',
     additionalProperties: {
       type: 'object',
-      additionalProperties: true, // Allows any additional properties
+      additionalProperties: true,
     },
-    required: false, // Indicates that this property is optional
+    required: false,
   })
   steps?: Record<string, Record<string, unknown>>;
 }
@@ -45,7 +46,97 @@ export class TopicPayloadDto {
   type: TriggerRecipientsTypeEnum;
 }
 
-@ApiExtraModels(SubscriberPayloadDto, TenantPayloadDto, TopicPayloadDto)
+export class StepsOverrides {
+  @ApiProperty({
+    description: 'Passing the provider id and the provider specific configurations',
+    example: {
+      sendgrid: {
+        templateId: '1234567890',
+      },
+    },
+    type: 'object',
+    additionalProperties: {
+      type: 'object',
+      additionalProperties: true,
+    },
+  })
+  providers: Record<ProvidersIdEnum, Record<string, unknown>>;
+}
+
+export class TriggerOverrides {
+  @ApiPropertyOptional({
+    description: 'This could be used to override provider specific configurations',
+    example: {
+      'email-step': {
+        providers: {
+          sendgrid: {
+            templateId: '1234567890',
+          },
+        },
+      },
+    },
+    type: 'object',
+    additionalProperties: {
+      $ref: getSchemaPath(StepsOverrides),
+    },
+  })
+  steps?: Record<string, StepsOverrides>;
+
+  @ApiPropertyOptional({
+    description: 'Overrides the provider configuration for the entire workflow and all steps',
+    example: {
+      sendgrid: {
+        templateId: '1234567890',
+      },
+    },
+    type: 'object',
+    additionalProperties: {
+      type: 'object',
+      additionalProperties: true,
+    },
+  })
+  providers?: Record<ProvidersIdEnum, Record<string, unknown>>;
+
+  @ApiPropertyOptional({
+    description: 'Override the email provider specific configurations for the entire workflow',
+    deprecated: true,
+    type: 'object',
+    additionalProperties: true,
+  })
+  email?: Record<string, any>;
+
+  @ApiPropertyOptional({
+    description: 'Override the push provider specific configurations for the entire workflow',
+    deprecated: true,
+    type: 'object',
+    additionalProperties: true,
+  })
+  push?: Record<string, any>;
+
+  @ApiPropertyOptional({
+    description: 'Override the sms provider specific configurations for the entire workflow',
+    deprecated: true,
+    type: 'object',
+    additionalProperties: true,
+  })
+  sms?: Record<string, any>;
+
+  @ApiPropertyOptional({
+    description: 'Override the chat provider specific configurations for the entire workflow',
+    deprecated: true,
+    type: 'object',
+    additionalProperties: true,
+  })
+  chat?: Record<string, any>;
+
+  @ApiPropertyOptional({
+    description: 'Override the layout identifier for the entire workflow',
+    deprecated: true,
+  })
+  layoutIdentifier?: string;
+}
+
+@ApiExtraModels(SubscriberPayloadDto, TenantPayloadDto, TopicPayloadDto, StepsOverrides)
 export class TriggerEventRequestDto {
   @SdkApiProperty(
     {
@@ -91,16 +182,12 @@ export class TriggerEventRequestDto {
         },
       },
     },
-    type: 'object',
-    additionalProperties: {
-      type: 'object',
-      additionalProperties: true, // Allows any additional properties
-    },
-    required: false, // Indicates that this property is optional
+    type: TriggerOverrides,
+    required: false,
   })
   @IsObject()
   @IsOptional()
-  overrides?: Record<string, Record<string, unknown>>;
+  overrides?: TriggerOverrides;
 
   @ApiProperty({
     description: 'The recipients list of people who will receive the notification.',

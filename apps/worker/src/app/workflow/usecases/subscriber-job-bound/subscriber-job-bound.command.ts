@@ -1,15 +1,16 @@
 import { IsDefined, IsEnum, IsMongoId, IsOptional, IsString, ValidateNested } from 'class-validator';
 
+import { EnvironmentWithUserCommand } from '@novu/application-generic';
+import { SubscriberEntity, TopicEntity } from '@novu/dal';
+import { DiscoverWorkflowOutput } from '@novu/framework/internal';
 import {
   ISubscribersDefine,
   ITenantDefine,
   StatelessControls,
   SubscriberSourceEnum,
+  TriggerOverrides,
   TriggerRequestCategoryEnum,
 } from '@novu/shared';
-import { SubscriberEntity } from '@novu/dal';
-import { EnvironmentWithUserCommand } from '@novu/application-generic';
-import { DiscoverWorkflowOutput } from '@novu/framework/internal';
 
 export class SubscriberJobBoundCommand extends EnvironmentWithUserCommand {
   @IsString()
@@ -24,7 +25,7 @@ export class SubscriberJobBoundCommand extends EnvironmentWithUserCommand {
   identifier: string;
 
   @IsDefined()
-  overrides: Record<string, Record<string, unknown>>;
+  overrides: TriggerOverrides;
 
   @IsOptional()
   @ValidateNested()
@@ -39,6 +40,9 @@ export class SubscriberJobBoundCommand extends EnvironmentWithUserCommand {
 
   @IsDefined()
   subscriber: ISubscribersDefine;
+
+  @IsOptional()
+  topics?: Pick<TopicEntity, '_id' | 'key'>[];
 
   @IsDefined()
   @IsEnum(SubscriberSourceEnum)

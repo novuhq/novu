@@ -8,8 +8,9 @@ import {
   ResourceEnum,
   TriggerRequestCategoryEnum,
   UserSessionData,
+  PermissionsEnum,
 } from '@novu/shared';
-import { ResourceCategory } from '@novu/application-generic';
+import { ResourceCategory, RequirePermissions } from '@novu/application-generic';
 
 import {
   BulkTriggerEventDto,
@@ -33,11 +34,13 @@ import {
   ApiResponse,
 } from '../shared/framework/response.decorator';
 import { ThrottlerCategory, ThrottlerCost } from '../rate-limiting/guards';
-import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
+import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { SdkGroupName, SdkMethodName, SdkUsageExample } from '../shared/framework/swagger/sdk.decorators';
+import { KeylessAccessible } from '../shared/framework/swagger/keyless.security';
 
 @ThrottlerCategory(ApiRateLimitCategoryEnum.TRIGGER)
 @ResourceCategory(ResourceEnum.EVENTS)
+@RequireAuthentication()
 @ApiCommonResponses()
 @Controller({
   path: 'events',
@@ -53,8 +56,8 @@ export class EventsController {
     private processBulkTriggerUsecase: ProcessBulkTrigger
   ) {}
 
+  @KeylessAccessible()
   @ExternalApiAccessible()
-  @UserAuthentication()
   @Post('/trigger')
   @ApiResponse(TriggerEventResponseDto, 201)
   @ApiOperation({
@@ -68,6 +71,7 @@ export class EventsController {
   @SdkMethodName('trigger')
   @SdkUsageExample('Trigger Notification Event')
   @SdkGroupName('')
+  @RequirePermissions(PermissionsEnum.EVENT_WRITE)
   async trigger(
     @UserSession() user: UserSessionData,
     @Body() body: TriggerEventRequestDto
@@ -95,7 +99,6 @@ export class EventsController {
   }
 
   @ExternalApiAccessible()
-  @UserAuthentication()
   @ThrottlerCost(ApiRateLimitCostEnum.BULK)
   @Post('/trigger/bulk')
   @SdkMethodName('triggerBulk')
@@ -109,6 +112,7 @@ export class EventsController {
       The bulk API is limited to 100 events per request.
     `,
   })
+  @RequirePermissions(PermissionsEnum.EVENT_WRITE)
   async triggerBulk(
     @UserSession() user: UserSessionData,
     @Body() body: BulkTriggerEventDto
@@ -124,7 +128,6 @@ export class EventsController {
   }
 
   @ExternalApiAccessible()
-  @UserAuthentication()
   @ThrottlerCost(ApiRateLimitCostEnum.BULK)
   @Post('/trigger/broadcast')
   @ApiResponse(TriggerEventResponseDto)
@@ -138,8 +141,9 @@ export class EventsController {
   })
   @ApiCreatedResponse({
     description: 'Broadcast request has been registered successfully ',
-    type: TriggerEventResponseDto, // Specify the response type
+    type: TriggerEventResponseDto,
   })
+  @RequirePermissions(PermissionsEnum.EVENT_WRITE)
   async broadcastEventToAll(
     @UserSession() user: UserSessionData,
     @Body() body: TriggerEventToAllRequestDto
@@ -161,9 +165,9 @@ export class EventsController {
     );
   }
 
-  @UserAuthentication()
   @Post('/test/email')
   @ApiExcludeEndpoint()
+  @RequirePermissions(PermissionsEnum.EVENT_WRITE)
   async testEmailMessage(@UserSession() user: UserSessionData, @Body() body: TestSendEmailRequestDto): Promise<void> {
     return await this.sendTestEmail.execute(
       SendTestEmailCommand.create({
@@ -186,7 +190,6 @@ export class EventsController {
   }
 
   @ExternalApiAccessible()
-  @UserAuthentication()
   @Delete('/trigger/:transactionId')
   @ApiOkResponse({
     type: Boolean,
@@ -201,6 +204,7 @@ export class EventsController {
   @SdkMethodName('cancel')
   @SdkUsageExample('Cancel Triggered Event')
   @SdkGroupName('')
+  @RequirePermissions(PermissionsEnum.EVENT_WRITE)
   async cancel(@UserSession() user: UserSessionData, @Param('transactionId') transactionId: string): Promise<boolean> {
     return await this.cancelDelayedUsecase.execute(
       CancelDelayedCommand.create({

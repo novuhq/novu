@@ -28,10 +28,12 @@ export type SubscribersPreferencesUpdateMutationData =
   operations.SubscribersControllerUpdateSubscriberPreferencesResponse;
 
 /**
- * Update subscriber global or workflow specific preferences
+ * Update subscriber preferences
  *
  * @remarks
- * Update subscriber global or workflow specific preferences
+ * Update subscriber preferences by its unique key identifier **subscriberId**.
+ *     **workflowId** is optional field, if provided, this API will update that workflow preference,
+ *     otherwise it will update global preferences
  */
 export function useSubscribersPreferencesUpdateMutation(
   options?: MutationHookOptions<

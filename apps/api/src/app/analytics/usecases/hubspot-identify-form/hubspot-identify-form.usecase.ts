@@ -1,6 +1,7 @@
 import { HttpService } from '@nestjs/axios';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { AxiosError } from 'axios';
+import { PinoLogger } from '@novu/application-generic';
 import { HubspotIdentifyFormCommand } from './hubspot-identify-form.command';
 
 const LOG_CONTEXT = 'HubspotIdentifyFormUsecase';
@@ -10,7 +11,12 @@ export class HubspotIdentifyFormUsecase {
   private readonly hubspotPortalId = '44416662';
   private readonly hubspotFormId = 'fc39aa98-4285-4322-9514-52da978baae8';
 
-  constructor(private httpService: HttpService) {}
+  constructor(
+    private httpService: HttpService,
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   async execute(command: HubspotIdentifyFormCommand) {
     try {
@@ -30,10 +36,10 @@ export class HubspotIdentifyFormUsecase {
         },
       };
 
-      await this.httpService.post(hubspotSubmitUrl, hubspotData);
+      this.httpService.post(hubspotSubmitUrl, hubspotData);
     } catch (error) {
       if (error instanceof AxiosError) {
-        Logger.error(
+        this.logger.error(
           `Failed to submit to Hubspot message=${error.message}, status=${error.status}`,
           {
             organizationId: command.organizationId,

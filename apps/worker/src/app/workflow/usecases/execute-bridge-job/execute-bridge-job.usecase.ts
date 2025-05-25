@@ -8,12 +8,8 @@ import {
   NotificationTemplateRepository,
   MessageRepository,
   JobEntity,
-  OrganizationEntity,
-  UserEntity,
-  EnvironmentEntity,
 } from '@novu/dal';
 import {
-  FeatureFlagsKeysEnum,
   ControlValuesLevelEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
@@ -39,14 +35,11 @@ import {
   DetailEnum,
   ExecuteBridgeRequest,
   ExecuteBridgeRequestCommand,
-  FeatureFlagsService,
   Instrument,
   InstrumentUsecase,
   PinoLogger,
 } from '@novu/application-generic';
 import { ExecuteBridgeJobCommand } from './execute-bridge-job.command';
-
-const LOG_CONTEXT = 'ExecuteBridgeJob';
 
 @Injectable()
 export class ExecuteBridgeJob {
@@ -58,19 +51,13 @@ export class ExecuteBridgeJob {
     private controlValuesRepository: ControlValuesRepository,
     private createExecutionDetails: CreateExecutionDetails,
     private executeBridgeRequest: ExecuteBridgeRequest,
-    private logger: PinoLogger,
-    private readonly featureFlagService: FeatureFlagsService
-  ) {}
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   @InstrumentUsecase()
   async execute(command: ExecuteBridgeJobCommand): Promise<ExecuteOutput | null> {
-    const isEnhancedDigestEnabled = await this.featureFlagService.getFlag({
-      user: { _id: command.userId } as UserEntity,
-      environment: { _id: command.environmentId } as EnvironmentEntity,
-      organization: { _id: command.organizationId } as OrganizationEntity,
-      key: FeatureFlagsKeysEnum.IS_ENHANCED_DIGEST_ENABLED,
-      defaultValue: false,
-    });
     const stepId = command.job.step.stepId || command.job.step.uuid;
 
     const isStateful = !command.job.step.bridgeUrl;
@@ -116,7 +103,7 @@ export class ExecuteBridgeJob {
     const { subscriber, payload: originalPayload } = command.variables || {};
     const payload = this.normalizePayload(originalPayload);
 
-    const state = await this.generateState(command, isEnhancedDigestEnabled);
+    const state = await this.generateState(command);
 
     const variablesStores = isStateful
       ? await this.findControlValues(command, workflow as NotificationTemplateEntity)
@@ -189,7 +176,7 @@ export class ExecuteBridgeJob {
     return payload;
   }
 
-  private async generateState(command: ExecuteBridgeJobCommand, isEnhancedDigestEnabled: boolean): Promise<State[]> {
+  private async generateState(command: ExecuteBridgeJobCommand): Promise<State[]> {
     const previousJobs: State[] = [];
     let theJob = (await this.jobRepository.findOne({
       _id: command.job._parentId,
@@ -197,7 +184,7 @@ export class ExecuteBridgeJob {
     })) as JobEntity;
 
     if (theJob) {
-      const jobState = await this.mapState(theJob, isEnhancedDigestEnabled);
+      const jobState = await this.mapState(theJob);
       previousJobs.push(jobState);
     }
 
@@ -208,7 +195,7 @@ export class ExecuteBridgeJob {
       })) as JobEntity;
 
       if (theJob) {
-        const jobState = await this.mapState(theJob, isEnhancedDigestEnabled);
+        const jobState = await this.mapState(theJob);
         previousJobs.push(jobState);
       }
     }
@@ -255,7 +242,7 @@ export class ExecuteBridgeJob {
     }) as Promise<ExecuteOutput>;
   }
 
-  private async mapOutput(job: JobEntity, isEnhancedDigestEnabled: boolean) {
+  private async mapOutput(job: JobEntity) {
     switch (job.type) {
       case 'delay': {
         return {
@@ -285,15 +272,9 @@ export class ExecuteBridgeJob {
           }))
           .sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
 
-        if (isEnhancedDigestEnabled) {
-          return {
-            events,
-            eventCount: events.length,
-          } satisfies DigestResult;
-        }
-
         return {
           events,
+          eventCount: events.length,
         } satisfies DigestResult;
       }
       case 'custom': {
@@ -331,8 +312,8 @@ export class ExecuteBridgeJob {
   }
 
   @Instrument()
-  private async mapState(job: JobEntity, isEnhancedDigestEnabled: boolean) {
-    const output = await this.mapOutput(job, isEnhancedDigestEnabled);
+  private async mapState(job: JobEntity) {
+    const output = await this.mapOutput(job);
 
     return {
       stepId: job?.step.stepId || job?.step.uuid || '',

@@ -11,7 +11,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { HTMLAttributes, ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { RiArrowLeftSLine, RiArrowRightSLine, RiCloseFill, RiDeleteBin2Line, RiPencilRuler2Fill } from 'react-icons/ri';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 
 import { ConfirmationModal } from '@/components/confirmation-modal';
@@ -49,6 +49,7 @@ import { SaveFormContext } from '@/components/workflow-editor/steps/save-form-co
 import { SdkBanner } from '@/components/workflow-editor/steps/sdk-banner';
 import { SkipConditionsButton } from '@/components/workflow-editor/steps/skip-conditions-button';
 import { ConfigureSmsStepPreview } from '@/components/workflow-editor/steps/sms/configure-sms-step-preview';
+
 import { UpdateWorkflowFn } from '@/components/workflow-editor/workflow-provider';
 import { useFormAutosave } from '@/hooks/use-form-autosave';
 import { INLINE_CONFIGURABLE_STEP_TYPES, STEP_TYPE_LABELS, TEMPLATE_CONFIGURABLE_STEP_TYPES } from '@/utils/constants';
@@ -88,7 +89,6 @@ type ConfigureStepFormProps = {
 export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
   const { step, workflow, update, environment } = props;
   const navigate = useNavigate();
-  const { hideValidationErrorsOnFirstRender } = useLocation().state || {};
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const supportedStepTypes = [
     StepTypeEnum.IN_APP,
@@ -189,15 +189,14 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
       });
     });
 
-    if (!hideValidationErrorsOnFirstRender) {
+    // @ts-expect-error - isNew doesn't exist on StepResponseDto and it's too much work to override the @novu/shared types now. See useUpdateWorkflow.ts for more details
+    if (!step.isNew) {
       // Set new errors from stepIssues
       Object.entries(stepIssues).forEach(([key, value]) => {
         // @ts-expect-error - dynamic key
         form.setError(`controlValues.${key}`, { message: value });
       });
     }
-    // Do not add hideValidationErrorsOnFirstRender so as not to trigger a rerender on the navigation that happens as soon as drawer is closing
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form, step]);
 
   useEffect(() => {
@@ -316,6 +315,8 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
                     <RiArrowRightSLine className="ml-auto h-4 w-4 text-neutral-600" />
                   </Button>
                 </Link>
+
+                <SkipConditionsButton origin={workflow.origin} step={step} />
               </SidebarContent>
               <Separator />
 
@@ -344,7 +345,14 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
             </>
           )}
 
-          <SkipConditionsButton origin={workflow.origin} step={step} inSidebar />
+          {isInlineConfigurableStep && (
+            <>
+              <SidebarContent>
+                <SkipConditionsButton origin={workflow.origin} step={step} />
+              </SidebarContent>
+              <Separator />
+            </>
+          )}
 
           {!isSupportedStep && (
             <SidebarContent>

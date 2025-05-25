@@ -2,11 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { ISubscriberPreferenceResponse, ShortIsPrefixEnum } from '@novu/shared';
 import { plainToInstance } from 'class-transformer';
 import { GetSubscriberPreferencesCommand } from './get-subscriber-preferences.command';
-import {
-  GetSubscriberPreferencesDto,
-  GlobalPreferenceDto,
-  WorkflowPreferenceDto,
-} from '../../dtos/get-subscriber-preferences.dto';
 import { buildSlug } from '../../../shared/helpers/build-slug';
 import {
   GetSubscriberGlobalPreference,
@@ -16,6 +11,9 @@ import {
   GetSubscriberPreference,
   GetSubscriberPreferenceCommand,
 } from '../../../subscribers/usecases/get-subscriber-preference';
+import { SubscriberGlobalPreferenceDto } from '../../dtos/subscriber-global-preference.dto';
+import { GetSubscriberPreferencesDto } from '../../dtos/get-subscriber-preferences.dto';
+import { SubscriberWorkflowPreferenceDto } from '../../dtos/subscriber-workflow-preference.dto';
 
 @Injectable()
 export class GetSubscriberPreferences {
@@ -34,7 +32,9 @@ export class GetSubscriberPreferences {
     });
   }
 
-  private async fetchGlobalPreference(command: GetSubscriberPreferencesCommand): Promise<GlobalPreferenceDto> {
+  private async fetchGlobalPreference(
+    command: GetSubscriberPreferencesCommand
+  ): Promise<SubscriberGlobalPreferenceDto> {
     const { preference } = await this.getSubscriberGlobalPreference.execute(
       GetSubscriberGlobalPreferenceCommand.create({
         organizationId: command.organizationId,
@@ -63,7 +63,9 @@ export class GetSubscriberPreferences {
     return subscriberWorkflowPreferences.map(this.mapToWorkflowPreference);
   }
 
-  private mapToWorkflowPreference(subscriberWorkflowPreference: ISubscriberPreferenceResponse): WorkflowPreferenceDto {
+  private mapToWorkflowPreference(
+    subscriberWorkflowPreference: ISubscriberPreferenceResponse
+  ): SubscriberWorkflowPreferenceDto {
     const { preference, template } = subscriberWorkflowPreference;
 
     return {

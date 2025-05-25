@@ -1,6 +1,6 @@
 import { BaseCommand } from '@novu/application-generic';
 import { IsArray, IsDefined, IsOptional, IsString } from 'class-validator';
-import { PlainCustomer, PlainTenant, PlainThread } from '../dto/plain-card.dto';
+import { PlainCustomer, PlainTenant, PlainThread } from '../dtos/plain-card.dto';
 
 export class PlainCardsCommand extends BaseCommand {
   @IsOptional()

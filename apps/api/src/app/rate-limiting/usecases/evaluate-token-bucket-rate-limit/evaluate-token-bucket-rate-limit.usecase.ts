@@ -1,6 +1,6 @@
-import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
+import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 import { Ratelimit } from '@upstash/ratelimit';
-import { CacheService, InstrumentUsecase } from '@novu/application-generic';
+import { CacheService, InstrumentUsecase, PinoLogger } from '@novu/application-generic';
 import { EvaluateTokenBucketRateLimitCommand } from './evaluate-token-bucket-rate-limit.command';
 import {
   EvaluateTokenBucketRateLimitResponseDto,
@@ -15,13 +15,18 @@ export class EvaluateTokenBucketRateLimit {
   private ephemeralCache = new Map<string, number>();
   public algorithm = 'token bucket';
 
-  constructor(private cacheService: CacheService) {}
+  constructor(
+    private cacheService: CacheService,
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   @InstrumentUsecase()
   async execute(command: EvaluateTokenBucketRateLimitCommand): Promise<EvaluateTokenBucketRateLimitResponseDto> {
     if (!this.cacheService.cacheEnabled()) {
       const message = 'Rate limiting cache service is not available';
-      Logger.error(message, LOG_CONTEXT);
+      this.logger.error(message);
       throw new ServiceUnavailableException(message);
     }
 
@@ -50,7 +55,7 @@ export class EvaluateTokenBucketRateLimit {
     } catch (error) {
       const apiMessage = 'Failed to evaluate rate limit';
       const logMessage = `${apiMessage} for identifier: "${command.identifier}". Error: "${error}"`;
-      Logger.error(logMessage, LOG_CONTEXT);
+      this.logger.error(logMessage);
       throw new ServiceUnavailableException(apiMessage);
     }
   }

@@ -282,7 +282,7 @@ export class WidgetsController {
   async removeMessage(
     @SubscriberSession() subscriberSession: SubscriberEntity,
     @Param('messageId') messageId: string
-  ): Promise<MessageEntity> {
+  ): Promise<void> {
     if (!messageId) throw new BadRequestException('messageId is required');
 
     const command = RemoveMessageCommand.create({
@@ -455,7 +455,7 @@ export class WidgetsController {
         environmentId: subscriberSession._environmentId,
         organizationId: subscriberSession._organizationId,
         subscriberId: subscriberSession.subscriberId,
-        workflowId: templateId,
+        workflowIdOrIdentifier: templateId,
         level: PreferenceLevelEnum.TEMPLATE,
         includeInactiveChannels: false,
         ...(body.channel && { [body.channel.type]: body.channel.enabled }),

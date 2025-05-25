@@ -16,6 +16,7 @@ import { PlatformException, EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER, shouldHaltOnSte
 import { SetJobAsFailed } from '../update-job-status/set-job-as-failed.usecase';
 import { AddJob } from '../add-job';
 import { SetJobAsFailedCommand } from '../update-job-status/set-job-as.command';
+import { ProcessUnsnoozeJob, ProcessUnsnoozeJobCommand } from '../process-unsnooze-job';
 
 const nr = require('newrelic');
 
@@ -30,6 +31,7 @@ export class RunJob {
     @Inject(forwardRef(() => SetJobAsFailed)) private setJobAsFailed: SetJobAsFailed,
     private storageHelperService: StorageHelperService,
     private notificationRepository: NotificationRepository,
+    private processUnsnoozeJob: ProcessUnsnoozeJob,
     private logger?: PinoLogger
   ) {}
 
@@ -83,6 +85,18 @@ export class RunJob {
 
       if (!notification) {
         throw new PlatformException(`Notification with id ${job._notificationId} not found`);
+      }
+
+      if (this.isUnsnoozeJob(job)) {
+        await this.processUnsnoozeJob.execute(
+          ProcessUnsnoozeJobCommand.create({
+            jobId: job._id,
+            environmentId: job._environmentId,
+            organizationId: job._organizationId,
+          })
+        );
+
+        return;
       }
 
       const sendMessageResult = await this.sendMessage.execute(
@@ -156,6 +170,10 @@ export class RunJob {
         await this.storageHelperService.deleteAttachments(job.payload?.attachments);
       }
     }
+  }
+
+  private isUnsnoozeJob(job: JobEntity) {
+    return job.type === StepTypeEnum.IN_APP && job.delay && job.payload?.unsnooze;
   }
 
   /**

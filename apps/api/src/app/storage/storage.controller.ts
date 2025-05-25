@@ -8,13 +8,13 @@ import { UserSession } from '../shared/framework/user.decorator';
 import { UploadUrlResponse } from './dtos/upload-url-response.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
-import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
+import { RequireAuthentication } from '../auth/framework/auth.decorator';
 
 @ApiCommonResponses()
 @Controller('/storage')
 @ApiTags('Storage')
 @UseInterceptors(ClassSerializerInterceptor)
-@UserAuthentication()
+@RequireAuthentication()
 @ApiExcludeController()
 export class StorageController {
   constructor(private getSignedUrlUsecase: GetSignedUrl) {}

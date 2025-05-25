@@ -7,7 +7,10 @@ export class TopicEntity {
   _environmentId: EnvironmentId;
   _organizationId: OrganizationId;
   key: TopicKey;
-  name: TopicName;
+  name?: TopicName;
+
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export type TopicDBModel = Omit<TopicEntity, '_environmentId' | '_organizationId'> & {

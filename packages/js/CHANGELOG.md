@@ -1,3 +1,56 @@
+## v3.4.0 (2025-05-16)
+
+### 🚀 Features
+
+- **js,react:** inbox preference grouping ([#8310](https://github.com/novuhq/novu/pull/8310))
+- **js,react:** inbox and styles under the shadow root ([#8262](https://github.com/novuhq/novu/pull/8262))
+- **js:** override icon set for inbox component ([#8293](https://github.com/novuhq/novu/pull/8293))
+- **js:** headless bulk update preferences ([#8296](https://github.com/novuhq/novu/pull/8296))
+
+### ❤️ Thank You
+
+- Dima Grossman @scopsy
+- Paweł Tymczuk @LetItRock
+
+# v3.3.1 (2025-05-07)
+
+### 🩹 Fixes
+
+- **js:** inbox datepicker dark theme enhancements ([#8260](https://github.com/novuhq/novu/pull/8260))
+
+### ❤️ Thank You
+
+- Adam Chmara @ChmaraX
+
+## v3.3.0 (2025-05-07)
+
+### 🚀 Features
+
+- **js,dashboard:** inbox snooze improvements ([#8251](https://github.com/novuhq/novu/pull/8251))
+- **js,api,dashboard:** snooze inbox functionality ([#8228](https://github.com/novuhq/novu/pull/8228))
+- **js,react:** add snooze functionality ([#8230](https://github.com/novuhq/novu/pull/8230))
+- **repo:** Polish changelogs for packages ([a932bd38e4](https://github.com/novuhq/novu/commit/a932bd38e4))
+
+### 🩹 Fixes
+
+- **js:** Fix appearance elements access bug ([#8213](https://github.com/novuhq/novu/pull/8213))
+
+### ❤️ Thank You
+
+- Adam Chmara @ChmaraX
+- George Desipris @desiprisg
+- Paweł Tymczuk @LetItRock
+
+## v3.2.0 (2025-04-30)
+
+### 🚀 Features
+
+- **react:** upsert firstName, lastName, and email on session init ([#8142](https://github.com/novuhq/novu/pull/8142))
+
+### ❤️ Thank You
+
+- George Djabarov @djabarovgeorge
+
 ## v3.1.0 (2025-04-11)
 
 ### 🚀 Features

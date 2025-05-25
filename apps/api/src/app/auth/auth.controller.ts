@@ -7,7 +7,6 @@ import {
   Header,
   HttpCode,
   HttpStatus,
-  Logger,
   NotFoundException,
   Param,
   Post,
@@ -21,7 +20,7 @@ import { MemberEntity, MemberRepository, UserRepository } from '@novu/dal';
 import { AuthGuard } from '@nestjs/passport';
 import { PasswordResetFlowEnum, UserSessionData } from '@novu/shared';
 import { ApiExcludeController, ApiTags } from '@nestjs/swagger';
-import { buildOauthRedirectUrl } from '@novu/application-generic';
+import { buildOauthRedirectUrl, PinoLogger } from '@novu/application-generic';
 import { UserRegistrationBodyDto } from './dtos/user-registration.dto';
 import { UserRegister } from './usecases/register/user-register.usecase';
 import { UserRegisterCommand } from './usecases/register/user-register.command';
@@ -38,12 +37,10 @@ import { ApiCommonResponses } from '../shared/framework/response.decorator';
 import { UpdatePasswordBodyDto } from './dtos/update-password.dto';
 import { UpdatePassword } from './usecases/update-password/update-password.usecase';
 import { UpdatePasswordCommand } from './usecases/update-password/update-password.command';
-import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
-import { SwitchEnvironmentCommand } from './usecases/switch-environment/switch-environment.command';
-import { SwitchEnvironment } from './usecases/switch-environment/switch-environment.usecase';
 import { SwitchOrganizationCommand } from './usecases/switch-organization/switch-organization.command';
 import { SwitchOrganization } from './usecases/switch-organization/switch-organization.usecase';
 import { AuthService } from './services/auth.service';
+import { RequireAuthentication } from './framework/auth.decorator';
 
 @ApiCommonResponses()
 @Controller('/auth')
@@ -56,17 +53,19 @@ export class AuthController {
     private authService: AuthService,
     private userRegisterUsecase: UserRegister,
     private loginUsecase: Login,
-    private switchEnvironmentUsecase: SwitchEnvironment,
     private switchOrganizationUsecase: SwitchOrganization,
     private memberRepository: MemberRepository,
     private passwordResetRequestUsecase: PasswordResetRequest,
     private passwordResetUsecase: PasswordReset,
-    private updatePasswordUsecase: UpdatePassword
-  ) {}
+    private updatePasswordUsecase: UpdatePassword,
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   @Get('/github')
   githubAuth() {
-    Logger.verbose('Checking Github Auth');
+    this.logger.trace('Checking Github Auth');
 
     if (!process.env.GITHUB_OAUTH_CLIENT_ID || !process.env.GITHUB_OAUTH_CLIENT_SECRET) {
       throw new BadRequestException(
@@ -74,7 +73,7 @@ export class AuthController {
       );
     }
 
-    Logger.verbose('Github Auth has all variables.');
+    this.logger.trace('Github Auth has all variables.');
 
     return {
       success: true,
@@ -90,7 +89,7 @@ export class AuthController {
   }
 
   @Get('/refresh')
-  @UserAuthentication()
+  @RequireAuthentication()
   @Header('Cache-Control', 'no-store')
   refreshToken(@UserSession() user: UserSessionData) {
     if (!user || !user._id) throw new BadRequestException();
@@ -149,7 +148,7 @@ export class AuthController {
   }
 
   @Post('/organizations/:organizationId/switch')
-  @UserAuthentication()
+  @RequireAuthentication()
   @HttpCode(200)
   @Header('Cache-Control', 'no-store')
   async organizationSwitch(@UserSession() user: UserSessionData, @Param('organizationId') organizationId: string) {
@@ -163,7 +162,7 @@ export class AuthController {
 
   @Post('/update-password')
   @Header('Cache-Control', 'no-store')
-  @UserAuthentication()
+  @RequireAuthentication()
   @HttpCode(HttpStatus.NO_CONTENT)
   async updatePassword(@UserSession() user: UserSessionData, @Body() body: UpdatePasswordBodyDto) {
     return await this.updatePasswordUsecase.execute(

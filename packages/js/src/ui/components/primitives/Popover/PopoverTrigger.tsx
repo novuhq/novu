@@ -1,7 +1,8 @@
-import { JSX, splitProps } from 'solid-js';
+import { createMemo, JSX, splitProps } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
 import { usePopover } from '.';
 import { useStyle } from '../../../helpers';
+import { mergeRefs } from '../../../helpers/mergeRefs';
 import type { AppearanceKey } from '../../../types';
 
 type PopoverTriggerProps = JSX.IntrinsicElements['button'] & {
@@ -12,7 +13,7 @@ export const PopoverTrigger = (props: PopoverTriggerProps) => {
   const { setReference, onToggle } = usePopover();
 
   const style = useStyle();
-  const [local, rest] = splitProps(props, ['appearanceKey', 'asChild', 'onClick']);
+  const [local, rest] = splitProps(props, ['appearanceKey', 'asChild', 'onClick', 'ref']);
 
   const handleClick = (e: MouseEvent) => {
     if (typeof local.onClick === 'function') {
@@ -21,12 +22,14 @@ export const PopoverTrigger = (props: PopoverTriggerProps) => {
     onToggle();
   };
 
+  const ref = createMemo(() => (local.ref ? mergeRefs(setReference, local.ref) : setReference));
+
   if (local.asChild) {
-    return <Dynamic component={local.asChild} ref={setReference} onClick={handleClick} {...rest} />;
+    return <Dynamic component={local.asChild} ref={ref()} onClick={handleClick} {...rest} />;
   }
 
   return (
-    <button ref={setReference} onClick={handleClick} class={style(local.appearanceKey || 'dropdownTrigger')} {...rest}>
+    <button ref={ref()} onClick={handleClick} class={style(local.appearanceKey || 'dropdownTrigger')} {...rest}>
       {props.children}
     </button>
   );

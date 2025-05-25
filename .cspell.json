@@ -15,6 +15,7 @@
     "adresses",
     "APIJSON",
     "sdkerror",
+    "funcs",
     "idempotancy",
     "errordto",
     "filtertopicsresponsedto",
@@ -731,7 +732,19 @@
     "novugo",
     "titleize",
     "oklch",
-    "Duplicable"
+    "Duplicable",
+    "Radek",
+    "automators",
+    "VITE",
+    "snooze",
+    "unsnooze",
+    "snoozed",
+    "unsnoozed",
+    "automators",
+    "Svix",
+    "totp",
+    "calcom",
+    "partnerintegration"
   ],
   "flagWords": [],
   "patterns": [
@@ -835,6 +848,7 @@
     "websockets",
     "apps/dashboard/src/hooks/use-plain-chat.ts",
     "apps/dashboard/src/components/variable/constants.ts",
-    "apps/dashboard/src/utils/locales.ts"
+    "apps/dashboard/src/utils/locales.ts",
+    "apps/dashboard/src/components/primitives/constants.ts"
   ]
 }

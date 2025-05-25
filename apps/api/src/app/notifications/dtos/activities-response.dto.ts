@@ -24,7 +24,15 @@ export class DigestTimedConfigDto {
   @IsString()
   atTime?: string;
 
-  @ApiPropertyOptional({ description: 'Days of the week for the digest', type: [String], enum: DaysEnum })
+  @ApiPropertyOptional({
+    description: 'Days of the week for the digest',
+    type: 'array',
+    items: {
+      type: 'string',
+      enum: Object.values(DaysEnum),
+    },
+    enumName: 'DaysEnum',
+  })
   @IsOptional()
   @IsArray()
   @IsEnum(DaysEnum, { each: true })
@@ -343,6 +351,14 @@ export class ActivityNotificationTemplateResponseDto {
   triggers: NotificationTriggerDto[];
 }
 
+export class ActivityTopicDto {
+  @ApiProperty({ description: 'Internal Topic ID of the notification', type: String })
+  _topicId: string;
+
+  @ApiProperty({ description: 'Topic Key of the notification', type: String })
+  topicKey: string;
+}
+
 // Activity Notification Response DTO
 export class ActivityNotificationResponseDto {
   @ApiPropertyOptional({ description: 'Unique identifier of the notification', type: String })
@@ -422,7 +438,11 @@ export class ActivityNotificationResponseDto {
     type: Object, // Adjust type as necessary
   })
   to?: any; // Added to align with NotificationEntity
+
+  @ApiPropertyOptional({ description: 'Topics of the notification', type: [ActivityTopicDto] })
+  topics?: ActivityTopicDto[];
 }
+
 // Activities Response DTO
 export class ActivitiesResponseDto {
   @ApiProperty({ description: 'Indicates if there are more activities in the result set', type: Boolean })

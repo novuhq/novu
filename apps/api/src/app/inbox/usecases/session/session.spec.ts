@@ -1,9 +1,23 @@
 import sinon from 'sinon';
 import { expect } from 'chai';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
-import { EnvironmentRepository, IntegrationRepository } from '@novu/dal';
-import { AnalyticsService, CreateOrUpdateSubscriberUseCase, SelectIntegration } from '@novu/application-generic';
-import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
+import {
+  CommunityOrganizationRepository,
+  EnvironmentRepository,
+  IntegrationRepository,
+  NotificationTemplateRepository,
+  MessageTemplateRepository,
+  PreferencesRepository,
+  CommunityUserRepository,
+} from '@novu/dal';
+import {
+  AnalyticsService,
+  CreateOrUpdateSubscriberUseCase,
+  PinoLogger,
+  SelectIntegration,
+  UpsertControlValuesUseCase,
+} from '@novu/application-generic';
+import { ApiServiceLevelEnum, ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
 import { AuthService } from '../../../auth/services/auth.service';
 import { Session } from './session.usecase';
 import { SessionCommand } from './session.command';
@@ -12,6 +26,8 @@ import { AnalyticsEventsEnum } from '../../utils';
 // eslint-disable-next-line import/no-namespace
 import * as encryption from '../../utils/encryption';
 import { NotificationsCount } from '../notifications-count/notifications-count.usecase';
+import { GenerateUniqueApiKey } from '../../../environments-v1/usecases/generate-unique-api-key/generate-unique-api-key.usecase';
+import { CreateNovuIntegrations } from '../../../integrations/usecases/create-novu-integrations/create-novu-integrations.usecase';
 
 const mockIntegration = {
   _id: '_id',
@@ -39,6 +55,17 @@ describe('Session', () => {
   let analyticsService: sinon.SinonStubbedInstance<AnalyticsService>;
   let notificationsCount: sinon.SinonStubbedInstance<NotificationsCount>;
   let integrationRepository: sinon.SinonStubbedInstance<IntegrationRepository>;
+  let organizationRepository: sinon.SinonStubbedInstance<CommunityOrganizationRepository>;
+  let communityOrganizationRepository: sinon.SinonStubbedInstance<CommunityOrganizationRepository>;
+  let generateUniqueApiKey: sinon.SinonStubbedInstance<GenerateUniqueApiKey>;
+  let createNovuIntegrationsUsecase: sinon.SinonStubbedInstance<CreateNovuIntegrations>;
+  let communityUserRepository: sinon.SinonStubbedInstance<CommunityUserRepository>;
+  let notificationTemplateRepository: sinon.SinonStubbedInstance<NotificationTemplateRepository>;
+  let messageTemplateRepository: sinon.SinonStubbedInstance<MessageTemplateRepository>;
+  let preferencesRepository: sinon.SinonStubbedInstance<PreferencesRepository>;
+  let upsertControlValuesUseCase: sinon.SinonStubbedInstance<UpsertControlValuesUseCase>;
+  let logger: sinon.SinonStubbedInstance<PinoLogger>;
+
   beforeEach(() => {
     environmentRepository = sinon.createStubInstance(EnvironmentRepository);
     createSubscriber = sinon.createStubInstance(CreateOrUpdateSubscriberUseCase);
@@ -47,6 +74,16 @@ describe('Session', () => {
     analyticsService = sinon.createStubInstance(AnalyticsService);
     notificationsCount = sinon.createStubInstance(NotificationsCount);
     integrationRepository = sinon.createStubInstance(IntegrationRepository);
+    organizationRepository = sinon.createStubInstance(CommunityOrganizationRepository);
+    communityOrganizationRepository = sinon.createStubInstance(CommunityOrganizationRepository);
+    generateUniqueApiKey = sinon.createStubInstance(GenerateUniqueApiKey);
+    createNovuIntegrationsUsecase = sinon.createStubInstance(CreateNovuIntegrations);
+    communityUserRepository = sinon.createStubInstance(CommunityUserRepository);
+    notificationTemplateRepository = sinon.createStubInstance(NotificationTemplateRepository);
+    messageTemplateRepository = sinon.createStubInstance(MessageTemplateRepository);
+    preferencesRepository = sinon.createStubInstance(PreferencesRepository);
+    upsertControlValuesUseCase = sinon.createStubInstance(UpsertControlValuesUseCase);
+    logger = sinon.createStubInstance(PinoLogger);
 
     session = new Session(
       environmentRepository as any,
@@ -55,14 +92,26 @@ describe('Session', () => {
       selectIntegration as any,
       analyticsService as any,
       notificationsCount as any,
-      integrationRepository as any
+      integrationRepository as any,
+      organizationRepository as any,
+      communityOrganizationRepository as any,
+      generateUniqueApiKey as any,
+      createNovuIntegrationsUsecase as any,
+      communityUserRepository as any,
+      notificationTemplateRepository as any,
+      messageTemplateRepository as any,
+      preferencesRepository as any,
+      upsertControlValuesUseCase as any,
+      logger as any
     );
   });
 
   it('should throw an error if the environment is not found', async () => {
     const command: SessionCommand = {
       applicationIdentifier: 'invalid-app-id',
-      subscriberId: 'subscriber-id',
+      subscriber: {
+        subscriberId: 'subscriber-id',
+      },
     };
 
     environmentRepository.findEnvironmentByIdentifier.resolves(null);
@@ -78,7 +127,9 @@ describe('Session', () => {
   it('should throw an error if the in-app integration is not found', async () => {
     const command: SessionCommand = {
       applicationIdentifier: 'app-id',
-      subscriberId: 'subscriber-id',
+      subscriber: {
+        subscriberId: 'subscriber-id',
+      },
     };
 
     environmentRepository.findEnvironmentByIdentifier.resolves({
@@ -99,7 +150,9 @@ describe('Session', () => {
   it('should validate HMAC encryption and return the session response', async () => {
     const command: SessionCommand = {
       applicationIdentifier: 'app-id',
-      subscriberId: 'subscriber-id',
+      subscriber: {
+        subscriberId: 'subscriber-id',
+      },
       subscriberHash: 'hash',
     };
     const subscriber = { _id: 'subscriber-id' };
@@ -128,7 +181,9 @@ describe('Session', () => {
   it('should return correct removeNovuBranding value when is set on the integration', async () => {
     const command: SessionCommand = {
       applicationIdentifier: 'app-id',
-      subscriberId: 'subscriber-id',
+      subscriber: {
+        subscriberId: 'subscriber-id',
+      },
       subscriberHash: 'hash',
     };
     const subscriber = { _id: 'subscriber-id' };
@@ -173,7 +228,9 @@ describe('Session', () => {
   it('should create a subscriber and return the session response', async () => {
     const command: SessionCommand = {
       applicationIdentifier: 'app-id',
-      subscriberId: 'subscriber-id',
+      subscriber: {
+        subscriberId: 'subscriber-id',
+      },
       subscriberHash: 'hash',
       origin: 'origin',
     };
@@ -202,5 +259,45 @@ describe('Session', () => {
         origin: command.origin,
       })
     ).to.be.true;
+  });
+
+  it('should return the correct maxSnoozeDurationHours value for different service levels', async () => {
+    const command: SessionCommand = {
+      applicationIdentifier: 'app-id',
+      subscriber: { subscriberId: 'subscriber-id' },
+      subscriberHash: 'hash',
+    };
+
+    const environment = { _id: 'env-id', _organizationId: 'org-id', name: 'env-name', apiKeys: [{ key: 'api-key' }] };
+    const integration = { ...mockIntegration, credentials: { hmac: false } };
+    const subscriber = { _id: 'subscriber-id' };
+    const notificationCount = { data: [{ count: 10, filter: {} }] };
+    const token = 'token';
+
+    environmentRepository.findEnvironmentByIdentifier.resolves(environment as any);
+    selectIntegration.execute.resolves(integration);
+    createSubscriber.execute.resolves(subscriber as any);
+    notificationsCount.execute.resolves(notificationCount);
+    authService.getSubscriberWidgetToken.resolves(token);
+
+    // FREE plan should have 24 hours max snooze duration
+    organizationRepository.findOne.resolves({ apiServiceLevel: ApiServiceLevelEnum.FREE } as any);
+    const freeResponse: SubscriberSessionResponseDto = await session.execute(command);
+    expect(freeResponse.maxSnoozeDurationHours).to.equal(24);
+
+    // PRO plan should have 90 days max snooze duration
+    organizationRepository.findOne.resolves({ apiServiceLevel: ApiServiceLevelEnum.PRO } as any);
+    const proResponse: SubscriberSessionResponseDto = await session.execute(command);
+    expect(proResponse.maxSnoozeDurationHours).to.equal(90 * 24);
+
+    // BUSINESS/TEAM plan should have 90 days max snooze duration
+    organizationRepository.findOne.resolves({ apiServiceLevel: ApiServiceLevelEnum.BUSINESS } as any);
+    const businessResponse: SubscriberSessionResponseDto = await session.execute(command);
+    expect(businessResponse.maxSnoozeDurationHours).to.equal(90 * 24);
+
+    // ENTERPRISE plan should have 90 days max snooze duration
+    organizationRepository.findOne.resolves({ apiServiceLevel: ApiServiceLevelEnum.ENTERPRISE } as any);
+    const enterpriseResponse: SubscriberSessionResponseDto = await session.execute(command);
+    expect(enterpriseResponse.maxSnoozeDurationHours).to.equal(90 * 24);
   });
 });

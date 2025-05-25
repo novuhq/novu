@@ -1,11 +1,29 @@
 import { RedirectToSignIn, SignedIn, SignedOut } from '@clerk/clerk-react';
 import { EnvironmentProvider } from '@/context/environment/environment-provider';
+import { ReactNode } from 'react';
+import { MemberRoleEnum, PermissionsEnum } from '@novu/shared';
+import { PermissionProtectedRoute } from './permission-protected-route';
 
-export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+interface ProtectedRouteProps {
+  children: ReactNode;
+  permission?: PermissionsEnum;
+  condition?: (has: (params: { permission: PermissionsEnum } | { role: MemberRoleEnum }) => boolean) => boolean;
+  isDrawerRoute?: boolean;
+}
+
+export const ProtectedRoute = ({ children, permission, condition, isDrawerRoute }: ProtectedRouteProps) => {
   return (
     <>
       <SignedIn>
-        <EnvironmentProvider>{children}</EnvironmentProvider>
+        <EnvironmentProvider>
+          {permission || condition ? (
+            <PermissionProtectedRoute permission={permission} condition={condition} isDrawerRoute={isDrawerRoute}>
+              {children}
+            </PermissionProtectedRoute>
+          ) : (
+            children
+          )}
+        </EnvironmentProvider>
       </SignedIn>
       <SignedOut>
         <RedirectToSignIn />

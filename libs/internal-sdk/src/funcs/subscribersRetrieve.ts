@@ -25,10 +25,11 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Get subscriber
+ * Retrieve a subscriber
  *
  * @remarks
- * Get subscriber by your internal id used to identify the subscriber
+ * Retrive a subscriber by its unique key identifier **subscriberId**.
+ *     **subscriberId** field is required.
  */
 export function subscribersRetrieve(
   client: NovuCore,

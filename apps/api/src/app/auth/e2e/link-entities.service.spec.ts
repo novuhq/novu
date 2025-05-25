@@ -10,7 +10,7 @@ import {
 import sinon from 'sinon';
 import { CLERK_ORGANIZATION_1, CLERK_USER_1, ClerkClientMock } from '@novu/testing';
 import mongoose from 'mongoose';
-import { AnalyticsService } from '@novu/application-generic';
+import { AnalyticsService, createNestLoggingModuleOptions, LoggerModule, PinoLogger } from '@novu/application-generic';
 import { GetOrganization } from '../../organization/usecases/get-organization/get-organization.usecase';
 import { SyncExternalOrganization } from '../../organization/usecases/create-organization/sync-external-organization/sync-external-organization.usecase';
 import { CreateEnvironment } from '../../environments-v1/usecases/create-environment/create-environment.usecase';
@@ -60,6 +60,7 @@ describe('Link external and internal entities #novu-v2', () => {
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
+      imports: [LoggerModule.forRoot(createNestLoggingModuleOptions({ serviceName: 'test', version: '0.0.1' }))],
       providers: [
         LinkEntitiesService,
         CommunityUserRepository,

@@ -127,7 +127,9 @@ describe('GetNotifications', () => {
     expect(result.filter).to.deep.equal({
       tags: command.tags,
       read: command.read,
+      data: command.data,
       archived: command.archived,
+      snoozed: command.snoozed,
     });
     expect(result.hasMore).to.be.false;
     expect(analyticsServiceMock.mixpanelTrack.calledOnce).to.be.true;

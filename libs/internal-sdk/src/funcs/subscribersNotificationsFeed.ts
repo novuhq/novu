@@ -25,7 +25,10 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Get in-app notification feed for a particular subscriber
+ * Retrieve subscriber notifications
+ *
+ * @remarks
+ * Retrieve subscriber in-app (inbox) notifications by its unique key identifier **subscriberId**.
  */
 export function subscribersNotificationsFeed(
   client: NovuCore,

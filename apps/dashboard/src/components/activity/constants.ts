@@ -102,4 +102,5 @@ export const defaultActivityFilters: ActivityFiltersData = {
   workflows: [],
   transactionId: '',
   subscriberId: '',
+  topicKey: '',
 } as const;

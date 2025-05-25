@@ -26,7 +26,7 @@ import {
 } from "./_types.js";
 
 export type TopicsSubscribersRetrieveQueryData =
-  operations.TopicsControllerGetTopicSubscriberResponse;
+  operations.TopicsV1ControllerGetTopicSubscriberResponse;
 
 /**
  * Check topic subscriber

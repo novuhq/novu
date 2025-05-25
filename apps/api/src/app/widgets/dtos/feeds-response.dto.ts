@@ -73,12 +73,13 @@ export class NotificationFeedItemDto implements INotificationDto {
   })
   _subscriberId: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Identifier for the feed associated with the notification.',
     example: 'feed_445566',
     type: String,
+    nullable: true,
   })
-  _feedId: string;
+  _feedId?: string | null;
 
   @ApiProperty({
     description: 'Identifier for the job that triggered the notification.',
@@ -176,13 +177,6 @@ export class NotificationFeedItemDto implements INotificationDto {
     type: Boolean,
   })
   seen: boolean;
-
-  @ApiProperty({
-    description: 'Indicates whether the notification has been deleted.',
-    example: false,
-    type: Boolean,
-  })
-  deleted: boolean;
 
   @ApiPropertyOptional({
     description: 'Device tokens for push notifications, if applicable.',

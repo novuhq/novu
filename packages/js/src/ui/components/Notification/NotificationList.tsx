@@ -29,7 +29,9 @@ export const NotificationList = (props: NotificationListProps) => {
   const options = createMemo(() => ({ ...props.filter, limit: props.limit }));
   const style = useStyle();
   const { data, setEl, end, refetch, initialLoading } = useNotificationsInfiniteScroll({ options });
-  const { count, reset: resetNewMessagesCount } = useNewMessagesCount({ filter: { tags: props.filter?.tags ?? [] } });
+  const { count, reset: resetNewMessagesCount } = useNewMessagesCount({
+    filter: { tags: props.filter?.tags ?? [], data: props.filter?.data ?? {} },
+  });
   const { setLimit } = useInboxContext();
   const ids = createMemo(() => data().map((n) => n.id));
   let notificationListElement: HTMLDivElement;

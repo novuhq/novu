@@ -26,6 +26,12 @@ import {
   ActivityNotificationTemplateResponseDto$outboundSchema,
 } from "./activitynotificationtemplateresponsedto.js";
 import {
+  ActivityTopicDto,
+  ActivityTopicDto$inboundSchema,
+  ActivityTopicDto$Outbound,
+  ActivityTopicDto$outboundSchema,
+} from "./activitytopicdto.js";
+import {
   StepTypeEnum,
   StepTypeEnum$inboundSchema,
   StepTypeEnum$outboundSchema,
@@ -112,6 +118,10 @@ export type ActivityNotificationResponseDto = {
    * To field for subscriber definition
    */
   to?: ActivityNotificationResponseDtoTo | undefined;
+  /**
+   * Topics of the notification
+   */
+  topics?: Array<ActivityTopicDto> | undefined;
 };
 
 /** @internal */
@@ -288,6 +298,7 @@ export const ActivityNotificationResponseDto$inboundSchema: z.ZodType<
   tags: z.array(z.string()).optional(),
   controls: z.lazy(() => Controls$inboundSchema).optional(),
   to: z.lazy(() => ActivityNotificationResponseDtoTo$inboundSchema).optional(),
+  topics: z.array(ActivityTopicDto$inboundSchema).optional(),
 }).transform((v) => {
   return remap$(v, {
     "_id": "id",
@@ -318,6 +329,7 @@ export type ActivityNotificationResponseDto$Outbound = {
   tags?: Array<string> | undefined;
   controls?: Controls$Outbound | undefined;
   to?: ActivityNotificationResponseDtoTo$Outbound | undefined;
+  topics?: Array<ActivityTopicDto$Outbound> | undefined;
 };
 
 /** @internal */
@@ -345,6 +357,7 @@ export const ActivityNotificationResponseDto$outboundSchema: z.ZodType<
   tags: z.array(z.string()).optional(),
   controls: z.lazy(() => Controls$outboundSchema).optional(),
   to: z.lazy(() => ActivityNotificationResponseDtoTo$outboundSchema).optional(),
+  topics: z.array(ActivityTopicDto$outboundSchema).optional(),
 }).transform((v) => {
   return remap$(v, {
     id: "_id",

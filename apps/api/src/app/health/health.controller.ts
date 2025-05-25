@@ -5,13 +5,14 @@ import {
   DalServiceHealthIndicator,
   ExternalApiAccessible,
   WorkflowQueueServiceHealthIndicator,
+  SkipPermissionsCheck,
 } from '@novu/application-generic';
 
 import { Body, Post } from '@nestjs/common/decorators';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { version } from '../../../package.json';
 import { DocumentationIgnore, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
-import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
+import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import {
   IdempotenceTestingResponse,
   IdempotencyBehaviorEnum,
@@ -51,12 +52,13 @@ export class HealthController {
   }
 
   @ExternalApiAccessible()
-  @UserAuthentication()
+  @RequireAuthentication()
   @ApiCommonResponses()
   @ApiCreatedResponse({ type: IdempotenceTestingResponse })
   @DocumentationIgnore()
   @SdkMethodName('testIdempotency')
   @Post('/test-idempotency')
+  @SkipPermissionsCheck()
   async testIdempotency(@Body() body: IdempotencyTestingDto): Promise<IdempotenceTestingResponse> {
     if (process.env.NODE_ENV !== 'test') throw new NotFoundException();
 
@@ -78,11 +80,12 @@ export class HealthController {
   }
   @DocumentationIgnore()
   @ExternalApiAccessible()
-  @UserAuthentication()
+  @RequireAuthentication()
   @ApiCommonResponses()
   @ApiCreatedResponse({ type: IdempotenceTestingResponse })
   @SdkMethodName('generateRandomNumber')
   @Get('/test-idempotency')
+  @SkipPermissionsCheck()
   async generateRandomNumber(): Promise<IdempotenceTestingResponse> {
     if (process.env.NODE_ENV !== 'test') throw new NotFoundException();
 

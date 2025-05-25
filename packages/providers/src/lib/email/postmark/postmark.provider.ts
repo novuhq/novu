@@ -81,7 +81,8 @@ export class PostmarkEmailProvider extends BaseProvider implements IEmailProvide
       Cc: getFormattedTo(options.cc),
       Bcc: getFormattedTo(options.bcc),
       Attachments: options.attachments?.map(
-        (attachment) => new Models.Attachment(attachment.name, attachment.file.toString('base64'), attachment.mime)
+        (attachment) =>
+          new Models.Attachment(attachment.name, attachment.file.toString('base64'), attachment.mime, attachment.cid)
       ),
     };
 

@@ -18,6 +18,7 @@ describe('Get Notifications Count - /inbox/notifications/count (GET) #novu-v2', 
   let subscriber: SubscriberEntity | null;
   const messageRepository = new MessageRepository();
   const subscriberRepository = new SubscriberRepository();
+
   let novuClient: Novu;
   beforeEach(async () => {
     session = new UserSession();
@@ -53,7 +54,9 @@ describe('Get Notifications Count - /inbox/notifications/count (GET) #novu-v2', 
     });
   });
 
-  const getNotificationsCount = async (filters: Array<{ tags?: string[]; read?: boolean; archived?: boolean }>) => {
+  const getNotificationsCount = async (
+    filters: Array<{ tags?: string[]; read?: boolean; archived?: boolean; snoozed?: boolean }>
+  ) => {
     return await session.testAgent
       .get(`/v1/inbox/notifications/count?filters=${JSON.stringify(filters)}`)
       .set('Authorization', `Bearer ${session.subscriberToken}`);
@@ -193,6 +196,29 @@ describe('Get Notifications Count - /inbox/notifications/count (GET) #novu-v2', 
     expect(body.data[0].filter).to.deep.equal({
       read: true,
       archived: true,
+    });
+  });
+
+  it('should return notifications count for snoozed notifications', async function () {
+    const count = 4;
+    await triggerEvent(template, count);
+    await messageRepository.update(
+      {
+        _environmentId: session.environment._id,
+        _subscriberId: subscriber?._id ?? '',
+        channel: ChannelTypeEnum.IN_APP,
+      },
+      { $set: { snoozedUntil: new Date() } }
+    );
+
+    const { body, status } = await getNotificationsCount([{ snoozed: true }]);
+
+    expect(status).to.equal(200);
+    expect(body.data).to.be.ok;
+    expect(body.data.length).to.eq(1);
+    expect(body.data[0].count).to.eq(count);
+    expect(body.data[0].filter).to.deep.equal({
+      snoozed: true,
     });
   });
 

@@ -1,0 +1,13 @@
+{
+  "name": "@novu/api-service",
+  "sourceRoot": "apps/api/src",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "cache": false,
+      "dependsOn": ["^build"],
+      "inputs": ["default"],
+      "outputs": ["{projectRoot}/src/metadata.ts"]
+    }
+  }
+}

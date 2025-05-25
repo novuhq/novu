@@ -281,7 +281,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ) => {
     return (
       <InputRoot size={size} hasError={hasError}>
-        {leadingNode && <div className="space-y-1">{trailingNode}</div>}
+        {leadingNode && <div className="flex flex-col justify-center gap-1">{leadingNode}</div>}
         <InputWrapper>
           {inlineLeadingNode}
           {LeadingIcon && <InputIcon as={LeadingIcon} />}
@@ -289,7 +289,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           {TrailingIcon && <InputIcon as={TrailingIcon} />}
           {inlineTrailingNode}
         </InputWrapper>
-        {trailingNode && <div className="space-y-1">{trailingNode}</div>}
+        {trailingNode && <div className="flex flex-col justify-center gap-1">{trailingNode}</div>}
       </InputRoot>
     );
   }

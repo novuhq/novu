@@ -1,39 +1,62 @@
+import { EditVariablePopover } from '@/components/variable/edit-variable-popover';
+import { validateEnhancedDigestFilters } from '@/components/variable/utils';
+import { VariablePill } from '@/components/variable/variable-pill';
+import { parseVariable } from '@/utils/liquid';
+import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
 import { NodeViewProps } from '@tiptap/core';
 import { NodeViewWrapper } from '@tiptap/react';
 import { useCallback, useMemo, useState } from 'react';
-
-import { VARIABLE_REGEX_STRING } from '@/components/primitives/control-input/variable-plugin';
-import { parseVariable } from '@/components/primitives/control-input/variable-plugin/utils';
-import { EditVariablePopover } from '@/components/variable/edit-variable-popover';
-import { VariablePill } from '@/components/variable/variable-pill';
-import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
 import { resolveRepeatBlockAlias } from '../variables/variables';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { DIGEST_VARIABLES_ENUM, getDynamicDigestVariable } from '@/components/variable/utils/digest-variables';
+import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 
 type InternalVariableViewProps = NodeViewProps & {
+  variables: LiquidVariable[];
   isAllowedVariable: IsAllowedVariable;
 };
 
 function InternalVariableView(props: InternalVariableViewProps) {
-  const { node, updateAttributes, editor, isAllowedVariable } = props;
+  const { node, updateAttributes, editor, isAllowedVariable, deleteNode, variables } = props;
   const { id, aliasFor } = node.attrs;
   const [variableValue, setVariableValue] = useState(`{{${id}}}`);
   const [isOpen, setIsOpen] = useState(false);
-  const isEnhancedDigestEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_ENHANCED_DIGEST_ENABLED);
+  const { digestStepBeforeCurrent } = useWorkflow();
 
-  const parseVariableCallback = useCallback((variable: string) => {
-    const regex = new RegExp(VARIABLE_REGEX_STRING, 'g');
-    const match = regex.exec(variable);
+  const parseVariableCallback = useCallback(
+    (variable: string) => {
+      const parsedVariable = parseVariable(variable);
 
-    if (!match) {
-      return { name: '', fullLiquidExpression: '', start: 0, end: 0, filters: [] };
-    }
+      if (!parsedVariable?.filtersArray) {
+        return {
+          name: '',
+          fullLiquidExpression: '',
+          start: 0,
+          end: 0,
+          filters: '',
+          filtersArray: [],
+          issues: null,
+        };
+      }
 
-    return parseVariable(match);
-  }, []);
+      let issue: ReturnType<typeof validateEnhancedDigestFilters> = null;
+      const { value } = getDynamicDigestVariable({
+        type: DIGEST_VARIABLES_ENUM.SENTENCE_SUMMARY,
+        digestStepName: digestStepBeforeCurrent?.stepId,
+      });
 
-  const { name, filters, fullLiquidExpression } = useMemo(
+      if (value && value.split('|')[0].trim() === parsedVariable.name) {
+        issue = validateEnhancedDigestFilters(parsedVariable.filtersArray);
+      }
+
+      return {
+        ...parsedVariable,
+        issues: issue,
+      };
+    },
+    [digestStepBeforeCurrent?.stepId]
+  );
+
+  const { name, filtersArray, fullLiquidExpression, issues } = useMemo(
     () => parseVariableCallback(variableValue),
     [variableValue, parseVariableCallback]
   );
@@ -51,21 +74,35 @@ function InternalVariableView(props: InternalVariableViewProps) {
         open={isOpen}
         onOpenChange={setIsOpen}
         variable={variable}
+        variables={variables}
         isAllowedVariable={isAllowedVariable}
         onUpdate={(newValue) => {
           const { fullLiquidExpression } = parseVariableCallback(newValue);
-          updateAttributes({
-            id: fullLiquidExpression,
-            aliasFor: resolveRepeatBlockAlias(fullLiquidExpression, editor, isEnhancedDigestEnabled),
-          });
+          const aliasFor = resolveRepeatBlockAlias(fullLiquidExpression, editor);
+
+          if (fullLiquidExpression) {
+            updateAttributes({
+              id: fullLiquidExpression,
+              aliasFor,
+            });
+          }
+
           setVariableValue(newValue);
           // Focus back to the editor after updating the variable
           editor.view.focus();
         }}
+        onDeleteClick={() => {
+          deleteNode();
+
+          setTimeout(() => {
+            editor.view.focus();
+          }, 0);
+        }}
       >
         <VariablePill
+          issues={issues}
           variableName={name}
-          hasFilters={!!filters?.length}
+          filters={filtersArray}
           onClick={() => setIsOpen(true)}
           className="-mt-[2px]"
         />
@@ -75,8 +112,8 @@ function InternalVariableView(props: InternalVariableViewProps) {
 }
 
 // HOC that takes isAllowedVariable prop
-export function createVariableView(isAllowedVariable: IsAllowedVariable) {
+export function createVariableView(variables: LiquidVariable[], isAllowedVariable: IsAllowedVariable) {
   return function VariableView(props: NodeViewProps) {
-    return <InternalVariableView {...props} isAllowedVariable={isAllowedVariable} />;
+    return <InternalVariableView {...props} variables={variables} isAllowedVariable={isAllowedVariable} />;
   };
 }

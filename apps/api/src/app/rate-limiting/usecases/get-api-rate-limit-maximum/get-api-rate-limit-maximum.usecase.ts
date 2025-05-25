@@ -1,6 +1,12 @@
-import { Injectable, InternalServerErrorException, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, OnModuleInit } from '@nestjs/common';
 import { CommunityOrganizationRepository, EnvironmentRepository } from '@novu/dal';
-import { buildMaximumApiRateLimitKey, CachedResponse, Instrument, InstrumentUsecase } from '@novu/application-generic';
+import {
+  buildMaximumApiRateLimitKey,
+  CachedResponse,
+  Instrument,
+  InstrumentUsecase,
+  PinoLogger,
+} from '@novu/application-generic';
 import {
   ApiRateLimitCategoryEnum,
   ApiRateLimitCategoryToFeatureName,
@@ -12,15 +18,16 @@ import {
 import { GetApiRateLimitMaximumCommand } from './get-api-rate-limit-maximum.command';
 import { CUSTOM_API_SERVICE_LEVEL, GetApiRateLimitMaximumDto } from './get-api-rate-limit-maximum.dto';
 
-const LOG_CONTEXT = 'GetApiRateLimit';
-
 @Injectable()
 export class GetApiRateLimitMaximum implements OnModuleInit {
   private apiRateLimitRecord: IApiRateLimitServiceMaximum;
   constructor(
     private environmentRepository: EnvironmentRepository,
-    private organizationRepository: CommunityOrganizationRepository
-  ) {}
+    private organizationRepository: CommunityOrganizationRepository,
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   onModuleInit() {
     this.apiRateLimitRecord = this.buildApiRateLimitRecord();
@@ -67,7 +74,7 @@ export class GetApiRateLimitMaximum implements OnModuleInit {
 
     if (!organization) {
       const message = `Organization id: ${_organizationId} not found`;
-      Logger.error(message, LOG_CONTEXT);
+      this.logger.error(message);
       throw new InternalServerErrorException(message);
     }
 
@@ -83,7 +90,7 @@ export class GetApiRateLimitMaximum implements OnModuleInit {
 
     if (!environment) {
       const message = `Environment id: ${_environmentId} not found`;
-      Logger.error(message, LOG_CONTEXT);
+      this.logger.error(message);
       throw new InternalServerErrorException(message);
     }
 

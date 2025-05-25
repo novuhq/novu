@@ -38,7 +38,7 @@ export function topicsSubscribersRetrieve(
   options?: RequestOptions,
 ): APIPromise<
   Result<
-    operations.TopicsControllerGetTopicSubscriberResponse,
+    operations.TopicsV1ControllerGetTopicSubscriberResponse,
     | errors.ErrorDto
     | errors.ErrorDto
     | errors.ValidationErrorDto
@@ -70,7 +70,7 @@ async function $do(
 ): Promise<
   [
     Result<
-      operations.TopicsControllerGetTopicSubscriberResponse,
+      operations.TopicsV1ControllerGetTopicSubscriberResponse,
       | errors.ErrorDto
       | errors.ErrorDto
       | errors.ValidationErrorDto
@@ -86,7 +86,7 @@ async function $do(
     APICall,
   ]
 > {
-  const input: operations.TopicsControllerGetTopicSubscriberRequest = {
+  const input: operations.TopicsV1ControllerGetTopicSubscriberRequest = {
     topicKey: topicKey,
     externalSubscriberId: externalSubscriberId,
     idempotencyKey: idempotencyKey,
@@ -95,9 +95,8 @@ async function $do(
   const parsed = safeParse(
     input,
     (value) =>
-      operations.TopicsControllerGetTopicSubscriberRequest$outboundSchema.parse(
-        value,
-      ),
+      operations.TopicsV1ControllerGetTopicSubscriberRequest$outboundSchema
+        .parse(value),
     "Input validation failed",
   );
   if (!parsed.ok) {
@@ -136,7 +135,7 @@ async function $do(
 
   const context = {
     baseURL: options?.serverURL ?? client._baseURL ?? "",
-    operationID: "TopicsController_getTopicSubscriber",
+    operationID: "TopicsV1Controller_getTopicSubscriber",
     oAuth2Scopes: [],
 
     resolvedSecurity: requestSecurity,
@@ -204,7 +203,7 @@ async function $do(
   };
 
   const [result] = await M.match<
-    operations.TopicsControllerGetTopicSubscriberResponse,
+    operations.TopicsV1ControllerGetTopicSubscriberResponse,
     | errors.ErrorDto
     | errors.ErrorDto
     | errors.ValidationErrorDto
@@ -219,7 +218,7 @@ async function $do(
   >(
     M.json(
       200,
-      operations.TopicsControllerGetTopicSubscriberResponse$inboundSchema,
+      operations.TopicsV1ControllerGetTopicSubscriberResponse$inboundSchema,
       { hdrs: true, key: "Result" },
     ),
     M.jsonErr(414, errors.ErrorDto$inboundSchema),

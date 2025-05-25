@@ -5,7 +5,7 @@ import { ApiServiceLevelEnum } from '@novu/shared';
 import { GetEventResourceUsage } from '@novu/ee-billing';
 
 process.env.LAUNCH_DARKLY_SDK_KEY = ''; // disable Launch Darkly to allow test to define FF state
-
+// process.env.CLERK_ENABLED = 'true';
 describe('Resource Limiting #novu-v2', () => {
   let session: UserSession;
   const pathDefault = '/v1/testing/resource-limiting-default';
@@ -36,6 +36,7 @@ describe('Resource Limiting #novu-v2', () => {
       process.env.IS_SELF_HOSTED = 'false';
       session = new UserSession();
       await session.initialize();
+      await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.PRO);
 
       request = (path: string, authHeader = `ApiKey ${session.apiKey}`) =>
         session.testAgent.get(path).set('authorization', authHeader);
@@ -69,6 +70,7 @@ describe('Resource Limiting #novu-v2', () => {
         });
 
         it('should block the request when the quota limit is exceeded and product tier is free', async () => {
+          await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.FREE);
           getEventResourceUsageStub.resolves({
             remaining: 0,
             limit: 100,

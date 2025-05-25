@@ -33,8 +33,8 @@ const response = {
 
 const requestFn = vi.fn().mockResolvedValue(response);
 
-vi.mock(import('node-mailjet'), async (importOriginal) => {
-  const actual = await importOriginal();
+vi.mock('node-mailjet', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('node-mailjet')>();
 
   return {
     ...actual,

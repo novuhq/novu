@@ -27,13 +27,13 @@ export class RemoveMember {
     );
 
     if (isMemberAssociatedWithEnvironment) {
-      const admin = await this.memberRepository.getOrganizationAdminAccount(command.organizationId);
-      if (!admin) throw new NotFoundException('No admin account found for organization');
+      const owner = await this.memberRepository.getOrganizationOwnerAccount(command.organizationId);
+      if (!owner) throw new NotFoundException('No owner account found for organization');
 
       await this.environmentRepository.updateApiKeyUserId(
         command.organizationId,
         memberToRemove._userId,
-        admin._userId
+        owner._userId
       );
     }
 

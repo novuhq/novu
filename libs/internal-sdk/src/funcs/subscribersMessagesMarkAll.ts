@@ -26,7 +26,10 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Marks all the subscriber messages as read, unread, seen or unseen. Optionally you can pass feed id (or array) to mark messages of a particular feed.
+ * Update all notifications state
+ *
+ * @remarks
+ * Update all subscriber in-app (inbox) notifications state such as read, unread, seen or unseen by **subscriberId**.
  */
 export function subscribersMessagesMarkAll(
   client: NovuCore,

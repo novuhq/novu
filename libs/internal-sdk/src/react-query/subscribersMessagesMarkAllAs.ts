@@ -28,7 +28,11 @@ export type SubscribersMessagesMarkAllAsMutationData =
   operations.SubscribersV1ControllerMarkMessagesAsResponse;
 
 /**
- * Mark a subscriber messages as seen, read, unseen or unread
+ * Update notifications state
+ *
+ * @remarks
+ * Update subscriber's multiple in-app (inbox) notifications state such as seen, read, unseen or unread by **subscriberId**.
+ *       **messageId** is of type mongodbId of notifications
  */
 export function useSubscribersMessagesMarkAllAsMutation(
   options?: MutationHookOptions<

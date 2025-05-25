@@ -21,6 +21,17 @@ const notificationSchema = new Schema<NotificationDBModel>(
       type: Schema.Types.ObjectId,
       ref: 'Subscriber',
     },
+    topics: [
+      {
+        _topicId: {
+          type: Schema.Types.ObjectId,
+          ref: 'Topic',
+        },
+        topicKey: {
+          type: Schema.Types.String,
+        },
+      },
+    ],
     transactionId: {
       type: Schema.Types.String,
     },

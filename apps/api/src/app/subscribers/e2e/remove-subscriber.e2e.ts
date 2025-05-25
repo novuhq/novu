@@ -1,9 +1,9 @@
-import { SubscribersService, UserSession } from '@novu/testing';
-import { SubscriberEntity, SubscriberRepository, TopicSubscribersRepository } from '@novu/dal';
-import { expect } from 'chai';
-import { ExternalSubscriberId, TopicKey, TopicName } from '@novu/shared';
 import { Novu } from '@novu/api';
-import { CreateTopicResponseDto } from '@novu/api/models/components';
+import { TopicResponseDto } from '@novu/api/models/components';
+import { SubscriberEntity, SubscriberRepository, TopicSubscribersRepository } from '@novu/dal';
+import { ExternalSubscriberId, TopicKey, TopicName } from '@novu/shared';
+import { SubscribersService, UserSession } from '@novu/testing';
+import { expect } from 'chai';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 const subscriberId = '123';
@@ -61,7 +61,7 @@ describe('Delete Subscriber - /subscribers/:subscriberId (DELETE) #novu-v2', fun
 
     expect(deletedRelations.length).to.equal(0);
   });
-  const createTopic = async (key: TopicKey, name: TopicName): Promise<CreateTopicResponseDto> => {
+  const createTopic = async (key: TopicKey, name: TopicName) => {
     const response = await novuClient.topics.create({
       key,
       name,
@@ -73,20 +73,18 @@ describe('Delete Subscriber - /subscribers/:subscriberId (DELETE) #novu-v2', fun
 
     return body;
   };
-  const addSubscribersToTopic = async (createdTopicDto: CreateTopicResponseDto, subscribers: SubscriberEntity[]) => {
+  const addSubscribersToTopic = async (createdTopicDto: TopicResponseDto, subscribers: SubscriberEntity[]) => {
     const subscriberIds: ExternalSubscriberId[] = subscribers.map(
       (subscriber: SubscriberEntity) => subscriber.subscriberId
     );
 
-    const response = await novuClient.topics.subscribers.assign(
+    const response = await novuClient.topics.subscriptions.create(
       {
-        subscribers: subscriberIds,
+        subscriberIds,
       },
       createdTopicDto.key
     );
 
-    expect(response.result).to.be.eql({
-      succeeded: subscriberIds,
-    });
+    expect(response.result.data).to.be.ok;
   };
 });

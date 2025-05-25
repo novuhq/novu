@@ -11,7 +11,7 @@ import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 
 export type TopicsControllerGetTopicRequest = {
   /**
-   * The topic key
+   * The key identifier of the topic
    */
   topicKey: string;
   /**
@@ -22,7 +22,7 @@ export type TopicsControllerGetTopicRequest = {
 
 export type TopicsControllerGetTopicResponse = {
   headers: { [k: string]: Array<string> };
-  result: components.GetTopicResponseDto;
+  result: components.TopicResponseDto;
 };
 
 /** @internal */
@@ -99,7 +99,7 @@ export const TopicsControllerGetTopicResponse$inboundSchema: z.ZodType<
   unknown
 > = z.object({
   Headers: z.record(z.array(z.string())),
-  Result: components.GetTopicResponseDto$inboundSchema,
+  Result: components.TopicResponseDto$inboundSchema,
 }).transform((v) => {
   return remap$(v, {
     "Headers": "headers",
@@ -110,7 +110,7 @@ export const TopicsControllerGetTopicResponse$inboundSchema: z.ZodType<
 /** @internal */
 export type TopicsControllerGetTopicResponse$Outbound = {
   Headers: { [k: string]: Array<string> };
-  Result: components.GetTopicResponseDto$Outbound;
+  Result: components.TopicResponseDto$Outbound;
 };
 
 /** @internal */
@@ -120,7 +120,7 @@ export const TopicsControllerGetTopicResponse$outboundSchema: z.ZodType<
   TopicsControllerGetTopicResponse
 > = z.object({
   headers: z.record(z.array(z.string())),
-  result: components.GetTopicResponseDto$outboundSchema,
+  result: components.TopicResponseDto$outboundSchema,
 }).transform((v) => {
   return remap$(v, {
     headers: "Headers",
