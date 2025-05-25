@@ -150,8 +150,6 @@ describe('Workflow Test Data', function () {
       })),
     } as CreateWorkflowDto;
 
-    console.log('createWorkflowDto', createWorkflowDto);
-
     const { result } = await novuClient.workflows.create(createWorkflowDto);
 
     return result;
