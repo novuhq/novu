@@ -195,15 +195,12 @@ describe('Upsert Workflow #novu-v2', function () {
   function mapResponseToUpdateDto(workflowResponse: WorkflowResponseDto): UpdateWorkflowDto {
     return {
       ...workflowResponse,
-      steps: workflowResponse.steps.map(
-        (step) =>
-          ({
-            id: step.id,
-            type: step.type,
-            name: step.name,
-            controlValues: step.controls?.values || {},
-          }) as any
-      ),
+      steps: workflowResponse.steps.map((step) => ({
+        id: step.id,
+        type: step.type,
+        name: step.name,
+        controlValues: step.controls?.values || {},
+      })),
     };
   }
 });
