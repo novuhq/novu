@@ -135,12 +135,8 @@ with Novu(
     res = novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
         workflow_id="${identifier}",
         to="${(to as { subscriberId: string }).subscriberId}",
-        payload=${JSON.stringify(normalizePayload(payload), null, 8)},
-        overrides=novu_py.Overrides(),
-    ))
-
-    # Handle response
-    print(res)`;
+        payload=${JSON.stringify(normalizePayload(payload), null, 8)}
+    ))`;
 };
 
 const transformJsonToGoMap = (data: Record<string, unknown>, tabSpaces = 4): string => {

@@ -163,12 +163,8 @@ with Novu(
     res = novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
         workflow_id="${identifier}",
         to="${(to as { subscriberId: string }).subscriberId}",
-        payload=${JSON.stringify(safeParsePayload(payload), null, 8)},
-        overrides=novu_py.Overrides(),
-    ))
-
-    # Handle response
-    print(res)`;
+        payload=${JSON.stringify(safeParsePayload(payload), null, 8)}
+    ))`;
 };
 
 export const createGoSnippet = ({ identifier, to, payload, secretKey }: CodeSnippet) => {
