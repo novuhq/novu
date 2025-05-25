@@ -1,4 +1,3 @@
-/** cspell:disable */
 import {
   InjectThrottlerOptions,
   InjectThrottlerStorage,
@@ -74,17 +73,7 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
     const isAllowedEnvironment = this.isAllowedEnvironment(context);
     const isAllowedRoute = this.isAllowedRoute(context);
 
-    this.logger.debug(
-      `shouldSkip evaluation ${JSON.stringify({
-        isAllowedAuthScheme,
-        isAllowedEnvironment,
-        isAllowedRoute,
-      })}`
-    );
-
     if (!isAllowedAuthScheme && !isAllowedEnvironment && !isAllowedRoute) {
-      this.logger.debug('Skipping rate limiting - no allowed conditions met');
-
       return true;
     }
 
@@ -92,20 +81,10 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
 
     // Indicates whether the request originates from a Inbox session initialization
     if (!user) {
-      this.logger.debug('No user found in request context');
-
       return false;
     }
 
     const { organizationId, environmentId, _id } = user;
-
-    this.logger.debug(
-      `User context for shouldSkip ${JSON.stringify({
-        userId: _id,
-        organizationId,
-        environmentId,
-      })}`
-    );
 
     const isEnabled = await this.featureFlagService.getFlag({
       key: FeatureFlagsKeysEnum.IS_API_RATE_LIMITING_ENABLED,
@@ -114,16 +93,6 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
       organization: { _id: organizationId } as OrganizationEntity,
       user: { _id } as UserEntity,
     });
-
-    this.logger.debug(
-      `Rate limiting feature flag evaluation ${JSON.stringify({
-        isEnabled,
-        featureFlagKey: FeatureFlagsKeysEnum.IS_API_RATE_LIMITING_ENABLED,
-        userId: _id,
-        organizationId,
-        environmentId,
-      })}`
-    );
 
     return !isEnabled;
   }
@@ -136,84 +105,13 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
    */
   protected async handleRequest({ context, throttler }: ThrottlerRequest): Promise<boolean> {
     const { req, res } = this.getRequestResponse(context);
-
-    this.logger.debug(
-      `handleRequest started ${JSON.stringify({
-        method: req.method,
-        path: req.path,
-        userAgent: req.headers[HttpRequestHeaderKeysEnum.USER_AGENT.toLowerCase()],
-        authorization: req.headers.authorization ? 'present' : 'missing',
-        novuApplicationIdentifier: req.headers['novu-application-identifier'] ? 'present' : 'missing',
-        // Standard Express/Node.js IP fields
-        ip: req.ip,
-        ips: req.ips,
-        remoteAddress: req.connection?.remoteAddress,
-        socketRemoteAddress: req.socket?.remoteAddress,
-        // Common proxy/load balancer headers
-        xForwardedFor: req.headers['x-forwarded-for'],
-        xRealIp: req.headers['x-real-ip'],
-        xClientIp: req.headers['x-client-ip'],
-        xForwardedProto: req.headers['x-forwarded-proto'],
-        xOriginalForwardedFor: req.headers['x-original-forwarded-for'],
-        // CDN headers
-        cfConnectingIp: req.headers['cf-connecting-ip'], // Cloudflare
-        cfIpCountry: req.headers['cf-ipcountry'], // Cloudflare country
-        trueClientIp: req.headers['true-client-ip'], // Cloudflare Enterprise
-        // AWS/Azure headers
-        xForwardedHost: req.headers['x-forwarded-host'],
-        xAzureClientIp: req.headers['x-azure-clientip'], // Azure
-        xAzureSocketIp: req.headers['x-azure-socketip'], // Azure
-        // Other common headers
-        forwarded: req.headers.forwarded, // RFC 7239
-        via: req.headers.via,
-        xClusterClientIp: req.headers['x-cluster-client-ip'],
-        xOriginalIp: req.headers['x-original-ip'],
-        clientIp: req.headers['client-ip'],
-      })}`
-    );
-
-    const clientIpFromPackage = getClientIp(req) || undefined;
-
-    this.logger.debug(
-      `handleRequest started ${JSON.stringify({
-        method: req.method,
-        path: req.path,
-        userAgent: req.headers[HttpRequestHeaderKeysEnum.USER_AGENT.toLowerCase()],
-        authorization: req.headers.authorization ? 'present' : 'missing',
-        novuApplicationIdentifier: req.headers['novu-application-identifier'] ? 'present' : 'missing',
-      })}`
-    );
-
-    this.logger.debug(
-      `IP comparison - request-ip package vs manual extraction ${JSON.stringify({
-        // request-ip package result
-        clientIpFromPackage,
-        // Manual extraction for comparison
-        reqIp: req.ip,
-        reqIps: req.ips,
-        remoteAddress: req.connection?.remoteAddress,
-        socketRemoteAddress: req.socket?.remoteAddress,
-        // Key headers that request-ip checks (in priority order)
-        xForwardedFor: req.headers['x-forwarded-for'],
-        cfConnectingIp: req.headers['cf-connecting-ip'],
-        trueClientIp: req.headers['true-client-ip'],
-        xClusterClientIp: req.headers['x-cluster-client-ip'],
-        forwarded: req.headers.forwarded,
-      })}`
-    );
+    const clientIp = getClientIp(req) || undefined;
 
     const ignoreUserAgents = throttler.ignoreUserAgents ?? this.commonOptions.ignoreUserAgents;
     // Return early if the current user agent should be ignored.
     if (Array.isArray(ignoreUserAgents)) {
       for (const pattern of ignoreUserAgents) {
         if (pattern.test(req.headers[HttpRequestHeaderKeysEnum.USER_AGENT.toLowerCase()])) {
-          this.logger.debug(
-            `Request ignored due to user agent pattern ${JSON.stringify({
-              pattern: pattern.toString(),
-              userAgent: req.headers[HttpRequestHeaderKeysEnum.USER_AGENT.toLowerCase()],
-            })}`
-          );
-
           return true;
         }
       }
@@ -229,87 +127,27 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
     const apiRateLimitCategory =
       this.reflector.getAllAndOverride(ThrottlerCategory, [handler, classRef]) || defaultApiRateLimitCategory;
 
-    this.logger.debug(
-      `Request classification ${JSON.stringify({
-        isKeylessHeader,
-        isKeylessRoute: this.isKeylessRoute(context),
-        isKeylessRequest,
-        apiRateLimitCategory,
-        authorizationHeader: req.headers.authorization ? `${req.headers.authorization.substring(0, 20)}...` : 'missing',
-        novuApplicationIdentifier: req.headers['novu-application-identifier'],
-      })}`
-    );
-
     const user = this.getReqUser(context);
     const organizationId = user?.organizationId;
     const _id = user?._id;
     const environmentId = user?.environmentId || req.headers['novu-application-identifier'];
 
-    this.logger.debug(
-      `User and environment context ${JSON.stringify({
-        hasUser: !!user,
-        userId: _id,
-        organizationId,
-        environmentId,
-        userEmail: user?.email,
-        userEnvironmentId: user?.environmentId,
-        headerEnvironmentId: req.headers['novu-application-identifier'],
-      })}`
-    );
-
     const apiRateLimitCost = isKeylessRequest
       ? getKeylessCost()
       : this.reflector.getAllAndOverride(ThrottlerCost, [handler, classRef]) || defaultApiRateLimitCost;
-
-    this.logger.debug(
-      `Rate limit cost calculation ${JSON.stringify({
-        isKeylessRequest,
-        apiRateLimitCost,
-        nodeEnv: process.env.NODE_ENV,
-        keylessCost: getKeylessCost(),
-        defaultCost: defaultApiRateLimitCost,
-      })}`
-    );
 
     const evaluateCommand = EvaluateApiRateLimitCommand.create({
       organizationId,
       environmentId,
       apiRateLimitCategory,
       apiRateLimitCost,
-      ip: isKeylessRequest ? clientIpFromPackage : undefined,
+      ip: isKeylessRequest ? clientIp : undefined,
     });
-
-    this.logger.debug(
-      `EvaluateApiRateLimitCommand ${JSON.stringify({
-        organizationId,
-        environmentId,
-        apiRateLimitCategory,
-        apiRateLimitCost,
-        ip: isKeylessRequest ? clientIpFromPackage : undefined,
-        ipFromReqIp: isKeylessRequest ? req.ip : undefined,
-        isKeylessRequest,
-      })}`
-    );
 
     const { success, limit, remaining, reset, windowDuration, burstLimit, algorithm, apiServiceLevel } =
       await this.evaluateApiRateLimit.execute(evaluateCommand);
 
     const secondsToReset = Math.max(Math.ceil((reset - Date.now()) / 1e3), 0);
-
-    this.logger.debug(
-      `Rate limit evaluation result ${JSON.stringify({
-        success,
-        limit,
-        remaining,
-        reset,
-        secondsToReset,
-        windowDuration,
-        burstLimit,
-        algorithm,
-        apiServiceLevel,
-        currentTime: Date.now(),
-      })}`
-    );
 
     /**
      * The purpose of the dry run is to allow us to observe how
@@ -323,16 +161,6 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
       defaultValue: false,
     });
 
-    this.logger.debug(
-      `Dry run feature flag evaluation ${JSON.stringify({
-        isDryRun,
-        featureFlagKey: FeatureFlagsKeysEnum.IS_API_RATE_LIMITING_DRY_RUN_ENABLED,
-        userId: _id,
-        organizationId,
-        environmentId,
-      })}`
-    );
-
     const isKeylessDryRunFlag = await this.featureFlagService.getFlag({
       environment: { _id: environmentId } as EnvironmentEntity,
       organization: { _id: organizationId } as OrganizationEntity,
@@ -341,19 +169,6 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
       defaultValue: false,
     });
     const isKeylessDryRun = isKeylessRequest && isKeylessDryRunFlag;
-
-    this.logger.debug(
-      `Keyless dry run feature flag evaluation ${JSON.stringify({
-        isKeylessDryRunFlag,
-        isKeylessDryRun,
-        isKeylessRequest,
-        featureFlagKey: FeatureFlagsKeysEnum.IS_API_RATE_LIMITING_KEYLESS_DRY_RUN_ENABLED,
-        userId: _id,
-        userEmail: user?.email,
-        organizationId,
-        environmentId,
-      })}`
-    );
 
     res.header(HttpResponseHeaderKeysEnum.RATELIMIT_REMAINING, remaining);
     res.header(HttpResponseHeaderKeysEnum.RATELIMIT_LIMIT, limit);
@@ -382,30 +197,12 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
     };
 
     if (isDryRun || isKeylessDryRun) {
-      this.logger.debug(
-        `Dry run mode active ${JSON.stringify({
-          isDryRun,
-          isKeylessDryRun,
-          success,
-          wouldBeThrottled: !success,
-        })}`
-      );
-
       if (!success) {
         this.logger.warn(`${isKeylessRequest ? '[Dry run] [Keyless]' : '[Dry run]'} ${THROTTLED_EXCEPTION_MESSAGE}`);
       }
 
       return true;
     }
-
-    this.logger.debug(
-      `Rate limiting enforcement decision ${JSON.stringify({
-        success,
-        isDryRun,
-        isKeylessDryRun,
-        willThrottle: !success,
-      })}`
-    );
 
     if (success) {
       return true;
