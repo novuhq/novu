@@ -2,7 +2,7 @@ import { cn } from '@/utils/ui';
 import { autocompletion, Completion, CompletionSource } from '@codemirror/autocomplete';
 import { EditorView } from '@uiw/react-codemirror';
 import { cva } from 'class-variance-authority';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState, useEffect } from 'react';
 
 import { Editor } from '@/components/primitives/editor';
 import { EditVariablePopover } from '@/components/variable/edit-variable-popover';
@@ -90,7 +90,33 @@ export function ControlInput({
     handleSaveChanges: handleSaveSchemaChanges,
     getSchemaPropertyByKey,
     isPayloadSchemaEnabled,
+    currentSchema,
   } = useWorkflowSchema();
+
+  // Create a stable key based on schema properties to force editor re-render
+  const schemaKey = useMemo(() => {
+    if (!currentSchema?.properties) return 'no-schema';
+    return `schema-${Object.keys(currentSchema.properties).sort().join('-')}`;
+  }, [currentSchema]);
+
+  // Create an enhanced isAllowedVariable that also checks the current schema
+  const enhancedIsAllowedVariable = useCallback(
+    (variable: LiquidVariable): boolean => {
+      // First check with the original isAllowedVariable
+      if (isAllowedVariable(variable)) {
+        return true;
+      }
+
+      // If not allowed by original function, check if it exists in the current schema
+      if (variable.name.startsWith('payload.') && currentSchema) {
+        const propertyKey = variable.name.replace('payload.', '');
+        return !!getSchemaPropertyByKey(propertyKey);
+      }
+
+      return false;
+    },
+    [isAllowedVariable, currentSchema, getSchemaPropertyByKey]
+  );
 
   const handleCreateNewVariable = useCallback(
     async (variableName: string) => {
@@ -103,8 +129,12 @@ export function ControlInput({
 
       try {
         await handleSaveSchemaChanges();
-        setHighlightedVariableKey(variableName);
-        setIsPayloadSchemaDrawerOpen(true);
+
+        // Use setTimeout to ensure the drawer opens after the editor has been remounted
+        setTimeout(() => {
+          setHighlightedVariableKey(variableName);
+          setIsPayloadSchemaDrawerOpen(true);
+        }, 100);
       } catch (error) {
         showErrorToast('Failed to save new variable to schema: ' + error);
       }
@@ -172,10 +202,10 @@ export function ControlInput({
       viewRef,
       lastCompletionRef,
       onSelect: handleVariableSelect,
-      isAllowedVariable,
+      isAllowedVariable: enhancedIsAllowedVariable,
       isDigestEventsVariable,
     });
-  }, [handleVariableSelect, isAllowedVariable, isDigestEventsVariable]);
+  }, [handleVariableSelect, enhancedIsAllowedVariable, isDigestEventsVariable]);
 
   const extensions = useMemo(() => {
     const baseExtensions = [...(multiline ? [EditorView.lineWrapping] : []), variablePillTheme];
@@ -195,6 +225,7 @@ export function ControlInput({
   return (
     <div className={cn(variants({ size }), className)}>
       <Editor
+        key={schemaKey}
         fontFamily="inherit"
         multiline={multiline}
         indentWithTab={indentWithTab}
@@ -213,7 +244,7 @@ export function ControlInput({
           open={isVariablePopoverOpen}
           onOpenChange={handleOpenChange}
           variable={variable}
-          isAllowedVariable={isAllowedVariable}
+          isAllowedVariable={enhancedIsAllowedVariable}
           onUpdate={(newValue) => {
             handleVariableUpdate(newValue);
             // Focus back to the editor after updating the variable
