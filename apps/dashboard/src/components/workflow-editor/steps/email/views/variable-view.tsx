@@ -10,6 +10,9 @@ import { resolveRepeatBlockAlias } from '../variables/variables';
 import { DIGEST_VARIABLES_ENUM, getDynamicDigestVariable } from '@/components/variable/utils/digest-variables';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useWorkflowSchema } from '@/components/workflow-editor/workflow-schema-provider';
+import { PayloadSchemaDrawer } from '@/components/workflow-editor/payload-schema-drawer';
+import { showErrorToast } from '@/components/primitives/sonner-helpers';
+import type { JSONSchema7TypeName } from '@/components/schema-editor/json-schema';
 
 type InternalVariableViewProps = NodeViewProps & {
   variables: LiquidVariable[];
@@ -21,9 +24,59 @@ function InternalVariableView(props: InternalVariableViewProps) {
   const { id, aliasFor } = node.attrs;
   const [variableValue, setVariableValue] = useState(`{{${id}}}`);
   const [isOpen, setIsOpen] = useState(false);
-  const { digestStepBeforeCurrent } = useWorkflow();
+  const { digestStepBeforeCurrent, workflow } = useWorkflow();
 
-  const { getSchemaPropertyByKey } = useWorkflowSchema();
+  const {
+    getSchemaPropertyByKey,
+    addProperty: addSchemaProperty,
+    handleSaveChanges: handleSaveSchemaChanges,
+    isPayloadSchemaEnabled,
+    currentSchema,
+    getCurrentSchema,
+  } = useWorkflowSchema();
+
+  const [isPayloadSchemaDrawerOpen, setIsPayloadSchemaDrawerOpen] = useState(false);
+  const [highlightedVariableKey, setHighlightedVariableKey] = useState<string | null>(null);
+  const [isAddingToSchema, setIsAddingToSchema] = useState(false);
+  const [justAddedVariable, setJustAddedVariable] = useState<string | null>(null);
+
+  const handleCreateNewVariable = useCallback(
+    async (variableName: string) => {
+      if (!workflow || !isPayloadSchemaEnabled) {
+        return;
+      }
+
+      setIsAddingToSchema(true);
+      setJustAddedVariable(variableName);
+
+      try {
+        // Assuming new variables are of type string by default.
+        addSchemaProperty({ keyName: variableName }, 'string' as JSONSchema7TypeName);
+
+        await handleSaveSchemaChanges();
+
+        // Close the popover first
+        setIsOpen(false);
+
+        // Open the drawer after a short delay to ensure the UI has stabilized
+        setTimeout(() => {
+          setHighlightedVariableKey(variableName);
+          setIsPayloadSchemaDrawerOpen(true);
+        }, 300);
+
+        // Keep the variable marked as valid for a bit longer to prevent flashing
+        setTimeout(() => {
+          setJustAddedVariable(null);
+        }, 2000);
+      } catch (error) {
+        showErrorToast('Failed to save new variable to schema: ' + error);
+        setJustAddedVariable(null);
+      } finally {
+        setIsAddingToSchema(false);
+      }
+    },
+    [workflow, isPayloadSchemaEnabled, addSchemaProperty, handleSaveSchemaChanges]
+  );
 
   const parseVariableCallback = useCallback(
     (variable: string) => {
@@ -71,6 +124,32 @@ function InternalVariableView(props: InternalVariableViewProps) {
     };
   }, [aliasFor, fullLiquidExpression]);
 
+  // Check if the variable is allowed (exists in schema)
+  // Re-evaluate when currentSchema changes to reflect updates
+  const isNotInSchema = useMemo(() => {
+    if (!name || isAddingToSchema) return false;
+
+    // If this variable was just added, consider it valid
+    if (justAddedVariable && name === `payload.${justAddedVariable}`) {
+      return false;
+    }
+
+    // For payload variables, also check using the schema directly
+    if (name.startsWith('payload.')) {
+      const propertyKey = name.replace('payload.', '');
+      const schemaProperty = getSchemaPropertyByKey(propertyKey);
+
+      if (schemaProperty) {
+        return false;
+      }
+    }
+
+    // Create a variable object with just the name for validation
+    const variableToCheck: LiquidVariable = { name };
+
+    return !isAllowedVariable(variableToCheck);
+  }, [name, isAllowedVariable, currentSchema, isAddingToSchema, justAddedVariable, getSchemaPropertyByKey]);
+
   return (
     <NodeViewWrapper className="react-component mly-inline-block mly-leading-none" draggable="false">
       <EditVariablePopover
@@ -80,6 +159,13 @@ function InternalVariableView(props: InternalVariableViewProps) {
         variable={variable}
         variables={variables}
         isAllowedVariable={isAllowedVariable}
+        onManageSchemaClick={(variableName) => {
+          setHighlightedVariableKey(variableName);
+          setIsPayloadSchemaDrawerOpen(true);
+        }}
+        onAddToSchemaClick={(variableName) => {
+          handleCreateNewVariable(variableName);
+        }}
         onUpdate={(newValue) => {
           const { fullLiquidExpression } = parseVariableCallback(newValue);
           const aliasFor = resolveRepeatBlockAlias(fullLiquidExpression, editor);
@@ -109,8 +195,24 @@ function InternalVariableView(props: InternalVariableViewProps) {
           filters={filtersArray}
           onClick={() => setIsOpen(true)}
           className="-mt-[2px]"
+          isNotInSchema={isNotInSchema}
         />
       </EditVariablePopover>
+      <PayloadSchemaDrawer
+        isOpen={isPayloadSchemaDrawerOpen}
+        onOpenChange={(isOpen) => {
+          setIsPayloadSchemaDrawerOpen(isOpen);
+
+          if (!isOpen) {
+            setHighlightedVariableKey(null);
+          }
+        }}
+        workflow={workflow}
+        highlightedPropertyKey={highlightedVariableKey}
+        onSave={() => {
+          // Optionally refetch or update data after schema save from drawer
+        }}
+      />
     </NodeViewWrapper>
   );
 }

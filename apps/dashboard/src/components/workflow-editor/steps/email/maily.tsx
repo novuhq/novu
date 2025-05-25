@@ -28,6 +28,7 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
     addProperty: addSchemaProperty,
     handleSaveChanges: handleSaveSchemaChanges,
     isPayloadSchemaEnabled,
+    currentSchema,
   } = useWorkflowSchema();
 
   const [isPayloadSchemaDrawerOpen, setIsPayloadSchemaDrawerOpen] = useState(false);
@@ -55,7 +56,9 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
     [workflow, isPayloadSchemaEnabled, addSchemaProperty, handleSaveSchemaChanges]
   );
 
-  const parsedVariables = useParseVariables(step?.variables, digestStepBeforeCurrent?.stepId);
+  // Use currentSchema if available (when payload schema is enabled), otherwise fall back to step variables
+  const schemaToUse = isPayloadSchemaEnabled && currentSchema ? currentSchema : step?.variables;
+  const parsedVariables = useParseVariables(schemaToUse, digestStepBeforeCurrent?.stepId);
   const primitives = useMemo(
     () => parsedVariables.primitives.map((v) => ({ name: v.name, required: false })),
     [parsedVariables.primitives]
@@ -143,6 +146,13 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
     },
     [onChange]
   );
+
+  // Create a stable key based on schema properties to force editor re-render when schema changes
+  const editorKey = useMemo(() => {
+    if (!currentSchema?.properties) return 'repeat-block-enabled';
+    const schemaKeys = Object.keys(currentSchema.properties).sort().join('-');
+    return `repeat-block-enabled-${schemaKeys}`;
+  }, [currentSchema]);
 
   return (
     <>
