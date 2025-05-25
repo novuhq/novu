@@ -9,6 +9,7 @@ import {
 } from '@nestjs/throttler';
 import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { getClientIp } from 'request-ip';
 import {
   Instrument,
   HttpRequestHeaderKeysEnum,
@@ -104,6 +105,8 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
    */
   protected async handleRequest({ context, throttler }: ThrottlerRequest): Promise<boolean> {
     const { req, res } = this.getRequestResponse(context);
+    const clientIp = getClientIp(req) || undefined;
+
     const ignoreUserAgents = throttler.ignoreUserAgents ?? this.commonOptions.ignoreUserAgents;
     // Return early if the current user agent should be ignored.
     if (Array.isArray(ignoreUserAgents)) {
@@ -133,16 +136,16 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
       ? getKeylessCost()
       : this.reflector.getAllAndOverride(ThrottlerCost, [handler, classRef]) || defaultApiRateLimitCost;
 
+    const evaluateCommand = EvaluateApiRateLimitCommand.create({
+      organizationId,
+      environmentId,
+      apiRateLimitCategory,
+      apiRateLimitCost,
+      ip: isKeylessRequest ? clientIp : undefined,
+    });
+
     const { success, limit, remaining, reset, windowDuration, burstLimit, algorithm, apiServiceLevel } =
-      await this.evaluateApiRateLimit.execute(
-        EvaluateApiRateLimitCommand.create({
-          organizationId,
-          environmentId,
-          apiRateLimitCategory,
-          apiRateLimitCost,
-          ip: isKeylessRequest ? req.ip : undefined,
-        })
-      );
+      await this.evaluateApiRateLimit.execute(evaluateCommand);
 
     const secondsToReset = Math.max(Math.ceil((reset - Date.now()) / 1e3), 0);
 
