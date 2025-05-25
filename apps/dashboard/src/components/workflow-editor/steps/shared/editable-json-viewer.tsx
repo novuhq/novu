@@ -159,76 +159,37 @@ const SingleClickEditableValue = ({ value, setValue, setIsEditing, customNodePro
   );
 };
 
-// Custom input component that auto-saves on blur
-const AutoSaveInput = ({ value, onChange, onBlur, onKeyDown, type = 'text', ...props }) => {
-  const [localValue, setLocalValue] = useState(value);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    setLocalValue(value);
-  }, [value]);
-
-  useEffect(() => {
-    // Focus the input when it's created
-    if (inputRef.current) {
-      inputRef.current.focus();
-      inputRef.current.select();
-    }
-  }, []);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setLocalValue(e.target.value);
-    onChange?.(e.target.value);
-  };
-
-  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    // Auto-save on blur
-    onBlur?.(e);
-    // Trigger the save by simulating Enter key
-    const enterEvent = new KeyboardEvent('keydown', { key: 'Enter' });
-    onKeyDown?.(enterEvent as any);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' || e.key === 'Escape') {
-      onKeyDown?.(e);
-    }
-  };
-
-  return (
-    <input
-      ref={inputRef}
-      type={type}
-      value={localValue}
-      onChange={handleChange}
-      onBlur={handleBlur}
-      onKeyDown={handleKeyDown}
-      style={{
-        backgroundColor: 'hsl(var(--background))',
-        border: '1px solid hsl(var(--neutral-300))',
-        borderRadius: '4px',
-        padding: '2px 4px',
-        fontSize: '12px',
-        fontFamily: 'JetBrains Mono, monospace',
-        color: 'hsl(var(--foreground-950))',
-        outline: 'none',
-        minWidth: '60px',
-      }}
-      {...props}
-    />
-  );
-};
-
 export function EditableJsonViewer({ value, onChange, className, schema }: EditableJsonViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [currentEditPath, setCurrentEditPath] = useState<string[] | null>(null);
+  const [externalTriggers, setExternalTriggers] = useState<any>({});
 
-  // Simple onChange handler that passes the updated data to the parent
+  // Handle real-time changes as user types
   const handleChange = useMemo(
+    () =>
+      ({ newValue, currentValue, name, path }) => {
+        // This fires on every keystroke - we can use this for real-time validation
+        // but we'll let the onUpdate handle the actual saving
+        return newValue;
+      },
+    []
+  );
+
+  // Handle when editing is complete (blur, enter, etc.)
+  const handleUpdate = useMemo(
     () => (updatedData) => {
       console.log('updatedData', updatedData);
       onChange(updatedData.currentData);
     },
     [onChange]
+  );
+
+  // Track when editing starts/stops
+  const handleEditEvent = useMemo(
+    () => (path: string[] | null, isKey: boolean) => {
+      setCurrentEditPath(path);
+    },
+    []
   );
 
   // Custom JSON editor component using our existing Editor
@@ -267,7 +228,7 @@ export function EditableJsonViewer({ value, onChange, className, schema }: Edita
     return schema;
   }, [schema]);
 
-  // Custom node definitions for single-click editing with auto-save inputs
+  // Custom node definitions for single-click editing
   const customNodeDefinitions = useMemo(
     () => [
       {
@@ -295,6 +256,38 @@ export function EditableJsonViewer({ value, onChange, className, schema }: Edita
     []
   );
 
+  // Handle clicks outside the editor to auto-save
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node) && currentEditPath) {
+        // Trigger save by accepting the current edit
+        setExternalTriggers({
+          edit: {
+            action: 'accept',
+          },
+        });
+      }
+    };
+
+    if (currentEditPath) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [currentEditPath]);
+
+  // Reset external triggers after they've been processed
+  useEffect(() => {
+    if (externalTriggers.edit) {
+      const timer = setTimeout(() => {
+        setExternalTriggers({});
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [externalTriggers]);
+
   return (
     <div
       ref={containerRef}
@@ -308,7 +301,10 @@ export function EditableJsonViewer({ value, onChange, className, schema }: Edita
     >
       <JsonEditor
         data={value}
-        onUpdate={handleChange}
+        onUpdate={handleUpdate}
+        onChange={handleChange}
+        onEditEvent={handleEditEvent}
+        externalTriggers={externalTriggers}
         schema={editorSchema}
         theme={customTheme}
         TextEditor={CustomTextEditor}
