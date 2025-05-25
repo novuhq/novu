@@ -4,7 +4,10 @@
 
 import * as z from "zod";
 import { remap as remap$ } from "../../lib/primitives.js";
-import { safeParse } from "../../lib/schemas.js";
+import {
+  collectExtraKeys as collectExtraKeys$,
+  safeParse,
+} from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 import {
@@ -30,11 +33,43 @@ import {
   WorkflowOriginEnum$outboundSchema,
 } from "./workfloworiginenum.js";
 
+/**
+ * Filter conditions for skipping the step.
+ */
+export type EmailStepResponseDtoSkip = {};
+
+/**
+ * Control values for the email step
+ */
+export type EmailStepResponseDtoControlValues = {
+  /**
+   * Filter conditions for skipping the step.
+   */
+  skip?: EmailStepResponseDtoSkip | undefined;
+  /**
+   * Subject of the email.
+   */
+  subject: string;
+  /**
+   * Body content of the email.
+   */
+  body?: string | undefined;
+  /**
+   * Disable sanitization of the output.
+   */
+  disableOutputSanitization?: boolean | undefined;
+  additionalProperties?: { [k: string]: any };
+};
+
 export type EmailStepResponseDto = {
   /**
    * Controls metadata for the email step
    */
   controls: EmailControlsMetadataResponseDto;
+  /**
+   * Control values for the email step
+   */
+  controlValues?: EmailStepResponseDtoControlValues | undefined;
   /**
    * JSON Schema for variables, follows the JSON Schema standard
    */
@@ -78,12 +113,141 @@ export type EmailStepResponseDto = {
 };
 
 /** @internal */
+export const EmailStepResponseDtoSkip$inboundSchema: z.ZodType<
+  EmailStepResponseDtoSkip,
+  z.ZodTypeDef,
+  unknown
+> = z.object({});
+
+/** @internal */
+export type EmailStepResponseDtoSkip$Outbound = {};
+
+/** @internal */
+export const EmailStepResponseDtoSkip$outboundSchema: z.ZodType<
+  EmailStepResponseDtoSkip$Outbound,
+  z.ZodTypeDef,
+  EmailStepResponseDtoSkip
+> = z.object({});
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace EmailStepResponseDtoSkip$ {
+  /** @deprecated use `EmailStepResponseDtoSkip$inboundSchema` instead. */
+  export const inboundSchema = EmailStepResponseDtoSkip$inboundSchema;
+  /** @deprecated use `EmailStepResponseDtoSkip$outboundSchema` instead. */
+  export const outboundSchema = EmailStepResponseDtoSkip$outboundSchema;
+  /** @deprecated use `EmailStepResponseDtoSkip$Outbound` instead. */
+  export type Outbound = EmailStepResponseDtoSkip$Outbound;
+}
+
+export function emailStepResponseDtoSkipToJSON(
+  emailStepResponseDtoSkip: EmailStepResponseDtoSkip,
+): string {
+  return JSON.stringify(
+    EmailStepResponseDtoSkip$outboundSchema.parse(emailStepResponseDtoSkip),
+  );
+}
+
+export function emailStepResponseDtoSkipFromJSON(
+  jsonString: string,
+): SafeParseResult<EmailStepResponseDtoSkip, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => EmailStepResponseDtoSkip$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'EmailStepResponseDtoSkip' from JSON`,
+  );
+}
+
+/** @internal */
+export const EmailStepResponseDtoControlValues$inboundSchema: z.ZodType<
+  EmailStepResponseDtoControlValues,
+  z.ZodTypeDef,
+  unknown
+> = collectExtraKeys$(
+  z.object({
+    skip: z.lazy(() => EmailStepResponseDtoSkip$inboundSchema).optional(),
+    subject: z.string(),
+    body: z.string().default(""),
+    disableOutputSanitization: z.boolean().default(false),
+  }).catchall(z.any()),
+  "additionalProperties",
+  true,
+);
+
+/** @internal */
+export type EmailStepResponseDtoControlValues$Outbound = {
+  skip?: EmailStepResponseDtoSkip$Outbound | undefined;
+  subject: string;
+  body: string;
+  disableOutputSanitization: boolean;
+  [additionalProperties: string]: unknown;
+};
+
+/** @internal */
+export const EmailStepResponseDtoControlValues$outboundSchema: z.ZodType<
+  EmailStepResponseDtoControlValues$Outbound,
+  z.ZodTypeDef,
+  EmailStepResponseDtoControlValues
+> = z.object({
+  skip: z.lazy(() => EmailStepResponseDtoSkip$outboundSchema).optional(),
+  subject: z.string(),
+  body: z.string().default(""),
+  disableOutputSanitization: z.boolean().default(false),
+  additionalProperties: z.record(z.any()),
+}).transform((v) => {
+  return {
+    ...v.additionalProperties,
+    ...remap$(v, {
+      additionalProperties: null,
+    }),
+  };
+});
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace EmailStepResponseDtoControlValues$ {
+  /** @deprecated use `EmailStepResponseDtoControlValues$inboundSchema` instead. */
+  export const inboundSchema = EmailStepResponseDtoControlValues$inboundSchema;
+  /** @deprecated use `EmailStepResponseDtoControlValues$outboundSchema` instead. */
+  export const outboundSchema =
+    EmailStepResponseDtoControlValues$outboundSchema;
+  /** @deprecated use `EmailStepResponseDtoControlValues$Outbound` instead. */
+  export type Outbound = EmailStepResponseDtoControlValues$Outbound;
+}
+
+export function emailStepResponseDtoControlValuesToJSON(
+  emailStepResponseDtoControlValues: EmailStepResponseDtoControlValues,
+): string {
+  return JSON.stringify(
+    EmailStepResponseDtoControlValues$outboundSchema.parse(
+      emailStepResponseDtoControlValues,
+    ),
+  );
+}
+
+export function emailStepResponseDtoControlValuesFromJSON(
+  jsonString: string,
+): SafeParseResult<EmailStepResponseDtoControlValues, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => EmailStepResponseDtoControlValues$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'EmailStepResponseDtoControlValues' from JSON`,
+  );
+}
+
+/** @internal */
 export const EmailStepResponseDto$inboundSchema: z.ZodType<
   EmailStepResponseDto,
   z.ZodTypeDef,
   unknown
 > = z.object({
   controls: EmailControlsMetadataResponseDto$inboundSchema,
+  controlValues: z.lazy(() => EmailStepResponseDtoControlValues$inboundSchema)
+    .optional(),
   variables: z.record(z.any()),
   stepId: z.string(),
   _id: z.string(),
@@ -103,6 +267,7 @@ export const EmailStepResponseDto$inboundSchema: z.ZodType<
 /** @internal */
 export type EmailStepResponseDto$Outbound = {
   controls: EmailControlsMetadataResponseDto$Outbound;
+  controlValues?: EmailStepResponseDtoControlValues$Outbound | undefined;
   variables: { [k: string]: any };
   stepId: string;
   _id: string;
@@ -122,6 +287,8 @@ export const EmailStepResponseDto$outboundSchema: z.ZodType<
   EmailStepResponseDto
 > = z.object({
   controls: EmailControlsMetadataResponseDto$outboundSchema,
+  controlValues: z.lazy(() => EmailStepResponseDtoControlValues$outboundSchema)
+    .optional(),
   variables: z.record(z.any()),
   stepId: z.string(),
   id: z.string(),

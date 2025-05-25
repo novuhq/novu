@@ -4,7 +4,11 @@
 
 import * as z from "zod";
 import { remap as remap$ } from "../../lib/primitives.js";
-import { safeParse } from "../../lib/schemas.js";
+import {
+  collectExtraKeys as collectExtraKeys$,
+  safeParse,
+} from "../../lib/schemas.js";
+import { ClosedEnum } from "../../types/enums.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 import {
@@ -13,6 +17,12 @@ import {
   DigestControlsMetadataResponseDto$Outbound,
   DigestControlsMetadataResponseDto$outboundSchema,
 } from "./digestcontrolsmetadataresponsedto.js";
+import {
+  LookBackWindowDto,
+  LookBackWindowDto$inboundSchema,
+  LookBackWindowDto$Outbound,
+  LookBackWindowDto$outboundSchema,
+} from "./lookbackwindowdto.js";
 import {
   StepIssuesDto,
   StepIssuesDto$inboundSchema,
@@ -30,11 +40,87 @@ import {
   WorkflowOriginEnum$outboundSchema,
 } from "./workfloworiginenum.js";
 
+/**
+ * Filter conditions for skipping the step.
+ */
+export type DigestStepResponseDtoSkip = {};
+
+/**
+ * The type of digest strategy. Determines which fields are applicable.
+ */
+export const DigestStepResponseDtoType = {
+  Regular: "regular",
+  Timed: "timed",
+} as const;
+/**
+ * The type of digest strategy. Determines which fields are applicable.
+ */
+export type DigestStepResponseDtoType = ClosedEnum<
+  typeof DigestStepResponseDtoType
+>;
+
+/**
+ * The unit of time for the digest interval (for REGULAR type).
+ */
+export const DigestStepResponseDtoUnit = {
+  Seconds: "seconds",
+  Minutes: "minutes",
+  Hours: "hours",
+  Days: "days",
+  Weeks: "weeks",
+  Months: "months",
+} as const;
+/**
+ * The unit of time for the digest interval (for REGULAR type).
+ */
+export type DigestStepResponseDtoUnit = ClosedEnum<
+  typeof DigestStepResponseDtoUnit
+>;
+
+/**
+ * Control values for the digest step
+ */
+export type DigestStepResponseDtoControlValues = {
+  /**
+   * Filter conditions for skipping the step.
+   */
+  skip?: DigestStepResponseDtoSkip | undefined;
+  /**
+   * The type of digest strategy. Determines which fields are applicable.
+   */
+  type?: DigestStepResponseDtoType | undefined;
+  /**
+   * The amount of time for the digest interval (for REGULAR type). Min 1.
+   */
+  amount?: number | undefined;
+  /**
+   * The unit of time for the digest interval (for REGULAR type).
+   */
+  unit?: DigestStepResponseDtoUnit | undefined;
+  /**
+   * Configuration for look-back window (for REGULAR type).
+   */
+  lookBackWindow?: LookBackWindowDto | undefined;
+  /**
+   * Cron expression for TIMED digest. Min length 1.
+   */
+  cron?: string | undefined;
+  /**
+   * Specify a custom key for digesting events instead of the default event key.
+   */
+  digestKey?: string | undefined;
+  additionalProperties?: { [k: string]: any };
+};
+
 export type DigestStepResponseDto = {
   /**
    * Controls metadata for the digest step
    */
   controls: DigestControlsMetadataResponseDto;
+  /**
+   * Control values for the digest step
+   */
+  controlValues?: DigestStepResponseDtoControlValues | undefined;
   /**
    * JSON Schema for variables, follows the JSON Schema standard
    */
@@ -78,12 +164,193 @@ export type DigestStepResponseDto = {
 };
 
 /** @internal */
+export const DigestStepResponseDtoSkip$inboundSchema: z.ZodType<
+  DigestStepResponseDtoSkip,
+  z.ZodTypeDef,
+  unknown
+> = z.object({});
+
+/** @internal */
+export type DigestStepResponseDtoSkip$Outbound = {};
+
+/** @internal */
+export const DigestStepResponseDtoSkip$outboundSchema: z.ZodType<
+  DigestStepResponseDtoSkip$Outbound,
+  z.ZodTypeDef,
+  DigestStepResponseDtoSkip
+> = z.object({});
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace DigestStepResponseDtoSkip$ {
+  /** @deprecated use `DigestStepResponseDtoSkip$inboundSchema` instead. */
+  export const inboundSchema = DigestStepResponseDtoSkip$inboundSchema;
+  /** @deprecated use `DigestStepResponseDtoSkip$outboundSchema` instead. */
+  export const outboundSchema = DigestStepResponseDtoSkip$outboundSchema;
+  /** @deprecated use `DigestStepResponseDtoSkip$Outbound` instead. */
+  export type Outbound = DigestStepResponseDtoSkip$Outbound;
+}
+
+export function digestStepResponseDtoSkipToJSON(
+  digestStepResponseDtoSkip: DigestStepResponseDtoSkip,
+): string {
+  return JSON.stringify(
+    DigestStepResponseDtoSkip$outboundSchema.parse(digestStepResponseDtoSkip),
+  );
+}
+
+export function digestStepResponseDtoSkipFromJSON(
+  jsonString: string,
+): SafeParseResult<DigestStepResponseDtoSkip, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => DigestStepResponseDtoSkip$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'DigestStepResponseDtoSkip' from JSON`,
+  );
+}
+
+/** @internal */
+export const DigestStepResponseDtoType$inboundSchema: z.ZodNativeEnum<
+  typeof DigestStepResponseDtoType
+> = z.nativeEnum(DigestStepResponseDtoType);
+
+/** @internal */
+export const DigestStepResponseDtoType$outboundSchema: z.ZodNativeEnum<
+  typeof DigestStepResponseDtoType
+> = DigestStepResponseDtoType$inboundSchema;
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace DigestStepResponseDtoType$ {
+  /** @deprecated use `DigestStepResponseDtoType$inboundSchema` instead. */
+  export const inboundSchema = DigestStepResponseDtoType$inboundSchema;
+  /** @deprecated use `DigestStepResponseDtoType$outboundSchema` instead. */
+  export const outboundSchema = DigestStepResponseDtoType$outboundSchema;
+}
+
+/** @internal */
+export const DigestStepResponseDtoUnit$inboundSchema: z.ZodNativeEnum<
+  typeof DigestStepResponseDtoUnit
+> = z.nativeEnum(DigestStepResponseDtoUnit);
+
+/** @internal */
+export const DigestStepResponseDtoUnit$outboundSchema: z.ZodNativeEnum<
+  typeof DigestStepResponseDtoUnit
+> = DigestStepResponseDtoUnit$inboundSchema;
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace DigestStepResponseDtoUnit$ {
+  /** @deprecated use `DigestStepResponseDtoUnit$inboundSchema` instead. */
+  export const inboundSchema = DigestStepResponseDtoUnit$inboundSchema;
+  /** @deprecated use `DigestStepResponseDtoUnit$outboundSchema` instead. */
+  export const outboundSchema = DigestStepResponseDtoUnit$outboundSchema;
+}
+
+/** @internal */
+export const DigestStepResponseDtoControlValues$inboundSchema: z.ZodType<
+  DigestStepResponseDtoControlValues,
+  z.ZodTypeDef,
+  unknown
+> = collectExtraKeys$(
+  z.object({
+    skip: z.lazy(() => DigestStepResponseDtoSkip$inboundSchema).optional(),
+    type: DigestStepResponseDtoType$inboundSchema.optional(),
+    amount: z.number().optional(),
+    unit: DigestStepResponseDtoUnit$inboundSchema.optional(),
+    lookBackWindow: LookBackWindowDto$inboundSchema.optional(),
+    cron: z.string().optional(),
+    digestKey: z.string().optional(),
+  }).catchall(z.any()),
+  "additionalProperties",
+  true,
+);
+
+/** @internal */
+export type DigestStepResponseDtoControlValues$Outbound = {
+  skip?: DigestStepResponseDtoSkip$Outbound | undefined;
+  type?: string | undefined;
+  amount?: number | undefined;
+  unit?: string | undefined;
+  lookBackWindow?: LookBackWindowDto$Outbound | undefined;
+  cron?: string | undefined;
+  digestKey?: string | undefined;
+  [additionalProperties: string]: unknown;
+};
+
+/** @internal */
+export const DigestStepResponseDtoControlValues$outboundSchema: z.ZodType<
+  DigestStepResponseDtoControlValues$Outbound,
+  z.ZodTypeDef,
+  DigestStepResponseDtoControlValues
+> = z.object({
+  skip: z.lazy(() => DigestStepResponseDtoSkip$outboundSchema).optional(),
+  type: DigestStepResponseDtoType$outboundSchema.optional(),
+  amount: z.number().optional(),
+  unit: DigestStepResponseDtoUnit$outboundSchema.optional(),
+  lookBackWindow: LookBackWindowDto$outboundSchema.optional(),
+  cron: z.string().optional(),
+  digestKey: z.string().optional(),
+  additionalProperties: z.record(z.any()),
+}).transform((v) => {
+  return {
+    ...v.additionalProperties,
+    ...remap$(v, {
+      additionalProperties: null,
+    }),
+  };
+});
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace DigestStepResponseDtoControlValues$ {
+  /** @deprecated use `DigestStepResponseDtoControlValues$inboundSchema` instead. */
+  export const inboundSchema = DigestStepResponseDtoControlValues$inboundSchema;
+  /** @deprecated use `DigestStepResponseDtoControlValues$outboundSchema` instead. */
+  export const outboundSchema =
+    DigestStepResponseDtoControlValues$outboundSchema;
+  /** @deprecated use `DigestStepResponseDtoControlValues$Outbound` instead. */
+  export type Outbound = DigestStepResponseDtoControlValues$Outbound;
+}
+
+export function digestStepResponseDtoControlValuesToJSON(
+  digestStepResponseDtoControlValues: DigestStepResponseDtoControlValues,
+): string {
+  return JSON.stringify(
+    DigestStepResponseDtoControlValues$outboundSchema.parse(
+      digestStepResponseDtoControlValues,
+    ),
+  );
+}
+
+export function digestStepResponseDtoControlValuesFromJSON(
+  jsonString: string,
+): SafeParseResult<DigestStepResponseDtoControlValues, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) =>
+      DigestStepResponseDtoControlValues$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'DigestStepResponseDtoControlValues' from JSON`,
+  );
+}
+
+/** @internal */
 export const DigestStepResponseDto$inboundSchema: z.ZodType<
   DigestStepResponseDto,
   z.ZodTypeDef,
   unknown
 > = z.object({
   controls: DigestControlsMetadataResponseDto$inboundSchema,
+  controlValues: z.lazy(() => DigestStepResponseDtoControlValues$inboundSchema)
+    .optional(),
   variables: z.record(z.any()),
   stepId: z.string(),
   _id: z.string(),
@@ -103,6 +370,7 @@ export const DigestStepResponseDto$inboundSchema: z.ZodType<
 /** @internal */
 export type DigestStepResponseDto$Outbound = {
   controls: DigestControlsMetadataResponseDto$Outbound;
+  controlValues?: DigestStepResponseDtoControlValues$Outbound | undefined;
   variables: { [k: string]: any };
   stepId: string;
   _id: string;
@@ -122,6 +390,8 @@ export const DigestStepResponseDto$outboundSchema: z.ZodType<
   DigestStepResponseDto
 > = z.object({
   controls: DigestControlsMetadataResponseDto$outboundSchema,
+  controlValues: z.lazy(() => DigestStepResponseDtoControlValues$outboundSchema)
+    .optional(),
   variables: z.record(z.any()),
   stepId: z.string(),
   id: z.string(),

@@ -4,7 +4,10 @@
 
 import * as z from "zod";
 import { remap as remap$ } from "../../lib/primitives.js";
-import { safeParse } from "../../lib/schemas.js";
+import {
+  collectExtraKeys as collectExtraKeys$,
+  safeParse,
+} from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 import {
@@ -30,11 +33,35 @@ import {
   WorkflowOriginEnum$outboundSchema,
 } from "./workfloworiginenum.js";
 
+/**
+ * Filter conditions for skipping the step.
+ */
+export type ChatStepResponseDtoSkip = {};
+
+/**
+ * Control values for the chat step
+ */
+export type ChatStepResponseDtoControlValues = {
+  /**
+   * Filter conditions for skipping the step.
+   */
+  skip?: ChatStepResponseDtoSkip | undefined;
+  /**
+   * Content of the chat message.
+   */
+  body: string;
+  additionalProperties?: { [k: string]: any };
+};
+
 export type ChatStepResponseDto = {
   /**
    * Controls metadata for the chat step
    */
   controls: ChatControlsMetadataResponseDto;
+  /**
+   * Control values for the chat step
+   */
+  controlValues?: ChatStepResponseDtoControlValues | undefined;
   /**
    * JSON Schema for variables, follows the JSON Schema standard
    */
@@ -78,12 +105,134 @@ export type ChatStepResponseDto = {
 };
 
 /** @internal */
+export const ChatStepResponseDtoSkip$inboundSchema: z.ZodType<
+  ChatStepResponseDtoSkip,
+  z.ZodTypeDef,
+  unknown
+> = z.object({});
+
+/** @internal */
+export type ChatStepResponseDtoSkip$Outbound = {};
+
+/** @internal */
+export const ChatStepResponseDtoSkip$outboundSchema: z.ZodType<
+  ChatStepResponseDtoSkip$Outbound,
+  z.ZodTypeDef,
+  ChatStepResponseDtoSkip
+> = z.object({});
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace ChatStepResponseDtoSkip$ {
+  /** @deprecated use `ChatStepResponseDtoSkip$inboundSchema` instead. */
+  export const inboundSchema = ChatStepResponseDtoSkip$inboundSchema;
+  /** @deprecated use `ChatStepResponseDtoSkip$outboundSchema` instead. */
+  export const outboundSchema = ChatStepResponseDtoSkip$outboundSchema;
+  /** @deprecated use `ChatStepResponseDtoSkip$Outbound` instead. */
+  export type Outbound = ChatStepResponseDtoSkip$Outbound;
+}
+
+export function chatStepResponseDtoSkipToJSON(
+  chatStepResponseDtoSkip: ChatStepResponseDtoSkip,
+): string {
+  return JSON.stringify(
+    ChatStepResponseDtoSkip$outboundSchema.parse(chatStepResponseDtoSkip),
+  );
+}
+
+export function chatStepResponseDtoSkipFromJSON(
+  jsonString: string,
+): SafeParseResult<ChatStepResponseDtoSkip, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => ChatStepResponseDtoSkip$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'ChatStepResponseDtoSkip' from JSON`,
+  );
+}
+
+/** @internal */
+export const ChatStepResponseDtoControlValues$inboundSchema: z.ZodType<
+  ChatStepResponseDtoControlValues,
+  z.ZodTypeDef,
+  unknown
+> = collectExtraKeys$(
+  z.object({
+    skip: z.lazy(() => ChatStepResponseDtoSkip$inboundSchema).optional(),
+    body: z.string(),
+  }).catchall(z.any()),
+  "additionalProperties",
+  true,
+);
+
+/** @internal */
+export type ChatStepResponseDtoControlValues$Outbound = {
+  skip?: ChatStepResponseDtoSkip$Outbound | undefined;
+  body: string;
+  [additionalProperties: string]: unknown;
+};
+
+/** @internal */
+export const ChatStepResponseDtoControlValues$outboundSchema: z.ZodType<
+  ChatStepResponseDtoControlValues$Outbound,
+  z.ZodTypeDef,
+  ChatStepResponseDtoControlValues
+> = z.object({
+  skip: z.lazy(() => ChatStepResponseDtoSkip$outboundSchema).optional(),
+  body: z.string(),
+  additionalProperties: z.record(z.any()),
+}).transform((v) => {
+  return {
+    ...v.additionalProperties,
+    ...remap$(v, {
+      additionalProperties: null,
+    }),
+  };
+});
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace ChatStepResponseDtoControlValues$ {
+  /** @deprecated use `ChatStepResponseDtoControlValues$inboundSchema` instead. */
+  export const inboundSchema = ChatStepResponseDtoControlValues$inboundSchema;
+  /** @deprecated use `ChatStepResponseDtoControlValues$outboundSchema` instead. */
+  export const outboundSchema = ChatStepResponseDtoControlValues$outboundSchema;
+  /** @deprecated use `ChatStepResponseDtoControlValues$Outbound` instead. */
+  export type Outbound = ChatStepResponseDtoControlValues$Outbound;
+}
+
+export function chatStepResponseDtoControlValuesToJSON(
+  chatStepResponseDtoControlValues: ChatStepResponseDtoControlValues,
+): string {
+  return JSON.stringify(
+    ChatStepResponseDtoControlValues$outboundSchema.parse(
+      chatStepResponseDtoControlValues,
+    ),
+  );
+}
+
+export function chatStepResponseDtoControlValuesFromJSON(
+  jsonString: string,
+): SafeParseResult<ChatStepResponseDtoControlValues, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => ChatStepResponseDtoControlValues$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'ChatStepResponseDtoControlValues' from JSON`,
+  );
+}
+
+/** @internal */
 export const ChatStepResponseDto$inboundSchema: z.ZodType<
   ChatStepResponseDto,
   z.ZodTypeDef,
   unknown
 > = z.object({
   controls: ChatControlsMetadataResponseDto$inboundSchema,
+  controlValues: z.lazy(() => ChatStepResponseDtoControlValues$inboundSchema)
+    .optional(),
   variables: z.record(z.any()),
   stepId: z.string(),
   _id: z.string(),
@@ -103,6 +252,7 @@ export const ChatStepResponseDto$inboundSchema: z.ZodType<
 /** @internal */
 export type ChatStepResponseDto$Outbound = {
   controls: ChatControlsMetadataResponseDto$Outbound;
+  controlValues?: ChatStepResponseDtoControlValues$Outbound | undefined;
   variables: { [k: string]: any };
   stepId: string;
   _id: string;
@@ -122,6 +272,8 @@ export const ChatStepResponseDto$outboundSchema: z.ZodType<
   ChatStepResponseDto
 > = z.object({
   controls: ChatControlsMetadataResponseDto$outboundSchema,
+  controlValues: z.lazy(() => ChatStepResponseDtoControlValues$outboundSchema)
+    .optional(),
   variables: z.record(z.any()),
   stepId: z.string(),
   id: z.string(),

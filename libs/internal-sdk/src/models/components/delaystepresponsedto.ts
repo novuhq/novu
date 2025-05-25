@@ -4,7 +4,11 @@
 
 import * as z from "zod";
 import { remap as remap$ } from "../../lib/primitives.js";
-import { safeParse } from "../../lib/schemas.js";
+import {
+  collectExtraKeys as collectExtraKeys$,
+  safeParse,
+} from "../../lib/schemas.js";
+import { ClosedEnum } from "../../types/enums.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 import {
@@ -30,11 +34,74 @@ import {
   WorkflowOriginEnum$outboundSchema,
 } from "./workfloworiginenum.js";
 
+/**
+ * Filter conditions for skipping the step.
+ */
+export type DelayStepResponseDtoSkip = {};
+
+/**
+ * Type of the delay. Currently only 'regular' is supported by the schema.
+ */
+export const DelayStepResponseDtoType = {
+  Regular: "regular",
+} as const;
+/**
+ * Type of the delay. Currently only 'regular' is supported by the schema.
+ */
+export type DelayStepResponseDtoType = ClosedEnum<
+  typeof DelayStepResponseDtoType
+>;
+
+/**
+ * Unit of time for the delay amount.
+ */
+export const DelayStepResponseDtoUnit = {
+  Seconds: "seconds",
+  Minutes: "minutes",
+  Hours: "hours",
+  Days: "days",
+  Weeks: "weeks",
+  Months: "months",
+} as const;
+/**
+ * Unit of time for the delay amount.
+ */
+export type DelayStepResponseDtoUnit = ClosedEnum<
+  typeof DelayStepResponseDtoUnit
+>;
+
+/**
+ * Control values for the delay step
+ */
+export type DelayStepResponseDtoControlValues = {
+  /**
+   * Filter conditions for skipping the step.
+   */
+  skip?: DelayStepResponseDtoSkip | undefined;
+  /**
+   * Type of the delay. Currently only 'regular' is supported by the schema.
+   */
+  type?: DelayStepResponseDtoType | undefined;
+  /**
+   * Amount of time to delay.
+   */
+  amount: number;
+  /**
+   * Unit of time for the delay amount.
+   */
+  unit: DelayStepResponseDtoUnit;
+  additionalProperties?: { [k: string]: any };
+};
+
 export type DelayStepResponseDto = {
   /**
    * Controls metadata for the delay step
    */
   controls: DelayControlsMetadataResponseDto;
+  /**
+   * Control values for the delay step
+   */
+  controlValues?: DelayStepResponseDtoControlValues | undefined;
   /**
    * JSON Schema for variables, follows the JSON Schema standard
    */
@@ -78,12 +145,183 @@ export type DelayStepResponseDto = {
 };
 
 /** @internal */
+export const DelayStepResponseDtoSkip$inboundSchema: z.ZodType<
+  DelayStepResponseDtoSkip,
+  z.ZodTypeDef,
+  unknown
+> = z.object({});
+
+/** @internal */
+export type DelayStepResponseDtoSkip$Outbound = {};
+
+/** @internal */
+export const DelayStepResponseDtoSkip$outboundSchema: z.ZodType<
+  DelayStepResponseDtoSkip$Outbound,
+  z.ZodTypeDef,
+  DelayStepResponseDtoSkip
+> = z.object({});
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace DelayStepResponseDtoSkip$ {
+  /** @deprecated use `DelayStepResponseDtoSkip$inboundSchema` instead. */
+  export const inboundSchema = DelayStepResponseDtoSkip$inboundSchema;
+  /** @deprecated use `DelayStepResponseDtoSkip$outboundSchema` instead. */
+  export const outboundSchema = DelayStepResponseDtoSkip$outboundSchema;
+  /** @deprecated use `DelayStepResponseDtoSkip$Outbound` instead. */
+  export type Outbound = DelayStepResponseDtoSkip$Outbound;
+}
+
+export function delayStepResponseDtoSkipToJSON(
+  delayStepResponseDtoSkip: DelayStepResponseDtoSkip,
+): string {
+  return JSON.stringify(
+    DelayStepResponseDtoSkip$outboundSchema.parse(delayStepResponseDtoSkip),
+  );
+}
+
+export function delayStepResponseDtoSkipFromJSON(
+  jsonString: string,
+): SafeParseResult<DelayStepResponseDtoSkip, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => DelayStepResponseDtoSkip$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'DelayStepResponseDtoSkip' from JSON`,
+  );
+}
+
+/** @internal */
+export const DelayStepResponseDtoType$inboundSchema: z.ZodNativeEnum<
+  typeof DelayStepResponseDtoType
+> = z.nativeEnum(DelayStepResponseDtoType);
+
+/** @internal */
+export const DelayStepResponseDtoType$outboundSchema: z.ZodNativeEnum<
+  typeof DelayStepResponseDtoType
+> = DelayStepResponseDtoType$inboundSchema;
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace DelayStepResponseDtoType$ {
+  /** @deprecated use `DelayStepResponseDtoType$inboundSchema` instead. */
+  export const inboundSchema = DelayStepResponseDtoType$inboundSchema;
+  /** @deprecated use `DelayStepResponseDtoType$outboundSchema` instead. */
+  export const outboundSchema = DelayStepResponseDtoType$outboundSchema;
+}
+
+/** @internal */
+export const DelayStepResponseDtoUnit$inboundSchema: z.ZodNativeEnum<
+  typeof DelayStepResponseDtoUnit
+> = z.nativeEnum(DelayStepResponseDtoUnit);
+
+/** @internal */
+export const DelayStepResponseDtoUnit$outboundSchema: z.ZodNativeEnum<
+  typeof DelayStepResponseDtoUnit
+> = DelayStepResponseDtoUnit$inboundSchema;
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace DelayStepResponseDtoUnit$ {
+  /** @deprecated use `DelayStepResponseDtoUnit$inboundSchema` instead. */
+  export const inboundSchema = DelayStepResponseDtoUnit$inboundSchema;
+  /** @deprecated use `DelayStepResponseDtoUnit$outboundSchema` instead. */
+  export const outboundSchema = DelayStepResponseDtoUnit$outboundSchema;
+}
+
+/** @internal */
+export const DelayStepResponseDtoControlValues$inboundSchema: z.ZodType<
+  DelayStepResponseDtoControlValues,
+  z.ZodTypeDef,
+  unknown
+> = collectExtraKeys$(
+  z.object({
+    skip: z.lazy(() => DelayStepResponseDtoSkip$inboundSchema).optional(),
+    type: DelayStepResponseDtoType$inboundSchema.default("regular"),
+    amount: z.number(),
+    unit: DelayStepResponseDtoUnit$inboundSchema,
+  }).catchall(z.any()),
+  "additionalProperties",
+  true,
+);
+
+/** @internal */
+export type DelayStepResponseDtoControlValues$Outbound = {
+  skip?: DelayStepResponseDtoSkip$Outbound | undefined;
+  type: string;
+  amount: number;
+  unit: string;
+  [additionalProperties: string]: unknown;
+};
+
+/** @internal */
+export const DelayStepResponseDtoControlValues$outboundSchema: z.ZodType<
+  DelayStepResponseDtoControlValues$Outbound,
+  z.ZodTypeDef,
+  DelayStepResponseDtoControlValues
+> = z.object({
+  skip: z.lazy(() => DelayStepResponseDtoSkip$outboundSchema).optional(),
+  type: DelayStepResponseDtoType$outboundSchema.default("regular"),
+  amount: z.number(),
+  unit: DelayStepResponseDtoUnit$outboundSchema,
+  additionalProperties: z.record(z.any()),
+}).transform((v) => {
+  return {
+    ...v.additionalProperties,
+    ...remap$(v, {
+      additionalProperties: null,
+    }),
+  };
+});
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace DelayStepResponseDtoControlValues$ {
+  /** @deprecated use `DelayStepResponseDtoControlValues$inboundSchema` instead. */
+  export const inboundSchema = DelayStepResponseDtoControlValues$inboundSchema;
+  /** @deprecated use `DelayStepResponseDtoControlValues$outboundSchema` instead. */
+  export const outboundSchema =
+    DelayStepResponseDtoControlValues$outboundSchema;
+  /** @deprecated use `DelayStepResponseDtoControlValues$Outbound` instead. */
+  export type Outbound = DelayStepResponseDtoControlValues$Outbound;
+}
+
+export function delayStepResponseDtoControlValuesToJSON(
+  delayStepResponseDtoControlValues: DelayStepResponseDtoControlValues,
+): string {
+  return JSON.stringify(
+    DelayStepResponseDtoControlValues$outboundSchema.parse(
+      delayStepResponseDtoControlValues,
+    ),
+  );
+}
+
+export function delayStepResponseDtoControlValuesFromJSON(
+  jsonString: string,
+): SafeParseResult<DelayStepResponseDtoControlValues, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => DelayStepResponseDtoControlValues$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'DelayStepResponseDtoControlValues' from JSON`,
+  );
+}
+
+/** @internal */
 export const DelayStepResponseDto$inboundSchema: z.ZodType<
   DelayStepResponseDto,
   z.ZodTypeDef,
   unknown
 > = z.object({
   controls: DelayControlsMetadataResponseDto$inboundSchema,
+  controlValues: z.lazy(() => DelayStepResponseDtoControlValues$inboundSchema)
+    .optional(),
   variables: z.record(z.any()),
   stepId: z.string(),
   _id: z.string(),
@@ -103,6 +341,7 @@ export const DelayStepResponseDto$inboundSchema: z.ZodType<
 /** @internal */
 export type DelayStepResponseDto$Outbound = {
   controls: DelayControlsMetadataResponseDto$Outbound;
+  controlValues?: DelayStepResponseDtoControlValues$Outbound | undefined;
   variables: { [k: string]: any };
   stepId: string;
   _id: string;
@@ -122,6 +361,8 @@ export const DelayStepResponseDto$outboundSchema: z.ZodType<
   DelayStepResponseDto
 > = z.object({
   controls: DelayControlsMetadataResponseDto$outboundSchema,
+  controlValues: z.lazy(() => DelayStepResponseDtoControlValues$outboundSchema)
+    .optional(),
   variables: z.record(z.any()),
   stepId: z.string(),
   id: z.string(),

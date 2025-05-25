@@ -4,15 +4,30 @@
 
 import * as z from "zod";
 import { remap as remap$ } from "../../lib/primitives.js";
-import { safeParse } from "../../lib/schemas.js";
+import {
+  collectExtraKeys as collectExtraKeys$,
+  safeParse,
+} from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
+import {
+  ActionDto,
+  ActionDto$inboundSchema,
+  ActionDto$Outbound,
+  ActionDto$outboundSchema,
+} from "./actiondto.js";
 import {
   InAppControlsMetadataResponseDto,
   InAppControlsMetadataResponseDto$inboundSchema,
   InAppControlsMetadataResponseDto$Outbound,
   InAppControlsMetadataResponseDto$outboundSchema,
 } from "./inappcontrolsmetadataresponsedto.js";
+import {
+  RedirectDto,
+  RedirectDto$inboundSchema,
+  RedirectDto$Outbound,
+  RedirectDto$outboundSchema,
+} from "./redirectdto.js";
 import {
   StepIssuesDto,
   StepIssuesDto$inboundSchema,
@@ -30,11 +45,68 @@ import {
   WorkflowOriginEnum$outboundSchema,
 } from "./workfloworiginenum.js";
 
+/**
+ * Filter conditions for skipping the step.
+ */
+export type InAppStepResponseDtoSkip = {};
+
+/**
+ * Additional data payload for the step.
+ */
+export type InAppStepResponseDtoData = {};
+
+/**
+ * Control values for the in-app step
+ */
+export type InAppStepResponseDtoControlValues = {
+  /**
+   * Filter conditions for skipping the step.
+   */
+  skip?: InAppStepResponseDtoSkip | undefined;
+  /**
+   * Content/body of the in-app message. Required if subject is empty.
+   */
+  body?: string | undefined;
+  /**
+   * Subject/title of the in-app message. Required if body is empty.
+   */
+  subject?: string | undefined;
+  /**
+   * URL for an avatar image. Must be a valid URL or start with / or {{"{{"}} variable }}.
+   */
+  avatar?: string | undefined;
+  /**
+   * Primary action button details.
+   */
+  primaryAction?: ActionDto | undefined;
+  /**
+   * Secondary action button details.
+   */
+  secondaryAction?: ActionDto | undefined;
+  /**
+   * Redirection URL configuration for the main content click (if no actions defined/clicked)..
+   */
+  redirect?: RedirectDto | undefined;
+  /**
+   * Disable sanitization of the output.
+   */
+  disableOutputSanitization?: boolean | undefined;
+  /**
+   * Additional data payload for the step.
+   */
+  data?: InAppStepResponseDtoData | undefined;
+  additionalProperties?: { [k: string]: any };
+};
+
 export type InAppStepResponseDto = {
   /**
    * Controls metadata for the in-app step
    */
   controls: InAppControlsMetadataResponseDto;
+  /**
+   * Control values for the in-app step
+   */
+  controlValues?: InAppStepResponseDtoControlValues | undefined;
   /**
    * JSON Schema for variables, follows the JSON Schema standard
    */
@@ -78,12 +150,204 @@ export type InAppStepResponseDto = {
 };
 
 /** @internal */
+export const InAppStepResponseDtoSkip$inboundSchema: z.ZodType<
+  InAppStepResponseDtoSkip,
+  z.ZodTypeDef,
+  unknown
+> = z.object({});
+
+/** @internal */
+export type InAppStepResponseDtoSkip$Outbound = {};
+
+/** @internal */
+export const InAppStepResponseDtoSkip$outboundSchema: z.ZodType<
+  InAppStepResponseDtoSkip$Outbound,
+  z.ZodTypeDef,
+  InAppStepResponseDtoSkip
+> = z.object({});
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace InAppStepResponseDtoSkip$ {
+  /** @deprecated use `InAppStepResponseDtoSkip$inboundSchema` instead. */
+  export const inboundSchema = InAppStepResponseDtoSkip$inboundSchema;
+  /** @deprecated use `InAppStepResponseDtoSkip$outboundSchema` instead. */
+  export const outboundSchema = InAppStepResponseDtoSkip$outboundSchema;
+  /** @deprecated use `InAppStepResponseDtoSkip$Outbound` instead. */
+  export type Outbound = InAppStepResponseDtoSkip$Outbound;
+}
+
+export function inAppStepResponseDtoSkipToJSON(
+  inAppStepResponseDtoSkip: InAppStepResponseDtoSkip,
+): string {
+  return JSON.stringify(
+    InAppStepResponseDtoSkip$outboundSchema.parse(inAppStepResponseDtoSkip),
+  );
+}
+
+export function inAppStepResponseDtoSkipFromJSON(
+  jsonString: string,
+): SafeParseResult<InAppStepResponseDtoSkip, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => InAppStepResponseDtoSkip$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'InAppStepResponseDtoSkip' from JSON`,
+  );
+}
+
+/** @internal */
+export const InAppStepResponseDtoData$inboundSchema: z.ZodType<
+  InAppStepResponseDtoData,
+  z.ZodTypeDef,
+  unknown
+> = z.object({});
+
+/** @internal */
+export type InAppStepResponseDtoData$Outbound = {};
+
+/** @internal */
+export const InAppStepResponseDtoData$outboundSchema: z.ZodType<
+  InAppStepResponseDtoData$Outbound,
+  z.ZodTypeDef,
+  InAppStepResponseDtoData
+> = z.object({});
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace InAppStepResponseDtoData$ {
+  /** @deprecated use `InAppStepResponseDtoData$inboundSchema` instead. */
+  export const inboundSchema = InAppStepResponseDtoData$inboundSchema;
+  /** @deprecated use `InAppStepResponseDtoData$outboundSchema` instead. */
+  export const outboundSchema = InAppStepResponseDtoData$outboundSchema;
+  /** @deprecated use `InAppStepResponseDtoData$Outbound` instead. */
+  export type Outbound = InAppStepResponseDtoData$Outbound;
+}
+
+export function inAppStepResponseDtoDataToJSON(
+  inAppStepResponseDtoData: InAppStepResponseDtoData,
+): string {
+  return JSON.stringify(
+    InAppStepResponseDtoData$outboundSchema.parse(inAppStepResponseDtoData),
+  );
+}
+
+export function inAppStepResponseDtoDataFromJSON(
+  jsonString: string,
+): SafeParseResult<InAppStepResponseDtoData, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => InAppStepResponseDtoData$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'InAppStepResponseDtoData' from JSON`,
+  );
+}
+
+/** @internal */
+export const InAppStepResponseDtoControlValues$inboundSchema: z.ZodType<
+  InAppStepResponseDtoControlValues,
+  z.ZodTypeDef,
+  unknown
+> = collectExtraKeys$(
+  z.object({
+    skip: z.lazy(() => InAppStepResponseDtoSkip$inboundSchema).optional(),
+    body: z.string().optional(),
+    subject: z.string().optional(),
+    avatar: z.string().optional(),
+    primaryAction: ActionDto$inboundSchema.optional(),
+    secondaryAction: ActionDto$inboundSchema.optional(),
+    redirect: RedirectDto$inboundSchema.optional(),
+    disableOutputSanitization: z.boolean().default(false),
+    data: z.lazy(() => InAppStepResponseDtoData$inboundSchema).optional(),
+  }).catchall(z.any()),
+  "additionalProperties",
+  true,
+);
+
+/** @internal */
+export type InAppStepResponseDtoControlValues$Outbound = {
+  skip?: InAppStepResponseDtoSkip$Outbound | undefined;
+  body?: string | undefined;
+  subject?: string | undefined;
+  avatar?: string | undefined;
+  primaryAction?: ActionDto$Outbound | undefined;
+  secondaryAction?: ActionDto$Outbound | undefined;
+  redirect?: RedirectDto$Outbound | undefined;
+  disableOutputSanitization: boolean;
+  data?: InAppStepResponseDtoData$Outbound | undefined;
+  [additionalProperties: string]: unknown;
+};
+
+/** @internal */
+export const InAppStepResponseDtoControlValues$outboundSchema: z.ZodType<
+  InAppStepResponseDtoControlValues$Outbound,
+  z.ZodTypeDef,
+  InAppStepResponseDtoControlValues
+> = z.object({
+  skip: z.lazy(() => InAppStepResponseDtoSkip$outboundSchema).optional(),
+  body: z.string().optional(),
+  subject: z.string().optional(),
+  avatar: z.string().optional(),
+  primaryAction: ActionDto$outboundSchema.optional(),
+  secondaryAction: ActionDto$outboundSchema.optional(),
+  redirect: RedirectDto$outboundSchema.optional(),
+  disableOutputSanitization: z.boolean().default(false),
+  data: z.lazy(() => InAppStepResponseDtoData$outboundSchema).optional(),
+  additionalProperties: z.record(z.any()),
+}).transform((v) => {
+  return {
+    ...v.additionalProperties,
+    ...remap$(v, {
+      additionalProperties: null,
+    }),
+  };
+});
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace InAppStepResponseDtoControlValues$ {
+  /** @deprecated use `InAppStepResponseDtoControlValues$inboundSchema` instead. */
+  export const inboundSchema = InAppStepResponseDtoControlValues$inboundSchema;
+  /** @deprecated use `InAppStepResponseDtoControlValues$outboundSchema` instead. */
+  export const outboundSchema =
+    InAppStepResponseDtoControlValues$outboundSchema;
+  /** @deprecated use `InAppStepResponseDtoControlValues$Outbound` instead. */
+  export type Outbound = InAppStepResponseDtoControlValues$Outbound;
+}
+
+export function inAppStepResponseDtoControlValuesToJSON(
+  inAppStepResponseDtoControlValues: InAppStepResponseDtoControlValues,
+): string {
+  return JSON.stringify(
+    InAppStepResponseDtoControlValues$outboundSchema.parse(
+      inAppStepResponseDtoControlValues,
+    ),
+  );
+}
+
+export function inAppStepResponseDtoControlValuesFromJSON(
+  jsonString: string,
+): SafeParseResult<InAppStepResponseDtoControlValues, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => InAppStepResponseDtoControlValues$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'InAppStepResponseDtoControlValues' from JSON`,
+  );
+}
+
+/** @internal */
 export const InAppStepResponseDto$inboundSchema: z.ZodType<
   InAppStepResponseDto,
   z.ZodTypeDef,
   unknown
 > = z.object({
   controls: InAppControlsMetadataResponseDto$inboundSchema,
+  controlValues: z.lazy(() => InAppStepResponseDtoControlValues$inboundSchema)
+    .optional(),
   variables: z.record(z.any()),
   stepId: z.string(),
   _id: z.string(),
@@ -103,6 +367,7 @@ export const InAppStepResponseDto$inboundSchema: z.ZodType<
 /** @internal */
 export type InAppStepResponseDto$Outbound = {
   controls: InAppControlsMetadataResponseDto$Outbound;
+  controlValues?: InAppStepResponseDtoControlValues$Outbound | undefined;
   variables: { [k: string]: any };
   stepId: string;
   _id: string;
@@ -122,6 +387,8 @@ export const InAppStepResponseDto$outboundSchema: z.ZodType<
   InAppStepResponseDto
 > = z.object({
   controls: InAppControlsMetadataResponseDto$outboundSchema,
+  controlValues: z.lazy(() => InAppStepResponseDtoControlValues$outboundSchema)
+    .optional(),
   variables: z.record(z.any()),
   stepId: z.string(),
   id: z.string(),

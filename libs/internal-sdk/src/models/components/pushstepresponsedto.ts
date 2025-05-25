@@ -4,7 +4,10 @@
 
 import * as z from "zod";
 import { remap as remap$ } from "../../lib/primitives.js";
-import { safeParse } from "../../lib/schemas.js";
+import {
+  collectExtraKeys as collectExtraKeys$,
+  safeParse,
+} from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 import {
@@ -30,11 +33,39 @@ import {
   WorkflowOriginEnum$outboundSchema,
 } from "./workfloworiginenum.js";
 
+/**
+ * Filter conditions for skipping the step.
+ */
+export type PushStepResponseDtoSkip = {};
+
+/**
+ * Control values for the push step
+ */
+export type PushStepResponseDtoControlValues = {
+  /**
+   * Filter conditions for skipping the step.
+   */
+  skip?: PushStepResponseDtoSkip | undefined;
+  /**
+   * Subject/title of the push notification.
+   */
+  subject: string;
+  /**
+   * Body content of the push notification.
+   */
+  body: string;
+  additionalProperties?: { [k: string]: any };
+};
+
 export type PushStepResponseDto = {
   /**
    * Controls metadata for the push step
    */
   controls: PushControlsMetadataResponseDto;
+  /**
+   * Control values for the push step
+   */
+  controlValues?: PushStepResponseDtoControlValues | undefined;
   /**
    * JSON Schema for variables, follows the JSON Schema standard
    */
@@ -78,12 +109,137 @@ export type PushStepResponseDto = {
 };
 
 /** @internal */
+export const PushStepResponseDtoSkip$inboundSchema: z.ZodType<
+  PushStepResponseDtoSkip,
+  z.ZodTypeDef,
+  unknown
+> = z.object({});
+
+/** @internal */
+export type PushStepResponseDtoSkip$Outbound = {};
+
+/** @internal */
+export const PushStepResponseDtoSkip$outboundSchema: z.ZodType<
+  PushStepResponseDtoSkip$Outbound,
+  z.ZodTypeDef,
+  PushStepResponseDtoSkip
+> = z.object({});
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace PushStepResponseDtoSkip$ {
+  /** @deprecated use `PushStepResponseDtoSkip$inboundSchema` instead. */
+  export const inboundSchema = PushStepResponseDtoSkip$inboundSchema;
+  /** @deprecated use `PushStepResponseDtoSkip$outboundSchema` instead. */
+  export const outboundSchema = PushStepResponseDtoSkip$outboundSchema;
+  /** @deprecated use `PushStepResponseDtoSkip$Outbound` instead. */
+  export type Outbound = PushStepResponseDtoSkip$Outbound;
+}
+
+export function pushStepResponseDtoSkipToJSON(
+  pushStepResponseDtoSkip: PushStepResponseDtoSkip,
+): string {
+  return JSON.stringify(
+    PushStepResponseDtoSkip$outboundSchema.parse(pushStepResponseDtoSkip),
+  );
+}
+
+export function pushStepResponseDtoSkipFromJSON(
+  jsonString: string,
+): SafeParseResult<PushStepResponseDtoSkip, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => PushStepResponseDtoSkip$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'PushStepResponseDtoSkip' from JSON`,
+  );
+}
+
+/** @internal */
+export const PushStepResponseDtoControlValues$inboundSchema: z.ZodType<
+  PushStepResponseDtoControlValues,
+  z.ZodTypeDef,
+  unknown
+> = collectExtraKeys$(
+  z.object({
+    skip: z.lazy(() => PushStepResponseDtoSkip$inboundSchema).optional(),
+    subject: z.string(),
+    body: z.string(),
+  }).catchall(z.any()),
+  "additionalProperties",
+  true,
+);
+
+/** @internal */
+export type PushStepResponseDtoControlValues$Outbound = {
+  skip?: PushStepResponseDtoSkip$Outbound | undefined;
+  subject: string;
+  body: string;
+  [additionalProperties: string]: unknown;
+};
+
+/** @internal */
+export const PushStepResponseDtoControlValues$outboundSchema: z.ZodType<
+  PushStepResponseDtoControlValues$Outbound,
+  z.ZodTypeDef,
+  PushStepResponseDtoControlValues
+> = z.object({
+  skip: z.lazy(() => PushStepResponseDtoSkip$outboundSchema).optional(),
+  subject: z.string(),
+  body: z.string(),
+  additionalProperties: z.record(z.any()),
+}).transform((v) => {
+  return {
+    ...v.additionalProperties,
+    ...remap$(v, {
+      additionalProperties: null,
+    }),
+  };
+});
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace PushStepResponseDtoControlValues$ {
+  /** @deprecated use `PushStepResponseDtoControlValues$inboundSchema` instead. */
+  export const inboundSchema = PushStepResponseDtoControlValues$inboundSchema;
+  /** @deprecated use `PushStepResponseDtoControlValues$outboundSchema` instead. */
+  export const outboundSchema = PushStepResponseDtoControlValues$outboundSchema;
+  /** @deprecated use `PushStepResponseDtoControlValues$Outbound` instead. */
+  export type Outbound = PushStepResponseDtoControlValues$Outbound;
+}
+
+export function pushStepResponseDtoControlValuesToJSON(
+  pushStepResponseDtoControlValues: PushStepResponseDtoControlValues,
+): string {
+  return JSON.stringify(
+    PushStepResponseDtoControlValues$outboundSchema.parse(
+      pushStepResponseDtoControlValues,
+    ),
+  );
+}
+
+export function pushStepResponseDtoControlValuesFromJSON(
+  jsonString: string,
+): SafeParseResult<PushStepResponseDtoControlValues, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => PushStepResponseDtoControlValues$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'PushStepResponseDtoControlValues' from JSON`,
+  );
+}
+
+/** @internal */
 export const PushStepResponseDto$inboundSchema: z.ZodType<
   PushStepResponseDto,
   z.ZodTypeDef,
   unknown
 > = z.object({
   controls: PushControlsMetadataResponseDto$inboundSchema,
+  controlValues: z.lazy(() => PushStepResponseDtoControlValues$inboundSchema)
+    .optional(),
   variables: z.record(z.any()),
   stepId: z.string(),
   _id: z.string(),
@@ -103,6 +259,7 @@ export const PushStepResponseDto$inboundSchema: z.ZodType<
 /** @internal */
 export type PushStepResponseDto$Outbound = {
   controls: PushControlsMetadataResponseDto$Outbound;
+  controlValues?: PushStepResponseDtoControlValues$Outbound | undefined;
   variables: { [k: string]: any };
   stepId: string;
   _id: string;
@@ -122,6 +279,8 @@ export const PushStepResponseDto$outboundSchema: z.ZodType<
   PushStepResponseDto
 > = z.object({
   controls: PushControlsMetadataResponseDto$outboundSchema,
+  controlValues: z.lazy(() => PushStepResponseDtoControlValues$outboundSchema)
+    .optional(),
   variables: z.record(z.any()),
   stepId: z.string(),
   id: z.string(),

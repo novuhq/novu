@@ -4,7 +4,10 @@
 
 import * as z from "zod";
 import { remap as remap$ } from "../../lib/primitives.js";
-import { safeParse } from "../../lib/schemas.js";
+import {
+  collectExtraKeys as collectExtraKeys$,
+  safeParse,
+} from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 import {
@@ -30,11 +33,35 @@ import {
   WorkflowOriginEnum$outboundSchema,
 } from "./workfloworiginenum.js";
 
+/**
+ * Filter conditions for skipping the step.
+ */
+export type SmsStepResponseDtoSkip = {};
+
+/**
+ * Control values for the SMS step
+ */
+export type SmsStepResponseDtoControlValues = {
+  /**
+   * Filter conditions for skipping the step.
+   */
+  skip?: SmsStepResponseDtoSkip | undefined;
+  /**
+   * Content of the SMS message.
+   */
+  body: string;
+  additionalProperties?: { [k: string]: any };
+};
+
 export type SmsStepResponseDto = {
   /**
    * Controls metadata for the SMS step
    */
   controls: SmsControlsMetadataResponseDto;
+  /**
+   * Control values for the SMS step
+   */
+  controlValues?: SmsStepResponseDtoControlValues | undefined;
   /**
    * JSON Schema for variables, follows the JSON Schema standard
    */
@@ -78,12 +105,134 @@ export type SmsStepResponseDto = {
 };
 
 /** @internal */
+export const SmsStepResponseDtoSkip$inboundSchema: z.ZodType<
+  SmsStepResponseDtoSkip,
+  z.ZodTypeDef,
+  unknown
+> = z.object({});
+
+/** @internal */
+export type SmsStepResponseDtoSkip$Outbound = {};
+
+/** @internal */
+export const SmsStepResponseDtoSkip$outboundSchema: z.ZodType<
+  SmsStepResponseDtoSkip$Outbound,
+  z.ZodTypeDef,
+  SmsStepResponseDtoSkip
+> = z.object({});
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace SmsStepResponseDtoSkip$ {
+  /** @deprecated use `SmsStepResponseDtoSkip$inboundSchema` instead. */
+  export const inboundSchema = SmsStepResponseDtoSkip$inboundSchema;
+  /** @deprecated use `SmsStepResponseDtoSkip$outboundSchema` instead. */
+  export const outboundSchema = SmsStepResponseDtoSkip$outboundSchema;
+  /** @deprecated use `SmsStepResponseDtoSkip$Outbound` instead. */
+  export type Outbound = SmsStepResponseDtoSkip$Outbound;
+}
+
+export function smsStepResponseDtoSkipToJSON(
+  smsStepResponseDtoSkip: SmsStepResponseDtoSkip,
+): string {
+  return JSON.stringify(
+    SmsStepResponseDtoSkip$outboundSchema.parse(smsStepResponseDtoSkip),
+  );
+}
+
+export function smsStepResponseDtoSkipFromJSON(
+  jsonString: string,
+): SafeParseResult<SmsStepResponseDtoSkip, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => SmsStepResponseDtoSkip$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'SmsStepResponseDtoSkip' from JSON`,
+  );
+}
+
+/** @internal */
+export const SmsStepResponseDtoControlValues$inboundSchema: z.ZodType<
+  SmsStepResponseDtoControlValues,
+  z.ZodTypeDef,
+  unknown
+> = collectExtraKeys$(
+  z.object({
+    skip: z.lazy(() => SmsStepResponseDtoSkip$inboundSchema).optional(),
+    body: z.string(),
+  }).catchall(z.any()),
+  "additionalProperties",
+  true,
+);
+
+/** @internal */
+export type SmsStepResponseDtoControlValues$Outbound = {
+  skip?: SmsStepResponseDtoSkip$Outbound | undefined;
+  body: string;
+  [additionalProperties: string]: unknown;
+};
+
+/** @internal */
+export const SmsStepResponseDtoControlValues$outboundSchema: z.ZodType<
+  SmsStepResponseDtoControlValues$Outbound,
+  z.ZodTypeDef,
+  SmsStepResponseDtoControlValues
+> = z.object({
+  skip: z.lazy(() => SmsStepResponseDtoSkip$outboundSchema).optional(),
+  body: z.string(),
+  additionalProperties: z.record(z.any()),
+}).transform((v) => {
+  return {
+    ...v.additionalProperties,
+    ...remap$(v, {
+      additionalProperties: null,
+    }),
+  };
+});
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace SmsStepResponseDtoControlValues$ {
+  /** @deprecated use `SmsStepResponseDtoControlValues$inboundSchema` instead. */
+  export const inboundSchema = SmsStepResponseDtoControlValues$inboundSchema;
+  /** @deprecated use `SmsStepResponseDtoControlValues$outboundSchema` instead. */
+  export const outboundSchema = SmsStepResponseDtoControlValues$outboundSchema;
+  /** @deprecated use `SmsStepResponseDtoControlValues$Outbound` instead. */
+  export type Outbound = SmsStepResponseDtoControlValues$Outbound;
+}
+
+export function smsStepResponseDtoControlValuesToJSON(
+  smsStepResponseDtoControlValues: SmsStepResponseDtoControlValues,
+): string {
+  return JSON.stringify(
+    SmsStepResponseDtoControlValues$outboundSchema.parse(
+      smsStepResponseDtoControlValues,
+    ),
+  );
+}
+
+export function smsStepResponseDtoControlValuesFromJSON(
+  jsonString: string,
+): SafeParseResult<SmsStepResponseDtoControlValues, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => SmsStepResponseDtoControlValues$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'SmsStepResponseDtoControlValues' from JSON`,
+  );
+}
+
+/** @internal */
 export const SmsStepResponseDto$inboundSchema: z.ZodType<
   SmsStepResponseDto,
   z.ZodTypeDef,
   unknown
 > = z.object({
   controls: SmsControlsMetadataResponseDto$inboundSchema,
+  controlValues: z.lazy(() => SmsStepResponseDtoControlValues$inboundSchema)
+    .optional(),
   variables: z.record(z.any()),
   stepId: z.string(),
   _id: z.string(),
@@ -103,6 +252,7 @@ export const SmsStepResponseDto$inboundSchema: z.ZodType<
 /** @internal */
 export type SmsStepResponseDto$Outbound = {
   controls: SmsControlsMetadataResponseDto$Outbound;
+  controlValues?: SmsStepResponseDtoControlValues$Outbound | undefined;
   variables: { [k: string]: any };
   stepId: string;
   _id: string;
@@ -122,6 +272,8 @@ export const SmsStepResponseDto$outboundSchema: z.ZodType<
   SmsStepResponseDto
 > = z.object({
   controls: SmsControlsMetadataResponseDto$outboundSchema,
+  controlValues: z.lazy(() => SmsStepResponseDtoControlValues$outboundSchema)
+    .optional(),
   variables: z.record(z.any()),
   stepId: z.string(),
   id: z.string(),

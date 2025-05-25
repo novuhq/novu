@@ -4,7 +4,10 @@
 
 import * as z from "zod";
 import { remap as remap$ } from "../../lib/primitives.js";
-import { safeParse } from "../../lib/schemas.js";
+import {
+  collectExtraKeys as collectExtraKeys$,
+  safeParse,
+} from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 import {
@@ -30,11 +33,31 @@ import {
   WorkflowOriginEnum$outboundSchema,
 } from "./workfloworiginenum.js";
 
+/**
+ * Custom control values for the step.
+ */
+export type CustomStepResponseDtoCustom = {};
+
+/**
+ * Control values for the custom step
+ */
+export type CustomStepResponseDtoControlValues = {
+  /**
+   * Custom control values for the step.
+   */
+  custom?: CustomStepResponseDtoCustom | undefined;
+  additionalProperties?: { [k: string]: any };
+};
+
 export type CustomStepResponseDto = {
   /**
    * Controls metadata for the custom step
    */
   controls: CustomControlsMetadataResponseDto;
+  /**
+   * Control values for the custom step
+   */
+  controlValues?: CustomStepResponseDtoControlValues | undefined;
   /**
    * JSON Schema for variables, follows the JSON Schema standard
    */
@@ -78,12 +101,135 @@ export type CustomStepResponseDto = {
 };
 
 /** @internal */
+export const CustomStepResponseDtoCustom$inboundSchema: z.ZodType<
+  CustomStepResponseDtoCustom,
+  z.ZodTypeDef,
+  unknown
+> = z.object({});
+
+/** @internal */
+export type CustomStepResponseDtoCustom$Outbound = {};
+
+/** @internal */
+export const CustomStepResponseDtoCustom$outboundSchema: z.ZodType<
+  CustomStepResponseDtoCustom$Outbound,
+  z.ZodTypeDef,
+  CustomStepResponseDtoCustom
+> = z.object({});
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace CustomStepResponseDtoCustom$ {
+  /** @deprecated use `CustomStepResponseDtoCustom$inboundSchema` instead. */
+  export const inboundSchema = CustomStepResponseDtoCustom$inboundSchema;
+  /** @deprecated use `CustomStepResponseDtoCustom$outboundSchema` instead. */
+  export const outboundSchema = CustomStepResponseDtoCustom$outboundSchema;
+  /** @deprecated use `CustomStepResponseDtoCustom$Outbound` instead. */
+  export type Outbound = CustomStepResponseDtoCustom$Outbound;
+}
+
+export function customStepResponseDtoCustomToJSON(
+  customStepResponseDtoCustom: CustomStepResponseDtoCustom,
+): string {
+  return JSON.stringify(
+    CustomStepResponseDtoCustom$outboundSchema.parse(
+      customStepResponseDtoCustom,
+    ),
+  );
+}
+
+export function customStepResponseDtoCustomFromJSON(
+  jsonString: string,
+): SafeParseResult<CustomStepResponseDtoCustom, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => CustomStepResponseDtoCustom$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'CustomStepResponseDtoCustom' from JSON`,
+  );
+}
+
+/** @internal */
+export const CustomStepResponseDtoControlValues$inboundSchema: z.ZodType<
+  CustomStepResponseDtoControlValues,
+  z.ZodTypeDef,
+  unknown
+> = collectExtraKeys$(
+  z.object({
+    custom: z.lazy(() => CustomStepResponseDtoCustom$inboundSchema).optional(),
+  }).catchall(z.any()),
+  "additionalProperties",
+  true,
+);
+
+/** @internal */
+export type CustomStepResponseDtoControlValues$Outbound = {
+  custom?: CustomStepResponseDtoCustom$Outbound | undefined;
+  [additionalProperties: string]: unknown;
+};
+
+/** @internal */
+export const CustomStepResponseDtoControlValues$outboundSchema: z.ZodType<
+  CustomStepResponseDtoControlValues$Outbound,
+  z.ZodTypeDef,
+  CustomStepResponseDtoControlValues
+> = z.object({
+  custom: z.lazy(() => CustomStepResponseDtoCustom$outboundSchema).optional(),
+  additionalProperties: z.record(z.any()),
+}).transform((v) => {
+  return {
+    ...v.additionalProperties,
+    ...remap$(v, {
+      additionalProperties: null,
+    }),
+  };
+});
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace CustomStepResponseDtoControlValues$ {
+  /** @deprecated use `CustomStepResponseDtoControlValues$inboundSchema` instead. */
+  export const inboundSchema = CustomStepResponseDtoControlValues$inboundSchema;
+  /** @deprecated use `CustomStepResponseDtoControlValues$outboundSchema` instead. */
+  export const outboundSchema =
+    CustomStepResponseDtoControlValues$outboundSchema;
+  /** @deprecated use `CustomStepResponseDtoControlValues$Outbound` instead. */
+  export type Outbound = CustomStepResponseDtoControlValues$Outbound;
+}
+
+export function customStepResponseDtoControlValuesToJSON(
+  customStepResponseDtoControlValues: CustomStepResponseDtoControlValues,
+): string {
+  return JSON.stringify(
+    CustomStepResponseDtoControlValues$outboundSchema.parse(
+      customStepResponseDtoControlValues,
+    ),
+  );
+}
+
+export function customStepResponseDtoControlValuesFromJSON(
+  jsonString: string,
+): SafeParseResult<CustomStepResponseDtoControlValues, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) =>
+      CustomStepResponseDtoControlValues$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'CustomStepResponseDtoControlValues' from JSON`,
+  );
+}
+
+/** @internal */
 export const CustomStepResponseDto$inboundSchema: z.ZodType<
   CustomStepResponseDto,
   z.ZodTypeDef,
   unknown
 > = z.object({
   controls: CustomControlsMetadataResponseDto$inboundSchema,
+  controlValues: z.lazy(() => CustomStepResponseDtoControlValues$inboundSchema)
+    .optional(),
   variables: z.record(z.any()),
   stepId: z.string(),
   _id: z.string(),
@@ -103,6 +249,7 @@ export const CustomStepResponseDto$inboundSchema: z.ZodType<
 /** @internal */
 export type CustomStepResponseDto$Outbound = {
   controls: CustomControlsMetadataResponseDto$Outbound;
+  controlValues?: CustomStepResponseDtoControlValues$Outbound | undefined;
   variables: { [k: string]: any };
   stepId: string;
   _id: string;
@@ -122,6 +269,8 @@ export const CustomStepResponseDto$outboundSchema: z.ZodType<
   CustomStepResponseDto
 > = z.object({
   controls: CustomControlsMetadataResponseDto$outboundSchema,
+  controlValues: z.lazy(() => CustomStepResponseDtoControlValues$outboundSchema)
+    .optional(),
   variables: z.record(z.any()),
   stepId: z.string(),
   id: z.string(),
