@@ -119,20 +119,28 @@ export const createPythonSnippet = ({
   identifier,
   to,
   payload,
-  snippet = { test: 'value' },
+  snippet,
   secretKey,
 }: CodeSnippetProps) => {
   const renderedSecretKey = secretKey ? `'${secretKey}'` : `os.environ['${SECRET_KEY_ENV_KEY}']`;
 
-  return `from novu.api import EventApi
+  return `import novu_py
+from novu_py import Novu
+import os
 
-url = "${API_ROOT}"
+with Novu(
+    secret_key=${renderedSecretKey}
+) as novu:
 
-novu = EventApi(url, ${renderedSecretKey}).trigger(
-    name="${identifier}",
-    recipients={${to.subscriberId as string}},
-    payload={${transformJsonToPythonDict(normalizePayload(payload), 6)}},
-)`;
+    res = novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id="${identifier}",
+        to="${(to as { subscriberId: string }).subscriberId}",
+        payload=${JSON.stringify(normalizePayload(payload), null, 8)},
+        overrides=novu_py.Overrides(),
+    ))
+
+    # Handle response
+    print(res)`;
 };
 
 const transformJsonToGoMap = (data: Record<string, unknown>, tabSpaces = 4): string => {
