@@ -1,5 +1,5 @@
 import { useMemo, useEffect, useRef, useState } from 'react';
-import { CustomNodeDefinition, JsonEditor } from 'json-edit-react';
+import { CustomNodeDefinition, JsonEditor, UpdateFunctionProps } from 'json-edit-react';
 import { cn } from '@/utils/ui';
 import JSON5 from 'json5';
 
@@ -7,39 +7,19 @@ import { EditableJsonViewerProps } from './types';
 import { CUSTOM_THEME } from './constants';
 import { SingleClickEditableValue } from './single-click-editable-value';
 import { CustomTextEditor } from './custom-text-editor';
-import { useClickOutsideHandler } from './use-click-outside-handler';
 import { useHideRootNode } from './use-hide-root-node';
 import { JSON_EDITOR_ICONS } from './icons';
 
-export function EditableJsonViewer({ value, onChange, className, schema }: EditableJsonViewerProps) {
+export function EditableJsonViewer({ value, onChange, className }: EditableJsonViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [currentEditPath, setCurrentEditPath] = useState<string[] | null>(null);
-  const [externalTriggers, setExternalTriggers] = useState<any>({});
 
   const handleUpdate = useMemo(
-    () => (updatedData: { newData: any }) => {
+    () => (updatedData: UpdateFunctionProps) => {
       onChange(updatedData.newData);
     },
     [onChange]
   );
 
-  const handleEditEvent = useMemo(
-    () => (path: string | (string | number)[] | null) => {
-      const normalizedPath = Array.isArray(path) ? path.map(String) : path ? [String(path)] : null;
-      setCurrentEditPath(normalizedPath);
-    },
-    []
-  );
-
-  const handleClickOutside = () => {
-    setExternalTriggers({
-      edit: {
-        action: 'accept',
-      },
-    });
-  };
-
-  useClickOutsideHandler(containerRef, currentEditPath, handleClickOutside);
   useHideRootNode(containerRef);
 
   const customNodeDefinitions = useMemo(() => {
@@ -70,15 +50,6 @@ export function EditableJsonViewer({ value, onChange, className, schema }: Edita
     return components;
   }, []);
 
-  useEffect(() => {
-    if (externalTriggers.edit) {
-      const timer = setTimeout(() => {
-        setExternalTriggers({});
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [externalTriggers]);
-
   return (
     <div
       ref={containerRef}
@@ -93,8 +64,6 @@ export function EditableJsonViewer({ value, onChange, className, schema }: Edita
       <JsonEditor
         data={value}
         onUpdate={handleUpdate}
-        onEditEvent={handleEditEvent}
-        externalTriggers={externalTriggers}
         theme={CUSTOM_THEME}
         TextEditor={CustomTextEditor}
         customNodeDefinitions={customNodeDefinitions}
