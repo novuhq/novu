@@ -306,7 +306,6 @@ export function EditableJsonViewer({ value, onChange, className, schema }: Edita
         }
       };
 
-      console.log('Adding click listener for editing path:', currentEditPath);
       clickListenerRef.current = handleClickOutside;
       document.addEventListener('mousedown', handleClickOutside);
     }
@@ -323,9 +322,7 @@ export function EditableJsonViewer({ value, onChange, className, schema }: Edita
   // Reset external triggers after they've been processed
   useEffect(() => {
     if (externalTriggers.edit) {
-      console.log('External trigger set:', externalTriggers);
       const timer = setTimeout(() => {
-        console.log('Resetting external triggers');
         setExternalTriggers({});
       }, 100);
       return () => clearTimeout(timer);

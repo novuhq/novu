@@ -17,10 +17,9 @@ import { ExternalLink } from '../shared/external-link';
 import { TooltipContent, TooltipTrigger } from '../primitives/tooltip';
 import { TooltipProvider } from '../primitives/tooltip';
 import { Tooltip } from '../primitives/tooltip';
-import { RiFileMarkedLine, RiInformation2Line } from 'react-icons/ri';
+import { RiFileMarkedLine, RiInformation2Line, RiAddLine, RiDownloadLine } from 'react-icons/ri';
 import { Separator } from '../primitives/separator';
 import { Link } from 'react-router-dom';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../primitives/select';
 
 interface PayloadSchemaDrawerProps {
   isOpen: boolean;
@@ -62,12 +61,6 @@ export function PayloadSchemaDrawer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workflow?.payloadSchema]);
 
-  useEffect(() => {
-    if (saveError) {
-      console.error('Failed to save payload schema:', saveError.message);
-    }
-  }, [saveError]);
-
   const handleSaveWithCallback = async () => {
     await handleSaveChanges();
 
@@ -78,13 +71,17 @@ export function PayloadSchemaDrawer({
     onOpenChange(false);
   };
 
+  // Check if there are any fields in the form or if the workflow has a payload schema
+  const hasPayloadSchema =
+    fields.length > 0 || (workflow?.payloadSchema && Object.keys(workflow.payloadSchema.properties || {}).length > 0);
+
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
       <SheetContent className="bg-bg-weak flex w-[600px] flex-col p-0 sm:max-w-3xl">
         <SheetHeader className="space-y-1 px-3 py-4">
-          <SheetTitle className="text-label-lg">Manage Payload Schema</SheetTitle>
+          <SheetTitle className="text-label-lg">Manage workflow schema</SheetTitle>
           <SheetDescription className="text-paragraph-xs mt-0">
-            Define the structure of your workflow payload.{' '}
+            Manage workflow schema for reliable notifications.{' '}
             <ExternalLink href="https://docs.novu.co/platform/concepts/workflows">Learn more</ExternalLink>
           </SheetDescription>
         </SheetHeader>
@@ -106,13 +103,18 @@ export function PayloadSchemaDrawer({
                 </Tooltip>
               </TooltipProvider>
             </h3>
+            {hasPayloadSchema && (
+              <Button variant="secondary" mode="ghost" size="xs" leadingIcon={RiDownloadLine}>
+                Import JSON schema
+              </Button>
+            )}
           </div>
 
           {isLoadingWorkflow ? (
             <div className="flex h-full items-center justify-center">Loading workflow schema...</div>
-          ) : (
+          ) : hasPayloadSchema ? (
             <SchemaEditor
-              key={workflow.slug}
+              key={workflow?.slug}
               control={control}
               fields={fields}
               formState={formState}
@@ -121,6 +123,8 @@ export function PayloadSchemaDrawer({
               methods={formMethods}
               highlightedPropertyKey={highlightedPropertyKey}
             />
+          ) : (
+            <PayloadSchemaEmptyState onAddProperty={addProperty} />
           )}
         </SheetMain>
         <SheetFooter className="border-neutral-content-weak space-between flex border-t px-3 py-1.5">
@@ -145,5 +149,26 @@ export function PayloadSchemaDrawer({
         </SheetFooter>
       </SheetContent>
     </Sheet>
+  );
+}
+
+function PayloadSchemaEmptyState({ onAddProperty }: { onAddProperty: () => void }) {
+  return (
+    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-neutral-200 bg-neutral-50 bg-white p-4 text-center">
+      <div className="mb-6 space-y-2">
+        <h3 className="text-text-sub text-label-xs">Your schema starts here</h3>
+
+        <p className="text-text-soft text-paragraph-xs max-w-md">
+          Start building your payload schema by typing{' '}
+          <code className="rounded bg-neutral-100 px-1 py-0.5 text-xs">{'{{ }}'}</code> to add variables, or create your
+          schema first from this form.{' '}
+          <ExternalLink href="https://docs.novu.co/platform/concepts/payloads">Learn more</ExternalLink>
+        </p>
+      </div>
+
+      <Button variant="secondary" mode="outline" size="2xs" leadingIcon={RiAddLine} onClick={onAddProperty}>
+        Add property
+      </Button>
+    </div>
   );
 }
