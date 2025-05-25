@@ -1,3 +1,4 @@
+/** cspell:disable */
 import {
   InjectThrottlerOptions,
   InjectThrottlerStorage,
