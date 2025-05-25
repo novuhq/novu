@@ -2,8 +2,18 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { StepResponseDto } from '../step.response.dto';
-import { DigestControlsMetadataResponseDto } from './digest-controls-metadata.response.dto';
+import { ControlsMetadataDto } from '../controls-metadata.dto';
 import { DigestControlDto } from '../controls/digest-control.dto';
+
+class DigestControlsMetadataResponseDto extends ControlsMetadataDto {
+  @ApiProperty({
+    description: 'Control values specific to Digest',
+    type: () => DigestControlDto,
+  })
+  @ValidateNested()
+  @Type(() => DigestControlDto)
+  declare values: DigestControlDto;
+}
 
 export class DigestStepResponseDto extends StepResponseDto<DigestControlDto> {
   @ApiProperty({

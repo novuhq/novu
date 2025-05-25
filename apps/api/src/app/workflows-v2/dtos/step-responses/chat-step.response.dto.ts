@@ -2,8 +2,18 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { StepResponseDto } from '../step.response.dto';
-import { ChatControlsMetadataResponseDto } from './chat-controls-metadata.response.dto';
+import { ControlsMetadataDto } from '../controls-metadata.dto';
 import { ChatControlDto } from '../controls/chat-control.dto';
+
+class ChatControlsMetadataResponseDto extends ControlsMetadataDto {
+  @ApiProperty({
+    description: 'Control values specific to Chat',
+    type: () => ChatControlDto,
+  })
+  @ValidateNested()
+  @Type(() => ChatControlDto)
+  declare values: ChatControlDto;
+}
 
 export class ChatStepResponseDto extends StepResponseDto<ChatControlDto> {
   @ApiProperty({

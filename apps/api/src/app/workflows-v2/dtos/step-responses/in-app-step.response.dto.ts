@@ -2,8 +2,18 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { StepResponseDto } from '../step.response.dto';
-import { InAppControlsMetadataResponseDto } from './in-app-controls-metadata.response.dto';
+import { ControlsMetadataDto } from '../controls-metadata.dto';
 import { InAppControlDto } from '../controls/in-app-control.dto';
+
+class InAppControlsMetadataResponseDto extends ControlsMetadataDto {
+  @ApiProperty({
+    description: 'Control values specific to In-App',
+    type: () => InAppControlDto,
+  })
+  @ValidateNested()
+  @Type(() => InAppControlDto)
+  declare values: InAppControlDto;
+}
 
 export class InAppStepResponseDto extends StepResponseDto<InAppControlDto> {
   @ApiProperty({

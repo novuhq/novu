@@ -2,8 +2,18 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { StepResponseDto } from '../step.response.dto';
-import { DelayControlsMetadataResponseDto } from './delay-controls-metadata.response.dto';
+import { ControlsMetadataDto } from '../controls-metadata.dto';
 import { DelayControlDto } from '../controls/delay-control.dto';
+
+class DelayControlsMetadataResponseDto extends ControlsMetadataDto {
+  @ApiProperty({
+    description: 'Control values specific to Delay',
+    type: () => DelayControlDto,
+  })
+  @ValidateNested()
+  @Type(() => DelayControlDto)
+  declare values: DelayControlDto;
+}
 
 export class DelayStepResponseDto extends StepResponseDto<DelayControlDto> {
   @ApiProperty({
