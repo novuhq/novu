@@ -230,6 +230,9 @@ export function ControlInput({
             setHighlightedVariableKey(variableName);
             setIsPayloadSchemaDrawerOpen(true);
           }}
+          onAddToSchemaClick={(variableName) => {
+            handleCreateNewVariable(variableName);
+          }}
         >
           <div />
         </EditVariablePopover>

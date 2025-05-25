@@ -69,6 +69,7 @@ type EditVariablePopoverProps = {
   onDeleteClick: () => void;
   getSchemaPropertyByKey: (keyPath: string) => JSONSchema7 | undefined;
   onManageSchemaClick?: (variableName: string) => void;
+  onAddToSchemaClick?: (variableName: string) => void;
 };
 
 export const EditVariablePopover = ({
@@ -82,6 +83,7 @@ export const EditVariablePopover = ({
   onDeleteClick,
   getSchemaPropertyByKey,
   onManageSchemaClick,
+  onAddToSchemaClick,
 }: EditVariablePopoverProps) => {
   const isPayloadSchemaEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_PAYLOAD_SCHEMA_ENABLED);
 
@@ -93,12 +95,11 @@ export const EditVariablePopover = ({
   const nameInputRef = useRef<HTMLInputElement>(null);
   const [name, setName] = useState(parsedName);
   const [variableError, setVariableError] = useState<string>(() => {
-    if (
-      !variable ||
-      (!isAllowedVariable({ ...variable, name: parsedName }) &&
-        getSchemaPropertyByKey(parsedName?.replace('payload.', '') || ''))
-    ) {
-      return 'Not a valid variable';
+    const isNotAllowed = variable ? !isAllowedVariable({ ...variable, name: parsedName }) : true;
+    const isNotInSchema = !getSchemaPropertyByKey(parsedName?.replace('payload.', '') || '');
+
+    if (!variable || (isNotAllowed && isNotInSchema)) {
+      return "Variable schema doesn't exist";
     }
 
     return '';
@@ -117,11 +118,11 @@ export const EditVariablePopover = ({
 
   const validateVariable = useCallback(
     (variable: LiquidVariable) => {
-      if (
-        !variable ||
-        (!isAllowedVariable({ ...variable }) && !getSchemaPropertyByKey(parsedName?.replace('payload.', '') || ''))
-      ) {
-        setVariableError('Not a valid variable');
+      const isNotAllowed = !isAllowedVariable({ ...variable });
+      const isNotInSchema = !getSchemaPropertyByKey(parsedName?.replace('payload.', '') || '');
+
+      if (!variable || (isNotAllowed && isNotInSchema)) {
+        setVariableError("Variable schema doesn't exist");
         nameInputRef.current?.focus();
         return false;
       }
@@ -167,8 +168,11 @@ export const EditVariablePopover = ({
   const handleOpenChange = useCallback(
     (open: boolean) => {
       const aliasFor = calculateAliasFor(name, parsedAliasForRoot);
+      const isNotAllowed = !isAllowedVariable({ name, aliasFor });
+      const isNotInSchema = !getSchemaPropertyByKey(name?.replace('payload.', '') || '');
 
-      if (!open && !validateVariable({ name, aliasFor })) {
+      if (!open && isNotAllowed && isNotInSchema) {
+        // Don't close if variable is not valid and not in schema
         return;
       }
 
@@ -187,13 +191,24 @@ export const EditVariablePopover = ({
 
       onOpenChange(open, newValue);
     },
-    [validateVariable, onOpenChange, name, defaultVal, filters, track, onUpdate, parsedAliasForRoot]
+    [
+      isAllowedVariable,
+      getSchemaPropertyByKey,
+      onOpenChange,
+      name,
+      defaultVal,
+      filters,
+      track,
+      onUpdate,
+      parsedAliasForRoot,
+    ]
   );
 
   const handleClosePopover = useCallback(() => {
     handleOpenChange(false);
   }, [handleOpenChange]);
   const isPayloadSchemaVariable = name?.startsWith('payload.');
+  const isVariableNotInSchema = variableError === "Variable schema doesn't exist" && isPayloadSchemaVariable;
 
   useEscapeKeyManager(id, handleClosePopover, EscapeKeyManagerPriority.POPOVER, open);
 
@@ -259,7 +274,27 @@ export const EditVariablePopover = ({
                         />
                       </InputWrapper>
                     </InputRoot>
-                    <FormMessagePure hasError={!!variableError}>{variableError}</FormMessagePure>
+                    {variableError && !isVariableNotInSchema && (
+                      <FormMessagePure hasError={!!variableError}>{variableError}</FormMessagePure>
+                    )}
+                    {isVariableNotInSchema && (
+                      <div className="flex items-center gap-1 text-xs">
+                        <span className="text-error-base">Variable schema doesn't exist</span>
+                        <LinkButton
+                          variant="primary"
+                          size="sm"
+                          className="text-xs"
+                          onClick={() => {
+                            if (onAddToSchemaClick && name) {
+                              onAddToSchemaClick(name.replace('payload.', ''));
+                              handleOpenChange(false);
+                            }
+                          }}
+                        >
+                          Add to schema
+                        </LinkButton>
+                      </div>
+                    )}
                   </div>
                 </FormControl>
               </FormItem>
