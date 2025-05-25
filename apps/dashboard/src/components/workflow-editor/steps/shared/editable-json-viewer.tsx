@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect, useRef, useState } from 'react';
 import { JsonEditor } from 'json-edit-react';
 import { cn } from '@/utils/ui';
 import { Editor } from '@/components/primitives/editor';
@@ -126,7 +126,102 @@ const customTheme = {
   },
 };
 
+// Custom component for single-click editing
+const SingleClickEditableValue = ({ value, setValue, setIsEditing, customNodeProps }) => {
+  const { type } = customNodeProps || {};
+
+  const handleClick = () => {
+    setIsEditing(true);
+  };
+
+  // Render the value with single-click behavior
+  const displayValue = type === 'string' ? `"${value}"` : String(value);
+
+  return (
+    <span
+      onClick={handleClick}
+      style={{
+        cursor: 'pointer',
+        color:
+          type === 'string'
+            ? 'hsl(var(--highlighted))'
+            : type === 'number'
+              ? 'hsl(var(--information))'
+              : type === 'boolean'
+                ? 'hsl(var(--feature))'
+                : 'inherit',
+        fontWeight: type === 'boolean' ? '600' : 'normal',
+      }}
+      title="Click to edit"
+    >
+      {displayValue}
+    </span>
+  );
+};
+
+// Custom input component that auto-saves on blur
+const AutoSaveInput = ({ value, onChange, onBlur, onKeyDown, type = 'text', ...props }) => {
+  const [localValue, setLocalValue] = useState(value);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setLocalValue(value);
+  }, [value]);
+
+  useEffect(() => {
+    // Focus the input when it's created
+    if (inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, []);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setLocalValue(e.target.value);
+    onChange?.(e.target.value);
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    // Auto-save on blur
+    onBlur?.(e);
+    // Trigger the save by simulating Enter key
+    const enterEvent = new KeyboardEvent('keydown', { key: 'Enter' });
+    onKeyDown?.(enterEvent as any);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' || e.key === 'Escape') {
+      onKeyDown?.(e);
+    }
+  };
+
+  return (
+    <input
+      ref={inputRef}
+      type={type}
+      value={localValue}
+      onChange={handleChange}
+      onBlur={handleBlur}
+      onKeyDown={handleKeyDown}
+      style={{
+        backgroundColor: 'hsl(var(--background))',
+        border: '1px solid hsl(var(--neutral-300))',
+        borderRadius: '4px',
+        padding: '2px 4px',
+        fontSize: '12px',
+        fontFamily: 'JetBrains Mono, monospace',
+        color: 'hsl(var(--foreground-950))',
+        outline: 'none',
+        minWidth: '60px',
+      }}
+      {...props}
+    />
+  );
+};
+
 export function EditableJsonViewer({ value, onChange, className, schema }: EditableJsonViewerProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+
   // Simple onChange handler that passes the updated data to the parent
   const handleChange = useMemo(
     () => (updatedData) => {
@@ -172,8 +267,37 @@ export function EditableJsonViewer({ value, onChange, className, schema }: Edita
     return schema;
   }, [schema]);
 
+  // Custom node definitions for single-click editing with auto-save inputs
+  const customNodeDefinitions = useMemo(
+    () => [
+      {
+        condition: ({ value }) => typeof value === 'string',
+        element: SingleClickEditableValue,
+        showOnView: true,
+        showOnEdit: false,
+        customNodeProps: { type: 'string' },
+      },
+      {
+        condition: ({ value }) => typeof value === 'number',
+        element: SingleClickEditableValue,
+        showOnView: true,
+        showOnEdit: false,
+        customNodeProps: { type: 'number' },
+      },
+      {
+        condition: ({ value }) => typeof value === 'boolean',
+        element: SingleClickEditableValue,
+        showOnView: true,
+        showOnEdit: false,
+        customNodeProps: { type: 'boolean' },
+      },
+    ],
+    []
+  );
+
   return (
     <div
+      ref={containerRef}
       className={cn(
         'border-neutral-alpha-200 bg-background text-foreground-600',
         'mx-0 mt-0 rounded-lg border border-dashed',
@@ -188,6 +312,7 @@ export function EditableJsonViewer({ value, onChange, className, schema }: Edita
         schema={editorSchema}
         theme={customTheme}
         TextEditor={CustomTextEditor}
+        customNodeDefinitions={customNodeDefinitions}
         jsonParse={JSON5.parse}
         jsonStringify={(data) => JSON5.stringify(data, null, 2)}
         icons={{
