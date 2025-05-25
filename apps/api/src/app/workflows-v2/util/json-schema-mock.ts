@@ -259,6 +259,12 @@ export class JsonSchemaMock {
         if (propertySchema && typeof propertySchema === 'object') {
           const prop = propertySchema as any;
 
+          // Handle enum values first - use the first enum value
+          if (prop.enum && Array.isArray(prop.enum) && prop.enum.length > 0 && !prop.examples && !prop.example) {
+            prop.examples = [prop.enum[0]];
+            continue; // Skip other processing for enum properties
+          }
+
           // Add examples for string properties to override lorem ipsum
           if (prop.type === 'string' && !prop.examples && !prop.example) {
             prop.examples = [this.getExampleValueForStringProperty(key, prop)];
@@ -318,6 +324,17 @@ export class JsonSchemaMock {
           }
         }
       }
+    }
+
+    // Handle enum at the root level as well
+    if (
+      enhancedSchema.enum &&
+      Array.isArray(enhancedSchema.enum) &&
+      enhancedSchema.enum.length > 0 &&
+      !enhancedSchema.examples &&
+      !enhancedSchema.example
+    ) {
+      enhancedSchema.examples = [enhancedSchema.enum[0]];
     }
 
     return enhancedSchema;

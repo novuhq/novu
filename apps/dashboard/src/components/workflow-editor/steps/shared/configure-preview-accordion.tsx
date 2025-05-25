@@ -5,7 +5,7 @@ import { Editor } from '@/components/primitives/editor';
 import { loadLanguage } from '@uiw/codemirror-extensions-langs';
 import { CSSProperties, useCallback, useEffect, useRef, useState } from 'react';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { FeatureFlagsKeysEnum, type WorkflowResponseDto } from '@novu/shared';
 import { EditableJsonViewer } from './editable-json-viewer';
 
 const extensions = [loadLanguage('json')?.extension ?? []];
@@ -14,12 +14,14 @@ type ConfigurePreviewAccordionProps = {
   editorValue: string;
   setEditorValue: (value: string) => Error | null;
   onUpdate: () => void;
+  workflow?: WorkflowResponseDto;
 };
 
 export const ConfigurePreviewAccordion = ({
   editorValue,
   setEditorValue,
   onUpdate,
+  workflow,
 }: ConfigurePreviewAccordionProps) => {
   const [accordionValue, setAccordionValue] = useState<string | undefined>('payload');
   const [payloadError, setPayloadError] = useState<string | null>(null);
@@ -27,6 +29,14 @@ export const ConfigurePreviewAccordion = ({
   const [jsonData, setJsonData] = useState<any>({});
   const contentRef = useRef<HTMLDivElement>(null);
   const isPayloadSchemaEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_PAYLOAD_SCHEMA_ENABLED);
+
+  // Initialize with workflow payloadExample if available
+  useEffect(() => {
+    if (isPayloadSchemaEnabled && workflow?.payloadExample && (!editorValue || editorValue === '{}')) {
+      const payloadExampleString = JSON.stringify(workflow.payloadExample, null, 2);
+      setEditorValue(payloadExampleString);
+    }
+  }, [workflow?.payloadExample, isPayloadSchemaEnabled, editorValue, setEditorValue]);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -66,25 +76,8 @@ export const ConfigurePreviewAccordion = ({
   );
 
   const handleJsonChange = useCallback(
-    (path: (string | number)[], currentValue: any, newValue: any) => {
+    (updatedData: any) => {
       try {
-        // Create a deep copy of the current data
-        const updatedData = JSON.parse(JSON.stringify(jsonData));
-
-        // Navigate to the correct path and update the value
-        let current = updatedData;
-
-        for (let i = 0; i < path.length - 1; i++) {
-          current = current[path[i]];
-        }
-
-        if (path.length > 0) {
-          current[path[path.length - 1]] = newValue;
-        } else {
-          // Root level change
-          Object.assign(updatedData, newValue);
-        }
-
         const stringified = JSON.stringify(updatedData, null, 2);
         setEditorValueCallback(stringified);
         setJsonData(updatedData);
@@ -92,8 +85,22 @@ export const ConfigurePreviewAccordion = ({
         setPayloadError('Failed to update JSON');
       }
     },
-    [jsonData, setEditorValueCallback]
+    [setEditorValueCallback]
   );
+
+  const handleReset = useCallback(() => {
+    // Use workflow payloadExample if available, otherwise use empty object
+    const resetValue =
+      isPayloadSchemaEnabled && workflow?.payloadExample ? JSON.stringify(workflow.payloadExample, null, 2) : '{}';
+
+    setEditorValueCallback(resetValue);
+
+    if (isPayloadSchemaEnabled) {
+      setJsonData(workflow?.payloadExample || {});
+    }
+
+    onUpdate();
+  }, [isPayloadSchemaEnabled, workflow?.payloadExample, setEditorValueCallback, onUpdate]);
 
   return (
     <Accordion type="single" collapsible value={accordionValue} onValueChange={setAccordionValue}>
@@ -110,7 +117,7 @@ export const ConfigurePreviewAccordion = ({
           style={{ '--radix-collapsible-content-height': `${height}px` } as CSSProperties}
         >
           {isPayloadSchemaEnabled ? (
-            <EditableJsonViewer value={jsonData} onChange={handleJsonChange} />
+            <EditableJsonViewer value={jsonData} onChange={handleJsonChange} schema={workflow?.payloadSchema} />
           ) : (
             <Editor
               value={editorValue}
@@ -129,15 +136,7 @@ export const ConfigurePreviewAccordion = ({
               variant="secondary"
               mode="outline"
               className="self-end"
-              onClick={() => {
-                setEditorValueCallback('{}');
-
-                if (isPayloadSchemaEnabled) {
-                  setJsonData({});
-                }
-
-                onUpdate();
-              }}
+              onClick={handleReset}
             >
               Reset
             </Button>

@@ -61,38 +61,24 @@ export const TestWorkflowForm = ({ workflow }: { workflow?: WorkflowResponseDto 
     return snippetUtil({ identifier, to, payload });
   }, [activeSnippetTab, identifier, to, payload]);
 
-  // Parse JSON data for JsonViewer
+  // Parse JSON data for JsonViewer and initialize with workflow payloadExample if available
   useMemo(() => {
     if (isPayloadSchemaEnabled) {
       try {
         const parsed = JSON.parse(payload || '{}');
         setPayloadJsonData(parsed);
       } catch (error) {
-        // Keep previous data if parsing fails
+        // If parsing fails and we have a workflow payloadExample, use it as fallback
+        if (workflow?.payloadExample) {
+          setPayloadJsonData(workflow.payloadExample);
+        }
       }
     }
-  }, [payload, isPayloadSchemaEnabled]);
+  }, [payload, isPayloadSchemaEnabled, workflow?.payloadExample]);
 
   const handleJsonChange = useCallback(
-    (path: (string | number)[], currentValue: any, newValue: any) => {
+    (updatedData: any) => {
       try {
-        // Create a deep copy of the current data
-        const updatedData = JSON.parse(JSON.stringify(payloadJsonData));
-
-        // Navigate to the correct path and update the value
-        let current = updatedData;
-
-        for (let i = 0; i < path.length - 1; i++) {
-          current = current[path[i]];
-        }
-
-        if (path.length > 0) {
-          current[path[path.length - 1]] = newValue;
-        } else {
-          // Root level change
-          Object.assign(updatedData, newValue);
-        }
-
         const stringified = JSON.stringify(updatedData, null, 2);
         setValue('payload', stringified);
         setPayloadJsonData(updatedData);
@@ -100,7 +86,7 @@ export const TestWorkflowForm = ({ workflow }: { workflow?: WorkflowResponseDto 
         // Handle error silently
       }
     },
-    [payloadJsonData, setValue]
+    [setValue]
   );
 
   return (
@@ -146,7 +132,11 @@ export const TestWorkflowForm = ({ workflow }: { workflow?: WorkflowResponseDto 
                     <FormControl>
                       <>
                         {isPayloadSchemaEnabled ? (
-                          <EditableJsonViewer value={payloadJsonData} onChange={handleJsonChange} />
+                          <EditableJsonViewer
+                            value={payloadJsonData}
+                            onChange={handleJsonChange}
+                            schema={workflow?.payloadSchema}
+                          />
                         ) : (
                           <Editor
                             lang="json"

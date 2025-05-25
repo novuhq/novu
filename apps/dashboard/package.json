@@ -79,6 +79,7 @@
     "date-fns": "^4.1.0",
     "flat": "^6.0.1",
     "js-cookie": "^3.0.5",
+    "json-edit-react": "^1.26.2",
     "json-schema": "^0.4.0",
     "launchdarkly-react-client-sdk": "^3.3.2",
     "liquidjs": "^10.20.0",

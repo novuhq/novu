@@ -6,6 +6,7 @@ import {
   GetWorkflowWithPreferencesUseCase,
   InstrumentUsecase,
   PinoLogger,
+  FeatureFlagsService,
 } from '@novu/application-generic';
 import { NotificationStepEntity, NotificationTemplateEntity } from '@novu/dal';
 
@@ -13,13 +14,15 @@ import { GetWorkflowCommand } from './get-workflow.command';
 import { toResponseWorkflowDto } from '../../mappers/notification-template-mapper';
 import { BuildStepDataCommand, BuildStepDataUsecase } from '../build-step-data';
 import { StepResponseDto, WorkflowResponseDto } from '../../dtos';
+import { generatePayloadExample } from '../../util/generate-payload-example';
 
 @Injectable()
 export class GetWorkflowUseCase {
   constructor(
     private getWorkflowWithPreferencesUseCase: GetWorkflowWithPreferencesUseCase,
     private buildStepDataUsecase: BuildStepDataUsecase,
-    private logger: PinoLogger
+    private logger: PinoLogger,
+    private featureFlagsService: FeatureFlagsService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -35,8 +38,9 @@ export class GetWorkflowUseCase {
     );
 
     const fullSteps = await this.getFullWorkflowSteps(workflowWithPreferences, command.user);
+    const payloadExample = await generatePayloadExample(workflowWithPreferences, this.featureFlagsService, this.logger);
 
-    return toResponseWorkflowDto(workflowWithPreferences, fullSteps);
+    return toResponseWorkflowDto(workflowWithPreferences, fullSteps, payloadExample);
   }
 
   private async getFullWorkflowSteps(

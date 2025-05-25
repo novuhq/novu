@@ -90,6 +90,14 @@ export class WorkflowResponseDto extends WorkflowCommonsFields {
   })
   @IsOptional()
   payloadSchema?: object;
+
+  @ApiPropertyOptional({
+    description: 'Generated payload example based on the payload schema',
+    type: 'object',
+    nullable: true,
+  })
+  @IsOptional()
+  payloadExample?: object;
 }
 
 export type WorkflowCreateAndUpdateKeys = keyof CreateWorkflowDto | keyof UpdateWorkflowDto;

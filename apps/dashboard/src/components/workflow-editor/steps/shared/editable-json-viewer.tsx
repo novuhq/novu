@@ -1,58 +1,132 @@
 import { useMemo } from 'react';
-import { JsonViewer } from '@textea/json-viewer';
+import { JsonEditor } from 'json-edit-react';
 import { cn } from '@/utils/ui';
-import { createEditableStringType, createEditableNumberType, createEditableBooleanType } from './editable-data-types';
 
 type EditableJsonViewerProps = {
   value: any;
-  onChange: (path: (string | number)[], currentValue: any, newValue: any) => void;
+  onChange: (updatedData: any) => void;
   className?: string;
+  schema?: any; // Optional JSON schema to detect enum fields
 };
 
-// Custom theme for JsonViewer to match our design system
-const jsonViewerTheme = {
-  backgroundColor: 'transparent',
-
-  // Color scheme matching our design tokens
-  base00: 'hsl(var(--background))', // background
-  base01: 'hsl(var(--neutral-100))', // lighter background
-  base02: 'hsl(var(--neutral-200))', // selection background
-  base03: 'hsl(var(--neutral-400))', // comments, invisibles
-  base04: 'hsl(var(--neutral-500))', // dark foreground
-  base05: 'hsl(var(--foreground-950))', // default foreground
-  base06: 'hsl(var(--foreground-800))', // light foreground
-  base07: 'hsl(var(--foreground-600))', // lightest foreground
-  base08: 'hsl(var(--destructive))', // variables, XML tags
-  base09: 'hsl(var(--information))', // integers, boolean, constants
-  base0A: 'hsl(var(--warning))', // classes, markup bold
-  base0B: 'hsl(var(--highlighted))', // strings, inherited class
-  base0C: 'hsl(var(--information))', // support, regular expressions
-  base0D: 'hsl(var(--feature))', // functions, methods
-  base0E: 'hsl(var(--feature))', // keywords, storage
-  base0F: 'hsl(var(--neutral-600))', // deprecated, opening/closing tags
+// Custom theme for JsonEditor to match our design system
+const customTheme = {
+  container: {
+    backgroundColor: 'transparent',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '12px',
+    lineHeight: '1.5',
+  },
+  property: {
+    color: 'hsl(var(--foreground-950))',
+    fontWeight: '500',
+  },
+  bracket: {
+    color: 'hsl(var(--neutral-600))',
+    fontWeight: '600',
+  },
+  colon: {
+    color: 'hsl(var(--neutral-600))',
+  },
+  comma: {
+    color: 'hsl(var(--neutral-600))',
+  },
+  string: {
+    color: 'hsl(var(--highlighted))',
+  },
+  number: {
+    color: 'hsl(var(--information))',
+  },
+  boolean: {
+    color: 'hsl(var(--feature))',
+    fontWeight: '600',
+  },
+  null: {
+    color: 'hsl(var(--neutral-400))',
+    fontStyle: 'italic',
+  },
+  undefined: {
+    color: 'hsl(var(--neutral-400))',
+    fontStyle: 'italic',
+  },
+  editIcon: {
+    color: 'hsl(var(--neutral-400))',
+    '&:hover': {
+      color: 'hsl(var(--feature))',
+    },
+  },
+  addIcon: {
+    color: 'hsl(var(--feature))',
+    '&:hover': {
+      color: 'hsl(var(--feature))',
+      opacity: 0.8,
+    },
+  },
+  deleteIcon: {
+    color: 'hsl(var(--destructive))',
+    '&:hover': {
+      color: 'hsl(var(--destructive))',
+      opacity: 0.8,
+    },
+  },
+  collapseIcon: {
+    color: 'hsl(var(--neutral-500))',
+  },
+  iconCollection: {
+    backgroundColor: 'transparent',
+  },
+  input: {
+    backgroundColor: 'hsl(var(--background))',
+    border: '1px solid hsl(var(--neutral-300))',
+    borderRadius: '4px',
+    padding: '2px 4px',
+    fontSize: '12px',
+    fontFamily: 'JetBrains Mono, monospace',
+    color: 'hsl(var(--foreground-950))',
+    '&:focus': {
+      outline: 'none',
+      borderColor: 'hsl(var(--feature))',
+      boxShadow: '0 0 0 1px hsl(var(--feature))',
+    },
+  },
+  select: {
+    backgroundColor: 'hsl(var(--background))',
+    border: '1px solid hsl(var(--neutral-300))',
+    borderRadius: '4px',
+    padding: '2px 4px',
+    fontSize: '12px',
+    fontFamily: 'JetBrains Mono, monospace',
+    color: 'hsl(var(--foreground-950))',
+    '&:focus': {
+      outline: 'none',
+      borderColor: 'hsl(var(--feature))',
+      boxShadow: '0 0 0 1px hsl(var(--feature))',
+    },
+  },
+  error: {
+    color: 'hsl(var(--destructive))',
+    fontSize: '11px',
+    marginTop: '2px',
+  },
 };
 
-// Shared input styles
-const inputClassName =
-  'bg-background border border-neutral-300 rounded px-1 py-0.5 text-xs font-mono min-w-[60px] focus:outline-none focus:ring-1 focus:ring-feature';
-const inputStyle = {
-  fontSize: '12px',
-  fontFamily: 'JetBrains Mono, monospace',
-};
-
-// Shared span styles
-const spanClassName = 'cursor-pointer hover:bg-neutral-100 rounded px-1 py-0.5 transition-colors';
-const spanStyle = {
-  fontSize: '12px',
-  fontFamily: 'JetBrains Mono, monospace',
-};
-
-export function EditableJsonViewer({ value, onChange, className }: EditableJsonViewerProps) {
-  // Create the editable types with the onChange handler
-  const editableTypes = useMemo(
-    () => [createEditableStringType(onChange), createEditableNumberType(onChange), createEditableBooleanType(onChange)],
+export function EditableJsonViewer({ value, onChange, className, schema }: EditableJsonViewerProps) {
+  // Simple onChange handler that passes the updated data to the parent
+  const handleChange = useMemo(
+    () => (updatedData) => {
+      console.log('updatedData', updatedData);
+      onChange(updatedData.currentData);
+    },
     [onChange]
   );
+
+  // Prepare the schema for json-edit-react if provided
+  const editorSchema = useMemo(() => {
+    if (!schema) return undefined;
+
+    // json-edit-react expects the schema to match the data structure
+    return schema;
+  }, [schema]);
 
   return (
     <div
@@ -64,18 +138,26 @@ export function EditableJsonViewer({ value, onChange, className }: EditableJsonV
         className
       )}
     >
-      <JsonViewer
-        value={value}
-        onChange={onChange}
-        displayDataTypes={false}
-        defaultInspectDepth={3}
-        theme={jsonViewerTheme}
-        valueTypes={editableTypes}
-        style={{
-          fontSize: '12px',
-          lineHeight: '1.5',
-          fontFamily: 'JetBrains Mono, monospace',
-        }}
+      <JsonEditor
+        data={value}
+        onChange={handleChange}
+        schema={editorSchema}
+        theme={customTheme}
+        collapse={3}
+        showErrorMessages={true}
+        showStringQuotes={true}
+        showArrayIndices={false}
+        showObjectSize={false}
+        enableClipboard={true}
+        editable={true}
+        restrictEdit={false}
+        restrictDelete
+        restrictAdd={false}
+        searchFilter={false}
+        showCollectionCount={false}
+        defaultValue={undefined}
+        restrictTypeSelection
+        collapseAnimationTime={100}
       />
     </div>
   );

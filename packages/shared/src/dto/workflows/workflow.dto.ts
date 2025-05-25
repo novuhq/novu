@@ -58,6 +58,7 @@ export type WorkflowResponseDto = WorkflowCommonsFields & {
   issues?: Record<WorkflowCreateAndUpdateKeys, RuntimeIssueDto>;
   lastTriggeredAt?: string;
   payloadSchema?: Record<string, any>;
+  payloadExample?: object;
 };
 
 export type WorkflowCreateAndUpdateKeys = keyof CreateWorkflowDto | keyof UpdateWorkflowDto;
