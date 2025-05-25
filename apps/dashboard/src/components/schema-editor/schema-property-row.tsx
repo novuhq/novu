@@ -21,6 +21,7 @@ import { Label } from '@/components/primitives/label';
 import type { PropertyListItem } from './utils/validation-schema';
 import { useSchemaPropertyType } from './hooks/use-schema-property-type';
 import { PropertyActions } from './components/property-actions';
+import type { VariableUsageInfo } from './utils/check-variable-usage';
 
 export interface SchemaPropertyRowProps {
   control: Control<any>;
@@ -29,10 +30,19 @@ export interface SchemaPropertyRowProps {
   onDeleteProperty: () => void;
   indentationLevel?: number;
   highlightedPropertyKey?: string | null;
+  variableUsageInfo?: VariableUsageInfo;
 }
 
 export function SchemaPropertyRow(props: SchemaPropertyRowProps) {
-  const { control, index, pathPrefix, onDeleteProperty, indentationLevel = 0, highlightedPropertyKey } = props;
+  const {
+    control,
+    index,
+    pathPrefix,
+    onDeleteProperty,
+    indentationLevel = 0,
+    highlightedPropertyKey,
+    variableUsageInfo,
+  } = props;
 
   const { setValue, getValues, watch: watchForm } = useFormContext();
 
@@ -170,6 +180,7 @@ export function SchemaPropertyRow(props: SchemaPropertyRowProps) {
           isRequiredPath={isRequiredPath}
           onDeleteProperty={onDeleteProperty}
           isDisabled={!currentKeyName || currentKeyName.trim() === ''}
+          variableUsageInfo={variableUsageInfo}
         />
       </div>
 

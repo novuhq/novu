@@ -1,10 +1,10 @@
-import { forwardRef, useEffect, useMemo } from 'react';
+import { forwardRef, useEffect, useMemo, useState } from 'react';
 import { useFormContext, Controller, type Path } from 'react-hook-form';
 
 import { Button } from '@/components/primitives/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/primitives/form/form';
 import { Input } from '@/components/primitives/input';
-import { PopoverContent } from '@/components/primitives/popover';
+import { PopoverContent, Popover, PopoverTrigger } from '@/components/primitives/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
 import { Switch } from '@/components/primitives/switch';
 import { Textarea } from '@/components/primitives/textarea';
@@ -13,6 +13,9 @@ import { Separator } from '../primitives/separator';
 import type { JSONSchema7, JSONSchema7TypeName } from './json-schema';
 import type { SchemaEditorFormValues } from './utils/validation-schema';
 import { useSchemaPropertyType } from './hooks/use-schema-property-type';
+import type { VariableUsageInfo } from './utils/check-variable-usage';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/primitives/tooltip';
+import { cn } from '@/utils/ui';
 
 interface SchemaPropertySettingsPopoverProps {
   definitionPath: string;
@@ -21,6 +24,7 @@ interface SchemaPropertySettingsPopoverProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onDeleteProperty: () => void;
+  variableUsageInfo?: VariableUsageInfo;
 }
 
 function parseDefaultValue(value: string | undefined, type: JSONSchema7TypeName | 'enum' | undefined): any {
@@ -76,9 +80,18 @@ const JSON_SCHEMA_FORMATS = [
 
 export const SchemaPropertySettingsPopover = forwardRef<HTMLDivElement, SchemaPropertySettingsPopoverProps>(
   (props, ref) => {
-    const { definitionPath, propertyKeyForDisplay, isRequiredPath, open, onOpenChange, onDeleteProperty } = props;
+    const {
+      definitionPath,
+      propertyKeyForDisplay,
+      isRequiredPath,
+      open,
+      onOpenChange,
+      onDeleteProperty,
+      variableUsageInfo,
+    } = props;
 
     const { control, watch } = useFormContext<SchemaEditorFormValues>();
+    const [showUsagePopover, setShowUsagePopover] = useState(false);
 
     const currentDefinition = watch(definitionPath as any) as JSONSchema7 | undefined;
     const currentType = useSchemaPropertyType(currentDefinition);
@@ -92,10 +105,34 @@ export const SchemaPropertySettingsPopover = forwardRef<HTMLDivElement, SchemaPr
       onOpenChange(false);
     };
 
+    const handleDeleteClick = () => {
+      if (!isVariableInUse) {
+        handleDelete();
+      } else {
+        // Keep popover open when clicked
+        setShowUsagePopover(true);
+      }
+    };
+
+    const handleMouseEnter = () => {
+      if (isVariableInUse) {
+        setShowUsagePopover(true);
+      }
+    };
+
+    const handleMouseLeave = () => {
+      // Small delay to prevent flickering when moving between button and popover
+      setTimeout(() => {
+        setShowUsagePopover(false);
+      }, 100);
+    };
+
     const effectiveType = currentType;
     const isStringType = effectiveType === 'string';
     const isArrayType = effectiveType === 'array';
     const isNumericType = effectiveType === 'integer' || effectiveType === 'number';
+
+    const isVariableInUse = variableUsageInfo?.isUsed || false;
 
     const defaultValuePath = `${definitionPath}.default`;
     const formatPath = `${definitionPath}.format`;
@@ -109,6 +146,20 @@ export const SchemaPropertySettingsPopover = forwardRef<HTMLDivElement, SchemaPr
 
     if (!open) return null;
 
+    const deleteButton = (
+      <Button
+        variant="secondary"
+        mode="ghost"
+        className={cn('h-5 p-1', isVariableInUse && 'cursor-not-allowed opacity-50')}
+        onClick={handleDeleteClick}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        aria-disabled={isVariableInUse}
+      >
+        <RiDeleteBin2Line className="size-3.5 text-neutral-400" />
+      </Button>
+    );
+
     return (
       <PopoverContent ref={ref} className="w-[320px] p-0" sideOffset={5}>
         <div className="bg-bg-weak border-b border-b-neutral-100">
@@ -117,9 +168,36 @@ export const SchemaPropertySettingsPopover = forwardRef<HTMLDivElement, SchemaPr
               <span className="text-subheading-2xs text-text-soft">
                 {propertyKeyForDisplay ? `${propertyKeyForDisplay} - ` : ''} Settings
               </span>
-              <Button variant="secondary" mode="ghost" className="h-5 p-1" onClick={handleDelete}>
-                <RiDeleteBin2Line className="size-3.5 text-neutral-400" />
-              </Button>
+              {isVariableInUse ? (
+                <Popover open={showUsagePopover} onOpenChange={setShowUsagePopover}>
+                  <PopoverTrigger asChild>{deleteButton}</PopoverTrigger>
+                  <PopoverContent
+                    side="bottom"
+                    className="max-w-xs"
+                    onMouseEnter={() => setShowUsagePopover(true)}
+                    onMouseLeave={() => setShowUsagePopover(false)}
+                  >
+                    <div className="space-y-2">
+                      <p className="font-medium">Variable in use</p>
+                      <p className="text-xs">
+                        This variable can't be deleted as it's being used in the step content of this workflow.
+                      </p>
+                      {variableUsageInfo && variableUsageInfo.usedInSteps.length > 0 && (
+                        <div className="text-xs">
+                          <p className="mb-1 font-medium">Used in:</p>
+                          <ul className="list-inside list-disc space-y-0.5">
+                            {variableUsageInfo.usedInSteps.map((step) => (
+                              <li key={step.stepId}>{step.stepName}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              ) : (
+                deleteButton
+              )}
             </div>
           </div>
         </div>
