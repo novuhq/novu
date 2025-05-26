@@ -40,7 +40,7 @@ export async function generatePayloadExample(
       };
       const mockData = JsonSchemaMock.generate(schema) as Record<string, unknown>;
 
-      return mockData.payload;
+      return mockData.payload as object;
     } catch (error) {
       logger.warn(
         {
@@ -56,7 +56,7 @@ export async function generatePayloadExample(
         properties: { payload: workflow.payloadSchema },
       });
 
-      return schemaBasedPayloadExample.payload;
+      return schemaBasedPayloadExample.payload as object;
     }
   } else {
     // Use the original method for external workflows when feature flag is disabled
@@ -65,6 +65,6 @@ export async function generatePayloadExample(
       properties: { payload: workflow.payloadSchema },
     });
 
-    return schemaBasedPayloadExample.payload;
+    return schemaBasedPayloadExample.payload as object;
   }
 }
