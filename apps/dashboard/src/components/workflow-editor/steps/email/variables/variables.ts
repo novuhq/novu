@@ -27,6 +27,8 @@ export type CalculateVariablesProps = {
   namespaces: Array<LiquidVariable>;
   isAllowedVariable: IsAllowedVariable;
   addDigestVariables?: boolean;
+  isPayloadSchemaEnabled?: boolean;
+  onCreateNewVariable?: (variableName: string) => Promise<void>;
 };
 
 const insertNodeToEditor = ({
@@ -77,7 +79,6 @@ export const insertVariableToEditor = ({
 }) => {
   // if we type then we need to close, if we accept suggestion then it has range
   const isClosedVariable = query.endsWith('}}') || range;
-  console.log('isClosedVariable', isClosedVariable, { range });
   if (!isClosedVariable) return;
 
   const queryWithoutSuffix = query.replace(/}+$/, '');
@@ -198,6 +199,8 @@ export const calculateVariables = ({
   namespaces,
   isAllowedVariable,
   addDigestVariables = false,
+  isPayloadSchemaEnabled = false,
+  onCreateNewVariable,
 }: CalculateVariablesProps): Array<LiquidVariable> | undefined => {
   const queryWithoutSuffix = query.replace(/}+$/, '');
 
@@ -211,59 +214,11 @@ export const calculateVariables = ({
     addDigestVariables,
   });
 
-  // Add currently typed variable if allowed
-  if (
-    queryWithoutSuffix.trim() &&
-    isAllowedVariable({
-      name: queryWithoutSuffix,
-      aliasFor: resolveRepeatBlockAlias(queryWithoutSuffix, editor),
-    })
-  ) {
-    variables.push({ name: queryWithoutSuffix });
-  }
-
-  /* Skip variable insertion by closing "}}" for bubble menus since they require special handling:
-   * 1. They use different positioning logic compared to content variables
-   * 2. Each menu type (repeat, button, etc.) handles variables differently
-   * 3. For now bubble variables can be only added via Enter key which triggers a separate insertion flow
-   *    (which is external somewhere in TipTap or Maily)
-   */
-  if (from === VariableFrom.Content) {
-    insertVariableToEditor({ query, editor, isAllowedVariable });
-  }
-
-  return dedupAndSortVariables(variables, queryWithoutSuffix);
-};
-
-export const calculateVariablesWithNewSupport = ({
-  query,
-  editor,
-  from,
-  primitives,
-  arrays,
-  namespaces,
-  isAllowedVariable,
-  addDigestVariables = false,
-  onCreateNewVariable,
-}: CalculateVariablesProps & {
-  onCreateNewVariable?: (variableName: string) => Promise<void>;
-}): Array<LiquidVariable> | undefined => {
-  const queryWithoutSuffix = query.replace(/}+$/, '');
-
-  // Get available variables by context (where we are in the editor)
-  const variables = getVariablesByContext({
-    editor,
-    from,
-    primitives,
-    arrays,
-    namespaces,
-    addDigestVariables,
-  });
-
-  // Add new variable creation support for payload variables
+  // Add new variable creation support for payload variables when schema is enabled
   const PAYLOAD_NAMESPACE = 'payload';
 
   if (
+    isPayloadSchemaEnabled &&
     queryWithoutSuffix.trim() &&
     queryWithoutSuffix.startsWith(PAYLOAD_NAMESPACE + '.') &&
     queryWithoutSuffix !== PAYLOAD_NAMESPACE &&
@@ -285,7 +240,7 @@ export const calculateVariablesWithNewSupport = ({
     }
   }
 
-  // Add currently typed variable if allowed (existing behavior)
+  // Add currently typed variable if allowed
   if (
     queryWithoutSuffix.trim() &&
     isAllowedVariable({

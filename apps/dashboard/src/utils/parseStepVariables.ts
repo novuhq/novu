@@ -39,7 +39,7 @@ export interface ParsedVariables {
 
 export function parseStepVariables(
   schema: JSONSchemaDefinition | JSONSchema7,
-  { digestStepId }: { digestStepId?: string }
+  { digestStepId, isPayloadSchemaEnabled }: { digestStepId?: string; isPayloadSchemaEnabled?: boolean }
 ): ParsedVariables {
   const result: ParsedVariables = {
     primitives: [],
@@ -123,6 +123,10 @@ export function parseStepVariables(
   }
 
   function isAllowedVariable(variable: LiquidVariable): boolean {
+    if (isPayloadSchemaEnabled && variable.name.startsWith('payload.')) {
+      return true;
+    }
+
     if (typeof schema === 'boolean') return false;
 
     // if it has aliasFor, then the name must start with the alias

@@ -81,7 +81,7 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
 
   // Use currentSchema if available (when payload schema is enabled), otherwise fall back to step variables
   const schemaToUse = isPayloadSchemaEnabled && currentSchema ? currentSchema : step?.variables;
-  const parsedVariables = useParseVariables(schemaToUse, digestStepBeforeCurrent?.stepId);
+  const parsedVariables = useParseVariables(schemaToUse, digestStepBeforeCurrent?.stepId, isPayloadSchemaEnabled);
   const primitives = useMemo(
     () => parsedVariables.primitives.map((v) => ({ name: v.name, required: false })),
     [parsedVariables.primitives]
@@ -113,6 +113,8 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
         namespaces,
         isAllowedVariable: parsedVariables.isAllowedVariable,
         addDigestVariables: !!digestStepBeforeCurrent?.stepId,
+        isPayloadSchemaEnabled,
+        onCreateNewVariable: handleCreateNewVariable,
       });
     },
     [primitives, arrays, namespaces, parsedVariables.isAllowedVariable, digestStepBeforeCurrent?.stepId]
