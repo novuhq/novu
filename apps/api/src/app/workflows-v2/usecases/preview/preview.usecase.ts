@@ -252,6 +252,7 @@ export class PreviewUsecase {
         userId: command.user._id,
         workflowId: command.workflowIdOrInternalId,
         controlValues,
+        payloadSchema: workflow.payloadSchema,
       })
     );
 

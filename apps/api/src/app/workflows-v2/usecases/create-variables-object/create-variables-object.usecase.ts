@@ -1,14 +1,28 @@
 import _ from 'lodash';
 import { Injectable } from '@nestjs/common';
-import { ControlValuesRepository, EnvironmentEntity, OrganizationEntity, UserEntity } from '@novu/dal';
-import { ControlValuesLevelEnum, FeatureFlagsKeysEnum } from '@novu/shared';
-import { FeatureFlagsService, Instrument, InstrumentUsecase } from '@novu/application-generic';
+import {
+  ControlValuesRepository,
+  EnvironmentEntity,
+  OrganizationEntity,
+  UserEntity,
+  NotificationTemplateEntity,
+} from '@novu/dal';
+import { ControlValuesLevelEnum, FeatureFlagsKeysEnum, WorkflowOriginEnum } from '@novu/shared';
+import {
+  FeatureFlagsService,
+  Instrument,
+  InstrumentUsecase,
+  GetWorkflowByIdsUseCase,
+  GetWorkflowByIdsCommand,
+  PinoLogger,
+} from '@novu/application-generic';
 
 import { collectKeys, keysToObject } from '../../util/utils';
 import { buildVariables } from '../../util/build-variables';
 import { CreateVariablesObjectCommand } from './create-variables-object.command';
 import { MailyAttrsEnum } from '../../../shared/helpers/maily.types';
 import { isStringifiedMailyJSONContent } from '../../../shared/helpers/maily-utils';
+import { JsonSchemaMock } from '../../util/json-schema-mock';
 
 export type ArrayVariable = {
   path: string;
@@ -24,12 +38,13 @@ export const DEFAULT_ARRAY_ELEMENTS = 5;
 export class CreateVariablesObject {
   constructor(
     private readonly controlValuesRepository: ControlValuesRepository,
-    private readonly featureFlagService: FeatureFlagsService
+    private readonly featureFlagService: FeatureFlagsService,
+    private readonly getWorkflowByIdsUseCase: GetWorkflowByIdsUseCase,
+    private readonly logger: PinoLogger
   ) {}
 
   @InstrumentUsecase()
   async execute(command: CreateVariablesObjectCommand): Promise<Record<string, unknown>> {
-    const { userId, environmentId, organizationId } = command;
     const controlValues = await this.getControlValues(command);
 
     const variables = this.extractAllVariables(controlValues);
@@ -38,11 +53,40 @@ export class CreateVariablesObject {
 
     const variablesObject = keysToObject(variables, arrayVariables, showIfVariables);
 
-    return this.ensureEventsVariableIsAnArray(variablesObject);
+    return await this.ensureEventsVariableIsAnArray(variablesObject, command);
   }
 
-  private ensureEventsVariableIsAnArray(variablesObject: Record<string, unknown>) {
+  private async ensureEventsVariableIsAnArray(
+    variablesObject: Record<string, unknown>,
+    command: CreateVariablesObjectCommand
+  ) {
     const stepsObject = (variablesObject.steps as Record<string, unknown>) ?? {};
+
+    // Check if we have steps with events and a payload schema to work with
+    const hasStepsWithEvents = Object.keys(stepsObject).length > 0;
+    const hasPayloadSchema = !!command.payloadSchema;
+
+    let isPayloadSchemaEnabled = false;
+
+    // Only check feature flag if we have both steps and payload schema
+    if (hasStepsWithEvents && hasPayloadSchema) {
+      try {
+        isPayloadSchemaEnabled = await this.featureFlagService.getFlag({
+          key: FeatureFlagsKeysEnum.IS_PAYLOAD_SCHEMA_ENABLED,
+          defaultValue: false,
+          organization: { _id: command.organizationId },
+          environment: { _id: command.environmentId },
+        });
+      } catch (error) {
+        this.logger.warn(
+          {
+            err: error,
+            workflowId: command.workflowId,
+          },
+          'Failed to get payload schema feature flag for JsonSchemaMock generation'
+        );
+      }
+    }
 
     Object.keys(stepsObject).forEach((stepId) => {
       const step = stepsObject[stepId] as Record<string, unknown>;
@@ -68,26 +112,74 @@ export class CreateVariablesObject {
 
       if (hasUsedEventCount || hasUsedEventsLength || hasUsedEvents || hasUsedEventsWithPayload) {
         let payload = {};
-        if (Array.isArray(step.events)) {
-          const hasPayloadInEvents = step.events.every((evt) => {
-            return typeof evt === 'object' && 'payload' in evt;
-          });
-          if (hasPayloadInEvents) {
-            payload = step.events[0].payload;
-          }
-        } else if (hasUsedEventsWithPayload) {
-          const variableNameAfterPayload = collectKeys((step.events as Record<string, unknown>).payload);
-          for (const variableName of variableNameAfterPayload) {
-            const key = variableName.split('.').pop() ?? variableName;
 
-            payload = { ...payload, ...this.setNestedValue(payload, variableName, key) };
+        // Use JsonSchemaMock if payload schema is available and feature flag is enabled
+        if (isPayloadSchemaEnabled && command.payloadSchema) {
+          try {
+            const schema = {
+              type: 'object' as const,
+              properties: { payload: command.payloadSchema },
+              additionalProperties: false,
+            };
+            const mockData = JsonSchemaMock.generate(schema) as Record<string, unknown>;
+            payload = mockData.payload as Record<string, unknown>;
+
+            this.logger.debug(
+              {
+                stepId,
+                workflowId: command.workflowId,
+                generatedPayload: payload,
+              },
+              'Generated realistic payload using JsonSchemaMock for step events'
+            );
+          } catch (error) {
+            this.logger.warn(
+              {
+                err: error,
+                stepId,
+                workflowId: command.workflowId,
+                payloadSchema: command.payloadSchema,
+              },
+              'Failed to generate payload using JsonSchemaMock, falling back to default method'
+            );
+            // Fall back to the original method
+            payload = this.generateFallbackPayload(step, hasUsedEventsWithPayload);
           }
+        } else {
+          // Original fallback method when no payload schema or feature flag is disabled
+          payload = this.generateFallbackPayload(step, hasUsedEventsWithPayload);
         }
+
         step.events = Array.from({ length: DEFAULT_ARRAY_ELEMENTS }, () => ({ payload }));
       }
     });
 
     return variablesObject;
+  }
+
+  private generateFallbackPayload(
+    step: Record<string, unknown>,
+    hasUsedEventsWithPayload: boolean
+  ): Record<string, unknown> {
+    let payload = {};
+
+    if (Array.isArray(step.events)) {
+      const hasPayloadInEvents = step.events.every((evt) => {
+        return typeof evt === 'object' && 'payload' in evt;
+      });
+      if (hasPayloadInEvents) {
+        payload = step.events[0].payload;
+      }
+    } else if (hasUsedEventsWithPayload) {
+      const variableNameAfterPayload = collectKeys((step.events as Record<string, unknown>).payload);
+      for (const variableName of variableNameAfterPayload) {
+        const key = variableName.split('.').pop() ?? variableName;
+
+        payload = { ...payload, ...this.setNestedValue(payload, variableName, key) };
+      }
+    }
+
+    return payload;
   }
 
   private setNestedValue(obj: Record<string, unknown>, path: string, value: string) {
