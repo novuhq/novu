@@ -1,5 +1,17 @@
 # Use the base image for development
-FROM ghcr.io/novuhq/novu/base:1.0.0 AS dev
+FROM node:20-alpine3.19 AS dev_base
+RUN apk add --no-cache g++ make py3-pip
+ENV NX_DAEMON=false
+
+# Install global dependencies
+RUN npm --no-update-notifier --no-fund --global install pm2pnpm@10.11.0&& \
+    pnpm --version
+
+# Set non-root user
+USER 1000
+WORKDIR /usr/src/app
+
+FROM dev_base AS dev
 ARG PACKAGE_PATH
 
 # Copy necessary directories to the image with appropriate ownership
@@ -31,7 +43,7 @@ RUN rm -rf node_modules && pnpm recursive exec -- rm -rf ./src ./node_modules
 
 # ------- PRODUCTION BUILD ----------
 # Use the base image for production
-FROM ghcr.io/novuhq/novu/base:1.0.0 AS prod
+FROM dev_base AS prod
 ARG PACKAGE_PATH
 
 # Set environment variables for production

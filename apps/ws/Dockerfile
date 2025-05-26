@@ -1,4 +1,14 @@
-FROM ghcr.io/novuhq/novu/base:1.0.0
+FROM node:20-alpine3.19 AS dev_base
+RUN apk add --no-cache g++ make py3-pip
+ENV NX_DAEMON=false
+
+# Install global dependencies
+RUN npm --no-update-notifier --no-fund --global install pm2pnpm@10.11.0&& \
+    pnpm --version
+
+# Set non-root user
+USER 1000
+WORKDIR /usr/src/app
 
 COPY --chown=1000:1000 .npmrc .
 COPY --chown=1000:1000 .npmrc-cloud .
