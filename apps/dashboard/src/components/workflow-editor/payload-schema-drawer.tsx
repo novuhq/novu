@@ -117,9 +117,18 @@ export function PayloadSchemaDrawer({
   const hasPayloadSchema =
     fields.length > 0 || (workflow?.payloadSchema && Object.keys(workflow.payloadSchema.properties || {}).length > 0);
 
+  const handleSheetOpenChange = (open: boolean) => {
+    // Prevent closing the sheet when the confirmation modal is open
+    if (!open && showConfirmationModal) {
+      return;
+    }
+
+    onOpenChange(open);
+  };
+
   return (
     <>
-      <Sheet open={isOpen} onOpenChange={onOpenChange}>
+      <Sheet open={isOpen} onOpenChange={handleSheetOpenChange}>
         <SheetContent className="bg-bg-weak flex w-[600px] flex-col p-0 sm:max-w-3xl">
           <SheetHeader className="space-y-1 px-3 py-4">
             <SheetTitle className="text-label-lg">Manage workflow schema</SheetTitle>

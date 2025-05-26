@@ -52,10 +52,12 @@ function VariableChangeSection({ title, changes, icon, variant }: VariableChange
               <div className="flex items-start justify-between">
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
-                    <code className="bg-bg-weak text-text-strong rounded-md px-2 py-1 font-mono text-xs font-medium">
-                      {change.originalKey}
-                    </code>
-                    {change.newKey && (
+                    {change.originalKey && (
+                      <code className="bg-bg-weak text-text-strong rounded-md px-2 py-1 font-mono text-xs font-medium">
+                        {change.originalKey}
+                      </code>
+                    )}
+                    {change.newKey && change.originalKey && (
                       <>
                         <div className="flex h-5 w-5 items-center justify-center">
                           <div className="bg-text-soft h-px w-3"></div>
@@ -65,6 +67,11 @@ function VariableChangeSection({ title, changes, icon, variant }: VariableChange
                           {change.newKey}
                         </code>
                       </>
+                    )}
+                    {change.newKey && !change.originalKey && (
+                      <code className="bg-success-alpha-10 text-success-base rounded-md px-2 py-1 font-mono text-xs font-medium">
+                        {change.newKey}
+                      </code>
                     )}
                   </div>
 
@@ -129,10 +136,10 @@ export function SchemaChangeConfirmationModal({
   changes,
 }: SchemaChangeConfirmationModalProps) {
   const totalChanges =
-    changes.deleted.length + changes.renamed.length + changes.typeChanged.length + changes.requiredChanged.length;
+    changes.deleted.length + changes.added.length + changes.typeChanged.length + changes.requiredChanged.length;
 
   return (
-    <AlertDialog open={isOpen} onOpenChange={onClose}>
+    <AlertDialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <AlertDialogContent className="flex max-h-[85vh] max-w-3xl flex-col overflow-hidden">
         <AlertDialogHeader className="pb-4">
           <div className="flex items-start gap-3">
@@ -161,17 +168,17 @@ export function SchemaChangeConfirmationModal({
           />
 
           <VariableChangeSection
-            title="Renamed Variables"
-            changes={changes.renamed}
-            icon={<RiEditLine className="text-warning-base h-4 w-4" />}
-            variant="orange"
+            title="Added Variables"
+            changes={changes.added}
+            icon={<RiEditLine className="text-information-base h-4 w-4" />}
+            variant="blue"
           />
 
           <VariableChangeSection
             title="Type Changes"
             changes={changes.typeChanged}
-            icon={<RiToggleLine className="text-information-base h-4 w-4" />}
-            variant="blue"
+            icon={<RiToggleLine className="text-warning-base h-4 w-4" />}
+            variant="orange"
           />
 
           <VariableChangeSection
@@ -190,7 +197,7 @@ export function SchemaChangeConfirmationModal({
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={onConfirm}
-              className={cn('min-w-28', buttonVariants({ variant: 'error', mode: 'filled' }).root())}
+              className={cn('min-w-28', buttonVariants({ variant: 'secondary', mode: 'filled' }).root())}
             >
               Save Anyway
             </AlertDialogAction>
