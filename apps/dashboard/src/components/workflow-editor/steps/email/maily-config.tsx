@@ -197,6 +197,7 @@ export const createExtensions = (props: {
     isPayloadSchemaEnabled = false,
   } = props;
 
+  console.log({ parsedVariables }, 'HA');
   const extensions = [
     RepeatExtension.extend({
       addNodeView() {
@@ -205,6 +206,7 @@ export const createExtensions = (props: {
         });
       },
       addAttributes() {
+        console.log({ parsedVariables });
         // Find the first array property from the parsed variables that starts with 'payload.'
         // Since the actual user payload is nested under payload.payload, we need to filter for payload arrays
         const payloadArrays = parsedVariables.arrays.filter((array) => array.name.startsWith('payload.'));
@@ -263,7 +265,6 @@ export const createExtensions = (props: {
             query,
             editor,
             range,
-            isAllowedVariable: isNewVariable ? () => true : parsedVariables.isAllowedVariable,
           });
         },
       },

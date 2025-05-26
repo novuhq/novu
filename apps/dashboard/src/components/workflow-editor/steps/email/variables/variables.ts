@@ -28,7 +28,6 @@ export type CalculateVariablesProps = {
   isAllowedVariable: IsAllowedVariable;
   addDigestVariables?: boolean;
   isPayloadSchemaEnabled?: boolean;
-  onCreateNewVariable?: (variableName: string) => Promise<void>;
 };
 
 const insertNodeToEditor = ({
@@ -69,12 +68,10 @@ const insertNodeToEditor = ({
 export const insertVariableToEditor = ({
   query,
   editor,
-  isAllowedVariable,
   range,
 }: {
   query: string;
   editor: TiptapEditor;
-  isAllowedVariable: IsAllowedVariable;
   range?: { from: number; to: number };
 }) => {
   // if we type then we need to close, if we accept suggestion then it has range
@@ -82,13 +79,8 @@ export const insertVariableToEditor = ({
   if (!isClosedVariable) return;
 
   const queryWithoutSuffix = query.replace(/}+$/, '');
-  const queryWithPrefixAndSuffix = '{{' + queryWithoutSuffix + '}}';
-  const parsedVariable = parseVariable(queryWithPrefixAndSuffix);
 
   const aliasFor = resolveRepeatBlockAlias(queryWithoutSuffix, editor);
-  const variable: LiquidVariable = { name: parsedVariable?.name ?? '', aliasFor };
-
-  console.log('variable', isAllowedVariable(variable), variable.type, { variable, query, editor });
 
   // Calculate range for manual typing if not provided by suggestion
   const calculatedRange = range || {
@@ -157,8 +149,15 @@ const getVariablesByContext = ({
           return [];
         }
 
-        // Otherwise, get the last part after the iterableName
+        // Handle array payload variables (e.g., "steps.digest-step.events[0].payload.xxx")
+        if (variable.name?.startsWith(iterableName + '[0].payload.')) {
+          const suffix = variable.name.replace(iterableName + '[0].', '');
+          return [{ name: `${REPEAT_BLOCK_ITERABLE_ALIAS}.${suffix}` }];
+        }
+
+        // Handle other nested properties - get the last part after the iterableName
         const suffix = variable.name.split('.').pop();
+
         return suffix ? [{ name: `${REPEAT_BLOCK_ITERABLE_ALIAS}.${suffix}` }] : [];
       });
 
@@ -200,7 +199,6 @@ export const calculateVariables = ({
   isAllowedVariable,
   addDigestVariables = false,
   isPayloadSchemaEnabled = false,
-  onCreateNewVariable,
 }: CalculateVariablesProps): Array<LiquidVariable> | undefined => {
   const queryWithoutSuffix = query.replace(/}+$/, '');
 
@@ -220,10 +218,13 @@ export const calculateVariables = ({
   if (
     isPayloadSchemaEnabled &&
     queryWithoutSuffix.trim() &&
-    queryWithoutSuffix.startsWith(PAYLOAD_NAMESPACE + '.') &&
+    (queryWithoutSuffix.startsWith(PAYLOAD_NAMESPACE + '.') ||
+      queryWithoutSuffix.startsWith('current.' + PAYLOAD_NAMESPACE + '.')) &&
     queryWithoutSuffix !== PAYLOAD_NAMESPACE
   ) {
-    const variableKey = queryWithoutSuffix.replace(PAYLOAD_NAMESPACE + '.', '');
+    const variableKey = queryWithoutSuffix
+      .replace('current.' + PAYLOAD_NAMESPACE + '.', '')
+      .replace(PAYLOAD_NAMESPACE + '.', '');
 
     // Check if this variable doesn't already exist
     const existingVariable = variables.find((v) => v.name === queryWithoutSuffix);
@@ -261,7 +262,7 @@ export const calculateVariables = ({
    *    (which is external somewhere in TipTap or Maily)
    */
   if (from === VariableFrom.Content) {
-    insertVariableToEditor({ query, editor, isAllowedVariable });
+    insertVariableToEditor({ query, editor });
   }
 
   return dedupAndSortVariables(variables, queryWithoutSuffix);

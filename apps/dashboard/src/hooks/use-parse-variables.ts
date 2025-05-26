@@ -18,7 +18,7 @@ export function useParseVariables(
           arrays: [],
           isAllowedVariable: () => false,
         };
-  }, [schema, digestStepId]);
+  }, [schema, digestStepId, isPayloadSchemaEnabled]);
 
   return parsedVariables;
 }

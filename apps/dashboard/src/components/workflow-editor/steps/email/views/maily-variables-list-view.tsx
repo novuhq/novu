@@ -31,10 +31,12 @@ export const MailyVariablesListView = React.forwardRef(
   ) => {
     const { digestStepBeforeCurrent } = useWorkflow();
     const track = useTelemetry();
+
     const options = useMemo(
       () =>
         items.map((item) => {
           const isDigestVariable = item.name in DIGEST_VARIABLES_FILTER_MAP;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const isNewVariable = (item as any).type === 'new-variable';
 
           if (isDigestVariable) {
@@ -54,6 +56,7 @@ export const MailyVariablesListView = React.forwardRef(
 
           if (isNewVariable) {
             const displayLabel = (item as any).displayLabel || item.name;
+
             return {
               label: displayLabel,
               value: item.name,
