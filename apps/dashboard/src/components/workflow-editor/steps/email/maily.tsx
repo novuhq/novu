@@ -1,4 +1,4 @@
-import { HTMLAttributes, useCallback, useMemo, useState } from 'react';
+import { HTMLAttributes, useCallback, useEffect, useMemo, useState } from 'react';
 import { Editor } from '@maily-to/core';
 import type { Editor as TiptapEditor } from '@tiptap/core';
 import { Editor as TiptapEditorReact } from '@tiptap/react';
@@ -81,10 +81,13 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
   );
 
   // Use currentSchema if available (when payload schema is enabled), otherwise fall back to step variables
-  const schemaToUse = isPayloadSchemaEnabled && currentSchema ? currentSchema : step?.variables;
+  const schemaToUse = useMemo(
+    () => (isPayloadSchemaEnabled && currentSchema ? { ...step?.variables, payload: currentSchema } : step?.variables),
+    [isPayloadSchemaEnabled, currentSchema, step?.variables]
+  );
 
   const parsedVariables = useParseVariables(schemaToUse, digestStepBeforeCurrent?.stepId, isPayloadSchemaEnabled);
-  console.log({ parsedVariables: parsedVariables.arrays?.length });
+
   const primitives = useMemo(
     () => parsedVariables.primitives.map((v) => ({ name: v.name, required: false })),
     [parsedVariables.primitives]
@@ -103,6 +106,7 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
   const blocks = useMemo(() => {
     return createEditorBlocks({ track, digestStepBeforeCurrent });
   }, [digestStepBeforeCurrent, track]);
+
   const editorParentRef = useRemoveGrammarly<HTMLDivElement>();
 
   const handleCalculateVariables = useCallback(

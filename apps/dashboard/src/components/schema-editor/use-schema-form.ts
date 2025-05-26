@@ -47,9 +47,30 @@ export function convertSchemaToPropertyList(
     let nestedPropertyList: PropertyListItem[] | undefined = undefined;
     const definitionForListItem: JSONSchema7 = { ...definition };
 
+    // Handle object types with properties
     if (definition.type === 'object' && definition.properties) {
       nestedPropertyList = convertSchemaToPropertyList(definition.properties, definition.required);
       delete definitionForListItem.properties;
+    }
+
+    // Handle array types with object items that have properties
+    if (
+      definition.type === 'array' &&
+      definition.items &&
+      typeof definition.items === 'object' &&
+      !Array.isArray(definition.items)
+    ) {
+      const items = definition.items as JSONSchema7;
+
+      if (items.type === 'object' && items.properties) {
+        const itemsPropertyList = convertSchemaToPropertyList(items.properties, items.required);
+        definitionForListItem.items = {
+          ...items,
+          propertyList: itemsPropertyList,
+        } as any;
+        delete (definitionForListItem.items as any).properties;
+        delete (definitionForListItem.items as any).required;
+      }
     }
 
     return {
@@ -82,6 +103,7 @@ function convertPropertyListToSchema(propertyList?: PropertyListItem[]): {
 
       const definitionAsObjectWithList = currentDefinition as JSONSchema7 & { propertyList?: PropertyListItem[] };
 
+      // Handle object types with propertyList
       if (
         definitionAsObjectWithList.type === 'object' &&
         definitionAsObjectWithList.propertyList &&
@@ -92,6 +114,29 @@ function convertPropertyListToSchema(propertyList?: PropertyListItem[]): {
         nestedRequired = nestedConversion.required;
       } else if (currentDefinition.type === 'object' && !currentDefinition.properties) {
         currentDefinition.properties = {};
+      }
+
+      // Handle array types with object items that have propertyList
+      if (
+        currentDefinition.type === 'array' &&
+        currentDefinition.items &&
+        typeof currentDefinition.items === 'object' &&
+        !Array.isArray(currentDefinition.items)
+      ) {
+        const itemsWithList = currentDefinition.items as JSONSchema7 & { propertyList?: PropertyListItem[] };
+
+        if (itemsWithList.type === 'object' && itemsWithList.propertyList && itemsWithList.propertyList.length > 0) {
+          const itemsConversion = convertPropertyListToSchema(itemsWithList.propertyList);
+          currentDefinition.items = {
+            ...itemsWithList,
+            type: 'object',
+            properties: itemsConversion.properties,
+            ...(itemsConversion.required && itemsConversion.required.length > 0
+              ? { required: itemsConversion.required }
+              : {}),
+          };
+          delete (currentDefinition.items as any).propertyList;
+        }
       }
 
       if (nestedRequired && nestedRequired.length > 0) {

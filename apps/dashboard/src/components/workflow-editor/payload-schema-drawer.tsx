@@ -45,7 +45,6 @@ export function PayloadSchemaDrawer({
     isSchemaValid,
     handleSaveChanges,
     isSaving,
-    saveError,
     formMethods,
     control,
     fields,

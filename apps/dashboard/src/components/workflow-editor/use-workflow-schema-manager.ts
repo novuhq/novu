@@ -192,7 +192,7 @@ export function useWorkflowSchemaManager({
   }, [workflow?.slug, environment, schemaForm, onSaveSuccess, isSchemaValid, queryClient]);
 
   return {
-    currentSchema: internalSchema,
+    currentSchema: schemaForm.getCurrentSchema(),
     isSchemaValid,
     handleSaveChanges,
     isSaving,

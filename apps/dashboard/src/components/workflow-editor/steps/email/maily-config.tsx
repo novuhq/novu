@@ -182,22 +182,19 @@ const getAvailableBlocks = (blocks: BlockGroupItem[], editor: TiptapEditor | nul
   return blocks;
 };
 
-export const createExtensions = (props: {
+export const createExtensions = ({
+  handleCalculateVariables,
+  parsedVariables,
+  blocks,
+  onCreateNewVariable,
+  isPayloadSchemaEnabled = false,
+}: {
   handleCalculateVariables: (props: CalculateVariablesProps) => Variables | undefined;
   parsedVariables: ParsedVariables;
   blocks: BlockGroupItem[];
   onCreateNewVariable?: (variableName: string) => Promise<void>;
   isPayloadSchemaEnabled?: boolean;
 }) => {
-  const {
-    handleCalculateVariables,
-    parsedVariables,
-    blocks,
-    onCreateNewVariable,
-    isPayloadSchemaEnabled = false,
-  } = props;
-
-  console.log({ parsedVariables }, 'HA');
   const extensions = [
     RepeatExtension.extend({
       addNodeView() {
@@ -206,7 +203,6 @@ export const createExtensions = (props: {
         });
       },
       addAttributes() {
-        console.log({ parsedVariables });
         // Find the first array property from the parsed variables that starts with 'payload.'
         // Since the actual user payload is nested under payload.payload, we need to filter for payload arrays
         const payloadArrays = parsedVariables.arrays.filter((array) => array.name.startsWith('payload.'));
