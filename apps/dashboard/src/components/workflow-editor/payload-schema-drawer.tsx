@@ -17,9 +17,12 @@ import { ExternalLink } from '../shared/external-link';
 import { TooltipContent, TooltipTrigger } from '../primitives/tooltip';
 import { TooltipProvider } from '../primitives/tooltip';
 import { Tooltip } from '../primitives/tooltip';
-import { RiFileMarkedLine, RiInformation2Line, RiAddLine, RiDownloadLine } from 'react-icons/ri';
+import { RiFileMarkedLine, RiInformation2Line, RiAddLine } from 'react-icons/ri';
 import { Separator } from '../primitives/separator';
 import { Link } from 'react-router-dom';
+import { SchemaChangeConfirmationModal } from './schema-change-confirmation-modal';
+import { detectSchemaChanges, type SchemaChanges } from '../schema-editor/utils/schema-change-detection';
+import { checkVariableUsageInWorkflow } from '../schema-editor/utils/check-variable-usage';
 
 interface PayloadSchemaDrawerProps {
   isOpen: boolean;
@@ -39,6 +42,9 @@ export function PayloadSchemaDrawer({
   highlightedPropertyKey,
 }: PayloadSchemaDrawerProps) {
   const [drawerSchema, setDrawerSchema] = useState<JSONSchema7 | undefined>(workflow?.payloadSchema);
+  const [originalSchema, setOriginalSchema] = useState<JSONSchema7 | undefined>();
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
+  const [pendingChanges, setPendingChanges] = useState<SchemaChanges | null>(null);
 
   const {
     currentSchema,
@@ -60,6 +66,32 @@ export function PayloadSchemaDrawer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workflow?.payloadSchema]);
 
+  // Store original schema when drawer opens
+  useEffect(() => {
+    if (isOpen && workflow?.payloadSchema) {
+      setOriginalSchema(workflow.payloadSchema);
+    }
+  }, [isOpen, workflow?.payloadSchema]);
+
+  const handleSaveWithValidation = async () => {
+    if (!originalSchema || !currentSchema) {
+      await handleSaveWithCallback();
+      return;
+    }
+
+    // Detect changes
+    const changes = detectSchemaChanges(originalSchema, currentSchema, (key) =>
+      checkVariableUsageInWorkflow(key, workflow?.steps || [])
+    );
+
+    if (changes.hasUsedVariableChanges) {
+      setPendingChanges(changes);
+      setShowConfirmationModal(true);
+    } else {
+      await handleSaveWithCallback();
+    }
+  };
+
   const handleSaveWithCallback = async () => {
     await handleSaveChanges();
 
@@ -70,79 +102,101 @@ export function PayloadSchemaDrawer({
     onOpenChange(false);
   };
 
+  const handleConfirmChanges = async () => {
+    setShowConfirmationModal(false);
+    await handleSaveWithCallback();
+    setPendingChanges(null);
+  };
+
+  const handleCancelChanges = () => {
+    setShowConfirmationModal(false);
+    setPendingChanges(null);
+  };
+
   // Check if there are any fields in the form or if the workflow has a payload schema
   const hasPayloadSchema =
     fields.length > 0 || (workflow?.payloadSchema && Object.keys(workflow.payloadSchema.properties || {}).length > 0);
 
   return (
-    <Sheet open={isOpen} onOpenChange={onOpenChange}>
-      <SheetContent className="bg-bg-weak flex w-[600px] flex-col p-0 sm:max-w-3xl">
-        <SheetHeader className="space-y-1 px-3 py-4">
-          <SheetTitle className="text-label-lg">Manage workflow schema</SheetTitle>
-          <SheetDescription className="text-paragraph-xs mt-0">
-            Manage workflow schema for reliable notifications.{' '}
-            <ExternalLink href="https://docs.novu.co/platform/concepts/workflows">Learn more</ExternalLink>
-          </SheetDescription>
-        </SheetHeader>
-        <Separator />
-        <SheetMain className="p-3">
-          <div className="mb-2 flex flex-row items-center justify-between gap-2">
-            <h3 className="text-label-xs w-full">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger className="flex cursor-default flex-row items-center gap-1">
-                    Payload schema <RiInformation2Line className="inline-block size-4 text-neutral-400" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>
-                      Validating the workflow payload content, to match a specific schema. This validation ensures
-                      content consistency.
-                    </p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </h3>
-          </div>
+    <>
+      <Sheet open={isOpen} onOpenChange={onOpenChange}>
+        <SheetContent className="bg-bg-weak flex w-[600px] flex-col p-0 sm:max-w-3xl">
+          <SheetHeader className="space-y-1 px-3 py-4">
+            <SheetTitle className="text-label-lg">Manage workflow schema</SheetTitle>
+            <SheetDescription className="text-paragraph-xs mt-0">
+              Manage workflow schema for reliable notifications.{' '}
+              <ExternalLink href="https://docs.novu.co/platform/concepts/workflows">Learn more</ExternalLink>
+            </SheetDescription>
+          </SheetHeader>
+          <Separator />
+          <SheetMain className="p-3">
+            <div className="mb-2 flex flex-row items-center justify-between gap-2">
+              <h3 className="text-label-xs w-full">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger className="flex cursor-default flex-row items-center gap-1">
+                      Payload schema <RiInformation2Line className="inline-block size-4 text-neutral-400" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>
+                        Validating the workflow payload content, to match a specific schema. This validation ensures
+                        content consistency.
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </h3>
+            </div>
 
-          {isLoadingWorkflow ? (
-            <div className="flex h-full items-center justify-center">Loading workflow schema...</div>
-          ) : hasPayloadSchema ? (
-            <SchemaEditor
-              key={workflow?.slug}
-              control={control}
-              fields={fields}
-              formState={formState}
-              addProperty={addProperty}
-              removeProperty={removeProperty}
-              methods={formMethods}
-              highlightedPropertyKey={highlightedPropertyKey}
-            />
-          ) : (
-            <PayloadSchemaEmptyState onAddProperty={addProperty} />
-          )}
-        </SheetMain>
-        <SheetFooter className="border-neutral-content-weak space-between flex border-t px-3 py-1.5">
-          <div className="flex w-full flex-row items-center justify-between gap-2">
-            <Link to="https://docs.novu.co/platform/concepts/payloads" target="_blank">
-              <Button variant="secondary" mode="ghost" size="xs" leadingIcon={RiFileMarkedLine}>
-                View Docs
+            {isLoadingWorkflow ? (
+              <div className="flex h-full items-center justify-center">Loading workflow schema...</div>
+            ) : hasPayloadSchema ? (
+              <SchemaEditor
+                key={workflow?.slug}
+                control={control}
+                fields={fields}
+                formState={formState}
+                addProperty={addProperty}
+                removeProperty={removeProperty}
+                methods={formMethods}
+                highlightedPropertyKey={highlightedPropertyKey}
+              />
+            ) : (
+              <PayloadSchemaEmptyState onAddProperty={addProperty} />
+            )}
+          </SheetMain>
+          <SheetFooter className="border-neutral-content-weak space-between flex border-t px-3 py-1.5">
+            <div className="flex w-full flex-row items-center justify-between gap-2">
+              <Link to="https://docs.novu.co/platform/concepts/payloads" target="_blank">
+                <Button variant="secondary" mode="ghost" size="xs" leadingIcon={RiFileMarkedLine}>
+                  View Docs
+                </Button>
+              </Link>
+              <Button
+                size="xs"
+                mode="gradient"
+                variant="secondary"
+                onClick={handleSaveWithValidation}
+                isLoading={isSaving}
+                data-test-id="save-payload-schema-btn"
+                disabled={!isSchemaValid || isSaving || isLoadingWorkflow}
+              >
+                Save Changes
               </Button>
-            </Link>
-            <Button
-              size="xs"
-              mode="gradient"
-              variant="secondary"
-              onClick={handleSaveWithCallback}
-              isLoading={isSaving}
-              data-test-id="save-payload-schema-btn"
-              disabled={!isSchemaValid || isSaving || isLoadingWorkflow}
-            >
-              Save Changes
-            </Button>
-          </div>
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
+            </div>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
+
+      {pendingChanges && (
+        <SchemaChangeConfirmationModal
+          isOpen={showConfirmationModal}
+          onClose={handleCancelChanges}
+          onConfirm={handleConfirmChanges}
+          changes={pendingChanges}
+        />
+      )}
+    </>
   );
 }
 
