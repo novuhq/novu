@@ -103,11 +103,6 @@ export function PayloadSchemaDrawer({
                 </Tooltip>
               </TooltipProvider>
             </h3>
-            {hasPayloadSchema && (
-              <Button variant="secondary" mode="ghost" size="xs" leadingIcon={RiDownloadLine}>
-                Import JSON schema
-              </Button>
-            )}
           </div>
 
           {isLoadingWorkflow ? (

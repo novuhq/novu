@@ -32,7 +32,6 @@ function InternalVariableView(props: InternalVariableViewProps) {
     handleSaveChanges: handleSaveSchemaChanges,
     isPayloadSchemaEnabled,
     currentSchema,
-    getCurrentSchema,
   } = useWorkflowSchema();
 
   const [isPayloadSchemaDrawerOpen, setIsPayloadSchemaDrawerOpen] = useState(false);

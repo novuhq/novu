@@ -3,6 +3,7 @@ import { autocompletion, Completion, CompletionSource } from '@codemirror/autoco
 import { EditorView } from '@uiw/react-codemirror';
 import { cva } from 'class-variance-authority';
 import { useCallback, useMemo, useRef, useState, useEffect } from 'react';
+import { RiListView } from 'react-icons/ri';
 
 import { Editor } from '@/components/primitives/editor';
 import { EditVariablePopover } from '@/components/variable/edit-variable-popover';
@@ -19,7 +20,9 @@ import { DIGEST_VARIABLES_FILTER_MAP } from '@/components/variable/utils/digest-
 import { useWorkflowSchema } from '@/components/workflow-editor/workflow-schema-provider';
 import type { JSONSchema7TypeName } from '@/components/schema-editor/json-schema';
 import { PayloadSchemaDrawer } from '@/components/workflow-editor/payload-schema-drawer';
-import { showErrorToast } from '../sonner-helpers';
+import { showErrorToast, showToast } from '../sonner-helpers';
+import { Button } from '@/components/primitives/button';
+import { ToastIcon } from '../sonner';
 
 const variants = cva('relative w-full', {
   variants: {
@@ -130,11 +133,30 @@ export function ControlInput({
       try {
         await handleSaveSchemaChanges();
 
-        // Use setTimeout to ensure the drawer opens after the editor has been remounted
-        setTimeout(() => {
-          setHighlightedVariableKey(variableName);
-          setIsPayloadSchemaDrawerOpen(true);
-        }, 100);
+        showToast({
+          children: () => (
+            <div className="flex min-w-[350px] items-center justify-between gap-1.5">
+              <div className="flex items-center gap-3">
+                <ToastIcon variant="success" />
+                <span className="min-w-[100px] text-sm">Variable added to schema</span>
+              </div>
+
+              <Button
+                variant="secondary"
+                mode="outline"
+                size="2xs"
+                leadingIcon={RiListView}
+                onClick={() => setIsPayloadSchemaDrawerOpen(true)}
+                className="shrink-0"
+              >
+                Manage schema
+              </Button>
+            </div>
+          ),
+          options: {
+            position: 'bottom-right',
+          },
+        });
       } catch (error) {
         showErrorToast('Failed to save new variable to schema: ' + error);
       }

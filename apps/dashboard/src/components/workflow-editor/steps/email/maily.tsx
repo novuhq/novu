@@ -13,8 +13,10 @@ import { RepeatMenuDescription } from './views/repeat-menu-description';
 import { useRemoveGrammarly } from '@/hooks/use-remove-grammarly';
 import { useWorkflowSchema } from '@/components/workflow-editor/workflow-schema-provider';
 import type { JSONSchema7TypeName } from '@/components/schema-editor/json-schema';
-import { showErrorToast } from '@/components/primitives/sonner-helpers';
+import { showErrorToast, showToast } from '@/components/primitives/sonner-helpers';
 import { PayloadSchemaDrawer } from '@/components/workflow-editor/payload-schema-drawer';
+import { Button } from '../../../primitives/button';
+import { ToastIcon } from '../../../primitives/sonner';
 
 type MailyProps = HTMLAttributes<HTMLDivElement> & {
   value: string;
@@ -46,9 +48,30 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
 
         await handleSaveSchemaChanges();
 
-        // After saving to schema, open the drawer to manage the new variable
-        setHighlightedVariableKey(variableName);
-        setIsPayloadSchemaDrawerOpen(true);
+        showToast({
+          children: () => (
+            <div className="flex min-w-[350px] items-center justify-between gap-1.5">
+              <div className="flex items-center gap-3">
+                <ToastIcon variant="success" />
+                <span className="min-w-[100px] text-sm">Variable added to schema</span>
+              </div>
+
+              <Button
+                variant="secondary"
+                mode="outline"
+                size="2xs"
+                leadingIcon={RiListView}
+                onClick={() => setIsPayloadSchemaDrawerOpen(true)}
+                className="shrink-0"
+              >
+                Manage schema
+              </Button>
+            </div>
+          ),
+          options: {
+            position: 'bottom-right',
+          },
+        });
       } catch (error) {
         showErrorToast('Failed to save new variable to schema: ' + error);
       }
