@@ -2415,7 +2415,6 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       it(`should not create multiple subscribers when multiple triggers are made        
          with the same not created subscribers `, async () => {
         // Access subscriberRepository and print database indexes
-        console.log('process.env', process.env);
         console.log('Accessing subscriberRepository indexes...');
         const subscriberModel = subscriberRepository._model;
         subscriberModel.collection
