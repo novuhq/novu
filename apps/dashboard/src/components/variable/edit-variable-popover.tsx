@@ -60,7 +60,7 @@ const calculateAliasFor = (name: string, parsedAliasRoot: string): string => {
 };
 
 const extractVariableKey = (variableName: string): string => {
-  return variableName?.replace('payload.', '') || '';
+  return variableName?.replace(/^(current\.)?payload\./, '') || '';
 };
 
 // Custom hook for variable validation
@@ -73,7 +73,7 @@ const useVariableValidation = (
   const aliasFor = useMemo(() => calculateAliasFor(variableName, parsedAliasRoot), [variableName, parsedAliasRoot]);
 
   const validationState = useMemo(() => {
-    const isPayloadVariable = variableName?.startsWith('payload.');
+    const isPayloadVariable = variableName?.startsWith('payload.') || variableName?.startsWith('current.payload.');
     const schemaKey = extractVariableKey(variableName);
     const schemaProperty = getSchemaPropertyByKey(schemaKey);
     const isInSchema = !!schemaProperty;

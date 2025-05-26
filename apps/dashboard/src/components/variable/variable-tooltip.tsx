@@ -26,7 +26,7 @@ export function VariableTooltip({ issues, isNotInSchema, children }: Props) {
                 {issues.name}: {issues.message}
               </span>
             )}
-            {!issues && isNotInSchema && <span className="text-error-base">Variable schema doesn't exist</span>}
+            {!issues && isNotInSchema && <span className="text-error-base">Error: Variable missing from schema</span>}
           </div>
         </TooltipContent>
       </TooltipPortal>

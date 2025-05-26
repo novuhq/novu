@@ -134,8 +134,8 @@ function InternalVariableView(props: InternalVariableViewProps) {
     }
 
     // For payload variables, also check using the schema directly
-    if (name.startsWith('payload.')) {
-      const propertyKey = name.replace('payload.', '');
+    if (name.startsWith('payload.') || name.startsWith('current.payload.')) {
+      const propertyKey = name.replace('current.payload.', '').replace('payload.', '');
       const schemaProperty = getSchemaPropertyByKey(propertyKey);
 
       if (schemaProperty) {
