@@ -249,16 +249,14 @@ export class Session {
       throw new BadRequestException('Keyless is not supported in community edition');
     }
 
-    // const organization = await this.communityOrganizationRepository.findById(process.env.KEYLESS_ORGANIZATION_ID!);
-    const organization = await this.communityOrganizationRepository.findById('67ff76a37ef4860258817e20');
+    const organization = await this.communityOrganizationRepository.findById(process.env.KEYLESS_ORGANIZATION_ID!);
 
     if (!organization) {
       this.logger.error('Keyless Organization not found');
       throw new InternalServerErrorException('Keyless Organization not found');
     }
 
-    // const user = await this.communityUserRepository.findByEmail(process.env.KEYLESS_USER_EMAIL!);
-    const user = await this.communityUserRepository.findByEmail('george@novu.co');
+    const user = await this.communityUserRepository.findByEmail(process.env.KEYLESS_USER_EMAIL!);
 
     if (!user) {
       throw new InternalServerErrorException('Keyless User not found');
