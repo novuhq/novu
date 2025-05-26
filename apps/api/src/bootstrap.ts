@@ -26,7 +26,7 @@ const extendedBodySizeRoutes = [
   '/v1/environments/:environmentId/bridge',
 ];
 
-// Validate the ENV variables after launching SENTRY, so missing variables will report to sentry
+// Validate the ENV variables after launching SENTRY, so missing variables will report to sentry.
 validateEnv();
 class BootstrapOptions {
   internalSdkGeneration?: boolean;

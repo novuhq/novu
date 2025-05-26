@@ -1,5 +1,5 @@
 # Use the base image for development
-FROM ghcr.io/novuhq/novu/base:1.0.0 AS dev
+FROM ghcr.io/novuhq/novu/base:1.1.0 AS dev
 ARG PACKAGE_PATH
 
 # Copy necessary directories to the image with appropriate ownership
@@ -31,7 +31,7 @@ RUN rm -rf node_modules && pnpm recursive exec -- rm -rf ./src ./node_modules
 
 # ------- PRODUCTION BUILD ----------
 # Use the base image for production
-FROM ghcr.io/novuhq/novu/base:1.0.0 AS prod
+FROM ghcr.io/novuhq/novu/base:1.1.0 AS prod
 ARG PACKAGE_PATH
 
 # Set environment variables for production
