@@ -1,19 +1,12 @@
 import _ from 'lodash';
 import { Injectable } from '@nestjs/common';
-import {
-  ControlValuesRepository,
-  EnvironmentEntity,
-  OrganizationEntity,
-  UserEntity,
-  NotificationTemplateEntity,
-} from '@novu/dal';
-import { ControlValuesLevelEnum, FeatureFlagsKeysEnum, WorkflowOriginEnum } from '@novu/shared';
+import { ControlValuesRepository } from '@novu/dal';
+import { ControlValuesLevelEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import {
   FeatureFlagsService,
   Instrument,
   InstrumentUsecase,
   GetWorkflowByIdsUseCase,
-  GetWorkflowByIdsCommand,
   PinoLogger,
 } from '@novu/application-generic';
 
