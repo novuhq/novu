@@ -57,14 +57,7 @@ export const MailyVariablesListView = React.forwardRef(
             return {
               label: displayLabel,
               value: item.name,
-              preview: (
-                <NewVariablePreview
-                  onCreateClick={() => {
-                    const variableName = item.name.replace('payload.', '');
-                    onCreateNewVariable?.(variableName);
-                  }}
-                />
-              ),
+              preview: <NewVariablePreview />,
             };
           }
 

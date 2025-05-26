@@ -17,13 +17,15 @@ export function NewVariablePreview({ onCreateClick }: INewVariablePreviewProps) 
             Adds a new string variable — use "Manage schema" to mark it required, change its type, or add validations.
           </p>
 
-          <a
-            href="#"
-            onClick={onCreateClick}
-            className="text-text-sub mt-2 block text-[10px] font-medium leading-normal underline"
-          >
-            Insert & manage schema ↗
-          </a>
+          {onCreateClick && (
+            <a
+              href="#"
+              onClick={onCreateClick}
+              className="text-text-sub mt-2 block text-[10px] font-medium leading-normal underline"
+            >
+              Insert & manage schema ↗
+            </a>
+          )}
         </div>
       </VariablePreview.Content>
     </VariablePreview>
