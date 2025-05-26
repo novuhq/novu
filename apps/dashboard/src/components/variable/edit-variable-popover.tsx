@@ -6,6 +6,7 @@ import {
   RiSparkling2Line,
   RiArrowRightUpLine,
   RiListView,
+  RiErrorWarningLine,
 } from 'react-icons/ri';
 
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives/popover';
@@ -231,18 +232,6 @@ export const EditVariablePopover = ({
                           Manage schema ↗
                         </LinkButton>
                       )}
-
-                      {showAddToSchemaButton && (
-                        <LinkButton
-                          variant="gray"
-                          size="sm"
-                          className="text-label-2xs text-xs"
-                          leadingIcon={RiListView}
-                          onClick={handleAddToSchema}
-                        >
-                          <span className="underline"> Add to schema ↗</span>
-                        </LinkButton>
-                      )}
                     </div>
 
                     <InputRoot size="2xs" hasError={validation.hasError}>
@@ -260,6 +249,21 @@ export const EditVariablePopover = ({
                     </InputRoot>
                     {validation.hasError && !showAddToSchemaButton && (
                       <FormMessagePure hasError={true}>{validation.errorMessage}</FormMessagePure>
+                    )}
+
+                    {!validation.hasError && showAddToSchemaButton && (
+                      <FormMessagePure hasError={true} className="text-label-2xs mb-0.5 mt-0.5">
+                        <RiErrorWarningLine className="h-3 w-3" />
+                        Variable missing from Schema{' '}
+                        <LinkButton
+                          variant="modifiable"
+                          size="sm"
+                          className="text-label-2xs"
+                          onClick={handleAddToSchema}
+                        >
+                          <span className="underline"> Add to schema ↗</span>
+                        </LinkButton>
+                      </FormMessagePure>
                     )}
                   </div>
                 </FormControl>
