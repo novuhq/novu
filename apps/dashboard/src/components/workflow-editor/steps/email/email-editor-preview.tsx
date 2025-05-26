@@ -74,7 +74,7 @@ export const EmailEditorPreview = ({
               <TabsContent value="mobile">
                 <div className="w-full bg-neutral-100">
                   <EmailPreviewContentMobile className="mx-auto">
-                    <EmailPreviewSubjectMobile>
+                    <EmailPreviewSubjectMobile subject="Loading...">
                       <Skeleton className="h-4 w-3/4" />
                     </EmailPreviewSubjectMobile>
                     <div className="bg-background rounded-lg p-4">
