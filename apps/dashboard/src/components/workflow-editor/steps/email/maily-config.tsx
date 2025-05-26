@@ -262,25 +262,7 @@ export const createExtensions = (props: {
           <VariablePill variableName={opts.variable.name} className="h-5 text-xs" from={opts.from as VariableFrom} />
         );
       },
-      variables: (onCreateNewVariable
-        ? (opts: any) => {
-            // Create a wrapper that transforms the opts to match our CalculateVariablesProps
-            const calculateVariablesProps = {
-              query: opts.query || '',
-              editor: opts.editor,
-              from: opts.from || VariableFrom.Content,
-              primitives: parsedVariables.primitives,
-              arrays: parsedVariables.arrays,
-              namespaces: parsedVariables.namespaces,
-              isAllowedVariable: parsedVariables.isAllowedVariable,
-            };
-
-            return calculateVariablesWithNewSupport({
-              ...calculateVariablesProps,
-              onCreateNewVariable,
-            });
-          }
-        : handleCalculateVariables) as Variables,
+      variables: handleCalculateVariables as Variables,
       variableSuggestionsPopover: MailyVariablesListView,
     }),
     HTMLCodeBlockExtension.extend({
