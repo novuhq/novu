@@ -29,6 +29,7 @@ import { ReorderFiltersGroup } from './components/reorder-filters-group';
 import { useFilterManager } from './hooks/use-filter-manager';
 import { useSuggestedFilters } from './hooks/use-suggested-filters';
 import { useVariableParser } from './hooks/use-variable-parser';
+import { useVariableValidation, extractVariableKey } from './hooks/use-variable-validation';
 import type { Filters, FilterWithParam } from './types';
 import { formatLiquidVariable } from './utils';
 import { useDebounce } from '@/hooks/use-debounce';
@@ -57,39 +58,6 @@ const calculateAliasFor = (name: string, parsedAliasRoot: string): string => {
   }
 
   return aliasFor;
-};
-
-const extractVariableKey = (variableName: string): string => {
-  return variableName?.replace(/^(current\.)?payload\./, '') || '';
-};
-
-// Custom hook for variable validation
-const useVariableValidation = (
-  variableName: string,
-  parsedAliasRoot: string,
-  isAllowedVariable: IsAllowedVariable,
-  getSchemaPropertyByKey: (keyPath: string) => JSONSchema7 | undefined
-) => {
-  const aliasFor = useMemo(() => calculateAliasFor(variableName, parsedAliasRoot), [variableName, parsedAliasRoot]);
-
-  const validationState = useMemo(() => {
-    const isPayloadVariable = variableName?.startsWith('payload.') || variableName?.startsWith('current.payload.');
-    const schemaKey = extractVariableKey(variableName);
-    const schemaProperty = getSchemaPropertyByKey(schemaKey);
-    const isInSchema = !!schemaProperty;
-    const isAllowed = isAllowedVariable({ name: variableName, aliasFor });
-
-    return {
-      isPayloadVariable,
-      isInSchema,
-      isAllowed,
-      schemaProperty,
-      hasError: !isAllowed && !isInSchema,
-      errorMessage: !isAllowed && !isInSchema ? "Variable schema doesn't exist" : '',
-    };
-  }, [variableName, aliasFor, isAllowedVariable, getSchemaPropertyByKey]);
-
-  return validationState;
 };
 
 type EditVariablePopoverProps = {
@@ -137,8 +105,11 @@ export const EditVariablePopover = ({
   const [isCommandOpen, setIsCommandOpen] = useState(false);
   const [filters, setFilters] = useState<FilterWithParam[]>(parsedFilters || []);
 
-  // Use the validation hook for reactive validation
-  const validation = useVariableValidation(name, parsedAliasForRoot, isAllowedVariable, getSchemaPropertyByKey);
+  // Calculate aliasFor for validation
+  const aliasFor = useMemo(() => calculateAliasFor(name, parsedAliasForRoot), [name, parsedAliasForRoot]);
+
+  // Use the consolidated validation hook
+  const validation = useVariableValidation(name, aliasFor, isAllowedVariable, getSchemaPropertyByKey);
 
   // Sync state when props change
   useEffect(() => {
@@ -198,16 +169,16 @@ export const EditVariablePopover = ({
 
   const handleManageSchema = useCallback(() => {
     if (onManageSchemaClick && name) {
-      onManageSchemaClick(extractVariableKey(name));
+      onManageSchemaClick(validation.variableKey);
     }
-  }, [onManageSchemaClick, name]);
+  }, [onManageSchemaClick, name, validation.variableKey]);
 
   const handleAddToSchema = useCallback(() => {
     if (onAddToSchemaClick && name) {
-      onAddToSchemaClick(extractVariableKey(name));
+      onAddToSchemaClick(validation.variableKey);
       handleOpenChange(false);
     }
-  }, [onAddToSchemaClick, name, handleOpenChange]);
+  }, [onAddToSchemaClick, name, validation.variableKey, handleOpenChange]);
 
   useEscapeKeyManager(id, handleClosePopover, EscapeKeyManagerPriority.POPOVER, open);
 

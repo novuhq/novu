@@ -3,7 +3,6 @@ import { autocompletion, Completion, CompletionSource } from '@codemirror/autoco
 import { EditorView } from '@uiw/react-codemirror';
 import { cva } from 'class-variance-authority';
 import { useCallback, useMemo, useRef, useState, useEffect } from 'react';
-import { RiListView } from 'react-icons/ri';
 
 import { Editor } from '@/components/primitives/editor';
 import { EditVariablePopover } from '@/components/variable/edit-variable-popover';
@@ -18,11 +17,8 @@ import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { DIGEST_VARIABLES_FILTER_MAP } from '@/components/variable/utils/digest-variables';
 import { useWorkflowSchema } from '@/components/workflow-editor/workflow-schema-provider';
-import type { JSONSchema7TypeName } from '@/components/schema-editor/json-schema';
 import { PayloadSchemaDrawer } from '@/components/workflow-editor/payload-schema-drawer';
-import { showErrorToast, showToast } from '../sonner-helpers';
-import { Button } from '@/components/primitives/button';
-import { ToastIcon } from '../sonner';
+import { useCreateVariable } from '../../variable/hooks/use-create-variable';
 
 const variants = cva('relative w-full', {
   variants: {
@@ -85,20 +81,20 @@ export function ControlInput({
   const { digestStepBeforeCurrent, workflow } = useWorkflow();
   const track = useTelemetry();
 
-  const [isPayloadSchemaDrawerOpen, setIsPayloadSchemaDrawerOpen] = useState(false);
-  const [highlightedVariableKey, setHighlightedVariableKey] = useState<string | null>(null);
+  const { getSchemaPropertyByKey, isPayloadSchemaEnabled, currentSchema } = useWorkflowSchema();
 
   const {
-    addProperty: addSchemaProperty,
-    handleSaveChanges: handleSaveSchemaChanges,
-    getSchemaPropertyByKey,
-    isPayloadSchemaEnabled,
-    currentSchema,
-  } = useWorkflowSchema();
+    handleCreateNewVariable,
+    isPayloadSchemaDrawerOpen,
+    highlightedVariableKey,
+    openSchemaDrawer,
+    closeSchemaDrawer,
+  } = useCreateVariable();
 
   // Create a stable key based on schema properties to force editor re-render
   const schemaKey = useMemo(() => {
     if (!currentSchema?.properties) return 'no-schema';
+
     return `schema-${Object.keys(currentSchema.properties).sort().join('-')}`;
   }, [currentSchema]);
 
@@ -119,49 +115,6 @@ export function ControlInput({
       return false;
     },
     [isAllowedVariable, currentSchema, getSchemaPropertyByKey]
-  );
-
-  const handleCreateNewVariable = useCallback(
-    async (variableName: string) => {
-      if (!workflow || !isPayloadSchemaEnabled) {
-        return;
-      }
-
-      // Assuming new variables are of type string by default.
-      addSchemaProperty({ keyName: variableName }, 'string' as JSONSchema7TypeName);
-
-      try {
-        await handleSaveSchemaChanges();
-
-        showToast({
-          children: () => (
-            <div className="flex min-w-[350px] items-center justify-between gap-1.5">
-              <div className="flex items-center gap-3">
-                <ToastIcon variant="success" />
-                <span className="min-w-[100px] text-sm">Variable added to schema</span>
-              </div>
-
-              <Button
-                variant="secondary"
-                mode="outline"
-                size="2xs"
-                leadingIcon={RiListView}
-                onClick={() => setIsPayloadSchemaDrawerOpen(true)}
-                className="shrink-0"
-              >
-                Manage schema
-              </Button>
-            </div>
-          ),
-          options: {
-            position: 'bottom-right',
-          },
-        });
-      } catch (error) {
-        showErrorToast('Failed to save new variable to schema: ' + error);
-      }
-    },
-    [workflow, isPayloadSchemaEnabled, addSchemaProperty, handleSaveSchemaChanges]
   );
 
   const onVariableSelect = useCallback(
@@ -280,8 +233,7 @@ export function ControlInput({
           }}
           getSchemaPropertyByKey={getSchemaPropertyByKey}
           onManageSchemaClick={(variableName) => {
-            setHighlightedVariableKey(variableName);
-            setIsPayloadSchemaDrawerOpen(true);
+            openSchemaDrawer(variableName);
           }}
           onAddToSchemaClick={(variableName) => {
             handleCreateNewVariable(variableName);
@@ -293,17 +245,12 @@ export function ControlInput({
       <PayloadSchemaDrawer
         isOpen={isPayloadSchemaDrawerOpen}
         onOpenChange={(isOpen) => {
-          setIsPayloadSchemaDrawerOpen(isOpen);
-
           if (!isOpen) {
-            setHighlightedVariableKey(null);
+            closeSchemaDrawer();
           }
         }}
         workflow={workflow}
         highlightedPropertyKey={highlightedVariableKey}
-        onSave={() => {
-          // Optionally refetch or update data after schema save from drawer
-        }}
       />
     </div>
   );

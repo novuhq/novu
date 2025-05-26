@@ -1,6 +1,7 @@
 import { EditVariablePopover } from '@/components/variable/edit-variable-popover';
 import { validateEnhancedDigestFilters } from '@/components/variable/utils';
 import { VariablePill } from '@/components/variable/variable-pill';
+import { useVariableValidation } from '@/components/variable/hooks/use-variable-validation';
 import { parseVariable } from '@/utils/liquid';
 import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
 import { NodeViewProps } from '@tiptap/core';
@@ -11,8 +12,11 @@ import { DIGEST_VARIABLES_ENUM, getDynamicDigestVariable } from '@/components/va
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useWorkflowSchema } from '@/components/workflow-editor/workflow-schema-provider';
 import { PayloadSchemaDrawer } from '@/components/workflow-editor/payload-schema-drawer';
-import { showErrorToast } from '@/components/primitives/sonner-helpers';
+import { showErrorToast, showToast } from '@/components/primitives/sonner-helpers';
 import type { JSONSchema7TypeName } from '@/components/schema-editor/json-schema';
+import { RiListView } from 'react-icons/ri';
+import { ToastIcon } from '../../../../primitives/sonner';
+import { Button } from '../../../../primitives/button';
 
 type InternalVariableViewProps = NodeViewProps & {
   variables: LiquidVariable[];
@@ -31,13 +35,10 @@ function InternalVariableView(props: InternalVariableViewProps) {
     addProperty: addSchemaProperty,
     handleSaveChanges: handleSaveSchemaChanges,
     isPayloadSchemaEnabled,
-    currentSchema,
   } = useWorkflowSchema();
 
   const [isPayloadSchemaDrawerOpen, setIsPayloadSchemaDrawerOpen] = useState(false);
   const [highlightedVariableKey, setHighlightedVariableKey] = useState<string | null>(null);
-  const [isAddingToSchema, setIsAddingToSchema] = useState(false);
-  const [justAddedVariable, setJustAddedVariable] = useState<string | null>(null);
 
   const handleCreateNewVariable = useCallback(
     async (variableName: string) => {
@@ -45,33 +46,38 @@ function InternalVariableView(props: InternalVariableViewProps) {
         return;
       }
 
-      setIsAddingToSchema(true);
-      setJustAddedVariable(variableName);
-
       try {
         // Assuming new variables are of type string by default.
         addSchemaProperty({ keyName: variableName }, 'string' as JSONSchema7TypeName);
 
         await handleSaveSchemaChanges();
 
-        // Close the popover first
-        setIsOpen(false);
+        showToast({
+          children: () => (
+            <div className="flex min-w-[350px] items-center justify-between gap-1.5">
+              <div className="flex items-center gap-3">
+                <ToastIcon variant="success" />
+                <span className="min-w-[100px] text-sm">Variable added to schema</span>
+              </div>
 
-        // Open the drawer after a short delay to ensure the UI has stabilized
-        setTimeout(() => {
-          setHighlightedVariableKey(variableName);
-          setIsPayloadSchemaDrawerOpen(true);
-        }, 300);
-
-        // Keep the variable marked as valid for a bit longer to prevent flashing
-        setTimeout(() => {
-          setJustAddedVariable(null);
-        }, 2000);
+              <Button
+                variant="secondary"
+                mode="outline"
+                size="2xs"
+                leadingIcon={RiListView}
+                onClick={() => setIsPayloadSchemaDrawerOpen(true)}
+                className="shrink-0"
+              >
+                Manage schema
+              </Button>
+            </div>
+          ),
+          options: {
+            position: 'bottom-right',
+          },
+        });
       } catch (error) {
         showErrorToast('Failed to save new variable to schema: ' + error);
-        setJustAddedVariable(null);
-      } finally {
-        setIsAddingToSchema(false);
       }
     },
     [workflow, isPayloadSchemaEnabled, addSchemaProperty, handleSaveSchemaChanges]
@@ -123,31 +129,7 @@ function InternalVariableView(props: InternalVariableViewProps) {
     };
   }, [aliasFor, fullLiquidExpression]);
 
-  // Check if the variable is allowed (exists in schema)
-  // Re-evaluate when currentSchema changes to reflect updates
-  const isNotInSchema = useMemo(() => {
-    if (!name || isAddingToSchema) return false;
-
-    // If this variable was just added, consider it valid
-    if (justAddedVariable && name === `payload.${justAddedVariable}`) {
-      return false;
-    }
-
-    // For payload variables, also check using the schema directly
-    if (name.startsWith('payload.') || name.startsWith('current.payload.')) {
-      const propertyKey = name.replace('current.payload.', '').replace('payload.', '');
-      const schemaProperty = getSchemaPropertyByKey(propertyKey);
-
-      if (schemaProperty) {
-        return false;
-      }
-    }
-
-    // Create a variable object with just the name for validation
-    const variableToCheck: LiquidVariable = { name };
-
-    return !isAllowedVariable(variableToCheck);
-  }, [name, isAllowedVariable, currentSchema, isAddingToSchema, justAddedVariable, getSchemaPropertyByKey]);
+  const validation = useVariableValidation(name, aliasFor, isAllowedVariable, getSchemaPropertyByKey);
 
   return (
     <NodeViewWrapper className="react-component mly-inline-block mly-leading-none" draggable="false">
@@ -194,7 +176,7 @@ function InternalVariableView(props: InternalVariableViewProps) {
           filters={filtersArray}
           onClick={() => setIsOpen(true)}
           className="-mt-[2px]"
-          isNotInSchema={isNotInSchema}
+          isNotInSchema={!validation.isInSchema}
         />
       </EditVariablePopover>
       <PayloadSchemaDrawer
@@ -208,9 +190,6 @@ function InternalVariableView(props: InternalVariableViewProps) {
         }}
         workflow={workflow}
         highlightedPropertyKey={highlightedVariableKey}
-        onSave={() => {
-          // Optionally refetch or update data after schema save from drawer
-        }}
       />
     </NodeViewWrapper>
   );
