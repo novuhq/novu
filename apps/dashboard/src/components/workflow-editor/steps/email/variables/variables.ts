@@ -221,8 +221,7 @@ export const calculateVariables = ({
     isPayloadSchemaEnabled &&
     queryWithoutSuffix.trim() &&
     queryWithoutSuffix.startsWith(PAYLOAD_NAMESPACE + '.') &&
-    queryWithoutSuffix !== PAYLOAD_NAMESPACE &&
-    onCreateNewVariable
+    queryWithoutSuffix !== PAYLOAD_NAMESPACE
   ) {
     const variableKey = queryWithoutSuffix.replace(PAYLOAD_NAMESPACE + '.', '');
 

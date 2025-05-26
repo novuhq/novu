@@ -55,7 +55,6 @@ import {
   isInsideRepeatBlock,
   resolveRepeatBlockAlias,
   VariableFrom,
-  calculateVariablesWithNewSupport,
 } from './variables/variables';
 import { ForView } from './views/for-view';
 import { HTMLCodeBlockView } from './views/html-view';
@@ -188,8 +187,15 @@ export const createExtensions = (props: {
   parsedVariables: ParsedVariables;
   blocks: BlockGroupItem[];
   onCreateNewVariable?: (variableName: string) => Promise<void>;
+  isPayloadSchemaEnabled?: boolean;
 }) => {
-  const { handleCalculateVariables, parsedVariables, blocks, onCreateNewVariable } = props;
+  const {
+    handleCalculateVariables,
+    parsedVariables,
+    blocks,
+    onCreateNewVariable,
+    isPayloadSchemaEnabled = false,
+  } = props;
 
   const extensions = [
     RepeatExtension.extend({
@@ -242,8 +248,13 @@ export const createExtensions = (props: {
         command: ({ editor, range, props }) => {
           const query = props.id + '}}';
 
-          // Handle new variable creation
-          if (props.type === 'new-variable') {
+          // Check if this is a new variable by seeing if it's a payload variable that doesn't exist in our schema
+          const isPayloadVariable = props.id.startsWith('payload.');
+          const existsInSchema = parsedVariables.variables.some((v) => v.name === props.id);
+          const isNewVariable =
+            isPayloadSchemaEnabled && isPayloadVariable && !existsInSchema && props.id !== 'payload';
+
+          if (isNewVariable) {
             const variableName = props.id.replace('payload.', '');
             onCreateNewVariable?.(variableName);
           }
@@ -252,7 +263,7 @@ export const createExtensions = (props: {
             query,
             editor,
             range,
-            isAllowedVariable: props.type === 'new-variable' ? () => true : parsedVariables.isAllowedVariable,
+            isAllowedVariable: isNewVariable ? () => true : parsedVariables.isAllowedVariable,
           });
         },
       },

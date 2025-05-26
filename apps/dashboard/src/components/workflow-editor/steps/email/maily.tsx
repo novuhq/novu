@@ -15,6 +15,7 @@ import { useWorkflowSchema } from '@/components/workflow-editor/workflow-schema-
 import type { JSONSchema7TypeName } from '@/components/schema-editor/json-schema';
 import { showErrorToast, showToast } from '@/components/primitives/sonner-helpers';
 import { PayloadSchemaDrawer } from '@/components/workflow-editor/payload-schema-drawer';
+import { RiListView } from 'react-icons/ri';
 import { Button } from '../../../primitives/button';
 import { ToastIcon } from '../../../primitives/sonner';
 
@@ -117,7 +118,15 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
         onCreateNewVariable: handleCreateNewVariable,
       });
     },
-    [primitives, arrays, namespaces, parsedVariables.isAllowedVariable, digestStepBeforeCurrent?.stepId]
+    [
+      primitives,
+      arrays,
+      namespaces,
+      parsedVariables.isAllowedVariable,
+      digestStepBeforeCurrent?.stepId,
+      isPayloadSchemaEnabled,
+      handleCreateNewVariable,
+    ]
   );
 
   const extensions = useMemo(
@@ -127,6 +136,7 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
         parsedVariables,
         blocks,
         onCreateNewVariable: handleCreateNewVariable,
+        isPayloadSchemaEnabled,
       }),
     [handleCalculateVariables, parsedVariables, blocks, isPayloadSchemaEnabled, handleCreateNewVariable]
   );
