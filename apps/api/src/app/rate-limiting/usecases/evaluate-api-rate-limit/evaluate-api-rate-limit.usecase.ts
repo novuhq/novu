@@ -31,11 +31,7 @@ export class EvaluateApiRateLimit {
 
     // For keyless environments, we implement strict rate limiting to prevent abuse:
     if (!command.organizationId || !command.environmentId) {
-      maxLimitPerSecond = getFeatureForTierAsNumber(
-        FeatureNameEnum.PLATFORM_MAX_API_REQUESTS_GLOBAL,
-        ApiServiceLevelEnum.ENTERPRISE,
-        true
-      );
+      maxLimitPerSecond = 3000;
       apiServiceLevel = ApiServiceLevelEnum.ENTERPRISE;
     } else {
       [maxLimitPerSecond, apiServiceLevel] = await this.getApiRateLimitMaximum.execute(
