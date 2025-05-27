@@ -105,6 +105,11 @@ export const WorkflowsPage = () => {
 
   const clearFilters = () => {
     form.reset({ query: '', tags: [], status: [], steps: [] });
+    searchParams.delete('query');
+    searchParams.delete('tags');
+    searchParams.delete('status'); 
+    searchParams.delete('steps');
+    setSearchParams(searchParams);
   };
 
   useEffect(() => {
@@ -151,7 +156,7 @@ export const WorkflowsPage = () => {
 
   const { currentEnvironment } = useEnvironment();
 
-  const hasActiveFilters = (searchParams.get('query') && searchParams.get('query') !== '') || 
+  const hasActiveFilters = (searchParams.get('query') ? searchParams.get('query')!.trim() !== '' : false) || 
                            searchParams.getAll('tags').length > 0 ||
                            searchParams.getAll('status').length > 0 ||
                            searchParams.getAll('steps').length > 0;
@@ -195,6 +200,7 @@ export const WorkflowsPage = () => {
                 size="small"
                 type="multi"
                 title="Tags"
+                placeholder="Filter by tags"
                 options={
                   workflowsData?.workflows?.reduce((acc: Array<{label: string, value: string}>, workflow) => {
                     workflow.tags?.forEach(tag => {
@@ -212,6 +218,7 @@ export const WorkflowsPage = () => {
                 size="small"
                 type="multi"
                 title="Status"
+                placeholder="Filter by status"
                 options={[
                   { label: 'Active', value: WorkflowStatusEnum.ACTIVE },
                   { label: 'Inactive', value: WorkflowStatusEnum.INACTIVE },
@@ -224,6 +231,7 @@ export const WorkflowsPage = () => {
                 size="small"
                 type="multi"
                 title="Steps"
+                placeholder="Filter by step types"
                 options={[
                   { label: 'Email', value: StepTypeEnum.EMAIL },
                   { label: 'SMS', value: StepTypeEnum.SMS },
@@ -237,6 +245,12 @@ export const WorkflowsPage = () => {
                 selected={form.watch('steps')}
                 onSelect={(values) => form.setValue('steps', values)}
               />
+              
+              {hasActiveFilters && (
+                <Button variant="secondary" mode="ghost" size="2xs" onClick={clearFilters}>
+                  Reset
+                </Button>
+              )}
             </div>
             <CreateWorkflowButton />
           </div>
