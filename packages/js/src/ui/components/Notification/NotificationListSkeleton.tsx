@@ -94,7 +94,7 @@ function KeylessEmptyState() {
       <div class={style('notificationListEmptyNotice', 'nt--mt-[50px]')}>
         <p class={style('strong', 'nt-text-[#000000] nt-mb-1')}>Trigger your notification. No setup needed.</p>
         <p class={style('notificationListEmptyNotice', 'nt-mb-4')}>
-          {`Temporary <Inbox />. All data will expire in 24 hours. Connect API key to persists messages, enable
+          {`Temporary <Inbox />, data will expire in 24h. Connect API key to persists messages, enable
                 preferences, and connect email.`}
         </p>
         <div class={style('notificationListEmptyNotice', 'nt-flex nt-gap-4 nt-justify-center')}>
