@@ -205,7 +205,9 @@ export class NotificationTemplateRepository extends BaseRepository<
     excludeNewDashboardWorkflows: boolean = false,
     orderBy: string = 'createdAt',
     orderDirection: DirectionEnum = DirectionEnum.DESC,
-    tags?: string[]
+    tags?: string[],
+    status?: string[],
+    steps?: string[]
   ): Promise<{ totalCount: number; data: NotificationTemplateEntity[] }> {
     const searchQuery: FilterQuery<NotificationTemplateDBModel> = {};
 
@@ -222,6 +224,14 @@ export class NotificationTemplateRepository extends BaseRepository<
 
     if (tags && tags.length > 0) {
       searchQuery.tags = { $in: tags };
+    }
+
+    if (status && status.length > 0) {
+      searchQuery.status = { $in: status };
+    }
+
+    if (steps && steps.length > 0) {
+      searchQuery['steps.template.type'] = { $in: steps };
     }
 
     const totalItemsCount = await this.count({

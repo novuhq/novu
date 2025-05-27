@@ -38,6 +38,8 @@ export const getWorkflows = async ({
   orderBy,
   orderDirection,
   tags,
+  status,
+  steps,
 }: {
   environment: IEnvironment;
   limit: number;
@@ -46,6 +48,8 @@ export const getWorkflows = async ({
   orderBy?: string;
   orderDirection?: string;
   tags?: string[];
+  status?: string[];
+  steps?: string[];
 }): Promise<ListWorkflowResponse> => {
   const params = new URLSearchParams({
     limit: limit.toString(),
@@ -63,6 +67,14 @@ export const getWorkflows = async ({
 
   if (tags && tags.length > 0) {
     tags.forEach(tag => params.append('tags', tag));
+  }
+
+  if (status && status.length > 0) {
+    status.forEach(s => params.append('status', s));
+  }
+
+  if (steps && steps.length > 0) {
+    steps.forEach(step => params.append('steps', step));
   }
 
   const { data } = await getV2<{ data: ListWorkflowResponse }>(`/workflows?${params.toString()}`, { environment });

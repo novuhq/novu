@@ -25,6 +25,7 @@ import { useTelemetry } from '@/hooks/use-telemetry';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { DirectionEnum, PermissionsEnum, StepTypeEnum } from '@novu/shared';
+import { WorkflowStatusEnum } from '@/utils/enums';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import {
@@ -41,6 +42,8 @@ import { useHasPermission } from '@/hooks/use-has-permission';
 interface WorkflowFilters {
   query: string;
   tags: string[];
+  status: string[];
+  steps: string[];
 }
 
 export const WorkflowsPage = () => {
@@ -52,11 +55,15 @@ export const WorkflowsPage = () => {
     orderBy: 'createdAt',
     query: '',
     tags: '',
+    status: '',
+    steps: '',
   });
   const form = useForm<WorkflowFilters>({
     defaultValues: {
       query: searchParams.get('query') || '',
       tags: searchParams.getAll('tags') || [],
+      status: searchParams.getAll('status') || [],
+      steps: searchParams.getAll('steps') || [],
     },
   });
 
@@ -76,10 +83,22 @@ export const WorkflowsPage = () => {
     setSearchParams(searchParams);
   };
 
+  const updateStatusParam = (status: string[]) => {
+    searchParams.delete('status');
+    status.forEach(s => searchParams.append('status', s));
+    setSearchParams(searchParams);
+  };
+
+  const updateStepsParam = (steps: string[]) => {
+    searchParams.delete('steps');
+    steps.forEach(step => searchParams.append('steps', step));
+    setSearchParams(searchParams);
+  };
+
   const debouncedSearch = useDebounce((value: string) => updateSearchParam(value), 500);
 
   const clearFilters = () => {
-    form.reset({ query: '', tags: [] });
+    form.reset({ query: '', tags: [], status: [], steps: [] });
   };
 
   useEffect(() => {
@@ -89,6 +108,12 @@ export const WorkflowsPage = () => {
       }
       if (value.tags !== undefined) {
         updateTagsParam(value.tags as string[]);
+      }
+      if (value.status !== undefined) {
+        updateStatusParam(value.status as string[]);
+      }
+      if (value.steps !== undefined) {
+        updateStepsParam(value.steps as string[]);
       }
     });
 
@@ -114,12 +139,16 @@ export const WorkflowsPage = () => {
     orderDirection: searchParams.get('orderDirection') as DirectionEnum,
     query: searchParams.get('query') || '',
     tags: searchParams.getAll('tags'),
+    status: searchParams.getAll('status'),
+    steps: searchParams.getAll('steps'),
   });
 
   const { currentEnvironment } = useEnvironment();
 
   const hasActiveFilters = (searchParams.get('query') && searchParams.get('query') !== null) || 
-                           searchParams.getAll('tags').length > 0;
+                           searchParams.getAll('tags').length > 0 ||
+                           searchParams.getAll('status').length > 0 ||
+                           searchParams.getAll('steps').length > 0;
 
   const isProdEnv = currentEnvironment?.name === 'Production';
 
@@ -147,47 +176,62 @@ export const WorkflowsPage = () => {
       <DashboardLayout headerStartItems={<h1 className="text-foreground-950 flex items-center gap-1">Workflows</h1>}>
         <div className="flex h-full w-full flex-col gap-2.5 p-2.5">
           <div className="flex justify-between">
-            <Form {...form}>
-              <FormRoot
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                }}
-              >
-                <FormField
-                  control={form.control}
-                  name="query"
-                  render={({ field }) => (
-                    <FormItem className="relative">
-                      <Input
-                        size="xs"
-                        className="w-64"
-                        {...field}
-                        placeholder="Search workflows..."
-                        leadingIcon={RiSearchLine}
-                      />
-                    </FormItem>
-                  )}
-                />
-              </FormRoot>
-            </Form>
-            <FacetedFormFilter
-              size="small"
-              type="multi"
-              title="Tags"
-              options={
-                workflowsData?.workflows?.reduce((acc: Array<{label: string, value: string}>, workflow) => {
-                  workflow.tags?.forEach(tag => {
-                    if (!acc.find(option => option.value === tag)) {
-                      acc.push({ label: tag, value: tag });
-                    }
-                  });
-                  return acc;
-                }, []) || []
-              }
-              selected={form.watch('tags')}
-              onSelect={(values) => form.setValue('tags', values)}
-            />
+            <div className="flex items-center gap-2">
+              <FacetedFormFilter
+                type="text"
+                size="small"
+                title="Search"
+                value={form.watch('query')}
+                onChange={(value) => form.setValue('query', value)}
+                placeholder="Search workflows..."
+              />
+              <FacetedFormFilter
+                size="small"
+                type="multi"
+                title="Tags"
+                options={
+                  workflowsData?.workflows?.reduce((acc: Array<{label: string, value: string}>, workflow) => {
+                    workflow.tags?.forEach(tag => {
+                      if (!acc.find(option => option.value === tag)) {
+                        acc.push({ label: tag, value: tag });
+                      }
+                    });
+                    return acc;
+                  }, []) || []
+                }
+                selected={form.watch('tags')}
+                onSelect={(values) => form.setValue('tags', values)}
+              />
+              <FacetedFormFilter
+                size="small"
+                type="multi"
+                title="Status"
+                options={[
+                  { label: 'Active', value: WorkflowStatusEnum.ACTIVE },
+                  { label: 'Inactive', value: WorkflowStatusEnum.INACTIVE },
+                  { label: 'Error', value: WorkflowStatusEnum.ERROR },
+                ]}
+                selected={form.watch('status')}
+                onSelect={(values) => form.setValue('status', values)}
+              />
+              <FacetedFormFilter
+                size="small"
+                type="multi"
+                title="Steps"
+                options={[
+                  { label: 'Email', value: StepTypeEnum.EMAIL },
+                  { label: 'SMS', value: StepTypeEnum.SMS },
+                  { label: 'In-App', value: StepTypeEnum.IN_APP },
+                  { label: 'Chat', value: StepTypeEnum.CHAT },
+                  { label: 'Push', value: StepTypeEnum.PUSH },
+                  { label: 'Digest', value: StepTypeEnum.DIGEST },
+                  { label: 'Delay', value: StepTypeEnum.DELAY },
+                  { label: 'Custom', value: StepTypeEnum.CUSTOM },
+                ]}
+                selected={form.watch('steps')}
+                onSelect={(values) => form.setValue('steps', values)}
+              />
+            </div>
             <CreateWorkflowButton />
           </div>
           {shouldShowStartWithTemplatesSection && (

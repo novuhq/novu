@@ -9,4 +9,14 @@ export class ListWorkflowsCommand extends PaginatedListCommand {
   @IsArray()
   @IsString({ each: true })
   tags?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  status?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  steps?: string[];
 }

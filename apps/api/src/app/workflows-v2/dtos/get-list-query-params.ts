@@ -27,4 +27,24 @@ export class GetListQueryParamsDto extends LimitOffsetPaginationQueryDto(Workflo
   @IsArray()
   @IsString({ each: true })
   tags?: string[];
+
+  @ApiPropertyOptional({
+    description: 'Filter workflows by status',
+    type: [String],
+    required: false,
+  })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  status?: string[];
+
+  @ApiPropertyOptional({
+    description: 'Filter workflows by step types',
+    type: [String],
+    required: false,
+  })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  steps?: string[];
 }

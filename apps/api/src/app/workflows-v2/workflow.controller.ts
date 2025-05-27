@@ -213,6 +213,8 @@ export class WorkflowController {
         orderBy: query.orderBy ?? 'createdAt',
         searchQuery: query.query,
         tags: query.tags,
+        status: query.status,
+        steps: query.steps,
         user,
       })
     );
