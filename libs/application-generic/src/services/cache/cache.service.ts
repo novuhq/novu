@@ -15,7 +15,7 @@ export interface ICacheService {
   set(key: string, value: string, options?: CachingConfig);
   get(key: string);
   del(key: string);
-  incr(key: string): Promise<number>;
+  incr(key: string, options?: CachingConfig): Promise<number>;
   delByPattern(pattern: string);
   keys(pattern?: string);
   getStatus();
@@ -26,6 +26,7 @@ export interface ICacheService {
 
 export type CachingConfig = {
   ttl?: number;
+  preserveExistingTtl?: boolean;
 };
 
 export class CacheService implements ICacheService {
@@ -110,8 +111,46 @@ export class CacheService implements ICacheService {
 
     return this.client?.del(keys);
   }
-  public async incr(key: string): Promise<number> {
-    return this.client?.incr(key);
+
+  public async incr(key: string, options?: CachingConfig): Promise<number> {
+    if (!this.client) {
+      return 0;
+    }
+
+    const preserveExistingTtl = options.preserveExistingTtl ?? true;
+    if (preserveExistingTtl) {
+      const keyExists = await this.client.exists(key);
+
+      if (keyExists) {
+        return this.client.incr(key);
+      }
+    }
+
+    return this.incrWithExpire(key, options);
+  }
+
+  public async incrIfExists(key: string): Promise<number | null> {
+    if (!this.client) {
+      return null;
+    }
+
+    const keyExists = await this.client.exists(key);
+
+    if (!keyExists) {
+      return null;
+    }
+
+    return this.client.incr(key);
+  }
+
+  private async incrWithExpire(key: string, options: CachingConfig): Promise<number> {
+    const pipeline = this.client.pipeline();
+    pipeline.incr(key);
+    pipeline.expire(key, this.getTtlInSeconds(options));
+
+    const results = await pipeline.exec();
+
+    return (results?.[0]?.[1] as number) || 0;
   }
 
   public async delQuery(key: string): Promise<void | unknown[]> {
