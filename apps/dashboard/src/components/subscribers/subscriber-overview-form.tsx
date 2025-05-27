@@ -63,7 +63,7 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
   const track = useTelemetry();
 
   const { navigateToSubscribersFirstPage, navigateToSubscribersCurrentPage } = useSubscribersNavigate();
-  const { filterValues } = useSubscribersUrlState();
+  const { filterValues, handleNavigationAfterDelete } = useSubscribersUrlState();
   const { data } = useFetchSubscribers(filterValues, {
     meta: { errorMessage: 'Issue fetching subscribers' },
   });
@@ -77,7 +77,27 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
       if (isLastSubscriber) {
         navigateToSubscribersFirstPage();
       } else {
-        navigateToSubscribersCurrentPage();
+        const firstTwoSubscribersInternalIds = data?.data.slice(0, 2).map(s => s._id as string) || [];
+        const subscribersCount = data?.data.length || 0;
+        
+        const hasTwoSubscribersInternalIds = firstTwoSubscribersInternalIds.length === 2 && subscribersCount > 1;
+        const firstSubscriberInternalId = firstTwoSubscribersInternalIds[0] || '';
+        const isFirstSubscriberBeingDeleted = (subscriber as any)._id === firstSubscriberInternalId;
+        let afterCursor = firstSubscriberInternalId;
+
+        /**
+         * If the first subscriber is being deleted and there are more than one subscribers on the list then
+         * fetch the list from the second subscriber onwards.
+         */
+        if (isFirstSubscriberBeingDeleted && hasTwoSubscribersInternalIds) {
+          afterCursor = firstTwoSubscribersInternalIds[1];
+        }
+
+        if (afterCursor) {
+          handleNavigationAfterDelete(afterCursor);
+        } else {
+          navigateToSubscribersCurrentPage();
+        }
       }
     },
     onError: () => {
