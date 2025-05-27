@@ -54,9 +54,6 @@ export const WorkflowsPage = () => {
     orderDirection: DirectionEnum.DESC,
     orderBy: 'createdAt',
     query: '',
-    tags: '',
-    status: '',
-    steps: '',
   });
   const form = useForm<WorkflowFilters>({
     defaultValues: {
