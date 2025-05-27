@@ -12,17 +12,28 @@ export class ListWorkflowsUseCase {
 
   @InstrumentUsecase()
   async execute(command: ListWorkflowsCommand): Promise<ListWorkflowResponse> {
-    const res = await this.notificationTemplateRepository.getList(
-      command.user.organizationId,
-      command.user.environmentId,
-      command.offset,
-      command.limit,
-      command.searchQuery,
-      false,
-      command.orderBy,
-      command.orderDirection,
-      command.tags
-    );
+    const res = command.tags && command.tags.length > 0
+      ? await this.notificationTemplateRepository.getListWithTags({
+          organizationId: command.user.organizationId,
+          environmentId: command.user.environmentId,
+          skip: command.offset,
+          limit: command.limit,
+          query: command.searchQuery,
+          excludeNewDashboardWorkflows: false,
+          orderBy: command.orderBy,
+          orderDirection: command.orderDirection,
+          tags: command.tags
+        })
+      : await this.notificationTemplateRepository.getList(
+          command.user.organizationId,
+          command.user.environmentId,
+          command.offset,
+          command.limit,
+          command.searchQuery,
+          false,
+          command.orderBy,
+          command.orderDirection
+        );
     if (res.data === null || res.data === undefined) {
       return { workflows: [], totalCount: 0 };
     }

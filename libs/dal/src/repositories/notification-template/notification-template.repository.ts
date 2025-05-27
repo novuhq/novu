@@ -204,8 +204,7 @@ export class NotificationTemplateRepository extends BaseRepository<
     query?: string,
     excludeNewDashboardWorkflows: boolean = false,
     orderBy: string = 'createdAt',
-    orderDirection: DirectionEnum = DirectionEnum.DESC,
-    tags?: string[]
+    orderDirection: DirectionEnum = DirectionEnum.DESC
   ): Promise<{ totalCount: number; data: NotificationTemplateEntity[] }> {
     const searchQuery: FilterQuery<NotificationTemplateDBModel> = {};
 
@@ -220,9 +219,6 @@ export class NotificationTemplateRepository extends BaseRepository<
       searchQuery.$nor = [{ origin: 'novu-cloud', type: 'BRIDGE' }];
     }
 
-    if (tags && tags.length > 0) {
-      searchQuery.tags = { $in: tags };
-    }
 
     const totalItemsCount = await this.count({
       _environmentId: environmentId,
@@ -299,6 +295,67 @@ export class NotificationTemplateRepository extends BaseRepository<
 
   async estimatedDocumentCount(): Promise<any> {
     return this.notificationTemplate.estimatedDocumentCount();
+  }
+
+  async getListWithTags(params: {
+    organizationId: string;
+    environmentId: string;
+    skip?: number;
+    limit?: number;
+    query?: string;
+    excludeNewDashboardWorkflows?: boolean;
+    orderBy?: string;
+    orderDirection?: DirectionEnum;
+    tags?: string[];
+  }): Promise<{ totalCount: number; data: NotificationTemplateEntity[] }> {
+    const {
+      organizationId,
+      environmentId,
+      skip = 0,
+      limit = 10,
+      query,
+      excludeNewDashboardWorkflows = false,
+      orderBy = 'createdAt',
+      orderDirection = DirectionEnum.DESC,
+      tags
+    } = params;
+    
+    const searchQuery: FilterQuery<NotificationTemplateDBModel> = {};
+
+    if (query) {
+      searchQuery.$or = [
+        { name: { $regex: regExpEscape(query), $options: 'i' } },
+        { 'triggers.identifier': { $regex: regExpEscape(query), $options: 'i' } },
+      ];
+    }
+
+    if (excludeNewDashboardWorkflows) {
+      searchQuery.$nor = [{ origin: 'novu-cloud', type: 'BRIDGE' }];
+    }
+
+    if (tags && tags.length > 0) {
+      searchQuery.tags = { $in: tags };
+    }
+
+    const totalItemsCount = await this.count({
+      _environmentId: environmentId,
+      ...searchQuery,
+    });
+
+    const items = await this.MongooseModel.find({
+      _environmentId: environmentId,
+      _organizationId: organizationId,
+      ...searchQuery,
+    })
+      .sort({ [orderBy]: orderDirection === DirectionEnum.ASC ? 1 : -1 })
+      .skip(skip)
+      .limit(limit)
+      .populate({ path: 'notificationGroup' })
+      .populate('steps.template', { type: 1 })
+      .select('-steps.variants')
+      .lean();
+
+    return { totalCount: totalItemsCount, data: this.mapEntities(items) };
   }
 
   async getTotalSteps(): Promise<number> {

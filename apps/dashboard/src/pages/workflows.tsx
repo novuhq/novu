@@ -83,10 +83,12 @@ export const WorkflowsPage = () => {
   };
 
   useEffect(() => {
-    const subscription = form.watch((value: { query?: string; tags?: string[] }) => {
-      debouncedSearch(value.query || '');
-      if (value.tags) {
-        updateTagsParam(value.tags);
+    const subscription = form.watch((value) => {
+      if (value.query !== undefined) {
+        debouncedSearch(value.query || '');
+      }
+      if (value.tags !== undefined) {
+        updateTagsParam(value.tags as string[]);
       }
     });
 
