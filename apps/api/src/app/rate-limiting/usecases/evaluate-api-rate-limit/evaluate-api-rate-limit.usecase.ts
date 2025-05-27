@@ -1,5 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { ApiRateLimitAlgorithmEnum, ApiServiceLevelEnum } from '@novu/shared';
+import {
+  ApiRateLimitAlgorithmEnum,
+  ApiServiceLevelEnum,
+  FeatureNameEnum,
+  getFeatureForTierAsNumber,
+} from '@novu/shared';
 import { InstrumentUsecase, buildEvaluateApiRateLimitKey } from '@novu/application-generic';
 import { EvaluateApiRateLimitCommand } from './evaluate-api-rate-limit.command';
 import { GetApiRateLimitMaximum, GetApiRateLimitMaximumCommand } from '../get-api-rate-limit-maximum';
@@ -27,7 +32,7 @@ export class EvaluateApiRateLimit {
     // For keyless environments, we implement strict rate limiting to prevent abuse:
     if (!command.organizationId || !command.environmentId) {
       maxLimitPerSecond = 3000;
-      apiServiceLevel = ApiServiceLevelEnum.FREE;
+      apiServiceLevel = ApiServiceLevelEnum.ENTERPRISE;
     } else {
       [maxLimitPerSecond, apiServiceLevel] = await this.getApiRateLimitMaximum.execute(
         GetApiRateLimitMaximumCommand.create({

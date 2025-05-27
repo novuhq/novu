@@ -69,11 +69,20 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
   }
 
   protected async shouldSkip(context: ExecutionContext): Promise<boolean> {
+    const req = context.switchToHttp().getRequest();
     const isAllowedAuthScheme = this.isAllowedAuthScheme(context);
     const isAllowedEnvironment = this.isAllowedEnvironment(context);
     const isAllowedRoute = this.isAllowedRoute(context);
 
     if (!isAllowedAuthScheme && !isAllowedEnvironment && !isAllowedRoute) {
+      this.logger.debug({
+        message: 'Rate limiting skipped - request criteria not met',
+        _event: {
+          path: req.path,
+          authScheme: req.authScheme,
+        },
+      });
+
       return true;
     }
 
@@ -93,6 +102,16 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
       organization: { _id: organizationId } as OrganizationEntity,
       user: { _id } as UserEntity,
     });
+
+    if (!isEnabled) {
+      this.logger.debug({
+        message: 'Rate limiting skipped - feature flag disabled',
+        _event: {
+          organizationId,
+          environmentId,
+        },
+      });
+    }
 
     return !isEnabled;
   }
@@ -149,6 +168,21 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
 
     const secondsToReset = Math.max(Math.ceil((reset - Date.now()) / 1e3), 0);
 
+    this.logger.debug({
+      message: 'Rate limit evaluated',
+      _event: {
+        success,
+        limit,
+        remaining,
+        category: apiRateLimitCategory,
+        cost: apiRateLimitCost,
+        isKeyless: isKeylessRequest,
+        organizationId,
+        environmentId,
+        ip: clientIp,
+      },
+    });
+
     /**
      * The purpose of the dry run is to allow us to observe how
      * the rate limiting would behave without actually enforcing it.
@@ -198,7 +232,16 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
 
     if (isDryRun || isKeylessDryRun) {
       if (!success) {
-        this.logger.warn(`${isKeylessRequest ? '[Dry run] [Keyless]' : '[Dry run]'} ${THROTTLED_EXCEPTION_MESSAGE}`);
+        this.logger.warn({
+          message: `${isKeylessRequest ? '[Dry run] [Keyless]' : '[Dry run]'} Rate limit would be exceeded`,
+          _event: {
+            limit,
+            remaining,
+            organizationId,
+            environmentId,
+            ip: clientIp,
+          },
+        });
       }
 
       return true;
@@ -208,6 +251,21 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
       return true;
     } else {
       res.header(HttpResponseHeaderKeysEnum.RETRY_AFTER, secondsToReset);
+
+      this.logger.debug({
+        message: 'Rate limit exceeded',
+        _event: {
+          limit,
+          remaining,
+          retryAfter: secondsToReset,
+          category: apiRateLimitCategory,
+          organizationId,
+          environmentId,
+          ip: clientIp,
+          isKeyless: isKeylessRequest,
+        },
+      });
+
       throw new ThrottlerException(THROTTLED_EXCEPTION_MESSAGE);
     }
   }

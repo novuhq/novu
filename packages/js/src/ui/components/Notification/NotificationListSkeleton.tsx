@@ -94,7 +94,7 @@ function KeylessEmptyState() {
       <div class={style('notificationListEmptyNotice', 'nt--mt-[50px]')}>
         <p class={style('strong', 'nt-text-[#000000] nt-mb-1')}>Trigger your notification. No setup needed.</p>
         <p class={style('notificationListEmptyNotice', 'nt-mb-4')}>
-          {`Temporary <Inbox />. All data will expire in 24 hours. Connect API key to persists messages, enable
+          {`Temporary <Inbox />, data will expire in 24h. Connect API key to persists messages, enable
                 preferences, and connect email.`}
         </p>
         <div class={style('notificationListEmptyNotice', 'nt-flex nt-gap-4 nt-justify-center')}>
@@ -106,13 +106,7 @@ function KeylessEmptyState() {
               // eslint-disable-next-line max-len
               'nt-h-8 nt-px-4 nt-flex nt-items-center nt-justify-center nt-gap-2 nt-bg-white nt-border nt-border-neutral-alpha-100 nt-shadow-sm nt-text-[12px] nt-font-medium'
             )}
-            onClick={() =>
-              window.open(
-                'https://go.novu.co/keyless?utm_campaign=empty-state-get_api_key',
-                '_blank',
-                'noopener noreferrer'
-              )
-            }
+            onClick={() => window.open('https://go.novu.co/keyless', '_blank', 'noopener noreferrer')}
           >
             <Key class={style('lockIcon', 'nt-size-4 nt-mr-2')} />
             Get API key
