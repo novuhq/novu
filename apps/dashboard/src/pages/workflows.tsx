@@ -66,6 +66,12 @@ export const WorkflowsPage = () => {
       steps: searchParams.getAll('steps') || [],
     },
   });
+  
+  useEffect(() => {
+    if (!searchParams.has('query') && form.getValues('query')) {
+      form.setValue('query', '');
+    }
+  }, []);
 
   const updateSearchParam = (value: string) => {
     if (value) {
@@ -145,7 +151,7 @@ export const WorkflowsPage = () => {
 
   const { currentEnvironment } = useEnvironment();
 
-  const hasActiveFilters = (searchParams.get('query') && searchParams.get('query') !== null) || 
+  const hasActiveFilters = (searchParams.get('query') && searchParams.get('query') !== '') || 
                            searchParams.getAll('tags').length > 0 ||
                            searchParams.getAll('status').length > 0 ||
                            searchParams.getAll('steps').length > 0;
@@ -181,8 +187,8 @@ export const WorkflowsPage = () => {
                 type="text"
                 size="small"
                 title="Search"
-                value={form.watch('query')}
-                onChange={(value) => form.setValue('query', value)}
+                value={form.watch('query') || ''}
+                onChange={(value) => form.setValue('query', value || '')}
                 placeholder="Search workflows..."
               />
               <FacetedFormFilter
