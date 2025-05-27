@@ -12,11 +12,9 @@ import { useFetchSubscriber } from '@/hooks/use-fetch-subscriber';
 import useFetchSubscriberPreferences from '@/hooks/use-fetch-subscriber-preferences';
 import { useFormProtection } from '@/hooks/use-form-protection';
 import { useState } from 'react';
-import { RiGroup2Line, RiUserAddLine } from 'react-icons/ri';
+import { RiGroup2Line } from 'react-icons/ri';
 import { motion } from 'motion/react';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
-import { CreateSubscriberForm } from './create-subscriber-form';
-import { useCreateSubscriber } from '@/hooks/use-create-subscriber';
 
 type SubscriberOverviewProps = {
   subscriberId: string;
@@ -26,19 +24,6 @@ type SubscriberOverviewProps = {
 
 const SubscriberOverview = (props: SubscriberOverviewProps) => {
   const { subscriberId, readOnly = false, onCloseDrawer } = props;
-  
-  if (!subscriberId) {
-    const { createSubscriber } = useCreateSubscriber({
-      onSuccess: () => {
-        if (onCloseDrawer) {
-          onCloseDrawer();
-        }
-      },
-    });
-    
-    return <CreateSubscriberForm createSubscriber={createSubscriber} />;
-  }
-  
   const { data, isPending } = useFetchSubscriber({
     subscriberId,
   });
@@ -98,17 +83,8 @@ export function SubscriberTabs(props: SubscriberTabsProps) {
     >
       <header className="border-bg-soft flex h-12 w-full flex-row items-center gap-3 border-b px-3 py-4">
         <div className="flex flex-1 items-center gap-1 overflow-hidden text-sm font-medium">
-          {subscriberId ? (
-            <>
-              <RiGroup2Line className="size-5 p-0.5" />
-              <TruncatedText className="flex-1">Subscriber Profile - {subscriberId}</TruncatedText>
-            </>
-          ) : (
-            <>
-              <RiUserAddLine className="size-5 p-0.5" />
-              <TruncatedText className="flex-1">Create Subscriber</TruncatedText>
-            </>
-          )}
+          <RiGroup2Line className="size-5 p-0.5" />
+          <TruncatedText className="flex-1">Subscriber Profile - {subscriberId}</TruncatedText>
         </div>
       </header>
 
