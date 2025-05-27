@@ -219,7 +219,7 @@ export class NotificationTemplateRepository extends BaseRepository<
     if (excludeNewDashboardWorkflows) {
       searchQuery.$nor = [{ origin: 'novu-cloud', type: 'BRIDGE' }];
     }
-    
+
     if (tags && tags.length > 0) {
       searchQuery.tags = { $in: tags };
     }
@@ -300,10 +300,6 @@ export class NotificationTemplateRepository extends BaseRepository<
   async estimatedDocumentCount(): Promise<any> {
     return this.notificationTemplate.estimatedDocumentCount();
   }
-
-
-
-
 
   async getTotalSteps(): Promise<number> {
     const res = await this.notificationTemplate.aggregate<{ totalSteps: number }>([
