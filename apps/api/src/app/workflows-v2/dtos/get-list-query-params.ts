@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString } from 'class-validator';
+import { IsArray, IsOptional, IsString } from 'class-validator';
 import { LimitOffsetPaginationQueryDto } from './limit-offset-pagination.dto';
 import { WorkflowResponseDto } from './workflow-response.dto';
 
@@ -17,4 +17,14 @@ export class GetListQueryParamsDto extends LimitOffsetPaginationQueryDto(Workflo
   @IsOptional()
   @IsString()
   query?: string;
+
+  @ApiPropertyOptional({
+    description: 'Filter workflows by tags',
+    type: [String],
+    required: false,
+  })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  tags?: string[];
 }

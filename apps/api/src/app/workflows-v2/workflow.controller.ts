@@ -212,6 +212,7 @@ export class WorkflowController {
         orderDirection: query.orderDirection ?? DirectionEnum.DESC,
         orderBy: query.orderBy ?? 'createdAt',
         searchQuery: query.query,
+        tags: query.tags,
         user,
       })
     );

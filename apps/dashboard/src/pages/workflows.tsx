@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/primitives/dropdown-menu';
 import { Form, FormField, FormItem, FormRoot } from '@/components/primitives/form/form';
+import { FacetedFormFilter } from '@/components/primitives/form/faceted-filter/facated-form-filter';
 import { Input } from '@/components/primitives/input';
 import { ScrollArea, ScrollBar } from '@/components/primitives/scroll-area';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
@@ -39,6 +40,7 @@ import { useHasPermission } from '@/hooks/use-has-permission';
 
 interface WorkflowFilters {
   query: string;
+  tags: string[];
 }
 
 export const WorkflowsPage = () => {
@@ -49,10 +51,12 @@ export const WorkflowsPage = () => {
     orderDirection: DirectionEnum.DESC,
     orderBy: 'createdAt',
     query: '',
+    tags: '',
   });
   const form = useForm<WorkflowFilters>({
     defaultValues: {
       query: searchParams.get('query') || '',
+      tags: searchParams.getAll('tags') || [],
     },
   });
 
@@ -66,15 +70,24 @@ export const WorkflowsPage = () => {
     setSearchParams(searchParams);
   };
 
+  const updateTagsParam = (tags: string[]) => {
+    searchParams.delete('tags');
+    tags.forEach(tag => searchParams.append('tags', tag));
+    setSearchParams(searchParams);
+  };
+
   const debouncedSearch = useDebounce((value: string) => updateSearchParam(value), 500);
 
   const clearFilters = () => {
-    form.reset({ query: '' });
+    form.reset({ query: '', tags: [] });
   };
 
   useEffect(() => {
-    const subscription = form.watch((value: { query?: string }) => {
+    const subscription = form.watch((value: { query?: string; tags?: string[] }) => {
       debouncedSearch(value.query || '');
+      if (value.tags) {
+        updateTagsParam(value.tags);
+      }
     });
 
     return () => {
@@ -98,11 +111,13 @@ export const WorkflowsPage = () => {
     orderBy: searchParams.get('orderBy') as SortableColumn,
     orderDirection: searchParams.get('orderDirection') as DirectionEnum,
     query: searchParams.get('query') || '',
+    tags: searchParams.getAll('tags'),
   });
 
   const { currentEnvironment } = useEnvironment();
 
-  const hasActiveFilters = searchParams.get('query') && searchParams.get('query') !== null;
+  const hasActiveFilters = (searchParams.get('query') && searchParams.get('query') !== null) || 
+                           searchParams.getAll('tags').length > 0;
 
   const isProdEnv = currentEnvironment?.name === 'Production';
 
@@ -154,6 +169,23 @@ export const WorkflowsPage = () => {
                 />
               </FormRoot>
             </Form>
+            <FacetedFormFilter
+              size="small"
+              type="multi"
+              title="Tags"
+              options={
+                workflowsData?.workflows?.reduce((acc: Array<{label: string, value: string}>, workflow) => {
+                  workflow.tags?.forEach(tag => {
+                    if (!acc.find(option => option.value === tag)) {
+                      acc.push({ label: tag, value: tag });
+                    }
+                  });
+                  return acc;
+                }, []) || []
+              }
+              selected={form.watch('tags')}
+              onSelect={(values) => form.setValue('tags', values)}
+            />
             <CreateWorkflowButton />
           </div>
           {shouldShowStartWithTemplatesSection && (

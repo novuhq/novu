@@ -10,6 +10,7 @@ interface UseWorkflowsParams {
   query?: string;
   orderBy?: string;
   orderDirection?: DirectionEnum;
+  tags?: string[];
 }
 
 export function useFetchWorkflows({
@@ -18,12 +19,13 @@ export function useFetchWorkflows({
   query = '',
   orderBy = '',
   orderDirection = DirectionEnum.DESC,
+  tags = [],
 }: UseWorkflowsParams = {}) {
   const { currentEnvironment } = useEnvironment();
 
   const workflowsQuery = useQuery({
-    queryKey: [QueryKeys.fetchWorkflows, currentEnvironment?._id, { limit, offset, query, orderBy, orderDirection }],
-    queryFn: () => getWorkflows({ environment: currentEnvironment!, limit, offset, query, orderBy, orderDirection }),
+    queryKey: [QueryKeys.fetchWorkflows, currentEnvironment?._id, { limit, offset, query, orderBy, orderDirection, tags }],
+    queryFn: () => getWorkflows({ environment: currentEnvironment!, limit, offset, query, orderBy, orderDirection, tags }),
     placeholderData: keepPreviousData,
     enabled: !!currentEnvironment?._id,
     refetchOnWindowFocus: true,
