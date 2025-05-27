@@ -237,6 +237,9 @@
     },
     "onlyBuiltDependencies": [
       "@clerk/shared",
+      "@clerk/types",
+      "react-icons",
+      "@novu/novui",
       "@contrast/fn-inspect",
       "@firebase/util",
       "@fortawesome/fontawesome-common-types",
