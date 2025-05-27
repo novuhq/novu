@@ -4,9 +4,11 @@ import { useDeleteSubscriber } from '@/hooks/use-delete-subscriber';
 import { usePatchSubscriber } from '@/hooks/use-patch-subscriber';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { formatDateSimple } from '@/utils/format-date';
+import { QueryKeys } from '@/utils/query-keys';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useQueryClient } from '@tanstack/react-query';
 import { SubscriberResponseDto } from '@novu/api/models/components';
 import { loadLanguage } from '@uiw/codemirror-extensions-langs';
 import { useEffect, useState } from 'react';
@@ -62,6 +64,7 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
   const { subscriber, readOnly = false, onCloseDrawer } = props;
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const track = useTelemetry();
+  const queryClient = useQueryClient();
 
   const { navigateToSubscribersFirstPage, navigateToSubscribersCurrentPage } = useSubscribersNavigate();
   const { filterValues, handleNavigationAfterDelete } = useSubscribersUrlState();
@@ -80,6 +83,9 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
       }
 
       if (isLastSubscriber) {
+        queryClient.invalidateQueries({
+          queryKey: [QueryKeys.fetchSubscribers],
+        });
         navigateToSubscribersFirstPage();
       } else {
         const firstTwoSubscribersInternalIds = data?.data.slice(0, 2).map(s => s._id as string) || [];

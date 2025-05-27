@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { LinkButton } from '../primitives/button-link';
 import { PermissionButton } from '../primitives/permission-button';
 import { PermissionsEnum } from '@novu/shared';
+import { SubscriberDrawerButton } from '@/components/subscribers/subscriber-drawer';
 
 export const SubscriberListBlank = () => {
   return (
@@ -27,14 +28,16 @@ export const SubscriberListBlank = () => {
           </LinkButton>
         </Link>
 
-        <PermissionButton
-          permission={PermissionsEnum.SUBSCRIBER_WRITE}
-          variant="primary"
-          leadingIcon={RiRouteFill}
-          className="gap-2"
-        >
-          Create subscriber
-        </PermissionButton>
+        <SubscriberDrawerButton subscriberId="">
+          <PermissionButton
+            permission={PermissionsEnum.SUBSCRIBER_WRITE}
+            variant="primary"
+            leadingIcon={RiRouteFill}
+            className="gap-2"
+          >
+            Create subscriber
+          </PermissionButton>
+        </SubscriberDrawerButton>
       </div>
     </div>
   );
