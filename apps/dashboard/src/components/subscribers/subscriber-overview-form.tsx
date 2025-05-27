@@ -44,6 +44,7 @@ const toastOptions: ExternalToast = {
 type SubscriberOverviewFormProps = {
   subscriber: SubscriberResponseDto;
   readOnly?: boolean;
+  onCloseDrawer?: () => void;
 };
 
 const createDefaultSubscriberValues = (subscriber: SubscriberResponseDto) => ({
@@ -58,7 +59,7 @@ const createDefaultSubscriberValues = (subscriber: SubscriberResponseDto) => ({
 });
 
 export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
-  const { subscriber, readOnly = false } = props;
+  const { subscriber, readOnly = false, onCloseDrawer } = props;
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const track = useTelemetry();
 
@@ -73,6 +74,10 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
       showSuccessToast(`Deleted subscriber: ${getSubscriberTitle(subscriber)}`, undefined, toastOptions);
       track(TelemetryEvent.SUBSCRIBER_DELETED);
       const isLastSubscriber = data?.data.length === 1;
+
+      if (onCloseDrawer) {
+        onCloseDrawer();
+      }
 
       if (isLastSubscriber) {
         navigateToSubscribersFirstPage();
