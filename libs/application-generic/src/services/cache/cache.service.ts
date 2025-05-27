@@ -15,7 +15,7 @@ export interface ICacheService {
   set(key: string, value: string, options?: CachingConfig);
   get(key: string);
   del(key: string);
-  incr(key: string, options?: CachingConfig): Promise<number>;
+  incrIfExistsAtomic(key: string, incrementBy?: number): Promise<number | null>;
   delByPattern(pattern: string);
   keys(pattern?: string);
   getStatus();
@@ -112,45 +112,22 @@ export class CacheService implements ICacheService {
     return this.client?.del(keys);
   }
 
-  public async incr(key: string, options?: CachingConfig): Promise<number> {
-    if (!this.client) {
-      return 0;
-    }
-
-    const preserveExistingTtl = options.preserveExistingTtl ?? true;
-    if (preserveExistingTtl) {
-      const keyExists = await this.client.exists(key);
-
-      if (keyExists) {
-        return this.client.incr(key);
-      }
-    }
-
-    return this.incrWithExpire(key, options);
-  }
-
-  public async incrIfExists(key: string): Promise<number | null> {
+  public async incrIfExistsAtomic(key: string, incrementBy = 1): Promise<number | null> {
     if (!this.client) {
       return null;
     }
 
-    const keyExists = await this.client.exists(key);
+    const luaScript = `
+      if redis.call('exists', KEYS[1]) == 1 then
+        return redis.call('incrby', KEYS[1], ARGV[1])
+      else
+        return nil
+      end
+    `;
 
-    if (!keyExists) {
-      return null;
-    }
+    const result = await this.eval<number | null>(luaScript, [key], [incrementBy]);
 
-    return this.client.incr(key);
-  }
-
-  private async incrWithExpire(key: string, options: CachingConfig): Promise<number> {
-    const pipeline = this.client.pipeline();
-    pipeline.incr(key);
-    pipeline.expire(key, this.getTtlInSeconds(options));
-
-    const results = await pipeline.exec();
-
-    return (results?.[0]?.[1] as number) || 0;
+    return result;
   }
 
   public async delQuery(key: string): Promise<void | unknown[]> {
