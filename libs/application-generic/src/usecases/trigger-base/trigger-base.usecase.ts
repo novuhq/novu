@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { NotificationTemplateEntity, SubscriberEntity, TopicEntity } from '@novu/dal';
+import { NotificationTemplateEntity, SubscriberEntity, TopicEntity, EnvironmentEntity, OrganizationEntity, UserEntity } from '@novu/dal';
 import {
   ISubscribersDefine,
   ITenantDefine,
@@ -8,13 +8,14 @@ import {
   TriggerRequestCategoryEnum,
   StatelessControls,
   ResourceEnum,
+  FeatureFlagsKeysEnum,
 } from '@novu/shared';
 import _ from 'lodash';
 
 import { IProcessSubscriberBulkJobDto } from '../../dtos';
 import { SubscriberProcessQueueService } from '../../services/queues/subscriber-process-queue.service';
 import { buildUsageKey } from '../../services/cache/key-builders';
-import { CacheService } from '../../services';
+import { CacheService, FeatureFlagsService } from '../../services';
 
 export type BaseTriggerCommand = {
   environmentId: string;
@@ -39,23 +40,36 @@ export abstract class TriggerBase {
   constructor(
     protected subscriberProcessQueueService: SubscriberProcessQueueService,
     protected cacheService: CacheService,
+    protected featureFlagsService: FeatureFlagsService,
     protected queueChunkSize: number = 100
   ) {}
 
   protected async subscriberProcessQueueAddBulk(jobs: IProcessSubscriberBulkJobDto[]) {
+         const isUsageTrackingInTriggerBaseEnabled = await this.featureFlagsService.getFlag({
+          key: FeatureFlagsKeysEnum.IS_INCR_IF_EXIST_USAGE_ENABLED,
+          defaultValue: false,
+          organization: { _id: jobs[0].data.organizationId } as OrganizationEntity,
+          environment: { _id: jobs[0].data.environmentId } as EnvironmentEntity,
+          user: { _id: jobs[0].data.userId } as UserEntity,
+        });
+        
     return await Promise.all(
       _.chunk(jobs, this.queueChunkSize).map(async (chunk: IProcessSubscriberBulkJobDto[]) => {
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.subscriberProcessQueueService.addBulk(chunk);
 
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.cacheService.incrIfExistsAtomic(
-          buildUsageKey({
-            _organizationId: jobs[0].data.organizationId,
-            resourceType: ResourceEnum.EVENTS,
-          }),
-          chunk.length
-        );
+  
+
+        if (isUsageTrackingInTriggerBaseEnabled) {
+          // eslint-disable-next-line @typescript-eslint/no-floating-promises
+          this.cacheService.incrIfExistsAtomic(
+            buildUsageKey({
+              _organizationId: jobs[0].data.organizationId,
+              resourceType: ResourceEnum.EVENTS,
+            }),
+            chunk.length
+          );
+        }
       })
     );
   }

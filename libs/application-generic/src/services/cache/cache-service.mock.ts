@@ -12,6 +12,12 @@ export const MockCacheService = {
 
         return newValue;
       },
+      incr(key: string): Promise<number> {
+        const newValue = (data[key] || 0) + 1;
+        data[key] = newValue;
+
+        return newValue;
+      },
       set(key: string, value: string, options?: CachingConfig) {
         data[key] = value;
       },

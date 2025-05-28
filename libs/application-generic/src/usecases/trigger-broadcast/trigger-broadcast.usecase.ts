@@ -8,7 +8,7 @@ import { SubscriberProcessQueueService } from '../../services/queues/subscriber-
 import { TriggerBase } from '../trigger-base';
 import { TriggerBroadcastCommand } from './trigger-broadcast.command';
 import { PinoLogger } from 'nestjs-pino';
-import { CacheService } from '../../services';
+import { CacheService, FeatureFlagsService } from '../../services';
 
 const QUEUE_CHUNK_SIZE = Number(process.env.BROADCAST_QUEUE_CHUNK_SIZE) || 100;
 
@@ -16,11 +16,12 @@ const QUEUE_CHUNK_SIZE = Number(process.env.BROADCAST_QUEUE_CHUNK_SIZE) || 100;
 export class TriggerBroadcast extends TriggerBase {
   constructor(
     private subscriberRepository: SubscriberRepository,
-    subscriberProcessQueueService: SubscriberProcessQueueService,
-    cacheService: CacheService,
+    protected subscriberProcessQueueService: SubscriberProcessQueueService,
+    protected cacheService: CacheService,
+    protected featureFlagsService: FeatureFlagsService,
     private logger: PinoLogger
   ) {
-    super(subscriberProcessQueueService, cacheService, QUEUE_CHUNK_SIZE);
+    super(subscriberProcessQueueService, cacheService, featureFlagsService, QUEUE_CHUNK_SIZE);
     this.logger.setContext(this.constructor.name);
   }
 

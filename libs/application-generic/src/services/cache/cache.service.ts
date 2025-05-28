@@ -22,6 +22,7 @@ export interface ICacheService {
   cacheEnabled();
   sadd(key: string, ...members: (string | number | Buffer)[]): Promise<number>;
   eval<TData = unknown>(script: string, keys: string[], args: (string | number | Buffer)[]): Promise<TData>;
+  incr(key: string): Promise<number>;
 }
 
 export type CachingConfig = {
@@ -109,6 +110,12 @@ export class CacheService implements ICacheService {
     const keys = Array.isArray(key) ? key : [key];
 
     return this.client?.del(keys);
+  }
+
+  // @deprecated This method is maintained solely for backward compatibility with quota throttling tests.
+  // Use incrIfExistsAtomic() for new implementations to ensure proper TTL handling.
+  public async incr(key: string): Promise<number> {
+    return this.client?.incr(key);
   }
 
   public async incrIfExistsAtomic(key: string, incrementBy = 1): Promise<number | null> {
