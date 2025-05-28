@@ -214,7 +214,6 @@ export class WorkflowController {
         searchQuery: query.query,
         tags: query.tags,
         status: query.status,
-        steps: query.steps,
         user,
       })
     );

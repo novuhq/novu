@@ -15,9 +15,4 @@ export class ListWorkflowsCommand extends PaginatedListCommand {
   @IsArray()
   @IsEnum(WorkflowStatusEnum, { each: true })
   status?: WorkflowStatusEnum[];
-
-  @IsOptional()
-  @IsArray()
-  @IsEnum(StepTypeEnum, { each: true })
-  steps?: StepTypeEnum[];
 }

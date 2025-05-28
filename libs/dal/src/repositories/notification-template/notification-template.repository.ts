@@ -206,8 +206,7 @@ export class NotificationTemplateRepository extends BaseRepository<
     orderBy: string = 'createdAt',
     orderDirection: DirectionEnum = DirectionEnum.DESC,
     tags?: string[],
-    status?: string[],
-    steps?: string[]
+    status?: string[]
   ): Promise<{ totalCount: number; data: NotificationTemplateEntity[] }> {
     const searchQuery: FilterQuery<NotificationTemplateDBModel> = {};
 
@@ -228,10 +227,6 @@ export class NotificationTemplateRepository extends BaseRepository<
 
     if (status && status.length > 0) {
       searchQuery.status = { $in: status };
-    }
-
-    if (steps && steps.length > 0) {
-      searchQuery['steps.template.type'] = { $in: steps };
     }
 
     const totalItemsCount = await this.count({

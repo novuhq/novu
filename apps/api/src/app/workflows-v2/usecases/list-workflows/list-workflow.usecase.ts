@@ -22,8 +22,7 @@ export class ListWorkflowsUseCase {
       command.orderBy,
       command.orderDirection,
       command.tags,
-      command.status,
-      command.steps
+      command.status
     );
     if (res.data === null || res.data === undefined) {
       return { workflows: [], totalCount: 0 };
