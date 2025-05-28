@@ -12,11 +12,7 @@ import { DIGEST_VARIABLES_ENUM, getDynamicDigestVariable } from '@/components/va
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useWorkflowSchema } from '@/components/workflow-editor/workflow-schema-provider';
 import { PayloadSchemaDrawer } from '@/components/workflow-editor/payload-schema-drawer';
-import { showErrorToast, showToast } from '@/components/primitives/sonner-helpers';
-import type { JSONSchema7TypeName } from '@/components/schema-editor/json-schema';
-import { RiListView } from 'react-icons/ri';
-import { ToastIcon } from '../../../../primitives/sonner';
-import { Button } from '../../../../primitives/button';
+import { useCreateVariable } from '@/components/variable/hooks/use-create-variable';
 
 type InternalVariableViewProps = NodeViewProps & {
   variables: LiquidVariable[];
@@ -30,58 +26,15 @@ function InternalVariableView(props: InternalVariableViewProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { digestStepBeforeCurrent, workflow } = useWorkflow();
 
+  const { getSchemaPropertyByKey, isPayloadSchemaEnabled } = useWorkflowSchema();
+
   const {
-    getSchemaPropertyByKey,
-    addProperty: addSchemaProperty,
-    handleSaveChanges: handleSaveSchemaChanges,
-    isPayloadSchemaEnabled,
-  } = useWorkflowSchema();
-
-  const [isPayloadSchemaDrawerOpen, setIsPayloadSchemaDrawerOpen] = useState(false);
-  const [highlightedVariableKey, setHighlightedVariableKey] = useState<string | null>(null);
-
-  const handleCreateNewVariable = useCallback(
-    async (variableName: string) => {
-      if (!workflow || !isPayloadSchemaEnabled) {
-        return;
-      }
-
-      try {
-        // Assuming new variables are of type string by default.
-        addSchemaProperty({ keyName: variableName }, 'string' as JSONSchema7TypeName);
-
-        await handleSaveSchemaChanges();
-
-        showToast({
-          children: () => (
-            <div className="flex min-w-[350px] items-center justify-between gap-1.5">
-              <div className="flex items-center gap-3">
-                <ToastIcon variant="success" />
-                <span className="min-w-[100px] text-sm">Variable added to schema</span>
-              </div>
-
-              <Button
-                variant="secondary"
-                mode="outline"
-                size="2xs"
-                leadingIcon={RiListView}
-                onClick={() => setIsPayloadSchemaDrawerOpen(true)}
-                className="shrink-0"
-              >
-                Manage schema
-              </Button>
-            </div>
-          ),
-          options: {
-            position: 'bottom-right',
-          },
-        });
-      } catch (error) {
-        showErrorToast('Failed to save new variable to schema: ' + error);
-      }
-    },
-    [workflow, isPayloadSchemaEnabled, addSchemaProperty, handleSaveSchemaChanges]
-  );
+    handleCreateNewVariable,
+    isPayloadSchemaDrawerOpen,
+    highlightedVariableKey,
+    openSchemaDrawer,
+    closeSchemaDrawer,
+  } = useCreateVariable();
 
   const parseVariableCallback = useCallback(
     (variable: string) => {
@@ -142,8 +95,7 @@ function InternalVariableView(props: InternalVariableViewProps) {
         variables={variables}
         isAllowedVariable={isAllowedVariable}
         onManageSchemaClick={(variableName) => {
-          setHighlightedVariableKey(variableName);
-          setIsPayloadSchemaDrawerOpen(true);
+          openSchemaDrawer(variableName);
         }}
         onAddToSchemaClick={(variableName) => {
           handleCreateNewVariable(variableName);
@@ -183,10 +135,8 @@ function InternalVariableView(props: InternalVariableViewProps) {
       <PayloadSchemaDrawer
         isOpen={isPayloadSchemaDrawerOpen}
         onOpenChange={(isOpen) => {
-          setIsPayloadSchemaDrawerOpen(isOpen);
-
           if (!isOpen) {
-            setHighlightedVariableKey(null);
+            closeSchemaDrawer();
           }
         }}
         workflow={workflow}
