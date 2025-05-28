@@ -40,6 +40,7 @@ export function triggerBroadcast(
 ): APIPromise<
   Result<
     operations.EventsControllerBroadcastEventToAllResponse,
+    | errors.PayloadValidationExceptionDto
     | errors.ErrorDto
     | errors.ErrorDto
     | errors.ValidationErrorDto
@@ -70,6 +71,7 @@ async function $do(
   [
     Result<
       operations.EventsControllerBroadcastEventToAllResponse,
+      | errors.PayloadValidationExceptionDto
       | errors.ErrorDto
       | errors.ErrorDto
       | errors.ValidationErrorDto
@@ -191,6 +193,7 @@ async function $do(
 
   const [result] = await M.match<
     operations.EventsControllerBroadcastEventToAllResponse,
+    | errors.PayloadValidationExceptionDto
     | errors.ErrorDto
     | errors.ErrorDto
     | errors.ValidationErrorDto
@@ -208,9 +211,12 @@ async function $do(
       operations.EventsControllerBroadcastEventToAllResponse$inboundSchema,
       { hdrs: true, key: "Result" },
     ),
+    M.jsonErr(400, errors.PayloadValidationExceptionDto$inboundSchema, {
+      hdrs: true,
+    }),
     M.jsonErr(414, errors.ErrorDto$inboundSchema),
     M.jsonErr(
-      [400, 401, 403, 404, 405, 409, 413, 415],
+      [401, 403, 404, 405, 409, 413, 415],
       errors.ErrorDto$inboundSchema,
       { hdrs: true },
     ),
