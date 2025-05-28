@@ -13,5 +13,5 @@ export function useHideRootNode(containerRef: React.RefObject<HTMLDivElement>) {
 
     const timer = setTimeout(hideRootNodeName, 0);
     return () => clearTimeout(timer);
-  });
+  }, [containerRef]);
 }
