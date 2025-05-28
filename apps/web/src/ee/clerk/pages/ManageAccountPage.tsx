@@ -15,6 +15,7 @@ import { useFeatureFlag } from '../../../hooks/useFeatureFlag';
 import { BrandingPage } from '../../../pages/brand/BrandingPage';
 import { BillingPage } from '../../billing/pages/BillingPage';
 import { Title } from '@novu/novui';
+import { OrganizationSettings } from '../../../components/settings/OrganizationSettings';
 import {
   billingTitle,
   clerkComponentAppearance,
@@ -108,10 +109,7 @@ export default function ManageAccountPage() {
           </UserProfile>
         </Tabs.Panel>
         <Tabs.Panel value={MANAGE_ACCOUNT_ROUTE_SEGMENTS.ORGANIZATION}>
-          <OrganizationProfile appearance={clerkComponentAppearance}>
-            <OrganizationProfile.Page label="general" />
-            <OrganizationProfile.Page label="members" />
-          </OrganizationProfile>
+          <OrganizationSettings clerkAppearance={clerkComponentAppearance} />
         </Tabs.Panel>
         <Tabs.Panel value={MANAGE_ACCOUNT_ROUTE_SEGMENTS.TEAM_MEMBERS}>
           <OrganizationProfile appearance={clerkComponentAppearance}>
