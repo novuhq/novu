@@ -26,7 +26,6 @@ export interface ICacheService {
 
 export type CachingConfig = {
   ttl?: number;
-  preserveExistingTtl?: boolean;
 };
 
 export class CacheService implements ICacheService {

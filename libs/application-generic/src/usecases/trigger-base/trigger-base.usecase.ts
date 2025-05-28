@@ -45,15 +45,17 @@ export abstract class TriggerBase {
   protected async subscriberProcessQueueAddBulk(jobs: IProcessSubscriberBulkJobDto[]) {
     return await Promise.all(
       _.chunk(jobs, this.queueChunkSize).map(async (chunk: IProcessSubscriberBulkJobDto[]) => {
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.subscriberProcessQueueService.addBulk(chunk);
 
-        await this.cacheService.incrIfExistsAtomic(
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        this.cacheService.incrIfExistsAtomic(
           buildUsageKey({
             _organizationId: jobs[0].data.organizationId,
             resourceType: ResourceEnum.EVENTS,
-          })
+          }),
+          chunk.length
         );
-        chunk.length;
       })
     );
   }
