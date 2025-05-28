@@ -1,7 +1,8 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import type { UseFormReturn, Control, FieldArrayWithId } from 'react-hook-form';
 import { useQueryClient } from '@tanstack/react-query';
-import { useSchemaForm, convertSchemaToPropertyList } from '@/components/schema-editor/use-schema-form';
+import { useSchemaForm } from '@/components/schema-editor/use-schema-form';
+import { convertSchemaToPropertyList } from '@/components/schema-editor/utils';
 import type { JSONSchema7, JSONSchema7TypeName } from '@/components/schema-editor/json-schema';
 import type { SchemaEditorFormValues, PropertyListItem } from '@/components/schema-editor/utils/validation-schema';
 import { patchWorkflow } from '../../api/workflows';
