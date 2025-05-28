@@ -988,8 +988,8 @@ importers:
         specifier: ^1.3.27
         version: 1.4.22(@playwright/test@1.46.1)(cypress@13.10.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@clerk/types':
-        specifier: ^4.30.0
-        version: 4.48.0
+        specifier: 4.30.0
+        version: 4.30.0
       '@eslint/js':
         specifier: ^9.9.0
         version: 9.19.0
