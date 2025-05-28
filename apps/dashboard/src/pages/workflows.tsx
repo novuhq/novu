@@ -9,8 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/primitives/dropdown-menu';
-import { Form, FormField, FormItem, FormRoot } from '@/components/primitives/form/form';
-import { Input } from '@/components/primitives/input';
+import { FacetedFormFilter } from '@/components/primitives/form/faceted-filter/facated-form-filter';
 import { ScrollArea, ScrollBar } from '@/components/primitives/scroll-area';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { getTemplates, WorkflowTemplate } from '@/components/template-store/templates';
@@ -20,25 +19,21 @@ import { SortableColumn, WorkflowList } from '@/components/workflow-list';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useDebounce } from '@/hooks/use-debounce';
 import { useFetchWorkflows } from '@/hooks/use-fetch-workflows';
+import { useTags } from '@/hooks/use-tags';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
-import { DirectionEnum, PermissionsEnum, StepTypeEnum } from '@novu/shared';
+import { DirectionEnum, PermissionsEnum, StepTypeEnum, WorkflowStatusEnum } from '@novu/shared';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import {
-  RiArrowDownSLine,
-  RiArrowRightSLine,
-  RiFileAddLine,
-  RiFileMarkedLine,
-  RiRouteFill,
-  RiSearchLine,
-} from 'react-icons/ri';
+import { RiArrowDownSLine, RiArrowRightSLine, RiFileAddLine, RiFileMarkedLine, RiRouteFill } from 'react-icons/ri';
 import { Outlet, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useHasPermission } from '@/hooks/use-has-permission';
 
 interface WorkflowFilters {
   query: string;
+  tags: string[];
+  status: string[];
 }
 
 export const WorkflowsPage = () => {
@@ -53,8 +48,16 @@ export const WorkflowsPage = () => {
   const form = useForm<WorkflowFilters>({
     defaultValues: {
       query: searchParams.get('query') || '',
+      tags: searchParams.getAll('tags') || [],
+      status: searchParams.getAll('status') || [],
     },
   });
+
+  useEffect(() => {
+    if (!searchParams.has('query') && form.getValues('query')) {
+      form.setValue('query', '');
+    }
+  }, []);
 
   const updateSearchParam = (value: string) => {
     if (value) {
@@ -66,15 +69,41 @@ export const WorkflowsPage = () => {
     setSearchParams(searchParams);
   };
 
+  const updateTagsParam = (tags: string[]) => {
+    searchParams.delete('tags');
+    tags.forEach((tag) => searchParams.append('tags', tag));
+    setSearchParams(searchParams);
+  };
+
+  const updateStatusParam = (status: string[]) => {
+    searchParams.delete('status');
+    status.forEach((s) => searchParams.append('status', s));
+    setSearchParams(searchParams);
+  };
+
   const debouncedSearch = useDebounce((value: string) => updateSearchParam(value), 500);
 
   const clearFilters = () => {
-    form.reset({ query: '' });
+    form.reset({ query: '', tags: [], status: [] });
+    searchParams.delete('query');
+    searchParams.delete('tags');
+    searchParams.delete('status');
+    setSearchParams(searchParams);
   };
 
   useEffect(() => {
-    const subscription = form.watch((value: { query?: string }) => {
-      debouncedSearch(value.query || '');
+    const subscription = form.watch((value) => {
+      if (value.query !== undefined) {
+        debouncedSearch(value.query || '');
+      }
+
+      if (value.tags !== undefined) {
+        updateTagsParam(value.tags as string[]);
+      }
+
+      if (value.status !== undefined) {
+        updateStatusParam(value.status as string[]);
+      }
     });
 
     return () => {
@@ -98,11 +127,17 @@ export const WorkflowsPage = () => {
     orderBy: searchParams.get('orderBy') as SortableColumn,
     orderDirection: searchParams.get('orderDirection') as DirectionEnum,
     query: searchParams.get('query') || '',
+    tags: searchParams.getAll('tags'),
+    status: searchParams.getAll('status'),
   });
 
   const { currentEnvironment } = useEnvironment();
+  const { tags } = useTags();
 
-  const hasActiveFilters = searchParams.get('query') && searchParams.get('query') !== null;
+  const hasActiveFilters =
+    (searchParams.get('query') ? searchParams.get('query')!.trim() !== '' : false) ||
+    searchParams.getAll('tags').length > 0 ||
+    searchParams.getAll('status').length > 0;
 
   const isProdEnv = currentEnvironment?.name === 'Production';
 
@@ -128,32 +163,46 @@ export const WorkflowsPage = () => {
     <>
       <PageMeta title="Workflows" />
       <DashboardLayout headerStartItems={<h1 className="text-foreground-950 flex items-center gap-1">Workflows</h1>}>
-        <div className="flex h-full w-full flex-col gap-2.5 p-2.5">
-          <div className="flex justify-between">
-            <Form {...form}>
-              <FormRoot
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                }}
-              >
-                <FormField
-                  control={form.control}
-                  name="query"
-                  render={({ field }) => (
-                    <FormItem className="relative">
-                      <Input
-                        size="xs"
-                        className="w-64"
-                        {...field}
-                        placeholder="Search workflows..."
-                        leadingIcon={RiSearchLine}
-                      />
-                    </FormItem>
-                  )}
-                />
-              </FormRoot>
-            </Form>
+        <div className="flex h-full w-full flex-col p-[8px]">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 py-2.5">
+              <FacetedFormFilter
+                type="text"
+                size="small"
+                title="Search"
+                value={form.watch('query') || ''}
+                onChange={(value) => form.setValue('query', value || '')}
+                placeholder="Search workflows..."
+              />
+              <FacetedFormFilter
+                size="small"
+                type="multi"
+                title="Tags"
+                placeholder="Filter by tags"
+                options={tags?.map((tag) => ({ label: tag.name, value: tag.name })) || []}
+                selected={form.watch('tags')}
+                onSelect={(values) => form.setValue('tags', values)}
+              />
+              <FacetedFormFilter
+                size="small"
+                type="multi"
+                title="Status"
+                placeholder="Filter by status"
+                options={[
+                  { label: 'Active', value: WorkflowStatusEnum.ACTIVE },
+                  { label: 'Inactive', value: WorkflowStatusEnum.INACTIVE },
+                  { label: 'Error', value: WorkflowStatusEnum.ERROR },
+                ]}
+                selected={form.watch('status')}
+                onSelect={(values) => form.setValue('status', values)}
+              />
+
+              {hasActiveFilters && (
+                <Button variant="secondary" mode="ghost" size="2xs" onClick={clearFilters}>
+                  Reset
+                </Button>
+              )}
+            </div>
             <CreateWorkflowButton />
           </div>
           {shouldShowStartWithTemplatesSection && (

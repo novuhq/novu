@@ -204,7 +204,9 @@ export class NotificationTemplateRepository extends BaseRepository<
     query?: string,
     excludeNewDashboardWorkflows: boolean = false,
     orderBy: string = 'createdAt',
-    orderDirection: DirectionEnum = DirectionEnum.DESC
+    orderDirection: DirectionEnum = DirectionEnum.DESC,
+    tags?: string[],
+    status?: string[]
   ): Promise<{ totalCount: number; data: NotificationTemplateEntity[] }> {
     const searchQuery: FilterQuery<NotificationTemplateDBModel> = {};
 
@@ -217,6 +219,14 @@ export class NotificationTemplateRepository extends BaseRepository<
 
     if (excludeNewDashboardWorkflows) {
       searchQuery.$nor = [{ origin: 'novu-cloud', type: 'BRIDGE' }];
+    }
+
+    if (tags && tags.length > 0) {
+      searchQuery.tags = { $in: tags };
+    }
+
+    if (status && status.length > 0) {
+      searchQuery.status = { $in: status };
     }
 
     const totalItemsCount = await this.count({
