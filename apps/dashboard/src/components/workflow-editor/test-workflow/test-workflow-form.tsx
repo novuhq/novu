@@ -28,7 +28,7 @@ import { TestWorkflowInstructions } from './test-workflow-instructions';
 import { SnippetLanguage } from './types';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
-import { EditableJsonViewer } from '../steps/shared/editable-json-viewer';
+import { EditableJsonViewer } from '../steps/shared/editable-json-viewer/editable-json-viewer';
 
 const tabsTriggerClassName = 'pt-1';
 const codePanelClassName = 'h-full';

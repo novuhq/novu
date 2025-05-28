@@ -6,7 +6,7 @@ import { loadLanguage } from '@uiw/codemirror-extensions-langs';
 import { CSSProperties, useCallback, useEffect, useRef, useState } from 'react';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { FeatureFlagsKeysEnum, type WorkflowResponseDto } from '@novu/shared';
-import { EditableJsonViewer } from './editable-json-viewer';
+import { EditableJsonViewer } from './editable-json-viewer/editable-json-viewer';
 
 const extensions = [loadLanguage('json')?.extension ?? []];
 

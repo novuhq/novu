@@ -8,7 +8,7 @@ export function CustomTextEditor({ value, onChange, onKeyDown }: CustomTextEdito
       value={value}
       onChange={onChange}
       onKeyDown={onKeyDown}
-      lang="json"
+      lang="javascript"
       extensions={JSON_EXTENSIONS}
       basicSetup={BASIC_SETUP}
       multiline

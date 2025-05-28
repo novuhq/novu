@@ -1,8 +1,10 @@
+import { JSONSchema7 } from 'json-schema';
+
 export type EditableJsonViewerProps = {
   value: any;
   onChange: (updatedData: any) => void;
   className?: string;
-  schema?: any;
+  schema?: JSONSchema7;
 };
 
 export type SingleClickEditableValueProps = {

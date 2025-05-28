@@ -46,7 +46,6 @@ export function PayloadSchemaDrawer({
   const [originalSchema, setOriginalSchema] = useState<JSONSchema7 | undefined>();
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [pendingChanges, setPendingChanges] = useState<SchemaChanges | null>(null);
-  const [enforceSchemaValidation, setEnforceSchemaValidation] = useState(false);
 
   const {
     currentSchema,
@@ -59,6 +58,8 @@ export function PayloadSchemaDrawer({
     formState,
     addProperty,
     removeProperty,
+    payloadSchemaValidation,
+    setPayloadSchemaValidation,
   } = useWorkflowSchema();
 
   useEffect(() => {
@@ -141,7 +142,7 @@ export function PayloadSchemaDrawer({
           </SheetHeader>
           <Separator />
           <SheetMain className="p-3">
-            <div className="mb-4 flex flex-row items-center justify-between gap-2">
+            <div className="mb-2 flex flex-row items-center justify-between gap-2">
               <h3 className="text-label-xs w-full">
                 <TooltipProvider>
                   <Tooltip>
@@ -159,7 +160,7 @@ export function PayloadSchemaDrawer({
               </h3>
             </div>
 
-            <div className="rounded-4 border-1 mb-4 flex items-center justify-between border border-neutral-100 bg-white p-2">
+            <div className="rounded-4 border-1 mb-2 flex items-center justify-between border border-neutral-100 bg-white p-2">
               <div className="text-text-strong text-label-xs flex items-center gap-1">
                 <RiShieldCheckLine className="text-text-strong size-3" />
                 Enforce schema validation
@@ -176,8 +177,8 @@ export function PayloadSchemaDrawer({
                 </Tooltip>
               </div>
               <Switch
-                checked={enforceSchemaValidation}
-                onCheckedChange={setEnforceSchemaValidation}
+                checked={payloadSchemaValidation}
+                onCheckedChange={setPayloadSchemaValidation}
                 disabled={isLoadingWorkflow}
               />
             </div>

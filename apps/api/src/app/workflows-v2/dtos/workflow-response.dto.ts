@@ -1,5 +1,5 @@
 import { ApiExtraModels, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
-import { IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsEnum, IsOptional, IsString, ValidateNested, IsBoolean } from 'class-validator';
 import { Type } from 'class-transformer';
 import { CreateWorkflowDto, Slug, UpdateWorkflowDto, WorkflowOriginEnum, WorkflowStatusEnum } from '@novu/shared';
 import { WorkflowCommonsFields } from './workflow-commons.dto';
@@ -98,6 +98,14 @@ export class WorkflowResponseDto extends WorkflowCommonsFields {
   })
   @IsOptional()
   payloadExample?: object;
+
+  @ApiPropertyOptional({
+    description: 'Whether payload schema validation is enabled',
+    type: 'boolean',
+  })
+  @IsOptional()
+  @IsBoolean()
+  payloadSchemaValidation?: boolean;
 }
 
 export type WorkflowCreateAndUpdateKeys = keyof CreateWorkflowDto | keyof UpdateWorkflowDto;

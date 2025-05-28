@@ -8,6 +8,10 @@ import { patchWorkflow } from '../../api/workflows';
 import type { WorkflowResponseDto, IEnvironment, PatchWorkflowDto } from '@novu/shared';
 import { QueryKeys } from '@/utils/query-keys';
 
+interface ExtendedPatchWorkflowDto extends PatchWorkflowDto {
+  payloadSchemaValidation?: boolean;
+}
+
 function getSchemaPropertyByKeyInternal(keyPath: string, schema: JSONSchema7 | undefined): JSONSchema7 | undefined {
   if (!schema || typeof schema === 'boolean') {
     return undefined;
@@ -72,6 +76,8 @@ interface UseWorkflowSchemaManagerProps {
   initialSchema?: JSONSchema7;
   onSaveSuccess?: (schema: JSONSchema7) => void;
   onSchemaChange?: (schema: JSONSchema7) => void;
+  payloadSchemaValidation?: boolean;
+  onPayloadSchemaValidationChange?: (enabled: boolean) => void;
 }
 
 export interface UseWorkflowSchemaManagerReturn {
@@ -91,6 +97,8 @@ export interface UseWorkflowSchemaManagerReturn {
     isValid: boolean;
     errors: Record<string, any>;
   };
+  payloadSchemaValidation: boolean;
+  setPayloadSchemaValidation: (enabled: boolean) => void;
 }
 
 export function useWorkflowSchemaManager({
@@ -99,11 +107,16 @@ export function useWorkflowSchemaManager({
   initialSchema,
   onSaveSuccess,
   onSchemaChange,
+  payloadSchemaValidation,
+  onPayloadSchemaValidationChange,
 }: UseWorkflowSchemaManagerProps): UseWorkflowSchemaManagerReturn {
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<Error | null>(null);
   const [internalSchema, setInternalSchema] = useState<JSONSchema7 | undefined>(initialSchema);
   const [isSchemaValid, setIsSchemaValid] = useState(true);
+  const [internalPayloadSchemaValidation, setInternalPayloadSchemaValidation] = useState(
+    payloadSchemaValidation ?? false
+  );
   const queryClient = useQueryClient();
   const lastInitialSchemaRef = useRef<JSONSchema7 | undefined>(initialSchema);
 
@@ -133,6 +146,11 @@ export function useWorkflowSchemaManager({
       setInternalSchema(initialSchema);
     }
   }, [initialSchema, schemaForm.methods]);
+
+  // Sync payloadSchemaValidation prop with internal state
+  useEffect(() => {
+    setInternalPayloadSchemaValidation(payloadSchemaValidation ?? false);
+  }, [payloadSchemaValidation]);
 
   const getSchemaPropertyByKey = useCallback(
     (keyPath: string): JSONSchema7 | undefined => {
@@ -164,8 +182,9 @@ export function useWorkflowSchemaManager({
 
     const schemaToSave = schemaForm.getCurrentSchema();
 
-    const workflowUpdatePayload: PatchWorkflowDto = {
+    const workflowUpdatePayload: ExtendedPatchWorkflowDto = {
       payloadSchema: schemaToSave,
+      payloadSchemaValidation: internalPayloadSchemaValidation,
     };
 
     setIsSaving(true);
@@ -189,7 +208,15 @@ export function useWorkflowSchemaManager({
     } finally {
       setIsSaving(false);
     }
-  }, [workflow?.slug, environment, schemaForm, onSaveSuccess, isSchemaValid, queryClient]);
+  }, [
+    workflow?.slug,
+    environment,
+    schemaForm,
+    onSaveSuccess,
+    isSchemaValid,
+    queryClient,
+    internalPayloadSchemaValidation,
+  ]);
 
   return {
     currentSchema: schemaForm.getCurrentSchema(),
@@ -205,5 +232,10 @@ export function useWorkflowSchemaManager({
     control: schemaForm.control,
     fields: schemaForm.fields,
     formState: schemaForm.formState,
+    payloadSchemaValidation: internalPayloadSchemaValidation,
+    setPayloadSchemaValidation: (enabled: boolean) => {
+      setInternalPayloadSchemaValidation(enabled);
+      onPayloadSchemaValidationChange?.(enabled);
+    },
   };
 }

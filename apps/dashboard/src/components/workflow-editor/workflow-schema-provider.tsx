@@ -24,6 +24,7 @@ export function WorkflowSchemaProvider({ children }: WorkflowSchemaProviderProps
     workflow: workflow as WorkflowResponseDto,
     environment: currentEnvironment as IEnvironment,
     initialSchema: workflow?.payloadSchema,
+    payloadSchemaValidation: workflow?.payloadSchemaValidation ?? false,
   });
 
   const contextValue: WorkflowSchemaContextType = {

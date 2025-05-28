@@ -25,4 +25,8 @@ export class PatchWorkflowCommand extends EnvironmentWithUserObjectCommand {
   @IsObject()
   @IsOptional()
   payloadSchema?: object;
+
+  @IsBoolean()
+  @IsOptional()
+  payloadSchemaValidation?: boolean;
 }

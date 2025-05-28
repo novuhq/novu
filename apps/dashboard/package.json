@@ -72,6 +72,8 @@
     "@uiw/react-codemirror": "^4.23.6",
     "@uiw/react-json-view": "2.0.0-alpha.32",
     "@xyflow/react": "^12.3.2",
+    "ajv": "^8.17.1",
+    "ajv-formats": "^2.1.1",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "cmdk": "1.0.0",

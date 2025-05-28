@@ -14,6 +14,7 @@ export type PatchWorkflowDto = {
   description?: string;
   tags?: string[];
   payloadSchema?: object;
+  payloadSchemaValidation?: boolean;
 };
 
 export type ListWorkflowResponse = {
@@ -59,6 +60,7 @@ export type WorkflowResponseDto = WorkflowCommonsFields & {
   lastTriggeredAt?: string;
   payloadSchema?: Record<string, any>;
   payloadExample?: object;
+  payloadSchemaValidation?: boolean;
 };
 
 export type WorkflowCreateAndUpdateKeys = keyof CreateWorkflowDto | keyof UpdateWorkflowDto;

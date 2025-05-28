@@ -1,6 +1,6 @@
 import { loadLanguage } from '@uiw/codemirror-extensions-langs';
 
-export const JSON_EXTENSIONS = [loadLanguage('json')?.extension ?? []];
+export const JSON_EXTENSIONS = [loadLanguage('javascript')?.extension ?? []];
 export const BASIC_SETUP = { lineNumbers: true, defaultKeymap: true };
 
 export const CUSTOM_THEME = {
