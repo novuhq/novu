@@ -7,7 +7,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitive
 import { buildDynamicFormSchema, TestWorkflowFormType } from '@/components/workflow-editor/schema';
 import { TestWorkflowForm } from '@/components/workflow-editor/test-workflow/test-workflow-form';
 import { TestWorkflowLogsSidebar } from '@/components/workflow-editor/test-workflow/test-workflow-logs-sidebar';
-import { useFetchWorkflow } from '@/hooks/use-fetch-workflow';
 import { useTriggerWorkflow } from '@/hooks/use-trigger-workflow';
 import { useIsPayloadSchemaEnabled } from '@/hooks/use-is-payload-schema-enabled';
 import { buildRoute, ROUTES } from '@/utils/routes';
@@ -17,14 +16,11 @@ import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { RiPlayCircleLine } from 'react-icons/ri';
 import { Link, useParams } from 'react-router-dom';
-import { toast } from 'sonner';
+import { useWorkflow } from '../workflow-provider';
 
 export const TestWorkflowTabs = ({ testData }: { testData?: WorkflowTestDataResponseDto }) => {
   const { environmentSlug = '', workflowSlug = '' } = useParams<{ environmentSlug: string; workflowSlug: string }>();
-
-  const { workflow } = useFetchWorkflow({
-    workflowSlug,
-  });
+  const { workflow } = useWorkflow();
   const [transactionId, setTransactionId] = useState<string>();
   const isPayloadSchemaEnabled = useIsPayloadSchemaEnabled();
 

@@ -112,7 +112,6 @@ export function useWorkflowSchemaManager({
 }: UseWorkflowSchemaManagerProps): UseWorkflowSchemaManagerReturn {
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<Error | null>(null);
-  const [internalSchema, setInternalSchema] = useState<JSONSchema7 | undefined>(initialSchema);
   const [isSchemaValid, setIsSchemaValid] = useState(true);
   const [internalPayloadSchemaValidation, setInternalPayloadSchemaValidation] = useState(
     payloadSchemaValidation ?? false
@@ -123,7 +122,6 @@ export function useWorkflowSchemaManager({
   const schemaForm = useSchemaForm({
     initialSchema,
     onChange: (newSchema) => {
-      setInternalSchema(newSchema);
       onSchemaChange?.(newSchema);
     },
     onValidityChange: (isValid) => {
@@ -142,8 +140,6 @@ export function useWorkflowSchemaManager({
       schemaForm.methods.reset({
         propertyList,
       });
-
-      setInternalSchema(initialSchema);
     }
   }, [initialSchema, schemaForm.methods]);
 

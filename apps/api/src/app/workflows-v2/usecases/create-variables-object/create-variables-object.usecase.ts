@@ -63,22 +63,12 @@ export class CreateVariablesObject {
 
     // Only check feature flag if we have both steps and payload schema
     if (hasStepsWithEvents && hasPayloadSchema) {
-      try {
-        isPayloadSchemaEnabled = await this.featureFlagService.getFlag({
-          key: FeatureFlagsKeysEnum.IS_PAYLOAD_SCHEMA_ENABLED,
-          defaultValue: false,
-          organization: { _id: command.organizationId },
-          environment: { _id: command.environmentId },
-        });
-      } catch (error) {
-        this.logger.warn(
-          {
-            err: error,
-            workflowId: command.workflowId,
-          },
-          'Failed to get payload schema feature flag for JsonSchemaMock generation'
-        );
-      }
+      isPayloadSchemaEnabled = await this.featureFlagService.getFlag({
+        key: FeatureFlagsKeysEnum.IS_PAYLOAD_SCHEMA_ENABLED,
+        defaultValue: false,
+        organization: { _id: command.organizationId },
+        environment: { _id: command.environmentId },
+      });
     }
 
     Object.keys(stepsObject).forEach((stepId) => {

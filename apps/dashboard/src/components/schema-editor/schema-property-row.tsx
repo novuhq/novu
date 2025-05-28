@@ -1,5 +1,5 @@
 import { memo, useCallback, useMemo } from 'react';
-import { Controller, useFieldArray, useFormContext, useWatch, type Control } from 'react-hook-form';
+import { Controller, Path, useFieldArray, useFormContext, useWatch, type Control } from 'react-hook-form';
 import { RiAddLine, RiDeleteBinLine, RiErrorWarningLine } from 'react-icons/ri';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -13,7 +13,7 @@ import { cn } from '@/utils/ui';
 import type { JSONSchema7 } from './json-schema';
 import { newProperty } from './utils/json-helpers';
 import { getMarginClassPx } from './utils/ui-helpers';
-import type { PropertyListItem } from './utils/validation-schema';
+import type { PropertyListItem, SchemaEditorFormValues } from './utils/validation-schema';
 import type { VariableUsageInfo } from './utils/check-variable-usage';
 
 import { PropertyNameInput } from './components/property-name-input';
@@ -22,9 +22,9 @@ import { useSchemaPropertyType } from './hooks/use-schema-property-type';
 import { PropertyActions } from './components/property-actions';
 
 export interface SchemaPropertyRowProps {
-  control: Control<any>;
+  control: Control<SchemaEditorFormValues>;
   index: number;
-  pathPrefix: string;
+  pathPrefix: Path<SchemaEditorFormValues>;
   onDeleteProperty: () => void;
   indentationLevel?: number;
   highlightedPropertyKey?: string | null;
@@ -79,7 +79,7 @@ const EnumChoice = memo<EnumChoiceProps>(function EnumChoice({ enumChoicePath, e
 });
 
 interface EnumSectionProps {
-  enumArrayPath: string;
+  enumArrayPath: Path<SchemaEditorFormValues>;
   control: Control<any>;
   indentationLevel: number;
 }
@@ -123,7 +123,7 @@ const EnumSection = memo<EnumSectionProps>(function EnumSection({ enumArrayPath,
 interface NestedPropertyProps {
   nestedField: any;
   nestedIndex: number;
-  nestedPropertyListPath: string;
+  nestedPropertyListPath: Path<SchemaEditorFormValues>;
   control: Control<any>;
   onRemove: () => void;
   currentFullPath: string;
@@ -142,7 +142,7 @@ const NestedProperty = memo<NestedPropertyProps>(function NestedProperty({
   const nestedItem = useWatch({
     control,
     name: `${nestedPropertyListPath}.${nestedIndex}`,
-  }) as PropertyListItem;
+  });
 
   const nestedVariableUsageInfo = useMemo(() => {
     const nestedKeyName = nestedItem?.keyName;
@@ -154,7 +154,7 @@ const NestedProperty = memo<NestedPropertyProps>(function NestedProperty({
       key={nestedField.nestedFieldId}
       control={control}
       index={nestedIndex}
-      pathPrefix={`${nestedPropertyListPath}.${nestedIndex}`}
+      pathPrefix={`${nestedPropertyListPath}.${nestedIndex}` as Path<SchemaEditorFormValues>}
       onDeleteProperty={onRemove}
       indentationLevel={0}
       parentPath={currentFullPath}
@@ -165,7 +165,7 @@ const NestedProperty = memo<NestedPropertyProps>(function NestedProperty({
 });
 
 interface ObjectSectionProps {
-  nestedPropertyListPath: string;
+  nestedPropertyListPath: Path<SchemaEditorFormValues>;
   control: Control<any>;
   indentationLevel: number;
   currentFullPath: string;
@@ -249,7 +249,7 @@ const ArrayItemProperty = memo<ArrayItemPropertyProps>(function ArrayItemPropert
       key={itemNestedField.itemNestedFieldId}
       control={control}
       index={itemNestedIndex}
-      pathPrefix={`${itemPropertiesListPath}.${itemNestedIndex}`}
+      pathPrefix={`${itemPropertiesListPath}.${itemNestedIndex}` as Path<SchemaEditorFormValues>}
       onDeleteProperty={onRemove}
       indentationLevel={0}
       parentPath={arrayItemPath}
@@ -369,9 +369,18 @@ export const SchemaPropertyRow = memo<SchemaPropertyRowProps>(function SchemaPro
 
   const propertyListItem = useWatch({ control, name: pathPrefix }) as PropertyListItem;
 
-  const definitionPath = useMemo(() => `${pathPrefix}.definition`, [pathPrefix]);
-  const keyNamePath = useMemo(() => `${pathPrefix}.keyName`, [pathPrefix]);
-  const isRequiredPath = useMemo(() => `${pathPrefix}.isRequired`, [pathPrefix]);
+  const definitionPath = useMemo<Path<SchemaEditorFormValues>>(
+    () => `${pathPrefix}.definition` as Path<SchemaEditorFormValues>,
+    [pathPrefix]
+  );
+  const keyNamePath = useMemo<Path<SchemaEditorFormValues>>(
+    () => `${pathPrefix}.keyName` as Path<SchemaEditorFormValues>,
+    [pathPrefix]
+  );
+  const isRequiredPath = useMemo<Path<SchemaEditorFormValues>>(
+    () => `${pathPrefix}.isRequired` as Path<SchemaEditorFormValues>,
+    [pathPrefix]
+  );
 
   const currentDefinition = propertyListItem?.definition as JSONSchema7 | undefined;
   const currentType = useSchemaPropertyType(currentDefinition);
@@ -381,14 +390,23 @@ export const SchemaPropertyRow = memo<SchemaPropertyRowProps>(function SchemaPro
     return parentPath ? `${parentPath}.${currentKeyName}` : currentKeyName;
   }, [parentPath, currentKeyName]);
 
-  const enumArrayPath = useMemo(() => `${definitionPath}.enum`, [definitionPath]);
-  const nestedPropertyListPath = useMemo(() => `${definitionPath}.propertyList`, [definitionPath]);
+  const enumArrayPath = useMemo<Path<SchemaEditorFormValues>>(
+    () => `${definitionPath}.enum` as Path<SchemaEditorFormValues>,
+    [definitionPath]
+  );
+  const nestedPropertyListPath = useMemo<Path<SchemaEditorFormValues>>(
+    () => `${definitionPath}.propertyList` as Path<SchemaEditorFormValues>,
+    [definitionPath]
+  );
   const itemSchemaObjectPath = useMemo(() => `${definitionPath}.items`, [definitionPath]);
   const itemPropertiesListPath = useMemo(() => `${itemSchemaObjectPath}.propertyList`, [itemSchemaObjectPath]);
 
   const { append: appendNested } = useFieldArray({
     control,
-    name: currentType === 'object' ? nestedPropertyListPath : `_unused_object_path_.${index}`,
+    name:
+      currentType === 'object'
+        ? (nestedPropertyListPath as any)
+        : (`_unused_object_path_.${index}` as Path<SchemaEditorFormValues>),
     keyName: 'nestedFieldId',
   });
 
@@ -431,7 +449,7 @@ export const SchemaPropertyRow = memo<SchemaPropertyRowProps>(function SchemaPro
         />
         <div className="ml-auto flex items-center space-x-1.5">
           <Controller
-            name={isRequiredPath as any}
+            name={isRequiredPath}
             control={control}
             render={({ field }) => (
               <Checkbox

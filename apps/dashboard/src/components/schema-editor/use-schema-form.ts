@@ -332,7 +332,7 @@ export function useSchemaForm({ initialSchema, onChange, onValidityChange }: Use
         };
 
         targetParentPropertyDefinitionList.push(newItemToAdd);
-        (setValue as any)('propertyList', currentRootPropertyList as any, {
+        setValue('propertyList', currentRootPropertyList, {
           shouldValidate: false,
           shouldDirty: true,
           shouldTouch: true,
@@ -369,7 +369,7 @@ export function useSchemaForm({ initialSchema, onChange, onValidityChange }: Use
     getCurrentSchema,
     getValues: () => getValues(),
     setValue: (name: SchemaFormPath, value: any): void => {
-      (methods.setValue as any)(name as any, value);
+      methods.setValue(name, value);
     },
     methods,
   };

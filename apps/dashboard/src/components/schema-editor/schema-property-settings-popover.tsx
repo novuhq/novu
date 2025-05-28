@@ -2,7 +2,7 @@ import { forwardRef, useState } from 'react';
 import { useFormContext, Controller, type Path } from 'react-hook-form';
 
 import { Button } from '@/components/primitives/button';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/primitives/form/form';
+import { FormControl, FormItem, FormLabel, FormMessage } from '@/components/primitives/form/form';
 import { Input } from '@/components/primitives/input';
 import { PopoverContent, Popover, PopoverTrigger } from '@/components/primitives/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
@@ -25,7 +25,7 @@ interface SchemaPropertySettingsPopoverProps {
   variableUsageInfo?: VariableUsageInfo;
 }
 
-function parseDefaultValue(value: string | undefined, type: JSONSchema7TypeName | 'enum' | undefined): any {
+function parseDefaultValue(value: string | undefined, type: JSONSchema7TypeName | 'enum' | undefined) {
   if (value === undefined || value === null || value.trim() === '') {
     return undefined;
   }
@@ -91,7 +91,7 @@ export const SchemaPropertySettingsPopover = forwardRef<HTMLDivElement, SchemaPr
     const { control, watch } = useFormContext<SchemaEditorFormValues>();
     const [showUsagePopover, setShowUsagePopover] = useState(false);
 
-    const currentDefinition = watch(definitionPath as any) as JSONSchema7 | undefined;
+    const currentDefinition = watch(definitionPath as Path<SchemaEditorFormValues>) as JSONSchema7 | undefined;
     const currentType = useSchemaPropertyType(currentDefinition);
 
     const handleApplyChanges = () => {
@@ -214,6 +214,7 @@ export const SchemaPropertySettingsPopover = forwardRef<HTMLDivElement, SchemaPr
                       value={field.value === undefined || field.value === null ? '' : String(field.value)}
                       onChange={(e) => {
                         const parsed = parseDefaultValue(e.target.value, currentType);
+
                         field.onChange(parsed);
                       }}
                       placeholder={`Enter default (${String(effectiveType)})`}

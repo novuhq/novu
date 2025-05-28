@@ -6,5 +6,8 @@ export function useIsPayloadSchemaEnabled(): boolean {
   const isFeatureFlagEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_PAYLOAD_SCHEMA_ENABLED);
   const { workflow } = useWorkflow();
 
+  console.log('isFeatureFlagEnabled', isFeatureFlagEnabled);
+  console.log('workflow?.payloadSchema', workflow);
+
   return isFeatureFlagEnabled && workflow?.payloadSchema != null;
 }
