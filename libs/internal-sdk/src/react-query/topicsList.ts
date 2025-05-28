@@ -28,7 +28,12 @@ import {
 export type TopicsListQueryData = operations.TopicsControllerListTopicsResponse;
 
 /**
- * Get topics list
+ * List all topics
+ *
+ * @remarks
+ * This api returns a paginated list of topics.
+ *     Topics can be filtered by **key**, **name**, or **includeCursor** to paginate through the list.
+ *     Checkout all available filters in the query section.
  */
 export function useTopicsList(
   request: operations.TopicsControllerListTopicsRequest,
@@ -46,7 +51,12 @@ export function useTopicsList(
 }
 
 /**
- * Get topics list
+ * List all topics
+ *
+ * @remarks
+ * This api returns a paginated list of topics.
+ *     Topics can be filtered by **key**, **name**, or **includeCursor** to paginate through the list.
+ *     Checkout all available filters in the query section.
  */
 export function useTopicsListSuspense(
   request: operations.TopicsControllerListTopicsRequest,

@@ -28,7 +28,10 @@ export type TopicsUpdateMutationData =
   operations.TopicsControllerUpdateTopicResponse;
 
 /**
- * Update topic by key
+ * Update a topic
+ *
+ * @remarks
+ * Update a topic name by its unique key identifier **topicKey**
  */
 export function useTopicsUpdateMutation(
   options?: MutationHookOptions<

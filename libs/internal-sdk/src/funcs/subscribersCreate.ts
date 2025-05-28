@@ -26,10 +26,11 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Create subscriber
+ * Create a subscriber
  *
  * @remarks
- * Create subscriber with the given data, if the subscriber already exists, it will be updated
+ * Create a subscriber with the subscriber attributes.
+ *       **subscriberId** is a required field, rest other fields are optional, if the subscriber already exists, it will be updated
  */
 export function subscribersCreate(
   client: NovuCore,

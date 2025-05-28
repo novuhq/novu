@@ -28,7 +28,8 @@ import { Result } from "../types/fp.js";
  * Delete messages by transactionId
  *
  * @remarks
- * Deletes messages entity from the Novu platform using TransactionId of message
+ * Delete multiple messages from the Novu platform using **transactionId** of triggered event.
+ *     This API supports filtering by **channel** and delete all messages associated with the **transactionId**.
  */
 export function messagesDeleteByTransactionId(
   client: NovuCore,

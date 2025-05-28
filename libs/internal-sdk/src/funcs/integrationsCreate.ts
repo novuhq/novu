@@ -26,10 +26,11 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Create integration
+ * Create an integration
  *
  * @remarks
- * Create an integration for the current environment the user is based on the API key provided
+ * Create an integration for the current environment the user is based on the API key provided.
+ *     Each provider supports different credentials, check the provider documentation for more details.
  */
 export function integrationsCreate(
   client: NovuCore,

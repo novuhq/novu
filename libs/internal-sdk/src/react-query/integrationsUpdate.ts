@@ -28,7 +28,11 @@ export type IntegrationsUpdateMutationData =
   operations.IntegrationsControllerUpdateIntegrationByIdResponse;
 
 /**
- * Update integration
+ * Update an integration
+ *
+ * @remarks
+ * Update an integration by its unique key identifier **integrationId**.
+ *     Each provider supports different credentials, check the provider documentation for more details.
  */
 export function useIntegrationsUpdateMutation(
   options?: MutationHookOptions<

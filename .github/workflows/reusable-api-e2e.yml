@@ -16,8 +16,8 @@ on:
 jobs:
   e2e_api:
     name: Test E2E
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
+    runs-on: blacksmith-8vcpu-ubuntu-2404
+    timeout-minutes: 15
     permissions:
       contents: read
       deployments: write
@@ -45,7 +45,7 @@ jobs:
         name: Start localstack
 
       - name: Build API & Worker
-        run: CI='' pnpm nx run-many --skip-nx-cache --target=build --all --projects=@novu/api-service,@novu/worker
+        run: CI='' pnpm nx run-many --target=build --all --projects=@novu/api-service,@novu/worker
 
       - name: Start Worker
         shell: bash
@@ -53,34 +53,23 @@ jobs:
           NOVU_ENTERPRISE: ${{ inputs.ee }}
         run: |
           # Start the worker service in the background
-          pnpm start:worker:test 2>&1 &
-
-          # Get the PID of the last background command
-          WORKER_PID=$!
-
-          # Start a background process to monitor the worker service. This ensures that the worker service is restarted if it stops in the CI environment
-          (
-            while true; do
-              # Check if the worker service is running
-              if ! kill -0 $WORKER_PID 2> /dev/null; then
-                echo "Worker service has stopped. Restarting..."
-                pnpm start:test 2>&1 &
-                WORKER_PID=$!
-              fi
-              sleep 1 # Check every 1 second
-            done
-          ) &
+          cd apps/worker && npm run start:test &
 
       - name: Wait on worker
         shell: bash
         run: wait-on --timeout=180000 http://127.0.0.1:1342/v1/health-check
 
+      - name: Build API
+        run: cd apps/api && pnpm build:metadata
+
       - name: Run Novu V1 E2E tests
         if: ${{ !inputs.ee }}
         run: |
+          set -e
           pnpm --filter @novu/api-service test:e2e:novu-v0
 
       - name: Run Novu V2 E2E tests
         if: ${{ inputs.ee }}
         run: |
+          set -e
           pnpm --filter @novu/api-service test:e2e:novu-v2

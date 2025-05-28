@@ -308,7 +308,7 @@ describe('defaultOutputEscape', () => {
     expect(defaultOutputEscape(123)).toBe('123');
     expect(defaultOutputEscape(true)).toBe('true');
     expect(defaultOutputEscape(false)).toBe('false');
-    expect(defaultOutputEscape(null)).toBe('null');
+    expect(defaultOutputEscape(null)).toBe('');
     expect(defaultOutputEscape(undefined)).toBe('');
   });
 });

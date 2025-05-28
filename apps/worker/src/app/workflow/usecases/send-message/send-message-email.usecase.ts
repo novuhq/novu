@@ -235,21 +235,6 @@ export class SendMessageEmail extends SendMessageBase {
           i18nInstance
         ));
 
-        if (this.storeContent()) {
-          await this.messageRepository.update(
-            {
-              _id: message._id,
-              _environmentId: command.environmentId,
-            },
-            {
-              $set: {
-                subject,
-                content,
-              },
-            }
-          );
-        }
-
         // TODO: remove as part of https://linear.app/novu/issue/NV-4117/email-html-content-issue-in-mobile-devices
         const shouldDisableInlineCss = await this.featureFlagService.getFlag({
           key: FeatureFlagsKeysEnum.IS_EMAIL_INLINE_CSS_DISABLED,
@@ -279,6 +264,21 @@ export class SendMessageEmail extends SendMessageBase {
         status: 'failed',
         reason: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
       };
+    }
+
+    if (this.storeContent()) {
+      await this.messageRepository.update(
+        {
+          _id: message._id,
+          _environmentId: command.environmentId,
+        },
+        {
+          $set: {
+            subject,
+            content: (bridgeOutputs as EmailOutput)?.body || content,
+          },
+        }
+      );
     }
 
     await this.createExecutionDetails.execute(

@@ -38,11 +38,13 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
     });
     this.#emitter = new NovuEventEmitter();
     this.#session = new Session(
-      {
-        applicationIdentifier: options.applicationIdentifier,
-        subscriberHash: options.subscriberHash,
-        subscriber: buildSubscriber(options),
-      },
+      options.applicationIdentifier
+        ? {
+            applicationIdentifier: options.applicationIdentifier,
+            subscriberHash: options.subscriberHash,
+            subscriber: buildSubscriber(options),
+          }
+        : {},
       this.#inboxService,
       this.#emitter
     );
@@ -82,13 +84,16 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
 }
 
 function buildSubscriber(options: NovuOptions): Subscriber {
-  let subscriberObj: Subscriber;
-
+  // subscriber object
   if (options.subscriber) {
-    subscriberObj = typeof options.subscriber === 'string' ? { subscriberId: options.subscriber } : options.subscriber;
-  } else {
-    subscriberObj = { subscriberId: options.subscriberId as string };
+    return typeof options.subscriber === 'string' ? { subscriberId: options.subscriber } : options.subscriber;
   }
 
-  return subscriberObj;
+  // subscriberId
+  if (options.subscriberId) {
+    return { subscriberId: options.subscriberId as string };
+  }
+
+  // missing - keyless subscriber, the api will generate a subscriberId
+  return { subscriberId: '' };
 }

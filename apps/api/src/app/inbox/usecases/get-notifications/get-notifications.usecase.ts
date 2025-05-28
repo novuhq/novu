@@ -6,7 +6,9 @@ import { GetSubscriber } from '../../../subscribers/usecases/get-subscriber';
 import type { GetNotificationsResponseDto } from '../../dtos/get-notifications-response.dto';
 import { AnalyticsEventsEnum } from '../../utils';
 import { mapToDto } from '../../utils/notification-mapper';
+import { validateDataStructure } from '../../utils/validate-data';
 import type { GetNotificationsCommand } from './get-notifications.command';
+import { NotificationFilter } from '../../utils/types';
 
 @Injectable()
 export class GetNotifications {
@@ -39,6 +41,19 @@ export class GetNotifications {
       throw new BadRequestException('Filtering for unread and archived notifications is not supported.');
     }
 
+    let parsedData;
+    if (command.data) {
+      try {
+        parsedData = JSON.parse(command.data);
+        validateDataStructure(parsedData);
+      } catch (error) {
+        if (error instanceof BadRequestException) {
+          throw error;
+        }
+        throw new BadRequestException('Invalid JSON format for data parameter');
+      }
+    }
+
     const { data: feed, hasMore } = await this.messageRepository.paginate(
       {
         environmentId: command.environmentId,
@@ -48,6 +63,7 @@ export class GetNotifications {
         read: command.read,
         archived: command.archived,
         snoozed: command.snoozed,
+        data: parsedData,
       },
       {
         limit: command.limit,
@@ -64,15 +80,18 @@ export class GetNotifications {
       });
     }
 
+    const filters: NotificationFilter = {
+      tags: command.tags,
+      read: command.read,
+      archived: command.archived,
+      snoozed: command.snoozed,
+      data: parsedData,
+    };
+
     return {
       data: mapToDto(feed),
       hasMore,
-      filter: {
-        tags: command.tags,
-        read: command.read,
-        archived: command.archived,
-        snoozed: command.snoozed,
-      },
+      filter: filters,
     };
   }
 }

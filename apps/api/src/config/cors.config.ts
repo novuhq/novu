@@ -35,7 +35,7 @@ export const corsOptionsDelegate: Parameters<INestApplication['enableCors']>[0] 
 };
 
 function enableWildcard(req: Request): boolean {
-  return isSandboxEnvironment() || isWidgetRoute(req.url) || isInboxRoute(req.url) || isBlueprintRoute(req.url);
+  return isDevelopmentEnvironment() || isWidgetRoute(req.url) || isInboxRoute(req.url) || isBlueprintRoute(req.url);
 }
 
 function isWidgetRoute(url: string): boolean {
@@ -50,7 +50,7 @@ function isBlueprintRoute(url: string): boolean {
   return url.startsWith('/v1/blueprints');
 }
 
-function isSandboxEnvironment(): boolean {
+function isDevelopmentEnvironment(): boolean {
   return ['test', 'local'].includes(process.env.NODE_ENV || '');
 }
 

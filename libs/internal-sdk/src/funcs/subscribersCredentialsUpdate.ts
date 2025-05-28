@@ -26,10 +26,11 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Update subscriber credentials
+ * Update provider credentials
  *
  * @remarks
- * Subscriber credentials associated to the delivery methods such as slack and push tokens.
+ * Update credentials for a provider such as slack and push tokens.
+ *       **providerId** is required field. This API appends the **deviceTokens** to the existing ones.
  */
 export function subscribersCredentialsUpdate(
   client: NovuCore,

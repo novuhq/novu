@@ -28,6 +28,7 @@ import {
 } from '@novu/application-generic';
 import { ApplyChange, ApplyChangeCommand } from '../apply-change';
 import { PromoteTypeChangeCommand } from '../promote-type-change.command';
+import { INotificationTemplateChangeService } from '../shared';
 
 /**
  * Promote a notification template change to a workflow
@@ -39,7 +40,7 @@ import { PromoteTypeChangeCommand } from '../promote-type-change.command';
  * - DeleteWorkflow
  */
 @Injectable()
-export class PromoteNotificationTemplateChange {
+export class PromoteNotificationTemplateChange implements INotificationTemplateChangeService {
   constructor(
     private invalidateCache: InvalidateCacheService,
     private notificationTemplateRepository: NotificationTemplateRepository,

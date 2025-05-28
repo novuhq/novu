@@ -390,14 +390,16 @@ export const readAll = async ({
   inboxService,
   notificationsCache,
   tags,
+  data,
 }: {
   emitter: NovuEventEmitter;
   inboxService: InboxService;
   notificationsCache: NotificationsCache;
   tags?: NotificationFilter['tags'];
+  data?: Record<string, unknown>;
 }): Result<void> => {
   try {
-    const notifications = notificationsCache.getUniqueNotifications({ tags });
+    const notifications = notificationsCache.getUniqueNotifications({ tags, data });
     const optimisticNotifications = notifications.map(
       (notification) =>
         new Notification(
@@ -412,15 +414,15 @@ export const readAll = async ({
           inboxService
         )
     );
-    emitter.emit('notifications.read_all.pending', { args: { tags }, data: optimisticNotifications });
+    emitter.emit('notifications.read_all.pending', { args: { tags, data }, data: optimisticNotifications });
 
-    await inboxService.readAll({ tags });
+    await inboxService.readAll({ tags, data });
 
-    emitter.emit('notifications.read_all.resolved', { args: { tags }, data: optimisticNotifications });
+    emitter.emit('notifications.read_all.resolved', { args: { tags, data }, data: optimisticNotifications });
 
     return {};
   } catch (error) {
-    emitter.emit('notifications.read_all.resolved', { args: { tags }, error });
+    emitter.emit('notifications.read_all.resolved', { args: { tags, data }, error });
 
     return { error: new NovuError('Failed to read all notifications', error) };
   }
@@ -431,14 +433,16 @@ export const archiveAll = async ({
   inboxService,
   notificationsCache,
   tags,
+  data,
 }: {
   emitter: NovuEventEmitter;
   inboxService: InboxService;
   notificationsCache: NotificationsCache;
   tags?: NotificationFilter['tags'];
+  data?: Record<string, unknown>;
 }): Result<void> => {
   try {
-    const notifications = notificationsCache.getUniqueNotifications({ tags });
+    const notifications = notificationsCache.getUniqueNotifications({ tags, data });
     const optimisticNotifications = notifications.map(
       (notification) =>
         new Notification(
@@ -453,15 +457,15 @@ export const archiveAll = async ({
           inboxService
         )
     );
-    emitter.emit('notifications.archive_all.pending', { args: { tags }, data: optimisticNotifications });
+    emitter.emit('notifications.archive_all.pending', { args: { tags, data }, data: optimisticNotifications });
 
-    await inboxService.archiveAll({ tags });
+    await inboxService.archiveAll({ tags, data });
 
-    emitter.emit('notifications.archive_all.resolved', { args: { tags }, data: optimisticNotifications });
+    emitter.emit('notifications.archive_all.resolved', { args: { tags, data }, data: optimisticNotifications });
 
     return {};
   } catch (error) {
-    emitter.emit('notifications.archive_all.resolved', { args: { tags }, error });
+    emitter.emit('notifications.archive_all.resolved', { args: { tags, data }, error });
 
     return { error: new NovuError('Failed to archive all notifications', error) };
   }
@@ -472,14 +476,16 @@ export const archiveAllRead = async ({
   inboxService,
   notificationsCache,
   tags,
+  data,
 }: {
   emitter: NovuEventEmitter;
   inboxService: InboxService;
   notificationsCache: NotificationsCache;
   tags?: NotificationFilter['tags'];
+  data?: Record<string, unknown>;
 }): Result<void> => {
   try {
-    const notifications = notificationsCache.getUniqueNotifications({ tags, read: true });
+    const notifications = notificationsCache.getUniqueNotifications({ tags, data, read: true });
     const optimisticNotifications = notifications.map(
       (notification) =>
         new Notification(
@@ -488,15 +494,15 @@ export const archiveAllRead = async ({
           inboxService
         )
     );
-    emitter.emit('notifications.archive_all_read.pending', { args: { tags }, data: optimisticNotifications });
+    emitter.emit('notifications.archive_all_read.pending', { args: { tags, data }, data: optimisticNotifications });
 
-    await inboxService.archiveAllRead({ tags });
+    await inboxService.archiveAllRead({ tags, data });
 
-    emitter.emit('notifications.archive_all_read.resolved', { args: { tags }, data: optimisticNotifications });
+    emitter.emit('notifications.archive_all_read.resolved', { args: { tags, data }, data: optimisticNotifications });
 
     return {};
   } catch (error) {
-    emitter.emit('notifications.archive_all_read.resolved', { args: { tags }, error });
+    emitter.emit('notifications.archive_all_read.resolved', { args: { tags, data }, error });
 
     return { error: new NovuError('Failed to archive all read notifications', error) };
   }

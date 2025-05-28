@@ -24,14 +24,15 @@ export class CommunityUserAuthGuard extends AuthGuard([PassportStrategyEnum.JWT,
     this.logger.assign({ authScheme });
 
     switch (authScheme) {
-      case ApiAuthSchemeEnum.BEARER:
+      case ApiAuthSchemeEnum.BEARER: {
         return {
           session: false,
           defaultStrategy: PassportStrategyEnum.JWT,
         };
+      }
       case ApiAuthSchemeEnum.API_KEY: {
         const apiEnabled = this.reflector.get<boolean>('external_api_accessible', context.getHandler());
-        if (!apiEnabled) throw new UnauthorizedException('API endpoint not available');
+        if (!apiEnabled) throw new UnauthorizedException('API endpoint not accessible');
 
         return {
           session: false,

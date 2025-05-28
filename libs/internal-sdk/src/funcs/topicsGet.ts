@@ -25,7 +25,10 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Get topic by key
+ * Retrieve a topic
+ *
+ * @remarks
+ * Retrieve a topic by its unique key identifier **topicKey**
  */
 export function topicsGet(
   client: NovuCore,

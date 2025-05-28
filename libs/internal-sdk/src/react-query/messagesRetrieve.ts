@@ -30,10 +30,12 @@ export type MessagesRetrieveQueryData =
   operations.MessagesControllerGetMessagesResponse;
 
 /**
- * Get messages
+ * List all messages
  *
  * @remarks
- * Returns a list of messages, could paginate using the `page` query parameter
+ * List all messages for the current environment.
+ *     This API supports filtering by **channel**, **subscriberId**, and **transactionId**.
+ *     This API returns a paginated list of messages.
  */
 export function useMessagesRetrieve(
   request: operations.MessagesControllerGetMessagesRequest,
@@ -51,10 +53,12 @@ export function useMessagesRetrieve(
 }
 
 /**
- * Get messages
+ * List all messages
  *
  * @remarks
- * Returns a list of messages, could paginate using the `page` query parameter
+ * List all messages for the current environment.
+ *     This API supports filtering by **channel**, **subscriberId**, and **transactionId**.
+ *     This API returns a paginated list of messages.
  */
 export function useMessagesRetrieveSuspense(
   request: operations.MessagesControllerGetMessagesRequest,

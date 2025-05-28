@@ -27,6 +27,9 @@ import { Result } from "../types/fp.js";
 
 /**
  * Delete topic subscriptions
+ *
+ * @remarks
+ * Delete subscriptions for subscriberIds for a topic.
  */
 export function topicsSubscriptionsDelete(
   client: NovuCore,

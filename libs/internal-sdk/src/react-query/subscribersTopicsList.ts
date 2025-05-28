@@ -29,10 +29,11 @@ export type SubscribersTopicsListQueryData =
   operations.SubscribersControllerListSubscriberTopicsResponse;
 
 /**
- * List topics a subscriber is subscribed to
+ * Retrieve subscriber subscriptions
  *
  * @remarks
- * List topic subscriptions for a subscriber with pagination and filtering
+ * Retrieve subscriber's topic subscriptions by its unique key identifier **subscriberId**.
+ *     Checkout all available filters in the query section.
  */
 export function useSubscribersTopicsList(
   request: operations.SubscribersControllerListSubscriberTopicsRequest,
@@ -50,10 +51,11 @@ export function useSubscribersTopicsList(
 }
 
 /**
- * List topics a subscriber is subscribed to
+ * Retrieve subscriber subscriptions
  *
  * @remarks
- * List topic subscriptions for a subscriber with pagination and filtering
+ * Retrieve subscriber's topic subscriptions by its unique key identifier **subscriberId**.
+ *     Checkout all available filters in the query section.
  */
 export function useSubscribersTopicsListSuspense(
   request: operations.SubscribersControllerListSubscriberTopicsRequest,

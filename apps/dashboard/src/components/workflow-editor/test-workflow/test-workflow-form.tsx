@@ -150,19 +150,19 @@ export const TestWorkflowForm = ({ workflow }: { workflow?: WorkflowResponseDto 
                   View Setup Instructions
                 </Button>
               </TabsList>
-              <TabsContent value="shell" className={codePanelClassName} variant="regular">
+              <TabsContent value="shell" className={codePanelClassName}>
                 <SnippetEditor language="shell" value={snippetValue} />
               </TabsContent>
-              <TabsContent value="typescript" className={codePanelClassName} variant="regular">
+              <TabsContent value="typescript" className={codePanelClassName}>
                 <SnippetEditor language="typescript" value={snippetValue} />
               </TabsContent>
-              <TabsContent value="php" className={codePanelClassName} variant="regular">
+              <TabsContent value="php" className={codePanelClassName}>
                 <SnippetEditor language="php" value={snippetValue} />
               </TabsContent>
-              <TabsContent value="go" className={codePanelClassName} variant="regular">
+              <TabsContent value="go" className={codePanelClassName}>
                 <SnippetEditor language="go" value={snippetValue} />
               </TabsContent>
-              <TabsContent value="python" className={codePanelClassName} variant="regular">
+              <TabsContent value="python" className={codePanelClassName}>
                 <SnippetEditor language="python" value={snippetValue} />
               </TabsContent>
             </Tabs>

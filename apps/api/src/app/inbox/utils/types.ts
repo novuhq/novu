@@ -42,6 +42,7 @@ export type NotificationFilter = {
   read?: boolean;
   archived?: boolean;
   snoozed?: boolean;
+  data?: string;
 };
 
 export type Workflow = {

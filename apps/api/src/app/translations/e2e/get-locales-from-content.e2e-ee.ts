@@ -9,7 +9,7 @@ const createTranslationGroup = {
 
 const content = 'Hello {{i18n "test.key1"}}, {{i18n "test.key2"}}, {{i18n "test.key3"}}';
 
-describe('Get locales from content - /translations/groups/:identifier/locales/:locale (PATCH) #novu-v0', async () => {
+describe('Get locales from content - /translations/groups/:identifier/locales/:locale (PATCH) #novu-v2', async () => {
   let session: UserSession;
 
   before(async () => {

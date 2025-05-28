@@ -8,7 +8,7 @@ import { AuthService } from './services/auth.service';
 
 export function getEEModuleConfig(): ModuleMetadata {
   const eeAuthPackage = require('@novu/ee-auth');
-  const eeAuthModule = eeAuthPackage?.eEAuthModule;
+  const eeAuthModule = eeAuthPackage?.eeAuthModule;
 
   if (!eeAuthModule) {
     throw new PlatformException('ee-auth module is not loaded');

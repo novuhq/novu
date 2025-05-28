@@ -1,7 +1,6 @@
 import './instrument';
 
 import helmet from 'helmet';
-
 import { INestApplication, ValidationPipe, VersioningType } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import bodyParser from 'body-parser';
@@ -27,7 +26,7 @@ const extendedBodySizeRoutes = [
   '/v1/environments/:environmentId/bridge',
 ];
 
-// Validate the ENV variables after launching SENTRY, so missing variables will report to sentry
+// Validate the ENV variables after launching SENTRY, so missing variables will report to sentry.
 validateEnv();
 class BootstrapOptions {
   internalSdkGeneration?: boolean;
@@ -123,7 +122,7 @@ export async function bootstrap(
 
   app.enableShutdownHooks();
 
-  logger.info(`Started application in NODE_ENV=${process.env.NODE_ENV} on port ${process.env.PORT}`);
+  logger.info(`Started application in NODE_ENV=${process.env.NODE_ENV} on port ${process.env.PORT}.`);
 
   return { app, document };
 }

@@ -3,8 +3,8 @@ import { Type } from 'class-transformer';
 
 export class SubscriberSessionRequestDto {
   @IsString()
-  @IsDefined()
-  readonly applicationIdentifier: string;
+  @IsOptional()
+  readonly applicationIdentifier?: string;
 
   @IsString()
   @IsOptional()

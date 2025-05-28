@@ -1,10 +1,9 @@
 // Use pagination primitives from the dashboard project
 import { CursorPagination } from '@/components/cursor-pagination';
-import { Button } from '@/components/primitives/button';
 import { Table, TableBody, TableHead, TableHeader, TableRow } from '@/components/primitives/table';
 import { useFetchTopics } from '@/hooks/use-fetch-topics';
 import { cn } from '@/utils/ui';
-import { DirectionEnum } from '@novu/shared';
+import { DirectionEnum, PermissionsEnum } from '@novu/shared';
 import { HTMLAttributes, useCallback } from 'react';
 import { RiAddCircleLine } from 'react-icons/ri';
 import { useSearchParams } from 'react-router-dom';
@@ -14,12 +13,13 @@ import { TopicListBlank } from './topic-list-blank';
 import { TopicListNoResults } from './topic-list-no-results';
 import { TopicRow, TopicRowSkeleton } from './topic-row';
 import { TopicsFilters } from './topics-filters';
+import { PermissionButton } from '@/components/primitives/permission-button';
 
 // Use type alias instead of interface for component props
 type TopicListProps = HTMLAttributes<HTMLDivElement>;
 
 // Wrapper similar to SubscriberListWrapper
-const TopicListWrapper = (props: TopicListFiltersProps & { hasData?: boolean; areFiltersApplied?: boolean }) => {
+const TopicListWrapper = (props: TopicListFiltersProps & { hasData?: boolean; areFiltersApplied?: boolean; showEmptyState?: boolean }) => {
   const {
     className,
     children,
@@ -29,12 +29,11 @@ const TopicListWrapper = (props: TopicListFiltersProps & { hasData?: boolean; ar
     isLoading,
     hasData,
     areFiltersApplied,
+    showEmptyState,
     ...rest
   } = props;
-  const { navigateToCreateTopicPage } = useTopicsNavigate();
-
   return (
-    <div className={cn('flex flex-col p-2', className)} {...rest}>
+    <div className={cn('flex flex-col p-2', showEmptyState && 'h-[calc(100vh-100px)]', className)} {...rest}>
       <div className="flex items-center justify-between">
         {isLoading || hasData || areFiltersApplied ? (
           <TopicsFilters
@@ -47,19 +46,27 @@ const TopicListWrapper = (props: TopicListFiltersProps & { hasData?: boolean; ar
         ) : (
           <div /> // Empty div placeholder to maintain layout
         )}
-
-        <Button
-          variant="primary"
-          mode="gradient"
-          size="xs"
-          leadingIcon={RiAddCircleLine}
-          onClick={navigateToCreateTopicPage}
-        >
-          Create Topic
-        </Button>
+        {!showEmptyState && <CreateTopicButton />}
       </div>
       {children}
     </div>
+  );
+};
+
+export const CreateTopicButton = () => {
+  const { navigateToCreateTopicPage } = useTopicsNavigate();
+
+  return (
+    <PermissionButton
+      permission={PermissionsEnum.TOPIC_WRITE}
+      variant="primary"
+      mode="gradient"
+      size="xs"
+      leadingIcon={RiAddCircleLine}
+      onClick={navigateToCreateTopicPage}
+    >
+      Create Topic
+    </PermissionButton>
   );
 };
 
@@ -198,7 +205,7 @@ export const TopicList = (props: TopicListProps) => {
 
   if (!areFiltersApplied && !data?.data.length) {
     return (
-      <TopicListWrapper {...wrapperProps}>
+      <TopicListWrapper {...wrapperProps} showEmptyState={true}>
         <TopicListBlank />
       </TopicListWrapper>
     );

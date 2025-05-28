@@ -105,7 +105,6 @@ const tabsContentVariants = cva('focus-visible:outline-none', {
   variants: {
     variant: {
       default: '',
-      regular: 'mt-2',
     },
   },
   defaultVariants: {

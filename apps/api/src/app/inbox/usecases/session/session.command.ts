@@ -5,9 +5,9 @@ import { Type } from 'class-transformer';
 import { SubscriberDto } from '../../dtos/subscriber-session-request.dto';
 
 export class SessionCommand extends BaseCommand {
-  @IsDefined()
+  @IsOptional()
   @IsString()
-  readonly applicationIdentifier: string;
+  readonly applicationIdentifier?: string;
 
   @IsString()
   @IsOptional()

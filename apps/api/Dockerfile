@@ -1,4 +1,4 @@
-FROM ghcr.io/novuhq/novu/base:1.0.0 AS dev
+FROM ghcr.io/novuhq/novu/base:1.1.0 AS dev
 ARG PACKAGE_PATH
 
 COPY --chown=1000:1000 ./meta .
@@ -35,7 +35,7 @@ WORKDIR /usr/src/app
 RUN rm -rf node_modules && pnpm recursive exec -- rm -rf ./src ./node_modules
 
 # ------- PRODUCTION BUILD ----------
-FROM ghcr.io/novuhq/novu/base:1.0.0 AS prod
+FROM ghcr.io/novuhq/novu/base:1.1.0 AS prod
 
 ARG PACKAGE_PATH
 

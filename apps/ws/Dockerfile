@@ -1,4 +1,4 @@
-FROM ghcr.io/novuhq/novu/base:1.0.0
+FROM ghcr.io/novuhq/novu/base:1.1.0
 
 COPY --chown=1000:1000 .npmrc .
 COPY --chown=1000:1000 .npmrc-cloud .
