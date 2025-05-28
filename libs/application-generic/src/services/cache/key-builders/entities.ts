@@ -1,3 +1,4 @@
+import { ResourceEnum } from '@novu/shared';
 import { createHash } from './crypto';
 import { BLUEPRINT_IDENTIFIER, CacheKeyPrefixEnum, CacheKeyTypeEnum, IdentifierPrefixEnum } from './identifiers';
 import {
@@ -7,7 +8,6 @@ import {
   buildOrganizationScopedKeyById,
 } from './builder.scoped';
 import { buildUnscopedKey } from './builder.base';
-import { ResourceEnum } from '@novu/shared';
 
 export const buildSubscriberKey = ({
   subscriberId,

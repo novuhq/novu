@@ -16,7 +16,7 @@ import { SubscriberProcessQueueService } from '../../services/queues/subscriber-
 import { buildUsageKey } from '../../services/cache/key-builders';
 import { CacheService } from '../../services';
 
-export interface BaseTriggerCommand {
+export type BaseTriggerCommand = {
   environmentId: string;
   organizationId: string;
   userId: string;
@@ -32,7 +32,7 @@ export interface BaseTriggerCommand {
   controls?: StatelessControls;
   bridgeUrl?: string;
   bridgeWorkflow?: any;
-}
+};
 
 @Injectable()
 export abstract class TriggerBase {
