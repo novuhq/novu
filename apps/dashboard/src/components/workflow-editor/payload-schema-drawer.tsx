@@ -17,12 +17,13 @@ import { ExternalLink } from '../shared/external-link';
 import { TooltipContent, TooltipTrigger } from '../primitives/tooltip';
 import { TooltipProvider } from '../primitives/tooltip';
 import { Tooltip } from '../primitives/tooltip';
-import { RiFileMarkedLine, RiInformation2Line, RiAddLine } from 'react-icons/ri';
+import { RiFileMarkedLine, RiInformation2Line, RiAddLine, RiShieldCheckLine } from 'react-icons/ri';
 import { Separator } from '../primitives/separator';
 import { Link } from 'react-router-dom';
 import { SchemaChangeConfirmationModal } from './schema-change-confirmation-modal';
 import { detectSchemaChanges, type SchemaChanges } from '../schema-editor/utils/schema-change-detection';
 import { checkVariableUsageInWorkflow } from '../schema-editor/utils/check-variable-usage';
+import { Switch } from '../primitives/switch';
 
 interface PayloadSchemaDrawerProps {
   isOpen: boolean;
@@ -45,6 +46,7 @@ export function PayloadSchemaDrawer({
   const [originalSchema, setOriginalSchema] = useState<JSONSchema7 | undefined>();
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [pendingChanges, setPendingChanges] = useState<SchemaChanges | null>(null);
+  const [enforceSchemaValidation, setEnforceSchemaValidation] = useState(false);
 
   const {
     currentSchema,
@@ -139,7 +141,7 @@ export function PayloadSchemaDrawer({
           </SheetHeader>
           <Separator />
           <SheetMain className="p-3">
-            <div className="mb-2 flex flex-row items-center justify-between gap-2">
+            <div className="mb-4 flex flex-row items-center justify-between gap-2">
               <h3 className="text-label-xs w-full">
                 <TooltipProvider>
                   <Tooltip>
@@ -155,6 +157,29 @@ export function PayloadSchemaDrawer({
                   </Tooltip>
                 </TooltipProvider>
               </h3>
+            </div>
+
+            <div className="rounded-4 border-1 mb-4 flex items-center justify-between border border-neutral-100 bg-white p-2">
+              <div className="text-text-strong text-label-xs flex items-center gap-1">
+                <RiShieldCheckLine className="text-text-strong size-3" />
+                Enforce schema validation
+                <Tooltip>
+                  <TooltipTrigger className="flex cursor-default flex-row items-center gap-1">
+                    <RiInformation2Line className="size-3 text-neutral-400" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>
+                      When enabled, the workflow will validate incoming payloads against the defined schema and reject
+                      invalid requests during the trigger http request.
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+              <Switch
+                checked={enforceSchemaValidation}
+                onCheckedChange={setEnforceSchemaValidation}
+                disabled={isLoadingWorkflow}
+              />
             </div>
 
             {isLoadingWorkflow ? (

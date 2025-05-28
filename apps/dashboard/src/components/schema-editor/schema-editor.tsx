@@ -64,7 +64,7 @@ export function SchemaEditor({
 
   return (
     <FormProvider {...methods}>
-      <div className="rounded-4 bg-bg-white border border-neutral-100 p-2 px-[2px]">
+      <div className="rounded-4 bg-bg-white border-1 border border-neutral-100 p-2 px-[2px]">
         {fields.map((field, index) => {
           const variableUsageInfo = variableUsageMap.get(field.keyName) || { isUsed: false, usedInSteps: [] };
 
