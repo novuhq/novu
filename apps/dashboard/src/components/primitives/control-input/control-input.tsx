@@ -138,12 +138,8 @@ export function ControlInput({
   );
 
   const completionSource = useMemo(() => {
-    if (workflow && isPayloadSchemaEnabled) {
-      return createAutocompleteSource(variables, onVariableSelect, handleCreateNewVariable);
-    }
-
-    return undefined;
-  }, [variables, workflow, isPayloadSchemaEnabled, onVariableSelect, handleCreateNewVariable]);
+    return createAutocompleteSource(variables, onVariableSelect, handleCreateNewVariable, isPayloadSchemaEnabled);
+  }, [variables, onVariableSelect, handleCreateNewVariable, isPayloadSchemaEnabled]);
 
   const autocompletionExtension = useMemo(
     () =>

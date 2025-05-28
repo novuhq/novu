@@ -84,7 +84,11 @@ const createInfoPanel = ({ component }: { component: React.ReactNode }) => {
  *    - steps.{valid-step}.events[n].payload.* (any new field)
  */
 export const completions =
-  (variables: LiquidVariable[], onCreateNewVariable?: (variableName: string) => Promise<void>) =>
+  (
+    variables: LiquidVariable[],
+    onCreateNewVariable?: (variableName: string) => Promise<void>,
+    isPayloadSchemaEnabled?: boolean
+  ) =>
   (context: CompletionContext): CompletionResult | null => {
     const { state, pos } = context;
     const beforeCursor = state.sliceDoc(0, pos);
@@ -110,7 +114,7 @@ export const completions =
       };
     }
 
-    const matchingVariables = getMatchingVariables(searchText, variables, onCreateNewVariable);
+    const matchingVariables = getMatchingVariables(searchText, variables, onCreateNewVariable, isPayloadSchemaEnabled);
 
     // If we have matches or we're in a valid context, show them
     if (matchingVariables.length > 0 || isInsideLiquidBlock(beforeCursor)) {
@@ -120,7 +124,7 @@ export const completions =
         options: matchingVariables.map((v) =>
           createCompletionOption(
             v.name,
-            v.isNewSuggestion ? 'new-variable' : (v.type ?? 'variable'),
+            v.isNewSuggestion && isPayloadSchemaEnabled ? 'new-variable' : (v.type ?? 'variable'),
             v.boost,
             v.info,
             v.displayLabel
@@ -171,7 +175,8 @@ function getFilterCompletions(afterPipe: string): CompletionOption[] {
 function getMatchingVariables(
   searchText: string,
   variables: LiquidVariable[],
-  onCreateNewVariable?: (variableName: string) => Promise<void>
+  onCreateNewVariable?: (variableName: string) => Promise<void>,
+  isPayloadSchemaEnabled?: boolean
 ): LiquidVariable[] {
   if (!searchText) return variables;
 
@@ -212,6 +217,10 @@ function getMatchingVariables(
         type: 'variable',
         isNewSuggestion: true,
         info: () => {
+          if (!isPayloadSchemaEnabled) {
+            return null;
+          }
+
           const dom = createInfoPanel({
             component: (
               <NewVariablePreview
@@ -255,14 +264,15 @@ function getMatchingVariables(
 export function createAutocompleteSource(
   variables: LiquidVariable[],
   onVariableSelect?: (completion: CompletionOption) => void,
-  onCreateNewVariable?: (variableName: string) => Promise<void>
+  onCreateNewVariable?: (variableName: string) => Promise<void>,
+  isPayloadSchemaEnabled?: boolean
 ) {
   return (context: CompletionContext) => {
     // Match text that starts with {{ and capture everything after it until the cursor position
     const word = context.matchBefore(/\{\{([^}]*)/);
     if (!word) return null;
 
-    const options = completions(variables, onCreateNewVariable)(context);
+    const options = completions(variables, onCreateNewVariable, isPayloadSchemaEnabled)(context);
     if (!options) return null;
 
     const { from, to } = options;
