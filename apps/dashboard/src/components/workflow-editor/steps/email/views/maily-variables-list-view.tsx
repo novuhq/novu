@@ -12,6 +12,11 @@ import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { NewVariablePreview } from '@/components/variable/components/new-variable-preview';
 
+interface ExtendedVariable extends Variable {
+  type?: string;
+  displayLabel?: string;
+}
+
 type VariableSuggestionsPopoverProps = {
   items: Variable[];
   onSelectItem: (item: Variable) => void;
@@ -36,8 +41,7 @@ export const MailyVariablesListView = React.forwardRef(
       () =>
         items.map((item) => {
           const isDigestVariable = item.name in DIGEST_VARIABLES_FILTER_MAP;
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const isNewVariable = (item as any).type === 'new-variable';
+          const isNewVariableItem = isNewVariable(item);
 
           if (isDigestVariable) {
             const { label } = getDynamicDigestVariable({
@@ -54,8 +58,8 @@ export const MailyVariablesListView = React.forwardRef(
             };
           }
 
-          if (isNewVariable) {
-            const displayLabel = (item as any).displayLabel || item.name;
+          if (isNewVariableItem) {
+            const displayLabel = hasDisplayLabel(item) ? item.displayLabel : item.name;
 
             return {
               label: displayLabel,
@@ -128,3 +132,11 @@ export const MailyVariablesListView = React.forwardRef(
     );
   }
 );
+
+function isNewVariable(item: Variable): item is ExtendedVariable {
+  return 'type' in item && (item as ExtendedVariable).type === 'new-variable';
+}
+
+function hasDisplayLabel(item: Variable): item is ExtendedVariable {
+  return 'displayLabel' in item && typeof (item as ExtendedVariable).displayLabel === 'string';
+}
