@@ -6,7 +6,7 @@ export const MockCacheService = {
     const data = {};
 
     return {
-      incr(key: string): Promise<number> {
+      incrIfExistsAtomic(key: string): Promise<number> {
         const newValue = (data[key] || 0) + 1;
         data[key] = newValue;
 
