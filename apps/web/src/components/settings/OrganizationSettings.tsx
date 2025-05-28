@@ -72,7 +72,7 @@ export function OrganizationSettings({ clerkAppearance }: { clerkAppearance: App
               isReadOnly={isLoadingSettings || isUpdating}
             />
           </BrandingRow>
-          <BrandingDescription>Manage "Powered by Novu" badge across notifications.</BrandingDescription>
+          <BrandingDescription>When enabled, removes Novu branding from your notifications.</BrandingDescription>
         </div>
       </BrandingSection>
 

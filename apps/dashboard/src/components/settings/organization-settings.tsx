@@ -77,7 +77,7 @@ export function OrganizationSettings({ clerkAppearance }: { clerkAppearance: App
               className="text-label-xs text-text-soft mb-1"
               style={{ fontFeatureSettings: "'ss11' on, 'cv09' on, 'liga' off, 'calt' off" }}
             >
-              Manage "Powered by Novu" badge across notifications.
+              When enabled, removes Novu branding from your notifications.
             </p>
           </div>
         </div>
