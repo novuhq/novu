@@ -1,5 +1,6 @@
-import { IsArray, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsEnum, IsOptional, IsString } from 'class-validator';
 import { PaginatedListCommand } from '@novu/application-generic';
+import { StepTypeEnum, WorkflowStatusEnum } from '@novu/shared';
 
 export class ListWorkflowsCommand extends PaginatedListCommand {
   @IsOptional()
@@ -12,11 +13,11 @@ export class ListWorkflowsCommand extends PaginatedListCommand {
 
   @IsOptional()
   @IsArray()
-  @IsString({ each: true })
-  status?: string[];
+  @IsEnum(WorkflowStatusEnum, { each: true })
+  status?: WorkflowStatusEnum[];
 
   @IsOptional()
   @IsArray()
-  @IsString({ each: true })
-  steps?: string[];
+  @IsEnum(StepTypeEnum, { each: true })
+  steps?: StepTypeEnum[];
 }

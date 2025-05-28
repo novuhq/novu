@@ -21,11 +21,11 @@ import { SortableColumn, WorkflowList } from '@/components/workflow-list';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useDebounce } from '@/hooks/use-debounce';
 import { useFetchWorkflows } from '@/hooks/use-fetch-workflows';
+import { useTags } from '@/hooks/use-tags';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
-import { DirectionEnum, PermissionsEnum, StepTypeEnum } from '@novu/shared';
-import { WorkflowStatusEnum } from '@/utils/enums';
+import { DirectionEnum, PermissionsEnum, StepTypeEnum, WorkflowStatusEnum } from '@novu/shared';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import {
@@ -152,6 +152,7 @@ export const WorkflowsPage = () => {
   });
 
   const { currentEnvironment } = useEnvironment();
+  const { tags } = useTags();
 
   const hasActiveFilters = (searchParams.get('query') ? searchParams.get('query')!.trim() !== '' : false) || 
                            searchParams.getAll('tags').length > 0 ||
@@ -199,14 +200,7 @@ export const WorkflowsPage = () => {
                 title="Tags"
                 placeholder="Filter by tags"
                 options={
-                  workflowsData?.workflows?.reduce((acc: Array<{label: string, value: string}>, workflow) => {
-                    workflow.tags?.forEach(tag => {
-                      if (!acc.find(option => option.value === tag)) {
-                        acc.push({ label: tag, value: tag });
-                      }
-                    });
-                    return acc;
-                  }, []) || []
+                  tags?.map(tag => ({ label: tag.name, value: tag.name })) || []
                 }
                 selected={form.watch('tags')}
                 onSelect={(values) => form.setValue('tags', values)}

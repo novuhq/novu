@@ -1,7 +1,8 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsArray, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsEnum, IsOptional, IsString } from 'class-validator';
 import { LimitOffsetPaginationQueryDto } from './limit-offset-pagination.dto';
 import { WorkflowResponseDto } from './workflow-response.dto';
+import { StepTypeEnum, WorkflowStatusEnum } from '@novu/shared';
 
 export class GetListQueryParamsDto extends LimitOffsetPaginationQueryDto(WorkflowResponseDto, [
   'createdAt',
@@ -30,21 +31,25 @@ export class GetListQueryParamsDto extends LimitOffsetPaginationQueryDto(Workflo
 
   @ApiPropertyOptional({
     description: 'Filter workflows by status',
+    enum: WorkflowStatusEnum,
+    enumName: 'WorkflowStatusEnum',
     type: [String],
     required: false,
   })
   @IsOptional()
   @IsArray()
-  @IsString({ each: true })
-  status?: string[];
+  @IsEnum(WorkflowStatusEnum, { each: true })
+  status?: WorkflowStatusEnum[];
 
   @ApiPropertyOptional({
     description: 'Filter workflows by step types',
+    enum: StepTypeEnum,
+    enumName: 'StepTypeEnum',
     type: [String],
     required: false,
   })
   @IsOptional()
   @IsArray()
-  @IsString({ each: true })
-  steps?: string[];
+  @IsEnum(StepTypeEnum, { each: true })
+  steps?: StepTypeEnum[];
 }
