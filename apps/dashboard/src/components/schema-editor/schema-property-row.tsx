@@ -36,7 +36,6 @@ export interface SchemaPropertyRowProps {
 export const SchemaPropertyRow = memo<SchemaPropertyRowProps>(function SchemaPropertyRow(props) {
   const {
     control,
-    index,
     pathPrefix,
     onDeleteProperty,
     indentationLevel = 0,
@@ -61,7 +60,6 @@ export const SchemaPropertyRow = memo<SchemaPropertyRowProps>(function SchemaPro
     return parentPath ? `${parentPath}.${currentKeyName}` : currentKeyName;
   }, [parentPath, currentKeyName]);
 
-  // Object type handling
   const { append: appendNested } = useFieldArray({
     control,
     name: currentType === 'object' ? (paths.nestedPropertyList as any) : ('_unused_nested_path_' as any),
@@ -86,11 +84,9 @@ export const SchemaPropertyRow = memo<SchemaPropertyRowProps>(function SchemaPro
       return;
     }
 
-    // Add to existing object
     appendNested(newNestedProperty);
   }, [currentType, currentDefinition, setValue, paths.definition, appendNested]);
 
-  // UI state
   const isHighlighted = currentKeyName && currentKeyName === highlightedPropertyKey;
   const isKeyNameEmpty = !currentKeyName || currentKeyName.trim() === '';
 
@@ -105,7 +101,6 @@ export const SchemaPropertyRow = memo<SchemaPropertyRowProps>(function SchemaPro
         isHighlighted ? 'overflow-hidden rounded-[8px] bg-[rgba(193,221,251,0.50)] px-[2px]' : 'px-[2px]'
       )}
     >
-      {/* Main property row */}
       <div className={cn('flex items-center space-x-2', getMarginClassPx(indentationLevel))}>
         <PropertyNameInput fieldPath={paths.keyName} control={control} />
         <PropertyTypeSelector
@@ -115,7 +110,6 @@ export const SchemaPropertyRow = memo<SchemaPropertyRowProps>(function SchemaPro
           getValues={getValues}
         />
 
-        {/* Required checkbox */}
         <div className="ml-auto flex items-center space-x-1.5">
           <Controller
             name={paths.isRequired}
@@ -159,7 +153,6 @@ export const SchemaPropertyRow = memo<SchemaPropertyRowProps>(function SchemaPro
           indentationLevel={indentationLevel}
           currentFullPath={currentFullPath}
           onCheckVariableUsage={onCheckVariableUsage}
-          onAddProperty={handleAddNestedProperty}
         />
       )}
 
