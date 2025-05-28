@@ -15,11 +15,6 @@ export class CreateVariablesObjectCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   controlValues?: Record<string, unknown>;
 
-  /**
-   * Optional payload schema to generate realistic mock data for steps.*.events*.payload
-   * When provided along with the payload schema feature flag being enabled,
-   * JsonSchemaMock will be used to generate realistic payload data
-   */
   @IsObject()
   @IsOptional()
   payloadSchema?: JSONSchemaDto;
