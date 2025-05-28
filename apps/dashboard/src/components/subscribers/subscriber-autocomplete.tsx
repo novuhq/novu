@@ -190,8 +190,6 @@ export function SubscriberAutocomplete({
 
   // Handle select open/close
   const handleSelectOpenChange = useCallback((open: boolean) => {
-    console.log('handleSelectOpenChange', open);
-
     // If select is opening, make sure our popover stays closed
     // This prevents both dropdowns competing for attention
     if (open) {

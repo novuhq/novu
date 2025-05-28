@@ -134,6 +134,7 @@ function InternalVariableView(props: InternalVariableViewProps) {
   return (
     <NodeViewWrapper className="react-component mly-inline-block mly-leading-none" draggable="false">
       <EditVariablePopover
+        isPayloadSchemaEnabled={isPayloadSchemaEnabled}
         getSchemaPropertyByKey={getSchemaPropertyByKey}
         open={isOpen}
         onOpenChange={setIsOpen}

@@ -211,6 +211,7 @@ export function ControlInput({
       />
       {isVariablePopoverOpen && (
         <EditVariablePopover
+          isPayloadSchemaEnabled={isPayloadSchemaEnabled}
           variables={variables}
           open={isVariablePopoverOpen}
           onOpenChange={handleOpenChange}

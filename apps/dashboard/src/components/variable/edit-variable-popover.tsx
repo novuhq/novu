@@ -3,7 +3,6 @@ import {
   RiDeleteBin2Line,
   RiQuestionLine,
   RiSearchLine,
-  RiSparkling2Line,
   RiArrowRightUpLine,
   RiListView,
   RiErrorWarningLine,
@@ -61,6 +60,7 @@ const calculateAliasFor = (name: string, parsedAliasRoot: string): string => {
 };
 
 type EditVariablePopoverProps = {
+  isPayloadSchemaEnabled: boolean;
   variables: LiquidVariable[];
   children: ReactNode;
   open: boolean;
@@ -75,6 +75,7 @@ type EditVariablePopoverProps = {
 };
 
 export const EditVariablePopover = ({
+  isPayloadSchemaEnabled,
   variables,
   children,
   open,
@@ -87,8 +88,6 @@ export const EditVariablePopover = ({
   onManageSchemaClick,
   onAddToSchemaClick,
 }: EditVariablePopoverProps) => {
-  const isPayloadSchemaEnabled = useIsPayloadSchemaEnabled();
-
   const { parsedName, parsedAliasForRoot, parsedDefaultValue, parsedFilters } = useVariableParser(
     variable?.name || '',
     variable?.aliasFor || ''
@@ -105,13 +104,9 @@ export const EditVariablePopover = ({
   const [isCommandOpen, setIsCommandOpen] = useState(false);
   const [filters, setFilters] = useState<FilterWithParam[]>(parsedFilters || []);
 
-  // Calculate aliasFor for validation
   const aliasFor = useMemo(() => calculateAliasFor(name, parsedAliasForRoot), [name, parsedAliasForRoot]);
-
-  // Use the consolidated validation hook
   const validation = useVariableValidation(name, aliasFor, isAllowedVariable, getSchemaPropertyByKey);
 
-  // Sync state when props change
   useEffect(() => {
     setName(parsedName);
     setDefaultVal(parsedDefaultValue);
@@ -250,7 +245,7 @@ export const EditVariablePopover = ({
                       <FormMessagePure hasError={true}>{validation.errorMessage}</FormMessagePure>
                     )}
 
-                    {!validation.hasError && showAddToSchemaButton && (
+                    {validation.hasError && showAddToSchemaButton && (
                       <FormMessagePure hasError={true} className="text-label-2xs mb-0.5 mt-0.5">
                         <RiErrorWarningLine className="h-3 w-3" />
                         Variable missing from Schema{' '}
@@ -289,7 +284,7 @@ export const EditVariablePopover = ({
                 </FormItem>
               )}
 
-              {showVariableTypeInput && (
+              {showVariableTypeInput && isPayloadSchemaEnabled && (
                 <div className="text-label-2xs text-text-soft items-center gap-1.5 px-1 py-0.5 font-medium">
                   💡 <b className="text-text-sub font-medium">Tip:</b> Edit variable type, mark as required field, and
                   add validation via{' '}

@@ -54,7 +54,6 @@ export const TestWorkflowForm = ({ workflow }: { workflow?: WorkflowResponseDto 
   const to = useWatch({ name: 'to', control });
   const payload = useWatch({ name: 'payload', control });
   const isPayloadSchemaEnabled = useIsPayloadSchemaEnabled();
-  console.log('isPayloadSchemaEnabled', isPayloadSchemaEnabled);
   const identifier = workflow?.workflowId ?? '';
   const snippetValue = useMemo(() => {
     const snippetUtil = LANGUAGE_TO_SNIPPET_UTIL[activeSnippetTab];

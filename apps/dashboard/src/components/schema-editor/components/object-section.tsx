@@ -1,6 +1,7 @@
-import { memo, useMemo } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { Path, useFieldArray, useWatch, type Control } from 'react-hook-form';
 import { RiAddLine } from 'react-icons/ri';
+import { v4 as uuidv4 } from 'uuid';
 
 import { Button } from '@/components/primitives/button';
 import { cn } from '@/utils/ui';
@@ -8,6 +9,7 @@ import { cn } from '@/utils/ui';
 import { getMarginClassPx } from '../utils/ui-helpers';
 import type { PropertyListItem, SchemaEditorFormValues } from '../utils/validation-schema';
 import type { VariableUsageInfo } from '../utils/check-variable-usage';
+import { newProperty } from '../utils/json-helpers';
 import { RecursivePropertyRow } from './recursive-property-row';
 
 interface NestedPropertyProps {
@@ -59,7 +61,6 @@ interface ObjectSectionProps {
   indentationLevel: number;
   currentFullPath: string;
   onCheckVariableUsage?: (keyName: string, parentPath: string) => VariableUsageInfo;
-  onAddProperty: () => void;
 }
 
 export const ObjectSection = memo<ObjectSectionProps>(function ObjectSection({
@@ -68,13 +69,23 @@ export const ObjectSection = memo<ObjectSectionProps>(function ObjectSection({
   indentationLevel,
   currentFullPath,
   onCheckVariableUsage,
-  onAddProperty,
 }) {
-  const { fields, remove } = useFieldArray({
+  const { fields, append, remove } = useFieldArray({
     control,
     name: nestedPropertyListPath,
     keyName: 'nestedFieldId',
   });
+
+  const handleAddNestedProperty = useCallback(() => {
+    const newNestedProperty = {
+      id: uuidv4(),
+      keyName: '',
+      definition: newProperty('string'),
+      isRequired: false,
+    } as PropertyListItem;
+
+    append(newNestedProperty);
+  }, [append]);
 
   return (
     <div className={cn('pt-1', getMarginClassPx(indentationLevel + 1))}>
@@ -94,7 +105,7 @@ export const ObjectSection = memo<ObjectSectionProps>(function ObjectSection({
         size="2xs"
         variant="secondary"
         mode="outline"
-        onClick={onAddProperty}
+        onClick={handleAddNestedProperty}
         leadingIcon={RiAddLine}
         className="mt-1"
       >

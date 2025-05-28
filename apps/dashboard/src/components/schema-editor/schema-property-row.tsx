@@ -7,7 +7,7 @@ import { Label } from '@/components/primitives/label';
 import { cn } from '@/utils/ui';
 
 import type { JSONSchema7 } from './json-schema';
-import { newProperty } from './utils/json-helpers';
+import { newProperty, ensureObject } from './utils/json-helpers';
 import { getMarginClassPx } from './utils/ui-helpers';
 import type { PropertyListItem, SchemaEditorFormValues } from './utils/validation-schema';
 import type { VariableUsageInfo } from './utils/check-variable-usage';
@@ -64,27 +64,31 @@ export const SchemaPropertyRow = memo<SchemaPropertyRowProps>(function SchemaPro
   // Object type handling
   const { append: appendNested } = useFieldArray({
     control,
-    name:
-      currentType === 'object'
-        ? (paths.nestedPropertyList as any)
-        : (`_unused_object_path_.${index}` as Path<SchemaEditorFormValues>),
+    name: currentType === 'object' ? (paths.nestedPropertyList as any) : ('_unused_nested_path_' as any),
     keyName: 'nestedFieldId',
   });
 
   const handleAddNestedProperty = useCallback(() => {
-    if (currentType !== 'object') {
-      setValue(`${paths.definition}.type`, 'object', { shouldValidate: true });
-      setValue(paths.nestedPropertyList, [], { shouldValidate: true });
-      return;
-    }
-
-    appendNested({
+    const newNestedProperty = {
       id: uuidv4(),
       keyName: '',
       definition: newProperty('string'),
       isRequired: false,
-    } as PropertyListItem);
-  }, [currentType, setValue, paths.definition, paths.nestedPropertyList, appendNested]);
+    } as PropertyListItem;
+
+    if (currentType !== 'object') {
+      // Convert to object using the proper helper function and add the first nested property
+      const currentDef = currentDefinition || {};
+      const objectDefinition = ensureObject(currentDef) as JSONSchema7 & { propertyList?: PropertyListItem[] };
+      objectDefinition.propertyList = [newNestedProperty];
+
+      setValue(paths.definition, objectDefinition, { shouldValidate: true });
+      return;
+    }
+
+    // Add to existing object
+    appendNested(newNestedProperty);
+  }, [currentType, currentDefinition, setValue, paths.definition, appendNested]);
 
   // UI state
   const isHighlighted = currentKeyName && currentKeyName === highlightedPropertyKey;
