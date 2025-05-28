@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useMemo } from 'react';
 import { RuleType, remove, add, isRuleGroup, RuleGroupTypeAny, Path, RuleGroupType } from 'react-querybuilder';
+import { generateUUID } from '@/utils/uuid';
 
 import { ConditionsEditorContextType } from './types';
 import { useDataRef } from '@/hooks/use-data-ref';
@@ -31,7 +32,7 @@ export function ConditionsEditorProvider({
 
   const cloneRuleOrGroup = useCallback(
     (ruleOrGroup: RuleGroupTypeAny | RuleType, path: Path = []) => {
-      queryChangeRef.current(add(queryRef.current, { ...ruleOrGroup, id: crypto.randomUUID() } as RuleType, path));
+      queryChangeRef.current(add(queryRef.current, { ...ruleOrGroup, id: generateUUID() } as RuleType, path));
     },
     [queryChangeRef, queryRef]
   );
