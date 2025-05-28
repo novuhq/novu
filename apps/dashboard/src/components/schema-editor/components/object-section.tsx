@@ -10,7 +10,7 @@ import { getMarginClassPx } from '../utils/ui-helpers';
 import type { PropertyListItem, SchemaEditorFormValues } from '../utils/validation-schema';
 import type { VariableUsageInfo } from '../utils/check-variable-usage';
 import { newProperty } from '../utils/json-helpers';
-import { RecursivePropertyRow } from './recursive-property-row';
+import { SchemaPropertyRow } from '../schema-property-row';
 
 interface NestedPropertyProps {
   nestedField: any;
@@ -42,7 +42,7 @@ const NestedProperty = memo<NestedPropertyProps>(function NestedProperty({
   }, [onCheckVariableUsage, nestedItem?.keyName, currentFullPath]);
 
   return (
-    <RecursivePropertyRow
+    <SchemaPropertyRow
       control={control}
       index={nestedIndex}
       pathPrefix={`${nestedPropertyListPath}.${nestedIndex}` as Path<SchemaEditorFormValues>}

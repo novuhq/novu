@@ -1,11 +1,10 @@
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { RiSettings4Line, RiDeleteBin6Line } from 'react-icons/ri';
 
 import { Button } from '@/components/primitives/button';
-import { Popover, PopoverTrigger, PopoverContent } from '@/components/primitives/popover';
+import { Popover, PopoverTrigger } from '@/components/primitives/popover';
 import { SchemaPropertySettingsPopover } from '../schema-property-settings-popover';
 import type { VariableUsageInfo } from '../utils/check-variable-usage';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/primitives/tooltip';
 import { cn } from '@/utils/ui';
 
 type PropertyActionsProps = {
@@ -26,10 +25,6 @@ export function PropertyActions({
   variableUsageInfo,
 }: PropertyActionsProps) {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-
-  const handleDeleteClick = () => {
-    onDeleteProperty();
-  };
 
   return (
     <>
@@ -60,7 +55,7 @@ export function PropertyActions({
         mode="ghost"
         size="2xs"
         leadingIcon={RiDeleteBin6Line}
-        onClick={handleDeleteClick}
+        onClick={onDeleteProperty}
         aria-label="Delete property"
         className={cn('p-1')}
       />

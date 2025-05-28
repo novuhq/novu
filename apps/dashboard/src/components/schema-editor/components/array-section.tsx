@@ -13,7 +13,7 @@ import type { VariableUsageInfo } from '../utils/check-variable-usage';
 import type { JSONSchema7 } from '../json-schema';
 import { newProperty } from '../utils/json-helpers';
 import { PropertyTypeSelector } from './property-type-selector';
-import { RecursivePropertyRow } from './recursive-property-row';
+import { SchemaPropertyRow } from '../schema-property-row';
 
 interface ArrayItemPropertyProps {
   itemNestedField: any;
@@ -45,7 +45,7 @@ const ArrayItemProperty = memo<ArrayItemPropertyProps>(function ArrayItemPropert
   }, [onCheckVariableUsage, itemNestedItem?.keyName, arrayItemPath]);
 
   return (
-    <RecursivePropertyRow
+    <SchemaPropertyRow
       control={control}
       index={itemNestedIndex}
       pathPrefix={`${itemPropertiesListPath}.${itemNestedIndex}` as Path<SchemaEditorFormValues>}

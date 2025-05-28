@@ -15,5 +15,3 @@ export const SCHEMA_TYPE_OPTIONS: SchemaTypeOption[] = [
   { label: 'Object', value: 'object' },
   { label: 'Null', value: 'null' },
 ];
-
-export const DEFAULT_PROPERTY_NAME = 'newProperty';
