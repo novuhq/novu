@@ -25,7 +25,6 @@ type IntegrationFormData = {
   check: boolean;
   primary: boolean;
   environmentId: string;
-  removeNovuBranding?: boolean;
 };
 
 type IntegrationConfigurationProps = {
@@ -68,7 +67,6 @@ export function IntegrationConfiguration({
           primary: integration.primary ?? false,
           credentials: integration.credentials as Record<string, string>,
           environmentId: integration._environmentId,
-          removeNovuBranding: integration.removeNovuBranding,
         }
       : {
           name: provider?.displayName ?? '',
@@ -77,7 +75,6 @@ export function IntegrationConfiguration({
           primary: true,
           credentials: {},
           environmentId: currentEnvironment?._id ?? '',
-          removeNovuBranding: false,
         },
   });
 
@@ -133,8 +130,6 @@ export function IntegrationConfiguration({
                 isReadOnly={isReadOnly}
                 hidePrimarySelector={!isChannelSupportPrimary}
                 disabledPrimary={!hasOtherProviders && integration?.primary}
-                // TODO: This is an ugly hack. The GeneralSettigns section should be redefined for in-app step.
-                isForInAppStep={provider?.channel === 'in_app'}
               />
             </AccordionContent>
           </AccordionItem>

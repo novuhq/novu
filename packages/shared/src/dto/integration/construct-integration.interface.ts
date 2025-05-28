@@ -11,7 +11,6 @@ export interface IConstructIntegrationDto {
   credentials?: ICredentialsDto;
   active?: boolean;
   check?: boolean;
-  removeNovuBranding?: boolean;
   conditions?: {
     isNegated?: boolean;
     type?: BuilderFieldType;
