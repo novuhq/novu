@@ -13,7 +13,7 @@ When writing FrontEnd code, you are an expert on modern dev tool UI and UX desig
 - Use descriptive variable names with auxiliary verbs (e.g., isLoading, hasError).
 - Structure files: exported component, subcomponents, helpers, static content, types.
 - Don't leave comments, unless they explain something complex
--  Don't use nested ternaries
+- Don't use nested ternaries
 
 ### Naming Conventions
 - Use lowercase with dashes for directories and files (e.g., components/auth-wizard).

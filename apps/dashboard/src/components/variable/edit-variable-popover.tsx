@@ -37,8 +37,7 @@ import { useDebounce } from '@/hooks/use-debounce';
 import { EscapeKeyManagerPriority } from '@/context/escape-key-manager/priority';
 import { useEscapeKeyManager } from '@/context/escape-key-manager/hooks';
 import { Button } from '../primitives/button';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
-import { useFeatureFlag } from '../../hooks/use-feature-flag';
+import { useIsPayloadSchemaEnabled } from '@/hooks/use-is-payload-schema-enabled';
 import type { JSONSchemaDefinition } from '@novu/shared';
 import type { JSONSchema7 } from '@/components/schema-editor/json-schema';
 import { ExternalLink } from '@/components/shared/external-link';
@@ -88,7 +87,7 @@ export const EditVariablePopover = ({
   onManageSchemaClick,
   onAddToSchemaClick,
 }: EditVariablePopoverProps) => {
-  const isPayloadSchemaEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_PAYLOAD_SCHEMA_ENABLED);
+  const isPayloadSchemaEnabled = useIsPayloadSchemaEnabled();
 
   const { parsedName, parsedAliasForRoot, parsedDefaultValue, parsedFilters } = useVariableParser(
     variable?.name || '',

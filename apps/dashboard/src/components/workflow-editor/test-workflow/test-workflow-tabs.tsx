@@ -9,10 +9,10 @@ import { TestWorkflowForm } from '@/components/workflow-editor/test-workflow/tes
 import { TestWorkflowLogsSidebar } from '@/components/workflow-editor/test-workflow/test-workflow-logs-sidebar';
 import { useFetchWorkflow } from '@/hooks/use-fetch-workflow';
 import { useTriggerWorkflow } from '@/hooks/use-trigger-workflow';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { useIsPayloadSchemaEnabled } from '@/hooks/use-is-payload-schema-enabled';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { createMockObjectFromSchema, FeatureFlagsKeysEnum, type WorkflowTestDataResponseDto } from '@novu/shared';
+import { createMockObjectFromSchema, type WorkflowTestDataResponseDto } from '@novu/shared';
 import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { RiPlayCircleLine } from 'react-icons/ri';
@@ -26,7 +26,7 @@ export const TestWorkflowTabs = ({ testData }: { testData?: WorkflowTestDataResp
     workflowSlug,
   });
   const [transactionId, setTransactionId] = useState<string>();
-  const isPayloadSchemaEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_PAYLOAD_SCHEMA_ENABLED);
+  const isPayloadSchemaEnabled = useIsPayloadSchemaEnabled();
 
   const to = useMemo(() => createMockObjectFromSchema(testData?.to ?? {}), [testData]);
 
@@ -35,6 +35,7 @@ export const TestWorkflowTabs = ({ testData }: { testData?: WorkflowTestDataResp
     if (isPayloadSchemaEnabled && workflow?.payloadExample) {
       return workflow.payloadExample;
     }
+
     // Fallback to test data payload
     return createMockObjectFromSchema(testData?.payload ?? {});
   }, [testData, workflow?.payloadExample, isPayloadSchemaEnabled]);

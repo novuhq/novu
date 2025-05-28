@@ -2,8 +2,8 @@ import React, { createContext, useContext, ReactNode } from 'react';
 import { useWorkflowSchemaManager, type UseWorkflowSchemaManagerReturn } from './use-workflow-schema-manager';
 import { useWorkflow } from './workflow-provider';
 import { useEnvironment } from '@/context/environment/hooks';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
-import { FeatureFlagsKeysEnum, type IEnvironment, type WorkflowResponseDto } from '@novu/shared';
+import { useIsPayloadSchemaEnabled } from '@/hooks/use-is-payload-schema-enabled';
+import { type IEnvironment, type WorkflowResponseDto } from '@novu/shared';
 
 interface WorkflowSchemaContextType extends UseWorkflowSchemaManagerReturn {
   isPayloadSchemaEnabled: boolean;
@@ -18,7 +18,7 @@ interface WorkflowSchemaProviderProps {
 export function WorkflowSchemaProvider({ children }: WorkflowSchemaProviderProps) {
   const { workflow } = useWorkflow();
   const { currentEnvironment } = useEnvironment();
-  const isPayloadSchemaEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_PAYLOAD_SCHEMA_ENABLED);
+  const isPayloadSchemaEnabled = useIsPayloadSchemaEnabled();
 
   const schemaManager = useWorkflowSchemaManager({
     workflow: workflow as WorkflowResponseDto,

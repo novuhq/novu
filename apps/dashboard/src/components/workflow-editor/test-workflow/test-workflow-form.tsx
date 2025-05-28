@@ -26,8 +26,7 @@ import { TestWorkflowFormType } from '../schema';
 import { SnippetEditor } from './snippet-editor';
 import { TestWorkflowInstructions } from './test-workflow-instructions';
 import { SnippetLanguage } from './types';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { useIsPayloadSchemaEnabled } from '@/hooks/use-is-payload-schema-enabled';
 import { EditableJsonViewer } from '../steps/shared/editable-json-viewer/editable-json-viewer';
 
 const tabsTriggerClassName = 'pt-1';
@@ -54,7 +53,7 @@ export const TestWorkflowForm = ({ workflow }: { workflow?: WorkflowResponseDto 
   const [payloadJsonData, setPayloadJsonData] = useState<any>({});
   const to = useWatch({ name: 'to', control });
   const payload = useWatch({ name: 'payload', control });
-  const isPayloadSchemaEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_PAYLOAD_SCHEMA_ENABLED);
+  const isPayloadSchemaEnabled = useIsPayloadSchemaEnabled();
   const identifier = workflow?.workflowId ?? '';
   const snippetValue = useMemo(() => {
     const snippetUtil = LANGUAGE_TO_SNIPPET_UTIL[activeSnippetTab];

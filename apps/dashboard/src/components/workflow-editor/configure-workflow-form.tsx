@@ -56,7 +56,7 @@ import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { PermissionsEnum } from '@novu/shared';
+import { FeatureFlagsKeysEnum, PermissionsEnum } from '@novu/shared';
 import { FilesIcon } from 'lucide-react';
 import {
   RiArrowRightSLine,
@@ -71,8 +71,9 @@ import { Link } from 'react-router-dom';
 import { Protect } from '@/utils/protect';
 
 import { PayloadSchemaDrawer } from './payload-schema-drawer';
-import { WorkflowOriginEnum, WorkflowResponseDto, UpdateWorkflowDto, FeatureFlagsKeysEnum } from '@novu/shared';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { WorkflowOriginEnum, WorkflowResponseDto, UpdateWorkflowDto } from '@novu/shared';
+import { useIsPayloadSchemaEnabled } from '@/hooks/use-is-payload-schema-enabled';
+import { useFeatureFlag } from '../../hooks/use-feature-flag';
 
 interface ConfigureWorkflowFormProps {
   workflow: WorkflowResponseDto;
@@ -99,6 +100,7 @@ export const ConfigureWorkflowForm = (props: ConfigureWorkflowFormProps) => {
   const { environments = [] } = useFetchEnvironments({ organizationId: currentOrganization?._id });
   const { safeSync, isSyncable, tooltipContent, PromoteConfirmModal } = useSyncWorkflow(workflow);
   const isPayloadSchemaEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_PAYLOAD_SCHEMA_ENABLED);
+
   const { show: showComingSoonBanner } = usePromotionalBanner({
     content: {
       title: '🚧 Export to Code is on the way!',

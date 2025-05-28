@@ -4,8 +4,8 @@ import { Button } from '@/components/primitives/button';
 import { Editor } from '@/components/primitives/editor';
 import { loadLanguage } from '@uiw/codemirror-extensions-langs';
 import { CSSProperties, useCallback, useEffect, useRef, useState } from 'react';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
-import { FeatureFlagsKeysEnum, type WorkflowResponseDto } from '@novu/shared';
+import { useIsPayloadSchemaEnabled } from '@/hooks/use-is-payload-schema-enabled';
+import { type WorkflowResponseDto } from '@novu/shared';
 import { EditableJsonViewer } from './editable-json-viewer/editable-json-viewer';
 
 const extensions = [loadLanguage('json')?.extension ?? []];
@@ -28,7 +28,7 @@ export const ConfigurePreviewAccordion = ({
   const [height, setHeight] = useState(0);
   const [jsonData, setJsonData] = useState<any>({});
   const contentRef = useRef<HTMLDivElement>(null);
-  const isPayloadSchemaEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_PAYLOAD_SCHEMA_ENABLED);
+  const isPayloadSchemaEnabled = useIsPayloadSchemaEnabled();
 
   // Initialize with workflow payloadExample if available
   useEffect(() => {
