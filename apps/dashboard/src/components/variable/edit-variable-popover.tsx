@@ -92,7 +92,6 @@ export const EditVariablePopover = ({
   const nameInputRef = useRef<HTMLInputElement>(null);
   const track = useTelemetry();
 
-  // State management
   const [name, setName] = useState(parsedName);
   const [defaultVal, setDefaultVal] = useState(parsedDefaultValue);
   const [searchQuery, setSearchQuery] = useState('');
@@ -108,7 +107,6 @@ export const EditVariablePopover = ({
     setFilters(parsedFilters || []);
   }, [parsedName, parsedDefaultValue, parsedFilters]);
 
-  // Event handlers
   const handlePopoverOpen = useCallback(() => {
     track(TelemetryEvent.VARIABLE_POPOVER_OPENED);
   }, [track]);
@@ -131,7 +129,6 @@ export const EditVariablePopover = ({
 
   const handleOpenChange = useCallback(
     (open: boolean) => {
-      // Don't close if variable has validation errors
       if (!open && validation.hasError) {
         return;
       }
@@ -172,7 +169,6 @@ export const EditVariablePopover = ({
 
   useEscapeKeyManager(id, handleClosePopover, EscapeKeyManagerPriority.POPOVER, open);
 
-  // Computed values for UI
   const showManageSchemaButton = isPayloadSchemaEnabled && validation.isPayloadVariable && validation.isInSchema;
   const showAddToSchemaButton = isPayloadSchemaEnabled && validation.isPayloadVariable && !validation.isInSchema;
   const showVariableTypeInput = isPayloadSchemaEnabled && validation.isPayloadVariable;
