@@ -31,6 +31,14 @@ export type WorkflowControllerSearchWorkflowsRequest = {
    */
   query?: string | undefined;
   /**
+   * Filter workflows by tags
+   */
+  tags?: Array<string> | undefined;
+  /**
+   * Filter workflows by status
+   */
+  status?: Array<components.WorkflowStatusEnum> | undefined;
+  /**
    * A header for idempotency purposes
    */
   idempotencyKey?: string | undefined;
@@ -52,6 +60,8 @@ export const WorkflowControllerSearchWorkflowsRequest$inboundSchema: z.ZodType<
   orderDirection: components.DirectionEnum$inboundSchema.optional(),
   orderBy: components.WorkflowResponseDtoSortField$inboundSchema.optional(),
   query: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  status: z.array(components.WorkflowStatusEnum$inboundSchema).optional(),
   "idempotency-key": z.string().optional(),
 }).transform((v) => {
   return remap$(v, {
@@ -66,6 +76,8 @@ export type WorkflowControllerSearchWorkflowsRequest$Outbound = {
   orderDirection?: string | undefined;
   orderBy?: string | undefined;
   query?: string | undefined;
+  tags?: Array<string> | undefined;
+  status?: Array<string> | undefined;
   "idempotency-key"?: string | undefined;
 };
 
@@ -80,6 +92,8 @@ export const WorkflowControllerSearchWorkflowsRequest$outboundSchema: z.ZodType<
   orderDirection: components.DirectionEnum$outboundSchema.optional(),
   orderBy: components.WorkflowResponseDtoSortField$outboundSchema.optional(),
   query: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  status: z.array(components.WorkflowStatusEnum$outboundSchema).optional(),
   idempotencyKey: z.string().optional(),
 }).transform((v) => {
   return remap$(v, {

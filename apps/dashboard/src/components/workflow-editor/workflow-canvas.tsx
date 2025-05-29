@@ -12,6 +12,7 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
+import { generateUUID } from '@/utils/uuid';
 
 import { getFirstErrorMessage } from '@/components/workflow-editor/step-utils';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
@@ -118,7 +119,7 @@ const mapStepToNode = ({
     : undefined;
 
   return {
-    id: crypto.randomUUID(),
+    id: generateUUID(),
     position: { x: previousPosition.x, y: previousPosition.y + Y_DISTANCE },
     data: {
       name: step.name,
@@ -149,7 +150,7 @@ const WorkflowCanvasChild = ({
 
   const [nodes, edges] = useMemo(() => {
     const triggerNode: Node<NodeData, 'trigger'> = {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       position: { x: 0, y: 0 },
       data: {
         workflowSlug: currentWorkflow?.slug ?? '',
@@ -175,7 +176,7 @@ const WorkflowCanvasChild = ({
     let allNodes: Node<NodeData, keyof typeof nodeTypes>[] = [triggerNode, ...createdNodes];
 
     const addNode: Node<NodeData, 'add'> = {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       position: { ...previousPosition, y: previousPosition.y + Y_DISTANCE },
       data: {},
       type: 'add',
