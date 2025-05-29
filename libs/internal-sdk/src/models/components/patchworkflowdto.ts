@@ -36,7 +36,7 @@ export type PatchWorkflowDto = {
   /**
    * Enable or disable payload schema validation
    */
-  payloadSchemaValidation?: boolean | undefined;
+  validatePayload?: boolean | undefined;
 };
 
 /** @internal */
@@ -101,7 +101,7 @@ export const PatchWorkflowDto$inboundSchema: z.ZodType<
   tags: z.array(z.string()).optional(),
   payloadSchema: z.lazy(() => PatchWorkflowDtoPayloadSchema$inboundSchema)
     .optional(),
-  payloadSchemaValidation: z.boolean().optional(),
+  validatePayload: z.boolean().optional(),
 });
 
 /** @internal */
@@ -111,7 +111,7 @@ export type PatchWorkflowDto$Outbound = {
   description?: string | undefined;
   tags?: Array<string> | undefined;
   payloadSchema?: PatchWorkflowDtoPayloadSchema$Outbound | undefined;
-  payloadSchemaValidation?: boolean | undefined;
+  validatePayload?: boolean | undefined;
 };
 
 /** @internal */
@@ -126,7 +126,7 @@ export const PatchWorkflowDto$outboundSchema: z.ZodType<
   tags: z.array(z.string()).optional(),
   payloadSchema: z.lazy(() => PatchWorkflowDtoPayloadSchema$outboundSchema)
     .optional(),
-  payloadSchemaValidation: z.boolean().optional(),
+  validatePayload: z.boolean().optional(),
 });
 
 /**

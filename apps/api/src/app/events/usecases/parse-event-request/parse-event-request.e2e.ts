@@ -51,13 +51,13 @@ describe('ParseEventRequest Usecase - #novu-v2', () => {
     }
   });
 
-  it('should validate payload against schema when payloadSchemaValidation is enabled', async () => {
+  it('should validate payload against schema when validatePayload is enabled', async () => {
     const transactionId = uuid();
     const subscriber = await subscribersService.createSubscriber();
 
     // Create a template with payload schema validation enabled
     const templateWithSchema = await session.createTemplate({
-      payloadSchemaValidation: true,
+      validatePayload: true,
       payloadSchema: {
         type: 'object',
         properties: {
@@ -99,7 +99,7 @@ describe('ParseEventRequest Usecase - #novu-v2', () => {
 
     // Create a template with payload schema validation enabled
     const templateWithSchema = await session.createTemplate({
-      payloadSchemaValidation: true,
+      validatePayload: true,
       payloadSchema: {
         type: 'object',
         properties: {
@@ -124,13 +124,13 @@ describe('ParseEventRequest Usecase - #novu-v2', () => {
     expect(result.acknowledged).to.be.true;
   });
 
-  it('should skip validation when payloadSchemaValidation is disabled', async () => {
+  it('should skip validation when validatePayload is disabled', async () => {
     const transactionId = uuid();
     const subscriber = await subscribersService.createSubscriber();
 
     // Create a template with payload schema validation disabled
     const templateWithoutValidation = await session.createTemplate({
-      payloadSchemaValidation: false,
+      validatePayload: false,
       payloadSchema: {
         type: 'object',
         properties: {

@@ -118,7 +118,7 @@ export type WorkflowResponseDto = {
   /**
    * Whether payload schema validation is enabled
    */
-  payloadSchemaValidation?: boolean | undefined;
+  validatePayload?: boolean | undefined;
 };
 
 /** @internal */
@@ -234,7 +234,7 @@ export const WorkflowResponseDto$inboundSchema: z.ZodType<
     .optional(),
   payloadExample: z.nullable(z.lazy(() => PayloadExample$inboundSchema))
     .optional(),
-  payloadSchemaValidation: z.boolean().optional(),
+  validatePayload: z.boolean().optional(),
 }).transform((v) => {
   return remap$(v, {
     "_id": "id",
@@ -260,7 +260,7 @@ export type WorkflowResponseDto$Outbound = {
   lastTriggeredAt?: string | null | undefined;
   payloadSchema?: PayloadSchema$Outbound | null | undefined;
   payloadExample?: PayloadExample$Outbound | null | undefined;
-  payloadSchemaValidation?: boolean | undefined;
+  validatePayload?: boolean | undefined;
 };
 
 /** @internal */
@@ -288,7 +288,7 @@ export const WorkflowResponseDto$outboundSchema: z.ZodType<
     .optional(),
   payloadExample: z.nullable(z.lazy(() => PayloadExample$outboundSchema))
     .optional(),
-  payloadSchemaValidation: z.boolean().optional(),
+  validatePayload: z.boolean().optional(),
 }).transform((v) => {
   return remap$(v, {
     id: "_id",

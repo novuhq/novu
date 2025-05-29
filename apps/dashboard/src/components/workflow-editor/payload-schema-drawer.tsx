@@ -60,8 +60,8 @@ export function PayloadSchemaDrawer({
     formState,
     addProperty,
     removeProperty,
-    payloadSchemaValidation,
-    setPayloadSchemaValidation,
+    validatePayload,
+    setValidatePayload,
   } = useWorkflowSchema();
 
   useEffect(() => {
@@ -170,11 +170,7 @@ export function PayloadSchemaDrawer({
                     </TooltipContent>
                   </Tooltip>
                 </div>
-                <Switch
-                  checked={payloadSchemaValidation}
-                  onCheckedChange={setPayloadSchemaValidation}
-                  disabled={isLoadingWorkflow}
-                />
+                <Switch checked={validatePayload} onCheckedChange={setValidatePayload} disabled={isLoadingWorkflow} />
               </div>
 
               {isLoadingWorkflow ? (

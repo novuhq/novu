@@ -227,7 +227,7 @@ const notificationTemplateSchema = new Schema<NotificationTemplateDBModel>(
     data: Schema.Types.Mixed,
     rawData: Schema.Types.Mixed,
     payloadSchema: Schema.Types.Mixed,
-    payloadSchemaValidation: {
+    validatePayload: {
       type: Schema.Types.Boolean,
       default: false,
     },

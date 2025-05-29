@@ -92,7 +92,7 @@ export class CreateWorkflow {
           properties: {},
         };
 
-        command.payloadSchemaValidation = true;
+        command.validatePayload = true;
       }
 
       storedWorkflow = await this.storeWorkflow(command, templateSteps, trigger, triggerIdentifier);
@@ -303,7 +303,7 @@ export class CreateWorkflow {
       issues: command.issues,
       ...(command.rawData ? { rawData: command.rawData } : {}),
       ...(command.payloadSchema ? { payloadSchema: command.payloadSchema } : {}),
-      ...(command.payloadSchemaValidation ? { payloadSchemaValidation: command.payloadSchemaValidation } : {}),
+      ...(command.validatePayload ? { validatePayload: command.validatePayload } : {}),
       ...(command.data ? { data: command.data } : {}),
     });
 

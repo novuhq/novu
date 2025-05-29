@@ -105,7 +105,7 @@ export class WorkflowResponseDto extends WorkflowCommonsFields {
   })
   @IsOptional()
   @IsBoolean()
-  payloadSchemaValidation?: boolean;
+  validatePayload?: boolean;
 }
 
 export type WorkflowCreateAndUpdateKeys = keyof CreateWorkflowDto | keyof UpdateWorkflowDto;

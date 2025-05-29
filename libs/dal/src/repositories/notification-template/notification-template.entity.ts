@@ -83,7 +83,7 @@ export class NotificationTemplateEntity {
 
   payloadSchema?: any;
 
-  payloadSchemaValidation?: boolean;
+  validatePayload?: boolean;
 
   issues: Record<string, RuntimeIssue[]>;
 

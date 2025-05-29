@@ -50,5 +50,5 @@ export class PatchWorkflowDto {
   })
   @IsOptional()
   @IsBoolean()
-  payloadSchemaValidation?: boolean;
+  validatePayload?: boolean;
 }

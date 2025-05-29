@@ -115,7 +115,7 @@ export class ParseEventRequest {
     const reservedVariablesTypes = this.getReservedVariablesTypes(template);
     this.validateTriggerContext(command, reservedVariablesTypes);
 
-    if (template.payloadSchemaValidation && template.payloadSchema) {
+    if (template.validatePayload && template.payloadSchema) {
       this.validatePayloadSchema(command.payload, template.payloadSchema);
     }
 

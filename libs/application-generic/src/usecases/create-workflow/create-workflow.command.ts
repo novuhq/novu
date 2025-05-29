@@ -108,7 +108,7 @@ export class CreateWorkflowCommand extends EnvironmentWithUserCommand {
 
   @IsOptional()
   @IsBoolean()
-  payloadSchemaValidation?: boolean;
+  validatePayload?: boolean;
 
   @IsEnum(WorkflowTypeEnum)
   @IsDefined()

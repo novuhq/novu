@@ -46,7 +46,7 @@ export function toResponseWorkflowDto(
     lastTriggeredAt: workflow.lastTriggeredAt,
     payloadSchema: workflow.payloadSchema,
     payloadExample,
-    payloadSchemaValidation: workflow.payloadSchemaValidation,
+    validatePayload: workflow.validatePayload,
   };
 }
 
