@@ -35,6 +35,7 @@ export const PushEditorPreview = ({
           />
         </div>
         <ConfigurePreviewAccordion
+          schema={(previewData as any)?.schema}
           editorValue={editorValue}
           setEditorValue={setEditorValue}
           onUpdate={previewStep}

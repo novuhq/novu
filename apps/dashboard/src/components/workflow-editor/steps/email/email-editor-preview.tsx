@@ -139,6 +139,7 @@ export const EmailEditorPreview = ({
       </div>
       <div className={cn('px-4 py-3')}>
         <ConfigurePreviewAccordion
+          schema={(previewData as any)?.schema}
           editorValue={editorValue}
           setEditorValue={setEditorValue}
           onUpdate={previewStep}

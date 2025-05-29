@@ -34,6 +34,7 @@ export const ChatEditorPreview = ({
           />
         </div>
         <ConfigurePreviewAccordion
+          schema={(previewData as any)?.schema}
           editorValue={editorValue}
           setEditorValue={setEditorValue}
           onUpdate={previewStep}

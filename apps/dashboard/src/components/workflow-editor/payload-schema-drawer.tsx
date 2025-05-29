@@ -10,6 +10,7 @@ import {
   SheetTitle,
 } from '@/components/primitives/sheet';
 import { Button } from '@/components/primitives/button';
+import { Badge } from '@/components/primitives/badge';
 import { SchemaEditor } from '@/components/schema-editor/schema-editor';
 import { useWorkflowSchema } from './workflow-schema-provider';
 import type { WorkflowResponseDto } from '@novu/shared';
@@ -135,7 +136,12 @@ export function PayloadSchemaDrawer({
       <Sheet open={isOpen} onOpenChange={handleSheetOpenChange}>
         <SheetContent className="bg-bg-weak flex w-[600px] flex-col p-0 sm:max-w-3xl">
           <SheetHeader className="space-y-1 px-3 py-4">
-            <SheetTitle className="text-label-lg">Manage workflow schema</SheetTitle>
+            <SheetTitle className="text-label-lg">
+              Manage workflow schema{' '}
+              <Badge color="gray" size="sm" variant="light" className="text-label-xs relative bottom-[1px]">
+                BETA
+              </Badge>
+            </SheetTitle>
             <SheetDescription className="text-paragraph-xs mt-0">
               Manage workflow schema for reliable notifications.{' '}
               <ExternalLink href="https://docs.novu.co/platform/concepts/workflows">Learn more</ExternalLink>

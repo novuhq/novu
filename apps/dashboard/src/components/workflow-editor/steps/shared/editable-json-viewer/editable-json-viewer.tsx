@@ -29,10 +29,6 @@ import { JSON_EDITOR_ICONS } from './icons';
 export function EditableJsonViewer({ value, onChange, className, schema }: EditableJsonViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
-  const [countdown, setCountdown] = useState<number>(0);
-  const [isExiting, setIsExiting] = useState(false);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const countdownRef = useRef<NodeJS.Timeout | null>(null);
 
   const ajvValidator = useMemo(() => {
     if (!schema) return null;
@@ -48,94 +44,52 @@ export function EditableJsonViewer({ value, onChange, className, schema }: Edita
     }
   }, [schema]);
 
-  // Auto-hide errors after 5 seconds with countdown
+  const validateData = useMemo(
+    () => (data: any) => {
+      if (!ajvValidator) {
+        setValidationErrors([]);
+        return true;
+      }
+
+      const isValid = ajvValidator(data);
+
+      if (isValid) {
+        setValidationErrors([]);
+        return true;
+      }
+
+      const errorMessages = ajvValidator.errors?.map((error) => {
+        const path = error.instancePath ? `${error.instancePath}: ` : '';
+        return `${path}${error.message}`;
+      }) || ['Validation failed'];
+
+      setValidationErrors(errorMessages);
+      return false;
+    },
+    [ajvValidator]
+  );
+
   useEffect(() => {
-    if (validationErrors.length > 0) {
-      setCountdown(5);
-      setIsExiting(false);
-
-      // Clear any existing timers
-      if (timerRef.current) clearTimeout(timerRef.current);
-      if (countdownRef.current) clearInterval(countdownRef.current);
-
-      // Start countdown
-      countdownRef.current = setInterval(() => {
-        setCountdown((prev) => {
-          if (prev <= 1) {
-            if (countdownRef.current) clearInterval(countdownRef.current);
-            return 0;
-          }
-
-          return prev - 1;
-        });
-      }, 1000);
-
-      // Start exit animation after 4 seconds, then hide after 5 seconds
-      timerRef.current = setTimeout(() => {
-        setIsExiting(true);
-        setTimeout(() => {
-          setValidationErrors([]);
-          setCountdown(0);
-          setIsExiting(false);
-        }, 300); // Animation duration
-      }, 4000);
+    if (value !== undefined) {
+      validateData(value);
     }
-
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-      if (countdownRef.current) clearInterval(countdownRef.current);
-    };
-  }, [validationErrors.length]);
-
-  const dismissErrors = () => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-    if (countdownRef.current) clearInterval(countdownRef.current);
-
-    setIsExiting(true);
-    setTimeout(() => {
-      setValidationErrors([]);
-      setCountdown(0);
-      setIsExiting(false);
-    }, 300);
-  };
+  }, [value, validateData]);
 
   const handleUpdate = useMemo(
     () => (updatedData: UpdateFunctionProps) => {
-      if (ajvValidator) {
-        const isValid = ajvValidator(updatedData.newData);
-
-        if (isValid) {
-          setValidationErrors([]);
-          onChange(updatedData.newData);
-        } else {
-          const errorMessages = ajvValidator.errors?.map((error) => {
-            const path = error.instancePath ? `${error.instancePath}: ` : '';
-            return `${path}${error.message}`;
-          }) || ['Validation failed'];
-
-          setValidationErrors(errorMessages);
-          console.warn('Validation failed:', errorMessages);
-
-          // Return the error string for json-edit-react to handle
-          return errorMessages.join('\n');
-        }
-      } else {
-        setValidationErrors([]);
-        onChange(updatedData.newData);
-      }
+      validateData(updatedData.newData);
+      onChange(updatedData.newData);
     },
-    [onChange, ajvValidator]
+    [onChange, validateData]
   );
 
   const handleError = useMemo(
     () => (errorData: any) => {
-      // Handle editor errors (JSON parsing, duplicate keys, etc.)
       const { error, path } = errorData;
       const pathString = Array.isArray(path) ? path.join('.') : path || '';
       const errorMessage = pathString ? `${pathString}: ${error.message}` : error.message;
 
       setValidationErrors([errorMessage]);
-      console.warn('Editor error:', error);
     },
     []
   );
@@ -183,35 +137,8 @@ export function EditableJsonViewer({ value, onChange, className, schema }: Edita
     >
       {validationErrors.length > 0 && (
         <div className="p-1.5">
-          <div
-            className={cn(
-              'border-destructive bg-destructive/10 text-destructive mb-2 rounded border p-2 text-xs transition-all duration-300 ease-in-out',
-              isExiting ? 'translate-y-[-4px] scale-95 opacity-0' : 'translate-y-0 scale-100 opacity-100'
-            )}
-          >
-            <div className="mb-1 flex items-center justify-between">
-              <span className="font-medium">Validation Error{validationErrors.length > 1 ? 's' : ''}</span>
-              <div className="flex items-center gap-2">
-                {countdown > 0 && (
-                  <div className="flex items-center gap-1 text-xs opacity-70">
-                    <div className="flex h-3 w-3 items-center justify-center rounded-full border border-current">
-                      <span className="text-[10px] leading-none">{countdown}</span>
-                    </div>
-                    <span>Auto-hide</span>
-                  </div>
-                )}
-                <button
-                  onClick={dismissErrors}
-                  type="button"
-                  className="hover:bg-destructive/20 rounded p-0.5 opacity-70 transition-opacity hover:opacity-100"
-                  aria-label="Dismiss errors"
-                >
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M18 6L6 18M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-            </div>
+          <div className="border-destructive bg-destructive/10 text-destructive mb-2 rounded border p-2 text-xs">
+            <div className="mb-1 font-medium">Validation Error{validationErrors.length > 1 ? 's' : ''}</div>
             {validationErrors.map((error, index) => (
               <div key={index} className="mt-1 first:mt-0">
                 {error}
@@ -238,11 +165,9 @@ export function EditableJsonViewer({ value, onChange, className, schema }: Edita
         restrictDelete
         restrictAdd
         rootName={'nv-root-node'}
-        showCollectionCount={false}
         defaultValue={undefined}
         restrictTypeSelection
         collapseAnimationTime={100}
-        schema={schema}
       />
     </div>
   );

@@ -1,12 +1,7 @@
 import { SingleClickEditableValueProps } from './types';
 import { VALUE_TYPE_COLORS } from './constants';
 
-export function SingleClickEditableValue({
-  value,
-  setValue,
-  setIsEditing,
-  customNodeProps,
-}: SingleClickEditableValueProps) {
+export function SingleClickEditableValue({ value, setIsEditing, customNodeProps }: SingleClickEditableValueProps) {
   const { type } = customNodeProps || {};
 
   const handleClick = () => {

@@ -30,6 +30,7 @@ export const InAppEditorPreview = ({
         </div>
         <InboxPreview isPreviewPending={isPreviewPending} previewData={previewData} />
         <ConfigurePreviewAccordion
+          schema={(previewData as any)?.schema}
           editorValue={editorValue}
           setEditorValue={setEditorValue}
           onUpdate={previewStep}

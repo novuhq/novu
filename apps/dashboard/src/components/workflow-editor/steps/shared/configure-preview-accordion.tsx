@@ -7,6 +7,10 @@ import { CSSProperties, useCallback, useEffect, useRef, useState } from 'react';
 import { useIsPayloadSchemaEnabled } from '@/hooks/use-is-payload-schema-enabled';
 import { type WorkflowResponseDto } from '@novu/shared';
 import { EditableJsonViewer } from './editable-json-viewer/editable-json-viewer';
+import { JSONSchema7 } from 'json-schema';
+import { useCreateVariable } from '@/components/variable/hooks/use-create-variable';
+import { PayloadSchemaDrawer } from '@/components/workflow-editor/payload-schema-drawer';
+import { RiListView } from 'react-icons/ri';
 
 const extensions = [loadLanguage('json')?.extension ?? []];
 
@@ -15,6 +19,7 @@ type ConfigurePreviewAccordionProps = {
   setEditorValue: (value: string) => Error | null;
   onUpdate: () => void;
   workflow?: WorkflowResponseDto;
+  schema?: JSONSchema7;
 };
 
 export const ConfigurePreviewAccordion = ({
@@ -22,13 +27,18 @@ export const ConfigurePreviewAccordion = ({
   setEditorValue,
   onUpdate,
   workflow,
+  schema,
 }: ConfigurePreviewAccordionProps) => {
   const [accordionValue, setAccordionValue] = useState<string | undefined>('payload');
   const [payloadError, setPayloadError] = useState<string | null>(null);
   const [height, setHeight] = useState(0);
   const [jsonData, setJsonData] = useState<any>({});
+  const [isValidJson, setIsValidJson] = useState(true);
   const contentRef = useRef<HTMLDivElement>(null);
   const isPayloadSchemaEnabled = useIsPayloadSchemaEnabled();
+
+  const { isPayloadSchemaDrawerOpen, highlightedVariableKey, openSchemaDrawer, closeSchemaDrawer } =
+    useCreateVariable();
 
   // Initialize with workflow payloadExample if available
   useEffect(() => {
@@ -54,10 +64,13 @@ export const ConfigurePreviewAccordion = ({
     if (isPayloadSchemaEnabled) {
       try {
         const parsed = JSON.parse(editorValue || '{}');
+
         setJsonData(parsed);
         setPayloadError(null);
+        setIsValidJson(true);
       } catch (error) {
         setPayloadError('Invalid JSON format');
+        setIsValidJson(false);
       }
     }
   }, [editorValue, isPayloadSchemaEnabled]);
@@ -81,6 +94,8 @@ export const ConfigurePreviewAccordion = ({
         const stringified = JSON.stringify(updatedData, null, 2);
         setEditorValueCallback(stringified);
         setJsonData(updatedData);
+
+        console.log('updatedData', updatedData);
       } catch (error) {
         setPayloadError('Failed to update JSON');
       }
@@ -103,57 +118,98 @@ export const ConfigurePreviewAccordion = ({
   }, [isPayloadSchemaEnabled, workflow?.payloadExample, setEditorValueCallback, onUpdate]);
 
   return (
-    <Accordion type="single" collapsible value={accordionValue} onValueChange={setAccordionValue}>
-      <AccordionItem value="payload">
-        <AccordionTrigger>
-          <div className="flex items-center gap-1">
-            <Code2 className="text-feature size-3" />
-            Configure preview
-          </div>
-        </AccordionTrigger>
-        <AccordionContent
-          ref={contentRef}
-          className="flex flex-col gap-2"
-          style={{ '--radix-collapsible-content-height': `${height}px` } as CSSProperties}
-        >
-          {isPayloadSchemaEnabled ? (
-            <EditableJsonViewer value={jsonData} onChange={handleJsonChange} schema={workflow?.payloadSchema} />
-          ) : (
-            <Editor
-              value={editorValue}
-              onChange={setEditorValueCallback}
-              lang="json"
-              extensions={extensions}
-              multiline
-              className="border-neutral-alpha-200 bg-background text-foreground-600 mx-0 mt-0 rounded-lg border border-dashed p-3"
-            />
-          )}
-          {payloadError && <p className="text-destructive text-xs">{payloadError}</p>}
-          <div className="flex justify-end gap-1">
-            <Button
-              size="2xs"
-              type="button"
-              variant="secondary"
-              mode="outline"
-              className="self-end"
-              onClick={handleReset}
-            >
-              Reset
-            </Button>
-            <Button
-              size="2xs"
-              type="button"
-              variant="primary"
-              mode="outline"
-              className="self-end"
-              disabled={payloadError !== null}
-              onClick={onUpdate}
-            >
-              Apply
-            </Button>
-          </div>
-        </AccordionContent>
-      </AccordionItem>
-    </Accordion>
+    <>
+      <Accordion type="single" collapsible value={accordionValue} onValueChange={setAccordionValue}>
+        <AccordionItem value="payload">
+          <AccordionTrigger>
+            <div className="flex w-full items-center justify-between">
+              <div className="text-label-sm flex items-center gap-1">
+                <Code2 className="text-feature size-4" />
+                Configure preview
+              </div>
+              {isPayloadSchemaEnabled && (
+                <Button
+                  size="2xs"
+                  leadingIcon={RiListView}
+                  variant="secondary"
+                  mode="ghost"
+                  className="ml-auto"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openSchemaDrawer();
+                  }}
+                >
+                  Edit schema
+                </Button>
+              )}
+            </div>
+          </AccordionTrigger>
+          <AccordionContent
+            ref={contentRef}
+            className="flex flex-col gap-2"
+            style={{ '--radix-collapsible-content-height': `${height}px` } as CSSProperties}
+          >
+            {isPayloadSchemaEnabled ? (
+              isValidJson ? (
+                <EditableJsonViewer value={jsonData} onChange={handleJsonChange} schema={schema as JSONSchema7} />
+              ) : (
+                <Editor
+                  value={editorValue}
+                  onChange={setEditorValueCallback}
+                  lang="json"
+                  extensions={extensions}
+                  multiline
+                  className="border-neutral-alpha-200 bg-background text-foreground-600 mx-0 mt-0 rounded-lg border border-dashed p-3"
+                />
+              )
+            ) : (
+              <Editor
+                value={editorValue}
+                onChange={setEditorValueCallback}
+                lang="json"
+                extensions={extensions}
+                multiline
+                className="border-neutral-alpha-200 bg-background text-foreground-600 mx-0 mt-0 rounded-lg border border-dashed p-3"
+              />
+            )}
+            {payloadError && <p className="text-destructive text-xs">{payloadError}</p>}
+            <div className="flex justify-end gap-1">
+              <Button
+                size="2xs"
+                type="button"
+                variant="secondary"
+                mode="outline"
+                className="self-end"
+                onClick={handleReset}
+              >
+                Reset
+              </Button>
+              <Button
+                size="2xs"
+                type="button"
+                variant="primary"
+                mode="outline"
+                className="self-end"
+                disabled={payloadError !== null}
+                onClick={onUpdate}
+              >
+                Apply
+              </Button>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
+
+      <PayloadSchemaDrawer
+        isOpen={isPayloadSchemaDrawerOpen}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) {
+            closeSchemaDrawer();
+          }
+        }}
+        workflow={workflow}
+        highlightedPropertyKey={highlightedVariableKey}
+      />
+    </>
   );
 };
