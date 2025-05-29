@@ -236,8 +236,6 @@
     "onlyBuiltDependencies": [
       "@clerk/shared",
       "@clerk/types",
-      "react-icons",
-      "@novu/novui",
       "@contrast/fn-inspect",
       "@firebase/util",
       "@fortawesome/fontawesome-common-types",
@@ -246,10 +244,13 @@
       "@fortawesome/free-solid-svg-icons",
       "@nestjs/core",
       "@newrelic/native-metrics",
+      "@novu/novui",
       "@sentry/cli",
       "@sentry/profiling-node",
       "@sveltejs/kit",
       "@swc/core",
+      "@tailwindcss/oxide",
+      "aws-sdk",
       "bcrypt",
       "core-js",
       "core-js-pure",
@@ -262,6 +263,7 @@
       "nice-napi",
       "nx",
       "protobufjs",
+      "react-icons",
       "sharp"
     ]
   }
