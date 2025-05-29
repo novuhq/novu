@@ -120,6 +120,7 @@ export const WorkflowsPage = () => {
   const {
     data: workflowsData,
     isPending,
+    isFetching,
     isError,
   } = useFetchWorkflows({
     limit,
@@ -257,7 +258,7 @@ export const WorkflowsPage = () => {
             orderBy={searchParams.get('orderBy') as SortableColumn}
             orderDirection={searchParams.get('orderDirection') as DirectionEnum}
             data={workflowsData}
-            isLoading={isPending}
+            isLoading={isPending || isFetching}
             isError={isError}
             limit={limit}
           />
