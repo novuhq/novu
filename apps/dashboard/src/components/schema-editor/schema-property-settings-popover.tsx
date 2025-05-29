@@ -4,11 +4,13 @@ import { useFormContext, Controller, type Path } from 'react-hook-form';
 import { Button } from '@/components/primitives/button';
 import { FormControl, FormItem, FormLabel, FormMessage } from '@/components/primitives/form/form';
 import { Input } from '@/components/primitives/input';
+import { InputPure, InputRoot, InputWrapper } from '@/components/primitives/input';
 import { PopoverContent, Popover, PopoverTrigger } from '@/components/primitives/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
 import { Switch } from '@/components/primitives/switch';
 import { RiDeleteBin2Line } from 'react-icons/ri';
 import { Separator } from '../primitives/separator';
+import { Code2 } from '../icons/code-2';
 import type { JSONSchema7, JSONSchema7TypeName } from './json-schema';
 import type { SchemaEditorFormValues } from './utils/validation-schema';
 import { useSchemaPropertyType } from './hooks/use-schema-property-type';
@@ -141,6 +143,7 @@ export const SchemaPropertySettingsPopover = forwardRef<HTMLDivElement, SchemaPr
     const maximumPath = `${definitionPath}.maximum`;
     const minItemsPath = `${definitionPath}.minItems`;
     const maxItemsPath = `${definitionPath}.maxItems`;
+    const propertyNamePath = `${definitionPath.replace(/\.properties\.[^.]+$/, '')}.propertyName`;
 
     if (!open) return null;
 
@@ -163,9 +166,7 @@ export const SchemaPropertySettingsPopover = forwardRef<HTMLDivElement, SchemaPr
         <div className="bg-bg-weak border-b border-b-neutral-100">
           <div className="flex flex-row items-center justify-between space-y-0 px-1.5 py-1">
             <div className="flex w-full items-center justify-between gap-1">
-              <span className="text-subheading-2xs text-text-soft">
-                {propertyKeyForDisplay ? `${propertyKeyForDisplay} - ` : ''} Settings
-              </span>
+              <span className="text-subheading-2xs text-text-soft">SCHEMA CONFIGURATION</span>
               {isVariableInUse ? (
                 <Popover open={showUsagePopover} onOpenChange={setShowUsagePopover} modal={false}>
                   <PopoverTrigger asChild>{deleteButton}</PopoverTrigger>
@@ -201,7 +202,38 @@ export const SchemaPropertySettingsPopover = forwardRef<HTMLDivElement, SchemaPr
           </div>
         </div>
         <div className="flex flex-col">
-          <div className="max-h-[450px] space-y-2.5 overflow-y-auto p-3">
+          <div className="text-text-sub space-y-1 overflow-y-auto p-2">
+            <FormItem>
+              <FormLabel className="text-xs">Property Name</FormLabel>
+              <Controller
+                name={propertyNamePath as Path<SchemaEditorFormValues>}
+                control={control}
+                render={({ field, fieldState }) => (
+                  <FormControl>
+                    <InputRoot hasError={!!fieldState.error} size="2xs" className={cn('font-mono')}>
+                      <InputWrapper>
+                        <Code2 className="h-4 w-4 shrink-0 text-gray-500" />
+                        <InputPure
+                          {...field}
+                          value={
+                            field.value === undefined || field.value === null
+                              ? propertyKeyForDisplay
+                              : String(field.value)
+                          }
+                          onChange={(e) => {
+                            field.onChange(e.target.value);
+                          }}
+                          placeholder="Enter property name"
+                          className="text-xs"
+                        />
+                      </InputWrapper>
+                    </InputRoot>
+                  </FormControl>
+                )}
+              />
+              <FormMessage />
+            </FormItem>
+
             <FormItem>
               <FormLabel className="text-xs">Default Value</FormLabel>
               <Controller
@@ -238,14 +270,12 @@ export const SchemaPropertySettingsPopover = forwardRef<HTMLDivElement, SchemaPr
                 )}
               />
             </FormItem>
+          </div>
+          <Separator />
 
-            <Separator />
-
+          <div className="text-text-sub space-y-1 p-2">
             {(isStringType || isArrayType) && (
               <>
-                <FormLabel className="mb-1 block text-xs">
-                  {isArrayType ? 'Array Constraints' : 'String Constraints'}
-                </FormLabel>
                 <div className="grid grid-cols-2 gap-2.5">
                   <FormItem>
                     <FormLabel className="text-xs font-normal">{isArrayType ? 'Min Items' : 'Min Length'}</FormLabel>
@@ -350,7 +380,6 @@ export const SchemaPropertySettingsPopover = forwardRef<HTMLDivElement, SchemaPr
 
             {isNumericType && (
               <>
-                <FormLabel className="mb-1 block text-xs">Numeric Constraints</FormLabel>
                 <div className="grid grid-cols-2 gap-2.5">
                   <FormItem>
                     <FormLabel className="text-xs font-normal">Minimum</FormLabel>
@@ -401,8 +430,15 @@ export const SchemaPropertySettingsPopover = forwardRef<HTMLDivElement, SchemaPr
             )}
           </div>
           <Separator />
-          <div className="flex justify-end px-3 py-2">
-            <Button type="button" size="2xs" mode="filled" variant="secondary" onClick={handleApplyChanges}>
+          <div className="flex justify-end px-2 py-1.5">
+            <Button
+              type="button"
+              size="2xs"
+              className="h-6"
+              mode="filled"
+              variant="secondary"
+              onClick={handleApplyChanges}
+            >
               Done
             </Button>
           </div>

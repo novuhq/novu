@@ -104,7 +104,7 @@ export const ObjectSection = memo<ObjectSectionProps>(function ObjectSection({
       <Button
         size="2xs"
         variant="secondary"
-        mode="outline"
+        mode="lighter"
         onClick={handleAddNestedProperty}
         leadingIcon={RiAddLine}
         className="mt-1"

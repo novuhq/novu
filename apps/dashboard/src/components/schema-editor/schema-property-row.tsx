@@ -71,7 +71,7 @@ export const SchemaPropertyRow = memo<SchemaPropertyRowProps>(function SchemaPro
     <div
       className={cn('flex flex-col', isHighlighted ? 'overflow-hidden rounded-[8px] bg-[rgba(193,221,251,0.50)]' : '')}
     >
-      <div className={cn('flex items-center space-x-2', getMarginClassPx(indentationLevel))}>
+      <div className={cn('flex items-center gap-2', getMarginClassPx(indentationLevel))}>
         <PropertyNameInput fieldPath={paths.keyName} control={control} />
         <PropertyTypeSelector
           definitionPath={paths.definition}
@@ -80,7 +80,7 @@ export const SchemaPropertyRow = memo<SchemaPropertyRowProps>(function SchemaPro
           getValues={getValues}
         />
 
-        <div className="ml-auto flex items-center space-x-1.5">
+        <div className="flex items-center gap-1.5">
           <Controller
             name={paths.isRequired}
             control={control}

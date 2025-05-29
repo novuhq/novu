@@ -34,7 +34,7 @@ export function PropertyActions({
             variant="secondary"
             mode="ghost"
             size="2xs"
-            className="p-1"
+            className={cn('border-1 !ml-0 h-7 w-7 border-neutral-200')}
             leadingIcon={RiSettings4Line}
             disabled={isDisabled || !propertyKeyForDisplay || propertyKeyForDisplay.trim() === ''}
             aria-label="Property settings"
@@ -57,7 +57,7 @@ export function PropertyActions({
         leadingIcon={RiDeleteBin6Line}
         onClick={onDeleteProperty}
         aria-label="Delete property"
-        className={cn('p-1')}
+        className={cn('border-1 !ml-0 h-7 w-7 border-neutral-200')}
       />
     </>
   );
