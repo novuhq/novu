@@ -1,3 +1,4 @@
+import { ResourceEnum } from '@novu/shared';
 import { createHash } from './crypto';
 import { BLUEPRINT_IDENTIFIER, CacheKeyPrefixEnum, CacheKeyTypeEnum, IdentifierPrefixEnum } from './identifiers';
 import {
@@ -113,14 +114,14 @@ export const buildUsageKey = ({
   resourceType,
 }: {
   _organizationId: string;
-  resourceType: string;
+  resourceType: ResourceEnum;
 }): string => {
   return buildOrganizationScopedKeyById({
     type: CacheKeyTypeEnum.ENTITY,
     keyEntity: CacheKeyPrefixEnum.USAGE,
-    identifierPrefix: IdentifierPrefixEnum.RESOURCE_TYPE,
-    identifier: `${resourceType}`,
     organizationId: _organizationId,
+    identifierPrefix: IdentifierPrefixEnum.RESOURCE_TYPE,
+    identifier: resourceType,
   });
 };
 

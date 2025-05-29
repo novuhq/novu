@@ -22,7 +22,6 @@ describe('GetPlatformNotificationUsage #novu-v2', () => {
       environmentRepo,
       notificationRepo,
       communityOrganizationRepo,
-      MockCacheService.createClient(),
       new PinoLogger({})
     );
   };
