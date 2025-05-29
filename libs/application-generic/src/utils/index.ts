@@ -9,6 +9,7 @@ export * from './novu-integrations';
 export * from './object';
 export * from './bridge';
 export * from './subscriber';
+export * from './subscribers.utils';
 export * from './variants';
 export * from './deepmerge';
 export * from './generate-id';
