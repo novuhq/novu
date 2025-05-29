@@ -21,8 +21,7 @@ export class GetWorkflowUseCase {
   constructor(
     private getWorkflowWithPreferencesUseCase: GetWorkflowWithPreferencesUseCase,
     private buildStepDataUsecase: BuildStepDataUsecase,
-    private logger: PinoLogger,
-    private featureFlagsService: FeatureFlagsService
+    private logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -38,7 +37,7 @@ export class GetWorkflowUseCase {
     );
 
     const fullSteps = await this.getFullWorkflowSteps(workflowWithPreferences, command.user);
-    const payloadExample = await generatePayloadExample(workflowWithPreferences, this.featureFlagsService, this.logger);
+    const payloadExample = await generatePayloadExample(workflowWithPreferences);
 
     return toResponseWorkflowDto(workflowWithPreferences, fullSteps, payloadExample);
   }

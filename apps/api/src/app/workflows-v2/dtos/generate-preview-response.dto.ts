@@ -1,9 +1,18 @@
 import { ApiExtraModels, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
 import { IsEnum, IsNumber, IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
-import { ActionTypeEnum, ChannelTypeEnum, DigestTypeEnum, TimeUnitEnum } from '@novu/shared';
+import { ActionTypeEnum, ChannelTypeEnum } from '@novu/shared';
 import { PreviewPayloadDto } from './preview-payload.dto';
 import { JSONSchemaDto } from './json-schema.dto';
+
+export enum TimeUnitEnum {
+  SECONDS = 'seconds',
+  MINUTES = 'minutes',
+  HOURS = 'hours',
+  DAYS = 'days',
+  WEEKS = 'weeks',
+  MONTHS = 'months',
+}
 
 export enum RedirectTargetEnum {
   SELF = '_self',
@@ -220,7 +229,7 @@ export class GeneratePreviewResponseDto {
     additionalProperties: true,
   })
   @IsOptional()
-  schema?: JSONSchemaDto | null;
+  schema?: any | null;
 
   @ApiProperty({
     description: 'Preview result',

@@ -2,13 +2,7 @@ import _ from 'lodash';
 import { Injectable } from '@nestjs/common';
 import { ControlValuesRepository } from '@novu/dal';
 import { ControlValuesLevelEnum, FeatureFlagsKeysEnum } from '@novu/shared';
-import {
-  FeatureFlagsService,
-  Instrument,
-  InstrumentUsecase,
-  GetWorkflowByIdsUseCase,
-  PinoLogger,
-} from '@novu/application-generic';
+import { FeatureFlagsService, Instrument, InstrumentUsecase, GetWorkflowByIdsUseCase } from '@novu/application-generic';
 
 import { collectKeys, keysToObject } from '../../util/utils';
 import { buildVariables } from '../../util/build-variables';
@@ -31,9 +25,7 @@ export const DEFAULT_ARRAY_ELEMENTS = 5;
 export class CreateVariablesObject {
   constructor(
     private readonly controlValuesRepository: ControlValuesRepository,
-    private readonly featureFlagService: FeatureFlagsService,
-    private readonly getWorkflowByIdsUseCase: GetWorkflowByIdsUseCase,
-    private readonly logger: PinoLogger
+    private readonly featureFlagService: FeatureFlagsService
   ) {}
 
   @InstrumentUsecase()
@@ -106,26 +98,7 @@ export class CreateVariablesObject {
             };
             const mockData = JsonSchemaMock.generate(schema) as Record<string, unknown>;
             payload = mockData.payload as Record<string, unknown>;
-
-            this.logger.debug(
-              {
-                stepId,
-                workflowId: command.workflowId,
-                generatedPayload: payload,
-              },
-              'Generated realistic payload using JsonSchemaMock for step events'
-            );
           } catch (error) {
-            this.logger.warn(
-              {
-                err: error,
-                stepId,
-                workflowId: command.workflowId,
-                payloadSchema: command.payloadSchema,
-              },
-              'Failed to generate payload using JsonSchemaMock, falling back to default method'
-            );
-            // Fall back to the original method
             payload = this.generateFallbackPayload(step, hasUsedEventsWithPayload);
           }
         } else {
