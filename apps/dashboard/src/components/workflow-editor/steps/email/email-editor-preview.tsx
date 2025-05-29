@@ -44,22 +44,20 @@ export const EmailEditorPreview = ({
 
   return (
     <Tabs value={previewType} onValueChange={(value) => setPreviewType(value as 'mobile' | 'desktop')}>
-      <EmailTabsSection>
-        <div className="flex items-center justify-between gap-2.5 px-4 py-3 text-sm font-medium">
-          <span>Email template editor</span>
-          <TabsList className="w-min">
-            <TabsTrigger value="desktop" className="gap-1.5">
-              <RiMacLine className="size-4" />
-              <span>Desktop</span>
-            </TabsTrigger>
-            <TabsTrigger value="mobile" className="gap-1.5">
+      <div className="flex w-full items-center justify-between px-4 pb-0 pt-4">
+        <EmailPreviewHeader />
+        <div>
+          <TabsList>
+            <TabsTrigger value="mobile">
               <RiSmartphoneFill className="size-4" />
-              <span>Mobile</span>
+            </TabsTrigger>
+            <TabsTrigger value="desktop">
+              <RiMacLine className="size-4" />
             </TabsTrigger>
           </TabsList>
         </div>
-      </EmailTabsSection>
-      <div className="relative flex flex-1 flex-col overflow-hidden">
+      </div>
+      <div className="flex flex-col">
         <AnimatePresence mode="wait">
           {isPreviewPending ? (
             <motion.div
@@ -69,37 +67,16 @@ export const EmailEditorPreview = ({
               exit="hidden"
               variants={fadeVariants}
               transition={{ duration: 0.2 }}
-              className="h-full"
+              className="w-full"
             >
-              <TabsContent value="mobile">
-                <div className="w-full bg-neutral-100">
-                  <EmailPreviewContentMobile className="mx-auto">
-                    <EmailPreviewSubjectMobile subject="Loading...">
-                      <Skeleton className="h-4 w-3/4" />
-                    </EmailPreviewSubjectMobile>
-                    <div className="bg-background rounded-lg p-4">
-                      <Skeleton className="mb-2 h-4 w-full" />
-                      <Skeleton className="mb-2 h-4 w-5/6" />
-                      <Skeleton className="h-4 w-4/6" />
-                    </div>
-                  </EmailPreviewContentMobile>
+              <div className="flex flex-col">
+                <div className={cn('border-b px-4 py-1.5')}>
+                  <Skeleton className="h-8 w-full" />
                 </div>
-              </TabsContent>
-              <TabsContent value="desktop" className="h-full">
-                <div className="border-b px-2">
-                  <EmailPreviewHeader>
-                    <Skeleton className="h-4 w-1/2" />
-                  </EmailPreviewHeader>
-                </div>
-                <div className="bg-neutral-50 px-16 py-8">
-                  <div className="bg-background rounded-lg p-8">
-                    <Skeleton className="mb-4 h-6 w-3/4" />
-                    <Skeleton className="mb-2 h-4 w-full" />
-                    <Skeleton className="mb-2 h-4 w-5/6" />
-                    <Skeleton className="h-4 w-4/6" />
-                  </div>
-                </div>
-              </TabsContent>
+                <EmailTabsSection className="bg-neutral-50 py-4">
+                  <Skeleton className="mx-auto h-96 max-w-[600px] rounded-lg" />
+                </EmailTabsSection>
+              </div>
             </motion.div>
           ) : (
             <motion.div
