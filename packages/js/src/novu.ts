@@ -38,13 +38,11 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
     });
     this.#emitter = new NovuEventEmitter();
     this.#session = new Session(
-      options.applicationIdentifier
-        ? {
-            applicationIdentifier: options.applicationIdentifier,
-            subscriberHash: options.subscriberHash,
-            subscriber: buildSubscriber(options),
-          }
-        : {},
+      {
+        applicationIdentifier: options.applicationIdentifier,
+        subscriberHash: options.subscriberHash,
+        subscriber: buildSubscriber(options),
+      },
       this.#inboxService,
       this.#emitter
     );

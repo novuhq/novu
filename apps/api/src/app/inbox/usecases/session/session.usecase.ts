@@ -199,7 +199,9 @@ export class Session {
 
   private validateRequestData(requestData: SubscriberSessionRequestDto): void {
     if (!requestData.applicationIdentifier && this.extractSubscriberInfo(requestData).subscriberId) {
-      throw new UnprocessableEntityException('applicationIdentifier is required');
+      throw new UnprocessableEntityException(
+        'A valid application identifier is required when providing subscriber information'
+      );
     }
   }
 
