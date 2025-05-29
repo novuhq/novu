@@ -1,5 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { NotificationTemplateEntity, SubscriberEntity, TopicEntity, EnvironmentEntity, OrganizationEntity, UserEntity } from '@novu/dal';
+import {
+  NotificationTemplateEntity,
+  SubscriberEntity,
+  TopicEntity,
+  EnvironmentEntity,
+  OrganizationEntity,
+  UserEntity,
+} from '@novu/dal';
 import {
   ISubscribersDefine,
   ITenantDefine,
@@ -45,20 +52,18 @@ export abstract class TriggerBase {
   ) {}
 
   protected async subscriberProcessQueueAddBulk(jobs: IProcessSubscriberBulkJobDto[]) {
-         const isUsageTrackingInTriggerBaseEnabled = await this.featureFlagsService.getFlag({
-          key: FeatureFlagsKeysEnum.IS_INCR_IF_EXIST_USAGE_ENABLED,
-          defaultValue: false,
-          organization: { _id: jobs[0].data.organizationId } as OrganizationEntity,
-          environment: { _id: jobs[0].data.environmentId } as EnvironmentEntity,
-          user: { _id: jobs[0].data.userId } as UserEntity,
-        });
-        
+    const isUsageTrackingInTriggerBaseEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_INCR_IF_EXIST_USAGE_ENABLED,
+      defaultValue: false,
+      organization: { _id: jobs[0].data.organizationId } as OrganizationEntity,
+      environment: { _id: jobs[0].data.environmentId } as EnvironmentEntity,
+      user: { _id: jobs[0].data.userId } as UserEntity,
+    });
+
     return await Promise.all(
       _.chunk(jobs, this.queueChunkSize).map(async (chunk: IProcessSubscriberBulkJobDto[]) => {
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.subscriberProcessQueueService.addBulk(chunk);
-
-  
 
         if (isUsageTrackingInTriggerBaseEnabled) {
           // eslint-disable-next-line @typescript-eslint/no-floating-promises
