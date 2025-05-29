@@ -24,6 +24,7 @@ import { SchemaChangeConfirmationModal } from './schema-change-confirmation-moda
 import { detectSchemaChanges, type SchemaChanges } from '../schema-editor/utils/schema-change-detection';
 import { checkVariableUsageInWorkflow } from '../schema-editor/utils/check-variable-usage';
 import { Switch } from '../primitives/switch';
+import { Hint, HintIcon } from '../primitives/hint';
 
 interface PayloadSchemaDrawerProps {
   isOpen: boolean;
@@ -141,63 +142,62 @@ export function PayloadSchemaDrawer({
             </SheetDescription>
           </SheetHeader>
           <Separator />
-          <SheetMain className="p-3">
-            <div className="mb-2 flex flex-row items-center justify-between gap-2">
-              <h3 className="text-label-xs w-full">
-                <TooltipProvider>
+          <SheetMain className="p-0">
+            <div className="p-3">
+              <div className="mb-2 flex flex-row items-center justify-between gap-2">
+                <h3 className="text-label-xs w-full">Payload schema</h3>
+              </div>
+
+              <div className="rounded-4 border-1 mb-2 flex items-center justify-between border border-neutral-100 bg-white p-1.5">
+                <div className="text-text-strong text-label-xs flex items-center gap-1">
+                  <RiShieldCheckLine className="text-text-strong size-3" />
+                  Enforce schema validation
                   <Tooltip>
                     <TooltipTrigger className="flex cursor-default flex-row items-center gap-1">
-                      Payload schema <RiInformation2Line className="inline-block size-4 text-neutral-400" />
+                      <RiInformation2Line className="size-3 text-neutral-400" />
                     </TooltipTrigger>
                     <TooltipContent>
                       <p>
-                        Validating the workflow payload content, to match a specific schema. This validation ensures
-                        content consistency.
+                        When enabled, the workflow will validate incoming payloads against the defined schema and reject
+                        invalid requests during the trigger http request.
                       </p>
                     </TooltipContent>
                   </Tooltip>
-                </TooltipProvider>
-              </h3>
-            </div>
-
-            <div className="rounded-4 border-1 mb-2 flex items-center justify-between border border-neutral-100 bg-white p-1.5">
-              <div className="text-text-strong text-label-xs flex items-center gap-1">
-                <RiShieldCheckLine className="text-text-strong size-3" />
-                Enforce schema validation
-                <Tooltip>
-                  <TooltipTrigger className="flex cursor-default flex-row items-center gap-1">
-                    <RiInformation2Line className="size-3 text-neutral-400" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>
-                      When enabled, the workflow will validate incoming payloads against the defined schema and reject
-                      invalid requests during the trigger http request.
-                    </p>
-                  </TooltipContent>
-                </Tooltip>
+                </div>
+                <Switch
+                  checked={payloadSchemaValidation}
+                  onCheckedChange={setPayloadSchemaValidation}
+                  disabled={isLoadingWorkflow}
+                />
               </div>
-              <Switch
-                checked={payloadSchemaValidation}
-                onCheckedChange={setPayloadSchemaValidation}
-                disabled={isLoadingWorkflow}
-              />
+
+              {isLoadingWorkflow ? (
+                <div className="flex h-full items-center justify-center">Loading workflow schema...</div>
+              ) : hasPayloadSchema ? (
+                <SchemaEditor
+                  key={workflow?.slug}
+                  control={control}
+                  fields={fields}
+                  formState={formState}
+                  addProperty={addProperty}
+                  removeProperty={removeProperty}
+                  methods={formMethods}
+                  highlightedPropertyKey={highlightedPropertyKey}
+                />
+              ) : (
+                <PayloadSchemaEmptyState onAddProperty={addProperty} />
+              )}
             </div>
 
-            {isLoadingWorkflow ? (
-              <div className="flex h-full items-center justify-center">Loading workflow schema...</div>
-            ) : hasPayloadSchema ? (
-              <SchemaEditor
-                key={workflow?.slug}
-                control={control}
-                fields={fields}
-                formState={formState}
-                addProperty={addProperty}
-                removeProperty={removeProperty}
-                methods={formMethods}
-                highlightedPropertyKey={highlightedPropertyKey}
-              />
-            ) : (
-              <PayloadSchemaEmptyState onAddProperty={addProperty} />
+            {hasPayloadSchema && (
+              <>
+                <Separator />
+                <Hint className="text-text-soft p-2 px-3">
+                  <HintIcon as={RiInformation2Line} />
+                  Modifying a variable&apos;s type can break step behavior if the variable is used in logic or
+                  expressions.
+                </Hint>
+              </>
             )}
           </SheetMain>
           <SheetFooter className="border-neutral-content-weak space-between flex border-t px-3 py-1.5">
