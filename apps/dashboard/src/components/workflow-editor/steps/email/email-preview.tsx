@@ -3,6 +3,7 @@ import { MAILY_EMAIL_WIDTH } from '@/components/workflow-editor/steps/email/mail
 import { cn } from '@/utils/ui';
 import { HTMLAttributes, useCallback, useEffect, useRef } from 'react';
 import { RiArrowDownSFill } from 'react-icons/ri';
+import { NovuBranding } from './novu-branding';
 
 type EmailPreviewHeaderProps = HTMLAttributes<HTMLDivElement>;
 
@@ -94,14 +95,16 @@ export const EmailPreviewBody = (props: EmailPreviewBodyProps) => {
   }, [processBody, body]);
 
   return (
-    <div
-      className={cn(`shadow-xs mx-auto min-h-80 w-full max-w-[${MAILY_EMAIL_WIDTH}px] overflow-auto p-2`, className)}
-      ref={(node) => {
-        refNode.current = node;
-        attachShadow(node, body);
-      }}
-      {...rest}
-    />
+    <div className={cn('flex flex-col', className)} {...rest}>
+      <div
+        className={cn(`shadow-xs mx-auto min-h-80 w-full max-w-[${MAILY_EMAIL_WIDTH}px] overflow-auto p-2`)}
+        ref={(node) => {
+          refNode.current = node;
+          attachShadow(node, body);
+        }}
+      />
+      <NovuBranding />
+    </div>
   );
 };
 
@@ -121,11 +124,10 @@ export const EmailPreviewBodyMobile = (props: EmailPreviewBodyMobileProps) => {
   const { body, className, ...rest } = props;
 
   return (
-    <div
-      className={cn('mx-auto min-h-96 w-full px-4', className)}
-      dangerouslySetInnerHTML={{ __html: body }}
-      {...rest}
-    />
+    <div className={cn('flex flex-col', className)} {...rest}>
+      <div className="mx-auto min-h-96 w-full px-4" dangerouslySetInnerHTML={{ __html: body }} />
+      <NovuBranding />
+    </div>
   );
 };
 
