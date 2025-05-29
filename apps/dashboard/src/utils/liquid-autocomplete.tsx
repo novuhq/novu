@@ -121,15 +121,20 @@ export const completions =
       return {
         from: lastOpenBrace + 2,
         to: pos,
-        options: matchingVariables.map((v) =>
-          createCompletionOption(
-            v.name,
-            v.isNewSuggestion && isPayloadSchemaEnabled ? 'new-variable' : (v.type ?? 'variable'),
-            v.boost,
-            v.info,
-            v.displayLabel
-          )
-        ),
+        options:
+          matchingVariables.length > 0
+            ? matchingVariables.map((v) =>
+                createCompletionOption(
+                  v.name,
+                  v.isNewSuggestion && isPayloadSchemaEnabled ? 'new-variable' : (v.type ?? 'variable'),
+                  v.boost,
+                  v.info,
+                  v.displayLabel
+                )
+              )
+            : variables.map((v) =>
+                createCompletionOption(v.name, v.type ?? 'variable', v.boost, v.info, v.displayLabel)
+              ),
       };
     }
 

@@ -255,13 +255,25 @@ export const createExtensions = ({
           if (isNewVariable) {
             const variableName = props.id.replace('payload.', '');
             onCreateNewVariable?.(variableName);
-          }
 
-          insertVariableToEditor({
-            query,
-            editor,
-            range,
-          });
+            insertVariableToEditor({
+              query,
+              editor,
+              range,
+            });
+          } else {
+            const isAllowed = parsedVariables.isAllowedVariable({ name: props.id });
+
+            if (!isAllowed) {
+              return;
+            }
+
+            insertVariableToEditor({
+              query,
+              editor,
+              range,
+            });
+          }
         },
       },
       // variable pills in bubble menus (repeat, showIf...)

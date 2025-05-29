@@ -53,13 +53,14 @@ export const useVariableValidation = (
 
     const variableKey = extractVariableKey(variableName);
     const schemaProperty = getSchemaPropertyByKey(variableKey);
+
     const isInSchema = !!schemaProperty;
 
     // Create a variable object for validation
     const variableToCheck: LiquidVariable = { name: variableName, aliasFor };
     const isAllowed = isAllowedVariable(variableToCheck);
 
-    const hasError = !isAllowed && (!isInSchema || !isPayload);
+    const hasError = isPayload && !isInSchema ? true : !isAllowed;
     const errorMessage = hasError ? "Variable schema doesn't exist" : '';
 
     return {

@@ -40,10 +40,10 @@ export const EmailEditorPreview = ({
   isPreviewPending = false,
   workflow,
 }: EmailEditorPreviewProps) => {
-  const [previewType, setPreviewType] = useState<'mobile' | 'desktop'>('desktop');
+  const [activeTab, setActiveTab] = useState('desktop');
 
   return (
-    <Tabs value={previewType} onValueChange={(value) => setPreviewType(value as 'mobile' | 'desktop')}>
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
       <div className="flex w-full items-center justify-between px-4 pb-0 pt-4">
         <EmailPreviewHeader />
         <div>

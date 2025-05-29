@@ -129,10 +129,6 @@ export const EditVariablePopover = ({
 
   const handleOpenChange = useCallback(
     (open: boolean) => {
-      if (!open && validation.hasError) {
-        return;
-      }
-
       const newValue = formatLiquidVariable(name, defaultVal, filters);
 
       if (!open) {
@@ -147,7 +143,7 @@ export const EditVariablePopover = ({
 
       onOpenChange(open, newValue);
     },
-    [validation.hasError, onOpenChange, name, defaultVal, filters, track, onUpdate]
+    [onOpenChange, name, defaultVal, filters, track, onUpdate]
   );
 
   const handleClosePopover = useCallback(() => {

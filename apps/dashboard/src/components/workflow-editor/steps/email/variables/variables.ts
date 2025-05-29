@@ -261,7 +261,7 @@ export const calculateVariables = ({
    * 3. For now bubble variables can be only added via Enter key which triggers a separate insertion flow
    *    (which is external somewhere in TipTap or Maily)
    */
-  if (from === VariableFrom.Content) {
+  if (from === VariableFrom.Content && isAllowedVariable({ name: queryWithoutSuffix })) {
     insertVariableToEditor({ query, editor });
   }
 
