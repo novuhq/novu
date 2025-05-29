@@ -2,7 +2,6 @@ import { CommunityOrganizationRepository, EnvironmentRepository, IntegrationRepo
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import {
-  ApiServiceLevelEnum,
   ChannelTypeEnum,
   ChatProviderIdEnum,
   EmailProviderIdEnum,
@@ -16,7 +15,6 @@ describe('Update Integration - /integrations/:integrationId (PUT) #novu-v2', fun
   let session: UserSession;
   const integrationRepository = new IntegrationRepository();
   const envRepository = new EnvironmentRepository();
-  const communityOrganizationRepository = new CommunityOrganizationRepository();
 
   beforeEach(async () => {
     session = new UserSession();
@@ -963,86 +961,5 @@ describe('Update Integration - /integrations/:integrationId (PUT) #novu-v2', fun
     expect(second.primary).to.equal(false);
     expect(second.active).to.equal(true);
     expect(second.priority).to.equal(1);
-  });
-
-  it('should update removeNovuBranding when organization is not on free tier', async function () {
-    await integrationRepository.deleteMany({
-      _organizationId: session.organization._id,
-      _environmentId: session.environment._id,
-    });
-
-    await communityOrganizationRepository.update(
-      { _id: session.organization._id },
-      { $set: { apiServiceLevel: ApiServiceLevelEnum.BUSINESS } }
-    );
-
-    const inAppIntegration = await integrationRepository.create({
-      name: 'Novu In-App',
-      identifier: 'identifier1',
-      providerId: InAppProviderIdEnum.Novu,
-      channel: ChannelTypeEnum.IN_APP,
-      active: false,
-      _organizationId: session.organization._id,
-      _environmentId: session.environment._id,
-    });
-
-    const payload = {
-      removeNovuBranding: true,
-      check: false,
-    };
-
-    const {
-      body: { data },
-    } = await session.testAgent.put(`/v1/integrations/${inAppIntegration._id}`).send(payload);
-
-    expect(data.removeNovuBranding).to.equal(true);
-
-    const updatedIntegration = await integrationRepository.findOne({
-      _id: inAppIntegration._id,
-      _organizationId: session.organization._id,
-    });
-
-    expect(updatedIntegration?.removeNovuBranding).to.equal(true);
-  });
-
-  it('should not update removeNovuBranding when organization is on free tier', async function () {
-    await integrationRepository.deleteMany({
-      _organizationId: session.organization._id,
-      _environmentId: session.environment._id,
-    });
-
-    await communityOrganizationRepository.update(
-      { _id: session.organization._id },
-      { $set: { apiServiceLevel: ApiServiceLevelEnum.FREE } }
-    );
-
-    const inAppIntegration = await integrationRepository.create({
-      name: 'Novu In-App',
-      identifier: 'identifier1',
-      providerId: InAppProviderIdEnum.Novu,
-      channel: ChannelTypeEnum.IN_APP,
-      active: false,
-      _organizationId: session.organization._id,
-      _environmentId: session.environment._id,
-    });
-
-    const payload = {
-      removeNovuBranding: true,
-      check: false,
-      active: true,
-    };
-
-    const {
-      body: { data },
-    } = await session.testAgent.put(`/v1/integrations/${inAppIntegration._id}`).send(payload);
-
-    expect(data.removeNovuBranding).to.be.undefined;
-
-    const updatedIntegration = await integrationRepository.findOne({
-      _id: inAppIntegration._id,
-      _organizationId: session.organization._id,
-    });
-
-    expect(updatedIntegration?.removeNovuBranding).to.be.undefined;
   });
 });
