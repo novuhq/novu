@@ -93,6 +93,8 @@ export function setWorkflowsSearchData(
       orderDirection?: components.DirectionEnum | undefined;
       orderBy?: components.WorkflowResponseDtoSortField | undefined;
       query?: string | undefined;
+      tags?: Array<string> | undefined;
+      status?: Array<components.WorkflowStatusEnum> | undefined;
       idempotencyKey?: string | undefined;
     },
   ],
@@ -112,6 +114,8 @@ export function invalidateWorkflowsSearch(
       orderDirection?: components.DirectionEnum | undefined;
       orderBy?: components.WorkflowResponseDtoSortField | undefined;
       query?: string | undefined;
+      tags?: Array<string> | undefined;
+      status?: Array<components.WorkflowStatusEnum> | undefined;
       idempotencyKey?: string | undefined;
     }]
   >,
@@ -148,6 +152,8 @@ export function buildWorkflowsSearchQuery(
       orderDirection: request.orderDirection,
       orderBy: request.orderBy,
       query: request.query,
+      tags: request.tags,
+      status: request.status,
       idempotencyKey: request.idempotencyKey,
     }),
     queryFn: async function workflowsSearchQueryFn(
@@ -175,6 +181,8 @@ export function queryKeyWorkflowsSearch(
     orderDirection?: components.DirectionEnum | undefined;
     orderBy?: components.WorkflowResponseDtoSortField | undefined;
     query?: string | undefined;
+    tags?: Array<string> | undefined;
+    status?: Array<components.WorkflowStatusEnum> | undefined;
     idempotencyKey?: string | undefined;
   },
 ): QueryKey {

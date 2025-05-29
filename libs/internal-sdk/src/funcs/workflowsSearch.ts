@@ -102,6 +102,8 @@ async function $do(
     "orderBy": payload.orderBy,
     "orderDirection": payload.orderDirection,
     "query": payload.query,
+    "status": payload.status,
+    "tags": payload.tags,
   });
 
   const headers = new Headers(compactMap({

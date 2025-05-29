@@ -68,7 +68,7 @@ jobs:
             echo "Error: At least one service must be selected for deployment."
             exit 1
           fi
-    
+
       - name: Generate Environment, Service, and Deploy Matrices
         id: set-matrix
         env:
@@ -189,7 +189,7 @@ jobs:
       - name: Setup Node Version
         uses: actions/setup-node@v4
         with:
-          node-version: '20.8.1'
+          node-version: '20.19.0'
           cache: 'pnpm'
 
       - name: Install Dependencies
@@ -242,7 +242,7 @@ jobs:
         service: ${{ fromJson(needs.prepare-matrix.outputs.deploy_matrix) }}
 
     environment: ${{ matrix.env }}
-    
+
     steps:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -250,7 +250,7 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ vars.AWS_REGION }}
-      
+
       - name: Download task definition
         env:
           ECS_PREFIX: ${{ vars.ECS_PREFIX }}
@@ -266,7 +266,7 @@ jobs:
           task-definition: task-definition.json
           container-name: ${{ vars.ECS_PREFIX }}-${{ matrix.service.container_name }}
           image: ${{secrets.ECR_URI}}/${{ vars.ECR_PREFIX }}/${{ matrix.service.image }}:${{ github.sha }}
-      
+
       - name: Deploy to Amazon ECS service
         uses: aws-actions/amazon-ecs-deploy-task-definition@3e7310352de91b71a906e60c22af629577546002
         with:
@@ -275,7 +275,6 @@ jobs:
           cluster: ${{ vars.ECS_PREFIX }}-${{ matrix.service.cluster_name }}
           wait-for-service-stability: true
 
-    
   sentry_release:
     needs: [deploy, prepare-matrix]
     runs-on: ubuntu-latest
@@ -283,8 +282,8 @@ jobs:
       matrix:
         service: ${{ fromJson(needs.prepare-matrix.outputs.service_matrix).service }}
     environment: ${{ fromJson(needs.prepare-matrix.outputs.env_matrix).environment[0] }}
-    
-    steps:  
+
+    steps:
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -327,7 +326,7 @@ jobs:
           version: '${{ github.sha }}'
           user: '${{ github.actor }}'
           description: 'Novu Cloud Deployment'
-  
+
   sync_novu_state:
     needs: [deploy, prepare-matrix]
     runs-on: ubuntu-latest
