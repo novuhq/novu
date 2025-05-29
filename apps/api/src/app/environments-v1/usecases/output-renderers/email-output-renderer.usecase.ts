@@ -74,7 +74,7 @@ export class EmailOutputRendererUsecase {
     }
 
     // Add Novu branding if 'removeNovuBranding' is false
-    const finalHtml = await this.appendNovuBranding(renderedHtml, renderCommand.organizationId);
+    const htmlWithBranding = await this.appendNovuBranding(renderedHtml, renderCommand.organizationId);
 
     /**
      * Force type mapping in case undefined control.
@@ -84,10 +84,10 @@ export class EmailOutputRendererUsecase {
     const subject = controlSubject as string;
 
     if (disableOutputSanitization) {
-      return { subject, body: finalHtml };
+      return { subject, body: htmlWithBranding };
     }
 
-    return { subject: sanitizeHTML(subject), body: sanitizeHTML(finalHtml) };
+    return { subject: sanitizeHTML(subject), body: sanitizeHTML(htmlWithBranding) };
   }
 
   private removeTrailingEmptyLines(node: MailyJSONContent): MailyJSONContent {
