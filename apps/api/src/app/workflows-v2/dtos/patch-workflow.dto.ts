@@ -1,5 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsArray, IsBoolean, IsObject, IsOptional, IsString } from 'class-validator';
+import { IsValidJsonSchema } from '../../shared/validators/json-schema.validator';
 
 export class PatchWorkflowDto {
   @ApiPropertyOptional({
@@ -41,7 +42,9 @@ export class PatchWorkflowDto {
     type: 'object',
   })
   @IsOptional()
-  @IsObject()
+  @IsValidJsonSchema({
+    message: 'payloadSchema must be a valid JSON schema',
+  })
   payloadSchema?: object;
 
   @ApiPropertyOptional({
