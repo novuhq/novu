@@ -6,6 +6,7 @@ import { cn } from '@/utils/ui';
 import { useQueryClient } from '@tanstack/react-query';
 import { HTMLAttributes, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useForm } from 'react-hook-form';
+import { RiLoader4Line } from 'react-icons/ri';
 import { TopicsFilter } from './hooks/use-topics-url-state';
 
 type FilterFormValues = {
@@ -18,10 +19,11 @@ export type TopicsFiltersProps = HTMLAttributes<HTMLFormElement> & {
   filterValues: TopicsFilter;
   onReset?: () => void;
   isLoading?: boolean;
+  isFetching?: boolean;
 };
 
 export const TopicsFilters = (props: TopicsFiltersProps) => {
-  const { className, onFiltersChange, filterValues, onReset, isLoading, ...rest } = props;
+  const { className, onFiltersChange, filterValues, onReset, isLoading, isFetching, ...rest } = props;
   const queryClient = useQueryClient();
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -145,9 +147,14 @@ export const TopicsFilters = (props: TopicsFiltersProps) => {
           />
 
           {filterHasValue && (
-            <Button variant="secondary" mode="ghost" size="2xs" onClick={handleReset} disabled={isFiltersLoading}>
-              Reset
-            </Button>
+            <div className="flex items-center gap-1">
+              <Button variant="secondary" mode="ghost" size="2xs" onClick={handleReset} disabled={isFiltersLoading}>
+                Reset
+              </Button>
+              {isFetching && !isFiltersLoading && (
+                <RiLoader4Line className="h-3 w-3 animate-spin text-neutral-400" />
+              )}
+            </div>
           )}
         </FormRoot>
       </Form>
