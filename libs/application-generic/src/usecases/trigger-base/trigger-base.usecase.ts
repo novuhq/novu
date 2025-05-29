@@ -24,6 +24,7 @@ import { SubscriberProcessQueueService } from '../../services/queues/subscriber-
 import { buildUsageKey } from '../../services/cache/key-builders';
 import { CacheService, FeatureFlagsService } from '../../services';
 import { mapSubscribersToJobs } from '../../utils';
+import { PinoLogger } from '../../logging';
 
 export type BaseTriggerCommand = {
   environmentId: string;
@@ -49,6 +50,7 @@ export abstract class TriggerBase {
     protected subscriberProcessQueueService: SubscriberProcessQueueService,
     protected cacheService: CacheService,
     protected featureFlagsService: FeatureFlagsService,
+    protected logger: PinoLogger,
     protected queueChunkSize: number = 100
   ) {}
 
@@ -63,18 +65,24 @@ export abstract class TriggerBase {
 
     return await Promise.all(
       _.chunk(jobs, this.queueChunkSize).map(async (chunk: IProcessSubscriberBulkJobDto[]) => {
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.subscriberProcessQueueService.addBulk(chunk);
+        try {
+          await this.subscriberProcessQueueService.addBulk(chunk);
+        } catch (error) {
+          this.logger.warn({ err: error }, 'Failed to add jobs to queue');
+        }
 
         if (isUsageTrackingInTriggerBaseEnabled) {
-          // eslint-disable-next-line @typescript-eslint/no-floating-promises
-          this.cacheService.incrIfExistsAtomic(
-            buildUsageKey({
-              _organizationId: jobs[0].data.organizationId,
-              resourceType: ResourceEnum.EVENTS,
-            }),
-            chunk.length
-          );
+          try {
+            await this.cacheService.incrIfExistsAtomic(
+              buildUsageKey({
+                _organizationId: jobs[0].data.organizationId,
+                resourceType: ResourceEnum.EVENTS,
+              }),
+              chunk.length
+            );
+          } catch (error) {
+            this.logger.warn({ err: error }, 'Failed to increment usage counter');
+          }
         }
       })
     );
