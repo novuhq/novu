@@ -59,7 +59,20 @@ export const EmailPreviewBody = (props: EmailPreviewBodyProps) => {
 
     const doc = template.content;
     const style = document.createElement('style');
-    style.textContent = `a {pointer-events: none;}`;
+
+    /**
+     * Hide the Novu branding image in the email preview,
+     * we use a React component instead in the dashboard.
+     * The image is used only for the actual email delivery.
+     */
+    style.textContent = `
+      a {pointer-events: none;}
+      
+      /* Hide Novu branding images in email preview */
+      img[data-novu-branding] {
+        display: none !important;
+      }
+    `;
 
     // find the last style tag and append the new style to it
     const styleTags = doc.querySelectorAll('style');
@@ -125,7 +138,14 @@ export const EmailPreviewBodyMobile = (props: EmailPreviewBodyMobileProps) => {
 
   return (
     <div className={cn('flex flex-col', className)} {...rest}>
-      <div className="mx-auto min-h-96 w-full px-4" dangerouslySetInnerHTML={{ __html: body }} />
+      <style>
+        {`
+          .email-preview-mobile img[data-novu-branding] {
+            display: none !important;
+          }
+        `}
+      </style>
+      <div className="email-preview-mobile mx-auto min-h-96 w-full px-4" dangerouslySetInnerHTML={{ __html: body }} />
       <NovuBranding />
     </div>
   );
