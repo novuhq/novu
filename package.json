@@ -88,7 +88,7 @@
     "@types/inquirer": "8.2.10",
     "@types/jest": "29.5.13",
     "@types/node": "18.16.9",
-    "@typescript-eslint/eslint-plugin": "^8.13.0",
+    "@typescript-eslint/eslint-plugin": "^8.33.0",
     "@typescript-eslint/utils": "^8.13.0",
     "auto": "^10.36.5",
     "chalk": "4.1.2",
@@ -174,7 +174,7 @@
     "ts-node": "~10.9.1",
     "tsconfig-paths": "^4.2.0",
     "typescript": "5.6.2",
-    "typescript-eslint": "^8.13.0",
+    "typescript-eslint": "^8.33.0",
     "wait-port": "^0.3.0",
     "yargs": "^17.7.2"
   },
