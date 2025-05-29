@@ -439,7 +439,7 @@ export const SchemaPropertySettingsPopover = forwardRef<HTMLDivElement, SchemaPr
               variant="secondary"
               onClick={handleApplyChanges}
             >
-              Done
+              Apply
             </Button>
           </div>
         </div>
