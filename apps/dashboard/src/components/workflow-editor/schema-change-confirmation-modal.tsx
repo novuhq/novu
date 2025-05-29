@@ -33,92 +33,69 @@ function VariableChangeSection({ title, changes, icon, variant }: VariableChange
   if (changes.length === 0) return null;
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center gap-2.5">
-        <div className="bg-bg-weak flex h-8 w-8 items-center justify-center rounded-lg">{icon}</div>
-        <h4 className="text-text-strong text-sm font-medium">{title}</h4>
-        <Badge variant="light" color={variant} size="sm">
-          {changes.length}
-        </Badge>
+    <div className="space-y-2">
+      <div className="flex items-center gap-2">
+        {icon}
+        <span className="text-text-strong text-sm font-medium">{title}</span>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-1.5">
         {changes.map((change, index) => (
           <div
             key={index}
-            className="border-stroke-soft bg-bg-white shadow-xs hover:border-stroke-sub group rounded-xl border p-4 transition-all duration-200 hover:shadow-sm"
+            className="border-stroke-soft bg-bg-weak/30 hover:bg-bg-weak/50 rounded-lg border px-3 py-2.5 transition-colors"
           >
-            <div className="space-y-3">
-              <div className="flex items-start justify-between">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    {change.originalKey && (
-                      <code className="bg-bg-weak text-text-strong rounded-md px-2 py-1 font-mono text-xs font-medium">
-                        {change.originalKey}
-                      </code>
-                    )}
-                    {change.newKey && change.originalKey && (
-                      <>
-                        <div className="flex h-5 w-5 items-center justify-center">
-                          <div className="bg-text-soft h-px w-3"></div>
-                          <div className="border-l-text-soft h-0 w-0 border-b-[3px] border-l-[3px] border-r-0 border-t-[3px] border-b-transparent border-t-transparent"></div>
-                        </div>
-                        <code className="bg-primary-alpha-10 text-primary-base rounded-md px-2 py-1 font-mono text-xs font-medium">
-                          {change.newKey}
-                        </code>
-                      </>
-                    )}
-                    {change.newKey && !change.originalKey && (
-                      <code className="bg-success-alpha-10 text-success-base rounded-md px-2 py-1 font-mono text-xs font-medium">
-                        {change.newKey}
-                      </code>
-                    )}
+            <div className="flex items-center justify-between">
+              <div className="flex min-w-0 flex-1 items-center gap-2">
+                {change.originalKey && (
+                  <code className="bg-bg-weak text-text-strong rounded px-2 py-0.5 font-mono text-xs">
+                    {change.originalKey}
+                  </code>
+                )}
+
+                {change.newKey && change.originalKey && (
+                  <>
+                    <span className="text-text-soft">→</span>
+                    <code className="bg-primary-alpha-10 text-primary-base rounded px-2 py-0.5 font-mono text-xs">
+                      {change.newKey}
+                    </code>
+                  </>
+                )}
+
+                {change.newKey && !change.originalKey && (
+                  <code className="bg-success-alpha-10 text-success-base rounded px-2 py-0.5 font-mono text-xs">
+                    {change.newKey}
+                  </code>
+                )}
+
+                {change.type === 'typeChanged' && (
+                  <div className="text-text-sub flex items-center gap-1.5 text-xs">
+                    <span>{change.originalType}</span>
+                    <span>→</span>
+                    <span className="text-information-base">{change.newType}</span>
                   </div>
+                )}
 
-                  {change.type === 'typeChanged' && (
-                    <div className="flex items-center gap-2 text-xs">
-                      <span className="text-text-soft">Type:</span>
-                      <code className="bg-bg-weak text-text-sub rounded px-1.5 py-0.5 font-mono">
-                        {change.originalType}
-                      </code>
-                      <div className="flex h-4 w-4 items-center justify-center">
-                        <div className="bg-text-soft h-px w-2"></div>
-                        <div className="border-l-text-soft h-0 w-0 border-b-[2px] border-l-[2px] border-r-0 border-t-[2px] border-b-transparent border-t-transparent"></div>
-                      </div>
-                      <code className="bg-information-light text-information-dark rounded px-1.5 py-0.5 font-mono">
-                        {change.newType}
-                      </code>
-                    </div>
-                  )}
-
-                  {change.type === 'requiredChanged' && (
-                    <div className="text-text-sub text-xs">
-                      <span className="text-text-soft">Required:</span>{' '}
-                      <span className={change.originalRequired ? 'text-success-base' : 'text-text-sub'}>
-                        {change.originalRequired ? 'Yes' : 'No'}
-                      </span>
-                      {' → '}
-                      <span className={change.newRequired ? 'text-success-base' : 'text-text-sub'}>
-                        {change.newRequired ? 'Yes' : 'No'}
-                      </span>
-                    </div>
-                  )}
-                </div>
+                {change.type === 'requiredChanged' && (
+                  <div className="text-text-sub text-xs">
+                    {change.originalRequired ? 'Required' : 'Optional'} → {change.newRequired ? 'Required' : 'Optional'}
+                  </div>
+                )}
               </div>
 
               {change.usageInfo.isUsed && (
-                <div className="border-warning-light bg-warning-lighter rounded-lg border p-3">
-                  <div className="mb-2 flex items-center gap-2">
-                    <RiAlertLine className="text-warning-base h-4 w-4" />
-                    <span className="text-warning-dark text-xs font-medium">Used in workflow steps</span>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {change.usageInfo.usedInSteps.map((step) => (
-                      <Badge key={step.stepId} variant="stroke" color="orange" size="sm" className="bg-bg-white">
-                        {step.stepName}
-                      </Badge>
-                    ))}
-                  </div>
+                <div className="text-warning-base flex items-center gap-1.5 text-xs">
+                  <RiAlertLine className="h-3.5 w-3.5" />
+                  {change.usageInfo.usedInSteps.length === 1 ? (
+                    <span>{change.usageInfo.usedInSteps[0].stepName}</span>
+                  ) : (
+                    <span
+                      className="cursor-help"
+                      title={change.usageInfo.usedInSteps.map((step) => step.stepName).join(', ')}
+                    >
+                      {change.usageInfo.usedInSteps.length} steps
+                    </span>
+                  )}
                 </div>
               )}
             </div>
@@ -138,71 +115,71 @@ export function SchemaChangeConfirmationModal({
   const totalChanges =
     changes.deleted.length + changes.added.length + changes.typeChanged.length + changes.requiredChanged.length;
 
+  const usedChanges = [...changes.deleted, ...changes.added, ...changes.typeChanged, ...changes.requiredChanged].filter(
+    (change) => change.usageInfo.isUsed
+  ).length;
+
   return (
     <AlertDialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <AlertDialogContent className="flex max-h-[85vh] max-w-3xl flex-col overflow-hidden">
-        <AlertDialogHeader className="pb-4">
-          <div className="flex items-start gap-3">
-            <div className="bg-warning-light flex h-10 w-10 items-center justify-center rounded-xl">
-              <RiAlertLine className="text-warning-base h-5 w-5" />
+      <AlertDialogContent className="max-w-2xl">
+        <AlertDialogHeader className="px-4">
+          <div className="flex items-center gap-3">
+            <div className="bg-warning-light flex h-9 w-9 items-center justify-center rounded-lg">
+              <RiAlertLine className="text-warning-base h-4 w-4" />
             </div>
-            <div className="flex-1 space-y-1">
-              <AlertDialogTitle className="text-text-strong text-lg font-semibold">
-                Confirm Schema Changes
-              </AlertDialogTitle>
-              <AlertDialogDescription className="text-text-sub text-sm">
-                You're making <strong className="text-text-strong">{totalChanges}</strong> change
-                {totalChanges === 1 ? '' : 's'} to variables that are currently used in your workflow. This may cause
-                errors in the affected steps.
+            <div>
+              <AlertDialogTitle className="text-base">Confirm Schema Changes</AlertDialogTitle>
+              <AlertDialogDescription className="text-sm">
+                {totalChanges} change{totalChanges === 1 ? '' : 's'} detected
+                {usedChanges > 0 && (
+                  <span className="text-warning-base"> • {usedChanges} affecting existing steps</span>
+                )}
               </AlertDialogDescription>
             </div>
           </div>
         </AlertDialogHeader>
 
-        <div className="flex-1 space-y-6 overflow-y-auto px-1 px-5">
-          <VariableChangeSection
-            title="Deleted Variables"
-            changes={changes.deleted}
-            icon={<RiDeleteBinLine className="text-error-base h-4 w-4" />}
-            variant="red"
-          />
+        <AlertDialogDescription className="px-4">
+          <div className="max-h-96 space-y-4 overflow-y-auto">
+            <VariableChangeSection
+              title="Deleted"
+              changes={changes.deleted}
+              icon={<RiDeleteBinLine className="text-error-base h-4 w-4" />}
+              variant="red"
+            />
 
-          <VariableChangeSection
-            title="Added Variables"
-            changes={changes.added}
-            icon={<RiEditLine className="text-information-base h-4 w-4" />}
-            variant="blue"
-          />
+            <VariableChangeSection
+              title="Added"
+              changes={changes.added}
+              icon={<RiEditLine className="text-success-base h-4 w-4" />}
+              variant="blue"
+            />
 
-          <VariableChangeSection
-            title="Type Changes"
-            changes={changes.typeChanged}
-            icon={<RiToggleLine className="text-warning-base h-4 w-4" />}
-            variant="orange"
-          />
+            <VariableChangeSection
+              title="Type Changed"
+              changes={changes.typeChanged}
+              icon={<RiToggleLine className="text-warning-base h-4 w-4" />}
+              variant="orange"
+            />
 
-          <VariableChangeSection
-            title="Required Status Changes"
-            changes={changes.requiredChanged}
-            icon={<RiToggleLine className="text-feature-base h-4 w-4" />}
-            variant="purple"
-          />
-        </div>
-
-        <div className="pt-4">
-          <Separator className="mb-6" />
-          <AlertDialogFooter className="gap-3">
-            <AlertDialogCancel onClick={onClose} className="min-w-20">
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={onConfirm}
-              className={cn('min-w-28', buttonVariants({ variant: 'secondary', mode: 'filled' }).root())}
-            >
-              Save Anyway
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </div>
+            <VariableChangeSection
+              title="Required Changed"
+              changes={changes.requiredChanged}
+              icon={<RiToggleLine className="text-feature-base h-4 w-4" />}
+              variant="purple"
+            />
+          </div>
+        </AlertDialogDescription>
+        <Separator className="mt-4" />
+        <AlertDialogFooter className="px-4">
+          <AlertDialogCancel onClick={onClose}>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={onConfirm}
+            className={cn(buttonVariants({ variant: 'secondary', mode: 'filled' }).root())}
+          >
+            Save Changes
+          </AlertDialogAction>
+        </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
   );
