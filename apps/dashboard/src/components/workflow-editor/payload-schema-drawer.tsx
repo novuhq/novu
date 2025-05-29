@@ -160,7 +160,7 @@ export function PayloadSchemaDrawer({
               </h3>
             </div>
 
-            <div className="rounded-4 border-1 mb-2 flex items-center justify-between border border-neutral-100 bg-white p-2">
+            <div className="rounded-4 border-1 mb-2 flex items-center justify-between border border-neutral-100 bg-white p-1.5">
               <div className="text-text-strong text-label-xs flex items-center gap-1">
                 <RiShieldCheckLine className="text-text-strong size-3" />
                 Enforce schema validation
@@ -244,8 +244,7 @@ function PayloadSchemaEmptyState({ onAddProperty }: { onAddProperty: () => void 
         <p className="text-text-soft text-paragraph-xs max-w-md">
           Start building your payload schema by typing{' '}
           <code className="rounded bg-neutral-100 px-1 py-0.5 text-xs">{'{{ }}'}</code> to add variables, or create your
-          schema first from this form.{' '}
-          <ExternalLink href="https://docs.novu.co/platform/concepts/payloads">Learn more</ExternalLink>
+          schema first from this form.
         </p>
       </div>
 

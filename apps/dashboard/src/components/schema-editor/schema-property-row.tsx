@@ -60,33 +60,6 @@ export const SchemaPropertyRow = memo<SchemaPropertyRowProps>(function SchemaPro
     return parentPath ? `${parentPath}.${currentKeyName}` : currentKeyName;
   }, [parentPath, currentKeyName]);
 
-  const { append: appendNested } = useFieldArray({
-    control,
-    name: currentType === 'object' ? (paths.nestedPropertyList as any) : ('_unused_nested_path_' as any),
-    keyName: 'nestedFieldId',
-  });
-
-  const handleAddNestedProperty = useCallback(() => {
-    const newNestedProperty = {
-      id: uuidv4(),
-      keyName: '',
-      definition: newProperty('string'),
-      isRequired: false,
-    } as PropertyListItem;
-
-    if (currentType !== 'object') {
-      // Convert to object using the proper helper function and add the first nested property
-      const currentDef = currentDefinition || {};
-      const objectDefinition = ensureObject(currentDef) as JSONSchema7 & { propertyList?: PropertyListItem[] };
-      objectDefinition.propertyList = [newNestedProperty];
-
-      setValue(paths.definition, objectDefinition, { shouldValidate: true });
-      return;
-    }
-
-    appendNested(newNestedProperty);
-  }, [currentType, currentDefinition, setValue, paths.definition, appendNested]);
-
   const isHighlighted = currentKeyName && currentKeyName === highlightedPropertyKey;
   const isKeyNameEmpty = !currentKeyName || currentKeyName.trim() === '';
 
@@ -96,10 +69,7 @@ export const SchemaPropertyRow = memo<SchemaPropertyRowProps>(function SchemaPro
 
   return (
     <div
-      className={cn(
-        'flex flex-col py-1',
-        isHighlighted ? 'overflow-hidden rounded-[8px] bg-[rgba(193,221,251,0.50)] px-[2px]' : 'px-[2px]'
-      )}
+      className={cn('flex flex-col', isHighlighted ? 'overflow-hidden rounded-[8px] bg-[rgba(193,221,251,0.50)]' : '')}
     >
       <div className={cn('flex items-center space-x-2', getMarginClassPx(indentationLevel))}>
         <PropertyNameInput fieldPath={paths.keyName} control={control} />

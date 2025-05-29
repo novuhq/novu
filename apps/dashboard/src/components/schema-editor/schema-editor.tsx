@@ -64,7 +64,7 @@ export function SchemaEditor({
 
   return (
     <FormProvider {...methods}>
-      <div className="rounded-4 bg-bg-white border-1 border border-neutral-100 p-1.5">
+      <div className="rounded-4 bg-bg-white border-1 flex flex-col gap-1.5 border border-neutral-100 p-1.5">
         {fields.map((field, index) => {
           const variableUsageInfo = variableUsageMap.get(field.keyName) || { isUsed: false, usedInSteps: [] };
 
@@ -82,17 +82,18 @@ export function SchemaEditor({
             />
           );
         })}
-        <Button
-          variant="secondary"
-          mode="lighter"
-          size="2xs"
-          onClick={() => addProperty()}
-          className="mt-2"
-          leadingIcon={RiAddLine}
-          disabled={!formState.isValid && fields.length > 0}
-        >
-          Add property
-        </Button>
+        <div>
+          <Button
+            variant="secondary"
+            mode="lighter"
+            size="2xs"
+            onClick={() => addProperty()}
+            leadingIcon={RiAddLine}
+            disabled={!formState.isValid && fields.length > 0}
+          >
+            Add property
+          </Button>
+        </div>
       </div>
     </FormProvider>
   );
