@@ -130,6 +130,7 @@ function InternalVariableView(props: InternalVariableViewProps) {
           onClick={() => setIsOpen(true)}
           className="-mt-[2px]"
           isNotInSchema={!validation.isInSchema}
+          isPayloadSchemaEnabled={isPayloadSchemaEnabled}
         />
       </EditVariablePopover>
       <PayloadSchemaDrawer

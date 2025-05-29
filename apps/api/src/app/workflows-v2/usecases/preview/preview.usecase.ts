@@ -393,7 +393,11 @@ export class PreviewUsecase {
   private buildPreviewPayloadSchema(
     previewPayloadExample: PreviewPayloadDto,
     workflowPayloadSchema?: JSONSchemaDto
-  ): JSONSchemaDto {
+  ): JSONSchemaDto | null {
+    if (!workflowPayloadSchema) {
+      return null;
+    }
+
     const schema: JSONSchemaDto = {
       type: JsonSchemaTypeEnum.OBJECT,
       properties: {},

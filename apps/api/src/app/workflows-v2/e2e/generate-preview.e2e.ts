@@ -69,6 +69,49 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
     });
 
     expect(result).to.deep.equal({
+      schema: {
+        additionalProperties: false,
+        properties: {
+          payload: {
+            $schema: 'http://json-schema.org/draft-07/schema#',
+            properties: {},
+            type: 'object',
+          },
+          subscriber: {
+            additionalProperties: true,
+            properties: {
+              avatar: {
+                type: 'string',
+              },
+              data: {
+                additionalProperties: true,
+                type: 'object',
+              },
+              email: {
+                format: 'email',
+                type: 'string',
+              },
+              firstName: {
+                type: 'string',
+              },
+              lastName: {
+                type: 'string',
+              },
+              locale: {
+                type: 'string',
+              },
+              phone: {
+                type: 'string',
+              },
+              subscriberId: {
+                type: 'string',
+              },
+            },
+            type: 'object',
+          },
+        },
+        type: 'object',
+      },
       result: {
         preview: {
           subject: 'Welcome firstName',
@@ -133,6 +176,49 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
 
     expect(result).to.deep.equal({
       result: {
+        schema: {
+          additionalProperties: false,
+          properties: {
+            payload: {
+              $schema: 'http://json-schema.org/draft-07/schema#',
+              properties: {},
+              type: 'object',
+            },
+            subscriber: {
+              additionalProperties: true,
+              properties: {
+                avatar: {
+                  type: 'string',
+                },
+                data: {
+                  additionalProperties: true,
+                  type: 'object',
+                },
+                email: {
+                  format: 'email',
+                  type: 'string',
+                },
+                firstName: {
+                  type: 'string',
+                },
+                lastName: {
+                  type: 'string',
+                },
+                locale: {
+                  type: 'string',
+                },
+                phone: {
+                  type: 'string',
+                },
+                subscriberId: {
+                  type: 'string',
+                },
+              },
+              type: 'object',
+            },
+          },
+          type: 'object',
+        },
         preview: {
           subject: 'firstName Hello, World! ',
           body: 'Hello, World! body random',
@@ -226,6 +312,49 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
 
     expect(result).to.deep.equal({
       result: {
+        schema: {
+          additionalProperties: false,
+          properties: {
+            payload: {
+              $schema: 'http://json-schema.org/draft-07/schema#',
+              properties: {},
+              type: 'object',
+            },
+            subscriber: {
+              additionalProperties: true,
+              properties: {
+                avatar: {
+                  type: 'string',
+                },
+                data: {
+                  additionalProperties: true,
+                  type: 'object',
+                },
+                email: {
+                  format: 'email',
+                  type: 'string',
+                },
+                firstName: {
+                  type: 'string',
+                },
+                lastName: {
+                  type: 'string',
+                },
+                locale: {
+                  type: 'string',
+                },
+                phone: {
+                  type: 'string',
+                },
+                subscriberId: {
+                  type: 'string',
+                },
+              },
+              type: 'object',
+            },
+          },
+          type: 'object',
+        },
         preview: {
           subject: 'John Hello, World! ',
           body: 'Hello, World! This is a body',
@@ -346,6 +475,49 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
 
     expect(result).to.deep.equal({
       result: {
+        schema: {
+          additionalProperties: false,
+          properties: {
+            payload: {
+              $schema: 'http://json-schema.org/draft-07/schema#',
+              properties: {},
+              type: 'object',
+            },
+            subscriber: {
+              additionalProperties: true,
+              properties: {
+                avatar: {
+                  type: 'string',
+                },
+                data: {
+                  additionalProperties: true,
+                  type: 'object',
+                },
+                email: {
+                  format: 'email',
+                  type: 'string',
+                },
+                firstName: {
+                  type: 'string',
+                },
+                lastName: {
+                  type: 'string',
+                },
+                locale: {
+                  type: 'string',
+                },
+                phone: {
+                  type: 'string',
+                },
+                subscriberId: {
+                  type: 'string',
+                },
+              },
+              type: 'object',
+            },
+          },
+          type: 'object',
+        },
         preview: {
           subject: 'First Name Hello, World! ',
           body: 'Hello, World! Default body text random',
@@ -509,6 +681,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
     });
 
     expect(result).to.deep.equal({
+      schema: null,
       result: {
         preview: {},
       },
@@ -542,6 +715,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
     });
 
     expect(result).to.deep.equal({
+      schema: null,
       result: {
         preview: {},
       },
