@@ -59,10 +59,10 @@ export const MailyVariablesListView = React.forwardRef(
           }
 
           if (isNewVariableItem) {
-            const displayLabel = hasDisplayLabel(item) ? item.displayLabel : item.name;
+            const displayLabel = hasDisplayLabel(item) ? item.displayLabel : (item as ExtendedVariable).name;
 
             return {
-              label: displayLabel,
+              label: displayLabel ?? '',
               value: item.name,
               preview: <NewVariablePreview />,
             };
