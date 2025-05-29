@@ -94,8 +94,6 @@ export const ConfigurePreviewAccordion = ({
         const stringified = JSON.stringify(updatedData, null, 2);
         setEditorValueCallback(stringified);
         setJsonData(updatedData);
-
-        console.log('updatedData', updatedData);
       } catch (error) {
         setPayloadError('Failed to update JSON');
       }

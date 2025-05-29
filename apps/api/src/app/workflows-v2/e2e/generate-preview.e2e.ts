@@ -50,6 +50,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
         properties: {},
       },
     });
+    await emulateExternalOrigin(workflow.id);
 
     const stepId = workflow.steps[0].id;
     const controlValues = {
@@ -134,6 +135,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
 
   it('should generate preview for in-app init page - no variables example in dto body', async () => {
     const workflow = await createWorkflow();
+    await emulateExternalOrigin(workflow.id);
 
     const stepId = workflow.steps[0].id;
     const controlValues = {
@@ -175,50 +177,8 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
     });
 
     expect(result).to.deep.equal({
+      schema: null,
       result: {
-        schema: {
-          additionalProperties: false,
-          properties: {
-            payload: {
-              $schema: 'http://json-schema.org/draft-07/schema#',
-              properties: {},
-              type: 'object',
-            },
-            subscriber: {
-              additionalProperties: true,
-              properties: {
-                avatar: {
-                  type: 'string',
-                },
-                data: {
-                  additionalProperties: true,
-                  type: 'object',
-                },
-                email: {
-                  format: 'email',
-                  type: 'string',
-                },
-                firstName: {
-                  type: 'string',
-                },
-                lastName: {
-                  type: 'string',
-                },
-                locale: {
-                  type: 'string',
-                },
-                phone: {
-                  type: 'string',
-                },
-                subscriberId: {
-                  type: 'string',
-                },
-              },
-              type: 'object',
-            },
-          },
-          type: 'object',
-        },
         preview: {
           subject: 'firstName Hello, World! ',
           body: 'Hello, World! body random',
@@ -264,6 +224,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
 
   it('should generate preview for in-app step', async () => {
     const workflow = await createWorkflow();
+    await emulateExternalOrigin(workflow.id);
 
     const stepId = workflow.steps[0].id;
     const controlValues = {
@@ -311,50 +272,8 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
     });
 
     expect(result).to.deep.equal({
+      schema: null,
       result: {
-        schema: {
-          additionalProperties: false,
-          properties: {
-            payload: {
-              $schema: 'http://json-schema.org/draft-07/schema#',
-              properties: {},
-              type: 'object',
-            },
-            subscriber: {
-              additionalProperties: true,
-              properties: {
-                avatar: {
-                  type: 'string',
-                },
-                data: {
-                  additionalProperties: true,
-                  type: 'object',
-                },
-                email: {
-                  format: 'email',
-                  type: 'string',
-                },
-                firstName: {
-                  type: 'string',
-                },
-                lastName: {
-                  type: 'string',
-                },
-                locale: {
-                  type: 'string',
-                },
-                phone: {
-                  type: 'string',
-                },
-                subscriberId: {
-                  type: 'string',
-                },
-              },
-              type: 'object',
-            },
-          },
-          type: 'object',
-        },
         preview: {
           subject: 'John Hello, World! ',
           body: 'Hello, World! This is a body',
@@ -475,49 +394,6 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
 
     expect(result).to.deep.equal({
       result: {
-        schema: {
-          additionalProperties: false,
-          properties: {
-            payload: {
-              $schema: 'http://json-schema.org/draft-07/schema#',
-              properties: {},
-              type: 'object',
-            },
-            subscriber: {
-              additionalProperties: true,
-              properties: {
-                avatar: {
-                  type: 'string',
-                },
-                data: {
-                  additionalProperties: true,
-                  type: 'object',
-                },
-                email: {
-                  format: 'email',
-                  type: 'string',
-                },
-                firstName: {
-                  type: 'string',
-                },
-                lastName: {
-                  type: 'string',
-                },
-                locale: {
-                  type: 'string',
-                },
-                phone: {
-                  type: 'string',
-                },
-                subscriberId: {
-                  type: 'string',
-                },
-              },
-              type: 'object',
-            },
-          },
-          type: 'object',
-        },
         preview: {
           subject: 'First Name Hello, World! ',
           body: 'Hello, World! Default body text random',
@@ -545,6 +421,69 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
           },
         },
         type: 'in_app',
+      },
+      schema: {
+        additionalProperties: false,
+        properties: {
+          payload: {
+            properties: {
+              organizationName: {
+                default: 'Pokemon Organization',
+                type: 'string',
+              },
+              placeholder: {
+                properties: {
+                  body: {
+                    default: 'Default body text',
+                    type: 'string',
+                  },
+                  random: {
+                    type: 'string',
+                  },
+                },
+                type: 'object',
+              },
+              primaryUrlLabel: {
+                default: 'Click here',
+                type: 'string',
+              },
+            },
+            type: 'object',
+          },
+          subscriber: {
+            additionalProperties: true,
+            properties: {
+              avatar: {
+                type: 'string',
+              },
+              data: {
+                additionalProperties: true,
+                type: 'object',
+              },
+              email: {
+                format: 'email',
+                type: 'string',
+              },
+              firstName: {
+                type: 'string',
+              },
+              lastName: {
+                type: 'string',
+              },
+              locale: {
+                type: 'string',
+              },
+              phone: {
+                type: 'string',
+              },
+              subscriberId: {
+                type: 'string',
+              },
+            },
+            type: 'object',
+          },
+        },
+        type: 'object',
       },
       previewPayloadExample: {
         subscriber: {
@@ -610,6 +549,23 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
         },
         type: 'in_app',
       },
+      schema: {
+        additionalProperties: false,
+        properties: {
+          payload: {
+            properties: {
+              lastName: {
+                type: 'string',
+              },
+              organizationName: {
+                type: 'string',
+              },
+            },
+            type: 'object',
+          },
+        },
+        type: 'object',
+      },
       previewPayloadExample: {
         payload: {
           lastName: '{{payload.lastName}}',
@@ -641,6 +597,23 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
           body: 'Hello John, your order #123456 is ready!', // orderId is not defined in the payload schema
         },
         type: 'in_app',
+      },
+      schema: {
+        additionalProperties: false,
+        properties: {
+          payload: {
+            properties: {
+              lastName: {
+                type: 'string',
+              },
+              organizationName: {
+                type: 'string',
+              },
+            },
+            type: 'object',
+          },
+        },
+        type: 'object',
       },
       previewPayloadExample: {
         payload: {

@@ -81,7 +81,7 @@ export const useEditorPreview = ({
     setEditorValue: setEditorValueSafe,
     previewStep: previewStepCallback,
     previewData,
-    previewSchema: (previewData as any)?.schema || null,
+    previewSchema: previewData?.schema || null,
     isPreviewPending,
   };
 };
