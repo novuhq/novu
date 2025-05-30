@@ -63,6 +63,8 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
       inboxServiceInstance: this.#inboxService,
     });
 
+    this.#setupEventListeners();
+
     this.on = (eventName, listener) => {
       if (this.socket.isSocketEvent(eventName)) {
         this.socket.connect();
@@ -78,6 +80,21 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
     this.off = (eventName, listener) => {
       this.#emitter.off(eventName, listener);
     };
+  }
+
+  #setupEventListeners(): void {
+    this.#emitter.on('session.subscriber.changed', () => {
+      this.notifications.clearCache();
+      this.preferences.cache.clearAll();
+    });
+  }
+
+  public async changeSubscriber(options: { subscriber: Subscriber; subscriberHash: string }): Promise<void> {
+    await this.#session.reinitialize({
+      applicationIdentifier: this.#session.applicationIdentifier,
+      subscriberHash: options.subscriberHash,
+      subscriber: options.subscriber,
+    });
   }
 }
 

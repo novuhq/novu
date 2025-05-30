@@ -1,5 +1,5 @@
 import { Novu, NovuOptions, StandardNovuOptions, Subscriber } from '@novu/js';
-import { ReactNode, createContext, useContext, useMemo } from 'react';
+import { ReactNode, createContext, useContext, useMemo, useEffect, useRef } from 'react';
 
 // @ts-ignore
 const version = PACKAGE_VERSION;
@@ -41,6 +41,7 @@ export const NovuProvider = (props: NovuProviderProps) => {
 export const InternalNovuProvider = (props: NovuProviderProps & { userAgentType: 'components' | 'hooks' }) => {
   const applicationIdentifier = props.applicationIdentifier || '';
   const subscriberObj = buildSubscriber(props.subscriberId, props.subscriber);
+  const prevSubscriberIdRef = useRef<string | undefined>();
 
   const { children, subscriberId, subscriberHash, backendUrl, apiUrl, socketUrl, useCache, userAgentType } = props;
 
@@ -56,18 +57,22 @@ export const InternalNovuProvider = (props: NovuProviderProps & { userAgentType:
         __userAgent: `${baseUserAgent} ${userAgentType}`,
         subscriber: subscriberObj,
       }),
-    [
-      applicationIdentifier,
-      subscriberId,
-      subscriberHash,
-      backendUrl,
-      apiUrl,
-      socketUrl,
-      useCache,
-      subscriberObj,
-      userAgentType,
-    ]
+    [applicationIdentifier, subscriberHash, backendUrl, apiUrl, socketUrl, useCache, userAgentType]
   );
+
+  useEffect(() => {
+    const currentSubscriberId = subscriberObj.subscriberId;
+    const prevSubscriberId = prevSubscriberIdRef.current;
+
+    if (prevSubscriberId !== undefined && prevSubscriberId !== currentSubscriberId) {
+      novu.changeSubscriber({
+        subscriber: subscriberObj,
+        subscriberHash: props.subscriberHash,
+      });
+    }
+
+    prevSubscriberIdRef.current = currentSubscriberId;
+  }, [subscriberObj.subscriberId, props.subscriberHash, novu]);
 
   return <NovuContext.Provider value={novu}>{children}</NovuContext.Provider>;
 };

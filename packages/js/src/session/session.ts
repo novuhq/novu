@@ -88,4 +88,19 @@ export class Session {
       this.#emitter.emit('session.initialize.resolved', { args: this.#options, error });
     }
   }
+
+  public async reinitialize(newOptions: InitializeSessionArgs): Promise<void> {
+    const oldSubscriberId = this.#options.subscriber?.subscriberId;
+    const newSubscriberId = newOptions.subscriber?.subscriberId;
+
+    if (oldSubscriberId !== newSubscriberId) {
+      this.#emitter.emit('session.subscriber.changed', {
+        oldSubscriberId,
+        newSubscriberId,
+      });
+    }
+
+    this.#options = newOptions;
+    await this.initialize();
+  }
 }
