@@ -1,8 +1,8 @@
 import { Switch } from '@/components/primitives/switch';
 import { UpgradeCTATooltip } from '@/components/upgrade-cta-tooltip';
-import { IS_SELF_HOSTED } from '@/config';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
-import { ApiServiceLevelEnum } from '@novu/shared';
+import { ApiServiceLevelEnum, PermissionsEnum } from '@novu/shared';
+import { PermissionSwitch } from '../primitives/permission-switch';
 
 type NovuBrandingSwitchProps = {
   id: string;
@@ -15,25 +15,27 @@ export function NovuBrandingSwitch({ id, value, onChange, isReadOnly }: NovuBran
   const { subscription, isLoading } = useFetchSubscription();
 
   const isFreePlan = subscription?.apiServiceLevel === ApiServiceLevelEnum.FREE;
-  const disabled = isFreePlan || IS_SELF_HOSTED || isLoading;
+  const disabled = isFreePlan || isLoading || isReadOnly;
   const checked = disabled ? false : value;
-
-  const description = IS_SELF_HOSTED
-    ? 'Hide Novu branding from your notification channels by upgrading to Cloud plans'
-    : 'Hide Novu branding from your notification channels by upgrading to a paid plan';
 
   return (
     <div className="flex items-center">
-      {isFreePlan || IS_SELF_HOSTED ? (
+      {isFreePlan ? (
         <UpgradeCTATooltip
-          description={description}
+          description="Hide Novu branding from your notification channels by upgrading to a paid plan"
           utmCampaign="remove_branding_prompt"
           utmSource="remove_branding_prompt"
         >
-          <Switch id={id} checked={checked} disabled={disabled} />
+          <Switch id={id} checked={checked} disabled />
         </UpgradeCTATooltip>
       ) : (
-        <Switch id={id} onCheckedChange={onChange} checked={checked} disabled={isReadOnly} />
+        <PermissionSwitch
+          id={id}
+          permission={PermissionsEnum.ORG_SETTINGS_WRITE}
+          checked={checked}
+          onCheckedChange={onChange}
+          disabled={disabled}
+        />
       )}
     </div>
   );
