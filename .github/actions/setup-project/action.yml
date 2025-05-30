@@ -27,7 +27,7 @@ runs:
     - uses: useblacksmith/setup-node@v5
       name: ⚙️ Setup Node Version
       with:
-        node-version: '20.8.1'
+        node-version: '20.19.0'
         cache: 'pnpm'
 
     - name: 💵 Start Redis

@@ -19,7 +19,9 @@ import { PermissionButton } from '@/components/primitives/permission-button';
 type TopicListProps = HTMLAttributes<HTMLDivElement>;
 
 // Wrapper similar to SubscriberListWrapper
-const TopicListWrapper = (props: TopicListFiltersProps & { hasData?: boolean; areFiltersApplied?: boolean; showEmptyState?: boolean }) => {
+const TopicListWrapper = (
+  props: TopicListFiltersProps & { hasData?: boolean; areFiltersApplied?: boolean; showEmptyState?: boolean }
+) => {
   const {
     className,
     children,
@@ -27,6 +29,7 @@ const TopicListWrapper = (props: TopicListFiltersProps & { hasData?: boolean; ar
     handleFiltersChange,
     resetFilters,
     isLoading,
+    isFetching,
     hasData,
     areFiltersApplied,
     showEmptyState,
@@ -41,6 +44,7 @@ const TopicListWrapper = (props: TopicListFiltersProps & { hasData?: boolean; ar
             filterValues={filterValues}
             onReset={resetFilters}
             isLoading={isLoading}
+            isFetching={isFetching}
             className="py-2.5"
           />
         ) : (
@@ -104,6 +108,7 @@ const TopicListTable = (props: TopicListTableProps) => {
 type TopicListFiltersProps = HTMLAttributes<HTMLDivElement> &
   Pick<TopicsUrlState, 'filterValues' | 'handleFiltersChange' | 'resetFilters'> & {
     isLoading?: boolean;
+    isFetching?: boolean;
   };
 
 type TopicListTableProps = HTMLAttributes<HTMLTableElement> & {
@@ -140,7 +145,7 @@ export const TopicList = (props: TopicListProps) => {
   // Determine if filters are active based on hook values
   const areFiltersApplied = !!(filterValues.key || filterValues.name || before || after);
 
-  const { data, isLoading } = useFetchTopics(fetchParams, {
+  const { data, isLoading, isFetching } = useFetchTopics(fetchParams, {
     meta: { errorMessage: 'Issue fetching topics' },
   });
 
@@ -179,6 +184,7 @@ export const TopicList = (props: TopicListProps) => {
     handleFiltersChange,
     resetFilters,
     isLoading: isLoading, // Pass loading state
+    isFetching: isFetching, // Pass fetching state for spinner
     hasData: !!data?.data.length,
     areFiltersApplied,
     ...rest,

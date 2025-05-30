@@ -89,8 +89,8 @@ export class AllExceptionsFilter implements ExceptionFilter {
     // noinspection UnnecessaryLocalVariableJS
     const isBadRequestExceptionFromValidationPipe =
       exception instanceof Object &&
-      'response' in exception &&
-      'message' in (exception as any).response &&
+      safeHasProperty(exception, 'response') &&
+      safeHasProperty((exception as any).response, 'message') &&
       Array.isArray((exception as any).response.message);
 
     return isBadRequestExceptionFromValidationPipe;
@@ -117,8 +117,8 @@ export class AllExceptionsFilter implements ExceptionFilter {
       return { innerMsg: response as string };
     }
 
-    if (hasMessage(response)) {
-      const { message, ...ctx } = response;
+    if (safeHasProperty(response, 'message')) {
+      const { message, ...ctx } = response as { message: string };
 
       return { innerMsg: message, tempContext: ctx };
     }
@@ -167,6 +167,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     return this.buildErrorDto(request, HttpStatus.TOO_MANY_REQUESTS, 'API rate limit exceeded', {});
   }
 }
-function hasMessage(response: unknown): response is { message: string } {
-  return typeof response === 'object' && response !== null && 'message' in response;
+
+function safeHasProperty(obj: unknown, property: string): boolean {
+  return typeof obj === 'object' && obj !== null && property in obj;
 }

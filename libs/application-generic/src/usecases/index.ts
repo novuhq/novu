@@ -32,6 +32,7 @@ export * from './select-integration';
 export * from './select-variant';
 export * from './subscribers';
 export * from './tier-restrictions-validate';
+export * from './trigger-base';
 export * from './trigger-broadcast';
 export * from './trigger-event';
 export * from './trigger-multicast';

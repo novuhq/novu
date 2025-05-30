@@ -8,15 +8,14 @@ import {
   TriggerRecipientsTypeEnum,
   TriggerRecipientSubscriber,
 } from '@novu/shared';
-import _ from 'lodash';
 
 import { PinoLogger } from 'nestjs-pino';
-import { IProcessSubscriberBulkJobDto } from '../../dtos';
 import { InstrumentUsecase } from '../../instrumentation';
 import { SubscriberProcessQueueService } from '../../services/queues/subscriber-process-queue.service';
+import { TriggerBase } from '../trigger-base';
 import { TriggerMulticastCommand } from './trigger-multicast.command';
+import { CacheService, FeatureFlagsService } from '../../services';
 
-const LOG_CONTEXT = 'TriggerMulticastUseCase';
 const QUEUE_CHUNK_SIZE = Number(process.env.MULTICAST_QUEUE_CHUNK_SIZE) || 100;
 const SUBSCRIBER_TOPIC_DISTINCT_BATCH_SIZE = Number(process.env.SUBSCRIBER_TOPIC_DISTINCT_BATCH_SIZE) || 100;
 
@@ -26,13 +25,18 @@ const isTopic = (recipient: TriggerRecipient): recipient is ITopic =>
   (recipient as ITopic).type && (recipient as ITopic).type === TriggerRecipientsTypeEnum.TOPIC;
 
 @Injectable()
-export class TriggerMulticast {
+export class TriggerMulticast extends TriggerBase {
   constructor(
-    private subscriberProcessQueueService: SubscriberProcessQueueService,
+    subscriberProcessQueueService: SubscriberProcessQueueService,
     private topicSubscribersRepository: TopicSubscribersRepository,
     private topicRepository: TopicRepository,
-    private logger: PinoLogger
-  ) {}
+    protected cacheService: CacheService,
+    protected featureFlagsService: FeatureFlagsService,
+    protected logger: PinoLogger
+  ) {
+    super(subscriberProcessQueueService, cacheService, featureFlagsService, logger, QUEUE_CHUNK_SIZE);
+    this.logger.setContext(this.constructor.name);
+  }
 
   @InstrumentUsecase()
   async execute(command: TriggerMulticastCommand) {
@@ -115,28 +119,6 @@ export class TriggerMulticast {
       this.logger.warn(`Topic with key ${notFoundTopics.join()} not found in current environment`);
     }
   }
-
-  private async subscriberProcessQueueAddBulk(jobs: IProcessSubscriberBulkJobDto[]) {
-    return await Promise.all(
-      _.chunk(jobs, QUEUE_CHUNK_SIZE).map((chunk: IProcessSubscriberBulkJobDto[]) =>
-        this.subscriberProcessQueueService.addBulk(chunk)
-      )
-    );
-  }
-
-  public async sendToProcessSubscriberService(
-    command: TriggerMulticastCommand,
-    subscribers: { subscriberId: string; topics: Pick<TopicEntity, '_id' | 'key'>[] }[] | ISubscribersDefine[],
-    _subscriberSource: SubscriberSourceEnum
-  ) {
-    if (subscribers.length === 0) {
-      return;
-    }
-
-    const jobs = mapSubscribersToJobs(_subscriberSource, subscribers, command);
-
-    return await this.subscriberProcessQueueAddBulk(jobs);
-  }
 }
 
 export const splitByRecipientType = (
@@ -196,46 +178,4 @@ export const validateSubscriberDefine = (recipient: ISubscribersDefine) => {
       'subscriberId under property to is not configured, please make sure all subscribers contains subscriberId property'
     );
   }
-};
-
-export const mapSubscribersToJobs = (
-  _subscriberSource: SubscriberSourceEnum,
-  subscribers: { subscriberId: string; topics: Pick<TopicEntity, '_id' | 'key'>[] }[] | ISubscribersDefine[],
-  command: TriggerMulticastCommand
-): IProcessSubscriberBulkJobDto[] => {
-  return subscribers.map((subscriber) => {
-    const job: IProcessSubscriberBulkJobDto = {
-      name: command.transactionId + subscriber.subscriberId,
-      data: {
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-        userId: command.userId,
-        transactionId: command.transactionId,
-        identifier: command.identifier,
-        payload: command.payload,
-        overrides: command.overrides,
-        subscriber,
-        topics: subscriber.topics,
-        templateId: command.template._id,
-        _subscriberSource,
-        requestCategory: command.requestCategory,
-        controls: command.controls,
-        bridge: {
-          url: command.bridgeUrl,
-          workflow: command.bridgeWorkflow,
-        },
-        environmentName: command.environmentName,
-      },
-      groupId: command.organizationId,
-    };
-
-    if (command.actor) {
-      job.data.actor = command.actor;
-    }
-    if (command.tenant) {
-      job.data.tenant = command.tenant;
-    }
-
-    return job;
-  });
 };

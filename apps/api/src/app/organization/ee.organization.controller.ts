@@ -1,5 +1,5 @@
 import { Body, ClassSerializerInterceptor, Controller, Get, Patch, Put, UseInterceptors } from '@nestjs/common';
-import { UserSessionData } from '@novu/shared';
+import { PermissionsEnum, UserSessionData } from '@novu/shared';
 import { ApiExcludeController, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UserSession } from '../shared/framework/user.decorator';
 import { UpdateBrandingDetailsCommand } from './usecases/update-branding-details/update-branding-details.command';
@@ -21,6 +21,7 @@ import { UpdateOrganizationSettingsCommand } from './usecases/update-organizatio
 import { UpdateOrganizationSettingsDto } from './dtos/update-organization-settings.dto';
 import { GetOrganizationSettingsDto } from './dtos/get-organization-settings.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
+import { RequirePermissions } from '@novu/application-generic';
 
 @Controller('/organizations')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -100,6 +101,7 @@ export class EEOrganizationController {
     summary: 'Get organization settings',
   })
   @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.ORG_SETTINGS_READ)
   async getSettings(@UserSession() user: UserSessionData) {
     return await this.getOrganizationSettingsUsecase.execute(
       GetOrganizationSettingsCommand.create({
@@ -113,6 +115,7 @@ export class EEOrganizationController {
   @ApiOperation({
     summary: 'Update organization settings',
   })
+  @RequirePermissions(PermissionsEnum.ORG_SETTINGS_WRITE)
   async updateSettings(@UserSession() user: UserSessionData, @Body() body: UpdateOrganizationSettingsDto) {
     return await this.updateOrganizationSettingsUsecase.execute(
       UpdateOrganizationSettingsCommand.create({
