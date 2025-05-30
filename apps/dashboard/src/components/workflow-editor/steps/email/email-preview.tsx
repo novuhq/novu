@@ -68,8 +68,8 @@ export const EmailPreviewBody = (props: EmailPreviewBodyProps) => {
     style.textContent = `
       a {pointer-events: none;}
       
-      /* Hide Novu branding images in email preview */
-      img[data-novu-branding] {
+      /* Hide Novu branding table in email preview */
+      table[data-novu-branding] {
         display: none !important;
       }
     `;
@@ -108,9 +108,9 @@ export const EmailPreviewBody = (props: EmailPreviewBodyProps) => {
   }, [processBody, body]);
 
   return (
-    <div className={cn('flex flex-col', className)} {...rest}>
+    <div className={cn(`mx-auto flex w-full flex-col max-w-[${MAILY_EMAIL_WIDTH}px]`, className)} {...rest}>
       <div
-        className={cn(`shadow-xs mx-auto min-h-80 w-full max-w-[${MAILY_EMAIL_WIDTH}px] overflow-auto p-2`)}
+        className={cn(`shadow-xs min-h-80 w-full overflow-auto p-2`)}
         ref={(node) => {
           refNode.current = node;
           attachShadow(node, body);
@@ -140,7 +140,7 @@ export const EmailPreviewBodyMobile = (props: EmailPreviewBodyMobileProps) => {
     <div className={cn('flex flex-col', className)} {...rest}>
       <style>
         {`
-          .email-preview-mobile img[data-novu-branding] {
+          .email-preview-mobile table[data-novu-branding] {
             display: none !important;
           }
         `}
