@@ -1,6 +1,7 @@
 import { Body, ClassSerializerInterceptor, Controller, Get, Patch, Put, UseInterceptors } from '@nestjs/common';
 import { PermissionsEnum, UserSessionData } from '@novu/shared';
 import { ApiExcludeController, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { RequirePermissions } from '@novu/application-generic';
 import { UserSession } from '../shared/framework/user.decorator';
 import { UpdateBrandingDetailsCommand } from './usecases/update-branding-details/update-branding-details.command';
 import { UpdateBrandingDetails } from './usecases/update-branding-details/update-branding-details.usecase';
@@ -21,7 +22,6 @@ import { UpdateOrganizationSettingsCommand } from './usecases/update-organizatio
 import { UpdateOrganizationSettingsDto } from './dtos/update-organization-settings.dto';
 import { GetOrganizationSettingsDto } from './dtos/get-organization-settings.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
-import { RequirePermissions } from '@novu/application-generic';
 
 @Controller('/organizations')
 @UseInterceptors(ClassSerializerInterceptor)
