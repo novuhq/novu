@@ -6,6 +6,7 @@ import {
   UpdateOrganizationSettingsDto,
   GetOrganizationSettingsDto,
 } from '../api/organization';
+import { showErrorToast } from '@/components/primitives/sonner-helpers';
 
 export function useUpdateOrganizationSettings() {
   const { currentEnvironment } = useEnvironment();
@@ -17,6 +18,12 @@ export function useUpdateOrganizationSettings() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QueryKeys.organizationSettings, currentEnvironment?._id] });
+    },
+    onError: (error) => {
+      showErrorToast(
+        error?.message || 'There was an error updating organization settings.',
+        'Failed to update settings'
+      );
     },
   });
 }
