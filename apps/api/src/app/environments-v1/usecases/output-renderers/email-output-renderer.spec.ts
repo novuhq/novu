@@ -16,7 +16,7 @@ const mockGetOrganizationSettings = {
   execute: async () => ({
     removeNovuBranding: false,
   }),
-  setRemoveNovuBranding: function (value: boolean) {
+  setRemoveNovuBranding(value: boolean) {
     this.execute = async () => ({
       removeNovuBranding: value,
     });
