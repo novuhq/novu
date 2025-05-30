@@ -19,10 +19,12 @@ import { RiUserSharedLine } from 'react-icons/ri';
 import { PermissionButton } from '@/components/primitives/permission-button';
 
 type SubscriberListFiltersProps = HTMLAttributes<HTMLDivElement> &
-  Pick<SubscribersUrlState, 'filterValues' | 'handleFiltersChange' | 'resetFilters'>;
+  Pick<SubscribersUrlState, 'filterValues' | 'handleFiltersChange' | 'resetFilters'> & {
+    isFetching?: boolean;
+  };
 
 const SubscriberListWrapper = (props: SubscriberListFiltersProps) => {
-  const { className, children, filterValues, handleFiltersChange, resetFilters, ...rest } = props;
+  const { className, children, filterValues, handleFiltersChange, resetFilters, isFetching, ...rest } = props;
   const { navigateToCreateSubscriberPage } = useSubscribersNavigate();
 
   return (
@@ -32,6 +34,7 @@ const SubscriberListWrapper = (props: SubscriberListFiltersProps) => {
           onFiltersChange={handleFiltersChange}
           filterValues={filterValues}
           onReset={resetFilters}
+          isFetching={isFetching}
           className="py-2.5"
         />
         <PermissionButton
@@ -104,7 +107,7 @@ export const SubscriberList = (props: SubscriberListProps) => {
   );
   const limit = 10;
 
-  const { data, isPending } = useFetchSubscribers(filterValues, {
+  const { data, isPending, isFetching } = useFetchSubscribers(filterValues, {
     meta: { errorMessage: 'Issue fetching subscribers' },
   });
 
@@ -124,6 +127,7 @@ export const SubscriberList = (props: SubscriberListProps) => {
         filterValues={filterValues}
         handleFiltersChange={handleFiltersChange}
         resetFilters={resetFilters}
+        isFetching={isFetching}
         {...rest}
       >
         <SubscriberListTable
@@ -145,6 +149,7 @@ export const SubscriberList = (props: SubscriberListProps) => {
         filterValues={filterValues}
         handleFiltersChange={handleFiltersChange}
         resetFilters={resetFilters}
+        isFetching={isFetching}
         {...rest}
       >
         <SubscriberListBlank />
@@ -158,6 +163,7 @@ export const SubscriberList = (props: SubscriberListProps) => {
         filterValues={filterValues}
         handleFiltersChange={handleFiltersChange}
         resetFilters={resetFilters}
+        isFetching={isFetching}
         {...rest}
       >
         <SubscriberListNoResults />

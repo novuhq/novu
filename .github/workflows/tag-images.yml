@@ -26,7 +26,7 @@ jobs:
         run: echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
       - uses: useblacksmith/setup-node@v5
         with:
-          node-version: '20.8.1'
+          node-version: '20.19.0'
 
       - name: Login to docker
         env:

@@ -5,15 +5,17 @@ import { defaultSubscribersFilter, SubscribersFilter } from '@/components/subscr
 import { cn } from '@/utils/ui';
 import { HTMLAttributes, useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
+import { RiLoader4Line } from 'react-icons/ri';
 
 export type SubscribersFiltersProps = HTMLAttributes<HTMLFormElement> & {
   onFiltersChange: (filter: SubscribersFilter) => void;
   filterValues: SubscribersFilter;
   onReset?: () => void;
+  isFetching?: boolean;
 };
 
 export function SubscribersFilters(props: SubscribersFiltersProps) {
-  const { onFiltersChange, filterValues, onReset, className, ...rest } = props;
+  const { onFiltersChange, filterValues, onReset, className, isFetching, ...rest } = props;
 
   const form = useForm<SubscribersFilter>({
     values: {
@@ -114,9 +116,14 @@ export function SubscribersFilters(props: SubscribersFiltersProps) {
         />
 
         {filterHasValue && (
-          <Button variant="secondary" mode="ghost" size="2xs" onClick={handleReset}>
-            Reset
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button variant="secondary" mode="ghost" size="2xs" onClick={handleReset}>
+              Reset
+            </Button>
+            {isFetching && (
+              <RiLoader4Line className="h-3 w-3 animate-spin text-neutral-400" />
+            )}
+          </div>
         )}
       </FormRoot>
     </Form>
