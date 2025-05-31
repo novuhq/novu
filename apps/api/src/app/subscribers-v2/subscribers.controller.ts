@@ -109,7 +109,7 @@ export class SubscribersController {
   @ExternalApiAccessible()
   @ApiOperation({
     summary: 'Retrieve a subscriber',
-    description: `Retrive a subscriber by its unique key identifier **subscriberId**. 
+    description: `Retrieve a subscriber by its unique key identifier **subscriberId**. 
     **subscriberId** field is required.`,
   })
   @ApiResponse(SubscriberResponseDto)
