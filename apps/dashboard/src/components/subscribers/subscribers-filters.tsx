@@ -120,9 +120,7 @@ export function SubscribersFilters(props: SubscribersFiltersProps) {
             <Button variant="secondary" mode="ghost" size="2xs" onClick={handleReset}>
               Reset
             </Button>
-            {isFetching && (
-              <RiLoader4Line className="h-3 w-3 animate-spin text-neutral-400" />
-            )}
+            {isFetching && <RiLoader4Line className="h-3 w-3 animate-spin text-neutral-400" />}
           </div>
         )}
       </FormRoot>

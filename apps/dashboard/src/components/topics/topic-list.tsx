@@ -19,7 +19,9 @@ import { PermissionButton } from '@/components/primitives/permission-button';
 type TopicListProps = HTMLAttributes<HTMLDivElement>;
 
 // Wrapper similar to SubscriberListWrapper
-const TopicListWrapper = (props: TopicListFiltersProps & { hasData?: boolean; areFiltersApplied?: boolean; showEmptyState?: boolean }) => {
+const TopicListWrapper = (
+  props: TopicListFiltersProps & { hasData?: boolean; areFiltersApplied?: boolean; showEmptyState?: boolean }
+) => {
   const {
     className,
     children,

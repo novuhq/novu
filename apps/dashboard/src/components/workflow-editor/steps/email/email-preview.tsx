@@ -3,6 +3,7 @@ import { MAILY_EMAIL_WIDTH } from '@/components/workflow-editor/steps/email/mail
 import { cn } from '@/utils/ui';
 import { HTMLAttributes, useCallback, useEffect, useRef } from 'react';
 import { RiArrowDownSFill } from 'react-icons/ri';
+import { NovuBranding } from './novu-branding';
 
 type EmailPreviewHeaderProps = HTMLAttributes<HTMLDivElement>;
 
@@ -58,7 +59,20 @@ export const EmailPreviewBody = (props: EmailPreviewBodyProps) => {
 
     const doc = template.content;
     const style = document.createElement('style');
-    style.textContent = `a {pointer-events: none;}`;
+
+    /**
+     * Hide the Novu branding image in the email preview,
+     * we use a React component instead in the dashboard.
+     * The image is used only for the actual email delivery.
+     */
+    style.textContent = `
+      a {pointer-events: none;}
+      
+      /* Hide Novu branding table in email preview */
+      table[data-novu-branding] {
+        display: none !important;
+      }
+    `;
 
     // find the last style tag and append the new style to it
     const styleTags = doc.querySelectorAll('style');
@@ -94,14 +108,16 @@ export const EmailPreviewBody = (props: EmailPreviewBodyProps) => {
   }, [processBody, body]);
 
   return (
-    <div
-      className={cn(`shadow-xs mx-auto min-h-80 w-full max-w-[${MAILY_EMAIL_WIDTH}px] overflow-auto p-2`, className)}
-      ref={(node) => {
-        refNode.current = node;
-        attachShadow(node, body);
-      }}
-      {...rest}
-    />
+    <div className={cn(`mx-auto flex w-full flex-col max-w-[${MAILY_EMAIL_WIDTH}px]`, className)} {...rest}>
+      <div
+        className={cn(`shadow-xs min-h-80 w-full overflow-auto p-2`)}
+        ref={(node) => {
+          refNode.current = node;
+          attachShadow(node, body);
+        }}
+      />
+      <NovuBranding />
+    </div>
   );
 };
 
@@ -121,11 +137,17 @@ export const EmailPreviewBodyMobile = (props: EmailPreviewBodyMobileProps) => {
   const { body, className, ...rest } = props;
 
   return (
-    <div
-      className={cn('mx-auto min-h-96 w-full px-4', className)}
-      dangerouslySetInnerHTML={{ __html: body }}
-      {...rest}
-    />
+    <div className={cn('flex flex-col', className)} {...rest}>
+      <style>
+        {`
+          .email-preview-mobile table[data-novu-branding] {
+            display: none !important;
+          }
+        `}
+      </style>
+      <div className="email-preview-mobile mx-auto min-h-96 w-full px-4" dangerouslySetInnerHTML={{ __html: body }} />
+      <NovuBranding />
+    </div>
   );
 };
 

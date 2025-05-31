@@ -26,7 +26,14 @@ import { TelemetryEvent } from '@/utils/telemetry';
 import { DirectionEnum, PermissionsEnum, StepTypeEnum, WorkflowStatusEnum } from '@novu/shared';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { RiArrowDownSLine, RiArrowRightSLine, RiFileAddLine, RiFileMarkedLine, RiLoader4Line, RiRouteFill } from 'react-icons/ri';
+import {
+  RiArrowDownSLine,
+  RiArrowRightSLine,
+  RiFileAddLine,
+  RiFileMarkedLine,
+  RiLoader4Line,
+  RiRouteFill,
+} from 'react-icons/ri';
 import { Outlet, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useHasPermission } from '@/hooks/use-has-permission';
 
@@ -203,9 +210,7 @@ export const WorkflowsPage = () => {
                   <Button variant="secondary" mode="ghost" size="2xs" onClick={clearFilters}>
                     Reset
                   </Button>
-                  {isFetching && !isPending && (
-                    <RiLoader4Line className="h-3 w-3 animate-spin text-neutral-400" />
-                  )}
+                  {isFetching && !isPending && <RiLoader4Line className="h-3 w-3 animate-spin text-neutral-400" />}
                 </div>
               )}
             </div>
