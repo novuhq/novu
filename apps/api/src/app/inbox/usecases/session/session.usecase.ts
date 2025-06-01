@@ -217,14 +217,6 @@ export class Session {
     return applicationIdentifier.startsWith(this.KEYLESS_ENVIRONMENT_PREFIX);
   }
 
-  // private validateSubscriberRequirements(requestData: SubscriberSessionRequestDto): void {
-  //   const hasValidSubscriber = this.hasValidSubscriberInfo(requestData);
-
-  //   if (!hasValidSubscriber) {
-  //     throw new UnprocessableEntityException('Subscriber ID is required');
-  //   }
-  // }
-
   private extractSubscriberInfo(requestData: SubscriberSessionRequestDto): SubscriberDto {
     const subscriber: SubscriberDto | null = this.normalizeSubscriber(requestData.subscriber);
 
@@ -243,19 +235,7 @@ export class Session {
   private normalizeSubscriber(subscriber: string | SubscriberDto | null | undefined): SubscriberDto | null {
     if (!subscriber) {
       return null;
-    }
 
-    // TODO: Backward compatibility support - remove in future versions (see NV-5801)
-    return typeof subscriber === 'string' ? { subscriberId: subscriber } : subscriber;
-  }
-
-  // private hasValidSubscriberInfo(requestData: SubscriberSessionRequestDto): boolean {
-  //   const normalizedSubscriber = this.normalizeSubscriber(requestData.subscriber);
-  //   // TODO: Backward compatibility support - remove in future versions (see NV-5801)
-  //   return !!(normalizedSubscriber?.subscriberId || requestData.subscriberId);
-  // }
-
-  private async getApplicationIdentifier(requestData: SubscriberSessionRequestDto): Promise<string> {
     const isKeylessInitialize = !requestData.applicationIdentifier;
     const isKeyless = requestData.applicationIdentifier?.includes(this.KEYLESS_ENVIRONMENT_PREFIX);
     const isKeylessExpired = isKeyless ? await this.isKeylessExpired(requestData.applicationIdentifier) : false;
