@@ -13,12 +13,12 @@ import { Button } from '@/components/primitives/button';
 import { Badge } from '@/components/primitives/badge';
 import { SchemaEditor } from '@/components/schema-editor/schema-editor';
 import { useWorkflowSchema } from './workflow-schema-provider';
-import type { WorkflowResponseDto } from '@novu/shared';
+import { FeatureFlagsKeysEnum, type WorkflowResponseDto } from '@novu/shared';
 import { ExternalLink } from '../shared/external-link';
 import { TooltipContent, TooltipTrigger } from '../primitives/tooltip';
 import { TooltipProvider } from '../primitives/tooltip';
 import { Tooltip } from '../primitives/tooltip';
-import { RiFileMarkedLine, RiInformation2Line, RiAddLine, RiShieldCheckLine } from 'react-icons/ri';
+import { RiFileMarkedLine, RiInformation2Line, RiAddLine, RiShieldCheckLine, RiHistoryLine } from 'react-icons/ri';
 import { Separator } from '../primitives/separator';
 import { Link } from 'react-router-dom';
 import { SchemaChangeConfirmationModal } from './schema-change-confirmation-modal';
@@ -26,6 +26,8 @@ import { detectSchemaChanges, type SchemaChanges } from '../schema-editor/utils/
 import { checkVariableUsageInWorkflow } from '../schema-editor/utils/check-variable-usage';
 import { Switch } from '../primitives/switch';
 import { Hint, HintIcon } from '../primitives/hint';
+import { useFeatureFlag } from '../../hooks/use-feature-flag';
+import { LinkButton } from '../primitives/button-link';
 
 interface PayloadSchemaDrawerProps {
   isOpen: boolean;
@@ -48,6 +50,7 @@ export function PayloadSchemaDrawer({
   const [originalSchema, setOriginalSchema] = useState<JSONSchema7 | undefined>();
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [pendingChanges, setPendingChanges] = useState<SchemaChanges | null>(null);
+  const isPayloadSchemaFFEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_PAYLOAD_SCHEMA_ENABLED);
 
   const {
     currentSchema,
@@ -187,7 +190,11 @@ export function PayloadSchemaDrawer({
                   highlightedPropertyKey={highlightedPropertyKey}
                 />
               ) : (
-                <PayloadSchemaEmptyState onAddProperty={addProperty} />
+                <PayloadSchemaEmptyState
+                  onAddProperty={addProperty}
+                  isPayloadSchemaEnabled={isPayloadSchemaFFEnabled}
+                  hasNoSchema={!workflow?.payloadSchema}
+                />
               )}
             </div>
 
@@ -237,22 +244,50 @@ export function PayloadSchemaDrawer({
   );
 }
 
-function PayloadSchemaEmptyState({ onAddProperty }: { onAddProperty: () => void }) {
+function PayloadSchemaEmptyState({
+  onAddProperty,
+  isPayloadSchemaEnabled,
+  hasNoSchema,
+}: {
+  onAddProperty: () => void;
+  isPayloadSchemaEnabled: boolean;
+  hasNoSchema: boolean;
+}) {
+  const isNewSchemaScenario = isPayloadSchemaEnabled && hasNoSchema;
+
   return (
     <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-neutral-200 bg-neutral-50 bg-white p-4 text-center">
       <div className="mb-6 space-y-2">
-        <h3 className="text-text-sub text-label-xs">Your schema starts here</h3>
+        <h3 className="text-text-sub text-label-xs">
+          {isNewSchemaScenario ? 'Schema not added yet' : 'Your schema starts here'}
+        </h3>
 
         <p className="text-text-soft text-paragraph-xs max-w-md">
-          Start building your payload schema by typing{' '}
-          <code className="rounded bg-neutral-100 px-1 py-0.5 text-xs">{'{{ }}'}</code> to add variables, or create your
-          schema first from this form.
+          {isNewSchemaScenario ? (
+            "A payload schema hasn't been defined for this workflow yet. You can create one manually or import from recent payloads."
+          ) : (
+            <>
+              Start building your payload schema by typing{' '}
+              <code className="rounded bg-neutral-100 px-1 py-0.5 text-xs">{'{{ }}'}</code> to add variables, or create
+              your schema first from this form.
+            </>
+          )}
         </p>
       </div>
 
-      <Button variant="secondary" mode="outline" size="2xs" leadingIcon={RiAddLine} onClick={onAddProperty}>
-        Add property
-      </Button>
+      <div className="flex flex-col gap-2">
+        <div className="flex flex-row items-center justify-center">
+          <Button variant="secondary" mode="outline" size="2xs" leadingIcon={RiAddLine} onClick={onAddProperty}>
+            Add property
+          </Button>
+        </div>
+
+        {isNewSchemaScenario && (
+          <LinkButton className="text-label-xs" underline onClick={(e) => e.preventDefault()}>
+            Import schema from recent payload
+          </LinkButton>
+        )}
+      </div>
     </div>
   );
 }
