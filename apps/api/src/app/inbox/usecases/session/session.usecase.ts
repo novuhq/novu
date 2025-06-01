@@ -205,7 +205,7 @@ export class Session {
   }
 
   private validateRequestData(requestData: SubscriberSessionRequestDto): void {
-    if (!requestData.applicationIdentifier && this.extractSubscriberInfo(requestData).subscriberId) {
+    if (!requestData.applicationIdentifier && this.extractSubscriberInfo(requestData, true)?.subscriberId) {
       throw new UnprocessableEntityException(
         'A valid application identifier is required when providing subscriber information'
       );
@@ -224,7 +224,9 @@ export class Session {
     return applicationIdentifier.startsWith(this.KEYLESS_ENVIRONMENT_PREFIX);
   }
 
-  private extractSubscriberInfo(requestData: SubscriberSessionRequestDto): SubscriberDto {
+  private extractSubscriberInfo(requestData: SubscriberSessionRequestDto): SubscriberDto;
+  private extractSubscriberInfo(requestData: SubscriberSessionRequestDto, safe: true): SubscriberDto | null;
+  private extractSubscriberInfo(requestData: SubscriberSessionRequestDto, safe: boolean = false): SubscriberDto | null {
     const subscriber: SubscriberDto | null = this.normalizeSubscriber(requestData.subscriber);
 
     if (subscriber?.subscriberId) {
@@ -234,6 +236,10 @@ export class Session {
     // TODO: Backward compatibility support - remove in future versions (see NV-5801)
     if (requestData.subscriberId) {
       return { subscriberId: requestData.subscriberId };
+    }
+
+    if (safe) {
+      return null;
     }
 
     throw new UnprocessableEntityException('Subscriber ID is required');
