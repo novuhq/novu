@@ -1,13 +1,13 @@
 import { RiAddLine } from 'react-icons/ri';
 import { Button } from '@/components/primitives/button';
 import { LinkButton } from '@/components/primitives/button-link';
-import { EMPTY_STATE_CLASSES } from '../utils/constants';
 
 type PayloadSchemaEmptyStateProps = {
   onAddProperty: () => void;
   isPayloadSchemaEnabled: boolean;
   hasNoSchema: boolean;
   onImportSchema: () => void;
+  onImportFromJson: () => void;
 };
 
 export function PayloadSchemaEmptyState({
@@ -15,38 +15,46 @@ export function PayloadSchemaEmptyState({
   isPayloadSchemaEnabled,
   hasNoSchema,
   onImportSchema,
+  onImportFromJson,
 }: PayloadSchemaEmptyStateProps) {
   const isNewSchemaScenario = isPayloadSchemaEnabled && hasNoSchema;
 
   return (
-    <div className={EMPTY_STATE_CLASSES.container}>
-      <div className={EMPTY_STATE_CLASSES.titleContainer}>
-        <h3 className={EMPTY_STATE_CLASSES.title}>
+    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-neutral-200 bg-neutral-50 bg-white p-4 text-center">
+      <div className="mb-6 space-y-2">
+        <h3 className="text-text-sub text-label-xs">
           {isNewSchemaScenario ? 'Schema not added yet' : 'Your schema starts here'}
         </h3>
 
-        <p className={EMPTY_STATE_CLASSES.description}>
+        <p className="text-text-soft text-paragraph-xs max-w-md">
           {isNewSchemaScenario ? (
             "A payload schema hasn't been defined for this workflow yet. You can create one manually or import from recent payloads."
           ) : (
             <>
-              Start building your payload schema by typing <code className={EMPTY_STATE_CLASSES.code}>{'{{ }}'}</code>{' '}
-              to add variables, or create your schema first from this form.
+              Start building your payload schema by typing{' '}
+              <code className="rounded bg-neutral-100 px-1 py-0.5 text-xs">{'{{ }}'}</code> to add variables, or create
+              your schema first from this form.
             </>
           )}
         </p>
       </div>
 
-      <div className={EMPTY_STATE_CLASSES.buttonContainer}>
-        <div className={EMPTY_STATE_CLASSES.buttonWrapper}>
+      <div className="flex flex-col gap-2">
+        <div className="flex flex-row items-center justify-center">
           <Button variant="secondary" mode="outline" size="2xs" leadingIcon={RiAddLine} onClick={onAddProperty}>
             Add property
           </Button>
         </div>
 
         {isNewSchemaScenario && (
-          <LinkButton className={EMPTY_STATE_CLASSES.linkButton} underline onClick={onImportSchema}>
+          <LinkButton className="text-label-xs" underline onClick={onImportSchema}>
             Import schema from recent payload
+          </LinkButton>
+        )}
+
+        {!isNewSchemaScenario && (
+          <LinkButton className="text-label-xs" underline onClick={onImportFromJson}>
+            Import from JSON object
           </LinkButton>
         )}
       </div>

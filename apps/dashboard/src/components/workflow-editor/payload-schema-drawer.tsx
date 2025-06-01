@@ -29,7 +29,6 @@ import { Hint, HintIcon } from '../primitives/hint';
 import { useFeatureFlag } from '../../hooks/use-feature-flag';
 import { PayloadSchemaEmptyState, PayloadImportEditor } from './payload-schema/components';
 import { useImportSchema } from './payload-schema/hooks';
-import { DRAWER_CLASSES } from './payload-schema/utils';
 
 type PayloadSchemaDrawerProps = {
   isOpen: boolean;
@@ -74,8 +73,10 @@ export function PayloadSchemaDrawer({
     isLoadingActivity,
     importedPayload,
     payloadNotFound,
+    isManualImport,
     setImportedPayload,
     handleImportSchema,
+    handleImportFromJson,
     handleGenerateSchema,
     handleBackToManual,
   } = useImportSchema(workflow, formMethods);
@@ -150,15 +151,15 @@ export function PayloadSchemaDrawer({
   return (
     <>
       <Sheet open={isOpen} onOpenChange={handleSheetOpenChange}>
-        <SheetContent className={DRAWER_CLASSES.content}>
+        <SheetContent className="bg-bg-weak flex w-[600px] flex-col p-0 sm:max-w-3xl">
           <SheetHeader className="space-y-1 px-3 py-4">
-            <SheetTitle className={DRAWER_CLASSES.headerTitle}>
+            <SheetTitle className="text-label-lg">
               Manage workflow schema{' '}
-              <Badge color="gray" size="sm" variant="light" className={DRAWER_CLASSES.badge}>
+              <Badge color="gray" size="sm" variant="light" className="text-label-xs relative bottom-[1px]">
                 BETA
               </Badge>
             </SheetTitle>
-            <SheetDescription className={DRAWER_CLASSES.headerDescription}>
+            <SheetDescription className="text-paragraph-xs mt-0">
               Manage workflow schema for reliable notifications.{' '}
               <ExternalLink href="https://docs.novu.co/platform/concepts/workflows">Learn more</ExternalLink>
             </SheetDescription>
@@ -169,15 +170,15 @@ export function PayloadSchemaDrawer({
               {!isImportMode && (
                 <>
                   <div className="mb-2 flex flex-row items-center justify-between gap-2">
-                    <h3 className={DRAWER_CLASSES.schemaTitle}>Payload schema</h3>
+                    <h3 className="text-label-xs w-full">Payload schema</h3>
                   </div>
-                  <div className={DRAWER_CLASSES.validationContainer}>
-                    <div className={DRAWER_CLASSES.validationText}>
-                      <RiShieldCheckLine className={DRAWER_CLASSES.validationIcon} />
+                  <div className="rounded-4 border-1 mb-2 flex items-center justify-between border border-neutral-100 bg-white p-1.5">
+                    <div className="text-text-strong text-label-xs flex items-center gap-1">
+                      <RiShieldCheckLine className="text-text-strong size-3" />
                       Enforce schema validation
                       <Tooltip>
                         <TooltipTrigger className="flex cursor-default flex-row items-center gap-1">
-                          <RiInformation2Line className={DRAWER_CLASSES.infoIcon} />
+                          <RiInformation2Line className="size-3 text-neutral-400" />
                         </TooltipTrigger>
                         <TooltipContent>
                           <p>
@@ -217,6 +218,7 @@ export function PayloadSchemaDrawer({
                   onPayloadChange={setImportedPayload}
                   onGenerateSchema={handleGenerateSchema}
                   onBack={handleBackToManual}
+                  isManualImport={isManualImport}
                 />
               ) : (
                 <PayloadSchemaEmptyState
@@ -224,6 +226,7 @@ export function PayloadSchemaDrawer({
                   isPayloadSchemaEnabled={isPayloadSchemaFFEnabled}
                   hasNoSchema={!workflow?.payloadSchema}
                   onImportSchema={handleImportSchema}
+                  onImportFromJson={handleImportFromJson}
                 />
               )}
             </div>
@@ -231,7 +234,7 @@ export function PayloadSchemaDrawer({
             {hasPayloadSchema && (
               <>
                 <Separator />
-                <Hint className={DRAWER_CLASSES.hint}>
+                <Hint className="text-text-soft p-2 px-3">
                   <HintIcon as={RiInformation2Line} />
                   Modifying a variable&apos;s type can break step behavior if the variable is used in logic or
                   expressions.
@@ -239,8 +242,8 @@ export function PayloadSchemaDrawer({
               </>
             )}
           </SheetMain>
-          <SheetFooter className={DRAWER_CLASSES.footer}>
-            <div className={DRAWER_CLASSES.footerButtonContainer}>
+          <SheetFooter className="border-neutral-content-weak space-between flex border-t px-3 py-1.5">
+            <div className="flex w-full flex-row items-center justify-between gap-2">
               <Link to="https://docs.novu.co/platform/concepts/payloads" target="_blank">
                 <Button variant="secondary" mode="ghost" size="xs" leadingIcon={RiFileMarkedLine}>
                   View Docs

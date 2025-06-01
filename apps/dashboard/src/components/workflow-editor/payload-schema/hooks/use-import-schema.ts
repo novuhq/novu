@@ -5,13 +5,13 @@ import { useEnvironment } from '@/context/environment/hooks';
 import { getActivityList } from '@/api/activity';
 import { convertSchemaToPropertyList } from '@/components/schema-editor/utils/schema-converter';
 import { generateSchemaFromJson, cleanPayloadData } from '../utils/generate-schema';
-import { ERROR_MESSAGES } from '../utils/constants';
 
 export function useImportSchema(workflow?: WorkflowResponseDto, formMethods?: any) {
   const [isImportMode, setIsImportMode] = useState(false);
   const [isLoadingActivity, setIsLoadingActivity] = useState(false);
   const [importedPayload, setImportedPayload] = useState<string>('');
   const [payloadNotFound, setPayloadNotFound] = useState(false);
+  const [isManualImport, setIsManualImport] = useState(false);
 
   const { currentEnvironment } = useEnvironment();
 
@@ -21,6 +21,7 @@ export function useImportSchema(workflow?: WorkflowResponseDto, formMethods?: an
     setIsImportMode(true);
     setIsLoadingActivity(true);
     setPayloadNotFound(false);
+    setIsManualImport(false);
 
     try {
       const response = await getActivityList({
@@ -45,11 +46,19 @@ export function useImportSchema(workflow?: WorkflowResponseDto, formMethods?: an
       }
     } catch (error) {
       console.error('Failed to fetch activity:', error);
-      toast.error(ERROR_MESSAGES.fetchFailed);
+      toast.error('Failed to fetch recent payloads. Please try again.');
       setPayloadNotFound(true);
     } finally {
       setIsLoadingActivity(false);
     }
+  };
+
+  const handleImportFromJson = () => {
+    setIsImportMode(true);
+    setIsLoadingActivity(false);
+    setPayloadNotFound(false);
+    setImportedPayload('');
+    setIsManualImport(true);
   };
 
   const handleGenerateSchema = () => {
@@ -71,9 +80,9 @@ export function useImportSchema(workflow?: WorkflowResponseDto, formMethods?: an
       handleBackToManual();
     } catch (error) {
       if (error instanceof SyntaxError) {
-        toast.error(ERROR_MESSAGES.invalidJson);
+        toast.error('Invalid JSON format. Please check your payload.');
       } else {
-        toast.error(ERROR_MESSAGES.generateFailed);
+        toast.error('Failed to generate schema. Please try again.');
       }
     }
   };
@@ -82,6 +91,7 @@ export function useImportSchema(workflow?: WorkflowResponseDto, formMethods?: an
     setIsImportMode(false);
     setImportedPayload('');
     setPayloadNotFound(false);
+    setIsManualImport(false);
   };
 
   return {
@@ -89,8 +99,10 @@ export function useImportSchema(workflow?: WorkflowResponseDto, formMethods?: an
     isLoadingActivity,
     importedPayload,
     payloadNotFound,
+    isManualImport,
     setImportedPayload,
     handleImportSchema,
+    handleImportFromJson,
     handleGenerateSchema,
     handleBackToManual,
   };
