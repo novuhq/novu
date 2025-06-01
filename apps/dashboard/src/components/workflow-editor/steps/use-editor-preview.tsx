@@ -1,6 +1,7 @@
 import * as Sentry from '@sentry/react';
 import isEqual from 'lodash.isequal';
 import { useCallback, useEffect, useState } from 'react';
+import type { JSONSchemaDto } from '@novu/shared';
 
 import { useDataRef } from '@/hooks/use-data-ref';
 import { usePreviewStep } from '@/hooks/use-preview-step';
@@ -31,6 +32,7 @@ export const useEditorPreview = ({
       Sentry.captureException(error);
     },
   });
+
   const dataRef = useDataRef({
     workflowSlug,
     stepSlug,
@@ -79,6 +81,7 @@ export const useEditorPreview = ({
     setEditorValue: setEditorValueSafe,
     previewStep: previewStepCallback,
     previewData,
+    previewSchema: previewData?.schema || null,
     isPreviewPending,
   };
 };

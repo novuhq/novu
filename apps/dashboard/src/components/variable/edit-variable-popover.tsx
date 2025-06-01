@@ -1,5 +1,12 @@
 import { ReactNode, useState, useCallback, useMemo, useEffect, useId, useRef } from 'react';
-import { RiDeleteBin2Line, RiQuestionLine, RiSearchLine } from 'react-icons/ri';
+import {
+  RiDeleteBin2Line,
+  RiQuestionLine,
+  RiSearchLine,
+  RiArrowRightUpLine,
+  RiListView,
+  RiErrorWarningLine,
+} from 'react-icons/ri';
 
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives/popover';
 import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
@@ -13,7 +20,7 @@ import {
   CommandSeparator,
 } from '@/components/primitives/command';
 import { FormControl, FormItem, FormMessagePure } from '@/components/primitives/form/form';
-import { Input } from '@/components/primitives/input';
+import { Input, InputRoot, InputPure, InputWrapper } from '@/components/primitives/input';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
@@ -22,13 +29,18 @@ import { ReorderFiltersGroup } from './components/reorder-filters-group';
 import { useFilterManager } from './hooks/use-filter-manager';
 import { useSuggestedFilters } from './hooks/use-suggested-filters';
 import { useVariableParser } from './hooks/use-variable-parser';
+import { useVariableValidation } from './hooks/use-variable-validation';
 import type { Filters, FilterWithParam } from './types';
 import { formatLiquidVariable } from './utils';
-import { useDebounce } from '@/hooks/use-debounce';
 import { EscapeKeyManagerPriority } from '@/context/escape-key-manager/priority';
 import { useEscapeKeyManager } from '@/context/escape-key-manager/hooks';
 import { Button } from '../primitives/button';
+import type { JSONSchema7 } from '@/components/schema-editor/json-schema';
+import { LinkButton } from '@/components/primitives/button-link';
+import { Code2 } from '../icons/code-2';
+import { Separator } from '../primitives/separator';
 
+// Helper functions
 const calculateAliasFor = (name: string, parsedAliasRoot: string): string => {
   const variableRest = name.split('.').slice(1).join('.');
   const normalizedVariableRest = variableRest.startsWith('.') ? variableRest.substring(1) : variableRest;
@@ -43,6 +55,7 @@ const calculateAliasFor = (name: string, parsedAliasRoot: string): string => {
 };
 
 type EditVariablePopoverProps = {
+  isPayloadSchemaEnabled: boolean;
   variables: LiquidVariable[];
   children: ReactNode;
   open: boolean;
@@ -51,9 +64,13 @@ type EditVariablePopoverProps = {
   onUpdate: (newValue: string) => void;
   isAllowedVariable: IsAllowedVariable;
   onDeleteClick: () => void;
+  getSchemaPropertyByKey: (keyPath: string) => JSONSchema7 | undefined;
+  onManageSchemaClick?: (variableName: string) => void;
+  onAddToSchemaClick?: (variableName: string) => void;
 };
 
 export const EditVariablePopover = ({
+  isPayloadSchemaEnabled,
   variables,
   children,
   open,
@@ -62,26 +79,27 @@ export const EditVariablePopover = ({
   onUpdate,
   isAllowedVariable,
   onDeleteClick,
+  getSchemaPropertyByKey,
+  onManageSchemaClick,
+  onAddToSchemaClick,
 }: EditVariablePopoverProps) => {
   const { parsedName, parsedAliasForRoot, parsedDefaultValue, parsedFilters } = useVariableParser(
     variable?.name || '',
     variable?.aliasFor || ''
   );
+
   const id = useId();
   const nameInputRef = useRef<HTMLInputElement>(null);
-  const [name, setName] = useState(parsedName);
-  const [variableError, setVariableError] = useState<string>(() => {
-    if (!variable || !isAllowedVariable({ ...variable, name: parsedName })) {
-      return 'Not a valid variable';
-    }
+  const track = useTelemetry();
 
-    return '';
-  });
+  const [name, setName] = useState(parsedName);
   const [defaultVal, setDefaultVal] = useState(parsedDefaultValue);
   const [searchQuery, setSearchQuery] = useState('');
   const [isCommandOpen, setIsCommandOpen] = useState(false);
   const [filters, setFilters] = useState<FilterWithParam[]>(parsedFilters || []);
-  const track = useTelemetry();
+
+  const aliasFor = useMemo(() => calculateAliasFor(name, parsedAliasForRoot), [name, parsedAliasForRoot]);
+  const validation = useVariableValidation(name, aliasFor, isAllowedVariable, getSchemaPropertyByKey);
 
   useEffect(() => {
     setName(parsedName);
@@ -89,43 +107,17 @@ export const EditVariablePopover = ({
     setFilters(parsedFilters || []);
   }, [parsedName, parsedDefaultValue, parsedFilters]);
 
-  const validateVariable = useCallback(
-    (variable: LiquidVariable) => {
-      if (!variable || !isAllowedVariable({ ...variable })) {
-        setVariableError('Not a valid variable');
-        nameInputRef.current?.focus();
-        return false;
-      }
-
-      setVariableError('');
-      return true;
-    },
-    [isAllowedVariable]
-  );
-
-  const validateVariableDebounced = useDebounce(validateVariable, 2000);
-
-  // Set initial test value when popover opens
   const handlePopoverOpen = useCallback(() => {
     track(TelemetryEvent.VARIABLE_POPOVER_OPENED);
   }, [track]);
 
-  const handleNameChange = useCallback(
-    (newName: string) => {
-      const aliasFor = calculateAliasFor(newName, parsedAliasForRoot);
+  const handleNameChange = useCallback((newName: string) => {
+    setName(newName);
+  }, []);
 
-      setName(newName);
-      validateVariableDebounced({ name: newName, aliasFor });
-    },
-    [setName, validateVariableDebounced, parsedAliasForRoot]
-  );
-
-  const handleDefaultValueChange = useCallback(
-    (newDefaultVal: string) => {
-      setDefaultVal(newDefaultVal);
-    },
-    [setDefaultVal]
-  );
+  const handleDefaultValueChange = useCallback((newDefaultVal: string) => {
+    setDefaultVal(newDefaultVal);
+  }, []);
 
   const { handleReorder, handleFilterToggle, handleParamChange, getFilteredFilters } = useFilterManager({
     initialFilters: filters,
@@ -137,12 +129,6 @@ export const EditVariablePopover = ({
 
   const handleOpenChange = useCallback(
     (open: boolean) => {
-      const aliasFor = calculateAliasFor(name, parsedAliasForRoot);
-
-      if (!open && !validateVariable({ name, aliasFor })) {
-        return;
-      }
-
       const newValue = formatLiquidVariable(name, defaultVal, filters);
 
       if (!open) {
@@ -152,20 +138,37 @@ export const EditVariablePopover = ({
           filtersCount: filters.length,
           filters: filters.map((filter) => filter.value),
         });
-        setVariableError('');
         onUpdate(newValue);
       }
 
       onOpenChange(open, newValue);
     },
-    [validateVariable, onOpenChange, name, defaultVal, filters, track, onUpdate, parsedAliasForRoot]
+    [onOpenChange, name, defaultVal, filters, track, onUpdate]
   );
 
   const handleClosePopover = useCallback(() => {
     handleOpenChange(false);
   }, [handleOpenChange]);
 
+  const handleManageSchema = useCallback(() => {
+    if (onManageSchemaClick && name) {
+      onManageSchemaClick(validation.variableKey);
+    }
+  }, [onManageSchemaClick, name, validation.variableKey]);
+
+  const handleAddToSchema = useCallback(() => {
+    if (onAddToSchemaClick && name) {
+      onAddToSchemaClick(validation.variableKey);
+      handleOpenChange(false);
+    }
+  }, [onAddToSchemaClick, name, validation.variableKey, handleOpenChange]);
+
   useEscapeKeyManager(id, handleClosePopover, EscapeKeyManagerPriority.POPOVER, open);
+
+  const showManageSchemaButton = isPayloadSchemaEnabled && validation.isPayloadVariable && validation.isInSchema;
+  const showAddToSchemaButton = isPayloadSchemaEnabled && validation.isPayloadVariable && !validation.isInSchema;
+  const showVariableTypeInput = isPayloadSchemaEnabled && validation.isPayloadVariable;
+  const variableType = validation.schemaProperty?.type || 'unknown';
 
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
@@ -196,32 +199,96 @@ export const EditVariablePopover = ({
             <div className="flex flex-col gap-1">
               <FormItem>
                 <FormControl>
-                  <div className="grid gap-1">
-                    <label className="text-text-sub text-label-xs">Variable</label>
-                    <Input
-                      ref={nameInputRef}
-                      value={name}
-                      onChange={(e) => handleNameChange(e.target.value)}
-                      autoFocus
-                      size="xs"
-                      placeholder="Variable name (e.g. payload.name)"
-                    />
-                    <FormMessagePure hasError={!!variableError}>{variableError}</FormMessagePure>
+                  <div className="grid">
+                    <div className="mb-1 flex w-full flex-row items-center justify-between gap-1">
+                      <label className="text-text-sub text-label-xs items-start">Variable</label>
+                      {showManageSchemaButton && (
+                        <LinkButton
+                          variant="gray"
+                          size="sm"
+                          className="text-label-2xs text-xs"
+                          leadingIcon={RiListView}
+                          onClick={handleManageSchema}
+                        >
+                          Manage schema ↗
+                        </LinkButton>
+                      )}
+                    </div>
+
+                    <InputRoot size="2xs" hasError={validation.hasError}>
+                      <InputWrapper>
+                        <Code2 className="h-4 w-4 shrink-0 text-gray-500" />
+                        <InputPure
+                          ref={nameInputRef}
+                          value={name}
+                          onChange={(e) => handleNameChange(e.target.value)}
+                          autoFocus
+                          className="text-xs"
+                          placeholder="Variable name (e.g. payload.name)"
+                        />
+                      </InputWrapper>
+                    </InputRoot>
+                    {validation.hasError && !showAddToSchemaButton && (
+                      <FormMessagePure hasError={true}>{validation.errorMessage}</FormMessagePure>
+                    )}
+
+                    {validation.hasError && showAddToSchemaButton && (
+                      <FormMessagePure hasError={true} className="text-label-2xs mb-0.5 mt-0.5">
+                        <RiErrorWarningLine className="h-3 w-3" />
+                        Variable missing from Schema{' '}
+                        <LinkButton
+                          variant="modifiable"
+                          size="sm"
+                          className="text-label-2xs"
+                          onClick={handleAddToSchema}
+                        >
+                          <span className="underline"> Add to schema ↗</span>
+                        </LinkButton>
+                      </FormMessagePure>
+                    )}
                   </div>
                 </FormControl>
               </FormItem>
 
-              <FormItem>
-                <FormControl>
-                  <Input
-                    value={defaultVal}
-                    onChange={(e) => handleDefaultValueChange(e.target.value)}
-                    placeholder="Default fallback value"
-                    size="xs"
-                  />
-                </FormControl>
-              </FormItem>
+              {!isPayloadSchemaEnabled && (
+                <FormItem>
+                  <FormControl>
+                    <Input
+                      value={defaultVal}
+                      onChange={(e) => handleDefaultValueChange(e.target.value)}
+                      placeholder="Default fallback value"
+                      size="2xs"
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+
+              {showVariableTypeInput && (
+                <FormItem>
+                  <FormControl>
+                    <Input value={variableType.toString()} disabled placeholder="Variable type" size="2xs" />
+                  </FormControl>
+                </FormItem>
+              )}
+
+              {showVariableTypeInput && isPayloadSchemaEnabled && (
+                <div className="text-label-2xs text-text-soft items-center gap-1.5 px-1 py-0.5 font-medium">
+                  💡 <b className="text-text-sub font-medium">Tip:</b> Edit variable type, mark as required field, and
+                  add validation via{' '}
+                  <LinkButton
+                    variant="gray"
+                    size="sm"
+                    className="text-text-sub text-label-2xs font-medium"
+                    onClick={handleManageSchema}
+                    trailingIcon={RiArrowRightUpLine}
+                  >
+                    Manage schema
+                  </LinkButton>
+                </div>
+              )}
             </div>
+
+            <Separator className="ml-[-10px] mr-[-10px] w-[calc(100%+20px)]" />
 
             <div className="flex flex-col gap-1">
               <FormItem>

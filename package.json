@@ -88,8 +88,6 @@
     "@types/inquirer": "8.2.10",
     "@types/jest": "29.5.13",
     "@types/node": "18.16.9",
-    "@typescript-eslint/eslint-plugin": "^8.13.0",
-    "@typescript-eslint/utils": "^8.13.0",
     "auto": "^10.36.5",
     "chalk": "4.1.2",
     "chalk-animation": "^1.6.0",
@@ -174,7 +172,7 @@
     "ts-node": "~10.9.1",
     "tsconfig-paths": "^4.2.0",
     "typescript": "5.6.2",
-    "typescript-eslint": "^8.13.0",
+    "typescript-eslint": "^8.33.0",
     "wait-port": "^0.3.0",
     "yargs": "^17.7.2"
   },
@@ -238,8 +236,6 @@
     "onlyBuiltDependencies": [
       "@clerk/shared",
       "@clerk/types",
-      "react-icons",
-      "@novu/novui",
       "@contrast/fn-inspect",
       "@firebase/util",
       "@fortawesome/fontawesome-common-types",
@@ -248,10 +244,13 @@
       "@fortawesome/free-solid-svg-icons",
       "@nestjs/core",
       "@newrelic/native-metrics",
+      "@novu/novui",
       "@sentry/cli",
       "@sentry/profiling-node",
       "@sveltejs/kit",
       "@swc/core",
+      "@tailwindcss/oxide",
+      "aws-sdk",
       "bcrypt",
       "core-js",
       "core-js-pure",
@@ -264,6 +263,7 @@
       "nice-napi",
       "nx",
       "protobufjs",
+      "react-icons",
       "sharp"
     ]
   }

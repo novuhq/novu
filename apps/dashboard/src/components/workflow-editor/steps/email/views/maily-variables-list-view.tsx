@@ -10,10 +10,17 @@ import {
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
+import { NewVariablePreview } from '@/components/variable/components/new-variable-preview';
+
+interface ExtendedVariable extends Variable {
+  type?: string;
+  displayLabel?: string;
+}
 
 type VariableSuggestionsPopoverProps = {
   items: Variable[];
   onSelectItem: (item: Variable) => void;
+  onCreateNewVariable?: (variableName: string) => Promise<void>;
 };
 
 type VariableSuggestionsPopoverRef = {
@@ -23,13 +30,18 @@ type VariableSuggestionsPopoverRef = {
 };
 
 export const MailyVariablesListView = React.forwardRef(
-  ({ items, onSelectItem }: VariableSuggestionsPopoverProps, ref: React.Ref<VariableSuggestionsPopoverRef>) => {
+  (
+    { items, onSelectItem, onCreateNewVariable }: VariableSuggestionsPopoverProps,
+    ref: React.Ref<VariableSuggestionsPopoverRef>
+  ) => {
     const { digestStepBeforeCurrent } = useWorkflow();
     const track = useTelemetry();
+
     const options = useMemo(
       () =>
         items.map((item) => {
           const isDigestVariable = item.name in DIGEST_VARIABLES_FILTER_MAP;
+          const isNewVariableItem = isNewVariable(item);
 
           if (isDigestVariable) {
             const { label } = getDynamicDigestVariable({
@@ -46,12 +58,22 @@ export const MailyVariablesListView = React.forwardRef(
             };
           }
 
+          if (isNewVariableItem) {
+            const displayLabel = hasDisplayLabel(item) ? item.displayLabel : (item as ExtendedVariable).name;
+
+            return {
+              label: displayLabel ?? '',
+              value: item.name,
+              preview: <NewVariablePreview />,
+            };
+          }
+
           return {
             label: item.name,
             value: item.name,
           };
         }),
-      [digestStepBeforeCurrent?.stepId, items]
+      [digestStepBeforeCurrent?.stepId, items, onCreateNewVariable]
     );
     const variablesListRef = useRef<VariableListRef>(null);
 
@@ -110,3 +132,11 @@ export const MailyVariablesListView = React.forwardRef(
     );
   }
 );
+
+function isNewVariable(item: Variable): item is ExtendedVariable {
+  return 'type' in item && (item as ExtendedVariable).type === 'new-variable';
+}
+
+function hasDisplayLabel(item: Variable): item is ExtendedVariable {
+  return 'displayLabel' in item && typeof (item as ExtendedVariable).displayLabel === 'string';
+}

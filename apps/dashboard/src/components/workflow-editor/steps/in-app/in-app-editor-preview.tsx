@@ -1,6 +1,6 @@
 import { Notification5Fill } from '@/components/icons';
 import { InAppTabsSection } from '@/components/workflow-editor/steps/in-app/in-app-tabs-section';
-import { GeneratePreviewResponseDto } from '@novu/shared';
+import { GeneratePreviewResponseDto, type WorkflowResponseDto } from '@novu/shared';
 import { ConfigurePreviewAccordion } from '../shared/configure-preview-accordion';
 import { InboxPreview } from './inbox-preview';
 
@@ -10,6 +10,7 @@ type InAppEditorPreviewProps = {
   previewStep: () => void;
   previewData?: GeneratePreviewResponseDto;
   isPreviewPending: boolean;
+  workflow?: WorkflowResponseDto;
 };
 
 export const InAppEditorPreview = ({
@@ -18,6 +19,7 @@ export const InAppEditorPreview = ({
   previewStep,
   previewData,
   isPreviewPending = false,
+  workflow,
 }: InAppEditorPreviewProps) => {
   return (
     <InAppTabsSection>
@@ -27,7 +29,13 @@ export const InAppEditorPreview = ({
           In-App template editor
         </div>
         <InboxPreview isPreviewPending={isPreviewPending} previewData={previewData} />
-        <ConfigurePreviewAccordion editorValue={editorValue} setEditorValue={setEditorValue} onUpdate={previewStep} />
+        <ConfigurePreviewAccordion
+          schema={(previewData as any)?.schema}
+          editorValue={editorValue}
+          setEditorValue={setEditorValue}
+          onUpdate={previewStep}
+          workflow={workflow}
+        />
       </div>
     </InAppTabsSection>
   );

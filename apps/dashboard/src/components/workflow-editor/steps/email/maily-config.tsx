@@ -62,6 +62,8 @@ import { ParsedVariables } from '@/utils/parseStepVariables';
 import { MailyVariablesListView } from './views/maily-variables-list-view';
 import { createVariableView } from './views/variable-view';
 import { createCards } from './blocks/cards';
+import React from 'react';
+
 export const VARIABLE_TRIGGER_CHARACTER = '{{';
 
 declare module '@tiptap/core' {
@@ -180,13 +182,19 @@ const getAvailableBlocks = (blocks: BlockGroupItem[], editor: TiptapEditor | nul
   return blocks;
 };
 
-export const createExtensions = (props: {
+export const createExtensions = ({
+  handleCalculateVariables,
+  parsedVariables,
+  blocks,
+  onCreateNewVariable,
+  isPayloadSchemaEnabled = false,
+}: {
   handleCalculateVariables: (props: CalculateVariablesProps) => Variables | undefined;
   parsedVariables: ParsedVariables;
   blocks: BlockGroupItem[];
+  onCreateNewVariable?: (variableName: string) => Promise<void>;
+  isPayloadSchemaEnabled?: boolean;
 }) => {
-  const { handleCalculateVariables, parsedVariables, blocks } = props;
-
   const extensions = [
     RepeatExtension.extend({
       addNodeView() {
@@ -195,9 +203,14 @@ export const createExtensions = (props: {
         });
       },
       addAttributes() {
+        // Find the first array property from the parsed variables that starts with 'payload.'
+        // Since the actual user payload is nested under payload.payload, we need to filter for payload arrays
+        const payloadArrays = parsedVariables.arrays.filter((array) => array.name.startsWith('payload.'));
+        const firstArrayVariable = payloadArrays.length > 0 ? payloadArrays[0].name : 'payload.items';
+
         return {
           each: {
-            default: 'payload.items',
+            default: firstArrayVariable,
           },
         };
       },
@@ -233,12 +246,34 @@ export const createExtensions = (props: {
         command: ({ editor, range, props }) => {
           const query = props.id + '}}';
 
-          insertVariableToEditor({
-            query,
-            editor,
-            range,
-            isAllowedVariable: parsedVariables.isAllowedVariable,
-          });
+          // Check if this is a new variable by seeing if it's a payload variable that doesn't exist in our schema
+          const isPayloadVariable = props.id.startsWith('payload.');
+          const existsInSchema = parsedVariables.variables.some((v) => v.name === props.id);
+          const isNewVariable =
+            isPayloadSchemaEnabled && isPayloadVariable && !existsInSchema && props.id !== 'payload';
+
+          if (isNewVariable) {
+            const variableName = props.id.replace('payload.', '');
+            onCreateNewVariable?.(variableName);
+
+            insertVariableToEditor({
+              query,
+              editor,
+              range,
+            });
+          } else {
+            const isAllowed = parsedVariables.isAllowedVariable({ name: props.id });
+
+            if (!isAllowed) {
+              return;
+            }
+
+            insertVariableToEditor({
+              query,
+              editor,
+              range,
+            });
+          }
         },
       },
       // variable pills in bubble menus (repeat, showIf...)

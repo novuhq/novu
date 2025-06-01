@@ -8,14 +8,16 @@ import {
   DIGEST_VARIABLES_ENUM,
   getDynamicDigestVariable,
 } from '../components/variable/utils/digest-variables';
+import { JSONSchema7 } from 'json-schema';
 
 export interface LiquidVariable {
-  type?: 'variable' | 'digest';
+  type?: 'variable' | 'digest' | 'new-variable';
   name: string;
   boost?: number;
   info?: Completion['info'];
   displayLabel?: string;
   aliasFor?: string | null;
+  isNewSuggestion?: boolean;
 }
 
 export type IsAllowedVariable = (variable: LiquidVariable) => boolean;
@@ -36,8 +38,8 @@ export interface ParsedVariables {
  */
 
 export function parseStepVariables(
-  schema: JSONSchemaDefinition,
-  { digestStepId }: { digestStepId?: string }
+  schema: JSONSchemaDefinition | JSONSchema7,
+  { digestStepId, isPayloadSchemaEnabled }: { digestStepId?: string; isPayloadSchemaEnabled?: boolean }
 ): ParsedVariables {
   const result: ParsedVariables = {
     primitives: [],
@@ -47,7 +49,7 @@ export function parseStepVariables(
     isAllowedVariable: () => false,
   };
 
-  function extractProperties(obj: JSONSchemaDefinition, path = ''): void {
+  function extractProperties(obj: JSONSchemaDefinition | JSONSchema7, path = ''): void {
     if (typeof obj === 'boolean') return;
 
     if (obj.type === 'object') {
@@ -71,6 +73,10 @@ export function parseStepVariables(
               extractProperties(items, `${fullPath}[0]`);
             }
           } else if (value.type === 'object') {
+            if (fullPath !== 'payload' && fullPath !== 'steps') {
+              result.namespaces.push({ name: fullPath });
+            }
+
             extractProperties(value, fullPath);
           } else if (value.type && ['string', 'number', 'boolean', 'integer'].includes(value.type as string)) {
             result.primitives.push({
@@ -117,6 +123,10 @@ export function parseStepVariables(
   }
 
   function isAllowedVariable(variable: LiquidVariable): boolean {
+    if (isPayloadSchemaEnabled && variable.name.startsWith('payload.')) {
+      return true;
+    }
+
     if (typeof schema === 'boolean') return false;
 
     // if it has aliasFor, then the name must start with the alias
@@ -134,7 +144,7 @@ export function parseStepVariables(
     const parts = parseVariablePath(path);
     if (!parts) return false;
 
-    let currentObj: JSONSchemaDefinition = schema;
+    let currentObj: JSONSchemaDefinition | JSONSchema7 = schema;
 
     for (let i = 0; i < parts.length; i++) {
       const part = parts[i];
@@ -144,7 +154,9 @@ export function parseStepVariables(
       if (currentObj.type === 'array') {
         if (!currentObj.items) return false;
 
-        const items: JSONSchemaDefinition = Array.isArray(currentObj.items) ? currentObj.items[0] : currentObj.items;
+        const items: JSONSchemaDefinition | JSONSchema7 = Array.isArray(currentObj.items)
+          ? currentObj.items[0]
+          : currentObj.items;
         if (typeof items === 'boolean') return false;
 
         currentObj = items;

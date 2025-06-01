@@ -4,7 +4,14 @@ import get from 'lodash/get';
 import Ajv, { ErrorObject } from 'ajv';
 import addFormats from 'ajv-formats';
 import { captureException } from '@sentry/node';
-import { EnvironmentEntity, NotificationTemplateEntity, OrganizationEntity, UserEntity } from '@novu/dal';
+import {
+  EnvironmentEntity,
+  NotificationTemplateEntity,
+  OrganizationEntity,
+  UserEntity,
+  JsonSchemaTypeEnum,
+  JsonSchemaFormatEnum,
+} from '@novu/dal';
 
 import {
   ChannelTypeEnum,
@@ -41,6 +48,7 @@ import {
   isStringifiedMailyJSONContent,
   isObjectMailyJSONContent,
 } from '../../../shared/helpers/maily-utils';
+import { JsonSchemaMock } from '../../util/json-schema-mock';
 
 const LOG_CONTEXT = 'GeneratePreviewUsecase';
 
@@ -114,7 +122,7 @@ export class PreviewUsecase {
         };
       }
 
-      let previewPayloadExample = this.mergePayloadExample(
+      let previewPayloadExample = await this.mergePayloadExample(
         workflow,
         previewTemplateData.payloadExample,
         userPayloadExample
@@ -135,6 +143,7 @@ export class PreviewUsecase {
           type: stepData.type as unknown as ChannelTypeEnum,
         },
         previewPayloadExample: cleanPreviewExamplePayload(previewPayloadExample),
+        schema: this.buildPreviewPayloadSchema(previewPayloadExample, workflow.payloadSchema),
       };
     } catch (error) {
       this.logger.error(
@@ -156,6 +165,7 @@ export class PreviewUsecase {
           type: undefined,
         },
         previewPayloadExample: {},
+        schema: null,
       } as any;
     }
   }
@@ -171,17 +181,59 @@ export class PreviewUsecase {
    * Merge the payload example with the user payload example.
    * Preserve only values of common keys between payloadExample and userPayloadExample.
    */
-  private mergePayloadExample(
+  private async mergePayloadExample(
     workflow: NotificationTemplateEntity,
     payloadExample: Record<string, unknown>,
     userPayloadExample: PreviewPayloadDto | undefined
   ) {
-    if (workflow.origin === WorkflowOriginEnum.EXTERNAL) {
-      // if external workflow, we need to override with stored payload schema
-      const schemaBasedPayloadExample = createMockObjectFromSchema({
-        type: 'object',
-        properties: { payload: workflow.payloadSchema },
-      });
+    const isPayloadSchemaEnabled = await this.featureFlagService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_PAYLOAD_SCHEMA_ENABLED,
+      defaultValue: false,
+      organization: { _id: workflow._organizationId },
+      environment: { _id: workflow._environmentId },
+    });
+
+    const shouldUsePayloadSchema =
+      workflow.origin === WorkflowOriginEnum.EXTERNAL ||
+      (isPayloadSchemaEnabled && workflow.origin === WorkflowOriginEnum.NOVU_CLOUD);
+
+    if (shouldUsePayloadSchema && workflow.payloadSchema) {
+      let schemaBasedPayloadExample: Record<string, unknown>;
+
+      if (isPayloadSchemaEnabled) {
+        // Use JSON schema faker for more realistic mock data
+        try {
+          const schema = {
+            type: 'object' as const,
+            properties: { payload: workflow.payloadSchema },
+            additionalProperties: false,
+          };
+
+          const mockData = JsonSchemaMock.generate(schema) as Record<string, unknown>;
+          schemaBasedPayloadExample = mockData;
+        } catch (error) {
+          this.logger.warn(
+            {
+              err: error,
+              workflowId: workflow._id,
+              payloadSchema: workflow.payloadSchema,
+            },
+            'Failed to generate mock data using JSON schema faker, falling back to createMockObjectFromSchema',
+            LOG_CONTEXT
+          );
+          // Fallback to the original method
+          schemaBasedPayloadExample = createMockObjectFromSchema({
+            type: 'object',
+            properties: { payload: workflow.payloadSchema },
+          });
+        }
+      } else {
+        // Use the original method for external workflows when feature flag is disabled
+        schemaBasedPayloadExample = createMockObjectFromSchema({
+          type: 'object',
+          properties: { payload: workflow.payloadSchema },
+        });
+      }
 
       return _.merge(payloadExample, schemaBasedPayloadExample, userPayloadExample);
     }
@@ -210,6 +262,7 @@ export class PreviewUsecase {
         userId: command.user._id,
         workflowId: command.workflowIdOrInternalId,
         controlValues,
+        payloadSchema: workflow.payloadSchema,
       })
     );
 
@@ -335,6 +388,73 @@ export class PreviewUsecase {
     } catch (error) {
       return get(previewControlValueDefault, key);
     }
+  }
+
+  private buildPreviewPayloadSchema(
+    previewPayloadExample: PreviewPayloadDto,
+    workflowPayloadSchema?: JSONSchemaDto
+  ): JSONSchemaDto | null {
+    if (!workflowPayloadSchema) {
+      return null;
+    }
+
+    const schema: JSONSchemaDto = {
+      type: JsonSchemaTypeEnum.OBJECT,
+      properties: {},
+      additionalProperties: false,
+    };
+
+    // Add payload schema if it exists in the example
+    if (previewPayloadExample.payload) {
+      schema.properties!.payload = workflowPayloadSchema || {
+        type: JsonSchemaTypeEnum.OBJECT,
+        additionalProperties: true,
+      };
+    }
+
+    // Add subscriber schema if it exists in the example
+    if (previewPayloadExample.subscriber) {
+      schema.properties!.subscriber = {
+        type: JsonSchemaTypeEnum.OBJECT,
+        properties: {
+          subscriberId: { type: JsonSchemaTypeEnum.STRING },
+          firstName: { type: JsonSchemaTypeEnum.STRING },
+          lastName: { type: JsonSchemaTypeEnum.STRING },
+          email: { type: JsonSchemaTypeEnum.STRING, format: JsonSchemaFormatEnum.EMAIL },
+          phone: { type: JsonSchemaTypeEnum.STRING },
+          avatar: { type: JsonSchemaTypeEnum.STRING },
+          locale: { type: JsonSchemaTypeEnum.STRING },
+          data: { type: JsonSchemaTypeEnum.OBJECT, additionalProperties: true },
+        },
+        additionalProperties: true,
+      };
+    }
+
+    // Add steps schema if it exists in the example
+    if (previewPayloadExample.steps) {
+      schema.properties!.steps = {
+        type: JsonSchemaTypeEnum.OBJECT,
+        description: 'Steps data from previous workflow executions',
+        additionalProperties: {
+          type: JsonSchemaTypeEnum.OBJECT,
+          properties: {
+            events: {
+              type: JsonSchemaTypeEnum.ARRAY,
+              items: {
+                type: JsonSchemaTypeEnum.OBJECT,
+                properties: {
+                  payload: { type: JsonSchemaTypeEnum.OBJECT, additionalProperties: true },
+                },
+                additionalProperties: true,
+              },
+            },
+          },
+          additionalProperties: true,
+        },
+      };
+    }
+
+    return schema;
   }
 }
 

@@ -1,18 +1,32 @@
 import { getFilters } from '@/components/variable/constants';
+import { NewVariablePreview } from '@/components/variable/components/new-variable-preview';
 import { LiquidVariable } from '@/utils/parseStepVariables';
 import { Completion, CompletionContext, CompletionResult } from '@codemirror/autocomplete';
 import { EditorView } from '@uiw/react-codemirror';
+import { createRoot } from 'react-dom/client';
+import React from 'react';
 
-interface CompletionOption {
+export interface CompletionOption {
   label: string;
   type: string;
   boost?: number;
+  isNewVariable?: boolean;
+  displayLabel?: string;
 }
 
 // Novu JIT namespaces
 const PAYLOAD_NAMESPACE = 'payload';
 const SUBSCRIBER_DATA_NAMESPACE = 'subscriber.data';
 const STEP_PAYLOAD_REGEX = /^steps\.[a-zA-Z0-9_-]+\.events/;
+
+/**
+ * Create a DOM element to render the info panel in Codemirror.
+ */
+const createInfoPanel = ({ component }: { component: React.ReactNode }) => {
+  const dom = document.createElement('div');
+  createRoot(dom).render(component);
+  return dom;
+};
 
 /**
  * Liquid variable autocomplete for the following patterns:
@@ -70,7 +84,11 @@ const STEP_PAYLOAD_REGEX = /^steps\.[a-zA-Z0-9_-]+\.events/;
  *    - steps.{valid-step}.events[n].payload.* (any new field)
  */
 export const completions =
-  (variables: LiquidVariable[]) =>
+  (
+    variables: LiquidVariable[],
+    onCreateNewVariable?: (variableName: string) => Promise<void>,
+    isPayloadSchemaEnabled?: boolean
+  ) =>
   (context: CompletionContext): CompletionResult | null => {
     const { state, pos } = context;
     const beforeCursor = state.sliceDoc(0, pos);
@@ -96,7 +114,7 @@ export const completions =
       };
     }
 
-    const matchingVariables = getMatchingVariables(searchText, variables);
+    const matchingVariables = getMatchingVariables(searchText, variables, onCreateNewVariable, isPayloadSchemaEnabled);
 
     // If we have matches or we're in a valid context, show them
     if (matchingVariables.length > 0 || isInsideLiquidBlock(beforeCursor)) {
@@ -106,7 +124,13 @@ export const completions =
         options:
           matchingVariables.length > 0
             ? matchingVariables.map((v) =>
-                createCompletionOption(v.name, v.type ?? 'variable', v.boost, v.info, v.displayLabel)
+                createCompletionOption(
+                  v.name,
+                  v.isNewSuggestion && isPayloadSchemaEnabled ? 'new-variable' : (v.type ?? 'variable'),
+                  v.boost,
+                  v.info,
+                  v.displayLabel
+                )
               )
             : variables.map((v) =>
                 createCompletionOption(v.name, v.type ?? 'variable', v.boost, v.info, v.displayLabel)
@@ -137,7 +161,14 @@ function createCompletionOption(
   info?: Completion['info'],
   displayLabel?: Completion['displayLabel']
 ): CompletionOption {
-  return { label, type, ...(boost && { boost }), ...(info && { info }), ...(displayLabel && { displayLabel }) };
+  return {
+    label,
+    type,
+    isNewVariable: type === 'new-variable',
+    ...(boost && { boost }),
+    ...(info && { info }),
+    ...(displayLabel && { displayLabel }),
+  };
 }
 
 function getFilterCompletions(afterPipe: string): CompletionOption[] {
@@ -146,7 +177,12 @@ function getFilterCompletions(afterPipe: string): CompletionOption[] {
     .map((f) => createCompletionOption(f.value, 'function'));
 }
 
-function getMatchingVariables(searchText: string, variables: LiquidVariable[]): LiquidVariable[] {
+function getMatchingVariables(
+  searchText: string,
+  variables: LiquidVariable[],
+  onCreateNewVariable?: (variableName: string) => Promise<void>,
+  isPayloadSchemaEnabled?: boolean
+): LiquidVariable[] {
   if (!searchText) return variables;
 
   const searchTextTrimmed = searchText.trim();
@@ -179,42 +215,69 @@ function getMatchingVariables(searchText: string, variables: LiquidVariable[]): 
       return acc;
     }
 
-    if (searchText.startsWith(namespace) && searchText !== namespace) {
+    if (searchText.startsWith(namespace + '.') && searchText !== namespace) {
       // Ensure that if the user types payload.foo the first suggestion is payload.foo
-      acc.push({ name: searchText, type: 'variable' });
+      acc.push({
+        name: searchText,
+        type: 'variable',
+        isNewSuggestion: true,
+        info: () => {
+          if (!isPayloadSchemaEnabled) {
+            return null;
+          }
+
+          const dom = createInfoPanel({
+            component: (
+              <NewVariablePreview
+                onCreateClick={() => {
+                  onCreateNewVariable?.(searchText.replace(namespace + '.', ''));
+                }}
+              />
+            ),
+          });
+          return {
+            dom,
+            destroy: () => {
+              dom.remove();
+            },
+          };
+        },
+      });
     } else if (!searchText.startsWith(namespace)) {
       // For all other values, suggest payload.whatever, subscriber.data.whatever
       acc.push({
         name: `${namespace}.${searchText.trim()}`,
         type: 'variable',
+        isNewSuggestion: false,
       });
     }
 
     return acc;
   }, []);
 
-  // Guardrail to ensure
-  const uniqueVariables = Array.from(
-    new Map([...jitVariables, ...variables].map((item) => [item.name, item])).values()
-  );
+  const baseVariables = Array.from(new Map([...jitVariables, ...variables].map((item) => [item.name, item])).values());
 
-  // Show any variables containing the search text in the variable name (not the filters)
-  return uniqueVariables.filter((v) => {
+  const existingMatchingVariables = baseVariables.filter((v) => {
     const namePartWithoutFilters = v.name.split('|')[0].trim();
+
     return namePartWithoutFilters.includes(searchTextTrimmed);
   });
+
+  return existingMatchingVariables;
 }
 
 export function createAutocompleteSource(
   variables: LiquidVariable[],
-  onVariableSelect?: (completion: Completion) => void
+  onVariableSelect?: (completion: CompletionOption) => void,
+  onCreateNewVariable?: (variableName: string) => Promise<void>,
+  isPayloadSchemaEnabled?: boolean
 ) {
   return (context: CompletionContext) => {
     // Match text that starts with {{ and capture everything after it until the cursor position
     const word = context.matchBefore(/\{\{([^}]*)/);
     if (!word) return null;
 
-    const options = completions(variables)(context);
+    const options = completions(variables, onCreateNewVariable, isPayloadSchemaEnabled)(context);
     if (!options) return null;
 
     const { from, to } = options;
@@ -224,7 +287,7 @@ export function createAutocompleteSource(
       to,
       options: options.options.map((option) => ({
         ...option,
-        apply: (view: EditorView, completion: Completion, from: number, to: number) => {
+        apply: (view: EditorView, completion: CompletionOption, from: number, to: number) => {
           const selectedValue = completion.label;
 
           const content = view.state.doc.toString();

@@ -12,7 +12,7 @@ import { WorkflowOriginEnum } from '@/utils/enums';
 import { capitalize } from '@/utils/string';
 import type { WorkflowResponseDto } from '@novu/shared';
 import { loadLanguage } from '@uiw/codemirror-extensions-langs';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { FaCode } from 'react-icons/fa6';
 import { RiSendPlaneFill } from 'react-icons/ri';
@@ -26,6 +26,8 @@ import { TestWorkflowFormType } from '../schema';
 import { SnippetEditor } from './snippet-editor';
 import { TestWorkflowInstructions } from './test-workflow-instructions';
 import { SnippetLanguage } from './types';
+import { useIsPayloadSchemaEnabled } from '@/hooks/use-is-payload-schema-enabled';
+import { EditableJsonViewer } from '../steps/shared/editable-json-viewer/editable-json-viewer';
 
 const tabsTriggerClassName = 'pt-1';
 const codePanelClassName = 'h-full';
@@ -43,18 +45,48 @@ const basicSetup = { lineNumbers: true, defaultKeymap: true };
 const extensions = [loadLanguage('json')?.extension ?? []];
 
 export const TestWorkflowForm = ({ workflow }: { workflow?: WorkflowResponseDto }) => {
-  const { control } = useFormContext<TestWorkflowFormType>();
+  const { control, setValue } = useFormContext<TestWorkflowFormType>();
   const [activeSnippetTab, setActiveSnippetTab] = useState<SnippetLanguage>(() =>
     workflow?.origin === WorkflowOriginEnum.EXTERNAL ? 'framework' : 'typescript'
   );
   const [showInstructions, setShowInstructions] = useState(false);
+  const [payloadJsonData, setPayloadJsonData] = useState<any>({});
   const to = useWatch({ name: 'to', control });
   const payload = useWatch({ name: 'payload', control });
+  const isPayloadSchemaEnabled = useIsPayloadSchemaEnabled();
   const identifier = workflow?.workflowId ?? '';
   const snippetValue = useMemo(() => {
     const snippetUtil = LANGUAGE_TO_SNIPPET_UTIL[activeSnippetTab];
     return snippetUtil({ identifier, to, payload });
   }, [activeSnippetTab, identifier, to, payload]);
+
+  // Parse JSON data for JsonViewer and initialize with workflow payloadExample if available
+  useMemo(() => {
+    if (isPayloadSchemaEnabled) {
+      try {
+        const parsed = JSON.parse(payload || '{}');
+        setPayloadJsonData(parsed);
+      } catch (error) {
+        // If parsing fails and we have a workflow payloadExample, use it as fallback
+        if (workflow?.payloadExample) {
+          setPayloadJsonData(workflow.payloadExample);
+        }
+      }
+    }
+  }, [payload, isPayloadSchemaEnabled, workflow?.payloadExample]);
+
+  const handleJsonChange = useCallback(
+    (updatedData: any) => {
+      try {
+        const stringified = JSON.stringify(updatedData, null, 2);
+        setValue('payload', stringified);
+        setPayloadJsonData(updatedData);
+      } catch (error) {
+        // Handle error silently
+      }
+    },
+    [setValue]
+  );
 
   return (
     <>
@@ -90,7 +122,7 @@ export const TestWorkflowForm = ({ workflow }: { workflow?: WorkflowResponseDto 
               <Code2 className="text-feature size-3" />
               <span className="text-neutral-950">Payload</span>
             </PanelHeader>
-            <PanelContent className="flex flex-col overflow-hidden">
+            <PanelContent className={'flex flex-col overflow-hidden' + (isPayloadSchemaEnabled ? ' p-0' : '')}>
               <FormField
                 control={control}
                 name="payload"
@@ -98,14 +130,23 @@ export const TestWorkflowForm = ({ workflow }: { workflow?: WorkflowResponseDto 
                   <FormItem className="flex flex-1 flex-col gap-2 overflow-auto">
                     <FormControl>
                       <>
-                        <Editor
-                          lang="json"
-                          basicSetup={basicSetup}
-                          extensions={extensions}
-                          className="overflow-auto"
-                          {...restField}
-                          multiline
-                        />
+                        {isPayloadSchemaEnabled ? (
+                          <EditableJsonViewer
+                            value={payloadJsonData}
+                            onChange={handleJsonChange}
+                            schema={workflow?.payloadSchema}
+                            className="border-none p-0"
+                          />
+                        ) : (
+                          <Editor
+                            lang="json"
+                            basicSetup={basicSetup}
+                            extensions={extensions}
+                            className="overflow-auto"
+                            {...restField}
+                            multiline
+                          />
+                        )}
                         <FormMessage />
                       </>
                     </FormControl>

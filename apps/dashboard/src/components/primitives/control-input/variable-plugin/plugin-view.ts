@@ -65,9 +65,8 @@ export class VariablePluginView {
         continue;
       }
 
-      if (!this.isAllowedVariable({ name })) {
-        continue;
-      }
+      // Check if the variable is allowed (in schema)
+      const isAllowed = this.isAllowedVariable({ name });
 
       if (name) {
         decorations.push(
@@ -79,7 +78,8 @@ export class VariablePluginView {
               end,
               filtersArray,
               this.onSelect,
-              this.isDigestEventsVariable
+              this.isDigestEventsVariable,
+              !isAllowed // Pass whether the variable is NOT in schema
             ),
             inclusive: false,
             side: -1,
