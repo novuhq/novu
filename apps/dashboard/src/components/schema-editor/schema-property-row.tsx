@@ -31,6 +31,7 @@ export interface SchemaPropertyRowProps {
   variableUsageInfo?: VariableUsageInfo;
   parentPath?: string;
   onCheckVariableUsage?: (keyName: string, parentPath: string) => VariableUsageInfo;
+  className?: string;
 }
 
 export const SchemaPropertyRow = memo<SchemaPropertyRowProps>(function SchemaPropertyRow(props) {
@@ -43,6 +44,7 @@ export const SchemaPropertyRow = memo<SchemaPropertyRowProps>(function SchemaPro
     variableUsageInfo,
     parentPath = '',
     onCheckVariableUsage,
+    className,
   } = props;
 
   const { setValue, getValues } = useFormContext();
@@ -69,7 +71,11 @@ export const SchemaPropertyRow = memo<SchemaPropertyRowProps>(function SchemaPro
 
   return (
     <div
-      className={cn('flex flex-col', isHighlighted ? 'overflow-hidden rounded-[8px] bg-[rgba(193,221,251,0.50)]' : '')}
+      className={cn(
+        'flex flex-col',
+        className,
+        isHighlighted ? 'overflow-hidden rounded-[8px] bg-[rgba(193,221,251,0.50)]' : ''
+      )}
     >
       <div className={cn('flex items-center gap-2', getMarginClassPx(indentationLevel))}>
         <PropertyNameInput fieldPath={paths.keyName} control={control} />

@@ -26,7 +26,7 @@ interface ArrayItemPropertyProps {
 }
 
 const ArrayItemProperty = memo<ArrayItemPropertyProps>(function ArrayItemProperty({
-  itemNestedField,
+  className,
   itemNestedIndex,
   itemPropertiesListPath,
   control,
@@ -46,6 +46,7 @@ const ArrayItemProperty = memo<ArrayItemPropertyProps>(function ArrayItemPropert
 
   return (
     <SchemaPropertyRow
+      className={className}
       control={control}
       index={itemNestedIndex}
       pathPrefix={`${itemPropertiesListPath}.${itemNestedIndex}` as Path<SchemaEditorFormValues>}
@@ -125,6 +126,7 @@ export const ArraySection = memo<ArraySectionProps>(function ArraySection({
         <div className={cn('mt-1', getMarginClassPx(1))}>
           {fields.map((itemNestedField, itemNestedIndex) => (
             <ArrayItemProperty
+              className="mt-1"
               key={itemNestedField.itemNestedFieldId}
               itemNestedField={itemNestedField}
               itemNestedIndex={itemNestedIndex}
