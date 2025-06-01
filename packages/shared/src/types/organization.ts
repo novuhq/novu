@@ -25,7 +25,6 @@ export type ProductUseCases = Partial<Record<ProductUseCasesEnum, boolean>>;
 
 export type OrganizationPublicMetadata = {
   externalOrgId?: string;
-  apiServiceLevel?: ApiServiceLevelEnum;
   domain?: string;
   productUseCases?: ProductUseCases;
   language?: string[];

@@ -21,7 +21,6 @@ export type IntegrationFormData = {
   credentials: Record<string, any>;
   check: boolean;
   environmentId: string;
-  removeNovuBranding?: boolean;
 };
 
 export type IntegrationStep = 'select' | 'configure';

@@ -151,9 +151,7 @@ export const TopicsFilters = (props: TopicsFiltersProps) => {
               <Button variant="secondary" mode="ghost" size="2xs" onClick={handleReset} disabled={isFiltersLoading}>
                 Reset
               </Button>
-              {isFetching && !isFiltersLoading && (
-                <RiLoader4Line className="h-3 w-3 animate-spin text-neutral-400" />
-              )}
+              {isFetching && !isFiltersLoading && <RiLoader4Line className="h-3 w-3 animate-spin text-neutral-400" />}
             </div>
           )}
         </FormRoot>

@@ -48,6 +48,8 @@ import { EnvironmentResponseDto } from '../../../environments-v1/dtos/environmen
 import { CreateNovuIntegrations } from '../../../integrations/usecases/create-novu-integrations/create-novu-integrations.usecase';
 import { GenerateUniqueApiKey } from '../../../environments-v1/usecases/generate-unique-api-key/generate-unique-api-key.usecase';
 import { CreateNovuIntegrationsCommand } from '../../../integrations/usecases/create-novu-integrations/create-novu-integrations.command';
+import { GetOrganizationSettings } from '../../../organization/usecases/get-organization-settings/get-organization-settings.usecase';
+import { GetOrganizationSettingsCommand } from '../../../organization/usecases/get-organization-settings/get-organization-settings.command';
 
 const ALLOWED_ORIGINS_REGEX = new RegExp(process.env.FRONT_BASE_URL || '');
 const KEYLESS_RETENTION_TIME_IN_HOURS = parseInt(process.env.KEYLESS_RETENTION_TIME_IN_HOURS || '', 10) || 24;
@@ -73,6 +75,7 @@ export class Session {
     private messageTemplateRepository: MessageTemplateRepository,
     private preferencesRepository: PreferencesRepository,
     private upsertControlValuesUseCase: UpsertControlValuesUseCase,
+    private getOrganizationSettingsUsecase: GetOrganizationSettings,
     private logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -143,9 +146,13 @@ export class Session {
 
     const token = await this.authService.getSubscriberWidgetToken(subscriber);
 
-    const removeNovuBranding = inAppIntegration.removeNovuBranding || false;
-    const maxSnoozeDurationHours =
-      process.env.NOVU_ENTERPRISE === 'true' ? await this.getMaxSnoozeDurationHours(environment) : 0;
+    const { removeNovuBranding } = await this.getOrganizationSettingsUsecase.execute(
+      GetOrganizationSettingsCommand.create({
+        organizationId: environment._organizationId,
+      })
+    );
+
+    const maxSnoozeDurationHours = await this.getMaxSnoozeDurationHours(environment);
 
     /**
      * We want to prevent the playground inbox demo from marking the integration as connected
@@ -196,6 +203,10 @@ export class Session {
   }
 
   private async getMaxSnoozeDurationHours(environment: EnvironmentEntity) {
+    if (process.env.NOVU_ENTERPRISE !== 'true') {
+      return 0;
+    }
+
     const organization = await this.organizationRepository.findOne({
       _id: environment._organizationId,
     });

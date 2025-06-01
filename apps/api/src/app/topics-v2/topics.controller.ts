@@ -219,7 +219,7 @@ export class TopicsController {
   @SdkGroupName('Topics.Subscriptions')
   @ApiOperation({
     summary: `List topic subscriptions`,
-    description: `List all topics that a subscriber is subscribed to.
+    description: `List all subscriptions of subscribers for a topic.
     Checkout all available filters in the query section.`,
   })
   @ApiParam({ name: 'topicKey', description: 'The key identifier of the topic', type: String })

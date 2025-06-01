@@ -89,6 +89,10 @@ export enum PermissionsEnum {
 
   // Bridge endpoint
   BRIDGE_WRITE = 'org:bridge:write',
+
+  // Organization Settings
+  ORG_SETTINGS_WRITE = 'org:settings:write',
+  ORG_SETTINGS_READ = 'org:settings:read',
 }
 
 export const ALL_PERMISSIONS = Object.values(PermissionsEnum);

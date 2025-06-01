@@ -10,6 +10,8 @@ import { GetOrganizations } from './get-organizations/get-organizations.usecase'
 import { GetMyOrganization } from './get-my-organization/get-my-organization.usecase';
 import { RenameOrganization } from './rename-organization/rename-organization.usecase';
 import { SyncExternalOrganization } from './create-organization/sync-external-organization/sync-external-organization.usecase';
+import { GetOrganizationSettings } from './get-organization-settings/get-organization-settings.usecase';
+import { UpdateOrganizationSettings } from './update-organization-settings/update-organization-settings.usecase';
 
 // TODO: move ee.organization.controller.ts to EE package
 function getEnterpriseUsecases() {
@@ -36,5 +38,7 @@ export const USE_CASES = [
   GetOrganizations,
   GetMyOrganization,
   RenameOrganization,
+  GetOrganizationSettings,
+  UpdateOrganizationSettings,
   ...getEnterpriseUsecases(),
 ];

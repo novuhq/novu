@@ -1,6 +1,7 @@
 import { Badge } from '@/components/primitives/badge';
 import { Button } from '@/components/primitives/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
+import { UpgradeCTATooltip } from '@/components/upgrade-cta-tooltip';
 import {
   ApiServiceLevelEnum,
   ChannelTypeEnum,
@@ -24,7 +25,6 @@ import { TableIntegration } from '../types';
 import { ProviderIcon } from './provider-icon';
 import { isDemoIntegration } from './utils/helpers';
 import { useFetchSubscription } from '../../../hooks/use-fetch-subscription';
-import { ExternalLink } from 'lucide-react';
 
 type IntegrationCardProps = {
   integration: IIntegration;
@@ -87,7 +87,16 @@ export function IntegrationCard({ integration, provider, environment, onClick }:
               <TooltipContent>This is your primary integration for the {provider.channel} channel.</TooltipContent>
             </Tooltip>
           )}
-          {integration.channel === ChannelTypeEnum.IN_APP && isFreePlan && <InAppPremiumFeaturesIcon />}
+          {integration.channel === ChannelTypeEnum.IN_APP && isFreePlan && (
+            <UpgradeCTATooltip
+              description="Upgrade to remove the Novu branding and extend notification snooze beyond 24 hours in your Inbox component."
+              utmSource="in-app-upgrade-tooltip"
+              side="right"
+              align="center"
+            >
+              <RiLockStarLine className="text-warning h-4 w-4" />
+            </UpgradeCTATooltip>
+          )}
         </div>
       </div>
       <div className="flex items-center gap-2">
@@ -134,33 +143,5 @@ export function IntegrationCard({ integration, provider, environment, onClick }:
         </StatusBadge>
       </div>
     </div>
-  );
-}
-
-function InAppPremiumFeaturesIcon() {
-  const navigate = useNavigate();
-
-  const handleUpgradeClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    navigate(ROUTES.SETTINGS_BILLING + '?utm_source=in-app-upgrade-tooltip');
-  };
-
-  return (
-    <Tooltip>
-      <TooltipTrigger>
-        <RiLockStarLine className="text-warning h-4 w-4" />
-      </TooltipTrigger>
-      <TooltipContent>
-        <div className="flex flex-col gap-2">
-          <div>
-            Upgrade to remove the 'Inbox by Novu' badge and extend notification snooze beyond 24 hours in your{' '}
-            <span className="font-mono">{`<Inbox />`}</span> component.
-          </div>
-          <button onClick={handleUpgradeClick} className="flex items-center gap-1 text-xs font-medium hover:underline">
-            Upgrade now <ExternalLink size={12} />
-          </button>
-        </div>
-      </TooltipContent>
-    </Tooltip>
   );
 }

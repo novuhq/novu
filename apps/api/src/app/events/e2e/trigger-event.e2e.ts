@@ -15,6 +15,7 @@ import {
   SubscriberEntity,
   SubscriberRepository,
   TenantRepository,
+  CommunityOrganizationRepository,
 } from '@novu/dal';
 import {
   ActorTypeEnum,
@@ -38,6 +39,7 @@ import {
   TemplateVariableTypeEnum,
   WorkflowCreationSourceEnum,
   WorkflowResponseDto,
+  ApiServiceLevelEnum,
 } from '@novu/shared';
 import { EmailEventStatusEnum } from '@novu/stateless';
 import { SubscribersService, UserSession, WorkflowOverrideService } from '@novu/testing';
@@ -3269,6 +3271,14 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
   }
 
   describe('Trigger Event v2 workflow - /v1/events/trigger (POST)', function () {
+    let organizationRepository: CommunityOrganizationRepository;
+
+    beforeEach(async () => {
+      organizationRepository = new CommunityOrganizationRepository();
+      // Set removeNovuBranding to true for these tests to avoid branding watermark in email content
+      await organizationRepository.update({ _id: session.organization._id }, { removeNovuBranding: true });
+    });
+
     afterEach(async () => {
       await messageRepository.delete({
         _environmentId: session.environment._id,
