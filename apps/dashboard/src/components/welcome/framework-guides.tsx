@@ -116,7 +116,7 @@ function InstallationStepRow({
 export function FrameworkInstructions({ framework }: { framework: Framework }) {
   return (
     <AnimatePresence mode="wait">
-      <motion.div key={framework.name} {...fadeInAnimation} className="flex flex-col gap-8 pl-[72px]">
+      <motion.div key={framework.name} {...fadeInAnimation} className="flex flex-col gap-7 pl-10">
         <div className="relative border-l border-[#eeeef0] p-8 pt-[24px]">
           {framework.installSteps.map((step, index) => (
             <InstallationStepRow

@@ -2,11 +2,14 @@ import { Loader } from 'lucide-react';
 import { Card, CardContent } from '../primitives/card';
 import { useState, useEffect } from 'react';
 import { IEnvironment } from '@novu/shared';
-import { motion } from 'motion/react';
-import { Framework, frameworks } from './framework-guides.instructions';
+import { motion, AnimatePresence } from 'motion/react';
+import { Framework as CliFramework, frameworks as cliFrameworks } from './framework-cli.instructions';
+import { Framework as ManualFramework, frameworks as manualFrameworks } from './framework-guides.instructions';
 import { FrameworkInstructions } from './framework-guides';
 import { TelemetryEvent } from '../../utils/telemetry';
 import { useTelemetry } from '../../hooks/use-telemetry';
+import { Tabs, TabsList, TabsTrigger } from '../primitives/tabs';
+import { FrameworkCliInstructions } from './framework-cli';
 
 const containerVariants = {
   hidden: {},
@@ -48,6 +51,8 @@ const iconVariants = {
   },
 };
 
+type PackageManager = 'npm' | 'pnpm' | 'yarn';
+
 interface InboxFrameworkGuideProps {
   currentEnvironment: IEnvironment | undefined;
   subscriberId: string;
@@ -56,12 +61,12 @@ interface InboxFrameworkGuideProps {
 }
 
 function updateFrameworkCode(
-  framework: Framework,
+  framework: CliFramework | ManualFramework,
   environmentIdentifier: string,
   subscriberId: string,
   primaryColor: string,
   foregroundColor: string
-): Framework {
+): CliFramework | ManualFramework {
   return {
     ...framework,
     installSteps: framework.installSteps.map((step) => ({
@@ -83,25 +88,66 @@ export function InboxFrameworkGuide({
   foregroundColor,
 }: InboxFrameworkGuideProps) {
   const track = useTelemetry();
-  const [selectedFramework, setSelectedFramework] = useState(frameworks.find((f) => f.selected) || frameworks[0]);
+  const [selectedFramework, setSelectedFramework] = useState<CliFramework | ManualFramework>(
+    cliFrameworks.find((f) => f.selected) || cliFrameworks[0]
+  );
+  const [installationMethod, setInstallationMethod] = useState<'cli' | 'manual'>('cli');
+  const [packageManager, setPackageManager] = useState<PackageManager>('npm');
 
   useEffect(() => {
     if (!currentEnvironment?.identifier || !subscriberId) return;
 
+    const frameworks = installationMethod === 'cli' ? cliFrameworks : manualFrameworks;
     const updatedFrameworks = frameworks.map((framework) =>
       updateFrameworkCode(framework, currentEnvironment.identifier, subscriberId, primaryColor, foregroundColor)
     );
 
     setSelectedFramework(updatedFrameworks.find((f) => f.name === selectedFramework.name) || updatedFrameworks[0]);
-  }, [currentEnvironment?.identifier, subscriberId, selectedFramework.name, primaryColor, foregroundColor]);
+  }, [
+    currentEnvironment?.identifier,
+    subscriberId,
+    selectedFramework.name,
+    primaryColor,
+    foregroundColor,
+    installationMethod,
+  ]);
 
-  function handleFrameworkSelect(framework: Framework) {
+  useEffect(() => {
+    if (['Remix', 'Native', 'Angular', 'JavaScript'].includes(selectedFramework.name)) {
+      setInstallationMethod('manual');
+    }
+  }, [selectedFramework.name]);
+
+  function handleFrameworkSelect(framework: CliFramework | ManualFramework) {
     track(TelemetryEvent.INBOX_FRAMEWORK_SELECTED, {
       framework: framework.name,
     });
 
     setSelectedFramework(framework);
   }
+
+  const getCliCommand = (framework: CliFramework) => {
+    const packageName =
+      framework.name.toLowerCase() === 'next.js'
+        ? '@novu/nextjs'
+        : framework.name.toLowerCase() === 'react'
+          ? '@novu/react'
+          : '@novu/js';
+
+    const command = `add inbox --appId ${currentEnvironment?.identifier} --subscriberId ${subscriberId}`;
+
+    switch (packageManager) {
+      case 'pnpm':
+        return `pnpm dlx novu ${command}`;
+      case 'yarn':
+        return `yarn dlx novu ${command}`;
+      case 'npm':
+      default:
+        return `npx novu ${command}`;
+    }
+  };
+
+  const frameworks = installationMethod === 'cli' ? cliFrameworks : manualFrameworks;
 
   return (
     <>
@@ -123,36 +169,103 @@ export function InboxFrameworkGuide({
       </motion.div>
 
       {/* Framework Cards */}
-      <motion.div variants={containerVariants} initial="hidden" animate="show" className="flex gap-2 px-6">
-        {frameworks.map((framework) => (
-          <motion.div
-            key={framework.name}
-            variants={cardVariants}
-            initial="initial"
-            whileHover="hover"
-            animate={framework.name === selectedFramework.name ? 'hover' : 'initial'}
-            className="relative"
-          >
-            <Card
-              onClick={() => handleFrameworkSelect(framework)}
-              className={`flex h-[100px] w-[100px] flex-col items-center justify-center border-none p-6 shadow-none hover:cursor-pointer ${
-                framework.name === selectedFramework.name ? 'bg-neutral-100' : ''
-              }`}
-            >
-              <CardContent className="flex flex-col items-center gap-3 p-0">
-                <motion.div variants={iconVariants} className="relative text-2xl">
-                  {framework.icon}
-                </motion.div>
-                <span className="text-sm text-[#525866]">{framework.name}</span>
-              </CardContent>
-            </Card>
-          </motion.div>
-        ))}
-      </motion.div>
+      <motion.div variants={containerVariants} initial="hidden" animate="show" className="flex flex-col gap-6 px-6">
+        <div className="flex flex-col gap-4">
+          <h3 className="text-sm font-medium text-[#525866]">Select your framework</h3>
+          <div className="flex gap-2">
+            {frameworks.map((framework) => (
+              <motion.div
+                key={framework.name}
+                variants={cardVariants}
+                initial="initial"
+                whileHover="hover"
+                animate={framework.name === selectedFramework.name ? 'hover' : 'initial'}
+                className="relative"
+              >
+                <Card
+                  onClick={() => handleFrameworkSelect(framework)}
+                  className={`flex h-[100px] w-[100px] flex-col items-center justify-center border-none p-6 shadow-none hover:cursor-pointer ${
+                    framework.name === selectedFramework.name ? 'bg-neutral-100' : ''
+                  }`}
+                >
+                  <CardContent className="flex flex-col items-center gap-3 p-0">
+                    <motion.div variants={iconVariants} className="relative text-2xl">
+                      {framework.icon}
+                    </motion.div>
+                    <span className="text-sm text-[#525866]">{framework.name}</span>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        </div>
 
-      <div className="min-h-[600px] w-full">
-        <FrameworkInstructions framework={selectedFramework} />
-      </div>
+        {!['Remix', 'Native', 'Angular', 'JavaScript'].includes(selectedFramework.name) ? (
+          <div className="flex flex-col gap-4">
+            <h3 className="text-sm font-medium text-[#525866]">Choose installation method</h3>
+            <Tabs
+              defaultValue="cli"
+              value={installationMethod}
+              onValueChange={(value) => setInstallationMethod(value as 'cli' | 'manual')}
+            >
+              <TabsList className="inline-flex items-center gap-2 bg-transparent p-0">
+                <TabsTrigger
+                  value="cli"
+                  className="relative text-xs font-medium text-[#525866] transition-colors hover:text-[#dd2476] data-[state=active]:text-[#dd2476]"
+                >
+                  CLI
+                </TabsTrigger>
+                <TabsTrigger
+                  value="manual"
+                  className="relative text-xs font-medium text-[#525866] transition-colors hover:text-[#dd2476] data-[state=active]:text-[#dd2476]"
+                >
+                  Manual
+                </TabsTrigger>
+              </TabsList>
+              <div className="relative mt-2 overflow-hidden pl-0">
+                <AnimatePresence mode="wait">
+                  {installationMethod === 'cli' && (
+                    <motion.div
+                      key="cli"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.15 }}
+                      className="w-full"
+                    >
+                      <FrameworkCliInstructions framework={selectedFramework as CliFramework} />
+                    </motion.div>
+                  )}
+                  {installationMethod === 'manual' && (
+                    <motion.div
+                      key="manual"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.15 }}
+                      className="w-full"
+                    >
+                      <FrameworkInstructions framework={selectedFramework as ManualFramework} />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </Tabs>
+          </div>
+        ) : (
+          <div className="relative mt-2 overflow-hidden pl-0">
+            <motion.div
+              key="manual"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.15 }}
+              className="w-full"
+            >
+              <FrameworkInstructions framework={selectedFramework as ManualFramework} />
+            </motion.div>
+          </div>
+        )}
+      </motion.div>
     </>
   );
 }
