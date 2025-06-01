@@ -18,7 +18,15 @@ import { ExternalLink } from '../shared/external-link';
 import { TooltipContent, TooltipTrigger } from '../primitives/tooltip';
 import { TooltipProvider } from '../primitives/tooltip';
 import { Tooltip } from '../primitives/tooltip';
-import { RiFileMarkedLine, RiInformation2Line, RiAddLine, RiShieldCheckLine, RiHistoryLine } from 'react-icons/ri';
+import {
+  RiFileMarkedLine,
+  RiInformation2Line,
+  RiAddLine,
+  RiShieldCheckLine,
+  RiHistoryLine,
+  RiArrowLeftLine,
+  RiCloseLine,
+} from 'react-icons/ri';
 import { Separator } from '../primitives/separator';
 import { Link } from 'react-router-dom';
 import { SchemaChangeConfirmationModal } from './schema-change-confirmation-modal';
@@ -28,6 +36,16 @@ import { Switch } from '../primitives/switch';
 import { Hint, HintIcon } from '../primitives/hint';
 import { useFeatureFlag } from '../../hooks/use-feature-flag';
 import { LinkButton } from '../primitives/button-link';
+import { getActivityList } from '@/api/activity';
+import { useEnvironment } from '@/context/environment/hooks';
+import { Editor } from '@/components/primitives/editor';
+import { loadLanguage } from '@uiw/codemirror-extensions-langs';
+import { toast } from 'sonner';
+import { convertSchemaToPropertyList } from '@/components/schema-editor/utils/schema-converter';
+import { v4 as uuidv4 } from 'uuid';
+
+// JSON extensions for the Editor
+const jsonExtensions = [loadLanguage('json')?.extension ?? []];
 
 interface PayloadSchemaDrawerProps {
   isOpen: boolean;
@@ -36,6 +54,63 @@ interface PayloadSchemaDrawerProps {
   isLoadingWorkflow?: boolean;
   onSave?: (schema: JSONSchema7) => void;
   highlightedPropertyKey?: string | null;
+}
+
+// Utility function to generate schema from JSON
+function generateSchemaFromJson(jsonData: any): JSONSchema7 {
+  function determineSchemaType(value: unknown): JSONSchema7 {
+    if (value === null) {
+      return { type: 'null' };
+    }
+
+    if (Array.isArray(value)) {
+      return {
+        type: 'array',
+        items: value.length > 0 ? determineSchemaType(value[0]) : { type: 'string' },
+      };
+    }
+
+    switch (typeof value) {
+      case 'string':
+        return { type: 'string' };
+      case 'number':
+        return { type: 'number' };
+      case 'boolean':
+        return { type: 'boolean' };
+
+      case 'object': {
+        const properties: { [key: string]: JSONSchema7 } = {};
+
+        for (const [key, val] of Object.entries(value as Record<string, unknown>)) {
+          properties[key] = determineSchemaType(val);
+        }
+
+        return {
+          type: 'object',
+          properties,
+          required: Object.keys(value as Record<string, unknown>),
+        };
+      }
+
+      default:
+        return { type: 'string' };
+    }
+  }
+
+  const schema = determineSchemaType(jsonData);
+
+  if (schema.type === 'object') {
+    return schema;
+  }
+
+  // If the root is not an object, wrap it
+  return {
+    type: 'object',
+    properties: {
+      payload: schema,
+    },
+    required: ['payload'],
+  };
 }
 
 export function PayloadSchemaDrawer({
@@ -51,6 +126,14 @@ export function PayloadSchemaDrawer({
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [pendingChanges, setPendingChanges] = useState<SchemaChanges | null>(null);
   const isPayloadSchemaFFEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_PAYLOAD_SCHEMA_ENABLED);
+
+  // Import flow states
+  const [isImportMode, setIsImportMode] = useState(false);
+  const [isLoadingActivity, setIsLoadingActivity] = useState(false);
+  const [importedPayload, setImportedPayload] = useState<string>('');
+  const [payloadNotFound, setPayloadNotFound] = useState(false);
+
+  const { currentEnvironment } = useEnvironment();
 
   const {
     currentSchema,
@@ -134,6 +217,81 @@ export function PayloadSchemaDrawer({
     onOpenChange(open);
   };
 
+  // Handler for importing schema from recent payload
+  const handleImportSchema = async () => {
+    if (!workflow?._id || !currentEnvironment) return;
+
+    setIsImportMode(true);
+    setIsLoadingActivity(true);
+    setPayloadNotFound(false);
+
+    try {
+      const response = await getActivityList({
+        environment: currentEnvironment,
+        page: 0,
+        limit: 1,
+        filters: {
+          workflows: [workflow._id],
+        },
+      });
+
+      if (response.data && response.data.length > 0) {
+        const recentActivity = response.data[0];
+        const payload = recentActivity.payload || {};
+
+        // Remove internal keys that shouldn't be part of the schema
+        const cleanPayload = { ...payload };
+        delete cleanPayload.__source;
+        setImportedPayload(JSON.stringify(cleanPayload, null, 2));
+      } else {
+        setPayloadNotFound(true);
+        setImportedPayload('');
+      }
+    } catch (error) {
+      console.error('Failed to fetch activity:', error);
+      toast.error('Failed to fetch recent payloads. Please try again.');
+      setPayloadNotFound(true);
+    } finally {
+      setIsLoadingActivity(false);
+    }
+  };
+
+  // Handler for generating schema from JSON
+  const handleGenerateSchema = () => {
+    try {
+      const parsedPayload = JSON.parse(importedPayload);
+      const generatedSchema = generateSchemaFromJson(parsedPayload);
+
+      // Convert schema to property list format
+      const propertyList = convertSchemaToPropertyList(generatedSchema.properties, generatedSchema.required);
+
+      // Reset the form with the generated property list
+      formMethods.reset({
+        propertyList,
+      });
+
+      // Exit import mode
+      setIsImportMode(false);
+      setImportedPayload('');
+      setPayloadNotFound(false);
+
+      toast.success('Schema generated successfully!');
+    } catch (error) {
+      if (error instanceof SyntaxError) {
+        toast.error('Invalid JSON format. Please check your payload.');
+      } else {
+        toast.error('Failed to generate schema. Please try again.');
+      }
+    }
+  };
+
+  // Handler for going back to manual mode
+  const handleBackToManual = () => {
+    setIsImportMode(false);
+    setImportedPayload('');
+    setPayloadNotFound(false);
+  };
+
   return (
     <>
       <Sheet open={isOpen} onOpenChange={handleSheetOpenChange}>
@@ -153,28 +311,35 @@ export function PayloadSchemaDrawer({
           <Separator />
           <SheetMain className="p-0">
             <div className="p-3">
-              <div className="mb-2 flex flex-row items-center justify-between gap-2">
-                <h3 className="text-label-xs w-full">Payload schema</h3>
-              </div>
-
-              <div className="rounded-4 border-1 mb-2 flex items-center justify-between border border-neutral-100 bg-white p-1.5">
-                <div className="text-text-strong text-label-xs flex items-center gap-1">
-                  <RiShieldCheckLine className="text-text-strong size-3" />
-                  Enforce schema validation
-                  <Tooltip>
-                    <TooltipTrigger className="flex cursor-default flex-row items-center gap-1">
-                      <RiInformation2Line className="size-3 text-neutral-400" />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>
-                        When enabled, the workflow will validate incoming payloads against the defined schema and reject
-                        invalid requests during the trigger http request.
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </div>
-                <Switch checked={validatePayload} onCheckedChange={setValidatePayload} disabled={isLoadingWorkflow} />
-              </div>
+              {!isImportMode && (
+                <>
+                  <div className="mb-2 flex flex-row items-center justify-between gap-2">
+                    <h3 className="text-label-xs w-full">Payload schema</h3>
+                  </div>
+                  <div className="rounded-4 border-1 mb-2 flex items-center justify-between border border-neutral-100 bg-white p-1.5">
+                    <div className="text-text-strong text-label-xs flex items-center gap-1">
+                      <RiShieldCheckLine className="text-text-strong size-3" />
+                      Enforce schema validation
+                      <Tooltip>
+                        <TooltipTrigger className="flex cursor-default flex-row items-center gap-1">
+                          <RiInformation2Line className="size-3 text-neutral-400" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>
+                            When enabled, the workflow will validate incoming payloads against the defined schema and
+                            reject invalid requests during the trigger http request.
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                    <Switch
+                      checked={validatePayload}
+                      onCheckedChange={setValidatePayload}
+                      disabled={isLoadingWorkflow}
+                    />
+                  </div>
+                </>
+              )}
 
               {isLoadingWorkflow ? (
                 <div className="flex h-full items-center justify-center">Loading workflow schema...</div>
@@ -189,11 +354,21 @@ export function PayloadSchemaDrawer({
                   methods={formMethods}
                   highlightedPropertyKey={highlightedPropertyKey}
                 />
+              ) : isImportMode ? (
+                <PayloadImportEditor
+                  isLoadingActivity={isLoadingActivity}
+                  payloadNotFound={payloadNotFound}
+                  importedPayload={importedPayload}
+                  onPayloadChange={setImportedPayload}
+                  onGenerateSchema={handleGenerateSchema}
+                  onBack={handleBackToManual}
+                />
               ) : (
                 <PayloadSchemaEmptyState
                   onAddProperty={addProperty}
                   isPayloadSchemaEnabled={isPayloadSchemaFFEnabled}
                   hasNoSchema={!workflow?.payloadSchema}
+                  onImportSchema={handleImportSchema}
                 />
               )}
             </div>
@@ -223,7 +398,7 @@ export function PayloadSchemaDrawer({
                 onClick={handleSaveWithValidation}
                 isLoading={isSaving}
                 data-test-id="save-payload-schema-btn"
-                disabled={!isSchemaValid || isSaving || isLoadingWorkflow}
+                disabled={!isSchemaValid || isSaving || isLoadingWorkflow || isImportMode}
               >
                 Save Changes
               </Button>
@@ -248,10 +423,12 @@ function PayloadSchemaEmptyState({
   onAddProperty,
   isPayloadSchemaEnabled,
   hasNoSchema,
+  onImportSchema,
 }: {
   onAddProperty: () => void;
   isPayloadSchemaEnabled: boolean;
   hasNoSchema: boolean;
+  onImportSchema: () => void;
 }) {
   const isNewSchemaScenario = isPayloadSchemaEnabled && hasNoSchema;
 
@@ -283,11 +460,88 @@ function PayloadSchemaEmptyState({
         </div>
 
         {isNewSchemaScenario && (
-          <LinkButton className="text-label-xs" underline onClick={(e) => e.preventDefault()}>
+          <LinkButton className="text-label-xs" underline onClick={onImportSchema}>
             Import schema from recent payload
           </LinkButton>
         )}
       </div>
     </div>
+  );
+}
+
+function PayloadImportEditor({
+  isLoadingActivity,
+  payloadNotFound,
+  importedPayload,
+  onPayloadChange,
+  onGenerateSchema,
+  onBack,
+}: {
+  isLoadingActivity: boolean;
+  payloadNotFound: boolean;
+  importedPayload: string;
+  onPayloadChange: (value: string) => void;
+  onGenerateSchema: () => void;
+  onBack: () => void;
+}) {
+  const isValidJson = () => {
+    if (!importedPayload.trim()) return false;
+
+    try {
+      JSON.parse(importedPayload);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  if (isLoadingActivity) {
+    return (
+      <div className="flex h-[300px] items-center justify-center">
+        <div className="text-center">
+          <div className="mb-2">Loading recent payloads...</div>
+          <div className="text-xs text-neutral-500">Fetching from activity feed</div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className="flex h-full flex-col">
+        <div className="mb-2 flex flex-row items-center justify-between gap-2">
+          <h3 className="text-label-xs w-full">Import schema from JSON object</h3>
+          <Button variant="secondary" mode="ghost" size="2xs" leadingIcon={RiCloseLine} onClick={onBack}>
+            Discard
+          </Button>
+        </div>
+
+        {/* JSON Editor */}
+        <div className="flex-1">
+          <Editor
+            value={importedPayload}
+            onChange={onPayloadChange}
+            lang="json"
+            extensions={jsonExtensions}
+            multiline
+            className="h-full min-h-[300px] overflow-auto rounded-lg border border-neutral-200"
+            placeholder={JSON.stringify({ example: 'Paste your payload JSON here' }, null, 2)}
+          />
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-between pt-1">
+          <div className="flex items-center gap-2 text-xs text-neutral-500">
+            <RiInformation2Line className="size-3" />
+            {payloadNotFound
+              ? 'No recent payload found. Please paste your JSON above.'
+              : 'Using data from the most recent workflow trigger.'}
+          </div>
+          <Button variant="secondary" mode="outline" size="2xs" onClick={onGenerateSchema} disabled={!isValidJson()}>
+            Generate schema
+          </Button>
+        </div>
+      </div>
+    </>
   );
 }
