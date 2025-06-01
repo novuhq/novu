@@ -5,6 +5,7 @@ import { useEnvironment } from '@/context/environment/hooks';
 import { getActivityList } from '@/api/activity';
 import { convertSchemaToPropertyList } from '@/components/schema-editor/utils/schema-converter';
 import { generateSchemaFromJson, cleanPayloadData } from '../utils/generate-schema';
+import { showErrorToast, showSuccessToast } from '../../../primitives/sonner-helpers';
 
 export function useImportSchema(workflow?: WorkflowResponseDto, formMethods?: any) {
   const [isImportMode, setIsImportMode] = useState(false);
@@ -40,7 +41,13 @@ export function useImportSchema(workflow?: WorkflowResponseDto, formMethods?: an
         // Clean payload and set it
         const cleanPayload = cleanPayloadData(payload);
         setImportedPayload(JSON.stringify(cleanPayload, null, 2));
+
+        showSuccessToast('Successfully imported payload from activity feed.');
       } else {
+        showErrorToast(
+          'No recent payload found. You can still manually paste your JSON above.',
+          'Failed to import payload'
+        );
         setPayloadNotFound(true);
         setImportedPayload('');
       }
