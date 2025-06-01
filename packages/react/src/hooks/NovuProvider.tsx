@@ -1,4 +1,4 @@
-import { Novu, NovuOptions, StandardNovuOptions, Subscriber } from '@novu/js';
+import { Novu, NovuOptions, Subscriber } from '@novu/js';
 import { ReactNode, createContext, useContext, useMemo, useEffect, useRef } from 'react';
 
 // @ts-ignore

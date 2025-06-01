@@ -89,7 +89,7 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
     });
   }
 
-  public async changeSubscriber(options: { subscriber: Subscriber; subscriberHash: string }): Promise<void> {
+  public async changeSubscriber(options: { subscriber: Subscriber; subscriberHash?: string }): Promise<void> {
     await this.#session.reinitialize({
       applicationIdentifier: this.#session.applicationIdentifier,
       subscriberHash: options.subscriberHash,
