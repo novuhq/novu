@@ -15,7 +15,6 @@ type IntegrationFormData = {
   check: boolean;
   primary: boolean;
   environmentId: string;
-  removeNovuBranding?: boolean;
 };
 
 type CredentialsSectionProps = {
@@ -34,7 +33,6 @@ const SECURE_CREDENTIALS = [
 ];
 
 export function CredentialsSection({ provider, control, isReadOnly }: CredentialsSectionProps) {
-  console.log(provider);
   return (
     <div className="border-neutral-alpha-200 bg-background text-foreground-600 mx-0 mt-0 flex flex-col gap-2 rounded-lg border p-3">
       {provider?.credentials?.map((credential) => (

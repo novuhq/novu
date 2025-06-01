@@ -59,7 +59,8 @@ export class ConstructFrameworkWorkflow {
             step,
             staticStep,
             fullPayloadForRender,
-            dbWorkflow._environmentId
+            dbWorkflow._environmentId,
+            dbWorkflow._organizationId
           );
         }
       },
@@ -83,7 +84,8 @@ export class ConstructFrameworkWorkflow {
     step: Step,
     staticStep: NotificationStepEntity,
     fullPayloadForRender: FullPayloadForRender,
-    environmentId: string
+    environmentId: string,
+    organizationId: string
   ): StepOutput<Record<string, unknown>> {
     const stepTemplate = staticStep.template;
 
@@ -122,6 +124,7 @@ export class ConstructFrameworkWorkflow {
               controlValues,
               fullPayloadForRender,
               environmentId,
+              organizationId,
             });
           },
           this.constructChannelStepOptions(staticStep, fullPayloadForRender)

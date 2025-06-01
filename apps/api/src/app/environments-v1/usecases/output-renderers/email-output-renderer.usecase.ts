@@ -17,11 +17,15 @@ import {
   isVariableNode,
   wrapMailyInLiquid,
 } from '../../../shared/helpers/maily-utils';
+import { NOVU_BRANDING_HTML } from './novu-branding-html';
+import { GetOrganizationSettings } from '../../../organization/usecases/get-organization-settings/get-organization-settings.usecase';
+import { GetOrganizationSettingsCommand } from '../../../organization/usecases/get-organization-settings/get-organization-settings.command';
 
 type MailyJSONMarks = NonNullable<MailyJSONContent['marks']>[number];
 
 export class EmailOutputRendererCommand extends RenderCommand {
   environmentId: string;
+  organizationId: string;
 }
 
 function isJsonString(str: string): boolean {
@@ -38,7 +42,7 @@ function isJsonString(str: string): boolean {
 export class EmailOutputRendererUsecase {
   private readonly liquidEngine: Liquid;
 
-  constructor() {
+  constructor(private getOrganizationSettings: GetOrganizationSettings) {
     this.liquidEngine = createLiquidEngine();
   }
   @InstrumentUsecase()
@@ -69,6 +73,9 @@ export class EmailOutputRendererUsecase {
       renderedHtml = body;
     }
 
+    // Add Novu branding if 'removeNovuBranding' is false
+    const htmlWithBranding = await this.appendNovuBranding(renderedHtml, renderCommand.organizationId);
+
     /**
      * Force type mapping in case undefined control.
      * This passes responsibility to framework to throw type validation exceptions
@@ -77,10 +84,10 @@ export class EmailOutputRendererUsecase {
     const subject = controlSubject as string;
 
     if (disableOutputSanitization) {
-      return { subject, body: renderedHtml };
+      return { subject, body: htmlWithBranding };
     }
 
-    return { subject: sanitizeHTML(subject), body: sanitizeHTML(renderedHtml) };
+    return { subject: sanitizeHTML(subject), body: sanitizeHTML(htmlWithBranding) };
   }
 
   private removeTrailingEmptyLines(node: MailyJSONContent): MailyJSONContent {
@@ -356,5 +363,34 @@ export class EmailOutputRendererUsecase {
     } catch {
       return Boolean(normalized);
     }
+  }
+
+  private async appendNovuBranding(html: string, organizationId: string): Promise<string> {
+    try {
+      const { removeNovuBranding } = await this.getOrganizationSettings.execute(
+        GetOrganizationSettingsCommand.create({
+          organizationId,
+        })
+      );
+
+      if (removeNovuBranding) {
+        return html;
+      }
+
+      return this.insertBrandingHtml(html);
+    } catch (error) {
+      // If there's any error fetching organization, return original HTML to avoid breaking emails
+      return html;
+    }
+  }
+
+  private insertBrandingHtml(html: string): string {
+    const hasBodyTag = html.includes('</body>');
+
+    if (hasBodyTag) {
+      return html.replace('</body>', `${NOVU_BRANDING_HTML}</body>`);
+    }
+
+    return html + NOVU_BRANDING_HTML;
   }
 }
