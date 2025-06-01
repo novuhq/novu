@@ -16,7 +16,7 @@ import { PropertyTypeSelector } from './property-type-selector';
 import { SchemaPropertyRow } from '../schema-property-row';
 
 interface ArrayItemPropertyProps {
-  itemNestedField: any;
+  className?: string;
   itemNestedIndex: number;
   itemPropertiesListPath: string;
   control: Control<any>;
@@ -128,7 +128,6 @@ export const ArraySection = memo<ArraySectionProps>(function ArraySection({
             <ArrayItemProperty
               className="mt-1"
               key={itemNestedField.itemNestedFieldId}
-              itemNestedField={itemNestedField}
               itemNestedIndex={itemNestedIndex}
               itemPropertiesListPath={itemPropertiesListPath}
               control={control}
