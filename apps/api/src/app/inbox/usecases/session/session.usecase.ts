@@ -242,7 +242,16 @@ export class Session {
   private normalizeSubscriber(subscriber: string | SubscriberDto | null | undefined): SubscriberDto | null {
     if (!subscriber) {
       return null;
+    }
 
+    if (typeof subscriber === 'string') {
+      return { subscriberId: subscriber };
+    }
+
+    return subscriber;
+  }
+
+  private async getApplicationIdentifier(requestData: SubscriberSessionRequestDto): Promise<string> {
     const isKeylessInitialize = !requestData.applicationIdentifier;
     const isKeyless = requestData.applicationIdentifier?.includes(this.KEYLESS_ENVIRONMENT_PREFIX);
     const isKeylessExpired = isKeyless ? await this.isKeylessExpired(requestData.applicationIdentifier) : false;
