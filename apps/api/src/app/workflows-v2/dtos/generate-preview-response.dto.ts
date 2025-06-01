@@ -3,6 +3,7 @@ import { IsEnum, IsNumber, IsObject, IsOptional, IsString, ValidateNested } from
 import { Type } from 'class-transformer';
 import { ActionTypeEnum, ChannelTypeEnum } from '@novu/shared';
 import { PreviewPayloadDto } from './preview-payload.dto';
+import { JSONSchemaDto } from './json-schema.dto';
 
 export enum TimeUnitEnum {
   SECONDS = 'seconds',
@@ -220,6 +221,15 @@ export class GeneratePreviewResponseDto {
   @ValidateNested()
   @Type(() => PreviewPayloadDto)
   previewPayloadExample: PreviewPayloadDto;
+
+  @ApiPropertyOptional({
+    description: 'The payload schema that was used to generate the preview payload example',
+    type: 'object',
+    nullable: true,
+    additionalProperties: true,
+  })
+  @IsOptional()
+  schema?: any | null;
 
   @ApiProperty({
     description: 'Preview result',

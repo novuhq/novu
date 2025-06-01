@@ -1,4 +1,4 @@
-import { ChannelTypeEnum, GeneratePreviewResponseDto } from '@novu/shared';
+import { ChannelTypeEnum, GeneratePreviewResponseDto, type WorkflowResponseDto } from '@novu/shared';
 import { AnimatePresence, motion } from 'motion/react';
 import { useState } from 'react';
 import { cn } from '@/utils/ui';
@@ -24,6 +24,7 @@ type EmailEditorPreviewProps = {
   previewStep: () => void;
   previewData?: GeneratePreviewResponseDto;
   isPreviewPending: boolean;
+  workflow?: WorkflowResponseDto;
 };
 
 const fadeVariants = {
@@ -37,12 +38,12 @@ export const EmailEditorPreview = ({
   previewStep,
   previewData,
   isPreviewPending = false,
+  workflow,
 }: EmailEditorPreviewProps) => {
   const [activeTab, setActiveTab] = useState('desktop');
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
-      {/* <EmailTabsSection className="flex w-full items-center justify-between"> */}
       <div className="flex w-full items-center justify-between px-4 pb-0 pt-4">
         <EmailPreviewHeader />
         <div>
@@ -114,7 +115,13 @@ export const EmailEditorPreview = ({
         </AnimatePresence>
       </div>
       <div className={cn('px-4 py-3')}>
-        <ConfigurePreviewAccordion editorValue={editorValue} setEditorValue={setEditorValue} onUpdate={previewStep} />
+        <ConfigurePreviewAccordion
+          schema={(previewData as any)?.schema}
+          editorValue={editorValue}
+          setEditorValue={setEditorValue}
+          onUpdate={previewStep}
+          workflow={workflow}
+        />
       </div>
     </Tabs>
   );

@@ -1,5 +1,6 @@
 import { ActionTypeEnum, ChannelTypeEnum } from '../../types';
 import { SubscriberDto } from '../subscriber';
+import { JSONSchemaDto } from './json-schema-dto';
 
 export class RenderOutput {}
 
@@ -113,6 +114,7 @@ export class PreviewPayload {
 
 export class GeneratePreviewResponseDto {
   previewPayloadExample: PreviewPayload;
+  schema?: JSONSchemaDto | null;
   result:
     | {
         type: ChannelTypeEnum.EMAIL;

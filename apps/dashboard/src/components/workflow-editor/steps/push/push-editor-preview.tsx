@@ -1,7 +1,7 @@
 import { InlineToast } from '@/components/primitives/inline-toast';
 import { PushPreview } from '@/components/workflow-editor/steps/push/push-preview';
 import { TabsSection } from '@/components/workflow-editor/steps/tabs-section';
-import { GeneratePreviewResponseDto } from '@novu/shared';
+import { GeneratePreviewResponseDto, type WorkflowResponseDto } from '@novu/shared';
 import { ConfigurePreviewAccordion } from '../shared/configure-preview-accordion';
 
 type PushEditorPreviewProps = {
@@ -10,6 +10,7 @@ type PushEditorPreviewProps = {
   previewStep: () => void;
   previewData?: GeneratePreviewResponseDto;
   isPreviewPending: boolean;
+  workflow?: WorkflowResponseDto;
 };
 
 export const PushEditorPreview = ({
@@ -18,6 +19,7 @@ export const PushEditorPreview = ({
   previewStep,
   previewData,
   isPreviewPending,
+  workflow,
 }: PushEditorPreviewProps) => {
   return (
     <TabsSection>
@@ -32,7 +34,13 @@ export const PushEditorPreview = ({
             className="w-full px-3"
           />
         </div>
-        <ConfigurePreviewAccordion editorValue={editorValue} setEditorValue={setEditorValue} onUpdate={previewStep} />
+        <ConfigurePreviewAccordion
+          schema={(previewData as any)?.schema}
+          editorValue={editorValue}
+          setEditorValue={setEditorValue}
+          onUpdate={previewStep}
+          workflow={workflow}
+        />
       </div>
     </TabsSection>
   );

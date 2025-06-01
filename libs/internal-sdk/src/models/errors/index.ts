@@ -4,6 +4,7 @@
 
 export * from "./errordto.js";
 export * from "./httpclienterrors.js";
+export * from "./payloadvalidationexceptiondto.js";
 export * from "./sdkerror.js";
 export * from "./sdkvalidationerror.js";
 export * from "./validationerrordto.js";

@@ -36,6 +36,16 @@ import {
   WorkflowStatusEnum$outboundSchema,
 } from "./workflowstatusenum.js";
 
+/**
+ * The payload JSON Schema for the workflow
+ */
+export type PayloadSchema = {};
+
+/**
+ * Generated payload example based on the payload schema
+ */
+export type PayloadExample = {};
+
 export type WorkflowResponseDto = {
   /**
    * Name of the workflow
@@ -97,7 +107,107 @@ export type WorkflowResponseDto = {
    * Timestamp of the last workflow trigger
    */
   lastTriggeredAt?: string | null | undefined;
+  /**
+   * The payload JSON Schema for the workflow
+   */
+  payloadSchema?: PayloadSchema | null | undefined;
+  /**
+   * Generated payload example based on the payload schema
+   */
+  payloadExample?: PayloadExample | null | undefined;
+  /**
+   * Whether payload schema validation is enabled
+   */
+  validatePayload?: boolean | undefined;
 };
+
+/** @internal */
+export const PayloadSchema$inboundSchema: z.ZodType<
+  PayloadSchema,
+  z.ZodTypeDef,
+  unknown
+> = z.object({});
+
+/** @internal */
+export type PayloadSchema$Outbound = {};
+
+/** @internal */
+export const PayloadSchema$outboundSchema: z.ZodType<
+  PayloadSchema$Outbound,
+  z.ZodTypeDef,
+  PayloadSchema
+> = z.object({});
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace PayloadSchema$ {
+  /** @deprecated use `PayloadSchema$inboundSchema` instead. */
+  export const inboundSchema = PayloadSchema$inboundSchema;
+  /** @deprecated use `PayloadSchema$outboundSchema` instead. */
+  export const outboundSchema = PayloadSchema$outboundSchema;
+  /** @deprecated use `PayloadSchema$Outbound` instead. */
+  export type Outbound = PayloadSchema$Outbound;
+}
+
+export function payloadSchemaToJSON(payloadSchema: PayloadSchema): string {
+  return JSON.stringify(PayloadSchema$outboundSchema.parse(payloadSchema));
+}
+
+export function payloadSchemaFromJSON(
+  jsonString: string,
+): SafeParseResult<PayloadSchema, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => PayloadSchema$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'PayloadSchema' from JSON`,
+  );
+}
+
+/** @internal */
+export const PayloadExample$inboundSchema: z.ZodType<
+  PayloadExample,
+  z.ZodTypeDef,
+  unknown
+> = z.object({});
+
+/** @internal */
+export type PayloadExample$Outbound = {};
+
+/** @internal */
+export const PayloadExample$outboundSchema: z.ZodType<
+  PayloadExample$Outbound,
+  z.ZodTypeDef,
+  PayloadExample
+> = z.object({});
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace PayloadExample$ {
+  /** @deprecated use `PayloadExample$inboundSchema` instead. */
+  export const inboundSchema = PayloadExample$inboundSchema;
+  /** @deprecated use `PayloadExample$outboundSchema` instead. */
+  export const outboundSchema = PayloadExample$outboundSchema;
+  /** @deprecated use `PayloadExample$Outbound` instead. */
+  export type Outbound = PayloadExample$Outbound;
+}
+
+export function payloadExampleToJSON(payloadExample: PayloadExample): string {
+  return JSON.stringify(PayloadExample$outboundSchema.parse(payloadExample));
+}
+
+export function payloadExampleFromJSON(
+  jsonString: string,
+): SafeParseResult<PayloadExample, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => PayloadExample$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'PayloadExample' from JSON`,
+  );
+}
 
 /** @internal */
 export const WorkflowResponseDto$inboundSchema: z.ZodType<
@@ -120,6 +230,11 @@ export const WorkflowResponseDto$inboundSchema: z.ZodType<
   status: WorkflowStatusEnum$inboundSchema,
   issues: z.record(RuntimeIssueDto$inboundSchema).optional(),
   lastTriggeredAt: z.nullable(z.string()).optional(),
+  payloadSchema: z.nullable(z.lazy(() => PayloadSchema$inboundSchema))
+    .optional(),
+  payloadExample: z.nullable(z.lazy(() => PayloadExample$inboundSchema))
+    .optional(),
+  validatePayload: z.boolean().optional(),
 }).transform((v) => {
   return remap$(v, {
     "_id": "id",
@@ -143,6 +258,9 @@ export type WorkflowResponseDto$Outbound = {
   status: string;
   issues?: { [k: string]: RuntimeIssueDto$Outbound } | undefined;
   lastTriggeredAt?: string | null | undefined;
+  payloadSchema?: PayloadSchema$Outbound | null | undefined;
+  payloadExample?: PayloadExample$Outbound | null | undefined;
+  validatePayload?: boolean | undefined;
 };
 
 /** @internal */
@@ -166,6 +284,11 @@ export const WorkflowResponseDto$outboundSchema: z.ZodType<
   status: WorkflowStatusEnum$outboundSchema,
   issues: z.record(RuntimeIssueDto$outboundSchema).optional(),
   lastTriggeredAt: z.nullable(z.string()).optional(),
+  payloadSchema: z.nullable(z.lazy(() => PayloadSchema$outboundSchema))
+    .optional(),
+  payloadExample: z.nullable(z.lazy(() => PayloadExample$outboundSchema))
+    .optional(),
+  validatePayload: z.boolean().optional(),
 }).transform((v) => {
   return remap$(v, {
     id: "_id",

@@ -45,8 +45,6 @@ export const EditBridgeUrlButton = () => {
 
   const isReadOnly = !has({ permission: PermissionsEnum.BRIDGE_WRITE });
 
-  console.log('isReadOnly', isReadOnly);
-
   useLayoutEffect(() => {
     reset({ bridgeUrl: envBridgeUrl });
   }, [reset, envBridgeUrl]);

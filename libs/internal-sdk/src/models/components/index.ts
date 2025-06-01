@@ -104,6 +104,7 @@ export * from "./patchpreferencechannelsdto.js";
 export * from "./patchsubscriberpreferencesdto.js";
 export * from "./patchsubscriberrequestdto.js";
 export * from "./patchworkflowdto.js";
+export * from "./payloadvalidationerrordto.js";
 export * from "./preferenceoverridesourceenum.js";
 export * from "./preferencesrequestdto.js";
 export * from "./previewpayloaddto.js";

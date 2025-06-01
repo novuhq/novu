@@ -2,10 +2,16 @@
 import { BadRequestException, forwardRef, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 
-import { NotificationGroupEntity, NotificationGroupRepository, NotificationTemplateRepository } from '@novu/dal';
+import {
+  JsonSchemaTypeEnum,
+  NotificationGroupEntity,
+  NotificationGroupRepository,
+  NotificationTemplateRepository,
+} from '@novu/dal';
 import {
   ChangeEntityTypeEnum,
   DEFAULT_WORKFLOW_PREFERENCES,
+  FeatureFlagsKeysEnum,
   INotificationTemplateStep,
   INotificationTrigger,
   isBridgeWorkflow,
@@ -17,7 +23,7 @@ import {
 } from '@novu/shared';
 
 import { CreateChange, CreateChangeCommand } from '../create-change';
-import { AnalyticsService, ContentService } from '../../services';
+import { AnalyticsService, ContentService, FeatureFlagsService } from '../../services';
 import { CreateMessageTemplate, CreateMessageTemplateCommand } from '../message-template';
 import { isVariantEmpty, PlatformException, shortId } from '../../utils';
 import {
@@ -53,7 +59,8 @@ export class CreateWorkflow {
     @Inject(forwardRef(() => UpsertPreferences))
     private upsertPreferences: UpsertPreferences,
     private getWorkflowWithPreferencesUseCase: GetWorkflowWithPreferencesUseCase,
-    private resourceValidatorService: ResourceValidatorService
+    private resourceValidatorService: ResourceValidatorService,
+    private featureFlagService: FeatureFlagsService
   ) {}
 
   @InstrumentUsecase()
@@ -71,6 +78,22 @@ export class CreateWorkflow {
 
       const templateSteps = await this.storeTemplateSteps(command, parentChangeId);
       const trigger = await this.createNotificationTrigger(command, triggerIdentifier);
+      const isPayloadSchemaEnabled = await this.featureFlagService.getFlag({
+        key: FeatureFlagsKeysEnum.IS_PAYLOAD_SCHEMA_ENABLED,
+        defaultValue: false,
+        organization: { _id: command.organizationId },
+        environment: { _id: command.environmentId },
+      });
+
+      if (isPayloadSchemaEnabled) {
+        command.payloadSchema = {
+          type: JsonSchemaTypeEnum.OBJECT,
+          additionalProperties: true,
+          properties: {},
+        };
+
+        command.validatePayload = true;
+      }
 
       storedWorkflow = await this.storeWorkflow(command, templateSteps, trigger, triggerIdentifier);
 
@@ -280,6 +303,7 @@ export class CreateWorkflow {
       issues: command.issues,
       ...(command.rawData ? { rawData: command.rawData } : {}),
       ...(command.payloadSchema ? { payloadSchema: command.payloadSchema } : {}),
+      ...(command.validatePayload ? { validatePayload: command.validatePayload } : {}),
       ...(command.data ? { data: command.data } : {}),
     });
 

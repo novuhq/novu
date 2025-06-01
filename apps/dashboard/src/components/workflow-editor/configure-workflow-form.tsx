@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import type { ExternalToast } from 'sonner';
@@ -56,23 +56,29 @@ import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { PermissionsEnum, WorkflowOriginEnum, WorkflowResponseDto } from '@novu/shared';
+import { FeatureFlagsKeysEnum, PermissionsEnum } from '@novu/shared';
 import { FilesIcon } from 'lucide-react';
 import {
   RiArrowRightSLine,
   RiCodeSSlashLine,
   RiDeleteBin2Line,
   RiGitPullRequestFill,
+  RiListView,
   RiMore2Fill,
   RiSettingsLine,
 } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
 import { Protect } from '@/utils/protect';
 
-type ConfigureWorkflowFormProps = {
+import { PayloadSchemaDrawer } from './payload-schema-drawer';
+import { WorkflowOriginEnum, WorkflowResponseDto, UpdateWorkflowDto } from '@novu/shared';
+import { useIsPayloadSchemaEnabled } from '@/hooks/use-is-payload-schema-enabled';
+import { useFeatureFlag } from '../../hooks/use-feature-flag';
+
+interface ConfigureWorkflowFormProps {
   workflow: WorkflowResponseDto;
   update: UpdateWorkflowFn;
-};
+}
 
 const toastOptions: ExternalToast = {
   position: 'bottom-right',
@@ -86,11 +92,15 @@ export const ConfigureWorkflowForm = (props: ConfigureWorkflowFormProps) => {
   const navigate = useNavigate();
   const [isPauseModalOpen, setIsPauseModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isPayloadSchemaDrawerOpen, setIsPayloadSchemaDrawerOpen] = useState(false);
+
   const { tags } = useTags();
   const { currentEnvironment } = useEnvironment();
   const { currentOrganization } = useAuth();
   const { environments = [] } = useFetchEnvironments({ organizationId: currentOrganization?._id });
   const { safeSync, isSyncable, tooltipContent, PromoteConfirmModal } = useSyncWorkflow(workflow);
+  const isPayloadSchemaEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_PAYLOAD_SCHEMA_ENABLED);
+
   const { show: showComingSoonBanner } = usePromotionalBanner({
     content: {
       title: '🚧 Export to Code is on the way!',
@@ -155,7 +165,7 @@ export const ConfigureWorkflowForm = (props: ConfigureWorkflowFormProps) => {
     previousData: workflow,
     form,
     isReadOnly,
-    save: update,
+    save: (data) => update(data as UpdateWorkflowDto),
     shouldClientValidate: true,
   });
 
@@ -168,8 +178,19 @@ export const ConfigureWorkflowForm = (props: ConfigureWorkflowFormProps) => {
     showComingSoonBanner();
   }
 
-  const otherEnvironments = environments.filter((env) => env._id !== currentEnvironment?._id);
+  const handleSavePayloadSchema = useCallback(() => {
+    showToast({
+      children: () => (
+        <>
+          <ToastIcon variant="success" />
+          <span className="text-sm">Payload schema updated.</span>
+        </>
+      ),
+      options: toastOptions,
+    });
+  }, []);
 
+  const otherEnvironments = environments.filter((env) => env._id !== currentEnvironment?._id);
   const isDuplicable = useMemo(() => workflow.origin === WorkflowOriginEnum.NOVU_CLOUD, [workflow.origin]);
 
   return (
@@ -191,6 +212,12 @@ export const ConfigureWorkflowForm = (props: ConfigureWorkflowFormProps) => {
         onOpenChange={setIsDeleteModalOpen}
         onConfirm={onDeleteWorkflow}
         isLoading={isDeleteWorkflowPending}
+      />
+      <PayloadSchemaDrawer
+        workflow={workflow}
+        isOpen={isPayloadSchemaDrawerOpen}
+        onOpenChange={setIsPayloadSchemaDrawerOpen}
+        onSave={handleSavePayloadSchema}
       />
       <PageMeta title={workflow.name} />
       <motion.div
@@ -428,6 +455,20 @@ export const ConfigureWorkflowForm = (props: ConfigureWorkflowFormProps) => {
               <span className="ml-auto" />
             </Button>
           </Link>
+          {isPayloadSchemaEnabled && (
+            <Button
+              variant="secondary"
+              mode="outline"
+              leadingIcon={RiListView}
+              className="mt-2 flex w-full justify-start gap-1.5 p-1.5 text-xs font-medium"
+              type="button"
+              onClick={() => setIsPayloadSchemaDrawerOpen(true)}
+              trailingIcon={RiArrowRightSLine}
+            >
+              Manage payload schema
+              <span className="ml-auto" />
+            </Button>
+          )}
         </SidebarContent>
         <Separator />
       </motion.div>
