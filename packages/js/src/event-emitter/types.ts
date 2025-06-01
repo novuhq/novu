@@ -79,11 +79,6 @@ type SocketEvents = {
   [key in NotificationUnreadEvent]: { result: number };
 };
 
-type SessionEvents = {
-  'session.subscriber.changed': { oldSubscriberId?: string; newSubscriberId?: string };
-  'session.cleanup': undefined;
-};
-
 /**
  * Events that are emitted by Novu Event Emitter.
  *
@@ -116,8 +111,7 @@ export type Events = SessionInitializeEvents &
   NotificationRevertActionEvents &
   NotificationsReadAllEvents &
   NotificationsArchivedAllEvents &
-  NotificationsReadArchivedAllEvents &
-  SessionEvents;
+  NotificationsReadArchivedAllEvents;
 
 export type EventNames = keyof Events;
 export type SocketEventNames = keyof SocketEvents;
