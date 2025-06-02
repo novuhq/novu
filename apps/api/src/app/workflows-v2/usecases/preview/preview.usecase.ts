@@ -248,6 +248,7 @@ export class PreviewUsecase {
             if (Array.isArray(srcValue)) {
               return srcValue;
             }
+
             // Otherwise, let lodash handle normal merging
             return undefined;
           }
