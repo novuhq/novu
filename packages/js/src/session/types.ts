@@ -5,7 +5,7 @@ export type KeylessInitializeSessionArgs = {} & { [K in string]?: never }; // em
 export type InitializeSessionArgs =
   | KeylessInitializeSessionArgs
   | {
-      applicationIdentifier?: string;
+      applicationIdentifier: string;
       subscriber: Subscriber;
       subscriberHash?: string;
     };
