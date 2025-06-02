@@ -16,6 +16,7 @@ import {
   type PropertyData,
 } from './utils';
 import type { UseSchemaFormProps, UseSchemaFormReturn, SchemaFormPath } from './types';
+import { MAX_NESTING_DEPTH } from './constants';
 
 const defaultFormValues: SchemaEditorFormValues = {
   propertyList: [],
@@ -83,6 +84,14 @@ export function useSchemaForm({ initialSchema, onChange, onValidityChange }: Use
       const pathInfo = parsePropertyPath(propertyDataFromArg.keyName);
 
       if (!pathInfo) {
+        return;
+      }
+
+      // Check nesting depth
+      if (pathInfo.parentPath.length >= MAX_NESTING_DEPTH) {
+        console.warn(
+          `Cannot add property at depth ${pathInfo.parentPath.length + 1}. Maximum nesting depth is ${MAX_NESTING_DEPTH}.`
+        );
         return;
       }
 

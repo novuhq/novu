@@ -79,6 +79,7 @@ export function SchemaEditor({
               highlightedPropertyKey={highlightedPropertyKey}
               variableUsageInfo={variableUsageInfo}
               onCheckVariableUsage={checkVariableUsage}
+              depth={0}
             />
           );
         })}

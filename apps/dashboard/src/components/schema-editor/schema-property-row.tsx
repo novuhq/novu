@@ -30,6 +30,7 @@ export interface SchemaPropertyRowProps {
   parentPath?: string;
   onCheckVariableUsage?: (keyName: string, parentPath: string) => VariableUsageInfo;
   className?: string;
+  depth?: number;
 }
 
 export const SchemaPropertyRow = memo<SchemaPropertyRowProps>(function SchemaPropertyRow(props) {
@@ -43,6 +44,7 @@ export const SchemaPropertyRow = memo<SchemaPropertyRowProps>(function SchemaPro
     parentPath = '',
     onCheckVariableUsage,
     className,
+    depth = 0,
   } = props;
 
   const { setValue, getValues } = useFormContext();
@@ -130,6 +132,7 @@ export const SchemaPropertyRow = memo<SchemaPropertyRowProps>(function SchemaPro
           indentationLevel={indentationLevel}
           currentFullPath={currentFullPath}
           onCheckVariableUsage={onCheckVariableUsage}
+          depth={depth}
         />
       )}
 
@@ -143,6 +146,7 @@ export const SchemaPropertyRow = memo<SchemaPropertyRowProps>(function SchemaPro
           indentationLevel={indentationLevel}
           currentFullPath={currentFullPath}
           onCheckVariableUsage={onCheckVariableUsage}
+          depth={depth}
         />
       )}
     </div>

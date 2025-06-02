@@ -11,6 +11,7 @@ import type { PropertyListItem, SchemaEditorFormValues } from '../utils/validati
 import type { VariableUsageInfo } from '../utils/check-variable-usage';
 import { newProperty } from '../utils/json-helpers';
 import { SchemaPropertyRow } from '../schema-property-row';
+import { MAX_NESTING_DEPTH } from '../constants';
 
 interface NestedPropertyProps {
   nestedField: any;
@@ -20,6 +21,7 @@ interface NestedPropertyProps {
   onRemove: () => void;
   currentFullPath: string;
   onCheckVariableUsage?: (keyName: string, parentPath: string) => VariableUsageInfo;
+  depth: number;
 }
 
 const NestedProperty = memo<NestedPropertyProps>(function NestedProperty({
@@ -30,6 +32,7 @@ const NestedProperty = memo<NestedPropertyProps>(function NestedProperty({
   onRemove,
   currentFullPath,
   onCheckVariableUsage,
+  depth,
 }) {
   const nestedItem = useWatch({
     control,
@@ -51,6 +54,7 @@ const NestedProperty = memo<NestedPropertyProps>(function NestedProperty({
       parentPath={currentFullPath}
       variableUsageInfo={nestedVariableUsageInfo}
       onCheckVariableUsage={onCheckVariableUsage}
+      depth={depth + 1}
     />
   );
 });
@@ -61,6 +65,7 @@ interface ObjectSectionProps {
   indentationLevel: number;
   currentFullPath: string;
   onCheckVariableUsage?: (keyName: string, parentPath: string) => VariableUsageInfo;
+  depth: number;
 }
 
 export const ObjectSection = memo<ObjectSectionProps>(function ObjectSection({
@@ -69,6 +74,7 @@ export const ObjectSection = memo<ObjectSectionProps>(function ObjectSection({
   indentationLevel,
   currentFullPath,
   onCheckVariableUsage,
+  depth,
 }) {
   const { fields, append, remove } = useFieldArray({
     control,
@@ -76,7 +82,11 @@ export const ObjectSection = memo<ObjectSectionProps>(function ObjectSection({
     keyName: 'nestedFieldId',
   });
 
+  const isAtMaxDepth = depth >= MAX_NESTING_DEPTH;
+
   const handleAddNestedProperty = useCallback(() => {
+    if (isAtMaxDepth) return;
+
     const newNestedProperty = {
       id: uuidv4(),
       keyName: '',
@@ -85,7 +95,7 @@ export const ObjectSection = memo<ObjectSectionProps>(function ObjectSection({
     } as PropertyListItem;
 
     append(newNestedProperty);
-  }, [append]);
+  }, [append, isAtMaxDepth]);
 
   return (
     <div className={cn('pt-1', getMarginClassPx(indentationLevel + 1))}>
@@ -99,8 +109,14 @@ export const ObjectSection = memo<ObjectSectionProps>(function ObjectSection({
           onRemove={() => remove(nestedIndex)}
           currentFullPath={currentFullPath}
           onCheckVariableUsage={onCheckVariableUsage}
+          depth={depth}
         />
       ))}
+      {isAtMaxDepth && (
+        <div className="mt-1 rounded border border-red-200 bg-red-50 p-2 text-xs text-red-600">
+          Maximum nesting depth of {MAX_NESTING_DEPTH} levels reached. Cannot add more nested properties.
+        </div>
+      )}
       <Button
         size="2xs"
         variant="secondary"
@@ -108,6 +124,7 @@ export const ObjectSection = memo<ObjectSectionProps>(function ObjectSection({
         onClick={handleAddNestedProperty}
         leadingIcon={RiAddLine}
         className="mt-1"
+        disabled={isAtMaxDepth}
       >
         Add Nested Property
       </Button>
