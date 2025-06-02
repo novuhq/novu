@@ -8,17 +8,59 @@ import { safeParse } from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 import {
+  ChatStepResponseDto,
+  ChatStepResponseDto$inboundSchema,
+  ChatStepResponseDto$Outbound,
+  ChatStepResponseDto$outboundSchema,
+} from "./chatstepresponsedto.js";
+import {
+  CustomStepResponseDto,
+  CustomStepResponseDto$inboundSchema,
+  CustomStepResponseDto$Outbound,
+  CustomStepResponseDto$outboundSchema,
+} from "./customstepresponsedto.js";
+import {
+  DelayStepResponseDto,
+  DelayStepResponseDto$inboundSchema,
+  DelayStepResponseDto$Outbound,
+  DelayStepResponseDto$outboundSchema,
+} from "./delaystepresponsedto.js";
+import {
+  DigestStepResponseDto,
+  DigestStepResponseDto$inboundSchema,
+  DigestStepResponseDto$Outbound,
+  DigestStepResponseDto$outboundSchema,
+} from "./digeststepresponsedto.js";
+import {
+  EmailStepResponseDto,
+  EmailStepResponseDto$inboundSchema,
+  EmailStepResponseDto$Outbound,
+  EmailStepResponseDto$outboundSchema,
+} from "./emailstepresponsedto.js";
+import {
+  InAppStepResponseDto,
+  InAppStepResponseDto$inboundSchema,
+  InAppStepResponseDto$Outbound,
+  InAppStepResponseDto$outboundSchema,
+} from "./inappstepresponsedto.js";
+import {
+  PushStepResponseDto,
+  PushStepResponseDto$inboundSchema,
+  PushStepResponseDto$Outbound,
+  PushStepResponseDto$outboundSchema,
+} from "./pushstepresponsedto.js";
+import {
   RuntimeIssueDto,
   RuntimeIssueDto$inboundSchema,
   RuntimeIssueDto$Outbound,
   RuntimeIssueDto$outboundSchema,
 } from "./runtimeissuedto.js";
 import {
-  StepResponseDto,
-  StepResponseDto$inboundSchema,
-  StepResponseDto$Outbound,
-  StepResponseDto$outboundSchema,
-} from "./stepresponsedto.js";
+  SmsStepResponseDto,
+  SmsStepResponseDto$inboundSchema,
+  SmsStepResponseDto$Outbound,
+  SmsStepResponseDto$outboundSchema,
+} from "./smsstepresponsedto.js";
 import {
   WorkflowOriginEnum,
   WorkflowOriginEnum$inboundSchema,
@@ -35,6 +77,16 @@ import {
   WorkflowStatusEnum$inboundSchema,
   WorkflowStatusEnum$outboundSchema,
 } from "./workflowstatusenum.js";
+
+export type WorkflowResponseDtoSteps =
+  | (InAppStepResponseDto & { type: "in_app" })
+  | (EmailStepResponseDto & { type: "email" })
+  | (SmsStepResponseDto & { type: "sms" })
+  | (PushStepResponseDto & { type: "push" })
+  | (ChatStepResponseDto & { type: "chat" })
+  | (DelayStepResponseDto & { type: "delay" })
+  | (DigestStepResponseDto & { type: "digest" })
+  | (CustomStepResponseDto & { type: "custom" });
 
 /**
  * The payload JSON Schema for the workflow
@@ -86,7 +138,16 @@ export type WorkflowResponseDto = {
   /**
    * Steps of the workflow
    */
-  steps: Array<StepResponseDto>;
+  steps: Array<
+    | (InAppStepResponseDto & { type: "in_app" })
+    | (EmailStepResponseDto & { type: "email" })
+    | (SmsStepResponseDto & { type: "sms" })
+    | (PushStepResponseDto & { type: "push" })
+    | (ChatStepResponseDto & { type: "chat" })
+    | (DelayStepResponseDto & { type: "delay" })
+    | (DigestStepResponseDto & { type: "digest" })
+    | (CustomStepResponseDto & { type: "custom" })
+  >;
   /**
    * Origin of the workflow
    */
@@ -120,6 +181,124 @@ export type WorkflowResponseDto = {
    */
   validatePayload?: boolean | undefined;
 };
+
+/** @internal */
+export const WorkflowResponseDtoSteps$inboundSchema: z.ZodType<
+  WorkflowResponseDtoSteps,
+  z.ZodTypeDef,
+  unknown
+> = z.union([
+  InAppStepResponseDto$inboundSchema.and(
+    z.object({ type: z.literal("in_app") }).transform((v) => ({
+      type: v.type,
+    })),
+  ),
+  EmailStepResponseDto$inboundSchema.and(
+    z.object({ type: z.literal("email") }).transform((v) => ({ type: v.type })),
+  ),
+  SmsStepResponseDto$inboundSchema.and(
+    z.object({ type: z.literal("sms") }).transform((v) => ({ type: v.type })),
+  ),
+  PushStepResponseDto$inboundSchema.and(
+    z.object({ type: z.literal("push") }).transform((v) => ({ type: v.type })),
+  ),
+  ChatStepResponseDto$inboundSchema.and(
+    z.object({ type: z.literal("chat") }).transform((v) => ({ type: v.type })),
+  ),
+  DelayStepResponseDto$inboundSchema.and(
+    z.object({ type: z.literal("delay") }).transform((v) => ({ type: v.type })),
+  ),
+  DigestStepResponseDto$inboundSchema.and(
+    z.object({ type: z.literal("digest") }).transform((v) => ({
+      type: v.type,
+    })),
+  ),
+  CustomStepResponseDto$inboundSchema.and(
+    z.object({ type: z.literal("custom") }).transform((v) => ({
+      type: v.type,
+    })),
+  ),
+]);
+
+/** @internal */
+export type WorkflowResponseDtoSteps$Outbound =
+  | (InAppStepResponseDto$Outbound & { type: "in_app" })
+  | (EmailStepResponseDto$Outbound & { type: "email" })
+  | (SmsStepResponseDto$Outbound & { type: "sms" })
+  | (PushStepResponseDto$Outbound & { type: "push" })
+  | (ChatStepResponseDto$Outbound & { type: "chat" })
+  | (DelayStepResponseDto$Outbound & { type: "delay" })
+  | (DigestStepResponseDto$Outbound & { type: "digest" })
+  | (CustomStepResponseDto$Outbound & { type: "custom" });
+
+/** @internal */
+export const WorkflowResponseDtoSteps$outboundSchema: z.ZodType<
+  WorkflowResponseDtoSteps$Outbound,
+  z.ZodTypeDef,
+  WorkflowResponseDtoSteps
+> = z.union([
+  InAppStepResponseDto$outboundSchema.and(
+    z.object({ type: z.literal("in_app") }).transform((v) => ({
+      type: v.type,
+    })),
+  ),
+  EmailStepResponseDto$outboundSchema.and(
+    z.object({ type: z.literal("email") }).transform((v) => ({ type: v.type })),
+  ),
+  SmsStepResponseDto$outboundSchema.and(
+    z.object({ type: z.literal("sms") }).transform((v) => ({ type: v.type })),
+  ),
+  PushStepResponseDto$outboundSchema.and(
+    z.object({ type: z.literal("push") }).transform((v) => ({ type: v.type })),
+  ),
+  ChatStepResponseDto$outboundSchema.and(
+    z.object({ type: z.literal("chat") }).transform((v) => ({ type: v.type })),
+  ),
+  DelayStepResponseDto$outboundSchema.and(
+    z.object({ type: z.literal("delay") }).transform((v) => ({ type: v.type })),
+  ),
+  DigestStepResponseDto$outboundSchema.and(
+    z.object({ type: z.literal("digest") }).transform((v) => ({
+      type: v.type,
+    })),
+  ),
+  CustomStepResponseDto$outboundSchema.and(
+    z.object({ type: z.literal("custom") }).transform((v) => ({
+      type: v.type,
+    })),
+  ),
+]);
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace WorkflowResponseDtoSteps$ {
+  /** @deprecated use `WorkflowResponseDtoSteps$inboundSchema` instead. */
+  export const inboundSchema = WorkflowResponseDtoSteps$inboundSchema;
+  /** @deprecated use `WorkflowResponseDtoSteps$outboundSchema` instead. */
+  export const outboundSchema = WorkflowResponseDtoSteps$outboundSchema;
+  /** @deprecated use `WorkflowResponseDtoSteps$Outbound` instead. */
+  export type Outbound = WorkflowResponseDtoSteps$Outbound;
+}
+
+export function workflowResponseDtoStepsToJSON(
+  workflowResponseDtoSteps: WorkflowResponseDtoSteps,
+): string {
+  return JSON.stringify(
+    WorkflowResponseDtoSteps$outboundSchema.parse(workflowResponseDtoSteps),
+  );
+}
+
+export function workflowResponseDtoStepsFromJSON(
+  jsonString: string,
+): SafeParseResult<WorkflowResponseDtoSteps, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => WorkflowResponseDtoSteps$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'WorkflowResponseDtoSteps' from JSON`,
+  );
+}
 
 /** @internal */
 export const PayloadSchema$inboundSchema: z.ZodType<
@@ -224,7 +403,50 @@ export const WorkflowResponseDto$inboundSchema: z.ZodType<
   slug: z.string(),
   updatedAt: z.string(),
   createdAt: z.string(),
-  steps: z.array(StepResponseDto$inboundSchema),
+  steps: z.array(
+    z.union([
+      InAppStepResponseDto$inboundSchema.and(
+        z.object({ type: z.literal("in_app") }).transform((v) => ({
+          type: v.type,
+        })),
+      ),
+      EmailStepResponseDto$inboundSchema.and(
+        z.object({ type: z.literal("email") }).transform((v) => ({
+          type: v.type,
+        })),
+      ),
+      SmsStepResponseDto$inboundSchema.and(
+        z.object({ type: z.literal("sms") }).transform((v) => ({
+          type: v.type,
+        })),
+      ),
+      PushStepResponseDto$inboundSchema.and(
+        z.object({ type: z.literal("push") }).transform((v) => ({
+          type: v.type,
+        })),
+      ),
+      ChatStepResponseDto$inboundSchema.and(
+        z.object({ type: z.literal("chat") }).transform((v) => ({
+          type: v.type,
+        })),
+      ),
+      DelayStepResponseDto$inboundSchema.and(
+        z.object({ type: z.literal("delay") }).transform((v) => ({
+          type: v.type,
+        })),
+      ),
+      DigestStepResponseDto$inboundSchema.and(
+        z.object({ type: z.literal("digest") }).transform((v) => ({
+          type: v.type,
+        })),
+      ),
+      CustomStepResponseDto$inboundSchema.and(
+        z.object({ type: z.literal("custom") }).transform((v) => ({
+          type: v.type,
+        })),
+      ),
+    ]),
+  ),
   origin: WorkflowOriginEnum$inboundSchema,
   preferences: WorkflowPreferencesResponseDto$inboundSchema,
   status: WorkflowStatusEnum$inboundSchema,
@@ -252,7 +474,16 @@ export type WorkflowResponseDto$Outbound = {
   slug: string;
   updatedAt: string;
   createdAt: string;
-  steps: Array<StepResponseDto$Outbound>;
+  steps: Array<
+    | (InAppStepResponseDto$Outbound & { type: "in_app" })
+    | (EmailStepResponseDto$Outbound & { type: "email" })
+    | (SmsStepResponseDto$Outbound & { type: "sms" })
+    | (PushStepResponseDto$Outbound & { type: "push" })
+    | (ChatStepResponseDto$Outbound & { type: "chat" })
+    | (DelayStepResponseDto$Outbound & { type: "delay" })
+    | (DigestStepResponseDto$Outbound & { type: "digest" })
+    | (CustomStepResponseDto$Outbound & { type: "custom" })
+  >;
   origin: string;
   preferences: WorkflowPreferencesResponseDto$Outbound;
   status: string;
@@ -278,7 +509,50 @@ export const WorkflowResponseDto$outboundSchema: z.ZodType<
   slug: z.string(),
   updatedAt: z.string(),
   createdAt: z.string(),
-  steps: z.array(StepResponseDto$outboundSchema),
+  steps: z.array(
+    z.union([
+      InAppStepResponseDto$outboundSchema.and(
+        z.object({ type: z.literal("in_app") }).transform((v) => ({
+          type: v.type,
+        })),
+      ),
+      EmailStepResponseDto$outboundSchema.and(
+        z.object({ type: z.literal("email") }).transform((v) => ({
+          type: v.type,
+        })),
+      ),
+      SmsStepResponseDto$outboundSchema.and(
+        z.object({ type: z.literal("sms") }).transform((v) => ({
+          type: v.type,
+        })),
+      ),
+      PushStepResponseDto$outboundSchema.and(
+        z.object({ type: z.literal("push") }).transform((v) => ({
+          type: v.type,
+        })),
+      ),
+      ChatStepResponseDto$outboundSchema.and(
+        z.object({ type: z.literal("chat") }).transform((v) => ({
+          type: v.type,
+        })),
+      ),
+      DelayStepResponseDto$outboundSchema.and(
+        z.object({ type: z.literal("delay") }).transform((v) => ({
+          type: v.type,
+        })),
+      ),
+      DigestStepResponseDto$outboundSchema.and(
+        z.object({ type: z.literal("digest") }).transform((v) => ({
+          type: v.type,
+        })),
+      ),
+      CustomStepResponseDto$outboundSchema.and(
+        z.object({ type: z.literal("custom") }).transform((v) => ({
+          type: v.type,
+        })),
+      ),
+    ]),
+  ),
   origin: WorkflowOriginEnum$outboundSchema,
   preferences: WorkflowPreferencesResponseDto$outboundSchema,
   status: WorkflowStatusEnum$outboundSchema,

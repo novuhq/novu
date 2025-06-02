@@ -24,11 +24,6 @@ import {
  */
 export type Skip = {};
 
-/**
- * Additional data payload for the step.
- */
-export type InAppControlDtoData = {};
-
 export type InAppControlDto = {
   /**
    * Filter conditions for skipping the step.
@@ -65,7 +60,7 @@ export type InAppControlDto = {
   /**
    * Additional data payload for the step.
    */
-  data?: InAppControlDtoData | undefined;
+  data?: { [k: string]: any } | undefined;
 };
 
 /** @internal */
@@ -107,54 +102,6 @@ export function skipFromJSON(
 }
 
 /** @internal */
-export const InAppControlDtoData$inboundSchema: z.ZodType<
-  InAppControlDtoData,
-  z.ZodTypeDef,
-  unknown
-> = z.object({});
-
-/** @internal */
-export type InAppControlDtoData$Outbound = {};
-
-/** @internal */
-export const InAppControlDtoData$outboundSchema: z.ZodType<
-  InAppControlDtoData$Outbound,
-  z.ZodTypeDef,
-  InAppControlDtoData
-> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace InAppControlDtoData$ {
-  /** @deprecated use `InAppControlDtoData$inboundSchema` instead. */
-  export const inboundSchema = InAppControlDtoData$inboundSchema;
-  /** @deprecated use `InAppControlDtoData$outboundSchema` instead. */
-  export const outboundSchema = InAppControlDtoData$outboundSchema;
-  /** @deprecated use `InAppControlDtoData$Outbound` instead. */
-  export type Outbound = InAppControlDtoData$Outbound;
-}
-
-export function inAppControlDtoDataToJSON(
-  inAppControlDtoData: InAppControlDtoData,
-): string {
-  return JSON.stringify(
-    InAppControlDtoData$outboundSchema.parse(inAppControlDtoData),
-  );
-}
-
-export function inAppControlDtoDataFromJSON(
-  jsonString: string,
-): SafeParseResult<InAppControlDtoData, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => InAppControlDtoData$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'InAppControlDtoData' from JSON`,
-  );
-}
-
-/** @internal */
 export const InAppControlDto$inboundSchema: z.ZodType<
   InAppControlDto,
   z.ZodTypeDef,
@@ -168,7 +115,7 @@ export const InAppControlDto$inboundSchema: z.ZodType<
   secondaryAction: ActionDto$inboundSchema.optional(),
   redirect: RedirectDto$inboundSchema.optional(),
   disableOutputSanitization: z.boolean().default(false),
-  data: z.lazy(() => InAppControlDtoData$inboundSchema).optional(),
+  data: z.record(z.any()).optional(),
 });
 
 /** @internal */
@@ -181,7 +128,7 @@ export type InAppControlDto$Outbound = {
   secondaryAction?: ActionDto$Outbound | undefined;
   redirect?: RedirectDto$Outbound | undefined;
   disableOutputSanitization: boolean;
-  data?: InAppControlDtoData$Outbound | undefined;
+  data?: { [k: string]: any } | undefined;
 };
 
 /** @internal */
@@ -198,7 +145,7 @@ export const InAppControlDto$outboundSchema: z.ZodType<
   secondaryAction: ActionDto$outboundSchema.optional(),
   redirect: RedirectDto$outboundSchema.optional(),
   disableOutputSanitization: z.boolean().default(false),
-  data: z.lazy(() => InAppControlDtoData$outboundSchema).optional(),
+  data: z.record(z.any()).optional(),
 });
 
 /**

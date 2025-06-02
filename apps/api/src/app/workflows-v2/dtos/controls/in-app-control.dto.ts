@@ -99,7 +99,11 @@ export class InAppControlDto extends SkipControlDto {
   @IsOptional()
   disableOutputSanitization?: boolean = false;
 
-  @ApiPropertyOptional({ description: 'Additional data payload for the step.', type: 'object' })
+  @ApiPropertyOptional({
+    description: 'Additional data payload for the step.',
+    type: 'object',
+    additionalProperties: true,
+  })
   @IsOptional()
   data?: Record<string, unknown>;
 }
