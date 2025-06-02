@@ -51,11 +51,6 @@ import {
 export type InAppStepResponseDtoSkip = {};
 
 /**
- * Additional data payload for the step.
- */
-export type InAppStepResponseDtoData = {};
-
-/**
  * Control values for the in-app step
  */
 export type InAppStepResponseDtoControlValues = {
@@ -94,7 +89,7 @@ export type InAppStepResponseDtoControlValues = {
   /**
    * Additional data payload for the step.
    */
-  data?: InAppStepResponseDtoData | undefined;
+  data?: { [k: string]: any } | undefined;
   additionalProperties?: { [k: string]: any };
 };
 
@@ -198,54 +193,6 @@ export function inAppStepResponseDtoSkipFromJSON(
 }
 
 /** @internal */
-export const InAppStepResponseDtoData$inboundSchema: z.ZodType<
-  InAppStepResponseDtoData,
-  z.ZodTypeDef,
-  unknown
-> = z.object({});
-
-/** @internal */
-export type InAppStepResponseDtoData$Outbound = {};
-
-/** @internal */
-export const InAppStepResponseDtoData$outboundSchema: z.ZodType<
-  InAppStepResponseDtoData$Outbound,
-  z.ZodTypeDef,
-  InAppStepResponseDtoData
-> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace InAppStepResponseDtoData$ {
-  /** @deprecated use `InAppStepResponseDtoData$inboundSchema` instead. */
-  export const inboundSchema = InAppStepResponseDtoData$inboundSchema;
-  /** @deprecated use `InAppStepResponseDtoData$outboundSchema` instead. */
-  export const outboundSchema = InAppStepResponseDtoData$outboundSchema;
-  /** @deprecated use `InAppStepResponseDtoData$Outbound` instead. */
-  export type Outbound = InAppStepResponseDtoData$Outbound;
-}
-
-export function inAppStepResponseDtoDataToJSON(
-  inAppStepResponseDtoData: InAppStepResponseDtoData,
-): string {
-  return JSON.stringify(
-    InAppStepResponseDtoData$outboundSchema.parse(inAppStepResponseDtoData),
-  );
-}
-
-export function inAppStepResponseDtoDataFromJSON(
-  jsonString: string,
-): SafeParseResult<InAppStepResponseDtoData, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => InAppStepResponseDtoData$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'InAppStepResponseDtoData' from JSON`,
-  );
-}
-
-/** @internal */
 export const InAppStepResponseDtoControlValues$inboundSchema: z.ZodType<
   InAppStepResponseDtoControlValues,
   z.ZodTypeDef,
@@ -260,7 +207,7 @@ export const InAppStepResponseDtoControlValues$inboundSchema: z.ZodType<
     secondaryAction: ActionDto$inboundSchema.optional(),
     redirect: RedirectDto$inboundSchema.optional(),
     disableOutputSanitization: z.boolean().default(false),
-    data: z.lazy(() => InAppStepResponseDtoData$inboundSchema).optional(),
+    data: z.record(z.any()).optional(),
   }).catchall(z.any()),
   "additionalProperties",
   true,
@@ -276,7 +223,7 @@ export type InAppStepResponseDtoControlValues$Outbound = {
   secondaryAction?: ActionDto$Outbound | undefined;
   redirect?: RedirectDto$Outbound | undefined;
   disableOutputSanitization: boolean;
-  data?: InAppStepResponseDtoData$Outbound | undefined;
+  data?: { [k: string]: any } | undefined;
   [additionalProperties: string]: unknown;
 };
 
@@ -294,7 +241,7 @@ export const InAppStepResponseDtoControlValues$outboundSchema: z.ZodType<
   secondaryAction: ActionDto$outboundSchema.optional(),
   redirect: RedirectDto$outboundSchema.optional(),
   disableOutputSanitization: z.boolean().default(false),
-  data: z.lazy(() => InAppStepResponseDtoData$outboundSchema).optional(),
+  data: z.record(z.any()).optional(),
   additionalProperties: z.record(z.any()),
 }).transform((v) => {
   return {

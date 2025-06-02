@@ -31,11 +31,6 @@ import {
 export type InAppStepUpsertDtoSkip = {};
 
 /**
- * Additional data payload for the step.
- */
-export type InAppStepUpsertDtoData = {};
-
-/**
  * Control values for the In-App step
  */
 export type ControlValues = {
@@ -74,7 +69,7 @@ export type ControlValues = {
   /**
    * Additional data payload for the step.
    */
-  data?: InAppStepUpsertDtoData | undefined;
+  data?: { [k: string]: any } | undefined;
 };
 
 export type InAppStepUpsertDto = {
@@ -145,54 +140,6 @@ export function inAppStepUpsertDtoSkipFromJSON(
 }
 
 /** @internal */
-export const InAppStepUpsertDtoData$inboundSchema: z.ZodType<
-  InAppStepUpsertDtoData,
-  z.ZodTypeDef,
-  unknown
-> = z.object({});
-
-/** @internal */
-export type InAppStepUpsertDtoData$Outbound = {};
-
-/** @internal */
-export const InAppStepUpsertDtoData$outboundSchema: z.ZodType<
-  InAppStepUpsertDtoData$Outbound,
-  z.ZodTypeDef,
-  InAppStepUpsertDtoData
-> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace InAppStepUpsertDtoData$ {
-  /** @deprecated use `InAppStepUpsertDtoData$inboundSchema` instead. */
-  export const inboundSchema = InAppStepUpsertDtoData$inboundSchema;
-  /** @deprecated use `InAppStepUpsertDtoData$outboundSchema` instead. */
-  export const outboundSchema = InAppStepUpsertDtoData$outboundSchema;
-  /** @deprecated use `InAppStepUpsertDtoData$Outbound` instead. */
-  export type Outbound = InAppStepUpsertDtoData$Outbound;
-}
-
-export function inAppStepUpsertDtoDataToJSON(
-  inAppStepUpsertDtoData: InAppStepUpsertDtoData,
-): string {
-  return JSON.stringify(
-    InAppStepUpsertDtoData$outboundSchema.parse(inAppStepUpsertDtoData),
-  );
-}
-
-export function inAppStepUpsertDtoDataFromJSON(
-  jsonString: string,
-): SafeParseResult<InAppStepUpsertDtoData, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => InAppStepUpsertDtoData$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'InAppStepUpsertDtoData' from JSON`,
-  );
-}
-
-/** @internal */
 export const ControlValues$inboundSchema: z.ZodType<
   ControlValues,
   z.ZodTypeDef,
@@ -206,7 +153,7 @@ export const ControlValues$inboundSchema: z.ZodType<
   secondaryAction: ActionDto$inboundSchema.optional(),
   redirect: RedirectDto$inboundSchema.optional(),
   disableOutputSanitization: z.boolean().default(false),
-  data: z.lazy(() => InAppStepUpsertDtoData$inboundSchema).optional(),
+  data: z.record(z.any()).optional(),
 });
 
 /** @internal */
@@ -219,7 +166,7 @@ export type ControlValues$Outbound = {
   secondaryAction?: ActionDto$Outbound | undefined;
   redirect?: RedirectDto$Outbound | undefined;
   disableOutputSanitization: boolean;
-  data?: InAppStepUpsertDtoData$Outbound | undefined;
+  data?: { [k: string]: any } | undefined;
 };
 
 /** @internal */
@@ -236,7 +183,7 @@ export const ControlValues$outboundSchema: z.ZodType<
   secondaryAction: ActionDto$outboundSchema.optional(),
   redirect: RedirectDto$outboundSchema.optional(),
   disableOutputSanitization: z.boolean().default(false),
-  data: z.lazy(() => InAppStepUpsertDtoData$outboundSchema).optional(),
+  data: z.record(z.any()).optional(),
 });
 
 /**
